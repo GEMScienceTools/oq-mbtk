@@ -6,9 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Vim swap files
+.swp
+
 # Distribution / packaging
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -79,11 +81,10 @@ celerybeat-schedule
 # SageMath parsed files
 *.sage.py
 
-# dotenv
+# Environments
 .env
-
-# virtualenv
 .venv
+env/
 venv/
 ENV/
 
@@ -100,5 +101,13 @@ ENV/
 # mypy
 .mypy_cache/
 
-
-./tmp
+**/tmp/**
+.DS_Store
+*.pyc
+*.swp
+*.so
+*.old
+*.png
+.coverage
+*.qgs*
+**/.ipynb_checkpoints/**
