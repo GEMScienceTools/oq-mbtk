@@ -102,3 +102,6 @@ ENV/
 
 
 ./tmp
+
+
+setup.sh
