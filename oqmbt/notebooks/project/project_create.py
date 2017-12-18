@@ -55,7 +55,10 @@ def create_default_files(prj, project_dir):
             prj.hypo_depths_hdf5_filename)
     fhdf5 = h5py.File(hypo_depths_hdf5_filename, 'a')
     fhdf5.close()
-
+    # create the folder where to store hypo depth data
+    hypo_folder = os.path.join(project_dir, 'hypo_depths')
+    if not os.path.exists(hypo_folder):
+        os.mkdir(hypo_folder)
 
 def load_model_info(config, key):
     """
