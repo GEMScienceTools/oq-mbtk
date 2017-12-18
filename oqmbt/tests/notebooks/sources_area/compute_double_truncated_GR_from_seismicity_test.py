@@ -110,7 +110,7 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         nb_path = './../../../notebooks/sources_area/'
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
-        reports_folder = './../../tmp/project_test/reports/'
+        reports_folder = './../tmp/project_test/reports/'
         automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys,
                       reports_folder=reports_folder)
         #

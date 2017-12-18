@@ -19,7 +19,7 @@ def project_select_gui(project):
     margin = 5
 
     oqmbtp = project
-    models = oqmbtp.models.keys()
+    models = list(oqmbtp.models.keys())
     project_dir = oqmbtp.directory
     project_pickle_filename = os.environ.get('OQMBT_PROJECT')
 
