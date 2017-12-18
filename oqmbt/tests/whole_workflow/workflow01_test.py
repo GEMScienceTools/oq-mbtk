@@ -1,7 +1,9 @@
 
 import os
+import h5py
 import unittest
 import logging
+import numpy as np
 
 import oqmbt.tools.notebook as nb
 
@@ -13,12 +15,6 @@ from oqmbt.tests.tools import delete_and_create_project_dir
 
 from oqmbt.tools.completeness import set_completeness_for_sources
 
-TABLE = [[1985., 5.0],
-         [1970., 5.3],
-         [1923., 5.6],
-         [1900., 6.6],
-         [1800., 7.9]]
-
 
 class TestComputeDoubleTruncatedGR(unittest.TestCase):
 
@@ -28,36 +24,53 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         #
         #
         fname = './wf01.log'
-        logging.basicConfig(filename=fname,level=logging.DEBUG)
+        #logging.basicConfig(filename=fname,level=logging.DEBUG)
+        logging.basicConfig(filename=fname,level=logging.WARN)
         #
-        # clear directory
+        # clear directory where the project will be created
         folder = os.path.join(self.BASE_DATA_PATH, './../tmp/project_test')
         delete_and_create_project_dir(folder)
         #
         # set environment variable
         self.prj_path = os.path.join(self.BASE_DATA_PATH,
-                                     './../tmp/wf01_test/test.oqmbtp')
+                                     './../tmp/project_test/test.oqmbtp')
         os.environ["OQMBT_PROJECT"] = self.prj_path
         #
         # create the project
-        path = './../data/project.ini'
+        path = './../data/wf01/project.ini'
         inifile = os.path.join(self.BASE_DATA_PATH, path)
         project_create([inifile, os.path.dirname(self.prj_path)])
         #
-        # add to the model the name of the shapefile - the path is relative to
-        # the position of the project file
+        # load the project just created
         oqtkp = OQtProject.load_from_file(self.prj_path)
         model_id = 'model01'
         oqtkp.active_model_id = model_id
         model = oqtkp.models[model_id]
         #
-        # set the shapefile with the geometry of area sources
-        path = './../../notebooks/data/shapefiles/area_sources.shp'
+        # set the shapefile with the geometry of area sources [relative path 
+        # with origin the project folder]
+        path = './../../data/wf01/shapefiles/test_area.shp'
         model.area_shapefile_filename = path
         #
-        # set the catalogue name
-        path = './../../notebooks/data/catalogue.csv'
+        # set the shapefile withe the faults
+        path = './../../data/wf01/shapefile/test_faults.csv'
         model.catalogue_csv_filename = path
+        #
+        # set the catalogue name
+        path = './../../data/wf01/catalogue.csv'
+        model.catalogue_csv_filename = path
+        #
+        # create the hypo files
+        folder = os.path.dirname(self.prj_path)
+        for i in [1,2,3]:
+            fname = 'hypo_depths-model01-{:d}.csv'.format(i)
+            path = os.path.join(folder, 'hypo_depths', fname)
+            f = open(path, 'w')
+            f.write('depth,weight\n')
+            f.write('10,0.6\n')
+            f.write('20,0.4n')
+            f.close()
+        model.hypo_dist_filename='model01_hypo_dist.hdf5'
         #
         # saving the project
         oqtkp.models[model_id] = model
@@ -65,7 +78,7 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
 
     def test_01(self):
         """
-        Read geometry from a shapefile and compute a MFD for each source
+        This implements a workflow similar to the one used with FMG
         """
         #
         #
@@ -73,57 +86,143 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         model = oqtkp.models['model01']
         get_src_ids = GetSourceIDs(model)
         #
+        # .....................................................................
         # running the first notebook that loads the geometry of the sources
         # from the shapefile
         nb_name = 'load_geometry_from_shapefile.ipynb'
-        nb_path = './../../../notebooks/sources_area/'
+        nb_path = './../../notebooks/sources_area/'
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
         nb.run(nb_full_path, '')
         #
-        # create the pickled catalogue
-        nb_name = 'catalogue_create_pickle.ipynb' # we miss the completeness t
-        nb_path = './../../../notebooks/catalogue/'
+        # .....................................................................
+        # catalogue pre-processing 
+        nb_name = 'catalogue_pre_processing.ipynb' 
+        nb_path = './../../notebooks/catalogue/'
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
         nb.run(nb_full_path, '')
-        #
-        # set the completeness table for the to sources
-        set_completeness_for_sources(TABLE, ['02', '03'])
         #
         # checking the creation of the pickled version of the catalogue
         file_name = 'model01_catalogue.pkl'
-        file_path = './../../tmp/project_test/'
+        file_path = './../tmp/project_test/'
         tmp = os.path.join(self.BASE_DATA_PATH, file_path, file_name)
         nb_full_path = os.path.abspath(tmp)
         assert os.path.exists(nb_full_path)
+        #
+        # checking that .hdf5 file exists and contains updated information
+        file_name = 'completeness.hdf5'
+        file_path = './../tmp/project_test/'
+        tmp = os.path.join(self.BASE_DATA_PATH, file_path, file_name)
+        nb_full_path = os.path.abspath(tmp)
+        assert os.path.exists(nb_full_path)
+        #
+        # this is clearly non completely consistent. We should remove the 
+        # duplicated thresholds and keep only the ones with the smaller
+        # magnitude
+        f = h5py.File(nb_full_path, 'r') 
+        grp = f['/model01']
+        computed = grp['whole_catalogue'][:]
+        expected = np.array([[1998., 3.5], 
+                             [1989., 4.0],
+                             [1977., 4.5],
+                             [1970., 5.0],
+                             [1933., 5.5],
+                             [1933., 6.0],
+                             [1905., 6.5],
+                             [1905., 7.0]])
+        np.testing.assert_equal(expected, computed)
+        f.close()
+        #
+        # .....................................................................
+        # assign default completeness to all the sources
+        nb_name = 'completeness_set_default_to_all_area_sources.ipynb' 
+        nb_path = './../../notebooks/sources_area/'
+        tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
+        nb_full_path = os.path.abspath(tmp)
+        nb.run(nb_full_path, '')
+        #
+        # checking that the .hdf5 contains the completeness tables for all the
+        # sources 
+        file_name = 'completeness.hdf5'
+        file_path = './../tmp/project_test/'
+        tmp = os.path.join(self.BASE_DATA_PATH, file_path, file_name)
+        nb_full_path = os.path.abspath(tmp)
+        f = h5py.File(nb_full_path, 'r') 
+        grp = f['/model01']
+        computed = grp['1'][:]
+        np.testing.assert_equal(expected, computed)
+        computed = grp['2'][:]
+        np.testing.assert_equal(expected, computed)
+        computed = grp['3'][:]
+        np.testing.assert_equal(expected, computed)
+        f.close()
+        #
+        # .....................................................................
+        # calculate GR parameters for all the area sources
         #
         # loading the project
         oqtkp = OQtProject.load_from_file(self.prj_path)
         oqtkp.active_model_id = 'model01'
         model = oqtkp.models['model01']
         #
-        # running the notebook that computes the GR parameters
+        # running notebook
         get_src_ids = GetSourceIDs(model)
         get_src_ids.keep_equal_to('source_type', ['AreaSource'])
         nb_name = 'compute_double_truncated_GR_from_seismicity.ipynb'
-        nb_path = './../../../notebooks/sources_area/'
+        nb_path = './../../notebooks/sources_area/'
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
-        reports_folder = './../../tmp/project_test/reports/'
+        reports_folder = './../tmp/project_test/reports/'
         automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys,
                       reports_folder=reports_folder)
         #
         # loading the project
+        del oqtkp
         oqtkp = OQtProject.load_from_file(self.prj_path)
         oqtkp.active_model_id = 'model01'
         model = oqtkp.models['model01']
         #
         # check the a and b values computed
         keys = list(model.sources.keys())
-        print (model.sources['02'].__dict__)
-        print (model.sources['03'].__dict__)
-        self.assertAlmostEqual(model.sources['02'].a_gr, 5.824285578226533)
-        self.assertAlmostEqual(model.sources['02'].b_gr, 1.1421442004454874)
-        self.assertAlmostEqual(model.sources['03'].a_gr, 3.8036622760645868)
-        self.assertAlmostEqual(model.sources['03'].b_gr, 0.8832991033938602)
+        print (model.sources['1'].__dict__)
+        self.assertAlmostEqual(model.sources['1'].a_gr, 3.7243511906)
+        self.assertAlmostEqual(model.sources['1'].b_gr, 0.636452331875)
+        self.assertAlmostEqual(model.sources['2'].a_gr, 3.69438318983)
+        self.assertAlmostEqual(model.sources['2'].b_gr, 0.674434277192)
+        self.assertAlmostEqual(model.sources['3'].a_gr, 3.32936780717)
+        self.assertAlmostEqual(model.sources['3'].b_gr, 0.6336174742)
+        #
+        # .....................................................................
+        # upload hypocentral depths
+        #
+        # loading the project
+        del oqtkp
+        oqtkp = OQtProject.load_from_file(self.prj_path)
+        oqtkp.active_model_id = 'model01'
+        model = oqtkp.models['model01']
+        #
+        # running notebook
+        get_src_ids = GetSourceIDs(model)
+        get_src_ids.keep_equal_to('source_type', ['AreaSource'])
+        nb_name = 'load_hypocentral_depth_distribution_from_csv.ipynb'
+        nb_path = './../../notebooks/sources_area/'
+        tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
+        nb_full_path = os.path.abspath(tmp)
+        reports_folder = './../tmp/project_test/reports/'
+        automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys)
+        #
+        # loading the project
+        del oqtkp
+        oqtkp = OQtProject.load_from_file(self.prj_path)
+        oqtkp.active_model_id = 'model01'
+        model = oqtkp.models['model01']
+        #
+        # check the a and b values computed
+        # self.assertAlmostEqual(model.sources['1'].a_gr, 3.7243511906)
+        # self.assertAlmostEqual(model.sources['1'].b_gr, 0.636452331875)
+        # self.assertAlmostEqual(model.sources['2'].a_gr, 3.69438318983)
+        # self.assertAlmostEqual(model.sources['2'].b_gr, 0.674434277192)
+        # self.assertAlmostEqual(model.sources['3'].a_gr, 3.32936780717)
+        # self.assertAlmostEqual(model.sources['3'].b_gr, 0.6336174742)
+        
