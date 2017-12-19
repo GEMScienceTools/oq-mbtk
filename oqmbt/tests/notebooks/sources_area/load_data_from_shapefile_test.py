@@ -65,5 +65,3 @@ class TestLoadGeometryFromShapefile(unittest.TestCase):
         keys = list(model.sources.keys())
         self.assertEqual(model.sources[keys[0]].source_type, 'AreaSource')
         self.assertEqual(model.sources[keys[1]].source_type, 'AreaSource')
-
-        #assert 0 == 1

@@ -1,5 +1,6 @@
 
 import os
+import re
 import unittest
 import logging
 
@@ -12,46 +13,26 @@ from oqmbt.tests.tools import delete_and_create_project_dir
 
 BASE_DATA_PATH = os.path.dirname(__file__)
 
-def create_dummy_project():
-    """
-    Creates a dummy project
-    """
-    #
-    # clear directory
-    folder = os.path.join(BASE_DATA_PATH, './tmp/project_test')
-    delete_and_create_project_dir(folder)
-    #
-    # set environment variable
-    prj_path = os.path.join(BASE_DATA_PATH, './tmp/project_test/test.oqmbtp')
-    #
-    # create the project
-    path = './data/project.ini'
-    inifile = os.path.join(BASE_DATA_PATH, path)
-    project_create([inifile, os.path.dirname(prj_path)])
-
-
-class TestLoadFaultsFromXml(unittest.TestCase):
-
-    BASE_DATA_PATH = os.path.dirname(__file__)
+class TestLoadSimpleFaultOQ(unittest.TestCase):
 
     def setUp(self):
         #
-        #
-        fname = './testloadfaultsfromxml.log'
+        # set logging settings
+        fname = './testcomputedoubletruncatedmfd.log'
         logging.basicConfig(filename=fname,level=logging.DEBUG)
         #
         # clear directory
-        folder = os.path.join(self.BASE_DATA_PATH, './../../tmp/project_test')
+        folder = os.path.join(BASE_DATA_PATH, './../../tmp/project_test')
         delete_and_create_project_dir(folder)
         #
         # set environment variable
-        self.prj_path = os.path.join(self.BASE_DATA_PATH,
+        self.prj_path = os.path.join(BASE_DATA_PATH,
                                      './../../tmp/project_test/test.oqmbtp')
         os.environ["OQMBT_PROJECT"] = self.prj_path
         #
         # create the project
         path = './../data/project.ini'
-        inifile = os.path.join(self.BASE_DATA_PATH, path)
+        inifile = os.path.join(BASE_DATA_PATH, path)
         project_create([inifile, os.path.dirname(self.prj_path)])
         #
         # add to the model the name of the shapefile - the path is relative to
@@ -60,34 +41,37 @@ class TestLoadFaultsFromXml(unittest.TestCase):
         model_id = 'model01'
         oqtkp.active_model_id = model_id
         model = oqtkp.models[model_id]
-        path = './../../notebooks/data/shapefiles/area_sources.shp'
-        model.area_shapefile_filename = path
+        path = './../../data/wf01/shapefiles/test_faults.shp'
+        model.faults_shp_filename = path
         oqtkp.models[model_id] = model
         oqtkp.save()
 
 
     def test_load_fault_01(self):
         """
-        Load fault data from a nrml file (only simple faults for the time being)
+        Load fault data from a shapefile (only simple faults for the time being)
         """
         #
-        # running the notebook
-        nb_name = 'load_geometry_from_shapefile.ipynb'
-        nb_path = './../../../notebooks/sources_area/'
-        tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
+        # loading the 
+        nb_name = 'load_data_from_shapefile_fmg.ipynb'
+        nb_path = './../../../notebooks/sources_shallow_fault/'
+        tmp = os.path.join(BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
         nb.run(nb_full_path, '')
         #
         # loading the project
         oqtkp = OQtProject.load_from_file(self.prj_path)
-        model_id = 'model01'
-        oqtkp.active_model_id = model_id
-        model = oqtkp.models[model_id]
+        oqtkp.active_model_id = 'model01'
+        model = oqtkp.models['model01']
         #
-        # checking the number and the type of sources loaded
-        self.assertEqual(len(model.sources), 2)
-        keys = list(model.sources.keys())
-        self.assertEqual(model.sources[keys[0]].source_type, 'AreaSource')
-        self.assertEqual(model.sources[keys[1]].source_type, 'AreaSource')
-
-        #assert 0 == 1
+        # count the number of area sources
+        cnt = 0
+        for key in list(model.sources.keys()):
+            src = model.sources[key]
+            if re.match('SimpleFaultSource', src.source_type):
+                cnt += 1
+        # checking the number of sources
+        assert cnt == 6
+        # checking slip rate values
+        self.assertAlmostEqual(0.01, model.sources['sf395'].slip_rate, 0.01)
+        self.assertAlmostEqual(0.06, model.sources['sf400'].slip_rate, 0.01)

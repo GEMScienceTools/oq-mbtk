@@ -51,14 +51,24 @@ def create_default_files(prj, project_dir):
     #
     # create the .hdf5 with hypocentral depth information
     prj.hypo_depths_hdf5_filename = 'hypo_depths.hdf5'
-    hypo_depths_hdf5_filename = os.path.join(project_dir,
-            prj.hypo_depths_hdf5_filename)
-    fhdf5 = h5py.File(hypo_depths_hdf5_filename, 'a')
+    hypod_hdf5_filename = os.path.join(project_dir, prj.hypo_depths_hdf5_filename)
+    fhdf5 = h5py.File(hypod_hdf5_filename, 'a')
     fhdf5.close()
     # create the folder where to store hypo depth data
     hypo_folder = os.path.join(project_dir, 'hypo_depths')
     if not os.path.exists(hypo_folder):
         os.mkdir(hypo_folder)
+    #
+    # create the .hdf5 with focal mechanism information
+    prj.focal_mech_hdf5_filename = 'focal_mechs.hdf5'
+    focm_hdf5_filename = os.path.join(project_dir, prj.hypo_depths_hdf5_filename)
+    fhdf5 = h5py.File(focm_hdf5_filename, 'a')
+    fhdf5.close()
+    # create the folder where to store focal mechanism data
+    focm_folder = os.path.join(project_dir, 'focal_mechs')
+    if not os.path.exists(focm_folder):
+        os.mkdir(focm_folder)
+
 
 def load_model_info(config, key):
     """

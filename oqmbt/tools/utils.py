@@ -1,5 +1,18 @@
 import numpy
 
+from openquake.hazardlib.geo.point import Point
+
+def _get_point_list(lons, lats):
+    """
+    :returns:
+        Returns a list of :class:` openquake.hazardlib.geo.point.Point`
+        instances
+    """
+    points = []
+    for i in range(0, len(lons)):
+        points.append(Point(lons[i], lats[i]))
+    return points
+
 
 class GetSourceIDs(object):
 

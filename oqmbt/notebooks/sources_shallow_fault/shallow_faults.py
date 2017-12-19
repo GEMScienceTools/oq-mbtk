@@ -4,10 +4,115 @@ import os
 import sys
 import re
 
+from shapely import wkt
+from osgeo import ogr
+
 from openquake.man.model import read
+
 from openquake.hazardlib.source import SimpleFaultSource
+from openquake.hazardlib.geo.line import Line
+
 from oqmbt.oqt_project import OQtProject, OQtSource
-from oqmbt.mfd_tools import get_moment_from_mfd
+from oqmbt.tools.mfd import get_moment_from_mfd
+
+from oqmbt.tools.utils import _get_point_list
+
+
+MAPPING = {'identifier': 'ID',
+           'name': 'NAME',
+           'dip': 'DIP',
+           'rake': 'RAKE',
+           'upper_depth': 'DMIN',
+           'lower_depth': 'DMAX',
+           'recurrence': 'RECURRENCE',
+           'slip_rate': 'Sliprate',
+           'aseismic': 'COEF',
+           'mmax': 'MMAX',
+           'ri': 'RECURRENCE',
+           'coeff_fault': 'COEF',
+           'use_slip': 'SLIPSELECT',
+           }
+
+
+def shallow_faults_to_oqt_sources(shapefile_filename, mapping=None):
+    """
+    Creates al list of mtkActiveFault istances starting from a shapefile
+
+    :parameter string shapefile_filename:
+        Name of the shapefile containing information on active faults
+    :parameter mapping:
+        A dictionary indicating for each parameter in the shapefile attribute
+        table the corresponding one in the mtkActiveFault object. Note that
+        only the information listed in this dictionary will be included in the
+        mtkActiveFault istances.
+    """
+    # set the default mapping. This is based on the information in the
+    # attribute table of the shapefile Yufang sent in Sept. 2015.
+    if mapping is None:
+        mapping = MAPPING
+    # check if file exists
+    assert os.path.exists(shapefile_filename)
+    # reading the file
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    dataSource = driver.Open(shapefile_filename, 0)
+    layer = dataSource.GetLayer()
+    # reading sources geometry
+    src_id = set()
+    sources = {}
+    for cnt, feature in enumerate(layer):
+        # get dip
+        dip = float(feature.GetField(mapping['dip']))
+        # get geometry
+        geom = feature.GetGeometryRef()
+        geom_wkt = geom.ExportToWkt()
+
+        tmp = feature.GetField(mapping['identifier'])
+        if isinstance(tmp, str):
+            sid = 'sf'+tmp
+        elif isinstance(tmp, int):
+            sid = 'sf%d' % tmp
+        elif isinstance(tmp, float):
+            sid = 'sf%d' % int(tmp)
+        else:
+            print('value ', tmp)
+            print('type  ', type(tmp))
+            raise ValueError('Unsupported ID type')
+
+        if (re.search('^MULTILINESTRING', geom_wkt) or dip < 0.1 or
+                feature.GetField("TYPE") == 'SUB'):
+            print('skipping - multiline - src id: %s ' % (sid))
+            print('   ', feature.GetField(mapping['name']))
+        else:
+            line = wkt.loads(geom.ExportToWkt())
+            x, y = line.coords.xy
+
+            if dip > 90 or dip < 0:
+                print('dip outside admitted range')
+                print('   ', feature.GetField(mapping['dip']))
+                print('   ', feature.GetField(mapping['name']))
+
+            if src_id & set(sid):
+                raise ValueError('Source ID already used %s' % sid)
+
+            src = OQtSource(sid, 'SimpleFaultSource')
+            src.trace = Line(_get_point_list(x, y))
+            src.dip = float(feature.GetField(mapping['dip']))
+            src.upper_seismogenic_depth = (
+                float(feature.GetField(mapping['upper_depth'])))
+            src.lower_seismogenic_depth = float(
+                feature.GetField(mapping['lower_depth']))
+            src.name = feature.GetField(mapping['name'])
+            src.slip_rate = float(feature.GetField(mapping['slip_rate']))
+            src.recurrence = float(feature.GetField(mapping['recurrence']))
+            src.rake = float(feature.GetField(mapping['rake']))
+            src.mmax = float(feature.GetField(mapping['mmax']))
+            src.ri = float(feature.GetField(mapping['ri']))
+            src.coeff = float(feature.GetField(mapping['coeff_fault']))
+            src.use_slip = float(feature.GetField(mapping['use_slip']))
+            sources[sid] = src
+    dataSource.Destroy()
+
+    return sources
 
 
 def read_faults(faults_xml_filename=None):
@@ -57,5 +162,4 @@ def read_faults(faults_xml_filename=None):
     oqtkp.models[model_id] = model
     oqtkp.save()
 
-if __name__ == "__main__":
-    main()
+
