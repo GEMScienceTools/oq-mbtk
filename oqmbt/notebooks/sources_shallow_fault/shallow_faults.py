@@ -162,4 +162,9 @@ def read_faults(faults_xml_filename=None):
     oqtkp.models[model_id] = model
     oqtkp.save()
 
+<<<<<<< HEAD
 
+=======
+if __name__ == "__main__":
+    main()
+>>>>>>> ffcaa32f24a38bcbf587aa8c5ba983555318beba
