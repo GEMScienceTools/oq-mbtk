@@ -9,7 +9,7 @@ from oqmbt.tools import automator
 from oqmbt.tools.utils import GetSourceIDs
 from oqmbt.oqt_project import OQtProject
 from oqmbt.notebooks.project.project_create import project_create
-from oqmbt.tests.tools import delete_and_create_project_dir
+from oqmbt.tests.tools.tools import delete_and_create_project_dir
 
 from oqmbt.tools.completeness import set_completeness_for_sources
 

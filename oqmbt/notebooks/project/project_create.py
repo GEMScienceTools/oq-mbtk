@@ -4,7 +4,7 @@ import sys
 import h5py
 import shutil
 
-from oqmbt.tests.tools import delete_and_create_project_dir
+from oqmbt.tests.tools.tools import delete_and_create_project_dir
 from oqmbt.oqt_project import OQtProject, OQtModel
 from configparser import ConfigParser
 
