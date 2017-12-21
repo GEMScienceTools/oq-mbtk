@@ -7,7 +7,7 @@ import oqmbt.tools.notebook as nb
 
 from oqmbt.oqt_project import OQtProject
 from oqmbt.notebooks.project.project_create import project_create
-from oqmbt.tests.tools import delete_and_create_project_dir
+from oqmbt.tests.tools.tools import delete_and_create_project_dir
 
 
 class TestLoadGeometryFromShapefile(unittest.TestCase):
