@@ -10,6 +10,90 @@ from openquake.hazardlib.mfd import (TruncatedGRMFD, EvenlyDiscretizedMFD,
 log = True
 log = False
 
+
+class TaperedGrMFD(object):
+    """
+    Implements the Tapered G-R (Pareto) MFD as described by Kagan (2002) GJI 
+    page 523.
+
+    :parameter mo_t:
+    :parameter mo_corner:
+    :parameter b_gr:
+    """
+
+    def __init__(self, mo_t, mo_corner, b_gr):
+        self.mo_t = mo_t
+        self.mo_corner = mo_corner
+        self.b_gr = b_gr
+
+    def get_ccdf(self, mo):
+        beta = 2./3.*self.b_gr
+        ratio = self.mo_t / mo
+        phi = ratio**beta * np.exp((self.mo_t-mo)/ self.mo_corner)
+        return phi
+
+
+class GammaMFD(object):
+    """
+    :parameter mo_t:
+        Lower moment threshold
+    :parameter mo_corner:
+        The corner moment controlling the decay of the distribution close 
+        to the larger values of magnitude admitted 
+    :parameter b_gr:
+        Gutenberg-Richter relationship b-value
+    """
+
+    def __init__(self, mo_t, mo_corner, b_gr):
+        self.mo_t = mo_t
+        self.mo_corner = mo_corner
+        self.b_gr = b_gr
+
+    def get_ccdf(self, mo):
+        """
+        :parameter numpy.array mo:
+            A 1D instance of :class:`numpy.array` moment is in [N.m]
+        :returns:
+
+        """
+        beta = 2./3.*self.b_gr
+        ratio = self.mo_t / self.mo_corner
+        term1 = np.exp(ratio)
+        term2 = scipy.special.gammainc(1.-beta, ratio)
+        c = 1. - ratio**beta * term1 * term2
+
+        term3 = c**(-1.) * (self.mo_t/mo)**beta
+        term4 = np.exp((self.mo_t - mo) / (self.mo_corner))
+        term5 = (mo / self.mo_corner)**beta
+        term6 = np.exp(mo / self.mo_corner)
+        term7 = scipy.special.gammaincc(1.-beta, mo / self.mo_corner)
+        # We multiply the complemented incomplete gamma function in order
+        # to reproduce the eq. 15 of Kagan (2002)
+        term8 = scipy.special.gamma(1.-beta)
+        phi = term3 * term4 * ( 1.- term5 * term6 * term7 * term8)
+        return phi
+
+
+def mag_to_mo(mag):
+    """
+    Scalar moment [in Nm] from moment magnitude
+
+    :return:
+        The computed scalar seismic moment
+    """
+    return 10**(1.5*mag+9.1)
+
+
+def mo_to_mag(mo):
+    """
+    From moment magnitude to scalar moment [in Nm]
+
+    :return:
+        The computed magnitude
+    """
+    return (np.log10(mo)-9.1)/1.5
+
+
 def interpolate_ccumul(mfd, threshold):
     """
     Provides a value of exceedance given and MFD and a magnitude
@@ -93,7 +177,8 @@ def get_moment_from_mfd(mfd):
         occ_list = mfd.get_annual_occurrence_rates()
         mo_tot = 0.0
         for occ in occ_list:
-            mo_tot += occ[1] * 10.**(1.5*occ[0] + 9.05)
+            # mo_tot += occ[1] * 10.**(1.5*occ[0] + 9.05)
+            mo_tot += occ[1] * mo_to_mag(occ[0])
     else:
         raise ValueError('Unrecognised MFD type: %s' % type(mfd))
     return mo_tot
