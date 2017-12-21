@@ -163,7 +163,7 @@ class TestFMGWorkflow(unittest.TestCase):
         #
         # .....................................................................
         # assign default completeness to all the sources
-        nb_name = 'completeness_set_default_to_all_area_sources.ipynb' 
+        nb_name = 'set_default_completeness_to_all_area_sources.ipynb' 
         nb_path = './../../notebooks/sources_area/'
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
@@ -301,16 +301,37 @@ class TestFMGWorkflow(unittest.TestCase):
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
         nb.run(nb_full_path, '') 
+        #
+        # computing corner magnitude
+        get_src_ids = GetSourceIDs(model)
+        get_src_ids.keep_equal_to('source_type', ['AreaSource'])
+        nb_name = 'compute_mc_from_mo.ipynb'
+        nb_path = './../../notebooks/tectonics/'
+        tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
+        nb_full_path = os.path.abspath(tmp)
+        automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys)
         # 
         # checking
         del oqtkp
         oqtkp = OQtProject.load_from_file(self.prj_path)
         oqtkp.active_model_id = 'model01'
         model = oqtkp.models['model01']
-        thrs = 1e7
+        thrs = 1e7 
+        self.assertAlmostEqual(model.sources['1'].mo_mcs, 4.61)
+        self.assertAlmostEqual(model.sources['2'].mo_mcs, 4.87)
+        self.assertAlmostEqual(model.sources['3'].mo_mcs, 4.86)
         self.assertTrue(model.sources['1'].mo_strain/7.86150975109e+16 < thrs)
         self.assertTrue(model.sources['2'].mo_strain/5.29894154843e+16 < thrs)
         self.assertTrue(model.sources['3'].mo_strain/8.33252270107e+16 < thrs)
+        #
+        # fixing the MFD for all the area sources
+        get_src_ids = GetSourceIDs(model)
+        get_src_ids.keep_equal_to('source_type', ['AreaSource'])
+        nb_name = 'set_mfd_double_truncated_GR.ipynb'
+        nb_path = './../../notebooks/sources_area/'
+        tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
+        nb_full_path = os.path.abspath(tmp)
+        automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys)
         #
         # FAULT SOURCES
         # .....................................................................
@@ -378,3 +399,19 @@ class TestFMGWorkflow(unittest.TestCase):
         self.assertAlmostEqual(src.ids_faults_inside['sf397'], 1.0) 
         self.assertAlmostEqual(src.ids_faults_inside['sf400'], 0.3045975665) 
         self.assertAlmostEqual(src.ids_faults_inside['sf395'], 0.2386801966) 
+        #
+        # .....................................................................
+        # compute moment 
+        nb_name = 'compute_mo_from_mfd.ipynb'
+        nb_path = './../../notebooks/sources/'
+        tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
+        nb_full_path = os.path.abspath(tmp)
+        nb.run(nb_full_path, '')
+        # checking
+        del oqtkp
+        oqtkp = OQtProject.load_from_file(self.prj_path)
+        oqtkp.active_model_id = 'model01'
+        model = oqtkp.models['model01']
+        for key in list(model.sources.keys()):
+            src = model.sources[key]
+            self.assertTrue(hasattr(src, 'mo_from_mfd')
