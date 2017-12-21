@@ -16,7 +16,7 @@ from oqmbt.tests.tools.tools import delete_and_create_project_dir
 from oqmbt.tools.completeness import set_completeness_for_sources
 
 
-class TestComputeDoubleTruncatedGR(unittest.TestCase):
+class TestFMGWorkflow(unittest.TestCase):
 
     BASE_DATA_PATH = os.path.dirname(__file__)
 
@@ -52,6 +52,11 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         path = './../../data/wf01/shapefiles/test_area.shp'
         model.area_shapefile_filename = path
         #
+        # set the shapefile with the geometry of fault sources [relative path 
+        # with origin the project folder]
+        path = './../../data/wf01/shapefiles/test_faults.shp'
+        model.faults_shp_filename = path
+        #
         # set the shapefile withe the faults
         path = './../../data/wf01/shapefile/test_faults.csv'
         model.catalogue_csv_filename = path
@@ -59,6 +64,15 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         # set the catalogue name
         path = './../../data/wf01/catalogue.csv'
         model.catalogue_csv_filename = path
+
+        model.default_bgr = 1.0 # required by imfd_double_truncated_from_slip_rate_SRC.ipynb
+        model.strain_pickle_spatial_index_filename = './../../data/wf01/strain/sample_average_strain'
+        model.strain_rate_model_hdf5_filename = './../../data/wf01/strain/sample_average_strain.hdf5'
+        model.shear_modulus = 3.2e10 # required by compute_mo_from_strain.ipynb
+        model.coup_coef = 0.8 # required by compute_mo_from_strain.ipynb
+        model.coup_thick = 15.0 # required by compute_mo_from_strain.ipynb
+        model.strain_cell_dx = 0.250 # required by compute_mo_from_strain.ipynb
+        model.strain_cell_dy = 0.200
         #
         # create the hypo files - the folder hypo_depths is created by the 
         # 'project_create' script
@@ -91,12 +105,14 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         """
         This implements a workflow similar to the one used with FMG
         """
+        reports_folder = './../tmp/project_test/reports/'
         #
         #
         oqtkp = OQtProject.load_from_file(self.prj_path)
         model = oqtkp.models['model01']
         get_src_ids = GetSourceIDs(model)
         #
+        # AREA SOURCES
         # .....................................................................
         # running the first notebook that loads the geometry of the sources
         # from the shapefile
@@ -184,7 +200,6 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         nb_path = './../../notebooks/sources_area/'
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
-        reports_folder = './../tmp/project_test/reports/'
         automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys,
                       reports_folder=reports_folder)
         #
@@ -219,7 +234,6 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         nb_path = './../../notebooks/sources_area/'
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
-        reports_folder = './../tmp/project_test/reports/'
         automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys)
         #
         # checking that the .hdf5 contains the completeness tables for all the
@@ -258,7 +272,6 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         nb_path = './../../notebooks/sources_area/'
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
-        reports_folder = './../tmp/project_test/reports/'
         automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys)
         #
         # checking that the .hdf5 contains the completeness tables for all the
@@ -279,5 +292,84 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         computed = f['3'][:]
         np.testing.assert_array_equal(expected, computed)
         f.close()
-        
-
+        #
+        # STRAIN ANALYSIS
+        # .....................................................................
+        # Computing moment from strain
+        nb_name = 'compute_mo_from_strain.ipynb'
+        nb_path = './../../notebooks/sources_area/'
+        tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
+        nb_full_path = os.path.abspath(tmp)
+        nb.run(nb_full_path, '') 
+        # 
+        # checking
+        self.assertAlmostEqual(model.sources['1'].mo_strain, 7.86150975109e+16)
+        self.assertAlmostEqual(model.sources['1'].mo_strain, 5.29894154843e+16)
+        self.assertAlmostEqual(model.sources['1'].mo_strain, 8.33252270107e+16)
+        #
+        # FAULT SOURCES
+        # .....................................................................
+        # running the notebook that loads data from 
+        nb_name = 'load_data_from_shapefile_fmg.ipynb'
+        nb_path = './../../notebooks/sources_shallow_fault/'
+        tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
+        nb_full_path = os.path.abspath(tmp)
+        nb.run(nb_full_path, '')
+	#
+        # checking the number of fault sources loaded
+        del oqtkp
+        oqtkp = OQtProject.load_from_file(self.prj_path)
+        oqtkp.active_model_id = 'model01'
+        model = oqtkp.models['model01']
+        cnt = 0 
+        for key in list(model.sources.keys()):
+            src = model.sources[key]
+            if src.source_type == 'SimpleFaultSource':
+                cnt += 1
+        assert cnt == 6
+        #
+        # compute the mfd from slip rate
+        get_src_ids = GetSourceIDs(model)
+        get_src_ids.keep_equal_to('source_type', ['SimpleFaultSource'])
+        nb_name = 'mfd_double_truncated_from_slip_rate_SRC.ipynb'
+        nb_path = './../../notebooks/sources_shallow_fault/'
+        tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
+        nb_full_path = os.path.abspath(tmp)
+        automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys)
+        #
+        # checking that each fault has an MFD
+        del oqtkp
+        oqtkp = OQtProject.load_from_file(self.prj_path)
+        oqtkp.active_model_id = 'model01'
+        model = oqtkp.models['model01']
+        for key in list(model.sources.keys()):
+            src = model.sources[key]
+            if src.source_type == 'SimpleFaultSource':
+                assert hasattr(src, 'mfd') 
+        #
+        # .....................................................................
+        # find the faults inside each area source
+        get_src_ids.reset()
+        get_src_ids = GetSourceIDs(model)
+        get_src_ids.keep_equal_to('source_type', ['AreaSource'])
+        nb_name = 'find_faults_within_area_source.ipynb'
+        nb_path = './../../notebooks/sources_area/'
+        tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
+        nb_full_path = os.path.abspath(tmp)
+        automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys)
+        #
+        # checking that each fault has an MFD
+        del oqtkp
+        oqtkp = OQtProject.load_from_file(self.prj_path)
+        oqtkp.active_model_id = 'model01'
+        model = oqtkp.models['model01']
+        src = model.sources['1']
+        self.assertAlmostEqual(src.ids_faults_inside['sf400'], 0.695494958) 
+        self.assertAlmostEqual(src.ids_faults_inside['sf399'], 1.0) 
+        src = model.sources['2']
+        self.assertAlmostEqual(src.ids_faults_inside['sf398'], 1.0) 
+        self.assertAlmostEqual(src.ids_faults_inside['sf396'], 1.0) 
+        src = model.sources['3']
+        self.assertAlmostEqual(src.ids_faults_inside['sf397'], 1.0) 
+        self.assertAlmostEqual(src.ids_faults_inside['sf400'], 0.3045975665) 
+        self.assertAlmostEqual(src.ids_faults_inside['sf395'], 0.2386801966) 
