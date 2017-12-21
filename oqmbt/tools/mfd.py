@@ -10,6 +10,72 @@ from openquake.hazardlib.mfd import (TruncatedGRMFD, EvenlyDiscretizedMFD,
 log = True
 log = False
 
+def interpolate_ccumul(mfd, threshold):
+    """
+    Provides a value of exceedance given and MFD and a magnitude
+    threshold
+    
+    :param mfd:
+        An :class:'openquake.hazardlib.mfd.BaseMFD' instance
+    """
+    #
+    # get the cumulative
+    magc, occc = get_cumulative(mfd)
+    magc = np.array(magc)
+    occc = np.array(occc)
+    #
+    # no extrapolation
+    if threshold < min(magc) or threshold > max(magc) + mfd.bin_width:
+        msg = 'Theshold magnitude outside the mfd magnitude limits'
+        raise ValueError(msg)
+    #
+    # find rate of exceedance
+    idx = np.nonzero(abs(magc - threshold) < 1e-4)
+    if len(idx[0]):
+        exrate = occc[idx[0]]
+    else:
+        # find the index of the bin center just below the magnitude
+        # threshold
+        idx = max(np.nonzero(magc < threshold)[0])
+        if threshold > magc[-1]:
+            slope = (occc[idx] - occc[idx-1]) / mfd.bin_width
+        else:
+            slope = (occc[idx+1] - occc[idx]) / mfd.bin_width
+        intcp = occc[idx] - slope * magc[idx]
+        exrate = slope*threshold + intcp
+    return exrate
+
+def get_cumulative(mfd):
+    """
+    Compute a cumulative MFD from a (discrete) incremental one
+    
+    :param mfd:
+        An :class:'openquake.hazardlib.mfd.BaseMFD' instance
+    :returns: 
+        Two lists, the first one containing magnitudes values and the 
+        second one with annual rates of exceedance (m>m0).
+     """
+    mags = []
+    cml  = []
+    occs = []
+    #
+    # loading information for the original MFD
+    for mag, occ in mfd.get_annual_occurrence_rates():
+        mags.append(mag)
+        occs.append(occ)
+    #
+    # shifting mags of half bin
+    mags = [m-mfd.bin_width/2 for m in mags]
+    #
+    # reverting rates
+    for occ in reversed(occs):
+        if len(cml):
+            cml.append(occ+cml[-1])
+        else:
+            cml.append(occ)
+    #
+    return mags, cml[::-1]
+
 
 def get_moment_from_mfd(mfd):
     """
@@ -72,15 +138,11 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
 
     def stack(self, mfd2):
         """
-        This function stacks a mfd represented as discrete histograms.
+        This function stacks two mfds represented by discrete histograms.
 
         :parameter mfd2:
             Instance of :class:`~openquake.hazardlib.mfd.EvenlyDiscretizedMFD`
         """
-
-        if log:
-            print ('===================================================')
-
         mfd1 = self
         bin_width = self.bin_width
         #
@@ -318,11 +380,23 @@ def mfd_downsample(bin_width, mfd):
 
 
 def mfd_upsample(bin_width, mfd):
+    """
+    This is upsampling an MFD i.e. creating a new MFD with a larger 
+    bin width.
+
+    :param bin_width:
+    :param mfd:
+    """ 
+    #
+    # computing the min and max values of magnitude 
     ommin = mfd.min_mag
     ommax = mfd.min_mag + len(mfd.occurrence_rates) * mfd.bin_width
-    # check that the new min_mag is a multiple of the bin width
+    #
+    # rounding the lower and upper magnitude limits to the new 
+    # bin width
     min_mag = np.floor(ommin / bin_width) * bin_width
     max_mag = np.ceil(ommax / bin_width) * bin_width
+    #
     # prepare the new array for occurrences
     nocc = np.zeros((int((max_mag-min_mag)/bin_width+1), 4))
     # set the new array
@@ -330,25 +404,58 @@ def mfd_upsample(bin_width, mfd):
         nocc[idx, 0] = mag
         nocc[idx, 1] = mag-bin_width/2
         nocc[idx, 2] = mag+bin_width/2
-    # assigning occurrences
+    #
+    # create he arrays with magnitudes and occurrences
+    """
+    mago = []
+    occo = []
     for mag, occ in mfd.get_annual_occurrence_rates():
-        idx = np.nonzero((mag-mfd.bin_width/2) > nocc[:, 1])[0]
+        mago.append(mag)
+        occo.append(occo)
+    mago = np.array(mago)
+    occo = np.array(occo)
+    """
+    #
+    # assigning occurrences
+    dlt = bin_width * 1e-5
+    for mag, occ in mfd.get_annual_occurrence_rates():
+        print(mag, occ)
+        # 
+        # find indexes of lower bin limits lower than mag
+        idx = np.nonzero(mag+dlt-mfd.bin_width/2 > nocc[:, 1])[0]
         idxa = None
+        idxb = None
+        # idxa is the index of the lower limit 
         if len(idx):
             idxa = np.amax(idx)
-        idx = np.nonzero((mag+mfd.bin_width/2) > nocc[:, 2])[0]
-        idxb = None
+        else:
+            raise ValueError('Error in computing lower mag limit')
+        # find indexes of the bin centers with magnitude larger than mag
+        #idx = np.nonzero((mag+mfd.bin_width/2) > nocc[:, 2])[0]
+        idx = np.nonzero(mag-dlt+mfd.bin_width/2 < nocc[:, 2])[0]
         if len(idx):
-            idxb = np.amax(idx)
-        if idxa > idxb:
+            #idxb = np.amax(idx)
+            idxb = np.amin(idx)
+        # 
+        # this is the case when the 
+        print(idxa, idxb)
+        if idxb is not None and idxa == idxb:
             nocc[idxa, 3] += occ
         else:
+            # ratio of occurrences in the lower bin
             ra = (nocc[idxa, 2] - (mag-mfd.bin_width/2)) / mfd.bin_width
             nocc[idxa, 3] += occ*ra
             if (1.0-ra) > 1e-10:
                 nocc[idxa+1, 3] += occ*(1-ra)
+        print(nocc)
+    # 
+    # check that the the MFDs have the same total occurrence rate
     smmn = sum(nocc[:, 3])
     smmo = sum(mfd.occurrence_rates)
+    print(smmn, smmo)
+    #
+    # check that the total number of occurrences in the original and 
+    # resampled MFDs are the same
     assert abs(smmn-smmo) < 1e-5
 
     idxs = set(np.arange(0, len(nocc[:,3])))
