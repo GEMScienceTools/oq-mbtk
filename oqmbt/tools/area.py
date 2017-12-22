@@ -1,4 +1,5 @@
 
+import re
 import numpy
 from shapely import wkt
 
@@ -9,6 +10,7 @@ from prettytable import PrettyTable
 
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.sources.area_source import mtkAreaSource
+from openquake.hazardlib.const import TRT
 
 from oqmbt.tools.general import _get_point_list
 from oqmbt.oqt_project import OQtSource
@@ -188,3 +190,83 @@ def plot_area_source_polygons(model, bmap):
             if src.source_type == 'AreaSource':
                         x, y = bmap(src.polygon.lons, src.polygon.lats)
                         bmap.plot(x, y, '-b')
+
+
+def _set_trt(tstr):
+    if re.match('ACT', tstr):
+        return TRT.ACTIVE_SHALLOW_CRUST
+    elif re.match('STA', tstr):
+        return TRT.STABLE_CONTINENTAL
+    elif re.match('DEEP', tstr):
+        return 'Deep'
+    else:
+        raise ValueError('Unrecognized tectonic region type')
+
+
+def areas_to_oqt_sources(shapefile_filename):
+    """
+    :parameter str shapefile_filename:
+        Name of the shapefile containing the polygons
+    :parameter Boolean log:
+        Flag controlling information while processing
+    :returns:
+        A list of :class:`oqmbt.oqt_project.OQtSource` istances
+    """
+    idname = 'Id'
+    # Set the driver
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    dataSource = driver.Open(shapefile_filename, 0)
+    layer = dataSource.GetLayer()
+    # Reading sources geometry
+    sources = {}
+    id_set = set()
+    for feature in layer:
+        # Read the geometry
+        geom = feature.GetGeometryRef()
+        polygon = wkt.loads(geom.ExportToWkt())
+        x, y = polygon.exterior.coords.xy
+        points = _get_point_list(x, y)
+        # Set the ID
+        if isinstance(feature.GetField(idname), str):
+            id_str = feature.GetField(idname)
+        elif isinstance(feature.GetField(idname), int):
+            id_str = '%d' % (feature.GetField(idname))
+        else:
+            raise ValueError('Unsupported source ID type')
+        # Set tectonic region
+        trt = _set_trt(feature.GetField('TectonicRe'))
+        # Set lower seismogenic depth
+        lsd = float(feature.GetField('Depth'))
+        # Set coupling coefficient
+        coupc = float(feature.GetField('coup_coef'))
+        # Set coupling coefficient
+        coupt = float(feature.GetField('coup_thick'))
+        # Create the source
+        src = OQtSource(source_id=id_str,
+                        source_type='AreaSource',
+                        polygon=Polygon(points),
+                        name=id_str,
+                        lower_seismogenic_depth=lsd,
+                        tectonic_region_type=trt,
+                        )
+        src.coup_coef = coupc
+        src.coup_thick = coupt
+        # Append the new source
+        if not id_set and set(id_str):
+            sources[id_str] = src
+        else:
+            raise ValueError('Sources with non unique ID %s' % id_str)
+
+        """
+        sources.append(mtkAreaSource(identifier=id_str,
+                                     name=id_str,
+                                     geometry=Polygon(points)))
+        seism_thickness = float(feature.GetField('Depth'))
+        coef = float(feature.GetField('coef'))
+        tect_reg = feature.GetField('TectonicRe')
+        sources_data[id_str] = dict(seism_thickness=float(seism_thickness),
+                                    coef=coef,
+                                    tect_reg=tect_reg)
+        """
+    dataSource.Destroy()
+    return sources

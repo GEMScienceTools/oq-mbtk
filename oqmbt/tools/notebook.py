@@ -27,10 +27,12 @@ def run(notebook_filename, inps, reports_folder=None, key=None):
     #
     # prepare execution
     ep = ExecutePreprocessor(timeout=100000, kernel_name='python3')
+    ok = False
     try:
         #
         # returns a 'nb node' and 'resources'
         out = ep.preprocess(nb, {'metadata': {'path': './'}})
+        ok = True
     except CellExecutionError:
         msg = 'Error executing the notebook "%s".\n\n' % notebook_filename
         msg += 'See notebook for the traceback.'
@@ -59,4 +61,5 @@ def run(notebook_filename, inps, reports_folder=None, key=None):
             with open(filename, 'w') as f:
                 f.write(shtml[0])
             print ('Report in {:s}'.format(filename))
-    return 1
+            ok = True
+    return ok
