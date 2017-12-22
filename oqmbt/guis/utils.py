@@ -23,7 +23,7 @@ txt_ko = """
 
 def processing_out(out):
 
-    if not out:
+    if out is True:
         display(HTML(txt_ok))
     else:
         display(HTML(txt_ko))
