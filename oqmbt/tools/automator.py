@@ -55,6 +55,7 @@ def run(project_filename, model_id, notebook_path, src_id_list,
     opt = ''
     #
     # running
+    prc = []
     for idx, elem in enumerate(sorted(src_id_list)):
         #
         # saving project
@@ -86,28 +87,8 @@ def run(project_filename, model_id, notebook_path, src_id_list,
                            key=rpt_name)
         #
         #
-        """
-        if len(reports_folder):
-            nb_name = os.path.split(notebook_path)[1]
-            rpt_path, rpt_name = _get_report_path_name(outdir,
-                                                       model_id,
-                                                       elem,
-                                                       nb_name)
-
-            path = os.path.dirname(notebook_path)
-            html_filename = os.path.join(rpt_path, rpt_name)
-            in_html = os.path.join(rpt_path, os.path.splitext(nb_name)[0])
-
-            print (in_html, html_filename)
-
-            cmd_str = 'mv %s.html %s' % (in_html,
-                                         html_filename)
-            out = subprocess.call(cmd_str, shell=True)
-            if out:
-                print ('Error in moving the report to the final folder')
-                print ('from: %s.html' % (os.path.splitext(nb_name)[0]))
-                print ('to:', html_filename)
-                return 1
-            else:
-                print ('Created %s' % (rpt_name))
-        """
+        prc.append(out)
+    ok = False
+    if all(prc):
+        ok = True
+    return ok

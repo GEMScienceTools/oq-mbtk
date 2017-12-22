@@ -161,13 +161,15 @@ def get_cumulative(mfd):
     return mags, cml[::-1]
 
 
-def get_moment_from_mfd(mfd):
+def get_moment_from_mfd(mfd, threshold = -1):
     """
     This computes the total scalar seismic moment released per year by a
     source
 
     :parameter mfd:
         An instance of openquake.hazardlib.mfd
+    :param threshold:
+        Lower threshold magnitude
     :returns:
         A float corresponding to the rate of scalar moment released
     """
@@ -177,11 +179,12 @@ def get_moment_from_mfd(mfd):
         occ_list = mfd.get_annual_occurrence_rates()
         mo_tot = 0.0
         for occ in occ_list:
-            # mo_tot += occ[1] * 10.**(1.5*occ[0] + 9.05)
-            mo_tot += occ[1] * mo_to_mag(occ[0])
+            if occ[0] > threshold:
+                mo_tot += occ[1] * 10.**(1.5*occ[0] + 9.05)
     else:
         raise ValueError('Unrecognised MFD type: %s' % type(mfd))
     return mo_tot
+
 
 
 def get_evenlyDiscretizedMFD_from_truncatedGRMFD(mfd, bin_width=None):
