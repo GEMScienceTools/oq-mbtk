@@ -165,7 +165,7 @@ class TestFMGWorkflow(unittest.TestCase):
         #
         # .....................................................................
         # assign default completeness to all the sources
-        nb_name = 'set_default_completeness_to_all_area_sources.ipynb' 
+        nb_name = 'set_completeness_to_all_area_sources.ipynb' 
         nb_path = './../../notebooks/sources_area/'
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
