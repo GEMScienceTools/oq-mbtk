@@ -2,7 +2,7 @@ import numpy
 import unittest
 
 from oqmbt.tools.faults import rates_for_double_truncated_mfd
-from oqmbt.tools.utils import mag_to_mo
+from oqmbt.tools.mfd import mag_to_mo
 
 class RatesDoubleTruncatedFromSlipTestCase(unittest.TestCase):
     """
