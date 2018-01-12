@@ -23,6 +23,7 @@ from openquake.hazardlib.mfd import EvenlyDiscretizedMFD
 from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.hazardlib.tom import PoissonTOM
 
+from oqmbt.oqt_project import OQtSource
 from oqmbt.tools.faults import rates_for_double_truncated_mfd
 from openquake.hmtk.faults.mfd.youngs_coppersmith import YoungsCoppersmithExponential
 from openquake.hazardlib.geo.geodetic import azimuth
@@ -362,7 +363,7 @@ def get_fault_sources(filename, slip_rate_class, bin_width=0.1, m_low=6.5, b_gr=
                       rupture_mesh_spacing=2.0, upper_seismogenic_depth=0.0, 
                       lower_seismogenic_depth=10.0, msr=WC1994(), 
                       rupture_aspect_ratio=2.0, temporal_occurrence_model=PoissonTOM(1.0),
-                      aseismic_coeff=0.9):
+                      aseismic_coeff=0.9, oqsource=False):
     """
     :parameter filename:
         The name of the .geojson file with fault data
@@ -375,9 +376,8 @@ def get_fault_sources(filename, slip_rate_class, bin_width=0.1, m_low=6.5, b_gr=
     with open(filename, 'r') as data_file:
         data = json.load(data_file)
 
-    print(filename, slip_rate_class, bin_width, m_low, b_gr, rupture_mesh_spacing, upper_seismogenic_depth,
-          lower_seismogenic_depth, msr, rupture_aspect_ratio, temporal_occurrence_model, aseismic_coeff)
-  
+    print('------------------------------------------------------------------------------')
+
     # Configuration parameters to create the sources
     # TODO:
     # use b_gr values from the area_sources and not a generic value
@@ -702,44 +702,36 @@ def get_fault_sources(filename, slip_rate_class, bin_width=0.1, m_low=6.5, b_gr=
             mfd = EvenlyDiscretizedMFD(m_low+bin_width/2, bin_width, rates)
 
             # Source
-            src = SimpleFaultSource(source_id, name,
-                                    tectonic_region_type,
-                                    mfd,
-                                    rupture_mesh_spacing,
-                                    msr,
-                                    rupture_aspect_ratio,
-                                    temporal_occurrence_model,
-                                    upper_seismogenic_depth,
-                                    lower_seismogenic_depth,
-                                    fault_trace,
-                                    dip,
-                                    rake)
+            if oqsource:
+                src = SimpleFaultSource(source_id, name,
+                                        tectonic_region_type,
+                                        mfd,
+                                        rupture_mesh_spacing,
+                                        msr,
+                                        rupture_aspect_ratio,
+                                        temporal_occurrence_model,
+                                        upper_seismogenic_depth,
+                                        lower_seismogenic_depth,
+                                        fault_trace,
+                                        dip,
+                                        rake)
+            else:
+                src = OQtSource(source_id, source_type='SimpleFaultSource')
+                src.name = name   
+                src.tectonic_region_type = tectonic_region_type   
+                src.mfd = mfd  
+                src.rupture_mesh_spacing = rupture_mesh_spacing
+                src.slip_rate = slip_rate 
+                src.msr = msr  
+                src.rupture_aspect_ratio = rupture_aspect_ratio
+                src.temporal_occurrence_model = temporal_occurrence_model
+                src.upper_seismogenic_depth = upper_seismogenic_depth
+                src.lower_seismogenic_depth = lower_seismogenic_depth
+                src.trace = fault_trace
+                src.dip = dip
+                src.rake = rake
+                print('right')
+
             srcl.append(src)
 
     return srcl
-
-"""
-def main(argv):
-
-    # can be: 'suggested', 'min', 'max'
-    slip_rate_class = 'suggested'
-
-    logging.basicConfig(filename='fault_model_ccara_140917.log',
-                        level=logging.INFO)
-    filename = argv[0]
-
-    # get sources
-    srcl = get_fault_sources(filename, slip_rate_class)
-    basename = os.path.basename(filename)
-
-    print("Number of sources created = ", len(srcl))
-
-    # write the final fault model
-    dest = './fault_model_ccara_140917.xml'
-    # dest = './testing.xml'
-    write_source_model(dest, srcl, os.path.splitext(basename))
-    logging.info('Created .xml file %s' % (dest))
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
-"""
