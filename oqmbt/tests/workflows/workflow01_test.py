@@ -75,6 +75,8 @@ class TestFMGWorkflow(unittest.TestCase):
         model.strain_cell_dy = 0.200
         model.m_min = 5.0 # required by set_mfd_tapered_GR.ipynb
         model.bin_width = 0.1 # required by set_mfd_tapered_GR.ipynb
+        model.faults_lower_threshold_magnitude = 6.5 
+        model.msr = 'WC1994'
         #
         # create the hypo files - the folder hypo_depths is created by the 
         # 'project_create' script
