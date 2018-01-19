@@ -67,7 +67,6 @@ class Smoothing3D:
         # smooth data
         f1 = np.prod(np.ones((len(sigmas)))*bffer)
         n_cells = 4/3 * consts.pi * f1 / (self.bin_h**2*self.bin_z)
-        print ('# cells:', n_cells)
         #
         # Projected coordinates of the catalogue
         xs, ys = self.p(self.catalogue.data['longitude'],
@@ -81,7 +80,6 @@ class Smoothing3D:
         xg /= 1e3
         yg /= 1e3
         zg = self.mesh.depths.flatten('F')
-        print (np.amin(xg), np.amin(yg), np.amax(xg), np.amax(yg))
         #
         # Smoothing the catalogue
         for x, y, z in zip(xs, ys, self.catalogue.data['depth']):
@@ -97,40 +95,24 @@ class Smoothing3D:
                 #
                 # distances between earthquake and the selected nodes of the
                 # 3D mesh
-                dsts = ((x-xg[idxs])**2 +(y-yg[idxs])**2 + (z-zg[idxs])**2)**.5
+                dsts = ((x-xg[idxs])**2 + (y-yg[idxs])**2 +
+                        (z-zg[idxs])**2)**.5
                 #
                 # find the indexes of the cells at a distance closer than
                 # 'bffer'
                 jjj = np.ndarray.astype(np.nonzero(dsts < bffer)[0], int)
                 idxs = np.array(idxs)
                 iii = idxs[jjj]
-                #print (dsts[jjj])
                 #
                 # `data` contains the coordinates of the points where we
                 # calculate the values of the multivariate gaussian
                 data = np.vstack((xg[iii].flatten(), yg[jjj].flatten(),
                                   zg[iii].flatten())).T
-                #print ('data', data)
-                #xxx = multivariate_gaussian([x, y, z], sigmas, data)
+                # xxx = multivariate_gaussian([x, y, z], sigmas, data)
                 xxx = 1./dsts[jjj]
-                #print (xxx)
                 #
                 # update the array where we store the results of the smoothing
                 values[iii] += xxx
-                #print ('len',len(iii))
-
-                #----------
-                if False:
-                    import matplotlib.pyplot as plt
-                    from mpl_toolkits.mplot3d import Axes3D
-                    fig = plt.figure()
-                    ax = fig.add_subplot(111, projection='3d')
-                    ax.plot(xg, yg, zg, 'x', alpha=0.1, markeredgecolor=None)
-                    #ax.plot(xg[iii], yg[iii], zg[iii], 'o')
-                    ax.scatter(xg[iii], yg[iii], zg[iii], c=xxx)
-                    ax.plot([x], [y], [z], 'o')
-                    plt.show()
-                #----------
 
         return values
 
@@ -145,7 +127,7 @@ def multivariate_gaussian(means, sigmas, data):
     out = np.ones((data.shape[0]))
     for i, (mu, sigma) in enumerate(zip(list(means), list(sigmas))):
         f1 = 1./(sigma*sq2pi)
-        dst = (data[:,i]-mu)
+        dst = (data[:, i]-mu)
         f2 = np.exp(-dst**2./(2*sigma**2))
         out *= (f1*f2)
     return out
