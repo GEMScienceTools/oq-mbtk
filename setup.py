@@ -38,6 +38,7 @@ setup(
         'jupyter >=4.4.0',
         'matplotlib >=1.5',
     ],
+    python_requires='>=3',
     author='GEM Foundation',
     author_email='hazard@globalquakemodel.org',
     maintainer='GEM Foundation',
@@ -48,13 +49,13 @@ setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
         'Topic :: Scientific/Engineering',
     ),
     keywords="seismic hazard",
     license="AGPL3",
     platforms=["any"],
-    package_data={"smtk": [
+    package_data={"oqmbt": [
         "README.md", "LICENSE"]},
     include_package_data=True,
     zip_safe=False,

@@ -30,8 +30,8 @@ def load_geometry_from_shapefile(shapefile_filename):
     idname = 'Id'
     # Set the driver
     driver = ogr.GetDriverByName('ESRI Shapefile')
-    dataSource = driver.Open(shapefile_filename, 0)
-    layer = dataSource.GetLayer()
+    datasource = driver.Open(shapefile_filename, 0)
+    layer = datasource.GetLayer()
     # Reading sources geometry
     sources = {}
     id_set = set()
@@ -67,8 +67,9 @@ def src_oqt_to_hmtk(src):
             name=src.name,
             geometry=src.polygon)
 
+
 def create_catalogue(model, catalogue, area_source_ids_list=None,
-                                         polygon=None):
+                     polygon=None):
     """
     Note that this assumes that the catalogue has a rtree spatial index
     associated.
@@ -76,6 +77,7 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
     :parameter model:
     :parameter catalogue:
     :parameter area_source_ids_list:
+    :parameter polygon:
     """
 
     if area_source_ids_list is not None:
@@ -90,7 +92,7 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
             src.name = model.nrml_sources[src_id].name
             src.source_id = model.nrml_sources[src_id].source_id
         else:
-            print ('The source does not have a geometry assigned')
+            print('The source does not have a geometry assigned')
             return None
     elif polygon is not None:
         assert isinstance(polygon, Polygon)
@@ -99,8 +101,8 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
         src.name = 'dummy'
         src.polygon = polygon
     else:
-            msg = 'Either a polygon or a list of src id must be defined'
-            raise ValueError(msg)
+        msg = 'Either a polygon or a list of src id must be defined'
+        raise ValueError(msg)
 
     # This sets the limits of the area covered by the polygon
     limits = [numpy.min(src.polygon.lons),
@@ -111,36 +113,26 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
     src_hmtk = src_oqt_to_hmtk(src)
     # This creates a new catalogue with eqks within the bounding box of
     # the analysed area source
-    selectorB = CatalogueSelector(catalogue, create_copy=True)
-    tmpcat = selectorB.within_bounding_box(limits)
-    selectorA = CatalogueSelector(tmpcat, create_copy=False)
+    selectorb = CatalogueSelector(catalogue, create_copy=True)
+    tmpcat = selectorb.within_bounding_box(limits)
+    selectora = CatalogueSelector(tmpcat, create_copy=False)
     # This filters out the eqks outside the area source
-    src_hmtk.select_catalogue(selectorA)
-    # Create the composite catalogue as a copy of the sub-catalogue for the first source
-    labels = ['%s' % src_id for i in range(0, len(src_hmtk.catalogue.data['magnitude']))]
+    src_hmtk.select_catalogue(selectora)
+    # Create the composite catalogue as a copy of the sub-catalogue for the
+    # first source
+    upp = len(src_hmtk.catalogue.data['magnitude'])
+    labels = ['%s' % src_id for i in range(0, upp)]
     src_hmtk.catalogue.data['comment'] = labels
     fcatal = deepcopy(src_hmtk.catalogue)
-    print ('merging eqks for source:', src_id, '# eqks:', len(src_hmtk.catalogue.data['magnitude']))
     # Complete the composite subcatalogue
-    """
-    for src_id in area_source_ids_list[1:]:
-        # Set the source index and fix the catalogue selector
-        src = model.sources[src_id]
-        src_hmtk = src_oqt_to_hmtk(src)
-        # Merge the source-subcatalogue to the composite one
-        # print 'merging eqks for source:', src_id, '# eqks:', len(src_hmtk.catalogue.data['magnitude'])
-        labels = ['%s' % src_id for i in range(0, len(src_hmtk.catalogue.data['magnitude']))]
-        src_hmtk.catalogue.data['comment'] = labels
-        fcatal.concatenate(src.catalogue)
-    """
-    print ('Total number of earthquakes selected {:d}'.format(
+    print('Total number of earthquakes selected {:d}'.format(
                 fcatal.get_number_events()))
     return fcatal
 
 
 def create_gr_table(model):
         # Set table
-        p = PrettyTable(["ID","a_gr", "b_gr"])
+        p = PrettyTable(["ID", "a_gr", "b_gr"])
         p.align["Source ID"] = 'l'
         p.align["a_gr"] = 'r'
         p.align["b_gr"] = 'r'
@@ -157,9 +149,10 @@ def create_gr_table(model):
                 p.add_row([key, alab, blab])
         return p
 
+
 def create_mmax_table(model):
         # Set table
-        p = PrettyTable(["ID","mmax obs", "mmax assigned", "mo strain"])
+        p = PrettyTable(["ID", "mmax obs", "mmax assigned", "mo strain"])
         p.align["Source ID"] = 'l'
         p.align["mmax obs"] = 'r'
         p.align["mmax assigned"] = 'r'
@@ -171,14 +164,15 @@ def create_mmax_table(model):
                 alab = ''
                 blab = ''
                 clab = ''
-                if src.__dict__.has_key('mmax_obs'):
+                if 'mmax_obs' in src.__dict__:
                     alab = '%6.2f' % (src.mmax_obs)
-                if src.__dict__.has_key('mmax_expected'):
+                if 'mmax_expected' in src.__dict__:
                     blab = '%6.2f' % (src.mmax_expected)
-                if src.__dict__.has_key('mo_strain'):
+                if 'mo_strain' in src.__dict__:
                     clab = '%6.2e' % (src.mo_strain)
                 p.add_row([key, alab, blab, clab])
         return p
+
 
 def plot_area_source_polygons(model, bmap):
         """
@@ -215,8 +209,8 @@ def areas_to_oqt_sources(shapefile_filename):
     idname = 'Id'
     # Set the driver
     driver = ogr.GetDriverByName('ESRI Shapefile')
-    dataSource = driver.Open(shapefile_filename, 0)
-    layer = dataSource.GetLayer()
+    datasource = driver.Open(shapefile_filename, 0)
+    layer = datasource.GetLayer()
     # Reading sources geometry
     sources = {}
     id_set = set()
@@ -268,5 +262,5 @@ def areas_to_oqt_sources(shapefile_filename):
                                     coef=coef,
                                     tect_reg=tect_reg)
         """
-    dataSource.Destroy()
+    datasource.Destroy()
     return sources
