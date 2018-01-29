@@ -33,10 +33,14 @@ setup(
     url=url,
     packages=find_packages(exclude=['tests', 'tests.*']),
     # Minimal requirements, for a complete list see requirements-*.txt
+    # matplotlib is brought by the openquake engine
     install_requires=[
         'openquake.engine',
         'nbstripout >= 0.3.0',
-        'matplotlib >= 2.0.0',
+        'jupyter_client >= 5.0.0',
+        'ipython',
+        'nbformat',
+        'nbconvert'
     ],
     python_requires='>=3',
     author='GEM Foundation',
