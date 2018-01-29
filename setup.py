@@ -35,7 +35,7 @@ setup(
     # Minimal requirements, for a complete list see requirements-*.txt
     install_requires=[
         'openquake.engine',
-        'matplotlib >=1.5',
+        'matplotlib >= 2.0.0',
     ],
     python_requires='>=3',
     author='GEM Foundation',
