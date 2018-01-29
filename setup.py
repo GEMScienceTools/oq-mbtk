@@ -35,6 +35,7 @@ setup(
     # Minimal requirements, for a complete list see requirements-*.txt
     install_requires=[
         'openquake.engine',
+        'nbstripout >=3.0',
         'matplotlib >= 2.0.0',
     ],
     python_requires='>=3',
