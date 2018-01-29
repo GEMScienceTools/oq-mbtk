@@ -56,7 +56,7 @@ def source_editor_gui(project):
             types.insert(0, 'All')
             # Create the list of Text widgets
             param_list = get_source_param_list()
-            print param_list
+            print(param_list)
             w_text_list, par_dict = param_editor_create(param_list)
             # Source types widget
             w_types = widgets.Select(options=types,

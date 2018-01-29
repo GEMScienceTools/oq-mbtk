@@ -167,14 +167,14 @@ def handle_run(sender):
             cmd_str = 'ipython nbconvert --to html %s' % (nb_str)
             out = subprocess.call(cmd_str, shell=True)
             if out:
-                print 'Error in creating the html report'
+                print('Error in creating the html report')
 
             # Moving report to folder and rename it
             cmd_str = 'mv %s.html %s' % (os.path.splitext(w_nb_name.value)[0],
                                          os.path.join(rpt_path, rpt_name))
             out = subprocess.call(cmd_str, shell=True)
             if out:
-                print 'Error in moving the report to the final folder'
+                print('Error in moving the report to the final folder')
 
             # Update reports table
             path = os.path.relpath(os.path.join(rpt_path, rpt_name))

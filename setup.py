@@ -37,6 +37,7 @@ setup(
         'openquake.engine',
         'jupyter >=4.4.0',
         'matplotlib >=1.5',
+        'nbstripout >=3.0',
     ],
     python_requires='>=3',
     author='GEM Foundation',
