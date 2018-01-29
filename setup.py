@@ -35,9 +35,8 @@ setup(
     # Minimal requirements, for a complete list see requirements-*.txt
     install_requires=[
         'openquake.engine',
-        'jupyter >=4.4.0',
-        'matplotlib >=1.5',
         'nbstripout >=3.0',
+        'matplotlib >= 2.0.0',
     ],
     python_requires='>=3',
     author='GEM Foundation',
