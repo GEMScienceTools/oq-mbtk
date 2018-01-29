@@ -38,8 +38,10 @@ setup(
         'openquake.engine',
         'nbstripout >= 0.3.0',
         'jupyter_client >= 5.0.0',
-        'ipython',
+        'ipykernel >= 4.8.0',
+        'ipython >= 6.2.0',
         'nbformat',
+        'GDAL',
         'nbconvert'
     ],
     python_requires='>=3',
