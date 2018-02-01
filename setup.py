@@ -43,6 +43,7 @@ setup(
         'nbformat',
         'GDAL',
         'nbconvert'
+        'prettytable'
     ],
     python_requires='>=3',
     author='GEM Foundation',
