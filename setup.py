@@ -42,7 +42,7 @@ setup(
         'ipython >= 6.2.0',
         'nbformat',
         'GDAL',
-        'nbconvert'
+        'nbconvert',
         'prettytable'
     ],
     python_requires='>=3',
