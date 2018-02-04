@@ -36,13 +36,15 @@ setup(
     # matplotlib is brought by the openquake engine
     install_requires=[
         'openquake.engine',
+        'openquake.man',
         'nbstripout >= 0.3.0',
         'jupyter_client >= 5.0.0',
         'ipykernel >= 4.8.0',
         'ipython >= 6.2.0',
         'nbformat',
         'GDAL',
-        'nbconvert'
+        'nbconvert',
+        'prettytable'
     ],
     python_requires='>=3',
     author='GEM Foundation',
