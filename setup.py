@@ -37,6 +37,7 @@ setup(
     install_requires=[
         'openquake.engine',
         'openquake.man',
+        'openquake.sub',
         'nbstripout >= 0.3.0',
         'jupyter_client >= 5.0.0',
         'ipykernel >= 4.8.0',
