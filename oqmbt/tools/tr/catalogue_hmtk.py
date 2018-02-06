@@ -22,7 +22,7 @@ def gdfs(catalogue, surface):
     """
     nel = len(catalogue.data['longitude'])
     dsts = np.empty((nel))
-    delta = 5000
+    delta = 4000
     #
     # preparing the sub meshes, each containing a subset of earthquakes
     inputs = []
@@ -44,7 +44,7 @@ def get_distances_from_surface(catalogue, surface):
     """
     nel = len(catalogue.data['longitude'])
     dsts = np.empty((nel))
-    delta = 5000
+    delta = 4000
     i = 0
     upp = 0
     while upp < nel-1:
