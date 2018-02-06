@@ -73,12 +73,13 @@ def classify(ini_fname, rf, compute_distances):
         elif re.search('^crustal', key):
             print('Classifying: {:s}'.format(key))
             tmps = config['crustal']['crust_filename']
+            distance_delta = config['crustal']['distance_delta']
             crust_filename = os.path.join(rf, tmps)
             sce = SetCrustalEarthquakes(crust_filename,
                                         catalogue_fname,
                                         treg_filename,
-                                        label='crustal',
-                                        )
+                                        distance_delta,
+                                        label='crustal')
             sce.classify(remove_from)
         #
         #

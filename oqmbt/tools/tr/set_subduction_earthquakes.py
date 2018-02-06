@@ -1,5 +1,4 @@
 # coding: utf-8
-
 import os
 import h5py
 import numpy as np
@@ -10,7 +9,9 @@ from scipy.interpolate import griddata
 from oqmbt.tools.tr.catalogue import get_catalogue
 from oqmbt.tools.tr.catalogue_hmtk import (get_rtree_index,
                                            get_distances_from_surface)
-from oq.hmtk.subduction.utils import (_read_edges,
+#from oq.hmtk.subduction.utils_KJ import (_read_edges,
+#from openquake.sub.utils_KJ import (_read_edges,
+from openquake.sub.utils import (_read_edges,
                                       build_complex_surface_from_edges,
                                       plot_complex_surface)
 from openquake.hmtk.seismicity.selector import CatalogueSelector
