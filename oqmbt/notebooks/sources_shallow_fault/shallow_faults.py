@@ -7,7 +7,7 @@ import re
 from shapely import wkt
 from osgeo import ogr
 
-from openquake.man.model import read
+from oqmbt.tools.model import read
 
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.hazardlib.geo.line import Line
@@ -129,8 +129,8 @@ def read_faults(faults_xml_filename=None):
     model_id = oqtkp.active_model_id
     model = oqtkp.models[model_id]
     if faults_xml_filename is None:
-        faults_xml_filename = os.path.join(oqtkp.directory,
-                                           getattr(model,'faults_xml_filename'))
+        fname = getattr(model, 'faults_xml_filename')
+        faults_xml_filename = os.path.join(oqtkp.directory, fname)
     #
     # read .xml file content
     sources, _ = read(faults_xml_filename)
