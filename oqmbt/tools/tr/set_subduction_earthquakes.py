@@ -150,14 +150,6 @@ class SetSubductionEarthquakes:
             pickle.dump(surf_dist, open(out_filename, 'wb'))
         #
         # Let's find earthquakes close to the top of the slab
-        # idxb = np.nonzero(np.isfinite(surf_dist) & np.isfinite(sub_depths))[0]
-        """
-        idxa = np.nonzero((np.isfinite(surf_dist) & np.isfinite(sub_depths)) &
-                          ((surf_dist[idxb] < distance_buffer_below) &
-                           (sub_depths[idxb] < cat.data['depth'][idxb])) |
-                          ((surf_dist[idxb] < distance_buffer_above) &
-                           (sub_depths[idxb] >= cat.data['depth'][idxb])))[0]
-        """
         idxa = np.nonzero((np.isfinite(surf_dist) &
                            np.isfinite(sub_depths) &
                            np.isfinite(cat.data['depth'])) &
@@ -202,7 +194,7 @@ class SetSubductionEarthquakes:
         cat = self.cat
         sub_depths = self.sub_depths
         surf_dist = self.surf_dist
-
+        #
         fig = plt.figure(figsize=(10, 8))
         scat = plt.scatter(cat.data['depth'], sub_depths, c=surf_dist,
                            s=2**cat.data['magnitude'], edgecolor='w', vmin=0,

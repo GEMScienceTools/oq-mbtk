@@ -1,4 +1,5 @@
 import os
+import re
 import unittest
 
 from oqmbt.tools.tr.catalogue import get_catalogue
@@ -11,13 +12,33 @@ class CatalogueReadTestCase(unittest.TestCase):
     This class tests the tectonic regionalisation workflow
     """
 
-    def setUp(self):
-        tmps = './../../data/tr/catalogue_sample.csv'
-        self.cat_fname = os.path.join(BASE_PATH, tmps)
-
     def testcase01(self):
         """
+        Read .csv catalogue
         """
-        cat = get_catalogue(self.cat_fname)
+        tmps = './../../data/tr/catalogue_sample.csv'
+        cat = get_catalogue(os.path.join(BASE_PATH, tmps))
         expected = 11
         self.assertEqual(expected, len(cat.data['longitude']))
+        #
+        # pickle file
+        tmpo = os.path.join(BASE_PATH, tmps)
+        assert os.path.exists(re.sub('ndk$', 'pkl', tmpo))
+        os.remove(re.sub('ndk$', 'pkl', tmpo))
+
+    def testcase02(self):
+        """
+        Read .ndk catalogue
+        """
+        tmps = './../../data/tr/gcmt_sample.ndk'
+        cat = get_catalogue(os.path.join(BASE_PATH, tmps))
+        expected = 9
+        self.assertEqual(expected, len(cat.data['longitude']))
+        assert 'latitude' in cat.data
+        assert 'depth' in cat.data
+        assert 'magnitude' in cat.data
+        #
+        # pickle file
+        tmpo = os.path.join(BASE_PATH, tmps)
+        assert os.path.exists(re.sub('ndk$', 'pkl', tmpo))
+        os.remove(re.sub('ndk$', 'pkl', tmpo))
