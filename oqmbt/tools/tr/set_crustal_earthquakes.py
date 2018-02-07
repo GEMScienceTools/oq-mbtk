@@ -34,7 +34,6 @@ class SetCrustalEarthquakes():
         #
         # prepare dictionary with classification
         treg = {}
-        print("len is", len(cat.data['longitude']))
         treg['crustal'] = np.full((len(cat.data['longitude'])), False,
                                   dtype=bool)
         #
