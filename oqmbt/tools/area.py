@@ -1,4 +1,4 @@
-
+#Default model
 import re
 import numpy
 from shapely import wkt
@@ -6,7 +6,7 @@ from shapely import wkt
 from osgeo import ogr
 from copy import deepcopy
 
-from prettytable import PrettyTable
+#from prettytable import PrettyTable
 
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.sources.area_source import mtkAreaSource
@@ -39,7 +39,8 @@ def load_geometry_from_shapefile(shapefile_filename):
         # Read the geometry
         geom = feature.GetGeometryRef()
         polygon = wkt.loads(geom.ExportToWkt())
-        x, y = polygon.exterior.coords.xy
+        xtp, y = polygon.exterior.coords.xy
+        x = ([a-360 if a>180 else a for a in xtp])
         points = _get_point_list(x, y)
         # Set the ID
         if isinstance(feature.GetField(idname), str):
@@ -218,7 +219,8 @@ def areas_to_oqt_sources(shapefile_filename):
         # Read the geometry
         geom = feature.GetGeometryRef()
         polygon = wkt.loads(geom.ExportToWkt())
-        x, y = polygon.exterior.coords.xy
+        xtp, y = polygon.exterior.coords.xy
+        x = ([a-360 if a>180 else a for a in xtp])
         points = _get_point_list(x, y)
         # Set the ID
         if isinstance(feature.GetField(idname), str):
