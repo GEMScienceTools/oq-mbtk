@@ -1,7 +1,6 @@
 """
 :mod:`oqmbt.tools.tr.tectonic_regionalisation`
 """
-
 import re
 import numpy as np
 
@@ -47,7 +46,7 @@ def set_crustal(cat, treg, crust, sidx, delta=0):
         iii = list(sidx.nearest((lon, lat, lon, lat), 1))
         #
         #
-        if crust[iii[0], 2]+delta > dep:
+        if crust[iii[0], 2]+float(delta) > dep:
             treg[idx] = True
         data.append([dep, crust[iii[0], 2]])
     return treg, data
