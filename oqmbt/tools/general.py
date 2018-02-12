@@ -21,6 +21,10 @@ def _get_point_list(lons, lats):
     """
     points = []
     for i in range(0, len(lons)):
+        if lons[i] > 180:
+            lons[i] = -(360 - lons[i])
+        elif lons[i] < -180:
+            lons[i] = lons[i] + 360
         points.append(Point(lons[i], lats[i]))
     return points
 
