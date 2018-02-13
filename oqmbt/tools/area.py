@@ -6,13 +6,14 @@ from shapely import wkt
 from osgeo import ogr
 from copy import deepcopy
 
-from prettytable import PrettyTable
+#from prettytable import PrettyTable
 
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.sources.area_source import mtkAreaSource
 from openquake.hazardlib.const import TRT
 
 from oqmbt.tools.general import _get_point_list
+from oqmbt.tools.geo import get_idx_points_inside_polygon
 from oqmbt.oqt_project import OQtSource
 
 from openquake.hazardlib.geo.polygon import Polygon
@@ -36,11 +37,13 @@ def load_geometry_from_shapefile(shapefile_filename):
     sources = {}
     id_set = set()
     for feature in layer:
+        #
         # Read the geometry
         geom = feature.GetGeometryRef()
         polygon = wkt.loads(geom.ExportToWkt())
         x, y = polygon.exterior.coords.xy
         points = _get_point_list(x, y)
+        #
         # Set the ID
         if isinstance(feature.GetField(idname), str):
             id_str = feature.GetField(idname)
@@ -71,23 +74,39 @@ def src_oqt_to_hmtk(src):
 def create_catalogue(model, catalogue, area_source_ids_list=None,
                      polygon=None):
     """
-    Note that this assumes that the catalogue has a rtree spatial index
-    associated.
+    Select earthquakes within the polygon delineating an area source
 
     :parameter model:
+        An :class:`oqmbt.oqt_project.OQtModel` instance
     :parameter catalogue:
+        A hmtk-formatted catalogue
     :parameter area_source_ids_list:
+        The list of source ID to be used for the selection. The IDs are the
+        ones of one or several sources in the `sources` attribute of the
+        `model` instance.
     :parameter polygon:
+        A polygon (used when the area_source_ids_list is None).
+    :returns:
+        Returns an hmtk-formatted catalogue containing only the earthquakes
+        inside the polygon
     """
-
+    #
+    #
+    if len(area_source_ids_list) > 1:
+        msg = 'We do not support the selection for multiple sources'
+        raise ValueError(msg)
+    #
+    #
     if area_source_ids_list is not None:
         # Process the area source
         src_id = area_source_ids_list[0]
         src = model.sources[src_id]
-        # Check if the area source has a geometry
+        # Set the geometry
         if 'polygon' in src.__dict__:
+            # The source has a polygon
             pass
         elif src_id in model.nrml_sources:
+            # Set the polygon from nrml
             src.polygon = model.nrml_sources[src_id].polygon
             src.name = model.nrml_sources[src_id].name
             src.source_id = model.nrml_sources[src_id].source_id
@@ -103,31 +122,27 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
     else:
         msg = 'Either a polygon or a list of src id must be defined'
         raise ValueError(msg)
-
-    # This sets the limits of the area covered by the polygon
-    limits = [numpy.min(src.polygon.lons),
-              numpy.min(src.polygon.lats),
-              numpy.max(src.polygon.lons),
-              numpy.max(src.polygon.lats)]
-    # Src hmtk
-    src_hmtk = src_oqt_to_hmtk(src)
-    # This creates a new catalogue with eqks within the bounding box of
-    # the analysed area source
-    selectorb = CatalogueSelector(catalogue, create_copy=True)
-    tmpcat = selectorb.within_bounding_box(limits)
-    selectora = CatalogueSelector(tmpcat, create_copy=False)
-    # This filters out the eqks outside the area source
-    src_hmtk.select_catalogue(selectora)
-    # Create the composite catalogue as a copy of the sub-catalogue for the
-    # first source
-    upp = len(src_hmtk.catalogue.data['magnitude'])
-    labels = ['%s' % src_id for i in range(0, upp)]
-    src_hmtk.catalogue.data['comment'] = labels
-    fcatal = deepcopy(src_hmtk.catalogue)
+    #
+    #
+    neqk = len(catalogue.data['longitude'])
+    sel_idx = numpy.full((neqk), False, dtype=bool)
+    pnt_idxs = [i for i in range(0, neqk)]
+    idxs = get_idx_points_inside_polygon(catalogue.data['longitude'],
+                                         catalogue.data['latitude'],
+                                         src.polygon.lons, src.polygon.lats,
+                                         pnt_idxs, buff_distance=0.)
+    sel_idx[idxs] = True
+    #
+    # Select earthquakes
+    cat = deepcopy(catalogue)
+    selector = CatalogueSelector(cat, create_copy=False)
+    selector.select_catalogue(sel_idx)
+    #
+    # set label
+    labels = ['%s' % src_id for i in range(0, len(cat.data['longitude']))]
+    cat.data['comment'] = labels
     # Complete the composite subcatalogue
-    print('Total number of earthquakes selected {:d}'.format(
-                fcatal.get_number_events()))
-    return fcatal
+    return cat
 
 
 def create_gr_table(model):
@@ -251,16 +266,5 @@ def areas_to_oqt_sources(shapefile_filename):
         else:
             raise ValueError('Sources with non unique ID %s' % id_str)
 
-        """
-        sources.append(mtkAreaSource(identifier=id_str,
-                                     name=id_str,
-                                     geometry=Polygon(points)))
-        seism_thickness = float(feature.GetField('Depth'))
-        coef = float(feature.GetField('coef'))
-        tect_reg = feature.GetField('TectonicRe')
-        sources_data[id_str] = dict(seism_thickness=float(seism_thickness),
-                                    coef=coef,
-                                    tect_reg=tect_reg)
-        """
     datasource.Destroy()
     return sources
