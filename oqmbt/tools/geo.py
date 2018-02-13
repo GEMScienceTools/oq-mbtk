@@ -31,6 +31,8 @@ def get_line_inside_polygon(pnt_lon, pnt_lat, poly_lon, poly_lat):
     # Fix the projections
     inProj = Proj(init='epsg:4326')
     outProj = Proj(init='epsg:3857')
+    outProj = Proj('+proj=lcc +lon_0={:f}'.format(poly_lon[0]))
+    #outProj = Proj(init='epsg:3857')
     # Create polygon
     poly_xy = []
     for lo, la in zip(poly_lon, poly_lat):

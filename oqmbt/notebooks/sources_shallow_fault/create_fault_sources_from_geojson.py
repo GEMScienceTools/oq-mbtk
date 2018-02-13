@@ -38,13 +38,13 @@ SLIP_DIR_SET = set(['Dextral', 'Dextral-Normal',
                     'Reverse-Dextral','Reverse-Sinistral',
                     'Thrust',
                     'Anticline',
-                    'Blind-Thrust'])
+                    'Blind-Thrust','Spreading Ridge'])
 
 # This classes are related with Leonard(2010) and were used  to compute
 # geometries of the faults
 WIDTH_CLASS = {'cl1': ['Normal', 'Reverse', 'Thrust', 'Normal-Dextral',
                        'Normal-Sinistral', 'Reverse-Sinistral',
-                       'Reverse-Dextral',
+                       'Reverse-Dextral', 'Spreading Ridge',
                        'Blind-Thrust', 'Anticline'],
                'cl2': ['Dextral', 'Sinistral', 
                        'Dextral-Normal', 'Dextral-Reverse',
@@ -66,7 +66,8 @@ RAKE_CLASS = {'Normal': -90,
               'Sinistral-Reverse': 45,
               'Dextral': 180,
               'Dextral-Reverse': 135,
-              'Dextral-Normal': -135
+              'Dextral-Normal': -135,
+              'Spreading Ridge': -90
               }
 
 # To transform literal values into numerical ones
@@ -305,7 +306,8 @@ def get_dip_from_slip_type(slipt):
             dip = 40.
         elif re.search('Blind', mech):
             dip = 40.            
-        elif re.search('Normal', mech):
+        elif (re.search('Normal', mech) or
+              re.search('Spreading', mech)):
             dip = 60.
         elif (re.search('Dextral', mech) or
               re.search('Sinistral', mech)):
@@ -429,17 +431,17 @@ def get_fault_sources(filename, slip_rate_class, bin_width=0.1, m_low=6.5, b_gr=
             # continue        
 
         # Get the tuples
-        dipt = get_tples(feature['properties']['ns_average_dip'])
+        dipt = get_tples(feature['properties']['average_di'])
         print("dipt= ", dipt)
-        raket = get_tples(feature['properties']['ns_average_rake'])
+        raket = get_tples(feature['properties']['average_ra'])
         print("raket= ", raket)
-        sliprt = get_tples(feature['properties']['ns_net_slip_rate'])
+        sliprt = get_tples(feature['properties']['net_slip_r'])
         print("sliprt= ", sliprt)
-        shor_rd = get_tples(feature['properties']['ns_shortening_rate'])
+        shor_rd = get_tples(feature['properties']['shortening'])
         print("shortening_rate= ", shor_rd)
-        vert_rd = get_tples(feature['properties']['ns_vert_slip_rate'])
+        vert_rd = get_tples(feature['properties']['vert_slip_'])
         print("vertical_slip_rate= ", vert_rd)
-        stk_rd = get_tples(feature['properties']['ns_strike_slip_rate'])
+        stk_rd = get_tples(feature['properties']['strike_sli'])
         print("strike_slip_rate= ", stk_rd)
    
         # Set the value to be used [suggested, min, max]

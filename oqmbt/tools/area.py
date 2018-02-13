@@ -6,7 +6,7 @@ from shapely import wkt
 from osgeo import ogr
 from copy import deepcopy
 
-from prettytable import PrettyTable
+#from prettytable import PrettyTable
 
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.sources.area_source import mtkAreaSource
