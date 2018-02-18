@@ -1,0 +1,8 @@
+eventID,Agency,year,month,day,hour,minute,second,timeError,longitude,latitude,SemiMajor90,SemiMinor90,ErrorStrike,depth,depthError,magnitude,sigmaMagnitude,magnitudeType
+1,out,1962,1,1,1,41,11.86,nan,+175.0,-15.0,5.9,110.5,14.6,15,nan,6.28,0.42,Mw
+2,in_,1962,1,1,2,41,11.86,nan,+175.0,-17.0,5.9,110.5,14.6,15,nan,6.28,0.42,Mw
+3,in_,1962,1,1,2,41,11.86,nan,+181.0,-16.2,5.9,110.5,14.6,15,nan,6.28,0.42,Mw
+4,out,1962,1,1,2,41,11.86,nan,+182.0,-16.0,5.9,110.5,14.6,15,nan,6.28,0.42,Mw
+5,out,1962,1,1,2,41,11.86,nan,+179.5,-14.5,5.9,110.5,14.6,15,nan,6.28,0.42,Mw
+6,in_,1962,1,1,2,41,11.86,nan,-179.5,-16.5,5.9,110.5,14.6,15,nan,6.28,0.42,Mw
+7,in_,1962,1,1,2,41,11.86,nan,+179.5,-16.0,5.9,110.5,14.6,15,nan,6.28,0.42,Mw
