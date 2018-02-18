@@ -125,7 +125,6 @@ def get_idx_points_inside_polygon(plon, plat, poly_lon, poly_lat,
     for lo, la in zip(poly_lon, poly_lat):
         x, y = transform(inProj, outProj, lo, la)
         poly_xy.append((x,y))
-        print(lo, la, x, y)
     #
     # Shapely polygon
     polygon = shapely.geometry.Polygon(poly_xy)
