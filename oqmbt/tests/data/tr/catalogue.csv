@@ -1,0 +1,6 @@
+eventID,Identifier,year,month,day,hour,minute,second,latitude,longitude,depth,Agency,magnitude,note
+EV0001,A,1900,1,1,0,0,0,45.1,10.1,5,AA,6.2,interface
+EV0002,A,1900,1,1,0,0,0,45.1,10.1,50,AA,6.2,below interface
+EV0003,A,1900,1,1,0,0,0,45.4,10.3,10,AA,6.2,crustal
+EV0004,A,1900,1,1,0,0,0,45.5,10.5,31,AA,6.2,sub_crustal
+EV0005,A,1900,1,1,0,0,0,45.6,10.6,20,AA,6.2,crustal
