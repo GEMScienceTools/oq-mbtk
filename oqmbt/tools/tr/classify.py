@@ -85,7 +85,7 @@ def classify(ini_fname, rf, compute_distances):
             sse.classify(compute_distances, remove_from)
         #
         # crustal earthquakes
-        elif re.search('^crustal', key):
+        elif re.search('^crustal', key) or re.search('^volcanic', key):
             #
             # info
             print('Classifying: {:s}'.format(key))
