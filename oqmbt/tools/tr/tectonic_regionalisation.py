@@ -29,11 +29,12 @@ def get_crust_model(filename):
     return out, sidx
 
 
-def set_crustal(cat, treg, crust, sidx, delta=0):
+def set_crustal(cat, crust, sidx, delta=0):
     """
     :parameter catalogue:
-    :parameter treg:
+        An instance of :class:`openquake.hmtk.seismicity.catalogue.Catalogue`
     :parameter crust:
+
     :parameter sidx:
     """
     data = []
