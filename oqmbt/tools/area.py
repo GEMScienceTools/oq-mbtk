@@ -1,4 +1,4 @@
-
+import code
 import re
 import numpy
 from shapely import wkt
@@ -28,6 +28,7 @@ def load_geometry_from_shapefile(shapefile_filename):
     :returns:
         A list of :class:`oqmbt.oqt_project.OQtSource` istances
     """
+#    print('okay loading')
     idname = 'Id'
     # Set the driver
     driver = ogr.GetDriverByName('ESRI Shapefile')
@@ -51,6 +52,8 @@ def load_geometry_from_shapefile(shapefile_filename):
             id_str = '%d' % (feature.GetField(idname))
         else:
             raise ValueError('Unsupported source ID type')
+        #code.interact(local=locals())
+        print(id_str)
         src = OQtSource(source_id=id_str,
                         source_type='AreaSource',
                         polygon=Polygon(points),
@@ -92,12 +95,12 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
     """
     #
     #
-    if len(area_source_ids_list) > 1:
-        msg = 'We do not support the selection for multiple sources'
-        raise ValueError(msg)
     #
     #
     if area_source_ids_list is not None:
+        if len(area_source_ids_list) > 1:
+            msg = 'We do not support the selection for multiple sources'
+            raise ValueError(msg)
         # Process the area source
         src_id = area_source_ids_list[0]
         src = model.sources[src_id]

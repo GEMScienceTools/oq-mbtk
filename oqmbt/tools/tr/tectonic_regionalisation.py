@@ -50,3 +50,24 @@ def set_crustal(cat, treg, crust, sidx, delta=0):
             treg[idx] = True
         data.append([dep, crust[iii[0], 2]])
     return treg, data
+
+
+def set_firm_depth(cat, treg, firm_depth):
+    """
+    :parameter catalogue:
+    :parameter treg:
+    :parameter firm_depth:
+    """
+    data = []
+    treg = np.full((len(cat.data['longitude'])), False, dtype=bool)
+    for idx, (lon, lat, dep) in enumerate(zip(cat.data['longitude'],
+                                              cat.data['latitude'],
+                                              cat.data['depth'])):
+        #
+        # Find the nearest cell
+        if firm_depth > dep:
+            treg[idx] = True
+        data.append([dep, firm_depth])
+    return treg, data
+
+

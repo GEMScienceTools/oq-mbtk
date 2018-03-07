@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.5
-
+import code
 import sys
 import re
 import numpy
@@ -31,6 +31,7 @@ from openquake.hazardlib.geo.geodetic import azimuth
 from oqmbt.notebooks.sources_shallow_fault.slip_utils import *
 
 # Here I'm including "fake" categories, just for testing pourposes
+# KJ: I added extra "fake" categories....
 SLIP_DIR_SET = set(['Dextral', 'Dextral-Normal',
                     'Normal', 'Normal-Dextral', 'Normal-Sinistral',
                     'Reverse', 'Sinistral',
@@ -38,7 +39,8 @@ SLIP_DIR_SET = set(['Dextral', 'Dextral-Normal',
                     'Reverse-Dextral','Reverse-Sinistral',
                     'Thrust',
                     'Anticline',
-                    'Blind-Thrust','Spreading Ridge'])
+                    'Blind-Thrust','Spreading Ridge',
+                    'Dextral/Transform','Sinistral/Transform'])
 
 # This classes are related with Leonard(2010) and were used  to compute
 # geometries of the faults
@@ -47,6 +49,7 @@ WIDTH_CLASS = {'cl1': ['Normal', 'Reverse', 'Thrust', 'Normal-Dextral',
                        'Reverse-Dextral', 'Spreading Ridge',
                        'Blind-Thrust', 'Anticline'],
                'cl2': ['Dextral', 'Sinistral', 
+                       'Dextral/Transform', 'Sinistral/Transform', 
                        'Dextral-Normal', 'Dextral-Reverse',
                        'Sinistral-Normal', 'Sinistral-Reverse']
                }
@@ -62,9 +65,11 @@ RAKE_CLASS = {'Normal': -90,
               'Reverse-Dextral': 135,
               'Reverse-Sinistral': 45,
               'Sinistral': 0,
+              'Sinistral/Transform': 180,
               'Sinistral-Normal': -45,
               'Sinistral-Reverse': 45,
               'Dextral': 180,
+              'Dextral/Transform': 180,
               'Dextral-Reverse': 135,
               'Dextral-Normal': -135,
               'Spreading Ridge': -90
@@ -313,6 +318,7 @@ def get_dip_from_slip_type(slipt):
               re.search('Sinistral', mech)):
             dip = 90.
         else:
+            print (mech)
             raise ValueError('Unvalid dip angle from dip')
         return dip
 
@@ -322,7 +328,7 @@ def get_tples(tstr):
     Extract information included in the tuples contained in the .geojson file
 
     :parameter string tstr:
-        The string with the tuple
+        The string with the tuples
     :returns:
         A list containing the values of the tuple
     """
@@ -336,13 +342,16 @@ def get_tples(tstr):
                 flist.append(None)
     else:
         flist = (None, None, None)
+    flista = tuple(flist)
     return flist
 
 
 def get_line(dat):
     plist = []
     for tple in dat:
-        plist.append(Point(tple[0], tple[1]))
+        xa = tple[0]
+        xa = xa-360 if xa>180 else xa
+        plist.append(Point(xa, tple[1]))
     return Line(plist)
 
 
@@ -394,7 +403,14 @@ def get_fault_sources(filename, slip_rate_class, bin_width=0.1, m_low=6.5, b_gr=
 
         fs_name = ''
         ns_name = ''
-
+        slipt = feature['properties']['slip_type']
+        print(slipt)
+        if (slipt.find('Spread')>0) | (slipt.find('Trans')>0):
+            print('found one')
+            aseismic_coeff=0.15
+            slipt.replace('/Transform','')
+            feature['properties']['slip_type'] = slipt
+            print(slipt)
         # get fault name[s] - id
         if feature['properties']['fs_name'] is not None:
             fs_name = feature['properties']['fs_name']
@@ -612,7 +628,13 @@ def get_fault_sources(filename, slip_rate_class, bin_width=0.1, m_low=6.5, b_gr=
             raise ValueError('Invalid slip_rate_class')
 
         # Get fault trace geometry
-        fault_trace = get_line(numpy.array(feature['geometry']['coordinates']))
+        #print(feature['geometry']['coordinates'])
+        tmplist = (numpy.array(feature['geometry']['coordinates'])) 
+        if len(tmplist[0])>2:
+            fault_trace = get_line(tmplist[0])
+        else:
+            fault_trace = get_line(tmplist)
+        #fault_trace = get_line(numpy.array(feature['geometry']['coordinates']))
         
         # Get dip direction angle from literal and strike from trace geometry
         mean_az_from_trace = _get_mean_az_from_trace(fault_trace)

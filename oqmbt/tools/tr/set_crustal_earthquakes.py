@@ -57,3 +57,52 @@ class SetCrustalEarthquakes():
             del f[self.label]
         f[self.label] = treg
         f.close()
+
+class SetFirmDepths():
+    """
+    :param crust_filename:
+    :param catalogue_filename:
+    :param treg_filename:
+    :param label:
+    """
+
+    def __init__(self, firm_depth, catalogue_fname, treg_filename,
+                 label='crustal2'):
+        self.catalogue_fname = catalogue_fname
+        self.treg_filename = treg_filename
+        self.label = label
+        self.depth = firm_depth
+
+    def classify(self, remove_from):
+        """
+        :param str remove_from:
+        """
+        #
+        # get catalogue
+        cat = get_catalogue(self.catalogue_fname)
+        #
+        # prepare dictionary with classification
+        treg = {}
+        treg['crustal2'] = np.full((len(cat.data['longitude'])), False,
+                                  dtype=bool)
+        #
+        # classify earthquakes
+        treg, data = set_firm_depths(cat, treg, firm_depth, self.delta)
+        #
+        # storing results in the .hdf5 file
+        f = h5py.File(self.treg_filename, "a")
+        if len(remove_from):
+            iii = np.nonzero(treg)
+            for tkey in remove_from:
+                print('    Cleaning {:s}'.format(tkey))
+                old = f[tkey][:]
+                del f[tkey]
+                old[iii] = False
+                f[tkey] = old
+        #add the crust2 trues to original crustal
+        f = h5py.File(self.treg_filename, "a")
+        crust1 = f['crustal']
+        crust2 = np.nonzero(f['crustal2'])
+        crust1[crust2] = True
+        f['crustal'] = crust1
+        f.close()

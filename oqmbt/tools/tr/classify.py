@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+import code
 import os
 import re
 import sys
@@ -58,7 +58,7 @@ def classify(ini_fname, rf, compute_distances):
             lower_depth = None
             if 'lower_depth' in config[key]:
                 lower_depth = float(config[key]['lower_depth'])
-
+            #code.interact(local=locals())
             sse = SetSubductionEarthquakes(key,
                                            treg_filename,
                                            distance_folder,
@@ -98,7 +98,6 @@ def main(argv):
     p.arg(name='rf', help='Root folder (path are relative to this in the .ini')
     tmps = 'Flag for the calculation of distances'
     p.flg(name='compute_distances', help=tmps)
-
     if len(argv) < 1:
         print(p.help())
     else:

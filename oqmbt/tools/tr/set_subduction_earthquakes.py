@@ -1,4 +1,5 @@
 # coding: utf-8
+import code
 import os
 import h5py
 import numpy as np
@@ -17,7 +18,7 @@ from openquake.hmtk.seismicity.selector import CatalogueSelector
 #
 # selection buffer
 DELTA = 0.3
-LOWER_DEPTH_FOR_EARTHQUAKES = 400
+LOWER_DEPTH_FOR_EARTHQUAKES = 1000
 
 
 class SetSubductionEarthquakes:
@@ -86,10 +87,14 @@ class SetSubductionEarthquakes:
         max_la_sub = np.amax(mesh.lats)
         #
         # select earthquakes within the bounding box
+        upper_dl = 10
+        lower_dl = 70
+        if (self.label.find('slab')>0):
+            lower_dl = 1000
         idxs = sorted(list(sidx.intersection((min_lo_sub-DELTA,
-                                              min_la_sub-DELTA, 0,
+                                              min_la_sub-DELTA, upper_dl,
                                               max_lo_sub+DELTA,
-                                              max_la_sub+DELTA, 500))))
+                                              max_la_sub+DELTA, lower_dl))))
         #
         # prepare array for the selection of the catalogue
         flags = np.full((len(catalogue.data['longitude'])), False, dtype=bool)
@@ -139,6 +144,7 @@ class SetSubductionEarthquakes:
                                                       cat.data['latitude'])])
         #
         # compute the depth of the top of the slab at every epicenter
+        #code.interact(local=locals())
         sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
                               method='cubic')
         #
@@ -164,6 +170,7 @@ class SetSubductionEarthquakes:
                            (sub_depths < cat.data['depth'])) |
                           ((surf_dist < distance_buffer_above) &
                            (sub_depths >= cat.data['depth'])))[0]
+        #code.interact(local=locals())
         #
         #
         self.surf_dist = surf_dist
