@@ -13,6 +13,7 @@ from openquake.hazardlib.geo.geodetic import (point_at,
 def coord_generators(mesh):
     for cnt, pnt in enumerate(mesh):
         lon = pnt.longitude
+        lon = lon+360 if lon<0 else lon
         lat = pnt.latitude
         yield (cnt, (lon, lat, lon, lat), 1)
 
@@ -104,9 +105,12 @@ class Smoothing:
 		for lon, lat, mag in zip(self.catalogue.data['longitude'],
 								 self.catalogue.data['latitude'],
 								 self.catalogue.data['magnitude']):
+			lon = lon+360 if lon<0 else lon
 			# Set the bounding box 
 			minlon, minlat = point_at(lon, lat, 225, radius*2**0.5)
+			minlon = minlon+360 if minlon<0 else minlon
 			maxlon, maxlat = point_at(lon, lat, 45, radius*2**0.5) 
+			maxlon = maxlon+360 if maxlon<0 else maxlon
 			# find nodes within the bounding box
 			idxs = list(set(self.rtree.intersection((minlon, 
 					                                 minlat, 
@@ -130,13 +134,19 @@ class Smoothing:
 			    
 	def get_points_in_polygon(self, polygon):
 
-		minlon = min(polygon.lons)
+		lons_poly = polygon.lons
+		lons_poly_sh = ([x+360 if x<0 else x for x in lons_poly])
+		#minlon = min(polygon.lons)
+		minlon = min(lons_poly_sh)
 		minlat = min(polygon.lats)
-		maxlon = max(polygon.lons)
+		#maxlon = max(polygon.lons)
+		maxlon = max(lons_poly_sh)
 		maxlat = max(polygon.lats)
 		
 		idxs = list(self.rtree.intersection((minlon, minlat, 
 			                                 maxlon, maxlat)))
+		#plons = numpy.array(self.mesh.lons)[idxs]
+		#plats = numpy.array(self.mesh.lats)[idxs]
 		plons = self.mesh.lons[idxs]
 		plats = self.mesh.lats[idxs]
 		
