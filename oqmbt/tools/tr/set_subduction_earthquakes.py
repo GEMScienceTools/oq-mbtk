@@ -1,5 +1,6 @@
 # coding: utf-8
 import code
+import re
 import os
 import h5py
 import numpy as np
@@ -89,7 +90,8 @@ class SetSubductionEarthquakes:
         # select earthquakes within the bounding box
         upper_dl = 10
         lower_dl = 70
-        if (self.label.find('slab')>0):
+        if (re.search('^slab', self.label)):
+            print("using slab----lower_dl=1000")
             lower_dl = 1000
         idxs = sorted(list(sidx.intersection((min_lo_sub-DELTA,
                                               min_la_sub-DELTA, upper_dl,
