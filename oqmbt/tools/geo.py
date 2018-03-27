@@ -34,14 +34,16 @@ def get_line_inside_polygon(pnt_lon, pnt_lat, poly_lon, poly_lat):
     # Create polygon
     poly_xy = []
     for lo, la in zip(poly_lon, poly_lat):
-        x, y = transform(inProj, outProj, lo, la)
-        poly_xy.append((x,y))
+    #    x, y = transform(inProj, outProj, lo, la)
+    #    poly_xy.append((x,y))
+        poly_xy.append((lo,la))
     polygon = shapely.geometry.Polygon(poly_xy)
     # Create linesting
     line_xy = []
     for lo, la in zip(pnt_lon, pnt_lat):
-        x, y = transform(inProj, outProj, lo, la)
-        line_xy.append((x,y))
+#        x, y = transform(inProj, outProj, lo, la)
+        line_xy.append((lo,la))
+        #line_xy.append((x,y))
     line = shapely.geometry.LineString(line_xy)
     # Intersection
     if line.intersects(polygon):
@@ -161,7 +163,8 @@ def find_points_close_to_multisegment(plon, plat, mseg_lon, mseg_lat, pnt_idxs,
     selected_idx = []
     # Fix the projections
     inProj = Proj(init='epsg:4326')
-    outProj = Proj(init='epsg:3857')
+    outProj = Proj('+proj=lcc +lon_0={:f}'.format(poly_lon[0]))
+    #outProj = Proj(init='epsg:3857')
     # Create polygon
     mseg_xy = []
     for lo, la in zip(mseg_lon, mseg_lat):

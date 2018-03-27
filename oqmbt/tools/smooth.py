@@ -13,6 +13,7 @@ from openquake.hazardlib.geo.geodetic import (point_at,
 def coord_generators(mesh):
     for cnt, pnt in enumerate(mesh):
         lon = pnt.longitude
+        lon = lon+360 if lon<0 else lon
         lat = pnt.latitude
         yield (cnt, (lon, lat, lon, lat), 1)
 
@@ -43,6 +44,7 @@ class Smoothing:
 		p = rtree.index.Property()
 		p.get_overwrite = True       	
 		# Create the spatial index for the grid mesh 
+#		r = rtree.index.Index(properties=p)
 		r = rtree.index.Index('./tmp', properties=p)
 		ids = set()
 		for cnt, pnt in enumerate(coord_generators(self.mesh)):
@@ -84,7 +86,7 @@ class Smoothing:
 					valt = val * param[3]
 				else:
 					valt += val * param[3]
-		return valt
+		return valt 
 	
 	def gaussian(self, radius, sigma):
 		"""
@@ -97,6 +99,7 @@ class Smoothing:
 		"""
 
 		# Values
+		print ('Starting gaussian smoothing')
 		values = numpy.zeros((len(self.mesh)))
 		# Compute the number of expected nodes
 		numpnts = consts.pi*radius**2/(self.cellsize**2)
@@ -104,9 +107,13 @@ class Smoothing:
 		for lon, lat, mag in zip(self.catalogue.data['longitude'],
 								 self.catalogue.data['latitude'],
 								 self.catalogue.data['magnitude']):
+			lon = lon+360 if lon<0 else lon
 			# Set the bounding box 
 			minlon, minlat = point_at(lon, lat, 225, radius*2**0.5)
 			maxlon, maxlat = point_at(lon, lat, 45, radius*2**0.5) 
+			minlon = minlon+360 if minlon<0 else minlon
+			maxlon = maxlon+360 if maxlon<0 else maxlon
+                        
 			# find nodes within the bounding box
 			idxs = list(set(self.rtree.intersection((minlon, 
 					                                 minlat, 
@@ -126,6 +133,7 @@ class Smoothing:
 			# normalising
 			normfact = sum(tmpvalues)
 			values[iii] += tmpvalues/normfact
+	#	return dsts
 		return values
 			    
 	def get_points_in_polygon(self, polygon):
@@ -134,7 +142,9 @@ class Smoothing:
 		minlat = min(polygon.lats)
 		maxlon = max(polygon.lons)
 		maxlat = max(polygon.lats)
-		
+		extr_lons = [(minlon+360 if minlon<0 else minlon), (maxlon+360 if maxlon<0 else maxlon)]
+		minlon = min(extr_lons)
+		maxlon = max(extr_lons)
 		idxs = list(self.rtree.intersection((minlon, minlat, 
 			                                 maxlon, maxlat)))
 		plons = self.mesh.lons[idxs]
