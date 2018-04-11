@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import h5py
+import logging
 import configparser
 
 from openquake.baselib import sap
@@ -12,22 +13,25 @@ from openquake.baselib import sap
 from oqmbt.tools.tr.set_crustal_earthquakes import SetCrustalEarthquakes
 from oqmbt.tools.tr.set_subduction_earthquakes import SetSubductionEarthquakes
 
+logging.basicConfig(filename='classify.log', level=logging.DEBUG)
+
 
 def str_to_list(tmps):
     return re.split('\,', re.sub('\s*', '', re.sub(r'\[|\]', '', tmps)))
 
 
-def classify(ini_fname, rf, compute_distances):
+def classify(ini_fname, compute_distances, rf):
     """
     :param str ini_fname:
         The path to the .ini file containing settings
     :param str rf:
         The root folder (all the path in the .ini file will use this as a
-        referrence
+        reference
     :param bool compute_distances:
         A boolean controlling the calculation of distances between the slab
-        surfaces and the earthquakes in the catalogue
+        surfaces and the earthquakes in the catalog
     """
+    logger = logging.getLogger('classify')
     #
     #
     assert os.path.exists(ini_fname)
@@ -36,9 +40,15 @@ def classify(ini_fname, rf, compute_distances):
     config = configparser.ConfigParser()
     config.read(ini_fname)
     #
+    #
+    if rf is None:
+        assert 'root_folder' in config['general']
+        rf = config['general']['root_folder']
+    #
     # set root folder
     distance_folder = os.path.join(rf, config['general']['distance_folder'])
     catalogue_fname = os.path.join(rf, config['general']['catalogue_filename'])
+    assert os.path.exists(catalogue_fname)
     #
     # read priority list
     priorityl = str_to_list(config['general']['priority'])
@@ -47,11 +57,11 @@ def classify(ini_fname, rf, compute_distances):
     tmps = config['general']['treg_filename']
     treg_filename = os.path.join(rf, tmps)
     if not os.path.exists(treg_filename):
-        print('Creating: {:s}'.format(treg_filename))
+        logger.info('Creating: {:s}'.format(treg_filename))
         f = h5py.File(treg_filename, "w")
         f.close()
     else:
-        print('{:s} exists'.format(treg_filename))
+        logger.info('{:s} exists'.format(treg_filename))
 
     #
     # process the input information
@@ -60,7 +70,7 @@ def classify(ini_fname, rf, compute_distances):
         #
         # subduction earthquakes
         if re.search('^slab', key) or re.search('^int', key):
-            print('Classifying: {:s}'.format(key))
+            logger.info('Classifying: {:s}'.format(key))
             edges_folder = os.path.join(rf, config[key]['folder'])
             distance_buffer_below = None
             if 'distance_buffer_below' in config[key]:
@@ -88,7 +98,7 @@ def classify(ini_fname, rf, compute_distances):
         elif re.search('^crustal', key) or re.search('^volcanic', key):
             #
             # info
-            print('Classifying: {:s}'.format(key))
+            logger.info('Classifying: {:s}'.format(key))
             #
             # set data files
             tmps = config[key]['crust_filename']
@@ -158,16 +168,15 @@ def main(argv):
     similar to the one used for subduction interface seismicity.
 
     """
-
     p = sap.Script(classify)
     #
     # set arguments
-    mgs = 'Path to the configuration fname - typically a .ini file'
+    msg = 'Path to the configuration fname - typically a .ini file for tr'
     p.arg(name='ini_fname', help=msg)
+    msg = 'Flag defining if the calculation of distances'
+    p.flg(name='compute_distances', help=msg)
     msg = 'Root folder (path are relative to this in the .ini file)'
-    p.arg(name='rf', help=msg)
-    mgs = 'Flag defining if the calculation of distances'
-    p.flg(name='compute_distances', help=mgs)
+    p.opt(name='rf', help=msg)
     #
     # check command line arguments and run the code
     if len(argv) < 1:
