@@ -3,6 +3,7 @@
 import h5py
 import numpy as np
 import geopandas as gpd
+import logging
 
 from oqmbt.tools.tr.catalogue import get_catalogue
 from oqmbt.tools.geo import get_idx_points_inside_polygon
@@ -90,7 +91,7 @@ class SetCrustalEarthquakes():
         if len(remove_from):
             iii = np.nonzero(treg)
             for tkey in remove_from:
-                print('    Cleaning {:s}'.format(tkey))
+                logging.info('    Cleaning {:s}'.format(tkey))
                 old = f[tkey][:]
                 del f[tkey]
                 old[iii] = False
