@@ -5,6 +5,7 @@ import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import logging
 
 from scipy.interpolate import griddata
 from oqmbt.tools.tr.catalogue import get_catalogue
@@ -72,7 +73,8 @@ class SetSubductionEarthquakes:
         #
         # read the catalogue
         catalogue = get_catalogue(catalogue_filename)
-        treg = np.full((len(catalogue.data['longitude'])), False, dtype=bool)
+        neq = len(catalogue.data['longitude'])
+        treg = np.full((neq), False, dtype=bool)
         #
         # create the spatial index
         sidx = get_rtree_index(catalogue)
@@ -111,6 +113,16 @@ class SetSubductionEarthquakes:
         cat.sort_catalogue_chronologically()
         self.cat = cat
         #
+        # if none of the earthquakes in the catalogue is in the bounding box
+        # used for the selection we stop the processing
+        if len(cat.data['longitude']) < 1:
+            f = h5py.File(treg_filename, "a")
+            if self.label in f.keys():
+                del f[self.label]
+            f[self.label] = treg
+            f.close()
+            return
+        #
         # compute distances between the earthquakes in the catalogue and
         # the surface of the fault
         if compute_distances:
@@ -120,19 +132,20 @@ class SetSubductionEarthquakes:
                                         'dist_{:s}.pkl'.format(self.label))
             if not os.path.exists(out_filename):
                 tmps = 'Computing distances'
-                print(tmps.format(out_filename))
+                logging.info(tmps.format(out_filename))
                 surf_dist = get_distances_from_surface(cat, surface)
                 pickle.dump(surf_dist, open(out_filename, 'wb'))
             else:
                 surf_dist = pickle.load(open(out_filename, 'rb'))
                 tmps = 'Loading distances from file: {:s}'
-                print(tmps.format(out_filename))
+                logging.info(tmps.format(out_filename))
                 tmps = '    number of values loaded: {:d}'
-                print(tmps.format(len(surf_dist)))
+                logging.info(tmps.format(len(surf_dist)))
         #
         # info
+        neqks = len(cat.data['longitude'])
         tmps = 'Number of eqks in the new catalogue     : {:d}'
-        print(tmps.format(len(cat.data['longitude'])))
+        logging.info(tmps.format(neqks))
         #
         # Calculate the depth of the top of the slab for every earthquake
         # location
@@ -170,19 +183,22 @@ class SetSubductionEarthquakes:
             treg[idxs[iii]] = True
         #
         # storing results in the .hdf5 file
-        print('Storing data in:\n', treg_filename)
+        logging.info('Storing data in:\n{:s}'.format(treg_filename))
         f = h5py.File(treg_filename, "a")
         if len(remove_from):
-            print('    treg:', len(treg))
+            fmt = '    treg: {:d}'
+            logging.info(fmt.format(len(treg)))
             iii = np.nonzero(treg)[0]
             for tkey in remove_from:
-                print('    Cleaning {:s}'.format(tkey))
+                logging.info('    Cleaning {:s}'.format(tkey))
                 old = f[tkey][:]
-                print('     before:', len(np.nonzero(old)[0]))
+                fmt = '     before: {:d}'
+                logging.info(fmt.format(len(np.nonzero(old)[0])))
                 del f[tkey]
                 old[iii] = False
                 f[tkey] = old
-                print('     after:', len(np.nonzero(old)[0]))
+                fmt = '     after: {:d}'
+                logging.info(fmt.format(len(np.nonzero(old)[0])))
         if self.label in f.keys():
             del f[self.label]
         f[self.label] = treg
@@ -195,7 +211,7 @@ class SetSubductionEarthquakes:
         sub_depths = self.sub_depths
         surf_dist = self.surf_dist
         #
-        fig = plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(10, 8))
         scat = plt.scatter(cat.data['depth'], sub_depths, c=surf_dist,
                            s=2**cat.data['magnitude'], edgecolor='w', vmin=0,
                            vmax=100)
