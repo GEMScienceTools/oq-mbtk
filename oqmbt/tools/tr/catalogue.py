@@ -9,7 +9,7 @@ from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
 
 
-def get_catalogue(catalogue_filename):
+def get_catalogue(catalogue_filename, force_csv=False):
     """
     """
 
@@ -17,7 +17,7 @@ def get_catalogue(catalogue_filename):
     path, name = os.path.split(catalogue_filename)
     cat_pickle_filename = os.path.join(path, Path(name).stem+'.pkl')
 
-    if ext == '.csv' or ext == '.hmtk':
+    if (ext == '.csv' or ext == '.hmtk') or (force_csv):
         parser = CsvCatalogueParser(catalogue_filename)
         catalogue = parser.read_file()
         catalogue.sort_catalogue_chronologically()
