@@ -92,12 +92,12 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
     """
     #
     #
-    if len(area_source_ids_list) > 1:
-        msg = 'We do not support the selection for multiple sources'
-        raise ValueError(msg)
     #
     #
     if area_source_ids_list is not None:
+        if len(area_source_ids_list) > 1:
+            msg = 'We do not support the selection for multiple sources'
+            raise ValueError(msg)
         # Process the area source
         src_id = area_source_ids_list[0]
         src = model.sources[src_id]
