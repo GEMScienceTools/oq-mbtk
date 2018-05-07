@@ -9,7 +9,6 @@ from oqmbt.tools.tr.catalogue import get_catalogue
 from oqmbt.tools.geo import get_idx_points_inside_polygon
 from oqmbt.tools.tr.tectonic_regionalisation import (set_crustal,
                                                      get_crust_model)
-from openquake.hmtk.seismicity.selector import CatalogueSelector
 
 
 class SetCrustalEarthquakes():
@@ -21,14 +20,14 @@ class SetCrustalEarthquakes():
     """
 
     def __init__(self, crust_filename, catalogue_fname, treg_filename,
-                 distance_delta, label, shapefile=None):
+                 distance_delta, label, shapefile=None, log_fname=None):
         self.crust_filename = crust_filename
         self.catalogue_fname = catalogue_fname
         self.treg_filename = treg_filename
         self.delta = distance_delta
         self.label = label
         self.shapefile = shapefile
-
+        self.log_fname = log_fname
 
     def classify(self, remove_from):
         """
@@ -42,6 +41,13 @@ class SetCrustalEarthquakes():
         treg = {}
         treg[self.label] = np.full((len(icat.data['longitude'])), False,
                                    dtype=bool)
+        #
+        # open log file and prepare the group
+        flog = h5py.File(self.log_fname, 'a')
+        if self.label not in flog.keys():
+            grp = flog.create_group('/{:s}'.format(self.label))
+        else:
+            grp = flog['/{:s}'.format(self.label)]
         #
         # load the crust model
         crust, sidx = get_crust_model(self.crust_filename)
@@ -57,18 +63,18 @@ class SetCrustalEarthquakes():
             cp = []
             idxs = []
             for i, (lo, la) in enumerate(zip(icat.data['longitude'],
-                                            icat.data['latitude'])):
+                                             icat.data['latitude'])):
                 cp.append([lo, la])
                 idxs.append(i)
             cp = np.array(cp)
             #
-            #
+            # prepare array where to store the classification
             isel = np.full((len(icat.data['longitude'])), False, dtype=bool)
             #
             # read polygon using geopandas - get a geodataframe
             gdf = gpd.read_file(self.shapefile)
             #
-            #
+            # process the geometry i.e. finds points inside
             idx_all_sel = []
             for pol in gdf.geometry:
                 pcoo = []
@@ -85,6 +91,18 @@ class SetCrustalEarthquakes():
             #
             # final TR
             treg = np.logical_and(treg, isel)
+
+        tl = np.zeros(len(treg),
+                      dtype={'names': ('lon', 'lat', 'dep', 'moh', 'idx'),
+                             'formats': ('f8', 'f8', 'f8', 'f8', 'i4')})
+        tl['lon'] = icat.data['longitude']
+        tl['lat'] = icat.data['latitude']
+        tl['dep'] = icat.data['depth']
+        tl['moh'] = np.array(data)[:, 1]
+        tl['idx'] = treg
+        #
+        # store log data
+        grp.create_dataset('data', data=np.array(tl))
         #
         # storing results in the .hdf5 file
         f = h5py.File(self.treg_filename, "a")
@@ -99,4 +117,7 @@ class SetCrustalEarthquakes():
         if self.label in f.keys():
             del f[self.label]
         f[self.label] = treg
+        #
+        #
         f.close()
+        flog.close()
