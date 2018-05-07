@@ -34,7 +34,7 @@ class TrTestCase(unittest.TestCase):
         treg_filename = os.path.join(BASE_PATH, '../../tmp/test01.hdf5')
         #
         # classify
-        classify(ini_fname, self.root_folder, True)
+        classify(ini_fname, True, self.root_folder)
         #
         #
         f = h5py.File(treg_filename, 'r')
@@ -49,7 +49,7 @@ class TrTestCase(unittest.TestCase):
         treg_filename = os.path.join(BASE_PATH, '../../tmp/test02.hdf5')
         #
         # classify
-        classify(ini_fname, self.root_folder, True)
+        classify(ini_fname, True, self.root_folder)
         f = h5py.File(treg_filename, 'r')
         #
         # testing crustal active
@@ -71,7 +71,7 @@ class TrTestCase(unittest.TestCase):
         treg_filename = os.path.join(BASE_PATH, '../../tmp/test02.hdf5')
         #
         # classify
-        classify(ini_fname, self.root_folder, True)
+        classify(ini_fname, True, self.root_folder)
         #
         # testing
         f = h5py.File(treg_filename, 'r')

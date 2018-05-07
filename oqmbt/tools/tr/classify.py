@@ -9,6 +9,7 @@ import logging
 import configparser
 
 from openquake.baselib import sap
+from oqmbt.tools.tr.catalogue import get_catalogue
 
 from oqmbt.tools.tr.set_crustal_earthquakes import SetCrustalEarthquakes
 from oqmbt.tools.tr.set_subduction_earthquakes import SetSubductionEarthquakes
@@ -41,7 +42,7 @@ def classify(ini_fname, compute_distances, rf):
     config.read(ini_fname)
     #
     #
-    if rf is None:
+    if rf is False:
         assert 'root_folder' in config['general']
         rf = config['general']['root_folder']
     #
@@ -50,10 +51,10 @@ def classify(ini_fname, compute_distances, rf):
     catalogue_fname = os.path.join(rf, config['general']['catalogue_filename'])
     assert os.path.exists(catalogue_fname)
     #
-    # read priority list
+    # Read priority list
     priorityl = str_to_list(config['general']['priority'])
     #
-    # tectonic regionalisation fname
+    # Tectonic regionalisation fname
     tmps = config['general']['treg_filename']
     treg_filename = os.path.join(rf, tmps)
     if not os.path.exists(treg_filename):
@@ -62,7 +63,14 @@ def classify(ini_fname, compute_distances, rf):
         f.close()
     else:
         logger.info('{:s} exists'.format(treg_filename))
-
+    #
+    # Log filename
+    log_fname = 'log.hdf5'
+    if os.path.exists(log_fname):
+        os.remove(log_fname)
+    logger.info('Creating: {:s}'.format(treg_filename))
+    f = h5py.File(treg_filename)
+    f.close()
     #
     # process the input information
     remove_from = []
@@ -83,7 +91,8 @@ def classify(ini_fname, compute_distances, rf):
             lower_depth = None
             if 'lower_depth' in config[key]:
                 lower_depth = float(config[key]['lower_depth'])
-
+            #
+            #
             sse = SetSubductionEarthquakes(key,
                                            treg_filename,
                                            distance_folder,
@@ -91,7 +100,8 @@ def classify(ini_fname, compute_distances, rf):
                                            distance_buffer_below,
                                            distance_buffer_above,
                                            lower_depth,
-                                           catalogue_fname)
+                                           catalogue_fname,
+                                           log_fname)
             sse.classify(compute_distances, remove_from)
         #
         # crustal earthquakes
@@ -119,7 +129,8 @@ def classify(ini_fname, compute_distances, rf):
                                         treg_filename,
                                         distance_delta,
                                         label=key,
-                                        shapefile=shapefile)
+                                        shapefile=shapefile,
+                                        log_fname=log_fname)
             sce.classify(remove_from)
         #
         #
@@ -128,6 +139,28 @@ def classify(ini_fname, compute_distances, rf):
         #
         #
         remove_from.append(key)
+
+    #
+    # reading filename
+    c = get_catalogue(catalogue_fname)
+    csvfname = 'classified_earthquakes.csv'
+    fou = open(csvfname, 'w')
+    f = h5py.File(treg_filename, 'r')
+    fou.write('eventID,id,longitude,latitude,tr\n')
+    for i, (eid, lo, la) in enumerate(zip(c.data['eventID'],
+                                          c.data['longitude'],
+                                          c.data['latitude'])):
+        fnd = False
+        for k in list(f.keys()):
+            if f[k][i] and not fnd:
+                fou.write('{:s},{:d},{:f},{:f},{:s}\n'.format(str(eid), i,
+                                                              lo, la, k))
+                fnd = True
+        if not fnd:
+            fou.write('{:s},{:d},{:f},{:f},{:s}\n'.format(eid, i, lo, la,
+                                                          'unknown'))
+    f.close()
+    fou.close()
 
 
 def main(argv):

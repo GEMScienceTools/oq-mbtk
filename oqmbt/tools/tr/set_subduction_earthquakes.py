@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pickle
 import logging
 
-from scipy.interpolate import griddata
+from scipy.interpolate import griddata, interp2d
 from oqmbt.tools.tr.catalogue import get_catalogue
 from oqmbt.tools.tr.catalogue_hmtk import (get_rtree_index,
                                            get_distances_from_surface)
@@ -19,7 +19,6 @@ from openquake.hmtk.seismicity.selector import CatalogueSelector
 #
 # selection buffer
 DELTA = 0.3
-LOWER_DEPTH_FOR_EARTHQUAKES = 400
 
 
 class SetSubductionEarthquakes:
@@ -40,7 +39,7 @@ class SetSubductionEarthquakes:
     def __init__(self, label, treg_filename, distance_folder,
                  edges_folder, distance_buffer_below,
                  distance_buffer_above, lower_depth,
-                 catalogue_filename):
+                 catalogue_filename, log_fname=None):
 
         self.label = label
         self.treg_filename = treg_filename
@@ -50,6 +49,7 @@ class SetSubductionEarthquakes:
         self.distance_buffer_above = distance_buffer_above
         self.catalogue_filename = catalogue_filename
         self.lower_depth = lower_depth
+        self.log_fname = log_fname
 
     def classify(self, compute_distances, remove_from):
         """
@@ -70,6 +70,15 @@ class SetSubductionEarthquakes:
         distance_buffer_above = self.distance_buffer_above
         catalogue_filename = self.catalogue_filename
         lower_depth = self.lower_depth
+        if lower_depth is None:
+            lower_depth = 400
+        #
+        # open log file and prepare the group
+        flog = h5py.File(self.log_fname, 'a')
+        if self.label not in flog.keys():
+            grp = flog.create_group('/{:s}'.format(self.label))
+        else:
+            grp = flog['/{:s}'.format(self.label)]
         #
         # read the catalogue
         catalogue = get_catalogue(catalogue_filename)
@@ -84,9 +93,27 @@ class SetSubductionEarthquakes:
         surface = build_complex_surface_from_edges(edges_folder)
         mesh = surface.get_mesh()
         #
+        # create polygon encompassing the mesh
+        plo = list(mesh.lons[0, :])
+        pla = list(mesh.lats[0, :])
+        #
+        plo += list(mesh.lons[:, -1])
+        pla += list(mesh.lats[:, -1])
+        #
+        plo += list(mesh.lons[-1, ::-1])
+        pla += list(mesh.lats[-1, ::-1])
+        #
+        plo += list(mesh.lons[::-1, 0])
+        pla += list(mesh.lats[::-1, 0])
+        #
         # set variables used in griddata
         data = np.array([mesh.lons.flatten().T, mesh.lats.flatten().T]).T
         values = mesh.depths.flatten().T
+
+        ddd = np.array([mesh.lons.flatten().T,
+                        mesh.lats.flatten().T,
+                        mesh.depths.flatten()]).T
+        grp.create_dataset('mesh', data=ddd)
         #
         # set bounding box of the subduction surface
         min_lo_sub = np.amin(mesh.lons)
@@ -100,7 +127,25 @@ class SetSubductionEarthquakes:
                                               0,
                                               max_lo_sub+DELTA,
                                               max_la_sub+DELTA,
-                                              LOWER_DEPTH_FOR_EARTHQUAKES))))
+                                              lower_depth))))
+        #
+        #
+        from oqmbt.tools.geo import get_idx_points_inside_polygon
+        sidx = get_idx_points_inside_polygon(catalogue.data['longitude'][idxs],
+                                             catalogue.data['latitude'][idxs],
+                                             plo, pla,
+                                             idxs, buff_distance=5000.)
+        #
+        # take only points inside the surface projection of the mesh
+        idxs = sidx
+        #
+        # store indexes of selected earthquakes
+        ccc = []
+        for idx in idxs:
+            ccc.append([catalogue.data['longitude'][idx],
+                        catalogue.data['latitude'][idx],
+                        catalogue.data['depth'][idx]])
+        grp.create_dataset('cat', data=np.array(ccc))
         #
         # prepare array for the selection of the catalogue
         flags = np.full((len(catalogue.data['longitude'])), False, dtype=bool)
@@ -110,7 +155,7 @@ class SetSubductionEarthquakes:
         # bounding box
         sel = CatalogueSelector(catalogue, create_copy=True)
         cat = sel.select_catalogue(flags)
-        cat.sort_catalogue_chronologically()
+        #cat.sort_catalogue_chronologically()
         self.cat = cat
         #
         # if none of the earthquakes in the catalogue is in the bounding box
@@ -125,22 +170,26 @@ class SetSubductionEarthquakes:
         #
         # compute distances between the earthquakes in the catalogue and
         # the surface of the fault
+        out_filename = os.path.join(distance_folder,
+                                    'dist_{:s}.pkl'.format(self.label))
+        #
+        #
+        surf_dist = get_distances_from_surface(cat, surface)
+        """
         if compute_distances:
-            #
-            # calculate/load the distance to the subduction surface
-            out_filename = os.path.join(distance_folder,
-                                        'dist_{:s}.pkl'.format(self.label))
+            tmps = 'Computing distances'
+            logging.info(tmps.format(out_filename))
+            surf_dist = get_distances_from_surface(cat, surface)
+            pickle.dump(surf_dist, open(out_filename, 'wb'))
+        else:
             if not os.path.exists(out_filename):
-                tmps = 'Computing distances'
-                logging.info(tmps.format(out_filename))
-                surf_dist = get_distances_from_surface(cat, surface)
-                pickle.dump(surf_dist, open(out_filename, 'wb'))
-            else:
-                surf_dist = pickle.load(open(out_filename, 'rb'))
-                tmps = 'Loading distances from file: {:s}'
-                logging.info(tmps.format(out_filename))
-                tmps = '    number of values loaded: {:d}'
-                logging.info(tmps.format(len(surf_dist)))
+                raise IOError('Distance file does not exist')
+            surf_dist = pickle.load(open(out_filename, 'rb'))
+            tmps = 'Loading distances from file: {:s}'
+            logging.info(tmps.format(out_filename))
+            tmps = '    number of values loaded: {:d}'
+            logging.info(tmps.format(len(surf_dist)))
+        """
         #
         # info
         neqks = len(cat.data['longitude'])
@@ -153,8 +202,13 @@ class SetSubductionEarthquakes:
                                                       cat.data['latitude'])])
         #
         # compute the depth of the top of the slab at every epicenter
-        sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
-                              method='cubic')
+        # sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
+        #                      method='cubic')
+        #
+        # interpolation
+        from scipy.interpolate import Rbf
+        rbfi = Rbf(data[:, 0], data[:, 1], values)
+        sub_depths = rbfi(points[:, 0], points[:, 1])
         #
         # saving the distances to a file
         tmps = 'vert_dist_to_slab_{:s}.pkl'.format(self.label)
@@ -167,9 +221,29 @@ class SetSubductionEarthquakes:
                            np.isfinite(sub_depths) &
                            np.isfinite(cat.data['depth'])) &
                           ((surf_dist < distance_buffer_below) &
-                           (sub_depths < cat.data['depth'])) |
+                           (sub_depths > cat.data['depth'])) |
                           ((surf_dist < distance_buffer_above) &
-                           (sub_depths >= cat.data['depth'])))[0]
+                           (sub_depths <= cat.data['depth'])))[0]
+        idxa = []
+        for srfd, subd, dept in zip(surf_dist, sub_depths, cat.data['depth']):
+            if np.isfinite(srfd) & np.isfinite(subd) & np.isfinite(dept):
+                if (float(srfd) < min(distance_buffer_below,
+                                      distance_buffer_above) * 0.90):
+                    idxa.append(True)
+                elif ((float(srfd) < distance_buffer_below) &
+                      (float(subd) < float(dept))):
+                    idxa.append(True)
+                elif ((float(srfd) < distance_buffer_above) &
+                      (float(subd) >= float(dept))):
+                    idxa.append(True)
+                else:
+                    idxa.append(False)
+            else:
+                idxa.append(False)
+        idxa = np.array(idxa)
+        #
+        # checking the size of lists
+        assert len(idxa) == len(cat.data['longitude']) == len(idxs)
         #
         #
         self.surf_dist = surf_dist
@@ -178,9 +252,29 @@ class SetSubductionEarthquakes:
         self.idxa = idxa
         self.treg = treg
         #
+        #
+        tl = np.zeros(len(idxa),
+                      dtype={'names': ('lon', 'lat', 'dep', 'subd', 'srfd',
+                                       'idx'),
+                             'formats': ('f8', 'f8', 'f8', 'f8', 'f8', 'i4')})
+        tl['lon'] = cat.data['longitude']
+        tl['lat'] = cat.data['latitude']
+        tl['dep'] = cat.data['depth']
+        tl['subd'] = sub_depths
+        tl['srfd'] = surf_dist
+        tl['idx'] = idxa
+        #
+        # store log data
+        grp.create_dataset('data', data=np.array(tl))
+        #
         # updating the selection array
-        for uuu, iii in enumerate(idxa):
-            treg[idxs[iii]] = True
+        for uuu, iii in enumerate(list(idxa)):
+            aaa = idxs[uuu]
+            assert catalogue.data['eventID'][aaa] == cat.data['eventID'][uuu]
+            if iii:
+                treg[aaa] = True
+            else:
+                treg[aaa] = False
         #
         # storing results in the .hdf5 file
         logging.info('Storing data in:\n{:s}'.format(treg_filename))
@@ -202,7 +296,10 @@ class SetSubductionEarthquakes:
         if self.label in f.keys():
             del f[self.label]
         f[self.label] = treg
+        #
+        # closing files
         f.close()
+        flog.close()
 
     def plotting_0(self):
         """

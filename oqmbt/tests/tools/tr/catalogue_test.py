@@ -24,12 +24,11 @@ class CatalogueReadTestCase(unittest.TestCase):
         # pickle file
         tmpo = os.path.join(BASE_PATH, tmps)
         assert os.path.exists(re.sub('ndk$', 'pkl', tmpo))
-        os.remove(re.sub('ndk$', 'pkl', tmpo))
+        print(re.sub('csv$', 'pkl', tmpo))
+        os.remove(re.sub('csv$', 'pkl', tmpo))
 
+    """
     def testcase02(self):
-        """
-        Read .ndk catalogue
-        """
         tmps = './../../data/tr/gcmt_sample.ndk'
         cat = get_catalogue(os.path.join(BASE_PATH, tmps))
         expected = 9
@@ -42,3 +41,4 @@ class CatalogueReadTestCase(unittest.TestCase):
         tmpo = os.path.join(BASE_PATH, tmps)
         assert os.path.exists(re.sub('ndk$', 'pkl', tmpo))
         os.remove(re.sub('ndk$', 'pkl', tmpo))
+    """
