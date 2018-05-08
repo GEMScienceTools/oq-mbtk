@@ -39,15 +39,15 @@ class TrTestCase(unittest.TestCase):
         f = h5py.File(treg_filename, 'r')
         #
         # testing crustal active
-        expected = [1, 1, 0, 0, 0, 0, 1, 1, 1]
+        expected = [1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0]
         numpy.testing.assert_array_equal(f['crustal'][:], expected)
         #
         # testing interface
-        expected = [0, 0, 0, 1, 1, 1, 0, 0, 0]
+        expected = [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0]
         numpy.testing.assert_array_equal(f['int_cam'][:], expected)
         #
         # testing slab
-        expected = [0, 0, 1, 0, 0, 0, 0, 0, 0]
+        expected = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1]
         numpy.testing.assert_array_equal(f['slab_cam'][:], expected)
         #
         f.close()
