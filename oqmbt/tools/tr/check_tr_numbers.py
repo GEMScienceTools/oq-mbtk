@@ -13,6 +13,7 @@ def check(fname):
 
     f = h5py.File(fname, 'r')
     keys = sorted(f.keys())
+    print(len(f[keys[0]]))
 
     for i1, k1 in enumerate(keys):
         for i2 in range(i1, len(keys)):
@@ -25,8 +26,12 @@ def check(fname):
                 print(len(chk))
     #
     # Check total numbers
+    tot = 0
     for key in f:
-        print('{:10s}: {:5d}'.format(key, sum(f[key])))
+        smm = sum(f[key])
+        print('{:10s}: {:5d}'.format(key, smm))
+        tot += smm
+    print(tot, '/', len(f[key]))
     #
     # close hdf5
     f.close()

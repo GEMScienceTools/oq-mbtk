@@ -28,7 +28,6 @@ def gdfs(catalogue, surface):
     inputs = []
     for i in np.arange(0, nel, delta):
         upp = min([i+delta, nel-1])
-        print(i, upp)
         mesh = Mesh(catalogue.data['longitude'][i:upp],
                     catalogue.data['latitude'][i:upp],
                     catalogue.data['depth'][i:upp])
@@ -41,21 +40,27 @@ def gdfs(catalogue, surface):
 
 def get_distances_from_surface(catalogue, surface):
     """
+    This computes distances
     """
     nel = len(catalogue.data['longitude'])
     dsts = np.empty((nel))
     delta = 4000
-    i = 0
-    upp = 0
-    while upp < nel-1:
-        upp = min([i+delta, nel-1])
-        print(i, upp)
-        mesh = Mesh(catalogue.data['longitude'][i:upp],
-                    catalogue.data['latitude'][i:upp],
-                    catalogue.data['depth'][i:upp])
-        tmp = surface.get_min_distance(mesh)
-        dsts[i:upp] = tmp
-        i = upp + 1
+    if nel < delta:
+        mesh = Mesh(catalogue.data['longitude'][0:nel],
+                    catalogue.data['latitude'][0:nel],
+                    catalogue.data['depth'][0:nel])
+        dsts = surface.get_min_distance(mesh)
+    else:
+        i = 0
+        upp = 0
+        while upp < nel-1:
+            upp = min([i+delta, nel-1])
+            mesh = Mesh(catalogue.data['longitude'][i:upp],
+                        catalogue.data['latitude'][i:upp],
+                        catalogue.data['depth'][i:upp])
+            tmp = surface.get_min_distance(mesh)
+            dsts[i:upp] = tmp
+            i = upp + 1
     return dsts
 
 
