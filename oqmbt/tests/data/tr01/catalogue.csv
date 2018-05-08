@@ -1,0 +1,10 @@
+eventID,Identifier,year,month,day,hour,minute,second,latitude,longitude,depth,SemiMajor90,SemiMinor90,ErrorStrike,timeError,depthError,Agency,LocId,magnitude,sigmaMagnitude,magnitudeType,MagId
+0,OUT,1991,7,25,,,,0.0,10.0,8,,,,,,,,5.3,,,
+62,UNAM,1991,7,25,,,,17.81,-95.09,8,,,,,,,,5.3,,,
+0,INSLAB,1991,7,25,,,,17.71,-95.13,128,,,,,,,,5.3,,,
+0,INTEF,1991,7,25,,,,18.05,-101.42,36.68,,,,,,,,5.3,,,
+0,INTEF-ABOVE,1991,7,25,,,,18.05,-101.42,30.,,,,,,,,5.3,,,
+0,INTEF-BELOW,1991,7,25,,,,18.05,-101.42,45.,,,,,,,,5.3,,,
+0,CRUSTAL,1991,7,25,,,,18.43,-101.16,30.,,,,,,,,5.3,,,
+0,CRUSTAL,1991,7,25,,,,18.43,-101.16,10.,,,,,,,,5.3,,,
+0,CRUSTAL,1991,7,25,,,,17.82,-97.3,8.,,,,,,,,5.3,,,
