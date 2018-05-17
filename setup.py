@@ -36,7 +36,6 @@ setup(
     # matplotlib is brought by the openquake engine
     install_requires=[
         'openquake.engine',
-        'openquake.man',
         'openquake.sub',
         'nbstripout >= 0.3.0',
         'jupyter_client >= 5.0.0',
