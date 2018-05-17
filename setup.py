@@ -45,7 +45,8 @@ setup(
         'nbformat',
         'GDAL',
         'nbconvert',
-        'prettytable'
+        'prettytable',
+        'geopandas'
     ],
     python_requires='>=3',
     author='GEM Foundation',
