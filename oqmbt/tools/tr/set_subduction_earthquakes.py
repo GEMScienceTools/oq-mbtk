@@ -91,7 +91,7 @@ class SetSubductionEarthquakes:
         # build the complex fault surface
         tedges = _read_edges(edges_folder)
         surface = build_complex_surface_from_edges(edges_folder)
-        mesh = surface.get_mesh()
+        mesh = surface.mesh
         #
         # create polygon encompassing the mesh
         plo = list(mesh.lons[0, :])

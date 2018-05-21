@@ -26,7 +26,7 @@ def run(notebook_filename, inps, reports_folder=None, key=None):
         nb['cells'][0]['source'] = inps
     #
     # prepare execution
-    ep = ExecutePreprocessor(timeout=100000, kernel_name='python3')
+    ep = ExecutePreprocessor(timeout=100000, kernel_name='python')
     ok = False
     try:
         #

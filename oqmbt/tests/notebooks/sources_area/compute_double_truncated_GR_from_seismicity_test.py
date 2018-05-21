@@ -28,7 +28,7 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         #
         #
         fname = './testcomputedoubletruncatedGRfromseismicity.log'
-        logging.basicConfig(filename=fname,level=logging.DEBUG)
+        logging.basicConfig(filename=fname, level=logging.DEBUG)
         #
         # clear directory
         folder = os.path.join(self.BASE_DATA_PATH, './../../tmp/project_test')
