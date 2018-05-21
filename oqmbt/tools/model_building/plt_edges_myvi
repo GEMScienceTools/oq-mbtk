@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import numpy
+
+from mayavi import mlab
+
+from openquake.baselib import sap
+from oq.hmtk.subduction.utils import _read_edges
+from ccar18.hazard.profile import _read_profiles
+
+
+def plot(efolder, pfolder):
+    #
+    # checking folder
+    assert os.path.exists(efolder)
+    assert os.path.exists(pfolder)
+    #
+    # reading profiles
+    prfls, nprfls = _read_profiles(pfolder)
+    #
+    # reading edges
+    edges = _read_edges(efolder)
+    #
+    # vertical scaling
+    vsc = -0.01
+    #
+    # plotting
+    for e in edges:
+        coo = [(p.longitude, p.latitude, p.depth) for p in e.points]
+        coo = numpy.array(coo)
+        mlab.plot3d(coo[:, 0], coo[:, 0], coo[:, 0]*vsc, line_width=0.25,
+                    color=(1, 0, 0))
+    mlab.show()
+
+
+def main(argv):
+    p = sap.Script(plot)
+    p.arg(name='efolder', help='Folder containing the edges')
+    p.arg(name='pfolder', help='Folder containing the profiles')
+
+    if len(argv) < 1:
+        print(p.help())
+    else:
+        p.callfunc()
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

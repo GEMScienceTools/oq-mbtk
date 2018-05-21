@@ -1,0 +1,49 @@
+#!/usr/bin/env python3.5
+
+import os
+import sys
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+from openquake.baselib import sap
+from plt_tools import plot_edges, plot_profiles, plot_profiles_names
+from oq.hmtk.subduction.utils import _read_edges
+from ccar18.hazard.profile import _read_profiles
+
+
+def plot(efolder, pfolder):
+    #
+    # checking folder
+    assert os.path.exists(efolder)
+    assert os.path.exists(pfolder)
+    #
+    # reading profiles
+    prfls, nprfls = _read_profiles(pfolder)
+    #
+    # reading edges
+    edges = _read_edges(efolder)
+    #
+    # plotting
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    plot_edges(edges, ax)
+    plot_profiles(prfls, ax)
+    plot_profiles_names(prfls, ax, nprfls)
+    ax.invert_zaxis()
+    plt.show()
+
+
+def main(argv):
+    p = sap.Script(plot)
+    p.arg(name='efolder', help='Folder containing the edges')
+    p.arg(name='pfolder', help='Folder containing the profiles')
+
+    if len(argv) < 1:
+        print(p.help())
+    else:
+        p.callfunc()
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
