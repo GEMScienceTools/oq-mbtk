@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import pickle
+
+from pathlib import Path
+from openquake.baselib import sap
+from openquake.hmtk.parsers.catalogue.csv_catalogue_parser import \
+    CsvCatalogueParser
+
+
+def pkle(catalogue_hmtk_fname, output_path):
+    """
+    :param catalogue_hmtk_fname:
+    :param output_path:
+    """
+    #
+    # check if the initial catalogue file exists
+    assert os.path.exists(catalogue_hmtk_fname)
+    #
+    # Create output filename
+    out_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+'.pkl'
+    if output_path is not None:
+        assert os.path.exists(output_path)
+    else:
+        output_path = os.path.dirname(catalogue_hmtk_fname)
+    tmps = os.path.join(output_path, out_fname)
+    out_fname = os.path.abspath(tmps)
+    print(out_fname)
+    #
+    # Read the catalogue
+    catalogue_parser = CsvCatalogueParser(catalogue_hmtk_fname)
+    catalogue = catalogue_parser.read_file()
+    #
+    # Create pickle
+    fou = open(out_fname, 'wb')
+    pickle.dump(catalogue, fou)
+    fou.close()
+
+
+def main(argv):
+    """
+    """
+    p = sap.Script(pkle)
+    p.arg(name='catalogue_hmtk_fname', help='Catalogue filename')
+    p.opt(name='output_path', help='Folder where to put the pickled file')
+
+    if len(argv) < 1:
+        print(p.help())
+    else:
+        p.callfunc()
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
