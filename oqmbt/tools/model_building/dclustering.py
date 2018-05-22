@@ -44,11 +44,16 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     # Read the catalogue
     cat = _load_catalogue(catalogue_hmtk_fname)
     #
-    # Select earthquakes belonging to a given TR
+    # Select earthquakes belonging to a given TR. if combining multiple TRs, 
+    # use label <TR_1>AND<TR_2>AND...
     idx = numpy.full(cat.data['magnitude'].shape, True, dtype=bool)
     if label is not None and tr_fname is not None:
         f = h5py.File(tr_fname, 'r')
-        idx = f[label][:]
+        labs = label.split('AND')
+        idx = numpy.array([False for i in range(len(f[labs[0]]))])
+        for lab in labs:
+            idx_tmp = f[lab][:]
+            idx[numpy.where(idx_tmp)] = True
         f.close()
     #
     # Filter catalogue
@@ -57,7 +62,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         sel.select_catalogue(idx)
     #
     # Create declusterer
-    module = importlib.import_module('openquake.hmtk.seismicity.declusterer')
+    module = importlib.import_module('openquake.hmtk.seismicity.declusterer.dec_gardner_knopoff')
     my_class = getattr(module, declustering_meth)
     declusterer = my_class()
     #
