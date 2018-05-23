@@ -5,8 +5,8 @@ from openquake.man.model import read
 from openquake.man.checks.plotting import plot_mfd_cumulative
 from openquake.man.checks.mfd import get_total_mfd
 
-from oqmbt.oqt_project import OQtProject
-from oqmbt.tools.mfd import get_evenlyDiscretizedMFD_from_truncatedGRMFD
+from openquake.mbt.oqt_project import OQtProject
+from openquake.mbt.tools.mfd import get_evenlyDiscretizedMFD_from_truncatedGRMFD
 from openquake.hazardlib.mfd.truncated_gr import TruncatedGRMFD
 from openquake.hazardlib.source.non_parametric import \
     NonParametricSeismicSource
