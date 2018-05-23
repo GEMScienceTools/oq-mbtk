@@ -45,11 +45,11 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     cat = _load_catalogue(catalogue_hmtk_fname)
     #
     # Select earthquakes belonging to a given TR. if combining multiple TRs, 
-    # use label <TR_1>AND<TR_2>AND...
+    # use label <TR_1>,<TR_2>AND...
     idx = numpy.full(cat.data['magnitude'].shape, True, dtype=bool)
     if label is not None and tr_fname is not None:
         f = h5py.File(tr_fname, 'r')
-        labs = label.split('AND')
+        labs = label.split(',')
         idx = numpy.array([False for i in range(len(f[labs[0]]))])
         for lab in labs:
             idx_tmp = f[lab][:]
