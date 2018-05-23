@@ -2,7 +2,7 @@
 
 import sys
 from openquake.baselib import sap
-from oqmbt.tools.model_building.plt_mtd import plot_mtd
+from openquake.mbt.tools.model_building.plt_mtd import plot_mtd
 
 
 def plot(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,

@@ -27,7 +27,7 @@ Copyright (C) 2017-2018 GEM Foundation
 """
 
 setup(
-    name='oqmbt',
+    name='openquake.mbt',
     version='0.1.0',
     description=README,
     url=url,
@@ -64,7 +64,7 @@ setup(
     keywords="seismic hazard",
     license="AGPL3",
     platforms=["any"],
-    package_data={"oqmbt": [
+    package_data={"openquake.mbt": [
         "README.md", "LICENSE"]},
     include_package_data=True,
     zip_safe=False,
