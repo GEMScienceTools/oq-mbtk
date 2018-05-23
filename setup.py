@@ -61,6 +61,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Topic :: Scientific/Engineering',
     ),
+    namespace_packages=['openquake'],
     keywords="seismic hazard",
     license="AGPL3",
     platforms=["any"],
