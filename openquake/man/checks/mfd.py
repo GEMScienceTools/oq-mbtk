@@ -2,7 +2,7 @@
 :module:`openquake.man.checks.mfd`
 """
 
-import oqmbt.tools.mfd as mfdt
+import openquake.mbt.tools.mfd as mfdt
 
 from openquake.hazardlib.mfd import TruncatedGRMFD
 
