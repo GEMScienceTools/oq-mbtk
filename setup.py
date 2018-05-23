@@ -28,7 +28,7 @@ Copyright (C) 2017-2018 GEM Foundation
 
 setup(
     name='openquake.mbt',
-    version='0.1.0',
+    version='0.2.0',
     description=README,
     url=url,
     packages=find_packages(exclude=['tests', 'tests.*']),
@@ -47,7 +47,7 @@ setup(
         'prettytable',
         'geopandas'
     ],
-    python_requires='>=3',
+    python_requires='>=3.5',
     author='GEM Foundation',
     author_email='hazard@globalquakemodel.org',
     maintainer='GEM Foundation',
