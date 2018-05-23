@@ -27,8 +27,8 @@ Copyright (C) 2017-2018 GEM Foundation
 """
 
 setup(
-    name='oqmbt',
-    version='0.1.0',
+    name='openquake.mbt',
+    version='0.2.0',
     description=README,
     url=url,
     packages=find_packages(exclude=['tests', 'tests.*']),
@@ -47,7 +47,7 @@ setup(
         'prettytable',
         'geopandas'
     ],
-    python_requires='>=3',
+    python_requires='>=3.5',
     author='GEM Foundation',
     author_email='hazard@globalquakemodel.org',
     maintainer='GEM Foundation',
@@ -61,10 +61,11 @@ setup(
         'Programming Language :: Python :: 3',
         'Topic :: Scientific/Engineering',
     ),
+    namespace_packages=['openquake'],
     keywords="seismic hazard",
     license="AGPL3",
     platforms=["any"],
-    package_data={"oqmbt": [
+    package_data={"openquake.mbt": [
         "README.md", "LICENSE"]},
     include_package_data=True,
     zip_safe=False,
