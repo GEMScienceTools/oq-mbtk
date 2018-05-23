@@ -89,8 +89,9 @@ def fault_surface_distance(srcs, mesh_spacing, types=None, dmax=40):
                         raise ValueError('Unsupported fault type')
                     #
                     # Calculate the distance between the two bounding boxes
-                    tmpd = min_geodetic_distance(chA.lons, chA.lats,
-                                                 chB.lons, chB.lats)
+                    la = [(a, b) for a, b in zip(chA.lons, chA.lats)]
+                    lb = [(a, b) for a, b in zip(chB.lons, chB.lats)]
+                    tmpd = min_geodetic_distance(la, lb)
                     #
                     # Calculate the distance between the two fault surfaces
                     # (if needed)
