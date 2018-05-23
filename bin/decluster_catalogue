@@ -2,7 +2,7 @@
 
 import sys
 from openquake.baselib import sap
-from oqmbt.tools.model_building.dclustering import decluster
+from openquake.mbt.tools.model_building.dclustering import decluster
 
 
 def decl(catalogue_hmtk_fname, declustering_meth, declustering_params,
