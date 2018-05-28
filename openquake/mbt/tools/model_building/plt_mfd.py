@@ -1,12 +1,14 @@
 import h5py
 import numpy
+import logging
 
 import matplotlib.pyplot as plt
 
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.seismicity.occurrence.weichert import Weichert
 
-from openquake.mbt.tools.model_building.plt_tools import _load_catalogue, _get_extremes
+from openquake.mbt.tools.model_building.plt_tools import (_load_catalogue,
+                                                          _get_extremes)
 
 
 def _get_compl_table(hdf5_fname, label):
@@ -33,13 +35,32 @@ def _compute_mfd(cat, compl_table, mwid):
 
 
 def plot_mfd(catalogue_fname, grd, label, store, tr_fname,
-             compl_table=None, mwid=0.1):
+             compl_table=None, mwid=0.1, upper_mag=11., title=''):
     """
+    This function plots the incremental and complementary cumulative
+    distribution of the earthquakes included in a catalogue file.
+
     :param catalogue_fname:
+        Full path to the hmtk formatted catalogue
     :param label:
+        If the user provides a tectonic regionalisation file, this label (or
+        list of labels with the format LAB1, LAB2) defines the tectonic regions
+        to be selected.
     :param tr_fname:
-    :param compl_fname:
+        Full path to the .hdf5 file containing the TR 
+    :param compl_table:
+        A :class:`numpy.ndarray` instance of shape (2, n) where the first
+        column contains years in a decreasing order and the second column
+        contains magnitude (generally) in an increasing order 
     :param grd:
+        A boolean indicating the need to compute GR parameters
+    :param upper_mag:
+        The upper magnitude threshold used to filter the catalogue. This is
+        useful for example in cases when it is interesting to fit only the
+        exponential component of a magnitude-frequency distribution.
+    :return:
+        A tuple containing the output of the Weichert method in the following
+        order: gr_pars
     """
     mwid = float(mwid)
     #
@@ -56,6 +77,9 @@ def plot_mfd(catalogue_fname, grd, label, store, tr_fname,
     # select catalogue
     sel = CatalogueSelector(cat, create_copy=False)
     sel.select_catalogue(idx)
+    sel.within_magnitude_range(-1, upper_mag)
+    tmps = 'Selecting earthquakes below magnitude {:.2f}'
+    logging.info(tmps.format(upper_mag))
     #
     # find rounded min and max magnitude
     mmin, mmax = _get_extremes(cat.data['magnitude'], mwid)
@@ -111,11 +135,14 @@ def plot_mfd(catalogue_fname, grd, label, store, tr_fname,
                  transform=ax.transAxes)
         #
         #
-        print(compl_table[-1, 0])
-        ascaled = numpy.log10(10**agr*(tmax-compl_table[-1, 0]))
+        ascaled = numpy.log10(10**agr*(tmax-tmin))
         v = 10.**(-bins*bgr+ascaled)
         plt.plot(bins, v, '--g', lw=2)
-
+    #
+    # Set title
+    plt.title(title)
+    #
+    # Storing figure
     if store is not None:
         lbl = ''
         ext = 'png'
@@ -125,3 +152,9 @@ def plot_mfd(catalogue_fname, grd, label, store, tr_fname,
         plt.savefig(figure_fname, format=ext)
     else:
         plt.show()
+
+    out = (bins[:-1]+mwid/2, numpy.array([float(h) for h in his]))
+    if grd:
+        return out, (agr, bgr, asig, bsig)
+    else:
+        return out, None

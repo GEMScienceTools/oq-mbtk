@@ -29,7 +29,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         lbl = label
         assert tr_fname is not None
     sfx = Path(os.path.basename(catalogue_hmtk_fname)).suffix
-    ext = '_dec_{:s}{:s}'.format(lbl, sfx)
+    ext = '_dec_{:s}.p'.format(lbl)
     #
     # Output filename
     out_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
@@ -44,7 +44,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     # Read the catalogue
     cat = _load_catalogue(catalogue_hmtk_fname)
     #
-    # Select earthquakes belonging to a given TR. if combining multiple TRs, 
+    # Select earthquakes belonging to a given TR. if combining multiple TRs,
     # use label <TR_1>,<TR_2>AND...
     idx = numpy.full(cat.data['magnitude'].shape, True, dtype=bool)
     if label is not None and tr_fname is not None:
@@ -85,3 +85,5 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     fou = open(out_fname, 'wb')
     pickle.dump(cat, fou)
     fou.close()
+
+    return out_fname

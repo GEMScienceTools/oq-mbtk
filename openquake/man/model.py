@@ -55,7 +55,7 @@ def read(model_filename, get_info=True):
     :parameter model_filename:
         The name (including path) to a nrml formatted earthquake source model
     :return:
-        A list of sources
+        A list of sources and information on the model
     """
     # Analysis
     logging.info('Reading: %s' % (model_filename))
@@ -73,6 +73,15 @@ def read(model_filename, get_info=True):
     return source_model,  info
 
 
+def _get_mmin_mmax_nonpar(src):
+    mmin = 1e10
+    mmax = -1e10
+    for d in src.data:
+        mmin = min(mmin, d[0].mag)
+        mmax = max(mmax, d[0].mag)
+    return mmin, mmax
+
+
 def _get_model_info(srcl):
     """
     :parameter srcl:
@@ -86,7 +95,11 @@ def _get_model_info(srcl):
     for idx, src in enumerate(srcl):
         trt = src.tectonic_region_type
         typ = type(src).__name__
-        mmin, mmax = src.mfd.get_min_max_mag()
+        print(typ)
+        if typ == 'NonParametricSeismicSource':
+            mmin,mmax = _get_mmin_mmax_nonpar(src)
+        else:
+            mmin, mmax = src.mfd.get_min_max_mag()
         # Mmax per tectonic region
         if trt in trt_mmax:
             trt_mmax[trt] = max(trt_mmax[trt], mmax)
