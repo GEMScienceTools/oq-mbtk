@@ -7,8 +7,7 @@ import matplotlib.pyplot as plt
 
 from openquake.mbt.tools.geo import get_idx_points_inside_polygon
 
-from openquake.hazardlib.geo.geodetic import (point_at, 
-											  min_geodetic_distance)
+from openquake.hazardlib.geo.geodetic import (point_at, geodetic_distance)
 
 def coord_generators(mesh):
     for cnt, pnt in enumerate(mesh):
@@ -20,17 +19,17 @@ class Smoothing:
 	"""
 	Class for smoothing a catalogue based on a set of gaussian
 	smoothing kernels
-	
+
 	:parameter catalogue:
 	:parameter mesh:
 		An instance of :class:openquake.hazardlib
 	:parameter cellsize:
 	:parameter completeness:
 	"""
-	
+
 	def __init__(self, catalogue, mesh, cellsize, completeness=None):
 		self.catalogue = catalogue
-		self.mesh = mesh
+        self.mesh = mesh
 		self.cellsize = cellsize
 		self.completeness = completeness
 		self._create_spatial_index()
@@ -41,8 +40,8 @@ class Smoothing:
 		"""
 		# Setting properties
 		p = rtree.index.Property()
-		p.get_overwrite = True       	
-		# Create the spatial index for the grid mesh 
+		p.get_overwrite = True
+		# Create the spatial index for the grid mesh
 		r = rtree.index.Index('./tmp', properties=p)
 		ids = set()
 		for cnt, pnt in enumerate(coord_generators(self.mesh)):
@@ -52,28 +51,29 @@ class Smoothing:
 				ids.add(pnt[0])
 			else:
 				print(pnt[0])
-				raise ValueError('Index already used')	
+				raise ValueError('Index already used')
 		# Create nodes array
-		nodes = numpy.array((len(self.mesh)))		
+		nodes = numpy.array((len(self.mesh)))
 		# Set the index
 		self.rtree = r
-	
+
+
 	def multiple_smoothing(self, params):
 		"""
 		This performs a smoothing using a multiple kernels
 
 		:parameter params:
-			A list of tuples each one containing the name of the 
-			smoothing kernel, the required parameters and a weight. 
-			
+			A list of tuples each one containing the name of the
+			smoothing kernel, the required parameters and a weight.
+
 			The supported smoothin kernels are the following ones:
-		    - 'gaussian' - The required parameters are the radius [km] 
+		    - 'gaussian' - The required parameters are the radius [km]
 		    and the standard deviation.
-		    
+
 		    Note that the sum of weights must be always sum to 1.
-		    
+
 	    :returns:
-			An array 
+			An array
 		"""
 		assert isinstance(params, list)
 		valt = None
@@ -85,7 +85,8 @@ class Smoothing:
 				else:
 					valt += val * param[3]
 		return valt
-	
+
+
 	def gaussian(self, radius, sigma):
 		"""
 		:parameter radius:
@@ -104,20 +105,20 @@ class Smoothing:
 		for lon, lat, mag in zip(self.catalogue.data['longitude'],
 								 self.catalogue.data['latitude'],
 								 self.catalogue.data['magnitude']):
-			# Set the bounding box 
+			# Set the bounding box
 			minlon, minlat = point_at(lon, lat, 225, radius*2**0.5)
-			maxlon, maxlat = point_at(lon, lat, 45, radius*2**0.5) 
+			maxlon, maxlat = point_at(lon, lat, 45, radius*2**0.5)
 			# find nodes within the bounding box
-			idxs = list(set(self.rtree.intersection((minlon, 
-					                                 minlat, 
-			                                         maxlon, 
+			idxs = list(set(self.rtree.intersection((minlon,
+					                                 minlat,
+			                                         maxlon,
 			                                         maxlat))))
 			# Get distances
-			dsts = min_geodetic_distance(lon, lat, 
-			                             self.mesh.lons[idxs],
-			                             self.mesh.lats[idxs])
-			# Find indexes of nodes at a distance lower than the 
-			# radius   
+			dsts = geodetic_distance(lon, lat,
+			                         self.mesh.lons[idxs],
+			                         self.mesh.lats[idxs])
+			# Find indexes of nodes at a distance lower than the
+			# radius
 			jjj = numpy.nonzero(dsts < radius)[0]
 			idxs = numpy.array(idxs)
 			iii = idxs[jjj]
@@ -127,24 +128,24 @@ class Smoothing:
 			normfact = sum(tmpvalues)
 			values[iii] += tmpvalues/normfact
 		return values
-			    
+
 	def get_points_in_polygon(self, polygon):
 
 		minlon = min(polygon.lons)
 		minlat = min(polygon.lats)
 		maxlon = max(polygon.lons)
 		maxlat = max(polygon.lats)
-		
-		idxs = list(self.rtree.intersection((minlon, minlat, 
+
+		idxs = list(self.rtree.intersection((minlon, minlat,
 			                                 maxlon, maxlat)))
 		plons = self.mesh.lons[idxs]
 		plats = self.mesh.lats[idxs]
-		
-		iii = get_idx_points_inside_polygon(plon=plons, 
-											plat=plats, 
-											poly_lon=polygon.lons, 
-											poly_lat=polygon.lats, 
-											pnt_idxs=idxs, 
+
+		iii = get_idx_points_inside_polygon(plon=plons,
+											plat=plats,
+											poly_lon=polygon.lons,
+											poly_lat=polygon.lats,
+											pnt_idxs=idxs,
 											buff_distance=0.)
-											
+
 		return iii
