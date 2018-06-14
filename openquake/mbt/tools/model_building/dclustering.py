@@ -39,7 +39,6 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         output_path = os.path.dirname(catalogue_hmtk_fname)
     tmps = os.path.join(output_path, out_fname)
     out_fname = os.path.abspath(tmps)
-    print(out_fname)
     #
     # Read the catalogue
     cat = _load_catalogue(catalogue_hmtk_fname)

@@ -35,7 +35,9 @@ def _compute_mfd(cat, compl_table, mwid):
 
 
 def plot_mfd(catalogue_fname, grd, label, store, tr_fname,
-             compl_table=None, mwid=0.1, upper_mag=11., title=''):
+             compl_table=None, mwid=0.1, upper_mag=11., title='',
+             xlim=None, ylim=None, figsize=None):
+
     """
     This function plots the incremental and complementary cumulative
     distribution of the earthquakes included in a catalogue file.
@@ -90,7 +92,9 @@ def plot_mfd(catalogue_fname, grd, label, store, tr_fname,
     his, _ = numpy.histogram(cat.data['magnitude'], bins)
     #
     # plotting
-    fig = plt.figure()
+    if figsize is None:
+        figsize = (8,6)
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(1, 1, 1)
     #
     # add cumulative plot
@@ -138,6 +142,12 @@ def plot_mfd(catalogue_fname, grd, label, store, tr_fname,
         ascaled = numpy.log10(10**agr*(tmax-tmin))
         v = 10.**(-bins*bgr+ascaled)
         plt.plot(bins, v, '--g', lw=2)
+    #
+    # set limits
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
     #
     # Set title
     plt.title(title)
