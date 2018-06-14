@@ -3,6 +3,7 @@
 import os
 import h5py
 import numpy
+import copy
 import pickle
 import importlib
 
@@ -12,12 +13,20 @@ from openquake.hmtk.seismicity.selector import CatalogueSelector
 
 
 def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
-              output_path, label, tr_fname):
+              output_path, labels=None, tr_fname=None, subcatalogues=False):
     """
-    :param catalogue_hmtk_fname:
-    :param declustering_meth:
-    :param declustering_params:
+    :param str catalogue_hmtk_fname:
+        Full path to the file containing the initial catalogue
+    :param str declustering_meth:
+        A string indicating the type of declustering 
+    :param dict declustering_params:
+        Parameters required by the declustering algorithm
     :param output_path:
+        Folder where the output catalogue/s will be created 
+    :param labels:
+        It can be a string or a list of strings
+    :param tr_fname:
+        An .hdf5 file containing the TR classification of the catalogue
     """
     #
     # check if the initial catalogue file exists
@@ -25,10 +34,13 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     #
     # Create output filename
     lbl = ''
-    if label is not None:
-        lbl = label
+    if labels is not None:
+        labels = [labels] if isinstance(labels, str) else labels
+        if len(labels) < 2:
+            lbl = labels[0]
+        else:
+            lbl = '-'.join([l for l in labels])
         assert tr_fname is not None
-    sfx = Path(os.path.basename(catalogue_hmtk_fname)).suffix
     ext = '_dec_{:s}.p'.format(lbl)
     #
     # Output filename
@@ -42,21 +54,21 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     #
     # Read the catalogue
     cat = _load_catalogue(catalogue_hmtk_fname)
+    cato = copy.deepcopy(cat)
     #
     # Select earthquakes belonging to a given TR. if combining multiple TRs,
     # use label <TR_1>,<TR_2>AND...
     idx = numpy.full(cat.data['magnitude'].shape, True, dtype=bool)
-    if label is not None and tr_fname is not None:
+    if labels is not None and tr_fname is not None:
         f = h5py.File(tr_fname, 'r')
-        labs = label.split(',')
-        idx = numpy.array([False for i in range(len(f[labs[0]]))])
-        for lab in labs:
+        idx = numpy.array([False for i in range(len(f[labels[0]]))])
+        for lab in labels:
             idx_tmp = f[lab][:]
-            idx[numpy.where(idx_tmp)] = True
+            idx[numpy.where(idx_tmp.flatten())] = True
         f.close()
     #
     # Filter catalogue
-    if label is not None:
+    if labels is not None:
         sel = CatalogueSelector(cat, create_copy=False)
         sel.select_catalogue(idx)
     #
@@ -84,5 +96,31 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     fou = open(out_fname, 'wb')
     pickle.dump(cat, fou)
     fou.close()
+    #
+    #
+    icat = numpy.nonzero(idx)[0]
+    if subcatalogues:
+        f = h5py.File(tr_fname, 'r')
+        for lab in labels:
+            jjj = numpy.where(flag == 0)[0]
+            tmpi = numpy.full((len(idx)), False, dtype=bool)
+            tmpi[icat[jjj.astype(int)]] = True
+            idx_tmp = f[lab][:].flatten()
+            kkk = numpy.logical_and(tmpi, idx_tmp)
+            tsel = CatalogueSelector(cato, create_copy=True)
+            ooo = tsel.select_catalogue(kkk)
+            #
+            # save file
+            ext = '_dec_{:s}.p'.format(lab)
+            #
+            # Output filename
+            tcat_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
+            tmps = os.path.join(output_path, tcat_fname)
+            tcat_fname = os.path.abspath(tmps)
+            #
+            # Dumping data into the pickle file
+            fou = open(tcat_fname, 'wb')
+            pickle.dump(ooo, fou)
+            fou.close()
 
     return out_fname
