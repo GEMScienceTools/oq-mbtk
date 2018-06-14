@@ -25,7 +25,6 @@ def _load_catalogue(catalogue_fname):
         # load hmtk file
         parser = CsvCatalogueParser(catalogue_fname)
         cat = parser.read_file()
-        cat.sort_catalogue_chronologically()
     return cat
 
 

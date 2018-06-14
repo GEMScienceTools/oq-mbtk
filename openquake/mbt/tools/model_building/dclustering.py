@@ -43,7 +43,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     # Read the catalogue
     cat = _load_catalogue(catalogue_hmtk_fname)
     #
-    # Select earthquakes belonging to a given TR. if combining multiple TRs, 
+    # Select earthquakes belonging to a given TR. if combining multiple TRs,
     # use label <TR_1>,<TR_2>AND...
     idx = numpy.full(cat.data['magnitude'].shape, True, dtype=bool)
     if label is not None and tr_fname is not None:

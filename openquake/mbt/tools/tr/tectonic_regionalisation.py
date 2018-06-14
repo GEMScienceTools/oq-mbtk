@@ -43,10 +43,11 @@ def set_crustal(cat, crust, sidx, delta=0):
                                               cat.data['latitude'],
                                               cat.data['depth'])):
         #
-        # Find the nearest cell
+        # Find the nearest cell in the crustal model
         iii = list(sidx.nearest((lon, lat, lon, lat), 1))
         #
-        #
+        # Set the crustal earthquakes
+        print(crust[iii[0], 2]+float(delta), dep)
         if crust[iii[0], 2]+float(delta) > dep:
             treg[idx] = True
         data.append([dep, crust[iii[0], 2]])

@@ -1,12 +1,12 @@
 
 import os
-import sys
 import copy
 import nbformat
 
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbconvert.preprocessors.execute import CellExecutionError
-from nbconvert.exporters import HTMLExporter, export, SlidesExporter
+from nbconvert.exporters import HTMLExporter, export
+
 
 def run(notebook_filename, inps, reports_folder=None, key=None):
     """
@@ -53,13 +53,14 @@ def run(notebook_filename, inps, reports_folder=None, key=None):
             node['cells'] = ocells
             #
             # creating the exporter
-            html_exporter = HTMLExporter()
+            #html_exporter = HTMLExporter()
+            html_exporter = HTMLExporter(html_exporter='nbextensions.tpl')
             shtml = export(html_exporter, node)
             #
             #
             filename = os.path.join(reports_folder, '%s.html' % key)
             with open(filename, 'w') as f:
                 f.write(shtml[0])
-            print ('Report in {:s}'.format(filename))
+            print('Report in {:s}'.format(filename))
             ok = True
     return ok

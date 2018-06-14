@@ -20,15 +20,12 @@ def get_catalogue(catalogue_filename, force_csv=False):
     if (ext == '.csv' or ext == '.hmtk') or (force_csv):
         parser = CsvCatalogueParser(catalogue_filename)
         catalogue = parser.read_file()
-        catalogue.sort_catalogue_chronologically()
         pickle.dump(catalogue, open(cat_pickle_filename, 'wb'))
     elif ext == '.pkl' or ext == '.p':
         catalogue = pickle.load(open(catalogue_filename, 'rb'))
-        catalogue.sort_catalogue_chronologically()
     elif ext == '.ndk':
         parser = ParseNDKtoGCMT(catalogue_filename)
         catalogue = parser.read_file()
-        catalogue.sort_catalogue_chronologically()
         pickle.dump(catalogue, open(cat_pickle_filename, 'wb'))
     else:
         raise ValueError('File with an unkown extension')
