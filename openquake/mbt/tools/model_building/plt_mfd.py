@@ -37,6 +37,7 @@ def _compute_mfd(cat, compl_table, mwid):
 def plot_mfd(catalogue_fname, grd, label, store, tr_fname,
              compl_table=None, mwid=0.1, upper_mag=11., title='',
              xlim=None, ylim=None, figsize=None):
+
     """
     This function plots the incremental and complementary cumulative
     distribution of the earthquakes included in a catalogue file.

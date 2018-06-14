@@ -155,7 +155,6 @@ class SetSubductionEarthquakes:
         # bounding box
         sel = CatalogueSelector(catalogue, create_copy=True)
         cat = sel.select_catalogue(flags)
-        #cat.sort_catalogue_chronologically()
         self.cat = cat
         #
         # if none of the earthquakes in the catalogue is in the bounding box
