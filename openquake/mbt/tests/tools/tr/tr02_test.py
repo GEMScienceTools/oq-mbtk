@@ -31,8 +31,10 @@ class TrTestCase02(unittest.TestCase):
         """
         Testing TR - Case 02 - Crustal
         """
-        ini_fname = os.path.join(BASE_PATH, '../../data/tr02/cls_v2_1500_2017.ini')
-        treg_filename = os.path.join(BASE_PATH, '../../tmp/test02.hdf5')
+        tmps = '../../data/tr02/cls_v2_1500_2017.ini'
+        ini_fname = os.path.join(BASE_PATH, tmps)
+        tmps = '../../tmp/SARA_V2_1500_2017_nc.hdf5'
+        treg_filename = os.path.join(BASE_PATH, tmps)
         #
         # classify
         classify(ini_fname, True, self.root_folder)
