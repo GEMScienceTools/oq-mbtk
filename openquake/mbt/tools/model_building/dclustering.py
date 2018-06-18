@@ -56,8 +56,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         assert os.path.exists(output_path)
     else:
         output_path = os.path.dirname(catalogue_hmtk_fname)
-    tmps = os.path.join(output_path, out_fname)
-    out_fname = os.path.abspath(tmps)
+    out_fname = os.path.abspath(os.path.join(output_path, out_fname))
     #
     # Read the catalogue
     cat = _load_catalogue(catalogue_hmtk_fname)
@@ -77,6 +76,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     #
     # Filter catalogue
     if labels is not None:
+        print('Filter catalogue')
         sel = CatalogueSelector(cat, create_copy=False)
         sel.select_catalogue(idx)
     #
@@ -103,22 +103,24 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         catt.select_catalogue_events(numpy.where(flag == 1)[0])
         ext = '_dec_af_{:s}{:s}.{:s}'.format(lbl, olab, format)
         outfa_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
+        outfa_fname = os.path.abspath(os.path.join(output_path, outfa_fname))
     #
     # Select mainshocks
     cat.select_catalogue_events(numpy.where(flag == 0)[0])
+    print(len(cat.data['magnitude']))
     #
     # Save output
     if format == 'csv':
         cat.write_catalogue(out_fname)
         if save_af:
-            cato.write_catalogue(outfa_fname)
+            catt.write_catalogue(outfa_fname)
     elif format == 'pkl':
         fou = open(out_fname, 'wb')
         pickle.dump(cat, fou)
         fou.close()
         if save_af:
             fou = open(outfa_fname, 'wb')
-            pickle.dump(cato, fou)
+            pickle.dump(catt, fou)
             fou.close()
     #
     # Create subcatalogues
