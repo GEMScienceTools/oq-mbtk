@@ -41,6 +41,7 @@ setup(
         'jupyter_client >= 5.0.0',
         'ipykernel >= 4.8.0',
         'ipython >= 6.2.0',
+        'notebook >= 5.0.0',
         'nbformat',
         'GDAL',
         'nbconvert',
