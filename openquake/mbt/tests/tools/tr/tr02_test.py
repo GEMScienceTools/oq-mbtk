@@ -29,7 +29,7 @@ class TrTestCase02(unittest.TestCase):
 
     def testcase01(self):
         """
-        Testing TR - Case 02 - Crustal
+        Testing TR - Case 02 - Crustal and Subduction
         """
         tmps = '../../data/tr02/cls_v2_1500_2017.ini'
         ini_fname = os.path.join(BASE_PATH, tmps)
@@ -41,7 +41,11 @@ class TrTestCase02(unittest.TestCase):
         f = h5py.File(treg_filename, 'r')
         #
         # testing crustal active
-        expected = [1, 1, 0, 0, 0, 0]
+        expected = [1, 1, 0, 0, 0, 0, 0]
         numpy.testing.assert_array_equal(f['crustal'][:], expected)
+        #
+        # testing subduction interface
+        expected = [0, 0, 0, 0, 0, 0, 1]
+        numpy.testing.assert_array_equal(f['interface_1'][:], expected)
         #
         f.close()
