@@ -7,17 +7,19 @@ import matplotlib.pyplot as plt
 import pickle
 import logging
 
+from scipy.interpolate import Rbf
 from scipy.interpolate import griddata, interp2d
 from openquake.mbt.tools.tr.catalogue import get_catalogue
+from openquake.mbt.tools.geo import get_idx_points_inside_polygon
 from openquake.mbt.tools.tr.catalogue_hmtk import (get_rtree_index,
-                                           get_distances_from_surface)
+                                                   get_distances_from_surface)
 from openquake.sub.utils import (_read_edges,
                                  build_complex_surface_from_edges,
                                  plot_complex_surface)
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
 #
-# selection buffer
+# Buffer around the brounding box
 DELTA = 0.3
 
 
@@ -27,20 +29,35 @@ class SetSubductionEarthquakes:
     interface or inslab).
 
     :param str label:
+        Flag used to classify the earthquakes
     :param str treg_filename:
+        Name of the .hdf5 containing the tectonic regionalisation
     :param str distance_folder:
+        Folder where to store the epicenter-surface files
     :param str edges_folder:
+        Folder containing the edges specifying the geometry of the surface
     :param float distance_buffer_below:
+        Distance [km] below the fault surface used to select earthquakes
     :param float distance_buffer_above:
+        Distance [km] above the fault surface used to select earthquakes
     :param str catalogue_filename:
-    :param str cat_pickle_filename:
+        Name of the file containing the earthquakes to be classified
+    :param str log_fname:
+        Name of the .log file
+    :param low_year:
+        Lowest year selected
+    :param upp_year:
+        Largest year selected
+    :param low_mag:
+        Lowest magnitude selected
+    :param upp_mag:
+        Largest magnitude selected
     """
 
-    def __init__(self, label, treg_filename, distance_folder,
-                 edges_folder, distance_buffer_below,
-                 distance_buffer_above, lower_depth,
-                 catalogue_filename, log_fname=None):
-
+    def __init__(self, label, treg_filename, distance_folder, edges_folder,
+                 distance_buffer_below, distance_buffer_above, lower_depth,
+                 catalogue_filename, log_fname=None, low_year=-10000,
+                 upp_year=+10000, low_mag=-5., upp_mag=15.):
         self.label = label
         self.treg_filename = treg_filename
         self.distance_folder = distance_folder
@@ -50,6 +67,10 @@ class SetSubductionEarthquakes:
         self.catalogue_filename = catalogue_filename
         self.lower_depth = lower_depth
         self.log_fname = log_fname
+        self.low_year = low_year
+        self.upp_year = upp_year
+        self.low_mag = float(low_mag)
+        self.upp_mag = float(upp_mag)
 
     def classify(self, compute_distances, remove_from):
         """
@@ -113,7 +134,8 @@ class SetSubductionEarthquakes:
         ddd = np.array([mesh.lons.flatten().T,
                         mesh.lats.flatten().T,
                         mesh.depths.flatten()]).T
-        grp.create_dataset('mesh', data=ddd)
+        if self.label not in flog.keys():
+            grp.create_dataset('mesh', data=ddd)
         #
         # set bounding box of the subduction surface
         min_lo_sub = np.amin(mesh.lons)
@@ -129,35 +151,43 @@ class SetSubductionEarthquakes:
                                               max_la_sub+DELTA,
                                               lower_depth))))
         #
-        #
-        from openquake.mbt.tools.geo import get_idx_points_inside_polygon
+        # Select earthquakes within the bounding box of the surface
+        # projection of the fault
         sidx = get_idx_points_inside_polygon(catalogue.data['longitude'][idxs],
                                              catalogue.data['latitude'][idxs],
                                              plo, pla,
                                              idxs, buff_distance=5000.)
         #
-        # take only points inside the surface projection of the mesh
-        idxs = sidx
-        #
-        # store indexes of selected earthquakes
+        # Select earthuakes and store indexes of selected ones
         ccc = []
-        for idx in idxs:
-            ccc.append([catalogue.data['longitude'][idx],
-                        catalogue.data['latitude'][idx],
-                        catalogue.data['depth'][idx]])
-        grp.create_dataset('cat', data=np.array(ccc))
+        idxs = []
+        for idx in sidx:
+            #
+            # Preselection based on magitude and time of occurrence
+            if ((catalogue.data['magnitude'][idx] >= self.low_mag) &
+                    (catalogue.data['magnitude'][idx] <= self.upp_mag) &
+                    (catalogue.data['year'][idx] >= self.low_year) &
+                    (catalogue.data['year'][idx] <= self.upp_year)):
+                idxs.append(idx)
+                #
+                # Update the log file
+                ccc.append([catalogue.data['longitude'][idx],
+                            catalogue.data['latitude'][idx],
+                            catalogue.data['depth'][idx]])
+        if self.label not in flog.keys():
+            grp.create_dataset('cat', data=np.array(ccc))
         #
-        # prepare array for the selection of the catalogue
+        # Prepare array for the selection of the catalogue
         flags = np.full((len(catalogue.data['longitude'])), False, dtype=bool)
         flags[idxs] = True
         #
-        # create a selector for the catalogue and select earthquakes within
+        # Create a selector for the catalogue and select earthquakes within
         # bounding box
         sel = CatalogueSelector(catalogue, create_copy=True)
         cat = sel.select_catalogue(flags)
         self.cat = cat
         #
-        # if none of the earthquakes in the catalogue is in the bounding box
+        # If none of the earthquakes in the catalogue is in the bounding box
         # used for the selection we stop the processing
         if len(cat.data['longitude']) < 1:
             f = h5py.File(treg_filename, "a")
@@ -205,7 +235,6 @@ class SetSubductionEarthquakes:
         #                      method='cubic')
         #
         # interpolation
-        from scipy.interpolate import Rbf
         rbfi = Rbf(data[:, 0], data[:, 1], values)
         sub_depths = rbfi(points[:, 0], points[:, 1])
         #
@@ -264,7 +293,8 @@ class SetSubductionEarthquakes:
         tl['idx'] = idxa
         #
         # store log data
-        grp.create_dataset('data', data=np.array(tl))
+        if self.label not in flog.keys():
+            grp.create_dataset('data', data=np.array(tl))
         #
         # updating the selection array
         for uuu, iii in enumerate(list(idxa)):
@@ -292,6 +322,8 @@ class SetSubductionEarthquakes:
                 f[tkey] = old
                 fmt = '     after: {:d}'
                 logging.info(fmt.format(len(np.nonzero(old)[0])))
+        #
+        # Removing the old classification and adding the new one
         if self.label in f.keys():
             del f[self.label]
         f[self.label] = treg

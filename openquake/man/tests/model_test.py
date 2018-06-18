@@ -68,6 +68,11 @@ class TestSplitSources(unittest.TestCase):
 
     def test02(self):
         srcl = _split_point_source(self.src2)
-        com = numpy.array(self.src2.mfd.occurrence_rates)
-        exp = numpy.array([2.1, 1.4, 0.7])
+        #
+        com = numpy.array(srcl[0].mfd.occurrence_rates)
+        exp = numpy.array(self.src2.mfd.occurrence_rates)*0.7
+        numpy.testing.assert_array_equal(com, exp)
+        #
+        com = numpy.array(srcl[1].mfd.occurrence_rates)
+        exp = numpy.array(self.src2.mfd.occurrence_rates)*0.3
         numpy.testing.assert_array_equal(com, exp)
