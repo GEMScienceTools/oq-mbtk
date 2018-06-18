@@ -105,24 +105,20 @@ def classify(ini_fname, compute_distances, rf):
                 lower_depth = float(config[key]['lower_depth'])
             #
             # Selecting earthquakes within a time period
+            low_year = -10000
             if 'low_year' in config[key]:
                 low_year = float(config[key]['low_year'])
-            else:
-                low_year = -10000
+            upp_year = 10000
             if 'upp_year' in config[key]:
                 upp_year = float(config[key]['upp_year'])
-            else:
-                upp_year = 10000
             #
             # Selecting earthquakes within a magnitude range
+            low_mag = -5
             if 'low_mag' in config[key]:
                 low_mag = float(config[key]['low_mag'])
-            else:
-                low_year = -5
+            upp_mag = 15
             if 'upp_mag' in config[key]:
                 upp_mag = float(config[key]['upp_mag'])
-            else:
-                upp_mag = 15
             #
             #
             sse = SetSubductionEarthquakes(trlab,

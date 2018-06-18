@@ -134,7 +134,8 @@ class SetSubductionEarthquakes:
         ddd = np.array([mesh.lons.flatten().T,
                         mesh.lats.flatten().T,
                         mesh.depths.flatten()]).T
-        grp.create_dataset('mesh', data=ddd)
+        if self.label not in flog.keys():
+            grp.create_dataset('mesh', data=ddd)
         #
         # set bounding box of the subduction surface
         min_lo_sub = np.amin(mesh.lons)
@@ -173,7 +174,8 @@ class SetSubductionEarthquakes:
                 ccc.append([catalogue.data['longitude'][idx],
                             catalogue.data['latitude'][idx],
                             catalogue.data['depth'][idx]])
-        grp.create_dataset('cat', data=np.array(ccc))
+        if self.label not in flog.keys():
+            grp.create_dataset('cat', data=np.array(ccc))
         #
         # Prepare array for the selection of the catalogue
         flags = np.full((len(catalogue.data['longitude'])), False, dtype=bool)
@@ -291,7 +293,8 @@ class SetSubductionEarthquakes:
         tl['idx'] = idxa
         #
         # store log data
-        grp.create_dataset('data', data=np.array(tl))
+        if self.label not in flog.keys():
+            grp.create_dataset('data', data=np.array(tl))
         #
         # updating the selection array
         for uuu, iii in enumerate(list(idxa)):
@@ -319,6 +322,8 @@ class SetSubductionEarthquakes:
                 f[tkey] = old
                 fmt = '     after: {:d}'
                 logging.info(fmt.format(len(np.nonzero(old)[0])))
+        #
+        # Removing the old classification and adding the new one
         if self.label in f.keys():
             del f[self.label]
         f[self.label] = treg
