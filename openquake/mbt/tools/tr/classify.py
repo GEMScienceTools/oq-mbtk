@@ -11,8 +11,10 @@ import configparser
 from openquake.baselib import sap
 from openquake.mbt.tools.tr.catalogue import get_catalogue
 
-from openquake.mbt.tools.tr.set_crustal_earthquakes import SetCrustalEarthquakes
-from openquake.mbt.tools.tr.set_subduction_earthquakes import SetSubductionEarthquakes
+from openquake.mbt.tools.tr.set_crustal_earthquakes import \
+    SetCrustalEarthquakes
+from openquake.mbt.tools.tr.set_subduction_earthquakes import \
+    SetSubductionEarthquakes
 
 logging.basicConfig(filename='classify.log', level=logging.DEBUG)
 
@@ -76,9 +78,19 @@ def classify(ini_fname, compute_distances, rf):
     remove_from = []
     for key in priorityl:
         #
+        # Set TR label
+        if 'label' in config[key]:
+            trlab = config[key]['label']
+        else:
+            trlab = key
+        #
         # subduction earthquakes
         if re.search('^slab', key) or re.search('^int', key):
+            #
+            # Info
             logger.info('Classifying: {:s}'.format(key))
+            #
+            # Reading parameters
             edges_folder = os.path.join(rf, config[key]['folder'])
             distance_buffer_below = None
             if 'distance_buffer_below' in config[key]:
@@ -92,8 +104,24 @@ def classify(ini_fname, compute_distances, rf):
             if 'lower_depth' in config[key]:
                 lower_depth = float(config[key]['lower_depth'])
             #
+            # Selecting earthquakes within a time period
+            low_year = -10000
+            if 'low_year' in config[key]:
+                low_year = float(config[key]['low_year'])
+            upp_year = 10000
+            if 'upp_year' in config[key]:
+                upp_year = float(config[key]['upp_year'])
             #
-            sse = SetSubductionEarthquakes(key,
+            # Selecting earthquakes within a magnitude range
+            low_mag = -5
+            if 'low_mag' in config[key]:
+                low_mag = float(config[key]['low_mag'])
+            upp_mag = 15
+            if 'upp_mag' in config[key]:
+                upp_mag = float(config[key]['upp_mag'])
+            #
+            #
+            sse = SetSubductionEarthquakes(trlab,
                                            treg_filename,
                                            distance_folder,
                                            edges_folder,
@@ -101,7 +129,11 @@ def classify(ini_fname, compute_distances, rf):
                                            distance_buffer_above,
                                            lower_depth,
                                            catalogue_fname,
-                                           log_fname)
+                                           log_fname,
+                                           low_year,
+                                           upp_year,
+                                           low_mag,
+                                           upp_mag)
             sse.classify(compute_distances, remove_from)
         #
         # crustal earthquakes
@@ -128,7 +160,7 @@ def classify(ini_fname, compute_distances, rf):
                                         catalogue_fname,
                                         treg_filename,
                                         distance_delta,
-                                        label=key,
+                                        label=trlab,
                                         shapefile=shapefile,
                                         log_fname=log_fname)
             sce.classify(remove_from)
@@ -137,9 +169,9 @@ def classify(ini_fname, compute_distances, rf):
         else:
             raise ValueError('Undefined option')
         #
-        #
-        remove_from.append(key)
-
+        # Updating the list of TR with lower priority
+        if trlab not in remove_from:
+            remove_from.append(trlab)
     #
     # reading filename
     c = get_catalogue(catalogue_fname)

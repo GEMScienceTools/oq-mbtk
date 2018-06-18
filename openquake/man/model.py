@@ -97,7 +97,7 @@ def _get_model_info(srcl):
         typ = type(src).__name__
         print(typ)
         if typ == 'NonParametricSeismicSource':
-            mmin,mmax = _get_mmin_mmax_nonpar(src)
+            mmin, mmax = _get_mmin_mmax_nonpar(src)
         else:
             mmin, mmax = src.mfd.get_min_max_mag()
         # Mmax per tectonic region

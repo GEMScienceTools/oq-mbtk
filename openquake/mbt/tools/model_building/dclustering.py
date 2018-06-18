@@ -12,13 +12,10 @@ from pathlib import Path
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
-import openquake.hmtk.seismicity
-
-#from openquake.hmtk.seismicity.declusterer.distance_time_windows import GardnerKnopoffWindow
 
 def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
               output_path, labels=None, tr_fname=None, subcatalogues=False,
-              format='csv'):
+              format='csv', olab='', save_af=False):
     """
     :param str catalogue_hmtk_fname:
         Full path to the file containing the initial catalogue
@@ -34,6 +31,8 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         An .hdf5 file containing the TR classification of the catalogue
     :param str format:
         Can be either 'csv' or 'pkl'
+    :param str olab:
+        Optional label for output catalogues
     """
     #
     # check if the initial catalogue file exists
@@ -49,7 +48,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             lbl = '-'.join([l for l in labels])
         assert tr_fname is not None
         assert os.path.exists(tr_fname)
-    ext = '_dec_{:s}.{:s}'.format(lbl, format)
+    ext = '_dec_{:s}{:s}.{:s}'.format(lbl, olab, format)
     #
     # Output filename
     out_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
@@ -82,7 +81,6 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         sel.select_catalogue(idx)
     #
     # Declustering parameters
-    # config = {'time_distance_window': distance_time_wind, 'fs_time_prop': .9}
     config = declustering_params
     #
     # Create declusterer
@@ -97,20 +95,31 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         config['time_distance_window'] = my_class()
     #
     # Declustering
-    #distance_time_wind = GardnerKnopoffWindow()
-    #config = {'time_distance_window': distance_time_wind, 'fs_time_prop': .9}
     vcl, flag = declusterer.decluster(cat, config)
     #
-    # select mainshocks
+    # Save foreshocks and aftershocks
+    if save_af:
+        catt = copy.deepcopy(cat)
+        catt.select_catalogue_events(numpy.where(flag == 1)[0])
+        ext = '_dec_af_{:s}{:s}.{:s}'.format(lbl, olab, format)
+        outfa_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
+    #
+    # Select mainshocks
     cat.select_catalogue_events(numpy.where(flag == 0)[0])
     #
     # Save output
     if format == 'csv':
         cat.write_catalogue(out_fname)
+        if save_af:
+            cato.write_catalogue(outfa_fname)
     elif format == 'pkl':
         fou = open(out_fname, 'wb')
         pickle.dump(cat, fou)
         fou.close()
+        if save_af:
+            fou = open(outfa_fname, 'wb')
+            pickle.dump(cato, fou)
+            fou.close()
     #
     # Create subcatalogues
     icat = numpy.nonzero(idx)[0]
@@ -124,28 +133,61 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             tmpi[icat[jjj.astype(int)]] = True
             idx_tmp = f[lab][:].flatten()
             kkk = numpy.logical_and(tmpi, idx_tmp)
+            if save_af:
+                jjj = numpy.where(flag == 1)[0]
+                tmpi = numpy.full((len(idx)), False, dtype=bool)
+                tmpi[icat[jjj.astype(int)]] = True
+                idx_tmp = f[lab][:].flatten()
+                jjj = numpy.logical_and(tmpi, idx_tmp)
+            #
+            # Create output catalogue
             tsel = CatalogueSelector(cato, create_copy=True)
             ooo = tsel.select_catalogue(kkk)
+            if save_af:
+                aaa = tsel.select_catalogue(jjj)
             #
-            # save file
-            ext = '_dec_{:s}.{:s}'.format(lab, format)
+            # Info
+            tmps = 'Cat: {:s}\n'
+            tmps += '    Earthquakes: {:5d} Mainshocks {:5d} {:4.1f}%'
+            pct = sum(kkk)/sum(idx_tmp)*100.
+            tmpr = '    mmin: {:5.2f} mmax {:5.2f}'
+            logging.info(tmps.format(lab, sum(idx_tmp), sum(kkk), pct))
+            print(tmps.format(lab, sum(idx_tmp), sum(kkk), pct))
+            print(tmpr.format(min(ooo.data['magnitude']),
+                              max(ooo.data['magnitude'])))
             #
             # Output filename
+            ext = '_dec_{:s}{:s}.{:s}'.format(lab, olab, format)
             tcat_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
             tmps = os.path.join(output_path, tcat_fname)
             tcat_fname = os.path.abspath(tmps)
+            if save_af:
+                ext = '_dec_af_{:s}{:s}.{:s}'.format(lab, olab, format)
+                tcataf_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
+                tmps = os.path.join(output_path, tcataf_fname)
+                tcataf_fname = os.path.abspath(tmps)
             #
             # Dumping data into the pickle file
             if ooo is not None:
                 if format == 'csv':
                     ooo.write_catalogue(tcat_fname)
+                    if save_af:
+                        aaa.write_catalogue(tcataf_fname)
                 elif format == 'pkl':
                     fou = open(tcat_fname, 'wb')
                     pickle.dump(ooo, fou)
                     fou.close()
+                    if save_af:
+                        fou = open(tcataf_fname, 'wb')
+                        pickle.dump(aaa, fou)
+                        fou.close()
             else:
                 tstr = 'Catalogue for region {:s} is empty'.format(lab)
                 logging.warning(tstr)
         f.close()
 
-    return out_fname
+    outl = [out_fname]
+    if save_af:
+        outl.append(outfa_fname)
+
+    return [out_fname]
