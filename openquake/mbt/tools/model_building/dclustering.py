@@ -56,22 +56,24 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         assert os.path.exists(output_path)
     else:
         output_path = os.path.dirname(catalogue_hmtk_fname)
-    tmps = os.path.join(output_path, out_fname)
-    out_fname = os.path.abspath(tmps)
+    out_fname = os.path.abspath(os.path.join(output_path, out_fname))
     #
     # Read the catalogue
     cat = _load_catalogue(catalogue_hmtk_fname)
     cato = copy.deepcopy(cat)
     #
-    # Select earthquakes belonging to a given TR. if combining multiple TRs,
-    # use label <TR_1>,<TR_2>AND...
+    # Select earthquakes belonging to a given TR. When necessary combining
+    # multiple TRs, use label <TR_1>,<TR_2>AND...
     idx = numpy.full(cat.data['magnitude'].shape, True, dtype=bool)
+    sumchk = 0
     if labels is not None and tr_fname is not None:
         f = h5py.File(tr_fname, 'r')
         idx = numpy.array([False for i in range(len(f[labels[0]]))])
         for lab in labels:
             idx_tmp = f[lab][:]
             idx[numpy.where(idx_tmp.flatten())] = True
+            print(lab, sum(idx_tmp.flatten()))
+            sumchk += sum(idx_tmp.flatten())
         f.close()
     idx = idx.flatten()
     #
@@ -79,6 +81,8 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     if labels is not None:
         sel = CatalogueSelector(cat, create_copy=False)
         sel.select_catalogue(idx)
+    num_eqks_sub = len(cat.data['magnitude'])
+    assert sumchk == num_eqks_sub
     #
     # Declustering parameters
     config = declustering_params
@@ -98,27 +102,35 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     vcl, flag = declusterer.decluster(cat, config)
     #
     # Save foreshocks and aftershocks
+    catt = copy.deepcopy(cat)
+    catt.select_catalogue_events(numpy.where(flag != 0)[0])
     if save_af:
-        catt = copy.deepcopy(cat)
-        catt.select_catalogue_events(numpy.where(flag == 1)[0])
         ext = '_dec_af_{:s}{:s}.{:s}'.format(lbl, olab, format)
         outfa_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
+        outfa_fname = os.path.abspath(os.path.join(output_path, outfa_fname))
     #
     # Select mainshocks
     cat.select_catalogue_events(numpy.where(flag == 0)[0])
+    tmps = 'Number of earthquakes in the original subcatalogue: {:d}'
+    print('Total eqks       : {:d}'.format(num_eqks_sub))
+    num_main = len(cat.data['magnitude'])
+    num_foaf = len(catt.data['magnitude'])
+    print('Mainshocks       : {:d}'.format(num_main))
+    print('Fore/Aftershocks : {:d}'.format(num_foaf))
+    assert num_main + num_foaf == num_eqks_sub
     #
     # Save output
     if format == 'csv':
         cat.write_catalogue(out_fname)
         if save_af:
-            cato.write_catalogue(outfa_fname)
+            catt.write_catalogue(outfa_fname)
     elif format == 'pkl':
         fou = open(out_fname, 'wb')
         pickle.dump(cat, fou)
         fou.close()
         if save_af:
             fou = open(outfa_fname, 'wb')
-            pickle.dump(cato, fou)
+            pickle.dump(catt, fou)
             fou.close()
     #
     # Create subcatalogues
@@ -134,7 +146,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             idx_tmp = f[lab][:].flatten()
             kkk = numpy.logical_and(tmpi, idx_tmp)
             if save_af:
-                jjj = numpy.where(flag == 1)[0]
+                jjj = numpy.where(flag != 1)[0]
                 tmpi = numpy.full((len(idx)), False, dtype=bool)
                 tmpi[icat[jjj.astype(int)]] = True
                 idx_tmp = f[lab][:].flatten()
