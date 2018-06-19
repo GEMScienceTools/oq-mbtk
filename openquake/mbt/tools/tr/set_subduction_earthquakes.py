@@ -1,5 +1,4 @@
 # coding: utf-8
-
 import os
 import h5py
 import numpy as np
@@ -104,7 +103,11 @@ class SetSubductionEarthquakes:
         # read the catalogue
         catalogue = get_catalogue(catalogue_filename)
         neq = len(catalogue.data['longitude'])
-        treg = np.full((neq), False, dtype=bool)
+        f = h5py.File(treg_filename, "a")
+        if self.label in f.keys():
+            treg = f[self.label]
+        else:
+            treg = np.full((neq), False, dtype=bool)
         #
         # create the spatial index
         sidx = get_rtree_index(catalogue)
@@ -231,8 +234,8 @@ class SetSubductionEarthquakes:
                                                       cat.data['latitude'])])
         #
         # compute the depth of the top of the slab at every epicenter
-        # sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
-        #                      method='cubic')
+    #    sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
+    #                          method='cubic')
         #
         # interpolation
         rbfi = Rbf(data[:, 0], data[:, 1], values)
