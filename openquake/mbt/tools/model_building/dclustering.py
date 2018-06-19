@@ -78,11 +78,12 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     idx = idx.flatten()
     #
     # Filter catalogue
+    num_eqks_sub = len(cat.data['magnitude'])
     if labels is not None:
         sel = CatalogueSelector(cat, create_copy=False)
         sel.select_catalogue(idx)
-    num_eqks_sub = len(cat.data['magnitude'])
-    assert sumchk == num_eqks_sub
+        num_eqks_sub = len(cat.data['magnitude'])
+        assert sumchk == num_eqks_sub
     #
     # Declustering parameters
     config = declustering_params
