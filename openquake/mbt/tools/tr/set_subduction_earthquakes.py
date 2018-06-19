@@ -234,12 +234,12 @@ class SetSubductionEarthquakes:
                                                       cat.data['latitude'])])
         #
         # compute the depth of the top of the slab at every epicenter
-        sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
-                              method='cubic')
+    #    sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
+    #                          method='cubic')
         #
         # interpolation
-    #    rbfi = Rbf(data[:, 0], data[:, 1], values)
-    #    sub_depths = rbfi(points[:, 0], points[:, 1])
+        rbfi = Rbf(data[:, 0], data[:, 1], values)
+        sub_depths = rbfi(points[:, 0], points[:, 1])
         #
         # saving the distances to a file
         tmps = 'vert_dist_to_slab_{:s}.pkl'.format(self.label)
