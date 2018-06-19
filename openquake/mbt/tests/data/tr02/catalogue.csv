@@ -6,3 +6,4 @@ eventID,Identifier,year,month,day,hour,minute,second,latitude,longitude,depth,Se
 5,aa5,1920,11,24,11,51,,-14.3,-64.2,318,,,,,,SARA_H_1964,SARAH_0781,7.11,0.2,Mw,xx
 6,aa6,1919,9,16,11,48,,-15.2,-64,493,,,,,,SARA_H_1964,SARAH_0753,6.32,0.2,Mw,xx
 1,aa7,1590,0,0,,,,-39.8,-73.2,0,,,,,,SARA_H_1900,SARAH_0030,8.00,0.6,Mw,xx
+8,aa7,1960,5,22,10,30,44.35,-37.775,-73.017,25,,,,,5.8,ISC-GEM,879127,7.14,0.2,Mw,xx
