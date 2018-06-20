@@ -14,10 +14,7 @@ def change(cat_pickle_filename,treg,eqlist):
     eqlist - csv file with two columns format <eventID>,<target label>
     """
    
-    if overwrite:
-        treg2 = treg
-    else:
-        treg2 = treg.replace('.hdf5','_up.hdf5')
+    treg2 = treg.replace('.hdf5','_up.hdf5')
     cat = pickle.load(open(cat_pickle_filename, 'rb'))
     dct = {key:idx for idx, key in enumerate(cat.data['eventID'])}
     
