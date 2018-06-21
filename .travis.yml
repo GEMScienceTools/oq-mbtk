@@ -19,4 +19,4 @@ install:
   - pip install -e .
 
 script:
-  - nosetests -vsx 
+  - nosetests -vsx -a '!slow'
