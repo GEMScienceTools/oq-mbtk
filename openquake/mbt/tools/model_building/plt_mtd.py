@@ -5,6 +5,7 @@ import numpy
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+from openquake.hmtk.seismicity.catalogue import Catalogue
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.mbt.tools.model_building.plt_tools import (_load_catalogue,
                                                   _get_extremes)
@@ -25,7 +26,12 @@ def plot_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
         pmaxt = int(pmaxt)
     #
     # loading catalogue
-    cat = _load_catalogue(catalogue_fname)
+    if isinstance(catalogue_fname, str):
+        cat = _load_catalogue(catalogue_fname)
+    elif isinstance(catalogue_fname, Catalogue):
+        cat = catalogue_fname
+    else:
+        raise ValueError('Unknown instance')
     #
     # select earthquakes belonging to a given TR
     idx = numpy.full(cat.data['magnitude'].shape, True, dtype=bool)
