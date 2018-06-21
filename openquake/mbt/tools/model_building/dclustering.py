@@ -147,7 +147,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             idx_tmp = f[lab][:].flatten()
             kkk = numpy.logical_and(tmpi, idx_tmp)
             if save_af:
-                jjj = numpy.where(flag != 1)[0]
+                jjj = numpy.where(flag != 0)[0]
                 tmpi = numpy.full((len(idx)), False, dtype=bool)
                 tmpi[icat[jjj.astype(int)]] = True
                 idx_tmp = f[lab][:].flatten()
