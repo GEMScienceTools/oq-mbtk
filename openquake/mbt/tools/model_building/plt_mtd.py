@@ -10,9 +10,26 @@ from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.mbt.tools.model_building.plt_tools import (_load_catalogue,
                                                   _get_extremes)
 
-
 def plot_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
-		     twid=20., pmint=None, pmaxt=None):
+             twid=20., pmint=None, pmaxt=None):
+
+    fig = create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid,
+	             twid, pmint, pmaxt)
+    #
+    # showing figure
+    if store is not None:
+        lbl = ''
+        ext = 'png'
+        if label is not None:
+            lbl = label
+        figure_fname = 'fig_mtd_{:s}.{:s}'.format(lbl, ext)
+        plt.savefig(figure_fname, format=ext)
+    else:
+        plt.show()
+
+
+def create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
+	       twid=20., pmint=None, pmaxt=None):
     """
     :param catalogue_fname:
     :param label:
@@ -100,14 +117,5 @@ def plot_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
     if label is not None:
         plt.title('label: {:s}'.format(label))
     plt.grid(linestyle='-')
-    #
-    # showing figure
-    if store is not None:
-        lbl = ''
-        ext = 'png'
-        if label is not None:
-            lbl = label
-        figure_fname = 'fig_mtd_{:s}.{:s}'.format(lbl, ext)
-        plt.savefig(figure_fname, format=ext)
-    else:
-        plt.show()
+
+    return fig
