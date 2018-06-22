@@ -4,6 +4,7 @@ import unittest
 from openquake.mbt.tools.faults import rates_for_double_truncated_mfd
 from openquake.mbt.tools.mfd import mag_to_mo
 
+
 class RatesDoubleTruncatedFromSlipTestCase(unittest.TestCase):
     """
     This class tests the calculation of occurrence rates for a discrete double
@@ -16,9 +17,8 @@ class RatesDoubleTruncatedFromSlipTestCase(unittest.TestCase):
         classical definition and the scalar seismic moment computed from
         the discrete magnitude-frequency distribution.
         """
-
-        area = 100 # km
-        slip_rate = 2 # mm
+        area = 100  # km
+        slip_rate = 2  # mm
         m_low = 6.5
         m_upp = 7.5
         b_gr = 1.1
