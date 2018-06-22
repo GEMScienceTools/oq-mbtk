@@ -51,6 +51,7 @@ def get_fault_vertices_3d(fault_trace, upper_seismogenic_depth,
 
     return all_lons, all_lats, all_deps
 
+
 def _get_rate_above_m_low(seismic_moment, m_low, m_upp, b_gr):
     """
     :parameter seismic_moment:
@@ -84,8 +85,8 @@ def _get_cumul_rate_truncated(m, m_low, m_upp, rate_gt_m_low, b_gr):
     return rate
 
 
-def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp,
-                                   b_gr, bin_width=0.1):
+def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, b_gr,
+                                   bin_width=0.1, rigidity=32e9):
     """
     :parameter area:
         Area of the fault surface
@@ -98,24 +99,24 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp,
         float
     :parameter m_upp:
         Upper magnitude
-    :parameter bin_width:
-        Bin width
     :parameter b_gr:
         b-value of Gutenber-Richter relationship
+    :parameter bin_width:
+        Bin width
+    :parameter rigidity:
+        Rigidity [Pa]
     :return:
         A list containing the rates per bin starting from m_low
     """
-
-    rigidity_Pa = 32 * 1e9  # [GPa] -> [Pa]
-
+    #
     # Compute moment
     slip_m = slip_rate * 1e-3  # [mm/yr] -> [m/yr]
     area_m2 = area * 1e6
-    moment_from_slip = (rigidity_Pa * area_m2 * slip_m)
-
+    moment_from_slip = (rigidity * area_m2 * slip_m)
+    #
     # Compute total rate
     rate_above = _get_rate_above_m_low(moment_from_slip, m_low, m_upp, b_gr)
-
+    #
     # Compute rate per bin
     rrr = []
     mma = []
@@ -148,5 +149,4 @@ def get_surface_corners_coordinates(surface):
         An instance of
         :class:`openquake.hazardlib.geo.surface.SimpleFaultSurface`
     """
-
     mesh = surface.mesh
