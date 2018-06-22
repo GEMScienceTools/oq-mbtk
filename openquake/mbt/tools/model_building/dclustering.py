@@ -15,7 +15,7 @@ from openquake.hmtk.seismicity.selector import CatalogueSelector
 
 def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
               output_path, labels=None, tr_fname=None, subcatalogues=False,
-              format='csv', olab='', save_af=False):
+              format='csv', olab='', save_af=False, out_fname_ext=None):
     """
     :param str catalogue_hmtk_fname:
         Full path to the file containing the initial catalogue
@@ -40,7 +40,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     #
     # Create output filename
     lbl = 'all'
-    if labels is not None:
+    if labels is not None and out_fname_ext is None:
         labels = [labels] if isinstance(labels, str) else labels
         if len(labels) < 2:
             lbl = labels[0]
@@ -48,7 +48,9 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             lbl = '-'.join([l for l in labels])
         assert tr_fname is not None
         assert os.path.exists(tr_fname)
-    ext = '_dec_{:s}{:s}.{:s}'.format(lbl, olab, format)
+        ext = '_dec_{:s}{:s}.{:s}'.format(lbl, olab, format)
+    else:
+        ext = '_dec_{:s}{:s}.{:s}'.format(out_fname_ext, olab, format)
     #
     # Output filename
     out_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
