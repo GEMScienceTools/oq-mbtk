@@ -8,13 +8,15 @@ import matplotlib.colors as colors
 from openquake.hmtk.seismicity.catalogue import Catalogue
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.mbt.tools.model_building.plt_tools import (_load_catalogue,
-                                                  _get_extremes)
+                                                          _get_extremes)
+
 
 def plot_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
-             twid=20., pmint=None, pmaxt=None):
-
+             twid=20., pmint=None, pmaxt=None, ylim=None):
+    #
+    #
     fig = create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid,
-	             twid, pmint, pmaxt)
+                     twid, pmint, pmaxt, ylim)
     #
     # showing figure
     if store is not None:
@@ -29,7 +31,7 @@ def plot_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
 
 
 def create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
-	       twid=20., pmint=None, pmaxt=None):
+               twid=20., pmint=None, pmaxt=None, ylim=None):
     """
     :param catalogue_fname:
     :param label:
@@ -67,6 +69,9 @@ def create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
     # find rounded min and max magnitude
     mmin, mmax = _get_extremes(cat.data['magnitude'], mwid)
     tmin, tmax = _get_extremes(cat.data['year'], twid)
+    if ylim is not None:
+        mmin = ylim[0]
+        mmax = ylim[1]
     #
     #
     if pmint is None:
