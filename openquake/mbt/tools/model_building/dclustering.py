@@ -13,9 +13,31 @@ from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
 
+def _add_defaults(cat):
+    """
+    Adds default values for month, day, hour, minute and second
+
+    :param cat:
+        An instance of :class:`openquake.hmtk.seismicity.catalogue.Catalogue`
+    :returns:
+        An instance of :class:`openquake.hmtk.seismicity.catalogue.Catalogue`
+    """
+
+    for lab in ['month', 'day', 'hour', 'minute', 'second']:
+        idx = numpy.isnan(cat.data[lab])
+        if lab in ['day', 'month']:
+            cat.data[lab][idx] = 1
+        elif lab == 'second':
+            cat.data[lab][idx] = 0.0
+        else:
+            cat.data[lab][idx] = 0
+    return cat
+
+
 def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
               output_path, labels=None, tr_fname=None, subcatalogues=False,
-              format='csv', olab='', save_af=False, out_fname_ext=None):
+              format='csv', olab='', save_af=False, out_fname_ext=None,
+              fix_defaults=False):
     """
     :param str catalogue_hmtk_fname:
         Full path to the file containing the initial catalogue
@@ -33,6 +55,12 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         Can be either 'csv' or 'pkl'
     :param str olab:
         Optional label for output catalogues
+    :param boolean save_af:
+        Save aftershocks and foreshocks
+    :param str out_fname_ext:
+        String to be added to the putput filename
+    :param str fix_defaults:
+        Fix defaults values when missing
     """
     #
     # check if the initial catalogue file exists
@@ -60,8 +88,10 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         output_path = os.path.dirname(catalogue_hmtk_fname)
     out_fname = os.path.abspath(os.path.join(output_path, out_fname))
     #
-    # Read the catalogue
+    # Read the catalogue and adding default values
     cat = _load_catalogue(catalogue_hmtk_fname)
+    if fix_defaults:
+        cat = _add_defaults(cat)
     cato = copy.deepcopy(cat)
     #
     # Select earthquakes belonging to a given TR. When necessary combining
