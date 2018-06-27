@@ -95,7 +95,6 @@ def _get_model_info(srcl):
     for idx, src in enumerate(srcl):
         trt = src.tectonic_region_type
         typ = type(src).__name__
-        print(typ)
         if typ == 'NonParametricSeismicSource':
             mmin, mmax = _get_mmin_mmax_nonpar(src)
         else:
@@ -275,11 +274,8 @@ def _split_point_source(src):
         if isinstance(tsrc.mfd, TruncatedGRMFD):
             tsrc.mfd.a_val = numpy.log10(10.**tsrc.mfd.a_val * tple[0])
         elif isinstance(tsrc.mfd, EvenlyDiscretizedMFD):
-            print(tple[0])
             occ = [tmp * tple[0] for tmp in tsrc.mfd.occurrence_rates]
-            print(occ)
             tsrc.mfd.occurrence_rates = occ
-            print(tsrc.mfd.occurrence_rates)
             tsrc.hypocenter_distribution.data = PMF([(1.0, tple[1])])
         srcs.append(tsrc)
     return srcs
