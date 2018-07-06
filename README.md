@@ -20,7 +20,7 @@ cd "$MY_BASEDIR"
 
 git clone "git@github.com:GEMScienceTools/oq-mbtk.git"
 
-# this sed magic extract 'install' target of travis.yml, reconstruct splitted lines and run them
+# this sed magic extract 'install' target of .travis.yml, reconstruct splitted lines and run them
 cat  oq-mbtk/.travis.yml \
 sed '1,/^install:$/d;/^ *$/,$d' | \
 sed ':a;N;/\n  - /!s/\n/ /;ta;P;D' | \
