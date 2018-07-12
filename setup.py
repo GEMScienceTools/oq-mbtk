@@ -44,6 +44,7 @@ setup(
         'nbformat',
         'GDAL',
         'pyproj',
+        'rtree',
         'nbconvert',
         'prettytable',
         'geopandas'
