@@ -1,0 +1,6 @@
+# Suggested versions for development based on
+# Ubuntu 18.04 stack
+# !! must update pip first! so wheels will be used !!
+
+# GEM Mirror
+http://cdn.ftp.openquake.org/wheelhouse/macos/py35/GDAL-2.2.4-cp35-cp35m-macosx_10_6_intel.whl
