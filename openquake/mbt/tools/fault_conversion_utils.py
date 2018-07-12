@@ -8,14 +8,6 @@ import openquake.mbt as oqmbt
 from openquake.mbt.tools.faults import rates_for_double_truncated_mfd
 
 
-#param_map = {'source_id': 'ns_source_id',
-#             'average_dip': 'average_dip',
-#             'rake': 'ns_average_rake',
-#             'net_slip_rate': 'ns_net_slip_rate',
-#             'vert_slip_rate':'vert_slip_rate',
-#             'strike_slip_rate': 'strike_slip_rate',
-#             'shortening_rate': 'shortening_rate'}
-
 sfs_params = ('source_id', 
               'name', 
               'tectonic_region_type', 
@@ -35,7 +27,6 @@ all_params = list(sfs_params)
 all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
                'net_slip_rate', 'strike_slip_rate', 'dip_slip_rate',
                'vert_slip_rate', 'shortening_rate']
-
 
 
 param_map = {p:p for p in all_params}
@@ -58,38 +49,44 @@ defaults = {'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
                 hz.scalerel.leonard2014.Leonard2014_Interplate(),
             }  
 
-def construct_sfs_dict(f, area_method='simple', width_method='seismo_depth',
+
+def construct_sfs_dict(fault_dict, area_method='simple', width_method='seismo_depth',
                        scaling_rel='leonard_2010', slip_class='mle',
                        mag_scaling_rel=None, M_max=None, M_min=None,
                        b_value=None, slip_rate=None, bin_width=None,
                        fault_area=None, defaults=defaults,
-                       param_map=param_map,):
+                       param_map=param_map, ):
     
     """ 
-    docs
+    Makes a dictionary containing all of the parameters needed to create a SimpleFaultSource.
+
+    :para
+
+
+
     """
 
     sfs = {p: None for p in sfs_params}
 
     # source_id, name, tectonic_region_type
-    sfs.update(write_metadata(f, defaults=defaults, param_map=param_map))
+    sfs.update(write_metadata(fault_dict, defaults=defaults, param_map=param_map))
 
     # dip, rake, fault_trace, upper_seismogenic_depth, lower_seismogenic_depth
-    sfs.update(write_geom(f, defaults=defaults, param_map=param_map))
+    sfs.update(write_geom(fault_dict, defaults=defaults, param_map=param_map))
 
     # rupture_mesh_spacing, magnitude_scaling_relationship,
     # rupture_aspect_ratio, temporal_occurrence_model
-    sfs.update(write_rupture_params(f, defaults=defaults, param_map=param_map))
+    sfs.update(write_rupture_params(fault_dict, defaults=defaults, param_map=param_map))
 
     # mfd
     sfs.update(
-        {'mfd': calc_mfd_from_fault_params(f, area_method=area_method,
+        {'mfd': calc_mfd_from_fault_params(fault_dict, area_method=area_method,
                                            width_method=width_method,
                                            scaling_rel=scaling_rel,
                                            slip_class=slip_class,
                                            mag_scaling_rel=mag_scaling_rel,
                                            M_max=M_max, M_min=M_min,
-                                           b_value=b_value, 
+                                           b_value=b_value,
                                            slip_rate=slip_rate,
                                            bin_width=bin_width,
                                            fault_area=fault_area,
@@ -121,17 +118,17 @@ def make_fault_source(sfs_dict):
 # util functions
 ###
 
-def fetch_param_val(f, param, defaults=defaults, param_map=param_map):
+def fetch_param_val(fault_dict, param, defaults=defaults, param_map=param_map):
     """
     """
 
     try:
-        val = f[param_map[param]]
+        val = fault_dict[param_map[param]]
         if val is None:
-            val = f[defaults[param]]
+            val = fault_dict[defaults[param]]
     except KeyError:
         try:
-            val = f[defaults[param]]
+            val = fault_dict[defaults[param]]
         except (KeyError, TypeError):  # not a field in the fault's attr dict
             val = defaults[param]
 
@@ -217,10 +214,10 @@ def get_val_from_tuple(tup, requested_val='mle', _abs_sort=False):
 # metadata
 ###
 
-def write_metadata(f, defaults=defaults, param_map=param_map):
+def write_metadata(fault_dict, defaults=defaults, param_map=param_map):
     metadata_params = ('tectonic_region_type', 'name', 'source_id')
 
-    meta_param_d = {p: fetch_param_val(f, p, defaults=defaults, 
+    meta_param_d = {p: fetch_param_val(fault_dict, p, defaults=defaults,
                                        param_map=param_map)
                     for p in metadata_params}
     return meta_param_d
@@ -230,12 +227,12 @@ def write_metadata(f, defaults=defaults, param_map=param_map):
 ###
 
 
-def write_rupture_params(f, defaults=defaults, param_map=param_map):
+def write_rupture_params(fault_dict, defaults=defaults, param_map=param_map):
 
     rupture_params = ('rupture_mesh_spacing', 'magnitude_scaling_relationship',
                       'rupture_aspect_ratio', 'temporal_occurrence_model')
 
-    rup_param_d = {p: fetch_param_val(f, p, defaults=defaults, 
+    rup_param_d = {p: fetch_param_val(fault_dict, p, defaults=defaults,
                                       param_map=param_map)
                    for p in rupture_params}
     return rup_param_d
@@ -310,20 +307,20 @@ direction_map = {'N': 0.,
 #    pass
 
 
-def trace_from_coords(f, defaults=defaults, param_map=param_map,
+def trace_from_coords(fault_dict, defaults=defaults, param_map=param_map,
                       check_coord_order=True):
     # get the coords
     # check against dip direction
         # flip if need be
     # return a Line
 
-    trace_coords = fetch_param_val(f, 'trace_coordinates', defaults=defaults,
+    trace_coords = fetch_param_val(fault_dict, 'trace_coordinates', defaults=defaults,
                                    param_map=param_map)
 
     fault_trace = line_from_trace_coords(trace_coords)
 
     if check_coord_order is True:
-        fault_trace = _check_trace_coord_ordering(f, fault_trace)
+        fault_trace = _check_trace_coord_ordering(fault_dict, fault_trace)
 
     return fault_trace
 
@@ -336,16 +333,16 @@ def line_from_trace_coords(trace_coords):
     return fault_trace
 
 
-def _check_trace_coord_ordering(f, fault_trace, reverse_angle_threshold=90.):
+def _check_trace_coord_ordering(fault_dict, fault_trace, reverse_angle_threshold=90.):
     """
     Enforces right-hand rule with respect to fault trace coordinate ordering
     and dip direction.  If there is an inconsitency, the trace coordinates
     are reversed.
 
-    :param f:
+    :param fault_dict:
         Dictionary with fault parameters.
 
-    :type f:
+    :type fault_dict:
         dict
 
     :param fault_trace:
@@ -366,7 +363,7 @@ def _check_trace_coord_ordering(f, fault_trace, reverse_angle_threshold=90.):
 
     trace_dip_trend = strike + 90.
 
-    fault_dip_dir = fetch_param_val(f, 'dip_dir', defaults=defaults,
+    fault_dip_dir = fetch_param_val(fault_dict, 'dip_dir', defaults=defaults,
                                     param_map=param_map)
 
     fault_dip_trend = direction_map[fault_dip_dir]
@@ -427,32 +424,32 @@ def angle_difference(trend_1, trend_2, return_abs=True):
 
 
 
-def write_geom(f, requested_val='mle', defaults=defaults, param_map=param_map):
+def write_geom(fault_dict, requested_val='mle', defaults=defaults, param_map=param_map):
     """
     """
 
     #TODO: ensure consistency w/ rake and dip for min/max slip_class
 
-    geom_params = {'average_rake': get_rake(f, requested_val=requested_val,
+    geom_params = {'average_rake': get_rake(fault_dict, requested_val=requested_val,
                                             defaults=defaults,
                                             param_map=param_map),
 
-                   'average_dip': get_dip(f, requested_val=requested_val,
+                   'average_dip': get_dip(fault_dict, requested_val=requested_val,
                                           defaults=defaults,
                                           param_map=param_map),
 
-                   'fault_trace': trace_from_coords(f, param_map=param_map,
+                   'fault_trace': trace_from_coords(fault_dict, param_map=param_map,
                                                     defaults=defaults),
 
-                   'upper_seismogenic_depth': fetch_param_val(f,
+                   'upper_seismogenic_depth': fetch_param_val(fault_dict,
                                                      'upper_seismogenic_depth',
-                                                     defaults=defaults,
-                                                     param_map=param_map),
+                                                              defaults=defaults,
+                                                              param_map=param_map),
                         
-                   'lower_seismogenic_depth': fetch_param_val(f,
+                   'lower_seismogenic_depth': fetch_param_val(fault_dict,
                                                      'lower_seismogenic_depth',
-                                                     defaults=defaults,
-                                                     param_map=param_map),
+                                                              defaults=defaults,
+                                                              param_map=param_map),
                         
                     }
     
@@ -460,18 +457,18 @@ def write_geom(f, requested_val='mle', defaults=defaults, param_map=param_map):
     return geom_params
 
 
-def get_rake(f, requested_val='mle', defaults=defaults, param_map=param_map):
+def get_rake(fault_dict, requested_val='mle', defaults=defaults, param_map=param_map):
     """
     """
 
     try:
-        rake_tuple = fetch_param_val(f, 'average_rake', defaults=defaults,
-                                   param_map=param_map)
+        rake_tuple = fetch_param_val(fault_dict, 'average_rake', defaults=defaults,
+                                     param_map=param_map)
         rake = get_val_from_tuple(rake_tuple, requested_val=requested_val)
 
     except KeyError:
         try:
-            slip_type = fetch_param_val(f, 'slip_type', defaults=defaults,
+            slip_type = fetch_param_val(fault_dict, 'slip_type', defaults=defaults,
                                         param_map=param_map)
             rake = rake_map[slip_type]
         except KeyError as e:
@@ -480,7 +477,7 @@ def get_rake(f, requested_val='mle', defaults=defaults, param_map=param_map):
     return rake
 
 
-def get_dip(f, requested_val='mle', defaults=defaults, param_map=param_map):
+def get_dip(fault_dict, requested_val='mle', defaults=defaults, param_map=param_map):
     """
     Returns a value of dip from the dip tuple for each structure. If no
     dip tuple is present, a default value is returned based on the fault
@@ -488,14 +485,14 @@ def get_dip(f, requested_val='mle', defaults=defaults, param_map=param_map):
     """
 
     try:
-        dip_tuple = fetch_param_val(f, 'average_dip', defaults=defaults,
+        dip_tuple = fetch_param_val(fault_dict, 'average_dip', defaults=defaults,
                                     param_map=param_map)
         dip = get_val_from_tuple(dip_tuple, requested_val=requested_val)
     
         return dip
     except KeyError:
         try:
-            slip_type = fetch_param_val(f, 'slip_type', defaults=defaults,
+            slip_type = fetch_param_val(fault_dict, 'slip_type', defaults=defaults,
                                         param_map=param_map)
             dip = dip_map[slip_type]
             return dip
@@ -507,18 +504,18 @@ def get_dip(f, requested_val='mle', defaults=defaults, param_map=param_map):
 # slip rates and mfds
 ###
 
-def fetch_slip_rate(f, rate_component, slip_class='suggested', _abs_sort=True):
+def fetch_slip_rate(fault_dict, rate_component, slip_class='suggested', _abs_sort=True):
     """
     """
 
     requested_val = 'mle' if slip_class is 'suggested' else slip_class
-    slip_rate_tup = fetch_param_val(f, rate_component)
+    slip_rate_tup = fetch_param_val(fault_dict, rate_component)
     
     return get_val_from_tuple(slip_rate_tup, requested_val, 
                               _abs_sort=_abs_sort)
 
 
-def get_net_slip_rate(f, slip_class='suggested', defaults=defaults,
+def get_net_slip_rate(fault_dict, slip_class='suggested', defaults=defaults,
                       param_map=param_map):
     """
     """
@@ -533,44 +530,44 @@ def get_net_slip_rate(f, slip_class='suggested', defaults=defaults,
     for rate_type in ['net_slip_rate', 'strike_slip_rate',
                       'shortening_rate', 'vert_slip_rate']:
         try:
-            rate = f[param_map[rate_type]]
+            rate = fault_dict[param_map[rate_type]]
             if rate is not None:
                 rate_comps.append(rate_type)
         except KeyError:
             pass
 
     if 'net_slip_rate' in rate_comps:
-        return fetch_slip_rate(f, 'net_slip_rate', slip_class=slip_class)
+        return fetch_slip_rate(fault_dict, 'net_slip_rate', slip_class=slip_class)
     elif rate_comps == ['strike_slip_rate']:
-        return net_slip_from_strike_slip_fault_geom(f, slip_class=slip_class)
+        return net_slip_from_strike_slip_fault_geom(fault_dict, slip_class=slip_class)
     elif rate_comps == ['vert_slip_rate']:
-        return net_slip_from_vert_slip_fault_geom(f, slip_class=slip_class)
+        return net_slip_from_vert_slip_fault_geom(fault_dict, slip_class=slip_class)
     elif rate_comps == ['shortening_rate']:
-        return net_slip_from_shortening_fault_geom(f, slip_class=slip_class)
+        return net_slip_from_shortening_fault_geom(fault_dict, slip_class=slip_class)
     elif set(rate_comps) == {'strike_slip_rate', 'shortening_rate'}:
-        return net_slip_from_strike_slip_shortening(f, slip_class=slip_class)
+        return net_slip_from_strike_slip_shortening(fault_dict, slip_class=slip_class)
     elif set(rate_comps) == {'vert_slip_rate', 'shortening_rate'}:
-        return net_slip_from_vert_slip_shortening(f, slip_class=slip_class)
+        return net_slip_from_vert_slip_shortening(fault_dict, slip_class=slip_class)
     elif set(rate_comps) == {'strike_slip_rate', 'vert_slip_rate'}:
-        return net_slip_from_vert_strike_slip(f, slip_class=slip_class)
+        return net_slip_from_vert_strike_slip(fault_dict, slip_class=slip_class)
     elif set(rate_comps) == {'strike_slip_rate', 'shortening_rate'}:
-        return net_slip_from_strike_slip_shortening(f, slip_class=slip_class)
+        return net_slip_from_strike_slip_shortening(fault_dict, slip_class=slip_class)
     elif set(rate_comps) == {'strike_slip_rate', 'shortening_rate',
                              'vert_slip_rate'}:
-        return net_slip_from_all_slip_comps(f, slip_class=slip_class)
+        return net_slip_from_all_slip_comps(fault_dict, slip_class=slip_class)
 
     else:
         print(rate_comps)
 
 
-def net_slip_from_strike_slip_fault_geom(f, slip_class='mle', _abs=True):
+def net_slip_from_strike_slip_fault_geom(fault_dict, slip_class='mle', _abs=True):
     """
     """
 
-    strike_slip_rate = fetch_slip_rate(f, 'strike_slip_rate', 
+    strike_slip_rate = fetch_slip_rate(fault_dict, 'strike_slip_rate',
                                        slip_class=slip_class)
     
-    rake = get_vals_from_tuple(fetch_param_val(f, 'rake'))
+    rake = get_vals_from_tuple(fetch_param_val(fault_dict, 'rake'))
 
     net_slip_rate = strike_slip_rate / np.cos(np.radians(rake))
     if _abs is True:
@@ -588,14 +585,14 @@ def net_slip_from_strike_slip_fault_geom(f, slip_class='mle', _abs=True):
         raise Exception('not enough info')
 
 
-def dip_slip_from_vert_slip(f, slip_class='mle', _abs=True):
+def dip_slip_from_vert_slip(fault_dict, slip_class='mle', _abs=True):
     """
     """
 
-    vert_slip_rate = fetch_slip_rate(f, 'vert_slip_rate', 
+    vert_slip_rate = fetch_slip_rate(fault_dict, 'vert_slip_rate',
                                      slip_class=slip_class)
     
-    dips = get_vals_from_tuple(fetch_param_val(f, 'average_dip'))
+    dips = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_dip'))
 
     dip_slip_rate = vert_slip_rate / np.sin(np.radians(dips))
 
@@ -612,30 +609,30 @@ def dip_slip_from_vert_slip(f, slip_class='mle', _abs=True):
         return dip_slip_rate
 
 
-def net_slip_from_vert_slip_fault_geom(f, slip_class='mle', _abs=True):
+def net_slip_from_vert_slip_fault_geom(fault_dict, slip_class='mle', _abs=True):
     """
     """
 
-    vert_slip_rate = fetch_slip_rate(f, 'vert_slip_rate',
+    vert_slip_rate = fetch_slip_rate(fault_dict, 'vert_slip_rate',
                                      slip_class=slip_class)
-    dip_slip_rate = dip_slip_from_vert_slip(f, slip_class=slip_class)
+    dip_slip_rate = dip_slip_from_vert_slip(fault_dict, slip_class=slip_class)
 
-    return net_slip_from_dip_slip_fault_geom(dip_slip_rate, f, 
+    return net_slip_from_dip_slip_fault_geom(dip_slip_rate, fault_dict,
                                              slip_class=slip_class,
                                              _abs=_abs)
 
 
-def net_slip_from_shortening_fault_geom(f, slip_class='mle', _abs=True):
+def net_slip_from_shortening_fault_geom(fault_dict, slip_class='mle', _abs=True):
     """
     """
 
-    shortening_rate = fetch_slip_rate(f, 'shortening_rate', 
+    shortening_rate = fetch_slip_rate(fault_dict, 'shortening_rate',
                                       slip_class=slip_class)
 
     if _abs is True:
         shortening_rate = np.abs(shortening_rate)
-    dips = get_vals_from_tuple(fetch_param_val(f, 'average_dip'))
-    rakes = get_vals_from_tuple(fetch_param_val(f, 'rake'))
+    dips = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_dip'))
+    rakes = get_vals_from_tuple(fetch_param_val(fault_dict, 'rake'))
 
     if slip_class == 'mle':
         dip = dips[0] if not np.isscalar(dips) else dips
@@ -660,12 +657,12 @@ def net_slip_from_shortening_fault_geom(f, slip_class='mle', _abs=True):
             return np.min(net_slip_rates)
 
 
-def net_slip_from_dip_slip_fault_geom(dip_slip_rate, f, slip_class='mle',
+def net_slip_from_dip_slip_fault_geom(dip_slip_rate, fault_dict, slip_class='mle',
                                       _abs=True):
     """
     """
 
-    rakes = get_vals_from_tuple(fetch_param_val(f, 'rake'))
+    rakes = get_vals_from_tuple(fetch_param_val(fault_dict, 'rake'))
 
     if _abs:
         rakes = np.abs(rakes)
@@ -694,18 +691,18 @@ def net_slip_from_dip_slip_fault_geom(dip_slip_rate, f, slip_class='mle',
             return np.max(net_slip_rates)
 
 
-def net_slip_from_vert_slip_shortening(f, slip_class='mle', _abs=True):
+def net_slip_from_vert_slip_shortening(fault_dict, slip_class='mle', _abs=True):
     """
     """
 
-    vert_slip_rate = fetch_slip_rate(f, 'vert_slip_rate', 
+    vert_slip_rate = fetch_slip_rate(fault_dict, 'vert_slip_rate',
                                      slip_class=slip_class)
-    shortening_rate = fetch_slip_rate(f, 'shortening_rate', 
+    shortening_rate = fetch_slip_rate(fault_dict, 'shortening_rate',
                                       slip_class=slip_class)
     dip_slip_rate = dip_slip_from_vert_rate_shortening(vert_slip_rate, 
                                                        shortening_rate)
 
-    rakes = get_vals_from_tuple(fetch_param_val(f, 'rake'))
+    rakes = get_vals_from_tuple(fetch_param_val(fault_dict, 'rake'))
     rake_diffs = np.abs(np.pi / 2 - np.radians(rakes))
 
     net_slip_rates = dip_slip_rate / np.cos(rake_diffs)
@@ -724,37 +721,37 @@ def net_slip_from_vert_slip_shortening(f, slip_class='mle', _abs=True):
         return np.max(net_slip_rates)
 
 
-def net_slip_from_vert_strike_slip(f, slip_class='mle', _abs=True):
+def net_slip_from_vert_strike_slip(fault_dict, slip_class='mle', _abs=True):
     """
     """
 
-    strike_slip_rate = fetch_slip_rate(f, 'strike_slip_rate', 
+    strike_slip_rate = fetch_slip_rate(fault_dict, 'strike_slip_rate',
                                        slip_class=slip_class)
-    dip_slip_rate = dip_slip_from_vert_slip(f, slip_class=slip_class, 
+    dip_slip_rate = dip_slip_from_vert_slip(fault_dict, slip_class=slip_class,
                                             _abs=_abs)
 
     return np.sqrt(dip_slip_rate ** 2 + strike_slip_rate ** 2)
 
 
-def net_slip_from_strike_slip_shortening(f, slip_class='mle',
+def net_slip_from_strike_slip_shortening(fault_dict, slip_class='mle',
                                          _abs=True):
     """
     """
 
-    strike_slip_rate = fetch_slip_rate(f, 'strike_slip_rate',
+    strike_slip_rate = fetch_slip_rate(fault_dict, 'strike_slip_rate',
                                        slip_class=slip_class)
-    dip_slip_rate = dip_slip_from_shortening(f, slip_class=slip_class,
+    dip_slip_rate = dip_slip_from_shortening(fault_dict, slip_class=slip_class,
                                              _abs=True)
 
     return np.sqrt(dip_slip_rate ** 2 + strike_slip_rate ** 2)
 
 
-def dip_slip_from_shortening(f, slip_class='mle', _abs=True):
+def dip_slip_from_shortening(fault_dict, slip_class='mle', _abs=True):
     """
     """
 
-    short_rate = fetch_slip_rate(f, 'shortening_rate', slip_class=slip_class)
-    dips = get_vals_from_tuple(fetch_param_val(f, 'average_dip'))
+    short_rate = fetch_slip_rate(fault_dict, 'shortening_rate', slip_class=slip_class)
+    dips = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_dip'))
     if np.isscalar(dips):
         dip = dips
     elif len(dips) == 1:
@@ -775,15 +772,15 @@ def dip_slip_from_shortening(f, slip_class='mle', _abs=True):
     return short_rate / np.cos(dip)
 
 
-def net_slip_from_all_slip_comps(f, slip_class='mle', _abs=True):
+def net_slip_from_all_slip_comps(fault_dict, slip_class='mle', _abs=True):
     """
     """
 
-    vert_slip_rate = fetch_slip_rate(f, 'vert_slip_rate',
+    vert_slip_rate = fetch_slip_rate(fault_dict, 'vert_slip_rate',
                                      slip_class=slip_class)
-    shortening_rate = fetch_slip_rate(f, 'shortening_rate',
+    shortening_rate = fetch_slip_rate(fault_dict, 'shortening_rate',
                                       slip_class=slip_class)
-    strike_slip_rate = fetch_slip_rate(f, 'strike_slip_rate',
+    strike_slip_rate = fetch_slip_rate(fault_dict, 'strike_slip_rate',
                                        slip_class=slip_class)
 
     dip_slip_rate = dip_slip_from_vert_rate_shortening(vert_slip_rate,
@@ -830,31 +827,31 @@ WIDTH_CLASS = {'cl1': ['Normal', 'Reverse', 'Thrust', 'Normal-Dextral',
 # make spreading ridge width very small?
 
 
-def get_fault_length(f, defaults=defaults, param_map=param_map):
+def get_fault_length(fault_dict, defaults=defaults, param_map=param_map):
     """
     Returns the length of a fault.
     """
 
     try:
-        fault_trace = f['fault_trace']
+        fault_trace = fault_dict['fault_trace']
     except KeyError:
-        fault_trace = trace_from_coords(f, param_map=param_map,
+        fault_trace = trace_from_coords(fault_dict, param_map=param_map,
                                         defaults=defaults)
 
     return fault_trace.get_length()
 
 
-def get_fault_width(f, method='length_scaling', scaling_rel='leonard_2010',
+def get_fault_width(fault_dict, method='length_scaling', scaling_rel='leonard_2010',
                     defaults=defaults, param_map=param_map):
     """
     Returns the width (i.e., the down-dip distance) of a fault. Two methods
     exist: One based on the fault length and a scaling relationship, and one
     based on the upper and lower seismogenic depths.
 
-    :param f:
+    :param fault_dict:
         desc
 
-    :type f:
+    :type fault_dict:
         dict
 
     :param method:
@@ -879,10 +876,10 @@ def get_fault_width(f, method='length_scaling', scaling_rel='leonard_2010',
     """
 
     if method == 'length_scaling':
-        width = calc_fault_width_from_length(f, scaling_rel=scaling_rel)
+        width = calc_fault_width_from_length(fault_dict, scaling_rel=scaling_rel)
 
     elif method == 'seismo_depth':
-        width = calc_fault_width_from_usd_lsd_dip(f, defaults=defaults,
+        width = calc_fault_width_from_usd_lsd_dip(fault_dict, defaults=defaults,
                                                   param_map=param_map)
     else:
         raise ValueError('method ', method, 'not recognized')
@@ -890,26 +887,26 @@ def get_fault_width(f, method='length_scaling', scaling_rel='leonard_2010',
     return width
 
 
-def calc_fault_width_from_usd_lsd_dip(f, defaults=defaults, 
+def calc_fault_width_from_usd_lsd_dip(fault_dict, defaults=defaults,
                                       param_map=param_map):
     """
     Calculates the width (down-dip distance) of the fault from the fault's
     dip and seismogenic boundaries).
 
-    :param f:
+    :param fault_dict:
         desc
 
-    :type f:
+    :type fault_dict:
         dict
 
     """
 
 
-    usd = fetch_param_val(f, 'upper_seismogenic_depth', defaults=defaults,
+    usd = fetch_param_val(fault_dict, 'upper_seismogenic_depth', defaults=defaults,
                           param_map=param_map)
-    lsd = fetch_param_val(f, 'lower_seismogenic_depth', defaults=defaults,
+    lsd = fetch_param_val(fault_dict, 'lower_seismogenic_depth', defaults=defaults,
                           param_map=param_map)
-    dip = get_dip(f, defaults=defaults, param_map=param_map)
+    dip = get_dip(fault_dict, defaults=defaults, param_map=param_map)
 
     denom = np.sin(np.radians(dip))
 
@@ -921,7 +918,7 @@ def calc_fault_width_from_usd_lsd_dip(f, defaults=defaults,
     return width
 
 
-def calc_fault_width_from_length(f, scaling_rel='leonard_2010', **kwargs):
+def calc_fault_width_from_length(fault_dict, scaling_rel='leonard_2010', **kwargs):
     """
     """
 
@@ -929,23 +926,23 @@ def calc_fault_width_from_length(f, scaling_rel='leonard_2010', **kwargs):
     scale_func_dict = {'leonard_2010': leonard_width_from_length}
 
     #try:
-    width = scale_func_dict[scaling_rel](f, **kwargs)
+    width = scale_func_dict[scaling_rel](fault_dict, **kwargs)
     return width
     #except KeyError:
     #    raise ValueError('scaling relationship ', scaling_rel, 
     #                     'not implemented.')
 
 
-def leonard_width_from_length(f, const_1=1.75, const_2=1.5, dip_cutoff=45.,
+def leonard_width_from_length(fault_dict, const_1=1.75, const_2=1.5, dip_cutoff=45.,
                               exp=2./3., max_width_1=150., max_width_2=20.,
                               defaults=defaults, param_map=param_map):
     """
     """
 
-    slip_type = fetch_param_val(f, 'slip_type', defaults=defaults,
+    slip_type = fetch_param_val(fault_dict, 'slip_type', defaults=defaults,
                                 param_map=param_map)
 
-    fault_length = get_fault_length(f, defaults=defaults, param_map=param_map)
+    fault_length = get_fault_length(fault_dict, defaults=defaults, param_map=param_map)
 
     if slip_type in WIDTH_CLASS['cl1']:
         width = const_1 * fault_length ** exp
@@ -960,47 +957,47 @@ def leonard_width_from_length(f, const_1=1.75, const_2=1.5, dip_cutoff=45.,
     return width
 
 
-def get_fault_area(f, area_method='simple', width_method='seismo_depth',
+def get_fault_area(fault_dict, area_method='simple', width_method='seismo_depth',
                    scaling_rel='leonard_2010', defaults=defaults,
                    param_map=param_map): 
     """ 
     """
 
     if area_method == 'simple':
-        fault_length = get_fault_length(f, defaults=defaults,
+        fault_length = get_fault_length(fault_dict, defaults=defaults,
                                         param_map=param_map)
-        fault_width = get_fault_width(f, method=width_method,
+        fault_width = get_fault_width(fault_dict, method=width_method,
                                       defaults=defaults, param_map=param_map)
         fault_area = fault_length * fault_width
 
     elif area_method == 'from_surface':
 
         try:
-            fault_trace = f['fault_trace']
+            fault_trace = fault_dict['fault_trace']
         except KeyError:
-            fault_trace = trace_from_coords(f, param_map=param_map,
+            fault_trace = trace_from_coords(fault_dict, param_map=param_map,
                                             defaults=defaults)
 
-        usd = fetch_param_val(f, 'upper_seismogenic_depth')
+        usd = fetch_param_val(fault_dict, 'upper_seismogenic_depth')
 
         if width_method == 'seismo_depth':
-            lsd = fetch_param_val(f, 'lower_seismogenic_depth')
+            lsd = fetch_param_val(fault_dict, 'lower_seismogenic_depth')
 
         elif width_method == 'length_scaling':
 
-            width = calc_fault_width_from_length(f, scaling_rel=scaling_rel,
+            width = calc_fault_width_from_length(fault_dict, scaling_rel=scaling_rel,
                                                  defaults=defaults,
                                                  param_map=param_map)
 
-            dip = get_dip(f, param_map=param_map, defaults=defaults)
+            dip = get_dip(fault_dict, param_map=param_map, defaults=defaults)
 
             lsd = width * np.sin(np.radians(dip))
 
         else:
             raise ValueError('width_method ', width_method, 'not recognized')
 
-        dip = get_dip(f, defaults=defaults, param_map=param_map)
-        mesh_spacing = fetch_param_val(f, 'rupture_mesh_spacing')
+        dip = get_dip(fault_dict, defaults=defaults, param_map=param_map)
+        mesh_spacing = fetch_param_val(fault_dict, 'rupture_mesh_spacing')
 
         fault_area = hz.geo.surface.SimpleFaultSurface.from_fault_data(
                                                                  fault_trace,
@@ -1011,12 +1008,12 @@ def get_fault_area(f, area_method='simple', width_method='seismo_depth',
 
 
 
-def get_M_min(f, mag_scaling_rel=None, defaults=defaults, param_map=param_map):
+def get_M_min(fault_dict, mag_scaling_rel=None, defaults=defaults, param_map=param_map):
     """
     """
 
     try:
-        M_min = f[param_map['M_min']]
+        M_min = fault_dict[param_map['M_min']]
     except KeyError:
         try:
             M_min = defaults['M_min']
@@ -1028,7 +1025,7 @@ def get_M_min(f, mag_scaling_rel=None, defaults=defaults, param_map=param_map):
     return M_min
 
 
-def get_M_max(f, mag_scaling_rel=None, area_method='simple', 
+def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
               width_method='seismo_depth', width_scaling_rel='leonard_2010',
               defaults=defaults, param_map=param_map):
     """
@@ -1037,7 +1034,7 @@ def get_M_max(f, mag_scaling_rel=None, area_method='simple',
 
     # TODO: check if fault M_max is greater than zone M_max
     try:
-        M_max = f[param_map['M_max']]
+        M_max = fault_dict[param_map['M_max']]
 
     except KeyError:
         try:
@@ -1045,8 +1042,8 @@ def get_M_max(f, mag_scaling_rel=None, area_method='simple',
             if mag_scaling_rel is None:
                 mag_scaling_rel = defaults['mag_scaling_rel']
 
-            rake = get_rake(f)
-            fault_area = get_fault_area(f, method=area_method,
+            rake = get_rake(fault_dict)
+            fault_area = get_fault_area(fault_dict, method=area_method,
                                         width_method=width_method,
                                         scaling_rel=width_scaling_rel,
                                         defaults=defaults, param_map=param_map)
@@ -1060,7 +1057,7 @@ def get_M_max(f, mag_scaling_rel=None, area_method='simple',
 
 
 
-def calc_mfd_from_fault_params(f, area_method='simple', 
+def calc_mfd_from_fault_params(fault_dict, area_method='simple',
                                width_method='seismo_depth',
                                scaling_rel='leonard_2010',
                                slip_class='mle',
@@ -1074,25 +1071,25 @@ def calc_mfd_from_fault_params(f, area_method='simple',
     """
 
     if fault_area is None:
-        fault_area = get_fault_area(f)
+        fault_area = get_fault_area(fault_dict)
 
     if M_min is None:
-        M_min = get_M_min(f, defaults=defaults, param_map=param_map)
+        M_min = get_M_min(fault_dict, defaults=defaults, param_map=param_map)
     if M_max is None:
-        M_max = get_M_max(f, defaults=defaults, param_map=param_map,
+        M_max = get_M_max(fault_dict, defaults=defaults, param_map=param_map,
                           mag_scaling_rel=mag_scaling_rel)
 
     if slip_rate is None:
-        slip_rate = get_net_slip_rate(f, defaults=defaults, 
+        slip_rate = get_net_slip_rate(fault_dict, defaults=defaults,
                                       param_map=param_map)
     if M_min > M_max:
         raise ValueError('M_min is greater than M_max')
 
     if b_value is None:
-        b_value = fetch_param_val(f, 'b_value', defaults=defaults, 
-                               param_map=param_map)
+        b_value = fetch_param_val(fault_dict, 'b_value', defaults=defaults,
+                                  param_map=param_map)
     if bin_width is None:
-        bin_width = fetch_param_val(f, 'bin_width', defaults=defaults,
+        bin_width = fetch_param_val(fault_dict, 'bin_width', defaults=defaults,
                                     param_map=param_map)
 
     bin_rates = rates_for_double_truncated_mfd( fault_area, slip_rate, M_min,
