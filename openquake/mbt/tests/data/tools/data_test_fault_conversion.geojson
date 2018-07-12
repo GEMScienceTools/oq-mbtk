@@ -1,0 +1,108 @@
+{
+    "type": "FeatureCollection",
+    "name": "data_test_fault_conversion",
+    "crs": {
+        "type": "name",
+        "properties": {
+            "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+        }
+    },
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "fid": 0,
+                "catalog_id": "test_1",
+                "name": "Karakoram Fault (Gar Basin segment)",
+                "fs_name": "Karakoram Fault System",
+                "is_active": 1,
+                "exposure_quality": 1,
+                "epistemic_quality": 1,
+                "accuracy": 400000,
+                "slip_type": "Dextral-Normal",
+                "average_dip": "(75,60,90)",
+                "average_rake": "(-10, -40, 0)",
+                "dip_dir": "E",
+                "downthrown_side_dir": "E",
+                "net_slip_rate": "(6, 3, 10)",
+                "strike_slip_rate": "(5, 2, 7)",
+                "vert_slip_rate": null,
+                "shortening_rate": null,
+                "upper_seis_depth": 0.0,
+                "lower_seis_depth": 12.0,
+                "last_movement": null,
+                "reference": "fake",
+                "notes": "blah"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        79.7391028607983,
+                        32.41641275873077
+                    ],
+                    [
+                        79.80952834070585,
+                        32.33659721483554
+                    ],
+                    [
+                        79.87525878861958,
+                        32.27321428291874
+                    ],
+                    [
+                        79.9034289805826,
+                        32.23330651097112
+                    ],
+                    [
+                        79.91047152857335,
+                        32.20044128701426
+                    ],
+                    [
+                        79.93864172053638,
+                        32.14879593508205
+                    ],
+                    [
+                        79.99732962045934,
+                        32.09010803515908
+                    ],
+                    [
+                        80.0536700043854,
+                        32.033767651233035
+                    ],
+                    [
+                        80.09123026033609,
+                        31.963342171325472
+                    ],
+                    [
+                        80.11470542030528,
+                        31.921086883380937
+                    ],
+                    [
+                        80.16869828823441,
+                        31.88352662743024
+                    ],
+                    [
+                        80.21330109217587,
+                        31.834228791494947
+                    ],
+                    [
+                        80.25790389611731,
+                        31.782583439562735
+                    ],
+                    [
+                        80.29076912007417,
+                        31.726243055636687
+                    ],
+                    [
+                        80.29781166806494,
+                        31.669902671710638
+                    ],
+                    [
+                        80.30954924804952,
+                        31.65112254373529
+                    ]
+                ]
+            }
+        }
+    ]
+}
