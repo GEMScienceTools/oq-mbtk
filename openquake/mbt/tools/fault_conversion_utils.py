@@ -608,7 +608,18 @@ def trace_from_coords(fault_dict, defaults=defaults, param_map=param_map,
     fault_trace = line_from_trace_coords(trace_coords)
 
     if check_coord_order is True:
-        fault_trace = _check_trace_coord_ordering(fault_dict, fault_trace)
+
+        slip_type = fetch_param_val(fault_dict, 'slip_type',
+                                    defaults=defaults,
+                                    param_map=param_map)
+
+        dip = get_dip(fault_dict, defaults=defaults, param_map=param_map)
+
+        if slip_type not in ('Strike-Slip', 'Dextral', 'Sinistral'):
+            if dip < 90.:
+
+                fault_trace = _check_trace_coord_ordering(fault_dict, 
+                                                          fault_trace)
 
     return fault_trace
 
@@ -2272,7 +2283,7 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
     if slip_rate is None:
         slip_rate = get_net_slip_rate(fault_dict,
                                       slip_class=slip_class,
-                                      defaults=defaults,
+                                      #defaults=defaults,
                                       param_map=param_map)
     if M_min > M_max:
         raise ValueError('M_min is greater than M_max')
