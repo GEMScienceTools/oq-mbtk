@@ -364,6 +364,8 @@ def get_vals_from_tuple(tup):
     """
 
     if type(tup) == str:
+        if tup == '':
+            raise ValueError("Value is ''")
         vals = tuple_to_vals(tup)
         vals = [np.float(v) for v in vals if v is not '']
     elif np.isscalar(tup):
@@ -840,7 +842,7 @@ def get_rake(fault_dict, requested_val='mle', defaults=defaults,
                                      param_map=param_map)
         rake = get_val_from_tuple(rake_tuple, requested_val=requested_val)
 
-    except KeyError:
+    except (KeyError, ValueError):
         try:
             slip_type = fetch_param_val(fault_dict, 'slip_type',
                                         defaults=defaults,
