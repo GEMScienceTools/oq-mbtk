@@ -1,7 +1,7 @@
 import sys
-sys.path.append('../../tools/')
+sys.path.append('../../tools/fault_modeler/')
 
-from fault_conversion_utils import *
+from fault_modeling_utils import *
 
 import json
 
