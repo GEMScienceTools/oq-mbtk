@@ -28,7 +28,7 @@ import json
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-import openquake.mbt.tools.fault_conversion_utils as fcu
+import openquake.mbt.tools.fault_modeler.fault_modeling_utils as fmu
 from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.baselib import sap
 
@@ -100,8 +100,8 @@ def build_model_from_db(fault_list, xml_output=None,
 
     for fl in fault_list.db:
 
-        sfs_dict = fcu.construct_sfs_dict(fl)
-        sfs = fcu.make_fault_source(sfs_dict)
+        sfs_dict = fmu.construct_sfs_dict(fl)
+        sfs = fmu.make_fault_source(sfs_dict)
         srcl.append(sfs)
 
     if xml_output is not None:
