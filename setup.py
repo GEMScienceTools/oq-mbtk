@@ -17,6 +17,8 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
 from setuptools import setup, find_packages
+import re
+import sys
 
 url = "https://github.com/GEMScienceTools/oq-mbtk"
 
@@ -26,9 +28,27 @@ Models
 Copyright (C) 2017-2018 GEM Foundation
 """
 
+
+def get_version():
+    version_re = r"^__version__\s+=\s+['\"]([^'\"]*)['\"]"
+    version = None
+
+    package_init = 'openquake/mbt/__init__.py'
+    for line in open(package_init, 'r'):
+        version_match = re.search(version_re, line, re.M)
+        if version_match:
+            version = version_match.group(1)
+            break
+    else:
+        sys.exit('__version__ variable not found in %s' % package_init)
+
+    return version
+
+version = get_version()
+
 setup(
     name='openquake.mbt',
-    version='0.2.0',
+    version=version,
     description=README,
     url=url,
     packages=find_packages(exclude=['tests', 'tests.*']),
