@@ -477,7 +477,7 @@ def create_from_profiles(profiles, profile_sd, edge_sd, idl, align=False):
     rprofiles = []
     for prf in profiles:
         rprofiles.append(_resample_profile(prf, profile_sd))
-    tmps = 'Completed reading ({:d} loaded)'.format(len(rprofiles))
+    tmps = 'Completed reading ({:d} profiles loaded)'.format(len(rprofiles))
     logging.info(tmps)
     #
     # set the reference profile i.e. the longest one
@@ -519,7 +519,7 @@ def create_from_profiles(profiles, profile_sd, edge_sd, idl, align=False):
     add = ccsum - min(ccsum)
     #
     # Create resampled profiles. Now the profiles should be all aligned from
-    # the top
+    # the top (if align option is True)
     rprof = []
     maxnum = 0
     for i, pro in enumerate(rprofiles):
@@ -541,11 +541,11 @@ def create_from_profiles(profiles, profile_sd, edge_sd, idl, align=False):
             pro.append([np.nan, np.nan, np.nan])
         rprof[i] = np.array(pro)
     #
-    # create edges
+    # create mesh in forward direction
     prfr = get_mesh(rprof, ref_idx, edge_sd, idl)
     logging.info('Completed creation of resampled profiles')
     #
-    # create the mesh
+    # create the mesh in backward direction
     if ref_idx > 0:
         prfl = get_mesh_back(rprof, ref_idx, edge_sd, idl)
     else:
@@ -619,6 +619,14 @@ def create_from_profiles(profiles, profile_sd, edge_sd, idl, align=False):
 
 def fix_mesh(msh):
     """
+    This check that the quadrilaterals composing the final mesh are correctly
+    defined i.e. all the vertexes are finite
+
+    :param msh:
+        A :class:`numpy.ndarray` instance with the coordinates of the mesh
+    :returns:
+        A revised :class:`numpy.ndarray` instance with the coordinates of
+        the mesh
     """
     for i in range(msh.shape[0]):
         ru = i+1
@@ -709,7 +717,7 @@ def get_mesh_back(pfs, rfi, sd, idl):
         for k in list(np.nonzero(cmm)[0]):
             #
             # compute azimuth and horizontal distance
-            az12, az21, hdist = g.inv(pl[k, 0], pl[k, 1], pr[k, 0], pr[k, 1])
+            az12, _, hdist = g.inv(pl[k, 0], pl[k, 1], pr[k, 0], pr[k, 1])
             hdist /= 1e3
             vdist = pr[k, 2] - pl[k, 2]
             tdist = (vdist**2 + hdist**2)**.5
@@ -836,6 +844,16 @@ def get_mesh_back(pfs, rfi, sd, idl):
 
 def get_mesh(pfs, rfi, sd, idl):
     """
+    :param pfs:
+        List of :class:`openquake.hazardlib.geo.line.Line` instances
+    :param rfi:
+        Index of the reference profile
+    :param sd:
+        Sampling distance
+    :param idl:
+        Boolean indicating the need to account for IDL presence
+    :returns:
+        TODO
     """
     g = Geod(ellps='WGS84')
     #
@@ -872,8 +890,8 @@ def get_mesh(pfs, rfi, sd, idl):
         #
         #
         for x in range(0, len(pr[:, 2])):
-            # this edge is in common between the last and the current profiles
             #
+            # this edge is in common between the last and the current profiles
             if x in cmmi and laidx[x] is None:
                 iii = []
                 for li, lv in enumerate(laidx):
@@ -890,8 +908,9 @@ def get_mesh(pfs, rfi, sd, idl):
         # loop over profiles
         for k in list(np.nonzero(cmm)[0]):
             #
-            #
-            az12, az21, hdist = g.inv(pl[k, 0], pl[k, 1], pr[k, 0], pr[k, 1])
+            # compute distance and azimuth between the corresponding points
+            # on the two profiles
+            az12, _, hdist = g.inv(pl[k, 0], pl[k, 1], pr[k, 0], pr[k, 1])
             hdist /= 1e3
             vdist = pr[k, 2] - pl[k, 2]
             tdist = (vdist**2 + hdist**2)**.5
@@ -902,6 +921,7 @@ def get_mesh(pfs, rfi, sd, idl):
                           pr[k, 0], pr[k, 1], pl[k, 2])
             # >>> TOLERANCE
             if abs(dd-tdist) > 0.5*tdist:
+                print('dd:', dd)
                 tmps = 'Error while building the mesh'
                 tmps += '\nDistances: {:f} {:f}'
                 raise ValueError(tmps.format(dd, tdist))
@@ -913,14 +933,17 @@ def get_mesh(pfs, rfi, sd, idl):
                 if len(npr)-1 < laidx[k]+1:
                     npr = add_empy_profile(npr)
                 #
-                # fix distance
+                # compute the coordinates of intermediate points along the
+                # current edge 
                 tmp = (j+1)*sd - rdist[k]
                 lo, la, _ = g.fwd(pl[k, 0], pl[k, 1], az12,
                                   tmp*hdist/tdist*1e3)
                 #
-                # fixing longitudes
+                # fix longitudes
                 if idl:
                     lo = lo+360 if lo < 0 else lo
+                #
+                # computing depths
                 de = pl[k, 2] + tmp*vdist/hdist
                 npr[laidx[k]+1][k] = [lo, la, de]
 
