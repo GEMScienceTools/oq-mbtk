@@ -121,7 +121,8 @@ def test_get_rake_from_kinematics():
 def test_check_trace_from_coords_no_coord_reversal():
 
     fault = {'coords': [[0., 0.,], [-1., 1.]],
-             'dip_dir': 'E'
+             'dip_dir': 'E',
+             'slip_type': 'Reverse'
              }
 
     trace = trace_from_coords(fault, param_map=param_map, defaults=defaults,
@@ -135,7 +136,8 @@ def test_check_trace_from_coords_no_coord_reversal():
 def test_check_trace_from_coords_yes_coord_reversal():
 
     fault = {'coords': [[0., 0.,], [-1., 1.]],
-             'dip_dir': 'S'
+             'dip_dir': 'S',
+             'slip_type': 'Reverse'
              }
 
     trace = trace_from_coords(fault, param_map=param_map, defaults=defaults,
@@ -189,7 +191,8 @@ def test_get_fault_area_simple():
              'upper_seis_depth': 0.,
              'lower_seis_depth': 10.,
              'average_dip': '(30,,)',
-             'dip_dir': 'E'
+             'dip_dir': 'E',
+             'slip_type': 'Reverse'
              }
     
     length = get_fault_length(fault, defaults=defaults, param_map=param_map)
@@ -212,7 +215,7 @@ def test_get_fault_area_from_surface():
 
     area = get_fault_area(fault, area_method='from_surface', 
                           width_method='length_scaling',
-                          scaling_rel='leonard_2010', defaults=defaults,
+                          width_scaling_rel='leonard_2010', defaults=defaults,
                           param_map=param_map)
 
     print(area)
@@ -267,8 +270,7 @@ def test_construct_sfs_dict():
 def test_get_net_slip_rate():
     _nsr = 6.
 
-    nsr = get_net_slip_rate(fault_1, slip_class='mle', param_map=param_map,
-                            defaults=defaults)
+    nsr = get_net_slip_rate(fault_1, slip_class='mle', param_map=param_map)
 
     try:
         assert nsr == _nsr
