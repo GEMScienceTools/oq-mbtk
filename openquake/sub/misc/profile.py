@@ -87,7 +87,7 @@ def _read_profile(filename):
     """
     points = []
     for line in open(filename, 'r'):
-        aa = re.split('\s+', line)
+        aa = re.split('\s+', re.sub('\s+$', '', line))
         points.append(Point(float(aa[0]),
                             float(aa[1]),
                             float(aa[2])))
@@ -107,23 +107,28 @@ def _resample_profile(line, sampling_dist):
     la = [pnt.latitude for pnt in line.points]
     de = [pnt.depth for pnt in line.points]
     #
-    # Add a tolerance length
+    # Set projection
     g = Geod(ellps='WGS84')
-    az12, az21, odist = g.inv(lo[-2], la[-2], lo[-1], la[-1])
-    odist /= 1e3
-    slope = np.arctan((de[-1] - de[-2]) / odist)
-    hdist = TOLERANCE * sampling_dist * np.cos(slope)
-    vdist = TOLERANCE * sampling_dist * np.sin(slope)
-    endlon, endlat, backaz = g.fwd(lo[-1], la[-1], az12, hdist*1e3)
-    lo[-1] = endlon
-    la[-1] = endlat
-    de[-1] = de[-1] + vdist
-    az12, az21, odist = g.inv(lo[-2], la[-2], lo[-1], la[-1])
     #
-    # checking
-    odist /= 1e3
-    slopec = np.arctan((de[-1] - de[-2]) / odist)
-    assert abs(slope-slopec) < 1e-3
+    # Add a tolerance length to the last point of the profile
+    # check that final portion of the profile is not vertical
+    if abs(lo[-2]-lo[-1]) > 1e-5 and abs(la[-2]-la[-1]) > 1e-5:
+        az12, az21, odist = g.inv(lo[-2], la[-2], lo[-1], la[-1])
+        odist /= 1e3
+        slope = np.arctan((de[-1] - de[-2]) / odist)
+        hdist = TOLERANCE * sampling_dist * np.cos(slope)
+        vdist = TOLERANCE * sampling_dist * np.sin(slope)
+        endlon, endlat, backaz = g.fwd(lo[-1], la[-1], az12, hdist*1e3)
+        lo[-1] = endlon
+        la[-1] = endlat
+        de[-1] = de[-1] + vdist
+        az12, az21, odist = g.inv(lo[-2], la[-2], lo[-1], la[-1])
+        # checking
+        odist /= 1e3
+        slopec = np.arctan((de[-1] - de[-2]) / odist)
+        assert abs(slope-slopec) < 1e-3
+    else:
+        de[-1] = de[-1] + TOLERANCE * sampling_dist
     #
     # initialise the cumulated distance
     cdist = 0.
@@ -161,7 +166,10 @@ def _resample_profile(line, sampling_dist):
             # compute the slope of the last segment and its horizontal length.
             # We need to manage the case of a vertical segment TODO
             segment_hlen = distance(slo, sla, 0., lo[idx+1], la[idx+1], 0.)
-            segment_slope = np.arctan((de[idx+1] - sde) / segment_hlen)
+            if segment_hlen > 1e-5:
+                segment_slope = np.arctan((de[idx+1] - sde) / segment_hlen)
+            else:
+                segment_slope = 90.
             #
             # horizontal and vertical lenght of delta
             delta_v = delta * np.sin(segment_slope)
@@ -195,5 +203,5 @@ def _resample_profile(line, sampling_dist):
         if abs(dst-sampling_dist) > 0.1*sampling_dist:
             raise ValueError('Wrong distance between points along the profile')
     #
-    #
+    # 
     return Line(resampled_cs)

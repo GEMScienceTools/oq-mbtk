@@ -187,8 +187,8 @@ class CreateFromProfilesTest(unittest.TestCase):
 class ResampleEdgeTest(unittest.TestCase):
 
     def setUp(self):
-        filename = os.path.join(BASE_DATA_PATH,
-                                '../data/slab/edge/edge_000.csv')
+        tmps = '../data/slab/edge/edge_000.csv'
+        filename = os.path.join(BASE_DATA_PATH, tmps)
         self.edge = _read_edge(filename)
 
     def test_edge_resampling01(self):
