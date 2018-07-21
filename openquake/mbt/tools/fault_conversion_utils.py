@@ -55,7 +55,7 @@ sfs_params = ('source_id',
 all_params = list(sfs_params)
 all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
                'net_slip_rate', 'strike_slip_rate', 'dip_slip_rate',
-               'vert_slip_rate', 'shortening_rate']
+               'vert_slip_rate', 'shortening_rate', 'aseismic_coefficient']
 
 # Default mapping of parameters
 # (keys: variable names used here, vals: variable names in input files
@@ -66,7 +66,7 @@ param_map = {p: p for p in all_params}
 defaults = {'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
             'b_value': 1.,
             'bin_width': 0.1,
-            'aseismic_coefficient': 0.9,
+            'aseismic_coefficient': 0.1,
             'upper_seismogenic_depth': 0.,
             'lower_seismogenic_depth': 20.,
             'rupture_mesh_spacing': 2.,
@@ -84,7 +84,9 @@ def construct_sfs_dict(fault_dict, area_method='simple',
                        width_method='seismo_depth',
                        width_scaling_rel='leonard_2010', slip_class='mle',
                        mag_scaling_rel=None, M_max=None, M_min=None,
-                       b_value=None, slip_rate=None, bin_width=None,
+                       b_value=None, slip_rate=None,
+                       aseismic_coefficient=None,
+                       bin_width=None,
                        fault_area=None, defaults=defaults,
                        param_map=param_map):
     """
@@ -169,6 +171,14 @@ def construct_sfs_dict(fault_dict, area_method='simple',
     :type slip_rate:
         float
 
+    :param aseismic_coefficient:
+        Fraction of slip rate that is released aseismically and doesn't
+        contribute to moment accumulation or seismic release on the fault.
+        Ranges between 0 and 1.
+
+    :type aseismic_coefficient:
+        float
+
     :param bin_width:
         Width of the bins for the magnitude-frequency distribution.
 
@@ -227,6 +237,7 @@ def construct_sfs_dict(fault_dict, area_method='simple',
                                            M_max=M_max, M_min=M_min,
                                            b_value=b_value,
                                            slip_rate=slip_rate,
+                                           aseismic_coefficient=aseismic_coefficient,
                                            bin_width=bin_width,
                                            fault_area=fault_area,
                                            defaults=defaults,
@@ -2174,6 +2185,7 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
                                mag_scaling_rel=None,
                                M_max=None, M_min=None,
                                b_value=None, slip_rate=None,
+                               aseismic_coefficient=None,
                                bin_width=None, fault_area=None,
                                defaults=defaults, param_map=param_map):
     """
@@ -2262,6 +2274,14 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
     :type slip_rate:
         float
 
+    :param aseismic_coefficient:
+        Fraction of slip rate that is released aseismically and doesn't
+        contribute to moment accumulation or seismic release on the fault.
+        Ranges between 0 and 1.
+
+    :type aseismic_coefficient:
+        float
+
     :param bin_width:
         Width of the bins for the magnitude-frequency distribution.
 
@@ -2314,6 +2334,15 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
                                       slip_class=slip_class,
                                       #defaults=defaults,
                                       param_map=param_map)
+
+    if aseismic_coefficient is None:
+        aseismic_coefficient = fetch_param_val(fault_dict,
+                                               'aseismic_coefficient',
+                                               defaults=defaults,
+                                               param_map=param_map)
+
+    seismic_slip_rate = slip_rate * (1. - aseismic_coefficient)
+
     if M_min > M_max:
         raise ValueError('M_min is greater than M_max')
 
@@ -2324,8 +2353,8 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
         bin_width = fetch_param_val(fault_dict, 'bin_width', defaults=defaults,
                                     param_map=param_map)
 
-    bin_rates = rates_for_double_truncated_mfd(fault_area, slip_rate, M_min,
-                                               M_max, b_value, bin_width)
+    bin_rates = rates_for_double_truncated_mfd(fault_area, seismic_slip_rate,
+                                               M_min, M_max, b_value, bin_width)
 
     mfd = hz.mfd.EvenlyDiscretizedMFD(M_min + bin_width / 2., bin_width,
                                       bin_rates)
