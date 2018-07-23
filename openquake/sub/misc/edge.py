@@ -19,6 +19,7 @@ from openquake.hazardlib.geo.geodetic import distance
 from openquake.hazardlib.geo.geodetic import npoints_towards
 
 import matplotlib.pyplot as plt
+# MN: 'Axes3D' imported but never used
 from mpl_toolkits.mplot3d import Axes3D
 
 
@@ -572,7 +573,7 @@ def create_from_profiles(profiles, profile_sd, edge_sd, idl, align=False):
         for pro in profiles:
             tmp = [[p.longitude, p.latitude, p.depth] for p in pro.points]
             tmp = np.array(tmp)
-            idx = np.nonzero(tmp[:,0] > 180)
+            idx = np.nonzero(tmp[:, 0] > 180)
             tmp[idx, 0] -= 360.
             ax.plot(tmp[:, 0], tmp[:, 1], tmp[:, 2], 'x--b', markersize=2)
         for i, tmp in enumerate(rprof):
@@ -772,8 +773,8 @@ def get_mesh_back(pfs, rfi, sd, idl):
                                 if idl:
                                     tmp[:, 0] = ([x+360 if x < 0 else x
                                                   for x in tmp[:, 0]])
-                                #ax.plot(tmp[0, 0], tmp[0, 1], tmp[0, 2],
-                                #        'o', color='orange', markersize=6)
+                                # ax.plot(tmp[0, 0], tmp[0, 1], tmp[0, 2],
+                                #         'o', color='orange', markersize=6)
                                 ax.plot(tmp[:, 0], tmp[:, 1], tmp[:, 2],
                                         'x--b', markersize=6, label='original')
                                 ax.text(tmp[0, 0], tmp[0, 1], tmp[0, 2],
@@ -971,7 +972,7 @@ def get_mesh(pfs, rfi, sd, idl):
                             ax.invert_zaxis()
                             ax.view_init(50, 55)
                             plt.show()
-                        #raise ValueError('')
+                        # raise ValueError('')
                 laidx[k] += 1
             rdist[k] = tdist - sd*ndists + rdist[k]
             assert rdist[k] < sd

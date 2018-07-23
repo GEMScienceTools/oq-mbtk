@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 
+# MN: 'os' imported but never used
 import os
 import sys
 import numpy
 import pickle
 
+# MN: 'Catalogue' imported but never used
 from openquake.hmtk.seismicity.catalogue import Catalogue
-from openquake.hmtk.parsers.catalogue.csv_catalogue_parser import CsvCatalogueParser
+from openquake.hmtk.parsers.catalogue.csv_catalogue_parser import (
+    CsvCatalogueParser)
 from openquake.hmtk.seismicity.selector import CatalogueSelector
+
 
 def main(argv):
 
@@ -16,7 +20,7 @@ def main(argv):
     cat = parser.read_file()
 
     output_path = './catalogue_ori.p'
-    fou = open(output_path,'wb')
+    fou = open(output_path, 'wb')
     pickle.dump(cat, fou)
     fou.close()
 
@@ -47,7 +51,7 @@ def main(argv):
     newcat = selector.select_catalogue(boo)
 
     output_path = './catalogue_ext.p'
-    fou = open(output_path,'wb')
+    fou = open(output_path, 'wb')
     pickle.dump(newcat, fou)
     fou.close()
 
