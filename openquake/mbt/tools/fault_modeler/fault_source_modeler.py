@@ -93,6 +93,7 @@ def build_fault_model(cfg_file=None,
     optional arguments
     """
 
+    # Import arguments from INI configuration file
     if cfg_file is not None:
         cfg_dict = read_config_file(cfg_file)
 
@@ -101,6 +102,12 @@ def build_fault_model(cfg_file=None,
                 geojson_file = cfg_dict['config']['geojson_file']
             if 'xml_output' in cfg_dict['config']:
                 xml_output = cfg_dict['config']['xml_output']
+            if 'black_list' in cfg_dict['config']:
+                black_list = ast.literal_eval(
+                                cfg_dict['config']['black_list'])
+            if 'select_list' in cfg_dict['config']:
+                select_list = ast.literal_eval(
+                                cfg_dict['config']['select_list'])
 
         if 'param_map' in cfg_dict:
             param_map.update(cfg_dict['param_map'])
@@ -160,7 +167,8 @@ def build_model_from_db(fault_db,
 
     for fl in fault_db.db:
 
-        sfs_dict = fmu.construct_sfs_dict(fl, defaults=defaults)
+        # Missing defaults
+        sfs_dict = fmu.construct_sfs_dict(fl)
         sfs = fmu.make_fault_source(sfs_dict)
         srcl.append(sfs)
 
@@ -247,10 +255,18 @@ def main(argv):
     """
 
     p = sap.Script(build_fault_model)
-    p.arg(name='geojson_file',
-          help='Fault database in geojson format')
-    p.arg(name='xml_output',
-          help='Output xml containing the fault model')
+    p.opt(name='cfg_file',
+          help='Parameter configuration file (.ini)',
+          abbrev='-cfg',
+          metavar='\'.ini\'')
+    p.opt(name='geojson_file',
+          help='Fault database in geojson format',
+          abbrev='-geo',
+          metavar='\'.geojson\'')
+    p.opt(name='xml_output',
+          help='Output xml containing the fault model',
+          abbrev='-xml',
+          metavar='\'.xml\'')
     p.opt(name='project_name',
           help='Name of the current project', abbrev='-h')
     p.opt(name='black_list',
