@@ -25,6 +25,7 @@
 import sys
 import ast
 import json
+import configparser
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -73,34 +74,93 @@ param_map = {'source_id': 'ogc_fid',
              'dip_dir': 'ns_dip_dir',
              'dip_slip_rate': 'ns_dip_slip_rate'}
 
-
 # Default values
 defaults = {}
 
 # -----------------------------------------------------------------------------
 
-def build_fault_model(geojson_file, xml_output=None,
-                                    project_name=None,
-                                    black_list=None,
-                                    select_list=None):
+def build_fault_model(cfg_file=None,
+                      geojson_file=None,
+                      xml_output=None,
+                      project_name=None,
+                      black_list=None,
+                      select_list=None,
+                      param_map=param_map,
+                      defaults=defaults,
+                      **kwargs):
     """
+    Note: we have to set the priority when using both ini file and
+    optional arguments
     """
 
-    faults = fault_database()
-    faults.import_from_geojson(geojson_file, black_list, select_list)
+    if cfg_file is not None:
+        cfg_dict = read_config_file(cfg_file)
 
-    build_model_from_db(faults, xml_output, project_name)
+        if 'config' in cfg_dict:
+            if 'geojson_file' in cfg_dict['config']:
+                geojson_file = cfg_dict['config']['geojson_file']
+            if 'xml_output' in cfg_dict['config']:
+                xml_output = cfg_dict['config']['xml_output']
+
+        if 'param_map' in cfg_dict:
+            param_map.update(cfg_dict['param_map'])
+
+        if 'defaults' in cfg_dict:
+            defaults.update(cfg_dict['defaults'])
+
+    for key in kwargs:
+        defaults[key] = kwargs[key]
+
+    # Import the fault database from geojson
+    if geojson_file is not None:
+        fault_db = fault_database()
+        fault_db.import_from_geojson(geojson_file,
+                                     black_list=black_list,
+                                     select_list=select_list,
+                                     param_map=param_map)
+    else:
+        print('Geojson file no specified')
+        return
+
+    # Create the fault source model in xml_format
+    build_model_from_db(fault_db, xml_output, project_name, defaults=defaults)
 
 # -----------------------------------------------------------------------------
 
-def build_model_from_db(fault_list, xml_output=None,
-                                    project_name=None):
+def read_config_file(cfg_file):
+    """
+    """
+
+    cfg = configparser.ConfigParser(dict_type=dict)
+    cfg.read(cfg_file)
+
+    cfg_dict = {}
+
+    for key in ['config', 'param_map', 'defaults']:
+
+        if cfg.has_section(key):
+            cfg_dict[key] = {k:v for k, v in cfg.items(key)}
+
+    return cfg_dict
+
+# -----------------------------------------------------------------------------
+
+def build_model_from_db(fault_db,
+                        xml_output=None,
+                        project_name=None,
+                        defaults=defaults,
+                        **kwargs):
+    """
+    """
+
+    for key in kwargs:
+        defaults[key] = kwargs[key]
 
     srcl = []
 
-    for fl in fault_list.db:
+    for fl in fault_db.db:
 
-        sfs_dict = fmu.construct_sfs_dict(fl)
+        sfs_dict = fmu.construct_sfs_dict(fl, defaults=defaults)
         sfs = fmu.make_fault_source(sfs_dict)
         srcl.append(sfs)
 
