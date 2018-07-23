@@ -101,8 +101,8 @@ ENV/
 # mypy
 .mypy_cache/
 
-
-./tmp
+# temporary files
+**/tmp/**
 
 
 setup.sh
