@@ -48,14 +48,17 @@ class AlignProfilesTest(unittest.TestCase):
         self.assertEqual(0, idx)
 
     def test_alignement_02(self):
+        # MN: 'idx' assigned but never used
         idx = profiles_depth_alignment(self.pro1, self.pro3)
         # self.assertEqual(-1, idx)
 
     def test_alignement_03(self):
+        # MN: 'idx' assigned but never used
         idx = profiles_depth_alignment(self.pro1, self.pro4)
         # self.assertEqual(1, idx)
 
     def test_alignement_04(self):
+        # MN: 'idx' assigned but never used
         idx = profiles_depth_alignment(self.pro1, self.pro5)
         # self.assertEqual(-1, idx)
 

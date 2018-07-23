@@ -4,6 +4,7 @@
 
 import numpy as np
 
+# _read_profile imported but never used
 from openquake.sub.misc.profile import _read_profile
 from openquake.sub.misc.edge import create_faults
 

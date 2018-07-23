@@ -6,6 +6,7 @@ import numpy
 import unittest
 
 import matplotlib.pyplot as plt
+# MN: 'Axes3D' imported but never used
 from mpl_toolkits.mplot3d import Axes3D
 
 from openquake.sub.misc.profile import _read_profiles
