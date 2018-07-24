@@ -1,4 +1,3 @@
-
 import os
 import copy
 import nbformat
@@ -53,7 +52,7 @@ def run(notebook_filename, inps, reports_folder=None, key=None):
             node['cells'] = ocells
             #
             # creating the exporter
-            #html_exporter = HTMLExporter()
+            # html_exporter = HTMLExporter()
             html_exporter = HTMLExporter(html_exporter='nbextensions.tpl')
             shtml = export(html_exporter, node)
             #

@@ -1,5 +1,3 @@
-
-
 import sys
 
 from openquake.commonlib import readinput
@@ -20,6 +18,7 @@ def main(argv):
     #
     # read the content of the configuration file
     oqparam = readinput.get_oqparam(ini_fname)
+    # MN: 'gmmlt' assigned but never used
     gmmlt = readinput.get_gsim_lt(oqparam)
     gmmlist = set(readinput.get_gsims(oqparam))
     #
@@ -31,12 +30,12 @@ def main(argv):
     #
     # parameters
     print('\nRequired rupture-site distances')
-    print('   ', getattr(ctx,'REQUIRES_DISTANCES'))
+    print('   ', getattr(ctx, 'REQUIRES_DISTANCES'))
     print('Required site parameters')
-    print('   ', getattr(ctx,'REQUIRES_SITES_PARAMETERS'))
+    print('   ', getattr(ctx, 'REQUIRES_SITES_PARAMETERS'))
     print('Required rupture parameters')
-    print('   ', getattr(ctx,'REQUIRES_RUPTURE_PARAMETERS'))
+    print('   ', getattr(ctx, 'REQUIRES_RUPTURE_PARAMETERS'))
 
 
-if __name__== "__main__":
+if __name__ == "__main__":
     main(sys.argv[1:])

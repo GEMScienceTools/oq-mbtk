@@ -7,8 +7,8 @@ import logging
 
 from openquake.mbt.tools.tr.catalogue import get_catalogue
 from openquake.mbt.tools.geo import get_idx_points_inside_polygon
-from openquake.mbt.tools.tr.tectonic_regionalisation import (set_crustal,
-                                                     get_crust_model)
+from openquake.mbt.tools.tr.tectonic_regionalisation import (
+    set_crustal, get_crust_model)
 
 
 class SetCrustalEarthquakes():

@@ -208,7 +208,8 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             tcat_fname = os.path.abspath(tmps)
             if save_af:
                 ext = '_dec_af_{:s}{:s}.{:s}'.format(lab, olab, format)
-                tcataf_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
+                tcataf_fname = Path(
+                    os.path.basename(catalogue_hmtk_fname)).stem + ext
                 tmps = os.path.join(output_path, tcataf_fname)
                 tcataf_fname = os.path.abspath(tmps)
             #

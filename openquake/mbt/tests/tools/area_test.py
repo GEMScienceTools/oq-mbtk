@@ -1,11 +1,14 @@
 import os
+# MN: 'numpy' and 'Path' imported but not used
 import numpy
 import unittest
 
 from pathlib import Path
 
 from openquake.mbt.tools.tr.catalogue import get_catalogue
-from openquake.mbt.tools.area import create_catalogue, load_geometry_from_shapefile
+from openquake.mbt.tools.area import (
+    create_catalogue, load_geometry_from_shapefile)
+# MN: 'OQtSource' imported but not used
 from openquake.mbt.oqt_project import OQtModel, OQtSource
 
 BASE_DATA_PATH = os.path.dirname(__file__)
@@ -46,7 +49,6 @@ class SelectEarthquakesWithinAreaTestCase(unittest.TestCase):
         #
         # check
         self.assertEqual(len(scat.data['longitude']), 5)
-
 
     def testcase02(self):
         """
