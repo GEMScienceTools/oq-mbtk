@@ -42,7 +42,7 @@ if 0:
 
 ## Geojson standard format
 
-```
+```json
 {
     "type": "FeatureCollection",
     "name": "Example 1",
