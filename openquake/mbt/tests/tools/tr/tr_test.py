@@ -62,7 +62,6 @@ class TrTestCase(unittest.TestCase):
         #
         f.close()
 
-
     def testcase03(self):
         """
         Testing TR for an idealized case

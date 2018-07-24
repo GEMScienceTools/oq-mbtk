@@ -53,7 +53,8 @@ def get_rates_density(model, mmint=0.0, mmaxt=11.0, trt='.*'):
     for src in model:
         if (isinstance(src, AreaSource) and
                 re.search(trt, src.tectonic_region_type)):
-            trates = get_rates_within_m_range(src.mfd, mmint=mmint, mmaxt=mmaxt)
+            trates = get_rates_within_m_range(src.mfd, mmint=mmint,
+                                              mmaxt=mmaxt)
             mmin, mmax = src.mfd.get_min_max_mag()
             area = _get_area(loads(src.polygon.wkt))
             dens[src.source_id] = trates / area
