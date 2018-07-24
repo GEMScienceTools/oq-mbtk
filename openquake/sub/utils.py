@@ -39,11 +39,11 @@ def mecclass(plungt, plungb, plungp):
     maxplung, axis = plunges.max(0), plunges.argmax(0)
     if maxplung >= 67.5:
         if axis == 0:  # P max
-                clase = 'N'  # normal faulting
+            clase = 'N'  # normal faulting
         elif axis == 1:  # B max
-                clase = 'SS'  # strike-slip faulting
+            clase = 'SS'  # strike-slip faulting
         elif axis == 2:  # T max
-                clase = 'R'  # reverse faulting
+            clase = 'R'  # reverse faulting
     else:
         if axis == 0:  # P max
             if B > T:
