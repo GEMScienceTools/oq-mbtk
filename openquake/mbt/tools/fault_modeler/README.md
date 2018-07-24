@@ -2,10 +2,10 @@
 
 This is a set of
 
-## Use as a module
+## Getting Started
 
 The fault model builder can be run as a Python module or as a bash script.
-As a module, the main function *build_fault_model* is called like:
+As a module, the main function *build_fault_model* can be called with:
 
 ```python
 from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_fault_model
@@ -14,8 +14,46 @@ build_fault_model(geojson_file='FaultDatabase.geojson',
                   xml_output='FaultModel.xml')
 ```
 
+or, alternatively, by passing a configuration file (.ini):
+
+```python
+from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_fault_model
+
+build_fault_model(cfg_file='config.ini')
+```
+
+## Configuration File Format
+
+The configuration file (.ini) replaces the need of manually passing each argument to the function. It contains a list of processing information with the following format:
+
+```
+[config]
+geojson_file = FaultDatabase.geojson
+xml_output = FaultModel.xml
+
+[param_map]
+source_id = ogc_fid
+name = ns_name
+average_dip = ns_average_dip
+average_rake = ns_average_rake
+net_slip_rate = ns_net_slip_rate
+vert_slip_rate = ns_vert_slip_rate
+strike_slip_rate = ns_strike_slip_rate
+shortening_rate = ns_shortening_rate
+dip_dir = ns_dip_dir
+dip_slip_rate = ns_dip_slip_rate
+
+[defaults]
+upper_seismogenic_depth = 0
+lower_seismogenic_depth = 15
+tectonic_region_type = ActiveShallow
+rupture_mesh_spacing = 5
+```
+
+The use of any of the three blocks is optional. The first block is referred to the input/output. The second block contains the keyword translation map when using non-standard a geojson fault database. The third block includes a list of settings to be used as default parameters.
 
 
+# -----------------------------------------------------------------------------
 
 from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_fault_model
 
