@@ -25,6 +25,8 @@ from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_fault_m
 build_fault_model(cfg_file='config.ini')
 ```
 
+Note that if the *xml_output* is not specified (either as an argument of in the .ini file), the function will return directly a list of the generated OpenQuake source objects.
+
 ### Using the Console
 
 The above example can also be run a shell command as:
@@ -57,7 +59,7 @@ param_map = {'source_id': 'ogc_fid',
 
 build_fault_model(geojson_file='FaultDatabase.geojson',
                   xml_output='FaultModel.xml')
-                  param_map=PM)
+                  param_map=param_map)
 ```
 
 ## Configuration File Format
@@ -93,7 +95,7 @@ The first block is referred to the input/output. The second block contains the k
 
 The use of any of the three blocks is optional, as well as any of the directives. The combined used of the configuration file and the direct passing of arguments is allowed. Note, however, that in case an option is specified twice, the directive in the configuration file will have priority.
 
-## Using non-standard Geojson file format
+## Using a non-standard Geojson file format
 
 In case a geojson database with *non-standard* keyword (e.g. an old version),
 it is possible to specify the translation map with a simple dictionary:
@@ -115,59 +117,4 @@ build_fault_model(geojson_file='FaultDatabase.geojson',
                   param_map=PM)
 ```
 
-## Geojson standard format
-
-```json
-{
-    "type": "FeatureCollection",
-    "name": "Example 1",
-    "crs": {
-        "type": "name",
-        "properties": {
-            "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
-        }
-    },
-    "features": [
-        {
-            "type": "Feature",
-            "properties": {
-                "fid": 1,
-                "catalog_id": "test_1",
-                "name": "Mons Olympus Fault System",
-                "is_active": 1,
-                "exposure_quality": 1,
-                "epistemic_quality": 1,
-                "accuracy": 400000,
-                "slip_type": "Dextral-Normal",
-                "average_dip": "(75,60,90)",
-                "average_rake": "(-10, -40, 0)",
-                "dip_dir": "E",
-                "downthrown_side_dir": "E",
-                "net_slip_rate": "(6, 3, 10)",
-                "strike_slip_rate": "(5, 2, 7)",
-                "vert_slip_rate": null,
-                "shortening_rate": null,
-                "upper_seis_depth": 0.0,
-                "lower_seis_depth": 12.0,
-                "last_movement": null,
-                "reference": null,
-                "notes": "Some consideration"
-            },
-            "geometry": {
-                "type": "LineString",
-                "coordinates": [
-                    [
-                        79.7391028607983, 32.41641275873077
-                    ],
-                    [
-                        80.0536700043854, 32.033767651233035
-                    ],
-                    [
-                        80.30954924804952, 31.65112254373529
-                    ]
-                ]
-            }
-        }
-    ]
-}
-```
+As well, the translation information can be specified in the configuration file (see following section) 
