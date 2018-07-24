@@ -308,10 +308,10 @@ class Trench:
         trch = self.resample(distance)
         for idx, coo in enumerate(trch.axis.tolist()):
             if idx < len(trch.axis[:, 1]):
-                    yield CrossSection(coo[0],
-                                       coo[1],
-                                       [length],
-                                       [(coo[2]+90) % 360])
+                yield CrossSection(coo[0],
+                                   coo[1],
+                                   [length],
+                                   [(coo[2]+90) % 360])
             else:
                 yield
         return
