@@ -40,4 +40,59 @@ if 1:
 if 0:
     build_fault_model(cfg_file='config.ini')
 
+## Geojson standard format
 
+```
+{
+    "type": "FeatureCollection",
+    "name": "Example 1",
+    "crs": {
+        "type": "name",
+        "properties": {
+            "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+        }
+    },
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "fid": 1,
+                "catalog_id": "test_1",
+                "name": "Mons Olympus Fault System",
+                "is_active": 1,
+                "exposure_quality": 1,
+                "epistemic_quality": 1,
+                "accuracy": 400000,
+                "slip_type": "Dextral-Normal",
+                "average_dip": "(75,60,90)",
+                "average_rake": "(-10, -40, 0)",
+                "dip_dir": "E",
+                "downthrown_side_dir": "E",
+                "net_slip_rate": "(6, 3, 10)",
+                "strike_slip_rate": "(5, 2, 7)",
+                "vert_slip_rate": null,
+                "shortening_rate": null,
+                "upper_seis_depth": 0.0,
+                "lower_seis_depth": 12.0,
+                "last_movement": null,
+                "reference": null,
+                "notes": "Some consideration"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        79.7391028607983, 32.41641275873077
+                    ],
+                    [
+                        80.0536700043854, 32.033767651233035
+                    ],
+                    [
+                        80.30954924804952, 31.65112254373529
+                    ]
+                ]
+            }
+        }
+    ]
+}
+```
