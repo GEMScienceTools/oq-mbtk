@@ -62,28 +62,6 @@ build_fault_model(geojson_file='FaultDatabase.geojson',
                   param_map=param_map)
 ```
 
-## Using a non-standard Geojson file format
-
-In case a geojson database with *non-standard* keyword (e.g. an old version),
-it is possible to specify the translation map with a simple dictionary:
-
-```
-param_map = {'source_id': 'ogc_fid',
-             'name': 'ns_name',
-             'average_dip': 'ns_average_dip',
-             'average_rake': 'ns_average_rake',
-             'net_slip_rate': 'ns_net_slip_rate',
-             'vert_slip_rate': 'ns_vert_slip_rate',
-             'strike_slip_rate': 'ns_strike_slip_rate',
-             'shortening_rate': 'ns_shortening_rate',
-             'dip_dir': 'ns_dip_dir',
-             'dip_slip_rate': 'ns_dip_slip_rate'}
-
-build_fault_model(geojson_file='FaultDatabase.geojson',
-                  xml_output='FaultModel.xml')
-                  param_map=PM)
-```
-
 As well, the translation information can be specified in the configuration file (see following section)
 
 ## Configuration File Format
