@@ -18,7 +18,7 @@ def get_crust_model(filename):
     """
     crust = []
     for line in open(filename, 'r'):
-        aa = re.split('\s+', re.sub('^\s*', '', line.rstrip()))
+        aa = re.split('\\s+', re.sub('^\\s*', '', line.rstrip()))
         crust.append([float(aa[0]), float(aa[1]), float(aa[2])])
     #
     # create the spatial index

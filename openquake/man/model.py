@@ -147,7 +147,7 @@ def storeNew(filename, model, info=None):
     """
     # Preparing output filenames
     dname = os.path.dirname(filename)
-    slist = re.split('\.', os.path.basename(filename))
+    slist = re.split('\\.', os.path.basename(filename))
     # SIDx
     p = index.Property()
     p.dimension = 3
@@ -206,7 +206,7 @@ def store(filename, model, info=None):
     """
     # Preparing output filenames
     dname = os.path.dirname(filename)
-    slist = re.split('\.', os.path.basename(filename))
+    slist = re.split('\\.', os.path.basename(filename))
     # SIDx
     p = index.Property()
     p.dimension = 3
@@ -299,7 +299,7 @@ def load(filename, what='all'):
     points = None
     # Filename
     dname = os.path.dirname(filename)
-    slist = re.split('\.', os.path.basename(filename))
+    slist = re.split('\\.', os.path.basename(filename))
     # SIDx
     p = index.Property()
     p.dimension = 3
@@ -332,7 +332,7 @@ def load_models(path, modell=None):
     """
     modd = {}
     for fname in glob.glob(path):
-        slist = re.split('\.', os.path.basename(fname))
+        slist = re.split('\\.', os.path.basename(fname))
         if not re.search('info', fname):
             if modell is not None and slist[0] in modell:
                 mod, info = load(fname)
