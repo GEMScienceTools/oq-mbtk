@@ -549,18 +549,18 @@ def mfd_upsample(bin_width, mfd):
             if (1.0-ra) > 1e-10:
                 nocc[idxa+1, 3] += occ*(1-ra)
         print(nocc)
-    # 
+    #
     # check that the the MFDs have the same total occurrence rate
     smmn = sum(nocc[:, 3])
     smmo = sum(mfd.occurrence_rates)
     print(smmn, smmo)
     #
-    # check that the total number of occurrences in the original and 
+    # check that the total number of occurrences in the original and
     # resampled MFDs are the same
     assert abs(smmn-smmo) < 1e-5
 
-    idxs = set(np.arange(0, len(nocc[:,3])))
-    iii = len(nocc[:,3])-1
+    idxs = set(np.arange(0, len(nocc[:, 3])))
+    iii = len(nocc[:, 3])-1
     while nocc[iii, 3] < 1e-10:
         idxs = idxs - set([iii])
         iii -= 1

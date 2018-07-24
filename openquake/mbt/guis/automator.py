@@ -119,7 +119,8 @@ def automator_gui(filename):
 
 
 def runipy_for_sources(project_filename, model_id, notebook_path,
-                       src_id_list, wdg_progress='None', report=False, create_pdf=False):
+                       src_id_list, wdg_progress='None', report=False,
+                       create_pdf=False):
 
     opt = ''
     if report:
@@ -152,9 +153,9 @@ def runipy_for_sources(project_filename, model_id, notebook_path,
         # Running notebook
         out = subprocess.call(cmd_str, shell=True)
         if out:
-            print (cmd_str)
-            print ('src ID:', elem)
-            print ('Error in processing the notebook')
+            print(cmd_str)
+            print('src ID:', elem)
+            print('Error in processing the notebook')
             return 1
 
         if len(opt) > 0:
@@ -162,8 +163,8 @@ def runipy_for_sources(project_filename, model_id, notebook_path,
             cmd_str = 'ipython nbconvert --to html %s' % (notebook_path)
             out = subprocess.call(cmd_str, shell=True)
             if out:
-                print (cmd_str)
-                print ('Error in creating the html report')
+                print(cmd_str)
+                print('Error in creating the html report')
                 return 1
 
             # Moving report to folder and rename it
@@ -175,19 +176,19 @@ def runipy_for_sources(project_filename, model_id, notebook_path,
 
             out = subprocess.call(cmd_str, shell=True)
             if out:
-                print ('Error in moving the report to the final folder')
-                print ('from: %s.html' % (os.path.splitext(nb_name)[0]))
-                print ('to:', html_filename)
+                print('Error in moving the report to the final folder')
+                print('from: %s.html' % (os.path.splitext(nb_name)[0]))
+                print('to:', html_filename)
                 return 1
             else:
-                print ('Created %s' % (rpt_name))
+                print('Created %s' % (rpt_name))
 
             if create_pdf:
                 pdf_filename = '%s.pdf' % (html_filename.rsplit('.', 1)[0])
                 cmd_str = 'wkhtmltopdf %s %s' % (html_filename, pdf_filename)
                 out = subprocess.call(cmd_str, shell=True)
                 if out:
-                    print ('Error in creating the .pdf file')
+                    print('Error in creating the .pdf file')
                     return 1
                 else:
                     pass

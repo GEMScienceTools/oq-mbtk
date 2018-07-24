@@ -21,6 +21,7 @@ def gdfs(catalogue, surface):
     :parameter surface:
     """
     nel = len(catalogue.data['longitude'])
+    # MN: 'dsts' assigned but never used
     dsts = np.empty((nel))
     delta = 4000
     #
@@ -35,6 +36,7 @@ def gdfs(catalogue, surface):
     #
     # multiprocessing
     pool = mp.Pool(processes=6)
+    # MN: 'results' assigned but never used
     results = pool.map(aaa, inputs)
 
 
