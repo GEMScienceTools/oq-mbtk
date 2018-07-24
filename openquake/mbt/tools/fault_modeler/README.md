@@ -1,10 +1,10 @@
 # Fault Model Building Tools
 
-This is a set of
+This module contains a set of functionalities to create a a Fault source model from a active fault database.
 
 ## Getting Started
 
-The fault model builder can be run as a Python module or as a bash script.
+The fault model builder can be run as a Python module or from the command line.
 
 ### In Python
 
@@ -36,6 +36,28 @@ or identically:
 
 ```console
 fault_source_modeler.py -cfg config.ini
+```
+
+## Using non-standard Geojson file format
+
+In case a geojson database with *non-standard* keyword (e.g. an old version),
+it is possible to specify the translation map with a simple dictionary:
+
+```
+param_map = {'source_id': 'ogc_fid',
+             'name': 'ns_name',
+             'average_dip': 'ns_average_dip',
+             'average_rake': 'ns_average_rake',
+             'net_slip_rate': 'ns_net_slip_rate',
+             'vert_slip_rate': 'ns_vert_slip_rate',
+             'strike_slip_rate': 'ns_strike_slip_rate',
+             'shortening_rate': 'ns_shortening_rate',
+             'dip_dir': 'ns_dip_dir',
+             'dip_slip_rate': 'ns_dip_slip_rate'}
+
+build_fault_model(geojson_file='FaultDatabase.geojson',
+                  xml_output='FaultModel.xml')
+                  param_map=PM)
 ```
 
 ## Configuration File Format
@@ -71,30 +93,27 @@ The first block is referred to the input/output. The second block contains the k
 
 The use of any of the three blocks is optional, as well as any of the directives. The combined used of the configuration file and the direct passing of arguments is allowed. Note, however, that in case an option is specified twice, the directive in the configuration file will have priority.
 
-# -----------------------------------------------------------------------------
+## Using non-standard Geojson file format
 
-from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_fault_model
+In case a geojson database with *non-standard* keyword (e.g. an old version),
+it is possible to specify the translation map with a simple dictionary:
 
-if 1:
-    param_map = {'source_id': 'ogc_fid',
-                 'name': 'ns_name',
-                 'average_dip': 'ns_average_dip',
-                 'average_rake': 'ns_average_rake',
-                 'net_slip_rate': 'ns_net_slip_rate',
-                 'vert_slip_rate': 'ns_vert_slip_rate',
-                 'strike_slip_rate': 'ns_strike_slip_rate',
-                 'shortening_rate': 'ns_shortening_rate',
-                 'dip_dir': 'ns_dip_dir',
-                 'dip_slip_rate': 'ns_dip_slip_rate'}
+```
+param_map = {'source_id': 'ogc_fid',
+             'name': 'ns_name',
+             'average_dip': 'ns_average_dip',
+             'average_rake': 'ns_average_rake',
+             'net_slip_rate': 'ns_net_slip_rate',
+             'vert_slip_rate': 'ns_vert_slip_rate',
+             'strike_slip_rate': 'ns_strike_slip_rate',
+             'shortening_rate': 'ns_shortening_rate',
+             'dip_dir': 'ns_dip_dir',
+             'dip_slip_rate': 'ns_dip_slip_rate'}
 
-    build_fault_model(
-        geojson_file='Data/ne_asia_faults_rates_bvalue.geojson',
-        xml_output='Data/test.xml',
-        select_list=[1,2],
-        param_map=param_map)
-
-if 0:
-    build_fault_model(cfg_file='config.ini')
+build_fault_model(geojson_file='FaultDatabase.geojson',
+                  xml_output='FaultModel.xml')
+                  param_map=PM)
+```
 
 ## Geojson standard format
 
