@@ -25,7 +25,9 @@ from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_fault_m
 build_fault_model(cfg_file='config.ini')
 ```
 
-### In Bash
+### Using the Console
+
+The above example can also be run a shell command as:
 
 ```console
 fault_source_modeler.py -geo FaultDatabase.geojson -xml FaultModel.xml
