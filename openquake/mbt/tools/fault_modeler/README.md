@@ -24,7 +24,8 @@ build_fault_model(cfg_file='config.ini')
 
 ## Configuration File Format
 
-The configuration file (.ini) replaces the need of manually passing each argument to the function. It contains a list of processing information with the following format:
+The configuration file (.ini) replaces the need of manually passing the arguments to the main function.
+The file has the following standard format:
 
 ```
 [config]
@@ -50,8 +51,9 @@ tectonic_region_type = ActiveShallow
 rupture_mesh_spacing = 5
 ```
 
-The use of any of the three blocks is optional. The first block is referred to the input/output. The second block contains the keyword translation map when using non-standard a geojson fault database. The third block includes a list of settings to be used as default parameters.
+The first block is referred to the input/output. The second block contains the keyword translation map when using non-standard a geojson fault database. The third block includes a list of settings to be used as default parameters.
 
+The use of any of the three blocks is optional, as well as any of the directives. The combined used of the configuration file and the direct passing of arguments is allowed. Note, however, that in case an option is specified twice, the directive in the configuration file will have priority.
 
 # -----------------------------------------------------------------------------
 
