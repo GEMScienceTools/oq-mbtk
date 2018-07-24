@@ -27,12 +27,12 @@ build_fault_model(cfg_file='config.ini')
 
 ### In Bash
 
-```bash
+```console
 fault_source_modeler.py -geo FaultDatabase.geojson -xml FaultModel.xml
 ```
 or identically:
 
-```bash
+```console
 fault_source_modeler.py -cfg config.ini
 ```
 
