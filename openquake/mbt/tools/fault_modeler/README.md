@@ -5,6 +5,9 @@ This is a set of
 ## Getting Started
 
 The fault model builder can be run as a Python module or as a bash script.
+
+### In Python
+
 As a module, the main function *build_fault_model* can be called with:
 
 ```python
@@ -20,6 +23,17 @@ or, alternatively, by passing a configuration file (.ini):
 from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_fault_model
 
 build_fault_model(cfg_file='config.ini')
+```
+
+### In Bash
+
+```bash
+fault_source_modeler.py -geo FaultDatabase.geojson -xml FaultModel.xml
+```
+or identically:
+
+```bash
+fault_source_modeler.py -cfg config.ini
 ```
 
 ## Configuration File Format
