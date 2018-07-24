@@ -152,7 +152,7 @@ def build_model_from_db(fault_db,
     for fl in fault_db.db:
 
         # Missing defaults
-        sfs_dict = fmu.construct_sfs_dict(fl)
+        sfs_dict = fmu.construct_sfs_dict(fl, defaults_update=defaults)
         sfs = fmu.make_fault_source(sfs_dict)
         srcl.append(sfs)
 
