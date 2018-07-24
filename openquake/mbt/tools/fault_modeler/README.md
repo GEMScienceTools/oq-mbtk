@@ -1,10 +1,10 @@
 # Fault Model Building Tools
 
-This module contains a set of functionalities to create a a Fault source model from a active fault database.
+This module contains a set of functionalities to create an OpenQuake source model from a active fault database in geojson format.
 
 ## Getting Started
 
-The fault model builder can be run as a Python module or from the command line.
+The fault model builder can be run as a Python module or directly from the command line.
 
 ### In Python
 
@@ -23,7 +23,7 @@ or, alternatively, by passing a configuration file (.ini):
 build_fault_model(cfg_file='config.ini')
 ```
 
-Note that if the *xml_output* is not specified (either as an argument of in the .ini file), the function will return directly a list of the generated OpenQuake source objects.
+Note that if the *xml_output* is not specified (either as an argument of in the .ini file), the function will return directly the list of generated OpenQuake source objects as output.
 
 ### Using the Console
 

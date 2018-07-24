@@ -220,7 +220,7 @@ class fault_database():
 
                 self.db.append(fault)
 
-            # Temporary adjustment to make the code running....
+            # Temporary adjustment to make the code running....!
             self.add_property('name', 'XXX')
 
 
