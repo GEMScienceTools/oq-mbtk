@@ -72,9 +72,7 @@ class ProfileSet():
             sid = '%03d' % int(sid)
         return cls(lines)
 
-
     def smooth(self, method='linear'):
-
         arr = _from_lines_to_array(self.profiles)
 
         x1 = np.amin(arr[:, 0])
@@ -89,6 +87,7 @@ class ProfileSet():
 
         if True:
             import matplotlib.pyplot as plt
+            # MN: 'Axes3D' imported but never used
             from mpl_toolkits.mplot3d import Axes3D
             fig = plt.figure(figsize=(10, 8))
             ax = fig.add_subplot(111, projection='3d')
@@ -97,7 +96,8 @@ class ProfileSet():
                 tmp = np.array(tmp)
                 ax.plot(tmp[:, 0], tmp[:, 1], tmp[:, 2], 'x--b', markersize=2)
             xg, yg = np.meshgrid(xv, yv)
-            ax.plot(xg.flatten(), yg.flatten(), grd.flatten(), '.r', markersize=1)
+            ax.plot(xg.flatten(), yg.flatten(), grd.flatten(), '.r',
+                    markersize=1)
             plt.show()
 
         return grd

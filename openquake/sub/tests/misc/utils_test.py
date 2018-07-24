@@ -55,4 +55,3 @@ class CreateVirtualFaultsTest(unittest.TestCase):
                     ps = np.array([[p.longitude, p.latitude, p.depth] for p in
                                    prf.points])
                     assert not np.any(np.isnan(ps))
-

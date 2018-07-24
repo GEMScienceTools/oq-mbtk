@@ -585,6 +585,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
     if 0:
         vsc = 0.01
         import matplotlib.pyplot as plt
+        # MN: 'Axes3D' imported but never used
         from mpl_toolkits.mplot3d import Axes3D
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
@@ -658,6 +659,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
     #
     # create all the ruptures - the probability of occurrence is for one year
     # in this case
+    # MN: 'Axes3D' assigned but never used
     allrup = create_ruptures(mfd, dips, sampling, msr, asprs, float_strike,
                              float_dip, r, values, ohs, 1., hdf5_filename,
                              uniform_fraction, proj, idl, align, True)
