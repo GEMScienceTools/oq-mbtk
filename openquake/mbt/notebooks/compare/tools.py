@@ -1,10 +1,11 @@
 import numpy as np
 
+
 def interpolate_ccumul(mfd, threshold):
     """
     Provides a value of exceedance given and MFD and a magnitude
     threshold
-    
+
     :param mfd:
         An :class:'openquake.hazardlib.mfd.BaseMFD' instance
     """
@@ -26,27 +27,28 @@ def interpolate_ccumul(mfd, threshold):
     else:
         # find the index of the bin center just below the magnitude
         # threshold
-        idx = max(np.nonzero(magc < threshold)[0]) 
+        idx = max(np.nonzero(magc < threshold)[0])
         if threshold > magc[-1]:
-            slope = (occc[idx] - occc[idx-1]) / mfd.bin_width 
+            slope = (occc[idx] - occc[idx-1]) / mfd.bin_width
         else:
-            slope = (occc[idx+1] - occc[idx]) / mfd.bin_width 
+            slope = (occc[idx+1] - occc[idx]) / mfd.bin_width
         intcp = occc[idx] - slope * magc[idx]
         exrate = slope*threshold + intcp
     return exrate
 
+
 def get_cumulative(mfd):
     """
     Compute a cumulative MFD from a (discrete) incremental one
-    
+
     :param mfd:
         An :class:'openquake.hazardlib.mfd.BaseMFD' instance
-    :returns: 
-        Two lists, the first one containing magnitudes values and the 
+    :returns:
+        Two lists, the first one containing magnitudes values and the
         second one with annual rates of exceedance (m>m0).
      """
     mags = []
-    cml  = []
+    cml = []
     occs = []
     #
     # loading information for the original MFD
@@ -65,4 +67,3 @@ def get_cumulative(mfd):
             cml.append(occ)
     #
     return mags, cml[::-1]
- 

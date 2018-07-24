@@ -1,5 +1,3 @@
-
-
 from openquake.hazardlib.geo.point import Point
 
 
@@ -27,4 +25,3 @@ def _get_point_list(lons, lats):
             lons[i] = lons[i] + 360
         points.append(Point(lons[i], lats[i]))
     return points
-
