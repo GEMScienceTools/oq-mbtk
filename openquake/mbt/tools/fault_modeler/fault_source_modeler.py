@@ -48,33 +48,11 @@ key_list = ['source_id',
             'dip_slip_rate',
             'slip_type']
 
-"""
-key_list += ['mfd',
-             'M_max',
-             'M_min',
-             'fault_trace',
-             'rupture_aspect_ratio',
-             'rupture_mesh_spacing',
-             'magnitude_scaling_relationship',
-             'tectonic_region_type',
-             'temporal_occurrence_model',
-             'upper_seismogenic_depth',
-             'lower_seismogenic_depth'] 
-"""
+# Conversion map for geojson input
+param_map = {}
 
-# Conversion map for geojson input parameters
-param_map = {'source_id': 'ogc_fid',
-             'name': 'ns_name',
-             'average_dip': 'ns_average_dip',
-             'average_rake': 'ns_average_rake',
-             'net_slip_rate': 'ns_net_slip_rate',
-             'vert_slip_rate': 'ns_vert_slip_rate',
-             'strike_slip_rate': 'ns_strike_slip_rate',
-             'shortening_rate': 'ns_shortening_rate',
-             'dip_dir': 'ns_dip_dir',
-             'dip_slip_rate': 'ns_dip_slip_rate'}
 
-# Default values
+# Default arguments
 defaults = {}
 
 # -----------------------------------------------------------------------------
