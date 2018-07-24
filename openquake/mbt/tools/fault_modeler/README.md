@@ -20,8 +20,6 @@ build_fault_model(geojson_file='FaultDatabase.geojson',
 or, alternatively, by passing a configuration file (.ini):
 
 ```python
-from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_fault_model
-
 build_fault_model(cfg_file='config.ini')
 ```
 
@@ -39,6 +37,8 @@ or identically:
 ```console
 fault_source_modeler.py -cfg config.ini
 ```
+
+See *fault_source_modeler.py -h* to get a list of the available options.
 
 ## Using non-standard Geojson file format
 
