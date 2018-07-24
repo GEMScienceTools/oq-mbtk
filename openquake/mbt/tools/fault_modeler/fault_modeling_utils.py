@@ -79,13 +79,12 @@ defaults = {'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
                 hz.scalerel.leonard2014.Leonard2014_Interplate(),
             }
 
-
 def construct_sfs_dict(fault_dict, area_method='simple',
                        width_method='seismo_depth',
                        width_scaling_rel='leonard_2010', slip_class='mle',
                        mag_scaling_rel=None, M_max=None, M_min=None,
                        b_value=None, slip_rate=None, bin_width=None,
-                       fault_area=None, defaults=defaults,
+                       fault_area=None, defaults_update=None,
                        param_map=param_map):
     """
     Makes a dictionary containing all of the parameters needed to create a
@@ -202,6 +201,9 @@ def construct_sfs_dict(fault_dict, area_method='simple',
     :rtype:
         dict
     """
+
+    if defaults_update is not None:
+        defaults.update(defaults_update)
 
     sfs = {p: None for p in sfs_params}
 
