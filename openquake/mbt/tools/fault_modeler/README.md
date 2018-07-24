@@ -38,7 +38,7 @@ or identically:
 fault_source_modeler.py -cfg config.ini
 ```
 
-See *fault_source_modeler.py -h* to get a list of the available options.
+(Type ```fault_source_modeler.py -h``` to get a list of the available options)
 
 ## Using non-standard Geojson file format
 
