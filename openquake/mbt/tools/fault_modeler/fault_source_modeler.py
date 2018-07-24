@@ -108,7 +108,13 @@ def build_fault_model(cfg_file=None,
         return
 
     # Create the fault source model in xml_format
-    build_model_from_db(fault_db, xml_output, project_name, defaults=defaults)
+    srcl = build_model_from_db(fault_db,
+                               xml_output,
+                               project_name,
+                               defaults=defaults)
+
+    if xml_output is None:
+        return srcl
 
 # -----------------------------------------------------------------------------
 
