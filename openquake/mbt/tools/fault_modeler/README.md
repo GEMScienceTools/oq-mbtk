@@ -1,4 +1,21 @@
-# Fault Modeler
+# Fault Model Building Tools
+
+This is a set of
+
+## Use as a module
+
+The fault model builder can be run as a Python module or as a bash script.
+As a module, the main function *build_fault_model* is called like:
+
+```python
+from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_fault_model
+
+build_fault_model(geojson_file='FaultDatabase.geojson',
+                  xml_output='FaultModel.xml')
+```
+
+
+
 
 from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_fault_model
 
