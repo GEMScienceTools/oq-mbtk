@@ -69,7 +69,7 @@ def _delete_reports(foldername, src_id):
     src_id = re.sub('[a-z]', '', src_id)
     foldername = os.path.join(foldername, '*{:s}*'.format(src_id))
     for filename in glob.glob(foldername):
-        tmp = re.split('-', re.split('\.', os.path.basename(filename))[0])
+        tmp = re.split('-', re.split('\\.', os.path.basename(filename))[0])
         print(tmp[-1])
         if tmp[-1] == src_id:
             print('----', filename)

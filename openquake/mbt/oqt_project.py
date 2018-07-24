@@ -150,7 +150,7 @@ class OQtProject(object):
         print('Model \'%s\' added to project' % (model.model_id))
 
     def _get_filename(self):
-        filename = re.sub('\s', '_', self.name).lower()
+        filename = re.sub('\\s', '_', self.name).lower()
         filename += '.oqmbtp'
         return filename
 
