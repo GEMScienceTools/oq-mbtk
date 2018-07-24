@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 from mayavi import mlab
 
+
 def plot_catalogue(ax, pickle_fname, vsc):
     cat = pickle.load(open(pickle_fname, 'rb'))
     ax.scatter(cat.data['longitude'], cat.data['latitude'],
@@ -28,6 +29,7 @@ def plot_mesh(ax, msh, vsc, lw=1, color='green'):
                   msh[i, j + 1, 2] * vsc, msh[i, j, 2] * vsc]
             if all(np.isfinite(xt)):
                 ax.plot(xt, yt, zt, color=color, linewidth=lw)
+
 
 def plot_mesh_mayavi(msh, vsc, lw=2, color=(1, 0, 0)):
     """

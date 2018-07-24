@@ -8,9 +8,11 @@ import glob
 import numpy as np
 import unittest
 import matplotlib.pyplot as plt
+# MN: 'Axes3D' imported but never used
 from mpl_toolkits.mplot3d import Axes3D
 
 from openquake.hazardlib.geo.geodetic import distance
+# MN: 'Mesh' imported but never used
 from openquake.hazardlib.geo.mesh import Mesh
 
 from openquake.sub.misc.edge import (_read_edge, _resample_edge,
@@ -153,6 +155,7 @@ class CreateFromProfilesTest(unittest.TestCase):
         Create edges from profiles 0
         """
         # sampling: profile, edge
+        # MN: 'msh' assigned but never used
         msh = create_from_profiles(self.profiles, 10, 5, False)
 
     def test_create1(self):
@@ -160,6 +163,7 @@ class CreateFromProfilesTest(unittest.TestCase):
         Create edges from profiles 1
         """
         # sampling: profile, edge
+        # MN: 'msh' assigned but never used
         msh = create_from_profiles(self.profiles1, 5, 5, False)
 
     def test_create2(self):
@@ -167,6 +171,7 @@ class CreateFromProfilesTest(unittest.TestCase):
         Create edges from profiles 2
         """
         # sampling: profile, edge
+        # MN: 'msh' assigned but never used
         msh = create_from_profiles(self.profiles2, 20, 25, False)
 
     def test_create3(self):
@@ -174,6 +179,7 @@ class CreateFromProfilesTest(unittest.TestCase):
         Create edges from profiles 3
         """
         # sampling: profile, edge
+        # MN: 'msh' assigned but never used
         msh = create_from_profiles(self.profiles2, 50, 50, False)
 
     def _test_create4(self):

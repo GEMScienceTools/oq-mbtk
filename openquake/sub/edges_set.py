@@ -7,7 +7,6 @@ import numpy
 from openquake.hazardlib.geo import Line, Point
 from openquake.hazardlib.source import ComplexFaultSource
 from openquake.hazardlib.tom import PoissonTOM
-from openquake.hazardlib.source import ComplexFaultSource
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.mfd import TruncatedGRMFD
 from openquake.hazardlib.scalerel.strasser2010 import StrasserInterface

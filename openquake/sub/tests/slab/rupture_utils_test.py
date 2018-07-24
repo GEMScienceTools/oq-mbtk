@@ -23,6 +23,7 @@ class CreateRuptureTest(unittest.TestCase):
         """
         TODO Test rupture generation
         """
+        # MN: 'rups' assigned but never used
         rups = [r for r in get_ruptures(self.mesh, 1, 1)]
 
 
