@@ -1,6 +1,6 @@
 # Fault Model Building Tools
 
-This module contains a set of functionalities to create an OpenQuake source model from a active fault database in geojson format.
+This module includes a set of functionalities to create an OpenQuake source model from an active fault database in geojson format.
 
 ## Getting Started
 
@@ -13,8 +13,7 @@ As a module, the main function *build_fault_model* can be called with:
 ```python
 from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_fault_model
 
-build_fault_model(geojson_file='FaultDatabase.geojson',
-                  xml_output='FaultModel.xml')
+build_fault_model(geojson_file='FaultDatabase.geojson', xml_output='FaultModel.xml')
 ```
 
 or, alternatively, by passing a configuration file (.ini):
