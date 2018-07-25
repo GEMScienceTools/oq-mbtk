@@ -28,7 +28,7 @@ Note that if the *xml_output* is not specified (either as an argument of in the 
 This is the list of optional parameters that can be passed as argument or in the configuration file (not yet available for the console):
 
 | Key | Description |
-|--------------------------------|--------------------------------------|
+|-----|-------------|
 | b_value | |
 | M_min | |
 | M_max | |
