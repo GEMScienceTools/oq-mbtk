@@ -25,6 +25,25 @@ build_fault_model(cfg_file='config.ini')
 
 Note that if the *xml_output* is not specified (either as an argument of in the .ini file), the function will return directly the list of generated OpenQuake source objects as output.
 
+This is the list of optional parameters that can be passed as argument or in the configuration file (not yet available for the console):
+
+| Key | Description |
+|--------------------------------|--------------------------------------|
+| b_value | |
+| M_min | |
+| M_max | |
+| bin_width | |
+| aseismic_coefficient | |
+| rupture_aspect_ratio | |
+| rupture_mesh_spacing | |
+| minimum_fault_length | |
+| tectonic_region_type | |
+| upper_seismogenic_depth | |
+| lower_seismogenic_depth | |
+| magnitude_scaling_relationship | |
+
+The provided settings will override the default (hardcoded) values for all the faults.
+
 ### Using the Console
 
 The above example can also be run a shell command as:
@@ -90,7 +109,7 @@ dip_slip_rate = ns_dip_slip_rate
 [defaults]
 upper_seismogenic_depth = 0
 lower_seismogenic_depth = 15
-tectonic_region_type = ActiveShallow
+tectonic_region_type = Active Shallow Crust
 rupture_mesh_spacing = 5
 ```
 
