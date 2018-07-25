@@ -63,7 +63,8 @@ all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
 param_map = {p: p for p in all_params}
 
 # default parameter values
-defaults = {'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
+defaults = {'name': 'Unknown',
+            'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
             'b_value': 1.,
             'bin_width': 0.1,
             'aseismic_coefficient': 0.9,

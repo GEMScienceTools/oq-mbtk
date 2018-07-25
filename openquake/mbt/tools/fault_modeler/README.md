@@ -73,6 +73,7 @@ The file has the following standard format:
 [config]
 geojson_file = FaultDatabase.geojson
 xml_output = FaultModel.xml
+select_list = 1,2,3
 
 [param_map]
 source_id = ogc_fid

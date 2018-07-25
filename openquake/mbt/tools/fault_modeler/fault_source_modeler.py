@@ -48,9 +48,16 @@ key_list = ['source_id',
             'dip_slip_rate',
             'slip_type']
 
+opt_list = {'M_max': float,
+            'M_min': float,
+            'rupture_aspect_ratio': float,
+            'rupture_mesh_spacing': float,
+            'tectonic_region_type': str,
+            'upper_seismogenic_depth': float,
+            'lower_seismogenic_depth': float}
+
 # Conversion map for geojson input
 param_map = {}
-
 
 # Default arguments
 defaults = {}
@@ -122,15 +129,21 @@ def read_config_file(cfg_file):
     """
     """
 
+    cfg_dict = {}
     cfg = configparser.ConfigParser(dict_type=dict)
     cfg.read(cfg_file)
-
-    cfg_dict = {}
 
     for key in ['config', 'param_map', 'defaults']:
 
         if cfg.has_section(key):
-            cfg_dict[key] = {k:v for k, v in cfg.items(key)}
+            cfg_dict[key] = {}
+
+            for k, v in cfg.items(key):
+                if k in opt_list:
+                    cast = opt_list[k]
+                else:
+                    cast = str
+                cfg_dict[key][k] = cast(v) 
 
     return cfg_dict
 
@@ -221,7 +234,7 @@ class fault_database():
                 self.db.append(fault)
 
             # Temporary adjustment to make the code running....!
-            self.add_property('name', 'XXX')
+            # self.add_property('name', 'XXX')
 
 
     def add_property(self, property, value=None, id=None):
