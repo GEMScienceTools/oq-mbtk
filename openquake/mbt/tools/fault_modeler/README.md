@@ -44,22 +44,22 @@ fault_source_modeler.py -cfg config.ini
 
 This is the list of optional parameters that can be passed as argument or in the configuration file (not yet available for the console):
 
-| Key | Description |
-|-----|-------------|
-| b_value | |
-| M_min | |
-| M_max | |
-| bin_width | |
-| aseismic_coefficient | |
-| rupture_aspect_ratio | |
-| rupture_mesh_spacing | |
-| minimum_fault_length | |
-| tectonic_region_type | |
-| upper_seismogenic_depth | |
-| lower_seismogenic_depth | |
-| magnitude_scaling_relationship | |
+| Key | Description | Default |
+|-----|-------------|---------|
+| b_value | ... | ... |
+| M_min | ... | ... |
+| M_max | ... | ... |
+| bin_width | ... | ... |
+| aseismic_coefficient | ... | ... |
+| rupture_aspect_ratio | ... | ... |
+| rupture_mesh_spacing | ... | ... |
+| minimum_fault_length | ... | ... |
+| tectonic_region_type | ... | ... |
+| upper_seismogenic_depth | ... | ... |
+| lower_seismogenic_depth | ... | ... |
+| magnitude_scaling_relationship | ... | ... |
 
-The provided settings will override the default (hardcoded) values for all the faults.
+Note that the provided settings will override the default (hardcoded) values for all the faults.
 
 ## Using non-standard Geojson file format
 
