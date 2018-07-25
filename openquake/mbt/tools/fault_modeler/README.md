@@ -22,7 +22,7 @@ or, alternatively, by passing a configuration file (.ini):
 build_fault_model(cfg_file='config.ini')
 ```
 
-Note that if the *xml_output* is not specified (either as an argument of in the .ini file), the function will return directly the list of generated OpenQuake source objects as output.
+Note that if the *xml_output* argument is not specified (either as an argument of in the .ini file), the code returns a list of the generated OpenQuake fault source objects as output.
 
 ### Using the Console
 
@@ -41,7 +41,7 @@ fault_source_modeler.py -cfg config.ini
 
 ### Optional Parameters
 
-This is the list of optional parameters that can be passed as argument or in the configuration file (not yet available for the console):
+Several optional parameters can be passed as arguments or within the configuration file (not yet available as console flags):
 
 | Key | Description | Default |
 |:----|:------------|:--------|
@@ -58,7 +58,7 @@ This is the list of optional parameters that can be passed as argument or in the
 | lower_seismogenic_depth | ... | ... |
 | magnitude_scaling_relationship | ... | ... |
 
-Note that the provided settings will override the default (hardcoded) values for all the faults. To provide fault specific parametrisation, it is possible to:
+Note that providing a new setting will override the default (hardcoded) value for all the faults at the same time. To provide fault specific parametrisation, it is possible to:
 
 1. Manually modify the geojson by adding the key-value pair to the specific fault item
 
@@ -78,7 +78,7 @@ fault_db.add_property('upper_seismogenic_depth', value=20, id=1)
 # Create and export the model
 build_model_from_db(fault_db,xml_output='FaultModel.xml')
 ```
-The function *build_model_from_db* shares the same options of *build_fault_model*.
+Note that the function *build_model_from_db* shares the same options of *build_fault_model*.
 
 ## Using non-standard Geojson file format
 
