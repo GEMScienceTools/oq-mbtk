@@ -40,12 +40,12 @@ fault_source_modeler.py -cfg config.ini
 
 (Type ```fault_source_modeler.py -h``` to get a list of the available options)
 
-### Optional parameters
+### Optional Parameters
 
 This is the list of optional parameters that can be passed as argument or in the configuration file (not yet available for the console):
 
 | Key | Description | Default |
-|:----|-------------|---------|
+|:----|:------------|:--------|
 | b_value | ... | ... |
 | M_min | ... | ... |
 | M_max | ... | ... |
@@ -59,7 +59,23 @@ This is the list of optional parameters that can be passed as argument or in the
 | lower_seismogenic_depth | ... | ... |
 | magnitude_scaling_relationship | ... | ... |
 
-Note that the provided settings will override the default (hardcoded) values for all the faults.
+Note that the provided settings will override the default (hardcoded) values for all the faults. To provide fault specific parametrisation, it is possible to:
+
+1. Manually modify the geojson by adding the key-value pair to the specific fault item
+
+2. Use the following programmatic approach:
+
+```python
+from openquake.mbt.tools.fault_modeler.fault_source_modeler import fault_database
+
+fault_db = fault_database()
+fault_db.import_from_geojson(geojson_file)
+
+fault_db.add_property('upper_seismogenic_depth', value=20, id=1)
+
+build_model_from_db(fault_db,xml_output='FaultModel.xml')
+```
+The function *build_model_from_db* shares the same options of *build_fault_model*.
 
 ## Using non-standard Geojson file format
 
