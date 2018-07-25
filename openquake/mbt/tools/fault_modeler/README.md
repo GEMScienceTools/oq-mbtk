@@ -45,7 +45,7 @@ fault_source_modeler.py -cfg config.ini
 This is the list of optional parameters that can be passed as argument or in the configuration file (not yet available for the console):
 
 | Key | Description | Default |
-|-----|-------------|---------|
+|:----|-------------|---------|
 | b_value | ... | ... |
 | M_min | ... | ... |
 | M_max | ... | ... |
