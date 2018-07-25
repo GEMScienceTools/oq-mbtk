@@ -74,7 +74,7 @@ defaults = {'name': 'Unknown',
             'rupture_aspect_ratio': 2.,
             'minimum_fault_length': 5.,
             'M_min': 6.0,
-            'M_max': 8.0,
+            'M_max': 10.0,
             'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
             'magnitude_scaling_relationship':
                 hz.scalerel.leonard2014.Leonard2014_Interplate(),
