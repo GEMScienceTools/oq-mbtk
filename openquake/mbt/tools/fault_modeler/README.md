@@ -25,6 +25,23 @@ build_fault_model(cfg_file='config.ini')
 
 Note that if the *xml_output* is not specified (either as an argument of in the .ini file), the function will return directly the list of generated OpenQuake source objects as output.
 
+### Using the Console
+
+The above example can also be run a shell command as:
+
+```console
+fault_source_modeler.py -geo FaultDatabase.geojson -xml FaultModel.xml
+```
+or identically:
+
+```console
+fault_source_modeler.py -cfg config.ini
+```
+
+(Type ```fault_source_modeler.py -h``` to get a list of the available options)
+
+### Optional parameters
+
 This is the list of optional parameters that can be passed as argument or in the configuration file (not yet available for the console):
 
 | Key | Description |
@@ -43,21 +60,6 @@ This is the list of optional parameters that can be passed as argument or in the
 | magnitude_scaling_relationship | |
 
 The provided settings will override the default (hardcoded) values for all the faults.
-
-### Using the Console
-
-The above example can also be run a shell command as:
-
-```console
-fault_source_modeler.py -geo FaultDatabase.geojson -xml FaultModel.xml
-```
-or identically:
-
-```console
-fault_source_modeler.py -cfg config.ini
-```
-
-(Type ```fault_source_modeler.py -h``` to get a list of the available options)
 
 ## Using non-standard Geojson file format
 
