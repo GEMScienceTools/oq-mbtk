@@ -53,9 +53,9 @@ sfs_params = ('source_id',
 
 # Additional parameters
 all_params = list(sfs_params)
-all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
+all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 
                'net_slip_rate', 'strike_slip_rate', 'dip_slip_rate',
-               'vert_slip_rate', 'shortening_rate']
+               'vert_slip_rate', 'shortening_rate', 'slip_class']
 
 # Default mapping of parameters
 # (keys: variable names used here, vals: variable names in input files
@@ -64,8 +64,9 @@ param_map = {p: p for p in all_params}
 
 # default parameter values
 defaults = {'name': 'Unknown',
-            'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
             'b_value': 1.,
+            'M_min': 6.0,
+            'M_max': 10.0,
             'bin_width': 0.1,
             'aseismic_coefficient': 0.9,
             'upper_seismogenic_depth': 0.,
@@ -73,11 +74,11 @@ defaults = {'name': 'Unknown',
             'rupture_mesh_spacing': 2.,
             'rupture_aspect_ratio': 2.,
             'minimum_fault_length': 5.,
-            'M_min': 6.0,
-            'M_max': 10.0,
+            'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
             'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
             'magnitude_scaling_relationship':
                 hz.scalerel.leonard2014.Leonard2014_Interplate(),
+            'slip_class': 'mle'
             }
 
 def construct_sfs_dict(fault_dict, area_method='simple',
