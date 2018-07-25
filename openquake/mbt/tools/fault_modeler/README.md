@@ -67,12 +67,16 @@ Note that the provided settings will override the default (hardcoded) values for
 
 ```python
 from openquake.mbt.tools.fault_modeler.fault_source_modeler import fault_database
+from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_model_from_db
 
+# Import the database
 fault_db = fault_database()
 fault_db.import_from_geojson(geojson_file)
 
+# Add a key/value to fault with id 1
 fault_db.add_property('upper_seismogenic_depth', value=20, id=1)
 
+# Create and export the model
 build_model_from_db(fault_db,xml_output='FaultModel.xml')
 ```
 The function *build_model_from_db* shares the same options of *build_fault_model*.
