@@ -2317,6 +2317,13 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
                                       slip_class=slip_class,
                                       #defaults=defaults,
                                       param_map=param_map)
+
+        if 'aseismic_coefficient' in fault_dict:
+            aseismic_coefficient = fault_dict['aseismic_coefficient']
+        else:
+            aseismic_coefficient = defaults['aseismic_coefficient']
+        slip_rate *= aseismic_coefficient
+
     if M_min > M_max:
         raise ValueError('M_min is greater than M_max')
 
