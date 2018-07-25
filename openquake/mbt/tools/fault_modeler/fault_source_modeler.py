@@ -48,13 +48,18 @@ key_list = ['source_id',
             'dip_slip_rate',
             'slip_type']
 
-opt_list = {'M_max': float,
+opt_list = {'b_value': float,
             'M_min': float,
+            'M_max': float,
+            'bin_width': float,
+            'aseismic_coefficient': float,
             'rupture_aspect_ratio': float,
             'rupture_mesh_spacing': float,
+            'minimum_fault_length': float,
             'tectonic_region_type': str,
             'upper_seismogenic_depth': float,
-            'lower_seismogenic_depth': float}
+            'lower_seismogenic_depth': float,
+            'magnitude_scaling_relationship': str}
 
 # Conversion map for geojson input
 param_map = {}
