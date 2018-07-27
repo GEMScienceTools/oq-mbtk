@@ -37,7 +37,6 @@ from openquake.baselib import sap
 
 # -----------------------------------------------------------------------------
 
-
 # Parameters required from the fault modeler
 """
 key_list = ['source_id',
@@ -67,11 +66,10 @@ option_types = {'b_value': float,
                 'magnitude_scaling_relationship': str}
 
 # Conversion map for geojson input
-param_map = deepcopy(fmu.param_map)
+param_map_local = deepcopy(fmu.param_map)
 
 # Default arguments
-defaults = deepcopy(fmu.defaults)
-
+defaults_local = deepcopy(fmu.defaults)
 
 # -----------------------------------------------------------------------------
 
@@ -81,8 +79,8 @@ def build_fault_model(cfg_file=None,
                       project_name=None,
                       black_list=None,
                       select_list=None,
-                      param_map=param_map,
-                      defaults=defaults,
+                      param_map=param_map_local,
+                      defaults=defaults_local,
                       **kwargs):
     """
     Note: we have to set the priority when using both ini file and
@@ -164,11 +162,14 @@ def read_config_file(cfg_file):
 def build_model_from_db(fault_db,
                         xml_output=None,
                         project_name=None,
-                        defaults=defaults,
-                        param_map=param_map,
+                        defaults=defaults_local,
+                        param_map=param_map_local,
                         **kwargs):
     """
     """
+
+    param_map_local.update(param_map)
+    defaults_local.update(defaults)
 
     for key in kwargs:
         defaults[key] = kwargs[key]
@@ -177,8 +178,10 @@ def build_model_from_db(fault_db,
 
     for i, fl in enumerate(fault_db.db):
         try:
-            sfs_dict = fmu.construct_sfs_dict(fl, defaults=defaults,
-                                          param_map=param_map)
+            sfs_dict = fmu.construct_sfs_dict(
+                            fl,
+                            defaults=defaults_local,
+                            param_map=param_map_local)
             sfs = fmu.make_fault_source(sfs_dict)
             srcl.append(sfs)
         except Exception as e:
@@ -213,7 +216,7 @@ class fault_database():
     def import_from_geojson(self, geojson_file,
                                   black_list=None,
                                   select_list=None,
-                                  param_map=param_map,
+                                  param_map=param_map_local,
                                   #defaults=defaults
                             ):
         """
@@ -223,13 +226,20 @@ class fault_database():
         with open(geojson_file, 'r') as f:
             data = json.load(f)
 
+            #param_map_r = {param_map[k]: k for k in param_map}
+
             # Loop over faults
             for feature in data['features']:
                 fault = feature['properties']
 
+                #for k in fault:
+                #    if k in param_map.values():
+                #        fault[param_map[k]] = fault.pop(k)
+                #print(fault)
+
                 # Process only faults in the selection list
                 if select_list is not None:
-                    if fault[param_map['source_id']] not in select_list:
+                    if fault['source_id'] not in select_list:
                         continue
 
                 # Skip further processing for blacklisted faults
@@ -243,7 +253,7 @@ class fault_database():
                 self.db.append(fault)
 
             # Temporary adjustment to make the code running....!
-            # self.add_property('name', 'XXX')
+            self.add_property('name', 'XXX')
 
 
     def add_property(self, property, value=None, id=None):
