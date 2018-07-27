@@ -154,9 +154,7 @@ def create_faults(mesh, iedge, thickness, rot_angle, sampling):
     tmpx = np.reshape(x, shape,  order='C')
     tmpy = np.reshape(y, shape,  order='C')
     meshp = np.stack((tmpx, tmpy, mesh[:, :, 2]), axis=2)
-
     assert np.nanmax(meshp[:, :, 2]) < 750.
-
     #
     # check if the selected edge is continuous, otherwise split
     if np.all(np.diff(idxs) == 1):
@@ -665,6 +663,7 @@ def get_mesh_back(pfs, rfi, sd, idl):
     :returns:
 
     """
+    print('back')
     tmps = 'Number of profiles: {:d}'
     logging.info(tmps.format(len(pfs)))
     #
@@ -853,7 +852,7 @@ def get_mesh(pfs, rfi, sd, idl):
     :param idl:
         Boolean indicating the need to account for IDL presence
     :returns:
-        TODO
+        TODO 
     """
     g = Geod(ellps='WGS84')
     #
@@ -880,15 +879,15 @@ def get_mesh(pfs, rfi, sd, idl):
         #
         # point in common on the two profiles
         cmm = np.logical_and(np.isfinite(pr[:, 2]), np.isfinite(pl[:, 2]))
+        cmmi = np.nonzero(cmm)[0].astype(int)
         #
         # update last profile index
-        cmmi = np.nonzero(cmm)[0].astype(int)
         mxx = 0
         for ll in laidx:
             if ll is not None:
                 mxx = max(mxx, ll)
         #
-        #
+        # loop over the points in the right profile
         for x in range(0, len(pr[:, 2])):
             #
             # this edge is in common between the last and the current profiles
@@ -915,29 +914,51 @@ def get_mesh(pfs, rfi, sd, idl):
             vdist = pr[k, 2] - pl[k, 2]
             tdist = (vdist**2 + hdist**2)**.5
             ndists = int(np.floor((tdist+rdist[k])/sd))
+
+ 
+            ll = g.npts(pl[k, 0], pl[k, 1], pr[k, 0], pr[k, 1],
+                        np.ceil(tdist)*20)
+            ll = np.array(ll)
+            lll = np.ones_like(ll)
+            lll[:, 0] = pl[k, 0]
+            lll[:, 1] = pl[k, 1]
+            _, _, hdsts = g.inv(lll[:, 0], lll[:, 1], ll[:, 0], ll[:, 1])
+            hdsts /= 1e3
+            deps = np.linspace(pl[k, 2], pr[k, 2], ll.shape[0],
+                               endpoint=True)
+            tdsts = (hdsts**2 + (pl[k, 2]-deps)**2)**0.5
+            assert len(deps) == ll.shape[0]
+            
+
             #
             # checking distance calculation
             dd = distance(pl[k, 0], pl[k, 1], pl[k, 2],
-                          pr[k, 0], pr[k, 1], pl[k, 2])
+                          pr[k, 0], pr[k, 1], pr[k, 2])
             # >>> TOLERANCE
-            if abs(dd-tdist) > 0.5*tdist:
+            if abs(dd-tdist) > 0.1*tdist:
                 print('dd:', dd)
                 tmps = 'Error while building the mesh'
                 tmps += '\nDistances: {:f} {:f}'
                 raise ValueError(tmps.format(dd, tdist))
             #
             # adding new points along the edge with index k
-            for j, dst in enumerate(range(ndists)):
+            for j in range(ndists):
                 #
                 # add new profile
                 if len(npr)-1 < laidx[k]+1:
                     npr = add_empy_profile(npr)
                 #
                 # compute the coordinates of intermediate points along the
-                # current edge 
+                # current edge
                 tmp = (j+1)*sd - rdist[k]
                 lo, la, _ = g.fwd(pl[k, 0], pl[k, 1], az12,
                                   tmp*hdist/tdist*1e3)
+
+                #----------------------------------------------
+                tidx = np.argmin(abs(tdsts-tmp))
+                lo = ll[tidx, 0]
+                la = ll[tidx, 1]
+
                 #
                 # fix longitudes
                 if idl:
@@ -945,8 +966,12 @@ def get_mesh(pfs, rfi, sd, idl):
                 #
                 # computing depths
                 de = pl[k, 2] + tmp*vdist/hdist
-                npr[laidx[k]+1][k] = [lo, la, de]
 
+
+                #----------------------------------------------
+                de = deps[tidx]
+
+                npr[laidx[k]+1][k] = [lo, la, de]
                 if (k > 0 and np.all(np.isfinite(npr[laidx[k]+1][k])) and
                         np.all(np.isfinite(npr[laidx[k]][k]))):
 
@@ -955,7 +980,8 @@ def get_mesh(pfs, rfi, sd, idl):
                     d = distance(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2])
 
                     # >>> TOLERANCE
-                    if abs(d-sd) > TOL*sd:
+                    # if abs(d-sd) > TOL*sd:
+                    if abs(d-sd) > 0.1*sd:
                         tmpf = 'd: {:f} diff: {:f} tol: {:f} sd:{:f}'
                         tmpf += '\nresidual: {:f}'
                         tmps = tmpf.format(d, d-sd,  TOL*sd, sd, rdist[k])
