@@ -7,6 +7,7 @@ import pickle
 import logging
 
 from scipy.interpolate import Rbf
+# MN: 'griddata' and 'interp2d' imported but not used
 from scipy.interpolate import griddata, interp2d
 from openquake.mbt.tools.tr.catalogue import get_catalogue
 from openquake.mbt.tools.geo import get_idx_points_inside_polygon
@@ -234,7 +235,7 @@ class SetSubductionEarthquakes:
                                                       cat.data['latitude'])])
         #
         # compute the depth of the top of the slab at every epicenter
-        #sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
+        # sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
         #                      method='cubic')
         #
         # interpolation
@@ -346,6 +347,7 @@ class SetSubductionEarthquakes:
         scat = plt.scatter(cat.data['depth'], sub_depths, c=surf_dist,
                            s=2**cat.data['magnitude'], edgecolor='w', vmin=0,
                            vmax=100)
+        # MN: 'idx' assigned but never used
         idx = np.nonzero(sub_depths < cat.data['depth'])
         plt.ylabel('Top of slab depth [km]')
         plt.xlabel('Hypocentral depth [km]')

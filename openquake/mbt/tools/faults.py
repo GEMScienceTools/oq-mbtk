@@ -1,4 +1,3 @@
-
 import math
 import numpy
 
@@ -149,4 +148,5 @@ def get_surface_corners_coordinates(surface):
         An instance of
         :class:`openquake.hazardlib.geo.surface.SimpleFaultSurface`
     """
+    # MN: 'mesh' assigned but never used, maybe must be returned ?
     mesh = surface.mesh

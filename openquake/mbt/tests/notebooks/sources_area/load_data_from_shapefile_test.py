@@ -1,4 +1,3 @@
-
 import os
 import unittest
 import logging
@@ -18,7 +17,7 @@ class TestLoadGeometryFromShapefile(unittest.TestCase):
         #
         #
         fname = './testloadgeometryfromshapefile.log'
-        logging.basicConfig(filename=fname,level=logging.DEBUG)
+        logging.basicConfig(filename=fname, level=logging.DEBUG)
         #
         # clear directory
         folder = os.path.join(self.BASE_DATA_PATH, './../../tmp/project_test')

@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import os
+# MN: 'sys' imported but not used
 import sys
 import re
 
@@ -13,6 +14,7 @@ from openquake.hazardlib.source import SimpleFaultSource
 from openquake.hazardlib.geo.line import Line
 
 from openquake.mbt.oqt_project import OQtProject, OQtSource
+# MN: 'get_moment_from_mfd' imported but not used
 from openquake.mbt.tools.mfd import get_moment_from_mfd
 
 from openquake.mbt.tools.utils import _get_point_list
@@ -161,5 +163,3 @@ def read_faults(faults_xml_filename=None):
     # save the project
     oqtkp.models[model_id] = model
     oqtkp.save()
-
-

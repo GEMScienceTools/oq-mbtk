@@ -1,5 +1,6 @@
 import os
 import h5py
+# MN: 'code' imported but not used
 import code
 import shutil
 import numpy
@@ -33,16 +34,16 @@ class ChangeTrTestCase(unittest.TestCase):
         Testing TR change from crustal to stable crustal
         """
         ini_fname = os.path.join(BASE_PATH, '../../data/tr/acr_scr.ini')
-        cat = os.path.join(BASE_PATH,'../../data/tr/catalogue.pkl')
+        cat = os.path.join(BASE_PATH, '../../data/tr/catalogue.pkl')
         treg_filename = os.path.join(BASE_PATH, '../../tmp/test02.hdf5')
-        event_change = os.path.join(BASE_PATH,'../../data/tr/ev_change.csv')
+        event_change = os.path.join(BASE_PATH, '../../data/tr/ev_change.csv')
         #
         # classify
         classify(ini_fname, True, self.root_folder)
         f = h5py.File(treg_filename, 'r')
         #
         # manually change an event
-        change(cat,treg_filename,event_change)
+        change(cat, treg_filename, event_change)
 
         # testing new file to see if the swap worked
         treg_filename2 = os.path.join(BASE_PATH, '../../tmp/test02_up.hdf5')
@@ -56,4 +57,3 @@ class ChangeTrTestCase(unittest.TestCase):
         numpy.testing.assert_array_equal(f2['crustal_stable'][:], expected)
         #
         f.close()
-

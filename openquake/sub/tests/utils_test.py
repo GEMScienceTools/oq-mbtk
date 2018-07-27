@@ -8,9 +8,9 @@ import unittest
 from openquake.hazardlib.geo import Line, Point
 
 from openquake.sub.utils import (get_line_of_intersection,
-                                      get_direction_cosines,
-                                      build_complex_surface_from_edges,
-                                      _check_edges)
+                                 get_direction_cosines,
+                                 build_complex_surface_from_edges,
+                                 _check_edges)
 
 EDGE_FOLDER = os.path.join(os.path.dirname(__file__), 'data/edges')
 
@@ -20,6 +20,7 @@ class TestBuildComplexFaultSurface(unittest.TestCase):
     def test_build_surface_01(self):
         """
         """
+        # srfc assigned but never used
         srfc = build_complex_surface_from_edges(EDGE_FOLDER)
 
 

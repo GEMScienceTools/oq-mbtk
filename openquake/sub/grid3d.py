@@ -47,8 +47,8 @@ class Grid3d():
         """
         """
 
-        minlo = minlo+360 if minlo<0 else minlo
-        maxlo = maxlo+360 if maxlo<0 else maxlo
+        minlo = minlo+360 if minlo < 0 else minlo
+        maxlo = maxlo+360 if maxlo < 0 else maxlo
 
         self.minlo = minlo
         self.minla = minla
@@ -117,9 +117,9 @@ class Grid3d():
         #
         # compute the concave hull for the top and bottom slab
         lonsup = meshup.lons[idxs].flatten()
-        lonsup = ([x+360 if x<0 else x for x in lonsup])
+        lonsup = ([x+360 if x < 0 else x for x in lonsup])
         lonslo = meshlo.lons[idxs].flatten()
-        lonslo = ([x+360 if x<0 else x for x in lonslo])
+        lonslo = ([x+360 if x < 0 else x for x in lonslo])
         ch_up, _ = alpha_shape(lonsup, meshup.lats[idxs].flatten(), 1.0)
         ch_lo, _ = alpha_shape(lonslo, meshlo.lats[idxs].flatten(), 1.0)
         #

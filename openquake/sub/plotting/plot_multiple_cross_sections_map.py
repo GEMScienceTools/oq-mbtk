@@ -39,17 +39,19 @@ def main(argv):
 
     # Load trench axis
     fin = open(fname_trench, 'r')
-    lotmp = []; latmp = []
+    lotmp = []
+    latmp = []
     for line in fin:
         aa = re.split('\s+', re.sub('^\s+', '', line))
         lotmp.append(float(aa[0]))
         latmp.append(float(aa[1]))
     fin.close()
     qual = 0
-    if (min(lotmp)/max(lotmp)<0.) & (min(lotmp)<-150.):
+    if (min(lotmp)/max(lotmp) < 0.) & (min(lotmp) < -150.):
+        # MN: 'qual' assigned but never used
         qual = 1
-        lotmp = (x+360. if x<0. else x for x in lotmp)
-    trench = list(zip(lotmp,latmp))
+        lotmp = (x+360. if x < 0. else x for x in lotmp)
+    trench = list(zip(lotmp, latmp))
     trench = Trench(numpy.array(trench))
 
     # Load catalogue

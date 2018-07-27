@@ -4,6 +4,7 @@ import sys
 from plot_cross_section import plt_cs
 import matplotlib.pyplot as plt
 
+
 def main(argv):
 
     if len(argv) < 2:
@@ -26,7 +27,7 @@ def main(argv):
         name = 'section_%s.pdf' % (ids)
         path = os.path.join(folder, name)
         fig.savefig(path, bbox_inches='tight')
-        print ('Created %s' % (path))
+        print('Created %s' % (path))
         plt.close()
 
 if __name__ == "__main__":

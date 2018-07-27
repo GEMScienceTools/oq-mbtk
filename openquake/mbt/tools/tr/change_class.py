@@ -6,21 +6,22 @@ import re
 
 from openquake.baselib import sap
 
-def change(cat_pickle_filename,treg,eqlist):
+
+def change(cat_pickle_filename, treg, eqlist):
     """
     cat_pickle_filename - pickled catalogue
-    treg - hdf5 file with classifications; currently a new file '<>_up.hdf5' is created
-    rather than overwriting
+    treg - hdf5 file with classifications; currently
+    a new file '<>_up.hdf5' is created rather than overwriting
     eqlist - csv file with two columns format <eventID>,<target label>
     """
-   
-    treg2 = treg.replace('.hdf5','_up.hdf5')
+
+    treg2 = treg.replace('.hdf5', '_up.hdf5')
     cat = pickle.load(open(cat_pickle_filename, 'rb'))
-    dct = {key:idx for idx, key in enumerate(cat.data['eventID'])}
-    
+    dct = {key: idx for idx, key in enumerate(cat.data['eventID'])}
+
     idx = []
     targ = []
-    for line in open(eqlist,'r'):
+    for line in open(eqlist, 'r'):
         eqid, target = line.split(',')
         idx.append(dct[eqid])
         targ.append(target)
@@ -29,7 +30,7 @@ def change(cat_pickle_filename,treg,eqlist):
     f2 = h5py.File(treg2, "w")
     for key in f.keys():
         tmp = f[key][:]
-        for eid,tar in zip(idx,targ):
+        for eid, tar in zip(idx, targ):
             if re.search(key, tar):
                 tmp[eid] = True
             else:
@@ -37,6 +38,7 @@ def change(cat_pickle_filename,treg,eqlist):
         f2[key] = tmp
     f.close()
     f2.close()
+
 
 def main(argv):
     """
