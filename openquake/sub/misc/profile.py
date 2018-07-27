@@ -16,6 +16,11 @@ TOLERANCE = 0.2
 
 def profiles_depth_alignment(pro1, pro2):
     """
+    Find the indexes needed to align the profiles i.e. define profiles whose
+    edges are as much as possible horizontal. Note that this method expects
+    that the two profiles had been already resampled, therefore, vertexes in
+    each profile should be equally spaced.
+
     :param pro1:
         An instance of :class:`openquake.hazardlib.geo.line.Line`
     :param pro2:
@@ -23,14 +28,14 @@ def profiles_depth_alignment(pro1, pro2):
     :returns:
         AA
     """
+    #
+    # create two numpy.ndarray with the coordinates of the two profiles
     coo1 = [(pnt.longitude, pnt.latitude, pnt.depth) for pnt in pro1.points]
     coo2 = [(pnt.longitude, pnt.latitude, pnt.depth) for pnt in pro2.points]
-    #
-    #
     coo1 = np.array(coo1)
     coo2 = np.array(coo2)
     #
-    #
+    # set the profile with the smaller number of points as the first one
     swap = 1
     if coo2.shape[0] < coo1.shape[0]:
         tmp = coo1
@@ -38,12 +43,14 @@ def profiles_depth_alignment(pro1, pro2):
         coo2 = tmp
         swap = -1
     #
-    # Creating two arrays of the same lenght
-    coo1 = np.array(coo1)
-    coo2 = np.array(coo2[:coo1.shape[0]])
-    #
-    # The two profiles require at least 5 points
+    # process the profiles. Note that in the ideal case the two profiles
+    # require at least 5 points
     if len(coo1) > 5 and len(coo2) > 5:
+        #
+        # create two arrays of the same lenght
+        coo1 = np.array(coo1)
+        coo2 = np.array(coo2[:coo1.shape[0]])
+        #
         indexes = np.arange(-2, 3)
         dff = np.zeros_like(indexes)
         for i, shf in enumerate(indexes):
@@ -56,8 +63,12 @@ def profiles_depth_alignment(pro1, pro2):
         amin = np.amin(dff)
         res = indexes[np.amax(np.nonzero(dff == amin))] * swap
     else:
-        res = 0
-
+        d1 = np.zeros((len(coo2)-len(coo1)+1, len(coo1)))
+        d2 = np.zeros((len(coo2)-len(coo1)+1, len(coo1)))
+        for i in np.arange(0, len(coo2)-len(coo1)+1):
+            d2[i, :] = [coo2[d, 2] for d in range(i, i+len(coo1))]
+            d1[i, :] = coo1[:, 2]
+        res = np.argmin(np.sum(abs(d2-d1), axis=1))
     return res
 
 
