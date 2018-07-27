@@ -1,5 +1,5 @@
-
 import os
+# MN: 'subprocess' imported but not used
 import subprocess
 
 from openquake.mbt.tools import notebook
@@ -52,6 +52,7 @@ def run(project_filename, model_id, notebook_path, src_id_list,
         os.makedirs(reports_folder)
     #
     # options
+    # MN: 'opt' assigned but never used
     opt = ''
     #
     # running
@@ -80,7 +81,7 @@ def run(project_filename, model_id, notebook_path, src_id_list,
         #
         msg = 'Running {:s}'.format(os.path.basename(notebook_path))
         msg += ' for source with ID {:s}'.format(elem)
-        print (msg)
+        print(msg)
         #
         # running the notebook
         out = notebook.run(notebook_path, '', reports_folder=reports_folder,

@@ -4,6 +4,7 @@ import re
 import sys
 
 from openquake.baselib import sap
+# MN: 'ParseNDKtoGCMT' imported but not used
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
 
 
@@ -13,7 +14,7 @@ def filter_gcmt(ndf_fname, limits):
     lims = [float(v) for v in re.split('\,', limits)]
     #
     #
-    with open(ndf_fname , 'r') as f:
+    with open(ndf_fname, 'r') as f:
         while True:
             lines = []
             for i in range(5):
@@ -26,8 +27,8 @@ def filter_gcmt(ndf_fname, limits):
             lon = float(aa[4])
             lat = float(aa[3])
             # lat, lon
-            if (lat > lims[1] and  lat < lims[3] and
-                lon > lims[0] and  lon < lims[2]):
+            if (lat > lims[1] and lat < lims[3] and
+                    lon > lims[0] and lon < lims[2]):
                 for line in lines:
                     print('{:s}'.format(line.rstrip()))
 

@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 
 from pyproj import Proj
 
-from mpl_toolkits.mplot3d import Axes3D
+# MN: Axes3D imported but never used
+# from mpl_toolkits.mplot3d import Axes3D
 
 from openquake.hazardlib.geo import Line, Point
 from openquake.hazardlib.geo.surface import ComplexFaultSurface
@@ -148,6 +149,7 @@ def plot_planes_at(x, y, strikes, dips, magnitudes, strike_cs, dip_cs,
     """
 
     if axis is None:
+        # MN: ax asigned but never used
         ax = plt.gca()
     else:
         plt.sca(axis)
@@ -313,12 +315,13 @@ def plot_complex_surface(tedges):
         coo = np.array(coo)
         #
         # plot edges
-        ax.plot(coo[:,0], coo[:,1], coo[:,2])
+        ax.plot(coo[:, 0], coo[:, 1], coo[:, 2])
         #
         # shallow part of the subduction surface
-        k = np.nonzero(coo[:,2]<50.)
+        k = np.nonzero(coo[:, 2] < 50.)
         if len(k[0]):
-            ax.plot(coo[k[0],0], coo[k[0],1], coo[k[0],2], 'or', markersize=2)
+            ax.plot(coo[k[0], 0], coo[k[0], 1], coo[k[0], 2], 'or',
+                    markersize=2)
     #
     # set axes
     ax.set_zlim([0, 300])
@@ -326,4 +329,3 @@ def plot_complex_surface(tedges):
     ax.view_init(50, 10)
 
     return fig, ax
-

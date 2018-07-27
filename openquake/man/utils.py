@@ -2,7 +2,8 @@ import pyproj
 import shapely.ops as ops
 from functools import partial
 
-SHEAR_MODULUS = 32e9 # Pascals
+SHEAR_MODULUS = 32e9  # Pascals
+
 
 def get_area(geom):
     """
@@ -22,7 +23,7 @@ def get_area(geom):
                              geom)
     return geom_aea.area/1e6
 
-    
+
 def slip_from_mo(mo, area):
     """
     :parameter mo:

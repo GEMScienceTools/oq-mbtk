@@ -6,8 +6,8 @@ import sys
 from plot_cross_section import plt_cs
 import matplotlib.pyplot as plt
 
-def main(argv):
 
+def main(argv):
     if len(argv) < 2:
         folder = './'
     else:

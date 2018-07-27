@@ -36,7 +36,8 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
         tmps = '\nError: the input folder cannot be also the output one\n'
         tmps += '    input : {0:s}\n'.format(in_path)
         tmps += '    output: {0:s}\n'.format(out_path)
-        logging.warning(tmps.format(lab, len(allrup[lab])))
+        # MN: UNCOMMENT THIS LOG AND FIX IT
+        # logging.warning(tmps.format(lab, len(allrup[lab])))
         exit(0)
     #
     # read profiles
@@ -48,15 +49,16 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
     #
     # compute length of profiles
     lengths, longest_key, shortest_key = get_profiles_length(sps)
-    logging.info('Longest profile (id: {:s}): {:2f}'.format(longest_key,
-                                                     lengths[longest_key]))
-    logging.info('Shortest profile (id: {:s}): {:2f}'.format(shortest_key,
-                                                      lengths[shortest_key]))
+    logging.info('Longest profile (id: {:s}): {:2f}'.format(
+        longest_key, lengths[longest_key]))
+    logging.info('Shortest profile (id: {:s}): {:2f}'.format(
+        shortest_key, lengths[shortest_key]))
     logging.info('Depth min: {:.2f}'.format(dmin))
     logging.info('Depth max: {:.2f}'.format(dmax))
     #
     #
-    number_of_samples = numpy.ceil(lengths[longest_key] / float(max_sampl_dist))
+    number_of_samples = numpy.ceil(lengths[longest_key] / float(
+        max_sampl_dist))
     tmps = 'Number of subsegments for each profile: {:d}'
     logging.info(tmps.format(int(number_of_samples)))
     tmp = lengths[shortest_key]/number_of_samples

@@ -14,6 +14,7 @@ from mayavi import mlab
 
 SCALING = -3.
 
+
 def plt_catalogue(filename):
     """
     :parameter str filename:
@@ -36,10 +37,12 @@ def plot_sub_profiles(foldername):
     # Read files
     for filename in glob.glob(os.path.join(foldername, 'cs_*.csv')):
         dat = numpy.loadtxt(filename)
+        # MN: 'idx' assigned but never used
         sid = re.sub('^cs_', '', re.split('\.', os.path.basename(filename))[0])
-        x, y = p1(dat[:,0], dat[:,1])
-        mlab.plot3d(x/1e3, y/1e3, SCALING*dat[:,2], tube_radius=2,
-                    color=(1,0,0))
+        x, y = p1(dat[:, 0], dat[:, 1])
+        mlab.plot3d(x/1e3, y/1e3, SCALING*dat[:, 2], tube_radius=2,
+                    color=(1, 0, 0))
+
 
 def plot_edges(foldername):
     """
@@ -49,10 +52,12 @@ def plot_edges(foldername):
     # Read files
     for filename in glob.glob(os.path.join(foldername, 'edge_*.csv')):
         dat = numpy.loadtxt(filename)
-        sid = re.sub('^edge_', '', re.split('\.', os.path.basename(filename))[0])
-        x, y = p1(dat[:,0], dat[:,1])
-        mlab.plot3d(x/1e3, y/1e3, SCALING*dat[:,2], tube_radius=2,
-                    color=(1,1,0))
+        # MN: 'idx' assigned but never used
+        sid = re.sub('^edge_', '',
+                     re.split('\.', os.path.basename(filename))[0])
+        x, y = p1(dat[:, 0], dat[:, 1])
+        mlab.plot3d(x/1e3, y/1e3, SCALING*dat[:, 2], tube_radius=2,
+                    color=(1, 1, 0))
 
 
 def main(argv):
@@ -62,6 +67,7 @@ def main(argv):
 
     config = configparser.ConfigParser()
     config.read(argv[1])
+    # MN: 'fname_eqk_cat' assigned but never used
     fname_eqk_cat = config['data']['catalogue_pickle_filename']
 
     # Create figure
@@ -70,7 +76,7 @@ def main(argv):
     plot_sub_profiles(foldername)
     plot_edges(foldername)
     # Plot catalogue
-    #plt_catalogue(fname_eqk_cat)
+    # plt_catalogue(fname_eqk_cat)
     #
     mlab.show()
 

@@ -1,9 +1,10 @@
 import os
 import re
+# MN: 'sys' imported but not used
 import sys
 import glob
 
-
+# MN: 'OQtModel' imported but not used
 from openquake.mbt.oqt_project import OQtProject, OQtModel
 
 
@@ -39,14 +40,14 @@ def clean_project_component(model_id, source_type):
     # - hypo_depths.hdf5
     # - <model>_hypo_dist.hdf5
     # - <model>_nodal_plane_dist.hdf5
-    
+
     #
     # deleting sources
     keys = list(model.sources.keys())
     for key in keys:
-        stype = model.sources[key].source_type        
+        stype = model.sources[key].source_type
         if stype == source_type:
-            del model.sources[key] 
+            del model.sources[key]
             #
             # delete reports
             _delete_reports(folder_reports, key)
@@ -54,15 +55,16 @@ def clean_project_component(model_id, source_type):
             # remove information about faults
             if source_type == 'SimpleFaultSource':
                 for src_key in model.sources:
-                    if (model.sources[src_key].source_type  == 'AreaSource' and
-                        hasattr(model.sources[src_key], 'ids_faults_inside')):
-                        del model.sources[src_key].ids_faults_inside 
+                    if (model.sources[src_key].source_type == 'AreaSource' and
+                            hasattr(model.sources[src_key],
+                                    'ids_faults_inside')):
+                        del model.sources[src_key].ids_faults_inside
     #
     # saving model and project
     oqtkp.models[model_id] = model
     oqtkp.save()
-    
-    
+
+
 def _delete_reports(foldername, src_id):
     src_id = re.sub('[a-z]', '', src_id)
     foldername = os.path.join(foldername, '*{:s}*'.format(src_id))
@@ -70,7 +72,4 @@ def _delete_reports(foldername, src_id):
         tmp = re.split('-', re.split('\.', os.path.basename(filename))[0])
         print(tmp[-1])
         if tmp[-1] == src_id:
-            print('----',filename)
-                                 
-                                 
-                                 
+            print('----', filename)

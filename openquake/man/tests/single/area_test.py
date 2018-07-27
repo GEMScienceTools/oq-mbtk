@@ -1,4 +1,3 @@
-
 import unittest
 
 from openquake.man.single.areas import _get_area, get_rates_density
