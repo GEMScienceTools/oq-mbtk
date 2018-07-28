@@ -661,7 +661,9 @@ def trace_from_coords(fault_dict, defaults=defaults, param_map=param_map,
             if dip < 90.:
 
                 fault_trace = _check_trace_coord_ordering(fault_dict, 
-                                                          fault_trace)
+                                                          fault_trace,
+                                                          defaults=defaults,
+                                                          param_map=param_map)
 
     return fault_trace
 
@@ -690,7 +692,9 @@ def line_from_trace_coords(trace_coords):
 
 
 def _check_trace_coord_ordering(fault_dict, fault_trace,
-                                reverse_angle_threshold=90.):
+                                reverse_angle_threshold=90.,
+                                param_map=param_map,
+                                defaults=defaults):
     """
     Enforces right-hand rule with respect to fault trace coordinate ordering
     and dip direction.  If there is an inconsistency, the trace coordinates
@@ -965,7 +969,9 @@ def fetch_slip_rate(fault_dict, rate_component, slip_class='mle',
     """
 
     requested_val = 'mle' if slip_class is 'suggested' else slip_class
-    slip_rate_tup = fetch_param_val(fault_dict, rate_component)
+    slip_rate_tup = fetch_param_val(fault_dict, rate_component,
+                                    param_map=param_map,
+                                    defaults=defaults)
 
     return get_val_from_tuple(slip_rate_tup, requested_val,
                               _abs_sort=_abs_sort)
