@@ -1746,7 +1746,8 @@ def get_fault_width(fault_dict, method='length_scaling',
     """
 
     if method == 'length_scaling':
-        width = calc_fault_width_from_length(fault_dict,
+        width = calc_fault_width_from_length(fault_dict, param_map=param_map,
+                                             defaults=defaults,
                                            width_scaling_rel=width_scaling_rel)
 
     elif method == 'seismo_depth':
@@ -2017,8 +2018,10 @@ def get_fault_area(fault_dict, area_method='simple',
     if area_method == 'simple':
         fault_length = get_fault_length(fault_dict, defaults=defaults,
                                         param_map=param_map)
+
         fault_width = get_fault_width(fault_dict, method=width_method,
                                       defaults=defaults, param_map=param_map)
+
         fault_area = fault_length * fault_width
 
     elif area_method == 'from_surface':
@@ -2046,16 +2049,23 @@ def get_fault_area(fault_dict, area_method='simple',
             lsd = width * np.sin(np.radians(dip))
 
         else:
-            raise ValueError('width_method ', width_method, 'not recognized')
+            raise ValueError('width_method {} not recognized'.format(
+                                                                 width_method))
 
         dip = get_dip(fault_dict, defaults=defaults, param_map=param_map)
-        mesh_spacing = fetch_param_val(fault_dict, 'rupture_mesh_spacing')
+        mesh_spacing = fetch_param_val(fault_dict, 'rupture_mesh_spacing',
+                                       defaults=defaults,
+                                       param_map=param_map)
 
         fault_area = hz.geo.surface.SimpleFaultSurface.from_fault_data(
             fault_trace,
             usd, lsd, dip,
             mesh_spacing
         ).get_area()
+
+    else:
+        raise ValueError('Unrecognized area_method "{}"'.format(area_method))
+
     return fault_area
 
 
@@ -2195,7 +2205,8 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
 
             M_max = mag_scaling_rel.get_median_mag(fault_area, rake)
 
-        except:
+        except Exception as e:
+            print(e, '\n Using default value')
             M_max = defaults['M_max']
 
     return M_max
