@@ -1,13 +1,26 @@
 import json
 import unittest
+import os
+
 from openquake.mbt.tools.fault_modeler.fault_modeling_utils import *
+
+
+BASE_DATA_PATH = os.path.dirname(__file__)
+data_dir_str = '../data/tools/'
+test_data_dir = os.path.join(BASE_DATA_PATH, data_dir_str)
 
 
 class TestConversionUtils(unittest.TestCase):
 
-    def setUp(self):
 
-        with open('../data/tools/data_test_fault_conversion.geojson') as ff:
+    def setUp(self):
+        data_file_name = 'data_test_fault_conversion.geojson'
+
+        test_file_path = os.path.join(test_data_dir, data_file_name)
+
+        print(test_file_path)
+
+        with open(test_file_path) as ff:
             self.fault_dataset = json.load(ff)
             del ff
 
@@ -88,7 +101,8 @@ class TestConversionUtils(unittest.TestCase):
                  'slip_type': 'Reverse'
                  }
     
-        trace = trace_from_coords(fault, param_map=self.param_map, defaults=defaults,
+        trace = trace_from_coords(fault, param_map=self.param_map, 
+                                  defaults=defaults,
                                   check_coord_order=True)
     
         _trace = line_from_trace_coords(fault['coords'])
@@ -103,7 +117,8 @@ class TestConversionUtils(unittest.TestCase):
                  'slip_type': 'Reverse'
                  }
     
-        trace = trace_from_coords(fault, param_map=self.param_map, defaults=defaults,
+        trace = trace_from_coords(fault, param_map=self.param_map, 
+                                  defaults=defaults,
                                   check_coord_order=True)
     
         _trace = line_from_trace_coords(fault['coords'])
@@ -124,7 +139,8 @@ class TestConversionUtils(unittest.TestCase):
         _width = 20.
     
     
-        width = calc_fault_width_from_usd_lsd_dip(fault, param_map=self.param_map,
+        width = calc_fault_width_from_usd_lsd_dip(fault, 
+                                                  param_map=self.param_map,
                                                   defaults=defaults)
     
         assert abs(_width - width) < 0.01
@@ -158,7 +174,8 @@ class TestConversionUtils(unittest.TestCase):
                  'slip_type': 'Reverse'
                  }
         
-        length = get_fault_length(fault, defaults=defaults, param_map=self.param_map)
+        length = get_fault_length(fault, defaults=defaults, 
+                                  param_map=self.param_map)
         _area = length * 20.
     
         area = get_fault_area(fault, area_method='simple', 
@@ -172,7 +189,8 @@ class TestConversionUtils(unittest.TestCase):
     def test_get_net_slip_rate(self):
         _nsr = 6.
     
-        nsr = get_net_slip_rate(self.fault_1, slip_class='mle', param_map=self.param_map,
+        nsr = get_net_slip_rate(self.fault_1, slip_class='mle', 
+                                param_map=self.param_map,
                                 defaults=defaults)
     
         assert nsr == _nsr
