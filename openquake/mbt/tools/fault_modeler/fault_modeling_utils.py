@@ -2179,7 +2179,7 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
         try:
             # fetch?
             if mag_scaling_rel is None:
-                mag_scaling_rel = defaults['mag_scaling_rel']
+                mag_scaling_rel = defaults['magnitude_scaling_relationship']
 
             rake = get_rake(fault_dict) #returns mle rake
             fault_area = get_fault_area(fault_dict, area_method=area_method,
