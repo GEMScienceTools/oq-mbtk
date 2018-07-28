@@ -18,8 +18,6 @@ class TestConversionUtils(unittest.TestCase):
 
         test_file_path = os.path.join(test_data_dir, data_file_name)
 
-        print(test_file_path)
-
         with open(test_file_path) as ff:
             self.fault_dataset = json.load(ff)
             del ff
@@ -57,7 +55,7 @@ class TestConversionUtils(unittest.TestCase):
         meta_dict = write_metadata(self.fault_1, defaults=defaults, 
                                    param_map=self.param_map)
     
-        assert meta_dict == _meta_dict
+        self.assertEqual(meta_dict, _meta_dict)
 
     ## geometry tests
     def test_get_dip(self):
@@ -65,7 +63,7 @@ class TestConversionUtils(unittest.TestCase):
         dip = get_dip(self.fault_1, requested_val='mle', defaults=defaults,
                       param_map=self.param_map)
     
-        assert dip == _dip
+        self.assertEqual(dip, _dip)
     
     
     def test_get_dip_from_kinematics(self):
@@ -74,7 +72,7 @@ class TestConversionUtils(unittest.TestCase):
     
         dip = get_dip(fault_, param_map=self.param_map)
     
-        assert dip == _dip
+        self.assertEqual(dip, _dip)
     
     
     def test_get_rake(self):
@@ -82,7 +80,7 @@ class TestConversionUtils(unittest.TestCase):
         rake = get_rake(self.fault_1, requested_val='mle', defaults=defaults,
                         param_map=self.param_map)
     
-        assert rake == _rake
+        self.assertEqual(rake, _rake)
     
     
     def test_get_rake_from_kinematics(self):
@@ -91,7 +89,7 @@ class TestConversionUtils(unittest.TestCase):
     
         rake = get_rake(fault_, param_map=self.param_map)
     
-        assert rake == _rake
+        self.assertEqual(rake, _rake)
     
     
     def test_check_trace_from_coords_no_coord_reversal(self):
@@ -107,7 +105,7 @@ class TestConversionUtils(unittest.TestCase):
     
         _trace = line_from_trace_coords(fault['coords'])
     
-        assert trace.points == _trace.points
+        self.assertEqual(trace.points, _trace.points)
     
     
     def test_check_trace_from_coords_yes_coord_reversal(self):
@@ -124,7 +122,7 @@ class TestConversionUtils(unittest.TestCase):
         _trace = line_from_trace_coords(fault['coords'])
         _trace.points.reverse()
     
-        assert trace.points == _trace.points
+        self.assertEqual(trace.points, _trace.points)
     
     
     def test_calc_fault_width_from_usd_lsd_dip(self):
@@ -143,7 +141,7 @@ class TestConversionUtils(unittest.TestCase):
                                                   param_map=self.param_map,
                                                   defaults=defaults)
     
-        assert abs(_width - width) < 0.01
+        self.assertTrue( abs(_width - width) < 0.01)
     
 
     def test_get_fault_width_seismo_depth(self):
@@ -161,7 +159,7 @@ class TestConversionUtils(unittest.TestCase):
                                 param_map=self.param_map,
                                 defaults=defaults)
     
-        assert abs(_width - width) < 0.01
+        self.assertTrue( abs(_width - width) < 0.01)
     
     
     def test_get_fault_area_simple(self):
@@ -182,7 +180,7 @@ class TestConversionUtils(unittest.TestCase):
                               width_method='seismo_depth',
                               param_map=self.param_map, defaults=defaults)
     
-        assert abs(_area - area) < 0.01
+        self.assertTrue( abs(_area - area) < 0.01)
 
 
     # rates
@@ -193,7 +191,7 @@ class TestConversionUtils(unittest.TestCase):
                                 param_map=self.param_map,
                                 defaults=defaults)
     
-        assert nsr == _nsr
+        self.assertEqual( nsr, _nsr)
 
     def test_net_slip_from_strike_slip_fault_geom(self):
         pass
