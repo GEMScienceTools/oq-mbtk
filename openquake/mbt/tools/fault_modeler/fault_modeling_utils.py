@@ -2347,9 +2347,12 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
 
     if M_min is None:
         M_min = get_M_min(fault_dict, defaults=defaults, param_map=param_map)
+
     if M_max is None:
         M_max = get_M_max(fault_dict, defaults=defaults, param_map=param_map,
-                          mag_scaling_rel=mag_scaling_rel)
+                          mag_scaling_rel=mag_scaling_rel,
+                          area_method=area_method,
+                          width_method=width_method)
 
     if slip_rate is None:
         slip_rate = get_net_slip_rate(fault_dict,
