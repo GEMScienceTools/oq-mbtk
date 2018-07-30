@@ -38,20 +38,6 @@ from openquake.baselib import sap
 # -----------------------------------------------------------------------------
 
 # Parameters required from the fault modeler
-"""
-key_list = ['source_id',
-            'name',
-            'average_dip',
-            'average_rake',
-            'net_slip_rate',
-            'vert_slip_rate',
-            'strike_slip_rate',
-            'shortening_rate',
-            'dip_dir',
-            'dip_slip_rate',
-            'slip_type']
-
-"""
 option_types = {'b_value': float,
                 'M_min': float,
                 'M_max': float,
@@ -65,12 +51,6 @@ option_types = {'b_value': float,
                 'lower_seismogenic_depth': float,
                 'magnitude_scaling_relationship': str}
 
-# Conversion map for geojson input
-param_map_local = deepcopy(fmu.param_map)
-
-# Default arguments
-defaults_local = deepcopy(fmu.defaults)
-
 # -----------------------------------------------------------------------------
 
 def build_fault_model(cfg_file=None,
@@ -79,13 +59,18 @@ def build_fault_model(cfg_file=None,
                       project_name=None,
                       black_list=None,
                       select_list=None,
-                      param_map=param_map_local,
-                      defaults=defaults_local,
+                      param_map=None,
+                      defaults=None,
                       **kwargs):
     """
-    Note: we have to set the priority when using both ini file and
-    optional arguments
+    Note: priority when using optional parameters:
+        1) ini file
+        2) dictionaty
+        3) single arguments
     """
+
+    param_map_local = deepcopy(fmu.param_map)
+    defaults_local = deepcopy(fmu.defaults)
 
     # Import arguments from INI configuration file
     if cfg_file is not None:
@@ -104,13 +89,17 @@ def build_fault_model(cfg_file=None,
                                 cfg_dict['config']['select_list'])
 
         if 'param_map' in cfg_dict:
-            param_map.update(cfg_dict['param_map'])
-
+            param_map_local.update(cfg_dict['param_map'])
         if 'defaults' in cfg_dict:
-            defaults.update(cfg_dict['defaults'])
+            defaults_local.update(cfg_dict['defaults'])
+
+    if param_map is not None:
+        param_map_local.update(param_map)
+    if defaults is not None:
+        defaults_local.update(defaults)
 
     for key in kwargs:
-        defaults[key] = kwargs[key]
+        defaults_local[key] = kwargs[key]
 
     # Import the fault database from geojson
     if geojson_file is not None:
@@ -118,7 +107,7 @@ def build_fault_model(cfg_file=None,
         fault_db.import_from_geojson(geojson_file,
                                      black_list=black_list,
                                      select_list=select_list,
-                                     param_map=param_map)
+                                     param_map=param_map_local)
     else:
         print('Geojson file not specified')
         return
@@ -127,8 +116,7 @@ def build_fault_model(cfg_file=None,
     srcl = build_model_from_db(fault_db,
                                xml_output,
                                project_name,
-                               param_map=param_map,
-                               defaults=defaults)
+                               defaults=defaults_local)
 
     if xml_output is None:
         return srcl
@@ -162,14 +150,19 @@ def read_config_file(cfg_file):
 def build_model_from_db(fault_db,
                         xml_output=None,
                         project_name=None,
-                        defaults=defaults_local,
-                        param_map=param_map_local,
+                        param_map=None,
+                        defaults=None,
                         **kwargs):
     """
     """
 
-    param_map_local.update(param_map)
-    defaults_local.update(defaults)
+    param_map_local = deepcopy(fmu.param_map)
+    defaults_local = deepcopy(fmu.defaults)
+
+    if param_map is not None:
+        param_map_local.update(param_map)
+    if defaults is not None:
+        defaults_local.update(defaults)
 
     for key in kwargs:
         defaults[key] = kwargs[key]
@@ -177,19 +170,18 @@ def build_model_from_db(fault_db,
     srcl = []
 
     for i, fl in enumerate(fault_db.db):
-        try:
-            sfs_dict = fmu.construct_sfs_dict(
-                            fl,
-                            defaults=defaults_local,
-                            param_map=param_map_local)
+        #try:
+            sfs_dict = fmu.construct_sfs_dict(fl,
+                                              param_map=param_map_local,
+                                              defaults=defaults_local)
             sfs = fmu.make_fault_source(sfs_dict)
             srcl.append(sfs)
-        except Exception as e:
-            if 'source_id' in fl.keys():
-                _id = fl['source_id']
-            else:
-                _id = '_unnamed_fault_number_{}'.format(i)
-            print("Couldn't process Fault {}:  {}".format(_id, e))
+        #except Exception as e:
+        #    if 'source_id' in fl.keys():
+        #        _id = fl['source_id']
+        #    else:
+        #        _id = '_unnamed_fault_number_{}'.format(i)
+        #    print("Couldn't process Fault {}:  {}".format(_id, e))
 
     if xml_output is not None:
         # Write the final fault model
@@ -216,26 +208,38 @@ class fault_database():
     def import_from_geojson(self, geojson_file,
                                   black_list=None,
                                   select_list=None,
-                                  param_map=param_map_local,
-                                  #defaults=defaults
-                            ):
+                                  param_map=None):
         """
         """
+
+        param_map_local = deepcopy(fmu.param_map)
+
+        if param_map is not None:
+            param_map_local.update(param_map)
 
         # Import database
         with open(geojson_file, 'r') as f:
             data = json.load(f)
 
-            #param_map_r = {param_map[k]: k for k in param_map}
-
             # Loop over faults
             for feature in data['features']:
-                fault = feature['properties']
 
-                #for k in fault:
-                #    if k in param_map.values():
-                #        fault[param_map[k]] = fault.pop(k)
-                #print(fault)
+                """
+                fault = {}
+                prop = feature['properties']
+
+                for k in param_map_local:
+                    if param_map_local[k] in prop:
+                        fault[k] = prop[param_map_local[k]]
+                    if k in prop:
+                        fault[k] = prop[k]
+                """
+
+                fault = feature['properties']
+                for k in param_map_local:
+                    k_map = param_map_local[k]
+                    if k_map in fault:
+                        fault[k] = fault.pop(k_map)
 
                 # Process only faults in the selection list
                 if select_list is not None:
