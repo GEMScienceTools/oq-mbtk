@@ -16,9 +16,7 @@ param_map = {'source_id': 'ogc_fid',
              'dip_dir': 'ns_dip_dir',
              'dip_slip_rate': 'ns_dip_slip_rate'}
 
-#param_map = {param_map[k]: k for k in param_map}
-
-if 1:
+if 0:
     build_fault_model(
         geojson_file='Data/ne_asia_faults_rates_bvalue.geojson',
         xml_output='Data/test.xml',
@@ -26,7 +24,7 @@ if 1:
         param_map=param_map,
         lower_seismogenic_depth=30.)
 
-if 0:
+if 1:
     build_fault_model(
         geojson_file='Data/ne_asia_faults_rates_bvalue.geojson',
         xml_output='Data/test.xml',
