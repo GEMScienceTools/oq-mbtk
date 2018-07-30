@@ -169,19 +169,17 @@ def build_model_from_db(fault_db,
 
     srcl = []
 
-    for i, fl in enumerate(fault_db.db):
-        #try:
+    for fl in fault_db.db:
+
+        try:
             sfs_dict = fmu.construct_sfs_dict(fl,
                                               param_map=param_map_local,
                                               defaults=defaults_local)
             sfs = fmu.make_fault_source(sfs_dict)
             srcl.append(sfs)
-        #except Exception as e:
-        #    if 'source_id' in fl.keys():
-        #        _id = fl['source_id']
-        #    else:
-        #        _id = '_unnamed_fault_number_{}'.format(i)
-        #    print("Couldn't process Fault {}:  {}".format(_id, e))
+
+        except Exception as e:
+            print("Couldn't process Fault {}: {}".format(fl['source_id'], e))
 
     if xml_output is not None:
         # Write the final fault model
@@ -267,6 +265,14 @@ class fault_database():
         for fault in self.db:
             if fault['source_id'] is id or id is None:
                 fault[property] = value
+
+    def remove_property(self, property, id=None):
+        """
+        """
+
+        for fault in self.db:
+            if fault['source_id'] is id or id is None:
+                fault.pop(property)
 
 # -----------------------------------------------------------------------------
 
