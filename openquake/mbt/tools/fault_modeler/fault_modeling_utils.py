@@ -78,7 +78,8 @@ defaults = {'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
             'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
             'magnitude_scaling_relationship':
                 hz.scalerel.leonard2014.Leonard2014_Interplate(),
-            'slip_class': 'mle'
+            'slip_class': 'mle',
+            'name': 'unnamed',
             }
 
 
