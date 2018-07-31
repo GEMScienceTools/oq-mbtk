@@ -59,7 +59,7 @@ Modificable parameters are:
 | lower_seismogenic_depth | ... | ... |
 | magnitude_scaling_relationship | ... | ... |
 
-A single parameter can be modified as optional arguments as:
+A single parameter can be passed as optional arguments like:
 
 ```python
 build_fault_model(geojson_file='FaultDatabase.geojson', 
@@ -67,10 +67,11 @@ build_fault_model(geojson_file='FaultDatabase.geojson',
                   lower_seismogenic_depth=25.)
 ```
 
-For multiple parameters, it is also possible to pass the a dictionary:
+(note that passing single parameters as flags is presently not yet implemented in the command line interface)
+
+For multiple parameters, it is also possible to use a dictionary:
 
 ```python
-
 defaults = {'b_value': 1.,
             'aseismic_coefficient': 0.1,
             'upper_seismogenic_depth': 0.,
@@ -80,9 +81,7 @@ build_fault_model(geojson_file='FaultDatabase.geojson',
                   defaults=defaults)
 ```
 
-(Note that passing single parameters as flags is presently not yet implemented in the command line interface)
-
-Note that providing a new setting will override the default (hardcoded) value for all the faults at the same time. To provide fault specific parametrisation, it is possible to:
+Providing a new setting will override the default (hardcoded) value for all the faults at the same time. To provide fault specific parametrisation, it is possible to:
 
 1. Manually modify the geojson by adding the key-value pair to the specific fault item
 
