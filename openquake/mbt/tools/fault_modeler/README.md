@@ -111,7 +111,7 @@ The *fault_database* class can be used also to export the modified database to g
 fault_db.export_geojson(geojson_file)
 ```
 
-## Using non-standard Geojson file format
+## Using non-standard Geojson file formats
 
 In case a geojson database with *non-standard* keyword (e.g. an old version),
 it is possible to specify the translation map with a simple dictionary:
