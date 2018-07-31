@@ -81,7 +81,9 @@ build_fault_model(geojson_file='FaultDatabase.geojson',
                   defaults=defaults)
 ```
 
-Providing a new setting will override the default (hardcoded) value for all the faults at the same time. To provide fault specific parametrisation, it is possible to:
+As final options, optional parameters can be specified in an external configuration file (see below).
+
+However, providing an optional setting will always override the default (hardcoded) value for all the faults in the database at the same time. To provide fault specific parametrisation, it is possible to:
 
 1. Manually modify the geojson by adding the key-value pair to the specific fault item
 
@@ -101,7 +103,13 @@ fault_db.add_property('upper_seismogenic_depth', value=20, id=1)
 # Create and export the model
 build_model_from_db(fault_db, xml_output='FaultModel.xml')
 ```
-Note that the function *build_model_from_db* shares the same options of *build_fault_model*.
+(n)ote that the function *build_model_from_db* shares the same options of *build_fault_model*)
+
+The *fault_database* class can be used also to export the modified database to geojson format:
+
+```python
+fault_db.export_geojson(geojson_file)
+```
 
 ## Using non-standard Geojson file format
 
