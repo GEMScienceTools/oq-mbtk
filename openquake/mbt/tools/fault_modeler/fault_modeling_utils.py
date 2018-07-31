@@ -64,7 +64,7 @@ all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
 param_map = {p: p for p in all_params}
 
 # default parameter values
-defaults = {'name': None,
+defaults = {'name': 'None',
             'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
             'b_value': 1.,
             'bin_width': 0.1,

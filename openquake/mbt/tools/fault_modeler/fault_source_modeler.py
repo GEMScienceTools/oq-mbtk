@@ -219,13 +219,16 @@ class fault_database():
         with open(geojson_file, 'r') as f:
             data = json.load(f)
 
+            # Save geojson metadata
+            self.meta = {k:data[k] for k in data if k is not 'features'}
+
             # Loop over faults
             for feature in data['features']:
 
                 """
+                # Save only standard keys, neglect any other
                 fault = {}
                 prop = feature['properties']
-
                 for k in param_map_local:
                     if param_map_local[k] in prop:
                         fault[k] = prop[param_map_local[k]]
@@ -255,23 +258,46 @@ class fault_database():
                 self.db.append(fault)
 
             # Temporary adjustment to make the code running....!
-            self.add_property('name', 'XXX')
+            # self.add_property('name', 'None')
+
+    def export_to_geojson(self, geojson_file):
+        """
+        """
+
+        with open(geojson_file, 'w') as f:
+
+            data = {k:self.meta[k] for k in self.meta}
+            data['features'] = []
+
+            for fl in self.db:
+
+                prop = {k:fl[k] for k in fl if k is not 'trace_coordinates'}
+                geom = {'coordinates': fl['trace_coordinates'],
+                        'type': 'LineString'}
+
+                feat = {'properties': prop,
+                        'geometry': geom,
+                        'type': 'Feature'}
+
+                data['features'].append(feat)
+
+            json.dump(data, f)
 
 
-    def add_property(self, property, value=None, id=None):
+    def add_property(self, property, value=None, id=None, key='source_id'):
         """
         """
 
         for fault in self.db:
-            if fault['source_id'] is id or id is None:
+            if fault[key] is id or id is None:
                 fault[property] = value
 
-    def remove_property(self, property, id=None):
+    def remove_property(self, property, id=None, key='source_id'):
         """
         """
 
         for fault in self.db:
-            if fault['source_id'] is id or id is None:
+            if fault[key] is id or id is None:
                 fault.pop(property)
 
 # -----------------------------------------------------------------------------
