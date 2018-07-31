@@ -24,7 +24,7 @@ build_fault_model(cfg_file='config.ini')
 
 Note that if the *xml_output* argument is not specified (either as an argument of in the .ini file), the code returns a list of the generated OpenQuake fault source objects as output.
 
-### Using the Console
+### From the Command Line
 
 The above example can also be run a shell command as:
 
@@ -76,7 +76,7 @@ fault_db.import_from_geojson(geojson_file)
 fault_db.add_property('upper_seismogenic_depth', value=20, id=1)
 
 # Create and export the model
-build_model_from_db(fault_db,xml_output='FaultModel.xml')
+build_model_from_db(fault_db, xml_output='FaultModel.xml')
 ```
 Note that the function *build_model_from_db* shares the same options of *build_fault_model*.
 
