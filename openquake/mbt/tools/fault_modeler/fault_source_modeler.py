@@ -63,10 +63,45 @@ def build_fault_model(cfg_file=None,
                       defaults=None,
                       **kwargs):
     """
-    Note: priority when using optional parameters:
+    Main interface to create the fault source model from an active fault
+    database in geojson format. Priority of the optional parameters is:
         1) .ini file
         2) dictionary
         3) single arguments
+
+
+    : param cfg_file:
+
+    : type:
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
     """
 
     param_map_local = deepcopy(fmu.param_map)
