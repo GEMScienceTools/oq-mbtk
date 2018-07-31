@@ -72,7 +72,7 @@ class TestDatabaseIO(unittest.TestCase):
 
     def test_build_source_model_config_file(self):
 
-        fsm.build_fault_model(cfg_file='config.ini')
+        fsm.build_fault_model(cfg_file='Data/config.ini')
 
 
 if __name__ == "__main__":
