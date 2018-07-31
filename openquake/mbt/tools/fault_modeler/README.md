@@ -26,7 +26,7 @@ Note that if the *xml_output* argument is not specified (either as an argument o
 
 ### From the Command Line
 
-The above example can also be run a shell command as:
+The above examples can also be run as a shell command:
 
 ```console
 fault_source_modeler.py -geo FaultDatabase.geojson -xml FaultModel.xml
@@ -41,9 +41,10 @@ fault_source_modeler.py -cfg config.ini
 
 ### Optional Parameters
 
-Several optional parameters can be passed as arguments or within the configuration file (not yet available as console flags):
+Several optional parameters can be passed, either as arguments or within the configuration file.
+Modificable parameters are:
 
-| Key | Description | Default |
+| Key | Description | Default Value |
 |:----|:------------|:--------|
 | b_value | ... | ... |
 | M_min | ... | ... |
@@ -57,6 +58,29 @@ Several optional parameters can be passed as arguments or within the configurati
 | upper_seismogenic_depth | ... | ... |
 | lower_seismogenic_depth | ... | ... |
 | magnitude_scaling_relationship | ... | ... |
+
+A single parameter can be modified as optional arguments as:
+
+```python
+build_fault_model(geojson_file='FaultDatabase.geojson', 
+                  aseismic_coefficient=0.9,
+                  lower_seismogenic_depth=25.)
+```
+
+For multiple parameters, it is also possible to pass the a dictionary:
+
+```python
+
+defaults = {'b_value': 1.,
+            'aseismic_coefficient': 0.1,
+            'upper_seismogenic_depth': 0.,
+            'lower_seismogenic_depth': 20.}
+
+build_fault_model(geojson_file='FaultDatabase.geojson', 
+                  defaults=defaults)
+```
+
+(Note that passing single parameters as flags is presently not yet implemented in the command line interface)
 
 Note that providing a new setting will override the default (hardcoded) value for all the faults at the same time. To provide fault specific parametrisation, it is possible to:
 
