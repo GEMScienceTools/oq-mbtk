@@ -56,16 +56,16 @@ option_types = {'b_value': float,
 def build_fault_model(cfg_file=None,
                       geojson_file=None,
                       xml_output=None,
-                      project_name=None,
                       black_list=None,
                       select_list=None,
+                      project_name=None,
                       param_map=None,
                       defaults=None,
                       **kwargs):
     """
     Note: priority when using optional parameters:
-        1) ini file
-        2) dictionaty
+        1) .ini file
+        2) dictionary
         3) single arguments
     """
 
@@ -109,7 +109,7 @@ def build_fault_model(cfg_file=None,
                                      select_list=select_list,
                                      param_map=param_map_local)
     else:
-        print('Geojson file not specified')
+        print('Geojson file not found')
         return
 
     # Create the fault source model in xml_format
@@ -219,7 +219,7 @@ class fault_database():
         with open(geojson_file, 'r') as f:
             data = json.load(f)
 
-            # Save geojson metadata
+            # Import geojson metadata
             self.meta = {k:data[k] for k in data if k is not 'features'}
 
             # Loop over faults
@@ -257,9 +257,6 @@ class fault_database():
 
                 self.db.append(fault)
 
-            # Temporary adjustment to make the code running....!
-            # self.add_property('name', 'None')
-
     def export_to_geojson(self, geojson_file):
         """
         """
@@ -282,7 +279,6 @@ class fault_database():
                 data['features'].append(feat)
 
             json.dump(data, f)
-
 
     def add_property(self, property, value=None, id=None, key='source_id'):
         """
@@ -310,23 +306,23 @@ def main(argv):
     p.opt(name='cfg_file',
           help='Parameter configuration file (.ini)',
           abbrev='-cfg',
-          metavar='\'.ini\'')
+          metavar='\'*.ini\'')
     p.opt(name='geojson_file',
           help='Fault database in geojson format',
           abbrev='-geo',
-          metavar='\'.geojson\'')
+          metavar='\'*.geojson\'')
     p.opt(name='xml_output',
           help='Output xml containing the fault model',
           abbrev='-xml',
-          metavar='\'.xml\'')
-    p.opt(name='project_name',
-          help='Name of the current project', abbrev='-h')
+          metavar='\'*.xml\'')
     p.opt(name='black_list',
           help='List of fault IDs NOT to be processed [id1,id2]', 
           type=ast.literal_eval, abbrev='-h')
     p.opt(name='select_list',
           help='List of selected fault IDs to be processed [id1,id2]', 
           type=ast.literal_eval, abbrev='-h')
+    p.opt(name='project_name',
+          help='Name of the current project', abbrev='-h')
 
     if len(argv) < 1:
         print(p.help())
