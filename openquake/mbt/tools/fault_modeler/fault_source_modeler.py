@@ -245,6 +245,12 @@ class fault_database():
         """
         """
 
+        if not isinstance(select_list, list):
+            select_list = [select_list]
+
+        if not isinstance(select_list, list):
+            select_list = [select_list]
+
         param_map_local = deepcopy(fmu.param_map)
 
         if param_map is not None:
