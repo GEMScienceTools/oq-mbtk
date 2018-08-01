@@ -19,9 +19,9 @@ def coord_generators(mesh):
         yield (cnt, (lon, lat, lon, lat), 1)
 
 def check_idl(lons):
-    idl=0
     maxlon = max(lons)
     minlon = min(lons)
+    idl=0
     if ((abs(maxlon-minlon)>50) & ((maxlon/minlon)<0)):
         idl=1
     return idl
