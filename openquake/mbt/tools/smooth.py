@@ -1,4 +1,4 @@
-
+import code
 import numpy
 import rtree
 import scipy.constants as consts
@@ -11,9 +11,20 @@ from openquake.hazardlib.geo.geodetic import (point_at, geodetic_distance)
 
 def coord_generators(mesh):
     for cnt, pnt in enumerate(mesh):
+        idl = check_idl(mesh.lons)
         lon = pnt.longitude
+        if idl==1:
+            lon = lon+360 if lon<0 else lon
         lat = pnt.latitude
         yield (cnt, (lon, lat, lon, lat), 1)
+
+def check_idl(lons):
+    idl=0
+    maxlon = max(lons)
+    minlon = min(lons)
+    if ((abs(maxlon-minlon)>50) & ((maxlon/minlon)<0)):
+        idl=1
+    return idl
 
 class Smoothing:
 	"""
@@ -29,7 +40,7 @@ class Smoothing:
 
 	def __init__(self, catalogue, mesh, cellsize, completeness=None):
 		self.catalogue = catalogue
-        self.mesh = mesh
+		self.mesh = mesh
 		self.cellsize = cellsize
 		self.completeness = completeness
 		self._create_spatial_index()
@@ -44,13 +55,13 @@ class Smoothing:
 		# Create the spatial index for the grid mesh
 		r = rtree.index.Index('./tmp', properties=p)
 		ids = set()
+                #check for idl
 		for cnt, pnt in enumerate(coord_generators(self.mesh)):
 			r.insert(id=pnt[0], coordinates=pnt[1])
 			# Check that the point IDs are unique
 			if pnt[0] not in ids:
 				ids.add(pnt[0])
 			else:
-				print(pnt[0])
 				raise ValueError('Index already used')
 		# Create nodes array
 		nodes = numpy.array((len(self.mesh)))
@@ -102,21 +113,30 @@ class Smoothing:
 		# Compute the number of expected nodes
 		numpnts = consts.pi*radius**2/(self.cellsize**2)
 		# Smoothing the catalogue
+
 		for lon, lat, mag in zip(self.catalogue.data['longitude'],
 								 self.catalogue.data['latitude'],
 								 self.catalogue.data['magnitude']):
 			# Set the bounding box
+			idl = check_idl(self.mesh.lons)
+			if idl==1:
+			    lon = lon+360 if lon<0 else lon
+			# Set the bounding box 
 			minlon, minlat = point_at(lon, lat, 225, radius*2**0.5)
-			maxlon, maxlat = point_at(lon, lat, 45, radius*2**0.5)
+			maxlon, maxlat = point_at(lon, lat, 45, radius*2**0.5) 
+			if idl==1:
+			    minlon = minlon+360 if minlon<0 else minlon
+			    maxlon = maxlon+360 if maxlon<0 else maxlon
 			# find nodes within the bounding box
 			idxs = list(set(self.rtree.intersection((minlon,
-					                                 minlat,
+					                         minlat,
 			                                         maxlon,
 			                                         maxlat))))
 			# Get distances
 			dsts = geodetic_distance(lon, lat,
 			                         self.mesh.lons[idxs],
 			                         self.mesh.lats[idxs])
+
 			# Find indexes of nodes at a distance lower than the
 			# radius
 			jjj = numpy.nonzero(dsts < radius)[0]
