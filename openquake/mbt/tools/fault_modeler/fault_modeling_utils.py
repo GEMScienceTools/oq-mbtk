@@ -64,7 +64,7 @@ all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
 param_map = {p: p for p in all_params}
 
 # default parameter values
-defaults = {'name': 'None',
+defaults = {'name': 'unnamed',
             'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
             'b_value': 1.,
             'bin_width': 0.1,
@@ -79,8 +79,7 @@ defaults = {'name': 'None',
             'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
             'magnitude_scaling_relationship':
                 hz.scalerel.leonard2014.Leonard2014_Interplate(),
-            'slip_class': 'mle',
-            'name': 'unnamed',
+            'slip_class': 'mle'
             }
 
 

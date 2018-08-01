@@ -63,10 +63,45 @@ def build_fault_model(cfg_file=None,
                       defaults=None,
                       **kwargs):
     """
-    Note: priority when using optional parameters:
+    Main interface to create the fault source model from an active fault
+    database in geojson format. Priority of the optional parameters is:
         1) .ini file
         2) dictionary
         3) single arguments
+
+
+    : param cfg_file:
+
+    : type:
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
+    : param cfg_file:
+
+    : type :
+
     """
 
     param_map_local = deepcopy(fmu.param_map)
@@ -128,7 +163,8 @@ def read_config_file(cfg_file):
     """
 
     cfg_dict = {}
-    cfg = configparser.ConfigParser(dict_type=dict)
+    cfg = configparser.RawConfigParser(dict_type=dict)
+    cfg.optionxform = str
     cfg.read(cfg_file)
 
     for key in ['config', 'param_map', 'defaults']:
@@ -209,6 +245,12 @@ class fault_database():
                                   param_map=None):
         """
         """
+
+        if not isinstance(select_list, (list, tuple)):
+            select_list = [select_list]
+
+        if not isinstance(select_list, (list, tuple)):
+            select_list = [select_list]
 
         param_map_local = deepcopy(fmu.param_map)
 
