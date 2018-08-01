@@ -163,7 +163,8 @@ def read_config_file(cfg_file):
     """
 
     cfg_dict = {}
-    cfg = configparser.ConfigParser(dict_type=dict)
+    cfg = configparser.RawConfigParser(dict_type=dict)
+    cfg.optionxform = str
     cfg.read(cfg_file)
 
     for key in ['config', 'param_map', 'defaults']:
