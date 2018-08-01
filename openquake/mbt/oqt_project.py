@@ -1,5 +1,6 @@
 """
-Module :mod:`openquake.mbt.oqt_project` defines :class:`OQtProject`, :class:`OQtModel`,
+Module :mod:`openquake.mbt.oqt_project` defines :class:`OQtProject`,\
+ :class:`OQtModel`,
 and :class:`OQtSource`. A :class:`OQtProject` instance is a container for
 the inofrmation needed to create a PSHA source model.
 """
@@ -100,13 +101,13 @@ class OQtSource(object):
         # Check attributes
         for key in self.__dict__:
             if key not in attribute_set:
-                print ('Attribute set {:s}'.format(attribute_set))
+                print('Attribute set {:s}'.format(attribute_set))
                 msg = 'Parameter %s not compatible with this source' % (key)
                 raise ValueError(msg)
 
     def get_info(self):
         for key in self.__dict__:
-            print ('%30s:' % (key), getattr(self, key))
+            print('%30s:' % (key), getattr(self, key))
 
 
 class OQtProject(object):
@@ -146,7 +147,7 @@ class OQtProject(object):
         """
         assert isinstance(model, OQtModel)
         self.models[model.model_id] = (model)
-        print ('Model \'%s\' added to project' % (model.model_id))
+        print('Model \'%s\' added to project' % (model.model_id))
 
     def _get_filename(self):
         filename = re.sub('\s', '_', self.name).lower()
@@ -174,7 +175,7 @@ class OQtProject(object):
         pickle.dump(self, fou)
         fou.close()
         if log:
-            print ('Project saved into file %s' % (output_path))
+            print('Project saved into file %s' % (output_path))
 
     @classmethod
     def load_from_file(cls, filename):
@@ -185,7 +186,7 @@ class OQtProject(object):
             An instance of :py:class:`~openquake.mbt.oqt_project.OQtProject`
         """
         if not os.path.exists(filename):
-            print (filename)
+            print(filename)
             warnings.warn("File does not exist", UserWarning)
             return None
         else:
@@ -201,25 +202,25 @@ class OQtProject(object):
         """
         if model_id in self.models:
             self.active_model_id = model_id
-            print ('\nActivating model already available in the project')
+            print('\nActivating model already available in the project')
         else:
             self.add_model(OQtModel(model_id=model_id))
-            print ('   Initialising model not available in the project')
+            print('   Initialising model not available in the project')
             if len(kwargs):
                 self.__dict__.update(kwargs)
 
     def get_info(self):
-        print ('\nInformation for project: %s' % (self.name))
-        print ('\n  -- parameters:')
+        print('\nInformation for project: %s' % (self.name))
+        print('\n  -- parameters:')
         for key in self.__dict__:
-            print ('   %-40s:' % (key), getattr(self, key))
-        print ('\n  -- models:')
+            print('   %-40s:' % (key), getattr(self, key))
+        print('\n  -- models:')
         if len(self.models):
             for key in self.models:
-                print ('   %-40s: %2d sources' % (key,
-                                                 len(self.models[key].sources)))
+                print('   %-40s: %2d sources' % (
+                    key, len(self.models[key].sources)))
         else:
-            print ('   %-30s' % ('None'))
+            print('   %-30s' % ('None'))
 
 
 class OQtModel(object):
@@ -292,10 +293,10 @@ class OQtModel(object):
             if sid in self.sources:
                 msg = 'Skipping source with ID %s ' % (sid)
                 msg += 'since already included'
-                print (msg)
+                print(msg)
             else:
                 self.sources[sid] = source
-                print ('Adding source: %s' % (sid))
+                print('Adding source: %s' % (sid))
 
     def update_source(self, source):
         """
@@ -311,18 +312,18 @@ class OQtModel(object):
             raise ValueError(msg)
         else:
             self.sources[source.source_id] = source
-            print ('Updating source: %s' % (source.source_id))
+            print('Updating source: %s' % (source.source_id))
 
     def get_info(self):
         """
         Prints info on the project content
         """
-        print ('\nInformation for model: %s' % (self.name))
+        print('\nInformation for model: %s' % (self.name))
         for key in sorted(self.__dict__):
             if key in ['sources', 'nrml_sources']:
                 pass
             else:
-                print ('   %-40s:' % (key), getattr(self, key))
+                print('   %-40s:' % (key), getattr(self, key))
 
     def get_source(self, source_id):
         """

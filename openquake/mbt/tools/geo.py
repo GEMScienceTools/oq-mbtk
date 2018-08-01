@@ -1,6 +1,7 @@
 """
 """
 
+# MN: 'np' imported but not used
 import numpy as np
 import shapely
 
@@ -9,7 +10,6 @@ from pyproj import Proj, transform
 from openquake.mbt.tools.mfd import get_moment_from_mfd
 
 from openquake.hazardlib.geo.polygon import Polygon
-from openquake.hazardlib.geo.line import Line
 from openquake.hazardlib.geo.line import Line
 from openquake.hazardlib.source import SimpleFaultSource
 
@@ -27,6 +27,7 @@ def get_line_inside_polygon(pnt_lon, pnt_lat, poly_lon, poly_lat):
     :return:
         Indexes of the points inside the polygon
     """
+    # MN: 'selected_idx' assigned but never used
     selected_idx = []
     # Fix the projections
     inProj = Proj(init='epsg:4326')
@@ -35,13 +36,13 @@ def get_line_inside_polygon(pnt_lon, pnt_lat, poly_lon, poly_lat):
     poly_xy = []
     for lo, la in zip(poly_lon, poly_lat):
         x, y = transform(inProj, outProj, lo, la)
-        poly_xy.append((x,y))
+        poly_xy.append((x, y))
     polygon = shapely.geometry.Polygon(poly_xy)
     # Create linesting
     line_xy = []
     for lo, la in zip(pnt_lon, pnt_lat):
         x, y = transform(inProj, outProj, lo, la)
-        line_xy.append((x,y))
+        line_xy.append((x, y))
     line = shapely.geometry.LineString(line_xy)
     # Intersection
     if line.intersects(polygon):
@@ -49,6 +50,7 @@ def get_line_inside_polygon(pnt_lon, pnt_lat, poly_lon, poly_lat):
         return tmpl.length/line.length
     else:
         return None
+
 
 def get_faults_in_polygon(polygon, faults):
     """
@@ -78,6 +80,7 @@ def get_faults_in_polygon(polygon, faults):
             mo_tot += frac * mo
     return sel_flts, mo_tot
 
+
 def from_trace_to_xy(trace):
     """
     Extracts longitude and latitude values from the trace used to define the
@@ -98,6 +101,7 @@ def from_trace_to_xy(trace):
         lats.append(pnt.latitude)
         deps.append(pnt.depth)
     return lons, lats, deps
+
 
 def get_idx_points_inside_polygon(plon, plat, poly_lon, poly_lat,
                                   pnt_idxs, buff_distance=10.):
@@ -124,7 +128,7 @@ def get_idx_points_inside_polygon(plon, plat, poly_lon, poly_lat,
     poly_xy = []
     for lo, la in zip(poly_lon, poly_lat):
         x, y = transform(inProj, outProj, lo, la)
-        poly_xy.append((x,y))
+        poly_xy.append((x, y))
     #
     # Shapely polygon
     polygon = shapely.geometry.Polygon(poly_xy)
@@ -137,10 +141,11 @@ def get_idx_points_inside_polygon(plon, plat, poly_lon, poly_lat,
     for lo, la, jjj in zip(plon, plat, pnt_idxs):
         x, y = transform(inProj, outProj, lo, la)
         cxy.append((x, y))
-        point = shapely.geometry.Point((x,y))
+        point = shapely.geometry.Point((x, y))
         if point.within(buff):
             selected_idx.append(jjj)
     return selected_idx
+
 
 def find_points_close_to_multisegment(plon, plat, mseg_lon, mseg_lat, pnt_idxs,
                                       buff_distance=10.):
@@ -166,14 +171,14 @@ def find_points_close_to_multisegment(plon, plat, mseg_lon, mseg_lat, pnt_idxs,
     mseg_xy = []
     for lo, la in zip(mseg_lon, mseg_lat):
         x, y = transform(inProj, outProj, lo, la)
-        mseg_xy.append((x,y))
+        mseg_xy.append((x, y))
     # Create polygon
     line = shapely.geometry.LineString(mseg_xy)
     buff = line.buffer(buff_distance)
     # Find close points
     for lo, la, jjj in zip(plon, plat, pnt_idxs):
         x, y = transform(inProj, outProj, lo, la)
-        point = shapely.geometry.Point((x,y))
+        point = shapely.geometry.Point((x, y))
         if point.within(buff):
             selected_idx.append(jjj)
     return selected_idx

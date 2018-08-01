@@ -5,9 +5,8 @@ fundamental parameters of a project used to run scripts.
 
 import os
 from ipywidgets import widgets
-from openquake.mbt.guis.project_select import (_get_source_types,
-                                       handle_change, handle_change_type,
-                                       handle_click)
+from openquake.mbt.guis.project_select import (
+    _get_source_types, handle_change, handle_change_type, handle_click)
 MARGIN = 5
 SKIP_SET = set(['polygon'])
 FIXED_SET = set(['source_type'])
