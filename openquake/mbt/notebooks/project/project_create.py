@@ -2,14 +2,16 @@ import os
 import re
 import sys
 import h5py
+# MN: 'shutil' imported but not used
 import shutil
 
 from openquake.mbt.tests.tools.tools import delete_and_create_project_dir
 from openquake.mbt.oqt_project import OQtProject, OQtModel
 from configparser import ConfigParser
 
-HDF5_FILES = ['completeness.hdf5', 'eqk_rates.hdf5', 'hypo_close_to_faults.hdf5',
-              'hypo_depths.hdf5']
+HDF5_FILES = ['completeness.hdf5', 'eqk_rates.hdf5',
+              'hypo_close_to_faults.hdf5', 'hypo_depths.hdf5']
+
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
@@ -44,14 +46,15 @@ def create_default_files(prj, project_dir):
     #
     # create the .hdf5 file with info on eqks close to faults
     prj.hypo_close_to_flts_hdf5_filename = 'hypo_close_to_faults.hdf5'
-    hypo_close_to_flts_hdf5_filename = os.path.join(project_dir,
-            prj.hypo_close_to_flts_hdf5_filename)
+    hypo_close_to_flts_hdf5_filename = os.path.join(
+        project_dir, prj.hypo_close_to_flts_hdf5_filename)
     fhdf5 = h5py.File(hypo_close_to_flts_hdf5_filename, 'a')
     fhdf5.close()
     #
     # create the .hdf5 with hypocentral depth information
     prj.hypo_depths_hdf5_filename = 'hypo_depths.hdf5'
-    hypod_hdf5_filename = os.path.join(project_dir, prj.hypo_depths_hdf5_filename)
+    hypod_hdf5_filename = os.path.join(project_dir,
+                                       prj.hypo_depths_hdf5_filename)
     fhdf5 = h5py.File(hypod_hdf5_filename, 'a')
     fhdf5.close()
     # create the folder where to store hypo depth data
@@ -61,7 +64,8 @@ def create_default_files(prj, project_dir):
     #
     # create the .hdf5 with focal mechanism information
     prj.focal_mech_hdf5_filename = 'focal_mechs.hdf5'
-    focm_hdf5_filename = os.path.join(project_dir, prj.hypo_depths_hdf5_filename)
+    focm_hdf5_filename = os.path.join(project_dir,
+                                      prj.hypo_depths_hdf5_filename)
     fhdf5 = h5py.File(focm_hdf5_filename, 'a')
     fhdf5.close()
     # create the folder where to store focal mechanism data
@@ -100,6 +104,7 @@ def load_model_info(config, key):
         hdf5_filename = os.path.join(project_dir, fname)
         fhdf5 = h5py.File(hdf5_filename, 'a')
         if model.model_id not in fhdf5:
+            # MN: 'grp' assigned but never used
             grp = fhdf5.create_group(model.model_id)
         fhdf5.close()
     #
@@ -132,7 +137,7 @@ def project_create(argv):
         .ini file
     """
     ini_filename = argv[0]
-    print ('Reading project information from: \n{:s}'.format(ini_filename))
+    print('Reading project information from: \n{:s}'.format(ini_filename))
     assert os.path.exists(ini_filename)
     #
     # reading the .ini file
@@ -148,14 +153,15 @@ def project_create(argv):
     project_name = config._sections.project.name
     #
     # info
-    print ('Project directory : {:s}'.format((project_dir)))
-    print ('Project name      : {:s}'.format((project_name)))
+    print('Project directory : {:s}'.format((project_dir)))
+    print('Project name      : {:s}'.format((project_name)))
     #
     # create a clean project directory
     delete_and_create_project_dir(project_dir)
     #
     # create the project
     prj = OQtProject(project_name, project_dir)
+    # MN: 'project_filename' assigned but never used
     project_filename = os.path.join(project_dir, prj._get_filename())
     #
     # create default files

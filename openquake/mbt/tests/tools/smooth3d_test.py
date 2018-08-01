@@ -55,6 +55,7 @@ class Smooth3DTestCase(unittest.TestCase):
         if False:
             vsc = 0.01
             import matplotlib.pyplot as plt
+            # MN: 'Axes3D' imported but not used
             from mpl_toolkits.mplot3d import Axes3D
             fig = plt.figure()
             iii = np.nonzero(values > 1e-15)[0]

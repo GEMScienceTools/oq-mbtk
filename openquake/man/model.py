@@ -44,8 +44,10 @@ def _get_source_model(source_file, inv_time, simple_mesh_spacing=10.0,
     conv = SourceConverter(inv_time, simple_mesh_spacing, complex_mesh_spacing,
                            mfd_spacing, area_discretisation)
     parser = SourceModelParser(conv)
-    f = lambda x: x
-    return parser.parse_src_groups(source_file, f)
+
+    def _f(x):
+        return x
+    return parser.parse_src_groups(source_file, _f)
 
 
 def read(model_filename, get_info=True):

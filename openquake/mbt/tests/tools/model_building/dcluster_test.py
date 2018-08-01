@@ -50,7 +50,8 @@ class TrTestCase(unittest.TestCase):
                   format='pkl')
         #
         # Read first mainshock catalogue
-        a_fname = os.path.abspath(os.path.join('./../../tmp/catalogue_dec_a.pkl'))
+        a_fname = os.path.abspath(os.path.join(
+            './../../tmp/catalogue_dec_a.pkl'))
         self.assertTrue(os.path.exists(a_fname))
         cat = _load_catalogue(a_fname)
         self.assertTrue(len(cat.data['magnitude'] == 1))
