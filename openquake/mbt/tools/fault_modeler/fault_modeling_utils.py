@@ -223,7 +223,9 @@ def construct_sfs_dict(fault_dict, area_method='simple',
         write_metadata(fault_dict, defaults=defaults, param_map=param_map))
 
     # dip, rake, fault_trace, upper_seismogenic_depth, lower_seismogenic_depth
-    sfs.update(write_geom(fault_dict, defaults=defaults, param_map=param_map))
+    sfs.update(write_geom(fault_dict, width_method=width_method,
+                          width_scaling_rel=width_scaling_rel,
+                          defaults=defaults, param_map=param_map))
 
     # rupture_mesh_spacing, magnitude_scaling_relationship,
     # rupture_aspect_ratio, temporal_occurrence_model
@@ -791,7 +793,8 @@ def angle_difference(trend_1, trend_2, return_abs=True):
     return difference
 
 
-def write_geom(fault_dict, requested_val='mle', defaults=defaults,
+def write_geom(fault_dict, requested_val='mle', width_method='seismo_depth',
+               width_scaling_rel='leonard_2010', defaults=defaults,
                param_map=param_map):
     """
     :param defaults:
