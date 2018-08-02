@@ -827,14 +827,56 @@ def write_geom(fault_dict, requested_val='mle', defaults=defaults,
                                                    defaults=defaults,
                                                    param_map=param_map),
 
-        'lower_seismogenic_depth': fetch_param_val(fault_dict,
-                                                   'lower_seismogenic_depth',
-                                                   defaults=defaults,
-                                                   param_map=param_map),
+        'lower_seismogenic_depth': get_lower_seismo_depth(fault_dict,
+                                           width_method=width_method,
+                                           width_scaling_rel=width_scaling_rel,
+                                           defaults=defaults,
+                                           param_map=param_map),
 
     }
 
     return geom_params
+
+
+def get_lower_seismo_depth(fault_dict, width_method='seismo_depth',
+                           width_scaling_rel='leonard_2010',
+                           param_map=param_map, defaults=defaults):
+
+    if width_method == 'seismo_depth':
+        return fetch_param_val(fault_dict, 'lower_seismogenic_depth',
+                               defaults=defaults, param_map=param_map)
+
+    elif width_method == 'length_scaling':
+
+        usd = fetch_param_val(fault_dict, 'upper_seismogenic_depth',
+                              defaults=defaults, param_map=param_map)
+
+        return get_lsd_from_width(fault_dict, usd=usd,
+                                  width_scaling_rel=width_scaling_rel,
+                                  defaults=defaults, param_map=param_map)
+
+
+
+def get_lsd_from_width(fault_dict, usd=None, width=None,
+                       width_scaling_rel='leonard_2010',
+                       defaults=defaults, param_map=param_map):
+    if usd is None:
+        usd = fetch_param_val(fault_dict, 'upper_seismogenic_depth',
+                              defaults=defaults, param_map=param_map)
+
+
+    if width == None:
+        width = calc_fault_width_from_length(fault_dict,
+                                           width_scaling_rel=width_scaling_rel,
+                                           defaults=defaults,
+                                           param_map=param_map)
+
+    dip = get_dip(fault_dict, param_map=param_map, defaults=defaults)
+
+    lsd = usd + width * np.sin(np.radians(dip))
+
+    return lsd
+
 
 
 def get_rake(fault_dict, requested_val='mle', defaults=defaults,
@@ -1688,7 +1730,7 @@ def get_fault_length(fault_dict, defaults=defaults, param_map=param_map):
     return fault_trace.get_length()
 
 
-def get_fault_width(fault_dict, method='length_scaling',
+def get_fault_width(fault_dict, width_method='length_scaling',
                     width_scaling_rel='leonard_2010',
                     defaults=defaults, param_map=param_map):
     """
@@ -1702,14 +1744,14 @@ def get_fault_width(fault_dict, method='length_scaling',
     :type fault_dict:
         dict
 
-    :param method:
+    :param width_method:
         Method used to calculate the width of the fault. 'length_scaling'
         implements a scaling relationship between the fault length (derived
         from the trace) and the fault width, which is calculated.
         'seismo_depth' calculates the width based on the fault's dip and the
         given values for upper and lower seismogenic depth.
 
-    :type method:
+    :type width_method:
         str
 
     :param width_scaling_rel:
@@ -1746,12 +1788,12 @@ def get_fault_width(fault_dict, method='length_scaling',
         float
     """
 
-    if method == 'length_scaling':
+    if width_method == 'length_scaling':
         width = calc_fault_width_from_length(fault_dict, param_map=param_map,
                                              defaults=defaults,
                                            width_scaling_rel=width_scaling_rel)
 
-    elif method == 'seismo_depth':
+    elif width_method == 'seismo_depth':
         width = calc_fault_width_from_usd_lsd_dip(fault_dict,
                                                   defaults=defaults,
                                                   param_map=param_map)
@@ -2020,7 +2062,7 @@ def get_fault_area(fault_dict, area_method='simple',
         fault_length = get_fault_length(fault_dict, defaults=defaults,
                                         param_map=param_map)
 
-        fault_width = get_fault_width(fault_dict, method=width_method,
+        fault_width = get_fault_width(fault_dict, width_method=width_method,
                                       defaults=defaults, param_map=param_map)
 
         fault_area = fault_length * fault_width
@@ -2040,15 +2082,10 @@ def get_fault_area(fault_dict, area_method='simple',
 
         elif width_method == 'length_scaling':
 
-            width = calc_fault_width_from_length(fault_dict,
-                                           width_scaling_rel=width_scaling_rel,
-                                           defaults=defaults,
-                                           param_map=param_map)
 
-            dip = get_dip(fault_dict, param_map=param_map, defaults=defaults)
-
-            lsd = width * np.sin(np.radians(dip))
-
+            lsd = get_lsd_from_width(fault_dict, usd=usd,
+                                     width_scaling_rel=width_scaling_rel,
+                                     defaults=defaults, param_map=param_map)
         else:
             raise ValueError('width_method {} not recognized'.format(
                                                                  width_method))
