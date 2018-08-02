@@ -1,9 +1,9 @@
-
 import os
 import pickle
 
 from pathlib import Path
 from openquake.hmtk.parsers.catalogue import CsvCatalogueParser
+# MN: 'CatalogueSelector' imported but not used
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT

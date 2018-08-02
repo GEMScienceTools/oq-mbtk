@@ -15,6 +15,7 @@ def plot_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
              twid=20., pmint=None, pmaxt=None, ylim=None):
     #
     #
+    # MN: 'fig' assigned but never used
     fig = create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid,
                      twid, pmint, pmaxt, ylim)
     #

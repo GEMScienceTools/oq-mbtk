@@ -1,4 +1,3 @@
-
 import numpy as np
 import rtree
 import scipy.constants as consts
@@ -12,6 +11,7 @@ def _generator(mesh, p):
                                               mesh.depths.flatten('F'))):
         x, y = tuple(t/1e3 for t in p(lon, lat))
         yield (cnt, (x, y, dep, x, y, dep), 1)
+
 
 class Smoothing3D:
     """
@@ -66,6 +66,7 @@ class Smoothing3D:
         # Compute the number of expected nodes within the distance used to
         # smooth data
         f1 = np.prod(np.ones((len(sigmas)))*bffer)
+        # MN: 'n_cells' assigned but never used
         n_cells = 4/3 * consts.pi * f1 / (self.bin_h**2*self.bin_z)
         #
         # Projected coordinates of the catalogue
@@ -106,6 +107,7 @@ class Smoothing3D:
                 #
                 # `data` contains the coordinates of the points where we
                 # calculate the values of the multivariate gaussian
+                # MN: 'data' assigned but never used
                 data = np.vstack((xg[iii].flatten(), yg[jjj].flatten(),
                                   zg[iii].flatten())).T
                 # xxx = multivariate_gaussian([x, y, z], sigmas, data)

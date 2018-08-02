@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -32,6 +31,7 @@ def plot_models(models):
     :param models:
     """
     fig = plt.figure()
+    # MN: 'ax' assigned but never used
     ax = fig.add_subplot(111)
     for model in models:
         for src in model:

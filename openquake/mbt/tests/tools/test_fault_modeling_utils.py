@@ -155,11 +155,41 @@ class TestConversionUtils(unittest.TestCase):
     
         _width = 20.
     
-        width = get_fault_width(fault, method='seismo_depth', 
+        width = get_fault_width(fault, width_method='seismo_depth', 
                                 param_map=self.param_map,
                                 defaults=defaults)
     
         self.assertTrue( abs(_width - width) < 0.01)
+
+
+    def test_get_lsd_from_width_scaling_rel(self):
+
+        """
+        Tests lower seismogenic depth (from length scaling relationship)
+        by asserting the seismogenic thickness should be half the fault
+        width for a fault with 30 degree dip
+        """
+
+
+        fault = {'coords': [[0.,0.], [0.,1.]],
+                 'upper_seis_depth': 0.,
+                 'lower_seis_depth': 10.,
+                 'average_dip': '(30,,)',
+                 'dip_dir': 'E',
+                 'slip_type': 'Reverse'
+                 }
+        
+        _width = get_fault_width(fault, width_method='length_scaling',
+                                 defaults=defaults, param_map=self.param_map)
+
+        _lsd = get_lower_seismo_depth(fault, width_method='length_scaling',
+                                      defaults=defaults,
+                                      param_map=self.param_map)
+
+        seis_thickness = _lsd - fault['upper_seis_depth'] 
+
+        self.assertAlmostEqual(seis_thickness * 2, _width)
+
     
     
     def test_get_fault_area_simple(self):

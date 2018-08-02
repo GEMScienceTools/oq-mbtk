@@ -13,7 +13,9 @@ class TestCreateProject(unittest.TestCase):
         """
         Create an oqmbt project
         """
-        inifile = filename = os.path.join(self.BASE_DATA_PATH, 'project.ini')
+        # MN: 'filename' assigned but never used
+        inifile = filename = os.path.join(self.BASE_DATA_PATH,
+                                          'project.ini')
         argv = [inifile]
         project_create(argv)
         #
@@ -25,7 +27,7 @@ class TestCreateProject(unittest.TestCase):
         folder = './../../tmp/project_test'
         for fle in fles:
             tmp = os.path.join(folder, fle)
-            print (tmp)
+            print(tmp)
             assert os.path.isfile(tmp)
         #
         # check that in the new folder there are no other files

@@ -1,9 +1,10 @@
-
 import os
+# MN: 'np' imported but not used
 import numpy as np
 import unittest
 
 BASE_DATA_PATH = os.path.dirname(__file__)
+
 
 class TestComputeStrain(unittest.TestCase):
 
