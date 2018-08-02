@@ -54,9 +54,9 @@ sfs_params = ('source_id',
 # Additional parameters
 all_params = list(sfs_params)
 all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
-               'M_upp', 'net_slip_rate', 'strike_slip_rate', 'dip_slip_rate',
-               'vert_slip_rate', 'shortening_rate', 'aseismic_coefficient',
-               'slip_class']
+               'M_upp', 'b_value', 'net_slip_rate', 'strike_slip_rate',
+               'dip_slip_rate', 'vert_slip_rate', 'shortening_rate',
+               'aseismic_coefficient', 'slip_class']
 
 # Default mapping of parameters
 # (keys: variable names used here, vals: variable names in input files
@@ -2436,6 +2436,7 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
     if b_value is None:
         b_value = fetch_param_val(fault_dict, 'b_value', defaults=defaults,
                                   param_map=param_map)
+
     if bin_width is None:
         bin_width = fetch_param_val(fault_dict, 'bin_width', defaults=defaults,
                                     param_map=param_map)
