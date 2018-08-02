@@ -2455,7 +2455,8 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
     bin_rates = rates_for_double_truncated_mfd(fault_area, seismic_slip_rate,
                                                M_min, M_max, b_value, bin_width)
 
-    # TESTING
+    """
+    # JUST FOR TESTING
     Mbin = np.arange(M_min, M_max, bin_width) + bin_width/2
     Mo = 10**((Mbin+10.7)*3/2) # Output in dyne*cm
     Mo *= 1e-7 # Conversion to N/m
@@ -2468,8 +2469,10 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
     print('Fault Area: ', fault_area)
     print('Input Slip Rate: ', seismic_slip_rate)
     print('Recomputed Slip Rate: ', msr)
+    """
 
-    mfd = hz.mfd.EvenlyDiscretizedMFD(M_min + bin_width / 2., bin_width,
+    mfd = hz.mfd.EvenlyDiscretizedMFD(M_min + bin_width / 2.,
+                                      bin_width,
                                       bin_rates)
 
     return mfd
