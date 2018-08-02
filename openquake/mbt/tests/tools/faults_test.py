@@ -75,7 +75,7 @@ class TestMomentReleaseRateNonUniformBinEdge(unittest.TestCase):
 
             mags = _make_range(self.m_low, _M_max, self.bin_width)
             release_rate = sum([rate * mag_to_mo(mag) 
-                                for rate, mag in zip(rates, mags)])
+                                for rate, mag in zip(bin_rates, mags)])
 
             self.assertLess(abs(self.moment_accum_rate - release_rate)
                              / self.moment_accum_rate * 100., 1)
