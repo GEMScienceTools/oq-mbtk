@@ -64,7 +64,7 @@ class TestMomentReleaseRateNonUniformBinEdge(unittest.TestCase):
 
     def test_moment_release_rate(self):
 
-        for _M_max in np.arange(6.501, 8.501, 0.01):
+        for _M_max in numpy.arange(6.501, 8.501, 0.01):
 
             bin_rates = rates_for_double_truncated_mfd(self.area, 
                                                        self.slip_rate,
