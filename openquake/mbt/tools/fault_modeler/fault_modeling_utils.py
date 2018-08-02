@@ -54,7 +54,7 @@ sfs_params = ('source_id',
 # Additional parameters
 all_params = list(sfs_params)
 all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
-               'net_slip_rate', 'strike_slip_rate', 'dip_slip_rate',
+               'M_upp', 'net_slip_rate', 'strike_slip_rate', 'dip_slip_rate',
                'vert_slip_rate', 'shortening_rate', 'aseismic_coefficient',
                'slip_class']
 
@@ -75,11 +75,11 @@ defaults = {'name': 'unnamed',
             'rupture_aspect_ratio': 2.,
             'minimum_fault_length': 5.,
             'M_min': 6.0,
-            'M_max': 10.0,
+            'M_max': None,
+            'M_upp': 10.,
             'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
             'magnitude_scaling_relationship':
-                hz.scalerel.leonard2014.Leonard2014_Interplate(),
-            'slip_class': 'mle'
+                hz.scalerel.leonard2014.Leonard2014_Interplate()
             }
 
 
@@ -2122,8 +2122,10 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
 
     The priority order is:
         1- Fault attribute.
-        2- Fault geometry and scaling relationship.
-        3- Default value.
+        2- Default value if not none
+        3- Fault geometry and scaling relationship, if lower than M_upp
+           otherwise use M_upp
+
 
     :param fault_dict:
         Dictionary containing the fault attributes and geometry
@@ -2193,7 +2195,10 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
         M_max = fault_dict[param_map['M_max']]
 
     except KeyError:
-        try:
+        if defaults['M_max'] is not None:
+            M_max = defaults['M_max']
+
+        else:
             # fetch?
             if mag_scaling_rel is None:
                 mag_scaling_rel = defaults['magnitude_scaling_relationship']
@@ -2206,9 +2211,14 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
 
             M_max = mag_scaling_rel.get_median_mag(fault_area, rake)
 
-        except Exception as e:
-            print(e, '\n Using default value')
-            M_max = defaults['M_max']
+            try:
+                M_upp = fault_dict[param_map['M_upp']]
+
+            except KeyError:
+                M_upp = defaults['M_upp']
+
+            if M_max > M_upp:
+                M_max = M_upp
 
     return M_max
 
