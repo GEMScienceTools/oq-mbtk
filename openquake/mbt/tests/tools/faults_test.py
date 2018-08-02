@@ -56,7 +56,7 @@ class TestMomentReleaseRateNonUniformBinEdge(unittest.TestCase):
         self.slip_rate = 0.2
         self.m_low = 6.5
         self.b_gr = 1.0
-        self.bin_width = 1.0
+        self.bin_width = 0.1
         self.rigidity = 32e9
 
         self.moment_accum_rate = (self.area * 1e6 * self.slip_rate * 1e-3
@@ -73,9 +73,19 @@ class TestMomentReleaseRateNonUniformBinEdge(unittest.TestCase):
                                                        self.b_gr,
                                                        self.bin_width)
 
-            mags = _make_range(self.m_low, _M_max, self.bin_width)
+            mags = [mag + self.bin_width / 2. for mag in
+                    _make_range(self.m_low, _M_max, self.bin_width)]
             release_rate = sum([rate * mag_to_mo(mag) 
                                 for rate, mag in zip(bin_rates, mags)])
 
-            self.assertLess(abs(self.moment_accum_rate - release_rate)
-                             / self.moment_accum_rate * 100., 1)
+            release_rate_error = abs((self.moment_accum_rate - release_rate)
+                                     / self.moment_accum_rate * 100)
+
+
+
+            self.assertLess(release_rate_error, 1)
+
+
+
+if __name__ == "__main__":
+    unittest.main()
