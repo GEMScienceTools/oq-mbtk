@@ -182,7 +182,7 @@ def get_moment_from_mfd(mfd, threshold=-1):
         mo_tot = 0.0
         for occ in occ_list:
             if occ[0] > threshold:
-                mo_tot += occ[1] * 10.**(1.5*occ[0] + 9.05)
+                mo_tot += occ[1] * 10.**(1.5*occ[0] + 9.1)
     else:
         raise ValueError('Unrecognised MFD type: %s' % type(mfd))
     return mo_tot

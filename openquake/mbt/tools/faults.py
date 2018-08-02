@@ -112,20 +112,121 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, b_gr,
     slip_m = slip_rate * 1e-3  # [mm/yr] -> [m/yr]
     area_m2 = area * 1e6
     moment_from_slip = (rigidity * area_m2 * slip_m)
-    #
+
+    # Round m_upp to bin edge
+    m_upp = _round_M_max(m_upp, m_low, bin_width, tol=bin_width/100.)
+
     # Compute total rate
     rate_above = _get_rate_above_m_low(moment_from_slip, m_low, m_upp, b_gr)
     #
     # Compute rate per bin
     rrr = []
     mma = []
-    for mmm in numpy.arange(m_low, m_upp, bin_width):
+    for mmm in _make_range(m_low, m_upp, bin_width):
         rte = (_get_cumul_rate_truncated(mmm, m_low, m_upp, rate_above, b_gr) -
                _get_cumul_rate_truncated(mmm+bin_width, m_low,
                                          m_upp, rate_above, b_gr))
         mma.append(mmm+bin_width/2)
         rrr.append(rte)
     return rrr
+
+
+def _round_M_max(M_max, M_min, bin_size, tol=0.0001):
+    """
+    Rounds `M_max` up to `M_min` plus an integer multiple of `bin_size`.
+    
+    :param M_max:
+        Initial value for maximum earthquake magnitude.
+        
+    :type M_max:
+        float
+        
+    :param M_min:
+        Minimum earthquake magnitude.
+    
+    :param bin_size:
+        Size (or width) of the bins in an evenly-discretized,
+        truncated Gutenberg-Richter distribution.
+        
+    :type bin_size:
+        float
+        
+    :param tol:
+        Tolerance for deciding whether `M_max` falls on a bin edge.
+        Should be larger than the floating-point precision but much
+        smaller than the bin_size.
+        
+    :type tol:
+        float
+        
+    :returns:
+        New (rounded-up) M_max.
+        
+    :rtype:
+        float
+    """
+    
+    M_diff = M_max - M_min
+    if M_diff > 0:
+        n_bins = M_diff // bin_size
+        bin_remainder = M_diff % bin_size
+    
+        if bin_remainder < tol:
+            n_bins = n_bins
+        else:
+            n_bins = n_bins + 1
+    
+        new_M_max = M_min + n_bins * bin_size
+        
+    else:
+        new_M_max = M_max
+    
+    return new_M_max
+
+
+def _make_range(start, stop, step, tol=0.0001):
+    
+    """
+    Makes a list of equally-spaced values that consistently
+    omits the final value, unlike numpy.arange
+
+    :param start:
+        Initial value in range list
+
+    :type start:
+        float
+
+    :param stop:
+        Value at which the range stops. This value
+        is NOT included.
+
+    :param step:
+        Step size, or distance between, consecutive values.
+
+    :type step:
+        float
+
+    :param tol:
+        Tolerance at which the final value is considered equal to
+        the stop value.
+
+    :type tol:
+        float
+
+    :returns:
+        List of equally-spaced values.
+
+    :rtype:
+        float
+    """
+    
+    
+    num_list = [start]
+    
+    while num_list[-1] < (stop - step - tol):
+        num_list.append(num_list[-1] + step)
+        
+    return num_list
 
 
 def get_points_within_distance(surface, points):
