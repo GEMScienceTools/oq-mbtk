@@ -27,8 +27,9 @@ from copy import deepcopy
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-from openquake.hazardlib.source import SimpleFaultSource
 import openquake.hazardlib as hz
+from openquake.hazardlib.source import SimpleFaultSource
+from openquake.mbt.oqt_project import OQtSource
 from openquake.mbt.tools.faults import rates_for_double_truncated_mfd
 
 # -----------------------------------------------------------------------------
@@ -232,22 +233,22 @@ def construct_sfs_dict(fault_dict, area_method='simple',
     sfs.update(write_rupture_params(fault_dict, defaults=defaults,
                                     param_map=param_map))
 
-    # mfd
-    sfs.update(
-        {'mfd': calc_mfd_from_fault_params(fault_dict, area_method=area_method,
-                                           width_method=width_method,
-                                           width_scaling_rel=width_scaling_rel,
-                                           slip_class=slip_class,
-                                           mag_scaling_rel=mag_scaling_rel,
-                                           M_max=M_max, M_min=M_min,
-                                           b_value=b_value,
-                                           slip_rate=slip_rate,
-                                           aseismic_coefficient=aseismic_coefficient,
-                                           bin_width=bin_width,
-                                           fault_area=fault_area,
-                                           defaults=defaults,
-                                           param_map=param_map)
-         })
+    mfd, slr = calc_mfd_from_fault_params(fault_dict, area_method=area_method,
+                                          width_method=width_method,
+                                          width_scaling_rel=width_scaling_rel,
+                                          slip_class=slip_class,
+                                          mag_scaling_rel=mag_scaling_rel,
+                                          M_max=M_max, M_min=M_min,
+                                          b_value=b_value,
+                                          slip_rate=slip_rate,
+                                          aseismic_coefficient=aseismic_coefficient,
+                                          bin_width=bin_width,
+                                          fault_area=fault_area,
+                                          defaults=defaults,
+                                          param_map=param_map)
+
+    # mfd and slip rate
+    sfs.update({'mfd': mfd, 'seismic_slip_rate': slr})
 
     for param in sfs_params:
         if sfs[param] is None:
@@ -258,7 +259,7 @@ def construct_sfs_dict(fault_dict, area_method='simple',
     return sfs
 
 
-def make_fault_source(sfs_dict):
+def make_fault_source(sfs_dict, oqt_source=False):
     """
     Takes a dictionary with the parameters for SimpleFaultSource creation,
     and creates a SimpleFaultSource.
@@ -270,15 +271,39 @@ def make_fault_source(sfs_dict):
     :type sfs_dict:
         dict
 
+    :param oqt_source:
+        Flag to return a SimpleFaultSource and OQtSource output
+
+    :type oqt_source:
+        Boolean
+
     :returns:
-        SimpleFaultSource
+        SimpleFaultSource or OqtSource
     """
 
-    try:
-        src = SimpleFaultSource(*[sfs_dict[param] for param in sfs_params])
-        return src
-    except Exception as e:
-        print(Exception)
+    if oqt_source:
+        src = OQtSource(str(sfs_dict['source_id']),
+                        source_type='SimpleFaultSource')
+
+        src.name = sfs_dict['name']
+        src.tectonic_region_type = sfs_dict['tectonic_region_type']
+        src.mfd = sfs_dict['mfd']
+        src.rupture_mesh_spacing = sfs_dict['rupture_mesh_spacing']
+        src.msr = sfs_dict['magnitude_scaling_relationship']
+        src.slip_rate = sfs_dict['seismic_slip_rate']
+        src.rupture_aspect_ratio = sfs_dict['rupture_aspect_ratio']
+        src.temporal_occurrence_model = sfs_dict['temporal_occurrence_model']
+        src.upper_seismogenic_depth = sfs_dict['upper_seismogenic_depth']
+        src.lower_seismogenic_depth = sfs_dict['lower_seismogenic_depth']
+        src.trace = sfs_dict['fault_trace']
+        src.dip = sfs_dict['average_dip']
+        src.rake = sfs_dict['average_rake']
+
+    else:
+        arg = [sfs_dict[p] for p in sfs_params if p is not 'seismic_slip_rate']
+        src = SimpleFaultSource(*arg)
+
+    return src
 
 
 ###
@@ -2475,4 +2500,4 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
                                       bin_width,
                                       bin_rates)
 
-    return mfd
+    return mfd, seismic_slip_rate
