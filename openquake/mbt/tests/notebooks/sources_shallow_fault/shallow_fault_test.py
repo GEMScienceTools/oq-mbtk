@@ -1,4 +1,3 @@
-
 import os
 import re
 import unittest
@@ -13,13 +12,14 @@ from openquake.mbt.tests.tools.tools import delete_and_create_project_dir
 
 BASE_DATA_PATH = os.path.dirname(__file__)
 
+
 class TestLoadSimpleFaultOQ(unittest.TestCase):
 
     def setUp(self):
         #
         # set logging settings
         fname = './testcomputedoubletruncatedmfd.log'
-        logging.basicConfig(filename=fname,level=logging.DEBUG)
+        logging.basicConfig(filename=fname, level=logging.DEBUG)
         #
         # clear directory
         folder = os.path.join(BASE_DATA_PATH, './../../tmp/project_test')
@@ -46,13 +46,13 @@ class TestLoadSimpleFaultOQ(unittest.TestCase):
         oqtkp.models[model_id] = model
         oqtkp.save()
 
-
     def test_load_fault_01(self):
         """
-        Load fault data from a shapefile (only simple faults for the time being)
+        Load fault data from a shapefile (only simple faults for the time\
+ being)
         """
         #
-        # loading the 
+        # loading the
         nb_name = 'load_data_from_shapefile_fmg.ipynb'
         nb_path = './../../../notebooks/sources_shallow_fault/'
         tmp = os.path.join(BASE_DATA_PATH, nb_path, nb_name)

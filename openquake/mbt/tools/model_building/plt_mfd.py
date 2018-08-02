@@ -49,11 +49,11 @@ def plot_mfd(catalogue_fname, grd, label, store, tr_fname,
         list of labels with the format LAB1, LAB2) defines the tectonic regions
         to be selected.
     :param tr_fname:
-        Full path to the .hdf5 file containing the TR 
+        Full path to the .hdf5 file containing the TR
     :param compl_table:
         A :class:`numpy.ndarray` instance of shape (2, n) where the first
         column contains years in a decreasing order and the second column
-        contains magnitude (generally) in an increasing order 
+        contains magnitude (generally) in an increasing order
     :param grd:
         A boolean indicating the need to compute GR parameters
     :param upper_mag:
@@ -93,7 +93,7 @@ def plot_mfd(catalogue_fname, grd, label, store, tr_fname,
     #
     # plotting
     if figsize is None:
-        figsize = (8,6)
+        figsize = (8, 6)
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(1, 1, 1)
     #
