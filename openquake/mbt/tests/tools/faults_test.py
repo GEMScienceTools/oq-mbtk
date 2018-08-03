@@ -84,8 +84,3 @@ class TestMomentReleaseRateNonUniformBinEdge(unittest.TestCase):
 
 
             self.assertLess(release_rate_error, 1)
-
-
-
-if __name__ == "__main__":
-    unittest.main()
