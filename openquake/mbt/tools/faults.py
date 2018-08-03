@@ -113,7 +113,7 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, b_gr,
     moment_from_slip = (rigidity * area_m2 * slip_m)
 
     # Round m_upp to bin edge
-    m_upp = _round_M_max(m_upp, m_low, bin_width, tol=bin_width/100.)
+    m_upp = _round_m_max(m_upp, m_low, bin_width, tol=bin_width/100.)
 
     # Compute total rate
     rate_above = _get_rate_above_m_low(moment_from_slip, m_low, m_upp, b_gr)
@@ -130,17 +130,17 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, b_gr,
     return rrr
 
 
-def _round_M_max(M_max, M_min, bin_size, tol=0.0001):
+def _round_m_max(m_max, m_min, bin_size, tol=0.0001):
     """
-    Rounds `M_max` up to `M_min` plus an integer multiple of `bin_size`.
+    Rounds `m_max` up to `m_min` plus an integer multiple of `bin_size`.
     
-    :param M_max:
+    :param m_max:
         Initial value for maximum earthquake magnitude.
         
-    :type M_max:
+    :type m_max:
         float
         
-    :param M_min:
+    :param m_min:
         Minimum earthquake magnitude.
     
     :param bin_size:
@@ -151,7 +151,7 @@ def _round_M_max(M_max, M_min, bin_size, tol=0.0001):
         float
         
     :param tol:
-        Tolerance for deciding whether `M_max` falls on a bin edge.
+        Tolerance for deciding whether `m_max` falls on a bin edge.
         Should be larger than the floating-point precision but much
         smaller than the bin_size.
         
@@ -159,28 +159,28 @@ def _round_M_max(M_max, M_min, bin_size, tol=0.0001):
         float
         
     :returns:
-        New (rounded-up) M_max.
+        New (rounded-up) m_max.
         
     :rtype:
         float
     """
     
-    M_diff = M_max - M_min
-    if M_diff > 0:
-        n_bins = M_diff // bin_size
-        bin_remainder = M_diff % bin_size
+    m_diff = m_max - m_min
+    if m_diff > 0:
+        n_bins = m_diff // bin_size
+        bin_remainder = m_diff % bin_size
     
         if bin_remainder < tol:
             n_bins = n_bins
         else:
             n_bins = n_bins + 1
     
-        new_M_max = M_min + n_bins * bin_size
+        new_m_max = m_min + n_bins * bin_size
         
     else:
-        new_M_max = M_max
+        new_m_max = m_max
     
-    return new_M_max
+    return new_m_max
 
 
 def _make_range(start, stop, step, tol=0.0001):
