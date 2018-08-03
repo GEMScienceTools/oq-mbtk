@@ -27,8 +27,9 @@ from copy import deepcopy
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-from openquake.hazardlib.source import SimpleFaultSource
 import openquake.hazardlib as hz
+from openquake.hazardlib.source import SimpleFaultSource
+from openquake.mbt.oqt_project import OQtSource
 from openquake.mbt.tools.faults import rates_for_double_truncated_mfd
 
 # -----------------------------------------------------------------------------
@@ -54,9 +55,9 @@ sfs_params = ('source_id',
 # Additional parameters
 all_params = list(sfs_params)
 all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
-               'net_slip_rate', 'strike_slip_rate', 'dip_slip_rate',
-               'vert_slip_rate', 'shortening_rate', 'aseismic_coefficient',
-               'slip_class']
+               'M_upper', 'b_value', 'net_slip_rate', 'strike_slip_rate',
+               'dip_slip_rate', 'vert_slip_rate', 'shortening_rate',
+               'aseismic_coefficient', 'slip_class']
 
 # Default mapping of parameters
 # (keys: variable names used here, vals: variable names in input files
@@ -65,21 +66,21 @@ param_map = {p: p for p in all_params}
 
 # default parameter values
 defaults = {'name': 'unnamed',
-            'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
             'b_value': 1.,
             'bin_width': 0.1,
-            'aseismic_coefficient': 0.1,
+            'M_min': 6.0,
+            'M_max': None,
+            'M_upper': 10.,
+            'aseismic_coefficient': 0.,
             'upper_seismogenic_depth': 0.,
-            'lower_seismogenic_depth': 20.,
+            'lower_seismogenic_depth': 35.,
             'rupture_mesh_spacing': 2.,
             'rupture_aspect_ratio': 2.,
             'minimum_fault_length': 5.,
-            'M_min': 6.0,
-            'M_max': 10.0,
+            'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
             'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
             'magnitude_scaling_relationship':
-                hz.scalerel.leonard2014.Leonard2014_Interplate(),
-            'slip_class': 'mle'
+                hz.scalerel.leonard2014.Leonard2014_Interplate()
             }
 
 
@@ -223,29 +224,31 @@ def construct_sfs_dict(fault_dict, area_method='simple',
         write_metadata(fault_dict, defaults=defaults, param_map=param_map))
 
     # dip, rake, fault_trace, upper_seismogenic_depth, lower_seismogenic_depth
-    sfs.update(write_geom(fault_dict, defaults=defaults, param_map=param_map))
+    sfs.update(write_geom(fault_dict, width_method=width_method,
+                          width_scaling_rel=width_scaling_rel,
+                          defaults=defaults, param_map=param_map))
 
     # rupture_mesh_spacing, magnitude_scaling_relationship,
     # rupture_aspect_ratio, temporal_occurrence_model
     sfs.update(write_rupture_params(fault_dict, defaults=defaults,
                                     param_map=param_map))
 
-    # mfd
-    sfs.update(
-        {'mfd': calc_mfd_from_fault_params(fault_dict, area_method=area_method,
-                                           width_method=width_method,
-                                           width_scaling_rel=width_scaling_rel,
-                                           slip_class=slip_class,
-                                           mag_scaling_rel=mag_scaling_rel,
-                                           M_max=M_max, M_min=M_min,
-                                           b_value=b_value,
-                                           slip_rate=slip_rate,
-                                           aseismic_coefficient=aseismic_coefficient,
-                                           bin_width=bin_width,
-                                           fault_area=fault_area,
-                                           defaults=defaults,
-                                           param_map=param_map)
-         })
+    mfd, slr = calc_mfd_from_fault_params(fault_dict, area_method=area_method,
+                                          width_method=width_method,
+                                          width_scaling_rel=width_scaling_rel,
+                                          slip_class=slip_class,
+                                          mag_scaling_rel=mag_scaling_rel,
+                                          M_max=M_max, M_min=M_min,
+                                          b_value=b_value,
+                                          slip_rate=slip_rate,
+                                          aseismic_coefficient=aseismic_coefficient,
+                                          bin_width=bin_width,
+                                          fault_area=fault_area,
+                                          defaults=defaults,
+                                          param_map=param_map)
+
+    # mfd and slip rate
+    sfs.update({'mfd': mfd, 'seismic_slip_rate': slr})
 
     for param in sfs_params:
         if sfs[param] is None:
@@ -256,7 +259,7 @@ def construct_sfs_dict(fault_dict, area_method='simple',
     return sfs
 
 
-def make_fault_source(sfs_dict):
+def make_fault_source(sfs_dict, oqt_source=False):
     """
     Takes a dictionary with the parameters for SimpleFaultSource creation,
     and creates a SimpleFaultSource.
@@ -268,15 +271,39 @@ def make_fault_source(sfs_dict):
     :type sfs_dict:
         dict
 
+    :param oqt_source:
+        Flag to return a SimpleFaultSource and OQtSource output
+
+    :type oqt_source:
+        Boolean
+
     :returns:
-        SimpleFaultSource
+        SimpleFaultSource or OqtSource
     """
 
-    try:
-        src = SimpleFaultSource(*[sfs_dict[param] for param in sfs_params])
-        return src
-    except Exception as e:
-        print(Exception)
+    if oqt_source:
+        src = OQtSource(str(sfs_dict['source_id']),
+                        source_type='SimpleFaultSource')
+
+        src.name = sfs_dict['name']
+        src.tectonic_region_type = sfs_dict['tectonic_region_type']
+        src.mfd = sfs_dict['mfd']
+        src.rupture_mesh_spacing = sfs_dict['rupture_mesh_spacing']
+        src.msr = sfs_dict['magnitude_scaling_relationship']
+        src.slip_rate = sfs_dict['seismic_slip_rate']
+        src.rupture_aspect_ratio = sfs_dict['rupture_aspect_ratio']
+        src.temporal_occurrence_model = sfs_dict['temporal_occurrence_model']
+        src.upper_seismogenic_depth = sfs_dict['upper_seismogenic_depth']
+        src.lower_seismogenic_depth = sfs_dict['lower_seismogenic_depth']
+        src.trace = sfs_dict['fault_trace']
+        src.dip = sfs_dict['average_dip']
+        src.rake = sfs_dict['average_rake']
+
+    else:
+        arg = [sfs_dict[p] for p in sfs_params if p is not 'seismic_slip_rate']
+        src = SimpleFaultSource(*arg)
+
+    return src
 
 
 ###
@@ -791,7 +818,8 @@ def angle_difference(trend_1, trend_2, return_abs=True):
     return difference
 
 
-def write_geom(fault_dict, requested_val='mle', defaults=defaults,
+def write_geom(fault_dict, requested_val='mle', width_method='seismo_depth',
+               width_scaling_rel='leonard_2010', defaults=defaults,
                param_map=param_map):
     """
     :param defaults:
@@ -1789,9 +1817,10 @@ def get_fault_width(fault_dict, width_method='length_scaling',
     """
 
     if width_method == 'length_scaling':
-        width = calc_fault_width_from_length(fault_dict, param_map=param_map,
-                                             defaults=defaults,
-                                           width_scaling_rel=width_scaling_rel)
+        width = calc_fault_width_from_length(
+                    fault_dict, param_map=param_map,
+                    defaults=defaults,
+                    width_scaling_rel=width_scaling_rel)
 
     elif width_method == 'seismo_depth':
         width = calc_fault_width_from_usd_lsd_dip(fault_dict,
@@ -1887,6 +1916,20 @@ def calc_fault_width_from_length(fault_dict, width_scaling_rel='leonard_2010',
 
     # try:
     width = scale_func_dict[width_scaling_rel](fault_dict, **kwargs)
+
+    # Check if LSD is exceeded, otherwise rescale the width
+    lsd = fetch_param_val(fault_dict, 'lower_seismogenic_depth',
+                          defaults=defaults,
+                          param_map=param_map)
+
+    dip = get_dip(fault_dict, defaults=defaults, param_map=param_map)
+    denom = np.sin(np.radians(dip))
+
+    width_threshold = lsd/denom
+
+    if width > width_threshold:
+        width = width_threshold
+
     return width
     # except KeyError:
     #    raise ValueError('scaling relationship ', width_scaling_rel,
@@ -2001,6 +2044,7 @@ def leonard_width_from_length(fault_dict, const_1=1.75, const_2=1.5,
     elif slip_type in WIDTH_CLASS['cl2']:
         width = const_2 * fault_length ** beta
         width = min((width, max_width_2))
+
     return width
 
 
@@ -2082,7 +2126,6 @@ def get_fault_area(fault_dict, area_method='simple',
 
         elif width_method == 'length_scaling':
 
-
             lsd = get_lsd_from_width(fault_dict, usd=usd,
                                      width_scaling_rel=width_scaling_rel,
                                      defaults=defaults, param_map=param_map)
@@ -2159,8 +2202,10 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
 
     The priority order is:
         1- Fault attribute.
-        2- Fault geometry and scaling relationship.
-        3- Default value.
+        2- Default value if not none
+        3- Fault geometry and scaling relationship, if lower than M_upper
+           otherwise use M_upper
+
 
     :param fault_dict:
         Dictionary containing the fault attributes and geometry
@@ -2230,7 +2275,10 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
         M_max = fault_dict[param_map['M_max']]
 
     except KeyError:
-        try:
+        if defaults['M_max'] is not None:
+            M_max = defaults['M_max']
+
+        else:
             # fetch?
             if mag_scaling_rel is None:
                 mag_scaling_rel = defaults['magnitude_scaling_relationship']
@@ -2243,9 +2291,10 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
 
             M_max = mag_scaling_rel.get_median_mag(fault_area, rake)
 
-        except Exception as e:
-            print(e, '\n Using default value')
-            M_max = defaults['M_max']
+            M_upper = fetch_param_val(fault_dict, 'M_upper', param_map=param_map)
+
+            if M_max > M_upper:
+                M_max = M_upper
 
     return M_max
 
@@ -2423,6 +2472,7 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
     if b_value is None:
         b_value = fetch_param_val(fault_dict, 'b_value', defaults=defaults,
                                   param_map=param_map)
+
     if bin_width is None:
         bin_width = fetch_param_val(fault_dict, 'bin_width', defaults=defaults,
                                     param_map=param_map)
@@ -2430,7 +2480,24 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
     bin_rates = rates_for_double_truncated_mfd(fault_area, seismic_slip_rate,
                                                M_min, M_max, b_value, bin_width)
 
-    mfd = hz.mfd.EvenlyDiscretizedMFD(M_min + bin_width / 2., bin_width,
+    """
+    # JUST FOR TESTING
+    Mbin = np.arange(M_min, M_max, bin_width) + bin_width/2
+    Mo = 10**((Mbin+10.7)*3/2) # Output in dyne*cm
+    Mo *= 1e-7 # Conversion to N/m
+    Motot = np.sum(bin_rates*Mo)
+    rigidity=32e9 # in GPa (equivalent to 32000000000 N/m2)
+    msr = Motot/(rigidity * fault_area * 1e6) * 1e3
+
+    print('Minimum Magnitude: ', M_min)
+    print('Maximum Magnitude: ', M_max)
+    print('Fault Area: ', fault_area)
+    print('Input Slip Rate: ', seismic_slip_rate)
+    print('Recomputed Slip Rate: ', msr)
+    """
+
+    mfd = hz.mfd.EvenlyDiscretizedMFD(M_min + bin_width / 2.,
+                                      bin_width,
                                       bin_rates)
 
-    return mfd
+    return mfd, seismic_slip_rate
