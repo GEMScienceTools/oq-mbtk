@@ -75,24 +75,24 @@ class GammaMFD(object):
         return phi
 
 
-def mag_to_mo(mag):
+def mag_to_mo(mag, c=9.05):
     """
     Scalar moment [in Nm] from moment magnitude
 
     :return:
         The computed scalar seismic moment
     """
-    return 10**(1.5*mag+9.1)
+    return 10**(1.5 * mag + c)
 
 
-def mo_to_mag(mo):
+def mo_to_mag(mo, c=9.05):
     """
     From moment magnitude to scalar moment [in Nm]
 
     :return:
         The computed magnitude
     """
-    return (np.log10(mo)-9.1)/1.5
+    return (np.log10(mo) - c) / 1.5
 
 
 def interpolate_ccumul(mfd, threshold):
@@ -163,7 +163,7 @@ def get_cumulative(mfd):
     return mags, cml[::-1]
 
 
-def get_moment_from_mfd(mfd, threshold=-1):
+def get_moment_from_mfd(mfd, threshold=-1, c=9.05):
     """
     This computes the total scalar seismic moment released per year by a
     source
@@ -182,7 +182,7 @@ def get_moment_from_mfd(mfd, threshold=-1):
         mo_tot = 0.0
         for occ in occ_list:
             if occ[0] > threshold:
-                mo_tot += occ[1] * 10.**(1.5*occ[0] + 9.1)
+                mo_tot += occ[1] * 10.**(1.5*occ[0] + c)
     else:
         raise ValueError('Unrecognised MFD type: %s' % type(mfd))
     return mo_tot

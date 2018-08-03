@@ -51,7 +51,7 @@ def get_fault_vertices_3d(fault_trace, upper_seismogenic_depth,
     return all_lons, all_lats, all_deps
 
 
-def _get_rate_above_m_low(seismic_moment, m_low, m_upp, b_gr):
+def _get_rate_above_m_low(seismic_moment, m_low, m_upp, b_gr, a_m=9.05):
     """
     :parameter seismic_moment:
         Seismic moment in Nm
@@ -62,7 +62,6 @@ def _get_rate_above_m_low(seismic_moment, m_low, m_upp, b_gr):
     :parameter b_gr:
         b value of the Gutenberg-Richter relationship
     """
-    a_m = 9.1
     b_m = 1.5
     beta = b_gr * numpy.log(10.)
     x = (-seismic_moment*(b_m*numpy.log(10.) - beta) /
