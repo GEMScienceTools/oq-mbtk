@@ -58,6 +58,9 @@ def build_fault_model(cfg_file=None,
                       xml_output=None,
                       black_list=None,
                       select_list=None,
+                      width_method='seismo_depth',
+                      width_scaling_rel='leonard_2010',
+                      oqt_source=False,
                       project_name=None,
                       param_map=None,
                       defaults=None,
@@ -150,7 +153,10 @@ def build_fault_model(cfg_file=None,
     # Create the fault source model in xml_format
     srcl = build_model_from_db(fault_db,
                                xml_output,
-                               project_name,
+                               width_method=width_method,
+                               width_scaling_rel=width_scaling_rel,
+                               oqt_source=oqt_source,
+                               project_name=project_name,
                                defaults=defaults_local)
 
     if xml_output is None:
@@ -185,6 +191,9 @@ def read_config_file(cfg_file):
 
 def build_model_from_db(fault_db,
                         xml_output=None,
+                        width_method='seismo_depth',
+                        width_scaling_rel='leonard_2010',
+                        oqt_source=False,
                         project_name=None,
                         param_map=None,
                         defaults=None,
@@ -209,9 +218,11 @@ def build_model_from_db(fault_db,
 
         try:
             sfs_dict = fmu.construct_sfs_dict(fl,
-                                              param_map=param_map_local,
-                                              defaults=defaults_local)
-            sfs = fmu.make_fault_source(sfs_dict)
+                                width_method=width_method,
+                                width_scaling_rel=width_scaling_rel,
+                                param_map=param_map_local,
+                                defaults=defaults_local)
+            sfs = fmu.make_fault_source(sfs_dict, oqt_source=oqt_source)
             srcl.append(sfs)
 
         except Exception as e:
