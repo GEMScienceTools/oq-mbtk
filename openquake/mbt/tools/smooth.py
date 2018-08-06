@@ -1,4 +1,3 @@
-import code
 import numpy
 import rtree
 import scipy.constants as consts
@@ -162,10 +161,10 @@ class Smoothing:
 		plats = self.mesh.lats[idxs]
 
 		iii = get_idx_points_inside_polygon(plon=plons,
-											plat=plats,
-											poly_lon=polygon.lons,
-											poly_lat=polygon.lats,
-											pnt_idxs=idxs,
-											buff_distance=0.)
+						    plat=plats,
+						    poly_lon=polygon.lons,
+						    poly_lat=polygon.lats,
+						    pnt_idxs=idxs,
+						    buff_distance=0.)
 
 		return iii
