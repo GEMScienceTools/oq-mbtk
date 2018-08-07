@@ -9,8 +9,8 @@ from openquake.mbt.tools.geo import get_idx_points_inside_polygon
 from openquake.hazardlib.geo.geodetic import (point_at, geodetic_distance)
 
 def coord_generators(mesh):
+    idl = check_idl(mesh.lons)
     for cnt, pnt in enumerate(mesh):
-        idl = check_idl(mesh.lons)
         lon = pnt.longitude
         if idl==1:
             lon = lon+360 if lon<0 else lon
@@ -112,12 +112,11 @@ class Smoothing:
 		# Compute the number of expected nodes
 		numpnts = consts.pi*radius**2/(self.cellsize**2)
 		# Smoothing the catalogue
-
+		idl = check_idl(self.mesh.lons)
 		for lon, lat, mag in zip(self.catalogue.data['longitude'],
 								 self.catalogue.data['latitude'],
 								 self.catalogue.data['magnitude']):
 			# Set the bounding box
-			idl = check_idl(self.mesh.lons)
 			if idl==1:
 			    lon = lon+360 if lon<0 else lon
 			# Set the bounding box 
