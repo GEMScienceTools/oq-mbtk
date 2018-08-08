@@ -210,7 +210,7 @@ def build_model_from_db(fault_db,
         defaults_local.update(defaults)
 
     for key in kwargs:
-        defaults[key] = kwargs[key]
+        defaults_local[key] = kwargs[key]
 
     srcl = []
 
