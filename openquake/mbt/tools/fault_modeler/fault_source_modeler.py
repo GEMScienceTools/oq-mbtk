@@ -257,12 +257,6 @@ class fault_database():
         """
         """
 
-        if not isinstance(select_list, (list, tuple)):
-            select_list = [select_list]
-
-        if not isinstance(select_list, (list, tuple)):
-            select_list = [select_list]
-
         param_map_local = deepcopy(fmu.param_map)
 
         if param_map is not None:
@@ -297,11 +291,15 @@ class fault_database():
 
                 # Process only faults in the selection list
                 if select_list is not None:
+                    if not isinstance(select_list, (list, tuple)):
+                        select_list = [select_list]
                     if fault['source_id'] not in select_list:
                         continue
 
                 # Skip further processing for blacklisted faults
                 if black_list is not None:
+                    if not isinstance(black_list, (list, tuple)):
+                        black_list = [black_list]
                     if fault['source_id'] in black_list:
                         continue
 

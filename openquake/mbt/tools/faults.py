@@ -119,12 +119,12 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, b_gr,
     # Compute rate per bin
     rrr = []
     mma = []
-    for mmm in numpy.arange(m_low, m_upp, bin_width):
-        rte = (_get_cumul_rate_truncated(mmm, m_low, m_upp, rate_above, b_gr) -
-               _get_cumul_rate_truncated(mmm+bin_width, m_low,
-                                         m_upp, rate_above, b_gr))
-        mma.append(mmm+bin_width/2)
-        rrr.append(rte)
+    for mmm in numpy.arange(m_low, m_upp-bin_width/2., bin_width):
+       rte = (_get_cumul_rate_truncated(mmm, m_low, m_upp, rate_above, b_gr) -
+              _get_cumul_rate_truncated(mmm+bin_width, m_low,
+                                        m_upp, rate_above, b_gr))
+       mma.append(mmm+bin_width/2)
+       rrr.append(rte)
     return rrr
 
 
