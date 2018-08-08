@@ -24,6 +24,7 @@
 import warnings
 import numpy as np
 from copy import deepcopy
+import importlib
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -43,7 +44,7 @@ sfs_params = ('source_id',
               'tectonic_region_type',
               'mfd',
               'rupture_mesh_spacing',
-              'magnitude_scaling_relationship',
+              'magnitude_scaling_relation',
               'rupture_aspect_ratio',
               'temporal_occurrence_model',
               'upper_seismogenic_depth',
@@ -57,7 +58,8 @@ all_params = list(sfs_params)
 all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
                'M_upper', 'b_value', 'net_slip_rate', 'strike_slip_rate',
                'dip_slip_rate', 'vert_slip_rate', 'shortening_rate',
-               'aseismic_coefficient', 'slip_class']
+               'aseismic_coefficient', 'slip_class',
+               'width_scaling_relation']
 
 # Default mapping of parameters
 # (keys: variable names used here, vals: variable names in input files
@@ -79,15 +81,20 @@ defaults = {'name': 'unnamed',
             'minimum_fault_length': 5.,
             'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
             'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
-            'magnitude_scaling_relationship':
-                hz.scalerel.leonard2014.Leonard2014_Interplate()
+            'magnitude_scaling_relation': 'Leonard2014_Interplate',
+            'width_scaling_relation': 'Leonard2014_Interplate',
             }
 
+scale_rel_map = {'Leonard2014_SCR': 'leonard2014',
+                 'Leonard2014_Interplate': 'leonard2014',
+                 'WC1994': 'wc1994'}
+
+# -----------------------------------------------------------------------------
 
 def construct_sfs_dict(fault_dict, area_method='simple',
                        width_method='seismo_depth',
-                       width_scaling_rel='leonard_2010', slip_class='mle',
-                       mag_scaling_rel=None, M_max=None, M_min=None,
+                       width_scaling_relation='None', slip_class='mle',
+                       magnitude_scaling_relation=None, M_max=None, M_min=None,
                        b_value=None, slip_rate=None,
                        aseismic_coefficient=None,
                        bin_width=None,
@@ -95,7 +102,7 @@ def construct_sfs_dict(fault_dict, area_method='simple',
                        param_map=param_map):
     """
     Makes a dictionary containing all of the parameters needed to create a
-    SimpleFaultSource. Fault parameters (not methods or scaling relationships)
+    SimpleFaultSource. Fault parameters (not methods or scaling relations)
     passed here will override those in the `fault_dict`.
 
     :param fault_dict:
@@ -116,7 +123,7 @@ def construct_sfs_dict(fault_dict, area_method='simple',
 
     :param width_method:
         Method used to calculate the width (down-dip distance) of a fault.
-        'length_scaling' implements a scaling relationship between the fault
+        'length_scaling' implements a scaling relation between the fault
         length (derived from the trace) and the fault width, which is
         calculated given the `scaling_rel`.  'seismo_depth' calculates the
         width based on the fault's dip and the given values for upper and lower
@@ -126,8 +133,8 @@ def construct_sfs_dict(fault_dict, area_method='simple',
         str
 
     :param width_scaling_rel:
-        The scaling relationship between length and width. Currently,
-        only the scaling relationship of Leonard (2010) BSSA is implemented,
+        The scaling relation between length and width. Currently,
+        only the scaling relation of Leonard (2010) BSSA is implemented,
         as 'leonard_2010'.
 
     :type width_scaling_rel:
@@ -142,7 +149,7 @@ def construct_sfs_dict(fault_dict, area_method='simple',
         str
 
     :param mag_scaling_rel:
-        Magnitude-scaling relationship used to calculate the maximum magnitude
+        Magnitude-scaling relation used to calculate the maximum magnitude
         from the fault parameters.
 
     :type mag_scaling_rel:
@@ -225,27 +232,32 @@ def construct_sfs_dict(fault_dict, area_method='simple',
 
     # dip, rake, fault_trace, upper_seismogenic_depth, lower_seismogenic_depth
     sfs.update(write_geom(fault_dict, width_method=width_method,
-                          width_scaling_rel=width_scaling_rel,
+                          width_scaling_relation=width_scaling_relation,
                           defaults=defaults, param_map=param_map))
 
-    # rupture_mesh_spacing, magnitude_scaling_relationship,
+    # rupture_mesh_spacing, magnitude_scaling_relation,
     # rupture_aspect_ratio, temporal_occurrence_model
-    sfs.update(write_rupture_params(fault_dict, defaults=defaults,
-                                    param_map=param_map))
+    sfs.update(write_rupture_params(
+                    fault_dict,
+                    magnitude_scaling_relation=magnitude_scaling_relation,
+                    defaults=defaults,
+                    param_map=param_map))
 
-    mfd, slr = calc_mfd_from_fault_params(fault_dict, area_method=area_method,
-                                          width_method=width_method,
-                                          width_scaling_rel=width_scaling_rel,
-                                          slip_class=slip_class,
-                                          mag_scaling_rel=mag_scaling_rel,
-                                          M_max=M_max, M_min=M_min,
-                                          b_value=b_value,
-                                          slip_rate=slip_rate,
-                                          aseismic_coefficient=aseismic_coefficient,
-                                          bin_width=bin_width,
-                                          fault_area=fault_area,
-                                          defaults=defaults,
-                                          param_map=param_map)
+
+    mfd, slr = calc_mfd_from_fault_params(
+                    fault_dict, area_method=area_method,
+                    width_method=width_method,
+                    width_scaling_relation=width_scaling_relation,
+                    slip_class=slip_class,
+                    magnitude_scaling_relation=magnitude_scaling_relation,
+                    M_max=M_max, M_min=M_min,
+                    b_value=b_value,
+                    slip_rate=slip_rate,
+                    aseismic_coefficient=aseismic_coefficient,
+                    bin_width=bin_width,
+                    fault_area=fault_area,
+                    defaults=defaults,
+                    param_map=param_map)
 
     # mfd and slip rate
     sfs.update({'mfd': mfd, 'seismic_slip_rate': slr})
@@ -289,7 +301,7 @@ def make_fault_source(sfs_dict, oqt_source=False):
         src.tectonic_region_type = sfs_dict['tectonic_region_type']
         src.mfd = sfs_dict['mfd']
         src.rupture_mesh_spacing = sfs_dict['rupture_mesh_spacing']
-        src.msr = sfs_dict['magnitude_scaling_relationship']
+        src.msr = sfs_dict['magnitude_scaling_relation']
         src.slip_rate = sfs_dict['seismic_slip_rate']
         src.rupture_aspect_ratio = sfs_dict['rupture_aspect_ratio']
         src.temporal_occurrence_model = sfs_dict['temporal_occurrence_model']
@@ -309,6 +321,17 @@ def make_fault_source(sfs_dict, oqt_source=False):
 ###
 # util functions
 ###
+
+def get_scaling_rel(scaling_rel_name):
+    """
+    Return an initialized scaling relation object from the name string
+    """
+
+    modstr = 'openquake.hazardlib.scalerel.' + scale_rel_map[scaling_rel_name]
+    module = importlib.import_module(modstr)
+    modcls = getattr(module, scaling_rel_name)
+    return modcls()
+
 
 def fetch_param_val(fault_dict, param, defaults=defaults, param_map=param_map):
     """
@@ -537,10 +560,12 @@ def write_metadata(fault_dict, defaults=defaults, param_map=param_map):
 ###
 
 
-def write_rupture_params(fault_dict, defaults=defaults, param_map=param_map):
+def write_rupture_params(fault_dict,
+                         magnitude_scaling_relation=None,
+                         defaults=defaults, param_map=param_map):
     """
     Gets the fault's rupture parameters ('rupture_mesh_spacing',
-    'magnitude_scaling_relationship', 'rupture_aspect_ratio',
+    'magnitude_scaling_relation', 'rupture_aspect_ratio',
     'temporal_occurrence_model') from the `fault_dict` and writes them in a new
     dictionary.
 
@@ -569,12 +594,20 @@ def write_rupture_params(fault_dict, defaults=defaults, param_map=param_map):
     :rtype:
         dict
     """
-    rupture_params = ('rupture_mesh_spacing', 'magnitude_scaling_relationship',
-                      'rupture_aspect_ratio', 'temporal_occurrence_model')
+    rupture_params = ('rupture_mesh_spacing',
+                      'rupture_aspect_ratio',
+                      'temporal_occurrence_model')
 
     rup_param_d = {p: fetch_param_val(fault_dict, p, defaults=defaults,
                                       param_map=param_map)
                    for p in rupture_params}
+
+    rup_param_d['magnitude_scaling_relation'] = get_scaling_rel(
+                                                fetch_param_val(fault_dict,
+                                                'magnitude_scaling_relation',
+                                                defaults=defaults,
+                                                param_map=param_map))
+
     return rup_param_d
 
 
@@ -819,7 +852,7 @@ def angle_difference(trend_1, trend_2, return_abs=True):
 
 
 def write_geom(fault_dict, requested_val='mle', width_method='seismo_depth',
-               width_scaling_rel='leonard_2010', defaults=defaults,
+               width_scaling_relation='Leonard2014_Interplate', defaults=defaults,
                param_map=param_map):
     """
     :param defaults:
@@ -857,7 +890,7 @@ def write_geom(fault_dict, requested_val='mle', width_method='seismo_depth',
 
         'lower_seismogenic_depth': get_lower_seismo_depth(fault_dict,
                                            width_method=width_method,
-                                           width_scaling_rel=width_scaling_rel,
+                                           width_scaling_relation=width_scaling_relation,
                                            defaults=defaults,
                                            param_map=param_map),
 
@@ -867,7 +900,7 @@ def write_geom(fault_dict, requested_val='mle', width_method='seismo_depth',
 
 
 def get_lower_seismo_depth(fault_dict, width_method='seismo_depth',
-                           width_scaling_rel='leonard_2010',
+                           width_scaling_relation='Leonard2014_Interplate',
                            param_map=param_map, defaults=defaults):
 
     if width_method == 'seismo_depth':
@@ -880,13 +913,13 @@ def get_lower_seismo_depth(fault_dict, width_method='seismo_depth',
                               defaults=defaults, param_map=param_map)
 
         return get_lsd_from_width(fault_dict, usd=usd,
-                                  width_scaling_rel=width_scaling_rel,
+                                  width_scaling_relation=width_scaling_relation,
                                   defaults=defaults, param_map=param_map)
 
 
 
 def get_lsd_from_width(fault_dict, usd=None, width=None,
-                       width_scaling_rel='leonard_2010',
+                       width_scaling_relation='Leonard2014_Interplate',
                        defaults=defaults, param_map=param_map):
     if usd is None:
         usd = fetch_param_val(fault_dict, 'upper_seismogenic_depth',
@@ -895,7 +928,7 @@ def get_lsd_from_width(fault_dict, usd=None, width=None,
 
     if width == None:
         width = calc_fault_width_from_length(fault_dict,
-                                           width_scaling_rel=width_scaling_rel,
+                                           width_scaling_relation=width_scaling_relation,
                                            defaults=defaults,
                                            param_map=param_map)
 
@@ -1759,11 +1792,11 @@ def get_fault_length(fault_dict, defaults=defaults, param_map=param_map):
 
 
 def get_fault_width(fault_dict, width_method='length_scaling',
-                    width_scaling_rel='leonard_2010',
+                    width_scaling_relation='Leonard2014_Interplate',
                     defaults=defaults, param_map=param_map):
     """
     Returns the width (i.e., the down-dip distance) of a fault. Two methods
-    exist: One based on the fault length and a scaling relationship, and one
+    exist: One based on the fault length and a scaling relation, and one
     based on the upper and lower seismogenic depths.
 
     :param fault_dict:
@@ -1774,7 +1807,7 @@ def get_fault_width(fault_dict, width_method='length_scaling',
 
     :param width_method:
         Method used to calculate the width of the fault. 'length_scaling'
-        implements a scaling relationship between the fault length (derived
+        implements a scaling relation between the fault length (derived
         from the trace) and the fault width, which is calculated.
         'seismo_depth' calculates the width based on the fault's dip and the
         given values for upper and lower seismogenic depth.
@@ -1783,8 +1816,8 @@ def get_fault_width(fault_dict, width_method='length_scaling',
         str
 
     :param width_scaling_rel:
-        The scaling relationship between length and width. Currently,
-        only the scaling relationship of Leonard (2010) BSSA is implemented,
+        The scaling relation between length and width. Currently,
+        only the scaling relation of Leonard (2010) BSSA is implemented,
         as 'leonard_2010'.
 
     :type width_scaling_rel:
@@ -1820,7 +1853,7 @@ def get_fault_width(fault_dict, width_method='length_scaling',
         width = calc_fault_width_from_length(
                     fault_dict, param_map=param_map,
                     defaults=defaults,
-                    width_scaling_rel=width_scaling_rel)
+                    width_scaling_relation=width_scaling_relation)
 
     elif width_method == 'seismo_depth':
         width = calc_fault_width_from_usd_lsd_dip(fault_dict,
@@ -1882,11 +1915,14 @@ def calc_fault_width_from_usd_lsd_dip(fault_dict, defaults=defaults,
     return width
 
 
-def calc_fault_width_from_length(fault_dict, width_scaling_rel='leonard_2010',
+def calc_fault_width_from_length(fault_dict,
+                                 width_scaling_relation='Leonard2014_Interplate',
+                                 defaults=defaults,
+                                 param_map=param_map,
                                  **kwargs):
     """
     Calculates the width (down-dip distance) of a fault from its length given
-    a scaling relationship. Currently, only `leonard_2010` is defined.
+    a scaling relation. Currently, only `leonard_2010` is defined.
 
 
     :param fault_dict:
@@ -1896,8 +1932,8 @@ def calc_fault_width_from_length(fault_dict, width_scaling_rel='leonard_2010',
         dict
 
     :param width_scaling_rel:
-        The scaling relationship between length and width. Currently,
-        only the scaling relationship of Leonard (2010) BSSA is implemented,
+        The scaling relation between length and width. Currently,
+        only the scaling relation of Leonard (2010) BSSA is implemented,
         as 'leonard_2010'.
 
     :type width_scaling_rel:
@@ -1912,10 +1948,20 @@ def calc_fault_width_from_length(fault_dict, width_scaling_rel='leonard_2010',
     :rtype:
         float
     """
-    scale_func_dict = {'leonard_2010': leonard_width_from_length}
+
+    width_scaling_relation = fetch_param_val(fault_dict,
+                                             'width_scaling_relation',
+                                             defaults=defaults,
+                                             param_map=param_map)
+
+
+    scale_func_dict = {'Leonard2014_Interplate': leonard_width_from_length}
 
     # try:
-    width = scale_func_dict[width_scaling_rel](fault_dict, **kwargs)
+    width = scale_func_dict[width_scaling_relation](fault_dict,
+                                                    defaults=defaults,
+                                                    param_map=param_map,
+                                                    **kwargs)
 
     # Check if LSD is exceeded, otherwise rescale the width
     lsd = fetch_param_val(fault_dict, 'lower_seismogenic_depth',
@@ -1932,7 +1978,7 @@ def calc_fault_width_from_length(fault_dict, width_scaling_rel='leonard_2010',
 
     return width
     # except KeyError:
-    #    raise ValueError('scaling relationship ', width_scaling_rel,
+    #    raise ValueError('scaling relation ', width_scaling_rel,
     #                     'not implemented.')
 
 
@@ -2050,7 +2096,7 @@ def leonard_width_from_length(fault_dict, const_1=1.75, const_2=1.5,
 
 def get_fault_area(fault_dict, area_method='simple',
                    width_method='seismo_depth',
-                   width_scaling_rel='leonard_2010', defaults=defaults,
+                   width_scaling_relation='Leonard2014_Interplate', defaults=defaults,
                    param_map=param_map):
     """ 
     :param fault_dict:
@@ -2071,7 +2117,7 @@ def get_fault_area(fault_dict, area_method='simple',
 
     :param width_method:
         Method used to calculate the width (down-dip distance) of a fault.
-        'length_scaling' implements a scaling relationship between the fault
+        'length_scaling' implements a scaling relation between the fault
         length (derived from the trace) and the fault width, which is
         calculated given the `scaling_rel`.  'seismo_depth' calculates the
         width based on the fault's dip and the given values for upper and lower
@@ -2081,8 +2127,8 @@ def get_fault_area(fault_dict, area_method='simple',
         str
 
     :param width_scaling_rel:
-        The scaling relationship between length and width. Currently,
-        only the scaling relationship of Leonard (2010) BSSA is implemented,
+        The scaling relation between length and width. Currently,
+        only the scaling relation of Leonard (2010) BSSA is implemented,
         as 'leonard_2010'.
 
     :type width_scaling_rel:
@@ -2127,7 +2173,7 @@ def get_fault_area(fault_dict, area_method='simple',
         elif width_method == 'length_scaling':
 
             lsd = get_lsd_from_width(fault_dict, usd=usd,
-                                     width_scaling_rel=width_scaling_rel,
+                                     width_scaling_relation=width_scaling_rel,
                                      defaults=defaults, param_map=param_map)
         else:
             raise ValueError('width_method {} not recognized'.format(
@@ -2192,18 +2238,18 @@ def get_M_min(fault_dict, defaults=defaults, param_map=param_map):
     return M_min
 
 
-def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
-              width_method='seismo_depth', width_scaling_rel='leonard_2010',
+def get_M_max(fault_dict, magnitude_scaling_relation=None, area_method='simple',
+              width_method='seismo_depth', width_scaling_relation='Leonard2014_Interplate',
               defaults=defaults, param_map=param_map):
     """
     Calculates (or fetches) the maximum magnitude for a fault, given a fault
-    attribute, the fault geometry and a scaling relationship, or a project
+    attribute, the fault geometry and a scaling relation, or a project
     default.
 
     The priority order is:
         1- Fault attribute.
         2- Default value if not none
-        3- Fault geometry and scaling relationship, if lower than M_upper
+        3- Fault geometry and scaling relation, if lower than M_upper
            otherwise use M_upper
 
 
@@ -2214,9 +2260,9 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
         dict
 
     :param mag_scaling_rel:
-        Magnitude-scaling relationship, as implemented in the
+        Magnitude-scaling relation, as implemented in the
         openquake.hazardlib.scalerel class. If no value is passed here,
-        then the project default magnitude-scaling relationship is used.
+        then the project default magnitude-scaling relation is used.
 
     :type mag_scaling_rel:
         openquake.hazardlib.scalrel.BaseMSR
@@ -2233,7 +2279,7 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
 
     :param width_method:
         Method used to calculate the width (down-dip distance) of a fault.
-        'length_scaling' implements a scaling relationship between the fault
+        'length_scaling' implements a scaling relation between the fault
         length (derived from the trace) and the fault width, which is
         calculated given the `scaling_rel`.  'seismo_depth' calculates the
         width based on the fault's dip and the given values for upper and lower
@@ -2243,8 +2289,8 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
         str
 
     :param width_scaling_rel:
-        The scaling relationship between length and width. Currently,
-        only the scaling relationship of Leonard (2010) BSSA is implemented,
+        The scaling relation between length and width. Currently,
+        only the scaling relation of Leonard (2010) BSSA is implemented,
         as 'leonard_2010'.
 
     :type width_scaling_rel:
@@ -2280,24 +2326,31 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
 
         else:
             # fetch?
-            if mag_scaling_rel is None:
-                mag_scaling_rel = defaults['magnitude_scaling_relationship']
+            if magnitude_scaling_relation is None:
+                mag_scaling_fun = get_scaling_rel(
+                                  defaults['magnitude_scaling_relation'])
+            else:
+                mag_scaling_fun = get_scaling_rel(magnitude_scaling_relation)
 
             rake = get_rake(fault_dict) #returns mle rake
+            #rake = get_rake(fault_dict, requested_val=slip_class,
+            #                defaults=defaults, param_map=param_map)
+
             fault_area = get_fault_area(fault_dict, area_method=area_method,
                                         width_method=width_method,
-                                        width_scaling_rel=width_scaling_rel,
+                                        width_scaling_relation=width_scaling_relation,
                                         defaults=defaults, param_map=param_map)
 
-            M_max = mag_scaling_rel.get_median_mag(fault_area, rake)
+            M_max = mag_scaling_fun.get_median_mag(fault_area, rake)
+
 
     return M_max
 
 
 def calc_mfd_from_fault_params(fault_dict, area_method='simple',
                                width_method='seismo_depth',
-                               width_scaling_rel='leonard_2010',
-                               slip_class='mle', mag_scaling_rel=None,
+                               width_scaling_relation='Leonard2014_Interplate',
+                               slip_class='mle', magnitude_scaling_relation=None,
                                M_max=None, M_min=None, b_value=None,
                                slip_rate=None, bin_width=None, fault_area=None,
                                defaults=defaults, param_map=param_map,
@@ -2305,7 +2358,7 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
     """
     Creates a magnitude-frequency distribution from fault parameters.
 
-    Fault parameters (not methods or scaling relationships)
+    Fault parameters (not methods or scaling relations)
     passed here will override those in the `fault_dict`.
 
     Currently, only an EvenlyDiscretizedMFD (double-truncated Gutenberg-Richter
@@ -2330,7 +2383,7 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
 
     :param width_method:
         Method used to calculate the width (down-dip distance) of a fault.
-        'length_scaling' implements a scaling relationship between the fault
+        'length_scaling' implements a scaling relation between the fault
         length (derived from the trace) and the fault width, which is
         calculated given the `scaling_rel`.  'seismo_depth' calculates the
         width based on the fault's dip and the given values for upper and lower
@@ -2340,8 +2393,8 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
         str
 
     :param width_scaling_rel:
-        The scaling relationship between length and width. Currently,
-        only the scaling relationship of Leonard (2010) BSSA is implemented,
+        The scaling relation between length and width. Currently,
+        only the scaling relation of Leonard (2010) BSSA is implemented,
         as 'leonard_2010'.
 
     :type width_scaling_rel:
@@ -2356,7 +2409,7 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
         str
 
     :param mag_scaling_rel:
-        Magnitude-scaling relationship used to calculate the maximum magnitude
+        Magnitude-scaling relation used to calculate the maximum magnitude
         from the fault parameters.
 
     :type mag_scaling_rel:
@@ -2425,7 +2478,7 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
         dict
 
     :returns:
-        Magnitude-scaling relationship class.
+        Magnitude-scaling relation class.
 
     :rtype:
         EvenlyDiscretizedMFD
@@ -2437,14 +2490,14 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
 
     if M_max is None:
         M_max = get_M_max(fault_dict, defaults=defaults, param_map=param_map,
-                          mag_scaling_rel=mag_scaling_rel,
+                          magnitude_scaling_relation=magnitude_scaling_relation,
                           area_method=area_method,
                           width_method=width_method)
 
     if fault_area is None:
         fault_area = get_fault_area(fault_dict, area_method=area_method,
                                     width_method=width_method,
-                                    width_scaling_rel=width_scaling_rel,
+                                    width_scaling_relation=width_scaling_relation,
                                     defaults=defaults, param_map=param_map)
 
     M_upper = fetch_param_val(fault_dict, 'M_upper',
@@ -2456,9 +2509,13 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
         rake = get_rake(fault_dict, requested_val=slip_class,
                         defaults=defaults, param_map=param_map)
 
-        if mag_scaling_rel is None:
-              mag_scaling_rel = defaults['magnitude_scaling_relationship']
-        fault_area = mag_scaling_rel.get_median_area(M_max, rake)
+        if magnitude_scaling_relation is None:
+            mag_scaling_fun =  get_scaling_rel(
+                               defaults['magnitude_scaling_relation'])
+        else:
+            mag_scaling_fun =  get_scaling_rel(magnitude_scaling_relation)
+
+        fault_area = mag_scaling_fun.get_median_area(M_max, rake)
 
     if slip_rate is None:
         slip_rate = get_net_slip_rate(fault_dict,

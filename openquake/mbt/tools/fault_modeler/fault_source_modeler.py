@@ -49,7 +49,8 @@ option_types = {'b_value': float,
                 'tectonic_region_type': str,
                 'upper_seismogenic_depth': float,
                 'lower_seismogenic_depth': float,
-                'magnitude_scaling_relationship': str}
+                'magnitude_scaling_relation': str,
+                'width_scaling_relation': str}
 
 # -----------------------------------------------------------------------------
 
@@ -59,7 +60,6 @@ def build_fault_model(cfg_file=None,
                       black_list=None,
                       select_list=None,
                       width_method='seismo_depth',
-                      width_scaling_rel='leonard_2010',
                       oqt_source=False,
                       project_name=None,
                       param_map=None,
@@ -68,10 +68,9 @@ def build_fault_model(cfg_file=None,
     """
     Main interface to create the fault source model from an active fault
     database in geojson format. Priority of the optional parameters is:
-        1) .ini file
+        1) single arguments
         2) dictionary
-        3) single arguments
-
+        3) .ini file
 
     : param cfg_file:
 
@@ -154,7 +153,6 @@ def build_fault_model(cfg_file=None,
     srcl = build_model_from_db(fault_db,
                                xml_output,
                                width_method=width_method,
-                               width_scaling_rel=width_scaling_rel,
                                oqt_source=oqt_source,
                                project_name=project_name,
                                defaults=defaults_local)
@@ -192,7 +190,6 @@ def read_config_file(cfg_file):
 def build_model_from_db(fault_db,
                         xml_output=None,
                         width_method='seismo_depth',
-                        width_scaling_rel='leonard_2010',
                         oqt_source=False,
                         project_name=None,
                         param_map=None,
@@ -219,7 +216,6 @@ def build_model_from_db(fault_db,
         try:
             sfs_dict = fmu.construct_sfs_dict(fl,
                                 width_method=width_method,
-                                width_scaling_rel=width_scaling_rel,
                                 param_map=param_map_local,
                                 defaults=defaults_local)
             sfs = fmu.make_fault_source(sfs_dict, oqt_source=oqt_source)
