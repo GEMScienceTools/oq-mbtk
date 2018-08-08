@@ -24,7 +24,6 @@
 import warnings
 import numpy as np
 from copy import deepcopy
-import matplotlib.pyplot as plt
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -32,8 +31,6 @@ import openquake.hazardlib as hz
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.mbt.oqt_project import OQtSource
 from openquake.mbt.tools.faults import rates_for_double_truncated_mfd
-
-from openquake.mbt.tools.fault_modeler.slip_rate_invert import get_rates_for_slip
 
 # -----------------------------------------------------------------------------
 
@@ -2294,11 +2291,6 @@ def get_M_max(fault_dict, mag_scaling_rel=None, area_method='simple',
 
             M_max = mag_scaling_rel.get_median_mag(fault_area, rake)
 
-            M_upper = fetch_param_val(fault_dict, 'M_upper', param_map=param_map)
-
-            if M_max > M_upper:
-                M_max = M_upper
-
     return M_max
 
 
@@ -2440,12 +2432,6 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
 
     """
 
-    if fault_area is None:
-        fault_area = get_fault_area(fault_dict, area_method=area_method,
-                                    width_method=width_method,
-                                    width_scaling_rel=width_scaling_rel,
-                                    defaults=defaults, param_map=param_map)
-
     if M_min is None:
         M_min = get_M_min(fault_dict, defaults=defaults, param_map=param_map)
 
@@ -2454,6 +2440,25 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
                           mag_scaling_rel=mag_scaling_rel,
                           area_method=area_method,
                           width_method=width_method)
+
+    if fault_area is None:
+        fault_area = get_fault_area(fault_dict, area_method=area_method,
+                                    width_method=width_method,
+                                    width_scaling_rel=width_scaling_rel,
+                                    defaults=defaults, param_map=param_map)
+
+    M_upper = fetch_param_val(fault_dict, 'M_upper',
+                              defaults=defaults, param_map=param_map)
+
+    if M_max > M_upper:
+        M_max = M_upper
+
+        rake = get_rake(fault_dict, requested_val=slip_class,
+                        defaults=defaults, param_map=param_map)
+
+        if mag_scaling_rel is None:
+              mag_scaling_rel = defaults['magnitude_scaling_relationship']
+        fault_area = mag_scaling_rel.get_median_area(M_max, rake)
 
     if slip_rate is None:
         slip_rate = get_net_slip_rate(fault_dict,
@@ -2481,7 +2486,8 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
                                     param_map=param_map)
 
     bin_rates = rates_for_double_truncated_mfd(fault_area, seismic_slip_rate,
-                                               M_min, M_max, b_value, bin_width)
+                                               M_min, M_max,
+                                               b_value, bin_width)
 
     mfd = hz.mfd.EvenlyDiscretizedMFD(M_min + bin_width / 2.,
                                       bin_width,
