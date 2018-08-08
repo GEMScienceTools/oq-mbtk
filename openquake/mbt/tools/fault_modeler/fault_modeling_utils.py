@@ -24,6 +24,7 @@
 import warnings
 import numpy as np
 from copy import deepcopy
+import matplotlib.pyplot as plt
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -31,6 +32,8 @@ import openquake.hazardlib as hz
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.mbt.oqt_project import OQtSource
 from openquake.mbt.tools.faults import rates_for_double_truncated_mfd
+
+from openquake.mbt.tools.fault_modeler.slip_rate_invert import get_rates_for_slip
 
 # -----------------------------------------------------------------------------
 
@@ -2479,22 +2482,6 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
 
     bin_rates = rates_for_double_truncated_mfd(fault_area, seismic_slip_rate,
                                                M_min, M_max, b_value, bin_width)
-
-    """
-    # JUST FOR TESTING
-    Mbin = np.arange(M_min, M_max, bin_width) + bin_width/2
-    Mo = 10**((Mbin+10.7)*3/2) # Output in dyne*cm
-    Mo *= 1e-7 # Conversion to N/m
-    Motot = np.sum(bin_rates*Mo)
-    rigidity=32e9 # in GPa (equivalent to 32000000000 N/m2)
-    msr = Motot/(rigidity * fault_area * 1e6) * 1e3
-
-    print('Minimum Magnitude: ', M_min)
-    print('Maximum Magnitude: ', M_max)
-    print('Fault Area: ', fault_area)
-    print('Input Slip Rate: ', seismic_slip_rate)
-    print('Recomputed Slip Rate: ', msr)
-    """
 
     mfd = hz.mfd.EvenlyDiscretizedMFD(M_min + bin_width / 2.,
                                       bin_width,
