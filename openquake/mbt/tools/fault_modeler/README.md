@@ -59,7 +59,7 @@ Modificable parameters are:
 | lower_seismogenic_depth | ... | ... |
 | magnitude_scaling_relationship | ... | ... |
 
-A single parameter can be passed as optional arguments like:
+A single parameter can be passed as optional argument like:
 
 ```python
 build_fault_model(geojson_file='FaultDatabase.geojson', 
@@ -167,4 +167,4 @@ rupture_mesh_spacing = 5
 
 The first block is referred to the input/output. The second block contains the keyword translation map when using non-standard a geojson fault database. The third block includes a list of settings to be used as default parameters.
 
-The use of any of the three blocks is optional, as well as any of the directives. The combined used of the configuration file and the direct passing of arguments is allowed. Note, however, that in case an option is specified twice, the directive in the configuration file will have priority.
+The use of any of the three blocks is optional, as well as any of the directives. The combined used of the configuration file and the direct passing of arguments is allowed. Note, however, that in case an option is specified twice, the directive passed as optional argument will have priority.
