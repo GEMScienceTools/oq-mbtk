@@ -20,7 +20,7 @@ logging.basicConfig(filename='classify.log', level=logging.DEBUG)
 
 
 def str_to_list(tmps):
-    return re.split('\,', re.sub('\s*', '', re.sub(r'\[|\]', '', tmps)))
+    return re.split(',', re.sub('\\s*', '', re.sub('\\[|\\]', '', tmps)))
 
 
 def classify(ini_fname, compute_distances, rf):

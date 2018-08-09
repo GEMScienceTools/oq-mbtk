@@ -15,7 +15,7 @@ def read_cs(filename):
     cs_dict = {}
     fin = open(filename, 'r')
     for line in fin:
-        aa = re.split('\s+', line)
+        aa = re.split('\\s+', line)
         olo = float(aa[0])
         ola = float(aa[1])
         length = float(aa[3])
@@ -42,7 +42,7 @@ def main(argv):
     lotmp = []
     latmp = []
     for line in fin:
-        aa = re.split('\s+', re.sub('^\s+', '', line))
+        aa = re.split('\\s+', re.sub('^\\s+', '', line))
         lotmp.append(float(aa[0]))
         latmp.append(float(aa[1]))
     fin.close()

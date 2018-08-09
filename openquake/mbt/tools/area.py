@@ -145,59 +145,59 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
 
 
 def create_gr_table(model):
-        # Set table
-        p = PrettyTable(["ID", "a_gr", "b_gr"])
-        p.align["Source ID"] = 'l'
-        p.align["a_gr"] = 'r'
-        p.align["b_gr"] = 'r'
-        #
-        for key in sorted(model.sources):
-            src = model.sources[key]
-            if src.source_type == 'AreaSource':
-                alab = ''
-                blab = ''
-                if 'a_gr' in src.__dict__:
-                    alab = '%8.5f' % (src.a_gr)
-                if 'b_gr' in src.__dict__:
-                    blab = '%6.3f' % (src.b_gr)
-                p.add_row([key, alab, blab])
-        return p
+    # Set table
+    p = PrettyTable(["ID", "a_gr", "b_gr"])
+    p.align["Source ID"] = 'l'
+    p.align["a_gr"] = 'r'
+    p.align["b_gr"] = 'r'
+    #
+    for key in sorted(model.sources):
+        src = model.sources[key]
+        if src.source_type == 'AreaSource':
+            alab = ''
+            blab = ''
+            if 'a_gr' in src.__dict__:
+                alab = '%8.5f' % (src.a_gr)
+            if 'b_gr' in src.__dict__:
+                blab = '%6.3f' % (src.b_gr)
+            p.add_row([key, alab, blab])
+    return p
 
 
 def create_mmax_table(model):
-        # Set table
-        p = PrettyTable(["ID", "mmax obs", "mmax assigned", "mo strain"])
-        p.align["Source ID"] = 'l'
-        p.align["mmax obs"] = 'r'
-        p.align["mmax assigned"] = 'r'
-        p.align["mo strain"] = 'r'
-        #
-        for key in sorted(model.sources):
-            src = model.sources[key]
-            if src.source_type == 'AreaSource':
-                alab = ''
-                blab = ''
-                clab = ''
-                if 'mmax_obs' in src.__dict__:
-                    alab = '%6.2f' % (src.mmax_obs)
-                if 'mmax_expected' in src.__dict__:
-                    blab = '%6.2f' % (src.mmax_expected)
-                if 'mo_strain' in src.__dict__:
-                    clab = '%6.2e' % (src.mo_strain)
-                p.add_row([key, alab, blab, clab])
-        return p
+    # Set table
+    p = PrettyTable(["ID", "mmax obs", "mmax assigned", "mo strain"])
+    p.align["Source ID"] = 'l'
+    p.align["mmax obs"] = 'r'
+    p.align["mmax assigned"] = 'r'
+    p.align["mo strain"] = 'r'
+    #
+    for key in sorted(model.sources):
+        src = model.sources[key]
+        if src.source_type == 'AreaSource':
+            alab = ''
+            blab = ''
+            clab = ''
+            if 'mmax_obs' in src.__dict__:
+                alab = '%6.2f' % (src.mmax_obs)
+            if 'mmax_expected' in src.__dict__:
+                blab = '%6.2f' % (src.mmax_expected)
+            if 'mo_strain' in src.__dict__:
+                clab = '%6.2e' % (src.mo_strain)
+            p.add_row([key, alab, blab, clab])
+    return p
 
 
 def plot_area_source_polygons(model, bmap):
-        """
-        :parameter bmap:
-                A :class:Basemap instance
-        """
-        for key in sorted(model.sources):
-            src = model.sources[key]
-            if src.source_type == 'AreaSource':
-                        x, y = bmap(src.polygon.lons, src.polygon.lats)
-                        bmap.plot(x, y, '-b')
+    """
+    :parameter bmap:
+            A :class:Basemap instance
+    """
+    for key in sorted(model.sources):
+        src = model.sources[key]
+        if src.source_type == 'AreaSource':
+            x, y = bmap(src.polygon.lons, src.polygon.lats)
+            bmap.plot(x, y, '-b')
 
 
 def _set_trt(tstr):
