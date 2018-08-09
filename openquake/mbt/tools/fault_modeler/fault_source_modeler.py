@@ -18,7 +18,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors: Julio Garcia, Richard Styron, Valerio Poggi
-# Last modify: 18/07/2018
+# Last modify: 09/08/2018
 
 # -----------------------------------------------------------------------------
 
@@ -67,11 +67,11 @@ def build_fault_model(cfg_file=None,
                       **kwargs):
     """
     Main interface to create the fault source model from an active fault
-    database in geojson format. Priority of the optional parameters is:
+    database in geojson format.
+    Priority for the optional parameters is set to:
         1) single arguments
         2) dictionary
         3) .ini file
-
     """
 
     param_map_local = deepcopy(fmu.param_map)
@@ -132,6 +132,7 @@ def build_fault_model(cfg_file=None,
 
 def read_config_file(cfg_file):
     """
+    Import various processing options from the (.ini) configuration file
     """
 
     cfg_dict = {}
@@ -202,6 +203,8 @@ def build_model_from_db(fault_db,
 
 class fault_database():
     """
+    The faukl_database object is used to retrieve, add, modify and export
+    information from a database in geojson format
     """
 
     def __init__(self, geojson_file=None):
@@ -315,6 +318,7 @@ class fault_database():
 
 def main(argv):
     """
+    Command line interface of the tool
     """
 
     p = sap.Script(build_fault_model)
