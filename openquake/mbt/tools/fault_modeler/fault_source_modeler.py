@@ -59,9 +59,9 @@ def build_fault_model(cfg_file=None,
                       xml_output=None,
                       black_list=None,
                       select_list=None,
+                      project_name=None,
                       width_method='seismo_depth',
                       oqt_source=False,
-                      project_name=None,
                       param_map=None,
                       defaults=None,
                       **kwargs):
@@ -71,38 +71,6 @@ def build_fault_model(cfg_file=None,
         1) single arguments
         2) dictionary
         3) .ini file
-
-    : param cfg_file:
-
-    : type:
-
-    : param cfg_file:
-
-    : type :
-
-    : param cfg_file:
-
-    : type :
-
-    : param cfg_file:
-
-    : type :
-
-    : param cfg_file:
-
-    : type :
-
-    : param cfg_file:
-
-    : type :
-
-    : param cfg_file:
-
-    : type :
-
-    : param cfg_file:
-
-    : type :
 
     """
 
@@ -370,6 +338,11 @@ def main(argv):
           type=ast.literal_eval, abbrev='-h')
     p.opt(name='project_name',
           help='Name of the current project', abbrev='-h')
+    p.opt(name='width_method',
+          help='Method to compute the fault width', abbrev='-h')
+    p.opt(name='oqt_source',
+          help='Switch between hazardlib and oq-mbt source formats', 
+          abbrev='-h')
 
     if len(argv) < 1:
         print(p.help())
@@ -378,3 +351,4 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+
