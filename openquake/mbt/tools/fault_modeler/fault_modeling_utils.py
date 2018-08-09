@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors: Julio Garcia, Richard Styron, Valerio Poggi
-# Last modify: 13/07/2018
+# Last modify: 09/08/2018
 
 # -----------------------------------------------------------------------------
 
