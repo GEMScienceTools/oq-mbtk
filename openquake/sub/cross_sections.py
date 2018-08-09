@@ -39,7 +39,7 @@ class CrossSectionData:
         fin = open(filename, 'r')
         trench = []
         for line in fin:
-            aa = re.split('\s+', re.sub('^\s+', '', line))
+            aa = re.split('\\s+', re.sub('^\\s+', '', line))
             trench.append((float(aa[0]), float(aa[1])))
         fin.close()
         self.trench = numpy.array(trench)
@@ -73,7 +73,7 @@ class CrossSectionData:
         # Read the Slab 1.0 file
         slab1pt0 = []
         for line in open(filename):
-            aa = re.split('\s+', line)
+            aa = re.split('\\s+', line)
             if not re.search('[a-z]', aa[2]):
                 slab1pt0.append([float(aa[0]), float(aa[1]), float(aa[2])])
         slab1pt0or = numpy.asarray(slab1pt0)
@@ -111,7 +111,8 @@ class CrossSectionData:
         print('setting crust/moho')
         datal = []
         for line in open(filename, 'r'):
-            xx = re.split('\s+', re.sub('\s+$', '', re.sub('^\s+', '', line)))
+            xx = re.split('\\s+', re.sub('\\s+$', '',
+                                         re.sub('^\\s+', '', line)))
             datal.append([float(val) for val in xx])
         dataa = numpy.array(datal)
         minlo, maxlo, minla, maxla, qual = self.csec.get_mm()
@@ -143,7 +144,8 @@ class CrossSectionData:
         print('setting litho/moho')
         datal = []
         for line in open(filename, 'r'):
-            xx = re.split('\s+', re.sub('\s+$', '', re.sub('^\s+', '', line)))
+            xx = re.split('\\s+', re.sub('\\s+$', '',
+                                         re.sub('^\\s+', '', line)))
             datal.append([float(val) for val in xx])
         dataa = numpy.array(datal)
         minlo, maxlo, minla, maxla, qual = self.csec.get_mm()
@@ -201,7 +203,8 @@ class CrossSectionData:
         print('setting topo')
         datat = []
         for line in open(filename, 'r'):
-            tt = re.split('\s+', re.sub('\s+$', '', re.sub('^\s+', '', line)))
+            tt = re.split('\\s+', re.sub('\\s+$', '',
+                                         re.sub('^\\s+', '', line)))
             datat.append([float(val) for val in tt])
         datab = numpy.array(datat)
         minlo, maxlo, minla, maxla, qual = self.csec.get_mm()
@@ -232,7 +235,7 @@ class CrossSectionData:
         fin = open(filename, 'r')
         datav = []
         for line in fin:
-            vv = re.split('\s+', re.sub('^\s+', '', line))
+            vv = re.split('\\s+', re.sub('^\\s+', '', line))
             datav.append((float(vv[0]), float(vv[1])))
 
         vulc = numpy.array(datav)
@@ -305,10 +308,10 @@ class Trench:
         trch = self.resample(distance)
         for idx, coo in enumerate(trch.axis.tolist()):
             if idx < len(trch.axis[:, 1]):
-                    yield CrossSection(coo[0],
-                                       coo[1],
-                                       [length],
-                                       [(coo[2]+90) % 360])
+                yield CrossSection(coo[0],
+                                   coo[1],
+                                   [length],
+                                   [(coo[2]+90) % 360])
             else:
                 yield
         return
