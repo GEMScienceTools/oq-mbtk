@@ -59,7 +59,7 @@ all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
                'M_upper', 'b_value', 'net_slip_rate', 'strike_slip_rate',
                'dip_slip_rate', 'vert_slip_rate', 'shortening_rate',
                'aseismic_coefficient', 'slip_class',
-               'width_scaling_relation']
+               'width_scaling_relation', 'subsurface_length']
 
 # Default mapping of parameters
 # (keys: variable names used here, vals: variable names in input files
@@ -83,6 +83,7 @@ defaults = {'name': 'unnamed',
             'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
             'magnitude_scaling_relation': 'Leonard2014_Interplate',
             'width_scaling_relation': 'Leonard2014_Interplate',
+            'subsurface_length': False
             }
 
 # Module mapping for the scaling relations in the hazardlib
@@ -95,7 +96,9 @@ scale_rel_map = {'Leonard2014_SCR': 'leonard2014',
 def construct_sfs_dict(fault_dict, area_method='simple',
                        width_method='seismo_depth',
                        width_scaling_relation='None', slip_class='mle',
-                       magnitude_scaling_relation=None, M_max=None, M_min=None,
+                       magnitude_scaling_relation=None,
+                       subsurface_length=None,
+                       M_max=None, M_min=None,
                        b_value=None, slip_rate=None,
                        aseismic_coefficient=None,
                        bin_width=None,
@@ -853,8 +856,8 @@ def angle_difference(trend_1, trend_2, return_abs=True):
 
 
 def write_geom(fault_dict, requested_val='mle', width_method='seismo_depth',
-               width_scaling_relation='Leonard2014_Interplate', defaults=defaults,
-               param_map=param_map):
+               width_scaling_relation='Leonard2014_Interplate',
+               defaults=defaults, param_map=param_map):
     """
     :param defaults:
         Dictionary of project defaults.
@@ -893,8 +896,7 @@ def write_geom(fault_dict, requested_val='mle', width_method='seismo_depth',
                                            width_method=width_method,
                                            width_scaling_relation=width_scaling_relation,
                                            defaults=defaults,
-                                           param_map=param_map),
-
+                                           param_map=param_map)
     }
 
     return geom_params
@@ -1789,7 +1791,18 @@ def get_fault_length(fault_dict, defaults=defaults, param_map=param_map):
         fault_trace = trace_from_coords(fault_dict, param_map=param_map,
                                         defaults=defaults)
 
-    return fault_trace.get_length()
+    fault_length = fault_trace.get_length()
+
+    subsurface_length = fetch_param_val(fault_dict, 'subsurface_length',
+                                        defaults=defaults, param_map=param_map)
+
+    if subsurface_length is not None:
+        # Compute the subsurface length
+        if subsurface_length is 'Leonard2014' and fault_length < 500.:
+            # Table 6 of Leonard 2010
+            fault_length = 10**((np.log10(fault_length)+0.275)/1.1)
+
+    return fault_length
 
 
 def get_fault_width(fault_dict, width_method='length_scaling',
