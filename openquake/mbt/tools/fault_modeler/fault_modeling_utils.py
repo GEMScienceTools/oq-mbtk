@@ -85,6 +85,7 @@ defaults = {'name': 'unnamed',
             'width_scaling_relation': 'Leonard2014_Interplate',
             }
 
+# Module mapping for the scaling relations in the hazardlib
 scale_rel_map = {'Leonard2014_SCR': 'leonard2014',
                  'Leonard2014_Interplate': 'leonard2014',
                  'WC1994': 'wc1994'}
