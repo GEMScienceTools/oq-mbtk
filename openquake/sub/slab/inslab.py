@@ -30,7 +30,7 @@ def _read_profile(filename):
     """
     points = []
     for line in open(filename, 'r'):
-        aa = re.split('\s+', line)
+        aa = re.split('\\s+', line)
         points.append(Point(float(aa[0]),
                             float(aa[1]),
                             float(aa[2])))
@@ -126,7 +126,7 @@ def _read_edge(filename):
     """
     points = []
     for line in open(filename, 'r'):
-        aa = re.split('\s+', line)
+        aa = re.split('\\s+', line)
         points.append(Point(float(aa[0]),
                             float(aa[1]),
                             float(aa[2])))

@@ -67,7 +67,8 @@ setup(
         'rtree',
         'nbconvert',
         'prettytable',
-        'geopandas'
+        'geopandas',
+        'pylint >= 2.1.1'
     ],
     python_requires='>=3.5',
     author='GEM Foundation',
