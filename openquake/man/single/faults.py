@@ -234,7 +234,7 @@ def get_lengths(model, trt='.*'):
                 re.search(trt, src.tectonic_region_type)):
             lngths[src.source_id] = src.fault_trace.get_length()
         else:
-            logging.warning('unsupported fault type', type(src).__name__)
+            logging.warning('unsupported fault type %s', type(src).__name__)
     return lngths
 
 
