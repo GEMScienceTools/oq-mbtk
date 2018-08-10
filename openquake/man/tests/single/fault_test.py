@@ -103,7 +103,7 @@ class TestFaultSurfaceDistance(unittest.TestCase):
         computed = fault_surface_distance(self.srcs, 5.0)
         expected = np.array([
             [0., 15.67589056, 31.35175709, 39.313281],
-            [40.,  0., 15.67589056, 23.587993],
-            [40., 40.,  0.,  7.862668],
-            [40., 40., 40.,  0.]])
+            [40., 00., 15.67589056, 23.587993],
+            [40., 40., 00., 7.862668],
+            [40., 40., 40., 0.]])
         np.testing.assert_allclose(computed, expected, rtol=1e-2)

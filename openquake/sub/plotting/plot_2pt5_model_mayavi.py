@@ -38,7 +38,7 @@ def plot_sub_profiles(foldername):
     for filename in glob.glob(os.path.join(foldername, 'cs_*.csv')):
         dat = numpy.loadtxt(filename)
         # MN: 'idx' assigned but never used
-        sid = re.sub('^cs_', '', re.split('\.', os.path.basename(filename))[0])
+        sid = re.sub('^cs_', '', re.split('\\.', os.path.basename(filename))[0])
         x, y = p1(dat[:, 0], dat[:, 1])
         mlab.plot3d(x/1e3, y/1e3, SCALING*dat[:, 2], tube_radius=2,
                     color=(1, 0, 0))
@@ -54,7 +54,7 @@ def plot_edges(foldername):
         dat = numpy.loadtxt(filename)
         # MN: 'idx' assigned but never used
         sid = re.sub('^edge_', '',
-                     re.split('\.', os.path.basename(filename))[0])
+                     re.split('\\.', os.path.basename(filename))[0])
         x, y = p1(dat[:, 0], dat[:, 1])
         mlab.plot3d(x/1e3, y/1e3, SCALING*dat[:, 2], tube_radius=2,
                     color=(1, 1, 0))
