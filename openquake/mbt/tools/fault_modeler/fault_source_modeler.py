@@ -201,9 +201,9 @@ def build_model_from_db(fault_db,
 
 # -----------------------------------------------------------------------------
 
-class fault_database():
+class FaultDatabase():
     """
-    The faukl_database object is used to retrieve, add, modify and export
+    The faul_database object is used to retrieve, add, modify and export
     information from a database in geojson format
     """
 

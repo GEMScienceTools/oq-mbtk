@@ -24,7 +24,7 @@ class TestDatabaseIO(unittest.TestCase):
     def test_fault_database(self):
 
         # Import the database
-        fault_db = fsm.fault_database()
+        fault_db = fsm.FaultDatabase()
         fault_db.import_from_geojson(geojson_file,
                                       param_map=param_map,
                                       select_list=[1, 2])
@@ -44,7 +44,7 @@ class TestDatabaseIO(unittest.TestCase):
     def test_build_model_from_db(self):
 
         # Import the database
-        fault_db = fsm.fault_database()
+        fault_db = fsm.FaultDatabase()
         fault_db.import_from_geojson(geojson_file,
                                       param_map=param_map,
                                       select_list=[1, 2])
