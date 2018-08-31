@@ -1,5 +1,6 @@
 import unittest
-#import filecmp
+import os
+import json
 
 import openquake.mbt.tools.fault_modeler.fault_source_modeler as fsm
 
@@ -39,11 +40,21 @@ class TestDatabaseIO(unittest.TestCase):
 
         fault_db.remove_property('name')
 
-        # Esport the augmented database
-        fault_db.export_to_geojson('Data/out_db.geojson')
+        # Target and reference files
+        tar_file = os.path.join('Data', 'out_db.tar.geojson')
+        ref_file = os.path.join('Data', 'out_db.ref.geojson')
 
-        #self.assertTrue(filecmp('Data/out_db.reference.geojson',
-        #                        'Data/out_db.geojson'))
+        # Export the augmented database
+        fault_db.export_to_geojson(tar_file)
+
+        with open(tar_file, 'r') as f:
+            tar = json.load(f)
+
+        with open(ref_file, 'r') as f:
+            ref = json.load(f)
+
+        for fr, ft in zip(ref['features'], tar['features']):
+            self.assertTrue(fr == ft)
 
     def test_build_model_from_db(self):
 
