@@ -108,7 +108,7 @@ def build_fault_model(cfg_file=None,
 
     # Import the fault database from geojson
     if geojson_file is not None:
-        fault_db = fault_database()
+        fault_db = FaultDatabase()
         fault_db.import_from_geojson(geojson_file,
                                      black_list=black_list,
                                      select_list=select_list,
