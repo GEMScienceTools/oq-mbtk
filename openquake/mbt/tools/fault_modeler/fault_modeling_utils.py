@@ -1383,7 +1383,7 @@ def net_slip_from_shortening_fault_geom(fault_dict, slip_class='mle',
     if slip_class == 'mle':
         dip = dips[0] if not np.isscalar(dips) else dips
         rake = rakes[0] if not np.isscalar(rakes) else rakes
-        apparent_dip = _apparent_dip_from_dip_rake(dip, rake)
+        apparent_dip = apparent_dip_from_dip_rake(dip, rake)
         net_slip_rate = shortening_rate / np.cos(np.radians(apparent_dip))
         return net_slip_rate
 
@@ -1393,7 +1393,7 @@ def net_slip_from_shortening_fault_geom(fault_dict, slip_class='mle',
         if np.isscalar(rakes):
             rakes = [rakes]
 
-        apparent_dips = [_apparent_dip_from_dip_rake(dip, rake)
+        apparent_dips = [apparent_dip_from_dip_rake(dip, rake)
                          for dip in dips
                          for rake in rakes]
         net_slip_rates = shortening_rate / np.cos(np.radians(apparent_dips))
@@ -1729,14 +1729,18 @@ def net_slip_from_all_slip_comps(fault_dict, slip_class='mle', _abs=True,
     return np.sqrt(dip_slip_rate ** 2 + strike_slip_rate ** 2)
 
 
-def _apparent_dip_from_dip_rake(dip, rake):
+def apparent_dip_from_dip_rake(dip, rake):
     """
     Calculates the apparent dip of a fault given the true dip and rake.
     """
     dip = np.abs(dip)
     rake = np.abs(rake)
-    return np.degrees(np.arctan(np.tan(np.radians(rake))
-                                * np.sin(np.radians(dip))))
+
+    beta = np.degrees(np.arctan(np.tan(np.radians(rake))
+                                * np.cos(np.radians(dip))))
+
+    return np.degrees(np.arctan(np.sin(np.radians(beta))
+                                * np.tan(np.radians(dip))))
 
 
 def true_dip_from_vert_short(vert, short):
