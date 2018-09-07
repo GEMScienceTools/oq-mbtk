@@ -1,6 +1,7 @@
 import json
 import unittest
 import os
+import numpy as np
 
 from openquake.mbt.tools.fault_modeler.fault_modeling_utils import *
 
@@ -230,7 +231,19 @@ class TestConversionUtils(unittest.TestCase):
         pass
 
     def test_net_slip_from_shortening_fault_geom(self):
-        pass
+        fault = {'coords': [[0.,0.], [0.,1.]],
+                 'upper_seis_depth': 0.,
+                 'lower_seis_depth': 10.,
+                 'average_dip': '(30,,)',
+                 'dip_dir': 'E',
+                 'slip_type': 'Reverse'
+                 'shortening_rate': '({},,)'.format(np.sqrt(3.))
+                 }
+        net_slip_rate_ = 2.
+
+        net_slip_rate = net_slip_from_shortening_fault_geom(fault)
+
+        self.assertTrue( abs(net_slip_rate_ - net_slip_rate) < 0.01)
 
     def test_net_slip_from_strike_slip_shortening(self):
         pass
@@ -253,8 +266,15 @@ class TestConversionUtils(unittest.TestCase):
         pass
 
 
+  
+    # utils
 
+    def test_apparent_dip_from_dip_rake_1(self):
+        dip = 30.
+        rake = 90.
 
+        apparent_dip = apparent_dip_from_dip_rake(dip, rake)
+        self.assertTrue( abs(apparent_dip - 30.) < 0.01)
 
 if __name__ == "__main__":
     unittest.main()
