@@ -236,7 +236,7 @@ class TestConversionUtils(unittest.TestCase):
                  'lower_seis_depth': 10.,
                  'average_dip': '(30,,)',
                  'dip_dir': 'E',
-                 'slip_type': 'Reverse'
+                 'slip_type': 'Reverse',
                  'shortening_rate': '({},,)'.format(np.sqrt(3.))
                  }
         net_slip_rate_ = 2.
