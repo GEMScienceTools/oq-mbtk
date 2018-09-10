@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors: Julio Garcia, Richard Styron, Valerio Poggi
-# Last modify: 09/08/2018
+# Last modify: 10/09/2018
 
 # -----------------------------------------------------------------------------
 
@@ -26,8 +26,6 @@ import numpy as np
 from copy import deepcopy
 import importlib
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
-
 import openquake.hazardlib as hz
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.mbt.oqt_project import OQtSource
@@ -35,10 +33,13 @@ from openquake.mbt.tools.faults import rates_for_double_truncated_mfd
 
 # -----------------------------------------------------------------------------
 
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 # TODO: Create options for MFDs other than double-truncated,
 #       evenly-distributed GR
 
-# Parameters, in order, that are the necessary arguments for a SimpleFaultSource
+# Parameters, in order, that are the necessary arguments
+# for a SimpleFaultSource
 sfs_params = ('source_id',
               'name',
               'tectonic_region_type',
@@ -90,6 +91,7 @@ defaults = {'name': 'unnamed',
 scale_rel_map = {'Leonard2014_SCR': 'leonard2014',
                  'Leonard2014_Interplate': 'leonard2014',
                  'WC1994': 'wc1994'}
+
 
 # -----------------------------------------------------------------------------
 
@@ -246,7 +248,6 @@ def construct_sfs_dict(fault_dict, area_method='simple',
                     magnitude_scaling_relation=magnitude_scaling_relation,
                     defaults=defaults,
                     param_map=param_map))
-
 
     mfd, slr = calc_mfd_from_fault_params(
                     fault_dict, area_method=area_method,
@@ -607,10 +608,9 @@ def write_rupture_params(fault_dict,
                    for p in rupture_params}
 
     rup_param_d['magnitude_scaling_relation'] = get_scaling_rel(
-                                                fetch_param_val(fault_dict,
-                                                'magnitude_scaling_relation',
-                                                defaults=defaults,
-                                                param_map=param_map))
+        fetch_param_val(
+            fault_dict, 'magnitude_scaling_relation',
+            defaults=defaults, param_map=param_map))
 
     return rup_param_d
 
@@ -725,7 +725,7 @@ def trace_from_coords(fault_dict, defaults=defaults, param_map=param_map,
         if slip_type not in ('Strike-Slip', 'Dextral', 'Sinistral'):
             if dip < 90.:
 
-                fault_trace = _check_trace_coord_ordering(fault_dict, 
+                fault_trace = _check_trace_coord_ordering(fault_dict,
                                                           fault_trace,
                                                           defaults=defaults,
                                                           param_map=param_map)
@@ -816,7 +816,7 @@ def _check_trace_coord_ordering(fault_dict, fault_trace,
 
 def angle_difference(trend_1, trend_2, return_abs=True):
     """
-    Calculates the difference between two trends or azimuths (trend_1 and 
+    Calculates the difference between two trends or azimuths (trend_1 and
     trend_2), in degrees.
 
     :param trend_1:
@@ -892,11 +892,10 @@ def write_geom(fault_dict, requested_val='mle', width_method='seismo_depth',
                                                    defaults=defaults,
                                                    param_map=param_map),
 
-        'lower_seismogenic_depth': get_lower_seismo_depth(fault_dict,
-                                           width_method=width_method,
-                                           width_scaling_relation=width_scaling_relation,
-                                           defaults=defaults,
-                                           param_map=param_map)
+        'lower_seismogenic_depth': get_lower_seismo_depth(
+                        fault_dict, width_method=width_method,
+                        width_scaling_relation=width_scaling_relation,
+                        defaults=defaults, param_map=param_map)
     }
 
     return geom_params
@@ -915,10 +914,10 @@ def get_lower_seismo_depth(fault_dict, width_method='seismo_depth',
         usd = fetch_param_val(fault_dict, 'upper_seismogenic_depth',
                               defaults=defaults, param_map=param_map)
 
-        return get_lsd_from_width(fault_dict, usd=usd,
-                                  width_scaling_relation=width_scaling_relation,
-                                  defaults=defaults, param_map=param_map)
-
+        return get_lsd_from_width(
+                    fault_dict, usd=usd,
+                    width_scaling_relation=width_scaling_relation,
+                    defaults=defaults, param_map=param_map)
 
 
 def get_lsd_from_width(fault_dict, usd=None, width=None,
@@ -928,19 +927,16 @@ def get_lsd_from_width(fault_dict, usd=None, width=None,
         usd = fetch_param_val(fault_dict, 'upper_seismogenic_depth',
                               defaults=defaults, param_map=param_map)
 
-
-    if width == None:
-        width = calc_fault_width_from_length(fault_dict,
-                                           width_scaling_relation=width_scaling_relation,
-                                           defaults=defaults,
-                                           param_map=param_map)
+    if width is None:
+        width = calc_fault_width_from_length(
+                    fault_dict, width_scaling_relation=width_scaling_relation,
+                    defaults=defaults, param_map=param_map)
 
     dip = get_dip(fault_dict, param_map=param_map, defaults=defaults)
 
     lsd = usd + width * np.sin(np.radians(dip))
 
     return lsd
-
 
 
 def get_rake(fault_dict, requested_val='mle', defaults=defaults,
@@ -1137,7 +1133,8 @@ def get_net_slip_rate(fault_dict, slip_class='mle', param_map=param_map,
 
     if 'net_slip_rate' in rate_comps:
         return fetch_slip_rate(fault_dict, 'net_slip_rate',
-                               slip_class=slip_class, param_map=param_map)
+                               slip_class=slip_class,
+                               param_map=param_map)
     elif rate_comps == ['strike_slip_rate']:
         return net_slip_from_strike_slip_fault_geom(fault_dict,
                                                     slip_class=slip_class,
@@ -1159,7 +1156,8 @@ def get_net_slip_rate(fault_dict, slip_class='mle', param_map=param_map,
                                                   slip_class=slip_class,
                                                   param_map=param_map)
     elif set(rate_comps) == {'strike_slip_rate', 'vert_slip_rate'}:
-        return net_slip_from_vert_strike_slip(fault_dict, slip_class=slip_class,
+        return net_slip_from_vert_strike_slip(fault_dict,
+                                              slip_class=slip_class,
                                               param_map=param_map)
     elif set(rate_comps) == {'strike_slip_rate', 'shortening_rate'}:
         return net_slip_from_strike_slip_shortening(fault_dict,
@@ -1167,7 +1165,8 @@ def get_net_slip_rate(fault_dict, slip_class='mle', param_map=param_map,
                                                     param_map=param_map)
     elif set(rate_comps) == {'strike_slip_rate', 'shortening_rate',
                              'vert_slip_rate'}:
-        return net_slip_from_all_slip_comps(fault_dict, slip_class=slip_class,
+        return net_slip_from_all_slip_comps(fault_dict,
+                                            slip_class=slip_class,
                                             param_map=param_map)
 
     else:
@@ -1212,8 +1211,9 @@ def net_slip_from_strike_slip_fault_geom(fault_dict, slip_class='mle',
                                        slip_class=slip_class)
 
     try:
-        rake = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_rake',
-                                               param_map=param_map))
+        rake = get_vals_from_tuple(fetch_param_val(
+                                        fault_dict, 'average_rake',
+                                        param_map=param_map))
     except KeyError:
 
         rake = get_rake(fault_dict, requested_val=slip_class,
@@ -1736,11 +1736,11 @@ def apparent_dip_from_dip_rake(dip, rake):
     dip = np.abs(dip)
     rake = np.abs(rake)
 
-    beta = np.degrees(np.arctan(np.tan(np.radians(rake))
-                                * np.cos(np.radians(dip))))
+    beta = np.degrees(np.arctan(
+                np.tan(np.radians(rake)) * np.cos(np.radians(dip))))
 
-    return np.degrees(np.arctan(np.sin(np.radians(beta))
-                                * np.tan(np.radians(dip))))
+    return np.degrees(np.arctan(
+                np.sin(np.radians(beta)) * np.tan(np.radians(dip))))
 
 
 def true_dip_from_vert_short(vert, short):
@@ -1840,7 +1840,7 @@ def get_fault_width(fault_dict, width_method='length_scaling',
 
     :type width_scaling_rel:
         str
-        
+
     :param fault_dict:
         Dictionary containing the fault attributes and geometry
 
@@ -1933,11 +1933,9 @@ def calc_fault_width_from_usd_lsd_dip(fault_dict, defaults=defaults,
     return width
 
 
-def calc_fault_width_from_length(fault_dict,
-                                 width_scaling_relation='Leonard2014_Interplate',
-                                 defaults=defaults,
-                                 param_map=param_map,
-                                 **kwargs):
+def calc_fault_width_from_length(
+        fault_dict, width_scaling_relation='Leonard2014_Interplate',
+        defaults=defaults, param_map=param_map, **kwargs):
     """
     Calculates the width (down-dip distance) of a fault from its length given
     a scaling relation. Currently, only `leonard_2010` is defined.
@@ -1971,7 +1969,6 @@ def calc_fault_width_from_length(fault_dict,
                                              'width_scaling_relation',
                                              defaults=defaults,
                                              param_map=param_map)
-
 
     scale_func_dict = {'Leonard2014_Interplate': leonard_width_from_length}
 
@@ -2114,9 +2111,10 @@ def leonard_width_from_length(fault_dict, const_1=1.75, const_2=1.5,
 
 def get_fault_area(fault_dict, area_method='simple',
                    width_method='seismo_depth',
-                   width_scaling_relation='Leonard2014_Interplate', defaults=defaults,
+                   width_scaling_relation='Leonard2014_Interplate',
+                   defaults=defaults,
                    param_map=param_map):
-    """ 
+    """
     :param fault_dict:
         Dictionary containing the fault attributes and geometry
 
@@ -2256,8 +2254,9 @@ def get_M_min(fault_dict, defaults=defaults, param_map=param_map):
     return M_min
 
 
-def get_M_max(fault_dict, magnitude_scaling_relation=None, area_method='simple',
-              width_method='seismo_depth', width_scaling_relation='Leonard2014_Interplate',
+def get_M_max(fault_dict, magnitude_scaling_relation=None,
+              area_method='simple', width_method='seismo_depth',
+              width_scaling_relation='Leonard2014_Interplate',
               defaults=defaults, param_map=param_map):
     """
     Calculates (or fetches) the maximum magnitude for a fault, given a fault
@@ -2350,29 +2349,28 @@ def get_M_max(fault_dict, magnitude_scaling_relation=None, area_method='simple',
             else:
                 mag_scaling_fun = get_scaling_rel(magnitude_scaling_relation)
 
-            rake = get_rake(fault_dict) #returns mle rake
-            #rake = get_rake(fault_dict, requested_val=slip_class,
-            #                defaults=defaults, param_map=param_map)
+            rake = get_rake(fault_dict)  # returns mle rake
+            # rake = get_rake(fault_dict, requested_val=slip_class,
+            #                 defaults=defaults, param_map=param_map)
 
-            fault_area = get_fault_area(fault_dict, area_method=area_method,
-                                        width_method=width_method,
-                                        width_scaling_relation=width_scaling_relation,
-                                        defaults=defaults, param_map=param_map)
+            fault_area = get_fault_area(
+                            fault_dict, area_method=area_method,
+                            width_method=width_method,
+                            width_scaling_relation=width_scaling_relation,
+                            defaults=defaults, param_map=param_map)
 
             M_max = mag_scaling_fun.get_median_mag(fault_area, rake)
-
 
     return M_max
 
 
-def calc_mfd_from_fault_params(fault_dict, area_method='simple',
-                               width_method='seismo_depth',
-                               width_scaling_relation='Leonard2014_Interplate',
-                               slip_class='mle', magnitude_scaling_relation=None,
-                               M_max=None, M_min=None, b_value=None,
-                               slip_rate=None, bin_width=None, fault_area=None,
-                               defaults=defaults, param_map=param_map,
-                               aseismic_coefficient=None):
+def calc_mfd_from_fault_params(
+        fault_dict, area_method='simple', width_method='seismo_depth',
+        width_scaling_relation='Leonard2014_Interplate', slip_class='mle',
+        magnitude_scaling_relation=None, M_max=None, M_min=None, b_value=None,
+        slip_rate=None, bin_width=None, fault_area=None,
+        defaults=defaults, param_map=param_map,
+        aseismic_coefficient=None):
     """
     Creates a magnitude-frequency distribution from fault parameters.
 
@@ -2507,16 +2505,18 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
         M_min = get_M_min(fault_dict, defaults=defaults, param_map=param_map)
 
     if M_max is None:
-        M_max = get_M_max(fault_dict, defaults=defaults, param_map=param_map,
-                          magnitude_scaling_relation=magnitude_scaling_relation,
-                          area_method=area_method,
-                          width_method=width_method)
+        M_max = get_M_max(
+                    fault_dict, defaults=defaults, param_map=param_map,
+                    magnitude_scaling_relation=magnitude_scaling_relation,
+                    area_method=area_method,
+                    width_method=width_method)
 
     if fault_area is None:
-        fault_area = get_fault_area(fault_dict, area_method=area_method,
-                                    width_method=width_method,
-                                    width_scaling_relation=width_scaling_relation,
-                                    defaults=defaults, param_map=param_map)
+        fault_area = get_fault_area(
+                        fault_dict, area_method=area_method,
+                        width_method=width_method,
+                        width_scaling_relation=width_scaling_relation,
+                        defaults=defaults, param_map=param_map)
 
     M_upper = fetch_param_val(fault_dict, 'M_upper',
                               defaults=defaults, param_map=param_map)
@@ -2528,10 +2528,10 @@ def calc_mfd_from_fault_params(fault_dict, area_method='simple',
                         defaults=defaults, param_map=param_map)
 
         if magnitude_scaling_relation is None:
-            mag_scaling_fun =  get_scaling_rel(
-                               defaults['magnitude_scaling_relation'])
+            mag_scaling_fun = get_scaling_rel(
+                              defaults['magnitude_scaling_relation'])
         else:
-            mag_scaling_fun =  get_scaling_rel(magnitude_scaling_relation)
+            mag_scaling_fun = get_scaling_rel(magnitude_scaling_relation)
 
         fault_area = mag_scaling_fun.get_median_area(M_max, rake)
 
