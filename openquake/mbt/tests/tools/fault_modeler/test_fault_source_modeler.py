@@ -1,14 +1,20 @@
 import unittest
 import os
 import json
+import filecmp
 
 import openquake.mbt.tools.fault_modeler.fault_source_modeler as fsm
 
 # -----------------------------------------------------------------------------
 
+BASE_DATA_PATH = os.path.dirname(__file__)
+
+# -----------------------------------------------------------------------------
+
 class TestDatabaseIO(unittest.TestCase):
 
-    geojson_file = os.path.join('Data', 'ne_asia_faults_rates.geojson')
+    geojson_file = os.path.join(BASE_DATA_PATH, 'Data',
+                                'ne_asia_faults_rates.geojson')
 
     param_map = {'source_id': 'ogc_fid',
                  'name': 'ns_name',
@@ -22,6 +28,12 @@ class TestDatabaseIO(unittest.TestCase):
                  'dip_slip_rate': 'ns_dip_slip_rate'}
 
     def test_fault_database(self):
+
+        # Target and reference files
+        test_file = os.path.join(BASE_DATA_PATH, 'Data',
+                                 'fault_database.test.geojson')
+        base_file = os.path.join(BASE_DATA_PATH, 'Data',
+                                 'fault_database.base.geojson')
 
         # Import the database
         fault_db = fsm.FaultDatabase()
@@ -38,23 +50,25 @@ class TestDatabaseIO(unittest.TestCase):
 
         fault_db.remove_property('name')
 
-        # Target and reference files
-        tar_file = os.path.join('Data', 'out_db.tar.geojson')
-        ref_file = os.path.join('Data', 'out_db.ref.geojson')
-
         # Export the augmented database
-        fault_db.export_to_geojson(tar_file)
+        fault_db.export_to_geojson(test_file)
 
-        with open(tar_file, 'r') as f:
-            tar = json.load(f)
+        with open(test_file, 'r') as f:
+            test_out = json.load(f)
 
-        with open(ref_file, 'r') as f:
-            ref = json.load(f)
+        with open(base_file, 'r') as f:
+            base_out = json.load(f)
 
-        for fr, ft in zip(ref['features'], tar['features']):
-            self.assertTrue(fr == ft)
+        for bo, to in zip(base_out['features'], test_out['features']):
+            self.assertTrue(bo == to)
 
     def test_build_model_from_db(self):
+
+        # Target and reference files
+        test_file = os.path.join(BASE_DATA_PATH, 'Data',
+                                 'fault_model_01.test.xml')
+        base_file = os.path.join(BASE_DATA_PATH, 'Data', 
+                                 'fault_model_01.base.xml')
 
         # Import the database
         fault_db = fsm.FaultDatabase()
@@ -63,30 +77,62 @@ class TestDatabaseIO(unittest.TestCase):
                                      select_list=[1, 2])
 
         # Create and export the model
-        fsm.build_model_from_db(fault_db,
-                                xml_output='Data/fault_model.xml')
+        fsm.build_model_from_db(fault_db, xml_output=test_file)
+
+        # Compare files
+        self.assertTrue(filecmp.cmp(base_file, test_file))
 
     def test_build_source_model_single_args(self):
 
+        # Target and reference files
+        test_file = os.path.join(BASE_DATA_PATH, 'Data',
+                                 'fault_model_02.test.xml')
+        base_file = os.path.join(BASE_DATA_PATH, 'Data', 
+                                 'fault_model_02.base.xml')
+
+        # Create and export the model
         fsm.build_fault_model(geojson_file=self.geojson_file,
-                              xml_output='Data/fault_model.xml',
+                              xml_output=test_file,
                               black_list=[1,2,3],
                               param_map=self.param_map,
                               M_max=8.2,
                               lower_seismogenic_depth=30.)
 
+        # Compare files
+        self.assertTrue(filecmp.cmp(base_file, test_file))
+
     def test_build_source_model_dictionary(self):
 
+        # Target and reference files
+        test_file = os.path.join(BASE_DATA_PATH, 'Data',
+                                 'fault_model_03.test.xml')
+        base_file = os.path.join(BASE_DATA_PATH, 'Data', 
+                                 'fault_model_03.base.xml')
+
+        # Create and export the model
         fsm.build_fault_model(geojson_file=self.geojson_file,
-                              xml_output='Data/fault_model.xml',
+                              xml_output=test_file,
                               param_map=self.param_map,
                               defaults={'upper_seismogenic_depth':10.,
                                         'lower_seismogenic_depth':30.})
 
+        # Compare files
+        self.assertTrue(filecmp.cmp(base_file, test_file))
+
     def test_build_source_model_config_file(self):
 
-        fsm.build_fault_model(cfg_file='Data/config.ini')
+        # Configuration, target and reference files
+        conf_file = os.path.join(BASE_DATA_PATH, 'Data', 'config.ini')
+        test_file = os.path.join(BASE_DATA_PATH, 'Data',
+                                 'fault_model_04.test.xml')
+        base_file = os.path.join(BASE_DATA_PATH, 'Data', 
+                                 'fault_model_04.base.xml')
 
+        # Create and export the model
+        fsm.build_fault_model(cfg_file=conf_file)
+
+        # Compare files
+        self.assertTrue(filecmp.cmp(base_file, test_file))
 
 if __name__ == "__main__":
     unittest.main()
