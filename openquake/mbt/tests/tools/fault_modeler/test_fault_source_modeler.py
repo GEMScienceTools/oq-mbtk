@@ -11,9 +11,10 @@ BASE_DATA_PATH = os.path.dirname(__file__)
 
 # -----------------------------------------------------------------------------
 
+
 class TestDatabaseIO(unittest.TestCase):
 
-    geojson_file = os.path.join(BASE_DATA_PATH, 'Data',
+    geojson_file = os.path.join(BASE_DATA_PATH, 'data',
                                 'ne_asia_faults_rates.geojson')
 
     param_map = {'source_id': 'ogc_fid',
@@ -30,9 +31,9 @@ class TestDatabaseIO(unittest.TestCase):
     def test_fault_database(self):
 
         # Target and reference files
-        test_file = os.path.join(BASE_DATA_PATH, 'Data',
+        test_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_database.test.geojson')
-        base_file = os.path.join(BASE_DATA_PATH, 'Data',
+        base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_database.base.geojson')
 
         # Import the database
@@ -65,9 +66,9 @@ class TestDatabaseIO(unittest.TestCase):
     def test_build_model_from_db(self):
 
         # Target and reference files
-        test_file = os.path.join(BASE_DATA_PATH, 'Data',
+        test_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_01.test.xml')
-        base_file = os.path.join(BASE_DATA_PATH, 'Data', 
+        base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_01.base.xml')
 
         # Import the database
@@ -85,15 +86,15 @@ class TestDatabaseIO(unittest.TestCase):
     def test_build_source_model_single_args(self):
 
         # Target and reference files
-        test_file = os.path.join(BASE_DATA_PATH, 'Data',
+        test_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_02.test.xml')
-        base_file = os.path.join(BASE_DATA_PATH, 'Data', 
+        base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_02.base.xml')
 
         # Create and export the model
         fsm.build_fault_model(geojson_file=self.geojson_file,
                               xml_output=test_file,
-                              black_list=[1,2,3],
+                              black_list=[1, 2, 3],
                               param_map=self.param_map,
                               M_max=8.2,
                               lower_seismogenic_depth=30.)
@@ -104,17 +105,17 @@ class TestDatabaseIO(unittest.TestCase):
     def test_build_source_model_dictionary(self):
 
         # Target and reference files
-        test_file = os.path.join(BASE_DATA_PATH, 'Data',
+        test_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_03.test.xml')
-        base_file = os.path.join(BASE_DATA_PATH, 'Data', 
+        base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_03.base.xml')
 
         # Create and export the model
         fsm.build_fault_model(geojson_file=self.geojson_file,
                               xml_output=test_file,
                               param_map=self.param_map,
-                              defaults={'upper_seismogenic_depth':10.,
-                                        'lower_seismogenic_depth':30.})
+                              defaults={'upper_seismogenic_depth': 10.,
+                                        'lower_seismogenic_depth': 30.})
 
         # Compare files
         self.assertTrue(filecmp.cmp(base_file, test_file))
@@ -122,10 +123,10 @@ class TestDatabaseIO(unittest.TestCase):
     def test_build_source_model_config_file(self):
 
         # Configuration, target and reference files
-        conf_file = os.path.join(BASE_DATA_PATH, 'Data', 'config.ini')
-        test_file = os.path.join(BASE_DATA_PATH, 'Data',
+        conf_file = os.path.join(BASE_DATA_PATH, 'data', 'config.ini')
+        test_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_04.test.xml')
-        base_file = os.path.join(BASE_DATA_PATH, 'Data', 
+        base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_04.base.xml')
 
         # Create and export the model
