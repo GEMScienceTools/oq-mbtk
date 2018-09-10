@@ -20,7 +20,8 @@ class TestReadModel(unittest.TestCase):
 
     def test_read_source_model(self):
         """ read simple source model """
-        fname = os.path.join('data', 'model', 'source_model.xml')
+        fname = os.path.join(BASE_DATA_PATH, 'data', 'model',
+                             'source_model.xml')
         srcs, _ = read(fname)
         self.assertTrue(len(srcs) == 1)
 
