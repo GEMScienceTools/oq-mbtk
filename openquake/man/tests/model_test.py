@@ -1,7 +1,8 @@
+import os
 import numpy
 import unittest
 
-from openquake.man.model import _split_point_source
+from openquake.man.model import _split_point_source, read
 
 from openquake.hazardlib.source import PointSource
 from openquake.hazardlib.mfd import TruncatedGRMFD, EvenlyDiscretizedMFD
@@ -10,6 +11,18 @@ from openquake.hazardlib.tom import PoissonTOM
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib.geo.nodalplane import NodalPlane
 from openquake.hazardlib.pmf import PMF
+
+
+BASE_DATA_PATH = os.path.dirname(__file__)
+
+
+class TestReadModel(unittest.TestCase):
+
+    def test_read_source_model(self):
+        """ read simple source model """
+        fname = os.path.join('data', 'model', 'source_model.xml')
+        srcs, _ = read(fname)
+        self.assertTrue(len(srcs) == 1)
 
 
 class TestSplitSources(unittest.TestCase):
