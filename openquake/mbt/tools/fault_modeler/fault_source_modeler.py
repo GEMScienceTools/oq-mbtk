@@ -29,13 +29,14 @@ from copy import deepcopy
 
 import configparser
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import openquake.mbt.tools.fault_modeler.fault_modeling_utils as fmu
 from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.baselib import sap
 
 # -----------------------------------------------------------------------------
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # Parameters required from the fault modeler
 option_types = {'b_value': float,
@@ -51,6 +52,7 @@ option_types = {'b_value': float,
                 'lower_seismogenic_depth': float,
                 'magnitude_scaling_relation': str,
                 'width_scaling_relation': str}
+
 
 # -----------------------------------------------------------------------------
 
@@ -128,6 +130,7 @@ def build_fault_model(cfg_file=None,
     if xml_output is None:
         return srcl
 
+
 # -----------------------------------------------------------------------------
 
 def read_config_file(cfg_file):
@@ -150,9 +153,10 @@ def read_config_file(cfg_file):
                     cast = option_types[k]
                 else:
                     cast = str
-                cfg_dict[key][k] = cast(v) 
+                cfg_dict[key][k] = cast(v)
 
     return cfg_dict
+
 
 # -----------------------------------------------------------------------------
 
@@ -184,9 +188,9 @@ def build_model_from_db(fault_db,
 
         try:
             sfs_dict = fmu.construct_sfs_dict(fl,
-                                width_method=width_method,
-                                param_map=param_map_local,
-                                defaults=defaults_local)
+                                              width_method=width_method,
+                                              param_map=param_map_local,
+                                              defaults=defaults_local)
             sfs = fmu.make_fault_source(sfs_dict, oqt_source=oqt_source)
             srcl.append(sfs)
 
@@ -198,6 +202,7 @@ def build_model_from_db(fault_db,
         write_source_model(xml_output, srcl, project_name)
     else:
         return srcl
+
 
 # -----------------------------------------------------------------------------
 
@@ -217,10 +222,8 @@ class FaultDatabase():
         if geojson_file:
             self.import_from_geojson(geojson_file)
 
-    def import_from_geojson(self, geojson_file,
-                                  black_list=None,
-                                  select_list=None,
-                                  param_map=None):
+    def import_from_geojson(self, geojson_file, black_list=None,
+                            select_list=None, param_map=None):
         """
         """
 
@@ -234,7 +237,7 @@ class FaultDatabase():
             data = json.load(f)
 
             # Import geojson metadata
-            self.meta = {k:data[k] for k in data if k is not 'features'}
+            self.meta = {k: data[k] for k in data if k is not 'features'}
 
             # Loop over faults
             for feature in data['features']:
@@ -281,12 +284,12 @@ class FaultDatabase():
 
         with open(geojson_file, 'w') as f:
 
-            data = {k:self.meta[k] for k in self.meta}
+            data = {k: self.meta[k] for k in self.meta}
             data['features'] = []
 
             for fl in self.db:
 
-                prop = {k:fl[k] for k in fl if k is not 'trace_coordinates'}
+                prop = {k: fl[k] for k in fl if k is not 'trace_coordinates'}
                 geom = {'coordinates': fl['trace_coordinates'],
                         'type': 'LineString'}
 
@@ -314,6 +317,7 @@ class FaultDatabase():
             if fault[key] is id or id is None:
                 fault.pop(property)
 
+
 # -----------------------------------------------------------------------------
 
 def main(argv):
@@ -335,17 +339,17 @@ def main(argv):
           abbrev='-xml',
           metavar='\'*.xml\'')
     p.opt(name='black_list',
-          help='List of fault IDs NOT to be processed [id1,id2]', 
+          help='List of fault IDs NOT to be processed [id1,id2]',
           type=ast.literal_eval, abbrev='-h')
     p.opt(name='select_list',
-          help='List of selected fault IDs to be processed [id1,id2]', 
+          help='List of selected fault IDs to be processed [id1,id2]',
           type=ast.literal_eval, abbrev='-h')
     p.opt(name='project_name',
           help='Name of the current project', abbrev='-h')
     p.opt(name='width_method',
           help='Method to compute the fault width', abbrev='-h')
     p.opt(name='oqt_source',
-          help='Switch between hazardlib and oq-mbt source formats', 
+          help='Switch between hazardlib and oq-mbt source formats',
           abbrev='-h')
 
     if len(argv) < 1:
@@ -355,4 +359,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
