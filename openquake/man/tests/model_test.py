@@ -23,7 +23,7 @@ class TestReadModel(unittest.TestCase):
         fname = os.path.join(BASE_DATA_PATH, 'data', 'model',
                              'source_model.xml')
         srcs, _ = read(fname)
-        self.assertTrue(len(srcs) == 1)
+        self.assertEqual(len(srcs), 1)
 
 
 class TestSplitSources(unittest.TestCase):
