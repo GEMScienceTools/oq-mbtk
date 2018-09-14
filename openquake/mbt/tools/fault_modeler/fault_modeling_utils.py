@@ -74,6 +74,7 @@ defaults = {'name': 'unnamed',
             'M_min': 6.0,
             'M_max': None,
             'M_upper': 10.,
+            'slip_class': 'mle',
             'aseismic_coefficient': 0.,
             'upper_seismogenic_depth': 0.,
             'lower_seismogenic_depth': 35.,
@@ -97,7 +98,7 @@ scale_rel_map = {'Leonard2014_SCR': 'leonard2014',
 
 def construct_sfs_dict(fault_dict, area_method='simple',
                        width_method='seismo_depth',
-                       width_scaling_relation='None', slip_class='mle',
+                       width_scaling_relation=None, slip_class=None,
                        magnitude_scaling_relation=None,
                        subsurface_length=None,
                        M_max=None, M_min=None,
@@ -2366,7 +2367,7 @@ def get_M_max(fault_dict, magnitude_scaling_relation=None,
 
 def calc_mfd_from_fault_params(
         fault_dict, area_method='simple', width_method='seismo_depth',
-        width_scaling_relation='Leonard2014_Interplate', slip_class='mle',
+        width_scaling_relation='Leonard2014_Interplate', slip_class=None,
         magnitude_scaling_relation=None, M_max=None, M_min=None, b_value=None,
         slip_rate=None, bin_width=None, fault_area=None,
         defaults=defaults, param_map=param_map,
@@ -2500,6 +2501,10 @@ def calc_mfd_from_fault_params(
         EvenlyDiscretizedMFD
 
     """
+
+    if slip_class is None:
+        slip_class = fetch_param_val(fault_dict, 'slip_class',
+                                     defaults=defaults, param_map=param_map)
 
     if M_min is None:
         M_min = get_M_min(fault_dict, defaults=defaults, param_map=param_map)
