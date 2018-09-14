@@ -35,9 +35,6 @@ from openquake.mbt.tools.faults import rates_for_double_truncated_mfd
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-# TODO: Create options for MFDs other than double-truncated,
-#       evenly-distributed GR
-
 # Parameters, in order, that are the necessary arguments
 # for a SimpleFaultSource
 sfs_params = ('source_id',
@@ -101,7 +98,7 @@ scale_rel_map = {'Leonard2014_SCR': 'leonard2014',
 # -----------------------------------------------------------------------------
 
 def construct_sfs_dict(fault_dict, 
-                       mfd_type='DoubleTruncatedGR',
+                       mfd_type=None,
                        area_method='simple',
                        width_method='seismo_depth',
                        width_scaling_relation=None, slip_class=None,
