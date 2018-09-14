@@ -14,7 +14,7 @@ test_data_dir = os.path.join(BASE_DATA_PATH, data_dir_str)
 
 # -----------------------------------------------------------------------------
 
-class TestConversionUtils(unittest.TestCase):
+class TestModelingUtils(unittest.TestCase):
 
     def setUp(self):
 
@@ -222,8 +222,64 @@ class TestConversionUtils(unittest.TestCase):
         pass
 
     # MFDs and final objects
-    def test_calc_mfd_from_fault_params_1(self):
-        pass
+    def test_calc_mfd_from_fault_params_double_gr(self):
+
+        mfd, seis_rate = calc_mfd_from_fault_params(self.fault_1,
+                                                mfd_type='DoubleTruncatedGR',
+                                                param_map=self.param_map,
+                                                defaults=defaults)
+        
+        mfd_rates = [(6.05, 0.008792708455724264), 
+                     (6.1499999999999995, 0.0069842965860807266), 
+                     (6.25, 0.005547823978012335), 
+                     (6.35, 0.004406793227015579), 
+                     (6.45, 0.003500440284810207), 
+                     (6.55, 0.002780498552191055), 
+                     (6.65, 0.002208628506615345), 
+                     (6.75, 0.001754375982821495), 
+                     (6.85, 0.0013935503774772729), 
+                     (6.95, 0.0011069364113408821), 
+                     (7.05, 0.000879270845572433)]
+
+        seis_rate_ = 6.0
+
+        mfd_rate_calc = mfd.get_annual_occurrence_rates()
+
+        self.assertTrue(abs(seis_rate_ - seis_rate) < 0.01)
+        
+        for i, rate in enumerate(mfd_rates):
+            self.assertTrue(abs(rate[1] - mfd_rate_calc[i][1]) < 0.01)
+
+    def test_calc_mfd_from_fault_params_yc_1985(self):
+
+        mfd, seis_rate = calc_mfd_from_fault_params(self.fault_1,
+                                            mfd_type='YoungsCoppersmith1985',
+                                            param_map=self.param_map,
+                                            defaults=defaults)
+
+        mfd_rates = [(6.05, 0.0005161196304084878),
+                     (6.1499999999999995, 0.00040996839492892304), 
+                     (6.249999999999999, 0.00032564947143663876),
+                     (6.349999999999999, 0.00025867256978516083), 
+                     (6.449999999999998, 0.00020547092572904065), 
+                     (6.549999999999998, 0.0001632113577215128),
+                     (6.649999999999998, 0.0001296433896658826),
+                     (6.749999999999997, 0.00010297940485697282),
+                     (6.849999999999997, 0.0008258332824773236),
+                     (6.949999999999997, 0.0008258332824773236),
+                     (7.049999999999996, 0.0008258332824773236),
+                     (7.149999999999996, 0.0008258332824773236), 
+                     (7.249999999999996, 0.0008258332824773236)]
+
+        seis_rate_ = 6.0
+
+        mfd_rate_calc = mfd.get_annual_occurrence_rates()
+
+        self.assertTrue(abs(seis_rate_ - seis_rate) < 0.01)
+        
+        for i, rate in enumerate(mfd_rates):
+            self.assertTrue(abs(rate[1] - mfd_rate_calc[i][1]) < 0.01)
+
 
     # Utils
     def test_apparent_dip_from_dip_rake_1(self):
