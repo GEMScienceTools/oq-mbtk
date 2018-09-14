@@ -57,10 +57,11 @@ sfs_params = ('source_id',
 # Additional parameters
 all_params = list(sfs_params)
 all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
-               'M_upper', 'b_value', 'net_slip_rate', 'strike_slip_rate',
-               'dip_slip_rate', 'vert_slip_rate', 'shortening_rate',
-               'aseismic_coefficient', 'slip_class',
-               'width_scaling_relation', 'subsurface_length']
+               'M_char', 'M_upper', 'b_value', 'net_slip_rate',
+               'strike_slip_rate', 'dip_slip_rate', 'vert_slip_rate',
+               'shortening_rate', 'aseismic_coefficient', 'slip_class',
+               'width_scaling_relation', 'subsurface_length', 'rigidity',
+               'mfd_type']
 
 # Default mapping of parameters
 # (keys: variable names used here, vals: variable names in input files
@@ -73,6 +74,7 @@ defaults = {'name': 'unnamed',
             'bin_width': 0.1,
             'M_min': 6.0,
             'M_max': None,
+            'M_char': None,
             'M_upper': 10.,
             'slip_class': 'mle',
             'aseismic_coefficient': 0.,
@@ -85,7 +87,9 @@ defaults = {'name': 'unnamed',
             'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
             'magnitude_scaling_relation': 'Leonard2014_Interplate',
             'width_scaling_relation': 'Leonard2014_Interplate',
-            'subsurface_length': False
+            'subsurface_length': False,
+            'rigidity': 32e9,
+            'mfd_type': 'DoubleTruncatedGR',
             }
 
 # Module mapping for the scaling relations in the hazardlib
@@ -96,13 +100,16 @@ scale_rel_map = {'Leonard2014_SCR': 'leonard2014',
 
 # -----------------------------------------------------------------------------
 
-def construct_sfs_dict(fault_dict, area_method='simple',
+def construct_sfs_dict(fault_dict, 
+                       mfd_type='DoubleTruncatedGR',
+                       area_method='simple',
                        width_method='seismo_depth',
                        width_scaling_relation=None, slip_class=None,
                        magnitude_scaling_relation=None,
                        subsurface_length=None,
-                       M_max=None, M_min=None,
+                       M_max=None, M_char=None, M_min=None,
                        b_value=None, slip_rate=None,
+                       rigidity=None,
                        aseismic_coefficient=None,
                        bin_width=None,
                        fault_area=None, defaults=defaults,
@@ -117,6 +124,11 @@ def construct_sfs_dict(fault_dict, area_method='simple',
 
     :type fault_dict:
         dict
+
+    :param mfd_type:
+        Type (functional form) of magnitude-frequency distribution. Currently,
+        options are 'DoubleTruncatedGR' and 'YoungsCoppersmith1985'; the
+        latter is a hybrid GR-Characteristic model.
 
     :param area_method:
         Method used to calculate the surface area of a fault. Possible values
@@ -164,8 +176,16 @@ def construct_sfs_dict(fault_dict, area_method='simple',
 
     :param M_max:
         Maximum magnitude in the fault's magnitude-frequency distribution.
+        This is used for the 'DoubleTruncatedGR' mfd.
 
     :type M_max:
+        float
+
+    :param M_char:
+        Characteristic magnitude in the fault's magnitude-frequency
+        distribution. This is used for the 'YoungsCoppersmith1985' mfd.
+
+    :type M_char:
         float
 
     :param M_min:
@@ -251,7 +271,9 @@ def construct_sfs_dict(fault_dict, area_method='simple',
                     param_map=param_map))
 
     mfd, slr = calc_mfd_from_fault_params(
-                    fault_dict, area_method=area_method,
+                    fault_dict, 
+                    mfd_type=mfd_type,
+                    area_method=area_method,
                     width_method=width_method,
                     width_scaling_relation=width_scaling_relation,
                     slip_class=slip_class,
@@ -2365,12 +2387,199 @@ def get_M_max(fault_dict, magnitude_scaling_relation=None,
     return M_max
 
 
-def calc_mfd_from_fault_params(
+def calc_mfd_from_fault_params(fault_dict,
+                               mfd_type='DoubleTruncatedGR',
+                               area_method='simple',
+                               width_method='seismo_depth',
+                               width_scaling_relation='Leonard2014_Interplate',
+                               slip_class=None,
+                               magnitude_scaling_relation=None, M_max=None,
+                               M_char=None,
+                               M_min=None, b_value=None, slip_rate=None,
+                               bin_width=None, fault_area=None,
+                               defaults=defaults, param_map=param_map,
+                               rigidity=None,
+                               aseismic_coefficient=None):
+
+    """
+    Creates a magnitude-frequency distribution from fault parameters
+    and MFD type.
+
+    Fault parameters (not methods or scaling relations) passed here will
+    override those in the `fault_dict`.
+
+    :param fault_dict:
+        Dictionary containing the fault attributes and geometry
+
+    :type fault_dict:
+        dict
+
+    :param mfd_type:
+        Type (functional form) of magnitude-frequency distribution. Currently,
+        options are 'DoubleTruncatedGR' and 'YoungsCoppersmith1985'; the
+        latter is a hybrid GR-Characteristic model.
+
+    :param area_method:
+        Method used to calculate the surface area of a fault. Possible values
+        are `simple` and `from_surface`. The 'simple' method calculates the
+        fault area as the fault length times the width (down-dip distance). The
+        `from_surface` method calculates the fault area through the
+        discretization methods used in the SimpleFaultSurface.
+
+    :type area_method:
+        str
+
+    :param width_method:
+        Method used to calculate the width (down-dip distance) of a fault.
+        'length_scaling' implements a scaling relation between the fault
+        length (derived from the trace) and the fault width, which is
+        calculated given the `scaling_rel`.  'seismo_depth' calculates the
+        width based on the fault's dip and the given values for upper and lower
+        seismogenic depth.
+
+    :type width_method:
+        str
+
+    :param width_scaling_rel:
+        The scaling relation between length and width. Currently,
+        only the scaling relation of Leonard (2010) BSSA is implemented,
+        as 'leonard_2010'.
+
+    :type width_scaling_rel:
+        str
+
+    :param slip_class:
+        Magnitude of the slip rate (and associated parameters) to be used in
+        the calculations. Possible values are `mle` (most-likely estimate),
+        `min` and `max`.
+
+    :type slip_class:
+        str
+
+    :param mag_scaling_rel:
+        Magnitude-scaling relation used to calculate the maximum magnitude
+        from the fault parameters.
+
+    :type mag_scaling_rel:
+        str
+
+    :param M_max:
+        Maximum magnitude in the fault's magnitude-frequency distribution.
+        This is used for the 'DoubleTruncatedGR' mfd.
+
+    :type M_max:
+        float
+
+    :param M_char:
+        Characteristic magnitude in the fault's magnitude-frequency
+        distribution. This is used for the 'YoungsCoppersmith1985' mfd.
+
+    :type M_char:
+        float
+
+    :param M_min:
+        Minimum magnitude in the fault's magnitude-frequency distribution.
+
+    :type M_min:
+        float
+
+    :param b_value:
+        Gutenberg-Richter b-value for magnitude-frequency distribution. A
+        `b-value` passed here will override project and fault defaults.
+
+    :type b_value:
+        float
+
+    :param slip_rate:
+        Slip rate to be used in calculating the magnitude-frequency
+        distributiuon. A `slip_rate` passed here will override project and
+        fault defaults.
+
+    :type slip_rate:
+        float
+
+    :param aseismic_coefficient:
+        Fraction of slip rate that is released aseismically and doesn't
+        contribute to moment accumulation or seismic release on the fault.
+        Ranges between 0 and 1.
+
+    :type aseismic_coefficient:
+        float
+
+    :param bin_width:
+        Width of the bins for the magnitude-frequency distribution.
+
+    :type bin_width:
+        float
+
+    :param fault_area:
+        Surface area of the fault used to calculate the momen release rate
+        on the fault. A `slip_rate` value passed here will override the
+        value calculated from the fault's geometry.
+
+    :type fault_area:
+        float
+
+    :param defaults:
+        Dictionary of project defaults.
+
+    :type defaults:
+        dict
+
+    :param param_map:
+        Dictionary of the mapping from a fault's attribute names to the
+        variables used in this library.
+
+    :type param_map:
+        dict
+
+    :returns:
+        The MFD and seismic slip rate
+
+    :rtype:
+        tuple
+    """
+
+
+    if mfd_type == 'DoubleTruncatedGR':
+        mfd, seismic_slip_rate = calc_double_truncated_GR_mfd_from_fault_params(
+            fault_dict, area_method=area_method, width_method=width_method,
+            width_scaling_relation=width_scaling_relation, 
+            slip_class=slip_class,
+            magnitude_scaling_relation=magnitude_scaling_relation, 
+            M_max=M_max, M_min=M_min,
+            b_value=b_value, slip_rate=slip_rate, 
+            bin_width=bin_width, fault_area=fault_area,
+            rigidity=rigidity, defaults=defaults, param_map=param_map,
+            aseismic_coefficient=aseismic_coefficient)
+
+    elif mfd_type == 'YoungsCoppersmith1985':
+        mfd, seismic_slip_rate = calc_youngs_coppersmith_mfd_from_fault_params(
+            fault_dict, area_method=area_method, width_method=width_method,
+            width_scaling_relation=width_scaling_relation, 
+            slip_class=slip_class,
+            magnitude_scaling_relation=magnitude_scaling_relation, 
+            M_char=M_char, M_min=M_min,
+            b_value=b_value, slip_rate=slip_rate, 
+            bin_width=bin_width, fault_area=fault_area,
+            rigidity=rigidity, defaults=defaults, param_map=param_map,
+            aseismic_coefficient=aseismic_coefficient)
+
+    else:
+        raise NotImplementedError(
+            'mfd_type{} not implemented'.format(mfd_type))
+
+    return mfd, seismic_slip_rate
+
+
+
+
+def calc_double_truncated_GR_mfd_from_fault_params(
         fault_dict, area_method='simple', width_method='seismo_depth',
         width_scaling_relation='Leonard2014_Interplate', slip_class=None,
         magnitude_scaling_relation=None, M_max=None, M_min=None, b_value=None,
         slip_rate=None, bin_width=None, fault_area=None,
-        defaults=defaults, param_map=param_map,
+        defaults=defaults, param_map=param_map, rigidity=None,
         aseismic_coefficient=None):
     """
     Creates a magnitude-frequency distribution from fault parameters.
@@ -2554,6 +2763,11 @@ def calc_mfd_from_fault_params(
 
     seismic_slip_rate = slip_rate * (1 - aseismic_coefficient)
 
+    if rigidity is None:
+        rigidity = fetch_param_val(fault_dict,
+                                   'rigidity',
+                                   defaults=defaults,
+                                   param_map=param_map)
     if M_min > M_max:
         raise ValueError('M_min is greater than M_max')
 
@@ -2567,10 +2781,229 @@ def calc_mfd_from_fault_params(
 
     bin_rates = rates_for_double_truncated_mfd(fault_area, seismic_slip_rate,
                                                M_min, M_max,
-                                               b_value, bin_width)
+                                               b_value, bin_width,
+                                               rigidity=rigidity)
 
     mfd = hz.mfd.EvenlyDiscretizedMFD(M_min + bin_width / 2.,
                                       bin_width,
                                       bin_rates)
+
+    return mfd, seismic_slip_rate
+
+
+def calc_youngs_coppersmith_mfd_from_fault_params(
+        fault_dict, area_method='simple', width_method='seismo_depth',
+        width_scaling_relation='Leonard2014_Interplate', slip_class=None,
+        magnitude_scaling_relation=None, M_char=None, M_min=None, b_value=None,
+        slip_rate=None, bin_width=None, fault_area=None, rigidity=None,
+        defaults=defaults, param_map=param_map,
+        aseismic_coefficient=None):
+    """
+    Creates a double-truncated Gutenberg-Richter magnitude-frequency
+    distribution from fault parameters.
+
+    Fault parameters (not methods or scaling relations)
+    passed here will override those in the `fault_dict`.
+
+
+    :param aseismic_coefficient:
+    :param fault_dict:
+        Dictionary containing the fault attributes and geometry
+
+    :type fault_dict:
+        dict
+
+    :param area_method:
+        Method used to calculate the surface area of a fault. Possible values
+        are `simple` and `from_surface`. The 'simple' method calculates the
+        fault area as the fault length times the width (down-dip distance). The
+        `from_surface` method calculates the fault area through the
+        discretization methods used in the SimpleFaultSurface.
+
+    :type area_method:
+        str
+
+    :param width_method:
+        Method used to calculate the width (down-dip distance) of a fault.
+        'length_scaling' implements a scaling relation between the fault
+        length (derived from the trace) and the fault width, which is
+        calculated given the `scaling_rel`.  'seismo_depth' calculates the
+        width based on the fault's dip and the given values for upper and lower
+        seismogenic depth.
+
+    :type width_method:
+        str
+
+    :param width_scaling_rel:
+        The scaling relation between length and width. Currently,
+        only the scaling relation of Leonard (2010) BSSA is implemented,
+        as 'leonard_2010'.
+
+    :type width_scaling_rel:
+        str
+
+    :param slip_class:
+        Magnitude of the slip rate (and associated parameters) to be used in
+        the calculations. Possible values are `mle` (most-likely estimate),
+        `min` and `max`.
+
+    :type slip_class:
+        str
+
+    :param mag_scaling_rel:
+        Magnitude-scaling relation used to calculate the maximum magnitude
+        from the fault parameters.
+
+    :type mag_scaling_rel:
+        str
+
+    :param M_char:
+        Characteristic magnitude in the fault's magnitude-frequency
+        distribution.
+
+    :type M_char:
+        float
+
+    :param M_min:
+        Minimum magnitude in the fault's magnitude-frequency distribution.
+
+    :type M_min:
+        float
+
+    :param b_value:
+        Gutenberg-Richter b-value for magnitude-frequency distribution. A
+        `b-value` passed here will override project and fault defaults.
+
+    :type b_value:
+        float
+
+    :param slip_rate:
+        Slip rate to be used in calculating the magnitude-frequency
+        distributiuon. A `slip_rate` passed here will override project and
+        fault defaults.
+
+    :type slip_rate:
+        float
+
+    :param aseismic_coefficient:
+        Fraction of slip rate that is released aseismically and doesn't
+        contribute to moment accumulation or seismic release on the fault.
+        Ranges between 0 and 1.
+
+    :type aseismic_coefficient:
+        float
+
+    :param bin_width:
+        Width of the bins for the magnitude-frequency distribution.
+
+    :type bin_width:
+        float
+
+    :param fault_area:
+        Surface area of the fault used to calculate the momen release rate
+        on the fault. A `slip_rate` value passed here will override the
+        value calculated from the fault's geometry.
+
+    :type fault_area:
+        float
+
+    :param defaults:
+        Dictionary of project defaults.
+
+    :type defaults:
+        dict
+
+    :param param_map:
+        Dictionary of the mapping from a fault's attribute names to the
+        variables used in this library.
+
+    :type param_map:
+        dict
+
+    :returns:
+        Magnitude-scaling relation class.
+
+    :rtype:
+        EvenlyDiscretizedMFD
+
+    """
+
+    if slip_class is None:
+        slip_class = fetch_param_val(fault_dict, 'slip_class',
+                                     defaults=defaults, param_map=param_map)
+
+    if M_min is None:
+        M_min = get_M_min(fault_dict, defaults=defaults, param_map=param_map)
+
+    if M_char is None:
+        M_char = get_M_max(
+                    fault_dict, defaults=defaults, param_map=param_map,
+                    magnitude_scaling_relation=magnitude_scaling_relation,
+                    area_method=area_method,
+                    width_method=width_method)
+
+    if fault_area is None:
+        fault_area = get_fault_area(
+                        fault_dict, area_method=area_method,
+                        width_method=width_method,
+                        width_scaling_relation=width_scaling_relation,
+                        defaults=defaults, param_map=param_map)
+
+    M_upper = fetch_param_val(fault_dict, 'M_upper',
+                              defaults=defaults, param_map=param_map)
+
+    if M_char > M_upper:
+        M_char = M_upper
+
+        rake = get_rake(fault_dict, requested_val=slip_class,
+                        defaults=defaults, param_map=param_map)
+
+        if magnitude_scaling_relation is None:
+            mag_scaling_fun = get_scaling_rel(
+                              defaults['magnitude_scaling_relation'])
+        else:
+            mag_scaling_fun = get_scaling_rel(magnitude_scaling_relation)
+
+        fault_area = mag_scaling_fun.get_median_area(M_char, rake)
+
+    if slip_rate is None:
+        slip_rate = get_net_slip_rate(fault_dict,
+                                      slip_class=slip_class,
+                                      defaults=defaults,
+                                      param_map=param_map)
+
+    if aseismic_coefficient is None:
+        aseismic_coefficient = fetch_param_val(fault_dict,
+                                               'aseismic_coefficient',
+                                               defaults=defaults,
+                                               param_map=param_map)
+
+    if rigidity is None:
+        rigidity = fetch_param_val(fault_dict,
+                                   'rigidity',
+                                   defaults=defaults,
+                                   param_map=param_map)
+
+    seismic_slip_rate = slip_rate * (1 - aseismic_coefficient)
+
+    if M_min > M_char:
+        raise ValueError('M_min is greater than M_char')
+
+    if b_value is None:
+        b_value = fetch_param_val(fault_dict, 'b_value', defaults=defaults,
+                                  param_map=param_map)
+
+    if bin_width is None:
+        bin_width = fetch_param_val(fault_dict, 'bin_width', defaults=defaults,
+                                    param_map=param_map)
+
+    moment_rate = (seismic_slip_rate * 1e-3) * (fault_area * 1e6) * rigidity
+
+
+    mfd = hz.mfd.YoungsCoppersmith1985MFD.from_total_moment_rate(M_min,
+                                                                 b_value,
+                                                                 M_char,
+                                                                 moment_rate,
+                                                                 bin_width)
 
     return mfd, seismic_slip_rate
