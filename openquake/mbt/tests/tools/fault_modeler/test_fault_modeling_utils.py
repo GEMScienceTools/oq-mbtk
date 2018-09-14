@@ -8,7 +8,7 @@ from openquake.mbt.tools.fault_modeler.fault_modeling_utils import *
 # -----------------------------------------------------------------------------
 
 BASE_DATA_PATH = os.path.dirname(__file__)
-data_dir_str = '../data/tools/'
+data_dir_str = '../../data/tools/'
 test_data_dir = os.path.join(BASE_DATA_PATH, data_dir_str)
 
 
