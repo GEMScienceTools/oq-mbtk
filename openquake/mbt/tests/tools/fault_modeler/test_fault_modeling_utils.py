@@ -8,8 +8,7 @@ from openquake.mbt.tools.fault_modeler.fault_modeling_utils import *
 # -----------------------------------------------------------------------------
 
 BASE_DATA_PATH = os.path.dirname(__file__)
-data_dir_str = '../../data/tools/'
-test_data_dir = os.path.join(BASE_DATA_PATH, data_dir_str)
+test_data_dir = os.path.join(BASE_DATA_PATH, '..', '..', 'data', 'tools')
 
 
 # -----------------------------------------------------------------------------
@@ -186,9 +185,11 @@ class TestModelingUtils(unittest.TestCase):
 
         self.assertEqual(nsr, 6.)
 
+    @unittest.skip("not yet implemented")
     def test_net_slip_from_strike_slip_fault_geom(self):
         pass
 
+    @unittest.skip("not yet implemented")
     def test_net_slip_from_vert_slip_fault_geom(self):
         pass
 
@@ -206,18 +207,23 @@ class TestModelingUtils(unittest.TestCase):
 
         self.assertTrue(abs(2. - net_slip_rate) < 0.01)
 
+    @unittest.skip("not yet implemented")
     def test_net_slip_from_strike_slip_shortening(self):
         pass
 
+    @unittest.skip("not yet implemented")
     def test_net_slip_from_vert_slip_shortening(self):
         pass
 
+    @unittest.skip("not yet implemented")
     def test_net_slip_from_vert_strike_slip(self):
         pass
 
+    @unittest.skip("not yet implemented")
     def test_net_slip_from_strike_slip_shortening(self):
         pass
 
+    @unittest.skip("not yet implemented")
     def test_net_slip_from_all_slip_comps(self):
         pass
 
@@ -227,7 +233,8 @@ class TestModelingUtils(unittest.TestCase):
         # mfd_type should be set to 'DoubleTruncatedGR' by default;
         # this is part of the test.
 
-        mfd, seis_rate = calc_mfd_from_fault_params(self.fault_1,
+        mfd, seis_rate = calc_mfd_from_fault_params(
+                                                self.fault_1,
                                                 #mfd_type='DoubleTruncatedGR',
                                                 param_map=self.param_map,
                                                 defaults=defaults)
@@ -255,7 +262,8 @@ class TestModelingUtils(unittest.TestCase):
 
     def test_calc_mfd_from_fault_params_yc_1985(self):
 
-        mfd, seis_rate = calc_mfd_from_fault_params(self.fault_1,
+        mfd, seis_rate = calc_mfd_from_fault_params(
+                                            self.fault_1,
                                             mfd_type='YoungsCoppersmith1985',
                                             param_map=self.param_map,
                                             defaults=defaults)
