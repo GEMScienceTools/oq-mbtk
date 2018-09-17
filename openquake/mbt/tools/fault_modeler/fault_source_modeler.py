@@ -82,18 +82,19 @@ def build_fault_model(cfg_file=None,
     # Import arguments from INI configuration file
     if cfg_file is not None:
         cfg_dict = read_config_file(cfg_file)
+        config = cfg_dict['config']
 
         if 'config' in cfg_dict:
-            if 'geojson_file' in cfg_dict['config']:
-                geojson_file = cfg_dict['config']['geojson_file']
-            if 'xml_output' in cfg_dict['config']:
-                xml_output = cfg_dict['config']['xml_output']
-            if 'black_list' in cfg_dict['config']:
+            if 'geojson_file' in config:
+                geojson_file = config['geojson_file']
+            if 'xml_output' in config:
+                xml_output = config['xml_output']
+            if 'black_list' in config:
                 black_list = ast.literal_eval(
-                                cfg_dict['config']['black_list'])
-            if 'select_list' in cfg_dict['config']:
+                                config['black_list'])
+            if 'select_list' in config:
                 select_list = ast.literal_eval(
-                                cfg_dict['config']['select_list'])
+                                config['select_list'])
 
         if 'param_map' in cfg_dict:
             param_map_local.update(cfg_dict['param_map'])

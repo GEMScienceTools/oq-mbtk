@@ -37,12 +37,12 @@ or identically:
 fault_source_modeler.py -cfg config.ini
 ```
 
-(Type ```fault_source_modeler.py -h``` to get a list of the available options)
+(Type `fault_source_modeler.py -h` to get a list of the available options)
 
 ### Optional Parameters
 
 Several optional parameters can be passed, either as arguments or within the configuration file.
-Modificable parameters are:
+Modifiable parameters are:
 
 | Key | Description | Default Value |
 |:----|:------------|:--------|
@@ -83,7 +83,9 @@ build_fault_model(geojson_file='FaultDatabase.geojson',
 
 As final options, optional parameters can be specified in an external configuration file (see below).
 
-However, providing an optional setting will always override the default (hardcoded) value for all the faults in the database at the same time. To provide fault specific parametrisation, it is possible to:
+However, providing an optional setting will always override the default 
+(hardcoded) value for all the faults in the database at the same time. To 
+provide fault specific parameterisation, it is possible to:
 
 1. Manually modify the geojson by adding the key-value pair to the specific fault item
 
