@@ -6,7 +6,7 @@ import re
 from shapely import wkt
 from osgeo import ogr
 
-from openquake.man.tools.model import read
+from openquake.man.model import read
 
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.hazardlib.geo.line import Line
