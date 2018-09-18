@@ -82,9 +82,9 @@ def build_fault_model(cfg_file=None,
     # Import arguments from INI configuration file
     if cfg_file is not None:
         cfg_dict = read_config_file(cfg_file)
-        config = cfg_dict['config']
 
         if 'config' in cfg_dict:
+            config = cfg_dict['config']
             if 'geojson_file' in config:
                 geojson_file = config['geojson_file']
             if 'xml_output' in config:
