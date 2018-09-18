@@ -1,21 +1,17 @@
 # coding: utf-8
 
 import os
-# MN: 'sys' imported but not used
-import sys
 import re
 
 from shapely import wkt
 from osgeo import ogr
 
-from openquake.mbt.tools.model import read
+from openquake.man.tools.model import read
 
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.hazardlib.geo.line import Line
 
 from openquake.mbt.oqt_project import OQtProject, OQtSource
-# MN: 'get_moment_from_mfd' imported but not used
-from openquake.mbt.tools.mfd import get_moment_from_mfd
 
 from openquake.mbt.tools.utils import _get_point_list
 
