@@ -10,7 +10,7 @@ from rtree import index
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.mfd import TruncatedGRMFD, EvenlyDiscretizedMFD
 from openquake.hazardlib.sourceconverter import SourceConverter
-from openquake.hazardlib.nrml import SourceModelParser
+from openquake.hazardlib.nrml import to_python
 from openquake.hazardlib.geo.geodetic import distance, azimuth
 from openquake.hazardlib.source import (AreaSource,
                                         SimpleFaultSource, ComplexFaultSource,
@@ -25,99 +25,6 @@ def getcoo(lon, lat):
     outProj = Proj(init='epsg:3857')
     xp, yp = transform(inProj, outProj, lon, lat)
     return xp, yp
-
-
-def _get_source_model(source_file, inv_time, simple_mesh_spacing=10.0,
-                      complex_mesh_spacing=10.0, mfd_spacing=0.1,
-                      area_discretisation=20.):
-    """
-    Read and build a source model from an xml file
-
-    :parameter source_file
-    :parameter inv_time:
-    :paramater simple_mesh_spacing:
-    :parameter complex_mesh_spacing:
-    :parameter mfd_spacing:
-    :parameter area_discretisation:
-    :returns:
-    """
-    conv = SourceConverter(inv_time, simple_mesh_spacing, complex_mesh_spacing,
-                           mfd_spacing, area_discretisation)
-    parser = SourceModelParser(conv)
-    return parser.parse_src_groups(source_file)
-
-
-def read(model_filename, get_info=True):
-    """
-    This reads the nrml file containing the model
-
-    :parameter model_filename:
-        The name (including path) to a nrml formatted earthquake source model
-    :return:
-        A list of sources
-    """
-    # Analysis
-    logging.info('Reading: %s' % (model_filename))
-    source_grps = _get_source_model(model_filename, inv_time=1)
-    source_model = []
-    for grp in source_grps:
-        for src in grp.sources:
-            source_model.append(src)
-    logging.info('The model contains %d sources' % (len(source_model)))
-    #
-    # get info
-    info = None
-    if get_info:
-        info = _get_model_info(source_model)
-    return source_model, info
-
-
-def _get_model_info(srcl):
-    """
-    :parameter srcl:
-        A list of openquake source instances
-    """
-    trt_mmax = {}
-    trt_mmin = {}
-    trt_srcs = {}
-    srcs_mmax = {}
-    srcs_mmin = {}
-    for idx, src in enumerate(srcl):
-        trt = src.tectonic_region_type
-        typ = type(src).__name__
-        mmin, mmax = src.mfd.get_min_max_mag()
-        # Mmax per tectonic region
-        if trt in trt_mmax:
-            trt_mmax[trt] = max(trt_mmax[trt], mmax)
-        else:
-            trt_mmax[trt] = mmax
-        # Mmin per tectonic region
-        if trt in trt_mmin:
-            trt_mmin[trt] = min(trt_mmin[trt], mmin)
-        else:
-            trt_mmin[trt] = mmin
-        # Mmax per source type
-        if typ in srcs_mmax:
-            srcs_mmax[typ] = max(srcs_mmax[typ], mmax)
-        else:
-            srcs_mmax[typ] = mmax
-        # Mmin per source type
-        if typ in srcs_mmin:
-            srcs_mmin[typ] = min(srcs_mmin[typ], mmin)
-        else:
-            srcs_mmin[typ] = mmin
-        # Src per TRT
-        if trt in trt_srcs:
-            trt_srcs[trt] = trt_srcs[trt] & set(typ)
-        else:
-            trt_srcs[trt] = set([typ])
-
-    return {'trt_mmax': trt_mmax,
-            'trt_mmin': trt_mmin,
-            'trt_srcs': trt_srcs,
-            'srcs_mmax': srcs_mmax,
-            'srcs_mmin': srcs_mmin,
-            }
 
 
 def storeNew(filename, model, info=None):
