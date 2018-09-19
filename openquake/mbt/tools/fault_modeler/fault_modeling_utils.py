@@ -98,7 +98,7 @@ scale_rel_map = {'Leonard2014_SCR': 'leonard2014',
 # -----------------------------------------------------------------------------
 
 def construct_sfs_dict(fault_dict, 
-                       mfd_type=None,
+                       mfd_type='DoubleTruncatedGR',
                        area_method='simple',
                        width_method='seismo_depth',
                        width_scaling_relation=None, slip_class=None,
