@@ -76,7 +76,7 @@ class TestDatabaseIO(unittest.TestCase):
         fault_db.import_from_geojson(self.geojson_file,
                                      param_map=self.param_map,
                                      select_list=[1, 2])
-        print(fault_db)
+
         # Create and export the model
         fsm.build_model_from_db(fault_db, xml_output=test_file)
 
