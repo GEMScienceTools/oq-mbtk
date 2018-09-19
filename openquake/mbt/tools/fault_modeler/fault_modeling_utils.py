@@ -2537,6 +2537,9 @@ def calc_mfd_from_fault_params(fault_dict,
         tuple
     """
 
+    if mfd_type is None:
+        mfd_type = fetch_param_val(fault_dict, 'mfd_type', defaults=defaults,
+                                   param_map=param_map)
 
     if mfd_type == 'DoubleTruncatedGR':
         mfd, seismic_slip_rate = calc_double_truncated_GR_mfd_from_fault_params(
