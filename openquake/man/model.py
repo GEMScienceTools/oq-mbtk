@@ -10,7 +10,7 @@ from rtree import index
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.mfd import TruncatedGRMFD, EvenlyDiscretizedMFD
 from openquake.hazardlib.sourceconverter import SourceConverter
-from openquake.hazardlib.nrml import SourceModelParser
+from openquake.hazardlib.nrml import to_python
 from openquake.hazardlib.geo.geodetic import distance, azimuth
 from openquake.hazardlib.source import (AreaSource,
                                         SimpleFaultSource, ComplexFaultSource,
@@ -34,20 +34,25 @@ def _get_source_model(source_file, inv_time, simple_mesh_spacing=10.0,
     Read and build a source model from an xml file
 
     :parameter source_file
-    :parameter inv_time:
-    :paramater simple_mesh_spacing:
-    :parameter complex_mesh_spacing:
-    :parameter mfd_spacing:
-    :parameter area_discretisation:
+        The name of a file containing the source model
+    :parameter float inv_time:
+        A positive float
+    :paramater float simple_mesh_spacing:
+        A positive float
+    :parameter float complex_mesh_spacing:
+        A positive float
+    :parameter float mfd_spacing:
+        A positive float
+    :parameter float area_discretisation:
+        A positive float
     :returns:
+        A list of :class:`~openquake.hazardlib.sourceconverter.SourceGroup`
+        instances
     """
     conv = SourceConverter(inv_time, simple_mesh_spacing, complex_mesh_spacing,
                            mfd_spacing, area_discretisation)
-    parser = SourceModelParser(conv)
-
-    def _f(x):
-        return x
-    return parser.parse_src_groups(source_file, _f)
+    srcs = to_python(source_file, conv)
+    return srcs.src_groups
 
 
 def read(model_filename, get_info=True):
