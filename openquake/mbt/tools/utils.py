@@ -1,8 +1,6 @@
 import re
 import sys
 import time
-# MN: 'numpy' imported but not used
-import numpy
 
 from openquake.hazardlib.geo.point import Point
 
@@ -15,11 +13,13 @@ def get_time(time_start, time_cell):
     print(tstr % (delta_tot, delta_cell))
     return time_end
 
+
 def find_oqmbtk_folder():
     for tstr in sys.path:
         if re.search('oq-mbtk', tstr):
             return tstr
     return None
+
 
 def _get_point_list(lons, lats):
     """
