@@ -1240,6 +1240,7 @@ def net_slip_from_strike_slip_fault_geom(fault_dict, slip_class='mle',
                         param_map=param_map, defaults=defaults)
 
     net_slip_rate = strike_slip_rate / np.cos(np.radians(rake))
+
     if _abs is True:
         net_slip_rate = np.abs(net_slip_rate)
 
@@ -1459,8 +1460,12 @@ def net_slip_from_dip_slip_fault_geom(dip_slip_rate, fault_dict,
         float
     """
 
-    rakes = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_rake',
-                                                param_map=param_map))
+    try:
+        rakes = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_rake',
+                                                    param_map=param_map))
+    except KeyError:
+        rakes = get_rake(fault_dict, requested_val=slip_class,
+                         param_map=param_map, defaults=defaults)
 
     if _abs:
         rakes = np.abs(rakes)
@@ -1473,7 +1478,7 @@ def net_slip_from_dip_slip_fault_geom(dip_slip_rate, fault_dict,
         if rake in (0, 0., 180, 180., -180, -180.):
             warnings.warn(
                 "Cannot derive dip slip rate with rake {}".format(rake))
-        return dip_slip_rate / np.sin(np.radians(rakes[0]))
+        return dip_slip_rate / np.sin(np.radians(rake))
 
     else:
         for rake in rakes:
@@ -1530,8 +1535,13 @@ def net_slip_from_vert_slip_shortening(fault_dict, slip_class='mle', _abs=True,
     dip_slip_rate = dip_slip_from_vert_rate_shortening(vert_slip_rate,
                                                        shortening_rate)
 
-    rakes = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_rake',
-                                                param_map=param_map))
+    try:
+        rakes = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_rake',
+                                                    param_map=param_map))
+    except KeyError:
+        rakes = get_rake(fault_dict, requested_val=slip_class,
+                         param_map=param_map, defaults=defaults)
+
     rake_diffs = np.abs(np.pi / 2 - np.radians(rakes))
 
     net_slip_rates = dip_slip_rate / np.cos(rake_diffs)

@@ -212,6 +212,23 @@ class TestModelingUtils(unittest.TestCase):
         net_slip_rate = fmu.net_slip_from_shortening_fault_geom(fault)
 
         self.assertTrue(abs(2. - net_slip_rate) < 0.01)
+    
+    def test_net_slip_from_vert_slip_fault_geom(self):
+
+        fault = {'coords': [[0., 0.], [0., 1.]],
+                 'upper_seis_depth': 0.,
+                 'lower_seis_depth': 10.,
+                 'average_dip': '(30,,)',
+                 'dip_dir': 'E',
+                 'slip_type': 'Reverse',
+                 'vert_slip_rate': '(1.,,)'}
+
+        net_slip_rate = fmu.net_slip_from_vert_slip_fault_geom(fault)
+
+        net_slip_true_rate = 2.
+
+        self.assertTrue(abs(net_slip_true_rate - net_slip_true_rate) < 0.01)
+
 
     @unittest.skip("not yet implemented")
     def test_net_slip_from_strike_slip_shortening(self):
