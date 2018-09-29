@@ -21,7 +21,7 @@ CRUST_DATA_PATH_IDL = os.path.join(os.path.dirname(__file__), tmp_idl)
 def _get_data(filename):
     datal = []
     for line in open(filename, 'r'):
-        xx = re.split('\s+', re.sub('\s+$', '', re.sub('^\s+', '', line)))
+        xx = re.split('\\s+', re.sub('\\s+$', '', re.sub('^\\s+', '', line)))
         datal.append([float(val) for val in xx])
     return datal
 

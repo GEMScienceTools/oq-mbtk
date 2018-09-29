@@ -298,7 +298,7 @@ def get_dip_from_slip_type(slipt):
     fix a missing dip value using the slip type info
 
     """
-    mtch = re.match('(\w*)-*\w*', slipt)
+    mtch = re.match('(\\w*)-*\\w*', slipt)
 
     if mtch:
         mech = mtch.group(1)
@@ -330,9 +330,9 @@ def get_tples(tstr):
         A list containing the values of the tuple
     """
     if tstr is not None and len(tstr):
-        tstra = re.sub('\(', '', re.sub('\)', '', tstr))
+        tstra = re.sub('\\(', '', re.sub('\\)', '', tstr))
         flist = []
-        for tmp in re.split('\,', tstra):
+        for tmp in re.split(',', tstra):
             if re.search('[0-9]', tmp):
                 flist.append(float(tmp))
             else:

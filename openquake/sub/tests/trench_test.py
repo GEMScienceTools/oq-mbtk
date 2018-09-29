@@ -24,7 +24,7 @@ class TrenchDiscretizationTest(unittest.TestCase):
         fin = open(fname_trench, 'r')
         trench = []
         for line in fin:
-            aa = re.split('\s+', re.sub('^\s+', '', line))
+            aa = re.split('\\s+', re.sub('^\\s+', '', line))
             trench.append((float(aa[0]), float(aa[1])))
         fin.close()
         #

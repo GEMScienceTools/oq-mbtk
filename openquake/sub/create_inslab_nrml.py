@@ -102,7 +102,7 @@ def create(label, rupture_hdf5_fname, output_folder, investigation_t):
         fnrml = os.path.join(output_folder, '{:s}.nrml'.format(mag))
         #
         # source ID
-        mags = re.sub('\.', 'pt', mag)
+        mags = re.sub('\\.', 'pt', mag)
         sid = 'src_{:s}_{:s}'.format(label, mags)
         name = 'Ruptures for mag bin {:s}'.format(mags)
         #
