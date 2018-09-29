@@ -19,9 +19,7 @@ from openquake.hazardlib.geo.geodetic import distance
 from openquake.hazardlib.geo.geodetic import npoints_towards
 
 import matplotlib.pyplot as plt
-# MN: 'Axes3D' imported but never used
 from mpl_toolkits.mplot3d import Axes3D
-
 
 EDGE_TOL = 0.2
 PROF_TOL = 0.4
@@ -757,9 +755,6 @@ def get_mesh_back(pfs, rfi, sd, idl):
                     p1 = npr[laidx[k]][k]
                     p2 = npr[laidx[k]+1][k]
                     d = distance(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2])
-
-                    # print(tmp, sd)
-                    # print(d, ((tmp*hdist/tdist)**2+de**2)**.5)
                     #
                     # >>> TOLERANCE
                     if abs(d-sd) > TOL*sd:
@@ -853,7 +848,7 @@ def get_mesh(pfs, rfi, sd, idl):
     :param idl:
         Boolean indicating the need to account for IDL presence
     :returns:
-        TODO 
+        Profiles
     """
     g = Geod(ellps='WGS84')
     #
@@ -916,7 +911,6 @@ def get_mesh(pfs, rfi, sd, idl):
             tdist = (vdist**2 + hdist**2)**.5
             ndists = int(np.floor((tdist+rdist[k])/sd))
 
- 
             ll = g.npts(pl[k, 0], pl[k, 1], pr[k, 0], pr[k, 1],
                         np.ceil(tdist)*20)
             ll = np.array(ll)
@@ -929,7 +923,6 @@ def get_mesh(pfs, rfi, sd, idl):
                                endpoint=True)
             tdsts = (hdsts**2 + (pl[k, 2]-deps)**2)**0.5
             assert len(deps) == ll.shape[0]
-            
 
             #
             # checking distance calculation
@@ -955,7 +948,7 @@ def get_mesh(pfs, rfi, sd, idl):
                 lo, la, _ = g.fwd(pl[k, 0], pl[k, 1], az12,
                                   tmp*hdist/tdist*1e3)
 
-                #----------------------------------------------
+                # ---------------------------------------------
                 tidx = np.argmin(abs(tdsts-tmp))
                 lo = ll[tidx, 0]
                 la = ll[tidx, 1]
@@ -967,9 +960,7 @@ def get_mesh(pfs, rfi, sd, idl):
                 #
                 # computing depths
                 de = pl[k, 2] + tmp*vdist/hdist
-
-
-                #----------------------------------------------
+                # ---------------------------------------------
                 de = deps[tidx]
 
                 npr[laidx[k]+1][k] = [lo, la, de]
