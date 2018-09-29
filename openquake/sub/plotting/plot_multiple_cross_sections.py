@@ -16,7 +16,7 @@ def main(argv):
     fin = open(argv[0], 'r')
     for line in fin:
 
-        aa = re.split('\s+', line.rstrip())
+        aa = re.split('\\s+', line.rstrip())
         olo = float(aa[0])
         ola = float(aa[1])
         depth = float(aa[2])
