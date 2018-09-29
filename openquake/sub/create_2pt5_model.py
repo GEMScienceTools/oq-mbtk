@@ -161,7 +161,8 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
     for filename in sorted(glob.glob(os.path.join(foldername, 'cs*.csv'))):
         #
         # get the filename ID
-        sid = re.sub('^cs_', '', re.split('\.', os.path.basename(filename))[0])
+        sid = re.sub('^cs_', '', re.split('\\.',
+                                          os.path.basename(filename))[0])
         if not re.search('[a-zA-Z]', sid):
             sid = '%03d' % int(sid)
         if not from_id == '.*' and not re.search('[a-zA-Z]', from_id):

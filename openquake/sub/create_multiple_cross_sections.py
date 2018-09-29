@@ -153,7 +153,7 @@ def main(argv):
     lotmp = []
     latmp = []
     for line in fin:
-        aa = re.split('\s+', re.sub('^\s+', '', line))
+        aa = re.split('\\s+', re.sub('^\\s+', '', line))
         lotmp.append(float(aa[0]))
         latmp.append(float(aa[1]))
     fin.close()

@@ -152,8 +152,8 @@ def create_faults(mesh, iedge, thickness, rot_angle, sampling):
     #
     # create a np.array with the same shape of the input 'mesh' but with
     # projected coordinates
-    tmpx = np.reshape(x, shape,  order='C')
-    tmpy = np.reshape(y, shape,  order='C')
+    tmpx = np.reshape(x, shape, order='C')
+    tmpy = np.reshape(y, shape, order='C')
     meshp = np.stack((tmpx, tmpy, mesh[:, :, 2]), axis=2)
     assert np.nanmax(meshp[:, :, 2]) < 750.
     #
@@ -765,7 +765,7 @@ def get_mesh_back(pfs, rfi, sd, idl):
                     if abs(d-sd) > TOL*sd:
                         tmpf = 'd: {:f} diff: {:f} tol: {:f} sd:{:f}'
                         tmpf += '\nresidual: {:f}'
-                        tmps = tmpf.format(d, d-sd,  TOL*sd, sd, rdist[k])
+                        tmps = tmpf.format(d, d-sd, TOL*sd, sd, rdist[k])
                         logging.warning(tmps)
                         #
                         # plotting
@@ -985,7 +985,7 @@ def get_mesh(pfs, rfi, sd, idl):
                     if abs(d-sd) > 0.1*sd:
                         tmpf = 'd: {:f} diff: {:f} tol: {:f} sd:{:f}'
                         tmpf += '\nresidual: {:f}'
-                        tmps = tmpf.format(d, d-sd,  TOL*sd, sd, rdist[k])
+                        tmps = tmpf.format(d, d-sd, TOL*sd, sd, rdist[k])
                         logging.warning(tmps)
                         #
                         # plotting
@@ -1054,7 +1054,7 @@ def _read_edge(filename):
     """
     points = []
     for line in open(filename, 'r'):
-        aa = re.split('\s+', line)
+        aa = re.split('\\s+', line)
         points.append(Point(float(aa[0]),
                             float(aa[1]),
                             float(aa[2])))

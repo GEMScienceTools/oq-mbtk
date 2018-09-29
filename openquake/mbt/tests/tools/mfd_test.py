@@ -312,4 +312,4 @@ class TestDownsampleMFD(unittest.TestCase):
                              [4.1, 0.45],
                              [4.2, 0.2],
                              ])
-        # self.assertTrue(np.allclose(res, expected))
+        # self.assertTrue(np.allclose(res, expected))            
