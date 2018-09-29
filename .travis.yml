@@ -12,12 +12,10 @@ env:
 
 install:
   - git clone --depth=1 https://github.com/gem/oq-engine.git &&
-    pip -q install -r oq-engine/requirements-py35-linux64.txt &&
+    pip -q install -r oq-engine/requirements-py36-linux64.txt &&
     pip -q install -e oq-engine
-  - pip -q install http://cdn.ftp.openquake.org/wheelhouse/linux/py35/pyproj-1.9.5.1-cp35-cp35m-manylinux1_x86_64.whl
-  - pip -q install http://cdn.ftp.openquake.org/wheelhouse/linux/py35/GDAL-2.2.4-cp35-cp35m-manylinux1_x86_64.whl
-  - pip -q install http://cdn.ftp.openquake.org/wheelhouse/linux/py35/Rtree-0.8.3-cp35-cp35m-manylinux1_x86_64.whl
-  - pip install -e .
+  - pip -q install -r requirements-py36-linux64.txt &&
+    pip install -e .
 
 script:
   - nosetests -vsx -a '!slow'

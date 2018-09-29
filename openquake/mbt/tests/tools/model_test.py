@@ -1,7 +1,7 @@
 import numpy
 import unittest
 
-from openquake.mbt.tools.model import _split_point_source
+from openquake.man.model import _split_point_source
 
 from openquake.hazardlib.source import PointSource
 from openquake.hazardlib.mfd import TruncatedGRMFD, EvenlyDiscretizedMFD

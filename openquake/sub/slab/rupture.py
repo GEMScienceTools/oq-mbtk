@@ -418,7 +418,7 @@ def dict_of_floats_from_string(istr):
     """
     tstr = re.sub(r'(\{|\})', '', istr)
     out = {}
-    for tmp in re.split('\,', tstr):
+    for tmp in re.split(',', tstr):
         elem = re.split(':', tmp)
         out[float(elem[0])] = float(elem[1])
     return out

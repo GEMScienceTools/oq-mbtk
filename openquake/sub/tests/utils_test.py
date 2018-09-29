@@ -101,7 +101,7 @@ class TestGetDirectionCosines(unittest.TestCase):
         strike = 210
         dip = 30.
         actual = get_direction_cosines(strike, dip)
-        desired = numpy.asarray([-0.4330127, 0.25,  0.86602540])
+        desired = numpy.asarray([-0.4330127, 0.25, 0.86602540])
         numpy.testing.assert_almost_equal(actual, desired)
 
 

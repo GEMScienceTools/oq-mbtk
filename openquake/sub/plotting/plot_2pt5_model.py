@@ -58,7 +58,8 @@ def plot_sub_profiles(foldername):
     qual = 0
     for filename in glob.glob(os.path.join(foldername, 'cs_*.csv')):
         dat = numpy.loadtxt(filename)
-        sid = re.sub('^cs_', '', re.split('\.', os.path.basename(filename))[0])
+        sid = re.sub('^cs_', '', re.split('\\.',
+                                          os.path.basename(filename))[0])
         if ((min(dat[:, 0])/max(dat[:, 0]) < 0) & (max(dat[:, 0] > 150))):
             qual = 1
 
@@ -70,7 +71,8 @@ def plot_sub_profiles(foldername):
             dat[:, 0] = numpy.array([x + 360 if x < 0 else
                                      x for x in dat[:, 0]])
 
-        sid = re.sub('^cs_', '', re.split('\.', os.path.basename(filename))[0])
+        sid = re.sub('^cs_', '', re.split('\\.',
+                                          os.path.basename(filename))[0])
         if re.search('[a-zA-Z]', sid):
             sid = '%03d' % int(sid)
             print(sid)
@@ -91,7 +93,7 @@ def plot_sub_profiles(foldername):
             dat[:, 0] = numpy.array([x+360 if x < 0 else x for x in dat[:, 0]])
 
         sid = re.sub('^edge_', '',
-                     re.split('\.', os.path.basename(filename))[0])
+                     re.split('\\.', os.path.basename(filename))[0])
         sps[sid] = numpy.loadtxt(filename)
         plot_edge(sid, dat, ax)
 
