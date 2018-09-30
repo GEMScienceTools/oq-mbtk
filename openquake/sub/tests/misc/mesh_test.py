@@ -14,7 +14,7 @@ from openquake.sub.misc.profile import _read_profiles
 from openquake.sub.misc.edge import create_from_profiles
 from openquake.hazardlib.geo.geodetic import distance
 
-from openquake.sub.tests.misc.utils_plot import plotter
+# from openquake.sub.tests.misc.utils_plot import plotter
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), '..', 'data')
 
@@ -57,9 +57,7 @@ class IdealisedSimpleMeshTest(unittest.TestCase):
         alg = False
         smsh = create_from_profiles(self.profiles, h_sampl, v_sampl, idl, alg)
 
-
         # plotter(self.profiles, smsh)
-
 
         #
         # Check the horizontal mesh spacing
@@ -210,8 +208,9 @@ class SouthAmericaSegmentTest(unittest.TestCase):
         sampling = 40
         idl = False
         alg = False
-        smsh = create_from_profiles(self.profiles, sampling, sampling, idl, alg)
+        smsh = create_from_profiles(self.profiles, sampling, sampling, idl,
+                                    alg)
         # ppp(self.profiles, smsh)
-        plotter(self.profiles, smsh)
+        # plotter(self.profiles, smsh)
         idx = numpy.isfinite(smsh[:, :, 0])
         self.assertEqual(numpy.sum(numpy.sum(idx)), 202)
