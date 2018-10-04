@@ -49,6 +49,7 @@ Modifiable parameters are:
 | b_value | ... | ... |
 | M_min | ... | ... |
 | M_max | ... | ... |
+| M_upp | ... | ... |
 | bin_width | ... | ... |
 | aseismic_coefficient | ... | ... |
 | rupture_aspect_ratio | ... | ... |
@@ -92,11 +93,11 @@ provide fault specific parameterisation, it is possible to:
 2. Use the following programmatic approach:
 
 ```python
-from openquake.mbt.tools.fault_modeler.fault_source_modeler import fault_database
+from openquake.mbt.tools.fault_modeler.fault_source_modeler import FaultDatabase
 from openquake.mbt.tools.fault_modeler.fault_source_modeler import build_model_from_db
 
 # Import the database
-fault_db = fault_database()
+fault_db = FaultDatabase()
 fault_db.import_from_geojson(geojson_file)
 
 # Add a key/value to fault with id 1
