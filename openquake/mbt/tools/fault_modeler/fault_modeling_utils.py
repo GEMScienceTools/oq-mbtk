@@ -86,7 +86,7 @@ defaults = {'name': 'unnamed',
             'width_scaling_relation': 'Leonard2014_Interplate',
             'subsurface_length': False,
             'rigidity': 32e9,
-            'mfd_type': 'DoubleTruncatedGR',
+            'mfd_type': 'DoubleTruncatedGR'
             }
 
 # Module mapping for the scaling relations in the hazardlib
@@ -930,7 +930,6 @@ def get_lower_seismo_depth(fault_dict, width_method='seismo_depth',
                                defaults=defaults, param_map=param_map)
 
     elif width_method == 'length_scaling':
-
         usd = fetch_param_val(fault_dict, 'upper_seismogenic_depth',
                               defaults=defaults, param_map=param_map)
 
