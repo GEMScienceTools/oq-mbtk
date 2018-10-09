@@ -187,7 +187,7 @@ def build_model_from_db(fault_db,
 
     for fl in fault_db.db:
 
-        try:
+        #try:
             sfs_dict = fmu.construct_sfs_dict(fl,
                                               width_method=width_method,
                                               param_map=param_map_local,
@@ -195,9 +195,9 @@ def build_model_from_db(fault_db,
             sfs = fmu.make_fault_source(sfs_dict, oqt_source=oqt_source)
             srcl.append(sfs)
 
-        except Exception as e:
-            id = fl[param_map['source_id']]
-            print("Couldn't process Fault {}: {}".format(id, e))
+        #except Exception as e:
+        #    id = fl[param_map['source_id']]
+        #    print("Couldn't process Fault {}: {}".format(id, e))
 
     if xml_output is not None:
         # Write the final fault model
