@@ -2029,7 +2029,7 @@ def calc_fault_width_from_length(
 WIDTH_CLASS = {'cl1': ['Normal', 'Reverse', 'Thrust', 'Normal-Dextral',
                        'Normal-Sinistral', 'Reverse-Sinistral',
                        'Reverse-Dextral', 'Spreading-Ridge',
-                       'Blind-Thrust'],
+                       'Blind-Thrust', 'Anticline'],
                'cl2': ['Dextral', 'Sinistral', 'Strike-Slip',
                        'Dextral-Normal', 'Dextral-Reverse',
                        'Sinistral-Normal', 'Sinistral-Reverse']
