@@ -312,16 +312,22 @@ class FaultDatabase():
         """
 
         for fault in self.db:
-            if fault[key] is id or id is None:
+            if id is None:
                 fault[property] = value
+            else:
+                if fault[key] is id:
+                    fault[property] = value
 
     def remove_property(self, property, id=None, key='source_id'):
         """
         """
 
         for fault in self.db:
-            if fault[key] is id or id is None:
+            if id is None:
                 fault.pop(property)
+            else:
+                if fault[key] is id:
+                    fault.pop(property)
 
 
 # -----------------------------------------------------------------------------
