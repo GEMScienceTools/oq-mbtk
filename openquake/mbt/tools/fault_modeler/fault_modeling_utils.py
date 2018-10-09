@@ -655,7 +655,8 @@ rake_map = {'Normal': -90.,
             'Strike-Slip': 0.,
             'Thrust': 90.,
             'Blind-Thrust': 90.,
-            'Spreading-Ridge': -90.}
+            'Spreading-Ridge': -90.,
+            'Anticline': 90.}
 
 dip_map = {'Normal': 60.,
            'Normal-Dextral': 65.,
@@ -672,7 +673,8 @@ dip_map = {'Normal': 60.,
            'Strike-Slip': 90.,
            'Thrust': 40.,
            'Blind-Thrust': 40.,
-           'Spreading-Ridge': 60.}
+           'Spreading-Ridge': 60.,
+           'Anticline': 40.}
 
 # To transform literal values into numbers
 direction_map = {'N': 0.,
