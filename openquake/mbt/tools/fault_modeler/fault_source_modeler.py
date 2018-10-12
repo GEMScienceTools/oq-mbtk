@@ -126,6 +126,7 @@ def build_fault_model(cfg_file=None,
                                width_method=width_method,
                                oqt_source=oqt_source,
                                project_name=project_name,
+                               param_map=param_map_local,
                                defaults=defaults_local)
 
     if xml_output is None:
