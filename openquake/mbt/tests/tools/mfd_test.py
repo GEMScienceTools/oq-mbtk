@@ -1,14 +1,35 @@
 import numpy as np
 import unittest
 
-from openquake.hazardlib.mfd import TruncatedGRMFD
+from openquake.hazardlib.mfd import TruncatedGRMFD, ArbitraryMFD
 
 from openquake.mbt.tools.mfd import mfd_upsample, mfd_downsample
 from openquake.mbt.tools.mfd import EEvenlyDiscretizedMFD
 
 from openquake.mbt.tools.mfd import (get_cumulative, interpolate_ccumul)
+from openquake.mbt.tools.mfd import get_evenlyDiscretizedMFD_from_arbitraryMFD
 
 from openquake.hazardlib.mfd import EvenlyDiscretizedMFD
+
+
+class TestArbitraryMFD2EvenlyDiscretizedMFD(unittest.TestCase):
+    """
+    """
+
+    def setUp(self):
+        magnitudes = [5.0, 5.05, 5.1, 5.5]
+        occurrence_rates = [0.1, 0.1, 0.1, 0.1]
+        self.amfd_1 = ArbitraryMFD(magnitudes, occurrence_rates)
+
+    def test_simple_conversion(self):
+        """ Tests a simple conversion """
+        mfd = get_evenlyDiscretizedMFD_from_arbitraryMFD(self.amfd_1)
+        computed = np.array(mfd.get_annual_occurrence_rates())
+        expected = np.array([0.1, 0.2, 0., 0., 0., 0.1])
+        np.testing.assert_almost_equal(computed[:, 1], expected)
+        expected = np.array([5.0, 5.1, 5.2, 5.3, 5.4, 5.5])
+        np.testing.assert_almost_equal(computed[:, 0], expected)
+        np.testing.assert_almost_equal(mfd.bin_width, 0.1)
 
 
 class TestComputeCCumulative(unittest.TestCase):
@@ -93,7 +114,6 @@ class TestStackMFDs(unittest.TestCase):
                                                     0.1, 0.05, 0.025, 0.01])
         self.mfd5 = EvenlyDiscretizedMFD(4.6, 0.1, [0.5, 0.4, 0.3, 0.2,
                                                     0.1, 0.05, 0.025, 0.01])
-
         self.base = EEvenlyDiscretizedMFD(6.0, 0.1, [1e-20])
         self.huas082 = EvenlyDiscretizedMFD(4.7, 0.2, [
             0.000890073609248, 0.000561598480883, 0.000354344686162,
@@ -101,7 +121,6 @@ class TestStackMFDs(unittest.TestCase):
             5.61598480883e-05, 3.54344686162e-05, 2.23576382212e-05,
             1.41067160409e-05, 8.90073609248e-06, 2.8088205502e-06,
             3.54240181229e-07, 2.23510444056e-07])
-
         self.mfd6 = EvenlyDiscretizedMFD(4.7, 0.01, [0.5])
         self.mfd7 = EvenlyDiscretizedMFD(5.5, 0.01, [0.5])
 
@@ -116,11 +135,6 @@ class TestStackMFDs(unittest.TestCase):
                              [4.7, 0.6],
                              [4.8, 0.4],
                              ])
-        print('res')
-        print(sum(res[:, 1]))
-        print(res)
-        print('expected')
-        print(sum(expected[:, 1]))
         self.assertTrue(np.allclose(res, expected))
 
     def test_stack_02(self):
@@ -130,7 +144,6 @@ class TestStackMFDs(unittest.TestCase):
         """
         self.mfd1.stack(self.mfd2)
         res = np.array(self.mfd1.get_annual_occurrence_rates())
-        print(res)
         expected = np.array([[4.4, 0.5],
                              [4.5, 0.9],
                              [4.6, 0.7],
@@ -153,11 +166,6 @@ class TestStackMFDs(unittest.TestCase):
                              [4.7, 0.3],
                              [4.8, 0.2],
                              ])
-        print('res')
-        print(sum(res[:, 1]))
-        print(res)
-        print('expected')
-        print(sum(expected[:, 1]))
         self.assertTrue(np.allclose(res, expected))
 
     def test_stack_04(self):
@@ -312,4 +320,4 @@ class TestDownsampleMFD(unittest.TestCase):
                              [4.1, 0.45],
                              [4.2, 0.2],
                              ])
-        # self.assertTrue(np.allclose(res, expected))            
+        # self.assertTrue(np.allclose(res, expected))

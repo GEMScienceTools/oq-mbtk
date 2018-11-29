@@ -188,13 +188,32 @@ def get_moment_from_mfd(mfd, threshold=-1, c=9.05):
     return mo_tot
 
 
+def get_evenlyDiscretizedMFD_from_arbitraryMFD(mfd, bin_width=0.1):
+    """
+    Converts an arbitrary MFD into a
+    :class:`~openquake.hazardlib.mfd.EvenlyDiscretizedMFD` instance
+
+    :parameter:
+        An instance of :class:`~openquake.hazardlib.mfd.ArbitraryMFD`
+    :return:
+        An instance of :class:`~openquake.hazardlib.mfd.EvenlyDiscretizedMFD`
+    """
+    assert isinstance(mfd, ArbitraryMFD)
+    mmin = np.floor(min(mfd.magnitudes)/bin_width)*bin_width
+    mmax = np.ceil(max(mfd.magnitudes)/bin_width)*bin_width
+    edges = np.arange(mmin-bin_width/2, mmax+bin_width/1.99, 0.1)
+    count, edges = np.histogram(mfd.magnitudes, edges,
+                                weights=mfd.occurrence_rates)
+    return EvenlyDiscretizedMFD(mmin, bin_width, count)
+
+
 def get_evenlyDiscretizedMFD_from_truncatedGRMFD(mfd, bin_width=None):
     """
     This function converts a double truncated Gutenberg Richter distribution
     into an almost equivalent discrete representation.
 
     :parameter:
-        A instance of :class:`~openquake.hazardlib.mfd.TruncatedGRMFD`
+        An instance of :class:`~openquake.hazardlib.mfd.TruncatedGRMFD`
     :return:
         An instance of :class:`~openquake.hazardlib.mfd.EvenlyDiscretizedMFD`
     """
@@ -370,6 +389,7 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
 def mfd_resample(bin_width, mfd):
     tol = 1e-10
     if bin_width > mfd.bin_width+tol:
+        print(bin_width, mfd.bin_width)
         return mfd_upsample(bin_width, mfd)
     else:
         return mfd_downsample(bin_width, mfd)
@@ -501,10 +521,12 @@ def mfd_upsample(bin_width, mfd):
     # prepare the new array for occurrences
     nocc = np.zeros((int((max_mag-min_mag)/bin_width+1), 4))
     # set the new array
+    print(min_mag, max_mag)
     for idx, mag in enumerate(np.arange(min_mag, max_mag, bin_width)):
         nocc[idx, 0] = mag
         nocc[idx, 1] = mag-bin_width/2
         nocc[idx, 2] = mag+bin_width/2
+    print('nocc pre:\n', nocc, '\n')
     #
     # create he arrays with magnitudes and occurrences
     """
@@ -520,7 +542,6 @@ def mfd_upsample(bin_width, mfd):
     # assigning occurrences
     dlt = bin_width * 1e-5
     for mag, occ in mfd.get_annual_occurrence_rates():
-        print(mag, occ)
         #
         # find indexes of lower bin limits lower than mag
         idx = np.nonzero(mag+dlt-mfd.bin_width/2 > nocc[:, 1])[0]
@@ -538,22 +559,20 @@ def mfd_upsample(bin_width, mfd):
             # idxb = np.amax(idx)
             idxb = np.amin(idx)
         #
-        #
-        print(idxa, idxb)
+        # This updated occurrences
         if idxb is not None and idxa == idxb:
             nocc[idxa, 3] += occ
         else:
-            # ratio of occurrences in the lower bin
+            # Here we compute the ratio fraction of occurrences in lower
+            # bin
             ra = (nocc[idxa, 2] - (mag-mfd.bin_width/2)) / mfd.bin_width
             nocc[idxa, 3] += occ*ra
             if (1.0-ra) > 1e-10:
                 nocc[idxa+1, 3] += occ*(1-ra)
-        print(nocc)
     #
     # check that the the MFDs have the same total occurrence rate
     smmn = sum(nocc[:, 3])
     smmo = sum(mfd.occurrence_rates)
-    print(smmn, smmo)
     #
     # check that the total number of occurrences in the original and
     # resampled MFDs are the same
@@ -565,5 +584,5 @@ def mfd_upsample(bin_width, mfd):
         idxs = idxs - set([iii])
         iii -= 1
 
-    return EvenlyDiscretizedMFD(nocc[0, 0], bin_width,
-                                list(nocc[list(idxs), 3]))
+    return EvenlyDiscretizedMFD(nocc[0, 0], bin_width, list(nocc[list(idxs),
+                                                                 3]))
