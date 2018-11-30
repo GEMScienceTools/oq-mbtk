@@ -201,7 +201,7 @@ def get_evenlyDiscretizedMFD_from_arbitraryMFD(mfd, bin_width=0.1):
     assert isinstance(mfd, ArbitraryMFD)
     mmin = np.floor(min(mfd.magnitudes)/bin_width)*bin_width
     mmax = np.ceil(max(mfd.magnitudes)/bin_width)*bin_width
-    edges = np.arange(mmin-bin_width/2, mmax+bin_width/1.99, 0.1)
+    edges = np.arange(mmin-bin_width/2, mmax+bin_width/1.99, bin_width)
     count, edges = np.histogram(mfd.magnitudes, edges,
                                 weights=mfd.occurrence_rates)
     return EvenlyDiscretizedMFD(mmin, bin_width, count)
@@ -389,7 +389,6 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
 def mfd_resample(bin_width, mfd):
     tol = 1e-10
     if bin_width > mfd.bin_width+tol:
-        print(bin_width, mfd.bin_width)
         return mfd_upsample(bin_width, mfd)
     else:
         return mfd_downsample(bin_width, mfd)
@@ -519,25 +518,12 @@ def mfd_upsample(bin_width, mfd):
     max_mag = np.ceil(ommax / bin_width) * bin_width
     #
     # prepare the new array for occurrences
-    nocc = np.zeros((int((max_mag-min_mag)/bin_width+1), 4))
+    nocc = np.zeros((int((max_mag-min_mag+1e-6)/bin_width+1), 4))
     # set the new array
-    print(min_mag, max_mag)
-    for idx, mag in enumerate(np.arange(min_mag, max_mag, bin_width)):
-        nocc[idx, 0] = mag
-        nocc[idx, 1] = mag-bin_width/2
-        nocc[idx, 2] = mag+bin_width/2
-    print('nocc pre:\n', nocc, '\n')
-    #
-    # create he arrays with magnitudes and occurrences
-    """
-    mago = []
-    occo = []
-    for mag, occ in mfd.get_annual_occurrence_rates():
-        mago.append(mag)
-        occo.append(occo)
-    mago = np.array(mago)
-    occo = np.array(occo)
-    """
+    for i in range(nocc.shape[0]):
+        nocc[i, 0] = min_mag + i * bin_width
+        nocc[i, 1] = nocc[i, 0] - bin_width/2
+        nocc[i, 2] = nocc[i, 0] + bin_width/2
     #
     # assigning occurrences
     dlt = bin_width * 1e-5
