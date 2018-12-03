@@ -29,7 +29,11 @@ def get_total_mfd(sources, trt=None, bin_width=0.1):
             if isinstance(src, NonParametricSeismicSource):
                 dat = []
                 for rup, pmf in src.data:
-                    rte = - np.log(1-pmf.data[0, 0])
+                    if pmf.data[1][0] == 1:
+                        print('Fixing rate to 1/50 for ', src.id)
+                        rte = 1/50.
+                    else:
+                        rte = -np.log(1.-pmf.data[1][0])
                     dat.append([rup.mag, rte])
                 dat = np.array(dat)
                 mmin = np.floor(min(dat[:, 0])/bin_width)*bin_width
@@ -38,14 +42,24 @@ def get_total_mfd(sources, trt=None, bin_width=0.1):
                                   bin_width)
                 count, edges = np.histogram(dat[:, 0], edges,
                                             weights=dat[:, 1])
-                mfd = EvenlyDiscretizedMFD(mmin, bin_width, count)
-            elif isinstance(mfd, ArbitraryMFD):
+                if (any(count)):
+                    idx = np.nonzero(count < 1e-10)
+                    count[idx] = 1e-10
+                    mfd = EvenlyDiscretizedMFD(mmin, bin_width, count)
+                else:
+                    continue
+            else:
                 mfd = src.mfd
+                if hasattr(mfd, 'occurrence_rates'):
+                    occ = np.array(mfd.occurrence_rates)
+                    if all(occ < 1e-12):
+                        continue
+
+            if isinstance(mfd, ArbitraryMFD):
                 mfd = mfdt.get_evenlyDiscretizedMFD_from_arbitraryMFD(
                     mfd, bin_width)
             # Truncated MFD
             elif isinstance(mfd, TruncatedGRMFD):
-                mfd = src.mfd
                 mfd = mfdt.get_evenlyDiscretizedMFD_from_truncatedGRMFD(
                     mfd, bin_width)
             # Multi MFD

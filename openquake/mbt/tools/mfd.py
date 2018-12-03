@@ -492,6 +492,9 @@ def mfd_downsample(bin_width, mfd):
     smmn = sum(nocc[:, 3])
     smmo = sum(mfd.occurrence_rates)
 
+    if (nocc.shape[0] < 1):
+        print(mfd.occurrence_rates, mfd.bin_width, bin_width)
+
     if log:
         print(nocc)
         print('SUMS:', smmn, smmo)
