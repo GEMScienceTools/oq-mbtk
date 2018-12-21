@@ -44,6 +44,9 @@ SUBSETS = {
                      'WA': ['25 20 25 5 18 -5.5 18.50 -9.80 18.95 -14.17 20.6 -30.25 9 -31 -29 20 -20 20 -15 20 -10 20 -5 20 0 20 5 20 10 20 15 20 20 20']}
           }
 
+# XX corresponds to the portion of Russia covered by the European model
+# XW corresponds to the portion of Malaysia covered by the Indonesian model
+# XY corresponds to the portion of Colombia covered by the CAC model
 DATA = {'als07': ['US'],
         'arb18': ['SA', 'QA', 'YM', 'MU', 'AE', 'BA'],
         'aus18': ['AS'],
@@ -58,7 +61,8 @@ DATA = {'als07': ['US'],
         'eur13': ['IC', 'EI', 'UK', 'PO', 'SP', 'IT', 'FR', 'GM', 'BE', 'NL',
                   'SZ', 'AU', 'NO', 'SW', 'FI', 'DA', 'PL', 'LH', 'LG', 'EN',
                   'BK', 'HR', 'SR', 'AL', 'MK', 'GR', 'BU', 'RO', 'MD', 'UP',
-                  'BO', 'EZ', 'LO', 'HU', 'SI', 'LU', 'AL', 'JE', 'MW', 'MT', 'XX'],
+                  'BO', 'EZ', 'LO', 'HU', 'SI', 'LU', 'AL', 'JE', 'MW', 'MT', 
+                  'XX'],
         'haw96': ['US'],
         'ind12': ['IN', 'BT', 'BG', 'CE', 'NP', 'RS'],
         'idn17': ['ID', 'XW', 'TM', 'BX'],
