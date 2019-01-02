@@ -1766,11 +1766,8 @@ def apparent_dip_from_dip_rake(dip, rake):
     dip = np.abs(dip)
     rake = np.abs(rake)
 
-    beta = np.degrees(np.arctan(
-                np.tan(np.radians(rake)) * np.cos(np.radians(dip))))
-
-    return np.degrees(np.arctan(
-                np.sin(np.radians(beta)) * np.tan(np.radians(dip))))
+    return np.degrees(np.arcsin(
+                 np.sin(np.radians(dip)) * np.sin(np.radians(rake))))
 
 
 def true_dip_from_vert_short(vert, short):
