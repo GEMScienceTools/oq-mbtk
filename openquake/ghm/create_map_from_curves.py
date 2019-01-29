@@ -153,9 +153,9 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                  imt_str, inland_shp, models_list=None,
                  only_buffers=False):
     """
-    This function process all the models listed in the mosaic.DATA dictionary.
-    The code creates for the models in contact with other models a file with
-    the points outside of the buffer area
+    This function processes all the models listed in the mosaic.DATA
+    dictionary. The code creates for the models in contact with other models
+    a file with the points outside of the buffer area
 
     :param str contacts_shp:
         The shapefile containing the contacts between models

@@ -30,9 +30,9 @@ IMTSTR='PGA'
 I_SHP='./../data/gis/inland.shp'
 #
 # List of models to be processed
-MDLS="-m als,can,usa,mex,ucf,cca,sam"
-MDLS="-m mex,usa"
-MDLS="-m cca,sam"
+#MDLS="-m als,can,usa,mex,ucf,cca,sam"
+#MDLS="-m mex,usa"
+#MDLS="-m cca,sam"
 #
 # Run hazard curves homogenisation
 ../create_map_from_curves.py $C_SHP $O_PATH $D_PATH $SIDX $B_SHP $IMTSTR $I_SHP $MDLS
