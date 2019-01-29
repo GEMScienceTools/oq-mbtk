@@ -100,6 +100,55 @@ def homogenise_curves(dat, poes, buf):
     return meanhc
 
 
+def get_hcurves_geodataframe(fname):
+    """
+    :param fname:
+        Name of the file with the hazard curves
+    """
+    # Load hazard curve data
+    df = pandas.read_csv(fname, skiprows=1)
+    df['Coordinates'] = list(zip(df.lon, df.lat))
+    df['Coordinates'] = df['Coordinates'].apply(Point)
+    map_gdf = gpd.GeoDataFrame(df, geometry='Coordinates')
+    # Read the header
+    fin = open(fname, 'r')
+    header = fin.readline()
+    p = re.compile(
+            r'^#\s*(\w*),\s*investigation_time=(\d*\.\d*),\s*imt=\"(\w*)')
+    m = p.search(header)
+    fin.close()
+    return map_gdf, (m.group(1), float(m.group(2)), m.group(3))
+
+
+def print_model_info(i, key):
+    """ """
+    dt = datetime.now()
+    tmps = dt.strftime('%H:%M:%S')
+    tmps = '[@{:s} - #{:d}] Working on {:s}'.format(tmps, i, key)
+    print(tmps)
+
+
+def print_model_read(i, data_fname):
+    """ """
+    dt = datetime.now()
+    tmps = dt.strftime('%H:%M:%S')
+    tmps = '[@{:s} - #{:d}] Reading {:s}'.format(tmps, i, data_fname)
+    print(tmps)
+
+
+def get_imtls(poes):
+    """
+    Returns a numpy.ndarray with the intensity measure levels
+
+    :param poes:
+        A list of strings
+    """
+    imtls = []
+    for tmps in poes:
+        imtls.append(float(re.sub('poe-', '', tmps)))
+    return np.array(imtls)
+
+
 def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                  imt_str, inland_shp, models_list=None,
                  only_buffers=False):
@@ -135,15 +184,11 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             raise ValueError('The code requires an empty folder')
     else:
         os.mkdir(outpath)
-
-    # TODO check that the GM values used to compute the poes are all the same
-
     # Read the shapefile with the contacts between models
     contacts_df = gpd.read_file(contacts_shp)
-    # reading the shapefile with inland area
+    # Read the shapefile with inland areas
     inland_df = gpd.read_file(inland_shp)
-    #
-    # load the spatial index
+    # Load the spatial index
     sidx = index.Rtree(sidx_fname)
     #
     # Get the list of the models from the data folder
@@ -157,35 +202,36 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
     buffer_data = {}
     buffer_poes = {}
     coords = {}
+    header_save = None
+    imts_save = None
     for i, key in enumerate(sorted(mosaic.DATA)):
-        #
-        # skipping models
+        # Skip models not included in the list
         if re.sub('[0-9]+', '', key) not in models_list:
             continue
-        # printing info
-        dt = datetime.now()
-        tmps = dt.strftime('%H:%M:%S')
-        tmps = '[@{:s} - #{:d}] Working on {:s}'.format(tmps, i, key)
-        print(tmps)
-        # load data from csv file
+        # Find name of the file with hazard curves
+        print_model_info(i, key)
         data_fname = find_hazard_curve_file(datafolder, key, imt_str)
-        print(data_fname)
-        # printing info
-        dt = datetime.now()
-        tmps = dt.strftime('%H:%M:%S')
-        tmps = '[@{:s} - #{:d}] Reading {:s}'.format(tmps, i, data_fname[0])
-        print(tmps)
-        # read the filename with the hazard map and create a geopandas
-        # geodataframe
-        df = pandas.read_csv(data_fname[0], skiprows=1)
-        df['Coordinates'] = list(zip(df.lon, df.lat))
-        df['Coordinates'] = df['Coordinates'].apply(Point)
-        map_gdf = gpd.GeoDataFrame(df, geometry='Coordinates')
-        # create the list of column names with hazard curve data
+        # Read hazard curves
+        print_model_read(i, data_fname[0])
+        map_gdf, header = get_hcurves_geodataframe(data_fname[0])
+        # Check the stability of information used. TODO we should also check
+        # that the IMTs are always the same
+        if header_save is None:
+            header_save = header
+        else:
+            for obtained, expected in zip(header, header_save):
+                assert obtained == expected
+        # Create the list of column names with hazard curve data. These are
+        # the IMLs
         poelabs = [l for l in map_gdf.columns.tolist() if re.search('^poe', l)]
+        imts = get_imtls(poelabs)
         if len(poelabs) < 1:
             raise ValueError('Empty list of column headers')
-
+        # Check the IMLs used
+        if imts_save is None:
+            imts_save = imts
+        else:
+            np.testing.assert_array_equal(imts_save, imts)
         # fixing an issue at the border between waf and ssa
         # TODO can we remove this?
         if key in ['waf18', 'ssa18']:
