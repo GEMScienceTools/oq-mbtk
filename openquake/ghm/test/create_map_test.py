@@ -39,7 +39,7 @@ class CreateMapTestCase(unittest.TestCase):
         datafolder = os.path.join(DATA, 'data', 'hom', 'db')
         # 4 - folder with the spatial index
         fname = 'trigrd_split_9_spacing_13'
-        sidx_fname = os.path.join(DATA, '..', 'data', 'global_grid', fname)
+        sidx_fname = os.path.join(os.environ['GEMDATA'], 'global_grid', fname)
         # 5 - contacts shapefile
         fname = 'world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp'
         shapefile = os.path.join(DATA, '..', 'data', 'gis', fname)
