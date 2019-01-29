@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 #
+# This is the shell script used to run the code which produces an homogenised
+# set of hazard curves with global coverage. Note that it requires
+# the a-priori definition of two environment variables: REPOS and GEMDATA.
+# The former contains the `mosaic` repository, the latter is the path to the 
+# repository containing the GEM dataset.
+#
 # Create the homogenised set of hazard curves
 C_SHP='./../data/gis/contacts_between_models.shp'
 #
