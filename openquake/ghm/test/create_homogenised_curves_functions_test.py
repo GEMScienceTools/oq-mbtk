@@ -6,7 +6,7 @@ import os
 import unittest
 import geopandas as gpd
 
-from openquake.ghm.create_map_from_curves import get_hcurves_geodataframe
+from openquake.ghm.create_homogenised_curves import get_hcurves_geodataframe
 
 DATA = os.path.join(os.path.dirname(__file__), 'data', 'hazardcurve')
 

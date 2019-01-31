@@ -102,13 +102,12 @@ def get_map_from_curves(imls, poes, pex):
                                       imls[poes[idx, :] > 0],
                                       kind='linear')
             dval = f2(pex)
-
-            if dval > 1.0:
-                plt.plot(imls[poes[idx, :] > 0],
-                         poes[idx, poes[idx, :] > 0], '-')
-                plt.xscale('log')
-                plt.yscale('log')
-                plt.show()
+            #if dval > 1.0:
+            #    plt.plot(imls[poes[idx, :] > 0],
+            #             poes[idx, poes[idx, :] > 0], '-')
+            #    plt.xscale('log')
+            #    plt.yscale('log')
+            #    plt.show()
         else:
             dval = 0.0
         dat.append(dval)
