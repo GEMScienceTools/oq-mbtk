@@ -6,7 +6,7 @@
 # folder with .json files
 I_JSON='/tmp/ghm/'
 #
-# Output folder
+# Prefix used to select the .json files with the hazard curves
 PREFIX='map'
 #
 # Output file and folder
