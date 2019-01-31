@@ -9,7 +9,7 @@ import unittest
 import numpy as np
 import geopandas as gpd
 
-from openquake.ghm.create_map_from_curves import process_maps
+from openquake.ghm.create_homogenised_curves import process_maps
 
 DATA = os.path.join(os.path.dirname(__file__))
 
