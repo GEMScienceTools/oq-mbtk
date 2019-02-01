@@ -27,9 +27,12 @@ def getcoo(lon, lat):
     return xp, yp
 
 
-def _get_source_model(source_file, inv_time, simple_mesh_spacing=10.0,
-                      complex_mesh_spacing=10.0, mfd_spacing=0.1,
-                      area_discretisation=20.):
+def _get_source_model(source_file, investigation_time=1., 
+                      rupture_mesh_spacing=10.0,
+                      complex_fault_mesh_spacing=10.0, 
+                      width_of_mfd_bin=0.1,
+                      area_source_discretization=20.,
+                      **kwargs):
     """
     Read and build a source model from an xml file
 
@@ -49,13 +52,15 @@ def _get_source_model(source_file, inv_time, simple_mesh_spacing=10.0,
         A list of :class:`~openquake.hazardlib.sourceconverter.SourceGroup`
         instances
     """
-    conv = SourceConverter(inv_time, simple_mesh_spacing, complex_mesh_spacing,
-                           mfd_spacing, area_discretisation)
+    conv = SourceConverter(investigation_time, rupture_mesh_spacing, 
+                           complex_fault_mesh_spacing,
+                           width_of_mfd_bin, area_source_discretization,
+                           **kwargs)
     srcs = to_python(source_file, conv)
     return srcs.src_groups
 
 
-def read(model_filename, get_info=True):
+def read(model_filename, get_info=True, **kwargs):
     """
     This reads the nrml file containing the model
 
@@ -66,7 +71,7 @@ def read(model_filename, get_info=True):
     """
     # Analysis
     logging.info('Reading: %s' % (model_filename))
-    source_grps = _get_source_model(model_filename, inv_time=1)
+    source_grps = _get_source_model(model_filename, **kwargs)
     source_model = []
     for grp in source_grps:
         for src in grp.sources:

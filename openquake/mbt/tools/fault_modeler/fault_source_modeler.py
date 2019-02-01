@@ -126,6 +126,7 @@ def build_fault_model(cfg_file=None,
                                width_method=width_method,
                                oqt_source=oqt_source,
                                project_name=project_name,
+                               param_map=param_map_local,
                                defaults=defaults_local)
 
     if xml_output is None:
@@ -163,7 +164,7 @@ def read_config_file(cfg_file):
 
 def build_model_from_db(fault_db,
                         xml_output=None,
-                        width_method='seismo_depth',
+                        width_method='length_scaling',
                         oqt_source=False,
                         project_name=None,
                         param_map=None,
@@ -196,7 +197,8 @@ def build_model_from_db(fault_db,
             srcl.append(sfs)
 
         except Exception as e:
-            print("Couldn't process Fault {}: {}".format(fl['source_id'], e))
+            id = fl[param_map['source_id']]
+            print("Couldn't process Fault {}: {}".format(id, e))
 
     if xml_output is not None:
         # Write the final fault model
@@ -224,7 +226,8 @@ class FaultDatabase():
             self.import_from_geojson(geojson_file)
 
     def import_from_geojson(self, geojson_file, black_list=None,
-                            select_list=None, param_map=None):
+                            select_list=None, param_map=None,
+                            update_keys=False):
         """
         """
 
@@ -255,23 +258,26 @@ class FaultDatabase():
                 """
 
                 fault = feature['properties']
-                for k in param_map_local:
-                    k_map = param_map_local[k]
-                    if k_map in fault:
-                        fault[k] = fault.pop(k_map)
+
+                # Update parameter keys only if explicitly requested
+                if update_keys:
+                    for k in param_map_local:
+                        k_map = param_map_local[k]
+                        if k_map in fault:
+                            fault[k] = fault.pop(k_map)
 
                 # Process only faults in the selection list
                 if select_list is not None:
                     if not isinstance(select_list, (list, tuple)):
                         select_list = [select_list]
-                    if fault['source_id'] not in select_list:
+                    if fault[param_map_local['source_id']] not in select_list:
                         continue
 
                 # Skip further processing for blacklisted faults
                 if black_list is not None:
                     if not isinstance(black_list, (list, tuple)):
                         black_list = [black_list]
-                    if fault['source_id'] in black_list:
+                    if fault[param_map_local['source_id']] in black_list:
                         continue
 
                 # Get fault geometry
@@ -307,16 +313,22 @@ class FaultDatabase():
         """
 
         for fault in self.db:
-            if fault[key] is id or id is None:
+            if id is None:
                 fault[property] = value
+            else:
+                if fault[key] is id:
+                    fault[property] = value
 
     def remove_property(self, property, id=None, key='source_id'):
         """
         """
 
         for fault in self.db:
-            if fault[key] is id or id is None:
+            if id is None:
                 fault.pop(property)
+            else:
+                if fault[key] is id:
+                    fault.pop(property)
 
 
 # -----------------------------------------------------------------------------

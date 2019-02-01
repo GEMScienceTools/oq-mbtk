@@ -195,10 +195,6 @@ class TestModelingUtils(unittest.TestCase):
     def test_net_slip_from_strike_slip_fault_geom(self):
         pass
 
-    @unittest.skip("not yet implemented")
-    def test_net_slip_from_vert_slip_fault_geom(self):
-        pass
-
     def test_net_slip_from_shortening_fault_geom(self):
 
         fault = {'coords': [[0., 0.], [0., 1.]],
@@ -227,7 +223,7 @@ class TestModelingUtils(unittest.TestCase):
 
         net_slip_true_rate = 2.
 
-        self.assertTrue(abs(net_slip_true_rate - net_slip_true_rate) < 0.01)
+        self.assertTrue(abs(net_slip_rate - net_slip_true_rate) < 0.01)
 
 
     @unittest.skip("not yet implemented")
@@ -240,10 +236,6 @@ class TestModelingUtils(unittest.TestCase):
 
     @unittest.skip("not yet implemented")
     def test_net_slip_from_vert_strike_slip(self):
-        pass
-
-    @unittest.skip("not yet implemented")
-    def test_net_slip_from_strike_slip_shortening(self):
         pass
 
     @unittest.skip("not yet implemented")
@@ -319,6 +311,17 @@ class TestModelingUtils(unittest.TestCase):
 
         apparent_dip = fmu.apparent_dip_from_dip_rake(30., 90.)
         self.assertTrue(abs(apparent_dip - 30.) < 0.01)
+
+    def test_apparent_dip_from_dip_rake(self):
+        dips = [81., 81., 79, 79., 30, 30, 30]
+        rakes = [17., 163., 50, 130, 20, 40, 60]
+        ads = [17, 17., 49, 49, 10, 19, 26]
+
+        for i, dip in enumerate(dips):
+            rake = rakes[i]
+            ad_true = ads[i]
+            ad = fmu.apparent_dip_from_dip_rake(dip, rake)
+            self.assertTrue( np.abs(ad - ad_true) < 1)
 
 if __name__ == "__main__":
     unittest.main()
