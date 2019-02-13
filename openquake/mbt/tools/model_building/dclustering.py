@@ -36,7 +36,7 @@ def _add_defaults(cat):
 
 def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
               output_path, labels=None, tr_fname=None, subcatalogues=False,
-              format='csv', olab='', save_af=False, out_fname_ext=None,
+              format='csv', olab='', save_af=False, out_fname_ext='',
               fix_defaults=False):
     """
     :param str catalogue_hmtk_fname:
@@ -68,7 +68,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     #
     # Create output filename
     lbl = 'all'
-    if labels is not None and out_fname_ext is None:
+    if labels is not None and len(out_fname_ext) == 0:
         labels = [labels] if isinstance(labels, str) else labels
         if len(labels) < 2:
             lbl = labels[0]
@@ -155,6 +155,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     # Save output
     if format == 'csv':
         cat.write_catalogue(out_fname)
+        print('Writing catalogue to file: {:s}'.format(out_fname))
         if save_af:
             catt.write_catalogue(outfa_fname)
     elif format == 'pkl':
