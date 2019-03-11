@@ -32,7 +32,7 @@ I_SHP='./../data/gis/inland.shp'
 # List of models to be processed. This is an optional parameter. If not set,
 # i.e. MDLS="", all the models specified in `openquake.ghm.mosaic.DATA`
 # will be used.
-MDLS="-m als,can,usa,mex,ucf,cca,sam"
+#MDLS="-m als,can,usa,mex,ucf,cca,sam"
 #MDLS="-m mex,usa"
 #MDLS="-m cca,sam"
 #
