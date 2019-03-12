@@ -1,6 +1,8 @@
 import re
 import numpy
+import pandas as pd
 from scipy import interpolate
+from openquake.hmtk.seismicity.catalogue import Catalogue
 
 
 def mde_for_gmt(filename, fout):
@@ -229,3 +231,58 @@ def read_hazard_map(filename):
                 maps.append([float(bb) for bb in aa[2:]])
     return numpy.array(lons), numpy.array(lats), numpy.array(maps), header1, \
         header2
+
+
+def get_catalogue_from_ses(fname, duration):
+    """
+    Converts a set of ruptures into an instance of
+    :class:`openquake.hmtk.seismicity.catalogue.Catalogue`.
+
+    :param fname:
+        Name of the .csv file
+    :param float duration:
+        Duration [in years] of the SES
+    :returns:
+        A :class:`openquake.hmtk.seismicity.catalogue.Catalogue` instance
+    """
+    # Read the set of ruptures
+    ses = pd.read_csv(fname, sep='\t', skiprows=1)
+    # Create an empty catalogue
+    cat = Catalogue()
+    # Set catalogue data
+    cnt = 0
+    year = []
+    eventids = []
+    mags = []
+    lons = []
+    lats = []
+    deps = []
+    for i in range(len(ses)):
+        nevents = ses['multiplicity'][i]
+        for j in range(nevents):
+            eventids.append(':d'.format(cnt))
+            mags.append(ses['mag'].values[i])
+            lons.append(ses['centroid_lon'].values[i])
+            lats.append(ses['centroid_lat'].values[i])
+            deps.append(ses['centroid_depth'].values[i])
+            cnt += 1
+            year.append(numpy.random.random_integers(1, duration, 1))
+
+    data = {}
+    year = numpy.array(year, dtype=int)
+    data['year'] = year
+    data['month'] = numpy.ones_like(year, dtype=int)
+    data['day'] = numpy.ones_like(year)
+    data['hour'] = numpy.zeros_like(year)
+    data['minute'] = numpy.zeros_like(year)
+    data['second'] = numpy.zeros_like(year)
+    data['magnitude'] = numpy.array(mags)
+    data['longitude'] = numpy.array(lons)
+    data['latitude'] = numpy.array(lats)
+    data['depth'] = numpy.array(deps)
+    data['eventID'] = eventids
+    cat.data = data
+    cat.end_year = duration
+    cat.start_year = 0
+    cat.data['dtime'] = cat.get_decimal_time()
+    return cat
