@@ -37,3 +37,19 @@ class TestReadHeader(unittest.TestCase):
         msgstr = 'The IMTs do not match'
         self.assertEqual("SA(0.2)", header[tmpstr], msgstr)
 
+
+class CatalogueFromSESTest(unittest.TestCase):
+    """ """
+
+    def testcase01(self):
+        fname = os.path.join(BASE_DATA_PATH, 'ruptures.csv')
+        catalogue = csv.get_catalogue_from_ses(fname, 10)
+        msg = 'Total number of events not matching'
+        self.assertEqual(catalogue.get_number_events(), 51, msg)
+        #
+        dat = [[6.05, 21], [6.15, 11], [6.25, 8], [6.35, 11]]
+        for mag, expected in dat:
+            fmt = 'Number of events with magnitude {:.2f} not matching'
+            msg = fmt.format(mag)
+            computed = sum(abs(catalogue.data['magnitude'] - mag) < 1e-8)
+        self.assertEqual(computed, expected, msg)
