@@ -272,9 +272,9 @@ def get_catalogue_from_ses(fname, duration):
     year = numpy.array(year, dtype=int)
     data['year'] = year
     data['month'] = numpy.ones_like(year, dtype=int)
-    data['day'] = numpy.ones_like(year)
-    data['hour'] = numpy.zeros_like(year)
-    data['minute'] = numpy.zeros_like(year)
+    data['day'] = numpy.ones_like(year, dtype=int)
+    data['hour'] = numpy.zeros_like(year, dtype=int)
+    data['minute'] = numpy.zeros_like(year, dtype=int)
     data['second'] = numpy.zeros_like(year)
     data['magnitude'] = numpy.array(mags)
     data['longitude'] = numpy.array(lons)
