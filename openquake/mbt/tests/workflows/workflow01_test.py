@@ -28,17 +28,16 @@ class TestFMGWorkflow(unittest.TestCase):
         logging.basicConfig(filename=fname, level=logging.WARN)
         #
         # clear directory where the project will be created
-        folder = os.path.join(self.BASE_DATA_PATH, './../tmp/project_test')
+        folder = os.path.join(self.BASE_DATA_PATH, '..', 'tmp' 'project_test')
         delete_and_create_project_dir(folder)
         #
         # set environment variable
-        self.prj_path = os.path.join(self.BASE_DATA_PATH,
-                                     './../tmp/project_test/test.oqmbtp')
+        self.prj_path = os.path.join(folder, 'test.oqmbtp')
         os.environ["OQMBT_PROJECT"] = self.prj_path
         #
         # create the project
-        path = './../data/wf01/project.ini'
-        inifile = os.path.join(self.BASE_DATA_PATH, path)
+        inifile = os.path.join(self.BASE_DATA_PATH, '..', 'data', 'wf01',
+                               'project.ini')
         project_create([inifile, os.path.dirname(self.prj_path)])
         #
         # load the project just created
@@ -50,7 +49,9 @@ class TestFMGWorkflow(unittest.TestCase):
         # set the shapefile with the geometry of area sources [relative path
         # with origin the project folder]
         path = './../../data/wf01/shapefiles/test_area.shp'
-        model.area_shapefile_filename = path
+        model.area_shapefile_filename = os.path.join('..', '..', 'data',
+                                                     'wf01', 'shapefiles',
+                                                     'test_area.shp')
         #
         # set the shapefile with the geometry of fault sources [relative path
         # with origin the project folder]
