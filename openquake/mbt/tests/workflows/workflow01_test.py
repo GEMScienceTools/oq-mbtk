@@ -12,9 +12,6 @@ from openquake.mbt.oqt_project import OQtProject
 from openquake.mbt.notebooks.project.project_create import project_create
 from openquake.mbt.tests.tools.tools import delete_and_create_project_dir
 
-# MN: 'set_completeness_for_sources' imported but not used
-from openquake.mbt.tools.completeness import set_completeness_for_sources
-
 
 class TestFMGWorkflow(unittest.TestCase):
 
@@ -28,7 +25,7 @@ class TestFMGWorkflow(unittest.TestCase):
         logging.basicConfig(filename=fname, level=logging.WARN)
         #
         # clear directory where the project will be created
-        folder = os.path.join(self.BASE_DATA_PATH, '..', 'tmp' 'project_test')
+        folder = os.path.join(self.BASE_DATA_PATH, '..', 'tmp', 'project_test')
         delete_and_create_project_dir(folder)
         #
         # set environment variable
@@ -48,15 +45,15 @@ class TestFMGWorkflow(unittest.TestCase):
         #
         # set the shapefile with the geometry of area sources [relative path
         # with origin the project folder]
-        path = './../../data/wf01/shapefiles/test_area.shp'
-        model.area_shapefile_filename = os.path.join('..', '..', 'data',
+        model.area_shapefile_filename = os.path.join('.', '..', '..', 'data',
                                                      'wf01', 'shapefiles',
                                                      'test_area.shp')
         #
         # set the shapefile with the geometry of fault sources [relative path
         # with origin the project folder]
-        path = './../../data/wf01/shapefiles/test_faults.shp'
-        model.faults_shp_filename = path
+        model.faults_shp_filename = os.path.join('.', '..', '..', 'data',
+                                                 'wf01', 'shapefiles',
+                                                 'test_faults.shp')
         #
         # set the shapefile withe the faults
         path = './../../data/wf01/shapefile/test_faults.csv'
@@ -127,7 +124,7 @@ class TestFMGWorkflow(unittest.TestCase):
         """
         This implements a workflow similar to the one used with FMG
         """
-        reports_folder = './../tmp/project_test/reports/'
+        reports_folder = os.path.join('..', 'tmp', 'project_test', 'reports')
         #
         #
         oqtkp = OQtProject.load_from_file(self.prj_path)
@@ -139,7 +136,7 @@ class TestFMGWorkflow(unittest.TestCase):
         # running the first notebook that loads the geometry of the sources
         # from the shapefile
         nb_name = 'load_geometry_from_shapefile.ipynb'
-        nb_path = './../../notebooks/sources_area/'
+        nb_path = os.path.join('..', '..', 'notebooks', 'sources_area')
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
         nb.run(nb_full_path, '')
@@ -147,21 +144,21 @@ class TestFMGWorkflow(unittest.TestCase):
         # .....................................................................
         # catalogue pre-processing
         nb_name = 'catalogue_pre_processing.ipynb'
-        nb_path = './../../notebooks/catalogue/'
+        nb_path = os.path.join('..', '..', 'notebooks', 'catalogue')
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
         nb.run(nb_full_path, '')
         #
         # checking the creation of the pickled version of the catalogue
         file_name = 'model01_catalogue.pkl'
-        file_path = './../tmp/project_test/'
+        file_path = os.path.join('..', 'tmp', 'project_test')
         tmp = os.path.join(self.BASE_DATA_PATH, file_path, file_name)
         nb_full_path = os.path.abspath(tmp)
         assert os.path.exists(nb_full_path)
         #
         # checking that .hdf5 file exists and contains updated information
         file_name = 'completeness.hdf5'
-        file_path = './../tmp/project_test/'
+        file_path = os.path.join('..', 'tmp', 'project_test')
         tmp = os.path.join(self.BASE_DATA_PATH, file_path, file_name)
         nb_full_path = os.path.abspath(tmp)
         assert os.path.exists(nb_full_path)
@@ -186,7 +183,7 @@ class TestFMGWorkflow(unittest.TestCase):
         # .....................................................................
         # assign default completeness to all the sources
         nb_name = 'set_completeness_to_all_area_sources.ipynb'
-        nb_path = './../../notebooks/sources_area/'
+        nb_path = os.path.join('..', '..', 'notebooks', 'sources_area')
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
         nb.run(nb_full_path, '')
@@ -194,7 +191,7 @@ class TestFMGWorkflow(unittest.TestCase):
         # checking that the .hdf5 contains the completeness tables for all the
         # sources
         file_name = 'completeness.hdf5'
-        file_path = './../tmp/project_test/'
+        file_path = os.path.join('..', 'tmp', 'project_test')
         tmp = os.path.join(self.BASE_DATA_PATH, file_path, file_name)
         nb_full_path = os.path.abspath(tmp)
         f = h5py.File(nb_full_path, 'r')
@@ -219,7 +216,7 @@ class TestFMGWorkflow(unittest.TestCase):
         get_src_ids = GetSourceIDs(model)
         get_src_ids.keep_equal_to('source_type', ['AreaSource'])
         nb_name = 'compute_double_truncated_GR_from_seismicity.ipynb'
-        nb_path = './../../notebooks/sources_area/'
+        nb_path = os.path.join('..', '..', 'notebooks', 'sources_area')
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
         automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys,
@@ -232,8 +229,6 @@ class TestFMGWorkflow(unittest.TestCase):
         model = oqtkp.models['model01']
         #
         # check the a and b values computed
-        # MN: 'keys' assigned but never used
-        keys = list(model.sources.keys())
         self.assertAlmostEqual(model.sources['1'].a_gr, 3.7243511906)
         self.assertAlmostEqual(model.sources['1'].b_gr, 0.636452331875)
         self.assertAlmostEqual(model.sources['2'].a_gr, 3.69438318983)
@@ -254,7 +249,7 @@ class TestFMGWorkflow(unittest.TestCase):
         get_src_ids = GetSourceIDs(model)
         get_src_ids.keep_equal_to('source_type', ['AreaSource'])
         nb_name = 'load_hypocentral_depth_distribution_from_csv.ipynb'
-        nb_path = './../../notebooks/sources_area/'
+        nb_path = os.path.join('..', '..', 'notebooks', 'sources_area')
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
         automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys)
@@ -262,7 +257,7 @@ class TestFMGWorkflow(unittest.TestCase):
         # checking that the .hdf5 contains the completeness tables for all the
         # sources
         file_name = 'model01_hypo_dist.hdf5'
-        file_path = './../tmp/project_test/'
+        file_path = os.path.join('..', 'tmp', 'project_test')
         tmp = os.path.join(self.BASE_DATA_PATH, file_path, file_name)
         nb_full_path = os.path.abspath(tmp)
         assert os.path.exists(nb_full_path)
@@ -292,7 +287,7 @@ class TestFMGWorkflow(unittest.TestCase):
         get_src_ids = GetSourceIDs(model)
         get_src_ids.keep_equal_to('source_type', ['AreaSource'])
         nb_name = 'load_nodal_plane_distribution_from_csv.ipynb'
-        nb_path = './../../notebooks/sources_area/'
+        nb_path = os.path.join('..', '..', 'notebooks', 'sources_area')
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
         automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys)
