@@ -142,6 +142,8 @@ plot()
 
     # Cleaning
     rm gmt.*
+
+    echo "Created: "$PNG
 }
 
 
