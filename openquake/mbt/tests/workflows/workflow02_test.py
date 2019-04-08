@@ -1,24 +1,10 @@
 import os
-# MN: 'h5py' imported but not used
-import h5py
 import unittest
 import logging
-# MN: 'np' imported but not used
-import numpy as np
 
-# MN: 'nb' imported but not used
-import openquake.mbt.tools.notebook as nb
-
-# MN: 'automator' imported but not used
-from openquake.mbt.tools import automator
-# MN: 'GetSourceIDs' imported but not used
-from openquake.mbt.tools.utils import GetSourceIDs
 from openquake.mbt.oqt_project import OQtProject
 from openquake.mbt.notebooks.project.project_create import project_create
 from openquake.mbt.tests.tools.tools import delete_and_create_project_dir
-
-# MN: 'set_completeness_for_sources' imported but not used
-from openquake.mbt.tools.completeness import set_completeness_for_sources
 
 
 class TestWorkflow(unittest.TestCase):
