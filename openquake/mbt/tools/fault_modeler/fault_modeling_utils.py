@@ -17,10 +17,9 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors: Julio Garcia, Richard Styron, Valerio Poggi
-# Last modify: 10/09/2018
+# Last modify: 09/04/2019
 
 # -----------------------------------------------------------------------------
-
 import warnings
 import numpy as np
 from copy import deepcopy
@@ -2543,7 +2542,7 @@ def calc_mfd_from_fault_params(fault_dict,
         tuple
     """
 
-    if mfd_type is None:
+    if True:
         mfd_type = fetch_param_val(fault_dict, 'mfd_type', defaults=defaults,
                                    param_map=param_map)
 

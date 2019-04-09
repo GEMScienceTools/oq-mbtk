@@ -18,10 +18,9 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors: Julio Garcia, Richard Styron, Valerio Poggi
-# Last modify: 10/09/2018
+# Last modify: 09/04/2019
 
 # -----------------------------------------------------------------------------
-
 import sys
 import ast
 import json
