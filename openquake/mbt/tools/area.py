@@ -91,7 +91,7 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
     """
     #
     #
-    if len(area_source_ids_list) > 1:
+    if area_source_ids_list is not None and len(area_source_ids_list) > 1:
         msg = 'We do not support the selection for multiple sources'
         raise ValueError(msg)
     #
