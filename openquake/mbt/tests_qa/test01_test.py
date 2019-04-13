@@ -1,8 +1,12 @@
-
-
+"""
+module test01
+"""
 import os
-import numpy
+import glob
+import subprocess
+import shutil
 import unittest
+import numpy
 import openquake.man.model as model
 import openquake.man.tools.csv_output as csv
 from openquake.mbt.tools.mfd import EEvenlyDiscretizedMFD
@@ -10,20 +14,40 @@ from openquake.mbt.tools.mfd import EEvenlyDiscretizedMFD
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'test01')
 
 
+def get_fname(folder, pattern):
+    """
+    Find a single file
+    :param folder:
+    :param pattern:
+    """
+
+    patt = os.path.join(folder, pattern)
+    lst = glob.glob(patt)
+    print(lst)
+    assert len(lst) == 1
+    return lst[0]
+
+
 class MFDFromSESMFDFromInputTest(unittest.TestCase):
     """
+    Check that the MFD computed on the source model matches the one
+    obtained from the computed SES
     """
 
     def testcase01(self):
-        """
-        """
+        """ Test case 1"""
 
         # Bin width
         bwdt = 0.1
         time = 500000
 
-        fname_ses = os.path.join(BASE_DATA_PATH, 'out', 'ruptures_786.csv')
+        folder = os.path.join(BASE_DATA_PATH, 'out')
         fname_ssm = os.path.join(BASE_DATA_PATH, 'ssm01.xml')
+        fname_ini = os.path.join(BASE_DATA_PATH, 'job.ini')
+        command = 'oq engine --run {:s} --exports csv'.format(fname_ini)
+        subprocess.run(command, shell=True)
+        fname_ses = get_fname(folder, 'ruptures_*.csv')
+        print(fname_ses)
 
         # Read catalogue
         cat = csv.get_catalogue_from_ses(fname_ses, time)
@@ -35,12 +59,6 @@ class MFDFromSESMFDFromInputTest(unittest.TestCase):
         # Compute MFD from the ses catalogue
         cm_ses = numpy.arange(mmin, mmax, bwdt)
         nobs_ses, _ = numpy.histogram(cat.data['magnitude'], cm_ses)
-
-        # Read input seismic source model
-        # print(fname_ssm)
-        # conv = SourceConverter(1., 5., 5., 0.1, 10.)
-        # mdl = to_python(fname_ssm, conv)
-        # print(mdl.src_groups)
 
         # Create total MFD
         ssm, _ = model.read(fname_ssm)
@@ -62,6 +80,7 @@ class MFDFromSESMFDFromInputTest(unittest.TestCase):
 
         ratio = abs(computed/expected)
         msg = 'Total rates do not match'
+
         self.assertTrue(ratio < 1., msg)
 
         if False:
@@ -72,3 +91,5 @@ class MFDFromSESMFDFromInputTest(unittest.TestCase):
             plt.grid()
             plt.legend()
             plt.show()
+
+        shutil.rmtree(folder)
