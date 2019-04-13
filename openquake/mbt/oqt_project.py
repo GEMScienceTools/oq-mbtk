@@ -9,10 +9,7 @@ import re
 import os
 import warnings
 import inspect
-try:
-    import cPickle as pickle
-except:
-    import pickle
+import pickle
 import openquake.hazardlib.source as oqsrc
 
 from copy import deepcopy
@@ -221,6 +218,25 @@ class OQtProject(object):
                     key, len(self.models[key].sources)))
         else:
             print('   %-30s' % ('None'))
+
+    def set_tectonic_region(self, model_id, trt, source_type='.*'):
+        """
+        Set the tectonic region for a set of sources in a OQtProject project.
+
+        :param project:
+            A :class: openquake.mbt.project.OQtProject` instance
+        :param str model_id:
+            The ID of the model
+        :param str trt:
+            Tectonic region type
+        """
+        model = self.models[model_id]
+        for key in sorted(model.sources):
+            source = model.sources[key]
+            if re.match(source_type, source.source_type):
+                source.tectonic_region_type = trt
+                model.sources[key] = source
+        self.models[model_id] = model
 
 
 class OQtModel(object):
