@@ -98,10 +98,10 @@ def get_map_from_curves(imls, poes, pex):
         if (any(poes[idx, :] > 0.0) and
             min(poes[idx, poes[idx, :] > 0.0]) < pex and
                 max(poes[idx, :]) > pex):
-            f2 = interpolate.interp1d(poes[idx, poes[idx, :] > 0],
+            f2 = interpolate.interp1d(numpy.log(poes[idx, poes[idx, :] > 0]),
                                       imls[poes[idx, :] > 0],
                                       kind='linear')
-            dval = f2(pex)
+            dval = f2(numpy.log(pex))
         else:
             dval = 0.0
         dat.append(dval)
@@ -199,14 +199,15 @@ def _get_header1(line):
     tmpstr = "imt"
     pattern = r'{:s}="(.*)"'.format(tmpstr)
     mtc = re.search(pattern, line)
-    header[tmpstr] = mtc.group(1)
+    if mtc:
+        header[tmpstr] = mtc.group(1)
     return header
 
 
 def _get_header2(line):
     imls = []
     aa = re.split('\\,', line)
-    for bb in aa[3:]:
+    for bb in aa[2:]:
         imls.append(re.sub('^poe-', '', bb))
     return imls
 
@@ -219,16 +220,15 @@ def read_hazard_map(filename):
     lons = []
     maps = []
     for idx, line in enumerate(open(filename, 'r')):
-        if not re.search('^#', line):
-            if idx == 0:
-                header1 = _get_header1(line)
-            elif idx == 1:
-                header2 = _get_header2(line)
-            else:
-                aa = re.split('\\,', line)
-                lons.append(float(aa[0]))
-                lats.append(float(aa[1]))
-                maps.append([float(bb) for bb in aa[2:]])
+        if idx == 0:
+            header1 = _get_header1(line.rstrip())
+        elif idx == 1:
+            header2 = _get_header2(line.rstrip())
+        else:
+            aa = re.split('\\,', line)
+            lons.append(float(aa[0]))
+            lats.append(float(aa[1]))
+            maps.append([float(bb) for bb in aa[2:]])
     return numpy.array(lons), numpy.array(lats), numpy.array(maps), header1, \
         header2
 
