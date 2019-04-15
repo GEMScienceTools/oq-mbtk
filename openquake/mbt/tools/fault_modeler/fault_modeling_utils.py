@@ -98,7 +98,7 @@ scale_rel_map = {'Leonard2014_SCR': 'leonard2014',
 # -----------------------------------------------------------------------------
 
 def construct_sfs_dict(fault_dict, 
-                       mfd_type='DoubleTruncatedGR',
+                       mfd_type=None,
                        area_method='simple',
                        width_method='seismo_depth',
                        width_scaling_relation=None, slip_class=None,
@@ -2391,7 +2391,7 @@ def get_M_max(fault_dict, magnitude_scaling_relation=None,
 
 
 def calc_mfd_from_fault_params(fault_dict,
-                               mfd_type='DoubleTruncatedGR',
+                               mfd_type=None,
                                area_method='simple',
                                width_method='seismo_depth',
                                width_scaling_relation='Leonard2014_Interplate',
@@ -2588,7 +2588,8 @@ def calc_double_truncated_GR_mfd_from_fault_params(
         defaults=defaults, param_map=param_map, rigidity=None,
         aseismic_coefficient=None):
     """
-    Creates a magnitude-frequency distribution from fault parameters.
+    Creates a double-truncated Gutenberg-Richter magnitude-frequency 
+    distribution from fault parameters.
 
     Fault parameters (not methods or scaling relations)
     passed here will override those in the `fault_dict`.
@@ -2805,8 +2806,8 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
         defaults=defaults, param_map=param_map,
         aseismic_coefficient=None):
     """
-    Creates a double-truncated Gutenberg-Richter magnitude-frequency
-    distribution from fault parameters.
+    Creates a Youngs-Coppersmith (hybrid characteristic and GR) 
+    magnitude-frequency distribution from fault parameters.
 
     Fault parameters (not methods or scaling relations)
     passed here will override those in the `fault_dict`.
@@ -2930,7 +2931,7 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
         Magnitude-scaling relation class.
 
     :rtype:
-        EvenlyDiscretizedMFD
+        YoungsCoppersmithMFD
 
     """
 
