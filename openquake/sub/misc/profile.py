@@ -16,6 +16,11 @@ TOLERANCE = 0.2
 
 def profiles_depth_alignment(pro1, pro2):
     """
+    Find the indexes needed to align the profiles i.e. define profiles whose
+    edges are as much as possible horizontal. Note that this method expects
+    that the two profiles had been already resampled, therefore, vertexes in
+    each profile should be equally spaced.
+
     :param pro1:
         An instance of :class:`openquake.hazardlib.geo.line.Line`
     :param pro2:
@@ -23,14 +28,14 @@ def profiles_depth_alignment(pro1, pro2):
     :returns:
         AA
     """
+    #
+    # create two numpy.ndarray with the coordinates of the two profiles
     coo1 = [(pnt.longitude, pnt.latitude, pnt.depth) for pnt in pro1.points]
     coo2 = [(pnt.longitude, pnt.latitude, pnt.depth) for pnt in pro2.points]
-    #
-    #
     coo1 = np.array(coo1)
     coo2 = np.array(coo2)
     #
-    #
+    # set the profile with the smaller number of points as the first one
     swap = 1
     if coo2.shape[0] < coo1.shape[0]:
         tmp = coo1
@@ -38,12 +43,14 @@ def profiles_depth_alignment(pro1, pro2):
         coo2 = tmp
         swap = -1
     #
-    # Creating two arrays of the same lenght
-    coo1 = np.array(coo1)
-    coo2 = np.array(coo2[:coo1.shape[0]])
-    #
-    # The two profiles require at least 5 points
+    # process the profiles. Note that in the ideal case the two profiles
+    # require at least 5 points
     if len(coo1) > 5 and len(coo2) > 5:
+        #
+        # create two arrays of the same lenght
+        coo1 = np.array(coo1)
+        coo2 = np.array(coo2[:coo1.shape[0]])
+        #
         indexes = np.arange(-2, 3)
         dff = np.zeros_like(indexes)
         for i, shf in enumerate(indexes):
@@ -56,8 +63,12 @@ def profiles_depth_alignment(pro1, pro2):
         amin = np.amin(dff)
         res = indexes[np.amax(np.nonzero(dff == amin))] * swap
     else:
-        res = 0
-
+        d1 = np.zeros((len(coo2)-len(coo1)+1, len(coo1)))
+        d2 = np.zeros((len(coo2)-len(coo1)+1, len(coo1)))
+        for i in np.arange(0, len(coo2)-len(coo1)+1):
+            d2[i, :] = [coo2[d, 2] for d in range(i, i+len(coo1))]
+            d1[i, :] = coo1[:, 2]
+        res = np.argmin(np.sum(abs(d2-d1), axis=1))
     return res
 
 
@@ -107,23 +118,28 @@ def _resample_profile(line, sampling_dist):
     la = [pnt.latitude for pnt in line.points]
     de = [pnt.depth for pnt in line.points]
     #
-    # Add a tolerance length
+    # Set projection
     g = Geod(ellps='WGS84')
-    az12, az21, odist = g.inv(lo[-2], la[-2], lo[-1], la[-1])
-    odist /= 1e3
-    slope = np.arctan((de[-1] - de[-2]) / odist)
-    hdist = TOLERANCE * sampling_dist * np.cos(slope)
-    vdist = TOLERANCE * sampling_dist * np.sin(slope)
-    endlon, endlat, backaz = g.fwd(lo[-1], la[-1], az12, hdist*1e3)
-    lo[-1] = endlon
-    la[-1] = endlat
-    de[-1] = de[-1] + vdist
-    az12, az21, odist = g.inv(lo[-2], la[-2], lo[-1], la[-1])
     #
-    # checking
-    odist /= 1e3
-    slopec = np.arctan((de[-1] - de[-2]) / odist)
-    assert abs(slope-slopec) < 1e-3
+    # Add a tolerance length to the last point of the profile
+    # check that final portion of the profile is not vertical
+    if abs(lo[-2]-lo[-1]) > 1e-5 and abs(la[-2]-la[-1]) > 1e-5:
+        az12, az21, odist = g.inv(lo[-2], la[-2], lo[-1], la[-1])
+        odist /= 1e3
+        slope = np.arctan((de[-1] - de[-2]) / odist)
+        hdist = TOLERANCE * sampling_dist * np.cos(slope)
+        vdist = TOLERANCE * sampling_dist * np.sin(slope)
+        endlon, endlat, backaz = g.fwd(lo[-1], la[-1], az12, hdist*1e3)
+        lo[-1] = endlon
+        la[-1] = endlat
+        de[-1] = de[-1] + vdist
+        az12, az21, odist = g.inv(lo[-2], la[-2], lo[-1], la[-1])
+        # checking
+        odist /= 1e3
+        slopec = np.arctan((de[-1] - de[-2]) / odist)
+        assert abs(slope-slopec) < 1e-3
+    else:
+        de[-1] = de[-1] + TOLERANCE * sampling_dist
     #
     # initialise the cumulated distance
     cdist = 0.
@@ -161,7 +177,10 @@ def _resample_profile(line, sampling_dist):
             # compute the slope of the last segment and its horizontal length.
             # We need to manage the case of a vertical segment TODO
             segment_hlen = distance(slo, sla, 0., lo[idx+1], la[idx+1], 0.)
-            segment_slope = np.arctan((de[idx+1] - sde) / segment_hlen)
+            if segment_hlen > 1e-5:
+                segment_slope = np.arctan((de[idx+1] - sde) / segment_hlen)
+            else:
+                segment_slope = 90.
             #
             # horizontal and vertical lenght of delta
             delta_v = delta * np.sin(segment_slope)
@@ -195,5 +214,5 @@ def _resample_profile(line, sampling_dist):
         if abs(dst-sampling_dist) > 0.1*sampling_dist:
             raise ValueError('Wrong distance between points along the profile')
     #
-    #
+    # 
     return Line(resampled_cs)

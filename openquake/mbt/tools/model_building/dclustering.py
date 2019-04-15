@@ -1,14 +1,16 @@
 #!/usr/bin/env python
+"""
+:module:`openquake.mbt.tools.model_building.dclustering`
+"""
 
 import os
-import h5py
-import numpy
-import copy
 import pickle
 import importlib
+import copy
 import logging
-
 from pathlib import Path
+import h5py
+import numpy
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
@@ -26,17 +28,20 @@ def _add_defaults(cat):
     for lab in ['month', 'day', 'hour', 'minute', 'second']:
         idx = numpy.isnan(cat.data[lab])
         if lab in ['day', 'month']:
-            cat.data[lab][idx] = 1
+            cat.data[lab] = numpy.array(cat.data[lab], dtype=int)
+            cat.data[lab][idx] = int(1.0)
+            idx = numpy.isfinite(cat.data[lab])
         elif lab == 'second':
             cat.data[lab][idx] = 0.0
         else:
-            cat.data[lab][idx] = 0
+            cat.data[lab][idx] = int(0)
+
     return cat
 
 
 def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
               output_path, labels=None, tr_fname=None, subcatalogues=False,
-              format='csv', olab='', save_af=False, out_fname_ext=None,
+              format='csv', olab='', save_af=False, out_fname_ext='',
               fix_defaults=False):
     """
     :param str catalogue_hmtk_fname:
@@ -68,7 +73,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     #
     # Create output filename
     lbl = 'all'
-    if labels is not None and out_fname_ext is None:
+    if labels is not None and len(out_fname_ext) == 0:
         labels = [labels] if isinstance(labels, str) else labels
         if len(labels) < 2:
             lbl = labels[0]
@@ -155,6 +160,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     # Save output
     if format == 'csv':
         cat.write_catalogue(out_fname)
+        print('Writing catalogue to file: {:s}'.format(out_fname))
         if save_af:
             catt.write_catalogue(outfa_fname)
     elif format == 'pkl':
