@@ -5,6 +5,12 @@ from scipy import interpolate
 from openquake.hmtk.seismicity.catalogue import Catalogue
 
 
+def read_realisations(fname):
+    """
+    """
+    
+
+
 def mde_for_gmt(filename, fout):
     """
     This simple function converts the information in the .csv file (m-d-e) into
