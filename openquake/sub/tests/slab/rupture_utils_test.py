@@ -19,13 +19,6 @@ class CreateRuptureTest(unittest.TestCase):
         z = np.loadtxt(os.path.join(path, 'virtual_fault.z'))
         self.mesh = Mesh(x, y, z)
 
-    def test_get_ruptures_m(self):
-        """
-        TODO Test rupture generation
-        """
-        # MN: 'rups' assigned but never used
-        rups = [r for r in get_ruptures(self.mesh, 1, 1)]
-
 
 class RuptureGenerationTest(unittest.TestCase):
 

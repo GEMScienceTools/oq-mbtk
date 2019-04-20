@@ -3,8 +3,6 @@ import re
 import numpy
 import unittest
 
-# MN: 'Catalogue' imported but never used
-from openquake.hmtk.seismicity.catalogue import Catalogue
 from openquake.sub.cross_sections import CrossSection, CrossSectionData
 from openquake.sub.cross_sections import get_min_distance
 

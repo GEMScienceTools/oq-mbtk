@@ -7,14 +7,15 @@ import numpy
 import unittest
 
 import matplotlib.pyplot as plt
-# MN: 'Axes3D' imported but never used
-from mpl_toolkits.mplot3d import Axes3D
 
 from openquake.sub.misc.profile import _read_profiles
 from openquake.sub.misc.edge import create_from_profiles
 from openquake.hazardlib.geo.geodetic import distance
 
-# from openquake.sub.tests.misc.utils_plot import plotter
+PLT = True
+
+if PLT:
+    from openquake.sub.misc.utils_plot import plotter
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), '..', 'data')
 
@@ -57,7 +58,8 @@ class IdealisedSimpleMeshTest(unittest.TestCase):
         alg = False
         smsh = create_from_profiles(self.profiles, h_sampl, v_sampl, idl, alg)
 
-        # plotter(self.profiles, smsh)
+        if PLT:
+            plotter(self.profiles, smsh)
 
         #
         # Check the horizontal mesh spacing
@@ -84,7 +86,6 @@ class IdealisedSimpleMeshTest(unittest.TestCase):
                 tmp.append(dst)
             computed.append(dst)
         computed = numpy.array(computed)
-        print(numpy.amax(abs(computed-v_sampl)/v_sampl))
         self.assertTrue(numpy.all(abs(computed-v_sampl)/v_sampl < 0.05))
 
 
@@ -104,7 +105,8 @@ class IdealisedSimpleDisalignedMeshTest(unittest.TestCase):
         alg = False
         self.smsh = create_from_profiles(self.profiles, self.h_sampl,
                                          self.v_sampl, idl, alg)
-        # ppp(self.profiles, self.smsh)
+        if PLT:
+            ppp(self.profiles, self.smsh)
 
     def test_h_spacing(self):
         """ Check h-spacing: two misaligned profiles - no top alignment """
@@ -154,8 +156,9 @@ class IdealisedAsimmetricMeshTest(unittest.TestCase):
         idl = False
         alg = False
         smsh = create_from_profiles(self.profiles, h_sampl, v_sampl, idl, alg)
-        # ppp(self.profiles, smsh)
-        # plotter(self.profiles, smsh)
+        if PLT:
+            ppp(self.profiles, smsh)
+            plotter(self.profiles, smsh)
         idx = numpy.isfinite(smsh[:, :, 0])
 
     def test_mesh_creation_with_alignment(self):
@@ -165,8 +168,9 @@ class IdealisedAsimmetricMeshTest(unittest.TestCase):
         idl = False
         alg = True
         smsh = create_from_profiles(self.profiles, h_sampl, v_sampl, idl, alg)
-        # ppp(self.profiles, smsh)
-        # plotter(self.profiles, smsh)
+        if PLT:
+            ppp(self.profiles, smsh)
+            plotter(self.profiles, smsh)
         idx = numpy.isfinite(smsh[:, :, 0])
 
 
@@ -183,7 +187,8 @@ class IdealizedATest(unittest.TestCase):
         idl = False
         alg = False
         smsh = create_from_profiles(self.profiles, h_sampl, v_sampl, idl, alg)
-        # ppp(self.profiles, smsh)
+        if PLT:
+            ppp(self.profiles, smsh)
         idx = numpy.isfinite(smsh[:, :, 0])
 
     def test_mesh_creation_with_alignment(self):
@@ -193,7 +198,8 @@ class IdealizedATest(unittest.TestCase):
         idl = False
         alg = True
         smsh = create_from_profiles(self.profiles, h_sampl, v_sampl, idl, alg)
-        # ppp(self.profiles, smsh)
+        if PLT:
+            ppp(self.profiles, smsh)
         idx = numpy.isfinite(smsh[:, :, 0])
 
 
@@ -210,7 +216,8 @@ class SouthAmericaSegmentTest(unittest.TestCase):
         alg = False
         smsh = create_from_profiles(self.profiles, sampling, sampling, idl,
                                     alg)
-        # ppp(self.profiles, smsh)
-        # plotter(self.profiles, smsh)
+        if PLT:
+            ppp(self.profiles, smsh)
+            plotter(self.profiles, smsh)
         idx = numpy.isfinite(smsh[:, :, 0])
         self.assertEqual(numpy.sum(numpy.sum(idx)), 202)
