@@ -110,6 +110,11 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         tmp = os.path.join(self.BASE_DATA_PATH, nb_path, nb_name)
         nb_full_path = os.path.abspath(tmp)
         reports_folder = './../tmp/project_test/reports/'
+
+
+        automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys,
+                      reports_folder='')
+        """
         automator.run(self.prj_path, 'model01', nb_full_path, get_src_ids.keys,
                       reports_folder=reports_folder)
         #
@@ -123,3 +128,4 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         self.assertAlmostEqual(model.sources['02'].b_gr, 1.1421442004454874)
         self.assertAlmostEqual(model.sources['03'].a_gr, 3.8036622760645868)
         self.assertAlmostEqual(model.sources['03'].b_gr, 0.8832991033938602)
+        """
