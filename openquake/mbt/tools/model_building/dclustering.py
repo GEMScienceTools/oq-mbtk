@@ -69,7 +69,8 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     """
     #
     # check if the initial catalogue file exists
-    assert os.path.exists(catalogue_hmtk_fname)
+    msg = 'Catalogue {:s} is missing'.format(catalogue_hmtk_fname)
+    assert os.path.exists(catalogue_hmtk_fname), msg
     #
     # Create output filename
     lbl = 'all'
