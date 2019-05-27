@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.seismicity.occurrence.weichert import Weichert
-
+from openquake.mbt.tools.model_building.dclustering import _add_defaults
 from openquake.mbt.tools.model_building.plt_tools import (_load_catalogue,
                                                           _get_extremes)
 
@@ -21,6 +21,7 @@ def _get_compl_table(hdf5_fname, label):
 def _compute_mfd(cat, compl_table, mwid):
     """
     """
+    cat = _add_defaults(cat)
     weichert_config = {'magnitude_interval': mwid,
                        'reference_magnitude': 0.0}
     weichert = Weichert()
