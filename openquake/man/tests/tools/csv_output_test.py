@@ -37,6 +37,19 @@ class TestReadHeader(unittest.TestCase):
         msgstr = 'The IMTs do not match'
         self.assertEqual("SA(0.2)", header[tmpstr], msgstr)
 
+    def testcase03(self):
+        """ Reading hcurve header - csv version 3.6"""
+        tmpstr = 'hazard_curve-mean-PGA_23538_v3.6.csv'
+        fname = os.path.join(BASE_DATA_PATH, tmpstr)
+        fhandle = open(fname, 'r')
+        header = csv._get_header1(fhandle.readline())
+        tmpstr = 'investigation_time'
+        msgstr = 'The investigation times do not match'
+        self.assertEqual(1.0, header[tmpstr], msgstr)
+        tmpstr = 'imt'
+        msgstr = 'The IMTs do not match'
+        self.assertEqual("PGA", header[tmpstr], msgstr)
+
 
 class CatalogueFromSESTest(unittest.TestCase):
     """ """
