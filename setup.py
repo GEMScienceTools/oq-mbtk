@@ -55,7 +55,7 @@ setup(
     # Minimal requirements, for a complete list see requirements-*.txt
     # matplotlib is brought by the openquake engine
     install_requires=[
-        'openquake.engine',
+        'openquake.engine[plotting]',
         'nbstripout >= 0.3.0',
         'jupyter_client >= 5.0.0',
         'ipykernel >= 4.8.0',

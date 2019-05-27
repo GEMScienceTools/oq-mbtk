@@ -4,5 +4,6 @@
 
 # GEM Mirror
 http://cdn.ftp.openquake.org/wheelhouse/linux/py36/pyproj-1.9.5.1-cp36-cp36m-manylinux1_x86_64.whl
+http://cdn.ftp.openquake.org/wheelhouse/linux/py36/basemap-1.1.0-cp36-cp36m-manylinux1_x86_64.whl
 http://cdn.ftp.openquake.org/wheelhouse/linux/py36/GDAL-2.4.1-cp36-cp36m-manylinux1_x86_64.whl
 http://cdn.ftp.openquake.org/wheelhouse/linux/py36/Rtree-0.8.3-cp36-cp36m-manylinux1_x86_64.whl
