@@ -186,7 +186,23 @@ def read_hazard_curve_csv(filename):
 
 
 def _get_header1(line):
+
     header = {}
+
+    tmpstr = "imt"
+    if re.search('generated_by', line):
+        # version 3.6
+        imt_pattern = r'{:s}=\'([^\']*)\''.format(tmpstr)
+        # engine
+        tmpstr = "generated_by"
+        pattern = r'{:s}=\'([^\']*)\''.format(tmpstr)
+        mtc = re.search(pattern, line)
+        header["engine"] = mtc.group(1)
+        print(mtc.group(1))
+    else:
+        # version 3.5 and before
+        imt_pattern = r'{:s}=\"([^\']*)\"'.format(tmpstr)
+
     # result type
     aa = re.split('\\,', re.sub('#', '', line))
     header['result_type'] = re.sub('^\\s*', '', re.sub('\\s*$', '', aa[0]))
@@ -196,10 +212,8 @@ def _get_header1(line):
     mtc = re.search(pattern, line)
     header[tmpstr] = float(mtc.group(1))
     # IMT
-    tmpstr = "imt"
-    pattern = r'{:s}="(.*)"'.format(tmpstr)
-    mtc = re.search(pattern, line)
-    header[tmpstr] = mtc.group(1)
+    mtc = re.search(imt_pattern, line)
+    header["imt"] = mtc.group(1)
     return header
 
 
