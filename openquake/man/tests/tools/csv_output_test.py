@@ -46,9 +46,15 @@ class TestReadHeader(unittest.TestCase):
         tmpstr = 'investigation_time'
         msgstr = 'The investigation times do not match'
         self.assertEqual(1.0, header[tmpstr], msgstr)
+        #
         tmpstr = 'imt'
         msgstr = 'The IMTs do not match'
         self.assertEqual("PGA", header[tmpstr], msgstr)
+        #
+        msgstr = 'Wrong engine version'
+        expected = 'OpenQuake engine 3.6.0-git3c85fde84e'
+        self.assertEqual(expected, header['engine'], msgstr)
+
 
 
 class CatalogueFromSESTest(unittest.TestCase):
