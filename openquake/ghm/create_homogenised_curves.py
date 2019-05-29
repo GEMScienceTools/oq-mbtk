@@ -23,14 +23,15 @@ import re
 import sys
 import glob
 import copy
+import pickle
 import pandas
 import warnings
 import logging
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-
 import shapely.speedups
+
 from rtree import index
 from datetime import datetime
 from shapely.geometry import Point
@@ -216,12 +217,14 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
     #
     # Loop over the various models
     buf = 0.6
-    buffer_data = {}
-    buffer_poes = {}
-    coords = {}
     header_save = None
     imts_save = None
     for i, key in enumerate(sorted(mosaic.DATA)):
+
+        buffer_data = {}
+        buffer_poes = {}
+        coords = {}
+
         # Skip models not included in the list
         if re.sub('[0-9]+', '', key) not in models_list:
             continue
@@ -237,7 +240,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         else:
             for obtained, expected in zip(header, header_save):
                 # print(obtained, expected)
-                #assert obtained == expected
+                # assert obtained == expected
                 pass
         # Create the list of column names with hazard curve data. These are
         # the IMLs
@@ -250,8 +253,8 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             imts_save = imts
         else:
             np.testing.assert_array_equal(imts_save, imts)
-        # fixing an issue at the border between waf and ssa
-        # TODO can we remove this?
+        # Fixing an issue at the border between waf and ssa
+        # TODO can we remove this now?
         if key in ['waf18', 'ssa18']:
             from shapely.geometry import Polygon
             coo = get_poly_from_str(mosaic.SUBSETS[key]['AO'][0])
@@ -272,7 +275,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         # Now we process the polygons composing the selected model
         for poly in one_polygon.geometry:
             # Checking the contacts between the current model and the
-            # surrounding one as specified in the contacts_df geodataframe
+            # surrounding ones as specified in the contacts_df geodataframe
             c = 0
             for la, lb, geo in zip(contacts_df.modelA, contacts_df.modelB,
                                    contacts_df.geometry):
@@ -295,11 +298,9 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     # Create a dataframe with just the points in the buffer
                     # and save the distance of each point from the border
                     tmpdf = copy.deepcopy(map_gdf[idx])
-
                     tmpdf.crs = {'init': 'epsg:4326'}
                     tmpdf = gpd.sjoin(tmpdf, inland_df, how='inner',
                                       op='intersects')
-
                     dst = tmpdf.distance(geo)
                     tmpdf = tmpdf.assign(distance=dst)
                     # Select the points contained in the buffer and belonging
@@ -312,7 +313,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     # points within the model but outside of the buffers. The
                     # points in the buffer but outside the model are True.
                     poly = poly.difference(geo.buffer(buf))
-                    # Write the data in the buffer
+                    # Write the data in the buffer between the two models
                     fname = 'buf{:d}_{:s}.json'.format(c, key)
                     fname = os.path.join(outpath, fname)
                     if len(tmpdf):
@@ -327,6 +328,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                                                         tmpdf['distance'],
                                                         tmpdf['outside'])):
                         # pidx = tmpdf.index.values[iii]
+                        # get only poes for the various IMLs
                         tmp = tmpdf[poelabs]
                         poe = tmp.iloc[iii].values
                         # Using rtree we find the closest point on the
@@ -348,7 +350,6 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                             buffer_data[res[0]] = [[d, o]]
                             buffer_poes[res[0]] = [poe]
                             coords[res[0]] = [p.x, p.y]
-            #
             # idx is a series of booleans
             if not only_buffers:
                 df = pandas.DataFrame({'Name': [key], 'Polygon': [poly]})
@@ -356,7 +357,73 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                 within = gpd.sjoin(map_gdf, gdf, op='within')
                 fname = os.path.join(outpath, 'map_{:s}.json'.format(key))
                 within.to_file(fname, driver='GeoJSON')
-    #
+        #
+        # Storing temporary files
+        tmpdir = os.path.join(outpath, 'temp')
+        if not os.path.exists(tmpdir):
+            os.mkdir(tmpdir)
+        #
+        fname = os.path.join(tmpdir, '{:s}_data.pkl'.format(key))
+        print(fname)
+        fou = open(fname, "wb")
+        pickle.dump(buffer_data, fou)
+        fou.close()
+        #
+        fname = os.path.join(tmpdir, '{:s}_poes.pkl'.format(key))
+        fou = open(fname, "wb")
+        pickle.dump(buffer_poes, fou)
+        fou.close()
+        #
+        fname = os.path.join(tmpdir, '{:s}_coor.pkl'.format(key))
+        fou = open(fname, "wb")
+        pickle.dump(coords, fou)
+        fou.close()
+
+        buffer_processing(outpath, datafolder, sidx_fname, imt_str,
+                          models_list, poelabs, buf)
+
+
+def buffer_processing(outpath, datafolder, sidx_fname, imt_str, models_list,
+                      poelabs, buf):
+    """
+    Buffer processing
+    """
+
+    buffer_data = {}
+    buffer_poes = {}
+    coords = {}
+
+    tmpdir = os.path.join(outpath, 'temp')
+    for i, key in enumerate(sorted(mosaic.DATA)):
+ 
+        # Skip models not included in the list
+        if re.sub('[0-9]+', '', key) not in models_list:
+            continue
+
+        print(key)
+
+        fname = os.path.join(tmpdir, '{:s}_data.pkl'.format(key))
+        fou = open(fname, 'rb')
+        tbuffer_data = pickle.load(fou)
+        fou.close()
+        fname = os.path.join(tmpdir, '{:s}_poes.pkl'.format(key))
+        fou = open(fname, 'rb')
+        tbuffer_poes = pickle.load(fou)
+        fou.close()
+        fname = os.path.join(tmpdir, '{:s}_coor.pkl'.format(key))
+        fou = open(fname, 'rb')
+        tcoords = pickle.load(fou)
+        fou.close()
+
+        for k in tbuffer_data.keys():
+            if k in buffer_data:
+                buffer_data[k].append(tbuffer_data[k])
+                buffer_poes[k].append(tbuffer_poes[k])
+            else:
+                buffer_data[k] = [tbuffer_data[k]]
+                buffer_poes[k] = [tbuffer_poes[k]]
+                coords[k] = tcoords[k]
+
     # Here we process the points in the buffer
     msg = 'Final processing'
     logging.info(msg)
@@ -367,7 +434,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
     for l in poelabs:
         header += ','+l
     fou.write(header)
-    # This is the file with points that have only one value (in theory this is
+    # This is the file with points that has only one value (in theory this is
     # impossible)
     fname = os.path.join(outpath, 'buf_unique.txt')
     fuu = open(fname, 'w')
