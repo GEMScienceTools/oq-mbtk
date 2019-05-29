@@ -379,8 +379,8 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         pickle.dump(coords, fou)
         fou.close()
 
-        buffer_processing(outpath, datafolder, sidx_fname, imt_str,
-                          models_list, poelabs, buf)
+    buffer_processing(outpath, datafolder, sidx_fname, imt_str,
+                      models_list, poelabs, buf)
 
 
 def buffer_processing(outpath, datafolder, sidx_fname, imt_str, models_list,
@@ -395,21 +395,23 @@ def buffer_processing(outpath, datafolder, sidx_fname, imt_str, models_list,
 
     tmpdir = os.path.join(outpath, 'temp')
     for i, key in enumerate(sorted(mosaic.DATA)):
- 
+
         # Skip models not included in the list
         if re.sub('[0-9]+', '', key) not in models_list:
             continue
-
-        print(key)
-
+        #
+        print('Loading {:s}'.format(key))
+        #
         fname = os.path.join(tmpdir, '{:s}_data.pkl'.format(key))
         fou = open(fname, 'rb')
         tbuffer_data = pickle.load(fou)
         fou.close()
+        #
         fname = os.path.join(tmpdir, '{:s}_poes.pkl'.format(key))
         fou = open(fname, 'rb')
         tbuffer_poes = pickle.load(fou)
         fou.close()
+        #
         fname = os.path.join(tmpdir, '{:s}_coor.pkl'.format(key))
         fou = open(fname, 'rb')
         tcoords = pickle.load(fou)
@@ -447,6 +449,7 @@ def buffer_processing(outpath, datafolder, sidx_fname, imt_str, models_list,
     for key in buffer_data.keys():
         c += 1
         dat = np.array(buffer_data[key])
+        print(key, dat.shape)
         if dat.shape[0] > 1:
             poe = np.array(buffer_poes[key])
             meanhc = homogenise_curves(dat, poe, buf)
