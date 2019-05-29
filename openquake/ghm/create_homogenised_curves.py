@@ -364,7 +364,6 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             os.mkdir(tmpdir)
         #
         fname = os.path.join(tmpdir, '{:s}_data.pkl'.format(key))
-        print(fname)
         fou = open(fname, "wb")
         pickle.dump(buffer_data, fou)
         fou.close()
@@ -418,13 +417,15 @@ def buffer_processing(outpath, datafolder, sidx_fname, imt_str, models_list,
         fou.close()
 
         for k in tbuffer_data.keys():
-            if k in buffer_data:
-                buffer_data[k].append(tbuffer_data[k])
-                buffer_poes[k].append(tbuffer_poes[k])
-            else:
-                buffer_data[k] = [tbuffer_data[k]]
-                buffer_poes[k] = [tbuffer_poes[k]]
-                coords[k] = tcoords[k]
+            if k not in buffer_data:
+                buffer_data[k] = []
+                buffer_poes[k] = []
+
+            coords[k] = tcoords[k]
+            for d in tbuffer_data[k]:
+                buffer_data[k].append(d)
+            for d in tbuffer_poes[k]:
+                buffer_poes[k].append(d)
 
     # Here we process the points in the buffer
     msg = 'Final processing'
@@ -449,7 +450,6 @@ def buffer_processing(outpath, datafolder, sidx_fname, imt_str, models_list,
     for key in buffer_data.keys():
         c += 1
         dat = np.array(buffer_data[key])
-        print(key, dat.shape)
         if dat.shape[0] > 1:
             poe = np.array(buffer_poes[key])
             meanhc = homogenise_curves(dat, poe, buf)
