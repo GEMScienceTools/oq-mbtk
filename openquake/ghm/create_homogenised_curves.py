@@ -252,7 +252,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         if imts_save is None:
             imts_save = imts
         else:
-            np.testing.assert_array_equal(imts_save, imts)
+            np.testing.assert_almost_equal(imts_save, imts)
         # Fixing an issue at the border between waf and ssa
         # TODO can we remove this now?
         if key in ['waf18', 'ssa18']:

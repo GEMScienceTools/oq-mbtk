@@ -25,6 +25,7 @@ B_SHP='./../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russ
 #
 # String with the intensity measure type
 IMTSTR='PGA'
+IMTSTR='SA(0.2)'
 #
 # Shapefile with inland territories
 I_SHP='./../data/gis/inland.shp'
