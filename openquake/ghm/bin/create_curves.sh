@@ -37,6 +37,5 @@ I_SHP='./../data/gis/inland.shp'
 #MDLS="-m cca,sam"
 #
 # Run hazard curves homogenisation
-echo ../create_homogenised_curves.py $C_SHP $O_PATH $D_PATH $SIDX $B_SHP $IMTSTR $I_SHP $MDLS
 ../create_homogenised_curves.py $C_SHP $O_PATH $D_PATH $SIDX $B_SHP $IMTSTR $I_SHP $MDLS
 
