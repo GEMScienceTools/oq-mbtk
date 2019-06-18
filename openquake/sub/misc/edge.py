@@ -662,7 +662,6 @@ def get_mesh_back(pfs, rfi, sd, idl):
     :returns:
 
     """
-    print('back')
     tmps = 'Number of profiles: {:d}'
     logging.info(tmps.format(len(pfs)))
     #
@@ -765,7 +764,6 @@ def get_mesh_back(pfs, rfi, sd, idl):
                         #
                         # plotting
                         if False:
-                            print('plotting')
                             fig = plt.figure(figsize=(10, 8))
                             ax = fig.add_subplot(111, projection='3d')
                             # profiles
