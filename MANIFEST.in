@@ -1,0 +1,4 @@
+include README.md LICENSE 
+
+recursive-include openquake/mbt *.ipynb
+include openquake/mbt/notebooks/catalogue/catalogue_pre_processing.ipynb
