@@ -5,11 +5,6 @@ from scipy import interpolate
 from openquake.hmtk.seismicity.catalogue import Catalogue
 
 
-def read_realisations(fname):
-    """
-    """
-    
-
 
 def mde_for_gmt(filename, fout):
     """
