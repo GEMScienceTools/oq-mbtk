@@ -42,6 +42,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 option_types = {'b_value': float,
                 'M_min': float,
                 'M_max': float,
+                'M_ref': float,
                 'bin_width': float,
                 'aseismic_coefficient': float,
                 'rupture_aspect_ratio': float,

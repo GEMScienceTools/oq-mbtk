@@ -83,7 +83,8 @@ def _get_cumul_rate_truncated(m, m_low, m_upp, rate_gt_m_low, b_gr):
     return rate
 
 
-def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, b_gr,
+def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, m_min,
+                                   b_gr,
                                    bin_width=0.1, rigidity=32e9):
     """
     :parameter area:
@@ -93,10 +94,14 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, b_gr,
         Slip-rate
         float [mm/tr]
     :parameter m_low:
-        Lower magnitude
+        Reference magnitude [No m_min!, m_low <= m_min]
         float
     :parameter m_upp:
         Upper magnitude
+        float
+    :parameter m_min:
+         Minimum magnitude [m_min >= m_low, m_low is the reference magnitude]
+         float
     :parameter b_gr:
         b-value of Gutenber-Richter relationship
     :parameter bin_width:
@@ -105,6 +110,7 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, b_gr,
         Rigidity [Pa]
     :return:
         A list containing the rates per bin starting from m_low
+        A list containing the magnitude bins starting from m_low
     """
     #
     # Compute moment
@@ -117,6 +123,7 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, b_gr,
 
     # Compute total rate
     rate_above = _get_rate_above_m_low(moment_from_slip, m_low, m_upp, b_gr)
+    print("total rate = ", rate_above)
     #
     # Compute rate per bin
     rrr = []
@@ -125,66 +132,81 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, b_gr,
         rte = (_get_cumul_rate_truncated(mmm, m_low, m_upp, rate_above, b_gr) -
                _get_cumul_rate_truncated(mmm+bin_width, m_low,
                                          m_upp, rate_above, b_gr))
-        mma.append(mmm+bin_width/2)
+        ma = mmm+bin_width/2.
+        ma = float("{0:.2f}".format(ma))
+        mma.append(ma)
         rrr.append(rte)
-    return rrr
+
+    if m_min+bin_width/2. == m_low+bin_width/2.:
+        print("Mmin= ",m_min+bin_width/2.)
+        print("Mref= ",m_low+bin_width/2.)
+        return rrr
+    else:
+        idx = mma.index(m_min+bin_width/2)
+        print("idx_Mmin= ", idx)
+        print("Mmin= ", mma[idx])
+        print("Rate= ", rrr[idx])
+        # rates for [M_min ~ M_max]
+        mma = mma[idx:]
+        rrr = rrr[idx:]
+        return rrr
 
 
 def _round_m_max(m_max, m_min, bin_size, tol=0.0001):
     """
     Rounds `m_max` up to `m_min` plus an integer multiple of `bin_size`.
-    
+
     :param m_max:
         Initial value for maximum earthquake magnitude.
-        
+
     :type m_max:
         float
-        
+
     :param m_min:
         Minimum earthquake magnitude.
-    
+
     :param bin_size:
         Size (or width) of the bins in an evenly-discretized,
         truncated Gutenberg-Richter distribution.
-        
+
     :type bin_size:
         float
-        
+
     :param tol:
         Tolerance for deciding whether `m_max` falls on a bin edge.
         Should be larger than the floating-point precision but much
         smaller than the bin_size.
-        
+
     :type tol:
         float
-        
+
     :returns:
         New (rounded-up) m_max.
-        
+
     :rtype:
         float
     """
-    
+
     m_diff = m_max - m_min
     if m_diff > 0:
         n_bins = m_diff // bin_size
         bin_remainder = m_diff % bin_size
-    
+
         if bin_remainder < tol:
             n_bins = n_bins
         else:
             n_bins = n_bins + 1
-    
+
         new_m_max = m_min + n_bins * bin_size
-        
+
     else:
         new_m_max = m_max
-    
+
     return new_m_max
 
 
 def _make_range(start, stop, step, tol=0.0001):
-    
+
     """
     Makes a list of equally-spaced values that consistently
     omits the final value, unlike numpy.arange
@@ -218,13 +240,13 @@ def _make_range(start, stop, step, tol=0.0001):
     :rtype:
         float
     """
-    
-    
+
+
     num_list = [start]
-    
+
     while num_list[-1] < (stop - step - tol):
         num_list.append(num_list[-1] + step)
-        
+
     return num_list
 
 
