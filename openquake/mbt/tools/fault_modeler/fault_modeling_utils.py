@@ -29,7 +29,7 @@ import importlib
 import openquake.hazardlib as hz
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.mbt.oqt_project import OQtSource
-from openquake.mbt.tools.faults import rates_for_double_truncated_mfd
+from openquake.mbt.tools.faults_commented import rates_for_double_truncated_mfd
 
 # -----------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ sfs_params = ('source_id',
 # Additional parameters
 all_params = list(sfs_params)
 all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'M_min', 'M_max',
-               'M_char', 'M_upper', 'b_value', 'net_slip_rate',
+               'M_char', 'M_ref', 'M_upper', 'b_value', 'net_slip_rate',
                'strike_slip_rate', 'dip_slip_rate', 'vert_slip_rate',
                'shortening_rate', 'aseismic_coefficient', 'slip_class',
                'width_scaling_relation', 'subsurface_length', 'rigidity',
@@ -69,9 +69,10 @@ param_map = {p: p for p in all_params}
 defaults = {'name': 'unnamed',
             'b_value': 1.,
             'bin_width': 0.1,
-            'M_min': 6.0,
+            'M_min': 6.5,
             'M_max': None,
             'M_char': None,
+            'M_ref': 0.0,
             'M_upper': 10.,
             'slip_class': 'mle',
             'aseismic_coefficient': 0.,
@@ -97,14 +98,14 @@ scale_rel_map = {'Leonard2014_SCR': 'leonard2014',
 
 # -----------------------------------------------------------------------------
 
-def construct_sfs_dict(fault_dict, 
+def construct_sfs_dict(fault_dict,
                        mfd_type=None,
                        area_method='simple',
                        width_method='seismo_depth',
                        width_scaling_relation=None, slip_class=None,
                        magnitude_scaling_relation=None,
                        subsurface_length=None,
-                       M_max=None, M_char=None, M_min=None,
+                       M_max=None, M_char=None, M_ref=None, M_min=None,
                        b_value=None, slip_rate=None,
                        rigidity=None,
                        aseismic_coefficient=None,
@@ -191,6 +192,13 @@ def construct_sfs_dict(fault_dict,
     :type M_min:
         float
 
+    :param M_ref:
+        Reference magnitude in the fault's magnitude-frequency distribution.
+        This is used to for the 'DoubleTruncatedGR' mfd. M_ref <= M_min.
+
+    :type M_ref:
+        float
+
     :param b_value:
         Gutenberg-Richter b-value for magnitude-frequency distribution. A
         `b-value` passed here will override project and fault defaults.
@@ -268,14 +276,14 @@ def construct_sfs_dict(fault_dict,
                     param_map=param_map))
 
     mfd, slr = calc_mfd_from_fault_params(
-                    fault_dict, 
+                    fault_dict,
                     mfd_type=mfd_type,
                     area_method=area_method,
                     width_method=width_method,
                     width_scaling_relation=width_scaling_relation,
                     slip_class=slip_class,
                     magnitude_scaling_relation=magnitude_scaling_relation,
-                    M_max=M_max, M_min=M_min,
+                    M_max=M_max, M_min=M_min,M_ref=M_ref,
                     b_value=b_value,
                     slip_rate=slip_rate,
                     aseismic_coefficient=aseismic_coefficient,
@@ -2280,6 +2288,49 @@ def get_M_min(fault_dict, defaults=defaults, param_map=param_map):
     return M_min
 
 
+def get_M_ref(fault_dict, defaults=defaults, param_map=param_map):
+    """
+    Gets the reference magnitude of earthquakes on a fault from the fault's
+    attributes or global defaults.
+    This is used to for the 'DoubleTruncatedGR' mfd.
+
+    :param fault_dict:
+        Dictionary containing the fault attributes and geometry
+
+    :type fault_dict:
+        dict
+
+    :param defaults:
+        Dictionary of project defaults.
+
+    :type defaults:
+        dict
+
+    :param param_map:
+        Dictionary of the mapping from a fault's attribute names to the
+        variables used in this library.
+
+    :type param_map:
+        dict
+
+    :returns:
+        Reference magnitude
+
+    :rtype:
+        str
+    """
+
+    try:
+        M_ref = fault_dict[param_map['M_ref']]
+    except KeyError:
+        try:
+            M_ref = defaults['M_ref']
+        except KeyError:
+            raise ValueError('No M_ref defined.')
+
+    return M_ref
+
+
 def get_M_max(fault_dict, magnitude_scaling_relation=None,
               area_method='simple', width_method='seismo_depth',
               width_scaling_relation='Leonard2014_Interplate',
@@ -2398,7 +2449,8 @@ def calc_mfd_from_fault_params(fault_dict,
                                slip_class=None,
                                magnitude_scaling_relation=None, M_max=None,
                                M_char=None,
-                               M_min=None, b_value=None, slip_rate=None,
+                               M_min=None, M_ref=None,
+                               b_value=None, slip_rate=None,
                                bin_width=None, fault_area=None,
                                defaults=defaults, param_map=param_map,
                                rigidity=None,
@@ -2486,6 +2538,13 @@ def calc_mfd_from_fault_params(fault_dict,
     :type M_min:
         float
 
+    :param M_ref:
+        Reference magnitude in the fault's magnitude-frequency distribution.
+        This is used to for the 'DoubleTruncatedGR' mfd. M_ref <= M_min.
+
+    :type M_ref:
+        float
+
     :param b_value:
         Gutenberg-Richter b-value for magnitude-frequency distribution. A
         `b-value` passed here will override project and fault defaults.
@@ -2550,11 +2609,11 @@ def calc_mfd_from_fault_params(fault_dict,
     if mfd_type == 'DoubleTruncatedGR':
         mfd, seismic_slip_rate = calc_double_truncated_GR_mfd_from_fault_params(
             fault_dict, area_method=area_method, width_method=width_method,
-            width_scaling_relation=width_scaling_relation, 
+            width_scaling_relation=width_scaling_relation,
             slip_class=slip_class,
-            magnitude_scaling_relation=magnitude_scaling_relation, 
-            M_max=M_max, M_min=M_min,
-            b_value=b_value, slip_rate=slip_rate, 
+            magnitude_scaling_relation=magnitude_scaling_relation,
+            M_max=M_max, M_min=M_min, M_ref=M_ref,
+            b_value=b_value, slip_rate=slip_rate,
             bin_width=bin_width, fault_area=fault_area,
             rigidity=rigidity, defaults=defaults, param_map=param_map,
             aseismic_coefficient=aseismic_coefficient)
@@ -2562,11 +2621,11 @@ def calc_mfd_from_fault_params(fault_dict,
     elif mfd_type == 'YoungsCoppersmith1985':
         mfd, seismic_slip_rate = calc_youngs_coppersmith_mfd_from_fault_params(
             fault_dict, area_method=area_method, width_method=width_method,
-            width_scaling_relation=width_scaling_relation, 
+            width_scaling_relation=width_scaling_relation,
             slip_class=slip_class,
-            magnitude_scaling_relation=magnitude_scaling_relation, 
+            magnitude_scaling_relation=magnitude_scaling_relation,
             M_char=M_char, M_min=M_min,
-            b_value=b_value, slip_rate=slip_rate, 
+            b_value=b_value, slip_rate=slip_rate,
             bin_width=bin_width, fault_area=fault_area,
             rigidity=rigidity, defaults=defaults, param_map=param_map,
             aseismic_coefficient=aseismic_coefficient)
@@ -2583,12 +2642,12 @@ def calc_mfd_from_fault_params(fault_dict,
 def calc_double_truncated_GR_mfd_from_fault_params(
         fault_dict, area_method='simple', width_method='seismo_depth',
         width_scaling_relation='Leonard2014_Interplate', slip_class=None,
-        magnitude_scaling_relation=None, M_max=None, M_min=None, b_value=None,
-        slip_rate=None, bin_width=None, fault_area=None,
+        magnitude_scaling_relation=None, M_max=None, M_min=None, M_ref=None,
+        b_value=None, slip_rate=None, bin_width=None, fault_area=None,
         defaults=defaults, param_map=param_map, rigidity=None,
         aseismic_coefficient=None):
     """
-    Creates a double-truncated Gutenberg-Richter magnitude-frequency 
+    Creates a double-truncated Gutenberg-Richter magnitude-frequency
     distribution from fault parameters.
 
     Fault parameters (not methods or scaling relations)
@@ -2660,6 +2719,13 @@ def calc_double_truncated_GR_mfd_from_fault_params(
     :type M_min:
         float
 
+    :param M_ref:
+        Reference magnitude in the fault's magnitude-frequency distribution.
+        This is used to for the 'DoubleTruncatedGR' mfd. M_ref <= M_min.
+
+    :type M_ref:
+        float
+
     :param b_value:
         Gutenberg-Richter b-value for magnitude-frequency distribution. A
         `b-value` passed here will override project and fault defaults.
@@ -2721,9 +2787,11 @@ def calc_double_truncated_GR_mfd_from_fault_params(
     if slip_class is None:
         slip_class = fetch_param_val(fault_dict, 'slip_class',
                                      defaults=defaults, param_map=param_map)
-
     if M_min is None:
         M_min = get_M_min(fault_dict, defaults=defaults, param_map=param_map)
+
+    if M_ref is None:
+        M_ref = get_M_ref(fault_dict, defaults=defaults, param_map=param_map)
 
     if M_max is None:
         M_max = get_M_max(
@@ -2741,6 +2809,7 @@ def calc_double_truncated_GR_mfd_from_fault_params(
 
     M_upper = fetch_param_val(fault_dict, 'M_upper',
                               defaults=defaults, param_map=param_map)
+
 
     if M_max > M_upper:
         M_max = M_upper
@@ -2785,11 +2854,15 @@ def calc_double_truncated_GR_mfd_from_fault_params(
     if bin_width is None:
         bin_width = fetch_param_val(fault_dict, 'bin_width', defaults=defaults,
                                     param_map=param_map)
+    # M_min must be >= M_ref!
+    if M_min < M_ref:
+        raise ValueError('M_min is greater than M_ref')
 
+    # bin_rates computed from M_ref to M_max, but returned from M_min to M_max
     bin_rates = rates_for_double_truncated_mfd(fault_area, seismic_slip_rate,
-                                               M_min, M_max,
-                                               b_value, bin_width,
-                                               rigidity=rigidity)
+                                                         M_ref, M_max, M_min,
+                                                         b_value, bin_width,
+                                                         rigidity=rigidity)
 
     mfd = hz.mfd.EvenlyDiscretizedMFD(M_min + bin_width / 2.,
                                       bin_width,
@@ -2806,7 +2879,7 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
         defaults=defaults, param_map=param_map,
         aseismic_coefficient=None):
     """
-    Creates a Youngs-Coppersmith (hybrid characteristic and GR) 
+    Creates a Youngs-Coppersmith (hybrid characteristic and GR)
     magnitude-frequency distribution from fault parameters.
 
     Fault parameters (not methods or scaling relations)
@@ -3005,7 +3078,6 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
                                     param_map=param_map)
 
     moment_rate = (seismic_slip_rate * 1e-3) * (fault_area * 1e6) * rigidity
-
 
     mfd = hz.mfd.YoungsCoppersmith1985MFD.from_total_moment_rate(M_min,
                                                                  b_value,
