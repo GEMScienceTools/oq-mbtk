@@ -29,7 +29,7 @@ import importlib
 import openquake.hazardlib as hz
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.mbt.oqt_project import OQtSource
-from openquake.mbt.tools.faults_commented import rates_for_double_truncated_mfd
+from openquake.mbt.tools.faults import rates_for_double_truncated_mfd
 
 # -----------------------------------------------------------------------------
 
