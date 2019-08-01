@@ -73,13 +73,14 @@ class TestMomentReleaseRateNonUniformBinEdge(unittest.TestCase):
             bin_rates = rates_for_double_truncated_mfd(self.area,
                                                        self.slip_rate,
                                                        self.m_low,
-                                                       self.m_min,
                                                        _M_max,
+                                                       self.m_min,
                                                        self.b_gr,
                                                        self.bin_width)
 
             mags = [mag + self.bin_width / 2. for mag in
                     _make_range(self.m_low, _M_max, self.bin_width)]
+
             release_rate = sum([rate * mag_to_mo(mag)
                                 for rate, mag in zip(bin_rates, mags)])
 
