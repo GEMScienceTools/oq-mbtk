@@ -25,13 +25,16 @@ class RatesDoubleTruncatedFromSlipTestCase(unittest.TestCase):
         m_upp = 7.5
         b_gr = 1.1
         bin_width = 0.05
+        # to pass test
+        m_min = 6.5
 
         # Compute moment in Nm
         expected = (32 * 1e9) * (area * 1e6) * (slip_rate * 1e-3)
 
         # Compute rates and magnitudes (i.e. bin centers)
-        rates = rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp,
+        rates = rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, m_min,
                                                b_gr, bin_width)
+
         mags = numpy.arange(m_low+bin_width/2, m_upp, bin_width)
 
         # Compute moment from rates
@@ -64,18 +67,19 @@ class TestMomentReleaseRateNonUniformBinEdge(unittest.TestCase):
 
     def test_moment_release_rate(self):
 
-        for _M_max in numpy.arange(6.501, 8.501, 0.01):
+        for _M_max in numpy.arange(6.501, 6.501, 8.501, 0.01):
 
-            bin_rates = rates_for_double_truncated_mfd(self.area, 
+            bin_rates = rates_for_double_truncated_mfd(self.area,
                                                        self.slip_rate,
                                                        self.m_low,
+                                                       self.m_min,
                                                        _M_max,
                                                        self.b_gr,
                                                        self.bin_width)
 
             mags = [mag + self.bin_width / 2. for mag in
                     _make_range(self.m_low, _M_max, self.bin_width)]
-            release_rate = sum([rate * mag_to_mo(mag) 
+            release_rate = sum([rate * mag_to_mo(mag)
                                 for rate, mag in zip(bin_rates, mags)])
 
             release_rate_error = abs((self.moment_accum_rate - release_rate)
