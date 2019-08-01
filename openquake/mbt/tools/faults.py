@@ -123,7 +123,6 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, m_min,
 
     # Compute total rate
     rate_above = _get_rate_above_m_low(moment_from_slip, m_low, m_upp, b_gr)
-    print("total rate = ", rate_above)
     #
     # Compute rate per bin
     rrr = []
@@ -138,15 +137,9 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, m_min,
         rrr.append(rte)
 
     if m_min+bin_width/2. == m_low+bin_width/2.:
-        print("Mmin= ",m_min+bin_width/2.)
-        print("Mref= ",m_low+bin_width/2.)
         return rrr
     else:
         idx = mma.index(m_min+bin_width/2)
-        print("idx_Mmin= ", idx)
-        print("Mmin= ", mma[idx])
-        print("Rate= ", rrr[idx])
-        # rates for [M_min ~ M_max]
         mma = mma[idx:]
         rrr = rrr[idx:]
         return rrr
