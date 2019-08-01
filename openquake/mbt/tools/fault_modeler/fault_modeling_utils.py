@@ -69,7 +69,7 @@ param_map = {p: p for p in all_params}
 defaults = {'name': 'unnamed',
             'b_value': 1.,
             'bin_width': 0.1,
-            'M_min': 6.5,
+            'M_min': 6.0,
             'M_max': None,
             'M_char': None,
             'M_ref': 0.0,
@@ -1712,8 +1712,7 @@ def dip_slip_from_shortening(fault_dict, slip_class='mle', _abs=True,
             'Cannot calculate dip slip from shortening with vertical fault.')
 
     dip = np.radians(dip)
-
-    return short_rate / np.cos(dip)
+    return short_rate * np.cos(dip)
 
 
 def net_slip_from_all_slip_comps(fault_dict, slip_class='mle', _abs=True,
@@ -2427,8 +2426,6 @@ def get_M_max(fault_dict, magnitude_scaling_relation=None,
                 mag_scaling_fun = get_scaling_rel(magnitude_scaling_relation)
 
             rake = get_rake(fault_dict)  # returns mle rake
-            # rake = get_rake(fault_dict, requested_val=slip_class,
-            #                 defaults=defaults, param_map=param_map)
 
             fault_area = get_fault_area(
                             fault_dict, area_method=area_method,
