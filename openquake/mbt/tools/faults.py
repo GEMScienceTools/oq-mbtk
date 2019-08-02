@@ -50,14 +50,42 @@ def get_fault_vertices_3d(fault_trace, upper_seismogenic_depth,
 
     return all_lons, all_lats, all_deps
 
+def get_rate_above_m_cli(mma, rrr, m_min, m_cli, bin_width):
+    """
+    :parameter mma:
+        A list containing the rates per bin starting from m_min
+    :parameter rrr:
+        A list containing the magnitude bins starting from m_min
+    :parameter m_min:
+        Minimum magnitude
+        float
+    :parameter m_cli:
+        Clipping magnitude
+        float
+    :parameter bin_width:
+        Bin width
+    :return:
+        A list containing the rates per bin starting from m_cli
+    """
+    if m_cli+bin_width/2. == m_min+bin_width/2.:
+        rate_m_cli = rrr
 
-def _get_rate_above_m_low(seismic_moment, m_low, m_upp, b_gr, a_m=9.05):
+        return rate_m_cli
+
+    else:
+        idx = mma.index(m_cli+bin_width/2)
+        mma = mma[idx:]
+        rate_m_cli = rrr[idx:]
+
+        return rate_m_cli
+
+def _get_rate_above_m_min(seismic_moment, m_min, m_max, b_gr, a_m=9.05):
     """
     :parameter seismic_moment:
         Seismic moment in Nm
-    :parameter m_low:
+    :parameter m_min:
         Lower magnitude threshold
-    :parameter m_upp:
+    :parameter m_max:
         Upper magnitude threshold
     :parameter b_gr:
         b value of the Gutenberg-Richter relationship
@@ -65,10 +93,10 @@ def _get_rate_above_m_low(seismic_moment, m_low, m_upp, b_gr, a_m=9.05):
     b_m = 1.5
     beta = b_gr * numpy.log(10.)
     x = (-seismic_moment*(b_m*numpy.log(10.) - beta) /
-         (beta*(10**(a_m + b_m*m_low) -
-          10**(a_m + b_m*m_upp)*numpy.exp(beta*(m_low - m_upp)))))
-    rate_m_low = x * (1-numpy.exp(-beta*(m_upp-m_low)))
-    return rate_m_low
+         (beta*(10**(a_m + b_m*m_min) -
+          10**(a_m + b_m*m_max)*numpy.exp(beta*(m_min - m_max)))))
+    rate_m_min = x * (1-numpy.exp(-beta*(m_max-m_min)))
+    return rate_m_min
 
 
 def _get_cumul_rate_truncated(m, m_low, m_upp, rate_gt_m_low, b_gr):
@@ -83,7 +111,8 @@ def _get_cumul_rate_truncated(m, m_low, m_upp, rate_gt_m_low, b_gr):
     return rate
 
 
-def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, m_min,
+def rates_for_double_truncated_mfd(area, slip_rate,
+                                   m_min, m_max,
                                    b_gr,
                                    bin_width=0.1, rigidity=32e9):
     """
@@ -93,14 +122,14 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, m_min,
     :parameter slip_rate:
         Slip-rate
         float [mm/tr]
-    :parameter m_low:
-        Reference magnitude [No m_min!, m_low <= m_min]
-        float
-    :parameter m_upp:
-        Upper magnitude
-        float
     :parameter m_min:
-         Minimum magnitude [m_min >= m_low, m_low is the reference magnitude]
+        Minimum magnitude
+        float
+    :parameter m_max:
+        Maximum magnitude
+        float
+    :parameter m_cli:
+         Clipping magnitude
          float
     :parameter b_gr:
         b-value of Gutenber-Richter relationship
@@ -109,8 +138,8 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, m_min,
     :parameter rigidity:
         Rigidity [Pa]
     :return:
-        A list containing the rates per bin starting from m_low
-        A list containing the magnitude bins starting from m_low
+        A list containing the rates per bin starting from m_min
+        A list containing the magnitude bins starting from m_min
     """
     #
     # Compute moment
@@ -118,32 +147,27 @@ def rates_for_double_truncated_mfd(area, slip_rate, m_low, m_upp, m_min,
     area_m2 = area * 1e6
     moment_from_slip = (rigidity * area_m2 * slip_m)
 
-    # Round m_upp to bin edge
-    m_upp = _round_m_max(m_upp, m_low, bin_width, tol=bin_width/100.)
+    # Round m_max to bin edge
+    m_max = _round_m_max(m_max, m_min, bin_width, tol=bin_width/100.)
 
     # Compute total rate
-    rate_above = _get_rate_above_m_low(moment_from_slip, m_low, m_upp, b_gr)
+    rate_above = _get_rate_above_m_min(moment_from_slip, m_min, m_max, b_gr)
     #
     # Compute rate per bin
     rrr = []
     mma = []
-    for mmm in _make_range(m_low, m_upp, bin_width):
-        rte = (_get_cumul_rate_truncated(mmm, m_low, m_upp, rate_above, b_gr) -
-               _get_cumul_rate_truncated(mmm+bin_width, m_low,
-                                         m_upp, rate_above, b_gr))
+    for mmm in _make_range(m_min, m_max, bin_width):
+        rte = (_get_cumul_rate_truncated(mmm, m_min, m_max, rate_above, b_gr) -
+               _get_cumul_rate_truncated(mmm+bin_width, m_min,
+                                         m_max, rate_above, b_gr))
         ma = mmm+bin_width/2.
         ma = float("{0:.2f}".format(ma))
         mma.append(ma)
         rrr.append(rte)
 
-    if m_min+bin_width/2. == m_low+bin_width/2.:
-        return rrr
-    else:
-        idx = mma.index(m_min+bin_width/2)
-        mma = mma[idx:]
-        rrr = rrr[idx:]
-        return rrr
-
+    return mma, rrr
+    #
+    #
 
 def _round_m_max(m_max, m_min, bin_size, tol=0.0001):
     """

@@ -247,27 +247,13 @@ class TestModelingUtils(unittest.TestCase):
 
         # mfd_type should be set to 'DoubleTruncatedGR' by default;
         # this is part of the test.
-        # 20190801 - added M_ref
-        # mdf_rates modified, using M_ref = 0 as default value
 
         mfd, seis_rate = fmu.calc_mfd_from_fault_params(
                                                 self.fault_1,
-                                                #mfd_type='DoubleTruncatedGR',
                                                 param_map=self.param_map,
                                                 defaults=fmu.defaults)
-
-        #mfd_rates_old = [(6.05, 0.008792708455724264),
-        #             (6.1499999999999995, 0.0069842965860807266),
-        #             (6.25, 0.005547823978012335),
-        #             (6.35, 0.004406793227015579),
-        #             (6.45, 0.003500440284810207),
-        #             (6.55, 0.002780498552191055),
-        #             (6.65, 0.002208628506615345),
-        #             (6.75, 0.001754375982821495),
-        #             (6.85, 0.0013935503774772729),
-        #             (6.95, 0.0011069364113408821),
-        #             (7.05, 0.000879270845572433)]
-        # computed using M_ref = 0.0 as default value
+        # mdf_rates values were computed by hand using M_min = 4.0
+        # and M_cli = 6.0 as default values
         mfd_rates = [(6.05, 0.006316366706615863),
                      (6.1499999999999995, 0.005017268415937408),
                      (6.25, 0.0039853579639694565),
@@ -279,7 +265,6 @@ class TestModelingUtils(unittest.TestCase):
                      (6.85, 0.0010010766594403568),
                      (6.95, 0.0007951834557169339),
                      (7.05, 0.0006316366706616012)]
-
 
         seis_rate_ = 6.0
 
