@@ -67,17 +67,17 @@ def get_rate_above_m_cli(mma, rrr, m_min, m_cli, bin_width):
     :return:
         A list containing the rates per bin starting from m_cli
     """
+    #
     if m_cli+bin_width/2. == m_min+bin_width/2.:
-        rate_m_cli = rrr
 
-        return rate_m_cli
+        return mma, rrr
 
     else:
         idx = mma.index(m_cli+bin_width/2)
-        mma = mma[idx:]
+        mma_cli = mma[idx:]
         rate_m_cli = rrr[idx:]
 
-        return rate_m_cli
+        return mma_cli, rate_m_cli
 
 def _get_rate_above_m_min(seismic_moment, m_min, m_max, b_gr, a_m=9.05):
     """
@@ -138,8 +138,9 @@ def rates_for_double_truncated_mfd(area, slip_rate,
     :parameter rigidity:
         Rigidity [Pa]
     :return:
-        A list containing the rates per bin starting from m_min
         A list containing the magnitude bins starting from m_min
+        A list containing values of rate located at the centre of
+        each magnitude bin, starting from mmin+bin_width/2
     """
     #
     # Compute moment

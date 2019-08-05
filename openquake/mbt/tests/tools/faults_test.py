@@ -47,7 +47,7 @@ class RatesDoubleTruncatedFromSlipTestCase(unittest.TestCase):
 class TestMomentReleaseRateNonUniformBinEdge(unittest.TestCase):
     """
     This class tests that moment release rates on the fault equal
-    the moment accumulation rate even if M_max doesn't initally
+    the moment accumulation rate even if m_max doesn't initally
     fall on a bin edge
     """
 
@@ -66,22 +66,22 @@ class TestMomentReleaseRateNonUniformBinEdge(unittest.TestCase):
 
     def test_moment_release_rate(self):
 
-        for _M_max in numpy.arange(6.501, 8.501, 0.01):
+        for _m_max in numpy.arange(6.501, 8.501, 0.01):
 
             bin_mags, bin_rates = rates_for_double_truncated_mfd(self.area,
                                                                  self.slip_rate,
                                                                  self.m_min,
-                                                                 _M_max,
+                                                                 _m_max,
                                                                  self.b_gr,
                                                                  self.bin_width)
             #
-            bin_rates_cli = get_rate_above_m_cli(bin_mags, bin_rates,
+            _, bin_rates_cli = get_rate_above_m_cli(bin_mags, bin_rates,
                                                  self.m_min,
                                                  self.m_cli,
                                                  self.bin_width)
 
             mags = [mag + self.bin_width / 2. for mag in
-                    _make_range(self.m_cli, _M_max, self.bin_width)]
+                    _make_range(self.m_cli, _m_max, self.bin_width)]
 
             release_rate = sum([rate * mag_to_mo(mag)
                                 for rate, mag in zip(bin_rates_cli, mags)])
