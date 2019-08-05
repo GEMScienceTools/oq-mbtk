@@ -46,8 +46,8 @@ class TestDatabaseIO(unittest.TestCase):
         fault_db.add_property('lower_seismogenic_depth', value=25)
 
         # Adding key/value to given faults
-        fault_db.add_property('M_max', value=7., id=1)
-        fault_db.add_property('M_max', value=7.5, id=2)
+        fault_db.add_property('m_max', value=7., id=1)
+        fault_db.add_property('m_max', value=7.5, id=2)
 
         fault_db.remove_property('name')
 
@@ -96,7 +96,7 @@ class TestDatabaseIO(unittest.TestCase):
                               xml_output=test_file,
                               black_list=[1, 2, 3],
                               param_map=self.param_map,
-                              M_max=8.2,
+                              m_max=8.2,
                               lower_seismogenic_depth=30.)
 
         # Compare files
