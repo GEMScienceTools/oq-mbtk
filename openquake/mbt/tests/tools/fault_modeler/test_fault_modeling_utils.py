@@ -182,6 +182,15 @@ class TestModelingUtils(unittest.TestCase):
 
         self.assertTrue(abs((length * 20.) - area) < 0.01)
 
+    def test_get_m_max_from_geojson(self):
+
+        m_max = fmu.get_m_max(self.fault_1,
+                          area_method='simple', width_method='seismo_depth',
+                          width_scaling_relation='Leonard2014_Interplate',
+                          defaults=fmu.defaults, param_map=self.param_map)
+
+        self.assertEqual(m_max, 7.0)
+
     # Rates
     def test_get_net_slip_rate(self):
 
@@ -252,19 +261,18 @@ class TestModelingUtils(unittest.TestCase):
                                                 self.fault_1,
                                                 param_map=self.param_map,
                                                 defaults=fmu.defaults)
-        # mdf_rates values were computed by hand using m_min = 4.0
-        # and m_cli = 6.0 as default values
-        mfd_rates = [(6.05, 0.006316366706615863),
-                     (6.1499999999999995, 0.005017268415937408),
-                     (6.25, 0.0039853579639694565),
-                     (6.35, 0.0031656823562642173),
-                     (6.45, 0.0025145908777491803),
-                     (6.55, 0.0019974105329762706),
-                     (6.65, 0.0015865995826787318),
-                     (6.75, 0.0012602808457234777),
-                     (6.85, 0.0010010766594403568),
-                     (6.95, 0.0007951834557169339),
-                     (7.05, 0.0006316366706616012)]
+        # mdf_rates values were computed by hand using m_min = 4.0,
+        # m_cli = 6.0 and m_max = 7.0 as default values
+        mfd_rates =  [(6.05, 0.007316449031674849),
+                     (6.1499999999999995, 0.005811662043780461),
+                     (6.25, 0.004616367252050254),
+                     (6.35, 0.0036669108501600576),
+                     (6.45, 0.002912730822498961),
+                     (6.55, 0.0023136643324626104),
+                     (6.65, 0.0018378089049495543),
+                     (6.75, 0.0014598235032291457),
+                     (6.85, 0.001159579026329024),
+                     (6.95, 0.0009210863610072359)]
 
         seis_rate_ = 6.0
 
