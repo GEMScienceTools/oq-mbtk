@@ -50,12 +50,13 @@ sfs_params = ('source_id',
               'lower_seismogenic_depth',
               'fault_trace',
               'average_dip',
-              'average_rake')
+              'average_rake',
+              'm_max')
 
 # Additional parameters
 all_params = list(sfs_params)
-all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'm_min', 'm_max',
-               'm_char', 'm_cli', 'm_upper', 'b_value', 'net_slip_rate',
+all_params += ['slip_type', 'trace_coordinates', 'dip_dir', 'm_min', 'm_char',
+               'm_cli', 'm_upper', 'b_value', 'net_slip_rate',
                'strike_slip_rate', 'dip_slip_rate', 'vert_slip_rate',
                'shortening_rate', 'aseismic_coefficient', 'slip_class',
                'width_scaling_relation', 'subsurface_length', 'rigidity',
@@ -302,6 +303,16 @@ def construct_sfs_dict(fault_dict,
     # mfd and slip rate
     sfs.update({'mfd': mfd, 'seismic_slip_rate': slr})
 
+    # m_max
+    # TODO m_char?
+    m_max = get_m_max(fault_dict,
+                      magnitude_scaling_relation=magnitude_scaling_relation,
+                      area_method=area_method, width_method=width_method,
+                      width_scaling_relation=width_scaling_relation,
+                      defaults=defaults, param_map=param_map)
+
+    sfs.update({'m_max': m_max})
+
     for param in sfs_params:
         if sfs[param] is None:
             err_msg = 'Missing Value: {} for id {}'.format(param,
@@ -350,9 +361,12 @@ def make_fault_source(sfs_dict, oqt_source=False):
         src.trace = sfs_dict['fault_trace']
         src.dip = sfs_dict['average_dip']
         src.rake = sfs_dict['average_rake']
+        src.m_max = sfs_dict['m_max']
 
     else:
         arg = [sfs_dict[p] for p in sfs_params if p is not 'seismic_slip_rate']
+        arg = [sfs_dict[p] for p in sfs_params if p is not 'm_max']
+
         src = SimpleFaultSource(*arg)
 
     return src
@@ -2442,6 +2456,7 @@ def get_m_max(fault_dict, magnitude_scaling_relation=None,
 
             m_max = mag_scaling_fun.get_median_mag(fault_area, rake)
 
+
     return m_max
 
 
@@ -2869,7 +2884,8 @@ def calc_double_truncated_GR_mfd_from_fault_params(
         bin_width = fetch_param_val(fault_dict, 'bin_width', defaults=defaults,
                                     param_map=param_map)
 
-    bin_mags, bin_rates = rates_for_double_truncated_mfd(fault_area, seismic_slip_rate,
+    bin_mags, bin_rates = rates_for_double_truncated_mfd(fault_area,
+                                                         seismic_slip_rate,
                                                          m_min, m_max,
                                                          b_value, bin_width,
                                                          rigidity=rigidity)
