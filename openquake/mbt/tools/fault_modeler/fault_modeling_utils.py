@@ -25,7 +25,7 @@ import warnings
 import numpy as np
 from copy import deepcopy
 import importlib
-
+import pdb
 import openquake.hazardlib as hz
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.mbt.oqt_project import OQtSource
@@ -2646,7 +2646,7 @@ def calc_mfd_from_fault_params(fault_dict,
             width_scaling_relation=width_scaling_relation,
             slip_class=slip_class,
             magnitude_scaling_relation=magnitude_scaling_relation,
-            m_char=m_char, m_cli=m_cli,
+            m_char=m_char, m_cli=m_cli, m_min=m_min,
             b_value=b_value, slip_rate=slip_rate,
             bin_width=bin_width, fault_area=fault_area,
             rigidity=rigidity, defaults=defaults, param_map=param_map,
@@ -2905,7 +2905,7 @@ def calc_double_truncated_GR_mfd_from_fault_params(
 def calc_youngs_coppersmith_mfd_from_fault_params(
         fault_dict, area_method='simple', width_method='seismo_depth',
         width_scaling_relation='Leonard2014_Interplate', slip_class=None,
-        magnitude_scaling_relation=None, m_char=None, m_cli=None,b_value=None,
+        magnitude_scaling_relation=None, m_char=None, m_cli=None, m_min=None, b_value=None,
         slip_rate=None, bin_width=None, fault_area=None, rigidity=None,
         defaults=defaults, param_map=param_map,
         aseismic_coefficient=None):
@@ -3047,6 +3047,9 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
 
     if m_cli is None:
         m_cli = get_m_cli(fault_dict, defaults=defaults, param_map=param_map)
+    
+    if m_min is None:
+        m_min = get_m_min(fault_dict, defaults=defaults, param_map=param_map)
 
     if m_char is None:
         m_char = get_m_max(
@@ -3112,11 +3115,14 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
 
     moment_rate = (seismic_slip_rate * 1e-3) * (fault_area * 1e6) * rigidity
 
-    mfd = hz.mfd.YoungsCoppersmith1985MFD.from_total_moment_rate(m_cli,
+    mfd = hz.mfd.YoungsCoppersmith1985MFD.from_total_moment_rate(m_min,
                                                                  b_value,
                                                                  m_char,
                                                                  moment_rate,
                                                                  bin_width)
+    
+    #pdb.set_trace()
+    mfd.min_mag = m_cli
 
     mfd_rate_calc = mfd.get_annual_occurrence_rates()
 
