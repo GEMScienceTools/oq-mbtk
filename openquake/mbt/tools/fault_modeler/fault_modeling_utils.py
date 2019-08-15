@@ -25,7 +25,6 @@ import warnings
 import numpy as np
 from copy import deepcopy
 import importlib
-import pdb
 import openquake.hazardlib as hz
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.mbt.oqt_project import OQtSource
@@ -3121,7 +3120,6 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
                                                                  moment_rate,
                                                                  bin_width)
     
-    #pdb.set_trace()
     mfd.min_mag = m_cli
 
     mfd_rate_calc = mfd.get_annual_occurrence_rates()
