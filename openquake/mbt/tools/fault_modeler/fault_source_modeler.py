@@ -194,7 +194,7 @@ def build_model_from_db(fault_db,
                                               width_method=width_method,
                                               param_map=param_map_local,
                                               defaults=defaults_local)
-            print("sfs_dict = ", sfs_dict)
+            #print("sfs_dict = ", sfs_dict)
             sfs = fmu.make_fault_source(sfs_dict, oqt_source=oqt_source)
             print("sfs en build_model_from_db = ", sfs)
             srcl.append(sfs)
