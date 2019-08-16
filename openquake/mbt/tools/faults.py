@@ -53,9 +53,9 @@ def get_fault_vertices_3d(fault_trace, upper_seismogenic_depth,
 def get_rate_above_m_cli(mma, rrr, m_min, m_cli, bin_width):
     """
     :parameter mma:
-        A list containing the rates per bin starting from m_min
-    :parameter rrr:
         A list containing the magnitude bins starting from m_min
+    :parameter rrr:
+        A list containing the rates per bins starting from m_min
     :parameter m_min:
         Minimum magnitude
         float

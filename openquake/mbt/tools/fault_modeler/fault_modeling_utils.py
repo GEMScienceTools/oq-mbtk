@@ -22,9 +22,11 @@
 # -----------------------------------------------------------------------------
 
 import warnings
-import numpy as np
 from copy import deepcopy
 import importlib
+
+import numpy as np
+
 import openquake.hazardlib as hz
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.mbt.oqt_project import OQtSource
@@ -3119,10 +3121,22 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
                                                                  m_char,
                                                                  moment_rate,
                                                                  bin_width)
-    
-    mfd.min_mag = m_cli
+   
+    # using only rates from m_cli to m_max
+    mfd_rates = mfd.get_annual_occurrence_rates()
 
-    mfd_rate_calc = mfd.get_annual_occurrence_rates()
+    bin_mags = [round(rate[0], 2) for rate in mfd_rates]
+
+    bin_rates = [rate[1] for rate in mfd_rates]
+
+    bin_mags_cli, bin_rates_cli = get_rate_above_m_cli(bin_mags,
+                                                       bin_rates,
+                                                       m_min, m_cli,
+                                                       bin_width)
+
+    mfd_ed = hz.mfd.EvenlyDiscretizedMFD(bin_mags_cli[0],
+                                      bin_width,
+                                      bin_rates_cli)
 
 
-    return mfd, seismic_slip_rate
+    return mfd_ed, seismic_slip_rate
