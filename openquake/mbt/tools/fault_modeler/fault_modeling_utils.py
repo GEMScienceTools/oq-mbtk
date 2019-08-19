@@ -42,7 +42,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 sfs_params = ('source_id',
               'name',
               'tectonic_region_type',
-               'mfd',
+              'mfd',
               'rupture_mesh_spacing',
               'magnitude_scaling_relation',
               'rupture_aspect_ratio',
@@ -2726,12 +2726,12 @@ def calc_double_truncated_GR_mfd_from_fault_params(
         slip_class = fetch_param_val(fault_dict, 'slip_class',
                                      defaults=defaults, param_map=param_map)
     if m_cli is None:
-        m_cli = fetch_param_val(fault_dict, 'm_cli',
-                                     defaults=defaults, param_map=param_map)
+        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults, 
+                                param_map=param_map)
     
     if m_min is None:
-        m_min = fetch_param_val(fault_dict, 'm_min',
-                                     defaults=defaults, param_map=param_map)
+        m_min = fetch_param_val(fault_dict, 'm_min', defaults=defaults, 
+                                param_map=param_map)
     if m_max is None:
         m_max = get_m_max(
                     fault_dict, defaults=defaults, param_map=param_map,
@@ -2961,12 +2961,12 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
                                      defaults=defaults, param_map=param_map)
 
     if m_cli is None:
-        m_cli = fetch_param_val(fault_dict, 'm_cli',
-                                     defaults=defaults, param_map=param_map)
+        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults, 
+                                param_map=param_map)
     
     if m_min is None:
-        m_min = fetch_param_val(fault_dict, 'm_min',
-                                     defaults=defaults, param_map=param_map)
+        m_min = fetch_param_val(fault_dict, 'm_min', defaults=defaults,
+                                param_map=param_map)
 
     if m_char is None:
         m_char = get_m_max(
