@@ -22,9 +22,10 @@
 # -----------------------------------------------------------------------------
 
 import warnings
-import numpy as np
 from copy import deepcopy
 import importlib
+
+import numpy as np
 
 import openquake.hazardlib as hz
 from openquake.hazardlib.source import SimpleFaultSource
@@ -2266,91 +2267,6 @@ def get_fault_area(fault_dict, area_method='simple',
     return fault_area
 
 
-def get_m_min(fault_dict, defaults=defaults, param_map=param_map):
-    """
-    Gets the minimum magnitude of earthquakes on a fault from the fault's
-    attributes or global defaults.
-
-    :param fault_dict:
-        Dictionary containing the fault attributes and geometry
-
-    :type fault_dict:
-        dict
-
-    :param defaults:
-        Dictionary of project defaults.
-
-    :type defaults:
-        dict
-
-    :param param_map:
-        Dictionary of the mapping from a fault's attribute names to the
-        variables used in this library.
-
-    :type param_map:
-        dict
-
-    :returns:
-        Minimum magnitude
-
-    :rtype:
-        str
-    """
-
-    try:
-        m_min = fault_dict[param_map['m_min']]
-    except KeyError:
-        try:
-            m_min = defaults['m_min']
-        except KeyError:
-            raise ValueError('No m_min defined.')
-
-    return m_min
-
-
-def get_m_cli(fault_dict, defaults=defaults, param_map=param_map):
-    """
-    Gets the clipping magnitude of earthquakes on a fault from the fault's
-    attributes or global defaults.
-    This is used to for the 'DoubleTruncatedGR' mfd.
-
-    :param fault_dict:
-        Dictionary containing the fault attributes and geometry
-
-    :type fault_dict:
-        dict
-
-    :param defaults:
-        Dictionary of project defaults.
-
-    :type defaults:
-        dict
-
-    :param param_map:
-        Dictionary of the mapping from a fault's attribute names to the
-        variables used in this library.
-
-    :type param_map:
-        dict
-
-    :returns:
-        Reference magnitude
-
-    :rtype:
-        str
-    """
-
-    try:
-        m_cli = fault_dict[param_map['m_cli']]
-    except KeyError:
-        try:
-            m_cli = defaults['m_cli']
-        except KeyError:
-            raise ValueError('No m_cli defined.')
-
-    return m_cli
-
-
 def get_m_max(fault_dict, magnitude_scaling_relation=None,
               area_method='simple', width_method='seismo_depth',
               width_scaling_relation='Leonard2014_Interplate',
@@ -2646,7 +2562,7 @@ def calc_mfd_from_fault_params(fault_dict,
             width_scaling_relation=width_scaling_relation,
             slip_class=slip_class,
             magnitude_scaling_relation=magnitude_scaling_relation,
-            m_char=m_char, m_cli=m_cli,
+            m_char=m_char, m_cli=m_cli, m_min=m_min,
             b_value=b_value, slip_rate=slip_rate,
             bin_width=bin_width, fault_area=fault_area,
             rigidity=rigidity, defaults=defaults, param_map=param_map,
@@ -2657,8 +2573,6 @@ def calc_mfd_from_fault_params(fault_dict,
             'mfd_type{} not implemented'.format(mfd_type))
 
     return mfd, seismic_slip_rate
-
-
 
 
 def calc_double_truncated_GR_mfd_from_fault_params(
@@ -2811,12 +2725,13 @@ def calc_double_truncated_GR_mfd_from_fault_params(
     if slip_class is None:
         slip_class = fetch_param_val(fault_dict, 'slip_class',
                                      defaults=defaults, param_map=param_map)
-    if m_min is None:
-        m_min = get_m_min(fault_dict, defaults=defaults, param_map=param_map)
-
     if m_cli is None:
-        m_cli = get_m_cli(fault_dict, defaults=defaults, param_map=param_map)
-
+        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults, 
+                                param_map=param_map)
+    
+    if m_min is None:
+        m_min = fetch_param_val(fault_dict, 'm_min', defaults=defaults, 
+                                param_map=param_map)
     if m_max is None:
         m_max = get_m_max(
                     fault_dict, defaults=defaults, param_map=param_map,
@@ -2905,7 +2820,7 @@ def calc_double_truncated_GR_mfd_from_fault_params(
 def calc_youngs_coppersmith_mfd_from_fault_params(
         fault_dict, area_method='simple', width_method='seismo_depth',
         width_scaling_relation='Leonard2014_Interplate', slip_class=None,
-        magnitude_scaling_relation=None, m_char=None, m_cli=None,b_value=None,
+        magnitude_scaling_relation=None, m_char=None, m_cli=None, m_min=None, b_value=None,
         slip_rate=None, bin_width=None, fault_area=None, rigidity=None,
         defaults=defaults, param_map=param_map,
         aseismic_coefficient=None):
@@ -3046,7 +2961,12 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
                                      defaults=defaults, param_map=param_map)
 
     if m_cli is None:
-        m_cli = get_m_cli(fault_dict, defaults=defaults, param_map=param_map)
+        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults, 
+                                param_map=param_map)
+    
+    if m_min is None:
+        m_min = fetch_param_val(fault_dict, 'm_min', defaults=defaults,
+                                param_map=param_map)
 
     if m_char is None:
         m_char = get_m_max(
@@ -3112,13 +3032,27 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
 
     moment_rate = (seismic_slip_rate * 1e-3) * (fault_area * 1e6) * rigidity
 
-    mfd = hz.mfd.YoungsCoppersmith1985MFD.from_total_moment_rate(m_cli,
+    mfd = hz.mfd.YoungsCoppersmith1985MFD.from_total_moment_rate(m_min,
                                                                  b_value,
                                                                  m_char,
                                                                  moment_rate,
                                                                  bin_width)
+   
+    # using only rates from m_cli to m_max
+    mfd_rates = mfd.get_annual_occurrence_rates()
 
-    mfd_rate_calc = mfd.get_annual_occurrence_rates()
+    bin_mags = [round(rate[0], 2)for rate in mfd_rates]
+
+    bin_rates = [rate[1] for rate in mfd_rates]
+
+    bin_mags_cli, bin_rates_cli = get_rate_above_m_cli(bin_mags,
+                                                       bin_rates,
+                                                       m_min, m_cli,
+                                                       bin_width)
+
+    mfd_ed = hz.mfd.EvenlyDiscretizedMFD(bin_mags_cli[0],
+                                      bin_width,
+                                      bin_rates_cli)
 
 
-    return mfd, seismic_slip_rate
+    return mfd_ed, seismic_slip_rate
