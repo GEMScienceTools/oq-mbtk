@@ -50,11 +50,12 @@ def get_fault_vertices_3d(fault_trace, upper_seismogenic_depth,
 
     return all_lons, all_lats, all_deps
 
-def get_rate_above_m_cli(mma, rrr, m_min, m_cli, bin_width):
+
+def get_rate_above_m_cli(mag_bins, rates, m_min, m_cli, bin_width):
     """
-    :parameter mma:
+    :parameter mag_bins:
         A list containing the magnitude bins starting from m_min
-    :parameter rrr:
+    :parameter rates:
         A list containing the rates per bins starting from m_min
     :parameter m_min:
         Minimum magnitude
@@ -68,16 +69,17 @@ def get_rate_above_m_cli(mma, rrr, m_min, m_cli, bin_width):
         A list containing the rates per bin starting from m_cli
     """
     #
-    if m_cli+bin_width/2. == m_min+bin_width/2.:
+    if m_cli + bin_width / 2. == m_min + bin_width / 2.:
 
-        return mma, rrr
+        return mag_bins, rates
 
     else:
-        idx = mma.index(m_cli+bin_width/2)
-        mma_cli = mma[idx:]
-        rate_m_cli = rrr[idx:]
+        idx = mag_bins.index(m_cli + bin_width / 2)
+        mma_cli = mag_bins[idx:]
+        rate_m_cli = rates[idx:]
 
         return mma_cli, rate_m_cli
+
 
 def _get_rate_above_m_min(seismic_moment, m_min, m_max, b_gr, a_m=9.05):
     """
@@ -92,10 +94,10 @@ def _get_rate_above_m_min(seismic_moment, m_min, m_max, b_gr, a_m=9.05):
     """
     b_m = 1.5
     beta = b_gr * numpy.log(10.)
-    x = (-seismic_moment*(b_m*numpy.log(10.) - beta) /
-         (beta*(10**(a_m + b_m*m_min) -
-          10**(a_m + b_m*m_max)*numpy.exp(beta*(m_min - m_max)))))
-    rate_m_min = x * (1-numpy.exp(-beta*(m_max-m_min)))
+    x = (-seismic_moment * (b_m * numpy.log(10.) - beta) /
+         (beta * (10**(a_m + b_m * m_min) - 10**
+                  (a_m + b_m * m_max) * numpy.exp(beta * (m_min - m_max)))))
+    rate_m_min = x * (1 - numpy.exp(-beta * (m_max - m_min)))
     return rate_m_min
 
 
@@ -104,17 +106,20 @@ def _get_cumul_rate_truncated(m, m_low, m_upp, rate_gt_m_low, b_gr):
     This is basically equation 9 of Youngs and Coppersmith (1985)
     """
     beta = b_gr * numpy.log(10.)
-    nmr1 = numpy.exp(-beta*(m-m_low))
-    nmr2 = numpy.exp(-beta*(m_upp-m_low))
-    den1 = 1-numpy.exp(-beta*(m_upp-m_low))
+    nmr1 = numpy.exp(-beta * (m - m_low))
+    nmr2 = numpy.exp(-beta * (m_upp - m_low))
+    den1 = 1 - numpy.exp(-beta * (m_upp - m_low))
     rate = rate_gt_m_low * (nmr1 - nmr2) / den1
     return rate
 
 
-def rates_for_double_truncated_mfd(area, slip_rate,
-                                   m_min, m_max,
+def rates_for_double_truncated_mfd(area,
+                                   slip_rate,
+                                   m_min,
+                                   m_max,
                                    b_gr,
-                                   bin_width=0.1, rigidity=32e9):
+                                   bin_width=0.1,
+                                   rigidity=32e9):
     """
     :parameter area:
         Area of the fault surface
@@ -149,7 +154,7 @@ def rates_for_double_truncated_mfd(area, slip_rate,
     moment_from_slip = (rigidity * area_m2 * slip_m)
 
     # Round m_max to bin edge
-    m_max = _round_m_max(m_max, m_min, bin_width, tol=bin_width/100.)
+    m_max = _round_m_max(m_max, m_min, bin_width, tol=bin_width / 100.)
 
     # Compute total rate
     rate_above = _get_rate_above_m_min(moment_from_slip, m_min, m_max, b_gr)
@@ -159,9 +164,9 @@ def rates_for_double_truncated_mfd(area, slip_rate,
     mma = []
     for mmm in _make_range(m_min, m_max, bin_width):
         rte = (_get_cumul_rate_truncated(mmm, m_min, m_max, rate_above, b_gr) -
-               _get_cumul_rate_truncated(mmm+bin_width, m_min,
-                                         m_max, rate_above, b_gr))
-        ma = mmm+bin_width/2.
+               _get_cumul_rate_truncated(mmm + bin_width, m_min, m_max,
+                                         rate_above, b_gr))
+        ma = mmm + bin_width / 2.
         ma = float("{0:.2f}".format(ma))
         mma.append(ma)
         rrr.append(rte)
@@ -169,6 +174,7 @@ def rates_for_double_truncated_mfd(area, slip_rate,
     return mma, rrr
     #
     #
+
 
 def _round_m_max(m_max, m_min, bin_size, tol=0.0001):
     """
@@ -224,7 +230,6 @@ def _round_m_max(m_max, m_min, bin_size, tol=0.0001):
 
 
 def _make_range(start, stop, step, tol=0.0001):
-
     """
     Makes a list of equally-spaced values that consistently
     omits the final value, unlike numpy.arange
@@ -258,7 +263,6 @@ def _make_range(start, stop, step, tol=0.0001):
     :rtype:
         float
     """
-
 
     num_list = [start]
 
