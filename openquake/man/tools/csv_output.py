@@ -198,7 +198,6 @@ def _get_header1(line):
         pattern = r'{:s}=\'([^\']*)\''.format(tmpstr)
         mtc = re.search(pattern, line)
         header["engine"] = mtc.group(1)
-        print(mtc.group(1))
     else:
         # version 3.5 and before
         imt_pattern = r'{:s}=\"([^\']*)\"'.format(tmpstr)
