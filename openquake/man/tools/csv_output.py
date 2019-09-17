@@ -1,3 +1,4 @@
+import pdb
 import re
 import numpy
 import pandas as pd
@@ -41,6 +42,55 @@ def mde_for_gmt(filename, fout):
                 fou.write(outs+'\n')
         cnt += 1
 
+def llt_for_gmt(filename, fout):
+    """
+    This simple function converts the information in the .csv file (l-l-trt) into
+    a format suitable to be used by GMT.
+
+    :param str filename:
+        Name of the file containing the original information
+    :param str fout:
+        The name of the file where the information must be stored
+    """
+    fou = open(fout, 'w')
+    base_dic = {}
+    cnt = 0
+    for line in open(filename, 'r'):
+        if cnt > 2:
+            #
+            # Splitting the row
+            aa = re.split('\,', line)
+            key = '{0:s}_{1:s}'.format(aa[0], aa[1])
+            #
+            # Updating the base level of the bin
+            if key in base_dic:
+                base = base_dic[key]
+            else:
+                base = 0.
+                base_dic[key] = 0.
+            base_dic[key] += float(aa[3])
+            #
+            # Replace TRT with id number: (1) active crustal (2) stable crustal
+            # (3) subduction interface (4) subductions slab 
+            trt = aa[2].lower()
+#            for t in aa[2]:
+            trt_ids = 0
+            if trt.find('active')>-1:
+                trt_ids = 1
+            elif trt.find('interface')>-1:
+                trt_ids = 2
+            elif trt.find('slab')>-1:
+                trt_ids = 3
+            elif trt.find('stable')>-1:
+                trt_ids = 4
+
+            # Formatting the output
+            fmt = '{0:7.5e} {1:7.5e} {2:7.5e} {3:7.5e} {4:7.5e}'
+            outs = fmt.format(float(aa[0]), float(aa[1]), base+float(aa[3]),
+                              trt_ids, base)
+            if float(aa[3]) > 1e-20:
+                fou.write(outs+'\n')
+        cnt += 1
 
 def read_dsg_ll(fname):
     """
@@ -191,6 +241,7 @@ def _get_header1(line):
 
     tmpstr = "imt"
     if re.search('generated_by', line):
+        #pdb.set_trace()
         # version 3.6
         imt_pattern = r'{:s}=\'([^\']*)\''.format(tmpstr)
         # engine
@@ -212,7 +263,8 @@ def _get_header1(line):
     header[tmpstr] = float(mtc.group(1))
     # IMT
     mtc = re.search(imt_pattern, line)
-    header["imt"] = mtc.group(1)
+    header["imt"] = r'tmp-broke'
+    #header["imt"] = mtc.group(1)
     return header
 
 
