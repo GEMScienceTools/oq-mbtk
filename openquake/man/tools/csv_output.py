@@ -123,7 +123,7 @@ def _get_header_uhs2(line):
     per = []
     aa = re.split('\\,', line)
     for bb in aa[2:]:
-        mtc = re.match('(\\d+\\.+\\d+)\\~([A-Z]+\\((.*)\\)|PGA)', bb)
+        mtc = re.match('(\\d+\\.+\\d+)\\~([A-Z]+\\((.*)\\)|PGA|PGV)', bb)
         rps.append(float(mtc.group(1)))
         if mtc.group(3) is None:
             per.append(0.0)
@@ -212,6 +212,9 @@ def _get_header1(line):
     header[tmpstr] = float(mtc.group(1))
     # IMT
     mtc = re.search(imt_pattern, line)
+    if mtc is None:
+        imt_pattern = r'{:s}=([^\']*)'.format(tmpstr)
+        mtc = re.search(imt_pattern, line)
     header["imt"] = mtc.group(1)
     return header
 
