@@ -10,7 +10,7 @@ MY_VENV=~/.virtualenvs/mbtk
 MY_BASEDIR=~/base_dir
 
 # creation of virtual environment
-python3.5 -m venv $MY_VENV
+python3.6 -m venv $MY_VENV
 . "$MY_VENV/bin/activate"
 pip install -U pip
 
