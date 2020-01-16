@@ -20,10 +20,8 @@ def get_fname(folder, pattern):
     :param folder:
     :param pattern:
     """
-
     patt = os.path.join(folder, pattern)
     lst = glob.glob(patt)
-    print(lst)
     assert len(lst) == 1
     return lst[0]
 
@@ -44,6 +42,10 @@ class MFDFromSESMFDFromInputTest(unittest.TestCase):
         folder = os.path.join(BASE_DATA_PATH, 'out')
         fname_ssm = os.path.join(BASE_DATA_PATH, 'ssm01.xml')
         fname_ini = os.path.join(BASE_DATA_PATH, 'job.ini')
+        print(fname_ini)
+        tmps = 'if [ -d "${:s}" ]; then rm -Rf $WORKING_DIR; fi'
+        command = tmps.format(folder)
+        subprocess.run(command, shell=True)
         command = 'oq engine --run {:s} --exports csv'.format(fname_ini)
         subprocess.run(command, shell=True)
         fname_ses = get_fname(folder, 'ruptures_*.csv')
