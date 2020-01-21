@@ -260,6 +260,8 @@ def get_catalogue_from_ses(fname, duration):
     """
     # Read the set of ruptures
     ses = pd.read_csv(fname, sep='\t', skiprows=1)
+    if len(ses.columns) < 2:
+        ses = pd.read_csv(fname, sep=',', skiprows=1)
     # Create an empty catalogue
     cat = Catalogue()
     # Set catalogue data
@@ -270,6 +272,8 @@ def get_catalogue_from_ses(fname, duration):
     lons = []
     lats = []
     deps = []
+    print(ses['rup_id'])
+    print('Columns:', ses.columns)
     for i in range(len(ses)):
         nevents = ses['multiplicity'][i]
         for j in range(nevents):
