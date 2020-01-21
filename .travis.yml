@@ -19,3 +19,11 @@ install:
 
 script:
   - nosetests -vsx -a '!slow'
+
+notifications:
+  email:
+    recipients:
+      - marco.pagani@globalquakemodel.org
+      - michele.simionato@globalquakemodel.org
+    on_success: never
+    on_failure: always
