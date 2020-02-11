@@ -43,6 +43,7 @@ def _to_int(string):
     else:
         return None
 
+
 def _to_float(string):
     """
     Converts a string to a float, returning none if empty
@@ -52,6 +53,7 @@ def _to_float(string):
         return float(string)
     else:
         return None
+
 
 def _to_str(string):
     """
@@ -65,15 +67,15 @@ class BaseCatalogueDatabaseReader(with_metaclass(abc.ABCMeta)):
     Abstract base class for reading an earthquake database file
     """
     def __init__(self, filename, selected_origin_agencies=[],
-            selected_magnitude_agencies=[]):
+                 selected_magnitude_agencies=[]):
         """
         Instantiate the reader
         :param str filename:
             Path to catalogue file
         :param list selected_origin_agencies:
-            List of origin agencies to be considered for inclusion 
+            List of origin agencies to be considered for inclusion
         :param list selected_magnitude_agencies:
-            List of magnitude agencies to be considered for inclusion 
+            List of magnitude agencies to be considered for inclusion
         """
         if not os.path.exists(filename):
             raise IOError("File %s does not exist!" % filename)
@@ -87,4 +89,3 @@ class BaseCatalogueDatabaseReader(with_metaclass(abc.ABCMeta)):
         """
         Reads the catalogue from the file and assigning the identifier and name
         """
-

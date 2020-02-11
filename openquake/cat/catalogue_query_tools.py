@@ -59,7 +59,9 @@ class CatalogueDB(object):
     def __init__(self, filename=None):
         """
         Instantiate the class. If a filename is supplied this will load the
-        data from the file
+        data from the file. Note that the attibutes `magnitudes` and `origins`
+        are two instances of a :class:`pandas.DataFrame`
+
         :param str filename:
             Path to input file
         """
@@ -206,7 +208,8 @@ class CatalogueSelector(object):
     """
     def __init__(self, catalogue, create_copy=True):
         """
-
+        :param catalogue:
+        :param create_copy:
         """
         self.catalogue = catalogue
         self.copycat = create_copy
@@ -223,7 +226,7 @@ class CatalogueSelector(object):
             output_catalogue.origins = self.catalogue.origins[idx]
             output_catalogue.magnitudes = self.catalogue.magnitudes[
                 self.catalogue.magnitudes["eventID"].isin(
-                output_catalogue.origins["eventID"].unique())]
+                        output_catalogue.origins["eventID"].unique())]
             return output_catalogue
         if not select_type == "any":
             raise ValueError(
@@ -256,7 +259,7 @@ class CatalogueSelector(object):
             output_catalogue.magnitudes = self.catalogue.magnitudes[idx]
             output_catalogue.origins = self.catalogue.origins[
                 self.catalogue.origins["eventID"].isin(
-                output_catalogue.magnitudes["eventID"].unique())]
+                        output_catalogue.magnitudes["eventID"].unique())]
             return output_catalogue
 
         if not select_type == "any":
@@ -281,6 +284,11 @@ class CatalogueSelector(object):
     def select_by_agency(self, agency, select_type="any"):
         """
         Selects by agency type
+
+        :param agency:
+            A string with the agency code
+        :returns:
+            A catalogue instance
         """
         idx = self.catalogue.origins.Agency == agency
         return self._select_by_origins(idx, select_type)
@@ -396,10 +404,23 @@ def get_agency_magnitude_count(catalogue):
     return count_list
 
 
+def get_agency_start_stop(catalogue):
+    """
+    :param catalogue:
+        An instance of :class:`CatalogueDB`
+    """
+    orig_grps = catalogue.origins.groupby("originAgency")
+
+
 def get_agency_magtype_statistics(catalogue, pretty_print=True):
     """
     Returns an analysis of the number of different magnitude types found for
-    each agency
+    each agency.
+
+    :param catalogue:
+        An instance of :class:`CatalogueDB`
+    :param pretty_print:
+        A boolean
     """
     agency_count = get_agency_origin_count(catalogue)
     mag_group = catalogue.magnitudes.groupby("magAgency")
@@ -491,9 +512,9 @@ def get_agency_magnitude_pairs(catalogue, pair1, pair2, no_case=False):
             (catalogue.magnitudes["magType"].str.lower() == pair2[1].lower()))
     else:
         case1_select = ((catalogue.magnitudes["magAgency"] == pair1[0]) &
-            (catalogue.magnitudes["magType"] == pair1[1]))
+                        (catalogue.magnitudes["magType"] == pair1[1]))
         case2_select = ((catalogue.magnitudes["magAgency"] == pair2[0]) &
-            (catalogue.magnitudes["magType"] == pair2[1]))
+                        (catalogue.magnitudes["magType"] == pair2[1]))
 
     if not np.any(case1_select):
         print("Agency-Pair: (%s, %s) returned no magnitudes" % (pair1[0],
@@ -809,7 +830,6 @@ def plot_agency_magnitude_density(data, overlay=False, number_samples=0,
         cmap = deepcopy(matplotlib.cm.get_cmap("jet"))
         cmap.set_under("w")
         data_norm = Normalize(vmin=0.1, vmax=np.max(density))
-        #density[density < 1E-15] == np.nan
     plt.pcolormesh(xbins[:-1] + 0.05, ybins[:-1] + 0.05, density.T,
                    norm=data_norm, cmap=cmap)
     cbar = plt.colorbar()
@@ -821,7 +841,7 @@ def plot_agency_magnitude_density(data, overlay=False, number_samples=0,
     plt.xlim(lowx, highx)
     # Overlay 1:1 line
     plt.plot(np.array([lowx, highx]), np.array([lowx, highx]), ls="--",
-        color=[0.5, 0.5, 0.5], zorder=1)
+             color=[0.5, 0.5, 0.5], zorder=1)
     plt.tight_layout()
 
     if filename:
@@ -831,9 +851,9 @@ def plot_agency_magnitude_density(data, overlay=False, number_samples=0,
     return data
 
 
-DEFAULT_SIGMA = {"minimum": lambda x : np.nanmin(x),
-                 "maximum": lambda x : np.nanmax(x),
-                 "mean": lambda x : np.nanmean(x)}
+DEFAULT_SIGMA = {"minimum": lambda x: np.nanmin(x),
+                 "maximum": lambda x: np.nanmax(x),
+                 "mean": lambda x: np.nanmean(x)}
 
 
 def extract_scale_agency(key):
@@ -875,7 +895,7 @@ def extract_scale_agency(key):
 
 class CatalogueRegressor(object):
     """
-    Class to perform an orthodonal distance regression on a pair of magnitude
+    Class to perform an orthogonal distance regression on a pair of magnitude
     data tuples
     :param dict data:
         Output of agency-magnitude query
@@ -945,16 +965,17 @@ class CatalogueRegressor(object):
         return cls(data_dict)
 
     def plot_data(self, overlay, xlim=[], ylim=[], marker="o",
-            figure_size=(7, 7), filetype="png", resolution=300, filename=None):
+                  figure_size=(7, 7), filetype="png", resolution=300,
+                  filename=None):
         """
         Plots the result of the agency-magnitude query
         """
         plot_agency_magnitude_pair(self.data, overlay, xlim, ylim, marker,
-            figure_size, filetype, resolution, filename)
-
+                                   figure_size, filetype, resolution, filename)
 
     def plot_density(self, overlay, xlim=[], ylim=[], lognorm=True, sample=0,
-            figure_size=(7, 7), filetype="png", resolution=300, filename=None):
+                     figure_size=(7, 7), filetype="png", resolution=300,
+                     filename=None):
         """
         Plots the result of the agency-magnitude query
         """

@@ -608,6 +608,10 @@ class ISFCatalogue(object):
                         continue
             if not found:
                 self.events.append(event)
+        #
+        # Updating the spatial index
+        print('Updating')
+        self._create_spatial_index()
         return id_common_events
 
     def get_number_events(self):
@@ -645,24 +649,66 @@ class ISFCatalogue(object):
                 event.merge_secondary_origin(catalogue.events[iloc].origins)
                 self.events[location] = event
 
-    def find_events_without_prime(self):
+    def calculate_number_of_unique_events_per_agency(self):
         """
-        This method returns the indexes of the events with more than one
-        origin and without the prime origin defined
+        This method computes the number of unique events provided by each
+        agency.
+
         :returns:
-            A list of integers corresponding to the events identified.
+            A dictionary with key the name of the agency and value the number
+            of unique events.
+        """
+        counter = {}
+        for iloc, event in enumerate(self.events):
+            if len(event.origins) == 1:
+                key = event.origins[0].author
+                if key in counter:
+                    counter[key] += 1
+                else:
+                    counter[key] = 1
+        return counter
+
+    def get_prime_events_info(self):
+        """
+        :returns:
+            This method returns the indexes of the events with more than one
+            origin and without the prime origin defined and a dictionary per
+            agency with indexes of prime events.
         """
         idxs = []
+        stats = {}
         for iloc, event in enumerate(self.events):
             found = False
-            for origin in event.origins:
-                if not origin.is_prime:
-                    continue
-                else:
+            for iori, origin in enumerate(event.origins):
+                if origin.is_prime or len(event.origins) == 1:
+                    key = origin.author
+                    if key in stats:
+                        stats[key].append((iloc, iori))
+                    else:
+                        stats[key] = [(iloc, iori)]
                     found = True
+                else:
+                    continue
             if not found and len(event.origins) > 1:
                 idxs.append(iloc)
-        return idxs
+        return idxs, stats
+
+    def filter_catalogue_by_event_id(self, ids):
+        """
+        This removes from the catalogue all the events with ID included in the
+        list provided.
+
+        :param ids:
+            A list of event IDs
+        """
+        for iloc in sorted(ids, reverse=True):
+            del self.events[iloc]
+
+    def get_catalogue_subset(self, ids):
+        newcat = ISFCatalogue(self.id, self.name)
+        for iloc in sorted(ids, reverse=True):
+            newcat.events.append(self.events[iloc])
+        return newcat
 
     def get_decimal_dates(self):
         """
