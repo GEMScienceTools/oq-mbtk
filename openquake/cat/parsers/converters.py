@@ -77,12 +77,15 @@ class GenericCataloguetoISFParser(object):
     def parse(self, cat_id, cat_name):
         df = pd.read_csv(self.filename, delimiter=',')
         #
-        mask = df['day'] == 0
-        df.loc[mask, 'day'] = 1
-
-        df.drop(df[df.second > 59].index, inplace=True)
-        df.drop(df[df.minute > 59].index, inplace=True)
-        df.drop(df[df.hour > 23].index, inplace=True)
+        if 'day' in df.columns:
+            mask = df['day'] == 0
+            df.loc[mask, 'day'] = 1
+        if 'second' in df.columns:
+            df.drop(df[df.second > 59].index, inplace=True)
+        if 'minute' in df.columns:
+            df.drop(df[df.minute > 59].index, inplace=True)
+        if 'hour' in df.columns:
+            df.drop(df[df.hour > 23].index, inplace=True)
 
         #
         for col in df.columns:

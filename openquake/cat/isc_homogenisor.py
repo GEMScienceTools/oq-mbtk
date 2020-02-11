@@ -6,10 +6,10 @@
 #
 # Copyright (c) 2015 GEM Foundation
 #
-# The Catalogue Toolkit is free software: you can redistribute 
-# it and/or modify it under the terms of the GNU Affero General Public 
-# License as published by the Free Software Foundation, either version 
-# 3 of the License, or (at your option) any later version.
+# The Catalogue Toolkit is free software: you can redistribute
+# it and/or modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either version
+# 3 of the License, or (at your option) any later version.
 #
 # You should have received a copy of the GNU Affero General Public License
 # with this download. If not, see <http://www.gnu.org/licenses/>
@@ -526,7 +526,7 @@ class HomogenisorPreprocessor(object):
         """
         orig_rules = self._build_float_key_rule_list(origin_rules)
         mag_rules = self._build_float_key_rule_list(magnitude_rules)
-        for event in catalogue.events:    
+        for event in catalogue.events:
             eq_depth = None
             for origin in event.origins:
                 if not depth and (origin.location.depth is not None):
@@ -562,7 +562,7 @@ class HomogenisorPreprocessor(object):
             for iloc, rule in enumerate(mag_rules):
                 if eq_date >= rule[0][0] and eq_date <= rule[0][1] and\
                     eq_depth >= rule[0][2] and eq_depth < rule[0][3]:
-                    setattr(event, "magnitude_rule_idx", iloc)       
+                    setattr(event, "magnitude_rule_idx", iloc)
         return catalogue
 
     def _build_time_key_rule_list(self, rule_set):
@@ -579,7 +579,7 @@ class HomogenisorPreprocessor(object):
             rule_list.append(((start_date, end_date, key_rule.strip(" ")),
                               rule[1]))
         return rule_list
-    
+
     def _build_float_key_rule_list(self, rule_set):
         """
         Parses the rule set from the string-defined rule for a set of
@@ -645,7 +645,7 @@ class DynamicHomogenisor(Homogenisor):
 
     def _apply_origin_selection(self, event):
         '''
-        Checks each agency to see if it is found in the event, returning the 
+        Checks each agency to see if it is found in the event, returning the
         corresponding origin if so.
         '''
 
@@ -725,7 +725,7 @@ class DynamicHomogenisor(Homogenisor):
                 print("%s" % ",".join([str(event.id), descriptor,
                     str(event.preferred.date), str(event.preferred.time),
                     str(event.preferred.record_key),
-                    str(event.preferred.location.longitude), 
+                    str(event.preferred.location.longitude),
                     str(event.preferred.location.latitude),
                     str(event.preferred.location.depth),
                     str(event.preferred.magnitude),
@@ -739,7 +739,7 @@ class DynamicHomogenisor(Homogenisor):
                     origin_rule_idx,
                     magnitude_rule_idx,
                     self.log[iloc][0],
-                    self.log[iloc][1]]), file=fid) 
+                    self.log[iloc][1]]), file=fid)
         fid.close()
 
 #: Earth radius in km.
@@ -760,12 +760,12 @@ def geodetic_distance_diff(origin1, origin2):
     :returns:
         Distance in km, floating point scalar or numpy array of such.
     """
-    
+
     lons1 = origin1.location.longitude
     lats1 = origin1.location.latitude
     lons2 = origin2.location.longitude
     lats2 = origin2.location.latitude
-    
+
     lons1, lats1, lons2, lats2 = _prepare_coords(lons1, lats1, lons2, lats2)
     distance = np.arcsin(np.sqrt(
         np.sin((lats1 - lats2) / 2.0) ** 2.0
@@ -797,7 +797,7 @@ BREAK_STR = "==============================================="
 
 class DuplicateFinder(object):
     """
-    Find duplicate events between two catalogues - adding the origins of 
+    Find duplicate events between two catalogues - adding the origins of
     the second catalogue into the first
     """
     def __init__(self, reference_catalogue, time_window, distance_window,
@@ -871,7 +871,7 @@ class DuplicateFinder(object):
             return
 
         if hasattr(self.reference.events[dup_event], 'tensor'):
-            # If the reference event has a tensor then use reference catalogue 
+            # If the reference event has a tensor then use reference catalogue
             # tensor
             return
         else:

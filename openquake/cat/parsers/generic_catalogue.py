@@ -156,16 +156,23 @@ class GeneralCsvCatalogue(object):
         """
         isf_cat = ISFCatalogue(catalogue_id, name)
         for iloc in range(0, self.get_number_events()):
-            # Origin I
-            event_id = str(self.data['eventID'][iloc])
+            # Origin ID
+            if len(self.data['eventID']) > 0:
+                event_id = str(self.data['eventID'][iloc])
+            else:
+                raise ValueError('Unknown key')
             origin_id = event_id
             # Create Magnitude
+            sigma_mag = None
+            if ('sigmaMagnitude' in self.data and
+                    len(self.data['sigmaMagnitude']) > 0):
+                sigma_mag = self.data['sigmaMagnitude'][iloc]
             mag = [Magnitude(event_id,
                              origin_id,
                              self.data['magnitude'][iloc],
                              catalogue_id,
                              scale='Mw',
-                             sigma=self.data['sigmaMagnitude'][iloc])]
+                             sigma=sigma_mag)]
             # Create Moment
             if 'moment' in self.data and len(self.data['moment']):
                 if not np.isnan(self.data['moment'][iloc]):
@@ -215,9 +222,9 @@ class GeneralCsvCatalogue(object):
 
             # Create Origin
             # Date
-            if self.data['day'][iloc] == 0:
+            if len(self.data['day']) > 1 and self.data['day'][iloc] == 0:
                 self.data['day'][iloc] = 1
-            if self.data['month'][iloc] == 0:
+            if len(self.data['month']) > 1 and self.data['month'][iloc] == 0:
                 self.data['month'][iloc] = 1
             try:
                 eq_date = datetime.date(self.data['year'][iloc],

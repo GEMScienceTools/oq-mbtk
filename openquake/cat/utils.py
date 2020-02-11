@@ -63,7 +63,7 @@ def decimal_year(year, month, day):
     :rtype: numpy.ndarray
     """
     marker = np.array([0., 31., 59., 90., 120., 151., 181.,
-                                 212., 243., 273., 304., 334.])
+                       212., 243., 273., 304., 334.])
     tmonth = (month - 1).astype(int)
     day_count = marker[tmonth] + day - 1.
     dec_year = year + (day_count / 365.)
@@ -102,7 +102,7 @@ def decimal_time(year, month, day, hour, minute, second):
     id_leap = leap_check(year)
     leap_loc = np.where(id_leap)[0]
     day_count[leap_loc] = MARKER_LEAP[tmonth[leap_loc]] + day[leap_loc] - 1
-    year_secs = (day_count.astype(float) * SECONDS_PER_DAY) +  second + \
+    year_secs = (day_count.astype(float) * SECONDS_PER_DAY) + second + \
         (60. * minute.astype(float)) + (3600. * hour.astype(float))
     decimal_time = year.astype(float) + (year_secs / (365. * 24. * 3600.))
     decimal_time[leap_loc] = year[leap_loc].astype(float) + \
@@ -130,7 +130,7 @@ def haversine(lon1, lat1, lon2, lat2, radians=False, earth_rad=6371.227):
     :returns: geographical distance in km
     :rtype: numpy.ndarray
     """
-    if radians == False:
+    if radians is False:
         cfact = np.pi / 180.
         lon1 = cfact * lon1
         lat1 = cfact * lat1
@@ -157,10 +157,10 @@ def haversine(lon1, lat1, lon2, lat2, radians=False, earth_rad=6371.227):
         # Perform distance calculation
         dlat = lat1 - lat2[i]
         dlon = lon1 - lon2[i]
-        aval = (np.sin(dlat / 2.) ** 2.) + (np.cos(lat1) * np.cos(lat2[i]) *
-             (np.sin(dlon / 2.) ** 2.))
+        aval = ((np.sin(dlat / 2.) ** 2.) + (np.cos(lat1) * np.cos(lat2[i]) *
+                (np.sin(dlon / 2.) ** 2.)))
         distance[:, i] = (2. * earth_rad * np.arctan2(np.sqrt(aval),
-                                                    np.sqrt(1 - aval))).T
+                                                      np.sqrt(1 - aval))).T
         i += 1
     return distance
 

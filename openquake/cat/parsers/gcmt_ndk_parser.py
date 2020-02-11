@@ -84,7 +84,7 @@ def _read_moment_tensor_from_ndk_string(ndk_string, system='USE'):
                        float(ndk_string[mkr[1]:mkr[2]])])
         mkr = mkr + 13
     vector = np.array(vector)
-    mrr, mtt, mpp, mrt, mrp, mtp  = tuple(vector[np.arange(0, 12, 2)])
+    mrr, mtt, mpp, mrt, mrp, mtp = tuple(vector[np.arange(0, 12, 2)])
     sig_mrr, sig_mtt, sig_mpp, sig_mrt, sig_mrp, sig_mtp = \
         tuple(vector[np.arange(1, 13, 2)])
 
