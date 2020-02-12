@@ -32,7 +32,8 @@
                 "lower_seis_depth": 12.0,
                 "last_movement": null,
                 "reference": "fake",
-                "notes": "blah"
+                "notes": "blah",
+                "m_max": 7.0
             },
             "geometry": {
                 "type": "LineString",

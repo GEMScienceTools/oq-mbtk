@@ -40,8 +40,9 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # Parameters required from the fault modeler
 option_types = {'b_value': float,
-                'M_min': float,
-                'M_max': float,
+                'm_min': float,
+                'm_max': float,
+                'm_cli': float,
                 'bin_width': float,
                 'aseismic_coefficient': float,
                 'rupture_aspect_ratio': float,
@@ -193,7 +194,9 @@ def build_model_from_db(fault_db,
                                               width_method=width_method,
                                               param_map=param_map_local,
                                               defaults=defaults_local)
+            print("sfs_dict = ", sfs_dict)
             sfs = fmu.make_fault_source(sfs_dict, oqt_source=oqt_source)
+            print("sfs en build_model_from_db = ", sfs)
             srcl.append(sfs)
 
         except Exception as e:
