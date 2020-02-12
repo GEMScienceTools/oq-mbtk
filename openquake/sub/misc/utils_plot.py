@@ -45,8 +45,9 @@ def plotter(profiles, smsh):
     smsh[:, :, 2] *= scl
     for i in range(smsh.shape[0]):
         k = np.isfinite(smsh[i, :, 0])
-        _ = mlab.plot3d(smsh[i, k, 0], smsh[i, k, 1], smsh[i, k, 2],
-                        color=(1, 0, 0), line_width=wdt, tube_radius=0.01)
+        if np.any(k):
+            _ = mlab.plot3d(smsh[i, k, 0], smsh[i, k, 1], smsh[i, k, 2],
+                            color=(1, 0, 0), line_width=wdt, tube_radius=0.01)
     for i in range(smsh.shape[1]):
         k = np.isfinite(smsh[:, i, 0])
         if sum(k):
