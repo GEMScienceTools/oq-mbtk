@@ -119,10 +119,6 @@ class TestComputeDoubleTruncatedGR(unittest.TestCase):
         model = oqtkp.models['model01']
         #
         # check the a and b values computed
-        # MN: 'keys' assigned but never used
-        keys = list(model.sources.keys())
-        print(model.sources['02'].__dict__)
-        print(model.sources['03'].__dict__)
         self.assertAlmostEqual(model.sources['02'].a_gr, 5.824285578226533)
         self.assertAlmostEqual(model.sources['02'].b_gr, 1.1421442004454874)
         self.assertAlmostEqual(model.sources['03'].a_gr, 3.8036622760645868)

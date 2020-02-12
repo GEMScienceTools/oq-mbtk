@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<nrml
+xmlns="http://openquake.org/xmlns/nrml/0.5"
+xmlns:gml="http://www.opengis.net/gml"
+>
+    <sourceModel
+    name="Example Source Model Containing Area Source"
+    >
+        <sourceGroup name="group 1" tectonicRegion="Active Shallow Crust">
+
+            <simpleFaultSource id="1" name="SFS" tectonicRegion="Active Shallow Crust">
+                <simpleFaultGeometry>
+                    <gml:LineString>
+                        <gml:posList>
+                            1.0 -0.2 1.4 0.0 1.7 0.0
+                        </gml:posList>
+                    </gml:LineString>
+                    <dip> 30.0 </dip>
+                    <upperSeismoDepth> 0.0 </upperSeismoDepth>
+                    <lowerSeismoDepth> 15.0 </lowerSeismoDepth>
+                </simpleFaultGeometry>
+                <magScaleRel> WC1994 </magScaleRel>
+                <ruptAspectRatio> 2.0 </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="4.2" bValue="0.9" maxMag="7.0" minMag="6.0"/>
+                <rake> 90 </rake>
+            </simpleFaultSource>
+
+            <simpleFaultSource id="2" name="SFS" tectonicRegion="Active Shallow Crust">
+                <simpleFaultGeometry>
+                    <gml:LineString>
+                        <gml:posList>
+                            1.0 -0.2 1.4 0.0 1.7 0.0
+                        </gml:posList>
+                    </gml:LineString>
+                    <dip> 30.0 </dip>
+                    <upperSeismoDepth> 0.0 </upperSeismoDepth>
+                    <lowerSeismoDepth> 15.0 </lowerSeismoDepth>
+                </simpleFaultGeometry>
+                <magScaleRel> WC1994 </magScaleRel>
+                <ruptAspectRatio> 2.0 </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="3.4" bValue="0.9" maxMag="7.5" minMag="6.0"/>
+                <rake> 90 </rake>
+            </simpleFaultSource>
+
+            <simpleFaultSource id="3" name="SFS" tectonicRegion="Active Shallow Crust">
+                <simpleFaultGeometry>
+                    <gml:LineString>
+                        <gml:posList>
+                            1.0 -0.2 1.4 0.0 1.7 0.0
+                        </gml:posList>
+                    </gml:LineString>
+                    <dip> 30.0 </dip>
+                    <upperSeismoDepth> 0.0 </upperSeismoDepth>
+                    <lowerSeismoDepth> 15.0 </lowerSeismoDepth>
+                </simpleFaultGeometry>
+                <magScaleRel> WC1994 </magScaleRel>
+                <ruptAspectRatio> 2.0 </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="2.7" bValue="0.9" maxMag="6.8" minMag="6.0"/>
+                <rake> 90 </rake>
+            </simpleFaultSource>
+
+        </sourceGroup>
+    </sourceModel>
+</nrml>
