@@ -582,7 +582,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
         exit(0)
     """
 
-    if 0:
+    if 1:
         vsc = 0.01
         import matplotlib.pyplot as plt
         # MN: 'Axes3D' imported but never used
