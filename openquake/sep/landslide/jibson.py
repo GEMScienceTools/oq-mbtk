@@ -27,6 +27,10 @@ def newmark_displ_from_pga_M(
     pga: Union[float, np.ndarray],
     critical_accel: Union[float, np.ndarray],
     M: float,
+    c1: float = -2.71,
+    c2: float = 2.335,
+    c3: float = -1.478,
+    c4: float = 0.424,
 ) -> Union[float, np.ndarray]:
     """
     Landslide displacement calculated from PGA, M, and critical acceleration,
@@ -39,13 +43,24 @@ def newmark_displ_from_pga_M(
         Critical Acceleration, measured in g; this is the acceleration at which
         the slope fails.
 
+    :param M:
+        Magnitude (Mw) of the earthquake.
 
+    :param c1:
+        Empirical constant
+
+    :param c2:
+        Empirical constant
+    
+    :param c3:
+        Empirical constant
+    
+    :param c4:
+        Empirical constant
+
+    :returns:
+        Predicted earthquake displacement in meters. 
     """
-
-    c1 = -2.71
-    c2 = 2.335
-    c3 = -1.478
-    c4 = 0.424
 
     # first of many corrections of invalid values
     if np.isscalar(pga):
