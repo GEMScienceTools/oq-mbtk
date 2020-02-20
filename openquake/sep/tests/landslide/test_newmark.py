@@ -4,7 +4,7 @@ import numpy as np
 
 from openquake.sep.landslide.common import static_factor_of_safety
 
-from openquake.sep.landslide.jibson import (
+from openquake.sep.landslide.newmark import (
     critical_accel,
     newmark_displ_from_pga_M,
     prob_failure_given_displacement,
