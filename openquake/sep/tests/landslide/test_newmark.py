@@ -5,7 +5,7 @@ import numpy as np
 from openquake.sep.landslide.common import static_factor_of_safety
 
 from openquake.sep.landslide.newmark import (
-    critical_accel,
+    newmark_critical_accel,
     newmark_displ_from_pga_M,
     prob_failure_given_displacement,
 )
@@ -28,8 +28,8 @@ class jibson_landslide_test(unittest.TestCase):
             soil_dry_density=1500.0,
         )
 
-    def test_critical_accel(self):
-        ca = critical_accel(self.fs, self.slopes)
+    def test_newmark_critical_accel(self):
+        ca = newmark_critical_accel(self.fs, self.slopes)
         ca_ = np.array(
             [
                 1.16853211,

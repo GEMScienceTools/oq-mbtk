@@ -3,7 +3,7 @@ from typing import Optional, Union
 import numpy as np
 
 
-def critical_accel(
+def newmark_critical_accel(
     factor_of_safety: Union[float, np.ndarray], slope: Union[float, np.ndarray]
 ) -> Union[float, np.ndarray]:
     """
