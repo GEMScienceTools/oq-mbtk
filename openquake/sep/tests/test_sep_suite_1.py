@@ -1,0 +1,88 @@
+import os
+import unittest
+
+import numpy as np
+import xarray as xr
+from osgeo import gdal
+
+from openquake.sep.utils import make_local_relief_raster
+from openquake.sep.calculators import (
+    calc_newmark_soil_slide_single_event,
+    calc_newmark_soil_slide_event_set,
+)
+
+
+BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+test_dem = os.path.join(BASE_DATA_PATH, "dem_small.tif")
+test_relief = os.path.join(BASE_DATA_PATH, "relief_out.tif")
+test_slope = os.path.join(BASE_DATA_PATH, "slope_small.tif")
+test_saturation = os.path.join(BASE_DATA_PATH, "saturation.tif")
+test_friction = os.path.join(BASE_DATA_PATH, "friction.tif")
+test_cohesion = os.path.join(BASE_DATA_PATH, "cohesion.tif")
+test_pga = os.path.join(BASE_DATA_PATH, "pga.nc")
+
+
+"""
+Integration test suite for secondary perils, with small set of realistic inputs.
+"""
+
+
+class test_sec_perils_cali_small(unittest.TestCase):
+    def setUp(self):
+        self.relief_map = xr.open_rasterio(test_relief, parse_coordinates=True)[
+            0
+        ]
+        self.slope_map = xr.open_rasterio(test_slope, parse_coordinates=True)[0]
+        self.pga = xr.open_dataset(test_pga)
+        self.saturation = xr.open_rasterio(
+            test_saturation, parse_coordinates=True
+        )[0]
+        self.friction = xr.open_rasterio(test_friction, parse_coordinates=True)[
+            0
+        ]
+        self.cohesion = xr.open_rasterio(test_cohesion, parse_coordinates=True)[
+            0
+        ]
+
+        (
+            self.relief_map,
+            self.slope_map,
+            self.pga,
+            self.saturation,
+            self.friction,
+            self.cohesion,
+        ) = xr.align(
+            self.relief_map,
+            self.slope_map,
+            self.pga,
+            self.saturation,
+            self.friction,
+            self.cohesion,
+            join="override",
+        )
+
+    def test_calc_newmark_soil_slide_single_event(self):
+        eq_pga = self.pga["1286"]
+
+        Dn = calc_newmark_soil_slide_single_event(
+            pga=eq_pga,
+            M=eq_pga.attrs["mag"],
+            slope=self.slope_map,
+            cohesion=self.cohesion,
+            friction_angle=self.friction,
+            saturation_coeff=self.saturation,
+        )
+
+        # Dn.to_netcdf(os.path.join(BASE_DATA_PATH, "Dn.nc"))
+        #
+
+    def test_calc_newmark_soil_slide_event_set(self):
+        Dn_set = calc_newmark_soil_slide_event_set(
+            pga=self.pga,
+            M=None,
+            slope=self.slope_map,
+            cohesion=self.cohesion,
+            friction_angle=self.friction,
+            saturation_coeff=self.saturation,
+        )
+
