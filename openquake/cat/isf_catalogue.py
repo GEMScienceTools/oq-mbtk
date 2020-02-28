@@ -539,7 +539,7 @@ class ISFCatalogue(object):
 
     # TODO - this does not cope yet with catalogues crossing the international
     # dateline
-    def add_external_idf_formatted_catalogue(self, cat, ll_delta=0.01,
+    def add_external_idf_formatted_catalogue(self, cat, ll_deltas=0.01,
             time_delta=dt.timedelta(seconds=30),
             utc_time_zone=dt.timezone(dt.timedelta(hours=0))):
         """
@@ -549,7 +549,7 @@ class ISFCatalogue(object):
 
         :param cat:
             An instance of :class:`ISFCatalogue`
-        :param ll_delta:
+        :param ll_deltas:
             A float defining the tolerance in decimal degrees used when looking
             for colocated events
         :param time_delta:
@@ -562,21 +562,26 @@ class ISFCatalogue(object):
             A list with the indexes of the events in common. The index refers
             to the envent in the catalogue added.
         """
+        #
+        # Check if we have a spatial index
         assert 'sidx' in self.__dict__
-        threshold = time_delta.total_seconds()
+        #
+        # Set delta time thresholds
+        if hasattr(time_delta, '__iter__'):
+            threshold = np.array([[t[0], t[1].total_seconds()] for t in
+                                  time_delta])
+        else:
+            threshold = np.array([[1000, time_delta.total_seconds()]])
+        #
+        # Set ll delta thresholds
+        if hasattr(ll_deltas, '__iter__'):
+            ll_deltas = np.array([d for d in ll_deltas])
+        else:
+            ll_deltas = np.array([[1000, ll_deltas]])
+        #
+        # Processing the events in the catalogue
         id_common_events = []
         for iloc, event in enumerate(cat.events):
-            #
-            # Create selection window
-            minlo = event.origins[0].location.longitude - ll_delta
-            minla = event.origins[0].location.latitude - ll_delta
-            maxlo = event.origins[0].location.longitude + ll_delta
-            maxla = event.origins[0].location.latitude + ll_delta
-            #
-            # Querying the spatial index
-            obj = [n.object for n in self.sidx.intersection((minlo, minla,
-                                                             maxlo, maxla),
-                                                            objects=True)]
             #
             # Updating time of the origin to the new timezone
             new_datetime = dt.datetime.combine(event.origins[0].date,
@@ -586,11 +591,37 @@ class ISFCatalogue(object):
             event.origins[0].date = new_datetime.date()
             event.origins[0].time = new_datetime.time()
             #
+            # Set the datetime of the event
+            dtime_a = dt.datetime.combine(event.origins[0].date,
+                                          event.origins[0].time)
+            #
+            # Find the appropriate delta_ll
+            idx_threshold = min(np.argwhere(dtime_a.year >
+                                            ll_deltas[:, 0]))
+            ll_thrs = ll_deltas[idx_threshold, 1]
+            #
+            # Create selection window
+            minlo = event.origins[0].location.longitude - ll_thrs
+            minla = event.origins[0].location.latitude - ll_thrs
+            maxlo = event.origins[0].location.longitude + ll_thrs
+            maxla = event.origins[0].location.latitude + ll_thrs
+            #
+            # Querying the spatial index
+            obj = [n.object for n in self.sidx.intersection((minlo, minla,
+                                                             maxlo, maxla),
+                                                            objects=True)]
+            #
             # If true there is at least one event to check
             found = False
             if len(obj):
-                dtime_a = dt.datetime.combine(event.origins[0].date,
-                                              event.origins[0].time)
+
+                #
+                # Find the appropriate delta_time
+                idx_threshold = max(np.argwhere(dtime_a.year >
+                                                threshold[:, 0]))
+                sel_thrs = threshold[idx_threshold, 1]
+                #
+                # Checking the events selected with the spatial index
                 for i in obj:
                     #
                     # Selecting the origin of the event found in the catalogue
@@ -600,7 +631,7 @@ class ISFCatalogue(object):
                     dtime_b = dt.datetime.combine(orig.date, orig.time)
                     #
                     # Check if time difference is within the threshold value
-                    if abs((dtime_a - dtime_b).total_seconds()) < threshold:
+                    if abs((dtime_a - dtime_b).total_seconds()) < sel_thrs:
                         found = True
                         tmp = event.origins
                         self.events[i_eve].merge_secondary_origin(tmp)
