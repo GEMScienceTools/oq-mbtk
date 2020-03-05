@@ -539,39 +539,57 @@ class ISFCatalogue(object):
 
     # TODO - this does not cope yet with catalogues crossing the international
     # dateline
-    def add_external_idf_formatted_catalogue(self, cat, ll_deltas=0.01,
-            time_delta=dt.timedelta(seconds=30),
-            utc_time_zone=dt.timezone(dt.timedelta(hours=0))):
+    def add_external_idf_formatted_catalogue(
+            self,
+            cat,
+            ll_deltas=0.01,
+            delta_t=dt.timedelta(seconds=30),
+            utc_time_zone=dt.timezone(dt.timedelta(hours=0)),
+            buff_t=dt.timedelta(seconds=0),
+            buff_ll=0):
         """
         This merges an external catalogue formatted in the ISF format e.g. a
-        catalogue coming form an external agency. Because of this, we assume
+        catalogue coming from an external agency. Because of this, we assume
         that each event has a single origin.
 
         :param cat:
-            An instance of :class:`ISFCatalogue`
+            An instance of :class:`ISFCatalogue` i.e. the 'guest' catalogue
         :param ll_deltas:
             A float defining the tolerance in decimal degrees used when looking
             for colocated events
-        :param time_delta:
+        :param delta_t:
             Tolerance used to find colocated events. It's an instance of
             :class:`datetime.timedelta`
         :param utc_time_zone:
             A :class:`datetime.timezone` instance describing the reference
             timezone for the new catalogue.
+        :param buff_t:
+            Tolerance used to find events close to the selection threshold.
+            It's an instance of :class:`datetime.timedelta`
+        :param buff_ll:
+            A float defining the tolerance used to find events close to the
+            selection threshold.
         :return:
-            A list with the indexes of the events in common. The index refers
-            to the envent in the catalogue added.
+            - A list with the indexes of the events in the 'guest' catalogue
+              added to the 'host' catalogue.
+            - A dictionary with doubtful events. The keys in this dictionary
+              are the indexes of the events in the 'host' catalogue.
+              The values are the indexes of the doubtful events in the 'guest'
+              catalogue.
         """
+        #
+        # This is a dictionary where we store the doubtful events.
+        doubts = {}
         #
         # Check if we have a spatial index
         assert 'sidx' in self.__dict__
         #
         # Set delta time thresholds
-        if hasattr(time_delta, '__iter__'):
+        if hasattr(delta_t, '__iter__'):
             threshold = np.array([[t[0], t[1].total_seconds()] for t in
-                                  time_delta])
+                                  delta_t])
         else:
-            threshold = np.array([[1000, time_delta.total_seconds()]])
+            threshold = np.array([[1000, delta_t.total_seconds()]])
         #
         # Set ll delta thresholds
         if hasattr(ll_deltas, '__iter__'):
@@ -579,7 +597,7 @@ class ISFCatalogue(object):
         else:
             ll_deltas = np.array([[1000, ll_deltas]])
         #
-        # Processing the events in the catalogue
+        # Processing the events in the catalogue 'guest' catalogue
         id_common_events = []
         for iloc, event in enumerate(cat.events):
             #
@@ -595,9 +613,9 @@ class ISFCatalogue(object):
             dtime_a = dt.datetime.combine(event.origins[0].date,
                                           event.origins[0].time)
             #
-            # Find the appropriate delta_ll
-            idx_threshold = min(np.argwhere(dtime_a.year >
-                                            ll_deltas[:, 0]))
+            # Take the appropriate value from delta_ll - this is needed in
+            # particular when delta_ll varies with time.
+            idx_threshold = max(np.argwhere(dtime_a.year > ll_deltas[:, 0]))
             ll_thrs = ll_deltas[idx_threshold, 1]
             #
             # Create selection window
@@ -611,15 +629,30 @@ class ISFCatalogue(object):
                                                              maxlo, maxla),
                                                             objects=True)]
             #
+            # This is for checking. We perform the check only if the buffer
+            # distance is larger than 0
+            obj_e = []
+            obj_a = []
+            if buff_ll > 0 or buff_t.seconds > 0:
+                obj_a = [n.object for n in self.sidx.intersection((
+                        minlo-buff_ll, minla-buff_ll, maxlo+buff_ll,
+                        maxla+buff_ll), objects=True)]
+                obj_b = [n.object for n in self.sidx.intersection((
+                        minlo+buff_ll, minla+buff_ll, maxlo-buff_ll,
+                        maxla+buff_ll), objects=True)]
+                #
+                # Find the index of the events in the buffer across the
+                # selection window
+                obj_e = list(set(obj_a) - set(obj_b))
+            #
             # If true there is at least one event to check
             found = False
+            #
+            # Find the appropriate delta_time
+            idx_threshold = max(np.argwhere(dtime_a.year >
+                                            threshold[:, 0]))
+            sel_thrs = threshold[idx_threshold, 1]
             if len(obj):
-
-                #
-                # Find the appropriate delta_time
-                idx_threshold = max(np.argwhere(dtime_a.year >
-                                                threshold[:, 0]))
-                sel_thrs = threshold[idx_threshold, 1]
                 #
                 # Checking the events selected with the spatial index
                 for i in obj:
@@ -637,13 +670,48 @@ class ISFCatalogue(object):
                         self.events[i_eve].merge_secondary_origin(tmp)
                         id_common_events.append(iloc)
                         continue
+            #
+            # Searching for doubtful events:
+            if buff_ll < 1e-10 and buff_t.seconds < buff_ll < 1e-10:
+                continue
+            if len(obj_a) > 0:
+                for i in obj_a:
+                    to_add = False
+                    #
+                    # Selecting the origin of the event found in the catalogue
+                    i_eve = i[0]
+                    i_ori = i[1]
+                    orig = self.events[i_eve].origins[i_ori]
+                    dtime_b = dt.datetime.combine(orig.date, orig.time)
+                    #
+                    # Check if time difference is within the threshold value
+                    tmp_delta = abs(dtime_a - dtime_b).total_seconds()
+                    #
+                    # Within max distance and across the time buffer
+                    if (tmp_delta > (sel_thrs - buff_t.total_seconds()) and
+                            tmp_delta < (sel_thrs + buff_t.total_seconds())):
+                        to_add = True
+                    #
+                    # Within max time and within the ll buffer
+                    if (not to_add and
+                            tmp_delta < (sel_thrs + buff_t.total_seconds())):
+                        if i in obj_e:
+                            to_add = True
+                    #
+                    # Saving info
+                    if to_add:
+                        if iloc in doubts:
+                            doubts[i[0]].append(iloc)
+                        else:
+                            doubts[i[0]] = [iloc]
+
             if not found:
                 self.events.append(event)
         #
         # Updating the spatial index
         print('Updating')
         self._create_spatial_index()
-        return id_common_events
+        return id_common_events, doubts
 
     def get_number_events(self):
         """
