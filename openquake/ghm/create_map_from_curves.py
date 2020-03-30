@@ -61,7 +61,7 @@ def read_hazard_curve_files(path_in, prefix=''):
 def write_hazard_map(filename, lons, lats, pex, gms, imt):
     fou = open(filename, 'w')
     fou.write('# mean, investigation_time=1.0\n')
-    fou.write('lon,lat,PGA-{:f}\n'.format(pex))
+    fou.write('lon,lat,{:s}-{:f}\n'.format(imt, pex))
     for lo, la, gm in zip(lons, lats, gms):
         fou.write('{:f},{:f},{:e}\n'.format(lo, la, gm))
     fou.close()
@@ -90,7 +90,7 @@ def create_map(path_in, prefix, fname_out, path_out, iml_str, pex=None,
         raise ValueError('You cannot set both iml and pex')
     # Save the hazard map
     path_out = os.path.join(path_out, fname_out)
-    write_hazard_map(path_out, lons, lats, pex, dat, 'PGA')
+    write_hazard_map(path_out, lons, lats, pex, dat, iml_str)
 
 
 def main(argv):
