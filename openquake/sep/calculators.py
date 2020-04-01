@@ -27,7 +27,8 @@ def calc_newmark_soil_slide_single_event(
     saturation_coeff: Union[float, np.ndarray] = 0.1,
     slab_thickness: Union[float, np.ndarray] = 2.5,
     soil_dry_density: Union[float, np.ndarray] = 1500.0,
-    water_density=1000.0,
+    water_density: float = 1000.0,
+    out_name=None,
 ) -> Union[float, np.ndarray]:
     """
     """
@@ -45,6 +46,9 @@ def calc_newmark_soil_slide_single_event(
     ca = newmark_critical_accel(fs, slope)
 
     Dn = newmark_displ_from_pga_M(pga, ca, M)
+
+    if isinstance(Dn, xr.DataArray):
+        Dn.name = out_name
 
     return Dn
 
@@ -82,8 +86,6 @@ def calc_newmark_soil_slide_event_set(
             }
         )
 
-    # Dn = newmark_displ_from_pga_M(pga, ca, M)
-
     return Dn
 
 
@@ -93,4 +95,3 @@ def calc_rock_slope_failures():
 
 def calc_rotational_failures():
     pass
-
