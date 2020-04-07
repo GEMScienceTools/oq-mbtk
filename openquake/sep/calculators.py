@@ -1,8 +1,9 @@
 from typing import Optional, Union
 
 import osgeo
-import xarray as xr
 import numpy as np
+import pandas as pd
+import xarray as xr
 from osgeo import gdal
 
 
@@ -55,7 +56,7 @@ def calc_newmark_soil_slide_single_event(
 
 def calc_newmark_soil_slide_event_set(
     pga: Union[float, np.ndarray],
-    M: float,
+    M: Union[float, np.ndarray],
     slope: Union[float, np.ndarray],
     cohesion: Union[float, np.ndarray],
     friction_angle: Union[float, np.ndarray],
@@ -85,6 +86,8 @@ def calc_newmark_soil_slide_event_set(
                 for k, da in pga.data_vars.items()
             }
         )
+
+    #elif isinstance(pga, )
 
     return Dn
 
