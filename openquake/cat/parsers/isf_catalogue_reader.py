@@ -288,6 +288,7 @@ class ISFReader(BaseCatalogueDatabaseReader):
                 name + " - Rejected",
                 events=self.rejected_catalogue)
         f.close()
+        self.catalogue.ids = [e.id for e in self.catalogue.events]
         return self.catalogue
 
     def _build_event(self, event, origins, magnitudes, comment_str):
