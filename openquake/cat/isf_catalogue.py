@@ -18,7 +18,8 @@
 """
 General class for an earthquame catalogue in ISC (ISF) format
 """
-from __future__ import print_function
+import warnings
+#from __future__ import print_function
 import numpy as np
 import pandas as pd
 import datetime as dt
@@ -539,14 +540,11 @@ class ISFCatalogue(object):
 
     # TODO - this does not cope yet with catalogues crossing the international
     # dateline
-    def add_external_idf_formatted_catalogue(
-            self,
-            cat,
-            ll_deltas=0.01,
+    def add_external_idf_formatted_catalogue(self, cat, ll_deltas=0.01,
             delta_t=dt.timedelta(seconds=30),
             utc_time_zone=dt.timezone(dt.timedelta(hours=0)),
-            buff_t=dt.timedelta(seconds=0),
-            buff_ll=0):
+            buff_t=dt.timedelta(seconds=0), buff_ll=0, use_ids=False,
+            logfle=False):
         """
         This merges an external catalogue formatted in the ISF format e.g. a
         catalogue coming from an external agency. Because of this, we assume
@@ -569,6 +567,8 @@ class ISFCatalogue(object):
         :param buff_ll:
             A float defining the tolerance used to find events close to the
             selection threshold.
+        :param use_ids:
+            A boolean
         :return:
             - A list with the indexes of the events in the 'guest' catalogue
               added to the 'host' catalogue.
@@ -577,6 +577,9 @@ class ISFCatalogue(object):
               The values are the indexes of the doubtful events in the 'guest'
               catalogue.
         """
+        if logfle:
+            fou = open(logfle, 'w')
+
         #
         # This is a dictionary where we store the doubtful events.
         doubts = {}
@@ -599,7 +602,21 @@ class ISFCatalogue(object):
         #
         # Processing the events in the catalogue 'guest' catalogue
         id_common_events = []
+        new = 0
+        new_old = 0
+        common = 0
+        common_old = 0
+        iloc = 0
         for iloc, event in enumerate(cat.events):
+
+            if logfle:
+                msg = 'Index: {:d} Event ID: {:s}\n'.format(iloc, event.id)
+                fou.write(msg)
+
+            #
+            # Initial settings
+            found = False
+            before = self.get_number_events()
             #
             # Updating time of the origin to the new timezone
             new_datetime = dt.datetime.combine(event.origins[0].date,
@@ -645,16 +662,20 @@ class ISFCatalogue(object):
                 # selection window
                 obj_e = list(set(obj_a) - set(obj_b))
             #
-            # If true there is at least one event to check
-            found = False
-            #
             # Find the appropriate delta_time
             idx_threshold = max(np.argwhere(dtime_a.year >
                                             threshold[:, 0]))
             sel_thrs = threshold[idx_threshold, 1]
+
+            if logfle:
+                msg = '   Selected {:d} events \n'.format(len(obj))
+                fou.write(msg)
+
             if len(obj):
                 #
-                # Checking the events selected with the spatial index
+                # Checking the events selected with the spatial index. obj is
+                # a list of tuples (event and origin ID) in the host
+                # catalogue for the epicenters close to the investigated event
                 for i in obj:
                     #
                     # Selecting the origin of the event found in the catalogue
@@ -664,53 +685,144 @@ class ISFCatalogue(object):
                     dtime_b = dt.datetime.combine(orig.date, orig.time)
                     #
                     # Check if time difference is within the threshold value
-                    if abs((dtime_a - dtime_b).total_seconds()) < sel_thrs:
+                    delta = abs((dtime_a - dtime_b).total_seconds())
+
+                    if logfle:
+                        eid = self.events[i_eve].id
+                        msg = '      Event ID: {:s}\n'.format(eid)
+                        msg += '      Delta: {:f}\n'.format(delta)
+                        fou.write(msg)
+
+                    if delta < sel_thrs and found is False:
                         found = True
                         tmp = event.origins
+
+                        if (len(self.events[i_eve].origins) == 1 and
+                                not self.events[i_eve].origins[0].is_prime):
+                            tmp[0].is_prime = True
+                        else:
+                            tmp[0].is_prime = False
+
                         self.events[i_eve].merge_secondary_origin(tmp)
+                        if use_ids:
+                            if event.id != self.events[i_eve].id:
+                                fmt = "Adding a secondary origin whose ID {:s}"
+                                fmt += " differs from the original one"
+                                msg = fmt.format(event.id,
+                                                 self.events[i_eve].id)
+                                warnings.warn(msg)
                         id_common_events.append(iloc)
-                        continue
+                        common += 1
+                        break
             #
             # Searching for doubtful events:
-            if buff_ll < 1e-10 and buff_t.seconds < buff_ll < 1e-10:
-                continue
-            if len(obj_a) > 0:
-                for i in obj_a:
-                    to_add = False
-                    #
-                    # Selecting the origin of the event found in the catalogue
-                    i_eve = i[0]
-                    i_ori = i[1]
-                    orig = self.events[i_eve].origins[i_ori]
-                    dtime_b = dt.datetime.combine(orig.date, orig.time)
-                    #
-                    # Check if time difference is within the threshold value
-                    tmp_delta = abs(dtime_a - dtime_b).total_seconds()
-                    #
-                    # Within max distance and across the time buffer
-                    if (tmp_delta > (sel_thrs - buff_t.total_seconds()) and
-                            tmp_delta < (sel_thrs + buff_t.total_seconds())):
-                        to_add = True
-                    #
-                    # Within max time and within the ll buffer
-                    if (not to_add and
-                            tmp_delta < (sel_thrs + buff_t.total_seconds())):
-                        if i in obj_e:
+            if buff_ll > 1e-10 and buff_t.seconds > 1e-10:
+                if len(obj_a) > 0:
+                    for i in obj_a:
+                        to_add = False
+                        #
+                        # Selecting origin of the event found in the catalogue
+                        i_eve = i[0]
+                        i_ori = i[1]
+                        orig = self.events[i_eve].origins[i_ori]
+                        dtime_b = dt.datetime.combine(orig.date, orig.time)
+                        #
+                        # Check if time difference within the threshold value
+                        tmp_delta = abs(dtime_a - dtime_b).total_seconds()
+                        #
+                        # Within max distance and across the time buffer
+                        tsec = buff_t.total_seconds()
+                        if (tmp_delta > (sel_thrs - tsec) and
+                                tmp_delta < (sel_thrs + tsec)):
                             to_add = True
-                    #
-                    # Saving info
-                    if to_add:
-                        if iloc in doubts:
-                            doubts[i[0]].append(iloc)
-                        else:
-                            doubts[i[0]] = [iloc]
-
+                        #
+                        # Within max time and within the ll buffer
+                        if (not to_add and tmp_delta < (sel_thrs + tsec)):
+                            if i in obj_e:
+                                to_add = True
+                        #
+                        # Saving info
+                        if to_add:
+                            if i[0] in doubts:
+                                doubts[i[0]].append(iloc)
+                            else:
+                                doubts[i[0]] = [iloc]
+            #
+            # Adding new event
             if not found:
-                self.events.append(event)
+                # Making sure that the ID of the event added does not exist
+                # already
+
+                if event.id in set(self.ids):
+                    if use_ids:
+                        fmt = "Adding a new event whose ID {:s}"
+                        fmt += " is already in the DB. Making it secondary."
+                        msg = fmt.format(event.id)
+                        warnings.warn(msg)
+
+                        if logfle:
+                            msg = '      WARNING already in DB\n'
+                            fou.write(msg)
+
+                        i_eve = np.where(np.array(self.ids) == event.id)
+                        tmp = event.origins
+                        tmp[0].is_prime = False
+                        self.events[i_eve[0][0]].merge_secondary_origin(tmp)
+                        found = 1
+                        common += 1
+                    else:
+                        fmt = 'Event ID: {:s} already there. Length ids {:d}'
+                        msg = fmt.format(event.id, len(self.ids))
+                        raise ValueError(msg)
+                else:
+                    assert len(event.origins) == 1
+                    event.origins[0].is_prime = True
+                    self.events.append(event)
+                    self.ids.append(event.id)
+                    new += 1
+            #
+            # Checking
+            if (new - new_old) > 0 and (common - common_old > 0):
+                msg = '{:d}'.format(iloc)
+                raise ValueError(msg)
+            elif (new - new_old) > 1:
+                msg = 'New increment larger than 1, iloc {:d}'.format(iloc)
+                raise ValueError(msg)
+            elif (common - common_old) > 1:
+                msg = 'Common increment larger than 1, iloc {:d}'.format(iloc)
+                raise ValueError(msg)
+            else:
+                new_old = new
+                common_old = common
+            #
+            #
+            after = self.get_number_events()
+            #
+            #
+            # if not iloc % 5000:
+            #    idxs, stats = self.get_prime_events_info()
+            #    num_primes = [len(stats[k]) for k in stats.keys()]
+            #    msg = "{:d}".format(iloc)
+            #    assert sum(num_primes) == after, msg
+
+            fmt = 'before {:d} after {:d} iloc {:d} found {:d} loops: {:d}'
+            msg = fmt.format(before, after, iloc, found, iloc)
+            dlt = 0 if found else 1
+            assert before+dlt == after, msg
+        #
+        # Checking
+        fmt = "Wrong budget \n"
+        fmt += "Common: {:d} New: {:d} Sum: {:d} Expected: {:d} loops: {:d}\n"
+        msg = fmt.format(common, new, common+new, cat.get_number_events(),
+                         iloc+1)
+        assert (common + new) == cat.get_number_events(), msg
         #
         # Updating the spatial index
-        print('Updating')
         self._create_spatial_index()
+
+        if logfle:
+            fou.close()
+
         return id_common_events, doubts
 
     def get_number_events(self):
@@ -804,9 +916,19 @@ class ISFCatalogue(object):
             del self.events[iloc]
 
     def get_catalogue_subset(self, ids):
+        """
+        :param ids:
+            An iterable of indexes in [0, |events|-1]
+        :returns:
+            A new :class:`openquake.cat.isf_catalogue.IDFCatalogue` instance
+        """
         newcat = ISFCatalogue(self.id, self.name)
+        eids = []
         for iloc in sorted(ids, reverse=True):
             newcat.events.append(self.events[iloc])
+            eids.append(self.events[iloc].id)
+        # Updating the list of eventss
+        newcat.ids = eids
         return newcat
 
     def get_decimal_dates(self):
@@ -917,7 +1039,7 @@ class ISFCatalogue(object):
                 else:
                     depthSolution = ""
 
-                if orig.is_prime:
+                if orig.is_prime or len(eq.origins) == 1:
                     prime = 1
                 else:
                     prime = 0
