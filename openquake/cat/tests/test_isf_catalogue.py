@@ -19,6 +19,9 @@ class MergeGenericCatalogueTest(unittest.TestCase):
         self.fname_csv2 = os.path.join(BASE_DATA_PATH, 'data', 'cat02.csv')
         self.fname_csv3 = os.path.join(BASE_DATA_PATH, 'data', 'cat03.csv')
 
+        self.fname_idf4 = os.path.join(BASE_DATA_PATH, 'data', 'cat04.isf')
+        self.fname_csv4 = os.path.join(BASE_DATA_PATH, 'data', 'cat04.csv')
+
     def test_case01(self):
         """Merging .csv formatted catalogue"""
         #
@@ -119,3 +122,25 @@ class MergeGenericCatalogueTest(unittest.TestCase):
         msg = 'The information about doubtful earthquakes is wrong'
         self.assertEqual([1, 2], doubts[2], msg)
         self.assertEqual(1, len(doubts), msg)
+
+    def test_case04(self):
+        """Merge ISC-GEM not identified through search"""
+
+        parser = ISFReader(self.fname_idf4)
+        cat = parser.read_file("ISC_DB1", "Test ISF")
+
+        parser = GenericCataloguetoISFParser(self.fname_csv4)
+        cat_iscgem = parser.parse("ISCGEM", "ISC-GEM")
+
+        delta = dt.timedelta(seconds=30)
+        timezone = dt.timezone(dt.timedelta(hours=0))
+
+        cat._create_spatial_index()
+        with self.assertWarns(UserWarning) as cm:
+            _ = cat.add_external_idf_formatted_catalogue(cat_iscgem,
+                    ll_deltas=0.40, delta_t=delta, utc_time_zone=timezone,
+                    buff_t=dt.timedelta(0), buff_ll=0, use_ids=True,
+                    logfle=None)
+
+        self.assertIn('isf_catalogue.py', cm.filename)
+        self.assertEqual(761, cm.lineno)
