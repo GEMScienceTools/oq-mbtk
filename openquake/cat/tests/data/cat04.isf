@@ -1,0 +1,11 @@
+Event   913399 Southeastern China
+   Date       Time        Err   RMS Latitude Longitude  Smaj  Smin  Az Depth   Err Ndef Nsta Gap  mdist  Mdist Qual   Author      OrigID
+1917/01/24 00:48:12                  31.0000  114.0000                                                             uk ISS        1960719
+1917/01/24 00:48:12                  31.0000  116.0000                                                             uk DBN        1960720
+1917/01/24 00:48:12.00               31.0000  114.0000                   0.0                                          CENT      02318934
+1917/01/24 00:48:38.15   1.22 2.859  31.6171  116.9535 24.68 12.21  60  20.0f         9   30 157   3.85  77.56 m i ke ISC       05951248
+ (#PRIME)
+
+Magnitude  Err Nsta Author      OrigID
+Ms     6.5          BJI       02318934
+MS     6.3 0.1    4 ISC       05951248
