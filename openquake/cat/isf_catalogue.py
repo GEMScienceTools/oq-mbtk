@@ -419,6 +419,7 @@ class Event(object):
         for origin2 in origin2set:
             if not isinstance(origin2, Origin):
                 o_t = type(origin2)
+                print(type(o_t))
                 msg = ('Secondary origins must be instance of ' +
                        'isf_catalogue.Origin class. Found: {:s}'.format(o_t))
                 raise ValueError(msg)

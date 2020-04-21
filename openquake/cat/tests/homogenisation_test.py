@@ -7,3 +7,4 @@ import unittest
 # class TestMagnitudeConditions(unittest.TestCase):
 
     # pass
+
