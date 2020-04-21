@@ -9,6 +9,9 @@ import pandas as pd
 
 def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
     """
+    This function applies sequentially a set of rules to the information in
+    the `save` :class:`pandas.DataFrame` instance.
+
     :param low_mags:
         A list
     :param conv_eqs:
@@ -17,6 +20,9 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
     :param save:
     :param work:
     :return:
+        Two :class:`pandas.DataFrame` instances. The first one with the
+        homogenised catalogue, the second one with the information not
+        processed (if any).
     """
 
     # Formatting
@@ -32,12 +38,17 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
         else:
             tmpstr = re.sub('m', fmt2.format(mlow), conversion)
             cmd = "tmp[m >= {:.2f}] = {:s}".format(mlow, tmpstr)
-            exec(cmd)
+
+            try:
+                exec(cmd)
+            except ValueError:
+                fmt = 'Cannot execute the following conversion rule:\n{:s}'
+                print(fmt.format(conversion))
+
     rows = rows.copy()
     rows.loc[:, 'magMw'] = tmp
     save = save.copy()
     save = pd.concat([save, rows], ignore_index=True, sort=False)
-    print(len(save), len(work))
 
     # Cleaning
     eids = rows['eventID'].values
@@ -47,17 +58,24 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
     return save, work
 
 
-def get_mag_selection_condition(agency, mag_type, default=["Mw", "MW"]):
+def get_mag_selection_condition(agency, mag_type, default=None):
     """
+    Given an agency code and a magnitude type this function creates a
+    condition that can be used to filter a :class:`pandas.DataFrame`
+    instance.
+
     :param agency:
         A string with the name of the agency that originally defined
         magnitude values
     :param mag_type:
-
+        A string defining the typology of magnitude to be selected
     :return:
         A string. When evaluated, it creates a selection condition for the
         magnitude dataframe
     """
+
+    if default is None:
+        default = ["Mw", "MW"]
 
     # Create the initial selection condition using the agency name
     fmt1 = "({:s}) & (work['magType'] == '{:s}')"
@@ -71,16 +89,44 @@ def get_mag_selection_condition(agency, mag_type, default=["Mw", "MW"]):
     return cond
 
 
+def get_ori_selection_condition(agency):
+    """
+    Given an agency code this function creates a
+    condition that can be used to filter a :class:`pandas.DataFrame`
+    instance.
+    """
+    return "odf['Agency'] == '{:s}'".format(agency)
+
+
 def process_origin(odf, ori_rules):
     """
-    :param work:
+    :param odf:
         A :class:`pandas.DataFrame` instance containing origin data
     :param mag_rules:
         A dictionary with the rules to be used for processing the origins
     :return:
         An updated version of the origin dataframe.
     """
-    # TODO
+    # This is a new dataframe used to store the processed origins
+    save = pd.DataFrame(columns=odf.columns)
+
+    for agency in ori_rules["ranking"]:
+
+        # Create the first selection condition and select rows
+        if agency in ["PRIME", "prime"]:
+            rows = odf[odf["prime"] == 1]
+        else:
+            cond = get_ori_selection_condition(agency)
+            rows = odf.loc[eval(cond), :]
+
+        # Saving results
+        save = pd.concat([save, rows], ignore_index=True, sort=False)
+
+        # Cleaning
+        eids = rows['eventID'].values
+        cond = odf['eventID'].isin(eids)
+        odf.drop(odf.loc[cond, :].index, inplace=True)
+
     return odf
 
 
@@ -96,6 +142,7 @@ def process_magnitude(work, mag_rules):
         homogenised catalogue, the second one with the information not
         processed (if any).
     """
+
     # This is a new dataframe used to store the processed events
     save = pd.DataFrame(columns=work.columns)
 
@@ -108,10 +155,14 @@ def process_magnitude(work, mag_rules):
 
             # Create the first selection condition and select rows
             cond = get_mag_selection_condition(agency, mag_type)
-            rows = work.loc[eval(cond), :]
+            try:
+                rows = work.loc[eval(cond), :]
+            except ValueError:
+                fmt = 'Cannot evaluate the following condition:\n {:s}'
+                print(fmt.format(cond))
 
             # Magnitude conversion
-            if len(rows):
+            if len(rows) > 0:
                 low_mags = mag_rules[agency][mag_type]['low_mags']
                 conv_eqs = mag_rules[agency][mag_type]['conv_eqs']
                 save, work = apply_mag_conversion_rule(low_mags, conv_eqs,
@@ -120,45 +171,39 @@ def process_magnitude(work, mag_rules):
     return save, work
 
 
-def process_dfs(odf_fname, mdf_fname, o_settings_fname=None,
-                m_settings_fname=None):
+def process_dfs(odf_fname, mdf_fname, settings_fname=None):
     """
     :param odf_fname:
         Name of the .h5 file containing the origin dataframe
     :param mdf_fname:
         Name of the .h5 file containing the magnitudes dataframe
-    :param o_settings_fname:
-        Name of the file with the origin settings for homogenisation
-    :param m_settings_fname:
-        Name of the file with the magnitude settings for homogenisation
+    :param settings_fname:
+        Name of the file with the settings for selection and homogenisation
     """
 
+    # Initialising output
+    save = None
+    work = None
+
+    # Reading settings
+    rules = toml.load(settings_fname)
+
     # Checking input
-    if not(o_settings_fname or m_settings_fname):
+    if not('origin' in rules.keys() or 'magnitude' in rules.keys()):
         raise ValueError('At least one set of settings must be defined')
 
     # These are the tables with origins and magnitudes
     odf = pd.read_hdf(odf_fname)
     mdf = pd.read_hdf(mdf_fname)
 
-    # Loading settings from .toml file and processing origins
-    if o_settings_fname:
-        ori_rules = toml.load(o_settings_fname)
-        nodf = process_origin(odf, ori_rules)
-    else:
-        nodf = odf
+    # Processing origins
+    if 'origin' in rules.keys():
+        nodf = process_origin(odf, rules['origin'])
 
-    # Loading settings from .toml file and processing magnitudes
-    if m_settings_fname:
-        mag_rules = toml.load(m_settings_fname)
-
+    # Processing magnitudes
+    if 'magnitude' in rules.keys():
         # Creating a single dataframe by joining
         work = pd.merge(nodf, mdf, on=["eventID"])
-
-        # Processing magnitudes
-        save, work = process_magnitude(work, mag_rules)
-
-    # FIXME as it stands save and work are not defined if m_settings_fname is
-    # none
+        save, work = process_magnitude(work, rules['magnitude'])
 
     return save, work
