@@ -4,6 +4,6 @@
 import unittest
 
 
-class TestMagnitudeConditions(unitest.testcase):
-    
-    def 
+# class TestMagnitudeConditions(unittest.TestCase):
+
+    # pass
