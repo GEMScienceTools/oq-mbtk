@@ -111,13 +111,19 @@ def process_origin(odf, ori_rules):
     save = pd.DataFrame(columns=odf.columns)
 
     for agency in ori_rules["ranking"]:
+        print('   Agency: ', agency)
 
         # Create the first selection condition and select rows
         if agency in ["PRIME", "prime"]:
             rows = odf[odf["prime"] == 1]
         else:
             cond = get_ori_selection_condition(agency)
-            rows = odf.loc[eval(cond), :]
+
+            try:
+                rows = odf.loc[eval(cond), :]
+            except ValueError:
+                fmt = 'Cannot execute the following selection rule:\n{:s}'
+                print(fmt.format(cond))
 
         # Saving results
         save = pd.concat([save, rows], ignore_index=True, sort=False)
@@ -127,7 +133,7 @@ def process_origin(odf, ori_rules):
         cond = odf['eventID'].isin(eids)
         odf.drop(odf.loc[cond, :].index, inplace=True)
 
-    return odf
+    return save
 
 
 def process_magnitude(work, mag_rules):
@@ -148,7 +154,7 @@ def process_magnitude(work, mag_rules):
 
     # Looping over agencies
     for agency in mag_rules.keys():
-        print('\nAgency: ', agency)
+        print('   Agency: ', agency)
         #
         # Looping over magnitude-types
         for mag_type in mag_rules[agency].keys():
@@ -196,14 +202,23 @@ def process_dfs(odf_fname, mdf_fname, settings_fname=None):
     odf = pd.read_hdf(odf_fname)
     mdf = pd.read_hdf(mdf_fname)
 
+    # print(odf.head())
+    print(len(odf["eventID"].unique()))
+
     # Processing origins
     if 'origin' in rules.keys():
-        nodf = process_origin(odf, rules['origin'])
+        print('Selecting origins')
+        odf = process_origin(odf, rules['origin'])
+
+    print(len(odf))
 
     # Processing magnitudes
     if 'magnitude' in rules.keys():
+        print('Homogenising magnitudes')
         # Creating a single dataframe by joining
-        work = pd.merge(nodf, mdf, on=["eventID"])
+        work = pd.merge(odf, mdf, on=["eventID"])
         save, work = process_magnitude(work, rules['magnitude'])
+
+    print(len(save))
 
     return save, work
