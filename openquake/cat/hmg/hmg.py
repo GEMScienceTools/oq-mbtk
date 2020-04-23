@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+# Copyright (C) 2020 GEM Foundation
+#
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
+
 import re
 import toml
 import numpy as np
@@ -149,6 +164,10 @@ def process_magnitude(work, mag_rules):
         processed (if any).
     """
 
+    # Add a column for destination
+    if "magMw" not in list(work.columns):
+        work["magMw"] = np.nan
+
     # This is a new dataframe used to store the processed events
     save = pd.DataFrame(columns=work.columns)
 
@@ -202,15 +221,14 @@ def process_dfs(odf_fname, mdf_fname, settings_fname=None):
     odf = pd.read_hdf(odf_fname)
     mdf = pd.read_hdf(mdf_fname)
 
-    # print(odf.head())
-    print(len(odf["eventID"].unique()))
+    print("Number of EventIDs {:d}\n".format(len(odf["eventID"].unique())))
 
     # Processing origins
     if 'origin' in rules.keys():
         print('Selecting origins')
         odf = process_origin(odf, rules['origin'])
 
-    print(len(odf))
+    print("Number of origins selected {:d}\n".format(len(odf)))
 
     # Processing magnitudes
     if 'magnitude' in rules.keys():
@@ -219,6 +237,6 @@ def process_dfs(odf_fname, mdf_fname, settings_fname=None):
         work = pd.merge(odf, mdf, on=["eventID"])
         save, work = process_magnitude(work, rules['magnitude'])
 
-    print(len(save))
+    print("Number of origins with final mag type {:d}\n".format(len(save)))
 
     return save, work
