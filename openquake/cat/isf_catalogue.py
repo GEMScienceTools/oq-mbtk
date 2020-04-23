@@ -1,25 +1,25 @@
-#!/usr/bin/env/python
-# -*- coding: utf-8 -*-
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#!/usr/bin/env python3
+# coding: utf-8
 
+# Copyright (C) 2015-2020 GEM Foundation
 #
-# LICENSE
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# Copyright (c) 2015 GEM Foundation
-#
-# The Catalogue Toolkit is free software: you can redistribute
-# it and/or modify it under the terms of the GNU Affero General Public
-# License as published by the Free Software Foundation, either version
-# 3 of the License, or (at your option) any later version.
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# with this download. If not, see <http://www.gnu.org/licenses/>
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
 """
-General class for an earthquame catalogue in ISC (ISF) format
+General class for an earthquake catalogue in ISC (ISF) format
 """
 import warnings
-#from __future__ import print_function
 import numpy as np
 import pandas as pd
 import datetime as dt
@@ -695,8 +695,22 @@ class ISFCatalogue(object):
                         fou.write(msg)
 
                     if delta < sel_thrs and found is False:
+
+                        # Found an origin in the same space-time window
                         found = True
                         tmp = event.origins
+
+                        # Check this event already contains an origin from
+                        # the same agency
+                        origins = self.events[i_eve].origins
+                        if tmp[0].author in [o.author for o in origins]:
+
+                            fmt = "This event already contains "
+                            fmt += " an origin from the same agency: {:s}\n"
+                            fmt += " Trying to add evID {:s}\n"
+                            msg = fmt.format(tmp[0].author, event.id)
+                            warnings.warn(msg)
+                            fou.write(msg)
 
                         if (len(self.events[i_eve].origins) == 1 and
                                 not self.events[i_eve].origins[0].is_prime):
@@ -704,14 +718,18 @@ class ISFCatalogue(object):
                         else:
                             tmp[0].is_prime = False
 
-                        self.events[i_eve].merge_secondary_origin(tmp)
                         if use_ids:
                             if event.id != self.events[i_eve].id:
-                                fmt = "Adding a secondary origin whose ID {:s}"
-                                fmt += " differs from the original one"
+                                fmt = " Trying to add a secondary origin "
+                                fmt += " whose ID {:s} differs from the "
+                                fmt += " original one. Skipping\n"
                                 msg = fmt.format(event.id,
                                                  self.events[i_eve].id)
                                 warnings.warn(msg)
+                                found = False
+                                continue
+
+                        self.events[i_eve].merge_secondary_origin(tmp)
                         id_common_events.append(iloc)
                         common += 1
                         break
@@ -755,6 +773,7 @@ class ISFCatalogue(object):
                 # already
 
                 if event.id in set(self.ids):
+                    
                     if use_ids:
                         fmt = "Adding a new event whose ID {:s}"
                         fmt += " is already in the DB. Making it secondary."
@@ -762,7 +781,6 @@ class ISFCatalogue(object):
                         warnings.warn(msg)
 
                         if logfle:
-                            msg = '      WARNING already in DB\n'
                             fou.write(msg)
 
                         i_eve = np.where(np.array(self.ids) == event.id)
