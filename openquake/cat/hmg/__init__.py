@@ -17,4 +17,4 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
 
-from openquake.hmtk.cat.hmg import hmg
+from openquake.mbtk.cat.hmg import hmg
