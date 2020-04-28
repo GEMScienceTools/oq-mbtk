@@ -34,6 +34,7 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
     :param rows:
     :param save:
     :param work:
+        One :class:`pandas.DataFrame` instance
     :return:
         Two :class:`pandas.DataFrame` instances. The first one with the
         homogenised catalogue, the second one with the information not
@@ -73,7 +74,7 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
     return save, work
 
 
-def get_mag_selection_condition(agency, mag_type, default=None):
+def get_mag_selection_condition(agency, mag_type, df_name="work"):
     """
     Given an agency code and a magnitude type this function creates a
     condition that can be used to filter a :class:`pandas.DataFrame`
@@ -84,23 +85,21 @@ def get_mag_selection_condition(agency, mag_type, default=None):
         magnitude values
     :param mag_type:
         A string defining the typology of magnitude to be selected
+    :param df_name:
+        A string with the name of the dataframe to which apply the query
     :return:
         A string. When evaluated, it creates a selection condition for the
         magnitude dataframe
     """
 
-    if default is None:
-        default = ["Mw", "MW"]
-
     # Create the initial selection condition using the agency name
-    fmt1 = "({:s}) & (work['magType'] == '{:s}')"
-    cond = "work['magAgency'] == '{:s}'".format(agency)
-
-    # If the original magnitude type is not the default one adjust the
-    # magnitude selection condition
-    if mag_type not in default:
-        cond = fmt1.format(cond, mag_type)
-
+    if agency == "*":
+        cond = "({:s}['magType'] == '{:s}')".format(df_name, mag_type)
+    else:
+        cond = "{:s}['magAgency'] == '{:s}'".format(df_name, agency)
+        # Adding magnitude type selection condition
+        fmt1 = "({:s}) & ({:s}['magType'] == '{:s}')"
+        cond = fmt1.format(cond, df_name, mag_type)
     return cond
 
 
