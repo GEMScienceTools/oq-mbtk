@@ -21,7 +21,7 @@ import subprocess
 from openquake.cat.hmg.plot import get_agencies
 
 
-def write_gmt_file(df, agencies=[], fname_gmt='/tmp/tmp.txt'):
+def write_gmt_file(df, agencies=[], fname_gmt='/tmp/tmp.txt', **kwargs):
     """
     :param df:
         A dataframe
@@ -30,6 +30,9 @@ def write_gmt_file(df, agencies=[], fname_gmt='/tmp/tmp.txt'):
     :param fname_gmt:
         The name of the output file
     """
+
+    if "mmin" in kwargs:
+        df = df[df["value"] > float(kwargs["mmin"])]
 
     if len(agencies) < 1:
         agencies = get_agencies(df)
@@ -46,7 +49,7 @@ def write_gmt_file(df, agencies=[], fname_gmt='/tmp/tmp.txt'):
                 index=False, header=False)
 
 
-def plot_catalogue(fname, fname_fig='/tmp/tmp', **kwargs):
+def plot_catalogue(fname, fname_fig='/tmp/tmp.txt', **kwargs):
     """
     :param fname:
         Name of the file with the catalogue
@@ -58,14 +61,6 @@ def plot_catalogue(fname, fname_fig='/tmp/tmp', **kwargs):
     """
 
     cmds = []
-
-    # ARG1=${1:-}
-    # ARG2=${2:-R-60/360/-90/90}
-    # ARG3=${3:-/tmp/fig}
-    # ARG4=${4:-3c}
-    # TITLE=${5:-"Catalogue"}
-    # EXTENT=-R$ARG2
-    # PRO=-Jm$ARG4
 
     if "extent" in kwargs:
         extent = "-R"+kwargs["extent"]
@@ -91,13 +86,17 @@ def plot_catalogue(fname, fname_fig='/tmp/tmp', **kwargs):
     fmt = "gmt coast {:s} {:s} -Bp5 -N1"
     cmds.append(fmt.format(extent, "-JM10"))
     cmds.append("gmt coast -Ccyan -Scyan")
+
+    tmp = "gawk '{{print $1, $2, 2.4**$3/800}}' {:s}".format(fname)
+    tmp += " | gmt plot -Sc0.1 -W0.5,red -Gpink -t50"
+
     cmds.append("gmt plot {:s} -Sc0.1 -W0.5,red -Gpink -t50".format(fname))
     cmds.append("gmt coast -N1 -t50 -B+t{:s}".format("test"))
 
     # Running
     cmds.append("gmt end")
     for cmd in cmds:
-        _ = subprocess.call(cmd, shell=True)
+        out = subprocess.call(cmd, shell=True)
 
     tmps = "{:s}.{:s}".format(fname_fig, fformat)
     return tmps
