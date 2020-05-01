@@ -1,8 +1,46 @@
-from typing import Callable
+from typing import Callable, Union
 
-from osgeo import gdal
 import numpy as np
+import pandas as pd
+import pyproj as pj
+from osgeo import gdal
 from numpy.lib.stride_tricks import as_strided
+
+
+def sample_raster_at_points(raster_file, x_pts, y_pts, out_of_bounds_val=0.0):
+
+    if isinstance(x_pts, pd.Series):
+        x_pts = x_pts.values
+    if isinstance(y_pts, pd.Series):
+        y_pts = y_pts.values
+
+    raster_ds = gdal.Open(raster_file)
+    gt = raster_ds.GetGeoTransform()
+    raster_proj_wkt = raster_ds.GetProjection()
+    raster_data = raster_ds.GetRasterBand(1).ReadAsArray()
+
+    raster_proj = pj.CRS(raster_proj_wkt)
+    if raster_proj.to_epsg() != 4326:
+        trans = pj.transformer.Transformer.from_crs("epsg:4326", raster_proj)
+        y_pts, x_pts = trans.transform(y_pts, x_pts)
+
+    x_rast = np.int_(np.round((x_pts - gt[0]) / gt[1]))
+    y_rast = np.int_(np.round((y_pts - gt[3]) / gt[5]))
+
+    def sample_raster(raster, row, col):
+        if (0 <= row < raster.shape[0]) and (0 <= col < raster.shape[1]):
+            return raster[row, col]
+        else:
+            return out_of_bounds_val
+
+    interp_vals = np.array(
+        [
+            sample_raster(raster_data, y_rast[i], xr)
+            for i, xr in enumerate(x_rast)
+        ]
+    )
+
+    return interp_vals
 
 
 def make_2d_array_strides(arr, window_radius, linear=True):
@@ -149,3 +187,99 @@ def make_local_relief_raster(
     )
 
     return relief_arr
+
+
+def slope_angle_to_gradient(slope, unit: str = "deg"):
+    if unit in ["radians", "radian", "rad"]:
+        slope_r = slope
+    elif unit in ["degrees", "deg", "degree"]:
+        slope_r = np.radians(slope)
+    else:
+        raise ValueError('Slope units need to be "radians" or "degrees"')
+
+    return np.tan(slope_r)
+
+
+def vs30_from_slope(
+    slope: Union[float, np.array],
+    slope_unit: str = "deg",
+    tectonic_region_type: str = "active",
+    method: str = "wald_allen_2007",
+) -> Union[float, np.array]:
+    """
+    """
+    if slope_unit in ["grad", "gradient"]:
+        grad = slope
+    else:
+        grad = slope_angle_to_gradient(slope, unit=slope_unit)
+
+    if method == "wald_allen_2007":
+        vs30 = vs30_from_slope_wald_allen_2007(
+            grad, tectonic_region_type=tectonic_region_type
+        )
+    else:
+        raise NotImplementedError(f"{method} not yet implemented.")
+    return vs30
+
+
+def vs30_from_slope_wald_allen_2007(
+    gradient: Union[float, np.array], tectonic_region_type: str = "active"
+) -> Union[float, np.array]:
+    """
+    Calculates Vs30 from the topographic slope (given as a gradient) using
+    the methods of Wald and Allen, 2007 BSSA.
+
+    Either 'active' or 'stable' are valid for the `tectonic_region_type`
+    argument.
+    """
+    if np.isscalar(gradient):
+        grad = np.array([gradient])
+        if tectonic_region_type == "active":
+            vs30 = vs30_from_slope_wald_allen_2007_active(grad)
+        elif tectonic_region_type == "stable":
+            vs30 = vs30_from_slope_wald_allen_2007_stable(grad)
+        else:
+            raise ValueError(
+                f"'{tectonic_region_type}' must be 'active' or 'stable'"
+            )
+        vs30 = vs30[0]
+    else:
+        if tectonic_region_type == "active":
+            vs30 = vs30_from_slope_wald_allen_2007_active(gradient)
+        elif tectonic_region_type == "stable":
+            vs30 = vs30_from_slope_wald_allen_2007_stable(gradient)
+        else:
+            raise ValueError(
+                f"'{tectonic_region_type}' must be 'active' or 'stable'"
+            )
+    return vs30
+
+
+def vs30_from_slope_wald_allen_2007_active(gradient: np.array) -> np.ndarray:
+
+    vs30 = np.zeros(gradient.shape)
+    vs30[(gradient < 1.0e-4)] = np.mean([0.0, 180.0])
+    vs30[(1.0e-4 <= gradient) & (gradient < 2.2e-3)] = np.mean([180.0, 240.0])
+    vs30[(2.2e-3 <= gradient) & (gradient < 6.3e-3)] = np.mean([240.0, 300.0])
+    vs30[(6.3e-3 <= gradient) & (gradient < 0.0180)] = np.mean([300.0, 360.0])
+    vs30[(0.0180 <= gradient) & (gradient < 0.0500)] = np.mean([360.0, 490.0])
+    vs30[(0.0500 <= gradient) & (gradient < 0.1000)] = np.mean([490.0, 620.0])
+    vs30[(0.1000 <= gradient) & (gradient < 0.1380)] = np.mean([620.0, 760.0])
+    vs30[(0.1380 <= gradient)] = 760.0
+
+    return vs30
+
+
+def vs30_from_slope_wald_allen_2007_stable(gradient: np.array) -> np.ndarray:
+
+    vs30 = np.zeros(gradient.shape)
+    vs30[(gradient < 2.0e-5)] = np.mean([0.0, 180.0])
+    vs30[(2.0e-5 <= gradient) & (gradient < 2.0e-3)] = np.mean([180.0, 240.0])
+    vs30[(2.0e-3 <= gradient) & (gradient < 4.0e-3)] = np.mean([240.0, 300.0])
+    vs30[(4.0e-3 <= gradient) & (gradient < 7.2e-3)] = np.mean([300.0, 360.0])
+    vs30[(7.2e-3 <= gradient) & (gradient < 0.0130)] = np.mean([360.0, 490.0])
+    vs30[(0.0130 <= gradient) & (gradient < 0.0180)] = np.mean([490.0, 620.0])
+    vs30[(0.0180 <= gradient) & (gradient < 0.0250)] = np.mean([620.0, 760.0])
+    vs30[(0.0250 <= gradient)] = 760.0
+
+    return vs30
