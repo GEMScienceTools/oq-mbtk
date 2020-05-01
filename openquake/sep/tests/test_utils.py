@@ -10,12 +10,51 @@ from openquake.sep.utils import (
     rolling_raster_operation,
     relief,
     make_local_relief_raster,
+    sample_raster_at_points,
+    slope_angle_to_gradient,
+    vs30_from_slope,
+    vs30_from_slope_wald_allen_2007,
+    vs30_from_slope_wald_allen_2007_active,
+    vs30_from_slope_wald_allen_2007_stable,
 )
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 test_dem = os.path.join(BASE_DATA_PATH, "dem_small.tif")
 test_relief = os.path.join(BASE_DATA_PATH, "relief_out.tif")
+
+
+class testUtils(unittest.TestCase):
+    def test_slope_angle_to_gradient_1(self):
+        assert slope_angle_to_gradient(0, unit="degree") == 0.0
+
+    def test_slope_angle_to_gradient_2(self):
+        assert slope_angle_to_gradient(0, unit="radian") == 0.0
+
+    def test_slope_angle_to_gradient_3(self):
+        np.testing.assert_approx_equal(
+            slope_angle_to_gradient(45.0, unit="deg"), 1.0
+        )
+
+    def test_slope_angle_to_gradient_4(self):
+        slopes = np.array([0.0, 0.52359878, 0.78539816, 1.04719755, 1.53588974])
+        grads = np.array([0.0, 0.57735027, 1.0, 1.73205081, 28.63625328])
+        np.testing.assert_array_almost_equal(
+            grads, slope_angle_to_gradient(slopes, unit="rad")
+        )
+
+
+class testWaldAllenVs30(unittest.TestCase):
+    def test_wald_allen_vs30_1(self):
+        pass
+
+
+class testVs30(unittest.TestCase):
+    def test_Vs30_WaldAllen_deg_vec(self):
+        slopes = np.array(
+            [0.01, 0.1, 0.2, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0]
+        )
+        pass
 
 
 class test_array_funcs_super_simple(unittest.TestCase):
