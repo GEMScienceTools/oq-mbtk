@@ -39,7 +39,9 @@ class test_hazus_liquefaction_functions(unittest.TestCase):
         # replicates Fig. 4.8 in the Hazus manual
         depth_ft = np.arange(4, 36, 4)
         Kw = hazus_groundwater_correction_factor(depth_ft)
-        test_res = np.array([1.018, 1.25266667, 1.48733333, 1.722])
+        test_res = np.array(
+            [1.018, 1.106, 1.194, 1.282, 1.37, 1.458, 1.546, 1.634]
+        )
         np.testing.assert_array_almost_equal(Kw, test_res)
 
     def test_hazus_conditional_liquefaction_probability_vl(self):
@@ -50,21 +52,11 @@ class test_hazus_liquefaction_functions(unittest.TestCase):
             [
                 0.0,
                 0.0,
-                0.0,
-                0.01473684,
-                0.10231579,
-                0.18989474,
-                0.27747368,
-                0.36505263,
-                0.45263158,
-                0.54021053,
-                0.62778947,
-                0.71536842,
-                0.80294737,
-                0.89052632,
-                0.97810526,
-                1.0,
-                1.0,
+                0.12177778,
+                0.30666667,
+                0.49155556,
+                0.67644444,
+                0.86133333,
                 1.0,
                 1.0,
                 1.0,
@@ -82,24 +74,14 @@ class test_hazus_liquefaction_functions(unittest.TestCase):
         test_res = np.array(
             [
                 0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.08057895,
-                0.16852632,
-                0.25647368,
-                0.34442105,
-                0.43236842,
-                0.52031579,
-                0.60826316,
-                0.69621053,
-                0.78415789,
-                0.87210526,
-                0.96005263,
+                0.18155556,
+                0.42911111,
+                0.67666667,
+                0.92422222,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
                 1.0,
             ]
         )

@@ -174,6 +174,3 @@ def hazus_liquefaction_probability(
             map_unit_proportion = 1.0
 
     return (liq_susc_prob * map_unit_proportion) / (groundwater_corr * mag_corr)
-
-
-# 1 m =  feet
