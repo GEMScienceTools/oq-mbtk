@@ -1,0 +1,2 @@
+date,latitude,longitude,smajax,sminax,strike,q,depth,unc_depth,q.1,magnitude,unc_mw,q.2,s,mo,fac,mo_auth,str1,dip1,rake1,str2,dip2,rake2,type,eventID,year,month,day,hour,minute,second,geometry
+1917-01-24 00:48:34.550,31.495,115.96600000000001,   16.0 ,    8.5 ,  39.1 , C ,20.0,25.0, C ,6.41,0.43, C , p ,       ,    ,          ,        ,        ,        ,        ,        ,        ,        ,913399,1917,1,24,0,48,34,POINT (115.966 31.495)
