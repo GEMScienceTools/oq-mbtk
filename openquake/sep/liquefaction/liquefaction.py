@@ -54,6 +54,25 @@ def zhu_liquefaction_probability_general(
     vs30_coeff: float = -4.784,
 ) -> Union[float, np.ndarray]:
     """
+    Calculates the probability of a site undergoing liquefaction using the
+    logistic regression of Zhu et al., 2015. This particular equation is
+    the 'general model' with global applicability.
+
+    Reference: Zhu et al., 2015, 'A Geospatial Liquefaction Model for Rapid
+    Response and Loss Estimation', Earthquake Spectra, 31(3), 1813-1837.
+
+    :param pga: 
+        Peak Ground Acceleration, measured in g
+    :param mag:
+        Magnitude of causative earthquake (moment or work scale)
+    :param cti:
+        Compound Topographic Index, a proxy for soil wetness.
+    :param vs30:
+        Shear-wave velocity averaged over the upper 30 m of the earth at the
+        site.
+
+    :returns:
+        Probability of liquefaction at the site.
     """
     pga_scale = pga * zhu_magnitude_correction_factor(mag)
     Xg = (
@@ -142,7 +161,39 @@ def hazus_liquefaction_probability(
     groundwater_depth: float = 1.524,
     do_map_proportion_correction: bool = True,
 ) -> Union[float, np.ndarray]:
+    """
+    Calculates the probability of liquefaction at a site based on the
+    HAZUS methodology, which involves both earthquake and ground motion
+    characteristics as well as a site characterization.
 
+    For more information, see the HAZUS-MH MR5 Earthquake Model Technical
+    Manual (https://www.hsdl.org/?view&did=12760), section 4-21.
+
+    :param pga: 
+        Peak Ground Acceleration, measured in g
+    :param mag:
+        Magnitude of causative earthquake (moment or work scale)
+    :param liq_susc_cat:
+        Liquefaction susceptibility category (LSC). This is a category denoting
+        the susceptibility of a site to liquefaction, independent of the
+        ground motions or earthquake magnitude. Acceptable values are:
+            `vh`: Very high
+            `h` : High
+            `m` : Medium
+            `l` : Low
+            `vl`: Very low
+            `n` : No suceptibility.
+    :param groundwater_depth:
+        Depth to the groundwater from the earth surface in meters (note
+        that the HAZUS methods call for this depth in feet; a conversion
+        is automatically applied).
+    :param do_map_proportion_correction:
+        Flag to apply an additional LSC-based probability or coefficent to
+        the conditional probability. This is part of the HAZUS methodology
+        but it is unclear whether this is applicable for point-based site
+        analysis, or how to compare this to other liquefaction models.
+        Defaults to `True` following the HAZUS methods.
+    """
     groundwater_corr = hazus_groundwater_correction_factor(
         groundwater_depth, unit="m"
     )
