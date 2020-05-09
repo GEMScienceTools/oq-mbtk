@@ -1,7 +1,7 @@
 from typing import Union
 
 import numpy as np
-import xarray as xr
+#import xarray as xr
 
 
 def static_factor_of_safety(
@@ -62,8 +62,8 @@ def static_factor_of_safety(
     if np.isscalar(slope):
         if slope == 0.0:
             slope = 1e-5
-    elif isinstance(slope, xr.DataArray):
-        slope = xr.where(slope == 0.0, 1e-5, slope)
+    #elif isinstance(slope, xr.DataArray):
+    #    slope = xr.where(slope == 0.0, 1e-5, slope)
     else:
         slope[slope == 0.0] = 1e-5
 
