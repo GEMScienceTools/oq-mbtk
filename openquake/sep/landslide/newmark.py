@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
 import numpy as np
-import xarray as xr
+#import xarray as xr
 
 
 def newmark_critical_accel(
@@ -67,8 +67,8 @@ def newmark_displ_from_pga_M(
     if np.isscalar(pga):
         if pga == 0.0:
             pga = 1e-5
-    elif isinstance(pga, xr.DataArray):
-        pga = xr.where(pga == 0.0, 1e-5, pga)
+    #elif isinstance(pga, xr.DataArray):
+    #    pga = xr.where(pga == 0.0, 1e-5, pga)
     else:
         pga[pga == 0.0] = 1e-5
 
@@ -78,8 +78,8 @@ def newmark_displ_from_pga_M(
     if np.isscalar(accel_ratio):
         if accel_ratio > 1.0:
             accel_ratio = 1.0
-    elif isinstance(accel_ratio, xr.DataArray):
-        accel_ratio = xr.where(accel_ratio > 1.0, 1.0, accel_ratio)
+    #elif isinstance(accel_ratio, xr.DataArray):
+    #    accel_ratio = xr.where(accel_ratio > 1.0, 1.0, accel_ratio)
     else:
         accel_ratio[accel_ratio > 1.0] = 1.0
 
@@ -92,8 +92,8 @@ def newmark_displ_from_pga_M(
     if np.isscalar(pow_prod):
         if pow_prod == 0.0:
             pow_prod = 1e-100
-    elif isinstance(pow_prod, xr.DataArray):
-        pow_prod = xr.where(pow_prod == 0.0, 1e-100, pow_prod)
+    #elif isinstance(pow_prod, xr.DataArray):
+    #    pow_prod = xr.where(pow_prod == 0.0, 1e-100, pow_prod)
     else:
         pow_prod[pow_prod == 0.0] = 1e-100
 
@@ -105,16 +105,16 @@ def newmark_displ_from_pga_M(
     if np.isscalar(d_cm):
         if d_cm < 1e-99:
             d_cm = 0.0
-    elif isinstance(d_cm, xr.DataArray):
-        d_cm = xr.where(d_cm < 1e-99, 0.0, d_cm)
+    #elif isinstance(d_cm, xr.DataArray):
+    #    d_cm = xr.where(d_cm < 1e-99, 0.0, d_cm)
     else:
         d_cm[d_cm < 1e-99] = 0.0
 
     # convert output to m
     d_m = d_cm / 100.0
 
-    if isinstance(d_m, xr.DataArray):
-        d_m.attrs["unit"] = "meters"
+    #if isinstance(d_m, xr.DataArray):
+    #    d_m.attrs["unit"] = "meters"
     return d_m
 
 
