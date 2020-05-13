@@ -25,11 +25,14 @@ def get_hists(df, bins, agencies=None, column="magMw"):
     #
     # Creating the histograms
     out = []
+    out_agencies = []
     for key in agencies:
         mw = df[df['magAgency'] == key][column]
-        hist, _ = np.histogram(mw, bins=bins)
-        out.append(hist)
-    return out
+        if len(mw):
+            hist, _ = np.histogram(mw, bins=bins)
+            out.append(hist)
+            out_agencies.append(key)
+    return out, out_agencies
 
 
 def get_ranges(agencies, df):
@@ -166,7 +169,7 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     hist, _ = np.histogram(mw, bins=bins)
 
     # Computing the histograms
-    hsts = get_hists(df, bins, agencies, column=column)
+    hsts, sel_agencies = get_hists(df, bins, agencies, column=column)
 
     # Create Figure
     fig = plt.figure(figsize=(15, 8))
@@ -185,7 +188,7 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     for i, hst in enumerate(hsts):
         plt.bar(bins[:-1], hst, width=wdt*0.8, color=COLORS[i],
                 edgecolor='none', align='edge', lw=1,
-                bottom=bottom, label=agencies[i])
+                bottom=bottom, label=sel_agencies[i])
         bottom += hst
     #
     # Plotting the CCDF
