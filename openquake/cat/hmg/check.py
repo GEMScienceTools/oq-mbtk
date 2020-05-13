@@ -69,20 +69,25 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson):
 
     # Loop over the earthquakes in the catalogue
     for index, row in tqdm(cat.iterrows()):
+        print(" ------------- ")
 
         # Select events that occurred close in space
         minlo = row.longitude - delta_ll
-        minla = row.longitude - delta_ll
+        minla = row.latitude - delta_ll
         maxlo = row.longitude + delta_ll
-        maxla = row.longitude + delta_ll
-        idx_space = sidx.intersection((minlo, minla, maxlo, maxla))
+        maxla = row.latitude + delta_ll
+        idx_space = list(sidx.intersection((minlo, minla, maxlo, maxla)))
 
         # Select events that occurred close in time
+        print(abs(cat.loc[:, 'datetime'] - row.datetime))
         tmp = abs(cat.loc[:, 'datetime'] - row.datetime) < delta_t
-        idx_time = tmp[tmp].index
+        idx_time = list(tmp[tmp].index)
 
         # Find the index of the events that are matching temporal and spatial
         # constraints
+        print("space", idx_space)
+        print("time", idx_time)
+
         idx = set(idx_space) & set(idx_time)
 
         if len(idx) > 1:
@@ -114,9 +119,10 @@ def check_catalogue(catalogue_fname, settings_fname):
 
     # Load the catalogue
     _, file_extension = os.path.splitext(catalogue_fname)
-    if file_extension in ['h5', 'hdf5']:
+    print(file_extension)
+    if file_extension in ['.h5', '.hdf5']:
         cat = pd.read_hdf(catalogue_fname)
-    elif file_extension == 'csv':
+    elif file_extension == '.csv':
         cat = pd.read_csv(catalogue_fname)
     else:
         raise ValueError("File format not supported")

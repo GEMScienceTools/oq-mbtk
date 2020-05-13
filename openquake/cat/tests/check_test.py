@@ -29,14 +29,14 @@ BASE_PATH = os.path.dirname(__file__)
 SETTINGS = """
 
 [general]
-delta_ll = 0.2
-delta_t = 20.0
-output_path = {:s}
+delta_ll = 0.3
+delta_t = 10.0
+output_path = "{:s}"
 """
 
 
 class CheckHomogenisedCatalogue(unittest.TestCase):
-    """ Test checkinf the check function in the catalogue toolkit """
+    """ Test checking the check function in the catalogue toolkit """
 
     def setUp(self):
 
