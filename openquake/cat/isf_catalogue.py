@@ -824,8 +824,9 @@ class ISFCatalogue(object):
                     event.origins[0].is_prime = True
                     self.events.append(event)
     
-                    msg = "Adding new event\n"
-                    fou.write(msg)
+                    if logfle:
+                        msg = "Adding new event\n"
+                        fou.write(msg)
 
                     self.ids.append(event.id)
                     new += 1
