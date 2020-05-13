@@ -38,7 +38,7 @@ def get_features(cat, idx, idxsel):
 
     lon1 = cat.loc[idx, 'longitude']
     lat1 = cat.loc[idx, 'latitude']
-    evid = cat.loc[idx, 'eventID']
+    evid = "{:d}".format(cat.loc[idx, 'eventID'])
 
     for i in idxsel:
         lon2 = cat.loc[i, 'longitude']
@@ -64,12 +64,12 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson):
     """
 
     features = []
+    found = set()
     delta_t = dt.timedelta(seconds=delta_t)
     cnt = 0
 
     # Loop over the earthquakes in the catalogue
     for index, row in tqdm(cat.iterrows()):
-        print(" ------------- ")
 
         # Select events that occurred close in space
         minlo = row.longitude - delta_ll
@@ -79,20 +79,18 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson):
         idx_space = list(sidx.intersection((minlo, minla, maxlo, maxla)))
 
         # Select events that occurred close in time
-        print(abs(cat.loc[:, 'datetime'] - row.datetime))
         tmp = abs(cat.loc[:, 'datetime'] - row.datetime) < delta_t
         idx_time = list(tmp[tmp].index)
 
         # Find the index of the events that are matching temporal and spatial
         # constraints
-        print("space", idx_space)
-        print("time", idx_time)
-
-        idx = set(idx_space) & set(idx_time)
+        idx = (set(idx_space) & set(idx_time)) - found
 
         if len(idx) > 1:
             cnt += 1
             features.extend(get_features(cat, index, idx))
+            for i in idx:
+                found.add(i)
 
     # Create the geojson file
     feature_collection = FeatureCollection(features)
@@ -119,7 +117,6 @@ def check_catalogue(catalogue_fname, settings_fname):
 
     # Load the catalogue
     _, file_extension = os.path.splitext(catalogue_fname)
-    print(file_extension)
     if file_extension in ['.h5', '.hdf5']:
         cat = pd.read_hdf(catalogue_fname)
     elif file_extension == '.csv':
