@@ -71,7 +71,7 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson):
     cnt = 0
 
     # Loop over the earthquakes in the catalogue
-    for index, row in tqdm(cat.iterrows()):
+    for index, row in cat.iterrows():
 
         # Select events that occurred close in space
         minlo = row.longitude - delta_ll
