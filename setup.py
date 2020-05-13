@@ -67,6 +67,7 @@ setup(
         'rtree',
         'nbconvert',
         'prettytable',
+        'geojson',
         'geopandas == 0.6.3',
         'pylint >= 2.1.1'
     ],
