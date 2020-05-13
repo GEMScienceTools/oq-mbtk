@@ -19,12 +19,17 @@
 """
 General class for an earthquake catalogue in ISC (ISF) format
 """
+
+import os
 import warnings
 import numpy as np
 import pandas as pd
 import datetime as dt
-from rtree import index
+
 from math import fabs
+from rtree import index
+from geojson import LineString, Feature, FeatureCollection, dump
+
 from openquake.cat.utils import decimal_time
 
 
@@ -417,9 +422,8 @@ class Event(object):
         '''
         current_id_list = self.get_origin_id_list()
         for origin2 in origin2set:
-            if not isinstance(origin2, Origin):
-                o_t = type(origin2)
-                print(type(o_t))
+            if not type(origin2).__name__ == "Origin":
+                o_t = type(origin2).__name__
                 msg = ('Secondary origins must be instance of ' +
                        'isf_catalogue.Origin class. Found: {:s}'.format(o_t))
                 raise ValueError(msg)
@@ -570,6 +574,8 @@ class ISFCatalogue(object):
             selection threshold.
         :param use_ids:
             A boolean
+        :param logfle:
+            Name of the file which will contain the log of the processing
         :return:
             - A list with the indexes of the events in the 'guest' catalogue
               added to the 'host' catalogue.
@@ -580,6 +586,7 @@ class ISFCatalogue(object):
         """
         if logfle:
             fou = open(logfle, 'w')
+            fname_geojson = os.path.splitext(logfle)[0]+"_secondary.geojson"
 
         #
         # This is a dictionary where we store the doubtful events.
@@ -603,6 +610,7 @@ class ISFCatalogue(object):
         #
         # Processing the events in the catalogue 'guest' catalogue
         id_common_events = []
+        features = []
         new = 0
         new_old = 0
         common = 0
@@ -710,7 +718,9 @@ class ISFCatalogue(object):
                             fmt += " Trying to add evID {:s}\n"
                             msg = fmt.format(tmp[0].author, event.id)
                             warnings.warn(msg)
-                            fou.write(msg)
+                            
+                            if logfle:
+                                fou.write(msg)
 
                         if (len(self.events[i_eve].origins) == 1 and
                                 not self.events[i_eve].origins[0].is_prime):
@@ -729,9 +739,25 @@ class ISFCatalogue(object):
                                 found = False
                                 continue
 
+                        fmt = "Adding to event {:d}\n"
+                        msg = fmt.format(i_eve) 
+                        
+                        if logfle: 
+                            fou.write(msg)
+
+                            lon1 = self.events[i_eve].origins[0].location.longitude
+                            lat1 = self.events[i_eve].origins[0].location.latitude
+                            lon2 = tmp[0].location.longitude
+                            lat2 = tmp[0].location.latitude
+                            line = LineString([(lon1, lat1), (lon2, lat2)])
+                            ide = self.events[i_eve].id
+                            features.append(Feature(geometry=line, 
+                                            properties={"originalID": ide}))
+                        
                         self.events[i_eve].merge_secondary_origin(tmp)
                         id_common_events.append(iloc)
                         common += 1
+                        
                         break
             #
             # Searching for doubtful events:
@@ -797,6 +823,10 @@ class ISFCatalogue(object):
                     assert len(event.origins) == 1
                     event.origins[0].is_prime = True
                     self.events.append(event)
+    
+                    msg = "Adding new event\n"
+                    fou.write(msg)
+
                     self.ids.append(event.id)
                     new += 1
             #
@@ -841,6 +871,10 @@ class ISFCatalogue(object):
 
         if logfle:
             fou.close()
+            
+            feature_collection = FeatureCollection(features)
+            with open(fname_geojson, 'w') as f:
+                dump(feature_collection, f)
 
         return id_common_events, doubts
 
