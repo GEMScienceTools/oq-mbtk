@@ -67,7 +67,7 @@ setup(
         'rtree',
         'nbconvert',
         'prettytable',
-        'geopandas >= 0.6.3',
+        'geopandas == 0.6.3',
         'pylint >= 2.1.1'
     ],
     python_requires='>=3.5',
