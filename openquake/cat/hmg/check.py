@@ -23,7 +23,6 @@ import pandas as pd
 import datetime as dt
 import geopandas as gpd
 
-from tqdm import tqdm
 from openquake.baselib import sap
 from geojson import LineString, Feature, FeatureCollection, dump
 
@@ -52,15 +51,18 @@ def get_features(cat, idx, idxsel):
 def process(cat, sidx, delta_ll, delta_t, fname_geojson):
     """
     :param cat
-        A pandas geodataframe instance
+        A pandas geodataframe instance containing a homogenised catalogue as
+        obtained from :method:`openquake.cat.hmg.merge.hmg.process_dfs`
     :param sidx:
-        Spatial index
+        Spatial index for the geodataframe as obtained by `gdf.sindex`
     :param delta_ll:
-        Delta longitude/latitude
+        A float defining the longitude/latitude tolerance used for checking
     :param delta_t:
-        Delta time
+        A float [in seconds] the time tolerance used to search for duplicated
+        events.
     :param fname_geojson:
-        Name of the .geojson file
+        Name of the output .geojson file which will contains the lines
+        connecting the possibly duplicated events.
     """
 
     features = []
