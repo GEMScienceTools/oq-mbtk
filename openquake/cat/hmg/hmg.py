@@ -93,7 +93,7 @@ def get_mag_selection_condition(agency, mag_type, df_name="work"):
     """
 
     # Create the initial selection condition using the agency name
-    if agency == "*":
+    if re.search("^\\*", agency):
         cond = "({:s}['magType'] == '{:s}')".format(df_name, mag_type)
     else:
         cond = "{:s}['magAgency'] == '{:s}'".format(df_name, agency)
@@ -172,10 +172,11 @@ def process_magnitude(work, mag_rules):
 
     # Looping over agencies
     for agency in mag_rules.keys():
-        print('   Agency: ', agency)
+        print('   Agency: {:s} ('.format(agency), end='')
         #
         # Looping over magnitude-types
         for mag_type in mag_rules[agency].keys():
+            print('{:s} '.format(mag_type), end='')
 
             # Create the first selection condition and select rows
             cond = get_mag_selection_condition(agency, mag_type)
@@ -191,6 +192,7 @@ def process_magnitude(work, mag_rules):
                 conv_eqs = mag_rules[agency][mag_type]['conv_eqs']
                 save, work = apply_mag_conversion_rule(low_mags, conv_eqs,
                                                        rows, save, work)
+        print(")")
 
     return save, work
 
