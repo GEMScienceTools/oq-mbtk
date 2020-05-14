@@ -43,7 +43,8 @@ def get_features(cat, idx, idxsel):
     elif type(tmp).__name__ == 'int':
         evid = "{:d}".format(cat.loc[idx, 'eventID'])
     else:
-        raise ValueError("Unsupported format for EventID")
+        fmt = "Unsupported format for EventID: {:s}"
+        raise ValueError(fmt.format(type(tmp).__name__))
 
     for i in idxsel:
         lon2 = float(cat.loc[i, 'longitude'])
