@@ -35,13 +35,19 @@ def get_features(cat, idx, idxsel):
     """
     features = []
 
-    lon1 = cat.loc[idx, 'longitude']
-    lat1 = cat.loc[idx, 'latitude']
-    evid = "{:d}".format(cat.loc[idx, 'eventID'])
+    lon1 = float(cat.loc[idx, 'longitude'])
+    lat1 = float(cat.loc[idx, 'latitude'])
+    tmp = cat.loc[idx, 'eventID']
+    if type(tmp).__name__ == 'str':
+        evid = tmp
+    elif type(tmp).__name__ == 'int':
+        evid = "{:d}".format(cat.loc[idx, 'eventID'])
+    else:
+        raise ValueError("Unsupported format for EventID")
 
     for i in idxsel:
-        lon2 = cat.loc[i, 'longitude']
-        lat2 = cat.loc[i, 'latitude']
+        lon2 = float(cat.loc[i, 'longitude'])
+        lat2 = float(cat.loc[i, 'latitude'])
         line = LineString([(lon1, lat1), (lon2, lat2)])
         features.append(Feature(geometry=line, properties={"eventID": evid}))
 
