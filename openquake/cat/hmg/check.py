@@ -40,7 +40,7 @@ def get_features(cat, idx, idxsel):
     tmp = cat.loc[idx, 'eventID']
     if type(tmp).__name__ == 'str':
         evid = tmp
-    elif type(tmp).__name__ == 'int':
+    elif type(tmp).__name__ in ['int', 'int64', 'int32']:
         evid = "{:d}".format(cat.loc[idx, 'eventID'])
     else:
         fmt = "Unsupported format for EventID: {:s}"
