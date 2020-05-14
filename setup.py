@@ -68,6 +68,7 @@ setup(
         'nbconvert',
         'prettytable',
         'geojson',
+        'tables',
         'geopandas == 0.6.3',
         'pylint >= 2.1.1'
     ],
