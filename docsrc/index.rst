@@ -8,10 +8,12 @@ Welcome to the OpenQuake Model Building Toolkit's documentation!
 
 The OpenQuake Model Building Toolkit (*oq-mbt*) is a suite of tools for the 
 construction of components of a Probabilistic Seismic Hazard (PSH) model. 
-*oq-mbt* code is hosted on github at the following link 
-https://github.com/GEMScienceTools/oq-mbtk.
+The main contributors to this suite of tools are GEM Hazard Team members. 
+Contribution from extena users are very welcome!
 
-The *oq-mbt* is developed in close connection with the 
+*oq-mbt* code is hosted on github at the following link 
+https://github.com/GEMScienceTools/oq-mbtk. It is developed in close 
+connection with the 
 `OpenQuake engine <https://github.com/gem/oq-engine>`_, the 
 open-source hazard and risk calculation engine developed primarily by the 
 GEM Foundation.
