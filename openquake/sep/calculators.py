@@ -3,8 +3,12 @@ from typing import Optional, Union
 import osgeo
 import numpy as np
 import pandas as pd
-import xarray as xr
 from osgeo import gdal
+
+try:
+    import xarray as xr
+except ImportError:
+    pass
 
 
 from .landslide.common import (
@@ -87,7 +91,7 @@ def calc_newmark_soil_slide_event_set(
             }
         )
 
-    #elif isinstance(pga, )
+    # elif isinstance(pga, )
 
     return Dn
 
@@ -97,4 +101,8 @@ def calc_rock_slope_failures():
 
 
 def calc_rotational_failures():
+    pass
+
+
+def calculate_lateral_spreading():
     pass
