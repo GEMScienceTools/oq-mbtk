@@ -19,12 +19,12 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'OpenQuake Model Building Toolkit'
+project = 'OpenQuake Model Building Toolkit Suite'
 copyright = '2019, GEM Hazard'
 author = 'GEM Hazard'
 
 # The short X.Y version
-version = ''
+version = '0.1'
 # The full version, including alpha/beta/rc tags
 release = ''
 
