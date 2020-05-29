@@ -1,5 +1,5 @@
 # Minimal makefile for Sphinx documentation
-#
+# See https://github.com/sphinx-doc/sphinx/issues/3382
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
