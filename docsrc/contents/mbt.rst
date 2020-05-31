@@ -1,5 +1,5 @@
 Model Building Toolkit (mbt) module
-===================================
+###################################
 
 The *mbt* module contains code for building a PSHA earthquake occurrence 
 model. The main goals of this tools are to:

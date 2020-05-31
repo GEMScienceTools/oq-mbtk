@@ -28,7 +28,7 @@ def get_hists(df, bins, agencies=None, column="magMw"):
     out_agencies = []
     for key in agencies:
         mw = df[df['magAgency'] == key][column]
-        if len(mw):
+        if len(mw) > 0:
             hist, _ = np.histogram(mw, bins=bins)
             out.append(hist)
             out_agencies.append(key)
@@ -36,6 +36,12 @@ def get_hists(df, bins, agencies=None, column="magMw"):
 
 
 def get_ranges(agencies, df):
+    """
+    :param agencies:
+        A list of agencies
+    :param df:
+        A :class:`pandas.DataFrame` instance
+    """
     #
     # Getting the list of agencies
     if not agencies:
@@ -56,7 +62,7 @@ def get_agencies(df):
     """
     :param df:
         A :class:`pandas.DataFrame` instance
-    :return:
+    :returns:
         A list
     """
     return list(df["magAgency"].unique())
@@ -83,11 +89,7 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     lws = np.array(num)/max(num) * (max_wdt-min_wdt) + min_wdt
 
     # Plotting
-
-    if "height" in kwargs:
-        height = kwargs["height"]
-    else:
-        height = 8
+    height = kwargs.get('height', 8)
 
     _ = plt.figure(figsize=(10, height))
     ax = plt.subplot(1, 1, 1)
@@ -99,10 +101,10 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     for i, key in enumerate(agencies):
         if sum(np.diff(yranges[i])) > 0:
             plt.plot(yranges[i], [i, i], COLORS[i], lw=lws[i])
-            plt.text(yranges[i][0], i+0.2,  '{:d}'.format(num[i]))
+            plt.text(yranges[i][0], i+0.2, '{:d}'.format(num[i]))
         else:
             plt.plot(yranges[i][1], i, 'o', COLORS[i], lw=min_wdt)
-            plt.text(yranges[i][1], i+0.2,  '{:d}'.format(num[i]))
+            plt.text(yranges[i][1], i+0.2, '{:d}'.format(num[i]))
 
     ax.grid(which='major', linestyle='-')
     ax.grid(which='minor', linestyle=':')
@@ -140,6 +142,8 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
         A float defining the width of the bins
     :param fname:
         The name of the output file
+    :returns:
+        Figure and axes handles
     """
 
     # Filtering
@@ -149,21 +153,21 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     print(fmt.format(len(df), num))
     #
     # Settings
-    wdt = wdt
     if not agencies:
         agencies = get_agencies(df)
-        print('List of agencies: ', agencies)
     #
     # Settings plottings
     plt.style.use('seaborn-ticks')
     mpl.rcParams['lines.linewidth'] = 2
     mpl.rcParams['axes.labelsize'] = 16
+    mpl.rcParams.update({'figure.autolayout': True})
     #
     # Data
     mw = df[column].values
     #
     # Creating bins and total histogram
     mmi = np.floor(min(mw)/wdt)*wdt-wdt
+    mmi = kwargs.get('min_mag', mmi)
     mma = np.ceil(max(mw)/wdt)*wdt+wdt
     bins = np.arange(mmi, mma, step=wdt)
     hist, _ = np.histogram(mw, bins=bins)
@@ -172,7 +176,7 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     hsts, sel_agencies = get_hists(df, bins, agencies, column=column)
 
     # Create Figure
-    fig = plt.figure(figsize=(15, 8))
+    fig = plt.figure(figsize=(15, 15))
     ax = plt.subplot(1, 1, 1)
     ax.tick_params(labelsize=14)
 
@@ -204,14 +208,13 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=5,
               fontsize='large')
 
-    plt.savefig(fname)
-
     if "xlim" in kwargs:
         ax.set_xlim(kwargs["xlim"])
 
     if "ylim" in kwargs:
         ax.set_ylim(kwargs["ylim"])
 
+    plt.savefig(fname)
     print('Created figure: {:s}'.format(fname))
 
     return fig, ax
