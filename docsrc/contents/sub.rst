@@ -1,5 +1,5 @@
 SUBduction (sub) module
-=======================
+#######################
 
 This module contains software for the construction of subduction earthquake 
 sources for the *oq-engine*. The components of this model can be used either

@@ -19,13 +19,15 @@ open-source hazard and risk calculation engine developed primarily by the
 GEM Foundation.
 
 The *oq-mbt* relies on several functionalities included in the Hazard Modeller's
-Toolkit library (*oq-hmtk*). The oq-hmtk code is accessible
-`here <https://github.com/gem/oq-engine/tree/master/openquake/hmtk>`_,
-while documentation for the oq-hmtk can be downloaded here. 
-`here <https://github.com/GEMScienceTools/hmtk_docs/blob/master/hmtk_tutorial.pdf>`_
+Toolkit library (*oq-hmtk*). The oq-hmtk code is accessible on github at the
+following link https://github.com/gem/oq-engine/tree/master/openquake/hmtk,
+while documentation for the oq-hmtk can be downloaded  
+at https://github.com/GEMScienceTools/hmtk_docs/blob/master/hmtk_tutorial.pdf.
 
 Currently the oq-mbt includes four sub-modules:
 
+* *CATalogue Toolkit (cat)* contains code used for creating a homogenised 
+  catalogue;
 * *Global Hazard Map (ghm)* contains code used to produce homogenised hazard 
   maps using results obtained using a collection of PSHA input models;
 * *Model ANalysis (man)* contains code for analysing oq-engine formattted PSHA 
@@ -40,6 +42,7 @@ Currently the oq-mbt includes four sub-modules:
    :caption: Contents:
 
    contents/installation
+   contents/cat
    contents/man
    contents/mbt
    contents/sub
