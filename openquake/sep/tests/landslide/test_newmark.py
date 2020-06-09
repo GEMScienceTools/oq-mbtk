@@ -37,7 +37,7 @@ class jibson_landslide_test(unittest.TestCase):
                 0.98539093,
                 0.68736863,
                 0.17927676,
-                -0.18231179,
+                0.0,
             ]
         )
         np.testing.assert_allclose(ca, ca_)
