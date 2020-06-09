@@ -87,7 +87,7 @@ class test_sec_perils_cali_small_xr(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(Dn, self.Dn_single)
 
-    @unittest.skipIf(xr == False, "XArray not available")
+    @unittest.skipIf(xr_import == False, "XArray not available")
     def test_calc_newmark_soil_slide_event_set(self):
         Dn_set = calc_newmark_soil_slide_event_set(
             pga=self.pga,
