@@ -244,6 +244,7 @@ class test_array_funcs_super_simple(unittest.TestCase):
         np.testing.assert_array_almost_equal(relief_res, relief_result)
 
 
+@unittest.skip("GDAL not always installed correctly")
 class test_make_local_relief_raster(unittest.TestCase):
     def setUp(self):
         self.test_relief_raster = gdal.Open(test_relief)
