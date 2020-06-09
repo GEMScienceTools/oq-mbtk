@@ -1,5 +1,5 @@
-# oq-mbtk
-OpenQuake Model Building Toolkit
+# OpenQuake Model Building Toolkit [oq-mbtk]
+The OpenQuake Model Building Toolkit is a container for various packages with unique modelling or analyses capabilities. The project started with the `mbt` package which provides tools for the construction of components of a PSHA earthquake occurrence model. 
 
 [![Build Status](https://travis-ci.org/GEMScienceTools/oq-mbtk.svg?branch=master)](https://travis-ci.org/GEMScienceTools/oq-mbtk)
 
