@@ -1,6 +1,11 @@
 import numpy as np
 import pandas as pd
-import xarray as xr
+
+try:
+    import xarray as xr
+    xr_import = True
+except ImportError:
+    xr_import = False
 
 
 def make_dataset_from_oq_gmfs(
