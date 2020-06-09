@@ -2,8 +2,13 @@ import os
 import unittest
 
 import numpy as np
-import xarray as xr
 from osgeo import gdal
+
+try:
+    import xarray as xr
+    xr_import = True
+except:
+    xr_import = False
 
 from openquake.sep.utils import make_local_relief_raster
 from openquake.sep.calculators import (
@@ -23,12 +28,14 @@ test_pga = os.path.join(BASE_DATA_PATH, "pga.nc")
 test_Dn_single = os.path.join(BASE_DATA_PATH, "Dn_single.nc")
 test_Dn_set = os.path.join(BASE_DATA_PATH, "Dn_set.nc")
 
-"""
-Integration test suite for secondary perils, with small set of realistic inputs.
-"""
-
-
-class test_sec_perils_cali_small(unittest.TestCase):
+@unittest.skipIf(xr_import == False, "XArray not available")
+class test_sec_perils_cali_small_xr(unittest.TestCase):
+    """
+    Integration test suite for secondary perils, with small set of realistic
+    inputs.  This is for using a possibly-obselete interface that uses XArray,
+    which is not currently part of the OQ-MBTK dependencies.
+    """
+    @unittest.skipIf(xr_import == False, "XArray not available")
     def setUp(self):
         self.relief_map = xr.open_rasterio(test_relief, parse_coordinates=True)[
             0
@@ -64,6 +71,7 @@ class test_sec_perils_cali_small(unittest.TestCase):
             join="override",
         )
 
+    @unittest.skipIf(xr_import == False, "XArray not available")
     def test_calc_newmark_soil_slide_single_event(self):
         eq_pga = self.pga["1286"]
 
@@ -79,6 +87,7 @@ class test_sec_perils_cali_small(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(Dn, self.Dn_single)
 
+    @unittest.skipIf(xr == False, "XArray not available")
     def test_calc_newmark_soil_slide_event_set(self):
         Dn_set = calc_newmark_soil_slide_event_set(
             pga=self.pga,
