@@ -21,7 +21,11 @@ def newmark_critical_accel(
         Critical acceleration in terms of g (9.81 m s^-2)
     """
 
-    return (factor_of_safety - 1) * np.sin(np.radians(slope))
+    crit_accel = (factor_of_safety - 1) * np.sin(np.radians(slope))
+    if np.isscalar(crit_accel):
+        return max([0., crit_accel])
+    else:
+        return np.array([max([0., ca]) for ca in crit_accel])
 
 
 def newmark_displ_from_pga_M(
@@ -32,6 +36,7 @@ def newmark_displ_from_pga_M(
     c2: float = 2.335,
     c3: float = -1.478,
     c4: float = 0.424,
+    crit_accel_threshold: float = 0.05
 ) -> Union[float, np.ndarray]:
     """
     Landslide displacement calculated from PGA, M, and critical acceleration,
@@ -59,6 +64,12 @@ def newmark_displ_from_pga_M(
     :param c4:
         Empirical constant
 
+    :param crit_accel_threshold:
+        Lower bound for critical acceleration. Values close to or below zero
+        may reflect an incorrect factor of safety calculation or site
+        characterization, and produce unreasonably high displacements.
+        Defaults to 0.05
+
     :returns:
         Predicted earthquake displacement in meters. 
     """
@@ -74,14 +85,18 @@ def newmark_displ_from_pga_M(
 
     accel_ratio = critical_accel / pga
 
-    # correct too high accel ratios (it breaks powers below)
+    # correct too high or too low accel ratios (it breaks powers below)
     if np.isscalar(accel_ratio):
         if accel_ratio > 1.0:
             accel_ratio = 1.0
+        elif accel_ratio <= crit_accel_threshold:
+            accel_ratio == crit_accel_threshold
     #elif isinstance(accel_ratio, xr.DataArray):
     #    accel_ratio = xr.where(accel_ratio > 1.0, 1.0, accel_ratio)
     else:
         accel_ratio[accel_ratio > 1.0] = 1.0
+        accel_ratio[accel_ratio <= crit_accel_threshold] = crit_accel_threshold
+
 
     pow_1 = (1 - accel_ratio) ** c2
     pow_2 = accel_ratio ** c3
