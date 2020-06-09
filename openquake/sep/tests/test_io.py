@@ -2,7 +2,12 @@ import os
 import unittest
 
 import pandas as pd
-import xarray as xr
+
+try:
+    import xarray as xr
+    xr_import = True
+except ImportError:
+    xr_import = False
 
 from openquake.sep.io import make_dataset_from_oq_gmfs, make_pga_xr
 
@@ -12,6 +17,7 @@ event_file = os.path.join(BASE_DATA_PATH, "test_events.csv")
 rupture_file = os.path.join(BASE_DATA_PATH, "test_ruptures.csv")
 site_file = os.path.join(BASE_DATA_PATH, "test_sites.csv")
 
+@unittest.skipIf(xr_import == False, "xarray not available")
 class test_make_pga_dataset(unittest.TestCase):
 
     def setUp(self):
