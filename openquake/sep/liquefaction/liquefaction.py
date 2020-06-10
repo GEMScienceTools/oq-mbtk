@@ -14,6 +14,7 @@ LIQUEFACTION_PGA_THRESHOLD_TABLE = {
     "n": 5.0,
 }
 
+
 # Table mapping the qualitative susceptibility of soils to liquefaction
 # to coefficients for the range of PGA that can cause liquefaction.
 # See `hazus_conditional_liquefaction_probability` for more explanation
@@ -37,10 +38,15 @@ LIQUEFACTION_MAP_AREA_PROPORTION_TABLE = {
     "n": 0.0,
 }
 
+
 FT_PER_M = 3.28084
 
 
 def zhu_magnitude_correction_factor(mag: float):
+    """
+    Corrects the liquefaction probabilty equations based on the magnitude
+    of the causative earthquake.
+    """
     return (mag ** 2.56) / (10 ** 2.24)
 
 
