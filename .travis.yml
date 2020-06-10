@@ -1,21 +1,16 @@
-sudo: false
-
 language: python
 
 cache: pip
 
 python:
- - "3.6"
+ - "3.8"
 
 env:
   - MPLBACKEND=Agg
 
 install:
   - git clone --depth=1 https://github.com/gem/oq-engine.git &&
-    pip -q install -r oq-engine/requirements-py36-linux64.txt -r oq-engine/requirements-extra-py36-linux64.txt &&
-    pip -q install -e oq-engine
-  - pip -q install -r requirements-py36-linux64.txt &&
-    pip install -e .
+    pip -q install -r oq-engine/requirements-py38-linux64.txt -r oq-engine/requirements-extra-py38-linux64.txt && pip install -e .
 
 script:
   - nosetests -vsx -a '!slow'
