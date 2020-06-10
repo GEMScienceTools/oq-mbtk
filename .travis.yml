@@ -12,7 +12,7 @@ env:
 install:
   - sudo apt update && sudo apt install libspatialindex-dev
   - git clone --depth=1 https://github.com/gem/oq-engine.git &&
-    pip -q install -r oq-engine/requirements-py38-linux64.txt -r oq-engine/requirements-extra-py38-linux64.txt && pip install -e .
+    pip -q install -r oq-engine/requirements-py38-linux64.txt -r oq-engine/requirements-extra-py38-linux64.txt && pip install -e oq-engine
 
 script:
   - nosetests -vsx -a '!slow'
