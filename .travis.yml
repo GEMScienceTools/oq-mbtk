@@ -17,8 +17,34 @@ install:
   - pip -q install -r requirements-py36-linux64.txt &&
     pip install -e .
 
-script:
-  - nosetests -vsx -a '!slow'
+jobs:
+  include:
+
+  - stage: test
+    script:
+      - nosetests -vsx -a '!slow'
+    deploy:
+
+  - stage: pages
+    script:
+      - pip install sphinx
+      - pip install recommonmark
+      - pip install sphinx_rtd_theme
+      - cd docsrc ; sphinxs-apidoc -o contents/ ../openquake ; make html
+      - touch _build/html/.nojekyll
+
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  keep-history: true
+  local_dir: docsrc/_build/html/
+  on:
+    branch:
+      - master
+      - docs
+
 
 notifications:
   email:
