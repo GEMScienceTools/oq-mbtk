@@ -43,7 +43,7 @@ deploy:
   on:
     branch:
       - master
-      - docs
+      - new_docs
 
 
 notifications:
