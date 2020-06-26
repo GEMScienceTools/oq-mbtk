@@ -30,7 +30,7 @@ jobs:
       - pip install sphinx
       - pip install recommonmark
       - pip install sphinx_rtd_theme
-      - cd docsrc ; sphinxs-apidoc -o contents/ ../openquake ; make html
+      - cd docsrc ; sphinx-apidoc -o contents/ ../openquake ; make html
       - touch _build/html/.nojekyll
 
 
