@@ -18,7 +18,8 @@ def hazus_lateral_spreading_displacement(
         return_unit: str ='m'
     )->Union[float, np.ndarray]:
     """
-    Distance of lateral spreading from Hazus ()
+    Distance of lateral spreading from Hazus 
+    (https://www.hsdl.org/?view&did=12760)
 
     :param mag:
         Magnitude of earthquake.
@@ -38,7 +39,7 @@ def hazus_lateral_spreading_displacement(
             `n` : No suceptibility.
 
     :returns:
-        Displacements from lateral spreading in inches.
+        Displacements from lateral spreading in meters or inches.
     """
     if isinstance(liq_susc_cat, str):
         pga_threshold = thresh_table[liq_susc_cat]
