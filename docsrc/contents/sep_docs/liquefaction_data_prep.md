@@ -113,14 +113,48 @@ to the water table, in meters. Estimation of this parameter from remote sensing
 data is quite challenging. It may range from less than a meter near major water
 bodies in humid regions to tens of meters in dry, rugged areas. Furthermore,
 this value may fluctuate with recent or seasonal rainfall. Sensitivity testing
-of this parameter throughout reasonable ranges of uncertainty for each site is recommended.
+of this parameter throughout reasonable ranges of uncertainty for each site is
+recommended.
 
-### Lateral displacements
+### Lateral spreading
 
-## Zhu et al. 2015
+The horizontal displacements from lateral spreading may be calculated through
+HAZUS methods as well. These calculations do not require additional data or site
+characterization. However, if methods are used for calculating liquefaction
+probabilities that do not use the HAZUS site classifications (such as Zhu et al
+2015), then these classifications will have to be done in order to calculate the
+displacements.
+
+
+## Zhu et al. 2015 (general model)
 
 ### Liquefaction probabilities
 
+The liquefaction model by Zhu et al. (2015) calculates the probability of
+liquefaction via logistic regression of a few variables that are, in principle,
+easily derived from digital elevation data. In practice, there are strict
+requirements on the spatial resolution and sources of these data derivations,
+and deviations from this will yield values at each site that may be quite
+discrepant from those calculated 'correctly'. This may produce very inaccurate
+liquefaction probabilities, as the logistic coefficients will no longer be
+calibrated correctly.
 
+#### Vs30
 
-hzm: https://www.hsdl.org/?view&did=12760
+Zhu et al (2015) calibrated their model on Vs30 data derived from DEMs using the
+methods of Wald and Allen (2007). This method is implemented in the OQ-MBTK
+[here][wald_allen_07]. It requires 
+
+A more general wrapper function 
+
+#### Compound Topographic Index
+
+### Lateral spreading
+
+Zhu et al. (2015) do not present a model for calculating lateral spreading.
+Therefore, if one requires displacements produced by liquefaction, another model
+must be used here, with attendant site characterization. Currently the
+OQ-MBTK only contains the HAZUS model, described above.
+
+[hzm]: https://www.hsdl.org/?view&did=12760
+[wald_allen_07]: ../openquake.sep.html#openquake.sep.utils.vs30_from_slope_wald_allen_2007
