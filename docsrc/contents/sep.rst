@@ -17,8 +17,8 @@ for accurate secondary peril hazard and risk calculations.
 
 
 .. toctree::
-   :maxdepth:: 2
    :caption: Contents:
 
    sep_docs/sep_models
    sep_docs/liquefaction_data_prep
+   sep_docs/liq_site_prep
