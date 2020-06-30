@@ -1,4 +1,4 @@
-sudo: false
+sudo: true
 
 language: python
 
@@ -26,6 +26,7 @@ jobs:
 
     - stage: pages
       script:
+        - sudo apt-get install pandoc
         - pip install sphinx
         - pip install recommonmark
         - pip install sphinx_rtd_theme
