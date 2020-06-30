@@ -3,7 +3,7 @@
 There are many methods to calculate the probabilities and displacements that
 result from liquefaction.  In OpenQuake, we have implemented two of these, the
 methods developed by the US Federal Emergency Management Agency through their
-HAZUS project, and a statistical method developed by Zhu et al (2015).
+HAZUS project, and a statistical method developed by [Zhu et al (2015)][z15].
 
 These methods require different input datasets. The HAZUS methods are 
 simplified from older, more comprehensive liquefaction evaluations that would be
@@ -128,8 +128,6 @@ displacements.
 
 ## Zhu et al. 2015 (general model)
 
-### Liquefaction probabilities
-
 The liquefaction model by Zhu et al. (2015) calculates the probability of
 liquefaction via logistic regression of a few variables that are, in principle,
 easily derived from digital elevation data. In practice, there are strict
@@ -139,15 +137,49 @@ discrepant from those calculated 'correctly'. This may produce very inaccurate
 liquefaction probabilities, as the logistic coefficients will no longer be
 calibrated correctly.
 
+### Getting raster values at sites
+
+Digital elevation data and its derivatives are often given as rasters. However,
+in the case of probabilistic analysis of secondary perils (particularly for risk
+analysis) the analyist may need to deal with sites that are not distributed
+according to a raster grid.
+
+Raster values may be extracted at sites using a GIS program to perform a spatial
+join, but following inconvenient historical precedent, this operation often
+produces new data files instead of simply appending the raster values to the
+point data file.
+
+Therefore we have implemented a simple function,
+[`openquake.sep.utils.sample_raster_at_points`][srap], to get the raster values.
+This function requires the filename of the raster, and the longitudes and
+latitudes of the sites, and returns a Numpy array with the raster values at each
+point. This function can be easily incorporated into a Python script or workflow
+in this manner.
+
+### Liquefaction probabilities
+
+Calculating liquefaction probabilities requires values for Vs30 and the Compound
+Topographic Index, which is a proxy for soil wetness.
+
 #### Vs30
 
 Zhu et al (2015) calibrated their model on Vs30 data derived from DEMs using the
-methods of Wald and Allen (2007). This method is implemented in the OQ-MBTK
-[here][wald_allen_07]. It requires 
+methods of [Wald and Allen (2007)][wa_07_paper]. 
 
-A more general wrapper function 
+This method is implemented in the OQ-MBTK [here][wald_allen_07]. It requires
+that the slope is calculated as the gradient (dy/dx) rather than an angular
+unit, and the study area is categorized as tectonically `active` or `stable`. 
+
+A more general wrapper function has also been written [here]. This function can
+calculate gradient from the slope in degrees (a more common formulation), and
+will be able to use different formulas or relations between slope and Vs30 if
+and when those are implemented (we have no current plans for doing so).
+
+
 
 #### Compound Topographic Index
+
+
 
 ### Lateral spreading
 
@@ -156,5 +188,7 @@ Therefore, if one requires displacements produced by liquefaction, another model
 must be used here, with attendant site characterization. Currently the
 OQ-MBTK only contains the HAZUS model, described above.
 
+[z15]: https://journals.sagepub.com/doi/abs/10.1193/121912EQS353M
 [hzm]: https://www.hsdl.org/?view&did=12760
+[wa_07_paper]: https://pubs.geoscienceworld.org/ssa/bssa/article/97/5/1379/146527
 [wald_allen_07]: ../openquake.sep.html#openquake.sep.utils.vs30_from_slope_wald_allen_2007
