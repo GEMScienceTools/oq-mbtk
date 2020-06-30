@@ -5,7 +5,7 @@ language: python
 cache: pip
 
 python:
- - "3.6"
+  - "3.6"
 
 env:
   - MPLBACKEND=Agg
@@ -19,20 +19,19 @@ install:
 
 jobs:
   include:
+    - stage: test
+      script:
+        - nosetests -vsx -a '!slow'
+      deploy:
 
-  - stage: test
-    script:
-      - nosetests -vsx -a '!slow'
-    deploy:
-
-  - stage: pages
-    script:
-      - pip install sphinx
-      - pip install recommonmark
-      - pip install sphinx_rtd_theme
-      - cd docsrc ; sphinx-apidoc -o contents/ ../openquake ; make html
-      - touch _build/html/.nojekyll
-
+    - stage: pages
+      script:
+        - pip install sphinx
+        - pip install recommonmark
+        - pip install sphinx_rtd_theme
+        - pip install nbsphinx
+        - cd docsrc ; sphinx-apidoc -o contents/ ../openquake ; make html
+        - touch _build/html/.nojekyll
 
 deploy:
   provider: pages
@@ -44,7 +43,6 @@ deploy:
     branch:
       - master
       - new_docs
-
 
 notifications:
   email:

@@ -57,10 +57,11 @@ probability). :math:`K_w` is a groundwater depth correction factor
 +-----------+----------------+-----------+---------+----------------+
 
 Table 1: Liquefaction values for different liquefaction susceptibility
-categories (LSC). *PGA min* is the minimum ground acceleration required
-to initiate liquefaction. *MAP* is the Map Area Proportion, which gives
-the area of liquefaction within each map unit conditional on
-liquefaction occurring in the map unit.
+categories (LSC). *PGA min* is the minimum ground acceleration required to
+initiate liquefaction. *PGA slope* is the slope of the liquefaction probability
+curve as a function of PGA, and *PGA int* is the *y*-intercept of that curve.
+:math:`P_{ml}` is the Map Area Proportion, which gives the area of liquefaction
+within each map unit conditional on liquefaction occurring in the map unit.
 
 Zhu et al (2015)
 ~~~~~~~~~~~~~~~~
