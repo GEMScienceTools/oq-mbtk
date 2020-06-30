@@ -7,12 +7,34 @@ from osgeo import gdal
 from numpy.lib.stride_tricks import as_strided
 
 
-def sample_raster_at_points(raster_file, x_pts, y_pts, out_of_bounds_val=0.0):
+def sample_raster_at_points(raster_file: str, lon_pts: np.ndarray, lat_pts:
+                            np.ndarray, out_of_bounds_val: float=0.0):
+    """
+    Gets the values of a raster at each (lon,lat) point specified.
+    This is done using a nearest-neighbor approach; no interpolation is
+    performed.
 
-    if isinstance(x_pts, pd.Series):
-        x_pts = x_pts.values
-    if isinstance(y_pts, pd.Series):
-        y_pts = y_pts.values
+    :param raster_file:
+        A filename (and path) of a raster value to be opened by GDAL.
+
+    :param lon_pts:
+        Longitudes of points
+
+    :param lat_pts:
+        Latitudes of points
+
+    :param out_of_bounds_val:
+        Value to be returned if the points fall outside of the raster's extent.
+        Defaults to 0.0
+
+    :returns:
+        Numpy array of raster values sampled at points.
+    """
+
+    if isinstance(lon_pts, pd.Series):
+        lon_pts = lon_pts.values
+    if isinstance(lat_pts, pd.Series):
+        lat_pts = lat_pts.values
 
     raster_ds = gdal.Open(raster_file)
     gt = raster_ds.GetGeoTransform()
@@ -22,10 +44,10 @@ def sample_raster_at_points(raster_file, x_pts, y_pts, out_of_bounds_val=0.0):
     raster_proj = pj.CRS(raster_proj_wkt)
     if raster_proj.to_epsg() != 4326:
         trans = pj.transformer.Transformer.from_crs("epsg:4326", raster_proj)
-        y_pts, x_pts = trans.transform(y_pts, x_pts)
+        lat_pts, lon_pts = trans.transform(lat_pts, lon_pts)
 
-    x_rast = np.int_(np.round((x_pts - gt[0]) / gt[1]))
-    y_rast = np.int_(np.round((y_pts - gt[3]) / gt[5]))
+    x_rast = np.int_(np.round((lon_pts - gt[0]) / gt[1]))
+    y_rast = np.int_(np.round((lat_pts - gt[3]) / gt[5]))
 
     def sample_raster(raster, row, col):
         if (0 <= row < raster.shape[0]) and (0 <= col < raster.shape[1]):
@@ -58,7 +80,7 @@ def make_2d_array_strides(arr, window_radius, linear=True):
         Flag specifying the shape of the stride collection.
 
     :returns:
-        asdf
+        Array of strides
 
     Slightly modified from https://gist.github.com/thengineer/10024511
     """
