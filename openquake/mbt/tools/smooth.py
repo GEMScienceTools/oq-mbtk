@@ -9,11 +9,21 @@ from openquake.mbt.tools.geo import get_idx_points_inside_polygon
 
 from openquake.hazardlib.geo.geodetic import (point_at, geodetic_distance)
 
+def check_idl(lons):
+    idl=0
+    maxlon = max(lons)
+    minlon = min(lons)
+    if ((abs(maxlon - minlon) > 50) & ((maxlon / minlon) < 0)):
+        idl = 1
+    return idl
 
 def coord_generators(mesh):
     for cnt, pnt in enumerate(mesh):
+        idl = check_idl(mesh.lons)
         lon = pnt.longitude
         lat = pnt.latitude
+        if idl==1:
+            lon = lon+360 if lon<0 else lon
         yield (cnt, (lon, lat, lon, lat), 1)
 
 
@@ -107,9 +117,17 @@ class Smoothing:
         for lon, lat, mag in zip(self.catalogue.data['longitude'],
                                  self.catalogue.data['latitude'],
                                  self.catalogue.data['magnitude']):
+            # check for idl and shift lon
+            idl = check_idl(self.mesh.lons)
+            if idl == 1:
+                lon = lon + 360 if lon < 0 else lon
             # Set the bounding box
-            minlon, minlat = point_at(lon, lat, 225, radius*2**0.5)
-            maxlon, maxlat = point_at(lon, lat, 45, radius*2**0.5)
+            minlon, minlat = point_at(lon, lat, 225, radius * 2 ** 0.5)
+            maxlon, maxlat = point_at(lon, lat, 45, radius * 2 ** 0.5)
+            # shift mins and maxs if idl
+            if idl == 1:
+                minlon = minlon + 360 if minlon < 0 else minlon
+                maxlon = maxlon + 360 if maxlon < 0 else maxlon
             # find nodes within the bounding box
             idxs = list(set(self.rtree.intersection((minlon,
                                                      minlat,
@@ -132,6 +150,12 @@ class Smoothing:
         return values
 
     def get_points_in_polygon(self, polygon):
+
+        # first make idl adjustments 
+        idl = check_idl(self.mesh.lons)
+        lons = polygon.lons
+        if idl == 1:
+            lons = [lon + 360 if lon < 0 else lon for lon in lons]
 
         minlon = min(polygon.lons)
         minlat = min(polygon.lats)
