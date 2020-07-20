@@ -21,7 +21,6 @@ def setUpMesh():
 
     newpoly = Polygon(points)
     new_polygon_mesh = newpoly.discretize(5)
-    import pdb; pdb.set_trace()
 
     return new_polygon_mesh
 
