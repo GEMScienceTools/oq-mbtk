@@ -1,3 +1,4 @@
+import os
 import numpy
 import rtree
 import scipy.constants as consts
@@ -50,12 +51,15 @@ class Smoothing:
         """
         This creates a rtree spatial index of the grid mesh.
         """
-        # Setting properties
-        p = rtree.index.Property()
-        p.get_overwrite = True
+        # empty the tmp files
+        tmp_file = ['./tmp.dat','./tmp.idx']
+        for tmp in tmp_file:
+            if os.path.exists(tmp):
+                os.remove(tmp)
         # Create the spatial index for the grid mesh
-        r = rtree.index.Index('./tmp', properties=p)
+        r = rtree.index.Index('./tmp')
         ids = set()
+#        import pdb; pdb.set_trace()
         for cnt, pnt in enumerate(coord_generators(self.mesh)):
             r.insert(id=pnt[0], coordinates=pnt[1])
             # Check that the point IDs are unique
