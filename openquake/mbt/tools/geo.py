@@ -30,7 +30,6 @@ def get_line_inside_polygon(pnt_lon, pnt_lat, poly_lon, poly_lat):
     selected_idx = []
     # Fix the projections
     inProj = Proj(init='epsg:4326')
-#    outProj = Proj(init='epsg:3857')
     outProj = Proj('+proj=lcc +lon_0={:f}'.format(poly_lon[0]))
     
     # Create polygon
@@ -122,7 +121,6 @@ def get_idx_points_inside_polygon(plon, plat, poly_lon, poly_lat,
     #
     # Fix the projections
     inProj = Proj(init='epsg:4326')
-    # outProj = Proj(init='epsg:3857')
     outProj = Proj('+proj=lcc +lon_0={:f}'.format(poly_lon[0]))
     #
     # Create polygon
@@ -167,7 +165,6 @@ def find_points_close_to_multisegment(plon, plat, mseg_lon, mseg_lat, pnt_idxs,
     selected_idx = []
     # Fix the projections
     inProj = Proj(init='epsg:4326')
-    #outProj = Proj(init='epsg:3857')
     outProj = Proj('+proj=lcc +lon_0={:f}'.format(poly_lon[0]))
     # Create polygon
     mseg_xy = []

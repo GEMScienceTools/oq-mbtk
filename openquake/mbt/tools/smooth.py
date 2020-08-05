@@ -59,7 +59,6 @@ class Smoothing:
         # Create the spatial index for the grid mesh
         r = rtree.index.Index('./tmp')
         ids = set()
-#        import pdb; pdb.set_trace()
         for cnt, pnt in enumerate(coord_generators(self.mesh)):
             r.insert(id=pnt[0], coordinates=pnt[1])
             # Check that the point IDs are unique
