@@ -1,5 +1,6 @@
 import re
 import numpy
+import geojson
 from shapely import wkt
 
 from osgeo import ogr
@@ -18,6 +19,50 @@ from openquake.mbt.oqt_project import OQtSource
 from openquake.hazardlib.geo.polygon import Polygon
 
 
+def load_geometry_from_geojson(geojson_filename):
+    """
+    :parameter str geojson_filename:
+        Name of the geojson file containing the polygons
+    :parameter Boolean log:
+        Flag controlling information while processing
+    :returns:
+        A list of :class:`openquake.mbt.oqt_project.OQtSource` istances
+    """
+    
+    idname = 'Id'
+    # Reading sources geometry
+    sources = {}
+    id_set = set()
+    with open(zones_json) as f:
+        gj = geojson.load(f)
+    features = gj['features']
+    for feature in features:
+        poly = []
+        for pt in feature["geometry"]["coordinates"][0][0]:
+            poly.append((pt[0],pt[1]))
+        polygon = Polygon(poly)
+        id = feature["properties"][idname]
+        # Set the ID
+        if isinstance(id, str):
+            id_str = id
+        elif isinstance(id, int):
+            id_str = '%d' % (id)
+        else:
+            raise ValueError('Unsupported source ID type')
+
+        src = OQtSource(source_id=id_str,
+                        source_type='AreaSource',
+                        polygon=polygon,
+                        name=id_str,
+                        )
+        # Append the new source
+        if not id_set and set(id_str):
+            sources[id_str] = src
+        else:
+            raise ValueError('Sources with non unique ID %s' % id_str)
+    return sources
+    
+    
 def load_geometry_from_shapefile(shapefile_filename):
     """
     :parameter str shapefile_filename:
