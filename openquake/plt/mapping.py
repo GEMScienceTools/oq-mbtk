@@ -90,6 +90,47 @@ class HMTKBaseMap(object):
         self.cmds.append(tmp)
         self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format('100', cpt_fle))
 
+    def plot_area_source(self):
+        pass
+
+    def plot_point_source(self):
+        pass
+
+    def plot_simple_fault(self):
+        pass
+
+    def plot_complex_fault(self):
+        pass
+
+
+    def add_source_model(self):
+        pass
+
+    def add_colour_scaled_points(self):
+        pass
+
+    def add_self_scaled_points(self):
+        pass
+
+        def _select_color_mag(self, mag):
+        if (mag > 8.0):
+            color = 'k'
+        elif (mag < 8.0) and (mag >= 7.0):
+            color = 'b'
+        elif (mag < 7.0) and (mag >= 6.0):
+            color = 'y'
+        elif (mag < 6.0) and (mag >= 5.0):
+            color = 'g'
+        elif (mag < 5.0):
+            color = 'm'
+        return color
+
+    def add_focal_mechanism(self):
+        pass
+
+    def add_catalogue_cluster(self):
+        pass
+
     def savemap(self, verb=0):
         '''
         Saves map
