@@ -11,8 +11,8 @@ class HMTKBaseMap(object):
     imported from openquake.hmtk.
     '''
 
-    def __init__(self, config, projection='-JM8', filename=None,
-                 dpi=300, ax=None, lat_lon_spacing=2.):
+    def __init__(self, config, projection='-JM15', filename=None,
+                 ax=None, lat_lon_spacing=2.):
         """
         :param dict config:
             Configuration parameters of the algorithm, containing the
@@ -31,8 +31,11 @@ class HMTKBaseMap(object):
         if self.filename == None:
             self.filename = 'Map.pdf'
 
-        self.title = config['title']
-        self.dpi = dpi
+        if self.config['title']:
+            self.title = config['title']
+        else:
+            self.title = None
+
         self.ll_spacing = lat_lon_spacing
         self.fig = None
         self.ax = '-Bx{} -By{}'.format(self.ll_spacing, self.ll_spacing)
@@ -64,7 +67,7 @@ class HMTKBaseMap(object):
 
         return self.cmds
 
-    def add_catalogue(self, cat):
+    def add_catalogue(self, cat, scale=0.05, cpt_fle="tmp.cpt"):
         '''
         adds catalogue to map
         '''
@@ -74,19 +77,18 @@ class HMTKBaseMap(object):
 
         lats = cat.data['latitude']
         lons = cat.data['longitude']
-        mags = [0.05*10**(-1.5+m*0.3) for m in cat.data['magnitude']]
+        mags = [scale*10**(-1.5+m*0.3) for m in cat.data['magnitude']]
         
         df = pd.DataFrame({'lo':lons, 'la':lats, 'd':deps, 'm':mags})
         df.sort_values(by=['m']).to_csv('cat_tmp.csv',index = False, header=False)
 
-        cpt_fle = "tmp.cpt"
-        self.cmds.append("gmt makecpt -Cjet -T0/2.7/30+n -Q -D > \
-                          {}".format(cpt_fle))
-                          #{}".format(zmax, zmax/5, cpt_fle))
+        if cpt_fle == "tmp.cpt":
+            self.cmds.append("gmt makecpt -Cjet -T0/2.7/30+n -Q -D > \
+                             {}".format(cpt_fle))
 
         tmp = "gmt plot {} -Sc -C{} -Wthinnest,black".format('cat_tmp.csv',cpt_fle)
         self.cmds.append(tmp)
-        self.cmds.append('gmt colorbar -DJCR -Ba+l"Depth (km)" -C{}'.format(cpt_fle))
+        self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format('100', cpt_fle))
 
     def savemap(self, verb=0):
         '''
@@ -99,6 +101,17 @@ class HMTKBaseMap(object):
             if verb == 1:
                 print(cmd)
             out = subprocess.call(cmd, shell=True)
+
+    def save_gmt_script(self, filename="gmt_plotter.sh"):
+        '''
+        saves the gmt plotting commands as a shell script
+        '''
+
+        if self.cmds[-1] != "gmt end":
+            self.cmds.append("gmt end")
+        
+        with open(filename,'w') as f:
+            f.write('\n'.join(self.cmds))
 
     def show(self):
         '''
