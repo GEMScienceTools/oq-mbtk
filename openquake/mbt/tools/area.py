@@ -33,14 +33,15 @@ def load_geometry_from_geojson(geojson_filename):
     # Reading sources geometry
     sources = {}
     id_set = set()
-    with open(zones_json) as f:
+    with open(geojson_filename) as f:
         gj = geojson.load(f)
     features = gj['features']
     for feature in features:
-        poly = []
+        x, y = [], []
         for pt in feature["geometry"]["coordinates"][0][0]:
-            poly.append((pt[0],pt[1]))
-        polygon = Polygon(poly)
+            x.append(pt[0])
+            y.append(pt[1])
+        points = _get_point_list(x, y)
         id = feature["properties"][idname]
         # Set the ID
         if isinstance(id, str):
@@ -52,7 +53,7 @@ def load_geometry_from_geojson(geojson_filename):
 
         src = OQtSource(source_id=id_str,
                         source_type='AreaSource',
-                        polygon=polygon,
+                        polygon=Polygon(points),
                         name=id_str,
                         )
         # Append the new source
