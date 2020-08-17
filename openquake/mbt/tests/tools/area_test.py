@@ -7,7 +7,7 @@ from pathlib import Path
 
 from openquake.mbt.tools.tr.catalogue import get_catalogue
 from openquake.mbt.tools.area import (
-    create_catalogue, load_geometry_from_shapefile)
+    create_catalogue, load_geometry_from_shapefile, load_geometry_from_geojson)
 # MN: 'OQtSource' imported but not used
 from openquake.mbt.oqt_project import OQtModel, OQtSource
 
@@ -63,6 +63,34 @@ class SelectEarthquakesWithinAreaTestCase(unittest.TestCase):
         # read geometries
         shapefile = os.path.join(datafold, 'area_16.shp')
         srcs = load_geometry_from_shapefile(shapefile)
+        model.sources = srcs
+        #
+        # read catalogue
+        self.catalogue_fname = os.path.join(datafold, 'catalogue.csv')
+        cat = get_catalogue(self.catalogue_fname)
+        #
+        # select earthquakes within the polygon
+        scat = create_catalogue(model, cat, ['16'])
+        #
+        # cleaning
+        os.remove(os.path.join(datafold, 'catalogue.pkl'))
+        #
+        # check
+        self.assertEqual(len(scat.data['longitude']), 4)
+
+    def testcase02_geojson(self):
+        """
+        Area source straddling the IDL
+        """
+        datafold = '../data/tools/area/case02/'
+        datafold = os.path.join(BASE_DATA_PATH, datafold)
+        #
+        # create the source and set the geometry
+        model = OQtModel('0', 'test')
+        #
+        # read geometries
+        geojsonfile = os.path.join(datafold, 'area_16.geojson')
+        srcs = load_geometry_from_geojson(geojsonfile)
         model.sources = srcs
         #
         # read catalogue
