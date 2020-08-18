@@ -44,6 +44,7 @@ def get_version():
 
     return version
 
+
 version = get_version()
 
 setup(
