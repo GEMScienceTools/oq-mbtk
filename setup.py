@@ -65,7 +65,7 @@ setup(
         'nbformat',
         'GDAL',
         'pyproj',
-        'rtree',
+        # 'rtree',
         'nbconvert',
         'prettytable',
         'geopandas == 0.6.3',
