@@ -91,7 +91,7 @@ class HMTKBaseMap(object):
 
         cmds = []
 
-        cmds.append("gmt begin")# {}".format(self.filename))
+        cmds.append("gmt begin")
         tmp = "gmt basemap {} {} -BWSne".format(self.R, self.J)
         tmp += " {}".format(self.ax)
         cmds.append(tmp)
@@ -167,15 +167,18 @@ class HMTKBaseMap(object):
         if add_plot_line == 1:
             self.cmds.append('gmt plot {} -L -Wthick,{}'.format(filename, border))
 
-    def _plot_point_source(self, source, pointsize=0.08):
-        x, y = self.m(source.geometry.longitude, source.geometry.latitude)
+    def _plot_point_source(self, source, pointsize=0.5):
+#        x, y = self.m(source.geometry.longitude, source.geometry.latitude)
+
+        lons = source.geometry.longitude
+        lats = source.geometry.latitude
 
         filename = '{}/mtkPointSource.csv'.format(self.out)
 
-        add_plot_line = self.mk_plt_csv(lons, lats, filename)
+        add_plot_line = self.mk_plt_csv(np.array([lons]), np.array([lats]), filename)
 
         if add_plot_line == 1:
-            self.cmds.append('gmt plot {} -Ss{}'.format(filename, pointsize))
+            self.cmds.append('gmt plot {} -Ss{} -Gred'.format(filename, pointsize))
 
 
     def _plot_simple_fault(self, source):
@@ -186,24 +189,24 @@ class HMTKBaseMap(object):
         surface_projection = _fault_polygon_from_mesh(source)
 
         # First make surface projection file and command
-        x, y = self.m(surface_projection[:, 0], surface_projection[:, 1])
+#        x, y = self.m(surface_projection[:, 0], surface_projection[:, 1])
 
         filename = '{}/mtkSimpleFaultProjection.csv'.format(self.out)
-        add_plot_line = self.mk_plt_csv(lons, lats, filename, lines=1)
+        add_plot_line = self.mk_plt_csv(surface_projection[:, 0], 
+                                        surface_projection[:, 1], 
+                                        filename, lines=1)
         
         if add_plot_line == 1:
             self.cmds.append('gmt plot {} -t50 -Ggray'.format(filename))
 
         # then fault trace 
-        x, y = self.m(trace_lons, trace_lats)
         filename = '{}/mtkSimpleFaultTrace.csv'.format(self.out)
-        add_plot_line = self.mk_plt_csv(lons, lats, filename, lines=1)
+        add_plot_line = self.mk_plt_csv(trace_lons, trace_lats, filename, lines=1)
         
         if add_plot_line == 1:
             self.cmds.append('gmt plot {} -Wthick,red'.format(filename))
 
     def _plot_complex_fault(self, source):
-        max_depth = 600.
 
         top_edge = np.column_stack([source.geometry.mesh.lons[0],
                                     source.geometry.mesh.lats[0]])
@@ -214,7 +217,8 @@ class HMTKBaseMap(object):
         lons = source.geometry.mesh.lons.flatten()
         lats = source.geometry.mesh.lats.flatten()
         depths = source.geometry.mesh.depths.flatten()
-#        norm = Normalize(vmin=min_depth, vmax=max_depth)
+
+        self.max_cf_depth = max(depths) if max(depths) < self.max_cf_depth else self.max_cf_depth
 
         filename = '{}/mtkComplexFaultPoints.csv'.format(self.out)
         add_plot_line = self.mk_plt_csv(lons, lats, filename, color_column=depths)
@@ -222,15 +226,17 @@ class HMTKBaseMap(object):
         if add_plot_line == 1:
             # Making cpt
             cpt_fle = "{}/cf_tmp.cpt".format(self.out)
-            self.cmds.append("gmt makecpt -Cjet -T0/{}/1 -Q -D > {:s}".format(10, cpt_fle))
+            self.cmds.append("gmt makecpt -Cjet -T0/{}/2> {:s}".format(self.max_cf_depth, cpt_fle))
 
-            #self.cmds.append('gmt plot {} -Ss0.5 -Ggreen '.format(filename))
-            
-            self.cmds.append('gmt plot {} -C{} -Ss0.5 '.format(filename, cpt_fle))
+            self.cmds.append('gmt plot {} -C{} -Ss0.1 '.format(filename, cpt_fle))
+            self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format('10', cpt_fle))
 
         # Plot border
-        #x2, y2 = self.m(outline[:, 0], outline[:, 1])
-        #self.m.plot(x2, y2, border, linewidth=border_width)
+        filename = '{}/mtkComplexFaultOutline.csv'.format(self.out)
+        add_plot_line = self.mk_plt_csv(outline[:, 0], outline[:, 1], filename, lines=1)
+       
+        if add_plot_line == 1:
+            self.cmds.append('gmt plot {} -Wthick,black'.format(filename))
 
     def mk_plt_csv(self, lons, lats, filename, color_column=None, lines=None):
 
