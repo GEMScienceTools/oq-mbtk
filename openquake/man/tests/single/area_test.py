@@ -24,7 +24,7 @@ class TestGetArea(unittest.TestCase):
     def test01(self):
         # Initial approximated value obtained by roughly multiplying the lenght
         # of one degree of longitude time one degree of latitude
-        expected = 12308.236750903827
+        expected = 12308.463846396065
         computed = _get_area(loads(self.pol.wkt))
         self.assertEqual(expected, computed)
 
@@ -62,6 +62,6 @@ class TestAreaSourceDensity(unittest.TestCase):
     def test01(self):
         # Initial value obtained by dividing the rate by the area
         # 10**(a-bmt)-10**(a-bmu) / area
-        expected = 1.7567728862622177e-08
+        expected = 1.7567404731838406e-08
         computed = get_rates_density([self.src1], mmint=5.5)
         self.assertEqual(expected, computed['1'])
