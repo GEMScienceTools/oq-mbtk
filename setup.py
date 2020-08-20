@@ -63,7 +63,7 @@ setup(
         'ipython >= 6.2.0',
         'notebook >= 5.0.0',
         'nbformat',
-        'GDAL >= 3.0.0, GDAL < 3.1',
+        'GDAL >= 3.0.0',
         'pyproj >= 2.5.0',
         'rtree-linux == 0.9.4',
         'nbconvert',
