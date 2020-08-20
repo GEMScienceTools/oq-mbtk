@@ -48,7 +48,7 @@ def get_area(geom):
     geom_aea = ops.transform(
         partial(
             pyproj.transform,
-            pyproj.Proj(init='EPSG:4326'),
+            pyproj.Proj('EPSG:4326'),
             pyproj.Proj(
                 proj='aea',
                 lat1=geom.bounds[1],
