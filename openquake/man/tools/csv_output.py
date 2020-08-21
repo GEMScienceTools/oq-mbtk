@@ -272,7 +272,7 @@ def get_catalogue_from_ses(fname, duration):
     lons = []
     lats = []
     deps = []
-    print(ses['rup_id'])
+    print(ses['rupid'])
     print('Columns:', ses.columns)
     for i in range(len(ses)):
         nevents = ses['multiplicity'][i]

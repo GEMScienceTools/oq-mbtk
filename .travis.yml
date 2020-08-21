@@ -21,7 +21,7 @@ jobs:
   include:
     - stage: test
       script:
-        - nosetests -vsx -a '!slow'
+        - pytest -vsx
       deploy:
 
     - stage: pages
