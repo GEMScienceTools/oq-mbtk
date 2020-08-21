@@ -26,7 +26,7 @@ import sys
 import ast
 import json
 from copy import deepcopy
-
+import pathlib
 import configparser
 import warnings
 
@@ -83,11 +83,12 @@ def build_fault_model(cfg_file=None,
     # Import arguments from INI configuration file
     if cfg_file is not None:
         cfg_dict = read_config_file(cfg_file)
+        basedir = pathlib.Path(cfg_file).parent
 
         if 'config' in cfg_dict:
             config = cfg_dict['config']
             if 'geojson_file' in config:
-                geojson_file = config['geojson_file']
+                geojson_file = basedir / config['geojson_file']
             if 'xml_output' in config:
                 xml_output = config['xml_output']
             if 'black_list' in config:
@@ -140,7 +141,6 @@ def read_config_file(cfg_file):
     """
     Import various processing options from the (.ini) configuration file
     """
-
     cfg_dict = {}
     cfg = configparser.RawConfigParser(dict_type=dict)
     cfg.optionxform = str
@@ -171,9 +171,6 @@ def build_model_from_db(fault_db,
                         param_map=None,
                         defaults=None,
                         **kwargs):
-    """
-    """
-
     param_map_local = deepcopy(fmu.param_map)
     defaults_local = deepcopy(fmu.defaults)
 
@@ -200,8 +197,11 @@ def build_model_from_db(fault_db,
             srcl.append(sfs)
 
         except Exception as e:
-            id = fl[param_map['source_id']]
-            print("Couldn't process Fault {}: {}".format(id, e))
+            if param_map:
+                id = fl[param_map['source_id']]
+                print("Couldn't process Fault {}: {}".format(id, e))
+            else:
+                raise
 
     if xml_output is not None:
         # Write the final fault model
@@ -219,9 +219,6 @@ class FaultDatabase():
     """
 
     def __init__(self, geojson_file=None):
-        """
-        """
-
         # Initialise an empty fault list
         self.db = []
 
@@ -231,9 +228,6 @@ class FaultDatabase():
     def import_from_geojson(self, geojson_file, black_list=None,
                             select_list=None, param_map=None,
                             update_keys=False):
-        """
-        """
-
         param_map_local = deepcopy(fmu.param_map)
 
         if param_map is not None:
@@ -289,9 +283,6 @@ class FaultDatabase():
                 self.db.append(fault)
 
     def export_to_geojson(self, geojson_file):
-        """
-        """
-
         with open(geojson_file, 'w') as f:
 
             data = {k: self.meta[k] for k in self.meta}
@@ -312,9 +303,6 @@ class FaultDatabase():
             json.dump(data, f)
 
     def add_property(self, property, value=None, id=None, key='source_id'):
-        """
-        """
-
         for fault in self.db:
             if id is None:
                 fault[property] = value
@@ -323,9 +311,6 @@ class FaultDatabase():
                     fault[property] = value
 
     def remove_property(self, property, id=None, key='source_id'):
-        """
-        """
-
         for fault in self.db:
             if id is None:
                 fault.pop(property)
@@ -372,6 +357,7 @@ def main(argv):
         print(p.help())
     else:
         p.callfunc()
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
