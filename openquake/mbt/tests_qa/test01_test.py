@@ -3,6 +3,7 @@ module test01
 """
 import os
 import glob
+import tempfile
 import subprocess
 import shutil
 import unittest
@@ -16,13 +17,12 @@ BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'test01')
 
 def get_fname(folder, pattern):
     """
-    Find a single file
-    :param folder:
-    :param pattern:
+    If there is a single file in a folder following the given glob pattern,
+    retrieve it, otherwise raise an error.
     """
     patt = os.path.join(folder, pattern)
     lst = glob.glob(patt)
-    assert len(lst) == 1
+    assert len(lst) == 1, lst
     return lst[0]
 
 
@@ -39,14 +39,15 @@ class MFDFromSESMFDFromInputTest(unittest.TestCase):
         bwdt = 0.1
         time = 500000
 
-        folder = os.path.join(BASE_DATA_PATH, 'out')
+        folder = tempfile.mkdtemp()
         fname_ssm = os.path.join(BASE_DATA_PATH, 'ssm01.xml')
         fname_ini = os.path.join(BASE_DATA_PATH, 'job.ini')
         print(fname_ini)
         tmps = 'if [ -d "${:s}" ]; then rm -Rf $WORKING_DIR; fi'
         command = tmps.format(folder)
         subprocess.run(command, shell=True)
-        command = 'oq engine --run {:s} --exports csv'.format(fname_ini)
+        command = 'oq engine --run {:s} --exports csv -p export_dir={}'.format(
+            fname_ini, folder)
         subprocess.run(command, shell=True)
         fname_ses = get_fname(folder, 'ruptures_*.csv')
         print(fname_ses)
