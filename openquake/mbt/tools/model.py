@@ -21,8 +21,8 @@ from pyproj import Proj, transform
 
 
 def getcoo(lon, lat):
-    inProj = Proj('epsg:4326')
-    outProj = Proj('epsg:3857')
+    inProj = Proj(init='epsg:4326')
+    outProj = Proj(init='epsg:3857')
     xp, yp = transform(inProj, outProj, lon, lat)
     return xp, yp
 

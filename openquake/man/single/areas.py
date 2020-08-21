@@ -18,10 +18,10 @@ def _get_area(geom):
         The area of the polygon in km2
     """
     geom_aea = ops.transform(partial(pyproj.transform,
-                                     pyproj.Proj('EPSG:4326'),
+                                     pyproj.Proj(init='EPSG:4326'),
                                      pyproj.Proj(proj='aea',
-                                                 lat_1=geom.bounds[1],
-                                                 lat_2=geom.bounds[3])),
+                                                 lat1=geom.bounds[1],
+                                                 lat2=geom.bounds[3])),
                              geom)
     return geom_aea.area/1e6
 
