@@ -8,12 +8,7 @@ from openquake.hmtk.seismicity.catalogue import Catalogue
 
 
 class Smooth3DTestCase(unittest.TestCase):
-    """
-    """
-
     def setUp(self):
-        #
-        #
         self.spch = 2.5
         self.spcv = 2.5
         #
@@ -46,8 +41,6 @@ class Smooth3DTestCase(unittest.TestCase):
         self.cat.load_from_array(keys, cata)
 
     def testcase01(self):
-        """
-        """
         smooth = Smoothing3D(self.cat, self.mesh, self.spch, self.spcv)
         values = smooth.gaussian(20, [5, 5, 2])
         print('sum:', sum(values))
@@ -67,4 +60,3 @@ class Smooth3DTestCase(unittest.TestCase):
                        alpha=0.5)
             ax.invert_zaxis()
             plt.show()
-        assert 0 == 1
