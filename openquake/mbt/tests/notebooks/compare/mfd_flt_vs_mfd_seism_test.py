@@ -3,8 +3,8 @@
   {
    "cell_type": "markdown",
    "metadata": {
-    "deletable": true,
-    "editable": true
+    "deletable": True,
+    "editable": True
    },
    "source": [
     "# Area source: compare earthquake occurrence from seismicity and geology\n",
@@ -15,9 +15,9 @@
   {
    "cell_type": "raw",
    "metadata": {
-    "collapsed": false,
-    "deletable": true,
-    "editable": true
+    "collapsed": False,
+    "deletable": True,
+    "editable": True
    },
    "source": [
     "%%html\n",
@@ -46,9 +46,9 @@
    "cell_type": "code",
    "execution_count": 1,
    "metadata": {
-    "collapsed": false,
-    "deletable": true,
-    "editable": true
+    "collapsed": False,
+    "deletable": True,
+    "editable": True
    },
    "outputs": [],
    "source": [
@@ -70,8 +70,8 @@
   {
    "cell_type": "markdown",
    "metadata": {
-    "deletable": true,
-    "editable": true
+    "deletable": True,
+    "editable": True
    },
    "source": [
     "## Info"
@@ -81,9 +81,9 @@
    "cell_type": "code",
    "execution_count": 2,
    "metadata": {
-    "collapsed": false,
-    "deletable": true,
-    "editable": true
+    "collapsed": False,
+    "deletable": True,
+    "editable": True
    },
    "outputs": [
     {
@@ -113,7 +113,7 @@
    "cell_type": "code",
    "execution_count": 3,
    "metadata": {
-    "collapsed": true
+    "collapsed": True
    },
    "outputs": [],
    "source": [
@@ -123,8 +123,8 @@
   {
    "cell_type": "markdown",
    "metadata": {
-    "deletable": true,
-    "editable": true
+    "deletable": True,
+    "editable": True
    },
    "source": [
     "## Results"
@@ -134,10 +134,10 @@
    "cell_type": "code",
    "execution_count": 4,
    "metadata": {
-    "collapsed": false,
-    "deletable": true,
-    "editable": true,
-    "scrolled": false
+    "collapsed": False,
+    "deletable": True,
+    "editable": True,
+    "scrolled": False
    },
    "outputs": [
     {
@@ -342,18 +342,18 @@
   },
   {
    "cell_type": "code",
-   "execution_count": null,
+   "execution_count": None,
    "metadata": {
-    "collapsed": true
+    "collapsed": True
    },
    "outputs": [],
    "source": []
   },
   {
    "cell_type": "code",
-   "execution_count": null,
+   "execution_count": None,
    "metadata": {
-    "collapsed": true
+    "collapsed": True
    },
    "outputs": [],
    "source": []
