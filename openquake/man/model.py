@@ -21,15 +21,15 @@ from pyproj import Proj, transform
 
 
 def getcoo(lon, lat):
-    inProj = Proj('epsg:4326')
-    outProj = Proj('epsg:3857')
+    inProj = Proj(init='epsg:4326')
+    outProj = Proj(init='epsg:3857')
     xp, yp = transform(inProj, outProj, lon, lat)
     return xp, yp
 
 
-def _get_source_model(source_file, investigation_time=1., 
+def _get_source_model(source_file, investigation_time=1.,
                       rupture_mesh_spacing=10.0,
-                      complex_fault_mesh_spacing=10.0, 
+                      complex_fault_mesh_spacing=10.0,
                       width_of_mfd_bin=0.1,
                       area_source_discretization=20.,
                       **kwargs):
