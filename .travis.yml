@@ -21,7 +21,7 @@ jobs:
   include:
     - stage: test
       script:
-        - pytest -vsx
+        - cd openquake && pytest -vsx mbt cat man sub sep
       deploy:
 
     - stage: pages
