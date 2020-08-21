@@ -17,13 +17,12 @@ BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'test01')
 
 def get_fname(folder, pattern):
     """
-    Find a single file
-    :param folder: the output folder
-    :param pattern: the
+    If there is a single file in a folder following the given glob pattern,
+    retrieve it, otherwise raise an error.
     """
     patt = os.path.join(folder, pattern)
     lst = glob.glob(patt)
-    assert len(lst) == 1
+    assert len(lst) == 1, lst
     return lst[0]
 
 
