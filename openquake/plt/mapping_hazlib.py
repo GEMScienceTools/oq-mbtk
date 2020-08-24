@@ -325,7 +325,7 @@ class HMTKBaseMap(object):
         self.cmds.append('gmt colorbar -DJBC -Ba{}+l{} -C{}'.format(space, label, cpt_fle))
 
     def add_size_scaled_points(self, longitude, latitude, data, shape='-Ss',
-            logplot=False, color='blue', smin=0.0, coeff=1.0, sscale=2.0, label=''):
+            logplot=False, color='blue', smin=0.01, coeff=1.0, sscale=2.0, label=''):
 
         if logplot:
             data = np.log10(data.copy())
@@ -346,23 +346,25 @@ class HMTKBaseMap(object):
         ds = np.arange(mindat,maxdat+1,np.ceil(drange/5))
         sz = smin + coeff * ds ** sscale
 
-        self._add_legend_size_scaled(ds, sz, shape, label)
+        self._add_legend_size_scaled(ds, color, sz, shape, label)
 
 
-    def _add_legend_size_scaled(self, data, size, shape, label):
+    def _add_legend_size_scaled(self, data, color, size, shape, label):
         '''
         adds legend for catalogue seismicity
         '''
 
         fname = '{}/legend_ss.csv'.format(self.out)
         fou = open(fname, 'w')
-        fou.write("L 9p R {}\n".format(label))
-        fmt = "S 0.4i {} {:.4f} - 0.0c,black 2.0c {:.0f} \n"
+        fou.write("L 12p R {}\n".format(label))
+        fou.write('G 0.1i\n')
+        fmt = "S 0.4i {} {:.4f} {} 0.0c,black 2.0c {:.0f} \n"
 
         sh = shape.replace('-S','').replace("'",'')
 
-        for d,s in zip(data, size):
-            fou.write(fmt.format(sh, s, d))
+        for dd,ss in zip(data, size):
+            fou.write(fmt.format(sh, ss, color, dd))
+            fou.write('G 0.2i\n')
 
         fou.close()
 
