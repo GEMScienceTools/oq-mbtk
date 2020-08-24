@@ -65,7 +65,7 @@ def _int_check(attribute_array, value):
 
 class GenericCataloguetoISFParser(object):
     '''
-    Reads the generic csv catalogue file to return an instance of the
+    Reads the generic csv or hdf catalogue file to return an instance of the
     ISFCatalogue class
     '''
     def __init__(self, filename):
@@ -75,7 +75,13 @@ class GenericCataloguetoISFParser(object):
         self.catalogue = GeneralCsvCatalogue()
 
     def parse(self, cat_id, cat_name):
-        df = pd.read_csv(self.filename, delimiter=',')
+        if self.filename[-4:] == '.csv' :
+            df = pd.read_csv(self.filename, delimiter=',')
+        else :
+            df = pd.read_hdf(self.filename)
+            if not 'magnitude' in df.columns:
+                if 'magMw' in df.columns:
+                    df.rename(columns = {'magMw':'magnitude'}, inplace = True)
         #
         if 'day' in df.columns:
             mask = df['day'] == 0

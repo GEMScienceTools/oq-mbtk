@@ -167,6 +167,7 @@ class GeneralCsvCatalogue(object):
             if ('sigmaMagnitude' in self.data and
                     len(self.data['sigmaMagnitude']) > 0):
                 sigma_mag = self.data['sigmaMagnitude'][iloc]
+            
             mag = [Magnitude(event_id,
                              origin_id,
                              self.data['magnitude'][iloc],
