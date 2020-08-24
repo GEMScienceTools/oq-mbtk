@@ -25,6 +25,8 @@ from openquake.cat.isf_catalogue import (ISFCatalogue, Magnitude,
                                          Origin, Location, Event)
 from openquake.cat.parsers.gcmt_ndk_parser import ParseNDKtoGCMT
 
+from openquake.hmtk.seismicity.catalogue import Catalogue
+
 
 def _header_check(input_keys, catalogue_keys):
     valid_key_list = []
@@ -240,3 +242,53 @@ class GCMTtoISFParser(object):
             setattr(event, 'tensor', gcmt.moment_tensor)
             isf_cat.events.append(event)
         return isf_cat
+        
+
+
+def isf_to_hmtk(isf_cat):
+    """
+    Converts a :class: `openquake.cat.isf_catalogue.ISFCatalogue` into an instance of
+    :class:`openquake.hmtk.seismicity.catalogue.Catalogue`.
+    :param isf_cat:
+        A :class: `openquake.cat.isf_catalogue.ISFCatalogue`
+    :returns:
+        A :class:`openquake.hmtk.seismicity.catalogue.Catalogue` instance
+    """
+    # Create an empty catalogue
+    cat = Catalogue()
+    # Set catalogue data
+    cnt = 0
+    year = []
+    eventids = []
+    mags = []
+    lons = []
+    lats = []
+    deps = []
+        
+    for eq in isf_cat.events:
+        eventids.append(eq.id)
+        mags.append(eq.magnitudes[0].value)
+        lons.append(eq.origins[0].location.longitude)
+        lats.append(eq.origins[0].location.latitude)
+        deps.append(eq.origins[0].location.depth)
+        cnt += 1
+        year.append(eq.origins[0].date.year)
+
+    data = {}
+    year = np.array(year, dtype=int)
+    data['year'] = year
+    data['month'] = np.ones_like(year, dtype=int)
+    data['day'] = np.ones_like(year, dtype=int)
+    data['hour'] = np.zeros_like(year, dtype=int)
+    data['minute'] = np.zeros_like(year, dtype=int)
+    data['second'] = np.zeros_like(year)
+    data['magnitude'] = np.array(mags)
+    data['longitude'] = np.array(lons)
+    data['latitude'] = np.array(lats)
+    data['depth'] = np.array(deps)
+    data['eventID'] = eventids
+    cat.data = data
+    cat.end_year = max(year)
+    cat.start_year = 0
+    cat.data['dtime'] = cat.get_decimal_time()
+    return cat
