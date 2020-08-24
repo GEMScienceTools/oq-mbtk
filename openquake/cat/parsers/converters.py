@@ -261,16 +261,20 @@ def isf_to_hmtk(isf_cat):
     year = []
     eventids = []
     mags = []
+    mags_sigma = []
     lons = []
     lats = []
     deps = []
+    deps_error = []
         
     for eq in isf_cat.events:
         eventids.append(eq.id)
         mags.append(eq.magnitudes[0].value)
+        mags_sigma.append(eq.magnitudes[0].sigma)
         lons.append(eq.origins[0].location.longitude)
         lats.append(eq.origins[0].location.latitude)
         deps.append(eq.origins[0].location.depth)
+        deps_error.append(eq.origins[0].location.depth_error)
         cnt += 1
         year.append(eq.origins[0].date.year)
 
@@ -283,9 +287,11 @@ def isf_to_hmtk(isf_cat):
     data['minute'] = np.zeros_like(year, dtype=int)
     data['second'] = np.zeros_like(year)
     data['magnitude'] = np.array(mags)
+    data['sigmaMagnitude'] = np.array(mags_sigma)
     data['longitude'] = np.array(lons)
     data['latitude'] = np.array(lats)
     data['depth'] = np.array(deps)
+    data['depthError'] = np.array(deps_error)
     data['eventID'] = eventids
     cat.data = data
     cat.end_year = max(year)
