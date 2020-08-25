@@ -817,9 +817,9 @@ def plot_agency_magnitude_density(data, overlay=False, number_samples=0,
         highx = highy
 
     xbins = np.linspace(lowx - 0.05, highx + 0.05,
-                        ((highx + 0.05 - lowx - 0.05) / 0.1) + 2.0)
+                        int(((highx + 0.05 - lowx - 0.05) / 0.1) + 2.0))
     ybins = np.linspace(lowx - 0.05, highx + 0.05,
-                        ((highx + 0.05 - lowx - 0.05) / 0.1) + 2.0)
+                        int(((highx + 0.05 - lowx - 0.05) / 0.1) + 2.0))
     density = sample_agency_magnitude_pairs(data, xbins, ybins, number_samples)
     fig = plt.figure(figsize=figure_size)
 
