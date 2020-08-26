@@ -21,6 +21,7 @@ import h5py
 import re
 import numpy as np
 import pandas as pd
+import subprocess
 import matplotlib
 import matplotlib.dates as mdates
 import matplotlib.gridspec as gridspec
@@ -1519,3 +1520,63 @@ def plot_catalogue_map(config, catalogue, magnitude_scale=False,
         plt.savefig(filename, format=filetype, dpi=dpi)
     if not overlay:
         plt.show()
+
+def plot_catalogue_map_gmt(config, catalogue, projection='-JM15', 
+        lat_lon_spacing=2., filename='catalogue.pdf', magnitude_scale=False):
+                           
+    """
+    Creates a map of the catalogue using Generic Mapping Tools v6 
+    (requires GMT6.0.0 or greater)
+    """
+
+    cmds = []
+    R = '-R{}/{}/{}/{}'.format(config['min_lon'], 
+                               config['max_lon'],
+                               config['min_lat'],
+                               config['max_lat'])
+     
+    cmds.append("gmt begin {}".format(filename))
+    tmp = "gmt basemap {} {} -BWSne".format(R, projection)
+    tmp += " -Bx{} -By{}".format(lat_lon_spacing, lat_lon_spacing)
+    cmds.append(tmp)
+    cmds.append("gmt coast -Df -Wthin -Gwheat")
+    
+    lon = catalogue.origins["longitude"].values
+    lat = catalogue.origins["latitude"].values
+    dep = catalogue.origins["depth"].values
+    dep[np.isnan(dep)] = 0
+
+    if magnitude_scale:
+        magnitudes = []
+        mag_grps = catalogue.magnitudes.groupby("originID")
+        for key in catalogue.origins.originID.values:
+            if key in catalogue.magnitudes.originID.values:
+                grp = mag_grps.get_group(key)
+                if magnitude_scale in grp.magType.values:
+                    magnitudes.append(
+                        grp[grp.magType==magnitude_scale].value.values[0])
+                else:
+                    magnitudes.append(1.0)
+        magnitudes = [0.05*10**(-1.5+m*0.3) for m in np.array(magnitudes)]
+    else:
+        magnitudes = 0.3
+
+    df = pd.DataFrame({'lo':lon, 'la':lat, 'd':dep, 'm':magnitudes})
+    cat_tmp = 'cat_tmp.csv'
+    df.sort_values(by=['m']).to_csv(cat_tmp, index = False, header = False)
+
+    cpt_fle = "tmp.cpt"
+    cmds.append("gmt makecpt -Cjet -T0/{}/10+n -D > \
+                             {}".format(max(dep),cpt_fle))
+    
+
+    tmp = "gmt plot {} -Sc -C{} -t50 -Wthinnest,black".format(cat_tmp,cpt_fle)
+    cmds.append(tmp)
+    space = int(np.ceil(max(dep)/100))*10
+    cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format(space, cpt_fle))
+    cmds.append('gmt end')
+
+    for cmd in cmds:
+        print(cmd)
+        out = subprocess.call(cmd, shell=True)
+
