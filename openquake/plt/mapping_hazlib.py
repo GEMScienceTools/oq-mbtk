@@ -385,12 +385,31 @@ class HMTKBaseMap(object):
             color = 'm'
         return color
 
-    def add_focal_mechanism(self, filename, config=None):
+    def add_focal_mechanism(self, filename, mech_format, config=None):
+        '''
+        string filename:
+            the filename containing the gcmt entries
+        string mech_format: 
+            the format of the file to be plotted. either focal mechanism 
+            (mech_format='FM') or seimsic moment tensor (mech_format='MT')
+            both using the Harvard CMT convention
+        '''
+
+        if mech_format == 'FM':
+            mf = 'c'
+        elif mech_format == 'MT':
+            mf = 'm'
+        else:
+            fail_error = "mech_format must be either 'FM' or 'MT'; see doc"
+            raise ValueError(fail_error)
+
         if config is not None:
             df = pd.read_csv(filename)
-        
+            # TODO: make some other settings... scale by mag, color, don't
+            # use label, etc
         else:
-            self.cmds.append("gmt psmeca {} -Sm0.5 -t20".format(filename))
+            self.cmds.append("gmt psmeca {} -S{}0.5 -t20".format(filename,\
+                    mf)
 
 
     def add_catalogue_cluster(self):
