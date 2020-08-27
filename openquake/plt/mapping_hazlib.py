@@ -90,7 +90,7 @@ class HMTKBaseMap(object):
 
         self.cmds = []
         self.cmds.append("gmt begin")
-        tmp = "gmt basemap {} {} -BWSne".format(self.R, self.J)
+        tmp = 'gmt basemap {} {} -BWSne+t"{}"'.format(self.R, self.J, self.title)
         tmp += " {}".format(self.ax)
         self.cmds.append(tmp)
 
@@ -404,12 +404,12 @@ class HMTKBaseMap(object):
             raise ValueError(fail_error)
 
         if config is not None:
-            df = pd.read_csv(filename)
+            #df = pd.read_csv(filename)
             # TODO: make some other settings... scale by mag, color, don't
             # use label, etc
+            print('config methods not implemented yet')
         else:
-            self.cmds.append("gmt psmeca {} -S{}0.5 -t20".format(filename,\
-                    mf)
+            self.cmds.append("gmt psmeca {} -S{}0.5 -t20".format(filename, mf))
 
 
     def add_catalogue_cluster(self):
