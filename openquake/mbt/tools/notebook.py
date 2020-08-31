@@ -1,5 +1,6 @@
 import os
 import copy
+import unittest
 import nbformat
 
 from nbconvert.preprocessors import ExecutePreprocessor
@@ -32,11 +33,13 @@ def run(notebook_filename, inps, reports_folder=None, key=None):
         # returns a 'nb node' and 'resources'
         out = ep.preprocess(nb, {'metadata': {'path': './'}})
         ok = True
-    except CellExecutionError:
+    except CellExecutionError as cee:
         msg = 'Error executing the notebook "%s".\n\n' % notebook_filename
         msg += 'See notebook for the traceback.'
-        print(msg)
-        raise
+        if 'mpl_toolkits.basemap' in cee.traceback:
+            raise unittest.SkipTest('Missing basemap')
+        else:
+            raise
     finally:
         #
         # creating report
