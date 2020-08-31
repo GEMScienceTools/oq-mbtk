@@ -1,6 +1,3 @@
-"""
-"""
-
 import os
 import re
 import glob
@@ -240,7 +237,7 @@ def _check_edges(edges):
     pnts = np.array(pnts)
     #
     # projecting the points
-    p = Proj('+proj=lcc +lon_0={:f}'.format(np.mean(pnts[:, 0])))
+    p = Proj(proj='lcc', lon_0=np.mean(pnts[:, 0]))
     x, y = p(pnts[:, 0], pnts[:, 1])
     x = x / 1e3  # m -> km
     y = y / 1e3  # m -> km
