@@ -232,8 +232,8 @@ def _check_edges(edges):
     # creating a matrix of points
     pnts = []
     for edge in edges:
-        pnts += [[pnt.longitude, pnt.latitude, pnt.depth] for pnt in
-                 edge.points]
+        pnts += [[pnt.longitude, pnt.latitude, pnt.depth]
+                 for pnt in edge.points]
     pnts = np.array(pnts)
     #
     # projecting the points
@@ -260,7 +260,7 @@ def _check_edges(edges):
         chks.append(np.sign(np.cross(ppar[:2], edgv)))
     #
     #
-    return(np.array(chks))
+    return np.array(chks)
 
 
 def build_complex_surface_from_edges(foldername):
