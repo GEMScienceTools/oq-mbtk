@@ -132,7 +132,7 @@ def spatial_index(smooth):
     #
     # Set the geographic projection
     lons = smooth.mesh.lons.flatten()
-    p = Proj('+proj=lcc +lon_0={:f}'.format(np.mean(lons)))
+    p = Proj(proj='lcc', lon_0=np.mean(lons), lat_2=45)
     #
     # Create the spatial index for the grid mesh
     r = rtree.index.Index(_generator(smooth.mesh, p), properties=prop)

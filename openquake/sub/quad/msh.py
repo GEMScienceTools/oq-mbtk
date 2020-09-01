@@ -36,7 +36,7 @@ def create_lower_surface_mesh(msh, slab_thickness):
     real_lons = msh[:, :, 0][~np.isnan(msh[:, :, 0])].flatten('C')
     reference_longitude = np.mean(real_lons)
 
-    p = Proj('+proj=lcc +lon_0={:f}'.format(reference_longitude))
+    p = Proj(proj='lcc', lon_0=reference_longitude, lat_2=45)
     x, y = p(msh[:, :, 0].flatten('C'), msh[:, :, 1].flatten('C'))
     x = x / 1e3  # m -> km
     y = y / 1e3  # m -> k

@@ -4,11 +4,6 @@ import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.art3d as art3d
 
 from pyproj import Proj
-
-# MN: 'Axes3D' imported but not used
-from mpl_toolkits.mplot3d import Axes3D
-# MN: 'PathPatch' imported but not used
-from matplotlib.patches import Circle, PathPatch
 from openquake.mbt.tools.tr.catalogue import get_catalogue
 from openquake.sub.utils import _read_edges, plot_complex_surface
 from openquake.hazardlib.geo.utils import plane_fit
@@ -29,7 +24,7 @@ def get_points_on_plane(edges, poi):
     pnts = np.array(pnts)
     #
     # projecting the points
-    p = Proj('+proj=lcc +lon_0={:f}'.format(np.mean(pnts[:, 0])))
+    p = Proj(proj='lcc', lon_0=np.mean(pnts[:, 0]), lat_2=45)
     x, y = p(pnts[:, 0], pnts[:, 1])
     x = x / 1e3  # m -> km
     y = y / 1e3  # m -> km
