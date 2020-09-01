@@ -237,7 +237,7 @@ def _check_edges(edges):
     pnts = np.array(pnts)
     #
     # projecting the points
-    p = Proj(proj='lcc', lon_0=np.mean(pnts[:, 0]))
+    p = Proj(proj='lcc', lon_0=np.mean(pnts[:, 0]), lat_1=0., lat_2=60.)
     x, y = p(pnts[:, 0], pnts[:, 1])
     x = x / 1e3  # m -> km
     y = y / 1e3  # m -> km

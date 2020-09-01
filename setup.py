@@ -64,7 +64,7 @@ setup(
         'notebook >= 5.0.0',
         'nbformat',
         'GDAL',
-        'pyproj == 1.9.6',
+        'pyproj',
         'rtree-linux == 0.9.4',
         'nbconvert',
         'prettytable',
