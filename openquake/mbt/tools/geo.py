@@ -114,7 +114,7 @@ def get_idx_points_inside_polygon(plon, plat, poly_lon, poly_lat,
     #
     # Fix the projections
     inProj = Proj(init='epsg:4326')
-    outProj = Proj(proj='lcc', lon_0=poly_lon[0])
+    outProj = Proj(proj='lcc', lon_0=poly_lon[0], lat_2=45)
     #
     # Create polygon
     poly_xy = []
