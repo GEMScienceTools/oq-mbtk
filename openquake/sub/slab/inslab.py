@@ -1,6 +1,3 @@
-"""
-"""
-
 import re
 import os
 import glob
@@ -172,7 +169,7 @@ def regularize(mesh, spacing):
     #
     # project the points using Lambert Conic Conformal - for the reference
     # meridian 'lon_0' we use the mean longitude of the mesh
-    p = Proj('+proj=lcc +lon_0={:f}'.format(np.mean(lld[:, 0])))
+    p = Proj(proj='lcc', lon_0=np.mean(lld[:, 0]), lat_2=45)
     x, y = p(lld[:, 0], lld[:, 1])
     x = x / 1e3  # m -> km
     y = y / 1e3  # m -> km
@@ -245,7 +242,7 @@ def create_lower_surface_mesh(mesh, slab_thickness):
     #
     # project the points using Lambert Conic Conformal - for the reference
     # meridian 'lon_0' we use the mean longitude of the grid
-    p = Proj('+proj=lcc +lon_0={:f}'.format(np.mean(mesh.lons.flatten('F'))))
+    p = Proj(proj='lcc', lon_0=np.mean(mesh.lons.flatten('F')), lat_2=45)
     x, y = p(mesh.lons.flatten('F'), mesh.lats.flatten('F'))
     x = x / 1e3  # m -> km
     y = y / 1e3  # m -> k
@@ -341,7 +338,7 @@ def create_lower_surface_mesh_old(mesh, slab_thickness):
     #
     # project the points using Lambert Conic Conformal - for the reference
     # meridian 'lon_0' we use the mean longitude of the grid
-    p = Proj('+proj=lcc +lon_0={:f}'.format(np.mean(lld[:, 0])))
+    p = Proj(proj='lcc', lon_0=np.mean(lld[:, 0]), lat_2=45)
     x, y = p(lld[:, 0], lld[:, 1])
     x = x / 1e3  # m -> km
     y = y / 1e3  # m -> km

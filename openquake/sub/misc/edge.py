@@ -141,7 +141,7 @@ def create_faults(mesh, iedge, thickness, rot_angle, sampling):
     # project the points using Lambert Conic Conformal - for the reference
     # meridian 'lon_0' we use the mean longitude of the mesh
     melo = _get_mean_longitude(lld[:, 0])
-    p = Proj('+proj=lcc +lon_0={:f}'.format(melo))
+    p = Proj(proj='lcc', lon_0=melo, lat_1=0., lat_2=60.)
     x, y = p(lld[:, 0], lld[:, 1])
     x = x / 1e3  # m -> km
     y = y / 1e3  # m -> km
