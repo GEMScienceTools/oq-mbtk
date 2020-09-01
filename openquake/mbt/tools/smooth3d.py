@@ -46,7 +46,7 @@ class Smoothing3D:
         #
         # Set the geographic projection
         lons = self.mesh.lons.flatten('F')
-        self.p = Proj('+proj=lcc +lon_0={:f}'.format(np.mean(lons)))
+        self.p = Proj(proj='lcc', lon_0=np.mean(lons), lat_2=45)
         #
         # Create the spatial index for the grid mesh
         r = rtree.index.Index(_generator(self.mesh, self.p), properties=prop)
