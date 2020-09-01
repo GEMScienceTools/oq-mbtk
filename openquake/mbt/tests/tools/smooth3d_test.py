@@ -13,7 +13,7 @@ class Smooth3DTestCase(unittest.TestCase):
         self.spcv = 2.5
         #
         # set the projection
-        self.p = Proj('+proj=lcc +lon_0={:f}'.format(10.5))
+        self.p = Proj(proj='lcc', lon_0=10.5, lat_2=45)
         #
         # grid limits
         xlo, ylo = tuple(t/1e3 for t in self.p(10.0, 45.0))
