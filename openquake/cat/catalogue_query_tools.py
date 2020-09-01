@@ -19,9 +19,11 @@ Collection of Catalogue Database Query Tools
 """
 import h5py
 import re
+import os
 import numpy as np
 import pandas as pd
 import subprocess
+import webbrowser
 import matplotlib
 import matplotlib.dates as mdates
 import matplotlib.gridspec as gridspec
@@ -1579,4 +1581,5 @@ def plot_catalogue_map_gmt(config, catalogue, projection='-JM15',
     for cmd in cmds:
         print(cmd)
         out = subprocess.call(cmd, shell=True)
-
+    
+#    webbrowser.open_new(r'file://{}/{}'.format(os.getcwd(),filename))
