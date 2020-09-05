@@ -8,12 +8,8 @@ import glob
 import numpy as np
 import unittest
 import matplotlib.pyplot as plt
-# MN: 'Axes3D' imported but never used
-from mpl_toolkits.mplot3d import Axes3D
 
 from openquake.hazardlib.geo.geodetic import distance
-# MN: 'Mesh' imported but never used
-from openquake.hazardlib.geo.mesh import Mesh
 
 from openquake.sub.misc.edge import (_read_edge, _resample_edge,
                                      create_from_profiles, create_faults,
