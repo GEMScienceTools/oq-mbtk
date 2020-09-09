@@ -3,7 +3,6 @@ import h5py
 import shutil
 import numpy
 import unittest
-from nose.plugins.attrib import attr
 from openquake.mbt.tools.tr.classify import classify
 
 BASE_PATH = os.path.dirname(__file__)
@@ -27,7 +26,7 @@ class TrTestCase02(unittest.TestCase):
         # shutil.rmtree(self.tmp)
         pass
 
-    @attr('slow')
+    @unittest.skipUnless('OQ_RUN_SLOW_TESTS' in os.environ, 'slow')
     def testcase01(self):
         """
         Testing TR - Case 02 - Crustal and Subduction

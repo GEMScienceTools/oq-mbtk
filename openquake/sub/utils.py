@@ -1,6 +1,3 @@
-"""
-"""
-
 import os
 import re
 import glob
@@ -235,12 +232,12 @@ def _check_edges(edges):
     # creating a matrix of points
     pnts = []
     for edge in edges:
-        pnts += [[pnt.longitude, pnt.latitude, pnt.depth] for pnt in
-                 edge.points]
+        pnts += [[pnt.longitude, pnt.latitude, pnt.depth]
+                 for pnt in edge.points]
     pnts = np.array(pnts)
     #
     # projecting the points
-    p = Proj('+proj=lcc +lon_0={:f}'.format(np.mean(pnts[:, 0])))
+    p = Proj(proj='lcc', lon_0=np.mean(pnts[:, 0]), lat_1=0., lat_2=60.)
     x, y = p(pnts[:, 0], pnts[:, 1])
     x = x / 1e3  # m -> km
     y = y / 1e3  # m -> km
@@ -263,7 +260,7 @@ def _check_edges(edges):
         chks.append(np.sign(np.cross(ppar[:2], edgv)))
     #
     #
-    return(np.array(chks))
+    return np.array(chks)
 
 
 def build_complex_surface_from_edges(foldername):

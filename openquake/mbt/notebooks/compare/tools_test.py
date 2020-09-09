@@ -2,7 +2,7 @@ import numpy as np
 import unittest
 
 from openquake.hazardlib.mfd import TruncatedGRMFD
-from openquake.mbt.notebooks.compare_and_report.tools import (
+from openquake.mbt.notebooks.compare.tools import (
     get_cumulative, interpolate_ccumul)
 
 
