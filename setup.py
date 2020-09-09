@@ -44,6 +44,7 @@ def get_version():
 
     return version
 
+
 version = get_version()
 
 setup(
@@ -64,7 +65,7 @@ setup(
         'nbformat',
         'GDAL',
         'pyproj',
-        'rtree',
+        'rtree-linux == 0.9.4',
         'nbconvert',
         'prettytable',
         'geopandas == 0.6.3',

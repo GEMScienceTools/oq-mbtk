@@ -9,13 +9,11 @@ xmlns:gml="http://www.opengis.net/gml"
         <sourceGroup
         rup_interdep="indep"
         src_interdep="indep"
-        srcs_weights="1.0 1.0"
         tectonicRegion="Active Shallow Crust"
         >
             <simpleFaultSource
             id="1"
             name="Har-Us-Nuur Fault"
-            tectonicRegion="Active Shallow Crust"
             >
                 <simpleFaultGeometry>
                     <gml:LineString>
@@ -30,7 +28,7 @@ xmlns:gml="http://www.opengis.net/gml"
                         0.0
                     </upperSeismoDepth>
                     <lowerSeismoDepth>
-                        35.0
+                        17.0
                     </lowerSeismoDepth>
                 </simpleFaultGeometry>
                 <magScaleRel>
@@ -44,7 +42,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 minMag="6.05"
                 >
                     <occurRates>
-                        0.0032249518933011832 0.0025616703444766627 0.0020348070826736913 0.0016163047179846585 0.001283876473413284 0.0010198193327304087 0.0008100712903054415 0.0006434624980291431 0.0005111204301707654 0.00040599738902906077 0.00032249518933012087 0.000256167034447668
+                        0.001717773527515262 0.0013644760137673006 0.0010838418233394065 0.0008609261622535367 0.0006838579586908042 0.0005432076851290186 0.0004314852016171958 0.0003427408785102381 0.0002722487569948869
                     </occurRates>
                 </incrementalMFD>
                 <rake>
@@ -54,7 +52,6 @@ xmlns:gml="http://www.opengis.net/gml"
             <simpleFaultSource
             id="2"
             name="Erzin Fault"
-            tectonicRegion="Active Shallow Crust"
             >
                 <simpleFaultGeometry>
                     <gml:LineString>
@@ -69,7 +66,7 @@ xmlns:gml="http://www.opengis.net/gml"
                         0.0
                     </upperSeismoDepth>
                     <lowerSeismoDepth>
-                        35.0
+                        11.751062011093225
                     </lowerSeismoDepth>
                 </simpleFaultGeometry>
                 <magScaleRel>
@@ -83,7 +80,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 minMag="6.05"
                 >
                     <occurRates>
-                        0.00030945403773379614 0.00024580807952138777 0.00019525229788718978 0.00015509441310659113 0.0001231958713785572 9.78579590374489e-05 7.773133985593801e-05 6.174419797052048e-05 4.904515977839006e-05
+                        0.00011257094375607366 8.941827903500839e-05 7.102746373796156e-05 5.641911988791793e-05 4.481529990526752e-05
                     </occurRates>
                 </incrementalMFD>
                 <rake>
