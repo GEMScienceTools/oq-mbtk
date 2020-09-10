@@ -24,6 +24,8 @@ class HMTKBaseMap(object):
     '''
     Class to plot the spatial distribution of events based in the Catalogue
     imported from openquake.hmtk using Generic Mapping Tools.
+
+    Initiates a plot and a GMT mapping script 
     '''
 
     def __init__(self, config, projection='-JM15', output_folder='gmt',
