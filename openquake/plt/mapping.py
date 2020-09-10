@@ -350,12 +350,11 @@ class HMTKBaseMap(object):
                 if type(source).__name__ == 'AreaSource':
                     self._plot_area_source(source)
                 elif type(source).__name__ == 'PointSource': 
-                    self._plot_point_source(source)#, point_marker, point_size)
+                    self._plot_point_source(source)
                 elif type(source).__name__ == 'ComplexFaultSource':
-                    self._plot_complex_fault(source)#, area_border, border_width,
-                                             #min_depth, max_depth, alpha)
+                    self._plot_complex_fault(source)
                 elif type(source).__name__ == 'SimpleFaultSource':
-                    self._plot_simple_fault(source)#, area_border, border_width)
+                    self._plot_simple_fault(source)
                 else:
                     pass
 
