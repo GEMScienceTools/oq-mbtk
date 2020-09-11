@@ -34,10 +34,5 @@ cd oq-mbtk
 
 ### how to run tests:
 ```
-nosetests -vsx -a '!slow'
-```
-
-### how to run tests with coverage:
-```
-nosetests -vsx -a '!slow'  --with-coverage --cover-package=openquake.mbt openquake/mbt --cover-package=openquake.man openquake/man --cover-package=openquake.sub ../oq-subduction/openquake/sub
+pytest -vsx openquake
 ```
