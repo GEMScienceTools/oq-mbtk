@@ -139,7 +139,8 @@ class HMTKBaseMap(object):
             self.cmds.append("gmt makecpt -Cjet -T0/2.7/30+n -Q -D > \
                              {}".format(cpt_fle))
 
-        space = np.floor(abs(min(data)-max(data))/3)
+        depth = cat.data['depth']
+        space = np.floor(abs(min(depth)-max(depth))/4)
         tmp = "gmt plot {} -Sc -C{} -Wthinnest,black".format(cat_tmp,cpt_fle)
         self.cmds.append(tmp)
         self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format(space, cpt_fle))
