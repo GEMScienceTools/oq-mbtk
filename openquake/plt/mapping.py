@@ -136,11 +136,10 @@ class HMTKBaseMap(object):
         df.sort_values(by=['m']).to_csv(cat_tmp, index = False, header = False)
 
         if cpt_fle == "{}/tmp.cpt".format(self.out):
-            self.cmds.append("gmt makecpt -Cjet -T0/2.7/30+n -Q -D > \
-                             {}".format(cpt_fle))
+            self.cmds.append("gmt makecpt -Cjet -T0/{}/30+n -Q -D > \
+                             {}".format(np.log10(zmax)*1.1, cpt_fle))
 
-        depth = cat.data['depth']
-        space = np.floor(abs(min(depth)-max(depth))/4)
+        space = np.floor(abs(min(deps)-max(deps))/4)
         tmp = "gmt plot {} -Sc -C{} -Wthinnest,black".format(cat_tmp,cpt_fle)
         self.cmds.append(tmp)
         self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format(space, cpt_fle))
