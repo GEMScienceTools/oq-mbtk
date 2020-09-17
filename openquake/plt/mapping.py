@@ -407,7 +407,8 @@ class HMTKBaseMap(object):
         self.cmds.append('gmt colorbar -DJBC -Ba{}+l{} -C{}'.format(space, label, cpt_fle))
 
     def add_size_scaled_points(self, longitude, latitude, data, shape='-Ss',
-            logplot=False, color='blue', smin=0.01, coeff=1.0, sscale=2.0, label=''):
+            logplot=False, color='blue', smin=0.01, coeff=1.0, sscale=2.0, label='',
+            legend=False):
         '''
         Adds xy data (epicenters) size-scaled by some specified data value
         :param array longitude:
@@ -432,6 +433,7 @@ class HMTKBaseMap(object):
             with sscale, sets relative size among data values
         :param float sscale:
             with coeff, sets relative size among data values
+            set sscale=None to use constant size of coeff
         :param str label:
             Data label for the legend. Also used to name tmp file
         '''
@@ -439,9 +441,12 @@ class HMTKBaseMap(object):
         if logplot:
             data = np.log10(data.copy())
 
-        size = smin + coeff * data ** sscale
+        if sscale is None:
+            sz = [coeff] * len(latitude)
+        else: 
+            sz = smin + coeff * data ** sscale
 
-        df = pd.DataFrame({'lo':longitude, 'la':latitude, 's':size})
+        df = pd.DataFrame({'lo':longitude, 'la':latitude, 's':sz})
         dat_tmp = '{}/tmp_dat_size{}.csv'.format(self.out, label.replace(' ','-'))
         df.to_csv(dat_tmp, index = False, header = False)
 
@@ -453,9 +458,9 @@ class HMTKBaseMap(object):
         drange = abs(mindat - maxdat)
         
         ds = np.arange(mindat,maxdat+1,np.ceil(drange/5))
-        sz = smin + coeff * ds ** sscale
 
-        self._add_legend_size_scaled(ds, color, sz, shape, label)
+        if legend:
+            self._add_legend_size_scaled(ds, color, sz, shape, label)
 
 
     def _add_legend_size_scaled(self, data, color, size, shape, label):
