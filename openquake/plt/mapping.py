@@ -81,18 +81,24 @@ class HMTKBaseMap(object):
         self.max_cf_depth = 1000
         self.max_sf_depth = 1000
 
+
+    def _check_output(self,filename):
         # create the output directory. Check if it exists, whether overwrite 
         # is allowed, rm dir contents or fail
 
-        if os.path.exists(self.out):
+        outfile = os.path.join(self.out, filename)
+        if os.path.exists(outfile):
             if overwrite == True:
-                shutil.rmtree(self.out)
+                shutil.rmtree(outfile)
             else:
-                warning = "{} directory already exists!\n".format(self.out)
-                warning += "Set overwrite=True or change the output path."
+                warning = "output file {}/{} already exists!\n".format(self.out, filename)
+                warning += "Set overwrite=True or change the output directory or filename."
                 raise ValueError(warning)
 
-        os.makedirs(self.out)
+        if os.path.exists(self.out):
+            pass
+        else:
+            os.makedirs(self.out)
             
 
     def _build_basemap(self):
@@ -393,7 +399,7 @@ class HMTKBaseMap(object):
 
 
         df = pd.DataFrame({'lo':longitude, 'la':latitude, 'c':data})
-        dat_tmp = '{}/tmp_dat_col{}.csv'.format(self.out, label)
+        dat_tmp = '{}/tmp_dat_col{}.csv'.format(self.out, label.replace(' ','-'))
         df.sort_values(by=['c']).to_csv(dat_tmp, index = False, header = False)
 
         space = np.floor(abs(min(data)-max(data))/3)
@@ -436,7 +442,7 @@ class HMTKBaseMap(object):
         size = smin + coeff * data ** sscale
 
         df = pd.DataFrame({'lo':longitude, 'la':latitude, 's':size})
-        dat_tmp = '{}/tmp_dat_size{}.csv'.format(self.out, label)
+        dat_tmp = '{}/tmp_dat_size{}.csv'.format(self.out, label.replace(' ','-'))
         df.to_csv(dat_tmp, index = False, header = False)
 
 
@@ -551,6 +557,8 @@ class HMTKBaseMap(object):
 
         self.cmds=[x for x in self.cmds if x != "gmt end"]
         self.cmds.append("gmt end")
+
+        self._check_output(filename)
 
         for cmd in self.cmds:
             if verb:
