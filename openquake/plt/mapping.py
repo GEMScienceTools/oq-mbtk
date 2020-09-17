@@ -358,7 +358,7 @@ class HMTKBaseMap(object):
                 else:
                     pass
 
-    def add_colour_scaled_points(self, longitude, latitude, data, label="Data value",
+    def add_colour_scaled_points(self, longitude, latitude, data, label='',
             shape="-Ss", size=0.3, logscale=False):
         '''
         Adds xy data (epicenters) colored by some specified data value
@@ -369,7 +369,7 @@ class HMTKBaseMap(object):
         :param array data:
             array to be used to color-scale the xy data
         :param str label:
-            Data label for the colorbar
+            Data label for the colorbar and plot title. Also used to name tmp file
         :param str shape: 
             shape of the plotted data. Must start with '-S'. Default is a square.
             See GMT documentation.
@@ -393,7 +393,7 @@ class HMTKBaseMap(object):
 
 
         df = pd.DataFrame({'lo':longitude, 'la':latitude, 'c':data})
-        dat_tmp = '{}/tmp_dat_col.csv'.format(self.out)
+        dat_tmp = '{}/tmp_dat_col{}.csv'.format(self.out, label)
         df.sort_values(by=['c']).to_csv(dat_tmp, index = False, header = False)
 
         space = np.floor(abs(min(data)-max(data))/3)
@@ -427,7 +427,7 @@ class HMTKBaseMap(object):
         :param float sscale:
             with coeff, sets relative size among data values
         :param str label:
-            Data label for the legend 
+            Data label for the legend. Also used to name tmp file
         '''
 
         if logplot:
@@ -436,7 +436,7 @@ class HMTKBaseMap(object):
         size = smin + coeff * data ** sscale
 
         df = pd.DataFrame({'lo':longitude, 'la':latitude, 's':size})
-        dat_tmp = '{}/tmp_dat_size.csv'.format(self.out)
+        dat_tmp = '{}/tmp_dat_size{}.csv'.format(self.out, label)
         df.to_csv(dat_tmp, index = False, header = False)
 
 
