@@ -418,7 +418,7 @@ class HMTKBaseMap(object):
 
     def add_size_scaled_points(self, longitude, latitude, data, shape='-Ss',
             logplot=False, color='blue', smin=0.01, coeff=1.0, sscale=2.0, label='',
-            legend=False):
+            legend=True):
         '''
         Adds xy data (epicenters) size-scaled by some specified data value
         :param array longitude:
@@ -470,31 +470,43 @@ class HMTKBaseMap(object):
         ds = np.arange(mindat,maxdat+1,np.ceil(drange/5))
 
         if legend:
-            self._add_legend_size_scaled(ds, color, sz, shape, label)
+            self._add_legend_size_scaled(ds, color, sz, shape, label, sscale)
 
-
-    def _add_legend_size_scaled(self, data, color, size, shape, label):
+    def _add_legend_size_scaled(self, data, color, size, shape, label, sscale):
         '''
         adds legend for catalogue seismicity.  
         '''
 
         fname = '{}/legend_ss.csv'.format(self.out)
-        fou = open(fname, 'w')
-        fou.write("L 12p R {}\n".format(label))
-        fou.write('G 0.1i\n')
-        fmt = "S 0.4i {} {:.4f} {} 0.0c,black 2.0c {:.0f} \n"
+        chk_file = 1 if os.path.isfile(fname) else 0
 
-        sh = shape.replace('-S','').replace("'",'')
+        
+        if chk_file == 0:
+            fou = open(fname, 'a')
+            fou.write("L 12p R {}\n".format(label))
+            fou.write('G 0.1i\n')
 
-        for dd,ss in zip(data, size):
-            fou.write(fmt.format(sh, ss, color, dd))
-            fou.write('G 0.2i\n')
+        if sscale is not None:
+            fmt = "S 0.4i {} {:.4f} {} 0.0c,black 2.0c {:.0f} \n"
+    
+            sh = shape.replace('-S','').replace("'",'')
+    
+            for dd,ss in zip(data, size):
+                fou.write(fmt.format(sh, ss, color, dd))
+                fou.write('G 0.2i\n')
+    
+        else:
+            fou = open(fname,'a')
+            fmt = "S 0.4i {} {} {} 0.0c,black 2.0c {} \n"
+            sh = shape.replace('-S','').replace("'",'')
+            fou.write(fmt.format(sh, size[0], color, label))
 
         fou.close()
-
+    
         tmp = "gmt legend {} -DJMR -C0.3c ".format(fname)
         tmp += "--FONT_ANNOT_PRIMARY=9p"
-        self.cmds.append(tmp)
+        if chk_file==0:
+            self.cmds.append(tmp)
 
     def _select_color_mag(self, mag):
         '''
