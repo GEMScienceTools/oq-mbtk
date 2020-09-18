@@ -116,7 +116,8 @@ class HMTKBaseMap(object):
         self.cmds.append("gmt coast -Df {} {} -Wthin -Gwheat".format(self.R, self.J))
         
 
-    def add_catalogue(self, cat, scale=0.05, cpt_file="tmp.cpt"):
+    def add_catalogue(self, cat, scale=0.05, cpt_file="tmp.cpt", color_field='depth',
+                      logscale=True):
         '''
         adds catalogue to map
         :param cat:
@@ -126,29 +127,38 @@ class HMTKBaseMap(object):
             Scaling coefficient for symbol size per magnitude.
         :param str cpt_file:
             Name of file (no path) where color pallet with be saved
+        :param str color_field:
+            Field used to color the symbols. Must correspond to header.
         '''
         cpt_fle = "{}/{}".format(self.out, cpt_file)
 
-        deps = cat.data['depth']
-        zmax = max(deps)
+        zfield = cat.data[color_field]
+        zmax = max(zfield)
+        zmin = min(zfield)
 
         lats = cat.data['latitude']
         lons = cat.data['longitude']
         mags_raw = cat.data['magnitude']
         mags = [scale*10**(-1.5+m*0.3) for m in mags_raw]
         
-        df = pd.DataFrame({'lo':lons, 'la':lats, 'd':deps, 'm':mags})
+        df = pd.DataFrame({'lo':lons, 'la':lats, 'd':zfield, 'm':mags})
         cat_tmp = '{}/cat_tmp.csv'.format(self.out)
         df.sort_values(by=['m']).to_csv(cat_tmp, index = False, header = False)
 
         if cpt_fle == "{}/tmp.cpt".format(self.out):
-            self.cmds.append("gmt makecpt -Cjet -T0/{}/30+n -Q -D > \
-                             {}".format(np.log10(zmax)*1.1, cpt_fle))
+            if logscale is True:
+                self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -Q -D > \
+                                 {}".format(np.log10(zmin), np.log10(zmax), cpt_fle))
+            else:
+                self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -D > \
+                                 {}".format(zmin, zmax, cpt_fle))
 
-        space = np.floor(abs(min(deps)-max(deps))/4)
+        space = np.floor(abs(min(zfield)-max(zfield))/4)
         tmp = "gmt plot {} -Sc -C{} -Wthinnest,black".format(cat_tmp,cpt_fle)
         self.cmds.append(tmp)
-        self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format(space, cpt_fle))
+        self.cmds.append('gmt colorbar -DJBC -Ba{}+l"{}" -C{}'.format(space, 
+                                                                      color_field,
+                                                                      cpt_fle))
         
         self._add_legend_catalogue(mags_raw, scale)
 
