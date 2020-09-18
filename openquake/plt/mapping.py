@@ -443,7 +443,7 @@ class HMTKBaseMap(object):
             with sscale, sets relative size among data values
         :param float sscale:
             with coeff, sets relative size among data values
-            set sscale=None to use constant size of coeff
+            set sscale=None to use constant size set by coeff
         :param str label:
             Data label for the legend. Also used to name tmp file
         '''
