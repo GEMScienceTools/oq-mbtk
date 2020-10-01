@@ -1,7 +1,6 @@
 import os
 import sys
 import subprocess
-import shutil
 import pandas as pd
 import numpy as np
 from openquake.baselib import sap
@@ -57,6 +56,7 @@ class HMTKBaseMap(object):
         
         self.config = config
         self.out = output_folder
+        self.overwrite = overwrite
 
         if self.config['title']:
             self.title = config['title']
@@ -75,24 +75,32 @@ class HMTKBaseMap(object):
 
 #        self.cmds = []
         self._build_basemap()
+        self.gmt_files_list = []
 
 
         # initiate integers that may be replaced when making the colors
         self.max_cf_depth = 1000
         self.max_sf_depth = 1000
 
+
+    def _check_output(self,filename):
         # create the output directory. Check if it exists, whether overwrite 
         # is allowed, rm dir contents or fail
 
         if os.path.exists(self.out):
-            if overwrite == True:
-                shutil.rmtree(self.out)
+            pass
+        else:
+            os.makedirs(self.out)
+
+        outfile = os.path.join(self.out, filename)
+        if os.path.exists(outfile):
+            if self.overwrite == True:
+                os.remove(outfile)
             else:
-                warning = "{} directory already exists!\n".format(self.out)
-                warning += "Set overwrite=True or change the output path."
+                warning = "output file {}/{} already exists!\n".format(self.out, filename)
+                warning += "Set overwrite=True or change the output directory or filename."
                 raise ValueError(warning)
 
-        os.makedirs(self.out)
             
 
     def _build_basemap(self):
@@ -110,7 +118,8 @@ class HMTKBaseMap(object):
         self.cmds.append("gmt coast -Df {} {} -Wthin -Gwheat".format(self.R, self.J))
         
 
-    def add_catalogue(self, cat, scale=0.05, cpt_file="tmp.cpt"):
+    def add_catalogue(self, cat, scale=0.05, cpt_file="tmp.cpt", color_field='depth',
+                      logscale=True):
         '''
         adds catalogue to map
         :param cat:
@@ -120,31 +129,44 @@ class HMTKBaseMap(object):
             Scaling coefficient for symbol size per magnitude.
         :param str cpt_file:
             Name of file (no path) where color pallet with be saved
+        :param str color_field:
+            Field used to color the symbols. Must correspond to header.
         '''
         cpt_fle = "{}/{}".format(self.out, cpt_file)
 
-        deps = cat.data['depth']
-        zmax = max(deps)
+        zfield = cat.data[color_field]
+        zmax = max(zfield)
+        zmin = min(zfield)
 
         lats = cat.data['latitude']
         lons = cat.data['longitude']
         mags_raw = cat.data['magnitude']
         mags = [scale*10**(-1.5+m*0.3) for m in mags_raw]
         
-        df = pd.DataFrame({'lo':lons, 'la':lats, 'd':deps, 'm':mags})
+        df = pd.DataFrame({'lo':lons, 'la':lats, 'd':zfield, 'm':mags})
         cat_tmp = '{}/cat_tmp.csv'.format(self.out)
+        self.gmt_files_list.append(cat_tmp)
+
         df.sort_values(by=['m']).to_csv(cat_tmp, index = False, header = False)
 
         if cpt_fle == "{}/tmp.cpt".format(self.out):
-            self.cmds.append("gmt makecpt -Cjet -T0/{}/30+n -Q -D > \
-                             {}".format(np.log10(zmax)*1.1, cpt_fle))
+            if logscale is True:
+                self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -Q -D > \
+                                 {}".format(np.log10(zmin), np.log10(zmax), cpt_fle))
+            else:
+                self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -D > \
+                                 {}".format(zmin, zmax, cpt_fle))
+            self.gmt_files_list.append(cpt_fle)
 
-        space = np.floor(abs(min(deps)-max(deps))/4)
+        space = np.floor(abs(min(zfield)-max(zfield))/4)
         tmp = "gmt plot {} -Sc -C{} -Wthinnest,black".format(cat_tmp,cpt_fle)
         self.cmds.append(tmp)
-        self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format(space, cpt_fle))
+        self.cmds.append('gmt colorbar -DJBC -Ba{}+l"{}" -C{}'.format(space, 
+                                                                      color_field,
+                                                                      cpt_fle))
         
         self._add_legend_catalogue(mags_raw, scale)
+        self.gmt_files_list.append('{}/legend.csv'.format(self.out))
 
     def _add_legend_catalogue(self, mags, scale):
         '''
@@ -190,6 +212,7 @@ class HMTKBaseMap(object):
         add_plot_line = self.mk_plt_csv(lons, lats, filename, lines=1)
 
         if add_plot_line == 1:
+            self.gmt_files_list.append(filename)
             self.cmds.append('gmt plot {} -L -Wthick,{}'.format(filename, border))
 
     def _plot_point_source(self, source, pointsize=0.5):
@@ -211,6 +234,7 @@ class HMTKBaseMap(object):
 
         if add_plot_line == 1:
             self.cmds.append('gmt plot {} -Ss{} -Gred'.format(filename, pointsize))
+            self.gmt_files_list.append(filename)
 
 
     def _plot_simple_fault(self, source):
@@ -244,7 +268,9 @@ class HMTKBaseMap(object):
                                         color_column=depths, lines=1)
         
         if add_plot_line == 1:
+            self.gmt_files_list.append(filename)
             cpt_fle = "{}/sf_tmp.cpt".format(self.out)
+            self.gmt_files_list.append(cpt_fle)
             self.cmds.append("gmt makecpt -Cjet -T0/{}/30+n > {:s}".format(
                 self.max_sf_depth*1.2, cpt_fle))
 
@@ -255,12 +281,14 @@ class HMTKBaseMap(object):
         filename = '{}/mtkSimpleFaultProjection.csv'.format(self.out)
         add_plot_line = self.mk_plt_csv(outline[:, 0], outline[:, 1], filename, lines=1)
         if add_plot_line == 1:
+            self.gmt_files_list.append(filename)
             self.cmds.append('gmt plot {} -Wblack'.format(filename))
         # then fault trace 
         filename = '{}/mtkSimpleFaultTrace.csv'.format(self.out)
         add_plot_line = self.mk_plt_csv(trace_lons, trace_lats, filename, lines=1)
         
         if add_plot_line == 1:
+            self.gmt_files_list.append(filename)
             self.cmds.append('gmt plot {} -Wthick,red'.format(filename))
 
     def _plot_complex_fault(self, source):
@@ -288,7 +316,9 @@ class HMTKBaseMap(object):
 
         if add_plot_line == 1:
             # Making cpt
+            self.gmt_files_list.append(filename)
             cpt_fle = "{}/cf_tmp.cpt".format(self.out)
+            self.gmt_files_list.append(cpt_fle)
             self.cmds.append("gmt makecpt -Cjet -T0/{}/2> {:s}".format(
                 self.max_cf_depth, cpt_fle))
 
@@ -300,6 +330,7 @@ class HMTKBaseMap(object):
         add_plot_line = self.mk_plt_csv(outline[:, 0], outline[:, 1], filename, lines=1)
        
         if add_plot_line == 1:
+            self.gmt_files_list.append(filename)
             self.cmds.append('gmt plot {} -Wthick,black'.format(filename))
 
     def mk_plt_csv(self, lons, lats, filename, color_column=None, lines=0):
@@ -330,7 +361,9 @@ class HMTKBaseMap(object):
             d = {'lons': lons, 'lats': lats, 'zs': color_column}
             df = pd.DataFrame(data=d)
 
-        add_plot_line = 0 if os.path.isfile(filename) else 1
+        #add_plot_line = 0 if os.path.isfile(filename) else 1
+        chk = sum([1 if c.find(filename)>0 else 0 for c in self.cmds])
+        add_plot_line = 0 if chk > 0 else 1
 
         with open(filename,'a') as f:
              df.to_csv(f, header=False, index=False)
@@ -358,7 +391,7 @@ class HMTKBaseMap(object):
                 else:
                     pass
 
-    def add_colour_scaled_points(self, longitude, latitude, data, label="Data value",
+    def add_colour_scaled_points(self, longitude, latitude, data, label='',
             shape="-Ss", size=0.3, logscale=False):
         '''
         Adds xy data (epicenters) colored by some specified data value
@@ -369,7 +402,7 @@ class HMTKBaseMap(object):
         :param array data:
             array to be used to color-scale the xy data
         :param str label:
-            Data label for the colorbar
+            Data label for the colorbar and plot title. Also used to name tmp file
         :param str shape: 
             shape of the plotted data. Must start with '-S'. Default is a square.
             See GMT documentation.
@@ -384,6 +417,7 @@ class HMTKBaseMap(object):
 
 
         cpt_fle = "{}/tmp_col_dat.cpt".format(self.out)
+        self.gmt_files_list.append(cpt_fle)
         if logscale:
             self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -Q -D > \
                              {}".format(min(data), max(data), cpt_fle))
@@ -393,7 +427,8 @@ class HMTKBaseMap(object):
 
 
         df = pd.DataFrame({'lo':longitude, 'la':latitude, 'c':data})
-        dat_tmp = '{}/tmp_dat_col.csv'.format(self.out)
+        dat_tmp = '{}/tmp_dat_col{}.csv'.format(self.out, label.replace(' ','-'))
+        self.gmt_files_list.append(dat_tmp)
         df.sort_values(by=['c']).to_csv(dat_tmp, index = False, header = False)
 
         space = np.floor(abs(min(data)-max(data))/3)
@@ -401,7 +436,8 @@ class HMTKBaseMap(object):
         self.cmds.append('gmt colorbar -DJBC -Ba{}+l{} -C{}'.format(space, label, cpt_fle))
 
     def add_size_scaled_points(self, longitude, latitude, data, shape='-Ss',
-            logplot=False, color='blue', smin=0.01, coeff=1.0, sscale=2.0, label=''):
+            logplot=False, color='blue', smin=0.01, coeff=1.0, sscale=2.0, label='',
+            legend=True):
         '''
         Adds xy data (epicenters) size-scaled by some specified data value
         :param array longitude:
@@ -426,17 +462,22 @@ class HMTKBaseMap(object):
             with sscale, sets relative size among data values
         :param float sscale:
             with coeff, sets relative size among data values
+            set sscale=None to use constant size set by coeff
         :param str label:
-            Data label for the legend 
+            Data label for the legend. Also used to name tmp file
         '''
 
         if logplot:
             data = np.log10(data.copy())
 
-        size = smin + coeff * data ** sscale
+        if sscale is None:
+            sz = [coeff] * len(latitude)
+        else: 
+            sz = smin + coeff * data ** sscale
 
-        df = pd.DataFrame({'lo':longitude, 'la':latitude, 's':size})
-        dat_tmp = '{}/tmp_dat_size.csv'.format(self.out)
+        df = pd.DataFrame({'lo':longitude, 'la':latitude, 's':sz})
+        dat_tmp = '{}/tmp_dat_size{}.csv'.format(self.out, label.replace(' ','-'))
+        self.gmt_files_list.append(dat_tmp)
         df.to_csv(dat_tmp, index = False, header = False)
 
 
@@ -447,33 +488,53 @@ class HMTKBaseMap(object):
         drange = abs(mindat - maxdat)
         
         ds = np.arange(mindat,maxdat+1,np.ceil(drange/5))
-        sz = smin + coeff * ds ** sscale
 
-        self._add_legend_size_scaled(ds, color, sz, shape, label)
+        if legend:
+            self._add_legend_size_scaled(ds, color, sz, shape, label, sscale)
 
-
-    def _add_legend_size_scaled(self, data, color, size, shape, label):
+    def _add_legend_size_scaled(self, data, color, size, shape, label, sscale):
         '''
         adds legend for catalogue seismicity.  
         '''
 
         fname = '{}/legend_ss.csv'.format(self.out)
-        fou = open(fname, 'w')
-        fou.write("L 12p R {}\n".format(label))
-        fou.write('G 0.1i\n')
-        fmt = "S 0.4i {} {:.4f} {} 0.0c,black 2.0c {:.0f} \n"
+        chk_file = 1 if os.path.isfile(fname) else 0
 
-        sh = shape.replace('-S','').replace("'",'')
+        
+        if chk_file == 0:
+            self.gmt_files_list.append(fname)
+            fou = open(fname, 'w')
+            if sscale is not None:
+                fou.write("L 12p R {}\n".format(label))
+                fou.write('G 0.1i\n')
+        else:
+            fou = open(fname, 'a')
 
-        for dd,ss in zip(data, size):
-            fou.write(fmt.format(sh, ss, color, dd))
-            fou.write('G 0.2i\n')
+        if sscale is not None:
+            fmt = "S 0.4i {} {:.4f} {} 0.0c,black 2.0c {:.0f} \n"
+    
+            sh = shape.replace('-S','').replace("'",'')
+    
+            for dd,ss in zip(data, size):
+                fou.write(fmt.format(sh, ss, color, dd))
+                fou.write('G 0.2i\n')
+    
+        else:
+            fou = open(fname,'a')
+            fmt = "S 0.4i {} {} {} 0.0c,black 2.0c {} \n"
+            sh = shape.replace('-S','').replace("'",'')
+            fou.write(fmt.format(sh, size[0], color, label))
 
         fou.close()
-
+    
         tmp = "gmt legend {} -DJMR -C0.3c ".format(fname)
-        tmp += "--FONT_ANNOT_PRIMARY=9p"
-        self.cmds.append(tmp)
+        tmp += "--FONT_ANNOT_PRIMARY=12p"
+
+        chk = sum([1 if c.find(fname)>0 else 0 for c in self.cmds])
+        add_plot_line = 0 if chk > 0 else 1
+
+        if add_plot_line==1:
+            self.cmds.append(tmp)
 
     def _select_color_mag(self, mag):
         '''
@@ -524,42 +585,54 @@ class HMTKBaseMap(object):
         #TODO
         pass
 
-    def savemap(self, filename=None, verb=False):
+    def savemap(self, filename=None, save_script=False, verb=False):
         '''
         Saves map by finalizing GMT script and executing it line by line
         :param string filename:
-            filename for output pdf
+            filename for output. include the suffix which indicates the desired 
+            file type. limited to "pdf", "png", and "jpg". defaults to pdf
+        :param boolean save_script:
+            true in order to save the GMT script and its needed files. 
+            if false, the temporary files are erased
         :param verb:
             if True, print GMT commands during execution
         '''
 
-        # file must be a pdf. set path and modify accordingly 
-
-        if filename != None:
-            begin = 'gmt begin {}/{}'.format(self.out, filename)
-            if begin[-4:] != '.pdf':
-                begin = begin + '.pdf'
+        # set file name and file type 
+        if filename != None and "." in filename[-4:]:
+            filetype = filename[-3:]
+            filestring = filename[:-4]
             
-
+        elif filename != None and "." not in filename[-4:]:
+            filetype = "pdf"
+            filestring = filename
         else:
-            begin = 'gmt begin {}/map.pdf'.format(self.out)
-
-        self.cmds[0] = begin
+            filetype = "pdf"
+            filestring = "map"
 
         # remove any old instances of gmt end, then re-add
         # necessary in case plotting occurs at differt stages
 
-        self.cmds=[x for x in self.cmds if x != "gmt end"]
+        self.cmds=[x for x in self.cmds if x != "gmt end" and "gmt figure" not in x]
+
+        self.cmds.insert(1, "gmt figure {}/{} {}".format(self.out, filestring, filetype))
         self.cmds.append("gmt end")
+
+        self._check_output(filename)
 
         for cmd in self.cmds:
             if verb:
                 print(cmd)
             out = subprocess.call(cmd, shell=True)
 
-        print("Map saved to {}.".format(begin.split(' ')[-1]))
+        print("Map saved to {}/{}.{}.".format(self.out, filestring, filetype))
+        
+        if save_script==True:
+            self._save_gmt_script(scriptname=filename.replace(filetype,'sh'))
+        else:
+            [os.remove(fi) for fi in self.gmt_files_list]
 
-    def save_gmt_script(self, filename="gmt_plotter.sh"):
+    def _save_gmt_script(self, scriptname="gmt_plotter.sh"):
         '''
         saves the gmt plotting commands as a shell script
         :param string filename:
@@ -569,7 +642,7 @@ class HMTKBaseMap(object):
         if self.cmds[-1] != "gmt end":
             self.cmds.append("gmt end")
 
-        fname = '{}/{}'.format(self.out, filename)
+        fname = '{}/{}'.format(self.out, scriptname)
         
         with open(fname,'w') as f:
             f.write('\n'.join(self.cmds))
