@@ -57,7 +57,7 @@ def ISCMs_toGCMTMw(magnitude):
     Converts an ISC-Ms value to Mw using the ISC-GEM exponential regression
     model
     '''
-    return exp(-0.22 + (0.23 * magnitude)) + 2.86
+    return [exp(-0.22 + (0.23 * m)) + 2.86 for m in magnitude]
 
 
 def ISCMs_toGCMTMw_Sigma(magnitude):
@@ -71,7 +71,7 @@ def ISCmb_toGCMTMw(magnitude):
     Converts an ISC-mb value to Mw using the ISC-GEM exponential regression
     model
     '''
-    return exp(-4.66 + (0.86 * magnitude)) + 4.56
+    return [exp(-4.66 + (0.86 * m)) + 4.56 for m in magnitude]
 
 
 def ISCmb_toGCMTMw_Sigma(magnitude):
@@ -85,10 +85,8 @@ def ISCGORMs_toGCMTMw(magnitude):
     Converts an ISC-Ms value to Mw using the ISC-GEM general orthogonal
     regression model
     '''
-    if magnitude <= 6.47:
-        return 0.67 * magnitude + 2.13
-    else:
-        return 1.10 * magnitude - 0.67
+    return [0.67 * m + 2.13 if m <= 6.47 else 1.10 * m - 0.67 
+            for m in magnitude]
 
 
 def ISCGORMs_toGCMTMw_Sigma(magnitude):
@@ -102,7 +100,7 @@ def ISCGORmb_toGCMTMw(magnitude):
     Converts an ISC-mb value to Mw using the ISC-GEM general orthogonal
     regression model
     '''
-    return 1.38 * magnitude - 1.79
+    return [1.38 * m - 1.79 for m in magnitude]
 
 
 def ISCGORmb_toGCMTMw_Sigma(magnitude):
