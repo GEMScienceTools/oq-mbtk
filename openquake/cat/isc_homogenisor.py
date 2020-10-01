@@ -57,7 +57,7 @@ def ISCMs_toGCMTMw(magnitude):
     Converts an ISC-Ms value to Mw using the ISC-GEM exponential regression
     model
     '''
-    return [exp(-0.22 + (0.23 * m)) + 2.86 for m in magnitude]
+    return [exp(-0.22 + (0.23 * m)) + 2.86 for m in np.array(magnitude).flatten()]
 
 
 def ISCMs_toGCMTMw_Sigma(magnitude):
@@ -71,7 +71,7 @@ def ISCmb_toGCMTMw(magnitude):
     Converts an ISC-mb value to Mw using the ISC-GEM exponential regression
     model
     '''
-    return [exp(-4.66 + (0.86 * m)) + 4.56 for m in magnitude]
+    return [exp(-4.66 + (0.86 * m)) + 4.56 for m in np.array(magnitude).flatten()]
 
 
 def ISCmb_toGCMTMw_Sigma(magnitude):
@@ -86,7 +86,7 @@ def ISCGORMs_toGCMTMw(magnitude):
     regression model
     '''
     return [0.67 * m + 2.13 if m <= 6.47 else 1.10 * m - 0.67 
-            for m in magnitude]
+            for m in np.array(magnitude).flatten()]
 
 
 def ISCGORMs_toGCMTMw_Sigma(magnitude):
@@ -100,7 +100,7 @@ def ISCGORmb_toGCMTMw(magnitude):
     Converts an ISC-mb value to Mw using the ISC-GEM general orthogonal
     regression model
     '''
-    return [1.38 * m - 1.79 for m in magnitude]
+    return [1.38 * m - 1.79 for m in np.array(magnitude).flatten()]
 
 
 def ISCGORmb_toGCMTMw_Sigma(magnitude):
