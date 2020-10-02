@@ -36,7 +36,7 @@ from __future__ import print_function
 import numpy as np
 from scipy.misc import derivative
 from datetime import date
-from math import exp, sqrt
+from math import sqrt
 from openquake.cat.utils import _prepare_coords
 
 
@@ -57,7 +57,7 @@ def ISCMs_toGCMTMw(magnitude):
     Converts an ISC-Ms value to Mw using the ISC-GEM exponential regression
     model
     '''
-    return [exp(-0.22 + (0.23 * m)) + 2.86 for m in np.array(magnitude).flatten()]
+    return np.exp(-0.22 + (0.23 * magnitude)) + 2.86
 
 
 def ISCMs_toGCMTMw_Sigma(magnitude):
@@ -71,7 +71,7 @@ def ISCmb_toGCMTMw(magnitude):
     Converts an ISC-mb value to Mw using the ISC-GEM exponential regression
     model
     '''
-    return [exp(-4.66 + (0.86 * m)) + 4.56 for m in np.array(magnitude).flatten()]
+    return np.exp(-4.66 + (0.86 * magnitude)) + 4.56
 
 
 def ISCmb_toGCMTMw_Sigma(magnitude):
@@ -100,7 +100,7 @@ def ISCGORmb_toGCMTMw(magnitude):
     Converts an ISC-mb value to Mw using the ISC-GEM general orthogonal
     regression model
     '''
-    return [1.38 * m - 1.79 for m in np.array(magnitude).flatten()]
+    return 1.38 * magnitude - 1.79
 
 
 def ISCGORmb_toGCMTMw_Sigma(magnitude):
