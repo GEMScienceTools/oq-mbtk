@@ -115,7 +115,7 @@ class HMTKBaseMap(object):
         tmp += " {}".format(self.ax)
         self.cmds.append(tmp)
 
-        self.cmds.append("gmt coast -Df {} {} -Wthin -Gwheat".format(self.R, self.J))
+        self.cmds.append("gmt coast -Di {} {} -Wthin -Gwheat".format(self.R, self.J))
         
 
     def add_catalogue(self, cat, scale=0.05, cpt_file="tmp.cpt", color_field='depth',
