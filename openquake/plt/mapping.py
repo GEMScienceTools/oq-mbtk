@@ -4,7 +4,6 @@ import subprocess
 import pandas as pd
 import numpy as np
 from openquake.baselib import sap
-from wand.image import Image as WImage
 from openquake.hazardlib.source.complex_fault import ComplexFaultSurface
 from openquake.hazardlib.source.simple_fault import SimpleFaultSurface
 
