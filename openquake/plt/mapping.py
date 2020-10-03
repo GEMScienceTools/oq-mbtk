@@ -137,6 +137,13 @@ class HMTKBaseMap(object):
         zmax = max(zfield)
         zmin = min(zfield)
 
+        if color_field == 'magnitude' and logscale == True:
+            print('Logscale cannot be used with magnitude; setting logscale=False')
+            logscale=False
+
+        if color_field == 'depth' and zmin == 0:
+            zmin = 1
+
         lats = cat.data['latitude']
         lons = cat.data['longitude']
         mags_raw = cat.data['magnitude']
