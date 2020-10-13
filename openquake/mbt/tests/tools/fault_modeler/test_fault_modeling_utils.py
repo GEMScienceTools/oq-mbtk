@@ -239,9 +239,19 @@ class TestModelingUtils(unittest.TestCase):
     def test_net_slip_from_strike_slip_shortening(self):
         pass
 
-    @unittest.skip("not yet implemented")
+    #@unittest.skip("not yet implemented")
     def test_net_slip_from_vert_slip_shortening(self):
-        pass
+        fault = {'coords': [[0., 0.], [0., 1.]],
+                'shortening_rate': '(2.,1.,3.)', 
+                'vert_slip_rate': '(2.,1.,3.)', 
+                'slip_type': 'Reverse-Dextral'}
+
+        net_slip_rate = fmu.net_slip_from_vert_slip_shortening(fault)
+
+        net_slip_true_rate = 3.999999999934677
+
+        self.assertTrue(abs(net_slip_rate - net_slip_true_rate) < 0.01)
+                 
 
     @unittest.skip("not yet implemented")
     def test_net_slip_from_vert_strike_slip(self):
