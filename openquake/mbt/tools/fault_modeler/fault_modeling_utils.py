@@ -501,7 +501,6 @@ def get_vals_from_tuple(tup):
     if len(vals) == 0:
         raise Exception(ValueError)
     elif len(vals) == 1:
-        print(vals)
         return vals
     elif len(vals) > 3:
         raise ValueError
