@@ -1323,8 +1323,8 @@ def dip_slip_from_vert_slip(fault_dict, slip_class='mle', _abs=True,
                                      slip_class=slip_class,
                                      param_map=param_map)
 
-    dips = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_dip',
-                                               param_map=param_map))
+    dips = get_dip(fault_dict, requested_val='all', defaults=defaults,
+                    param_map=param_map)
 
     dip_slip_rate = vert_slip_rate / np.sin(np.radians(dips))
 
@@ -1575,6 +1575,8 @@ def net_slip_from_vert_slip_shortening(fault_dict, slip_class='mle', _abs=True,
 
     net_slip_rates = dip_slip_rate / np.cos(rake_diffs)
 
+    if np.isscalar(net_slip_rates):
+        return net_slip_rates
     if slip_class == 'mle':
         if len(net_slip_rates) == 3:
             return net_slip_rates[0]
