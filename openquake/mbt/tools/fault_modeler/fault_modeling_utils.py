@@ -1722,8 +1722,7 @@ def dip_slip_from_shortening(fault_dict, slip_class='mle', _abs=True,
                                  slip_class=slip_class,
                                  param_map=param_map)
     dips = get_dip(fault_dict, defaults=defaults, param_map=param_map)
-#    dips = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_dip',
-#                                               param_map=param_map))
+
     if np.isscalar(dips):
         dip = dips
     elif len(dips) == 1:
