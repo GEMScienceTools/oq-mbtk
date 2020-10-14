@@ -685,7 +685,7 @@ rake_map = {'Normal': -90.,
             'Strike-Slip': 0.,
             'Thrust': 90.,
             'Blind-Thrust': 90.,
-            'Spreading-Ridge': -90.}
+            'Spreading_Ridge': -90.}
 
 dip_map = {'Normal': 60.,
            'Normal-Dextral': 65.,
@@ -702,7 +702,7 @@ dip_map = {'Normal': 60.,
            'Strike-Slip': 90.,
            'Thrust': 40.,
            'Blind-Thrust': 40.,
-           'Spreading-Ridge': 60.}
+           'Spreading_Ridge': 60.}
 
 # To transform literal values into numbers
 direction_map = {'N': 0.,
@@ -1023,7 +1023,6 @@ def get_rake(fault_dict, requested_val='mle', defaults=defaults,
             rake = rake_map[slip_type]
         except KeyError as e:
             print(e)
-
     return rake
 
 
@@ -1273,10 +1272,13 @@ def net_slip_from_strike_slip_fault_geom(fault_dict, slip_class='mle',
     if _abs is True:
         net_slip_rate = np.abs(net_slip_rate)
 
-    if np.isscalar(rake):
+    if np.isscalar(net_slip_rate):
         return net_slip_rate
     elif slip_class == 'mle':
-        return np.sort(net_slip_rate)[1]
+        if len(net_slip_rate) == 3:
+            return np.sort(net_slip_rate)[0]
+        elif len(net_slip_rate) == 1:
+            return net_slip_rate[0]
     elif slip_class == 'min':
         return np.min(net_slip_rate)
     elif slip_class == 'max':
@@ -1323,8 +1325,8 @@ def dip_slip_from_vert_slip(fault_dict, slip_class='mle', _abs=True,
                                      slip_class=slip_class,
                                      param_map=param_map)
 
-    dips = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_dip',
-                                               param_map=param_map))
+    dips = get_dip(fault_dict, requested_val='all', defaults=defaults,
+                    param_map=param_map)
 
     dip_slip_rate = vert_slip_rate / np.sin(np.radians(dips))
 
@@ -1575,6 +1577,8 @@ def net_slip_from_vert_slip_shortening(fault_dict, slip_class='mle', _abs=True,
 
     net_slip_rates = dip_slip_rate / np.cos(rake_diffs)
 
+    if np.isscalar(net_slip_rates):
+        return net_slip_rates
     if slip_class == 'mle':
         if len(net_slip_rates) == 3:
             return net_slip_rates[0]
@@ -1716,8 +1720,8 @@ def dip_slip_from_shortening(fault_dict, slip_class='mle', _abs=True,
     short_rate = fetch_slip_rate(fault_dict, 'shortening_rate',
                                  slip_class=slip_class,
                                  param_map=param_map)
-    dips = get_vals_from_tuple(fetch_param_val(fault_dict, 'average_dip',
-                                               param_map=param_map))
+    dips = get_dip(fault_dict, defaults=defaults, param_map=param_map)
+
     if np.isscalar(dips):
         dip = dips
     elif len(dips) == 1:
@@ -2054,7 +2058,7 @@ def calc_fault_width_from_length(
 
 WIDTH_CLASS = {'cl1': ['Normal', 'Reverse', 'Thrust', 'Normal-Dextral',
                        'Normal-Sinistral', 'Reverse-Sinistral',
-                       'Reverse-Dextral', 'Spreading-Ridge',
+                       'Reverse-Dextral', 'Spreading_Ridge',
                        'Blind-Thrust'],
                'cl2': ['Dextral', 'Sinistral', 'Strike-Slip',
                        'Dextral-Normal', 'Dextral-Reverse',
