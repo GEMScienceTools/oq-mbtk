@@ -57,6 +57,13 @@ class HMTKBaseMap(object):
         self.out = output_folder
         self.overwrite = overwrite
 
+        # make the output directory if it doesn't exist
+        if os.path.exists(self.out):
+            pass
+        else:
+            os.makedirs(self.out)
+
+        # set the title if it is specified
         if self.config['title']:
             self.title = config['title']
         else:
@@ -85,11 +92,6 @@ class HMTKBaseMap(object):
     def _check_output(self,filename):
         # create the output directory. Check if it exists, whether overwrite 
         # is allowed, rm dir contents or fail
-
-        if os.path.exists(self.out):
-            pass
-        else:
-            os.makedirs(self.out)
 
         outfile = os.path.join(self.out, filename)
         if os.path.exists(outfile):
