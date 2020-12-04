@@ -129,9 +129,12 @@ class HMTKBaseMap(object):
         :param float scale:
             Scaling coefficient for symbol size per magnitude.
         :param str cpt_file:
-            Name of file (no path) where color pallet with be saved
+            Name of color pallet file (no path). The default generates
+            a color pallet.
         :param str color_field:
             Field used to color the symbols. Must correspond to header.
+        :param str logscale:
+            Uses logscale to make the color pallet, if generating it here.
         '''
 
         zfield = cat.data[color_field]
