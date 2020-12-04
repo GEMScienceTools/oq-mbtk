@@ -133,7 +133,6 @@ class HMTKBaseMap(object):
         :param str color_field:
             Field used to color the symbols. Must correspond to header.
         '''
-        cpt_fle = "{}/{}".format(self.out, cpt_file)
 
         zfield = cat.data[color_field]
         zmax = max(zfield)
@@ -157,7 +156,8 @@ class HMTKBaseMap(object):
 
         df.sort_values(by=['m']).to_csv(cat_tmp, index = False, header = False)
 
-        if cpt_fle == "{}/tmp.cpt".format(self.out):
+        if cpt_file == "tmp.cpt":
+            cpt_fle = "{}/{}".format(self.out, cpt_file)
             if logscale is True:
                 self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -Q -D > \
                                  {}".format(np.log10(zmin), np.log10(zmax), cpt_fle))
@@ -165,6 +165,8 @@ class HMTKBaseMap(object):
                 self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -D > \
                                  {}".format(zmin, zmax, cpt_fle))
             self.gmt_files_list.append(cpt_fle)
+        else:
+            cpt_fle = cpt_file
 
         space = np.floor(abs(min(zfield)-max(zfield))/4)
         tmp = "gmt plot {} -Sc -C{} -Wthinnest,black".format(cat_tmp,cpt_fle)
