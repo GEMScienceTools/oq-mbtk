@@ -171,10 +171,13 @@ class HMTKBaseMap(object):
         else:
             cpt_fle = cpt_file
 
-        space = np.floor(abs(min(zfield)-max(zfield))/4)
         tmp = "gmt plot {} -Sc -C{} -Wthinnest,black".format(cat_tmp,cpt_fle)
         self.cmds.append(tmp)
-        self.cmds.append('gmt colorbar -DJBC -Ba{}+l"{}" -C{}'.format(space, 
+        if logscale:
+            self.cmds.append('gmt colorbar -DJBC -Ba+l"{}" -C{} -Q'.format(
+                                                             color_field, cpt_fle))
+        else:
+            self.cmds.append('gmt colorbar -DJBC -Ba+l"{}" -C{}'.format( 
                                                                       color_field,
                                                                       cpt_fle))
         
