@@ -428,18 +428,18 @@ class HMTKBaseMap(object):
         :param logscale:
             if True, scale colors in log space
         '''
-#        if not norm:
-#            norm = Normalize(vmin=np.min(data), vmax=np.max(data))
-
 
         cpt_fle = "{}/tmp_col_dat.cpt".format(self.out)
         self.gmt_files_list.append(cpt_fle)
         if logscale:
             self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -Q -D > \
-                             {}".format(min(data), max(data), cpt_fle))
+                             {}".format(np.log10(min(data)), 
+                                 np.log10(max(data)), cpt_fle))
+            qq = '-Q'
         else:
             self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -D > \
                              {}".format(min(data), max(data), cpt_fle))
+            qq = ''
 
 
         df = pd.DataFrame({'lo':longitude, 'la':latitude, 'c':data})
@@ -447,9 +447,8 @@ class HMTKBaseMap(object):
         self.gmt_files_list.append(dat_tmp)
         df.sort_values(by=['c']).to_csv(dat_tmp, index = False, header = False)
 
-        space = np.floor(abs(min(data)-max(data))/3)
         self.cmds.append('gmt plot {} {}{} -C{}'.format(dat_tmp, shape, size, cpt_fle))
-        self.cmds.append('gmt colorbar -DJBC -Ba{}+l{} -C{}'.format(space, label, cpt_fle))
+        self.cmds.append('gmt colorbar -DJBC -Ba+l{} -C{} {}'.format(label, cpt_fle, qq))
 
     def add_size_scaled_points(self, longitude, latitude, data, shape='-Ss',
             logplot=False, color='blue', smin=0.01, coeff=1.0, sscale=2.0, label='',
