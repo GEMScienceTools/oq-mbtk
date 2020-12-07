@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import subprocess
 import pandas as pd
@@ -79,7 +80,6 @@ class HMTKBaseMap(object):
                                         config['min_lat'],
                                         config['max_lat'])
 
-#        self.cmds = []
         self._build_basemap()
         self.gmt_files_list = []
 
@@ -231,7 +231,7 @@ class HMTKBaseMap(object):
             self.gmt_files_list.append(filename)
             self.cmds.append('gmt plot {} -L -Wthick,{}'.format(filename, border))
 
-    def _plot_point_source(self, source, pointsize=0.5):
+    def _plot_point_source(self, source):
         '''
         Adds point sources to mapping script. 
         :param source:
@@ -240,7 +240,10 @@ class HMTKBaseMap(object):
         :param float pointsize:
             sets the size of plotting symbols 
         '''
-
+        
+        pnum = int(re.sub("[^0-9]", "", self.J))
+        pointsize = 0.01 * pnum
+        
         lons = source.location.longitude
         lats = source.location.latitude
 
@@ -268,7 +271,7 @@ class HMTKBaseMap(object):
 
         fault_surface = SimpleFaultSurface.from_fault_data(
                 source.fault_trace, source.upper_seismogenic_depth,
-                source.lower_seismogenic_depth, source.dip, source.rupture_mesh_spacing)
+                source.lower_seismogenic_depth, source.dip, 5)
 
         outline = _fault_polygon_from_mesh(fault_surface)
 
@@ -290,7 +293,7 @@ class HMTKBaseMap(object):
             self.cmds.append("gmt makecpt -Cjet -T0/{}/30+n > {:s}".format(
                 self.max_sf_depth*1.2, cpt_fle))
 
-            self.cmds.append('gmt plot {} -C{} -Ss0.1 '.format(filename, cpt_fle))
+            self.cmds.append('gmt plot {} -C{} -Ss0.075 -t50 '.format(filename, cpt_fle))
             self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format(
                 '10', cpt_fle))
 
@@ -305,7 +308,7 @@ class HMTKBaseMap(object):
         
         if add_plot_line == 1:
             self.gmt_files_list.append(filename)
-            self.cmds.append('gmt plot {} -Wthick,red'.format(filename))
+            self.cmds.append('gmt plot {} -Wthick,black'.format(filename))
 
     def _plot_complex_fault(self, source):
         '''
@@ -316,7 +319,7 @@ class HMTKBaseMap(object):
         '''
 
         fault_surface = ComplexFaultSurface.from_fault_data(
-            source.edges, source.rupture_mesh_spacing)
+            source.edges, 5)
 
         outline = _fault_polygon_from_mesh(fault_surface)
 
@@ -338,7 +341,7 @@ class HMTKBaseMap(object):
             self.cmds.append("gmt makecpt -Cjet -T0/{}/2> {:s}".format(
                 self.max_cf_depth, cpt_fle))
 
-            self.cmds.append('gmt plot {} -C{} -Ss0.1 '.format(filename, cpt_fle))
+            self.cmds.append('gmt plot {} -C{} -Ss0.075 -t50'.format(filename, cpt_fle))
             self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format(
                 '10', cpt_fle))
 
@@ -377,7 +380,6 @@ class HMTKBaseMap(object):
             d = {'lons': lons, 'lats': lats, 'zs': color_column}
             df = pd.DataFrame(data=d)
 
-        #add_plot_line = 0 if os.path.isfile(filename) else 1
         chk = sum([1 if c.find(filename)>0 else 0 for c in self.cmds])
         add_plot_line = 0 if chk > 0 else 1
 
