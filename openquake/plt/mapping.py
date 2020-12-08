@@ -27,7 +27,7 @@ class HMTKBaseMap(object):
     Initiates a plot and a GMT mapping script 
     '''
 
-    def __init__(self, config, projection='-JM15', output_folder='gmt',
+    def __init__(self, config, projection='-JM15c', output_folder='gmt',
                  lat_lon_spacing=2., overwrite=False):
         """
         :param dict config:
@@ -449,7 +449,7 @@ class HMTKBaseMap(object):
         self.gmt_files_list.append(dat_tmp)
         df.sort_values(by=['c']).to_csv(dat_tmp, index = False, header = False)
 
-        self.cmds.append('gmt plot {} {}{} -C{}'.format(dat_tmp, shape, size, cpt_fle))
+        self.cmds.append('gmt plot {} {}{}c -C{}'.format(dat_tmp, shape, size, cpt_fle))
         self.cmds.append('gmt colorbar -DJBC -Ba+l{} -C{} {}'.format(label, cpt_fle, qq))
 
     def add_size_scaled_points(self, longitude, latitude, data, shape='-Ss',
@@ -467,8 +467,6 @@ class HMTKBaseMap(object):
             shape of the plotted data. Must start with '-S'. Default is a square.
             See GMT documentation.
             https://docs.generic-mapping-tools.org/latest/psxy.html#s
-        :param float size:
-            size of the plotted symbols
         :param logplot:
             if True, scale colors in log space
         :param str color:
@@ -482,6 +480,8 @@ class HMTKBaseMap(object):
             set sscale=None to use constant size set by coeff
         :param str label:
             Data label for the legend. Also used to name tmp file
+        :param boolean legend:
+            If True, add a legend to the plot
         '''
 
         if logplot:
@@ -498,7 +498,7 @@ class HMTKBaseMap(object):
         df.to_csv(dat_tmp, index = False, header = False)
 
 
-        self.cmds.append('gmt plot {} {} -G{} -Wblack'.format(dat_tmp, shape, color))
+        self.cmds.append('gmt plot {} {}c -G{} -Wblack'.format(dat_tmp, shape, color))
 
         mindat = np.floor(min(data))
         maxdat = np.ceil(max(data))
