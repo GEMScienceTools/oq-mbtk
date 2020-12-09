@@ -294,7 +294,7 @@ class HMTKBaseMap(object):
                 self.max_sf_depth*1.2, cpt_fle))
 
             self.cmds.append('gmt plot {} -C{} -Ss0.075 -t50 '.format(filename, cpt_fle))
-            self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format(
+            self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth to simple fault surface (km)" -C{}'.format(
                 '10', cpt_fle))
 
         filename = '{}/mtkSimpleFaultProjection.csv'.format(self.out)
@@ -342,7 +342,7 @@ class HMTKBaseMap(object):
                 self.max_cf_depth, cpt_fle))
 
             self.cmds.append('gmt plot {} -C{} -Ss0.075 -t50'.format(filename, cpt_fle))
-            self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format(
+            self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth to complex fault surface (km)" -C{}'.format(
                 '10', cpt_fle))
 
         filename = '{}/mtkComplexFaultOutline.csv'.format(self.out)
@@ -483,6 +483,11 @@ class HMTKBaseMap(object):
         :param boolean legend:
             If True, add a legend to the plot
         '''
+        # remove existing legend file
+        self.legendfi = os.path.join(self.out, 'legend_ss.txt')
+        if os.path.exists(self.legendfi):
+            if self.overwrite == True:
+                os.remove(self.legendfi)
 
         if logplot:
             data = np.log10(data.copy())
@@ -493,7 +498,8 @@ class HMTKBaseMap(object):
             sz = smin + coeff * data ** sscale
 
         df = pd.DataFrame({'lo':longitude, 'la':latitude, 's':sz})
-        dat_tmp = '{}/tmp_dat_size{}.csv'.format(self.out, label.replace(' ','-'))
+        lab_finame = re.sub('[^A-Za-z0-9]+', '', label)
+        dat_tmp = '{}/tmp_dat_size{}.csv'.format(self.out, lab_finame) 
         self.gmt_files_list.append(dat_tmp)
         df.to_csv(dat_tmp, index = False, header = False)
 
@@ -514,18 +520,18 @@ class HMTKBaseMap(object):
         adds legend for catalogue seismicity.  
         '''
 
-        fname = '{}/legend_ss.csv'.format(self.out)
-        chk_file = 1 if os.path.isfile(fname) else 0
+#        fname = '{}/legend_ss.csv'.format(self.out)
+        chk_file = 1 if os.path.isfile(self.legendfi) else 0
 
         
         if chk_file == 0:
-            self.gmt_files_list.append(fname)
-            fou = open(fname, 'w')
+            self.gmt_files_list.append(self.legendfi)
+            fou = open(self.legendfi, 'w')
             if sscale is not None:
                 fou.write("L 12p R {}\n".format(label))
                 fou.write('G 0.1i\n')
         else:
-            fou = open(fname, 'a')
+            fou = open(self.legendfi, 'a')
 
         if sscale is not None:
             fmt = "S 0.4i {} {:.4f} {} 0.0c,black 2.0c {:.0f} \n"
@@ -537,17 +543,17 @@ class HMTKBaseMap(object):
                 fou.write('G 0.2i\n')
     
         else:
-            fou = open(fname,'a')
+            fou = open(self.legendfi,'a')
             fmt = "S 0.4i {} {} {} 0.0c,black 2.0c {} \n"
             sh = shape.replace('-S','').replace("'",'')
             fou.write(fmt.format(sh, size[0], color, label))
 
         fou.close()
     
-        tmp = "gmt legend {} -DJMR -C0.3c ".format(fname)
+        tmp = "gmt legend {} -DJMR -C0.3c ".format(self.legendfi)
         tmp += "--FONT_ANNOT_PRIMARY=12p"
 
-        chk = sum([1 if c.find(fname)>0 else 0 for c in self.cmds])
+        chk = sum([1 if c.find(self.legendfi)>0 else 0 for c in self.cmds])
         add_plot_line = 0 if chk > 0 else 1
 
         if add_plot_line==1:
@@ -602,7 +608,7 @@ class HMTKBaseMap(object):
         #TODO
         pass
 
-    def savemap(self, filename=None, save_script=False, verb=False):
+    def savemap(self, filename='map', save_script=False, verb=False):
         '''
         Saves map by finalizing GMT script and executing it line by line
         :param string filename:
