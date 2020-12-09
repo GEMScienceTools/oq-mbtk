@@ -572,7 +572,7 @@ class HMTKBaseMap(object):
     def add_focal_mechanism(self, filename, mech_format, config=None):
         '''
         :param string filename:
-            the filename containing the gcmt entries
+            the filename containing the cmt entries
         :param string mech_format: 
             the format of the file to be plotted. 
             https://docs.generic-mapping-tools.org/latest/supplements/seis/psmeca.html?highlight=psmeca#s
