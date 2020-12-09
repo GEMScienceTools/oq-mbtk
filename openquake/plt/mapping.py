@@ -576,8 +576,8 @@ class HMTKBaseMap(object):
         :param string mech_format: 
             the format of the file to be plotted. 
             https://docs.generic-mapping-tools.org/latest/supplements/seis/psmeca.html?highlight=psmeca#s
-            currently only focal mechanism (mech_format='FM') and seimsic 
-            moment tensor (mech_format='MT') are supported, both using the 
+            currently only focal mechanism ('FM') and seimsic 
+            moment tensor ('MT') are supported, both using the 
             Harvard CMT convention
         '''
 
