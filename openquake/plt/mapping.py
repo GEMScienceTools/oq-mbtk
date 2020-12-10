@@ -151,7 +151,8 @@ class HMTKBaseMap(object):
         lats = cat.data['latitude']
         lons = cat.data['longitude']
         mags_raw = cat.data['magnitude']
-        mags = [scale*10**(-1.5+m*0.3) for m in mags_raw]
+        mags = scale*10**(-1.5+mags_raw*0.3)
+        #mags = [scale*10**(-1.5+m*0.3) for m in mags_raw]
         
         df = pd.DataFrame({'lo':lons, 'la':lats, 'd':zfield, 'm':mags})
         cat_tmp = '{}/cat_tmp.csv'.format(self.out)
@@ -489,13 +490,26 @@ class HMTKBaseMap(object):
             if self.overwrite == True:
                 os.remove(self.legendfi)
 
-        if logplot:
-            data = np.log10(data.copy())
-
         if sscale is None:
             sz = [coeff] * len(latitude)
         else: 
             sz = smin + coeff * data ** sscale
+
+        if logplot:
+            data = np.log10(data.copy())
+            sz = np.log10(sz)
+
+        mindat = np.floor(min(data))
+        maxdat = np.ceil(max(data))
+        drange = abs(mindat - maxdat)
+        
+        if logplot:
+            ds = np.arange(10**mindat,10**(maxdat+1),np.ceil(drange/5))
+            legsz = np.log10(smin + coeff * ds ** sscale)
+        else:
+            ds = np.arange(mindat,maxdat+1,np.ceil(drange/5))
+            legsz = smin + coeff * ds ** sscale
+
 
         df = pd.DataFrame({'lo':longitude, 'la':latitude, 's':sz})
         lab_finame = re.sub('[^A-Za-z0-9]+', '', label)
@@ -506,14 +520,8 @@ class HMTKBaseMap(object):
 
         self.cmds.append('gmt plot {} {}c -G{} -Wblack'.format(dat_tmp, shape, color))
 
-        mindat = np.floor(min(data))
-        maxdat = np.ceil(max(data))
-        drange = abs(mindat - maxdat)
-        
-        ds = np.arange(mindat,maxdat+1,np.ceil(drange/5))
-
         if legend:
-            self._add_legend_size_scaled(ds, color, sz, shape, label, sscale)
+            self._add_legend_size_scaled(ds, color, legsz, shape, label, sscale)
 
     def _add_legend_size_scaled(self, data, color, size, shape, label, sscale):
         '''
