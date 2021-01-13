@@ -1,0 +1,892 @@
+<?xml version="1.0" encoding="utf-8"?>
+<nrml
+xmlns="http://openquake.org/xmlns/nrml/0.4"
+xmlns:gml="http://www.opengis.net/gml"
+>
+    <sourceModel
+    name="Area-sources-PNG"
+    >
+        <areaSource
+        id="0"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.5010000E+02 -1.0055000E+01 1.4947600E+02 -9.6800000E+00 1.4931500E+02 -9.6770000E+00 1.4917600E+02 -9.5950000E+00 1.4897600E+02 -9.4770000E+00 1.4880700E+02 -9.4440000E+00 1.4868000E+02 -9.4200000E+00 1.4866900E+02 -9.4800000E+00 1.4881500E+02 -9.6530000E+00 1.4894000E+02 -9.8020000E+00 1.4875800E+02 -9.7800000E+00 1.4843700E+02 -9.6730000E+00 1.4820900E+02 -9.4980000E+00 1.4797000E+02 -9.1840000E+00 1.4768000E+02 -8.7810000E+00 1.4742000E+02 -8.5740000E+00 1.4731600E+02 -8.1950000E+00 1.4705700E+02 -7.8720000E+00 1.4690800E+02 -7.6860000E+00 1.4688300E+02 -7.6550000E+00 1.4675300E+02 -7.4920000E+00 1.4672400E+02 -7.1920000E+00 1.4685200E+02 -6.9070000E+00 1.4695200E+02 -6.6570000E+00 1.4648100E+02 -6.4710000E+00 1.4601000E+02 -6.1650000E+00 1.4541800E+02 -5.6650000E+00 1.4528900E+02 -5.5860000E+00 1.4384700E+02 -4.2870000E+00 1.4323300E+02 -4.3730000E+00 1.4269200E+02 -4.3480000E+00 1.4234800E+02 -4.3660000E+00 1.4201300E+02 -4.3090000E+00 1.4135600E+02 -3.9730000E+00 1.4122300E+02 -3.9540000E+00 1.4103000E+02 -3.9260000E+00 1.3996800E+02 -3.7660000E+00 1.3971100E+02 -3.7070000E+00 1.3935200E+02 -3.5780000E+00 1.3900000E+02 -3.4520000E+00 1.3879300E+02 -3.4450000E+00 1.3862200E+02 -3.5380000E+00 1.3821500E+02 -3.4880000E+00 1.3798700E+02 -3.3810000E+00 1.3780100E+02 -3.2950000E+00 1.3744400E+02 -3.4590000E+00 1.3722300E+02 -3.5300000E+00 1.3695900E+02 -3.5090000E+00 1.3656600E+02 -3.4090000E+00 1.3628800E+02 -3.2950000E+00 1.3610900E+02 -3.1520000E+00 1.3596600E+02 -3.0310000E+00 1.3556400E+02 -3.3270000E+00 1.3660600E+02 -3.7080000E+00 1.3699100E+02 -3.8580000E+00 1.3763100E+02 -4.0280000E+00 1.3833500E+02 -4.0710000E+00 1.3880300E+02 -4.1080000E+00 1.3945800E+02 -4.1880000E+00 1.4007700E+02 -4.4020000E+00 1.4078100E+02 -4.7860000E+00 1.4155300E+02 -4.9490000E+00 1.4214700E+02 -5.2770000E+00 1.4300000E+02 -5.5540000E+00 1.4411000E+02 -6.0660000E+00 1.4487800E+02 -6.3860000E+00 1.4554000E+02 -6.6000000E+00 1.4600900E+02 -7.1330000E+00 1.4620100E+02 -7.3680000E+00 1.4639300E+02 -7.6030000E+00 1.4573200E+02 -7.9210000E+00 1.4596600E+02 -8.1920000E+00 1.4624400E+02 -8.2770000E+00 1.4664900E+02 -9.2370000E+00 1.4688400E+02 -9.5150000E+00 1.4771900E+02 -1.0260000E+01 1.4970100E+02 -1.0269000E+01 1.4972900E+02 -1.0469000E+01 1.4997900E+02 -1.0626000E+01 1.5028600E+02 -1.0612000E+01 1.5060000E+02 -1.0597000E+01 1.5060700E+02 -1.0462000E+01 1.5046700E+02 -1.0413000E+01 1.5030000E+02 -1.0355000E+01 1.5014300E+02 -1.0348000E+01 1.5014300E+02 -1.0241000E+01 1.5012200E+02 -1.0149000E+01 1.5010000E+02 -1.0055000E+01
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    6.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.0769243E+00" bValue="9.3900000E-01" maxMag="8.2000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="3.0000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="2.7500000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="1"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.3950400E+02 -2.3140000E+00 1.3953800E+02 -2.3220000E+00 1.4045400E+02 -3.6080000E+00 1.4004900E+02 -3.7840000E+00 1.3971100E+02 -3.7070000E+00 1.3900000E+02 -3.4520000E+00 1.3879300E+02 -3.4450000E+00 1.3862200E+02 -3.5380000E+00 1.3742800E+02 -1.7490000E+00 1.3776100E+02 -1.7670000E+00 1.3801700E+02 -1.8200000E+00 1.3846500E+02 -2.1010000E+00 1.3874900E+02 -2.2780000E+00 1.3950400E+02 -2.3140000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    6.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.9556199E+00" bValue="1.0340000E+00" maxMag="8.0000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="1.2000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="2.5000000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="2"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4327700E+02 -2.5730000E+00 1.4347900E+02 -3.0040000E+00 1.4371700E+02 -3.6680000E+00 1.4018700E+02 -3.2340000E+00 1.3953800E+02 -2.3220000E+00 1.3874900E+02 -2.2780000E+00 1.3801700E+02 -1.8200000E+00 1.3844700E+02 -1.3000000E+00 1.4002900E+02 -2.0140000E+00 1.4117100E+02 -2.5370000E+00 1.4327700E+02 -2.5730000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    4.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.7941742E+00" bValue="9.9000000E-01" maxMag="8.5000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="1.0000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="1.5000000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="3"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4371700E+02 -3.6680000E+00 1.4435000E+02 -3.7920000E+00 1.4537100E+02 -3.7090000E+00 1.4690300E+02 -3.5190000E+00 1.4752200E+02 -3.2860000E+00 1.4946300E+02 -3.8500000E+00 1.4961300E+02 -3.8430000E+00 1.5025600E+02 -3.5070000E+00 1.5124800E+02 -3.9930000E+00 1.5153400E+02 -3.8360000E+00 1.5287600E+02 -4.6140000E+00 1.5317700E+02 -4.4220000E+00 1.5324000E+02 -4.3940000E+00 1.5343200E+02 -4.3090000E+00 1.5158300E+02 -3.2310000E+00 1.5114700E+02 -3.4240000E+00 1.5020500E+02 -2.8950000E+00 1.4962700E+02 -3.2590000E+00 1.4746600E+02 -2.6910000E+00 1.4699300E+02 -2.8730000E+00 1.4448100E+02 -3.2080000E+00 1.4347900E+02 -3.0040000E+00 1.4371700E+02 -3.6680000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    5.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.4357154E+00" bValue="8.5500000E-01" maxMag="8.2000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="9.0000000E+01" probability="1.0000000E+00" rake="0.0000000E+00" strike="1.0000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="2.0000000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="4"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4371700E+02 -3.6680000E+00 1.4384700E+02 -4.2870000E+00 1.4323300E+02 -4.3730000E+00 1.4269200E+02 -4.3480000E+00 1.4234800E+02 -4.3660000E+00 1.4201300E+02 -4.3090000E+00 1.4135600E+02 -3.9730000E+00 1.4004900E+02 -3.7840000E+00 1.4045400E+02 -3.6080000E+00 1.4018700E+02 -3.2340000E+00 1.4371700E+02 -3.6680000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    6.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.6886307E+00" bValue="1.0770000E+00" maxMag="8.2000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="8.0000000E+01"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="2.7500000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="5"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4672600E+02 -3.5410000E+00 1.4673300E+02 -3.5400000E+00 1.4623300E+02 -4.4370000E+00 1.4610800E+02 -4.6760000E+00 1.4593600E+02 -4.9760000E+00 1.4558200E+02 -5.1860000E+00 1.4513700E+02 -5.4500000E+00 1.4384700E+02 -4.2870000E+00 1.4371700E+02 -3.6680000E+00 1.4435000E+02 -3.7920000E+00 1.4537100E+02 -3.7090000E+00 1.4612500E+02 -3.6160000E+00 1.4672600E+02 -3.5410000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    6.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="4.1824432E+00" bValue="8.1200000E-01" maxMag="7.8000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="9.0000000E+01" probability="1.0000000E+00" rake="0.0000000E+00" strike="9.0000000E+01"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="2.7500000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="6"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4764200E+02 -7.1200000E+00 1.4766300E+02 -6.0200000E+00 1.4593600E+02 -4.9760000E+00 1.4513700E+02 -5.4490000E+00 1.4528900E+02 -5.5860000E+00 1.4541800E+02 -5.6650000E+00 1.4601000E+02 -6.1650000E+00 1.4648100E+02 -6.4710000E+00 1.4695200E+02 -6.6570000E+00 1.4764200E+02 -7.1200000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    6.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.3314536E+00" bValue="9.3300000E-01" maxMag="8.2000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="3.0000000E+01"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="2.7500000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="7"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4117100E+02 -2.5370000E+00 1.4133700E+02 -2.0880000E+00 1.4176600E+02 -1.7070000E+00 1.4321700E+02 -9.4500000E-01 1.4543000E+02 -2.7900000E-01 1.4766700E+02 -1.1300000E-01 1.4911800E+02 -6.1200000E-01 1.5116500E+02 -1.2070000E+00 1.5175900E+02 -1.5400000E+00 1.5323500E+02 -2.7060000E+00 1.5463900E+02 -4.1810000E+00 1.5576900E+02 -5.6180000E+00 1.5603100E+02 -6.1420000E+00 1.5605400E+02 -6.5700000E+00 1.5593000E+02 -6.9850000E+00 1.5517800E+02 -6.4070000E+00 1.5484600E+02 -6.0310000E+00 1.5451000E+02 -5.7140000E+00 1.5413500E+02 -5.3670000E+00 1.5380700E+02 -5.0710000E+00 1.5363500E+02 -4.5160000E+00 1.5343200E+02 -4.3090000E+00 1.5314300E+02 -4.1400000E+00 1.5158300E+02 -3.2310000E+00 1.5114700E+02 -3.4240000E+00 1.5020500E+02 -2.8950000E+00 1.4962700E+02 -3.2590000E+00 1.4746600E+02 -2.6910000E+00 1.4699300E+02 -2.8730000E+00 1.4448100E+02 -3.2080000E+00 1.4347900E+02 -3.0040000E+00 1.4327700E+02 -2.5730000E+00 1.4117100E+02 -2.5370000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    5.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="4.9045803E+00" bValue="8.7900000E-01" maxMag="8.4000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="9.0000000E+01" probability="1.0000000E+00" rake="0.0000000E+00" strike="9.0000000E+01"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="2.2500000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="8"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.5593000E+02 -6.9850000E+00 1.5605400E+02 -6.5700000E+00 1.5603100E+02 -6.1420000E+00 1.5822000E+02 -6.1420000E+00 1.5862400E+02 -6.3320000E+00 1.5910000E+02 -6.5220000E+00 1.5971900E+02 -6.8320000E+00 1.5972900E+02 -9.2850000E+00 1.5593000E+02 -6.9850000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    6.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="4.9544210E+00" bValue="9.5600000E-01" maxMag="8.0000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="9.0000000E+01" probability="1.0000000E+00" rake="0.0000000E+00" strike="6.0000000E+01"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="2.5000000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="9"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4766300E+02 -6.0200000E+00 1.4751700E+02 -5.9330000E+00 1.4593600E+02 -4.9760000E+00 1.4610200E+02 -4.6850000E+00 1.4660700E+02 -3.7650000E+00 1.4673300E+02 -3.5400000E+00 1.4690300E+02 -3.5190000E+00 1.4752200E+02 -3.2860000E+00 1.4946300E+02 -3.8500000E+00 1.4961300E+02 -3.8430000E+00 1.5025600E+02 -3.5070000E+00 1.5124800E+02 -3.9930000E+00 1.5153400E+02 -3.8360000E+00 1.5287600E+02 -4.6140000E+00 1.5257900E+02 -4.6070000E+00 1.5200700E+02 -4.8550000E+00 1.5169800E+02 -4.9680000E+00 1.5145100E+02 -5.1420000E+00 1.5122600E+02 -5.1890000E+00 1.5005900E+02 -5.7490000E+00 1.4960000E+02 -5.8600000E+00 1.4922800E+02 -5.9100000E+00 1.4875600E+02 -6.1280000E+00 1.4836000E+02 -6.1780000E+00 1.4805000E+02 -6.1630000E+00 1.4765700E+02 -6.1260000E+00 1.4766300E+02 -6.0200000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    6.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.8476744E+00" bValue="1.0410000E+00" maxMag="8.0000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="9.0000000E+01"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="2.7500000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="10"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4904500E+02 -7.0370000E+00 1.5014700E+02 -7.1790000E+00 1.5068500E+02 -7.5670000E+00 1.5165400E+02 -6.9770000E+00 1.5188900E+02 -6.8110000E+00 1.5200300E+02 -6.7360000E+00 1.5223600E+02 -6.6900000E+00 1.5269400E+02 -6.6000000E+00 1.5318200E+02 -6.7570000E+00 1.5410800E+02 -7.4200000E+00 1.5453400E+02 -7.8690000E+00 1.5476900E+02 -8.1160000E+00 1.5487600E+02 -8.2290000E+00 1.5527200E+02 -8.3880000E+00 1.5557800E+02 -8.5270000E+00 1.5667000E+02 -9.2460000E+00 1.5969800E+02 -1.0834000E+01 1.5970500E+02 -1.0035000E+01 1.5944400E+02 -9.9400000E+00 1.5906300E+02 -9.6900000E+00 1.5727800E+02 -8.8210000E+00 1.5549400E+02 -7.6320000E+00 1.5441100E+02 -6.8700000E+00 1.5361400E+02 -6.1210000E+00 1.5305500E+02 -5.7400000E+00 1.5266200E+02 -5.6570000E+00 1.5229300E+02 -5.7160000E+00 1.5096100E+02 -6.3940000E+00 1.4984100E+02 -6.7880000E+00 1.4904500E+02 -7.0370000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    5.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.4960685E+00" bValue="9.1700000E-01" maxMag="8.2000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="2.7000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="2.0000000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <complexFaultSource
+        id="11"
+        name="New Britian"
+        tectonicRegion="Subduction Interface">
+            <complexFaultGeometry>
+                <faultTopEdge>
+                    <gml:LineString>
+                        <gml:posList>
+                            152.643530 -5.581218 2.000000 152.339660 -5.670808 2.000000 152.029780 -5.820968 2.000000 151.751640 -5.955667 2.000000 151.348850 -6.240114 2.000000 150.925940 -6.460677 2.000000 150.342360 -6.651109 2.000000 149.926300 -6.761129 2.000000 149.491300 -6.854551 2.000000 149.063330 -6.985630 2.000000 148.237430 -7.104177 2.000000 147.728980 -7.095352 2.000000
+                        </gml:posList>
+                    </gml:LineString>
+                </faultTopEdge>
+                <intermediateEdge>
+                    <gml:LineString>
+                        <gml:posList>
+                            152.579620 -5.233854 20.000000 152.430970 -5.282638 20.000000 152.153950 -5.393474 20.000000 151.707510 -5.607442 20.000000 151.232570 -5.899630 20.000000 150.838850 -6.085951 20.000000 150.404940 -6.286444 20.000000 150.106710 -6.395896 20.000000 149.722930 -6.493372 20.000000 149.409960 -6.545580 20.000000 149.226090 -6.607870 20.000000 148.923170 -6.751594 20.000000 148.568500 -6.846930 20.000000 148.339920 -6.860462 20.000000 147.747360 -6.720232 20.000000
+                        </gml:posList>
+                    </gml:LineString>
+                </intermediateEdge>
+                <intermediateEdge>
+                    <gml:LineString>
+                        <gml:posList>
+                            152.571500 -4.917984 40.000000 152.465060 -4.943589 40.000000 152.233390 -5.066910 40.000000 151.986710 -5.161737 40.000000 151.752140 -5.297363 40.000000 151.580180 -5.365240 40.000000 151.323680 -5.500759 40.000000 151.065510 -5.640487 40.000000 150.710880 -5.769905 40.000000 150.392210 -5.916343 40.000000 150.066460 -6.048300 40.000000 149.860750 -6.111964 40.000000 149.441030 -6.174933 40.000000 149.264420 -6.237075 40.000000 148.870010 -6.418982 40.000000 148.429350 -6.509466 40.000000 148.120480 -6.482337 40.000000 147.748390 -6.393552 40.000000
+                        </gml:posList>
+                    </gml:LineString>
+                </intermediateEdge>
+                <faultBottomEdge>
+                    <gml:LineString>
+                        <gml:posList>
+                            152.597582 -4.698380 60.000000 152.464496 -4.742086 60.000000 152.270087 -4.840601 60.000000 151.871878 -4.993082 60.000000 151.770318 -5.046912 60.000000 151.509247 -5.171548 60.000000 151.357146 -5.248744 60.000000 151.093704 -5.365982 60.000000 150.826185 -5.499680 60.000000 150.536214 -5.638087 60.000000 150.161435 -5.800239 60.000000 149.856580 -5.902953 60.000000 149.536963 -5.970044 60.000000 149.316476 -5.998104 60.000000 149.140740 -6.088839 60.000000 148.929551 -6.187223 60.000000 148.645806 -6.252094 60.000000 148.302979 -6.268598 60.000000 148.094480 -6.245689 60.000000 147.762740 -6.197282 60.000000
+                        </gml:posList>
+                    </gml:LineString>
+                </faultBottomEdge>
+            </complexFaultGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                2.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="6.0853000E+00" bValue="9.3200000E-01" maxMag="8.8000000E+00" minMag="5.0000000E+00"/>
+            <rake>
+                9.0000000E+01
+            </rake>
+        </complexFaultSource>
+        <complexFaultSource
+        id="12"
+        name="Bougainville_Island"
+        tectonicRegion="Subduction Interface">
+            <complexFaultGeometry>
+                <faultTopEdge>
+                    <gml:LineString>
+                        <gml:posList>
+                            156.405650 -8.183980 2.000000 156.112030 -7.885731 2.000000 155.889140 -7.715556 2.000000 155.534230 -7.502635 2.000000 155.221830 -7.351447 2.000000 154.902190 -7.147241 2.000000 154.780990 -7.005700 2.000000 154.568570 -6.740620 2.000000 154.280940 -6.478550 2.000000 154.011640 -6.271672 2.000000 153.667230 -6.010937 2.000000 153.392970 -5.832772 2.000000 153.062350 -5.681306 2.000000 152.655450 -5.585910 2.000000
+                        </gml:posList>
+                    </gml:LineString>
+                </faultTopEdge>
+                <intermediateEdge>
+                    <gml:LineString>
+                        <gml:posList>
+                            156.600330 -7.915249 20.000000 156.480160 -7.734447 20.000000 156.276640 -7.568974 20.000000 156.028110 -7.436966 20.000000 155.768410 -7.297977 20.000000 155.569370 -7.135019 20.000000 155.345810 -7.021780 20.000000 155.068760 -6.820191 20.000000 154.746720 -6.518297 20.000000 154.345970 -6.086927 20.000000 153.984990 -5.837803 20.000000 153.749670 -5.664576 20.000000 153.408830 -5.456825 20.000000 153.136160 -5.333441 20.000000 152.922050 -5.297617 20.000000 152.593030 -5.239317 20.000000
+                        </gml:posList>
+                    </gml:LineString>
+                </intermediateEdge>
+                <intermediateEdge>
+                    <gml:LineString>
+                        <gml:posList>
+                            156.693450 -7.784115 40.000000 156.632590 -7.725926 40.000000 156.500900 -7.582096 40.000000 156.366820 -7.449915 40.000000 156.361630 -7.451131 40.000000 156.123270 -7.317006 40.000000 155.934170 -7.156160 40.000000 155.735930 -6.933882 40.000000 155.454590 -6.743418 40.000000 155.247410 -6.627315 40.000000 155.039950 -6.442180 40.000000 154.847330 -6.205793 40.000000 154.612250 -5.969250 40.000000 154.374930 -5.743815 40.000000 154.198000 -5.567497 40.000000 154.001520 -5.465156 40.000000 153.822790 -5.325988 40.000000 153.525950 -5.166070 40.000000 153.348690 -5.057452 40.000000 153.165530 -5.035944 40.000000 152.881020 -4.978262 40.000000 152.587470 -4.910810 40.000000
+                        </gml:posList>
+                    </gml:LineString>
+                </intermediateEdge>
+                <faultBottomEdge>
+                    <gml:LineString>
+                        <gml:posList>
+                            156.770037 -7.716928 60.000000 156.606803 -7.563061 60.000000 156.398740 -7.360890 60.000000 156.125124 -7.111024 60.000000 155.821918 -6.864978 60.000000 155.511968 -6.670563 60.000000 155.293725 -6.487777 60.000000 155.090196 -6.296517 60.000000 154.878862 -6.006053 60.000000 154.578429 -5.742611 60.000000 154.273340 -5.458383 60.000000 154.083578 -5.295419 60.000000 153.894842 -5.137008 60.000000 153.573915 -4.966323 60.000000 153.378792 -4.850762 60.000000 153.130643 -4.784783 60.000000 152.916146 -4.748215 60.000000 152.619724 -4.691568 60.000000
+                        </gml:posList>
+                    </gml:LineString>
+                </faultBottomEdge>
+            </complexFaultGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                2.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.9475000E+00" bValue="9.3700000E-01" maxMag="8.8000000E+00" minMag="5.0000000E+00"/>
+            <rake>
+                9.0000000E+01
+            </rake>
+        </complexFaultSource>
+        <areaSource
+        id="13"
+        name="area-source"
+        tectonicRegion="Subduction Interface"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.5631100E+02 -8.1770000E+00 1.5681000E+02 -7.5170000E+00 1.5972900E+02 -9.2850000E+00 1.5970500E+02 -1.0035000E+01 1.5944400E+02 -9.9400000E+00 1.5906300E+02 -9.6900000E+00 1.5727800E+02 -8.8210000E+00 1.5631100E+02 -8.1770000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    4.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.1469834E+00" bValue="9.1300000E-01" maxMag="8.7000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="3.1500000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="1.5000000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="14"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.5142900E+02 -1.1152000E+01 1.5197700E+02 -1.1233000E+01 1.5234800E+02 -1.1447000E+01 1.5294800E+02 -1.1833000E+01 1.5359000E+02 -1.2004000E+01 1.5403300E+02 -1.2004000E+01 1.5456100E+02 -1.1819000E+01 1.5497500E+02 -1.1505000E+01 1.5550300E+02 -1.1119000E+01 1.5596000E+02 -1.0762000E+01 1.5636000E+02 -1.0477000E+01 1.5681700E+02 -1.0163000E+01 1.5731700E+02 -1.0006000E+01 1.5807800E+02 -9.9840000E+00 1.5656000E+02 -9.1730000E+00 1.5557700E+02 -9.9680000E+00 1.5433300E+02 -1.0505000E+01 1.5349500E+02 -1.0753000E+01 1.5194900E+02 -1.0682000E+01 1.5086600E+02 -1.0266000E+01 1.5014000E+02 -9.7300000E+00 1.4936700E+02 -9.0760000E+00 1.5018800E+02 -8.4340000E+00 1.5120000E+02 -8.8630000E+00 1.5202000E+02 -9.1590000E+00 1.5251200E+02 -9.1420000E+00 1.5304300E+02 -9.1240000E+00 1.5385200E+02 -9.0760000E+00 1.5428400E+02 -8.9720000E+00 1.5454200E+02 -8.9090000E+00 1.5495900E+02 -8.7310000E+00 1.5557800E+02 -8.5270000E+00 1.5487600E+02 -8.2290000E+00 1.5410800E+02 -7.4200000E+00 1.5318200E+02 -6.7570000E+00 1.5269400E+02 -6.6000000E+00 1.5200300E+02 -6.7360000E+00 1.5142200E+02 -7.1190000E+00 1.5068500E+02 -7.5670000E+00 1.5014700E+02 -7.1790000E+00 1.4904500E+02 -7.0370000E+00 1.4843900E+02 -7.1200000E+00 1.4764200E+02 -7.1200000E+00 1.4695200E+02 -6.6570000E+00 1.4672400E+02 -7.1920000E+00 1.4675300E+02 -7.4920000E+00 1.4731600E+02 -8.1950000E+00 1.4742000E+02 -8.5740000E+00 1.4768000E+02 -8.7810000E+00 1.4820900E+02 -9.4980000E+00 1.4843700E+02 -9.6730000E+00 1.4875800E+02 -9.7800000E+00 1.4894000E+02 -9.8020000E+00 1.4866900E+02 -9.4800000E+00 1.4868000E+02 -9.4200000E+00 1.4897600E+02 -9.4770000E+00 1.4931500E+02 -9.6770000E+00 1.4947600E+02 -9.6800000E+00 1.5010000E+02 -1.0055000E+01 1.5014300E+02 -1.0241000E+01 1.5014300E+02 -1.0348000E+01 1.5030000E+02 -1.0355000E+01 1.5060700E+02 -1.0462000E+01 1.5074400E+02 -1.1038000E+01 1.5107200E+02 -1.1152000E+01 1.5142900E+02 -1.1152000E+01
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    4.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.1998319E+00" bValue="9.5500000E-01" maxMag="8.4000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="9.0000000E+01"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="1.7500000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="15"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.5557800E+02 -8.5270000E+00 1.5495900E+02 -8.7310000E+00 1.5454200E+02 -8.9090000E+00 1.5385200E+02 -9.0760000E+00 1.5304300E+02 -9.1240000E+00 1.5202000E+02 -9.1590000E+00 1.5099700E+02 -8.7900000E+00 1.5018800E+02 -8.4340000E+00 1.4936700E+02 -9.0760000E+00 1.5014000E+02 -9.7300000E+00 1.5086600E+02 -1.0266000E+01 1.5194900E+02 -1.0682000E+01 1.5349500E+02 -1.0753000E+01 1.5445900E+02 -1.0468000E+01 1.5557700E+02 -9.9680000E+00 1.5656000E+02 -9.1730000E+00 1.5557800E+02 -8.5270000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    3.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.5965938E+00" bValue="1.0080000E+00" maxMag="7.6000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="9.0000000E+01" probability="1.0000000E+00" rake="0.0000000E+00" strike="9.0000000E+01"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="1.0000000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="16"
+        name="area-source"
+        tectonicRegion="Stable Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.3835700E+02 -4.7060000E+00 1.3897100E+02 -4.7470000E+00 1.4010800E+02 -5.1790000E+00 1.4049200E+02 -5.3710000E+00 1.4116400E+02 -5.5950000E+00 1.4216800E+02 -6.2500000E+00 1.4344800E+02 -6.9960000E+00 1.4464300E+02 -7.5510000E+00 1.4494200E+02 -7.7010000E+00 1.4518100E+02 -7.7360000E+00 1.4532500E+02 -7.7560000E+00 1.4545300E+02 -7.8630000E+00 1.4573200E+02 -7.9210000E+00 1.4596600E+02 -8.1920000E+00 1.4624400E+02 -8.2770000E+00 1.4664900E+02 -9.2370000E+00 1.4688400E+02 -9.5150000E+00 1.4771900E+02 -1.0260000E+01 1.4774000E+02 -1.1863000E+01 1.3750200E+02 -8.3610000E+00 1.3835700E+02 -4.7060000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    2.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="4.6588601E+00" bValue="1.0410000E+00" maxMag="7.6000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="3.0000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="9.5000000E+00" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="17"
+        name="area-source"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4639300E+02 -7.6030000E+00 1.4573200E+02 -7.9210000E+00 1.4545300E+02 -7.8630000E+00 1.4518100E+02 -7.7360000E+00 1.4494200E+02 -7.7010000E+00 1.4344800E+02 -6.9960000E+00 1.4116400E+02 -5.5950000E+00 1.3897100E+02 -4.7470000E+00 1.3835700E+02 -4.7060000E+00 1.3620300E+02 -4.5970000E+00 1.3479500E+02 -4.2980000E+00 1.3556400E+02 -3.3270000E+00 1.3763100E+02 -4.0280000E+00 1.3945800E+02 -4.1880000E+00 1.4029700E+02 -4.5220000E+00 1.4078100E+02 -4.7860000E+00 1.4155300E+02 -4.9490000E+00 1.4214700E+02 -5.2770000E+00 1.4300000E+02 -5.5540000E+00 1.4554000E+02 -6.6000000E+00 1.4639300E+02 -7.6030000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    1.0000000E+00
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    5.0000000E+01
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.9798496E+00" bValue="1.0390000E+00" maxMag="8.0000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="3.0000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="2.0000000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="18"
+        name="area-source"
+        tectonicRegion="Subduction IntraSlab"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.5633600E+02 -8.1650000E+00 1.5587000E+02 -7.6990000E+00 1.5548900E+02 -7.4450000E+00 1.5500200E+02 -7.2760000E+00 1.5390100E+02 -6.1330000E+00 1.5345700E+02 -5.2860000E+00 1.5324500E+02 -3.7830000E+00 1.5354200E+02 -3.7830000E+00 1.5451500E+02 -4.5450000E+00 1.5504200E+02 -5.2030000E+00 1.5557400E+02 -5.8790000E+00 1.5619800E+02 -6.2720000E+00 1.5688600E+02 -6.7040000E+00 1.5692100E+02 -6.7740000E+00 1.5724600E+02 -7.4240000E+00 1.5633600E+02 -8.1650000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    6.0000000E+01
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    2.5000000E+02
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.7021194E+00" bValue="9.7600000E-01" maxMag="8.5000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="3.1500000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="1.0000000E+02" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="19"
+        name="area-source"
+        tectonicRegion="Subduction IntraSlab"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.5324500E+02 -3.7830000E+00 1.5345700E+02 -5.2860000E+00 1.5275800E+02 -5.2230000E+00 1.5172100E+02 -5.6460000E+00 1.5115000E+02 -6.0480000E+00 1.5045100E+02 -6.0690000E+00 1.4839800E+02 -6.4720000E+00 1.4810800E+02 -4.9910000E+00 1.4964300E+02 -5.1100000E+00 1.5006600E+02 -4.9910000E+00 1.5027600E+02 -4.8830000E+00 1.5071300E+02 -4.6140000E+00 1.5160100E+02 -4.0520000E+00 1.5182600E+02 -3.4830000E+00 1.5214300E+02 -3.3640000E+00 1.5251300E+02 -3.3380000E+00 1.5291000E+02 -3.3640000E+00 1.5324500E+02 -3.7830000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    6.0000000E+01
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    2.0000000E+02
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="6.2855312E+00" bValue="1.0430000E+00" maxMag="8.5000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="2.5000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="1.0000000E+02" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="20"
+        name="area-source"
+        tectonicRegion="Subduction IntraSlab"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.5633600E+02 -8.1650000E+00 1.5574300E+02 -8.7580000E+00 1.5541100E+02 -8.5010000E+00 1.5462100E+02 -7.8900000E+00 1.5353000E+02 -7.1020000E+00 1.5303400E+02 -6.6830000E+00 1.5273700E+02 -6.6410000E+00 1.5225000E+02 -6.9160000E+00 1.5068400E+02 -7.6360000E+00 1.4863100E+02 -7.2760000E+00 1.4810200E+02 -7.1280000E+00 1.4839800E+02 -6.4720000E+00 1.5045100E+02 -6.0690000E+00 1.5115000E+02 -6.0480000E+00 1.5172100E+02 -5.6460000E+00 1.5275800E+02 -5.2230000E+00 1.5345700E+02 -5.2860000E+00 1.5390100E+02 -6.1330000E+00 1.5428200E+02 -6.4500000E+00 1.5500200E+02 -7.2760000E+00 1.5548900E+02 -7.4450000E+00 1.5587000E+02 -7.6990000E+00 1.5633600E+02 -8.1650000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    6.0000000E+01
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    1.8000000E+02
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.2879562E+00" bValue="1.0000000E+00" maxMag="8.2000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="2.7000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="1.0000000E+02" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="21"
+        name="area-source"
+        tectonicRegion="Subduction IntraSlab"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4810800E+02 -4.9910000E+00 1.4839800E+02 -6.4720000E+00 1.4810200E+02 -7.1280000E+00 1.4793600E+02 -7.8090000E+00 1.4561200E+02 -6.6080000E+00 1.4522400E+02 -6.4070000E+00 1.4398100E+02 -5.4150000E+00 1.4286900E+02 -5.2430000E+00 1.4257800E+02 -5.1240000E+00 1.4347800E+02 -3.6680000E+00 1.4490700E+02 -4.0250000E+00 1.4642300E+02 -4.5640000E+00 1.4810800E+02 -4.9910000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    6.0000000E+01
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    2.0000000E+02
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.7242751E+00" bValue="9.5200000E-01" maxMag="8.2000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="3.0000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="1.0000000E+02" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="22"
+        name="area-source"
+        tectonicRegion="Subduction IntraSlab"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4793600E+02 -7.8090000E+00 1.4793600E+02 -7.8090000E+00 1.4878600E+02 -8.6470000E+00 1.4833000E+02 -8.6340000E+00 1.4783400E+02 -8.6200000E+00 1.4685500E+02 -8.1710000E+00 1.4543900E+02 -7.1120000E+00 1.4561200E+02 -6.6080000E+00 1.4793600E+02 -7.8090000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    6.0000000E+01
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    1.8000000E+02
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.7318191E+00" bValue="1.1270000E+00" maxMag="8.0000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="3.0000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="1.0000000E+02" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+        <areaSource
+        id="23"
+        name="area-source"
+        tectonicRegion="Subduction IntraSlab"
+        >
+            <areaGeometry>
+                <gml:Polygon>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList>
+                                1.4347800E+02 -3.6680000E+00 1.4257800E+02 -5.1240000E+00 1.4117600E+02 -4.3170000E+00 1.3997200E+02 -4.5280000E+00 1.3866200E+02 -3.9990000E+00 1.3774700E+02 -3.8430000E+00 1.3808600E+02 -2.1810000E+00 1.3927100E+02 -2.2870000E+00 1.4022400E+02 -3.1550000E+00 1.4191700E+02 -3.3670000E+00 1.4347800E+02 -3.6680000E+00
+                            </gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </gml:Polygon>
+                <upperSeismoDepth>
+                    6.0000000E+01
+                </upperSeismoDepth>
+                <lowerSeismoDepth>
+                    1.3000000E+02
+                </lowerSeismoDepth>
+            </areaGeometry>
+            <magScaleRel>
+                WC1994
+            </magScaleRel>
+            <ruptAspectRatio>
+                1.0000000E+00
+            </ruptAspectRatio>
+            <truncGutenbergRichterMFD aValue="5.5519548E+00" bValue="9.9900000E-01" maxMag="8.5000000E+00" minMag="5.0000000E+00"/>
+            <nodalPlaneDist>
+                <nodalPlane dip="4.5000000E+01" probability="1.0000000E+00" rake="9.0000000E+01" strike="1.2000000E+02"/>
+            </nodalPlaneDist>
+            <hypoDepthDist>
+                <hypoDepth depth="9.0000000E+01" probability="1.0000000E+00"/>
+            </hypoDepthDist>
+        </areaSource>
+    </sourceModel>
+</nrml>
