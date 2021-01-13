@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import subprocess
+import math
 import pandas as pd
 import numpy as np
 from openquake.baselib import sap
@@ -138,8 +139,9 @@ class HMTKBaseMap(object):
         '''
 
         zfield = cat.data[color_field]
-        zmax = max(zfield)
-        zmin = min(zfield)
+        zz = [0.0 if math.isnan(zi) else zi for zi in zfield]
+        zmax = max(zz)
+        zmin = min(zz)
 
         if color_field == 'magnitude' and logscale == True:
             print('Logscale cannot be used with magnitude; setting logscale=False')
@@ -152,9 +154,8 @@ class HMTKBaseMap(object):
         lons = cat.data['longitude']
         mags_raw = cat.data['magnitude']
         mags = scale*10**(-1.5+mags_raw*0.3)
-        #mags = [scale*10**(-1.5+m*0.3) for m in mags_raw]
         
-        df = pd.DataFrame({'lo':lons, 'la':lats, 'd':zfield, 'm':mags})
+        df = pd.DataFrame({'lo':lons, 'la':lats, 'd':zz, 'm':mags})
         cat_tmp = '{}/cat_tmp.csv'.format(self.out)
         self.gmt_files_list.append(cat_tmp)
 
@@ -342,7 +343,7 @@ class HMTKBaseMap(object):
             self.cmds.append("gmt makecpt -Cjet -T0/{}/2> {:s}".format(
                 self.max_cf_depth, cpt_fle))
 
-            self.cmds.append('gmt plot {} -C{} -Ss0.075 -t50'.format(filename, cpt_fle))
+            self.cmds.append('gmt plot {} -C{} -Ss0.075 -t90'.format(filename, cpt_fle))
             self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth to complex fault surface (km)" -C{}'.format(
                 '10', cpt_fle))
 
