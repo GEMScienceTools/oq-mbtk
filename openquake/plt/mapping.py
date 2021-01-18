@@ -1,6 +1,8 @@
 import os
+import re
 import sys
 import subprocess
+import math
 import pandas as pd
 import numpy as np
 from openquake.baselib import sap
@@ -26,7 +28,7 @@ class HMTKBaseMap(object):
     Initiates a plot and a GMT mapping script 
     '''
 
-    def __init__(self, config, projection='-JM15', output_folder='gmt',
+    def __init__(self, config, projection='-JM15c', output_folder='gmt',
                  lat_lon_spacing=2., overwrite=False):
         """
         :param dict config:
@@ -57,6 +59,13 @@ class HMTKBaseMap(object):
         self.out = output_folder
         self.overwrite = overwrite
 
+        # make the output directory if it doesn't exist
+        if os.path.exists(self.out):
+            pass
+        else:
+            os.makedirs(self.out)
+
+        # set the title if it is specified
         if self.config['title']:
             self.title = config['title']
         else:
@@ -72,7 +81,6 @@ class HMTKBaseMap(object):
                                         config['min_lat'],
                                         config['max_lat'])
 
-#        self.cmds = []
         self._build_basemap()
         self.gmt_files_list = []
 
@@ -85,11 +93,6 @@ class HMTKBaseMap(object):
     def _check_output(self,filename):
         # create the output directory. Check if it exists, whether overwrite 
         # is allowed, rm dir contents or fail
-
-        if os.path.exists(self.out):
-            pass
-        else:
-            os.makedirs(self.out)
 
         outfile = os.path.join(self.out, filename)
         if os.path.exists(outfile):
@@ -127,15 +130,18 @@ class HMTKBaseMap(object):
         :param float scale:
             Scaling coefficient for symbol size per magnitude.
         :param str cpt_file:
-            Name of file (no path) where color pallet with be saved
+            Name of color pallet file (no path). The default generates
+            a color pallet.
         :param str color_field:
             Field used to color the symbols. Must correspond to header.
+        :param str logscale:
+            Uses logscale to make the color pallet, if generating it here.
         '''
-        cpt_fle = "{}/{}".format(self.out, cpt_file)
 
         zfield = cat.data[color_field]
-        zmax = max(zfield)
-        zmin = min(zfield)
+        zz = [0.0 if math.isnan(zi) else zi for zi in zfield]
+        zmax = max(zz)
+        zmin = min(zz)
 
         if color_field == 'magnitude' and logscale == True:
             print('Logscale cannot be used with magnitude; setting logscale=False')
@@ -147,15 +153,16 @@ class HMTKBaseMap(object):
         lats = cat.data['latitude']
         lons = cat.data['longitude']
         mags_raw = cat.data['magnitude']
-        mags = [scale*10**(-1.5+m*0.3) for m in mags_raw]
+        mags = scale*10**(-1.5+mags_raw*0.3)
         
-        df = pd.DataFrame({'lo':lons, 'la':lats, 'd':zfield, 'm':mags})
+        df = pd.DataFrame({'lo':lons, 'la':lats, 'd':zz, 'm':mags})
         cat_tmp = '{}/cat_tmp.csv'.format(self.out)
         self.gmt_files_list.append(cat_tmp)
 
         df.sort_values(by=['m']).to_csv(cat_tmp, index = False, header = False)
 
-        if cpt_fle == "{}/tmp.cpt".format(self.out):
+        if cpt_file == "tmp.cpt":
+            cpt_fle = "{}/{}".format(self.out, cpt_file)
             if logscale is True:
                 self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -Q -D > \
                                  {}".format(np.log10(zmin), np.log10(zmax), cpt_fle))
@@ -163,11 +170,16 @@ class HMTKBaseMap(object):
                 self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -D > \
                                  {}".format(zmin, zmax, cpt_fle))
             self.gmt_files_list.append(cpt_fle)
+        else:
+            cpt_fle = cpt_file
 
-        space = np.floor(abs(min(zfield)-max(zfield))/4)
         tmp = "gmt plot {} -Sc -C{} -Wthinnest,black".format(cat_tmp,cpt_fle)
         self.cmds.append(tmp)
-        self.cmds.append('gmt colorbar -DJBC -Ba{}+l"{}" -C{}'.format(space, 
+        if logscale:
+            self.cmds.append('gmt colorbar -DJBC -Ba+l"{}" -C{} -Q'.format(
+                                                             color_field, cpt_fle))
+        else:
+            self.cmds.append('gmt colorbar -DJBC -Ba+l"{}" -C{}'.format( 
                                                                       color_field,
                                                                       cpt_fle))
         
@@ -221,7 +233,7 @@ class HMTKBaseMap(object):
             self.gmt_files_list.append(filename)
             self.cmds.append('gmt plot {} -L -Wthick,{}'.format(filename, border))
 
-    def _plot_point_source(self, source, pointsize=0.5):
+    def _plot_point_source(self, source):
         '''
         Adds point sources to mapping script. 
         :param source:
@@ -230,7 +242,10 @@ class HMTKBaseMap(object):
         :param float pointsize:
             sets the size of plotting symbols 
         '''
-
+        
+        pnum = int(re.sub("[^0-9]", "", self.J))
+        pointsize = 0.01 * pnum
+        
         lons = source.location.longitude
         lats = source.location.latitude
 
@@ -258,7 +273,7 @@ class HMTKBaseMap(object):
 
         fault_surface = SimpleFaultSurface.from_fault_data(
                 source.fault_trace, source.upper_seismogenic_depth,
-                source.lower_seismogenic_depth, source.dip, source.rupture_mesh_spacing)
+                source.lower_seismogenic_depth, source.dip, 5)
 
         outline = _fault_polygon_from_mesh(fault_surface)
 
@@ -280,8 +295,8 @@ class HMTKBaseMap(object):
             self.cmds.append("gmt makecpt -Cjet -T0/{}/30+n > {:s}".format(
                 self.max_sf_depth*1.2, cpt_fle))
 
-            self.cmds.append('gmt plot {} -C{} -Ss0.1 '.format(filename, cpt_fle))
-            self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format(
+            self.cmds.append('gmt plot {} -C{} -Ss0.075 -t50 '.format(filename, cpt_fle))
+            self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth to simple fault surface (km)" -C{}'.format(
                 '10', cpt_fle))
 
         filename = '{}/mtkSimpleFaultProjection.csv'.format(self.out)
@@ -295,7 +310,7 @@ class HMTKBaseMap(object):
         
         if add_plot_line == 1:
             self.gmt_files_list.append(filename)
-            self.cmds.append('gmt plot {} -Wthick,red'.format(filename))
+            self.cmds.append('gmt plot {} -Wthick,black'.format(filename))
 
     def _plot_complex_fault(self, source):
         '''
@@ -306,7 +321,7 @@ class HMTKBaseMap(object):
         '''
 
         fault_surface = ComplexFaultSurface.from_fault_data(
-            source.edges, source.rupture_mesh_spacing)
+            source.edges, 5)
 
         outline = _fault_polygon_from_mesh(fault_surface)
 
@@ -328,8 +343,8 @@ class HMTKBaseMap(object):
             self.cmds.append("gmt makecpt -Cjet -T0/{}/2> {:s}".format(
                 self.max_cf_depth, cpt_fle))
 
-            self.cmds.append('gmt plot {} -C{} -Ss0.1 '.format(filename, cpt_fle))
-            self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth (km)" -C{}'.format(
+            self.cmds.append('gmt plot {} -C{} -Ss0.075 -t90'.format(filename, cpt_fle))
+            self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth to complex fault surface (km)" -C{}'.format(
                 '10', cpt_fle))
 
         filename = '{}/mtkComplexFaultOutline.csv'.format(self.out)
@@ -367,7 +382,6 @@ class HMTKBaseMap(object):
             d = {'lons': lons, 'lats': lats, 'zs': color_column}
             df = pd.DataFrame(data=d)
 
-        #add_plot_line = 0 if os.path.isfile(filename) else 1
         chk = sum([1 if c.find(filename)>0 else 0 for c in self.cmds])
         add_plot_line = 0 if chk > 0 else 1
 
@@ -418,18 +432,18 @@ class HMTKBaseMap(object):
         :param logscale:
             if True, scale colors in log space
         '''
-#        if not norm:
-#            norm = Normalize(vmin=np.min(data), vmax=np.max(data))
-
 
         cpt_fle = "{}/tmp_col_dat.cpt".format(self.out)
         self.gmt_files_list.append(cpt_fle)
         if logscale:
             self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -Q -D > \
-                             {}".format(min(data), max(data), cpt_fle))
+                             {}".format(np.log10(min(data)), 
+                                 np.log10(max(data)), cpt_fle))
+            qq = '-Q'
         else:
             self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -D > \
                              {}".format(min(data), max(data), cpt_fle))
+            qq = ''
 
 
         df = pd.DataFrame({'lo':longitude, 'la':latitude, 'c':data})
@@ -437,9 +451,8 @@ class HMTKBaseMap(object):
         self.gmt_files_list.append(dat_tmp)
         df.sort_values(by=['c']).to_csv(dat_tmp, index = False, header = False)
 
-        space = np.floor(abs(min(data)-max(data))/3)
-        self.cmds.append('gmt plot {} {}{} -C{}'.format(dat_tmp, shape, size, cpt_fle))
-        self.cmds.append('gmt colorbar -DJBC -Ba{}+l{} -C{}'.format(space, label, cpt_fle))
+        self.cmds.append('gmt plot {} {}{}c -C{}'.format(dat_tmp, shape, size, cpt_fle))
+        self.cmds.append('gmt colorbar -DJBC -Ba+l{} -C{} {}'.format(label, cpt_fle, qq))
 
     def add_size_scaled_points(self, longitude, latitude, data, shape='-Ss',
             logplot=False, color='blue', smin=0.01, coeff=1.0, sscale=2.0, label='',
@@ -456,8 +469,6 @@ class HMTKBaseMap(object):
             shape of the plotted data. Must start with '-S'. Default is a square.
             See GMT documentation.
             https://docs.generic-mapping-tools.org/latest/psxy.html#s
-        :param float size:
-            size of the plotted symbols
         :param logplot:
             if True, scale colors in log space
         :param str color:
@@ -471,50 +482,65 @@ class HMTKBaseMap(object):
             set sscale=None to use constant size set by coeff
         :param str label:
             Data label for the legend. Also used to name tmp file
+        :param boolean legend:
+            If True, add a legend to the plot
         '''
-
-        if logplot:
-            data = np.log10(data.copy())
+        # remove existing legend file
+        self.legendfi = os.path.join(self.out, 'legend_ss.txt')
+        if os.path.exists(self.legendfi):
+            if self.overwrite == True:
+                os.remove(self.legendfi)
 
         if sscale is None:
             sz = [coeff] * len(latitude)
         else: 
             sz = smin + coeff * data ** sscale
 
-        df = pd.DataFrame({'lo':longitude, 'la':latitude, 's':sz})
-        dat_tmp = '{}/tmp_dat_size{}.csv'.format(self.out, label.replace(' ','-'))
-        self.gmt_files_list.append(dat_tmp)
-        df.to_csv(dat_tmp, index = False, header = False)
-
-
-        self.cmds.append('gmt plot {} {} -G{} -Wblack'.format(dat_tmp, shape, color))
+        if logplot:
+            data = np.log10(data.copy())
+            sz = np.log10(sz)
 
         mindat = np.floor(min(data))
         maxdat = np.ceil(max(data))
         drange = abs(mindat - maxdat)
         
-        ds = np.arange(mindat,maxdat+1,np.ceil(drange/5))
+        if logplot:
+            ds = np.arange(10**mindat,10**(maxdat+1),np.ceil(drange/5))
+            legsz = np.log10(smin + coeff * ds ** sscale)
+        else:
+            ds = np.arange(mindat,maxdat+1,np.ceil(drange/5))
+            legsz = smin + coeff * ds ** sscale
+
+
+        df = pd.DataFrame({'lo':longitude, 'la':latitude, 's':sz})
+        lab_finame = re.sub('[^A-Za-z0-9]+', '', label)
+        dat_tmp = '{}/tmp_dat_size{}.csv'.format(self.out, lab_finame) 
+        self.gmt_files_list.append(dat_tmp)
+        df.to_csv(dat_tmp, index = False, header = False)
+
+
+        self.cmds.append('gmt plot {} {}c -G{} -Wblack'.format(dat_tmp, shape, color))
 
         if legend:
-            self._add_legend_size_scaled(ds, color, sz, shape, label, sscale)
+            self._add_legend_size_scaled(ds, color, legsz, shape, label, sscale)
 
     def _add_legend_size_scaled(self, data, color, size, shape, label, sscale):
         '''
         adds legend for catalogue seismicity.  
         '''
 
-        fname = '{}/legend_ss.csv'.format(self.out)
-        chk_file = 1 if os.path.isfile(fname) else 0
+#        fname = '{}/legend_ss.csv'.format(self.out)
+        chk_file = 1 if os.path.isfile(self.legendfi) else 0
 
         
         if chk_file == 0:
-            self.gmt_files_list.append(fname)
-            fou = open(fname, 'w')
+            self.gmt_files_list.append(self.legendfi)
+            fou = open(self.legendfi, 'w')
             if sscale is not None:
                 fou.write("L 12p R {}\n".format(label))
                 fou.write('G 0.1i\n')
         else:
-            fou = open(fname, 'a')
+            fou = open(self.legendfi, 'a')
 
         if sscale is not None:
             fmt = "S 0.4i {} {:.4f} {} 0.0c,black 2.0c {:.0f} \n"
@@ -526,17 +552,17 @@ class HMTKBaseMap(object):
                 fou.write('G 0.2i\n')
     
         else:
-            fou = open(fname,'a')
+            fou = open(self.legendfi,'a')
             fmt = "S 0.4i {} {} {} 0.0c,black 2.0c {} \n"
             sh = shape.replace('-S','').replace("'",'')
             fou.write(fmt.format(sh, size[0], color, label))
 
         fou.close()
     
-        tmp = "gmt legend {} -DJMR -C0.3c ".format(fname)
+        tmp = "gmt legend {} -DJMR -C0.3c ".format(self.legendfi)
         tmp += "--FONT_ANNOT_PRIMARY=12p"
 
-        chk = sum([1 if c.find(fname)>0 else 0 for c in self.cmds])
+        chk = sum([1 if c.find(self.legendfi)>0 else 0 for c in self.cmds])
         add_plot_line = 0 if chk > 0 else 1
 
         if add_plot_line==1:
@@ -561,12 +587,12 @@ class HMTKBaseMap(object):
     def add_focal_mechanism(self, filename, mech_format, config=None):
         '''
         :param string filename:
-            the filename containing the gcmt entries
+            the filename containing the cmt entries
         :param string mech_format: 
             the format of the file to be plotted. 
             https://docs.generic-mapping-tools.org/latest/supplements/seis/psmeca.html?highlight=psmeca#s
-            currently only focal mechanism (mech_format='FM') and seimsic 
-            moment tensor (mech_format='MT') are supported, both using the 
+            currently only focal mechanism ('FM') and seimsic 
+            moment tensor ('MT') are supported, both using the 
             Harvard CMT convention
         '''
 
@@ -591,7 +617,7 @@ class HMTKBaseMap(object):
         #TODO
         pass
 
-    def savemap(self, filename=None, save_script=False, verb=False):
+    def savemap(self, filename='map', save_script=False, verb=False):
         '''
         Saves map by finalizing GMT script and executing it line by line
         :param string filename:
