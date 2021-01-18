@@ -18,6 +18,7 @@
 
 import re
 import toml
+import warnings
 import numpy as np
 import pandas as pd
 
@@ -32,12 +33,15 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
     :param conv_eqs:
         A list
     :param rows:
+        The :class:`pandas.DataFrame` instance containing the information
+        still to be processed
     :param save:
+        One :class:`pandas.DataFrame` instance
     :param work:
         One :class:`pandas.DataFrame` instance
     :return:
         Two :class:`pandas.DataFrame` instances. The first one with the
-        homogenised catalogue, the second one with the information not
+        homogenised catalogue, the second one with the information not yet
         processed (if any).
     """
 
@@ -172,8 +176,8 @@ def process_magnitude(work, mag_rules):
 
     # Looping over agencies
     for agency in mag_rules.keys():
-        print('   Agency: {:s} ('.format(agency), end='')
-        #
+        print('   Agency: {:s} ('.format(agency), end="")
+
         # Looping over magnitude-types
         for mag_type in mag_rules[agency].keys():
             print('{:s} '.format(mag_type), end='')
@@ -185,6 +189,16 @@ def process_magnitude(work, mag_rules):
             except ValueError:
                 fmt = 'Cannot evaluate the following condition:\n {:s}'
                 print(fmt.format(cond))
+
+            # TODO
+            # This is an initial solution that is not ideal since it does
+            # not take the best information available.
+            # Remove duplicates. This can happen when we process a magnitude
+            # type without specifying the agency
+            flag = rows["eventID"].duplicated(keep='first')
+            if any(flag):
+                tmp = rows[~flag].copy()
+                rows = tmp
 
             # Magnitude conversion
             if len(rows) > 0:
@@ -239,5 +253,12 @@ def process_dfs(odf_fname, mdf_fname, settings_fname=None):
         save, work = process_magnitude(work, rules['magnitude'])
 
     print("Number of origins with final mag type {:d}\n".format(len(save)))
+
+    computed = len(save)
+    expected = len(save['eventID'].unique())
+    if computed - expected > 0:
+        fmt = "The catalogue contains {:d} duplicated eventIDs"
+        msg = fmt.format(computed - expected)
+        warnings.warn(msg)
 
     return save, work
