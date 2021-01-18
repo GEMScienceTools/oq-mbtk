@@ -1,0 +1,533 @@
+<?xml version='1.0' encoding='ASCII'?>
+<nrml xmlns:gml="http://www.opengis.net/gml" xmlns="http://openquake.org/xmlns/nrml/0.4">
+  <sourceModel name="Area-sources-PNG">
+    <areaSource tectonicRegion="Active Shallow Crust" id="az0" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>150.1 -10.055 149.476 -9.68 149.315 -9.677 149.176 -9.595 148.976 -9.477 148.807 -9.444 148.68 -9.42 148.669 -9.48 148.815 -9.653 148.94 -9.802 148.758 -9.78 148.437 -9.673 148.209 -9.498 147.97 -9.184 147.68 -8.781 147.42 -8.574 147.316 -8.195 147.057 -7.872 146.908 -7.686 146.883 -7.655 146.753 -7.492 146.724 -7.192 146.852 -6.907 146.952 -6.657 146.481 -6.471 146.01 -6.165 145.418 -5.665 145.289 -5.586 143.847 -4.287 143.233 -4.373 142.692 -4.348 142.348 -4.366 142.013 -4.309 141.356 -3.973 141.223 -3.954 141.03 -3.926 139.968 -3.766 139.711 -3.707 139.352 -3.578 139.0 -3.452 138.793 -3.445 138.622 -3.538 138.215 -3.488 137.987 -3.381 137.801 -3.295 137.444 -3.459 137.223 -3.53 136.959 -3.509 136.566 -3.409 136.288 -3.295 136.109 -3.152 135.966 -3.031 135.564 -3.327 136.606 -3.708 136.991 -3.858 137.631 -4.028 138.335 -4.071 138.803 -4.108 139.458 -4.188 140.077 -4.402 140.781 -4.786 141.553 -4.949 142.147 -5.277 143.0 -5.554 144.11 -6.066 144.878 -6.386 145.54 -6.6 146.009 -7.133 146.201 -7.368 146.393 -7.603 145.732 -7.921 145.966 -8.192 146.244 -8.277 146.649 -9.237 146.884 -9.515 147.719 -10.26 149.701 -10.269 149.729 -10.469 149.979 -10.626 150.286 -10.612 150.6 -10.597 150.607 -10.462 150.467 -10.413 150.3 -10.355 150.143 -10.348 150.143 -10.241 150.122 -10.149 150.1 -10.055</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>60.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.2" bValue="0.939" aValue="5.076924299" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="300.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="27.5" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az1" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>139.504 -2.314 139.538 -2.322 140.454 -3.608 140.049 -3.784 139.711 -3.707 139.0 -3.452 138.793 -3.445 138.622 -3.538 137.428 -1.749 137.761 -1.767 138.017 -1.82 138.465 -2.101 138.749 -2.278 139.504 -2.314</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>60.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.0" bValue="1.034" aValue="5.955619932" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="120.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="25.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az2" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>143.277 -2.573 143.479 -3.004 143.717 -3.668 140.187 -3.234 139.538 -2.322 138.749 -2.278 138.017 -1.82 138.447 -1.3 140.029 -2.014 141.171 -2.537 143.277 -2.573</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>40.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.5" bValue="0.99" aValue="5.794174237" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="100.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="15.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az3" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>143.717 -3.668 144.35 -3.792 145.371 -3.709 146.903 -3.519 147.522 -3.286 149.463 -3.85 149.613 -3.843 150.256 -3.507 151.248 -3.993 151.534 -3.836 152.876 -4.614 153.177 -4.422 153.24 -4.394 153.432 -4.309 151.583 -3.231 151.147 -3.424 150.205 -2.895 149.627 -3.259 147.466 -2.691 146.993 -2.873 144.481 -3.208 143.479 -3.004 143.717 -3.668</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>50.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.2" bValue="0.855" aValue="5.435715396" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="100.0" rake="0.0" dip="90.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="20.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az4" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>143.717 -3.668 143.847 -4.287 143.233 -4.373 142.692 -4.348 142.348 -4.366 142.013 -4.309 141.356 -3.973 140.049 -3.784 140.454 -3.608 140.187 -3.234 143.717 -3.668</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>60.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.2" bValue="1.077" aValue="5.688630688" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="80.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="27.5" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az5" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>146.726 -3.541 146.733 -3.54 146.233 -4.437 146.108 -4.676 145.936 -4.976 145.582 -5.186 145.137 -5.45 143.847 -4.287 143.717 -3.668 144.35 -3.792 145.371 -3.709 146.125 -3.616 146.726 -3.541</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>60.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="7.8" bValue="0.812" aValue="4.182443186" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="90.0" rake="0.0" dip="90.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="27.5" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az6" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>147.642 -7.12 147.663 -6.02 145.936 -4.976 145.137 -5.449 145.289 -5.586 145.418 -5.665 146.01 -6.165 146.481 -6.471 146.952 -6.657 147.642 -7.12</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>60.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.2" bValue="0.933" aValue="5.331453617" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="30.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="27.5" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az7" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>141.171 -2.537 141.337 -2.088 141.766 -1.707 143.217 -0.945 145.43 -0.279 147.667 -0.113 149.118 -0.612 151.165 -1.207 151.759 -1.54 153.235 -2.706 154.639 -4.181 155.769 -5.618 156.031 -6.142 156.054 -6.57 155.93 -6.985 155.178 -6.407 154.846 -6.031 154.51 -5.714 154.135 -5.367 153.807 -5.071 153.635 -4.516 153.432 -4.309 153.143 -4.14 151.583 -3.231 151.147 -3.424 150.205 -2.895 149.627 -3.259 147.466 -2.691 146.993 -2.873 144.481 -3.208 143.479 -3.004 143.277 -2.573 141.171 -2.537</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>50.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.4" bValue="0.879" aValue="4.904580314" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="90.0" rake="0.0" dip="90.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="22.5" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az8" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>155.93 -6.985 156.054 -6.57 156.031 -6.142 158.22 -6.142 158.624 -6.332 159.1 -6.522 159.719 -6.832 159.729 -9.285 155.93 -6.985</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>60.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.0" bValue="0.956" aValue="4.954421016" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="60.0" rake="0.0" dip="90.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="25.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az9" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>147.663 -6.02 147.517 -5.933 145.936 -4.976 146.102 -4.685 146.607 -3.765 146.733 -3.54 146.903 -3.519 147.522 -3.286 149.463 -3.85 149.613 -3.843 150.256 -3.507 151.248 -3.993 151.534 -3.836 152.876 -4.614 152.579 -4.607 152.007 -4.855 151.698 -4.968 151.451 -5.142 151.226 -5.189 150.059 -5.749 149.6 -5.86 149.228 -5.91 148.756 -6.128 148.36 -6.178 148.05 -6.163 147.657 -6.126 147.663 -6.02</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>60.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.0" bValue="1.041" aValue="5.847674435" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="90.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="27.5" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az10" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>149.045 -7.037 150.147 -7.179 150.685 -7.567 151.654 -6.977 151.889 -6.811 152.003 -6.736 152.236 -6.69 152.694 -6.6 153.182 -6.757 154.108 -7.42 154.534 -7.869 154.769 -8.116 154.876 -8.229 155.272 -8.388 155.578 -8.527 156.67 -9.246 159.698 -10.834 159.705 -10.035 159.444 -9.94 159.063 -9.69 157.278 -8.821 155.494 -7.632 154.411 -6.87 153.614 -6.121 153.055 -5.74 152.662 -5.657 152.293 -5.716 150.961 -6.394 149.841 -6.788 149.045 -7.037</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>50.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.2" bValue="0.917" aValue="5.496068505" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="270.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="20.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Subduction Interface" id="az11" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>153.431 -4.308 153.055 -5.74 152.662 -5.657 152.293 -5.716 150.961 -6.394 149.858 -6.782 149.839 -6.789 149.777 -6.808 149.045 -7.037 148.439 -7.12 147.642 -7.12 147.657 -6.126 148.36 -6.178 148.756 -6.128 149.228 -5.91 149.6 -5.86 150.059 -5.749 151.226 -5.189 151.451 -5.142 151.698 -4.968 152.041 -4.84 152.579 -4.607 152.876 -4.614 153.177 -4.422 153.431 -4.308</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>60.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.8" bValue="0.932" aValue="6.0853" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="250.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="25.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Subduction Interface" id="az12" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>153.055 -5.74 153.432 -4.309 153.635 -4.516 153.807 -5.071 154.51 -5.714 154.846 -6.031 155.178 -6.407 155.93 -6.985 156.81 -7.517 156.311 -8.177 155.507 -7.64 155.399 -7.565 154.411 -6.87 153.614 -6.121 153.055 -5.74</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>60.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.7" bValue="0.937" aValue="5.9475" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="315.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="25.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Subduction Interface" id="az13" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>156.311 -8.177 156.81 -7.517 159.729 -9.285 159.705 -10.035 159.444 -9.94 159.063 -9.69 157.278 -8.821 156.311 -8.177</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>40.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.7" bValue="0.913" aValue="5.146983373" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="315.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="15.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az14" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>151.429 -11.152 151.977 -11.233 152.348 -11.447 152.948 -11.833 153.59 -12.004 154.033 -12.004 154.561 -11.819 154.975 -11.505 155.503 -11.119 155.96 -10.762 156.36 -10.477 156.817 -10.163 157.317 -10.006 158.078 -9.984 156.56 -9.173 155.577 -9.968 154.333 -10.505 153.495 -10.753 151.949 -10.682 150.866 -10.266 150.14 -9.73 149.367 -9.076 150.188 -8.434 151.2 -8.863 152.02 -9.159 152.512 -9.142 153.043 -9.124 153.852 -9.076 154.284 -8.972 154.542 -8.909 154.959 -8.731 155.578 -8.527 154.876 -8.229 154.108 -7.42 153.182 -6.757 152.694 -6.6 152.003 -6.736 151.422 -7.119 150.685 -7.567 150.147 -7.179 149.045 -7.037 148.439 -7.12 147.642 -7.12 146.952 -6.657 146.724 -7.192 146.753 -7.492 147.316 -8.195 147.42 -8.574 147.68 -8.781 148.209 -9.498 148.437 -9.673 148.758 -9.78 148.94 -9.802 148.669 -9.48 148.68 -9.42 148.976 -9.477 149.315 -9.677 149.476 -9.68 150.1 -10.055 150.143 -10.241 150.143 -10.348 150.3 -10.355 150.607 -10.462 150.744 -11.038 151.072 -11.152 151.429 -11.152</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>40.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.4" bValue="0.955" aValue="5.19983194" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="90.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="17.5" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az15" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>155.578 -8.527 154.959 -8.731 154.542 -8.909 153.852 -9.076 153.043 -9.124 152.02 -9.159 150.997 -8.79 150.188 -8.434 149.367 -9.076 150.14 -9.73 150.866 -10.266 151.949 -10.682 153.495 -10.753 154.459 -10.468 155.577 -9.968 156.56 -9.173 155.578 -8.527</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>30.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="7.6" bValue="1.008" aValue="5.596593797" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="90.0" rake="0.0" dip="90.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="10.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Stable Shallow Crust" id="az16" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>138.357 -4.706 138.971 -4.747 140.108 -5.179 140.492 -5.371 141.164 -5.595 142.168 -6.25 143.448 -6.996 144.643 -7.551 144.942 -7.701 145.181 -7.736 145.325 -7.756 145.453 -7.863 145.732 -7.921 145.966 -8.192 146.244 -8.277 146.649 -9.237 146.884 -9.515 147.719 -10.26 147.74 -11.863 137.502 -8.361 138.357 -4.706</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>20.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="7.6" bValue="1.041" aValue="4.658860066" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="300.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="9.5" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Active Shallow Crust" id="az17" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>146.393 -7.603 145.732 -7.921 145.453 -7.863 145.181 -7.736 144.942 -7.701 143.448 -6.996 141.164 -5.595 138.971 -4.747 138.357 -4.706 136.203 -4.597 134.795 -4.298 135.564 -3.327 137.631 -4.028 139.458 -4.188 140.297 -4.522 140.781 -4.786 141.553 -4.949 142.147 -5.277 143.0 -5.554 145.54 -6.6 146.393 -7.603</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>1.0</upperSeismoDepth>
+        <lowerSeismoDepth>50.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.0" bValue="1.039" aValue="5.979849636" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="300.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="20.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Subduction IntraSlab" id="az18" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>156.336 -8.165 155.87 -7.699 155.489 -7.445 155.002 -7.276 153.901 -6.133 153.457 -5.286 153.245 -3.783 153.542 -3.783 154.515 -4.545 155.042 -5.203 155.574 -5.879 156.198 -6.272 156.886 -6.704 156.921 -6.774 157.246 -7.424 156.336 -8.165</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>60.0</upperSeismoDepth>
+        <lowerSeismoDepth>250.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.5" bValue="0.976" aValue="5.702119353" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="315.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="100.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Subduction IntraSlab" id="az19" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>153.245 -3.783 153.457 -5.286 152.758 -5.223 151.721 -5.646 151.15 -6.048 150.451 -6.069 148.398 -6.472 148.108 -4.991 149.643 -5.11 150.066 -4.991 150.276 -4.883 150.713 -4.614 151.601 -4.052 151.826 -3.483 152.143 -3.364 152.513 -3.338 152.91 -3.364 153.245 -3.783</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>60.0</upperSeismoDepth>
+        <lowerSeismoDepth>200.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.5" bValue="1.043" aValue="6.285531206" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="250.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="100.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Subduction IntraSlab" id="az20" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>156.336 -8.165 155.743 -8.758 155.411 -8.501 154.621 -7.89 153.53 -7.102 153.034 -6.683 152.737 -6.641 152.25 -6.916 150.684 -7.636 148.631 -7.276 148.102 -7.128 148.398 -6.472 150.451 -6.069 151.15 -6.048 151.721 -5.646 152.758 -5.223 153.457 -5.286 153.901 -6.133 154.282 -6.45 155.002 -7.276 155.489 -7.445 155.87 -7.699 156.336 -8.165</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>60.0</upperSeismoDepth>
+        <lowerSeismoDepth>180.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.2" bValue="1.0" aValue="5.287956168" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="270.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="100.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Subduction IntraSlab" id="az21" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>148.108 -4.991 148.398 -6.472 148.102 -7.128 147.936 -7.809 145.612 -6.608 145.224 -6.407 143.981 -5.415 142.869 -5.243 142.578 -5.124 143.478 -3.668 144.907 -4.025 146.423 -4.564 148.108 -4.991</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>60.0</upperSeismoDepth>
+        <lowerSeismoDepth>200.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.2" bValue="0.952" aValue="5.72427505" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="300.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="100.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Subduction IntraSlab" id="az22" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>147.936 -7.809 147.936 -7.809 148.786 -8.647 148.33 -8.634 147.834 -8.62 146.855 -8.171 145.439 -7.112 145.612 -6.608 147.936 -7.809</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>60.0</upperSeismoDepth>
+        <lowerSeismoDepth>180.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.0" bValue="1.127" aValue="5.731819146" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="300.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="100.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+    <areaSource tectonicRegion="Subduction IntraSlab" id="az23" name="area-source">
+      <areaGeometry>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>143.478 -3.668 142.578 -5.124 141.176 -4.317 139.972 -4.528 138.662 -3.999 137.747 -3.843 138.086 -2.181 139.271 -2.287 140.224 -3.155 141.917 -3.367 143.478 -3.668</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+        <upperSeismoDepth>60.0</upperSeismoDepth>
+        <lowerSeismoDepth>130.0</lowerSeismoDepth>
+      </areaGeometry>
+      <magScaleRel>WC1994</magScaleRel>
+      <ruptAspectRatio>1.0</ruptAspectRatio>
+      <truncGutenbergRichterMFD maxMag="8.5" bValue="0.999" aValue="5.551954755" minMag="5.0"/>
+      <nodalPlaneDist>
+        <nodalPlane strike="120.0" rake="90.0" dip="45.0" probability="1.0"/>
+      </nodalPlaneDist>
+      <hypoDepthDist>
+        <hypoDepth depth="90.0" probability="1.0"/>
+      </hypoDepthDist>
+    </areaSource>
+  </sourceModel>
+</nrml>
