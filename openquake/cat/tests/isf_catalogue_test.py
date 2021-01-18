@@ -138,8 +138,8 @@ class MergeGenericCatalogueTest(unittest.TestCase):
         cat._create_spatial_index()
         with self.assertWarns(UserWarning) as cm:
             _ = cat.add_external_idf_formatted_catalogue(cat_iscgem,
-                    ll_deltas=0.40, delta_t=delta, utc_time_zone=timezone,
-                    buff_t=dt.timedelta(0), buff_ll=0, use_ids=True,
-                    logfle=None)
+                        ll_deltas=0.40, delta_t=delta, utc_time_zone=timezone,
+                        buff_t=dt.timedelta(0), buff_ll=0, use_ids=True,
+                        logfle=None)
         self.assertIn('isf_catalogue.py', cm.filename)
-        self.assertEqual(781, cm.lineno)
+        self.assertEqual(821, cm.lineno)
