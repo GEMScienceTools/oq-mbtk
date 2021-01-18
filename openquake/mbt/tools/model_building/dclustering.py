@@ -203,8 +203,10 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             tmps += '    Earthquakes: {:5d} Mainshocks {:5d} {:4.1f}%'
             pct = sum(kkk)/sum(idx_tmp)*100.
             tmpr = '    mmin: {:5.2f} mmax {:5.2f}'
-            logging.info(tmps.format(lab, sum(idx_tmp), sum(kkk), pct))
-            print(tmps.format(lab, sum(idx_tmp), sum(kkk), pct))
+            tmpsum1 = int(sum(idx_tmp))
+            tmpsum2 = int(sum(kkk))
+            logging.info(tmps.format(lab, tmpsum1, tmpsum2, pct))
+            print(tmps.format(lab, tmpsum1, tmpsum2, pct))
             print(tmpr.format(min(ooo.data['magnitude']),
                               max(ooo.data['magnitude'])))
             #
