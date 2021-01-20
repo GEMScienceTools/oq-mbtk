@@ -15,9 +15,8 @@ def plot_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
              twid=20., pmint=None, pmaxt=None, ylim=None):
     #
     #
-    # MN: 'fig' assigned but never used
     fig = create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid,
-                     twid, pmint, pmaxt, ylim)
+                   twid, pmint, pmaxt, ylim)
     #
     # showing figure
     if store is not None:
@@ -29,6 +28,7 @@ def plot_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
         plt.savefig(figure_fname, format=ext)
     else:
         plt.show()
+    return fig
 
 
 def create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
@@ -52,8 +52,12 @@ def create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
         cat = catalogue_fname
     else:
         raise ValueError('Unknown instance')
-    #
-    # select earthquakes belonging to a given TR
+
+    # Check catalogue
+    if cat is None or len(cat.data['magnitude']) < 1:
+        return None
+
+    # Select earthquakes belonging to a given TR
     idx = numpy.full(cat.data['magnitude'].shape, True, dtype=bool)
     if label is not None and tr_fname is not None:
         f = h5py.File(tr_fname, 'r')
@@ -66,6 +70,11 @@ def create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
     start = datetime.datetime(pmint, 1, 1) if pmint is not None else None
     stop = datetime.datetime(pmaxt, 12, 31) if pmaxt is not None else None
     sel.within_time_period(start, stop)
+
+    # Check if the catalogue contains earthquakes
+    if len(cat.data['magnitude']) < 1:
+        return None
+
     #
     # find rounded min and max magnitude
     mmin, mmax = _get_extremes(cat.data['magnitude'], mwid)
