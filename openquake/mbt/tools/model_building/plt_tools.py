@@ -19,7 +19,14 @@ def _load_catalogue(catalogue_fname):
         #
         # load pickle file
         cat = pickle.load(open(catalogue_fname, 'rb'))
-    elif ext == '.csv' or ext == '.hmtk':
+    elif ext in ['.csv', '.hmtk']:
+
+        file = open(catalogue_fname, "r")
+        nonempty_lines = [line.strip("\n") for line in file if line != "\n"]
+        line_count = len(nonempty_lines)
+        file.close()
+        if line_count < 2:
+            return None
         #
         # load hmtk file
         parser = CsvCatalogueParser(catalogue_fname)
