@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
-import os
+
 import subprocess
 from openquake.cat.hmg.plot import get_agencies
 
@@ -49,7 +49,7 @@ def write_gmt_file(df, agencies=[], fname_gmt='/tmp/tmp.txt', **kwargs):
                 index=False, header=False)
 
 
-def plot_catalogue(fname, fname_fig='/tmp/tmp', **kwargs):
+def plot_catalogue(fname, fname_fig='/tmp/tmp.txt', **kwargs):
     """
     :param fname:
         Name of the file with the catalogue
@@ -61,9 +61,6 @@ def plot_catalogue(fname, fname_fig='/tmp/tmp', **kwargs):
     """
 
     cmds = []
-
-    tmpdir = kwargs.get('tmpdir', '/tmp')
-    title = kwargs.get('title', '')
 
     if "extent" in kwargs:
         extent = "-R"+kwargs["extent"]
@@ -84,34 +81,22 @@ def plot_catalogue(fname, fname_fig='/tmp/tmp', **kwargs):
     else:
         fformat = "pdf"
 
-    topography = kwargs.get('topography', None)
-
-    # Starting
     cmds.append("gmt begin {:s}".format(fname_fig))
 
-    # Plotting coast
-    fmt = "gmt coast {:s} {:s} -Bp10 -N1 -BWSne"
-    cmds.append(fmt.format(extent, "-JR10"))
+    fmt = "gmt coast {:s} {:s} -Bp5 -N1"
+    cmds.append(fmt.format(extent, "-JM10"))
+    cmds.append("gmt coast -Ccyan -Scyan")
 
-    # Topography
-    if topography is not None:
-        cmds.append('gmt makecpt -C150 -T-10000,10000 -N')
-        cmds.append('gmt grdimage {:s} -I+d'.format(topography))
-    cmds.append("gmt coast -Ccyan -Scyan -t50")
+    tmp = "gawk '{{print $1, $2, 2.4**$3/800}}' {:s}".format(fname)
+    tmp += " | gmt plot -Sc0.1 -W0.5,red -Gpink -t50"
 
-    # Process file and plot epicenters
-    tmpfle = os.path.join(tmpdir, 'tmp.txt')
-    fmt = "gawk '{{print $1, $2, 2.1**$3/800}}' {:s} > {:s}"
-    cmds.append(fmt.format(fname, tmpfle))
-    cmds.append("gmt plot {:s} -Sc -W0.5,red -Gpink -t50".format(tmpfle))
-
-    # cmds.append("gmt plot {:s} -Sc0.1 -W0.5,red -Gpink -t50".format(fname))
-    cmds.append("gmt coast -N1 -t50 -B+t\"{:s}\"".format(title))
+    cmds.append("gmt plot {:s} -Sc0.1 -W0.5,red -Gpink -t50".format(fname))
+    cmds.append("gmt coast -N1 -t50 -B+t{:s}".format("test"))
 
     # Running
     cmds.append("gmt end")
     for cmd in cmds:
-        _ = subprocess.call(cmd, shell=True)
+        out = subprocess.call(cmd, shell=True)
 
     tmps = "{:s}.{:s}".format(fname_fig, fformat)
     return tmps
