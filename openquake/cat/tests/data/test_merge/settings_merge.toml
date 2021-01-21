@@ -1,0 +1,37 @@
+# This file contains a set of rules for merging various catalogues. Paths are relative to this file.
+# Admitted catalogue types are: "isf", "gcmt" and "csv"
+
+#
+# General settings
+#
+
+[general]
+output_origins = "./tmp/otab_option1.h5"
+output_magnitudes = "./tmp/mtab_option1.h5"
+region_shp = "../../../data/gis/admin/chn_admdnda_adm0_ocha_no_taiwan.shp"
+region_buffer = 5.0
+output_path = "./../catalogues/"
+output_prefix = "case1_"
+
+#
+# Catalogues
+#
+
+[[catalogues]]
+code = "ISC"
+name = "ISC Bulletin"
+filename = "../catalogues/isf/catalogue.isf"
+type = "isf"
+select_region = "True"
+
+[[catalogues]]
+code = "oGCMT"
+name = "Original GCMT"
+filename = "../catalogues/csv/gcmt_1976_2017.csv"
+type = "csv"
+delta_ll = 0.50
+delta_t =  40.0
+timezone = 0
+buff_ll = 0.0
+buff_t = 5.0
+use_ids = "False"
