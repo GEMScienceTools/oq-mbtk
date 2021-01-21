@@ -213,7 +213,7 @@ class HMTKBaseMap(object):
         self.cmds.append(tmp)
         
             
-    def _plot_area_source(self, source, border='blue'):
+    def _plot_area_source(self, poly, border='blue'):
         '''
         Adds area source perimeters to mapping script. 
         :param source:
@@ -222,7 +222,6 @@ class HMTKBaseMap(object):
         :param str border:
            color of the area source perimeters
         '''
-        poly = source.polygon
         lons = np.append(poly.lons, poly.lons[0])
         lats = np.append(poly.lats, poly.lats[0])
         
@@ -401,7 +400,7 @@ class HMTKBaseMap(object):
         for grp in model.src_groups:
             for source in grp:
                 if type(source).__name__ == 'AreaSource':
-                    self._plot_area_source(source)
+                    self._plot_area_source(source.polygon)
                 elif type(source).__name__ == 'PointSource': 
                     self._plot_point_source(source)
                 elif type(source).__name__ == 'ComplexFaultSource':
