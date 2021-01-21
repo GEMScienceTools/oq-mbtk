@@ -117,7 +117,7 @@ class HMTKBaseMap(object):
         tmp += " {}".format(self.ax)
         self.cmds.append(tmp)
 
-        self.cmds.append("gmt coast -Di {} {} -Wthin -Gwheat".format(self.R, self.J))
+        self.cmds.append("gmt coast -Di {} {} -Wthin -Gwheat -N1".format(self.R, self.J))
         
 
     def add_catalogue(self, cat, scale=0.05, cpt_file="tmp.cpt", color_field='depth',
@@ -213,11 +213,11 @@ class HMTKBaseMap(object):
         self.cmds.append(tmp)
         
             
-    def _plot_area_source(self, poly, border='blue'):
+    def plot_polygon(self, poly, border='blue'):
         '''
         Adds area source perimeters to mapping script. 
-        :param source:
-            area source as instance of 
+        :param poly:
+            polygon as instance of 
             :class:`openquake.hazardlib.source.area.AreaSource`
         :param str border:
            color of the area source perimeters
@@ -225,7 +225,7 @@ class HMTKBaseMap(object):
         lons = np.append(poly.lons, poly.lons[0])
         lats = np.append(poly.lats, poly.lats[0])
         
-        filename = '{}/mtkAreaSource.csv'.format(self.out)
+        filename = '{}/mtkPolygon_{}.csv'.format(self.out, border)
         add_plot_line = self.mk_plt_csv(lons, lats, filename, lines=1)
 
         if add_plot_line == 1:
@@ -400,7 +400,7 @@ class HMTKBaseMap(object):
         for grp in model.src_groups:
             for source in grp:
                 if type(source).__name__ == 'AreaSource':
-                    self._plot_area_source(source.polygon)
+                    self.plot_polygon(source.polygon)
                 elif type(source).__name__ == 'PointSource': 
                     self._plot_point_source(source)
                 elif type(source).__name__ == 'ComplexFaultSource':
