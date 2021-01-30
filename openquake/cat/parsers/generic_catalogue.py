@@ -160,7 +160,7 @@ class GeneralCsvCatalogue(object):
             if len(self.data['eventID']) > 0:
                 event_id = str(self.data['eventID'][iloc])
             else:
-                raise ValueError('Unknown key')
+                raise ValueError('Unknown key. Line: {:d}'.format(iloc))
             origin_id = event_id
             # Create Magnitude
             sigma_mag = None
