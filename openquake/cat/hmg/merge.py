@@ -184,10 +184,11 @@ def process_catalogues(settings_fname):
             use_ids = tdict["use_ids"]
 
             # Set log files
-            if "log_file" not in settings["general"]:
+            if "log_file" not in tdict:
                 logfle = "/tmp/tmp.tmp"
             else:
-                logfle = settings["general"]["log_file"]
+                logfle = tdict["log_file"]
+            print("   Log file: {:s}".format(logfle))
 
             # Merging
             meth = catroot.add_external_idf_formatted_catalogue
