@@ -741,11 +741,12 @@ class ISFCatalogue(object):
                                 found = False
                                 continue
 
-                        # Check is a secondary solution from the same agency
+                        # Check if a secondary solution from the same agency
                         # exists
                         authors = [m.author for m in
                                    self.events[i_eve].magnitudes]
                         if event.magnitudes[0].author in authors:
+                            print("Solution already included for this source")
                             print(event.magnitudes[0].origin_id)
                             found = False
                             continue
