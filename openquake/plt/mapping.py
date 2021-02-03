@@ -3,6 +3,7 @@ import re
 import sys
 import subprocess
 import math
+import shutil
 import pandas as pd
 import numpy as np
 from openquake.baselib import sap
@@ -59,12 +60,19 @@ class HMTKBaseMap(object):
         self.out = output_folder
         self.overwrite = overwrite
 
+        # if overwrite is true, remove the directory
+        if self.overwrite:
+            if os.path.exists(self.out):
+                shutil.rmtree(self.out)
+            else:
+                pass
+
         # make the output directory if it doesn't exist
         if os.path.exists(self.out):
             pass
         else:
             os.makedirs(self.out)
-
+       
         # set the title if it is specified
         if self.config['title']:
             self.title = config['title']
@@ -486,9 +494,6 @@ class HMTKBaseMap(object):
         '''
         # remove existing legend file
         self.legendfi = os.path.join(self.out, 'legend_ss.txt')
-        if os.path.exists(self.legendfi):
-            if self.overwrite == True:
-                os.remove(self.legendfi)
 
         if sscale is None:
             sz = [coeff] * len(latitude)
@@ -528,7 +533,6 @@ class HMTKBaseMap(object):
         adds legend for catalogue seismicity.  
         '''
 
-#        fname = '{}/legend_ss.csv'.format(self.out)
         chk_file = 1 if os.path.isfile(self.legendfi) else 0
 
         
@@ -536,12 +540,12 @@ class HMTKBaseMap(object):
             self.gmt_files_list.append(self.legendfi)
             fou = open(self.legendfi, 'w')
             if sscale is not None:
-                fou.write("L 12p R {}\n".format(label))
+#                fou.write("L 12p R {}\n".format(label))
                 fou.write('G 0.1i\n')
         else:
             fou = open(self.legendfi, 'a')
 
-        if sscale is not None:
+        if sscale != 0.0:
             fmt = "S 0.4i {} {:.4f} {} 0.0c,black 2.0c {:.0f} \n"
     
             sh = shape.replace('-S','').replace("'",'')
@@ -551,7 +555,6 @@ class HMTKBaseMap(object):
                 fou.write('G 0.2i\n')
     
         else:
-            fou = open(self.legendfi,'a')
             fmt = "S 0.4i {} {} {} 0.0c,black 2.0c {} \n"
             sh = shape.replace('-S','').replace("'",'')
             fou.write(fmt.format(sh, size[0], color, label))
@@ -661,7 +664,7 @@ class HMTKBaseMap(object):
         if save_script==True:
             self._save_gmt_script(scriptname=filename.replace(filetype,'sh'))
         else:
-            [os.remove(fi) for fi in self.gmt_files_list]
+            [os.remove(fi) for fi in set(self.gmt_files_list)]
 
     def _save_gmt_script(self, scriptname="gmt_plotter.sh"):
         '''
