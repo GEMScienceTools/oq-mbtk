@@ -49,6 +49,7 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
     #
     # compute length of profiles
     lengths, longest_key, shortest_key = get_profiles_length(sps)
+    #import pdb; pdb.set_trace()
     logging.info('Longest profile (id: {:s}): {:2f}'.format(
         longest_key, lengths[longest_key]))
     logging.info('Shortest profile (id: {:s}): {:2f}'.format(
@@ -76,22 +77,23 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
     write_edges_csv(rsps, out_path)
 
 
-def main(argv):
+#def main(argv):
 
-    p = sap.Script(build_complex_surface)
-    p.arg(name='in_path', help='Path to the input folder')
-    p.arg(name='max_sampl_dist', help='Maximum profile sampling distance')
-    p.arg(name='out_path', help='Path to the output folder')
-    p.opt(name='upper_depth', help='Upper depth')
-    p.opt(name='lower_depth', help='Lower depth')
-    p.opt(name='from_id', help='Index profile where to start the sampling')
-    p.opt(name='to_id', help='Index profile where to stop the sampling')
+#    p = sap.Script(build_complex_surface)
+in_path = 'Path to the input folder'
+max_sampl_dist = 'Maximum profile sampling distance'
+out_path = 'Path to the output folder'
+upper_depth = 'Upper depth'
+lower_depth = 'Lower depth'
+from_id = 'Index profile where to start the sampling'
+to_id = 'Index profile where to stop the sampling'
 
-    if len(argv) < 1:
-        print(p.help())
-    else:
-        p.callfunc()
+#    if len(argv) < 1:
+#        print(p.help())
+#    else:
+#        p.callfunc()
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sap.run(build_complex_surface)
+    #main(sys.argv[1:])
