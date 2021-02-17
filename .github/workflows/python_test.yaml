@@ -49,6 +49,7 @@ jobs:
         pip install sphinx_rtd_theme
         pip install nbsphinx
     - name: Make html pages
+      run: |
         cd docsrc ; sphinx-apidoc -o contents/ ../openquake ; make html
         touch _build/html/.nojekyll
 
