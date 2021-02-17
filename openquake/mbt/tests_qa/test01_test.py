@@ -42,7 +42,6 @@ class MFDFromSESMFDFromInputTest(unittest.TestCase):
         folder = tempfile.mkdtemp()
         fname_ssm = os.path.join(BASE_DATA_PATH, 'ssm01.xml')
         fname_ini = os.path.join(BASE_DATA_PATH, 'job.ini')
-        print(fname_ini)
         tmps = 'if [ -d "${:s}" ]; then rm -Rf $WORKING_DIR; fi'
         command = tmps.format(folder)
         subprocess.run(command, shell=True)
@@ -50,7 +49,6 @@ class MFDFromSESMFDFromInputTest(unittest.TestCase):
             fname_ini, folder)
         subprocess.run(command, shell=True)
         fname_ses = get_fname(folder, 'ruptures_*.csv')
-        print(fname_ses)
 
         # Read catalogue
         cat = csv.get_catalogue_from_ses(fname_ses, time)
@@ -82,9 +80,8 @@ class MFDFromSESMFDFromInputTest(unittest.TestCase):
         computed = cat.get_number_events()/time
 
         ratio = abs(computed/expected)
-        msg = 'Total rates do not match'
-
-        self.assertTrue(ratio < 1., msg)
+        msg = 'Total rates do not match. Ratio {:f}'.format(ratio)
+        self.assertTrue(abs(ratio-1.) < 1e-2, msg)
 
         if False:
             import matplotlib.pyplot as plt
