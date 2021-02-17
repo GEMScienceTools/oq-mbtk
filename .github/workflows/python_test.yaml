@@ -5,7 +5,7 @@ on:
 jobs:
 
   test:
-    name: Python Application
+    name: hazard test
     runs-on: ubuntu-18.04
     env:
       MPLBACKEND: 'Agg'
@@ -20,14 +20,15 @@ jobs:
         git clone --depth=1 https://github.com/gem/oq-engine.git
         pip -q install -r oq-engine/requirements-py38-linux64.txt -r oq-engine/requirements-extra-py38-linux64.txt
         pip -q install -e oq-engine
-        pip install rtree-linux && pip install -e .
+        pip install rtree-linux 
+        pip install -e .
     - name: Run test with pytest
       run: |
         cd openquake
         pytest -vsx mbt cat man sub
 
   pages:
-    name: Python Application
+    name: pages
     runs-on: ubuntu-18.04
     env:
       MPLBACKEND: 'Agg'
@@ -39,7 +40,7 @@ jobs:
         python-version: 3.8
     - name: Install dependencies
       run: |
-        apt-get install pandoc
+        sudo apt-get install pandoc
         pip install sphinx
         pip install recommonmark
         pip install sphinx_rtd_theme
