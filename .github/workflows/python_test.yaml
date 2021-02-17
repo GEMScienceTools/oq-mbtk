@@ -1,7 +1,5 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-w    ith-github-actions
 name: Python application for 3.8
- on:
+on:
   push:
 
 jobs:
