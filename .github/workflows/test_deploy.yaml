@@ -2,7 +2,7 @@ name: Python application
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, github-actions]
   pull_request:
     branches: [ master ]
   schedule:
