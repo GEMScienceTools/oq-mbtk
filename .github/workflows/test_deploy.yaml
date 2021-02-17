@@ -53,14 +53,11 @@ jobs:
         cd docsrc ; sphinx-apidoc -o contents/ ../openquake ; make html
         touch _build/html/.nojekyll
 
-    - name: Deploy
-      uses: JamesIves/github-pages-deploy-action@4.0.0
-      with:
-        branch: master # The branch the action should deploy to.
-        folder: docsrc/_build/html/ # The folder the action should deploy.
-
-    - name: Deploy
-      uses: JamesIves/github-pages-deploy-action@4.0.0
-      with:
-        branch: new_docs # The branch the action should deploy to.
-        folder: docsrc/_build/html/ # The folder the action should deploy.
+    - name: Deploy to GitHub Pages
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: master
+          build_dir: docsrc/_build/html/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
