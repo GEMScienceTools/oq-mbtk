@@ -23,6 +23,7 @@ jobs:
         pip install -e .
     - name: Run test with pytest
       run: |
+        pip install pytest
         cd openquake
         pytest -vsx mbt cat man sub
 
@@ -39,11 +40,15 @@ jobs:
         python-version: 3.8
     - name: Install dependencies
       run: |
+        git clone --depth=1 https://github.com/gem/oq-engine.git
+        pip -q install -r oq-engine/requirements-py38-linux64.txt -r oq-engine/requirements-extra-py38-linux64.txt
+        pip -q install -e oq-engine
         sudo apt-get install pandoc
         pip install sphinx
         pip install recommonmark
         pip install sphinx_rtd_theme
         pip install nbsphinx
+    - name: Make html pages
         cd docsrc ; sphinx-apidoc -o contents/ ../openquake ; make html
         touch _build/html/.nojekyll
 
