@@ -3,12 +3,12 @@ on:
   push:
 
 jobs:
-  env:
-    MPLBACKEND: 'Agg'
 
   test:
     name: Python Application
     runs-on: ubuntu-18.04
+    env:
+      MPLBACKEND: 'Agg'
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
@@ -29,6 +29,8 @@ jobs:
   pages:
     name: Python Application
     runs-on: ubuntu-18.04
+    env:
+      MPLBACKEND: 'Agg'
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
