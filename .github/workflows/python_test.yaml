@@ -3,11 +3,12 @@ on:
   push:
 
 jobs:
+  env:
+    MPLBACKEND: 'Agg'
 
   test:
     name: Python Application
     runs-on: ubuntu-18.04
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
@@ -24,3 +25,24 @@ jobs:
       run: |
         cd openquake
         pytest -vsx mbt cat man sub
+
+  pages:
+    name: Python Application
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        apt-get install pandoc
+        pip install sphinx
+        pip install recommonmark
+        pip install sphinx_rtd_theme
+        pip install nbsphinx
+        cd docsrc ; sphinx-apidoc -o contents/ ../openquake ; make html
+        touch _build/html/.nojekyll
+
+
