@@ -10,8 +10,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      with:
-        ref: actions
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
@@ -22,7 +20,7 @@ jobs:
         pip -q install -r oq-engine/requirements-py38-linux64.txt -r oq-engine/requirements-extra-py38-linux64.txt
         pip -q install -e oq-engine
         pip install rtree-linux && pip install -e .
-    - name: Test with pytest
+    - name: Run test with pytest
       run: |
         cd openquake
         pytest -vsx mbt cat man sub
