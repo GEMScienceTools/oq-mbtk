@@ -1,12 +1,18 @@
-name: Python application for 3.8
+name: Python application
+
 on:
   push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: "0 2 * * *"
 
 jobs:
 
   test:
     name: hazard test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     env:
       MPLBACKEND: 'Agg'
     steps:
@@ -18,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         git clone --depth=1 https://github.com/gem/oq-engine.git
-        pip -q install -r oq-engine/requirements-py38-linux64.txt -r oq-engine/requirements-extra-py38-linux64.txt
+        pip -q install -r oq-engine/requirements-py38-linux64.txt 
         pip -q install -e oq-engine
         pip install -e .
     - name: Run test with pytest
@@ -29,7 +35,7 @@ jobs:
 
   pages:
     name: pages
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     env:
       MPLBACKEND: 'Agg'
     steps:
@@ -57,7 +63,7 @@ jobs:
       if: success()
       uses: crazy-max/ghaction-github-pages@v2
       with:
-        target_branch: master
+        target_branch: new_docs
         build_dir: docsrc/_build/html/
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
