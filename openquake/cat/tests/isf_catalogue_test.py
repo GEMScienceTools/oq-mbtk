@@ -141,5 +141,6 @@ class MergeGenericCatalogueTest(unittest.TestCase):
                         ll_deltas=0.40, delta_t=delta, utc_time_zone=timezone,
                         buff_t=dt.timedelta(0), buff_ll=0, use_ids=True,
                         logfle=None)
+        print(cm)
         self.assertIn('isf_catalogue.py', cm.filename)
-        self.assertEqual(821, cm.lineno)
+        self.assertEqual(822, cm.lineno)
