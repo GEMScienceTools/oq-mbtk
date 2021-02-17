@@ -1,0 +1,30 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-w    ith-github-actions
+name: Python application for 3.8
+ on:
+  push:
+
+jobs:
+
+  test:
+    name: Python Application
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: actions
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        git clone --depth=1 https://github.com/gem/oq-engine.git
+        pip -q install -r oq-engine/requirements-py38-linux64.txt -r oq-engine/requirements-extra-py38-linux64.txt
+        pip -q install -e oq-engine
+        pip install rtree-linux && pip install -e .
+    - name: Test with pytest
+      run: |
+        cd openquake
+        pytest -vsx mbt cat man sub
