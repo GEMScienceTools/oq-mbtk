@@ -54,10 +54,10 @@ jobs:
         touch _build/html/.nojekyll
 
     - name: Deploy to GitHub Pages
-        if: success()
-        uses: crazy-max/ghaction-github-pages@v2
-        with:
-          target_branch: master
-          build_dir: docsrc/_build/html/
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: success()
+      uses: crazy-max/ghaction-github-pages@v2
+      with:
+        target_branch: master
+        build_dir: docsrc/_build/html/
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
