@@ -3,7 +3,7 @@ The OpenQuake Model Building Toolkit is a container for various packages with un
 
 Documentation accessible at [https://gemsciencetools.github.io/oq-mbtk/index.html](https://gemsciencetools.github.io/oq-mbtk/index.html)
 
-![workflow](https://github.com/GEMScienceTools/oq-mbtk/tree/master/.github/workflows/test_deploy.yaml/badge.svg)
+![workflow](https://github.com/GEMScienceTools/oq-mbtk/workflows/.github/workflows/test_deploy.yaml/badge.svg)
 
 ## Development installation
 ```
