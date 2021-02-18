@@ -71,6 +71,7 @@ setup(
         'nbconvert',
         'prettytable',
         'tqdm',
+        'tables',
         'geopandas == 0.6.3',
         'pylint >= 2.1.1'
     ],
