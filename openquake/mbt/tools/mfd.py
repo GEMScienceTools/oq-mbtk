@@ -7,6 +7,7 @@ import numpy as np
 
 from openquake.hazardlib.mfd import (TruncatedGRMFD, EvenlyDiscretizedMFD,
                                      ArbitraryMFD)
+from openquake.hazardlib.mfd.multi_mfd import MultiMFD
 
 log = True
 log = False
@@ -209,6 +210,27 @@ def get_evenlyDiscretizedMFD_from_truncatedGRMFD(mfd, bin_width=None):
                                 list(rates))
 
 
+def get_evenlyDiscretizedMFD_from_multiMFD(mfd, bin_width=None):
+    if mfd.kind == 'incrementalMFD':
+
+        oc = mfd.kwargs['occurRates']
+        min_mag = mfd.kwargs['min_mag']
+        binw = mfd.kwargs['bin_width'][0]
+
+        for i in range(mfd.size):
+            occ = oc[0] if len(oc) == 1 else oc[i]
+            min_m = min_mag[0] if len(min_mag) == 1 else min_mag[i]
+            if i == 0:
+                emfd = EEvenlyDiscretizedMFD(min_m, binw, occ)
+            else:
+                tmfd = EEvenlyDiscretizedMFD(min_m, binw, occ)
+                emfd.stack(tmfd)
+    else:
+        raise ValueError('Unsupported MFD type')
+
+    return emfd
+
+
 class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
 
     @classmethod
@@ -224,6 +246,9 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
             tmfd = get_evenlyDiscretizedMFD_from_truncatedGRMFD(mfd, bin_width)
             return EEvenlyDiscretizedMFD(tmfd.min_mag, tmfd.bin_width,
                                          tmfd.occurrence_rates)
+        elif isinstance(mfd, MultiMFD):
+            tmfd = get_evenlyDiscretizedMFD_from_multiMFD(mfd, bin_width)
+            return tmfd
         else:
             raise ValueError('Unsupported MFD type')
 
