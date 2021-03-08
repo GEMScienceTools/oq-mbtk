@@ -153,11 +153,17 @@ def analyze_hypocentral_depth(folder_subcat: str, *, depth_min: float = 0,
             wei = np.around(hist, 2)
             wei = wei / np.sum(wei)
             wei = np.around(wei, 2)
-
+ 
             swei = np.sum(wei)
             if abs(1.0-swei) > 1e-2:
-                msg = "Weights do not sum to 1: {:f}\n{:s}".format(swei, fname)
-                warnings.warn(msg)
+                # Fixing
+                wei[-1] += 1.0-swei
+                swei = np.sum(wei)
+                if abs(1.0-swei) > 1e-2:
+                    fmt = "Weights do not sum to 1: {:f}\n{:s}"
+                    msg = fmt.format(swei, fname)
+                    warnings.warn(msg)
+                    exit()
 
             var = model['sources'][source_id] 
             tlist = []

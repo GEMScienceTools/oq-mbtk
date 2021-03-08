@@ -11,6 +11,11 @@ from shapely.geometry import Point
 from shapely import wkt
 
 
+def main(fname_points: str, fname_polygons: str, folder_out: str='/tmp', 
+        skip=[]):
+    create_smoothing_per_zone(fname_points, fname_polygons, folder_out, skip) 
+
+
 def create_smoothing_per_zone(fname_points: str, fname_polygons: str, 
                               folder_out: str='/tmp', skip=[]):
     """
@@ -18,17 +23,18 @@ def create_smoothing_per_zone(fname_points: str, fname_polygons: str,
     `fname_polygons` shapefile. The attibute table must have an 'id' attribute.
     
     :param fname_points:
+        Name of the file with the output of the smoothing
     :param fname_polygons:
         The shapefile with the polygons
     :param folder_out:
         The name of the folder where to write the output
     :returns:
-        This function creates a number of .csv files in `folder_out` 
+        A number of .csv files in `folder_out` 
     """
 
     create_folder(folder_out)
 
-    # Create geodataframe 
+    # Create a geodataframe with the point sources
     df = pd.read_csv(fname_points)
     gdf = gpd.GeoDataFrame(df.drop(['lon', 'lat'], axis=1), crs='epsg:4326',
                            geometry=[Point(xy) for xy in zip(df.lon, df.lat)])
@@ -36,15 +42,17 @@ def create_smoothing_per_zone(fname_points: str, fname_polygons: str,
     # Read polygons
     polygons_gdf = gpd.read_file(fname_polygons)
     
-    # Select point in polygon
+    # Iterate over the polygons defining the boundaries of area sources
     for idx, poly in polygons_gdf.iterrows():
         
         if poly.id in skip:
             continue
         
+        # Create a geodataframe with the polygon in question
         df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
-        
         gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
+        
+        # Find the point sources from the smoothing inside the polygon
         within = gpd.sjoin(gdf, gdf_poly, op='within')
 
         within['lon'] = within['geometry'].x
@@ -58,10 +66,10 @@ def create_smoothing_per_zone(fname_points: str, fname_polygons: str,
         if len(within):
             within.to_csv(fout, index=False, columns=['lon', 'lat', 'nocc'])
 
-create_smoothing_per_zone.fname_points = ".csv file created by the smoothing code"
-create_smoothing_per_zone.fname_polygons = "Shapefile with the polygons"
-create_smoothing_per_zone.folder_out = "The name of the output folder where to save .csv files"
-create_smoothing_per_zone.skip = "A string containing a list of source IDs"
+main.fname_points = ".csv file created by the smoothing code"
+main.fname_polygons = "Shapefile with the polygons"
+main.folder_out = "The name of the output folder where to save .csv files"
+main.skip = "A string containing a list of source IDs"
 
 if __name__ == '__main__':
-    sap.run(create_smoothing_per_zone)
+    sap.run(main)
