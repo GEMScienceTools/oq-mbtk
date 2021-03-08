@@ -142,7 +142,6 @@ def get_param(dct, dct_default, key):
         return dct_default[key]
     
 
-
 create_nrml_sources.fname_input_pattern = "Pattern for input .csv files"
 create_nrml_sources.fname_config = "Name of the configuration file"
 create_nrml_sources.folder_out = "Name of the output folder"
