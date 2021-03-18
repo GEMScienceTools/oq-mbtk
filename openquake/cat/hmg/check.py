@@ -78,8 +78,14 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson):
     cnt = 0
 
     from tqdm import tqdm
+    import numpy as np
     # Loop over the earthquakes in the catalogue
-    for index, row in tqdm(cat.iterrows()):
+    # datetime can only cover 548 years starting in 1677
+    # general advice will be to exclude historic events and 
+    # add those later
+    subcat = cat[cat['year']>1800]
+    nat_idx = np.where(pd.isnull(subcat.loc[:, 'datetime'])==False)[0].tolist()
+    for index, row in tqdm(subcat.iterrows()):
 
         # Select events that occurred close in space
         minlo = row.longitude - delta_ll
@@ -88,8 +94,7 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson):
         maxla = row.latitude + delta_ll
         idx_space = list(sidx.intersection((minlo, minla, maxlo, maxla)))
 
-        # Select events that occurred close in time
-        tmp = abs(cat.loc[:, 'datetime'] - row.datetime) < delta_t
+        tmp = abs(subcat.loc[:, 'datetime'] - row.datetime) < delta_t
         idx_time = list(tmp[tmp].index)
 
         # Find the index of the events that are matching temporal and spatial
@@ -98,7 +103,7 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson):
 
         if len(idx) > 1:
             cnt += 1
-            features.extend(get_features(cat, index, idx))
+            features.extend(get_features(subcat, index, idx))
             for i in idx:
                 found.add(i)
 
@@ -147,7 +152,7 @@ def check_catalogue(catalogue_fname, settings_fname):
     # Add datetime field
     if "datetime" not in cat.keys():
         cat['datetime'] = pd.to_datetime(cat[['year', 'month', 'day', 'hour',
-                                              'minute', 'second']])
+                                              'minute', 'second']], errors = 'coerce')
 
     # Set filename
     out_path = settings["general"]["output_path"]
