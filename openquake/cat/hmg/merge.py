@@ -175,6 +175,11 @@ def process_catalogues(settings_fname):
             nev = tmpcat.get_number_events()
             print("   Catalogue contains: {:d} events".format(nev))
 
+            select_flag = tdict.get("select_region", False)
+            if select_flag:
+                print("      Selecting")
+                tmpcat = geographic_selection(tmpcat, fname_shp, buffr)
+
             # Setting the parameters for merging
             delta_ll = tdict["delta_ll"]
             delta_t = get_delta_t(tdict["delta_t"])
