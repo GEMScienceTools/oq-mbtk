@@ -819,9 +819,9 @@ def plot_agency_magnitude_density(data, overlay=False, number_samples=0,
     if highy > highx:
         highx = highy
 
-    xbins = np.linspace(lowx - 0.05, highx + 0.05,
+    xbins = np.linspace(lowx - 0.05, highx + 0.15,
                         int(((highx + 0.05 - lowx - 0.05) / 0.1) + 2.0))
-    ybins = np.linspace(lowx - 0.05, highx + 0.05,
+    ybins = np.linspace(lowx - 0.05, highx + 0.15,
                         int(((highx + 0.05 - lowx - 0.05) / 0.1) + 2.0))
     density = sample_agency_magnitude_pairs(data, xbins, ybins, number_samples)
     fig = plt.figure(figsize=figure_size)
@@ -840,8 +840,8 @@ def plot_agency_magnitude_density(data, overlay=False, number_samples=0,
     plt.xlabel(utils._to_latex(keys[0]), fontsize=16)
     plt.ylabel(utils._to_latex(keys[2]), fontsize=16)
     plt.grid(True)
-    plt.ylim(lowx, highx)
-    plt.xlim(lowx, highx)
+    plt.ylim(lowx, highx+0.5)
+    plt.xlim(lowx, highx+0.5)
     # Overlay 1:1 line
     plt.plot(np.array([lowx, highx]), np.array([lowx, highx]), ls="--",
              color=[0.5, 0.5, 0.5], zorder=1)
@@ -1087,6 +1087,7 @@ class CatalogueRegressor(object):
         plt.plot(model_x, model_y, line_color,
                  linewidth=2.0,
                  label=title_string)
+
         #plt.title(r"{:s}".format(title_string), fontsize=14)
         plt.legend(loc=2, frameon=False)
         if filename:
