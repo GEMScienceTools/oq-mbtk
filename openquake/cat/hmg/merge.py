@@ -71,6 +71,29 @@ def coords_prime_origins(catalogue):
     return np.array(data)
 
 
+def magnitude_selection(catalogue: str, min_mag: float):
+    """
+    :param catalogue:
+        An instance of :class:`openquake.cat.isf_catalogue.ISFCatalogue`
+    :param min_mag:
+        Minimum magnitude
+    """
+    # Filter events
+    iii = []
+    for iloc, event in enumerate(catalogue.events):
+        for iori, origin in enumerate(event.origins):
+            # Skipping events that are not prime
+            if not origin.is_prime and len(event.origins) > 1:
+                continue
+            else:
+                if len(origin.magnitudes) > 0:
+                    for m in origin.magnitudes:
+                        if m.value > (min_mag-0.001):
+                            iii.append(iloc)
+                            continue
+    return catalogue.get_catalogue_subset(iii)
+
+
 def geographic_selection(catalogue, shapefile_fname, buffer_dist=0.0):
     """
     :param catalogue:
@@ -88,7 +111,7 @@ def geographic_selection(catalogue, shapefile_fname, buffer_dist=0.0):
     # Create geodataframe with the catalogue
     origins = pd.DataFrame(tmp, columns=['iloc', 'iori'])
     tmp = gpd.points_from_xy(data[:, 0], data[:, 1])
-    origins = gpd.GeoDataFrame(origins, geometry=tmp)
+    origins = gpd.GeoDataFrame(origins, geometry=tmp, crs="EPSG:4326")
 
     # Reading shapefile and dissolving polygons into a single one
     boundaries = gpd.read_file(shapefile_fname)
@@ -99,8 +122,15 @@ def geographic_selection(catalogue, shapefile_fname, buffer_dist=0.0):
     if buffer_dist > 0:
         geom = geom.buffer(buffer_dist)
 
-    # Selecting origins
-    aaa = origins[origins.within(geom)]
+    # Selecting origins - Tried two methods both give the same result
+    #pip = origins.within(geom)
+    #aaa = origins.loc[pip]
+    tmpgeo = {'col1': ['tmp'], 'geometry': [geom]}
+    gdf = gpd.GeoDataFrame(tmpgeo, crs="EPSG:4326")
+    aaa = gpd.sjoin(origins, gdf, how="inner", op='intersects')
+    
+    # This is for checking purposes
+    aaa.to_file("/tmp/within.geojson", driver='GeoJSON')
 
     return catalogue.get_catalogue_subset(list(aaa["iloc"].values))
 
@@ -120,6 +150,8 @@ def load_catalogue(fname, cat_type, cat_code, cat_name):
         cat = parser.parse(cat_code, cat_name)
     else:
         raise ValueError("Unsupported catalogue type")
+    fmt = '    The original catalogue contains {:d} events'
+    print(fmt.format(len(cat.events)))
     return cat
 
 
@@ -151,7 +183,7 @@ def process_catalogues(settings_fname):
 
         print("\n", cat_name)
 
-        # Reading catalogue
+        # Reading the first catalogue
         if icat == 0:
 
             catroot = load_catalogue(fname, cat_type, cat_code, cat_name)
@@ -160,8 +192,17 @@ def process_catalogues(settings_fname):
 
             select_flag = tdict.get("select_region", False)
             if select_flag:
-                print("      Selecting")
+                msg = "Selecting earthquakes within the region shapefile"
+                print("      " + msg)
                 catroot = geographic_selection(catroot, fname_shp, buffr)
+                msg = "Selected {:d} earthquakes".format(len(catroot))
+                print("      " + msg)
+
+            min_mag = settings["general"].get("minimum_magnitude", False)
+            if min_mag:
+                msg = "Selecting earthquakes above {:f}".format(min_mag)
+                print("      " + msg)
+                catroot = magnitude_selection(catroot, min_mag)
 
             # Add the spatial index
             if 'sidx' not in catroot.__dict__:
@@ -175,6 +216,14 @@ def process_catalogues(settings_fname):
             nev = tmpcat.get_number_events()
             print("   Catalogue contains: {:d} events".format(nev))
 
+            select_flag = tdict.get("select_region", False)
+            if select_flag:
+                msg = "Selecting earthquakes within the region shapefile"
+                print("      " + msg)
+                tmpcat = geographic_selection(tmpcat, fname_shp, buffr)
+                msg = "Selected {:d} earthquakes".format(len(tmpcat))
+                print("      " + msg)
+
             # Setting the parameters for merging
             delta_ll = tdict["delta_ll"]
             delta_t = get_delta_t(tdict["delta_t"])
@@ -185,7 +234,7 @@ def process_catalogues(settings_fname):
 
             # Set log files
             if "log_file" not in tdict:
-                logfle = "/tmp/tmp.tmp"
+                logfle = "/tmp/tmp_merge_{:02d}.tmp".format(icat)
             else:
                 logfle = tdict["log_file"]
             print("   Log file: {:s}".format(logfle))

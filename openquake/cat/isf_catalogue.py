@@ -1105,25 +1105,38 @@ class ISFCatalogue(object):
                 else:
                     depth_error = 0.0
 
-                if orig.location.depthSolution:
+                if (orig.location.depthSolution == 'None' or
+                        orig.location.depthSolution is None):
+                    depthSolution = np.NaN
+                elif orig.location.depthSolution:
                     depthSolution = orig.location.depthSolution
                 else:
-                    depthSolution = ""
+                    raise ValueError("Unsupported case")
+
+                if (orig.location.depth == 'None' or
+                        orig.location.depth is None):
+                    depth = np.NaN
+                elif orig.location.depth:
+                    depth = orig.location.depth
+                else:
+                    raise ValueError("Unsupported case")
 
                 if orig.is_prime or len(eq.origins) == 1:
                     prime = 1
                 else:
                     prime = 0
+
                 origin_data[o_counter] = (eq.id, orig.id, orig.author,
                                           orig.date.year, orig.date.month,
                                           orig.date.day, orig.time.hour,
                                           orig.time.minute, seconds,
                                           time_error, orig.location.longitude,
                                           orig.location.latitude,
-                                          orig.location.depth,
-                                          orig.location.depthSolution,
+                                          depth,
+                                          depthSolution,
                                           semimajor90, semiminor90,
                                           error_strike, depth_error, prime)
+
                 o_counter += 1
 
             for mag in eq.magnitudes:
