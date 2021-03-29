@@ -21,20 +21,30 @@ def create_folder(folder: str, clean: bool = False):
         Path(folder).mkdir(parents=True, exist_ok=True)
 
 
-def _get_src_id(fname: str) -> str:
+def _get_src_id(fpath: str) -> str:
     """
     Returns the ID of the source included in a string with the
     format `whatever_<source_id>.csv`
 
-    :param:
+    :param fpath:
         The string containign the source ID
     :returns:
         The source ID
     """
-    pattern = '.*_(\\w*)\\..*'
-    pattern = '.*[_|\\.]([\\w|-]*)\\.'
+    fname = os.path.basename(fpath)
+    if '_' in fname:
+        pattern = '.*_+(\\S*)\\..*'
+        #pattern = '.*[_|\\.]([\\w|-]*)\\.'
+    else:
+        pattern = '(\\S*)\\..*'
     mtch = re.search(pattern, fname)
-    return mtch.group(1)
+
+
+    try:
+        return mtch.group(1)
+    except:
+        fmt = 'Name {:s} does not comply with standards'
+        raise ValueError(fmt.format(fname))
 
 
 def get_list(tmps, sep=','):

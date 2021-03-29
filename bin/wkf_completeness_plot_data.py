@@ -36,7 +36,6 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, skip=[],
 
     # Processing files
     for fname in sorted(glob(fname_input_pattern)):
-        print(fname)
 
         # Get source ID
         src_id = _get_src_id(fname)
@@ -56,6 +55,7 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, skip=[],
         if 'ylim' in kwargs:
             plt.ylim(kwargs['ylim'])
 
+        print('src_id:', src_id)
         if ('sources' in model and
                 'completeness_table' in model['sources'][src_id]):
             ctab = numpy.array(model['sources'][src_id]['completeness_table'])
