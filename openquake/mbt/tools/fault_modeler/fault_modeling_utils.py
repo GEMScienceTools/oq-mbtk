@@ -365,8 +365,8 @@ def make_fault_source(sfs_dict, oqt_source=False):
         src.m_max = sfs_dict['m_max']
 
     else:
-        arg = [sfs_dict[p] for p in sfs_params if p is not 'seismic_slip_rate']
-        arg = [sfs_dict[p] for p in sfs_params if p is not 'm_max']
+        arg = [sfs_dict[p] for p in sfs_params if p != 'seismic_slip_rate']
+        arg = [sfs_dict[p] for p in sfs_params if p != 'm_max']
 
         src = SimpleFaultSource(*arg)
 
@@ -486,7 +486,7 @@ def get_vals_from_tuple(tup):
         if tup == '':
             raise ValueError("Value is ''")
         vals = tuple_to_vals(tup)
-        vals = [np.float(v) for v in vals if v is not '']
+        vals = [np.float(v) for v in vals if len(v) > 0]
     elif np.isscalar(tup):
         try:
             num_check = np.float(tup)
@@ -1010,7 +1010,7 @@ def get_rake(fault_dict, requested_val='mle', defaults=defaults,
                                      defaults=defaults,
                                      param_map=param_map)
 
-        if requested_val is not 'all':
+        if requested_val != 'all':
             rake = get_val_from_tuple(rake_tuple, requested_val=requested_val)
         else:
             rake = get_vals_from_tuple(rake_tuple)
@@ -1053,7 +1053,7 @@ def get_dip(fault_dict, requested_val='mle', defaults=defaults,
                                     defaults=defaults,
                                     param_map=param_map)
 
-        if requested_val is not 'all':
+        if requested_val != 'all':
             dip = get_val_from_tuple(dip_tuple, requested_val=requested_val)
         else:
             dip = get_vals_from_tuple(dip_tuple)
@@ -1119,7 +1119,7 @@ def fetch_slip_rate(fault_dict, rate_component, slip_class='mle',
 
     """
 
-    requested_val = 'mle' if slip_class is 'suggested' else slip_class
+    requested_val = 'mle' if slip_class == 'suggested' else slip_class
     slip_rate_tup = fetch_param_val(fault_dict, rate_component,
                                     param_map=param_map,
                                     defaults=defaults)
@@ -1861,7 +1861,7 @@ def get_fault_length(fault_dict, defaults=defaults, param_map=param_map):
 
     if subsurface_length is not None:
         # Compute the subsurface length
-        if subsurface_length is 'Leonard2014' and fault_length < 500.:
+        if subsurface_length == 'Leonard2014' and fault_length < 500.:
             # Table 6 of Leonard 2010
             fault_length = 10**((np.log10(fault_length)+0.275)/1.1)
 
