@@ -1106,19 +1106,27 @@ class ISFCatalogue(object):
                     depth_error = 0.0
 
                 if (orig.location.depthSolution == 'None' or
+                        orig.location.depthSolution == '' or
                         orig.location.depthSolution is None):
                     depthSolution = np.NaN
                 elif orig.location.depthSolution:
                     depthSolution = orig.location.depthSolution
                 else:
+                    print('Location:', orig.location.depthSolution)
                     raise ValueError("Unsupported case")
 
                 if (orig.location.depth == 'None' or
+                        orig.location.depth == '' or
                         orig.location.depth is None):
                     depth = np.NaN
+                elif orig.location.depth < 0.01:
+                    depth = orig.location.depth
+                    fmt = "Warning, depth <= 0.0 (id:{:s})"
+                    warnings.warn(fmt.format(eq.id))
                 elif orig.location.depth:
                     depth = orig.location.depth
                 else:
+                    print('Depth:', orig.location.depth)
                     raise ValueError("Unsupported case")
 
                 if orig.is_prime or len(eq.origins) == 1:
