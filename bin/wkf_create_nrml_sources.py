@@ -64,7 +64,7 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
     for fname in glob(fname_input_pattern):
 
         src_id = os.path.basename(fname).split('.')[0]
-        #src_id = _get_src_id(fname)
+        rc_id = _get_src_id(fname)
         
         df = pd.read_csv(fname)
         
@@ -91,7 +91,9 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
             if subzones:
                 srcd_sz = model_subz['sources'][pnt.id]
 
-            sid = '{:s}_{:d}'.format(src_id, idx)
+            pfx = model.get("source_prefix", "")
+            pfx += "_" if len(pfx) else pfx
+            sid = '{:s}{:s}_{:d}'.format(pfx, src_id, idx)
             name = ""
 
             trt = srcd['tectonic_region_type']
