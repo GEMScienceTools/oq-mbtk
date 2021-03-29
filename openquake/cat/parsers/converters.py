@@ -75,19 +75,22 @@ class GenericCataloguetoISFParser(object):
         self.catalogue = GeneralCsvCatalogue()
 
     def parse(self, cat_id, cat_name):
+
         df = pd.read_csv(self.filename, delimiter=',')
-        #
+
+        # Checking information included in the original
         if 'day' in df.columns:
+            # Fixing day
             mask = df['day'] == 0
             df.loc[mask, 'day'] = 1
         if 'second' in df.columns:
-            df.drop(df[df.second > 59].index, inplace=True)
+            df.drop(df[df.second > 59.999999].index, inplace=True)
         if 'minute' in df.columns:
-            df.drop(df[df.minute > 59].index, inplace=True)
+            df.drop(df[df.minute > 59.599999].index, inplace=True)
         if 'hour' in df.columns:
-            df.drop(df[df.hour > 23].index, inplace=True)
+            df.drop(df[df.hour > 23.99999].index, inplace=True)
 
-        #
+        # Processing columns and updating the catalogue
         for col in df.columns:
             if col in self.catalogue.TOTAL_ATTRIBUTE_LIST:
                 if (col in self.catalogue.FLOAT_ATTRIBUTE_LIST or
@@ -96,6 +99,17 @@ class GenericCataloguetoISFParser(object):
                 else:
                     self.catalogue.data[col] = df[col].to_list()
         output_cat = self.export(cat_id, cat_name)
+
+        # Check that the length of the datasets is homogenous
+        nels = []
+        for k in self.catalogue.data.keys():
+            tmplen = len(self.catalogue.data[k])
+            if tmplen > 0:
+                nels.append(tmplen)
+        assert len(list(set(nels))) == 1
+
+        # Printing info
+
         return output_cat
 
     def parse_old(self, cat_id, cat_name):

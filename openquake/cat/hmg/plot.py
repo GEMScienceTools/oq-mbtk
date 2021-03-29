@@ -35,7 +35,7 @@ def get_hists(df, bins, agencies=None, column="magMw"):
     return out, out_agencies
 
 
-def get_ranges(agencies, df):
+def get_ranges(agencies, df, mthresh=-10.0):
     #
     # Getting the list of agencies
     if not agencies:
@@ -45,10 +45,11 @@ def get_ranges(agencies, df):
     out = []
     num = []
     for key in agencies:
-        ylow = np.min(df[df['magAgency'] == key]['year'])
-        yup = np.max(df[df['magAgency'] == key]['year'])
-        num.append(len(df[df['magAgency'] == key]))
-        out.append([ylow, yup])
+        condition = (df['magAgency'] == key) & (df['value'] > mthresh)
+        ylow = np.min(df[condition]['year'])
+        yupp = np.max(df[condition]['year'])
+        num.append(len(df[condition]))
+        out.append([ylow, yupp])
     return out, num
 
 
@@ -64,6 +65,9 @@ def get_agencies(df):
 
 def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     """
+    Creates a plot showing the interval between the first and the last
+    earthquake origin of the agencies included in the database.
+
     :param df:
         A :class:`pandas.DataFrame` instance
     :param agencies:
@@ -72,10 +76,22 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
         The name of the output file
     """
     if not agencies:
-        agencies = get_agencies(df)
+        agencies = sorted(get_agencies(df), reverse=True)
+
+    if 'mthresh' in kwargs:
+        mthresh = kwargs['mthresh']
+    else:
+        mthresh = -10.0
 
     # Plotting
-    yranges, num = get_ranges(agencies, df)
+    yranges, num = get_ranges(agencies, df, mthresh)
+
+    if 'nthresh' in kwargs:
+        num = np.array(num)
+        idx = np.nonzero(num > kwargs['nthresh'])
+        num = num[idx]
+        agencies = [agencies[i] for i in idx[0]]
+        yranges = [yranges[i] for i in idx[0]]
 
     # Compute line widths
     max_wdt = 12
@@ -99,10 +115,10 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     for i, key in enumerate(agencies):
         if sum(np.diff(yranges[i])) > 0:
             plt.plot(yranges[i], [i, i], COLORS[i], lw=lws[i])
-            plt.text(yranges[i][0], i+0.2,  '{:d}'.format(num[i]))
+            plt.text(yranges[i][0], i+0.2, '{:d}'.format(num[i]))
         else:
             plt.plot(yranges[i][1], i, 'o', COLORS[i], lw=min_wdt)
-            plt.text(yranges[i][1], i+0.2,  '{:d}'.format(num[i]))
+            plt.text(yranges[i][1], i+0.2, '{:d}'.format(num[i]))
 
     ax.grid(which='major', linestyle='-')
     ax.grid(which='minor', linestyle=':')
@@ -127,6 +143,8 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     ax.add_artist(leg)
     ax.set_xlim([xlo-xdf*0.05, xup+xdf*0.05])
     plt.xlabel('Year')
+
+    return num
 
 
 def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
