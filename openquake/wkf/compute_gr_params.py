@@ -80,8 +80,8 @@ def get_agr(mag, bgr, rate):
 
 
 def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
-                    folder_out: str, use: str = '', folder_out_figs: str = None, 
-                    plt_show=False):
+                    folder_out: str, use: str = '',
+                    folder_out_figs: str = None, plt_show=False):
     """
     This function assignes an a-value to each source with a file selected by
     the provided `fname_input_pattern`.
@@ -119,9 +119,21 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
 
         # Processing catalogue
         tcat = _load_catalogue(fname)
+
+        if tcat is None or len(tcat.data['magnitude']) < 2:
+            continue
+
+        # Completeness analysis
         tcat = _add_defaults(tcat)
         tcat.data["dtime"] = tcat.get_decimal_time()
-        cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
+        try:
+            cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
+            if cent_mag is None:
+                print('   Completeness analysis failed')
+                continue
+        except ValueError:
+            print('   Completeness analysis failed')
+            continue
 
         df = pd.DataFrame()
         df['mag'] = cent_mag
@@ -146,8 +158,9 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
         model['sources'][src_id]['bgr_counting'] = float(tmp)
 
         gwci = get_weichert_confidence_intervals
-        lcl, ucl, ex_rates, ex_rates_scaled = gwci(cent_mag, n_obs, t_per, bval)
-        
+        lcl, ucl, ex_rates, ex_rates_scaled = gwci(cent_mag, n_obs, t_per,
+                                                   bval)
+
         _ = plt.figure()
         ax = plt.gca()
         plt.plot(cent_mag, n_obs/t_per, 'o', markerfacecolor='none')
@@ -183,7 +196,6 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
 
             plt.savefig(figure_fname, format=ext)
             plt.close()
-
 
     # Saving results into the config file
     with open(fname_config, 'w') as fou:
@@ -337,7 +349,8 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
                 mmax = model['default']['mmax']
             if (src_id in model['sources'] and
                     'completeness_table' in model['sources'][src_id]):
-                ctab = numpy.array(model['sources'][src_id]['completeness_table'])
+                key_tmp = 'completeness_table'
+                ctab = numpy.array(model['sources'][src_id][key_tmp])
                 print('Using source specific completeness')
             else:
                 ctab = numpy.array(model['default']['completeness_table'])
@@ -349,7 +362,8 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
         tcat = _load_catalogue(fname)
 
         if tcat is None or len(tcat.data['magnitude']) < 2:
-            return None
+            print('    Source {:s} has less than 2 eqks'.format(src_id))
+            continue
 
         tcat.data["dtime"] = tcat.get_decimal_time()
         cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
@@ -369,11 +383,12 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
                            'reference_magnitude': 0.0}
         weichert = Weichert()
         bval_wei, sigmab, aval_wei, sigmaa = weichert.calculate(tcat,
-                weichert_config, ctab)
+            weichert_config, ctab)
 
         # Computing confidence intervals
         gwci = get_weichert_confidence_intervals
-        lcl, ucl, ex_rates, ex_rates_scaled = gwci(cent_mag, n_obs, t_per, bval_wei)
+        lcl, ucl, ex_rates, ex_rates_scaled = gwci(cent_mag, n_obs, t_per,
+                                                   bval_wei)
 
         if 'sources' not in model:
             model['sources'] = {}
@@ -427,11 +442,13 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
             f.write(toml.dumps(model))
             print('Updated {:s}'.format(fname_config))
 
-def main(fname_input_pattern, fname_config, folder_out=None, 
+
+def main(fname_input_pattern, fname_config, folder_out=None,
          folder_out_figs=None, *, skip=[], binw=None, plt_show=False):
 
     weichert_analysis(fname_input_pattern, fname_config, folder_out,
                       folder_out_figs, skip, binw, plt_show)
+
 
 main.fname_input_pattern = 'Name of a shapefile with polygons'
 msg = 'Name of the .toml file with configuration parameters'
