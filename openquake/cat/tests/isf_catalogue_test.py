@@ -143,4 +143,4 @@ class MergeGenericCatalogueTest(unittest.TestCase):
                         logfle=None)
         print(cm)
         self.assertIn('isf_catalogue.py', cm.filename)
-        self.assertEqual(822, cm.lineno)
+        self.assertEqual(824, cm.lineno)
