@@ -171,14 +171,16 @@ class Location(object):
     :param float depth_error:
         1 s.d. Error on the depth value (km)
     '''
-    def __init__(self, origin_id, longitude, latitude, depth,
-                 depthSolution=None, semimajor90=None, semiminor90=None,
-                 error_strike=None, depth_error=None):
+    def __init__(self, origin_id, longitude: float, latitude: float,
+                 depth: float, depthSolution=None, semimajor90=None,
+                 semiminor90=None, error_strike=None, depth_error=None):
         """
         """
         self.identifier = origin_id
         self.longitude = longitude
         self.latitude = latitude
+        if isinstance(depth, str):
+            raise ValueError()
         self.depth = depth
         self.depthSolution = depthSolution
         self.semimajor90 = semimajor90

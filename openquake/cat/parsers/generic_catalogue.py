@@ -213,10 +213,16 @@ class GeneralCsvCatalogue(object):
             if np.isnan(depth_error):
                 depth_error = None
 
+            # Depth
+            if self.data['depth'][iloc] == 'None':
+                tmp_depth = None
+            else:
+                tmp_depth = float(self.data['depth'][iloc])
+
             locn = Location(origin_id,
                             self.data['longitude'][iloc],
                             self.data['latitude'][iloc],
-                            self.data['depth'][iloc],
+                            tmp_depth,
                             semimajor90,
                             semiminor90,
                             error_strike,

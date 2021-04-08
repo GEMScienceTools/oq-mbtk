@@ -11,10 +11,11 @@ from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 
 def catalogue_declustering(fname: str, output_folder: str):
     """
-    Decluster a catalogue 
+    Decluster a catalogue
     """
 
     create_folder(output_folder)
+    create_folder('./tmp')
 
     # Create a fake file with the classification. We use a fake classification
     # since earthquakes in this analysis are just from stable crust
@@ -61,12 +62,12 @@ def catalogue_declustering(fname: str, output_folder: str):
     declustering_params = {'time_distance_window': 'GruenthalWindow',
                            'fs_time_prop': 0.9}
     labels = ['stable']
-    out = decluster(fname, 
-                    declustering_meth, 
-                    declustering_params, 
-                    output_folder, 
-                    labels=labels, 
-                    tr_fname=tr_fname, 
+    out = decluster(fname,
+                    declustering_meth,
+                    declustering_params,
+                    output_folder,
+                    labels=labels,
+                    tr_fname=tr_fname,
                     subcatalogues=True,
                     olab='_gr_whole',
                     save_af=True,
