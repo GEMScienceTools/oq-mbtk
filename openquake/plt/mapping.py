@@ -172,11 +172,15 @@ class HMTKBaseMap(object):
         if cpt_file == "tmp.cpt":
             cpt_fle = "{}/{}".format(self.out, cpt_file)
             if logscale is True:
-                self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -Q -D > \
-                                 {}".format(np.log10(zmin), np.log10(zmax), cpt_fle))
+                cmd = "gmt makecpt -Cjet"
+                cmd += " -T{}/{}/30+n".format(np.log10(zmin), np.log10(zmax))
+                cmd += " -Q -D > {}".format(cpt_fle)
+                self.cmds.append(cmd)
             else:
-                self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -D > \
-                                 {}".format(zmin, zmax, cpt_fle))
+                cmd = "gmt makecpt -Cjet"
+                cmd += " -T{}/{}/30+n".format(np.log10(zmin), np.log10(zmax))
+                cmd += " -D > {}".format(cpt_fle)
+                self.cmds.append(cmd)
             self.gmt_files_list.append(cpt_fle)
         else:
             cpt_fle = cpt_file
