@@ -178,7 +178,7 @@ class HMTKBaseMap(object):
                 self.cmds.insert(0, cmd)
             else:
                 cmd = "gmt makecpt -Cjet"
-                cmd += " -T{}/{}/30+n".format(np.log10(zmin), np.log10(zmax))
+                cmd += " -T{}/{}/30+n".format(zmin, zmax)
                 cmd += " -D > {}".format(cpt_fle)
                 self.cmds.insert(0, cmd)
             self.gmt_files_list.append(cpt_fle)
