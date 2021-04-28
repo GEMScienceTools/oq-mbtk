@@ -35,7 +35,7 @@ def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab):
         within = gpd.sjoin(gdf, gdf_poly, op='within')
         mmax = np.max(within.magnitude.to_numpy())
         lab = 'mmax_{:s}'.format(cat_lab)
-        model['sources'][poly.id][lab] = float(mmax)
+        model['sources'][str(poly.id)][lab] = float(mmax)
 
     # Saving results into the config file
     with open(fname_conf, 'w') as f:
