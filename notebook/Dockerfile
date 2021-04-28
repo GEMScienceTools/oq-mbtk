@@ -15,28 +15,46 @@
 #
 #
 #
-ARG BASE_CONTAINER=jupyter/minimal-notebook
+ARG BASE_CONTAINER=ubuntu:focal
 FROM $BASE_CONTAINER
 LABEL maintainer="GEM Foundation <devops@openquake.org>" \
        vendor="GEM Foundation"
 USER root
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update \
+ && apt-get install -yq \
+    wget git zip unzip \
+    bzip2 \
+    ca-certificates \
+    locales \
+    fonts-liberation \
+    run-one \
+    gmt gmt-gshhg \
+    ghostscript \
+    build-essential python3 python3-pip python3-dev python3-venv && \ 
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    useradd -m -u 1000 -s /bin/bash openquake  
 
-RUN apt-get update &&  \
-    apt-get install -y gmt && \
-    useradd -m -u 1001 -g 100 -s /bin/bash openquake 
 ENV LANG en_US.UTF-8
 
-USER openquake
-ENV HOME /home/openquake
-WORKDIR $HOME
-RUN fix-permissions $HOME
+# Create venv
+ENV VIRTUAL_ENV=/opt/openquake
+RUN python3 -m venv $VIRTUAL_ENV 
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV GMT_SESSION_NAME=$$
 
-# Install dependencies and engine
-RUN git clone https://github.com/gem/oq-engine.git --depth=1 && cd oq-engine && \ 
-    pip install  . -r requirements-py38-linux64.txt --no-warn-script-location && \ 
-    cd $WORKDIR && \
-    git clone https://github.com/GEMScienceTools/oq-mbtk.git --depth=1 && cd oq-mbtk && \
-    pip install rtree && pip --disable-pip-version-check install . && \
-    pip install --upgrade setuptools
+# Install engine and tools
+RUN pip install wheel --upgrade && \
+    pip install notebook==6.3.0 jupyterlab==3.0.14 ipywidgets && \
+    cd /usr/src && git clone https://github.com/gem/oq-engine.git --depth=1 && cd oq-engine && \ 
+    pip install -r requirements-py38-linux64.txt && pip install -e . && \ 
+    cd /usr/src && git clone https://github.com/GEMScienceTools/oq-mbtk.git --depth=1 && cd oq-mbtk && \
+    pip install rtree && pip install -e . && \
+    cd /usr/src && git clone https://github.com/GEMScienceTools/gmpe-smtk.git --depth=1 && cd gmpe-smtk && \
+    python3 setup.py install && \
+    pip install setuptools --upgrade
 #
-#
+USER openquake
+WORKDIR /home/openquake
+EXPOSE 8888
+CMD ["jupyter", "lab", "--ip='0.0.0.0'", "--port=8888", "--no-browser"]
