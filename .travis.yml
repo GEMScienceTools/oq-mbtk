@@ -14,7 +14,7 @@ install:
   - git clone --depth=1 https://github.com/gem/oq-engine.git &&
     pip -q install -r oq-engine/requirements-py38-linux64.txt -r oq-engine/requirements-extra-py38-linux64.txt &&
     pip -q install -e oq-engine
-  - pip install rtree-linux && pip install -e .
+  - pip install rtree && pip install -e .
 
 jobs:
   include:
