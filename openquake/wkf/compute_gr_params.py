@@ -129,10 +129,10 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
         try:
             cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
             if cent_mag is None:
-                print('   Completeness analysis failed')
+                print('   a-value calculation: completeness analysis failed')
                 continue
         except ValueError:
-            print('   Completeness analysis failed')
+            print('   a-value calculation: completeness analysis failed')
             continue
 
         df = pd.DataFrame()
@@ -291,6 +291,68 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, skip=[],
         break
 
 
+def _weichert_analysis(tcat, ctab, binw, cent_mag, n_obs, t_per,
+                       folder_out=None, src_id=None):
+    """
+    :param tcat:
+        A catalogue instance
+    :param ctab:
+        Completeness table
+    :param binw:
+        Binw width folder
+    :param:
+        path to the folder where to stopre information
+    :param src_id:
+        The source id
+    :returns:
+        A tuple with a and b values,
+    """
+
+    # Computing GR a and b
+    weichert_config = {'magnitude_interval': binw,
+                        'reference_magnitude': 0.0}
+    weichert = Weichert()
+    bval_wei, sigmab, aval_wei, sigmaa = weichert.calculate(tcat,
+        weichert_config, ctab)
+
+    # Computing confidence intervals
+    gwci = get_weichert_confidence_intervals
+    lcl, ucl, ex_rates, ex_rates_scaled = gwci(cent_mag, n_obs, t_per,
+                                                bval_wei)
+
+    return aval_wei, bval_wei, lcl, ucl, ex_rates, ex_rates_scaled
+
+def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
+                   lcl, ucl, mmax, aval_wei, bval_wei, src_id=None,
+                   plt_show=False):
+
+    _ = plt.figure()
+    ax = plt.gca()
+    plt.plot(cent_mag, n_obs/t_per, 'o', markerfacecolor='none')
+    plt.plot(cent_mag-binw/2, ex_rates_scaled, 's', markerfacecolor='none',
+                color='red')
+
+    plt.plot(cent_mag-binw/2, lcl, '--', color='darkgrey')
+    plt.plot(cent_mag-binw/2, ucl, '--', color='darkgrey')
+
+    xmag = numpy.arange(cent_mag[0]-binw/2, mmax-0.01*binw, binw/2)
+    exra = (10.0**(aval_wei - bval_wei * xmag) -
+            10.0**(aval_wei - bval_wei * mmax))
+    plt.plot(xmag, exra, '--', lw=3, color='green')
+
+    plt.yscale('log')
+    plt.xlabel('Magnitude')
+    plt.ylabel('Annual rate of exceedance')
+    plt.text(0.75, 0.95, 'b_GR = {:.2f}'.format(bval_wei),
+                transform=ax.transAxes)
+    plt.grid(which='major', color='grey')
+    plt.grid(which='minor', linestyle='--', color='lightgrey')
+    plt.title(src_id)
+
+    if plt_show:
+        plt.show()
+
+
 def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
                       folder_out_figs=None, skip=[], binw=None,
                       plt_show=False):
@@ -360,10 +422,10 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
 
         # Processing catalogue
         tcat = _load_catalogue(fname)
-
         if tcat is None or len(tcat.data['magnitude']) < 2:
             print('    Source {:s} has less than 2 eqks'.format(src_id))
             continue
+        tcat = _add_defaults(tcat)
 
         tcat.data["dtime"] = tcat.get_decimal_time()
         cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
@@ -377,54 +439,21 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
             fout = os.path.join(folder_out, fmt.format(src_id))
             df.to_csv(fout, index=False)
 
-        # Computing GR a and b
-        tcat = _add_defaults(tcat)
-        weichert_config = {'magnitude_interval': binw,
-                           'reference_magnitude': 0.0}
-        weichert = Weichert()
-        bval_wei, sigmab, aval_wei, sigmaa = weichert.calculate(tcat,
-            weichert_config, ctab)
+        aval, bval, lcl, ucl, ex_rates, ex_rates_scaled = _weichert_analysis(
+            tcat, ctab, binw, cent_mag, n_obs, t_per, folder_out, src_id)
 
-        # Computing confidence intervals
-        gwci = get_weichert_confidence_intervals
-        lcl, ucl, ex_rates, ex_rates_scaled = gwci(cent_mag, n_obs, t_per,
-                                                   bval_wei)
+        _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
+                       lcl, ucl, mmax, aval, bval, src_id, plt_show)
 
         if 'sources' not in model:
             model['sources'] = {}
         if src_id not in model['sources']:
             model['sources'][src_id] = {}
 
-        tmp = "{:.5e}".format(aval_wei)
+        tmp = "{:.5e}".format(aval)
         model['sources'][src_id]['agr_weichert'] = float(tmp)
-        tmp = "{:.3f}".format(bval_wei)
+        tmp = "{:.3f}".format(bval)
         model['sources'][src_id]['bgr_weichert'] = float(tmp)
-
-        _ = plt.figure()
-        ax = plt.gca()
-        plt.plot(cent_mag, n_obs/t_per, 'o', markerfacecolor='none')
-        plt.plot(cent_mag-binw/2, ex_rates_scaled, 's', markerfacecolor='none',
-                 color='red')
-
-        plt.plot(cent_mag-binw/2, lcl, '--', color='darkgrey')
-        plt.plot(cent_mag-binw/2, ucl, '--', color='darkgrey')
-
-        xmag = numpy.arange(cent_mag[0]-binw/2, mmax-0.01*binw, binw/2)
-        exra = (10.0**(aval_wei - bval_wei * xmag) -
-                10.0**(aval_wei - bval_wei * mmax))
-        plt.plot(xmag, exra, '--', lw=3, color='green')
-
-        plt.yscale('log')
-        plt.xlabel('Magnitude')
-        plt.ylabel('Annual rate of exceedance')
-        plt.text(0.75, 0.95, 'b_GR = {:.2f}'.format(bval_wei),
-                 transform=ax.transAxes)
-        plt.grid(which='major', color='grey')
-        plt.grid(which='minor', linestyle='--', color='lightgrey')
-        plt.title(src_id)
-
-        if plt_show:
-            plt.show()
 
         # Saving figures
         if folder_out_figs is not None:
@@ -432,7 +461,6 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
             fmt = 'fig_mfd_{:s}.{:s}'
             figure_fname = os.path.join(folder_out_figs,
                                         fmt.format(src_id, ext))
-
             plt.savefig(figure_fname, format=ext)
             plt.close()
 
