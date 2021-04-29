@@ -172,11 +172,15 @@ class HMTKBaseMap(object):
         if cpt_file == "tmp.cpt":
             cpt_fle = "{}/{}".format(self.out, cpt_file)
             if logscale is True:
-                self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -Q -D > \
-                                 {}".format(np.log10(zmin), np.log10(zmax), cpt_fle))
+                cmd = "gmt makecpt -Cjet"
+                cmd += " -T{}/{}/30+n".format(np.log10(zmin), np.log10(zmax))
+                cmd += " -Q -D > {}".format(cpt_fle)
+                self.cmds.insert(0, cmd)
             else:
-                self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -D > \
-                                 {}".format(zmin, zmax, cpt_fle))
+                cmd = "gmt makecpt -Cjet"
+                cmd += " -T{}/{}/30+n".format(zmin, zmax)
+                cmd += " -D > {}".format(cpt_fle)
+                self.cmds.insert(0, cmd)
             self.gmt_files_list.append(cpt_fle)
         else:
             cpt_fle = cpt_file
@@ -299,7 +303,7 @@ class HMTKBaseMap(object):
             self.gmt_files_list.append(filename)
             cpt_fle = "{}/sf_tmp.cpt".format(self.out)
             self.gmt_files_list.append(cpt_fle)
-            self.cmds.append("gmt makecpt -Cjet -T0/{}/30+n > {:s}".format(
+            self.cmds.insert(0,"gmt makecpt -Cjet -T0/{}/30+n > {:s}".format(
                 self.max_sf_depth*1.2, cpt_fle))
 
             self.cmds.append('gmt plot {} -C{} -Ss0.075 -t50 '.format(filename, cpt_fle))
@@ -347,7 +351,7 @@ class HMTKBaseMap(object):
             self.gmt_files_list.append(filename)
             cpt_fle = "{}/cf_tmp.cpt".format(self.out)
             self.gmt_files_list.append(cpt_fle)
-            self.cmds.append("gmt makecpt -Cjet -T0/{}/2> {:s}".format(
+            self.cmds.insert(0,"gmt makecpt -Cjet -T0/{}/2> {:s}".format(
                 self.max_cf_depth, cpt_fle))
 
             self.cmds.append('gmt plot {} -C{} -Ss0.075 -t90'.format(filename, cpt_fle))
@@ -443,12 +447,12 @@ class HMTKBaseMap(object):
         cpt_fle = "{}/tmp_col_dat.cpt".format(self.out)
         self.gmt_files_list.append(cpt_fle)
         if logscale:
-            self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -Q -D > \
+            self.cmds.insert(0,"gmt makecpt -Cjet -T{}/{}/30+n -Q -D > \
                              {}".format(np.log10(min(data)), 
                                  np.log10(max(data)), cpt_fle))
             qq = '-Q'
         else:
-            self.cmds.append("gmt makecpt -Cjet -T{}/{}/30+n -D > \
+            self.cmds.insert(0,"gmt makecpt -Cjet -T{}/{}/30+n -D > \
                              {}".format(min(data), max(data), cpt_fle))
             qq = ''
 
@@ -649,7 +653,12 @@ class HMTKBaseMap(object):
 
         self.cmds=[x for x in self.cmds if x != "gmt end" and "gmt figure" not in x]
 
-        self.cmds.insert(1, "gmt figure {}/{} {}".format(self.out, filestring, filetype))
+        if 'makecpt' in self.cmds[0]:
+            put = 2
+        else:
+            put = 1
+
+        self.cmds.insert(put, "gmt figure {}/{} {}".format(self.out, filestring, filetype))
         self.cmds.append("gmt end")
 
         self._check_output(filename)
