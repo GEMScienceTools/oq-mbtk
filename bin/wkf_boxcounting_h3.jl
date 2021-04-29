@@ -55,7 +55,8 @@ function main()
 	# Running boxcounting
 	PSHAModelBuilder.boxcounting(args["cat"], args["h3_level"], 
                 args["mapping"], args["config"], 
-	            args["folder_out"], args["year_end"], args["weighting"]);
+	            args["folder_out"]);
+#, args["year_end"], args["weighting"]);
 
 end
 
