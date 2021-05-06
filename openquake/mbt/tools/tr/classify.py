@@ -195,7 +195,6 @@ def classify(ini_fname, compute_distances, rf):
     fou.close()
 
 
-def main(argv):
     """
     This is the controlling script that can be used to subdivide an
     earthquake catalogue into many subsets, each one describing the seismicity
@@ -233,22 +232,13 @@ def main(argv):
     similar to the one used for subduction interface seismicity.
 
     """
-    p = sap.Script(classify)
-    #
-    # set arguments
-    msg = 'Path to the configuration fname - typically a .ini file for tr'
-    p.arg(name='ini_fname', help=msg)
-    msg = 'Flag defining if the calculation of distances'
-    p.flg(name='compute_distances', help=msg)
-    msg = 'Root folder (path are relative to this in the .ini file)'
-    p.opt(name='rf', help=msg)
-    #
-    # check command line arguments and run the code
-    if len(argv) < 1:
-        print(p.help())
-    else:
-        p.callfunc()
-
+msg = 'Path to the configuration fname - typically a .ini file for tr'
+classify.ini_fname = msg
+msg = 'Flag defining if the calculation of distances'
+classify.compute_distances = msg
+msg = 'Root folder (path are relative to this in the .ini file)'
+classify.rf = msg
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sap.run(classify)
+
