@@ -1,0 +1,113 @@
+openquake.sub package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.sub.misc
+   openquake.sub.plotting
+   openquake.sub.quad
+   openquake.sub.slab
+   openquake.sub.tests
+
+Submodules
+----------
+
+openquake.sub.build\_complex\_surface module
+--------------------------------------------
+
+.. automodule:: openquake.sub.build_complex_surface
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.complex\_fault\_source\_from\_edges module
+--------------------------------------------------------
+
+.. automodule:: openquake.sub.complex_fault_source_from_edges
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.create\_2pt5\_model module
+----------------------------------------
+
+.. automodule:: openquake.sub.create_2pt5_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.create\_inslab\_nrml module
+-----------------------------------------
+
+.. automodule:: openquake.sub.create_inslab_nrml
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.create\_multiple\_cross\_sections module
+------------------------------------------------------
+
+.. automodule:: openquake.sub.create_multiple_cross_sections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.cross\_sections module
+------------------------------------
+
+.. automodule:: openquake.sub.cross_sections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.edges\_set module
+-------------------------------
+
+.. automodule:: openquake.sub.edges_set
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.grid3d module
+---------------------------
+
+.. automodule:: openquake.sub.grid3d
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.pickle\_catalogue module
+--------------------------------------
+
+.. automodule:: openquake.sub.pickle_catalogue
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.profiles module
+-----------------------------
+
+.. automodule:: openquake.sub.profiles
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.utils module
+--------------------------
+
+.. automodule:: openquake.sub.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.sub
+   :members:
+   :undoc-members:
+   :show-inheritance:

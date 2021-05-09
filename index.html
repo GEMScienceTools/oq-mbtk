@@ -1,0 +1,304 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Welcome to the OpenQuake Model Building Toolkit’s documentation! &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="contents/installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home"> OpenQuake Model Building Toolkit Suite
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contents/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contents/cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contents/man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contents/mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contents/sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contents/sep.html">Secondary Perils Analysis using the OQ-MBTK</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">OpenQuake Model Building Toolkit Suite</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Welcome to the OpenQuake Model Building Toolkit’s documentation!</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="welcome-to-the-openquake-model-building-toolkit-s-documentation">
+<h1>Welcome to the OpenQuake Model Building Toolkit’s documentation!<a class="headerlink" href="#welcome-to-the-openquake-model-building-toolkit-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>The OpenQuake Model Building Toolkit (<em>oq-mbt</em>) is a suite of tools for the
+construction of components of a Probabilistic Seismic Hazard (PSH) model.
+The main contributors to this suite of tools are GEM Hazard Team members.
+Contribution from extena users are very welcome!</p>
+<p><em>oq-mbt</em> code is hosted on github at the following link
+<a class="reference external" href="https://github.com/GEMScienceTools/oq-mbtk">https://github.com/GEMScienceTools/oq-mbtk</a>. It is developed in close
+connection with the
+<a class="reference external" href="https://github.com/gem/oq-engine">OpenQuake engine</a>, the
+open-source hazard and risk calculation engine developed primarily by the
+GEM Foundation.</p>
+<p>The <em>oq-mbt</em> relies on several functionalities included in the Hazard Modeller’s
+Toolkit library (<em>oq-hmtk</em>). The oq-hmtk code is accessible on github at the
+following link <a class="reference external" href="https://github.com/gem/oq-engine/tree/master/openquake/hmtk">https://github.com/gem/oq-engine/tree/master/openquake/hmtk</a>,
+while documentation for the oq-hmtk can be downloaded
+at <a class="reference external" href="https://github.com/GEMScienceTools/hmtk_docs/blob/master/hmtk_tutorial.pdf">https://github.com/GEMScienceTools/hmtk_docs/blob/master/hmtk_tutorial.pdf</a>.</p>
+<p>Currently the oq-mbt includes five sub-modules:</p>
+<ul class="simple">
+<li><p><em>CATalogue Toolkit (cat)</em> contains code used for creating a homogenised
+catalogue;</p></li>
+<li><p><em>Global Hazard Map (ghm)</em> contains code used to produce homogenised hazard
+maps using results obtained using a collection of PSHA input models;</p></li>
+<li><p><em>Model ANalysis (man)</em> contains code for analysing oq-engine formattted PSHA
+input models;</p></li>
+<li><p><em>Model Building tool (mbt)</em> contains code for seismic source
+characterisation;</p></li>
+<li><p><em>SUBduction modelling (sub)</em> contains code for building subduction
+earthquake sources.</p></li>
+<li><p><em>SEcondary Perils (sep)</em> contains code for calculating secondary earthquake</p></li>
+</ul>
+<p>perils such as liquefaction and coseismic landslides.</p>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contents/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contents/cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contents/man.html">Model ANalysis (man) module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contents/man.html#the-structure-of-a-psha-input-model-for-the-openquake-engine">The structure of a PSHA input model for the OpenQuake engine</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contents/mbt.html">Model Building Toolkit (mbt) module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contents/mbt.html#input-datasets-and-their-format">Input Datasets and their Format</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contents/sub.html">SUBduction (sub) module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contents/sub.html#defining-the-geometry-of-the-top-of-the-slab">Defining the geometry of the top of the slab</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contents/sep.html">Secondary Perils Analysis using the OQ-MBTK</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contents/sep_docs/sep_models.html">Liquefaction and Landslide models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/sep_docs/liquefaction_data_prep.html">Site characterization for probabilistic liquefaction analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/sep_docs/tutorials/sep_tutorials.html">Tutorials for using the OQ-MBTK for analysis of secondary perils</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="contents/installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, GEM Hazard.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

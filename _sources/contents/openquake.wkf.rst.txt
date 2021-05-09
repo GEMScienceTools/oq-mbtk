@@ -1,0 +1,45 @@
+openquake.wkf package
+=====================
+
+Submodules
+----------
+
+openquake.wkf.compute\_gr\_params module
+----------------------------------------
+
+.. automodule:: openquake.wkf.compute_gr_params
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.distributed\_seismicity module
+--------------------------------------------
+
+.. automodule:: openquake.wkf.distributed_seismicity
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.seismicity module
+-------------------------------
+
+.. automodule:: openquake.wkf.seismicity
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.utils module
+--------------------------
+
+.. automodule:: openquake.wkf.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.wkf
+   :members:
+   :undoc-members:
+   :show-inheritance:

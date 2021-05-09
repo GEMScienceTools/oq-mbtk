@@ -1,0 +1,127 @@
+openquake.mbt.tools package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.mbt.tools.fault_modeler
+   openquake.mbt.tools.model_building
+   openquake.mbt.tools.tr
+
+Submodules
+----------
+
+openquake.mbt.tools.area module
+-------------------------------
+
+.. automodule:: openquake.mbt.tools.area
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.automator module
+------------------------------------
+
+.. automodule:: openquake.mbt.tools.automator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.completeness module
+---------------------------------------
+
+.. automodule:: openquake.mbt.tools.completeness
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.faults module
+---------------------------------
+
+.. automodule:: openquake.mbt.tools.faults
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.general module
+----------------------------------
+
+.. automodule:: openquake.mbt.tools.general
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.geo module
+------------------------------
+
+.. automodule:: openquake.mbt.tools.geo
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.mfd module
+------------------------------
+
+.. automodule:: openquake.mbt.tools.mfd
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.model module
+--------------------------------
+
+.. automodule:: openquake.mbt.tools.model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.notebook module
+-----------------------------------
+
+.. automodule:: openquake.mbt.tools.notebook
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.smooth module
+---------------------------------
+
+.. automodule:: openquake.mbt.tools.smooth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.smooth3d module
+-----------------------------------
+
+.. automodule:: openquake.mbt.tools.smooth3d
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.strain module
+---------------------------------
+
+.. automodule:: openquake.mbt.tools.strain
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.utils module
+--------------------------------
+
+.. automodule:: openquake.mbt.tools.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tools
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,391 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Liquefaction and Landslide models &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Site characterization for probabilistic liquefaction analysis" href="liquefaction_data_prep.html" />
+    <link rel="prev" title="Secondary Perils Analysis using the OQ-MBTK" href="../sep.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> OpenQuake Model Building Toolkit Suite
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../sep.html">Secondary Perils Analysis using the OQ-MBTK</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Liquefaction and Landslide models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#liquefaction-models">Liquefaction models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#hazus">HAZUS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#zhu-et-al-2015">Zhu et al (2015)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="liquefaction_data_prep.html">Site characterization for probabilistic liquefaction analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/sep_tutorials.html">Tutorials for using the OQ-MBTK for analysis of secondary perils</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">OpenQuake Model Building Toolkit Suite</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../sep.html">Secondary Perils Analysis using the OQ-MBTK</a> &raquo;</li>
+        
+      <li>Liquefaction and Landslide models</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/contents/sep_docs/sep_models.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="liquefaction-and-landslide-models">
+<h1>Liquefaction and Landslide models<a class="headerlink" href="#liquefaction-and-landslide-models" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="liquefaction-models">
+<h2>Liquefaction models<a class="headerlink" href="#liquefaction-models" title="Permalink to this headline">¶</a></h2>
+<p>Two liquefaction models were are implemented in the OQ-MBTK. The first
+is the method developed for the HAZUS software by the US Federal
+Emergency Management Agency. This model involves categorization of sites
+into liquefaction susceptibility classes based on geotechnical
+characteristics, and a quanitative probability model for each
+susceptibility class. The second model is an academic model developed by
+Zhu and others (2015). It is statistical model incorporating only
+DEM-derived quantities for site characterization.</p>
+<div class="section" id="hazus">
+<h3>HAZUS<a class="headerlink" href="#hazus" title="Permalink to this headline">¶</a></h3>
+<p>The HAZUS model classifies each site into a liquefaction susceptibility
+class (LSC) based on the geologic and geotechnical characteristics of
+the site, such as the sedimentological type and the deposition age of
+the unit. In addition to the LSC and the local ground acceleration at
+each site, the depth to groundwater at the site and the magnitude of the
+causative earthquake will affect the probability that a given site will
+experience liquefaction.</p>
+<p>The equation that describes this probability is:</p>
+<div class="math notranslate nohighlight">
+\[P(L) = \frac{P(L | PGA=a) \cdot P_{ml}}{K_m K_w}\]</div>
+<p><span class="math notranslate nohighlight">\(P(L|PGA=a)\)</span> is the conditional probability that a site will fail
+based on the PGA and the LSC. <span class="math notranslate nohighlight">\(P_{ml}\)</span> is the fraction of the
+total mapped area that will experience liquefaction if
+<span class="math notranslate nohighlight">\(P(L|PGA=a)\)</span> reaches 1. These terms both have LSC-specific
+coefficients; these are shown in Table 1.</p>
+<p><span class="math notranslate nohighlight">\(K_m\)</span> is a magnitude-correction factor that scales <span class="math notranslate nohighlight">\(P(L)\)</span>
+for earthquake magnitudes other than <em>M</em>=7.5, potentially to account
+for the duration of shaking (longer shaking increases liquefaction
+probability). <span class="math notranslate nohighlight">\(K_w\)</span> is a groundwater depth correction factor
+(shallower groundwater increases liquefaction probability).</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 25%" />
+<col style="width: 17%" />
+<col style="width: 14%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>LSC</p></th>
+<th class="head"><p>PGA min</p></th>
+<th class="head"><p>PGA slope</p></th>
+<th class="head"><p>PGA int</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(P_{ml}\)</span></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>very high</p></td>
+<td><p>0.09</p></td>
+<td><p>9.09</p></td>
+<td><p>0.82</p></td>
+<td><p>0.25</p></td>
+</tr>
+<tr class="row-odd"><td><p>high</p></td>
+<td><p>0.12</p></td>
+<td><p>7.67</p></td>
+<td><p>0.92</p></td>
+<td><p>0.2</p></td>
+</tr>
+<tr class="row-even"><td><p>med</p></td>
+<td><p>0.15</p></td>
+<td><p>6.67</p></td>
+<td><p>1.0</p></td>
+<td><p>0.1</p></td>
+</tr>
+<tr class="row-odd"><td><p>low</p></td>
+<td><p>0.21</p></td>
+<td><p>5.57</p></td>
+<td><p>1.18</p></td>
+<td><p>0.05</p></td>
+</tr>
+<tr class="row-even"><td><p>very low</p></td>
+<td><p>0.26</p></td>
+<td><p>4.16</p></td>
+<td><p>1.08</p></td>
+<td><p>0.02</p></td>
+</tr>
+<tr class="row-odd"><td><p>none</p></td>
+<td><p><span class="math notranslate nohighlight">\(\infty\)</span></p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+</tbody>
+</table>
+<p>Table 1: Liquefaction values for different liquefaction susceptibility
+categories (LSC). <em>PGA min</em> is the minimum ground acceleration required to
+initiate liquefaction. <em>PGA slope</em> is the slope of the liquefaction probability
+curve as a function of PGA, and <em>PGA int</em> is the <em>y</em>-intercept of that curve.
+<span class="math notranslate nohighlight">\(P_{ml}\)</span> is the Map Area Proportion, which gives the area of liquefaction
+within each map unit conditional on liquefaction occurring in the map unit.</p>
+</div>
+<div class="section" id="zhu-et-al-2015">
+<h3>Zhu et al (2015)<a class="headerlink" href="#zhu-et-al-2015" title="Permalink to this headline">¶</a></h3>
+<p>The model by Zhu et al. (2015) is a logistic regression model requiring
+specification of the Vs30, the Compound Topographic Index (CTI), a proxy
+for soil wetness or groundwater depth, the PGA experienced at a site,
+and the magnitude of the causative earthquake.</p>
+<p>The model is quite simple. An explanatory variable <span class="math notranslate nohighlight">\(X\)</span> is
+calculated as:</p>
+<div class="math notranslate nohighlight">
+\[X = 24.1 + \ln PGA_{M,SM} + 0.355\,CTI − 4.784\, ln\, Vs30\]</div>
+<p>and the final probability is the logistic function</p>
+<div class="math notranslate nohighlight">
+\[P(L) = \frac{1}{1+e^X} \; .\]</div>
+<p>The term <span class="math notranslate nohighlight">\(PGA_{M,SM}\)</span> is the PGA times a nonlinear scaling factor
+for the magnitude.</p>
+<p>Both the CTI and the Vs30 may be derived from digital elevation data.
+The Vs30 may be estimated from the topographic slope through the
+equations of Wald and Allen (2007), which uses a very low resolution DEM
+compared to modern offerings. As topographic slope tends to increase
+with increased DEM resolution, the estimated Vs30 does too; therefore a
+low-resolution DEM (i.e., a 1 km resolution) must be used to calculate
+Vs30, rather than the 30 m DEM that is the current standard. This
+results in a more accurate Vs30 for a given slope measurement, but it
+also means that in an urban setting, sub-km-scale variations in slope
+are not accounted for.</p>
+<p>The CTI (Moore et al., 1991) is a proxy for soil wetness that relates
+the topographic slope of a point to the upstream drainage area of that
+point, through the relation</p>
+<div class="math notranslate nohighlight">
+\[CTI = \ln (d_a / \tan \delta)\]</div>
+<p>where <span class="math notranslate nohighlight">\(d_a\)</span> is the upstream drainage area per unit width through
+the flow direction (i.e. relating to the DEM resolution). It was
+developed for hillslopes, and is not meaningful in certain very flat
+areas such as the valley floors of major low-gradient rivers, where the
+upstream drainage areas are very large. Unfortunately, this is exactly
+where liquefaction is most expected away from coastal settings.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="liquefaction_data_prep.html" class="btn btn-neutral float-right" title="Site characterization for probabilistic liquefaction analysis" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../sep.html" class="btn btn-neutral float-left" title="Secondary Perils Analysis using the OQ-MBTK" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, GEM Hazard.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

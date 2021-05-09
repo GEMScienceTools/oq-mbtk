@@ -1,0 +1,45 @@
+openquake.cat.tests package
+===========================
+
+Submodules
+----------
+
+openquake.cat.tests.check\_test module
+--------------------------------------
+
+.. automodule:: openquake.cat.tests.check_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.tests.homogenisation\_test module
+-----------------------------------------------
+
+.. automodule:: openquake.cat.tests.homogenisation_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.tests.isf\_catalogue\_test module
+-----------------------------------------------
+
+.. automodule:: openquake.cat.tests.isf_catalogue_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.tests.merge\_test module
+--------------------------------------
+
+.. automodule:: openquake.cat.tests.merge_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.cat.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:

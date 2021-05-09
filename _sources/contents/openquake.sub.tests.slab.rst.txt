@@ -1,0 +1,77 @@
+openquake.sub.tests.slab package
+================================
+
+Submodules
+----------
+
+openquake.sub.tests.slab.create\_fault\_test module
+---------------------------------------------------
+
+.. automodule:: openquake.sub.tests.slab.create_fault_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.tests.slab.fit\_plane\_test module
+------------------------------------------------
+
+.. automodule:: openquake.sub.tests.slab.fit_plane_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.tests.slab.rupture\_test\_cam module
+--------------------------------------------------
+
+.. automodule:: openquake.sub.tests.slab.rupture_test_cam
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.tests.slab.rupture\_test\_pai module
+--------------------------------------------------
+
+.. automodule:: openquake.sub.tests.slab.rupture_test_pai
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.tests.slab.rupture\_test\_sa06 module
+---------------------------------------------------
+
+.. automodule:: openquake.sub.tests.slab.rupture_test_sa06
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.tests.slab.rupture\_test\_smoothed module
+-------------------------------------------------------
+
+.. automodule:: openquake.sub.tests.slab.rupture_test_smoothed
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.tests.slab.rupture\_test\_south\_america\_slab6 module
+--------------------------------------------------------------------
+
+.. automodule:: openquake.sub.tests.slab.rupture_test_south_america_slab6
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.tests.slab.rupture\_utils\_test module
+----------------------------------------------------
+
+.. automodule:: openquake.sub.tests.slab.rupture_utils_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.sub.tests.slab
+   :members:
+   :undoc-members:
+   :show-inheritance:

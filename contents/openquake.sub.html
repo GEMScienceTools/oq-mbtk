@@ -1,0 +1,360 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>openquake.sub package &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> OpenQuake Model Building Toolkit Suite
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sep.html">Secondary Perils Analysis using the OQ-MBTK</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">OpenQuake Model Building Toolkit Suite</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>openquake.sub package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/contents/openquake.sub.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="openquake-sub-package">
+<h1>openquake.sub package<a class="headerlink" href="#openquake-sub-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="openquake.sub.misc.html">openquake.sub.misc package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.misc.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.misc.html#openquake-sub-misc-alpha-shape-module">openquake.sub.misc.alpha_shape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.misc.html#openquake-sub-misc-edge-module">openquake.sub.misc.edge module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.misc.html#openquake-sub-misc-profile-module">openquake.sub.misc.profile module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.misc.html#openquake-sub-misc-utils-module">openquake.sub.misc.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.misc.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openquake.sub.plotting.html">openquake.sub.plotting package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.plotting.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.plotting.html#openquake-sub-plotting-plot-2pt5-model-module">openquake.sub.plotting.plot_2pt5_model module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.plotting.html#openquake-sub-plotting-plot-2pt5-model-mayavi-module">openquake.sub.plotting.plot_2pt5_model_mayavi module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.plotting.html#openquake-sub-plotting-plot-cross-section-module">openquake.sub.plotting.plot_cross_section module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.plotting.html#openquake-sub-plotting-plot-multiple-cross-sections-module">openquake.sub.plotting.plot_multiple_cross_sections module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.plotting.html#openquake-sub-plotting-plot-multiple-cross-sections-map-module">openquake.sub.plotting.plot_multiple_cross_sections_map module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.plotting.html#openquake-sub-plotting-tools-module">openquake.sub.plotting.tools module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.plotting.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openquake.sub.quad.html">openquake.sub.quad package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.quad.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.quad.html#openquake-sub-quad-msh-module">openquake.sub.quad.msh module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.quad.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openquake.sub.slab.html">openquake.sub.slab package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.slab.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.slab.html#openquake-sub-slab-inslab-module">openquake.sub.slab.inslab module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.slab.html#openquake-sub-slab-rupture-module">openquake.sub.slab.rupture module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.slab.html#openquake-sub-slab-rupture-utils-module">openquake.sub.slab.rupture_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.slab.html#openquake-sub-slab-utils-plot-module">openquake.sub.slab.utils_plot module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.slab.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openquake.sub.tests.html">openquake.sub.tests package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.tests.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openquake.sub.tests.misc.html">openquake.sub.tests.misc package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.misc.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.misc.html#openquake-sub-tests-misc-edge-test-module">openquake.sub.tests.misc.edge_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.misc.html#openquake-sub-tests-misc-mesh-test-module">openquake.sub.tests.misc.mesh_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.misc.html#openquake-sub-tests-misc-profile-test-module">openquake.sub.tests.misc.profile_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.misc.html#openquake-sub-tests-misc-utils-test-module">openquake.sub.tests.misc.utils_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.misc.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="openquake.sub.tests.quad.html">openquake.sub.tests.quad package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.quad.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.quad.html#openquake-sub-tests-quad-trapezoidal-cells-surface-test-module">openquake.sub.tests.quad.trapezoidal_cells_surface_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.quad.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="openquake.sub.tests.slab.html">openquake.sub.tests.slab package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.slab.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.slab.html#openquake-sub-tests-slab-create-fault-test-module">openquake.sub.tests.slab.create_fault_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.slab.html#openquake-sub-tests-slab-fit-plane-test-module">openquake.sub.tests.slab.fit_plane_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.slab.html#openquake-sub-tests-slab-rupture-test-cam-module">openquake.sub.tests.slab.rupture_test_cam module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.slab.html#openquake-sub-tests-slab-rupture-test-pai-module">openquake.sub.tests.slab.rupture_test_pai module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.slab.html#openquake-sub-tests-slab-rupture-test-sa06-module">openquake.sub.tests.slab.rupture_test_sa06 module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.slab.html#openquake-sub-tests-slab-rupture-test-smoothed-module">openquake.sub.tests.slab.rupture_test_smoothed module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.slab.html#openquake-sub-tests-slab-rupture-test-south-america-slab6-module">openquake.sub.tests.slab.rupture_test_south_america_slab6 module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.slab.html#openquake-sub-tests-slab-rupture-utils-test-module">openquake.sub.tests.slab.rupture_utils_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.sub.tests.slab.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.tests.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.tests.html#openquake-sub-tests-build-complex-surface-test-module">openquake.sub.tests.build_complex_surface_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.tests.html#openquake-sub-tests-create-2pt5-model-test-module">openquake.sub.tests.create_2pt5_model_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.tests.html#openquake-sub-tests-cross-section-test-module">openquake.sub.tests.cross_section_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.tests.html#openquake-sub-tests-profile-test-module">openquake.sub.tests.profile_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.tests.html#openquake-sub-tests-trench-test-module">openquake.sub.tests.trench_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.tests.html#openquake-sub-tests-utils-test-module">openquake.sub.tests.utils_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.sub.tests.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="openquake-sub-build-complex-surface-module">
+<h2>openquake.sub.build_complex_surface module<a class="headerlink" href="#openquake-sub-build-complex-surface-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="openquake-sub-complex-fault-source-from-edges-module">
+<h2>openquake.sub.complex_fault_source_from_edges module<a class="headerlink" href="#openquake-sub-complex-fault-source-from-edges-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="openquake-sub-create-2pt5-model-module">
+<h2>openquake.sub.create_2pt5_model module<a class="headerlink" href="#openquake-sub-create-2pt5-model-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="openquake-sub-create-inslab-nrml-module">
+<h2>openquake.sub.create_inslab_nrml module<a class="headerlink" href="#openquake-sub-create-inslab-nrml-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="openquake-sub-create-multiple-cross-sections-module">
+<h2>openquake.sub.create_multiple_cross_sections module<a class="headerlink" href="#openquake-sub-create-multiple-cross-sections-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="openquake-sub-cross-sections-module">
+<h2>openquake.sub.cross_sections module<a class="headerlink" href="#openquake-sub-cross-sections-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="openquake-sub-edges-set-module">
+<h2>openquake.sub.edges_set module<a class="headerlink" href="#openquake-sub-edges-set-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="openquake-sub-grid3d-module">
+<h2>openquake.sub.grid3d module<a class="headerlink" href="#openquake-sub-grid3d-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="openquake-sub-pickle-catalogue-module">
+<h2>openquake.sub.pickle_catalogue module<a class="headerlink" href="#openquake-sub-pickle-catalogue-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="openquake-sub-profiles-module">
+<h2>openquake.sub.profiles module<a class="headerlink" href="#openquake-sub-profiles-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="openquake-sub-utils-module">
+<h2>openquake.sub.utils module<a class="headerlink" href="#openquake-sub-utils-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, GEM Hazard.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
