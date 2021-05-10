@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.6
 # coding: utf-8
 
 """
@@ -185,6 +185,7 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
     #
     # hdf5 file
     fh5 = h5py.File(hdf5_filename, 'a')
+    print(fh5)
     grp_inslab = fh5.create_group('inslab')
     #
     allrup = {}
@@ -205,6 +206,7 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
             #
             # create in-slab virtual fault - `lines` is the list of profiles
             # to be used for the construction of the virtual fault surface
+            import pdb; pdb.set_trace()
             smsh = create_from_profiles(lines, sampling, sampling, idl, align)
             #
             # Create mesh
@@ -501,6 +503,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
         treg_filename = os.path.abspath(os.path.join(ref_fdr, treg_filename))
     #
     #
+    print('treg_file is {}'.format(treg_filename))
     dips = list_of_floats_from_string(config.get('main', 'dips'))
     asprsstr = config.get('main', 'aspect_ratios')
     asprs = dict_of_floats_from_string(asprsstr)
@@ -535,6 +538,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
     """
     #
     # create mesh from profiles
+    import pdb; pdb.set_trace()
     msh = create_from_profiles(profiles, profile_sd_topsl, edge_sd_topsl, idl)
     #
     # Create inslab mesh. The one created here describes the top of the slab.
@@ -660,23 +664,27 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
     # create all the ruptures - the probability of occurrence is for one year
     # in this case
     # MN: 'Axes3D' assigned but never used
+    print('gonna create the rups now')
+    print(hdf5_filename)
     allrup = create_ruptures(mfd, dips, sampling, msr, asprs, float_strike,
                              float_dip, r, values, ohs, 1., hdf5_filename,
                              uniform_fraction, proj, idl, align, True)
 
 
-def main(argv):
 
-    p = sap.Script(calculate_ruptures)
-    p.arg(name='ini_fname', help='.ini filename')
-    p.flg(name='only_plt', help='Only plotting')
-    p.opt(name='ref_fdr', help='Reference folder for paths')
+#    p = sap.Script(calculate_ruptures)
+    calculate_ruptures.ini_fname = '.ini filename'
+#    p.arg(name='ini_fname', help='.ini filename')
+#    p.flg(name='only_plt', help='Only plotting')
+    calculate_ruptures.only_plt = 'Only plotting'
+#    p.opt(name='ref_fdr', help='Reference folder for paths')
+    calculate_ruptures.ref_fdr = 'Reference folder for paths'
 
-    if len(argv) < 1:
-        print(p.help())
-    else:
-        p.callfunc()
+#    if len(argv) < 1:
+#        print(p.help())
+#    else:
+#        p.callfunc()
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sap.run(calculate_ruptures)
