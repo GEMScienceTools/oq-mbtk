@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3.6
 
 import os
 import re
@@ -119,21 +119,13 @@ def create(label, rupture_hdf5_fname, output_folder, investigation_t):
         # write source model
         write_source_model(fnrml, mdl, mag)
     f.close()
-    print('Done')
 
 
-def main(argv):
-    p = sap.Script(create)
-    p.arg(name='label', help='TR label')
-    p.arg(name='rupture_hdf5_fname', help='hdf5 file with the ruptures')
-    p.arg(name='output_folder', help='Name of the output folder')
-    p.arg(name='investigation_t', help='Investigation time')
-
-    if len(argv) < 1:
-        print(p.help())
-    else:
-        p.callfunc()
+    create.label = 'TR label'
+    create.rupture_hdf5_fname = 'hdf5 file with the ruptures'
+    create.output_folder = 'Name of the output folder'
+    create.investigation_t = 'Investigation time'
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    sap.run(create)
