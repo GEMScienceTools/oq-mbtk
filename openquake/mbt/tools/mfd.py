@@ -5,9 +5,12 @@ module:`openquake.mbt.tool.mfd`
 import scipy
 import numpy as np
 
+from scipy.stats import truncnorm
+
 from openquake.hazardlib.mfd import (TruncatedGRMFD, EvenlyDiscretizedMFD,
                                      ArbitraryMFD)
 from openquake.hazardlib.mfd.multi_mfd import MultiMFD
+from openquake.mbt.tools.mfd import mag_to_mo
 
 log = True
 log = False
@@ -592,3 +595,80 @@ def mfd_upsample(bin_width, mfd):
 
     return EvenlyDiscretizedMFD(nocc[0, 0], bin_width,
                                 list(nocc[list(idxs), 3]))
+
+
+def merge(mfdexp, mfdchar, magexp=None, magchar=None):
+    """
+    """
+    mfdexp = np.array(mfdexp)
+    mfdchar = np.array(mfdchar)
+    tmp = np.nonzero(mfdchar > mfdexp[-len(mfdchar):])[0]
+    if len(tmp):
+        idx = np.min(tmp)
+        idxexp = - len(mfdchar) + idx
+        out = np.concatenate((mfdexp[:idxexp], mfdchar[idx:]))
+        midx = len(out)
+    else:
+        if magexp is not None and magchar is not None:
+            midx = max(np.nonzero(magexp <= max(magchar))[0])
+            out = mfdexp[:midx]
+    return out, midx
+
+
+def mergeinv(agr, bgr, magchar, mfdchar, mwdt):
+    """
+    """
+    mmin = 6.0
+    mupp = min(magchar)
+    # get dt mfd
+    dtmfd = TruncatedGRMFD(6.0, mupp+mwdt, mwdt, agr, bgr)
+    occ = dtmfd.get_annual_occurrence_rates()
+    #
+    madt = numpy.array([d[0] for d in occ])
+    ocdt = numpy.array([d[1] for d in occ])
+    # compute moment
+    modt = sum(mag_to_mo(madt)*ocdt)
+    return modt
+
+def get_dt_gaussian(mag, std, std_factor=2, mwdt=0.1):
+    """
+    :param mean_mag:
+    :param std:
+    :param std_factor:
+    """
+    #
+    # Computing magnitude extremes
+    mlow = mag - std*std_factor
+    mlow = mlow - (mlow % mwdt) - mwdt / 2
+    mupp = mag + std*std_factor
+    mupp = mupp + (mwdt - mupp % mwdt) + mwdt / 2
+    #
+    # discretize the truncated normal distribution
+    mags = np.arange(mlow, mupp+0.1*mwdt, mwdt)
+    vlow = (mlow - mag) / std
+    vupp = (mupp - mag) / std
+    vals = truncnorm.pdf(mags, vlow, vupp, loc=mag, scale=std)
+    vals = vals/sum(vals)
+    return mags, vals
+
+
+def get_dt_lognormal(mag, std, std_factor=2, mwdt=0.1):
+    """
+    :param mean_mag:
+    :param std:
+    :param std_factor:
+    """
+    #
+    # Computing magnitude extremes
+    mlow = mag - std*std_factor
+    mlow = mlow - (mlow % mwdt) - mwdt / 2
+    mupp = mag + std*std_factor
+    mupp = mupp + (mwdt - mupp % mwdt) + mwdt / 2
+    #
+    # discretize the truncated normal distribution
+    mags = np.arange(mlow, mupp+0.1*mwdt, mwdt)
+    vlow = (mlow - mag) / std
+    vupp = (mupp - mag) / std
+    vals = truncnorm.pdf(mags, vlow, vupp, loc=mag, scale=std)
+    vals = vals/sum(vals)
+    return mags, vals
