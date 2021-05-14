@@ -76,22 +76,13 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
     write_edges_csv(rsps, out_path)
 
 
-def main(argv):
-
-    p = sap.Script(build_complex_surface)
-    p.arg(name='in_path', help='Path to the input folder')
-    p.arg(name='max_sampl_dist', help='Maximum profile sampling distance')
-    p.arg(name='out_path', help='Path to the output folder')
-    p.opt(name='upper_depth', help='Upper depth')
-    p.opt(name='lower_depth', help='Lower depth')
-    p.opt(name='from_id', help='Index profile where to start the sampling')
-    p.opt(name='to_id', help='Index profile where to stop the sampling')
-
-    if len(argv) < 1:
-        print(p.help())
-    else:
-        p.callfunc()
-
+build_complex_surface.in_path = 'Path to the input folder'
+build_complex_surface.max_sampl_dist = 'Maximum profile sampling distance'
+build_complex_surface.out_path = 'Path to the output folder'
+build_complex_surface.upper_depth = 'Upper depth'
+build_complex_surface.lower_depth = 'lower depth'
+build_complex_surface.from_id = 'Index profile where to start the sampling'
+build_complex_surface.to_id = 'Index profile where to stop the sampling'
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sap.run(build_complex_surface)
