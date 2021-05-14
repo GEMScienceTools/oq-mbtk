@@ -588,6 +588,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
         vsc = 0.01
         import matplotlib.pyplot as plt
         # MN: 'Axes3D' imported but never used
+        mpl.use('tkagg')
         from mpl_toolkits.mplot3d import Axes3D
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
