@@ -2,25 +2,14 @@
 # coding: utf-8
 
 import os
+from glob import glob
+
 import toml
 import numpy
 import matplotlib.pyplot as plt
 from openquake.baselib import sap
-from glob import glob
 from openquake.wkf.utils import _get_src_id, create_folder
-from scipy.stats import chi2
 from openquake.mbt.tools.model_building.plt_mtd import create_mtd
-
-
-def get_weichert_confidence_intervals(occ, tcompl):
-    exceedance_rates = numpy.array([sum(occ[i:]) for i in range(len(occ))])
-    exceedance_rates_scaled = numpy.array([sum(occ[i:]/tcompl[i:]) for i in
-                                           range(len(occ))])
-    N = sum(occ)
-    u = 0.5*chi2.ppf(0.841, 2*(N+1))
-    l = 0.5*chi2.ppf(0.159, 2*N)
-    return (l/max(tcompl)*tcompl, u/max(tcompl)*tcompl, exceedance_rates,
-            exceedance_rates_scaled)
 
 
 def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, skip=[],
@@ -44,7 +33,7 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, skip=[],
 
         # Create figure
         out = create_mtd(fname, src_id, None, False, False, 0.5, 10,
-                       pmint=1900)
+                         pmint=1900)
 
         if out is None:
             continue
@@ -56,7 +45,7 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, skip=[],
             plt.ylim(kwargs['ylim'])
 
         print('src_id:', src_id)
-        if ('sources' in model and
+        if ('sources' in model and src_id in model['sources'] and
                 'completeness_table' in model['sources'][src_id]):
             ctab = numpy.array(model['sources'][src_id]['completeness_table'])
         else:
@@ -82,8 +71,10 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, skip=[],
         plt.close()
 
 
-subcatalogues_analysis.fname_input_pattern = 'Name of a shapefile with polygons'
-subcatalogues_analysis.fname_config = 'Name of the .toml file with configuration parameters'
+descr = 'Name of a shapefile with polygons'
+subcatalogues_analysis.fname_input_pattern = descr
+descr = 'Name of the .toml file with configuration parameters'
+subcatalogues_analysis.fname_config = descr
 subcatalogues_analysis.outdir = 'Name of the output folder'
 
 if __name__ == '__main__':
