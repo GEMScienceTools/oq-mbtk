@@ -185,7 +185,6 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
     #
     # hdf5 file
     fh5 = h5py.File(hdf5_filename, 'a')
-    print(fh5)
     grp_inslab = fh5.create_group('inslab')
     #
     allrup = {}
@@ -502,7 +501,6 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
         treg_filename = os.path.abspath(os.path.join(ref_fdr, treg_filename))
     #
     #
-    print('treg_file is {}'.format(treg_filename))
     dips = list_of_floats_from_string(config.get('main', 'dips'))
     asprsstr = config.get('main', 'aspect_ratios')
     asprs = dict_of_floats_from_string(asprsstr)
