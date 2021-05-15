@@ -11,6 +11,7 @@ from openquake.sub.create_inslab_nrml import create
 from openquake.sub.build_complex_surface import build_complex_surface
 
 BASE_DATA_PATH = os.path.dirname(__file__)
+PLOTTING = False
 
 
 class RuptureCreationSouthAmericaTest(unittest.TestCase):
