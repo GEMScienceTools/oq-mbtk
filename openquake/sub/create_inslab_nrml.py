@@ -126,7 +126,6 @@ def create(label, rupture_hdf5_fname, output_folder, investigation_t):
         write_source_model(fnrml, mdl, mag)
 
     f.close()
-    print('Done')
 
 
 create.label = 'TR label'

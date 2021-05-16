@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 """
@@ -582,7 +582,11 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
         exit(0)
     """
 
-    if PLOTTING:
+    if 1:
+        import matplotlib as mpl
+        mpl.use('tkagg')
+        import matplotlib.pyplot as plt
+
         vsc = 0.01
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
@@ -661,9 +665,12 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
                              uniform_fraction, proj, idl, align, True)
 
 
-calculate_ruptures.ini_fname = '.ini filename'
-calculate_ruptures.only_plt = 'Only plotting'
-calculate_ruptures.ref_fdr = 'Reference folder for paths'
+
+    calculate_ruptures.ini_fname = '.ini filename'
+    calculate_ruptures.only_plt = 'Only plotting'
+    calculate_ruptures.ref_fdr = 'Reference folder for paths'
+
+
 
 if __name__ == "__main__":
     sap.run(calculate_ruptures)

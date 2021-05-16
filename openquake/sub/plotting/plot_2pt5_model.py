@@ -10,10 +10,13 @@ import numpy
 import pickle
 import configparser
 
+import matplotlib as mpl
+mpl.use('tkagg')
+
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 # MN: 'Basemap' imported but used just for an orhpan var
-from mpl_toolkits.basemap import Basemap
+#from mpl_toolkits.basemap import Basemap
 
 
 def plot_sub_profile(sid, dat, axes):
@@ -50,7 +53,7 @@ def plot_sub_profiles(foldername):
     maxde = -1e10
     #
     # MN: 'mpp' assigned but never used
-    mpp = Basemap()
+#    mpp = Basemap()
     # Create figure
     fig = plt.figure()
     ax = Axes3D(fig)
@@ -128,7 +131,6 @@ def main(argv):
         config = configparser.ConfigParser()
         config.read(argv[1])
         fname_eqk_cat = config['data']['catalogue_pickle_filename']
-        # code.interact(local=locals())
         if re.search('[a-z]', fname_eqk_cat):
             plot_catalogue(fname_eqk_cat, axes, lims, qual)
 
