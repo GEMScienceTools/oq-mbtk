@@ -15,9 +15,11 @@ import rtree
 import logging
 import configparser
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 # from mayavi import mlab
 from pyproj import Proj
-
 # from openquake.sub.plotting.tools import plot_mesh
 # from openquake.sub.plotting.tools import plot_mesh_mayavi
 
@@ -39,6 +41,8 @@ from openquake.hazardlib.geo.surface.gridded import GriddedSurface
 
 from openquake.mbt.tools.smooth3d import Smoothing3D
 from openquake.man.checks.catalogue import load_catalogue
+
+PLOTTING = False
 
 
 def get_catalogue(cat_pickle_fname, treg_filename, label):
@@ -213,7 +217,7 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
             # Store data in the hdf5 file
             grp_inslab.create_dataset('{:09d}'.format(iscnt), data=smsh)
             #
-            # get centroids for a given virtual fault surface
+            # Get centroids for a given virtual fault surface
             ccc = get_centroids(smsh[:, :, 0], smsh[:, :, 1], smsh[:, :, 2])
             #
             # Get weights - this assigns to each cell centroid the weight of
@@ -222,17 +226,17 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
             #
             # loop over magnitudes
             for mag, _ in mfd.get_annual_occurrence_rates():
-                #
+
                 # TODO this is assigns arbitrarly a rake of 90 degrees. It
                 # should be a configuration parameter
                 area = msr.get_median_area(mag=mag, rake=90)
                 rups = []
                 for aspr in asprs:
-                    #
+
                     # IMPORTANT: the sampling here must be consistent with
                     # what we use for the construction of the mesh
                     lng, wdt = get_discrete_dimensions(area, sampling, aspr)
-                    #
+
                     # If one of the dimensions is equal to 0 it means that
                     # this aspect ratio cannot be represented with the value of
                     # sampling
@@ -243,129 +247,122 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
                         msg = '{:s} will not be defined'.format(msg)
                         logging.warning(msg)
                         continue
-                    #
+
                     # rupture lenght and rupture width as multiples of the
                     # mesh sampling distance
                     rup_len = int(lng/sampling) + 1
                     rup_wid = int(wdt/sampling) + 1
-                    #
+
                     # skipping small ruptures
                     if rup_len < 2 or rup_wid < 2:
                         msg = 'Found an incompatible discrete rupture size'
                         logging.warning(msg)
                         continue
-                    #
+
                     # get_ruptures
                     counter = 0
                     for rup, rl, cl in get_ruptures(omsh, rup_len, rup_wid,
                                                     f_strike=float_strike,
                                                     f_dip=float_dip):
-                        #
-                        # getting weights from the smoothing
+
+                        # Get weights from the smoothing
                         w = weights[cl:rup_len-1, rl:rup_wid-1]
                         i = np.isfinite(w)
-                        #
-                        # fix the longitudes outside the standard [-180, 180]
+
+                        # Fix the longitudes outside the standard [-180, 180]
                         # range
                         ij = np.isfinite(rup[0])
                         iw = rup[0] > 180.
                         ik = np.logical_and(ij, iw)
                         rup[0][ik] -= 360
 
-                        """
-                        iw = np.nonzero(rup[0][ij] > 180.)
-                        if len(iw):
-                            print(type(rup), rup[0])
-                            print(ij[iw])
-                            rup[0][ij[iw]] -= 360.
-                        """
+                        # Get centroid
+                        idx_r = np.floor(rup[0].shape[0]/2).astype('i4')
+                        idx_c = np.floor(rup[0].shape[1]/2).astype('i4')
+                        hypo = (rup[0][idx_r, idx_c], rup[1][idx_r, idx_c],
+                                rup[2][idx_r, idx_c])
 
-                        #if np.any(rup[0][j] > 180):
-                        #    rup[0][rup[0] > 180.] = rup[0][rup[0] > 180.] - 360.
+                        # Checking
                         assert np.all(rup[0][ij] <= 180)
                         assert np.all(rup[0][ij] >= -180)
 
+                        # Get coordinates of the rupture surface
                         rx = rup[0][ij].flatten()
                         ry = rup[1][ij].flatten()
                         rz = rup[2][ij].flatten()
 
-                        #
-                        # normalize the weight using the aspect ratio weight
+                        # Normalize the weight using the aspect ratio weight
                         wsum = sum(w[i])/asprs[aspr]
-                        #
-                        # create the gridded surface. We need at least four
+
+                        # Create the gridded surface. We need at least four
                         # vertexes
                         if len(rx) > 3:
-                        #if rup[0].size > 3:
                             srfc = GriddedSurface(Mesh.from_coords(zip(rx,
                                                                        ry,
                                                                        rz),
                                                                    sort=False))
-                            #srfc = GriddedSurface(Mesh.from_coords(zip(rup[0],
-                            #                                           rup[1],
-                            #                                           rup[2]),
-                            #                                       sort=False))
-                            #
-                            # update the list with the ruptures - the last
+                            # Update the list with the ruptures - the last
                             # element in the list is the container for the
                             # probability of occurrence. For the time being
                             # this is not defined
-                            rups.append([srfc, wsum, dip, aspr, []])
+                            rups.append([srfc, wsum, dip, aspr, [], hypo])
                             counter += 1
-                #
-                # update the list of ruptures
+
+                # Update the list of ruptures
                 lab = '{:.2f}'.format(mag)
                 if lab in allrup:
                     allrup[lab] += rups
                 else:
                     allrup[lab] = rups
-            #
-            # update counter
+
+            # Update counter
             iscnt += 1
-    #
-    # closing the hdf5 file
+
+    # Closing the hdf5 file
     fh5.close()
-    #
-    # logging info
+
+    # Logging info
     for lab in sorted(allrup.keys()):
         tmps = 'Number of ruptures for m={:s}: {:d}'
         logging.info(tmps.format(lab, len(allrup[lab])))
-    #
+
     # Compute the normalizing factor for every rupture. This is used only in
     # the case when smoothing is used a reference for distributing occurrence
     twei = {}
     for mag, occr in mfd.get_annual_occurrence_rates():
         smm = 0.
         lab = '{:.2f}'.format(mag)
-        for _, wei, _, _, _ in allrup[lab]:
+        for _, wei, _, _, _, _ in allrup[lab]:
             if np.isfinite(wei):
                 smm += wei
         twei[lab] = smm
         tmps = 'Total weight {:s}: {:f}'
         logging.info(tmps.format(lab, twei[lab]))
-    #
-    # generate and store the final set of ruptures
+
+    # Generate and store the final set of ruptures
     fh5 = h5py.File(hdf5_filename, 'a')
     grp_rup = fh5.create_group('ruptures')
-    #
+
+    # Assign probability of occurrence
     for mag, occr in mfd.get_annual_occurrence_rates():
-        #
-        # set label
+
+        # Label
         lab = '{:.2f}'.format(mag)
-        #
-        # warning
+
+        # Check if weight is larger than 0
         if twei[lab] < 1e-50 and uniform_fraction < 0.99:
             tmps = 'Weight for magnitude {:s} equal to 0'
             tmps = tmps.format(lab)
             logging.warning(tmps)
-        #
-        #
+
         rups = []
         grp = grp_rup.create_group(lab)
         cnt = 0
         numrup = len(allrup[lab])
-        for srfc, wei, _, _, _ in allrup[lab]:
-            #
+
+        # Loop over the ruptures and compute the annual pocc
+        for srfc, wei, _, _, _, hypo in allrup[lab]:
+
             # Adjust the weight. Every rupture will have a weight that is
             # a combination between a flat rate and a variable rate
             if twei[lab] > 1e-10:
@@ -374,15 +371,15 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
                        occr / numrup * uniform_fraction)
             else:
                 ocr = occr / numrup * uniform_fraction
-            #
-            # compute the probabilities
+
+            # Compute the probabilities
             p0 = np.exp(-ocr*tspan)
             p1 = 1. - p0
-            #
-            #
+
+            # Append ruptures
             rups.append([srfc, wei, dip, aspr, [p0, p1]])
-            #
-            #
+
+            # Preparing the data structure for storing information
             a = np.zeros(1, dtype=[('lons', 'f4', srfc.mesh.lons.shape),
                                    ('lats', 'f4', srfc.mesh.lons.shape),
                                    ('deps', 'f4', srfc.mesh.lons.shape),
@@ -390,7 +387,9 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
                                    ('dip', 'f4'),
                                    ('aspr', 'f4'),
                                    ('prbs', 'float32', (2)),
+                                   ('hypo', 'float32', (3)),
                                    ])
+
             a['lons'] = srfc.mesh.lons
             a['lats'] = srfc.mesh.lats
             a['deps'] = srfc.mesh.depths
@@ -398,6 +397,7 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
             a['dip'] = dip
             a['aspr'] = aspr
             a['prbs'] = np.array([p0, p1], dtype='float32')
+            a['hypo'] = np.array(hypo, dtype='float32')
             grp.create_dataset('{:08d}'.format(cnt), data=a)
             cnt += 1
         allrup[lab] = rups
@@ -435,7 +435,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
     #
     # read config file
     config = configparser.ConfigParser()
-    config.readfp(open(ini_fname))
+    config.read_file(open(ini_fname))
     #
     # logging settings
     logging.basicConfig(format='rupture:%(levelname)s:%(message)s')
@@ -660,7 +660,6 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
     #
     # create all the ruptures - the probability of occurrence is for one year
     # in this case
-    # MN: 'Axes3D' assigned but never used
     allrup = create_ruptures(mfd, dips, sampling, msr, asprs, float_strike,
                              float_dip, r, values, ohs, 1., hdf5_filename,
                              uniform_fraction, proj, idl, align, True)

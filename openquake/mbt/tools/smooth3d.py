@@ -2,6 +2,7 @@ import numpy as np
 import rtree
 import scipy.constants as consts
 
+from rtree import index
 from pyproj import Proj
 
 
@@ -41,7 +42,7 @@ class Smoothing3D:
         """
         #
         # Setting rtree properties
-        prop = rtree.index.Property()
+        prop = index.Property()
         prop.dimension = 3
         #
         # Set the geographic projection
@@ -49,7 +50,7 @@ class Smoothing3D:
         self.p = Proj(proj='lcc', lon_0=np.mean(lons), lat_2=45)
         #
         # Create the spatial index for the grid mesh
-        r = rtree.index.Index(_generator(self.mesh, self.p), properties=prop)
+        r = index.Index(_generator(self.mesh, self.p), properties=prop)
         #
         # set the rtree
         self.rtree = r

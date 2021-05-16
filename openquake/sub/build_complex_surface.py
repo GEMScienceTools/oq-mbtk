@@ -1,10 +1,14 @@
 #!/usr/bin/env python
+
+"""
+Module :mod:`openquake.sub.build_complex_surface` creates a complex fault
+surface from a set of profiles
+"""
+
 import sys
-import numpy
 import logging
-
+import numpy
 from openquake.baselib import sap
-
 from openquake.sub.create_2pt5_model import (read_profiles_csv,
                                              get_profiles_length,
                                              get_interpolated_profiles,
@@ -30,24 +34,22 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
     :param str to_id:
         The ID of the last profile to be considered
     """
-    #
+
     # Check input and output folders
     if in_path == out_path:
         tmps = '\nError: the input folder cannot be also the output one\n'
         tmps += '    input : {0:s}\n'.format(in_path)
         tmps += '    output: {0:s}\n'.format(out_path)
-        # MN: UNCOMMENT THIS LOG AND FIX IT
-        # logging.warning(tmps.format(lab, len(allrup[lab])))
-        exit(0)
-    #
-    # read profiles
+        sys.exit()
+
+    # Read the profiles
     sps, dmin, dmax = read_profiles_csv(in_path,
                                         float(upper_depth),
                                         float(lower_depth),
                                         from_id, to_id)
     logging.info('Number of profiles: {:d}'.format(len(sps)))
-    #
-    # compute length of profiles
+
+    # Compute length of profiles
     lengths, longest_key, shortest_key = get_profiles_length(sps)
     logging.info('Longest profile (id: {:s}): {:2f}'.format(
         longest_key, lengths[longest_key]))
@@ -80,9 +82,17 @@ build_complex_surface.in_path = 'Path to the input folder'
 build_complex_surface.max_sampl_dist = 'Maximum profile sampling distance'
 build_complex_surface.out_path = 'Path to the output folder'
 build_complex_surface.upper_depth = 'Upper depth'
+<<<<<<< HEAD
+build_complex_surface.lower_depth = 'Lower depth'
+build_complex_surface.from_id = 'Index profile where to start the sampling'
+build_complex_surface.to_id = 'Index profile where to stop the sampling'
+
+if __name__ == '__main__':
+=======
 build_complex_surface.lower_depth = 'lower depth'
 build_complex_surface.from_id = 'Index profile where to start the sampling'
 build_complex_surface.to_id = 'Index profile where to stop the sampling'
 
 if __name__ == "__main__":
+>>>>>>> mbtk_cd_corr
     sap.run(build_complex_surface)
