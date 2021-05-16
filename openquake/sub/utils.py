@@ -1,15 +1,12 @@
 import os
 import re
 import glob
-import scipy
 import numpy as np
 import matplotlib.pyplot as plt
 
 from pyproj import Proj
 
-# MN: Axes3D imported but never used
-# from mpl_toolkits.mplot3d import Axes3D
-
+from mpl_toolkits.mplot3d import Axes3D
 from openquake.hazardlib.geo import Line, Point
 from openquake.hazardlib.geo.surface import ComplexFaultSurface
 from openquake.hazardlib.scalerel.wc1994 import WC1994
@@ -72,13 +69,13 @@ def get_direction_cosines(strike, dip):
         A 3x1 array containing the direction cosines of the normal to the plane
     """
     if dip < 89.99:
-        c = scipy.cos(scipy.radians(dip))
-        h = scipy.sin(scipy.radians(dip))
+        c = np.cos(np.radians(dip))
+        h = np.sin(np.radians(dip))
     else:
         c = 0.
         h = 1.
-    a = h*scipy.sin(scipy.radians(strike+90.))
-    b = h*scipy.cos(scipy.radians(strike+90.))
+    a = h*np.sin(np.radians(strike+90.))
+    b = h*np.cos(np.radians(strike+90.))
     den = np.sqrt(a**2.+b**2.+c**2.)
     a /= den
     b /= den
