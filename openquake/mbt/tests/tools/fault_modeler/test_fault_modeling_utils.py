@@ -182,6 +182,15 @@ class TestModelingUtils(unittest.TestCase):
 
         self.assertTrue(abs((length * 20.) - area) < 0.01)
 
+    def test_get_m_max_from_geojson(self):
+
+        m_max = fmu.get_m_max(self.fault_1,
+                          area_method='simple', width_method='seismo_depth',
+                          width_scaling_relation='Leonard2014_Interplate',
+                          defaults=fmu.defaults, param_map=self.param_map)
+
+        self.assertEqual(m_max, 7.0)
+
     # Rates
     def test_get_net_slip_rate(self):
 
@@ -208,7 +217,7 @@ class TestModelingUtils(unittest.TestCase):
         net_slip_rate = fmu.net_slip_from_shortening_fault_geom(fault)
 
         self.assertTrue(abs(2. - net_slip_rate) < 0.01)
-    
+
     def test_net_slip_from_vert_slip_fault_geom(self):
 
         fault = {'coords': [[0., 0.], [0., 1.]],
@@ -230,9 +239,19 @@ class TestModelingUtils(unittest.TestCase):
     def test_net_slip_from_strike_slip_shortening(self):
         pass
 
-    @unittest.skip("not yet implemented")
+    #@unittest.skip("not yet implemented")
     def test_net_slip_from_vert_slip_shortening(self):
-        pass
+        fault = {'coords': [[0., 0.], [0., 1.]],
+                'shortening_rate': '(2.,1.,3.)', 
+                'vert_slip_rate': '(2.,1.,3.)', 
+                'slip_type': 'Reverse-Dextral'}
+
+        net_slip_rate = fmu.net_slip_from_vert_slip_shortening(fault)
+
+        net_slip_true_rate = 3.999999999934677
+
+        self.assertTrue(abs(net_slip_rate - net_slip_true_rate) < 0.01)
+                 
 
     @unittest.skip("not yet implemented")
     def test_net_slip_from_vert_strike_slip(self):
@@ -250,21 +269,20 @@ class TestModelingUtils(unittest.TestCase):
 
         mfd, seis_rate = fmu.calc_mfd_from_fault_params(
                                                 self.fault_1,
-                                                # mfd_type='DoubleTruncatedGR',
                                                 param_map=self.param_map,
                                                 defaults=fmu.defaults)
-
-        mfd_rates = [(6.05, 0.008792708455724264),
-                     (6.1499999999999995, 0.0069842965860807266),
-                     (6.25, 0.005547823978012335),
-                     (6.35, 0.004406793227015579),
-                     (6.45, 0.003500440284810207),
-                     (6.55, 0.002780498552191055),
-                     (6.65, 0.002208628506615345),
-                     (6.75, 0.001754375982821495),
-                     (6.85, 0.0013935503774772729),
-                     (6.95, 0.0011069364113408821),
-                     (7.05, 0.000879270845572433)]
+        # mdf_rates values were computed by hand using m_min = 4.0,
+        # m_cli = 6.0 and m_max = 7.0 as default values
+        mfd_rates =  [(6.05, 0.007316449031674849),
+                     (6.1499999999999995, 0.005811662043780461),
+                     (6.25, 0.004616367252050254),
+                     (6.35, 0.0036669108501600576),
+                     (6.45, 0.002912730822498961),
+                     (6.55, 0.0023136643324626104),
+                     (6.65, 0.0018378089049495543),
+                     (6.75, 0.0014598235032291457),
+                     (6.85, 0.001159579026329024),
+                     (6.95, 0.0009210863610072359)]
 
         seis_rate_ = 6.0
 
@@ -283,19 +301,21 @@ class TestModelingUtils(unittest.TestCase):
                                             param_map=self.param_map,
                                             defaults=fmu.defaults)
 
-        mfd_rates = [(6.05, 0.0005161196304084878),
-                     (6.1499999999999995, 0.00040996839492892304),
-                     (6.249999999999999, 0.00032564947143663876),
-                     (6.349999999999999, 0.00025867256978516083),
-                     (6.449999999999998, 0.00020547092572904065),
-                     (6.549999999999998, 0.0001632113577215128),
-                     (6.649999999999998, 0.0001296433896658826),
-                     (6.749999999999997, 0.00010297940485697282),
-                     (6.849999999999997, 0.0008258332824773236),
-                     (6.949999999999997, 0.0008258332824773236),
-                     (7.049999999999996, 0.0008258332824773236),
-                     (7.149999999999996, 0.0008258332824773236),
-                     (7.249999999999996, 0.0008258332824773236)]
+        # mfd rates were computed manually for m_cli=2.0 and m_min=0.1
+
+        mfd_rates = [(6.0499999999999945, 0.0004899832550486021), 
+                     (6.149999999999994, 0.00038920753402721386), 
+                     (6.249999999999994, 0.0003091585334452278), 
+                     (6.349999999999993, 0.0002455733521214958), 
+                     (6.449999999999993, 0.00019506584728599225), 
+                     (6.549999999999993, 0.00015494631012967855), 
+                     (6.649999999999992, 0.0001230782290023488), 
+                     (6.749999999999992, 9.776451237642668e-05), 
+                     (6.849999999999992, 0.0009754887193815162), 
+                     (6.949999999999991, 0.0009754887193815162), 
+                     (7.049999999999991, 0.0009754887193815162), 
+                     (7.149999999999991, 0.0009754887193815162), 
+                     (7.24999999999999, 0.0009754887193815162)]
 
         seis_rate_ = 6.0
 

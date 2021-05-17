@@ -1,19 +1,29 @@
+import os
 import numpy
 import rtree
+import rtree.index  # needed with version 0.9.4
 import scipy.constants as consts
 
-# MN: 'plt' imported but not used
-import matplotlib.pyplot as plt
-
 from openquake.mbt.tools.geo import get_idx_points_inside_polygon
-
 from openquake.hazardlib.geo.geodetic import (point_at, geodetic_distance)
+
+
+def check_idl(lons):
+    idl = 0
+    maxlon = max(lons)
+    minlon = min(lons)
+    if ((abs(maxlon - minlon) > 50) & ((maxlon / minlon) < 0)):
+        idl = 1
+    return idl
 
 
 def coord_generators(mesh):
     for cnt, pnt in enumerate(mesh):
+        idl = check_idl(mesh.lons)
         lon = pnt.longitude
         lat = pnt.latitude
+        if idl == 1:
+            lon = lon + 360 if lon < 0 else lon
         yield (cnt, (lon, lat, lon, lat), 1)
 
 
@@ -40,11 +50,13 @@ class Smoothing:
         """
         This creates a rtree spatial index of the grid mesh.
         """
-        # Setting properties
-        p = rtree.index.Property()
-        p.get_overwrite = True
+        # empty the tmp files
+        tmp_file = ['./tmp.dat', './tmp.idx']
+        for tmp in tmp_file:
+            if os.path.exists(tmp):
+                os.remove(tmp)
         # Create the spatial index for the grid mesh
-        r = rtree.index.Index('./tmp', properties=p)
+        r = rtree.index.Index('./tmp')
         ids = set()
         for cnt, pnt in enumerate(coord_generators(self.mesh)):
             r.insert(id=pnt[0], coordinates=pnt[1])
@@ -54,9 +66,6 @@ class Smoothing:
             else:
                 print(pnt[0])
                 raise ValueError('Index already used')
-        # Create nodes array
-        # MN: 'nodes' assigned but never used
-        nodes = numpy.array((len(self.mesh)))
         # Set the index
         self.rtree = r
 
@@ -97,19 +106,23 @@ class Smoothing:
 
         NOTE: this will not work across the IDL
         """
-
         # Values
         values = numpy.zeros((len(self.mesh)))
-        # Compute the number of expected nodes
-        # MN: 'numpnts' assigned but never used
-        numpnts = consts.pi*radius**2/(self.cellsize**2)
         # Smoothing the catalogue
         for lon, lat, mag in zip(self.catalogue.data['longitude'],
                                  self.catalogue.data['latitude'],
                                  self.catalogue.data['magnitude']):
+            # check for idl and shift lon
+            idl = check_idl(self.mesh.lons)
+            if idl == 1:
+                lon = lon + 360 if lon < 0 else lon
             # Set the bounding box
-            minlon, minlat = point_at(lon, lat, 225, radius*2**0.5)
-            maxlon, maxlat = point_at(lon, lat, 45, radius*2**0.5)
+            minlon, minlat = point_at(lon, lat, 225, radius * 2 ** 0.5)
+            maxlon, maxlat = point_at(lon, lat, 45, radius * 2 ** 0.5)
+            # shift mins and maxs if idl
+            if idl == 1:
+                minlon = minlon + 360 if minlon < 0 else minlon
+                maxlon = maxlon + 360 if maxlon < 0 else maxlon
             # find nodes within the bounding box
             idxs = list(set(self.rtree.intersection((minlon,
                                                      minlat,
@@ -132,6 +145,11 @@ class Smoothing:
         return values
 
     def get_points_in_polygon(self, polygon):
+        # first make idl adjustments
+        idl = check_idl(self.mesh.lons)
+        lons = polygon.lons
+        if idl == 1:
+            lons = [lon + 360 if lon < 0 else lon for lon in lons]
 
         minlon = min(polygon.lons)
         minlat = min(polygon.lats)

@@ -1,10 +1,15 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python
+
+"""
+:module:`openquake.sub.create_inslab_nrml` creates a set of .xml input files
+for the OpenQuake Engine
+"""
 
 import os
 import re
-import sys
-import h5py
+from decimal import Decimal, getcontext
 import logging
+import h5py
 import numpy as np
 from openquake.baselib import sap
 from openquake.hazardlib.const import TRT
@@ -18,52 +23,48 @@ from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.hazardlib.nrml import SourceModel
 from openquake.hazardlib.sourceconverter import SourceGroup
 
-from decimal import Decimal, getcontext
 getcontext().prec = 10
 
 
 def create_nrml_source(rup, mag, sid, name, tectonic_region_type):
     """
     :param rup:
+        A h5py dataset with the rupture information
     :param mag:
+        The magnitude of the ruptures
     :param sid:
+        Source ID
     :param name:
+        Name of the source
     :param tectonic_region_type:
+        Tectonic region type
     """
     data = []
     for key in rup.keys():
         d = rup[key][:]
-        #
-        # creating the surface
+
+        # Creating the surface
         llo = np.squeeze(d['lons'])
         lla = np.squeeze(d['lats'])
         lde = np.squeeze(d['deps'])
-        #
-        # find a node in the middle of the rupture
-        if len(llo.shape):
-            ihyp = (int(np.round(llo.shape[0]/2)))
-            if len(llo.shape) > 1:
-                ihyp = (ihyp, int(np.round(llo.shape[1]/2)))
-            hlo = llo[ihyp]
-            hla = lla[ihyp]
-            hde = lde[ihyp]
-            #
-            #
+
+        # Create the gridded surface
+        if len(llo.shape) > 0:
+
+            # Hypocenter computed in the 'rupture.py' module
+            hlo = d['hypo'][0]
+            hla = d['hypo'][1]
+            hde = d['hypo'][2]
+
+            # Probabilities of occurrence
             ppp = np.squeeze(d['prbs'])
             i = np.isfinite(llo)
             points = [Point(x, y, z) for x, y, z in
                       zip(llo[i], lla[i], lde[i])]
+
+            # Create the surface and the rupture
             srf = GriddedSurface.from_points_list(points)
-            """
-            br = BaseRupture(mag=mag,
-                             rake=-90.,
-                             tectonic_region_type=tectonic_region_type,
-                             hypocenter=Point(hlo, hla, hde),
-                             surface=srf,
-                             source_typology=NonParametricSeismicSource)
-            """
-            br = BaseRupture(mag=mag,
-                             rake=-90.,
+            br = BaseRupture(mag=mag, rake=-90.,
                              tectonic_region_type=tectonic_region_type,
                              hypocenter=Point(hlo, hla, hde),
                              surface=srf)
@@ -77,63 +78,60 @@ def create_nrml_source(rup, mag, sid, name, tectonic_region_type):
 def create(label, rupture_hdf5_fname, output_folder, investigation_t):
     """
     :param label:
+        A string identifying the source
     :param rupture_hdf5_fname:
+        Name of the .hdf5 file containing the ruptures
     :param output_folder:
+        Folder where to write the .xl files
+    :param investigation_t:
+        Investigation time in years
     """
-    #
-    #
+
+    # Open the input .hdf5 file with the ruptures
     f = h5py.File(rupture_hdf5_fname, 'r')
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
-    #
-    #
+
+    # TODO this must be an input variable
     trt = TRT.SUBDUCTION_INTRASLAB
     for mag in f['ruptures'].keys():
-        #
-        # check the number of ruptures defined for the current magnitude value
+
+        # Check the number of ruptures defined for the current magnitude value
         grp = f['ruptures'][mag]
         if len(grp) < 1:
             tmps = 'Skipping ruptures for magnitude {:.2f}'.format(float(mag))
             print(tmps)
             logging.warning(tmps)
             continue
-        #
-        # set the name of the output nrml file
+
+        # Set the name of the output nrml file
         fnrml = os.path.join(output_folder, '{:s}.nrml'.format(mag))
-        #
-        # source ID
+
+        # Set the source ID
         mags = re.sub('\\.', 'pt', mag)
         sid = 'src_{:s}_{:s}'.format(label, mags)
         name = 'Ruptures for mag bin {:s}'.format(mags)
-        #
-        # creates a non-parametric seismic source
+
+        # Creates a non-parametric seismic source
         src = create_nrml_source(grp, float(mag), sid, name, trt)
-        #
-        # create source group
+
+        # Create source group
         sgrp = SourceGroup(trt, [src])
-        #
-        # create source model
+
+        # Create source model
         name = 'Source model for {:s} magnitude {:s}'.format(label, mags)
         mdl = SourceModel([sgrp], name, investigation_t)
-        #
-        # write source model
+
+        # Write source model
         write_source_model(fnrml, mdl, mag)
+
     f.close()
-    print('Done')
 
 
-def main(argv):
-    p = sap.Script(create)
-    p.arg(name='label', help='TR label')
-    p.arg(name='rupture_hdf5_fname', help='hdf5 file with the ruptures')
-    p.arg(name='output_folder', help='Name of the output folder')
-    p.arg(name='investigation_t', help='Investigation time')
-
-    if len(argv) < 1:
-        print(p.help())
-    else:
-        p.callfunc()
-
+create.label = 'TR label'
+create.rupture_hdf5_fname = 'hdf5 file with the ruptures'
+create.output_folder = 'Name of the output folder'
+create.investigation_t = 'Investigation time'
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    sap.run(create)

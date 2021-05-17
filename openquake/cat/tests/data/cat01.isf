@@ -1,0 +1,20 @@
+Event 000000001 Test 1
+   Date       Time        Err   RMS Latitude Longitude  Smaj  Smin  Az Depth   Err Ndef Nsta Gap  mdist  Mdist Qual   Author      OrigID
+2015/12/31 22:15:58.41   1.80 0.890  40.8895   72.5413   8.4   5.9 130  48.2   8.4   90       67   1.51            se NEIC      00000001
+2015/12/31 22:15:53.36   0.90 1.974  40.8484   72.5710 2.552 1.986 172  14.7  6.18  456  387  25   0.36  85.78 m i se ISC       00000002
+ (#PRIME)
+
+Magnitude  Err Nsta Author      OrigID
+mb     4.5 0.1   46 NEIC      00000001
+mb     4.3 0.1   77 ISC       00000002
+MS     4.2 0.1    9 ISC       00000002
+
+Event 000000002 Test 2
+   Date       Time        Err   RMS Latitude Longitude  Smaj  Smin  Az Depth   Err Ndef Nsta Gap  mdist  Mdist Qual   Author      OrigID
+2015/12/31 22:15:58.41   1.80 0.890  41.8895   72.5413   8.4   5.9 130  48.2   8.4   90       67   1.51            se NEIC      00000003
+2015/12/31 22:15:53.36   0.90 1.974  41.8484   72.5710 2.552 1.986 172  14.7  6.18  456  387  25   0.36  85.78 m i se ISC       00000004
+ (#PRIME)
+
+Magnitude  Err Nsta Author      OrigID
+mb     4.5 0.1   46 NEIC      00000003
+MS     4.2 0.1    9 ISC       00000004

@@ -1,11 +1,7 @@
-"""
-"""
-
 import os
 import unittest
 import shutil
 
-from nose.plugins.attrib import attr
 from openquake.sub.slab.rupture import calculate_ruptures
 from openquake.sub.create_inslab_nrml import create
 from openquake.sub.build_complex_surface import build_complex_surface
@@ -13,10 +9,8 @@ from openquake.sub.build_complex_surface import build_complex_surface
 BASE_DATA_PATH = os.path.dirname(__file__)
 
 
-@attr('slow')
+@unittest.skipUnless('OQ_RUN_SLOW_TESTS' in os.environ, 'slow')
 class RuptureCreationPAITest(unittest.TestCase):
-    """
-    """
 
     def setUp(self):
         """

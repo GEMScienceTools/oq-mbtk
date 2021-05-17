@@ -44,6 +44,7 @@ def get_version():
 
     return version
 
+
 version = get_version()
 
 setup(
@@ -55,7 +56,7 @@ setup(
     # Minimal requirements, for a complete list see requirements-*.txt
     # matplotlib is brought by the openquake engine
     install_requires=[
-        'openquake.engine[plotting]',
+        # 'openquake.engine[plotting]',
         'nbstripout >= 0.3.0',
         'jupyter_client >= 5.0.0',
         'ipykernel >= 4.8.0',
@@ -64,10 +65,14 @@ setup(
         'nbformat',
         'GDAL',
         'pyproj',
+        # 'rtree-linux == 0.9.4',
         'rtree',
+        'geojson',
         'nbconvert',
         'prettytable',
-        'geopandas',
+        'tqdm',
+        'tables',
+        'geopandas == 0.6.3',
         'pylint >= 2.1.1'
     ],
     python_requires='>=3.5',

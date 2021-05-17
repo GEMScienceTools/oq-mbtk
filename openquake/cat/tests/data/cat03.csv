@@ -1,0 +1,4 @@
+year,month,day,hour,minute,second,latitude,longitude,magnitude,depth,D,eventID,Agency,sigmaMagnitude
+2015,12,31,22,15,53.36,0.000,0.015,15.0,0,0,1,cea,0.5
+2015,12,31,22,15,53.36,0.000,0.060,15.0,0,0,2,cea,0.5
+2015,12,31,22,15,47.36,0.000,0.015,15.0,0,0,3,cea,0.5
