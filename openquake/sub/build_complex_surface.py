@@ -82,17 +82,9 @@ build_complex_surface.in_path = 'Path to the input folder'
 build_complex_surface.max_sampl_dist = 'Maximum profile sampling distance'
 build_complex_surface.out_path = 'Path to the output folder'
 build_complex_surface.upper_depth = 'Upper depth'
-<<<<<<< HEAD
-build_complex_surface.lower_depth = 'Lower depth'
-build_complex_surface.from_id = 'Index profile where to start the sampling'
-build_complex_surface.to_id = 'Index profile where to stop the sampling'
-
-if __name__ == '__main__':
-=======
 build_complex_surface.lower_depth = 'lower depth'
 build_complex_surface.from_id = 'Index profile where to start the sampling'
 build_complex_surface.to_id = 'Index profile where to stop the sampling'
 
 if __name__ == "__main__":
->>>>>>> mbtk_cd_corr
     sap.run(build_complex_surface)

@@ -1,7 +1,13 @@
-# MN: 'code' imported but never used
-import code
+"""
+Module :mod:`openquake.sub.cross_section` defines :class:`Trench`,
+:class:`Slab2pt0`, :class:`CrossSectionData` and :class:`CrossSection`
+"""
+
+import os
 import re
+import copy
 import numpy
+from collections.abc import Iterable
 
 from openquake.hazardlib.geo.geodetic import distance
 from openquake.hazardlib.geo.geodetic import npoints_towards
@@ -10,13 +16,119 @@ from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.geodetic import (min_distance_to_segment,
                                               point_at, azimuth)
 from pyproj import Geod
+from scipy.interpolate import LinearNDInterpolator
 
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
 
 
+class Slab2pt0(object):
+    """
+    Container and methods for handling top-of-the-slab surfaces from the
+    Slab 2.0 model.
+
+    :param points:
+        An instance of a :class:`numpy.ndarray`
+    :param cross_sections:
+        A list of :class:`openquake.sub.cross_sections.CrossSection`
+        instances.
+    """
+
+    def __init__(self, points, cross_sections):
+        self.points = points
+        self.cross_sections = cross_sections
+
+    @classmethod
+    def from_file(cls, fname, cross_sections):
+        """
+        :param fname:
+            The name of a Slab 2.0 text file containing the depth to the top
+            of the slab.
+        :param cross_sections:
+            A list of :class:`openquake.sub.cross_sections.CrossSection`
+            instances
+        """
+        slab = []
+        for line in open(fname):
+            if re.search('\\,', line):
+                aa = re.split('\\,', line)
+            else:
+                aa = re.split('\\s+', line)
+
+            if not re.search('[a-z]', aa[2]):
+                slab.append([float(aa[0]), float(aa[1]), float(aa[2])])
+        slabarr = numpy.asarray(slab)
+        return cls(slabarr, cross_sections)
+
+    def compute_profiles(self, bffer):
+        """
+        Compute the profile for each cross-section using the slab mesh.
+
+        :param bffer:
+            Buffer distance [km] from the plane of the cross-section used to
+            find the points.
+        """
+        hspacing = 5.0
+        slab_points = copy.copy(self.points)
+
+        # Set values in the range [-180, 180]
+        idx = numpy.nonzero(self.points[:, 0] > 180)
+        if len(idx[0]):
+            slab_points[idx[0], 0] = slab_points[idx[0], 0] - 360.
+
+        # Loop over the cross-sections
+        self.profiles = {}
+        for ics, cs in enumerate(self.cross_sections):
+            pnts = copy.copy(slab_points)
+
+            # Get min and max longitude and latitude values
+            minlo, maxlo, minla, maxla, qual = cs.get_mm()
+
+            # Find the nodes of the grid within a certain distance from the
+            # plane of the cross-section
+            if qual == 0:
+                minlo, maxlo, minla, maxla, qual = cs.get_mm(2.0)
+                idxslb, dsts = cs.get_grd_nodes_within_buffer(pnts[:, 0],
+                        pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
+            if qual == 1:
+                idxslb, dsts = cs.get_grd_nodes_within_buffer_idl(pnts[:, 0],
+                        pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
+
+            # Check if the array with cross-section data is not empty
+            if idxslb is None:
+                continue
+
+            # Points
+            num = numpy.ceil(cs.length[0]/hspacing).astype(int)
+            psec = npoints_towards(cs.olo, cs.ola, 0.0, cs.strike[0],
+                                   cs.length[0], 0., num)
+            p = pnts[idxslb, :]
+            interp = LinearNDInterpolator(p[:, 0:2], p[:, 2])
+            z = interp(psec[0], psec[1])
+
+            iii = numpy.isfinite(z)
+            pro = numpy.concatenate((numpy.expand_dims(psec[0][iii], axis=1),
+                                     numpy.expand_dims(psec[1][iii], axis=1),
+                                     numpy.expand_dims(z[iii], axis=1)),
+                                    axis=1)
+            self.profiles['{:03d}'.format(ics)] = pro
+
+    def write_profiles(self, folder):
+        """
+        Save to files the profiles describing the top-of-the-slab surface.
+
+        :param folder:
+            The name of the folder where to store the profiles
+        """
+        for key in self.profiles:
+            fname = 'cs_{:s}.csv'.format(key)
+            fname = os.path.join(folder, fname)
+            numpy.savetxt(fname, self.profiles[key])
+
+
 class CrossSectionData:
     """
+    This is a container for the information used to plot cross-sections.
     """
 
     def __init__(self, cross_section):
@@ -46,6 +158,12 @@ class CrossSectionData:
 
     def set_catalogue(self, catalogue, bffer=75.):
         """
+        :param catalogue:
+            An instance of
+            :class:`openquake.hmtk.seismicity.catalogue.Catalogue`
+        :param buffer:
+            A float defining the maximum distance [km] from the cross-section
+            used to select seismicity
         """
         print('setting catalogue')
         _, _, _, _, qual = self.csec.get_mm()
@@ -66,14 +184,16 @@ class CrossSectionData:
             The name of a .xyz grid containing Slab 1.0 data
         :parameter bffer:
             Buffer distance [km]
-        :return:
-            An array
         """
         print('setting slab')
         # Read the Slab 1.0 file
         slab1pt0 = []
         for line in open(filename):
-            aa = re.split('\\s+', line)
+            if re.search('\\,', line):
+                aa = re.split('\\,', line)
+            else:
+                aa = re.split('\\s+', line)
+
             if not re.search('[a-z]', aa[2]):
                 slab1pt0.append([float(aa[0]), float(aa[1]), float(aa[2])])
         slab1pt0or = numpy.asarray(slab1pt0)
@@ -105,8 +225,6 @@ class CrossSectionData:
         """
         :parameter filename:
             The name of the file containing the CRUST 1.0 model
-        :return:
-            A numpy array
         """
         print('setting crust/moho')
         datal = []
@@ -118,17 +236,11 @@ class CrossSectionData:
         minlo, maxlo, minla, maxla, qual = self.csec.get_mm()
         if qual == 0:
             minlo, maxlo, minla, maxla, qual = self.csec.get_mm(2.0)
-            idxs = self.csec.get_grd_nodes_within_buffer(dataa[:, 0],
-                                                         dataa[:, 1],
-                                                         bffer,
-                                                         minlo, maxlo,
-                                                         minla, maxla)
+            idxs, _ = self.csec.get_grd_nodes_within_buffer(dataa[:, 0],
+                dataa[:, 1], bffer, minlo, maxlo, minla, maxla)
         if qual == 1:
-            idxs = self.csec.get_grd_nodes_within_buffer_idl(dataa[:, 0],
-                                                             dataa[:, 1],
-                                                             bffer,
-                                                             minlo, maxlo,
-                                                             minla, maxla)
+            idxs, _ = self.csec.get_grd_nodes_within_buffer_idl(dataa[:, 0],
+                dataa[:, 1], bffer, minlo, maxlo, minla, maxla)
         if idxs is not None and len(idxs):
             boo = numpy.zeros_like(dataa[:, 0], dtype=int)
             boo[idxs[0]] = 1
@@ -138,10 +250,11 @@ class CrossSectionData:
         """
         :parameter filename:
             The name of the file containing the LITHO model
-        :return:
-            A numpy array
         """
         print('setting litho/moho')
+        if filename == 'None':
+            return
+
         datal = []
         for line in open(filename, 'r'):
             xx = re.split('\\s+', re.sub('\\s+$', '',
@@ -170,7 +283,7 @@ class CrossSectionData:
     def set_gcmt(self, filename, bffer=75.):
         """
         :parameter cmt_cat:
-
+            Name of a file in the .ndk format
         """
         print('setting gcmt')
         parser = ParseNDKtoGCMT(filename)
@@ -201,6 +314,10 @@ class CrossSectionData:
             Name of the grid file containing the topography
         """
         print('setting topo')
+
+        if filename == 'None':
+            return
+
         datat = []
         for line in open(filename, 'r'):
             tt = re.split('\\s+', re.sub('\\s+$', '',
@@ -232,6 +349,10 @@ class CrossSectionData:
             Name of the file containing the volcano list
         """
         print('setting volcano')
+
+        if filename == 'None':
+            return
+
         fin = open(filename, 'r')
         datav = []
         for line in fin:
@@ -284,13 +405,13 @@ class Trench:
         the strike at each node.
 
         :parameter distance:
-            The sampling distance [in km
+            The sampling distance [in km]
         """
         naxis = rsmpl(self.axis[:, 0], self.axis[:, 1], distance)
         if len(self.axis) < 3:
             raise ValueError('Small array')
-        #
-        # compute azimuths
+
+        # Compute azimuths
         az = numpy.zeros_like(self.axis[:, 0])
         az[1:-1] = azimuth(self.axis[:-2, 0], self.axis[:-2, 1],
                            self.axis[2:, 0], self.axis[2:, 1])
@@ -300,6 +421,8 @@ class Trench:
 
     def iterate_cross_sections(self, distance, length, azim=[]):
         """
+        A cross-section iterator
+
         :parameter distance:
             Distance between traces along the trench axis [in km]
         :parameter length:
@@ -317,19 +440,15 @@ class Trench:
         return
 
 
-def rsmpl_old(ix, iy, samdst):
-    """
-    """
-    #
-    # create line instance
-    ix = numpy.array([x+360 if x < 0 else x for x in ix])
-    trench = Line([Point(x, y) for x, y in zip(ix, iy)])
-    rtrench = trench.resample(samdst)
-    tmp = [[pnt.longitude, pnt.latitude] for pnt in rtrench.points]
-    return numpy.array(tmp)
-
-
 def rsmpl(ix, iy, sampling_dist):
+    """
+    Resampling the trace of the subduction axis
+
+    :param ix:
+    :param iy:
+    :param sampling_dist:
+    """
+
     direct = 1
     idx = 0
     #
@@ -402,80 +521,6 @@ def rsmpl(ix, iy, sampling_dist):
     return numpy.array(resampled_cs)
 
 
-def rsmpl_unsure(ix, iy, sampling_dist):
-    direct = 1
-    idx = 0
-    #
-    # create three lists: one with longitude, one with latitude and one with
-    # depth
-    lo = list(ix)
-    la = list(iy)
-    de = list(numpy.zeros_like(ix))
-    #
-    # initialise the variable used to store the cumulated distance
-    cdist = 0.
-    #
-    # set the starting point
-    slo = lo[idx]
-    sla = la[idx]
-    sde = de[idx]
-    #
-    # get the azimuth of the first segment on the edge in the given direction
-    azim = azimuth(lo[idx], la[idx], lo[idx+direct], la[idx+direct])
-    #
-    # initialise the list with the resampled nodes
-    resampled_cs = [[lo[idx], la[idx], azim]]
-    #
-    # resampling
-    while 1:
-        #
-        # this is a sanity check
-        assert idx <= len(lo)-1
-        #
-        # check loop exit condition
-        if direct > 0 and idx > len(lo)-1:
-            break
-        #
-        # compute the distance between the starting point and the next point
-        # on the profile
-        segment_len = distance(slo, sla, sde, lo[idx+direct], la[idx+direct],
-                               de[idx+direct])
-        #
-        # search for the point
-        if cdist+segment_len > sampling_dist:
-            #
-            # this is the lenght of the last segment-fraction needed to
-            # obtain the sampling distance
-            delta = sampling_dist - cdist
-            #
-            # add a new point to the cross section
-            pnts = npoints_towards(slo, sla, sde, azim, delta, 0., 2)
-            #
-            # update the starting point
-            slo = pnts[0][-1]
-            sla = pnts[1][-1]
-            sde = pnts[2][-1]
-            resampled_cs.append([slo, sla, azim])
-            #
-            # reset the cumulative distance
-            cdist = 0.
-        else:
-            cdist += segment_len
-            idx += direct
-            slo = lo[idx]
-            sla = la[idx]
-            sde = de[idx]
-            #
-            # get the azimuth of the profile
-            if idx < len(lo)-1:
-                azim = azimuth(lo[idx], la[idx],
-                               lo[idx+direct], la[idx+direct])
-            else:
-                break
-    # code.interact(local=locals())
-    return numpy.array(resampled_cs)
-
-
 class CrossSection:
     """
     :parameter float olo:
@@ -492,8 +537,13 @@ class CrossSection:
     """
 
     def __init__(self, olo, ola, length, strike, ids='cs'):
+
+        if not isinstance(length, Iterable):
+            length = [length]
+            strike = [strike]
         self.length = length
         self.strike = strike
+
         self.olo = olo
         self.ola = ola
         self.plo = []
@@ -503,7 +553,14 @@ class CrossSection:
 
     def get_mm(self, delta=0.0):
         """
-        Get min and maximum values
+        Get min and maximum values of the cross section.
+
+        :param delta:
+            A float used to expand the bounding box computed.
+        :returns:
+            A tuple containing longitude min and max values, latitude min and
+            max values and a parameter that's when is equal to 1 tells that
+            the cross-section crosses the IDL.
         """
         lomin = min(self.plo) - delta
         if lomin < -180:
@@ -528,7 +585,7 @@ class CrossSection:
 
     def split_at_idl(self):
         """
-        use when a line crosses the international dateline -> divides the line
+        Used when a line crosses the international dateline -> divides the line
         into two segments that meet at -180/180 degrees longitude
         """
         # discretize line along ellipsoid and find where it gets closest to idl
@@ -606,9 +663,13 @@ class CrossSection:
             Horizontal buffer_distance used to select earthquakes included in
             the catalogue [in km]
         :parameter minlo:
+            Minimum longitude
         :parameter minla:
+            Minimum latitude
         :parameter maxlo:
+            Maximum longitude
         :parameter maxla:
+            Maximum latitude
         """
         line = Line([Point(lo, la) for lo, la in zip(self.plo, self.pla)])
         idxs = numpy.nonzero((x > minlo) & (x < maxlo) &
@@ -618,7 +679,8 @@ class CrossSection:
         coo = [(lo, la) for lo, la in zip(list(xs), list(ys))]
         if len(coo):
             dst = get_min_distance(line, numpy.array(coo))
-            return idxs[0][abs(dst) <= buffer_distance]
+            iii = idxs[0][abs(dst) <= buffer_distance]
+            return iii, dst[abs(dst) <= buffer_distance]
         else:
             print('   Warning: no nodes found around the cross-section')
             return None
@@ -667,7 +729,10 @@ class CrossSection:
 
         if (len(set1)+len(set2)) > 0:
             use_inds = numpy.concatenate((set1, set2), axis=0)
-            return use_inds
+            dsts = numpy.concatenate((dst1[abs(dst1) <= buffer_distance],
+                                      dst2[abs(dst2) <= buffer_distance]),
+                                     axis=0)
+            return use_inds, dsts
         else:
             print('   Warning: no nodes found around the cross-section')
             return None
