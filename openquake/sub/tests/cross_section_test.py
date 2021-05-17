@@ -53,7 +53,9 @@ class Slab2pt0Test(unittest.TestCase):
         slb.write_profiles(outdir.name)
         fname = os.path.join(outdir.name, 'cs_000.csv')
         msg = 'The files containing the profile differ'
-        self.assertTrue(filecmp.cmp(fname, self.fname_pro, shallow=False), msg)
+        expected = numpy.loadtxt(self.fname_pro)
+        computed = numpy.loadtxt(fname)
+        numpy.testing.assert_almost_equal(computed, expected, msg)
 
 
 class GetCrustalModelTest(unittest.TestCase):
