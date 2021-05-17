@@ -8,14 +8,10 @@ import configparser
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as PathEffects
 
-from mpl_toolkits.basemap import Basemap
 from matplotlib.patches import Circle
 from matplotlib.collections import PatchCollection
 
-# MN: 'CrossSection' imported but never used
-from openquake.sub.cross_sections import CrossSection, Trench
-# MN: 'CatalogueSelector' imported but never used
-from openquake.hmtk.seismicity.selector import CatalogueSelector
+from openquake.sub.cross_sections import Trench
 
 
 def get_cs(trench, ini_filename, cs_len, cs_depth, interdistance, qual):
@@ -66,6 +62,7 @@ def plot(trench, cat, cs_dict, interdistance):
     :parameter interdistance:
         Separation distance between cross-sections [km]
     """
+    from mpl_toolkits.basemap import Basemap
 
     minlo = min(trench.axis[:, 0]) - 5
     minla = min(trench.axis[:, 1]) - 5
@@ -74,10 +71,11 @@ def plot(trench, cat, cs_dict, interdistance):
     midlo = (minlo+maxlo)/2
     midla = (minla+maxla)/2
 
-    # MN: 'fig' assigned but never used
-    fig = plt.figure(figsize=(12, 9))
+    # Plot the traces of cross-sections
+    ts = trench.resample(interdistance)
 
-    #
+    _ = plt.figure(figsize=(12, 9))
+
     # Plot the basemap
     m = Basemap(llcrnrlon=minlo, llcrnrlat=minla,
                 urcrnrlon=maxlo, urcrnrlat=maxla,
@@ -110,10 +108,6 @@ def plot(trench, cat, cs_dict, interdistance):
     p.set_array(numpy.array(colors))
     plt.gca().add_collection(p)
     plt.colorbar(p, fraction=0.02, pad=0.04, extend='max')
-
-    #
-    # Plot the traces of cross-sections
-    ts = trench.resample(interdistance)
 
     x, y = m(trench.axis[:, 0], trench.axis[:, 1])
     plt.plot(x, y, '-g', linewidth=2, zorder=10)
@@ -165,13 +159,16 @@ def main(argv):
     trench = Trench(numpy.array(trench))
 
     # Load catalogue
-    cat = pickle.load(open(fname_eqk_cat, 'rb'))
+    with open(fname_eqk_cat, 'rb') as fin:
+        cat = pickle.load(fin)
 
     # Get cross-sections
     cs_dict = get_cs(trench, argv[0], cs_length, cs_depth, interdistance, qual)
 
     # Plotting
-    plot(trench, cat, cs_dict, interdistance)
+    if False:
+        plot(trench, cat, cs_dict, interdistance)
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

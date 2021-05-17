@@ -25,7 +25,7 @@ url = "https://github.com/GEMScienceTools/oq-mbtk"
 README = """
 Python and OpenQuake-based Toolkit for the construction of Seismic Source
 Models
-Copyright (C) 2017-2018 GEM Foundation
+Copyright (C) 2017-2021 GEM Foundation
 """
 
 
@@ -56,7 +56,7 @@ setup(
     # Minimal requirements, for a complete list see requirements-*.txt
     # matplotlib is brought by the openquake engine
     install_requires=[
-        # 'openquake.engine[plotting]',
+        'geopandas == 0.6.3',
         'nbstripout >= 0.3.0',
         'jupyter_client >= 5.0.0',
         'ipykernel >= 4.8.0',
@@ -65,17 +65,16 @@ setup(
         'nbformat',
         'GDAL',
         'pyproj',
-        # 'rtree-linux == 0.9.4',
         'rtree',
         'geojson',
         'nbconvert',
+        'obspy',
         'prettytable',
         'tqdm',
         'tables',
-        'geopandas == 0.6.3',
         'pylint >= 2.1.1'
     ],
-    python_requires='>=3.5',
+    python_requires='>=3.8',
     author='GEM Foundation',
     author_email='hazard@globalquakemodel.org',
     maintainer='GEM Foundation',
