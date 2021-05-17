@@ -111,7 +111,7 @@ def create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
     ax = fig.add_subplot(1, 1, 1)
     X, Y = numpy.meshgrid(bins_time, bins_ma)
     tmp_col = colors.LogNorm(vmin=1e-1, vmax=his.max())
-    pcm = ax.pcolormesh(X, Y, his, norm=, tmp_col, cmap='BuGn')
+    pcm = ax.pcolormesh(X, Y, his, norm=tmp_col, cmap='BuGn')
 
     # Plotting number of occurrences
     for it, vt in enumerate(bins_time[:-1]):
