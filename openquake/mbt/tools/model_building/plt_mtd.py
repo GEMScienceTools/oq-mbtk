@@ -15,7 +15,6 @@ def plot_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
              twid=20., pmint=None, pmaxt=None, ylim=None):
     #
     #
-    # MN: 'fig' assigned but never used
     fig = create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid,
                      twid, pmint, pmaxt, ylim)
     #
@@ -29,6 +28,35 @@ def plot_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
         plt.savefig(figure_fname, format=ext)
     else:
         plt.show()
+    return fig
+
+
+def get_mtd(cat, mwid, twid, ylim=None, cumulative=False):
+
+    #
+    # find rounded min and max magnitude
+    mmin, mmax = _get_extremes(cat.data['magnitude'], mwid)
+    tmin, tmax = _get_extremes(cat.data['year'], twid)
+    if ylim is not None:
+        mmin = ylim[0]
+        mmax = ylim[1]
+    #
+    # histogram
+    bins_ma = numpy.arange(mmin, mmax+mwid*0.01, mwid)
+    bins_time = numpy.arange(tmin, tmax+twid*0.01, twid)
+    his, _, _ = numpy.histogram2d(cat.data['year'], cat.data['magnitude'],
+                                  bins=(bins_time, bins_ma))
+    his = his.T
+    #
+    # complementary cumulative
+    if cumulative:
+        ccu = numpy.zeros_like(his)
+        for i in range(his.shape[1]):
+            cc = numpy.cumsum(his[::-1, i])
+            ccu[:, i] = cc[::-1]
+        his = ccu
+
+    return bins_time, bins_ma, ccu
 
 
 def create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
@@ -52,8 +80,12 @@ def create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
         cat = catalogue_fname
     else:
         raise ValueError('Unknown instance')
-    #
-    # select earthquakes belonging to a given TR
+
+    # Check catalogue
+    if cat is None or len(cat.data['magnitude']) < 1:
+        return None
+
+    # Select earthquakes belonging to a given TR
     idx = numpy.full(cat.data['magnitude'].shape, True, dtype=bool)
     if label is not None and tr_fname is not None:
         f = h5py.File(tr_fname, 'r')
@@ -66,58 +98,32 @@ def create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
     start = datetime.datetime(pmint, 1, 1) if pmint is not None else None
     stop = datetime.datetime(pmaxt, 12, 31) if pmaxt is not None else None
     sel.within_time_period(start, stop)
-    #
-    # find rounded min and max magnitude
-    mmin, mmax = _get_extremes(cat.data['magnitude'], mwid)
-    tmin, tmax = _get_extremes(cat.data['year'], twid)
-    if ylim is not None:
-        mmin = ylim[0]
-        mmax = ylim[1]
-    #
-    #
-    if pmint is None:
-        pmint = tmin
-    if pmaxt is None:
-        pmaxt = tmax
-    #
-    # histogram
-    bins_ma = numpy.arange(mmin, mmax+mwid*0.01, mwid)
-    bins_time = numpy.arange(tmin, tmax+twid*0.01, twid)
-    his, _, _ = numpy.histogram2d(cat.data['year'], cat.data['magnitude'],
-                                  bins=(bins_time, bins_ma))
-    his = his.T
-    #
-    # complementary cumulative
-    if cumulative:
-        ccu = numpy.zeros_like(his)
-        for i in range(his.shape[1]):
-            cc = numpy.cumsum(his[::-1, i])
-            ccu[:, i] = cc[::-1]
-    #
-    # plotting
+
+    # Check if the catalogue contains earthquakes
+    if len(cat.data['magnitude']) < 1:
+        return None
+
+    # Get matrix
+    bins_time, bins_ma, his = get_mtd(cat, mwid, twid, ylim, cumulative)
+
+    # Plotting
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    #
-    #
     X, Y = numpy.meshgrid(bins_time, bins_ma)
-    if cumulative:
-        his = ccu
-    pcm = ax.pcolormesh(X, Y, his, norm=colors.LogNorm(vmin=1e-1,
-                                                       vmax=his.max()),
-                        cmap='BuGn')
-    #
-    # plotting number of occurrences
+    tmp_col = colors.LogNorm(vmin=1e-1, vmax=his.max())
+    pcm = ax.pcolormesh(X, Y, his, norm=, tmp_col, cmap='BuGn')
+
+    # Plotting number of occurrences
     for it, vt in enumerate(bins_time[:-1]):
         for im, vm in enumerate(bins_ma[:-1]):
             ax.text(vt+twid/2, vm+mwid/2, '{:.0f}'.format(his[im, it]),
                     fontsize=7, ha='center')
 
-    #
-    # plotting colorbar
+    # Plotting colorbar
     cb = fig.colorbar(pcm, ax=ax, extend='max')
     cb.set_label('Number of occurrences')
-    #
-    # finishing the plot
+
+    # Finishing the plot
     plt.ylabel('Magnitude')
     plt.xlabel('Time')
     if label is not None:

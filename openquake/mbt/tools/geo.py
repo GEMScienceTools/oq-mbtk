@@ -1,14 +1,8 @@
-"""
-"""
-
-# MN: 'np' imported but not used
-import numpy as np
 import shapely
 
 from pyproj import Proj, transform
 
 from openquake.mbt.tools.mfd import get_moment_from_mfd
-
 from openquake.hazardlib.geo.polygon import Polygon
 from openquake.hazardlib.geo.line import Line
 from openquake.hazardlib.source import SimpleFaultSource
@@ -27,11 +21,10 @@ def get_line_inside_polygon(pnt_lon, pnt_lat, poly_lon, poly_lat):
     :return:
         Indexes of the points inside the polygon
     """
-    # MN: 'selected_idx' assigned but never used
-    selected_idx = []
     # Fix the projections
     inProj = Proj(init='epsg:4326')
-    outProj = Proj(init='epsg:3857')
+    outProj = Proj(proj='lcc', lon_0=poly_lon[0])
+
     # Create polygon
     poly_xy = []
     for lo, la in zip(poly_lon, poly_lat):
@@ -121,8 +114,7 @@ def get_idx_points_inside_polygon(plon, plat, poly_lon, poly_lat,
     #
     # Fix the projections
     inProj = Proj(init='epsg:4326')
-    # outProj = Proj(init='epsg:3857')
-    outProj = Proj('+proj=lcc +lon_0={:f}'.format(poly_lon[0]))
+    outProj = Proj(proj='lcc', lon_0=poly_lon[0], lat_2=45)
     #
     # Create polygon
     poly_xy = []
@@ -166,7 +158,7 @@ def find_points_close_to_multisegment(plon, plat, mseg_lon, mseg_lat, pnt_idxs,
     selected_idx = []
     # Fix the projections
     inProj = Proj(init='epsg:4326')
-    outProj = Proj(init='epsg:3857')
+    outProj = Proj(proj='lcc', lon_0=poly_lon[0])
     # Create polygon
     mseg_xy = []
     for lo, la in zip(mseg_lon, mseg_lat):

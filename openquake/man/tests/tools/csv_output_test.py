@@ -56,10 +56,7 @@ class TestReadHeader(unittest.TestCase):
         self.assertEqual(expected, header['engine'], msgstr)
 
 
-
 class CatalogueFromSESTest(unittest.TestCase):
-    """ """
-
     def testcase01(self):
         fname = os.path.join(BASE_DATA_PATH, 'ruptures.csv')
         catalogue = csv.get_catalogue_from_ses(fname, 10)

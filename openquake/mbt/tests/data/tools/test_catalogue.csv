@@ -1,0 +1,2 @@
+eventID,Agency,year,month,day,hour,minute,second,timeError,longitude,latitude,SemiMajor90,SemiMinor90,ErrorStrike,depth,depthError,magnitude,sigmaMagnitude,magnitudeType
+10000640,ISC-GEM,1923,7,12,3,15,39.68,,150.56032597091826,-15.76979648,10.3,141.7,25.0,15.0,,6.39,0.58,Mw

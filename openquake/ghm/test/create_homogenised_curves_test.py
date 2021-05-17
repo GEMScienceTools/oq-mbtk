@@ -25,6 +25,7 @@ class CreateMapTestCase(unittest.TestCase):
         else:
             shutil.rmtree(self.outfolder)
 
+    @unittest.skipUnless('GEMDATA' in os.environ, 'please set GEMDATA')
     def test_mean_file_search(self):
         """ Testing homogenisation between models"""
 

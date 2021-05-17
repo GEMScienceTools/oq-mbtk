@@ -61,7 +61,7 @@ class Grid3d():
         #
         # set projection
         clon = (self.minlo+self.maxlo)/2.
-        self.p = Proj('+proj=lcc +lon_0={:f}'.format(clon))
+        self.p = Proj(proj='lcc', lon_0=clon, lat_2=45)
         #
         # initialise the grid
         self._create_equally_spaced_grid()

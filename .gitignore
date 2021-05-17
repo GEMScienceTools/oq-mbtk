@@ -1,3 +1,5 @@
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -63,7 +65,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+docsrc/_build/
 
 # PyBuilder
 target/
@@ -106,3 +108,7 @@ ENV/
 
 
 setup.sh
+.vscode/settings.json
+
+# auxiliary files made by QGIS for arrays
+*.aux.xml

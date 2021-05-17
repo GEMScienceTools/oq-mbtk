@@ -409,15 +409,15 @@ class TestFMGWorkflow(unittest.TestCase):
         oqtkp.active_model_id = 'model01'
         model = oqtkp.models['model01']
         src = model.sources['1']
-        self.assertAlmostEqual(src.ids_faults_inside['sf400'], 0.695494958)
+        self.assertAlmostEqual(src.ids_faults_inside['sf400'], 0.695494958, 2)
         self.assertAlmostEqual(src.ids_faults_inside['sf399'], 1.0)
         src = model.sources['2']
         self.assertAlmostEqual(src.ids_faults_inside['sf398'], 1.0)
         self.assertAlmostEqual(src.ids_faults_inside['sf396'], 1.0)
         src = model.sources['3']
         self.assertAlmostEqual(src.ids_faults_inside['sf397'], 1.0)
-        self.assertAlmostEqual(src.ids_faults_inside['sf400'], 0.3045975665)
-        self.assertAlmostEqual(src.ids_faults_inside['sf395'], 0.2386801966)
+        self.assertAlmostEqual(src.ids_faults_inside['sf400'], 0.3045975665, 2)
+        self.assertAlmostEqual(src.ids_faults_inside['sf395'], 0.2386801966, 2)
         #
         # .....................................................................
         # compute moment
