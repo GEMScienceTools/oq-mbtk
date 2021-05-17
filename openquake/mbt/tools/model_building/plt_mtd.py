@@ -56,7 +56,8 @@ def get_mtd(cat, mwid, twid, ylim=None, cumulative=False):
             ccu[:, i] = cc[::-1]
         his = ccu
 
-    return bins_time, bins_ma, ccu
+    return bins_time, bins_ma, his
+    #return bins_time, bins_ma, ccu
 
 
 def create_mtd(catalogue_fname, label, tr_fname, cumulative, store, mwid=0.1,
