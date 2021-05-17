@@ -4,7 +4,6 @@ import re
 import sys
 import pickle
 import numpy
-import scipy
 import matplotlib
 import configparser
 import matplotlib.pyplot as plt
@@ -16,8 +15,7 @@ from matplotlib.backend_bases import KeyEvent
 from matplotlib.patches import (Circle, Rectangle)
 from matplotlib.collections import PatchCollection
 
-from openquake.sub.cross_sections import (CrossSection,
-                                          CrossSectionData)
+from openquake.sub.cross_sections import (CrossSection, CrossSectionData)
 from openquake.sub.utils import plot_planes_at, mecclass
 
 from openquake.hazardlib.geo.geodetic import geodetic_distance
@@ -27,7 +25,7 @@ from openquake.hazardlib.geo.geodetic import point_at
 MAX_DEPTH = 350
 YPAD = 10
 MAX_DIST = 1000
-fig_length = 10
+FIG_LENGTH = 10
 
 
 KAVERINA = {'N': 'blue',
@@ -46,12 +44,18 @@ def onclick(event):
 
 def _plot_h_eqk_histogram(axes, csda, dep_max=[], dis_max=[]):
     """
+    Plot the horizontal histogram representing the density of seismicity along
+    the cross-section
+
+    :param axes:
+    :param csda:
+    :param dep_max:
+    :param dis_max:
     """
     if csda.ecat is None:
         return
 
-    plt.sca(axes)
-
+    plt.axes(axes)
     newcat = csda.ecat
 
     olo = csda.csec.olo
@@ -73,8 +77,8 @@ def _plot_h_eqk_histogram(axes, csda, dep_max=[], dis_max=[]):
         edges_dep = numpy.arange(0, MAX_DEPTH, 5)
         edges_dist = numpy.arange(0, MAX_DIST, 5)
 
-    seism_depth_hist = scipy.histogram(tmp_dep[iii], edges_dep)
-    seism_dist_hist = scipy.histogram(dsts[iii], edges_dist)
+    seism_depth_hist = numpy.histogram(tmp_dep[iii], edges_dep)
+    seism_dist_hist = numpy.histogram(dsts[iii], edges_dist)
 
     plt.bar(edges_dist[:-1], height=seism_dist_hist[0],
             width=numpy.diff(edges_dist)[0], fc='none', ec='blue')
@@ -85,7 +89,7 @@ def _plot_h_eqk_histogram(axes, csda, dep_max=[], dis_max=[]):
                                     ola,
                                     cat_gcmt.data['longitude'],
                                     cat_gcmt.data['latitude'])
-        gcmt_dist_hist = scipy.histogram(cmt_dst, edges_dist)
+        gcmt_dist_hist = numpy.histogram(cmt_dst, edges_dist)
         plt.bar(edges_dist[:-1], height=gcmt_dist_hist[0],
                 width=numpy.diff(edges_dist)[0], fc='red', alpha=0.4)
 
@@ -110,9 +114,20 @@ def _plot_h_eqk_histogram(axes, csda, dep_max=[], dis_max=[]):
 
 
 def _plot_v_eqk_histogram(axes, csda, dep_max=[], dis_max=[]):
+    """
+    Plot the vertical histogram representing the density of seismicity Vs
+    depth.
+
+    :param axes:
+    :param csda:
+    :param dep_max:
+    :param dis_max:
+    """
 
     if csda.ecat is None:
         return
+
+    plt.axes(axes)
 
     newcat = csda.ecat
     tmp_mag = newcat.data['magnitude'][:]
@@ -121,12 +136,10 @@ def _plot_v_eqk_histogram(axes, csda, dep_max=[], dis_max=[]):
 
     if dep_max and dis_max:
         edges_dep = numpy.arange(0, dep_max, 5)
-        edges_dist = numpy.arange(0, dis_max, 5)
     else:
         edges_dep = numpy.arange(0, MAX_DEPTH, 5)
-        edges_dist = numpy.arange(0, MAX_DIST, 5)
 
-    seism_depth_hist = scipy.histogram(tmp_dep[iii], edges_dep)
+    seism_depth_hist = numpy.histogram(tmp_dep[iii], edges_dep)
 
     plt.barh(edges_dep[:-1], seism_depth_hist[0],
              height=numpy.diff(edges_dep)[0], ec='blue')
@@ -135,7 +148,7 @@ def _plot_v_eqk_histogram(axes, csda, dep_max=[], dis_max=[]):
     if csda.gcmt is not None:
         cat_gcmt = csda.gcmt
         tmp_dep = cat_gcmt.data['depth'][:]
-        gcmt_dep_hist = scipy.histogram(tmp_dep, edges_dep)
+        gcmt_dep_hist = numpy.histogram(tmp_dep, edges_dep)
 
         plt.barh(edges_dep[:-1], gcmt_dep_hist[0]-1,
                  height=numpy.diff(edges_dep)[0]-1, fc='red')
@@ -160,7 +173,7 @@ def _plot_slab1pt0(axes, csda):
     """
     if csda.slab1pt0 is None:
         return
-    plt.sca(axes)
+    plt.axes(axes)
     olo = csda.csec.olo
     ola = csda.csec.ola
     slab1pt0 = csda.slab1pt0
@@ -272,7 +285,7 @@ def _plot_moho(axes, csda):
     if csda.moho is None:
         print("No CRUST1.0...")
         return
-    plt.sca(axes)
+    plt.axes(axes)
     olo = csda.csec.olo
     ola = csda.csec.ola
     moho = csda.moho
@@ -292,7 +305,7 @@ def _plot_litho(axes, csda):
     if csda.litho is None:
         print("No LITHO1.0...")
         return
-    plt.sca(axes)
+    plt.axes(axes)
     olo = csda.csec.olo
     ola = csda.csec.ola
     litho = csda.litho
@@ -301,7 +314,6 @@ def _plot_litho(axes, csda):
     lists = geodetic_distance(olo, ola, litho[:, 0], litho[:, 1])
     lll = numpy.argsort(lists)
     plt.plot(lists[lll], litho[lll, 2], '-.', zorder=100, linewidth=2)
-    # plt.text(lists[lll[-1]], litho[lll[-1]], 'Litho1.0', fontsize=8)
 
 
 def _plot_topo(axes, csda):
@@ -311,7 +323,7 @@ def _plot_topo(axes, csda):
     """
     if csda.topo is None:
         return
-    plt.sca(axes)
+    plt.axes(axes)
     olo = csda.csec.olo
     ola = csda.csec.ola
     topo = csda.topo
@@ -369,8 +381,6 @@ def _plot_eqks(axes, csda):
     dsts = geodetic_distance(olo, ola,
                              newcat.data['longitude'],
                              newcat.data['latitude'])
-    # MN: 'sze' assigned but never used
-    sze = (newcat.data['magnitude'])**0.5
     patches = []
     for dst, dep, mag in zip(dsts,
                              newcat.data['depth'],
@@ -382,7 +392,6 @@ def _plot_eqks(axes, csda):
     p.set_alpha(0.5)
     p.set_array(numpy.array(colors))
     axes.add_collection(p)
-    # plt.colorbar(p, fraction=0.1)
 
 
 def _print_legend(axes, depp, lnght):
@@ -393,8 +402,6 @@ def _print_legend(axes, depp, lnght):
     else:
         y = MAX_DEPTH+27
 
-    # MN: 'patches' assigned but never used
-    patches = []
     note = 'Rupture mechanism classification (Kaverina et al. 1996)'
     if depp:
         axes.annotate(note, xy=(x, depp+20), xycoords='data',
@@ -414,7 +421,7 @@ def _print_legend(axes, depp, lnght):
 def _print_info(axes, csec, depp):
     """
     """
-    plt.sca(axes)
+    plt.axes(axes)
     note = 'Cross-Section origin: %.2f %.2f' % (csec.olo, csec.ola)
     axes.annotate(note, xy=(0.0, depp+20), xycoords='data',
                   annotation_clip=False, fontsize=8)
@@ -432,44 +439,46 @@ def plot(csda, depp, lnght):
     """
     """
     # Computing figure width
-    fig_width = fig_length * (depp+YPAD) / lnght
+    fig_width = FIG_LENGTH * (depp+YPAD) / lnght
 
     # Creating the figure
-    fig = plt.figure(figsize=(fig_length, fig_width))
+    fig = plt.figure(figsize=(FIG_LENGTH, fig_width))
 
     # fig = plt.figure(figsize=(15,9))
     gs = gridspec.GridSpec(2, 2, width_ratios=[1, 5], height_ratios=[1, 5])
-    #
-    # MN: 'ax0' assigned but never used
-    ax0 = plt.subplot(gs[0])
+
+    ax0 = fig.add_subplot(gs[0, 0])
+    ax1 = fig.add_subplot(gs[0, 1])
+    ax2 = fig.add_subplot(gs[1, 0])
+    ax3 = fig.add_subplot(gs[1, 1])
+
+    plt.axes(ax0)
     plt.axis('off')
 
-    ax3 = plt.subplot(gs[3])
+    plt.axes(ax3)
     ax3.xaxis.tick_top()
-    # ax3.set_xticklabels([])
-    # ax3.set_yticklabels([])
 
-    _print_info(plt.subplot(gs[3]), csda.csec, depp)
-    _print_legend(plt.subplot(gs[3]), depp, lnght)
+    _print_info(ax3, csda.csec, depp)
+    _print_legend(ax3, depp, lnght)
 
     # Plotting
-    _plot_eqks(plt.subplot(gs[3]), csda)
-    _plot_moho(plt.subplot(gs[3]), csda)
-    _plot_litho(plt.subplot(gs[3]), csda)
-    _plot_topo(plt.subplot(gs[3]), csda)
-    _plot_volc(plt.subplot(gs[3]), csda)
+    _plot_eqks(ax3, csda)
+    _plot_moho(ax3, csda)
+    _plot_litho(ax3, csda)
+    _plot_topo(ax3, csda)
+    if csda.volc is not None:
+        _plot_volc(ax3, csda)
 
-    _plot_focal_mech(plt.subplot(gs[3]), csda)
-    _plot_slab1pt0(plt.subplot(gs[3]), csda)
-    _plot_np_intersection(plt.subplot(gs[3]), csda)
-    _plot_h_eqk_histogram(plt.subplot(gs[1]), csda, depp, lnght)
-    _plot_v_eqk_histogram(plt.subplot(gs[2]), csda, depp, lnght)
+    _plot_focal_mech(ax3, csda)
+    _plot_slab1pt0(ax3, csda)
+    _plot_np_intersection(ax3, csda)
+    _plot_h_eqk_histogram(ax1, csda, depp, lnght)
+    _plot_v_eqk_histogram(ax2, csda, depp, lnght)
 
     # Main panel
-    ax3 = plt.subplot(gs[3])
+    plt.axes(ax3)
     ax3.autoscale(enable=False, tight=True)
     ax3.invert_yaxis()
-    # plt.xlim([0, 500])
 
     plt.xlim([0, lnght])
     plt.ylim([depp, -YPAD])
@@ -477,13 +486,11 @@ def plot(csda, depp, lnght):
     ax3.grid(which='both', zorder=20)
 
     # Showing results
-    # MN: 'cid' assigned but never used
-    cid = fig.canvas.mpl_connect('button_press_event', onclick)
+    _ = fig.canvas.mpl_connect('button_press_event', onclick)
 
     line, = ax3.plot([], [], zorder=100)  # empty line
     point, = ax3.plot([], [], 'xr', zorder=100)
-    # MN: 'linebuilder' assigned but never used
-    linebuilder = LineBuilder(line, point, csda.csec)
+    _ = LineBuilder(line, point, csda.csec)
 
     return fig
 
@@ -504,7 +511,7 @@ class LineBuilder:
     def __call__(self, event):
 
         if isinstance(event, KeyEvent):
-            if event.key is 'd':
+            if event.key == 'd':
                 print('----------------------')
                 self.xs = []
                 self.ys = []
@@ -515,7 +522,7 @@ class LineBuilder:
                 self.line.figure.canvas.draw()
                 self.point.figure.canvas.draw()
                 self.data = []
-            elif event.key is 'f':
+            elif event.key == 'f':
                 dat = numpy.array(self.data)
                 fname = './cs_%s.csv' % (self.csec.ids)
                 numpy.savetxt(fname, dat)
@@ -563,6 +570,7 @@ def plt_cs(olo, ola, depp, lnght, strike, ids, ini_filename):
     fname_crust = config['data']['crust1pt0_filename']
     fname_gcmt = config['data']['gcmt_filename']
     fname_topo = config['data']['topo_filename']
+
     fname_litho = config['data']['litho_filename']
     fname_volc = config['data']['volc_filename']
 
@@ -593,9 +601,9 @@ def main(argv):
     ini_filename = argv[6]
 
     print('Working on cross section: %s' % (ids))
-    # MN: 'fig' imported but never used
-    fig = plt_cs(olo, ola, depp, lnght, strike, ids, ini_filename)
+    _ = plt_cs(olo, ola, depp, lnght, strike, ids, ini_filename)
     plt.show()
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
