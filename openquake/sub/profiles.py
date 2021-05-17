@@ -86,6 +86,8 @@ class ProfileSet():
                                    (xv[None, :], yv[:, None]), method=method)
 
         if True:
+            import matplotlib as mpl
+            mpl.use('tkagg')
             import matplotlib.pyplot as plt
             # MN: 'Axes3D' imported but never used
             from mpl_toolkits.mplot3d import Axes3D
