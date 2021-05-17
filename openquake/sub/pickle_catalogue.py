@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
-# MN: 'os' imported but never used
-import os
 import sys
 import numpy
 import pickle
 
-# MN: 'Catalogue' imported but never used
-from openquake.hmtk.seismicity.catalogue import Catalogue
 from openquake.hmtk.parsers.catalogue.csv_catalogue_parser import (
     CsvCatalogueParser)
 from openquake.hmtk.seismicity.selector import CatalogueSelector
@@ -54,6 +50,7 @@ def main(argv):
     fou = open(output_path, 'wb')
     pickle.dump(newcat, fou)
     fou.close()
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

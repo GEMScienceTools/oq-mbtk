@@ -1,21 +1,23 @@
 import os
 import re
 import numpy
+import filecmp
 import unittest
+import tempfile
 
-# MN: 'Catalogue' imported but never used
-from openquake.hmtk.seismicity.catalogue import Catalogue
-from openquake.sub.cross_sections import CrossSection, CrossSectionData
+from openquake.sub.cross_sections import (CrossSection, CrossSectionData,
+                                          Slab2pt0)
 from openquake.sub.cross_sections import get_min_distance
 
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.line import Line
 
 
+BASE_PATH = os.path.dirname(__file__)
 tmp = 'data/crust/crust_except.xyz'
-CRUST_DATA_PATH = os.path.join(os.path.dirname(__file__), tmp)
+CRUST_DATA_PATH = os.path.join(BASE_PATH, tmp)
 tmp_idl = 'data/crust/crust_except_idl.xyz'
-CRUST_DATA_PATH_IDL = os.path.join(os.path.dirname(__file__), tmp_idl)
+CRUST_DATA_PATH_IDL = os.path.join(BASE_PATH, tmp_idl)
 
 
 def _get_data(filename):
@@ -24,6 +26,34 @@ def _get_data(filename):
         xx = re.split('\\s+', re.sub('\\s+$', '', re.sub('^\\s+', '', line)))
         datal.append([float(val) for val in xx])
     return datal
+
+
+class Slab2pt0Test(unittest.TestCase):
+
+    def setUp(self):
+        cs = CrossSection(99.871355, -3.732278, 400.0, 52.046981)
+        self.css = [cs]
+        self.fname = os.path.join(BASE_PATH, 'data', 'slab2pt0',
+                                  'sum_slab2_dep_02.23.18.xyz')
+        self.fname_pro = os.path.join(BASE_PATH, 'data', 'slab2pt0',
+                                      'profile.csv')
+
+    def test_create_profile(self):
+        """ Test the creation of a profile """
+        slb = Slab2pt0.from_file(self.fname, self.css)
+        slb.compute_profiles(10)
+        expected = numpy.loadtxt(self.fname_pro)
+        numpy.testing.assert_almost_equal(slb.profiles['000'], expected)
+
+    def test_write_profile(self):
+        """ Test the creation of .csv files """
+        slb = Slab2pt0.from_file(self.fname, self.css)
+        slb.compute_profiles(10)
+        outdir = tempfile.TemporaryDirectory()
+        slb.write_profiles(outdir.name)
+        fname = os.path.join(outdir.name, 'cs_000.csv')
+        msg = 'The files containing the profile differ'
+        self.assertTrue(filecmp.cmp(fname, self.fname_pro, shallow=False), msg)
 
 
 class GetCrustalModelTest(unittest.TestCase):
