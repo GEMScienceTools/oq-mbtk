@@ -4,7 +4,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pyproj import Proj
+from pyproj import Proj, CRS
 
 from mpl_toolkits.mplot3d import Axes3D
 from openquake.hazardlib.geo import Line, Point
@@ -125,7 +125,7 @@ def plot_planes_at(x, y, strikes, dips, magnitudes, strike_cs, dip_cs,
                    aratio=1.0, msr=None, ax=None, zorder=20, color='None',
                    linewidth=1, axis=None):
     """
-    This plots an a cross-section a number of rupture planes defined in terms
+    This plots a cross-section and number of rupture planes defined in terms
     of a strike and a dip.
 
     :parameter x:
@@ -143,7 +143,6 @@ def plot_planes_at(x, y, strikes, dips, magnitudes, strike_cs, dip_cs,
     """
 
     if axis is None:
-        # MN: ax asigned but never used
         ax = plt.gca()
     else:
         plt.sca(axis)
@@ -223,27 +222,37 @@ def _check_edges(edges):
         The list of edges to be analysed.
     :return:
         An instance of :class:`numpy.ndarray` of cardinality equal to the
-        number of edges. Where integers are positive edges need to be flipped.
+        number of edges. Where integers are positive, the edges need to be
+        flipped.
     """
-    #
-    # creating a matrix of points
+
+    # Check the input
+    if len(edges) < 1:
+        return None
+
+    # Create a matrix of points
     pnts = []
     for edge in edges:
         pnts += [[pnt.longitude, pnt.latitude, pnt.depth]
                  for pnt in edge.points]
     pnts = np.array(pnts)
-    #
-    # projecting the points
-    p = Proj(proj='lcc', lon_0=np.mean(pnts[:, 0]), lat_1=0., lat_2=60.)
+
+    # Project the points using Lambert Conic Conformal
+    fmt = "+proj=lcc +lon_0={:f} +lat_1={:f} +lat_2={:f}"
+    mla = np.mean(pnts[:, 1])
+    srs = CRS.from_proj4(fmt.format(np.mean(pnts[:, 0]), mla-10, mla+10))
+    p = Proj(srs)
+
+    # From m to km
     x, y = p(pnts[:, 0], pnts[:, 1])
     x = x / 1e3  # m -> km
     y = y / 1e3  # m -> km
-    #
-    # fit the plane
+
+    # Fit the plane
     tmp = np.vstack((x.flatten(), y.flatten(), pnts[:, 2].flatten())).T
     _, ppar = plane_fit(tmp)
-    #
-    # analysing the edges
+
+    # Analyse the edges
     chks = []
     for edge in edges:
         epnts = np.array([[pnt.longitude, pnt.latitude, pnt.depth] for pnt in
@@ -251,12 +260,11 @@ def _check_edges(edges):
         ex, ey = p(epnts[:, 0], epnts[:, 1])
         ex = ex / 1e3
         ey = ey / 1e3
-        #
-        # checking edge direction Vs plane perpendicular
+
+        # Check the edge direction Vs plane perpendicular
         edgv = np.array([np.diff(ex[0:2])[0], np.diff(ey[0:2])[0]])
         chks.append(np.sign(np.cross(ppar[:2], edgv)))
-    #
-    #
+
     return np.array(chks)
 
 
