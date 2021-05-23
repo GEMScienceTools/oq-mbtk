@@ -71,8 +71,8 @@ def classify(ini_fname, compute_distances, rf):
     if os.path.exists(log_fname):
         os.remove(log_fname)
     logger.info('Creating: {:s}'.format(treg_filename))
-    f = h5py.File(treg_filename)
-    f.close()
+    # f = h5py.File(treg_filename, 'w')
+    # f.close()
     #
     # process the input information
     remove_from = []
