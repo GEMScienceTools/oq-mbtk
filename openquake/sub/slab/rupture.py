@@ -5,7 +5,6 @@
 Module :module:`openquake.sub.slab.rupture`
 """
 
-
 import os
 import re
 import h5py
@@ -278,10 +277,11 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
 
                         # Get weights from the smoothing
                         tmpw = 1
-                        if uniform_fraction > 0.99:
+                        if uniform_fraction < 0.99:
                             w = weights[cl:cl+rup_len-1, rl:cl+rup_wid-1]
                             i = np.isfinite(w)
                             tmpw = sum(w[i])
+                            wsum_smoo = tmpw/asprs[aspr]
 
                         # Scale the weight using the aspect ratio weight
                         wsum = tmpw/asprs[aspr]
@@ -320,7 +320,8 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
                             # element in the list is the container for the
                             # probability of occurrence. For the time being
                             # this is not defined
-                            rups.append([srfc, wsum, dip, aspr, [], hypo])
+                            rups.append([srfc, wsum, wsum_smoo, dip, aspr,
+                                         [], hypo])
                             counter += 1
 
                 # Update the list of ruptures
@@ -343,13 +344,18 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
 
     # Compute the normalizing factor
     twei = {}
+    tweis = {}
     for mag, occr in mfd.get_annual_occurrence_rates():
         smm = 0.
+        smms = 0.
         lab = '{:.2f}'.format(mag)
-        for _, wei, _, _, _, _ in allrup[lab]:
+        for _, wei, weis, _, _, _, _ in allrup[lab]:
             if np.isfinite(wei):
                 smm += wei
+            if np.isfinite(weis):
+                smms += weis
         twei[lab] = smm
+        tweis[lab] = smms
         tmps = 'Total weight {:s}: {:f}'
         logging.info(tmps.format(lab, twei[lab]))
 
