@@ -2,13 +2,12 @@
 # coding: utf-8
 
 """
-:module:`openquake.sub.slab.rupture`
+Module :module:`openquake.sub.slab.rupture`
 """
 
 
 import os
 import re
-import sys
 import h5py
 import numpy as np
 import rtree
@@ -45,7 +44,7 @@ from openquake.man.checks.catalogue import load_catalogue
 PLOTTING = False
 
 
-def get_catalogue(cat_pickle_fname, treg_filename, label):
+def get_catalogue(cat_pickle_fname, treg_filename=None, label=''):
     """
     :param cat_pickle_fname:
     :param treg_filename:
@@ -73,11 +72,11 @@ def get_catalogue(cat_pickle_fname, treg_filename, label):
 def smoothing(mlo, mla, mde, catalogue, hspa, vspa, fname):
     """
     :param mlo:
-        Longitudes
+        Longitudes of the mesh
     :param mla:
-        Latitudes
+        Latitudes of the mesh
     :param mde:
-        Depths [downward positive]
+        Depths [downward positive] of the mesh
     :param catalogue:
         An earthquake catalogue instance in the hmtk format
     :param hspa:
@@ -90,31 +89,38 @@ def smoothing(mlo, mla, mde, catalogue, hspa, vspa, fname):
         A tuple including the values on the grid provided and the smoothing
         object
     """
-    #
-    # create mesh with the 3D grid of points and complete the smoothing
+
+    # Create mesh with the 3D grid of points and complete the smoothing
     mesh = Mesh(mlo, mla, mde)
-    #
-    # smoothing
+
+    # Smooth
     smooth = Smoothing3D(catalogue, mesh, hspa, vspa)
     values = smooth.gaussian(bffer=40, sigmas=[40, 20])
-    #
-    #
+
+    # Output .hdf5 file
     if os.path.exists(fname):
         os.remove(fname)
+
+    # Save results
     fh5 = h5py.File(fname, 'w')
     fh5.create_dataset('values', data=values)
     fh5.create_dataset('lons', data=mesh.lons)
     fh5.create_dataset('lats', data=mesh.lats)
     fh5.create_dataset('deps', data=mesh.depths)
     fh5.close()
-    #
+
     return values, smooth
 
 
 def spatial_index(smooth):
     """
+    Create a spatial index for the mesh used to smoooth the seismicity.
+
     :param smooth:
         An instance of the :class:`openquake.mbt.tools.smooth3d.Smoothing3D`
+    :returns:
+        A tuple containing the spatial index instance and the projection used
+        to convert the geographic coordinates of the smoothing grid.
     """
 
     def _generator(mesh, p):
@@ -129,18 +135,19 @@ def spatial_index(smooth):
             x /= 1e3
             y /= 1e3
             yield (cnt, (x, y, dep, x, y, dep), 1)
-    #
+
     # Setting rtree properties
     prop = rtree.index.Property()
     prop.dimension = 3
-    #
+
     # Set the geographic projection
     lons = smooth.mesh.lons.flatten()
     p = Proj(proj='lcc', lon_0=np.mean(lons), lat_2=45)
-    #
+
     # Create the spatial index for the grid mesh
     r = rtree.index.Index(_generator(smooth.mesh, p), properties=prop)
-    # return the 3D spatial index - note that the index is in projected
+
+    # Return the 3D spatial index - note that the index is in projected
     # coordinates
     return r, p
 
@@ -156,19 +163,20 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
     :param mfd:
         A magnitude frequency distribution
     :param dips:
-        A set of dip values
+        A set of dip values used to create the virtual faults withni the slab.
     :param sampling:
         The distance in km used to
     :param msr:
         A magnitude scaling relationship instance
     :param asprs:
-        A set of aspect ratios
+        A dictionary of aspect ratios (key: aspect ratio, value: weight)
     :param float_strike:
-        Along strike floating parameter
+        Along strike rupture floating parameter
     :param float_dip:
-        Along dip floating parameter
+        Along dip rupture floating parameter
     :param r:
-        Spatial index
+        Spatial index for the nodes of the grid over which we smoothed
+        seismicity
     :param values:
         Smothing results
     :param oms:
@@ -186,45 +194,48 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
     :param align:
         Profile alignment flag
     """
-    #
-    # hdf5 file
+
+    # Create the output hdf5 file
     fh5 = h5py.File(hdf5_filename, 'a')
     grp_inslab = fh5.create_group('inslab')
-    #
+
+    # Loop over dip angles, top traces on the top the slab surface and
+    # magnitudes. The traces are used to create the virtual faults and
+    # float the ruptures.
     allrup = {}
     iscnt = 0
     for dip in dips:
         for mi, lines in enumerate(oms[dip]):
-            #
-            # filter out small surfaces i.e. surfaces defined by less than
+
+            # Filter out small surfaces i.e. surfaces defined by less than
             # three profiles
             if len(lines) < 3:
                 continue
-            #
-            # checking initial profiles
-            for l in lines:
+
+            # Checking initial profiles
+            for lne in lines:
                 ps = np.array([[p.longitude, p.latitude, p.depth] for p in
-                               l.points])
+                               lne.points])
                 assert not np.any(np.isnan(ps))
-            #
-            # create in-slab virtual fault - `lines` is the list of profiles
+
+            # Create in-slab virtual fault - `lines` is the list of profiles
             # to be used for the construction of the virtual fault surface
             smsh = create_from_profiles(lines, sampling, sampling, idl, align)
-            #
+
             # Create mesh
             omsh = Mesh(smsh[:, :, 0], smsh[:, :, 1], smsh[:, :, 2])
-            #
+
             # Store data in the hdf5 file
             grp_inslab.create_dataset('{:09d}'.format(iscnt), data=smsh)
-            #
+
             # Get centroids for a given virtual fault surface
             ccc = get_centroids(smsh[:, :, 0], smsh[:, :, 1], smsh[:, :, 2])
-            #
+
             # Get weights - this assigns to each cell centroid the weight of
             # the closest node in the values array
             weights = get_weights(ccc, r, values, proj)
-            #
-            # loop over magnitudes
+
+            # Loop over magnitudes
             for mag, _ in mfd.get_annual_occurrence_rates():
 
                 # TODO this is assigns arbitrarly a rake of 90 degrees. It
@@ -248,26 +259,32 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
                         logging.warning(msg)
                         continue
 
-                    # rupture lenght and rupture width as multiples of the
+                    # Rupture lenght and rupture width as multiples of the
                     # mesh sampling distance
                     rup_len = int(lng/sampling) + 1
                     rup_wid = int(wdt/sampling) + 1
 
-                    # skipping small ruptures
+                    # Skip small ruptures
                     if rup_len < 2 or rup_wid < 2:
-                        msg = 'Found an incompatible discrete rupture size'
+                        msg = 'Found an incompatible rupture size'
                         logging.warning(msg)
                         continue
 
-                    # get_ruptures
+                    # Get Ruptures
                     counter = 0
                     for rup, rl, cl in get_ruptures(omsh, rup_len, rup_wid,
                                                     f_strike=float_strike,
                                                     f_dip=float_dip):
 
                         # Get weights from the smoothing
-                        w = weights[cl:rup_len-1, rl:rup_wid-1]
-                        i = np.isfinite(w)
+                        tmpw = 1
+                        if uniform_fraction > 0.99:
+                            w = weights[cl:cl+rup_len-1, rl:cl+rup_wid-1]
+                            i = np.isfinite(w)
+                            tmpw = sum(w[i])
+
+                        # Scale the weight using the aspect ratio weight
+                        wsum = tmpw/asprs[aspr]
 
                         # Fix the longitudes outside the standard [-180, 180]
                         # range
@@ -279,8 +296,9 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
                         # Get centroid
                         idx_r = np.floor(rup[0].shape[0]/2).astype('i4')
                         idx_c = np.floor(rup[0].shape[1]/2).astype('i4')
-                        hypo = (rup[0][idx_r, idx_c], rup[1][idx_r, idx_c],
-                                rup[2][idx_r, idx_c])
+                        hypo = [rup[0][idx_r, idx_c],
+                                rup[1][idx_r, idx_c],
+                                rup[2][idx_r, idx_c]]
 
                         # Checking
                         assert np.all(rup[0][ij] <= 180)
@@ -290,9 +308,6 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
                         rx = rup[0][ij].flatten()
                         ry = rup[1][ij].flatten()
                         rz = rup[2][ij].flatten()
-
-                        # Normalize the weight using the aspect ratio weight
-                        wsum = sum(w[i])/asprs[aspr]
 
                         # Create the gridded surface. We need at least four
                         # vertexes
@@ -357,20 +372,19 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
 
         rups = []
         grp = grp_rup.create_group(lab)
-        cnt = 0
-        numrup = len(allrup[lab])
 
         # Loop over the ruptures and compute the annual pocc
+        cnt = 0
+        chk = 0
         for srfc, wei, _, _, _, hypo in allrup[lab]:
 
             # Adjust the weight. Every rupture will have a weight that is
             # a combination between a flat rate and a variable rate
+            ocr = (occr * uniform_fraction) * wei
             if twei[lab] > 1e-10:
-                wei = wei / twei[lab]
-                ocr = (wei * occr * (1.-uniform_fraction) +
-                       occr / numrup * uniform_fraction)
-            else:
-                ocr = occr / numrup * uniform_fraction
+                wei /= twei[lab]
+                ocr += (occr * (1.-uniform_fraction)) * wei
+            chk += wei
 
             # Compute the probabilities
             p0 = np.exp(-ocr*tspan)
@@ -397,10 +411,14 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
             a['dip'] = dip
             a['aspr'] = aspr
             a['prbs'] = np.array([p0, p1], dtype='float32')
-            a['hypo'] = np.array(hypo, dtype='float32')
+            a['hypo'] = hypo
             grp.create_dataset('{:08d}'.format(cnt), data=a)
             cnt += 1
+
         allrup[lab] = rups
+
+        print('CHK', chk)
+
     fh5.close()
 
     return allrup
@@ -408,6 +426,7 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
 
 def list_of_floats_from_string(istr):
     """
+    Return a list of floats included in a string
     """
     tstr = re.sub(r'(\[|\])', '', istr)
     return [float(d) for d in re.split(',', tstr)]
@@ -415,6 +434,7 @@ def list_of_floats_from_string(istr):
 
 def dict_of_floats_from_string(istr):
     """
+    Returns a dictionary from a string. Used to parse the config file.
     """
     tstr = re.sub(r'(\{|\})', '', istr)
     out = {}
@@ -428,26 +448,32 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
     """
     :param str ini_fname:
         The name of a .ini file
+    :param only_plt:
+        Boolean. When true only it only plots ruptures
     :param ref_fdr:
         The path to the reference folder used to set the paths in the .ini
         file. If not provided directly, we use the one set in the .ini file.
     """
-    #
-    # read config file
+
+    # Read config file
     config = configparser.ConfigParser()
     config.read_file(open(ini_fname))
-    #
-    # logging settings
+
+    # Logging settings
     logging.basicConfig(format='rupture:%(levelname)s:%(message)s')
-    #
-    # reference folder
+
+    # Reference folder
     if ref_fdr is None:
+        if 'reference_folder' not in config['main']:
+            msg = 'The .ini file does not contain the reference_folder param'
+            raise ValueError(msg)
         ref_fdr = config.get('main', 'reference_folder')
-    #
-    # set parameters
+
+    # Set parameters
     profile_sd_topsl = config.getfloat('main', 'profile_sd_topsl')
     edge_sd_topsl = config.getfloat('main', 'edge_sd_topsl')
-    # this sampling distance is used to
+
+    # This sampling distance is used to
     sampling = config.getfloat('main', 'sampling')
     float_strike = config.getfloat('main', 'float_strike')
     float_dip = config.getfloat('main', 'float_dip')
@@ -456,96 +482,79 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
     hspa = config.getfloat('main', 'hspa')
     vspa = config.getfloat('main', 'vspa')
     uniform_fraction = config.getfloat('main', 'uniform_fraction')
-    #
+
     # MFD params
     agr = config.getfloat('main', 'agr')
     bgr = config.getfloat('main', 'bgr')
     mmax = config.getfloat('main', 'mmax')
     mmin = config.getfloat('main', 'mmin')
-    #
+
     # IDL
     if config.has_option('main', 'idl'):
         idl = config.get('main', 'idl')
     else:
         idl = False
-    #
-    # IDL
+
+    # Profile aliggnment at the top
     align = False
     if config.has_option('main', 'profile_alignment'):
         tmps = config.get('main', 'profile_alignment')
         if re.search('true', tmps.lower()):
             align = True
-    #
-    # set profile folder
+
+    # Set profile folder
     path = config.get('main', 'profile_folder')
     path = os.path.abspath(os.path.join(ref_fdr, path))
-    #
-    # catalogue
+
+    # Catalogue
     cat_pickle_fname = config.get('main', 'catalogue_pickle_fname')
     cat_pickle_fname = os.path.abspath(os.path.join(ref_fdr, cat_pickle_fname))
-    #
-    # output
+
+    # Output
     hdf5_filename = config.get('main', 'out_hdf5_fname')
     hdf5_filename = os.path.abspath(os.path.join(ref_fdr, hdf5_filename))
-    #
-    # smoothing output
+
+    # Smoothing output
     out_hdf5_smoothing_fname = config.get('main', 'out_hdf5_smoothing_fname')
     tmps = os.path.join(ref_fdr, out_hdf5_smoothing_fname)
     out_hdf5_smoothing_fname = os.path.abspath(tmps)
-    #
-    # tectonic regionalisation
+
+    # Tectonic regionalisation
     treg_filename = config.get('main', 'treg_fname')
     if not re.search('[a-z]', treg_filename):
         treg_filename = None
     else:
         treg_filename = os.path.abspath(os.path.join(ref_fdr, treg_filename))
-    #
-    #
+
+    # Dip angles used to create the virtual faults within the slab
     dips = list_of_floats_from_string(config.get('main', 'dips'))
     asprsstr = config.get('main', 'aspect_ratios')
     asprs = dict_of_floats_from_string(asprsstr)
-    #
-    # magnitude-scaling relationship
+
+    # Magnitude-scaling relationship
     msrstr = config.get('main', 'mag_scaling_relation')
     msrd = get_available_scalerel()
     if msrstr not in msrd.keys():
         raise ValueError('')
     msr = msrd[msrstr]()
-    #
-    # ------------------------------------------------------------------------
+
     logging.info('Reading profiles from: {:s}'.format(path))
     profiles, pro_fnames = _read_profiles(path)
+    print('>>', path)
     assert len(profiles) > 0
-    #
-    """
-    if logging.getLogger().isEnabledFor(logging.DEBUG):
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D
-        fig = plt.figure(figsize=(10, 8))
-        ax = fig.add_subplot(111, projection='3d')
-        for ipro, (pro, fnme) in enumerate(zip(profiles, pro_fnames)):
-            tmp = [[p.longitude, p.latitude, p.depth] for p in pro.points]
-            tmp = np.array(tmp)
-            ax.plot(tmp[:, 0], tmp[:, 1], tmp[:, 2], 'x--b', markersize=2)
-            tmps = '{:d}-{:s}'.format(ipro, os.path.basename(fnme))
-            ax.text(tmp[0, 0], tmp[0, 1], tmp[0, 2], tmps)
-        ax.invert_zaxis()
-        ax.view_init(50, 55)
-        plt.show()
-    """
-    #
-    # create mesh from profiles
+
+    # Create mesh from profiles
     msh = create_from_profiles(profiles, profile_sd_topsl, edge_sd_topsl, idl)
-    #
-    # Create inslab mesh. The one created here describes the top of the slab.
-    # The output (i.e ohs) is a dictionary with the values of dip as keys. The
-    # values in the dictionary are :class:`openquake.hazardlib.geo.line.Line`
-    # instances
+
+    # Create inslab meshes. The output (i.e ohs) is a dictionary with the
+    # values of dip as keys. The values in the dictionary
+    # are :class:`openquake.hazardlib.geo.line.Line` instances
     ohs = create_inslab_meshes(msh, dips, slab_thickness, sampling)
 
     if only_plt:
         pass
 
+    # TODO consider replacing wiith pyvista
     """
         azim = 10.
         elev = 20.
@@ -582,11 +591,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
         exit(0)
     """
 
-    if 1:
-        import matplotlib as mpl
-        mpl.use('tkagg')
-        import matplotlib.pyplot as plt
-
+    if PLOTTING:
         vsc = 0.01
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
@@ -599,10 +604,10 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
             ax.plot(tmp[:, 0], tmp[:, 1], tmp[:, 2]*vsc, 'x--b', markersize=2)
             tmps = '{:d}-{:s}'.format(ipro, os.path.basename(fnme))
             ax.text(tmp[0, 0], tmp[0, 1], tmp[0, 2]*vsc, tmps)
-        #
-        # top of the slab mesh
+
+        # Top of the slab mesh
         # plot_mesh(ax, msh, vsc)
-        #
+
         for key in ohs:
             for iii in range(len(ohs[key])):
                 for line in ohs[key][iii]:
@@ -614,24 +619,23 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
         ax.view_init(50, 55)
         plt.show()
 
-    #
     # The one created here describes the bottom of the slab
     lmsh = create_lower_surface_mesh(msh, slab_thickness)
-    #
-    # get min and max values
+
+    # Get min and max values of the mesh
     milo, mila, mide, malo, mala, made = get_min_max(msh, lmsh)
-    #
-    # discretizing the slab
+
+    # Discretizing the slab
     # omsh = Mesh(msh[:, :, 0], msh[:, :, 1], msh[:, :, 2])
     # olmsh = Mesh(lmsh[:, :, 0], lmsh[:, :, 1], lmsh[:, :, 2])
-    #
+
     # this `dlt` value [in degrees] is used to create a buffer around the mesh
     dlt = 5.0
     msh3d = Grid3d(milo-dlt, mila-dlt, mide, malo+dlt, mala+dlt, made, hspa,
                    vspa)
     # mlo, mla, mde = msh3d.select_nodes_within_two_meshesa(omsh, olmsh)
     mlo, mla, mde = msh3d.get_coordinates_vectors()
-    #
+
     # save data on hdf5 file
     if os.path.exists(hdf5_filename):
         os.remove(hdf5_filename)
@@ -642,35 +646,31 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None):
     dset.attrs['spacing'] = sampling
     grp_slab.create_dataset('bot', data=lmsh)
     fh5.close()
-    #
-    # get catalogue
+
+    # Get catalogue
     catalogue = get_catalogue(cat_pickle_fname, treg_filename, label)
-    #
+
     # smoothing
     values, smooth = smoothing(mlo, mla, mde, catalogue, hspa, vspa,
                                out_hdf5_smoothing_fname)
-    #
-    # spatial index
-    # r = spatial_index(mlo, mla, mde, catalogue, hspa, vspa)
+
+    # Spatial index
     r, proj = spatial_index(smooth)
-    #
+
     # magnitude-frequency distribution
     mfd = TruncatedGRMFD(min_mag=mmin, max_mag=mmax, bin_width=0.1,
                          a_val=agr, b_val=bgr)
-    #
-    # create all the ruptures - the probability of occurrence is for one year
+
+    # Create all the ruptures - the probability of occurrence is for one year
     # in this case
-    allrup = create_ruptures(mfd, dips, sampling, msr, asprs, float_strike,
-                             float_dip, r, values, ohs, 1., hdf5_filename,
-                             uniform_fraction, proj, idl, align, True)
+    _ = create_ruptures(mfd, dips, sampling, msr, asprs, float_strike,
+                        float_dip, r, values, ohs, 1., hdf5_filename,
+                        uniform_fraction, proj, idl, align, True)
 
 
-
-    calculate_ruptures.ini_fname = '.ini filename'
-    calculate_ruptures.only_plt = 'Only plotting'
-    calculate_ruptures.ref_fdr = 'Reference folder for paths'
-
-
+calculate_ruptures.ini_fname = '.ini filename'
+calculate_ruptures.only_plt = 'Only plotting'
+calculate_ruptures.ref_fdr = 'Reference folder for paths'
 
 if __name__ == "__main__":
     sap.run(calculate_ruptures)

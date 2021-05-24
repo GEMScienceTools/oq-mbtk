@@ -2,7 +2,7 @@
 
 """
 :module:`openquake.sub.create_inslab_nrml` creates a set of .xml input files
-for the OpenQuake Engine
+for the OpenQuake Engine.
 """
 
 import os
@@ -11,17 +11,17 @@ from decimal import Decimal, getcontext
 import logging
 import h5py
 import numpy as np
+
 from openquake.baselib import sap
+from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.geo.point import Point
-from openquake.hazardlib.geo.surface.gridded import GriddedSurface
-from openquake.hazardlib.source import NonParametricSeismicSource
-from openquake.hazardlib.source import BaseRupture
-from openquake.hazardlib.pmf import PMF
-from openquake.hazardlib.sourcewriter import write_source_model
-
 from openquake.hazardlib.nrml import SourceModel
+from openquake.hazardlib.source import BaseRupture
 from openquake.hazardlib.sourceconverter import SourceGroup
+from openquake.hazardlib.source import NonParametricSeismicSource
+from openquake.hazardlib.geo.surface.gridded import GriddedSurface
+from openquake.hazardlib.sourcewriter import write_source_model
 
 getcontext().prec = 10
 
@@ -52,9 +52,10 @@ def create_nrml_source(rup, mag, sid, name, tectonic_region_type):
         if len(llo.shape) > 0:
 
             # Hypocenter computed in the 'rupture.py' module
-            hlo = d['hypo'][0]
-            hla = d['hypo'][1]
-            hde = d['hypo'][2]
+            hypo = np.squeeze(d['hypo'][:])
+            hlo = hypo[0]
+            hla = hypo[1]
+            hde = hypo[2]
 
             # Probabilities of occurrence
             ppp = np.squeeze(d['prbs'])
@@ -64,13 +65,13 @@ def create_nrml_source(rup, mag, sid, name, tectonic_region_type):
 
             # Create the surface and the rupture
             srf = GriddedSurface.from_points_list(points)
-            br = BaseRupture(mag=mag, rake=-90.,
-                             tectonic_region_type=tectonic_region_type,
-                             hypocenter=Point(hlo, hla, hde),
-                             surface=srf)
+            brup = BaseRupture(mag=mag, rake=-90.,
+                               tectonic_region_type=tectonic_region_type,
+                               hypocenter=Point(hlo, hla, hde),
+                               surface=srf)
             xxx = Decimal('{:.8f}'.format(ppp[1]))
             pmf = PMF(data=[((Decimal('1')-xxx), 0), (xxx, 1)])
-            data.append((br, pmf))
+            data.append((brup, pmf))
     src = NonParametricSeismicSource(sid, name, tectonic_region_type, data)
     return src
 
@@ -100,7 +101,6 @@ def create(label, rupture_hdf5_fname, output_folder, investigation_t):
         grp = f['ruptures'][mag]
         if len(grp) < 1:
             tmps = 'Skipping ruptures for magnitude {:.2f}'.format(float(mag))
-            print(tmps)
             logging.warning(tmps)
             continue
 
