@@ -80,7 +80,7 @@ def _read_profiles(path, prefix='cs'):
     path = os.path.join(path, '{:s}*.*'.format(prefix))
     profiles = []
     names = []
-    print(path)
+    print('Reading profiles from {:s}'.format(path))
     for filename in sorted(glob.glob(path)):
         profiles.append(_read_profile(filename))
         names.append(os.path.basename(filename))
@@ -214,5 +214,5 @@ def _resample_profile(line, sampling_dist):
         if abs(dst-sampling_dist) > 0.1*sampling_dist:
             raise ValueError('Wrong distance between points along the profile')
     #
-    # 
+    #
     return Line(resampled_cs)

@@ -15,14 +15,13 @@ def complex_fault_src_from_edges(edges_folder, out_nrml='source.xml'):
     :param edges_folder:
     :param out_nrml:
     """
-    #
+
     # check edges folder
     assert os.path.exists(edges_folder)
-    #
-    #
+
+    # Create .xml
     es = EdgesSet.from_files(edges_folder)
     src = es.get_complex_fault()
-    print(out_nrml)
     write_source_model(out_nrml, [src], 'Name')
 
 
