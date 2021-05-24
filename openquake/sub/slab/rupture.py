@@ -341,8 +341,7 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
         tmps = 'Number of ruptures for m={:s}: {:d}'
         logging.info(tmps.format(lab, len(allrup[lab])))
 
-    # Compute the normalizing factor for every rupture. This is used only in
-    # the case when smoothing is used a reference for distributing occurrence
+    # Compute the normalizing factor
     twei = {}
     for mag, occr in mfd.get_annual_occurrence_rates():
         smm = 0.
@@ -361,7 +360,7 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
     # Assign probability of occurrence
     for mag, occr in mfd.get_annual_occurrence_rates():
 
-        # Label
+        # Create the label
         lab = '{:.2f}'.format(mag)
 
         # Check if weight is larger than 0
@@ -380,9 +379,9 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
 
             # Adjust the weight. Every rupture will have a weight that is
             # a combination between a flat rate and a variable rate
+            wei /= twei[lab]
             ocr = (occr * uniform_fraction) * wei
-            if twei[lab] > 1e-10:
-                wei /= twei[lab]
+            if uniform_fraction < 0.99:
                 ocr += (occr * (1.-uniform_fraction)) * wei
             chk += wei
 
@@ -417,6 +416,7 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
 
         allrup[lab] = rups
 
+        assert (1.0 - chk) < 1e-5
         print('CHK', chk)
 
     fh5.close()
