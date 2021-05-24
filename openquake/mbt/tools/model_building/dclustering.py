@@ -67,11 +67,11 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     :param str fix_defaults:
         Fix defaults values when missing
     """
-    #
-    # check if the initial catalogue file exists
+
+    # Check if the initial catalogue file exists
     msg = 'Catalogue {:s} is missing'.format(catalogue_hmtk_fname)
     assert os.path.exists(catalogue_hmtk_fname), msg
-    #
+
     # Create output filename
     lbl = 'all'
     if labels is not None and len(out_fname_ext) == 0:
