@@ -6,13 +6,13 @@ from openquake.sub.build_complex_surface import build_complex_surface
 
 
 def main(in_path, max_sampl_dist, out_path, upper_depth=0,
-         lower_depth=1000, from_id='.*', to_id='.*'):
+         lower_depth=1000, *, from_id='.*', to_id='.*'):
     """
     Builds edges that can be used to generate a complex fault surface
     starting from a set of profiles
     """
-    build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
-                          lower_depth=1000, from_id='.*', to_id='.*')
+    build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth,
+                          lower_depth, from_id, to_id)
 
 
 main.in_path = 'Path to the input folder'
