@@ -47,7 +47,7 @@ def main(config_fname, *, root=None):
 
             for meth in methods:
                 print('')
-                arams = copy.deepcopy(meth[1])
+                params = copy.deepcopy(meth[1])
                 _ = decluster(fname_cat, meth[0], params, fname_out, regions,
                               fname_reg, create_sc, 'csv', meth[2], save_afrs,
                               cat_lab, add_deflt)
