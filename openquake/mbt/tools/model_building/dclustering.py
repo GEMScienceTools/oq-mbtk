@@ -41,7 +41,7 @@ def _add_defaults(cat):
 
 def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
               output_path, labels=None, tr_fname=None, subcatalogues=False,
-              format='csv', olab='', save_af=False, out_fname_ext='',
+              fmat='csv', olab='', save_af=False, out_fname_ext='',
               fix_defaults=False):
     """
     :param str catalogue_hmtk_fname:
@@ -56,7 +56,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         It can be a string or a list of strings
     :param str tr_fname:
         An .hdf5 file containing the TR classification of the catalogue
-    :param str format:
+    :param str fmat:
         Can be either 'csv' or 'pkl'
     :param str olab:
         Optional label for output catalogues
@@ -82,9 +82,9 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             lbl = '-'.join([l for l in labels])
         assert tr_fname is not None
         assert os.path.exists(tr_fname)
-        ext = '_dec_{:s}{:s}.{:s}'.format(lbl, olab, format)
+        ext = '_dec_{:s}_{:s}.{:s}'.format(olab, lbl, fmat)
     else:
-        ext = '_dec_{:s}{:s}.{:s}'.format(out_fname_ext, olab, format)
+        ext = '_dec_{:s}_{:s}.{:s}'.format(olab, out_fname_ext, fmat)
     #
     # Output filename
     out_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
@@ -144,7 +144,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     catt = copy.deepcopy(cat)
     catt.select_catalogue_events(numpy.where(flag != 0)[0])
     if save_af:
-        ext = '_dec_af_{:s}{:s}.{:s}'.format(lbl, olab, format)
+        ext = '_dec_af_{:s}_{:s}.{:s}'.format(olab, lbl, fmat)
         outfa_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
         outfa_fname = os.path.abspath(os.path.join(output_path, outfa_fname))
     #
@@ -159,12 +159,12 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     assert num_main + num_foaf == num_eqks_sub
     #
     # Save output
-    if format == 'csv':
+    if fmat == 'csv':
         cat.write_catalogue(out_fname)
         print('Writing catalogue to file: {:s}'.format(out_fname))
         if save_af:
             catt.write_catalogue(outfa_fname)
-    elif format == 'pkl':
+    elif fmat == 'pkl':
         fou = open(out_fname, 'wb')
         pickle.dump(cat, fou)
         fou.close()
@@ -211,12 +211,12 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
                               max(ooo.data['magnitude'])))
             #
             # Output filename
-            ext = '_dec_{:s}{:s}.{:s}'.format(lab, olab, format)
+            ext = '_dec_{:s}_{:s}.{:s}'.format(olab, lab, fmat)
             tcat_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
             tmps = os.path.join(output_path, tcat_fname)
             tcat_fname = os.path.abspath(tmps)
             if save_af:
-                ext = '_dec_af_{:s}{:s}.{:s}'.format(lab, olab, format)
+                ext = '_dec_af_{:s}_{:s}.{:s}'.format(olab, lab, fmat)
                 tcataf_fname = Path(
                     os.path.basename(catalogue_hmtk_fname)).stem + ext
                 tmps = os.path.join(output_path, tcataf_fname)
@@ -224,11 +224,11 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             #
             # Dumping data into the pickle file
             if ooo is not None:
-                if format == 'csv':
+                if fmat == 'csv':
                     ooo.write_catalogue(tcat_fname)
                     if save_af:
                         aaa.write_catalogue(tcataf_fname)
-                elif format == 'pkl':
+                elif fmat == 'pkl':
                     fou = open(tcat_fname, 'wb')
                     pickle.dump(ooo, fou)
                     fou.close()
