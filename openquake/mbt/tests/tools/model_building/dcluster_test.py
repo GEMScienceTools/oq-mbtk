@@ -40,7 +40,7 @@ class TrTestCase(unittest.TestCase):
                   labels=['a', 'b'],
                   tr_fname=self.classification,
                   subcatalogues=True,
-                  format='pkl')
+                  fmat='pkl')
         #
         # Read first mainshock catalogue
         a_fname = os.path.join(self.tmp, 'catalogue_dec_a.pkl')
