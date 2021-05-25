@@ -230,7 +230,7 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
             # Get centroids for a given virtual fault surface
             ccc = get_centroids(smsh[:, :, 0], smsh[:, :, 1], smsh[:, :, 2])
 
-            # Get weights - this assigns to each cell centroid the weight of
+            # Get weights - this assigns to each centroid the weight of
             # the closest node in the values array
             weights = get_weights(ccc, r, values, proj)
 
@@ -265,7 +265,7 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
 
                     # Skip small ruptures
                     if rup_len < 2 or rup_wid < 2:
-                        msg = 'Found an incompatible rupture size'
+                        msg = 'Found a small rupture size'
                         logging.warning(msg)
                         continue
 
@@ -275,16 +275,14 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
                                                     f_strike=float_strike,
                                                     f_dip=float_dip):
 
-                        # Get weights from the smoothing
+                        # Get weights
                         tmpw = 1
+                        wsum = tmpw * asprs[aspr]
                         if uniform_fraction < 0.99:
-                            w = weights[cl:cl+rup_len-1, rl:cl+rup_wid-1]
+                            w = weights[rl:rl+rup_wid-1, cl:cl+rup_len-1]
                             i = np.isfinite(w)
                             tmpw = sum(w[i])
-                            wsum_smoo = tmpw/asprs[aspr]
-
-                        # Scale the weight using the aspect ratio weight
-                        wsum = tmpw/asprs[aspr]
+                            wsum_smoo = tmpw * asprs[aspr]
 
                         # Fix the longitudes outside the standard [-180, 180]
                         # range
@@ -381,28 +379,29 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
         # Loop over the ruptures and compute the annual pocc
         cnt = 0
         chk = 0
-        for srfc, wei, _, _, _, hypo in allrup[lab]:
+        for srfc, wei, weis, _, _, _, hypo in allrup[lab]:
 
             # Adjust the weight. Every rupture will have a weight that is
-            # a combination between a flat rate and a variable rate
+            # a combination between a flat rate and a spatially variable rate
             wei /= twei[lab]
+            weis /= tweis[lab]
             ocr = (occr * uniform_fraction) * wei
             if uniform_fraction < 0.99:
-                ocr += (occr * (1.-uniform_fraction)) * wei
-            chk += wei
+                ocr += (occr * (1.-uniform_fraction)) * weis
+                chk += weis
 
             # Compute the probabilities
             p0 = np.exp(-ocr*tspan)
             p1 = 1. - p0
 
             # Append ruptures
-            rups.append([srfc, wei, dip, aspr, [p0, p1]])
+            rups.append([srfc, [wei, weis], dip, aspr, [p0, p1]])
 
             # Preparing the data structure for storing information
             a = np.zeros(1, dtype=[('lons', 'f4', srfc.mesh.lons.shape),
                                    ('lats', 'f4', srfc.mesh.lons.shape),
                                    ('deps', 'f4', srfc.mesh.lons.shape),
-                                   ('w', 'float32'),
+                                   ('w', 'float32', (2)),
                                    ('dip', 'f4'),
                                    ('aspr', 'f4'),
                                    ('prbs', 'float32', (2)),
@@ -412,7 +411,7 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
             a['lons'] = srfc.mesh.lons
             a['lats'] = srfc.mesh.lats
             a['deps'] = srfc.mesh.depths
-            a['w'] = wei
+            a['w'] = [wei, weis]
             a['dip'] = dip
             a['aspr'] = aspr
             a['prbs'] = np.array([p0, p1], dtype='float32')
