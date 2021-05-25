@@ -130,13 +130,89 @@ The output is a set of interpolated profiles and edges that can be used to creat
 where ``<configuration_file>`` is the configuration file used to build the cross-sections.
 
 
-Classifying an earthquake catalog using the top of the slab surface [incoplete]
-*******************************************************************************
+Classifying an earthquake catalog using the top of the slab surface [incomplete]
+********************************************************************************
 
-The ``create_2pt5_model.py`` code produces a set of profiles and edges describing the geometry of the top of the slab. With this information we can separate the seismicity in an earthquake catalog into a few subsets, each one representing a specific tectonic environment (e.g. `Abrahamson and Shedlock, 1997 <https://pubs.geoscienceworld.org/ssa/srl/article/68/1/9/142158/overview>`__ or `Chen et al., 2017 <https://academic.oup.com/gji/article/213/2/1263/4794950?login=true>`__ ). The procedure required to complete this task is the following:
+The ``create_2pt5_model.py`` code produces a set of profiles and edges (i.e. .csv files with the 3D coordinates) describing the geometry of the top of the slab. With this information we can separate the seismicity in an earthquake catalog into a few subsets, each one representing a specific tectonic environment (e.g. `Abrahamson and Shedlock, 1997 <https://pubs.geoscienceworld.org/ssa/srl/article/68/1/9/142158/overview>`__ or `Chen et al., 2017 <https://academic.oup.com/gji/article/213/2/1263/4794950?login=true>`__ ). The procedure required to complete this task includes the following steps.
 
-Creating inslab sources for the OpenQuake Engine [incoplete]
-************************************************************
+1. Create a configuration file that describes the tectonic environments
+
+The configuration file specifies the geometry of surfaces, along with buffer regions, that are used as references for each tectonic environment, and the catalogue to be classified. Additionally, the configuration includes a ``priority list`` that indicates how hypocenters that can occur in overlapping buffer regions should be labeled. An example configuration file is shown below. The format of the configuration is as follows.
+  
+The ``[general]`` section, which includes:
+    - the directory ``distance_folder`` where the Euclidean distance between each hypocenter and surface will be stored (NB: this folder must be manually created by the user)
+    - an .hdf5 file ``treg_filename`` that will store the results of the classfication
+    - the .pkl file ``catalogue_filename``, which is the pickeled catalogue in HMTK format to be classified. 
+    - an array ``priority`` lists the tectonic regions, sorting the labels in the order of increasing priority, and a later label overrides classification of a hypocenter to a previous label. For example, in the configuration file shown below, an earthquake that could be classified as both ``crustal`` and ``int_prt`` will be labeled as ``int_prt``.
+
+A geometry section for each labelled tectonic environment in the ``priority`` list in ``[general]``. The labels should each contain one of the following four strings, which indicate the way that the surface will be used for classification. 
+
+
+    - ``int`` or ``slab``: These strings indicate a surface related to subduction or similar. They require at least four configurations: (1) ``label``, which will be used by ``treg_filename`` to indicate which earthquakes correspond to the given tectonic environment; (2) ``folder``, which gives the relative path to the directory (see Step 2) with the geometry .csv files created by ``create_2pt5_model`` for the given surface; and (3) ``distance_buffer_above`` and (4) ``distance_buffer_below``, which are the upper limits of Euclidean distances used to classify hypocenters above or below the surface to the respective tectonic environment. A user can additionally specify ``lower depth`` to bound the surface and buffer region, and ``low_year``, ``upp_year``,  ``low_mag``, and ``upp_mag`` to to select only from a given time period or magnitude range. These latter options are useful when hypocenters from a given bracket are known to include major assumptions, such as when historical earthquake are assigned a depth of 0 km. 
+    - ``crustal`` or ``volcanic``: These strings indicate a surface against which the classification compares the relative position of a hypocenter laterally and vertically, for example to isolate crustal or volcanic earthquakes. They require two configurations: (1) ``crust_filename``, which is a tab-delimited .xyz file listing longitude, latitude, and depth (as a negative value), which indicates the lateral extent of the tectonic environment and the depths above which all earthquakes should be classified to the respective tectonic environment; and (2) ``distance_delta``, which specifies the vertical depth below a surface to be used as a buffer region.
+
+ 
+.. code-block:: ini
+
+    [general]
+    
+    distance_folder = ./model/catalogue/classification/distances/
+    treg_filename = ./model/catalogue/classification/classified.hdf5
+    catalogue_filename = ./model/catalogue/csv/catalogue.pkl
+    
+    priority=[slab_A, slab_B, crustal, int_A]
+    
+    
+    [crustal]
+    
+    label = crustal
+    distance_delta = 20.
+    crust_filename = ./model/litho1pt0/litho_crust3bottom.xyz
+    
+    
+    [int_A]
+    
+    label = int_A
+    folder = ./model/surfaces/edges_A-int
+    lower_depth = 60.
+    distance_buffer_above = 10.
+    distance_buffer_below = 10.
+    
+    [slab_A]
+    
+    label = slab_A
+    folder = ./model/surfaces/edges_A-slab
+    distance_buffer_above = 30.
+    distance_buffer_below = 30.
+    
+    [slab_B]
+    
+    label = slab_B
+    folder = ./model/surfaces/edges_B-slab
+    distance_buffer_above = 30.
+    distance_buffer_below = 30. 
+
+2. Run the classification 
+
+The classification algorithm is run using the following command::
+
+    > cat_classify.py <configuration_file> <distance_flag> <root_folder>
+
+Where:
+    - ``configuration_file`` is the name of the .ini configuration file 
+    - ``distance_flag`` is a flag indicating whether or not the distances to surfaces must be computed (i.e. *True* is used the first time a classification is run for a set of surfaces and tectonic environments, but *False* when only the buffer and delta distances are changed)
+    - ``root_folder`` is the root directory for all paths specified in the ``configuration_file`` 
+
+3. Separate the classified events into subcatalogues
+
+The user must decide the exact way in which they would like to separate the classified events into subcatalogues for each tectonic environment. For example, one may want to decluster the entire catalogue before separating the events, or to decluster each tectonic environment separately. View the following link for an example of the latter case:
+
+.. toctree:: 
+    sub_tutorials/make_trts
+
+
+Creating inslab sources for the OpenQuake Engine [incomplete]
+*************************************************************
 
 The construction of subduction inslab sources involves the creation of `virtual faults` elongated along the stike of the slab surface and constrained within the slab volume.
     
@@ -172,19 +248,15 @@ The construction of subduction inslab sources involves the creation of `virtual 
 
     # output folder
     out_hdf5_fname = ./tmp/ruptures/ruptures_inslab_kerton_1.hdf5
-    #out_hdf5_fname = ./model/subduction/intraslab/tmp/ruptures/ruptures_inslab_kerton_1.hdf5
 
     # output smoothing folder
     out_hdf5_smoothing_fname = ./tmp/smoothing/smoothing_kerton_1.hdf5
-    #out_hdf5_smoothing_fname = ./model/subduction/intraslab/tmp/smoothing/smoothing_kerton_1.hdf5
 
     # this is a lists 
     dips = [45, 135]
 
     # this is a dictionary
-    #aspect_ratios = {2.0: 0.5, 5.0: 0.3, 10.0: 0.2}
     aspect_ratios = {2.0: 0.4, 3.0: 0.3, 6.0: 0.2, 8.0: 0.1}
-    #aspect_ratios = {1.0: 0.4, 3.0: 0.3, 6.0: 0.2, 8.0: 0.1}
 
     # this is a dictionary
     uniform_fraction = 1.0
