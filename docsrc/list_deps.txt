@@ -1,0 +1,4 @@
+recommonmark
+nbsphinx
+sphinx_rtd_theme
+pandoc (http://pandoc.org/installing.html)
