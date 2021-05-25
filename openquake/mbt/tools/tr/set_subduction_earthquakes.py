@@ -7,8 +7,6 @@ import pickle
 import logging
 
 from scipy.interpolate import Rbf
-# MN: 'griddata' and 'interp2d' imported but not used
-from scipy.interpolate import griddata, interp2d
 from openquake.mbt.tools.tr.catalogue import get_catalogue
 from openquake.mbt.tools.geo import get_idx_points_inside_polygon
 from openquake.mbt.tools.tr.catalogue_hmtk import (get_rtree_index,
@@ -100,8 +98,8 @@ class SetSubductionEarthquakes:
             grp = flog.create_group('/{:s}'.format(self.label))
         else:
             grp = flog['/{:s}'.format(self.label)]
-        #
-        # read the catalogue
+
+        # Read the catalogue
         catalogue = get_catalogue(catalogue_filename)
         neq = len(catalogue.data['longitude'])
         f = h5py.File(treg_filename, "a")
@@ -109,16 +107,17 @@ class SetSubductionEarthquakes:
             treg = f[self.label]
         else:
             treg = np.full((neq), False, dtype=bool)
-        #
-        # create the spatial index
+
+        # Create the spatial index
         sidx = get_rtree_index(catalogue)
-        #
-        # build the complex fault surface
+
+        # Build the complex fault surface
         tedges = _read_edges(edges_folder)
+        print(edges_folder)
         surface = build_complex_surface_from_edges(edges_folder)
         mesh = surface.mesh
-        #
-        # create polygon encompassing the mesh
+
+        # Create polygon encompassing the mesh
         plo = list(mesh.lons[0, :])
         pla = list(mesh.lats[0, :])
         #
@@ -130,8 +129,8 @@ class SetSubductionEarthquakes:
         #
         plo += list(mesh.lons[::-1, 0])
         pla += list(mesh.lats[::-1, 0])
-        #
-        # set variables used in griddata
+
+        # Set variables used in griddata
         data = np.array([mesh.lons.flatten().T, mesh.lats.flatten().T]).T
         values = mesh.depths.flatten().T
 
@@ -140,14 +139,14 @@ class SetSubductionEarthquakes:
                         mesh.depths.flatten()]).T
         if self.label not in flog.keys():
             grp.create_dataset('mesh', data=ddd)
-        #
-        # set bounding box of the subduction surface
+
+        # Set the bounding box of the subduction surface
         min_lo_sub = np.amin(mesh.lons)
         min_la_sub = np.amin(mesh.lats)
         max_lo_sub = np.amax(mesh.lons)
         max_la_sub = np.amax(mesh.lats)
-        #
-        # select earthquakes within the bounding box
+
+        # Select the earthquakes within the bounding box
         idxs = sorted(list(sidx.intersection((min_lo_sub-DELTA,
                                               min_la_sub-DELTA,
                                               0,
@@ -190,7 +189,7 @@ class SetSubductionEarthquakes:
         sel = CatalogueSelector(catalogue, create_copy=True)
         cat = sel.select_catalogue(flags)
         self.cat = cat
-        #
+
         # If none of the earthquakes in the catalogue is in the bounding box
         # used for the selection we stop the processing
         if len(cat.data['longitude']) < 1:
@@ -347,8 +346,6 @@ class SetSubductionEarthquakes:
         scat = plt.scatter(cat.data['depth'], sub_depths, c=surf_dist,
                            s=2**cat.data['magnitude'], edgecolor='w', vmin=0,
                            vmax=100)
-        # MN: 'idx' assigned but never used
-        idx = np.nonzero(sub_depths < cat.data['depth'])
         plt.ylabel('Top of slab depth [km]')
         plt.xlabel('Hypocentral depth [km]')
         xx = np.arange(10, 300)

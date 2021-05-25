@@ -28,7 +28,8 @@ class TrTestCase(unittest.TestCase):
     def tearDown(self):
         # removing tmp folder
         if os.path.exists(self.tmp):
-            shutil.rmtree(self.tmp)
+            print(self.tmp)
+            #shutil.rmtree(self.tmp)
 
     def testcase01(self):
         config = {'time_distance_window': 'GardnerKnopoffWindow',
@@ -40,22 +41,22 @@ class TrTestCase(unittest.TestCase):
                   labels=['a', 'b'],
                   tr_fname=self.classification,
                   subcatalogues=True,
-                  format='pkl')
+                  fmat='pkl')
         #
         # Read first mainshock catalogue
-        a_fname = os.path.join(self.tmp, 'catalogue_dec_a.pkl')
+        a_fname = os.path.join(self.tmp, 'catalogue_dec__a.pkl')
         self.assertTrue(os.path.exists(a_fname))
         cat = _load_catalogue(a_fname)
         self.assertTrue(len(cat.data['magnitude'] == 1))
         self.assertAlmostEqual(cat.data['magnitude'][0], 6.0)
         #
         # Read second mainshock catalogue
-        b_fname = os.path.join(self.tmp, 'catalogue_dec_b.pkl')
+        b_fname = os.path.join(self.tmp, 'catalogue_dec__b.pkl')
         self.assertTrue(os.path.exists(b_fname))
         cat = _load_catalogue(b_fname)
         self.assertTrue(len(cat.data['magnitude'] == 1))
         self.assertAlmostEqual(cat.data['magnitude'][0], 6.1)
         #
         # Check that the third mainshock catalogue does not exist
-        c_fname = os.path.join(self.tmp, 'catalogue_dec_c.pkl')
+        c_fname = os.path.join(self.tmp, 'catalogue_dec__c.pkl')
         self.assertFalse(os.path.exists(c_fname))
