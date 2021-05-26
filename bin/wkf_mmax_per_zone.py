@@ -22,7 +22,7 @@ def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab):
     # Read polygons
     polygons_gdf = gpd.read_file(fname_poly)
 
-    # Create geodataframe with the catalogue 
+    # Create geodataframe with the catalogue
     df = pd.read_csv(fname_cat)
     gdf = gpd.GeoDataFrame(df, crs='epsg:4326', geometry=[Point(xy) for xy
                            in zip(df.longitude, df.latitude)])

@@ -26,7 +26,7 @@ from openquake.hazardlib.sourcewriter import write_source_model
 getcontext().prec = 10
 
 
-def create_nrml_source(rup, mag, sid, name, tectonic_region_type):
+def create_source(rup, mag, sid, name, tectonic_region_type):
     """
     :param rup:
         A h5py dataset with the rupture information
@@ -105,7 +105,7 @@ def create(label, rupture_hdf5_fname, output_folder, investigation_t):
             continue
 
         # Set the name of the output nrml file
-        fnrml = os.path.join(output_folder, '{:s}.nrml'.format(mag))
+        fxml = os.path.join(output_folder, '{:s}.xml'.format(mag))
 
         # Set the source ID
         mags = re.sub('\\.', 'pt', mag)
@@ -113,7 +113,7 @@ def create(label, rupture_hdf5_fname, output_folder, investigation_t):
         name = 'Ruptures for mag bin {:s}'.format(mags)
 
         # Creates a non-parametric seismic source
-        src = create_nrml_source(grp, float(mag), sid, name, trt)
+        src = create_source(grp, float(mag), sid, name, trt)
 
         # Create source group
         sgrp = SourceGroup(trt, [src])
@@ -123,7 +123,7 @@ def create(label, rupture_hdf5_fname, output_folder, investigation_t):
         mdl = SourceModel([sgrp], name, investigation_t)
 
         # Write source model
-        write_source_model(fnrml, mdl, mag)
+        write_source_model(fxml, mdl, mag)
 
     f.close()
 
