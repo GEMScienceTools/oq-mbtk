@@ -81,7 +81,7 @@ class RuptureCreationSmoothedTest(unittest.TestCase):
 
         # Read .xml and calculate the rates of occurrence within each
         # magnitude bin
-        pattern = os.path.join(self.out_path, '*.nrml')
+        pattern = os.path.join(self.out_path, '*.xml')
         rates = []
         for source_model_fname in sorted(glob.glob(pattern)):
             mag, rate = get_mags_rates(source_model_fname, 1.0)
@@ -97,7 +97,7 @@ class RuptureCreationSmoothedTest(unittest.TestCase):
         print(rates, rates_gr)
         np.testing.assert_almost_equal(rates[:, 1], rates_gr, decimal=3)
 
-        if 1:
+        if PLOTTING:
             # See https://docs.pyvista.org/user-guide/index.html# note also
             # that the zone crosses the IDL
             vscaling = -0.01
