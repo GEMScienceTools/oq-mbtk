@@ -16,7 +16,7 @@ from openquake.sub.slab.rupture import calculate_ruptures, get_catalogue
 from openquake.sub.create_inslab_nrml import create
 from openquake.sub.build_complex_surface import build_complex_surface
 
-PLOTTING = True
+PLOTTING = False
 
 BASE_DATA_PATH = os.path.dirname(__file__)
 
