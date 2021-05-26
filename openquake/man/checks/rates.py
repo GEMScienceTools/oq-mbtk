@@ -19,11 +19,11 @@ def get_mags_rates(source_model_fname, time_span):
     :param float time_span:
         In years
     """
-    #
-    # read the source_model
+
+    # Read the source_model
     src_model, info = read(source_model_fname, False)
-    #
-    # process sources
+
+    # Process sources
     rate = 0.
     mag = None
     for src in src_model:
