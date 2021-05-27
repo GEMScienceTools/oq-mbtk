@@ -96,6 +96,8 @@ def create(label, rupture_hdf5_fname, output_folder, investigation_t,
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
 
+    print(trt)
+
     # Create xml
     for mag in f['ruptures'].keys():
 

@@ -4,7 +4,7 @@
 import os
 import toml
 import configparser
-from openquake.hazardlib.consts import TRT
+from openquake.hazardlib.const import TRT
 from openquake.baselib import sap
 from openquake.wkf.utils import create_folder
 from openquake.sub.create_inslab_nrml import create
