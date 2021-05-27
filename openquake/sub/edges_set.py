@@ -44,16 +44,24 @@ class EdgesSet():
             lines.append(Line(pnts))
         return cls(lines)
 
-    def get_complex_fault(self, params={}):
+    def get_complex_fault(self, params={}, section_length=None):
         """
-        :param params
+        :param params:
+        :param params:
         """
         p = DEFAULTS
-        #
+
         # update the default parameters
         for key in params:
             p[key] = params[key]
-        #
+
+        if section_length is not None:
+            edges = []
+            for l in self.edges:
+                edges.append(l.resample(section_length))
+        else:
+            edges = self.edges
+
         # create the complex fault source instance
         return ComplexFaultSource(p['source_id'],
                                   p['name'],

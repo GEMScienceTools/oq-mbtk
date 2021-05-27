@@ -15,7 +15,7 @@ from openquake.hazardlib.source.non_parametric import \
 def get_mags_rates(source_model_fname, time_span):
     """
     :param str source_model_fname:
-        The name of the xml shapefile
+        The name of the xml
     :param float time_span:
         In years
     """
@@ -42,7 +42,7 @@ def get_mags_rates(source_model_fname, time_span):
 def mfd_from_xml(source_model_fname):
     """
     :param str source_model_fname:
-        The name of the xml shapefile
+        The name of the xml
     """
     #
     # read the source_model
