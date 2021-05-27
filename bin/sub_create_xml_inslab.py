@@ -4,12 +4,14 @@
 import os
 import toml
 import configparser
+from openquake.hazardlib.consts import TRT
 from openquake.baselib import sap
 from openquake.wkf.utils import create_folder
 from openquake.sub.create_inslab_nrml import create
 
 
-def main(config_fname: str, output_folder: str):
+def main(config_fname: str, output_folder: str, *,
+         trt: str=TRT.SUBDUCTION_INTRASLAB):
 
     investigation_t = 1.0
 
@@ -26,13 +28,15 @@ def main(config_fname: str, output_folder: str):
         rupture_hdf5_fname = os.path.join(path, tmp)
         outf = os.path.join(output_folder, key)
         create_folder(outf)
-        create(key, rupture_hdf5_fname, outf, investigation_t)
+        create(key, rupture_hdf5_fname, outf, investigation_t, trt)
 
 
 descr = 'A string with a comma separated list of source ids'
 main.labels = descr
 descr = 'Name of the folder where to store the profiles'
 main.output_folder = descr
+descr = 'The tectonic region type label'
+main.trt = descr
 
 if __name__ == '__main__':
     sap.run(main)

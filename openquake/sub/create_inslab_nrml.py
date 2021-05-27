@@ -76,7 +76,8 @@ def create_source(rup, mag, sid, name, tectonic_region_type):
     return src
 
 
-def create(label, rupture_hdf5_fname, output_folder, investigation_t):
+def create(label, rupture_hdf5_fname, output_folder, investigation_t,
+           trt=TRT.SUBDUCTION_INTRASLAB):
     """
     :param label:
         A string identifying the source
@@ -86,6 +87,8 @@ def create(label, rupture_hdf5_fname, output_folder, investigation_t):
         Folder where to write the .xl files
     :param investigation_t:
         Investigation time in years
+    :param trt:
+        Tectonic region type label
     """
 
     # Open the input .hdf5 file with the ruptures
@@ -93,8 +96,7 @@ def create(label, rupture_hdf5_fname, output_folder, investigation_t):
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
 
-    # TODO this must be an input variable
-    trt = TRT.SUBDUCTION_INTRASLAB
+    # Create xml
     for mag in f['ruptures'].keys():
 
         # Check the number of ruptures defined for the current magnitude value
