@@ -8,40 +8,6 @@ from openquake.mbt.oqt_project import OQtProject
 from openquake.mbt.tools.mfd import (
     get_evenlyDiscretizedMFD_from_truncatedGRMFD)
 from openquake.hazardlib.mfd.truncated_gr import TruncatedGRMFD
-from openquake.hazardlib.source.non_parametric import \
-    NonParametricSeismicSource
-
-
-def get_mags_rates(source_model_fname, time_span):
-    """
-
-
-    :param str source_model_fname:
-        The name of the xml
-    :param float time_span:
-        In years
-    """
-
-    # Read the source_model
-    src_model, info = read(source_model_fname, False)
-
-    # Process sources
-    rate = 0.
-    mag = None
-    for src in src_model:
-        if isinstance(src, NonParametricSeismicSource):
-            for dat in src.data:
-                rupture = dat[0]
-                pmf = dat[1].data
-                rate += pmf[1][0]
-                if mag is None:
-                    mag = rupture.mag
-                else:
-                    assert abs(mag-rupture.mag) < 1e-2
-        else:
-
-
-    return mag, rate
 
 
 def mfd_from_xml(source_model_fname):
