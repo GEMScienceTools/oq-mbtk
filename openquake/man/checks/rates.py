@@ -14,6 +14,8 @@ from openquake.hazardlib.source.non_parametric import \
 
 def get_mags_rates(source_model_fname, time_span):
     """
+
+
     :param str source_model_fname:
         The name of the xml
     :param float time_span:
@@ -36,6 +38,9 @@ def get_mags_rates(source_model_fname, time_span):
                     mag = rupture.mag
                 else:
                     assert abs(mag-rupture.mag) < 1e-2
+        else:
+
+
     return mag, rate
 
 
