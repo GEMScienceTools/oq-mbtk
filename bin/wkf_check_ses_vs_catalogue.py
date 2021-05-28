@@ -1,0 +1,208 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import os
+import toml
+import pygmt
+import json
+import numpy as np
+import pandas as pd
+import geojson as geoj
+import geopandas as gpd
+import matplotlib.pyplot as plt
+from openquake.baselib import sap
+from shapely.geometry import shape
+from openquake.wkf.utils import create_folder
+from openquake.commonlib.datastore import read
+from openquake.wkf.compute_gr_params import get_mmax_ctab
+from openquake.hmtk.seismicity.catalogue import Catalogue
+from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
+from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
+
+
+def from_df(df, end_year=None):
+    cat = Catalogue()
+    for column in df:
+        if (column in Catalogue.FLOAT_ATTRIBUTE_LIST or
+                column in Catalogue.INT_ATTRIBUTE_LIST):
+            cat.data[column] = df[column].to_numpy()
+        else:
+            cat.data[column] = df[column]
+    cat.end_year = np.max(df.year) if end_year is None else end_year
+    return cat
+
+
+def to_df(cat):
+    df = pd.DataFrame()
+    for key in cat.data:
+        if key not in ['comment', 'flag']:
+            df.loc[:, key] = cat.data[key]
+    return df
+
+
+def main(fname: str):
+
+    config_main = toml.load(fname)
+    path = os.path.dirname(fname)
+
+    # Reading information in the config file
+    fname_catalogues = []
+    for tmp in config_main['main']['catalogues']:
+        fname_catalogues.append(os.path.join(path, tmp))
+    calc_id = config_main['main']['calc_id']
+    ses_duration = config_main['main']['ses_duration']
+    polygon_fname = os.path.join(path, config_main['main']['polygon'])
+    fname_config = os.path.join(path, config_main['main']['fname_config'])
+    output_dir = os.path.join(path, config_main['main']['output_dir'])
+    descr = config_main['main']['description']
+
+    # Checking
+    msg = 'The config file does not exist:\n{:s}'.format(fname_config)
+    assert os.path.exists(fname_config), msg
+    msg = 'The polygon file does not exist:\n{:s}'.format(polygon_fname)
+    assert os.path.exists(polygon_fname), msg
+    if not os.path.exists(output_dir):
+        create_folder(output_dir)
+
+    # Reading ruptures from the datastore
+    dstore = read(calc_id)
+    dfr = dstore.read_df('ruptures')
+    dfr = gpd.GeoDataFrame(dfr, geometry=gpd.points_from_xy(dfr.hypo_0,
+                                                            dfr.hypo_1))
+
+    # Reading geojson polygon and create the shapely geometry
+    with open(polygon_fname) as json_file:
+        data = json.load(json_file)
+    polygon = data['features'][0]['geometry']
+    tmp = eval(geoj.dumps(polygon))
+    geom = shape(tmp)
+
+    # Get region limits
+    coo = []
+    for poly in geom.geoms:
+        coo += list(zip(*poly.exterior.coords.xy))
+    coo = np.array(coo)
+    minlo = np.min(coo[:, 0])
+    minla = np.min(coo[:, 1])
+    maxlo = np.max(coo[:, 0])
+    maxla = np.max(coo[:, 1])
+    region = "{:f}/{:f}/{:f}/{:f}".format(minlo, maxlo, minla, maxla)
+
+    # Reading catalogue and creating a geodataframe
+    binw = 0.1
+    for i, fname in enumerate(fname_catalogues):
+        if i == 0:
+            tcat = _load_catalogue(fname)
+        else:
+            tcat.concatenate(_load_catalogue(fname))
+
+    # Create a dataframe from the catalogue
+    dfcat = to_df(tcat)
+    dfcat = gpd.GeoDataFrame(dfcat,
+                             geometry=gpd.points_from_xy(dfcat.longitude,
+                                                         dfcat.latitude))
+    dfcat.head(n=1)
+
+    # Selecting the events within the polygon
+    idx = dfcat.within(geom)
+    selcat_df = dfcat.loc[idx]
+    selcat = from_df(selcat_df)
+    config = toml.load(fname_config)
+
+    selcat.data["dtime"] = selcat.get_decimal_time()
+    mmax, ctab = get_mmax_ctab(config, 'lan')
+    cent_mag, t_per, n_obs = get_completeness_counts(selcat, ctab, binw)
+    tmp = n_obs/t_per
+    hiscml_cat = np.array([np.sum(tmp[i:]) for i in range(0, len(tmp))])
+
+    # Now we take into account possible multiple occurrences
+    df = dfr.loc[dfr.index.repeat(dfr.n_occ)]
+    assert len(df) == np.sum(dfr.n_occ)
+
+    # SES
+    idx = dfr.within(geom)
+    bins = np.arange(5.0, 9.0, binw)
+    hisr, _ = np.histogram(df.loc[idx].mag, bins=bins)
+    hisr = hisr / ses_duration
+    hiscml = np.array([np.sum(hisr[i:]) for i in range(0, len(hisr))])
+
+    fig = plt.figure(figsize=(7, 5))
+    plt.plot(bins[:-1], hiscml, '--', label='SES')
+    plt.plot(cent_mag, hiscml_cat, '-.', label='Catalogue')
+    plt.bar(cent_mag, n_obs/t_per, width=binw*0.7, fc='none', ec='red',
+            alpha=0.5)
+    plt.bar(bins[:-1], hisr, align='edge', width=binw*0.6, fc='none',
+            ec='blue', alpha=0.5)
+    plt.yscale('log')
+    _ = plt.xlabel('Magnitude')
+    _ = plt.ylabel('Annual frequency of exceedance')
+    plt.grid()
+    plt.legend()
+    plt.title(descr)
+    plt.savefig(os.path.join(output_dir, 'ses.png'))
+
+    # Plot map with the SES
+    fig = pygmt.Figure()
+    fig.basemap(region=region, projection="M15c", frame=True)
+    fig.coast(land="#666666", water="skyblue")
+    pygmt.makecpt(cmap="jet", series=[0, 300])
+    fig.plot(x=dfr.loc[idx].hypo_0,
+             y=dfr.loc[idx].hypo_1,
+             style="c",
+             color=dfr.loc[idx].hypo_2,
+             cmap=True,
+             sizes=0.01 * (1.5 ** dfr.loc[idx].mag),
+             pen="black")
+    fig.show()
+    fig.savefig(os.path.join(output_dir, 'map_ses.png'))
+
+    # Plot map with catalogue
+    fig = pygmt.Figure()
+    fig.basemap(region=region, projection="M15c", frame=True)
+    fig.coast(land="#666666", water="skyblue")
+    pygmt.makecpt(cmap="jet", series=[0, 300])
+    fig.plot(x=selcat_df.longitude,
+             y=selcat_df.latitude,
+             style="c",
+             color=selcat_df.depth,
+             cmap=True,
+             sizes=0.01 * (1.5 ** selcat_df.magnitude),
+             pen="black")
+    fig.show()
+    fig.savefig(os.path.join(output_dir, 'map_eqks.png'))
+
+    # Depth histogram
+    deptw = 10.
+    mmin = 5.0
+    dfs = df.loc[idx]
+    bins = np.arange(0.0, 200.0, deptw)
+    fig = plt.figure()
+    hisr, _ = np.histogram(dfs[dfs.mag > mmin].hypo_2, bins=bins)
+    hiscat, _ = np.histogram(selcat_df[selcat_df.magnitude > mmin].depth,
+                             bins=bins)
+    fig = plt.Figure(figsize=(5, 8))
+    plt.barh(bins[:-1], hisr/sum(hisr), align='edge', height=deptw*0.6,
+             fc='lightgreen', ec='blue', label='ses')
+    plt.barh(bins[:-1], hiscat/sum(hiscat), align='edge', height=deptw*0.5,
+             fc='white', ec='red', alpha=0.5, lw=1.5, label='catalogue')
+    for dep, val in zip(bins[:-1], hiscat):
+        if val > 0:
+            plt.text(val/sum(hiscat), dep, s='{:.2f}'.format(val))
+    plt.gca().invert_yaxis()
+    _ = plt.ylabel('Depth [km]')
+    _ = plt.xlabel('Count')
+    plt.grid()
+    plt.legend()
+    plt.title(descr)
+    plt.savefig(os.path.join(output_dir, 'depth_normalized.png'))
+
+
+descr = 'The ID of a calculation perfomed locally'
+main.calc_id = descr
+descr = 'Name of the folder where to store the profiles'
+main.output_folder = descr
+descr = 'The tectonic region type label'
+main.trt = descr
+
+if __name__ == '__main__':
+    sap.run(main)
