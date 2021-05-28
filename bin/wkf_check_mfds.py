@@ -9,15 +9,23 @@ from glob import glob
 from openquake.wkf.utils import _get_src_id
 from openquake.hazardlib.nrml import to_python
 from openquake.hazardlib.sourceconverter import SourceConverter
-from openquake.mbt.tools.mfd import (EEvenlyDiscretizedMFD, 
+from openquake.mbt.tools.mfd import (EEvenlyDiscretizedMFD,
         get_evenlyDiscretizedMFD_from_truncatedGRMFD)
 
 
-def check_mfds(fname_input_pattern: str, fname_config: str):
+def check_mfds(fname_input_pattern: str, fname_config: str, *,
+               src_id: str = None):
+    """
+    Given a set of .xml files and a configuration file with GR params, this
+    code compares the total MFD of the sources against the original one in the
+    configuration file. The ID of the source if not provided is taken from the
+    name of the files (i.e., last label preceded by `_`)
+    """
 
     for fname in sorted(glob(fname_input_pattern)):
 
-        src_id = _get_src_id(fname)
+        if src_id is None:
+            src_id = _get_src_id(fname)
         model = toml.load(fname_config)
 
         binw = 0.1
@@ -28,12 +36,13 @@ def check_mfds(fname_input_pattern: str, fname_config: str):
         ssm = to_python(fname, sourceconv)
 
         for grp in ssm:
-            
+
             for i, src in enumerate(grp):
                 if i == 0:
                     nmfd = EEvenlyDiscretizedMFD.from_mfd(src.mfd, binw)
                 else:
-                    tmfd = get_evenlyDiscretizedMFD_from_truncatedGRMFD(src.mfd, nmfd.bin_width)
+                    ged = get_evenlyDiscretizedMFD_from_truncatedGRMFD
+                    tmfd = ged(src.mfd, nmfd.bin_width)
                     nmfd.stack(tmfd)
 
             occ = np.array(nmfd.get_annual_occurrence_rates())
@@ -41,22 +50,24 @@ def check_mfds(fname_input_pattern: str, fname_config: str):
             bgr = model["sources"][src_id]["bgr_weichert"]
             agr = model["sources"][src_id]["agr_weichert"]
 
-            tmp = occ[:,0] - binw
+            tmp = occ[:, 0] - binw
             mfd = 10.0**(agr-bgr*tmp[:-1])-10.0**(agr-bgr*(tmp[:-1]+binw))
-            
-            fig = plt.figure(figsize=(8, 6))
+
+            _ = plt.figure(figsize=(8, 6))
             plt.plot(occ[:, 0], occ[:, 1], 'o')
             plt.plot(tmp[:-1]+binw/2, mfd, 'x')
             print(mfd)
-            plt.title(fname) 
+            plt.title(fname)
             plt.xlabel('Magnitude')
             plt.ylabel('Annual occurrence rate')
             plt.yscale('log')
 
             plt.show()
 
-check_mfds.fname_input_pattern = "Pattern for input .csv files"
+
+check_mfds.fname_input_pattern = "Pattern for input .xml files"
 check_mfds.fname_config = "Name of the configuration file"
+check_mfds.src_id = "The ID of the source to use"
 
 if __name__ == '__main__':
     sap.run(check_mfds)
