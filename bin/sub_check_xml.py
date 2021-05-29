@@ -9,6 +9,12 @@ from openquake.man.checks.rates import get_mags_rates
 
 
 def main(xml_pattern: str, label: str, config_fname: str):
+    """
+    Given a pattern to a file or a set of files, the label identifying the
+    source (or the set of sources) and a configuration file for characterizing
+    earthquake occurrence using a workflow, check that the total MFD of the
+    sources is equal to the orinal MFD in the config file.
+    """
 
     investigation_t = 1.0
 
