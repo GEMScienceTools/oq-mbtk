@@ -4,24 +4,20 @@
 import os
 import numpy
 import pandas as pd
-import geopandas as gpd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from glob import glob
-from matplotlib import cm
 from openquake.baselib import sap
 from openquake.wkf.utils import create_folder, _get_src_id
-from shapely.geometry import Point
-from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
 
 
-KAVERINA = {'N'   : 'blue',
-            'SS'  : 'green',
-            'R'   : 'red',
+KAVERINA = {'N': 'blue',
+            'SS': 'green',
+            'R': 'red',
             'N-SS': 'turquoise',
             'SS-N': 'palegreen',
             'R-SS': 'goldenrod',
-            'SS-R': 'yellow' }
+            'SS-R': 'yellow'}
 
 
 def get_simpler(dct):
@@ -34,9 +30,10 @@ def get_simpler(dct):
         elif key == 'R-SS':
             ndct['R'] += dct[key]
         else:
-            ndct[key] += dct[key] 
+            ndct[key] += dct[key]
     return ndct
-    
+
+
 def get_simplified_classification(histo, keys):
     simpl_class = {'N': 0, 'SS': 0, 'R': 0}
     for num, key in zip(histo, keys):
@@ -47,8 +44,9 @@ def get_simplified_classification(histo, keys):
         elif key == 'R-SS':
             simpl_class['R'] += num
         else:
-            simpl_class[key] += num 
+            simpl_class[key] += num
     return simpl_class
+
 
 def mecclass(plungt, plungb, plungp):
     """
@@ -95,12 +93,12 @@ def mecclass(plungt, plungb, plungp):
 
 
 def plot_histogram(gs0, fmclassification, title=""):
-    
+
     classes = ['N', 'R', 'SS', 'N-SS', 'SS-N', 'SS-R', 'R-SS']
 
     bin_edges = numpy.array([0, 1, 2, 3, 4, 5, 6, 7])
     histo = []
-    
+
     for key in classes:
         if key in fmclassification:
             histo.append(fmclassification[key])
@@ -108,7 +106,7 @@ def plot_histogram(gs0, fmclassification, title=""):
             histo.append(0)
 
     simplified = get_simplified_classification(histo, classes)
-    
+
     histosimple = []
     for key in classes:
         if key in simplified:
@@ -119,24 +117,24 @@ def plot_histogram(gs0, fmclassification, title=""):
     ax = plt.subplot(gs0)
     ax.set_title(title)
 
-    plt.bar(bin_edges[0:-1], histo, 
+    plt.bar(bin_edges[0:-1], histo,
             width=numpy.diff(bin_edges),
-            edgecolor='red', 
-            facecolor='orange', 
-            linewidth=3, 
+            edgecolor='red',
+            facecolor='orange',
+            linewidth=3,
             alpha=1.0,
             align='edge',
             label='Kaverina')
 
-    plt.bar(bin_edges[0:-1], histosimple, 
+    plt.bar(bin_edges[0:-1], histosimple,
             width=numpy.diff(bin_edges),
-            edgecolor='blue', 
-            facecolor='None', 
-            linewidth=3, 
+            edgecolor='blue',
+            facecolor='None',
+            linewidth=3,
             alpha=1.0,
             align='edge',
             label='Simplified')
-    
+
     plt.ylabel(r'Earthquake count', fontsize=14)
     plt.grid(which='major', axis='y', linestyle='--')
 
@@ -153,31 +151,30 @@ def plot_histogram(gs0, fmclassification, title=""):
             dlt = -0.04 * ylimdff
         if prc > 1e-1:
             plt.text(mid[i], h+dlt, "{:.2f}".format(prc))
+    _ = plt.legend()
 
-    xlimits = plt.xlim([0, max(bin_edges)])
-    leg = plt.legend()
-    
+
 def plot_xx(gs0, dip_1, dip_2, strike_1, strike_2):
-    
+
     classes = ['N', 'R', 'SS', 'N-SS', 'SS-N', 'SS-R', 'R-SS']
-    
-    KAVERINA = {'N'   : 'blue',
-                'SS'  : 'green',
-                'R'   : 'red',
+
+    KAVERINA = {'N': 'blue',
+                'SS': 'green',
+                'R': 'red',
                 'N-SS': 'turquoise',
                 'SS-N': 'palegreen',
                 'R-SS': 'goldenrod',
-                'SS-R': 'yellow' }
+                'SS-R': 'yellow'}
 
     fs = 14
-    gs = gs0.subgridspec(4, 2, wspace=0.0, hspace=0.0) 
-    
+    gs = gs0.subgridspec(4, 2, wspace=0.0, hspace=0.0)
+
     for key, igs in zip(classes, range(0, len(classes))):
         ax = plt.subplot(gs[igs])
         if key in strike_1:
-            plt.plot(strike_1[key], dip_1[key], 'o', markersize=8, 
+            plt.plot(strike_1[key], dip_1[key], 'o', markersize=8,
                      color=KAVERINA[key])
-            plt.plot(strike_2[key], dip_2[key], 'o', markersize=6, 
+            plt.plot(strike_2[key], dip_2[key], 'o', markersize=6,
                      color=KAVERINA[key], alpha=0.5, markeredgecolor='blue')
         plt.xlim([0, 360])
         plt.ylim([0, 90])
@@ -196,13 +193,13 @@ def plot_xx(gs0, dip_1, dip_2, strike_1, strike_2):
         else:
             ax.set_ylabel('dip', fontsize=fs)
 
-        plt.text(.05,.90,key,
-            horizontalalignment='left',
-            transform=ax.transAxes)
+        plt.text(.05, .90, key,
+                 horizontalalignment='left',
+                 transform=ax.transAxes)
 
 
-def plot_density_simple(gs0, dip1, dip2, stk1, stk2): 
-    
+def plot_density_simple(gs0, dip1, dip2, stk1, stk2):
+
     fs = 14
     gs = gs0.subgridspec(3, 2, wspace=0.0, hspace=0.0)
     cmap = plt.get_cmap('Blues')
@@ -218,7 +215,8 @@ def plot_density_simple(gs0, dip1, dip2, stk1, stk2):
         ax = plt.subplot(gs[igs, 0])
         plt.set_cmap(cmap)
         if key in dip1.keys():
-            hist, xedges, yedges = numpy.histogram2d(stk1[key], dip1[key], bins=[xbins, ybins])
+            hist, xedges, yedges = numpy.histogram2d(stk1[key], dip1[key],
+                                                     bins=[xbins, ybins])
             hist = hist.T / total_solutions
             ax.pcolormesh(X, Y, hist)
 
@@ -235,17 +233,16 @@ def plot_density_simple(gs0, dip1, dip2, stk1, stk2):
         else:
             ax.set_xlabel('strike', fontsize=fs)
         ax.set_ylabel('dip', fontsize=fs)
-        plt.text(.05,.90, "{:s} I plane".format(key),
-            horizontalalignment='left',
-            transform=ax.transAxes)
-
+        plt.text(.05, .90, "{:s} I plane".format(key),
+                 horizontalalignment='left',
+                 transform=ax.transAxes)
 
     for key, igs in zip(dip1.keys(), range(0, len(dip1.keys()))):
-
         ax = plt.subplot(gs[igs, 1])
         plt.set_cmap(cmap)
         if key in dip1.keys():
-            hist, xedges, yedges = numpy.histogram2d(stk2[key], dip2[key], bins=[xbins, ybins])
+            hist, xedges, yedges = numpy.histogram2d(stk2[key], dip2[key],
+                                                     bins=[xbins, ybins])
             hist = hist.T / total_solutions
             ax.pcolormesh(X, Y, hist)
 
@@ -267,18 +264,18 @@ def plot_density_simple(gs0, dip1, dip2, stk1, stk2):
                  transform=ax.transAxes)
 
 
-def plot_yy(gs0, dip1, dip2, stk1, stk2):       
-    
-    KAVERINA = {'N'   : 'blue',
-                'SS'  : 'green',
-                'R'   : 'red',
+def plot_yy(gs0, dip1, dip2, stk1, stk2):
+
+    KAVERINA = {'N': 'blue',
+                'SS': 'green',
+                'R': 'red',
                 'N-SS': 'turquoise',
                 'SS-N': 'palegreen',
                 'R-SS': 'goldenrod',
-                'SS-R': 'yellow' }
-        
+                'SS-R': 'yellow'}
+
     fs = 14
-    gs = gs0.subgridspec(3, 1, wspace=0.0, hspace=0.0) 
+    gs = gs0.subgridspec(3, 1, wspace=0.0, hspace=0.0)
     for key, igs in zip(dip1.keys(), range(0, len(dip1.keys()))):
         ax = plt.subplot(gs[igs])
         if key in dip1.keys():
@@ -299,15 +296,17 @@ def plot_yy(gs0, dip1, dip2, stk1, stk2):
         else:
             ax.set_xlabel('strike', fontsize=fs)
         ax.set_ylabel('dip', fontsize=fs)
-        plt.text(.05,.90,key,
-            horizontalalignment='left',
-            transform=ax.transAxes)
+        plt.text(.05, .90, key,
+                 horizontalalignment='left',
+                 transform=ax.transAxes)
 
 
 def process_gcmt_datafames(fname_folder: str, folder_out: str):
     """
     :param fnames:
         A list containing the names of the files to be processed or a pattern
+    :param folder_out:
+        The name of the output folder
     """
 
     create_folder(folder_out)
@@ -316,18 +315,22 @@ def process_gcmt_datafames(fname_folder: str, folder_out: str):
         fnames = [f for f in glob(fname_folder)]
     else:
         fnames = fname_folder
-    
+
     for fname in fnames:
-        
+
+        df = pd.read_csv(fname)
+        if len(df.dip1) < 1:
+            continue
+
         # See https://matplotlib.org/3.1.0/gallery/subplots_axes_and_figures/gridspec_nested.html
         f = plt.figure(figsize=(15, 15))
         gs0 = gridspec.GridSpec(2, 2, figure=f)
         src_id = _get_src_id(fname)
 
         ext = "png"
-        figure_name = os.path.join(folder_out, "zone_{:s}.{:s}".format(src_id, ext))
-        
-        df = pd.read_csv(fname)
+        fmt = "zone_{:s}.{:s}"
+        figure_name = os.path.join(folder_out, fmt.format(src_id, ext))
+
         fmclassification = {}
         eventfm = {}
         dip_1 = {}
@@ -335,7 +338,7 @@ def process_gcmt_datafames(fname_folder: str, folder_out: str):
         strike_1 = {}
         strike_2 = {}
         for idx, row in df.iterrows():
-            
+
             plungeb = row.loc['plunge_b']
             plungep = row['plunge_p']
             plunget = row['plunge_t']
@@ -353,11 +356,11 @@ def process_gcmt_datafames(fname_folder: str, folder_out: str):
                 dip_2[mclass] = [row['dip2']]
                 strike_1[mclass] = [row['strike1']]
                 strike_2[mclass] = [row['strike2']]
-        
+
         title = "Source: {:s}".format(src_id)
-        classific = plot_histogram(gs0[0, 0], fmclassification, title)
+        _ = plot_histogram(gs0[0, 0], fmclassification, title)
         plot_xx(gs0[0, 1], dip_1, dip_2, strike_1, strike_2)
-        
+
         stk1 = get_simpler(strike_1)
         stk2 = get_simpler(strike_2)
         dip1 = get_simpler(dip_1)
@@ -368,9 +371,9 @@ def process_gcmt_datafames(fname_folder: str, folder_out: str):
 
         plt.savefig(figure_name, format=ext)
         plt.close()
-    
-    return fmclassification 
-        
+
+    return fmclassification
+
 
 process_gcmt_datafames.fname_folder = 'Name of the folder with input files'
 process_gcmt_datafames.folder_out = 'Name of the output folder'

@@ -44,11 +44,13 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, skip=[],
         if 'ylim' in kwargs:
             plt.ylim(kwargs['ylim'])
 
-        print('src_id:', src_id)
+        print('src_id: {:s} '.format(src_id), end='')
         if ('sources' in model and src_id in model['sources'] and
                 'completeness_table' in model['sources'][src_id]):
+            print(' source specific completeness')
             ctab = numpy.array(model['sources'][src_id]['completeness_table'])
         else:
+            print(' default completeness')
             ctab = numpy.array(model['default']['completeness_table'])
 
         n = len(ctab)

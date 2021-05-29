@@ -33,6 +33,8 @@ def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab):
         df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
         gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
         within = gpd.sjoin(gdf, gdf_poly, op='within')
+        if len(within.magnitude) < 1:
+            continue
         mmax = np.max(within.magnitude.to_numpy())
         lab = 'mmax_{:s}'.format(cat_lab)
         model['sources'][str(poly.id)][lab] = float(mmax)

@@ -56,6 +56,12 @@ def main(fname: str):
     output_dir = os.path.join(path, config_main['main']['output_dir'])
     descr = config_main['main']['description']
 
+    if ('tectonic_region' not in config_main['main'] or
+        config_main['main']['tectonic_region'] in ['', 'none', 'None']):
+        tectonic_region = None
+    else:
+        tectonic_region = int(config_main['main']['tectonic_region'])
+
     # Checking
     msg = 'The config file does not exist:\n{:s}'.format(fname_config)
     assert os.path.exists(fname_config), msg
@@ -69,6 +75,8 @@ def main(fname: str):
     dfr = dstore.read_df('ruptures')
     dfr = gpd.GeoDataFrame(dfr, geometry=gpd.points_from_xy(dfr.hypo_0,
                                                             dfr.hypo_1))
+    if tectonic_region is not None:
+        dfr = dfr.loc[dfr['trt_smr'] == tectonic_region]
 
     # Reading geojson polygon and create the shapely geometry
     with open(polygon_fname) as json_file:
