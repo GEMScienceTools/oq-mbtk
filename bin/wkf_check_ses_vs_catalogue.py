@@ -55,6 +55,8 @@ def main(fname: str):
     fname_config = os.path.join(path, config_main['main']['fname_config'])
     output_dir = os.path.join(path, config_main['main']['output_dir'])
     descr = config_main['main']['description']
+    binw = config_main['main'].get('bin_width', 0.2)
+    min_magnitude = config_main['main'].get('min_magnitude', None)
 
     if ('tectonic_region' not in config_main['main'] or
         config_main['main']['tectonic_region'] in ['', 'none', 'None']):
@@ -96,8 +98,7 @@ def main(fname: str):
     maxla = np.max(coo[:, 1])
     region = "{:f}/{:f}/{:f}/{:f}".format(minlo, maxlo, minla, maxla)
 
-    # Reading catalogue and creating a geodataframe
-    binw = 0.1
+    # Read catalogue
     for i, fname in enumerate(fname_catalogues):
         if i == 0:
             tcat = _load_catalogue(fname)
@@ -111,11 +112,15 @@ def main(fname: str):
                                                          dfcat.latitude))
     dfcat.head(n=1)
 
-    # Selecting the events within the polygon
+    # Select the events within the polygon and convert from df to catalogue
     idx = dfcat.within(geom)
     selcat_df = dfcat.loc[idx]
     selcat = from_df(selcat_df)
     config = toml.load(fname_config)
+
+    if len(selcat_df.magnitude) < 2:
+        print('The catalogue contains less than 2 earthquakes')
+        return
 
     selcat.data["dtime"] = selcat.get_decimal_time()
     mmax, ctab = get_mmax_ctab(config, 'lan')
@@ -123,30 +128,36 @@ def main(fname: str):
     tmp = n_obs/t_per
     hiscml_cat = np.array([np.sum(tmp[i:]) for i in range(0, len(tmp))])
 
-    # Now we take into account possible multiple occurrences
+    # Take into account possible multiple occurrences in the SES
     df = dfr.loc[dfr.index.repeat(dfr.n_occ)]
     assert len(df) == np.sum(dfr.n_occ)
 
-    # SES
+    # SES histogram
     idx = dfr.within(geom)
     bins = np.arange(5.0, 9.0, binw)
     hisr, _ = np.histogram(df.loc[idx].mag, bins=bins)
     hisr = hisr / ses_duration
     hiscml = np.array([np.sum(hisr[i:]) for i in range(0, len(hisr))])
 
+    # Plotting
     fig = plt.figure(figsize=(7, 5))
-    plt.plot(bins[:-1], hiscml, '--', label='SES')
-    plt.plot(cent_mag, hiscml_cat, '-.', label='Catalogue')
+    # - cumulative
+    plt.plot(bins[:-1]-binw/2, hiscml, '--x', label='SES')
+    plt.plot(cent_mag-binw/2, hiscml_cat, '-.x', label='Catalogue')
+    # - incremental
     plt.bar(cent_mag, n_obs/t_per, width=binw*0.7, fc='none', ec='red',
             alpha=0.5)
-    plt.bar(bins[:-1], hisr, align='edge', width=binw*0.6, fc='none',
-            ec='blue', alpha=0.5)
+    plt.bar(bins[:-1], hisr, width=binw*0.6, fc='none', ec='blue', alpha=0.5)
     plt.yscale('log')
     _ = plt.xlabel('Magnitude')
     _ = plt.ylabel('Annual frequency of exceedance')
     plt.grid()
     plt.legend()
     plt.title(descr)
+    # - set xlim
+    xlim = list(fig.gca().get_xlim())
+    xlim[0] = min_magnitude if min_magnitude is not None else xlim[0]
+    plt.xlim(xlim)
     plt.savefig(os.path.join(output_dir, 'ses.png'))
 
     # Plot map with the SES

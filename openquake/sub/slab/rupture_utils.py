@@ -184,7 +184,7 @@ def get_discrete_dimensions(area, sampling, aspr):
         lng = lng2
         wdt = wdtC
         dff = abs(lng2*wdtC-area)
-    if abs(lng2*wdtD-area) < dff and lng2 > 0. and wdtC > 0.:
+    if abs(lng2*wdtD-area) < dff and lng2 > 0. and wdtD > 0.:
         lng = lng2
         wdt = wdtD
         dff = abs(lng2*wdtD-area)
