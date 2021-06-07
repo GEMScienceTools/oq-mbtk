@@ -39,21 +39,11 @@ def change(cat_pickle_filename, treg, eqlist):
     f.close()
     f2.close()
 
-
-def main(argv):
-    """
-    """
-    p = sap.Script(change)
-    p.arg(name='cat_pickle_filename', help='pickled catalogue')
-    p.arg(name='treg', help='TR hdf5 filename')
-    msg = 'list of events to change. format <eventID>,<target class>'
-    p.arg(name='eqlist', help=msg)
-
-    if len(argv) < 3:
-        print(p.help())
-    else:
-        p.callfunc()
+change.cat_pickle_filename = 'pickled catalogue'
+change.treg = 'TR hdf5 filename'
+msg = 'list of events to change. format <eventID>,<target class>'
+change.eqlist = msg
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sap.run(change)
