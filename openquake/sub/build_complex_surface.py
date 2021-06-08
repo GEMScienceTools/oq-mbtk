@@ -5,6 +5,7 @@ Module :mod:`openquake.sub.build_complex_surface` creates a complex fault
 surface from a set of profiles
 """
 
+import os
 import sys
 import logging
 import numpy
@@ -15,12 +16,15 @@ from openquake.sub.create_2pt5_model import (read_profiles_csv,
                                              write_edges_csv,
                                              write_profiles_csv)
 
+logging.basicConfig(format='%(asctime)s %(message)s',
+                    datefmt='%m/%d/%Y %I:%M:%S %p')
+
 
 def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
                           lower_depth=1000, from_id='.*', to_id='.*'):
     """
     :param str in_path:
-        Folder name
+        Folder name. It contains files with the prefix 'cs_'
     :param str float max_sampl_dist:
         Sampling distance [km]
     :param str out_path:
@@ -47,7 +51,14 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
                                         float(upper_depth),
                                         float(lower_depth),
                                         from_id, to_id)
+
+    # Check
     logging.info('Number of profiles: {:d}'.format(len(sps)))
+    if len(sps) < 1:
+        fmt = 'Did not find cross-sections in {:s}\n exiting'
+        msg = fmt.format(os.path.abspath(in_path))
+        logging.error(msg)
+        sys.exit(0)
 
     # Compute length of profiles
     lengths, longest_key, shortest_key = get_profiles_length(sps)
@@ -57,8 +68,8 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
         shortest_key, lengths[shortest_key]))
     logging.info('Depth min: {:.2f}'.format(dmin))
     logging.info('Depth max: {:.2f}'.format(dmax))
-    #
-    #
+
+    # Info
     number_of_samples = numpy.ceil(lengths[longest_key] / float(
         max_sampl_dist))
     tmps = 'Number of subsegments for each profile: {:d}'
@@ -67,14 +78,14 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
     logging.info('Shortest sampling [%s]: %.4f' % (shortest_key, tmp))
     tmp = lengths[longest_key]/number_of_samples
     logging.info('Longest sampling  [%s]: %.4f' % (longest_key, tmp))
-    #
-    # resampled profiles
+
+    # Resampled profiles
     rsps = get_interpolated_profiles(sps, lengths, number_of_samples)
-    #
-    # store new profiles
+
+    # Store new profiles
     write_profiles_csv(rsps, out_path)
-    #
-    # store computed edges
+
+    # Store computed edges
     write_edges_csv(rsps, out_path)
 
 

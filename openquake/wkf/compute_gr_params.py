@@ -394,14 +394,15 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
 
     # Processing files
     for fname in sorted(fname_list):
-
-        print(fname)
+        print(fname, end='')
 
         # Get source ID
         src_id = _get_src_id(fname)
         if src_id in skip:
             print("   skipping")
             continue
+        else:
+            print("")
 
         if 'sources' in model:
             if (src_id in model['sources'] and

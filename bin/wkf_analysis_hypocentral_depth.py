@@ -18,7 +18,7 @@ from openquake.wkf.utils import create_folder, get_list
 def hypocentral_depth_analysis(fname: str, depth_min: float, depth_max: float,
                                depth_binw: float, figure_name_out: str = '',
                                show: bool = False, depth_bins=[], label='',
-                               figure_format='png') -> Tuple[np.ndarray, np.ndarray]:    
+                               figure_format='png') -> Tuple[np.ndarray, np.ndarray]:
     """
     :param fname:
         The name of the file containing the catalogue
@@ -45,6 +45,9 @@ def hypocentral_depth_analysis(fname: str, depth_min: float, depth_max: float,
     # Read the file as a pandas Dataframe
     df = pd.read_csv(fname)
 
+    if len(df.depth) < 1:
+        return None, None
+
     # Set depth intervals
     if len(depth_bins) < 1:
         bins = np.arange(depth_min, depth_max+depth_binw*0.1, depth_binw)
@@ -65,15 +68,15 @@ def hypocentral_depth_analysis(fname: str, depth_min: float, depth_max: float,
         fig, ax1 = plt.subplots(constrained_layout=True)
         heights = np.diff(bins)
 
-        plt.barh(bins[:-1], width=hist, height=heights, align='edge', 
+        plt.barh(bins[:-1], width=hist, height=heights, align='edge',
                  hatch='///', fc='none', ec='blue', alpha=0.5)
-        
+
         ax1.set_ylim([depth_max, depth_min])
         ax1.invert_yaxis()
         ax1.grid(which='both')
         ax1.set_xlabel('Count')
         ax1.set_ylabel('Depth [km]')
-        
+
         ax2 = ax1.twiny()
         ax2.invert_yaxis()
         ax2.set_ylim([depth_max, depth_min])
@@ -81,8 +84,8 @@ def hypocentral_depth_analysis(fname: str, depth_min: float, depth_max: float,
         color = 'tab:red'
         ax2.set_xlabel('Normalized count', color=color)
         ax2.tick_params(axis='x', labelcolor=color)
-        
-        plt.barh(bins[:-1], width=hist/sum(hist), height=heights, color='none', 
+
+        plt.barh(bins[:-1], width=hist/sum(hist), height=heights, color='none',
                  edgecolor=color, linewidth=2.0, align='edge')
 
         # PMF labels
@@ -139,10 +142,13 @@ def analyze_hypocentral_depth(folder_subcat: str, *, depth_min: float = 0,
                                           depth_binw, fname_figure_out,
                                           show, depth_bins, source_id,
                                           figure_format)
-        
+
+        if hist is None:
+            continue
+
         THRESHOLD = 0.03
         if len(conf) > 0:
-            
+
             midd = depb[:-1]+np.diff(depb)/2
 
             hist = hist / np.sum(hist)
@@ -153,7 +159,7 @@ def analyze_hypocentral_depth(folder_subcat: str, *, depth_min: float = 0,
             wei = np.around(hist, 2)
             wei = wei / np.sum(wei)
             wei = np.around(wei, 2)
- 
+
             swei = np.sum(wei)
             if abs(1.0-swei) > 1e-2:
                 # Fixing
@@ -165,7 +171,7 @@ def analyze_hypocentral_depth(folder_subcat: str, *, depth_min: float = 0,
                     warnings.warn(msg)
                     exit()
 
-            var = model['sources'][source_id] 
+            var = model['sources'][source_id]
             tlist = []
             for w, m in zip(wei, midd):
                 if w > 1e-10:
