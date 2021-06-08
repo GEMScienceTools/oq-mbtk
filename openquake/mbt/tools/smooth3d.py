@@ -1,9 +1,13 @@
+"""
+Module :module:`openquake.mbt.tools.smooth3d` exports :class:`Smooth3d`
+"""
+
 import numpy as np
-import rtree
 import scipy.constants as consts
 
 from rtree import index
 from pyproj import Proj
+from scipy.stats import norm
 
 
 def _generator(mesh, p):
@@ -40,52 +44,52 @@ class Smoothing3D:
         """
         This creates the spatial index for the input mesh
         """
-        #
+
         # Setting rtree properties
         prop = index.Property()
         prop.dimension = 3
-        #
+
         # Set the geographic projection
         lons = self.mesh.lons.flatten('F')
-        self.p = Proj(proj='lcc', lon_0=np.mean(lons), lat_2=45)
-        #
+        mean_lat = np.mean(self.mesh.lats)
+        self.p = Proj(proj='lcc', lon_0=np.mean(lons), lat_1=mean_lat-10.,
+                      lat_2=mean_lat+10.)
+
         # Create the spatial index for the grid mesh
         r = index.Index(_generator(self.mesh, self.p), properties=prop)
-        #
-        # set the rtree
+
+        # Set the rtree
         self.rtree = r
 
     def gaussian(self, bffer, sigmas):
         """
+        Smooths the seismicity using a gaussian kernel.
+
         :parameter bffer:
+            Maximum distance [km]
         :parameter sigma:
+            Standard deviation of the gaussian distribution
         """
-        #
+
         # Initialise the array where we store the results of the smoothing
         values = np.zeros((len(self.mesh.lons.flatten('F'))))
-        #
-        # Compute the number of expected nodes within the distance used to
-        # smooth data
-        f1 = np.prod(np.ones((len(sigmas)))*bffer)
-        # MN: 'n_cells' assigned but never used
-        n_cells = 4/3 * consts.pi * f1 / (self.bin_h**2*self.bin_z)
-        #
+
         # Projected coordinates of the catalogue
         xs, ys = self.p(self.catalogue.data['longitude'],
                         self.catalogue.data['latitude'])
         xs /= 1e3
         ys /= 1e3
-        #
+
         # Projected coordinates of the grid
         xg, yg = self.p(self.mesh.lons.flatten('F'),
                         self.mesh.lats.flatten('F'))
         xg /= 1e3
         yg /= 1e3
         zg = self.mesh.depths.flatten('F')
-        #
+
         # Smoothing the catalogue
         for x, y, z in zip(xs, ys, self.catalogue.data['depth']):
-            #
+
             # find nodes within the bounding box
             idxs = list(self.rtree.intersection((x-bffer*1.05,
                                                  y-bffer*1.05,
@@ -94,30 +98,31 @@ class Smoothing3D:
                                                  y+bffer*1.05,
                                                  z+bffer*1.05)))
             if len(idxs):
-                #
-                # distances between earthquake and the selected nodes of the
+
+                # Distances between earthquake and the selected nodes of the
                 # 3D mesh
                 dsts = ((x-xg[idxs])**2 + (y-yg[idxs])**2 +
                         (z-zg[idxs])**2)**.5
-                #
-                # find the indexes of the cells at a distance closer than
+
+                # Find the indexes of the cells at a distance shorter than
                 # 'bffer'
                 jjj = np.ndarray.astype(np.nonzero(dsts < bffer)[0], int)
                 idxs = np.array(idxs)
                 iii = idxs[jjj]
-                #
+
                 # `data` contains the coordinates of the points where we
                 # calculate the values of the multivariate gaussian
                 # MN: 'data' assigned but never used
-                data = np.vstack((xg[iii].flatten(), yg[jjj].flatten(),
-                                  zg[iii].flatten())).T
+                # data = np.vstack((xg[iii].flatten(), yg[jjj].flatten(),
+                #                  zg[iii].flatten())).T
                 # xxx = multivariate_gaussian([x, y, z], sigmas, data)
-                xxx = 1./dsts[jjj]
-                #
+
+                xxx = 1./dsts[jjj]**0.01
+
                 # update the array where we store the results of the smoothing
                 values[iii] += xxx
 
-        return values
+        return values/np.sum(values)
 
 
 def multivariate_gaussian(means, sigmas, data):

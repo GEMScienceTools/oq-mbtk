@@ -55,9 +55,13 @@ def get_ruptures(omsh, rup_s, rup_d, f_strike=1, f_dip=1):
     :param f_dip:
         Floating distance along dip (multiple of sampling distance)
     :returns:
-
+        A tuple with three elements. The first one is a tuple with three 2D
+        arrays containing the coordinates of the nodes representing the
+        ruptures. Rge second and third one are the indexes of the of the
+        upper-left node of the grid (the indexes refer to the grid used to
+        describe the virstual fault).
     """
-    #
+
     # When f_strike is negative, the floating distance is interpreted as
     # a fraction of the rupture length (i.e. a multiple of the sampling
     # distance)
@@ -65,14 +69,14 @@ def get_ruptures(omsh, rup_s, rup_d, f_strike=1, f_dip=1):
         f_strike = int(np.floor(rup_s * abs(f_strike) + 1e-5))
         if f_strike < 1:
             f_strike = 1
-    #
-    # see f_strike comment above
+
+    # See f_strike comment above
     if f_dip < 0:
         f_dip = int(np.floor(rup_d * abs(f_dip) + 1e-5))
         if f_dip < 1:
             f_dip = 1
-    #
-    # float the rupture on the virtual fault
+
+    # Float the rupture on the virtual fault
     for i in np.arange(0, omsh.lons.shape[1] - rup_s + 1, f_strike):
         for j in np.arange(0, omsh.lons.shape[0] - rup_d + 1, f_dip):
             #
@@ -87,40 +91,43 @@ def get_ruptures(omsh, rup_s, rup_d, f_strike=1, f_dip=1):
 
 def get_weights(centroids, r, values, proj):
     """
+    Assign a weight to each centroid of the grid representing the fault
+    surface.
+
     :param centroids:
         A :class:`~numpy.ndarray` instance with cardinality j x k x 3 where
         j and k corresponds to the number of cells along strike and along dip
-        forming the rupture
+        forming the fault surface
     :param r:
-        A :class:`~rtree.index.Index` instance for the location of the values
+        A :class:`~rtree.index.Index` instance with the location smoothing
+        grid
     :param values:
         A :class:`~numpy.ndarray` instance with lenght equal to the number of
-        rows in the `centroids` matrix
+        elements in the `centroids` matrix
     :param proj:
         An instance of Proj
     :returns:
         An :class:`numpy.ndarray` instance
     """
-    #
-    # set the projection
-    p = proj
-    # projected centroids - projection shouldn't be an issue here as long as
+
+    # Projected centroids - projection shouldn't be an issue here as long as
     # we can get the nearest neighbour correctly
-    cx, cy = p(centroids[:, :, 0].flatten(), centroids[:, :, 1].flatten())
-    cx *= 1e-3
-    cy *= 1e-3
-    cz = centroids[:, :, 2].flatten()
-    #
-    # assign a weight to each centroid
-    weights = np.zeros_like(cx)
+    ccx, ccy = proj(centroids[:, :, 0].flatten(), centroids[:, :, 1].flatten())
+    ccx *= 1e-3
+    ccy *= 1e-3
+    ccz = centroids[:, :, 2].flatten()
+
+    # Assign a weight to each centroid
+    weights = np.zeros_like(ccx)
     weights[:] = np.nan
-    for i in range(0, len(cx)):
-        if np.isfinite(cz[i]):
-            idx = list(r.nearest((cx[i], cy[i], cz[i], cx[i], cy[i], cz[i]), 1,
+    for i in range(0, len(ccx)):
+        if np.isfinite(ccz[i]):
+            idx = list(r.nearest((ccx[i], ccy[i], ccz[i],
+                                  ccx[i], ccy[i], ccz[i]), 1,
                                  objects=False))
             weights[i] = values[idx[0]]
-    #
-    # reshape the weights
+
+    # Reshape the weights
     weights = np.reshape(weights, (centroids.shape[0], centroids.shape[1]))
     return weights
 
@@ -129,7 +136,6 @@ def heron_formula(coords):
     """
     TODO
     """
-    pass
 
 
 def get_mesh_area(mesh):
@@ -139,8 +145,9 @@ def get_mesh_area(mesh):
     """
     for j in range(0, mesh.shape[0]-1):
         for k in range(0, mesh.shape[1]-1):
-            if (np.all(np.isfinite(mesh.depths[j:j+1, k:k+1]))):
+            if np.all(np.isfinite(mesh.depths[j:j+1, k:k+1])):
                 pass
+                # TODO
                 # calculate the area
 
 
@@ -177,7 +184,7 @@ def get_discrete_dimensions(area, sampling, aspr):
         lng = lng2
         wdt = wdtC
         dff = abs(lng2*wdtC-area)
-    if abs(lng2*wdtD-area) < dff and lng2 > 0. and wdtC > 0.:
+    if abs(lng2*wdtD-area) < dff and lng2 > 0. and wdtD > 0.:
         lng = lng2
         wdt = wdtD
         dff = abs(lng2*wdtD-area)
