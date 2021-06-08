@@ -88,11 +88,11 @@ class Slab2pt0(object):
             # plane of the cross-section
             if qual == 0:
                 minlo, maxlo, minla, maxla, qual = cs.get_mm(2.0)
-                idxslb, dsts = cs.get_grd_nodes_within_buffer(pnts[:, 0],
-                        pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
+                idxslb, dsts = cs.get_grd_nodes_within_buffer(
+                    pnts[:, 0], pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
             if qual == 1:
-                idxslb, dsts = cs.get_grd_nodes_within_buffer_idl(pnts[:, 0],
-                        pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
+                idxslb, dsts = cs.get_grd_nodes_within_buffer_idl(
+                    pnts[:, 0], pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
 
             # Check if the array with cross-section data is not empty
             if idxslb is None:
@@ -111,6 +111,7 @@ class Slab2pt0(object):
                                      numpy.expand_dims(psec[1][iii], axis=1),
                                      numpy.expand_dims(z[iii], axis=1)),
                                     axis=1)
+            pro[:, 2] *= -1
             self.profiles['{:03d}'.format(ics)] = pro
 
     def write_profiles(self, folder):
@@ -236,11 +237,11 @@ class CrossSectionData:
         minlo, maxlo, minla, maxla, qual = self.csec.get_mm()
         if qual == 0:
             minlo, maxlo, minla, maxla, qual = self.csec.get_mm(2.0)
-            idxs, _ = self.csec.get_grd_nodes_within_buffer(dataa[:, 0],
-                dataa[:, 1], bffer, minlo, maxlo, minla, maxla)
+            idxs, _ = self.csec.get_grd_nodes_within_buffer(
+                dataa[:, 0], dataa[:, 1], bffer, minlo, maxlo, minla, maxla)
         if qual == 1:
-            idxs, _ = self.csec.get_grd_nodes_within_buffer_idl(dataa[:, 0],
-                dataa[:, 1], bffer, minlo, maxlo, minla, maxla)
+            idxs, _ = self.csec.get_grd_nodes_within_buffer_idl(
+                dataa[:, 0], dataa[:, 1], bffer, minlo, maxlo, minla, maxla)
         if idxs is not None and len(idxs):
             boo = numpy.zeros_like(dataa[:, 0], dtype=int)
             boo[idxs[0]] = 1
