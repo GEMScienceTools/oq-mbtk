@@ -155,22 +155,22 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
     dmin = +1e100
     dmax = -1e100
     sps = {}
-    #
-    # reading files
-    read_file = False
-    for filename in sorted(glob.glob(os.path.join(foldername, 'cs*.csv'))):
-        #
-        # get the filename ID
+
+    # Reading files
+    pattern = os.path.join(foldername, 'cs*.csv')
+    for filename in sorted(glob.glob(pattern)):
+
+        # Get the filename ID
         sid = re.sub('^cs_', '', re.split('\\.',
                                           os.path.basename(filename))[0])
         if not re.search('[a-zA-Z]', sid):
             sid = '%03d' % int(sid)
-        if not from_id == '.*' and not re.search('[a-zA-Z]', from_id):
+        if from_id != '.*' and not re.search('[a-zA-Z]', from_id):
             from_id = '%03d' % int(from_id)
-        if not to_id == '.*' and not re.search('[a-zA-Z]', to_id):
+        if to_id != '.*' and not re.search('[a-zA-Z]', to_id):
             to_id = '%03d' % int(to_id)
-        #
-        # check the file key
+
+        # Check the file key
         if (from_id == '.*') and (to_id == '.*'):
             read_file = True
         elif (from_id == '.*') and (sid <= to_id):
@@ -181,16 +181,16 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
             read_file = True
         else:
             read_file = False
-        #
-        # reading data
+
+        # Reading data
         if read_file:
             tmpa = numpy.loadtxt(filename)
-            #
-            # selecting depths within the defined range
+
+            # Select depths within the defined range
             j = numpy.nonzero((tmpa[:, 2] >= upper_depth) &
                               (tmpa[:, 2] <= lower_depth))
-            #
-            # upper depth
+
+            # Upper depth
             pntt = False
             if len(j[0]) > 1 and min(j[0]) == 0:
                 # start from top
@@ -201,8 +201,8 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
                 idx = min(j[0])
                 pntt = _get_point_at_depth(tmpa[idx-1, :], tmpa[idx, :],
                                            upper_depth)
-            #
-            # upper depth
+
+            # Lower depth
             pntb = False
             if len(j[0]) > 1 and max(j[0]) == len(tmpa[:, 2])-1:
                 # reached bottom

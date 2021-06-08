@@ -7,14 +7,16 @@ from geojson import LineString, FeatureCollection, dump, Feature
 from openquake.baselib import sap
 
 
-def main(pattern: str, fname_output: str="profiles.geojson"):
+def main(pattern: str, fname_output: str = "profiles.geojson"):
     """
     Creates a geojson file with all the sections included in the text files
     matching the pattern
     """
 
     features = []
+    print(pattern)
     for fname in glob.glob(pattern):
+        print(fname)
         dat = np.loadtxt(fname)
         tmp = LineString([(x, y) for x, y in zip(dat[:, 0], dat[:, 1])])
         features.append(Feature(geometry=tmp))
