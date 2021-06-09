@@ -66,7 +66,7 @@ xmlns:gml="http://www.opengis.net/gml"
                         0.0
                     </upperSeismoDepth>
                     <lowerSeismoDepth>
-                        11.751062011093225
+                        11.751062011093229
                     </lowerSeismoDepth>
                 </simpleFaultGeometry>
                 <magScaleRel>
@@ -80,7 +80,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 minMag="6.05"
                 >
                     <occurRates>
-                        0.00011257094375607366 8.941827903500839e-05 7.102746373796156e-05 5.641911988791793e-05 4.481529990526752e-05
+                        0.00011257094375607371 8.941827903500844e-05 7.10274637379616e-05 5.641911988791797e-05 4.481529990526755e-05
                     </occurRates>
                 </incrementalMFD>
                 <rake>
