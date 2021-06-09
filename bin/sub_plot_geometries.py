@@ -26,13 +26,11 @@ def polyline_from_points(points):
     return poly
 
 
-def plt_catalogue(filename, plotter, max_hypo_depth=350):
+def plt_catalogue(filename, plotter, projection, max_hypo_depth=350):
     """
     :parameter str filename:
     """
     scaling = -1e2
-    # Set projection
-    p1 = Proj(proj='aeqd')
     # Load catalogue
     cat = pickle.load(open(filename, 'rb'))
     points = np.array([cat.data['longitude'], cat.data['latitude'],
@@ -43,7 +41,8 @@ def plt_catalogue(filename, plotter, max_hypo_depth=350):
     mesh['scalars'] = points[:, 2] * scaling
     cmap = plt.cm.get_cmap("jet_r")
     _ = plotter.add_mesh(mesh=mesh, cmap=cmap,
-                         render_points_as_spheres=True)
+                         render_points_as_spheres=True, point_size=2.0)
+
 
 def plot_profiles(foldername, plotter, p1):
     """
@@ -54,7 +53,7 @@ def plot_profiles(foldername, plotter, p1):
         points = numpy.loadtxt(filename)
         points[:, 2] /= -1e2
         polyline = polyline_from_points(points)
-        tube = polyline.tube(radius=0.01)
+        tube = polyline.tube(radius=0.02)
         _ = plotter.add_mesh(tube, smooth_shading=True, color='blue')
 
 
@@ -67,7 +66,7 @@ def plot_edges(foldername, plotter, p1, color):
         points = numpy.loadtxt(filename)
         points[:, 2] /= -1e2
         polyline = polyline_from_points(points)
-        tube = polyline.tube(radius=0.01)
+        tube = polyline.tube(radius=0.02)
         _ = plotter.add_mesh(tube, smooth_shading=True, color=color)
 
 
@@ -81,9 +80,10 @@ def main(fname_config):
 
     projection = Proj(proj='aeqd')
     catalogue_filename = config['general']['catalogue_filename']
-    plt_catalogue(catalogue_filename, plotter)
+    plt_catalogue(catalogue_filename, plotter, projection)
 
     for section in config.sections():
+        print(section)
         if section == 'general':
             pass
         elif section == 'crustal':
