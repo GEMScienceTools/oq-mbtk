@@ -94,6 +94,9 @@ setup(
     platforms=["any"],
     package_data={"openquake.mbt": [
         "README.md", "LICENSE"]},
+    entry_points={
+        'console_scripts': ['oqm = openquake.mbi.__main__:oqm'],
+    },
     include_package_data=True,
     zip_safe=False,
 )
