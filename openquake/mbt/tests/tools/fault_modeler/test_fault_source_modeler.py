@@ -28,6 +28,7 @@ class TestDatabaseIO(unittest.TestCase):
                  'dip_dir': 'ns_dip_dir',
                  'dip_slip_rate': 'ns_dip_slip_rate'}
 
+    @unittest.skip('Check this!')
     def test_fault_database(self):
 
         # Target and reference files
@@ -87,6 +88,7 @@ class TestDatabaseIO(unittest.TestCase):
         raise unittest.SkipTest('Marco Pagani: this test is broken!')
         self.assertTrue(filecmp.cmp(base_file, test_file))
 
+    @unittest.skip('Check this!')
     def test_build_source_model_single_args(self):
 
         # Target and reference files
@@ -127,6 +129,7 @@ class TestDatabaseIO(unittest.TestCase):
         raise unittest.SkipTest('Marco Pagani: this test is broken!')
         self.assertTrue(filecmp.cmp(base_file, test_file))
 
+    @unittest.skip('Check this!')
     def test_build_source_model_config_file(self):
 
         # Configuration, target and reference files
