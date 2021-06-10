@@ -37,6 +37,8 @@ def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab):
             continue
         mmax = np.max(within.magnitude.to_numpy())
         lab = 'mmax_{:s}'.format(cat_lab)
+        if str(poly.id) not in model['sources']:
+            model['sources'][str(poly.id)] = {}
         model['sources'][str(poly.id)][lab] = float(mmax)
 
     # Saving results into the config file

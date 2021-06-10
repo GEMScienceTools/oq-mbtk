@@ -30,5 +30,5 @@ descr = 'Name of the file with the traces of the cross-sections'
 main.fname_cross_sections = descr
 main.bffer = 'Distance [km] to select the slab points close to a cross-section'
 
-if __name__ == '__main__':
-    sap.run(main)
+#if __name__ == '__main__':
+#    sap.run(main)

@@ -30,5 +30,5 @@ main.labels = descr
 descr = 'The name of the output .geojson file'
 main.config_fname = descr
 
-if __name__ == '__main__':
-    sap.run(main)
+#if __name__ == '__main__':
+#    sap.run(main)

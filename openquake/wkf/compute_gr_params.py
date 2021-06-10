@@ -81,10 +81,25 @@ def get_agr(mag, bgr, rate):
 
 def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
                     folder_out: str, use: str = '',
-                    folder_out_figs: str = None, plt_show=False):
+                    folder_out_figs: str = None, plt_show: bool = False):
     """
     This function assignes an a-value to each source with a file selected by
     the provided `fname_input_pattern`.
+
+    :param fname_input_pattern:
+        Pattern to the files which will be processed
+    :param bval:
+        The GR b-value
+    :param fname_config:
+        Path to the file with the configuration parameters:
+    :param folder_out:
+        Path to the folder where to store results
+    :param use:
+        String with a list of comma separated IDs
+    :param folder_out_figs:
+        Path to the folder where to store results
+    :param plt_show:
+        When true the code shows the plots
     """
 
     if len(use) > 0:
@@ -120,7 +135,7 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
         # Processing catalogue
         tcat = _load_catalogue(fname)
 
-        if tcat is None or len(tcat.data['magnitude']) < 2:
+        if tcat is None or len(tcat.data['magnitude']) < 1:
             continue
 
         # Completeness analysis
@@ -310,17 +325,18 @@ def _weichert_analysis(tcat, ctab, binw, cent_mag, n_obs, t_per,
 
     # Computing GR a and b
     weichert_config = {'magnitude_interval': binw,
-                        'reference_magnitude': 0.0}
+                       'reference_magnitude': 0.0}
     weichert = Weichert()
-    bval_wei, sigmab, aval_wei, sigmaa = weichert.calculate(tcat,
-        weichert_config, ctab)
+    bval_wei, sigmab, aval_wei, sigmaa = weichert.calculate(
+        tcat, weichert_config, ctab)
 
     # Computing confidence intervals
     gwci = get_weichert_confidence_intervals
-    lcl, ucl, ex_rates, ex_rates_scaled = gwci(cent_mag, n_obs, t_per,
-                                                bval_wei)
+    lcl, ucl, ex_rates, ex_rates_scaled = gwci(
+        cent_mag, n_obs, t_per, bval_wei)
 
     return aval_wei, bval_wei, lcl, ucl, ex_rates, ex_rates_scaled
+
 
 def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
                    lcl, ucl, mmax, aval_wei, bval_wei, src_id=None,
@@ -330,7 +346,7 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
     ax = plt.gca()
     plt.plot(cent_mag, n_obs/t_per, 'o', markerfacecolor='none')
     plt.plot(cent_mag-binw/2, ex_rates_scaled, 's', markerfacecolor='none',
-                color='red')
+             color='red')
 
     plt.plot(cent_mag-binw/2, lcl, '--', color='darkgrey')
     plt.plot(cent_mag-binw/2, ucl, '--', color='darkgrey')
@@ -344,7 +360,7 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
     plt.xlabel('Magnitude')
     plt.ylabel('Annual rate of exceedance')
     plt.text(0.75, 0.95, 'b_GR = {:.2f}'.format(bval_wei),
-                transform=ax.transAxes)
+             transform=ax.transAxes)
     plt.grid(which='major', color='grey')
     plt.grid(which='minor', linestyle='--', color='lightgrey')
     plt.title(src_id)
@@ -353,9 +369,10 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
         plt.show()
 
 
-def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
-                      folder_out_figs=None, skip=[], binw=None,
-                      plt_show=False):
+def weichert_analysis(fname_input_pattern: str, fname_config: str,
+                      folder_out: str = None, folder_out_figs: str = None,
+                      skip: list = [], binw: float = None,
+                      plt_show: bool = False):
     """
     Computes GR parameters for a set of catalogues stored in a .csv file
 
