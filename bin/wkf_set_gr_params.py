@@ -33,21 +33,21 @@ def set_gr_params(fname_conf: str, *, use: str = "*", method: str = "weichert",
     if exclude is not None:
         exclude = get_list(exclude)
 
-    if method not in ['weichert', 'counting']:
+    if method not in ['weichert', 'counting', 'assigned']:
         raise ValueError("The {:s} option is not supported".format(method))
 
     # Iterate over sources
     labb = "bgr_{:s}".format(method)
     laba = "agr_{:s}".format(method)
 
-    for src_id in model['sources']:
-        if exclude is not None and src_id in exclude:
+    for sid in model['sources']:
+        if exclude is not None and sid in exclude:
             continue
         else:
-            print("src_id:", src_id, " ", method)
-            if use == "*" or src_id in use:
-                output['sources'][src_id]['bgr'] = output['sources'][src_id][labb]
-                output['sources'][src_id]['agr'] = output['sources'][src_id][laba]
+            if use == "*" or sid in use:
+                print("sid: {:>6s} {:s}".format(sid, method))
+                output['sources'][sid]['bgr'] = output['sources'][sid][labb]
+                output['sources'][sid]['agr'] = output['sources'][sid][laba]
 
     # Saving results into the config file
     with open(fname_conf, 'w') as f:
@@ -63,7 +63,7 @@ descr = 'The label with the method used to infer these parameters: '
 descr += 'e.g. weichert, counting'
 set_gr_params.method = descr
 descr = 'A string with source IDs separated by commas'
-set_gr_params.skip = descr
+set_gr_params.exclude = descr
 
 if __name__ == '__main__':
     sap.run(set_gr_params)

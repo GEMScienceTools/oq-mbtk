@@ -5,7 +5,7 @@
 https://wheelhouse.openquake.org/v3/linux/py38/GDAL-3.2.2-cp38-cp38-manylinux1_x86_64.whl
 
 # Version specific
-geopandas == 0.6.3
+geopandas > 0.7.0
 ipykernel >= 4.8.0
 ipython >= 6.2.0
 jupyter_client >= 5.0.0
