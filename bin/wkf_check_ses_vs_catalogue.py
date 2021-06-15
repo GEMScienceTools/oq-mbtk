@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import re
 import os
 import toml
 import pygmt
@@ -40,19 +41,62 @@ def to_df(cat):
     return df
 
 
-def main(fname: str):
+def print_example():
+    tmps = """
+[main]
+# Description of the check
+description = "Puerto Rico"
+# ID of the calculation containing the SES
+calc_id = 1180
+# Duration in years
+ses_duration = 10000
+# Width of the bins in the MFD used for the comparison
+bin_width = 0.5
+# Minimum magnitude used to compare the two datasets
+min_magnitude = 5.0
+# Catalogues containing the observed seismicity
+catalogues = ["./../../catalogueA",
+              "./../../catalogueB"]
+# Name of the file with polygon defining the investigation area. It must
+# be a multipolygon layer
+polygon = "./../polygons/prc.geojson"
+# Directory where to store the results
+output_dir = "./../output/prc"
 
+# Name of the .toml file used to build the model
+fname_config = "./../../subduction/config/m01_int_config.toml"
+completeness_label = "lan"
+
+OR
+
+# Completeness table
+completeness_table = [ [ 2000.0, 4.5,], [ 1970.0, 5.0,], [ 1940.0, 6.0,],
+                       [ 1918.0, 7.0,], [ 1900.0, 7.7,],]
+    """
+    print(tmps)
+
+
+def main(fname: str, *, example_flag: bool = False):
+    """ Compares SES against a catalogue given a .toml configuration file """
+
+    # Print an example of configuration file
+    if example_flag:
+        print_example()
+        exit()
+
+    # Load the .toml file containing the information required
     config_main = toml.load(fname)
     path = os.path.dirname(fname)
 
-    # Reading information in the config file
+    # Read information in the config file
     fname_catalogues = []
-    for tmp in config_main['main']['catalogues']:
-        fname_catalogues.append(os.path.join(path, tmp))
+    for tmp_name in config_main['main']['catalogues']:
+        if not re.search('^/', tmp_name):
+            tmp_name = os.path.join(path, tmp_name)
+        fname_catalogues.append(os.path.join(path, tmp_name))
     calc_id = config_main['main']['calc_id']
     ses_duration = config_main['main']['ses_duration']
     polygon_fname = os.path.join(path, config_main['main']['polygon'])
-    fname_config = os.path.join(path, config_main['main']['fname_config'])
     output_dir = os.path.join(path, config_main['main']['output_dir'])
     descr = config_main['main']['description']
     binw = config_main['main'].get('bin_width', 0.2)
@@ -65,8 +109,6 @@ def main(fname: str):
         tectonic_region = int(config_main['main']['tectonic_region'])
 
     # Checking
-    msg = 'The config file does not exist:\n{:s}'.format(fname_config)
-    assert os.path.exists(fname_config), msg
     msg = 'The polygon file does not exist:\n{:s}'.format(polygon_fname)
     assert os.path.exists(polygon_fname), msg
     if not os.path.exists(output_dir):
@@ -116,14 +158,23 @@ def main(fname: str):
     idx = dfcat.within(geom)
     selcat_df = dfcat.loc[idx]
     selcat = from_df(selcat_df)
-    config = toml.load(fname_config)
+
+    if 'completeness_table' in config_main['main']:
+        ctab = config_main['main']['completeness_table']
+        ctab = np.array(ctab)
+    else:
+        fname_config = os.path.join(path, config_main['main']['fname_config'])
+        msg = 'The config file does not exist:\n{:s}'.format(fname_config)
+        assert os.path.exists(fname_config), msg
+        config = toml.load(fname_config)
+        completeness_label = config_main['main']['completeness_label']
+        _, ctab = get_mmax_ctab(config, completeness_label)
 
     if len(selcat_df.magnitude) < 2:
         print('The catalogue contains less than 2 earthquakes')
         return
 
     selcat.data["dtime"] = selcat.get_decimal_time()
-    mmax, ctab = get_mmax_ctab(config, 'lan')
     cent_mag, t_per, n_obs = get_completeness_counts(selcat, ctab, binw)
     tmp = n_obs/t_per
     hiscml_cat = np.array([np.sum(tmp[i:]) for i in range(0, len(tmp))])
@@ -134,7 +185,7 @@ def main(fname: str):
 
     # SES histogram
     idx = dfr.within(geom)
-    bins = np.arange(5.0, 9.0, binw)
+    bins = np.arange(min_magnitude, 9.0, binw)
     hisr, _ = np.histogram(df.loc[idx].mag, bins=bins)
     hisr = hisr / ses_duration
     hiscml = np.array([np.sum(hisr[i:]) for i in range(0, len(hisr))])
@@ -142,12 +193,13 @@ def main(fname: str):
     # Plotting
     fig = plt.figure(figsize=(7, 5))
     # - cumulative
-    plt.plot(bins[:-1]-binw/2, hiscml, '--x', label='SES')
+    plt.plot(bins[1:]-binw/2, hiscml, '--x', label='SES')
     plt.plot(cent_mag-binw/2, hiscml_cat, '-.x', label='Catalogue')
     # - incremental
     plt.bar(cent_mag, n_obs/t_per, width=binw*0.7, fc='none', ec='red',
             alpha=0.5)
-    plt.bar(bins[:-1], hisr, width=binw*0.6, fc='none', ec='blue', alpha=0.5)
+    plt.bar(bins[1:]-binw/2, hisr, width=binw*0.6, fc='none', ec='blue',
+            alpha=0.5)
     plt.yscale('log')
     _ = plt.xlabel('Magnitude')
     _ = plt.ylabel('Annual frequency of exceedance')
@@ -216,12 +268,10 @@ def main(fname: str):
     plt.savefig(os.path.join(output_dir, 'depth_normalized.png'))
 
 
-descr = 'The ID of a calculation perfomed locally'
-main.calc_id = descr
-descr = 'Name of the folder where to store the profiles'
-main.output_folder = descr
-descr = 'The tectonic region type label'
-main.trt = descr
+descr = 'Name of the .toml configuration file'
+main.fname = descr
+descr = 'A flag. When true the code prints an example of .toml configuration'
+main.example_flag = descr
 
 if __name__ == '__main__':
     sap.run(main)
