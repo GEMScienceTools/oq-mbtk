@@ -9,7 +9,8 @@ from openquake.mbt.tools.model_building.dclustering import decluster
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 
 
-def catalogue_declustering(fname: str, output_folder: str):
+def catalogue_declustering(fname: str, output_folder: str, *,
+                           subcatalogues: bool = False):
     """
     Decluster a catalogue
     """
@@ -23,37 +24,37 @@ def catalogue_declustering(fname: str, output_folder: str):
     cat = _load_catalogue(fname)
     label = np.ones_like(np.array(cat['magnitude']))
     f = h5py.File(tr_fname, 'w')
-    _ = f.create_dataset("stable", data=label)
+    _ = f.create_dataset("undef", data=label)
     f.close()
+
+    labels = ['undef']
 
     # Declustering with the classical GK algorithm
     declustering_meth = 'GardnerKnopoffType1'
     declustering_params = {'time_distance_window': 'GardnerKnopoffWindow',
                            'fs_time_prop': 0.9}
-    labels = ['stable']
     out = decluster(fname,
                     declustering_meth,
                     declustering_params,
                     output_folder,
                     labels=labels,
                     tr_fname=tr_fname,
-                    subcatalogues=True,
-                    olab='_gk_whole',
+                    subcatalogues=subcatalogues,
+                    olab='_gk',
                     save_af=True,
                     fix_defaults=True)
 
     declustering_meth = 'GardnerKnopoffType1'
     declustering_params = {'time_distance_window': 'UhrhammerWindow',
                            'fs_time_prop': 0.9}
-    labels = ['stable']
     out = decluster(fname,
                     declustering_meth,
                     declustering_params,
                     output_folder,
                     labels=labels,
                     tr_fname=tr_fname,
-                    subcatalogues=True,
-                    olab='_uh_whole',
+                    subcatalogues=subcatalogues,
+                    olab='_uh',
                     save_af=True,
                     fix_defaults=True)
 
@@ -61,22 +62,22 @@ def catalogue_declustering(fname: str, output_folder: str):
     declustering_meth = 'GardnerKnopoffType1'
     declustering_params = {'time_distance_window': 'GruenthalWindow',
                            'fs_time_prop': 0.9}
-    labels = ['stable']
-    out = decluster(fname,
-                    declustering_meth,
-                    declustering_params,
-                    output_folder,
-                    labels=labels,
-                    tr_fname=tr_fname,
-                    subcatalogues=True,
-                    olab='_gr_whole',
-                    save_af=True,
-                    fix_defaults=True)
+    _ = decluster(fname,
+                  declustering_meth,
+                  declustering_params,
+                  output_folder,
+                  labels=labels,
+                  tr_fname=tr_fname,
+                  subcatalogues=subcatalogues,
+                  olab='_gr',
+                  save_af=True,
+                  fix_defaults=True)
 
 
-catalogue_declustering.calc_ref = 'first calculation'
-catalogue_declustering.calc = 'second calculation'
-catalogue_declustering.nsigma = 'tolerance as number of sigma'
+catalogue_declustering.fname = 'Name of the .csv formatted catalogue'
+catalogue_declustering.output_folder = 'Path to the output folder'
+msg = 'Boolean, when true it creates subcatalogues'
+catalogue_declustering.subcatalogues = msg
 
 if __name__ == '__main__':
     sap.run(catalogue_declustering)
