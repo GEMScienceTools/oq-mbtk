@@ -56,6 +56,8 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         It can be a string or a list of strings
     :param str tr_fname:
         An .hdf5 file containing the TR classification of the catalogue
+    :param bool subcatalogues:
+        When true creates subcatalogues per tectonic region
     :param str fmat:
         Can be either 'csv' or 'pkl'
     :param str olab:
