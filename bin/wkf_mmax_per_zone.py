@@ -1,20 +1,25 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import os
-import h3
-import json
 import toml
-import shapely
 import pandas as pd
 import numpy as np
 import geopandas as gpd
 from shapely.geometry import Point
-from openquake.wkf.utils import create_folder
 from openquake.baselib import sap
+from openquake.wkf.utils import get_list
 
 
-def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab):
+def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab,
+                  *, use: str = [], skip: str = []):
+
+    if len(use) > 0:
+        use = get_list(use)
+
+    if len(skip) > 0:
+        if isinstance(skip, str):
+            skip = get_list(skip)
+        print('Skipping: ', skip)
 
     # Parsing config
     model = toml.load(fname_conf)
@@ -29,6 +34,10 @@ def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab):
 
     # Iterate over sources
     for idx, poly in polygons_gdf.iterrows():
+
+        src_id = poly.id
+        if (src_id not in use) or (src_id in skip):
+            continue
 
         df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
         gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
@@ -53,6 +62,9 @@ descr = 'The name of configuration file'
 mmax_per_zone.fname_conf = descr
 descr = 'The label used to identify the catalogue'
 mmax_per_zone.cat_lab = descr
+mmax_per_zone.use = 'A list with the ID of sources that should be considered'
+msg = 'A list with the ID of sources that should not be considered'
+mmax_per_zone.skip = msg
 
 if __name__ == '__main__':
     sap.run(mmax_per_zone)

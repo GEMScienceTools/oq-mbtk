@@ -236,7 +236,7 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, skip=[],
     if len(skip) > 0:
         if isinstance(skip, str):
             skip = get_list(skip)
-        print(skip)
+            print('Skipping: ', skip)
 
     # Parsing config
     model = toml.load(fname_config)
@@ -310,17 +310,18 @@ def _weichert_analysis(tcat, ctab, binw, cent_mag, n_obs, t_per,
 
     # Computing GR a and b
     weichert_config = {'magnitude_interval': binw,
-                        'reference_magnitude': 0.0}
+                       'reference_magnitude': 0.0}
     weichert = Weichert()
-    bval_wei, sigmab, aval_wei, sigmaa = weichert.calculate(tcat,
-        weichert_config, ctab)
+    bval_wei, sigmab, aval_wei, sigmaa = weichert.calculate(
+        tcat, weichert_config, ctab)
 
     # Computing confidence intervals
     gwci = get_weichert_confidence_intervals
-    lcl, ucl, ex_rates, ex_rates_scaled = gwci(cent_mag, n_obs, t_per,
-                                                bval_wei)
+    lcl, ucl, ex_rates, ex_rates_scaled = gwci(
+        cent_mag, n_obs, t_per, bval_wei)
 
     return aval_wei, bval_wei, lcl, ucl, ex_rates, ex_rates_scaled
+
 
 def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
                    lcl, ucl, mmax, aval_wei, bval_wei, src_id=None,
@@ -330,7 +331,7 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
     ax = plt.gca()
     plt.plot(cent_mag, n_obs/t_per, 'o', markerfacecolor='none')
     plt.plot(cent_mag-binw/2, ex_rates_scaled, 's', markerfacecolor='none',
-                color='red')
+             color='red')
 
     plt.plot(cent_mag-binw/2, lcl, '--', color='darkgrey')
     plt.plot(cent_mag-binw/2, ucl, '--', color='darkgrey')
@@ -344,7 +345,7 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
     plt.xlabel('Magnitude')
     plt.ylabel('Annual rate of exceedance')
     plt.text(0.75, 0.95, 'b_GR = {:.2f}'.format(bval_wei),
-                transform=ax.transAxes)
+             transform=ax.transAxes)
     plt.grid(which='major', color='grey')
     plt.grid(which='minor', linestyle='--', color='lightgrey')
     plt.title(src_id)
