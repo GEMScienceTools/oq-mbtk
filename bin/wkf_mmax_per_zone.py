@@ -36,7 +36,7 @@ def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab,
     for idx, poly in polygons_gdf.iterrows():
 
         src_id = poly.id
-        if (src_id not in use) or (src_id in skip):
+        if (len(use) > 0 and src_id not in use) or (src_id in skip):
             continue
 
         df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
@@ -47,6 +47,8 @@ def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab,
         mmax = np.max(within.magnitude.to_numpy())
         lab = 'mmax_{:s}'.format(cat_lab)
         model['sources'][str(poly.id)][lab] = float(mmax)
+
+        print('{:10s}: {:5.2f}'.format(src_id, mmax))
 
     # Saving results into the config file
     with open(fname_conf, 'w') as f:

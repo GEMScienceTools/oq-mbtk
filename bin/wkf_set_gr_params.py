@@ -33,7 +33,7 @@ def set_gr_params(fname_conf: str, *, use: str = "*", method: str = "weichert",
     if exclude is not None:
         exclude = get_list(exclude)
 
-    if method not in ['weichert', 'counting']:
+    if method not in ['weichert', 'counting', 'basel']:
         raise ValueError("The {:s} option is not supported".format(method))
 
     # Iterate over sources
@@ -46,8 +46,10 @@ def set_gr_params(fname_conf: str, *, use: str = "*", method: str = "weichert",
         else:
             print("src_id:", src_id, " ", method)
             if use == "*" or src_id in use:
-                output['sources'][src_id]['bgr'] = output['sources'][src_id][labb]
-                output['sources'][src_id]['agr'] = output['sources'][src_id][laba]
+                output['sources'][src_id]['bgr'] = \
+                    output['sources'][src_id][labb]
+                output['sources'][src_id]['agr'] = \
+                    output['sources'][src_id][laba]
 
     # Saving results into the config file
     with open(fname_conf, 'w') as f:
