@@ -5,6 +5,7 @@ import os
 import toml
 import numpy
 import pandas as pd
+import geopandas as gpd
 import matplotlib.pyplot as plt
 from glob import glob
 from openquake.wkf.utils import _get_src_id, create_folder, get_list
@@ -15,6 +16,69 @@ from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 from openquake.mbt.tools.model_building.plt_mtd import create_mtd
 from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
 from openquake.hmtk.seismicity.occurrence.weichert import Weichert
+
+
+def compute_a_value_from_density(fname_input_pattern: str,
+                                 fname_config: str, fname_polygon: str,
+                                 use: str = '', folder_out_figs: str = None,
+                                 plt_show=False):
+    """
+    This function computes the a_gr value for polygons given a rate of
+    occurrence per unit of area. This rate is specified in the `fname_config`
+    file.
+    """
+
+    if len(use) > 0:
+        use = get_list(use)
+
+    # Read the settings
+    model = toml.load(fname_config)
+
+    # Read the file with polygons set projection
+    print(fname_polygon)
+    gdf = gpd.read_file(fname_polygon)
+    gdf = gdf.to_crs({'init': 'epsg:3857'})
+
+    # Loop over polygons
+    for idx, poly in gdf.iterrows():
+
+        # Get source ID
+        src_id = poly.id
+        print(src_id)
+
+        if len(use) > 0 and src_id not in use:
+            print('skipping')
+            continue
+
+        # Getting area in km2
+        area = poly["geometry"].area / 1e6
+
+        # Getting rate and reference mag
+        if (src_id in model['sources'] and
+                'rate_basel' in model['sources'][src_id]):
+            rate = float(model['sources'][src_id]['rate_basel'])
+            bgr = float(model['sources'][src_id]['bgr_basel'])
+            mref = float(model['sources'][src_id]['mref_basel'])
+        else:
+            rate = float(model['baseline']['rate_basel'])
+            bgr = float(model['baseline']['bgr_basel'])
+            mref = float(model['baseline']['mref_basel'])
+
+        # Computing agr
+        agr = numpy.log10(rate * area) + bgr * mref
+
+        # Saving agr
+        if 'sources' not in model:
+            model['sources'] = {}
+        if src_id not in model['sources']:
+            model['sources'][src_id] = {}
+
+        model['sources'][src_id]['agr_basel'] = float('{:.5f}'.format(agr))
+
+    # Saving results into the config file
+    with open(fname_config, 'w') as fou:
+        fou.write(toml.dumps(model))
+        print('Updated {:s}'.format(fname_config))
 
 
 def get_mmax_ctab(model, src_id):
@@ -85,6 +149,15 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
     """
     This function assignes an a-value to each source with a file selected by
     the provided `fname_input_pattern`.
+
+    :param fname_input_pattern:
+        The name of a file or of a pattern
+    :param bval:
+        The b-value of the GR distribution
+    :param fname_config:
+        Configuration file
+    :param folder_out:
+        Path to the output folder
     """
 
     if len(use) > 0:
