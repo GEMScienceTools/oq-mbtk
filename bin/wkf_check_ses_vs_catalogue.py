@@ -88,11 +88,16 @@ def main(fname: str, *, example_flag: bool = False):
     config_main = toml.load(fname)
     path = os.path.dirname(fname)
 
+    print('Root path: {:s}'.format(path))
+
     # Read information in the config file
     fname_catalogues = []
     for tmp_name in config_main['main']['catalogues']:
+        # If not absolute
         if not re.search('^/', tmp_name):
             tmp_name = os.path.join(path, tmp_name)
+            assert os.path.exists(tmp_name)
+            print(tmp_name)
         fname_catalogues.append(os.path.join(path, tmp_name))
     calc_id = config_main['main']['calc_id']
     ses_duration = config_main['main']['ses_duration']
@@ -103,7 +108,7 @@ def main(fname: str, *, example_flag: bool = False):
     min_magnitude = config_main['main'].get('min_magnitude', None)
 
     if ('tectonic_region' not in config_main['main'] or
-        config_main['main']['tectonic_region'] in ['', 'none', 'None']):
+            config_main['main']['tectonic_region'] in ['', 'none', 'None']):
         tectonic_region = None
     else:
         tectonic_region = int(config_main['main']['tectonic_region'])
@@ -193,11 +198,11 @@ def main(fname: str, *, example_flag: bool = False):
     # Plotting
     fig = plt.figure(figsize=(7, 5))
     # - cumulative
-    plt.plot(bins[1:]-binw/2, hiscml, '--x', label='SES')
+    plt.plot(bins[:-1], hiscml, '--x', label='SES')
     plt.plot(cent_mag-binw/2, hiscml_cat, '-.x', label='Catalogue')
     # - incremental
     plt.bar(cent_mag, n_obs/t_per, width=binw*0.7, fc='none', ec='red',
-            alpha=0.5)
+            alpha=0.5, align='center')
     plt.bar(bins[1:]-binw/2, hisr, width=binw*0.6, fc='none', ec='blue',
             alpha=0.5)
     plt.yscale('log')
@@ -222,7 +227,7 @@ def main(fname: str, *, example_flag: bool = False):
              style="c",
              color=dfr.loc[idx].hypo_2,
              cmap=True,
-             sizes=0.01 * (1.5 ** dfr.loc[idx].mag),
+             size=0.01 * (1.5 ** dfr.loc[idx].mag),
              pen="black")
     fig.show()
     fig.savefig(os.path.join(output_dir, 'map_ses.png'))
@@ -237,7 +242,7 @@ def main(fname: str, *, example_flag: bool = False):
              style="c",
              color=selcat_df.depth,
              cmap=True,
-             sizes=0.01 * (1.5 ** selcat_df.magnitude),
+             size=0.01 * (1.5 ** selcat_df.magnitude),
              pen="black")
     fig.show()
     fig.savefig(os.path.join(output_dir, 'map_eqks.png'))

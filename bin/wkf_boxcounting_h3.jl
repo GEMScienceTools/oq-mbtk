@@ -33,7 +33,7 @@ function parse_commandline()
 			arg_type = Int
 			default = Dates.year(today())
 		"--weighting", "-w"
-		    help = "weighting option for events"
+            help = "weighting option for events [one, mfd, completeness]"
 			arg_type = String
 			default = "one"
     end
