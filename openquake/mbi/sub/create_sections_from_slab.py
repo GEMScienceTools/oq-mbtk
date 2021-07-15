@@ -10,7 +10,7 @@ def main(fname_slab: str, pname_out: str, fname_cross_sections: str, *,
          bffer: float = 10):
 
     # Read the traces of the cross-sections
-    names = ['olo', 'ola', 'sle', 'sde', 'azi', 'num', 'ini']
+    names = ['olo', 'ola', 'sde', 'sle', 'azi', 'num', 'ini']
     df = pd.read_csv(fname_cross_sections, names=names, sep='\\s+')
     css = []
     for i, l in df.iterrows():
