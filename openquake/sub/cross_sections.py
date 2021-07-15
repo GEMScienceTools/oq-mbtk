@@ -7,6 +7,7 @@ import os
 import re
 import copy
 import numpy
+from pyproj import Geod
 from collections.abc import Iterable
 
 from openquake.hazardlib.geo.geodetic import distance
@@ -15,7 +16,8 @@ from openquake.hazardlib.geo.line import Line
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.geodetic import (min_distance_to_segment,
                                               point_at, azimuth)
-from pyproj import Geod
+
+from openquake.hazardlib.geo.utils import OrthographicProjection
 from scipy.interpolate import LinearNDInterpolator
 
 from openquake.hmtk.seismicity.selector import CatalogueSelector
@@ -430,15 +432,101 @@ class Trench:
             The length of each trace [in km]
         """
         trch = self.resample(distance)
+        css = []
+        lng = length
         for idx, coo in enumerate(trch.axis.tolist()):
             if idx < len(trch.axis[:, 1]):
-                yield CrossSection(coo[0],
-                                   coo[1],
-                                   [length],
-                                   [(coo[2]+90) % 360])
+                cs = CrossSection(coo[0], coo[1], [lng], [(coo[2]+90) % 360])
+                out = check_intersections(cs, css) if len(css) else None
+                tmp = out if out is not None else lng
+                cs = CrossSection(coo[0], coo[1], [tmp], [(coo[2]+90) % 360])
+                css.append(cs)
+                yield cs, tmp
             else:
                 yield
         return
+
+
+def check_bboxes_overlap(mm0, mm1):
+    """
+    :param mm0:
+        A tuple with lomin, lomax, lamin, lamax
+    :param mm1:
+        A tuple with lomin, lomax, lamin, lamax
+    :return:
+        A boolean which is True when the two bb intersects each other
+    """
+    cond1 = mm0[0] > mm1[1]
+    cond2 = mm0[1] < mm1[0]
+    cond3 = mm0[2] > mm1[3]
+    cond4 = mm0[3] < mm1[2]
+    check = not (cond1 or cond2 or cond3 or cond4)
+    return check
+
+
+def check_intersections(cs, css):
+    """
+    Fixes the cross section trace 'cs' given a set of pre-existing cross
+    section traces in 'css'.
+
+    :param cs:
+        A cross section trace i.e. an instance of
+        :class:`openquake.sub.cross_section.CrossSection`
+    :param css:
+        A list of pre-existing cross sections
+    """
+
+    # Get min and max
+    mm = cs.get_mm()
+    lngs = []
+    for icc, cc in enumerate(css):
+        cmm = cc.get_mm()
+        intersect = check_bboxes_overlap(mm, cmm)
+        if intersect:
+            prj = OrthographicProjection(min(mm[0], cmm[0]),
+                                         max(mm[1], cmm[1]),
+                                         min(mm[2], cmm[2]),
+                                         min(mm[3], cmm[3]))
+            ox, oy = prj(cs.plo, cs.pla)
+            cx, cy = prj(cc.plo, cc.pla)
+
+            for i in range(len(ox)-1):
+                pa = numpy.array([ox[i], oy[i]])
+                pb = numpy.array([ox[i+1], oy[i+1]])
+                for j in range(len(cx)-1):
+                    pc = numpy.array([cx[j], cy[j]])
+                    pd = numpy.array([cx[j+1], cy[j+1]])
+                    chk = check_segments_intersection(pa, pb, pc, pd)
+                    if chk:
+                        # Calculate intersection point
+                        den = (pa[0]-pb[0])
+                        a1 = (pa[1]-pb[1])/den if abs(den) > 1e-10 else 1e100
+                        den = (pc[0]-pd[0])
+                        a2 = (pc[1]-pd[1])/den if abs(den) > 1e-10 else 1e100
+                        b1 = pa[1] - a1*pa[0]
+                        b2 = pc[1] - a2*pc[0]
+                        den = (a1 - a2)
+                        xp = (b2 - b1) / den if abs(den) > 1e-10 else 1e100
+                        yp = a1 * xp + b1
+                        lng = ((ox[i]-xp)**2 + (oy[i]-yp)**2)**0.5
+                        lngs.append(lng)
+    if len(lngs):
+        return numpy.min(numpy.array(lngs))
+    else:
+        return None
+
+
+def ccw(pa, pb, pc):
+    return (pc[1]-pa[1])*(pb[0]-pa[0]) > (pb[1]-pa[1])*(pc[0]-pa[0])
+
+
+def check_segments_intersection(pa, pb, pc, pd):
+    """
+    See:
+    https://bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
+    """
+    return (ccw(pa, pc, pd) != ccw(pb, pc, pd) and
+            ccw(pa, pb, pc) != ccw(pa, pb, pd))
 
 
 def rsmpl(ix, iy, sampling_dist):
@@ -452,8 +540,8 @@ def rsmpl(ix, iy, sampling_dist):
 
     direct = 1
     idx = 0
-    #
-    # create three lists: one with longitude, one with latitude and one
+
+    # Create three lists: one with longitude, one with latitude and one
     # with depth
     lo = list(ix)
     la = list(iy)
@@ -472,8 +560,8 @@ def rsmpl(ix, iy, sampling_dist):
     slo = lo[idx]
     sla = la[idx]
     sde = de[idx]
-    #
-    # resampling
+
+    # Resampling
     while 1:
         #
         # this is a sanity check
