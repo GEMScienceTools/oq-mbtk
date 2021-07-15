@@ -14,7 +14,8 @@ from matplotlib.collections import PatchCollection
 from openquake.sub.cross_sections import Trench
 
 
-def get_cs(trench, ini_filename, cs_len, cs_depth, interdistance, qual):
+def get_cs(trench, ini_filename, cs_len, cs_depth, interdistance, qual,
+           fname_out_cs='cs_traces.cs'):
     """
     :parameter trench:
         An instance of the :class:`Trench` class
@@ -24,22 +25,31 @@ def get_cs(trench, ini_filename, cs_len, cs_depth, interdistance, qual):
         Length of the cross-section [km]
     :parameter interdistance:
         Separation distance between cross-sections [km]
+    :parameter qual:
+        Boolean when true fixes longitudes in proximity of the IDL
+    :parameter fname_out_cs:
+        Name of the file where we write the traces of the cross sections
     """
-    #
+
     # Plot the traces of cross-sections
-    fou = open('cs_traces.cs', 'w')
+    fou = open(fname_out_cs, 'w')
 
     cs_dict = {}
-    for idx, cs in enumerate(trench.iterate_cross_sections(interdistance,
-                                                           cs_len)):
+    for idx, (cs, out) in enumerate(
+            trench.iterate_cross_sections(interdistance, cs_len)):
+
         if cs is not None:
             cs_dict['%s' % idx] = cs
+
             if qual == 1:
                 cs.plo[:] = ([x-360. if x > 180. else x for x in cs.plo[:]])
+
+            # Set the length
+            tmp_len = numpy.min([cs_len, out]) if out is not None else cs_len
             tmps = '%f %f %f %f %f %d %s\n' % (cs.plo[0],
                                                cs.pla[0],
                                                cs_depth,
-                                               cs_len,
+                                               tmp_len,
                                                cs.strike[0],
                                                idx,
                                                ini_filename)
