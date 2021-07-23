@@ -16,7 +16,6 @@ def _get_extremes(dat, wid):
 def _load_catalogue(catalogue_fname):
     ext = pathlib.Path(catalogue_fname).suffix
     if ext == '.pkl' or ext == '.p':
-        #
         # load pickle file
         cat = pickle.load(open(catalogue_fname, 'rb'))
     elif ext in ['.csv', '.hmtk']:
