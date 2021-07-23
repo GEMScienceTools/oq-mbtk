@@ -97,8 +97,8 @@ def main(fname: str, *, example_flag: bool = False):
         if not re.search('^/', tmp_name):
             tmp_name = os.path.join(path, tmp_name)
             assert os.path.exists(tmp_name)
-            print(tmp_name)
-        fname_catalogues.append(os.path.join(path, tmp_name))
+            print('Catalogue: {:s}'.format(tmp_name))
+        fname_catalogues.append(tmp_name)
     calc_id = config_main['main']['calc_id']
     ses_duration = config_main['main']['ses_duration']
     polygon_fname = os.path.join(path, config_main['main']['polygon'])
