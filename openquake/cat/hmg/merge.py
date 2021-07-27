@@ -128,7 +128,7 @@ def geographic_selection(catalogue, shapefile_fname, buffer_dist=0.0):
     tmpgeo = {'col1': ['tmp'], 'geometry': [geom]}
     gdf = gpd.GeoDataFrame(tmpgeo, crs="EPSG:4326")
     aaa = gpd.sjoin(origins, gdf, how="inner", op='intersects')
-    
+
     # This is for checking purposes
     aaa.to_file("/tmp/within.geojson", driver='GeoJSON')
 
@@ -172,6 +172,9 @@ def process_catalogues(settings_fname):
         fname_shp = os.path.join(path, tmps)
         buffr = float(settings["general"].get("region_buffer", 0.))
 
+    if len(settings["catalogues"]) < 1:
+        raise ValueError("Please specify a catalogue in the settings")
+
     # Processing the catalogues
     for icat, tdict in enumerate(settings["catalogues"]):
 
@@ -181,7 +184,7 @@ def process_catalogues(settings_fname):
         cat_code = tdict["code"]
         cat_name = tdict["name"]
 
-        print("\n", cat_name)
+        print("\nCatalogue:", cat_name)
 
         # Reading the first catalogue
         if icat == 0:
@@ -208,6 +211,13 @@ def process_catalogues(settings_fname):
             if 'sidx' not in catroot.__dict__:
                 print("      Building index")
                 catroot._create_spatial_index()
+
+            # Set log files
+            if "log_file" not in tdict:
+                logfle = "/tmp/tmp_merge_{:02d}.tmp".format(icat)
+            else:
+                logfle = tdict["log_file"]
+            print("   Log file: {:s}".format(logfle))
 
         else:
 
