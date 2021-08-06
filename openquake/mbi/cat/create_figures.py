@@ -4,6 +4,7 @@ import os
 import pandas as pd
 
 from openquake.baselib import sap
+from openquake.mbi.cat.create_csv import create_folder
 from openquake.cat.hmg.plot import plot_histogram
 from openquake.cat.hmg.map import plot_catalogue, write_gmt_file
 
@@ -14,6 +15,10 @@ def main(cat_fname: str, *, out_folder: str = './figs', mmin: float = 4.0):
 
     # Read catalogue
     cat = pd.read_hdf(cat_fname)
+
+    #
+    # Create output folder
+    create_folder(out_folder)
 
     #
     # Histogram of the homogenised catalogue
@@ -34,7 +39,7 @@ def main(cat_fname: str, *, out_folder: str = './figs', mmin: float = 4.0):
     fname_gmt = '/tmp/gmt.txt'
     write_gmt_file(cat, fname_gmt=fname_gmt, mmin=4.0)
     fname = os.path.join(out_folder, 'hom_cat_map')
-    fname = plot_catalogue(fname_gmt, fformat="pdf", extent="65/140/10/60",
+    fname = plot_catalogue(fname_gmt, fformat="pdf",
                            fname_fig=fname, topography=topo,
                            title='Homogenised Catalog')
 

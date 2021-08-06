@@ -14,6 +14,7 @@ random.shuffle(COLORS)
 def get_hists(df, bins, agencies=None, column="magMw"):
     """
     :param df:
+        A :class:`pandas.DataFrame` instance
     :param bins:
     :param agencies:
     :param column:
@@ -75,8 +76,10 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     :param fname:
         The name of the output file
     """
+    tmp = sorted(get_agencies(df), reverse=True)
+    print(tmp)
     if not agencies:
-        agencies = sorted(get_agencies(df), reverse=True)
+        agencies = tmp
 
     if 'mthresh' in kwargs:
         mthresh = kwargs['mthresh']
@@ -165,12 +168,18 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     df = df[np.isfinite(df[column])]
     fmt = "Total number of events {:d}, with finite magnitude {:d}"
     print(fmt.format(len(df), num))
+
+    # Info
+    print('Agencies')
+    print(get_agencies(df))
+
     #
     # Settings
     wdt = wdt
     if not agencies:
         agencies = get_agencies(df)
-        print('List of agencies: ', agencies)
+        print('List of agencies plotted: ', agencies)
+
     #
     # Settings plottings
     plt.style.use('seaborn-ticks')

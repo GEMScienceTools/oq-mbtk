@@ -18,6 +18,7 @@
 
 
 import subprocess
+import pandas as pd
 from openquake.cat.hmg.plot import get_agencies
 
 
@@ -62,10 +63,29 @@ def plot_catalogue(fname, fname_fig='/tmp/tmp.txt', **kwargs):
 
     cmds = []
 
+    lonote = 5
     if "extent" in kwargs:
         extent = "-R"+kwargs["extent"]
     else:
-        cmds.append("EXTENT=$(gmt info {:s} -I2 -D1)".format(fname))
+        df = pd.read_csv(fname, sep="\\s+")
+        factor = 0.2
+
+        lomn = df.iloc[:, 0].min()
+        lomx = df.iloc[:, 0].max()
+        lodelta = (lomx - lomn)
+        lomn -= lodelta * factor
+        lomx += lodelta * factor
+        if lodelta < 1:
+            lonote = 0.5
+        elif lodelta < 5:
+            lonote = 2
+
+        lamn = df.iloc[:, 1].min()
+        lamx = df.iloc[:, 1].max()
+        ladelta = (lamx - lamn)
+        lamn -= ladelta * factor
+        lamx += ladelta * factor
+        extent = "-R{:.4f}/{:.4f}/{:.4f}/{:.4f}".format(lomn, lomx, lamn, lamx)
 
     cmds.append("gmt set MAP_FRAME_TYPE = PLAIN")
     cmds.append("gmt set MAP_GRID_CROSS_SIZE_PRIMARY = 0.2i")
@@ -83,20 +103,20 @@ def plot_catalogue(fname, fname_fig='/tmp/tmp.txt', **kwargs):
 
     cmds.append("gmt begin {:s}".format(fname_fig))
 
-    fmt = "gmt coast {:s} {:s} -Bp5 -N1"
-    cmds.append(fmt.format(extent, "-JM10"))
+    fmt = "gmt coast {:s} {:s} -Bp{:f} -N1"
+    cmds.append(fmt.format(extent, "-JM10", lonote))
     cmds.append("gmt coast -Ccyan -Scyan")
 
     tmp = "gawk '{{print $1, $2, 2.4**$3/800}}' {:s}".format(fname)
     tmp += " | gmt plot -Sc0.1 -W0.5,red -Gpink -t50"
 
     cmds.append("gmt plot {:s} -Sc0.1 -W0.5,red -Gpink -t50".format(fname))
-    cmds.append("gmt coast -N1 -t50 -B+t{:s}".format("test"))
+    cmds.append("gmt coast -N1 -t50 -B+t{:s}".format("Catalogue"))
 
     # Running
     cmds.append("gmt end")
     for cmd in cmds:
-        out = subprocess.call(cmd, shell=True)
+        _ = subprocess.call(cmd, shell=True)
 
     tmps = "{:s}.{:s}".format(fname_fig, fformat)
     return tmps
