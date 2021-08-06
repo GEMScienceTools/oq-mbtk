@@ -39,6 +39,28 @@ def _add_defaults(cat):
     return cat
 
 
+def dec(declustering_params, declustering_meth, cat):
+
+    # Declustering parameters
+    config = declustering_params
+
+    # Create declusterer
+    modstr = 'openquake.hmtk.seismicity'
+    module = importlib.import_module(modstr)
+    my_class = getattr(module, declustering_meth)
+    declusterer = my_class()
+
+    # Create distance-time window
+    if 'time_distance_window' in config:
+        my_class = getattr(module, config['time_distance_window'])
+        config['time_distance_window'] = my_class()
+
+    # Declustering
+    vcl, flag = declusterer.decluster(cat, config)
+
+    return vcl, flag
+
+
 def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
               output_path, labels=None, tr_fname=None, subcatalogues=False,
               fmat='csv', olab='', save_af=False, out_fname_ext='',
@@ -87,7 +109,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         ext = '_dec_{:s}_{:s}.{:s}'.format(olab, lbl, fmat)
     else:
         ext = '_dec_{:s}_{:s}.{:s}'.format(olab, out_fname_ext, fmat)
-    #
+
     # Output filename
     out_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
     if output_path is not None:
@@ -95,13 +117,13 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     else:
         output_path = os.path.dirname(catalogue_hmtk_fname)
     out_fname = os.path.abspath(os.path.join(output_path, out_fname))
-    #
+
     # Read the catalogue and adding default values
     cat = _load_catalogue(catalogue_hmtk_fname)
     if fix_defaults:
         cat = _add_defaults(cat)
     cato = copy.deepcopy(cat)
-    #
+
     # Select earthquakes belonging to a given TR. When necessary combining
     # multiple TRs, use label <TR_1>,<TR_2>AND...
     idx = numpy.full(cat.data['magnitude'].shape, True, dtype=bool)
@@ -116,7 +138,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             sumchk += sum(idx_tmp.flatten())
         f.close()
     idx = idx.flatten()
-    #
+
     # Filter catalogue
     num_eqks_sub = len(cat.data['magnitude'])
     if labels is not None:
@@ -124,24 +146,10 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         sel.select_catalogue(idx)
         num_eqks_sub = len(cat.data['magnitude'])
         assert sumchk == num_eqks_sub
-    #
-    # Declustering parameters
-    config = declustering_params
-    #
-    # Create declusterer
-    modstr = 'openquake.hmtk.seismicity'
-    module = importlib.import_module(modstr)
-    my_class = getattr(module, declustering_meth)
-    declusterer = my_class()
-    #
-    # Create distance-time window
-    if 'time_distance_window' in config:
-        my_class = getattr(module, config['time_distance_window'])
-        config['time_distance_window'] = my_class()
-    #
+
     # Declustering
-    vcl, flag = declusterer.decluster(cat, config)
-    #
+    vcl, flag = dec(declustering_params, declustering_meth, cat)
+
     # Save foreshocks and aftershocks
     catt = copy.deepcopy(cat)
     catt.select_catalogue_events(numpy.where(flag != 0)[0])
@@ -149,7 +157,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         ext = '_dec_af_{:s}_{:s}.{:s}'.format(olab, lbl, fmat)
         outfa_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
         outfa_fname = os.path.abspath(os.path.join(output_path, outfa_fname))
-    #
+
     # Select mainshocks
     cat.select_catalogue_events(numpy.where(flag == 0)[0])
     tmps = 'Number of earthquakes in the original subcatalogue: {:d}'
@@ -159,7 +167,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     print('Mainshocks       : {:d}'.format(num_main))
     print('Fore/Aftershocks : {:d}'.format(num_foaf))
     assert num_main + num_foaf == num_eqks_sub
-    #
+
     # Save output
     if fmat == 'csv':
         cat.write_catalogue(out_fname)
@@ -174,7 +182,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             fou = open(outfa_fname, 'wb')
             pickle.dump(catt, fou)
             fou.close()
-    #
+
     # Create subcatalogues
     icat = numpy.nonzero(idx)[0]
     if subcatalogues:
