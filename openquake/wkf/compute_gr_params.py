@@ -132,7 +132,7 @@ def get_agr(mag, bgr, rate):
     """
     :param mag:
         The magnitude to which the parameter `rate` refers to. If the rates
-        are binned this should be the lower limit of the bin with `mag`
+        are binned this should be the lower limit of the bin containing `mag`
     :param bgr:
         The b-value of the Gutenberg-Richer relatioship
     :param rate:
@@ -141,6 +141,35 @@ def get_agr(mag, bgr, rate):
         The a-value of the GR relationship
     """
     return numpy.log10(rate) + bgr * (mag)
+
+
+def _compute_a_value(tcat, ctab, bval, binw):
+
+    if tcat is None or len(tcat.data['magnitude']) < 2:
+        return None, None, None, None
+
+    # Completeness analysis
+    tcat = _add_defaults(tcat)
+    tcat.data["dtime"] = tcat.get_decimal_time()
+    try:
+        cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
+        if cent_mag is None:
+            print('   a-value calculation: completeness analysis failed')
+            return None, None, None, None
+    except ValueError:
+        print('   a-value calculation: completeness analysis failed')
+        return None, None, None, None
+
+    df = pd.DataFrame()
+    df['mag'] = cent_mag
+    df['deltaT'] = t_per
+    df['nobs'] = n_obs
+
+    # Computing GR a. 'exrs' corresponds to N_alpha
+    exrs = get_exrs(df, bval)
+    aval = get_agr(df.mag[0]-binw/2, bval, exrs[0])
+
+    return aval, cent_mag, n_obs, t_per, df
 
 
 def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
@@ -188,62 +217,42 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
             continue
         print(fname)
 
-        mmax, ctab = get_mmax_ctab(model, src_id)
-
         # Processing catalogue
         tcat = _load_catalogue(fname)
+        mmax, ctab = get_mmax_ctab(model, src_id)
+        aval, cmag, n_obs, t_per, df = _compute_a_value(tcat, ctab, bval,
+                                                            binw)
 
-        if tcat is None or len(tcat.data['magnitude']) < 2:
-            continue
-
-        # Completeness analysis
-        tcat = _add_defaults(tcat)
-        tcat.data["dtime"] = tcat.get_decimal_time()
-        try:
-            cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
-            if cent_mag is None:
-                print('   a-value calculation: completeness analysis failed')
-                continue
-        except ValueError:
-            print('   a-value calculation: completeness analysis failed')
-            continue
-
-        df = pd.DataFrame()
-        df['mag'] = cent_mag
-        df['deltaT'] = t_per
-        df['nobs'] = n_obs
-        fout = os.path.join(folder_out, 'occ_count_zone_{:s}'.format(src_id))
-        df.to_csv(fout, index=False)
-
-        # Computing GR a
         if 'sources' not in model:
             model['sources'] = {}
         if src_id not in model['sources']:
             model['sources'][src_id] = {}
 
-        exrs = get_exrs(df, bval)
-        aval = get_agr(df.mag[0]-binw/2, bval, exrs[0])
-
         tmp = "{:.5e}".format(aval)
         model['sources'][src_id]['agr_counting'] = float(tmp)
-
         tmp = "{:.5e}".format(bval)
         model['sources'][src_id]['bgr_counting'] = float(tmp)
 
+        # Computing confidence intervals
         gwci = get_weichert_confidence_intervals
-        lcl, ucl, ex_rates, ex_rates_scaled = gwci(cent_mag, n_obs, t_per,
-                                                   bval)
+        lcl, ucl, ex_rates, ex_rates_scaled = gwci(
+            cmag, n_obs, t_per, bval)
 
+        # Saving results
+        fout = os.path.join(folder_out, 'occ_count_zone_{:s}'.format(src_id))
+        df.to_csv(fout, index=False)
+
+        # Plotting
         _ = plt.figure()
         ax = plt.gca()
-        plt.plot(cent_mag, n_obs/t_per, 'o', markerfacecolor='none')
-        plt.plot(cent_mag-binw/2, ex_rates_scaled, 's', markerfacecolor='none',
+        plt.plot(cmag, n_obs/t_per, 'o', markerfacecolor='none')
+        plt.plot(cmag-binw/2, ex_rates_scaled, 's', markerfacecolor='none',
                  color='red')
 
-        plt.plot(cent_mag-binw/2, lcl, '--', color='black')
-        plt.plot(cent_mag-binw/2, ucl, '--', color='black')
+        plt.plot(cmag-binw/2, lcl, '--', color='black')
+        plt.plot(cmag-binw/2, ucl, '--', color='black')
 
-        xmag = numpy.arange(cent_mag[0]-binw/2, mmax-0.01*binw, binw/2)
+        xmag = numpy.arange(cmag[0]-binw/2, mmax-0.01*binw, binw/2)
         exra = (10.0**(aval - bval * xmag) -
                 10.0**(aval - bval * mmax))
         plt.plot(xmag, exra, '--', lw=3, color='green')
@@ -278,10 +287,20 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
 
 def get_weichert_confidence_intervals(mag, occ, tcompl, bgr):
     """
+    Computes 16th-84th confidence intervals according to Weichert (1980)
+
     :param mag:
+        A vector with the magnitude value of each magnitude bin
     :param occ:
+        The number of occurrences in each magnitude bin
     :param tcompl:
+        Duration [in years] of the completeness interval for each magnitude
+        bin
     :param bgr:
+        The GR b-value
+    :returns:
+        A tuple with: the upper and lower confidence interval, a vector with
+        the occurrence rates and the occurrence rates scaled
     """
 
     beta = bgr * numpy.log(10.0)
@@ -364,7 +383,7 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, skip=[],
         break
 
 
-def _weichert_analysis(tcat, ctab, binw, cent_mag, n_obs, t_per,
+def _weichert_analysis(tcat, ctab, binw, cmag, n_obs, t_per,
                        folder_out=None, src_id=None):
     """
     :param tcat:
@@ -372,59 +391,91 @@ def _weichert_analysis(tcat, ctab, binw, cent_mag, n_obs, t_per,
     :param ctab:
         Completeness table
     :param binw:
-        Binw width folder
-    :param:
+        Binw width
+    :param cent_mag:
         path to the folder where to stopre information
+    :param n_obs:
+        number of observations per bin
+    :param t_per:
+        Duration of completeness interval per each bin
+    :param folder_out:
+        Output folder
     :param src_id:
-        The source id
+        The source ID
     :returns:
-        A tuple with a and b values,
+        A tuple with a and b values, upper and lower limits of the 16th-84th
+        confidence interval, exceedance rates and exceedance rates scaled
     """
 
     # Computing GR a and b
     weichert_config = {'magnitude_interval': binw,
                        'reference_magnitude': 0.0}
     weichert = Weichert()
-    bval_wei, sigmab, aval_wei, sigmaa = weichert.calculate(
-        tcat, weichert_config, ctab)
+    fun = weichert.calculate
+    bval, sigmab, aval, sigmaa = fun(tcat, weichert_config, ctab)
 
     # Computing confidence intervals
     gwci = get_weichert_confidence_intervals
-    lcl, ucl, ex_rates, ex_rates_scaled = gwci(
-        cent_mag, n_obs, t_per, bval_wei)
+    lcl, ucl, exrates, exrates_scaled = gwci(cmag-binw/2, n_obs, t_per, bval)
 
-    return aval_wei, bval_wei, lcl, ucl, ex_rates, ex_rates_scaled
+    return aval, bval, lcl, ucl, exrates, exrates_scaled
+
+
+def _get_gr_double_trunc_exceedance_rates(agr, bgr, cmag, binw, mmax):
+    """
+    Computes exceedance rates for a double truncated GR
+
+    :param agr:
+        GR a-value
+    :param bgr:
+        GR b-value
+    :param cmag:
+        List or array with the values of magnitude at the center of each bin
+    :param binw:
+        The width of the bins used to discretize magnitude
+    :param mmax:
+        The maximum value of magnitude
+    :returns:
+        The magnitude values and the corresponding exceedance rates
+    """
+    xmag = numpy.arange(cmag[0]-binw/2, mmax-0.01*binw, binw/2)
+    exra = (10.0**(agr - bgr * xmag) -
+            10.0**(agr - bgr * mmax))
+    return xmag, exra
 
 
 def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
                    lcl, ucl, mmax, aval_wei, bval_wei, src_id=None,
                    plt_show=False):
 
-    _ = plt.figure()
-    ax = plt.gca()
+    fig, ax = plt.subplots()
+    # Incremental rates of occurrence
     plt.plot(cent_mag, n_obs/t_per, 'o', markerfacecolor='none')
+    # Rates of exceedance
     plt.plot(cent_mag-binw/2, ex_rates_scaled, 's', markerfacecolor='none',
              color='red')
-
+    # Confidence intervals
     plt.plot(cent_mag-binw/2, lcl, '--', color='darkgrey')
     plt.plot(cent_mag-binw/2, ucl, '--', color='darkgrey')
 
-    xmag = numpy.arange(cent_mag[0]-binw/2, mmax-0.01*binw, binw/2)
-    exra = (10.0**(aval_wei - bval_wei * xmag) -
-            10.0**(aval_wei - bval_wei * mmax))
+    fun = _get_gr_double_trunc_exceedance_rates
+    xmag, exra = fun(aval_wei, bval_wei, cent_mag, binw, mmax)
     plt.plot(xmag, exra, '--', lw=3, color='green')
 
     plt.yscale('log')
     plt.xlabel('Magnitude')
     plt.ylabel('Annual rate of exceedance')
-    plt.text(0.75, 0.95, 'b_GR = {:.2f}'.format(bval_wei),
-             transform=ax.transAxes)
+    bbox = dict(facecolor='white', alpha=0.8, edgecolor='None')
+    plt.text(0.98, 0.95, 'b_GR = {:.2f}'.format(bval_wei),
+             transform=ax.transAxes, bbox=bbox, ha='right')
     plt.grid(which='major', color='grey')
     plt.grid(which='minor', linestyle='--', color='lightgrey')
     plt.title(src_id)
 
     if plt_show:
         plt.show()
+
+    return fig
 
 
 def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
