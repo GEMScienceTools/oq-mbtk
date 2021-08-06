@@ -24,6 +24,7 @@ import datetime as dt
 import geopandas as gpd
 
 from openquake.baselib import sap
+from openquake.mbi.cat.create_csv import create_folder
 from geojson import LineString, Feature, FeatureCollection, dump
 
 
@@ -78,13 +79,11 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson):
     cnt = 0
 
     from tqdm import tqdm
-    import numpy as np
     # Loop over the earthquakes in the catalogue
     # datetime can only cover 548 years starting in 1677
-    # general advice will be to exclude historic events and 
+    # general advice will be to exclude historic events and
     # add those later
-    subcat = cat[cat['year']>1800]
-    nat_idx = np.where(pd.isnull(subcat.loc[:, 'datetime'])==False)[0].tolist()
+    subcat = cat[cat['year'] > 1800]
     for index, row in tqdm(subcat.iterrows()):
 
         # Select events that occurred close in space
@@ -152,11 +151,14 @@ def check_catalogue(catalogue_fname, settings_fname):
     # Add datetime field
     if "datetime" not in cat.keys():
         cat['datetime'] = pd.to_datetime(cat[['year', 'month', 'day', 'hour',
-                                              'minute', 'second']], errors = 'coerce')
+                                              'minute', 'second']],
+                                         errors='coerce')
 
     # Set filename
     out_path = settings["general"]["output_path"]
     geojson_fname = os.path.join(out_path, "check.geojson")
+    create_folder(out_path)
+    print('Created: {:s}'.format(out_path))
 
     # Processing the catalogue
     delta_ll = settings["general"]["delta_ll"]
