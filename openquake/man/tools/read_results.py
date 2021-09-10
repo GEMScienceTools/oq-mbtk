@@ -16,6 +16,17 @@ def get_rlzs(folder):
 
 
 def get_mean_hc(folder, imt):
+    """
+    Reads the mean hazard curve found in `folder` for a given imt
+
+    :param folder:
+        Name of the folder
+    :param imt:
+        Name of the imt
+    :returns:
+        The same parameters of the function `read_hazard_curve_csv` i.e. a
+        tuple with: lon, lat, poe, header, imls
+    """
     fmt = 'hazard_curve-mean-{:s}*.csv'
     fname = glob(os.path.join(folder, fmt.format(imt)))
     print('Found: {:s}'.format(fname[0]))
