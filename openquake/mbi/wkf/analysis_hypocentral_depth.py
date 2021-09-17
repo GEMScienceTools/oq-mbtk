@@ -9,7 +9,8 @@ import warnings
 import numpy as np
 from openquake.baselib import sap
 from openquake.wkf.utils import create_folder, get_list
-from openquake.wkf.seismicity import hypocentral_depth_analysis
+from openquake.wkf.seismicity.hypocentral_depth import (
+    hypocentral_depth_analysis)
 
 
 def analyze_hypocentral_depth(folder_subcat: str, *, depth_min: float = 0,
