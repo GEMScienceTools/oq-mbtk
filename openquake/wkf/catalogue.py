@@ -7,6 +7,7 @@ from typing import Type
 from shapely.geometry import Point
 from openquake.hmtk.seismicity.catalogue import Catalogue
 from openquake.wkf.utils import create_folder
+from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
 
 
 def to_df(cat: Type[Catalogue]):
@@ -84,3 +85,56 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
         out_fnames.append(out_fname)
         within.to_csv(out_fname, index=False, columns=columns)
     return out_fnames
+
+
+def get_dataframe(fname):
+    print(fname)
+    parser = ParseNDKtoGCMT(fname)
+    cat_gcmt = parser.read_file()
+    df = pd.DataFrame({k: cat_gcmt.data[k] for k in cat_gcmt.data.keys()})
+    return df
+
+
+def create_gcmt_files(fname_polygons: str, gcmt_filename: str, folder_out: str,
+                      depth_max: float=600.0, depth_min:float=0.0):
+
+    # Create output folder
+    create_folder(folder_out)
+
+    # Create geodataframe with the catalogue
+    tmp = get_dataframe(gcmt_filename)
+
+    # Filter depths
+    df = tmp[(tmp.depth > depth_min) & (tmp.depth <= depth_max)]
+    if len(df) < 0:
+        return []
+
+    # Create geodataframe
+    gdf = gpd.GeoDataFrame(df, crs='epsg:4326', geometry=[Point(xy) for xy
+                           in zip(df.longitude, df.latitude)])
+
+    # Read polygons
+    polygons_gdf = gpd.read_file(fname_polygons)
+
+    # Iterate over sources
+    fnames_list = []
+    for idx, poly in polygons_gdf.iterrows():
+
+        df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
+        gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
+        within = gpd.sjoin(gdf, gdf_poly, op='within')
+
+        if len(df) < 0:
+            continue
+
+        # Create output file
+        if isinstance(poly.id, int):
+            fname = 'subcatalogue_zone_{:d}.csv'.format(poly.id)
+        else:
+            fname = 'subcatalogue_zone_{:s}.csv'.format(poly.id)
+        out_fname = os.path.join(folder_out, fname)
+        within.to_csv(out_fname, index=False)
+
+        fnames_list.append(out_fname)
+
+    return fnames_list
