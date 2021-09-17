@@ -49,7 +49,7 @@ function parse_commandline()
 		"--depth_min", "-n"
 		    help = "Minimum hypocentral depth"
 			arg_type = Float64
-            default = 0.0
+            default = -1.0
 		"--depth_max", "-x"
 		    help = "Maximum hypocentral depth"
 			arg_type = Float64

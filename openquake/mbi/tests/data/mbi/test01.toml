@@ -1,0 +1,13 @@
+
+[settings]
+
+
+[unc.compute_a_value_from_catalogue]
+
+main.fname_input_pattern = '/test/test*.csv'
+main.bval = 1.0
+main.fname_config = '/test/config*.csv'
+main.folder_out = '/test/out'
+main.use = 'None'
+main.folder_out_figs = '/test/figs'
+main.plt_show = 'False'
