@@ -9,11 +9,12 @@ import numpy
 import matplotlib.pyplot as plt
 from openquake.baselib import sap
 from openquake.wkf.utils import _get_src_id, create_folder
+from openquake.wkf.completeness import _plot_ctab
 from openquake.mbt.tools.model_building.plt_mtd import create_mtd
 
 
-def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, skip=[],
-                           **kwargs):
+def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, *,
+                           skip=[], yealim='', **kwargs):
     """
     Analyze the catalogue
     """
@@ -32,11 +33,17 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, skip=[],
             continue
 
         # Create figure
-        out = create_mtd(fname, src_id, None, False, False, 0.5, 10,
+        out = create_mtd(fname, src_id, None, False, False, 0.25, 10,
                          pmint=1900)
 
         if out is None:
             continue
+
+        if len(yealim) > 0:
+            tmp = yealim.split(',')
+            tmp = numpy.array(tmp)
+            tmp = tmp.astype(numpy.float)
+            plt.xlim(tmp)
 
         if 'xlim' in kwargs:
             plt.xlim(kwargs['xlim'])
@@ -49,22 +56,14 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, skip=[],
                 'completeness_table' in model['sources'][src_id]):
             print(' source specific completeness')
             ctab = numpy.array(model['sources'][src_id]['completeness_table'])
+            ctab = ctab.astype(numpy.float)
         else:
             print(' default completeness')
             ctab = numpy.array(model['default']['completeness_table'])
+            ctab = ctab.astype(numpy.float)
 
-        n = len(ctab)
-        for i in range(0, n-1):
-            plt.plot([ctab[i, 0], ctab[i, 0]], [ctab[i, 1],
-                     ctab[i+1, 1]], '-r')
-            plt.plot([ctab[i, 0], ctab[i+1, 0]], [ctab[i+1, 1],
-                     ctab[i+1, 1]], '-r')
-
-        ylim = plt.gca().get_ylim()
-        xlim = plt.gca().get_xlim()
-
-        plt.plot([ctab[n-1, 0], ctab[n-1, 0]], [ylim[1], ctab[n-1, 1]], '-r')
-        plt.plot([ctab[0, 0], xlim[1]], [ctab[0, 1], ctab[0, 1]], '-r')
+        print(ctab)
+        _plot_ctab(ctab)
 
         ext = 'png'
         figure_fname = os.path.join(outdir,
@@ -73,11 +72,12 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, skip=[],
         plt.close()
 
 
-descr = 'Name of a shapefile with polygons'
+descr = 'Pattern for the .csv catalogue files'
 subcatalogues_analysis.fname_input_pattern = descr
 descr = 'Name of the .toml file with configuration parameters'
 subcatalogues_analysis.fname_config = descr
 subcatalogues_analysis.outdir = 'Name of the output folder'
+subcatalogues_analysis.yealim = 'Year range used in the plot'
 
 if __name__ == '__main__':
     sap.run(subcatalogues_analysis)
