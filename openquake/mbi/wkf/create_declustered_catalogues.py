@@ -9,7 +9,7 @@ from openquake.mbt.tools.model_building.dclustering import decluster
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 
 
-def catalogue_declustering(fname: str, output_folder: str, *,
+def catalogue_declustering(fname: str, output_folder: str,
                            subcatalogues: bool = False):
     """
     Decluster a catalogue
@@ -74,10 +74,21 @@ def catalogue_declustering(fname: str, output_folder: str, *,
                   fix_defaults=True)
 
 
-catalogue_declustering.fname = 'Name of the .csv formatted catalogue'
-catalogue_declustering.output_folder = 'Path to the output folder'
+def main(fname: str, output_folder: str, *, subcatalogues: bool = False):
+    """
+    Creates catalogues with mainshocks and after/foreshocks using the GK
+    algorithm and three declustering windows:
+        - Gardner and Knopoff  : gk
+        - Urhammer             : uh
+        - Gruenthal            : gr
+    """
+    catalogue_declustering(fname, output_folder, subcatalogues)
+
+
+main.fname = 'Name of the .csv formatted catalogue'
+main.output_folder = 'Path to the output folder'
 msg = 'Boolean, when true it creates subcatalogues'
-catalogue_declustering.subcatalogues = msg
+main.subcatalogues = msg
 
 if __name__ == '__main__':
-    sap.run(catalogue_declustering)
+    sap.run(main)

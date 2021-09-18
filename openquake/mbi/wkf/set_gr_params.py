@@ -13,7 +13,7 @@ def get_list(tmps):
     return aa
 
 
-def set_gr_params(fname_conf: str, *, use: str = "*", method: str = "weichert",
+def set_gr_params(fname_conf: str, use: str = "*", method: str = "weichert",
                   exclude: str = None):
     """
     Choose the GR parameters to be used for constructing the sources. The
@@ -57,15 +57,20 @@ def set_gr_params(fname_conf: str, *, use: str = "*", method: str = "weichert",
         print('Updated {:s}'.format(fname_conf))
 
 
+def main(fname_conf: str, *, use: str = "*", method: str = "weichert",
+         exclude: str = None):
+    set_gr_params(fname_conf, use, method, exclude)
+
+
 descr = 'The name of configuration file'
-set_gr_params.fname_conf = descr
+main.fname_conf = descr
 descr = 'Can be either a string with * or with source IDs separated by commas'
-set_gr_params.use = descr
+main.use = descr
 descr = 'The label with the method used to infer these parameters: '
 descr += 'e.g. weichert, counting'
-set_gr_params.method = descr
+main.method = descr
 descr = 'A string with source IDs separated by commas'
-set_gr_params.skip = descr
+main.skip = descr
 
 if __name__ == '__main__':
-    sap.run(set_gr_params)
+    sap.run(main)

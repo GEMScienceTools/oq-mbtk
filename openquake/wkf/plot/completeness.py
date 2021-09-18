@@ -13,8 +13,8 @@ from openquake.wkf.completeness import _plot_ctab
 from openquake.mbt.tools.model_building.plt_mtd import create_mtd
 
 
-def completeness_plot(fname_input_pattern, fname_config, outdir, *,
-                      skip=[], yealim='', **kwargs):
+def completeness_plot(fname_input_pattern, fname_config, outdir, skip=[],
+                      yealim='', **kwargs):
     """
     Analyze the catalogue
     """

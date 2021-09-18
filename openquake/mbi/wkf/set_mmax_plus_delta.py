@@ -2,14 +2,8 @@
 # coding: utf-8
 
 import re
-import os
-import h3
-import json
 import toml
 import copy
-import pandas as pd
-import numpy as np
-import geopandas as gpd
 from openquake.baselib import sap
 
 
@@ -39,12 +33,16 @@ def set_mmax_plus_delta(fname_conf: str, mmax_delta: float, min_mmax: None):
         print('Updated {:s}'.format(fname_conf))
 
 
+def main(fname_conf: str, mmax_delta: float, min_mmax: None):
+    set_mmax_plus_delta(fname_conf, mmax_delta, min_mmax)
+
+
 descr = 'The name of configuration file'
-set_mmax_plus_delta.fname_conf = descr
+main.fname_conf = descr
 descr = 'The increment to apply to mmax observed'
-set_mmax_plus_delta.mmax_delta = descr
+main.mmax_delta = descr
 descr = 'The minimum mmax assigned'
-set_mmax_plus_delta.min_mmax = descr
+main.min_mmax = descr
 
 if __name__ == '__main__':
-    sap.run(set_mmax_plus_delta)
+    sap.run(main)

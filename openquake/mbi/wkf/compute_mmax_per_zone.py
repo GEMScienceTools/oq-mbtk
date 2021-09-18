@@ -11,7 +11,7 @@ from openquake.wkf.utils import get_list
 
 
 def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab,
-                  *, use: str = [], skip: str = []):
+                  use: str = [], skip: str = []):
 
     if len(use) > 0:
         use = get_list(use)
@@ -56,17 +56,22 @@ def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab,
         print('Updated {:s}'.format(fname_conf))
 
 
+def main(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab, *,
+         use: str = [], skip: str = []):
+    mmax_per_zone(fname_poly, fname_cat, fname_conf, cat_lab, use, skip)
+
+
 descr = 'The name of the shapefile with the polygons'
-mmax_per_zone.fname_poly = descr
+main.fname_poly = descr
 descr = 'The name of the .csv file with the catalogue'
-mmax_per_zone.fname_cat = descr
+main.fname_cat = descr
 descr = 'The name of configuration file'
-mmax_per_zone.fname_conf = descr
+main.fname_conf = descr
 descr = 'The label used to identify the catalogue'
-mmax_per_zone.cat_lab = descr
-mmax_per_zone.use = 'A list with the ID of sources that should be considered'
+main.cat_lab = descr
+main.use = 'A list with the ID of sources that should be considered'
 msg = 'A list with the ID of sources that should not be considered'
-mmax_per_zone.skip = msg
+main.skip = msg
 
 if __name__ == '__main__':
-    sap.run(mmax_per_zone)
+    sap.run(main)
