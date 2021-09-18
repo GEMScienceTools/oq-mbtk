@@ -13,7 +13,7 @@ from openquake.wkf.seismicity.hypocentral_depth import (
     hypocentral_depth_analysis)
 
 
-def analyze_hypocentral_depth(folder_subcat: str, *, depth_min: float = 0,
+def analyze_hypocentral_depth(folder_subcat: str, depth_min: float = 0,
                               depth_max: float = 300.0, depth_binw: float = 10,
                               folder_out_figs: str = '', show: bool = False,
                               depth_bins: str = '', conf='', use: str = [],
@@ -98,23 +98,36 @@ def analyze_hypocentral_depth(folder_subcat: str, *, depth_min: float = 0,
             print('Updated {:s}'.format(conf))
 
 
-analyze_hypocentral_depth.folder_subcat = 'The folder with the subcatalogues'
-analyze_hypocentral_depth.depth_min = 'The minimum hypocentral depth [km]'
-analyze_hypocentral_depth.depth_max = 'The maximum hypocentral depth [km]'
-analyze_hypocentral_depth.depth_binw = 'The depth bin width [km]'
+def main(folder_subcat: str, *, depth_min: float = 0,
+         depth_max: float = 300.0, depth_binw: float = 10,
+         folder_out_figs: str = '', show: bool = False,
+         depth_bins: str = '', conf='', use: str = [],
+         skip: str = []):
+    """
+    Analyses the distribution of hypocentral depths within a depth interval.
+    """
+    analyze_hypocentral_depth(folder_subcat, depth_min, depth_max, depth_binw,
+                              folder_out_figs, show, depth_bins, conf, use,
+                              skip)
+
+
+main.folder_subcat = 'The folder with the subcatalogues'
+main.depth_min = 'The minimum hypocentral depth [km]'
+main.depth_max = 'The maximum hypocentral depth [km]'
+main.depth_binw = 'The depth bin width [km]'
 descr = "The name of the folder where to store figures"
-analyze_hypocentral_depth.folder_out_figs = descr
+main.folder_out_figs = descr
 descr = "[true/false] when true show figures on screen"
-analyze_hypocentral_depth.show = descr
+main.show = descr
 descr = "String with the bins limits. Overrides depth-min, depth-max, "
 descr += "depth-binw"
-analyze_hypocentral_depth.depth_bins = descr
+main.depth_bins = descr
 descr = "A .toml file. When provided, updated with new info"
-analyze_hypocentral_depth.conf = descr
+main.conf = descr
 descr = "Source IDs to use"
-analyze_hypocentral_depth.use = descr
+main.use = descr
 descr = "Source IDs to skip"
-analyze_hypocentral_depth.skip = descr
+main.skip = descr
 
 if __name__ == '__main__':
-    sap.run(analyze_hypocentral_depth)
+    sap.run(main)

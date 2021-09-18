@@ -21,4 +21,4 @@ main.folder_out = 'Name of the output folder'
 main.source_ids = 'IDs of sources to be considered'
 
 if __name__ == '__main__':
-    sap.run(create_subcatalogues)
+    sap.run(main)

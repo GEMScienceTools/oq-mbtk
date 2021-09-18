@@ -27,4 +27,4 @@ def main(fname):
 main.fname = "Name of the file containing the catalogue"
 
 if __name__ == '__main__':
-    sap.run(fix_catalogue)
+    sap.run(main)

@@ -13,4 +13,4 @@ main.fname_folder = 'Name of the folder with input files'
 main.folder_out = 'Name of the output folder'
 
 if __name__ == '__main__':
-    sap.run(process_gcmt_datafames)
+    sap.run(main)

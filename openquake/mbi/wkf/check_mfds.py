@@ -14,4 +14,4 @@ main.fname_config = "Name of the configuration file"
 main.src_id = "The ID of the source to use"
 
 if __name__ == '__main__':
-    sap.run(check_mfds)
+    sap.run(main)
