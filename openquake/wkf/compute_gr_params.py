@@ -466,7 +466,9 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
     plt.xlabel('Magnitude')
     plt.ylabel('Annual rate of exceedance')
     bbox = dict(facecolor='white', alpha=0.8, edgecolor='None')
-    plt.text(0.98, 0.95, 'b_GR = {:.2f}'.format(bval_wei),
+    plt.text(0.98, 0.95, 'bGR = {:5.3f}'.format(bval_wei),
+             transform=ax.transAxes, bbox=bbox, ha='right')
+    plt.text(0.98, 0.90, 'aGR = {:5.3f}'.format(aval_wei),
              transform=ax.transAxes, bbox=bbox, ha='right')
     plt.grid(which='major', color='grey')
     plt.grid(which='minor', linestyle='--', color='lightgrey')

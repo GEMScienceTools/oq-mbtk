@@ -13,8 +13,8 @@ from openquake.wkf.completeness import _plot_ctab
 from openquake.mbt.tools.model_building.plt_mtd import create_mtd
 
 
-def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, *,
-                           skip=[], yealim='', **kwargs):
+def completeness_plot(fname_input_pattern, fname_config, outdir, skip=[],
+                      yealim='', **kwargs):
     """
     Analyze the catalogue
     """
@@ -70,14 +70,3 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, outdir, *,
                                     'fig_mtd_{:s}.{:s}'.format(src_id, ext))
         plt.savefig(figure_fname, format=ext)
         plt.close()
-
-
-descr = 'Pattern for the .csv catalogue files'
-subcatalogues_analysis.fname_input_pattern = descr
-descr = 'Name of the .toml file with configuration parameters'
-subcatalogues_analysis.fname_config = descr
-subcatalogues_analysis.outdir = 'Name of the output folder'
-subcatalogues_analysis.yealim = 'Year range used in the plot'
-
-if __name__ == '__main__':
-    sap.run(subcatalogues_analysis)
