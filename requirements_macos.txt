@@ -24,3 +24,5 @@ obspy
 prettytable
 tqdm
 tables
+h3
+pygmt
