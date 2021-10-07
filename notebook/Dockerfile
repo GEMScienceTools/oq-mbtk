@@ -51,7 +51,9 @@ RUN pip install pip wheel setuptools --upgrade && \
     cd /usr/src && git clone -q https://github.com/GEMScienceTools/oq-mbtk.git --depth=1 && cd oq-mbtk && \
     pip install rtree && pip install -e . && \
     cd /usr/src && git clone -q https://github.com/GEMScienceTools/gmpe-smtk.git --depth=1 && cd gmpe-smtk && \
-    python3 setup.py install 
+    python3 setup.py install && \
+    cd /usr/src && git clone -q https://github.com/GEMScienceTools/hamlet.git --depth=1 && cd hamlet && \
+    pip install h3 && pip install -e . -r requirements.txt 
 #
 #ENV OQ_CONFIG_FILE /opt/openquake/openquake.cfg
 #ADD openquake.cfg /opt/openquake/openquake.cfg
