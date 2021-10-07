@@ -34,25 +34,27 @@ RUN apt-get update \
     build-essential python3 python3-pip python3-dev python3-venv && \ 
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
     useradd -m -u 1000 -s /bin/bash openquake  
-
+#
+ARG oq_branch
 ENV LANG en_US.UTF-8
-
 # Create venv
 ENV VIRTUAL_ENV=/opt/openquake
 RUN python3 -m venv $VIRTUAL_ENV 
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV GMT_SESSION_NAME=$$
-
+#
 # Install engine and tools
-RUN pip install wheel --upgrade && \
-    pip install notebook==6.3.0 jupyterlab==3.0.14 ipywidgets && \
-    cd /usr/src && git clone https://github.com/gem/oq-engine.git --depth=1 && cd oq-engine && \ 
-    pip install -r requirements-py38-linux64.txt && pip install -e . && \ 
-    cd /usr/src && git clone https://github.com/GEMScienceTools/oq-mbtk.git --depth=1 && cd oq-mbtk && \
+RUN pip install pip wheel setuptools --upgrade && \
+    pip install notebook jupyterlab ipywidgets && \
+    cd /usr/src && git clone -q --depth=1 -b $oq_branch https://github.com/gem/oq-engine.git && cd oq-engine && \
+    pip --disable-pip-version-check install -e . -r requirements-py38-linux64.txt --no-warn-script-location && \
+    cd /usr/src && git clone -q https://github.com/GEMScienceTools/oq-mbtk.git --depth=1 && cd oq-mbtk && \
     pip install rtree && pip install -e . && \
-    cd /usr/src && git clone https://github.com/GEMScienceTools/gmpe-smtk.git --depth=1 && cd gmpe-smtk && \
-    python3 setup.py install && \
-    pip install setuptools --upgrade
+    cd /usr/src && git clone -q https://github.com/GEMScienceTools/gmpe-smtk.git --depth=1 && cd gmpe-smtk && \
+    python3 setup.py install 
+#
+#ENV OQ_CONFIG_FILE /opt/openquake/openquake.cfg
+#ADD openquake.cfg /opt/openquake/openquake.cfg
 #
 USER openquake
 WORKDIR /home/openquake
