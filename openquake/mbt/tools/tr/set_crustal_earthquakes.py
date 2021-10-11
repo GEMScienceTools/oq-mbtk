@@ -93,8 +93,10 @@ class SetCrustalEarthquakes():
             treg = np.logical_and(treg, isel)
 
         tl = np.zeros(len(treg),
-                      dtype={'names': ('lon', 'lat', 'dep', 'moh', 'idx'),
-                             'formats': ('f8', 'f8', 'f8', 'f8', 'i4')})
+                      dtype={'names': ('eid', 'lon', 'lat', 'dep', 'moh', 'idx'),
+                             'formats': ('f8', 'f8', 'f8', 'f8', 'f8', 'i4')})
+
+        tl['eid'] = icat.data['eventID']
         tl['lon'] = icat.data['longitude']
         tl['lat'] = icat.data['latitude']
         tl['dep'] = icat.data['depth']
