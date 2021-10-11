@@ -285,9 +285,10 @@ class SetSubductionEarthquakes:
         #
         #
         tl = np.zeros(len(idxa),
-                      dtype={'names': ('lon', 'lat', 'dep', 'subd', 'srfd',
+                      dtype={'names': ('eid', 'lon', 'lat', 'dep', 'subd', 'srfd',
                                        'idx'),
-                             'formats': ('f8', 'f8', 'f8', 'f8', 'f8', 'i4')})
+                             'formats': ('f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'i4')})
+        tl['eid'] = cat.data['eventID']
         tl['lon'] = cat.data['longitude']
         tl['lat'] = cat.data['latitude']
         tl['dep'] = cat.data['depth']
@@ -296,8 +297,8 @@ class SetSubductionEarthquakes:
         tl['idx'] = idxa
         #
         # store log data
-        if self.label not in flog.keys():
-            grp.create_dataset('data', data=np.array(tl))
+
+        grp.create_dataset('data', data=np.array(tl))
         #
         # updating the selection array
         for uuu, iii in enumerate(list(idxa)):
