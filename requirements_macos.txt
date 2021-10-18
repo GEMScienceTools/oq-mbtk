@@ -26,3 +26,4 @@ tqdm
 tables
 h3
 pygmt
+reportlab
