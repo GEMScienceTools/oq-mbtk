@@ -93,13 +93,13 @@ def main(fname, *, outname='report_lt.pdf'):
 
         i += 1
         if i > 5:
-            canvas.showPage()
+            c.showPage()
             i = 0
 
     c.showPage()
     c.save()
 
-    print("Generated file {:s}".format(outfname))
+    print("Generated file {:s}".format(outname))
 
 
 main.fname = 'Name of the .xml file with the logic tree'
