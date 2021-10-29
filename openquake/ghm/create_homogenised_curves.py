@@ -487,32 +487,27 @@ def buffer_processing(outpath, datafolder, sidx_fname, imt_str, models_list,
     fuu.close()
 
 
-def main(argv):
-    """
-    Process the original hazard curves. The required input information is
-    described in the header of the `process_maps` function.
-    """
-    p = sap.Script(process_maps)
-    #
-    # Logging
-    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.ERROR)
-    #
-    # Settings
-    p.arg(name='contacts_shp', help='Name of shapefile with contacts')
-    p.arg(name='outpath', help='Output folder')
-    p.arg(name='datafolder', help='Folder with the mosaic repository')
-    p.arg(name='sidx_fname', help='Rtree spatial index file with ref. grid')
-    p.arg(name='boundaries_shp', help='Name of shapefile with boundaries')
-    p.arg(name='imt_str', help='String with the intensity measure type')
-    p.arg(name='inland_shp', help='Name of shapefile with inland territories')
-    p.opt(name='models_list', help='List of models to be processed')
-    #
-    # Processing
-    if len(argv) < 1:
-        print(p.help())
-    else:
-        p.callfunc()
+def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
+             imt_str, inland_shp, models_list=None,
+             only_buffers=False):
 
+    process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
+        imt_str, inland_shp, models_list, only_buffers)
+
+process.contacts_shp = 'Name of shapefile with contacts'
+process.outpath = 'Output folder'
+process.datafolder = 'Folder with the mosaic repository'
+process.sidx_fname = 'Rtree spatial index file with ref. grid'
+process.boundaries_shp = 'Name of shapefile with boundaries'
+process.imt_str = 'String with the intensity measure type'
+process.inland_shp = 'Name of shapefile with inland territories'
+process.models_list = 'List of models to be processed'
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    """
+    This function processes all the models listed in the mosaic.DATA
+    dictionary. The code creates for the models in contact with other models
+    a file with the points outside of the buffer area
+
+    """
+    sap.run(process)
