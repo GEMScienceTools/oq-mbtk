@@ -490,7 +490,10 @@ def buffer_processing(outpath, datafolder, sidx_fname, imt_str, models_list,
 def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
              imt_str, inland_shp, models_list=None,
              only_buffers=False):
-
+    """
+    This function processes all the models listed in the mosaic.DATA dictionary
+    and creates homogenised curves.
+    """
     process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         imt_str, inland_shp, models_list, only_buffers)
 
@@ -504,10 +507,4 @@ process.inland_shp = 'Name of shapefile with inland territories'
 process.models_list = 'List of models to be processed'
 
 if __name__ == "__main__":
-    """
-    This function processes all the models listed in the mosaic.DATA
-    dictionary. The code creates for the models in contact with other models
-    a file with the points outside of the buffer area
-
-    """
     sap.run(process)
