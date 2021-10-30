@@ -6,12 +6,6 @@ import os
 import unittest
 import numpy as np
 
-# MN: 'create_ruptures' imported but never used
-from openquake.sub.slab.rupture import create_ruptures
-
-# MN: 'StrasserIntraslab' imported but never used
-from openquake.hazardlib.scalerel.strasser2010 import StrasserIntraslab
-
 BASE_DATA_PATH = os.path.dirname(__file__)
 
 
