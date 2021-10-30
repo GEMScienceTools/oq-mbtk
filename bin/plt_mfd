@@ -2,7 +2,7 @@
 
 import sys
 from openquake.baselib import sap
-from openquake.mbt.tools.model_building.plt_tools import plot_mfd, _get_compl_table
+from openquake.mbt.tools.model_building.plt_mfd import plot_mfd, _get_compl_table
 
 
 def plot(catalogue_fname, grd, label, store, tr_fname, compl_fname, mwid=0.1):
@@ -15,9 +15,8 @@ def plot(catalogue_fname, grd, label, store, tr_fname, compl_fname, mwid=0.1):
     """
     ctab = None
     if compl_fname:
-        ctab = _get_compl_table(compl_fname)
+        ctab = _get_compl_table(compl_fname,label)
     plot_mfd(catalogue_fname, grd, label, store, tr_fname, ctab, mwid)
-
 
 def main(argv):
     """
