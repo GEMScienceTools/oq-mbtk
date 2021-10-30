@@ -30,7 +30,10 @@ def main(h3_mapping: str, h3_level: int, folder_out: str):
 
     # Writing output
     for sid in df.sid.unique():
-        tmps = '{:02d}.csv'.format(sid)
+        if isinstance(sid, str):
+            tmps = '{:s}.csv'.format(sid[0:3])
+        else:
+            tmps = '{:02d}.csv'.format(sid)
         fname_out = os.path.join(folder_out, tmps)
         print(fname_out)
         tdf = df.loc[df.sid == sid]
