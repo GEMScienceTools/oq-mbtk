@@ -1,0 +1,13 @@
+CMDLINE /Users/mpagani/Repos/venv/bin/python3 ../create_homogenised_curves.py ./../data/gis/contacts_between_models.shp /tmp/ghm /Users/mpagani/Repos//mosaic /Users/mpagani/Data/gem//global_grid/trigrd_split_9_spacing_13 ./../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp PGA ./../data/gis/inland.shp
+MEM 0.250000 1559134797.6133
+MEM 15.324219 1559134797.7156
+MEM 26.203125 1559134797.8199
+MEM 37.375000 1559134797.9249
+MEM 48.000000 1559134798.0290
+MEM 62.359375 1559134798.1293
+MEM 72.808594 1559134798.2305
+MEM 81.804688 1559134798.3318
+MEM 89.015625 1559134798.4321
+MEM 95.066406 1559134798.5356
+MEM 107.960938 1559134798.6359
+MEM 115.371094 1559134798.7369
