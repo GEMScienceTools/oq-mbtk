@@ -93,28 +93,21 @@ def create_map(path_in, prefix, fname_out, path_out, imt_str, pex=None,
     write_hazard_map(path_out, lons, lats, pex, dat, imt_str)
 
 
-def main(argv):
+def map(path_in, prefix, fname_out, path_out, imt_str, pex=None, iml=None):
     """
     Creates a hazard map from a set of hazard curves
     """
-    p = sap.Script(create_map)
-    #
-    # Settings
-    p.arg(name='path_in', help='Name of the file with input .json files')
-    p.arg(name='prefix', help='Prefix for selecting files')
-    p.arg(name='fname_out', help='Name output csv file')
-    p.arg(name='path_out', help='Path to the output folder')
-    p.arg(name='imt_str', help='String describing the IMT')
-    p.opt(name='pex', help='Probability of exceedance')
-    msg = 'Intensity measure level used for building the maps'
-    p.opt(name='iml', help=msg)
-    #
-    # Processing
-    if len(argv) < 1:
-        print(p.help())
-    else:
-        p.callfunc()
+    create_map(path_in, prefix, fname_out, path_out, imt_str, pex, iml)
+
+
+map.path_in = 'Name of the file with input .json files'
+map.prefix = 'Prefix for selecting files'
+map.fname_out = 'Name output csv file'
+map.path_out = 'Path to the output folder'
+map.imt_str = 'String describing the IMT'
+map.pex = 'Probability of exceedance'
+map.iml = 'Intensity measure level used for building the maps'
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sap.run(process)
