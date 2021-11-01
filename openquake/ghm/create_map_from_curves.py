@@ -110,4 +110,4 @@ map.iml = 'Intensity measure level used for building the maps'
 
 
 if __name__ == "__main__":
-    sap.run(process)
+    sap.run(map)
