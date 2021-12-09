@@ -3,15 +3,15 @@
 
 import re
 import os
+import sys
+import importlib
 import toml
-import pygmt
 import json
 import numpy as np
 import pandas as pd
 import geojson as geoj
 import geopandas as gpd
 import matplotlib.pyplot as plt
-from openquake.baselib import sap
 from shapely.geometry import shape
 from openquake.wkf.utils import create_folder
 from openquake.commonlib.datastore import read
@@ -20,8 +20,16 @@ from openquake.hmtk.seismicity.catalogue import Catalogue
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
 
+pygmt_installed = importlib.util.find_spec("pygmt") is not None
+if pygmt_installed:
+    import pygmt
+
 
 def from_df(df, end_year=None):
+    """
+    :param df:
+        A :class:`pd.DataFrame` instance with the catalogue
+    """
     cat = Catalogue()
     for column in df:
         if (column in Catalogue.FLOAT_ATTRIBUTE_LIST or
@@ -82,13 +90,12 @@ def check_ses_vs_catalogue(fname: str, *, example_flag: bool = False):
     # Print an example of configuration file
     if example_flag:
         print_example()
-        exit()
+        sys.exit()
 
     # Load the .toml file containing the information required
     config_main = toml.load(fname)
     path = os.path.dirname(fname)
-
-    print('Root path: {:s}'.format(path))
+    print(f'Root path: {path}')
 
     # Read information in the config file
     fname_catalogues = []
@@ -97,7 +104,7 @@ def check_ses_vs_catalogue(fname: str, *, example_flag: bool = False):
         if not re.search('^/', tmp_name):
             tmp_name = os.path.join(path, tmp_name)
             assert os.path.exists(tmp_name)
-            print('Catalogue: {:s}'.format(tmp_name))
+            print(f'Catalogue: {tmp_name}')
         fname_catalogues.append(tmp_name)
     calc_id = config_main['main']['calc_id']
     ses_duration = config_main['main']['ses_duration']
@@ -114,7 +121,7 @@ def check_ses_vs_catalogue(fname: str, *, example_flag: bool = False):
         tectonic_region = int(config_main['main']['tectonic_region'])
 
     # Checking
-    msg = 'The polygon file does not exist:\n{:s}'.format(polygon_fname)
+    msg = f'The polygon file does not exist:\n{polygon_fname}'
     assert os.path.exists(polygon_fname), msg
     if not os.path.exists(output_dir):
         create_folder(output_dir)
@@ -169,7 +176,7 @@ def check_ses_vs_catalogue(fname: str, *, example_flag: bool = False):
         ctab = np.array(ctab)
     else:
         fname_config = os.path.join(path, config_main['main']['fname_config'])
-        msg = 'The config file does not exist:\n{:s}'.format(fname_config)
+        msg = f'The config file does not exist:\n{fname_config}'
         assert os.path.exists(fname_config), msg
         config = toml.load(fname_config)
         completeness_label = config_main['main']['completeness_label']
@@ -218,34 +225,36 @@ def check_ses_vs_catalogue(fname: str, *, example_flag: bool = False):
     plt.savefig(os.path.join(output_dir, 'ses.png'))
 
     # Plot map with the SES
-    fig = pygmt.Figure()
-    fig.basemap(region=region, projection="M15c", frame=True)
-    fig.coast(land="#666666", water="skyblue")
-    pygmt.makecpt(cmap="jet", series=[0, 300])
-    fig.plot(x=dfr.loc[idx].hypo_0,
-             y=dfr.loc[idx].hypo_1,
-             style="c",
-             color=dfr.loc[idx].hypo_2,
-             cmap=True,
-             size=0.01 * (1.5 ** dfr.loc[idx].mag),
-             pen="black")
-    fig.show()
-    fig.savefig(os.path.join(output_dir, 'map_ses.png'))
+    if pygmt_installed:
+        fig = pygmt.Figure()
+        fig.basemap(region=region, projection="M15c", frame=True)
+        fig.coast(land="#666666", water="skyblue")
+        pygmt.makecpt(cmap="jet", series=[0, 300])
+        fig.plot(x=dfr.loc[idx].hypo_0,
+                 y=dfr.loc[idx].hypo_1,
+                 style="c",
+                 color=dfr.loc[idx].hypo_2,
+                 cmap=True,
+                 size=0.01 * (1.5 ** dfr.loc[idx].mag),
+                 pen="black")
+        fig.show()
+        fig.savefig(os.path.join(output_dir, 'map_ses.png'))
 
     # Plot map with catalogue
-    fig = pygmt.Figure()
-    fig.basemap(region=region, projection="M15c", frame=True)
-    fig.coast(land="#666666", water="skyblue")
-    pygmt.makecpt(cmap="jet", series=[0, 300])
-    fig.plot(x=selcat_df.longitude,
-             y=selcat_df.latitude,
-             style="c",
-             color=selcat_df.depth,
-             cmap=True,
-             size=0.01 * (1.5 ** selcat_df.magnitude),
-             pen="black")
-    fig.show()
-    fig.savefig(os.path.join(output_dir, 'map_eqks.png'))
+    if pygmt_installed:
+        fig = pygmt.Figure()
+        fig.basemap(region=region, projection="M15c", frame=True)
+        fig.coast(land="#666666", water="skyblue")
+        pygmt.makecpt(cmap="jet", series=[0, 300])
+        fig.plot(x=selcat_df.longitude,
+                 y=selcat_df.latitude,
+                 style="c",
+                 color=selcat_df.depth,
+                 cmap=True,
+                 size=0.01 * (1.5 ** selcat_df.magnitude),
+                 pen="black")
+        fig.show()
+        fig.savefig(os.path.join(output_dir, 'map_eqks.png'))
 
     # Depth histogram
     deptw = 10.
@@ -263,7 +272,7 @@ def check_ses_vs_catalogue(fname: str, *, example_flag: bool = False):
              fc='white', ec='red', alpha=0.5, lw=1.5, label='catalogue')
     for dep, val in zip(bins[:-1], hiscat):
         if val > 0:
-            plt.text(val/sum(hiscat), dep, s='{:.2f}'.format(val))
+            plt.text(val/sum(hiscat), dep, s=f'{val:.2f}')
     plt.gca().invert_yaxis()
     _ = plt.ylabel('Depth [km]')
     _ = plt.xlabel('Count')
