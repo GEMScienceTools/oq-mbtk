@@ -16,11 +16,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
-from setuptools import setup, find_packages
 import re
 import sys
+from setuptools import setup, find_packages
 
-url = "https://github.com/GEMScienceTools/oq-mbtk"
+URL = "https://github.com/GEMScienceTools/oq-mbtk"
 
 README = """
 Python and OpenQuake-based Toolkit for the construction of Seismic Source
@@ -28,11 +28,12 @@ Models
 Copyright (C) 2017-2021 GEM Foundation
 """
 
+README = """ Model Building Toolkit"""
+
 
 def get_version():
     version_re = r"^__version__\s+=\s+['\"]([^'\"]*)['\"]"
     version = None
-
     package_init = 'openquake/mbt/__init__.py'
     for line in open(package_init, 'r'):
         version_match = re.search(version_re, line, re.M)
@@ -41,7 +42,6 @@ def get_version():
             break
     else:
         sys.exit('__version__ variable not found in %s' % package_init)
-
     return version
 
 
@@ -51,7 +51,7 @@ setup(
     name='openquake.mbt',
     version=version,
     description=README,
-    url=url,
+    url=URL,
     packages=find_packages(exclude=['tests', 'tests.*']),
     # Minimal requirements, for a complete list see requirements-*.txt
     # matplotlib is brought by the openquake engine
@@ -63,7 +63,6 @@ setup(
         'ipython >= 6.2.0',
         'notebook >= 5.0.0',
         'nbformat',
-        'GDAL',
         'pyproj',
         'rtree',
         'geojson',
@@ -71,15 +70,16 @@ setup(
         'obspy',
         'prettytable',
         'tqdm',
-        'tables',
         'pylint >= 2.1.1'
+        #'GDAL',
+        #'tables',
     ],
     python_requires='>=3.8',
     author='GEM Foundation',
     author_email='hazard@globalquakemodel.org',
     maintainer='GEM Foundation',
     maintainer_email='hazard@globalquakemodel.org',
-    classifiers=(
+    classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Education',
         'Intended Audience :: Science/Research',
@@ -87,7 +87,7 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
         'Topic :: Scientific/Engineering',
-    ),
+    ],
     namespace_packages=['openquake'],
     keywords="seismic hazard",
     license="AGPL3",
