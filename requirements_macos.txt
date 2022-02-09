@@ -2,7 +2,7 @@
 # OQ mbtk requirements
 
 # From OQ wheels
-https://wheelhouse.openquake.org/v3/macos/py38/GDAL-3.2.2-cp38-cp38-macosx_10_14_x86_64.whl
+#https://wheelhouse.openquake.org/v3/macos/py38/GDAL-3.2.2-cp38-cp38-macosx_10_14_x86_64.whl
 
 # Version specific
 geopandas >= 0.6.3
