@@ -25,7 +25,7 @@ URL = "https://github.com/GEMScienceTools/oq-mbtk"
 README = """
 Python and OpenQuake-based Toolkit for the construction of Seismic Source
 Models
-Copyright (C) 2017-2021 GEM Foundation
+Copyright (C) 2017-2022 GEM Foundation
 """
 
 README = """ Model Building Toolkit"""
@@ -71,8 +71,8 @@ setup(
         'prettytable',
         'tqdm',
         'pylint >= 2.1.1'
+        'tables',
         #'GDAL',
-        #'tables',
     ],
     python_requires='>=3.8',
     author='GEM Foundation',

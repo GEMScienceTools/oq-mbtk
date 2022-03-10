@@ -71,3 +71,13 @@ def get_table_mag_agency(work, mthresh=5.0, nthresh=0):
     x.add_row(["TOTAL", "", "{:d}".format(total)])
 
     return x, tbl
+
+
+def get_number_unique_events_per_agency(work, mthresh=5.0):
+    """
+    :param work:
+        A :class:`pandas.DataFrame` instance
+    :param mthresh:
+        Minimum magnitude (original scale) threshold
+    """
+    yyy = work[(work["value"] > mthresh)]
