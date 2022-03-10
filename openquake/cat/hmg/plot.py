@@ -1,9 +1,12 @@
+
+import os
 import random
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib._color_data as mcds
 
+from pathlib import Path
 from matplotlib.legend import Legend
 
 COLORS = [mcds.XKCD_COLORS[k] for k in mcds.XKCD_COLORS]
@@ -37,11 +40,11 @@ def get_hists(df, bins, agencies=None, column="magMw"):
 
 
 def get_ranges(agencies, df, mthresh=-10.0):
-    #
+
     # Getting the list of agencies
     if not agencies:
         agencies = get_agencies(df)
-    #
+
     # Computing the time interval
     out = []
     num = []
@@ -77,7 +80,6 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
         The name of the output file
     """
     tmp = sorted(get_agencies(df), reverse=True)
-    print(tmp)
     if not agencies:
         agencies = tmp
 
@@ -102,11 +104,7 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     lws = np.array(num)/max(num) * (max_wdt-min_wdt) + min_wdt
 
     # Plotting
-
-    if "height" in kwargs:
-        height = kwargs["height"]
-    else:
-        height = 8
+    height = kwargs.get("height", 8)
 
     _ = plt.figure(figsize=(10, height))
     ax = plt.subplot(1, 1, 1)
@@ -129,7 +127,7 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     xx.extend(agencies)
     ax.set_yticks(range(len(agencies)))
     ax.set_yticklabels(agencies)
-    #
+
     # Creating legend for thickness
     idx2 = np.argmin(num)
     idx1 = np.argmax(num)
@@ -163,6 +161,8 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
         The name of the output file
     """
 
+    df = df.astype({column: 'float32'})
+
     # Filtering
     num = len(df)
     df = df[np.isfinite(df[column])]
@@ -173,22 +173,20 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     print('Agencies')
     print(get_agencies(df))
 
-    #
     # Settings
     wdt = wdt
     if not agencies:
         agencies = get_agencies(df)
         print('List of agencies plotted: ', agencies)
 
-    #
     # Settings plottings
     plt.style.use('seaborn-ticks')
     mpl.rcParams['lines.linewidth'] = 2
     mpl.rcParams['axes.labelsize'] = 16
-    #
+
     # Data
     mw = df[column].values
-    #
+
     # Creating bins and total histogram
     mmi = np.floor(min(mw)/wdt)*wdt-wdt
     mma = np.ceil(max(mw)/wdt)*wdt+wdt
@@ -231,6 +229,9 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=5,
               fontsize='large')
 
+    # Save figure
+    folder = os.path.dirname(fname)
+    Path(folder).mkdir(parents=True, exist_ok=True)
     plt.savefig(fname)
 
     if "xlim" in kwargs:
@@ -240,5 +241,4 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
         ax.set_ylim(kwargs["ylim"])
 
     print('Created figure: {:s}'.format(fname))
-
     return fig, ax
