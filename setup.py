@@ -62,7 +62,7 @@ setup(
         'ipykernel >= 4.8.0',
         'ipython >= 6.2.0',
         'notebook >= 5.0.0',
-        'pylint >= 2.1.1'
+        'pylint >= 2.1.1',
         'tables >= 3.7.0',
         'nbformat',
         'pyproj',
