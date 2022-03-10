@@ -72,7 +72,7 @@ setup(
         'tqdm',
         'pylint >= 2.1.1'
         'tables',
-        #'GDAL',
+        # 'GDAL',
     ],
     python_requires='>=3.8',
     author='GEM Foundation',
