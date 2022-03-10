@@ -56,12 +56,14 @@ setup(
     # Minimal requirements, for a complete list see requirements-*.txt
     # matplotlib is brought by the openquake engine
     install_requires=[
-        'geopandas == 0.6.3',
+        'geopandas > 0.10.0',
         'nbstripout >= 0.3.0',
         'jupyter_client >= 5.0.0',
         'ipykernel >= 4.8.0',
         'ipython >= 6.2.0',
         'notebook >= 5.0.0',
+        'pylint >= 2.1.1'
+        'tables >= 3.7.0',
         'nbformat',
         'pyproj',
         'rtree',
@@ -70,8 +72,6 @@ setup(
         'obspy',
         'prettytable',
         'tqdm',
-        'pylint >= 2.1.1'
-        'tables',
         # 'GDAL',
     ],
     python_requires='>=3.8',
