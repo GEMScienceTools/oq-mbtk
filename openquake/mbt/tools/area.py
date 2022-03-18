@@ -1,3 +1,8 @@
+"""
+:module:`openquake.mbt.tools.area`
+"""
+
+
 import re
 import numpy
 from shapely import wkt
@@ -28,15 +33,17 @@ def load_geometry_from_shapefile(shapefile_filename):
         A list of :class:`openquake.mbt.oqt_project.OQtSource` istances
     """
     idname = 'Id'
+
     # Set the driver
     driver = ogr.GetDriverByName('ESRI Shapefile')
     datasource = driver.Open(shapefile_filename, 0)
     layer = datasource.GetLayer()
+
     # Reading sources geometry
     sources = {}
     id_set = set()
     for feature in layer:
-        #
+
         # Read the geometry
         geom = feature.GetGeometryRef()
         polygon = wkt.loads(geom.ExportToWkt())
