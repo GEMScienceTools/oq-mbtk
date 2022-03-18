@@ -69,7 +69,8 @@ def create_source(rup, mag, sid, name, tectonic_region_type):
                                tectonic_region_type=tectonic_region_type,
                                hypocenter=Point(hlo, hla, hde),
                                surface=srf)
-            xxx = Decimal('{:.8f}'.format(ppp[1]))
+            brup.weight = None
+            xxx = Decimal(f'{ppp[1]:.8f}')
             pmf = PMF(data=[((Decimal('1')-xxx), 0), (xxx, 1)])
             data.append((brup, pmf))
     src = NonParametricSeismicSource(sid, name, tectonic_region_type, data)
