@@ -1,5 +1,5 @@
 """
-Module :module:`openquake.sub.tests.slab.rupture_test_smoothed`
+Module :module:`openquake.sub.tests.slab.rupture_smooth_test`
 """
 
 import os
@@ -17,7 +17,6 @@ from openquake.sub.create_inslab_nrml import create
 from openquake.sub.build_complex_surface import build_complex_surface
 
 PLOTTING = False
-
 BASE_DATA_PATH = os.path.dirname(__file__)
 
 
@@ -94,7 +93,6 @@ class RuptureCreationSmoothedTest(unittest.TestCase):
         bgr = float(self.config['main']['bgr'])
         rates_gr = 10**(agr-bgr*mags[:-1]) - 10**(agr-bgr*mags[1:])
 
-        print(rates, rates_gr)
         np.testing.assert_almost_equal(rates[:, 1], rates_gr, decimal=3)
 
         if PLOTTING:
@@ -136,7 +134,8 @@ class RuptureCreationSmoothedTest(unittest.TestCase):
                    (cat.data['latitude'] < max(points[:, 1])) &
                    (cat.data['depth'] > 30))
             catc = [(x, y, z) for x, y, z in zip(cat.data['longitude'][flg],
-                cat.data['latitude'][flg], cat.data['depth'][flg] * vscaling)]
+                    cat.data['latitude'][flg],
+                    cat.data['depth'][flg] * vscaling)]
             catc = np.array(catc)
 
             # Ruptures
