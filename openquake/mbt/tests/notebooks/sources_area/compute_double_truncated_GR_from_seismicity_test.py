@@ -1,3 +1,7 @@
+"""
+:module:`openquake.mbt.tests.notebooks.sources_area`
+"""
+
 import os
 import unittest
 import logging

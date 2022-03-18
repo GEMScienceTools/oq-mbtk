@@ -1,20 +1,19 @@
-import os
-# MN: 'numpy' and 'Path' imported but not used
-import numpy
-import unittest
+"""
+:module:`openquake.mbt.tests.tools.area_test`
+"""
 
-from pathlib import Path
+import os
+import unittest
 
 from openquake.mbt.tools.tr.catalogue import get_catalogue
 from openquake.mbt.tools.area import (
     create_catalogue, load_geometry_from_shapefile)
-# MN: 'OQtSource' imported but not used
-from openquake.mbt.oqt_project import OQtModel, OQtSource
+from openquake.mbt.oqt_project import OQtModel
 
 BASE_DATA_PATH = os.path.dirname(__file__)
 
 
-class SelectEarthquakesWithinAreaTestCase(unittest.TestCase):
+class SelectEqksWithinAreaTestCase(unittest.TestCase):
     """
     This class tests the selection of earthquakes within a polygon
     """

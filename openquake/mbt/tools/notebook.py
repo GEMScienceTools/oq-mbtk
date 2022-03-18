@@ -18,20 +18,20 @@ def run(notebook_filename, inps, reports_folder=None, key=None):
     :parameter reports_folder:
         The name of the folder where the report will be created
     """
+
     with open(notebook_filename) as f:
         nb = nbformat.read(f, as_version=4)
-    #
-    # replacing the content of the first cell
+
+    # Replacing the content of the first cell
     if len(inps):
         nb['cells'][0]['source'] = inps
-    #
-    # prepare execution
+
+    # Prepare execution
     ep = ExecutePreprocessor(timeout=100000, kernel_name='python')
     ok = False
     out = None
     try:
-        #
-        # returns a 'nb node' and 'resources'
+        # Returns a 'nb node' and 'resources'
         out = ep.preprocess(nb, {'metadata': {'path': './'}})
         ok = True
     except CellExecutionError as cee:
@@ -46,11 +46,11 @@ def run(notebook_filename, inps, reports_folder=None, key=None):
         else:
             raise
     finally:
-        #
-        # creating report
+
+        # Create report
         if reports_folder is not None and key is not None and out is not None:
-            #
-            # filtering cells
+
+            # Filter cells
             ocells = []
             for cell in out[0]['cells']:
                 if cell['cell_type'] == 'code':
