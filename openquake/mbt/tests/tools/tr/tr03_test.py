@@ -34,7 +34,7 @@ class TrTestCase(unittest.TestCase):
         """
         ini_fname = os.path.join(BASE_PATH, '../../data/tr03/tr03.ini')
         treg_filename = os.path.join(BASE_PATH, '../../tmp/test03.hdf5')
-        catalogue = '../../data/tr03/cat_4001.pkl'
+        catalogue = os.path.join(BASE_PATH,'../../data/tr03/cat_4001.pkl')
         c = get_catalogue(catalogue)
         c_num = len(c.data['eventID'])
         #
