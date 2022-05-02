@@ -1,26 +1,30 @@
-# -*- coding: utf-8 -*-
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
 #
-# LICENSE
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
 #
-# Copyright (c) 2015 GEM Foundation
-#
-# The Catalogue Toolkit is free software: you can redistribute
-# it and/or modify it under the terms of the GNU Affero General Public
-# License as published by the Free Software Foundation, either version
-# 3 of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# with this download. If not, see <http://www.gnu.org/licenses/>
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
 
 """
-Utility functions to support catalogue processing
+Module :mod:`openquake.cat.utils` contains tools for working with catalogue
+files
 """
 
 import os
+import math
 import numpy as np
-from math import fabs
 import matplotlib.pyplot as plt
 
 MARKER_NORMAL = np.array([0, 31, 59, 90, 120, 151, 181,
@@ -190,12 +194,13 @@ def greg2julian(year, month, day, hour, minute, second):
     timeut = hour.astype(float) + (minute.astype(float) / 60.0) + \
         (second / 3600.0)
 
-    julian_time = (367.0 * year) - np.floor(7.0 * (year +
+    julian_time = ((367.0 * year) - np.floor(7.0 * (year +
              np.floor((month + 9.0) / 12.0)) / 4.0) - np.floor(3.0 *
              (np.floor((year + (month - 9.0) / 7.0) / 100.0) + 1.0) /
-             4.0) + np.floor((275.0 * month) / 9.0) + day +\
-             1721028.5 + (timeut / 24.0)
+             4.0) + np.floor((275.0 * month) / 9.0) + day +
+             1721028.5 + (timeut / 24.0))
     return julian_time
+
 
 def _set_string(value):
     """
@@ -203,9 +208,10 @@ def _set_string(value):
     whether the number if positive or negative.
     """
     if value >= 0.0:
-        return "+ {:.3f}".format(value)
+        return f"+ {value:.3f}"
     else:
-        return "- {:.3f}".format(value)
+        return f"- {value:.3f}"
+
 
 def _to_latex(string):
     """
@@ -216,6 +222,7 @@ def _to_latex(string):
     lb = string.find("(")
     ub = string.find(")")
     return "$" + string[:lb] + ("_{%s}$" % string[lb+1:ub])
+
 
 def piecewise_linear_scalar(params, xval):
     '''Piecewise linear function for a scalar variable xval (float).
@@ -230,7 +237,7 @@ def piecewise_linear_scalar(params, xval):
         Piecewise linear function evaluated at point xval (float)
     '''
     n_params = len(params)
-    if fabs(float(n_params / 2) - float(n_params) / 2.) > 1E-7:
+    if math.fabs(float(n_params / 2) - float(n_params) / 2.) > 1E-7:
         raise ValueError(
             'Piecewise Function requires 2 * nsegments parameters')
 
@@ -239,14 +246,14 @@ def piecewise_linear_scalar(params, xval):
     if n_seg == 1:
         return params[1] + params[0] * xval
 
-    gradients = params[0 : n_seg]
+    gradients = params[0:n_seg]
     turning_points = params[n_seg: -1]
     c_val = np.array([params[-1]])
 
     for iloc in range(1, n_seg):
         c_val = np.hstack([c_val, (c_val[iloc - 1] + gradients[iloc - 1] *
-            turning_points[iloc - 1]) - (gradients[iloc] *
-            turning_points[iloc - 1])])
+                           turning_points[iloc - 1]) - (gradients[iloc] *
+                           turning_points[iloc - 1])])
 
     if xval <= turning_points[0]:
         return gradients[0] * xval + c_val[0]
@@ -261,7 +268,7 @@ def polynomial(params, xval):
     """
     Returns the polynomial f(xval) where the order is defined by the
     number of params, i.e.
-    yval = \SUM_{i=1}^{Num Params} params[i] * (xval ** i - 1)
+    yval = \\SUM_{i=1}^{Num Params} params[i] * (xval ** i - 1)
     """
     yval = np.zeros_like(xval)
     for iloc, param in enumerate(params):
@@ -324,8 +331,9 @@ def _save_image(filename, filetype='png', resolution=300):
 def _save_image_tight(fig, lgd, filename, filetype='png', resolution=300):
     """
     If filename is specified, saves the image
+
     :param str filename:
-        Name of the file
+        Name of the file where to save the figure
     :param str filetype:
         Type of file
     :param int resolution:
@@ -351,7 +359,7 @@ AGEN_CODES = {
              "alias": "",
              "country": "Peru"
              },
-     "G-R": {"name" : "Gutenberg and Richter-Seismicity of the Earth - from CERESIS catalogue",
+     "G-R": {"name": "Gutenberg and Richter-Seismicity of the Earth - from CERESIS catalogue",
              "alias": "",
              "country": "Worldwide"
              },

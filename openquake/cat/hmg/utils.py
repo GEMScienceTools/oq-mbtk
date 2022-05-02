@@ -24,44 +24,40 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-import matplotlib.pyplot as plt
+import pandas as pd
 
 
-def _plot_ctab(ctab, label='', xlim=None, ylim=None, color='red', ls='-',
-               marker=''):
+def to_hmtk_catalogue(cdf: pd.DataFrame):
     """
-    Plots completeness
+    Converts a catalogue obtained from the homogenisation into a format
+    compatible with the oq-hmtk.
 
-    :param ctab:
-        A :class:`np.ndarray` instance containing the completeness table
-    :param label:
-        A string
-    :param xlim:
-        A tuple with the min and max values on the abscissa
-    :param ylim:
-        A tuple with the min and max values on the ordinate
-    :param color:
-        Color to be used for plotting the line
-    :param ls:
-        Line style
+    :param cdf:
+        An instance of :class:`pd.DataFrame`
+    :returns:
+        An instance of :class:`pd.DataFrame`
     """
-    n = ctab.shape[0]
-    if n > 1:
-        for i in range(0, n-1):
-            plt.plot([ctab[i, 0], ctab[i, 0]], [ctab[i, 1],
-                     ctab[i+1, 1]], color=color, ls=ls, marker=marker)
-            plt.plot([ctab[i, 0], ctab[i+1, 0]], [ctab[i+1, 1],
-                     ctab[i+1, 1]], color=color, ls=ls, marker=marker)
-        ylim = plt.gca().get_ylim()
-        xlim = plt.gca().get_xlim()
 
-    if xlim is None:
-        xlim = [1900, 2020]
+    # Select columns
+    cdf = cdf[['eventID', 'Agency', 'year', 'month', 'day', 'longitude',
+               'latitude', 'depth', 'magMw']]
 
-    if ylim is None:
-        ylim = [4.5, 7.0]
+    # Rename columns
+    cdf = cdf.rename(columns={"magMw": "magnitude"})
 
-    plt.plot([ctab[n-1, 0], ctab[n-1, 0]], [ylim[1], ctab[n-1, 1]],
-             color=color, ls=ls, marker=marker)
-    plt.plot([ctab[0, 0], xlim[1]], [ctab[0, 1], ctab[0, 1]],
-             label=label, color=color, ls=ls, marker=marker)
+    return cdf
+
+
+def to_hmtk_catalogue_csv(fname_in: str, fname_out: str):
+    """
+    Converts a .csv file as obtained from the homogenisation into a .csv file
+    woth the oq-hmtk format
+
+    :param cdf:
+        Name of the input .csv file
+    :returns:
+        Name of the output .csv file
+    """
+    cdf = pd.read_csv(fname_in)
+    odf = to_hmtk_catalogue(cdf)
+    odf.to_csv(fname_out, index=False)

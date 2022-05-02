@@ -1,3 +1,29 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
 import re
 import numpy
 import pandas as pd
@@ -5,7 +31,7 @@ from scipy import interpolate
 from openquake.hmtk.seismicity.catalogue import Catalogue
 
 
-def mde_for_gmt(filename, fout):
+def mde_for_gmt(filename, froot):
     """
     This simple function converts the information in the .csv file (m-d-e) into
     a format suitable to be used by GMT.
@@ -13,33 +39,55 @@ def mde_for_gmt(filename, fout):
     :param str filename:
         Name of the file containing the original information
     :param str fout:
-        The name of the file where the information must be stored
+        Root path (including file prefix) for the output files
     """
-    fou = open(fout, 'w')
-    base_dic = {}
-    cnt = 0
-    for line in open(filename, 'r'):
-        if cnt > 2:
-            #
-            # Splitting the row
-            aa = re.split('\\,', line)
-            key = '{0:s}_{1:s}'.format(aa[0], aa[1])
-            #
-            # Updating the base level of the bin
-            if key in base_dic:
-                base = base_dic[key]
-            else:
-                base = 0.
-                base_dic[key] = 0.
-            base_dic[key] += float(aa[3])
-            #
-            # Formatting the output
-            fmt = '{0:7.5e} {1:7.5e} {2:7.5e} {3:7.5e} {4:7.5e}'
-            outs = fmt.format(float(aa[0]), float(aa[1]), base+float(aa[3]),
-                              float(aa[2]), base)
-            if float(aa[3]) > 1e-8:
-                fou.write(outs+'\n')
-        cnt += 1
+    flist = []
+
+    # Read input
+    df = pd.read_csv(filename, comment='#')
+
+    # Find the unique combinations of IMT and poe
+    sips = set()
+    for group_name, df_group in df.groupby(['imt', 'poe']):
+        if group_name not in sips:
+            sips.add(group_name)
+
+    # Column names with the realizations
+    rlz_cols = [col for col in df.columns if 'rlz' in col]
+
+    # For each imt + poe
+    for sip in list(sips):
+        imt = sip[0]
+
+        # For each rlz
+        for rlz in rlz_cols:
+
+            base_dic = {}
+            name = f'{froot}_{imt}_{rlz}.txt'
+            flist.append(name)
+            fou = open(name, 'w')
+
+            for i, row in df[df.imt == imt].iterrows():
+                key = '{0:.2f}_{1:.2f}'.format(row.mag, row.dist)
+
+                # Updating the base level of the bin
+                if key in base_dic:
+                    base = base_dic[key]
+                else:
+                    base = 0.
+                    base_dic[key] = 0.
+                base_dic[key] += row[rlz]
+
+                # Formatting the output:
+                # magnitude, distance, z, height, upp,
+                fmt = '{:7.5e} {:7.5e} {:7.5e} {:7.5e} {:7.5e}'
+                outs = fmt.format(row.mag, row.dist, base+row[rlz], row.eps,
+                                  base)
+
+                if row[rlz] > 1e-8:
+                    fou.write(outs+'\n')
+            fou.close()
+    return flist
 
 
 def read_dsg_ll(fname):
@@ -277,7 +325,7 @@ def get_catalogue_from_ses(fname, duration):
     for i in range(len(ses)):
         nevents = ses['multiplicity'][i]
         for j in range(nevents):
-            eventids.append(':d'.format(cnt))
+            eventids.append(f'{cnt:d}')
             mags.append(ses['mag'].values[i])
             lons.append(ses['centroid_lon'].values[i])
             lats.append(ses['centroid_lat'].values[i])
