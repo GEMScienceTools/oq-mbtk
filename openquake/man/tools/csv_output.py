@@ -5,6 +5,16 @@ from scipy import interpolate
 from openquake.hmtk.seismicity.catalogue import Catalogue
 
 
+def _read_dsg_header(tstr):
+
+    # Skipping hash
+    tstr = tstr[1, :]
+
+    # Splitting
+    aa = tstr.split(',')
+
+
+
 def mde_for_gmt(filename, fout):
     """
     This simple function converts the information in the .csv file (m-d-e) into
@@ -18,9 +28,10 @@ def mde_for_gmt(filename, fout):
     fou = open(fout, 'w')
     base_dic = {}
     cnt = 0
-    for line in open(filename, 'r'):
-        if cnt > 2:
-            #
+    header = False
+    df = pd.read_csv(fname, comment='#')
+
+    for i, line in df.iterrows():
             # Splitting the row
             aa = re.split('\\,', line)
             key = '{0:s}_{1:s}'.format(aa[0], aa[1])

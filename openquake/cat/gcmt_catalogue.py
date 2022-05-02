@@ -1,19 +1,28 @@
-# -*- coding: utf-8 -*-
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
 #
-# LICENSE
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
 #
-# Copyright (c) 2015 GEM Foundation
-#
-# The Catalogue Toolkit is free software: you can redistribute
-# it and/or modify it under the terms of the GNU Affero General Public
-# License as published by the Free Software Foundation, either version
-# 3 of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# with this download. If not, see <http://www.gnu.org/licenses/>
-
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
 """
 Implements set of classes to represent a GCMT Catalogue
 """
@@ -318,7 +327,7 @@ class GCMTMomentTensor(object):
         rotation_matrices = sorted(
             [rotation_matrix, flip_dc * rotation_matrix], cmp=cmp_mat)
         nodal_planes = GCMTNodalPlanes()
-        dip, strike, rake = [(180. / pi) * angle 
+        dip, strike, rake = [(180. / pi) * angle
             for angle in utils.matrix_to_euler(rotation_matrices[0])]
         # 1st Nodal Plane
         nodal_planes.nodal_plane_1 = {'strike': strike % 360,
@@ -326,17 +335,17 @@ class GCMTMomentTensor(object):
                                       'rake': -rake}
 
         # 2nd Nodal Plane
-        dip, strike, rake = [(180. / pi) * angle 
+        dip, strike, rake = [(180. / pi) * angle
             for angle in utils.matrix_to_euler(rotation_matrices[1])]
         nodal_planes.nodal_plane_2 = {'strike': strike % 360.,
                                       'dip': dip,
                                       'rake': -rake}
         return nodal_planes
 
-        
+
     def get_principal_axes(self):
         '''
-        Uses the eigendecomposition to extract the principal axes from the 
+        Uses the eigendecomposition to extract the principal axes from the
         moment tensor - returning an instance of the GCMTPrincipalAxes class
         '''
         # Perform eigendecomposition - returns in order P, B, T
@@ -395,17 +404,17 @@ class GCMTEvent(object):
 
     def get_f_clvd(self):
         '''
-        Returns the statistic f_clvd: the signed ratio of the sizes of the 
+        Returns the statistic f_clvd: the signed ratio of the sizes of the
         intermediate and largest principal moments
 
-        f_clvd = -b_axis_eigenvalue / 
+        f_clvd = -b_axis_eigenvalue /
                   max(|t_axis_eigenvalue|,|p_axis_eigenvalue|)
 
         '''
         if not self.principal_axes:
             # Principal axes not yet defined for moment tensor - raises error
             raise ValueError('Principal Axes not defined!')
-        
+
         denominator = np.max(np.array([
             fabs(self.principal_axes.t_axis['eigenvalue']),
             fabs(self.principal_axes.p_axis['eigenvalue'])
@@ -417,21 +426,21 @@ class GCMTEvent(object):
         '''
         Returns the relative error statistic (e_rel), defined by Frohlich &
         Davis (1999):
-            e_rel = sqrt((U:U) / (M:M)) 
+            e_rel = sqrt((U:U) / (M:M))
         where M is the moment tensor, U is the uncertainty tensor and : is the
         tensor dot product
         '''
         if not self.moment_tensor:
             raise ValueError('Moment tensor not defined!')
 
-        numer = np.tensordot(self.moment_tensor.tensor_sigma, 
+        numer = np.tensordot(self.moment_tensor.tensor_sigma,
                              self.moment_tensor.tensor_sigma)
 
-        denom = np.tensordot(self.moment_tensor.tensor, 
+        denom = np.tensordot(self.moment_tensor.tensor,
                              self.moment_tensor.tensor)
         self.e_rel = sqrt(numer / denom)
         return self.e_rel
-        
+
     def get_mechanism_similarity(self, mechanisms):
         '''
         '''
@@ -483,15 +492,15 @@ class GCMTCatalogue(object):
         for gcmt in self.gcmts:
             yield gcmt
 
-   
+
     def gcmt_to_simple_array(self, centroid_location=True):
         '''
-        Converts the GCMT catalogue to a simple array of 
+        Converts the GCMT catalogue to a simple array of
         [ID, year, month, day, hour, minute, second, long., lat., depth, Mw,
         strike_1, dip_1, rake_1, strike_2, dip_2, rake_2, b-plunge, b-azimuth,
         p-plunge, p-azimuth, t-plunge, t-azimuth]
         '''
-        catalogue = np.zeros([self.number_events(), 26], dtype=float) 
+        catalogue = np.zeros([self.number_events(), 26], dtype=float)
         for iloc, tensor in enumerate(self.gcmts):
             catalogue[iloc, 0] = iloc
             if centroid_location:
@@ -527,7 +536,7 @@ class GCMTCatalogue(object):
             catalogue[iloc, 15] = tensor.nodal_planes.nodal_plane_2['dip']
             catalogue[iloc, 16] = tensor.nodal_planes.nodal_plane_2['rake']
             # Principal axes
-            catalogue[iloc, 17] = tensor.principal_axes.b_axis['eigenvalue'] 
+            catalogue[iloc, 17] = tensor.principal_axes.b_axis['eigenvalue']
             catalogue[iloc, 18] = tensor.principal_axes.b_axis['azimuth']
             catalogue[iloc, 19] = tensor.principal_axes.b_axis['plunge']
             catalogue[iloc, 20] = tensor.principal_axes.p_axis['eigenvalue']
@@ -546,7 +555,7 @@ class GCMTCatalogue(object):
         '''
         location = np.zeros([self.number_events(), 3], dtype=float)
         location_uncertainty = np.zeros([self.number_events(), 3], dtype=float)
-         
+
         for iloc, tensor in enumerate(self.gcmts):
             if use_centroids:
                 # Use centroids
@@ -570,12 +579,12 @@ class GCMTCatalogue(object):
 
     def serialise_to_hmtk_csv(self, filename, centroid_location=True):
         '''
-        Serialise the catalogue to a simple csv format, designed for 
+        Serialise the catalogue to a simple csv format, designed for
         comptibility with the GEM Hazard Modeller's Toolkit
         '''
-        header_list = ['eventID', 'Agency', 'year', 'month', 'day', 'hour', 
+        header_list = ['eventID', 'Agency', 'year', 'month', 'day', 'hour',
                    'minute', 'second', 'timeError', 'longitude', 'latitude',
-                   'SemiMajor90', 'SemiMinor90', 'ErrorStrike', 'depth', 
+                   'SemiMajor90', 'SemiMinor90', 'ErrorStrike', 'depth',
                    'depthError', 'magnitude', 'sigmaMagnitude']
         with open(filename, 'wt') as fid:
             writer = csv.DictWriter(fid, fieldnames=header_list)
@@ -617,7 +626,7 @@ class GCMTCatalogue(object):
                     cmt_dict['hour'] = tensor.hypocentre.time.hour
                     cmt_dict['minute'] = tensor.hypocentre.time.minute
                     cmt_dict['second'] = np.round(
-                        np.float(tensor.hypocentre.time.second) + 
+                        np.float(tensor.hypocentre.time.second) +
                         np.float(tensor.hypocentre.time.microsecond) / 1000000., 2)
                     cmt_dict['timeError'] = None
                     cmt_dict['longitude'] = tensor.hypocentre.longitude
@@ -651,9 +660,9 @@ class GCMTCatalogue(object):
             resultant.moment_tensor.tensor += target
 
             # Update resultant centroid
-            resultant.centroid.longitude += (target.centroid.longitude * 
+            resultant.centroid.longitude += (target.centroid.longitude *
                                              weight[iloc])
-            resultant.centroid.latitude += (target.centroid.latitude * 
+            resultant.centroid.latitude += (target.centroid.latitude *
                                             weight[iloc])
             resultant.centroid.depth += (target.centroid.depth * weight[iloc])
         return resultant
@@ -669,7 +678,7 @@ class GCMTCatalogue(object):
         """
         with open(filename, "wt") as fid:
             for iloc, gcmt in enumerate(self.gcmts):
-                mantissa = gcmt.moment / (10. ** 
+                mantissa = gcmt.moment / (10. **
                                           float(gcmt.moment_tensor.exponent))
                 exponent = gcmt.moment_tensor.exponent + 7.
                 if add_text:

@@ -1,16 +1,39 @@
 #!/usr/bin/env python
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
 import os
 import glob
 import toml
-import itertools
 import numpy as np
 import logging
-from tqdm import tqdm
 import matplotlib.pyplot as plt
-from openquake.wkf.utils import _get_src_id
+
 from openquake.baselib import sap
+from openquake.wkf.utils import _get_src_id, create_folder
 from openquake.wkf.compute_gr_params import (get_weichert_confidence_intervals,
                                              _weichert_plot)
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
@@ -96,6 +119,9 @@ def completeness_analysis(fname, idxs, years, mags, binw, ref_mag, bgrlim,
 
     # Saving figure
     if folder_out_figs is not None:
+
+        create_folder(folder_out_figs)
+
         ext = 'png'
         fmt = 'fig_mfd_{:s}.{:s}'
         figure_fname = os.path.join(folder_out_figs,
@@ -107,6 +133,9 @@ def completeness_analysis(fname, idxs, years, mags, binw, ref_mag, bgrlim,
 
 
 def main(fname_input_pattern, fname_config, folder_out_figs):
+    """
+    Analyzes the completeness of a catalogue
+    """
 
     config = toml.load(fname_config)
     tmp = [1900, 1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990]

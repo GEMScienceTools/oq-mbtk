@@ -1,4 +1,28 @@
 #!/usr/bin/env python
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
 import os
@@ -9,32 +33,29 @@ import shapely
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import matplotlib.pyplot as plt
 from openquake.wkf.utils import create_folder
 from openquake.baselib import sap
-from shapely.geometry import Point
-from shapely import wkt
 
 
 def create_missing(missing, h3_level, a_value, b_value):
     """
-    Create a dataframe with the same structure of the dataframe containing 
-    basic information on point sources but for the points requiring a 
+    Create a dataframe with the same structure of the dataframe containing
+    basic information on point sources but for the points requiring a
     baseline seismicity.
     """
     coo = np.array([h3.h3_to_geo(idx) for idx in missing])
-    a = np.ones_like(coo[:,0]) * a_value
-    b = np.ones_like(coo[:,0]) * b_value
-    df = pd.DataFrame({'lon': coo[:,0], 'lat': coo[:,1], 'agr': a, 'bgr': b})
+    a = np.ones_like(coo[:, 0]) * a_value
+    b = np.ones_like(coo[:, 0]) * b_value
+    df = pd.DataFrame({'lon': coo[:, 0], 'lat': coo[:, 1], 'agr': a, 'bgr': b})
     return df
 
 
-def add_baseline_seismicity(folder_name: str, folder_name_out: str, 
+def add_baseline_seismicity(folder_name: str, folder_name_out: str,
                             fname_config: str, fname_poly: str, skip=[]):
     """
-    
+
     :param folder_name:
-        The name of the folder containing the files with GR parameters for the 
+        The name of the folder containing the files with GR parameters for the
         points in each zone considered
     :param folder_name_out:
         The folder where to write the results
@@ -45,7 +66,7 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
     :param skip:
         A list with the sources that should be skipped [NOT ACTIVE!!!]
     :returns:
-        An updated set of .csv files 
+        An updated set of .csv files
     """
 
     # Create output folder
@@ -56,7 +77,7 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
     h3_level = model['baseline']['h3_level']
     basel_agr = model['baseline']['a_value']
     basel_bgr = model['baseline']['b_value']
-    
+
     # Read polygons
     polygons_gdf = gpd.read_file(fname_poly)
 
@@ -66,13 +87,14 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
 
     for idx, poly in polygons_gdf.iterrows():
 
-        geojson_poly = eval(json.dumps(shapely.geometry.mapping(poly.geometry)))
+        tmp = shapely.geometry.mapping(poly.geometry)
+        geojson_poly = eval(json.dumps(tmp))
 
         # Revert the positions of lons and lats
         coo = [[c[1], c[0]] for c in geojson_poly['coordinates'][0]]
         geojson_poly['coordinates'] = [coo]
 
-        # Discretizing the polygon i.e. find all the hexagons covering the 
+        # Discretizing the polygon i.e. find all the hexagons covering the
         # polygon describing the current zone
         hexagons = list(h3.polyfill(geojson_poly, h3_level))
 
@@ -81,14 +103,15 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         fname = os.path.join(folder_name, '{:s}.csv'.format(poly.id))
         df = pd.read_csv(fname)
 
-        srcs_idxs = [h3.geo_to_h3(la, lo, h3_level) for lo, la in zip(df.lon, df.lat)]
+        srcs_idxs = [
+            h3.geo_to_h3(la, lo, h3_level) for lo, la in zip(df.lon, df.lat)]
         hxg_idxs = [hxg for hxg in hexagons]
 
         missing = list(set(hxg_idxs) - set(srcs_idxs))
         tmp = np.nonzero([df.agr <= basel_agr])[0]
 
-        # If we don't miss cells and rates are all above the threshold there 
-        # is nothing else to do 
+        # If we don't miss cells and rates are all above the threshold there
+        # is nothing else to do
         fname = os.path.join(folder_name_out, "{:s}.csv".format(poly.id))
         if len(missing) == 0 and len(tmp) == 0:
             df.to_csv(fname, index=False)
@@ -101,7 +124,7 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         # Removing the sources with activity below the threshold
         df.drop(df.index[idxs], inplace=True)
 
-        # Find the h3 indexes of the point sources either without seismicity 
+        # Find the h3 indexes of the point sources either without seismicity
         # or with a rate below the baseline
         both = set(missing) | set(low)
 
@@ -115,10 +138,10 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         df.to_csv(fname, index=False)
 
 
-def main(folder_name: str, folder_name_out: str, fname_config: str, 
+def main(folder_name: str, folder_name_out: str, fname_config: str,
          fname_poly: str, skip=[]):
-       
-    add_baseline_seismicity(folder_name, folder_name_out, fname_config, 
+
+    add_baseline_seismicity(folder_name, folder_name_out, fname_config,
                             fname_poly, skip)
 
 
