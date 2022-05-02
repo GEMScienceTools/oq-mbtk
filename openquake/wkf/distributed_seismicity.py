@@ -1,4 +1,27 @@
-#!/usr/bin/env python
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
 import os
@@ -33,7 +56,7 @@ def get_data(src, coo_pnt_src, pnt_srcs, buffer=1.0):
     :param src:
         An instance of
     :param coo_pnt_src:
-        
+
     :param pnt_srcs:
     """
 
@@ -71,7 +94,7 @@ def get_stacked_mfd(srcs: list, within_idx: list, binw: float):
     """
     :param srcs:
     :param within_idx:
-        Param 
+        Param
     :param binw:
     """
     for i, idx in enumerate(within_idx):
@@ -82,7 +105,7 @@ def get_stacked_mfd(srcs: list, within_idx: list, binw: float):
     return tot_mfd
 
 
-def remove_buffer_around_faults(fname: str, path_point_sources: str, 
+def remove_buffer_around_faults(fname: str, path_point_sources: str,
                                  out_path: str, dst: float):
     """
     Remove the seismicity above a magnitude threshold for all the point

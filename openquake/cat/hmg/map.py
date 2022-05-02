@@ -1,21 +1,29 @@
-#!/usr/bin/env python3
-# coding: utf-8
-
-# Copyright (C) 2020 GEM Foundation
+#!/usr/bin/env python
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
 #
-# OpenQuake is free software: you can redistribute it and/or modify it
-# under the terms of the GNU Affero General Public License as published
-# by the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
 #
-# OpenQuake is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
-
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
 
 import subprocess
 import pandas as pd
@@ -50,15 +58,68 @@ def write_gmt_file(df, agencies=[], fname_gmt='/tmp/tmp.txt', **kwargs):
                 index=False, header=False)
 
 
-def plot_catalogue(fname, fname_fig='/tmp/tmp.txt', **kwargs):
+def plot_catalogue(fname, fname_fig='/tmp/tmp.pdf', **kwargs):
     """
     :param fname:
         Name of the file with the catalogue
     :param kwargs:
         Optional parameters:
-            - 'extent' - The extent of the plot in the gmt format (i.e.
-                         minlo/maxlo/minla/maxla0
-            - 'fformat' - The format of the plot created
+            - 'extent' - The extent of the plot as a list with
+                         [minlo, maxlo, minla, maxla]
+    """
+
+    try:
+        import pygmt
+    except:
+        print("pygmt is not available")
+        return
+
+    lonote = 5
+    if "extent" in kwargs:
+        extent = "-R"+kwargs["extent"]
+    else:
+        df = pd.read_csv(fname, sep="\\s+", names=['lon', 'lat', 'mag'])
+        factor = 0.02
+
+        # Longitude
+        lomn = df.lon.min()
+        lomx = df.lon.max()
+        lodelta = (lomx - lomn)
+        lomn -= lodelta * factor
+        lomx += lodelta * factor
+        if lodelta < 1:
+            lonote = 0.5
+        elif lodelta < 5:
+            lonote = 2
+
+        # Latitude
+        lamn = df.lat.min()
+        lamx = df.lat.max()
+        ladelta = (lamx - lamn)
+        lamn -= ladelta * factor
+        lamx += ladelta * factor
+        region = [lomn, lomx, lamn, lamx]
+
+    # Get filename
+    tmps = fname_fig
+
+    # Plotting
+    fig = pygmt.Figure()
+    fig.basemap(region=region, projection="M15c", frame=True)
+    fig.coast(land="wheat", water="skyblue")
+    fig.plot(x=df.lon, y=df.lat, size=0.005*2**df.mag, color="white",
+             pen="black", style="cc")
+    fig.savefig(fname_fig)
+
+
+def plot_catalogue_old(fname, fname_fig='/tmp/tmp.txt', **kwargs):
+    """
+    :param fname:
+        Name of the file with the catalogue
+    :param kwargs:
+        Optional parameters:
+            - 'extent' - The extent of the plot as a list with
+                         [minlo, maxlo, minla, maxla]
     """
 
     cmds = []
@@ -116,6 +177,7 @@ def plot_catalogue(fname, fname_fig='/tmp/tmp.txt', **kwargs):
     # Running
     cmds.append("gmt end")
     for cmd in cmds:
+        print(cmd)
         _ = subprocess.call(cmd, shell=True)
 
     tmps = "{:s}.{:s}".format(fname_fig, fformat)

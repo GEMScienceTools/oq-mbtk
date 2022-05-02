@@ -1,4 +1,29 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
 
 import os
 import pandas as pd
@@ -34,14 +59,11 @@ def main(cat_fname: str, *, out_folder: str = './figs', mmin: float = 4.0):
     #
     # Map with the homogenised catalogue
     fname = os.path.join(out_folder, './tmp/tmp.txt')
-    topo = os.path.join(data, 'dem', 'globalGTOPO30.grd')
-
     fname_gmt = '/tmp/gmt.txt'
     write_gmt_file(cat, fname_gmt=fname_gmt, mmin=4.0)
-    fname = os.path.join(out_folder, 'hom_cat_map')
-    fname = plot_catalogue(fname_gmt, fformat="pdf",
-                           fname_fig=fname, topography=topo,
-                           title='Homogenised Catalog')
+    fname = os.path.join(out_folder, 'hom_cat_map.pdf')
+    fname = plot_catalogue(fname_gmt, fname_fig=fname,
+                           title='Homogenized Catalog')
 
 
 main.cat_fname = '.h5 file with origins'
