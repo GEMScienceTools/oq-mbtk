@@ -1,18 +1,28 @@
-# -*- coding: utf-8 -*-
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
 #
-# LICENSE
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
 #
-# Copyright (c) 2015 GEM Foundation
-#
-# The Catalogue Toolkit is free software: you can redistribute
-# it and/or modify it under the terms of the GNU Affero General Public
-# License as published by the Free Software Foundation, either version
-# 3 of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# with this download. If not, see <http://www.gnu.org/licenses/>
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
 
 """
 Collection of Catalogue Database Query Tools
@@ -1524,26 +1534,26 @@ def plot_catalogue_map(config, catalogue, magnitude_scale=False,
     if not overlay:
         plt.show()
 
-def plot_catalogue_map_gmt(config, catalogue, projection='-JM15', 
+def plot_catalogue_map_gmt(config, catalogue, projection='-JM15',
         lat_lon_spacing=2., filename='catalogue.pdf', magnitude_scale=False):
-                           
+
     """
-    Creates a map of the catalogue using Generic Mapping Tools v6 
+    Creates a map of the catalogue using Generic Mapping Tools v6
     (requires GMT6.0.0 or greater)
     """
 
     cmds = []
-    R = '-R{}/{}/{}/{}'.format(config['min_lon'], 
+    R = '-R{}/{}/{}/{}'.format(config['min_lon'],
                                config['max_lon'],
                                config['min_lat'],
                                config['max_lat'])
-     
+
     cmds.append("gmt begin {}".format(filename))
     tmp = "gmt basemap {} {} -BWSne".format(R, projection)
     tmp += " -Bx{} -By{}".format(lat_lon_spacing, lat_lon_spacing)
     cmds.append(tmp)
     cmds.append("gmt coast -Df -Wthin -Gwheat")
-    
+
     lon = catalogue.origins["longitude"].values
     lat = catalogue.origins["latitude"].values
     dep = catalogue.origins["depth"].values
@@ -1571,7 +1581,7 @@ def plot_catalogue_map_gmt(config, catalogue, projection='-JM15',
     cpt_fle = "tmp.cpt"
     cmds.append("gmt makecpt -Cjet -T0/{}/10+n -D > \
                              {}".format(max(dep),cpt_fle))
-    
+
 
     tmp = "gmt plot {} -Sc -C{} -t50 -Wthinnest,black".format(cat_tmp,cpt_fle)
     cmds.append(tmp)
@@ -1582,5 +1592,5 @@ def plot_catalogue_map_gmt(config, catalogue, projection='-JM15',
     for cmd in cmds:
         print(cmd)
         out = subprocess.call(cmd, shell=True)
-    
+
 #    webbrowser.open_new(r'file://{}/{}'.format(os.getcwd(),filename))

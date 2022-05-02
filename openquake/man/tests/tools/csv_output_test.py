@@ -6,6 +6,16 @@ import openquake.man.tools.csv_output as csv
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 
 
+
+
+class TestMDeOutput(unittest.TestCase):
+
+    def test_read_mre(self):
+        fname = os.path.join(BASE_DATA_PATH, 'mde.csv')
+
+
+
+
 class TestReadHeader(unittest.TestCase):
     """
     Test reading the contect of the hazard curve file header

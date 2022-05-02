@@ -276,7 +276,7 @@ class OQtModel(object):
             A string
         """
         tdic = deepcopy(self.sources)
-        if source_type is 'All':
+        if source_type == 'All':
             self.sources = {}
         elif source_type in set(['AreaSource',
                                  'SimpleFaultSource',
