@@ -1,26 +1,28 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
 #
-# Copyright (C) 2015-2018 GEM Foundation
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
 #
-# OpenQuake is free software: you can redistribute it and/or modify it
-# under the terms of the GNU Affero General Public License as published
-# by the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# OpenQuake is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
-#
-# Authors: Julio Garcia, Richard Styron, Valerio Poggi
-# Last modify: 10/09/2018
-
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
 
 import sys
 import ast
@@ -238,21 +240,10 @@ class FaultDatabase():
             data = json.load(f)
 
             # Import geojson metadata
-            self.meta = {k: data[k] for k in data if k is not 'features'}
+            self.meta = {k: data[k] for k in data if k != 'features'}
 
             # Loop over faults
             for feature in data['features']:
-
-                """
-                # Save only standard keys, neglect any other
-                fault = {}
-                prop = feature['properties']
-                for k in param_map_local:
-                    if param_map_local[k] in prop:
-                        fault[k] = prop[param_map_local[k]]
-                    if k in prop:
-                        fault[k] = prop[k]
-                """
 
                 fault = feature['properties']
 
@@ -290,7 +281,7 @@ class FaultDatabase():
 
             for fl in self.db:
 
-                prop = {k: fl[k] for k in fl if k is not 'trace_coordinates'}
+                prop = {k: fl[k] for k in fl if k != 'trace_coordinates'}
                 geom = {'coordinates': fl['trace_coordinates'],
                         'type': 'LineString'}
 
