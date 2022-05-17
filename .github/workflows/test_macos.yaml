@@ -1,0 +1,46 @@
+name: Installation and test on MacOS
+
+on:
+  push:
+    branches: [ ae-win64 ]
+  pull_request:
+
+jobs:
+
+  test:
+    name: MacOS Installation
+    runs-on: macos-latest
+    env:
+      MPLBACKEND: 'Agg'
+
+    steps:
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      id: extract_branch
+
+    - name: Clone Repository (Custom Ref)
+      uses: actions/checkout@v2
+      with:
+        ref:  ${{ steps.extract_branch.outputs.branch }} 
+    - name: Set up Python3
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install Openquake engine and mbtk
+      env:
+        GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
+      run: |
+        export PIP_DEFAULT_TIMEOUT=100
+        pip3 install -U pip wheel setuptools pytest
+        git clone -b master --depth=1  https://github.com/gem/oq-engine.git
+        cd oq-engine
+        pip install -r ./requirements-py38-win64.txt
+        pip install -e .
+        cd ..
+        git clone -b ${GIT_BRANCH} https://github.com/GEMScienceTools/oq-mbtk.git
+        cd oq-mbtk
+        pip install -r requirements_macos.txt
+        pip install -e .
+        cd openquake
+        pytest -vsx mbt cat man sub
