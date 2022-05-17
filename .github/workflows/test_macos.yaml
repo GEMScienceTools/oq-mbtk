@@ -22,7 +22,7 @@ jobs:
     - name: Clone Repository (Custom Ref)
       uses: actions/checkout@v2
       with:
-        ref:  ${{ steps.extract_branch.outputs.branch }} 
+        ref:  ${{ steps.extract_branch.outputs.branch }}
     - name: Set up Python3
       uses: actions/setup-python@v2
       with:
@@ -35,7 +35,7 @@ jobs:
         pip3 install -U pip wheel setuptools pytest
         git clone -b master --depth=1  https://github.com/gem/oq-engine.git
         cd oq-engine
-        pip install -r ./requirements-py38-win64.txt
+        pip install -r requirements_macos.txt
         pip install -e .
         cd ..
         git clone -b ${GIT_BRANCH} https://github.com/GEMScienceTools/oq-mbtk.git
