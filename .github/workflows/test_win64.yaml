@@ -1,4 +1,4 @@
-name: test and make pages
+name: Installation and test on Windows
 
 on:
   push:
