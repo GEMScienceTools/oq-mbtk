@@ -23,12 +23,7 @@ jobs:
       env:
         GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
       run: |
-        $branchName = ${Env:GIT_BRANCH}
-        Write-Host "Branch: ${branchName}"
-        Write-Host "CURRENT_BRANCH=${branchName}"
-        Write-Host "${Env:CURRENT_BRANCH}"
         Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
-        Write-Host "Git branch for Run action "${branchName}
         #
         $curDir = Get-Location
         $workDir = $curDir.Path + "\mbtk"
