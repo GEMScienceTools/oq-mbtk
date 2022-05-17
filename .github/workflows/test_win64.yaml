@@ -39,7 +39,7 @@ jobs:
         cd $workDir
         Write-Host "Current Working Directory: $workDir"
         Write-Host "Download and Installation of pip, wheel and setuptools"
-        wget -Uri https://bootstrap.pypa.io/get-pip.py -OutFile .\get-pip.py
+        Invoke-WebRequest -Uri https://bootstrap.pypa.io/get-pip.py -OutFile .\get-pip.py
         $Env:PY_PIP = "$workDir\Scripts"
         $Env:PY_LIBS = "$workDir\Lib;$workDir\Lib\site-package"
         $Env:PY_HOME = "$workDir"
