@@ -1,0 +1,29 @@
+
+# OQ mbtk requirements
+
+# From OQ wheels
+https://wheelhouse.openquake.org/v3/windows/py38/GDAL-3.2.2-cp38-cp38-win_amd64.whl
+
+# Version specific
+geopandas >= 0.6.3
+ipykernel >= 4.8.0
+ipython >= 6.2.0
+jupyter_client >= 5.0.0
+matplotlib >= 3.4.2
+nbstripout >= 0.3.0
+notebook >= 5.0.0 
+pylint >= 2.1.1
+rtree >= 0.9.4
+
+# Generic
+nbformat
+pyproj
+geojson
+nbconvert
+obspy
+prettytable
+tqdm
+tables
+h3
+pygmt
+reportlab
