@@ -10,7 +10,6 @@ jobs:
   test:
     name: Windows Installation
     runs-on: windows-latest
-    env:
 
     steps:
     - name: Extract branch name
