@@ -15,9 +15,9 @@ nbstripout >= 0.3.0
 notebook >= 5.0.0 
 pylint >= 2.1.1
 rtree >= 0.9.4
-toml >= 0.10.2
 
 # Generic
+toml 
 nbformat
 pyproj
 geojson
