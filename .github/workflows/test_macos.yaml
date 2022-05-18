@@ -1,8 +1,6 @@
 name: Installation and test on MacOS
 
 on:
-  push:
-    branches: [ ae-win64 ]
   pull_request:
 
 jobs:
