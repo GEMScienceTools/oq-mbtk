@@ -1,6 +1,7 @@
 # OpenQuake Model Building Toolkit on Windows
 The OpenQuake Model Building Toolkit (OQ-MBTK) can be installed on Windows 
 with powershell installer.
+
 You actually need to invoke PowerShell from Command Prompt and from that window run:
 ```
 C:\>curl.exe -LO https://raw.githubusercontent.com/GEMScienceTools/oq-mbtk/master/windows/install_oqmbtk.ps1
