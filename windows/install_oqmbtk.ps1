@@ -36,6 +36,6 @@ pip install -e .
 Write-Host "End of installation"
 Write-Host "Creation of symlink for bat files on the Desktop of user $ENV:USERNAME"
 cd windows
-Copy-Item  -Path .\oq-console.bat -Destination "$ENV:USERPROFILE\Desktop"
-Copy-Item  -Path .\oq-server.bat -Destination "$ENV:USERPROFILE\Desktop"
+Copy-Item  -Path .\oq-console.cmd -Destination "$ENV:USERPROFILE\Desktop"
+Copy-Item  -Path .\oq-server.cmd -Destination "$ENV:USERPROFILE\Desktop"
 cd $workDir
