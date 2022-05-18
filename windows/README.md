@@ -5,7 +5,7 @@ with powershell installer.
 You actually need to invoke PowerShell from Command Prompt and from that window run:
 ```
 C:\>curl.exe -LO https://raw.githubusercontent.com/GEMScienceTools/oq-mbtk/master/windows/install_oqmbtk.ps1
-C:\>install_oqmbtk.ps1 
+C:\>.\install_oqmbtk.ps1 
 ```
 
 - this Installer includes its own distribution of the dependencies needed 
