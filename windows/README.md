@@ -21,4 +21,4 @@ Requirements are:
 - 1.5 GB of free disk space
 
 **Windows 7** and **Windows 8** are not supported. That means that we do
-not test such platforms and the openquake engine may or may not work there. 
+not test such platforms and the openquake model building toolkit may or may not work there. 
