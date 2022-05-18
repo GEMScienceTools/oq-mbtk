@@ -1,7 +1,11 @@
 @echo off
 setlocal
-set mypath=%~dp0
-set PATH=%mypath%\python3.6;%mypath%\python3.6\Scripts;%PATH%
+set mypath=%USERPROFILE%\mbtk
+set PATH=%mypath%;%mypath%\Scripts;%PATH%
+set PY_PIP=%mypath%\Scripts
+set PY_LIBS=%mypath%\Lib;%mypath%\Lib\site-package
+set PY_HOME=%mypath%
+set PYTHONUTF8=1
 set OQ_HOST=localhost
 set OQ_PORT=8800
 
