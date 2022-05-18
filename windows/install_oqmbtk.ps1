@@ -1,4 +1,3 @@
-$branch = master
 cd $ENV:USERPROFILE
 $curDir = Get-Location
 $workDir = $curDir.Path + "\mbtk"
@@ -23,12 +22,20 @@ python .\get-pip.py
 Move-Item .\python38._pth .\python38._pth.old
 #
 pip install pytest
-git clone -b $branch --depth=1  https://github.com/gem/oq-engine.git
+Write-Host "clone of the branch $branch for oq-engine and install in developer mode"
+git clone --depth=1 https://github.com/gem/oq-engine.git
 cd .\oq-engine\
 pip install -r .\requirements-py38-win64.txt
 pip install -e .
 cd ..
-git clone -b $branch https://github.com/GEMScienceTools/oq-mbtk.git
+Write-Host "clone of the branch $branch for oq-mbtk and install in developer mode"
+git clone --depth=1 -b ae-win64 https://github.com/GEMScienceTools/oq-mbtk.git
 cd .\oq-mbtk\
 pip install -r .\requirements_win64.txt
 pip install -e .
+Write-Host "End of installation"
+Write-Host "Creation of symlink for bat files on the Desktop of user $ENV:USERNAME"
+cd windows
+Copy-Item  -Path .\oq-console.bat -DestinationPath "$ENV:USERPROFILE\Desktop"
+Copy-Item  -Path .\oq-server.bat -DestinationPath "$ENV:USERPROFILE\Desktop"
+cd $workDir
