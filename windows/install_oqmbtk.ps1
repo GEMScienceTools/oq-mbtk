@@ -1,4 +1,5 @@
 $branch = master
+cd $ENV:USERPROFILE
 $curDir = Get-Location
 $workDir = $curDir.Path + "\mbtk"
 Write-Host "Current Working Directory: $curDir"
