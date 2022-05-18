@@ -2,6 +2,8 @@ name: Installation and test on Windows
 
 on:
   pull_request:
+  push:
+    branches: [ ae-win64 ]
 
 jobs:
 
@@ -9,7 +11,6 @@ jobs:
     name: Windows Installation
     runs-on: windows-latest
     env:
-      MPLBACKEND: 'Agg'
 
     steps:
     - name: Extract branch name
