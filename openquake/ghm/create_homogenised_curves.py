@@ -371,7 +371,6 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             if not only_buffers:
                 df = pandas.DataFrame({'Name': [key], 'Polygon': [poly]})
                 gdf = gpd.GeoDataFrame(df, geometry='Polygon')
-                # within = gpd.sjoin(map_gdf, gdf, op='within')
                 within = gpd.sjoin(map_gdf, gdf, predicate='within')
                 fname = os.path.join(outpath, 'map_{:s}.json'.format(key))
                 within.to_file(fname, driver='GeoJSON')
