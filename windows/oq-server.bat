@@ -9,7 +9,7 @@ set PYTHONUTF8=1
 set OQ_HOST=localhost
 set OQ_PORT=8800
 
-
+echo OpenQuake environment loaded
 echo Starting the server.
 echo Please wait ...
 REM Start the WebUI using django
