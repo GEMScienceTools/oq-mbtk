@@ -6,6 +6,7 @@ Write-Host "Current Working Directory: $curDir"
 Write-Host "Download and Installation of python embeddable package"
 Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.8.10/python-3.8.10-embed-amd64.zip -OutFile .\python.zip
 Expand-Archive -Path .\python.zip -DestinationPath .\mbtk -Verbose
+Remove-Item .\python.zip
 cd $workDir
 Write-Host "Current Working Directory: $workDir"
 Write-Host "Download and Installation of pip, wheel and setuptools"
