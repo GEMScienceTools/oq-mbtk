@@ -21,7 +21,7 @@
 cd $ENV:USERPROFILE
 $curDir = Get-Location
 $workDir = $curDir.Path + "\mbtk"
-"Test to see if folder [$workDir]  exists"
+# Test to see if folder [$workDir]  exists
 if (Test-Path -Path $workDir) {
     Write-Host "ATTENTION"
     Write-Host "Path $workDir exist."
