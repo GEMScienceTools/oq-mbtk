@@ -21,7 +21,17 @@
 cd $ENV:USERPROFILE
 $curDir = Get-Location
 $workDir = $curDir.Path + "\mbtk"
-Write-Host "Current Working Directory: $curDir"
+"Test to see if folder [$workDir]  exists"
+if (Test-Path -Path $workDir) {
+    Write-Host "ATTENTION"
+    Write-Host "Path $workDir exist."
+    Write-Host "We can not install the OQ-MBTK environment in the folder $workDir"
+	EXIT 1
+} else {
+    Write-Host "Path $workDir doesn't exist."
+    Write-Host "We can install the OQ-MBTK environment in the folder $workDir"
+}
+Write-Host "Current Working Directory: $workDir"
 Write-Host "Download and Installation of python embeddable package"
 Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.8.10/python-3.8.10-embed-amd64.zip -OutFile .\python.zip
 Expand-Archive -Path .\python.zip -DestinationPath .\mbtk -Verbose
