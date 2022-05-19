@@ -29,7 +29,7 @@ pip install -r .\requirements-py38-win64.txt
 pip install -e .
 cd ..
 Write-Host "clone of the branch $branch for oq-mbtk and install in developer mode"
-git clone --depth=1 -b ae-win64 https://github.com/GEMScienceTools/oq-mbtk.git
+git clone --depth=1 https://github.com/GEMScienceTools/oq-mbtk.git
 cd .\oq-mbtk\
 pip install -r .\requirements_win64.txt
 pip install -e .
