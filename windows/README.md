@@ -2,15 +2,22 @@
 The OpenQuake Model Building Toolkit (OQ-MBTK) can be installed on Windows 
 with powershell installer.
 
-You actually need to invoke PowerShell from Command Prompt and from that window run:
+To install the OQ-MBTK on Windows 10 run the following command from the PowerShell (not the normal CMD command prompt):
+
 ```
 C:\>curl.exe -LO https://raw.githubusercontent.com/GEMScienceTools/oq-mbtk/master/windows/install_oqmbtk.ps1
 C:\>.\install_oqmbtk.ps1 
 ```
 
+This will install the OQ-MBTK software and OpenQuake Engine in a new folder called 'mbtk' under the USER home directory: $ENV:USERPROFILE\mbtk 
+and create two cmd files on the Desktop to load the OQ-MBTK environment and Openquake environment
+
 - this Installer includes its own distribution of the dependencies needed 
     - Python 3.8.10
     - Python dependencies (pip, numpy, scipy, and more)
+
+To uninstall the OQ-MBTK simply remove the mbtk folder and the cmd files on the desktop
+
 
 ## Requirements
 
