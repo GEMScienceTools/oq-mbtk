@@ -16,6 +16,11 @@ and create two cmd files on the Desktop to load the OQ-MBTK environment and Open
     - Python 3.8.10
     - Python dependencies (pip, numpy, scipy, and more)
 
+To use the environment just activate from the command files on the desktop:
+
+- oq-console.cmd: To load the  OQ-MBTK and OpenQuake Engine environment
+- oq-server.cmd: To start db server and webui of Openquake Engine
+
 To uninstall the OQ-MBTK simply remove the mbtk folder and the cmd files on the desktop
 
 
