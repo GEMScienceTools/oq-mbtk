@@ -23,7 +23,6 @@ $curDir = Get-Location
 $workDir = $curDir.Path + "\mbtk"
 # Test to see if folder [$workDir]  exists
 if (Test-Path -Path $workDir) {
-    Write-Host "ATTENTION"
     Write-Host "Path $workDir exist."
     Write-Host "We can not install the OQ-MBTK environment in the folder $workDir"
 	EXIT 1
