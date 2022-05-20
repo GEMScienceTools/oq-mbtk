@@ -25,23 +25,21 @@
 # coding: utf-8
 
 
-
 import os
-import pandas as pd
 import unittest
 import tempfile
+import toml
 
 from openquake.cat.hmg import check
 
 BASE_PATH = os.path.dirname(__file__)
 
-SETTINGS = """
-
-[general]
-delta_ll = 0.3
-delta_t = 10.0
-output_path = "{:s}"
-"""
+SETTINGS_DICT = {
+    "general": {
+        "delta_ll": 0.3,
+        "delta_t": 10.0
+    }
+}
 
 
 class CheckHomogenisedCatalogue(unittest.TestCase):
@@ -56,13 +54,12 @@ class CheckHomogenisedCatalogue(unittest.TestCase):
         self.tmpd = tempfile.mkdtemp()
 
         # Update settings
-        settings = SETTINGS.format(self.tmpd)
+        SETTINGS_DICT["general"]["output_path"] = self.tmpd
 
         # Create settings file
         self.settings = os.path.join(self.tmpd, "settings.toml")
-        fou = open(self.settings, "w")
-        fou.write(settings)
-        fou.close()
+        with open(self.settings, "w") as fou:
+            toml.dump(SETTINGS_DICT, fou)
 
     def test_case01(self):
         """Searching for the duplicate"""
