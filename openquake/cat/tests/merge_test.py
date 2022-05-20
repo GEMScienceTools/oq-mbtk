@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import unittest
 import tempfile
+import toml
 
 from openquake.cat.hmg import merge
 
@@ -48,19 +49,24 @@ class MergeGCMTTest(unittest.TestCase):
 
         # Create the temporary folder
         self.tmpd = tempfile.mkdtemp()
-        flog = os.path.join(self.tmpd, "log.txt")
-        isff = os.path.join(data_path, "test_isc_bulletin.isf")
-        gcmtf = os.path.join(data_path, "test_gcmt.csv")
-        shpf = os.path.join(data_path, "shp", "test_area.shp")
 
         # Update settings
-        settings = SETTINGS.format(self.tmpd, shpf, flog, isff, gcmtf)
+        # Use toml.load and toml dump to ensure that Windows paths
+        # are escaped correctly and the resulting TOML file is valid
+        td = toml.loads(SETTINGS)
+        td["general"]["output_path"] = self.tmpd
+        td["general"]["log_file"] = os.path.join(self.tmpd, "log.txt")
+        td["general"]["region_shp"] = \
+            os.path.join(data_path, "shp", "test_area.shp")
+        td["catalogues"][0]["filename"] = \
+            os.path.join(data_path, "test_isc_bulletin.isf")
+        td["catalogues"][1]["filename"] = \
+            os.path.join(data_path, "test_gcmt.csv")
 
         # Create settings file
         self.settings = os.path.join(self.tmpd, "settings.toml")
-        fou = open(self.settings, "w")
-        fou.write(settings)
-        fou.close()
+        with open(self.settings, "w") as fou:
+            toml.dump(td, fou)
 
     def test_case01(self):
         """Merging GCMT catalogue"""
