@@ -32,7 +32,10 @@ Requirements are:
 - 4 GB of RAM (8 GB recommended)
 - 1.5 GB of free disk space
 - Git on Windows
-  The most official build is available for download on the Git website. Just go to https://git-scm.com/download/win and the download will start automatically.
+
+  If you don't have Git installed, it is available for download on the Git website. 
+
+  Just go to https://git-scm.com/download/win and the download will start automatically.
 
 **Windows 7** and **Windows 8** are not supported. That means that we do
 not test such platforms and the openquake model building toolkit may or may not work there. 
