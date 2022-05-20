@@ -17,7 +17,7 @@ O_PATH='/tmp/ghm/global'
 IMTSTR='PGA'
 #
 # Probability of exceedance
-PEX='-p 0.002105'
+PEX='0.002105'
 #
 # Run hazard curves homogenisation
 ../create_map_from_curves.py $I_JSON $PREFIX $O_NAME $O_PATH $IMTSTR $PEX
