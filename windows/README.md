@@ -15,6 +15,22 @@ Requirements are:
 **Windows 7** and **Windows 8** are not supported. That means that we do
 not test such platforms and the openquake model building toolkit may or may not work there. 
 
+## PowerShell Execution Policy
+
+The Powershell execution policy is a rule that defines which scripts are allowed to run on a specific server or workstation.
+The default execution policy is Restricted, so no scripts are allowed to run.
+If you want to check which execution policy is currently configured, you can use the Get-ExecutionPolicy cmdlet.
+
+```
+Get-ExecutionPolicy
+```
+
+You can change to a new execution policy with the Set-ExecutionPolicy cmdlet.
+
+```
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
+```
+
 ## Installation
 
 To install the OQ-MBTK on Windows 10 run the following command from the PowerShell (not the normal CMD command prompt):
