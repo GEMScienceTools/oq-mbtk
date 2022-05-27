@@ -262,7 +262,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             np.testing.assert_allclose(imts_save, imts, rtol=1e-5)
         # Fixing an issue at the border between waf and ssa
         # TODO can we remove this now?
-        if key in ['waf18', 'ssa18']:
+        if key in ['waf', 'ssa']:
             from shapely.geometry import Polygon
             coo = get_poly_from_str(mosaic.SUBSETS[key]['AO'][0])
             df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
