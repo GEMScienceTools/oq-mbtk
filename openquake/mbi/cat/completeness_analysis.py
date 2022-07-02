@@ -33,6 +33,7 @@ import logging
 import matplotlib.pyplot as plt
 
 from openquake.baselib import sap
+from openquake.wkf.utils import get_list
 from openquake.wkf.utils import _get_src_id, create_folder
 from openquake.wkf.compute_gr_params import (get_weichert_confidence_intervals,
                                              _weichert_plot)
@@ -132,7 +133,8 @@ def completeness_analysis(fname, idxs, years, mags, binw, ref_mag, bgrlim,
     return save
 
 
-def main(fname_input_pattern, fname_config, folder_out_figs):
+def main(fname_input_pattern, fname_config, folder_out_figs, *,
+         skip: str = ''):
     """
     Analyzes the completeness of a catalogue
     """
@@ -153,8 +155,17 @@ def main(fname_input_pattern, fname_config, folder_out_figs):
     bmin = 0.90
     bmax = 1.10
 
+    if len(skip) > 0:
+        if isinstance(skip, str):
+            skip = get_list(skip)
+        print('Skipping: ', skip)
+
     for fname in glob.glob(fname_input_pattern):
         src_id = _get_src_id(fname)
+
+        if src_id in skip:
+            continue
+
         var = config['sources'][src_id]
         res = completeness_analysis(fname, idxs, years, mags, binw, ref_mag,
                                     [bmin, bmax], src_id, folder_out_figs,
@@ -174,6 +185,8 @@ msg = 'Name of the .toml file with configuration parameters'
 main.fname_config = msg
 msg = 'Name of the folder where to store figures'
 main.fname_config = msg
+msg = 'IDs of the sources to skip'
+main.skip = msg
 
 
 if __name__ == '__main__':
