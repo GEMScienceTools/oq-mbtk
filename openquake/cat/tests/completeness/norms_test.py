@@ -24,38 +24,38 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-import toml
+import unittest
 import numpy as np
-from openquake.baselib import sap
-from openquake.cat.completeness.generate import get_completenesses
+from openquake.hmtk.seismicity.catalogue import Catalogue
+from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
+from openquake.mbt.tools.model_building.dclustering import _add_defaults
+from openquake.cat.completeness.norms import get_norm_optimize_b
 
 
-def main(fname_config, folder_out):
-    """
-    Creates three .npz files with all the completeness windows admitted by
-    the combination of years and magnitudes provided.
-    """
+class NormTest(unittest.TestCase):
 
-    config = toml.load(fname_config)
-    key = 'completeness'
-    mags = np.array(config[key]['mags'])
-    years = np.array(config[key]['years'])
-    num_steps = config[key].get('num_steps', 0)
-    min_mag_compl = config[key].get('min_mag_compl', None)
-    apriori_conditions = config[key].get('apriori_conditions', {})
-    step = config[key].get('step', 8)
-    flexible = config[key].get('flexible', False)
+    def setUp(self):
+        dat = [[1900, 6.0],
+               [1980, 6.0],
+               [1970, 5.0],
+               [1980, 5.0],
+               [1980, 5.7],
+               [1990, 5.0]]
+        dat = np.array(dat)
+        cat = Catalogue()
+        cat.load_from_array(['year', 'magnitude'], dat)
+        cat = _add_defaults(cat)
+        cat.data["dtime"] = cat.get_decimal_time()
+        self.cat = cat
+        self.compl = np.array([[1980, 5.0], [1950, 5.9]])
 
-    get_completenesses(mags, years, folder_out, num_steps,
-                       min_mag_compl, apriori_conditions,
-                       step, flexible)
+    def test_case01(self):
+        mbinw = 0.5
+        ybinw = 10.0
 
-
-msg = 'Name of the .toml file with configuration parameters'
-main.fname_config = msg
-msg = 'Name of the folder where to store files'
-main.folder_out = msg
-
-
-if __name__ == '__main__':
-    sap.run(main)
+        aval = 2.0
+        bval = 1.0
+        cmag, t_per, n_obs = get_completeness_counts(self.cat, self.compl,
+                                                     mbinw)
+        norm = get_norm_optimize_b(aval, bval, self.compl, self.cat, mbinw,
+                                   ybinw)
