@@ -112,3 +112,6 @@ setup.sh
 
 # auxiliary files made by QGIS for arrays
 *.aux.xml
+
+# vim
+*.swp
