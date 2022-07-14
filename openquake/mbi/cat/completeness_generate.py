@@ -27,6 +27,7 @@
 import toml
 import numpy as np
 from openquake.baselib import sap
+from openquake.wkf.utils import create_folder
 from openquake.cat.completeness.generate import get_completenesses
 
 
@@ -35,7 +36,7 @@ def main(fname_config, folder_out):
     Creates three .npz files with all the completeness windows admitted by
     the combination of years and magnitudes provided.
     """
-
+    create_folder(folder_out)
     config = toml.load(fname_config)
     key = 'completeness'
     mags = np.array(config[key]['mags'])
