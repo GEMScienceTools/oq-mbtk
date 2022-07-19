@@ -9,7 +9,8 @@ from openquake.hazardlib.tom import PoissonTOM
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.geo.nodalplane import NodalPlane
 
-from .rupture_distances import (
+#from .rupture_distances import (
+from openquake.aft.rupture_distances import (
     RupDistType,
     calc_min_source_dist,
     get_close_source_pairs,

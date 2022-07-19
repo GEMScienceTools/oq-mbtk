@@ -12,7 +12,7 @@ from openquake.hazardlib.tom import PoissonTOM
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.geo.nodalplane import NodalPlane
 
-from rupture_distances import (
+from openquake.aft.rupture_distances import (
     # RupDistType,
     # calc_min_source_dist,
     get_close_source_pairs,
@@ -29,7 +29,8 @@ from rupture_distances import (
     prep_source_data,
 )
 
-from aftershock_probabilities import (
+#from aftershock_probabilities import (
+from openquake.aft.aftershock_probabilities import (
     get_aftershock_grmfd,
     num_aftershocks,
     get_a,
@@ -231,4 +232,4 @@ def look_at_aftershock_rup_rates():
     )
 
 
-plot_mfds()
+#plot_mfds()
