@@ -610,32 +610,3 @@ def calc_rupture_adjacence_dict_all_sources(
     if not h5_file:
         return rup_adj_dict
 
-
-def prep_source_data(
-    sources: Sequence[BaseSeismicSource],
-) -> Tuple[pd.DataFrame, pd.core.groupby.generic.DataFrameGroupBy]:
-    """
-    Creates a Pandas DataFrame and a Groupby object for all ruptures
-    in a sequence of seismic sources.  The DataFrame has some additional
-    information that is used during the pairwise rupture distance
-    calculations.
-    """
-    big_rup_list = []
-
-    for source in sources:
-        rup_list = [r for r in source.iter_ruptures()]
-        for r in rup_list:
-            r.source = source.source_id
-        big_rup_list.extend(rup_list)
-
-    rup_df = pd.DataFrame(
-        index=np.arange(len(big_rup_list)),
-        data=big_rup_list,
-        columns=["rupture"],
-    )
-    rup_df["source"] = [r.source for r in rup_df["rupture"]]
-    rup_df["mag"] = [r.mag for r in rup_df["rupture"]]
-    rup_df["xyz"] = [r.surface.mesh.xyz for r in rup_df["rupture"]]
-
-    source_groups = rup_df.groupby("source")
-    return rup_df, source_groups

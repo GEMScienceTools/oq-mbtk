@@ -13,33 +13,21 @@ from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.geo.nodalplane import NodalPlane
 
 from openquake.aft.rupture_distances import (
-    # RupDistType,
-    # calc_min_source_dist,
     get_close_source_pairs,
-    # calc_pairwise_distances,
-    # min_reduce,
-    # stack_sequences,
-    # split_rows,
-    # get_min_rup_dists,
-    # check_dists_by_mag,
-    # filter_dists_by_mag,
-    # get_rup_dist_pairs,
-    # process_source_pair,
     calc_rupture_adjacence_dict_all_sources,
     prep_source_data,
 )
 
-#from aftershock_probabilities import (
 from openquake.aft.aftershock_probabilities import (
-    get_aftershock_grmfd,
-    num_aftershocks,
-    get_a,
+    #get_aftershock_grmfd,
+    #num_aftershocks,
+    #get_a,
     get_source_counts,
-    get_aftershock_rup_rates,
-    get_rup,
-    RupDist2,
-    make_source_dist_df,
-    fetch_rup_from_source_dist_groups,
+    #get_aftershock_rup_rates,
+    #get_rup,
+    #RupDist2,
+    #make_source_dist_df,
+    #fetch_rup_from_source_dist_groups,
     rupture_aftershock_rates_per_source,
 )
 
@@ -130,7 +118,10 @@ def test_num_aftershocks_1():
     pass
 
 
-def get_aftershock_rup_adjustments():
+def test_get_aftershock_rup_adjustments():
+    """
+    Essentially, the workflow for the whole process
+    """
 
     sources = [area_source_1, area_source_2, area_source_3]
     rup_df, source_groups = prep_source_data(sources)
