@@ -1,8 +1,8 @@
+import os
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
-# import pytest
 
 from openquake.hazardlib.geo import Polygon, Point
 from openquake.hazardlib.mfd import TruncatedGRMFD
@@ -162,6 +162,14 @@ def test_get_aftershock_rup_adjustments():
     rup_adj_df = pd.concat([pd.DataFrame(r) for r in rr], axis=1).fillna(0.0)
 
     rup_adjustments = rup_adj_df.sum(axis=1)
+    oq_rup_index = rup_df.loc[rup_adjustments.index, "oq_rup_ind"]
+    rup_adjustments.index = oq_rup_index
+
+    rup_adj_df_path = os.path.join(".", "test_data", "test_get_aftershock_rup_adjustments_results.csv")
+    rup_adjustment_df = pd.read_csv(rup_adj_df_path, index_col=0)
+
+    np.testing.assert_array_almost_equal(rup_adjustments.values,
+    rup_adjustment_df['rates'].values)
 
     return rup_adjustments
 
