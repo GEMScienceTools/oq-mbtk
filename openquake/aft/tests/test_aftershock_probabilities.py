@@ -15,7 +15,6 @@ from openquake.hazardlib.geo.nodalplane import NodalPlane
 from openquake.aft.rupture_distances import (
     get_close_source_pairs,
     calc_rupture_adjacence_dict_all_sources,
-    prep_source_data,
 )
 
 from openquake.aft.aftershock_probabilities import (
@@ -29,10 +28,11 @@ from openquake.aft.aftershock_probabilities import (
     #make_source_dist_df,
     #fetch_rup_from_source_dist_groups,
     rupture_aftershock_rates_per_source,
+    prep_source_data,
 )
 
 area_source_1 = AreaSource(
-    source_id="s1",
+    source_id=0,
     name="s1",
     tectonic_region_type="ActiveShallowCrust",
     mfd=TruncatedGRMFD(
@@ -59,7 +59,7 @@ area_source_1 = AreaSource(
 )
 
 area_source_2 = AreaSource(
-    source_id="s2",
+    source_id=1,
     name="s2",
     tectonic_region_type="ActiveShallowCrust",
     mfd=TruncatedGRMFD(
@@ -86,7 +86,7 @@ area_source_2 = AreaSource(
 )
 
 area_source_3 = AreaSource(
-    source_id="s3",
+    source_id=2,
     name="s3",
     tectonic_region_type="ActiveShallowCrust",
     mfd=TruncatedGRMFD(
@@ -152,6 +152,7 @@ def test_get_aftershock_rup_adjustments():
                 c=0.25,
                 b_val=0.85,
                 gr_max=7.5,
+                gr_min=4.7,
             )
         )
         r_on = source_cum_counts[ns] + 1
