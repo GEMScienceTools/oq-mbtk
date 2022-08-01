@@ -98,7 +98,11 @@ def _main(fname_input_pattern, fname_config, folder_out_figs, folder_in,
                                     compl_tables, src_id, folder_out,
                                     rewrite=False)
 
-        var['completeness_table'] = list(res[3])
+        # Formatting completeness table
+        tmp = []
+        for row in res[3]:
+            tmp.append([float(row[0]), float(row[1])])
+        var['completeness_table'] = tmp
         var['agr_weichert'] = float('{:.4f}'.format(res[0]))
         var['bgr_weichert'] = float('{:.4f}'.format(res[1]))
 
