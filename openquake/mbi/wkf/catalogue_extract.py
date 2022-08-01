@@ -40,7 +40,7 @@ def main(fname_in: str, fname_out: str, *, depth_min: float = 0,
     folder_out = os.path.dirname(fname_out)
     create_folder(folder_out)
     kwargs = {'depth_min': depth_min, 'depth_max': depth_max,
-              'min_mag': max_mag, 'max_mag': max_mag}
+              'min_mag': min_mag, 'max_mag': max_mag}
     cdf = extract(fname_in, **kwargs)
     cdf.to_csv(fname_out, index=False)
 

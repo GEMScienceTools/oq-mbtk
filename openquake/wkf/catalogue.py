@@ -73,6 +73,12 @@ def extract(fname_in: str, **kwargs) -> pd.DataFrame:
 
     # Return the final catalogue
     df.reset_index()
+
+    if len(df) < 1:
+        print('Empty catalogue!')
+    else:
+        print(f'Catalogue contains {len(df):d} earthquakes')
+
     return df
 
 
