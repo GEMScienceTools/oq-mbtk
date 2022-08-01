@@ -88,7 +88,10 @@ def _main(fname_input_pattern, fname_config, folder_out_figs, folder_in,
             continue
 
         # Read configuration parameters for the current source
-        var = config['sources'][src_id]
+        if src_id in config['sources']:
+            var = config['sources'][src_id]
+        else:
+            var = {}
 
         res = completeness_analysis(fname, years, mags, binw, ref_mag,
                                     ref_upp_mag, [bmin, bmax], criterion,
@@ -98,6 +101,9 @@ def _main(fname_input_pattern, fname_config, folder_out_figs, folder_in,
         var['completeness_table'] = list(res[3])
         var['agr_weichert'] = float('{:.4f}'.format(res[0]))
         var['bgr_weichert'] = float('{:.4f}'.format(res[1]))
+
+        # Updating configuration
+        config['sources'][src_id] = var
 
     with open(fname_config, 'w') as fou:
         fou.write(toml.dumps(config))
