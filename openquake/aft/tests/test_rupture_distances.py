@@ -9,7 +9,6 @@ from openquake.hazardlib.tom import PoissonTOM
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.geo.nodalplane import NodalPlane
 
-#from .rupture_distances import (
 from openquake.aft.rupture_distances import (
     RupDistType,
     calc_min_source_dist,
@@ -116,7 +115,7 @@ def test_calc_min_source_dist():
 
 def test_get_close_source_pairs_filter():
     close_source_pairs = get_close_source_pairs(
-        [area_source_1, area_source_2, area_source_3], dist_threshold=150.0
+        [area_source_1, area_source_2, area_source_3], max_dist=150.0
     )
 
     close_source_pairs_answer = {
@@ -132,7 +131,7 @@ def test_get_close_source_pairs_filter():
 
 def test_get_close_source_pairs_no_filter():
     close_source_pairs = get_close_source_pairs(
-        [area_source_1, area_source_2, area_source_3], dist_threshold=None
+        [area_source_1, area_source_2, area_source_3], max_dist=None
     )
 
     close_source_pairs_answer = {
@@ -153,9 +152,7 @@ def test_calc_pairwise_distances():
 
     pair_dists = calc_pairwise_distances(v1, v2)
 
-    pair_dists_answer = np.array(
-        [[1118.03398875, 10.0], [500.0, 707.17748833]]
-    )
+    pair_dists_answer = np.array([[1118.03398875, 10.0], [500.0, 707.17748833]])
 
     np.testing.assert_array_almost_equal(pair_dists, pair_dists_answer)
 
