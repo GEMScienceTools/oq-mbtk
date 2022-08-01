@@ -32,7 +32,7 @@ from openquake.wkf.utils import create_folder
 
 
 def main(fname_in: str, fname_out: str, *, depth_min: float = 0,
-         depth_max: float = 1000):
+         depth_max: float = 1000, mag_min: float = -1):
     """
     Extact from a .csv catalogue the essential information required for hazard
     modelling. Some filtering options are also available.
@@ -48,6 +48,7 @@ main.fname_in = "The name of the input catalogue"
 main.fname_out = "The name of the output catalogue"
 main.depth_min = "Minimum depth [km]"
 main.depth_max = "Maximum depth [km]"
+main.mag_min = "Minimum magnitude"
 
 if __name__ == '__main__':
     sap.run(main)
