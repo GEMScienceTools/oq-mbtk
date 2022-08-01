@@ -67,9 +67,9 @@ def extract(fname_in: str, **kwargs) -> pd.DataFrame:
         elif key == 'max_depth':
             df.query(f"depth < {kwargs['max_depth']}", inplace=True)
         elif key == 'min_mag':
-            df.query(f"mag > {kwargs['min_max']}", inplace=True)
+            df.query(f"magnitude >= {kwargs['min_mag']}", inplace=True)
         elif key == 'max_mag':
-            df.query(f"mag > {kwargs['min_max']}", inplace=True)
+            df.query(f"magnitude < {kwargs['max_mag']}", inplace=True)
 
     # Return the final catalogue
     df.reset_index()
