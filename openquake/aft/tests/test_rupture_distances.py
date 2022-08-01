@@ -23,12 +23,13 @@ from openquake.aft.rupture_distances import (
     get_rup_dist_pairs,
     process_source_pair,
     calc_rupture_adjacence_dict_all_sources,
-    prep_source_data,
 )
 
+from openquake.aft.aftershock_probabilities import prep_source_data
+
 area_source_1 = AreaSource(
-    source_id="s1",
-    name="s1",
+    source_id=0,
+    name=0,
     tectonic_region_type="ActiveShallowCrust",
     mfd=TruncatedGRMFD(
         min_mag=4.6, max_mag=8.0, bin_width=0.2, a_val=1.0, b_val=1.0
@@ -54,8 +55,8 @@ area_source_1 = AreaSource(
 )
 
 area_source_2 = AreaSource(
-    source_id="s2",
-    name="s2",
+    source_id=1,
+    name=1,
     tectonic_region_type="ActiveShallowCrust",
     mfd=TruncatedGRMFD(
         min_mag=4.6, max_mag=8.0, bin_width=0.2, a_val=1.0, b_val=1.0
@@ -119,10 +120,10 @@ def test_get_close_source_pairs_filter():
     )
 
     close_source_pairs_answer = {
-        ("s1", "s1"): 0.0,
-        ("s2", "s1"): 111.19351532028067,
-        ("s2", "s2"): 0.0,
-        ("s3", "s2"): 111.19351532028064,
+        (0, 0): 0.0,
+        (1, 0): 111.19351532028067,
+        (1, 1): 0.0,
+        ("s3", 1): 111.19351532028064,
         ("s3", "s3"): 0.0,
     }
 
@@ -135,11 +136,11 @@ def test_get_close_source_pairs_no_filter():
     )
 
     close_source_pairs_answer = {
-        ("s1", "s1"): 0.0,
-        ("s2", "s1"): 111.19351532028067,
-        ("s2", "s2"): 0.0,
-        ("s3", "s1"): 333.495874564696,
-        ("s3", "s2"): 111.19351532028064,
+        (0, 0): 0.0,
+        (1, 0): 111.19351532028067,
+        (1, 1): 0.0,
+        ("s3", 0): 333.495874564696,
+        ("s3", 1): 111.19351532028064,
         ("s3", "s3"): 0.0,
     }
 
@@ -419,7 +420,7 @@ def test_get_rup_dist_pairs():
         [area_source_1, area_source_2, area_source_3]
     )
     rup_dist_pairs = get_rup_dist_pairs(
-        "s1", "s2", rup_df, source_groups, dist_constant=4.0
+        0, 1, rup_df, source_groups, dist_constant=4.0
     )
     rdp0 = np.array((11, 16, 223.67159), dtype=RupDistType)
     assert rdp0 == rup_dist_pairs[0]
@@ -429,7 +430,7 @@ def test_process_source_pair():
     rup_df, source_groups = prep_source_data(
         [area_source_1, area_source_2, area_source_3]
     )
-    source_pair = ("s1", "s2")
+    source_pair = (0, 1)
     rup_adj_dict = {}
 
     process_source_pair(
@@ -441,7 +442,7 @@ def test_process_source_pair():
     )
     rdp0 = np.array((11, 16, 223.67159), dtype=RupDistType)
 
-    assert rup_adj_dict["s1"]["s2"][0] == rdp0
+    assert rup_adj_dict[0][1][0] == rdp0
 
 
 def test_calc_rupture_distance_dict_all_sources():
@@ -460,4 +461,4 @@ def test_calc_rupture_distance_dict_all_sources():
     )
 
     rdp0 = np.array((11, 16, 223.67159), dtype=RupDistType)
-    assert rup_adj_dict["s1"]["s2"][0] == rdp0
+    assert rup_adj_dict[0][1][0] == rdp0
