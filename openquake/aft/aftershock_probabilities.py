@@ -1,4 +1,5 @@
 import time
+import logging
 from typing import Optional, Sequence, Tuple
 
 import h5py
@@ -14,9 +15,10 @@ from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.source import BaseSeismicSource
 
 from openquake.aft.rupture_distances import (
-        calc_rupture_adjacence_dict_all_sources,
-        get_close_source_pairs,
+    calc_rupture_adjacence_dict_all_sources,
+    get_close_source_pairs,
 )
+
 
 def get_aftershock_grmfd(
     rup,
@@ -97,6 +99,10 @@ def get_aftershock_rup_rates(
     )
 
     occur_rates = mfd.get_annual_occurrence_rates()
+
+    if np.abs(gr_min - occur_rates[0][0]) > 0.01:
+        mag_diff = gr_min - occur_rates[0][0]
+        occur_rates = [(occ[0] + mag_diff, occ[1]) for occ in occur_rates]
 
     aft_df["dist_probs"] = np.exp(-aft_df.d)
 
@@ -213,8 +219,8 @@ def rupture_aftershock_rates_per_source(
     return source_rup_adjustments
 
 
-def prep_source_data(sources: Sequence[BaseSeismicSource],
-    source_info = None
+def prep_source_data(
+    sources: Sequence[BaseSeismicSource], source_info=None
 ) -> Tuple[pd.DataFrame, pd.core.groupby.generic.DataFrameGroupBy]:
     """
     Creates a Pandas DataFrame and a Groupby object for all ruptures
@@ -223,74 +229,98 @@ def prep_source_data(sources: Sequence[BaseSeismicSource],
     calculations.
     """
     big_rup_list = []
+    rup_inds = []
 
     for i, source in enumerate(tqdm(sources, leave=False)):
+        source_rup_inds = []
         if source_info is not None:
-            rup_list = [r for r in tqdm(source.iter_ruptures(), 
-                total=source_info[i]['num_ruptures'],
-                leave=False)]
+            rup_list = [
+                r
+                for r in tqdm(
+                    source.iter_ruptures(),
+                    total=source_info[i]["num_ruptures"],
+                    leave=False,
+                )
+            ]
         else:
             rup_list = [r for r in source.iter_ruptures()]
-        for r in rup_list:
-            #r.source = source.source_id
-            r.source = str(i)
+        for j, r in enumerate(rup_list):
+            # r.source = source.source_id
+            r.source = i
+            source_rup_inds.append((i, j))
+
         big_rup_list.extend(rup_list)
+        rup_inds.extend(source_rup_inds)
 
     rup_df = pd.DataFrame(
         index=np.arange(len(big_rup_list)),
         data=big_rup_list,
         columns=["rupture"],
     )
-    rup_df["source"] = [r.source for r in rup_df["rupture"]]
-    rup_df["mag"] = [r.mag for r in rup_df["rupture"]]
-    rup_df["xyz"] = [r.surface.mesh.xyz for r in rup_df["rupture"]]
+    logging.info("\tadding rupture attributes")
+    rup_df["source"] = [r.source for r in tqdm(rup_df["rupture"])]
+    rup_df["mag"] = [r.mag for r in tqdm(rup_df["rupture"])]
+    rup_df["xyz"] = [r.surface.mesh.xyz for r in tqdm(rup_df["rupture"])]
+    rup_df["oq_rup_ind"] = rup_inds
 
+    logging.info("\tgrouping ruptures by source")
     source_groups = rup_df.groupby("source")
     return rup_df, source_groups
 
 
 def sources_from_job_ini(job_ini):
 
-    calc = run_calc(job_ini, calculation_mode='preclassical',
-                    split_sources='false')
+    calc = run_calc(
+        job_ini, calculation_mode="preclassical", split_sources="false"
+    )
 
     sources = calc.csm.get_sources()
-    source_info = calc.datastore['source_info'][:]
+    source_info = calc.datastore["source_info"][:]
+
+    for i, source in enumerate(sources):
+        source.source_id = i
 
     return sources, source_info
 
 
-def get_aftershock_rupture_rates(job_ini, dist_constant=4.0, c=0.25, b_val=0.85,
-        gr_max=7.5):
+def get_aftershock_rupture_rates(
+    job_ini, dist_constant=4.0, c=0.25, b_val=0.85, gr_max=7.5, min_mag=6.0
+):
 
     t0 = time.time()
-    print("Getting sources from model")
+    logging.info("Getting sources from model")
     sources, source_info = sources_from_job_ini(job_ini)
     t1 = time.time()
-    print(f"\nDone in {(t1 - t0 ) / 60 :0.1} min")
+    logging.info(f"\nDone in {(t1 - t0 ) / 60 :0.1} min")
 
-    print("Prepping source data")
-    rup_df, source_groups = prep_source_data(sources, source_info=source_info)
-    t2 = time.time()
-    print(f"Done in { (t2 - t1) / 60 :0.1} min")
+    # breakpoint()
 
-    print("Calculating close source pairs")
+    logging.info("Calculating close source pairs")
     source_pairs = get_close_source_pairs(sources)
-    t3 = time.time()
-    print(f"Done in { (t3-t2) / 60 :0.1} min")
+    t2 = time.time()
+    logging.info(f"Done in { (t2 - t1) / 60 :0.2} min")
+    logging.info(
+        f"{len(source_pairs)} source pairs out of {len(sources)**2} possible"
+    )
 
-    print("Calculationg rupture distances") 
-    rup_dists = calc_rupture_adjacence_dict_all_sources(source_pairs,
-        rup_df, source_groups)
+    logging.info("Prepping source data")
+    rup_df, source_groups = prep_source_data(sources, source_info=source_info)
+    t3 = time.time()
+    logging.info(f"Done in { (t3-t2) / 60 :0.2} min")
+
+    logging.info("Calculating rupture distances")
+    rup_dists = calc_rupture_adjacence_dict_all_sources(
+        source_pairs, rup_df, source_groups
+    )
     t4 = time.time()
-    print(f"Done in {(t4-t3) / 60 :0.1} min")
+    logging.info(f"Done in {(t4-t3) / 60 :0.2} min")
 
     source_counts, source_cum_counts, source_count_starts = get_source_counts(
         sources
     )
     t5 = time.time()
 
-    print("Calculating aftershock rates per source")
+    logging.info("Calculating aftershock rates per source")
     rup_adjustments = []
     r_on = 1
     for ns, source in enumerate(tqdm(sources)):
@@ -305,22 +335,25 @@ def get_aftershock_rupture_rates(job_ini, dist_constant=4.0, c=0.25, b_val=0.85,
                 ns=ns,
                 c=c,
                 b_val=b_val,
-                gr_max=gr_max
+                gr_max=gr_max,
+                gr_min=rup_df.mag.min(),
             )
         )
         r_on = source_cum_counts[ns] + 1
     t6 = time.time()
-    print(f"Done in {(t6-t5) / 60 :0.1} min")
+    logging.info(f"Done in {(t6-t5) / 60 :0.2} min")
 
-    print('Concatenating results')
+    logging.info("Concatenating results")
     rr = [r for r in rup_adjustments if len(r) != 0]
     t7 = time.time()
     rup_adj_df = pd.concat([pd.DataFrame(r) for r in rr], axis=1).fillna(0.0)
     t8 = time.time()
 
     rup_adjustments = rup_adj_df.sum(axis=1)
+    oq_rup_index = rup_df.loc[rup_adjustments.index, "oq_rup_ind"]
+    rup_adjustments.index = oq_rup_index
     t9 = time.time()
 
-    print(f"\nDone in {(t9-t0) / 60 :0.1} min!!")
+    logging.info(f"\nDone in {(t9-t0) / 60 :0.3} min")
 
     return rup_adjustments

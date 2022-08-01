@@ -1,3 +1,5 @@
+import logging
+from multiprocessing import Pool
 from typing import Dict, Sequence, Optional, Tuple, Union
 
 import h5py
@@ -7,6 +9,7 @@ from tqdm import tqdm
 from numba import jit, prange, njit
 from scipy.spatial.distance import cdist
 
+from openquake.hazardlib.source import PointSource
 from openquake.hazardlib.geo.geodetic import spherical_to_cartesian
 
 # typing
@@ -35,7 +38,7 @@ def calc_min_source_dist(
     return np.min(dist_mat)
 
 
-def get_close_source_pairs(
+def get_close_source_pairs_slow(
     source_list: Sequence[BaseSeismicSource],
     dist_threshold: Optional[float] = None,
 ) -> Dict[Tuple[str, str], float]:
@@ -54,7 +57,7 @@ def get_close_source_pairs(
     """
     source_pair_dists = {
         (s_i.source_id, s_j.source_id): calc_min_source_dist(s_i, s_j)
-        for i, s_i in enumerate(source_list)
+        for i, s_i in enumerate(tqdm(source_list, leave=True))
         for j, s_j in enumerate(source_list)
     }
 
@@ -66,10 +69,38 @@ def get_close_source_pairs(
     return source_pair_dists
 
 
+def get_source_points(source):
+    if isinstance(source, PointSource):
+        return np.array([[source.location.x, source.location.y]])
+    else:
+        return np.array(source.polygon.coords)
+
+
+def get_close_source_pairs(
+    source_list: Sequence[BaseSeismicSource],
+    max_dist: Optional[float] = 1000,
+    source_len_limit: Optional[int] = 2000,
+    n_procs: Optional[int] = 4,
+):
+
+    poly_pts = [get_source_points(source) for source in source_list]
+    cart_pts = [
+        spherical_to_cartesian(pts[:, 0], pts[:, 1]) for pts in poly_pts
+    ]
+
+    source_pair_dists = get_sequence_pairwise_dists(cart_pts, cart_pts)
+
+    logging.info(" filtering source pairs by distance")
+    if max_dist:
+        source_pair_dists = source_pair_dists[
+            source_pair_dists["d"] <= max_dist
+        ]
+
+    return source_pair_dists
+
+
 @njit(fastmath=True, parallel=True)
-def calc_pairwise_distances(
-    vec_1: np.ndarray, vec_2: np.ndarray
-) -> np.ndarray:
+def calc_pairwise_distances(vec_1: np.ndarray, vec_2: np.ndarray) -> np.ndarray:
     """
     Calculates the pairwise Cartesian distance between two 3D vectors.  Runs in
     parallel over `vec_1`.
@@ -202,8 +233,7 @@ def split_rows(
     split_starts = [split[0] for split in splits]
 
     closest_first_inds = [
-        np.argmin(np.abs(row_ids - split_start))
-        for split_start in split_starts
+        np.argmin(np.abs(row_ids - split_start)) for split_start in split_starts
     ]
 
     closest_first_inds = np.unique(closest_first_inds)
@@ -366,6 +396,49 @@ def filter_dists_by_mag(
     ]
 
 
+@jit
+def filter_dists_by_dist(
+    min_rup_dists: RupDistType,
+    dist_threshold=4.0,
+) -> np.ndarray:
+    pass
+
+
+def get_sequence_pairwise_dists(seq_1, seq_2, max_block_ram=20.0):
+    r_id_1, array_stack_1 = stack_sequences(seq_1)
+    r_id_2, array_stack_2 = stack_sequences(seq_2)
+
+    if (
+        array_stack_1.shape[0] * array_stack_2.shape[0] * 8
+        < max_block_ram * 1e9
+    ):
+        dists = calc_pairwise_distances(array_stack_1, array_stack_2)
+        min_rup_dists = get_min_rup_dists(dists, r_id_1, r_id_2)
+
+    else:
+        min_rup_dist_list = []
+        n_splits = int(
+            np.ceil(
+                (array_stack_1.shape[0] * array_stack_2.shape[0] * 8)
+                / (max_block_ram * 1e9)
+            )
+        )
+        row_splits = split_rows(r_id_1, array_stack_1, n_splits)
+
+        for start_rup, row_split in row_splits.items():
+            dists = calc_pairwise_distances(
+                row_split["array_stack"], array_stack_2
+            )
+            min_rup_dist_list.append(
+                get_min_rup_dists(
+                    dists, row_split["row_idxs"], r_id_2, row_offset=start_rup
+                )
+            )
+        min_rup_dists = np.hstack(min_rup_dist_list)
+
+    return min_rup_dists
+
+
 def get_rup_dist_pairs(
     source_id_0: str,
     source_id_1: str,
@@ -420,36 +493,40 @@ def get_rup_dist_pairs(
     rups1 = rup_df.iloc[source_groups.groups[source_id_0]]
     rups2 = rup_df.iloc[source_groups.groups[source_id_1]]
 
-    r_id_1, array_stack_1 = stack_sequences(rups1.xyz)
-    r_id_2, array_stack_2 = stack_sequences(rups2.xyz)
+    # r_id_1, array_stack_1 = stack_sequences(rups1.xyz)
+    # r_id_2, array_stack_2 = stack_sequences(rups2.xyz)
 
-    if (
-        array_stack_1.shape[0] * array_stack_2.shape[0] * 8
-        < max_block_ram * 1e9
-    ):
-        dists = calc_pairwise_distances(array_stack_1, array_stack_2)
-        min_rup_dists = get_min_rup_dists(dists, r_id_1, r_id_2)
+    # if (
+    #    array_stack_1.shape[0] * array_stack_2.shape[0] * 8
+    #    < max_block_ram * 1e9
+    # ):
+    #    dists = calc_pairwise_distances(array_stack_1, array_stack_2)
+    #    min_rup_dists = get_min_rup_dists(dists, r_id_1, r_id_2)
 
-    else:
-        min_rup_dist_list = []
-        n_splits = int(
-            np.ceil(
-                (array_stack_1.shape[0] * array_stack_2.shape[0] * 8)
-                / (max_block_ram * 1e9)
-            )
-        )
-        row_splits = split_rows(r_id_1, array_stack_1, n_splits)
+    # else:
+    #    min_rup_dist_list = []
+    #    n_splits = int(
+    #        np.ceil(
+    #            (array_stack_1.shape[0] * array_stack_2.shape[0] * 8)
+    #            / (max_block_ram * 1e9)
+    #        )
+    #    )
+    #    row_splits = split_rows(r_id_1, array_stack_1, n_splits)
 
-        for start_rup, row_split in row_splits.items():
-            dists = calc_pairwise_distances(
-                row_split["array_stack"], array_stack_2
-            )
-            min_rup_dist_list.append(
-                get_min_rup_dists(
-                    dists, row_split["row_idxs"], r_id_2, row_offset=start_rup
-                )
-            )
-        min_rup_dists = np.hstack(min_rup_dist_list)
+    #    for start_rup, row_split in row_splits.items():
+    #        dists = calc_pairwise_distances(
+    #            row_split["array_stack"], array_stack_2
+    #        )
+    #        min_rup_dist_list.append(
+    #            get_min_rup_dists(
+    #                dists, row_split["row_idxs"], r_id_2, row_offset=start_rup
+    #            )
+    #        )
+    #    min_rup_dists = np.hstack(min_rup_dist_list)
+
+    min_rup_dists = get_sequence_pairwise_dists(
+        rups1.xyz, rups2.xyz, max_block_ram=max_block_ram
+    )
 
     min_rup_dists = filter_dists_by_mag(
         min_rup_dists, rups1.mag.values, dist_constant=dist_constant
@@ -609,4 +686,3 @@ def calc_rupture_adjacence_dict_all_sources(
 
     if not h5_file:
         return rup_adj_dict
-
