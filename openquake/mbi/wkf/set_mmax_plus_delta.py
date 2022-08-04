@@ -5,9 +5,16 @@ import re
 import toml
 import copy
 from openquake.baselib import sap
+from openquake.wkf.utils import get_list
 
 
-def set_mmax_plus_delta(fname_conf: str, mmax_delta: float, min_mmax: None):
+def set_mmax_plus_delta(fname_conf: str, mmax_delta: float, min_mmax: None,
+                        use: str = [], skip: str = []):
+
+    if len(use) > 0:
+        use = get_list(use)
+    if len(skip) > 0:
+        skip = get_list(skip)
 
     # Parsing config
     model = toml.load(fname_conf)
@@ -19,6 +26,10 @@ def set_mmax_plus_delta(fname_conf: str, mmax_delta: float, min_mmax: None):
 
     # Iterate over sources
     for src_id in model['sources']:
+
+        if (len(use) and src_id not in use) or (src_id in skip):
+            continue
+
         mmax = 0.
         for param in model['sources'][src_id]:
             if re.search('^mmax_', param):
@@ -33,8 +44,9 @@ def set_mmax_plus_delta(fname_conf: str, mmax_delta: float, min_mmax: None):
         print('Updated {:s}'.format(fname_conf))
 
 
-def main(fname_conf: str, mmax_delta: float, min_mmax: None):
-    set_mmax_plus_delta(fname_conf, mmax_delta, min_mmax)
+def main(fname_conf: str, mmax_delta: float, min_mmax: None, *, use: str=[],
+         skip: str=[]):
+    set_mmax_plus_delta(fname_conf, mmax_delta, min_mmax, use, skip)
 
 
 descr = 'The name of configuration file'
@@ -43,6 +55,10 @@ descr = 'The increment to apply to mmax observed'
 main.mmax_delta = descr
 descr = 'The minimum mmax assigned'
 main.min_mmax = descr
+descr = 'A list of source IDs to be used'
+main.use = descr
+descr = 'A list of source IDs to be skipped'
+main.skip = descr
 
 if __name__ == '__main__':
     sap.run(main)

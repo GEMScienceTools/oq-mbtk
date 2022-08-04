@@ -95,7 +95,9 @@ def _main(fname_input_pattern, fname_config, folder_out_figs, folder_in,
 
         res = completeness_analysis(fname, years, mags, binw, ref_mag,
                                     ref_upp_mag, [bmin, bmax], criterion,
-                                    compl_tables, src_id, folder_out,
+                                    compl_tables, src_id,
+                                    folder_out_figs=folder_out_figs,
+                                    folder_out=folder_out,
                                     rewrite=False)
 
         # Formatting completeness table
@@ -105,6 +107,8 @@ def _main(fname_input_pattern, fname_config, folder_out_figs, folder_in,
         var['completeness_table'] = tmp
         var['agr_weichert'] = float('{:.4f}'.format(res[0]))
         var['bgr_weichert'] = float('{:.4f}'.format(res[1]))
+        var['agr_sig_weichert'] = float('{:.4f}'.format(res[5]))
+        var['bgr_sig_weichert'] = float('{:.4f}'.format(res[6]))
 
         # Updating configuration
         config['sources'][src_id] = var
