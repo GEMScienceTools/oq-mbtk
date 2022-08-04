@@ -243,8 +243,7 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
         # Processing catalogue
         tcat = _load_catalogue(fname)
         mmax, ctab = get_mmax_ctab(model, src_id)
-        aval, cmag, n_obs, t_per, df = _compute_a_value(tcat, ctab, bval,
-                                                            binw)
+        aval, cmag, n_obs, t_per, df = _compute_a_value(tcat, ctab, bval, binw)
 
         if 'sources' not in model:
             model['sources'] = {}
@@ -268,12 +267,13 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
         # Plotting
         _ = plt.figure()
         ax = plt.gca()
-        plt.plot(cmag, n_obs/t_per, 'o', markerfacecolor='none')
+        plt.plot(cmag, n_obs/t_per, 'o', markerfacecolor='none',
+                 label='Incremental rates')
         plt.plot(cmag-binw/2, ex_rates_scaled, 's', markerfacecolor='none',
-                 color='red')
+                 color='red', label='Cumulative rates')
 
-        plt.plot(cmag-binw/2, lcl, '--', color='black')
-        plt.plot(cmag-binw/2, ucl, '--', color='black')
+        plt.plot(cmag-binw/2, lcl, '--', color='grey', label='16th C.I.')
+        plt.plot(cmag-binw/2, ucl, '-.', color='grey', label='84th C.I.')
 
         xmag = numpy.arange(cmag[0]-binw/2, mmax-0.01*binw, binw/2)
         exra = (10.0**(aval - bval * xmag) -
@@ -283,11 +283,14 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
         plt.yscale('log')
         plt.xlabel('Magnitude')
         plt.ylabel('Annual rate of exceedance')
-        plt.text(0.75, 0.95, 'Fixed b_GR = {:.2f}'.format(bval),
+        plt.text(0.70, 0.95, 'b_GR = {:.2f} (fixed)'.format(bval),
+                 transform=ax.transAxes)
+        plt.text(0.70, 0.90, 'a_GR = {:.2f}'.format(aval),
                  transform=ax.transAxes)
         plt.grid(which='major', color='grey')
         plt.grid(which='minor', linestyle='--', color='lightgrey')
         plt.title(src_id)
+        plt.legend(fontsize=10, loc=3)
 
         if plt_show:
             plt.show()
@@ -473,13 +476,14 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
 
     fig, ax = plt.subplots()
     # Incremental rates of occurrence
-    plt.plot(cent_mag, n_obs/t_per, 'o', markerfacecolor='none')
+    plt.plot(cent_mag, n_obs/t_per, 'o', markerfacecolor='none',
+             label='Incremental rates')
     # Rates of exceedance
     plt.plot(cent_mag-binw/2, ex_rates_scaled, 's', markerfacecolor='none',
-             color='red')
+             color='red', label='Cumulative rates')
     # Confidence intervals
-    plt.plot(cent_mag-binw/2, lcl, '--', color='darkgrey')
-    plt.plot(cent_mag-binw/2, ucl, '--', color='darkgrey')
+    plt.plot(cent_mag-binw/2, lcl, '--', color='darkgrey', label='16th C.I.')
+    plt.plot(cent_mag-binw/2, ucl, '-.', color='darkgrey', label='84th C.I.')
 
     fun = _get_gr_double_trunc_exceedance_rates
     xmag, exra = fun(aval_wei, bval_wei, cent_mag, binw, mmax)
@@ -496,6 +500,7 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
     plt.grid(which='major', color='grey')
     plt.grid(which='minor', linestyle='--', color='lightgrey')
     plt.title(src_id)
+    plt.legend(fontsize=10, loc=3)
 
     if plt_show:
         plt.show()

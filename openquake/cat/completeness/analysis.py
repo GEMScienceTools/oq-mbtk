@@ -29,9 +29,9 @@ import glob
 import toml
 import numpy as np
 import logging
+import pandas as pd
 import matplotlib.pyplot as plt
 
-from scipy import stats
 from openquake.cat.completeness.norms import (
     get_norm_optimize, get_norm_optimize_a, get_norm_optimize_b)
 from openquake.wkf.utils import _get_src_id, create_folder, get_list
@@ -98,13 +98,25 @@ def clean_completeness(tmp):
     return ctab
 
 
-def check_criterion(criterion, rate, current_norm, tvars):
+def check_criterion(criterion, rate, previous_norm, tvars):
     """
-    :param norm:
-        Value to be minimized
+    Given a criterion, it computes the norm (i.e. distance between model and
+    observations).
+
+    :param criterion:
+        Logic used to compute the norm
+    :param rate:
+        Earthquake rate value
+    :param previous_norm:
+        Current norm
+    :param tvars:
+
+    :returns:
+        A tuple with a boolean (True when the new norm is better than the
+        previous one) a rate (not always computed) and the current value
+        of the norm
     """
     check = False
-
     binw = tvars['binw']
     bval = tvars['bval']
     aval = tvars['aval']
@@ -138,17 +150,17 @@ def check_criterion(criterion, rate, current_norm, tvars):
 
     elif criterion == 'optimize':
         tmp_rate = -1
-        #norm = get_norm_optimize(aval, bval, ctab, cmag, t_per, n_obs,
+        # norm = get_norm_optimize(aval, bval, ctab, cmag, t_per, n_obs,
         #                         last_year, info=False)
-        #norm = get_norm_optimize_a(aval, bval, ctab, cmag, t_per, n_obs,
+        # norm = get_norm_optimize_a(aval, bval, ctab, cmag, t_per, n_obs,
         #                           binw, info=False)
         norm = get_norm_optimize_b(aval, bval, ctab, tcat, binw, ybinw=10.,
                                    mmin=ref_mag, mmax=ref_upp_mag)
 
     if norm is None:
-        return False, -1, current_norm
+        return False, -1, previous_norm
 
-    if current_norm > norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
+    if previous_norm > norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
         check = True
 
     return check, tmp_rate, norm
@@ -156,7 +168,8 @@ def check_criterion(criterion, rate, current_norm, tvars):
 
 def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
                           bgrlim, criterion, compl_tables, src_id=None,
-                          folder_out_figs=None, rewrite=False):
+                          folder_out_figs=None, rewrite=False,
+                          folder_out=None):
     """
     :param fname:
         Name of the file with the catalogue
@@ -213,14 +226,14 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     count = {'complete': 0, 'warning': 0, 'else': 0}
 
     all_res = []
-    for i, prm in enumerate(perms):
+    for iper, prm in enumerate(perms):
 
-        print('Iteration: {:05d} norm: {:12.6e}'.format(i, norm), end="\r")
+        print('Iteration: {:05d} norm: {:12.6e}'.format(iper, norm), end="\r")
 
         tmp = []
-        for y, i in zip(years, prm):
-            if i >= -1e-10:
-                tmp.append([y, mags[int(i)]])
+        for y, j in zip(years, prm):
+            if j >= -1e-10:
+                tmp.append([y, mags[int(j)]])
         tmp = np.array(tmp)
         ctab = clean_completeness(tmp)
 
@@ -279,14 +292,15 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
             # Compute the measure expressing the performance of the current
             # completeness. If the norm is smaller than the previous one we
             # save the information.
-            check, trate, tnorm = check_criterion(criterion, rate, norm, tvars)
-            all_res.append([i, aval, bval, norm])
+            check, trate, tnorm = check_criterion(
+                criterion, rate, norm, tvars)
+            all_res.append([iper, aval, bval, tnorm])
 
             # Saving the information for the current completeness table.
             if check:
                 rate = trate
                 norm = tnorm
-                save = [aval, bval, rate, ctab, norm]
+                save = [aval, bval, rate, ctab, norm, siga, sigb]
                 gwci = get_weichert_confidence_intervals
                 lcl, ucl, ex_rates, ex_rates_scaled = gwci(
                     cent_mag, n_obs, t_per, bval)
@@ -310,7 +324,7 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
             logging.debug('Skipping', ctab)
 
     # Print info
-    print('Iteration: {:05d} norm: {:12.6e}'.format(i, norm))
+    print('Iteration: {:05d} norm: {:12.6e}'.format(iper, norm))
 
     if True and len(save):
         fmt = 'Maximum annual rate for {:.1f}: {:.4f}'
@@ -328,6 +342,7 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
     # Saving figure
     if folder_out_figs is not None:
+
         if not os.path.exists(folder_out_figs):
             create_folder(folder_out_figs)
         ext = 'png'
@@ -336,6 +351,14 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
                                     fmt.format(src_id, ext))
         plt.savefig(figure_fname, format=ext)
         plt.close()
+
+    if folder_out is not None:
+        if not os.path.exists(folder_out):
+            create_folder(folder_out)
+        columns = ['id', 'agr', 'bgr', 'norm']
+        df = pd.DataFrame(data=np.array(all_res), columns=columns)
+        fname = os.path.join(folder_out, f'full.results_{src_id:s}.csv')
+        df.to_csv(fname, index=False)
 
     return save
 

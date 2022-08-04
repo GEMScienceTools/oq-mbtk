@@ -14,7 +14,7 @@ def get_list(tmps):
 
 
 def set_gr_params(fname_conf: str, use: str = "*", method: str = "weichert",
-                  exclude: str = None):
+                  exclude: str = None, only_ab: bool = False):
     """
     Choose the GR parameters to be used for constructing the sources. The
     supported options are 'weichert' and 'counting'
@@ -39,6 +39,8 @@ def set_gr_params(fname_conf: str, use: str = "*", method: str = "weichert",
     # Iterate over sources
     labb = "bgr_{:s}".format(method)
     laba = "agr_{:s}".format(method)
+    labas = "agr_sig_{:s}".format(method)
+    labbs = "bgr_sig_{:s}".format(method)
 
     for src_id in model['sources']:
         if exclude is not None and src_id in exclude:
@@ -50,6 +52,11 @@ def set_gr_params(fname_conf: str, use: str = "*", method: str = "weichert",
                     output['sources'][src_id][labb]
                 output['sources'][src_id]['agr'] = \
                     output['sources'][src_id][laba]
+                if not only_ab:
+                    output['sources'][src_id]['agr_sig'] = \
+                        output['sources'][src_id][labas]
+                    output['sources'][src_id]['bgr_sig'] = \
+                        output['sources'][src_id][labbs]
 
     # Saving results into the config file
     with open(fname_conf, 'w') as f:
@@ -58,8 +65,8 @@ def set_gr_params(fname_conf: str, use: str = "*", method: str = "weichert",
 
 
 def main(fname_conf: str, *, use: str = "*", method: str = "weichert",
-         exclude: str = None):
-    set_gr_params(fname_conf, use, method, exclude)
+         exclude: str = None, only_ab: bool = False):
+    set_gr_params(fname_conf, use, method, exclude, only_ab)
 
 
 descr = 'The name of configuration file'
@@ -71,6 +78,9 @@ descr += 'e.g. weichert, counting'
 main.method = descr
 descr = 'A string with source IDs separated by commas'
 main.skip = descr
+descr = 'Only a and b'
+main.only_ab = descr
+
 
 if __name__ == '__main__':
     sap.run(main)
