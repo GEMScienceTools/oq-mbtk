@@ -25,7 +25,9 @@ VRT="tmp.var"
 gdal_rasterize -burn 1 -te -180 -60 180 89.99 -tr 0.05 0.049996666666667 -at -a_nodata nan -l global_inland_areas $INSHP $INTIF 
 
 
+
 for i in ${!LAYERS[@]}; do
+
 	
 	# set up the .vrt file. variables that will replace those in template.var 
 	# must be exported
@@ -48,10 +50,12 @@ for i in ${!LAYERS[@]}; do
 	# coordinates are correct. Must do this for next step to work correctly
 	# power=25 is the value needed for raster maps to match the csv values within ~0.05g
 
+	echo "Making " $TIF "from" $LAY $VRT 
 	gdal_grid -a invdistnn:power=25:max_points=3.0:nodata=-nan -txe -180 180 -tye 89.99 -60 -tr 0.05 0.05 -of GTiff -ot Float64 -l $LAY $VRT $TIF --config GDAL_NUM_THREADS ALL_CPUS
 
 	###  Cut hazard map to inland areas
-	gdal_calc.py -A $TIF -B $INTIF --outfile=$CUTTIF --calc='A*B'
+	echo "cutting "$TIF" with "$INTIF" to make "$CUTTIF
+	gdal_calc.py -A $TIF -B $INTIF --outfile=$CUTTIF --calc='A*B' --overwrite
 
 	# repeat for vs30
 	SDS=$GEM_MOSAIC"global_map/"$VERSION"/vs30/"$SLROOT"_vs30.csv"
@@ -64,11 +68,11 @@ for i in ${!LAYERS[@]}; do
 	CUTTIF=$SL".tif"
 
 
-	gdal_grid -a invdistnn:power=25:max_points=3.0:nodata=-nan -txe -180 180 -tye 89.99 -60 -tr 0.05 0.05 -of GTiff -ot Float64 -l $LAY $VRT $TIF --config GDAL_NUM_THREADS ALL_CPUS
+	gdal_grid -a invdistnn:power=25:max_points=3.0:nodata=-nan -txe -180 180 -tye 89.99 -60 -tr 0.05 0.05 -of GTiff -ot Float64 -l $LAY $VRT $TIF --config GDAL_NUM_THREADS ALL_CPUS 
 
-	gdal_calc.py -A $TIF -B $INTIF --outfile=$CUTTIF --calc='A*B'
-
+	gdal_calc.py -A $TIF -B $INTIF --outfile=$CUTTIF --calc='A*B' --overwrite
 
 done
 
-rm $VRT *csv $INTIF *full.tif 
+rm $VRT *csv *full.tif 
+
