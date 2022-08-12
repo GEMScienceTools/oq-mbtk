@@ -27,7 +27,6 @@
 
 import os
 import re
-import sys
 import glob
 import copy
 import pickle
@@ -273,7 +272,10 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         # Read the shapefile with the polygons of countries. The explode
         # function converts multipolygons into a single multipolygon.
         tmpdf = gpd.read_file(boundaries_shp)
-        inpt = explode(tmpdf)
+       
+       #inpt = explode(tmpdf)
+        inpt = tmpdf.explode(index_parts=True)
+       
         inpt['MODEL'] = key
         # Select polygons composing the given model and merge them into a
         # single multipolygon.
@@ -305,11 +307,21 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     # Create a dataframe with just the points in the buffer
                     # and save the distance of each point from the border
                     tmpdf = copy.deepcopy(map_gdf[idx])
-                    tmpdf.crs = {'init': 'epsg:4326'}
+                    tmpdf = tmpdf.set_crs('epsg:4326')
                     tmpdf = gpd.sjoin(tmpdf, inland_df, how='inner',
                                       op='intersects')
-                    dst = tmpdf.distance(geo)
+                    
+                    ##keeping the crs as epsg:4326.
+                    #p_tmpdf = tmpdf.to_crs('epsg:3857')
+                    p_geo = gpd.GeoDataFrame({'geometry': [geo]})
+                    p_geo = p_geo.set_crs('epsg:4326')
+                    #p_geo = p_geo.to_crs('epsg:3857') #keeping the crs as 4326.
+                    ##changed p_tmpdf to tmpdf to fix the projection issue with maps
+                    dst = tmpdf.distance(p_geo.iloc[0].geometry)
+                    
+                    # dst = tmpdf.distance(geo)
                     tmpdf = tmpdf.assign(distance=dst)
+
                     # Select the points contained in the buffer and belonging
                     # to the other model. These points are labelled.
                     g = other_polygon.geometry[0]
@@ -489,7 +501,10 @@ def buffer_processing(outpath, datafolder, sidx_fname, imt_str, models_list,
     bdf['Coordinates'] = bdf['Coordinates'].apply(Point)
     gbdf = gpd.GeoDataFrame(bdf, geometry='Coordinates')
     fname = os.path.join(outpath, 'map_buffer.json')
-    gbdf.to_file(fname, driver='GeoJSON')
+    if len(gbdf):
+        gbdf.to_file(fname, driver='GeoJSON')
+    else:
+        print('Empty buffer')
     fou.close()
     fuu.close()
 
@@ -503,6 +518,7 @@ def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
     """
     process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         imt_str, inland_shp, models_list, only_buffers)
+
 
 process.contacts_shp = 'Name of shapefile with contacts'
 process.outpath = 'Output folder'
