@@ -43,7 +43,7 @@ from datetime import datetime
 from shapely.geometry import Point
 from openquake.ghm import mosaic
 from openquake.baselib import sap
-from openquake.ghm.utils import create_query, explode
+from openquake.ghm.utils import create_query
 from openquake.man.tools.csv_output import _get_header1
 
 
@@ -205,7 +205,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         lst = glob.glob(os.path.join(outpath, '*.json'))
         lst += glob.glob(os.path.join(outpath, '*.txt'))
         if len(lst):
-            raise ValueError('The code requires an empty folder')
+            raise ValueError(f'The code requires an empty folder\n{outpath}')
     else:
         os.mkdir(outpath)
     # Read the shapefile with the contacts between models
@@ -272,10 +272,10 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         # Read the shapefile with the polygons of countries. The explode
         # function converts multipolygons into a single multipolygon.
         tmpdf = gpd.read_file(boundaries_shp)
-       
-       #inpt = explode(tmpdf)
+
+        # inpt = explode(tmpdf)
         inpt = tmpdf.explode(index_parts=True)
-       
+        
         inpt['MODEL'] = key
         # Select polygons composing the given model and merge them into a
         # single multipolygon.
@@ -309,7 +309,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     tmpdf = copy.deepcopy(map_gdf[idx])
                     tmpdf = tmpdf.set_crs('epsg:4326')
                     tmpdf = gpd.sjoin(tmpdf, inland_df, how='inner',
-                                      op='intersects')
+                                       predicate='intersects')
                     
                     ##keeping the crs as epsg:4326.
                     #p_tmpdf = tmpdf.to_crs('epsg:3857')
@@ -318,7 +318,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     #p_geo = p_geo.to_crs('epsg:3857') #keeping the crs as 4326.
                     ##changed p_tmpdf to tmpdf to fix the projection issue with maps
                     dst = tmpdf.distance(p_geo.iloc[0].geometry)
-                    
+                   
                     # dst = tmpdf.distance(geo)
                     tmpdf = tmpdf.assign(distance=dst)
 
@@ -373,7 +373,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             if not only_buffers:
                 df = pandas.DataFrame({'Name': [key], 'Polygon': [poly]})
                 gdf = gpd.GeoDataFrame(df, geometry='Polygon')
-                within = gpd.sjoin(map_gdf, gdf, op='within')
+                within = gpd.sjoin(map_gdf, gdf, predicate='within')
                 fname = os.path.join(outpath, 'map_{:s}.json'.format(key))
                 within.to_file(fname, driver='GeoJSON')
         #
@@ -510,14 +510,15 @@ def buffer_processing(outpath, datafolder, sidx_fname, imt_str, models_list,
 
 
 def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
-             imt_str, inland_shp, models_list=None,
-             only_buffers=False):
+            imt_str, inland_shp, models_list=None,
+            only_buffers=False):
     """
     This function processes all the models listed in the mosaic.DATA dictionary
     and creates homogenised curves.
     """
     process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
-        imt_str, inland_shp, models_list, only_buffers)
+                 imt_str, inland_shp, models_list, only_buffers)
+
 
 
 process.contacts_shp = 'Name of shapefile with contacts'

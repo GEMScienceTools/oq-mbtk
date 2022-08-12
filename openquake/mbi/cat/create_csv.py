@@ -72,7 +72,7 @@ def main(cat_fname, fname_out):
 
 
 main.cat_fname = 'Name of the .hdf5 file containing the homogenized catalogue'
-main.cat_fname = 'Name of output .csv that will be created'
+main.fname_out = 'Name of output .csv that will be created'
 
 if __name__ == "__main__":
     """

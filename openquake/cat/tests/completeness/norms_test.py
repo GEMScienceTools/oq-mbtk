@@ -24,54 +24,38 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-
-import os
 import unittest
-import tempfile
-import toml
-
-from openquake.cat.hmg import check
-
-BASE_PATH = os.path.dirname(__file__)
-
-SETTINGS_DICT = {
-    "general": {
-        "delta_ll": 0.3,
-        "delta_t": 10.0
-    }
-}
+import numpy as np
+from openquake.hmtk.seismicity.catalogue import Catalogue
+from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
+from openquake.mbt.tools.model_building.dclustering import _add_defaults
+from openquake.cat.completeness.norms import get_norm_optimize_b
 
 
-class CheckHomogenisedCatalogue(unittest.TestCase):
-    """ Test checking the check function in the catalogue toolkit """
+class NormTest(unittest.TestCase):
 
     def setUp(self):
-
-        data_path = os.path.join(BASE_PATH, 'data', 'test_check')
-        self.catalogue_fname = os.path.join(data_path, "test_check.csv")
-
-        # Create the temporary folder
-        self.tmpd = tempfile.mkdtemp()
-
-        # Update settings
-        SETTINGS_DICT["general"]["output_path"] = self.tmpd
-
-        # Create settings file
-        self.settings = os.path.join(self.tmpd, "settings.toml")
-        with open(self.settings, "w") as fou:
-            toml.dump(SETTINGS_DICT, fou)
+        dat = [[1900, 6.0],
+               [1980, 6.0],
+               [1970, 5.0],
+               [1980, 5.0],
+               [1980, 5.7],
+               [1990, 5.0]]
+        dat = np.array(dat)
+        cat = Catalogue()
+        cat.load_from_array(['year', 'magnitude'], dat)
+        cat = _add_defaults(cat)
+        cat.data["dtime"] = cat.get_decimal_time()
+        self.cat = cat
+        self.compl = np.array([[1980, 5.0], [1950, 5.9]])
 
     def test_case01(self):
-        """Searching for the duplicate"""
+        mbinw = 0.5
+        ybinw = 10.0
 
-        # In this test we created a small catalogue with 5 earthquakes. The
-        # last one is a duplication of the first one with slightly modified
-        # longitude (+0.1) and seconds (+2.0). We expect that the code that
-        # checks the catalogue will find this duplicate (given the settings
-        # above)
-
-        # Run the check
-        cnt = check.check_catalogue(self.catalogue_fname, self.settings)
-
-        # Testing
-        self.assertEqual(cnt, 1, "Found a wrong number of checks")
+        aval = 2.0
+        bval = 1.0
+        cmag, t_per, n_obs = get_completeness_counts(self.cat, self.compl,
+                                                     mbinw)
+        norm = get_norm_optimize_b(aval, bval, self.compl, self.cat, mbinw,
+                                   ybinw)
