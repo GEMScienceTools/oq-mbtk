@@ -310,13 +310,8 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     tmpdf = tmpdf.set_crs('epsg:4326')
                     tmpdf = gpd.sjoin(tmpdf, inland_df, how='inner',
                                        predicate='intersects')
-                    
-                    ##keeping the crs as epsg:4326.
-                    #p_tmpdf = tmpdf.to_crs('epsg:3857')
                     p_geo = gpd.GeoDataFrame({'geometry': [geo]})
                     p_geo = p_geo.set_crs('epsg:4326')
-                    #p_geo = p_geo.to_crs('epsg:3857') #keeping the crs as 4326.
-                    ##changed p_tmpdf to tmpdf to fix the projection issue with maps
                     dst = tmpdf.distance(p_geo.iloc[0].geometry)
                    
                     # dst = tmpdf.distance(geo)
