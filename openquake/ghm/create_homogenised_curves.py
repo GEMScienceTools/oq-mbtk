@@ -261,7 +261,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             np.testing.assert_allclose(imts_save, imts, rtol=1e-5)
         # Fixing an issue at the border between waf and ssa
         # TODO can we remove this now?
-        if key in ['waf18', 'ssa18']:
+        if key in ['waf', 'ssa']:
             from shapely.geometry import Polygon
             coo = get_poly_from_str(mosaic.SUBSETS[key]['AO'][0])
             df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
@@ -275,7 +275,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
 
         # inpt = explode(tmpdf)
         inpt = tmpdf.explode(index_parts=True)
-
+        
         inpt['MODEL'] = key
         # Select polygons composing the given model and merge them into a
         # single multipolygon.
@@ -309,14 +309,11 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     tmpdf = copy.deepcopy(map_gdf[idx])
                     tmpdf = tmpdf.set_crs('epsg:4326')
                     tmpdf = gpd.sjoin(tmpdf, inland_df, how='inner',
-                                      predicate='intersects')
-
-                    p_tmpdf = tmpdf.to_crs('epsg:3857')
+                                       predicate='intersects')
                     p_geo = gpd.GeoDataFrame({'geometry': [geo]})
                     p_geo = p_geo.set_crs('epsg:4326')
-                    p_geo = p_geo.to_crs('epsg:3857')
-                    dst = p_tmpdf.distance(p_geo.iloc[0].geometry)
-
+                    dst = tmpdf.distance(p_geo.iloc[0].geometry)
+                   
                     # dst = tmpdf.distance(geo)
                     tmpdf = tmpdf.assign(distance=dst)
 
@@ -516,6 +513,7 @@ def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
     """
     process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                  imt_str, inland_shp, models_list, only_buffers)
+
 
 
 process.contacts_shp = 'Name of shapefile with contacts'
