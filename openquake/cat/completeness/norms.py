@@ -110,7 +110,7 @@ def get_norm_optimize(aval, bval, ctab, cmag, t_per, n_obs, last_year,
     rates = (10**(-bval * mags[:-1] + aval) -
              10**(-bval * mags[1:] + aval)) * dur
 
-    # Standard deviation of the poisson model
+    # Standard deviation of the poisson model.
     stds_poisson = scipy.stats.poisson.std(rates)
     idx = stds_poisson > 0
     if not np.any(idx):
@@ -149,7 +149,8 @@ def get_norm_optimize(aval, bval, ctab, cmag, t_per, n_obs, last_year,
 def get_norm_optimize_a(aval, bval, ctab, cmag, t_per, n_obs,
                         binw, info=False):
     """
-    Computes a norm
+    Computes a norm using a slightly different strategy than the one used in
+    `get_norm_optimize`
 
     :param aval:
         GR a-value
@@ -182,7 +183,8 @@ def get_norm_optimize_a(aval, bval, ctab, cmag, t_per, n_obs,
 def get_norm_optimize_b(aval, bval, ctab, tcat, mbinw, ybinw, back=5, mmin=-1,
                         mmax=10):
     """
-    Computes a norm
+    Computes a norm using a slightly different strategy than the one used in
+    `get_norm_optimize`
 
     :param aval:
         GR a-value
@@ -204,22 +206,25 @@ def get_norm_optimize_b(aval, bval, ctab, tcat, mbinw, ybinw, back=5, mmin=-1,
         Maximum magnitude
     """
 
-    # oin and out have shape mags x years
+    # oin and out have shape (num mags bins) x (num years bins)
     oin, out, cmags, cyeas = get_completeness_matrix(tcat, ctab, mbinw, ybinw)
 
-    # Selecting the rates for the magnitudes between mmin and mmax
+    # Count the occurrences inside and outside the completeness window. The
+    # rest of the matrix has a negative value of -1
     idx = (cmags >= mmin) & (cmags <= mmax)
     cmags = cmags[idx]
     oin = oin[idx, :]
     out = out[idx, :]
 
-    # Rates for each magnitude bin
+    # Compute the rates in each magnitude bin using the GR parameters provided
     rates = 10**(aval-bval*cmags-mbinw/2) + 10**(aval-bval*cmags+mbinw/2)*ybinw
 
     # Assuming a Poisson process, compute the standard deviation of the rates
     stds_poi = scipy.stats.poisson.std(rates)
 
-    # Preparing matrices
+    # Preparing matrices with the rates in each magnitude bins and their
+    # standard deviation. The standard deviation is not used in the rest of the
+    # function
     rates = matlib.repmat(np.expand_dims(rates, 1), 1, len(cyeas))
     stds_poi = matlib.repmat(np.expand_dims(stds_poi, 1), 1, len(cyeas))
 
@@ -229,13 +234,20 @@ def get_norm_optimize_b(aval, bval, ctab, tcat, mbinw, ybinw, back=5, mmin=-1,
     tmp = np.digitize(ctab[:, 1], mag_bins) - 1 - back
     tmp = np.maximum(np.zeros_like(tmp), tmp)
 
-    count_in = np.abs(oin / ybinw - rates)
-    idx = oin < 0
-    count_in[idx] = 0
+    # Count the occurrences in the completeness window
+    diff_in = np.abs(oin / ybinw - rates) / rates
+    idxin = oin < 0
+    diff_in[idxin] = 0
 
-    count_out = np.abs(out / ybinw - rates)
-    idx = out < 0
-    count_out[idx] = 0
+    # Count the occurrences out of the completeness window
+    diff_out = np.abs(out / ybinw - rates) / rates
+    idxout = out < 0
+    diff_out[idxout] = 0
 
-    norm = np.sum(count_in) - np.sum(count_out)
+    # In this case we want 'count_in' to be as small as possible and
+    # 'count_out' to be as big as possible. The term '1/np.sum(idxin)' is
+    # used to give preference to solutions with a larger number of cells
+    # considered complete
+    norm = np.sum(diff_in) / np.sum(diff_out) / np.sum(idxin) * np.sum(idxout)
+
     return norm
