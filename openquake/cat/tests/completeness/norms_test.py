@@ -52,7 +52,6 @@ class NormTest(unittest.TestCase):
     def test_case01(self):
         mbinw = 0.5
         ybinw = 10.0
-
         aval = 2.0
         bval = 1.0
         cmag, t_per, n_obs = get_completeness_counts(self.cat, self.compl,
