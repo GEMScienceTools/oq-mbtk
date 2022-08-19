@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # ------------------- The OpenQuake Model Building Toolkit --------------------
 # Copyright (C) 2022 GEM Foundation
 #           _______  _______        __   __  _______  _______  ___   _
@@ -25,30 +24,31 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+"""
+Module create_grid_test
+"""
+
 import os
-from openquake.baselib import sap
-from openquake.wkf.catalogue import extract
-from openquake.wkf.utils import create_folder
+import unittest
+import tempfile
+import numpy as np
+
+import openquake.ghm.grid.get_sites as get_sites
+
+DATA = os.path.join(os.path.dirname(__file__))
 
 
-def main(fname_in: str, fname_out: str, *, depth_min: float = 0,
-         depth_max: float = 1000, mag_min: float = -1):
-    """
-    Extact from a .csv catalogue the essential information required for hazard
-    modelling. Some filtering options are also available.
-    """
-    folder_out = os.path.dirname(fname_out)
-    create_folder(folder_out)
-    kwargs = {'depth_min': depth_min, 'depth_max': depth_max}
-    cdf = extract(fname_in, **kwargs)
-    cdf.to_csv(fname_out, index=False)
+class GetSitesTestCase(unittest.TestCase):
+    """ Test the creation of a grid of sites """
 
-
-main.fname_in = "The name of the input catalogue"
-main.fname_out = "The name of the output catalogue"
-main.depth_min = "Minimum depth [km]"
-main.depth_max = "Maximum depth [km]"
-main.mag_min = "Minimum magnitude"
-
-if __name__ == '__main__':
-    sap.run(main)
+    def test_get_sites_eur(self):
+        """ Test creation of sites for the EUR model """
+        model = 'eur'
+        folder_out = tempfile.mkdtemp()
+        fname_conf = os.path.join(DATA, 'data', 'conf.toml')
+        get_sites.main(model, folder_out, fname_conf)
+        fname_expected = os.path.join(DATA, 'data', 'eur.csv')
+        expected = np.loadtxt(fname_expected, delimiter=',')
+        fname_computed = os.path.join(folder_out, 'eur.csv')
+        computed = np.loadtxt(fname_computed, delimiter=',')
+        np.testing.assert_almost_equal(computed, expected)
