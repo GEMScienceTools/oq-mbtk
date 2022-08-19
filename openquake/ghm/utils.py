@@ -47,21 +47,21 @@ def explode(indf):
     outdf = gpd.GeoDataFrame(columns=indf.columns)
     for idx, row in indf.iterrows():
         if type(row.geometry) == Polygon:
-            #outdf = outdf.append(row, ignore_index=True)
-            #outdf = outdf.copy()
-            outdf = pd.concat([outdf, row], axis=0)
-            breakpoint()
+            # concat CANNOT be used since it's not yet supported by geopandas
+            # version 0.11.1
+            outdf = outdf.append(row, ignore_index=True)
+            outdf = outdf.copy()
+            # outdf = pd.concat([outdf, row], axis=0)
         if type(row.geometry) == MultiPolygon:
             multdf = gpd.GeoDataFrame(columns=indf.columns)
             recs = len(row.geometry)
-            #
             tmp = [row]*recs
-            #multdf = pd.concat([multdf, row.repeat(recs)], ignore_index=True)
+            # multdf = pd.concat([multdf, row.repeat(recs)], ignore_index=True)
             multdf = multdf.append([row]*recs, ignore_index=True)
             for geom in range(recs):
                 multdf.loc[geom, 'geometry'] = row.geometry[geom]
             outdf = outdf.append(multdf, ignore_index=True)
-            #outdf = pd.concat([outdf, multdf], ignore_index=True)
+            # outdf = pd.concat([outdf, multdf], ignore_index=True)
     return outdf
 
 
