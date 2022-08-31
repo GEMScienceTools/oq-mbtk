@@ -432,7 +432,7 @@ class HMTKBaseMap(object):
             self.cmds.insert(0,"gmt makecpt -Cjet -T0/{}/2> {:s}".format(
                 self.max_cf_depth, cpt_fle))
 
-            self.cmds.append('gmt plot {} -C{} -Ss0.075 -t90'.format(filename, cpt_fle))
+            self.cmds.append('gmt plot {} -C{} -Ss0.075 -t50'.format(filename, cpt_fle))
             self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Depth to complex fault surface (km)" -C{}'.format(
                 '10', cpt_fle))
 
