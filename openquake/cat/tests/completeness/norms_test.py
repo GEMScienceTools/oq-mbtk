@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # ------------------- The OpenQuake Model Building Toolkit --------------------
 # Copyright (C) 2022 GEM Foundation
 #           _______  _______        __   __  _______  _______  ___   _
@@ -25,58 +24,38 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-
-import os
-import shutil
-import pandas as pd
-from pathlib import Path
-from openquake.baselib import sap
-from openquake.cat.hmg.utils import to_hmtk_catalogue
-
-
-def create_folder(folder: str, clean: bool = False):
-    """
-    Create a folder. If the folder exists, it's possible to
-    clean it.
-
-    :param folder:
-        The name of the folder tp be created
-    :param clean:
-        When true the function removes the content of the folder
-    """
-    if os.path.exists(folder):
-        if clean:
-            shutil.rmtree(folder)
-    else:
-        Path(folder).mkdir(parents=True, exist_ok=True)
+import unittest
+import numpy as np
+from openquake.hmtk.seismicity.catalogue import Catalogue
+from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
+from openquake.mbt.tools.model_building.dclustering import _add_defaults
+from openquake.cat.completeness.norms import get_norm_optimize_b
 
 
-def main(cat_fname, fname_out):
+class NormTest(unittest.TestCase):
 
-    # Read catalogue
-    df = pd.read_hdf(cat_fname)
+    def setUp(self):
+        dat = [[1900, 6.0],
+               [1980, 6.0],
+               [1970, 5.0],
+               [1980, 5.0],
+               [1980, 5.7],
+               [1990, 5.0]]
+        dat = np.array(dat)
+        cat = Catalogue()
+        cat.load_from_array(['year', 'magnitude'], dat)
+        cat = _add_defaults(cat)
+        cat.data["dtime"] = cat.get_decimal_time()
+        self.cat = cat
+        self.compl = np.array([[1980, 5.0], [1950, 5.9]])
 
-    # Create folder
-    create_folder(os.path.dirname(fname_out))
+    def test_case01(self):
+        mbinw = 0.5
+        ybinw = 10.0
 
-    # Save file
-    df.to_csv(fname_out, index=False)
-
-    # Create hmtk file
-    odir = os.path.dirname(fname_out)
-    ofle = os.path.basename(fname_out)
-    tmps = ofle.split('.')
-    ofle = f'{tmps[0]}_hmtk.csv'
-    odf = to_hmtk_catalogue(df)
-    odf.to_csv(os.path.join(odir, ofle), index=False)
-
-
-main.cat_fname = 'Name of the .hdf5 file containing the homogenized catalogue'
-main.fname_out = 'Name of output .csv that will be created'
-
-if __name__ == "__main__":
-    """
-    The function creates the .csv file with the events in the homogenised
-    catalog
-    """
-    sap.run(main)
+        aval = 2.0
+        bval = 1.0
+        cmag, t_per, n_obs = get_completeness_counts(self.cat, self.compl,
+                                                     mbinw)
+        norm = get_norm_optimize_b(aval, bval, self.compl, self.cat, mbinw,
+                                   ybinw)
