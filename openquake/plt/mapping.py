@@ -268,13 +268,51 @@ class HMTKBaseMap(object):
             self.cmds.append('gmt plot {} -Ss{} -Gred'.format(filename, pointsize))
             self.gmt_files_list.append(filename)
 
+    def _plot_nonpar_source(self, source):
+        '''
+        Adds point sources to mapping script. 
+        :param source:
+            point source as instance of 
+            :class:`openquake.hazardlib.source.non_parametric.NonParametricSeismicSource`
+        :param float pointsize:
+            sets the size of plotting symbols 
+        '''
+        
+        pnum = int(re.sub("[^0-9]", "", self.J))
+        pointsize = 0.01 * pnum
+        #import pdb; pdb.set_trace()
+
+        hypos = source.todict()['hypocenter'].T
+        
+        lons = hypos[0] 
+        lats = hypos[1]
+        deps = hypos[2]
+
+        filename = '{}/mtkNPSS.csv'.format(self.out)
+
+        add_plot_line = self.mk_plt_csv(lons, lats, filename, color_column=deps) 
+
+        if add_plot_line == 1:
+            # Making cpt
+            self.gmt_files_list.append(filename)
+            cpt_fle = "{}/cf_tmp.cpt".format(self.out)
+            self.gmt_files_list.append(cpt_fle)
+            #cbar_int = 0.3*(max(deps) - min(deps))
+            self.cmds.insert(0,"gmt makecpt -Cjet -T0/{}/30+n > {:s}".format(
+                max(deps), cpt_fle))
+
+            self.cmds.append('gmt plot {} -C{} -Ss0.075 -t10'.format(filename, cpt_fle))
+            self.cmds.append('gmt colorbar -DJBC -Ba+l"Cumulative rate" -C{}'.format(
+                cpt_fle))
+
+
 
     def _plot_multi_point_source(self, source):
         '''
-        Adds point sources defined as multipoint to mapping script.
+        Adds multipoint sources defined as multipoint to mapping script.
         :param source:
-            point source as instance of
-            :class:`openquake.hazardlib.source.point.MultiPointSource`
+            multipoint source as instance of
+            :class:`openquake.hazardlib.source.multi_point.MultiPointSource`
         :param float pointsize:
             sets the size of plotting symbols
         '''
@@ -303,14 +341,11 @@ class HMTKBaseMap(object):
             self.gmt_files_list.append(cpt_fle)
             cbar_int = 0.3*(max(cmrates) - min(cmrates))
             self.cmds.insert(0,"gmt makecpt -Cjet -T0/{}/30+n > {:s}".format(
-            #self.cmds.insert(0,"gmt makecpt -Cjet -T0/{}/2> {:s}".format(
                 max(cmrates), cpt_fle))
 
             self.cmds.append('gmt plot {} -C{} -Ss0.075 -t10'.format(filename, cpt_fle))
             self.cmds.append('gmt colorbar -DJBC -Ba+l"Cumulative rate" -C{}'.format(
-            #self.cmds.append('gmt colorbar -DJBC -Ba{}+l"Cumulative rate" -C{}'.format(
                 cpt_fle))
-                #spacing, cpt_fle))
 
     def _plot_simple_fault(self, source):
         '''
@@ -464,6 +499,8 @@ class HMTKBaseMap(object):
                     self._plot_complex_fault(source)
                 elif type(source).__name__ == 'SimpleFaultSource':
                     self._plot_simple_fault(source)
+                elif type(source).__name__ == 'NonParametricSeismicSource':
+                    self._plot_nonpar_source(source)
                 else:
                     pass
 
