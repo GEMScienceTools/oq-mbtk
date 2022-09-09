@@ -2,10 +2,11 @@
 [main]
 
 # Name of the shapefile containing the borders of countries
-borders_fname = '../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp'
+# borders_fname = '../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp'
+borders_fname = '/Users/mpagani/Documents/2022/diary/08/19_remapping_mosaic/gadm_410_level_0.gpkg'
 
 # Buffer distance [m]
 buffer = 50000 
 
 # Grid resolution
-h3_resolution = 5
+h3_resolution = 6
