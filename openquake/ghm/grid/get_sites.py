@@ -32,6 +32,7 @@ import numpy as np
 import geopandas as gpd
 import openquake.ghm.mosaic as mosaic
 
+from pathlib import Path
 from shapely.geometry import Polygon
 from openquake.ghm.utils import explode
 from openquake.baselib import sap
@@ -78,7 +79,6 @@ def create_query(inpt, field, labels):
             sel = inpt[field] == lab
         else:
             sel = sel | (inpt[field] == lab)
-        print(lab, sum(sel))
     return inpt.loc[sel]
 
 
@@ -106,25 +106,32 @@ def main(model, folder_out, fname_conf, example=False):
     #    print('ucerf')
     # in_file = os.path.join(inpath, fname)
 
-    # Read polygon file and set MODEL attribute
+    country_column = 'FIPS_CNTRY'
+    country_column = 'GID_0'
+
+    # Read polygon file
     tmpdf = gpd.read_file(in_file)
+    tmpdf = create_query(tmpdf, country_column, mosaic.DATA[model])
+
+    # Explode the geodataframe and set MODEL attribute
     inpt = explode(tmpdf)
     inpt['MODEL'] = model
 
     # Select polygons the countries composing the given model
-    selection = create_query(inpt, 'FIPS_CNTRY', mosaic.DATA[model])
-    selection = selection.set_crs('epsg:4326')
+    # selection = create_query(inpt, country_column, mosaic.DATA[model])
+    # selection = selection.set_crs('epsg:4326')
+    selection = inpt
 
     # Merge the polygons into a single one
     one_polygon = selection.dissolve(by='MODEL')
 
-    # Process the countries included in the selection
+    # Process the polygons included in the selection. One polygon per row
     old_key = ''
     sites_indices = []
-    for _, row in selection.iterrows():
+    for nrow, row in selection.iterrows():
 
         # Info
-        key = row['FIPS_CNTRY']
+        key = row[country_column]
         if old_key != key:
             print(f'Processing: {key}')
             old_key = key
@@ -154,16 +161,22 @@ def main(model, folder_out, fname_conf, example=False):
                     tidx_a = list(set(tidx_a) & set(tidx_b))
 
             sites_indices.extend(tidx_a)
-            print(f"# sites {len(sites_indices)}")
+
+    sites_indices = list(set(sites_indices))
+
+    Path(folder_out).mkdir(parents=True, exist_ok=True)
 
     # Output shapefile file
     out_file = os.path.join(folder_out, f'{model}.geojson')
     one_polygon.columns = one_polygon.columns.astype(str)
     one_polygon.to_file(out_file, driver='GeoJSON')
 
+    selection.to_file('/tmp/chk.shp')
+
     # Output file with grid
-    sites = np.fliplr(np.array([h3.h3_to_geo(h) for h in sites_indices]))
-    out_file = os.path.join(folder_out, f'{model}.csv')
+    sidxs = sorted(sites_indices)
+    sites = np.fliplr(np.array([h3.h3_to_geo(h) for h in sidxs]))
+    out_file = os.path.join(folder_out, f'{model}_res{h3_resolution}.csv')
     np.savetxt(out_file, sites, delimiter=",")
 
 

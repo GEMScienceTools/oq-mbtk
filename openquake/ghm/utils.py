@@ -29,6 +29,8 @@ Module :module:`~openquake.ghm.utils`
 """
 
 import re
+import copy
+import numpy as np
 import pandas as pd
 import geopandas as gpd
 
@@ -44,25 +46,42 @@ def explode(indf):
     :returns:
         A geodataframe instance
     """
-    outdf = gpd.GeoDataFrame(columns=indf.columns)
+    indf = pd.DataFrame(indf)
+
+    # Adding column and index
+    #indf['idx'] = np.arange(len(indf))
+    #indf.set_index('idx')
+
+    # Create output dataframe
+    outdf = pd.DataFrame(columns=indf.columns)
+
     for idx, row in indf.iterrows():
+
         if type(row.geometry) == Polygon:
-            # concat CANNOT be used since it's not yet supported by geopandas
-            # version 0.11.1
-            outdf = outdf.append(row, ignore_index=True)
-            outdf = outdf.copy()
-            # outdf = pd.concat([outdf, row], axis=0)
+            outdf = pd.concat([outdf, row.to_frame()], ignore_index=True)
+
         if type(row.geometry) == MultiPolygon:
-            multdf = gpd.GeoDataFrame(columns=indf.columns)
-            recs = len(row.geometry)
-            tmp = [row]*recs
-            # multdf = pd.concat([multdf, row.repeat(recs)], ignore_index=True)
-            multdf = multdf.append([row]*recs, ignore_index=True)
-            for geom in range(recs):
-                multdf.loc[geom, 'geometry'] = row.geometry[geom]
-            outdf = outdf.append(multdf, ignore_index=True)
-            # outdf = pd.concat([outdf, multdf], ignore_index=True)
-    return outdf
+
+            # Create a DataFrame
+            vals = {}
+            for key in row.keys():
+                vals[key] = row[key]
+            multdf = pd.DataFrame(vals)
+            #tmp = pd.DataFrame(vals)
+
+            # Duplicate rows
+            #recs = len(row.geometry)
+            #for i in range(recs-1):
+            #    multdf = pd.concat([multdf, tmp], ignore_index=True)
+            #breakpoint()
+
+            # Updating geometry column
+            #for i in range(recs):
+            #    multdf.loc[i, 'geometry'] = row.geometry[i]
+
+            outdf = pd.concat([outdf, multdf], ignore_index=True)
+
+    return gpd.GeoDataFrame(outdf, geometry='geometry')
 
 
 def read_hazard_map_csv(fname):
