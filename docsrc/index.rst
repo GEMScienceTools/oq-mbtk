@@ -45,6 +45,7 @@ perils such as liquefaction and coseismic landslides.
 
    contents/installation
    contents/cat
+   contents/ghm
    contents/man
    contents/mbt
    contents/sub
