@@ -176,7 +176,7 @@ def main(model, folder_out, fname_conf, example=False):
     # Output file with grid
     sidxs = sorted(sites_indices)
     sites = np.fliplr(np.array([h3.h3_to_geo(h) for h in sidxs]))
-    out_file = os.path.join(folder_out, f'{model}.csv')
+    out_file = os.path.join(folder_out, f'{model}_res{h3_resolution}.csv')
     np.savetxt(out_file, sites, delimiter=",")
 
 
