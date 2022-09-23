@@ -78,6 +78,12 @@ class GeneralCsvCatalogue(object):
         self.gcmt_catalogue = GCMTCatalogue()
 
     def parse_csv(self, filename):
+        """
+        Parse a .csv file
+
+        :param filename:
+            Name of the .csv file
+        """
 
         df = pd.read_csv(filename, delimiter=',')
 
@@ -208,7 +214,8 @@ class GeneralCsvCatalogue(object):
                 sigma_mag = self.data['sigmaMagnitude'][iloc]
 
             # Set the magnitude type
-            if 'magnitudeType' not in self.data.keys():
+            if ('magnitudeType' not in self.data.keys() or
+                len(self.data['magnitudeType']) < 1):
                 mtype = 'Mw'
             else:
                 mtype = self.data['magnitudeType'][iloc]
