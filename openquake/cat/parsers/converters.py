@@ -225,7 +225,9 @@ class GCMTtoISFParser(object):
                                              gcmt.hypocentre.source,
                                              scale='Ms'))
             m_w = Magnitude(event_id,
-                            origin_id + "-C", gcmt.magnitude, cat_id,
+                            origin_id + "-C",
+                            gcmt.magnitude,
+                            cat_id,
                             scale='Mw')
             # Get locations
             hypo_loc = Location(origin_id,
