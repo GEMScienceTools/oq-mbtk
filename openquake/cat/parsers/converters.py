@@ -87,29 +87,10 @@ class GenericCataloguetoISFParser(object):
         self.catalogue = GeneralCsvCatalogue()
 
     def parse(self, cat_id, cat_name):
-
-        df = pd.read_csv(self.filename, delimiter=',')
-
-        # Checking information included in the original
-        if 'day' in df.columns:
-            # Fixing day
-            mask = df['day'] == 0
-            df.loc[mask, 'day'] = 1
-        if 'second' in df.columns:
-            df.drop(df[df.second > 59.999999].index, inplace=True)
-        if 'minute' in df.columns:
-            df.drop(df[df.minute > 59.599999].index, inplace=True)
-        if 'hour' in df.columns:
-            df.drop(df[df.hour > 23.99999].index, inplace=True)
-
-        # Processing columns and updating the catalogue
-        for col in df.columns:
-            if col in self.catalogue.TOTAL_ATTRIBUTE_LIST:
-                if (col in self.catalogue.FLOAT_ATTRIBUTE_LIST or
-                        col in self.catalogue.INT_ATTRIBUTE_LIST):
-                    self.catalogue.data[col] = df[col].to_numpy()
-                else:
-                    self.catalogue.data[col] = df[col].to_list()
+        """
+        Parses the file
+        """
+        self.catalogue.parse_csv(self.filename)
         output_cat = self.export(cat_id, cat_name)
 
         # Check that the length of the datasets is homogenous
@@ -225,7 +206,9 @@ class GCMTtoISFParser(object):
                                              gcmt.hypocentre.source,
                                              scale='Ms'))
             m_w = Magnitude(event_id,
-                            origin_id + "-C", gcmt.magnitude, cat_id,
+                            origin_id + "-C",
+                            gcmt.magnitude,
+                            cat_id,
                             scale='Mw')
             # Get locations
             hypo_loc = Location(origin_id,
