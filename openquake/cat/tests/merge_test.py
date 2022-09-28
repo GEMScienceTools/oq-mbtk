@@ -174,5 +174,4 @@ class MergeComCatTestCase(unittest.TestCase):
 
         # Checking prime events
         expected = [1, 0, 1, 1, 0, 1, 0, 1, 0, 1]
-        breakpoint()
         aeq(odf.prime.to_numpy(), expected)
