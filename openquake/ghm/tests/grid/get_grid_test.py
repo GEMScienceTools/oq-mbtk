@@ -47,8 +47,10 @@ class GetSitesTestCase(unittest.TestCase):
         folder_out = tempfile.mkdtemp()
         fname_conf = os.path.join(DATA, 'data', 'conf.toml')
         get_sites.main(model, folder_out, fname_conf)
-        fname_expected = os.path.join(DATA, 'data', 'eur.csv')
+        fname_expected = os.path.join(DATA, 'data', 'eur_FIPS_CNTRY.csv')
         expected = np.loadtxt(fname_expected, delimiter=',')
-        fname_computed = os.path.join(folder_out, 'eur.csv')
+        fname_computed = os.path.join(folder_out, 'eur_res5.csv')
         computed = np.loadtxt(fname_computed, delimiter=',')
-        np.testing.assert_almost_equal(computed, expected)
+        msg = f'Content of files {fname_computed} and {fname_expected} does'
+        msg += ' not match'
+        np.testing.assert_almost_equal(computed, expected, err_msg=msg)
