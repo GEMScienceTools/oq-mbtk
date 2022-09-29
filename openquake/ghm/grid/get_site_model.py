@@ -24,13 +24,27 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import os
 import sys
+import subprocess
+import tempfile
+import numpy as np
 import toml
 
 from openquake.baselib import sap
-from openquake.ghm.grid.get_sites import _get_sites
+from openquake.ghm.grid.get_sites import _get_sites, EXAMPLE
 
-def main(model, folder_out, fname_conf, example=False):
+CODE = os.path.join('..', '..', 'mbt', 'tools', 'site',
+                    'create_site_models_julia.jl')
+PWD = os.path.join(os.path.dirname(__file__))
+
+
+def main(model, folder_out, fname_conf, *, example=False):
+    """
+    This code creates a site model given the code of a model in the mosaic.
+    """
+
+    model = model.lower()
 
     # Prints an example of configuration file
     if example:
@@ -41,22 +55,26 @@ def main(model, folder_out, fname_conf, example=False):
     conf = toml.load(fname_conf)
 
     # Getting the coordinates of the sites
-    sites, sites_indices, one_polygon, selection = _get_sites(
-        model, folder_out, conf, example)
+    sites, _, _, _ = _get_sites(model, folder_out, conf, example)
 
-def _get_site_model(sites):
-    """
-    :param sites:
-    """
-    sites
+    # Write sites to a temporary .csv file
+    folder_tmp = tempfile.mkdtemp()
+    fname_sites = os.path.join(folder_tmp, 'sites.csv')
+    np.savetxt(fname_sites, sites, delimiter=",")
 
+    # Create site model
+    res = conf['main']['h3_resolution']
+    fname_out = os.path.join(folder_out, f'{model}_res{res}.csv')
+    code = os.path.join(PWD, CODE)
+    cmd = f"julia {code} '{fname_conf}' '{fname_sites}' '{fname_out}'"
+    subprocess.call(cmd, shell=True)
 
 
 main.model = 'Model key e.g. eur'
 main.folder_out = 'Name of the output folder'
 main.fname_conf = 'Name of the configuration file'
-msg = 'Print an example of configuration and exit'
-main.example = msg
+MSG = 'Print an example of configuration and exit'
+main.example = MSG
 
 if __name__ == '__main__':
     sap.run(main)

@@ -45,13 +45,22 @@ EXAMPLE = """
 [main]
 
 # Name of the shapefile containing the borders of countries
-borders_fname = '../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp'
+# borders_fname = '../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp'
+borders_fname = '/Users/mpagani/Documents/2022/diary/08/19_remapping_mosaic/gadm_410_level_0.gpkg'
+
+# This can be either 'FIPS_CNTRY' or 'GID_0' depending on the shapefile
+country_column = 'FIPS_CNTRY'
 
 # Buffer distance [m]
 buffer = 50000
 
 # Grid resolution
-h3_resolution = 5
+h3_resolution = 6
+
+[site_model]
+
+# This file is usually quite big and, therefore, stored locally. Path must be adjusted accordingly
+ncfile = "/Users/mpagani/Repos/gem-hazard-data/vs30/global_vs30.grd"
 """
 
 
@@ -128,7 +137,11 @@ def _get_sites(model, folder_out, conf, root_path=''):
         dictionary
     """
 
-    in_file = os.path.join(root_path, conf['main']['borders_fname'])
+    if not os.path.isabs(conf['main']['borders_fname']):
+        in_file = os.path.join(root_path, conf['main']['borders_fname'])
+    else:
+        in_file = conf['main']['borders_fname']
+
     buffer_dist = conf['main']['buffer']
     h3_resolution = conf['main']['h3_resolution']
 
