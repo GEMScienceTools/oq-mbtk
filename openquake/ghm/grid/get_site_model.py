@@ -52,8 +52,6 @@ def _get_site_model(sites):
 
 
 
-
-
 main.model = 'Model key e.g. eur'
 main.folder_out = 'Name of the output folder'
 main.fname_conf = 'Name of the configuration file'
