@@ -54,7 +54,6 @@ class GetSitesModelTestCase(unittest.TestCase):
         conf = toml.load(fname_conf)
 
         sites, _, _, _ = _get_sites(model, folder_out, conf)
-        _get_site_model(sites)
 
         #fname_expected = os.path.join(DATA, 'data', 'cea.csv')
         #expected = np.loadtxt(fname_expected, delimiter=',')

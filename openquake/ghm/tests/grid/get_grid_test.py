@@ -41,7 +41,7 @@ DATA = os.path.join(os.path.dirname(__file__))
 class GetSitesTestCase(unittest.TestCase):
     """ Test the creation of a grid of sites """
 
-    def test_get_sites_eur(self):
+    def test_get_sites_eur_old(self):
         """ Test creation of sites for the EUR model """
         model = 'eur'
         folder_out = tempfile.mkdtemp()
