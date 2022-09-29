@@ -26,6 +26,7 @@
 
 import os
 import re
+import sys
 import h3
 import toml
 import numpy as np
@@ -83,18 +84,40 @@ def create_query(inpt, field, labels):
 
 
 def main(model, folder_out, fname_conf, example=False):
-    """
-    Tool for creating an equally spaced set of points covering a model in the
-    global hazard mosaic.
-    """
 
     # Prints an example of configuration file
     if example:
         print(EXAMPLE)
-        exit(0)
+        sys.exit(0)
 
     # Set model key
     conf = toml.load(fname_conf)
+
+    # Getting the coordinates of the sites
+    sites, sites_indices, one_polygon, selection = _get_sites(
+        model, folder_out, conf)
+
+    Path(folder_out).mkdir(parents=True, exist_ok=True)
+
+    # Output shapefile file
+    out_file = os.path.join(folder_out, f'{model}.geojson')
+    one_polygon.columns = one_polygon.columns.astype(str)
+    one_polygon.to_file(out_file, driver='GeoJSON')
+    selection.to_file('/tmp/chk.shp')
+
+    # Params
+    h3_resolution = conf['main']['h3_resolution']
+
+    # Output file with grid
+    out_file = os.path.join(folder_out, f'{model}_res{h3_resolution}.csv')
+    np.savetxt(out_file, sites, delimiter=",")
+
+
+def _get_sites(model, folder_out, conf):
+    """
+    Tool for creating an equally spaced set of points covering a model in the
+    global hazard mosaic.
+    """
 
     in_file = conf['main']['borders_fname']
     buffer_dist = conf['main']['buffer']
@@ -163,21 +186,10 @@ def main(model, folder_out, fname_conf, example=False):
             sites_indices.extend(tidx_a)
 
     sites_indices = list(set(sites_indices))
-
-    Path(folder_out).mkdir(parents=True, exist_ok=True)
-
-    # Output shapefile file
-    out_file = os.path.join(folder_out, f'{model}.geojson')
-    one_polygon.columns = one_polygon.columns.astype(str)
-    one_polygon.to_file(out_file, driver='GeoJSON')
-
-    selection.to_file('/tmp/chk.shp')
-
-    # Output file with grid
     sidxs = sorted(sites_indices)
     sites = np.fliplr(np.array([h3.h3_to_geo(h) for h in sidxs]))
-    out_file = os.path.join(folder_out, f'{model}_res{h3_resolution}.csv')
-    np.savetxt(out_file, sites, delimiter=",")
+
+    return sites, sites_indices, one_polygon, selection
 
 
 main.model = 'Model key e.g. eur'
