@@ -27,16 +27,19 @@
 import os
 import re
 import sys
+from pathlib import Path
+
 import h3
 import toml
 import numpy as np
 import geopandas as gpd
 import openquake.ghm.mosaic as mosaic
 
-from pathlib import Path
 from shapely.geometry import Polygon
 from openquake.ghm.utils import explode
 from openquake.baselib import sap
+
+INFO = False
 
 EXAMPLE = """
 [main]
@@ -92,10 +95,11 @@ def main(model, folder_out, fname_conf, example=False):
 
     # Set model key
     conf = toml.load(fname_conf)
+    root_path = Path(fname_conf).parents[0]
 
     # Getting the coordinates of the sites
     sites, sites_indices, one_polygon, selection = _get_sites(
-        model, folder_out, conf)
+        model, folder_out, conf, root_path)
 
     Path(folder_out).mkdir(parents=True, exist_ok=True)
 
@@ -113,13 +117,18 @@ def main(model, folder_out, fname_conf, example=False):
     np.savetxt(out_file, sites, delimiter=",")
 
 
-def _get_sites(model, folder_out, conf):
+def _get_sites(model, folder_out, conf, root_path=''):
     """
     Tool for creating an equally spaced set of points covering a model in the
     global hazard mosaic.
+
+    :param root_path:
+        The path to the file with the confifuration i.e. the file used as a
+        reference for specifying the relative paths in the configuration
+        dictionary
     """
 
-    in_file = conf['main']['borders_fname']
+    in_file = os.path.join(root_path, conf['main']['borders_fname'])
     buffer_dist = conf['main']['buffer']
     h3_resolution = conf['main']['h3_resolution']
 
@@ -129,15 +138,17 @@ def _get_sites(model, folder_out, conf):
     #    print('ucerf')
     # in_file = os.path.join(inpath, fname)
 
-    country_column = 'FIPS_CNTRY'
-    country_column = 'GID_0'
+    country_column = conf['main']['country_column']
+    SUBSETS = mosaic.SUBSETS[country_column]
+    DATA = mosaic.DATA[country_column]
 
     # Read polygon file
     tmpdf = gpd.read_file(in_file)
-    tmpdf = create_query(tmpdf, country_column, mosaic.DATA[model])
+    tmpdf = create_query(tmpdf, country_column, DATA[model])
 
     # Explode the geodataframe and set MODEL attribute
-    inpt = explode(tmpdf)
+    # inpt = explode(tmpdf)
+    inpt = tmpdf.explode(index_parts=True)
     inpt['MODEL'] = model
 
     # Select polygons the countries composing the given model
@@ -155,7 +166,7 @@ def _get_sites(model, folder_out, conf):
 
         # Info
         key = row[country_column]
-        if old_key != key:
+        if old_key != key and INFO:
             print(f'Processing: {key}')
             old_key = key
 
@@ -175,8 +186,8 @@ def _get_sites(model, folder_out, conf):
             tidx_a = h3.polyfill_geojson(tmp, h3_resolution)
 
             # In this case we need to further refine the selection
-            if model in mosaic.SUBSETS and key in mosaic.SUBSETS[model]:
-                for tstr in mosaic.SUBSETS[model][key]:
+            if model in SUBSETS and key in SUBSETS[model]:
+                for tstr in SUBSETS[model][key]:
                     tpoly = get_poly_from_str(tstr)
                     feature_coll = gpd.GeoSeries([tpoly]).__geo_interface__
                     tmp = feature_coll['features'][0]['geometry']
@@ -187,7 +198,8 @@ def _get_sites(model, folder_out, conf):
 
     sites_indices = list(set(sites_indices))
     sidxs = sorted(sites_indices)
-    sites = np.fliplr(np.array([h3.h3_to_geo(h) for h in sidxs]))
+    tmp = np.array([h3.h3_to_geo(h) for h in sidxs])
+    sites = np.fliplr(tmp)
 
     return sites, sites_indices, one_polygon, selection
 
