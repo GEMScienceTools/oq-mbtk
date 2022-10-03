@@ -194,9 +194,13 @@ def _get_sites(model, folder_out, conf, root_path=''):
             gds = projected.to_crs('epsg:4326')
 
             # Create geojson and find the indexes of the points inside
-            feature_coll = gds.__geo_interface__
+            eee = gds.explode(index_parts=True)
+            feature_coll = eee.__geo_interface__
             tmp = feature_coll['features'][0]['geometry']
-            tidx_a = h3.polyfill_geojson(tmp, h3_resolution)
+            try:
+                tidx_a = h3.polyfill_geojson(tmp, h3_resolution)
+            except:
+                breakpoint()
 
             # In this case we need to further refine the selection
             if model in SUBSETS and key in SUBSETS[model]:
