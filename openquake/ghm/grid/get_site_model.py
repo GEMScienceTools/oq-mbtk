@@ -30,6 +30,7 @@ import subprocess
 import tempfile
 import numpy as np
 import toml
+import pandas as pd
 
 from openquake.baselib import sap
 from openquake.ghm.grid.get_sites import _get_sites, EXAMPLE
@@ -39,9 +40,12 @@ CODE = os.path.join('..', '..', 'mbt', 'tools', 'site',
 PWD = os.path.join(os.path.dirname(__file__))
 
 
-def main(model, folder_out, fname_conf, *, example=False):
+def main(model, folder_out, fname_conf, *, fname_sites=None, example=False):
     """
     This code creates a site model given the code of a model in the mosaic.
+    When the name of a .csv file is provided, the code creates an output
+    site model using the coordinates in the columns named 'Lon' and 'Lat'
+    in the .csv file.
     """
 
     model = model.lower()
@@ -51,19 +55,21 @@ def main(model, folder_out, fname_conf, *, example=False):
         print(EXAMPLE)
         sys.exit(0)
 
-    # Set model key
-    conf = toml.load(fname_conf)
-
     # Getting the coordinates of the sites
-    sites, _, _, _ = _get_sites(model, folder_out, conf, example)
+    res = ''
+    if fname_sites is None:
 
-    # Write sites to a temporary .csv file
-    folder_tmp = tempfile.mkdtemp()
-    fname_sites = os.path.join(folder_tmp, 'sites.csv')
-    np.savetxt(fname_sites, sites, delimiter=",")
+        # Load the configuration, get the resolution and get the sites
+        conf = toml.load(fname_conf)
+        res = conf['main']['h3_resolution']
+        sites, _, _, _ = _get_sites(model, folder_out, conf, example)
+
+        # Write sites to a temporary .csv file
+        folder_tmp = tempfile.mkdtemp()
+        fname_sites = os.path.join(folder_tmp, 'sites.csv')
+        np.savetxt(fname_sites, sites, delimiter=",")
 
     # Create site model
-    res = conf['main']['h3_resolution']
     fname_out = os.path.join(folder_out, f'{model}_res{res}.csv')
     code = os.path.join(PWD, CODE)
     cmd = f"julia {code} '{fname_conf}' '{fname_sites}' '{fname_out}'"
@@ -73,6 +79,7 @@ def main(model, folder_out, fname_conf, *, example=False):
 main.model = 'Model key e.g. eur'
 main.folder_out = 'Name of the output folder'
 main.fname_conf = 'Name of the configuration file'
+main.fname_csv = 'Name of the .csv file'
 MSG = 'Print an example of configuration and exit'
 main.example = MSG
 
