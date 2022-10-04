@@ -29,143 +29,103 @@ import os
 import glob
 import toml
 import numpy as np
-import logging
-import matplotlib.pyplot as plt
 
 from openquake.baselib import sap
-from openquake.wkf.utils import _get_src_id, create_folder
-from openquake.wkf.compute_gr_params import (get_weichert_confidence_intervals,
-                                             _weichert_plot)
-from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
-from openquake.mbt.tools.model_building.dclustering import _add_defaults
-from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
-from openquake.hmtk.seismicity.occurrence.weichert import Weichert
+from openquake.wkf.utils import get_list
+from openquake.wkf.utils import _get_src_id
 
-import warnings
-warnings.filterwarnings("ignore")
+from openquake.cat.completeness.analysis import completeness_analysis
 
 
-def clean_completeness(tmp):
-    ctab = []
-    for m in np.unique(tmp[:, 1]):
-        idx = np.nonzero(tmp[:, 1] == m)[0]
-        ctab.append([tmp[max(idx), 0], tmp[max(idx), 1]])
-    ctab = np.array(ctab)
-    return ctab
+def _main(fname_input_pattern, fname_config, folder_out_figs, folder_in,
+          folder_out, skip=''):
 
-
-def completeness_analysis(fname, idxs, years, mags, binw, ref_mag, bgrlim,
-                          src_id, folder_out_figs, rewrite=False):
-
-    tcat = _load_catalogue(fname)
-    tcat = _add_defaults(tcat)
-    tcat.data["dtime"] = tcat.get_decimal_time()
-    print('\nSOURCE:', src_id)
-    print('Catalogue contains {:d} events'.format(len(tcat.data['magnitude'])))
-
-    # See http://shorturl.at/adsvA
-    fname_disp = 'dispositions.npy'
-    perms = np.load(fname_disp)
-    mags = np.flipud(np.load('mags.npy'))
-    years = np.load('years.npy')
-
-    wei_conf = {'magnitude_interval': binw, 'reference_magnitude': 0.0}
-    weichert = Weichert()
-    rate = -1e10
-    save = []
-    mags = np.array(mags)
-
-    for prm in perms:
-
-        idx = prm.astype(int)
-        tmp = np.array([(y, m) for y, m in zip(years, mags[idx])])
-        ctab = clean_completeness(tmp)
-
-        try:
-            cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
-            bval, sigb, aval, siga = weichert.calculate(tcat, wei_conf, ctab)
-
-            tmp_rate = 10**(-bval*ref_mag + aval)
-            if tmp_rate > rate and bval <= bgrlim[1] and bval >= bgrlim[0]:
-                rate = tmp_rate
-                save = [aval, bval, rate, ctab]
-
-                gwci = get_weichert_confidence_intervals
-                lcl, ucl, ex_rates, ex_rates_scaled = gwci(
-                    cent_mag, n_obs, t_per, bval)
-
-                mmax = max(tcat.data['magnitude'])
-                wei = [cent_mag, n_obs, binw, t_per, ex_rates_scaled,
-                       lcl, ucl, mmax, aval, bval]
-
-        except RuntimeWarning:
-            logging.debug('Skipping', ctab)
-
-        except UserWarning:
-            logging.debug('Skipping', ctab)
-
-        except:
-            logging.debug('Skipping', ctab)
-
-    if True:
-        fmt = 'Maximum annual rate for {:.1f}: {:.4f}'
-        print(fmt.format(ref_mag, save[2]))
-        fmt = 'GR a and b                 : {:.4f} {:.4f}'
-        print(fmt.format(save[0], save[1]))
-        print('Completeness:\n', save[3])
-
-    _weichert_plot(wei[0], wei[1], wei[2], wei[3], wei[4], wei[5], wei[6],
-                   wei[7], wei[8], wei[9], src_id=src_id)
-
-    # Saving figure
-    if folder_out_figs is not None:
-
-        create_folder(folder_out_figs)
-
-        ext = 'png'
-        fmt = 'fig_mfd_{:s}.{:s}'
-        figure_fname = os.path.join(folder_out_figs,
-                                    fmt.format(src_id, ext))
-        plt.savefig(figure_fname, format=ext)
-        plt.close()
-
-    return save
-
-
-def main(fname_input_pattern, fname_config, folder_out_figs):
-    """
-    Analyzes the completeness of a catalogue
-    """
-
+    # Loading configuration
     config = toml.load(fname_config)
-    tmp = [1900, 1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990]
-    years = np.array(tmp)
-    mags = np.array([4.0, 4.5, 5, 5.5, 6, 6.5, 7])
-    binw = 0.2
-    ref_mag = 5.0
 
-    # Mags in descending order
-    years[::-1].sort()
-    idxs = np.arange(len(mags))
-    idxs[::-1].sort()
-    bmin = 0.85
-    bmax = 1.15
-    bmin = 0.90
-    bmax = 1.10
+    # Read parameters for completeness analysis
+    key = 'completeness'
+    mags = np.array(config[key]['mags'])
+    years = np.array(config[key]['years'])
+    binw = config.get('bin_width', 0.1)
+    ref_mag = config[key].get('ref_mag', 5.0)
+    ref_upp_mag = config[key].get('ref_upp_mag', None)
+    bmin = config[key].get('bmin', 0.8)
+    bmax = config[key].get('bmax', 1.2)
+    # Options: 'largest_rate', 'match_rate', 'optimize'
+    criterion = config[key].get('optimization_criterion', 'optimize')
 
+    # Reading completeness data
+    print('Reading completeness data from: {:s}'.format(folder_in))
+    fname_disp = os.path.join(folder_in, 'dispositions.npy')
+    perms = np.load(fname_disp)
+    mags_chk = np.load(os.path.join(folder_in, 'mags.npy'))
+    years_chk = np.load(os.path.join(folder_in, 'years.npy'))
+    compl_tables = {'perms': perms, 'mags_chk': mags_chk,
+                    'years_chk': years_chk}
+
+    # Fixing sorting of years
+    if not np.all(np.diff(years)) < 0:
+        years = np.flipud(years)
+
+    np.testing.assert_array_equal(mags, mags_chk)
+    np.testing.assert_array_equal(years, years_chk)
+
+    # Info
+    if len(skip) > 0:
+        if isinstance(skip, str):
+            skip = get_list(skip)
+        print('Skipping: ', skip)
+
+    # Processing subcatalogues
     for fname in glob.glob(fname_input_pattern):
+
+        # Get source ID
         src_id = _get_src_id(fname)
-        var = config['sources'][src_id]
-        res = completeness_analysis(fname, idxs, years, mags, binw, ref_mag,
-                                    [bmin, bmax], src_id, folder_out_figs,
+
+        # If necessary skip the source
+        if src_id in skip:
+            continue
+
+        # Read configuration parameters for the current source
+        if src_id in config['sources']:
+            var = config['sources'][src_id]
+        else:
+            var = {}
+
+        res = completeness_analysis(fname, years, mags, binw, ref_mag,
+                                    ref_upp_mag, [bmin, bmax], criterion,
+                                    compl_tables, src_id,
+                                    folder_out_figs=folder_out_figs,
+                                    folder_out=folder_out,
                                     rewrite=False)
-        var['completeness_table'] = list(res[3])
+
+        # Formatting completeness table
+        tmp = []
+        for row in res[3]:
+            tmp.append([float(row[0]), float(row[1])])
+        var['completeness_table'] = tmp
         var['agr_weichert'] = float('{:.4f}'.format(res[0]))
         var['bgr_weichert'] = float('{:.4f}'.format(res[1]))
+        var['agr_sig_weichert'] = float('{:.4f}'.format(res[5]))
+        var['bgr_sig_weichert'] = float('{:.4f}'.format(res[6]))
+
+        # Updating configuration
+        config['sources'][src_id] = var
 
     with open(fname_config, 'w') as fou:
         fou.write(toml.dumps(config))
         print('Updated {:s}'.format(fname_config))
+
+
+def main(fname_input_pattern, fname_config, folder_out_figs, folder_in,
+         folder_out, *, skip: str = ''):
+    """
+    Analyzes the completeness of a catalogue
+    """
+
+    _main(fname_input_pattern, fname_config, folder_out_figs, folder_in,
+          folder_out, skip)
 
 
 descr = 'Pattern to select input files with subcatalogues'
@@ -173,7 +133,13 @@ main.fname_input_pattern = descr
 msg = 'Name of the .toml file with configuration parameters'
 main.fname_config = msg
 msg = 'Name of the folder where to store figures'
-main.fname_config = msg
+main.folder_out_figs = msg
+msg = 'Name of the folder where to read candidate completeness tables'
+main.folder_in = msg
+msg = 'Name of the folder where to store data'
+main.folder_out = msg
+msg = 'IDs of the sources to skip'
+main.skip = msg
 
 
 if __name__ == '__main__':

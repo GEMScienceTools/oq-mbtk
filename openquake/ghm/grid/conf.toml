@@ -1,0 +1,19 @@
+[main]
+
+# Name of the shapefile containing the borders of countries
+# borders_fname = '../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp'
+borders_fname = "/Users/mpagani/Documents/2022/diary/08/19_remapping_mosaic/gadm_410_level_0.gpkg"
+
+# This can be either 'FIPS_CNTRY' or 'GID_0' depending on the shapefile
+country_column = "GID_0"
+
+# Buffer distance [m]
+buffer = 50000 
+
+# Grid resolution
+h3_resolution = 6
+
+[site_model]
+
+# This file is usually quite big and, therefore, stored locally. Path must be adjusted accordingly
+ncfile = "/Users/mpagani/Repos/gem-hazard-data/vs30/global_vs30.grd"

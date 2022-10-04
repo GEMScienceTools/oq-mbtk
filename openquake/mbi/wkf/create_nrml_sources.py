@@ -89,7 +89,7 @@ def write_as_multipoint_sources(df, model, src_id, module, subzones,
             tmp = get_param(srcd, model['default'], key)
             hyd = _get_hypocenter_distribution(tmp)
 
-    name = model['sources'][src_id]
+    name = src_id
     mmfd = MultiMFD('truncGutenbergRichterMFD',
                     size=len(avals),
                     min_mag=[mmin],

@@ -1,0 +1,4 @@
+time,latitude,longitude,depth,magnitude,magnitudeType,nst,gap,dmin,rms,net,eventID,type,horizontalError,depthError,magError,magNst,status,locationSource,magSource,year,month,day,hour,minute,second,geometry
+2005-12-30 23:56:04.650000+00:00,5.508,94.546,49.5,4.6,mb,49.0,181.4,,0.91,us,usp000e78h,earthquake,,,,21.0,reviewed,us,us,2005,12,30,23,56,4,POINT (94.546 5.508)
+2005-12-30 22:35:47.960000+00:00,32.14,141.827,29.4,4.5,mb,20.0,159.7,,0.46,us,usp000e78f,earthquake,,21.0,,8.0,reviewed,us,us,2005,12,30,22,35,47,POINT (141.827 32.14)
+2005-12-30 21:14:52.420000+00:00,32.146,141.73,27.1,4.8,mb,67.0,113.3,,0.66,us,usp000e78d,earthquake,,14.6,,33.0,reviewed,us,us,2005,12,30,21,14,52,POINT (141.73 32.146)

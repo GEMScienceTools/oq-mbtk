@@ -30,6 +30,7 @@ Class to hold a general csv formatted catalogue to write to other formats
 """
 import datetime
 import numpy as np
+import pandas as pd
 import openquake.cat.gcmt_utils as utils
 
 from math import floor
@@ -75,6 +76,37 @@ class GeneralCsvCatalogue(object):
                 self.data[attribute] = []
         self.number_earthquakes = 0
         self.gcmt_catalogue = GCMTCatalogue()
+
+    def parse_csv(self, filename):
+        """
+        Parse a .csv file
+
+        :param filename:
+            Name of the .csv file
+        """
+
+        df = pd.read_csv(filename, delimiter=',')
+
+        # Checking information included in the original
+        if 'day' in df.columns:
+            # Fixing day
+            mask = df['day'] == 0
+            df.loc[mask, 'day'] = 1
+        if 'second' in df.columns:
+            df.drop(df[df.second > 59.999999].index, inplace=True)
+        if 'minute' in df.columns:
+            df.drop(df[df.minute > 59.599999].index, inplace=True)
+        if 'hour' in df.columns:
+            df.drop(df[df.hour > 23.99999].index, inplace=True)
+
+        # Processing columns and updating the catalogue
+        for col in df.columns:
+            if col in self.TOTAL_ATTRIBUTE_LIST:
+                if (col in self.FLOAT_ATTRIBUTE_LIST or
+                        col in self.INT_ATTRIBUTE_LIST):
+                    self.data[col] = df[col].to_numpy()
+                else:
+                    self.data[col] = df[col].to_list()
 
     def get_number_events(self):
         """
@@ -180,11 +212,19 @@ class GeneralCsvCatalogue(object):
             if ('sigmaMagnitude' in self.data and
                     len(self.data['sigmaMagnitude']) > 0):
                 sigma_mag = self.data['sigmaMagnitude'][iloc]
+
+            # Set the magnitude type
+            if ('magnitudeType' not in self.data.keys() or
+                len(self.data['magnitudeType']) < 1):
+                mtype = 'Mw'
+            else:
+                mtype = self.data['magnitudeType'][iloc]
+
             mag = [Magnitude(event_id,
                              origin_id,
                              self.data['magnitude'][iloc],
                              catalogue_id,
-                             scale='Mw',
+                             scale=mtype,
                              sigma=sigma_mag)]
             # Create Moment
             if 'moment' in self.data and len(self.data['moment']):
