@@ -1,0 +1,13 @@
+
+[main]
+
+# Name of the shapefile containing the borders of countries
+borders_fname = '../../../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp'
+# This can be either 'FIPS_CNTRY' or 'GID_0' depending on the shapefile
+country_column = 'FIPS_CNTRY'
+
+# Buffer distance [m]
+buffer = 50000 
+
+# Grid resolution
+h3_resolution = 5

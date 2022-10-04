@@ -28,7 +28,7 @@ Get-ExecutionPolicy
 You can change to a new execution policy with the Set-ExecutionPolicy cmdlet.
 
 ```
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 ```
 
 ## Installation

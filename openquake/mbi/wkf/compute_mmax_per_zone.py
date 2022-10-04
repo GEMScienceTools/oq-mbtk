@@ -35,7 +35,7 @@ def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab,
     # Iterate over sources
     for idx, poly in polygons_gdf.iterrows():
 
-        src_id = poly.id
+        src_id = str(poly.id)
         if (len(use) > 0 and src_id not in use) or (src_id in skip):
             continue
 
@@ -48,7 +48,7 @@ def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab,
         lab = 'mmax_{:s}'.format(cat_lab)
         model['sources'][str(poly.id)][lab] = float(mmax)
 
-        print('{:10s}: {:5.2f}'.format(src_id, mmax))
+        print('{:10s}: {:5.2f}'.format(str(src_id), mmax))
 
     # Saving results into the config file
     with open(fname_conf, 'w') as f:

@@ -67,12 +67,18 @@ def extract(fname_in: str, **kwargs) -> pd.DataFrame:
         elif key == 'max_depth':
             df.query(f"depth < {kwargs['max_depth']}", inplace=True)
         elif key == 'min_mag':
-            df.query(f"mag > {kwargs['min_max']}", inplace=True)
+            df.query(f"magnitude >= {kwargs['min_mag']}", inplace=True)
         elif key == 'max_mag':
-            df.query(f"mag > {kwargs['min_max']}", inplace=True)
+            df.query(f"magnitude < {kwargs['max_mag']}", inplace=True)
 
     # Return the final catalogue
     df.reset_index()
+
+    if len(df) < 1:
+        print('Empty catalogue!')
+    else:
+        print(f'Catalogue contains {len(df):d} earthquakes')
+
     return df
 
 
@@ -193,6 +199,7 @@ def create_gcmt_files(fname_polygons: str, gcmt_filename: str, folder_out: str,
     create_folder(folder_out)
 
     # Create geodataframe with the catalogue
+    print(os.path.abspath(gcmt_filename))
     tmp = get_dataframe(gcmt_filename)
 
     # Filter depths
@@ -215,7 +222,7 @@ def create_gcmt_files(fname_polygons: str, gcmt_filename: str, folder_out: str,
         gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
         within = gpd.sjoin(gdf, gdf_poly, op='within')
 
-        if len(df) < 0:
+        if len(df) < 1:
             continue
 
         # Create output file
