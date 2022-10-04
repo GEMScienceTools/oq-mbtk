@@ -191,7 +191,9 @@ def _get_sites(model, folder_out, conf, root_path=''):
             gds = gds.set_crs('epsg:4326')
             projected = gds.to_crs('epsg:3857')
             projected = projected.buffer(buffer_dist)
+            # This returns a geodataseries that we convert to geodataframe
             gds = projected.to_crs('epsg:4326')
+            gdata = gpd.GeoDataFrame(geometry=gpd.GeoSeries(gds))
 
             # Create geojson and find the indexes of the points inside
             eee = gds.explode(index_parts=True)
@@ -206,12 +208,21 @@ def _get_sites(model, folder_out, conf, root_path=''):
             if model in SUBSETS and key in SUBSETS[model]:
                 for tstr in SUBSETS[model][key]:
                     tpoly = get_poly_from_str(tstr)
+                    pol = gpd.GeoDataFrame(index=[0], crs='epsg:4326',
+                                           geometry=[tpoly])
+                    # Intersection between the geodataframe filled with points
+                    # and the area defining a subportion of a nation
+                    intsc = gpd.sjoin(pol, gdata, predicate='intersects')
+                    if len(intsc) < 1:
+                        continue
+                    # Select points
                     feature_coll = gpd.GeoSeries([tpoly]).__geo_interface__
                     tmp = feature_coll['features'][0]['geometry']
                     tidx_b = h3.polyfill_geojson(tmp, h3_resolution)
                     tidx_a = list(set(tidx_a) & set(tidx_b))
-
-            sites_indices.extend(tidx_a)
+                    sites_indices.extend(tidx_a)
+            else:
+                sites_indices.extend(tidx_a)
 
     sites_indices = list(set(sites_indices))
     sidxs = sorted(sites_indices)
