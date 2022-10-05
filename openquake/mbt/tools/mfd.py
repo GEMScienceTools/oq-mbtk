@@ -10,6 +10,8 @@ from scipy.stats import truncnorm
 from openquake.hazardlib.mfd import (TruncatedGRMFD, EvenlyDiscretizedMFD,
                                      ArbitraryMFD)
 from openquake.hazardlib.mfd.multi_mfd import MultiMFD
+from openquake.hazardlib.mfd.youngs_coppersmith_1985 import (
+        YoungsCoppersmith1985MFD)
 
 log = True
 log = False
@@ -251,6 +253,9 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
         elif isinstance(mfd, MultiMFD):
             tmfd = get_evenlyDiscretizedMFD_from_multiMFD(mfd, bin_width)
             return tmfd
+        elif isinstance(mfd, YoungsCoppersmith1985MFD):
+            occ = np.array(mfd.get_annual_occurrence_rates())
+            return EEvenlyDiscretizedMFD(occ[0, 0], mfd.bin_width, occ[:, 1])
         else:
             raise ValueError('Unsupported MFD type')
 
