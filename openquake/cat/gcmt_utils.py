@@ -72,7 +72,7 @@ def get_azimuth_plunge(vect, degrees=True):
 COORD_SYSTEM = {'USE': tensor_components_to_use,
                 'NED': tensor_components_to_ned}
 
-ROT_NED_USE = np.matrix([[0., 0., -1.],
+ROT_NED_USE = np.array([[0., 0., -1.],
                         [-1., 0., 0.],
                         [0., 1., 0.]])
 
