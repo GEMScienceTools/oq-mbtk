@@ -33,6 +33,7 @@ import os
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+
 from typing import Type
 from shapely.geometry import Point
 from openquake.hmtk.seismicity.catalogue import Catalogue

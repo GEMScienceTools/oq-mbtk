@@ -2,9 +2,18 @@ from prettytable import PrettyTable
 
 
 def print_trt_stats_table(model):
+    """
+    Print tables describing the source typologies used per each tectonic
+    region and the magnitude scaling relationships
+
+    :param model:
+        A list of :class:`openquake.hazardlib.source.BaseSeismicSource`
+        instances
+    """
+
     stypes, msrtypes = get_trt_stats(model)
     for trt in stypes:
-        print('Tectonic region: {0:s}'.format(trt))
+        print(f'\nTectonic region: {trt}')
         x = PrettyTable()
         x.add_column('Source type', list(stypes[trt].keys()))
         nums = [stypes[trt][key] for key in stypes[trt].keys()]

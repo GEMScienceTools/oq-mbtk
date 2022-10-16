@@ -26,12 +26,13 @@
 
 import os
 import random
+from pathlib import Path
 import numpy as np
+import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib._color_data as mcds
 
-from pathlib import Path
 from matplotlib.legend import Legend
 
 COLORS = [mcds.XKCD_COLORS[k] for k in mcds.XKCD_COLORS]
@@ -39,85 +40,106 @@ random.seed(1)
 random.shuffle(COLORS)
 
 
-def get_hists(df, bins, agencies=None, column="magMw"):
+def get_hists(dfc: pd.DataFrame, bins: np.ndarray, agencies: list = None,
+              column="magMw") -> tuple[list, list]:
     """
-    :param df:
+    :param dfc:
         A :class:`pandas.DataFrame` instance
     :param bins:
+        The bin edges that will be used to plot the histogram
     :param agencies:
+        A list with the IDs of the agencies to consider
     :param column:
+        The name of the column with the magnitude values
     """
-    #
+
     # Getting the list of agencies
     if not agencies:
-        agencies = get_agencies(df)
-    #
+        agencies = get_agencies(dfc)
+
     # Creating the histograms
     out = []
     out_agencies = []
     for key in agencies:
-        mw = df[df['magAgency'] == key][column]
-        if len(mw):
-            hist, _ = np.histogram(mw, bins=bins)
+        m_mw = dfc[dfc['magAgency'] == key][column]
+        if len(m_mw):
+            hist, _ = np.histogram(m_mw, bins=bins)
             out.append(hist)
             out_agencies.append(key)
     return out, out_agencies
 
 
-def get_ranges(agencies, df, mthresh=-10.0):
+def get_ranges(agencies: list, dfc: pd.DataFrame,
+               mthresh: float = -10.0) -> tuple[list, list]:
+    """
+    :param agencies:
+        A list with the IDs of the agencies
+    :param dfc:
+        A :class:`pandas.DataFrame` instance
+    :param mthresh:
+        Minimum magnitude threshold
+    :returns:
+        A tuple with two lists. The first list contains the first and last
+        year of occurrence for earthquakes detected by an agency. The second
+        list contains the number of earthquakes.
+    """
 
     # Getting the list of agencies
     if not agencies:
-        agencies = get_agencies(df)
+        agencies = get_agencies(dfc)
 
     # Computing the time interval
     out = []
     num = []
     for key in agencies:
-        condition = (df['magAgency'] == key) & (df['value'] > mthresh)
-        ylow = np.min(df[condition]['year'])
-        yupp = np.max(df[condition]['year'])
-        num.append(len(df[condition]))
+        condition = (dfc['magAgency'] == key) & (dfc['value'] > mthresh)
+        ylow = np.min(dfc[condition]['year'])
+        yupp = np.max(dfc[condition]['year'])
+        num.append(len(dfc[condition]))
         out.append([ylow, yupp])
     return out, num
 
 
-def get_agencies(df) -> list:
+def get_agencies(dfc: pd.DataFrame) -> list:
     """
     Return a list of the agencies in the catalogue
 
     :param df:
         A :class:`pandas.DataFrame` instance
     :return:
-        A list
+        A list with the list of agencies
     """
-    return list(df["magAgency"].unique())
+    return list(dfc["magAgency"].unique())
 
 
-def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
+def plot_time_ranges(dfc: pd.DataFrame, agencies: list = None,
+                     fname: str = '/tmp/tmp.pdf', **kwargs):
     """
     Creates a plot showing the interval between the first and the last
     earthquake origin of the agencies included in the database.
 
-    :param df:
-        A :class:`pandas.DataFrame` instance
+    :param dfc:
+        A :class:`pandas.DataFrame` instance with
     :param agencies:
         A list of agencies codes
     :param fname:
         The name of the output file
+    :param kwargs:
+        - mthresh: minimum magnitude threshold
+        - nthresh: minimum number of events threshold
     """
-    tmp = sorted(get_agencies(df), reverse=True)
+    tmp = sorted(get_agencies(dfc), reverse=True)
     if not agencies:
         agencies = tmp
 
-    if 'mthresh' in kwargs:
-        mthresh = kwargs['mthresh']
-    else:
-        mthresh = -10.0
+    # Set minimum magnitude threshold
+    mthresh = kwargs.get('mthresh', -10.0)
+    txt_y_shift = kwargs.get('txt_y_shift', 0.2)
 
-    # Plotting
-    yranges, num = get_ranges(agencies, df, mthresh)
+    # Get time range and number of events for each agency
+    yranges, num = get_ranges(agencies, dfc, mthresh)
 
+    # Filter out the agencies without enough events
     if 'nthresh' in kwargs:
         num = np.array(num)
         idx = np.nonzero(num > kwargs['nthresh'])
@@ -143,15 +165,19 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     for i, key in enumerate(agencies):
         if sum(np.diff(yranges[i])) > 0:
             plt.plot(yranges[i], [i, i], COLORS[i], lw=lws[i])
-            plt.text(yranges[i][0], i+0.2, '{:d}'.format(num[i]))
+            tmps = f'{num[i]:d} [{yranges[i][0]}-{yranges[i][1]}]'
+            plt.text(yranges[i][0], i+txt_y_shift, tmps)
         else:
+            if num[i] == 0:
+                continue
             plt.plot(yranges[i][1], i, 'o', COLORS[i], lw=min_wdt)
-            plt.text(yranges[i][1], i+0.2, '{:d}'.format(num[i]))
+            tmps = f'{num[i]:d} [{yranges[i][1]}]'
+            plt.text(yranges[i][1], i+txt_y_shift, tmps)
 
     ax.grid(which='major', linestyle='-')
     ax.grid(which='minor', linestyle=':')
-    xx = [' ']
-    xx.extend(agencies)
+    tmps = [' ']
+    tmps.extend(agencies)
     ax.set_yticks(range(len(agencies)))
     ax.set_yticklabels(agencies)
 
@@ -159,26 +185,27 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     idx2 = np.argmin(num)
     idx1 = np.argmax(num)
     xlo = min(np.array(yranges)[:, 0])
-    xup = max(np.array(yranges)[:, 0])
+    xup = max(np.array(yranges)[:, 1])
     xdf = xup - xlo
     fake1, = plt.plot([xlo, xlo], [0, 0], lw=max_wdt, alpha=1,
                       color=COLORS[idx1])
     fake2, = plt.plot([xlo, xlo], [0, 0], lw=min_wdt, alpha=1,
                       color=COLORS[idx2])
-    labels = ['{:d}'.format(max(num)), '{:d}'.format(min(num))]
+    labels = [f'{max(num):d}', f'{min(num):d}']
     leg = Legend(ax, [fake1, fake2], labels=labels, loc='best', frameon=True,
                  title='Number of magnitudes', fontsize='medium')
     ax.add_artist(leg)
     ax.set_xlim([xlo-xdf*0.05, xup+xdf*0.05])
     plt.xlabel('Year')
+    plt.savefig(fname)
 
     return num
 
 
-def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
+def plot_histogram(dfc, agencies=None, wdt=0.1, column="magMw",
                    fname='/tmp/tmp.pdf', **kwargs):
     """
-    :param df:
+    :param dfc:
         A :class:`pandas.DataFrame` instance
     :param agencies:
         A list of agencies codes
@@ -188,22 +215,21 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
         The name of the output file
     """
 
-    df = df.astype({column: 'float32'})
+    dfc = dfc.astype({column: 'float32'})
 
     # Filtering
-    num = len(df)
-    df = df[np.isfinite(df[column])]
+    num = len(dfc)
+    dfc = dfc[np.isfinite(dfc[column])]
     fmt = "Total number of events {:d}, with finite magnitude {:d}"
-    print(fmt.format(len(df), num))
+    print(fmt.format(len(dfc), num))
 
     # Info
     print('Agencies')
-    print(get_agencies(df))
+    print(get_agencies(dfc))
 
     # Settings
-    wdt = wdt
     if not agencies:
-        agencies = get_agencies(df)
+        agencies = get_agencies(dfc)
         print('List of agencies plotted: ', agencies)
 
     # Settings plottings
@@ -212,7 +238,7 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     mpl.rcParams['axes.labelsize'] = 16
 
     # Data
-    mw = df[column].values
+    mw = dfc[column].values
 
     # Creating bins and total histogram
     mmi = np.floor(min(mw)/wdt)*wdt-wdt
@@ -221,7 +247,7 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     hist, _ = np.histogram(mw, bins=bins)
 
     # Computing the histograms
-    hsts, sel_agencies = get_hists(df, bins, agencies, column=column)
+    hsts, sel_agencies = get_hists(dfc, bins, agencies, column=column)
 
     # Create Figure
     fig = plt.figure(figsize=(15, 8))
@@ -267,5 +293,5 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     if "ylim" in kwargs:
         ax.set_ylim(kwargs["ylim"])
 
-    print('Created figure: {:s}'.format(fname))
+    print(f'Created figure: {fname:s}')
     return fig, ax
