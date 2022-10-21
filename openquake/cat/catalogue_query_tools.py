@@ -1014,15 +1014,22 @@ class CatalogueRegressor(object):
             Optionl parameters to control how to define missing uncertainties
 
         """
+        #import pdb; pdb.set_trace()
+
+        print("setting up regression")
+        
+        #breakpoint()
         if "2segment" in model_type:
             model_type, mag = model_type.split("M")
             mag = float(mag)
             self.model_type = function_map[model_type](mag)
+            
         else:
             if not model_type in function_map:
                 raise ValueError("Model type %s not supported!" % model_type)
             self.model_type = function_map[model_type]()
-        self.model = odr.Model(self.model_type.run)
+            
+        model = odr.Model(self.model_type.run)
         if (model_type=="exponential") and (len(initial_params) != 3):
             raise ValueError("Exponential model requires three initial "
                              "parameters")
@@ -1051,14 +1058,82 @@ class CatalogueRegressor(object):
                 s_y[idx] = DEFAULT_SIGMA[setup_parameters["Missing Y"]](s_y)
         self.regression_data = odr.RealData(self.data[self.keys[0]],
                                             self.data[self.keys[2]],
-                                            sx=s_x,
-                                            sy=s_y)
+                                            s_x,
+                                            s_y)
+        print("running regression") 
         regressor = odr.ODR(self.regression_data,
-                            self.model,
-                            initial_params)
+                            model, initial_params)                                   
         regressor.set_iprint(final=2)
         self.results = regressor.run()
         return self.results
+        #return regressor
+
+
+    def run_regression_poly(self, initial_params, setup_parameters={}):
+        """
+        Runs the regression analysis on the retreived data
+        :param str model_type:
+            Model type. Choose from {"polynomial", "piecewise", "exponential",
+                "2segmentM#.#"} where M#.# is the corner magnitude
+        :param list initial_params:
+            Initial estimate of the parameters
+            * polynomial = [c_1, c_2, c_3, ...] where
+                  f(X) = \Sum_i^N c_i X^{i-1}
+            * piecewise = [m_1, m_2, ..., m_i, xc_1, xc_2, ..., xc_i-1, c]
+            * exponential =[c_1, c_2, c_3] where f(X) = exp(c_1 + c_2 X) + c_3
+            * 2segmentM#.# = [m_1, m_2, c_1] where m_1 and m_2 are the gradient
+                of slope 1 and 2, respectively, and c_1 is the intercept
+        :param dict setup_parameters:
+            Optionl parameters to control how to define missing uncertainties
+
+        """
+        self.model_type = function_map["polynomial"]()
+        model = odr.Model(self.model_type.run)
+        #import pdb; pdb.set_trace()
+
+        ## Assumes polynomial model, will update once this works!
+        #self.model = odr.Model(self.model_type.run)
+        
+        setup_parameters.setdefault("Missing X", "Default")
+        setup_parameters.setdefault("Missing Y", "Default")
+        setup_parameters.setdefault("sx", 0.1)
+        setup_parameters.setdefault("sy", 0.1)
+
+        # Setup X
+        s_x = self.data[self.keys[1]]
+        idx = (np.isnan(s_x)) | (s_x < 1E-20) 
+        if np.any(idx):
+        #    # Need to apply default sigma values
+            if (setup_parameters["Missing X"] == "Default") or np.all(idx):
+                s_x[idx] = setup_parameters["sx"]
+            else:
+                s_x[idx] = DEFAULT_SIGMA[setup_parameters["Missing X"]](s_x)
+        # Setup Y
+        s_y = self.data[self.keys[3]]
+        idx = (np.isnan(s_y)) | (s_y < 1E-20)
+        if np.any(idx):
+            print("Need to apply sigma")
+            # Need to apply default sigma values
+            if (setup_parameters["Missing Y"] == "Default") or np.all(idx):
+                s_y[idx] = setup_parameters["sy"]
+            else:
+                s_y[idx] = DEFAULT_SIGMA[setup_parameters["Missing Y"]](s_y)
+        self.regression_data = odr.RealData(self.data[self.keys[0]],
+                                            self.data[self.keys[2]], s_x, s_y)
+                                            
+        #odr_obj =odr.ODR(odr.RealData(self.data[self.keys[0]], self.data[self.keys[2]], s_x, s_y), odr.polynomial(1))
+
+        print("Running")                                    
+        #regressor = odr.ODR(self.regression_data,
+        #                    odr.polynomial(1))
+        regressor = odr.ODR(self.regression_data,
+                            model, initial_params)
+        #regressor.set_iprint(final=2)
+        #output = odr_obj.run()
+        self.results = regressor.run()
+        #print("Regressed!")
+        return self.results
+        
 
     def plot_model(self, overlay, xlim=[], ylim=[], marker="o", line_color="g",
             figure_size=(7, 8), filetype="png",

@@ -41,13 +41,21 @@ from geojson import LineString, Feature, FeatureCollection, dump
 def get_features(cat, idx, idxsel):
     """
     :param cat:
+        A pandas geodataframe instance containing a homogenised catalogue as
+        obtained from :method:`openquake.cat.hmg.merge.hmg.process_dfs`
     :param idx:
+        The index location of specific events in the catalogue
     :param idxsel:
+        The index location for pairs for each event in idx
     """
     features = []
-
+    
+    
     lon1 = float(cat.loc[idx, 'longitude'])
     lat1 = float(cat.loc[idx, 'latitude'])
+    mag1 = float(cat.loc[idx, 'value'])
+    time1 = cat.loc[idx, 'datetime']
+    
     tmp = cat.loc[idx, 'eventID']
     if type(tmp).__name__ == 'str':
         evid = tmp
@@ -56,12 +64,26 @@ def get_features(cat, idx, idxsel):
     else:
         fmt = "Unsupported format for EventID: {:s}"
         raise ValueError(fmt.format(type(tmp).__name__))
-
+            
+    mag2 = cat.loc[idxsel, 'value'].apply(lambda x: float(x))
+    # reference agency used for idx
+    ref_agency = cat.loc[idx, 'Agency']
+    
+    
     for i in idxsel:
         lon2 = float(cat.loc[i, 'longitude'])
         lat2 = float(cat.loc[i, 'latitude'])
+        
+        londiff = abs(lon1 - lon2)
+        latdiff = abs(lat1 - lat2)
+        # Magnitude difference between events
+        mag_diff = abs(mag1 - float(cat.loc[i, 'value']))
+        
+        # Time difference between events
+        t_del = abs(time1 - cat.loc[i, 'datetime']).total_seconds()
+    
         line = LineString([(lon1, lat1), (lon2, lat2)])
-        features.append(Feature(geometry=line, properties={"eventID": evid}))
+        features.append(Feature(geometry=line, properties={"eventID": evid, "magDiff":mag_diff, "delta_t":t_del, "lon_diff": londiff, "lat_diff": latdiff, "m1": mag1, "agency" : cat.loc[i, 'Agency'], "ref_agency":ref_agency, "mag_type":  cat.loc[i, 'magType']}))
 
     return features
 
@@ -95,7 +117,7 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson):
     # add those later
     subcat = cat[cat['year'] > 1800]
     for index, row in tqdm(subcat.iterrows()):
-
+    	
         # Select events that occurred close in space
         minlo = row.longitude - delta_ll
         minla = row.latitude - delta_ll
@@ -135,11 +157,13 @@ def check_catalogue(catalogue_fname, settings_fname):
     :fname settings_fname:
         The name of a file containing the settings used to create a catalogue
     """
+    #import pdb; pdb.set_trace()
 
     print("Checking catalogue")
 
     # Read configuration
     settings = toml.load(settings_fname)
+    #print(settings)
 
     # Load the catalogue
     _, file_extension = os.path.splitext(catalogue_fname)
@@ -173,6 +197,7 @@ def check_catalogue(catalogue_fname, settings_fname):
     # Processing the catalogue
     delta_ll = settings["general"]["delta_ll"]
     delta_t = settings["general"]["delta_t"]
+    #use_km = settings["general"]["use_km"]
     nchecks = process(cat, sindex, delta_ll, delta_t, geojson_fname)
 
     return nchecks
