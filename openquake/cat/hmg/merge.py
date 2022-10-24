@@ -37,7 +37,6 @@ import geopandas as gpd
 
 from openquake.cat.parsers.isf_catalogue_reader import ISFReader
 from openquake.cat.parsers.converters import GenericCataloguetoISFParser
-from openquake.cat.parsers.generic_catalogue import GeneralCsvCatalogue
 
 warnings.filterwarnings('ignore')
 
@@ -106,12 +105,17 @@ def magnitude_selection(catalogue: str, min_mag: float):
 
 def geographic_selection(catalogue, shapefile_fname, buffer_dist=0.0):
     """
+    Given a catalogue and a shapefile with a polygon or a set of polygons, it
+    selects all the earthquakes inside the union of all the polygons.
+
     :param catalogue:
         An instance of :class:`openquake.cat.isf_catalogue.ISFCatalogue`
     :param shapefile_fname:
         Name of a shapefile
     :param buffer_dist:
         A distance in decimal degrees
+    :returns:
+        An instance of :class:`openquake.cat.isf_catalogue.ISFCatalogue`
     """
 
     # Getting info on prime events
@@ -133,8 +137,8 @@ def geographic_selection(catalogue, shapefile_fname, buffer_dist=0.0):
         geom = geom.buffer(buffer_dist)
 
     # Selecting origins - Tried two methods both give the same result
-    #pip = origins.within(geom)
-    #aaa = origins.loc[pip]
+    # pip = origins.within(geom)
+    # aaa = origins.loc[pip]
     tmpgeo = {'col1': ['tmp'], 'geometry': [geom]}
     gdf = gpd.GeoDataFrame(tmpgeo, crs="EPSG:4326")
     aaa = gpd.sjoin(origins, gdf, how="inner", op='intersects')
@@ -145,12 +149,16 @@ def geographic_selection(catalogue, shapefile_fname, buffer_dist=0.0):
     return catalogue.get_catalogue_subset(list(aaa["iloc"].values))
 
 
-def load_catalogue(fname, cat_type, cat_code, cat_name):
+def load_catalogue(fname: str, cat_type: str, cat_code: str, cat_name: str):
     """
     :param fname:
+        Name of the file with the catalogue
     :param cat_type:
+        Type of catalogue. Options are 'isf' and 'csv'
     :param cat_code:
+        The code to be assigned to earthquakes from this catalogue
     :param cat_name:
+        The name of this catalogue
     """
     if cat_type == "isf":
         parser = ISFReader(fname)
@@ -176,7 +184,7 @@ def process_catalogues(settings_fname):
     settings = toml.load(settings_fname)
     path = os.path.dirname(settings_fname)
 
-    # Reading shapefile and setting the buffer
+    # Reading name of the shapefile and setting the buffer
     tmps = settings["general"].get("region_shp", None)
     if tmps is not None:
         fname_shp = os.path.join(path, tmps)
@@ -201,7 +209,7 @@ def process_catalogues(settings_fname):
 
             catroot = load_catalogue(fname, cat_type, cat_code, cat_name)
             nev = catroot.get_number_events()
-            print("   Catalogue contains: {:d} events".format(nev))
+            print(f"   Catalogue contains: {nev:d} events")
 
             select_flag = tdict.get("select_region", False)
             if select_flag:
@@ -234,7 +242,7 @@ def process_catalogues(settings_fname):
             # Loading the catalogue
             tmpcat = load_catalogue(fname, cat_type, cat_code, cat_name)
             nev = tmpcat.get_number_events()
-            print("   Catalogue contains: {:d} events".format(nev))
+            print(f"   Catalogue contains: {nev:d} events")
 
             select_flag = tdict.get("select_region", False)
             if select_flag:
@@ -254,10 +262,10 @@ def process_catalogues(settings_fname):
 
             # Set log files
             if "log_file" not in tdict:
-                logfle = "/tmp/tmp_merge_{:02d}.tmp".format(icat)
+                logfle = f"/tmp/tmp_merge_{icat:02d}.tmp"
             else:
                 logfle = tdict["log_file"]
-            print("   Log file: {:s}".format(logfle))
+            print(f"   Log file: {logfle:s}".format())
 
             # Merging
             meth = catroot.add_external_idf_formatted_catalogue
@@ -269,7 +277,7 @@ def process_catalogues(settings_fname):
             catroot._create_spatial_index()
 
         nev = catroot.get_number_events()
-        print("   Whole catalogue contains: {:d} events".format(nev))
+        print(f"   Whole catalogue contains: {nev:d} events")
 
     # Building dataframes
     otab, mtab = catroot.build_dataframe()
@@ -290,4 +298,4 @@ def process_catalogues(settings_fname):
     otab.to_hdf(fname_or, '/origins', append=False)
     mtab.to_hdf(fname_mag, '/magnitudes', append=False)
 
-    print("\nLog file: \n{:s}".format(logfle))
+    print(f"\nLog file: \n{logfle:s}")
