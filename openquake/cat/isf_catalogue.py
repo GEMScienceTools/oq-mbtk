@@ -555,8 +555,8 @@ class ISFCatalogue(object):
 
     # TODO - this does not cope yet with catalogues crossing the international
     # dateline
-    def add_external_idf_formatted_catalogue(self, cat, ll_deltas=0.01,
-            delta_t=dt.timedelta(seconds=30),
+    def add_external_idf_formatted_catalogue(self,
+            cat, ll_deltas=0.01, delta_t=dt.timedelta(seconds=30),
             utc_time_zone=dt.timezone(dt.timedelta(hours=0)),
             buff_t=dt.timedelta(seconds=0), buff_ll=0, use_ids=False,
             logfle=False):
@@ -595,30 +595,31 @@ class ISFCatalogue(object):
               catalogue.
         """
         if logfle:
-            fou = open(logfle, 'w')
+            fou = open(logfle, 'w', encoding="utf-8")
             fname_geojson = os.path.splitext(logfle)[0]+"_secondary.geojson"
 
-        #
         # This is a dictionary where we store the doubtful events.
         doubts = {}
-        #
+
         # Check if we have a spatial index
         assert 'sidx' in self.__dict__
-        #
+
         # Set delta time thresholds
         if hasattr(delta_t, '__iter__'):
             threshold = np.array([[t[0], t[1].total_seconds()] for t in
                                   delta_t])
         else:
             threshold = np.array([[1000, delta_t.total_seconds()]])
-        #
-        # Set ll delta thresholds
+
+        # Set ll delta thresholds. These thresholds can be simply one value of
+        # delta distance or a list of tuples where the first value is a year
+        # and the second value a delta distance
         if hasattr(ll_deltas, '__iter__'):
-            ll_deltas = np.array([d for d in ll_deltas])
+            ll_deltas = np.array(list(ll_deltas))
         else:
             ll_deltas = np.array([[1000, ll_deltas]])
-        #
-        # Processing the events in the catalogue 'guest' catalogue
+
+        # Processing the events in the 'guest' catalogue
         id_common_events = []
         features = []
         new = 0
@@ -629,14 +630,13 @@ class ISFCatalogue(object):
         for iloc, event in enumerate(cat.events):
 
             if logfle:
-                msg = 'Index: {:d} Event ID: {:s}\n'.format(iloc, event.id)
+                msg = f'Index: {iloc:d} Event ID: {event.id:s}\n'
                 fou.write(msg)
 
-            #
             # Initial settings
             found = False
             before = self.get_number_events()
-            #
+
             # Updating time of the origin to the new timezone
             new_datetime = dt.datetime.combine(event.origins[0].date,
                                                event.origins[0].time,
@@ -644,27 +644,26 @@ class ISFCatalogue(object):
             new_datetime = new_datetime.astimezone(self.timezone)
             event.origins[0].date = new_datetime.date()
             event.origins[0].time = new_datetime.time()
-            #
+
             # Set the datetime of the event
             dtime_a = dt.datetime.combine(event.origins[0].date,
                                           event.origins[0].time)
-            #
+
             # Take the appropriate value from delta_ll - this is needed in
             # particular when delta_ll varies with time.
             idx_threshold = max(np.argwhere(dtime_a.year > ll_deltas[:, 0]))
             ll_thrs = ll_deltas[idx_threshold, 1]
-            #
+
             # Create selection window
             minlo = event.origins[0].location.longitude - ll_thrs
             minla = event.origins[0].location.latitude - ll_thrs
             maxlo = event.origins[0].location.longitude + ll_thrs
             maxla = event.origins[0].location.latitude + ll_thrs
-            #
+
             # Querying the spatial index
-            obj = [n.object for n in self.sidx.intersection((minlo, minla,
-                                                             maxlo, maxla),
-                                                            objects=True)]
-            #
+            obj = [n.object for n in self.sidx.intersection(
+                (minlo, minla, maxlo, maxla), objects=True)]
+
             # This is for checking. We perform the check only if the buffer
             # distance is larger than 0
             obj_e = []
@@ -676,40 +675,39 @@ class ISFCatalogue(object):
                 obj_b = [n.object for n in self.sidx.intersection((
                         minlo+buff_ll, minla+buff_ll, maxlo-buff_ll,
                         maxla+buff_ll), objects=True)]
-                #
+
                 # Find the index of the events in the buffer across the
                 # selection window
                 obj_e = list(set(obj_a) - set(obj_b))
-            #
+
             # Find the appropriate delta_time
-            idx_threshold = max(np.argwhere(dtime_a.year >
-                                            threshold[:, 0]))
+            idx_threshold = max(np.argwhere(dtime_a.year > threshold[:, 0]))
             sel_thrs = threshold[idx_threshold, 1]
 
             if logfle:
-                msg = '   Selected {:d} events \n'.format(len(obj))
+                msg = f'   Selected {len(obj):d} events \n'
                 fou.write(msg)
 
             if len(obj):
-                #
+
                 # Checking the events selected with the spatial index. obj is
                 # a list of tuples (event and origin ID) in the host
                 # catalogue for the epicenters close to the investigated event
                 for i in obj:
-                    #
+
                     # Selecting the origin of the event found in the catalogue
                     i_eve = i[0]
                     i_ori = i[1]
                     orig = self.events[i_eve].origins[i_ori]
                     dtime_b = dt.datetime.combine(orig.date, orig.time)
-                    #
+
                     # Check if time difference is within the threshold value
                     delta = abs((dtime_a - dtime_b).total_seconds())
 
                     if logfle:
                         eid = self.events[i_eve].id
-                        msg = '      Event ID: {:s}\n'.format(eid)
-                        msg += '      Delta: {:f}\n'.format(delta)
+                        msg = f'      Event ID: {eid:s}\n'
+                        msg += f'      Delta: {delta:f}\n'
                         fou.write(msg)
 
                     if delta < sel_thrs and found is False:
@@ -724,7 +722,7 @@ class ISFCatalogue(object):
                         if tmp[0].author in [o.author for o in origins]:
 
                             fmt = "This event already contains "
-                            fmt += " an origin from the same agency: {:s}\n"
+                            fmt += " an origin from this agency: {:s}\n"
                             fmt += " Trying to add evID {:s}\n"
                             msg = fmt.format(tmp[0].author, event.id)
                             warnings.warn(msg)
@@ -784,45 +782,45 @@ class ISFCatalogue(object):
                         common += 1
 
                         break
-            #
+
             # Searching for doubtful events:
             if buff_ll > 1e-10 and buff_t.seconds > 1e-10:
                 if len(obj_a) > 0:
                     for i in obj_a:
                         to_add = False
-                        #
+
                         # Selecting origin of the event found in the catalogue
                         i_eve = i[0]
                         i_ori = i[1]
                         orig = self.events[i_eve].origins[i_ori]
                         dtime_b = dt.datetime.combine(orig.date, orig.time)
-                        #
+
                         # Check if time difference within the threshold value
                         tmp_delta = abs(dtime_a - dtime_b).total_seconds()
-                        #
+
                         # Within max distance and across the time buffer
                         tsec = buff_t.total_seconds()
                         if (tmp_delta > (sel_thrs - tsec) and
                                 tmp_delta < (sel_thrs + tsec)):
                             to_add = True
-                        #
+
                         # Within max time and within the ll buffer
                         if (not to_add and tmp_delta < (sel_thrs + tsec)):
                             if i in obj_e:
                                 to_add = True
-                        #
+
                         # Saving info
                         if to_add:
                             if i[0] in doubts:
                                 doubts[i[0]].append(iloc)
                             else:
                                 doubts[i[0]] = [iloc]
-            #
+
             # Adding new event
             if not found:
+
                 # Making sure that the ID of the event added does not exist
                 # already
-
                 if event.id in set(self.ids):
 
                     if use_ids:
@@ -857,52 +855,43 @@ class ISFCatalogue(object):
 
                     self.ids.append(event.id)
                     new += 1
-            #
+
             # Checking
             if (new - new_old) > 0 and (common - common_old > 0):
-                msg = '{:d}'.format(iloc)
+                msg = f'{iloc:d}'
                 raise ValueError(msg)
-            elif (new - new_old) > 1:
-                msg = 'New increment larger than 1, iloc {:d}'.format(iloc)
+            if (new - new_old) > 1:
+                msg = f'New increment larger than 1, iloc {iloc:d}'
                 raise ValueError(msg)
-            elif (common - common_old) > 1:
-                msg = 'Common increment larger than 1, iloc {:d}'.format(iloc)
+            if (common - common_old) > 1:
+                msg = f'Common increment larger than 1, iloc {iloc:d}'
                 raise ValueError(msg)
-            else:
-                new_old = new
-                common_old = common
-            #
-            #
-            after = self.get_number_events()
-            #
-            #
-            # if not iloc % 5000:
-            #    idxs, stats = self.get_prime_events_info()
-            #    num_primes = [len(stats[k]) for k in stats.keys()]
-            #    msg = "{:d}".format(iloc)
-            #    assert sum(num_primes) == after, msg
 
+            new_old = new
+            common_old = common
+
+            # Check
+            after = self.get_number_events()
             fmt = 'before {:d} after {:d} iloc {:d} found {:d} loops: {:d}'
             msg = fmt.format(before, after, iloc, found, iloc)
             dlt = 0 if found else 1
             assert before+dlt == after, msg
-        #
-        # Checking
+
+        # Check
         fmt = "Wrong budget \n"
         fmt += "Common: {:d} New: {:d} Sum: {:d} Expected: {:d} loops: {:d}\n"
         msg = fmt.format(common, new, common+new, cat.get_number_events(),
                          iloc+1)
         assert (common + new) == cat.get_number_events(), msg
-        #
-        # Updating the spatial index
+
+        # Update the spatial index
         self._create_spatial_index()
 
         if logfle:
             fou.close()
-
             feature_collection = FeatureCollection(features)
-            with open(fname_geojson, 'w') as f:
-                dump(feature_collection, f)
+            with open(fname_geojson, 'w', encoding="utf-8") as fname:
+                dump(feature_collection, fname)
 
         return id_common_events, doubts
 
