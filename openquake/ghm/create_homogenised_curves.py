@@ -272,10 +272,17 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         # Read the shapefile with the polygons of countries. The explode
         # function converts multipolygons into a single multipolygon.
         tmpdf = gpd.read_file(boundaries_shp)
+<<<<<<< HEAD
 
         # inpt = explode(tmpdf)
         inpt = tmpdf.explode(index_parts=True)
 
+=======
+       
+       #inpt = explode(tmpdf)
+        inpt = tmpdf.explode(index_parts=True)
+       
+>>>>>>> 430c755036a8165f068e94a5d2d878d15c9ed2be
         inpt['MODEL'] = key
         # Select polygons composing the given model and merge them into a
         # single multipolygon.
@@ -309,6 +316,7 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     tmpdf = copy.deepcopy(map_gdf[idx])
                     tmpdf = tmpdf.set_crs('epsg:4326')
                     tmpdf = gpd.sjoin(tmpdf, inland_df, how='inner',
+<<<<<<< HEAD
                                       predicate='intersects')
 
                     p_tmpdf = tmpdf.to_crs('epsg:3857')
@@ -317,6 +325,18 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     p_geo = p_geo.to_crs('epsg:3857')
                     dst = p_tmpdf.distance(p_geo.iloc[0].geometry)
 
+=======
+                                      op='intersects')
+                    
+                    ##keeping the crs as epsg:4326.
+                    #p_tmpdf = tmpdf.to_crs('epsg:3857')
+                    p_geo = gpd.GeoDataFrame({'geometry': [geo]})
+                    p_geo = p_geo.set_crs('epsg:4326')
+                    #p_geo = p_geo.to_crs('epsg:3857') #keeping the crs as 4326.
+                    ##changed p_tmpdf to tmpdf to fix the projection issue with maps
+                    dst = tmpdf.distance(p_geo.iloc[0].geometry)
+                    
+>>>>>>> 430c755036a8165f068e94a5d2d878d15c9ed2be
                     # dst = tmpdf.distance(geo)
                     tmpdf = tmpdf.assign(distance=dst)
 
@@ -516,6 +536,7 @@ def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
     """
     process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                  imt_str, inland_shp, models_list, only_buffers)
+
 
 
 process.contacts_shp = 'Name of shapefile with contacts'
