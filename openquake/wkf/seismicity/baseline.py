@@ -39,15 +39,40 @@ from openquake.baselib import sap
 
 def create_missing(missing, h3_level, a_value, b_value):
     """
-    Create a dataframe with the same structure of the dataframe containing
-    basic information on point sources but for the points requiring a
-    baseline seismicity.
+    Create a dataframe with the same structure of the one containing
+    basic information on point sources but for the points requiring the
+    definition of a baseline seismicity.
+
+    :param missing:
+        A :class:`list` instance with the indexes of the point sources to be
+        created
+    :param h3_level:
+        The h3 resolution
+    :param a_value:
+        The a_gr value per km2
+    :param b_value:
+        The b_gr value
+    :param mmin:
+        The minimum value of magnitude to be used for the calculation of
+        seismicity
     """
+
+    # Get coordinates and compute area [km2] of each cell
     coo = np.array([h3.h3_to_geo(idx) for idx in missing])
-    a = np.ones_like(coo[:, 0]) * a_value
-    b = np.ones_like(coo[:, 0]) * b_value
-    df = pd.DataFrame({'lon': coo[:, 0], 'lat': coo[:, 1], 'agr': a, 'bgr': b})
-    return df
+    area = np.array([h3.cell_area(idx) for idx in missing])
+
+    # Compute the occurrence rate per km2 from a_gr and b_gr
+    numm = 10**(a_value)
+
+    # Compute the output a_value in each cell
+    a_cell = np.log10(numm * area)
+    b_cell = np.ones_like(coo[:, 0]) * b_value
+
+    # Output dataframe
+    sdf = pd.DataFrame({'lon': coo[:, 1], 'lat': coo[:, 0], 'agr': a_cell,
+                       'bgr': b_cell})
+
+    return sdf
 
 
 def add_baseline_seismicity(folder_name: str, folder_name_out: str,
@@ -84,7 +109,6 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
     # Loop over the polygons
     polygons_gdf.sort_values(by="id", ascending=True, inplace=True)
     polygons_gdf.reset_index(drop=True, inplace=True)
-
     for idx, poly in polygons_gdf.iterrows():
 
         tmp = shapely.geometry.mapping(poly.geometry)
@@ -100,19 +124,30 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
 
         # Read the file with the points obtained by the smoothing
         print("Source ID", poly.id)
-        fname = os.path.join(folder_name, '{:s}.csv'.format(poly.id))
-        df = pd.read_csv(fname)
+        if folder_name is None:
+            tmp_data = {'lon': [], 'lat': [], 'agr': [], 'bgr': []}
+            df = pd.DataFrame(data=tmp_data)
+        else:
+            fname = os.path.join(folder_name, f'{poly.id}.csv')
+            df = pd.read_csv(fname)
 
+        # Create a list with the geohashes of the points with a rate. This is
+        # the output of the smoothing.
         srcs_idxs = [
             h3.geo_to_h3(la, lo, h3_level) for lo, la in zip(df.lon, df.lat)]
         hxg_idxs = [hxg for hxg in hexagons]
 
+        # `missing` contains the number of cells used to discretize the polygon
+        # and without a rate
         missing = list(set(hxg_idxs) - set(srcs_idxs))
+
+        # This instead finds the cells with a rate lower that the minimum rate
+        # defined in the configuration file
         tmp = np.nonzero([df.agr <= basel_agr])[0]
 
         # If we don't miss cells and rates are all above the threshold there
         # is nothing else to do
-        fname = os.path.join(folder_name_out, "{:s}.csv".format(poly.id))
+        fname = os.path.join(folder_name_out, f'{poly.id}.csv')
         if len(missing) == 0 and len(tmp) == 0:
             df.to_csv(fname, index=False)
             continue
@@ -121,7 +156,8 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         idxs = np.nonzero(df.agr.to_numpy() <= basel_agr)[0]
         low = [srcs_idxs[i] for i in idxs]
 
-        # Removing the sources with activity below the threshold
+        # Remove the sources with activity below the threshold since these
+        # will be replaced by new new point sources
         df.drop(df.index[idxs], inplace=True)
 
         # Find the h3 indexes of the point sources either without seismicity
@@ -131,7 +167,7 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         # Adding baseline seismicity to the dataframe for the current source
         if len(both) > 0:
             tmp_df = create_missing(both, h3_level, basel_agr, basel_bgr)
-            df = df.append(tmp_df)
+            df = pd.concat([df, tmp_df])
 
         # Creating output file
         assert len(hxg_idxs) == df.shape[0]
