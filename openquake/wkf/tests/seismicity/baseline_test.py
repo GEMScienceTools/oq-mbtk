@@ -58,4 +58,4 @@ class AddBaselineTestCase(unittest.TestCase):
                   (abs(tdf.lon - 0.10945153) < 1e-4)]
         msg = 'Wrong value of agr'
         self.assertAlmostEqual(res.agr.values[0], 3.1387, places=4,
-                               message=msg)
+                               msg=msg)
