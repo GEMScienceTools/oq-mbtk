@@ -20,7 +20,7 @@
 # details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
@@ -38,17 +38,29 @@ from openquake.wkf.utils import get_list
 from openquake.wkf.utils import create_folder
 
 
-def create_missing(missing, h3_level, a_value, b_value):
+def _get_rates(geohashes, a_value):
+
+    # Get coordinates and compute area [km2] of each cell
+    area = np.array([h3.cell_area(idx) for idx in geohashes])
+
+    # Compute the occurrence rate per km2 from a_gr and b_gr
+    numm = 10**(a_value)
+
+    # Compute the output a_value in each cell
+    a_cell = np.log10(numm * area)
+
+    return a_cell, area
+
+
+def create_missing(geohashes, a_value, b_value, a_cell=None, area=None):
     """
     Create a dataframe with the same structure of the one containing
     basic information on point sources but for the points requiring the
     definition of a baseline seismicity.
 
-    :param missing:
+    :param geohashes:
         A :class:`list` instance with the indexes of the point sources to be
         created
-    :param h3_level:
-        The h3 resolution
     :param a_value:
         The a_gr value per km2
     :param b_value:
@@ -58,20 +70,17 @@ def create_missing(missing, h3_level, a_value, b_value):
         seismicity
     """
 
-    # Get coordinates and compute area [km2] of each cell
-    coo = np.array([h3.h3_to_geo(idx) for idx in missing])
-    area = np.array([h3.cell_area(idx) for idx in missing])
-
-    # Compute the occurrence rate per km2 from a_gr and b_gr
-    numm = 10**(a_value)
+    # Coordinates
+    coo = np.array([h3.h3_to_geo(idx) for idx in geohashes])
 
     # Compute the output a_value in each cell
-    a_cell = np.log10(numm * area)
+    if a_cell is None:
+        a_cell, _ = _get_rates(geohashes, a_value)
     b_cell = np.ones_like(coo[:, 0]) * b_value
 
     # Output dataframe
     sdf = pd.DataFrame({'lon': coo[:, 1], 'lat': coo[:, 0], 'agr': a_cell,
-                       'bgr': b_cell})
+                        'bgr': b_cell})
 
     return sdf
 
@@ -114,6 +123,7 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
     h3_level = model['baseline']['h3_level']
     basel_agr = model['baseline']['a_value']
     basel_bgr = model['baseline']['b_value']
+    set_all_cells = model['baseline'].get('set_all_cells', False)
 
     # Read polygons
     polygons_gdf = gpd.read_file(fname_poly)
@@ -193,8 +203,11 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
 
         # Adding baseline seismicity to the dataframe for the current source
         if len(both) > 0:
-            tmp_df = create_missing(both, h3_level, basel_agr, basel_bgr)
-            df = pd.concat([df, tmp_df])
+            if set_all_cells is False:
+                tmp_df = create_missing(both, basel_agr, basel_bgr)
+                df = pd.concat([df, tmp_df])
+            else:
+                df = create_missing(hxg_idxs, basel_agr, basel_bgr)
 
         # Creating output file
         assert len(hxg_idxs) == df.shape[0]
