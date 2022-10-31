@@ -33,7 +33,7 @@ from openquake.wkf.seismicity.baseline import add_baseline_seismicity
 
 
 def main(folder_name: str, folder_name_out: str, fname_config: str,
-         fname_poly: str, skip: list = []):
+         fname_poly: str, *, use: str = [], skip: str = []):
     """
     Add a baseline rate the to the sources modelling distributed seismicity.
     The .toml configuration file contains four parameters defining the
@@ -54,8 +54,9 @@ main.folder_name_out = "The name of the folder where to store the results"
 main.fname_config = ".toml configuration file"
 MSG = "The name of the shapefile with the polygons of the area sources"
 main.fname_poly = MSG
-MSG = "A string containing a list of source IDs that will not be considered"
-main.skip = MSG
+main.use = 'A list with the ID of sources that should be considered'
+msg = 'A string containing a list of source IDs that will not be considere'
+main.skip = msg
 
 if __name__ == '__main__':
     sap.run(main)
