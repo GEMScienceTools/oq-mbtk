@@ -26,15 +26,16 @@
 # coding: utf-8
 
 import os
+import json
 import h3
 import toml
-import json
 import shapely
+import warnings
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+from openquake.wkf.utils import get_list
 from openquake.wkf.utils import create_folder
-from openquake.baselib import sap
 
 
 def create_missing(missing, h3_level, a_value, b_value):
@@ -76,7 +77,8 @@ def create_missing(missing, h3_level, a_value, b_value):
 
 
 def add_baseline_seismicity(folder_name: str, folder_name_out: str,
-                            fname_config: str, fname_poly: str, skip=[]):
+                            fname_config: str, fname_poly: str, use=[],
+                            skip=[]):
     """
 
     :param folder_name:
@@ -88,11 +90,21 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         A .toml file with the configuration parameters
     :param shapefile:
         The name of the shapefile containing the geometry of the polygons used
+    :param use:
+        A list with the IDs of sources that will be used
     :param skip:
-        A list with the sources that should be skipped [NOT ACTIVE!!!]
+        A list with the IDs of sources that should be skipped [NOT ACTIVE!!!]
     :returns:
         An updated set of .csv files
     """
+
+    if len(use) > 0:
+        use = get_list(use)
+
+    if len(skip) > 0:
+        if isinstance(skip, str):
+            skip = get_list(skip)
+        print('Skipping: ', skip)
 
     # Create output folder
     create_folder(folder_name_out)
@@ -109,14 +121,29 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
     # Loop over the polygons
     polygons_gdf.sort_values(by="id", ascending=True, inplace=True)
     polygons_gdf.reset_index(drop=True, inplace=True)
-    for idx, poly in polygons_gdf.iterrows():
+    for src_id, poly in polygons_gdf.iterrows():
+
+        if (len(use) > 0 and src_id not in use) or (src_id in skip):
+            continue
 
         tmp = shapely.geometry.mapping(poly.geometry)
         geojson_poly = eval(json.dumps(tmp))
 
+        # Take the exterior in a Polygon and the first geometry in a
+        # MultiPolygon
+        if geojson_poly['type'] == "MultiPolygon":
+            tmp_coo = geojson_poly['coordinates'][0][0]
+            message = 'Taking the first polygon of a multipolygon'
+            warnings.warn(message, UserWarning)
+        elif geojson_poly['type'] == "Polygon":
+            tmp_coo = geojson_poly['coordinates'][0]
+        else:
+            raise ValueError('Unsupported Geometry')
+
         # Revert the positions of lons and lats
-        coo = [[c[1], c[0]] for c in geojson_poly['coordinates'][0]]
+        coo = [[c[1], c[0]] for c in tmp_coo]
         geojson_poly['coordinates'] = [coo]
+        geojson_poly['type'] = "Polygon"
 
         # Discretizing the polygon i.e. find all the hexagons covering the
         # polygon describing the current zone
@@ -172,20 +199,3 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         # Creating output file
         assert len(hxg_idxs) == df.shape[0]
         df.to_csv(fname, index=False)
-
-
-def main(folder_name: str, folder_name_out: str, fname_config: str,
-         fname_poly: str, skip=[]):
-
-    add_baseline_seismicity(folder_name, folder_name_out, fname_config,
-                            fname_poly, skip)
-
-
-main.folder_name = "The name of the folder with smoothing results per source"
-main.folder_name_out = "The name of the folder where to store the results"
-main.fname_config = ".toml configuration file"
-main.fname_poly = "The name of the shapefile with the polygons"
-main.skip = "A string containing a list of source IDs"
-
-if __name__ == '__main__':
-    sap.run(main)
