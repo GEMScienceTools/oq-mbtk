@@ -92,22 +92,31 @@ def find_hazard_curve_file(datafolder, key, imt_str):
 
 def homogenise_curves(dat, poes, buf):
     """
+    Homogenise the hazard curves within a buffer zone.
+
     :param dat:
+        A :class:`numpy.ndarray` instance with two columns. The first one
+        contains an integer that can be either 0 or 1. In the former case, the
+        point is within the domain of a given model (and inside a buffer) in
+        the latter case the point is in the buffer but outside the domain of
+        a hazard model. The second column contains the distance to the boundary
+        between two models.
     :param poes:
+        The probabilities of exceedance to homogenise
     :return:
-        Return the hazard curve
+        Returns the homogenised hazard curve
     """
 
-    # This computes the maximum distance of a point within the buffer
-    buf = np.max(abs(dat[:, 0]))
-
+    # Initialize array with weights
     tmp = np.zeros_like((dat[:, 0]))
 
-    # points inside a model
+    # Points inside a model
     tmp[dat[:, 1] == 0] = buf + dat[dat[:, 1] == 0, 0]
 
-    # points outside a model
+    # Points outside a model
     tmp[dat[:, 1] == 1] = buf - dat[dat[:, 1] == 1, 0]
+
+    # Compute mean curve
     meanhc = np.zeros((poes.shape[1]))
     for i in range(poes.shape[0]):
         meanhc += poes[i, :] * tmp[i]/sum(tmp)
@@ -179,9 +188,9 @@ def get_imtls(poes):
     return np.array(imtls)
 
 
-def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
-                 imt_str, inland_shp, models_list=None,
-                 only_buffers=False):
+def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
+         imt_str, inland_shp, models_list=None, only_buffers=False,
+         buf=50, h3_resolution=6, mosaic_key='GID_0'):
     """
     This function processes all the models listed in the mosaic.DATA
     dictionary. The code creates for the models in contact with other models
@@ -201,14 +210,18 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         The string defininig the IMT used for the homogenisation of results
     :param str inland_shp:
         The name of the shapefile defining inland areas
-    :param str:
+    :param str models_list:
         [optional] A list of models IDs
+    :param buf:
+        [optional] Buffer distance
+    :param h3_resolution:
+        [optional] The h3 resolution
+    :param mosaic_key:
+        [optional] The key used to identify models
     """
     shapely.speedups.enable()
 
-    # TODO: add to input
-    h3_resolution = 6
-    mosaic_key = 'GID_0'
+    # Load mosaic data
     mosaic_data = mosaic.DATA[mosaic_key]
 
     # Checking output directory
@@ -236,7 +249,6 @@ def process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
 
     # Loop over the various models. TODO the value of the buffer here must
     # be converted into a distance in km.
-    buf = 0.25
     header_save = None
     imts_save = None
     for i, key in enumerate(sorted(mosaic_data)):
@@ -472,8 +484,7 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
         A list with the column labels used in the .csv file produced by OQ
         and containing the hazard curves
     :param buf:
-        The buffer distance TODO originally this was in decimal degrees. We
-        want to use distances in km
+        The buffer distance in km
     """
 
     print('Buffer processing')
@@ -533,7 +544,7 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
         header += ','+l
     fou.write(header)
 
-    # This is the file with points that has only one value (in theory this is
+    # This is the file with points that have only one value (in theory this is
     # impossible)
     fname = os.path.join(outpath, 'buf_unique.txt')
     fuu = open(fname, 'w')
@@ -594,25 +605,28 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
 
 
 def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
-            imt_str, inland_shp, models_list=None,
-            only_buffers=False):
+            imt_str, inland_shp, *, models_list=None, only_buffers=False,
+            buf=50, h3_resolution=6, mosaic_key='GID_0'):
     """
     This function processes all the models listed in the mosaic.DATA dictionary
     and creates homogenised curves.
     """
-    process_maps(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
-                 imt_str, inland_shp, models_list, only_buffers)
-
+    proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
+         imt_str, inland_shp, models_list, only_buffers, buf, h3_resolution,
+         mosaic_key)
 
 
 process.contacts_shp = 'Name of shapefile with contacts'
 process.outpath = 'Output folder'
 process.datafolder = 'Folder with the mosaic repository'
-process.sidx_fname = 'Rtree spatial index file with ref. grid'
+process.sidx_fname = 'Rtreespatial index file with ref. grid'
 process.boundaries_shp = 'Name of shapefile with boundaries'
 process.imt_str = 'String with the intensity measure type'
 process.inland_shp = 'Name of shapefile with inland territories'
 process.models_list = 'List of models to be processed'
+process.buf = 'Buffer distance'
+process.h3_resolution = 'H3 resolution used to create the grid of sites'
+process.mosaic_key = 'The key used to specify countries'
 
 if __name__ == "__main__":
     sap.run(process)
