@@ -605,8 +605,8 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
 
 
 def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
-            imt_str, inland_shp, *, models_list=None, only_buffers=False,
-            buf=50, h3_resolution=6, mosaic_key='GID_0'):
+            imt_str, inland_shp, buf, *, models_list=None, only_buffers=False,
+            h3_resolution=6, mosaic_key='GID_0'):
     """
     This function processes all the models listed in the mosaic.DATA dictionary
     and creates homogenised curves.
@@ -623,8 +623,8 @@ process.sidx_fname = 'Rtreespatial index file with ref. grid'
 process.boundaries_shp = 'Name of shapefile with boundaries'
 process.imt_str = 'String with the intensity measure type'
 process.inland_shp = 'Name of shapefile with inland territories'
-process.models_list = 'List of models to be processed'
 process.buf = 'Buffer distance'
+process.models_list = 'List of models to be processed'
 process.h3_resolution = 'H3 resolution used to create the grid of sites'
 process.mosaic_key = 'The key used to specify countries'
 
