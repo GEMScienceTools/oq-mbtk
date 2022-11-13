@@ -410,6 +410,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     # points in the buffer but outside the model are True.
                     poly_pp = poly_pro.buffer(0)
                     poly_pp = poly_pp.difference(tpoly.buffer(buf)[0])
+                    poly_pro = poly_pp
 
                     # Write the data in the buffer between the two models
                     fname = 'buf{:d}_{:s}.json'.format(c, key)
@@ -466,7 +467,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                 #gdf = gpd.GeoDataFrame(df, geometry='Polygon')
                 #gdf = gdf.set_crs('epsg:4326')
                 #gdf_pro = gdf.to_crs(crs=aeqd)
-                tmp = gpd.GeoDataFrame(geometry=poly_pp)
+                tmp = gpd.GeoDataFrame(geometry=poly_pro)
                 within = gpd.sjoin(map_gdf_pro, tmp, predicate='within')
                 # Write results after going back to geographic projection
                 fname = os.path.join(outpath, 'map_{:s}.json'.format(key))
