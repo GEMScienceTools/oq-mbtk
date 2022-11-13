@@ -221,6 +221,9 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
     """
     shapely.speedups.enable()
 
+    # Buffer distance in [m]
+    buf = float(buf) * 1000
+
     # Load mosaic data
     mosaic_data = mosaic.DATA[mosaic_key]
 
@@ -315,8 +318,19 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         selection = create_query(inpt, mosaic_key, mosaic_data[key])
         one_polygon = selection.dissolve(by='MODEL')
 
+        # PROJECTING
+        aeqd = pyproj.Proj(proj='aeqd', ellps='WGS84',
+                           datum='WGS84', lat_0=map_gdf.lat.mean(),
+                           lon_0=map_gdf.lon.mean()).srs
+        p4326 = pyproj.CRS.from_string("epsg:4326")
+        map_gdf = map_gdf.set_crs('epsg:4326')
+        map_gdf_pro = map_gdf.to_crs(crs=aeqd)
+
         # Now we process the polygons composing the selected model
         for poly in one_polygon.geometry:
+
+            tmp = gpd.GeoSeries([poly], crs='epsg:4326')
+            poly_pro = tmp.to_crs(crs=aeqd)
 
             # Checking the contacts between the current model and the
             # surrounding ones as specified in the contacts_df geodataframe
@@ -329,7 +343,11 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     # Index of the points in the buffer. The buffer
                     # includes the country boundary + buffer distance.
                     # map_gdf is a dataframe with the hazard data.
-                    idx = map_gdf.geometry.intersects(geo.buffer(buf))
+
+                    tmp_geo_gse = gpd.GeoSeries([geo], crs='epsg:4326')
+                    geo_pro = tmp_geo_gse.to_crs(crs=aeqd)
+                    tpoly = geo_pro.geometry.values
+                    idx = map_gdf_pro.geometry.intersects(tpoly.buffer(buf)[0])
 
                     # Key defining the second model
                     other = lb
@@ -344,7 +362,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                         raise ValueError('Empty dataframe')
 
                     # Create a dataframe with just the points in the buffer
-                    # and save the distance of each point from the border
+                    # and save the distance of each point frotmpdfm the border
                     tmpdf = copy.deepcopy(map_gdf[idx])
                     tmpdf = tmpdf.set_crs('epsg:4326')
                     tmpdf = gpd.sjoin(tmpdf, inland_df, how='inner',
@@ -353,14 +371,15 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     p_geo = p_geo.set_crs('epsg:4326')
 
                     # Computing the distances
-                    aeqd = pyproj.Proj(proj='aeqd', ellps='WGS84',
-                                       datum='WGS84', lat_0=tmpdf.lat.mean(),
-                                       lon_0=tmpdf.lon.mean()).srs
-                    tmpdf_pro = tmpdf.to_crs(crs=aeqd)
-                    p_geo_pro = p_geo.to_crs(crs=aeqd)
+                    aeqd_local = pyproj.Proj(proj='aeqd', ellps='WGS84',
+                                             datum='WGS84',
+                                             lat_0=tmpdf.lat.mean(),
+                                             lon_0=tmpdf.lon.mean()).srs
+                    tmpdf_pro = tmpdf.to_crs(crs=aeqd_local)
+                    p_geo_pro = p_geo.to_crs(crs=aeqd_local)
 
                     # Original distance is in [m]
-                    dst = tmpdf_pro.distance(p_geo_pro.iloc[0].geometry) / 1000
+                    dst = tmpdf_pro.distance(p_geo_pro.iloc[0].geometry)
                     # dst = tmpdf.distance(geo)
                     tmpdf = tmpdf.assign(distance=dst)
 
@@ -368,7 +387,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     # for the second model
                     g = other_polygon.geometry[0]
                     xgdf = gpd.GeoDataFrame(gpd.GeoSeries(g))
-                    xgdf = xgdf.rename(columns={0:'geometry'}).set_geometry('geometry')
+                    xgdf = xgdf.rename(columns={0: 'geometry'}).set_geometry('geometry')
                     xgdf = xgdf.set_crs('epsg:4326')
 
                     # Rename to avoid raising an error in the sjoin
@@ -389,7 +408,8 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     # Update the polygon containing just internal points i.e.
                     # points within the model but outside of the buffers. The
                     # points in the buffer but outside the model are True.
-                    poly = poly.difference(geo.buffer(buf))
+                    poly_pp = poly_pro.buffer(0)
+                    poly_pp = poly_pp.difference(tpoly.buffer(buf)[0])
 
                     # Write the data in the buffer between the two models
                     fname = 'buf{:d}_{:s}.json'.format(c, key)
@@ -414,11 +434,15 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
 
                         # Using rtree we find the closest point on the
                         # reference grid. Check that there is a single index.
-                        #res = list(sidx.nearest((p.x, p.y, p.x, p.y), 1))
+                        # res = list(sidx.nearest((p.x, p.y, p.x, p.y), 1))
 
-                        res = h3.latlng_to_cell(p.y, p.x, h3_resolution)
+                        # Handling the v4.0 Vs. v3.0 synthax
+                        try:
+                            res = h3.latlng_to_cell(p.y, p.x, h3_resolution)
+                        except:
+                            res = h3.geo_to_h3(p.y, p.x, h3_resolution)
 
-                        #if len(res) > 1:
+                        # if len(res) > 1:
                         #    msg = 'The number of indexes found is larger '
                         #    msg += 'than 1'
                         #    print('Indexes:', res)
@@ -436,13 +460,18 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                             buffer_poes[res] = [poe]
                             coords[res] = [p.x, p.y]
 
-            # idx is a series of booleans
+            #  Write information outside the buffers
             if not only_buffers:
-                df = pd.DataFrame({'Name': [key], 'Polygon': [poly]})
-                gdf = gpd.GeoDataFrame(df, geometry='Polygon')
-                within = gpd.sjoin(map_gdf, gdf, predicate='within')
+                #df = pd.DataFrame({'Name': [key], 'Polygon': [poly_pro]})
+                #gdf = gpd.GeoDataFrame(df, geometry='Polygon')
+                #gdf = gdf.set_crs('epsg:4326')
+                #gdf_pro = gdf.to_crs(crs=aeqd)
+                tmp = gpd.GeoDataFrame(geometry=poly_pp)
+                within = gpd.sjoin(map_gdf_pro, tmp, predicate='within')
+                # Write results after going back to geographic projection
                 fname = os.path.join(outpath, 'map_{:s}.json'.format(key))
-                within.to_file(fname, driver='GeoJSON')
+                final = within.to_crs(crs=p4326)
+                final.to_file(fname, driver='GeoJSON')
 
         # Store temporary files
         tmpdir = os.path.join(outpath, 'temp')
@@ -489,6 +518,7 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
 
     print('Buffer processing')
     mosaic_data = mosaic.DATA['GID_0']
+    buf = float(buf)
 
     buffer_data = {}
     buffer_poes = {}
@@ -540,8 +570,8 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
 
     # TODO
     header = 'i,lon,lat'
-    for l in poelabs:
-        header += ','+l
+    for lab in poelabs:
+        header += ','+lab
     fou.write(header)
 
     # This is the file with points that have only one value (in theory this is
@@ -568,7 +598,7 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
             meanhc = buffer_poes[key][0]
             tmps = f'{c:d},{coords[key][0]:f},{coords[key][1]:f}'
             for prob in meanhc:
-                tmps += ',f{prob:f}'
+                tmps += f',{prob:f}'
             if key not in coords:
                 continue
             fuu.write(tmps+'\n')
@@ -580,7 +610,7 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
         # Write poes
         tmps = f'{c:d},{coords[key][0]:f},{coords[key][1]:f}'
         for prob in meanhc:
-            tmps += ',{prob:f}'
+            tmps += f',{prob:f}'
         fou.write(tmps+'\n')
 
         if coords[key][0] > 180 or coords[key][0] < -180:
