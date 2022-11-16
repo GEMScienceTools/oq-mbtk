@@ -2,10 +2,9 @@ name: Installation and test on Windows
 
 on:
   push:
-    branches: [ master ]
   schedule:
     - cron: "0 4 * * *"
-
+  workflow_dispatch:
 jobs:
 
   test:
