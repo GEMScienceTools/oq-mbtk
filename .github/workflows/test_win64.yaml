@@ -23,8 +23,9 @@ jobs:
       run: |
         Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
         #
-        .\oq-mbtk\windows\install_oqmbtk.ps1
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
+        Get-ChildItem
+        .\oq-mbtk\windows\install_oqmbtk.ps1
         #cd openquake
         #pytest -vsx mbt cat man sub
