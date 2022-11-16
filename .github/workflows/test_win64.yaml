@@ -24,7 +24,8 @@ jobs:
         #
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
-        Get-ChildItem -Path . –Recurse
+        $folder = Get-ChildItem -Path . –Recurse
+        ls -recurse
         #.\windows\install_oqmbtk.ps1
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
