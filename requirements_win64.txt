@@ -1,3 +1,7 @@
+#Openquake wheelhouse
+https://wheelhouse.openquake.org/v3/windows/py310/GDAL-3.4.3-cp310-cp310-win_amd64.whl
+https://wheelhouse.openquake.org/v3/windows/py310/Fiona-1.8.21-cp310-cp310-win_amd64.whl
+
 # OQ mbtk requirements
 
 # Version specific
