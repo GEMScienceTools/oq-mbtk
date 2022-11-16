@@ -1,7 +1,6 @@
 name: Installation and test on Windows
 
 on:
-  push:
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
@@ -26,7 +25,7 @@ jobs:
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
         Get-ChildItem -Path . –Recurse
-        .\windows\install_oqmbtk.ps1
+        #.\windows\install_oqmbtk.ps1
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
         Get-ChildItem -Path . –Recurse
