@@ -18,54 +18,14 @@ jobs:
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       id: extract_branch
 
-    - name: Install python embeddable package and dependencies
+    - name: Run scripts to install on windows
       env:
         GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
       run: |
         Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
         #
+        .\oq-mbtk\windows\install_oqmbtk.ps1
         $curDir = Get-Location
-        $workDir = $curDir.Path + "\mbtk"
-        # Test to see if folder [$workDir]  exists
-        if (Test-Path -Path $workDir) {
-            Write-Host "ATTENTION"
-            Write-Host "Path $workDir exist."
-            Write-Host "We can not install the OQ-MBTK environment in the folder $workDir"
-        	EXIT 1
-        } else {
-            Write-Host "Path $workDir doesn't exist."
-            Write-Host "We can install the OQ-MBTK environment in the folder $workDir"
-        }
         Write-Host "Current Working Directory: $curDir"
-        Write-Host "Download and Installation of python embeddable package"
-        Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.8.10/python-3.8.10-embed-amd64.zip -OutFile .\python.zip
-        Expand-Archive -Path .\python.zip -DestinationPath .\mbtk -Verbose
-        cd $workDir
-        Write-Host "Current Working Directory: $workDir"
-        Write-Host "Download and Installation of pip, wheel and setuptools"
-        Invoke-WebRequest -Uri https://bootstrap.pypa.io/get-pip.py -OutFile .\get-pip.py
-        $Env:PY_PIP = "$workDir\Scripts"
-        $Env:PY_LIBS = "$workDir\Lib;$workDir\Lib\site-package"
-        $Env:PY_HOME = "$workDir"
-        $Env:PATH="$workDir\Scripts;$ENV:PATH"
-        $Env:PYTHONUTF8=1
-        Write-Host ${ENV:PATH}
-        Write-Host ${ENV:PYTHONUTF8}
-        Set-Alias -Name python -Value $Env:PY_HOME\python.exe
-        Set-Alias -Name pip -Value $Env:PY_PIP\pip.exe
-        #
-        python .\get-pip.py
-        Move-Item .\python38._pth .\python38._pth.old
-        #
-        pip install pytest
-        git clone -b master --depth=1  https://github.com/gem/oq-engine.git
-        cd .\oq-engine\
-        pip install -r .\requirements-py38-win64.txt
-        pip install -e .
-        cd ..
-        git clone -b ${ENV:GIT_BRANCH} https://github.com/GEMScienceTools/oq-mbtk.git
-        cd .\oq-mbtk\
-        pip install -r requirements_win64.txt
-        pip install -e .
-        cd openquake
-        pytest -vsx mbt cat man sub
+        #cd openquake
+        #pytest -vsx mbt cat man sub
