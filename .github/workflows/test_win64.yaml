@@ -39,7 +39,6 @@ jobs:
         echo To see versions of installed software run 'pip freeze'
         echo To run OpenQuake use 'oq' and 'oq engine'
         cd %mypath%
-        pip install pytest
-        cd oq-engine/openquake
-        pytest -vsx mbt cat man sub 
+        dir
+        #pytest -vsx mbt cat man sub 
       shell: cmd
