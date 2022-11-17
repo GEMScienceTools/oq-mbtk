@@ -27,7 +27,6 @@ jobs:
         Write-Host "Current Working Directory: $curDir"
         Get-ChildItem -Path .\windows –recurse
         .\windows\install_oqmbtk.ps1
-        Write-Host "Set environments"
     - name: Set environments and run oq on cmd
       run: |
         set mypath=%USERPROFILE%\mbtk
@@ -40,5 +39,7 @@ jobs:
         echo To see versions of installed software run 'pip freeze'
         echo To run OpenQuake use 'oq' and 'oq engine'
         cd %mypath%
-        pip freeze
+        pip install pytest
+        cd oq-engine/openquake
+        pytest -vsx mbt cat man sub 
       shell: cmd
