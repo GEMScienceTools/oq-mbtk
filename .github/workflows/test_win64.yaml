@@ -25,11 +25,9 @@ jobs:
         #
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
-        $folder = Get-ChildItem -Path . –Recurse
-        ls -recurse
-        #.\windows\install_oqmbtk.ps1
+        Get-ChildItem -Path .\windows –recurse
+        .\windows\install_oqmbtk.ps1
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
-        Get-ChildItem -Path . –Recurse
         #cd openquake
         #pytest -vsx mbt cat man sub
