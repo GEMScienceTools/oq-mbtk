@@ -1,6 +1,9 @@
 name: Installation and test on Windows
 
 on:
+  push: 
+    branches:
+      - 'ae-310action'
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
@@ -15,10 +18,11 @@ jobs:
       shell: bash
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       id: extract_branch
-
+    - uses: actions/checkout@v3
+      with:
+        ref: extract_branch
     - name: Run scripts to install on windows
       env:
-        GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
       run: |
         Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
         #
