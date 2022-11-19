@@ -101,7 +101,7 @@ def compute_a_value_from_density(fname_input_pattern: str,
     # Saving results into the config file
     with open(fname_config, 'w') as fou:
         fou.write(toml.dumps(model))
-        print('Updated {:s}'.format(fname_config))
+        print(f'Updated {fname_config:s}')
 
 
 def get_mmax_ctab(model, src_id):
@@ -306,9 +306,9 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
             plt.close()
 
     # Saving results into the config file
-    with open(fname_config, 'w') as fou:
+    with open(fname_config, 'w', encoding='utf-8') as fou:
         fou.write(toml.dumps(model))
-        print('Updated {:s}'.format(fname_config))
+        print(f'Updated {fname_config:s}')
 
 
 def get_weichert_confidence_intervals(mag, occ, tcompl, bgr):
@@ -409,8 +409,7 @@ def subcatalogues_analysis(fname_input_pattern, fname_config, skip=[],
         break
 
 
-def _weichert_analysis(tcat, ctab, binw, cmag, n_obs, t_per,
-                       folder_out=None, src_id=None):
+def _weichert_analysis(tcat, ctab, binw, cmag, n_obs, t_per):
     """
     :param tcat:
         A catalogue instance
@@ -424,10 +423,6 @@ def _weichert_analysis(tcat, ctab, binw, cmag, n_obs, t_per,
         number of observations per bin
     :param t_per:
         Duration of completeness interval per each bin
-    :param folder_out:
-        Output folder
-    :param src_id:
-        The source ID
     :returns:
         A tuple with a and b values, upper and lower limits of the 16th-84th
         confidence interval, exceedance rates and exceedance rates scaled
@@ -435,16 +430,24 @@ def _weichert_analysis(tcat, ctab, binw, cmag, n_obs, t_per,
 
     # Computing GR a and b
     weichert_config = {'magnitude_interval': binw,
-                       'reference_magnitude': 0.0}
+                       'reference_magnitude': numpy.min(ctab[:, 1])}
     weichert = Weichert()
-    fun = weichert.calculate
-    bval, sigmab, aval, sigmaa = fun(tcat, weichert_config, ctab)
+
+    # weichert.calculate returns bGR and its standard deviation + log10(rate)
+    # for the reference magnitude and its standard deviation. In this case
+    # we set the reference magnitude to 0 hence we get the aGR.
+    fun = weichert._calculate
+    # bval, sigmab, aval, sigmaa = fun(tcat, weichert_config, ctab)
+    bval, sigmab, rmag_rate, rmag_rate_sigma, aval, sigmaa = fun(
+        tcat, weichert_config, ctab)
 
     # Computing confidence intervals
     gwci = get_weichert_confidence_intervals
     lcl, ucl, exrates, exrates_scaled = gwci(cmag-binw/2, n_obs, t_per, bval)
 
-    return aval, bval, lcl, ucl, exrates, exrates_scaled
+    rmag = weichert_config['reference_magnitude']
+    return (aval, bval, lcl, ucl, exrates, exrates_scaled, rmag, rmag_rate,
+            rmag_rate_sigma)
 
 
 def _get_gr_double_trunc_exceedance_rates(agr, bgr, cmag, binw, mmax):
@@ -509,7 +512,7 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
 
 
 def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
-                      folder_out_figs=None, skip=[], binw=None,
+                      folder_out_figs=None, skip=[], binw=0.1,
                       plt_show=False):
     """
     Computes GR parameters for a set of catalogues stored in a .csv file
@@ -526,8 +529,11 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
         The folder where to store the figures
     :param skip:
         A list with the IDs of the sources to skip
+    :param plt_show:
+        Boolean. When true show the plots on screen.
     """
 
+    # Create output folders if needed
     if folder_out is not None:
         create_folder(folder_out)
     if folder_out_figs is not None:
@@ -537,17 +543,18 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
     if fname_config is not None:
         model = toml.load(fname_config)
 
-    if binw is None and fname_config is not None:
+    # Set the bin width
+    if 'bin_width' in model:
         binw = model['bin_width']
-    else:
-        binw = 0.1
 
+    # `fname_input_pattern` can be either a list or a pattern (defined by a
+    # string)
     if isinstance(fname_input_pattern, str):
-        fname_list = [f for f in glob(fname_input_pattern)]
+        fname_list = list(glob(fname_input_pattern))
     else:
         fname_list = fname_input_pattern
 
-    # Processing files
+    # Process files with subcatalogues
     for fname in sorted(fname_list):
         print(fname, end='')
 
@@ -559,6 +566,10 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
         else:
             print("")
 
+        # Check if the configuration file there is already information about
+        # the current source. Otherwise, use default information to set:
+        # - The maximum magnitude (only used while plotting)
+        # - The completeness table
         if 'sources' in model:
             if (src_id in model['sources'] and
                     'mmax' in model['sources'][src_id]):
@@ -576,16 +587,19 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
             mmax = model['default']['mmax']
             ctab = numpy.array(model['default']['completeness_table'])
 
-        # Processing catalogue
+        # Process catalogue
         tcat = _load_catalogue(fname)
         if tcat is None or len(tcat.data['magnitude']) < 2:
             print('    Source {:s} has less than 2 eqks'.format(src_id))
             continue
         tcat = _add_defaults(tcat)
 
+        # Compute the number of earthquakes per magnitude bin using the
+        # completeness table provided
         tcat.data["dtime"] = tcat.get_decimal_time()
         cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
 
+        # When the output folder is defined, save information about eqks count
         if folder_out is not None:
             df = pd.DataFrame()
             df['mag'] = cent_mag
@@ -595,23 +609,31 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
             fout = os.path.join(folder_out, fmt.format(src_id))
             df.to_csv(fout, index=False)
 
-        aval, bval, lcl, ucl, ex_rates, ex_rates_scaled = _weichert_analysis(
-            tcat, ctab, binw, cent_mag, n_obs, t_per, folder_out, src_id)
+        # Compute aGR and bGR using Weichert
+        out = _weichert_analysis(tcat, ctab, binw, cent_mag, n_obs, t_per)
+        aval, bval, lcl, ucl, ex_rat, ex_rts_scl, rmag, rm_rate, rm_sig = out
 
-        _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
+        # Plot
+        _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rts_scl,
                        lcl, ucl, mmax, aval, bval, src_id, plt_show)
 
+        # Save results in the configuration file
         if 'sources' not in model:
             model['sources'] = {}
         if src_id not in model['sources']:
             model['sources'][src_id] = {}
-
-        tmp = "{:.5e}".format(aval)
+        tmp = f"{aval:.5e}"
         model['sources'][src_id]['agr_weichert'] = float(tmp)
-        tmp = "{:.3f}".format(bval)
+        tmp = f"{bval:.5f}"
         model['sources'][src_id]['bgr_weichert'] = float(tmp)
+        tmp = f"{rmag:.5e}"
+        model['sources'][src_id]['rmag'] = float(tmp)
+        tmp = f"{rm_rate:.5e}"
+        model['sources'][src_id]['rmag_rate'] = float(tmp)
+        tmp = f"{rm_sig:.5e}"
+        model['sources'][src_id]['rmag_rate_sig'] = float(tmp)
 
-        # Saving figures
+        # Save figures
         if folder_out_figs is not None:
             ext = 'png'
             fmt = 'fig_mfd_{:s}.{:s}'
@@ -620,31 +642,8 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
             plt.savefig(figure_fname, format=ext)
             plt.close()
 
-    # Saving results into the config file
+    # Save results the updated config into a file
     if fname_config is not None:
         with open(fname_config, 'w') as f:
             f.write(toml.dumps(model))
             print('Updated {:s}'.format(fname_config))
-
-
-def main(fname_input_pattern, fname_config, folder_out=None,
-         folder_out_figs=None, *, skip=[], binw=None, plt_show=False):
-
-    weichert_analysis(fname_input_pattern, fname_config, folder_out,
-                      folder_out_figs, skip, binw, plt_show)
-
-
-main.fname_input_pattern = 'Name of a shapefile with polygons'
-msg = 'Name of the .toml file with configuration parameters'
-main.fname_config = msg
-msg = 'Name of the output folder where to store occurrence counts'
-main.folder_out = msg
-msg = 'Name of the output folder where to store figures'
-main.folder_out_figs = msg
-msg = 'A list with the ID of sources that should not be considered'
-main.skip = msg
-main.binw = 'Width of the magnitude bin used in the analysis'
-main.plot_show = 'Show figures on screen'
-
-if __name__ == '__main__':
-    sap.run(main)

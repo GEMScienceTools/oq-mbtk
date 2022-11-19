@@ -5,13 +5,15 @@ from openquake.baselib import sap
 from openquake.wkf.compute_gr_params import weichert_analysis
 
 
-def main(fname_input_pattern, fname_config, folder_out=None, 
+def main(fname_input_pattern, fname_config, folder_out=None,
          folder_out_figs=None, *, skip=[], binw=None, plt_show=False):
 
     weichert_analysis(fname_input_pattern, fname_config, folder_out,
                       folder_out_figs, skip, binw, plt_show)
 
-main.fname_input_pattern = 'Name of a shapefile with polygons'
+msg = 'A string (defining a pattern) or a list of .csv files '
+msg += 'with subcatalogues'
+main.fname_input_pattern = msg
 msg = 'Name of the .toml file with configuration parameters'
 main.fname_config = msg
 msg = 'Name of the output folder where to store occurrence counts'
