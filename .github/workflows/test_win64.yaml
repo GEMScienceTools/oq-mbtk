@@ -2,6 +2,8 @@ name: Installation and test on Windows
 
 on:
   push:
+    branches:
+      - 'ae-310action'
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
@@ -16,19 +18,17 @@ jobs:
       shell: bash
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       id: extract_branch
-
+    - uses: actions/checkout@v3
     - name: Run scripts to install on windows
-      env:
-        GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
       run: |
         Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
         #
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
-        Get-ChildItem -Path . –Recurse
+        Get-ChildItem -Path .\windows –recurse
         .\windows\install_oqmbtk.ps1
-        $curDir = Get-Location
-        Write-Host "Current Working Directory: $curDir"
-        Get-ChildItem -Path . –Recurse
-        #cd openquake
-        #pytest -vsx mbt cat man sub
+        cd $env:USERPROFILE
+        cd mbtk
+        dir
+        cd oq-mbtk\openquake
+        pytest -vsx mbt cat man sub 
