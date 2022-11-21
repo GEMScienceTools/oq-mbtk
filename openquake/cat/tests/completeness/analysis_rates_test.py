@@ -1,5 +1,12 @@
 # ------------------- The OpenQuake Model Building Toolkit --------------------
 # Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU Affero General Public License as published by the Free
@@ -14,12 +21,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
 
 import os
 import unittest
 import tempfile
 import toml
-import matplotlib.pyplot as plt
 
 from openquake.cat.completeness.generate import get_completenesses
 from openquake.cat.completeness.analysis import completeness_analysis
