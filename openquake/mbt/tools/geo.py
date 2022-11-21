@@ -1,6 +1,6 @@
 import shapely
 
-from pyproj import Proj, transform
+from pyproj import Transformer
 
 from openquake.mbt.tools.mfd import get_moment_from_mfd
 from openquake.hazardlib.geo.polygon import Polygon
@@ -22,21 +22,23 @@ def get_line_inside_polygon(pnt_lon, pnt_lat, poly_lon, poly_lat):
         Indexes of the points inside the polygon
     """
     # Fix the projections
-    inProj = Proj(init='epsg:4326')
-    outProj = Proj(proj='lcc', lon_0=poly_lon[0])
+    transformer = Transformer.from_proj("EPSG:4326",
+                                        {"proj": 'lcc', "lat_1": poly_lat[0]})
 
     # Create polygon
     poly_xy = []
     for lo, la in zip(poly_lon, poly_lat):
-        x, y = transform(inProj, outProj, lo, la)
+        x, y = transformer.transform(lo, la)
         poly_xy.append((x, y))
     polygon = shapely.geometry.Polygon(poly_xy)
+
     # Create linesting
     line_xy = []
     for lo, la in zip(pnt_lon, pnt_lat):
-        x, y = transform(inProj, outProj, lo, la)
+        x, y = transformer.transform(lo, la)
         line_xy.append((x, y))
     line = shapely.geometry.LineString(line_xy)
+
     # Intersection
     if line.intersects(polygon):
         tmpl = line.intersection(polygon)
@@ -111,27 +113,27 @@ def get_idx_points_inside_polygon(plon, plat, poly_lon, poly_lat,
         Indexes of the points inside the polygon
     """
     selected_idx = []
-    #
+
     # Fix the projections
-    inProj = Proj(init='epsg:4326')
-    outProj = Proj(proj='lcc', lon_0=poly_lon[0], lat_2=45)
-    #
+    transformer = Transformer.from_proj("EPSG:4326",
+                                        {"proj": 'lcc', "lat_1": poly_lat[0]})
+
     # Create polygon
     poly_xy = []
     for lo, la in zip(poly_lon, poly_lat):
-        x, y = transform(inProj, outProj, lo, la)
+        x, y = transformer.transform(la, lo)
         poly_xy.append((x, y))
-    #
+
     # Shapely polygon
     polygon = shapely.geometry.Polygon(poly_xy)
-    #
-    # Add buffer if requested
+
+    # Add buffer
     buff = polygon.buffer(buff_distance)
-    #
+
     # Find points inside
     cxy = []
     for lo, la, jjj in zip(plon, plat, pnt_idxs):
-        x, y = transform(inProj, outProj, lo, la)
+        x, y = transformer.transform(la, lo)
         cxy.append((x, y))
         point = shapely.geometry.Point((x, y))
         if point.within(buff):
