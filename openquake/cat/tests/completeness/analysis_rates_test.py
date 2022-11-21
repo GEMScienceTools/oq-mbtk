@@ -88,4 +88,3 @@ class ComputeGRParametersTest(unittest.TestCase):
         computed = conf['sources']['00']['rmag_rate_sig']
         self.assertAlmostEqual(computed, expected, msg='rmag_rate_sig',
                                places=5)
-
