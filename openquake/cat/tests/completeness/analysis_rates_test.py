@@ -77,8 +77,8 @@ class ComputeGRParametersTest(unittest.TestCase):
 
         # Tests
         expected = 5.217742014665241
-        # computed = conf['sources']['00']['agr_weichert']
-        # self.assertAlmostEqual(computed, expected, msg='aGR', places=5)
+        computed = conf['sources']['00']['agr_weichert']
+        self.assertAlmostEqual(computed, expected, msg='aGR', places=5)
 
         expected = 1.1531979338923517
         computed = conf['sources']['00']['bgr_weichert']
