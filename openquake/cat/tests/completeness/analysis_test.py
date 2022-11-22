@@ -30,7 +30,7 @@ import unittest
 import numpy as np
 from openquake.cat.completeness.analysis import (
     clean_completeness, get_earliest_year_with_n_occurrences)
-from openquake.cat.completeness.generate import get_completenesses
+from openquake.cat.completeness.generate import _get_completenesses
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 
 DATAFOLDER = os.path.join(os.path.dirname(__file__), 'data')
@@ -160,14 +160,14 @@ class TestCompletenessGeneration(unittest.TestCase):
     def test01(self):
         years = np.array([1900, 1930, 1960, 1970, 1980, 1990])
         mags = np.array([5.0, 6.0, 7.0])
-        disps, mags, years = get_completenesses(mags=mags, years=years,
+        disps, mags, years = _get_completenesses(mags=mags, years=years,
                                                 step=3, min_mag_compl=7.0)
         np.testing.assert_array_almost_equal(self.expect01, disps)
 
     def test02(self):
         years = np.array([1900, 1930, 1960, 1970, 1980, 1990])
         mags = np.array([5.0, 6.0, 7.0])
-        disps, mags, years = get_completenesses(mags=mags, years=years,
+        disps, mags, years = _get_completenesses(mags=mags, years=years,
                                                 min_mag_compl=5.0, step=3)
         np.testing.assert_array_almost_equal(self.expect02, disps)
 
@@ -178,7 +178,7 @@ class TestCompletenessGeneration(unittest.TestCase):
         # This implies that the column for the year just after 1965 (column 3)
         # has an index for magnitude lower or equal to 6.2 (i.e. 0 or 1)
         conds = {1965: 6.2}
-        disps, mags, years = get_completenesses(mags=mags, years=years,
+        disps, mags, years = _get_completenesses(mags=mags, years=years,
                                                 min_mag_compl=5.0, step=3,
                                                 apriori_conditions=conds)
         np.testing.assert_array_almost_equal(self.expect03, disps)
@@ -189,7 +189,7 @@ class TestCompletenessGeneration(unittest.TestCase):
         mags = np.array([5.0, 6.0, 7.0])
         # Conditions
         conds = {1965: 7.0}
-        disps, mags, years = get_completenesses(mags=mags, years=years,
+        disps, mags, years = _get_completenesses(mags=mags, years=years,
                                                 min_mag_compl=5.0, step=3,
                                                 apriori_conditions=conds)
         np.testing.assert_array_almost_equal(self.expect02, disps)
@@ -201,7 +201,7 @@ class TestCompletenessGeneration(unittest.TestCase):
         # In this case the column for 1930 (the fifth one in disps must have
         # index for 0 or 1
         conds = {1920: 6.2}
-        disps, mags, years = get_completenesses(mags=mags, years=years,
+        disps, mags, years = _get_completenesses(mags=mags, years=years,
                                                 min_mag_compl=5.0, step=3,
                                                 apriori_conditions=conds)
         np.testing.assert_array_almost_equal(self.expect05, disps)
@@ -238,7 +238,7 @@ class TestCompletenessGenerationWithOptional(unittest.TestCase):
         """ First test for the flexible option """
         years = np.array([1900, 1930, 1960, 1970, 1980, 1990])
         mags = np.array([5.0, 6.0, 7.0])
-        disps, mags, years = get_completenesses(mags=mags, years=years,
+        disps, mags, years = _get_completenesses(mags=mags, years=years,
                                                 min_mag_compl=5.0, step=3,
                                                 flexible=True)
 
