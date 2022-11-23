@@ -1,12 +1,35 @@
 #!/usr/bin/env python
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
 import os
 import re
-import sys
-import h5py
 import logging
 import configparser
+import h5py
 
 from openquake.baselib import sap
 from openquake.mbt.tools.tr.catalogue import get_catalogue
@@ -73,7 +96,7 @@ def classify(ini_fname, compute_distances, rf):
     logger.info('Creating: {:s}'.format(treg_filename))
     f = h5py.File(treg_filename, 'w')
     f.close()
-    #
+
     # process the input information
     remove_from = []
     for key in priorityl:
@@ -86,10 +109,10 @@ def classify(ini_fname, compute_distances, rf):
         #
         # subduction earthquakes
         if re.search('^slab', key) or re.search('^int', key):
-            #
+
             # Info
             logger.info('Classifying: {:s}'.format(key))
-            #
+
             # Reading parameters
             edges_folder = os.path.join(rf, config[key]['folder'])
             distance_buffer_below = None
@@ -119,7 +142,7 @@ def classify(ini_fname, compute_distances, rf):
             upp_mag = 15
             if 'upp_mag' in config[key]:
                 upp_mag = float(config[key]['upp_mag'])
-            #
+
             #
             sse = SetSubductionEarthquakes(trlab,
                                            treg_filename,
@@ -135,27 +158,27 @@ def classify(ini_fname, compute_distances, rf):
                                            low_mag,
                                            upp_mag)
             sse.classify(compute_distances, remove_from)
-        #
+
         # crustal earthquakes
         elif re.search('^crustal', key) or re.search('^volcanic', key):
-            #
+
             # info
-            logger.info('Classifying: {:s}'.format(key))
-            #
-            # set data files
+            logger.info(f'Classifying: {key:s}')
+
+            # Set data files
             tmps = config[key]['crust_filename']
             distance_delta = config[key]['distance_delta']
-            #
-            # set shapefile name
+
+            # Set shapefile name
             shapefile = None
-            if ('shapefile' in config[key]):
+            if 'shapefile' in config[key]:
                 shapefile = os.path.join(rf, config[key]['shapefile'])
                 assert os.path.exists(shapefile)
-            #
-            # crust filename
+
+            # Crust filename
             crust_filename = os.path.join(rf, tmps)
-            #
-            # classifying
+
+            # Classify
             sce = SetCrustalEarthquakes(crust_filename,
                                         catalogue_fname,
                                         treg_filename,
@@ -164,15 +187,14 @@ def classify(ini_fname, compute_distances, rf):
                                         shapefile=shapefile,
                                         log_fname=log_fname)
             sce.classify(remove_from)
-        #
-        #
+
         else:
             raise ValueError('Undefined option')
-        #
+
         # Updating the list of TR with lower priority
         if trlab not in remove_from:
             remove_from.append(trlab)
-    #
+
     # reading filename
     c = get_catalogue(catalogue_fname)
     csvfname = 'classified_earthquakes.csv'
@@ -193,7 +215,6 @@ def classify(ini_fname, compute_distances, rf):
                                                           'unknown'))
     f.close()
     fou.close()
-
 
     """
     This is the controlling script that can be used to subdivide an
@@ -230,8 +251,9 @@ def classify(ini_fname, compute_distances, rf):
 
     The selection of subduction inslab earthquakes is perfomed in a manner
     similar to the one used for subduction interface seismicity.
-
     """
+
+
 msg = 'Path to the configuration fname - typically a .ini file for tr'
 classify.ini_fname = msg
 msg = 'Flag defining if the calculation of distances'
@@ -241,4 +263,3 @@ classify.rf = msg
 
 if __name__ == "__main__":
     sap.run(classify)
-
