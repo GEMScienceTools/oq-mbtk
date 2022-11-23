@@ -26,16 +26,15 @@
 
 import os
 import glob
+import logging
+import warnings
 import toml
 import numpy as np
-import logging
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from openquake.cat.completeness.norms import (
-    get_norm_optimize, get_norm_optimize_a, get_norm_optimize_b)
+from openquake.cat.completeness.norms import get_norm_optimize_b
 from openquake.wkf.utils import _get_src_id, create_folder, get_list
-from openquake.baselib import sap
 from openquake.wkf.compute_gr_params import (get_weichert_confidence_intervals,
                                              _weichert_plot)
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
@@ -43,7 +42,6 @@ from openquake.mbt.tools.model_building.dclustering import _add_defaults
 from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
 from openquake.hmtk.seismicity.occurrence.weichert import Weichert
 
-import warnings
 warnings.filterwarnings("ignore")
 
 
@@ -124,11 +122,7 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     ref_upp_mag = tvars['ref_upp_mag']
     bgrlim = tvars['bgrlim']
     ctab = tvars['ctab']
-    t_per = tvars['t_per']
-    n_obs = tvars['n_obs']
-    cmag = tvars['cmag']
     tcat = tvars['tcat']
-    last_year = tvars['last_year']
 
     if criterion == 'largest_rate':
 
@@ -166,10 +160,10 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     return check, tmp_rate, norm
 
 
-def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
-                          bgrlim, criterion, compl_tables, src_id=None,
-                          folder_out_figs=None, rewrite=False,
-                          folder_out=None):
+def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
+                           bgrlim, criterion, compl_tables, src_id=None,
+                           folder_out_figs=None, rewrite=False,
+                           folder_out=None):
     """
     :param fname:
         Name of the file with the catalogue
@@ -215,7 +209,8 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     perms = compl_tables['perms']
 
     # Configuration parameters for the Weichert method
-    wei_conf = {'magnitude_interval': binw, 'reference_magnitude': None,
+    wei_conf = {'magnitude_interval': binw,
+                'reference_magnitude': 0.0,
                 'bvalue': 1.0}
     weichert = Weichert()
 
@@ -223,17 +218,19 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     rate = -1e10
     norm = 1e100
     save = []
+    wei = None
     count = {'complete': 0, 'warning': 0, 'else': 0}
 
     all_res = []
     for iper, prm in enumerate(perms):
 
-        print('Iteration: {:05d} norm: {:12.6e}'.format(iper, norm), end="\r")
+        # Info
+        print(f'Iteration: {iper:05d} norm: {norm:12.6e}', end="\r")
 
         tmp = []
-        for y, j in zip(years, prm):
+        for yea, j in zip(years, prm):
             if j >= -1e-10:
-                tmp.append([y, mags[int(j)]])
+                tmp.append([yea, mags[int(j)]])
         tmp = np.array(tmp)
         ctab = clean_completeness(tmp)
 
@@ -257,10 +254,12 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         assert np.all(np.diff(ctab[:, 1]) >= 0)
 
         # Compute occurrence
-        if True:
+        try:
 
             cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
-            bval, sigb, aval, siga = weichert.calculate(tcat, wei_conf, ctab)
+            wei_conf['reference_magnitude'] = min(ctab[:, 1])
+            bval, sigb, rmag_rate, rmag_sigma_rate, aval, siga = \
+                weichert._calculate(tcat, wei_conf, ctab)
 
             if bval >= bgrlim[1] or bval <= bgrlim[0]:
                 count['else'] += 1
@@ -269,7 +268,7 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
             r_mag = np.floor((ref_mag+binw*0.01)/binw)*binw-binw/2
             r_upp_mag = np.ceil((ref_upp_mag+binw*0.01)/binw)*binw+binw/2
 
-            # Create a dictionary of parameters for the function which computed
+            # Create a dictionary of parameters for the function that computes
             # the norm
             tvars = {}
             tvars['binw'] = binw
@@ -300,7 +299,8 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
             if check:
                 rate = trate
                 norm = tnorm
-                save = [aval, bval, rate, ctab, norm, siga, sigb]
+                save = [aval, bval, rate, ctab, norm, siga, sigb,
+                        min(ctab[:, 1]), rmag_rate, rmag_sigma_rate]
                 gwci = get_weichert_confidence_intervals
                 lcl, ucl, ex_rates, ex_rates_scaled = gwci(
                     cent_mag, n_obs, t_per, bval)
@@ -308,7 +308,6 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
                 wei = [cent_mag, n_obs, binw, t_per, ex_rates_scaled,
                        lcl, ucl, mmax, aval, bval]
 
-        try:
             count['complete'] += 1
 
         except RuntimeWarning:
@@ -324,19 +323,21 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
             logging.debug('Skipping', ctab)
 
     # Print info
-    print('Iteration: {:05d} norm: {:12.6e}'.format(iper, norm))
+    print(f'Iteration: {iper:05d} norm: {norm:12.6e}')
 
-    if True and len(save):
-        fmt = 'Maximum annual rate for {:.1f}: {:.4f}'
-        print(fmt.format(ref_mag, save[2]))
-        fmt = 'GR a and b                 : {:.4f} {:.4f}'
-        print(fmt.format(save[0], save[1]))
+    if len(save) > 0:
+        print(f'Maximum annual rate for {ref_mag:.1f}: {save[2]:.4f}')
+        print(f'GR a and b                 : {save[0]:.4f} {save[1]:.4f}')
         print('Completeness:\n', save[3])
         print(count)
     else:
         print('No results')
         print(count)
 
+    if wei is None:
+        return save
+
+    # Plotting
     _weichert_plot(wei[0], wei[1], wei[2], wei[3], wei[4], wei[5], wei[6],
                    wei[7], wei[8], wei[9], src_id=src_id)
 
@@ -363,91 +364,102 @@ def completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     return save
 
 
-def main(fname_input_pattern, fname_config, folder_out, *, skip=[],
-         folder_out_data=None, in_folder='.'):
+def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
+                          folder_in, folder_out, skip=''):
+    """
+    :param fname_input_pattern:
+        Pattern to the files with the subcatalogues
+    :param fname_config:
+        .toml configuration file
+    :param folder_out_figs:
+        Output folder for figures
+    :param folder_in:
+        Folder with the completeness windows
+    :param folder_out:
+        Folder where to store results
+    :param skip:
+        List with the IDs of the sources to skip
+    """
 
-    if folder_out_data is not None:
-        create_folder(folder_out_data)
-
-    if len(skip) > 0:
-        if isinstance(skip, str):
-            skip = get_list(skip)
-            print('Skipping: ', skip)
-
+    # Loading configuration
     config = toml.load(fname_config)
 
+    # Read parameters for completeness analysis
     key = 'completeness'
     mags = np.array(config[key]['mags'])
     years = np.array(config[key]['years'])
-
     binw = config.get('bin_width', 0.1)
     ref_mag = config[key].get('ref_mag', 5.0)
     ref_upp_mag = config[key].get('ref_upp_mag', None)
     bmin = config[key].get('bmin', 0.8)
     bmax = config[key].get('bmax', 1.2)
-    criterion = config[key].get('optimization_criterion', 'largest_rate')
+    # Options: 'largest_rate', 'match_rate', 'optimize'
+    criterion = config[key].get('optimization_criterion', 'optimize')
 
-    # Mags in descending order
-    years[::-1].sort()
-
-    if 'sources' not in config:
-        config['sources'] = {}
-
-    print('Reading completeness data from: {:s}'.format(in_folder))
-    fname_disp = os.path.join(in_folder, 'dispositions.npy')
+    # Reading completeness data
+    print(f'Reading completeness data from: {folder_in:s}')
+    fname_disp = os.path.join(folder_in, 'dispositions.npy')
     perms = np.load(fname_disp)
-    mags_chk = np.load(os.path.join(in_folder, 'mags.npy'))
-    years_chk = np.load(os.path.join(in_folder, 'years.npy'))
+    mags_chk = np.load(os.path.join(folder_in, 'mags.npy'))
+    years_chk = np.load(os.path.join(folder_in, 'years.npy'))
     compl_tables = {'perms': perms, 'mags_chk': mags_chk,
                     'years_chk': years_chk}
+
+    # Fixing sorting of years
+    if np.all(np.diff(years)) >= 0:
+        years = np.flipud(years)
+
     np.testing.assert_array_equal(mags, mags_chk)
     np.testing.assert_array_equal(years, years_chk)
 
-    for fname in sorted(glob.glob(fname_input_pattern)):
+    # Info
+    if len(skip) > 0:
+        if isinstance(skip, str):
+            skip = get_list(skip)
+        print('Skipping: ', skip)
 
-        ref_mag = config[key].get('ref_mag', 5.0)
-        ref_upp_mag = config[key].get('ref_upp_mag', None)
+    # Processing subcatalogues
+    for fname in glob.glob(fname_input_pattern):
 
         # Get source ID
         src_id = _get_src_id(fname)
+
+        # If necessary skip the source
         if src_id in skip:
             continue
 
-        src_id = _get_src_id(fname)
-        if src_id not in config['sources']:
-            config['sources'][src_id] = {}
+        # Read configuration parameters for the current source
+        if src_id in config['sources']:
+            var = config['sources'][src_id]
+        else:
+            var = {}
 
-        var = config['sources'][src_id]
-        res, ares = completeness_analysis(fname, years, mags, binw, ref_mag,
-                                          ref_upp_mag, [bmin, bmax], criterion,
-                                          compl_tables, src_id, folder_out,
-                                          rewrite=False)
+        res = _completeness_analysis(fname, years, mags, binw, ref_mag,
+                                     ref_upp_mag, [bmin, bmax], criterion,
+                                     compl_tables, src_id,
+                                     folder_out_figs=folder_out_figs,
+                                     folder_out=folder_out,
+                                     rewrite=False)
 
-        var['completeness_table'] = list(res[3])
-        var['agr_weichert'] = float('{:.4f}'.format(res[0]))
-        var['bgr_weichert'] = float('{:.4f}'.format(res[1]))
+        if len(res) == 0:
+            continue
 
-        if folder_out_data is not None:
-            tmpname = os.path.join(folder_out_data, 'data_{:s}'.format(src_id))
-            np.save(tmpname, ares)
+        # Formatting completeness table
+        tmp = []
+        for row in res[3]:
+            tmp.append([float(row[0]), float(row[1])])
+        var['completeness_table'] = tmp
+        var['agr_weichert'] = float(f'{res[0]:.5f}')
+        var['bgr_weichert'] = float(f'{res[1]:.5f}')
+        var['agr_sig_weichert'] = float(f'{res[5]:.5f}')
+        var['bgr_sig_weichert'] = float(f'{res[6]:.5f}')
+        var['rmag'] = float(f'{res[7]:.5f}')
+        var['rmag_rate'] = float(f'{res[8]:.5f}')
+        var['rmag_rate_sig'] = float(f'{res[9]:.5f}')
 
-    with open(fname_config, 'w') as fou:
+        # Updating configuration
+        config['sources'][src_id] = var
+
+    with open(fname_config, 'w', encoding='utf-8') as fou:
         fou.write(toml.dumps(config))
-        print('Updated {:s}'.format(fname_config))
-
-
-descr = 'Pattern to select input files with subcatalogues'
-main.fname_input_pattern = descr
-msg = 'Name of the .toml file with configuration parameters'
-main.fname_config = msg
-msg = 'Name of the folder where to store figures'
-main.folder_out = msg
-msg = 'A list with the ID of sources that should not be considered'
-main.skip = msg
-msg = 'Name of the folder where to store data'
-main.folder_out_data = msg
-msg = 'Name of the folder where to read .npy files with completeness tables'
-main.in_folder = msg
-
-if __name__ == '__main__':
-    sap.run(main)
+        print(f'Updated {fname_config:s}')

@@ -1,7 +1,32 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
 """
 :module:`openquake.mbt.tools.area`
 """
-
 
 import re
 import numpy
@@ -49,7 +74,7 @@ def load_geometry_from_shapefile(shapefile_filename):
         polygon = wkt.loads(geom.ExportToWkt())
         x, y = polygon.exterior.coords.xy
         points = _get_point_list(x, y)
-        #
+
         # Set the ID
         if isinstance(feature.GetField(idname), str):
             id_str = feature.GetField(idname)
@@ -62,11 +87,13 @@ def load_geometry_from_shapefile(shapefile_filename):
                         polygon=Polygon(points),
                         name=id_str,
                         )
+
         # Append the new source
         if not id_set and set(id_str):
             sources[id_str] = src
         else:
             raise ValueError('Sources with non unique ID %s' % id_str)
+
     return sources
 
 
@@ -96,17 +123,19 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
         Returns an hmtk-formatted catalogue containing only the earthquakes
         inside the polygon
     """
-    #
-    #
+
+    # Check input
     if area_source_ids_list is not None and len(area_source_ids_list) > 1:
         msg = 'We do not support the selection for multiple sources'
         raise ValueError(msg)
-    #
-    #
+
+    # Process list
     if area_source_ids_list is not None:
+
         # Process the area source
         src_id = area_source_ids_list[0]
         src = model.sources[src_id]
+
         # Set the geometry
         if 'polygon' in src.__dict__:
             # The source has a polygon
@@ -119,6 +148,7 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
         else:
             print('The source does not have a geometry assigned')
             return None
+
     elif polygon is not None:
         assert isinstance(polygon, Polygon)
         src_id = 'user_defined'
@@ -128,26 +158,28 @@ def create_catalogue(model, catalogue, area_source_ids_list=None,
     else:
         msg = 'Either a polygon or a list of src id must be defined'
         raise ValueError(msg)
-    #
-    #
+
+    # Process catalogue
     neqk = len(catalogue.data['longitude'])
     sel_idx = numpy.full((neqk), False, dtype=bool)
     pnt_idxs = [i for i in range(0, neqk)]
+
+    # Find index of earthquakes inside the polygon
     idxs = get_idx_points_inside_polygon(catalogue.data['longitude'],
                                          catalogue.data['latitude'],
                                          src.polygon.lons, src.polygon.lats,
                                          pnt_idxs, buff_distance=0.)
     sel_idx[idxs] = True
-    #
+
     # Select earthquakes
     cat = deepcopy(catalogue)
     selector = CatalogueSelector(cat, create_copy=False)
     selector.select_catalogue(sel_idx)
-    #
-    # set label
+
+    # Set label
     labels = ['%s' % src_id for i in range(0, len(cat.data['longitude']))]
     cat.data['comment'] = labels
-    # Complete the composite subcatalogue
+
     return cat
 
 
@@ -228,19 +260,23 @@ def areas_to_oqt_sources(shapefile_filename):
         A list of :class:`openquake.mbt.oqt_project.OQtSource` istances
     """
     idname = 'Id'
+
     # Set the driver
     driver = ogr.GetDriverByName('ESRI Shapefile')
     datasource = driver.Open(shapefile_filename, 0)
     layer = datasource.GetLayer()
+
     # Reading sources geometry
     sources = {}
     id_set = set()
     for feature in layer:
+
         # Read the geometry
         geom = feature.GetGeometryRef()
         polygon = wkt.loads(geom.ExportToWkt())
         x, y = polygon.exterior.coords.xy
         points = _get_point_list(x, y)
+
         # Set the ID
         if isinstance(feature.GetField(idname), str):
             id_str = feature.GetField(idname)
@@ -248,14 +284,19 @@ def areas_to_oqt_sources(shapefile_filename):
             id_str = '%d' % (feature.GetField(idname))
         else:
             raise ValueError('Unsupported source ID type')
+
         # Set tectonic region
         trt = _set_trt(feature.GetField('TectonicRe'))
+
         # Set lower seismogenic depth
         lsd = float(feature.GetField('Depth'))
+
         # Set coupling coefficient
         coupc = float(feature.GetField('coup_coef'))
+
         # Set coupling coefficient
         coupt = float(feature.GetField('coup_thick'))
+
         # Create the source
         src = OQtSource(source_id=id_str,
                         source_type='AreaSource',
@@ -266,6 +307,7 @@ def areas_to_oqt_sources(shapefile_filename):
                         )
         src.coup_coef = coupc
         src.coup_thick = coupt
+
         # Append the new source
         if not id_set and set(id_str):
             sources[id_str] = src

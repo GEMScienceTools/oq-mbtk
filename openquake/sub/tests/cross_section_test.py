@@ -91,7 +91,7 @@ class GetMMTest(unittest.TestCase):
         cs = CrossSection(10.0, 45.0, [100], [45])
         computed = cs.get_mm()
         expected = [cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1], 0]
-        numpy.testing.assert_equal(computed, expected)
+        numpy.testing.assert_almost_equal(computed, expected)
 
     def test_cs_across_idl(self):
         """
@@ -100,7 +100,7 @@ class GetMMTest(unittest.TestCase):
         cs = CrossSection(-179.0, -50.0, [500], [-90])
         computed = cs.get_mm()
         expected = [cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1], 1]
-        numpy.testing.assert_equal(computed, expected)
+        numpy.testing.assert_almost_equal(computed, expected)
 
     def test_cs_across_idl_with_delta(self):
         """
@@ -109,7 +109,7 @@ class GetMMTest(unittest.TestCase):
         cs = CrossSection(-179.5, -50.0, [200], [90])
         computed = cs.get_mm(1.0)
         expected = [179.5, -175.70311203864779, -51.0, -48.966369263787726, 1]
-        numpy.testing.assert_equal(computed, expected)
+        numpy.testing.assert_almost_equal(computed, expected)
 
 
 class MinDistTest(unittest.TestCase):
