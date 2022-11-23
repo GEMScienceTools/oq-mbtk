@@ -19,7 +19,7 @@ julia> distribute_rates('./smooth', './conf.toml', './out')
 1
 ```
 """
-function distribute_rates(folder_smooth::String, fname_config::String, folder_out::String, eps_b::Float64=0.0, eps_rate_ex::Float64=0.0)
+function distribute_rates(folder_smooth::String, fname_config::String, folder_out::String, eps_b::Float64=0.0, eps_rate::Float64=0.0)
 
     # Parse the configuration file
     config = TOML.parsefile(fname_config)
@@ -27,19 +27,40 @@ function distribute_rates(folder_smooth::String, fname_config::String, folder_ou
     # Loop over the zones
     pattern = joinpath(folder_smooth, "*.csv")
     for tmps in glob(pattern)
+
         fname = splitdir(tmps)[2]
+        println(fname)
         source_id = split(fname, '.')[1]
-        σa = config["sources"][source_id]["agr_sig"]
+        
+        # bgr
         σb = config["sources"][source_id]["bgr_sig"]
-        agr = config["sources"][source_id]["agr"] + σa * eps_a
         bgr = config["sources"][source_id]["bgr"] + σb * eps_b
+
+        # agr
+        if haskey(config["sources"], "agr") && eps_rate == 0
+
+            # This is the original behaviour
+            agr = config["sources"][source_id]["agr"]
+
+        else
+
+            # This adds support for the uncertainty on the rate
+            rmag = config["sources"][source_id]["rmag"]
+            λ_rmag = config["sources"][source_id]["rmag_rate"]
+            λ_rmag_sig = config["sources"][source_id]["rmag_rate_sig"]
+
+            # This is the total agr
+            agr = log10((λ_rmag + eps_rate * λ_rmag_sig) / (10^(-bgr*rmag)))
+
+        end
+
         fname_out = joinpath(folder_out, @sprintf("%s.csv", source_id))
         PSHAModelBuilder.distribute_total_rates(agr, bgr, tmps, fname_out)
     end
         
 end
 
-
+"""
 function distribute_rates(folder_smooth::String, fname_config::String, folder_out::String, eps_a::Float64=0.0, eps_b::Float64=0.0)
 
     # Parse the configuration file
@@ -59,6 +80,7 @@ function distribute_rates(folder_smooth::String, fname_config::String, folder_ou
     end
         
 end
+"""
 
 function parse_commandline()
     s = ArgParseSettings()
@@ -79,12 +101,10 @@ function parse_commandline()
         "--eps_a", "-a"
             help = "epsilon for agr"
             arg_type = Float64
-            required = true
             default = 0.0
         "--eps_b", "-b"
             help = "epsilon for bgr"
             arg_type = Float64
-            required = true
             default = 0.0
     end
 
