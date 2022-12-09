@@ -88,3 +88,18 @@ class RatesDistributeTestCase(unittest.TestCase):
         expected = numpy.array([3.671158, 3.97219, 4.14828, 4.27322])
         computed = res.agr.to_numpy()
         numpy.testing.assert_almost_equal(expected, computed, decimal=4)
+
+
+    def test_distribute_rates_deltaA(self):
+        """ Test the mean value + 1std for rate """
+
+        # Run the code
+        fmt = './wkf_rates_distribute.jl {:s} {:s} {:s} -r {:.1f}'
+        cmd = fmt.format(DATA, self.conf, self.out_folder, 2.0)
+        subprocess.call(cmd, shell=True)
+
+        # Test results. The expected total agr is 4.671150
+        res = pd.read_csv(os.path.join(self.out_folder, '00.csv'))
+        expected = numpy.array([3.241309, 3.542339, 3.718430, 3.843369])
+        computed = res.agr.to_numpy()
+        numpy.testing.assert_almost_equal(expected, computed, decimal=4)
