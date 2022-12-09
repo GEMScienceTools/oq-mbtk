@@ -33,7 +33,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from openquake.cat.completeness.norms import get_norm_optimize_b
+from openquake.cat.completeness.norms import (get_norm_optimize_b,
+                                              get_norm_optimize_a,
+                                              get_norm_optimize_c)
 from openquake.wkf.utils import _get_src_id, create_folder, get_list
 from openquake.wkf.compute_gr_params import (get_weichert_confidence_intervals,
                                              _weichert_plot)
@@ -60,16 +62,36 @@ def get_earliest_year_with_n_occurrences(ctab, cat, occ_threshold=2):
     c_yea = cat.data['year']
     c_mag = cat.data['magnitude']
     mags = np.array(list(ctab[:, 1])+[10])
+
+    low_yea = []
+    for i, com in enumerate(ctab):
+
+        if i == len(ctab)-1:
+            uppmag = 10.0
+        else:
+            uppmag = ctab[i+1][1]
+
+        idx = (c_mag >= com[1]) & (c_mag < uppmag)
+        years = c_yea[idx]
+
+        if len(years) >= occ_threshold:
+            low_yea.append(np.sort(years)[occ_threshold-1])
+        else:
+            low_yea.append(np.NaN)
+
+    """
+    # Find the index of the completeness bin foreach magnitude
     idx = np.digitize(c_mag, bins=mags, right=False)
 
-    # low_yea = np.ones((ctab.shape[0])) * np.NaN
-    low_yea = []
+    # Process
     for i in range(ctab.shape[0]):
         years = c_yea[idx == i]
         if len(years) >= occ_threshold:
             low_yea.append(np.sort(years)[occ_threshold-1])
         else:
             low_yea.append(np.NaN)
+    """
+
     return np.array(low_yea)
 
 
@@ -115,6 +137,7 @@ def check_criterion(criterion, rate, previous_norm, tvars):
         of the norm
     """
     check = False
+
     binw = tvars['binw']
     bval = tvars['bval']
     aval = tvars['aval']
@@ -123,6 +146,7 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     bgrlim = tvars['bgrlim']
     ctab = tvars['ctab']
     tcat = tvars['tcat']
+    last_year = tvars['last_year']
 
     if criterion == 'largest_rate':
 
@@ -144,17 +168,18 @@ def check_criterion(criterion, rate, previous_norm, tvars):
 
     elif criterion == 'optimize':
         tmp_rate = -1
-        # norm = get_norm_optimize(aval, bval, ctab, cmag, t_per, n_obs,
-        #                         last_year, info=False)
-        # norm = get_norm_optimize_a(aval, bval, ctab, cmag, t_per, n_obs,
-        #                           binw, info=False)
-        norm = get_norm_optimize_b(aval, bval, ctab, tcat, binw, ybinw=10.,
-                                   mmin=ref_mag, mmax=ref_upp_mag)
+        #norm = get_norm_optimize(aval, bval, ctab, cmag, t_per, n_obs, last_year, info=False)
+        #norm = get_norm_optimize_a(aval, bval, ctab, cmag, t_per, n_obs, binw, info=False)
+        #norm = get_norm_optimize_b(aval, bval, ctab, tcat, binw, ybinw=10.,
+        #                           mmin=ref_mag, mmax=ref_upp_mag)
+        norm = get_norm_optimize_c(tcat, aval, bval, ctab, last_year)
 
     if norm is None:
         return False, -1, previous_norm
 
-    if previous_norm > norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
+    #if previous_norm > norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
+    #    check = True
+    if previous_norm < norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
         check = True
 
     return check, tmp_rate, norm
@@ -216,10 +241,10 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
     # Initial settings
     rate = -1e10
-    norm = 1e100
+    norm = -1e1000
     save = []
     wei = None
-    count = {'complete': 0, 'warning': 0, 'else': 0}
+    count = {'complete': 0, 'warning': 0, 'else': 0, 'early': 0}
 
     all_res = []
     for iper, prm in enumerate(perms):
@@ -236,17 +261,20 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
         # Check compatibility between catalogue and completeness table. This
         # function finds in each magnitude interval defined in the completeness
-        # table the earliest year since the occurreence of a number X of
+        # table the earliest year since the occurrence of a number X of
         # earthquakes. This ensures that the completeness table applies only to
         # sets with a number of occurrences sufficient to infer a recurrence
         # interval.
+
+        """
         earliest_yea = get_earliest_year_with_n_occurrences(ctab, tcat, 2)
 
         # Select the completeness windows using the criteria just defined
         if np.any(np.isnan(earliest_yea)) or np.any(ctab[:, 0] < earliest_yea):
-            count['else'] += 1
+            count['early'] += 1
             logging.debug('Skipping', ctab)
             continue
+        """
 
         # Check that the selected completeness window has decreasing years and
         # increasing magnitudes
@@ -289,14 +317,15 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
             tvars['tcat'] = tcat
 
             # Compute the measure expressing the performance of the current
-            # completeness. If the norm is smaller than the previous one we
-            # save the information.
-            check, trate, tnorm = check_criterion(
-                criterion, rate, norm, tvars)
+            # completeness. If the norm is smaller than the previous one
+            # `check` is True
+            check, trate, tnorm = check_criterion(criterion, rate, norm, tvars)
             all_res.append([iper, aval, bval, tnorm])
+
 
             # Saving the information for the current completeness table.
             if check:
+                iper_save = iper
                 rate = trate
                 norm = tnorm
                 save = [aval, bval, rate, ctab, norm, siga, sigb,
@@ -305,8 +334,15 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
                 lcl, ucl, ex_rates, ex_rates_scaled = gwci(
                     cent_mag, n_obs, t_per, bval)
                 mmax = max(tcat.data['magnitude'])
+                # Scheme:
+                # 0, 1, 2, 3, 4
+                # 5, 6, 7, 8, 9
+                # 10, 11
+                # 12, 13
                 wei = [cent_mag, n_obs, binw, t_per, ex_rates_scaled,
-                       lcl, ucl, mmax, aval, bval]
+                       lcl, ucl, mmax, aval, bval,
+                       wei_conf['reference_magnitude'], rmag_rate,
+                       rmag_sigma_rate, sigb]
 
             count['complete'] += 1
 
@@ -326,8 +362,9 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     print(f'Iteration: {iper:05d} norm: {norm:12.6e}')
 
     if len(save) > 0:
-        print(f'Maximum annual rate for {ref_mag:.1f}: {save[2]:.4f}')
-        print(f'GR a and b                 : {save[0]:.4f} {save[1]:.4f}')
+        print(f'Index of selected permutation : {iper_save:d}')
+        print(f'Maximum annual rate for {ref_mag:.1f}   : {save[2]:.4f}')
+        print(f'GR a and b                    : {save[0]:.4f} {save[1]:.4f}')
         print('Completeness:\n', save[3])
         print(count)
     else:
@@ -339,7 +376,9 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
     # Plotting
     _weichert_plot(wei[0], wei[1], wei[2], wei[3], wei[4], wei[5], wei[6],
-                   wei[7], wei[8], wei[9], src_id=src_id)
+                   wei[7], wei[8], wei[9], src_id=src_id, plt_show=False,
+                   ref_mag=wei[10], ref_mag_rate=wei[11],
+                   ref_mag_rate_sig=wei[12], bval_sigma=wei[13])
 
     # Saving figure
     if folder_out_figs is not None:
@@ -454,8 +493,8 @@ def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
         var['agr_sig_weichert'] = float(f'{res[5]:.5f}')
         var['bgr_sig_weichert'] = float(f'{res[6]:.5f}')
         var['rmag'] = float(f'{res[7]:.5f}')
-        var['rmag_rate'] = float(f'{res[8]:.5f}')
-        var['rmag_rate_sig'] = float(f'{res[9]:.5f}')
+        var['rmag_rate'] = float(f'{res[8]:.5e}')
+        var['rmag_rate_sig'] = float(f'{res[9]:.5e}')
 
         # Updating configuration
         config['sources'][src_id] = var

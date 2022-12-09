@@ -30,10 +30,10 @@ import numpy
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as pe
 from glob import glob
 from openquake.wkf.utils import _get_src_id, create_folder, get_list
 from scipy.stats import chi2
-from openquake.baselib import sap
 from openquake.mbt.tools.model_building.dclustering import _add_defaults
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 from openquake.mbt.tools.model_building.plt_mtd import create_mtd
@@ -473,22 +473,91 @@ def _get_gr_double_trunc_exceedance_rates(agr, bgr, cmag, binw, mmax):
     return xmag, exra
 
 
+def _get_agr(bgr, rate, mag, mmax=None):
+    """ Get the agr given the rate of exceedance at a given magnitude """
+    den = 10**(-bgr*mag)
+    if mmax is not None:
+        den -= 10**(-bgr*mmax)
+    return numpy.log10(rate / den)
+
+
 def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
                    lcl, ucl, mmax, aval_wei, bval_wei, src_id=None,
-                   plt_show=False):
+                   plt_show=False, ref_mag=None, ref_mag_rate=None,
+                   ref_mag_rate_sig=None, bval_sigma=None):
 
     fig, ax = plt.subplots()
+
     # Incremental rates of occurrence
-    plt.plot(cent_mag, n_obs/t_per, 'o', markerfacecolor='none',
+    plt.plot(cent_mag, n_obs/t_per, 's', markerfacecolor='none',
              label='Incremental rates')
+
+    alo = [pe.withStroke(linewidth=4, foreground="white")]
+    for tm, tn, tp in zip(cent_mag, n_obs, t_per):
+        if tn > 0:
+            plt.text(tm, tn/tp, f'{tn:.0f}', fontsize=6, path_effects=alo)
+
     # Rates of exceedance
     plt.plot(cent_mag-binw/2, ex_rates_scaled, 's', markerfacecolor='none',
              color='red', label='Cumulative rates')
-    # Confidence intervals
-    plt.plot(cent_mag-binw/2, lcl, '--', color='darkgrey', label='16th C.I.')
-    plt.plot(cent_mag-binw/2, ucl, '-.', color='darkgrey', label='84th C.I.')
 
+    # Rates of exceedance + uncertainty
     fun = _get_gr_double_trunc_exceedance_rates
+    if ref_mag is not None:
+
+        # Lower
+        alpha = 0.7
+        eps_bgr = +1
+        eps_rate = -1
+        tmp_rate = ref_mag_rate + eps_rate * ref_mag_rate_sig
+        tmp_bgr = bval_wei + eps_bgr * bval_sigma
+        tmp_agr = _get_agr(tmp_bgr, tmp_rate, ref_mag, mmax=None)
+        xmag, exra = fun(tmp_agr, tmp_bgr, cent_mag, binw, mmax)
+        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\sigma$'
+        lab += f' bgr{eps_bgr:+.1f}$\sigma$'
+        plt.plot(xmag, exra, ls='-.', color='orange', label=lab,
+                 alpha=alpha)
+
+        # Upper
+        eps_bgr = -1
+        eps_rate = +1
+        tmp_rate = ref_mag_rate + eps_rate * ref_mag_rate_sig
+        tmp_bgr = bval_wei + eps_bgr * bval_sigma
+        tmp_agr = _get_agr(tmp_bgr, tmp_rate, ref_mag, mmax=None)
+        xmag, exra = fun(tmp_agr, tmp_bgr, cent_mag, binw, mmax)
+        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\sigma$'
+        lab += f' bgr{eps_bgr:+.1f}$\sigma$'
+        plt.plot(xmag, exra, ls='-.', color='purple', label=lab,
+                 alpha=alpha)
+
+        # Lower
+        eps_bgr = 2
+        eps_rate = -2
+        tmp_rate = ref_mag_rate + eps_rate * ref_mag_rate_sig
+        tmp_bgr = bval_wei + eps_bgr * bval_sigma
+        tmp_agr = _get_agr(tmp_bgr, tmp_rate, ref_mag, mmax=None)
+        xmag, exra = fun(tmp_agr, tmp_bgr, cent_mag, binw, mmax)
+        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\sigma$'
+        lab += f' bgr{eps_bgr:+.1f}$\sigma$'
+        plt.plot(xmag, exra, ls=':', color='orange', label=lab,
+                 alpha=alpha)
+
+        # Upper
+        eps_bgr = -2
+        eps_rate = +2
+        tmp_rate = ref_mag_rate + eps_rate * ref_mag_rate_sig
+        tmp_bgr = bval_wei + eps_bgr * bval_sigma
+        tmp_agr = _get_agr(tmp_bgr, tmp_rate, ref_mag, mmax=None)
+        xmag, exra = fun(tmp_agr, tmp_bgr, cent_mag, binw, mmax)
+        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\sigma$'
+        lab += f' bgr{eps_bgr:+.1f}$\sigma$'
+        plt.plot(xmag, exra, ls=':', color='purple', label=lab,
+                 alpha=alpha)
+
+    # Confidence intervals
+    plt.plot(cent_mag-binw/2, lcl, '--', color='blue', label='16th C.I.')
+    plt.plot(cent_mag-binw/2, ucl, '-.', color='blue', label='84th C.I.')
+
     xmag, exra = fun(aval_wei, bval_wei, cent_mag, binw, mmax)
     plt.plot(xmag, exra, '--', lw=3, color='green')
 
@@ -503,7 +572,7 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
     plt.grid(which='major', color='grey')
     plt.grid(which='minor', linestyle='--', color='lightgrey')
     plt.title(src_id)
-    plt.legend(fontsize=10, loc=3)
+    plt.legend(fontsize=8, loc=3)
 
     if plt_show:
         plt.show()
