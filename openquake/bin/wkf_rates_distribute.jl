@@ -11,7 +11,8 @@ using TOML
     distribute_rates(folder_smooth, fname_config, folder_out, [eps_b, eps_rate])
 
 Distributes the rates using the output of a seismicity smoothing function. 
-The `folder_smooth` contains 
+The `folder_smooth` contains the output of a smoothing algorithm i.e. .csv 
+files with three columns consisting of longitude, latitude and 
 
 # Examples
 ```julia-repl
@@ -29,20 +30,15 @@ function distribute_rates(folder_smooth::String, fname_config::String, folder_ou
     for tmps in glob(pattern)
 
         fname = splitdir(tmps)[2]
-        println(fname)
         source_id = split(fname, '.')[1]
         
         # bgr
         σb = config["sources"][source_id]["bgr_sig"]
         bgr = config["sources"][source_id]["bgr"] + σb * eps_b
 
-        # agr
-        if haskey(config["sources"], "agr") && eps_rate == 0
-
-            # This is the original behaviour
-            agr = config["sources"][source_id]["agr"]
-
-        else
+        # If for the current source the a value of the GR exists in the 
+        # configuration file and the epsilon is larger than 0
+        if haskey(config["sources"][source_id], "rmag")
 
             # This adds support for the uncertainty on the rate
             rmag = config["sources"][source_id]["rmag"]
@@ -51,6 +47,16 @@ function distribute_rates(folder_smooth::String, fname_config::String, folder_ou
 
             # This is the total agr
             agr = log10((λ_rmag + eps_rate * λ_rmag_sig) / (10^(-bgr*rmag)))
+
+        else
+
+            # In this case we do not support uncertainty
+            if eps_rate != 0.0
+                error("eps_rate must be equal to 0 since rmag is not defined")
+            end
+
+            # This is the original behaviour
+            agr = config["sources"][source_id]["agr"]
 
         end
 
@@ -98,8 +104,8 @@ function parse_commandline()
             help = "folder where to save output files"
             arg_type = String
             required = true
-        "--eps_a", "-a"
-            help = "epsilon for agr"
+        "--eps_rate", "-r"
+            help = "epsilon for the rate above m_ref"
             arg_type = Float64
             default = 0.0
         "--eps_b", "-b"
@@ -123,7 +129,7 @@ function main()
     end
 
     # Running smoothing
-    distribute_rates(args["smooth_folder"], args["config"], args["folder_out"], args["eps_a"], args["eps_b"])
+    distribute_rates(args["smooth_folder"], args["config"], args["folder_out"], args["eps_b"], args["eps_rate"])
 
 end
 
