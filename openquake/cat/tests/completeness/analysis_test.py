@@ -39,23 +39,24 @@ DATAFOLDER = os.path.join(os.path.dirname(__file__), 'data')
 class TestGetYear(unittest.TestCase):
 
     def setUp(self):
-
-        # 00 case
         fname = os.path.join(DATAFOLDER, 'cat_00.csv')
         self.cat02 = _load_catalogue(fname)
-        self.ctab = np.array([[1960.,4.6],[1900., 5.]])
-
-        # 05 case
         fname = os.path.join(DATAFOLDER, 'cat_05.csv')
         self.cat05 = _load_catalogue(fname)
 
-    def test_min_year_00(self):
-
+    def test_min_year_01(self):
         nocc = 3
+        ctab = np.array([[1960., 4.6], [1900., 5.]])
         fun = get_earliest_year_with_n_occurrences
-        eyea = fun(self.ctab, self.cat02, nocc)
+        eyea = fun(ctab, self.cat02, nocc)
         self.assertEqual(2, len(eyea))
 
+    def test_min_year_02(self):
+        nocc = 2
+        ctab = np.array([[2000., 4.6]])
+        fun = get_earliest_year_with_n_occurrences
+        eyea = fun(ctab, self.cat05, nocc)
+        np.testing.assert_equal([1966], eyea)
 
 class TestCleanCompleteness(unittest.TestCase):
 
