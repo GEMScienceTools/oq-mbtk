@@ -46,8 +46,11 @@ class RatesDistributeTestCase(unittest.TestCase):
 
     def test_distribute_rates(self):
         """ Test the original approach """
+        # In this test the configuration file contains only the agr and bgr
+        # values. With this configuration it's not possible to add uncertainty.
 
         # Run the code
+        conf = os.path.join(DATA, 'conf01.toml')
         fmt = './wkf_rates_distribute.jl {:s} {:s} {:s}'
         cmd = fmt.format(DATA, self.conf, self.out_folder)
         subprocess.call(cmd, shell=True)
@@ -58,11 +61,25 @@ class RatesDistributeTestCase(unittest.TestCase):
         computed = res.agr.to_numpy()
         numpy.testing.assert_almost_equal(expected, computed, decimal=4)
 
+    def test_distribute_rates_error(self):
+        """ Test the original approach """
+        # In this test the configuration file contains only the agr and bgr
+        # values. With this configuration it's not possible to add uncertainty.
+
+        # Run the code
+        conf = os.path.join(DATA, 'conf01.toml')
+        fmt = './wkf_rates_distribute.jl {:s} {:s} {:s} -r 1'
+        cmd = fmt.format(DATA, conf, self.out_folder)
+        out = subprocess.call(cmd, shell=True)
+
+        # Test results
+        assert out == 1
+
     def test_distribute_rates_delta(self):
         """ Test the mean value + 1std for b and rate """
 
         # Run the code
-        fmt = './wkf_rates_distribute.jl {:s} {:s} {:s} -a {:.1f} -b {:.1f}'
+        fmt = './wkf_rates_distribute.jl {:s} {:s} {:s} -r {:.1f} -b {:.1f}'
         cmd = fmt.format(DATA, self.conf, self.out_folder, 1.0, 1.0)
         subprocess.call(cmd, shell=True)
 
