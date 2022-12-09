@@ -6,5 +6,5 @@ rmag_rate = 0.5012
 # This is 5% of the mean rate at reference mag
 rmag_rate_sig = 0.025
 bgr = 1.0
-agr = 4.8
+agr = 4.2
 bgr_sig = 0.1
