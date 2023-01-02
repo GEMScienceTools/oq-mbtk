@@ -2,10 +2,45 @@ import os
 import unittest
 
 import openquake.man.tools.csv_output as csv
+from openquake.man.tools.csv_output import mean_mde_for_gmt
+from openquake.calculators.tests import open8
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 
 
+
+class TestMeanMDE(unittest.TestCase):
+
+    def test_output_mre(self):
+        """
+        test reorg of one instance of an MDE file; one rlz
+        """
+        fname = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-1.csv')
+        fout = 'test-1.csv'
+        mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        expected = 'expected/site_0.002105_SA01_mde-1.csv'
+        expected_lines = [line for line in open8(expected)]
+        actual_lines = [line for line in open8(fout)]
+        self.assertEqual(len(expected_lines), len(actual_lines))
+        for ii in range(len(actual_lines)):
+            self.assertEqual(expected_lines[ii], actual_lines[ii])
+        os.remove(fout)
+
+
+    def test_output_mre_2(self):
+        """
+        test reorg of one instance of an MDE file; two rlzs
+        """
+        fname = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-2.csv')
+        fout = 'test-2.csv'
+        mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        expected = 'expected/site_0.002105_SA01_mde-2.csv'
+        expected_lines = [line for line in open8(expected)]
+        actual_lines = [line for line in open8(fout)]
+        self.assertEqual(len(expected_lines), len(actual_lines))
+        for ii in range(len(actual_lines)):
+            self.assertEqual(expected_lines[ii], actual_lines[ii])
+        os.remove(fout)
 
 
 class TestMDeOutput(unittest.TestCase):
