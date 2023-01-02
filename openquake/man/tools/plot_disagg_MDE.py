@@ -21,7 +21,7 @@ example of usage:
 
 example of usage (filename is absolute path): 
 
-./plot_disagg_MDE.py file 0.002105 SA\(0.1\)
+./plot_disagg_MDE.py ../tests/tools/data/Mag_Dist_Eps-1.csv 0.002105 SA\(0.1\)
 
 """
 
@@ -101,8 +101,10 @@ def plot_gmt(fname, fout, settings_fname=None):
     maxmag = float(extinfo.split('/')[1])
     
     mags_full = get_disagg_header_info(header, 'mag_bin_edges=[', fl=True)
-    mags = [m for m in mags_full if m <= maxmag]
+    dmag = mags_full[-1]-mags_full[-2]
+    mags = [m for m in mags_full if m <= (maxmag + dmag)]
     dists = get_disagg_header_info(header, 'dist_bin_edges=[', fl=True)
+    ddist = dists[-1]-dists[-2]
 
     size = 3.2
     xsep = size / len(mags)*0.85
@@ -124,7 +126,7 @@ def plot_gmt(fname, fout, settings_fname=None):
     cmds.append('gmt begin {} png'.format(fout))
     
     cmd = 'gmt psxyz {}.csv {} {} -JZ5 {} -C{} -t5 '.format(fout, PRO, EXT, VIEW, CPTT1)
-    cmd += '-SO{}i/{}ib -Bx1.0+l"Magnitude" -By25+l"Distance (km)"'.format(xsep, ysep)
+    cmd += '-SO{}i/{}ib -Bx{}+l"Magnitude" -By{}+l"Distance (km)"'.format(xsep, ysep, dmag, ddist)
     cmd += ' -Bz{}+l"Joint probability" -BWSneZ -Wthin,black'.format(ZLIM/2)
     cmds.append(cmd)
 

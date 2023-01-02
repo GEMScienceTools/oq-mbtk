@@ -141,31 +141,28 @@ def mean_mde_for_gmt(fname, fout, poe, imt, threshold):
     fou = open(fout,'w')
 
     base_dic = {}
-    cnt = 0
+    #import pdb; pdb.set_trace()
     for ind in list(df_mean.index):
         line = df_mean.loc[ind]
 
-        if cnt > 2:
-            key = '{0:s}_{1:s}'.format(str(line.mag), str(line.dist))
-            #
-            # Updating the base level of the bin
-            if key in base_dic:
-                base = base_dic[key]
-            else:
-                base = 0.
-                base_dic[key] = 0.
-            base_dic[key] += line.poe_c
-            #
-            # Formatting the output
-            fmt = '{0:7.5e} {1:7.5e} {2:7.5e} {3:7.5e} {4:7.5e}'
-            outs = fmt.format(line.mag, line.dist, base+line.poe_c,
-                              line.eps, base)
+        key = '{0:s}_{1:s}'.format(str(line.mag), str(line.dist))
+        #
+        # Updating the base level of the bin
+        if key in base_dic:
+            base = base_dic[key]
+        else:
+            base = 0.
+            base_dic[key] = 0.
+        base_dic[key] += line.poe_c
+        #
+        # Formatting the output
+        fmt = '{0:7.5e} {1:7.5e} {2:7.5e} {3:7.5e} {4:7.5e}'
+        outs = fmt.format(line.mag, line.dist, base+line.poe_c,
+                          line.eps, base)
 
-            if float(line.poe_c) > threshold:
-                fou.write(outs+'\n')
+        if float(line.poe_c) > threshold:
+            fou.write(outs+'\n')
         
-        cnt += 1
-
     print('Written to {}'.format(fout))
 
 
