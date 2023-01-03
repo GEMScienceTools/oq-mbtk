@@ -89,6 +89,8 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
                             fname_config: str, fname_poly: str, use=[],
                             skip=[]):
     """
+    Add baseline seismicity to the sources in the `folder_name`. The
+    configuration file must contain
 
     :param folder_name:
         The name of the folder containing the files with GR parameters for the
@@ -118,7 +120,8 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
     # Create output folder
     create_folder(folder_name_out)
 
-    # Parsing config
+    # Parsing config. The basel_agr value is the log of the rate per km2 per
+    # year for earthquakes larger than 0
     model = toml.load(fname_config)
     h3_level = model['baseline']['h3_level']
     basel_agr = model['baseline']['a_value']
