@@ -100,7 +100,7 @@ def get_mean_mde(fname, poe, imt):
     df = pd.read_csv(fname, skiprows = 1)
     
     # take only the rows of interest based on poe, imt
-    df_sub = df.loc[(df['poe']==float(poe)) & (df['imt']==imt)]
+    df_sub = df.loc[(df['poe']==float(poe)) & (df['imt']==imt)].reset_index()
 
     # create dataframe for mean results
     df_mean = pd.DataFrame(columns=['mag','dist','eps','poe_c'])
