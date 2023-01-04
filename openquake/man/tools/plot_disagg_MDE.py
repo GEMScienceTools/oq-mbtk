@@ -40,13 +40,15 @@ def get_plt_settings(settings_fname, stt_plot, stt_default):
     """ 
     settings = toml.load(settings_fname)
     
-    stt_main_keys = settings['main'].keys()
-    for key in stt_main_keys:
-        stt_default[key] = settings['main'][key]
+    if settings['main']:
+        stt_main_keys = settings['main'].keys()
+        for key in stt_main_keys:
+            stt_default[key] = settings['main'][key]
 
-    stt_plot_keys = settings['plot'].keys()
-    for key in stt_plot_keys:
-        stt_plot[key] = settings['plot'][key]
+    if settings['plot']:
+        stt_plot_keys = settings['plot'].keys()
+        for key in stt_plot_keys:
+            stt_plot[key] = settings['plot'][key]
         
     return stt_plot, stt_default
     
@@ -104,7 +106,6 @@ def plot_gmt(fname, fout, settings_fname=None):
     dmag = mags_full[-1]-mags_full[-2]
     mags = [m for m in mags_full if m <= (maxmag + dmag)]
     dists = get_disagg_header_info(header, 'dist_bin_edges=[', fl=True)
-    ddist = dists[-1]-dists[-2]
 
     size = 3.2
     xsep = size / len(mags)*0.85
@@ -126,7 +127,7 @@ def plot_gmt(fname, fout, settings_fname=None):
     cmds.append('gmt begin {} png'.format(fout))
     
     cmd = 'gmt psxyz {}.csv {} {} -JZ5 {} -C{} -t5 '.format(fout, PRO, EXT, VIEW, CPTT1)
-    cmd += '-SO{}i/{}ib -Bx{}+l"Magnitude" -By{}+l"Distance (km)"'.format(xsep, ysep, dmag, ddist)
+    cmd += '-SO{}i/{}ib -Bx+l"Magnitude" -By+l"Distance (km)"'.format(xsep, ysep)
     cmd += ' -Bz{}+l"Joint probability" -BWSneZ -Wthin,black'.format(ZLIM/2)
     cmds.append(cmd)
 
