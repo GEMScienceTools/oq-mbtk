@@ -36,34 +36,24 @@ import datetime as dt
 import geopandas as gpd
 
 from openquake.cat.parsers.isf_catalogue_reader import ISFReader
-from openquake.cat.parsers.converters import GenericCataloguetoISFParser
+time_dfrom openquake.cat.parsers.converters import GenericCataloguetoISFParser
+from openquake.cat.isf_catalogue import get_delta_t
 
 warnings.filterwarnings('ignore')
 
 
-def get_delta_t(tmpl):
-    """
-    :param tmpl:
-        Either a float (or string) or an iterable containing tuples with
-        an int (year from which this delta time applies) and a float (time
-        in seconds)
-    :return:
-        Either a float or a list
-    """
-    if not hasattr(tmpl, '__iter__'):
-        return dt.timedelta(seconds=float(tmpl))
-
-    # Creating list
-    out = []
-    for tmp in tmpl:
-        out.append([dt.timedelta(seconds=float(tmp[0])), int(tmp[1])])
-    return out
-
-
 def coords_prime_origins(catalogue):
     """
+    Given an instance of an ISFCatalogue returns an array where each row
+    contains the longitude, latitude, the index of location and the one
+    of the origin.
+
     :param catalogue:
-        An ISFCatalogue instance
+        An :class:`openquake.cat.isf_catalogue.ISFCatalogue` instance
+    :returns:
+        An instance of :class:`numpy.ndarray`. The cardinality of the output
+        has a cardinality equal to the number of earthquakes in the
+        catalogue with a prime solution.
     """
     # Get coordinates of primes events
     data = []
@@ -105,8 +95,9 @@ def magnitude_selection(catalogue: str, min_mag: float):
 
 def geographic_selection(catalogue, shapefile_fname, buffer_dist=0.0):
     """
-    Given a catalogue and a shapefile with a polygon or a set of polygons, it
-    selects all the earthquakes inside the union of all the polygons.
+    Given a catalogue and a shapefile with a polygon or a set of polygons,
+    select all the earthquakes inside the union of all the polygons and
+    return a new catalogue instance.
 
     :param catalogue:
         An instance of :class:`openquake.cat.isf_catalogue.ISFCatalogue`
@@ -151,6 +142,9 @@ def geographic_selection(catalogue, shapefile_fname, buffer_dist=0.0):
 
 def load_catalogue(fname: str, cat_type: str, cat_code: str, cat_name: str):
     """
+    Given the name of a file (the supported formats are 'csv' and 'isf') read
+    its content and return a catalogue instance.
+
     :param fname:
         Name of the file with the catalogue
     :param cat_type:
@@ -159,6 +153,8 @@ def load_catalogue(fname: str, cat_type: str, cat_code: str, cat_name: str):
         The code to be assigned to earthquakes from this catalogue
     :param cat_name:
         The name of this catalogue
+    :return:
+        An instance of :class:`openquake.cat.isf_catalogue.ISFCatalogue`
     """
     if cat_type == "isf":
         parser = ISFReader(fname)
@@ -173,27 +169,34 @@ def load_catalogue(fname: str, cat_type: str, cat_code: str, cat_name: str):
     return cat
 
 
-def process_catalogues(settings_fname):
+def process_catalogues(settings_fname: str) -> None:
     """
+    Given a .toml file containing the list of catalogues to be merged,
+    process the catalogues and save the results in the output folder
+    specified in the settings file.
+
     :fname settings_fname:
         Name of the .toml file containing the information about the
         catalogues to be merged
     """
 
-    # Read configuration
+    # Read configuration file
     settings = toml.load(settings_fname)
     path = os.path.dirname(settings_fname)
 
-    # Reading name of the shapefile and setting the buffer
+    # Read the name of the shapefile and - if defined - the info on
+    # the buffer (otherwise `buffr` is 0)
     tmps = settings["general"].get("region_shp", None)
     if tmps is not None:
         fname_shp = os.path.join(path, tmps)
         buffr = float(settings["general"].get("region_buffer", 0.))
 
+    # Check that the file
     if len(settings["catalogues"]) < 1:
         raise ValueError("Please specify a catalogue in the settings")
 
-    # Processing the catalogues
+    # Process the catalogue. `tdict` is dictionary with the info
+    # required to merge one specific catalogue.
     for icat, tdict in enumerate(settings["catalogues"]):
 
         # Get settings
@@ -237,13 +240,16 @@ def process_catalogues(settings_fname):
                 logfle = tdict["log_file"]
             print("   Log file: {:s}".format(logfle))
 
+        # Process the additional catalogues
         else:
 
-            # Loading the catalogue
+            # Load the catalogue and get the number of events
             tmpcat = load_catalogue(fname, cat_type, cat_code, cat_name)
             nev = tmpcat.get_number_events()
             print(f"   Catalogue contains: {nev:d} events")
 
+            # If requested, select the earthquakes within the polygon
+            # specified in the configuration file
             select_flag = tdict.get("select_region", False)
             if select_flag:
                 msg = "Selecting earthquakes within the region shapefile"
@@ -252,27 +258,38 @@ def process_catalogues(settings_fname):
                 msg = "Selected {:d} earthquakes".format(len(tmpcat))
                 print("      " + msg)
 
-            # Setting the parameters for merging
+            # Set the parameters required for merging the new catalogue
+            # including a delta-distance and delta-time.
+            # - `delta_ll` is a float or a string defining a distance
+            #   in degrees (for the time being) as a function of magnitude.
+            # - `delta_t` is an integer or a string defining a delta
+            #   time in seconds as a function of magnitude.
             delta_ll = tdict["delta_ll"]
             delta_t = get_delta_t(tdict["delta_t"])
-            timezone = dt.timezone(dt.timedelta(hours=int(tdict["timezone"])))
+            # - `timezone` an integer
+            tzone = int(tdict.get("timezone", 0))
+            timezone = dt.timezone(dt.timedelta(hours=tzone))
+            # - buffer distances for time and distance used for TODO
             buff_ll = tdict["buff_ll"]
             buff_t = dt.timedelta(seconds=tdict["buff_t"])
-            use_ids = tdict["use_ids"]
+            # - `use_ids` a boolean specifying is the ids of this catalogue
+            #   should be used to find corresponding earthquakes in the
+            #   catalogues already merged
+            use_ids = tdict.get("use_ids", False)
 
-            # Set log files
+            # Set the name of the log file
             if "log_file" not in tdict:
                 logfle = f"/tmp/tmp_merge_{icat:02d}.tmp"
             else:
                 logfle = tdict["log_file"]
             print(f"   Log file: {logfle:s}".format())
 
-            # Merging
+            # Perform the merge
             meth = catroot.add_external_idf_formatted_catalogue
             out = meth(tmpcat, delta_ll, delta_t, timezone, buff_t, buff_ll,
                        use_ids, logfle)
 
-            # Updating spatial index
+            # Update the spatial index
             print("      Updating index")
             catroot._create_spatial_index()
 

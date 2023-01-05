@@ -38,8 +38,13 @@ from math import fabs
 from rtree import index
 from geojson import LineString, Feature, FeatureCollection, dump
 
+from typing import Union
 from openquake.cat.utils import decimal_time
 
+YEAR_MIN = 1000.0
+MAG_MIN = 1.0
+MAG_MAX = 9.0
+MAG_DLT = 0.2
 
 DATAMAP = [("eventID", "U20"), ("originID", "U20"), ("Agency", "U14"),
            ("year", "i2"), ("month", "i2"), ("day", "i2"), ("hour", "i2"),
@@ -555,8 +560,8 @@ class ISFCatalogue(object):
 
     # TODO - this does not cope yet with catalogues crossing the international
     # dateline
-    def add_external_idf_formatted_catalogue(self,
-            cat, ll_deltas=0.01, delta_t=dt.timedelta(seconds=30),
+    def add_external_idf_formatted_catalogue(
+            self, cat, ll_deltas=0.01, delta_t=dt.timedelta(seconds=30),
             utc_time_zone=dt.timezone(dt.timedelta(hours=0)),
             buff_t=dt.timedelta(seconds=0), buff_ll=0, use_ids=False,
             logfle=False):
@@ -567,7 +572,7 @@ class ISFCatalogue(object):
 
         :param cat:
             An instance of :class:`ISFCatalogue` i.e. the 'guest' catalogue
-        :param ll_deltas:
+        :param delta_ll:
             A float defining the tolerance in decimal degrees used when looking
             for colocated events
         :param delta_t:
@@ -578,7 +583,7 @@ class ISFCatalogue(object):
             timezone for the new catalogue.
         :param buff_t:
             Tolerance used to find events close to the selection threshold.
-            It's an instance of :class:`datetime.timedelta`
+            It's an instance of :class:`datetime.timedelta` or a float.
         :param buff_ll:
             A float defining the tolerance used to find events close to the
             selection threshold.
@@ -594,6 +599,20 @@ class ISFCatalogue(object):
               The values are the indexes of the doubtful events in the 'guest'
               catalogue.
         """
+        delta_ll = ll_deltas
+
+        # Create a dt.timedelta for buff_t if this is provided as a float
+        if isinstance(buff_t, float):
+            buff_t = dt.timedelta(seconds=buff_t)
+
+        # Check that the delta values for ll and t have the same reference
+        # years
+        if hasattr(delta_ll, '__iter__'):
+            assert hasattr(delta_t, '__iter__')
+            yea1 = [t[0] for t in delta_ll]
+            yea2 = [t[0] for t in delta_t]
+            np.testing.assert_array_equal(yea1, yea2)
+
         if logfle:
             fou = open(logfle, 'w', encoding="utf-8")
             fname_geojson = os.path.splitext(logfle)[0]+"_secondary.geojson"
@@ -604,20 +623,10 @@ class ISFCatalogue(object):
         # Check if we have a spatial index
         assert 'sidx' in self.__dict__
 
-        # Set delta time thresholds
-        if hasattr(delta_t, '__iter__'):
-            threshold = np.array([[t[0], t[1].total_seconds()] for t in
-                                  delta_t])
-        else:
-            threshold = np.array([[1000, delta_t.total_seconds()]])
-
-        # Set ll delta thresholds. These thresholds can be simply one value of
-        # delta distance or a list of tuples where the first value is a year
-        # and the second value a delta distance
-        if hasattr(ll_deltas, '__iter__'):
-            ll_deltas = np.array(list(ll_deltas))
-        else:
-            ll_deltas = np.array([[1000, ll_deltas]])
+        # Get the edges of magnitude and time plus the matrixes with the
+        # delta values that should be used
+        mag_low_edges, time_low_edges, time_d, ll_d = get_threshold_matrices(
+            delta_t, delta_ll)
 
         # Processing the events in the 'guest' catalogue
         id_common_events = []
@@ -649,10 +658,15 @@ class ISFCatalogue(object):
             dtime_a = dt.datetime.combine(event.origins[0].date,
                                           event.origins[0].time)
 
-            # Take the appropriate value from delta_ll - this is needed in
-            # particular when delta_ll varies with time.
-            idx_threshold = max(np.argwhere(dtime_a.year > ll_deltas[:, 0]))
-            ll_thrs = ll_deltas[idx_threshold, 1]
+            # Take the index from delta_ll - this is needed
+            # when delta_ll varies with time.
+            magnitude = event.magnitudes[0].value
+            idx_mag = max(np.argwhere(magnitude > mag_low_edges))[0]
+            idx_t = max(np.argwhere(dtime_a.year > time_low_edges))[0]
+
+            ll_thrs = ll_d[idx_t][idx_mag]
+            sel_thrs = time_d[idx_t][idx_mag]
+            sel_thrs = sel_thrs.total_seconds()
 
             # Create selection window
             minlo = event.origins[0].location.longitude - ll_thrs
@@ -668,7 +682,9 @@ class ISFCatalogue(object):
             # distance is larger than 0
             obj_e = []
             obj_a = []
-            if buff_ll > 0 or buff_t.seconds > 0:
+
+            if buff_ll > 0 or buff_t.total_seconds() > 0:
+
                 obj_a = [n.object for n in self.sidx.intersection((
                         minlo-buff_ll, minla-buff_ll, maxlo+buff_ll,
                         maxla+buff_ll), objects=True)]
@@ -679,10 +695,6 @@ class ISFCatalogue(object):
                 # Find the index of the events in the buffer across the
                 # selection window
                 obj_e = list(set(obj_a) - set(obj_b))
-
-            # Find the appropriate delta_time
-            idx_threshold = max(np.argwhere(dtime_a.year > threshold[:, 0]))
-            sel_thrs = threshold[idx_threshold, 1]
 
             if logfle:
                 msg = f'   Selected {len(obj):d} events \n'
@@ -730,7 +742,7 @@ class ISFCatalogue(object):
                             if logfle:
                                 fou.write(msg)
 
-                        # Set prime solution is necessary
+                        # Set prime solution, if necessary
                         if (len(self.events[i_eve].origins) == 1 and
                                 not self.events[i_eve].origins[0].is_prime):
                             tmp[0].is_prime = True
@@ -783,7 +795,7 @@ class ISFCatalogue(object):
 
                         break
 
-            # Searching for doubtful events:
+            # Search for doubtful events:
             if buff_ll > 1e-10 and buff_t.seconds > 1e-10:
                 if len(obj_a) > 0:
                     for i in obj_a:
@@ -795,7 +807,7 @@ class ISFCatalogue(object):
                         orig = self.events[i_eve].origins[i_ori]
                         dtime_b = dt.datetime.combine(orig.date, orig.time)
 
-                        # Check if time difference within the threshold value
+                        # Check if time difference is within the threshold
                         tmp_delta = abs(dtime_a - dtime_b).total_seconds()
 
                         # Within max distance and across the time buffer
@@ -816,10 +828,10 @@ class ISFCatalogue(object):
                             else:
                                 doubts[i[0]] = [iloc]
 
-            # Adding new event
+            # Add new event
             if not found:
 
-                # Making sure that the ID of the event added does not exist
+                # Make sure that the ID of the event added does not exist
                 # already
                 if event.id in set(self.ids):
 
@@ -1210,3 +1222,122 @@ class ISFCatalogue(object):
                     output_str = "|".join(output_strings)
                     print(output_str.replace("|", delimiter), file=f)
             print("Exported to %s" % filename)
+
+
+def get_delta_t(tmpl: Union[float, list]):
+    """
+    Given a tuple (or list of tuples) containing a year and a delta time in
+    seconds it returns timedelta instances.
+
+    :param tmpl:
+        Either a float (or string) or an iterable containing tuples with
+        an int (year from which this delta time applies) and a float (time
+        in seconds)
+    :return:
+        A :class:`datetime.timedelta` instance or a list of instances of the
+        same class with the same cardinality of the input `tmpl`
+    """
+    if not hasattr(tmpl, '__iter__'):
+        return [dt.timedelta(seconds=float(tmpl))]
+
+    # Creating list
+    out = []
+    for tmp in tmpl:
+        out.append([dt.timedelta(seconds=float(tmp[1])), int(tmp[1])])
+    return out
+
+
+def get_threshold_matrices(delta_t, delta_ll):
+    """
+    :param delta_t:
+        This can be a float, a string representing or a list of tuples where
+        the first element is a year and the second one, again, either a
+        float (i.e. a Δ in seconds) or a string representing a function
+    :param delta_ll:
+    """
+
+    # If the input contain scalars we transform them into lists
+    if not hasattr(delta_t, '__iter__'):
+        delta_t = [[YEAR_MIN, delta_t]]
+    if not hasattr(delta_ll, '__iter__'):
+        delta_ll = [[YEAR_MIN, delta_ll]]
+
+    # Set delta time matrix
+    if hasattr(delta_t, '__iter__'):
+
+        # Set the magnitude lower edges
+        if isinstance(delta_t[0][1], str):
+            mag_low_edges = np.arange(1.0, 9.0, 0.2)
+            var_eval = {'m': mag_low_edges}
+        else:
+            mag_low_edges = np.array([1.0])
+
+        # Set the time lower edges
+        time_low_edges = np.array([t[0] for t in delta_t])
+
+    else:
+
+        # Set the magnitude lower edges
+        if isinstance(delta_t, str):
+            mag_low_edges = np.arange(MAG_MIN, MAG_MAX, MAG_DLT)
+            var_eval = {'m': mag_low_edges}
+        else:
+            mag_low_edges = np.array([1.0])
+
+        # Set the time lower edges
+        time_low_edges = np.array([delta_t])
+
+    # Populate the list with the deltatime instances. This is a
+    # composite numpy array.
+    types = [('dt', dt.timedelta, 1)]
+
+    gettd = dt.timedelta
+    data = []
+    for i_par, tpar in enumerate(delta_t):
+        if isinstance(tpar[1], str):
+            tmp = np.array([gettd(seconds=t) for t in eval(tpar[1], var_eval)])
+        else:
+            tmp = [gettd(seconds=float(tpar[1]))]
+        data.append(tmp)
+    # time_delta = np.array(data, dtype=types)
+    time_delta = np.array(data)
+
+    # Set delta ll matrix
+    if hasattr(delta_ll, '__iter__'):
+
+        # Set the magnitude lower edges
+        if isinstance(delta_ll[0][1], str):
+            mag_low_edges = np.arange(1.0, 9.0, 0.2)
+            var_eval = {'m': mag_low_edges}
+        else:
+            mag_low_edges = np.array([1.0])
+
+        # Set the time lower edges
+        time_low_edges = np.array([t[0] for t in delta_ll])
+
+    else:
+
+        # Set the magnitude lower edges
+        if isinstance(delta_ll, str):
+            mag_low_edges = np.arange(MAG_MIN, MAG_MAX, MAG_DLT)
+            var_eval = {'m': mag_low_edges}
+        else:
+            mag_low_edges = np.array([1.0])
+
+        # Set the time lower edges
+        time_low_edges = np.array([delta_ll])
+
+    # Populate the list with the deltatime instances. This is a
+    # composite numpy array.
+    types = [('dll', np.float32, 1)]
+    data = []
+    for i_par, tpar in enumerate(delta_ll):
+        if isinstance(tpar[1], str):
+            tmp = eval(tpar[1], var_eval)
+        else:
+            tmp = [tpar[1]]
+        data.append(tmp)
+    # ll_delta = np.array(data, dtype=types)
+    ll_delta = np.array(data)
+
+    return mag_low_edges, time_low_edges, time_delta, ll_delta
