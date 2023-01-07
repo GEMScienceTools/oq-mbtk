@@ -29,7 +29,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from openquake.baselib import sap
-from completeness_analysis import clean_completeness
+from openquake.cat.completeness.analysis import clean_completeness
 
 
 def get_xy(ctab, ymax=2015, rndx=0.0, rndy=0.0):

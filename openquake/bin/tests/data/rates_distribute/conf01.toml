@@ -1,0 +1,6 @@
+name = "Test Distribute Rates"
+
+[sources.00]
+bgr = 1.0
+agr = 4.8
+bgr_sig = 0.1

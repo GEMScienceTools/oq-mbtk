@@ -20,38 +20,74 @@
 # details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
 import os
+import json
 import h3
 import toml
-import json
 import shapely
+import warnings
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+from openquake.wkf.utils import get_list
 from openquake.wkf.utils import create_folder
-from openquake.baselib import sap
 
 
-def create_missing(missing, h3_level, a_value, b_value):
+def _get_rates(geohashes, a_value):
+
+    # Get coordinates and compute area [km2] of each cell
+    area = np.array([h3.cell_area(idx) for idx in geohashes])
+
+    # Compute the occurrence rate per km2 from a_gr and b_gr
+    numm = 10**(a_value)
+
+    # Compute the output a_value in each cell
+    a_cell = np.log10(numm * area)
+
+    return a_cell, area
+
+
+def create_missing(geohashes, a_value, b_value, a_cell=None, area=None):
     """
-    Create a dataframe with the same structure of the dataframe containing
-    basic information on point sources but for the points requiring a
-    baseline seismicity.
+    Create a dataframe with the same structure of the one containing
+    basic information on point sources but for the points requiring the
+    definition of a baseline seismicity.
+
+    :param geohashes:
+        A :class:`list` instance with the indexes of the point sources to be
+        created
+    :param a_value:
+        The a_gr value per km2
+    :param b_value:
+        The b_gr value
+    :param mmin:
+        The minimum value of magnitude to be used for the calculation of
+        seismicity
     """
-    coo = np.array([h3.h3_to_geo(idx) for idx in missing])
-    a = np.ones_like(coo[:, 0]) * a_value
-    b = np.ones_like(coo[:, 0]) * b_value
-    df = pd.DataFrame({'lon': coo[:, 0], 'lat': coo[:, 1], 'agr': a, 'bgr': b})
-    return df
+
+    # Coordinates
+    coo = np.array([h3.h3_to_geo(idx) for idx in geohashes])
+
+    # Compute the output a_value in each cell
+    if a_cell is None:
+        a_cell, _ = _get_rates(geohashes, a_value)
+    b_cell = np.ones_like(coo[:, 0]) * b_value
+
+    # Output dataframe
+    sdf = pd.DataFrame({'lon': coo[:, 1], 'lat': coo[:, 0], 'agr': a_cell,
+                        'bgr': b_cell})
+
+    return sdf
 
 
 def add_baseline_seismicity(folder_name: str, folder_name_out: str,
-                            fname_config: str, fname_poly: str, skip=[]):
+                            fname_config: str, fname_poly: str, use=[],
+                            skip=[]):
     """
 
     :param folder_name:
@@ -63,11 +99,21 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         A .toml file with the configuration parameters
     :param shapefile:
         The name of the shapefile containing the geometry of the polygons used
+    :param use:
+        A list with the IDs of sources that will be used
     :param skip:
-        A list with the sources that should be skipped [NOT ACTIVE!!!]
+        A list with the IDs of sources that should be skipped [NOT ACTIVE!!!]
     :returns:
         An updated set of .csv files
     """
+
+    if len(use) > 0:
+        use = get_list(use)
+
+    if len(skip) > 0:
+        if isinstance(skip, str):
+            skip = get_list(skip)
+        print('Skipping: ', skip)
 
     # Create output folder
     create_folder(folder_name_out)
@@ -77,6 +123,7 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
     h3_level = model['baseline']['h3_level']
     basel_agr = model['baseline']['a_value']
     basel_bgr = model['baseline']['b_value']
+    set_all_cells = model['baseline'].get('set_all_cells', False)
 
     # Read polygons
     polygons_gdf = gpd.read_file(fname_poly)
@@ -84,15 +131,29 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
     # Loop over the polygons
     polygons_gdf.sort_values(by="id", ascending=True, inplace=True)
     polygons_gdf.reset_index(drop=True, inplace=True)
+    for src_id, poly in polygons_gdf.iterrows():
 
-    for idx, poly in polygons_gdf.iterrows():
+        if (len(use) > 0 and src_id not in use) or (src_id in skip):
+            continue
 
         tmp = shapely.geometry.mapping(poly.geometry)
         geojson_poly = eval(json.dumps(tmp))
 
+        # Take the exterior in a Polygon and the first geometry in a
+        # MultiPolygon
+        if geojson_poly['type'] == "MultiPolygon":
+            tmp_coo = geojson_poly['coordinates'][0][0]
+            message = 'Taking the first polygon of a multipolygon'
+            warnings.warn(message, UserWarning)
+        elif geojson_poly['type'] == "Polygon":
+            tmp_coo = geojson_poly['coordinates'][0]
+        else:
+            raise ValueError('Unsupported Geometry')
+
         # Revert the positions of lons and lats
-        coo = [[c[1], c[0]] for c in geojson_poly['coordinates'][0]]
+        coo = [[c[1], c[0]] for c in tmp_coo]
         geojson_poly['coordinates'] = [coo]
+        geojson_poly['type'] = "Polygon"
 
         # Discretizing the polygon i.e. find all the hexagons covering the
         # polygon describing the current zone
@@ -100,19 +161,30 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
 
         # Read the file with the points obtained by the smoothing
         print("Source ID", poly.id)
-        fname = os.path.join(folder_name, '{:s}.csv'.format(poly.id))
-        df = pd.read_csv(fname)
+        if folder_name is None:
+            tmp_data = {'lon': [], 'lat': [], 'agr': [], 'bgr': []}
+            df = pd.DataFrame(data=tmp_data)
+        else:
+            fname = os.path.join(folder_name, f'{poly.id}.csv')
+            df = pd.read_csv(fname)
 
+        # Create a list with the geohashes of the points with a rate. This is
+        # the output of the smoothing.
         srcs_idxs = [
             h3.geo_to_h3(la, lo, h3_level) for lo, la in zip(df.lon, df.lat)]
         hxg_idxs = [hxg for hxg in hexagons]
 
+        # `missing` contains the number of cells used to discretize the polygon
+        # and without a rate
         missing = list(set(hxg_idxs) - set(srcs_idxs))
+
+        # This instead finds the cells with a rate lower that the minimum rate
+        # defined in the configuration file
         tmp = np.nonzero([df.agr <= basel_agr])[0]
 
         # If we don't miss cells and rates are all above the threshold there
         # is nothing else to do
-        fname = os.path.join(folder_name_out, "{:s}.csv".format(poly.id))
+        fname = os.path.join(folder_name_out, f'{poly.id}.csv')
         if len(missing) == 0 and len(tmp) == 0:
             df.to_csv(fname, index=False)
             continue
@@ -121,7 +193,8 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         idxs = np.nonzero(df.agr.to_numpy() <= basel_agr)[0]
         low = [srcs_idxs[i] for i in idxs]
 
-        # Removing the sources with activity below the threshold
+        # Remove the sources with activity below the threshold since these
+        # will be replaced by new new point sources
         df.drop(df.index[idxs], inplace=True)
 
         # Find the h3 indexes of the point sources either without seismicity
@@ -130,26 +203,12 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
 
         # Adding baseline seismicity to the dataframe for the current source
         if len(both) > 0:
-            tmp_df = create_missing(both, h3_level, basel_agr, basel_bgr)
-            df = df.append(tmp_df)
+            if set_all_cells is False:
+                tmp_df = create_missing(both, basel_agr, basel_bgr)
+                df = pd.concat([df, tmp_df])
+            else:
+                df = create_missing(hxg_idxs, basel_agr, basel_bgr)
 
         # Creating output file
         assert len(hxg_idxs) == df.shape[0]
         df.to_csv(fname, index=False)
-
-
-def main(folder_name: str, folder_name_out: str, fname_config: str,
-         fname_poly: str, skip=[]):
-
-    add_baseline_seismicity(folder_name, folder_name_out, fname_config,
-                            fname_poly, skip)
-
-
-main.folder_name = "The name of the folder with smoothing results per source"
-main.folder_name_out = "The name of the folder where to store the results"
-main.fname_config = ".toml configuration file"
-main.fname_poly = "The name of the shapefile with the polygons"
-main.skip = "A string containing a list of source IDs"
-
-if __name__ == '__main__':
-    sap.run(main)
