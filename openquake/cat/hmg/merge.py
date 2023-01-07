@@ -36,7 +36,7 @@ import datetime as dt
 import geopandas as gpd
 
 from openquake.cat.parsers.isf_catalogue_reader import ISFReader
-time_dfrom openquake.cat.parsers.converters import GenericCataloguetoISFParser
+from openquake.cat.parsers.converters import GenericCataloguetoISFParser
 from openquake.cat.isf_catalogue import get_delta_t
 
 warnings.filterwarnings('ignore')
