@@ -1238,12 +1238,12 @@ def get_delta_t(tmpl: Union[float, list]):
         same class with the same cardinality of the input `tmpl`
     """
     if not hasattr(tmpl, '__iter__'):
-        return [dt.timedelta(seconds=float(tmpl))]
+        return [float(tmpl)]
 
-    # Creating list
+    # Creating a list of timedeltas
     out = []
     for tmp in tmpl:
-        out.append([dt.timedelta(seconds=float(tmp[1])), int(tmp[1])])
+        out.append([int(tmp[0]), float(tmp[1])])
     return out
 
 
@@ -1259,8 +1259,12 @@ def get_threshold_matrices(delta_t, delta_ll):
     # If the input contain scalars we transform them into lists
     if not hasattr(delta_t, '__iter__'):
         delta_t = [[YEAR_MIN, delta_t]]
+    elif len(delta_t) == 1:
+        delta_t = [[YEAR_MIN, delta_t[0]]]
     if not hasattr(delta_ll, '__iter__'):
         delta_ll = [[YEAR_MIN, delta_ll]]
+    elif len(delta_ll) == 1:
+        delta_ll = [[YEAR_MIN, delta_ll[0]]]
 
     # Set delta time matrix
     if hasattr(delta_t, '__iter__'):
@@ -1305,7 +1309,6 @@ def get_threshold_matrices(delta_t, delta_ll):
     # Set delta ll matrix
     if hasattr(delta_ll, '__iter__'):
 
-        # Set the magnitude lower edges
         if isinstance(delta_ll[0][1], str):
             mag_low_edges = np.arange(1.0, 9.0, 0.2)
             var_eval = {'m': mag_low_edges}
