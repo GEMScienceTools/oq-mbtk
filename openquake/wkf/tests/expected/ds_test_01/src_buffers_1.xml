@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<nrml
+xmlns="http://openquake.org/xmlns/nrml/0.5"
+xmlns:gml="http://www.opengis.net/gml"
+>
+    <sourceModel
+    name="Distributed seismicity"
+    >
+        <sourceGroup
+        rup_interdep="indep"
+        src_interdep="indep"
+        tectonicRegion="Active Shallow Crust"
+        >
+            <multiPointSource
+            id="buf"
+            name="buf"
+            >
+                <multiPointGeometry>
+                    <gml:posList>
+                        0.5 -0.1 0.4 -0.1 0.4 -0.2 0.3 -0.1 0.3 -0.2 0.3 -0.3 0.2 -0.1 0.2 -0.2 0.2 -0.3 0.1 -0.1 0.1 -0.2 0.0 -0.1 -0.3 -0.3 -0.3 -0.4 -0.4 -0.3 -0.4 -0.4 -0.4 -0.5 -0.5 -0.4 -0.5 -0.5 -0.5 -0.6 -0.6 -0.5 -0.6 -0.6 -0.6 -0.7 -0.7 -0.6 -0.7 -0.7 -0.7 -0.8 -0.8 -0.7 -0.8 -0.8 -0.8 -0.9 -0.9 -0.8 -0.9 -0.9 -0.9 -1.0 -1.0 -0.9 -1.0 -1.0
+                    </gml:posList>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </multiPointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <multiMFD
+                kind="truncGutenbergRichterMFD"
+                size="34"
+                >
+                    <a_val>
+                        0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5
+                    </a_val>
+                    <b_val>
+                        1.0
+                    </b_val>
+                    <bin_width>
+                        0.1
+                    </bin_width>
+                    <max_mag>
+                        6.45
+                    </max_mag>
+                    <min_mag>
+                        5.05
+                    </min_mag>
+                </multiMFD>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="7.0" probability="1.0"/>
+                </hypoDepthDist>
+            </multiPointSource>
+        </sourceGroup>
+    </sourceModel>
+</nrml>
