@@ -60,7 +60,7 @@ def get_bounding_box(src):
 def get_data(src, coo_pnt_src, pnt_srcs, buffer=1.0):
     """
     Computes point sources within the bounding box and the corresponding
-    rrup distances
+    rjb distances
 
     :param src:
         An instance of
@@ -92,7 +92,7 @@ def get_data(src, coo_pnt_src, pnt_srcs, buffer=1.0):
     # Create the mesh
     mesh = Mesh(sel_pnt_coo[:, 0], sel_pnt_coo[:, 1])
 
-    # Get the fault surface and compute rrup
+    # Get the fault surface and compute rjb
     if isinstance(src, SimpleFaultSource):
         sfc = SimpleFaultSurface.from_fault_data(src.fault_trace,
                                                  src.upper_seismogenic_depth, 
@@ -101,9 +101,9 @@ def get_data(src, coo_pnt_src, pnt_srcs, buffer=1.0):
     else:
         raise ValueError('Not supported fault type')
 
-    rrup = sfc.get_min_distance(mesh)
+    rjb = sfc.get_joyner_boore_distance(mesh)
 
-    return idxs, sel_pnt_srcs, sel_pnt_coo, rrup
+    return idxs, sel_pnt_srcs, sel_pnt_coo, rjb
 
 
 def get_stacked_mfd(srcs: list, within_idx: list, binw: float):
@@ -207,14 +207,14 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
             # lat). `pnt_srcs` is a list containing the point sources that 
             # collectively describe the distributed seismicity souces provided as
             # input
-            pnt_ii, sel_pnt_srcs, sel_pnt_coo, rrup = get_data(src, coo_pnt_src,
+            pnt_ii, sel_pnt_srcs, sel_pnt_coo, rjb = get_data(src, coo_pnt_src,
                                                                pnt_srcs)
     
     
             if pnt_ii is not None:
     
                 # Find the index of points within the buffer zone
-                within_idx = np.nonzero(rrup < dst)[0]
+                within_idx = np.nonzero(rjb < dst)[0]
                 idxs = sorted([pnt_ii[i] for i in within_idx], reverse=True)
     
                 plt.plot(coo_pnt_src[idxs, 0], coo_pnt_src[idxs, 1], 'or', mfc='none') 
