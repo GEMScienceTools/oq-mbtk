@@ -156,9 +156,12 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
     ssm_faults = to_python(fname, sourceconv)
 
     # Loading all the point sources in the distributed seismicity model
-    coo_pnt_src = []
-    pnt_srcs = []
+#    coo_pnt_src = []
+#    pnt_srcs = []
+    ii = 0
     for fname in glob.glob(path_point_sources):
+        coo_pnt_src = []
+        pnt_srcs = []
 
         # Info
         logging.info(f'Processing: {fname}')
@@ -173,8 +176,9 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
         tssm = to_python(fname, sourceconv)
 
         # Removing this file 
-        tmp_fle = pathlib.Path(fname)
-        tmp_fle.unlink()
+#        print(fname)
+#        tmp_fle = pathlib.Path(fname)
+#        tmp_fle.unlink()
 
         # Processing
         tcoo = np.array([(p.location.longitude, p.location.latitude) for p in
@@ -182,75 +186,79 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
         pnt_srcs.extend(tssm[0])
         coo_pnt_src.extend(tcoo)
 
-    coo_pnt_src = np.array(coo_pnt_src)
-
-    # Getting the list of faults
-    faults = []
-    for grp in ssm_faults:
-        for s in grp:
-            faults.append(s)
-            
-    fig, axs = plt.subplots(1, 1)
-    plt.plot(coo_pnt_src[:, 0], coo_pnt_src[:, 1], '.') 
-
-    # Processing faults
-    buffer = []
-    bco = []
-    for src in faults:
-
-        # Getting the subset of point sources in the surrounding of the fault
-        # `src`. `coo_pnt_src` is a numpy.array with two columns (i.e. lon and 
-        # lat). `pnt_srcs` is a list containing the point sources that 
-        # collectively describe the distributed seismicity souces provided as
-        # input
-        pnt_ii, sel_pnt_srcs, sel_pnt_coo, rrup = get_data(src, coo_pnt_src,
-                                                           pnt_srcs)
-
-
-        if pnt_ii is not None:
-
-            # Find the index of points within the buffer zone
-            within_idx = np.nonzero(rrup < dst)[0]
-            idxs = sorted([pnt_ii[i] for i in within_idx], reverse=True)
-
-            plt.plot(coo_pnt_src[idxs, 0], coo_pnt_src[idxs, 1], 'or', mfc='none') 
-            
-            for isrc in idxs:
+        coo_pnt_src = np.array(coo_pnt_src)
+    
+        # Getting the list of faults
+        faults = []
+        for grp in ssm_faults:
+            for s in grp:
+                faults.append(s)
                 
-                # Updating mmax for the point source
-                # sel_pnt_srcs[isrc].mfd.max_mag = threshold_mag
-                pnt_srcs[isrc].mfd.max_mag = threshold_mag
-
-                # Adding point source to the buffer
-                buffer.append(pnt_srcs[isrc])
-                bco.append([coo_pnt_src[isrc, 0], coo_pnt_src[isrc, 1]])
-
-                # Removing the point source from the list of sources outside
-                # of buffers
-                pnt_srcs.remove(pnt_srcs[isrc])
-
-            mask = np.ones(len(coo_pnt_src), dtype=bool)
-            mask[pnt_ii[within_idx]] = False
-            coo_pnt_src = coo_pnt_src[mask, :]
-            
-        else:
-            continue
-
-        # Fault occurrences
-        ocf = np.array(src.mfd.get_annual_occurrence_rates())
-
-    bco = np.array(bco)
-    plt.plot(bco[:,0], bco[:,1], 'x')
-
-    tmpsrc = from_list_ps_to_multipoint(pnt_srcs, 'pnts')
-    fname_out = os.path.join(out_path, "src_points.xml")
-    write_source_model(fname_out, [tmpsrc], 'Distributed seismicity')
-    print('Created: {:s}'.format(fname_out))
-
-    tmpsrc = from_list_ps_to_multipoint(buffer, 'buf')
-    fname_out = os.path.join(out_path, "src_buffers.xml")
-    write_source_model(fname_out, [tmpsrc], 'Distributed seismicity')
-    print('Created: {:s}'.format(fname_out))
+        fig, axs = plt.subplots(1, 1)
+        plt.plot(coo_pnt_src[:, 0], coo_pnt_src[:, 1], '.') 
+    
+        # Processing faults
+        buffer_pts = []
+        bco = []
+        for src in faults:
+    
+            # Getting the subset of point sources in the surrounding of the fault
+            # `src`. `coo_pnt_src` is a numpy.array with two columns (i.e. lon and 
+            # lat). `pnt_srcs` is a list containing the point sources that 
+            # collectively describe the distributed seismicity souces provided as
+            # input
+            pnt_ii, sel_pnt_srcs, sel_pnt_coo, rrup = get_data(src, coo_pnt_src,
+                                                               pnt_srcs)
+    
+    
+            if pnt_ii is not None:
+    
+                # Find the index of points within the buffer zone
+                within_idx = np.nonzero(rrup < dst)[0]
+                idxs = sorted([pnt_ii[i] for i in within_idx], reverse=True)
+    
+                plt.plot(coo_pnt_src[idxs, 0], coo_pnt_src[idxs, 1], 'or', mfc='none') 
+                
+                for isrc in idxs:
+                    
+                    # Updating mmax for the point source
+                    # sel_pnt_srcs[isrc].mfd.max_mag = threshold_mag
+                    pnt_srcs[isrc].mfd.max_mag = threshold_mag
+    
+                    # Adding point source to the buffer
+                    buffer_pts.append(pnt_srcs[isrc])
+                    bco.append([coo_pnt_src[isrc, 0], coo_pnt_src[isrc, 1]])
+    
+                    # Removing the point source from the list of sources outside
+                    # of buffers
+                    pnt_srcs.remove(pnt_srcs[isrc])
+    
+                mask = np.ones(len(coo_pnt_src), dtype=bool)
+                mask[pnt_ii[within_idx]] = False
+                coo_pnt_src = coo_pnt_src[mask, :]
+                
+            else:
+                continue
+    
+            # Fault occurrences
+           # ocf = np.array(src.mfd.get_annual_occurrence_rates())
+    
+        bco = np.array(bco)
+        plt.plot(bco[:,0], bco[:,1], 'x')
+    
+    
+        tmpsrc = from_list_ps_to_multipoint(pnt_srcs, 'pnts')
+        fname_out = os.path.join(out_path, "src_points_{}".format(fname.split('_')[1]))
+        write_source_model(fname_out, [tmpsrc], 'Distributed seismicity')
+    
+        print('Created: {:s}'.format(fname_out))
+    
+        tmpsrc = from_list_ps_to_multipoint(buffer_pts, 'buf')
+        fname_out = os.path.join(out_path, "src_buffers_{}".format(fname.split('_')[1]))
+        write_source_model(fname_out, [tmpsrc], 'Distributed seismicity')
+        print('Created: {:s}'.format(fname_out))
+        
+        ii+=1
 
 
 
