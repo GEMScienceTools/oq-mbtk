@@ -84,7 +84,7 @@ defaults = {'name': 'unnamed',
             'rupture_mesh_spacing': 2.,
             'rupture_aspect_ratio': 2.,
             'minimum_fault_length': 5.,
-            'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
+            'tectonic_region_type': 'Active Shallow Crust',
             'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
             'magnitude_scaling_relation': 'Leonard2014_Interplate',
             'width_scaling_relation': 'Leonard2014_Interplate',
@@ -800,6 +800,12 @@ def line_from_trace_coords(trace_coords):
     :rtype:
         openquake.hazardlib.geo.line.Line
     """
+    if len(trace_coords) == 1:
+        try:
+            trace_coords = next(iter(trace_coords))
+        except:
+            print("Error: fault traces incorrectly defined")
+
     fault_trace = hz.geo.Line([hz.geo.Point(i[0], i[1])
                                for i in trace_coords])
 
