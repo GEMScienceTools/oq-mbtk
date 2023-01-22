@@ -33,7 +33,10 @@ function distribute_rates(folder_smooth::String, fname_config::String, folder_ou
         source_id = split(fname, '.')[1]
         
         # bgr
-        σb = config["sources"][source_id]["bgr_sig"]
+        σb = 0.0
+        if haskey(config["sources"][source_id], "bgr_sig")
+            σb = config["sources"][source_id]["bgr_sig"]
+        end
         bgr = config["sources"][source_id]["bgr"] + σb * eps_b
 
         # If for the current source the a value of the GR exists in the 
