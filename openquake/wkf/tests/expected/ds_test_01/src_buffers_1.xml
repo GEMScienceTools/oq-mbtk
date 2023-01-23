@@ -11,54 +11,564 @@ xmlns:gml="http://www.opengis.net/gml"
         src_interdep="indep"
         tectonicRegion="Active Shallow Crust"
         >
-            <multiPointSource
-            id="buf"
-            name="buf"
+            <pointSource
+            id="1"
+            name="point1"
             >
-                <multiPointGeometry>
-                    <gml:posList>
-                        0.5 -0.1 0.4 -0.1 0.4 -0.2 0.3 -0.1 0.3 -0.2 0.3 -0.3 0.2 -0.1 0.2 -0.2 0.2 -0.3 0.1 -0.1 0.1 -0.2 0.0 -0.1 -0.3 -0.3 -0.3 -0.4 -0.4 -0.3 -0.4 -0.4 -0.4 -0.5 -0.5 -0.4 -0.5 -0.5 -0.5 -0.6 -0.6 -0.5 -0.6 -0.6 -0.6 -0.7 -0.7 -0.6 -0.7 -0.7 -0.7 -0.8 -0.8 -0.7 -0.8 -0.8 -0.8 -0.9 -0.9 -0.8 -0.9 -0.9 -0.9 -1.0 -1.0 -0.9 -1.0 -1.0
-                    </gml:posList>
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            0.4 -0.2
+                        </gml:pos>
+                    </gml:Point>
                     <upperSeismoDepth>
                         2.0
                     </upperSeismoDepth>
                     <lowerSeismoDepth>
                         20.0
                     </lowerSeismoDepth>
-                </multiPointGeometry>
+                </pointGeometry>
                 <magScaleRel>
                     PointMSR
                 </magScaleRel>
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <multiMFD
-                kind="truncGutenbergRichterMFD"
-                size="34"
-                >
-                    <a_val>
-                        0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5
-                    </a_val>
-                    <b_val>
-                        1.0
-                    </b_val>
-                    <bin_width>
-                        0.1
-                    </bin_width>
-                    <max_mag>
-                        6.45
-                    </max_mag>
-                    <min_mag>
-                        5.05
-                    </min_mag>
-                </multiMFD>
+                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="7.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
                 <hypoDepthDist>
-                    <hypoDepth depth="7.0" probability="1.0"/>
+                    <hypoDepth depth="5.0" probability="1.0"/>
                 </hypoDepthDist>
-            </multiPointSource>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            0.4 -0.2
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="7.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="10.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            0.4 -0.2
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="7.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="15.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            0.2 -0.2
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="7.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="5.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            0.2 -0.2
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="10.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            0.2 -0.2
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="15.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -0.4 -0.4
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="5.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -0.4 -0.4
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="10.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -0.4 -0.4
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="15.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -0.6 -0.6
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="5.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -0.6 -0.6
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="10.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -0.6 -0.6
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="15.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -0.8 -0.8
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="5.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -0.8 -0.8
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="10.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -0.8 -0.8
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="15.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -1.0 -1.0
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="5.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -1.0 -1.0
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="10.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
+            <pointSource
+            id="1"
+            name="point1"
+            >
+                <pointGeometry>
+                    <gml:Point>
+                        <gml:pos>
+                            -1.0 -1.0
+                        </gml:pos>
+                    </gml:Point>
+                    <upperSeismoDepth>
+                        2.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        20.0
+                    </lowerSeismoDepth>
+                </pointGeometry>
+                <magScaleRel>
+                    PointMSR
+                </magScaleRel>
+                <ruptAspectRatio>
+                    1.0
+                </ruptAspectRatio>
+                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <nodalPlaneDist>
+                    <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
+                </nodalPlaneDist>
+                <hypoDepthDist>
+                    <hypoDepth depth="15.0" probability="1.0"/>
+                </hypoDepthDist>
+            </pointSource>
         </sourceGroup>
     </sourceModel>
 </nrml>

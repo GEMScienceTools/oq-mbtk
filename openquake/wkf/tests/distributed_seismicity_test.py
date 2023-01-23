@@ -49,14 +49,14 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
     
         # first create the point sources
         trt = 'Active Shallow Crust'
-        mfd = TruncatedGRMFD(min_mag=5., max_mag=6.5, bin_width=0.1, a_val=0.5, b_val=1.)
+        mfd = TruncatedGRMFD(min_mag=5., max_mag=7.5, bin_width=0.1, a_val=0.5, b_val=1.)
         npd = PMF([(1, NodalPlane(strike=0., dip=50, rake=90.))])
-        hpd = PMF([(1, 7.)])
+        hpd = PMF([(0.2, 5.),(0.5, 10.),(0.3, 15.)])
     
         for ii in ['1','2']:
             ya = -2
-            lon = np.arange(-2, 2, 0.1)
-            lat = np.arange(ya, ya+2, 0.1)
+            lon = np.arange(-2, 2, 0.2)
+            lat = np.arange(ya, ya+2, 0.2)
             ya += 2
             sources = []
             for lo in lon:
