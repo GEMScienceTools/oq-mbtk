@@ -28,6 +28,7 @@ import os
 import glob
 import shutil
 import pathlib
+import copy
 
 import logging
 import numpy as np
@@ -36,12 +37,14 @@ from openquake.hazardlib.tom import PoissonTOM
 from openquake.wkf.utils import _get_src_id, create_folder, get_list
 from openquake.hazardlib.nrml import to_python
 from openquake.hazardlib.geo.mesh import Mesh
+from openquake.hazardlib.geo import Point
 from openquake.hazardlib.sourceconverter import SourceConverter
 from openquake.mbt.tools.mfd import EEvenlyDiscretizedMFD
 from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.hazardlib.source import SimpleFaultSource, MultiPointSource
 from openquake.hazardlib.geo.surface import SimpleFaultSurface
 from openquake.hazardlib.mfd.multi_mfd import MultiMFD
+from openquake.hazardlib.pmf import PMF
 
 
 def get_bounding_box(src):
@@ -57,7 +60,7 @@ def get_bounding_box(src):
     return [min(coo[:, 0]), min(coo[:, 1]), max(coo[:, 0]), max(coo[:, 1])]
 
 
-def get_data(src, coo_pnt_src, pnt_srcs, buffer=1.0):
+def get_data(src, coo_pnt_src, pnt_srcs, dist_type='rjb', buffer=1.0):
     """
     Computes point sources within the bounding box and the corresponding
     rjb distances
@@ -69,29 +72,6 @@ def get_data(src, coo_pnt_src, pnt_srcs, buffer=1.0):
     :param pnt_srcs:
     """
 
-    # Get the bounding box
-    bbox = get_bounding_box(src)
-
-    # Find the point sources within the extended buffer arround the fault
-    # bounding box
-    idxs = np.nonzero((coo_pnt_src[:, 0] > bbox[0]-buffer) &
-                      (coo_pnt_src[:, 1] > bbox[1]-buffer) &
-                      (coo_pnt_src[:, 0] < bbox[2]+buffer) &
-                      (coo_pnt_src[:, 1] < bbox[3]+buffer))[0]
-    sel_pnt_srcs = [pnt_srcs[i] for i in idxs]
-
-    # No points selected
-    if len(sel_pnt_srcs) < 1:
-        return None, None, None, None
-
-    # Coordinates of the selected points i.e. points within the bounding box
-    # plus of the fault plus a buffers
-    sel_pnt_coo = np.array([(p.location.longitude, p.location.latitude) for p
-                            in sel_pnt_srcs])
-
-    # Create the mesh
-    mesh = Mesh(sel_pnt_coo[:, 0], sel_pnt_coo[:, 1])
-
     # Get the fault surface and compute rjb
     if isinstance(src, SimpleFaultSource):
         sfc = SimpleFaultSurface.from_fault_data(src.fault_trace,
@@ -101,9 +81,42 @@ def get_data(src, coo_pnt_src, pnt_srcs, buffer=1.0):
     else:
         raise ValueError('Not supported fault type')
 
-    rjb = sfc.get_joyner_boore_distance(mesh)
+    # Get the bounding box
+    if dist_type=='rjb':
+        bbox = get_bounding_box(src)
+    
+        # Find the point sources within the extended buffer arround the fault
+        # bounding box
+        idxs = np.nonzero((coo_pnt_src[:, 0] > bbox[0]-buffer) &
+                          (coo_pnt_src[:, 1] > bbox[1]-buffer) &
+                          (coo_pnt_src[:, 0] < bbox[2]+buffer) &
+                          (coo_pnt_src[:, 1] < bbox[3]+buffer))[0]
+        sel_pnt_srcs = [pnt_srcs[i] for i in idxs]
+    
+        # No points selected
+        if len(sel_pnt_srcs) < 1:
+            return None, None, None, None
+    
+        # Coordinates of the selected points i.e. points within the bounding box
+        # plus of the fault plus a buffers
+        sel_pnt_coo = np.array([(p.location.longitude, p.location.latitude) for p
+                                in sel_pnt_srcs])
+    
+        # Create the mesh
+        mesh = Mesh(sel_pnt_coo[:, 0], sel_pnt_coo[:, 1])
+    
+        # compute rjb
+        dist = sfc.get_joyner_boore_distance(mesh)
 
-    return idxs, sel_pnt_srcs, sel_pnt_coo, rjb
+    elif dist_type == 'rrup':
+        # crete the mesh
+        lld = pnt_srcs.location
+        lld.depth = pnt_srcs.hypocenter_distribution.data[0][1]
+        mesh = Mesh.from_points_list([lld])
+        idxs, sel_pnt_srcs, sel_pnt_coo = [], [], []
+        dist = sfc.get_min_distance(mesh)
+
+    return idxs, sel_pnt_srcs, sel_pnt_coo, dist 
 
 
 def get_stacked_mfd(srcs: list, within_idx: list, binw: float):
@@ -119,6 +132,28 @@ def get_stacked_mfd(srcs: list, within_idx: list, binw: float):
         else:
             tot_mfd.stack(srcs[idx].mfd)
     return tot_mfd
+
+
+def explode(srcs):
+    """
+    takes sources with hypocentral depth distribution and divides them into 
+    one source for each depth
+    """
+    exploded_srcs = []
+    for src in srcs:
+        hpd = src.hypocenter_distribution.data
+        for h in hpd:
+            nsrc = copy.deepcopy(src)
+            dep = h[1]
+            wei = h[0]
+            if 'TruncatedGRMFD' in str(type(src.mfd)):
+                nsrc.mfd.a_val = wei*src.mfd.a_val
+                nsrc.hypocenter_distribution = PMF([(1.0, dep)])
+            else:
+                print('Not implementd for MFD of type {}'.format(src.mfd))
+            exploded_srcs.append(nsrc)
+
+    return exploded_srcs
 
 
 def remove_buffer_around_faults(fname: str, path_point_sources: str,
@@ -221,12 +256,24 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
                 
                 for isrc in idxs:
                     
-                    # Updating mmax for the point source
-                    # sel_pnt_srcs[isrc].mfd.max_mag = threshold_mag
-                    pnt_srcs[isrc].mfd.max_mag = threshold_mag
+                    # explode sources
+                    pnt_srcs_exp = explode(pnt_srcs[isrc])
+                    
+                    for pnt_src_exp in pnt_srcs_exp:
+                        _, _, _, rrup = get_data(src, [], pnt_src_exp,
+                                                 dist_type='rrup')
+
+                        
+                        if rrup < dst:
+                        ## Updating mmax for the point source
+                            pnt_src_exp.mfd.max_mag = threshold_mag
+
+
+                    ## Updating mmax for the point source
+                    #pnt_srcs[isrc].mfd.max_mag = threshold_mag
     
                     # Adding point source to the buffer
-                    buffer_pts.append(pnt_srcs[isrc])
+                    buffer_pts.extend(pnt_srcs_exp)
                     bco.append([coo_pnt_src[isrc, 0], coo_pnt_src[isrc, 1]])
     
                     # Removing the point source from the list of sources outside
@@ -253,9 +300,11 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
     
         print('Created: {:s}'.format(fname_out))
     
-        tmpsrc = from_list_ps_to_multipoint(buffer_pts, 'buf')
+        # currently must print the buffer points as single point sources, then
+        # upgrade nrml because the function below won't handle correctly the 
+        # hypocentral distribution 
         fname_out = os.path.join(out_path, "src_buffers_{}".format(fname.split('_')[1]))
-        write_source_model(fname_out, [tmpsrc], 'Distributed seismicity')
+        write_source_model(fname_out, buffer_pts, 'Distributed seismicity')
         print('Created: {:s}'.format(fname_out))
         
         ii+=1
