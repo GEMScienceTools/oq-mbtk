@@ -66,7 +66,7 @@ class TestDatabaseIO(unittest.TestCase):
         for bo, to in zip(base_out['features'], test_out['features']):
             self.assertTrue(bo == to)
 
-    @unittest.skip('find better way to compare outputs!')
+#    @unittest.skip('find better way to compare outputs!')
     def test_build_model_from_db(self):
 
         # Target and reference files
@@ -100,10 +100,10 @@ class TestDatabaseIO(unittest.TestCase):
                                 defaults=self.defaults)
 
         # Compare files
-        raise unittest.SkipTest('Marco Pagani: this test is broken!')
+#        raise unittest.SkipTest('Marco Pagani: this test is broken!')
         self.assertTrue(filecmp.cmp(base_file, test_file))
 
-    @unittest.skip('find better way to compare outputs!')
+#    @unittest.skip('find better way to compare outputs!')
     def test_build_source_model_single_args(self):
 
         # Target and reference files
@@ -124,10 +124,10 @@ class TestDatabaseIO(unittest.TestCase):
 
         # Compare files
         
-        raise unittest.SkipTest('Marco Pagani: this test is broken!')
+#        raise unittest.SkipTest('Marco Pagani: this test is broken!')
         self.assertTrue(filecmp.cmp(base_file, test_file))
 
-    @unittest.skip('find better way to compare outputs!')
+#    @unittest.skip('find better way to compare outputs!')
     def test_build_source_model_dictionary(self):
 
         # Target and reference files
@@ -146,10 +146,10 @@ class TestDatabaseIO(unittest.TestCase):
                                         'm_min': 6.0})
 
         # Compare files
-        raise unittest.SkipTest('Marco Pagani: this test is broken!')
+  #      raise unittest.SkipTest('Marco Pagani: this test is broken!')
         self.assertTrue(filecmp.cmp(base_file, test_file))
 
-    @unittest.skip('find better way to compare outputs!')
+ #   @unittest.skip('find better way to compare outputs!')
     def test_build_source_model_config_file(self):
 
         # Configuration, target and reference files
@@ -163,5 +163,5 @@ class TestDatabaseIO(unittest.TestCase):
         fsm.build_fault_model(cfg_file=conf_file)
 
         # Compare files
-        raise unittest.SkipTest('Marco Pagani: this test is broken!')
+  #      raise unittest.SkipTest('Marco Pagani: this test is broken!')
         self.assertTrue(filecmp.cmp(base_file, test_file))
