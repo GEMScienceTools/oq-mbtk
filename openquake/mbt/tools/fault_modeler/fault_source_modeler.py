@@ -137,7 +137,7 @@ def build_model_from_db(fault_db,
 
 class FaultDatabase():
     """
-    The faul_database object is used to retrieve, add, modify and export
+    The fault_database object is used to retrieve, add, modify and export
     information from a database in geojson format
     """
 
@@ -170,23 +170,27 @@ class FaultDatabase():
 
                 # Update parameter keys only if explicitly requested
                 if update_keys:
+                    pml = {}
                     for k in param_map_local:
                         k_map = param_map_local[k]
                         if k_map in fault:
                             fault[k] = fault.pop(k_map)
+                            pml[k] = k
+                else:
+                    pml = param_map_local
 
                 # Process only faults in the selection list
                 if select_list is not None:
                     if not isinstance(select_list, (list, tuple)):
                         select_list = [select_list]
-                    if fault[param_map_local['source_id']] not in select_list:
+                    if fault[pml['source_id']] not in select_list:
                         continue
 
                 # Skip further processing for blacklisted faults
                 if black_list is not None:
                     if not isinstance(black_list, (list, tuple)):
                         black_list = [black_list]
-                    if fault[param_map_local['source_id']] in black_list:
+                    if fault[pml['source_id']] in black_list:
                         continue
 
                 # Get fault geometry
