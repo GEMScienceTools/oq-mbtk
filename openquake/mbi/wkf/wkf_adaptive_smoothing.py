@@ -77,20 +77,6 @@ def main(catalogue, h3_map, config, outputfile, plot=False):
     out["nocc"] = out["nocc"]
     out.to_csv(outputfile, header=True)
 
-    if plot is True:
-        plot_adaptive_smoothing(outputfile, cat)
-
-
-def plot_adaptive_smoothing(smoothingfile, mor_cat):
-    out = pd.read_csv(smoothingfile)
-    plt.scatter(out["lon"], out["lat"], c=out["nocc"], cmap="viridis")
-    plt.colorbar(label="event density")
-    plt.scatter(mor_cat.data['longitude'],
-                mor_cat.data['latitude'], s=0.5, c="k")
-    plt.xlabel("longitude")
-    plt.ylabel("latitude")
-    plt.show()
-
 
 descr = 'Instance of the openquake.hmtk.seismicity.catalogue.Catalogue class'
 main.catalogue = descr
