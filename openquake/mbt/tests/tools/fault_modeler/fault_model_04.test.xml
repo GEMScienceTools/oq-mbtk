@@ -4,7 +4,7 @@ xmlns="http://openquake.org/xmlns/nrml/0.5"
 xmlns:gml="http://www.opengis.net/gml"
 >
     <sourceModel
-    name="fault_model_01.test"
+    name="fault_model_04.test"
     >
         <sourceGroup
         rup_interdep="indep"
@@ -28,7 +28,7 @@ xmlns:gml="http://www.opengis.net/gml"
                         0.0
                     </upperSeismoDepth>
                     <lowerSeismoDepth>
-                        35.0
+                        25.0
                     </lowerSeismoDepth>
                 </simpleFaultGeometry>
                 <magScaleRel>
@@ -42,7 +42,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 minMag="6.05"
                 >
                     <occurRates>
-                        0.003224951893 0.002561670344 0.002034807083 0.001616304718 0.001283876473 0.001019819333 0.00081007129 0.000643462498 0.00051112043 0.000405997389 0.000322495189 0.000256167034
+                        0.000224245151 0.000178124255 0.000141489125 0.000112388807 8.9273603e-05 7.0912543e-05 5.6327835e-05 4.474279e-05 3.5540461e-05 2.8230792e-05
                     </occurRates>
                 </incrementalMFD>
                 <rake>
@@ -66,7 +66,7 @@ xmlns:gml="http://www.opengis.net/gml"
                         0.0
                     </upperSeismoDepth>
                     <lowerSeismoDepth>
-                        35.0
+                        25.0
                     </lowerSeismoDepth>
                 </simpleFaultGeometry>
                 <magScaleRel>
@@ -80,7 +80,45 @@ xmlns:gml="http://www.opengis.net/gml"
                 minMag="6.05"
                 >
                     <occurRates>
-                        0.000309454038 0.00024580808 0.000195252298 0.000155094413 0.000123195871 9.7857959e-05 7.773134e-05 6.1744198e-05 4.904516e-05
+                        1.6664666e-05 1.3237215e-05 1.0514693e-05 8.352118e-06 6.634323e-06 5.26983e-06 4.185975e-06 3.325038e-06
+                    </occurRates>
+                </incrementalMFD>
+                <rake>
+                    0.0
+                </rake>
+            </simpleFaultSource>
+            <simpleFaultSource
+            id="3"
+            name="unnamed"
+            >
+                <simpleFaultGeometry>
+                    <gml:LineString>
+                        <gml:posList>
+                            92.8749 49.6966 92.8841 49.6993 92.8902 49.7019 92.8998 49.7047 92.9154 49.7112 92.9275 49.714 92.9378 49.715 92.9562 49.717 92.9734 49.7235 92.9967 49.7329 93.0136 49.7399 93.0296 49.7454 93.0469 49.7503 93.0668 49.7545 93.0799 49.7574 93.1002 49.7643 93.1161 49.7669 93.1307 49.7709 93.1446 49.775 93.1532 49.7778
+                        </gml:posList>
+                    </gml:LineString>
+                    <dip>
+                        90.0
+                    </dip>
+                    <upperSeismoDepth>
+                        0.0
+                    </upperSeismoDepth>
+                    <lowerSeismoDepth>
+                        25.0
+                    </lowerSeismoDepth>
+                </simpleFaultGeometry>
+                <magScaleRel>
+                    Leonard2014_Interplate
+                </magScaleRel>
+                <ruptAspectRatio>
+                    2.0
+                </ruptAspectRatio>
+                <incrementalMFD
+                binWidth="0.1"
+                minMag="6.05"
+                >
+                    <occurRates>
+                        1.6812391e-05 1.3354557e-05 1.0607901e-05 8.426156e-06 6.693133e-06 5.316545e-06 4.223082e-06 3.354513e-06
                     </occurRates>
                 </incrementalMFD>
                 <rake>
