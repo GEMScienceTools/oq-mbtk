@@ -51,8 +51,9 @@ class RatesDistributeTestCase(unittest.TestCase):
 
         # Run the code
         conf = os.path.join(DATA, 'conf01.toml')
-        fmt = './wkf_rates_distribute.jl {:s} {:s} {:s}'
+        fmt = './../wkf_rates_distribute.jl {:s} {:s} {:s}'
         cmd = fmt.format(DATA, self.conf, self.out_folder)
+        print(cmd)
         subprocess.call(cmd, shell=True)
 
         # Test results
@@ -68,7 +69,7 @@ class RatesDistributeTestCase(unittest.TestCase):
 
         # Run the code
         conf = os.path.join(DATA, 'conf01.toml')
-        fmt = './wkf_rates_distribute.jl {:s} {:s} {:s} -r 1'
+        fmt = './../wkf_rates_distribute.jl {:s} {:s} {:s} -r 1'
         cmd = fmt.format(DATA, conf, self.out_folder)
         out = subprocess.call(cmd, shell=True)
 
@@ -79,7 +80,7 @@ class RatesDistributeTestCase(unittest.TestCase):
         """ Test the mean value + 1std for b and rate """
 
         # Run the code
-        fmt = './wkf_rates_distribute.jl {:s} {:s} {:s} -r {:.1f} -b {:.1f}'
+        fmt = './../wkf_rates_distribute.jl {:s} {:s} {:s} -r {:.1f} -b {:.1f}'
         cmd = fmt.format(DATA, self.conf, self.out_folder, 1.0, 1.0)
         subprocess.call(cmd, shell=True)
 
@@ -94,7 +95,7 @@ class RatesDistributeTestCase(unittest.TestCase):
         """ Test the mean value + 1std for rate """
 
         # Run the code
-        fmt = './wkf_rates_distribute.jl {:s} {:s} {:s} -r {:.1f}'
+        fmt = './../wkf_rates_distribute.jl {:s} {:s} {:s} -r {:.1f}'
         cmd = fmt.format(DATA, self.conf, self.out_folder, 2.0)
         subprocess.call(cmd, shell=True)
 
