@@ -26,8 +26,11 @@ function distribute_rates(folder_smooth::String, fname_config::String, folder_ou
     config = TOML.parsefile(fname_config)
     
     # Loop over the zones
-    pattern = joinpath(folder_smooth, "*.csv")
-    for tmps in glob(pattern)
+    # This is how we used to do this. Now changed in order to make it work 
+    # also on windows
+    #pattern = joinpath(folder_smooth, "*.csv") 
+    #for tmps in glob(pattern)
+    for tmps in glob("*.csv", folder_smooth)
 
         fname = splitdir(tmps)[2]
         source_id = split(fname, '.')[1]
