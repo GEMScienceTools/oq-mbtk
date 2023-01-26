@@ -95,7 +95,7 @@ def get_data(src, coo_pnt_src, pnt_srcs, buffer=1.0):
     # Get the fault surface and compute rrup
     if isinstance(src, SimpleFaultSource):
         sfc = SimpleFaultSurface.from_fault_data(src.fault_trace,
-                                                 src.upper_seismogenic_depth, 
+                                                 src.upper_seismogenic_depth,
                                                  src.lower_seismogenic_depth,
                                                  src.dip, 1.0)
     else:
@@ -123,7 +123,8 @@ def get_stacked_mfd(srcs: list, within_idx: list, binw: float):
 
 def remove_buffer_around_faults(fname: str, path_point_sources: str,
                                 out_path: str, dst: float,
-                                threshold_mag: float = 6.5, use: str=''):
+                                threshold_mag: float = 6.5,
+                                use: str='', remove=False):
     """
     Remove the seismicity above a magnitude threshold for all the point
     sources within a buffer around faults.
@@ -138,12 +139,12 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
     :param dst:
         The distance in km of the buffer
     :param dst:
-        The threshold distance used to separate seismicity on the fault and 
+        The threshold distance used to separate seismicity on the fault and
         in the distributed seismicity sources
     :returns:
         A .xml file with the ajusted point sources
     """
-    
+
     if len(use) > 0:
         use = get_list(use)
 
@@ -172,9 +173,10 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
         # Reading file content
         tssm = to_python(fname, sourceconv)
 
-        # Removing this file 
+        # Removing this file
         tmp_fle = pathlib.Path(fname)
-        tmp_fle.unlink()
+        if remove:
+            tmp_fle.unlink()
 
         # Processing
         tcoo = np.array([(p.location.longitude, p.location.latitude) for p in
@@ -189,9 +191,9 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
     for grp in ssm_faults:
         for s in grp:
             faults.append(s)
-            
+
     fig, axs = plt.subplots(1, 1)
-    plt.plot(coo_pnt_src[:, 0], coo_pnt_src[:, 1], '.') 
+    plt.plot(coo_pnt_src[:, 0], coo_pnt_src[:, 1], '.')
 
     # Processing faults
     buffer = []
@@ -199,8 +201,8 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
     for src in faults:
 
         # Getting the subset of point sources in the surrounding of the fault
-        # `src`. `coo_pnt_src` is a numpy.array with two columns (i.e. lon and 
-        # lat). `pnt_srcs` is a list containing the point sources that 
+        # `src`. `coo_pnt_src` is a numpy.array with two columns (i.e. lon and
+        # lat). `pnt_srcs` is a list containing the point sources that
         # collectively describe the distributed seismicity souces provided as
         # input
         pnt_ii, sel_pnt_srcs, sel_pnt_coo, rrup = get_data(src, coo_pnt_src,
@@ -213,10 +215,10 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
             within_idx = np.nonzero(rrup < dst)[0]
             idxs = sorted([pnt_ii[i] for i in within_idx], reverse=True)
 
-            plt.plot(coo_pnt_src[idxs, 0], coo_pnt_src[idxs, 1], 'or', mfc='none') 
-            
+            plt.plot(coo_pnt_src[idxs, 0], coo_pnt_src[idxs, 1], 'or', mfc='none')
+
             for isrc in idxs:
-                
+
                 # Updating mmax for the point source
                 # sel_pnt_srcs[isrc].mfd.max_mag = threshold_mag
                 pnt_srcs[isrc].mfd.max_mag = threshold_mag
@@ -232,7 +234,7 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
             mask = np.ones(len(coo_pnt_src), dtype=bool)
             mask[pnt_ii[within_idx]] = False
             coo_pnt_src = coo_pnt_src[mask, :]
-            
+
         else:
             continue
 
