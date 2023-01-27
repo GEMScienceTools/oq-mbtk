@@ -49,7 +49,7 @@ def information_gain(catalogue, h3_map, h3_level, smooth_out, T = 1, for_zone = 
     '''
     colnames = ["h3_cell", "zid"]
     h3_idx = pd.read_csv(h3_map, names=colnames, header = None)
-    print(len(h3_idx))
+    
     cat_df = pd.read_csv(catalogue)
     cat_df = gpd.GeoDataFrame(cat_df, crs='epsg:4326', geometry=[Point(xy) for xy
                        in zip(cat_df.longitude, cat_df.latitude)])
@@ -57,7 +57,7 @@ def information_gain(catalogue, h3_map, h3_level, smooth_out, T = 1, for_zone = 
     smoothed = pd.read_csv(smooth_out)
     smoothed = gpd.GeoDataFrame(smoothed, crs='epsg:4326', geometry=[Point(xy) for xy
                        in zip(smoothed.lon, smoothed.lat)])
-    print(len(smoothed))
+    
     
     # Find which cell each event in the catalogue belongs to    
     h3_cell_c = [0]*len(cat_df)
@@ -75,8 +75,6 @@ def information_gain(catalogue, h3_map, h3_level, smooth_out, T = 1, for_zone = 
     
     # Only keep cells where smoothed value is in h3_map
     to_use = smoothed[smoothed['h3_cell'].isin(list(h3_idx.h3_cell))]
-    print("kept cells")
-    print(len(to_use))
     
     # count events in each h3 cell
     event_count = [0]*len(h3_idx)
