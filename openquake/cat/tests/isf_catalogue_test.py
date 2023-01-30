@@ -174,7 +174,7 @@ class MergeGenericCatalogueTest(unittest.TestCase):
                 utc_time_zone=timezone, buff_t=dt.timedelta(0), buff_ll=0,
                 use_ids=True, logfle=None)
         self.assertIn('isf_catalogue.py', cm.filename)
-        self.assertEqual(857, cm.lineno)
+        self.assertEqual(835, cm.lineno)
 
 
 class GetThresholdMatricesTest(unittest.TestCase):
