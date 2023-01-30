@@ -174,7 +174,7 @@ class MergeGenericCatalogueTest(unittest.TestCase):
                 utc_time_zone=timezone, buff_t=dt.timedelta(0), buff_ll=0,
                 use_ids=True, logfle=None)
         self.assertIn('isf_catalogue.py', cm.filename)
-        self.assertEqual(842, cm.lineno)
+        self.assertEqual(857, cm.lineno)
 
 
 class GetThresholdMatricesTest(unittest.TestCase):
@@ -193,15 +193,17 @@ class GetThresholdMatricesTest(unittest.TestCase):
     def test_gmtx02(self):
         """ Case with list of scalars """
 
-        delta_t = [[1900, 30.0], [1960, 20.0]]
-        delta_ll = [[1900, 0.3], [1980, 0.2]]
+        delta_t = [[1900, 30.0], [1960, 20.0], [1980, 20.0]]
+        delta_ll = [[1900, 0.3], [1960, 0.2], [1980, 0.2]]
         mage, timee, time_d, ll_d = get_threshold_matrices(delta_t, delta_ll)
 
         expected = np.array([t[1] for t in delta_t])
         computed = np.array([t[0].total_seconds() for t in time_d])
         np.testing.assert_almost_equal(computed, expected)
 
-        expected = np.transpose(np.array([[t[1] for t in delta_ll]]))
+        expected = np.ones((3, 40))
+        expected[0, :] = 0.3
+        expected[1:, :] = 0.2
         computed = ll_d
         np.testing.assert_almost_equal(computed, expected)
 
@@ -209,7 +211,7 @@ class GetThresholdMatricesTest(unittest.TestCase):
         """ Case with a list of functions """
 
         delta_t = [[1900, '5*m'], [1960, '2.5*m']]
-        delta_ll = [[1900, '0.1*m'], [1980, '0.05*m']]
+        delta_ll = [[1900, '0.1*m'], [1960, '0.05*m']]
         mage, timee, time_d, ll_d = get_threshold_matrices(delta_t, delta_ll)
 
         mags = np.arange(1.0, 9.0, 0.2)

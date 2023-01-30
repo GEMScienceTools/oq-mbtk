@@ -605,14 +605,6 @@ class ISFCatalogue(object):
         if isinstance(buff_t, float):
             buff_t = dt.timedelta(seconds=buff_t)
 
-        # Check that the delta values for ll and t have the same reference
-        # years
-        if hasattr(delta_ll, '__iter__'):
-            assert hasattr(delta_t, '__iter__')
-            yea1 = [t[0] for t in delta_ll]
-            yea2 = [t[0] for t in delta_t]
-            np.testing.assert_array_equal(yea1, yea2)
-
         if logfle:
             fou = open(logfle, 'w', encoding="utf-8")
             fname_geojson = os.path.splitext(logfle)[0]+"_secondary.geojson"
@@ -662,7 +654,8 @@ class ISFCatalogue(object):
             # when delta_ll varies with time.
             magnitude = event.magnitudes[0].value
             idx_mag = max(np.argwhere(magnitude > mag_low_edges))[0]
-            idx_t = max(np.argwhere(dtime_a.year > time_low_edges))[0]
+            tmp_val = np.float64(dtime_a.year)
+            idx_t = max(np.argwhere(tmp_val > time_low_edges))[0]
 
             ll_thrs = ll_d[idx_t][idx_mag]
             sel_thrs = time_d[idx_t][idx_mag]
@@ -1238,7 +1231,7 @@ def get_delta_t(tmpl: Union[float, list]):
         same class with the same cardinality of the input `tmpl`
     """
     if not hasattr(tmpl, '__iter__'):
-        return [float(tmpl)]
+        return float(tmpl)
 
     # Creating a list of timedeltas
     out = []
@@ -1250,46 +1243,34 @@ def get_delta_t(tmpl: Union[float, list]):
 def get_threshold_matrices(delta_t, delta_ll):
     """
     :param delta_t:
-        This can be a float, a string representing or a list of tuples where
-        the first element is a year and the second one, again, either a
-        float (i.e. a Δ in seconds) or a string representing a function
+        This can be:
+            - A float
+            - A string representing a function
+            - A list of tuples (first element a year, second element a Δ in
+            seconds)
+            - A list of tuples (first element a year, second element a string
+            describing a function of Δ)
     :param delta_ll:
     """
 
-    # If the input contain scalars we transform them into lists
+    # Homogenize the delta_t
     if not hasattr(delta_t, '__iter__'):
+        # This handles the case when delta_t is a scalar of a string
         delta_t = [[YEAR_MIN, delta_t]]
-    elif len(delta_t) == 1:
-        delta_t = [[YEAR_MIN, delta_t[0]]]
-    if not hasattr(delta_ll, '__iter__'):
+        assert not hasattr(delta_ll, '__iter__')
         delta_ll = [[YEAR_MIN, delta_ll]]
-    elif len(delta_ll) == 1:
-        delta_ll = [[YEAR_MIN, delta_ll[0]]]
+
+    if hasattr(delta_t, '__iter__'):
+        yea1 = np.array([float(t[0]) for t in delta_t])
+        yea2 = np.array([float(t[0]) for t in delta_ll])
+        np.testing.assert_array_equal(yea1, yea2)
 
     # Set delta time matrix
-    if hasattr(delta_t, '__iter__'):
+    mag_low_edges = np.arange(1.0, 9.0, 0.2)
+    var_eval = {'m': mag_low_edges}
 
-        # Set the magnitude lower edges
-        if isinstance(delta_t[0][1], str):
-            mag_low_edges = np.arange(1.0, 9.0, 0.2)
-            var_eval = {'m': mag_low_edges}
-        else:
-            mag_low_edges = np.array([1.0])
-
-        # Set the time lower edges
-        time_low_edges = np.array([t[0] for t in delta_t])
-
-    else:
-
-        # Set the magnitude lower edges
-        if isinstance(delta_t, str):
-            mag_low_edges = np.arange(MAG_MIN, MAG_MAX, MAG_DLT)
-            var_eval = {'m': mag_low_edges}
-        else:
-            mag_low_edges = np.array([1.0])
-
-        # Set the time lower edges
-        time_low_edges = np.array([delta_t])
+    # Set the time lower edges
+    time_low_edges = np.array([t[0] for t in delta_t])
 
     # Populate the list with the deltatime instances. This is a
     # composite numpy array.
@@ -1301,34 +1282,12 @@ def get_threshold_matrices(delta_t, delta_ll):
         if isinstance(tpar[1], str):
             tmp = np.array([gettd(seconds=t) for t in eval(tpar[1], var_eval)])
         else:
-            tmp = [gettd(seconds=float(tpar[1]))]
+            tmp = gettd(seconds=float(tpar[1])) * np.ones_like(mag_low_edges)
         data.append(tmp)
-    # time_delta = np.array(data, dtype=types)
     time_delta = np.array(data)
 
-    # Set delta ll matrix
-    if hasattr(delta_ll, '__iter__'):
-
-        if isinstance(delta_ll[0][1], str):
-            mag_low_edges = np.arange(1.0, 9.0, 0.2)
-            var_eval = {'m': mag_low_edges}
-        else:
-            mag_low_edges = np.array([1.0])
-
-        # Set the time lower edges
-        time_low_edges = np.array([t[0] for t in delta_ll])
-
-    else:
-
-        # Set the magnitude lower edges
-        if isinstance(delta_ll, str):
-            mag_low_edges = np.arange(MAG_MIN, MAG_MAX, MAG_DLT)
-            var_eval = {'m': mag_low_edges}
-        else:
-            mag_low_edges = np.array([1.0])
-
-        # Set the time lower edges
-        time_low_edges = np.array([delta_ll])
+    # Set the time lower edges
+    time_low_edges = np.array([float(t[0]) for t in delta_ll])
 
     # Populate the list with the deltatime instances. This is a
     # composite numpy array.
@@ -1338,9 +1297,8 @@ def get_threshold_matrices(delta_t, delta_ll):
         if isinstance(tpar[1], str):
             tmp = eval(tpar[1], var_eval)
         else:
-            tmp = [tpar[1]]
+            tmp = tpar[1] * np.ones_like(mag_low_edges)
         data.append(tmp)
-    # ll_delta = np.array(data, dtype=types)
     ll_delta = np.array(data)
 
     return mag_low_edges, time_low_edges, time_delta, ll_delta
