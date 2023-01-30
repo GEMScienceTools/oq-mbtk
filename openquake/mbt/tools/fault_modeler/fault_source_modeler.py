@@ -58,85 +58,6 @@ option_types = {'b_value': float,
 
 
 # -----------------------------------------------------------------------------
-
-def build_fault_model(cfg_file=None,
-                      geojson_file=None,
-                      xml_output=None,
-                      black_list=None,
-                      select_list=None,
-                      project_name=None,
-                      width_method='seismo_depth',
-                      oqt_source=False,
-                      param_map=None,
-                      defaults=None,
-                      **kwargs):
-    """
-    Main interface to create the fault source model from an active fault
-    database in geojson format.
-    Priority for the optional parameters is set to:
-        1) single arguments
-        2) dictionary
-        3) .ini file
-    """
-
-    param_map_local = deepcopy(fmu.param_map)
-    defaults_local = deepcopy(fmu.defaults)
-
-    # Import arguments from INI configuration file
-    if cfg_file is not None:
-        cfg_dict = read_config_file(cfg_file)
-        basedir = pathlib.Path(cfg_file).parent
-
-        if 'config' in cfg_dict:
-            config = cfg_dict['config']
-            if 'geojson_file' in config:
-                geojson_file = basedir / config['geojson_file']
-            if 'xml_output' in config:
-                xml_output = config['xml_output']
-            if 'black_list' in config:
-                black_list = ast.literal_eval(
-                                config['black_list'])
-            if 'select_list' in config:
-                select_list = ast.literal_eval(
-                                config['select_list'])
-
-        if 'param_map' in cfg_dict:
-            param_map_local.update(cfg_dict['param_map'])
-        if 'defaults' in cfg_dict:
-            defaults_local.update(cfg_dict['defaults'])
-
-    if param_map is not None:
-        param_map_local.update(param_map)
-    if defaults is not None:
-        defaults_local.update(defaults)
-
-    for key in kwargs:
-        defaults_local[key] = kwargs[key]
-
-    # Import the fault database from geojson
-    if geojson_file is not None:
-        fault_db = FaultDatabase()
-        fault_db.import_from_geojson(geojson_file,
-                                     black_list=black_list,
-                                     select_list=select_list,
-                                     param_map=param_map_local)
-    else:
-        print('Geojson file not found')
-        return
-
-    # Create the fault source model in xml_format
-    srcl = build_model_from_db(fault_db,
-                               xml_output,
-                               width_method=width_method,
-                               oqt_source=oqt_source,
-                               project_name=project_name,
-                               param_map=param_map_local,
-                               defaults=defaults_local)
-
-    if xml_output is None:
-        return srcl
-
-
 # -----------------------------------------------------------------------------
 
 def read_config_file(cfg_file):
@@ -216,7 +137,7 @@ def build_model_from_db(fault_db,
 
 class FaultDatabase():
     """
-    The faul_database object is used to retrieve, add, modify and export
+    The fault_database object is used to retrieve, add, modify and export
     information from a database in geojson format
     """
 
@@ -249,23 +170,27 @@ class FaultDatabase():
 
                 # Update parameter keys only if explicitly requested
                 if update_keys:
+                    pml = {}
                     for k in param_map_local:
                         k_map = param_map_local[k]
                         if k_map in fault:
                             fault[k] = fault.pop(k_map)
+                            pml[k] = k
+                else:
+                    pml = param_map_local
 
                 # Process only faults in the selection list
                 if select_list is not None:
                     if not isinstance(select_list, (list, tuple)):
                         select_list = [select_list]
-                    if fault[param_map_local['source_id']] not in select_list:
+                    if fault[pml['source_id']] not in select_list:
                         continue
 
                 # Skip further processing for blacklisted faults
                 if black_list is not None:
                     if not isinstance(black_list, (list, tuple)):
                         black_list = [black_list]
-                    if fault[param_map_local['source_id']] in black_list:
+                    if fault[pml['source_id']] in black_list:
                         continue
 
                 # Get fault geometry
@@ -312,43 +237,103 @@ class FaultDatabase():
 
 # -----------------------------------------------------------------------------
 
-def main(argv):
+
+def build_fault_model(*, cfg_file=None,
+                      geojson_file=None,
+                      xml_output=None,
+                      black_list=None,
+                      select_list=None,
+                      project_name=None,
+                      width_method='seismo_depth',
+                      oqt_source=False,
+                      param_map=None,
+                      defaults=None,
+                      **kwargs):
     """
-    Command line interface of the tool
+    Main interface to create the fault source model from an active fault
+    database in geojson format.
+    Priority for the optional parameters is set to:
+        1) single arguments
+        2) dictionary
+        3) .ini file
     """
 
-    p = sap.Script(build_fault_model)
-    p.opt(name='cfg_file',
-          help='Parameter configuration file (.ini)',
-          abbrev='-cfg',
-          metavar='\'*.ini\'')
-    p.opt(name='geojson_file',
-          help='Fault database in geojson format',
-          abbrev='-geo',
-          metavar='\'*.geojson\'')
-    p.opt(name='xml_output',
-          help='Output xml containing the fault model',
-          abbrev='-xml',
-          metavar='\'*.xml\'')
-    p.opt(name='black_list',
-          help='List of fault IDs NOT to be processed [id1,id2]',
-          type=ast.literal_eval, abbrev='-h')
-    p.opt(name='select_list',
-          help='List of selected fault IDs to be processed [id1,id2]',
-          type=ast.literal_eval, abbrev='-h')
-    p.opt(name='project_name',
-          help='Name of the current project', abbrev='-h')
-    p.opt(name='width_method',
-          help='Method to compute the fault width', abbrev='-h')
-    p.opt(name='oqt_source',
-          help='Switch between hazardlib and oq-mbt source formats',
-          abbrev='-h')
+    param_map_local = deepcopy(fmu.param_map)
+    defaults_local = deepcopy(fmu.defaults)
 
-    if len(argv) < 1:
-        print(p.help())
+    # Import arguments from INI configuration file
+    if cfg_file is not None:
+        cfg_dict = read_config_file(cfg_file)
+        basedir = pathlib.Path(cfg_file).parent
+
+        if 'config' in cfg_dict:
+            config = cfg_dict['config']
+            if 'geojson_file' in config:
+                geojson_file = basedir / config['geojson_file']
+            if 'xml_output' in config:
+                xml_output = config['xml_output']
+            if 'black_list' in config:
+                black_list = ast.literal_eval(
+                                config['black_list'])
+            if 'select_list' in config:
+                select_list = ast.literal_eval(
+                                config['select_list'])
+
+        if 'param_map' in cfg_dict:
+            param_map_local.update(cfg_dict['param_map'])
+        if 'defaults' in cfg_dict:
+            defaults_local.update(cfg_dict['defaults'])
+
+    if param_map is not None:
+        param_map_local.update(param_map)
+    if defaults is not None:
+        defaults_local.update(defaults)
+
+    for key in kwargs:
+        defaults_local[key] = kwargs[key]
+
+    # Import the fault database from geojson
+    if geojson_file is not None:
+        fault_db = FaultDatabase()
+        fault_db.import_from_geojson(geojson_file,
+                                     black_list=black_list,
+                                     select_list=select_list,
+                                     param_map=param_map_local)
     else:
-        p.callfunc()
+        print('Geojson file not found')
+        return
+
+    # Create the fault source model in xml_format
+    srcl = build_model_from_db(fault_db,
+                               xml_output,
+                               width_method=width_method,
+                               oqt_source=oqt_source,
+                               project_name=project_name,
+                               param_map=param_map_local,
+                               defaults=defaults_local)
+
+    if xml_output is None:
+        return srcl
+
+
+
+    msg = 'Parameter configuration file (.ini)'
+    build_fault_model.cfg_file = msg
+    msg = 'Fault database in geojson format'
+    build_fault_model.geojson_file = msg
+    msg = 'Output xml containing the fault model'
+    build_fault_model.xml_output = msg
+    msg = 'List of fault IDs NOT to be processed [id1,id2]'
+    build_fault_model.black_list = msg
+    msg = 'List of selected fault IDs to be processed [id1,id2]'
+    build_fault_model.select_list = msg
+    msg = 'Name of the current project'
+    build_fault_model.project_name = msg
+    msg = 'Method to compute the fault width'
+    build_fault_model.width_method = msg
+    msg = 'Switch between hazardlib and oq-mbt source formats'
+    build_fault_model.oqt_source = msg
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sap.run(build_fault_model)

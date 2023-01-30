@@ -26,28 +26,41 @@
 
 import os
 import re
+import sys
+from pathlib import Path
+
 import h3
 import toml
 import numpy as np
 import geopandas as gpd
 import openquake.ghm.mosaic as mosaic
 
-from pathlib import Path
 from shapely.geometry import Polygon
 from openquake.ghm.utils import explode
 from openquake.baselib import sap
+
+INFO = False
 
 EXAMPLE = """
 [main]
 
 # Name of the shapefile containing the borders of countries
-borders_fname = '../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp'
+# borders_fname = '../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp'
+borders_fname = '/Users/mpagani/Documents/2022/diary/08/19_remapping_mosaic/gadm_410_level_0.gpkg'
+
+# This can be either 'FIPS_CNTRY' or 'GID_0' depending on the shapefile
+country_column = 'FIPS_CNTRY'
 
 # Buffer distance [m]
 buffer = 50000
 
 # Grid resolution
-h3_resolution = 5
+h3_resolution = 6
+
+[site_model]
+
+# This file is usually quite big and, therefore, stored locally. Path must be adjusted accordingly
+ncfile = "/Users/mpagani/Repos/gem-hazard-data/vs30/global_vs30.grd"
 """
 
 
@@ -83,20 +96,52 @@ def create_query(inpt, field, labels):
 
 
 def main(model, folder_out, fname_conf, example=False):
-    """
-    Tool for creating an equally spaced set of points covering a model in the
-    global hazard mosaic.
-    """
 
     # Prints an example of configuration file
     if example:
         print(EXAMPLE)
-        exit(0)
+        sys.exit(0)
 
     # Set model key
     conf = toml.load(fname_conf)
+    root_path = Path(fname_conf).parents[0]
 
-    in_file = conf['main']['borders_fname']
+    # Getting the coordinates of the sites
+    sites, sites_indices, one_polygon, selection = _get_sites(
+        model, folder_out, conf, root_path)
+
+    Path(folder_out).mkdir(parents=True, exist_ok=True)
+
+    # Output shapefile file
+    out_file = os.path.join(folder_out, f'{model}.geojson')
+    one_polygon.columns = one_polygon.columns.astype(str)
+    one_polygon.to_file(out_file, driver='GeoJSON')
+    selection.to_file('/tmp/chk.shp')
+
+    # Params
+    h3_resolution = conf['main']['h3_resolution']
+
+    # Output file with grid
+    out_file = os.path.join(folder_out, f'{model}_res{h3_resolution}.csv')
+    np.savetxt(out_file, sites, delimiter=",")
+
+
+def _get_sites(model, folder_out, conf, root_path=''):
+    """
+    Tool for creating an equally spaced set of points covering a model in the
+    global hazard mosaic.
+
+    :param root_path:
+        The path to the file with the confifuration i.e. the file used as a
+        reference for specifying the relative paths in the configuration
+        dictionary
+    """
+
+    if not os.path.isabs(conf['main']['borders_fname']):
+        in_file = os.path.join(root_path, conf['main']['borders_fname'])
+    else:
+        in_file = conf['main']['borders_fname']
+
     buffer_dist = conf['main']['buffer']
     h3_resolution = conf['main']['h3_resolution']
 
@@ -106,15 +151,17 @@ def main(model, folder_out, fname_conf, example=False):
     #    print('ucerf')
     # in_file = os.path.join(inpath, fname)
 
-    country_column = 'FIPS_CNTRY'
-    country_column = 'GID_0'
+    country_column = conf['main']['country_column']
+    SUBSETS = mosaic.SUBSETS[country_column]
+    DATA = mosaic.DATA[country_column]
 
     # Read polygon file
     tmpdf = gpd.read_file(in_file)
-    tmpdf = create_query(tmpdf, country_column, mosaic.DATA[model])
+    tmpdf = create_query(tmpdf, country_column, DATA[model])
 
     # Explode the geodataframe and set MODEL attribute
-    inpt = explode(tmpdf)
+    # inpt = explode(tmpdf)
+    inpt = tmpdf.explode(index_parts=True)
     inpt['MODEL'] = model
 
     # Select polygons the countries composing the given model
@@ -132,7 +179,7 @@ def main(model, folder_out, fname_conf, example=False):
 
         # Info
         key = row[country_column]
-        if old_key != key:
+        if old_key != key and INFO:
             print(f'Processing: {key}')
             old_key = key
 
@@ -144,40 +191,45 @@ def main(model, folder_out, fname_conf, example=False):
             gds = gds.set_crs('epsg:4326')
             projected = gds.to_crs('epsg:3857')
             projected = projected.buffer(buffer_dist)
+            # This returns a geodataseries that we convert to geodataframe
             gds = projected.to_crs('epsg:4326')
+            gdata = gpd.GeoDataFrame(geometry=gpd.GeoSeries(gds))
 
             # Create geojson and find the indexes of the points inside
-            feature_coll = gds.__geo_interface__
+            eee = gds.explode(index_parts=True)
+            feature_coll = eee.__geo_interface__
             tmp = feature_coll['features'][0]['geometry']
-            tidx_a = h3.polyfill_geojson(tmp, h3_resolution)
+            try:
+                tidx_a = h3.polyfill_geojson(tmp, h3_resolution)
+            except:
+                breakpoint()
 
             # In this case we need to further refine the selection
-            if model in mosaic.SUBSETS and key in mosaic.SUBSETS[model]:
-                for tstr in mosaic.SUBSETS[model][key]:
+            if model in SUBSETS and key in SUBSETS[model]:
+                for tstr in SUBSETS[model][key]:
                     tpoly = get_poly_from_str(tstr)
+                    pol = gpd.GeoDataFrame(index=[0], crs='epsg:4326',
+                                           geometry=[tpoly])
+                    # Intersection between the geodataframe filled with points
+                    # and the area defining a subportion of a nation
+                    intsc = gpd.sjoin(pol, gdata, predicate='intersects')
+                    if len(intsc) < 1:
+                        continue
+                    # Select points
                     feature_coll = gpd.GeoSeries([tpoly]).__geo_interface__
                     tmp = feature_coll['features'][0]['geometry']
                     tidx_b = h3.polyfill_geojson(tmp, h3_resolution)
                     tidx_a = list(set(tidx_a) & set(tidx_b))
-
-            sites_indices.extend(tidx_a)
+                    sites_indices.extend(tidx_a)
+            else:
+                sites_indices.extend(tidx_a)
 
     sites_indices = list(set(sites_indices))
-
-    Path(folder_out).mkdir(parents=True, exist_ok=True)
-
-    # Output shapefile file
-    out_file = os.path.join(folder_out, f'{model}.geojson')
-    one_polygon.columns = one_polygon.columns.astype(str)
-    one_polygon.to_file(out_file, driver='GeoJSON')
-
-    selection.to_file('/tmp/chk.shp')
-
-    # Output file with grid
     sidxs = sorted(sites_indices)
-    sites = np.fliplr(np.array([h3.h3_to_geo(h) for h in sidxs]))
-    out_file = os.path.join(folder_out, f'{model}_res{h3_resolution}.csv')
-    np.savetxt(out_file, sites, delimiter=",")
+    tmp = np.array([h3.h3_to_geo(h) for h in sidxs])
+    sites = np.fliplr(tmp)
+
+    return sites, sites_indices, one_polygon, selection
 
 
 main.model = 'Model key e.g. eur'
