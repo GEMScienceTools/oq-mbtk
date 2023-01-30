@@ -1,8 +1,33 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
 """
 module :mod:`openquake.plt.faults` provides functions for plotting in 3D fault
 surfaces and ruptures.
 """
-
 
 import numpy as np
 import pyvista as pv
@@ -115,9 +140,43 @@ def get_pv_line(coo, close=False):
     return pdata
 
 
-def get_pv_points(coo):
+def get_size_linear(m1, s1, m2, s2, mags):
+    """
+    :param m1:
+        Lower mag
+    :param s1:
+        Size for `m1`
+    :param m2:
+        Lower mag
+    :param s2:
+        Size for `m2`
+    :param mags:
+        Magnitudes
+    """
+    slope = (s2 - s1) / (m2 - m1)
+    inter = s1 - slope * m1
+    return (mags * slope + inter)
+
+
+def get_pv_points(coo, radius=None):
+    """
+    :param coo:
+        A :class:`np.ndarray` instance with N rows and 3 columns
+    :param radius:
+        Either a scalar or a :class:`np.ndarray` instance with N rows and 1
+        column
+    """
     pdata = pv.PolyData(coo)
-    return pdata
+    if radius is not None:
+        if np.isscalar(radius):
+            pdata["radius"] = np.ones((coo.shape[0]))*radius
+        else:
+            pdata["radius"] = radius
+    else:
+        pdata["radius"] = np.ones((coo.shape[0]))
+    geom = pv.Sphere(theta_resolution=8, phi_resolution=8)
+    glyphed = pdata.glyph(scale="radius", geom=geom) # progress_bar=True)
+    return glyphed
 
 
 def get_gdf_3d_polygons(ssm):

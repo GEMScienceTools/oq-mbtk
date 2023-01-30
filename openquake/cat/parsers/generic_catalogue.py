@@ -198,7 +198,6 @@ class GeneralCsvCatalogue(object):
         eqcat.isf_catalogue.ISFCatalogue
         """
         isf_cat = ISFCatalogue(catalogue_id, name)
-        print('write_to', self.get_number_events())
 
         for iloc in range(0, self.get_number_events()):
             # Origin ID

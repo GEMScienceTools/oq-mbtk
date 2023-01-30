@@ -26,6 +26,7 @@
 
 import copy
 import scipy
+from scipy.stats import poisson
 from numpy import matlib
 import numpy as np
 
@@ -216,17 +217,18 @@ def get_norm_optimize_b(aval, bval, ctab, tcat, mbinw, ybinw, back=5, mmin=-1,
     oin = oin[idx, :]
     out = out[idx, :]
 
-    # Compute the rates in each magnitude bin using the GR parameters provided
-    rates = 10**(aval-bval*cmags-mbinw/2) + 10**(aval-bval*cmags+mbinw/2)*ybinw
+    # Compute the eqks in each magnitude bin using the GR parameters provided
+    rates = ((10**(aval-(bval*(cmags-mbinw/2))) -
+              10**(aval-(bval*(cmags+mbinw/2)))) * ybinw)
 
     # Assuming a Poisson process, compute the standard deviation of the rates
-    stds_poi = scipy.stats.poisson.std(rates)
+    # stds_poi = scipy.stats.poisson.std(rates)
 
     # Preparing matrices with the rates in each magnitude bins and their
     # standard deviation. The standard deviation is not used in the rest of the
     # function
     rates = matlib.repmat(np.expand_dims(rates, 1), 1, len(cyeas))
-    stds_poi = matlib.repmat(np.expand_dims(stds_poi, 1), 1, len(cyeas))
+    # stds_poi = matlib.repmat(np.expand_dims(stds_poi, 1), 1, len(cyeas))
 
     # Compute the year from when to count the occurrences
     mag_bins = cmags-mbinw/2
@@ -251,3 +253,66 @@ def get_norm_optimize_b(aval, bval, ctab, tcat, mbinw, ybinw, back=5, mmin=-1,
     norm = np.sum(diff_in) / np.sum(diff_out) / np.sum(idxin) * np.sum(idxout)
 
     return norm
+
+
+def get_idx_compl(mag, compl):
+    if mag < compl[0, 1]:
+        return None
+    for i, com in enumerate(compl[:-1, :]):
+        if mag >= com[1] and mag < compl[i+1, 1]:
+            return i
+    return len(compl)-1
+
+
+def get_norm_optimize_c(cat, agr, bgr, compl, last_year, mmax=None, binw=0.1):
+
+    mags = cat.data['magnitude']
+    yeas = cat.data['year']
+
+    mmax = max(mags) if mmax is None else mmax
+    mvals = np.arange(min(compl[:, 1]), mmax+binw/10, binw)
+
+    rates = list(10**(agr-bgr * mvals[:-1]) - 10**(agr - bgr * mvals[1:]))
+    pocc = rates / sum(rates)
+
+    prob = None
+    first_year = min(yeas)
+    for imag, mag in enumerate(mvals[:-1]):
+        idxco = get_idx_compl(mag, compl)
+
+        idx = (mags >= mag) & (mags < mvals[imag+1]) & (yeas >= compl[idxco, 0])
+        nocc_in = sum(idx)
+
+        delta = (last_year - compl[idxco, 0])
+        idx = ((mags >= mag) & (mags < mvals[imag+1]) &
+               (yeas < compl[idxco, 0]) & (yeas > (compl[idxco, 0] - delta)))
+        nocc_out = sum(idx)
+
+        if np.any(idx):
+            ylow = np.min(yeas[idx])
+        else:
+            ylow = np.min([compl[idxco, 0], first_year])-1
+
+        # Compute the duration for the completeness interval and the time
+        # interval outside of completeness
+        # dur_out_compl = compl[idxco, 0] - ylow
+        dur_compl = last_year - compl[idxco, 0]
+
+        pmf = poisson.pmf(nocc_in, dur_compl*rates[imag])
+        std_in = poisson.std(dur_compl*rates[imag])
+
+        # cdf = poisson.cdf(nocc_out, delta*rates[imag])
+        # std_out = poisson.std(dur_out_compl*rates[imag])
+        pmf_out = poisson.pmf(nocc_out, delta*rates[imag])
+
+        if pmf > 0 and nocc_in > 0 and std_in > 0 and pmf_out > 0:
+            prob = 1.0 if prob is None else prob
+            #if pmf_out < 1e-10:
+            #    prob *= 1e-10
+            #else:
+            #    prob *= pmf / cdf / std_in
+            #    prob *= pmf / pmf_out / std_in
+            #    prob *= pmf
+        prob *= pmf * (1 - pmf_out)
+
+    return prob

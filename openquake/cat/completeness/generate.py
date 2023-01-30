@@ -26,20 +26,43 @@
 
 import os
 import copy
+from itertools import product
 import toml
 import numpy as np
 import multiprocessing
-from itertools import product
-from openquake.baselib import sap
+from openquake.wkf.utils import create_folder
 
 
 def mm(a):
     return a
 
 
-def get_completenesses(mags, years, folder_out=None, num_steps=0,
-                       min_mag_compl=None, apriori_conditions={},
-                       step=6, flexible=False):
+def get_completenesses(fname_config, folder_out):
+    """
+    :param fname_config:
+        .toml formatted file with configuration parameters.
+    :param folder_out:
+        Output folder where to store results i.e. the files containing all the
+        possible completeness windows admitted
+    """
+    create_folder(folder_out)
+    config = toml.load(fname_config)
+    key = 'completeness'
+    mags = np.array(config[key]['mags'])
+    years = np.array(config[key]['years'])
+    num_steps = config[key].get('num_steps', 0)
+    min_mag_compl = config[key].get('min_mag_compl', None)
+    apriori_conditions = config[key].get('apriori_conditions', {})
+    step = config[key].get('step', 8)
+    flexible = config[key].get('flexible', False)
+
+    _get_completenesses(mags, years, folder_out, num_steps, min_mag_compl,
+                        apriori_conditions, step, flexible)
+
+
+def _get_completenesses(mags, years, folder_out=None, num_steps=0,
+                        min_mag_compl=None, apriori_conditions={},
+                        step=6, flexible=False):
     """
     :param mags:
         A list or numpy array in increasing order
@@ -71,7 +94,7 @@ def get_completenesses(mags, years, folder_out=None, num_steps=0,
 
     # Info
     print('Total number of combinations : {:,d}'.format(len(mags)**len(years)))
-    print('Index of first magnitude     : {:,d}'.format(max_first_idx))
+    print(f'Index of first magnitude     : {max_first_idx:,d}')
 
     # Creating the possible completenesses
     perms = []
@@ -129,42 +152,16 @@ def get_completenesses(mags, years, folder_out=None, num_steps=0,
         # perms = perms[idxs <= idx_mag, :]
         perms = perms[perms[:, idx_yea] <= idx_mag, :]
 
-    print('Total number selected        : {:,d}'.format(len(perms)))
+    print(f'Total number selected        : {len(perms):,d}')
 
     # Replacing the index of the 'buffer;' magnitude
     if flexible:
         perms = np.where(perms == len(mags), -1, perms)
 
     if folder_out is not None:
-        print('Saving completeness tables in: {:s}'.format(folder_out))
+        print(f'Saving completeness tables in: {folder_out:s}')
         np.save(os.path.join(folder_out, 'dispositions.npy'), perms)
         np.save(os.path.join(folder_out, 'mags.npy'), mags)
         np.save(os.path.join(folder_out, 'years.npy'), years)
 
     return perms, mags, years
-
-
-def main(fname_config, *, folder_out=None):
-
-    config = toml.load(fname_config)
-    key = 'completeness'
-    mags = np.array(config[key]['mags'])
-    years = np.array(config[key]['years'])
-    num_steps = config[key].get('num_steps', 0)
-    min_mag_compl = config[key].get('min_mag_compl', None)
-    apriori_conditions = config[key].get('apriori_conditions', {})
-    step = config[key].get('step', 8)
-    flexible = config[key].get('flexible', False)
-
-    get_completenesses(mags, years, folder_out, num_steps,
-                       min_mag_compl, apriori_conditions,
-                       step, flexible)
-
-
-msg = 'Name of the .toml file with configuration parameters'
-main.fname_config = msg
-msg = 'Name of the folder where to store files'
-main.folder_out = msg
-
-if __name__ == '__main__':
-    sap.run(main)

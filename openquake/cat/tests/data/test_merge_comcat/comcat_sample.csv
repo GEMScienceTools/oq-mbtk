@@ -1,0 +1,6 @@
+,time,latitude,longitude,depth,magnitude,magnitudeType,nst,gap,dmin,rms,net,eventID,type,horizontalError,depthError,magError,magNst,status,locationSource,magSource,year,month,day,hour,minute,second,geometry
+111924,2011-03-11 05:59:31.580000+00:00,37.054,141.763,8.4,5.9,mb,86.0,129.7,,0.69,us,usp000hvny,earthquake,,23.3,,57.0,reviewed,us,us,2011,3,11,5,59,31,POINT (141.763 37.054)
+111927,2011-03-11 05:54:31.940000+00:00,37.712,141.184,32.3,6.3,mb,120.0,106.2,,0.75,us,usp000hvnv,earthquake,,13.5,,66.0,reviewed,us,us,2011,3,11,5,54,31,POINT (141.184 37.712)
+111928,2011-03-11 05:46:24.120000+00:00,38.297,142.373,29.0,9.1,mww,541.0,9.5,,1.16,official,official20110311054624120_30,earthquake,,,,,reviewed,us,official,2011,3,11,5,46,24,POINT (142.373 38.297)
+111932,2011-03-11 00:14:48.330000+00:00,-53.21,-117.837,10.0,5.7,mwc,59.0,34.9,,0.95,us,usp000hvng,earthquake,,,,,reviewed,us,gcmt,2011,3,11,0,14,48,POINT (-117.837 -53.21)
+111946,2011-03-10 08:08:20.560000+00:00,38.603,143.27,17.4,5.6,mwb,317.0,54.7,,1.05,us,usp000hvme,earthquake,,3.1,,,reviewed,us,us,2011,3,10,8,8,20,POINT (143.27 38.603)
