@@ -656,7 +656,7 @@ class ISFCatalogue(object):
             idx_mag = max(np.argwhere(magnitude > mag_low_edges))[0]
             tmp_val = np.float64(dtime_a.year)
             idx_t = max(np.argwhere(tmp_val > time_low_edges))[0]
-
+            
             ll_thrs = ll_d[idx_t][idx_mag]
             sel_thrs = time_d[idx_t][idx_mag]
             sel_thrs = sel_thrs.total_seconds()
@@ -1236,7 +1236,13 @@ def get_delta_t(tmpl: Union[float, list]):
     # Creating a list of timedeltas
     out = []
     for tmp in tmpl:
-        out.append([int(tmp[0]), float(tmp[1])])
+        ## If we can, parse tmp[1] to float
+        ## This should be the case as long as tmp[1] is not a function
+        try: 
+            out.append([int(tmp[0]), float(tmp[1])])
+        # If we can't parse tmp[1] to a float, pass it as a string
+        except:
+            out.append([int(tmp[0]), str(tmp[1])])
     return out
 
 
