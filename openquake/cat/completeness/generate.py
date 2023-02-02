@@ -72,6 +72,10 @@ def get_completenesses(fname_config, folder_out):
     apriori_conditions_out = config[key].get('apriori_conditions_out',
                                              apriori_conditions_out)
     apriori_conditions_in = config[key].get('apriori_conditions_in', {})
+
+    print(apriori_conditions_out)
+    print(apriori_conditions_in)
+
     step = config[key].get('step', 8)
     flexible = config[key].get('flexible', False)
 
@@ -203,19 +207,22 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
         perms = np.where(perms == len(mags), -1, perms)
 
     # Applying a-priori conditions
+    print(f'Total number selected completeness windows  : {len(perms):,d}')
     for yea_str in apriori_conditions_out.keys():
         yea = float(yea_str)
         mag = float(apriori_conditions_out[yea_str])
         idx_yea = np.min(np.where(yea >= years))
         idx_mag = np.min(np.where(mag < mags))
         perms = perms[perms[:, idx_yea] >= idx_mag, :]
+    print(f'Total number selected completeness windows  : {len(perms):,d}')
 
     # Applying a-priori conditions IN
     for yea_str in apriori_conditions_in.keys():
         yea = float(yea_str)
         mag = float(apriori_conditions_in[yea_str])
         idx_yea = np.min(np.where(yea >= years))
-        idx_mag = np.max(np.where(mags > mag))
+        #idx_mag = np.max(np.where(mags > mag))
+        idx_mag = np.min(np.where(mags > mag))
         perms = perms[perms[:, idx_yea] < idx_mag, :]
 
     print(f'Total number selected completeness windows  : {len(perms):,d}')

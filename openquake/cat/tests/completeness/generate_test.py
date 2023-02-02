@@ -29,7 +29,7 @@ import numpy as np
 from openquake.cat.completeness.generate import _get_completenesses
 from openquake.cat.completeness.plot import plot_completeness
 
-PLOT = False
+PLOT = True
 
 
 class GenerateTest(unittest.TestCase):
@@ -144,7 +144,7 @@ class GenerateTest(unittest.TestCase):
         # Test
         np.testing.assert_equal(perms, expected)
 
-    def test_generate_apriori_in_out(self):
+    def test_generate_apriori_in_out01(self):
         """ test use of apriori conditions in/out"""
         # As the previous test but also with apriori conditions in
 
@@ -174,3 +174,39 @@ class GenerateTest(unittest.TestCase):
 
         # Test
         np.testing.assert_equal(perms, expected)
+
+
+    def test_generate_apriori_in_out02(self):
+        """ test use of apriori conditions in/out"""
+        # As the previous test but also with apriori conditions in
+
+        mags = [3.0, 4.0, 5.0, 6.0, 7.0]
+        years =  [1700, 1800, 1900, 1925, 1950, 1960, 1970, 1980, 1990, 2000,
+                  2010]
+        num_steps = 0
+        min_mag_compl = 4.0
+        apriori_conditions_out = {1959: 4.1, 1875: 5.5}
+        #apriori_conditions_out = {1959: 4.1}
+        apriori_conditions_in = {1920: 6.1}
+        step = 6
+        flexible = True
+
+        # Generate the set of completeness windows. The `perms` matrix in this
+        # case has a length of 10 rather than 6 as in the previous case.
+        perms, mags, years = _get_completenesses(
+            mags, years, folder_out=None, num_steps=num_steps,
+            min_mag_compl=min_mag_compl,
+            apriori_conditions_out=apriori_conditions_out,
+            apriori_conditions_in=apriori_conditions_in,
+            step=step, flexible=flexible)
+
+        expected = np.array([[0, 1, 1, 2], [0, 0, 1, 2]])
+
+        if PLOT:
+            plot_completeness(perms, mags, years, 1800, 2015, 2.9, 7.1, '',
+                              apriori_conditions_out, apriori_conditions_in)
+
+        # Test
+        #np.testing.assert_equal(perms, expected)
+
+

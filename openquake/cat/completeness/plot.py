@@ -87,7 +87,8 @@ def plot_completeness(
     for key in apriori_in:
         mag = float(apriori_in[key])
         yea = float(key)
-        plt.plot(yea, mag, 'o', color='green')
+        print(mag, yea)
+        plt.plot(yea, mag, 'o', markersize=10., color='green')
 
     coll = matplotlib.collections.LineCollection(lines, colors=colors)
     ax.add_collection(coll)
