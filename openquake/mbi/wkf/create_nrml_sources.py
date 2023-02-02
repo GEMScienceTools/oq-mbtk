@@ -99,7 +99,8 @@ def write_as_multipoint_sources(df, model, src_id, module, subzones,
                     a_val=avals)
 
     mesh = Mesh(np.array(lons), np.array(lats))
-    srcmp = MultiPointSource(src_id, name, trt, mmfd, msr, rar, usd, lsd,
+    out_src_id = pfx + src_id
+    srcmp = MultiPointSource(out_src_id, name, trt, mmfd, msr, rar, usd, lsd,
                              npd, hyd, mesh, tom)
 
     # Write output file
@@ -109,6 +110,10 @@ def write_as_multipoint_sources(df, model, src_id, module, subzones,
 
 def write_as_set_point_sources(df, model, src_id, module, subzones,
                                model_subz, mmin, bwid, rms, tom, folder_out):
+    """
+    :param model:
+        The dictionary with the configuration
+    """
 
     srcd = model['sources'][src_id]
 
