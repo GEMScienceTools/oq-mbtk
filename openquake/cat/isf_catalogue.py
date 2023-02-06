@@ -666,7 +666,6 @@ class ISFCatalogue(object):
             # Create selection window
             # if using kms, still filter by lat/lon first so that we don't have to 
             # calculate distances between all events in the catalogue
-            ZZ
             if use_kms == False:
                 minlo = event.origins[0].location.longitude - ll_thrs
                 minla = event.origins[0].location.latitude - ll_thrs
