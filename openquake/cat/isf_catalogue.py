@@ -40,6 +40,7 @@ from geojson import LineString, Feature, FeatureCollection, dump
 
 from typing import Union
 from openquake.cat.utils import decimal_time
+from openquake.hazardlib.geo.geodetic import geodetic_distance, distance, _prepare_coords 
 
 YEAR_MIN = 1000.0
 MAG_MIN = 1.0
@@ -563,7 +564,7 @@ class ISFCatalogue(object):
     def add_external_idf_formatted_catalogue(
             self, cat, ll_deltas=0.01, delta_t=dt.timedelta(seconds=30),
             utc_time_zone=dt.timezone(dt.timedelta(hours=0)),
-            buff_t=dt.timedelta(seconds=0), buff_ll=0, use_ids=False,
+            buff_t=dt.timedelta(seconds=0), buff_ll=0, use_kms = False, use_ids=False,
             logfle=False):
         """
         This merges an external catalogue formatted in the ISF format e.g. a
@@ -657,15 +658,25 @@ class ISFCatalogue(object):
             tmp_val = np.float64(dtime_a.year)
             idx_t = max(np.argwhere(tmp_val > time_low_edges))[0]
             
+            
             ll_thrs = ll_d[idx_t][idx_mag]
             sel_thrs = time_d[idx_t][idx_mag]
             sel_thrs = sel_thrs.total_seconds()
-
+            
             # Create selection window
-            minlo = event.origins[0].location.longitude - ll_thrs
-            minla = event.origins[0].location.latitude - ll_thrs
-            maxlo = event.origins[0].location.longitude + ll_thrs
-            maxla = event.origins[0].location.latitude + ll_thrs
+            # if using kms, still filter by lat/lon first so that we don't have to 
+            # calculate distances between all events in the catalogue
+            ZZ
+            if use_kms == False:
+                minlo = event.origins[0].location.longitude - ll_thrs
+                minla = event.origins[0].location.latitude - ll_thrs
+                maxlo = event.origins[0].location.longitude + ll_thrs
+                maxla = event.origins[0].location.latitude + ll_thrs
+            else:
+                minlo = event.origins[0].location.longitude - 2
+                minla = event.origins[0].location.latitude - 2
+                maxlo = event.origins[0].location.longitude + 2
+                maxla = event.origins[0].location.latitude + 2
 
             # Querying the spatial index
             obj = [n.object for n in self.sidx.intersection(
@@ -699,13 +710,12 @@ class ISFCatalogue(object):
                 # a list of tuples (event and origin ID) in the host
                 # catalogue for the epicenters close to the investigated event
                 for i in obj:
-
                     # Selecting the origin of the event found in the catalogue
                     i_eve = i[0]
                     i_ori = i[1]
                     orig = self.events[i_eve].origins[i_ori]
                     dtime_b = dt.datetime.combine(orig.date, orig.time)
-
+ 
                     # Check if time difference is within the threshold value
                     delta = abs((dtime_a - dtime_b).total_seconds())
 
@@ -714,8 +724,20 @@ class ISFCatalogue(object):
                         msg = f'      Event ID: {eid:s}\n'
                         msg += f'      Delta: {delta:f}\n'
                         fou.write(msg)
-
-                    if delta < sel_thrs and found is False:
+                    
+                    # Use kms if specified. If event is outwith km threshold, set km_check to false and analysis of this event will stop
+                    # Otherwise, if event is within km threshold, or if we are not using kms, move to next step.    
+                    if use_kms == True:
+                        delta_km = abs(geodetic_distance(event.origins[0].location.longitude, event.origins[0].location.latitude, orig.location.longitude,  orig.location.latitude))
+                   
+                        if delta_km < ll_thrs:
+                            km_check = True
+                        else: km_check = False
+                    else: km_check = True
+                          
+                    if delta < sel_thrs and found is False and km_check is True:
+                        
+                        
 
                         # Found an origin in the same space-time window
                         found = True

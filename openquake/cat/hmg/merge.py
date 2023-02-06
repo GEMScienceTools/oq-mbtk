@@ -198,7 +198,7 @@ def process_catalogues(settings_fname: str) -> None:
     # Process the catalogue. `tdict` is dictionary with the info
     # required to merge one specific catalogue.
     for icat, tdict in enumerate(settings["catalogues"]):
-
+        
         # Get settings
         fname = os.path.join(path, tdict["filename"])
         cat_type = tdict["type"]
@@ -276,6 +276,7 @@ def process_catalogues(settings_fname: str) -> None:
             #   should be used to find corresponding earthquakes in the
             #   catalogues already merged
             use_ids = tdict.get("use_ids", False)
+            use_kms = tdict.get("use_kms", False)
 
             # Set the name of the log file
             if "log_file" not in tdict:
@@ -286,7 +287,7 @@ def process_catalogues(settings_fname: str) -> None:
 
             # Perform the merge
             meth = catroot.add_external_idf_formatted_catalogue
-            out = meth(tmpcat, delta_ll, delta_t, timezone, buff_t, buff_ll,
+            out = meth(tmpcat, delta_ll, delta_t, timezone, buff_t, buff_ll, use_kms,
                        use_ids, logfle)
 
             # Update the spatial index
