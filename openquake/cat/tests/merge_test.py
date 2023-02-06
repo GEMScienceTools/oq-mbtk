@@ -153,6 +153,46 @@ buff_t = 5.0
 use_ids = false
 """
 
+SETTINGS_GLOBAL = """
+
+[general]
+output_path = "{:s}"
+output_prefix = "global_"
+
+# Catalogues
+
+[[catalogues]]
+code = "ISC"
+name = "ISC Bulletin"
+filename = "{:s}"
+type = "csv"
+select_region = false
+
+[[catalogues]]
+code = "comcat"
+name = "comcat"
+#filename = "./comcat_concat.csv"
+filename = "{:s}"
+type = "csv"
+delta_ll = 20
+delta_t =  5
+timezone = 0
+buff_ll = 0.0
+buff_t = 5.0
+use_kms = true
+
+[[catalogues]]
+code = "oGCMT"
+name = "Original GCMT"
+filename = "{:s}"
+type = "csv"
+delta_ll = [['1900', '12*m']]
+delta_t =  [['1900', '8*m']]
+timezone = 0
+buff_ll = 0.0
+buff_t = 5.0
+use_kms = true
+"""
 
 class MergeGCMTTestCase(unittest.TestCase):
 
@@ -319,3 +359,52 @@ class MergeComCatTestCase(unittest.TestCase):
         # Checking prime events
         expected = [1, 0, 1, 1, 0, 1, 0, 1, 0, 1]
         aeq(odf.prime.to_numpy(), expected)
+        
+class MergeGlobalTestCase(unittest.TestCase):
+    # Merge ISC-GEM, comcat and GCMT sample files using km distances for delta_ll
+    
+    def setUp(self):
+
+        data_path = os.path.join(BASE_PATH, 'data', 'test_merge_comcat')
+
+        # Create the temporary folder
+        self.tmpd = tempfile.mkdtemp()
+
+        # Update settings
+        # Use toml.load and toml dump to ensure that Windows paths
+        # are escaped correctly and the resulting TOML file is valid
+        td = toml.loads(SETTINGS_GLOBAL)
+        td["general"]["output_path"] = self.tmpd
+        print(td["catalogues"])
+        #td["general"]["log_file"] = os.path.join(self.tmpd, "log.txt")
+        td["general"]["region_shp"] = \
+            os.path.join(data_path, "shp", "test_area.shp")
+        td["catalogues"][0]["filename"] = \
+            os.path.join(data_path, "isc_sample.csv")
+        td["catalogues"][1]["filename"] = \
+            os.path.join(data_path, "comcat_sample.csv")
+        td["catalogues"][2]["filename"] = \
+            os.path.join(data_path, "gcmt_sample.csv")
+
+        # Create settings file
+        self.settings = os.path.join(self.tmpd, "settings.toml")
+        with open(self.settings, "w") as fou:
+            toml.dump(td, fou)
+
+    def test_case_global_01(self):
+        """Merging GCMT catalogue"""
+
+        # Read the ISF formatted file
+        print(self.settings)
+
+        # Merge
+        merge.process_catalogues(self.settings)
+
+        # Reading catalogue
+        fname = os.path.join(self.tmpd, "global_otab.h5")
+        odf = pd.read_hdf(fname)
+        # Check prime events
+        expected = [1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1]
+        aeq(odf.prime.to_numpy(), expected)
+       
+
