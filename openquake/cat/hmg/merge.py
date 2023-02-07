@@ -261,9 +261,10 @@ def process_catalogues(settings_fname: str) -> None:
             # Set the parameters required for merging the new catalogue
             # including a delta-distance and delta-time.
             # - `delta_ll` is a float or a string defining a distance
-            #   in degrees (for the time being) as a function of magnitude.
+            #   in degrees or kms if use_kms = True. Can be specified as
+            #   a function of magnitude.
             # - `delta_t` is an integer or a string defining a delta
-            #   time in seconds as a function of magnitude.
+            #   time in seconds. Can be specified as a function of magnitude
             delta_ll = tdict["delta_ll"]
             delta_t = get_delta_t(tdict["delta_t"])
             # - `timezone` an integer
@@ -276,6 +277,7 @@ def process_catalogues(settings_fname: str) -> None:
             #   should be used to find corresponding earthquakes in the
             #   catalogues already merged
             use_ids = tdict.get("use_ids", False)
+            # - `use_kms` specifies if delta_ll distances are in kms or degrees
             use_kms = tdict.get("use_kms", False)
 
             # Set the name of the log file

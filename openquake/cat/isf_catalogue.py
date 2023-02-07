@@ -590,6 +590,8 @@ class ISFCatalogue(object):
             selection threshold.
         :param use_ids:
             A boolean
+        :param use_kms: 
+            Use kms for distance delta instead of degrees. 
         :param logfle:
             Name of the file which will contain the log of the processing
         :return:
@@ -685,7 +687,8 @@ class ISFCatalogue(object):
             # distance is larger than 0
             obj_e = []
             obj_a = []
-
+            
+            # This is not yet updated to work with use_kms!
             if buff_ll > 0 or buff_t.total_seconds() > 0:
 
                 obj_a = [n.object for n in self.sidx.intersection((
@@ -810,6 +813,7 @@ class ISFCatalogue(object):
                         break
 
             # Search for doubtful events:
+            # Not yet functional with use_kms
             if buff_ll > 1e-10 and buff_t.seconds > 1e-10:
                 if len(obj_a) > 0:
                     for i in obj_a:
