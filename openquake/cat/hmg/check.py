@@ -43,8 +43,10 @@ from openquake.hazardlib.geo.geodetic import geodetic_distance
 def get_features(cat, idx, idxsel):
     """
     :param cat:
-    :param idx:
-    :param idxsel:
+        A pandas geodataframe instance containing a homogenised catalogue as
+        obtained from :method:`openquake.cat.hmg.merge.hmg.process_dfs`
+    :param idx: index of event
+    :param idxsel: index of close event
     """
     features = []
 
@@ -100,6 +102,8 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms = False):
     :param fname_geojson:
         Name of the output .geojson file which will contains the lines
         connecting the possibly duplicated events.
+    :param use_kms:
+        Specify if distance buffer should use kms (default is False, use degrees)
     """
     
     features = []
