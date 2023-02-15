@@ -221,8 +221,8 @@ class CatalogueSelector(object):
     """
     def __init__(self, catalogue, create_copy=True):
         """
-        :param catalogue:
-        :param create_copy:
+        :param catalogue: Takes merged catalogue outputs (hd5 files for origin and magnitude)
+        :param create_copy: specifies whether to copy catalogue or make changes to original
         """
         self.catalogue = catalogue
         self.copycat = create_copy
@@ -385,7 +385,9 @@ class CatalogueSelector(object):
         if not start_date:
             start_date = 0
         if not end_date:
-            end_date = 2015
+            # Year should not be hardcoded
+            end_date = max(self.catalogue.origins["year"])
+            #end_date = 2015
         idx = (self.catalogue.origins["year"] >= start_date) &\
             (self.catalogue.origins["year"] <= end_date)
         return self._select_by_origins(idx, select_type)

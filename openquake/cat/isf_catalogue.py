@@ -40,6 +40,7 @@ from geojson import LineString, Feature, FeatureCollection, dump
 
 from typing import Union
 from openquake.cat.utils import decimal_time
+from openquake.hazardlib.geo.geodetic import geodetic_distance, distance, _prepare_coords 
 
 YEAR_MIN = 1000.0
 MAG_MIN = 1.0
@@ -563,7 +564,7 @@ class ISFCatalogue(object):
     def add_external_idf_formatted_catalogue(
             self, cat, ll_deltas=0.01, delta_t=dt.timedelta(seconds=30),
             utc_time_zone=dt.timezone(dt.timedelta(hours=0)),
-            buff_t=dt.timedelta(seconds=0), buff_ll=0, use_ids=False,
+            buff_t=dt.timedelta(seconds=0), buff_ll=0, use_kms = False, use_ids=False,
             logfle=False):
         """
         This merges an external catalogue formatted in the ISF format e.g. a
@@ -589,6 +590,8 @@ class ISFCatalogue(object):
             selection threshold.
         :param use_ids:
             A boolean
+        :param use_kms: 
+            Use kms for distance delta instead of degrees. 
         :param logfle:
             Name of the file which will contain the log of the processing
         :return:
@@ -656,16 +659,25 @@ class ISFCatalogue(object):
             idx_mag = max(np.argwhere(magnitude > mag_low_edges))[0]
             tmp_val = np.float64(dtime_a.year)
             idx_t = max(np.argwhere(tmp_val > time_low_edges))[0]
-
+            
+            
             ll_thrs = ll_d[idx_t][idx_mag]
             sel_thrs = time_d[idx_t][idx_mag]
             sel_thrs = sel_thrs.total_seconds()
-
+            
             # Create selection window
-            minlo = event.origins[0].location.longitude - ll_thrs
-            minla = event.origins[0].location.latitude - ll_thrs
-            maxlo = event.origins[0].location.longitude + ll_thrs
-            maxla = event.origins[0].location.latitude + ll_thrs
+            # if using kms, still filter by lat/lon first so that we don't have to 
+            # calculate distances between all events in the catalogue
+            if use_kms == False:
+                minlo = event.origins[0].location.longitude - ll_thrs
+                minla = event.origins[0].location.latitude - ll_thrs
+                maxlo = event.origins[0].location.longitude + ll_thrs
+                maxla = event.origins[0].location.latitude + ll_thrs
+            else:
+                minlo = event.origins[0].location.longitude - 2
+                minla = event.origins[0].location.latitude - 2
+                maxlo = event.origins[0].location.longitude + 2
+                maxla = event.origins[0].location.latitude + 2
 
             # Querying the spatial index
             obj = [n.object for n in self.sidx.intersection(
@@ -675,7 +687,8 @@ class ISFCatalogue(object):
             # distance is larger than 0
             obj_e = []
             obj_a = []
-
+            
+            # This is not yet updated to work with use_kms!
             if buff_ll > 0 or buff_t.total_seconds() > 0:
 
                 obj_a = [n.object for n in self.sidx.intersection((
@@ -699,13 +712,12 @@ class ISFCatalogue(object):
                 # a list of tuples (event and origin ID) in the host
                 # catalogue for the epicenters close to the investigated event
                 for i in obj:
-
                     # Selecting the origin of the event found in the catalogue
                     i_eve = i[0]
                     i_ori = i[1]
                     orig = self.events[i_eve].origins[i_ori]
                     dtime_b = dt.datetime.combine(orig.date, orig.time)
-
+ 
                     # Check if time difference is within the threshold value
                     delta = abs((dtime_a - dtime_b).total_seconds())
 
@@ -714,8 +726,20 @@ class ISFCatalogue(object):
                         msg = f'      Event ID: {eid:s}\n'
                         msg += f'      Delta: {delta:f}\n'
                         fou.write(msg)
-
-                    if delta < sel_thrs and found is False:
+                    
+                    # Use kms if specified. If event is outwith km threshold, set km_check to false and analysis of this event will stop
+                    # Otherwise, if event is within km threshold, or if we are not using kms, move to next step.    
+                    if use_kms == True:
+                        delta_km = abs(geodetic_distance(event.origins[0].location.longitude, event.origins[0].location.latitude, orig.location.longitude,  orig.location.latitude))
+                   
+                        if delta_km < ll_thrs:
+                            km_check = True
+                        else: km_check = False
+                    else: km_check = True
+                          
+                    if delta < sel_thrs and found is False and km_check is True:
+                        
+                        
 
                         # Found an origin in the same space-time window
                         found = True
@@ -789,6 +813,7 @@ class ISFCatalogue(object):
                         break
 
             # Search for doubtful events:
+            # Not yet functional with use_kms
             if buff_ll > 1e-10 and buff_t.seconds > 1e-10:
                 if len(obj_a) > 0:
                     for i in obj_a:
@@ -1236,7 +1261,13 @@ def get_delta_t(tmpl: Union[float, list]):
     # Creating a list of timedeltas
     out = []
     for tmp in tmpl:
-        out.append([int(tmp[0]), float(tmp[1])])
+        ## If we can, parse tmp[1] to float
+        ## This should be the case as long as tmp[1] is not a function
+        try: 
+            out.append([int(tmp[0]), float(tmp[1])])
+        # If we can't parse tmp[1] to a float, pass it as a string
+        except:
+            out.append([int(tmp[0]), str(tmp[1])])
     return out
 
 

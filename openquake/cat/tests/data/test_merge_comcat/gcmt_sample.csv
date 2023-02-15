@@ -1,0 +1,5 @@
+eventID,Agency,year,month,day,hour,minute,second,timeError,longitude,latitude,SemiMajor90,SemiMinor90,ErrorStrike,depth,depthError,magnitude,sigmaMagnitude
+cmt134245,oGCMT,2011,3,11,5,47,32,0.2,143.05,37.52,,,,20,0,9.11683871090664,
+cmt134237,oGCMT,2011,3,10,4,58,14.7,0.1,97.98,24.64,,,,15,0,5.49305930169506,
+cmt134244,oGCMT,2011,3,11,0,14,54.3,0.1,-118.18,-53.27,,,,15.9,0.7,5.70202403750035,
+cmt134246,oGCMT,2011,3,11,6,15,58,0.4,141.38,35.92,,,,29,2.2,7.91889642350991,
