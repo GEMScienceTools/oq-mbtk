@@ -18,7 +18,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
 """
-Parser from a "Simple Flatfile + ascii format" to SMTK
+Parser from a "Simple Flatfile + ascii format" to SMT
 """
 import os
 import csv
@@ -33,10 +33,10 @@ from openquake.hazardlib.scalerel.strasser2010 import (StrasserInterface,
 from openquake.hazardlib.scalerel.wc1994 import WC1994
 from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.geo.point import Point
-import smtk.trellis.configure as rcfg
-from smtk.sm_database import *
-from smtk.sm_utils import convert_accel_units
-from smtk.parsers.base_database_parser import (get_float, get_int,
+import openquake.smt.trellis.configure as rcfg
+from openquake.smt.sm_database import *
+from openquake.smt.sm_utils import convert_accel_units
+from openquake.smt.parsers.base_database_parser import (get_float, get_int,
                                                SMDatabaseReader,
                                                SMTimeSeriesReader,
                                                SMSpectraReader)
@@ -111,7 +111,7 @@ class SimpleFlatfileParser(SMDatabaseReader):
     def _parse_record(self, metadata):
         """
         Parses the record information and returns an instance of the
-        :class: smtk.sm_database.GroundMotionRecord 
+        :class: openquake.smt.sm_database.GroundMotionRecord 
         """
         # Waveform ID
         wfid = metadata["Record Sequence Number"]
@@ -145,7 +145,7 @@ class SimpleFlatfileParser(SMDatabaseReader):
     def _parse_event_data(self, metadata):
         """
         Read in the distance related metadata and return an instance of the
-        :class: smtk.sm_database.Earthquake
+        :class: openquake.smt.sm_database.Earthquake
 
         """
         metadata["MODY"] = metadata["MODY"].zfill(4)
@@ -212,7 +212,7 @@ class SimpleFlatfileParser(SMDatabaseReader):
     def _get_focal_mechanism(self, eq_id, eq_name, metadata):
         """
         Returns the focal mechanism information as an instance of the
-        :class: smtk.sigma_database.FocalMechanism 
+        :class: openquake.smt.sigma_database.FocalMechanism 
         """
         nodal_planes = GCMTNodalPlanes()
         strike = get_float(metadata["Strike (deg)"])
@@ -236,7 +236,7 @@ class SimpleFlatfileParser(SMDatabaseReader):
     def _parse_distance_data(self, event, site, metadata):
         """
         Read in the distance related metadata and return an instance of the
-        :class: smtk.sm_database.RecordDistance
+        :class: openquake.smt.sm_database.RecordDistance
         """
         # Compute various distance metrics
         # Add calculation of Repi, Rhypo from event and station localizations (latitudes, longitudes, depth, elevation)?
@@ -298,7 +298,7 @@ class SimpleFlatfileParser(SMDatabaseReader):
     def _parse_site_data(self, metadata):
         """
         Returns the site data as an instance of the :class:
-        smtk.sm_database.RecordSite
+        openquake.smt.sm_database.RecordSite
         """
         site = RecordSite(metadata["Station Sequence Number"],
                           metadata["Station ID  No."],

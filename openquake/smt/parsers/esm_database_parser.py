@@ -31,9 +31,9 @@ from linecache import getline
 from math import sqrt
 from copy import copy
 from openquake.hazardlib.geo.geodetic import geodetic_distance
-from smtk.sm_utils import convert_accel_units, get_time_vector
-from smtk.sm_database import *
-from smtk.parsers.base_database_parser import (get_float, get_int,
+from openquake.smt.sm_utils import convert_accel_units, get_time_vector
+from openquake.smt.sm_database import *
+from openquake.smt.parsers.base_database_parser import (get_float, get_int,
                                                SMDatabaseReader,
                                                SMTimeSeriesReader,
                                                SMSpectraReader)
@@ -283,7 +283,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
     def _parse_event(self, metadata, file_str):
         """
         Parses the event metadata to return an instance of the :class:
-        smtk.sm_database.Earthquake
+        openquake.smt.sm_database.Earthquake
         """
         # Date and time
         year, month, day = (_to_int(metadata["EVENT_DATE_YYYYMMDD"][:4]),
@@ -338,7 +338,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
     def _parse_distance_data(self, metadata, file_str, eqk):
         """
         Parses the event metadata to return an instance of the :class:
-        smtk.sm_database.RecordDistance
+        openquake.smt.sm_database.RecordDistance
         """
         repi = _to_float(metadata["EPICENTRAL_DISTANCE_KM"])
         # No hypocentral distance in file - calculate from event

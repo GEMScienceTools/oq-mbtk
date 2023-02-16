@@ -16,13 +16,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests parsing of the ESM22 flatfile format (i.e. flatfile downloaded from web service) in SMTK
+Tests parsing of the ESM22 flatfile format (i.e. flatfile downloaded from web service) in SMT
 """
 import os
 import sys
 import shutil
 import unittest
-from smtk.parsers.esm22_flatfile_parser import ESM22FlatfileParser
+from openquake.smt.parsers.esm22_flatfile_parser import ESM22FlatfileParser
 
 if sys.version_info[0] >= 3:
     import pickle

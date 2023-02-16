@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parser from the ESM23 flatfile format (i.e. flatfile downloaded from custom
-header HTML) to SMTK
+Parser fkr the ESM23 flatfile format (i.e. flatfile downloaded from custom
+header URL) to SMT
 
 This parser assumes you have selected all available headers in your URL search
 when downloading the flatfile
@@ -42,20 +42,20 @@ from openquake.hazardlib.geo.mesh import Mesh, RectangularMesh
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.line import Line
 from openquake.hazardlib.geo.surface.simple_fault import SimpleFaultSurface
-import smtk.trellis.configure as rcfg
-# from smtk.sm_database import *
-from smtk.sm_database import GroundMotionDatabase, GroundMotionRecord,\
+import openquake.smt.trellis.configure as rcfg
+# from openquake.smt.sm_database import *
+from openquake.smt.sm_database import GroundMotionDatabase, GroundMotionRecord,\
     Earthquake, Magnitude, Rupture, FocalMechanism, GCMTNodalPlanes,\
     Component, RecordSite, RecordDistance
-from smtk.sm_utils import convert_accel_units, MECHANISM_TYPE, DIP_TYPE
-from smtk.parsers import valid
-from smtk.parsers.base_database_parser import (get_float, get_int,
+from openquake.smt.sm_utils import convert_accel_units, MECHANISM_TYPE, DIP_TYPE
+from openquake.smt.parsers import valid
+from openquake.smt.parsers.base_database_parser import (get_float, get_int,
                                                get_positive_float,
                                                get_positive_int,
                                                SMDatabaseReader,
                                                SMTimeSeriesReader,
                                                SMSpectraReader)
-from smtk.trellis.configure import (vs30_to_z1pt0_cy14,
+from openquake.smt.trellis.configure import (vs30_to_z1pt0_cy14,
                                     vs30_to_z2pt5_cb14)
 
 if sys.version_info[0] >= 3:
@@ -65,7 +65,7 @@ else:
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
-#from smtk.parsers.simple_flatfile_parser_sara import SimpleFlatfileParserV9
+#from openquake.smt.parsers.simple_flatfile_parser_sara import SimpleFlatfileParserV9
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
@@ -474,7 +474,7 @@ class ESM23FlatfileParser(SMDatabaseReader):
             scalar_grp = comp_grp.create_group("Scalar")
             for imt in scalars[key]:
                 if imt in ["ia", "housner"]:
-                    # In the smtk convention it is "Ia" and "Housner"
+                    # In the smt convention it is "Ia" and "Housner"
                     ikey = imt[0].upper() + imt[1:]
                 else:
                     # Everything else to upper case (PGA, PGV, PGD, T90, CAV)
@@ -506,7 +506,7 @@ class ESM23FlatfileParser(SMDatabaseReader):
         hscalar = hcomp.create_group("Scalar")
         for imt in scalars["Geometric"]:
             if imt in ["ia", "housner"]:
-                # In the smtk convention it is "Ia" and "Housner"
+                # In the smt convention it is "Ia" and "Housner"
                 key = imt[0].upper() + imt[1:]
             else:
                 # Everything else to upper case (PGA, PGV, PGD, T90, CAV)

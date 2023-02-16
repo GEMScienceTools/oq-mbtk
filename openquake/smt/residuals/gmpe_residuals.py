@@ -35,9 +35,9 @@ from scipy.stats import norm
 from scipy.linalg import solve
 from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib import imt
-import smtk.intensity_measures as ims
-from smtk.strong_motion_selector import SMRecordSelector
-from smtk.sm_utils import convert_accel_units, check_gsim_list
+import openquake.smt.intensity_measures as ims
+from openquake.smt.strong_motion_selector import SMRecordSelector
+from openquake.smt.sm_utils import convert_accel_units, check_gsim_list
 
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
@@ -351,7 +351,7 @@ class Residuals(object):
         :param ctx_database: a :class:`context_db.ContextDB`, i.e. a database of
             records capable of returning dicts of earthquake-based Contexts and
             observed IMTs.
-            See e.g., :class:`smtk.sm_database.GroundMotionDatabase` for an
+            See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase` for an
             example
         """
 

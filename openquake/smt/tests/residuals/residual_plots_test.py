@@ -9,10 +9,10 @@ import unittest
 import numpy as np
 from scipy.stats import linregress
 
-from smtk.parsers.esm_flatfile_parser import ESMFlatfileParser
-import smtk.residuals.gmpe_residuals as res
-from smtk.database_visualiser import DISTANCES
-from smtk.residuals.residual_plots import residuals_density_distribution,\
+from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+import openquake.smt.residuals.gmpe_residuals as res
+from openquake.smt.database_visualiser import DISTANCES
+from openquake.smt.residuals.residual_plots import residuals_density_distribution,\
     likelihood, residuals_with_depth, residuals_with_magnitude,\
     residuals_with_vs30, residuals_with_distance, _tojson, _nanlinregress
 

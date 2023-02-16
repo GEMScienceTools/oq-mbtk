@@ -34,7 +34,7 @@ from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib.gsim.base import ContextMaker
 from openquake.hazardlib.sourceconverter import RuptureConverter
 from openquake.hazardlib import nrml
-from smtk.residuals.gmpe_residuals import Residuals
+from openquake.smt.residuals.gmpe_residuals import Residuals
 
 DEFAULT_CORRELATION = jbcorrelation
 GSIM_LIST = get_available_gsims()
@@ -166,7 +166,7 @@ def get_conditional_gmfs(
     Get a set of random fields conditioned on a set of observations
     :param database:
         Ground motion records for the event as instance of :class:
-        smtk.sm_database.GroundMotionDatabase
+        smt.sm_database.GroundMotionDatabase
     :param rupture:
         Event rupture as instance of :class:
         openquake.hazardlib.source.rupture.Rupture

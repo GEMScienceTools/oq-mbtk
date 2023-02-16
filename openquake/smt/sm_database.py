@@ -12,11 +12,11 @@ import h5py
 from openquake.hazardlib import imt
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
-from smtk.trellis.configure import vs30_to_z1pt0_as08, z1pt0_to_z2pt5
-from smtk.trellis.configure import vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14
-import smtk.sm_utils as utils
-from smtk import surface_utils
-from smtk.residuals.context_db import ContextDB
+from openquake.smt.trellis.configure import vs30_to_z1pt0_as08, z1pt0_to_z2pt5
+from openquake.smt.trellis.configure import vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14
+import openquake.smt.sm_utils as utils
+from openquake.smt import surface_utils
+from openquake.smt.residuals.context_db import ContextDB
 
 
 class Magnitude(object):
@@ -1141,7 +1141,7 @@ class GroundMotionDatabase(ContextDB):
     # END OF ABSTRACT METHODS #
     ###########################
 
-    # moved from smtk/residuals/gmpe_residuals.py:
+    # moved from openquake/smt/residuals/gmpe_residuals.py:
     def get_scalar(self, fle, i_m, component="Geometric"):
         """
         Retrieves the scalar IM from the database

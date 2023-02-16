@@ -24,7 +24,7 @@ Lion Krischer
 """
 import numpy as np
 import warnings
-from smtk.smoothing.base import BaseSpectralSmoother
+from openquake.smt.smoothing.base import BaseSpectralSmoother
 
 def konnoOhmachiSmoothingWindow(frequencies, center_frequency, bandwidth=40.0,
                                 normalize=False):

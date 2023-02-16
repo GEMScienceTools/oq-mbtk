@@ -54,7 +54,7 @@ def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5,
     '''Returns the density distribution of the given gmpe and imt
 
     :param residuals:
-            Residuals as instance of :class: smtk.gmpe_residuals.Residuals
+            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
     :param as_json: when True, converts all numpy numeric values (scalar
@@ -106,7 +106,7 @@ def likelihood(residuals, gmpe, imt, bin_width=0.1, as_json=False):
     '''Returns the likelihood of the given gmpe and imt
 
     :param residuals:
-            Residuals as instance of :class: smtk.gmpe_residuals.Likelihood
+            Residuals as instance of :class: openquake.smt.gmpe_residuals.Likelihood
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
     :param as_json: when True, converts all numpy numeric values (scalar
@@ -153,7 +153,7 @@ def residuals_with_magnitude(residuals, gmpe, imt, as_json=False):
     '''Returns the residuals of the given gmpe and imt vs. magnitude
 
     :param residuals:
-            Residuals as instance of :class: smtk.gmpe_residuals.Residuals
+            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
     :param as_json: when True, converts all numpy numeric values (scalar
@@ -210,7 +210,7 @@ def residuals_with_vs30(residuals, gmpe, imt, as_json=False):
     '''Returns the residuals of the given gmpe and imt vs. vs30
 
     :param residuals:
-            Residuals as instance of :class: smtk.gmpe_residuals.Residuals
+            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
     :param as_json: when True, converts all numpy numeric values (scalar
@@ -260,7 +260,7 @@ def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb",
     '''Returns the residuals of the given gmpe and imt vs. distance
 
     :param residuals:
-            Residuals as instance of :class: smtk.gmpe_residuals.Residuals
+            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
     :param as_json: when True, converts all numpy numeric values (scalar
@@ -315,7 +315,7 @@ def residuals_with_depth(residuals, gmpe, imt, as_json=False):
     '''Returns the residuals of the given gmpe and imt vs. depth
 
     :param residuals:
-            Residuals as instance of :class: smtk.gmpe_residuals.Residuals
+            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
     :param as_json: when True, converts all numpy numeric values (scalar

@@ -5,8 +5,8 @@ import os
 import sys
 import shutil
 import unittest
-from smtk.parsers.esm_flatfile_parser import ESMFlatfileParser
-import smtk.residuals.gmpe_residuals as res
+from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+import openquake.smt.residuals.gmpe_residuals as res
 
 if sys.version_info[0] >= 3:
     import pickle

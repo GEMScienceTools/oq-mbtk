@@ -38,9 +38,9 @@ from openquake.hazardlib import imt
 from openquake.hazardlib.gsim.base import (RuptureContext, DistancesContext,
                                            SitesContext)
 from openquake.hazardlib.scalerel.wc1994 import WC1994
-from smtk.sm_utils import _save_image, check_gsim_list
-import smtk.trellis.trellis_utils as utils
-from smtk.trellis.configure import GSIMRupture, DEFAULT_POINT
+from openquake.smt.sm_utils import _save_image, check_gsim_list
+import openquake.smt.trellis.trellis_utils as utils
+from openquake.smt.trellis.configure import GSIMRupture, DEFAULT_POINT
 
 
 # Default - defines a 21 color and line-type cycle
@@ -335,7 +335,7 @@ class BaseTrellis(object):
         Constructs the Base Trellis Class from a rupture model
         :param rupture:
             Rupture as instance of the :class:
-            smtk.trellis.configure.GSIMRupture
+            openquake.smt.trellis.configure.GSIMRupture
         """
         kwargs.setdefault('filename', None)
         kwargs.setdefault('filetype', "png")
@@ -793,7 +793,7 @@ class DistanceIMTTrellis(MagnitudeIMTTrellis):
         Constructs the Base Trellis Class from a rupture model
         :param rupture:
             Rupture as instance of the :class:
-            smtk.trellis.configure.GSIMRupture
+            openquake.smt.trellis.configure.GSIMRupture
         """
         kwargs.setdefault('filename', None)
         kwargs.setdefault('filetype', "png")

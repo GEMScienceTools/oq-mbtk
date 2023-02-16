@@ -27,9 +27,9 @@ import re
 import csv
 import numpy as np
 import h5py
-import smtk.intensity_measures as ims
-import smtk.sm_utils as utils
-from smtk.parsers.base_database_parser import get_float
+import openquake.smt.intensity_measures as ims
+import openquake.smt.sm_utils as utils
+from openquake.smt.parsers.base_database_parser import get_float
 
 if sys.version_info[0] >= 3:
     # In Python 3 pickle uses cPickle by default
@@ -92,7 +92,7 @@ class SMDatabaseBuilder(object):
 
         :param dbtype:
             Instance of :class:
-                smtk.parsers.base_database_parser.SMDatabaseReader
+                openquake.smt.parsers.base_database_parser.SMDatabaseReader
         :param str db_location:
             Path to database to be written
         """
@@ -137,10 +137,10 @@ class SMDatabaseBuilder(object):
         Parses the strong motion records to hdf5
         :param time_series_parser:
             Reader of the time series as instance of :class:
-            smtk.parsers.base_database_parser.SMTimeSeriesReader
+            openquake.smt.parsers.base_database_parser.SMTimeSeriesReader
         :param spectra_parser:
             Reader of the spectra files as instance of :class:
-            smtk.parsers.base_database_parser.SMSpectraReader
+            openquake.smt.parsers.base_database_parser.SMSpectraReader
         :param str units:
             Units of the records
         """
@@ -779,7 +779,7 @@ def add_horizontal_im(database, intensity_measures, component="Geometric",
     hdf databse for each record
     :param database:
         Strong motion databse as instance of :class:
-        smtk.sm_database.GroundMotionDatabase
+        openquake.smt.sm_database.GroundMotionDatabase
     :param list intensity_measures:
         List of strings of intensity measures
     :param str Geometric:

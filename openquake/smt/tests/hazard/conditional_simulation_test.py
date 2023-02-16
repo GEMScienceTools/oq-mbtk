@@ -22,11 +22,11 @@ Tests for execution of Conditional Simulation tools
 import unittest
 import os
 import shutil
-import smtk.hazard.conditional_simulation as csim
-import smtk.sm_database_builder as sdb
-from smtk.sm_utils import load_pickle
-from smtk.residuals.gmpe_residuals import Residuals
-from smtk.parsers.sigma_database_parser import (SigmaDatabaseMetadataReader,
+import openquake.smt.hazard.conditional_simulation as csim
+import openquake.smt.sm_database_builder as sdb
+from openquake.smt.sm_utils import load_pickle
+from openquake.smt.residuals.gmpe_residuals import Residuals
+from openquake.smt.parsers.sigma_database_parser import (SigmaDatabaseMetadataReader,
                                                 SigmaRecordParser,
                                                 SigmaSpectraParser)
 

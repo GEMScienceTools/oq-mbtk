@@ -24,8 +24,8 @@ import sys
 import json
 import pprint
 import unittest
-from smtk.sm_database import load_database
-from smtk.parsers.esm_flatfile_parser import ESMFlatfileParser
+from openquake.smt.sm_database import load_database
+from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
 
 if sys.version_info[0] >= 3:
     import pickle

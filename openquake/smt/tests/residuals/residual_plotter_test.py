@@ -8,12 +8,12 @@ import shutil
 import unittest
 from unittest.mock import patch, MagicMock
 
-from smtk.parsers.esm_flatfile_parser import ESMFlatfileParser
-import smtk.residuals.gmpe_residuals as res
-from smtk.residuals.residual_plotter import ResidualPlot, LikelihoodPlot,\
+from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+import openquake.smt.residuals.gmpe_residuals as res
+from openquake.smt.residuals.residual_plotter import ResidualPlot, LikelihoodPlot,\
     ResidualWithMagnitude, ResidualWithDepth, ResidualWithVs30, \
     ResidualWithDistance
-from smtk.database_visualiser import DISTANCES
+from openquake.smt.database_visualiser import DISTANCES
 
 
 if sys.version_info[0] >= 3:
@@ -74,8 +74,8 @@ class ResidualsTestCase(unittest.TestCase):
         cls.gsims = ["AkkarEtAlRjb2014",  "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]
 
-    @patch('smtk.residuals.residual_plotter.plt.subplot')
-    @patch('smtk.residuals.residual_plotter.plt')
+    @patch('openquake.smt.residuals.residual_plotter.plt.subplot')
+    @patch('openquake.smt.residuals.residual_plotter.plt')
     def tests_residual_plotter(self, mock_pyplot, mock_pyplot_subplot):
         """
         Tests basic execution of residual plot.
@@ -108,8 +108,8 @@ class ResidualsTestCase(unittest.TestCase):
                 # reset mock:
                 mocked_axes_obj.reset_mock()
 
-    @patch('smtk.residuals.residual_plotter.plt.subplot')
-    @patch('smtk.residuals.residual_plotter.plt')
+    @patch('openquake.smt.residuals.residual_plotter.plt.subplot')
+    @patch('openquake.smt.residuals.residual_plotter.plt')
     def tests_likelihood_plotter(self, mock_pyplot, mock_pyplot_subplot):
         """
         Tests basic execution of Likelihood plotD.
@@ -142,8 +142,8 @@ class ResidualsTestCase(unittest.TestCase):
                 # reset mock:
                 mocked_axes_obj.reset_mock()
 
-    @patch('smtk.residuals.residual_plotter.plt.subplot')
-    @patch('smtk.residuals.residual_plotter.plt')
+    @patch('openquake.smt.residuals.residual_plotter.plt.subplot')
+    @patch('openquake.smt.residuals.residual_plotter.plt')
     def tests_with_mag_vs30_depth_plotter(self, mock_pyplot,
                                           mock_pyplot_subplot):
         """
@@ -185,8 +185,8 @@ class ResidualsTestCase(unittest.TestCase):
                     # reset mock:
                     mocked_axes_obj.reset_mock()
 
-    @patch('smtk.residuals.residual_plotter.plt.subplot')
-    @patch('smtk.residuals.residual_plotter.plt')
+    @patch('openquake.smt.residuals.residual_plotter.plt.subplot')
+    @patch('openquake.smt.residuals.residual_plotter.plt')
     def tests_with_distance(self, mock_pyplot, mock_pyplot_subplot):
         """
         Tests basic execution of residual with distance plots.

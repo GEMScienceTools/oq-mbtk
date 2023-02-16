@@ -37,16 +37,16 @@ from openquake.hazardlib.geo.mesh import Mesh, RectangularMesh
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.line import Line
 from openquake.hazardlib.geo.surface.simple_fault import SimpleFaultSurface
-import smtk.trellis.configure as rcfg
-from smtk.sm_database import *
-from smtk.sm_utils import convert_accel_units
-from smtk.parsers.base_database_parser import (get_float, get_int,
+import openquake.smt.trellis.configure as rcfg
+from openquake.smt.sm_database import *
+from openquake.smt.sm_utils import convert_accel_units
+from openquake.smt.parsers.base_database_parser import (get_float, get_int,
                                                get_positive_float,
                                                get_positive_int,
                                                SMDatabaseReader,
                                                SMTimeSeriesReader,
                                                SMSpectraReader)
-from smtk.parsers.simple_flatfile_parser_sara import SimpleFlatfileParserV9
+from openquake.smt.parsers.simple_flatfile_parser_sara import SimpleFlatfileParserV9
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
@@ -190,7 +190,7 @@ class GeneralFlatfileParser(SimpleFlatfileParserV9):
     def _parse_record(self, metadata):
         """
         Parses the record information and returns an instance of the
-        :class: smtk.sm_database.GroundMotionRecord
+        :class: openquake.smt.sm_database.GroundMotionRecord
         """
         # Waveform ID
         wfid = metadata["Record Sequence Number"]
@@ -298,7 +298,7 @@ class GeneralFlatfileParser(SimpleFlatfileParserV9):
     def _parse_distance_data(self, event, site, metadata):
         """
         Read in the distance related metadata and return an instance of the
-        :class: smtk.sm_database.RecordDistance
+        :class: openquake.smt.sm_database.RecordDistance
         """
         # Compute various distance metrics
         # Add calculation of Repi, Rhypo from event and station localizations 
