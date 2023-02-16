@@ -954,8 +954,9 @@ def _get_ESM18_headers(ESM22,default_string,r_fm_type,r_datetime):
     
     # Output to folder where converted flatfile read into parser   
     DATA = os.path.abspath('')
-    converted_base_data_path = tempfile.mkdtemp()
-    converted_base_data_path = os.path.join(DATA,'converted_flatfile.csv')
+    temp_folder=tempfile.mkdtemp()
+    converted_base_data_path = os.path.join(DATA,temp_folder,
+                                            'converted_flatfile.csv')
     ESM_original_headers.to_csv(converted_base_data_path,sep=';')
 
     return converted_base_data_path
