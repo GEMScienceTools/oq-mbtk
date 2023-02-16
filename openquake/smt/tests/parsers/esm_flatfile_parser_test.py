@@ -23,7 +23,7 @@ import os
 import sys
 import shutil
 import unittest
-from smtk.parsers.esm_flatfile_parser import ESMFlatfileParser
+from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
 
 if sys.version_info[0] >= 3:
     import pickle

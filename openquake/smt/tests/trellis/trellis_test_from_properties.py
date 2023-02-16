@@ -28,8 +28,8 @@ from openquake.hazardlib.gsim.akkar_2014 import AkkarEtAlRjb2014
 from openquake.hazardlib.gsim.bindi_2014 import BindiEtAl2014Rjb
 from openquake.hazardlib.gsim.bindi_2017 import BindiEtAl2017Rjb
 
-import smtk.trellis.trellis_plots as trpl
-import smtk.trellis.configure as rcfg
+import openquake.smt.trellis.trellis_plots as trpl
+import openquake.smt.trellis.configure as rcfg
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")

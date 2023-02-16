@@ -1,6 +1,6 @@
 import os
 import unittest
-from smtk.parsers.asa_database_parser import ASADatabaseMetadataReader
+from openquake.smt.parsers.asa_database_parser import ASADatabaseMetadataReader
 from openquake.hazardlib import valid
 
 

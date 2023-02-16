@@ -16,9 +16,9 @@ import tempfile
 import unittest
 import numpy as np
 import pandas as pd
-from smtk.parsers.esm_flatfile_parser import ESMFlatfileParser
-import smtk.residuals.gmpe_residuals as res
-import smtk.residuals.residual_plotter as rspl
+from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+import openquake.smt.residuals.gmpe_residuals as res
+import openquake.smt.residuals.residual_plotter as rspl
 
 
 class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):

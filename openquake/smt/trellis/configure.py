@@ -32,7 +32,7 @@ from openquake.hazardlib.source.rupture import BaseRupture as Rupture
 from openquake.hazardlib.source.point import PointSource
 from openquake.hazardlib.gsim.base import (
     SitesContext, RuptureContext, DistancesContext)
-from smtk.sm_utils import _save_image
+from openquake.smt.sm_utils import _save_image
 from openquake.hazardlib.contexts import get_distances
 
 KM_TO_DEGREES = 0.0089932  # 1 degree == 111 km

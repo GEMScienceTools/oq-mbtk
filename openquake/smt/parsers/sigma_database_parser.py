@@ -18,7 +18,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
 """
-Parser from the Sigma data format to SMTK
+Parser from the Sigma data format to SMT
 """
 import os
 import csv
@@ -26,8 +26,8 @@ import numpy as np
 from collections import OrderedDict
 from datetime import datetime
 import h5py
-from smtk.sm_database import *
-from smtk.parsers.base_database_parser import (get_float, get_int,
+from openquake.smt.sm_database import *
+from openquake.smt.parsers.base_database_parser import (get_float, get_int,
                                                SMDatabaseReader,
                                                SMTimeSeriesReader,
                                                SMSpectraReader)

@@ -35,8 +35,8 @@ import json
 import numpy as np
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib.scalerel import get_available_magnitude_scalerel
-import smtk.trellis.trellis_plots as trpl
-from smtk.trellis.configure import vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14
+import openquake.smt.trellis.trellis_plots as trpl
+from openquake.smt.trellis.configure import vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14
 
 
 class BaseTrellisTest(unittest.TestCase):

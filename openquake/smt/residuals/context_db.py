@@ -14,7 +14,7 @@ class ContextDB:
     argument `ctx_database` of :meth:`gmpe_residuals.Residuals.get_residuals`)
 
     Concrete subclasses of `ContextDB` must implement three abstract methods
-    (e.g. :class:`smtk.sm_database.GroundMotionDatabase`):
+    (e.g. :class:`openquake.smt.sm_database.GroundMotionDatabase`):
      - get_event_and_records(self)
      - update_context(self, ctx, records, nodal_plane_index=1)
      - get_observations(self, imtx, records, component="Geometric")

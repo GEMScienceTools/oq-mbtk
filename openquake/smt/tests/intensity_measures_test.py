@@ -23,9 +23,9 @@ import unittest
 import os
 import h5py
 import numpy as np
-import smtk.response_spectrum as rsp
-import smtk.intensity_measures as ims
-import smtk.smoothing.konno_ohmachi as ko
+import openquake.smt.response_spectrum as rsp
+import openquake.smt.intensity_measures as ims
+import openquake.smt.smoothing.konno_ohmachi as ko
 
 
 BASE_DATA_PATH = os.path.dirname(__file__)
@@ -67,7 +67,7 @@ class BaseIMSTestCase(unittest.TestCase):
         Connect to hdf5 data store
         """
         self.fle = h5py.File(os.path.join(BASE_DATA_PATH,
-                                          "smtk_ims_test_data.hdf5"), "r")
+                                          "smt_ims_test_data.hdf5"), "r")
         self.periods = self.fle["INPUTS/periods"][:]
 
     def tearDown(self):

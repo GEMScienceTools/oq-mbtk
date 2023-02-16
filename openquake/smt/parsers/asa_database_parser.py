@@ -33,9 +33,9 @@ from linecache import getline
 from datetime import datetime
 from math import sqrt
 from openquake.hazardlib.geo import *
-from smtk.sm_database import *
-from smtk.sm_utils import convert_accel_units, get_time_vector
-from smtk.parsers.base_database_parser import (get_float,
+from openquake.smt.sm_database import *
+from openquake.smt.sm_utils import convert_accel_units, get_time_vector
+from openquake.smt.parsers.base_database_parser import (get_float,
                                                get_int,
                                                SMDatabaseReader,
                                                SMTimeSeriesReader)
@@ -179,7 +179,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
     def _parse_event(self, metadata, file_str):
         """
         Parses the event metadata to return an instance of the :class:
-        smtk.sm_database.Earthquake. Coordinates in western hemisphere
+        openquake.smt.sm_database.Earthquake. Coordinates in western hemisphere
         are returned as negative values.
         """
 
@@ -329,7 +329,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
     def _parse_distance_data(self, metadata, file_str, eqk):
         """
         Parses the event metadata to return an instance of the :class:
-        smtk.sm_database.RecordDistance. Coordinates in western hemisphere
+        openquake.smt.sm_database.RecordDistance. Coordinates in western hemisphere
         are converted to negative values.
         """
 

@@ -26,7 +26,7 @@ import numpy as np
 from math import sqrt
 
 import matplotlib.pyplot as plt
-from smtk.sm_utils import (_save_image, get_time_vector, convert_accel_units,
+from openquake.smt.sm_utils import (_save_image, get_time_vector, convert_accel_units,
                            get_velocity_displacement)
                      
 

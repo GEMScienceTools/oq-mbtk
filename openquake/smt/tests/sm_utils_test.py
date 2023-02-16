@@ -28,7 +28,7 @@ import unittest
 import numpy as np
 from scipy.constants import g
 
-from smtk.sm_utils import convert_accel_units, SCALAR_XY
+from openquake.smt.sm_utils import convert_accel_units, SCALAR_XY
 
 
 # OLD IMPLEMENTATION OF CONVERT ACCELERATION UNITS. USED HERE

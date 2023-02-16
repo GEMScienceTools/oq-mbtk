@@ -27,9 +27,9 @@ from math import pi
 from scipy.integrate import cumtrapz
 from scipy import constants
 import matplotlib.pyplot as plt
-import smtk.response_spectrum as rsp
-from smtk.smoothing import konno_ohmachi
-from smtk.sm_utils import get_time_vector, _save_image, nextpow2
+import openquake.smt.response_spectrum as rsp
+from openquake.smt.smoothing import konno_ohmachi
+from openquake.smt.sm_utils import get_time_vector, _save_image, nextpow2
 
 
 RESP_METHOD = {
@@ -181,7 +181,7 @@ def get_response_spectrum(acceleration, time_step, periods, damping=0.05,
         - "Newmark-Beta"
         - "Nigam-Jennings"
     :returns:
-        Outputs from :class: smtk.response_spectrum.BaseResponseSpectrum
+        Outputs from :class: openquake.smt.response_spectrum.BaseResponseSpectrum
     """
     response_spec = RESP_METHOD[method](acceleration,
                                         time_step,
@@ -659,7 +659,7 @@ def get_response_spectrum_intensity(spec):
     0.1 s and 2.5 s
     :param dict spec:
         Response spectrum of the record as output from :class:
-        smtk.response_spectrum.BaseResponseSpectrum
+        openquake.smt.response_spectrum.BaseResponseSpectrum
     """
     idx = np.where(np.logical_and(spec["Period"] >= 0.1,
                                   spec["Period"] <= 2.5))[0]

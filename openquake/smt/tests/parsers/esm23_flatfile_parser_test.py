@@ -16,15 +16,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests parsing of the ESM23 flatfile format (i.e. flatfile downloaded from custom header HTML) in SMTK
+Tests parsing of the ESM23 flatfile format (i.e. flatfile downloaded from custom
+header URL) in SMT
 
-This parser assumes you have selected all available headers in your URL search when downloading the flatfile
+This parser assumes you have selected all available headers in your URL search
+when downloading the flatfile
 """
 import os
 import sys
 import shutil
 import unittest
-from smtk.parsers.esm23_flatfile_parser import ESM23FlatfileParser
+from openquake.smt.parsers.esm23_flatfile_parser import ESM23FlatfileParser
 
 if sys.version_info[0] >= 3:
     import pickle

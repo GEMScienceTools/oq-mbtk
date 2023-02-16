@@ -105,7 +105,7 @@ def _get_gmpe_name(gsim):
 
 def get_time_vector(time_step, number_steps):
     """
-    General SMTK utils
+    General SMT utils
     """
     return np.cumsum(time_step * np.ones(number_steps, dtype=float)) - time_step
 

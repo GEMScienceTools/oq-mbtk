@@ -26,12 +26,12 @@ from copy import deepcopy
 from collections import OrderedDict
 from math import floor, ceil
 from scipy.stats import norm
-from smtk.sm_utils import _save_image
-from smtk.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
+from openquake.smt.sm_utils import _save_image
+from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from IPython.display import display
 from cycler import cycler
 
-from smtk.residuals.residual_plots import (residuals_density_distribution,
+from openquake.smt.residuals.residual_plots import (residuals_density_distribution,
                                            likelihood, residuals_with_magnitude,
                                            residuals_with_vs30,
                                            residuals_with_distance,
@@ -57,7 +57,7 @@ class BaseResidualPlot(object):
         Initializes a BaseResidualPlot
 
         :param residuals:
-            Residuals as instance of :class: smtk.gmpe_residuals.Residuals
+            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
         :param str gmpe: Choice of GMPE
         :param str imt: Choice of IMT
         :param kwargs: optional keyword arguments. Supported are:
@@ -112,7 +112,7 @@ class BaseResidualPlot(object):
         of the given GMPE (`self.gmpe`) and IMT (`self.imt`).
         Each key (residual type) needs then to be mapped to a residual data
         dict with at least the mandatory keys 'x', 'y' ,'xlabel' and 'ylabel'
-        (See :module:`smtk.residuals.residual_plots` for a list of available
+        (See :module:`openquake.smt.residuals.residual_plots` for a list of available
         functions that return these kind of dict's and should be in principle
         be called here)
         """
