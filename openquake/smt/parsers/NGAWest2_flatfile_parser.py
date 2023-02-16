@@ -155,10 +155,10 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2 = pd.read_csv(NGAWest2_flatfile_directory)
         NGAWest2_vertical = pd.read_csv(NGAWest2_vertical_flatfile_directory)
         
-        #Count initial size for printing number records removed during checks
+        # Count initial size for printing number records removed during checks
         Initial_NGAWest2_size = len(NGAWest2)
 
-        #Remove potential duplicate records in NGA-West2 flatfile
+        # Remove potential duplicate records in NGA-West2 flatfile
         NGAWest2 = NGAWest2.drop_duplicates(subset=
                                             ['Earthquake Name',
                                                     'Station Name'],
@@ -169,7 +169,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(
             columns='index')
 
-        #Remove records if earthquake not identifiable using lat/lon metadata
+        # Remove records if earthquake not identifiable using lat/lon metadata
         Index_to_drop=np.array(NGAWest2.loc[
             NGAWest2['Hypocenter Latitude (deg)']==-999][
                 'Hypocenter Latitude (deg)'].index)
@@ -185,24 +185,24 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
         
-        #If year not provided assign '0000' to work with datetime
+        # If year not provided assign '0000' to work with datetime
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['YEAR']=='-999'][
             'YEAR'].index)
         NGAWest2['YEAR'].iloc[Index_to_drop]='0000'
                 
-        #If month and day not provided assign '1010' to work with datetime
+        # If month and day not provided assign '1010' to work with datetime
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['MODY']=='-999'][
             'MODY'].index)
         NGAWest2['MODY'].iloc[Index_to_drop]='000'
         
-        #If hours and minutes not provided assign '000' to work with datetime
+        # If hours and minutes not provided assign '000' to work with datetime
         NGAWest2 = NGAWest2.reset_index().drop(columns='index')
         NGAWest2_vertical=NGAWest2_vertical.reset_index().drop(columns='index')
         for rec in range(0,len(NGAWest2)):
             if NGAWest2['HRMN'][rec]==-999:
                 NGAWest2['HRMN'][rec]='000'
         
-        #Remove records with no acceleration values
+        # Remove records with no acceleration values
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['PGA (g)']=='-999'][
             'PGA (g)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
@@ -211,7 +211,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(
             columns='index')
 
-        #Remove records with no magnitude
+        # Remove records with no magnitude
         Index_to_drop=np.array(NGAWest2.loc[
             NGAWest2['Earthquake Magnitude']=='-999'][
                 'Earthquake Magnitude'].index)
@@ -221,26 +221,19 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(
             columns='index')
         
-        #If no focal mechanism assign strike-slip
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2[
-            'Mechanism Based on Rake Angle']==-999][
-                'Mechanism Based on Rake Angle'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
-        
-        #Remove records with no valid station name
+        # Remove records with no valid station name
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Station Name']==-999][
             'Station Name'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
         
-        #Remove records with no epicentral distance
+        # Remove records with no epicentral distance
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['EpiD (km)']==-999][
             'EpiD (km)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
         
-        #If Joyner-Boore, rupture distance, Rx or Ry = -999 reassign as empty
+        # If Joyner-Boore, rupture distance, Rx or Ry = -999 reassign as empty
         Index_to_drop=np.array(NGAWest2.loc[
             NGAWest2['Joyner-Boore Dist. (km)']==-999][
                 'Joyner-Boore Dist. (km)'].index)
@@ -257,34 +250,34 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             'Ry 2']==-999]['Ry 2'].index)
         NGAWest2['Ry']=NGAWest2['Ry 2'].replace(Index_to_drop,'')
         
-        #Remove records with no vs30)
+        # Remove records with no vs30)
         Index_to_drop=np.array(NGAWest2.loc[
             NGAWest2['Vs30 (m/s) selected for analysis']==-999][
                 'Vs30 (m/s) selected for analysis'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
         
-        #Compute Mw from seismic moment provided for each record using Hanks and Kamori
+        # Compute Mw from seismic moment provided for each record using Hanks and Kamori
         NGAWest2['Earthquake Magnitude'] = ((2/3)*np.log10(NGAWest2[
             'Mo (dyne.cm)'])) - 10.7
         NGAWest2 = NGAWest2.reset_index().drop(columns='index')
         NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(
             columns='index')
         
-        #Replace -999 in 'Owner' with unknown network code
+        # Replace -999 in 'Owner' with unknown network code
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Owner']=='-999'][
             'Owner'].index)
         NGAWest2['Owner'].iloc[Index_to_drop]='NoNetworkCode'
         NGAWest2['Owner'] = 'NetworkCode-'+NGAWest2['Owner'] 
         
-        #Replace -999 in 'Station id' with unknown station id
+        # Replace -999 in 'Station id' with unknown station id
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2[
             'Station ID  No.']=='-999']['Station ID  No.'].index)
         NGAWest2['Station ID  No.'].iloc[Index_to_drop]='NoStationIDNum'
         NGAWest2['Station ID  No.'] = 'StationID-'+pd.Series(
             NGAWest2['Station ID  No.'],dtype='str')
         
-        #Interpolate between SA(T=4.4s) and SA(T=4.6s) for SA(T=4.5)
+        # Interpolate between SA(T=4.4s) and SA(T=4.6s) for SA(T=4.5)
         NGAWest2['T4.500S']=(NGAWest2['T4.400S']+NGAWest2['T4.600S'])/2
         NGAWest2_vertical['T4.500S']=(NGAWest2_vertical[
             'T4.400S']+NGAWest2_vertical['T4.600S'])/2        
@@ -728,7 +721,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     readable by parser
     """
     
-    #Construct event_time in yyyy-mm-dd hh:mm:ss format
+    # Construct event_time in yyyy-mm-dd hh:mm:ss format
     event_time={}
     for rec in range(0,len(NGAWest2)):
         event_time_year=NGAWest2.YEAR.iloc[rec]
@@ -760,7 +753,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     
     event_time_reformatted = pd.Series(event_time)
     
-    #generate event_id without delimiters and add NGAWest2 record sequence number
+    # generate event_id without delimiters and add NGAWest2 record sequence number
     final_event_id={}
     for rec in range(0,len(NGAWest2)):
         delimited_event_id=str(NGAWest2['Earthquake Name'][rec])
@@ -774,18 +767,21 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
             'Record Sequence Number'][rec])+'_Earthquake-'+delimited_event_id 
     event_id_reformatted = pd.Series(final_event_id)
     
-    #Assign ESM18 fault_code based on code in NGA-West2
+    # Assign ESM18 fault_code based on code in NGA-West2
     """
     Strike-Slip = 00 (SS)
     Normal = 01 (NF)
     Reverse = 02 (RF)
     Reverse - Oblique = 03 (RF)
     Normal - Oblique = 04 (NF)
+    
+    Assign strike-slip if -999 provided (i.e. fm_type_code unknown in NGAWest2)
     """
     
     fm_type_code_converted={}
     for rec in range(0,len(NGAWest2)):
-        if NGAWest2['Mechanism Based on Rake Angle'][rec]==0:
+        if NGAWest2['Mechanism Based on Rake Angle'][rec]==0 or NGAWest2[
+                'Mechanism Based on Rake Angle'][rec]==-999:
             ESM18_equivalent_fm_type_code='SS'
         if NGAWest2[
                 'Mechanism Based on Rake Angle'][
@@ -798,7 +794,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
         fm_type_code_converted[rec] = ESM18_equivalent_fm_type_code
     reformatted_fm_type_code = pd.Series(fm_type_code_converted)
     
-    #Station code without delimiters
+    # Station code without delimiters
     final_station_id={}
     for rec in range(0,len(NGAWest2)):
         delimited_station_id=str(NGAWest2['Station Name'][rec])
@@ -811,12 +807,12 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
         final_station_id[rec] = 'StationName-'+delimited_station_id
     station_id_reformatted = pd.Series(final_station_id)
     
-    #Create nation code (not provided in NGA-West-2 so assign flag)
+    # Create nation code (not provided in NGA-West-2 so assign flag)
     nation_code_default_string = np.full(len(NGAWest2),str(
         "NGAWest2_does_not_provide_nation_codes")) 
     default_nation_code = pd.Series(nation_code_default_string)
     
-    #Create channel codes for horizontal components as within NGAWest2 format
+    # Create channel codes for horizontal components as within NGAWest2 format
     H1_string = np.full(len(NGAWest2),str("H1"))
     default_H1_string = pd.Series(H1_string)
     H2_string = np.full(len(NGAWest2),str("H2"))
@@ -824,14 +820,14 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     V_string = np.full(len(NGAWest2),str("V"))
     default_V_string = pd.Series(V_string)
     
-    #Create default values for headers not readily available or required
+    # Create default values for headers not readily available or required
     r_string = np.full(len(NGAWest2),str(""))
     default_string = pd.Series(r_string)    
     
-    #Construct dataframe with original ESM 2018 format 
+    # Construct dataframe with original ESM 2018 format 
     ESM_original_headers = pd.DataFrame(
     {
-    #Non-GMIM headers   
+    # Non-GMIM headers   
     "event_id":event_id_reformatted,                                       
     "event_time":event_time_reformatted,
     "ISC_ev_id":default_string,
@@ -1178,8 +1174,9 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     
     # Output to folder where converted flatfile read into parser   
     DATA = os.path.abspath('')
-    converted_base_data_path = tempfile.mkdtemp()
-    converted_base_data_path = os.path.join(DATA,'converted_flatfile.csv')
+    temp_folder=tempfile.mkdtemp()
+    converted_base_data_path = os.path.join(DATA,temp_folder,
+                                            'converted_flatfile.csv')
     ESM_original_headers.to_csv(converted_base_data_path,sep=';')
 
     print(Initial_NGAWest2_size - len(NGAWest2),
