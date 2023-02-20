@@ -151,8 +151,7 @@ class MergeGenericCatalogueTest(unittest.TestCase):
         msg = 'The number of events in the catalogue is wrong'
         self.assertEqual(5, len(catisf.events), msg)
 
-        # Check doubtful earthquakesù
-        print("doubts: ",)
+        # Check doubtful earthquakes
         msg = 'The information about doubtful earthquakes is wrong'
         self.assertEqual([1, 2], doubts[2], msg)
         self.assertEqual(1, len(doubts), msg)
@@ -213,7 +212,6 @@ class MergeGenericCatalogueTest(unittest.TestCase):
         self.assertEqual(5, len(catisf.events), msg)
 
         # Check doubtful earthquakes
-        print("doubts: ", doubts)
         msg = 'The information about doubtful earthquakes is wrong'
         self.assertEqual([1, 2], doubts[2], msg)
         self.assertEqual(1, len(doubts), msg)
