@@ -52,6 +52,8 @@ class MergeGenericCatalogueTest(unittest.TestCase):
 
         self.fname_idf4 = os.path.join(BASE_DATA_PATH, 'data', 'cat04.isf')
         self.fname_csv4 = os.path.join(BASE_DATA_PATH, 'data', 'cat04.csv')
+        
+        self.fname_csv5 = os.path.join(BASE_DATA_PATH, 'data', 'cat05.csv')
 
     def test_case01(self):
         """Merging .csv formatted catalogue"""
@@ -149,7 +151,8 @@ class MergeGenericCatalogueTest(unittest.TestCase):
         msg = 'The number of events in the catalogue is wrong'
         self.assertEqual(5, len(catisf.events), msg)
 
-        # Check doubtful earthquakes
+        # Check doubtful earthquakesù
+        print("doubts: ",)
         msg = 'The information about doubtful earthquakes is wrong'
         self.assertEqual([1, 2], doubts[2], msg)
         self.assertEqual(1, len(doubts), msg)
@@ -174,7 +177,46 @@ class MergeGenericCatalogueTest(unittest.TestCase):
                 utc_time_zone=timezone, buff_t=dt.timedelta(0), buff_ll=0,
                 use_ids=True, logfle=None)
         self.assertIn('isf_catalogue.py', cm.filename)
-        self.assertEqual(860, cm.lineno)
+        self.assertEqual(903, cm.lineno)
+        
+    def test_case05(self):
+        """Testing the identification of doubtful events with use_kms"""
+        # In this test the first event in the .csv file is a duplicate of
+        # the 2015 earthquake and it is therefore excluded.
+        # The 2nd event is within the space window and so retained, and also within the buffer
+
+        # Read the CSV formatted file
+        parser = GenericCataloguetoISFParser(self.fname_csv3)
+        _ = parser.parse("tcsv", "Test CSV")
+        catcsv = parser.export("tcsv", "Test CSV")
+
+        # Read the ISF formatted file
+        parser = ISFReader(self.fname_isf2)
+        catisf = parser.read_file("tisf", "Test CSV")
+
+        # Create the spatial index
+        catisf._create_spatial_index()
+        buff_t = 2.0
+
+        # Merg the .csv catalogue into the isf one
+        tz = dt.timezone(dt.timedelta(hours=0))
+        ll_delta = np.array([[1899, 10], [1950, 5]])
+        delta = [[1899, 10.0], [1950, 5.0]]
+        out, doubts = catisf.add_external_idf_formatted_catalogue(
+                catcsv, ll_deltas=ll_delta, delta_t=delta, utc_time_zone=tz,
+                buff_t=buff_t, buff_ll=2, use_kms = True)
+
+        # Testing output
+        msg = 'The number of colocated events is wrong'
+        self.assertEqual(1, len(out), msg)
+        msg = 'The number of events in the catalogue is wrong'
+        self.assertEqual(5, len(catisf.events), msg)
+
+        # Check doubtful earthquakes
+        print("doubts: ", doubts)
+        msg = 'The information about doubtful earthquakes is wrong'
+        self.assertEqual([1, 2], doubts[2], msg)
+        self.assertEqual(1, len(doubts), msg)
 
 
 class GetThresholdMatricesTest(unittest.TestCase):
