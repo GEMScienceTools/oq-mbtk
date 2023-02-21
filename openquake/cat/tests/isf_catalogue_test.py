@@ -52,8 +52,6 @@ class MergeGenericCatalogueTest(unittest.TestCase):
 
         self.fname_idf4 = os.path.join(BASE_DATA_PATH, 'data', 'cat04.isf')
         self.fname_csv4 = os.path.join(BASE_DATA_PATH, 'data', 'cat04.csv')
-        
-        self.fname_csv5 = os.path.join(BASE_DATA_PATH, 'data', 'cat05.csv')
 
     def test_case01(self):
         """Merging .csv formatted catalogue"""
