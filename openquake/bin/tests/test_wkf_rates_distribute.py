@@ -50,10 +50,9 @@ class RatesDistributeTestCase(unittest.TestCase):
         # values. With this configuration it's not possible to add uncertainty.
 
         # Run the code
-        conf = os.path.join(DATA, 'conf01.toml')
-        fmt = './../wkf_rates_distribute.jl {:s} {:s} {:s}'
-        cmd = fmt.format(DATA, self.conf, self.out_folder)
-        print(cmd)
+        code = os.path.join(HERE, '..', 'wkf_rates_distribute.jl')
+        fmt = '{:s} {:s} {:s} {:s}'
+        cmd = fmt.format(code, DATA, self.conf, self.out_folder)
         subprocess.call(cmd, shell=True)
 
         # Test results
@@ -69,8 +68,9 @@ class RatesDistributeTestCase(unittest.TestCase):
 
         # Run the code
         conf = os.path.join(DATA, 'conf01.toml')
-        fmt = './../wkf_rates_distribute.jl {:s} {:s} {:s} -r 1'
-        cmd = fmt.format(DATA, conf, self.out_folder)
+        code = os.path.join(HERE, '..', 'wkf_rates_distribute.jl')
+        fmt = '{:s} {:s} {:s} {:s} -r 1'
+        cmd = fmt.format(code, DATA, conf, self.out_folder)
         out = subprocess.call(cmd, shell=True)
 
         # Test results
@@ -80,8 +80,9 @@ class RatesDistributeTestCase(unittest.TestCase):
         """ Test the mean value + 1std for b and rate """
 
         # Run the code
-        fmt = './../wkf_rates_distribute.jl {:s} {:s} {:s} -r {:.1f} -b {:.1f}'
-        cmd = fmt.format(DATA, self.conf, self.out_folder, 1.0, 1.0)
+        code = os.path.join(HERE, '..', 'wkf_rates_distribute.jl')
+        fmt = '{:s} {:s} {:s} {:s} -r {:.1f} -b {:.1f}'
+        cmd = fmt.format(code, DATA, self.conf, self.out_folder, 1.0, 1.0)
         subprocess.call(cmd, shell=True)
 
         # Test results. The expected total agr is 4.671150
@@ -90,13 +91,13 @@ class RatesDistributeTestCase(unittest.TestCase):
         computed = res.agr.to_numpy()
         numpy.testing.assert_almost_equal(expected, computed, decimal=4)
 
-
     def test_distribute_rates_deltaA(self):
         """ Test the mean value + 1std for rate """
 
         # Run the code
-        fmt = './../wkf_rates_distribute.jl {:s} {:s} {:s} -r {:.1f}'
-        cmd = fmt.format(DATA, self.conf, self.out_folder, 2.0)
+        code = os.path.join(HERE, '..', 'wkf_rates_distribute.jl')
+        fmt = '{:s} {:s} {:s} {:s} -r {:.1f}'
+        cmd = fmt.format(code, DATA, self.conf, self.out_folder, 2.0)
         subprocess.call(cmd, shell=True)
 
         # Test results. The expected total agr is 4.671150
