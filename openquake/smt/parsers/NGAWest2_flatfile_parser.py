@@ -102,7 +102,7 @@ COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
 class NGAWest2FlatfileParser(SMDatabaseReader):
     
     """
-    Parses the ESM metadata from the flatfile to a set of metadata objects
+    Parses the metadata from the flatfile to a set of metadata objects
     """
     
     M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
@@ -311,7 +311,11 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         return True
 
     def _parse_record(self, metadata):
-        # Waveform ID not provided in file so concatenate Event and Station ID
+        # Conc. NGAWest2 record info to identify each record in flatfile:
+        # --> event_id = NGAWest2['Earthquake Name'] in parser equivalencies
+        # --> station_id = NGAWest2['Station Name'] in parser equivalencies
+        # --> network_code = NGAWest2['Owner'] in parser equivalencies
+        # --> location_code = NGAWest2['Station ID No.'] in parser equivalencies
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
                          metadata["station_code"], metadata["location_code"]])
         wfid = wfid.replace("-", "_")
