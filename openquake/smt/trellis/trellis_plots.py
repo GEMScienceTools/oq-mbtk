@@ -27,13 +27,13 @@ try:  # https://stackoverflow.com/q/53978542
     from collections.abc import Iterable  # noqa
 except ImportError:
     from collections import Iterable  # noqa    
-from math import floor, ceil
 import matplotlib
 from cycler import cycler
 from copy import deepcopy
 import matplotlib.pyplot as plt
 
 import numpy as np
+import pandas as pd
 from openquake.hazardlib import imt
 from openquake.hazardlib.gsim.base import (RuptureContext, DistancesContext,
                                            SitesContext)
@@ -91,7 +91,7 @@ DISTANCE_LABEL_MAP = {
 }
 
 # Default figure size
-FIG_SIZE = (7, 5)
+FIG_SIZE = (12, 12)
 
 # RESET Axes tick labels
 matplotlib.rc("xtick", labelsize=12)
@@ -166,7 +166,7 @@ class BaseTrellis(object):
         kwargs.setdefault('figure_size', FIG_SIZE)
         kwargs.setdefault('xlim', None)
         kwargs.setdefault('ylim', None)
-        kwargs.setdefault("legend_fontsize", 14)
+        kwargs.setdefault("legend_fontsize", 12)
         kwargs.setdefault("ncol", 1)
         self.rupture = rupture
         self.magnitudes = magnitudes
@@ -389,7 +389,8 @@ class MagnitudeIMTTrellis(BaseTrellis):
                 distances[key] = np.array([distances[key]])
         super().__init__(
             magnitudes, distances, gsims, imts, params, stddev, **kwargs)
-
+        self.plot()
+        
     @classmethod
     def from_rupture_properties(cls, properties, magnitudes, distance,
                                 gsims, imts, stddev='Total', **kwargs):
@@ -470,7 +471,7 @@ class MagnitudeIMTTrellis(BaseTrellis):
         # Get means and standard deviations
         gmvs = self.get_ground_motion_values()
         fig = plt.figure(figsize=self.figure_size)
-        fig.set_tight_layout(True)
+        fig.set_tight_layout(False)
         row_loc = 0
         col_loc = 0
         for i_m in self.imts:
@@ -485,11 +486,11 @@ class MagnitudeIMTTrellis(BaseTrellis):
         lgd = plt.legend(self.lines,
                          self.labels,
                          loc=3,
-                         bbox_to_anchor=(1.1, 0.),
+                         bbox_to_anchor=(1.1, 1.5),
                          fontsize=self.legend_fontsize,
                          ncol=self.ncol)
         _save_image(self.filename, fig, self.filetype, self.dpi,
-                    bbox_extra_artists=(lgd,), bbox_inches="tight")
+                    bbox_extra_artists=(lgd,),bbox_inches='tight')
         return fig
 
     def _build_plot(self, ax, i_m, gmvs):
@@ -513,8 +514,7 @@ class MagnitudeIMTTrellis(BaseTrellis):
             if isinstance(self.xlim, tuple):
                 ax.set_xlim(self.xlim[0], self.xlim[1])
             else:
-                ax.set_xlim(floor(self.magnitudes[0]),
-                            ceil(self.magnitudes[-1]))
+                ax.set_xlim(min(self.magnitudes),max(self.magnitudes))
             if isinstance(self.ylim, tuple):
                 ax.set_ylim(self.ylim[0], self.ylim[1])
             self._set_labels(i_m, ax)
@@ -523,8 +523,8 @@ class MagnitudeIMTTrellis(BaseTrellis):
         """
         Sets the labels on the specified axes
         """
-        ax.set_xlabel("Magnitude", fontsize=16)
-        ax.set_ylabel(self._get_ylabel(i_m), fontsize=16)
+        ax.set_xlabel("Magnitude", fontsize=12)
+        ax.set_ylabel(self._get_ylabel(i_m), fontsize=12)
 
     def _get_ylabel(self, i_m):
         """
@@ -680,8 +680,7 @@ class MagnitudeSigmaIMTTrellis(MagnitudeIMTTrellis):
             if isinstance(self.xlim, tuple):
                 ax.set_xlim(self.xlim[0], self.xlim[1])
             else:
-                ax.set_xlim(floor(self.magnitudes[0]),
-                            ceil(self.magnitudes[-1]))
+                ax.set_xlim(min(self.magnitudes),max(self.magnitudes))
             if isinstance(self.ylim, tuple):
                 ax.set_ylim(self.ylim[0], self.ylim[1])
             self._set_labels(i_m, ax)
@@ -715,7 +714,7 @@ class MagnitudeSigmaIMTTrellis(MagnitudeIMTTrellis):
                         break
 
         return gmvs
-
+    
     def _get_ylabel(self, i_m):
         """
         """
@@ -725,8 +724,8 @@ class MagnitudeSigmaIMTTrellis(MagnitudeIMTTrellis):
         """
         Sets the axes labels
         """
-        ax.set_xlabel("Magnitude", fontsize=16)
-        ax.set_ylabel(self._get_ylabel(i_m), fontsize=16)
+        ax.set_xlabel("Magnitude", fontsize=12)
+        ax.set_ylabel(self._get_ylabel(i_m), fontsize=12)
 
     def _write_pprint_header_line(self, fid, sep=","):
         """
@@ -757,7 +756,8 @@ class DistanceIMTTrellis(MagnitudeIMTTrellis):
         super(DistanceIMTTrellis, self).__init__(magnitudes, distances, gsims,
                                                  imts, params, stddev,
                                                  **kwargs)
-
+        self.plot()
+        
     @classmethod
     def from_rupture_properties(cls, properties, magnitude, distances,
                                 gsims, imts, stddev='Total', **kwargs):
@@ -866,8 +866,8 @@ class DistanceIMTTrellis(MagnitudeIMTTrellis):
         Sets the labels on the specified axes
         """
         ax.set_xlabel("%s (km)" % DISTANCE_LABEL_MAP[self.distance_type],
-                      fontsize=16)
-        ax.set_ylabel(self._get_ylabel(i_m), fontsize=16)
+                      fontsize=12)
+        ax.set_ylabel(self._get_ylabel(i_m), fontsize=12)
 
     def _get_ylabel(self, i_m):
         """
@@ -1046,8 +1046,8 @@ class DistanceSigmaIMTTrellis(DistanceIMTTrellis):
         Sets the labels on the specified axes
         """
         ax.set_xlabel("%s (km)" % DISTANCE_LABEL_MAP[self.distance_type],
-                      fontsize=16)
-        ax.set_ylabel(self._get_ylabel(i_m), fontsize=16)
+                      fontsize=12)
+        ax.set_ylabel(self._get_ylabel(i_m), fontsize=12)
 
     def _write_pprint_header_line(self, fid, sep=","):
         """
@@ -1079,6 +1079,7 @@ class MagnitudeDistanceSpectraTrellis(BaseTrellis):
         imts = ["SA(%s)" % i_m for i_m in imts]
         super().__init__(magnitudes, distances, gsims, imts, params,
                          stddev, **kwargs)
+        self.plot()
 
     @classmethod
     def from_rupture_properties(cls, properties, magnitudes, distance,
@@ -1274,13 +1275,13 @@ class MagnitudeDistanceSpectraTrellis(BaseTrellis):
                 ax.set_title("%s = %9.1f (km)" %
                              (self.distance_type,
                               self.distances[rloc][self.distance_type][cloc]),
-                             fontsize=14)
+                             fontsize=12)
             # On the last column add a vertical label with magnitude
             if cloc == (self.nsites - 1):
                 ax.annotate("M = %s" % self.rctx[rloc].mag,
                             (1.05, 0.5),
                             xycoords="axes fraction",
-                            fontsize=14,
+                            fontsize=12,
                             rotation="vertical")
 
             self.lines.append(line)
@@ -1294,8 +1295,8 @@ class MagnitudeDistanceSpectraTrellis(BaseTrellis):
         """
         Sets the labels on the specified axes
         """
-        ax.set_xlabel("Period (s)", fontsize=14)
-        ax.set_ylabel(self._get_ylabel(None), fontsize=14)
+        ax.set_xlabel("Period (s)", fontsize=12)
+        ax.set_ylabel(self._get_ylabel(None), fontsize=12)
 
     def to_dict(self):
         """
@@ -1456,13 +1457,13 @@ class MagnitudeDistanceSpectraSigmaTrellis(MagnitudeDistanceSpectraTrellis):
                 ax.set_title("%s = %9.3f (km)" %
                              (self.distance_type,
                               self.distances[0][self.distance_type][cloc]),
-                             fontsize=14)
+                             fontsize=12)
             # On the last column add a vertical label with magnitude
             if cloc == (self.nsites - 1):
                 ax.annotate("M = %s" % self.rctx[rloc].mag,
                             (1.05, 0.5),
                             xycoords="axes fraction",
-                            fontsize=14,
+                            fontsize=12,
                             rotation="vertical")
 
             self.lines.append(line)
