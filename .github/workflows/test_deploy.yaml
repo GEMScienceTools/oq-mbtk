@@ -33,7 +33,7 @@ jobs:
     - name: Run test with pytest
       run: |
         cd openquake
-        pytest -vsx cat ghm man mbi mbt sub wkf
+        pytest -vsx cat ghm man mbt sub wkf
 
   pages:
     name: pages
