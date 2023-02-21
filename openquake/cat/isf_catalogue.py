@@ -556,8 +556,7 @@ class ISFCatalogue(object):
         self.sidx = sidx
         self.data = np.array(data)
 
-    # TODO - this does not cope yet with catalogues crossing the international
-    # dateline
+
     def add_external_idf_formatted_catalogue(
             self, cat, ll_deltas=0.01, delta_t=dt.timedelta(seconds=30),
             utc_time_zone=dt.timezone(dt.timedelta(hours=0)),
@@ -716,9 +715,7 @@ class ISFCatalogue(object):
                         else: km_check = False
                     else: km_check = True
                           
-                    if delta < sel_thrs and found is False and km_check is True:
-                        
-                        
+                    if delta < sel_thrs and found is False and km_check is True:                      
 
                         # Found an origin in the same space-time window
                         found = True
@@ -796,7 +793,6 @@ class ISFCatalogue(object):
             obj_e = []
             obj_a = []
             
-            # This is not yet updated to work with use_kms!
             if buff_ll > 0 or buff_t.total_seconds() > 0:
                 if use_kms == False:
                     obj_a = [n.object for n in self.sidx.intersection((
@@ -832,15 +828,13 @@ class ISFCatalogue(object):
 
                         # Within max time and within the ll buffer
                         if (not to_add and tmp_delta < (sel_thrs + tsec)):
-                            if i in obj_e:
-                                
+                            if i in obj_e: 
                                 to_add = True
 
                         # Saving info
                         if to_add:
                             if i[0] in doubts:
                                 doubts[i[0]].append(iloc)
-                             
                             else:
                                 doubts[i[0]] = [iloc]
 
@@ -848,7 +842,6 @@ class ISFCatalogue(object):
                 elif use_kms == True:
                     for i in obj:
                         to_add = False
-                        
 
                         # Selecting origin of the event found in the catalogue
                         i_eve = i[0]
@@ -883,7 +876,6 @@ class ISFCatalogue(object):
                             if to_add:
                                 if i[0] in doubts:
                                     doubts[i[0]].append(iloc)
-
                                 else:
                                     doubts[i[0]] = [iloc]
 

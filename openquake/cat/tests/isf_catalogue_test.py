@@ -176,13 +176,13 @@ class MergeGenericCatalogueTest(unittest.TestCase):
                 utc_time_zone=timezone, buff_t=dt.timedelta(0), buff_ll=0,
                 use_ids=True, logfle=None)
         self.assertIn('isf_catalogue.py', cm.filename)
-        self.assertEqual(903, cm.lineno)
+        self.assertEqual(895, cm.lineno)
         
     def test_case05(self):
         """Testing the identification of doubtful events with use_kms"""
         # In this test the first event in the .csv file is a duplicate of
         # the 2015 earthquake and it is therefore excluded.
-        # The 2nd event is within the space window and so retained, and also within the buffer
+        # The 2nd and 3rd events are within the buffers and so flagged as doubtful events
 
         # Read the CSV formatted file
         parser = GenericCataloguetoISFParser(self.fname_csv3)
