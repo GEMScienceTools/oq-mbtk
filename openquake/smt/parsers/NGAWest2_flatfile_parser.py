@@ -102,7 +102,7 @@ COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
 class NGAWest2FlatfileParser(SMDatabaseReader):
     
     """
-    Parses the ESM metadata from the flatfile to a set of metadata objects
+    Parses the metadata from the flatfile to a set of metadata objects
     """
     
     M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
@@ -154,6 +154,13 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Import NGAWest2 format strong-motion flatfiles
         NGAWest2 = pd.read_csv(NGAWest2_flatfile_directory)
         NGAWest2_vertical = pd.read_csv(NGAWest2_vertical_flatfile_directory)
+        
+        #Check RotD50 and vertical records match
+        for rec in range(0,len(NGAWest2)):
+            if NGAWest2['Record Sequence Number'
+                        ].iloc[rec]!=NGAWest2_vertical[
+                            'Record Sequence Number'].iloc[rec]:
+                raise ValueError("Records within inputted flatfiles do not match.")
         
         # Count initial size for printing number records removed during checks
         Initial_NGAWest2_size = len(NGAWest2)
@@ -311,7 +318,11 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         return True
 
     def _parse_record(self, metadata):
-        # Waveform ID not provided in file so concatenate Event and Station ID
+        # Conc. NGAWest2 record info to identify each record in flatfile:
+        # --> event_id = NGAWest2['Earthquake Name'] 
+        # --> station_id = NGAWest2['Station Name'] 
+        # --> network_code = NGAWest2['Owner']
+        # --> location_code = NGAWest2['Station ID No.']
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
                          metadata["station_code"], metadata["location_code"]])
         wfid = wfid.replace("-", "_")
@@ -718,7 +729,6 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     
     """
     Convert first from NGAWest2 format flatfile to ESM18 format flatfile 
-    readable by parser
     """
     
     # Construct event_time in yyyy-mm-dd hh:mm:ss format
@@ -906,20 +916,20 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "V_lp":default_string,
     "W_lp":default_string,
      
-    "U_pga":NGAWest2['PGA (g)']*981,
-    "V_pga":NGAWest2['PGA (g)']*981,
+    "U_pga":np.sqrt(((NGAWest2['PGA (g)']*981)**2)/2),
+    "V_pga":np.sqrt(((NGAWest2['PGA (g)']*981)**2)/2),
     "W_pga":NGAWest2_vertical['PGA (g)']*981,
     "rotD50_pga":NGAWest2['PGA (g)']*981,
     "rotD100_pga":default_string,
     "rotD00_pga":default_string,
-    "U_pgv":NGAWest2['PGV (cm/sec)'],
-    "V_pgv":NGAWest2['PGV (cm/sec)'],
+    "U_pgv":np.sqrt(((NGAWest2['PGV (cm/sec)'])**2)/2),
+    "V_pgv":np.sqrt(((NGAWest2['PGV (cm/sec)'])**2)/2),
     "W_pgv":NGAWest2_vertical['PGV (cm/sec)'],
     "rotD50_pgv":NGAWest2['PGV (cm/sec)'],
     "rotD100_pgv":default_string,
     "rotD00_pgv":default_string,
-    "U_pgd":NGAWest2['PGD (cm)'],
-    "V_pgd":NGAWest2['PGD (cm)'],
+    "U_pgd":np.sqrt(((NGAWest2['PGD (cm)'])**2)/2),
+    "V_pgd":np.sqrt(((NGAWest2['PGD (cm)'])**2)/2),
     "W_pgd":NGAWest2_vertical['PGD (cm)'],
     "rotD50_pgd":NGAWest2['PGD (cm)'],
     "rotD100_pgd":default_string,
@@ -950,81 +960,80 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "rotD100_ia":default_string,
     "rotD00_ia":default_string,
     
-    # Assign RotD50 to both horizontal components for computation of geo. mean
-    # Therefore equating RotD50 to geometric mean
-    "U_T0_010":NGAWest2['T0.010S']*981,
-    "U_T0_025":NGAWest2['T0.025S']*981,
-    "U_T0_040":NGAWest2['T0.040S']*981,
-    "U_T0_050":NGAWest2['T0.050S']*981,
-    "U_T0_070":NGAWest2['T0.070S']*981,
-    "U_T0_100":NGAWest2['T0.100S']*981,
-    "U_T0_150":NGAWest2['T0.150S']*981,
-    "U_T0_200":NGAWest2['T0.200S']*981,
-    "U_T0_250":NGAWest2['T0.250S']*981,
-    "U_T0_300":NGAWest2['T0.300S']*981,
-    "U_T0_350":NGAWest2['T0.350S']*981,
-    "U_T0_400":NGAWest2['T0.400S']*981,
-    "U_T0_450":NGAWest2['T0.450S']*981,
-    "U_T0_500":NGAWest2['T0.500S']*981,
-    "U_T0_600":NGAWest2['T0.600S']*981,
-    "U_T0_700":NGAWest2['T0.700S']*981,
-    "U_T0_750":NGAWest2['T0.750S']*981,
-    "U_T0_800":NGAWest2['T0.800S']*981,
-    "U_T0_900":NGAWest2['T0.900S']*981,
-    "U_T1_000":NGAWest2['T1.000S']*981,
-    "U_T1_200":NGAWest2['T1.200S']*981,
-    "U_T1_400":NGAWest2['T1.400S']*981,
-    "U_T1_600":NGAWest2['T1.600S']*981,
-    "U_T1_800":NGAWest2['T1.800S']*981,
-    "U_T2_000":NGAWest2['T2.000S']*981,
-    "U_T2_500":NGAWest2['T2.500S']*981,
-    "U_T3_000":NGAWest2['T3.000S']*981,
-    "U_T3_500":NGAWest2['T3.500S']*981,
-    "U_T4_000":NGAWest2['T4.000S']*981,
-    "U_T4_500":NGAWest2['T4.500S']*981,
-    "U_T5_000":NGAWest2['T5.000S']*981,
-    "U_T6_000":NGAWest2['T6.000S']*981,
-    "U_T7_000":NGAWest2['T7.000S']*981,
-    "U_T8_000":NGAWest2['T8.000S']*981,
-    "U_T9_000":NGAWest2['T9.000S']*981,
-    "U_T10_000":NGAWest2['T10.000S']*981,
+    # Compute each horiz. comp. from RotD50 (assuming geo mean = RotD50) 
+    "U_T0_010":np.sqrt(((NGAWest2['T0.010S']*981)**2)/2),
+    "U_T0_025":np.sqrt(((NGAWest2['T0.025S']*981)**2)/2),
+    "U_T0_040":np.sqrt(((NGAWest2['T0.040S']*981)**2)/2),
+    "U_T0_050":np.sqrt(((NGAWest2['T0.050S']*981)**2)/2),
+    "U_T0_070":np.sqrt(((NGAWest2['T0.070S']*981)**2)/2),
+    "U_T0_100":np.sqrt(((NGAWest2['T0.100S']*981)**2)/2),
+    "U_T0_150":np.sqrt(((NGAWest2['T0.150S']*981)**2)/2),
+    "U_T0_200":np.sqrt(((NGAWest2['T0.200S']*981)**2)/2),
+    "U_T0_250":np.sqrt(((NGAWest2['T0.250S']*981)**2)/2),
+    "U_T0_300":np.sqrt(((NGAWest2['T0.300S']*981)**2)/2),
+    "U_T0_350":np.sqrt(((NGAWest2['T0.350S']*981)**2)/2),
+    "U_T0_400":np.sqrt(((NGAWest2['T0.400S']*981)**2)/2),
+    "U_T0_450":np.sqrt(((NGAWest2['T0.450S']*981)**2)/2),
+    "U_T0_500":np.sqrt(((NGAWest2['T0.500S']*981)**2)/2),
+    "U_T0_600":np.sqrt(((NGAWest2['T0.600S']*981)**2)/2),
+    "U_T0_700":np.sqrt(((NGAWest2['T0.700S']*981)**2)/2),
+    "U_T0_750":np.sqrt(((NGAWest2['T0.750S']*981)**2)/2),
+    "U_T0_800":np.sqrt(((NGAWest2['T0.800S']*981)**2)/2),
+    "U_T0_900":np.sqrt(((NGAWest2['T0.900S']*981)**2)/2),
+    "U_T1_000":np.sqrt(((NGAWest2['T1.000S']*981)**2)/2),
+    "U_T1_200":np.sqrt(((NGAWest2['T1.200S']*981)**2)/2),
+    "U_T1_400":np.sqrt(((NGAWest2['T1.400S']*981)**2)/2),
+    "U_T1_600":np.sqrt(((NGAWest2['T1.600S']*981)**2)/2),
+    "U_T1_800":np.sqrt(((NGAWest2['T1.800S']*981)**2)/2),
+    "U_T2_000":np.sqrt(((NGAWest2['T2.000S']*981)**2)/2),
+    "U_T2_500":np.sqrt(((NGAWest2['T2.500S']*981)**2)/2),
+    "U_T3_000":np.sqrt(((NGAWest2['T3.000S']*981)**2)/2),
+    "U_T3_500":np.sqrt(((NGAWest2['T3.500S']*981)**2)/2),
+    "U_T4_000":np.sqrt(((NGAWest2['T4.000S']*981)**2)/2),
+    "U_T4_500":np.sqrt(((NGAWest2['T4.500S']*981)**2)/2),
+    "U_T5_000":np.sqrt(((NGAWest2['T5.000S']*981)**2)/2),
+    "U_T6_000":np.sqrt(((NGAWest2['T6.000S']*981)**2)/2),
+    "U_T7_000":np.sqrt(((NGAWest2['T7.000S']*981)**2)/2),
+    "U_T8_000":np.sqrt(((NGAWest2['T8.000S']*981)**2)/2),
+    "U_T9_000":np.sqrt(((NGAWest2['T9.000S']*981)**2)/2),
+    "U_T10_000":np.sqrt(((NGAWest2['T10.000S']*981)**2)/2),
     
-    "V_T0_010":NGAWest2['T0.010S']*981,
-    "V_T0_025":NGAWest2['T0.025S']*981,
-    "V_T0_040":NGAWest2['T0.040S']*981,
-    "V_T0_050":NGAWest2['T0.050S']*981,
-    "V_T0_070":NGAWest2['T0.070S']*981,
-    "V_T0_100":NGAWest2['T0.100S']*981,
-    "V_T0_150":NGAWest2['T0.150S']*981,
-    "V_T0_200":NGAWest2['T0.200S']*981,
-    "V_T0_250":NGAWest2['T0.250S']*981,
-    "V_T0_300":NGAWest2['T0.300S']*981,
-    "V_T0_350":NGAWest2['T0.350S']*981,
-    "V_T0_400":NGAWest2['T0.400S']*981,
-    "V_T0_450":NGAWest2['T0.450S']*981,
-    "V_T0_500":NGAWest2['T0.500S']*981,
-    "V_T0_600":NGAWest2['T0.600S']*981,
-    "V_T0_700":NGAWest2['T0.700S']*981,
-    "V_T0_750":NGAWest2['T0.750S']*981,
-    "V_T0_800":NGAWest2['T0.800S']*981,
-    "V_T0_900":NGAWest2['T0.900S']*981,
-    "V_T1_000":NGAWest2['T1.000S']*981,
-    "V_T1_200":NGAWest2['T1.200S']*981,
-    "V_T1_400":NGAWest2['T1.400S']*981,
-    "V_T1_600":NGAWest2['T1.600S']*981,
-    "V_T1_800":NGAWest2['T1.800S']*981,
-    "V_T2_000":NGAWest2['T2.000S']*981,
-    "V_T2_500":NGAWest2['T2.500S']*981,
-    "V_T3_000":NGAWest2['T3.000S']*981,
-    "V_T3_500":NGAWest2['T3.500S']*981,
-    "V_T4_000":NGAWest2['T4.000S']*981,
-    "V_T4_500":NGAWest2['T4.500S']*981,
-    "V_T5_000":NGAWest2['T5.000S']*981,
-    "V_T6_000":NGAWest2['T6.000S']*981,
-    "V_T7_000":NGAWest2['T7.000S']*981,
-    "V_T8_000":NGAWest2['T8.000S']*981,
-    "V_T9_000":NGAWest2['T9.000S']*981,
-    "V_T10_000":NGAWest2['T10.000S']*981,   
+    "V_T0_010":np.sqrt(((NGAWest2['T0.010S']*981)**2)/2),
+    "V_T0_025":np.sqrt(((NGAWest2['T0.025S']*981)**2)/2),
+    "V_T0_040":np.sqrt(((NGAWest2['T0.040S']*981)**2)/2),
+    "V_T0_050":np.sqrt(((NGAWest2['T0.050S']*981)**2)/2),
+    "V_T0_070":np.sqrt(((NGAWest2['T0.070S']*981)**2)/2),
+    "V_T0_100":np.sqrt(((NGAWest2['T0.100S']*981)**2)/2),
+    "V_T0_150":np.sqrt(((NGAWest2['T0.150S']*981)**2)/2),
+    "V_T0_200":np.sqrt(((NGAWest2['T0.200S']*981)**2)/2),
+    "V_T0_250":np.sqrt(((NGAWest2['T0.250S']*981)**2)/2),
+    "V_T0_300":np.sqrt(((NGAWest2['T0.300S']*981)**2)/2),
+    "V_T0_350":np.sqrt(((NGAWest2['T0.350S']*981)**2)/2),
+    "V_T0_400":np.sqrt(((NGAWest2['T0.400S']*981)**2)/2),
+    "V_T0_450":np.sqrt(((NGAWest2['T0.450S']*981)**2)/2),
+    "V_T0_500":np.sqrt(((NGAWest2['T0.500S']*981)**2)/2),
+    "V_T0_600":np.sqrt(((NGAWest2['T0.600S']*981)**2)/2),
+    "V_T0_700":np.sqrt(((NGAWest2['T0.700S']*981)**2)/2),
+    "V_T0_750":np.sqrt(((NGAWest2['T0.750S']*981)**2)/2),
+    "V_T0_800":np.sqrt(((NGAWest2['T0.800S']*981)**2)/2),
+    "V_T0_900":np.sqrt(((NGAWest2['T0.900S']*981)**2)/2),
+    "V_T1_000":np.sqrt(((NGAWest2['T1.000S']*981)**2)/2),
+    "V_T1_200":np.sqrt(((NGAWest2['T1.200S']*981)**2)/2),
+    "V_T1_400":np.sqrt(((NGAWest2['T1.400S']*981)**2)/2),
+    "V_T1_600":np.sqrt(((NGAWest2['T1.600S']*981)**2)/2),
+    "V_T1_800":np.sqrt(((NGAWest2['T1.800S']*981)**2)/2),
+    "V_T2_000":np.sqrt(((NGAWest2['T2.000S']*981)**2)/2),
+    "V_T2_500":np.sqrt(((NGAWest2['T2.500S']*981)**2)/2),
+    "V_T3_000":np.sqrt(((NGAWest2['T3.000S']*981)**2)/2),
+    "V_T3_500":np.sqrt(((NGAWest2['T3.500S']*981)**2)/2),
+    "V_T4_000":np.sqrt(((NGAWest2['T4.000S']*981)**2)/2),
+    "V_T4_500":np.sqrt(((NGAWest2['T4.500S']*981)**2)/2),
+    "V_T5_000":np.sqrt(((NGAWest2['T5.000S']*981)**2)/2),
+    "V_T6_000":np.sqrt(((NGAWest2['T6.000S']*981)**2)/2),
+    "V_T7_000":np.sqrt(((NGAWest2['T7.000S']*981)**2)/2),
+    "V_T8_000":np.sqrt(((NGAWest2['T8.000S']*981)**2)/2),
+    "V_T9_000":np.sqrt(((NGAWest2['T9.000S']*981)**2)/2),
+    "V_T10_000":np.sqrt(((NGAWest2['T10.000S']*981)**2)/2),   
         
     "W_T0_010":NGAWest2_vertical['T0.010S']*981,
     "W_T0_025":NGAWest2_vertical['T0.025S']*981,
