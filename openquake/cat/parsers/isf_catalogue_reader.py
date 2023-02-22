@@ -201,7 +201,7 @@ class ISFReader(BaseCatalogueDatabaseReader):
         Reads the catalogue from the file and assigns the identifier and name
         """
         self.catalogue = ISFCatalogue(identifier, name)
-        f = open(self.filename, 'rt')
+        f = open(self.filename, 'rt', encoding='utf-8')
         counter = 0
         is_origin = False
         is_magnitude = False
