@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parser fkr the ESM23 flatfile format (i.e. flatfile downloaded from custom
+Parser for the ESM23 flatfile format (i.e. flatfile downloaded from custom
 header URL) to SMT
 
 This parser assumes you have selected all available headers in your URL search
@@ -602,7 +602,7 @@ class ESM23FlatfileParser(SMDatabaseReader):
 def _get_ESM18_headers(ESM23,default_string,r_fm_type,r_datetime):
     
     """
-    Convert first from ESM23 format flatfile to ESM18 format flatfile readable by parser
+    Convert first from ESM23 format flatfile to ESM18 format flatfile
     """
     
     #Construct dataframe with original ESM format 

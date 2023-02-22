@@ -598,7 +598,6 @@ def _get_ESM18_headers(ESM22,default_string,r_fm_type,r_datetime):
     
     """
     Convert first from ESM22 format flatfile to ESM18 format flatfile 
-    readable by parser
     """
     
     #Construct dataframe with original ESM format 

@@ -35,7 +35,7 @@ import tempfile
 import numpy as np
 
 from openquake.ghm.grid.get_sites import _get_sites
-from openquake.ghm.grid.get_site_model import _get_site_model
+# from openquake.ghm.grid.get_site_model import _get_site_model
 
 DATA = os.path.join(os.path.dirname(__file__))
 
@@ -53,7 +53,8 @@ class GetSitesModelTestCase(unittest.TestCase):
         # Get the configuration
         conf = toml.load(fname_conf)
 
-        sites, _, _, _ = _get_sites(model, folder_out, conf)
+        root_path = os.path.dirname(fname_conf)
+        sites, _, _, _ = _get_sites(model, folder_out, conf, root_path)
 
         #fname_expected = os.path.join(DATA, 'data', 'cea.csv')
         #expected = np.loadtxt(fname_expected, delimiter=',')
