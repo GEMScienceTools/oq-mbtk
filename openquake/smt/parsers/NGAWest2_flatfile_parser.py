@@ -155,7 +155,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2 = pd.read_csv(NGAWest2_flatfile_directory)
         NGAWest2_vertical = pd.read_csv(NGAWest2_vertical_flatfile_directory)
         
-        #Check RotD50 and vertical records match
+        # Check RotD50 and vertical records match
         for rec in range(0,len(NGAWest2)):
             if NGAWest2['Record Sequence Number'
                         ].iloc[rec]!=NGAWest2_vertical[
