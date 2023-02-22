@@ -155,6 +155,13 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2 = pd.read_csv(NGAWest2_flatfile_directory)
         NGAWest2_vertical = pd.read_csv(NGAWest2_vertical_flatfile_directory)
         
+        #Check RotD50 and vertical records match
+        for rec in range(0,len(NGAWest2)):
+            if NGAWest2['Record Sequence Number'
+                        ].iloc[rec]!=NGAWest2_vertical[
+                            'Record Sequence Number'].iloc[rec]:
+                raise ValueError("Records within inputted flatfiles do not match.")
+        
         # Count initial size for printing number records removed during checks
         Initial_NGAWest2_size = len(NGAWest2)
 
@@ -312,10 +319,10 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_record(self, metadata):
         # Conc. NGAWest2 record info to identify each record in flatfile:
-        # --> event_id = NGAWest2['Earthquake Name'] in parser equivalencies
-        # --> station_id = NGAWest2['Station Name'] in parser equivalencies
-        # --> network_code = NGAWest2['Owner'] in parser equivalencies
-        # --> location_code = NGAWest2['Station ID No.'] in parser equivalencies
+        # --> event_id = NGAWest2['Earthquake Name'] 
+        # --> station_id = NGAWest2['Station Name'] 
+        # --> network_code = NGAWest2['Owner']
+        # --> location_code = NGAWest2['Station ID No.']
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
                          metadata["station_code"], metadata["location_code"]])
         wfid = wfid.replace("-", "_")
@@ -722,7 +729,6 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     
     """
     Convert first from NGAWest2 format flatfile to ESM18 format flatfile 
-    readable by parser
     """
     
     # Construct event_time in yyyy-mm-dd hh:mm:ss format
