@@ -164,6 +164,20 @@ class ESM23FlatfileParser(SMDatabaseReader):
         # Assign strike-slip to unknown faulting mechanism
         r_fm_type = ESM23.fm_type_code.fillna('SS') 
         
+        #If vs30 is empty use topographic approximation    
+        for idx in range(0,len(ESM23)):
+            if pd.isnull(ESM23.vs30_m_s[idx]):
+                ESM23['vs30_m_s'].iloc[idx]=ESM23['vs30_m_s_wa'].iloc[idx]
+        
+        
+        #Drop vs30 if still empty (no topographic slope approximation available
+        for idx in range(0,len(ESM23)):
+            if pd.isnull(ESM23.vs30_m_s[idx]):
+                ESM23['vs30_m_s']=ESM23['vs30_m_s'].iloc[idx]=-999
+        Index_to_drop=np.array(ESM23.loc[ESM23['vs30_m_s']==-999][
+            'vs30_m_s'].index)
+        ESM23=ESM23.drop(Index_to_drop)
+
         #Reformat datetime
         r_datetime = ESM23.event_time.str.replace('T',' ')
         
@@ -659,11 +673,11 @@ def _get_ESM18_headers(ESM23,default_string,r_fm_type,r_datetime):
     "ec8_code_method":ESM23.ec8_code_from_topography,
     "ec8_code_ref":default_string,
     "vs30_m_sec":ESM23.vs30_m_s_wa,
-    "vs30_ref":default_string,
+    "vs30_ref":ESM23.vs30_meas_type,
     "vs30_calc_method":default_string, 
     "vs30_meas_type":default_string,
     "slope_deg":default_string,
-    "vs30_m_sec_WA":default_string,
+    "vs30_m_sec_WA":ESM23.vs30_m_s_wa,
  
     "epi_dist":ESM23.epi_dist,
     "epi_az":ESM23.epi_az,  
