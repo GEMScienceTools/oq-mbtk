@@ -155,7 +155,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2 = pd.read_csv(NGAWest2_flatfile_directory)
         NGAWest2_vertical = pd.read_csv(NGAWest2_vertical_flatfile_directory)
         
-        #Check RotD50 and vertical records match
+        # Check RotD50 and vertical records match
         for rec in range(0,len(NGAWest2)):
             if NGAWest2['Record Sequence Number'
                         ].iloc[rec]!=NGAWest2_vertical[
@@ -888,7 +888,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "ec8_code_method":default_string,
     "ec8_code_ref":default_string,
     "vs30_m_sec":NGAWest2['Vs30 (m/s) selected for analysis'],
-    "vs30_ref":default_string,
+    "vs30_ref":NGAWest2['Measured/Inferred Class'],
     "vs30_calc_method":default_string, 
     "vs30_meas_type":default_string,
     "slope_deg":default_string,
