@@ -255,7 +255,6 @@ class Origin(object):
         - 'AnalysisType' - Analysis type
         - 'LocationMethod' - Location Method
         - 'EventType' - Event type
-
     """
     def __init__(self, identifier, date, time, location, author,
                  is_prime=False, is_centroid=False, time_error=None,
@@ -368,7 +367,6 @@ class Event(object):
         List of instances of the Magnitude class
     :param str description:
         Description string
-
     '''
     def __init__(self, identifier, origins, magnitudes, description=None):
         """
@@ -432,7 +430,6 @@ class Event(object):
         '''
         Merges an instance of an isf_catalogue.Origin class into the set
         of origins.
-
         :param origin2set:
             An iterable
         '''
@@ -559,8 +556,7 @@ class ISFCatalogue(object):
         self.sidx = sidx
         self.data = np.array(data)
 
-    # TODO - this does not cope yet with catalogues crossing the international
-    # dateline
+
     def add_external_idf_formatted_catalogue(
             self, cat, ll_deltas=0.01, delta_t=dt.timedelta(seconds=30),
             utc_time_zone=dt.timezone(dt.timedelta(hours=0)),
@@ -570,7 +566,6 @@ class ISFCatalogue(object):
         This merges an external catalogue formatted in the ISF format e.g. a
         catalogue coming from an external agency. Because of this, we assume
         that each event has a single origin.
-
         :param cat:
             An instance of :class:`ISFCatalogue` i.e. the 'guest' catalogue
         :param delta_ll:
@@ -683,24 +678,7 @@ class ISFCatalogue(object):
             obj = [n.object for n in self.sidx.intersection(
                 (minlo, minla, maxlo, maxla), objects=True)]
 
-            # This is for checking. We perform the check only if the buffer
-            # distance is larger than 0
-            obj_e = []
-            obj_a = []
             
-            # This is not yet updated to work with use_kms!
-            if buff_ll > 0 or buff_t.total_seconds() > 0:
-
-                obj_a = [n.object for n in self.sidx.intersection((
-                        minlo-buff_ll, minla-buff_ll, maxlo+buff_ll,
-                        maxla+buff_ll), objects=True)]
-                obj_b = [n.object for n in self.sidx.intersection((
-                        minlo+buff_ll, minla+buff_ll, maxlo-buff_ll,
-                        maxla+buff_ll), objects=True)]
-
-                # Find the index of the events in the buffer across the
-                # selection window
-                obj_e = list(set(obj_a) - set(obj_b))
 
             if logfle:
                 msg = f'   Selected {len(obj):d} events \n'
@@ -737,9 +715,7 @@ class ISFCatalogue(object):
                         else: km_check = False
                     else: km_check = True
                           
-                    if delta < sel_thrs and found is False and km_check is True:
-                        
-                        
+                    if delta < sel_thrs and found is False and km_check is True:                      
 
                         # Found an origin in the same space-time window
                         found = True
@@ -811,20 +787,35 @@ class ISFCatalogue(object):
                         common += 1
 
                         break
-
+            
+            # This is for checking. We perform the check only if the buffer
+            # distance is larger than 0
+            obj_e = []
+            obj_a = []
+            
+            if buff_ll > 0 or buff_t.total_seconds() > 0:
+                if use_kms == False:
+                    obj_a = [n.object for n in self.sidx.intersection((
+                            minlo-buff_ll, minla-buff_ll, maxlo+buff_ll,
+                            maxla+buff_ll), objects=True)]
+                    obj_b = [n.object for n in self.sidx.intersection((
+                            minlo+buff_ll, minla+buff_ll, maxlo-buff_ll,
+                            maxla-buff_ll), objects=True)]
+                    
+                    obj_e = list(set(obj_a) - set(obj_b))
+                    
+                            
             # Search for doubtful events:
-            # Not yet functional with use_kms
             if buff_ll > 1e-10 and buff_t.seconds > 1e-10:
-                if len(obj_a) > 0:
+                if use_kms == False and len(obj_a) > 0:
                     for i in obj_a:
                         to_add = False
-
+                      
                         # Selecting origin of the event found in the catalogue
                         i_eve = i[0]
                         i_ori = i[1]
                         orig = self.events[i_eve].origins[i_ori]
                         dtime_b = dt.datetime.combine(orig.date, orig.time)
-
                         # Check if time difference is within the threshold
                         tmp_delta = abs(dtime_a - dtime_b).total_seconds()
 
@@ -832,11 +823,12 @@ class ISFCatalogue(object):
                         tsec = buff_t.total_seconds()
                         if (tmp_delta > (sel_thrs - tsec) and
                                 tmp_delta < (sel_thrs + tsec)):
+                            
                             to_add = True
 
                         # Within max time and within the ll buffer
                         if (not to_add and tmp_delta < (sel_thrs + tsec)):
-                            if i in obj_e:
+                            if i in obj_e: 
                                 to_add = True
 
                         # Saving info
@@ -845,6 +837,49 @@ class ISFCatalogue(object):
                                 doubts[i[0]].append(iloc)
                             else:
                                 doubts[i[0]] = [iloc]
+
+                                
+                elif use_kms == True:
+                    for i in obj:
+                        to_add = False
+
+                        # Selecting origin of the event found in the catalogue
+                        i_eve = i[0]
+                        i_ori = i[1]
+                        orig = self.events[i_eve].origins[i_ori]
+                        dtime_b = dt.datetime.combine(orig.date, orig.time)
+                        # Check if time difference is within the threshold
+                        tmp_delta = abs(dtime_a - dtime_b).total_seconds()
+                                                
+                        hi_buff = ll_thrs + buff_ll
+                        lo_buff = ll_thrs - buff_ll
+                        
+                        delta_km_thresh_buff = abs(geodetic_distance(event.origins[0].location.longitude, event.origins[0].location.latitude, orig.location.longitude,  orig.location.latitude))  
+                        
+                        
+                        if (delta_km_thresh_buff < hi_buff):
+                            
+                            # Within max distance and across the time buffer
+                            tsec = buff_t.total_seconds()
+                            
+                            
+                            if (tmp_delta > (sel_thrs - tsec) and
+                                    tmp_delta < (sel_thrs + tsec)):
+                                to_add = True
+
+                            # Within max time and within the ll buffer
+                            if (not to_add and tmp_delta < (sel_thrs + tsec)):
+                                if (delta_km_thresh_buff > lo_buff): 
+                                    to_add = True
+
+                            # Saving info
+                            if to_add:
+                                if i[0] in doubts:
+                                    doubts[i[0]].append(iloc)
+                                else:
+                                    doubts[i[0]] = [iloc]
+
+                    
 
             # Add new event
             if not found:
@@ -964,7 +999,6 @@ class ISFCatalogue(object):
         """
         This method computes the number of unique events provided by each
         agency.
-
         :returns:
             A dictionary with key the name of the agency and value the number
             of unique events.
@@ -1008,7 +1042,6 @@ class ISFCatalogue(object):
         """
         This removes from the catalogue all the events with ID included in the
         list provided.
-
         :param ids:
             A list of event IDs
         """
@@ -1246,7 +1279,6 @@ def get_delta_t(tmpl: Union[float, list]):
     """
     Given a tuple (or list of tuples) containing a year and a delta time in
     seconds it returns timedelta instances.
-
     :param tmpl:
         Either a float (or string) or an iterable containing tuples with
         an int (year from which this delta time applies) and a float (time
@@ -1333,3 +1365,4 @@ def get_threshold_matrices(delta_t, delta_ll):
     ll_delta = np.array(data)
 
     return mag_low_edges, time_low_edges, time_delta, ll_delta
+
