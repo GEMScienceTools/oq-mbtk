@@ -626,7 +626,8 @@ def _get_ESM18_headers(ESM22,default_string,r_fm_type,r_datetime):
     "EMEC_Mw_type":default_string,
     "EMEC_Mw_ref":default_string,
     "event_source_id":default_string,
- 
+    
+    # Rupture plane information not provided in ESM22 format flatfile
     "es_strike":default_string,
     "es_dip":default_string,
     "es_rake":default_string,

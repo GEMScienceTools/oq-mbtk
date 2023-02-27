@@ -285,10 +285,11 @@ class ResidualPlot(ResidualHistogramPlot):
         stddev = res_data["stddev"]
         x = res_data['x']
         xdata = np.arange(x[0], x[-1] + self.bin_width + 0.01, 0.01)
+        xdata_norm_pdf = np.arange(-3,3,0.01)
         ax.plot(xdata, norm.pdf(xdata, mean, stddev), '-',
                 color="LightSlateGrey", linewidth=2.0, 
                 label = 'Normal dist. from dataset')
-        ax.plot(xdata, norm.pdf(xdata, 0.0, 1.0), '-',
+        ax.plot(xdata_norm_pdf, norm.pdf(xdata_norm_pdf, 0.0, 1.0), '-',
                 color='k', linewidth=2.0, 
                 label = 'Standard. normal dist. \n (mean = 0, std. dev. = 1')
         ax.legend(loc = 'best')

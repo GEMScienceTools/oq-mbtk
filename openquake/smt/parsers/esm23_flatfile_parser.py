@@ -157,28 +157,25 @@ class ESM23FlatfileParser(SMDatabaseReader):
         # Import ESM 2023 format strong-motion flatfile
         ESM23 = pd.read_csv(ESM23_flatfile_directory)
  
+         # If vs30 is empty use topographic approximation    
+        for idx in range(0,len(ESM23)):
+            if pd.isnull(ESM23.vs30_m_s[idx]):
+                ESM23['vs30_m_s'].iloc[idx]=ESM23['vs30_m_s_wa'].iloc[idx]
+        
+        # If vs30 still empty drop record
+        for idx in range(0,len(ESM23)):
+            if pd.isnull(ESM23.vs30_m_s[idx]):
+                ESM23=ESM23.drop(index=idx)
+        ESM23 = ESM23.reset_index()
+        
         # Create default values for headers not considered in ESM23 format
         default_string = pd.Series(np.full(np.size(ESM23.esm_event_id),
                                            str("")))
         
         # Assign strike-slip to unknown faulting mechanism
         r_fm_type = ESM23.fm_type_code.fillna('SS') 
-        
-        #If vs30 is empty use topographic approximation    
-        for idx in range(0,len(ESM23)):
-            if pd.isnull(ESM23.vs30_m_s[idx]):
-                ESM23['vs30_m_s'].iloc[idx]=ESM23['vs30_m_s_wa'].iloc[idx]
-        
-        
-        #Drop vs30 if still empty (no topographic slope approximation available
-        for idx in range(0,len(ESM23)):
-            if pd.isnull(ESM23.vs30_m_s[idx]):
-                ESM23['vs30_m_s']=ESM23['vs30_m_s'].iloc[idx]=-999
-        Index_to_drop=np.array(ESM23.loc[ESM23['vs30_m_s']==-999][
-            'vs30_m_s'].index)
-        ESM23=ESM23.drop(Index_to_drop)
 
-        #Reformat datetime
+        # Reformat datetime
         r_datetime = ESM23.event_time.str.replace('T',' ')
         
         converted_base_data_path=_get_ESM18_headers(
@@ -619,16 +616,16 @@ def _get_ESM18_headers(ESM23,default_string,r_fm_type,r_datetime):
     Convert first from ESM23 format flatfile to ESM18 format flatfile
     """
     
-    #Construct dataframe with original ESM format 
+    # Construct dataframe with original ESM format 
     ESM_original_headers = pd.DataFrame(
     {
-    #Non-GMIM headers   
+    # Non-GMIM headers   
     "event_id":ESM23.esm_event_id,                                       
     "event_time":r_datetime,
-    "ISC_ev_id":default_string,
-    "USGS_ev_id":default_string,
-    "INGV_ev_id":default_string,
-    "EMSC_ev_id":default_string,
+    "ISC_ev_id":ESM23.isc_event_id,
+    "USGS_ev_id":ESM23.usgs_event_id,
+    "INGV_ev_id":ESM23.ingv_event_id,
+    "EMSC_ev_id":ESM23.emsc_event_id,
     "ev_nation_code":ESM23.ev_nation_code,
     "ev_latitude":ESM23.ev_latitude,    
     "ev_longitude":ESM23.ev_longitude,   
@@ -636,25 +633,25 @@ def _get_ESM18_headers(ESM23,default_string,r_fm_type,r_datetime):
     "ev_hyp_ref":default_string,
     "fm_type_code":r_fm_type,
     "ML":ESM23.ml,
-    "ML_ref":default_string,
+    "ML_ref":ESM23.ml_ref,
     "Mw":ESM23.mw,
-    "Mw_ref":default_string,
-    "Ms":ESM23.mw,
-    "Ms_ref":default_string,
-    "EMEC_Mw":ESM23.mw,
-    "EMEC_Mw_type":default_string,
-    "EMEC_Mw_ref":default_string,
-    "event_source_id":default_string,
- 
-    "es_strike":default_string,
-    "es_dip":default_string,
-    "es_rake":default_string,
+    "Mw_ref":ESM23.mw_ref,
+    "Ms":ESM23.ms,
+    "Ms_ref":ESM23.ms_ref,
+    "EMEC_Mw":ESM23.emec_mw,
+    "EMEC_Mw_type":ESM23.emec_mw_type,
+    "EMEC_Mw_ref":ESM23.emec_mw_ref,
+    "event_source_id":ESM23.event_source_id,
+
+    "es_strike":ESM23.es_strike,
+    "es_dip":ESM23.es_dip,
+    "es_rake":ESM23.es_rake,
     "es_strike_dip_rake_ref":default_string, 
-    "es_z_top":default_string,
-    "es_z_top_ref":default_string,
-    "es_length":default_string,   
-    "es_width":default_string,
-    "es_geometry_ref":default_string,
+    "es_z_top":ESM23.z_top,
+    "es_z_top_ref":ESM23.es_z_top_ref,
+    "es_length":ESM23.es_length,   
+    "es_width":ESM23.es_width,
+    "es_geometry_ref":ESM23.es_geometry_ref,
  
     "network_code":ESM23.network_code,
     "station_code":ESM23.station_code,
@@ -662,7 +659,7 @@ def _get_ESM18_headers(ESM23,default_string,r_fm_type,r_datetime):
     "instrument_code":ESM23.instrument_type_code,     
     "sensor_depth_m":ESM23.sensor_depth_m,
     "proximity_code":ESM23.proximity,
-    "housing_code":ESM23.hounsing,    #Currently typo in their database header
+    "housing_code":ESM23.hounsing,    # Currently typo in their database header
     "installation_code":ESM23.installation,
     "st_nation_code":ESM23.st_nation_code,
     "st_latitude":ESM23.st_latitude,
@@ -724,7 +721,7 @@ def _get_ESM18_headers(ESM23,default_string,r_fm_type,r_datetime):
     "W_T90":ESM23.w_t90,
     "rotD50_T90":ESM23.rotd50_t90,
     "rotD100_T90":ESM23.rotd100_t90,
-    "rotD00_T90":ESM23.rot_d00_t90, #This header has typo in current db version 
+    "rotD00_T90":ESM23.rot_d00_t90, # This header has typo in current db version 
     "U_housner":ESM23.u_housner,
     "V_housner":ESM23.v_housner,
     "W_housner":ESM23.w_housner,
