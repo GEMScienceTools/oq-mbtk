@@ -613,8 +613,7 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
         model = toml.load(fname_config)
 
     # Set the bin width
-    if 'bin_width' in model:
-        binw = model['bin_width']
+    binw = model.get('bin_width', binw)
 
     # `fname_input_pattern` can be either a list or a pattern (defined by a
     # string)
