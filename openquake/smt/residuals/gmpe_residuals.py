@@ -289,11 +289,8 @@ class Residuals(object):
     Class to derive sets of residuals for a list of ground motion residuals
     according to the GMPEs
     """
-    def __init__(self, filename=None, gmpe_list=None, imts=None):
+    def __init__(self, gmpe_list, imts):
         """
-        :param filename:
-            .toml file with list of GMPEs and list of imts. Example .toml files
-            are provided in openquake.smt.tests.file_samples   
         :param  gmpe_list:
             if a .toml file is not provided, we can instead specify the gmpes
             as a list here e.g. ['BooreEtAl2014','CauzziEtAl2014']
@@ -301,26 +298,6 @@ class Residuals(object):
               if a .toml file is not provided, we can instead specify the imts
               as a list here e.g. ['PGA','SA(0.1)','SA(1.0)']
         """
-        
-        if gmpe_list is None or imts is None:
-            # Parsing file with models and imts to use within residual analysis
-            config = toml.load(filename)
-
-            gmpe_list = []
-            import_models = copy.deepcopy(config['models'])
-            import_imts = copy.deepcopy(config['imts'])
-            imts = import_imts['imt_list']
-            for key in import_models:
-            # If the key contains a number we take the second part
-                 if re.search("^\\d+\\-", key):
-                     tmp = re.sub("^\\d+\\-", "", key)
-                     value = f"[{tmp}] "
-                 else:
-                     value = f"[{key}] "
-                 if len(import_models[key]):
-                     import_models[key].pop('style', None)
-                     value += '\n' + str(toml.dumps(import_models[key]))
-                 gmpe_list.append(valid.gsim(value))        
              
         # Residuals object
         self.gmpe_list = check_gsim_list(gmpe_list)
@@ -373,6 +350,36 @@ class Residuals(object):
         self.modelled = OrderedDict(self.modelled)
         self.number_records = None
         self.contexts = None
+
+    @classmethod
+    def from_toml(cls, filename):
+        """
+        Read in gmpe_list and imts from .toml file. This method allows use of
+        non-ergodic GMPEs and gmpes with additional input files within SMT
+        """
+        # Read in toml file with dict of gmpes and subdict of imts
+        config_file = toml.load(filename)
+             
+        # Parsing file with models
+        gmpe_list = []
+        config = copy.deepcopy(config_file)
+        for key in config['models']:
+        # If the key contains a number we take the second part
+            if re.search("^\\d+\\-", key):
+                tmp = re.sub("^\\d+\\-", "", key)
+                value = f"[{tmp}] "
+            else:
+                value = f"[{key}] "
+            if len(config['models'][key]):
+               config['models'][key].pop('style', None)
+               value += '\n' + str(toml.dumps(config['models'][key]))
+            gmpe_list.append(valid.gsim(value))
+             
+        imts = config_file['imts']['imt_list']     
+        
+        return cls(gmpe_list,imts)
+    
+        
 
     def get_residuals(self, ctx_database, nodal_plane_index=1,
                       component="Geometric", normalise=True):
