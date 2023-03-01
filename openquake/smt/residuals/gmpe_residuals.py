@@ -26,13 +26,17 @@ from collections import OrderedDict
 import warnings
 from datetime import datetime
 from math import sqrt, ceil
-from copy import deepcopy
+import copy
+import re
+import toml
 
 import numpy as np
 import pandas as pd
 from scipy.special import erf
 from scipy.stats import norm
 from scipy.linalg import solve
+
+from openquake.hazardlib import valid
 from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib import imt
 import openquake.smt.intensity_measures as ims
@@ -285,13 +289,40 @@ class Residuals(object):
     Class to derive sets of residuals for a list of ground motion residuals
     according to the GMPEs
     """
-    def __init__(self, gmpe_list, imts):
+    def __init__(self, filename=None, gmpe_list=None, imts=None):
         """
-        :param list gmpe_list:
-            List of GMPE names (using the standard openquake strings)
-        :param list imts:
-            List of Intensity Measures
+        :param filename:
+            .toml file with list of GMPEs and list of imts. Example .toml files
+            are provided in openquake.smt.tests.file_samples   
+        :param  gmpe_list:
+            if a .toml file is not provided, we can instead specify the gmpes
+            as a list here e.g. ['BooreEtAl2014','CauzziEtAl2014']
+          :param  imts:
+              if a .toml file is not provided, we can instead specify the imts
+              as a list here e.g. ['PGA','SA(0.1)','SA(1.0)']
         """
+        
+        if gmpe_list is None or imts is None:
+            # Parsing file with models and imts to use within residual analysis
+            config = toml.load(filename)
+
+            gmpe_list = []
+            import_models = copy.deepcopy(config['models'])
+            import_imts = copy.deepcopy(config['imts'])
+            imts = import_imts['imt_list']
+            for key in import_models:
+            # If the key contains a number we take the second part
+                 if re.search("^\\d+\\-", key):
+                     tmp = re.sub("^\\d+\\-", "", key)
+                     value = f"[{tmp}] "
+                 else:
+                     value = f"[{key}] "
+                 if len(import_models[key]):
+                     import_models[key].pop('style', None)
+                     value += '\n' + str(toml.dumps(import_models[key]))
+                 gmpe_list.append(valid.gsim(value))        
+             
+        # Residuals object
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.number_gmpes = len(self.gmpe_list)
         self.types = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
