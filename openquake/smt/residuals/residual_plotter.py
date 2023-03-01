@@ -298,11 +298,10 @@ class ResidualPlot(ResidualHistogramPlot):
 
     def get_axis_title(self, res_data, res_type):
         mean, stddev = res_data["mean"], res_data["stddev"]
-        return "%s - %s\n Mean = %7.3f, Std Dev = %7.3f" % (self.gmpe,
-                                                            res_type,
-                                                            mean,
+        return "%s - %s\n Mean = %7.3f, Std Dev = %7.3f" % (str(
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0],res_type,mean,
                                                             stddev)
-
+    
 class LikelihoodPlot(ResidualHistogramPlot):
     """
     Abstract-like class to create a simple histrogram of strong ground motion
@@ -338,9 +337,8 @@ class LikelihoodPlot(ResidualHistogramPlot):
 
     def get_axis_title(self, res_data, res_type):
         median_lh = res_data["median"]
-        return "%s - %s\n Median LH = %7.3f" % (self.gmpe,
-                                                res_type,
-                                                median_lh)
+        return "%s - %s\n Median LH = %7.3f" % (str(self.residuals.gmpe_list[
+            self.gmpe]).split('(')[0],res_type,median_lh)
 
 
 class ResidualScatterPlot(BaseResidualPlot):
@@ -389,7 +387,8 @@ class ResidualScatterPlot(BaseResidualPlot):
         slope, intercept, pval = \
             res_data['slope'], res_data['intercept'], res_data['pvalue']
         return "%s - %s\n Slope = %.4e, Intercept = %7.3f p = %.6e " % \
-            (self.gmpe, res_type, slope, intercept, pval)
+            (str(self.residuals.gmpe_list[self.gmpe]).split('(')[0],
+             res_type, slope, intercept, pval)
 
     def draw(self, ax, res_data, res_type):
         x, y = res_data['x'], res_data['y']
@@ -547,9 +546,8 @@ class ResidualWithSite(ResidualPlot):
         ax.set_ylim(-max_lim, max_lim)
         ax.set_ylabel("%s" % res_type, fontsize=12)
         ax.grid()
-        title_string = "%s - %s - %s Residual" % (self.gmpe,
-                                                  self.imt,
-                                                  res_type)
+        title_string = "%s - %s - %s Residual" % (str(self.residuals.gmpe_list[
+            self.gmpe]).split('(')[0],self.imt,res_type)
         ax.set_title(title_string, fontsize=12)
 
     def _get_site_data(self):
@@ -655,7 +653,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         phi = np.std(dwess)
         ax.plot(xvals, phi * np.ones(len(xvals)), 'k--', linewidth=2.)
         ax.plot(xvals, -phi * np.ones(len(xvals)), 'k--', linewidth=2.)
-        title_string = "%s - %s (Std Dev = %8.5f)" % (self.gmpe, self.imt, phi)
+        title_string = "%s - %s (Std Dev = %8.5f)" % (str(
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0], self.imt, phi)
         ax.set_title(title_string, fontsize=16)
         # Show delta s2ss
         ax = fig.add_subplot(312)
@@ -682,7 +681,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.set_ylim(-max_lim, max_lim)
         ax.grid()
         ax.set_ylabel(r'$\delta S2S_S$ (%s)' % self.imt, fontsize=12)
-        title_string = r'%s - %s ($\phi_{S2S}$ = %8.5f)' % (self.gmpe,
+        title_string = r'%s - %s ($\phi_{S2S}$ = %8.5f)' % (str(
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0],
             self.imt, phi_s2ss["StdDev"])
         ax.set_title(title_string, fontsize=16)
         # Show dwoes
@@ -705,9 +705,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.set_ylabel(r'$\delta W_{o,es} = \delta W_{es} - \delta S2S_S$ (%s)'
                       % self.imt, 
                       fontsize=12)
-        title_string = r'%s - %s ($\phi_{SS}$ = %8.5f)' % (self.gmpe,
-                                                           self.imt,
-                                                           phi_ss)
+        title_string = r'%s - %s ($\phi_{SS}$ = %8.5f)' % (str(
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0],self.imt,phi_ss)
         ax.set_title(title_string, fontsize=16)
 
     def _get_site_data(self):
@@ -801,11 +800,12 @@ def PlotLoglikelihoodWithSpectralPeriod(residuals,filename,custom_cycler=0,
     for gmpe in range(0,len(gmpe_list_series)):
         y_llh=np.array(llh_with_imt[gmpe_list_series[gmpe]])
         ax_llh.scatter(x_llh.imt_float,y_llh)
-        ax_llh.plot(x_llh.imt_float,y_llh,label=str(gmpe_list_series[gmpe]))
+        ax_llh.plot(x_llh.imt_float,y_llh,label=str(residuals.gmpe_list[
+            gmpe_list_series[gmpe]]).split('(')[0])
     ax_llh.set_xlabel('Spectral Period (s)')
     ax_llh.set_ylabel('Loglikelihood Value')
     ax_llh.set_title('Scherbaum et al. (2009) Loglikelihood Values')
-    ax_llh.legend(loc='best',ncol=2,fontsize='x-small')
+    ax_llh.legend(loc='upper right',ncol=2,fontsize='x-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
     # Reassign original imts to residuals.imts
@@ -881,12 +881,17 @@ def PlotModelWeightsWithSpectralPeriod(residuals,filename,custom_cycler=0,
         ax_model_weights.scatter(x_model_weights.imt_float,
                                  y_model_weights)
         ax_model_weights.plot(x_model_weights.imt_float,y_model_weights,
-                              label=str(gmpe_list_series[gmpe]))
+                              label=str(residuals.gmpe_list[
+                                  gmpe_list_series[gmpe]]).split('(')[0])
+        """
+        ax_model_weights.plot(x_model_weights.imt_float,y_model_weights,
+                              label=str(gmpe_list_series[gmpe]).split('(')[0])
+        """
     ax_model_weights.set_xlabel('Spectral Period (s)')
     ax_model_weights.set_ylabel('Model Weight')
     ax_model_weights.set_title(
         'Sample loglikelihood based model weights (Scherbaum et al., 2009)')
-    ax_model_weights.legend(loc='best',ncol=2,fontsize='x-small')
+    ax_model_weights.legend(loc='upper right',ncol=2,fontsize='x-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
     # Reassign original imts to residuals.imts
@@ -934,11 +939,11 @@ def PlotEDRWithSpectralPeriod(residuals,filename,custom_cycler=0,
         ax_EDR.scatter(x_EDR_with_imt.imt_float,
                                  y_EDR)
         ax_EDR.plot(x_EDR_with_imt.imt_float,y_EDR,label=
-                    str(residuals.gmpe_list[gmpe]))
+                    str(residuals.gmpe_list[gmpe]).split('(')[0])
     ax_EDR.set_xlabel('Spectral Period (s)')
     ax_EDR.set_ylabel('EDR')
     ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)')
-    ax_EDR.legend(loc='best',ncol=2,fontsize='x-small')
+    ax_EDR.legend(loc='upper right',ncol=2,fontsize='x-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
 def PlotResidualPDFWithSpectralPeriod(residuals,filename,custom_cycler=0,
@@ -1091,7 +1096,7 @@ def PlotResidualPDFWithSpectralPeriod(residuals,filename,custom_cycler=0,
             'Std Dev'],color=color_input,marker=marker_input)
         ax[0,1].scatter(imts_to_plot.imt_float,Mean_Sigma_Total_df[gmpe].loc[
             'Std Dev'],color=color_input,marker=marker_input)
-        ax[0,0].legend(loc='best',ncol=3,fontsize='x-small')
+        ax[0,0].legend(loc='upper right',ncol=2,fontsize='x-small')
 
         _save_image(filename, plt.gcf(), filetype, dpi)
     
@@ -1161,9 +1166,16 @@ def LoglikelihoodTable(residuals,filename):
                                           index=['Avg over all periods'])
     average_llh_over_imts_df.columns=llh_columns_all
     final_llh_df=pd.concat([llh_metrics_df,average_llh_over_imts_df])
-
-    final_llh_df.to_csv(filename,sep=',')
-    display(final_llh_df)
+    
+    #Table and display outputs (need to assign simplified GMPE names)
+    final_llh_df_output = final_llh_df
+    llh_columns_all_output={}
+    for gmpe in range(0,len(residuals.gmpe_list)):
+         llh_columns_all_output[gmpe]= str(residuals.gmpe_list[gmpe_list_series[
+             gmpe]]).split('(')[0].replace('\n',', ') + ' LLH'
+    final_llh_df_output.columns = list(pd.Series(llh_columns_all_output))
+    final_llh_df_output.to_csv(filename,sep=',')
+    display(final_llh_df_output)
     
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
@@ -1224,8 +1236,17 @@ def WeightsTable(residuals,filename):
     model_weights_avg_df.columns=model_weights_columns
     final_model_weights_df=pd.concat([model_weights_df,model_weights_avg_df])
     
-    final_model_weights_df.to_csv(filename,sep=',')
-    display(final_model_weights_df)
+    # Table and display outputs (need to assign simplified GMPE names)
+    final_model_weights_df_output = final_model_weights_df
+    model_weights_columns_all_output={}
+    for gmpe in range(0,len(residuals.gmpe_list)):
+         model_weights_columns_all_output[gmpe] = str(residuals.gmpe_list[
+             gmpe_list_series[
+             gmpe]]).split('(')[0].replace('\n',', ') + ' LLH'
+    final_model_weights_df_output.columns = list(pd.Series(
+        model_weights_columns_all_output))
+    final_model_weights_df_output.to_csv(filename,sep=',')
+    display(final_model_weights_df_output)
     
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
@@ -1261,8 +1282,21 @@ def EDRTable(residuals,filename):
             average_EDR_metrics_over_imts_df.columns=EDR_metrics_df.columns
             final_EDR_metrics_df=pd.concat([EDR_metrics_df,
                                             average_EDR_metrics_over_imts_df])
-            final_EDR_metrics_df.to_csv(filename+'_%s' %(gmpe)+'.csv',sep=',')
-        display(final_EDR_metrics_df)
+            
+            # Rename to assign simplified GMPE names for outputted files
+            final_EDR_metrics_df_output = final_EDR_metrics_df
+            final_EDR_metrics_df_output.columns = list(pd.Series({
+                'MDE Norm':str(residuals.gmpe_list[gmpe]).split('(')[
+                    0].replace('\n',' ')+' MDE Norm','sqrt Kappa': 
+                         str(residuals.gmpe_list[gmpe]).split('(')[0].replace(
+                             '\n',' ') + ' sqrt Kappa','EDR': str(
+                                 residuals.gmpe_list[gmpe]).split('(')[
+                                     0].replace('\n',' ') + ' EDR'}))
+            final_EDR_metrics_df_output.to_csv(filename.replace(
+                '.csv','') + '_%s' %(
+                str(residuals.gmpe_list[gmpe]).replace('\n','_').replace(
+                    ' ','')).replace('"','') + '.csv', sep=',')
+        display(final_EDR_metrics_df_output)
         
 def PDFTable(residuals,filename):
     """
@@ -1334,9 +1368,19 @@ def PDFTable(residuals,filename):
                          'Inter-Event Std Dev','Intra-Event Mean',
                          'Intra-Event Std Dev']
     
-    combined_df.to_csv(filename,sep=',')
+    # Create additional dataframe for renaming of headers
+    combined_df_output = combined_df
+    gmpe_headers = {}
+    for gmpe in residuals.gmpe_list:
+        for imt in residuals.imts:
+            gmpe_headers[gmpe,imt] = str(imt) + '' + str(residuals.gmpe_list[
+                gmpe]).split('(')[
+        0].replace('\n',' ')
+            
+    combined_df_output.columns = list(pd.Series(gmpe_headers))
     
-    display(combined_df)
+    combined_df_output.to_csv(filename,sep=',')
+    display(combined_df_output)
 
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts  
