@@ -63,7 +63,7 @@ class ResidualsTestCase(unittest.TestCase):
         cls.database = None
         with open(cls.database_file, "rb") as f:
             cls.database = pickle.load(f)
-        cls.gsims = ["AkkarEtAlRjb2014",  "ChiouYoungs2014"]
+        cls.gmpe_list = ["AkkarEtAlRjb2014",  "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]
 
     def test_correct_build_load(self):
@@ -79,7 +79,7 @@ class ResidualsTestCase(unittest.TestCase):
         Basic check for correctness of the residual dictionary
         """
         for i, gsim in enumerate(res_dict):
-            self.assertEqual(gsim, self.gsims[i])
+            self.assertEqual(gsim, self.gmpe_list[i])
             for j, imt in enumerate(res_dict[gsim]):
                 self.assertEqual(imt, self.imts[j])
                 if gsim == "AkkarEtAlRjb2014":
@@ -103,7 +103,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests basic execution of residuals - not correctness of values
         """
-        residuals = res.Residuals(self.gsims, self.imts)
+        residuals = res.Residuals(self.gmpe_list, self.imts)
         residuals.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(residuals.residuals)
         residuals.get_residual_statistics()
@@ -112,7 +112,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests basic execution of residuals - not correctness of values
         """
-        lkh = res.Residuals(self.gsims, self.imts)
+        lkh = res.Residuals(self.gmpe_list, self.imts)
         lkh.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(lkh.residuals)
         lkh.get_likelihood_values()
@@ -121,7 +121,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests execution of LLH - not correctness of values
         """
-        llh = res.Residuals(self.gsims, self.imts)
+        llh = res.Residuals(self.gmpe_list, self.imts)
         llh.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(llh.residuals)
         llh.get_loglikelihood_values(self.imts)
@@ -130,7 +130,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests execution of multivariate llh - not correctness of values
         """
-        multi_llh = res.Residuals(self.gsims, self.imts)
+        multi_llh = res.Residuals(self.gmpe_list, self.imts)
         multi_llh.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(multi_llh.residuals)
         multi_llh.get_multivariate_loglikelihood_values()
@@ -139,7 +139,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests execution of EDR - not correctness of values
         """
-        edr = res.Residuals(self.gsims, self.imts)
+        edr = res.Residuals(self.gmpe_list, self.imts)
         edr.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(edr.residuals)
         edr.get_edr_values()
@@ -148,7 +148,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests the execution running multiple metrics in one call
         """
-        residuals = res.Residuals(self.gsims, self.imts)
+        residuals = res.Residuals(self.gmpe_list, self.imts)
         residuals.get_residuals(self.database, component="Geometric")
         config = {}
         for key in ["Residuals", "Likelihood", "LLH",
@@ -159,7 +159,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests basic execution of residuals - not correctness of values
         """
-        lkh = res.Likelihood(self.gsims, self.imts)
+        lkh = res.Likelihood(self.gmpe_list, self.imts)
         lkh.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(lkh.residuals)
         lkh.get_likelihood_values()
@@ -168,7 +168,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests execution of LLH - not correctness of values
         """
-        llh = res.LLH(self.gsims, self.imts)
+        llh = res.LLH(self.gmpe_list, self.imts)
         llh.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(llh.residuals)
         llh.get_loglikelihood_values(self.imts)
@@ -177,7 +177,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests execution of multivariate llh - not correctness of values
         """
-        multi_llh = res.MultivariateLLH(self.gsims, self.imts)
+        multi_llh = res.MultivariateLLH(self.gmpe_list, self.imts)
         multi_llh.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(multi_llh.residuals)
         multi_llh.get_multivariate_loglikelihood_values()
@@ -186,7 +186,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests execution of EDR - not correctness of values
         """
-        edr = res.EDR(self.gsims, self.imts)
+        edr = res.EDR(self.gmpe_list, self.imts)
         edr.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(edr.residuals)
         edr.get_edr_values()

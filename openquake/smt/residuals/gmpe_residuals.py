@@ -26,13 +26,17 @@ from collections import OrderedDict
 import warnings
 from datetime import datetime
 from math import sqrt, ceil
-from copy import deepcopy
+import copy
+import re
+import toml
 
 import numpy as np
 import pandas as pd
 from scipy.special import erf
 from scipy.stats import norm
 from scipy.linalg import solve
+
+from openquake.hazardlib import valid
 from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib import imt
 import openquake.smt.intensity_measures as ims
@@ -287,11 +291,13 @@ class Residuals(object):
     """
     def __init__(self, gmpe_list, imts):
         """
-        :param list gmpe_list:
-            List of GMPE names (using the standard openquake strings)
-        :param list imts:
-            List of Intensity Measures
+        :param  gmpe_list:
+            A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
+        :param  imts:
+            A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
         """
+             
+        # Residuals object
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.number_gmpes = len(self.gmpe_list)
         self.types = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
@@ -342,6 +348,33 @@ class Residuals(object):
         self.modelled = OrderedDict(self.modelled)
         self.number_records = None
         self.contexts = None
+
+    @classmethod
+    def from_toml(cls, filename):
+        """
+        Read in gmpe_list and imts from .toml file. This method allows use of
+        non-ergodic GMPEs and gmpes with additional input files within SMT
+        """
+        # Read in toml file with dict of gmpes and subdict of imts
+        config_file = toml.load(filename)
+             
+        # Parsing file with models
+        gmpe_list = []
+        config = copy.deepcopy(config_file)
+        for key in config['models']:
+        # If the key contains a number we take the second part
+            if re.search("^\\d+\\-", key):
+                tmp = re.sub("^\\d+\\-", "", key)
+                value = f"[{tmp}] "
+            else:
+                value = f"[{key}] "
+            if len(config['models'][key]):
+               config['models'][key].pop('style', None)
+               value += '\n' + str(toml.dumps(config['models'][key]))
+            gmpe_list.append(valid.gsim(value))
+        
+        imts = config_file['imts']['imt_list']     
+        return cls(gmpe_list,imts)
 
     def get_residuals(self, ctx_database, nodal_plane_index=1,
                       component="Geometric", normalise=True):
@@ -1148,7 +1181,7 @@ class SingleStationAnalysis(object):
 
         """
         self.site_ids = site_id_list
-        self.input_gmpe_list = deepcopy(gmpe_list)
+        self.input_gmpe_list = copy.deepcopy(gmpe_list)
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.imts = imts
         self.site_residuals = []
@@ -1199,7 +1232,7 @@ class SingleStationAnalysis(object):
         output_resid = []
 
         for t_resid in self.site_residuals:
-            resid = deepcopy(t_resid)
+            resid = copy.deepcopy(t_resid)
 
             for gmpe in self.gmpe_list:
                 for imtx in self.imts:
