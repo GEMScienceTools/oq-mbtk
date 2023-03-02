@@ -292,11 +292,9 @@ class Residuals(object):
     def __init__(self, gmpe_list, imts):
         """
         :param  gmpe_list:
-            if a .toml file is not provided, we can instead specify the gmpes
-            as a list here e.g. ['BooreEtAl2014','CauzziEtAl2014']
-          :param  imts:
-              if a .toml file is not provided, we can instead specify the imts
-              as a list here e.g. ['PGA','SA(0.1)','SA(1.0)']
+            A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
+        :param  imts:
+            A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
         """
              
         # Residuals object
@@ -374,12 +372,9 @@ class Residuals(object):
                config['models'][key].pop('style', None)
                value += '\n' + str(toml.dumps(config['models'][key]))
             gmpe_list.append(valid.gsim(value))
-             
+        
         imts = config_file['imts']['imt_list']     
-        
         return cls(gmpe_list,imts)
-    
-        
 
     def get_residuals(self, ctx_database, nodal_plane_index=1,
                       component="Geometric", normalise=True):
@@ -1186,7 +1181,7 @@ class SingleStationAnalysis(object):
 
         """
         self.site_ids = site_id_list
-        self.input_gmpe_list = deepcopy(gmpe_list)
+        self.input_gmpe_list = copy.deepcopy(gmpe_list)
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.imts = imts
         self.site_residuals = []
@@ -1237,7 +1232,7 @@ class SingleStationAnalysis(object):
         output_resid = []
 
         for t_resid in self.site_residuals:
-            resid = deepcopy(t_resid)
+            resid = copy.deepcopy(t_resid)
 
             for gmpe in self.gmpe_list:
                 for imtx in self.imts:
