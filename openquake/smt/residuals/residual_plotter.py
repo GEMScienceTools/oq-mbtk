@@ -800,8 +800,8 @@ def PlotLoglikelihoodWithSpectralPeriod(residuals,filename,custom_cycler=0,
     for gmpe in range(0,len(gmpe_list_series)):
         y_llh=np.array(llh_with_imt[gmpe_list_series[gmpe]])
         ax_llh.scatter(x_llh.imt_float,y_llh)
-        ax_llh.plot(x_llh.imt_float,y_llh,label=str(residuals.gmpe_list[
-            gmpe_list_series[gmpe]]).split('(')[0])
+        tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
+        ax_llh.plot(x_llh.imt_float,y_llh,label=tmp.split('(')[0])
     ax_llh.set_xlabel('Spectral Period (s)')
     ax_llh.set_ylabel('Loglikelihood Value')
     ax_llh.set_title('Scherbaum et al. (2009) Loglikelihood Values')
@@ -880,13 +880,9 @@ def PlotModelWeightsWithSpectralPeriod(residuals,filename,custom_cycler=0,
         y_model_weights=np.array(model_weights_with_imt.iloc[gmpe])
         ax_model_weights.scatter(x_model_weights.imt_float,
                                  y_model_weights)
+        tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
         ax_model_weights.plot(x_model_weights.imt_float,y_model_weights,
-                              label=str(residuals.gmpe_list[
-                                  gmpe_list_series[gmpe]]).split('(')[0])
-        """
-        ax_model_weights.plot(x_model_weights.imt_float,y_model_weights,
-                              label=str(gmpe_list_series[gmpe]).split('(')[0])
-        """
+                              label=tmp.split('(')[0])
     ax_model_weights.set_xlabel('Spectral Period (s)')
     ax_model_weights.set_ylabel('Model Weight')
     ax_model_weights.set_title(
@@ -936,10 +932,10 @@ def PlotEDRWithSpectralPeriod(residuals,filename,custom_cycler=0,
     for gmpe in residuals.gmpe_list:
         EDR_with_imt=pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_EDR=EDR_with_imt.EDR
+        tmp = str(residuals.gmpe_list[gmpe])
         ax_EDR.scatter(x_EDR_with_imt.imt_float,
                                  y_EDR)
-        ax_EDR.plot(x_EDR_with_imt.imt_float,y_EDR,label=
-                    str(residuals.gmpe_list[gmpe]).split('(')[0])
+        ax_EDR.plot(x_EDR_with_imt.imt_float,y_EDR,label=tmp.split('(')[0])
     ax_EDR.set_xlabel('Spectral Period (s)')
     ax_EDR.set_ylabel('EDR')
     ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)')
@@ -1171,8 +1167,9 @@ def LoglikelihoodTable(residuals,filename):
     final_llh_df_output = final_llh_df
     llh_columns_all_output={}
     for gmpe in range(0,len(residuals.gmpe_list)):
-         llh_columns_all_output[gmpe]= str(residuals.gmpe_list[gmpe_list_series[
-             gmpe]]).split('(')[0].replace('\n',', ') + ' LLH'
+         tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
+         llh_columns_all_output[gmpe]= tmp.split('(')[0].replace(
+             '\n',', ') + ' LLH'
     final_llh_df_output.columns = list(pd.Series(llh_columns_all_output))
     final_llh_df_output.to_csv(filename,sep=',')
     display(final_llh_df_output)
@@ -1240,9 +1237,9 @@ def WeightsTable(residuals,filename):
     final_model_weights_df_output = final_model_weights_df
     model_weights_columns_all_output={}
     for gmpe in range(0,len(residuals.gmpe_list)):
-         model_weights_columns_all_output[gmpe] = str(residuals.gmpe_list[
-             gmpe_list_series[
-             gmpe]]).split('(')[0].replace('\n',', ') + ' LLH'
+         tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
+         model_weights_columns_all_output[gmpe] = tmp.split('(')[0].replace(
+             '\n',', ') + ' LLH'
     final_model_weights_df_output.columns = list(pd.Series(
         model_weights_columns_all_output))
     final_model_weights_df_output.to_csv(filename,sep=',')
@@ -1285,13 +1282,11 @@ def EDRTable(residuals,filename):
             
             # Rename to assign simplified GMPE names for outputted files
             final_EDR_metrics_df_output = final_EDR_metrics_df
+            tmp = str(residuals.gmpe_list[gmpe])
             final_EDR_metrics_df_output.columns = list(pd.Series({
-                'MDE Norm':str(residuals.gmpe_list[gmpe]).split('(')[
-                    0].replace('\n',' ')+' MDE Norm','sqrt Kappa': 
-                         str(residuals.gmpe_list[gmpe]).split('(')[0].replace(
-                             '\n',' ') + ' sqrt Kappa','EDR': str(
-                                 residuals.gmpe_list[gmpe]).split('(')[
-                                     0].replace('\n',' ') + ' EDR'}))
+                'MDE Norm':tmp.split('(')[0].replace('\n',' ')+ ' MDE Norm',
+                'sqrt Kappa':tmp.split('(')[0].replace('\n',' ')+' sqrt Kappa',
+                'EDR':tmp.split('(')[0].replace('\n',' ') + ' EDR'}))
             final_EDR_metrics_df_output.to_csv(filename.replace(
                 '.csv','') + '_%s' %(
                 str(residuals.gmpe_list[gmpe]).replace('\n','_').replace(
@@ -1373,9 +1368,9 @@ def PDFTable(residuals,filename):
     gmpe_headers = {}
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
-            gmpe_headers[gmpe,imt] = str(imt) + '' + str(residuals.gmpe_list[
-                gmpe]).split('(')[
-        0].replace('\n',' ')
+            tmp = str(residuals.gmpe_list[gmpe])
+            gmpe_headers[gmpe,imt] = str(imt)+''+tmp.split(
+                '(')[0].replace('\n',' ')
             
     combined_df_output.columns = list(pd.Series(gmpe_headers))
     
