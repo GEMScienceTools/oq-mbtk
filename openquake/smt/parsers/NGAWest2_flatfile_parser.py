@@ -160,7 +160,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             if NGAWest2['Record Sequence Number'
                         ].iloc[rec]!=NGAWest2_vertical[
                             'Record Sequence Number'].iloc[rec]:
-                raise ValueError("Records within inputted flatfiles do not match.")
+                raise ValueError("Records within horizontal and vertical flatfiles do not match.")
         
         # Count initial size for printing number records removed during checks
         Initial_NGAWest2_size = len(NGAWest2)
