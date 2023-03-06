@@ -585,7 +585,7 @@ class GCMTCatalogue(object):
         header_list = ['eventID', 'Agency', 'year', 'month', 'day', 'hour',
                    'minute', 'second', 'timeError', 'longitude', 'latitude',
                    'SemiMajor90', 'SemiMinor90', 'ErrorStrike', 'depth',
-                   'depthError', 'magnitude', 'sigmaMagnitude']
+                   'depthError', 'magnitude', 'sigmaMagnitude', 'str1', 'dip1', 'rake1', 'str2', 'dip2', 'rake2']
         with open(filename, 'wt') as fid:
             writer = csv.DictWriter(fid, fieldnames=header_list)
             headers = dict((header, header) for header in header_list)
@@ -601,7 +601,13 @@ class GCMTCatalogue(object):
                             'magnitude': tensor.magnitude,
                             'sigmaMagnitude': None,
                             'depth': None,
-                            'depthError': None}
+                            'depthError': None,
+                            'str1': None,
+                            'dip1': None,
+                            'rake1': None,
+                            'str2': None,
+                            'dip2': None,
+                            'rake2': None}
 
                 if centroid_location:
                     # Time and location come from centroid
@@ -618,6 +624,12 @@ class GCMTCatalogue(object):
                     cmt_dict['latitude'] = tensor.centroid.latitude
                     cmt_dict['depth'] = tensor.centroid.depth
                     cmt_dict['depthError'] = tensor.centroid.depth_error
+                    cmt_dict['str1'] = tensor.nodal_planes.nodal_plane_1['strike']
+                    cmt_dict['rake1'] = tensor.nodal_planes.nodal_plane_1['rake']
+                    cmt_dict['dip1'] = tensor.nodal_planes.nodal_plane_1['dip']
+                    cmt_dict['str2'] = tensor.nodal_planes.nodal_plane_2['strike']
+                    cmt_dict['rake2'] = tensor.nodal_planes.nodal_plane_2['rake']
+                    cmt_dict['dip2'] = tensor.nodal_planes.nodal_plane_2['dip']
                 else:
                     # Time and location come from hypocentre
                     cmt_dict['year'] = tensor.hypocentre.date.year
