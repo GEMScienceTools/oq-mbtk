@@ -1,0 +1,49 @@
+### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
+
+### For region parameter, we can use:
+#0 for global
+#1 for California
+#2 for Japan
+#3 for China
+#4 for Italy
+#5 for Turkey (locally = 3)
+#6 for Taiwan (locally = 0) 
+
+[name_analysis] # Output folder
+name_analysis = 'test'
+
+[general]
+config_name = 'Albania_2std' # name appended to each outputted figure
+imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)','SA(2.0)'] # imts to compute gm for
+maxR = 300 # max distance to consider
+region = 0
+Nstd = 2 # number of standard deviations to sample sigma for 
+
+[site_properties]
+vs30 = 800
+Z1 = -999
+Z25 = -999
+
+[source_properties]
+strike = -999
+dip = -999
+rake = 60
+trellis_mag_list = [5,6,7] # mags used only for trellis
+depths = [20,25,30] # depth per magnitude
+
+# Specify mag values for use in Sammons, Euclidean dist and clustering
+[mag_values_non_trellis_functions]
+mmin = 5
+mmax = 7
+spacing = 0.1
+
+# Specify label for gmpes
+[gmpe_labels]
+gmpes_label = ['CY14','CB14','BSSA14','KO2020']
+
+# Specify gmpes
+[models] 
+[models.ChiouYoungs2014]
+[models.CampbellBozorgnia2014]
+[models.BooreEtAl2014]
+[models.KothaEtAl2020regional]
