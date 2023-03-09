@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2023 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2023 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -27,7 +27,7 @@ from scipy.spatial.distance import pdist, squareform
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib import valid
-from openquake.smt.comparison.utils_gmpes import AttCurves, _get_Z1, _get_Z25, _param_gmpes
+from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1, _get_z25, _param_gmpes
 
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd, name,
@@ -42,10 +42,10 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     threshold = 0.01
     
     if  Z1 == -999:
-        Z1 = _get_Z1(Vs30,region)
+        Z1 = _get_z1(Vs30,region)
 
     if  Z25 == -999:
-        Z25 = _get_Z25(Vs30,region)
+        Z25 = _get_z25(Vs30,region)
     
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
 
@@ -64,7 +64,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 gmm = valid.gsim(gmpe)
                 col=colors[g]
 
-                mean, std, distances = AttCurves(gmm,depth[l],m,aratio_g,
+                mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                  strike_g,dip_g,rake,Vs30,
                                                  Z1,Z25,maxR,step,i,1) 
                 
@@ -108,10 +108,10 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
     step = 1
     Npoints=maxR/step
     if  Z1 == -999:
-        Z1 = _get_Z1(Vs30,region)
+        Z1 = _get_z1(Vs30,region)
 
     if  Z25 == -999:
-        Z25 = _get_Z25(Vs30,region)
+        Z25 = _get_z25(Vs30,region)
     
     # define the matrix with the spectral accelerations
     mtxs_median = {}
@@ -127,15 +127,15 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
             medians = []
             sigmas = []
             for l, m in enumerate(mag_list): #iterate though mag_list
-
+        
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     gmpe,strike, dip, depth[l], aratio, rake) 
 
                 gmm = valid.gsim(gmpe)
                 
-                mean, std, distances = AttCurves(gmm,depth[l],m,aratio_g,
-                                                 strike_g,dip_g,rake,Vs30,
-                                                 Z1,Z25,maxR,step,i,1) 
+                mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
+                                                  strike_g,dip_g,rake,Vs30,Z1,
+                                                  Z25,maxR,step,i,1) 
 
                 medians = np.append(medians,(np.exp(mean)))
                 sigmas = np.append(sigmas,std[0])
@@ -148,6 +148,14 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
 def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig):
     """
     Plot Euclidean distance matrices for given run configuration
+    :param imt_list:
+        A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
+    :param gmpe_list:
+        A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
+    :param mtxs:
+        Matrix of median and sigma for each gmpe per imt 
+   :param namefig:
+        filename for outputted figure 
     """
     # Euclidean
     matrix_Dist = {}
@@ -197,6 +205,14 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig):
 def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig):
     """
     Plot Sammons maps for given run configuration
+    :param imt_list:
+        A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
+    :param gmpe_list:
+        A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
+    :param mtxs:
+        Matrix of median and sigma for each gmpe per imt 
+   :param namefig:
+        filename for outputted figure 
     """
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold']
@@ -234,7 +250,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig):
         pyplot.title(str(i), fontsize='16')
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
-    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
+    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 0.80), fontsize='16')
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
@@ -244,6 +260,14 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig):
 def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig):
     """
     Plot hierarchical clusters for given run configuration
+    :param imt_list:
+        A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
+    :param gmpe_list:
+        A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
+    :param mtxs:
+        Matrix of median and sigma for each gmpe per imt 
+   :param namefig:
+        filename for outputted figure 
     """
     ncols = 2
     

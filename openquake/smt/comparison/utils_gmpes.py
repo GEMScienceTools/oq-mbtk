@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2023 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2023 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -20,7 +20,6 @@ Module with utility functions for gmpes
 """
 import os
 import numpy 
-#from matplotlib import pyplot
 from prettytable import PrettyTable
 
 from openquake.hazardlib.geo import Point
@@ -32,13 +31,9 @@ from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.scalerel import WC1994
-#from openquake.hazardlib.scalerel.allenhayes2017 import AllenHayesInterfaceBilinear
 from openquake.hazardlib.const import TRT, StdDev
 from openquake.hazardlib.contexts import ContextMaker
-#from openquake.hazardlib.imt import PGA, SA
-#from openquake.man.tools.csv_output import mde_for_gmt
-#from openquake.commonlib import datastore
-#from openquake.calculators.extract import get_info, _get_dict
+
 
 def _get_first_point(rup, from_point):
     """
@@ -227,7 +222,7 @@ def get_rlz_info(ds, rlz_id, grp_id):
     print(gmmrlz)
     print('\n ', gmmrlz[trt_by_grp[grp_id]])
 
-def AttCurves(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,step,
+def att_curves(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,step,
               imt,ztor):    
     trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
     rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
@@ -252,9 +247,14 @@ def AttCurves(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,step,
     
     return mean, std, distances
 
-def AttCurvesESHM20(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,
-                    step,imt,ztor,region):    
-    
+def att_curves_eshm20(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,
+                    step,imt,ztor,region):  
+    """
+    :param region:
+        Choose among: region= 0 for global; 1 for California; 2 for Japan;
+        3 for China; 4 for Italy; 5 for Turkey (locally = 3); 6 for Taiwan (
+        locally = 0)
+    """      
     trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
     rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
                       strike=strike, dip=dip, rake=rake, trt=trt, ztor=ztor)
@@ -275,16 +275,26 @@ def AttCurvesESHM20(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,
     
     return mean, std, distances
 
-def _get_Z1(Vs30,region):
-    # choose among: region= 0 for global; 1 for California; 2 for Japan; 3 for China; 4 for Italy; 5 for Turkey (locally = 3); 6 for Taiwan (locally = 0)      
+def _get_z1(Vs30,region):
+    """
+    :param region:
+        Choose among: region= 0 for global; 1 for California; 2 for Japan;
+        3 for China; 4 for Italy; 5 for Turkey (locally = 3); 6 for Taiwan (
+        locally = 0)
+    """      
     if region == 2: # in California and non-Japan region
         Z1 = numpy.exp(-5.23/2*numpy.log((Vs30**2+412.39**2)/(1360**2+412.39**2)))
     else:
         Z1 = numpy.exp(-7.15/4*numpy.log((Vs30**4+570.94**4)/(1360**4+570.94**4)))
     return Z1
 
-def _get_Z25(Vs30,region):
-    # choose among: region= 0 for global; 1 for California; 2 for Japan; 3 for China; 4 for Italy; 5 for Turkey (locally = 3); 6 for Taiwan (locally = 0)      
+def _get_z25(Vs30,region):
+    """
+    :param region:
+        Choose among: region= 0 for global; 1 for California; 2 for Japan;
+        3 for China; 4 for Italy; 5 for Turkey (locally = 3); 6 for Taiwan (
+        locally = 0)
+    """     
     if region == 2: # in Japan
         Z25 = numpy.exp(5.359 - 1.102 * numpy.log(Vs30))
         Z25A_default = numpy.exp(7.089 - 1.144 * numpy.log(1100))
@@ -307,17 +317,19 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
             dip_s = 45 # reverse or normal fault 
     else:
         dip_s = dip
-                      
+
     if depth == -999:
-        if 'Inter' in gmpes:
+        print(gmpes)
+        
+        if str(valid.gsim(gmpes).DEFINED_FOR_TECTONIC_REGION_TYPE) == 'TRT.SUBDUCTION_INTERFACE':
             depth_s = 30
-        elif 'Slab' in gmpes:
+        elif str(valid.gsim(gmpes).DEFINED_FOR_TECTONIC_REGION_TYPE) == 'TRT.SUBDUCTION_INTRASLAB':
             depth_s = 50
         else:
             depth_s = 15
     else:
         depth_s = depth
-                        
+        
     if aratio > -999.0 and numpy.isfinite(aratio):
         aratio_s = aratio
     else:

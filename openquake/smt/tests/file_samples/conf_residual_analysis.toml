@@ -1,18 +1,18 @@
 [models]
 
-[models.1-AbrahamsonGulerce2020SInter]
+[models.AbrahamsonGulerce2020SInter]
 region = "GLO"
 
-[models.2-AbrahamsonGulerce2020SInter]
+[models.AbrahamsonGulerce2020SInter]
 region = "CAS"
 
-[models.3-AbrahamsonGulerce2020SInterCascadia]
+[models.AbrahamsonGulerce2020SInterCascadia]
 
-[models.4-BooreEtAl2014]
+[models.BooreEtAl2014]
 
-[models.5-KothaEtAl2020regional]
+[models.KothaEtAl2020regional]
 
-[models.6-HassaniAtkinson2018]
+[models.HassaniAtkinson2018]
     d_sigma = 50
     kappa0 = 0.04
 
