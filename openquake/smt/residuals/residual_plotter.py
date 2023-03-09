@@ -288,10 +288,10 @@ class ResidualPlot(ResidualHistogramPlot):
         xdata_norm_pdf = np.arange(-3,3,0.01)
         ax.plot(xdata, norm.pdf(xdata, mean, stddev), '-',
                 color="LightSlateGrey", linewidth=2.0, 
-                label = 'Normal dist. from dataset')
+                label = 'Empirical')
         ax.plot(xdata_norm_pdf, norm.pdf(xdata_norm_pdf, 0.0, 1.0), '-',
                 color='k', linewidth=2.0, 
-                label = 'Standard. normal dist. \n (mean = 0, std. dev. = 1')
+                label = 'Standard. Norm. Dist.')
         ax.legend(loc = 'best')
         x_limit = max(abs(x))
         ax.set_xlim(x_limit*-1,x_limit)
@@ -938,7 +938,8 @@ def PlotEDRWithSpectralPeriod(residuals,filename,custom_cycler=0,
         ax_EDR.plot(x_EDR_with_imt.imt_float,y_EDR,label=tmp.split('(')[0])
     ax_EDR.set_xlabel('Spectral Period (s)')
     ax_EDR.set_ylabel('EDR')
-    ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)')
+    ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)',
+                     fontsize = '12')
     ax_EDR.legend(loc='upper right',ncol=2,fontsize='x-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     

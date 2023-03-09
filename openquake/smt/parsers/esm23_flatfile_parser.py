@@ -88,20 +88,26 @@ HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
 HEADERS = set(HEADER_STR.split(";"))
 
 COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AZ": "Azerbaijan", "BA": "Bosnia and Herzegowina",
-                 "BG": "Bulgaria", "CH": "Switzerland", "CY": "Cyprus",
-                 "CZ": "Czech Republic", "DE": "Germany",  "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia",
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary",
-                 "IL": "Israel", "IR": "Iran", "IS": "Iceland", "IT": "Italy",
-                 "JO": "Jordan",  "LI": "Lichtenstein", "MA": "Morocco",
-                 "MC": "Monaco", "MD": "Moldova", "ME": "Montenegro",
-                 "MK": "Macedonia", "MT": "Malta", "PL": "Poland",
-                 "PT": "Portugal", "RO": "Romania", "RS": "Serbia",
-                 "RU": "Russia", "SI": "Slovenia", "SM": "San Marino",
-                 "SY": "Syria", "TM": "Turkmenistan", "TR": "Turkey",
-                 "UA": "Ukraine", "UZ": "Uzbekistan", "XK": "Kosovo"}
-
+                 "AR": "Argentina", "AZ": "Azerbaijan",
+                 "BA": "Bosnia and Herzegowina", "BG": "Bulgaria",
+                 "CH": "Switzerland", "CL": "Chile", "CN": "China", 
+                 "CR": "Costa Rica", "CY": "Cyprus", "CZ": "Czech Republic",
+                 "DE": "Germany", "DJ": "Djibouti", "DZ": "Algeria",
+                 "ES": "Spain", "FR": "France", "GE": "Georgia", "GH": "Ghana", 
+                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary", 
+                 "IL": "Israel", "ID": "Indonesia", "IR": "Iran",
+                 "IS": "Iceland", "IT": "Italy", "JO": "Jordan", "KE":"Kenya",
+                 "KG": "Kyrgyzstan", "KZ": "Kazakhstan", "LI": "Lichtenstein",
+                 "MA": "Morocco", "MC": "Monaco", "MD": "Moldova",
+                 "ME": "Montenegro", "MK": "Macedonia", "MM": "Myanmar",
+                 "MT": "Malta", "MX": "Mexico", "NI": "Nicaragua",
+                 "NO": "Norway", "PA": "Panama", "PG": "Papa New Guinea",
+                 "PL": "Poland", "PT": "Portugal", "PS": "Palestine",
+                 "RO": "Romania", "RS": "Serbia", "RU": "Russia",
+                 "SI": "Slovenia", "SM": "San Marino", "SY": "Syria",
+                 "TM": "Turkmenistan", "TR": "Turkey", "TW": "Taiwan",
+                 "UA": "Ukraine", "US": "United States", "UZ": "Uzbekistan",
+                 "VU": "Vanuatu", "XK": "Kosovo", "YE": "Yemen"}
 
 class ESM23FlatfileParser(SMDatabaseReader):
     
@@ -144,7 +150,7 @@ class ESM23FlatfileParser(SMDatabaseReader):
             if (counter % 100) == 0:
                 print("Processed record %s - %s" % (str(counter),
                                                     record.id))
-
+                
             counter += 1
 
     @classmethod
@@ -156,6 +162,9 @@ class ESM23FlatfileParser(SMDatabaseReader):
         
         # Import ESM 2023 format strong-motion flatfile
         ESM23 = pd.read_csv(ESM23_flatfile_directory)
+        
+        # Store for count of records removed during quality checks
+        ESM23_initial_size = len(ESM23)
  
          # If vs30 is empty use topographic approximation    
         for idx in range(0,len(ESM23)):
@@ -177,10 +186,10 @@ class ESM23FlatfileParser(SMDatabaseReader):
 
         # Reformat datetime
         r_datetime = ESM23.event_time.str.replace('T',' ')
-        
+    
         converted_base_data_path=_get_ESM18_headers(
             ESM23,default_string,r_fm_type,r_datetime)
-                
+        
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
@@ -197,7 +206,10 @@ class ESM23FlatfileParser(SMDatabaseReader):
         print("Storing metadata to file %s" % metadata_file)
         with open(metadata_file, "wb+") as f:
             pickle.dump(database.database, f)
-           
+        
+        print(ESM23_initial_size - len(ESM23),
+              'records removed from imported ESM23 flatfile during quality checks.')
+            
         return database
 
     def _sanitise(self, row, reader):
