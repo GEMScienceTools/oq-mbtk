@@ -74,21 +74,29 @@ class Configurations(object):
         
         # Depths per magnitude for trellis plots
         self.trellis_depth = config_file['source_properties'][
-            'depths']
+            'trellis_depths']
         for depth_val in range(0,len(self.trellis_depth)):
             self.trellis_depth[depth_val] = float(self.trellis_depth[depth_val])
             
-        # Depths per magnitude for use in other functions
-        depth_array = {}
-        interval_per_mag = (mag_params['mmax'] - mag_params[
-            'mmin'])/mag_params['spacing']/(mag_params['mmax'] - mag_params[
-                'mmin'])
-        for mag, mag_string in enumerate(self.trellis_mag_list):
-            depth_array[mag_string] = np.full(int(interval_per_mag),
-                                              config_file['source_properties'][
-                                                  'depths'][mag])
-        self.depth_for_non_trellis_functions = pd.DataFrame(depth_array).melt(
-            )['value']
+        # Create depth array for non trellis functions 
+        non_trellis_depths = pd.DataFrame(config_file[
+            'mag_values_non_trellis_functions']['non_trellis_depths'],
+            columns=['mag','depth'])
+        
+        # Round each mag interval to closest integer for depth assignment
+        mag_to_nearest_int = pd.Series(dtype='float')
+        for mag in mag_array:
+            mag_to_nearest_int[mag] = np.round(mag+0.001)
+        
+        # Assign depth to closest integer
+        depth_array_initial = []
+        for mag in mag_to_nearest_int:
+            for idx in range(0,len(non_trellis_depths['mag'])):
+                if mag == non_trellis_depths['mag'][idx]:
+                    depth_to_store = non_trellis_depths['depth'][idx]
+            depth_array_initial.append(depth_to_store)
+            
+        self.depth_for_non_trellis_functions = pd.Series(depth_array_initial) 
         
         # Get imts
         self.imt_list = config_file['general']['imt_list']
