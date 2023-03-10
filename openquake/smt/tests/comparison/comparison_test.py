@@ -23,7 +23,6 @@ import os
 import shutil
 import unittest
 from openquake.hazardlib import valid
-#from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes, plot_trellis_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util
 
@@ -33,13 +32,13 @@ BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 TARGET_CONFIG_NAME = 'Albania_2std'
 TARGET_VS30 = 800
 TARGET_REGION = 0
-TARGET_DEPTHS = [20,25,30]
+TARGET_TRELLIS_DEPTHS = [20,25,30]
 TARGET_RMAX = 300
 TARGET_NSTD = 2
 TARGET_TRELLIS_MAG = [5.0,6.0,7.0]
 TARGET_MAG = [5. , 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6. ,
                      6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]
-TARGET_IMTS = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)', 'SA(2.0)']
+TARGET_IMTS = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
 TARGET_GMPES = [valid.gsim('ChiouYoungs2014'),
                 valid.gsim('CampbellBozorgnia2014'), 
                 valid.gsim('BooreEtAl2014'), 
@@ -81,7 +80,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.region,TARGET_REGION)      
             
         # Check for target depths (other functions use arrays from these depths)
-        self.assertEqual(config.trellis_depth, TARGET_DEPTHS)     
+        self.assertEqual(config.trellis_depth, TARGET_TRELLIS_DEPTHS)     
         
         # Check for target Rmax
         self.assertEqual(config.maxR,TARGET_RMAX) 
