@@ -63,7 +63,7 @@ class ComparisonTestCase(unittest.TestCase):
     
     def test_configuration_object_check(self):
         """
-        Check for match bewteen the parameters read in from the .toml and 
+        Check for match between the parameters read in from the .toml and 
         the Configuration object, which stores the inputted parameters for
         each run.
         """
@@ -119,7 +119,8 @@ class ComparisonTestCase(unittest.TestCase):
                                                 config.depth_for_non_trellis_functions,
                                                 config.Z1, config.Z25,
                                                 config.Vs30, config.region,
-                                                config.maxR, config.aratio)
+                                                config.maxR, config.aratio,
+                                                mtxs_type = 'median')
         
         # Check correct number of imts
         self.assertEqual(len(mtxs_medians),len(TARGET_IMTS))
@@ -128,12 +129,11 @@ class ComparisonTestCase(unittest.TestCase):
         for imt in mtxs_medians:
             self.assertEqual(len(mtxs_medians[imt]), len(TARGET_GMPES))
         
-    def test_non_trellis_functions(self):
+    def test_sammons_and_euclidean_distance_matrix_functions(self):
         """
-        Check expected outputs based on given input parameters for clustering,
-        Sammons and Euclidean distance matrix plotting functions
+        Check expected outputs based on given input parameters for Sammons and
+        Euclidean distance matrix plotting functions
         """
-        
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
            
@@ -144,25 +144,10 @@ class ComparisonTestCase(unittest.TestCase):
                                                 config.depth_for_non_trellis_functions,
                                                 config.Z1, config.Z25,
                                                 config.Vs30, config.region,
-                                                config.maxR, config.aratio)
-        
-            
-        # CLUSTER CHECKS
-        Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
-                                     mtxs_medians, os.path.join(
-                                         self.output_directory,config.name_out)
-                                         + '_Clustering_Vs30_' +
-                                         str(config.Vs30) +'.png')
-            
-        # Check number of cluster arrays matches number of imts per config
-        self.assertEqual(len(Z_matrix),len(TARGET_IMTS))
-            
-        # Check number of gmpes matches number of values in each array
-        for imt in range(0,len(Z_matrix)):
-            for gmpe in range(0,len(Z_matrix[imt])):
-                self.assertEqual(len(Z_matrix[imt][gmpe]),len(TARGET_GMPES))
-                    
-        # SAMMONS CHECKS
+                                                config.maxR, config.aratio,
+                                                mtxs_type = 'median')
+                
+        # Sammons checks
         coo = plot_sammons_util(config.imt_list, config.gmpe_labels,
                                 mtxs_medians, os.path.join(
                                     self.output_directory,config.name_out) +
@@ -171,7 +156,7 @@ class ComparisonTestCase(unittest.TestCase):
         # Check Sammons computing outputs for num. GMPEs in .toml per run 
         self.assertEqual(len(coo),len(TARGET_GMPES))
             
-        # EUCLIDEAN CHECKS
+        # Euclidean checks
         matrix_Dist = plot_euclidean_util(config.imt_list, config.gmpe_labels,
                                           mtxs_medians, os.path.join(
                                               self.output_directory,
@@ -191,11 +176,77 @@ class ComparisonTestCase(unittest.TestCase):
             for gmpe in range(0,len(matrix_Dist[imt])):
                 self.assertEqual(len(matrix_Dist[imt][gmpe]),len(TARGET_GMPES))
     
-    def test_trellis_function(self):
+    def test_clustering_median(self):
         """
-        Check trellis plotting function is executed 
+        Check clustering functions for median predicted ground-motion of
+        considered GMPEs in the configuration
         """
+        # Check each parameter matches target
+        config = comp.Configurations(self.input_file)
         
+        # Median clustering checks
+        mtxs_medians = compute_matrix_gmpes(config.imt_list, config.mag_list,
+                                                config.gmpes_list, config.rake,
+                                                config.strike, config.dip, 
+                                                config.depth_for_non_trellis_functions,
+                                                config.Z1, config.Z25,
+                                                config.Vs30, config.region,
+                                                config.maxR, config.aratio,
+                                                mtxs_type = 'median')
+    
+        Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
+                                     mtxs_medians, os.path.join(
+                                         self.output_directory,config.name_out)
+                                         + '_Median_Clustering_Vs30_' +
+                                         str(config.Vs30) +'.png',
+                                         mtxs_type = 'median')
+            
+        # Check number of cluster arrays matches number of imts per config
+        self.assertEqual(len(Z_matrix),len(TARGET_IMTS))
+            
+        # Check number of gmpes matches number of values in each array
+        for imt in range(0,len(Z_matrix)):
+            for gmpe in range(0,len(Z_matrix[imt])):
+                self.assertEqual(len(Z_matrix[imt][gmpe]), len(TARGET_GMPES))
+                
+    def test_clustering_plus_1_sigma(self):
+        """
+        Check clustering of 84th percentile of predicted ground-motion (i.e.
+        median + 1 sigma) of considered GMPEs in the configuration
+        """
+        # Check each parameter matches target
+        config = comp.Configurations(self.input_file)
+        
+        # Median clustering checks
+        mtxs_medians = compute_matrix_gmpes(config.imt_list, config.mag_list,
+                                                config.gmpes_list, config.rake,
+                                                config.strike, config.dip, 
+                                                config.depth_for_non_trellis_functions,
+                                                config.Z1, config.Z25,
+                                                config.Vs30, config.region,
+                                                config.maxR, config.aratio,
+                                                mtxs_type = '+1_sigma')
+    
+        Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
+                                     mtxs_medians, os.path.join(
+                                         self.output_directory,config.name_out)
+                                         + '_+1_sigma_Clustering_Vs30_' +
+                                         str(config.Vs30) +'.png',
+                                         mtxs_type = '+1_sigma')
+            
+        # Check number of cluster arrays matches number of imts per config
+        self.assertEqual(len(Z_matrix),len(TARGET_IMTS))
+            
+        # Check number of gmpes matches number of values in each array
+        for imt in range(0,len(Z_matrix)):
+            for gmpe in range(0,len(Z_matrix[imt])):
+                self.assertEqual(len(Z_matrix[imt][gmpe]), len(TARGET_GMPES))        
+    
+    def test_trellis_and_spectra_functions(self):
+        """
+        Check trellis, response spectra and GMPE sigma w.r.t. spectral period
+        plotting functions are executed 
+        """
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
         
@@ -206,11 +257,17 @@ class ComparisonTestCase(unittest.TestCase):
                      config.Nstd, config.name_out, self.output_directory)
             
         # Specify target file (should be created by plot_trellis_util)
-        target_file = (os.path.join(self.output_directory,config.name_out) +
-                       '_TrellisPlots_Vs30_' + str(config.Vs30) +'.png')
+        target_file_trellis = (os.path.join(self.output_directory,config.name_out)
+                               + '_TrellisPlots_Vs30_' + str(config.Vs30) +'.png')
+        target_file_spectra = (os.path.join(self.output_directory,config.name_out)
+                               + '_ResponseSpectra_' + str(config.Vs30) +'.png')
+        target_file_sigma = (os.path.join(self.output_directory,config.name_out)
+                                     + '_sigma_' + str(config.Vs30) +'.png')
         
         # Check target file created and outputted in expected location
-        self.assertIn(target_file,target_file)
+        self.assertIn(target_file_trellis,target_file_trellis)
+        self.assertIn(target_file_spectra,target_file_spectra)
+        self.assertIn(target_file_sigma,target_file_sigma)
         
     @classmethod
     def tearDownClass(self):

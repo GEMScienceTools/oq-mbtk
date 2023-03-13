@@ -28,7 +28,7 @@ import os
 
 from openquake.hazardlib.imt import from_string
 from openquake.hazardlib import valid
-from openquake.smt.comparison.utils_compare_gmpes import plot_trellis_util,plot_cluster_util, plot_sammons_util, plot_euclidean_util, compute_matrix_gmpes
+from openquake.smt.comparison.utils_compare_gmpes import plot_trellis_util, plot_spectra_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util, compute_matrix_gmpes
 
 class Configurations(object):
     """
@@ -47,7 +47,9 @@ class Configurations(object):
         self.name_out = config_file['general']['config_name']
         self.region = config_file['general']['region']
         self.maxR = config_file['general']['maxR']
+        self.dist_list = config_file['general']['dist_list']
         self.Nstd = config_file['general']['Nstd']
+        self.max_period = config_file['general']['max_period']
         
         self.Vs30 = config_file['site_properties']['vs30']
         self.Z1 = config_file['site_properties']['Z1']
@@ -129,33 +131,75 @@ def plot_trellis(self, output_directory):
     """
     Plot trellis for given run configuration
     """
+    if len(self.gmpes_list) > 8:
+        raise ValueError("Cannot plot more than 8 GMPEs at once.") 
+        
     plot_trellis_util(self.rake, self.strike, self.dip, self.trellis_depth,
                       self.Z1, self.Z25, self.Vs30, self.region, self.imt_list,
                       self.trellis_mag_list, self.maxR, self.gmpes_list,
                       self.aratio, self.Nstd, self.name_out, output_directory) 
                 
+def plot_spectra(self, output_directory):
+    """
+    Plot response spectra and GMPE sigma wrt spectral period for given run
+    configuration
+    """
+    if len(self.gmpes_list) > 8:
+        raise ValueError("Cannot plot more than 8 GMPEs at once.") 
+        
+    plot_spectra_util(self.rake, self.strike, self.dip, self.trellis_depth,
+                      self.Z1, self.Z25, self.Vs30, self.region,
+                      self.max_period, self.trellis_mag_list,
+                      self.dist_list, self.gmpes_list, self.aratio, self.Nstd,
+                      self.name_out, output_directory) 
+
 def plot_cluster(self, output_directory):
     """
-    Plot hierarchical clusters for given configurations
+    Plot hierarchical clusters of (1) median and (2) median +1 sigma (i.e. 84th
+    percentile) predicted ground-motion by each GMPE for given configurations
     """
+    if len(self.gmpes_list) > 8:
+        raise ValueError("Cannot plot more than 8 GMPEs at once.") 
+        
     if len(self.gmpes_list) < 2:
         raise ValueError("Cannot perform clustering for a single GMPE.")   
-        
+
+    # Cluster median predicted ground-motion
     mtxs_medians = compute_matrix_gmpes(self.imt_list, self.mag_list,
                                             self.gmpes_list, self.rake,
                                             self.strike, self.dip, 
                                             self.depth_for_non_trellis_functions,
                                             self.Z1, self.Z25, self.Vs30,
-                                            self.region, self.maxR, self.aratio)
-        
+                                            self.region, self.maxR, self.aratio,
+                                            mtxs_type = 'median')
+
+    mtxs_plus_1_sigma = compute_matrix_gmpes(self.imt_list, self.mag_list,
+                                            self.gmpes_list, self.rake,
+                                            self.strike, self.dip, 
+                                            self.depth_for_non_trellis_functions,
+                                            self.Z1, self.Z25, self.Vs30,
+                                            self.region, self.maxR, self.aratio,
+                                            mtxs_type = '+1_sigma')
+    
+    # Cluster median + 1 sigma
     plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,self.name_out) +
-                      '_Clustering_Vs30_' + str(self.Vs30) +'.png')
-                    
+                      '_Median_Clustering_Vs30_' + str(self.Vs30) +'.png',
+                      mtxs_type = 'median')    
+    
+    plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_plus_1_sigma,
+                      os.path.join(output_directory,self.name_out) +
+                      '_+1_sigma_Clustering_Vs30_' + str(self.Vs30) +'.png',
+                      mtxs_type = '+1_sigma')                    
+
 def plot_sammons(self, output_directory):
     """
-    Plot Sammons Maps for given configurations
-    """        
+    Plot Sammons Maps of median predicted ground-motion by each GMPE for given
+    configurations
+    """ 
+    if len(self.gmpes_list) > 8:
+        raise ValueError("Cannot plot more than 8 GMPEs at once.") 
+        
     if len(self.gmpes_list) < 2:
         raise ValueError("Cannot perform Sammons Mapping for a single GMPE.")
         
@@ -164,7 +208,8 @@ def plot_sammons(self, output_directory):
                                         self.strike, self.dip, 
                                         self.depth_for_non_trellis_functions,
                                         self.Z1, self.Z25, self.Vs30, 
-                                        self.region, self.maxR, self.aratio)
+                                        self.region, self.maxR, self.aratio,
+                                        mtxs_type = 'median')
         
     plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,self.name_out) +
@@ -172,8 +217,12 @@ def plot_sammons(self, output_directory):
         
 def plot_euclidean(self,output_directory):
     """
-    Plot Euclidean distance matrix for given configurations
+    Plot Euclidean distance matrix of median predicted ground-motion by each GMPE
+    for given configurations
     """
+    if len(self.gmpes_list) > 8:
+        raise ValueError("Cannot plot more than 8 GMPEs at once.") 
+        
     if len(self.gmpes_list) < 2:
         raise ValueError("Cannot perform Euclidean distance matrix plotting for a single GMPE.")
         
@@ -182,7 +231,8 @@ def plot_euclidean(self,output_directory):
                                         self.strike, self.dip,
                                         self.depth_for_non_trellis_functions,
                                         self.Z1, self.Z25, self.Vs30,
-                                        self.region, self.maxR, self.aratio)
+                                        self.region, self.maxR, self.aratio,
+                                        mtxs_type = 'median')
         
     plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_medians,
                         os.path.join(output_directory,self.name_out) 
