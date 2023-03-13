@@ -21,7 +21,6 @@
 Simple Python Script to integrate a strong motion record using
 the Newmark-Beta method
 """
-
 import numpy as np
 from math import sqrt
 
