@@ -20,13 +20,16 @@ Module with utility functions for generating trellis plots, hierarchical
 clustering plots, Sammons maps and Euclidean distance matrix plots
 """
 import numpy as np
+import pandas as pd
 import os
 from matplotlib import pyplot
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist, squareform
+from scipy import interpolate
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib import valid
+from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1, _get_z25, _param_gmpes
 
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
@@ -41,6 +44,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     # Npoints=maxR/step
     threshold = 0.01
     
+    # Set Z1 and Z25
     if  Z1 == -999:
         Z1 = _get_z1(Vs30,region)
 
@@ -98,12 +102,153 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     pyplot.show()
     pyplot.tight_layout()
     
+def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
+                      max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
+                      name, output_directory):
+    """
+    Plot response spectra and sigma w.r.t. spectral period for given run
+    configuration
+    :param dist_list:
+        Array of distances to generate response spectra and sigma plots for 
+    :param max_period:
+        Maximum period to compute plots for (note an error will be returned if
+        this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
+    """
+    # Set initial periods with constant spacing of 0.1
+    period = list(np.round(np.arange(0,max_period,0.1),1))
+    period.append(max_period)
+    # if period extends beyond 1 s reduce interval to 0.2 s
+    period = pd.Series(period)
+    if max(period) > 1:
+        for SA in range(0,len(period)):
+            if period[SA] > 1:
+                period=period.drop(SA)
+        periods_to_re_add = pd.Series(np.arange(1,max_period,0.2))
+        period_df = pd.DataFrame({'periods':period,'periods_to_re_add':
+                                  periods_to_re_add, 'max_period': max_period})
+        period = period_df.melt().value.dropna().unique()
+    # if period extends beyond 2 s then reduce interval to 0.5 s
+    period = pd.Series(period)
+    if max(period) > 2:
+        for SA in range(0,len(period)):
+            if period[SA] > 2:
+                period=period.drop(SA)
+        periods_to_re_add = pd.Series(np.arange(2,max_period,0.5))
+        period_df = pd.DataFrame({'periods':period,'periods_to_re_add':
+                                  periods_to_re_add,'max_period': max_period})
+        period = period_df.melt().value.dropna().unique()
+    # if period extends beyond 5 s then reduce interval to 1 s
+    period = pd.Series(period)
+    if max(period) > 5:
+        for SA in range(0,len(period)):
+            if period[SA] > 2:
+                period=period.drop(SA)
+        periods_to_re_add = pd.Series(np.arange(5,max_period,1))
+        period_df = pd.DataFrame({'periods':period,'periods_to_re_add':
+                                  periods_to_re_add,'max_period': max_period})
+        period = period_df.melt().value.dropna().unique()
+        
+    # Convert from float to imt
+    period = np.round(period,1)
+    base_SA_string = 'SA(_)'
+    imt_list = []
+    for imt in range(0,len(period)):
+        if imt == 0:
+            SA_string = 'PGA'
+        else:
+            SA_string = base_SA_string.replace('_',str(period[imt]))
+        imt_list.append(SA_string)
+    for imt in range(0,len(imt_list)):
+        imt_list[imt] = from_string(str(imt_list[imt]))
+    
+    # Set Z1 and Z25
+    if  Z1 == -999:
+        Z1 = _get_z1(Vs30,region)
+
+    if  Z25 == -999:
+        Z25 = _get_z25(Vs30,region)
+        
+    # Plots: color for GMPEs
+    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold']
+    
+    fig1 = pyplot.figure(figsize=(len(mag_list)*5, len(dist_list)*4))
+    pyplot.rcParams.update({'font.size': 16})# response spectra
+    fig2 = pyplot.figure(figsize=(len(mag_list)*5, len(dist_list)*4))
+    pyplot.rcParams.update({'font.size': 16})# sigma
+    
+    for n, i in enumerate(dist_list): #iterate though dist_list
+        
+        for l, m in enumerate(mag_list):  #iterate through mag_list
+            
+            ax1 = fig1.add_subplot(len(dist_list), len(mag_list), l+1+n*len(
+                mag_list)) #(#vert, #hor, #subplot)
+            ax2 = fig2.add_subplot(len(dist_list), len(mag_list), l+1+n*len(
+                mag_list)) #(#vert, #hor, #subplot)
+
+            for g, gmpe in enumerate(gmpe_list): 
+                
+                col=colors[g]
+                gmm = valid.gsim(gmpe)
+                
+                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(gmpe, strike,
+                                                                  dip, 
+                                                                  depth[l],
+                                                                  aratio, rake)
+                
+                rs_50p, sigma = [], []
+                
+                for k, imt in enumerate(imt_list): 
+
+                    mu, std, distances = att_curves(gmm,depth[l],m,aratio_g,
+                                                    strike_g,dip_g,rake,Vs30,
+                                                    Z1,Z25,300,0.1,imt,1) 
+                    
+                    f = interpolate.interp1d(distances,mu)
+                    rs_50p_dist = np.exp(f(i))
+                    
+                    f1 = interpolate.interp1d(distances,std[0])
+                    sigma_dist = f1(i)
+                    
+                    rs_50p.append(rs_50p_dist)
+                    sigma.append(sigma_dist)
+                
+                ax1.plot(period, rs_50p, color=col, linewidth=3, linestyle='-',
+                         label=gmpe)
+                ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
+                         label=gmpe)
+                
+                ax1.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
+                              fontsize=16, y=1.0, pad=-16)
+                ax2.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
+                              fontsize=16, y=1.0, pad=-16)
+                if n == len(dist_list)-1: #bottom row only
+                    ax1.set_xlabel('Period (s)', fontsize=16)
+                    ax2.set_xlabel('Period (s)', fontsize=16)
+                if l == 0: # left row only
+                    ax1.set_ylabel('Sa (g)', fontsize=16) 
+                    ax2.set_ylabel(r'$\sigma$', fontsize=16) 
+            ax1.grid(True)
+            ax2.grid(True)
+            ax2.set_ylim(0.3, 1)
+           
+    ax1.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
+    ax2.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
+    fig2.savefig(os.path.join(output_directory,name) + '_sigma_' + str(
+        Vs30) +'.png', bbox_inches='tight',dpi=200,pad_inches = 0.2)
+    fig1.savefig(os.path.join(output_directory,name) + '_ResponseSpectra_' +
+                 str(Vs30) +'.png', bbox_inches='tight',dpi=200,
+                 pad_inches = 0.2)
+
 def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
-                         dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio):
+                         dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio,
+                         mtxs_type):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
     given run configuration for use within Euclidean distance matrix plots,
     Sammons Mapping and hierarchical clustering plots
+    :param mtxs_type:
+        type of predicted ground-motion matrix being computed in
+        compute_matrix_gmpes (either median or 84th percentile)
     """
     step = 1
     Npoints=maxR/step
@@ -136,8 +281,12 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                 mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                   strike_g,dip_g,rake,Vs30,Z1,
                                                   Z25,maxR,step,i,1) 
-
-                medians = np.append(medians,(np.exp(mean)))
+                
+                if mtxs_type == 'median':
+                    medians = np.append(medians,(np.exp(mean)))
+                if mtxs_type == '+1_sigma':
+                    Nstd = 1 # median + 1std = ~84th percentile
+                    medians = np.append(medians,(np.exp(mean+Nstd*std[0])))
                 sigmas = np.append(sigmas,std[0])
 
             matrix_medians[:][g]= medians
@@ -257,7 +406,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig):
     
     return coo
 
-def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig):
+def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     """
     Plot hierarchical clusters for given run configuration
     :param imt_list:
@@ -266,8 +415,11 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig):
         A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
     :param mtxs:
         Matrix of median and sigma for each gmpe per imt 
-   :param namefig:
+    :param namefig:
         filename for outputted figure 
+    :param mtxs_type:
+        type of predicted ground-motion matrix being computed in
+        compute_matrix_gmpes (either median or 84th percentile)
     """
     ncols = 2
     
@@ -307,7 +459,10 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig):
         dn1 = hierarchy.dendrogram(matrix_Z[n], ax=ax, orientation='right',
                                    labels=gmpe_list)
         ax.set_xlabel('Euclidean Distance', fontsize = '14')
-        ax.set_title(i, fontsize = '14')
+        if mtxs_type == 'median':
+            ax.set_title(str(i) + ' (median)', fontsize = '14')
+        if mtxs_type == '+1_sigma':
+            ax.set_title(str(i) + ' (+1 sigma)', fontsize = '14')
 
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
