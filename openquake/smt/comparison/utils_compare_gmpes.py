@@ -464,7 +464,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         if mtxs_type == '+1_sigma':
             ax.set_title(str(i) + ' (+1 sigma)', fontsize = '14')
 
-    pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
+    pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.4)
     pyplot.show()
     pyplot.tight_layout() 
     

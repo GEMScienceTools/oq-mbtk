@@ -32,7 +32,7 @@ from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.geo.point import Point
 from openquake.smt.sm_database import *
 from openquake.smt.sm_utils import convert_accel_units, create_planar_surface,\
-    get_hypocentre_on_planar_surface
+    get_hypocentre_on_planar_surface, z1pt0_to_z2pt5, vs30_to_z1pt0_as08
 from openquake.smt.parsers.base_database_parser import (get_float, get_int,
                                                SMDatabaseReader,
                                                SMTimeSeriesReader)
@@ -316,9 +316,9 @@ class SimpleFlatfileParser(SMDatabaseReader):
         site.z2pt5 = get_float(metadata["Z2.5 (m)"])
         # Implement default values for z1pt0 and z2pt5
         if site.z1pt0 is None:
-            site.z1pt0 = rcfg.vs30_to_z1pt0_as08(site.vs30)
+            site.z1pt0 = vs30_to_z1pt0_as08(site.vs30)
         if site.z2pt5 is None:
-            site.z2pt5 = rcfg.z1pt0_to_z2pt5(site.z1pt0)
+            site.z2pt5 = z1pt0_to_z2pt5(site.z1pt0)
         site.arc_location = metadata["Forearc/Backarc for subduction events"]
         site.instrument_type = metadata["Type of Recording"]
         return site

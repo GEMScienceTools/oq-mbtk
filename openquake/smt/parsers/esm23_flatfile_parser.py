@@ -48,7 +48,6 @@ else:
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
-#from openquake.smt.parsers.simple_flatfile_parser_sara import SimpleFlatfileParserV9
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
