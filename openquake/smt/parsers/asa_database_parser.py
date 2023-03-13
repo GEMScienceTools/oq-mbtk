@@ -24,12 +24,9 @@ https://aplicaciones.iingen.unam.mx/AcelerogramasRSM/DscAsa.aspx
 Each file contains the acceleration time series for all 3 components
 and the corresponding metadata
 """
-
-
 import os
 import re
 from collections import OrderedDict
-from linecache import getline
 from datetime import datetime
 from math import sqrt
 from openquake.hazardlib.geo import *
@@ -39,7 +36,6 @@ from openquake.smt.parsers.base_database_parser import (get_float,
                                                get_int,
                                                SMDatabaseReader,
                                                SMTimeSeriesReader)
-
 
 def _get_info_from_archive_name(aname):
     """

@@ -1,3 +1,22 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+# Copyright (C) 2014-2017 GEM Foundation and G. Weatherill
+#
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
+
 """
 Basic Pseudo-database built on top of hdf5 for a set of processed strong
 motion records
@@ -12,12 +31,11 @@ import h5py
 from openquake.hazardlib import imt
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
-from openquake.smt.trellis.configure import vs30_to_z1pt0_as08, z1pt0_to_z2pt5
-from openquake.smt.trellis.configure import vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14
+from openquake.smt.sm_utils import vs30_to_z1pt0_as08, z1pt0_to_z2pt5
+from openquake.smt.sm_utils import vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14
 import openquake.smt.sm_utils as utils
 from openquake.smt import surface_utils
 from openquake.smt.residuals.context_db import ContextDB
-
 
 class Magnitude(object):
     """
