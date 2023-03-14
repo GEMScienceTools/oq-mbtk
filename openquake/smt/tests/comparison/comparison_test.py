@@ -259,6 +259,13 @@ class ComparisonTestCase(unittest.TestCase):
                      config.maxR, config.gmpes_list, config.aratio,
                      config.Nstd, config.name_out, self.output_directory, 
                      config.custom_color_flag, config.custom_color_list)
+            
+        # Specify target file (should be created by plot_trellis_util)
+        target_file_trellis = (os.path.join(self.output_directory,config.name_out)
+                               + '_TrellisPlots_Vs30_' + str(config.Vs30) +'.png')
+        
+        # Check target file created and outputted in expected location
+        self.assertIn(target_file_trellis,target_file_trellis)
         
         plot_spectra_util(config.rake, config.strike, config.dip,
                           config.trellis_depth, config.Z1, config.Z25,
@@ -267,17 +274,13 @@ class ComparisonTestCase(unittest.TestCase):
                           config.gmpes_list, config.aratio, config.Nstd,
                           config.name_out, self.output_directory,
                           config.custom_color_flag, config.custom_color_list) 
-            
-        # Specify target file (should be created by plot_trellis_util)
-        target_file_trellis = (os.path.join(self.output_directory,config.name_out)
-                               + '_TrellisPlots_Vs30_' + str(config.Vs30) +'.png')
+        
         target_file_spectra = (os.path.join(self.output_directory,config.name_out)
                                + '_ResponseSpectra_Vs30_' + str(config.Vs30) +'.png')
         target_file_sigma = (os.path.join(self.output_directory,config.name_out)
                                      + '_sigma_' + str(config.Vs30) +'.png')
         
         # Check target file created and outputted in expected location
-        self.assertIn(target_file_trellis,target_file_trellis)
         self.assertIn(target_file_spectra,target_file_spectra)
         self.assertIn(target_file_sigma,target_file_sigma)
         
