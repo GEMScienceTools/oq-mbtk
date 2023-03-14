@@ -17,9 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as np
 from datetime import datetime
-
 
 def positive_float(value, key, verbose=False):
     """

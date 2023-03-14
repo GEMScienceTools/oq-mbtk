@@ -22,12 +22,11 @@ Strong motion record selection tools
 """
 import numpy as np
 from datetime import datetime
-from copy import deepcopy
 from collections import OrderedDict
 from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.polygon import Polygon
-from openquake.smt.sm_database import GroundMotionRecord, GroundMotionDatabase
+from openquake.smt.sm_database import GroundMotionDatabase
 
 def rank_sites_by_record_count(database, threshold=0):
     """

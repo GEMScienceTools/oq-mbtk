@@ -21,20 +21,17 @@ Parser set for the European Strong Motion database format.
 Detailed documentation on the format is here: 
 http://esm.mi.ingv.it/static_stage/doc/manual_ESM.pdf
 """
-import h5py
 import os
-import csv
 import numpy as np
 from collections import OrderedDict
 from datetime import datetime
 from linecache import getline
 from math import sqrt
 from copy import copy
-from openquake.hazardlib.geo.geodetic import geodetic_distance
+
 from openquake.smt.sm_utils import convert_accel_units, get_time_vector
 from openquake.smt.sm_database import *
-from openquake.smt.parsers.base_database_parser import (get_float, get_int,
-                                               SMDatabaseReader,
+from openquake.smt.parsers.base_database_parser import (SMDatabaseReader,
                                                SMTimeSeriesReader,
                                                SMSpectraReader)
 
