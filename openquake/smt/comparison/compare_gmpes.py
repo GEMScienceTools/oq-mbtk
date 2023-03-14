@@ -28,7 +28,9 @@ import os
 
 from openquake.hazardlib.imt import from_string
 from openquake.hazardlib import valid
-from openquake.smt.comparison.utils_compare_gmpes import plot_trellis_util, plot_spectra_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util, compute_matrix_gmpes
+from openquake.smt.comparison.utils_compare_gmpes import plot_trellis_util, \
+    plot_spectra_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util,\
+        compute_matrix_gmpes
 
 class Configurations(object):
     """

@@ -20,7 +20,6 @@
 """
 Abstract base class for applying smoothing to a spectrum
 """
-import os
 import abc
 
 

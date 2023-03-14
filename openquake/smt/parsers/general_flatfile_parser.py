@@ -21,32 +21,22 @@
 General Flatfile Only Parser - to handle the cases in which the only strong
 motion input is in the form of a flatfile
 """
-import os
 import csv
 import numpy as np
 import copy
-import h5py
 from linecache import getline
-from collections import OrderedDict
-from datetime import datetime
-# In order to define default fault dimension import scaling relationships
-from openquake.hazardlib.scalerel.strasser2010 import (StrasserInterface,
-                                                       StrasserIntraslab)
+
 from openquake.hazardlib.scalerel.wc1994 import WC1994
-from openquake.hazardlib.geo.mesh import Mesh, RectangularMesh
+from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.line import Line
 from openquake.hazardlib.geo.surface.simple_fault import SimpleFaultSurface
-import openquake.smt.trellis.configure as rcfg
 from openquake.smt.sm_database import *
-from openquake.smt.sm_utils import convert_accel_units
-from openquake.smt.parsers.base_database_parser import (get_float, get_int,
-                                               get_positive_float,
-                                               get_positive_int,
-                                               SMDatabaseReader,
-                                               SMTimeSeriesReader,
-                                               SMSpectraReader)
+from openquake.smt.parsers.base_database_parser import (get_float,
+                                               get_positive_float)
 from openquake.smt.parsers.simple_flatfile_parser_sara import SimpleFlatfileParserV9
+
+from openquake.smt.sm_utils import create_planar_surface, get_hypocentre_on_planar_surface
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
@@ -311,14 +301,13 @@ class GeneralFlatfileParser(SimpleFlatfileParserV9):
         if not event.rupture.area:
             event.rupture.area = WC1994().get_median_area(event.magnitude.value,
                                                           None)
-        surface_modeled = rcfg.create_planar_surface(
+        surface_modeled = create_planar_surface(
             Point(event.longitude, event.latitude, event.depth),
             event.mechanism.nodal_planes.nodal_plane_1['strike'],
             event.mechanism.nodal_planes.nodal_plane_1['dip'],
             event.rupture.area,
             ratio)
-        hypocenter = rcfg.get_hypocentre_on_planar_surface(
-            surface_modeled,
+        hypocenter = get_hypocentre_on_planar_surface(surface_modeled,
             event.rupture.hypo_loc)
         try:
             surface_modeled._create_mesh()

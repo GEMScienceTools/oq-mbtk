@@ -21,7 +21,6 @@
 General Class for extracting Ground Motion Intensity Measures (IMs) from a
 set of acceleration time series
 """
-
 import numpy as np
 from math import pi
 from scipy.integrate import cumtrapz
@@ -30,7 +29,6 @@ import matplotlib.pyplot as plt
 import openquake.smt.response_spectrum as rsp
 from openquake.smt.smoothing import konno_ohmachi
 from openquake.smt.sm_utils import get_time_vector, _save_image, nextpow2
-
 
 RESP_METHOD = {
     'Newmark-Beta': rsp.NewmarkBeta,

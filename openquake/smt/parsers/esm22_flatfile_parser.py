@@ -21,7 +21,6 @@ service) to SMT
 """
 import pandas as pd
 import os, sys
-import shutil
 import tempfile
 import csv
 import numpy as np
@@ -30,31 +29,14 @@ import h5py
 from math import sqrt
 from linecache import getline
 from collections import OrderedDict
-from datetime import datetime
-# In order to define default fault dimension import scaling relationships
-# from openquake.hazardlib.scalerel.strasser2010 import (StrasserInterface,
-#                                                       StrasserIntraslab)
-from openquake.hazardlib.scalerel.wc1994 import WC1994
-from openquake.hazardlib.geo.mesh import Mesh, RectangularMesh
-from openquake.hazardlib.geo.point import Point
-from openquake.hazardlib.geo.line import Line
-from openquake.hazardlib.geo.surface.simple_fault import SimpleFaultSurface
-import openquake.smt.trellis.configure as rcfg
-# from openquake.smt.sm_database import *
+
 from openquake.smt.sm_database import GroundMotionDatabase, GroundMotionRecord,\
     Earthquake, Magnitude, Rupture, FocalMechanism, GCMTNodalPlanes,\
     Component, RecordSite, RecordDistance
-from openquake.smt.sm_utils import convert_accel_units, MECHANISM_TYPE, DIP_TYPE
+from openquake.smt.sm_utils import MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14
 from openquake.smt.parsers import valid
-from openquake.smt.parsers.base_database_parser import (get_float, get_int,
-                                               get_positive_float,
-                                               get_positive_int,
-                                               SMDatabaseReader,
-                                               SMTimeSeriesReader,
-                                               SMSpectraReader)
-from openquake.smt.trellis.configure import (vs30_to_z1pt0_cy14,
-                                    vs30_to_z2pt5_cb14)
-
+from openquake.smt.parsers.base_database_parser import SMDatabaseReader
+                                               
 if sys.version_info[0] >= 3:
     import pickle
 else:
@@ -62,7 +44,6 @@ else:
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
-#from openquake.smt.parsers.simple_flatfile_parser_sara import SimpleFlatfileParserV9
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 

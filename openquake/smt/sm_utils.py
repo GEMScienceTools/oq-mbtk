@@ -28,7 +28,9 @@ import re
 import numpy as np
 from scipy.integrate import cumtrapz
 from scipy.constants import g
+from math import sqrt, pi, sin, cos
 
+from openquake.hazardlib.geo import PlanarSurface
 from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib.scalerel.peer import PeerMSR
 from openquake.hazardlib.gsim.gmpe_table import GMPETable
@@ -46,6 +48,7 @@ AVAILABLE_GSIMS = get_available_gsims()
 # Regular expression to get a GMPETable from string:
 _gmpetable_regex = re.compile(r'^GMPETable\(([^)]+?)\)$')
 
+TO_RAD = pi / 180.
 
 def check_gsim_list(gsim_list):
     """
@@ -297,3 +300,173 @@ def get_interpolated_period(target_period, periods, values):
         np.log10(values[lval]) +
         (np.log10(target_period) - np.log10(periods[lval])) * d_y / d_x
         )
+
+
+def create_planar_surface(top_centroid, strike, dip, area, aspect):
+    """
+    Given a central location, create a simple planar rupture
+    :param top_centroid:
+        Centroid of trace of the rupture, as instance of :class:
+            openquake.hazardlib.geo.point.Point
+    :param float strike:
+        Strike of rupture(Degrees)
+    :param float dip:
+        Dip of rupture (degrees)
+    :param float area:
+        Area of rupture (km^2)
+    :param float aspect:
+        Aspect ratio of rupture
+
+    :returns: Rupture as an instance of the :class:
+        openquake.hazardlib.geo.surface.planar.PlanarSurface
+    """
+    rad_dip = dip * pi / 180.
+    width = sqrt(area / aspect)
+    length = aspect * width
+    # Get end points by moving the top_centroid along strike
+    top_right = top_centroid.point_at(length / 2., 0., strike)
+    top_left = top_centroid.point_at(length / 2.,
+                                     0.,
+                                     (strike + 180.) % 360.)
+    # Along surface width
+    surface_width = width * cos(rad_dip)
+    vertical_depth = width * sin(rad_dip)
+    dip_direction = (strike + 90.) % 360.
+
+    bottom_right = top_right.point_at(surface_width,
+                                      vertical_depth,
+                                      dip_direction)
+    bottom_left = top_left.point_at(surface_width,
+                                    vertical_depth,
+                                    dip_direction)
+
+    # Create the rupture
+    return PlanarSurface(strike, dip, top_left, top_right,
+                         bottom_right, bottom_left)
+
+
+def get_hypocentre_on_planar_surface(plane, hypo_loc=None):
+    """
+    Determines the location of the hypocentre within the plane
+    :param plane:
+        Rupture plane as instance of :class:
+        openquake.hazardlib.geo.surface.planar.PlanarSurface
+    :param tuple hypo_loc:
+        Hypocentre location as fraction of rupture plane, as a tuple of
+        (Along Strike, Down Dip), e.g. a hypocentre located in the centroid of
+        the rupture plane would be input as (0.5, 0.5), whereas a hypocentre
+        located in a position 3/4 along the length, and 1/4 of the way down
+        dip of the rupture plane would be entered as (0.75, 0.25)
+    :returns:
+        Hypocentre location as instance of :class:
+        openquake.hazardlib.geo.point.Point
+    """
+
+    centroid = plane.get_middle_point()
+    if hypo_loc is None:
+        return centroid
+
+    along_strike_dist = (hypo_loc[0] * plane.length) - (0.5 * plane.length)
+    down_dip_dist = (hypo_loc[1] * plane.width) - (0.5 * plane.width)
+    if along_strike_dist >= 0.:
+        along_strike_azimuth = plane.strike
+    else:
+        along_strike_azimuth = (plane.strike + 180.) % 360.
+        along_strike_dist = (0.5 - hypo_loc[0]) * plane.length
+    # Translate along strike
+    hypocentre = centroid.point_at(along_strike_dist,
+                                   0.,
+                                   along_strike_azimuth)
+    # Translate down dip
+    horizontal_dist = down_dip_dist * cos(TO_RAD * plane.dip)
+    vertical_dist = down_dip_dist * sin(TO_RAD * plane.dip)
+    if down_dip_dist >= 0.:
+        down_dip_azimuth = (plane.strike + 90.) % 360.
+    else:
+        down_dip_azimuth = (plane.strike - 90.) % 360.
+        down_dip_dist = (0.5 - hypo_loc[1]) * plane.width
+        horizontal_dist = down_dip_dist * cos(TO_RAD * plane.dip)
+
+    return hypocentre.point_at(horizontal_dist,
+                               vertical_dist,
+                               down_dip_azimuth)
+
+
+def vs30_to_z1pt0_as08(vs30):
+    """
+    Extracts a depth to 1.0 km/s velocity layer using the relationship
+    proposed in Abrahamson & Silva 2008
+    :param float vs30:
+        Input Vs30 (m/s)
+    """
+    if vs30 < 180.:
+        return np.exp(6.745)
+    elif vs30 > 500.:
+        return np.exp(5.394 - 4.48 * np.log(vs30 / 500.))
+    else:
+        return np.exp(6.745 - 1.35 * np.log(vs30 / 180.))
+
+
+def vs30_to_z1pt0_cy08(vs30):
+    """
+    Extracts a depth to 1.0 km/s velocity layer using the relationship
+    proposed in Chiou & Youngs 2008
+    :param float vs30:
+        Input Vs30 (m/s)
+    """
+    return np.exp(28.5 - (3.82 / 8.) * np.log((vs30 ** 8.) + (378.7 ** 8.)))
+
+
+def z1pt0_to_z2pt5(z1pt0):
+    """
+    Calculates the depth to 2.5 km/s layer (km /s) using the model presented
+    in Campbell & Bozorgnia (2007)
+    :param float z1pt0:
+        Depth (m) to the 1.0 km/s layer
+    :returns:
+        Depth (km) to 2.5 km/s layer
+    """
+    return 0.519 + 3.595 * (z1pt0 / 1000.)
+
+
+def vs30_to_z1pt0_cy14(vs30, japan=False):
+    """
+    Returns the estimate depth to the 1.0 km/s velocity layer based on Vs30
+    from Chiou & Youngs (2014) California model
+
+    :param numpy.ndarray vs30:
+        Input Vs30 values in m/s
+    :param bool japan:
+        If true returns the Japan model, otherwise the California model
+    :returns:
+        Z1.0 in m
+    """
+    if japan:
+        c1 = 412. ** 2.
+        c2 = 1360.0 ** 2.
+        return np.exp((-5.23 / 2.0) * np.log((np.power(vs30, 2.) + c1) / (
+            c2 + c1)))
+    else:
+        c1 = 571 ** 4.
+        c2 = 1360.0 ** 4.
+        return np.exp((-7.15 / 4.0) * np.log((vs30 ** 4. + c1) / (c2 + c1)))
+
+
+def vs30_to_z2pt5_cb14(vs30, japan=False):
+    """
+    Converts vs30 to depth to 2.5 km/s interface using model proposed by
+    Campbell & Bozorgnia (2014)
+
+    :param vs30:
+        Vs30 values (numpy array or float)
+
+    :param bool japan:
+        Use Japan formula (True) or California formula (False)
+
+    :returns:
+        Z2.5 in km
+    """
+    if japan:
+        return np.exp(5.359 - 1.102 * np.log(vs30))
+    else:
+        return np.exp(7.089 - 1.144 * np.log(vs30))
