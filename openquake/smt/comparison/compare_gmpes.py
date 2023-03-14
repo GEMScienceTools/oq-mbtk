@@ -52,6 +52,8 @@ class Configurations(object):
         self.dist_list = config_file['general']['dist_list']
         self.Nstd = config_file['general']['Nstd']
         self.max_period = config_file['general']['max_period']
+        self.custom_color_flag = config_file['general']['custom_colors_flag']
+        self.custom_color_list = config_file['general']['custom_colors_list']
         
         self.Vs30 = config_file['site_properties']['vs30']
         self.Z1 = config_file['site_properties']['Z1']
@@ -128,41 +130,38 @@ class Configurations(object):
         self.gmpes_list = []
         for gmpe in range(0,len(gmpes_list_initial)):
             self.gmpes_list.append(str(gmpes_list_initial[gmpe]))
-        
+
+        # Check number of GMPEs matches number of GMPE labels
+        if len(self.gmpes_list) != len(self.gmpe_labels):
+            raise ValueError("Number of labels must match number of GMPEs.")
+            
 def plot_trellis(self, output_directory):
     """
     Plot trellis for given run configuration
-    """
-    if len(self.gmpes_list) > 8:
-        raise ValueError("Cannot plot more than 8 GMPEs at once.") 
-        
+    """ 
     plot_trellis_util(self.rake, self.strike, self.dip, self.trellis_depth,
                       self.Z1, self.Z25, self.Vs30, self.region, self.imt_list,
                       self.trellis_mag_list, self.maxR, self.gmpes_list,
-                      self.aratio, self.Nstd, self.name_out, output_directory) 
+                      self.aratio, self.Nstd, self.name_out, output_directory,
+                      self.custom_color_flag, self.custom_color_list) 
                 
 def plot_spectra(self, output_directory):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
     configuration
-    """
-    if len(self.gmpes_list) > 8:
-        raise ValueError("Cannot plot more than 8 GMPEs at once.") 
-        
+    """ 
     plot_spectra_util(self.rake, self.strike, self.dip, self.trellis_depth,
                       self.Z1, self.Z25, self.Vs30, self.region,
                       self.max_period, self.trellis_mag_list,
                       self.dist_list, self.gmpes_list, self.aratio, self.Nstd,
-                      self.name_out, output_directory) 
+                      self.name_out, output_directory, self.custom_color_flag,
+                      self.custom_color_list) 
 
 def plot_cluster(self, output_directory):
     """
-    Plot hierarchical clusters of (1) median and (2) median +1 sigma (i.e. 84th
-    percentile) predicted ground-motion by each GMPE for given configurations
-    """
-    if len(self.gmpes_list) > 8:
-        raise ValueError("Cannot plot more than 8 GMPEs at once.") 
-        
+    Plot hierarchical clusters of (1) median and (2) 84th percentile of predicted
+    ground-motion by each GMPE for given configurations
+    """ 
     if len(self.gmpes_list) < 2:
         raise ValueError("Cannot perform clustering for a single GMPE.")   
 
@@ -175,33 +174,31 @@ def plot_cluster(self, output_directory):
                                             self.region, self.maxR, self.aratio,
                                             mtxs_type = 'median')
 
-    mtxs_plus_1_sigma = compute_matrix_gmpes(self.imt_list, self.mag_list,
+    mtxs_84th_perc = compute_matrix_gmpes(self.imt_list, self.mag_list,
                                             self.gmpes_list, self.rake,
                                             self.strike, self.dip, 
                                             self.depth_for_non_trellis_functions,
                                             self.Z1, self.Z25, self.Vs30,
                                             self.region, self.maxR, self.aratio,
-                                            mtxs_type = '+1_sigma')
+                                            mtxs_type = '84th_perc')
     
-    # Cluster median + 1 sigma
+    # Cluster by median
     plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,self.name_out) +
                       '_Median_Clustering_Vs30_' + str(self.Vs30) +'.png',
                       mtxs_type = 'median')    
     
-    plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_plus_1_sigma,
+    # Cluster by 84th percentile
+    plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
                       os.path.join(output_directory,self.name_out) +
-                      '_+1_sigma_Clustering_Vs30_' + str(self.Vs30) +'.png',
-                      mtxs_type = '+1_sigma')                    
+                      '_84th_perc_Clustering_Vs30_' + str(self.Vs30) +'.png',
+                      mtxs_type = '84th_perc')                    
 
 def plot_sammons(self, output_directory):
     """
-    Plot Sammons Maps of median predicted ground-motion by each GMPE for given
-    configurations
+    Plot Sammons Maps of median and 84th percentile predicted ground-motion
+    by each GMPE for given configurations
     """ 
-    if len(self.gmpes_list) > 8:
-        raise ValueError("Cannot plot more than 8 GMPEs at once.") 
-        
     if len(self.gmpes_list) < 2:
         raise ValueError("Cannot perform Sammons Mapping for a single GMPE.")
         
@@ -212,19 +209,32 @@ def plot_sammons(self, output_directory):
                                         self.Z1, self.Z25, self.Vs30, 
                                         self.region, self.maxR, self.aratio,
                                         mtxs_type = 'median')
-        
+    
+    mtxs_84th_perc = compute_matrix_gmpes(self.imt_list, self.mag_list,
+                                            self.gmpes_list, self.rake,
+                                            self.strike, self.dip, 
+                                            self.depth_for_non_trellis_functions,
+                                            self.Z1, self.Z25, self.Vs30,
+                                            self.region, self.maxR, self.aratio,
+                                            mtxs_type = '84th_perc')
+    
     plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,self.name_out) +
-                      '_SammonMaps_Vs30_' + str(self.Vs30)+'.png')
-        
+                      '_Median_SammonMaps_Vs30_' + str(self.Vs30)+'.png',
+                      self.custom_color_flag, self.custom_color_list,
+                      mtxs_type = 'median',)
+    
+    plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
+                      os.path.join(output_directory,self.name_out) +
+                      '_84th_perc_SammonMaps_Vs30_' + str(self.Vs30)+'.png',
+                      self.custom_color_flag, self.custom_color_list,
+                      mtxs_type = '84th_perc')
+   
 def plot_euclidean(self,output_directory):
     """
-    Plot Euclidean distance matrix of median predicted ground-motion by each GMPE
-    for given configurations
-    """
-    if len(self.gmpes_list) > 8:
-        raise ValueError("Cannot plot more than 8 GMPEs at once.") 
-        
+    Plot Euclidean distance matrix of median and 84th percentile predicted
+    ground-motion by each GMPE for given configurations
+    """ 
     if len(self.gmpes_list) < 2:
         raise ValueError("Cannot perform Euclidean distance matrix plotting for a single GMPE.")
         
@@ -235,7 +245,22 @@ def plot_euclidean(self,output_directory):
                                         self.Z1, self.Z25, self.Vs30,
                                         self.region, self.maxR, self.aratio,
                                         mtxs_type = 'median')
-        
+    
+    mtxs_84th_perc = compute_matrix_gmpes(self.imt_list, self.mag_list,
+                                            self.gmpes_list, self.rake,
+                                            self.strike, self.dip, 
+                                            self.depth_for_non_trellis_functions,
+                                            self.Z1, self.Z25, self.Vs30,
+                                            self.region, self.maxR, self.aratio,
+                                            mtxs_type = '84th_perc')
+    
+    
     plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_medians,
                         os.path.join(output_directory,self.name_out) 
-                        + '_Euclidean_Vs30_' + str(self.Vs30) +'.png')
+                        + 'Median_Euclidean_Vs30_' + str(self.Vs30) +'.png',
+                        mtxs_type = 'median')
+    
+    plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_medians,
+                        os.path.join(output_directory,self.name_out) 
+                        + '84th_perc_Euclidean_Vs30_' + str(self.Vs30) +'.png',
+                        mtxs_type = '84th_perc')
