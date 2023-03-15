@@ -20,6 +20,9 @@ maxR = 300 # max distance to consider
 dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
 region = 0
 Nstd = 2 # number of standard deviations to sample sigma for 
+custom_colors_flag = 'True' #By default set to "False" (set to "True" for custom colours)
+custom_colors_list = ['lime','dodgerblue','gold','0.8','mediumseagreen','xkcd:eggshell','tab:orange', 'tab:purple','tab:brown', 'tab:pink','tab:olive','b']
+
 
 [site_properties]
 vs30 = 800
