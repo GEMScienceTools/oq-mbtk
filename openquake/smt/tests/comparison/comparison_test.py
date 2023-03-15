@@ -24,7 +24,8 @@ import shutil
 import unittest
 from openquake.hazardlib import valid
 from openquake.smt.comparison import compare_gmpes as comp
-from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes, plot_trellis_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util
+from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes,\
+    plot_trellis_util, plot_spectra_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
@@ -43,7 +44,7 @@ TARGET_GMPES = [valid.gsim('ChiouYoungs2014'),
                 valid.gsim('CampbellBozorgnia2014'), 
                 valid.gsim('BooreEtAl2014'), 
                 valid.gsim('KothaEtAl2020regional')]
-                
+
 class ComparisonTestCase(unittest.TestCase):
     """
     Core test case for the comparison module
@@ -55,11 +56,9 @@ class ComparisonTestCase(unittest.TestCase):
     
         self.output_directory = os.path.join(BASE_DATA_PATH,
                                         'compare_gmpes_test')
-    
         # set the output
         if not os.path.exists(self.output_directory): os.makedirs(
                 self.output_directory)
-    
     
     def test_configuration_object_check(self):
         """
@@ -67,6 +66,7 @@ class ComparisonTestCase(unittest.TestCase):
         the Configuration object, which stores the inputted parameters for
         each run.
         """
+
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
         
@@ -131,8 +131,8 @@ class ComparisonTestCase(unittest.TestCase):
         
     def test_sammons_and_euclidean_distance_matrix_functions(self):
         """
-        Check expected outputs based on given input parameters for Sammons and
-        Euclidean distance matrix plotting functions
+        Check expected outputs based on given input parameters for median Sammons
+        and Euclidean distance matrix plotting functions
         """
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
@@ -151,7 +151,9 @@ class ComparisonTestCase(unittest.TestCase):
         coo = plot_sammons_util(config.imt_list, config.gmpe_labels,
                                 mtxs_medians, os.path.join(
                                     self.output_directory,config.name_out) +
-                          '_SammonMaps_Vs30_' + str(config.Vs30)+'.png')
+                          '_SammonMaps_Vs30_' + str(config.Vs30)+'.png',
+                          config.custom_color_flag, config.custom_color_list,
+                          mtxs_type = 'median')
         
         # Check Sammons computing outputs for num. GMPEs in .toml per run 
         self.assertEqual(len(coo),len(TARGET_GMPES))
@@ -162,7 +164,8 @@ class ComparisonTestCase(unittest.TestCase):
                                               self.output_directory,
                                               config.name_out) +
                                           '_Euclidean_Vs30_' + str(
-                                              config.Vs30) +'.png')
+                                              config.Vs30) +'.png',
+                                          mtxs_type = 'median')
             
         # Check correct number of IMTS within matrix_Dist
         self.assertEqual(len(matrix_Dist),len(TARGET_IMTS))
@@ -209,10 +212,10 @@ class ComparisonTestCase(unittest.TestCase):
             for gmpe in range(0,len(Z_matrix[imt])):
                 self.assertEqual(len(Z_matrix[imt][gmpe]), len(TARGET_GMPES))
                 
-    def test_clustering_plus_1_sigma(self):
+    def test_clustering_84th_perc(self):
         """
-        Check clustering of 84th percentile of predicted ground-motion (i.e.
-        median + 1 sigma) of considered GMPEs in the configuration
+        Check clustering of 84th percentile of predicted ground-motion of
+        considered GMPEs in the configuration
         """
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
@@ -225,14 +228,14 @@ class ComparisonTestCase(unittest.TestCase):
                                                 config.Z1, config.Z25,
                                                 config.Vs30, config.region,
                                                 config.maxR, config.aratio,
-                                                mtxs_type = '+1_sigma')
+                                                mtxs_type = '84th_perc')
     
         Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
                                      mtxs_medians, os.path.join(
                                          self.output_directory,config.name_out)
-                                         + '_+1_sigma_Clustering_Vs30_' +
+                                         + '_84th_perc_Clustering_Vs30_' +
                                          str(config.Vs30) +'.png',
-                                         mtxs_type = '+1_sigma')
+                                         mtxs_type = '84th_perc')
             
         # Check number of cluster arrays matches number of imts per config
         self.assertEqual(len(Z_matrix),len(TARGET_IMTS))
@@ -254,18 +257,30 @@ class ComparisonTestCase(unittest.TestCase):
                      config.trellis_depth, config.Z1, config.Z25, config.Vs30,
                      config.region, config.imt_list, config.trellis_mag_list,
                      config.maxR, config.gmpes_list, config.aratio,
-                     config.Nstd, config.name_out, self.output_directory)
+                     config.Nstd, config.name_out, self.output_directory, 
+                     config.custom_color_flag, config.custom_color_list)
             
         # Specify target file (should be created by plot_trellis_util)
         target_file_trellis = (os.path.join(self.output_directory,config.name_out)
                                + '_TrellisPlots_Vs30_' + str(config.Vs30) +'.png')
+        
+        # Check target file created and outputted in expected location
+        self.assertIn(target_file_trellis,target_file_trellis)
+        
+        plot_spectra_util(config.rake, config.strike, config.dip,
+                          config.trellis_depth, config.Z1, config.Z25,
+                          config.Vs30, config.region, config.max_period,
+                          config.trellis_mag_list, config.dist_list,
+                          config.gmpes_list, config.aratio, config.Nstd,
+                          config.name_out, self.output_directory,
+                          config.custom_color_flag, config.custom_color_list) 
+        
         target_file_spectra = (os.path.join(self.output_directory,config.name_out)
-                               + '_ResponseSpectra_' + str(config.Vs30) +'.png')
+                               + '_ResponseSpectra_Vs30_' + str(config.Vs30) +'.png')
         target_file_sigma = (os.path.join(self.output_directory,config.name_out)
                                      + '_sigma_' + str(config.Vs30) +'.png')
         
         # Check target file created and outputted in expected location
-        self.assertIn(target_file_trellis,target_file_trellis)
         self.assertIn(target_file_spectra,target_file_spectra)
         self.assertIn(target_file_sigma,target_file_sigma)
         

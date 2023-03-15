@@ -34,12 +34,17 @@ from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1, _get_z25, 
 
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd, name,
-                 output_directory):
+                 output_directory, custom_color_flag, custom_color_list):
     """
     Generate trellis plots for given run configuration
     """
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold']
+    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold','lime',
+            'dodgerblue','gold','0.8','mediumseagreen','xkcd:eggshell',
+            'tab:orange', 'tab:purple','tab:brown', 'tab:pink']
+    if custom_color_flag == 'True':
+        colors = custom_color_list
+            
     step = 1
     # Npoints=maxR/step
     threshold = 0.01
@@ -104,7 +109,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     
 def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
-                      name, output_directory):
+                      name, output_directory, custom_color_flag, custom_color_list):
     """
     Plot response spectra and sigma w.r.t. spectral period for given run
     configuration
@@ -169,7 +174,11 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         Z25 = _get_z25(Vs30,region)
         
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold']
+    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold','lime',
+            'dodgerblue','gold','0.8','mediumseagreen','xkcd:eggshell',
+            'tab:orange', 'tab:purple','tab:brown', 'tab:pink']
+    if custom_color_flag == 'True':
+        colors = custom_color_list
     
     fig1 = pyplot.figure(figsize=(len(mag_list)*5, len(dist_list)*4))
     pyplot.rcParams.update({'font.size': 16})# response spectra
@@ -233,9 +242,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
            
     ax1.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     ax2.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
-    fig2.savefig(os.path.join(output_directory,name) + '_sigma_' + str(
+    fig2.savefig(os.path.join(output_directory,name) + '_sigma_Vs30_' + str(
         Vs30) +'.png', bbox_inches='tight',dpi=200,pad_inches = 0.2)
-    fig1.savefig(os.path.join(output_directory,name) + '_ResponseSpectra_' +
+    fig1.savefig(os.path.join(output_directory,name) + '_ResponseSpectra_Vs30_' +
                  str(Vs30) +'.png', bbox_inches='tight',dpi=200,
                  pad_inches = 0.2)
 
@@ -284,7 +293,7 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians,(np.exp(mean)))
-                if mtxs_type == '+1_sigma':
+                if mtxs_type == '84th_perc':
                     Nstd = 1 # median + 1std = ~84th percentile
                     medians = np.append(medians,(np.exp(mean+Nstd*std[0])))
                 sigmas = np.append(sigmas,std[0])
@@ -294,7 +303,7 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
     
     return mtxs_median
 
-def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig):
+def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     """
     Plot Euclidean distance matrices for given run configuration
     :param imt_list:
@@ -302,9 +311,12 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig):
     :param gmpe_list:
         A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
     :param mtxs:
-        Matrix of median and sigma for each gmpe per imt 
-   :param namefig:
+        Matrix of predicted ground-motion for each gmpe per imt 
+    :param namefig:
         filename for outputted figure 
+    :param mtxs_type:
+        type of predicted ground-motion matrix being computed in
+        compute_matrix_gmpes (either median or 84th percentile)
     """
     # Euclidean
     matrix_Dist = {}
@@ -337,7 +349,11 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig):
         else:
             ax = axs2[np.unravel_index(n, (nrows, ncols))]           
         ax.imshow(matrix_Dist[n],cmap='gray') 
-        ax.set_title(i, fontsize='12')
+        
+        if mtxs_type == 'median':
+            ax.set_title(str(i) + ' (median)', fontsize = '14')
+        if mtxs_type == '84th_perc':
+            ax.set_title(str(i) + ' (84th percentile)', fontsize = '14')
 
         ticks_loc = ax.get_yticks().tolist()
         ax.xaxis.set_ticks([n for n in range(len(gmpe_list))])
@@ -351,7 +367,8 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig):
     
     return matrix_Dist
     
-def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig):
+def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
+                      custom_color_list, mtxs_type):
     """
     Plot Sammons maps for given run configuration
     :param imt_list:
@@ -359,13 +376,20 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig):
     :param gmpe_list:
         A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
     :param mtxs:
-        Matrix of median and sigma for each gmpe per imt 
-   :param namefig:
+        Matrix of predicted ground-motion for each gmpe per imt 
+    :param namefig:
         filename for outputted figure 
+    :param mtxs_type:
+        type of predicted ground-motion matrix being computed in
+        compute_matrix_gmpes (either median or 84th percentile)
     """
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold']
-    
+    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold','lime',
+            'dodgerblue','gold','0.8','mediumseagreen','xkcd:eggshell',
+            'tab:orange', 'tab:purple','tab:brown', 'tab:pink']
+    if custom_color_flag == 'True':
+        colors = custom_color_list
+            
     texts = []
     
     # Rows and cols  
@@ -397,6 +421,11 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig):
                                      gmpe_list[g], ha='left', color=col))
 
         pyplot.title(str(i), fontsize='16')
+        if mtxs_type == 'median':
+            pyplot.title(str(i) + ' (median)', fontsize = '14')
+        if mtxs_type == '84th_perc':
+            pyplot.title(str(i) + ' (84th percentile)', fontsize = '14')
+
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 0.80), fontsize='16')
@@ -414,7 +443,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     :param gmpe_list:
         A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
     :param mtxs:
-        Matrix of median and sigma for each gmpe per imt 
+        Matrix of predicted ground-motion for each gmpe per imt 
     :param namefig:
         filename for outputted figure 
     :param mtxs_type:
@@ -461,8 +490,8 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         ax.set_xlabel('Euclidean Distance', fontsize = '14')
         if mtxs_type == 'median':
             ax.set_title(str(i) + ' (median)', fontsize = '14')
-        if mtxs_type == '+1_sigma':
-            ax.set_title(str(i) + ' (+1 sigma)', fontsize = '14')
+        if mtxs_type == '84th_perc':
+            ax.set_title(str(i) + ' (84th percentile)', fontsize = '14')
 
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.4)
     pyplot.show()
