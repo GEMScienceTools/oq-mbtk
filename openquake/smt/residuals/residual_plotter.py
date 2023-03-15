@@ -787,8 +787,10 @@ def PlotLoglikelihoodWithSpectralPeriod(residuals,filename,custom_cycler=0,
         columns)
     
     # Define colours for plots
-    colour_cycler = (cycler(color=['b', 'g', 'r', 'c','y','m']) *
-                  cycler(linestyle=['-', '--', '-.']))
+    colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','k','dodgerblue',
+                                   'gold','0.8','mediumseagreen','xkcd:eggshell',
+                                   'tab:orange', 'tab:purple','tab:brown',
+                                   'tab:pink'])*cycler(linestyle=['-']))
     
     if type(custom_cycler)==type(cycler(colour='b')):
        colour_cycler=custom_cycler
@@ -867,10 +869,13 @@ def PlotModelWeightsWithSpectralPeriod(residuals,filename,custom_cycler=0,
                                                       ,1)).columns)
     
     # Define colours for plots
-    colour_cycler = (cycler(color=['b', 'g', 'r', 'c','y','m']) *
-                  cycler(linestyle=['-', '--', '-.']))
+    colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','k','dodgerblue',
+                                   'gold','0.8','mediumseagreen','xkcd:eggshell',
+                                   'tab:orange', 'tab:purple','tab:brown',
+                                   'tab:pink'])*cycler(linestyle=['-']))
     if type(custom_cycler)==type(cycler(colour='b')):
        colour_cycler=custom_cycler
+       
 
     # Plot model weights w.r.t. spectral period
     model_weights_with_imt=pd.DataFrame(residuals.model_weights_with_imt)
@@ -920,8 +925,10 @@ def PlotEDRWithSpectralPeriod(residuals,filename,custom_cycler=0,
     x_EDR_with_imt=x_EDR_with_imt.dropna() #Remove any non-acceleration imt
 
     # Define colours for plots
-    colour_cycler = (cycler(color=['b', 'g', 'r', 'c','y','m']) *
-                  cycler(linestyle=['-', '--', '-.']))
+    colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','k','dodgerblue',
+                                   'gold','0.8','mediumseagreen','xkcd:eggshell',
+                                   'tab:orange', 'tab:purple','tab:brown',
+                                   'tab:pink'])*cycler(linestyle=['-']))
     if type(custom_cycler)==type(cycler(colour='b')):
        colour_cycler=custom_cycler
     
@@ -1024,8 +1031,10 @@ def PlotResidualPDFWithSpectralPeriod(residuals,filename,custom_cycler=0,
         columns)
     
     # Define colours for plots
-    colour_cycler = (cycler(color=['b', 'g', 'r', 'c','y','m'])*
-                     cycler(marker=['o','^','x']))
+    colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','dodgerblue', 'k',
+                                   'gold','0.8','mediumseagreen','xkcd:eggshell',
+                                   'tab:orange', 'tab:purple','tab:brown',
+                                   'tab:pink'])*cycler(marker=['x']))
     if type(custom_cycler)==type(cycler(colour='b')):
        colour_cycler=custom_cycler
     colour_cycler_df=pd.DataFrame(colour_cycler)

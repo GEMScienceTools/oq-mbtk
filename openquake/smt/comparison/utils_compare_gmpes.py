@@ -39,7 +39,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     Generate trellis plots for given run configuration
     """
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold','lime',
+    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold',
             'dodgerblue','gold','0.8','mediumseagreen','xkcd:eggshell',
             'tab:orange', 'tab:purple','tab:brown', 'tab:pink']
     if custom_color_flag == 'True':
@@ -174,9 +174,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         Z25 = _get_z25(Vs30,region)
         
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold','lime',
-            'dodgerblue','gold','0.8','mediumseagreen','xkcd:eggshell',
-            'tab:orange', 'tab:purple','tab:brown', 'tab:pink']
+    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold','dodgerblue',
+            'gold','0.8','mediumseagreen','xkcd:eggshell', 'tab:orange',
+            'tab:purple','tab:brown', 'tab:pink']
     if custom_color_flag == 'True':
         colors = custom_color_list
     
@@ -384,9 +384,9 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         compute_matrix_gmpes (either median or 84th percentile)
     """
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold','lime',
-            'dodgerblue','gold','0.8','mediumseagreen','xkcd:eggshell',
-            'tab:orange', 'tab:purple','tab:brown', 'tab:pink']
+    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold','dodgerblue',
+            'gold','0.8','mediumseagreen','xkcd:eggshell', 'tab:orange',
+            'tab:purple','tab:brown', 'tab:pink']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
