@@ -30,7 +30,7 @@ from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes,\
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
-TARGET_CONFIG_NAME = 'Albania_2std'
+TARGET_CONFIG_NAME = 'Albania_2Std'
 TARGET_VS30 = 800
 TARGET_REGION = 0
 TARGET_TRELLIS_DEPTHS = [20,25,30]

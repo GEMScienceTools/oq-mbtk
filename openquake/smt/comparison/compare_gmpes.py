@@ -46,7 +46,8 @@ class Configurations(object):
         config_file = toml.load(filename) 
         
         # Get input params from .toml file
-        self.name_out = config_file['general']['config_name']
+        self.name_out = str(config_file['name_analysis'][
+            'name_analysis']) + '_' + str(config_file['general']['Nstd']) + 'Std'
         self.region = config_file['general']['region']
         self.maxR = config_file['general']['maxR']
         self.dist_list = config_file['general']['dist_list']

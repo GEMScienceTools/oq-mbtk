@@ -10,10 +10,9 @@
 #6 for Taiwan (locally = 0) 
 
 [name_analysis]
-name_analysis = 'test'
+name_analysis = 'Albania'
 
 [general]
-config_name = 'Albania_2std' # name appended to each outputted figure
 imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)'] # imts to compute gm for
 max_period = 2 # max period for response spectra (can't exceed maximum period in a specified GMPE)
 maxR = 300 # max distance to consider
