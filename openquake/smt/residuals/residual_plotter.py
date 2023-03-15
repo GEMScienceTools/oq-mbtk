@@ -292,7 +292,7 @@ class ResidualPlot(ResidualHistogramPlot):
         ax.plot(xdata_norm_pdf, norm.pdf(xdata_norm_pdf, 0.0, 1.0), '-',
                 color='k', linewidth=2.0, 
                 label = 'Standard. Norm. Dist.')
-        ax.legend(loc = 'best')
+        ax.legend(loc = 'best', fontsize = 'small')
         x_limit = max(abs(x))
         ax.set_xlim(x_limit*-1,x_limit)
 
@@ -804,7 +804,7 @@ def PlotLoglikelihoodWithSpectralPeriod(residuals,filename,custom_cycler=0,
         ax_llh.plot(x_llh.imt_float,y_llh,label=tmp.split('(')[0])
     ax_llh.set_xlabel('Spectral Period (s)')
     ax_llh.set_ylabel('Loglikelihood Value')
-    ax_llh.set_title('Scherbaum et al. (2009) Loglikelihood Values')
+    ax_llh.set_title('Scherbaum et al. (2009) Loglikelihood Values',fontsize = '12')
     ax_llh.legend(loc='upper right',ncol=2,fontsize='x-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
@@ -886,7 +886,7 @@ def PlotModelWeightsWithSpectralPeriod(residuals,filename,custom_cycler=0,
     ax_model_weights.set_xlabel('Spectral Period (s)')
     ax_model_weights.set_ylabel('Model Weight')
     ax_model_weights.set_title(
-        'Sample loglikelihood based model weights (Scherbaum et al., 2009)')
+        'Sample loglikelihood based model weights (Scherbaum et al., 2009)',fontsize = '12')
     ax_model_weights.legend(loc='upper right',ncol=2,fontsize='x-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
@@ -938,8 +938,7 @@ def PlotEDRWithSpectralPeriod(residuals,filename,custom_cycler=0,
         ax_EDR.plot(x_EDR_with_imt.imt_float,y_EDR,label=tmp.split('(')[0])
     ax_EDR.set_xlabel('Spectral Period (s)')
     ax_EDR.set_ylabel('EDR')
-    ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)',
-                     fontsize = '12')
+    ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)',fontsize = '12')
     ax_EDR.legend(loc='upper right',ncol=2,fontsize='x-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
