@@ -258,10 +258,10 @@ def plot_euclidean(self,output_directory):
     
     plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_medians,
                         os.path.join(output_directory,self.name_out) 
-                        + 'Median_Euclidean_Vs30_' + str(self.Vs30) +'.png',
+                        + '_Median_Euclidean_Vs30_' + str(self.Vs30) +'.png',
                         mtxs_type = 'median')
     
-    plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_medians,
+    plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
                         os.path.join(output_directory,self.name_out) 
-                        + '84th_perc_Euclidean_Vs30_' + str(self.Vs30) +'.png',
+                        + '_84th_perc_Euclidean_Vs30_' + str(self.Vs30) +'.png',
                         mtxs_type = '84th_perc')
