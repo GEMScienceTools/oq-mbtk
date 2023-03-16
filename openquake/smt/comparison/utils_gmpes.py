@@ -223,13 +223,16 @@ def get_rlz_info(ds, rlz_id, grp_id):
     print('\n ', gmmrlz[trt_by_grp[grp_id]])
 
 def att_curves(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,step,
-              imt,ztor):    
+              imt,ztor,eshm20_region):    
     trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
     rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
                       strike=strike, dip=dip, rake=rake, trt=trt, ztor=ztor)
- 
-    props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
-             'vs30measured': True}
+
+    #eshm20_region = 2
+    if 'KothaEtAl2020ESHM20' in str(gmpe):
+        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False, 'vs30measured': True,'region': eshm20_region}  
+    else:
+        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False, 'vs30measured': True}
                 
     sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
                                    direction='positive', hdist=maxR, step=step,
@@ -242,34 +245,6 @@ def att_curves(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,step,
     ctxs = ctxs[0]
     ctxs.occurrence_rate = 0.0
     
-    mean, std = gmpe.get_mean_and_stddevs(ctxs, ctxs, ctxs, imt, [StdDev.TOTAL])
-    distances = ctxs.rrup
-    
-    return mean, std, distances
-
-def att_curves_eshm20(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,
-                    step,imt,ztor,region):  
-    """
-    :param region:
-        Choose among: region= 0 for global; 1 for California; 2 for Japan;
-        3 for China; 4 for Italy; 5 for Turkey (locally = 3); 6 for Taiwan (
-        locally = 0)
-    """      
-    trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
-    rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
-                      strike=strike, dip=dip, rake=rake, trt=trt, ztor=ztor)
-    props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
-             'vs30measured': True,'region': numpy.array(region)}                
-    sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
-                                   direction='positive', hdist=maxR,
-                                   step=step, site_props=props)
-    param = dict(imtls={})
-    cm = ContextMaker(trt, [gmpe], param)
-    
-    ctxs = list(cm.get_ctx_iter([rup], sites))          
-    ctxs = ctxs[0]
-    ctxs.occurrence_rate = 0.0
-            
     mean, std = gmpe.get_mean_and_stddevs(ctxs, ctxs, ctxs, imt, [StdDev.TOTAL])
     distances = ctxs.rrup
     

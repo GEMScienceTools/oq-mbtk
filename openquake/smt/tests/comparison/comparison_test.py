@@ -120,6 +120,7 @@ class ComparisonTestCase(unittest.TestCase):
                                                 config.Z1, config.Z25,
                                                 config.Vs30, config.region,
                                                 config.maxR, config.aratio,
+                                                config.eshm20_region,
                                                 mtxs_type = 'median')
         
         # Check correct number of imts
@@ -145,6 +146,7 @@ class ComparisonTestCase(unittest.TestCase):
                                                 config.Z1, config.Z25,
                                                 config.Vs30, config.region,
                                                 config.maxR, config.aratio,
+                                                config.eshm20_region,
                                                 mtxs_type = 'median')
                 
         # Sammons checks
@@ -195,6 +197,7 @@ class ComparisonTestCase(unittest.TestCase):
                                                 config.Z1, config.Z25,
                                                 config.Vs30, config.region,
                                                 config.maxR, config.aratio,
+                                                config.eshm20_region,
                                                 mtxs_type = 'median')
     
         Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
@@ -228,6 +231,7 @@ class ComparisonTestCase(unittest.TestCase):
                                                 config.Z1, config.Z25,
                                                 config.Vs30, config.region,
                                                 config.maxR, config.aratio,
+                                                config.eshm20_region,
                                                 mtxs_type = '84th_perc')
     
         Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
@@ -259,7 +263,8 @@ class ComparisonTestCase(unittest.TestCase):
                      config.region, config.imt_list, config.trellis_mag_list,
                      config.maxR, config.gmpes_list, config.aratio,
                      config.Nstd, config.name_out, self.output_directory, 
-                     config.custom_color_flag, config.custom_color_list)
+                     config.custom_color_flag, config.custom_color_list,
+                     config.eshm20_region)
         
         # Spectra plots 
         plot_spectra_util(config.rake, config.strike, config.dip,
@@ -268,7 +273,8 @@ class ComparisonTestCase(unittest.TestCase):
                           config.trellis_mag_list, config.dist_list,
                           config.gmpes_list, config.aratio, config.Nstd,
                           config.name_out, self.output_directory,
-                          config.custom_color_flag, config.custom_color_list) 
+                          config.custom_color_flag, config.custom_color_list,
+                          config.eshm20_region) 
        
         # Specify target files
         target_file_trellis = (os.path.join(self.output_directory,config.name_out)

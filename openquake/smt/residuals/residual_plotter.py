@@ -891,7 +891,7 @@ def PlotModelWeightsWithSpectralPeriod(residuals,filename,custom_cycler=0,
     ax_model_weights.set_xlabel('Spectral Period (s)')
     ax_model_weights.set_ylabel('Model Weight')
     ax_model_weights.set_title(
-        'Sample loglikelihood based model weights (Scherbaum et al., 2009)',fontsize='16')
+        'Sample loglikelihood based model weights (Scherbaum et al. 2009)',fontsize='16')
     ax_model_weights.legend(loc='upper right',ncol=2,fontsize='x-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     

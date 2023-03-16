@@ -49,6 +49,7 @@ class Configurations(object):
         self.name_out = str(config_file['general'][
             'name_analysis']) + '_' + str(config_file['general']['Nstd']) + 'Std'
         self.region = config_file['general']['region']
+        self.eshm20_region = config_file['general']['eshm20_region']
         self.maxR = config_file['general']['maxR']
         self.dist_list = config_file['general']['dist_list']
         self.Nstd = config_file['general']['Nstd']
@@ -144,7 +145,8 @@ def plot_trellis(self, output_directory):
                       self.Z1, self.Z25, self.Vs30, self.region, self.imt_list,
                       self.trellis_mag_list, self.maxR, self.gmpes_list,
                       self.aratio, self.Nstd, self.name_out, output_directory,
-                      self.custom_color_flag, self.custom_color_list) 
+                      self.custom_color_flag, self.custom_color_list,
+                      self.eshm20_region) 
                 
 def plot_spectra(self, output_directory):
     """
@@ -156,7 +158,7 @@ def plot_spectra(self, output_directory):
                       self.max_period, self.trellis_mag_list,
                       self.dist_list, self.gmpes_list, self.aratio, self.Nstd,
                       self.name_out, output_directory, self.custom_color_flag,
-                      self.custom_color_list) 
+                      self.custom_color_list,self.eshm20_region) 
 
 def plot_cluster(self, output_directory):
     """
@@ -173,7 +175,7 @@ def plot_cluster(self, output_directory):
                                             self.depth_for_non_trellis_functions,
                                             self.Z1, self.Z25, self.Vs30,
                                             self.region, self.maxR, self.aratio,
-                                            mtxs_type = 'median')
+                                            self.eshm20_region,mtxs_type='median')
 
     mtxs_84th_perc = compute_matrix_gmpes(self.imt_list, self.mag_list,
                                             self.gmpes_list, self.rake,
@@ -181,7 +183,7 @@ def plot_cluster(self, output_directory):
                                             self.depth_for_non_trellis_functions,
                                             self.Z1, self.Z25, self.Vs30,
                                             self.region, self.maxR, self.aratio,
-                                            mtxs_type = '84th_perc')
+                                            self.eshm20_region,mtxs_type='84th_perc')
     
     # Cluster by median
     plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_medians,
@@ -209,7 +211,7 @@ def plot_sammons(self, output_directory):
                                         self.depth_for_non_trellis_functions,
                                         self.Z1, self.Z25, self.Vs30, 
                                         self.region, self.maxR, self.aratio,
-                                        mtxs_type = 'median')
+                                        self.eshm20_region,mtxs_type='median')
     
     mtxs_84th_perc = compute_matrix_gmpes(self.imt_list, self.mag_list,
                                             self.gmpes_list, self.rake,
@@ -217,7 +219,7 @@ def plot_sammons(self, output_directory):
                                             self.depth_for_non_trellis_functions,
                                             self.Z1, self.Z25, self.Vs30,
                                             self.region, self.maxR, self.aratio,
-                                            mtxs_type = '84th_perc')
+                                            self.eshm20_region,mtxs_type='84th_perc')
     
     plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,self.name_out) +
@@ -245,7 +247,7 @@ def plot_euclidean(self,output_directory):
                                         self.depth_for_non_trellis_functions,
                                         self.Z1, self.Z25, self.Vs30,
                                         self.region, self.maxR, self.aratio,
-                                        mtxs_type = 'median')
+                                        self.eshm20_region,mtxs_type='median')
     
     mtxs_84th_perc = compute_matrix_gmpes(self.imt_list, self.mag_list,
                                             self.gmpes_list, self.rake,
@@ -253,7 +255,7 @@ def plot_euclidean(self,output_directory):
                                             self.depth_for_non_trellis_functions,
                                             self.Z1, self.Z25, self.Vs30,
                                             self.region, self.maxR, self.aratio,
-                                            mtxs_type = '84th_perc')
+                                            self.eshm20_region,mtxs_type='84th_perc')
     
     
     plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_medians,
