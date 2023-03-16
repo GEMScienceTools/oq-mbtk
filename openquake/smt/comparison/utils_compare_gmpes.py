@@ -245,9 +245,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
            
     ax1.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     ax2.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
-    fig2.savefig(os.path.join(output_directory,'sigma_Vs30.png'),
+    fig2.savefig(os.path.join(output_directory,'sigma.png'),
                  bbox_inches='tight',dpi=200,pad_inches = 0.2)
-    fig1.savefig(os.path.join(output_directory,'ResponseSpectra_Vs30.png'),
+    fig1.savefig(os.path.join(output_directory,'ResponseSpectra.png'),
                  bbox_inches='tight',dpi=200,pad_inches = 0.2)
 
 def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
