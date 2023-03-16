@@ -146,7 +146,7 @@ class ComparisonTestCase(unittest.TestCase):
         # Sammons checks
         coo = plot_sammons_util(config.imt_list, config.gmpe_labels,
                                 mtxs_medians, os.path.join(
-                                    self.output_directory,'SammonMaps_Vs30.png'),
+                                    self.output_directory,'SammonMaps.png'),
                                 config.custom_color_flag, config.custom_color_list,
                                 mtxs_type = 'median')
         
@@ -157,7 +157,7 @@ class ComparisonTestCase(unittest.TestCase):
         matrix_Dist = plot_euclidean_util(config.imt_list, config.gmpe_labels,
                                           mtxs_medians, os.path.join(
                                               self.output_directory,
-                                              'Euclidean_Vs30.png'),
+                                              'Euclidean.png'),
                                           mtxs_type = 'median')
             
         # Check correct number of IMTS within matrix_Dist
