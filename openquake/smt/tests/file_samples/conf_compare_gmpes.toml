@@ -9,15 +9,17 @@
 #5 for Turkey (locally = 3)
 #6 for Taiwan (locally = 0) 
 
-[name_analysis]
-name_analysis = 'test'
-
 [general]
-config_name = 'Albania_2std' # name appended to each outputted figure
+name_analysis = 'Albania'
 imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)'] # imts to compute gm for
+max_period = 2 # max period for response spectra
 maxR = 300 # max distance to consider
+dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
 region = 0
+eshm20_region = 4 # region for ESHM20 implementation of Kotha et al. 2020 GMPE (default is zero)
 Nstd = 2 # number of standard deviations to sample sigma for 
+custom_colors_flag = 'False' # Default = "False" ("True" for custom colours in RS + trellis)
+custom_colors_list = ['lime','dodgerblue','gold','0.8']
 
 [site_properties]
 vs30 = 800
@@ -40,11 +42,40 @@ non_trellis_depths = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth],[mag,dept
 
 # Specify label for gmpes
 [gmpe_labels]
-gmpes_label = ['CY14','CB14','BSSA14','KO2020']
+gmpes_label = ['KO20_1','KO20_2','KO20_3','KO20_4','KO20_5','KO20_6','KO20_7','KO20_8','KO20_9', 'BO14','GA20_Inter']
 
 # Specify gmpes
 [models] 
-[models.ChiouYoungs2014]
-[models.CampbellBozorgnia2014]
-[models.BooreEtAl2014]
-[models.KothaEtAl2020regional]
+[models.1-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = 2.85697
+    c3_epsilon = 1.72
+[models.2-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = 2.85697
+    c3_epsilon = 0    
+[models.3-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = 2.85697
+    c3_epsilon = -1.72 
+    
+[models.4-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = 0
+    c3_epsilon = 1.72
+[models.5-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = 0
+    c3_epsilon = 0    
+[models.6-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = 0
+    c3_epsilon = -1.72 
+    
+[models.7-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = -2.85697
+    c3_epsilon = 1.72
+[models.8-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = -2.85697
+    c3_epsilon = 0    
+[models.9-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = -2.85697
+    c3_epsilon = -1.72 
+    
+[models.10-BooreEtAl2014]
+[models.11-AbrahamsonGulerce2020SInter]
+region = "GLO"

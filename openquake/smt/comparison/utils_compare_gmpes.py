@@ -34,14 +34,15 @@ from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1, _get_z25, 
 
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd, name,
-                 output_directory, custom_color_flag, custom_color_list):
+                 output_directory, custom_color_flag, custom_color_list,
+                 eshm20_region):
     """
     Generate trellis plots for given run configuration
     """
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold','lime',
-            'dodgerblue','gold','0.8','mediumseagreen','xkcd:eggshell',
-            'tab:orange', 'tab:purple','tab:brown', 'tab:pink']
+    colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
+            'mediumseagreen','0.5','tab:orange', 'tab:purple',
+            'tab:brown', 'tab:pink']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
@@ -75,7 +76,8 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
 
                 mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                  strike_g,dip_g,rake,Vs30,
-                                                 Z1,Z25,maxR,step,i,1) 
+                                                 Z1,Z25,maxR,step,i,1,
+                                                 eshm20_region) 
                 
                 pyplot.plot(distances, np.exp(mean), color=col,
                             linewidth=2, linestyle='-', label=gmpe)
@@ -109,7 +111,8 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     
 def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
-                      name, output_directory, custom_color_flag, custom_color_list):
+                      name, output_directory, custom_color_flag, custom_color_list,
+                      eshm20_region):
     """
     Plot response spectra and sigma w.r.t. spectral period for given run
     configuration
@@ -174,9 +177,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         Z25 = _get_z25(Vs30,region)
         
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold','lime',
-            'dodgerblue','gold','0.8','mediumseagreen','xkcd:eggshell',
-            'tab:orange', 'tab:purple','tab:brown', 'tab:pink']
+    colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
+            'mediumseagreen','0.5','tab:orange', 'tab:purple',
+            'tab:brown', 'tab:pink']
     if custom_color_flag == 'True':
         colors = custom_color_list
     
@@ -210,7 +213,8 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
 
                     mu, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                     strike_g,dip_g,rake,Vs30,
-                                                    Z1,Z25,300,0.1,imt,1) 
+                                                    Z1,Z25,300,0.1,imt,1,
+                                                    eshm20_region) 
                     
                     f = interpolate.interp1d(distances,mu)
                     rs_50p_dist = np.exp(f(i))
@@ -250,7 +254,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
 
 def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                          dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio,
-                         mtxs_type):
+                         eshm20_region,mtxs_type):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
     given run configuration for use within Euclidean distance matrix plots,
@@ -289,7 +293,7 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                 
                 mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                   strike_g,dip_g,rake,Vs30,Z1,
-                                                  Z25,maxR,step,i,1) 
+                                                  Z25,maxR,step,i,1,eshm20_region) 
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians,(np.exp(mean)))
@@ -384,9 +388,9 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         compute_matrix_gmpes (either median or 84th percentile)
     """
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','dodgerblue', 'k', 'gold','lime',
-            'dodgerblue','gold','0.8','mediumseagreen','xkcd:eggshell',
-            'tab:orange', 'tab:purple','tab:brown', 'tab:pink']
+    colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
+            'mediumseagreen','0.5','tab:orange', 'tab:purple',
+            'tab:brown', 'tab:pink']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
