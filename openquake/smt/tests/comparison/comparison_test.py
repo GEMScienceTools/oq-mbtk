@@ -148,10 +148,9 @@ class ComparisonTestCase(unittest.TestCase):
         # Sammons checks
         coo = plot_sammons_util(config.imt_list, config.gmpe_labels,
                                 mtxs_medians, os.path.join(
-                                    self.output_directory,'SammonMaps_Vs30_'
-                                    + str(config.Vs30)+'.png'),
-                          config.custom_color_flag, config.custom_color_list,
-                          mtxs_type = 'median')
+                                    self.output_directory,'SammonMaps_Vs30.png'),
+                                config.custom_color_flag, config.custom_color_list,
+                                mtxs_type = 'median')
         
         # Check Sammons computing outputs for num. GMPEs in .toml per run 
         self.assertEqual(len(coo),len(TARGET_GMPES))
@@ -160,8 +159,7 @@ class ComparisonTestCase(unittest.TestCase):
         matrix_Dist = plot_euclidean_util(config.imt_list, config.gmpe_labels,
                                           mtxs_medians, os.path.join(
                                               self.output_directory,
-                                          'Euclidean_Vs30_' + str(
-                                              config.Vs30) +'.png'),
+                                              'Euclidean_Vs30.png'),
                                           mtxs_type = 'median')
             
         # Check correct number of IMTS within matrix_Dist
@@ -197,8 +195,9 @@ class ComparisonTestCase(unittest.TestCase):
     
         Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
                                      mtxs_medians, os.path.join(
-                                         self.output_directory,'Median_Clustering_Vs30_'
-                                         +str(config.Vs30) +'.png'), mtxs_type = 'median')
+                                         self.output_directory,
+                                         'Median_Clustering.png'),
+                                     mtxs_type = 'median')
             
         # Check number of cluster arrays matches number of imts per config
         self.assertEqual(len(Z_matrix),len(TARGET_IMTS))
@@ -230,8 +229,7 @@ class ComparisonTestCase(unittest.TestCase):
         Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
                                      mtxs_medians, os.path.join(
                                          self.output_directory,
-                                         '84th_perc_Clustering_Vs30_' +
-                                         str(config.Vs30) +'.png'),
+                                         '84th_perc_Clustering_Vs30.png'),
                                          mtxs_type = '84th_perc')
             
         # Check number of cluster arrays matches number of imts per config
@@ -268,12 +266,9 @@ class ComparisonTestCase(unittest.TestCase):
                           config.custom_color_list, config.eshm20_region) 
        
         # Specify target files
-        target_file_trellis = (os.path.join(self.output_directory,'TrellisPlots_Vs30_'
-                                            + str(config.Vs30) +'.png'))
-        target_file_spectra = (os.path.join(self.output_directory,'ResponseSpectra_Vs30_'
-                                            + str(config.Vs30) +'.png'))
-        target_file_sigma = (os.path.join(self.output_directory,'sigma_'
-                                          + str(config.Vs30) +'.png'))
+        target_file_trellis = (os.path.join(self.output_directory,'TrellisPlots.png'))
+        target_file_spectra = (os.path.join(self.output_directory,'ResponseSpectra.png'))
+        target_file_sigma = (os.path.join(self.output_directory,'sigma.png'))
         
         # Check target file created and outputted in expected location
         self.assertTrue(target_file_trellis)
