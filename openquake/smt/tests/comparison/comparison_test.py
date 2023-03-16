@@ -30,7 +30,6 @@ from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes,\
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
-TARGET_CONFIG_NAME = 'Albania_2Std'
 TARGET_VS30 = 800
 TARGET_REGION = 0
 TARGET_TRELLIS_DEPTHS = [20,25,30]
@@ -43,7 +42,7 @@ TARGET_IMTS = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
 TARGET_GMPES = [valid.gsim('ChiouYoungs2014'),
                 valid.gsim('CampbellBozorgnia2014'), 
                 valid.gsim('BooreEtAl2014'), 
-                valid.gsim('KothaEtAl2020regional')]
+                valid.gsim('KothaEtAl2020')]
 
 class ComparisonTestCase(unittest.TestCase):
     """
@@ -69,9 +68,6 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
-        
-        # Check for target run name
-        self.assertEqual(config.name_out,TARGET_CONFIG_NAME)
         
         # Check for target Vs30
         self.assertEqual(config.Vs30,TARGET_VS30)
@@ -152,8 +148,8 @@ class ComparisonTestCase(unittest.TestCase):
         # Sammons checks
         coo = plot_sammons_util(config.imt_list, config.gmpe_labels,
                                 mtxs_medians, os.path.join(
-                                    self.output_directory,config.name_out) +
-                          '_SammonMaps_Vs30_' + str(config.Vs30)+'.png',
+                                    self.output_directory,'SammonMaps_Vs30_'
+                                    + str(config.Vs30)+'.png'),
                           config.custom_color_flag, config.custom_color_list,
                           mtxs_type = 'median')
         
@@ -164,9 +160,8 @@ class ComparisonTestCase(unittest.TestCase):
         matrix_Dist = plot_euclidean_util(config.imt_list, config.gmpe_labels,
                                           mtxs_medians, os.path.join(
                                               self.output_directory,
-                                              config.name_out) +
-                                          '_Euclidean_Vs30_' + str(
-                                              config.Vs30) +'.png',
+                                          'Euclidean_Vs30_' + str(
+                                              config.Vs30) +'.png'),
                                           mtxs_type = 'median')
             
         # Check correct number of IMTS within matrix_Dist
@@ -202,10 +197,8 @@ class ComparisonTestCase(unittest.TestCase):
     
         Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
                                      mtxs_medians, os.path.join(
-                                         self.output_directory,config.name_out)
-                                         + '_Median_Clustering_Vs30_' +
-                                         str(config.Vs30) +'.png',
-                                         mtxs_type = 'median')
+                                         self.output_directory,'Median_Clustering_Vs30_'
+                                         +str(config.Vs30) +'.png'), mtxs_type = 'median')
             
         # Check number of cluster arrays matches number of imts per config
         self.assertEqual(len(Z_matrix),len(TARGET_IMTS))
@@ -236,9 +229,9 @@ class ComparisonTestCase(unittest.TestCase):
     
         Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
                                      mtxs_medians, os.path.join(
-                                         self.output_directory,config.name_out)
-                                         + '_84th_perc_Clustering_Vs30_' +
-                                         str(config.Vs30) +'.png',
+                                         self.output_directory,
+                                         '84th_perc_Clustering_Vs30_' +
+                                         str(config.Vs30) +'.png'),
                                          mtxs_type = '84th_perc')
             
         # Check number of cluster arrays matches number of imts per config
@@ -262,9 +255,8 @@ class ComparisonTestCase(unittest.TestCase):
                      config.trellis_depth, config.Z1, config.Z25, config.Vs30,
                      config.region, config.imt_list, config.trellis_mag_list,
                      config.maxR, config.gmpes_list, config.aratio,
-                     config.Nstd, config.name_out, self.output_directory, 
-                     config.custom_color_flag, config.custom_color_list,
-                     config.eshm20_region)
+                     config.Nstd, self.output_directory, config.custom_color_flag,
+                     config.custom_color_list, config.eshm20_region)
         
         # Spectra plots 
         plot_spectra_util(config.rake, config.strike, config.dip,
@@ -272,17 +264,16 @@ class ComparisonTestCase(unittest.TestCase):
                           config.Vs30, config.region, config.max_period,
                           config.trellis_mag_list, config.dist_list,
                           config.gmpes_list, config.aratio, config.Nstd,
-                          config.name_out, self.output_directory,
-                          config.custom_color_flag, config.custom_color_list,
-                          config.eshm20_region) 
+                          self.output_directory, config.custom_color_flag,
+                          config.custom_color_list, config.eshm20_region) 
        
         # Specify target files
-        target_file_trellis = (os.path.join(self.output_directory,config.name_out)
-                               + 'TrellisPlots_Vs30_' + str(config.Vs30) +'.png')
-        target_file_spectra = (os.path.join(self.output_directory,config.name_out)
-                               + '_ResponseSpectra_Vs30_' + str(config.Vs30) +'.png')
-        target_file_sigma = (os.path.join(self.output_directory,config.name_out)
-                                     + '_sigma_' + str(config.Vs30) +'.png')
+        target_file_trellis = (os.path.join(self.output_directory,'TrellisPlots_Vs30_'
+                                            + str(config.Vs30) +'.png'))
+        target_file_spectra = (os.path.join(self.output_directory,'ResponseSpectra_Vs30_'
+                                            + str(config.Vs30) +'.png'))
+        target_file_sigma = (os.path.join(self.output_directory,'sigma_'
+                                          + str(config.Vs30) +'.png'))
         
         # Check target file created and outputted in expected location
         self.assertTrue(target_file_trellis)
