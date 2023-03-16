@@ -46,8 +46,6 @@ class Configurations(object):
         config_file = toml.load(filename) 
         
         # Get input params from .toml file
-        self.name_out = str(config_file['general'][
-            'name_analysis']) + '_' + str(config_file['general']['Nstd']) + 'Std'
         self.region = config_file['general']['region']
         self.eshm20_region = config_file['general']['eshm20_region']
         self.maxR = config_file['general']['maxR']
@@ -144,7 +142,7 @@ def plot_trellis(self, output_directory):
     plot_trellis_util(self.rake, self.strike, self.dip, self.trellis_depth,
                       self.Z1, self.Z25, self.Vs30, self.region, self.imt_list,
                       self.trellis_mag_list, self.maxR, self.gmpes_list,
-                      self.aratio, self.Nstd, self.name_out, output_directory,
+                      self.aratio, self.Nstd, output_directory,
                       self.custom_color_flag, self.custom_color_list,
                       self.eshm20_region) 
                 
@@ -157,7 +155,7 @@ def plot_spectra(self, output_directory):
                       self.Z1, self.Z25, self.Vs30, self.region,
                       self.max_period, self.trellis_mag_list,
                       self.dist_list, self.gmpes_list, self.aratio, self.Nstd,
-                      self.name_out, output_directory, self.custom_color_flag,
+                      output_directory, self.custom_color_flag,
                       self.custom_color_list,self.eshm20_region) 
 
 def plot_cluster(self, output_directory):
@@ -187,14 +185,12 @@ def plot_cluster(self, output_directory):
     
     # Cluster by median
     plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_medians,
-                      os.path.join(output_directory,self.name_out) +
-                      '_Median_Clustering_Vs30_' + str(self.Vs30) +'.png',
+                      os.path.join(output_directory,'Median_Clustering.png'),
                       mtxs_type = 'median')    
     
     # Cluster by 84th percentile
     plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
-                      os.path.join(output_directory,self.name_out) +
-                      '_84th_perc_Clustering_Vs30_' + str(self.Vs30) +'.png',
+                      os.path.join(output_directory,'84th_perc_Clustering.png'),
                       mtxs_type = '84th_perc')                    
 
 def plot_sammons(self, output_directory):
@@ -222,14 +218,12 @@ def plot_sammons(self, output_directory):
                                             self.eshm20_region,mtxs_type='84th_perc')
     
     plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_medians,
-                      os.path.join(output_directory,self.name_out) +
-                      '_Median_SammonMaps_Vs30_' + str(self.Vs30)+'.png',
+                      os.path.join(output_directory,'Median_SammonMaps.png'),
                       self.custom_color_flag, self.custom_color_list,
-                      mtxs_type = 'median',)
+                      mtxs_type = 'median')
     
     plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
-                      os.path.join(output_directory,self.name_out) +
-                      '_84th_perc_SammonMaps_Vs30_' + str(self.Vs30)+'.png',
+                      os.path.join(output_directory,'84th_perc_SammonMaps.png'),
                       self.custom_color_flag, self.custom_color_list,
                       mtxs_type = '84th_perc')
    
@@ -259,11 +253,9 @@ def plot_euclidean(self,output_directory):
     
     
     plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_medians,
-                        os.path.join(output_directory,self.name_out) 
-                        + '_Median_Euclidean_Vs30_' + str(self.Vs30) +'.png',
+                        os.path.join(output_directory,'Median_Euclidean.png'),
                         mtxs_type = 'median')
     
     plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
-                        os.path.join(output_directory,self.name_out) 
-                        + '_84th_perc_Euclidean_Vs30_' + str(self.Vs30) +'.png',
+                        os.path.join(output_directory,'84th_perc_Euclidean.png'),
                         mtxs_type = '84th_perc')
