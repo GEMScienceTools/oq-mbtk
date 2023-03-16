@@ -220,7 +220,7 @@ def plot_sammons(self, output_directory):
     plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,'Median_SammonMaps.png'),
                       self.custom_color_flag, self.custom_color_list,
-                      mtxs_type = 'median',)
+                      mtxs_type = 'median')
     
     plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
                       os.path.join(output_directory,'84th_perc_SammonMaps.png'),

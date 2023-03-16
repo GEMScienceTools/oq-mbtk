@@ -1,6 +1,6 @@
 ### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
 
-### For region parameter, we can use:
+### For region parameter we can use:
 #0 for global
 #1 for California
 #2 for Japan
