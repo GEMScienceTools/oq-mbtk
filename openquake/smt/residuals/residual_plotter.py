@@ -788,7 +788,7 @@ def PlotLoglikelihoodWithSpectralPeriod(residuals,filename,custom_cycler=0,
     
     # Define colours for plots
     colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','k','dodgerblue',
-                                   'gold','0.8','mediumseagreen','xkcd:eggshell',
+                                   'gold','0.8','mediumseagreen','0.5',
                                    'tab:orange', 'tab:purple','tab:brown',
                                    'tab:pink'])*cycler(linestyle=['-']))
     
@@ -870,7 +870,7 @@ def PlotModelWeightsWithSpectralPeriod(residuals,filename,custom_cycler=0,
     
     # Define colours for plots
     colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','k','dodgerblue',
-                                   'gold','0.8','mediumseagreen','xkcd:eggshell',
+                                   'gold','0.8','mediumseagreen','0.5',
                                    'tab:orange', 'tab:purple','tab:brown',
                                    'tab:pink'])*cycler(linestyle=['-']))
     if type(custom_cycler)==type(cycler(colour='b')):
@@ -926,7 +926,7 @@ def PlotEDRWithSpectralPeriod(residuals,filename,custom_cycler=0,
 
     # Define colours for plots
     colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','k','dodgerblue',
-                                   'gold','0.8','mediumseagreen','xkcd:eggshell',
+                                   'gold','0.8','mediumseagreen','0.5',
                                    'tab:orange', 'tab:purple','tab:brown',
                                    'tab:pink'])*cycler(linestyle=['-']))
     if type(custom_cycler)==type(cycler(colour='b')):
@@ -1032,7 +1032,7 @@ def PlotResidualPDFWithSpectralPeriod(residuals,filename,custom_cycler=0,
     
     # Define colours for plots
     colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','dodgerblue', 'k',
-                                   'gold','0.8','mediumseagreen','xkcd:eggshell',
+                                   'gold','0.8','mediumseagreen','0.5',
                                    'tab:orange', 'tab:purple','tab:brown',
                                    'tab:pink'])*cycler(marker=['x']))
     if type(custom_cycler)==type(cycler(colour='b')):
