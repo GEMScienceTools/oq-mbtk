@@ -292,7 +292,7 @@ class ResidualPlot(ResidualHistogramPlot):
         ax.plot(xdata_norm_pdf, norm.pdf(xdata_norm_pdf, 0.0, 1.0), '-',
                 color='k', linewidth=2.0, 
                 label = 'Standard. Norm. Dist.')
-        ax.legend(loc = 'best')
+        ax.legend(loc = 'best', fontsize = 'small')
         x_limit = max(abs(x))
         ax.set_xlim(x_limit*-1,x_limit)
 
@@ -787,15 +787,17 @@ def PlotLoglikelihoodWithSpectralPeriod(residuals,filename,custom_cycler=0,
         columns)
     
     # Define colours for plots
-    colour_cycler = (cycler(color=['b', 'g', 'r', 'c','y','m']) *
-                  cycler(linestyle=['-', '--', '-.']))
+    colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','k','dodgerblue',
+                                   'gold','0.8','mediumseagreen','0.5',
+                                   'tab:orange', 'tab:purple','tab:brown',
+                                   'tab:pink'])*cycler(linestyle=['-']))
     
     if type(custom_cycler)==type(cycler(colour='b')):
        colour_cycler=custom_cycler
         
     # Plot LLH values w.r.t. spectral period
     llh_with_imt=pd.DataFrame(residuals.llh).drop('All')
-    fig_llh, ax_llh = plt.subplots(figsize=(7, 4))
+    fig_llh, ax_llh = plt.subplots(figsize=(10, 8))
     ax_llh.set_prop_cycle(colour_cycler)
     for gmpe in range(0,len(gmpe_list_series)):
         y_llh=np.array(llh_with_imt[gmpe_list_series[gmpe]])
@@ -804,7 +806,7 @@ def PlotLoglikelihoodWithSpectralPeriod(residuals,filename,custom_cycler=0,
         ax_llh.plot(x_llh.imt_float,y_llh,label=tmp.split('(')[0])
     ax_llh.set_xlabel('Spectral Period (s)')
     ax_llh.set_ylabel('Loglikelihood Value')
-    ax_llh.set_title('Scherbaum et al. (2009) Loglikelihood Values')
+    ax_llh.set_title('Scherbaum et al. (2009) Loglikelihood Values',fontsize='16')
     ax_llh.legend(loc='upper right',ncol=2,fontsize='x-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
@@ -867,14 +869,17 @@ def PlotModelWeightsWithSpectralPeriod(residuals,filename,custom_cycler=0,
                                                       ,1)).columns)
     
     # Define colours for plots
-    colour_cycler = (cycler(color=['b', 'g', 'r', 'c','y','m']) *
-                  cycler(linestyle=['-', '--', '-.']))
+    colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','k','dodgerblue',
+                                   'gold','0.8','mediumseagreen','0.5',
+                                   'tab:orange', 'tab:purple','tab:brown',
+                                   'tab:pink'])*cycler(linestyle=['-']))
     if type(custom_cycler)==type(cycler(colour='b')):
        colour_cycler=custom_cycler
+       
 
     # Plot model weights w.r.t. spectral period
     model_weights_with_imt=pd.DataFrame(residuals.model_weights_with_imt)
-    fig_model_weights, ax_model_weights = plt.subplots(figsize=(7, 4))
+    fig_model_weights, ax_model_weights = plt.subplots(figsize=(10, 8))
     ax_model_weights.set_prop_cycle(colour_cycler)
     for gmpe in range(0,len(gmpe_list_series)):
         y_model_weights=np.array(model_weights_with_imt.iloc[gmpe])
@@ -886,7 +891,7 @@ def PlotModelWeightsWithSpectralPeriod(residuals,filename,custom_cycler=0,
     ax_model_weights.set_xlabel('Spectral Period (s)')
     ax_model_weights.set_ylabel('Model Weight')
     ax_model_weights.set_title(
-        'Sample loglikelihood based model weights (Scherbaum et al., 2009)')
+        'Sample loglikelihood based model weights (Scherbaum et al. 2009)',fontsize='16')
     ax_model_weights.legend(loc='upper right',ncol=2,fontsize='x-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
@@ -920,14 +925,16 @@ def PlotEDRWithSpectralPeriod(residuals,filename,custom_cycler=0,
     x_EDR_with_imt=x_EDR_with_imt.dropna() #Remove any non-acceleration imt
 
     # Define colours for plots
-    colour_cycler = (cycler(color=['b', 'g', 'r', 'c','y','m']) *
-                  cycler(linestyle=['-', '--', '-.']))
+    colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','k','dodgerblue',
+                                   'gold','0.8','mediumseagreen','0.5',
+                                   'tab:orange', 'tab:purple','tab:brown',
+                                   'tab:pink'])*cycler(linestyle=['-']))
     if type(custom_cycler)==type(cycler(colour='b')):
        colour_cycler=custom_cycler
     
     # Plot EDR w.r.t. spectral period
     EDR_with_imt={}
-    fig_EDR, ax_EDR = plt.subplots(figsize=(7, 4))
+    fig_EDR, ax_EDR = plt.subplots(figsize=(10, 8))
     ax_EDR.set_prop_cycle(colour_cycler)
     for gmpe in residuals.gmpe_list:
         EDR_with_imt=pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
@@ -938,8 +945,7 @@ def PlotEDRWithSpectralPeriod(residuals,filename,custom_cycler=0,
         ax_EDR.plot(x_EDR_with_imt.imt_float,y_EDR,label=tmp.split('(')[0])
     ax_EDR.set_xlabel('Spectral Period (s)')
     ax_EDR.set_ylabel('EDR')
-    ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)',
-                     fontsize = '12')
+    ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)',fontsize='16')
     ax_EDR.legend(loc='upper right',ncol=2,fontsize='x-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
@@ -1025,8 +1031,10 @@ def PlotResidualPDFWithSpectralPeriod(residuals,filename,custom_cycler=0,
         columns)
     
     # Define colours for plots
-    colour_cycler = (cycler(color=['b', 'g', 'r', 'c','y','m'])*
-                     cycler(marker=['o','^','x']))
+    colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','dodgerblue', 'k',
+                                   'gold','0.8','mediumseagreen','0.5',
+                                   'tab:orange', 'tab:purple','tab:brown',
+                                   'tab:pink'])*cycler(marker=['x']))
     if type(custom_cycler)==type(cycler(colour='b')):
        colour_cycler=custom_cycler
     colour_cycler_df=pd.DataFrame(colour_cycler)

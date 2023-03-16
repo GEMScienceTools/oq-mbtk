@@ -9,20 +9,17 @@
 #5 for Turkey (locally = 3)
 #6 for Taiwan (locally = 0) 
 
-[name_analysis]
-name_analysis = 'test'
-
 [general]
-config_name = 'Albania_2std' # name appended to each outputted figure
+name_analysis = 'Albania'
 imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)'] # imts to compute gm for
 max_period = 2 # max period for response spectra (can't exceed maximum period in a specified GMPE)
 maxR = 300 # max distance to consider
 dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
 region = 0
+eshm20_region = 4 # region for ESHM20 implementation of Kotha et al. 2020 GMPE (default is zero)
 Nstd = 2 # number of standard deviations to sample sigma for 
 custom_colors_flag = 'False' #By default set to "False" (set to "True" for custom colours)
-custom_colors_list = ['lime','dodgerblue','gold','0.8','mediumseagreen','xkcd:eggshell','tab:orange', 'tab:purple','tab:brown', 'tab:pink','tab:olive','b']
-
+custom_colors_list = ['lime','dodgerblue','gold','0.8']
 
 [site_properties]
 vs30 = 800
