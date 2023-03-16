@@ -33,7 +33,7 @@ from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1, _get_z25, _param_gmpes
 
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
-                 imt_list, mag_list, maxR, gmpe_list, aratio, Nstd, name,
+                 imt_list, mag_list, maxR, gmpe_list, aratio, Nstd,
                  output_directory, custom_color_flag, custom_color_list,
                  eshm20_region):
     """
@@ -41,8 +41,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     """
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
-            'mediumseagreen','0.5','tab:orange', 'tab:purple',
-            'tab:brown', 'tab:pink']
+            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown','tab:pink']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
@@ -103,15 +102,14 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             pyplot.grid(axis='both', which='both', alpha=0.5)
 
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
-    pyplot.savefig(os.path.join(output_directory,name) + '_TrellisPlots_Vs30_'
-                   + str(Vs30) +'.png', bbox_inches='tight',dpi=200,
-                   pad_inches = 0.2)
+    pyplot.savefig(os.path.join(output_directory,'TrellisPlots.png'),
+                   bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
     
 def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
-                      name, output_directory, custom_color_flag, custom_color_list,
+                      output_directory, custom_color_flag, custom_color_list,
                       eshm20_region):
     """
     Plot response spectra and sigma w.r.t. spectral period for given run
@@ -246,11 +244,10 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
            
     ax1.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     ax2.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
-    fig2.savefig(os.path.join(output_directory,name) + '_sigma_Vs30_' + str(
-        Vs30) +'.png', bbox_inches='tight',dpi=200,pad_inches = 0.2)
-    fig1.savefig(os.path.join(output_directory,name) + '_ResponseSpectra_Vs30_' +
-                 str(Vs30) +'.png', bbox_inches='tight',dpi=200,
-                 pad_inches = 0.2)
+    fig2.savefig(os.path.join(output_directory,'sigma.png'),
+                 bbox_inches='tight',dpi=200,pad_inches = 0.2)
+    fig1.savefig(os.path.join(output_directory,'ResponseSpectra.png'),
+                 bbox_inches='tight',dpi=200,pad_inches = 0.2)
 
 def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                          dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio,

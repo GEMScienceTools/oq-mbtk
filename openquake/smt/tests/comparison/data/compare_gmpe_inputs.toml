@@ -1,6 +1,6 @@
 ### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
 
-### For region parameter, we can use:
+### For region parameter we can use:
 #0 for global
 #1 for California
 #2 for Japan
@@ -10,7 +10,6 @@
 #6 for Taiwan (locally = 0) 
 
 [general]
-name_analysis = 'Albania'
 imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)'] # imts to compute gm for
 max_period = 2 # max period for response spectra (can't exceed maximum period in a specified GMPE)
 maxR = 300 # max distance to consider
@@ -49,4 +48,4 @@ gmpes_label = ['CY14','CB14','BSSA14','KO2020']
 [models.ChiouYoungs2014]
 [models.CampbellBozorgnia2014]
 [models.BooreEtAl2014]
-[models.KothaEtAl2020regional]
+[models.KothaEtAl2020]
