@@ -185,13 +185,13 @@ def plot_cluster(self, output_directory):
     
     # Cluster by median
     plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_medians,
-                      os.path.join(output_directory,'Median_Clustering_Vs30_'
-                      + str(self.Vs30) +'.png'), mtxs_type = 'median')    
+                      os.path.join(output_directory,'Median_Clustering.png'),
+                      mtxs_type = 'median')    
     
     # Cluster by 84th percentile
     plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
-                      os.path.join(output_directory,'84th_perc_Clustering_Vs30_'
-                      + str(self.Vs30) +'.png'), mtxs_type = '84th_perc')                    
+                      os.path.join(output_directory,'84th_perc_Clustering.png'),
+                      mtxs_type = '84th_perc')                    
 
 def plot_sammons(self, output_directory):
     """
@@ -218,14 +218,14 @@ def plot_sammons(self, output_directory):
                                             self.eshm20_region,mtxs_type='84th_perc')
     
     plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_medians,
-                      os.path.join(output_directory,'Median_SammonMaps_Vs30_'
-                      + str(self.Vs30)+'.png'), self.custom_color_flag,
-                      self.custom_color_list, mtxs_type = 'median',)
+                      os.path.join(output_directory,'Median_SammonMaps.png'),
+                      self.custom_color_flag, self.custom_color_list,
+                      mtxs_type = 'median',)
     
     plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
-                      os.path.join(output_directory,'84th_perc_SammonMaps_Vs30_'
-                      + str(self.Vs30)+'.png'), self.custom_color_flag,
-                      self.custom_color_list, mtxs_type = '84th_perc')
+                      os.path.join(output_directory,'84th_perc_SammonMaps.png'),
+                      self.custom_color_flag, self.custom_color_list,
+                      mtxs_type = '84th_perc')
    
 def plot_euclidean(self,output_directory):
     """
@@ -253,9 +253,9 @@ def plot_euclidean(self,output_directory):
     
     
     plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_medians,
-                        os.path.join(output_directory,'Median_Euclidean_Vs30_'
-                        + str(self.Vs30) +'.png'), mtxs_type = 'median')
+                        os.path.join(output_directory,'Median_Euclidean.png'),
+                        mtxs_type = 'median')
     
     plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
-                        os.path.join(output_directory,'84th_perc_Euclidean_Vs30_'
-                        + str(self.Vs30) +'.png'), mtxs_type = '84th_perc')
+                        os.path.join(output_directory,'84th_perc_Euclidean.png'),
+                        mtxs_type = '84th_perc')
