@@ -1248,7 +1248,7 @@ def WeightsTable(residuals,filename):
     for gmpe in range(0,len(residuals.gmpe_list)):
          tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
          model_weights_columns_all_output[gmpe] = tmp.split('(')[0].replace(
-             '\n',', ') + ' LLH'
+             '\n',', ') + ' LLH Based Model Weight'
     final_model_weights_df_output.columns = list(pd.Series(
         model_weights_columns_all_output))
     final_model_weights_df_output.to_csv(filename,sep=',')
