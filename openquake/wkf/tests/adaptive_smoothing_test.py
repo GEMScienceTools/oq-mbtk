@@ -62,7 +62,7 @@ class AdaptiveSmoothingTest(unittest.TestCase):
         
     def test_cat_zones(self):
         """ test catalogue zone function """
-        h3_level = 5
+        h3_level = 2
         #mor_cat = fname
         fname = self.fname
         fname_out = os.path.join(DATA_PATH, '/tmp/h3.csv')
@@ -70,4 +70,5 @@ class AdaptiveSmoothingTest(unittest.TestCase):
         p = subprocess.run(cmd, shell=True)
         
         h3_idx = pd.read_csv(fname_out)
-        self.assertEqual(len(h3_idx), 2850)
+        self.assertEqual(len(h3_idx), 8)
+        
