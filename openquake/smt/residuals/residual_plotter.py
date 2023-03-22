@@ -18,7 +18,7 @@
 """
 Class to hold GMPE residual plotting functions
 """
-
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -898,11 +898,12 @@ def PlotModelWeightsWithSpectralPeriod(residuals,filename,custom_cycler=0,
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
     
-def PlotEDRWithSpectralPeriod(residuals,filename,custom_cycler=0,
+def PlotEDRMetricsWithSpectralPeriod(residuals,filename,custom_cycler=0,
                               filetype='jpg',dpi=200):
     """
-    Definition to create a simple plot of EDR computed using Kale and 
-    Akkar (2013) (y-axis) versus spectral period (x-axis)
+    Definition to create a simple plots of EDR, the median pred. correction
+    factor and normalised MDE computed using Kale and Akkar (2013) (y-axis)
+    versus spectral period (x-axis)
     
     :param custom_cycler: Default set to 0, to assign specific colours
     and linestyle to each GMPE, a cycler can instead be specified manually,
@@ -917,12 +918,12 @@ def PlotEDRWithSpectralPeriod(residuals,filename,custom_cycler=0,
     residuals.get_edr_values_wrt_spectral_period()
     
     # Convert imt_list to array
-    x_EDR_with_imt=pd.DataFrame([imt2tup(imts) for imts in residuals.imts],
+    x_with_imt=pd.DataFrame([imt2tup(imts) for imts in residuals.imts],
                                 columns=['imt_str','imt_float'])
     for imt_idx in range(0,np.size(residuals.imts)):
-         if x_EDR_with_imt.imt_str[imt_idx]=='PGA':
-            x_EDR_with_imt.imt_float.iloc[imt_idx]=0
-    x_EDR_with_imt=x_EDR_with_imt.dropna() #Remove any non-acceleration imt
+         if x_with_imt.imt_str[imt_idx]=='PGA':
+            x_with_imt.imt_float.iloc[imt_idx]=0
+    x_with_imt=x_with_imt.dropna() #Remove any non-acceleration imt
 
     # Define colours for plots
     colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime','k','dodgerblue',
@@ -940,14 +941,49 @@ def PlotEDRWithSpectralPeriod(residuals,filename,custom_cycler=0,
         EDR_with_imt=pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_EDR=EDR_with_imt.EDR
         tmp = str(residuals.gmpe_list[gmpe])
-        ax_EDR.scatter(x_EDR_with_imt.imt_float,
-                                 y_EDR)
-        ax_EDR.plot(x_EDR_with_imt.imt_float,y_EDR,label=tmp.split('(')[0])
+        ax_EDR.scatter(x_with_imt.imt_float,y_EDR)
+        ax_EDR.plot(x_with_imt.imt_float,y_EDR,label=tmp.split('(')[0])
     ax_EDR.set_xlabel('Spectral Period (s)')
     ax_EDR.set_ylabel('EDR')
-    ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)',fontsize='16')
+    ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)',
+                     fontsize='16')
     ax_EDR.legend(loc='upper right',ncol=2,fontsize='x-small')
-    _save_image(filename, plt.gcf(), filetype, dpi)
+    _save_image(os.path.join(filename+'_EDR_value'), plt.gcf(), filetype, dpi)
+    
+    # Plot median pred. correction factor w.r.t. spectral period
+    kappa_with_imt={}
+    fig_kappa, ax_kappa = plt.subplots(figsize=(10, 8))
+    ax_kappa.set_prop_cycle(colour_cycler)
+    for gmpe in residuals.gmpe_list:
+        kappa_with_imt=pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
+        y_kappa=kappa_with_imt["sqrt Kappa"]
+        tmp = str(residuals.gmpe_list[gmpe])
+        ax_kappa.scatter(x_with_imt.imt_float,y_kappa)
+        ax_kappa.plot(x_with_imt.imt_float,y_kappa,label=tmp.split('(')[0])
+    ax_kappa.set_xlabel('Spectral Period (s)')
+    ax_kappa.set_ylabel('k^0.5')
+    ax_kappa.set_title('Median Pred. Correction Factor (k) (Kale and Akkar, 2013)',
+                       fontsize='16')
+    ax_kappa.legend(loc='upper right',ncol=2,fontsize='x-small')
+    _save_image(os.path.join(filename+'_EDR_correction_factor'), plt.gcf(),
+                filetype, dpi)
+    
+    # Plot MDE w.r.t. spectral period
+    MDE_with_imt={}
+    fig_MDE, ax_MDE = plt.subplots(figsize=(10, 8))
+    ax_MDE.set_prop_cycle(colour_cycler)
+    for gmpe in residuals.gmpe_list:
+        MDE_with_imt=pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
+        y_MDE=MDE_with_imt["MDE Norm"]
+        tmp = str(residuals.gmpe_list[gmpe])
+        ax_MDE.scatter(x_with_imt.imt_float,
+                                 y_MDE)
+        ax_MDE.plot(x_with_imt.imt_float,y_MDE,label=tmp.split('(')[0])
+    ax_MDE.set_xlabel('Spectral Period (s)')
+    ax_MDE.set_ylabel('MDE Norm')
+    ax_MDE.set_title('Normalised MDE (Kale and Akkar, 2013)',fontsize='16')
+    ax_MDE.legend(loc='upper right',ncol=2,fontsize='x-small')
+    _save_image(os.path.join(filename+'_MDE'), plt.gcf(), filetype, dpi)
     
 def PlotResidualPDFWithSpectralPeriod(residuals,filename,custom_cycler=0,
                                       filetype='jpg',dpi=200):
