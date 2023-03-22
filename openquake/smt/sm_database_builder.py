@@ -20,7 +20,6 @@
 """
 Constructs the HDF5 database
 """
-
 import os
 import sys
 import re

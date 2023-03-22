@@ -24,7 +24,6 @@ when downloading the flatfile
 """
 import pandas as pd
 import os, sys
-import shutil
 import tempfile
 import csv
 import numpy as np
@@ -33,30 +32,14 @@ import h5py
 from math import sqrt
 from linecache import getline
 from collections import OrderedDict
-from datetime import datetime
-# In order to define default fault dimension import scaling relationships
-from openquake.hazardlib.scalerel.strasser2010 import (StrasserInterface,
-                                                       StrasserIntraslab)
-from openquake.hazardlib.scalerel.wc1994 import WC1994
-from openquake.hazardlib.geo.mesh import Mesh, RectangularMesh
-from openquake.hazardlib.geo.point import Point
-from openquake.hazardlib.geo.line import Line
-from openquake.hazardlib.geo.surface.simple_fault import SimpleFaultSurface
-import openquake.smt.trellis.configure as rcfg
-# from openquake.smt.sm_database import *
+
 from openquake.smt.sm_database import GroundMotionDatabase, GroundMotionRecord,\
     Earthquake, Magnitude, Rupture, FocalMechanism, GCMTNodalPlanes,\
     Component, RecordSite, RecordDistance
-from openquake.smt.sm_utils import convert_accel_units, MECHANISM_TYPE, DIP_TYPE
+from openquake.smt.sm_utils import MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14,\
+    vs30_to_z2pt5_cb14
 from openquake.smt.parsers import valid
-from openquake.smt.parsers.base_database_parser import (get_float, get_int,
-                                               get_positive_float,
-                                               get_positive_int,
-                                               SMDatabaseReader,
-                                               SMTimeSeriesReader,
-                                               SMSpectraReader)
-from openquake.smt.trellis.configure import (vs30_to_z1pt0_cy14,
-                                    vs30_to_z2pt5_cb14)
+from openquake.smt.parsers.base_database_parser import SMDatabaseReader
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -65,7 +48,6 @@ else:
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
-#from openquake.smt.parsers.simple_flatfile_parser_sara import SimpleFlatfileParserV9
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
@@ -88,20 +70,26 @@ HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
 HEADERS = set(HEADER_STR.split(";"))
 
 COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AZ": "Azerbaijan", "BA": "Bosnia and Herzegowina",
-                 "BG": "Bulgaria", "CH": "Switzerland", "CY": "Cyprus",
-                 "CZ": "Czech Republic", "DE": "Germany",  "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia",
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary",
-                 "IL": "Israel", "IR": "Iran", "IS": "Iceland", "IT": "Italy",
-                 "JO": "Jordan",  "LI": "Lichtenstein", "MA": "Morocco",
-                 "MC": "Monaco", "MD": "Moldova", "ME": "Montenegro",
-                 "MK": "Macedonia", "MT": "Malta", "PL": "Poland",
-                 "PT": "Portugal", "RO": "Romania", "RS": "Serbia",
-                 "RU": "Russia", "SI": "Slovenia", "SM": "San Marino",
-                 "SY": "Syria", "TM": "Turkmenistan", "TR": "Turkey",
-                 "UA": "Ukraine", "UZ": "Uzbekistan", "XK": "Kosovo"}
-
+                 "AR": "Argentina", "AZ": "Azerbaijan",
+                 "BA": "Bosnia and Herzegowina", "BG": "Bulgaria",
+                 "CH": "Switzerland", "CL": "Chile", "CN": "China", 
+                 "CR": "Costa Rica", "CY": "Cyprus", "CZ": "Czech Republic",
+                 "DE": "Germany", "DJ": "Djibouti", "DZ": "Algeria",
+                 "ES": "Spain", "FR": "France", "GE": "Georgia", "GH": "Ghana", 
+                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary", 
+                 "IL": "Israel", "ID": "Indonesia", "IR": "Iran",
+                 "IS": "Iceland", "IT": "Italy", "JO": "Jordan", "KE":"Kenya",
+                 "KG": "Kyrgyzstan", "KZ": "Kazakhstan", "LI": "Lichtenstein",
+                 "MA": "Morocco", "MC": "Monaco", "MD": "Moldova",
+                 "ME": "Montenegro", "MK": "Macedonia", "MM": "Myanmar",
+                 "MT": "Malta", "MX": "Mexico", "NI": "Nicaragua",
+                 "NO": "Norway", "PA": "Panama", "PG": "Papa New Guinea",
+                 "PL": "Poland", "PT": "Portugal", "PS": "Palestine",
+                 "RO": "Romania", "RS": "Serbia", "RU": "Russia",
+                 "SI": "Slovenia", "SM": "San Marino", "SY": "Syria",
+                 "TM": "Turkmenistan", "TR": "Turkey", "TW": "Taiwan",
+                 "UA": "Ukraine", "US": "United States", "UZ": "Uzbekistan",
+                 "VU": "Vanuatu", "XK": "Kosovo", "YE": "Yemen"}
 
 class ESM23FlatfileParser(SMDatabaseReader):
     
@@ -144,7 +132,7 @@ class ESM23FlatfileParser(SMDatabaseReader):
             if (counter % 100) == 0:
                 print("Processed record %s - %s" % (str(counter),
                                                     record.id))
-
+                
             counter += 1
 
     @classmethod
@@ -156,6 +144,9 @@ class ESM23FlatfileParser(SMDatabaseReader):
         
         # Import ESM 2023 format strong-motion flatfile
         ESM23 = pd.read_csv(ESM23_flatfile_directory)
+        
+        # Store for count of records removed during quality checks
+        ESM23_initial_size = len(ESM23)
  
          # If vs30 is empty use topographic approximation    
         for idx in range(0,len(ESM23)):
@@ -177,10 +168,10 @@ class ESM23FlatfileParser(SMDatabaseReader):
 
         # Reformat datetime
         r_datetime = ESM23.event_time.str.replace('T',' ')
-        
+    
         converted_base_data_path=_get_ESM18_headers(
             ESM23,default_string,r_fm_type,r_datetime)
-                
+        
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
@@ -197,7 +188,10 @@ class ESM23FlatfileParser(SMDatabaseReader):
         print("Storing metadata to file %s" % metadata_file)
         with open(metadata_file, "wb+") as f:
             pickle.dump(database.database, f)
-           
+        
+        print(ESM23_initial_size - len(ESM23),
+              'records removed from imported ESM23 flatfile during quality checks.')
+            
         return database
 
     def _sanitise(self, row, reader):
