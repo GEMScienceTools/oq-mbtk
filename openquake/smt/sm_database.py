@@ -1098,7 +1098,6 @@ class GroundMotionDatabase(ContextDB):
             ctx.z2pt5.append(z2pt5)
             if getattr(record.site, "backarc", None) is not None:
                 ctx.backarc.append(record.site.backarc)
-            ctx.eshm20_region = np.arange(0,len(records),2)
         # finalize:
         for attname in self.sites_context_attrs:
             attval = getattr(ctx, attname)
