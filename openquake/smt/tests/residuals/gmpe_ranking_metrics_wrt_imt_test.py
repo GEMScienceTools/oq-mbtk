@@ -2,8 +2,8 @@
 Test for functions added to gmpe_residuals (get_edr_values_wrt_spectral_period,
 _get_edr_gmpe_information_wrt_spectral_period and _get_edr_wrt_spectral_period)
 and residual_plotter (PlotLoglikelihoodWithSpectralPeriod,
-PlotModelWeightsWithSpectralPeriod, PlotEDRWithSpectralPeriod,
-LoglikelihoodTable, WeightsTable and EDRTable) to output loglikelihood values
+PlotLLHModelWeightsWithSpectralPeriod, PlotEDRWithSpectralPeriod,
+LoglikelihoodTable, LLHWeightsTable and EDRTable) to output loglikelihood values
 and sample loglikelihood based GMPE weightings (Scherbaum et al., 2009) and EDR
 metrics (Kale and Akkar, 2013) w.r.t. spectral period (rather than aggregated
 over all intensity measures as before).
@@ -76,9 +76,9 @@ class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
         'Avg over all periods'] #Get values within table
     avg_llh_new = np.array(pd.Series(avg_llh_from_wrt_period_function))
 
-    rspl.WeightsTable(residuals,
+    rspl.LLHWeightsTable(residuals,
                       filename) # Get model weights wrt spectral period
-    model_weights_wrt_period=residuals.final_model_weights_df
+    model_weights_wrt_period=residuals.final_LLH_model_weights_df
     avg_model_weights_from_wrt_period_function=model_weights_wrt_period.loc[
         'Avg over all periods'] #Get values within table
     avg_model_weights_new=np.array(pd.Series(

@@ -813,7 +813,7 @@ def PlotLoglikelihoodWithSpectralPeriod(residuals,filename,custom_cycler=0,
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
     
-def PlotModelWeightsWithSpectralPeriod(residuals,filename,custom_cycler=0,
+def PlotLLHModelWeightsWithSpectralPeriod(residuals,filename,custom_cycler=0,
                                        filetype='jpg',dpi=200):
     """
     Definition to create a simple plot of model weights computed using the
@@ -1226,7 +1226,7 @@ def LoglikelihoodTable(residuals,filename):
     residuals.final_llh_df=final_llh_df
     return residuals.final_llh_df
     
-def WeightsTable(residuals,filename):
+def LLHWeightsTable(residuals,filename):
     """
     Definition to create a table of model weights per imt based
     on sample loglikelihood (Scherbaum et al. 2009)
@@ -1294,8 +1294,80 @@ def WeightsTable(residuals,filename):
     residuals.imts = preserve_imts
     
     # Assign final model weights dataframe to residuals object (for unit test)
-    residuals.final_model_weights_df=final_model_weights_df
-    return residuals.final_model_weights_df
+    residuals.final_LLH_model_weights_df=final_model_weights_df
+    return residuals.final_LLH_model_weights_df
+
+def EDRWeightsTable(residuals,filename):
+    """
+    Definition to create a table of model weights per imt based
+    on Euclidean distance based ranking (Kale and Akkar, 2013)
+    """     
+       
+    # Preserve original residuals.imts
+    preserve_imts = residuals.imts
+    
+    # Remove non-acceleration imts from residuals.imts for generation of metrics
+    imt_append=pd.DataFrame(residuals.imts,index=residuals.imts)
+    imt_append.columns=['imt']
+    for imt_idx in range(0,np.size(residuals.imts)):
+         if residuals.imts[imt_idx]=='PGV':
+             imt_append=imt_append.drop(imt_append.loc['PGV'])
+         if residuals.imts[imt_idx]=='PGD':
+             imt_append=imt_append.drop(imt_append.loc['PGD'])
+         if residuals.imts[imt_idx]=='CAV':
+             imt_append=imt_append.drop(imt_append.loc['CAV'])
+         if residuals.imts[imt_idx]=='Ia':
+             imt_append=imt_append.drop(imt_append.loc['Ia'])
+        
+    imt_append_list=pd.DataFrame()
+    for idx in range(0,len(imt_append)):
+         imt_append_list[idx]=imt_append.iloc[idx]
+    imt_append=imt_append.reset_index()
+    imt_append_list.columns=imt_append.imt
+    residuals.imts=list(imt_append_list)
+    
+    # Produce series of residuals.gmpe_list
+    gmpe_list_series=pd.Series(pd.DataFrame(residuals.gmpe_list,index=
+                                        np.arange(0,len(residuals.gmpe_list)
+                                                  ,1)).columns)
+    
+    # Compute EDR based model weights
+    EDR_for_weights = residuals.get_edr_values_wrt_spectral_period()
+    EDR_per_gmpe={}
+    for gmpe in EDR_for_weights.keys():
+        EDR_per_gmpe[gmpe] = EDR_for_weights[gmpe]['EDR']
+    EDR_per_gmpe_df = pd.DataFrame(EDR_per_gmpe)
+    
+    GMPE_EDR_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
+    for imt in EDR_per_gmpe_df.index:
+        total_EDR_per_imt = np.sum(EDR_per_gmpe_df.loc[imt]**-1)
+        for gmpe in EDR_for_weights.keys():
+            GMPE_EDR_weight[gmpe][imt] = EDR_per_gmpe_df.loc[imt][
+                gmpe]**-1/total_EDR_per_imt
+    GMPE_EDR_weight_df = pd.DataFrame(GMPE_EDR_weight)
+    
+    Avg_EDR_weight_per_GMPE = {}
+    for gmpe in residuals.gmpe_list:
+        Avg_EDR_weight_per_GMPE[gmpe] = np.mean(GMPE_EDR_weight_df[gmpe])
+        
+    Avg_GMPE_EDR_weight_df = pd.DataFrame(Avg_EDR_weight_per_GMPE,index = [
+        'Avg over all periods'])
+    Final_EDR_weight_df = pd.concat([GMPE_EDR_weight_df, Avg_GMPE_EDR_weight_df])
+
+    # Table and display outputs (need to assign simplified GMPE names)
+    final_model_weights_df_output = Final_EDR_weight_df
+    model_weights_columns_all_output={}
+    for gmpe in range(0,len(residuals.gmpe_list)):
+         tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
+         model_weights_columns_all_output[gmpe] = tmp.split('(')[0].replace(
+             '\n',', ') + ' EDR Based Model Weight'
+    final_model_weights_df_output.columns = list(pd.Series(
+        model_weights_columns_all_output))
+    final_model_weights_df_output.to_csv(filename,sep=',')
+    display(final_model_weights_df_output)
+    
+    # Reassign original imts to residuals.imts
+    residuals.imts = preserve_imts
 
 def EDRTable(residuals,filename):
     """
