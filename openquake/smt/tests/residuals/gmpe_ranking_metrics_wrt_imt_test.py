@@ -69,15 +69,13 @@ class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
         original_avg_llh[gmpe]=original_llh[gmpe]['All']
     avg_llh_original=np.array(pd.Series(original_avg_llh))
 
-    rspl.LoglikelihoodTable(
-        residuals,filename) # Get loglikelihood wrt spectral period
+    rspl.loglikelihood_table(residuals,filename) # Get loglikelihood wrt spectral period
     llh_wrt_period = residuals.final_llh_df
     avg_llh_from_wrt_period_function = llh_wrt_period.loc[
         'Avg over all periods'] #Get values within table
     avg_llh_new = np.array(pd.Series(avg_llh_from_wrt_period_function))
 
-    rspl.LLHWeightsTable(residuals,
-                      filename) # Get model weights wrt spectral period
+    rspl.llh_weights_table(residuals, filename) # Get model weights wrt spectral period
     model_weights_wrt_period=residuals.final_LLH_model_weights_df
     avg_model_weights_from_wrt_period_function=model_weights_wrt_period.loc[
         'Avg over all periods'] #Get values within table
