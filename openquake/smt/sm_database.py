@@ -36,6 +36,7 @@ from openquake.smt.sm_utils import vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14
 import openquake.smt.sm_utils as utils
 from openquake.smt import surface_utils
 from openquake.smt.residuals.context_db import ContextDB
+from openquake.hazardlib.geo import geodetic
 
 class Magnitude(object):
     """
@@ -627,7 +628,7 @@ class RecordSite(object):
         self.backarc = backarc
         self.morphology = None
         self.slope = None
-
+        
     def to_dict(self):
         return self.__dict__
 
@@ -1097,7 +1098,6 @@ class GroundMotionDatabase(ContextDB):
             ctx.z2pt5.append(z2pt5)
             if getattr(record.site, "backarc", None) is not None:
                 ctx.backarc.append(record.site.backarc)
-
         # finalize:
         for attname in self.sites_context_attrs:
             attval = getattr(ctx, attname)
