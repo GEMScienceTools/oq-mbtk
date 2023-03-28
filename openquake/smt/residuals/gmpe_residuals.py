@@ -336,14 +336,28 @@ class Residuals(object):
                 gmpe_dict_2[imtx] = {}
                 self.unique_indices[gmpe][imtx] = []
                 self.types[gmpe][imtx] = []
-                for res_type in \
-                    self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES:
-                    gmpe_dict_1[imtx][res_type] = []
-                    gmpe_dict_2[imtx][res_type] = []
-                    self.types[gmpe][imtx].append(res_type)
-                gmpe_dict_2[imtx]["Mean"] = []
+                
+                # If mixed effects GMPE fix res_type order
+                if self.gmpe_list[
+                        gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == frozenset(
+                            {'Inter event', 'Intra event', 'Total'}):
+                    for res_type in ['Total','Inter event', 'Intra event']:
+                        gmpe_dict_1[imtx][res_type] = []
+                        gmpe_dict_2[imtx][res_type] = []
+                        self.types[gmpe][imtx].append(res_type)
+                    gmpe_dict_2[imtx]["Mean"] = []
+                # For handling of GMPEs with total sigma only
+                else: 
+                    for res_type in self.gmpe_list[
+                            gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES:
+                        gmpe_dict_1[imtx][res_type] = []
+                        gmpe_dict_2[imtx][res_type] = []
+                        self.types[gmpe][imtx].append(res_type)
+                    gmpe_dict_2[imtx]["Mean"] = []
+            
             self.residuals.append([gmpe, gmpe_dict_1])
             self.modelled.append([gmpe, gmpe_dict_2])
+        
         self.residuals = OrderedDict(self.residuals)
         self.modelled = OrderedDict(self.modelled)
         self.number_records = None
