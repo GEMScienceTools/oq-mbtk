@@ -382,29 +382,32 @@ class ResidualScatterPlot(BaseResidualPlot):
         y = res_data['y']
         max_lim = ceil(np.max(np.fabs(y)))
         return -max_lim, max_lim
-
+    
     def get_axis_title(self, res_data, res_type):
-        slope, intercept, pval = \
-            res_data['slope'], res_data['intercept'], res_data['pvalue']
-        return "%s - %s\n Slope = %.4e, Intercept = %7.3f p = %.6e " % \
-            (str(self.residuals.gmpe_list[self.gmpe]).split('(')[0],
-             res_type, slope, intercept, pval)
+        return "%s - %s" %(str(self.residuals.gmpe_list[self.gmpe]).split('(')[0],
+             res_type)
 
     def draw(self, ax, res_data, res_type):
         x, y = res_data['x'], res_data['y']
-        slope, intercept = res_data['slope'], res_data['intercept']
-        model_x = np.arange(np.min(x), np.max(x) + 1.0, 1.0)
-        model_y = intercept + slope * model_x
+        x_zero = np.arange(np.floor(np.min(x))-20, np.ceil(np.max(x))+20, 0.001)
+        zero_line = np.zeros(len(x_zero))
         pts_styling_kwargs = dict(markeredgecolor='Gray',
-                                  markerfacecolor='LightSteelBlue')
-        linreg_styling_kwargs = dict(color='r', linewidth=2.0)
+                                  markerfacecolor='LightSteelBlue',
+                                  label = 'residual')
         if self.plot_type == "log":
             ax.semilogx(x, y, 'o', **pts_styling_kwargs)
-            ax.semilogx(model_x, model_y, '-', **linreg_styling_kwargs)
+            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
+                       marker = 's', color = 'b', label = 'mean', zorder = 4)
+            ax.plot(x_zero, zero_line, color = 'k', linestyle = '--',
+                    linewidth = 1.25)
         else:
             ax.plot(x, y, 'o', **pts_styling_kwargs)
-            ax.plot(model_x, model_y, '-', **linreg_styling_kwargs)
-
+            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
+                       marker = 's', color = 'b', label = 'mean', zorder = 4)
+            ax.plot(x_zero, zero_line, color = 'k', linestyle = '--',
+                    linewidth = 1.25)
+        ax.legend(loc = 'upper right', fontsize = 'x-small')
+    
 
 class ResidualWithDistance(ResidualScatterPlot):
     """
@@ -477,8 +480,8 @@ class ResidualWithVs30(ResidualScatterPlot):
 
     def get_axis_xlim(self, res_data, res_type):
         x = res_data['x']
-        return 0.1, np.max(x)
-
+        return np.min(x)-20, np.max(x)+20
+    
 
 # FIXME: code below not tested and buggy (at least ResidualWithSite)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
