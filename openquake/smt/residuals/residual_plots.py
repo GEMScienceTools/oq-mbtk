@@ -408,6 +408,7 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type):
     Compute mean total, inter- and inter-event residual within bin for given
     variable. This is plotted within the scatter plots of residuals w.r.t.
     the given variable
+    :param var_type: Specifies variable which residuals are plotted against
     """
     # Get total and intra residuals and variable (per record)
     total_res = pd.Series(residuals.residuals[gmpe][imt]['Total'])
