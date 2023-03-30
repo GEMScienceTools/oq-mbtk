@@ -14,8 +14,8 @@ from openquake.hazardlib.geo.geodetic import distance
 from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.geo.line import Line
 from openquake.hazardlib.geo.point import Point
-from openquake.hazardlib.geo.geodetic import (min_distance_to_segment,
-                                              point_at, azimuth)
+from openquake.hazardlib.geo.geodetic import (
+    min_distance_to_segment, point_at, azimuth, geodetic_distance)
 
 from openquake.hazardlib.geo.utils import OrthographicProjection
 from scipy.interpolate import LinearNDInterpolator
@@ -422,7 +422,20 @@ class Trench:
         az[-1] = az[-2]
         return Trench(naxis, az)
 
-    def iterate_cross_sections(self, distance, length, azim=[]):
+    def get_azimuth(self):
+        lons = self.axis[:, 0]
+        lats = self.axis[:, 1]
+        # Azimuths
+        azims = azimuth(lons[:-1], lats[:-1], lons[1:], lats[1:])
+        # Lenghts of segments
+        lengs = geodetic_distance(lons[:-1], lats[:-1], lons[1:], lats[1:])
+        weigs = lengs / numpy.sum(lengs)
+        # Compute average azimuth
+        sins = numpy.mean(numpy.sin(numpy.radians(azims)))
+        coss = numpy.mean(numpy.cos(numpy.radians(azims)))
+        return numpy.degrees(numpy.arctan2(sins, coss))
+
+    def iterate_cross_sections(self, distance, length):
         """
         A cross-section iterator
 
@@ -431,15 +444,26 @@ class Trench:
         :parameter length:
             The length of each trace [in km]
         """
+        wei1 = 0.3
+        weis = numpy.array([wei1, 1-wei1])
+        avg_azim = self.get_azimuth()
+        overall_azim = (avg_azim + 90) % 360
+
         trch = self.resample(distance)
         css = []
         lng = length
         for idx, coo in enumerate(trch.axis.tolist()):
             if idx < len(trch.axis[:, 1]):
-                cs = CrossSection(coo[0], coo[1], [lng], [(coo[2]+90) % 360])
+
+                azims = numpy.array([(coo[2]+90) % 360, overall_azim])
+                sins = numpy.mean(numpy.sin(numpy.radians(azims)) * weis)
+                coss = numpy.mean(numpy.cos(numpy.radians(azims)) * weis)
+                azim = numpy.degrees(numpy.arctan2(sins, coss))
+
+                cs = CrossSection(coo[0], coo[1], [lng], [azim])
                 out = check_intersections(cs, css) if len(css) else None
                 tmp = out if out is not None else lng
-                cs = CrossSection(coo[0], coo[1], [tmp], [(coo[2]+90) % 360])
+                cs = CrossSection(coo[0], coo[1], [tmp], [azim])
                 css.append(cs)
                 yield cs, tmp
             else:
