@@ -466,17 +466,8 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type):
     df_inter.columns = ['inter', 'val']
     df_inter.sort_values(['val'])
     
-    # Create bins and make last interval fill up to max value
-    # Also scale to appropriate bin size for given var
-    if var_type == 'magnitude':
-        val_bin = len(vals)/(np.max(vals)-np.min(vals))/len(vals)
-    elif var_type == 'vs30':
-        val_bin = (np.max(vals)-np.min(vals))/len(vals)*150
-    elif var_type == 'depth':
-        val_bin = (np.max(vals)-np.min(vals))/len(vals)*200
-    elif var_type == 'distance':
-        val_bin = (np.max(vals)-np.min(vals))/len(vals)*200
-        
+    # Create bins and make last interval fill up to max var value
+    val_bin = (np.max(vals)-np.min(vals))/10
     val_bins = np.arange(np.min(vals), np.max(vals), val_bin)
     val_bins[len(val_bins) - 1] = np.max(vals)
     
