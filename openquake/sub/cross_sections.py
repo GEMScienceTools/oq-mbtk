@@ -97,7 +97,7 @@ class Slab2pt0(object):
                     pnts[:, 0], pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
 
             # Check if the array with cross-section data is not empty
-            if idxslb is None:
+            if idxslb is None or len(idxslb) < 1:
                 continue
 
             # Points
@@ -796,7 +796,7 @@ class CrossSection:
             return iii, dst[abs(dst) <= buffer_distance]
         else:
             print('   Warning: no nodes found around the cross-section')
-            return None
+            return None, None
 
     def get_grd_nodes_within_buffer_idl(self, x, y, buffer_distance,
                                         minlo=-180, maxlo=180,
