@@ -24,7 +24,7 @@ following link https://github.com/gem/oq-engine/tree/master/openquake/hmtk,
 while documentation for the oq-hmtk can be downloaded  
 at https://github.com/GEMScienceTools/hmtk_docs/blob/master/hmtk_tutorial.pdf.
 
-Currently the oq-mbt includes five sub-modules:
+Currently the oq-mbt includes six sub-modules:
 
 * *CATalogue Toolkit (cat)* contains code used for creating a homogenised 
   catalogue;
@@ -38,6 +38,8 @@ Currently the oq-mbt includes five sub-modules:
   earthquake sources. 
 * *SEcondary Perils (sep)* contains code for calculating secondary earthquake
 perils such as liquefaction and coseismic landslides.
+* *Strong-Motion Tools (smt)* contains code for ground-motion characterization
+   activities such as residual analyis and comparing predicted intensities.
 
 .. toctree::
    :maxdepth: 2
@@ -50,6 +52,7 @@ perils such as liquefaction and coseismic landslides.
    contents/mbt
    contents/sub
    contents/sep
+   contents/smt
 
 
 Indices and tables
