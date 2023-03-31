@@ -65,7 +65,7 @@ Following the parsing of a flatfile into useable metadata, we can now specify th
 
 The total residual (one per ground-motion record) is computed as follows:
 
-    total_residual = (log(observed_ground_motion) - log(predicted_ground_motion))/GMPE_sigma
+    ``total_residual = (log(observed_ground_motion) - log(predicted_ground_motion))/GMPE_sigma``
     
 The closer the computed residual is to zero the better the fit between the predicted ground-motion and the observed ground-motion. Given that the ground-motion predicted by a GMPE is assumed to be lognormally distributed with mean of mu and a standard deviation of sigma, a residual of 1.0 or -1.0 is representative of a mismatch of +1/-1 sigma respectively.
 
