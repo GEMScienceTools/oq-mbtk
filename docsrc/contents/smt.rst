@@ -61,9 +61,19 @@ Following the geographical filtering of the ESM 2018 flatfile for only earthquak
 Specifying the inputs for the residual analysis
 ===============================================
 
-Following the parsing of a flatfile into useable metadata, we can now specify the inputs for the performing of a residual analysis. Residual analysis compares the predicted and expected (i.e. observed) ground-motion for a combination of source, site and path parameters to evaluate the performance of GMPEs. Residuals are computed using the mixed effects methodology of Abrahamson and Youngs (1992), in which the total residual is split into an inter-event component and an intra-event component (please consult Abrahamson and Youngs, 1992 for more details regarding this methodology).
+Following the parsing of a flatfile into useable metadata, we can now specify the inputs for the performing of a residual analysis. Residual analysis compares the predicted and expected (i.e. observed) ground-motion for a combination of source, site and path parameters to evaluate the performance of GMPEs. Residuals are computed using the mixed effects methodology of Abrahamson and Youngs (1992), in which the total residual is split into an inter-event component and an intra-event component. Abrahamson and Youngs (1992) should be consulted for a detailed overview of ground-motion residuals, but a brief overview of the total residual, inter-event residual and intra-event residual terms is provided here. 
 
-The inputs are specified as follows:
+The total residual (one per ground-motion record) is computed as follows:
+
+    total_residual = (log(observed_ground_motion) - log(predicted_ground_motion))/GMPE_sigma
+    
+The closer the computed residual is to zero the better the fit between the predicted ground-motion and the observed ground-motion. Given that the ground-motion predicted by a GMPE is assumed to be lognormally distributed with mean of mu and a standard deviation of sigma, a residual of 1.0 or -1.0 is representative of a mismatch of +1/-1 sigma respectively.
+
+The inter-event residual is representative of how effectively a GMPE models the event-specific components of abn observed ground-motion (i.e. the source characteristics e.g. stress-drop, near-source velocity). The inter-event is computed from the mean of the total residuals for a single earthquake. Therefore, there is a single inter-event residual per an event.
+
+The intra-event residual is representative of how effectively a GMPE models record-specific components of an observed ground-motion (i.e. site-amplification, path effects, basin response). The intra-event residual for each record is computed by subtracting the inter-event for the associated earthquake (which generated the ground-shaking recorded in the record) from the corresponding total residual.
+
+The inputs to perform a residual analysis within the SMT are specified as follows:
     
 1. Specify the base path, the path to the metadata we parsed in the previous stage and an output folder:
 
@@ -156,8 +166,8 @@ Computation of the residuals and basic residual plots
    > # OR from .toml file (GMPEs and intensity measures in this case are stored in the residuals object created during computation of the residuals)
    > rspl.ResidualPlot(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype='jpeg') # Plot for gmpe in position 0 in resid1.gmpe_list and intensity measure in position 2 in resid1.imts
     
-   These plots can be used to evaluate how closely the residuals follow the expected trend of a standard normal distribution (which would be observed if the GMPE exactly predicts the expected ground-motion for the considered intensity measure for each record in the parsed metadata). 
-   
+   These plots can be used to evaluate how closely the residuals follow the expected trend of a standard normal distribution (which would be observed if the GMPE exactly predicts the expected ground-motion for the considered intensity measure for each record in the parsed metadata). Therefore, given that the residual distribution corresponding to perfect fit between a GMPE and the ground-motion records, a mean closer to zero is representative of a better fit than a mean further away from zero. Likewise, a standard deviation of 1 would be expected for a GMPE which fits exactly to the considered ground-motion records, and a standard deviation further away from 1 would be expected for a GMPE which fits less well to the considered ground-motion records.
+      
    Note that the filename (position 3 argument in rspl.ResidualPlot) should specify the output directory and filename for the generated figure in each instance.
    
    We can also plot the probability density functions over all considered spectral periods at once, so as to better examine how the residual distributions vary per GMPE over each spectral period:
