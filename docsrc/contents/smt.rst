@@ -380,7 +380,7 @@ Once we have created the Configuration object we can use the plotting functions 
    > # Generate dendrograms
    > comp.plot_cluster(config, output_directory)
    
-   Within these plots the GMPEs are clustered hierarchically (i.e. the GMPEs which are clustered together at shorter Euclidean distances are more similar than those clustered together at larger Euclidean distances).
+   Within the dendrograms the GMPEs are clustered hierarchically (i.e. the GMPEs which are clustered together at shorter Euclidean distances are more similar than those clustered together at larger Euclidean distances).
    
 5. Matrix Plots of Euclidean Distance
 
@@ -389,7 +389,7 @@ Once we have created the Configuration object we can use the plotting functions 
    > # Generate matrix plots of Euclidean distance
    > comp.plot_euclidean(config, output_directory)
    
-   Within the matrix plots, the darker cells represent a smaller Euclidean distance (and therefore greater similarity) between each GMPE for the given intensity measure.   
+   Within the matrix plots the darker cells represent a smaller Euclidean distance (and therefore greater similarity) between each GMPE for the given intensity measure.   
 
 References
 ==========
