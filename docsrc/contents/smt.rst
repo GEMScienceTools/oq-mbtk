@@ -63,7 +63,7 @@ Specifying the inputs for the residual analysis
 
 Following the parsing of a flatfile into useable metadata, we can now specify the inputs for the performing of a residual analysis. Residual analysis compares the predicted and expected (i.e. observed) ground-motion for a combination of source, site and path parameters to evaluate the performance of GMPEs. Residuals are computed using the mixed effects methodology of Abrahamson and Youngs (1992), in which the total residual is split into an inter-event component and an intra-event component. Abrahamson and Youngs (1992) should be consulted for a detailed overview of ground-motion residuals, but a brief overview of the total residual, inter-event residual and intra-event residual terms is provided here. 
 
-The total residual (one per ground-motion record) is computed as follows:
+The total residual for each ground-motion record is computed as follows:
 
     ``total_residual = (log(observed_ground_motion) - log(predicted_ground_motion))/GMPE_sigma``
     
