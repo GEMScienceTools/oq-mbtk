@@ -71,7 +71,8 @@ def get_initial_traces(bb, dip_dir, spacing):
     max_length = geodetic_distance(bb[0], bb[2], bb[1], bb[3])
 
     # Compute spacing
-    spacing_lon = np.abs(spacing / np.sin(dip_dir))
+    angle = ((np.floor(dip_dir / 90) + 1) * 90.0 - dip_dir)
+    spacing_lon = np.abs(spacing / np.sin(angle))
     spacing_lat = np.abs(spacing / np.cos(dip_dir))
     print(f'Spacing lon: {spacing_lon:.2f} lat: {spacing_lat:.2f}')
 
