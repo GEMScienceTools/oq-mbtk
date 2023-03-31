@@ -86,7 +86,7 @@ Now that we have an elementary overview of the residual components, we can speci
     > # Specify output folder
     > run_folder = os.path.join(DATA,results_preliminary)
     
-3. Specify the GMPEs we want to evaluate, and the intensity measures we want to evaluate each GMPE for.
+2. Specify the GMPEs we want to evaluate, and the intensity measures we want to evaluate each GMPE for.
 
    The GMPEs and intensity measures to compute residuals for can be specified in two ways. The first is simply to specify a ``gmpe_list`` and an ``imt_list`` within the command line:
 
