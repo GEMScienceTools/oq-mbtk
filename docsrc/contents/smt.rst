@@ -67,7 +67,7 @@ The total residual for each ground-motion record is computed as follows:
 
     ``total_residual = (log(observed_ground_motion) - log(predicted_ground_motion))/GMPE_sigma``
     
-The closer the computed residual is to zero the better the fit between the predicted ground-motion and the observed ground-motion. Given that the ground-motion predicted by a GMPE is assumed to be lognormally distributed with mean of mu and a standard deviation of sigma, a residual of 1.0 or -1.0 is representative of a mismatch of +1/-1 sigma respectively.
+The closer the computed residual lies to zero the better the fit between the predicted ground-motion and the observed ground-motion. A positive residual is inherently indicative of underprediction by a GMPE, and a negative residual is inherently indicative of overprediction by a GMPE. Therefore, given that the ground-motion predicted by a GMPE is assumed to be lognormally distributed with mean of mu and a standard deviation of sigma, a residual of 1.0 is representative of an underprediction by -1 sigma, and a residual of -1.0 is representative of an overprediction by +1 sigma.
 
 The inter-event residual is representative of how effectively a GMPE models the event-specific components of abn observed ground-motion (i.e. the source characteristics e.g. stress-drop, near-source velocity). The inter-event is computed from the mean of the total residuals for a single earthquake. Therefore, there is a single inter-event residual per an event. 
 
