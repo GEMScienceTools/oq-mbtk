@@ -38,10 +38,10 @@ Following the geographical filtering of the ESM 2018 flatfile for only earthquak
     > DATA = os.path.abspath('')
     >
     > # Specify flatfile location
-    > flatfile_directory = os.path.join(DATA,'ESM_flatfile_SA_geographically_filtered.csv')
+    > flatfile_directory = os.path.join(DATA, 'ESM_flatfile_SA_geographically_filtered.csv')
     >
     > # Specify metadata output location
-    > output_database = os.path.join(DATA,'metadata')
+    > output_database = os.path.join(DATA, 'metadata')
     >
     > # If the metadata already exists first remove
     > if os.path.exists(output_database):
@@ -81,10 +81,10 @@ Now that we have an elementary overview of the residual components, we can speci
     > DATA = os.path.abspath('')
     >
     > # Specify metadata directory
-    > metadata_directory = os.path.join(DATA,'metadata')
+    > metadata_directory = os.path.join(DATA, 'metadata')
     >
     > # Specify output folder
-    > run_folder = os.path.join(DATA,results_preliminary)
+    > run_folder = os.path.join(DATA, results_preliminary)
     
 2. Specify the GMPEs we want to evaluate, and the intensity measures we want to evaluate each GMPE for.
 
@@ -112,7 +112,7 @@ Now that we have an elementary overview of the residual components, we can speci
     gmpe_table = 'NGAEast_FRANKEL_J15.hdf5'
         
     [imts]
-    imt_list = ['PGA','SA(0.2)','SA(0.5)','SA(1.0']
+    imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']
     
 The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in oq-engine\openquake\hazardlib\gsim).
     
@@ -129,10 +129,10 @@ Computation of the residuals and basic residual plots
    > import openquake.smt.residuals.residual_plotter as rspl
    >   
    > # Create path to metadata file
-   > metadata = os.path.join(metadata_directory,'metadatafile.pkl')
+   > metadata = os.path.join(metadata_directory, 'metadatafile.pkl')
    >
    > # Load metadata
-   > sm_database = pickle.load(open(metadata,"rb"))
+   > sm_database = pickle.load(open(metadata, "rb"))
    >
    > # If the output folder already exists delete, then create output folder
    > if os.path.exists(run_folder):
@@ -144,7 +144,7 @@ Computation of the residuals and basic residual plots
    For computing the residuals from a list of GMPEs and intensity measures specified in the command line:
    
    > # Compute residuals using GMPEs and intensity measures specified in command line
-   > resid1 = res.Residuals(gmpe_list,imt_list)
+   > resid1 = res.Residuals(gmpe_list, imt_list)
    > resid1.get_residuals(sm_database)
    
    OR for computing the residuals from a list of GMPEs and intensity measures specified in a .toml file:
@@ -161,10 +161,10 @@ Computation of the residuals and basic residual plots
    We can first generate plots of the probability density function plots (for total, inter- and intra-event residuals), which compare the computed residual distribution to a standard normal distribution:
    
    > # Plot residual probability density function for a specified GMPE from gmpe_list and intensity measure from imt_list
-   > rspl.ResidualPlot(resid1, gmpe_list[0], imt_list[2], filename, filetype='jpeg') # Plot for gmpe in position 0 in gmpe_list and intensity measure in position 2 in imt_list
+   > rspl.ResidualPlot(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg') # Plot for gmpe in position 0 in gmpe_list and intensity measure in position 2 in imt_list
    >
    > # OR from .toml file (GMPEs and intensity measures in this case are stored in the residuals object created during computation of the residuals)
-   > rspl.ResidualPlot(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype='jpeg') # Plot for gmpe in position 0 in resid1.gmpe_list and intensity measure in position 2 in resid1.imts
+   > rspl.ResidualPlot(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg') # Plot for gmpe in position 0 in resid1.gmpe_list and intensity measure in position 2 in resid1.imts
     
    These plots can be used to evaluate how closely the residuals follow the expected trend of a standard normal distribution (which would be observed if the GMPE exactly predicts the expected ground-motion for the considered intensity measure for each record in the parsed metadata). Therefore, given that the residual distribution corresponding to perfect fit between a GMPE and the ground-motion records, a mean closer to zero is representative of a better fit than a mean further away from zero. Likewise, a standard deviation of 1 would be expected for a GMPE which fits exactly to the considered ground-motion records, and a standard deviation further away from 1 would be expected for a GMPE which fits less well to the considered ground-motion records.
       
@@ -180,22 +180,22 @@ Computation of the residuals and basic residual plots
    Plots for residual trends (again for total, inter- and intra-event components) with respect to the most important GMPE inputs can also be generated in a similar manner. Here we will demonstrate for magnitude:
    
    > # Plot residuals w.r.t. magnitude from gmpe_list and imt_list
-   > rspl.ResidualWithMagnitude(resid1, gmpe_list[0], imt_list[2], filename, filetype='jpeg'), filetype='jpg')
+   > rspl.ResidualWithMagnitude(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
    >
    > # OR plot residuals w.r.t. magnitude from .toml file
-   > rspl.ResidualWithMagnitude(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype='jpeg'), filetype='jpg')
+   > rspl.ResidualWithMagnitude(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
 
    The functions for plotting of residuals w.r.t. distance, focal depth and Vs30 are called in a similar manner:
    
    > # From gmpe_list and imt_list:
-   > rspl.ResidualWithDistance(resid1, gmpe_list[0], imt_list[2], filename, filetype='jpeg')
-   > rspl.ResidualWithDepth(resid1, gmpe_list[0], imt_list[2],  filename, filetype='jpeg')
-   > rspl.ResidualWithVs30(resid1, gmpe_list[0], imt_list[2],  filename, filetype='jpeg')
+   > rspl.ResidualWithDistance(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
+   > rspl.ResidualWithDepth(resid1, gmpe_list[0], imt_list[2],  filename, filetype = 'jpg')
+   > rspl.ResidualWithVs30(resid1, gmpe_list[0], imt_list[2],  filename, filetype = 'jpg')
    >
    > # OR from .toml:
-   > rspl.ResidualWithDistance(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype='jpeg')
-   > rspl.ResidualWithDepth(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype='jpeg')
-   > rspl.ResidualWithVs30(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype='jpeg')
+   > rspl.ResidualWithDistance(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
+   > rspl.ResidualWithDepth(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
+   > rspl.ResidualWithVs30(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
                    
 GMPE performance ranking methodologies
 ======================================
@@ -209,10 +209,10 @@ The SMT contains implementations of several published GMPE ranking methodologies
    Histograms of the likelihood values per GMPE per intensity measure can be plotted as follows:
    
    > # From gmpe_list and imt_list:
-   > rspl.LikelihoodPlot(resid1, gmpe_list[0], imt_list[2], filename, filetype='jpeg')
+   > rspl.LikelihoodPlot(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
    >
    > # OR from .toml:
-   > rspl.LikelihoodPlot(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype='jpeg')
+   > rspl.LikelihoodPlot(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
 
 2. Loglikelihood Plots (Scherbaum et al. 2009)
 
@@ -256,7 +256,7 @@ The SMT contains implementations of several published GMPE ranking methodologies
    EDR metrics per GMPE aggregated over all considered intensity measures, and per intensity measure, can be outputted together in a .csv as follows:
    
    > # Generate a .csv table of EDR values for each GMPE
-   > rspl.edr_table(resid1,filename=EDR_table_output)
+   > rspl.edr_table(resid1, filename=EDR_table_output)
    
    As per LLH, model-weights can also be computed by normalising EDR. 
    
@@ -283,7 +283,7 @@ The GMPE comparison tools include Sammon's maps, heirarchical clustering and mat
     ### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
     
     [general]
-    imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)','SA(2.0)']
+    imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)', 'SA(2.0)']
     max_period = 2 # max period for response spectra
     maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
     dist_list = [10, 100, 250] # distance intervals for use in spectra plots
@@ -291,7 +291,7 @@ The GMPE comparison tools include Sammon's maps, heirarchical clustering and mat
     eshm20_region = 4 # for KothaEtAl2020 ESHM20 GMPE regionalisation
     Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 or 3)
     custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
-    custom_colors_list = ['lime','dodgerblue','gold','0.8']
+    custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
     
     # Specify site properties
     [site_properties]
@@ -299,24 +299,24 @@ The GMPE comparison tools include Sammon's maps, heirarchical clustering and mat
     Z1 = -999
     Z25 = -999
     
-    # Characterise earthquake for the region
+    # Characterise earthquake for the region of interest
     [source_properties]
     strike = -999
     dip =  60 # (Albania has predominantly reverse faulting)
     rake = 90 # (+ 90 for compression, -90 for extension)
-    trellis_mag_list = [5,6,7] # mags used only for trellis
-    trellis_depths = [20,20,20] # depth per magnitude
+    trellis_mag_list = [5, 6, 7] # mags used only for trellis
+    trellis_depths = [20, 20, 20] # depth per magnitude
     
     # Specify magnitude array for Sammons, Euclidean dist and clustering
     [mag_values_non_trellis_functions]
     mmin = 5
     mmax = 7
     spacing = 0.1
-    non_trellis_depths = [[5,20],[6,20],[7,20]] # [[mag,depth],[mag,depth],[mag,depth]] 
+    non_trellis_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
     
     # Specify label for gmpes
     [gmpe_labels]
-    gmpes_label = ['B20','L19','BO14','BI14','C14','K20']
+    gmpes_label = ['B20', 'L19', 'BO14', 'K20']
     
     # Specify gmpes
     [models] 
@@ -341,12 +341,12 @@ The GMPE comparison tools include Sammon's maps, heirarchical clustering and mat
         sigma_mu_epsilon = -2.85697 
         c3_epsilon = -1.72    
     
-In the above .toml file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may best capture the epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree. Here, we are selecting 3 ergodic (fixed sigma per return period) GMPEs, and 5 scalings of the non-ergodic European Seismic Hazard Model 2020 (ESHM20) version Kotha et al. (2020) GMPE (see Weatherill et al. 2020 for more details on the ESHM20 version of Kotha et al. 2020). The ESHM20 version of Kotha et al. (2020) has been set to a regionalisation parameter of 2 in "general" params, which is representative of central region (regular) anelastic attenuation. 
+In the above .toml file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may best capture the epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree. Here, we are selecting 3 ergodic (fixed sigma per return period) GMPEs, and 5 scalings of the non-ergodic European Seismic Hazard Model 2020 (ESHM20) version Kotha et al. (2020) GMPE (see Weatherill et al. 2020 for more details on the ESHM20 version of Kotha et al. 2020). The ESHM20 version of Kotha et al. (2020) has been set to a regionalisation parameter of 2 in "general" params, which is representative of central region (regular) "residual" attenuation. 
 
 Once we have defined our inputs for GMPE comparison, we can use each tool within the Comparison module to evaluate how similar the GMPEs predict ground-motion for a given ground-shaking scenario. We must first create the "Configuration" object which stores the information specified within the .toml file for use in the plotting functions:
 
-    > # Generate config object (filename = path to input .toml file)
-    > config = comp.Configurations(filename)
+    > # Generate config object
+    > config = comp.Configurations(filename) # Filename is the path to the input .toml file
 
 Once we have created the Configuration object we can use the plotting functions available within the Comparison module.
 
