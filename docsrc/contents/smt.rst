@@ -65,7 +65,7 @@ Following the parsing of a flatfile into useable metadata, we can now specify th
 
 The total residual for each ground-motion record is computed as follows:
 
-    ``total_residual = (log(observed_ground_motion) - log(predicted_ground_motion))/GMPE_sigma``
+    ``total_residual = (log(observed_ground_motion) - log(predicted_ground_motion_by_GMPE))/GMPE_sigma``
     
 The closer the computed residual lies to zero the better the fit between the predicted ground-motion and the observed ground-motion. A positive residual is inherently indicative of underprediction by a GMPE, and a negative residual is inherently indicative of overprediction by a GMPE. Therefore, given that the ground-motion predicted by a GMPE is assumed to be lognormally distributed with mean of mu and a standard deviation of sigma, a residual of 1.0 is representative of an underprediction by -1 sigma, and a residual of -1.0 is representative of an overprediction by +1 sigma.
 
@@ -90,9 +90,9 @@ Now that we have an elementary overview of the residual components, we can speci
 
    The GMPEs and intensity measures to compute residuals for can be specified in two ways. The first is simply to specify a ``gmpe_list`` and an ``imt_list`` within the command line:
 
-    > # Specify GMPEs and intensity measures within command line
-    > gmpe_list = ['AbrahamsonEtAl2014','AkkarEtAlRjb2014','AmeriEtAl2017Rjb','BindiEtAl2014Rjb','BooreEtAl2014','BooreEtAl2020','CauzziEtAl2014','CampbellBozorgnia2014','ChiouYoungs2014','HassaniAtkinson2020Asc','KaleEtAl2015Turkey','KothaEtAl2020regional','LanzanoEtAl2019_RJB_OMO','LanzanoEtAl2020_ref']
-    > imt_list = ['PGA','SA(0.1)','SA(0.2)','SA(0.5)','SA(1.0)']
+    > # Specify some GMPEs and intensity measures within command line
+    > gmpe_list = ['AkkarEtAlRjb2014', 'BooreEtAl2014', 'BooreEtAl2020', 'CauzziEtAl2014', 'KothaEtAl2020regional', 'LanzanoEtAl2019_RJB_OMO']
+    > imt_list = ['PGA','SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']
     
    The second way is within a .toml file with the format specified below. The .toml file method is required for specifying the inputs of GMPEs with user-specifiable input parameters e.g. region or logic tree branch parameters. Note that here the GMPEs listed in the .toml file are not necessarily appropriate for Albania, but have been selected to demonstrate how GMPEs with additional inputs can be specified within a .toml file:
 
@@ -111,6 +111,10 @@ Now that we have an elementary overview of the residual components, we can speci
     [models.NGAEastGMPE]
     gmpe_table = 'NGAEast_FRANKEL_J15.hdf5'
         
+    [models.HassaniAtkinson2018]
+        d_sigma = 100
+        kappa0 = 0.04
+    
     [imts]
     imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']
     
@@ -266,7 +270,7 @@ The SMT contains implementations of several published GMPE ranking methodologies
    And we can also plot EDR, MDE Norm and k^0.5 versus spectral period using:
    
    > # Plot EDR score vs imt
-   > rspl.plot_plot_edr_metrics_with_spectral_period(resid1,filename)
+   > rspl.plot_plot_edr_metrics_with_spectral_period(resid1, filename)
 
 Comparing GMPEs
 ===============
@@ -284,7 +288,7 @@ The GMPE comparison tools include Sammon's maps, heirarchical clustering and mat
     
     [general]
     imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)', 'SA(2.0)']
-    max_period = 2 # max period for response spectra
+    max_period = 2 # max period for spectra plots
     maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
     dist_list = [10, 100, 250] # distance intervals for use in spectra plots
     region = 0 # for NGAWest2 GMPE regionalisation
@@ -316,7 +320,7 @@ The GMPE comparison tools include Sammon's maps, heirarchical clustering and mat
     
     # Specify label for gmpes
     [gmpe_labels]
-    gmpes_label = ['B20', 'L19', 'BO14', 'K20']
+    gmpes_label = ['B20', 'L19', 'BO14', 'K1', 'K2', 'K3', 'K4', 'K5']
     
     # Specify gmpes
     [models] 
