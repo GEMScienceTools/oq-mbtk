@@ -138,9 +138,12 @@ class Configurations(object):
 def plot_trellis(filename, output_directory):
     """
     Plot trellis for given run configuration
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.
     """ 
     
-    #Generate config object with each set of run parameters
+    # Generate config object
     config = Configurations(filename)
     
     plot_trellis_util(config.rake, config.strike, config.dip, config.trellis_depth,
@@ -154,9 +157,12 @@ def plot_spectra(filename, output_directory):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
     configuration
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.
     """ 
     
-    #Generate config object with each set of run parameters
+    # Generate config object
     config = Configurations(filename)
     
     plot_spectra_util(config.rake, config.strike, config.dip, config.trellis_depth,
@@ -170,8 +176,11 @@ def plot_cluster(filename, output_directory):
     """
     Plot hierarchical clusters of (1) median and (2) 84th percentile of predicted
     ground-motion by each GMPE for given configurations
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.
     """ 
-    #Generate config object with each set of run parameters
+    # Generate config object with each set of run parameters
     config = Configurations(filename)
     
     if len(config.gmpes_list) < 2:
@@ -208,8 +217,11 @@ def plot_sammons(filename, output_directory):
     """
     Plot Sammons Maps of median and 84th percentile predicted ground-motion
     by each GMPE for given configurations
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.
     """ 
-    #Generate config object with each set of run parameters
+    # Generate config object with each set of run parameters
     config = Configurations(filename)
     
     if len(config.gmpes_list) < 2:
@@ -245,8 +257,11 @@ def plot_euclidean(filename, output_directory):
     """
     Plot Euclidean distance matrix of median and 84th percentile predicted
     ground-motion by each GMPE for given configurations
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.    
     """ 
-    #Generate config object with each set of run parameters
+    # Generate config object
     config = Configurations(filename)
     
     if len(config.gmpes_list) < 2:
