@@ -18,13 +18,10 @@
 """
 Module with utility functions for gmpes
 """
-import os
 import numpy 
-from prettytable import PrettyTable
 
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib import valid
-from openquake.hazardlib.nrml import to_python
 from openquake.hazardlib.geo.surface import PlanarSurface
 from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.geo import utils as geo_utils
@@ -127,112 +124,19 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
     rup.hypo_depth = dep
     return rup
 
-class GmcLt:
-    """
-    Class for managing the GMC logic tree
-    """
-    def __init__(self, gmclt, basedir=None):
-        self.gmclt = gmclt
-        self.basedir = basedir
-
-    @classmethod
-    def from_file(cls, fname):
-        gmclt = to_python(fname)
-        basedir = os.path.dirname(fname)
-        self = cls(gmclt, basedir)
-        return self
-
-    def iter_gmms(self, trts=[]):
-        """
-        :param trts:
-            A list of tectonic regions
-        """
-        for branching_level in self.gmclt:
-            for branch_set in branching_level:
-                for branch in branch_set:
-                    gmm = valid.gsim(branch.uncertaintyModel, self.basedir)
-                    trt = branch_set['applyToTectonicRegionType']
-                    if trt in trts or len(trts) < 1:
-                        yield gmm
-
-    def iter_gmms_by_trt(self, trts=[]):
-        """
-        :param trts:
-            A list of tectonic regions
-        """
-        for branching_level in self.gmclt:
-            for branch_set in branching_level:
-                trt = branch_set['applyToTectonicRegionType']
-                gmms = []
-                for branch in branch_set:
-                    gmm = valid.gsim(branch.uncertaintyModel, self.basedir)
-                    gmms.append(gmm)
-                yield trt, gmms
-
-def get_gm_info(ds, gm_vals):
-    """
-    :param ds:
-        Datastore
-    :param gm_vals:
-        An iterable on a set of GM values
-    :returns:
-        Event ID and site ID
-    """
-    eids = []
-    siteids = []
-    df = ds.read_df('gmf_data', 'eid')
-    for gm_val in gm_vals:
-        print('Searching for ground motion value: {:.4f}'.format(gm_val))
-        tmp = df[df.gmv_0 == gm_val]
-        eids.append(tmp.index)
-        siteids.append(tmp['sid'].iloc[0])
-    return eids, siteids
-
-def get_rupture_info(ds, eids, display=True):
-    """
-    :param ds:
-    :param event_id:
-    """
-    x = PrettyTable()
-    x.field_names = ["Event ID", "Rup ID", "Rlz ID", "Source ID"]
-    x.align["Rup ID"] = "r"
-    x.align["Rlz ID"] = "r"
-    x.align["Source ID"] = "r"
-
-    # Get rupture info
-    ev = ds.read_df('events', 'id')
-    rup = ds.read_df('ruptures', 'id')
-
-    for eid in eids:
-        rupid = ev.loc[eid]['rup_id']
-        rlz_id = ev.loc[eid]['rlz_id'].iloc[0]
-        source_id = rup.loc[rupid]['source_id'].iloc[0].decode("utf-8")
-        ev.loc[eid]
-        x.add_row([eid, rupid, rlz_id, source_id])
-
-    return rupid, rlz_id, source_id
-
-def get_rlz_info(ds, rlz_id, grp_id):
-    full_lt = ds['full_lt']
-    trt_by_grp = full_lt.trt_by_grp
-    print(' ', trt_by_grp[grp_id])
-
-    rlzs = full_lt.get_realizations()
-    gmmrlz = full_lt.gsim_by_trt(rlzs[rlz_id])
-    print(gmmrlz)
-    print('\n ', gmmrlz[trt_by_grp[grp_id]])
-
 def att_curves(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,step,
               imt,ztor,eshm20_region):    
     trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
+    
     rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
                       strike=strike, dip=dip, rake=rake, trt=trt, ztor=ztor)
-
-    #eshm20_region = 2
+    
     if 'KothaEtAl2020ESHM20' in str(gmpe):
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False, 'vs30measured': True,'region': eshm20_region}  
+        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
+                 'vs30measured': True,'region': eshm20_region}  
     else:
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False, 'vs30measured': True}
+        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
+                 'vs30measured': True}
                 
     sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
                                    direction='positive', hdist=maxR, step=step,
