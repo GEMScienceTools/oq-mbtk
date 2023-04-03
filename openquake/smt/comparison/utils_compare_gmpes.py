@@ -47,8 +47,6 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         colors = custom_color_list
             
     step = 1
-    # Npoints=maxR/step
-    threshold = 0.01
     
     # Set Z1 and Z25
     if  Z1 == -999:
@@ -95,15 +93,17 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                 color=col, linestyle='-.')
                                      
                     store_trellis_values['IM = ' + str(i), 'Magnitude = ' 
-                                         + str(m), gmpe] = [np.array(mean),
-                                                            np.array(plus_sigma),
-                                                            np.array(minus_sigma),
-                                                            np.array(distances)]
+                                         + str(m), str(gmpe).replace(
+                                             '\n',', ')] = [np.array(mean),
+                                                           np.array(plus_sigma),
+                                                           np.array(minus_sigma),
+                                                           np.array(distances)]
                 else:
                     store_trellis_values['IM = ' + str(i), 'Magnitude = ' +
-                                             str(m), gmpe] = [np.array(mean),
+                                             str(m), str(gmpe).replace(
+                                                 '\n',', ')]= [np.array(mean),
                                                               np.array(distances)]
-
+                                                              
                 if n == 0: #top row only
                     pyplot.title('Mw=' + str(m), fontsize='16')
                 if n == len(imt_list)-1: #bottom row only
@@ -261,7 +261,8 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                          label=gmpe)
                 
                 store_spectra_values['Distance %s km' %i, 'Magnitude = '
-                                     + str(m), gmpe] = [np.array(period),
+                                     + str(m), str(gmpe).replace(
+                                         '\n',', ')] = [np.array(period),
                                                         np.array(rs_50p),
                                                         np.array(sigma)]
                 
@@ -319,8 +320,6 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
     for n, i in enumerate(imt_list): #iterate though imt_list
 
         matrix_medians=np.zeros((len(gmpe_list),(len(mag_list)*int((
-            maxR/step)))))
-        matrix_sigmas=np.zeros((len(gmpe_list),(len(mag_list)*int((
             maxR/step)))))
 
         for g, gmpe in enumerate(gmpe_list): 
@@ -401,7 +400,6 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         if mtxs_type == '84th_perc':
             ax.set_title(str(i) + ' (84th percentile)', fontsize = '14')
 
-        ticks_loc = ax.get_yticks().tolist()
         ax.xaxis.set_ticks([n for n in range(len(gmpe_list))])
         ax.xaxis.set_ticklabels(gmpe_list,rotation=40)
         ax.yaxis.set_ticks([n for n in range(len(gmpe_list))])
@@ -459,7 +457,6 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
 
         for g, gmpe in enumerate(gmpe_list): 
             col=colors[g]
-            label=type(gmpe).__name__
             pyplot.plot(coo[g,0], coo[g,1], 'o', markersize=9, color=colors[
                 g], label=gmpe)
             texts.append(pyplot.text(coo[g, 0]+np.abs(coo[g, 0])*0.02,
