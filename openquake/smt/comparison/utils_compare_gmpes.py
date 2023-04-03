@@ -126,7 +126,8 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     # Export values to csv
     if not Nstd == 0:
         trellis_value_df = pd.DataFrame(store_trellis_values,
-                                        index = ['Mean (g)','Plus %s sigma (g)' %Nstd,
+                                        index = ['Mean (g)',
+                                                 'Plus %s sigma (g)' %Nstd,
                                                  'Minus %s sigma (g)' %Nstd,
                                                  'Distance (km)'])
     if Nstd == 0:
