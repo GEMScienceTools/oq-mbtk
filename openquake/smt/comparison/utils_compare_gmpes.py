@@ -488,11 +488,11 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         # Plot dendrogram
         dn1 = hierarchy.dendrogram(matrix_Z[n], ax=ax, orientation='right',
                                    labels=gmpe_list)
-        ax.set_xlabel('Euclidean Distance', fontsize = '14')
+        ax.set_xlabel('Euclidean Distance', fontsize = '12')
         if mtxs_type == 'median':
-            ax.set_title(str(i) + ' (median)', fontsize = '14')
+            ax.set_title(str(i) + ' (median)', fontsize = '12')
         if mtxs_type == '84th_perc':
-            ax.set_title(str(i) + ' (84th percentile)', fontsize = '14')
+            ax.set_title(str(i) + ' (84th percentile)', fontsize = '12')
 
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.4)
     pyplot.show()
