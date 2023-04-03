@@ -94,14 +94,14 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                      
                     store_trellis_values['IM = ' + str(i), 'Magnitude = ' 
                                          + str(m), str(gmpe).replace(
-                                             '\n',', ')] = [np.array(mean),
+                                             '\n',', ')] = [np.array(np.exp(mean)),
                                                            np.array(plus_sigma),
                                                            np.array(minus_sigma),
                                                            np.array(distances)]
                 else:
                     store_trellis_values['IM = ' + str(i), 'Magnitude = ' +
                                              str(m), str(gmpe).replace(
-                                                 '\n',', ')]= [np.array(mean),
+                                                 '\n',', ')]= [np.array(np.exp(mean)),
                                                               np.array(distances)]
                                                               
                 if n == 0: #top row only
