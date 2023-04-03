@@ -273,29 +273,16 @@ def write_edges_csv(sps, foldername):
         numpy.savetxt(fname, numpy.array(dat))
 
 
-def main(argv):
+def create_2pt5_model(in_path, out_path, maximum_sampling_distance=25.):
     """
-    argv[0] - Folder name
-    argv[1] - Sampling distance [km]
-    argv[2] - Output folder name
-    argv[3] - Maximum sampling distance
+    :param in_path:
+        Folder name with profiles
+    :param out_path:
+        Output folder name
+    :param maximum_sampling_distance:
+        Maximum sampling distance used to create the mesh [km]
     """
-    in_path = os.path.abspath(argv[0])
-    out_path = os.path.abspath(argv[2])
-    #
-    # Check input
-    if len(argv) < 3:
-        tmps = 'Usage: create_2pt5_model.py <in_folder>'
-        tmps += ' <ini_filename> <out_folder>'
-        print(tmps)
-        exit(0)
-    #
-    # Sampling distance [km]
-    if len(argv) < 4:
-        maximum_sampling_distance = 25.
-    else:
-        maximum_sampling_distance = float(argv[3])
-    #
+
     # Check folders
     if in_path == out_path:
         tmps = '\nError: the input folder cannot be also the output one\n'
@@ -303,10 +290,10 @@ def main(argv):
         tmps += '    input: {0:s}\n'.format(out_path)
         print(tmps)
         exit(0)
-    #
+
     # Read profiles
     sps, dmin, dmax = read_profiles_csv(in_path)
-    #
+
     # Compute lengths
     lengths, longest_key, shortest_key = get_profiles_length(sps)
     number_of_samples = numpy.ceil(lengths[longest_key] /
@@ -316,16 +303,12 @@ def main(argv):
     print('Shortest sampling [%s]: %.4f' % (shortest_key, tmp))
     tmp = lengths[longest_key]/number_of_samples
     print('Longest sampling  [%s]: %.4f' % (longest_key, tmp))
-    #
+
     # Resampled profiles
     rsps = get_interpolated_profiles(sps, lengths, number_of_samples)
-    #
+
     # Store profiles
     write_profiles_csv(rsps, out_path)
-    #
+
     # Store edges
     write_edges_csv(rsps, out_path)
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
