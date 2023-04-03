@@ -94,14 +94,17 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                      
                     store_trellis_values['IM = ' + str(i), 'Magnitude = ' 
                                          + str(m), str(gmpe).replace(
-                                             '\n',', ')] = [np.array(np.exp(mean)),
+                                             '\n', ', ').replace('[', '').replace(
+                                                 ']', '')] = [np.array(np.exp(mean)),
                                                            np.array(plus_sigma),
                                                            np.array(minus_sigma),
                                                            np.array(distances)]
                 else:
                     store_trellis_values['IM = ' + str(i), 'Magnitude = ' +
                                              str(m), str(gmpe).replace(
-                                                 '\n',', ')]= [np.array(np.exp(mean)),
+                                                 '\n', ', ').replace(
+                                                     '[', '').replace(']', '')
+                                                     ] = [np.array(np.exp(mean)),
                                                               np.array(distances)]
                                                               
                 if n == 0: #top row only
@@ -260,9 +263,10 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
                          label=gmpe)
                 
-                store_spectra_values['Distance %s km' %i, 'Magnitude = '
+                store_spectra_values['Distance = %s km' %i, 'Magnitude = '
                                      + str(m), str(gmpe).replace(
-                                         '\n',', ')] = [np.array(period),
+                                         '\n', ', ').replace('[', '').replace(
+                                             ']', '')] = [np.array(period),
                                                         np.array(rs_50p),
                                                         np.array(sigma)]
                 
