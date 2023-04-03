@@ -84,7 +84,7 @@ defaults = {'name': 'unnamed',
             'rupture_mesh_spacing': 2.,
             'rupture_aspect_ratio': 2.,
             'minimum_fault_length': 5.,
-            'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST,
+            'tectonic_region_type': 'Active Shallow Crust',
             'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
             'magnitude_scaling_relation': 'Leonard2014_Interplate',
             'width_scaling_relation': 'Leonard2014_Interplate',
@@ -800,6 +800,12 @@ def line_from_trace_coords(trace_coords):
     :rtype:
         openquake.hazardlib.geo.line.Line
     """
+    if len(trace_coords) == 1:
+        try:
+            trace_coords = next(iter(trace_coords))
+        except:
+            print("Error: fault traces incorrectly defined")
+
     fault_trace = hz.geo.Line([hz.geo.Point(i[0], i[1])
                                for i in trace_coords])
 
@@ -2812,6 +2818,10 @@ def calc_double_truncated_GR_mfd_from_fault_params(
     bin_mags_cli, bin_rates_cli = get_rate_above_m_cli(bin_mags, bin_rates,
                                                        m_min, m_cli,
                                                        bin_width)
+
+    # first, round rates to 12 decimals (this makes tests easier - other ideas?)
+    bin_rates_cli = [b.round(12) for b in bin_rates_cli]
+    
     # Using rates from m_cli to m_max
     mfd = hz.mfd.EvenlyDiscretizedMFD(bin_mags_cli[0],
                                       bin_width,
@@ -3053,6 +3063,8 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
                                                        bin_rates,
                                                        m_min, m_cli,
                                                        bin_width)
+
+    bin_rates_cli = [b.round(12) for b in bin_rates_cli]
 
     mfd_ed = hz.mfd.EvenlyDiscretizedMFD(bin_mags_cli[0],
                                       bin_width,

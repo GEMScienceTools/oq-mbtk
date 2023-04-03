@@ -38,8 +38,14 @@ from math import fabs
 from rtree import index
 from geojson import LineString, Feature, FeatureCollection, dump
 
+from typing import Union
 from openquake.cat.utils import decimal_time
+from openquake.hazardlib.geo.geodetic import geodetic_distance, distance, _prepare_coords 
 
+YEAR_MIN = 1000.0
+MAG_MIN = 1.0
+MAG_MAX = 9.0
+MAG_DLT = 0.2
 
 DATAMAP = [("eventID", "U20"), ("originID", "U20"), ("Agency", "U14"),
            ("year", "i2"), ("month", "i2"), ("day", "i2"), ("hour", "i2"),
@@ -47,7 +53,9 @@ DATAMAP = [("eventID", "U20"), ("originID", "U20"), ("Agency", "U14"),
            ("longitude", "f4"), ("latitude", "f4"), ("depth", "f4"),
            ("depthSolution", "U1"), ("semimajor90", "f4"),
            ("semiminor90", "f4"), ("error_strike", "f2"),
-           ("depth_error", "f4"), ("prime", "i1")]
+           ("depth_error", "f4"), ("prime", "i1"), ("dip1", "f4"), 
+           ("rake1", "f4"), ("str1", "f4"), ("dip2", "f4"),
+           ("rake2", "f4"), ("str2", "f4")]
 
 MAGDATAMAP = [("eventID", "U20"), ("originID", "U20"), ("magnitudeID", "U40"),
               ("value", "f4"), ("sigma", "f4"), ("magType", "U6"),
@@ -157,7 +165,9 @@ class Magnitude(object):
 
 class Location(object):
     '''
-    Instance of a magnitude location
+    Instance of a magnitude location. Contains spatial information for a given event to be stored in the origins output.
+    Note that order is very important here. 
+    
     :param int origin_id:
         Identifier as origin ID
     :param float longitude:
@@ -178,10 +188,23 @@ class Location(object):
         Strike of the semimajor axis of the error ellipse
     :param float depth_error:
         1 s.d. Error on the depth value (km)
+    :param float str1:
+        strike from 1st nodal plane
+    :param float dip1:
+        dip from 1st nodal plane
+    :param float rake1:
+        rake from 1st nodal plane
+    :param float str2:
+        strike from 2nd nodal plane
+    :param float dip2:
+        dip from 2nd nodal plane
+    :param float rake2:
+        rake from 2nd nodal plane 
     '''
     def __init__(self, origin_id, longitude: float, latitude: float,
                  depth: float, depthSolution=None, semimajor90=None,
-                 semiminor90=None, error_strike=None, depth_error=None):
+                 semiminor90=None, error_strike=None, depth_error=None, 
+                 str1=None, dip1= None, rake1= None,  str2=None, dip2= None, rake2= None):
         """
         """
         self.identifier = origin_id
@@ -195,6 +218,12 @@ class Location(object):
         self.semiminor90 = semiminor90
         self.error_strike = error_strike
         self.depth_error = depth_error
+        self.str1 = str1
+        self.dip1 = dip1
+        self.rake1 = rake1
+        self.str2 = str2
+        self.dip2 = dip2
+        self.rake2 = rake2
 
     def __str__(self):
         """
@@ -249,7 +278,6 @@ class Origin(object):
         - 'AnalysisType' - Analysis type
         - 'LocationMethod' - Location Method
         - 'EventType' - Event type
-
     """
     def __init__(self, identifier, date, time, location, author,
                  is_prime=False, is_centroid=False, time_error=None,
@@ -270,6 +298,7 @@ class Origin(object):
         self.time_rms = time_rms
         self.date_time_str = "|".join([str(self.date).replace("-", "|"),
                                        str(self.time).replace(":", "|")])
+        
 
     def get_number_magnitudes(self):
         """
@@ -362,7 +391,6 @@ class Event(object):
         List of instances of the Magnitude class
     :param str description:
         Description string
-
     '''
     def __init__(self, identifier, origins, magnitudes, description=None):
         """
@@ -426,7 +454,6 @@ class Event(object):
         '''
         Merges an instance of an isf_catalogue.Origin class into the set
         of origins.
-
         :param origin2set:
             An iterable
         '''
@@ -553,21 +580,19 @@ class ISFCatalogue(object):
         self.sidx = sidx
         self.data = np.array(data)
 
-    # TODO - this does not cope yet with catalogues crossing the international
-    # dateline
-    def add_external_idf_formatted_catalogue(self, cat, ll_deltas=0.01,
-            delta_t=dt.timedelta(seconds=30),
+
+    def add_external_idf_formatted_catalogue(
+            self, cat, ll_deltas=0.01, delta_t=dt.timedelta(seconds=30),
             utc_time_zone=dt.timezone(dt.timedelta(hours=0)),
-            buff_t=dt.timedelta(seconds=0), buff_ll=0, use_ids=False,
+            buff_t=dt.timedelta(seconds=0), buff_ll=0, use_kms = False, use_ids=False,
             logfle=False):
         """
         This merges an external catalogue formatted in the ISF format e.g. a
         catalogue coming from an external agency. Because of this, we assume
         that each event has a single origin.
-
         :param cat:
             An instance of :class:`ISFCatalogue` i.e. the 'guest' catalogue
-        :param ll_deltas:
+        :param delta_ll:
             A float defining the tolerance in decimal degrees used when looking
             for colocated events
         :param delta_t:
@@ -578,12 +603,14 @@ class ISFCatalogue(object):
             timezone for the new catalogue.
         :param buff_t:
             Tolerance used to find events close to the selection threshold.
-            It's an instance of :class:`datetime.timedelta`
+            It's an instance of :class:`datetime.timedelta` or a float.
         :param buff_ll:
             A float defining the tolerance used to find events close to the
             selection threshold.
         :param use_ids:
             A boolean
+        :param use_kms: 
+            Use kms for distance delta instead of degrees. 
         :param logfle:
             Name of the file which will contain the log of the processing
         :return:
@@ -594,31 +621,28 @@ class ISFCatalogue(object):
               The values are the indexes of the doubtful events in the 'guest'
               catalogue.
         """
+        delta_ll = ll_deltas
+
+        # Create a dt.timedelta for buff_t if this is provided as a float
+        if isinstance(buff_t, float):
+            buff_t = dt.timedelta(seconds=buff_t)
+
         if logfle:
-            fou = open(logfle, 'w')
+            fou = open(logfle, 'w', encoding="utf-8")
             fname_geojson = os.path.splitext(logfle)[0]+"_secondary.geojson"
 
-        #
         # This is a dictionary where we store the doubtful events.
         doubts = {}
-        #
+
         # Check if we have a spatial index
         assert 'sidx' in self.__dict__
-        #
-        # Set delta time thresholds
-        if hasattr(delta_t, '__iter__'):
-            threshold = np.array([[t[0], t[1].total_seconds()] for t in
-                                  delta_t])
-        else:
-            threshold = np.array([[1000, delta_t.total_seconds()]])
-        #
-        # Set ll delta thresholds
-        if hasattr(ll_deltas, '__iter__'):
-            ll_deltas = np.array([d for d in ll_deltas])
-        else:
-            ll_deltas = np.array([[1000, ll_deltas]])
-        #
-        # Processing the events in the catalogue 'guest' catalogue
+
+        # Get the edges of magnitude and time plus the matrixes with the
+        # delta values that should be used
+        mag_low_edges, time_low_edges, time_d, ll_d = get_threshold_matrices(
+            delta_t, delta_ll)
+
+        # Processing the events in the 'guest' catalogue
         id_common_events = []
         features = []
         new = 0
@@ -629,14 +653,13 @@ class ISFCatalogue(object):
         for iloc, event in enumerate(cat.events):
 
             if logfle:
-                msg = 'Index: {:d} Event ID: {:s}\n'.format(iloc, event.id)
+                msg = f'Index: {iloc:d} Event ID: {event.id:s}\n'
                 fou.write(msg)
 
-            #
             # Initial settings
             found = False
             before = self.get_number_events()
-            #
+
             # Updating time of the origin to the new timezone
             new_datetime = dt.datetime.combine(event.origins[0].date,
                                                event.origins[0].time,
@@ -644,75 +667,79 @@ class ISFCatalogue(object):
             new_datetime = new_datetime.astimezone(self.timezone)
             event.origins[0].date = new_datetime.date()
             event.origins[0].time = new_datetime.time()
-            #
+
             # Set the datetime of the event
             dtime_a = dt.datetime.combine(event.origins[0].date,
                                           event.origins[0].time)
-            #
-            # Take the appropriate value from delta_ll - this is needed in
-            # particular when delta_ll varies with time.
-            idx_threshold = max(np.argwhere(dtime_a.year > ll_deltas[:, 0]))
-            ll_thrs = ll_deltas[idx_threshold, 1]
-            #
+
+            # Take the index from delta_ll - this is needed
+            # when delta_ll varies with time.
+            magnitude = event.magnitudes[0].value
+            idx_mag = max(np.argwhere(magnitude > mag_low_edges))[0]
+            tmp_val = np.float64(dtime_a.year)
+            idx_t = max(np.argwhere(tmp_val > time_low_edges))[0]
+            
+            
+            ll_thrs = ll_d[idx_t][idx_mag]
+            sel_thrs = time_d[idx_t][idx_mag]
+            sel_thrs = sel_thrs.total_seconds()
+            
             # Create selection window
-            minlo = event.origins[0].location.longitude - ll_thrs
-            minla = event.origins[0].location.latitude - ll_thrs
-            maxlo = event.origins[0].location.longitude + ll_thrs
-            maxla = event.origins[0].location.latitude + ll_thrs
-            #
+            # if using kms, still filter by lat/lon first so that we don't have to 
+            # calculate distances between all events in the catalogue
+            if use_kms == False:
+                minlo = event.origins[0].location.longitude - ll_thrs
+                minla = event.origins[0].location.latitude - ll_thrs
+                maxlo = event.origins[0].location.longitude + ll_thrs
+                maxla = event.origins[0].location.latitude + ll_thrs
+            else:
+                minlo = event.origins[0].location.longitude - 2
+                minla = event.origins[0].location.latitude - 2
+                maxlo = event.origins[0].location.longitude + 2
+                maxla = event.origins[0].location.latitude + 2
+
             # Querying the spatial index
-            obj = [n.object for n in self.sidx.intersection((minlo, minla,
-                                                             maxlo, maxla),
-                                                            objects=True)]
-            #
-            # This is for checking. We perform the check only if the buffer
-            # distance is larger than 0
-            obj_e = []
-            obj_a = []
-            if buff_ll > 0 or buff_t.seconds > 0:
-                obj_a = [n.object for n in self.sidx.intersection((
-                        minlo-buff_ll, minla-buff_ll, maxlo+buff_ll,
-                        maxla+buff_ll), objects=True)]
-                obj_b = [n.object for n in self.sidx.intersection((
-                        minlo+buff_ll, minla+buff_ll, maxlo-buff_ll,
-                        maxla+buff_ll), objects=True)]
-                #
-                # Find the index of the events in the buffer across the
-                # selection window
-                obj_e = list(set(obj_a) - set(obj_b))
-            #
-            # Find the appropriate delta_time
-            idx_threshold = max(np.argwhere(dtime_a.year >
-                                            threshold[:, 0]))
-            sel_thrs = threshold[idx_threshold, 1]
+            obj = [n.object for n in self.sidx.intersection(
+                (minlo, minla, maxlo, maxla), objects=True)]
+
+            
 
             if logfle:
-                msg = '   Selected {:d} events \n'.format(len(obj))
+                msg = f'   Selected {len(obj):d} events \n'
                 fou.write(msg)
 
             if len(obj):
-                #
+
                 # Checking the events selected with the spatial index. obj is
                 # a list of tuples (event and origin ID) in the host
                 # catalogue for the epicenters close to the investigated event
                 for i in obj:
-                    #
                     # Selecting the origin of the event found in the catalogue
                     i_eve = i[0]
                     i_ori = i[1]
                     orig = self.events[i_eve].origins[i_ori]
                     dtime_b = dt.datetime.combine(orig.date, orig.time)
-                    #
+ 
                     # Check if time difference is within the threshold value
                     delta = abs((dtime_a - dtime_b).total_seconds())
 
                     if logfle:
                         eid = self.events[i_eve].id
-                        msg = '      Event ID: {:s}\n'.format(eid)
-                        msg += '      Delta: {:f}\n'.format(delta)
+                        msg = f'      Event ID: {eid:s}\n'
+                        msg += f'      Delta: {delta:f}\n'
                         fou.write(msg)
-
-                    if delta < sel_thrs and found is False:
+                    
+                    # Use kms if specified. If event is outwith km threshold, set km_check to false and analysis of this event will stop
+                    # Otherwise, if event is within km threshold, or if we are not using kms, move to next step.    
+                    if use_kms == True:
+                        delta_km = abs(geodetic_distance(event.origins[0].location.longitude, event.origins[0].location.latitude, orig.location.longitude,  orig.location.latitude))
+                   
+                        if delta_km < ll_thrs:
+                            km_check = True
+                        else: km_check = False
+                    else: km_check = True
+                          
+                    if delta < sel_thrs and found is False and km_check is True:                      
 
                         # Found an origin in the same space-time window
                         found = True
@@ -724,7 +751,7 @@ class ISFCatalogue(object):
                         if tmp[0].author in [o.author for o in origins]:
 
                             fmt = "This event already contains "
-                            fmt += " an origin from the same agency: {:s}\n"
+                            fmt += " an origin from this agency: {:s}\n"
                             fmt += " Trying to add evID {:s}\n"
                             msg = fmt.format(tmp[0].author, event.id)
                             warnings.warn(msg)
@@ -732,7 +759,7 @@ class ISFCatalogue(object):
                             if logfle:
                                 fou.write(msg)
 
-                        # Set prime solution is necessary
+                        # Set prime solution, if necessary
                         if (len(self.events[i_eve].origins) == 1 and
                                 not self.events[i_eve].origins[0].is_prime):
                             tmp[0].is_prime = True
@@ -784,45 +811,105 @@ class ISFCatalogue(object):
                         common += 1
 
                         break
-            #
-            # Searching for doubtful events:
+            
+            # This is for checking. We perform the check only if the buffer
+            # distance is larger than 0
+            obj_e = []
+            obj_a = []
+            
+            if buff_ll > 0 or buff_t.total_seconds() > 0:
+                if use_kms == False:
+                    obj_a = [n.object for n in self.sidx.intersection((
+                            minlo-buff_ll, minla-buff_ll, maxlo+buff_ll,
+                            maxla+buff_ll), objects=True)]
+                    obj_b = [n.object for n in self.sidx.intersection((
+                            minlo+buff_ll, minla+buff_ll, maxlo-buff_ll,
+                            maxla-buff_ll), objects=True)]
+                    
+                    obj_e = list(set(obj_a) - set(obj_b))
+                    
+                            
+            # Search for doubtful events:
             if buff_ll > 1e-10 and buff_t.seconds > 1e-10:
-                if len(obj_a) > 0:
+                if use_kms == False and len(obj_a) > 0:
                     for i in obj_a:
                         to_add = False
-                        #
+                      
                         # Selecting origin of the event found in the catalogue
                         i_eve = i[0]
                         i_ori = i[1]
                         orig = self.events[i_eve].origins[i_ori]
                         dtime_b = dt.datetime.combine(orig.date, orig.time)
-                        #
-                        # Check if time difference within the threshold value
+                        # Check if time difference is within the threshold
                         tmp_delta = abs(dtime_a - dtime_b).total_seconds()
-                        #
+
                         # Within max distance and across the time buffer
                         tsec = buff_t.total_seconds()
                         if (tmp_delta > (sel_thrs - tsec) and
                                 tmp_delta < (sel_thrs + tsec)):
+                            
                             to_add = True
-                        #
+
                         # Within max time and within the ll buffer
                         if (not to_add and tmp_delta < (sel_thrs + tsec)):
-                            if i in obj_e:
+                            if i in obj_e: 
                                 to_add = True
-                        #
+
                         # Saving info
                         if to_add:
                             if i[0] in doubts:
                                 doubts[i[0]].append(iloc)
                             else:
                                 doubts[i[0]] = [iloc]
-            #
-            # Adding new event
-            if not found:
-                # Making sure that the ID of the event added does not exist
-                # already
 
+                                
+                elif use_kms == True:
+                    for i in obj:
+                        to_add = False
+
+                        # Selecting origin of the event found in the catalogue
+                        i_eve = i[0]
+                        i_ori = i[1]
+                        orig = self.events[i_eve].origins[i_ori]
+                        dtime_b = dt.datetime.combine(orig.date, orig.time)
+                        # Check if time difference is within the threshold
+                        tmp_delta = abs(dtime_a - dtime_b).total_seconds()
+                                                
+                        hi_buff = ll_thrs + buff_ll
+                        lo_buff = ll_thrs - buff_ll
+                        
+                        delta_km_thresh_buff = abs(geodetic_distance(event.origins[0].location.longitude, event.origins[0].location.latitude, orig.location.longitude,  orig.location.latitude))  
+                        
+                        
+                        if (delta_km_thresh_buff < hi_buff):
+                            
+                            # Within max distance and across the time buffer
+                            tsec = buff_t.total_seconds()
+                            
+                            
+                            if (tmp_delta > (sel_thrs - tsec) and
+                                    tmp_delta < (sel_thrs + tsec)):
+                                to_add = True
+
+                            # Within max time and within the ll buffer
+                            if (not to_add and tmp_delta < (sel_thrs + tsec)):
+                                if (delta_km_thresh_buff > lo_buff): 
+                                    to_add = True
+
+                            # Saving info
+                            if to_add:
+                                if i[0] in doubts:
+                                    doubts[i[0]].append(iloc)
+                                else:
+                                    doubts[i[0]] = [iloc]
+
+                    
+
+            # Add new event
+            if not found:
+
+                # Make sure that the ID of the event added does not exist
+                # already
                 if event.id in set(self.ids):
 
                     if use_ids:
@@ -857,52 +944,43 @@ class ISFCatalogue(object):
 
                     self.ids.append(event.id)
                     new += 1
-            #
+
             # Checking
             if (new - new_old) > 0 and (common - common_old > 0):
-                msg = '{:d}'.format(iloc)
+                msg = f'{iloc:d}'
                 raise ValueError(msg)
-            elif (new - new_old) > 1:
-                msg = 'New increment larger than 1, iloc {:d}'.format(iloc)
+            if (new - new_old) > 1:
+                msg = f'New increment larger than 1, iloc {iloc:d}'
                 raise ValueError(msg)
-            elif (common - common_old) > 1:
-                msg = 'Common increment larger than 1, iloc {:d}'.format(iloc)
+            if (common - common_old) > 1:
+                msg = f'Common increment larger than 1, iloc {iloc:d}'
                 raise ValueError(msg)
-            else:
-                new_old = new
-                common_old = common
-            #
-            #
-            after = self.get_number_events()
-            #
-            #
-            # if not iloc % 5000:
-            #    idxs, stats = self.get_prime_events_info()
-            #    num_primes = [len(stats[k]) for k in stats.keys()]
-            #    msg = "{:d}".format(iloc)
-            #    assert sum(num_primes) == after, msg
 
+            new_old = new
+            common_old = common
+
+            # Check
+            after = self.get_number_events()
             fmt = 'before {:d} after {:d} iloc {:d} found {:d} loops: {:d}'
             msg = fmt.format(before, after, iloc, found, iloc)
             dlt = 0 if found else 1
             assert before+dlt == after, msg
-        #
-        # Checking
+
+        # Check
         fmt = "Wrong budget \n"
         fmt += "Common: {:d} New: {:d} Sum: {:d} Expected: {:d} loops: {:d}\n"
         msg = fmt.format(common, new, common+new, cat.get_number_events(),
                          iloc+1)
         assert (common + new) == cat.get_number_events(), msg
-        #
-        # Updating the spatial index
+
+        # Update the spatial index
         self._create_spatial_index()
 
         if logfle:
             fou.close()
-
             feature_collection = FeatureCollection(features)
-            with open(fname_geojson, 'w') as f:
-                dump(feature_collection, f)
+            with open(fname_geojson, 'w', encoding="utf-8") as fname:
+                dump(feature_collection, fname)
 
         return id_common_events, doubts
 
@@ -945,7 +1023,6 @@ class ISFCatalogue(object):
         """
         This method computes the number of unique events provided by each
         agency.
-
         :returns:
             A dictionary with key the name of the agency and value the number
             of unique events.
@@ -989,7 +1066,6 @@ class ISFCatalogue(object):
         """
         This removes from the catalogue all the events with ID included in the
         list provided.
-
         :param ids:
             A list of event IDs
         """
@@ -1115,6 +1191,7 @@ class ISFCatalogue(object):
                 else:
                     depth_error = 0.0
 
+
                 if (orig.location.depthSolution == 'None' or
                         orig.location.depthSolution == '' or
                         orig.location.depthSolution is None):
@@ -1124,7 +1201,7 @@ class ISFCatalogue(object):
                 else:
                     print('Location:', orig.location.depthSolution)
                     raise ValueError("Unsupported case")
-
+                
                 if (orig.location.depth == 'None' or
                         orig.location.depth == '' or
                         orig.location.depth is None):
@@ -1143,7 +1220,37 @@ class ISFCatalogue(object):
                     prime = 1
                 else:
                     prime = 0
-
+                    
+                if orig.location.dip1:
+                    dip1 = orig.location.dip1
+                else:    
+                    dip1 = 0
+                    
+                if orig.location.str1:
+                    str1 = orig.location.str1
+                else:    
+                    str1 = 0
+                
+                if orig.location.rake1:
+                    rake1 = orig.location.rake1
+                else:    
+                    rake1 = 0
+                    
+                if orig.location.dip2:
+                    dip2 = orig.location.dip2
+                else:    
+                    dip2 = 0
+                    
+                if orig.location.str2:
+                    str2 = orig.location.str2
+                else:    
+                    str2 = 0
+                
+                if orig.location.rake2:  
+                    rake2 = orig.location.rake2
+                else:    
+                    rake2 = 0
+                
                 origin_data[o_counter] = (eq.id, orig.id, orig.author,
                                           orig.date.year, orig.date.month,
                                           orig.date.day, orig.time.hour,
@@ -1153,7 +1260,8 @@ class ISFCatalogue(object):
                                           depth,
                                           depthSolution,
                                           semimajor90, semiminor90,
-                                          error_strike, depth_error, prime)
+                                          error_strike, depth_error, prime,
+                                          dip1,rake1,str1,dip2, rake2, str2 )
 
                 o_counter += 1
 
@@ -1221,3 +1329,96 @@ class ISFCatalogue(object):
                     output_str = "|".join(output_strings)
                     print(output_str.replace("|", delimiter), file=f)
             print("Exported to %s" % filename)
+
+
+def get_delta_t(tmpl: Union[float, list]):
+    """
+    Given a tuple (or list of tuples) containing a year and a delta time in
+    seconds it returns timedelta instances.
+    :param tmpl:
+        Either a float (or string) or an iterable containing tuples with
+        an int (year from which this delta time applies) and a float (time
+        in seconds)
+    :return:
+        A :class:`datetime.timedelta` instance or a list of instances of the
+        same class with the same cardinality of the input `tmpl`
+    """
+    if not hasattr(tmpl, '__iter__'):
+        return float(tmpl)
+
+    # Creating a list of timedeltas
+    out = []
+    for tmp in tmpl:
+        ## If we can, parse tmp[1] to float
+        ## This should be the case as long as tmp[1] is not a function
+        try: 
+            out.append([int(tmp[0]), float(tmp[1])])
+        # If we can't parse tmp[1] to a float, pass it as a string
+        except:
+            out.append([int(tmp[0]), str(tmp[1])])
+    return out
+
+
+def get_threshold_matrices(delta_t, delta_ll):
+    """
+    :param delta_t:
+        This can be:
+            - A float
+            - A string representing a function
+            - A list of tuples (first element a year, second element a Δ in
+            seconds)
+            - A list of tuples (first element a year, second element a string
+            describing a function of Δ)
+    :param delta_ll:
+    """
+
+    # Homogenize the delta_t
+    if not hasattr(delta_t, '__iter__'):
+        # This handles the case when delta_t is a scalar of a string
+        delta_t = [[YEAR_MIN, delta_t]]
+        assert not hasattr(delta_ll, '__iter__')
+        delta_ll = [[YEAR_MIN, delta_ll]]
+
+    if hasattr(delta_t, '__iter__'):
+        yea1 = np.array([float(t[0]) for t in delta_t])
+        yea2 = np.array([float(t[0]) for t in delta_ll])
+        np.testing.assert_array_equal(yea1, yea2)
+
+    # Set delta time matrix
+    mag_low_edges = np.arange(1.0, 9.0, 0.2)
+    var_eval = {'m': mag_low_edges}
+
+    # Set the time lower edges
+    time_low_edges = np.array([t[0] for t in delta_t])
+
+    # Populate the list with the deltatime instances. This is a
+    # composite numpy array.
+    types = [('dt', dt.timedelta, 1)]
+
+    gettd = dt.timedelta
+    data = []
+    for i_par, tpar in enumerate(delta_t):
+        if isinstance(tpar[1], str):
+            tmp = np.array([gettd(seconds=t) for t in eval(tpar[1], var_eval)])
+        else:
+            tmp = gettd(seconds=float(tpar[1])) * np.ones_like(mag_low_edges)
+        data.append(tmp)
+    time_delta = np.array(data)
+
+    # Set the time lower edges
+    time_low_edges = np.array([float(t[0]) for t in delta_ll])
+
+    # Populate the list with the deltatime instances. This is a
+    # composite numpy array.
+    types = [('dll', np.float32, 1)]
+    data = []
+    for i_par, tpar in enumerate(delta_ll):
+        if isinstance(tpar[1], str):
+            tmp = eval(tpar[1], var_eval)
+        else:
+            tmp = tpar[1] * np.ones_like(mag_low_edges)
+        data.append(tmp)
+    ll_delta = np.array(data)
+
+    return mag_low_edges, time_low_edges, time_delta, ll_delta
+
