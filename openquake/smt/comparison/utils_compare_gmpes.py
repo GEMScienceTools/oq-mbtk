@@ -429,7 +429,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
 
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
-    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 0.80), fontsize='16')
+    pyplot.legend(loc="center left", bbox_to_anchor=(1.25, 0.50), fontsize='16')
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
@@ -484,7 +484,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax = axs[n]
         else:
             ax = axs[np.unravel_index(n, (nrows, ncols))]       
-
+        
         # Plot dendrogram
         dn1 = hierarchy.dendrogram(matrix_Z[n], ax=ax, orientation='right',
                                    labels=gmpe_list)
