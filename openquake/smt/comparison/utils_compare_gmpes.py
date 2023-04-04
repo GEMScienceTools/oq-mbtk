@@ -178,8 +178,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     lt_mean = np.sum(lt_df[:].loc['mean'])
                      
                     pyplot.plot(distances, lt_mean, linewidth = 2, color = 'm',
-                                linestyle = '-', label = logic_tree_config,
-                                zorder = len(gmpe_list)+2)
+                                linestyle = '-', label = logic_tree_config)
                     
                     lt_mean_store[i,m] = lt_mean
 
