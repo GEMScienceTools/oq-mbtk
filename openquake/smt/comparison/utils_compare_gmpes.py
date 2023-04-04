@@ -26,6 +26,7 @@ from matplotlib import pyplot
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist, squareform
 from scipy import interpolate
+from IPython.display import display
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib import valid
@@ -46,8 +47,6 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         colors = custom_color_list
             
     step = 1
-    # Npoints=maxR/step
-    threshold = 0.01
     
     # Set Z1 and Z25
     if  Z1 == -999:
@@ -57,7 +56,9 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         Z25 = _get_z25(Vs30,region)
     
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
-
+    
+    store_trellis_values = {}
+    
     for n, i in enumerate(imt_list): #iterate though imt_list
 
         for l, m in enumerate(mag_list):  #iterate though mag_list
@@ -81,13 +82,31 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 pyplot.plot(distances, np.exp(mean), color=col,
                             linewidth=2, linestyle='-', label=gmpe)
                 
+                plus_sigma = np.exp(mean+Nstd*std[0])
+                minus_sigma = np.exp(mean-Nstd*std[0])
+                
                 # Plot Sigma                
                 if not Nstd==0:
-                    pyplot.plot(distances, np.exp(mean+Nstd*std[0]),
-                                linewidth=0.75, color=col, linestyle='--')
-                    pyplot.plot(distances, np.exp(mean-Nstd*std[0]),
-                                linewidth=0.75, color=col, linestyle='-.')
-
+                    pyplot.plot(distances, plus_sigma, linewidth=0.75,
+                                color=col, linestyle='--')
+                    pyplot.plot(distances, minus_sigma, linewidth=0.75,
+                                color=col, linestyle='-.')
+                                     
+                    store_trellis_values['IM = ' + str(i), 'Magnitude = ' 
+                                         + str(m), str(gmpe).replace(
+                                             '\n', ', ').replace('[', '').replace(
+                                                 ']', '')] = [np.array(np.exp(mean)),
+                                                           np.array(plus_sigma),
+                                                           np.array(minus_sigma),
+                                                           np.array(distances)]
+                else:
+                    store_trellis_values['IM = ' + str(i), 'Magnitude = ' +
+                                             str(m), str(gmpe).replace(
+                                                 '\n', ', ').replace(
+                                                     '[', '').replace(']', '')
+                                                     ] = [np.array(np.exp(mean)),
+                                                              np.array(distances)]
+                                                              
                 if n == 0: #top row only
                     pyplot.title('Mw=' + str(m), fontsize='16')
                 if n == len(imt_list)-1: #bottom row only
@@ -106,6 +125,21 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                    bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
+    
+    # Export values to csv
+    if not Nstd == 0:
+        trellis_value_df = pd.DataFrame(store_trellis_values,
+                                        index = ['Mean (g)',
+                                                 'Plus %s sigma (g)' %Nstd,
+                                                 'Minus %s sigma (g)' %Nstd,
+                                                 'Distance (km)'])
+    if Nstd == 0:
+        trellis_value_df = pd.DataFrame(store_trellis_values,
+                                        index = ['Mean (g)', 'Distance (km)'])
+
+    display(trellis_value_df)
+    trellis_value_df.to_csv(os.path.join(output_directory, 'trellis_values.csv'))
+    
     
 def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
@@ -186,6 +220,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     fig2 = pyplot.figure(figsize=(len(mag_list)*5, len(dist_list)*4))
     pyplot.rcParams.update({'font.size': 16})# sigma
     
+    store_spectra_values = {}
     for n, i in enumerate(dist_list): #iterate though dist_list
         
         for l, m in enumerate(mag_list):  #iterate through mag_list
@@ -228,6 +263,13 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
                          label=gmpe)
                 
+                store_spectra_values['Distance = %s km' %i, 'Magnitude = '
+                                     + str(m), str(gmpe).replace(
+                                         '\n', ', ').replace('[', '').replace(
+                                             ']', '')] = [np.array(period),
+                                                        np.array(rs_50p),
+                                                        np.array(sigma)]
+                
                 ax1.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
                               fontsize=16, y=1.0, pad=-16)
                 ax2.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
@@ -248,6 +290,14 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  bbox_inches='tight',dpi=200,pad_inches = 0.2)
     fig1.savefig(os.path.join(output_directory,'ResponseSpectra.png'),
                  bbox_inches='tight',dpi=200,pad_inches = 0.2)
+    
+    # Export values to csv
+    spectra_value_df = pd.DataFrame(store_spectra_values,
+                                    index = ['Periods', 'Median (g)',
+                                             'GMPE Sigma (natural log)'])
+
+    display(spectra_value_df)
+    spectra_value_df.to_csv(os.path.join(output_directory, 'spectra_values.csv'))
 
 def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                          dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio,
@@ -274,8 +324,6 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
     for n, i in enumerate(imt_list): #iterate though imt_list
 
         matrix_medians=np.zeros((len(gmpe_list),(len(mag_list)*int((
-            maxR/step)))))
-        matrix_sigmas=np.zeros((len(gmpe_list),(len(mag_list)*int((
             maxR/step)))))
 
         for g, gmpe in enumerate(gmpe_list): 
@@ -356,7 +404,6 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         if mtxs_type == '84th_perc':
             ax.set_title(str(i) + ' (84th percentile)', fontsize = '14')
 
-        ticks_loc = ax.get_yticks().tolist()
         ax.xaxis.set_ticks([n for n in range(len(gmpe_list))])
         ax.xaxis.set_ticklabels(gmpe_list,rotation=40)
         ax.yaxis.set_ticks([n for n in range(len(gmpe_list))])
@@ -414,7 +461,6 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
 
         for g, gmpe in enumerate(gmpe_list): 
             col=colors[g]
-            label=type(gmpe).__name__
             pyplot.plot(coo[g,0], coo[g,1], 'o', markersize=9, color=colors[
                 g], label=gmpe)
             texts.append(pyplot.text(coo[g, 0]+np.abs(coo[g, 0])*0.02,
@@ -429,7 +475,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
 
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
-    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 0.80), fontsize='16')
+    pyplot.legend(loc="center left", bbox_to_anchor=(1.25, 0.50), fontsize='16')
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
@@ -484,15 +530,15 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax = axs[n]
         else:
             ax = axs[np.unravel_index(n, (nrows, ncols))]       
-
+        
         # Plot dendrogram
         dn1 = hierarchy.dendrogram(matrix_Z[n], ax=ax, orientation='right',
                                    labels=gmpe_list)
-        ax.set_xlabel('Euclidean Distance', fontsize = '14')
+        ax.set_xlabel('Euclidean Distance', fontsize = '12')
         if mtxs_type == 'median':
-            ax.set_title(str(i) + ' (median)', fontsize = '14')
+            ax.set_title(str(i) + ' (median)', fontsize = '12')
         if mtxs_type == '84th_perc':
-            ax.set_title(str(i) + ' (84th percentile)', fontsize = '14')
+            ax.set_title(str(i) + ' (84th percentile)', fontsize = '12')
 
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.4)
     pyplot.show()
