@@ -252,7 +252,8 @@ class ComparisonTestCase(unittest.TestCase):
                      config.region, config.imt_list, config.trellis_mag_list,
                      config.maxR, config.gmpes_list, config.aratio,
                      config.Nstd, self.output_directory, config.custom_color_flag,
-                     config.custom_color_list, config.eshm20_region)
+                     config.custom_color_list, config.eshm20_region,
+                     config.lt_weights)
         
         # Spectra plots 
         plot_spectra_util(config.rake, config.strike, config.dip,
@@ -261,7 +262,8 @@ class ComparisonTestCase(unittest.TestCase):
                           config.trellis_mag_list, config.dist_list,
                           config.gmpes_list, config.aratio, config.Nstd,
                           self.output_directory, config.custom_color_flag,
-                          config.custom_color_list, config.eshm20_region) 
+                          config.custom_color_list, config.eshm20_region,
+                          config.lt_weights) 
        
         # Specify target files
         target_file_trellis = (os.path.join(self.output_directory,'TrellisPlots.png'))
