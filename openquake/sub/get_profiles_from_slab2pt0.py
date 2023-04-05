@@ -84,61 +84,68 @@ def get_initial_traces(bb, dip_dir, spacing):
     # Dip towards 3rd or 4th quadrants
     if dip_dir > 180:
 
-        # Top distance and azimuth
-        distance = geodetic_distance(bb[1], bb[3], bb[0], bb[3])
-        edge_azimuth = azimuth(bb[1], bb[3], bb[0], bb[3])
-
-        # Number of samples
-        num_samples = np.ceil(distance/spacing_lon)
-        distance = spacing_lon * num_samples
-
-        # Sampling first edge
-        coords = npoints_towards(
-            bb[1], bb[3], 0, edge_azimuth, distance, 0, num_samples)
-
-        # Get profiles
-        profiles = _get_profiles(coords, dip_dir, max_length)
-
-        # Right distance and azimuth
+        # Right edge distance and azimuth
         distance = geodetic_distance(bb[1], bb[3], bb[1], bb[2])
         edge_azimuth = azimuth(bb[1], bb[3], bb[1], bb[2])
 
         # Number of samples
         num_samples = np.ceil(distance/spacing_lat)
-        distance = spacing_lat * num_samples
+        spacing_lat = distance / num_samples
+        distance = spacing_lon * num_samples
 
-        # Sampling first edge
+        # Sample the first edge (the right one) moving bottom up and compute
+        # the profiles. We reverse the list to comply with the right hand rule
         coords = npoints_towards(
             bb[0], bb[2], 0, edge_azimuth, distance, 0, num_samples)
+        profiles = _get_profiles(coords, dip_dir, max_length)
+        tmp_profiles.reverse()
 
-        # Create profiles
+        # Top edge distance and azimuth
+        distance = geodetic_distance(bb[1], bb[3], bb[0], bb[3])
+        edge_azimuth = azimuth(bb[1], bb[3], bb[0], bb[3])
+
+        # Number of samples
+        num_samples = np.ceil(distance/spacing_lon)
+        spacing_lon = distance / num_samples
+        distance = spacing_lon * num_samples
+
+        # Sample the second edge (the top one) from rigth to left and get the
+        # profiles
+        coords = npoints_towards(
+            bb[1], bb[3], 0, edge_azimuth, distance, 0, num_samples)
         tmp_profiles = _get_profiles(coords, dip_dir, max_length)
         tmp_profiles.reverse()
+
+        # Update the profile list
         profiles.extend(tmp_profiles)
 
         return profiles
 
-    # Top distance and azimuth
+    # Bottom edge distance and azimuth. The latter is taken from the bottom
+    # right to the bottom left corner
     distance = geodetic_distance(bb[0], bb[2], bb[1], bb[2])
-    edge_azimuth = azimuth(bb[0], bb[2], bb[1], bb[2])
+    edge_azimuth = azimuth(bb[1], bb[2], bb[0], bb[2])
 
     # Number of samples
-    num_samples = np.ceil(distance/spacing_lon)
+    num_samples = np.round(distance/spacing_lon)
+    spacing_lon = distance / num_samples
     distance = spacing_lon * num_samples
 
-    # Sampling first edge
+    # Sampling first edge going from right to left. 0 is the vertical distance
+    # in this case
     coords = npoints_towards(
-        bb[0], bb[2], 0, edge_azimuth, distance, 0, num_samples)
+        bb[1], bb[2], 0, edge_azimuth, distance, 0, num_samples)
 
     # Get profiles
     profiles = _get_profiles(coords, dip_dir, max_length)
 
-    # Left distance and azimuth
+    # Left distance and azimuth. The latter is taken bottom up.
     distance = geodetic_distance(bb[0], bb[2], bb[0], bb[3])
     edge_azimuth = azimuth(bb[0], bb[2], bb[0], bb[3])
 
     # Number of samples
     num_samples = np.ceil(distance/spacing_lat)
+    spacing_lat = distance / num_samples
     distance = spacing_lat * num_samples
 
     # Sampling first edge
@@ -147,7 +154,6 @@ def get_initial_traces(bb, dip_dir, spacing):
 
     # Create profiles
     tmp_profiles = _get_profiles(coords, dip_dir, max_length)
-    tmp_profiles.reverse()
     profiles.extend(tmp_profiles)
 
     return profiles, distance
