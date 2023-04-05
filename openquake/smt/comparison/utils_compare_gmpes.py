@@ -534,9 +534,9 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         ax.yaxis.set_ticklabels(gmpe_list)
 
     # Remove final plot if not required
-    if len(imt_list) > 3 and np.array(nrows*ncols)/2 != int:
-        ax = axs2[np.unravel_index(n+1, (nrows, ncols))]
-        ax.set_visible(False)
+    #if len(imt_list) > 3 and np.array(nrows*ncols)/2 != int:
+     #   ax = axs2[np.unravel_index(n+1, (nrows, ncols))]
+      #  ax.set_visible(False)
 
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
@@ -670,9 +670,9 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax.set_title(str(i) + ' (84th percentile)', fontsize = '12')
             
     # Remove final plot if not required
-    if len(imt_list) > 3 and np.array(nrows*ncols)/2 != int:
-        ax = axs[np.unravel_index(n+1, (nrows, ncols))]
-        ax.set_visible(False)
+    #if len(imt_list) > 3 and np.array(nrows*ncols)/2 != int:
+     #   ax = axs[np.unravel_index(n+1, (nrows, ncols))]
+      #  ax.set_visible(False)
 
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.4)
     pyplot.show()
