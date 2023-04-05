@@ -196,7 +196,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                  'Minus %s sigma (g)' %Nstd,
                                                      'Distance (km)'])
         if lt_weights != None:
-            for n, i in enumerate(imt_list): #iterate though dist_list
+            for n, i in enumerate(imt_list): #iterate though imt_list
                 for l, m in enumerate(mag_list):  #iterate through mag_list
                     trellis_value_df['IM = ' + str(i),
                                      'Magnitude = ' + str(m),'GMPE logic tree'] = [
