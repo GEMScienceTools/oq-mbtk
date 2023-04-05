@@ -210,7 +210,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                         index = ['Mean (g)', 'Distance (km)'])
         
         if lt_weights != None:
-            for n, i in enumerate(imt_list): #iterate though dist_list
+            for n, i in enumerate(imt_list): #iterate though imt_list
                 for l, m in enumerate(mag_list):  #iterate through mag_list
                     trellis_value_df['IM = ' + str(i), 'Magnitude = ' + str(m),
                                      'GMPE logic tree'] = [lt_mean_store[i,m],
@@ -533,10 +533,15 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         ax.yaxis.set_ticks([n for n in range(len(gmpe_list))])
         ax.yaxis.set_ticklabels(gmpe_list)
 
+    # Remove final plot if not required
+    if len(imt_list) > 3 and np.array(nrows*ncols)/2 != int:
+        ax = axs2[np.unravel_index(n+1, (nrows, ncols))]
+        ax.set_visible(False)
+
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
-    
+        
     return matrix_Dist
     
 def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
@@ -663,6 +668,11 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax.set_title(str(i) + ' (median)', fontsize = '12')
         if mtxs_type == '84th_perc':
             ax.set_title(str(i) + ' (84th percentile)', fontsize = '12')
+            
+    # Remove final plot if not required
+    if len(imt_list) > 3 and np.array(nrows*ncols)/2 != int:
+        ax = axs[np.unravel_index(n+1, (nrows, ncols))]
+        ax.set_visible(False)
 
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.4)
     pyplot.show()
