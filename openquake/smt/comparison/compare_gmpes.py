@@ -134,7 +134,26 @@ class Configurations(object):
         # Check number of GMPEs matches number of GMPE labels
         if len(self.gmpes_list) != len(self.gmpe_labels):
             raise ValueError("Number of labels must match number of GMPEs.")
-            
+
+        # If weight is assigned to a GMPE get it + check sum of weights for 
+        # GMPEs with weights allocated = 1
+        get_weights = {}
+        for gmpe in self.gmpes_list:
+            if 'lt_weight' in gmpe:
+                split_gmpe_str = str(gmpe).splitlines()
+                for idx, component in enumerate(split_gmpe_str):
+                    if 'lt_weight' in component:
+                        get_weights[gmpe] = float(split_gmpe_str[idx].split('=')[1])
+            else:
+                pass
+        if get_weights != {}:
+            check_weights = np.array(pd.Series(get_weights))
+            if np.sum(check_weights, axis = 0) != 1.0:
+                raise ValueError("For GMPEs to which logic tree weights are assigned the total of these weights must sum to 1.0")
+            self.lt_weights = get_weights
+        else:
+            self.lt_weights = None
+
 def plot_trellis(filename, output_directory):
     """
     Plot trellis for given run configuration
@@ -146,12 +165,13 @@ def plot_trellis(filename, output_directory):
     # Generate config object
     config = Configurations(filename)
     
-    plot_trellis_util(config.rake, config.strike, config.dip, config.trellis_depth,
-                      config.Z1, config.Z25, config.Vs30, config.region, config.imt_list,
-                      config.trellis_mag_list, config.maxR, config.gmpes_list,
-                      config.aratio, config.Nstd, output_directory,
-                      config.custom_color_flag, config.custom_color_list,
-                      config.eshm20_region) 
+    plot_trellis_util(config.rake, config.strike, config.dip,
+                      config.trellis_depth, config.Z1, config.Z25, config.Vs30,
+                      config.region, config.imt_list, config.trellis_mag_list,
+                      config.maxR, config.gmpes_list, config.aratio,
+                      config.Nstd, output_directory, config.custom_color_flag,
+                      config.custom_color_list, config.eshm20_region,
+                      config.lt_weights) 
                 
 def plot_spectra(filename, output_directory):
     """
@@ -165,12 +185,13 @@ def plot_spectra(filename, output_directory):
     # Generate config object
     config = Configurations(filename)
     
-    plot_spectra_util(config.rake, config.strike, config.dip, config.trellis_depth,
-                      config.Z1, config.Z25, config.Vs30, config.region,
-                      config.max_period, config.trellis_mag_list,
-                      config.dist_list, config.gmpes_list, config.aratio, config.Nstd,
-                      output_directory, config.custom_color_flag,
-                      config.custom_color_list, config.eshm20_region) 
+    plot_spectra_util(config.rake, config.strike, config.dip,
+                      config.trellis_depth, config.Z1, config.Z25, config.Vs30,
+                      config.region, config.max_period, config.trellis_mag_list,
+                      config.dist_list, config.gmpes_list, config.aratio,
+                      config.Nstd, output_directory, config.custom_color_flag,
+                      config.custom_color_list, config.eshm20_region,
+                      config.lt_weights) 
 
 def plot_cluster(filename, output_directory):
     """

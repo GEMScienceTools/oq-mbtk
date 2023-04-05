@@ -1,24 +1,15 @@
 ### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
 
-### For region parameter, we can use:
-#0 for global
-#1 for California
-#2 for Japan
-#3 for China
-#4 for Italy
-#5 for Turkey (locally = 3)
-#6 for Taiwan (locally = 0) 
-
 [general]
-name_analysis = 'Albania'
-imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)'] # imts to compute gm for
+name_analysis = 'test'
+imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)']
 max_period = 2 # max period for response spectra
 maxR = 300 # max distance to consider
-dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
-region = 0
-eshm20_region = 4 # region for ESHM20 implementation of Kotha et al. 2020 GMPE (default is zero)
+dist_list = [10, 50, 200] # distances for use in spectra plots
+region = 0 # for regionalisation of NGAWest2 GMPEs
+eshm20_region = 4 # for regionalisation of Kotha et al. 2020 (ESHM20 version - default is 0) 
 Nstd = 2 # number of standard deviations to sample sigma for 
-custom_colors_flag = 'False' # Default = "False" ("True" for custom colours in RS + trellis)
+custom_colors_flag = 'False' # Set to true for custom colours in trellis + RS
 custom_colors_list = ['lime','dodgerblue','gold','0.8']
 
 [site_properties]
@@ -75,7 +66,13 @@ gmpes_label = ['KO20_1','KO20_2','KO20_3','KO20_4','KO20_5','KO20_6','KO20_7','K
 [models.9-KothaEtAl2020ESHM20]
     sigma_mu_epsilon = -2.85697
     c3_epsilon = -1.72 
+         
+
+[modelsAbrahamsonGulerce2020SInter]
+    region = "GLO"
     
-[models.10-BooreEtAl2014]
-[models.11-AbrahamsonGulerce2020SInter]
-region = "GLO"
+# Assign two more GMPEs in logic tree config (will be plotted both individually and as logic tree config)
+[models.BooreEtAl2014]
+    lt_weight = 0.5      
+[models.CauzziEtAl2014]
+    lt_weight = 0.5 
