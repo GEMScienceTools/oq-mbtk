@@ -435,7 +435,7 @@ class Trench:
         coss = numpy.mean(numpy.cos(numpy.radians(azims)))
         return numpy.degrees(numpy.arctan2(sins, coss))
 
-    def iterate_cross_sections(self, distance, length):
+    def iterate_cross_sections(self, distance, length, wei1=1.0):
         """
         A cross-section iterator
 
@@ -443,8 +443,12 @@ class Trench:
             Distance between traces along the trench axis [in km]
         :parameter length:
             The length of each trace [in km]
+        :parameter wei1:
+            The direction of each cross section is a weighted average of the
+            overall dip direction and the local dip computed. `wei1` is the
+            weight assigned to local azimuth. The default is 1 for back
+            compatibility.
         """
-        wei1 = 0.3
         weis = numpy.array([wei1, 1-wei1])
         avg_azim = self.get_azimuth()
         overall_azim = (avg_azim + 90) % 360
