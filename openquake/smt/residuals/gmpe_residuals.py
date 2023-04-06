@@ -572,7 +572,8 @@ class Residuals(object):
                     dist_idx = []
                     distance_type = 'rjb'
                     for idx, site in enumerate(dist_list):
-                        tmp_idx = np.argmin(np.abs(ctxs[idx][0][distance_type] - dist_list[idx]))
+                        tmp_idx = np.argmin(np.abs(ctxs[idx][0][
+                            distance_type] - dist_list[idx]))
                         dist_idx.append(tmp_idx)
                             
                     # Compute expected mean and sigma per site for each step
@@ -582,7 +583,8 @@ class Residuals(object):
                     tau = {}
                     phi = {}
                     for idx, site in enumerate(dist_list):
-                        [mean_per_step, stddev_per_step, tau_per_step, phi_per_step] = ctxm.get_mean_stds(ctxs[idx])
+                        [mean_per_step, stddev_per_step, tau_per_step,
+                         phi_per_step] = ctxm.get_mean_stds(ctxs[idx])
                         mean[idx] = mean_per_step[0][0][dist_idx[idx]]
                         stddev[idx] = stddev_per_step[0][0][dist_idx[idx]] 
                         tau[idx] = tau_per_step[0][0][dist_idx[idx]] 
@@ -614,8 +616,6 @@ class Residuals(object):
                         expected[gmpe][imtx][res_type] = stddev[i]
 
         context["Expected"] = expected
-        #print(context)
-        #print(expected)
         return context
 
     def calculate_residuals(self, context, normalise=True):
