@@ -297,9 +297,17 @@ class ResidualPlot(ResidualHistogramPlot):
         ax.set_xlim(x_limit*-1,x_limit)
 
     def get_axis_title(self, res_data, res_type):
+        sigma_type = res_type
+        if res_type == 'Total':
+            sigma_type = 'Total Res.'
+        elif res_type == 'Inter-Event Res.':
+            sigma_type = 'Within event'
+        elif res_type == 'Intra-Event Res.':
+            sigma_type = 'Between event'
+        
         mean, stddev = res_data["mean"], res_data["stddev"]
         return "%s - %s\n Mean = %7.3f, Std Dev = %7.3f" % (str(
-            self.residuals.gmpe_list[self.gmpe]).split('(')[0],res_type,mean,
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0],sigma_type,mean,
                                                             stddev)
     
 class LikelihoodPlot(ResidualHistogramPlot):
@@ -384,8 +392,15 @@ class ResidualScatterPlot(BaseResidualPlot):
         return -max_lim, max_lim
     
     def get_axis_title(self, res_data, res_type):
+        sigma_type = res_type
+        if res_type == 'Total':
+            sigma_type = 'Total Res.'
+        elif res_type == 'Inter event':
+            sigma_type = 'Between-Event Res.'
+        elif res_type == 'Intra event':
+            sigma_type = 'Within-Event Res.'
         return "%s - %s" %(str(self.residuals.gmpe_list[self.gmpe]).split('(')[0],
-             res_type)
+             sigma_type)
 
     def draw(self, ax, res_data, res_type):
         x, y = res_data['x'], res_data['y']
@@ -398,12 +413,26 @@ class ResidualScatterPlot(BaseResidualPlot):
             ax.semilogx(x, y, 'o', **pts_styling_kwargs)
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker = 's', color = 'b', label = 'mean', zorder = 4)
+            
+            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
+                -1*res_data['sigma_res']), marker = 'x', color = 'b', zorder = 4)
+            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
+                res_data['sigma_res']), marker = 'x', color = 'b',
+                label = '+/- 1 Std.', zorder = 4)
+            
             ax.plot(x_zero, zero_line, color = 'k', linestyle = '--',
                     linewidth = 1.25)
         else:
             ax.plot(x, y, 'o', **pts_styling_kwargs)
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker = 's', color = 'b', label = 'mean', zorder = 4)
+            
+            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
+                -1*res_data['sigma_res']), marker = 'x', color = 'b', zorder = 4)
+            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
+                res_data['sigma_res']), marker = 'x', color = 'b',
+                label = '+/- 1 Std.', zorder = 4)
+            
             ax.plot(x_zero, zero_line, color = 'k', linestyle = '--',
                     linewidth = 1.25)
         ax.legend(loc = 'upper right', fontsize = 'x-small')
