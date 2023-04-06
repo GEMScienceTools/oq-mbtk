@@ -534,7 +534,7 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         ax.yaxis.set_ticklabels(gmpe_list)
 
     # Remove final plot if not required
-    if len(imt_list) > 3 and np.array(nrows*ncols)/2 != int:
+    if len(imt_list) > 3 and len(imt_list)/2 != int(len(imt_list)/2):
         ax = axs2[np.unravel_index(n+1, (nrows, ncols))]
         ax.set_visible(False)
 
@@ -670,7 +670,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax.set_title(str(i) + ' (84th percentile)', fontsize = '12')
             
     # Remove final plot if not required
-    if len(imt_list) > 3 and np.array(nrows*ncols)/2 != int:
+    if len(imt_list) > 3 and len(imt_list)/2 != int(len(imt_list)/2):
         ax = axs[np.unravel_index(n+1, (nrows, ncols))]
         ax.set_visible(False)
 
