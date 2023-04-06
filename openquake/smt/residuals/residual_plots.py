@@ -172,7 +172,7 @@ def residuals_with_magnitude(residuals, gmpe, imt, as_json=False):
     
     var_type = 'magnitude'
     
-    mean_res_df = _get_mean_res_wrt_var(residuals, gmpe, imt, var_type)
+    mean_res_df, sigma_res_df = _get_mean_res_wrt_var(residuals, gmpe, imt, var_type)
     
     for res_type in data.keys():
 
@@ -189,7 +189,8 @@ def residuals_with_magnitude(residuals, gmpe, imt, as_json=False):
              'slope': slope, 'intercept': intercept, 'pvalue': pval,
              'xlabel': "Magnitude", 'ylabel': "Z (%s)" % imt,
              'bin_midpoints': mean_res_df.x_data,
-             'mean_res': mean_res_df[res_type] }
+             'mean_res': mean_res_df[res_type],
+             'sigma_res': sigma_res_df[res_type] }
             
     return plot_data
 
@@ -236,7 +237,7 @@ def residuals_with_vs30(residuals, gmpe, imt, as_json=False):
 
     var_type = 'vs30'    
     
-    mean_res_df = _get_mean_res_wrt_var(residuals, gmpe, imt, var_type)
+    mean_res_df, sigma_res_df = _get_mean_res_wrt_var(residuals, gmpe, imt, var_type)
     
     for res_type in data.keys():
 
@@ -253,7 +254,8 @@ def residuals_with_vs30(residuals, gmpe, imt, as_json=False):
              'slope': slope, 'intercept': intercept, 'pvalue': pval,
              'xlabel': "Vs30 (m/s)", 'ylabel': "Z (%s)" % imt,
              'bin_midpoints': mean_res_df.x_data,
-             'mean_res': mean_res_df[res_type] }
+             'mean_res': mean_res_df[res_type],
+             'sigma_res': sigma_res_df[res_type]  }
 
     return plot_data
 
@@ -291,7 +293,7 @@ def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb",
 
     var_type = 'distance'    
     
-    mean_res_df = _get_mean_res_wrt_var(residuals, gmpe, imt, var_type)
+    mean_res_df, sigma_res_df = _get_mean_res_wrt_var(residuals, gmpe, imt, var_type)
 
     for res_type in data.keys():
 
@@ -308,7 +310,8 @@ def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb",
              'slope': slope, 'intercept': intercept, 'pvalue': pval,
              'xlabel': "%s Distance (km)" % distance_type,
              'ylabel': "Z (%s)" % imt, 'bin_midpoints': mean_res_df.x_data,
-             'mean_res': mean_res_df[res_type]}
+             'mean_res': mean_res_df[res_type],
+             'sigma_res': sigma_res_df[res_type] }
 
     return plot_data
 
@@ -350,7 +353,7 @@ def residuals_with_depth(residuals, gmpe, imt, as_json=False):
     data = residuals.residuals[gmpe][imt]
 
     var_type = 'depth'    
-    mean_res_df = _get_mean_res_wrt_var(residuals, gmpe, imt, var_type)
+    mean_res_df, sigma_res_df = _get_mean_res_wrt_var(residuals, gmpe, imt, var_type)
 
     for res_type in data.keys():
 
@@ -367,7 +370,8 @@ def residuals_with_depth(residuals, gmpe, imt, as_json=False):
              'slope': slope, 'intercept': intercept, 'pvalue': pval,
              'xlabel': "Hypocentral Depth (km)", 'ylabel': "Z (%s)" % imt,
              'bin_midpoints': mean_res_df.x_data,
-             'mean_res': mean_res_df[res_type] }
+             'mean_res': mean_res_df[res_type],
+             'sigma_res': sigma_res_df[res_type] }
 
     return plot_data
 
@@ -488,10 +492,14 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type):
                         idx][1]: 
                 idx_residuals_per_val_bin[idx][data_point] = data_point
     
-    # Compute mean residual per mag bin
+    # Compute mean and sigma of residuals per mag bin
     total_res_mean_per_val_bin = {}
     intra_res_mean_per_val_bin = {}
     inter_res_mean_per_val_bin = {}
+    
+    total_res_sigma_per_val_bin = {}
+    intra_res_sigma_per_val_bin = {}
+    inter_res_sigma_per_val_bin = {}
     
     for val_bin in idx_residuals_per_val_bin:
         total_res_mean_per_val_bin[val_bin] = np.mean(df.total_res.iloc[
@@ -499,6 +507,13 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type):
         intra_res_mean_per_val_bin[val_bin] = np.mean(df.intra_res.iloc[
             pd.Series(idx_residuals_per_val_bin[val_bin].keys())])
         inter_res_mean_per_val_bin[val_bin] = np.mean(df_inter['inter'].iloc[
+            pd.Series(idx_residuals_per_val_bin[val_bin].keys())].unique())
+        
+        total_res_sigma_per_val_bin[val_bin] = np.std(df.total_res.iloc[
+            pd.Series(idx_residuals_per_val_bin[val_bin].keys())])
+        intra_res_sigma_per_val_bin[val_bin] = np.std(df.intra_res.iloc[
+            pd.Series(idx_residuals_per_val_bin[val_bin].keys())])
+        inter_res_sigma_per_val_bin[val_bin] = np.std(df_inter['inter'].iloc[
             pd.Series(idx_residuals_per_val_bin[val_bin].keys())].unique())
         
     # Get midpoint of each val bin for plotting
@@ -514,4 +529,10 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type):
         'Inter event': inter_res_mean_per_val_bin, 
         'Intra event':intra_res_mean_per_val_bin})
     
-    return mean_res_wrt_val
+    sigma_res_wrt_val = pd.DataFrame({
+        'x_data':bin_mid_points,
+        'Total':total_res_sigma_per_val_bin,
+        'Inter event': inter_res_sigma_per_val_bin, 
+        'Intra event':intra_res_sigma_per_val_bin})
+    
+    return mean_res_wrt_val, sigma_res_wrt_val
