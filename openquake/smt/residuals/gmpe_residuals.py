@@ -42,6 +42,9 @@ from openquake.hazardlib import imt
 import openquake.smt.intensity_measures as ims
 from openquake.smt.strong_motion_selector import SMRecordSelector
 from openquake.smt.sm_utils import convert_accel_units, check_gsim_list
+from openquake.hazardlib.contexts import ContextMaker
+from openquake.hazardlib.scalerel.wc1994 import WC1994
+from openquake.smt.comparison import utils_gmpes
 
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
@@ -483,25 +486,107 @@ class Residuals(object):
         for gmpe in self.gmpe_list:
             expected[gmpe] = OrderedDict([(imtx, {}) for imtx in self.imts])
             for imtx in self.imts:
-                gsim = self.gmpe_list[gmpe]
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < self.gmpe_sa_limits[gmpe][0] or\
                             period > self.gmpe_sa_limits[gmpe][1]:
                         expected[gmpe][imtx] = None
-                        continue
-                mean, stddev = gsim.get_mean_and_stddevs(
-                    context["Ctx"],
-                    context["Ctx"],
-                    context["Ctx"],
-                    imt.from_string(imtx),
-                    self.types[gmpe][imtx])
-                expected[gmpe][imtx]["Mean"] = mean
+                        continue 
+                
+                ctxm, ctxs, dist_idx = self._get_ctx_for_expected_motions(
+                    context, gmpe, imtx)
+        
+                outputs = {'mean': {}, 'stddev': {}, 'tau': {}, 'phi': {}}
+                for idx, site in enumerate(context["Ctx"].rrup):
+                    [mean_per_step, stddev_per_step, tau_per_step,
+                     phi_per_step] = ctxm.get_mean_stds(ctxs[idx])
+                    values = [mean_per_step, stddev_per_step, tau_per_step,
+                              phi_per_step]
+                    for outpt_idx, outpt in enumerate(outputs):
+                        outputs[outpt][idx] = values[outpt_idx][0][0][
+                            dist_idx[idx]]
+  
+                gmpe_sigma = {
+                    'Total': np.array(pd.Series(outputs['stddev'])),
+                    'Inter event': np.array(pd.Series(outputs['tau'])),
+                    'Intra event': np.array(pd.Series(outputs['phi']))}                
+                
+                expected[gmpe][imtx]["Mean"] = np.array(pd.Series(outputs[
+                    'mean']))
                 for i, res_type in enumerate(self.types[gmpe][imtx]):
-                    expected[gmpe][imtx][res_type] = stddev[i]
+                    expected[gmpe][imtx][res_type] = gmpe_sigma[res_type]
 
         context["Expected"] = expected
         return context
+    
+    def _get_ctx_for_expected_motions(self, context, gmpe, imtx):
+        """
+        Reformat context for computation of expected ground-motion
+        """
+        # Reformat the rupture
+        rd = {'lon':context["Ctx"].lons[0], 'lat': context["Ctx"].lats[0],
+              'depth': context["Ctx"].depths[0], 'msr': WC1994(),
+              'mag': context["Ctx"].mag, 'aratio': 2.0, 'strike': context[
+                  "Ctx"].strike, 'dip': context["Ctx"].dip, 'rake': context[
+                      "Ctx"].rake, 'trt': 'fake', 'ztor': context['Ctx'].ztor}
+
+        rup = utils_gmpes.get_rupture(rd['lon'], rd['lat'], rd['depth'],
+                                      rd['msr'], rd['mag'], rd['aratio'],
+                                      rd['strike'], rd['dip'], rd['rake'],
+                                      rd['trt'], rd['ztor'])
+
+        # Reformat the sites collection
+        dist_list = context["Ctx"].rjb   
+        site_props = {}
+        if 'KothaEtAl2020ESHM20' in gmpe:
+            split_gmpe_str = str(gmpe).splitlines()          
+            for idx, strings in enumerate(split_gmpe_str):
+                if 'eshm20_region' in split_gmpe_str[idx]:
+                    region_str = split_gmpe_str[idx]
+                else:
+                    pass
+            eshm20_region = float(region_str.split('=')[1])
+            for idx, site in enumerate(dist_list):
+                site_props[idx] = {'vs30': context['Ctx'].vs30[idx],
+                                   'z1pt0': context['Ctx'].z1pt0[idx],
+                                   'z2pt5': context['Ctx'].z2pt5[idx],
+                                   'backarc': False, 'vs30measured':
+                                       context['Ctx'].vs30measured[idx],
+                                   'region': eshm20_region}  
+        else:
+            for idx, site in enumerate(dist_list):
+                site_props[idx]  = {'vs30': context['Ctx'].vs30[idx],
+                                    'z1pt0': context['Ctx'].z1pt0[idx],
+                                    'z2pt5': context['Ctx'].z2pt5[idx],
+                                    'backarc': False, 'vs30measured': context[
+                                        'Ctx'].vs30measured[idx]}
+        sites = {}
+        for idx, site in enumerate(dist_list):
+            if 'azimuth' not in vars(context['Ctx']):
+                azimuth = 90
+            else:
+                azimuth =  context['Ctx'].azimuth[idx]
+            sites[idx] = utils_gmpes.get_sites_from_rupture(
+                rup, 'TC', azimuth ,'positive', dist_list[idx],
+                np.min(dist_list)-0.001, site_props[idx])
+        
+        # Rebuild the context maker and get the contexts
+        mag = rd['mag']
+        mag_str = [f'{mag:.2f}']
+        oqp = {'imtls': {k: [] for k in [imtx]}, 'mags': mag_str}
+        ctxm = ContextMaker('fake', [self.gmpe_list[gmpe]], oqp)
+        ctxs = {}
+        for idx, site in enumerate(dist_list):
+            ctxs[idx] = list(ctxm.get_ctx_iter([rup], sites[idx]))
+   
+        # Create distance index for finding the sites   
+        dist_idx = []
+        distance_type = 'rrup' # Find 'site' using rupture distance
+        for idx, site in enumerate(dist_list):
+            tmp_idx = np.argmin(np.abs(ctxs[idx][0][
+                distance_type] - dist_list[idx]))
+            dist_idx.append(tmp_idx)
+        return ctxm, ctxs, dist_idx
 
     def calculate_residuals(self, context, normalise=True):
         """
@@ -1282,7 +1367,6 @@ class SingleStationAnalysis(object):
                             delta_s2ss,
                             n_events)
                     # Get expected values too
-
                     resid.site_analysis[gmpe][imtx]["Expected Inter"] =\
                         np.copy(t_resid.modelled[gmpe][imtx]["Inter event"])
                     resid.site_analysis[gmpe][imtx]["Expected Intra"] =\
