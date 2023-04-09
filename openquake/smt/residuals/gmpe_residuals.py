@@ -45,6 +45,7 @@ from openquake.smt.sm_utils import convert_accel_units, check_gsim_list
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.scalerel.wc1994 import WC1994
 from openquake.smt.comparison import utils_gmpes
+from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe
 
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
@@ -492,7 +493,6 @@ class Residuals(object):
                             period > self.gmpe_sa_limits[gmpe][1]:
                         expected[gmpe][imtx] = None
                         continue 
-                
                 ctxm, ctxs, dist_idx = self._get_ctx_for_expected_motions(
                     context, gmpe, imtx)
         
@@ -524,11 +524,13 @@ class Residuals(object):
         Reformat context for computation of expected ground-motion
         """
         # Reformat the rupture
+        trt = self.gmpe_list[gmpe].DEFINED_FOR_TECTONIC_REGION_TYPE
+        
         rd = {'lon':context["Ctx"].lons[0], 'lat': context["Ctx"].lats[0],
               'depth': context["Ctx"].depths[0], 'msr': WC1994(),
               'mag': context["Ctx"].mag, 'aratio': 2.0, 'strike': context[
                   "Ctx"].strike, 'dip': context["Ctx"].dip, 'rake': context[
-                      "Ctx"].rake, 'trt': 'fake', 'ztor': context['Ctx'].ztor}
+                      "Ctx"].rake, 'trt': trt, 'ztor': context['Ctx'].ztor}
 
         rup = utils_gmpes.get_rupture(rd['lon'], rd['lat'], rd['depth'],
                                       rd['msr'], rd['mag'], rd['aratio'],
@@ -1015,7 +1017,8 @@ class Residuals(object):
         self.edr_values_wrt_imt = OrderedDict([(gmpe, {}) for 
                                                gmpe in self.gmpe_list])
         for gmpe in self.gmpe_list:
-            obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt = self._get_edr_gmpe_information_wrt_spectral_period(gmpe)
+            obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt = \
+                self._get_edr_gmpe_information_wrt_spectral_period(gmpe)
             results = self._get_edr_wrt_spectral_period(obs_wrt_imt,
                                     expected_wrt_imt,
                                     stddev_wrt_imt,
