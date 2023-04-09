@@ -18,7 +18,7 @@
 """
 Module with utility functions for gmpes
 """
-import numpy 
+import numpy as np
 
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib import valid
@@ -142,14 +142,15 @@ def att_curves(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,step,
                                    direction='positive', hdist=maxR, step=step,
                                    site_props=props)
     
-    param = dict(imtls={})
-    cm = ContextMaker(trt, [gmpe], param)
+    mag_str = [f'{mag:.2f}']
+    oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
+    ctxm = ContextMaker(trt, [gmpe], oqp)
     
-    ctxs = list(cm.get_ctx_iter([rup], sites)) 
+    ctxs = list(ctxm.get_ctx_iter([rup], sites)) 
     ctxs = ctxs[0]
     ctxs.occurrence_rate = 0.0
     
-    mean, std = gmpe.get_mean_and_stddevs(ctxs, ctxs, ctxs, imt, [StdDev.TOTAL])
+    mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
     distances = ctxs.rrup
     
     return mean, std, distances
@@ -162,9 +163,9 @@ def _get_z1(Vs30,region):
         locally = 0)
     """      
     if region == 2: # in California and non-Japan region
-        Z1 = numpy.exp(-5.23/2*numpy.log((Vs30**2+412.39**2)/(1360**2+412.39**2)))
+        Z1 = np.exp(-5.23/2*np.log((Vs30**2+412.39**2)/(1360**2+412.39**2)))
     else:
-        Z1 = numpy.exp(-7.15/4*numpy.log((Vs30**4+570.94**4)/(1360**4+570.94**4)))
+        Z1 = np.exp(-7.15/4*np.log((Vs30**4+570.94**4)/(1360**4+570.94**4)))
     return Z1
 
 def _get_z25(Vs30,region):
@@ -175,11 +176,11 @@ def _get_z25(Vs30,region):
         locally = 0)
     """     
     if region == 2: # in Japan
-        Z25 = numpy.exp(5.359 - 1.102 * numpy.log(Vs30))
-        Z25A_default = numpy.exp(7.089 - 1.144 * numpy.log(1100))
+        Z25 = np.exp(5.359 - 1.102 * np.log(Vs30))
+        Z25A_default = np.exp(7.089 - 1.144 * np.log(1100))
     else:
-        Z25 = numpy.exp(7.089 - 1.144 * numpy.log(Vs30))
-        Z25A_default = numpy.exp(7.089 - 1.144 * numpy.log(1100))           
+        Z25 = np.exp(7.089 - 1.144 * np.log(Vs30))
+        Z25A_default = np.exp(7.089 - 1.144 * np.log(1100))           
     return Z25
 
 def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
@@ -209,7 +210,7 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
     else:
         depth_s = depth
         
-    if aratio > -999.0 and numpy.isfinite(aratio):
+    if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
         if 'Inter' in gmpes:

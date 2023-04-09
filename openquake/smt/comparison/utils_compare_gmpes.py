@@ -82,6 +82,8 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                  strike_g,dip_g,rake,Vs30,
                                                  Z1,Z25,maxR,step,i,1,
                                                  eshm20_region) 
+                mean = mean[0][0]
+                std = std[0][0]
                 
                 pyplot.plot(distances, np.exp(mean), color=col,
                             linewidth=2, linestyle='-', label=gmpe)
@@ -332,6 +334,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                     Z1,Z25,300,0.1,imt,1,
                                                     eshm20_region) 
                     
+                    mu = mu[0][0]
                     f = interpolate.interp1d(distances,mu)
                     rs_50p_dist = np.exp(f(i))
                     
