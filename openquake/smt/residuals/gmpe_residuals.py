@@ -576,7 +576,7 @@ class Residuals(object):
         mag = rd['mag']
         mag_str = [f'{mag:.2f}']
         oqp = {'imtls': {k: [] for k in [imtx]}, 'mags': mag_str}
-        ctxm = ContextMaker('fake', [self.gmpe_list[gmpe]], oqp)
+        ctxm = ContextMaker(trt, [self.gmpe_list[gmpe]], oqp)
         ctxs = {}
         for idx, site in enumerate(dist_list):
             ctxs[idx] = list(ctxm.get_ctx_iter([rup], sites[idx]))
