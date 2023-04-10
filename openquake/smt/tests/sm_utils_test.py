@@ -152,7 +152,8 @@ class SmUtilsTestCase(unittest.TestCase):
         gmpe_list = ['YenierAtkinson2015BSSA', 'BooreEtAl2014']
         imts = ['PGA']
         for idx, inputted_gmpe in enumerate(gmpe_list):
-            gmpe_outputted, gmpe_sigma_flag = al_atik_sigma_check(inputted_gmpe, imts[0])
+            gmpe_outputted, gmpe_sigma_flag = al_atik_sigma_check(inputted_gmpe,
+                                                                  imts[0])
             if idx == 0:
                 self.assertTrue(gmpe_sigma_flag == True) # Check flagged
                 self.assertTrue(gmpe_outputted == valid.gsim(inputted_gmpe)) # Check not modified GMPE
@@ -163,13 +164,13 @@ class SmUtilsTestCase(unittest.TestCase):
         # If from .toml only YA15 should be flagged and Al-Atik 2015 added
         residuals = res.Residuals.from_toml('sm_utils_test.toml')
         for idx, inputted_gmpe in enumerate(residuals.gmpe_list):
-            #inputted_gmpe = valid.gsim(str(inputted_gmpe).split('_toml=')[1].replace(')',''))
-            print(inputted_gmpe)
-            gmpe_outputted, gmpe_sigma_flag = al_atik_sigma_check(inputted_gmpe, imts[0])
+            gmpe_outputted, gmpe_sigma_flag = al_atik_sigma_check(inputted_gmpe,
+                                                                  imts[0])
             if idx == 0:
                 self.assertTrue(gmpe_sigma_flag == True) # Check flagged
                 # Get expected modified GMPE
-                tmp_gmm = valid.gsim(str(inputted_gmpe).split('_toml=')[1].replace(')',''))
+                tmp_gmm = valid.gsim(str(inputted_gmpe).split('_toml=')[
+                    1].replace(')',''))
                 tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
                 kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
                           'sigma_model_alatik2015': {}}
@@ -177,13 +178,9 @@ class SmUtilsTestCase(unittest.TestCase):
                 self.assertTrue(gmpe_outputted == mgmpe.ModifiableGMPE(**kwargs)) # Check is modified GMPE
             if idx == 1:
                 self.assertTrue(gmpe_sigma_flag == False) # Check not flagged
-                #self.assertTrue(gmpe_outputted == inputted_gmpe) # Check not modified GMPE
-
-        
-        
-     
-        
+                self.assertTrue(gmpe_outputted == inputted_gmpe) # Check not modified GMPE
                     
+                
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
