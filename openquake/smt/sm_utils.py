@@ -495,11 +495,13 @@ def al_atik_sigma_check(gmpe, imtx, task = 'residual'):
     # Construct a generic context (M = 5.5, D = 100km) to check if sigma provided 
     tmp_rup = get_rupture(20, 40, 15, WC1994(), 5.5, 2, 0, 90, 0, 'fake', None)
 
+    z1pt0 = vs30_to_z1pt0_cy14(800)
+    z1pt5 = vs30_to_z2pt5_cb14(800)
     if 'KothaEtAl2020ESHM20' in str(gmpe):
-        sp = {'vs30': 800, 'z1pt0': 0.05 , 'z2pt5': 0.10, 'backarc': False,
+        sp = {'vs30': 800, 'z1pt0': z1pt0, 'z2pt5': z1pt5, 'backarc': False,
               'vs30measured': True, 'region': 0}  
     else:
-        sp = {'vs30': 800, 'z1pt0': 0.05, 'z2pt5': 0.10, 'backarc': False,
+        sp = {'vs30': 800, 'z1pt0': z1pt0, 'z2pt5': z1pt5, 'backarc': False,
               'vs30measured': True, 'region': 0}  
             
     tmp_site = get_sites_from_rupture(tmp_rup, 'TC', 90, 'positive', 100, 5, sp)
@@ -522,7 +524,7 @@ def al_atik_sigma_check(gmpe, imtx, task = 'residual'):
                 kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
                           'sigma_model_alatik2015': {}}
                 gmpe = mgmpe.ModifiableGMPE(**kwargs)
-                warnings.warn('Al Atik (2015) sigma model has been implemented for %s GMPE.'
+                warnings.warn('Al Atik (2015) sigma model has been implemented for %s GMPE by the user.'
                     %tmp_gmm, stacklevel = 100)
             else:
                 warnings.warn('A sigma model is not provided by default for %s GMPE.'
