@@ -522,7 +522,7 @@ def al_atik_sigma_check(gmpe, imtx, task):
     kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
               'sigma_model_alatik2015': {}}
     
-    msg1 = 'Al Atik (2015) sigma model has been implemented for %s GMPE by the user.' %tmp_gmpe
+    msg1 = 'Al-Atik (2015) sigma model has been implemented for an implementation of %s by the user.' %tmp_gmpe
     msg2 = 'A sigma model is not provided by default for %s GMPE.' %tmp_gmpe
     
     if tmp_std.all() == 0:
