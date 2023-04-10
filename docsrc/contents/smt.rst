@@ -117,6 +117,9 @@ We can specify the inputs to perform a residual analysis within the smt are spec
             d_sigma = 100
             kappa0 = 0.04
         
+        [models.YenierAtkinson2015BSSA]
+        sigma_model = 'al_atik_2015_sigma'
+        
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
 
