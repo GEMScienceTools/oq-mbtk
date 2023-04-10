@@ -163,9 +163,10 @@ class SmUtilsTestCase(unittest.TestCase):
                 self.assertTrue(gmpe_outputted == inputted_gmpe) # Check not modified GMPE
                 
         # If from .toml only YA15 should be flagged and Al-Atik 2015 added
-        DATA = os.path.abspath('')
-        residuals = res.Residuals.from_toml(os.path.join(DATA,
-                                                         'sm_utils_test.toml'))
+        BASE_DATA_PATH = os.path.join(os.path.dirname(__file__))
+        filename = os.path.join(BASE_DATA_PATH, 'sm_utils_test.toml')
+        residuals = res.Residuals.from_toml(filename)
+        
         for idx, inputted_gmpe in enumerate(residuals.gmpe_list):
             gmpe_outputted, gmpe_sigma_flag = al_atik_sigma_check(inputted_gmpe,
                                                                   imts[0], task
