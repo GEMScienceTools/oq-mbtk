@@ -478,7 +478,7 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
     else:
         return np.exp(7.089 - 1.144 * np.log(vs30))
     
-def al_atik_sigma_check(gmpe, imtx, task = 'residual'):
+def al_atik_sigma_check(gmpe, imtx, task):
     """
     Check if Al-Atik (2015) sigma model should be implemented for a given GMPE
     and implement if specified. Also provides a warning if GMPE sigma is not
@@ -497,6 +497,7 @@ def al_atik_sigma_check(gmpe, imtx, task = 'residual'):
 
     z1pt0 = vs30_to_z1pt0_cy14(800)
     z1pt5 = vs30_to_z2pt5_cb14(800)
+    
     if 'KothaEtAl2020ESHM20' in str(gmpe):
         sp = {'vs30': 800, 'z1pt0': z1pt0, 'z2pt5': z1pt5, 'backarc': False,
               'vs30measured': True, 'region': 0}  
@@ -516,28 +517,33 @@ def al_atik_sigma_check(gmpe, imtx, task = 'residual'):
     
     # Get model sigma and if not provided implement Al-Atik (2015) if specified
     tmp_mean, tmp_std, tmp_tau, tmp_phi = ctxm.get_mean_stds(ctxs)
+    
+    tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
+    kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
+              'sigma_model_alatik2015': {}}
+    
+    msg1 = 'Al Atik (2015) sigma model has been implemented for %s GMPE by the user.' %tmp_gmpe
+    msg2 = 'A sigma model is not provided by default for %s GMPE.' %tmp_gmpe
+    
     if tmp_std.all() == 0:
         sigma_model_flag = True
         if task == 'residual' and 'toml=' in str(gmpe) or task == 'comparison':
-            if 'al_atik_2015_sigma' in str(gmpe):
-                tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
-                kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
-                          'sigma_model_alatik2015': {}}
+            if 'al_atik_2015_sigma' in str(gmpe): # No sigma so add
                 gmpe = mgmpe.ModifiableGMPE(**kwargs)
-                warnings.warn('Al Atik (2015) sigma model has been implemented for %s GMPE by the user.'
-                    %tmp_gmm, stacklevel = 100)
-            else:
-                warnings.warn('A sigma model is not provided by default for %s GMPE.'
-                              %tmp_gmm, stacklevel = 100)
+                warnings.warn(msg1, stacklevel = 100)
+            else: # No sigma but sigma model not specified in .toml
+                warnings.warn(msg2, stacklevel = 100)
                 gmpe = tmp_gmm
-        else:
-            warnings.warn('A sigma model is not provided by default for %s GMPE.'
-                          %tmp_gmm, stacklevel = 100)
+        else: # Task = 'residual' so sigma model not specifiable
+            warnings.warn(msg2, stacklevel = 100)
             gmpe = valid.gsim(gmpe)
     else:
         sigma_model_flag = False
-        if task == 'comparison':
+        if 'al_atik_2015_sigma' in str(gmpe): #GMPE has sigma but override
+            gmpe = mgmpe.ModifiableGMPE(**kwargs)
+            warnings.warn(msg1, stacklevel = 100)
+        elif task == 'comparison': # GMPE has sigma so retain (comparison use)
             gmpe = valid.gsim(gmpe)
-        else:
+        else: # GMPE has sigma so retain (residuals use)
             pass
     return gmpe, sigma_model_flag

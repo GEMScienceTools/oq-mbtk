@@ -580,6 +580,8 @@ class Residuals(object):
         oqp = {'imtls': {k: [] for k in [imtx]}, 'mags': mag_str}
         if sigma_model_flag == True:
             ctxm = ContextMaker(trt, [gmpe], oqp)
+        elif sigma_model_flag == False and '[ModifiableGMPE]' in str(gmpe):
+            ctxm = ContextMaker(trt, [gmpe], oqp)
         else:
             ctxm = ContextMaker(trt, [self.gmpe_list[gmpe]], oqp)
         ctxs = {}
