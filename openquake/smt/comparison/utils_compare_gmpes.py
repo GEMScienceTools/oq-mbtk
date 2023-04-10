@@ -84,7 +84,6 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                                task = 'comparison')
                 else:
                     pass
-                    
 
                 mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                  strike_g,dip_g,rake,Vs30,
@@ -228,6 +227,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             pass
     display(trellis_value_df)
     trellis_value_df.to_csv(os.path.join(output_directory, 'trellis_values.csv'))
+    
     
 def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
@@ -426,9 +426,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                         store_lt_mean_per_dist_mag[i,m])), '-']
     else:
         pass
-                    
     display(spectra_value_df)
     spectra_value_df.to_csv(os.path.join(output_directory, 'spectra_values.csv'))
+
 
 def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                          dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio,
@@ -480,7 +480,6 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
 
             matrix_medians[:][g]= medians
         mtxs_median[n] = matrix_medians
-    
     return mtxs_median
 
 def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
@@ -547,9 +546,9 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
-    pyplot.tight_layout()
-        
+    pyplot.tight_layout()        
     return matrix_Dist
+
     
 def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
                       custom_color_list, mtxs_type):
@@ -615,7 +614,6 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
-    
     return coo
 
 def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
@@ -684,5 +682,4 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.4)
     pyplot.show()
     pyplot.tight_layout() 
-    
     return matrix_Z
