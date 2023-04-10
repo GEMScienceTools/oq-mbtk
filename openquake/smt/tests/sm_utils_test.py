@@ -146,14 +146,14 @@ class SmUtilsTestCase(unittest.TestCase):
         are checked correctly, and that Al-Atik (2015) sigma model is correctly
         implemented if required
         """
-        
         # If from gmpe_list, only YA15 should be flagged, but no sigma model
         # should be implemented (must be specified in input .toml)
         gmpe_list = ['YenierAtkinson2015BSSA', 'BooreEtAl2014']
         imts = ['PGA']
         for idx, inputted_gmpe in enumerate(gmpe_list):
             gmpe_outputted, gmpe_sigma_flag = al_atik_sigma_check(inputted_gmpe,
-                                                                  imts[0])
+                                                                  imts[0], task
+                                                                  = 'residual')
             if idx == 0:
                 self.assertTrue(gmpe_sigma_flag == True) # Check flagged
                 self.assertTrue(gmpe_outputted == valid.gsim(inputted_gmpe)) # Check not modified GMPE
@@ -165,7 +165,8 @@ class SmUtilsTestCase(unittest.TestCase):
         residuals = res.Residuals.from_toml('sm_utils_test.toml')
         for idx, inputted_gmpe in enumerate(residuals.gmpe_list):
             gmpe_outputted, gmpe_sigma_flag = al_atik_sigma_check(inputted_gmpe,
-                                                                  imts[0])
+                                                                  imts[0], task
+                                                                  = 'residual')
             if idx == 0:
                 self.assertTrue(gmpe_sigma_flag == True) # Check flagged
                 # Get expected modified GMPE

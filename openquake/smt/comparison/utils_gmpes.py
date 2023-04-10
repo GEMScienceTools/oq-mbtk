@@ -199,8 +199,6 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
         dip_s = dip
 
     if depth == -999:
-        print(gmpes)
-        
         if str(valid.gsim(gmpes).DEFINED_FOR_TECTONIC_REGION_TYPE) == 'TRT.SUBDUCTION_INTERFACE':
             depth_s = 30
         elif str(valid.gsim(gmpes).DEFINED_FOR_TECTONIC_REGION_TYPE) == 'TRT.SUBDUCTION_INTRASLAB':

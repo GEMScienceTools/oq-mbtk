@@ -478,7 +478,7 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
     else:
         return np.exp(7.089 - 1.144 * np.log(vs30))
     
-def al_atik_sigma_check(gmpe, imtx):
+def al_atik_sigma_check(gmpe, imtx, task = 'residual'):
     """
     Check if Al-Atik (2015) sigma model should be implemented for a given GMPE
     and implement if specified. Also provides a warning if GMPE sigma is not
@@ -488,6 +488,9 @@ def al_atik_sigma_check(gmpe, imtx):
         sigma model should be implemented for
     :param imtx:
         Intensity measure to perform sigma checks for with the specified GMPE
+    :param task:
+        Specify whether for computation of residuals ('residual') or use within
+        comparison module ('comparison')
     """
     # Construct a generic context (M = 5.5, D = 100km) to check if sigma provided 
     tmp_rup = get_rupture(20, 40, 15, WC1994(), 5.5, 2, 0, 90, 0, 'fake', None)
@@ -513,7 +516,7 @@ def al_atik_sigma_check(gmpe, imtx):
     tmp_mean, tmp_std, tmp_tau, tmp_phi = ctxm.get_mean_stds(ctxs)
     if tmp_std.all() == 0:
         sigma_model_flag = True
-        if 'toml=' in str(gmpe):
+        if task == 'residual' and 'toml=' in str(gmpe) or task == 'comparison':
             if 'al_atik_2015_sigma' in str(gmpe):
                 tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
                 kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
@@ -529,7 +532,10 @@ def al_atik_sigma_check(gmpe, imtx):
             warnings.warn('A sigma model is not provided by default for %s GMPE.'
                           %tmp_gmm, stacklevel = 100)
             gmpe = valid.gsim(gmpe)
-            
     else:
         sigma_model_flag = False
+        if task == 'comparison':
+            gmpe = valid.gsim(gmpe)
+        else:
+            pass
     return gmpe, sigma_model_flag

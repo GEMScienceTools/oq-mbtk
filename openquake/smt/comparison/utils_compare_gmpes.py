@@ -31,6 +31,7 @@ from IPython.display import display
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib import valid
 from openquake.hazardlib.imt import from_string
+from openquake.smt.sm_utils import al_atik_sigma_check
 from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1, _get_z25, _param_gmpes
 
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
@@ -77,6 +78,13 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
 
                 gmm = valid.gsim(gmpe)
                 col=colors[g]
+
+                if not Nstd ==0:
+                    gmm, gmpe_sigma_flag = al_atik_sigma_check(gmpe, str(i),
+                                                               task = 'comparison')
+                else:
+                    pass
+                    
 
                 mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                  strike_g,dip_g,rake,Vs30,
@@ -210,7 +218,6 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     if Nstd == 0:
         trellis_value_df = pd.DataFrame(store_trellis_values,
                                         index = ['Mean (g)', 'Distance (km)'])
-        
         if lt_weights != None:
             for n, i in enumerate(imt_list): #iterate though imt_list
                 for l, m in enumerate(mag_list):  #iterate through mag_list
@@ -219,9 +226,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                           distances]                                                         
         else:
             pass
-                                                           
-    display(trellis_value_df)                                                
-    
+    display(trellis_value_df)
     trellis_value_df.to_csv(os.path.join(output_directory, 'trellis_values.csv'))
     
 def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
@@ -328,7 +333,6 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 rs_50p, sigma = [], []
                 
                 for k, imt in enumerate(imt_list): 
-
                     mu, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                     strike_g,dip_g,rake,Vs30,
                                                     Z1,Z25,300,0.1,imt,1,
@@ -382,7 +386,6 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             logic_tree_config = 'GMPE logic tree'
             
             if store_lt_branch_values != {}:
-                       
                 lt_df = pd.DataFrame(store_lt_branch_values, index = ['mean'])
                 
                 weighted_mean_per_gmpe = {}
@@ -461,8 +464,9 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     gmpe,strike, dip, depth[l], aratio, rake) 
 
-                gmm = valid.gsim(gmpe)
-                
+                gmm, gmpe_sigma_flag = al_atik_sigma_check(gmpe, str(i),
+                                                           task = 'comparison')
+
                 mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                   strike_g,dip_g,rake,Vs30,Z1,
                                                   Z25,maxR,step,i,1,eshm20_region) 

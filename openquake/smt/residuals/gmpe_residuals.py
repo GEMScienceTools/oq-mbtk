@@ -572,7 +572,7 @@ class Residuals(object):
                 np.min(dist_list)-0.001, site_props[idx])
         
         # Check if need to use Al-Atik (2015) sigma model
-        gmpe, sigma_model_flag = al_atik_sigma_check(gmpe, imtx)
+        gmpe, sigma_model_flag = al_atik_sigma_check(gmpe, imtx, task = 'residual')
         
         # Rebuild the context maker and get the contexts
         mag = rd['mag']
