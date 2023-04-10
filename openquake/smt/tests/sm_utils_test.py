@@ -18,6 +18,7 @@
 """
 Tests the GM database parsing and selection
 """
+import os
 import unittest
 import numpy as np
 from scipy.constants import g
@@ -162,7 +163,9 @@ class SmUtilsTestCase(unittest.TestCase):
                 self.assertTrue(gmpe_outputted == inputted_gmpe) # Check not modified GMPE
                 
         # If from .toml only YA15 should be flagged and Al-Atik 2015 added
-        residuals = res.Residuals.from_toml('sm_utils_test.toml')
+        DATA = os.path.abspath('')
+        residuals = res.Residuals.from_toml(os.path.join(DATA,
+                                                         'sm_utils_test.toml'))
         for idx, inputted_gmpe in enumerate(residuals.gmpe_list):
             gmpe_outputted, gmpe_sigma_flag = al_atik_sigma_check(inputted_gmpe,
                                                                   imts[0], task
