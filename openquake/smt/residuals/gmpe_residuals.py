@@ -537,16 +537,21 @@ class Residuals(object):
                                       rd['trt'], rd['ztor'])
 
         # Reformat the sites collection
-        dist_list = context["Ctx"].rjb   
+        dist_list = context["Ctx"].rjb
+        for idx, site in enumerate(dist_list):
+            if dist_list[idx] == 0.:
+                dist_list[idx] = 0.001
+            else:
+                pass
         site_props = {}
         if 'KothaEtAl2020ESHM20' in gmpe:
-            split_gmpe_str = str(gmpe).splitlines()          
-            for idx, strings in enumerate(split_gmpe_str):
-                if 'eshm20_region' in split_gmpe_str[idx]:
-                    region_str = split_gmpe_str[idx]
+            split_gmpe_str = str(gmpe).split('\n')
+            for idx_string, strings in enumerate(split_gmpe_str):
+                if 'eshm20_region' in split_gmpe_str[idx_string]:
+                    region_str = split_gmpe_str[idx_string]
                 else:
                     pass
-            eshm20_region = float(region_str.split('=')[1])
+            eshm20_region = float(region_str.split('=')[1].replace(')',''))
             for idx, site in enumerate(dist_list):
                 site_props[idx] = {'vs30': context['Ctx'].vs30[idx],
                                    'z1pt0': context['Ctx'].z1pt0[idx],
@@ -569,8 +574,8 @@ class Residuals(object):
                 azimuth =  context['Ctx'].azimuth[idx]
             sites[idx] = utils_gmpes.get_sites_from_rupture(
                 rup, 'TC', azimuth ,'positive', dist_list[idx],
-                np.min(dist_list)-0.001, site_props[idx])
-        
+                np.min(dist_list)-0.0001, site_props[idx])
+       
         # Check if need to use Al-Atik (2015) sigma model
         gmpe, sigma_model_flag = al_atik_sigma_check(gmpe, imtx, task = 'residual')
         
