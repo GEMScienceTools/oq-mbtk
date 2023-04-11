@@ -122,7 +122,8 @@ DATA = {'GID_0': {
        'arb': ['ARE', 'BHR', 'OMN', 'QAT', 'SAU',
                'YEM'],
        'aus': ['AUS'],
-       'can': ['CAN'],
+       #'can': ['CAN'], ##temporary fix to use CND and not CAN
+       'cnd': ['CAN'],
        'cca': ['ABW', 'AIA', 'ATG', 'BHS', 'BLZ',
                'BRB', 'CCY', 'CRI', 'CUB', 'CYM',
                'DMA', 'DOM', 'GLP', 'GRD', 'GTM',
@@ -177,8 +178,8 @@ DATA = {'GID_0': {
                'RWA', 'SDN', 'SOM', 'TZA', 'UGA',
                'ZMB', 'ZWE'],
        'twn': ['TWN'],
-       'usa': ['USA'],
-       'ucf': ['CAL'],
+       'usa': ['USA', 'CAL'],
+#        'ucf': ['CAL'], ## UCF merged with USA
        'waf': ['AGO', 'BEN', 'BFA', 'BWA', 'CAF',
                'CIV', 'CMR', 'COD', 'COG', 'DZA',
                'GAB', 'GHA', 'GIN', 'GMB', 'GNB',
