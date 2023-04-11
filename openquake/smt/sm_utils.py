@@ -480,9 +480,9 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
     
 def al_atik_sigma_check(gmpe, imtx, task):
     """
-    Check if Al-Atik (2015) sigma model should be implemented for a given GMPE
-    and implement if specified. Also provides a warning if GMPE sigma is not
-    provided by the specified GMPE.
+    Check if sigma is provided for a given GMPE and implement Al-Atik (2015)
+    sigma model if specified. Also provides a warning if GMPE sigma is not
+    provided by the specified GMPE. 
     :param gmpe:
         GMPE to check model sigma is provided, and to check if Al-Atik (2015)
         sigma model should be implemented for
@@ -517,7 +517,6 @@ def al_atik_sigma_check(gmpe, imtx, task):
     
     # Get model sigma and if not provided implement Al-Atik (2015) if specified
     tmp_mean, tmp_std, tmp_tau, tmp_phi = ctxm.get_mean_stds(ctxs)
-    
     tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
     kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
               'sigma_model_alatik2015': {}}
