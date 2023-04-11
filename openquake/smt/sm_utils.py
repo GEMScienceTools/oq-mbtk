@@ -503,7 +503,7 @@ def al_atik_sigma_check(gmpe, imtx, task):
               'vs30measured': True, 'region': 0}  
     else:
         sp = {'vs30': 800, 'z1pt0': z1pt0, 'z2pt5': z1pt5, 'backarc': False,
-              'vs30measured': True, 'region': 0}  
+              'vs30measured': True}  
             
     tmp_site = get_sites_from_rupture(tmp_rup, 'TC', 90, 'positive', 100, 5, sp)
     
