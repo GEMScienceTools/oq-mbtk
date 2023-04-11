@@ -18,10 +18,11 @@ O_PATH='/tmp/ghm'
 D_PATH=$REPOS'/mosaic'
 #
 # Spatial index folder
-SIDX=$GEMDATA'/global_grid/trigrd_split_9_spacing_13'
+SIDX=$GEMDATA'/trigrd_split_9_spacing_13'
 #
-# Boundaries shapefile
-B_SHP='./../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp'
+# Boundaries shapefilei
+B_SHP='~/gem-hazard-data/gis/grid/gadm_410_level_0.gpkg'
+#B_SHP='./../data/gis/world_country_admin_boundary_with_fips_codes_mosaic_eu_russia.shp'
 #
 # String with the intensity measure type
 IMTSTR='PGA'
@@ -29,13 +30,14 @@ IMTSTR='PGA'
 # Shapefile with inland territories
 I_SHP='./../data/gis/inland.shp'
 #
+BUF=50.0
+#
 # List of models to be processed. This is an optional parameter. If not set,
 # i.e. MDLS="", all the models specified in `openquake.ghm.mosaic.DATA`
 # will be used.
-#MDLS="-m als,can,usa,mex,ucf,cca,sam"
-#MDLS="-m mex,usa"
+#MDLS="-m als,arb,aus,cca,cea,chn,eur,gld,haw,idn,ind,jpn,kor,mex,mie,naf,nea,nwa,nzl,pac,phl,png,sam,sea,ssa,twn,waf,zaf"
+#MDLS="-m usa,cnd"
 #MDLS="-m cca,sam"
 #
 # Run hazard curves homogenisation
-../create_homogenised_curves.py $C_SHP $O_PATH $D_PATH $SIDX $B_SHP $IMTSTR $I_SHP $MDLS
-
+../create_homogenised_curves.py $C_SHP $O_PATH $D_PATH $SIDX $B_SHP $IMTSTR $I_SHP $BUF $MDLS
