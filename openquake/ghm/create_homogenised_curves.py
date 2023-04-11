@@ -220,7 +220,6 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         [optional] The key used to identify models
     """
     shapely.speedups.enable()
-
     # Buffer distance in [m]
     buf = float(buf) * 1000
 
@@ -263,7 +262,6 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         # Skip models not included in the list
         if re.sub('[0-9]+', '', key) not in models_list:
             continue
-
         # Find name of the file with hazard curves
         print_model_info(i, key)
         data_fname = find_hazard_curve_file(datafolder, key, imt_str)
@@ -460,7 +458,6 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                             buffer_data[res] = [[d, o]]
                             buffer_poes[res] = [poe]
                             coords[res] = [p.x, p.y]
-
             #  Write information outside the buffers
             if not only_buffers:
                 #df = pd.DataFrame({'Name': [key], 'Polygon': [poly_pro]})
@@ -473,7 +470,6 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                 fname = os.path.join(outpath, 'map_{:s}.json'.format(key))
                 final = within.to_crs(crs=p4326)
                 final.to_file(fname, driver='GeoJSON')
-
         # Store temporary files
         tmpdir = os.path.join(outpath, 'temp')
         if not os.path.exists(tmpdir):
