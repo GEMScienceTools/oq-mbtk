@@ -305,8 +305,7 @@ def get_interpolated_period(target_period, periods, values):
     d_x = np.log10(periods[uval]) - np.log10(periods[lval])
     return 10.0 ** (
         np.log10(values[lval]) +
-        (np.log10(target_period) - np.log10(periods[lval])) * d_y / d_x
-        )
+        (np.log10(target_period) - np.log10(periods[lval])) * d_y / d_x)
 
 
 def create_planar_surface(top_centroid, strike, dip, area, aspect):
@@ -478,6 +477,7 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
     else:
         return np.exp(7.089 - 1.144 * np.log(vs30))
     
+    
 def al_atik_sigma_check(gmpe, imtx, task):
     """
     Check if sigma is provided for a given GMPE and implement Al-Atik (2015)
@@ -546,8 +546,5 @@ def al_atik_sigma_check(gmpe, imtx, task):
         elif task == 'comparison': # GMPE has sigma so retain (comparison use)
             gmpe = valid.gsim(gmpe)
         else: # GMPE has sigma so retain (residuals use)
-            if 'gmpe_table' in str(gmpe):
-                gmpe = tmp_gmm
-            else:
-                gmpe = valid.gsim(gmpe.split('(')[0])
+            gmpe = valid.gsim(gmpe.split('(')[0])
     return gmpe, sigma_model_flag
