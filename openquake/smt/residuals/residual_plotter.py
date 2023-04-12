@@ -61,7 +61,7 @@ class BaseResidualPlot(object):
         :param str gmpe: Choice of GMPE
         :param str imt: Choice of IMT
         :param kwargs: optional keyword arguments. Supported are:
-            'figure_size' (default: (7,5)), 'show' (default: True)
+            'figure_size' (default: (8,8) or (7,5)), 'show' (default: True)
         """
         self._assertion_check(residuals)
         self.residuals = residuals
@@ -77,7 +77,14 @@ class BaseResidualPlot(object):
         self.filetype = filetype
         self.dpi = dpi
         self.num_plots = len(residuals.types[gmpe][imt])
-        self.figure_size = kwargs.get("figure_size",  (8, 8))
+        
+        # Adjust aspect ratio if only total residual for GMPE
+        if 'Inter event' and 'Intra event' not in residuals.residuals[
+                gmpe][imt]:
+            self.figure_size = kwargs.get("figure_size",  (8, 6))
+        else:
+            self.figure_size = kwargs.get("figure_size",  (8, 8))
+        
         self.show = kwargs.get("show", True)
         self.create_plot()
 
@@ -381,7 +388,7 @@ class ResidualScatterPlot(BaseResidualPlot):
                                                   filename=filename,
                                                   filetype=filetype,
                                                   dpi=dpi, **kwargs)
-
+        
     def get_subplots_rowcols(self):
         if self.num_plots > 1:
             nrow = 3
@@ -445,7 +452,6 @@ class ResidualScatterPlot(BaseResidualPlot):
             ax.plot(x_zero, zero_line, color = 'k', linestyle = '--',
                     linewidth = 1.25)
         ax.legend(loc = 'upper right', fontsize = 'xx-small')
-    
 
 class ResidualWithDistance(ResidualScatterPlot):
     """
