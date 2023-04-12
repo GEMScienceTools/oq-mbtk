@@ -514,17 +514,23 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type):
         pass
     
     for val_bin in idx_residuals_per_val_bin:
+        
         total_res_mean_per_val_bin[val_bin] = np.mean(df.total_res.iloc[
             pd.Series(idx_residuals_per_val_bin[val_bin].keys())])
+        
         total_res_sigma_per_val_bin[val_bin] = np.std(df.total_res.iloc[
             pd.Series(idx_residuals_per_val_bin[val_bin].keys())])
+        
         if 'Intra event' and 'Inter event' in residuals.residuals[gmpe][imt]:
             intra_res_mean_per_val_bin[val_bin] = np.mean(df.intra_res.iloc[
                 pd.Series(idx_residuals_per_val_bin[val_bin].keys())])
+        
             inter_res_mean_per_val_bin[val_bin] = np.mean(df_inter['inter'].iloc[
                 pd.Series(idx_residuals_per_val_bin[val_bin].keys())].unique())
+            
             intra_res_sigma_per_val_bin[val_bin] = np.std(df.intra_res.iloc[
                 pd.Series(idx_residuals_per_val_bin[val_bin].keys())])
+            
             inter_res_sigma_per_val_bin[val_bin] = np.std(df_inter['inter'].iloc[
                 pd.Series(idx_residuals_per_val_bin[val_bin].keys())].unique())
         else:
