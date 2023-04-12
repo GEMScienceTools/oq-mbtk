@@ -502,7 +502,7 @@ def al_atik_sigma_check(gmpe, imtx, task):
         sp = {'vs30': 800, 'z1pt0': 31.07, 'z2pt5': 0.57, 'backarc': False,
               'vs30measured': True}  
             
-    tmp_site = get_sites_from_rupture(tmp_rup, 'TC', 90, 'positive', 100, 99, sp)
+    tmp_site = get_sites_from_rupture(tmp_rup, 'TC', 90, 'positive', 100, 50, sp)
     
     oqp = {'imtls': {k: [] for k in [imtx]}, 'mags': [f'{5.5:.2f}']}
     if '_toml=' in str(gmpe):
@@ -512,16 +512,19 @@ def al_atik_sigma_check(gmpe, imtx, task):
     ctxm = ContextMaker('fake', [tmp_gmm], oqp)
     ctxs = list(ctxm.get_ctx_iter([tmp_rup], tmp_site))
     
-    # Get model sigma and if not provided implement Al-Atik (2015) if specified
+    # Get model sigma and set up modifiable GMPE
     tmp_mean, tmp_std, tmp_tau, tmp_phi = ctxm.get_mean_stds(ctxs)
     tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
     kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
               'sigma_model_alatik2015': {}}
     
+    # Messages for warnings/ValueError
     msg1 = 'Al-Atik (2015) sigma model has been used within an implementation of %s by the user.' %tmp_gmpe
     msg2 = 'A sigma model is not provided by default for %s GMPE.' %tmp_gmpe
     msg3 = 'For residual analysis a sigma model must be specified for %s GMPE.' %tmp_gmpe
     
+    # Raise warning/ValueError/implement Al-Atik 2015 sigma if specified based
+    # on sigma_model_flag
     if tmp_std.all() == 0:
         sigma_model_flag = True
         if task == 'residual' and 'toml=' in str(gmpe) or task == 'comparison':
