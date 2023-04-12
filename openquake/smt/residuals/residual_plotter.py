@@ -292,7 +292,7 @@ class ResidualPlot(ResidualHistogramPlot):
         ax.plot(xdata_norm_pdf, norm.pdf(xdata_norm_pdf, 0.0, 1.0), '-',
                 color='k', linewidth=2.0, 
                 label = 'Standard. Norm. Dist.')
-        ax.legend(loc = 'best', fontsize = 'small')
+        ax.legend(loc = 'best', fontsize = 'xx-small')
         x_limit = max(abs(x))
         ax.set_xlim(x_limit*-1,x_limit)
 
@@ -307,8 +307,9 @@ class ResidualPlot(ResidualHistogramPlot):
         
         mean, stddev = res_data["mean"], res_data["stddev"]
         return "%s - %s\n Mean = %7.3f, Std Dev = %7.3f" % (str(
-            self.residuals.gmpe_list[self.gmpe]).split('(')[0],sigma_type,mean,
-                                                            stddev)
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
+                ']\n', '] - ').replace('sigma_model','Sigma').replace(
+                    'sigma_model','Sigma'),sigma_type,mean, stddev)
     
 class LikelihoodPlot(ResidualHistogramPlot):
     """
@@ -352,8 +353,9 @@ class LikelihoodPlot(ResidualHistogramPlot):
             sigma_type = 'Between-Event Res.'
         elif res_type == 'Intra event':
             sigma_type = 'Within-Event Res.'
-        return "%s - %s\n Median LH = %7.3f" % (str(self.residuals.gmpe_list[
-            self.gmpe]).split('(')[0],sigma_type,median_lh)
+        return "%s \n%s - Median LH = %7.3f" % (str(self.residuals.gmpe_list[
+            self.gmpe]).split('(')[0].replace('\n',' - ').replace(
+                'sigma_model','Sigma'),sigma_type,median_lh)
 
 
 class ResidualScatterPlot(BaseResidualPlot):
@@ -406,8 +408,8 @@ class ResidualScatterPlot(BaseResidualPlot):
             sigma_type = 'Between-Event Res.'
         elif res_type == 'Intra event':
             sigma_type = 'Within-Event Res.'
-        return "%s - %s" %(str(self.residuals.gmpe_list[self.gmpe]).split('(')[0],
-             sigma_type)
+        return "%s - %s" %(str(self.residuals.gmpe_list[self.gmpe]).split('(')[
+            0].replace(']\n', '] - ').replace('sigma_model','Sigma'),sigma_type)
 
     def draw(self, ax, res_data, res_type):
         x, y = res_data['x'], res_data['y']
@@ -442,7 +444,7 @@ class ResidualScatterPlot(BaseResidualPlot):
             
             ax.plot(x_zero, zero_line, color = 'k', linestyle = '--',
                     linewidth = 1.25)
-        ax.legend(loc = 'upper right', fontsize = 'x-small')
+        ax.legend(loc = 'upper right', fontsize = 'xx-small')
     
 
 class ResidualWithDistance(ResidualScatterPlot):
@@ -586,7 +588,8 @@ class ResidualWithSite(ResidualPlot):
         ax.set_ylabel("%s" % res_type, fontsize=12)
         ax.grid()
         title_string = "%s - %s - %s Residual" % (str(self.residuals.gmpe_list[
-            self.gmpe]).split('(')[0],self.imt,res_type)
+            self.gmpe]).split('(')[0].replace(']\n', '] - ').replace(
+                'sigma_model','Sigma'),self.imt,res_type)
         ax.set_title(title_string, fontsize=12)
 
     def _get_site_data(self):
@@ -693,7 +696,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.plot(xvals, phi * np.ones(len(xvals)), 'k--', linewidth=2.)
         ax.plot(xvals, -phi * np.ones(len(xvals)), 'k--', linewidth=2.)
         title_string = "%s - %s (Std Dev = %8.5f)" % (str(
-            self.residuals.gmpe_list[self.gmpe]).split('(')[0], self.imt, phi)
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
+                ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi)
         ax.set_title(title_string, fontsize=16)
         # Show delta s2ss
         ax = fig.add_subplot(312)
@@ -721,7 +725,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.grid()
         ax.set_ylabel(r'$\delta S2S_S$ (%s)' % self.imt, fontsize=12)
         title_string = r'%s - %s ($\phi_{S2S}$ = %8.5f)' % (str(
-            self.residuals.gmpe_list[self.gmpe]).split('(')[0],
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
+                ']\n', '] - ').replace('sigma_model','Sigma'),
             self.imt, phi_s2ss["StdDev"])
         ax.set_title(title_string, fontsize=16)
         # Show dwoes
@@ -745,7 +750,8 @@ class IntraEventResidualWithSite(ResidualPlot):
                       % self.imt, 
                       fontsize=12)
         title_string = r'%s - %s ($\phi_{SS}$ = %8.5f)' % (str(
-            self.residuals.gmpe_list[self.gmpe]).split('(')[0],self.imt,phi_ss)
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
+                ']\n', '] - ').replace('sigma_model','Sigma'),self.imt,phi_ss)
         ax.set_title(title_string, fontsize=16)
 
     def _get_site_data(self):
@@ -846,7 +852,7 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, custom_cycler =
     ax_llh.set_xlabel('Spectral Period (s)')
     ax_llh.set_ylabel('Loglikelihood Value')
     ax_llh.set_title('Scherbaum et al. (2009) Loglikelihood Values', fontsize = '16')
-    ax_llh.legend(loc = 'upper right', ncol = 2, fontsize = 'x-small')
+    ax_llh.legend(loc = 'upper right', ncol = 2, fontsize = 'xx-small')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
     # Reassign original imts to residuals.imts
@@ -901,7 +907,7 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler = 0
     ax_EDR.set_ylabel('EDR')
     ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)',
                      fontsize = '16')
-    ax_EDR.legend(loc = 'upper right', ncol = 2, fontsize = 'x-small')
+    ax_EDR.legend(loc = 'upper right', ncol = 2, fontsize = 'xx-small')
     _save_image(os.path.join(filename + '_EDR_value'), plt.gcf(), filetype, dpi)
     
     # Plot median pred. correction factor w.r.t. spectral period
@@ -918,7 +924,7 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler = 0
     ax_kappa.set_ylabel('k^0.5')
     ax_kappa.set_title('Median Pred. Correction Factor (k) (Kale and Akkar, 2013)',
                        fontsize = '16')
-    ax_kappa.legend(loc = 'upper right', ncol = 2, fontsize = 'x-small')
+    ax_kappa.legend(loc = 'upper right', ncol = 2, fontsize = 'xx-small')
     _save_image(os.path.join(filename + '_EDR_correction_factor'), plt.gcf(),
                 filetype, dpi)
     
@@ -935,7 +941,7 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler = 0
     ax_MDE.set_xlabel('Spectral Period (s)')
     ax_MDE.set_ylabel('MDE Norm')
     ax_MDE.set_title('Normalised MDE (Kale and Akkar, 2013)',fontsize='16')
-    ax_MDE.legend(loc = 'upper right', ncol = 2, fontsize = 'x-small')
+    ax_MDE.legend(loc = 'upper right', ncol = 2, fontsize = 'xx-small')
     _save_image(os.path.join(filename + '_MDE'), plt.gcf(), filetype, dpi)
     
 def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 0,
@@ -1092,7 +1098,7 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 
             'Std Dev'], color = color_input, marker = marker_input)
         ax[0, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Total_df[gmpe].loc[
             'Std Dev'], color = color_input, marker = marker_input)
-        ax[0, 0].legend(loc = 'upper right', ncol = 2, fontsize = 'x-small')
+        ax[0, 0].legend(loc = 'upper right', ncol = 2, fontsize = 'xx-small')
 
         _save_image(filename, plt.gcf(), filetype, dpi)
     

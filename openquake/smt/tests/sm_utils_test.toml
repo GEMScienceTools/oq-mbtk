@@ -1,0 +1,9 @@
+[models]
+
+[models.YenierAtkinson2015BSSA]
+sigma_model = 'al_atik_2015_sigma'
+
+[models.BooreEtAl2014]
+
+[imts]
+imt_list = ["PGA"]
