@@ -94,7 +94,7 @@ We can specify the inputs to perform a residual analysis within the smt are spec
     
 3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for specifying the inputs of GMPEs with user-specifiable input parameters e.g. regionalisation parameter or logic tree branch parameters. Note that here the GMPEs listed in the ``.toml`` file are not appropriate for our target region, but have been selected to demonstrate how GMPEs with additional inputs can be specified within a ``.toml`` file.
 
-   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``).
+   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``). Note also that a GMPE sigma model must be provided by the GMPE for the computation of residuals. If a sigma model is not provided by the GMPE, it can be specified as demonstrated below for the YenierAtkinson2015BSSA GMPE.
    
    The ``.toml`` file for specifying GMPEs and intensity measures to consider within a residual analysis should be specified as follows:
    
@@ -109,6 +109,9 @@ We can specify the inputs to perform a residual analysis within the smt are spec
         region = "CAS"
         
         [models.AbrahamsonGulerce2020SInterCascadia]
+        
+        [models.YenierAtkinson2015BSSA]
+        sigma_model = 'al_atik_2015_sigma'
         
         [models.NGAEastGMPE]
         gmpe_table = 'NGAEast_FRANKEL_J15.hdf5'
