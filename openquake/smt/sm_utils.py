@@ -493,7 +493,7 @@ def al_atik_sigma_check(gmpe, imtx, task):
         comparison module ('comparison')
     """
     # Construct a generic context (M = 5.5, D = 100km) to check if sigma provided 
-    tmp_rup = get_rupture(20, 40, 15, WC1994(), 5.5, 2, 0, 90, 0, 'fake', None)
+    tmp_rup = get_rupture(20, 40, 15, WC1994(), 5.5, 1.5, 0, 90, 0, 'fake', None)
 
     if 'KothaEtAl2020ESHM20' in str(gmpe):
         sp = {'vs30': 800, 'z1pt0': 31.07, 'z2pt5': 0.57, 'backarc': False,
