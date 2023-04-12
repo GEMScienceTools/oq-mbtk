@@ -869,7 +869,6 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler = 0
     and linestyle to each GMPE, a cycler can instead be specified manually,
     where index value in the cycler corresponds to gmpe in residuals.gmpe_list
     """
-    
     # Check enough imts to plot w.r.t. spectral period
     if len(residuals.imts) == 1:
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
@@ -954,7 +953,6 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 
     and linestyle to each GMPE, a cycler can instead be specified manually,
     where index value in the cycler corresponds to gmpe in residuals.gmpe_list
     """
-    
     # Check enough imts to plot w.r.t. spectral period
     if len(residuals.imts) == 1:
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
@@ -1000,11 +998,17 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 
     Mean_Sigma_Intra = {}
     Mean_Sigma_Inter = {}
     Mean_Sigma_Total = {}
+    dummy_values = {'Mean': float(0), 'Std Dev': float(0)} # Assign if only total
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
-            Mean_Sigma_Intra[gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
-            Mean_Sigma_Inter[gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
             Mean_Sigma_Total[gmpe, imt] = res_statistics[gmpe, imt]['Total']
+            if 'Inter event' and 'Intra event' in residuals.residuals[gmpe][imt]:
+                Mean_Sigma_Inter[gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
+                Mean_Sigma_Intra[gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
+            else:
+                Mean_Sigma_Inter[gmpe, imt] = dummy_values
+                Mean_Sigma_Intra[gmpe, imt] = dummy_values
+                pass
 
     Mean_Sigma_Intra_df = pd.DataFrame(Mean_Sigma_Intra)
     Mean_Sigma_Inter_df = pd.DataFrame(Mean_Sigma_Inter)
@@ -1076,30 +1080,52 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 
 
     # Plot data
     for gmpe in residuals.gmpe_list:
-        
         # Assign colour and marker to each gmpe
         input_df = pd.DataFrame(colour_cycler_df_appended.loc[
             colour_cycler_df_appended['gmpe'] == gmpe])
         input_df.reset_index()
+        color_input_non_total = 'w'
         color_input = input_df['color'].iloc[0]
         marker_input = input_df['marker'].iloc[0]
         
-        # Plot residual data
-        ax[2, 0].scatter(imts_to_plot.imt_float,Mean_Sigma_Intra_df[gmpe].loc[
-            'Mean'], color = color_input, marker = marker_input)
-        ax[1, 0].scatter(imts_to_plot.imt_float, Mean_Sigma_Inter_df[gmpe].loc[
-            'Mean'], color = color_input, marker = marker_input)
+        # Plot mean
+        if Mean_Sigma_Intra_df[gmpe].loc['Mean'].all() == 0 and Mean_Sigma_Inter_df[
+                gmpe].loc['Mean'].all() == 0:
+            ax[2, 0].scatter(imts_to_plot.imt_float, Mean_Sigma_Intra_df[
+                gmpe].loc['Mean'], color = color_input_non_total,
+                marker = marker_input, zorder = 0)
+            ax[1, 0].scatter(imts_to_plot.imt_float, Mean_Sigma_Inter_df[
+                gmpe].loc['Mean'], color = color_input_non_total,
+                marker = marker_input, zorder = 0)
+        else:
+            ax[2, 0].scatter(imts_to_plot.imt_float,Mean_Sigma_Intra_df[
+                gmpe].loc['Mean'], color = color_input, marker = marker_input)
+            ax[1, 0].scatter(imts_to_plot.imt_float, Mean_Sigma_Inter_df[
+                gmpe].loc['Mean'], color = color_input, marker = marker_input)
         ax[0, 0].scatter(imts_to_plot.imt_float, Mean_Sigma_Total_df[gmpe].loc[
-            'Mean'], label = residuals.gmpe_list[gmpe], color = color_input, 
+            'Mean'], label = residuals.gmpe_list[gmpe], color = color_input,
             marker = marker_input)
-        ax[2, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Intra_df[gmpe].loc[
-            'Std Dev'], color = color_input, marker = marker_input)
-        ax[1, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Inter_df[gmpe].loc[
-            'Std Dev'], color = color_input, marker = marker_input)
+       
+        # Plot sigma
+        if Mean_Sigma_Intra_df[gmpe].loc['Std Dev'].all() == 0 and Mean_Sigma_Inter_df[
+                gmpe].loc['Std Dev'].all() == 0:
+            ax[2, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Intra_df[
+                gmpe].loc['Std Dev'], color = color_input_non_total,
+                marker = marker_input, zorder = 0)
+            ax[1, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Inter_df[
+                gmpe].loc['Std Dev'], color = color_input_non_total,
+                marker = marker_input, zorder = 0)
+        else:
+            ax[2, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Intra_df[
+                gmpe].loc['Std Dev'], color = color_input,
+                marker = marker_input)
+            ax[1, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Inter_df[
+                gmpe].loc['Std Dev'], color = color_input,
+                marker = marker_input)
         ax[0, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Total_df[gmpe].loc[
             'Std Dev'], color = color_input, marker = marker_input)
-        ax[0, 0].legend(loc = 'upper right', ncol = 2, fontsize = 'xx-small')
-
+        
+        ax[0, 0].legend(loc = 'upper right', ncol = 2, fontsize = 6)
         _save_image(filename, plt.gcf(), filetype, dpi)
     
         # Reassign original imts to residuals.imts
@@ -1110,7 +1136,6 @@ def loglikelihood_table(residuals, filename):
     Definition to create a table of loglikelihood values per GMPE per imt
     (Scherbaum et al. 2009)
     """
-    
     # Preserve original residuals.imts
     preserve_imts = residuals.imts
     
@@ -1191,8 +1216,7 @@ def llh_weights_table(residuals, filename):
     """
     Definition to create a table of model weights per imt based
     on sample loglikelihood (Scherbaum et al. 2009)
-    """     
-       
+    """       
     # Preserve original residuals.imts
     preserve_imts = residuals.imts
     
@@ -1263,7 +1287,6 @@ def edr_weights_table(residuals, filename):
     Definition to create a table of model weights per imt based
     on Euclidean distance based ranking (Kale and Akkar, 2013)
     """     
-       
     # Preserve original residuals.imts
     preserve_imts = residuals.imts
     
@@ -1335,7 +1358,6 @@ def edr_table(residuals, filename):
     Definition to create a table of MDE Norm, sqrt(kappa) and 
     EDR per imt per spectal period (Kale and Akkar, 2013)
     """
-    
     # Generate attributes required from residuals for table
     residuals.get_edr_values_wrt_spectral_period()
     
@@ -1377,7 +1399,6 @@ def pdf_table(residuals, filename):
     inter- and intra-event residual distributions (for each GMPE at each
     spectral period
     """  
-        
     # Preserve original residuals.imts
     preserve_imts = residuals.imts
     
@@ -1424,11 +1445,17 @@ def pdf_table(residuals, filename):
     Mean_Sigma_Intra = {}
     Mean_Sigma_Inter = {}
     Mean_Sigma_Total = {}
+    dummy_values = {'Mean': 'Total sigma only', 'Std Dev': 'Total sigma only'}
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
-            Mean_Sigma_Intra[gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
-            Mean_Sigma_Inter[gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
             Mean_Sigma_Total[gmpe, imt] = res_statistics[gmpe, imt]['Total']
+            if 'Intra event' in residuals.residuals[gmpe][
+                    imt] and 'Inter event' in residuals.residuals[gmpe][imt]:
+                Mean_Sigma_Intra[gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
+                Mean_Sigma_Inter[gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
+            else:
+                Mean_Sigma_Intra[gmpe, imt] = dummy_values
+                Mean_Sigma_Inter[gmpe, imt] = dummy_values
 
     Mean_Sigma_Intra_df = pd.DataFrame(Mean_Sigma_Intra)
     Mean_Sigma_Inter_df = pd.DataFrame(Mean_Sigma_Inter)
@@ -1447,7 +1474,7 @@ def pdf_table(residuals, filename):
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
             tmp = str(residuals.gmpe_list[gmpe])
-            gmpe_headers[gmpe,imt] = str(imt) + '' + tmp.split(
+            gmpe_headers[gmpe,imt] = str(imt) + ' ' + tmp.split(
                 '(')[0].replace('\n',' ')
             
     combined_df_output.columns = list(pd.Series(gmpe_headers))
