@@ -534,7 +534,7 @@ def al_atik_sigma_check(gmpe, imtx, task):
                 warnings.warn(msg2, stacklevel = 100)
                 gmpe = valid.gsim(gmpe.split('(')[0])
         elif task == 'residual': # Task = 'residual' but no toml used so sigma model not specifiable
-            warnings.warn(msg3, stacklevel = 100)
+            raise ValueError(msg3)
             gmpe = valid.gsim(gmpe)
     else:
         sigma_model_flag = False
