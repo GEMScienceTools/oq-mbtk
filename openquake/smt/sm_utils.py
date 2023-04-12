@@ -535,7 +535,6 @@ def al_atik_sigma_check(gmpe, imtx, task):
                 gmpe = valid.gsim(gmpe.split('(')[0])
         elif task == 'residual': # Task = 'residual' but no toml used so sigma model not specifiable
             raise ValueError(msg3)
-            gmpe = valid.gsim(gmpe)
     else:
         sigma_model_flag = False
         if 'al_atik_2015_sigma' in str(gmpe): #GMPE has sigma but override
@@ -544,5 +543,8 @@ def al_atik_sigma_check(gmpe, imtx, task):
         elif task == 'comparison': # GMPE has sigma so retain (comparison use)
             gmpe = valid.gsim(gmpe)
         else: # GMPE has sigma so retain (residuals use)
-            gmpe = valid.gsim(gmpe.split('(')[0])
+            if 'gmpe_table' in str(gmpe):
+                gmpe = tmp_gmm
+            else:
+                gmpe = valid.gsim(gmpe.split('(')[0])
     return gmpe, sigma_model_flag
