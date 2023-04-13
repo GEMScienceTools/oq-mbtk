@@ -1194,9 +1194,7 @@ class SingleStationAnalysis(object):
     Class to analyse residual sets recorded at specific stations
     """
     def __init__(self, site_id_list, gmpe_list, imts):
-        """
-
-        """
+        # Initial SSA object
         self.site_ids = site_id_list
         self.input_gmpe_list = copy.deepcopy(gmpe_list)
         self.gmpe_list = check_gsim_list(gmpe_list)
