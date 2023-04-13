@@ -1245,9 +1245,6 @@ def pdf_table(residuals, filename):
     residuals.imts = preserve_imts  
     
     
-# FIXME: code below not tested and buggy (at least ResidualWithSite)
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 class ResidualWithSite(ResidualPlot):
     """
     Class uses Single-Station residuals to plot residuals for specific sites
