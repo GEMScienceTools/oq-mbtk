@@ -42,6 +42,7 @@ from openquake.hazardlib import imt
 import openquake.smt.intensity_measures as ims
 from openquake.smt.strong_motion_selector import SMRecordSelector
 from openquake.smt.sm_utils import convert_accel_units, check_gsim_list, al_atik_sigma_check
+from openquake.smt.strong_motion_selector import rank_sites_by_record_count
 
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
@@ -1194,7 +1195,7 @@ class SingleStationAnalysis(object):
     Class to analyse residual sets recorded at specific stations
     """
     def __init__(self, site_id_list, gmpe_list, imts):
-        # Initial SSA object
+        # Initiate SSA object
         self.site_ids = site_id_list
         self.input_gmpe_list = copy.deepcopy(gmpe_list)
         self.gmpe_list = check_gsim_list(gmpe_list)
@@ -1202,22 +1203,52 @@ class SingleStationAnalysis(object):
         self.site_residuals = []
         self.types = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
         for gmpe in self.gmpe_list:
-            # if not gmpe in GSIM_LIST:
-            #    raise ValueError("%s not supported in OpenQuake" % gmpe)
             for imtx in self.imts:
                 self.types[gmpe][imtx] = []
-                for res_type in (self.gmpe_list[gmpe].
+                if self.gmpe_list[
+                        gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == frozenset(
+                            {'Inter event', 'Intra event', 'Total'}
+                            ) or 'al_atik_2015_sigma' in str(gmpe):
+                    for res_type in ['Total','Inter event', 'Intra event']:
+                        self.types[gmpe][imtx].append(res_type)
+                else:
+                    for res_type in (self.gmpe_list[gmpe].
                                  DEFINED_FOR_STANDARD_DEVIATION_TYPES):
-                    self.types[gmpe][imtx].append(res_type)
+                        self.types[gmpe][imtx].append(res_type)
+                        
+    @classmethod
+    def from_toml(cls, site_id_list, filename):
+        """
+        Read in gmpe_list and imts from .toml file. This method allows use of
+        non-ergodic GMPEs and gmpes with additional input files within SMT
+        """
+        # Read in toml file with dict of gmpes and subdict of imts
+        config_file = toml.load(filename)
+             
+        # Parsing file with models
+        gmpe_list = []
+        config = copy.deepcopy(config_file)
+        for key in config['models']:
+        # If the key contains a number we take the second part
+            if re.search("^\\d+\\-", key):
+                tmp = re.sub("^\\d+\\-", "", key)
+                value = f"[{tmp}] "
+            else:
+                value = f"[{key}] "
+            if len(config['models'][key]):
+               config['models'][key].pop('style', None)
+               value += '\n' + str(toml.dumps(config['models'][key]))
+            gmpe_list.append(valid.gsim(value))
+        
+        imts = config_file['imts']['imt_list']             
+        return cls(site_id_list, gmpe_list, imts)
 
     def get_site_residuals(self, database, component="Geometric"):
         """
         Calculates the total, inter-event and within-event residuals for
         each site
         """
-        # imt_dict = dict([(imtx, {}) for imtx in self.imts])
         for site_id in self.site_ids:
-            print(site_id)
             selector = SMRecordSelector(database)
             site_db = selector.select_from_site_id(site_id, as_db=True)
             resid = Residuals(self.input_gmpe_list, self.imts)
@@ -1240,25 +1271,25 @@ class SingleStationAnalysis(object):
             (gmpe, dict([(imtx, {}) for imtx in self.imts]))
             for gmpe in self.gmpe_list])
 
-    def residual_statistics(self, pretty_print=False, filename=None):
+    def residual_statistics(self, pretty_print = None, filename = None):
         """
         Get single-station residual statistics for each site
         """
         output_resid = []
-
         for t_resid in self.site_residuals:
             resid = copy.deepcopy(t_resid)
-
             for gmpe in self.gmpe_list:
                 for imtx in self.imts:
                     if not resid.residuals[gmpe][imtx]:
                         continue
+                    
                     n_events = len(resid.residuals[gmpe][imtx]["Total"])
                     resid.site_analysis[gmpe][imtx]["events"] = n_events
                     resid.site_analysis[gmpe][imtx]["Total"] = np.copy(
                         t_resid.residuals[gmpe][imtx]["Total"])
                     resid.site_analysis[gmpe][imtx]["Expected Total"] = \
                         np.copy(t_resid.modelled[gmpe][imtx]["Total"])
+                    
                     if not ("Intra event" in t_resid.residuals[gmpe][imtx]):
                         # GMPE has no within-event term - skip
                         continue
@@ -1276,18 +1307,19 @@ class SingleStationAnalysis(object):
                         delta_s2ss
                     resid.site_analysis[gmpe][imtx]["dS2ss"] = delta_s2ss
                     resid.site_analysis[gmpe][imtx]["dWo,es"] = delta_woes
-
+                    
                     resid.site_analysis[gmpe][imtx]["phi_ss,s"] = \
                         self._get_single_station_phi(
                             resid.residuals[gmpe][imtx]["Intra event"],
                             delta_s2ss,
                             n_events)
+            
                     # Get expected values too
-
                     resid.site_analysis[gmpe][imtx]["Expected Inter"] =\
                         np.copy(t_resid.modelled[gmpe][imtx]["Inter event"])
                     resid.site_analysis[gmpe][imtx]["Expected Intra"] =\
                         np.copy(t_resid.modelled[gmpe][imtx]["Intra event"])
+            
             output_resid.append(resid)
         self.site_residuals = output_resid
         return self.get_total_phi_ss(pretty_print, filename)
@@ -1301,36 +1333,37 @@ class SingleStationAnalysis(object):
 
     def _get_single_station_phi(self, intra_event, delta_s2ss, n_events):
         """
-        Returns the single-station phi for the specific station
+        Returns the single-station phi for the specific station from
         Rodriguez-Marek et al. (2011) Equation 11
         """
         phiss = np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1)
         return np.sqrt(phiss)
 
-    def get_total_phi_ss(self, pretty_print=None, filename=None):
+    def get_total_phi_ss(self, pretty_print = None, filename = None):
         """
-        Returns the station averaged single-station phi
-        Rodriguez-Marek et al. (2011) Equation 10
+        Returns the station averaged single-station phi from Rodriguez-Marek
+        et al. (2011) Equation 10
         """
-        if pretty_print:
+        if pretty_print == True:
             if filename:
                 fid = open(filename, "w")
             else:
                 fid = sys.stdout
         phi_ss = self._set_empty_dict()
         phi_s2ss = self._set_empty_dict()
-        n_sites = float(len(self.site_residuals))
         for gmpe in self.gmpe_list:
-            if pretty_print:
-                print("%s" % gmpe, file=fid)
-
+            if pretty_print == True:
+                gmpe_str = str(gmpe).split('_toml=')[1].replace(
+                    ')','').replace('\n','; ')
+                print("%s" % gmpe_str, file=fid)
             for imtx in self.imts:
-                if pretty_print:
+                if pretty_print == True:
                     print("%s" % imtx, file=fid)
                 if not ("Intra event" in self.site_residuals[0].site_analysis[
                         gmpe][imtx]):
-                    print("GMPE %s and IMT %s do not have defined "
-                          "random effects residuals" % (str(gmpe), str(imtx)))
+                    warnings.warn("GMPE %s and IMT %s do not have defined "
+                          "random effects residuals" % (str(gmpe), str(imtx)),
+                          stacklevel = 10)
                     continue
                 n_events = []
                 numerator_sum = 0.0
@@ -1341,30 +1374,41 @@ class SingleStationAnalysis(object):
                     numerator_sum += np.sum((
                         resid.site_analysis[gmpe][imtx]["Intra event"] -
                         resid.site_analysis[gmpe][imtx]["dS2ss"]) ** 2.)
-                    if pretty_print:
+                    if pretty_print == True:
                         print("Site ID, %s, dS2Ss, %12.8f, "
                               "phiss_s, %12.8f, Num Records, %s" % (
-                              self.site_ids[iloc],
+                              list(self.site_ids)[iloc],
                               resid.site_analysis[gmpe][imtx]["dS2ss"],
                               resid.site_analysis[gmpe][imtx]["phi_ss,s"],
                               resid.site_analysis[gmpe][imtx]["events"]),
                               file=fid)
+                        
                 d2ss = np.array(d2ss)
                 phi_s2ss[gmpe][imtx] = {"Mean": np.mean(d2ss),
                                         "StdDev": np.std(d2ss)}
                 phi_ss[gmpe][imtx] = np.sqrt(
                     numerator_sum /
                     float(np.sum(np.array(n_events)) - 1))
-        if pretty_print:
+        if pretty_print == True:
             print("TOTAL RESULTS FOR GMPE", file=fid)
             for gmpe in self.gmpe_list:
-                print("%s" % gmpe, file=fid)
-
-                for imtx in self.imts:
-                    print("%s, phi_ss, %12.8f, phi_s2ss(Mean),"
-                          " %12.8f, phi_s2ss(Std. Dev), %12.8f" % (imtx,
-                          phi_ss[gmpe][imtx], phi_s2ss[gmpe][imtx]["Mean"],
-                          phi_s2ss[gmpe][imtx]["StdDev"]), file=fid)
+                gmpe_str = str(gmpe).split('_toml=')[1].replace(
+                    ')','').replace('\n','; ')
+                print("%s" % gmpe_str, file=fid)
+                # If mixed effects GMPE append with intra-event res components
+                if self.gmpe_list[
+                        gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == frozenset(
+                            {'Inter event', 'Intra event', 'Total'}
+                            ) or 'al_atik_2015_sigma' in str(gmpe):
+                        for imtx in self.imts:
+                            print("%s, phi_ss, %12.8f, phi_s2ss(Mean),"
+                                  " %12.8f, phi_s2ss(Std. Dev), %12.8f" % (imtx,
+                                  phi_ss[gmpe][imtx], phi_s2ss[gmpe][imtx]["Mean"],
+                                  phi_s2ss[gmpe][imtx]["StdDev"]), file=fid)
+                else:
+                    for imtx in self.imts:
+                        print("%s, phi_ss, , phi_s2ss(Mean), , phi_s2ss(Std. Dev),"
+                              % (imtx), file=fid)
             if filename:
                 fid.close()
         return phi_ss, phi_s2ss

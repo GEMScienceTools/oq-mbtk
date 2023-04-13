@@ -69,8 +69,11 @@ class BaseResidualPlot(object):
             raise ValueError("No residual data found for GMPE %s" % gmpe)
         if imt not in residuals.imts:
             raise ValueError("No residual data found for IMT %s" % imt)
-        if not residuals.residuals[gmpe][imt]:
-            raise ValueError("No residuals found for %s (%s)" % (gmpe, imt))
+        if hasattr(residuals,'residuals') == True:
+             if not residuals.residuals[gmpe][imt]:
+                raise ValueError("No residuals found for %s (%s)" % (gmpe, imt))
+        else:
+            pass
         self.gmpe = gmpe
         self.imt = imt
         self.filename = filename
@@ -78,13 +81,20 @@ class BaseResidualPlot(object):
         self.dpi = dpi
         self.num_plots = len(residuals.types[gmpe][imt])
         
-        # Adjust aspect ratio if only total residual for GMPE
-        if 'Inter event' and 'Intra event' not in residuals.residuals[
-                gmpe][imt]:
-            self.figure_size = kwargs.get("figure_size",  (8, 6))
-        else:
-            self.figure_size = kwargs.get("figure_size",  (8, 8))
-        
+        # Adjust plot aspect ratio if only total residual for GMPE
+        if hasattr(residuals,'residuals') == True:
+            if 'Inter event' and 'Intra event' not in residuals.residuals[
+                    gmpe][imt] == True:
+                self.figure_size = kwargs.get("figure_size",  (8, 6))
+            else:
+                self.figure_size = kwargs.get("figure_size",  (8, 8))
+        elif hasattr(residuals,'site_residuals') == True:
+            if 'Inter event' and 'Intra event' not in residuals.site_residuals[
+                    0].residuals[gmpe][imt]:
+                self.figure_size = kwargs.get("figure_size",  (8, 6))
+            else:
+                self.figure_size = kwargs.get("figure_size",  (8, 8))
+            
         self.show = kwargs.get("show", True)
         self.create_plot()
 
@@ -525,265 +535,8 @@ class ResidualWithVs30(ResidualScatterPlot):
     def get_axis_xlim(self, res_data, res_type):
         x = res_data['x']
         return np.min(x)-20, np.max(x)+20
-    
-
-# FIXME: code below not tested and buggy (at least ResidualWithSite)
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-class ResidualWithSite(ResidualPlot):
-    """
-    Class uses Single-Station residuals to plot residual for specific sites
-    """
-    def _assertion_check(self, residuals):
-        """
-        Checks that residuals is en instance of the residuals class
-        """
-        assert isinstance(residuals, SingleStationAnalysis)
-    
-    def create_plot(self):
-        """
-
-        """
-        phi_ss, phi_s2ss = self.residuals.residual_statistics()
-        data = self._get_site_data()
-        fig = plt.figure(figsize=self.figure_size)
-        fig.set_tight_layout(True)
-        if self.num_plots > 1:
-            nrow = 3
-            ncol = 1
-        else:
-            nrow = 1
-            ncol = 1
-        tloc = 1
-        for res_type in self.residuals.types[self.gmpe][self.imt]:
-            self._residual_plot(
-                fig.add_subplot(nrow, ncol, tloc),
-                data,
-                res_type)
-            tloc += 1
-        _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)
-        if self.show:
-            plt.show()
-
-
-    def _residual_plot(self, ax, data, res_type):
-        """
-
-        """
-        xmean = np.array([data[site_id]["x-val"][0]
-                          for site_id in self.residuals.site_ids])
-
-        yvals = np.array([])
-        xvals = np.array([])
-        for site_id in self.residuals.site_ids:
-            xvals = np.hstack([xvals, data[site_id]["x-val"]])
-            yvals = np.hstack([yvals, data[site_id][res_type]])
-        ax.plot(xvals,
-                yvals,
-                'o',
-                markeredgecolor='Gray',
-                markerfacecolor='LightSteelBlue',
-                zorder=-32)
-        ax.set_xlim(0, len(self.residuals.site_ids))
-        ax.set_xticks(xmean)
-        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
-
-        max_lim = ceil(np.max(np.fabs(yvals)))
-        ax.set_ylim(-max_lim, max_lim)
-        ax.set_ylabel("%s" % res_type, fontsize=12)
-        ax.grid()
-        title_string = "%s - %s - %s Residual" % (str(self.residuals.gmpe_list[
-            self.gmpe]).split('(')[0].replace(']\n', '] - ').replace(
-                'sigma_model','Sigma'),self.imt,res_type)
-        ax.set_title(title_string, fontsize=12)
-
-    def _get_site_data(self):
-        """
-
-        """
-        data = OrderedDict([(site_id, {}) 
-                            for site_id in self.residuals.site_ids])
-        for iloc, site_resid in enumerate(self.residuals.site_residuals):
-            resid = deepcopy(site_resid)
-
-            site_id = self.residuals.site_ids[iloc]
-            n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
-            data[site_id]["Total"] = (
-                resid.site_analysis[self.gmpe][self.imt]["Total"] /
-                resid.site_analysis[self.gmpe][self.imt]["Expected Total"])
-            if "Intra event" in\
-                resid.site_analysis[self.gmpe][self.imt].keys():
-                data[site_id]["Inter event"] = (
-                    resid.site_analysis[self.gmpe][self.imt]["Inter event"] /
-                    resid.site_analysis[self.gmpe][self.imt]["Expected Inter"])
-                data[site_id]["Intra event"] = (
-                    resid.site_analysis[self.gmpe][self.imt]["Intra event"] /
-                    resid.site_analysis[self.gmpe][self.imt]["Expected Intra"])
-
-            data[site_id]["ID"] = self.residuals.site_ids[iloc]
-            data[site_id]["N"] = n_events
-            data[site_id]["x-val"] =(float(iloc) + 0.5) *\
-                np.ones_like(data[site_id]["Intra event"])
-        return data
-
-
-class IntraEventResidualWithSite(ResidualPlot):
-    """
-
-    """
-    def _assertion_check(self, residuals):
-        """
-        Checks that residuals is an instance of the residuals class
-        """
-        assert isinstance(residuals, SingleStationAnalysis)
-    
-    def create_plot(self):
-        """
-        Creates the plot
-        """
-        phi_ss, phi_s2ss = self.residuals.residual_statistics()
-        data = self._get_site_data()
-        fig = plt.figure(figsize=self.figure_size)
-        fig.set_tight_layout(True)
         
-        self._residual_plot(fig, data,
-                            phi_ss[self.gmpe][self.imt],
-                            phi_s2ss[self.gmpe][self.imt])
-        _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)
-        if self.show:
-            plt.show()
-
-
-    def _residual_plot(self, fig, data, phi_ss, phi_s2ss):
-        """
-        Creates three plots:
-        1) Plot of the intra-event residual for each station
-        2) Plot of the site term
-        3) Plot of the remainder-residual
-        """
-        dwess = np.array([])
-        dwoess = np.array([])
-        ds2ss = []
-        xvals = np.array([])
-        for site_id in self.residuals.site_ids:
-            xvals = np.hstack([xvals, data[site_id]["x-val"]])
-            dwess = np.hstack([dwess, data[site_id]["Intra event"]])
-            dwoess = np.hstack([dwoess, data[site_id]["dWo,es"]])
-            ds2ss.append(data[site_id]["dS2ss"])
-        ds2ss = np.array(ds2ss)
-        ax = fig.add_subplot(311)
-        # Show intra-event residuals
-        mean = np.array([np.mean(data[site_id]["Intra event"])
-                         for site_id in self.residuals.site_ids])
-        stddevs = np.array([np.std(data[site_id]["Intra event"])
-                            for site_id in self.residuals.site_ids])
-        xmean = np.array([data[site_id]["x-val"][0]
-                          for site_id in self.residuals.site_ids])
-
-        ax.plot(xvals,
-                dwess,
-                'x',
-                markeredgecolor='k',
-                markerfacecolor='k',
-                markersize=8,
-                zorder=-32)
-        ax.errorbar(xmean, mean, yerr=stddevs,
-                    ecolor="r", elinewidth=3.0, barsabove=True,
-                    fmt="s", mfc="r", mec="k", ms=6)
-        ax.set_xlim(0, len(self.residuals.site_ids))
-        ax.set_xticks(xmean)
-        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
-        max_lim = ceil(np.max(np.fabs(dwess)))
-        ax.set_ylim(-max_lim, max_lim)
-        ax.grid()
-        ax.set_ylabel(r'$\delta W_{es}$ (%s)' % self.imt, fontsize=12)
-        phi = np.std(dwess)
-        ax.plot(xvals, phi * np.ones(len(xvals)), 'k--', linewidth=2.)
-        ax.plot(xvals, -phi * np.ones(len(xvals)), 'k--', linewidth=2.)
-        title_string = "%s - %s (Std Dev = %8.5f)" % (str(
-            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
-                ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi)
-        ax.set_title(title_string, fontsize=16)
-        # Show delta s2ss
-        ax = fig.add_subplot(312)
-        ax.plot(xmean,
-                ds2ss,
-                's',
-                markeredgecolor='k',
-                markerfacecolor='LightSteelBlue',
-                markersize=8,
-                zorder=-32)
-        ax.plot(xmean,
-                (phi_s2ss["Mean"] - phi_s2ss["StdDev"]) * np.ones(len(xmean)),
-                "k--", linewidth=1.5)
-        ax.plot(xmean,
-                (phi_s2ss["Mean"] + phi_s2ss["StdDev"]) * np.ones(len(xmean)),
-                "k--", linewidth=1.5)
-        ax.plot(xmean,
-                (phi_s2ss["Mean"]) * np.ones(len(xmean)),
-                "k-", linewidth=2)
-        ax.set_xlim(0, len(self.residuals.site_ids))
-        ax.set_xticks(xmean)
-        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
-        max_lim = ceil(np.max(np.fabs(ds2ss)))
-        ax.set_ylim(-max_lim, max_lim)
-        ax.grid()
-        ax.set_ylabel(r'$\delta S2S_S$ (%s)' % self.imt, fontsize=12)
-        title_string = r'%s - %s ($\phi_{S2S}$ = %8.5f)' % (str(
-            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
-                ']\n', '] - ').replace('sigma_model','Sigma'),
-            self.imt, phi_s2ss["StdDev"])
-        ax.set_title(title_string, fontsize=16)
-        # Show dwoes
-        ax = fig.add_subplot(313)
-        ax.plot(xvals,
-                dwoess,
-                'x',
-                markeredgecolor='k',
-                markerfacecolor='k',
-                markersize=8,
-                zorder=-32)
-        ax.plot(xmean, -phi_ss * np.ones(len(xmean)), "k--", linewidth=1.5)
-        ax.plot(xmean, phi_ss * np.ones(len(xmean)), "k--", linewidth=1.5)
-        ax.set_xlim(0, len(self.residuals.site_ids))
-        ax.set_xticks(xmean)
-        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
-        max_lim = ceil(np.max(np.fabs(dwoess)))
-        ax.set_ylim(-max_lim, max_lim)
-        ax.grid()
-        ax.set_ylabel(r'$\delta W_{o,es} = \delta W_{es} - \delta S2S_S$ (%s)'
-                      % self.imt, 
-                      fontsize=12)
-        title_string = r'%s - %s ($\phi_{SS}$ = %8.5f)' % (str(
-            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
-                ']\n', '] - ').replace('sigma_model','Sigma'),self.imt,phi_ss)
-        ax.set_title(title_string, fontsize=16)
-
-    def _get_site_data(self):
-        """
-
-        """
-        data = OrderedDict([(site_id, {}) 
-                            for site_id in self.residuals.site_ids])
-        for iloc, site_resid in enumerate(self.residuals.site_residuals):
-            resid = deepcopy(site_resid)
-
-            site_id = self.residuals.site_ids[iloc]
-            n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
-            data[site_id] = resid.site_analysis[self.gmpe][self.imt]
-            data[site_id]["ID"] = self.residuals.site_ids[iloc]
-            data[site_id]["N"] = n_events
-            data[site_id]["Intra event"] =\
-                resid.site_analysis[self.gmpe][self.imt]["Intra event"]
-            data[site_id]["dS2ss"] =\
-                resid.site_analysis[self.gmpe][self.imt]["dS2ss"]
-            data[site_id]["dWo,es"] =\
-                resid.site_analysis[self.gmpe][self.imt]["dWo,es"]
-            data[site_id]["x-val"] =(float(iloc) + 0.5) *\
-                np.ones_like(data[site_id]["Intra event"])
-        return data
-        
+    
 def plot_loglikelihood_with_spectral_period(residuals, filename, custom_cycler = 0,
                                         filetype = 'jpg', dpi = 200):
     """
@@ -1490,3 +1243,257 @@ def pdf_table(residuals, filename):
 
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts  
+    
+    
+# FIXME: code below not tested and buggy (at least ResidualWithSite)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class ResidualWithSite(ResidualPlot):
+    """
+    Class uses Single-Station residuals to plot residuals for specific sites
+    """
+    def _assertion_check(self, residuals):
+        """
+        Checks that residuals is an instance of the residuals class
+        """
+        assert isinstance(residuals, SingleStationAnalysis)
+    
+    def create_plot(self):
+        """
+        Create residuals with site plot
+        """
+        phi_ss, phi_s2ss = self.residuals.residual_statistics()
+        data = self._get_site_data()
+        fig = plt.figure(figsize=self.figure_size)
+        fig.set_tight_layout(True)
+        if self.num_plots > 1:
+            nrow = 3
+            ncol = 1
+        else:
+            nrow = 1
+            ncol = 1
+        tloc = 1
+        for res_type in self.residuals.types[self.gmpe][self.imt]:
+            self._residual_plot(
+                fig.add_subplot(nrow, ncol, tloc),
+                data,
+                res_type)
+            tloc += 1
+        _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)
+        if self.show:
+            plt.show()
+
+    def _residual_plot(self, ax, data, res_type):
+        """
+        Plot residuals per site
+        """
+        xmean = np.array([data[site_id]["x-val"][0]
+                          for site_id in self.residuals.site_ids])
+
+        yvals = np.array([])
+        xvals = np.array([])
+        for site_id in self.residuals.site_ids:
+            xvals = np.hstack([xvals, data[site_id]["x-val"]])
+            yvals = np.hstack([yvals, data[site_id][res_type]])
+        ax.plot(xvals,
+                yvals,
+                'o',
+                markeredgecolor='Gray',
+                markerfacecolor='LightSteelBlue',
+                zorder=-32)
+        ax.set_xlim(0, len(self.residuals.site_ids))
+        ax.set_xticks(xmean)
+        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
+
+        max_lim = ceil(np.max(np.fabs(yvals)))
+        ax.set_ylim(-max_lim, max_lim)
+        ax.set_ylabel("%s" % res_type, fontsize=12)
+        ax.grid()
+        title_string = "%s - %s - %s Residual" % (str(self.residuals.gmpe_list[
+            self.gmpe]).split('(')[0].replace(']\n', '] - ').replace(
+                'sigma_model','Sigma'),self.imt,res_type)
+        ax.set_title(title_string, fontsize=11)
+
+    def _get_site_data(self):
+        """
+        Get single station analysis residual data
+        """
+        data = OrderedDict([(site_id, {}) 
+                            for site_id in self.residuals.site_ids])
+        for iloc, site_resid in enumerate(self.residuals.site_residuals):
+            resid = deepcopy(site_resid)
+            site_id = list(self.residuals.site_ids)[iloc]
+            n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
+            data[site_id]["Total"] = (
+                resid.site_analysis[self.gmpe][self.imt]["Total"] /
+                resid.site_analysis[self.gmpe][self.imt]["Expected Total"])
+            if "Intra event" in\
+                resid.site_analysis[self.gmpe][self.imt].keys():
+                data[site_id]["Inter event"] = (
+                    resid.site_analysis[self.gmpe][self.imt]["Inter event"] /
+                    resid.site_analysis[self.gmpe][self.imt]["Expected Inter"])
+                data[site_id]["Intra event"] = (
+                    resid.site_analysis[self.gmpe][self.imt]["Intra event"] /
+                    resid.site_analysis[self.gmpe][self.imt]["Expected Intra"])
+
+            data[site_id]["ID"] = list(self.residuals.site_ids)[iloc]
+            data[site_id]["N"] = n_events
+            data[site_id]["x-val"] =(float(iloc) + 0.5) *\
+                np.ones_like(data[site_id]["Total"])
+        return data
+
+
+class IntraEventResidualWithSite(ResidualPlot):
+    """
+    Create plots of intra-event residual components per site
+    """
+    def _assertion_check(self, residuals):
+        """
+        Checks that residuals is an instance of the residuals class
+        """
+        assert isinstance(residuals, SingleStationAnalysis)
+    
+    def create_plot(self):
+        """
+        Creates the plot
+        """
+        phi_ss, phi_s2ss = self.residuals.residual_statistics()
+        data = self._get_site_data()
+        fig = plt.figure(figsize=self.figure_size)
+        fig.set_tight_layout(True)
+        
+        self._residual_plot(fig, data,
+                            phi_ss[self.gmpe][self.imt],
+                            phi_s2ss[self.gmpe][self.imt])
+        _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)
+        if self.show:
+            plt.show()
+
+    def _residual_plot(self, fig, data, phi_ss, phi_s2ss):
+        """
+        Creates three plots:
+        1) Plot of the intra-event residual for each station
+        2) Plot of the site term
+        3) Plot of the remainder-residual
+        """
+        dwess = np.array([])
+        dwoess = np.array([])
+        ds2ss = []
+        xvals = np.array([])
+        for site_id in self.residuals.site_ids:
+            xvals = np.hstack([xvals, data[site_id]["x-val"]])
+            dwess = np.hstack([dwess, data[site_id]["Intra event"]])
+            dwoess = np.hstack([dwoess, data[site_id]["dWo,es"]])
+            ds2ss.append(data[site_id]["dS2ss"])
+        ds2ss = np.array(ds2ss)
+        ax = fig.add_subplot(311)
+        # Show intra-event residuals
+        mean = np.array([np.mean(data[site_id]["Intra event"])
+                         for site_id in self.residuals.site_ids])
+        stddevs = np.array([np.std(data[site_id]["Intra event"])
+                            for site_id in self.residuals.site_ids])
+        xmean = np.array([data[site_id]["x-val"][0]
+                          for site_id in self.residuals.site_ids])
+
+        ax.plot(xvals,
+                dwess,
+                'x',
+                markeredgecolor='k',
+                markerfacecolor='k',
+                markersize=8,
+                zorder=-32)
+        ax.errorbar(xmean, mean, yerr=stddevs,
+                    ecolor="r", elinewidth=3.0, barsabove=True,
+                    fmt="s", mfc="r", mec="k", ms=6)
+        ax.set_xlim(0, len(self.residuals.site_ids))
+        ax.set_xticks(xmean)
+        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
+        max_lim = ceil(np.max(np.fabs(dwess)))
+        ax.set_ylim(-max_lim, max_lim)
+        ax.grid()
+        ax.set_ylabel(r'$\delta W_{es}$ (%s)' % self.imt, fontsize=12)
+        phi = np.std(dwess)
+        ax.plot(xvals, phi * np.ones(len(xvals)), 'k--', linewidth=2.)
+        ax.plot(xvals, -phi * np.ones(len(xvals)), 'k--', linewidth=2.)
+        title_string = "%s - %s (Std Dev = %8.5f)" % (str(
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
+                ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi)
+        ax.set_title(title_string, fontsize=11)
+        # Show delta s2ss
+        ax = fig.add_subplot(312)
+        ax.plot(xmean,
+                ds2ss,
+                's',
+                markeredgecolor='k',
+                markerfacecolor='LightSteelBlue',
+                markersize=8,
+                zorder=-32)
+        ax.plot(xmean,
+                (phi_s2ss["Mean"] - phi_s2ss["StdDev"]) * np.ones(len(xmean)),
+                "k--", linewidth=1.5)
+        ax.plot(xmean,
+                (phi_s2ss["Mean"] + phi_s2ss["StdDev"]) * np.ones(len(xmean)),
+                "k--", linewidth=1.5)
+        ax.plot(xmean,
+                (phi_s2ss["Mean"]) * np.ones(len(xmean)),
+                "k-", linewidth=2)
+        ax.set_xlim(0, len(self.residuals.site_ids))
+        ax.set_xticks(xmean)
+        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
+        max_lim = ceil(np.max(np.fabs(ds2ss)))
+        ax.set_ylim(-max_lim, max_lim)
+        ax.grid()
+        ax.set_ylabel(r'$\delta S2S_S$ (%s)' % self.imt, fontsize=12)
+        title_string = r'%s - %s ($\phi_{S2S}$ = %8.5f)' % (str(
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
+                ']\n', '] - ').replace('sigma_model','Sigma'),
+            self.imt, phi_s2ss["StdDev"])
+        ax.set_title(title_string, fontsize=11)
+        # Show dwoes
+        ax = fig.add_subplot(313)
+        ax.plot(xvals,
+                dwoess,
+                'x',
+                markeredgecolor='k',
+                markerfacecolor='k',
+                markersize=8,
+                zorder=-32)
+        ax.plot(xmean, -phi_ss * np.ones(len(xmean)), "k--", linewidth=1.5)
+        ax.plot(xmean, phi_ss * np.ones(len(xmean)), "k--", linewidth=1.5)
+        ax.set_xlim(0, len(self.residuals.site_ids))
+        ax.set_xticks(xmean)
+        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
+        max_lim = ceil(np.max(np.fabs(dwoess)))
+        ax.set_ylim(-max_lim, max_lim)
+        ax.grid()
+        ax.set_ylabel(r'$\delta W_{o,es} = \delta W_{es} - \delta S2S_S$ (%s)'
+                      % self.imt, 
+                      fontsize=12)
+        title_string = r'%s - %s ($\phi_{SS}$ = %8.5f)' % (str(
+            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
+                ']\n', '] - ').replace('sigma_model','Sigma'),self.imt,phi_ss)
+        ax.set_title(title_string, fontsize=11)
+
+    def _get_site_data(self):
+        """
+        Get data for each component of intra-event residual per site
+        """
+        data = OrderedDict([(site_id, {}) 
+                            for site_id in self.residuals.site_ids])
+        for iloc, site_resid in enumerate(self.residuals.site_residuals):
+            resid = deepcopy(site_resid)
+
+            site_id = list(self.residuals.site_ids)[iloc]
+            n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
+            data[site_id] = resid.site_analysis[self.gmpe][self.imt]
+            data[site_id]["ID"] = list(self.residuals.site_ids)[iloc]
+            data[site_id]["N"] = n_events
+            data[site_id]["Intra event"] =\
+                resid.site_analysis[self.gmpe][self.imt]["Intra event"]
+            data[site_id]["dS2ss"] =\
+                resid.site_analysis[self.gmpe][self.imt]["dS2ss"]
+            data[site_id]["dWo,es"] =\
+                resid.site_analysis[self.gmpe][self.imt]["dWo,es"]
+            data[site_id]["x-val"] =(float(iloc) + 0.5) *\
+                np.ones_like(data[site_id]["Intra event"])
+        return data
