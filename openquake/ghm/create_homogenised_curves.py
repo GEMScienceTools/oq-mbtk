@@ -296,7 +296,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         # TODO can we remove this now?
         if key in ['waf', 'ssa']:
             from shapely.geometry import Polygon
-            coo = get_poly_from_str(mosaic.SUBSETS[key]['AO'][0])
+            coo = get_poly_from_str(mosaic.SUBSETS['GID_0'][key]['AGO'][0])
             df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
             dft = gpd.GeoDataFrame(df, geometry='geo')
             idx = map_gdf.geometry.intersects(dft.geometry[0])
