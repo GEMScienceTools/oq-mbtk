@@ -22,22 +22,23 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import warnings
 from copy import deepcopy
 from collections import OrderedDict
 from math import floor, ceil
 from scipy.stats import norm
-from openquake.smt.sm_utils import _save_image
-from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from IPython.display import display
 from cycler import cycler
 
+from openquake.hazardlib.imt import imt2tup
+from openquake.smt.sm_utils import _save_image
+from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from openquake.smt.residuals.residual_plots import (residuals_density_distribution,
                                            likelihood, residuals_with_magnitude,
                                            residuals_with_vs30,
                                            residuals_with_distance,
                                            residuals_with_depth)
 
-from openquake.hazardlib.imt import imt2tup
 
 class BaseResidualPlot(object):
     """
@@ -327,7 +328,8 @@ class ResidualPlot(ResidualHistogramPlot):
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma').replace(
                     'sigma_model','Sigma'),sigma_type,mean, stddev)
-    
+
+                    
 class LikelihoodPlot(ResidualHistogramPlot):
     """
     Abstract-like class to create a simple histrogram of strong ground motion
@@ -462,6 +464,7 @@ class ResidualScatterPlot(BaseResidualPlot):
             ax.plot(x_zero, zero_line, color = 'k', linestyle = '--',
                     linewidth = 1.25)
         ax.legend(loc = 'upper right', fontsize = 'xx-small')
+
 
 class ResidualWithDistance(ResidualScatterPlot):
     """
@@ -1247,7 +1250,8 @@ def pdf_table(residuals, filename):
     
 class ResidualWithSite(ResidualPlot):
     """
-    Class uses Single-Station residuals to plot residuals for specific sites
+    Plot single-station residuals for the site, GMPE and intensity measure
+    considered
     """
     def _assertion_check(self, residuals):
         """
@@ -1342,8 +1346,9 @@ class ResidualWithSite(ResidualPlot):
 
 class IntraEventResidualWithSite(ResidualPlot):
     """
-    Create plots of intra-event residual components per site
-    """
+    Create plots of site-specific intra-event residual components for the GMPEs
+    and intensity measures considered
+    """     
     def _assertion_check(self, residuals):
         """
         Checks that residuals is an instance of the residuals class
@@ -1354,24 +1359,29 @@ class IntraEventResidualWithSite(ResidualPlot):
         """
         Creates the plot
         """
-        phi_ss, phi_s2ss = self.residuals.residual_statistics()
-        data = self._get_site_data()
-        fig = plt.figure(figsize=self.figure_size)
-        fig.set_tight_layout(True)
-        
-        self._residual_plot(fig, data,
-                            phi_ss[self.gmpe][self.imt],
-                            phi_s2ss[self.gmpe][self.imt])
-        _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)
-        if self.show:
-            plt.show()
+        if 'Intra event' in self.residuals.site_residuals[0].residuals[self.gmpe][
+                self.imt]:
+            phi_ss, phi_s2ss = self.residuals.residual_statistics()
+            data = self._get_site_data()
+            fig = plt.figure(figsize=self.figure_size)
+            fig.set_tight_layout(True)
+            self._residual_plot(fig, data,phi_ss[self.gmpe][self.imt],
+                                phi_s2ss[self.gmpe][self.imt])
+            _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)
+            if self.show:
+                plt.show()
+        else:
+            warnings.warn('This implementation of %s GMPE does not have a mixed'
+                         'effects sigma model - plotting skipped' %self.gmpe,
+                         stacklevel = 10)
+            pass
 
     def _residual_plot(self, fig, data, phi_ss, phi_s2ss):
         """
         Creates three plots:
         1) Plot of the intra-event residual for each station
-        2) Plot of the site term
-        3) Plot of the remainder-residual
+        2) Plot of the site term (average intra-event per site)
+        3) Plot of the remainder-residual ( = intra per site - site term)
         """
         dwess = np.array([])
         dwoess = np.array([])
@@ -1384,6 +1394,7 @@ class IntraEventResidualWithSite(ResidualPlot):
             ds2ss.append(data[site_id]["dS2ss"])
         ds2ss = np.array(ds2ss)
         ax = fig.add_subplot(311)
+        
         # Show intra-event residuals
         mean = np.array([np.mean(data[site_id]["Intra event"])
                          for site_id in self.residuals.site_ids])
@@ -1416,6 +1427,7 @@ class IntraEventResidualWithSite(ResidualPlot):
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi)
         ax.set_title(title_string, fontsize=11)
+        
         # Show delta s2ss
         ax = fig.add_subplot(312)
         ax.plot(xmean,
@@ -1446,6 +1458,7 @@ class IntraEventResidualWithSite(ResidualPlot):
                 ']\n', '] - ').replace('sigma_model','Sigma'),
             self.imt, phi_s2ss["StdDev"])
         ax.set_title(title_string, fontsize=11)
+        
         # Show dwoes
         ax = fig.add_subplot(313)
         ax.plot(xvals,
@@ -1470,16 +1483,16 @@ class IntraEventResidualWithSite(ResidualPlot):
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma'),self.imt,phi_ss)
         ax.set_title(title_string, fontsize=11)
-
+        
     def _get_site_data(self):
         """
-        Get data for each component of intra-event residual per site
+        Get site-specific intra-event residual components for each site for the
+        GMPEs and intensity measures considered
         """
         data = OrderedDict([(site_id, {}) 
                             for site_id in self.residuals.site_ids])
         for iloc, site_resid in enumerate(self.residuals.site_residuals):
             resid = deepcopy(site_resid)
-
             site_id = list(self.residuals.site_ids)[iloc]
             n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
             data[site_id] = resid.site_analysis[self.gmpe][self.imt]
