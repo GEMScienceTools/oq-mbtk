@@ -481,7 +481,14 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type):
         pass
     
     # Create bins and make last interval fill up to max var value
-    val_bin = (np.max(vals)-np.min(vals))/10
+    if var_type == 'magnitude':
+        val_bin = 0.25
+    elif var_type == 'vs30':
+        val_bin = 100
+    elif var_type == 'distance':
+        val_bin = 25
+    elif var_type == 'depth':
+        val_bin = 5
     val_bins = np.arange(np.min(vals), np.max(vals), val_bin)
     val_bins[len(val_bins) - 1] = np.max(vals)
     
