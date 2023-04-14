@@ -519,9 +519,8 @@ def al_atik_sigma_check(gmpe, imtx, task):
               'sigma_model_alatik2015': {}}
     
     # Messages for warnings/ValueError
-    msg1 = 'Al-Atik (2015) sigma model has been used within an implementation of %s by the user.' %tmp_gmpe
-    msg2 = 'A sigma model is not provided by default for %s GMPE.' %tmp_gmpe
-    msg3 = 'For residual analysis a sigma model must be specified for %s GMPE.' %tmp_gmpe
+    msg1 = 'A sigma model is not provided by default for %s GMPE.' %tmp_gmpe
+    msg2 = 'For residual analysis a sigma model must be specified for %s GMPE.'%tmp_gmpe
     
     # Raise warning/ValueError/implement Al-Atik 2015 sigma if specified based
     # on sigma_model_flag
@@ -530,19 +529,17 @@ def al_atik_sigma_check(gmpe, imtx, task):
         if task == 'residual' and 'toml=' in str(gmpe) or task == 'comparison':
             if 'al_atik_2015_sigma' in str(gmpe): # No sigma so add
                 gmpe = mgmpe.ModifiableGMPE(**kwargs)
-                warnings.warn(msg1, stacklevel = 100)
             elif task == 'residual': # A sigma model is required for residuals
-                raise ValueError(msg3)
+                raise ValueError(msg2)
             elif task == 'comparison': # No sigma and not specified in toml
-                warnings.warn(msg2, stacklevel = 100)
+                warnings.warn(msg1, stacklevel = 100)
                 gmpe = valid.gsim(gmpe.split('(')[0])
         elif task == 'residual': # Task = 'residual' but no toml used so sigma model not specifiable
-            raise ValueError(msg3)
+            raise ValueError(msg2)
     else:
         sigma_model_flag = False
         if 'al_atik_2015_sigma' in str(gmpe): #GMPE has sigma but override
             gmpe = mgmpe.ModifiableGMPE(**kwargs)
-            warnings.warn(msg1, stacklevel = 100)
         elif task == 'comparison': # GMPE has sigma so retain (comparison use)
             gmpe = valid.gsim(gmpe)
         else: # GMPE has sigma so retain (residuals use)
