@@ -235,7 +235,7 @@ Single Station Residual Analysis
 
    We can compute the non-normalised intra-event residual per record associated with the selected sites ``$\delta W_{es}$``, the mean average (again non-normalised) intra-event residual per site ``$\delta S2S_S$`` and a residual variability ``$\delta W_{o,es}$`` (which is computed per record by subtracting the site-average intra-event residual from the corresponding inter-event residual). For more details on these intra-event residual components please consult Rodriguez-Marek et al. (2011), which is referenced repeatedly throughout the following section.
 
-   If a GMPE exactly predicted the record-specific effects for a ground-motion (i.e. the path and site effects), ``$\delta W_{es}$`` would exactly equal the standard deviation of the GMPE's intra-event sigma model. Therefore, this metric can be used to analyse how well a GMPE is modelling the record-specific effects for a given ground-motion.
+   The standard deviation of all ``$\delta W_{es}$`` values should in theory exactly equal the standard deviation of the GMPE's intra-event standard deviation.
 
    The ``$\delta S2S_S$`` term is characteristic of each site, and should equal 0 with a standard deviation of ``$\phi_{S2S}$``. A non-zero value for ``$\delta S2S_S$`` is indicative of a bias in the prediction of the observed ground-motions at the considered site.
    
