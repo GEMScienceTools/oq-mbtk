@@ -173,11 +173,19 @@ Plotting of Residuals
 
     .. code-block:: ini
        
+       > # If using .toml for inputs we first create equivalent gmpe_list and imt_list using residuals object attributes
+       > gmpe_list = {}
+       > for idx, gmpe in enumerate(resid1.gmpe_list):
+       >    gmpe_list[idx] = resid1.gmpe_list[gmpe]
+       > gmpe_list = list[gmpe_list]
+       >
+       > imt_list = {}
+       > for idx, imt in enumerate(resid1.imts):
+       >    imt_list[idx] = resid1.imt_list[imt]
+       > imt_list = list(imt_list)
+       >
        > # Plot residual probability density function for a specified GMPE from gmpe_list and intensity measure from imt_list
        > rspl.ResidualPlot(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg') # Plot for gmpe in position 0 in gmpe_list and intensity measure in position 2 in imt_list
-       >
-       > # OR from .toml file (GMPEs and intensity measures in this case are stored in the residuals object created during computation of the residuals)
-       > rspl.ResidualPlot(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg') # Plot for gmpe in position 0 in resid1.gmpe_list and intensity measure in position 2 in resid1.imts
         
 2. We can also plot the probability density functions over all considered spectral periods at once, so as to better examine how the residual distributions vary per GMPE over each spectral period:
    
@@ -195,9 +203,6 @@ Plotting of Residuals
        
        > # Plot residuals w.r.t. magnitude from gmpe_list and imt_list
        > rspl.ResidualWithMagnitude(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
-       >
-       > # OR plot residuals w.r.t. magnitude from .toml file
-       > rspl.ResidualWithMagnitude(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
 
 4. The functions for plotting of residuals w.r.t. distance, focal depth and Vs30 are called in a similar manner:
    
@@ -207,12 +212,7 @@ Plotting of Residuals
        > rspl.ResidualWithDistance(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
        > rspl.ResidualWithDepth(resid1, gmpe_list[0], imt_list[2],  filename, filetype = 'jpg')
        > rspl.ResidualWithVs30(resid1, gmpe_list[0], imt_list[2],  filename, filetype = 'jpg')
-       >
-       > # OR from .toml:
-       > rspl.ResidualWithDistance(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
-       > rspl.ResidualWithDepth(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
-       > rspl.ResidualWithVs30(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
-       
+
 Single Station Residual Analysis
 ********************************
 
@@ -237,7 +237,7 @@ Single Station Residual Analysis
 
    If a GMPE exactly predicted the record-specific effects for a ground-motion (i.e. the path and site effects), ``$\delta W_{es}$`` would exactly equal the standard deviation of the GMPE's intra-event sigma model. Therefore, this metric can be used to analyse how well a GMPE is modelling the record-specific effects for a given ground-motion.
 
-   The ``$\delta S2S_S$`` term is characteristic of each site, and should theoretically equal 0 with a standard deviation of ``$\phi_{S2S}$``. A non-zero value for ``$\delta S2S_S$`` is indicative of a bias in the prediction of the observed ground-motions at the considered site.
+   The ``$\delta S2S_S$`` term is characteristic of each site, and should equal 0 with a standard deviation of ``$\phi_{S2S}$``. A non-zero value for ``$\delta S2S_S$`` is indicative of a bias in the prediction of the observed ground-motions at the considered site.
    
    Finally, the standard deviation of the ``$\delta W_{o,es}$`` term (``$\phi{_SS}$``) is representative of the single-station standard deviation of the GMPE, and is an estimate of the non-ergodic standard deviation of the model.
 
@@ -264,10 +264,10 @@ Single Station Residual Analysis
     .. code-block:: ini
     
        > # First plot (normalised) total, inter-event and intra-event residuals for each site
-       > rspl.ResidualWithSite(ssa1, gmpe, imt, filename, filetype = 'jpg')
+       > rspl.ResidualWithSite(ssa1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
        >
        > # Then plot non-normalised intra-event per site, average intra-event per site and residual variability per site
-       > rspl.IntraEventResidualWithSite(ssa1, gmpe, imt, filename, filetype = 'jpg')
+       > rspl.IntraEventResidualWithSite(ssa1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
                    
 GMPE Performance Ranking Metrics
 ********************************
@@ -285,9 +285,6 @@ The Likelihood Method (Scherbaum et al. 2004)
        
        > # From gmpe_list and imt_list:
        > rspl.LikelihoodPlot(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
-       >
-       > # OR from .toml:
-       > rspl.LikelihoodPlot(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
 
 The Loglikelihood Method (Scherbaum et al. 2009)
 ================================================
