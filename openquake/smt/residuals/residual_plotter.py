@@ -1304,8 +1304,20 @@ class ResidualWithSite(ResidualPlot):
                 zorder=-32)
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
-        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
-
+        
+        # Truncate string if NGAWest2 format station ID (will need to add more
+        # station name truncations as add additional database parsers)
+        if 'StationName' in str(list(self.residuals.site_ids)[0]):
+            xtick_label = {}
+            for site_idx, site in enumerate(self.residuals.site_ids):
+                xtick_label[site_idx] = list(self.residuals.site_ids)[
+                    site_idx].split('StationName-')[1]
+                if site_idx == len(self.residuals.site_ids) - 1:
+                    xtick_label = pd.Series(xtick_label)
+        else:
+            xtick_label = self.residuals.site_ids
+        ax.set_xticklabels(xtick_label, rotation="vertical")
+        
         max_lim = ceil(np.max(np.fabs(yvals)))
         ax.set_ylim(-max_lim, max_lim)
         ax.set_ylabel("%s" % res_type, fontsize=12)
@@ -1410,7 +1422,20 @@ class IntraEventResidualWithSite(ResidualPlot):
                     'Error bar')
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
-        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
+        
+        # Truncate string if NGAWest2 format station ID (will need to add more
+        # station name truncations as add additional database parsers)
+        if 'StationName' in str(list(self.residuals.site_ids)[0]):
+            xtick_label = {}
+            for site_idx, site in enumerate(self.residuals.site_ids):
+                xtick_label[site_idx] = list(self.residuals.site_ids)[
+                    site_idx].split('StationName-')[1]
+                if site_idx == len(self.residuals.site_ids) - 1:
+                    xtick_label = pd.Series(xtick_label)
+        else:
+            xtick_label = self.residuals.site_ids
+        ax.set_xticklabels(xtick_label, rotation="vertical")
+        
         max_lim = ceil(np.max(np.fabs(dwess)))
         ax.set_ylim(-max_lim, max_lim)
         ax.grid()
@@ -1441,7 +1466,7 @@ class IntraEventResidualWithSite(ResidualPlot):
                 "k-", linewidth=2, label = 'Mean $\phi_{S2S}$')
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
-        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
+        ax.set_xticklabels(xtick_label, rotation="vertical")
         max_lim = ceil(np.max(np.fabs(ds2ss)))
         ax.set_ylim(-max_lim, max_lim)
         ax.grid()
@@ -1462,7 +1487,7 @@ class IntraEventResidualWithSite(ResidualPlot):
                 label = '$\phi_{SS}$')
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
-        ax.set_xticklabels(self.residuals.site_ids, rotation="vertical")
+        ax.set_xticklabels(xtick_label, rotation="vertical")
         max_lim = ceil(np.max(np.fabs(dwoess)))
         ax.set_ylim(-max_lim, max_lim)
         ax.grid()
