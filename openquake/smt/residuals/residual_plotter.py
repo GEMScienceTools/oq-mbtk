@@ -1318,11 +1318,6 @@ class ResidualWithSite(ResidualPlot):
             xtick_label = self.residuals.site_ids
         ax.set_xticklabels(xtick_label, rotation="vertical")
         
-        max_lim = ceil(np.max(np.fabs(yvals)))
-        ax.set_ylim(-max_lim, max_lim)
-        ax.set_ylabel("%s" % res_type, fontsize=12)
-        ax.grid()
-        
         sigma_type = res_type
         if res_type == 'Total':
             sigma_type = 'Total Res.'
@@ -1330,7 +1325,11 @@ class ResidualWithSite(ResidualPlot):
             sigma_type = 'Within-Event Res.'
         elif res_type == 'Intra event':
             sigma_type = 'Between-Event Res.'
-            
+        
+        max_lim = ceil(np.max(np.fabs(yvals)))
+        ax.set_ylim(-max_lim, max_lim)
+        ax.set_ylabel("%s" % sigma_type, fontsize=12)
+        ax.grid()
         title_string = "%s - %s - %s" % (str(self.residuals.gmpe_list[
             self.gmpe]).split('(')[0].replace(']\n', '] - ').replace(
                 'sigma_model','Sigma'),self.imt,sigma_type)
@@ -1432,8 +1431,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         
-        # Truncate string if NGAWest2 format station ID (will need to add more
-        # station name truncations as add additional database parsers)
+        # Truncate string if NGAWest2 format station ID (will potentially need
+        # to add more station name truncations as add additional database parsers)
         if 'StationName' in str(list(self.residuals.site_ids)[0]):
             xtick_label = {}
             for site_idx, site in enumerate(self.residuals.site_ids):
