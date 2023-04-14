@@ -42,7 +42,6 @@ from openquake.hazardlib import imt
 import openquake.smt.intensity_measures as ims
 from openquake.smt.strong_motion_selector import SMRecordSelector
 from openquake.smt.sm_utils import convert_accel_units, check_gsim_list, al_atik_sigma_check
-from openquake.smt.strong_motion_selector import rank_sites_by_record_count
 
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
