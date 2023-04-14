@@ -212,6 +212,62 @@ Plotting of Residuals
        > rspl.ResidualWithDistance(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
        > rspl.ResidualWithDepth(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
        > rspl.ResidualWithVs30(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
+       
+Single Station Residual Analysis
+********************************
+
+1. The SMT's residual module also offers capabilities for performing single station residual analysis (SSA).
+
+   We can first specify a threshold for the minimum number of records each site must have to be considered in the SSA:
+   
+    .. code-block:: ini
+    
+       > # Import SMT functions required for SSA
+       > from openquake.smt.strong_motion_selector import rank_sites_by_record_count
+       >
+       > # Specify threshold for min. num. records
+       > threshold = 20
+       >
+       > # Get the sites meeting threshold (for same parsed database as above!)
+       > top_sites = rank_sites_by_record_count(sm_database, threshold)
+       
+2. Following selection of sites using a threshold value, we can perform the SSA.
+
+   We can compute the non-normalised intra-event residual per record associated with the selected sites ``$\delta W_{es}$``, the mean average (again non-normalised) intra-event residual per site ``$\delta S2S_S$`` and a residual variability ``$\delta W_{o,es}$`` (which is computed per record by subtracting the site-average intra-event residual from the corresponding inter-event residual). For more details on these intra-event residual components please consult Rodriguez-Marek et al. (2011), which is referenced repeatedly throughout the following section.
+
+   If a GMPE exactly predicted the record-specific effects for a ground-motion (i.e. the path and site effects), ``$\delta W_{es}$`` would exactly equal the standard deviation of the GMPE's intra-event sigma model. Therefore, this metric can be used to analyse how well a GMPE is modelling the record-specific effects for a given ground-motion.
+
+   The ``$\delta S2S_S$`` term is characteristic of each site, and should theoretically equal 0 with a standard deviation of ``$\phi_{S2S}$``. A non-zero value for ``$\delta S2S_S$`` is indicative of a bias in the prediction of the observed ground-motions at the considered site.
+   
+   Finally, the standard deviation of the ``$\delta W_{o,es}$`` term (``$\phi{_SS}$``) is representative of the single-station standard deviation of the GMPE, and is an estimate of the non-ergodic standard deviation of the model.
+
+   As previously, we can specify the GMPEs and intensity measures to compute the residuals per site for using either a GMPE list and intensity measure list, or from a .toml file.
+    
+    .. code-block:: ini
+    
+       > # Create SingleStationAnalysis object from gmpe_list and imt_list
+       > ssa1 = res.SingleStationAnalysis(top_sites.keys(), gmpe_list, imt_list)
+       >
+       > # OR create SingleStationAnalysis object from .toml
+       > filename = os.path.join(DATA, 'SSA_inputs.toml') # path to input .toml
+       > ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), filename)
+       >
+       > Get the total, inter-event and intra-event residuals for each site
+       > ssa1.get_site_residuals(sm_database)
+       >
+       > Get single station residual statistics for each site and export to .csv
+       > csv_output = os.path.join(DATA, 'SSA_statistics.csv')
+       > ssa1.residual_statistics(True, csv_output)
+      
+3. We can plot the computed residual statistics as follows:
+
+    .. code-block:: ini
+    
+       > # First plot (normalised) total, inter-event and intra-event residuals for each site
+       > rspl.ResidualWithSite(ssa1, gmpe, imt, filename, filetype = 'jpg')
+       >
+       > # Then plot non-normalised intra-event per site, average intra-event per site and residual variability per site
+       > rspl.IntraEventResidualWithSite(ssa1, gmpe, imt, filename, filetype = 'jpg')
                    
 GMPE Performance Ranking Metrics
 ********************************
@@ -427,7 +483,6 @@ Comparing GMPEs
        > # Generate matrix plots of Euclidean distance
        > comp.plot_euclidean(filename, output_directory)
    
-   
 References
 ==========
 
@@ -436,6 +491,8 @@ Abrahamson, N. A. and R. R. Youngs (1992). “A Stable Algorithm for Regression 
 Kale, O and S. Akkar (2013). “A New Procedure for Selecting and Ranking Ground-Motion Prediction Equations (GMPES): The Euclidean Distance-Based Ranking (EDR) Method”. In: Bulletin of the Seismological Society of America 103(2A), pages 1069 – 1084.
 
 Kotha, S. -R., G. Weatherill, and F. Cotton (2020). "A Regionally Adaptable Ground-Motion Model for Shallow Crustal Earthquakes in Europe." In: Bulletin  of Earthquake Engineering 18, pages 4091 – 4125.
+
+Rodriguez-Marek, A., G. A. Montalva, F. Cotton, and F. Bonilla (2011). “Analysis of Single-Station Standard Deviation using the KiK-Net data”. In: Bulletin of the Seismological Society of America 101(3), pages 1242 –1258.
 
 Sammon, J. W. (1969). "A Nonlinear Mapping for Data Structure Analysis." In: IEEE Transactions on Computers C-18 (no. 5), pages 401 - 409.
 
