@@ -8,6 +8,7 @@ import unittest
 from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
+from openquake.smt.strong_motion_selector import rank_sites_by_record_count
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -199,7 +200,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         # Get sites with at least 1 record each
         threshold = 1
-        top_sites = res.rank_sites_by_record_count(self.database, threshold)
+        top_sites = rank_sites_by_record_count(self.database, threshold)
             
         # Create SingleStationAnalysis object
         ssa1 = res.SingleStationAnalysis(top_sites.keys(), self.gmpe_list,
