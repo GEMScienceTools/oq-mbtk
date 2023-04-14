@@ -1322,9 +1322,18 @@ class ResidualWithSite(ResidualPlot):
         ax.set_ylim(-max_lim, max_lim)
         ax.set_ylabel("%s" % res_type, fontsize=12)
         ax.grid()
-        title_string = "%s - %s - %s Residual" % (str(self.residuals.gmpe_list[
+        
+        sigma_type = res_type
+        if res_type == 'Total':
+            sigma_type = 'Total Res.'
+        elif res_type == 'Inter event':
+            sigma_type = 'Within-Event Res.'
+        elif res_type == 'Intra event':
+            sigma_type = 'Between-Event Res.'
+            
+        title_string = "%s - %s - %s" % (str(self.residuals.gmpe_list[
             self.gmpe]).split('(')[0].replace(']\n', '] - ').replace(
-                'sigma_model','Sigma'),self.imt,res_type)
+                'sigma_model','Sigma'),self.imt,sigma_type)
         ax.set_title(title_string, fontsize=11)
 
     def _get_site_data(self):
