@@ -65,28 +65,46 @@ def get_poly_from_str(tstr):
     return coo
 
 
-def find_hazard_curve_file(datafolder, key, imt_str):
+def find_hazard_curve_file(datafolder, vs30_flag, key, imt_str):
     """
     Searches for a file in a folder given a key
 
     :param str datafolder:
         The name of the folder where to search
+
     :param str key:
         The pattern to be used for searching the file
-    :param imt_str:
+
+    :param str imt_str:
         String specifying the desired intensity measure type
+
+    :param bool vs30_flag:
+        Flag to determine whether to search for files with vs30 in the folder path.
+
     :return:
         A list with the files matching the pattern
     """
     # First search for mean results
     tmps = 'hazard_curve-mean-{:s}*.csv'.format(imt_str)
     key = re.sub('[0-9]', '', key)
-    data_path = os.path.join(datafolder, key.upper(), 'out*', tmps)
+
+    if float(vs30_flag)==1:
+        data_path = os.path.join(datafolder, key.upper(), 'out/vs30*', tmps)
+    else:
+        data_path = os.path.join(datafolder, key.upper(), 'out*', tmps)
+
     data_fname = glob.glob(data_path)
+
     if len(data_fname) == 0:
         tmps = 'hazard_curve-rlz-*-{:s}*.csv'.format(imt_str)
-        data_path = os.path.join(datafolder, key.upper(), 'out*', tmps)
+
+        if float(vs30_flag)==1:
+            data_path = os.path.join(datafolder, key.upper(), 'out/vs30*', tmps)
+        else:
+            data_path = os.path.join(datafolder, key.upper(), 'out*', tmps)
+
         data_fname = glob.glob(data_path)
+
     return data_fname
 
 
@@ -190,7 +208,7 @@ def get_imtls(poes):
 
 def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
          imt_str, inland_shp, models_list=None, only_buffers=False,
-         buf=50, h3_resolution=6, mosaic_key='GID_0'):
+         buf=50, h3_resolution=6, mosaic_key='GID_0',vs30_flag=False,):
     """
     This function processes all the models listed in the mosaic.DATA
     dictionary. The code creates for the models in contact with other models
@@ -258,13 +276,12 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         buffer_data = {}
         buffer_poes = {}
         coords = {}
-
         # Skip models not included in the list
         if re.sub('[0-9]+', '', key) not in models_list:
             continue
         # Find name of the file with hazard curves
         print_model_info(i, key)
-        data_fname = find_hazard_curve_file(datafolder, key, imt_str)
+        data_fname = find_hazard_curve_file(datafolder, vs30_flag, key, imt_str)
 
         # Read hazard curves
         map_gdf, header = get_hcurves_geodataframe(data_fname[0])
@@ -630,9 +647,8 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
     fou.close()
     fuu.close()
 
-
 def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
-            imt_str, inland_shp, buf, *, models_list=None, only_buffers=False,
+            imt_str, inland_shp, buf,vs30_flag, *, models_list=None, only_buffers=False,
             h3_resolution=6, mosaic_key='GID_0'):
     """
     This function processes all the models listed in the mosaic.DATA dictionary
@@ -640,7 +656,7 @@ def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
     """
     proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
          imt_str, inland_shp, models_list, only_buffers, buf, h3_resolution,
-         mosaic_key)
+         mosaic_key, vs30_flag)
 
 
 process.contacts_shp = 'Name of shapefile with contacts'
@@ -651,9 +667,11 @@ process.boundaries_shp = 'Name of shapefile with boundaries'
 process.imt_str = 'String with the intensity measure type'
 process.inland_shp = 'Name of shapefile with inland territories'
 process.buf = 'Buffer distance'
+process.vs30_flag = 'Boolean flag to set path for reading hazard curves'
 process.models_list = 'List of models to be processed'
 process.h3_resolution = 'H3 resolution used to create the grid of sites'
 process.mosaic_key = 'The key used to specify countries'
 
 if __name__ == "__main__":
     sap.run(process)
+
