@@ -1197,6 +1197,8 @@ class SingleStationAnalysis(object):
     def __init__(self, site_id_list, gmpe_list, imts):
         # Initiate SSA object
         self.site_ids = site_id_list
+        if len(self.site_ids) < 1:
+            raise ValueError('No sites meet record threshold for analysis.')
         self.input_gmpe_list = copy.deepcopy(gmpe_list)
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.imts = imts
@@ -1353,8 +1355,11 @@ class SingleStationAnalysis(object):
         phi_s2ss = self._set_empty_dict()
         for gmpe in self.gmpe_list:
             if pretty_print == True:
-                gmpe_str = str(gmpe).split('_toml=')[1].replace(
-                    ')','').replace('\n','; ')
+                if '_toml=' in str(gmpe):
+                    gmpe_str = str(gmpe).split('_toml=')[1].replace(
+                        ')','').replace('\n','; ')
+                else:
+                    gmpe_str = gmpe
                 print("%s" % gmpe_str, file=fid)
             for imtx in self.imts:
                 if pretty_print == True:
@@ -1389,11 +1394,15 @@ class SingleStationAnalysis(object):
                 phi_ss[gmpe][imtx] = np.sqrt(
                     numerator_sum /
                     float(np.sum(np.array(n_events)) - 1))
+                
         if pretty_print == True:
             print("TOTAL RESULTS FOR GMPE", file=fid)
             for gmpe in self.gmpe_list:
-                gmpe_str = str(gmpe).split('_toml=')[1].replace(
-                    ')','').replace('\n','; ')
+                if '_toml' in str(gmpe):
+                    gmpe_str = str(gmpe).split('_toml=')[1].replace(
+                        ')','').replace('\n','; ')
+                else:
+                    gmpe_str = gmpe
                 print("%s" % gmpe_str, file=fid)
                 # If mixed effects GMPE append with intra-event res components
                 if self.gmpe_list[
@@ -1402,9 +1411,10 @@ class SingleStationAnalysis(object):
                             ) or 'al_atik_2015_sigma' in str(gmpe):
                         for imtx in self.imts:
                             print("%s, phi_ss, %12.8f, phi_s2ss(Mean),"
-                                  " %12.8f, phi_s2ss(Std. Dev), %12.8f" % (imtx,
-                                  phi_ss[gmpe][imtx], phi_s2ss[gmpe][imtx]["Mean"],
-                                  phi_s2ss[gmpe][imtx]["StdDev"]), file=fid)
+                                  " %12.8f, phi_s2ss(Std. Dev), %12.8f" % (
+                                      imtx, phi_ss[gmpe][imtx], phi_s2ss[gmpe][
+                                          imtx]["Mean"], phi_s2ss[gmpe][imtx][
+                                              "StdDev"]), file=fid)
                 else:
                     for imtx in self.imts:
                         print("%s, phi_ss, , phi_s2ss(Mean), , phi_s2ss(Std. Dev),"

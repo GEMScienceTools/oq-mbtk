@@ -191,6 +191,34 @@ class ResidualsTestCase(unittest.TestCase):
         self._check_residual_dictionary_correctness(edr.residuals)
         edr.get_edr_values()
 
+    def test_single_station_residual_analysis(self):
+        """
+        Test execution of single station residual analysis functions - not
+        correctness of values
+        """
+        # Only perform analysis for sites with more than 10 records each
+        threshold = 1
+        top_sites = res.rank_sites_by_record_count(self.database, threshold)
+            
+        # Create SingleStationAnalysis object
+        ssa1 = res.SingleStationAnalysis(top_sites.keys(), self.gmpe_list,
+                                         self.imts)
+        
+        # Compute the total, inter-event and intra-event residuals for each site
+        ssa1.get_site_residuals(self.database)
+        
+        # Get single station residual statistics per GMPE and per imt
+        ssa_csv_output = os.path.join(self.out_location, 'SSA_test.csv')
+        ssa1.residual_statistics(True, ssa_csv_output)
+        
+        # Check matches for num. sites, GMPEs and intensity measures
+        self.assertTrue(len(ssa1.site_ids) == len(top_sites))
+        self.assertTrue(len(ssa1.gmpe_list) == len(self.gmpe_list))
+        self.assertTrue(len(ssa1.imts) == len(self.imts))
+        
+        # Check csv outputted
+        self.assertTrue(ssa_csv_output)
+        
     @classmethod
     def tearDownClass(cls):
         """
