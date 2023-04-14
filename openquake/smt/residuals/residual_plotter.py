@@ -834,8 +834,8 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 
         ax[ax_index, 0].set_prop_cycle(colour_cycler)
         ax[ax_index, 1].set_prop_cycle(colour_cycler)
     for ax_index in range(0, 2):
-        ax[2, ax_index].set_ylabel('Intra-Event')
-        ax[1, ax_index].set_ylabel('Inter-Event')
+        ax[2, ax_index].set_ylabel('Within-Event')
+        ax[1, ax_index].set_ylabel('Between-Event')
         ax[0, ax_index].set_ylabel('Total')
     ax[0, 0].set_title('Mean of GMPE Residuals')    
     ax[0, 1].set_title('Sigma of GMPE Residuals')
@@ -1305,8 +1305,8 @@ class ResidualWithSite(ResidualPlot):
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         
-        # Truncate string if NGAWest2 format station ID (will need to add more
-        # station name truncations as add additional database parsers)
+        # Truncate string if NGAWest2 format station ID (will potentially need
+        # to add more station name truncations as add additional database parsers)
         if 'StationName' in str(list(self.residuals.site_ids)[0]):
             xtick_label = {}
             for site_idx, site in enumerate(self.residuals.site_ids):
