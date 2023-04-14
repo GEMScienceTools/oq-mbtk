@@ -1391,7 +1391,7 @@ class IntraEventResidualWithSite(ResidualPlot):
                 plt.show()
         else:
             warnings.warn('This implementation of %s GMPE does not have a mixed'
-                         'effects sigma model - plotting skipped' %self.gmpe,
+                         ' effects sigma model - plotting skipped' %self.gmpe,
                          stacklevel = 10)
             pass
 
