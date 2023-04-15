@@ -5,7 +5,9 @@ The :index:`Strong-Motion Tools` module contains code for the selection of groun
 
 The main components of the Strong-Motion Tools (smt) comprise of (1) parsing capabilities to generate metadata (2) capabilities for computation and plotting of ground-motion residual distributions (3) comparison of potentially viable GMPEs and (4) development of the GMC with the final selection(s) of GMPEs.
 
-Here, we will demonstrate how each of these components can be implemented, in the context of aiming to develop a GMPE logic-tree approach GMC for Albania. 
+Here, we will demonstrate how each of these components can be implemented, in the context of aiming to develop a GMPE logic-tree approach GMC for Albania.
+
+Please note that this documentation assumes an elementary knowledge of GMPEs, residual analysis and ground-motion characterisation. Therefore, this documentation's purpose is to facilitate the application of the smt by user who is already familiar with the underlying theory. References are provided throughout for useful overviews of such theory!
 
 Performing a Residual Analysis within the smt
 *********************************************
@@ -431,7 +433,7 @@ Comparing GMPEs
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         region = 0 # for NGAWest2 GMPE regionalisation
-        eshm20_region = 4 # for KothaEtAl2020 ESHM20 GMPE regionalisation
+        eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
         Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 or 3)
         custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
@@ -498,6 +500,8 @@ Comparing GMPEs
    Now that we have defined our inputs for GMPE comparison, we can use each tool within the Comparison module to evaluate how similar the GMPEs predict ground-motion for a given ground-shaking scenario.
 
    We can generate trellis plots (predicted ground-motion by each considered GMPE versus distance) for different magnitudes and intensity measures (specified in the ``.toml`` file).
+   
+   Trellis plots are especially useful for examining 1) how GMPEs behave for specific ground-shaking scenarios and 2) how the model branches of a GMPE logic tree capture the body and range of the predicted ground-motion.
    
    Note that ``filename`` (both for trellis plotting and in the subsequently demonstrated comparison module plotting functions) is the path to the input ``.toml`` file.    
 
