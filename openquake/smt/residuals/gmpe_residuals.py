@@ -1272,7 +1272,7 @@ class SingleStationAnalysis(object):
             (gmpe, dict([(imtx, {}) for imtx in self.imts]))
             for gmpe in self.gmpe_list])
 
-    def residual_statistics(self, pretty_print = None, filename = None):
+    def residual_statistics(self, pretty_print = False, filename = None):
         """
         Get single-station residual statistics for each site
         """
@@ -1340,7 +1340,7 @@ class SingleStationAnalysis(object):
         phiss = np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1)
         return np.sqrt(phiss)
 
-    def get_total_phi_ss(self, pretty_print = None, filename = None):
+    def get_total_phi_ss(self, pretty_print = False, filename = None):
         """
         Returns the station averaged single-station phi from Rodriguez-Marek
         et al. (2011) Equation 10
