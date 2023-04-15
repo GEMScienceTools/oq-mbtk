@@ -198,7 +198,7 @@ class ResidualsTestCase(unittest.TestCase):
         Test execution of single station residual analysis functions - not
         correctness of values. Execution of plots is also tested here.
         """
-        # Get sites with at least 1 record each
+        # Get sites with at least 1 record each (i.e. all sites in db)
         threshold = 1
         top_sites = rank_sites_by_record_count(self.database, threshold)
             
@@ -219,7 +219,7 @@ class ResidualsTestCase(unittest.TestCase):
         self.assertTrue(len(ssa1.imts) == len(self.imts))
         self.assertTrue(ssa_csv_output)
         
-        # Check plots outputted for each GMPE and intensity measure
+        # Check plots executed for each GMPE and intensity measure
         for gmpe in self.gmpe_list:
             for imt in self.imts:                        
                 output_all_res_plt = os.path.join(self.out_location, gmpe +

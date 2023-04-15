@@ -69,7 +69,7 @@ Computing the Ground-Motion Residuals
 
 Following the parsing of a flatfile into useable metadata, we can now specify the inputs for the performing of a residual analysis. Residual analysis compares the predicted and expected (i.e. observed) ground-motion for a combination of source, site and path parameters to evaluate the performance of GMPEs. Residuals are computed using the mixed effects methodology of Abrahamson and Youngs (1992), in which the total residual is split into an inter-event component and an intra-event component. Abrahamson and Youngs (1992) should be consulted for a detailed overview of ground-motion residuals.
 
-We can specify the inputs to perform a residual analysis within the smt are specified as follows:
+We can specify the inputs to perform a residual analysis with as follows:
     
 1. Specify the base path, the path to the metadata we parsed in the previous stage and an output folder:
 
@@ -92,7 +92,7 @@ We can specify the inputs to perform a residual analysis within the smt are spec
         > gmpe_list = ['AkkarEtAlRjb2014', 'BooreEtAl2014', 'BooreEtAl2020', 'CauzziEtAl2014', 'KothaEtAl2020regional', 'LanzanoEtAl2019_RJB_OMO']
         > imt_list = ['PGA','SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']
         
-3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for specifying the inputs of GMPEs with user-specifiable input parameters e.g. regionalisation parameter or logic tree branch parameters. Note that here the GMPEs listed in the ``.toml`` file are not appropriate for our target region, but have been selected to demonstrate how GMPEs with additional inputs can be specified within a ``.toml`` file.
+3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for specifying the inputs of GMPEs with user-specifiable input parameters e.g. regionalisation parameter or logic tree branch parameters. Note that here the GMPEs listed in the first ``.toml`` file are not appropriate for our target region, but have been selected to demonstrate how GMPEs with additional inputs can be specified within a ``.toml`` file. The second ``.toml`` file provides the GMPEs and intensity measures we use for running this demonstration analysis.
 
    The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``). Note also that a GMPE sigma model must be provided by the GMPE for the computation of residuals. If a sigma model is not provided by the GMPE, it can be specified as demonstrated below for the YenierAtkinson2015BSSA GMPE.
    
@@ -122,6 +122,41 @@ We can specify the inputs to perform a residual analysis within the smt are spec
         
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
+        
+    Adhering to this formatting, we here provide the GMPEs and intensity measures we consider within the subsequent analysis:
+    
+    .. code-block:: ini
+    
+        [models]
+    
+        [models.AbrahamsonEtAl2014]
+    
+        [models.AkkarEtAlRjb2014]
+    
+        [models.AmeriEtAl2017Rjb]
+    
+        [models.BindiEtAl2014Rjb]
+    
+        [models.BooreEtAl2014]
+    
+        [models.BooreEtAl2020]
+    
+        [models.CauzziEtAl2014]
+    
+        [models.CampbellBozorgnia2014]
+    
+        [models.ChiouYoungs2014]
+    
+        [models.HassaniAtkinson2020Asc]
+    
+        [models.KaleEtAl2015Turkey]
+    
+        [models.KothaEtAl2020regional]
+    
+        [models.LanzanoEtAl2019_RJB_OMO]
+    
+        [imts]
+        imt_list = ["PGA","SA(0.1)","SA(0.2)","SA(0.5)","SA(1.0)","SA(2.0)"]    
     
 4. Following specification of the GMPEs and intensity measures, we can now compute the ground-motion residuals using the Residuals module.
 
@@ -185,7 +220,7 @@ Plotting of Residuals
        > imt_list = list(imt_list)
        >
        > # Plot residual probability density function for a specified GMPE from gmpe_list and intensity measure from imt_list
-       > rspl.ResidualPlot(resid1, gmpe_list[3], imt_list[0], filename, filetype = 'jpg') # Plot for gmpe in position 3 in gmpe_list and intensity measure in position 0 in imt_list
+       > rspl.ResidualPlot(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg') # Plot for gmpe in position 5 in gmpe_list and intensity measure in position 0 in imt_list
         
 Residual distribution plot for Boore et al. 2020 and PGA:
     .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_bias+sigma.jpeg
@@ -208,7 +243,7 @@ Plot of residual distributions versus spectral acceleration:
     .. code-block:: ini
        
        > # Plot residuals w.r.t. magnitude from gmpe_list and imt_list
-       > rspl.ResidualWithMagnitude(resid1, gmpe_list[3], imt_list[0], filename, filetype = 'jpg')
+       > rspl.ResidualWithMagnitude(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
        
     Residuals w.r.t. magnitude for Boore et al. 2020 and PGA:
         .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_wrt_mag.jpeg
@@ -218,9 +253,9 @@ Plot of residual distributions versus spectral acceleration:
     .. code-block:: ini
        
        > # From gmpe_list and imt_list:
-       > rspl.ResidualWithDistance(resid1, gmpe_list[3], imt_list[0], filename, filetype = 'jpg')
-       > rspl.ResidualWithDepth(resid1, gmpe_list[3], imt_list[0],  filename, filetype = 'jpg')
-       > rspl.ResidualWithVs30(resid1, gmpe_list[3], imt_list[0],  filename, filetype = 'jpg')
+       > rspl.ResidualWithDistance(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
+       > rspl.ResidualWithDepth(resid1, gmpe_list[5], imt_list[0],  filename, filetype = 'jpg')
+       > rspl.ResidualWithVs30(resid1, gmpe_list[5], imt_list[0],  filename, filetype = 'jpg')
 
     Residuals w.r.t. distance for Boore et al. 2020 and PGA:
         .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_wrt_dist.jpeg
@@ -234,7 +269,7 @@ Plot of residual distributions versus spectral acceleration:
 Single Station Residual Analysis
 ********************************
 
-1. The SMT's residual module also offers capabilities for performing single station residual analysis (SSA).
+1. The smt's residual module also offers capabilities for performing single station residual analysis (SSA).
 
    We can first specify a threshold for the minimum number of records each site must have to be considered in the SSA:
    
@@ -296,7 +331,7 @@ Single Station Residual Analysis
 GMPE Performance Ranking Metrics
 ********************************
 
-The smt contains implementations of several published GMPE ranking methodologies, which allow additional inferences to be drawn from the computed residual distributions. Brief summaries of each ranking metric are provided here, but the corresponding publications should be consulted for more information.
+    The smt contains implementations of several published GMPE ranking methodologies, which allow additional inferences to be drawn from the computed residual distributions. Brief summaries of each ranking metric are provided here, but the corresponding publications should be consulted for more information.
 
 The Likelihood Method (Scherbaum et al. 2004)
 =============================================
@@ -308,7 +343,7 @@ The Likelihood Method (Scherbaum et al. 2004)
     .. code-block:: ini
        
        > # From gmpe_list and imt_list:
-       > rspl.LikelihoodPlot(resid1, gmpe_list[3], imt_list[0], filename, filetype = 'jpg')
+       > rspl.LikelihoodPlot(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
 
     Likelihood plot for Boore et al. 2020 and PGA:
         .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_likelihood.jpeg
