@@ -501,8 +501,6 @@ Comparing GMPEs
 
    We can generate trellis plots (predicted ground-motion by each considered GMPE versus distance) for different magnitudes and intensity measures (specified in the ``.toml`` file).
    
-   Trellis plots are especially useful for examining 1) how GMPEs behave for specific ground-shaking scenarios and 2) how the model branches of a GMPE logic tree capture the body and range of the predicted ground-motion.
-   
    Note that ``filename`` (both for trellis plotting and in the subsequently demonstrated comparison module plotting functions) is the path to the input ``.toml`` file.    
 
     .. code-block:: ini
