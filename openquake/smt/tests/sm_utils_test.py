@@ -23,10 +23,7 @@ import unittest
 import numpy as np
 from scipy.constants import g
 
-from openquake.hazardlib import valid
-from openquake.smt.residuals import gmpe_residuals as res
-from openquake.smt.sm_utils import convert_accel_units, SCALAR_XY, al_atik_sigma_check
-from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
+from openquake.smt.sm_utils import convert_accel_units, SCALAR_XY
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__))
@@ -142,36 +139,6 @@ class SmUtilsTestCase(unittest.TestCase):
                     self.assertTrue(equals)
                 except AssertionError:
                     asd = 9
-
-    def test_al_atik_sigma_check(self):
-        """
-        Check that sigma for GMPEs is checked correctly, and that Al-Atik (2015)
-        sigma model is correctly implemented if required
-        """
-        # Only YA15 should be flagged and Al-Atik 2015 added as sigma model
-        filename = os.path.join(BASE_DATA_PATH, 'sm_utils_test.toml')
-        residuals = res.Residuals.from_toml(filename)
-        
-        imts = ['PGA']
-        for idx, inputted_gmpe in enumerate(residuals.gmpe_list):
-            gmpe_outputted, gmpe_sigma_flag = al_atik_sigma_check(inputted_gmpe,
-                                                                  imts[0], task
-                                                                  = 'residual')
-            if idx == 0:
-                self.assertTrue(gmpe_sigma_flag == True) # Check flagged
-                # Get expected modified GMPE
-                tmp_gmm = valid.gsim(str(inputted_gmpe).split('_toml=')[
-                    1].replace(')',''))
-                tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
-                kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
-                          'sigma_model_alatik2015': {}}
-                inputted_gmpe = mgmpe.ModifiableGMPE(**kwargs)
-                self.assertTrue(gmpe_outputted == mgmpe.ModifiableGMPE(**kwargs)) # Check is modified GMPE
-            if idx == 1:
-                self.assertTrue(gmpe_sigma_flag == False) # Check not flagged
-                self.assertTrue(gmpe_outputted == valid.gsim(
-                    inputted_gmpe.split('(')[0])) # Check not modified GMPE
-                    
                 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

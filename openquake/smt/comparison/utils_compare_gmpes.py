@@ -31,8 +31,7 @@ from IPython.display import display
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib import valid
 from openquake.hazardlib.imt import from_string
-from openquake.smt.sm_utils import al_atik_sigma_check
-from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1, _get_z25, _param_gmpes
+from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1, _get_z25, _param_gmpes, al_atik_sigma_check
 
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd,

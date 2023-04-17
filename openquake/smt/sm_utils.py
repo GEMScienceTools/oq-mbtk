@@ -29,19 +29,12 @@ import numpy as np
 from scipy.integrate import cumtrapz
 from scipy.constants import g
 from math import sqrt, pi, sin, cos
-import warnings
 
-from openquake.hazardlib import valid
 from openquake.hazardlib.geo import PlanarSurface
 from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib.scalerel.peer import PeerMSR
 from openquake.hazardlib.gsim.gmpe_table import GMPETable
 from openquake.hazardlib.gsim.base import GMPE
-from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
-from openquake.hazardlib.contexts import ContextMaker
-from openquake.hazardlib.scalerel.wc1994 import WC1994
-from openquake.smt.comparison.utils_gmpes import get_rupture, get_sites_from_rupture
-
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -476,72 +469,3 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
         return np.exp(5.359 - 1.102 * np.log(vs30))
     else:
         return np.exp(7.089 - 1.144 * np.log(vs30))
-    
-    
-def al_atik_sigma_check(gmpe, imtx, task):
-    """
-    Check if sigma is provided for a given GMPE and implement Al-Atik (2015)
-    sigma model if specified. Also provides a warning if GMPE sigma is not
-    provided by the specified GMPE. 
-    :param gmpe:
-        GMPE to check model sigma is provided, and to check if Al-Atik (2015)
-        sigma model should be implemented for
-    :param imtx:
-        Intensity measure to perform sigma checks for with the specified GMPE
-    :param task:
-        Specify whether for computation of residuals ('residual') or use within
-        comparison module ('comparison')
-    """
-    # Construct a generic context (M = 5.5, D = 100km) to check if sigma provided 
-    tmp_rup = get_rupture(20, 40, 15, WC1994(), 5.5, 1.5, 0, 90, 0, 'fake', None)
-
-    if 'KothaEtAl2020ESHM20' in str(gmpe):
-        sp = {'vs30': 800, 'z1pt0': 31.07, 'z2pt5': 0.57, 'backarc': False,
-              'vs30measured': True, 'region': 0}  #Fix region to 0 for check
-    else:
-        sp = {'vs30': 800, 'z1pt0': 31.07, 'z2pt5': 0.57, 'backarc': False,
-              'vs30measured': True}  
-            
-    tmp_site = get_sites_from_rupture(tmp_rup, 'TC', 90, 'positive', 100, 50, sp)
-    
-    oqp = {'imtls': {k: [] for k in [imtx]}, 'mags': [f'{5.5:.2f}']}
-    if '_toml=' in str(gmpe):
-        tmp_gmm = valid.gsim(str(gmpe).split('_toml=')[1].replace(')',''))
-    else:
-        tmp_gmm = valid.gsim(gmpe)
-    ctxm = ContextMaker('fake', [tmp_gmm], oqp)
-    ctxs = list(ctxm.get_ctx_iter([tmp_rup], tmp_site))
-    
-    # Get model sigma and set up modifiable GMPE
-    tmp_mean, tmp_std, tmp_tau, tmp_phi = ctxm.get_mean_stds(ctxs)
-    tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
-    kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
-              'sigma_model_alatik2015': {}}
-    
-    # Messages for warnings/ValueError
-    msg1 = 'A sigma model is not provided by default for %s GMPE.' %tmp_gmpe
-    msg2 = 'For residual analysis a sigma model must be specified for %s GMPE.'%tmp_gmpe
-    
-    # Raise warning/ValueError/implement Al-Atik 2015 sigma if specified based
-    # on sigma_model_flag
-    if tmp_std.all() == 0:
-        sigma_model_flag = True
-        if task == 'residual' and 'toml=' in str(gmpe) or task == 'comparison':
-            if 'al_atik_2015_sigma' in str(gmpe): # No sigma so add
-                gmpe = mgmpe.ModifiableGMPE(**kwargs)
-            elif task == 'residual': # A sigma model is required for residuals
-                raise ValueError(msg2)
-            elif task == 'comparison': # No sigma and not specified in toml
-                warnings.warn(msg1, stacklevel = 100)
-                gmpe = valid.gsim(gmpe.split('(')[0])
-        elif task == 'residual': # Task = 'residual' but no toml used so sigma model not specifiable
-            raise ValueError(msg2)
-    else:
-        sigma_model_flag = False
-        if 'al_atik_2015_sigma' in str(gmpe): #GMPE has sigma but override
-            gmpe = mgmpe.ModifiableGMPE(**kwargs)
-        elif task == 'comparison': # GMPE has sigma so retain (comparison use)
-            gmpe = valid.gsim(gmpe)
-        else: # GMPE has sigma so retain (residuals use)
-            gmpe = valid.gsim(gmpe.split('(')[0])
-    return gmpe, sigma_model_flag
