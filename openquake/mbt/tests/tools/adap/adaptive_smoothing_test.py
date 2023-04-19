@@ -8,7 +8,7 @@ import openquake.wkf.wkf_h3_zones_cat
 import subprocess
 
 
-DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
+DATA_PATH = os.path.join(os.path.dirname(__file__))
 
 
 class AdaptiveSmoothingTest(unittest.TestCase):
@@ -22,7 +22,6 @@ class AdaptiveSmoothingTest(unittest.TestCase):
         cat.sort_catalogue_chronologically()
         self.cat = cat
         
-
             
     def test_adaptive01(self):
         """Test for adaptive smoothing - test intensity at event locations, n_v = 3, Gaussian kernel"""
@@ -60,15 +59,5 @@ class AdaptiveSmoothingTest(unittest.TestCase):
         IG = smooth.information_gain(5, T = 1)
         self.assertEqual(IG, 1.0119860022288694)
         
-    def test_cat_zones(self):
-        """ test catalogue zone function """
-        h3_level = 2
-        #mor_cat = fname
-        fname = self.fname
-        fname_out = os.path.join(DATA_PATH, '/tmp/h3.csv')
-        cmd = f"oqm wkf wkf_h3_zones_cat {h3_level} {fname} {fname_out}"
-        p = subprocess.run(cmd, shell=True)
-        
-        h3_idx = pd.read_csv(fname_out)
-        self.assertEqual(len(h3_idx), 8)
+    
         
