@@ -134,128 +134,181 @@ class Configurations(object):
         # Check number of GMPEs matches number of GMPE labels
         if len(self.gmpes_list) != len(self.gmpe_labels):
             raise ValueError("Number of labels must match number of GMPEs.")
-            
-def plot_trellis(self, output_directory):
+
+        # If weight is assigned to a GMPE get it + check sum of weights for 
+        # GMPEs with weights allocated = 1
+        get_weights = {}
+        for gmpe in self.gmpes_list:
+            if 'lt_weight' in gmpe:
+                split_gmpe_str = str(gmpe).splitlines()
+                for idx, component in enumerate(split_gmpe_str):
+                    if 'lt_weight' in component:
+                        get_weights[gmpe] = float(split_gmpe_str[idx].split('=')[1])
+            else:
+                pass
+        if get_weights != {}:
+            check_weights = np.array(pd.Series(get_weights))
+            if np.sum(check_weights, axis = 0) != 1.0:
+                raise ValueError("For GMPEs to which logic tree weights are assigned the total of these weights must sum to 1.0")
+            self.lt_weights = get_weights
+        else:
+            self.lt_weights = None
+
+def plot_trellis(filename, output_directory):
     """
     Plot trellis for given run configuration
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.
     """ 
-    plot_trellis_util(self.rake, self.strike, self.dip, self.trellis_depth,
-                      self.Z1, self.Z25, self.Vs30, self.region, self.imt_list,
-                      self.trellis_mag_list, self.maxR, self.gmpes_list,
-                      self.aratio, self.Nstd, output_directory,
-                      self.custom_color_flag, self.custom_color_list,
-                      self.eshm20_region) 
+    
+    # Generate config object
+    config = Configurations(filename)
+    
+    plot_trellis_util(config.rake, config.strike, config.dip,
+                      config.trellis_depth, config.Z1, config.Z25, config.Vs30,
+                      config.region, config.imt_list, config.trellis_mag_list,
+                      config.maxR, config.gmpes_list, config.aratio,
+                      config.Nstd, output_directory, config.custom_color_flag,
+                      config.custom_color_list, config.eshm20_region,
+                      config.lt_weights) 
                 
-def plot_spectra(self, output_directory):
+def plot_spectra(filename, output_directory):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
     configuration
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.
     """ 
-    plot_spectra_util(self.rake, self.strike, self.dip, self.trellis_depth,
-                      self.Z1, self.Z25, self.Vs30, self.region,
-                      self.max_period, self.trellis_mag_list,
-                      self.dist_list, self.gmpes_list, self.aratio, self.Nstd,
-                      output_directory, self.custom_color_flag,
-                      self.custom_color_list,self.eshm20_region) 
+    
+    # Generate config object
+    config = Configurations(filename)
+    
+    plot_spectra_util(config.rake, config.strike, config.dip,
+                      config.trellis_depth, config.Z1, config.Z25, config.Vs30,
+                      config.region, config.max_period, config.trellis_mag_list,
+                      config.dist_list, config.gmpes_list, config.aratio,
+                      config.Nstd, output_directory, config.custom_color_flag,
+                      config.custom_color_list, config.eshm20_region,
+                      config.lt_weights) 
 
-def plot_cluster(self, output_directory):
+def plot_cluster(filename, output_directory):
     """
     Plot hierarchical clusters of (1) median and (2) 84th percentile of predicted
     ground-motion by each GMPE for given configurations
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.
     """ 
-    if len(self.gmpes_list) < 2:
+    # Generate config object with each set of run parameters
+    config = Configurations(filename)
+    
+    if len(config.gmpes_list) < 2:
         raise ValueError("Cannot perform clustering for a single GMPE.")   
 
     # Cluster median predicted ground-motion
-    mtxs_medians = compute_matrix_gmpes(self.imt_list, self.mag_list,
-                                            self.gmpes_list, self.rake,
-                                            self.strike, self.dip, 
-                                            self.depth_for_non_trellis_functions,
-                                            self.Z1, self.Z25, self.Vs30,
-                                            self.region, self.maxR, self.aratio,
-                                            self.eshm20_region,mtxs_type='median')
+    mtxs_medians = compute_matrix_gmpes(config.imt_list, config.mag_list,
+                                            config.gmpes_list, config.rake,
+                                            config.strike, config.dip, 
+                                            config.depth_for_non_trellis_functions,
+                                            config.Z1, config.Z25, config.Vs30,
+                                            config.region, config.maxR, config.aratio,
+                                            config.eshm20_region,mtxs_type='median')
 
-    mtxs_84th_perc = compute_matrix_gmpes(self.imt_list, self.mag_list,
-                                            self.gmpes_list, self.rake,
-                                            self.strike, self.dip, 
-                                            self.depth_for_non_trellis_functions,
-                                            self.Z1, self.Z25, self.Vs30,
-                                            self.region, self.maxR, self.aratio,
-                                            self.eshm20_region,mtxs_type='84th_perc')
+    mtxs_84th_perc = compute_matrix_gmpes(config.imt_list, config.mag_list,
+                                            config.gmpes_list, config.rake,
+                                            config.strike, config.dip, 
+                                            config.depth_for_non_trellis_functions,
+                                            config.Z1, config.Z25, config.Vs30,
+                                            config.region, config.maxR, config.aratio,
+                                            config.eshm20_region,mtxs_type='84th_perc')
     
     # Cluster by median
-    plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_medians,
+    plot_cluster_util(config.imt_list, config.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,'Median_Clustering.png'),
                       mtxs_type = 'median')    
     
     # Cluster by 84th percentile
-    plot_cluster_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
+    plot_cluster_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
                       os.path.join(output_directory,'84th_perc_Clustering.png'),
                       mtxs_type = '84th_perc')                    
 
-def plot_sammons(self, output_directory):
+def plot_sammons(filename, output_directory):
     """
     Plot Sammons Maps of median and 84th percentile predicted ground-motion
     by each GMPE for given configurations
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.
     """ 
-    if len(self.gmpes_list) < 2:
+    # Generate config object with each set of run parameters
+    config = Configurations(filename)
+    
+    if len(config.gmpes_list) < 2:
         raise ValueError("Cannot perform Sammons Mapping for a single GMPE.")
         
-    mtxs_medians = compute_matrix_gmpes(self.imt_list, self.mag_list,
-                                        self.gmpes_list, self.rake,
-                                        self.strike, self.dip, 
-                                        self.depth_for_non_trellis_functions,
-                                        self.Z1, self.Z25, self.Vs30, 
-                                        self.region, self.maxR, self.aratio,
-                                        self.eshm20_region,mtxs_type='median')
+    mtxs_medians = compute_matrix_gmpes(config.imt_list, config.mag_list,
+                                        config.gmpes_list, config.rake,
+                                        config.strike, config.dip, 
+                                        config.depth_for_non_trellis_functions,
+                                        config.Z1, config.Z25, config.Vs30, 
+                                        config.region, config.maxR, config.aratio,
+                                        config.eshm20_region,mtxs_type='median')
     
-    mtxs_84th_perc = compute_matrix_gmpes(self.imt_list, self.mag_list,
-                                            self.gmpes_list, self.rake,
-                                            self.strike, self.dip, 
-                                            self.depth_for_non_trellis_functions,
-                                            self.Z1, self.Z25, self.Vs30,
-                                            self.region, self.maxR, self.aratio,
-                                            self.eshm20_region,mtxs_type='84th_perc')
+    mtxs_84th_perc = compute_matrix_gmpes(config.imt_list, config.mag_list,
+                                            config.gmpes_list, config.rake,
+                                            config.strike, config.dip, 
+                                            config.depth_for_non_trellis_functions,
+                                            config.Z1, config.Z25, config.Vs30,
+                                            config.region, config.maxR, config.aratio,
+                                            config.eshm20_region,mtxs_type='84th_perc')
     
-    plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_medians,
+    plot_sammons_util(config.imt_list, config.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,'Median_SammonMaps.png'),
-                      self.custom_color_flag, self.custom_color_list,
+                      config.custom_color_flag, config.custom_color_list,
                       mtxs_type = 'median')
     
-    plot_sammons_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
+    plot_sammons_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
                       os.path.join(output_directory,'84th_perc_SammonMaps.png'),
-                      self.custom_color_flag, self.custom_color_list,
+                      config.custom_color_flag, config.custom_color_list,
                       mtxs_type = '84th_perc')
    
-def plot_euclidean(self,output_directory):
+def plot_euclidean(filename, output_directory):
     """
     Plot Euclidean distance matrix of median and 84th percentile predicted
     ground-motion by each GMPE for given configurations
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.    
     """ 
-    if len(self.gmpes_list) < 2:
+    # Generate config object
+    config = Configurations(filename)
+    
+    if len(config.gmpes_list) < 2:
         raise ValueError("Cannot perform Euclidean distance matrix plotting for a single GMPE.")
         
-    mtxs_medians = compute_matrix_gmpes(self.imt_list, self.mag_list,
-                                        self.gmpes_list, self.rake,
-                                        self.strike, self.dip,
-                                        self.depth_for_non_trellis_functions,
-                                        self.Z1, self.Z25, self.Vs30,
-                                        self.region, self.maxR, self.aratio,
-                                        self.eshm20_region,mtxs_type='median')
+    mtxs_medians = compute_matrix_gmpes(config.imt_list, config.mag_list,
+                                        config.gmpes_list, config.rake,
+                                        config.strike, config.dip,
+                                        config.depth_for_non_trellis_functions,
+                                        config.Z1, config.Z25, config.Vs30,
+                                        config.region, config.maxR, config.aratio,
+                                        config.eshm20_region,mtxs_type='median')
     
-    mtxs_84th_perc = compute_matrix_gmpes(self.imt_list, self.mag_list,
-                                            self.gmpes_list, self.rake,
-                                            self.strike, self.dip, 
-                                            self.depth_for_non_trellis_functions,
-                                            self.Z1, self.Z25, self.Vs30,
-                                            self.region, self.maxR, self.aratio,
-                                            self.eshm20_region,mtxs_type='84th_perc')
+    mtxs_84th_perc = compute_matrix_gmpes(config.imt_list, config.mag_list,
+                                            config.gmpes_list, config.rake,
+                                            config.strike, config.dip, 
+                                            config.depth_for_non_trellis_functions,
+                                            config.Z1, config.Z25, config.Vs30,
+                                            config.region, config.maxR, config.aratio,
+                                            config.eshm20_region,mtxs_type='84th_perc')
     
     
-    plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_medians,
+    plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_medians,
                         os.path.join(output_directory,'Median_Euclidean.png'),
                         mtxs_type = 'median')
     
-    plot_euclidean_util(self.imt_list, self.gmpe_labels, mtxs_84th_perc,
+    plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
                         os.path.join(output_directory,'84th_perc_Euclidean.png'),
                         mtxs_type = '84th_perc')

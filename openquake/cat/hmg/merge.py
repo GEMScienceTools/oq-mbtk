@@ -295,7 +295,7 @@ def process_catalogues(settings_fname: str) -> None:
             # Update the spatial index
             print("      Updating index")
             catroot._create_spatial_index()
-
+        
         nev = catroot.get_number_events()
         print(f"   Whole catalogue contains: {nev:d} events")
 

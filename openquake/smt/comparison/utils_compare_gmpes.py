@@ -26,6 +26,7 @@ from matplotlib import pyplot
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist, squareform
 from scipy import interpolate
+from IPython.display import display
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib import valid
@@ -35,7 +36,7 @@ from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1, _get_z25, 
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd,
                  output_directory, custom_color_flag, custom_color_list,
-                 eshm20_region):
+                 eshm20_region, lt_weights = None):
     """
     Generate trellis plots for given run configuration
     """
@@ -46,8 +47,6 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         colors = custom_color_list
             
     step = 1
-    # Npoints=maxR/step
-    threshold = 0.01
     
     # Set Z1 and Z25
     if  Z1 == -999:
@@ -57,14 +56,20 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         Z25 = _get_z25(Vs30,region)
     
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
-
+    
+    store_trellis_values = {}
+    lt_mean_store = {}
+    lt_plus_sigma_store = {}
+    lt_minus_sigma_store = {}
     for n, i in enumerate(imt_list): #iterate though imt_list
 
         for l, m in enumerate(mag_list):  #iterate though mag_list
 
             fig.add_subplot(len(imt_list), len(mag_list), l+1+n*len(
                 mag_list)) #(#vert, #hor, #subplot)
-
+            
+            store_lt_branch_values = {}
+            
             for g, gmpe in enumerate(gmpe_list): 
                 
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
@@ -81,13 +86,52 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 pyplot.plot(distances, np.exp(mean), color=col,
                             linewidth=2, linestyle='-', label=gmpe)
                 
+                plus_sigma = np.exp(mean+Nstd*std[0])
+                minus_sigma = np.exp(mean-Nstd*std[0])
+                
                 # Plot Sigma                
                 if not Nstd==0:
-                    pyplot.plot(distances, np.exp(mean+Nstd*std[0]),
-                                linewidth=0.75, color=col, linestyle='--')
-                    pyplot.plot(distances, np.exp(mean-Nstd*std[0]),
-                                linewidth=0.75, color=col, linestyle='-.')
-
+                    pyplot.plot(distances, plus_sigma, linewidth=0.75,
+                                color=col, linestyle='--')
+                    pyplot.plot(distances, minus_sigma, linewidth=0.75,
+                                color=col, linestyle='-.')
+                                     
+                    store_trellis_values['IM = ' + str(i), 'Magnitude = ' 
+                                         + str(m), str(gmpe).replace(
+                                             '\n', ', ').replace('[', '').replace(
+                                                 ']', '')] = [np.array(np.exp(mean)),
+                                                           np.array(plus_sigma),
+                                                           np.array(minus_sigma),
+                                                           np.array(distances)]
+                    
+                    if lt_weights == None:
+                        pass
+                    elif gmpe in lt_weights:
+                        if lt_weights[gmpe] != None:
+                                store_lt_branch_values[gmpe] = {
+                                        'mean': np.exp(mean)*lt_weights[gmpe],
+                                        'plus_sigma': plus_sigma*lt_weights[gmpe],
+                                        'minus_sigma': minus_sigma*lt_weights[gmpe]}
+                        else:
+                            pass 
+                    
+                else:
+                    store_trellis_values['IM = ' + str(i), 'Magnitude = ' +
+                                             str(m), str(gmpe).replace(
+                                                 '\n', ', ').replace(
+                                                     '[', '').replace(']', '')
+                                                     ] = [np.array(np.exp(mean)),
+                                                              np.array(distances)]
+                                                          
+                    if lt_weights == None:
+                        pass
+                    elif gmpe in lt_weights:                                      
+                        if lt_weights[gmpe] != None:
+                            store_lt_branch_values[gmpe] = {
+                                    'mean': np.exp(mean)*lt_weights[gmpe]}
+                        else:
+                            pass
+                                                              
                 if n == 0: #top row only
                     pyplot.title('Mw=' + str(m), fontsize='16')
                 if n == len(imt_list)-1: #bottom row only
@@ -98,19 +142,90 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 pyplot.loglog()
                 pyplot.ylim(0.001, 10)
                 pyplot.xlim(1, maxR)
-
+                
             pyplot.grid(axis='both', which='both', alpha=0.5)
+        
+            # Plot logic tree for the IMT-mag combination if weights specified
+            logic_tree_config = 'GMPE logic tree'
+            
+            if store_lt_branch_values != {}:
+                if not Nstd == 0:
+                       
+                    lt_df = pd.DataFrame(store_lt_branch_values,
+                                         index = ['mean', 'plus_sigma',
+                                                  'minus_sigma'])
+
+                    lt_mean = np.sum(lt_df[:].loc['mean'])
+                    lt_plus_sigma = np.sum(lt_df[:].loc['plus_sigma'])
+                    lt_minus_sigma = np.sum(lt_df[:].loc['minus_sigma'])
+           
+                    pyplot.plot(distances, lt_mean, linewidth = 2, color = 'm',
+                                linestyle = '-', label = logic_tree_config)
+                    
+                    pyplot.plot(distances, lt_plus_sigma, linewidth = 0.75,
+                                color = 'm', linestyle = '--')
+        
+                    pyplot.plot(distances, lt_minus_sigma, linewidth = 0.75,
+                                color = 'm', linestyle = '-.')
+                    
+                    lt_mean_store[i,m] = lt_mean
+                    lt_plus_sigma_store[i,m] = lt_plus_sigma
+                    lt_minus_sigma_store[i,m] = lt_minus_sigma
+                    
+                if Nstd == 0:
+                    lt_df = pd.DataFrame(store_lt_branch_values, index = ['mean'])
+                    
+                    lt_mean = np.sum(lt_df[:].loc['mean'])
+                     
+                    pyplot.plot(distances, lt_mean, linewidth = 2, color = 'm',
+                                linestyle = '-', label = logic_tree_config)
+                    
+                    lt_mean_store[i,m] = lt_mean
 
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(os.path.join(output_directory,'TrellisPlots.png'),
                    bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
-    pyplot.tight_layout()
+    pyplot.tight_layout()    
+
+    # Export values to csv
+    if not Nstd == 0:
+        trellis_value_df = pd.DataFrame(store_trellis_values,
+                                        index = ['Mean (g)',
+                                                 'Plus %s sigma (g)' %Nstd,
+                                                 'Minus %s sigma (g)' %Nstd,
+                                                     'Distance (km)'])
+        if lt_weights != None:
+            for n, i in enumerate(imt_list): #iterate though imt_list
+                for l, m in enumerate(mag_list):  #iterate through mag_list
+                    trellis_value_df['IM = ' + str(i),
+                                     'Magnitude = ' + str(m),'GMPE logic tree'] = [
+                                         lt_mean_store[i,m],lt_plus_sigma_store[i,m],
+                                         lt_minus_sigma_store[i,m], distances]
+        else:
+            pass
+                                         
+    if Nstd == 0:
+        trellis_value_df = pd.DataFrame(store_trellis_values,
+                                        index = ['Mean (g)', 'Distance (km)'])
+        
+        if lt_weights != None:
+            for n, i in enumerate(imt_list): #iterate though imt_list
+                for l, m in enumerate(mag_list):  #iterate through mag_list
+                    trellis_value_df['IM = ' + str(i), 'Magnitude = ' + str(m),
+                                     'GMPE logic tree'] = [lt_mean_store[i,m],
+                                                          distances]                                                         
+        else:
+            pass
+                                                           
+    display(trellis_value_df)                                                
+    
+    trellis_value_df.to_csv(os.path.join(output_directory, 'trellis_values.csv'))
     
 def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
                       output_directory, custom_color_flag, custom_color_list,
-                      eshm20_region):
+                      eshm20_region, lt_weights = None):
     """
     Plot response spectra and sigma w.r.t. spectral period for given run
     configuration
@@ -186,6 +301,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     fig2 = pyplot.figure(figsize=(len(mag_list)*5, len(dist_list)*4))
     pyplot.rcParams.update({'font.size': 16})# sigma
     
+    store_spectra_values = {}
+    store_lt_branch_values = {}
+    store_lt_mean_per_dist_mag = {}
     for n, i in enumerate(dist_list): #iterate though dist_list
         
         for l, m in enumerate(mag_list):  #iterate through mag_list
@@ -228,6 +346,21 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
                          label=gmpe)
                 
+                store_spectra_values['Distance = %s km' %i, 'Magnitude = '
+                                     + str(m), str(gmpe).replace(
+                                         '\n', ', ').replace('[', '').replace(
+                                             ']', '')] = [np.array(period),
+                                                        np.array(rs_50p),
+                                                        np.array(sigma)]
+                if lt_weights == None:
+                    pass
+                elif gmpe in lt_weights:
+                    if lt_weights[gmpe] != None:
+                        rs_50p_weighted = {}
+                        for idx, rs in enumerate(rs_50p):
+                            rs_50p_weighted[idx] = rs_50p[idx]*lt_weights[gmpe]
+                        store_lt_branch_values[gmpe] = {'mean': rs_50p_weighted}
+                
                 ax1.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
                               fontsize=16, y=1.0, pad=-16)
                 ax2.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
@@ -241,6 +374,30 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             ax1.grid(True)
             ax2.grid(True)
             ax2.set_ylim(0.3, 1)
+            
+            # Plot logic tree for the dist-mag combination if weights specified
+            logic_tree_config = 'GMPE logic tree'
+            
+            if store_lt_branch_values != {}:
+                       
+                lt_df = pd.DataFrame(store_lt_branch_values, index = ['mean'])
+                
+                weighted_mean_per_gmpe = {}
+                for gmpe in gmpe_list:
+                    weighted_mean_per_gmpe[gmpe] = np.array(pd.Series(lt_df[
+                        gmpe].loc['mean']))
+                
+                lt_df = pd.DataFrame(weighted_mean_per_gmpe, index = period)
+                
+                lt_mean_per_period = {}
+                for idx, imt in enumerate(period):
+                    lt_mean_per_period[imt] = np.sum(lt_df.loc[imt])
+                
+                ax1.plot(period, np.array(pd.Series(lt_mean_per_period)),
+                         linewidth = 3, color = 'm', linestyle = '-',
+                         label = logic_tree_config)
+                
+                store_lt_mean_per_dist_mag[i,m] = lt_mean_per_period
            
     ax1.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     ax2.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
@@ -248,6 +405,24 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  bbox_inches='tight',dpi=200,pad_inches = 0.2)
     fig1.savefig(os.path.join(output_directory,'ResponseSpectra.png'),
                  bbox_inches='tight',dpi=200,pad_inches = 0.2)
+    
+    # Export values to csv
+    spectra_value_df = pd.DataFrame(store_spectra_values,
+                                    index = ['Periods', 'Median (g)',
+                                             'GMPE Sigma (natural log)'])
+    
+    if lt_weights != None:
+        for n, i in enumerate(dist_list): #iterate though dist_list
+            for l, m in enumerate(mag_list):  #iterate through mag_list
+                spectra_value_df[
+                    'Distance = ' + str(i) + 'km', 'Magnitude = ' + str(m),
+                    'GMPE logic tree'] = [np.array(period), np.array(pd.Series(
+                        store_lt_mean_per_dist_mag[i,m])), '-']
+    else:
+        pass
+                    
+    display(spectra_value_df)
+    spectra_value_df.to_csv(os.path.join(output_directory, 'spectra_values.csv'))
 
 def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                          dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio,
@@ -261,7 +436,6 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
         compute_matrix_gmpes (either median or 84th percentile)
     """
     step = 1
-    Npoints=maxR/step
     if  Z1 == -999:
         Z1 = _get_z1(Vs30,region)
 
@@ -274,8 +448,6 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
     for n, i in enumerate(imt_list): #iterate though imt_list
 
         matrix_medians=np.zeros((len(gmpe_list),(len(mag_list)*int((
-            maxR/step)))))
-        matrix_sigmas=np.zeros((len(gmpe_list),(len(mag_list)*int((
             maxR/step)))))
 
         for g, gmpe in enumerate(gmpe_list): 
@@ -356,16 +528,20 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         if mtxs_type == '84th_perc':
             ax.set_title(str(i) + ' (84th percentile)', fontsize = '14')
 
-        ticks_loc = ax.get_yticks().tolist()
         ax.xaxis.set_ticks([n for n in range(len(gmpe_list))])
         ax.xaxis.set_ticklabels(gmpe_list,rotation=40)
         ax.yaxis.set_ticks([n for n in range(len(gmpe_list))])
         ax.yaxis.set_ticklabels(gmpe_list)
 
+    # Remove final plot if not required
+    if len(imt_list) > 3 and len(imt_list)/2 != int(len(imt_list)/2):
+        ax = axs2[np.unravel_index(n+1, (nrows, ncols))]
+        ax.set_visible(False)
+
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
-    
+        
     return matrix_Dist
     
 def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
@@ -414,7 +590,6 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
 
         for g, gmpe in enumerate(gmpe_list): 
             col=colors[g]
-            label=type(gmpe).__name__
             pyplot.plot(coo[g,0], coo[g,1], 'o', markersize=9, color=colors[
                 g], label=gmpe)
             texts.append(pyplot.text(coo[g, 0]+np.abs(coo[g, 0])*0.02,
@@ -429,7 +604,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
 
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
-    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 0.80), fontsize='16')
+    pyplot.legend(loc="center left", bbox_to_anchor=(1.25, 0.50), fontsize='16')
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
@@ -484,15 +659,20 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax = axs[n]
         else:
             ax = axs[np.unravel_index(n, (nrows, ncols))]       
-
+        
         # Plot dendrogram
         dn1 = hierarchy.dendrogram(matrix_Z[n], ax=ax, orientation='right',
                                    labels=gmpe_list)
-        ax.set_xlabel('Euclidean Distance', fontsize = '14')
+        ax.set_xlabel('Euclidean Distance', fontsize = '12')
         if mtxs_type == 'median':
-            ax.set_title(str(i) + ' (median)', fontsize = '14')
+            ax.set_title(str(i) + ' (median)', fontsize = '12')
         if mtxs_type == '84th_perc':
-            ax.set_title(str(i) + ' (84th percentile)', fontsize = '14')
+            ax.set_title(str(i) + ' (84th percentile)', fontsize = '12')
+            
+    # Remove final plot if not required
+    if len(imt_list) > 3 and len(imt_list)/2 != int(len(imt_list)/2):
+        ax = axs[np.unravel_index(n+1, (nrows, ncols))]
+        ax.set_visible(False)
 
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.4)
     pyplot.show()
