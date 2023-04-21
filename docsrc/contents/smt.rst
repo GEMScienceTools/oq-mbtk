@@ -420,7 +420,7 @@ Comparing GMPEs
        > # Import GMPE comparison tools
        > from openquake.smt.comparison import compare_gmpes as comp
 
-2. The tools within the Comparison module include Sammon's Maps, heirarchical clustering and matrix plots of Euclidean distance for both median and 84th percentile of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra, GMPE sigma with respect to spectral period and trellis plots are also provided in this module.
+2. The tools within the Comparison module include Sammon's Maps, hierarchical clustering and matrix plots of Euclidean distance for both median and 84th percentile of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra, GMPE sigma with respect to spectral period and trellis plots are also provided in this module.
 
    The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may best capture the epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree (to plot a GMPE logic tree we assign model weights using ``lt_weight`` in each model).
 
@@ -542,13 +542,13 @@ Comparing GMPEs
     Sammon's Maps (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_SammonMaps.png
     
-6. Heirarchical Clustering
+6. Hierarchical Clustering
 
    Dendrograms can be plotted as an alternative tool to evaluate how similarly the predicted ground-motion is by each GMPE.
    
    Within the dendrograms the GMPEs are clustered hierarchically (i.e. the GMPEs which are clustered together at shorter Euclidean distances are more similar than those clustered together at larger Euclidean distances).
   
-   Heirarchical clustering plots can be generated as follows:
+   Hierarchical clustering plots can be generated as follows:
 
     .. code-block:: ini
        
@@ -560,7 +560,7 @@ Comparing GMPEs
          
 7. Matrix Plots of Euclidean Distance
 
-   In addition to Sammon's Maps and heirarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
+   In addition to Sammon's Maps and hierarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
    
    Within the matrix plots the darker cells represent a smaller Euclidean distance (and therefore greater similarity) between each GMPE for the given intensity measure.
    
