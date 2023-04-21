@@ -42,7 +42,9 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     """
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
-            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown','tab:pink']
+            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:purple',
+            'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
@@ -297,8 +299,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
-            'mediumseagreen','0.5','tab:orange', 'tab:purple',
-            'tab:brown', 'tab:pink']
+            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:purple',
+            'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
     
@@ -389,9 +392,12 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 
                 weighted_mean_per_gmpe = {}
                 for gmpe in gmpe_list:
-                    weighted_mean_per_gmpe[gmpe] = np.array(pd.Series(lt_df[
+                    if 'lt_weight' in str(gmpe):
+                        weighted_mean_per_gmpe[gmpe] = np.array(pd.Series(lt_df[
                         gmpe].loc['mean']))
-                
+                    else:
+                        pass
+                    
                 lt_df = pd.DataFrame(weighted_mean_per_gmpe, index = period)
                 
                 lt_mean_per_period = {}
@@ -567,8 +573,9 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
     """
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
-            'mediumseagreen','0.5','tab:orange', 'tab:purple',
-            'tab:brown', 'tab:pink']
+            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:purple',
+            'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
