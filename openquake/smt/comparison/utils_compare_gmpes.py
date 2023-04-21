@@ -93,18 +93,24 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 mean = mean[0][0]
                 std = std[0][0]
                 
-                pyplot.plot(distances, np.exp(mean), color=col,
-                            linewidth=2, linestyle='-', label=gmpe)
+                if 'lt_weight_plot_lt_only' not in str(gmpe):
+                    pyplot.plot(distances, np.exp(mean), color=col,
+                                linewidth=2, linestyle='-', label=gmpe)
+                else:
+                    pass
                 
                 plus_sigma = np.exp(mean+Nstd*std[0])
                 minus_sigma = np.exp(mean-Nstd*std[0])
                 
                 # Plot Sigma                
                 if not Nstd==0:
-                    pyplot.plot(distances, plus_sigma, linewidth=0.75,
-                                color=col, linestyle='--')
-                    pyplot.plot(distances, minus_sigma, linewidth=0.75,
-                                color=col, linestyle='-.')
+                    if 'lt_weight_plot_lt_only' not in str(gmpe):
+                        pyplot.plot(distances, plus_sigma, linewidth=0.75,
+                                    color=col, linestyle='--')
+                        pyplot.plot(distances, minus_sigma, linewidth=0.75,
+                                    color=col, linestyle='-.')
+                    else:
+                        pass
                                      
                     store_trellis_values['IM = ' + str(i), 'Magnitude = ' 
                                          + str(m), str(gmpe).replace(
@@ -156,7 +162,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             pyplot.grid(axis='both', which='both', alpha=0.5)
         
             # Plot logic tree for the IMT-mag combination if weights specified
-            logic_tree_config = 'GMPE logic tree'
+            logic_tree_config = 'Inputted GMPE logic tree config.'
             
             if store_lt_branch_values != {}:
                 if not Nstd == 0:
@@ -349,11 +355,14 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     
                     rs_50p.append(rs_50p_dist)
                     sigma.append(sigma_dist)
-                
-                ax1.plot(period, rs_50p, color=col, linewidth=3, linestyle='-',
-                         label=gmpe)
-                ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
-                         label=gmpe)
+                    
+                if 'lt_weight_plot_lt_only' not in str(gmpe):
+                    ax1.plot(period, rs_50p, color=col, linewidth=3, linestyle='-',
+                             label=gmpe)
+                    ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
+                             label=gmpe)
+                else:
+                    pass
                 
                 store_spectra_values['Distance = %s km' %i, 'Magnitude = '
                                      + str(m), str(gmpe).replace(
@@ -385,7 +394,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             ax2.set_ylim(0.3, 1)
             
             # Plot logic tree for the dist-mag combination if weights specified
-            logic_tree_config = 'GMPE logic tree'
+            logic_tree_config = 'Inputted GMPE logic tree config.'
             
             if store_lt_branch_values != {}:
                 lt_df = pd.DataFrame(store_lt_branch_values, index = ['mean'])
