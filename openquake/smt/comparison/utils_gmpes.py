@@ -18,7 +18,8 @@
 """
 Module with utility functions for gmpes
 """
-import numpy 
+import numpy as np
+import warnings
 
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib import valid
@@ -30,6 +31,7 @@ from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.scalerel import WC1994
 from openquake.hazardlib.const import TRT, StdDev
 from openquake.hazardlib.contexts import ContextMaker
+from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
 
 
 def _get_first_point(rup, from_point):
@@ -142,14 +144,15 @@ def att_curves(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,step,
                                    direction='positive', hdist=maxR, step=step,
                                    site_props=props)
     
-    param = dict(imtls={})
-    cm = ContextMaker(trt, [gmpe], param)
+    mag_str = [f'{mag:.2f}']
+    oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
+    ctxm = ContextMaker(trt, [gmpe], oqp)
     
-    ctxs = list(cm.get_ctx_iter([rup], sites)) 
+    ctxs = list(ctxm.get_ctx_iter([rup], sites)) 
     ctxs = ctxs[0]
     ctxs.occurrence_rate = 0.0
     
-    mean, std = gmpe.get_mean_and_stddevs(ctxs, ctxs, ctxs, imt, [StdDev.TOTAL])
+    mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
     distances = ctxs.rrup
     
     return mean, std, distances
@@ -162,9 +165,9 @@ def _get_z1(Vs30,region):
         locally = 0)
     """      
     if region == 2: # in California and non-Japan region
-        Z1 = numpy.exp(-5.23/2*numpy.log((Vs30**2+412.39**2)/(1360**2+412.39**2)))
+        Z1 = np.exp(-5.23/2*np.log((Vs30**2+412.39**2)/(1360**2+412.39**2)))
     else:
-        Z1 = numpy.exp(-7.15/4*numpy.log((Vs30**4+570.94**4)/(1360**4+570.94**4)))
+        Z1 = np.exp(-7.15/4*np.log((Vs30**4+570.94**4)/(1360**4+570.94**4)))
     return Z1
 
 def _get_z25(Vs30,region):
@@ -175,11 +178,11 @@ def _get_z25(Vs30,region):
         locally = 0)
     """     
     if region == 2: # in Japan
-        Z25 = numpy.exp(5.359 - 1.102 * numpy.log(Vs30))
-        Z25A_default = numpy.exp(7.089 - 1.144 * numpy.log(1100))
+        Z25 = np.exp(5.359 - 1.102 * np.log(Vs30))
+        Z25A_default = np.exp(7.089 - 1.144 * np.log(1100))
     else:
-        Z25 = numpy.exp(7.089 - 1.144 * numpy.log(Vs30))
-        Z25A_default = numpy.exp(7.089 - 1.144 * numpy.log(1100))           
+        Z25 = np.exp(7.089 - 1.144 * np.log(Vs30))
+        Z25A_default = np.exp(7.089 - 1.144 * np.log(1100))           
     return Z25
 
 def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
@@ -198,8 +201,6 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
         dip_s = dip
 
     if depth == -999:
-        print(gmpes)
-        
         if str(valid.gsim(gmpes).DEFINED_FOR_TECTONIC_REGION_TYPE) == 'TRT.SUBDUCTION_INTERFACE':
             depth_s = 30
         elif str(valid.gsim(gmpes).DEFINED_FOR_TECTONIC_REGION_TYPE) == 'TRT.SUBDUCTION_INTRASLAB':
@@ -209,7 +210,7 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
     else:
         depth_s = depth
         
-    if aratio > -999.0 and numpy.isfinite(aratio):
+    if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
         if 'Inter' in gmpes:
@@ -220,3 +221,71 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
             aratio_s = 2
             
     return strike_s, dip_s, depth_s, aratio_s
+
+def al_atik_sigma_check(gmpe, imtx, task):
+    """
+    Check if sigma is provided for a given GMPE and implement Al-Atik (2015)
+    sigma model if specified. Also provides a warning if GMPE sigma is not
+    provided by the specified GMPE. 
+    :param gmpe:
+        GMPE to check model sigma is provided, and to check if Al-Atik (2015)
+        sigma model should be implemented for
+    :param imtx:
+        Intensity measure to perform sigma checks for with the specified GMPE
+    :param task:
+        Specify whether for computation of residuals ('residual') or use within
+        comparison module ('comparison')
+    """
+    # Construct a generic context (M = 5.5, D = 100km) to check if sigma provided 
+    tmp_rup = get_rupture(20, 40, 15, WC1994(), 5.5, 1.5, 0, 90, 0, 'fake', None)
+
+    if 'KothaEtAl2020ESHM20' in str(gmpe):
+        sp = {'vs30': 800, 'z1pt0': 31.07, 'z2pt5': 0.57, 'backarc': False,
+              'vs30measured': True, 'region': 0}  #Fix region to 0 for check
+    else:
+        sp = {'vs30': 800, 'z1pt0': 31.07, 'z2pt5': 0.57, 'backarc': False,
+              'vs30measured': True}  
+            
+    tmp_site = get_sites_from_rupture(tmp_rup, 'TC', 90, 'positive', 100, 50, sp)
+    
+    oqp = {'imtls': {k: [] for k in [imtx]}, 'mags': [f'{5.5:.2f}']}
+    if '_toml=' in str(gmpe):
+        tmp_gmm = valid.gsim(str(gmpe).split('_toml=')[1].replace(')',''))
+    else:
+        tmp_gmm = valid.gsim(gmpe)
+    ctxm = ContextMaker('fake', [tmp_gmm], oqp)
+    ctxs = list(ctxm.get_ctx_iter([tmp_rup], tmp_site))
+    
+    # Get model sigma and set up modifiable GMPE
+    tmp_mean, tmp_std, tmp_tau, tmp_phi = ctxm.get_mean_stds(ctxs)
+    tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
+    kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
+              'sigma_model_alatik2015': {}}
+    
+    # Messages for warnings/ValueError
+    msg1 = 'A sigma model is not provided by default for %s GMPE.' %tmp_gmpe
+    msg2 = 'For residual analysis a sigma model must be specified for %s GMPE.'%tmp_gmpe
+    
+    # Raise warning/ValueError/implement Al-Atik 2015 sigma if specified based
+    # on sigma_model_flag
+    if tmp_std.all() == 0:
+        sigma_model_flag = True
+        if task == 'residual' and 'toml=' in str(gmpe) or task == 'comparison':
+            if 'al_atik_2015_sigma' in str(gmpe): # No sigma so add
+                gmpe = mgmpe.ModifiableGMPE(**kwargs)
+            elif task == 'residual': # A sigma model is required for residuals
+                raise ValueError(msg2)
+            elif task == 'comparison': # No sigma and not specified in toml
+                warnings.warn(msg1, stacklevel = 100)
+                gmpe = valid.gsim(gmpe.split('(')[0])
+        elif task == 'residual': # Task = 'residual' but no toml used so sigma model not specifiable
+            raise ValueError(msg2)
+    else:
+        sigma_model_flag = False
+        if 'al_atik_2015_sigma' in str(gmpe): #GMPE has sigma but override
+            gmpe = mgmpe.ModifiableGMPE(**kwargs)
+        elif task == 'comparison': # GMPE has sigma so retain (comparison use)
+            gmpe = valid.gsim(gmpe)
+        else: # GMPE has sigma so retain (residuals use)
+            gmpe = valid.gsim(gmpe.split('(')[0])
+    return gmpe, sigma_model_flag

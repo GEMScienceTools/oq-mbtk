@@ -298,8 +298,7 @@ def get_interpolated_period(target_period, periods, values):
     d_x = np.log10(periods[uval]) - np.log10(periods[lval])
     return 10.0 ** (
         np.log10(values[lval]) +
-        (np.log10(target_period) - np.log10(periods[lval])) * d_y / d_x
-        )
+        (np.log10(target_period) - np.log10(periods[lval])) * d_y / d_x)
 
 
 def create_planar_surface(top_centroid, strike, dip, area, aspect):

@@ -41,13 +41,10 @@ class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
     metadata = os.path.join(metadata_directory, metadata_file)
     sm_database = pickle.load(open(metadata,"rb"))
 
-    # Specify path to .toml file with gmpes + imts to consider
-    filename = os.path.join(DATA,'data','test_gmpe_metrics.toml')
-
-
     gmpe_list = ['ChiouYoungs2014','CampbellBozorgnia2014',
                  'BooreEtAl2014','AbrahamsonEtAl2014']
     imts = ['PGA', 'SA(1.0)']
+    
     residuals = res.Residuals(gmpe_list, imts)
     residuals.get_residuals(sm_database)
 
