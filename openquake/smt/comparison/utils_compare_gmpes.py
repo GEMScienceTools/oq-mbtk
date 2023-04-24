@@ -31,7 +31,7 @@ from IPython.display import display
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib import valid
 from openquake.hazardlib.imt import from_string
-from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1, _get_z25, _param_gmpes
+from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1, _get_z25, _param_gmpes, al_atik_sigma_check
 
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd,
@@ -42,7 +42,9 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     """
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
-            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown','tab:pink']
+            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:purple',
+            'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
@@ -78,23 +80,37 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 gmm = valid.gsim(gmpe)
                 col=colors[g]
 
+                if not Nstd ==0:
+                    gmm, gmpe_sigma_flag = al_atik_sigma_check(gmpe, str(i),
+                                                               task = 'comparison')
+                else:
+                    pass
+
                 mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                  strike_g,dip_g,rake,Vs30,
                                                  Z1,Z25,maxR,step,i,1,
                                                  eshm20_region) 
+                mean = mean[0][0]
+                std = std[0][0]
                 
-                pyplot.plot(distances, np.exp(mean), color=col,
-                            linewidth=2, linestyle='-', label=gmpe)
+                if 'lt_weight_plot_lt_only' not in str(gmpe):
+                    pyplot.plot(distances, np.exp(mean), color=col,
+                                linewidth=2, linestyle='-', label=gmpe)
+                else:
+                    pass
                 
                 plus_sigma = np.exp(mean+Nstd*std[0])
                 minus_sigma = np.exp(mean-Nstd*std[0])
                 
                 # Plot Sigma                
                 if not Nstd==0:
-                    pyplot.plot(distances, plus_sigma, linewidth=0.75,
-                                color=col, linestyle='--')
-                    pyplot.plot(distances, minus_sigma, linewidth=0.75,
-                                color=col, linestyle='-.')
+                    if 'lt_weight_plot_lt_only' not in str(gmpe):
+                        pyplot.plot(distances, plus_sigma, linewidth=0.75,
+                                    color=col, linestyle='--')
+                        pyplot.plot(distances, minus_sigma, linewidth=0.75,
+                                    color=col, linestyle='-.')
+                    else:
+                        pass
                                      
                     store_trellis_values['IM = ' + str(i), 'Magnitude = ' 
                                          + str(m), str(gmpe).replace(
@@ -146,7 +162,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             pyplot.grid(axis='both', which='both', alpha=0.5)
         
             # Plot logic tree for the IMT-mag combination if weights specified
-            logic_tree_config = 'GMPE logic tree'
+            logic_tree_config = 'Inputted GMPE logic tree config.'
             
             if store_lt_branch_values != {}:
                 if not Nstd == 0:
@@ -208,7 +224,6 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     if Nstd == 0:
         trellis_value_df = pd.DataFrame(store_trellis_values,
                                         index = ['Mean (g)', 'Distance (km)'])
-        
         if lt_weights != None:
             for n, i in enumerate(imt_list): #iterate though imt_list
                 for l, m in enumerate(mag_list):  #iterate through mag_list
@@ -217,10 +232,9 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                           distances]                                                         
         else:
             pass
-                                                           
-    display(trellis_value_df)                                                
-    
+    display(trellis_value_df)
     trellis_value_df.to_csv(os.path.join(output_directory, 'trellis_values.csv'))
+    
     
 def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
@@ -291,8 +305,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
-            'mediumseagreen','0.5','tab:orange', 'tab:purple',
-            'tab:brown', 'tab:pink']
+            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:purple',
+            'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
     
@@ -326,12 +341,12 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 rs_50p, sigma = [], []
                 
                 for k, imt in enumerate(imt_list): 
-
                     mu, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                     strike_g,dip_g,rake,Vs30,
                                                     Z1,Z25,300,0.1,imt,1,
                                                     eshm20_region) 
                     
+                    mu = mu[0][0]
                     f = interpolate.interp1d(distances,mu)
                     rs_50p_dist = np.exp(f(i))
                     
@@ -340,11 +355,14 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     
                     rs_50p.append(rs_50p_dist)
                     sigma.append(sigma_dist)
-                
-                ax1.plot(period, rs_50p, color=col, linewidth=3, linestyle='-',
-                         label=gmpe)
-                ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
-                         label=gmpe)
+                    
+                if 'lt_weight_plot_lt_only' not in str(gmpe):
+                    ax1.plot(period, rs_50p, color=col, linewidth=3, linestyle='-',
+                             label=gmpe)
+                    ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
+                             label=gmpe)
+                else:
+                    pass
                 
                 store_spectra_values['Distance = %s km' %i, 'Magnitude = '
                                      + str(m), str(gmpe).replace(
@@ -376,17 +394,19 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             ax2.set_ylim(0.3, 1)
             
             # Plot logic tree for the dist-mag combination if weights specified
-            logic_tree_config = 'GMPE logic tree'
+            logic_tree_config = 'Inputted GMPE logic tree config.'
             
             if store_lt_branch_values != {}:
-                       
                 lt_df = pd.DataFrame(store_lt_branch_values, index = ['mean'])
                 
                 weighted_mean_per_gmpe = {}
                 for gmpe in gmpe_list:
-                    weighted_mean_per_gmpe[gmpe] = np.array(pd.Series(lt_df[
+                    if 'lt_weight' in str(gmpe):
+                        weighted_mean_per_gmpe[gmpe] = np.array(pd.Series(lt_df[
                         gmpe].loc['mean']))
-                
+                    else:
+                        pass
+                    
                 lt_df = pd.DataFrame(weighted_mean_per_gmpe, index = period)
                 
                 lt_mean_per_period = {}
@@ -420,9 +440,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                         store_lt_mean_per_dist_mag[i,m])), '-']
     else:
         pass
-                    
     display(spectra_value_df)
     spectra_value_df.to_csv(os.path.join(output_directory, 'spectra_values.csv'))
+
 
 def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                          dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio,
@@ -433,7 +453,7 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
     Sammons Mapping and hierarchical clustering plots
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
-        compute_matrix_gmpes (either median or 84th percentile)
+        compute_matrix_gmpes (either median, 84th or 16th percentile)
     """
     step = 1
     if  Z1 == -999:
@@ -458,8 +478,9 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     gmpe,strike, dip, depth[l], aratio, rake) 
 
-                gmm = valid.gsim(gmpe)
-                
+                gmm, gmpe_sigma_flag = al_atik_sigma_check(gmpe, str(i),
+                                                           task = 'comparison')
+
                 mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                   strike_g,dip_g,rake,Vs30,Z1,
                                                   Z25,maxR,step,i,1,eshm20_region) 
@@ -469,11 +490,13 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                 if mtxs_type == '84th_perc':
                     Nstd = 1 # median + 1std = ~84th percentile
                     medians = np.append(medians,(np.exp(mean+Nstd*std[0])))
+                if mtxs_type == '16th_perc':
+                    Nstd = 1 # median - 1std = ~16th percentile
+                    medians = np.append(medians,(np.exp(mean-Nstd*std[0])))   
                 sigmas = np.append(sigmas,std[0])
 
             matrix_medians[:][g]= medians
         mtxs_median[n] = matrix_medians
-    
     return mtxs_median
 
 def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
@@ -489,7 +512,7 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         filename for outputted figure 
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
-        compute_matrix_gmpes (either median or 84th percentile)
+        compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Euclidean
     matrix_Dist = {}
@@ -527,6 +550,8 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax.set_title(str(i) + ' (median)', fontsize = '14')
         if mtxs_type == '84th_perc':
             ax.set_title(str(i) + ' (84th percentile)', fontsize = '14')
+        if mtxs_type == '16th_perc':
+            ax.set_title(str(i) + ' (16th percentile)', fontsize = '14')
 
         ax.xaxis.set_ticks([n for n in range(len(gmpe_list))])
         ax.xaxis.set_ticklabels(gmpe_list,rotation=40)
@@ -540,9 +565,9 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
-    pyplot.tight_layout()
-        
+    pyplot.tight_layout()        
     return matrix_Dist
+
     
 def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
                       custom_color_list, mtxs_type):
@@ -558,12 +583,13 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         filename for outputted figure 
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
-        compute_matrix_gmpes (either median or 84th percentile)
+        compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
-            'mediumseagreen','0.5','tab:orange', 'tab:purple',
-            'tab:brown', 'tab:pink']
+            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:purple',
+            'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
@@ -601,14 +627,14 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
             pyplot.title(str(i) + ' (median)', fontsize = '14')
         if mtxs_type == '84th_perc':
             pyplot.title(str(i) + ' (84th percentile)', fontsize = '14')
-
+        if mtxs_type == '16th_perc':
+            pyplot.title(str(i) + ' (16th percentile)', fontsize = '14')
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
     pyplot.legend(loc="center left", bbox_to_anchor=(1.25, 0.50), fontsize='16')
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
-    
     return coo
 
 def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
@@ -624,7 +650,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         filename for outputted figure 
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
-        compute_matrix_gmpes (either median or 84th percentile)
+        compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     ncols = 2
     
@@ -668,6 +694,8 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax.set_title(str(i) + ' (median)', fontsize = '12')
         if mtxs_type == '84th_perc':
             ax.set_title(str(i) + ' (84th percentile)', fontsize = '12')
+        if mtxs_type == '16th_perc':
+            ax.set_title(str(i) + ' (16th percentile)', fontsize = '12')
             
     # Remove final plot if not required
     if len(imt_list) > 3 and len(imt_list)/2 != int(len(imt_list)/2):
@@ -677,5 +705,4 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.4)
     pyplot.show()
     pyplot.tight_layout() 
-    
     return matrix_Z

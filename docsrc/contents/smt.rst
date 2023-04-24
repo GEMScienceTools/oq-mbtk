@@ -5,7 +5,9 @@ The :index:`Strong-Motion Tools` module contains code for the selection of groun
 
 The main components of the Strong-Motion Tools (smt) comprise of (1) parsing capabilities to generate metadata (2) capabilities for computation and plotting of ground-motion residual distributions (3) comparison of potentially viable GMPEs and (4) development of the GMC with the final selection(s) of GMPEs.
 
-Here, we will demonstrate how each of these components can be implemented, in the context of aiming to develop a GMPE logic-tree approach GMC for Albania. 
+Here, we will demonstrate how each of these components can be implemented, in the context of aiming to develop a GMPE logic-tree approach GMC for Albania.
+
+Please note that this documentation assumes an elementary knowledge of GMPEs, residual analysis and ground-motion characterisation. Therefore, this documentation's purpose is to facilitate the application of the smt by user who is already familiar with the underlying theory. References are provided throughout for useful overviews of such theory!
 
 Performing a Residual Analysis within the smt
 *********************************************
@@ -69,7 +71,7 @@ Computing the Ground-Motion Residuals
 
 Following the parsing of a flatfile into useable metadata, we can now specify the inputs for the performing of a residual analysis. Residual analysis compares the predicted and expected (i.e. observed) ground-motion for a combination of source, site and path parameters to evaluate the performance of GMPEs. Residuals are computed using the mixed effects methodology of Abrahamson and Youngs (1992), in which the total residual is split into an inter-event component and an intra-event component. Abrahamson and Youngs (1992) should be consulted for a detailed overview of ground-motion residuals.
 
-We can specify the inputs to perform a residual analysis within the smt are specified as follows:
+We can specify the inputs to perform a residual analysis with as follows:
     
 1. Specify the base path, the path to the metadata we parsed in the previous stage and an output folder:
 
@@ -83,7 +85,7 @@ We can specify the inputs to perform a residual analysis within the smt are spec
         >
         > # Specify output folder
         > run_folder = os.path.join(DATA, results_preliminary)
-    
+
 2. We can specify the GMPEs we want to evaluate, and the intensity measures we want to evaluate each GMPE for as a ``gmpe_list`` and an ``imt_list`` within the command line:
 
     .. code-block:: ini
@@ -91,10 +93,10 @@ We can specify the inputs to perform a residual analysis within the smt are spec
         > # Specify some GMPEs and intensity measures within command line
         > gmpe_list = ['AkkarEtAlRjb2014', 'BooreEtAl2014', 'BooreEtAl2020', 'CauzziEtAl2014', 'KothaEtAl2020regional', 'LanzanoEtAl2019_RJB_OMO']
         > imt_list = ['PGA','SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']
-    
-3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for specifying the inputs of GMPEs with user-specifiable input parameters e.g. regionalisation parameter or logic tree branch parameters. Note that here the GMPEs listed in the ``.toml`` file are not appropriate for our target region, but have been selected to demonstrate how GMPEs with additional inputs can be specified within a ``.toml`` file.
+        
+3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for specifying the inputs of GMPEs with user-specifiable input parameters e.g. regionalisation parameter or logic tree branch parameters. Note that here the GMPEs listed in the first ``.toml`` file are not appropriate for our target region, but have been selected to demonstrate how GMPEs with additional inputs can be specified within a ``.toml`` file. The second ``.toml`` file provides the GMPEs and intensity measures we use for running this demonstration analysis.
 
-   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``).
+   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``). Note also that a GMPE sigma model must be provided by the GMPE for the computation of residuals. If a sigma model is not provided by the GMPE, it can be specified as demonstrated below for the YenierAtkinson2015BSSA GMPE.
    
    The ``.toml`` file for specifying GMPEs and intensity measures to consider within a residual analysis should be specified as follows:
    
@@ -110,6 +112,9 @@ We can specify the inputs to perform a residual analysis within the smt are spec
         
         [models.AbrahamsonGulerce2020SInterCascadia]
         
+        [models.YenierAtkinson2015BSSA]
+        sigma_model = 'al_atik_2015_sigma'
+        
         [models.NGAEastGMPE]
         gmpe_table = 'NGAEast_FRANKEL_J15.hdf5'
             
@@ -119,7 +124,42 @@ We can specify the inputs to perform a residual analysis within the smt are spec
         
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
-
+        
+    Adhering to this formatting, we here provide the GMPEs and intensity measures we consider within the subsequent analysis:
+    
+    .. code-block:: ini
+    
+        [models]
+    
+        [models.AbrahamsonEtAl2014]
+    
+        [models.AkkarEtAlRjb2014]
+    
+        [models.AmeriEtAl2017Rjb]
+    
+        [models.BindiEtAl2014Rjb]
+    
+        [models.BooreEtAl2014]
+    
+        [models.BooreEtAl2020]
+    
+        [models.CauzziEtAl2014]
+    
+        [models.CampbellBozorgnia2014]
+    
+        [models.ChiouYoungs2014]
+    
+        [models.HassaniAtkinson2020Asc]
+    
+        [models.KaleEtAl2015Turkey]
+    
+        [models.KothaEtAl2020regional]
+    
+        [models.LanzanoEtAl2019_RJB_OMO]
+    
+        [imts]
+        imt_list = ["PGA","SA(0.1)","SA(0.2)","SA(0.5)","SA(1.0)","SA(2.0)"]    
+    
 4. Following specification of the GMPEs and intensity measures, we can now compute the ground-motion residuals using the Residuals module.
 
    We first need to get the metadata from the parsed ``.pkl`` file (stored within the metadata folder):
@@ -156,7 +196,7 @@ We can specify the inputs to perform a residual analysis within the smt are spec
        > filename = os.path.join(DATA,'gmpes_and_imts_to_test.toml') # path to .toml file
        > resid1 = res.Residuals.from_toml(filename)
        > resid1.get_residuals(sm_database)
-   
+
 Plotting of Residuals
 *********************
 
@@ -170,12 +210,23 @@ Plotting of Residuals
 
     .. code-block:: ini
        
-       > # Plot residual probability density function for a specified GMPE from gmpe_list and intensity measure from imt_list
-       > rspl.ResidualPlot(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg') # Plot for gmpe in position 0 in gmpe_list and intensity measure in position 2 in imt_list
+       > # If using .toml for inputs we first create equivalent gmpe_list and imt_list using residuals object attributes
+       > gmpe_list = {}
+       > for idx, gmpe in enumerate(resid1.gmpe_list):
+       >    gmpe_list[idx] = resid1.gmpe_list[gmpe]
+       > gmpe_list = list[gmpe_list]
        >
-       > # OR from .toml file (GMPEs and intensity measures in this case are stored in the residuals object created during computation of the residuals)
-       > rspl.ResidualPlot(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg') # Plot for gmpe in position 0 in resid1.gmpe_list and intensity measure in position 2 in resid1.imts
+       > imt_list = {}
+       > for idx, imt in enumerate(resid1.imts):
+       >    imt_list[idx] = resid1.imt_list[imt]
+       > imt_list = list(imt_list)
+       >
+       > # Plot residual probability density function for a specified GMPE from gmpe_list and intensity measure from imt_list
+       > rspl.ResidualPlot(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg') # Plot for gmpe in position 5 in gmpe_list and intensity measure in position 0 in imt_list
         
+Residual distribution plot for Boore et al. 2020 and PGA:
+    .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_bias+sigma.jpeg
+    
 2. We can also plot the probability density functions over all considered spectral periods at once, so as to better examine how the residual distributions vary per GMPE over each spectral period:
    
     .. code-block:: ini
@@ -184,36 +235,105 @@ Plotting of Residuals
        > rspl.PlotResidualPDFWithSpectralPeriod(resid1, filename)
        >
        > # Generate .csv of residual probability density function per imt per GMPE 
-       > rspl.PDFTable(resid1, filename)
+       > rspl.PDFTable(resid1, filename) 
+
+Plot of residual distributions versus spectral acceleration: 
+    .. image:: /contents/smt_images/all_gmpes_PDF_vs_imt_plot.jpg
 
 3. Plots for residual trends (again for total, inter- and intra-event components) with respect to the most important GMPE inputs can also be generated in a similar manner. Here we will demonstrate for magnitude:
    
     .. code-block:: ini
        
        > # Plot residuals w.r.t. magnitude from gmpe_list and imt_list
-       > rspl.ResidualWithMagnitude(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
-       >
-       > # OR plot residuals w.r.t. magnitude from .toml file
-       > rspl.ResidualWithMagnitude(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
-
+       > rspl.ResidualWithMagnitude(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
+       
+    Residuals w.r.t. magnitude for Boore et al. 2020 and PGA:
+        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_wrt_mag.jpeg
+    
 4. The functions for plotting of residuals w.r.t. distance, focal depth and Vs30 are called in a similar manner:
    
     .. code-block:: ini
        
        > # From gmpe_list and imt_list:
-       > rspl.ResidualWithDistance(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
-       > rspl.ResidualWithDepth(resid1, gmpe_list[0], imt_list[2],  filename, filetype = 'jpg')
-       > rspl.ResidualWithVs30(resid1, gmpe_list[0], imt_list[2],  filename, filetype = 'jpg')
+       > rspl.ResidualWithDistance(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
+       > rspl.ResidualWithDepth(resid1, gmpe_list[5], imt_list[0],  filename, filetype = 'jpg')
+       > rspl.ResidualWithVs30(resid1, gmpe_list[5], imt_list[0],  filename, filetype = 'jpg')
+
+    Residuals w.r.t. distance for Boore et al. 2020 and PGA:
+        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_wrt_dist.jpeg
+        
+    Residuals w.r.t. depth for Boore et al. 2020 and PGA:
+        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_wrt_depth.jpeg
+        
+    Residuals w.r.t. Vs30 for Boore et al. 2020 and PGA:
+        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_wrt_vs30.jpeg    
+
+Single Station Residual Analysis
+********************************
+
+1. The smt's residual module also offers capabilities for performing single station residual analysis (SSA).
+
+   We can first specify a threshold for the minimum number of records each site must have to be considered in the SSA:
+   
+    .. code-block:: ini
+    
+       > # Import SMT functions required for SSA
+       > from openquake.smt.strong_motion_selector import rank_sites_by_record_count
        >
-       > # OR from .toml:
-       > rspl.ResidualWithDistance(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
-       > rspl.ResidualWithDepth(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
-       > rspl.ResidualWithVs30(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
-                   
+       > # Specify threshold for min. num. records
+       > threshold = 20
+       >
+       > # Get the sites meeting threshold (for same parsed database as above!)
+       > top_sites = rank_sites_by_record_count(sm_database, threshold)
+       
+2. Following selection of sites using a threshold value, we can perform the SSA.
+
+   We can compute the non-normalised intra-event residual per record associated with the selected sites :math:`\delta W_{es}`, the mean average (again non-normalised) intra-event residual per site :math:`\delta S2S_S` and a residual variability :math:`\delta W_{o,es}` (which is computed per record by subtracting the site-average intra-event residual from the corresponding inter-event residual). For more details on these intra-event residual components please consult Rodriguez-Marek et al. (2011), which is referenced repeatedly throughout the following section.
+
+   The standard deviation of all :math:`\delta W_{es}` values should in theory exactly equal the standard deviation of the GMPE's intra-event standard deviation.
+
+   The :math:`\delta S2S_S` term is characteristic of each site, and should equal 0 with a standard deviation of :math:`\phi_{S2S}`. A non-zero value for :math:`\delta S2S_S` is indicative of a bias in the prediction of the observed ground-motions at the considered site.
+   
+   Finally, the standard deviation of the :math:`\delta W_{o,es}` term (:math:`\phi_{SS}`) is representative of the single-station standard deviation of the GMPE, and is an estimate of the non-ergodic standard deviation of the model.
+
+   As previously, we can specify the GMPEs and intensity measures to compute the residuals per site for using either a GMPE list and intensity measure list, or from a .toml file.
+    
+    .. code-block:: ini
+    
+       > # Create SingleStationAnalysis object from gmpe_list and imt_list
+       > ssa1 = res.SingleStationAnalysis(top_sites.keys(), gmpe_list, imt_list)
+       >
+       > # OR create SingleStationAnalysis object from .toml
+       > filename = os.path.join(DATA, 'SSA_inputs.toml') # path to input .toml
+       > ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), filename)
+       >
+       > Get the total, inter-event and intra-event residuals for each site
+       > ssa1.get_site_residuals(sm_database)
+       >
+       > Get single station residual statistics for each site and export to .csv
+       > csv_output = os.path.join(DATA, 'SSA_statistics.csv')
+       > ssa1.residual_statistics(True, csv_output)
+      
+3. We can plot the computed residual statistics as follows:
+
+    .. code-block:: ini
+    
+       > # First plot (normalised) total, inter-event and intra-event residuals for each site
+       > rspl.ResidualWithSite(ssa1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
+       >
+       > # Then plot non-normalised intra-event per site, average intra-event per site and residual variability per site
+       > rspl.IntraEventResidualWithSite(ssa1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
+
+    Normalised residuals per considered site for Boore et al. 2020 and PGA:
+        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_AllResPerSite.jpg
+        
+    Intra-event residuals components per considered site for Boore et al. 2020 and PGA:
+        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_IntraResCompPerSite.jpg
+    
 GMPE Performance Ranking Metrics
 ********************************
 
-The smt contains implementations of several published GMPE ranking methodologies, which allow additional inferences to be drawn from the computed residual distributions. Brief summaries of each ranking metric are provided here, but the corresponding publications should be consulted for more information.
+    The smt contains implementations of several published GMPE ranking methodologies, which allow additional inferences to be drawn from the computed residual distributions. Brief summaries of each ranking metric are provided here, but the corresponding publications should be consulted for more information.
 
 The Likelihood Method (Scherbaum et al. 2004)
 =============================================
@@ -225,11 +345,11 @@ The Likelihood Method (Scherbaum et al. 2004)
     .. code-block:: ini
        
        > # From gmpe_list and imt_list:
-       > rspl.LikelihoodPlot(resid1, gmpe_list[0], imt_list[2], filename, filetype = 'jpg')
-       >
-       > # OR from .toml:
-       > rspl.LikelihoodPlot(resid1, resid1.gmpe_list[0], resid1.imts[2], filename, filetype = 'jpg')
+       > rspl.LikelihoodPlot(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
 
+    Likelihood plot for Boore et al. 2020 and PGA:
+        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_likelihood.jpeg
+    
 The Loglikelihood Method (Scherbaum et al. 2009)
 ================================================
 
@@ -253,6 +373,9 @@ The Loglikelihood Method (Scherbaum et al. 2009)
        >
        > # Plot LLH vs imt
        > rspl.plot_loglikelihood_with_spectral_period(resid1, filename)
+
+    Loglikelihood versus spectral acceleration plot for considered GMPEs:
+       .. image:: /contents/smt_images/all_gmpes_LLH_plot.jpg
 
 Euclidean Distance Based Ranking (Kale and Akkar, 2013)
 =======================================================
@@ -278,6 +401,15 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
        > # Plot EDR score, MDE norm and k^0.5 vs imt
        > rspl.plot_plot_edr_metrics_with_spectral_period(resid1, filename)
 
+    EDR rank versus spectral acceleration plot for considered GMPEs:
+       .. image:: /contents/smt_images/all_gmpes_EDR_plot_EDR_value.jpg
+       
+    EDR correction factor versus spectral acceleration for considered GMPEs:
+       .. image:: /contents/smt_images/all_gmpes_EDR_plot_EDR_correction_factor.jpg   
+       
+    MDE versus spectral acceleration for considered GMPEs:
+       .. image:: /contents/smt_images/all_gmpes_EDR_plot_MDE.jpg      
+
 Comparing GMPEs
 ***************
 
@@ -288,9 +420,9 @@ Comparing GMPEs
        > # Import GMPE comparison tools
        > from openquake.smt.comparison import compare_gmpes as comp
 
-2. The tools within the Comparison module include Sammon's Maps, heirarchical clustering and matrix plots of Euclidean distance for both median and 84th percentile of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra, GMPE sigma with respect to spectral period and trellis plots are also provided in this module.
+2. The tools within the Comparison module include Sammon's Maps, hierarchical clustering and matrix plots of Euclidean distance for both median and 84th percentile of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra, GMPE sigma with respect to spectral period and trellis plots are also provided in this module.
 
-   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may best capture the epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree (to plot a GMPE logic tree we assign model weights using ``lt_weight`` in each model).
+   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may best capture the epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree (to plot a GMPE logic tree we assign model weights using ``lt_weight`` in each model. To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_plot_lt_only`` instead).
 
     .. code-block:: ini
     
@@ -301,7 +433,7 @@ Comparing GMPEs
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         region = 0 # for NGAWest2 GMPE regionalisation
-        eshm20_region = 4 # for KothaEtAl2020 ESHM20 GMPE regionalisation
+        eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
         Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 or 3)
         custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
@@ -375,6 +507,9 @@ Comparing GMPEs
        
        > # Generate trellis plots 
        > comp.plot_trellis(filename, output_directory)
+
+    Trellis plots for input parameters specified in toml file:
+       .. image:: /contents/smt_images/TrellisPlots.png
    
 4. Spectra Plots
 
@@ -384,6 +519,12 @@ Comparing GMPEs
     
        > # Generate spectra plots
        > comp.plot_spectra(filename, output_directory) 
+
+    Response spectra plots for input parameters specified in toml file:
+        .. image:: /contents/smt_images/ResponseSpectra.png
+        
+    GMPE sigma spectra plots for input parameters specified in toml file:
+        .. image:: /contents/smt_images/sigma.png
    
 5. Sammon's Maps
 
@@ -397,23 +538,29 @@ Comparing GMPEs
     
        > # Generate Sammon's Maps
        > comp.plot_sammons(filename, output_directory)   
+
+    Sammon's Maps (median predicted ground-motion) for input parameters specified in toml file:
+       .. image:: /contents/smt_images/Median_SammonMaps.png
     
-6. Heirarchical Clustering
+6. Hierarchical Clustering
 
    Dendrograms can be plotted as an alternative tool to evaluate how similarly the predicted ground-motion is by each GMPE.
    
    Within the dendrograms the GMPEs are clustered hierarchically (i.e. the GMPEs which are clustered together at shorter Euclidean distances are more similar than those clustered together at larger Euclidean distances).
   
-   Heirarchical clustering plots can be generated as follows:
+   Hierarchical clustering plots can be generated as follows:
 
     .. code-block:: ini
        
        > # Generate dendrograms
        > comp.plot_cluster(filename, output_directory)
-     
+
+    Dendrograms (median predicted ground-motion) for input parameters specified in toml file:
+       .. image:: /contents/smt_images/Median_Clustering.png
+         
 7. Matrix Plots of Euclidean Distance
 
-   In addition to Sammon's Maps and heirarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
+   In addition to Sammon's Maps and hierarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
    
    Within the matrix plots the darker cells represent a smaller Euclidean distance (and therefore greater similarity) between each GMPE for the given intensity measure.
    
@@ -423,8 +570,10 @@ Comparing GMPEs
     
        > # Generate matrix plots of Euclidean distance
        > comp.plot_euclidean(filename, output_directory)
-   
-   
+
+    Matrix plots of Euclidean distance between GMPEs (median predicted ground-motion) for input parameters specified in toml file:
+       .. image:: /contents/smt_images/Median_Euclidean.png
+    
 References
 ==========
 
@@ -433,6 +582,8 @@ Abrahamson, N. A. and R. R. Youngs (1992). “A Stable Algorithm for Regression 
 Kale, O and S. Akkar (2013). “A New Procedure for Selecting and Ranking Ground-Motion Prediction Equations (GMPES): The Euclidean Distance-Based Ranking (EDR) Method”. In: Bulletin of the Seismological Society of America 103(2A), pages 1069 – 1084.
 
 Kotha, S. -R., G. Weatherill, and F. Cotton (2020). "A Regionally Adaptable Ground-Motion Model for Shallow Crustal Earthquakes in Europe." In: Bulletin  of Earthquake Engineering 18, pages 4091 – 4125.
+
+Rodriguez-Marek, A., G. A. Montalva, F. Cotton, and F. Bonilla (2011). “Analysis of Single-Station Standard Deviation using the KiK-Net data”. In: Bulletin of the Seismological Society of America 101(3), pages 1242 –1258.
 
 Sammon, J. W. (1969). "A Nonlinear Mapping for Data Structure Analysis." In: IEEE Transactions on Computers C-18 (no. 5), pages 401 - 409.
 
