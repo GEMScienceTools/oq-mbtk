@@ -453,7 +453,7 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
     Sammons Mapping and hierarchical clustering plots
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
-        compute_matrix_gmpes (either median or 84th percentile)
+        compute_matrix_gmpes (either median, 84th or 16th percentile)
     """
     step = 1
     if  Z1 == -999:
@@ -490,6 +490,9 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                 if mtxs_type == '84th_perc':
                     Nstd = 1 # median + 1std = ~84th percentile
                     medians = np.append(medians,(np.exp(mean+Nstd*std[0])))
+                if mtxs_type == '16th_perc':
+                    Nstd = 1 # median - 1std = ~16th percentile
+                    medians = np.append(medians,(np.exp(mean-Nstd*std[0])))   
                 sigmas = np.append(sigmas,std[0])
 
             matrix_medians[:][g]= medians
@@ -509,7 +512,7 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         filename for outputted figure 
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
-        compute_matrix_gmpes (either median or 84th percentile)
+        compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Euclidean
     matrix_Dist = {}
@@ -547,6 +550,8 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax.set_title(str(i) + ' (median)', fontsize = '14')
         if mtxs_type == '84th_perc':
             ax.set_title(str(i) + ' (84th percentile)', fontsize = '14')
+        if mtxs_type == '16th_perc':
+            ax.set_title(str(i) + ' (16th percentile)', fontsize = '14')
 
         ax.xaxis.set_ticks([n for n in range(len(gmpe_list))])
         ax.xaxis.set_ticklabels(gmpe_list,rotation=40)
@@ -578,7 +583,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         filename for outputted figure 
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
-        compute_matrix_gmpes (either median or 84th percentile)
+        compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
@@ -622,7 +627,8 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
             pyplot.title(str(i) + ' (median)', fontsize = '14')
         if mtxs_type == '84th_perc':
             pyplot.title(str(i) + ' (84th percentile)', fontsize = '14')
-
+        if mtxs_type == '16th_perc':
+            pyplot.title(str(i) + ' (16th percentile)', fontsize = '14')
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
     pyplot.legend(loc="center left", bbox_to_anchor=(1.25, 0.50), fontsize='16')
@@ -644,7 +650,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         filename for outputted figure 
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
-        compute_matrix_gmpes (either median or 84th percentile)
+        compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     ncols = 2
     
@@ -688,6 +694,8 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax.set_title(str(i) + ' (median)', fontsize = '12')
         if mtxs_type == '84th_perc':
             ax.set_title(str(i) + ' (84th percentile)', fontsize = '12')
+        if mtxs_type == '16th_perc':
+            ax.set_title(str(i) + ' (16th percentile)', fontsize = '12')
             
     # Remove final plot if not required
     if len(imt_list) > 3 and len(imt_list)/2 != int(len(imt_list)/2):

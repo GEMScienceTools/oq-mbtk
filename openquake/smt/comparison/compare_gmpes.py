@@ -195,8 +195,8 @@ def plot_spectra(filename, output_directory):
 
 def plot_cluster(filename, output_directory):
     """
-    Plot hierarchical clusters of (1) median and (2) 84th percentile of predicted
-    ground-motion by each GMPE for given configurations
+    Plot hierarchical clusters of (1) median, (2) 84th percentile and (3) 16th
+    percentile of predicted ground-motion by each GMPE for given configurations
     :param  filename:
         toml file providing configuration for use within comparative
         plotting methods.
@@ -224,6 +224,14 @@ def plot_cluster(filename, output_directory):
                                             config.region, config.maxR, config.aratio,
                                             config.eshm20_region,mtxs_type='84th_perc')
     
+    mtxs_16th_perc = compute_matrix_gmpes(config.imt_list, config.mag_list,
+                                            config.gmpes_list, config.rake,
+                                            config.strike, config.dip, 
+                                            config.depth_for_non_trellis_functions,
+                                            config.Z1, config.Z25, config.Vs30,
+                                            config.region, config.maxR, config.aratio,
+                                            config.eshm20_region,mtxs_type='16th_perc')
+    
     # Cluster by median
     plot_cluster_util(config.imt_list, config.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,'Median_Clustering.png'),
@@ -233,6 +241,11 @@ def plot_cluster(filename, output_directory):
     plot_cluster_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
                       os.path.join(output_directory,'84th_perc_Clustering.png'),
                       mtxs_type = '84th_perc')                    
+
+    # Cluster by 16th percentile
+    plot_cluster_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
+                      os.path.join(output_directory,'16th_perc_Clustering.png'),
+                      mtxs_type = '16th_perc')  
 
 def plot_sammons(filename, output_directory):
     """
@@ -264,6 +277,14 @@ def plot_sammons(filename, output_directory):
                                             config.region, config.maxR, config.aratio,
                                             config.eshm20_region,mtxs_type='84th_perc')
     
+    mtxs_16th_perc = compute_matrix_gmpes(config.imt_list, config.mag_list,
+                                            config.gmpes_list, config.rake,
+                                            config.strike, config.dip, 
+                                            config.depth_for_non_trellis_functions,
+                                            config.Z1, config.Z25, config.Vs30,
+                                            config.region, config.maxR, config.aratio,
+                                            config.eshm20_region,mtxs_type='16th_perc')
+    
     plot_sammons_util(config.imt_list, config.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,'Median_SammonMaps.png'),
                       config.custom_color_flag, config.custom_color_list,
@@ -273,6 +294,11 @@ def plot_sammons(filename, output_directory):
                       os.path.join(output_directory,'84th_perc_SammonMaps.png'),
                       config.custom_color_flag, config.custom_color_list,
                       mtxs_type = '84th_perc')
+    
+    plot_sammons_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
+                      os.path.join(output_directory,'16th_perc_SammonMaps.png'),
+                      config.custom_color_flag, config.custom_color_list,
+                      mtxs_type = '16th_perc')
    
 def plot_euclidean(filename, output_directory):
     """
@@ -304,7 +330,13 @@ def plot_euclidean(filename, output_directory):
                                             config.region, config.maxR, config.aratio,
                                             config.eshm20_region,mtxs_type='84th_perc')
     
-    
+    mtxs_16th_perc = compute_matrix_gmpes(config.imt_list, config.mag_list,
+                                            config.gmpes_list, config.rake,
+                                            config.strike, config.dip, 
+                                            config.depth_for_non_trellis_functions,
+                                            config.Z1, config.Z25, config.Vs30,
+                                            config.region, config.maxR, config.aratio,
+                                            config.eshm20_region,mtxs_type='16th_perc')
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_medians,
                         os.path.join(output_directory,'Median_Euclidean.png'),
                         mtxs_type = 'median')
@@ -312,3 +344,7 @@ def plot_euclidean(filename, output_directory):
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
                         os.path.join(output_directory,'84th_perc_Euclidean.png'),
                         mtxs_type = '84th_perc')
+    
+    plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
+                        os.path.join(output_directory,'16th_perc_Euclidean.png'),
+                        mtxs_type = '16th_perc')
