@@ -391,22 +391,33 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 else:
                     pass
                 
+                sigma_store = []
+                for idx_sigma, val_sigma in enumerate(rs_plus_sigma):                    
+                    sigma_store.append(val_sigma[0])
+                    
                 if Nstd != 0:
+                    plus_sigma_store = []
+                    minus_sigma_store = []
+                    for idx_plus_sigma, val_plus_sigma in enumerate(rs_plus_sigma):
+                        plus_sigma_store.append(val_plus_sigma[0])
+                    for idx_minus_sigma, val_minus_sigma in enumerate(rs_minus_sigma):
+                        minus_sigma_store.append(val_minus_sigma[0])
+
                     store_spectra_values['Distance = %s km' %i, 'Magnitude = '
                                          + str(m), str(gmpe).replace(
                                              '\n', ', ').replace('[', '').replace(
                                                  ']', '')] = [np.array(period),
                                                             np.array(rs_50p),
-                                                            np.array(rs_plus_sigma),
-                                                            np.array(rs_minus_sigma),
-                                                            np.array(sigma)]                  
+                                                            plus_sigma_store,
+                                                            minus_sigma_store,
+                                                            sigma_store]                  
                 else:
                     store_spectra_values['Distance = %s km' %i, 'Magnitude = '
                                          + str(m), str(gmpe).replace(
                                              '\n', ', ').replace('[', '').replace(
                                                  ']', '')] = [np.array(period),
                                                             np.array(rs_50p),
-                                                            np.array(sigma)]
+                                                            sigma_store]
                 # Check if weight provided for the GMPE                            
                 if lt_weights == None:
                     pass
@@ -424,7 +435,6 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                     idx]*lt_weights[gmpe]
                             else:
                                 pass
-                            
                             
                         # If present store the weighted mean for the GMPE
                         store_lt_branch_values[gmpe] = {'mean': rs_50p_weighted}
