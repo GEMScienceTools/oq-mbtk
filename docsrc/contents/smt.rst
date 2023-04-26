@@ -112,6 +112,12 @@ We can specify the inputs to perform a residual analysis with as follows:
         
         [models.AbrahamsonGulerce2020SInterCascadia]
         
+        [models.AkkarBommer2010SWISS01]
+        CY14SiteTerm = 'CY14SiteTerm'
+
+        [[models.AkkarBommer2010SWISS08]
+        NRCan15SiteTerm = 'NRCan15SiteTerm'
+        
         [models.YenierAtkinson2015BSSA]
         sigma_model = 'al_atik_2015_sigma'
         
@@ -435,8 +441,6 @@ Comparing GMPEs
         region = 0 # for NGAWest2 GMPE regionalisation
         eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
         Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 or 3)
-        custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
-        custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
         
         # Specify site properties
         [site_properties]
@@ -495,6 +499,10 @@ Comparing GMPEs
             sigma_mu_epsilon = -2.85697 
             c3_epsilon = -1.72    
             
+        [custom_colors]
+        custom_colors_flag = 'False' # Default = "False" (set to "True" for custom colours in RS + trellis)
+        custom_colors_list = ['lime','dodgerblue','gold','0.8']
+        
 3. Trellis Plots 
 
    Now that we have defined our inputs for GMPE comparison, we can use each tool within the Comparison module to evaluate how similar the GMPEs predict ground-motion for a given ground-shaking scenario.

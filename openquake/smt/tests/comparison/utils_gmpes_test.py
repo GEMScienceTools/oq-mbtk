@@ -24,7 +24,7 @@ import unittest
 from openquake.hazardlib import valid
 from openquake.smt.residuals import gmpe_residuals as res
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
-from openquake.smt.comparison.utils_gmpes import al_atik_sigma_check
+from openquake.smt.comparison.utils_gmpes import mgmpe_check
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__),'data')
@@ -34,10 +34,10 @@ class utils_gmpes_test(unittest.TestCase):
     Test utils_gmpes functions
     '''
     
-    def test_al_atik_sigma_check(self):
+    def test_mgmpe_check(self):
         """
         Check that sigma for GMPEs is checked correctly, and that Al-Atik (2015)
-        sigma model is correctly implemented if required
+        sigma model is correctly implemented if required when using mgmpe_check
         """
         # Only YA15 should be flagged and Al-Atik 2015 added as sigma model
         filename = os.path.join(BASE_DATA_PATH, 'utils_gmpes_test.toml')
@@ -45,7 +45,7 @@ class utils_gmpes_test(unittest.TestCase):
         
         imts = ['PGA']
         for idx, inputted_gmpe in enumerate(residuals.gmpe_list):
-            gmpe_outputted, gmpe_sigma_flag = al_atik_sigma_check(inputted_gmpe,
+            gmpe_outputted, gmpe_sigma_flag = mgmpe_check(inputted_gmpe,
                                                                   imts[0], task
                                                                   = 'residual')
             if idx == 0:

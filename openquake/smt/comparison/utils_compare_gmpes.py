@@ -33,7 +33,7 @@ from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib import valid
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1,\
-    _get_z25, _param_gmpes, al_atik_sigma_check
+    _get_z25, _param_gmpes, mgmpe_check
 
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd,
@@ -83,8 +83,8 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 col=colors[g]
 
                 if not Nstd ==0:
-                    gmm, gmpe_sigma_flag = al_atik_sigma_check(gmpe, str(i),
-                                                               task = 'comparison')
+                    gmm, gmpe_sigma_flag = mgmpe_check(gmpe, str(i), 
+                                                       task = 'comparison')
                 else:
                     pass
 
@@ -512,15 +512,17 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 # Plot the logic tree
                 ax1.plot(period, np.array(pd.Series(lt_mean_per_period)),
                          linewidth = 3, color = 'm', linestyle = '-',
-                         label = logic_tree_config)
+                         label = logic_tree_config, zorder = 100)
                 
                 # Plot mean plus sigma and mean minus sigma if required
                 if Nstd != 0:
                     ax1.plot(period, np.array(pd.Series(lt_plus_sigma_per_period)),
-                             linewidth = 3, color = 'm', linestyle = '--')
+                             linewidth = 3, color = 'm', linestyle = '--',
+                             zorder = 100)
                     
                     ax1.plot(period, np.array(pd.Series(lt_minus_sigma_per_period)),
-                             linewidth = 3, color = 'm', linestyle = '--')
+                             linewidth = 3, color = 'm', linestyle = '--',
+                             zorder = 100)
                 else:
                     pass
                 
@@ -614,7 +616,7 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     gmpe,strike, dip, depth[l], aratio, rake) 
 
-                gmm, gmpe_sigma_flag = al_atik_sigma_check(gmpe, str(i),
+                gmm, gmpe_sigma_flag = mgmpe_check(gmpe, str(i),
                                                            task = 'comparison')
 
                 mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
