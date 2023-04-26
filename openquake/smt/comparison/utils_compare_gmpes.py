@@ -45,7 +45,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
             'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:purple',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:red',
             'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
@@ -178,13 +178,13 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     lt_minus_sigma = np.sum(lt_df[:].loc['minus_sigma'])
            
                     pyplot.plot(distances, lt_mean, linewidth = 2, color = 'm',
-                                linestyle = '-', label = logic_tree_config)
+                                linestyle = '-', label = logic_tree_config, zorder = 100)
                     
                     pyplot.plot(distances, lt_plus_sigma, linewidth = 0.75,
-                                color = 'm', linestyle = '--')
+                                color = 'm', linestyle = '--', zorder = 100)
         
                     pyplot.plot(distances, lt_minus_sigma, linewidth = 0.75,
-                                color = 'm', linestyle = '-.')
+                                color = 'm', linestyle = '-.', zorder = 100)
                     
                     lt_mean_store[i,m] = lt_mean
                     lt_plus_sigma_store[i,m] = lt_plus_sigma
@@ -308,7 +308,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
             'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:purple',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:red',
             'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
@@ -724,7 +724,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
             'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:purple',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:red',
             'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
