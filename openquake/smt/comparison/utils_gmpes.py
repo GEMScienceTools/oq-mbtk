@@ -32,6 +32,8 @@ from openquake.hazardlib.scalerel import WC1994
 from openquake.hazardlib.const import TRT, StdDev
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
+from openquake.hazardlib.gsim.mgmpe import cy14_site_term as cy14_st
+from openquake.hazardlib.gsim.mgmpe import nrcan15_site_term as nrcan15_st
 
 
 def _get_first_point(rup, from_point):
@@ -222,11 +224,13 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
             
     return strike_s, dip_s, depth_s, aratio_s
 
-def al_atik_sigma_check(gmpe, imtx, task):
+def mgmpe_check(gmpe, imtx, task):
     """
     Check if sigma is provided for a given GMPE and implement Al-Atik (2015)
     sigma model if specified. Also provides a warning if GMPE sigma is not
-    provided by the specified GMPE. 
+    provided by the specified GMPE. This function also checks if a site
+    amplification term (from openquake.hazardlib.gsim.mgmpe) should be
+    implemented for the given GMPE
     :param gmpe:
         GMPE to check model sigma is provided, and to check if Al-Atik (2015)
         sigma model should be implemented for
@@ -236,6 +240,9 @@ def al_atik_sigma_check(gmpe, imtx, task):
         Specify whether for computation of residuals ('residual') or use within
         comparison module ('comparison')
     """
+    # Preserve original GMPE prior to modification
+    orig_gmpe = gmpe
+    
     # Construct a generic context (M = 5.5, D = 100km) to check if sigma provided 
     tmp_rup = get_rupture(20, 40, 15, WC1994(), 5.5, 1.5, 0, 90, 0, 'fake', None)
 
@@ -259,7 +266,9 @@ def al_atik_sigma_check(gmpe, imtx, task):
     # Get model sigma and set up modifiable GMPE
     tmp_mean, tmp_std, tmp_tau, tmp_phi = ctxm.get_mean_stds(ctxs)
     tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
-    kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
+    
+    # Kwargs for modifiable GMPE inputs
+    kwargs_al_atik = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
               'sigma_model_alatik2015': {}}
     
     # Messages for warnings/ValueError
@@ -272,7 +281,7 @@ def al_atik_sigma_check(gmpe, imtx, task):
         sigma_model_flag = True
         if task == 'residual' and 'toml=' in str(gmpe) or task == 'comparison':
             if 'al_atik_2015_sigma' in str(gmpe): # No sigma so add
-                gmpe = mgmpe.ModifiableGMPE(**kwargs)
+                gmpe = mgmpe.ModifiableGMPE(**kwargs_al_atik)
             elif task == 'residual': # A sigma model is required for residuals
                 raise ValueError(msg2)
             elif task == 'comparison': # No sigma and not specified in toml
@@ -283,9 +292,46 @@ def al_atik_sigma_check(gmpe, imtx, task):
     else:
         sigma_model_flag = False
         if 'al_atik_2015_sigma' in str(gmpe): #GMPE has sigma but override
-            gmpe = mgmpe.ModifiableGMPE(**kwargs)
+            gmpe = mgmpe.ModifiableGMPE(**kwargs_al_atik)
         elif task == 'comparison': # GMPE has sigma so retain (comparison use)
             gmpe = valid.gsim(gmpe)
         else: # GMPE has sigma so retain (residuals use)
             gmpe = valid.gsim(gmpe.split('(')[0])
+    
+    # Site term implementations
+    if '_toml=' in str(orig_gmpe) or task == 'comparison':
+        
+        msg3 = 'An alternative sigma model and an alternative site term cannot\
+            be specified within a single GMPE implementation.'
+        msg4 = 'Two alternative site terms have been specified within the toml\
+            for a single GMPE implementation'
+        
+        # Check only single site term specified
+        if 'CY14Term' in str(orig_gmpe) and 'NRCan15SiteTerm' in str(orig_gmpe):
+            raise ValueError(msg4)
+            
+        # CY14 site term
+        if 'CY14SiteTerm' in str(
+                orig_gmpe) and 'al_atik_2015_sigma' not in str(orig_gmpe):
+            gmpe = cy14_st.CY14SiteTerm(tmp_gmpe)
+        if 'CY14SiteTerm' in str(orig_gmpe) and 'al_atik_2015_sigma' in str(
+                orig_gmpe):
+            raise ValueError(msg3)
+        else:
+            pass
+        
+        # NRCAN15 site term
+        if 'NRCan15SiteTerm' in str(
+                orig_gmpe) and 'al_atik_2015_sigma' not in str(orig_gmpe):
+            gmpe = nrcan15_st.NRCan15SiteTerm(tmp_gmpe)
+        elif 'NRCan15SiteTerm' in str(
+                orig_gmpe) and 'al_atik_2015_sigma' in str(orig_gmpe):
+            raise ValueError(msg3)
+        else:
+            pass
+    else:
+        pass
+    
     return gmpe, sigma_model_flag
+
+
