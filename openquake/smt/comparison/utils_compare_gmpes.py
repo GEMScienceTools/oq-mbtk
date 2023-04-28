@@ -26,7 +26,7 @@ from matplotlib import pyplot
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist, squareform
 from scipy import interpolate
-from IPython.display import display
+#from IPython.display import display
 from collections import OrderedDict
 
 from openquake.smt.comparison.sammons import sammon
@@ -234,7 +234,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                           distances]                                                         
         else:
             pass
-    display(trellis_value_df)
+    #display(trellis_value_df)
     trellis_value_df.to_csv(os.path.join(output_directory, 'trellis_values.csv'))
     
     
@@ -578,7 +578,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                             store_lt_mean_per_dist_mag[i,m])), '-']         
     else:
         pass
-    display(spectra_value_df)
+    #display(spectra_value_df)
     spectra_value_df.to_csv(os.path.join(output_directory, 'spectra_values.csv'))
 
 
