@@ -43,8 +43,8 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     Generate trellis plots for given run configuration
     """
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
-            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
+    colors=['r', 'g', 'b', 'y','lime','k','dodgerblue', 'gold', '0.8',
+            'mediumseagreen', '0.5','tab:orange', 'tab:purple', 'tab:brown',
             'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:red',
             'aquamarine']
     if custom_color_flag == 'True':
@@ -181,7 +181,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                 linestyle = '-', label = logic_tree_config, zorder = 100)
                     
                     pyplot.plot(distances, lt_plus_sigma, linewidth = 0.75,
-                                color = 'm', linestyle = '--', zorder = 100)
+                                color = 'm', linestyle = '-.', zorder = 100)
         
                     pyplot.plot(distances, lt_minus_sigma, linewidth = 0.75,
                                 color = 'm', linestyle = '-.', zorder = 100)
@@ -379,15 +379,15 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     
                     
                 if 'lt_weight_plot_lt_only' not in str(gmpe):
-                    ax1.plot(period, rs_50p, color=col, linewidth=3, linestyle='-',
-                             label=gmpe)
-                    ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
-                             label=gmpe)
+                    ax1.plot(period, rs_50p, color=col, linewidth=3,
+                             linestyle='-', label = gmpe)
+                    ax2.plot(period, sigma, color = col, linewidth = 3,
+                             linestyle = '-', label = gmpe)
                     if Nstd != 0:
-                        ax1.plot(period, rs_plus_sigma, color=col, linewidth=3,
-                                 linestyle='--')
-                        ax1.plot(period, rs_minus_sigma, color=col, linewidth=3,
-                                 linestyle='--')
+                        ax1.plot(period, rs_plus_sigma, color = col,
+                                 linewidth = 0.75, linestyle = '-.')
+                        ax1.plot(period, rs_minus_sigma, color = col,
+                                 linewidth = 0.75, linestyle = '-.')
                 else:
                     pass
                 

@@ -162,7 +162,6 @@ def plot_trellis(filename, output_directory):
         toml file providing configuration for use within comparative
         plotting methods.
     """ 
-    
     # Generate config object
     config = Configurations(filename)
     
@@ -181,8 +180,7 @@ def plot_spectra(filename, output_directory):
     :param  filename:
         toml file providing configuration for use within comparative
         plotting methods.
-    """ 
-    
+    """
     # Generate config object
     config = Configurations(filename)
     
