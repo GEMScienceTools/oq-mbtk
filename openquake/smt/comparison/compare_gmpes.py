@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Module to compare GMPEs using trellis plots, hierarchical clustering, Sammons
-Maps and Euclidean distance matrix plots
+Maps and Euclidean distance matrix plots test
 """
 import numpy as np
 import re
