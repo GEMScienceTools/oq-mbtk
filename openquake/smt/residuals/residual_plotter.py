@@ -27,7 +27,7 @@ from copy import deepcopy
 from collections import OrderedDict
 from math import floor, ceil
 from scipy.stats import norm
-#from IPython.display import display
+from IPython.display import display
 from cycler import cycler
 
 from openquake.hazardlib.imt import imt2tup
@@ -965,7 +965,7 @@ def loglikelihood_table(residuals, filename):
              '\n',', ') + ' LLH'
     final_llh_df_output.columns = list(pd.Series(llh_columns_all_output))
     final_llh_df_output.to_csv(filename, sep = ',')
-    #display(final_llh_df_output)
+    display(final_llh_df_output)
     
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
@@ -1035,7 +1035,7 @@ def llh_weights_table(residuals, filename):
     final_model_weights_df_output.columns = list(pd.Series(
         model_weights_columns_all_output))
     final_model_weights_df_output.to_csv(filename, sep = ',')
-    #display(final_model_weights_df_output)
+    display(final_model_weights_df_output)
     
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
@@ -1110,7 +1110,7 @@ def edr_weights_table(residuals, filename):
     final_model_weights_df_output.columns = list(pd.Series(
         model_weights_columns_all_output))
     final_model_weights_df_output.to_csv(filename, sep = ',')
-    #display(final_model_weights_df_output)
+    display(final_model_weights_df_output)
     
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
@@ -1153,7 +1153,7 @@ def edr_table(residuals, filename):
                 '.csv','') + '_%s' %(
                 str(residuals.gmpe_list[gmpe]).replace('\n','_').replace(
                     ' ','')).replace('"','') + '.csv', sep = ',')
-        #display(final_EDR_metrics_df_output)
+        display(final_EDR_metrics_df_output)
         
 def pdf_table(residuals, filename):
     """
@@ -1242,7 +1242,7 @@ def pdf_table(residuals, filename):
     combined_df_output.columns = list(pd.Series(gmpe_headers))
     
     combined_df_output.to_csv(filename, sep = ',')
-    #display(combined_df_output)
+    display(combined_df_output)
 
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts  

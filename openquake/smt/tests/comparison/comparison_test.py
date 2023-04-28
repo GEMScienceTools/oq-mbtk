@@ -25,7 +25,7 @@ import unittest
 from openquake.hazardlib import valid
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes,\
-plot_trellis_util, plot_spectra_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util
+    plot_trellis_util, plot_spectra_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 

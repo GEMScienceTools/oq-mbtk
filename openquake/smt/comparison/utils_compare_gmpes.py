@@ -26,7 +26,7 @@ from matplotlib import pyplot
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist, squareform
 from scipy import interpolate
-#from IPython.display import display
+from IPython.display import display
 from collections import OrderedDict
 
 from openquake.smt.comparison.sammons import sammon
@@ -181,7 +181,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                 linestyle = '-', label = logic_tree_config, zorder = 100)
                     
                     pyplot.plot(distances, lt_plus_sigma, linewidth = 0.75,
-                                color = 'm', linestyle = '-.', zorder = 100)
+                                color = 'm', linestyle = '--', zorder = 100)
         
                     pyplot.plot(distances, lt_minus_sigma, linewidth = 0.75,
                                 color = 'm', linestyle = '-.', zorder = 100)
@@ -234,7 +234,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                           distances]                                                         
         else:
             pass
-    #display(trellis_value_df)
+    display(trellis_value_df)
     trellis_value_df.to_csv(os.path.join(output_directory, 'trellis_values.csv'))
     
     
@@ -379,15 +379,15 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     
                     
                 if 'lt_weight_plot_lt_only' not in str(gmpe):
-                    ax1.plot(period, rs_50p, color=col, linewidth=3,
-                             linestyle='-', label = gmpe)
-                    ax2.plot(period, sigma, color = col, linewidth = 3,
-                             linestyle = '-', label = gmpe)
+                    ax1.plot(period, rs_50p, color=col, linewidth=3, linestyle='-',
+                             label=gmpe)
+                    ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
+                             label=gmpe)
                     if Nstd != 0:
-                        ax1.plot(period, rs_plus_sigma, color = col,
-                                 linewidth = 0.75, linestyle = '-.')
-                        ax1.plot(period, rs_minus_sigma, color = col,
-                                 linewidth = 0.75, linestyle = '-.')
+                        ax1.plot(period, rs_plus_sigma, color=col, linewidth=3,
+                                 linestyle='--')
+                        ax1.plot(period, rs_minus_sigma, color=col, linewidth=3,
+                                 linestyle='--')
                 else:
                     pass
                 
@@ -578,7 +578,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                             store_lt_mean_per_dist_mag[i,m])), '-']         
     else:
         pass
-    #display(spectra_value_df)
+    display(spectra_value_df)
     spectra_value_df.to_csv(os.path.join(output_directory, 'spectra_values.csv'))
 
 
