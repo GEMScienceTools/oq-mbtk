@@ -42,7 +42,7 @@ from openquake.hazardlib import imt
 import openquake.smt.intensity_measures as ims
 from openquake.smt.strong_motion_selector import SMRecordSelector
 from openquake.smt.sm_utils import convert_accel_units, check_gsim_list
-from openquake.smt.comparison.utils_gmpes import  al_atik_sigma_check
+from openquake.smt.comparison.utils_gmpes import mgmpe_check
 
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
@@ -492,8 +492,8 @@ class Residuals(object):
                             period > self.gmpe_sa_limits[gmpe][1]:
                         expected[gmpe][imtx] = None
                         continue
-                gsim, sigma_model_flag = al_atik_sigma_check(gmpe, imtx,
-                                                             task = 'residual')
+                gsim, sigma_model_flag = mgmpe_check(gmpe, imtx, 
+                                                     task = 'residual')
                 mean, stddev = gsim.get_mean_and_stddevs(
                     context["Ctx"],
                     context["Ctx"],

@@ -52,8 +52,9 @@ class Configurations(object):
         self.dist_list = config_file['general']['dist_list']
         self.Nstd = config_file['general']['Nstd']
         self.max_period = config_file['general']['max_period']
-        self.custom_color_flag = config_file['general']['custom_colors_flag']
-        self.custom_color_list = config_file['general']['custom_colors_list']
+        
+        self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
+        self.custom_color_list = config_file['custom_colors']['custom_colors_list']
         
         self.Vs30 = config_file['site_properties']['vs30']
         self.Z1 = config_file['site_properties']['Z1']
@@ -161,7 +162,6 @@ def plot_trellis(filename, output_directory):
         toml file providing configuration for use within comparative
         plotting methods.
     """ 
-    
     # Generate config object
     config = Configurations(filename)
     
@@ -180,8 +180,7 @@ def plot_spectra(filename, output_directory):
     :param  filename:
         toml file providing configuration for use within comparative
         plotting methods.
-    """ 
-    
+    """
     # Generate config object
     config = Configurations(filename)
     
