@@ -38,7 +38,20 @@ from shapely.geometry import Point
 from openquake.hmtk.seismicity.catalogue import Catalogue
 from openquake.wkf.utils import create_folder
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
+from openquake.hmtk.seismicity.selector import CatalogueSelector
 
+
+from openquake.hmtk.parsers.catalogue import CsvCatalogueParser   # Reads an earthquake catalogue from CSV
+from openquake.hmtk.parsers.catalogue.csv_catalogue_parser import CsvCatalogueWriter  # Writes an earthquake catalogue to CSV
+from openquake.mbt.tools.general import _get_point_list
+from openquake.mbt.tools.geo import get_idx_points_inside_polygon
+#from openquake.mbt.oqt_project import OQtSource
+from osgeo import ogr
+from shapely import wkt
+from copy import deepcopy
+#from openquake.hazardlib.geo.polygon import Polygon
+
+from openquake.mbt.tools.area import load_geometry_from_shapefile, create_catalogue
 
 def extract(fname_in: str, **kwargs) -> pd.DataFrame:
     """
@@ -127,6 +140,8 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
     .geojson), this code creates for each polygon a subcatalogue with the
     earthquakes with epicenters in the polygon.
 
+    ** Does not work with polygons that cross the international dateline
+
     :param fname_polygons:
         The name of the gis file containing the polygons.
     :param fname_cat:
@@ -149,6 +164,7 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
 
     # Read polygons
     polygons_gdf = gpd.read_file(fname_polygons)
+    
 
     # Select point in polygon
     columns = ['eventID', 'year', 'month', 'day', 'magnitude', 'longitude',
@@ -172,6 +188,98 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
         out_fname = os.path.join(folder_out, fname)
         out_fnames.append(out_fname)
         within.to_csv(out_fname, index=False, columns=columns)
+
+    return out_fnames
+
+def create_subcatalogues_nongeopd(fname_polygons: str, fname_cat: str, folder_out: str,
+                         source_ids: list = []):
+    """
+    Given a catalogue and a gis-file with polygons (e.g. shapefile or
+    .geojson), this code creates for each polygon a subcatalogue with the
+    earthquakes with epicenters in the polygon.
+
+    ** Based on old mbtk functions for subcats so no relying on geopandas
+
+
+    :param fname_polygons:
+        The name of the gis file containing the polygons.
+    :param fname_cat:
+        The name of the file with the catalogue (hmtk formatted)
+    :param folder_out:
+        The name of the output folder where to create the output .csv files
+        containing the subcatalogues
+    :param source_ids:
+        [optional] The list of source ids to be considered. If omitted all the
+        polygons will be considered.
+    """
+
+    # Create output folder
+    create_folder(folder_out)
+
+    # Create geodataframe with the catalogue
+    #df = pd.read_csv(fname_cat)
+    #gdf = gpd.GeoDataFrame(df, crs='epsg:4326', geometry=[Point(xy) for xy
+                           #in zip(df.longitude, df.latitude)])
+    
+    parser = CsvCatalogueParser(fname_cat)
+    catalogue = parser.read_file() 
+    # Read polygons
+    #polygons_gdf = gpd.read_file(fname_polygons)
+    
+    # Process catalogue
+    neqk = len(catalogue.data['longitude'])
+    
+    pnt_idxs = [i for i in range(0, neqk)]
+
+    
+    
+    idname = 'Id'
+
+    # Set the driver
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    datasource = driver.Open(fname_polygons, 0)
+    layer = datasource.GetLayer()
+
+    # Reading sources geometry
+    sources = {}
+    id_set = set()
+    out_fnames = []
+    nfeatures = layer.GetFeatureCount()
+    #sel_idx = np.full((neqk), False, dtype=bool)
+    
+    for feature in layer:
+        sel_idx = np.full((neqk), False, dtype=bool)
+        cat = deepcopy(catalogue)
+    
+        geom = feature.GetGeometryRef()
+        polygon = wkt.loads(geom.ExportToWkt())
+        x, y = polygon.exterior.coords.xy
+    
+        if isinstance(feature.GetField(idname), str):
+            id_str = feature.GetField(idname)
+        elif isinstance(feature.GetField(idname), int):
+            id_str = '%d' % (feature.GetField(idname))
+    
+        #x, y = poly.exterior.coords.xy
+        idxs = get_idx_points_inside_polygon(catalogue.data['longitude'],
+                                         catalogue.data['latitude'],
+                                         x, y,
+                                         pnt_idxs, buff_distance=0.)
+        sel_idx[idxs] = True
+    
+        # Select earthquakes
+        selector = CatalogueSelector(cat, create_copy=False)
+        selector.select_catalogue(sel_idx)
+
+        fname = f'subcatalogue_zone_{id_str}.csv'
+        out_fname = os.path.join(folder_out, fname)
+        out_fnames.append(out_fname)
+        
+        print(out_fname)
+        cat_csv = CsvCatalogueWriter(out_fname)
+        cat_csv.write_file(cat)
+        
+    layer.ResetReading()
 
     return out_fnames
 
