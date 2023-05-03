@@ -108,7 +108,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 if not Nstd==0:
                     if 'lt_weight_plot_lt_only' not in str(gmpe):
                         pyplot.plot(distances, plus_sigma, linewidth=0.75,
-                                    color=col, linestyle='--')
+                                    color=col, linestyle='-.')
                         pyplot.plot(distances, minus_sigma, linewidth=0.75,
                                     color=col, linestyle='-.')
                     else:
@@ -361,13 +361,14 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     mu = mu[0][0]
                     f = interpolate.interp1d(distances,mu)
                     rs_50p_dist = np.exp(f(i))
+                    sigma_non_dist = std[0][0][0]
                     
                     f1 = interpolate.interp1d(distances,std[0])
                     sigma_dist = f1(i)
                     
                     if Nstd != 0:
-                            rs_plus_sigma_dist = np.exp(f(i)+(Nstd*sigma_dist))
-                            rs_minus_sigma_dist = np.exp(f(i)-(Nstd*sigma_dist))
+                            rs_plus_sigma_dist = np.exp(f(i)+(Nstd*sigma_non_dist))
+                            rs_minus_sigma_dist = np.exp(f(i)-(Nstd*sigma_non_dist))
                     else:
                         pass
                  
@@ -377,11 +378,10 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                         rs_minus_sigma.append(rs_minus_sigma_dist)
                     sigma.append(sigma_dist)
                     
-                    
                 if 'lt_weight_plot_lt_only' not in str(gmpe):
-                    ax1.plot(period, rs_50p, color=col, linewidth=3, linestyle='-',
+                    ax1.plot(period, rs_50p, color=col, linewidth=2, linestyle='-',
                              label=gmpe)
-                    ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
+                    ax2.plot(period, sigma, color=col, linewidth=2, linestyle='-',
                              label=gmpe)
                     if Nstd != 0:
                         ax1.plot(period, rs_plus_sigma, color=col, linewidth=0.75,
@@ -392,16 +392,16 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     pass
                 
                 sigma_store = []
-                for idx_sigma, val_sigma in enumerate(rs_plus_sigma):                    
-                    sigma_store.append(val_sigma[0])
+                for idx_sigma, val_sigma in enumerate(rs_plus_sigma):       
+                    sigma_store.append(val_sigma)
                     
                 if Nstd != 0:
                     plus_sigma_store = []
                     minus_sigma_store = []
                     for idx_plus_sigma, val_plus_sigma in enumerate(rs_plus_sigma):
-                        plus_sigma_store.append(val_plus_sigma[0])
+                        plus_sigma_store.append(val_plus_sigma)
                     for idx_minus_sigma, val_minus_sigma in enumerate(rs_minus_sigma):
-                        minus_sigma_store.append(val_minus_sigma[0])
+                        minus_sigma_store.append(val_minus_sigma)
 
                     store_spectra_values['Distance = %s km' %i, 'Magnitude = '
                                          + str(m), str(gmpe).replace(
@@ -511,17 +511,17 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 
                 # Plot the logic tree
                 ax1.plot(period, np.array(pd.Series(lt_mean_per_period)),
-                         linewidth = 3, color = 'm', linestyle = '-',
+                         linewidth = 2, color = 'm', linestyle = '-',
                          label = logic_tree_config, zorder = 100)
                 
                 # Plot mean plus sigma and mean minus sigma if required
                 if Nstd != 0:
                     ax1.plot(period, np.array(pd.Series(lt_plus_sigma_per_period)),
-                             linewidth = 3, color = 'm', linestyle = '--',
+                             linewidth = 0.75, color = 'm', linestyle = '-.',
                              zorder = 100)
                     
                     ax1.plot(period, np.array(pd.Series(lt_minus_sigma_per_period)),
-                             linewidth = 3, color = 'm', linestyle = '--',
+                             linewidth = 0.75, color = 'm', linestyle = '-.',
                              zorder = 100)
                 else:
                     pass
@@ -561,9 +561,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     dict_keys = store_lt_plus_sigma_per_dist_mag[i,m].keys()
                     for key in dict_keys:
                         store_plus_sigma_per_dist_mag.append(
-                            store_lt_plus_sigma_per_dist_mag[i,m][key][0])
+                            store_lt_plus_sigma_per_dist_mag[i,m][key])
                         store_minus_sigma_per_dist_mag.append(
-                            store_lt_minus_sigma_per_dist_mag[i,m][key][0])
+                            store_lt_minus_sigma_per_dist_mag[i,m][key])
                     spectra_value_df[
                         'Distance = ' + str(i) + 'km', 'Magnitude = ' + str(m),
                         'GMPE logic tree'] = [np.array(period), np.array(pd.Series(
