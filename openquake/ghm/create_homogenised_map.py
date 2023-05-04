@@ -48,7 +48,7 @@ def get_poly_from_str(tstr):
     :param str tstr:
         A string with a sequence of lon, lat tuples
     """
-    li = re.split('\s+', tstr)
+    li = re.split('\\s+', tstr)
     coo = []
     for i in range(0, len(li), 2):
         coo.append([float(li[i]), float(li[i+1])])
