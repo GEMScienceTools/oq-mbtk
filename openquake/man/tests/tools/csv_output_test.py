@@ -3,7 +3,9 @@ import unittest
 
 import openquake.man.tools.csv_output as csv
 from openquake.man.tools.csv_output import mean_mde_for_gmt
-from openquake.calculators.tests import open8
+from openquake.calculators.tests import open8, CalculatorTestCase
+from openquake.calculators.export import export
+import case_8
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -42,13 +44,23 @@ class TestMeanMDE(unittest.TestCase):
             self.assertEqual(expected_lines[ii], actual_lines[ii])
         os.remove(fout)
 
+class TestOutputFormat(CalculatorTestCase):
+
+    def test_mde_format(self):
+        """
+        will fail if the output format changes
+        """
+        # run test job
+        self.run_calc(case_8.__file__, 'job.ini')
+        # test mre results output format
+        [fname] = export(('disagg-stats', 'csv'), self.calc.datastore)
+        self.assertEqualFiles('expected/Mag_Dist_Eps-mean-0.csv', fname)
+
 
 class TestMDeOutput(unittest.TestCase):
 
     def test_read_mre(self):
         fname = os.path.join(BASE_DATA_PATH, 'mde.csv')
-
-
 
 
 class TestReadHeader(unittest.TestCase):

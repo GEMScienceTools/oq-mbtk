@@ -89,29 +89,36 @@ def get_mean_mde(fname, poe, imt):
         imt to be isolated/plotted
     """
 
-    # get header from disagg output
-    with open(fname) as f:
-        header = f.readline()
-    
-    each_rlz = get_rlzs_mde(header)
-    rlzkeys = [*each_rlz]
-    
     # read in the rest of the outputs
     df = pd.read_csv(fname, skiprows = 1)
-    
+
     # take only the rows of interest based on poe, imt
     df_sub = df.loc[(df['poe']==float(poe)) & (df['imt']==imt)].reset_index()
 
     # create dataframe for mean results
     df_mean = pd.DataFrame(columns=['mag','dist','eps','poe_c'])
-    
-    new_poe = []
-    for r in rlzkeys:
-        poes = numpy.array([float(f) for f in df_sub[r].values])
-        tmp_array = each_rlz[r] * poes
-        new_poe.append(list(tmp_array))
 
-    df_mean['poe_c'] = numpy.sum(numpy.array(new_poe), axis=0)
+    if 'mean' not in df:
+
+        # get header from disagg output
+        with open(fname) as f:
+            header = f.readline()
+    
+        each_rlz = get_rlzs_mde(header)
+        rlzkeys = [*each_rlz]
+    
+
+    
+        new_poe = []
+        for r in rlzkeys:
+            poes = numpy.array([float(f) for f in df_sub[r].values])
+            tmp_array = each_rlz[r] * poes
+            new_poe.append(list(tmp_array))
+
+        df_mean['poe_c'] = numpy.sum(numpy.array(new_poe), axis=0)
+
+    else:
+        df_mean['poe_c'] = df['mean']
     
     for key in ['mag', 'eps', 'dist']:
         df_mean[key] = df_sub[key]
