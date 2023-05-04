@@ -361,14 +361,13 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     mu = mu[0][0]
                     f = interpolate.interp1d(distances,mu)
                     rs_50p_dist = np.exp(f(i))
-                    sigma_non_dist = std[0][0][0]
                     
                     f1 = interpolate.interp1d(distances,std[0])
                     sigma_dist = f1(i)
                     
                     if Nstd != 0:
-                            rs_plus_sigma_dist = np.exp(f(i)+(Nstd*sigma_non_dist))
-                            rs_minus_sigma_dist = np.exp(f(i)-(Nstd*sigma_non_dist))
+                            rs_plus_sigma_dist = np.exp(f(i)+(Nstd*sigma_dist))
+                            rs_minus_sigma_dist = np.exp(f(i)-(Nstd*sigma_dist))
                     else:
                         pass
                  
@@ -392,16 +391,18 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     pass
                 
                 sigma_store = []
-                for idx_sigma, val_sigma in enumerate(rs_plus_sigma):       
-                    sigma_store.append(val_sigma)
+                for idx_sigma, value_sigma in enumerate(rs_plus_sigma):       
+                    sigma_store.append(value_sigma[0])
                     
                 if Nstd != 0:
                     plus_sigma_store = []
                     minus_sigma_store = []
-                    for idx_plus_sigma, val_plus_sigma in enumerate(rs_plus_sigma):
-                        plus_sigma_store.append(val_plus_sigma)
-                    for idx_minus_sigma, val_minus_sigma in enumerate(rs_minus_sigma):
-                        minus_sigma_store.append(val_minus_sigma)
+                    for idx_50p_plus_sigma, value_50p_plus_sigma in enumerate(
+                            rs_plus_sigma):
+                        plus_sigma_store.append(value_50p_plus_sigma[0])
+                    for idx_50p_minus_sigma, value_50p_minus_sigma in enumerate(
+                            rs_minus_sigma):
+                        minus_sigma_store.append(value_50p_minus_sigma[0])
 
                     store_spectra_values['Distance = %s km' %i, 'Magnitude = '
                                          + str(m), str(gmpe).replace(
