@@ -72,6 +72,7 @@ setup(
         'obspy',
         'prettytable',
         'tqdm',
+        'h3',
         # 'GDAL',
     ],
     python_requires='>=3.8',

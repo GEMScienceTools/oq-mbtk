@@ -174,7 +174,45 @@ class MergeGenericCatalogueTest(unittest.TestCase):
                 utc_time_zone=timezone, buff_t=dt.timedelta(0), buff_ll=0,
                 use_ids=True, logfle=None)
         self.assertIn('isf_catalogue.py', cm.filename)
-        self.assertEqual(842, cm.lineno)
+        self.assertEqual(919, cm.lineno)
+        
+    def test_case05(self):
+        """Testing the identification of doubtful events with use_kms"""
+        # In this test the first event in the .csv file is a duplicate of
+        # the 2015 earthquake and it is therefore excluded.
+        # The 2nd and 3rd events are within the buffers and so flagged as doubtful events
+
+        # Read the CSV formatted file
+        parser = GenericCataloguetoISFParser(self.fname_csv3)
+        _ = parser.parse("tcsv", "Test CSV")
+        catcsv = parser.export("tcsv", "Test CSV")
+
+        # Read the ISF formatted file
+        parser = ISFReader(self.fname_isf2)
+        catisf = parser.read_file("tisf", "Test CSV")
+
+        # Create the spatial index
+        catisf._create_spatial_index()
+        buff_t = 2.0
+
+        # Merg the .csv catalogue into the isf one
+        tz = dt.timezone(dt.timedelta(hours=0))
+        ll_delta = np.array([[1899, 10], [1950, 5]])
+        delta = [[1899, 10.0], [1950, 5.0]]
+        out, doubts = catisf.add_external_idf_formatted_catalogue(
+                catcsv, ll_deltas=ll_delta, delta_t=delta, utc_time_zone=tz,
+                buff_t=buff_t, buff_ll=2, use_kms = True)
+
+        # Testing output
+        msg = 'The number of colocated events is wrong'
+        self.assertEqual(1, len(out), msg)
+        msg = 'The number of events in the catalogue is wrong'
+        self.assertEqual(5, len(catisf.events), msg)
+
+        # Check doubtful earthquakes
+        msg = 'The information about doubtful earthquakes is wrong'
+        self.assertEqual([1, 2], doubts[2], msg)
+        self.assertEqual(1, len(doubts), msg)
 
 
 class GetThresholdMatricesTest(unittest.TestCase):
@@ -193,15 +231,17 @@ class GetThresholdMatricesTest(unittest.TestCase):
     def test_gmtx02(self):
         """ Case with list of scalars """
 
-        delta_t = [[1900, 30.0], [1960, 20.0]]
-        delta_ll = [[1900, 0.3], [1980, 0.2]]
+        delta_t = [[1900, 30.0], [1960, 20.0], [1980, 20.0]]
+        delta_ll = [[1900, 0.3], [1960, 0.2], [1980, 0.2]]
         mage, timee, time_d, ll_d = get_threshold_matrices(delta_t, delta_ll)
 
         expected = np.array([t[1] for t in delta_t])
         computed = np.array([t[0].total_seconds() for t in time_d])
         np.testing.assert_almost_equal(computed, expected)
 
-        expected = np.transpose(np.array([[t[1] for t in delta_ll]]))
+        expected = np.ones((3, 40))
+        expected[0, :] = 0.3
+        expected[1:, :] = 0.2
         computed = ll_d
         np.testing.assert_almost_equal(computed, expected)
 
@@ -209,7 +249,7 @@ class GetThresholdMatricesTest(unittest.TestCase):
         """ Case with a list of functions """
 
         delta_t = [[1900, '5*m'], [1960, '2.5*m']]
-        delta_ll = [[1900, '0.1*m'], [1980, '0.05*m']]
+        delta_ll = [[1900, '0.1*m'], [1960, '0.05*m']]
         mage, timee, time_d, ll_d = get_threshold_matrices(delta_t, delta_ll)
 
         mags = np.arange(1.0, 9.0, 0.2)

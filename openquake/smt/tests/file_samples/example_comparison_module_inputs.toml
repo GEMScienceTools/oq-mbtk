@@ -1,0 +1,113 @@
+### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
+
+[general]
+name_analysis = 'demonstration'
+imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)','SA(2.0)']
+max_period = 2 # max period for response spectra
+maxR = 300 # max distance to consider
+dist_list = [10, 100, 250] # distances for use in response spectra + sigma wrt period plots
+region = 0 # for NGAWest2 regionalisation
+eshm20_region = 4 # for use in KothaEtAl2020 ESHM20 version
+Nstd = 1 # number of standard deviations to sample sigma for 
+custom_colors_flag = 'False' # set to "True" for custom colours in RS + trellis)
+custom_colors_list = ['lime','dodgerblue','gold','0.8']
+
+[site_properties]
+vs30 = 800
+Z1 = -999
+Z25 = -999
+
+[source_properties] # characterise earthquake for the region
+strike = -999
+dip =  60
+rake = 90
+trellis_mag_list = [5,6,7] # mags used only for trellis
+trellis_depths = [20,20,20] # depth per magnitude
+
+# Specify mag values for use in Sammons, Euclidean dist and clustering
+[mag_values_non_trellis_functions]
+mmin = 5
+mmax = 7
+spacing = 0.1
+non_trellis_depths = [[5,25],[6,30],[7,35]] # [[mag,depth],[mag,depth],[mag,depth]] --> e.g. if mag = 5.3 will be assigned depth of 25, if mag = 5.8 will be assigned depth of 30
+
+# Specify label for gmpes (make sure matches number of gmpes we specify below!)
+[gmpe_labels]
+gmpes_label = ['AG20_glo','AG20_cas','YA15', 'HA18', 'B20','K1','K2','K3','K4','K5','K6','K7','K8','K9','K10','K11','K12','K13','K14','K15']
+
+# Specify gmpes
+[models]      
+
+# Some models with varying inputs specifiable within the .toml format
+[models.1-AbrahamsonGulerce2020SInter]
+region = "GLO"
+[models.2-AbrahamsonGulerce2020SInter]
+region = "CAS"
+[models.YenierAtkinson2015BSSA]
+sigma_model = 'al_atik_2015_sigma'
+[models.HassaniAtkinson2018]
+    d_sigma = 100
+    kappa0 = 0.04
+[models.BooreEtAl2020]
+
+# Default K20_ESHM20 logic tree branches with weights assigned to plot logic tree config
+[models.1-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = -2.85697 
+    c3_epsilon = 1.732051
+    lt_weight = 0.00188042
+[models.2-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = -2.85697 
+    c3_epsilon = -1.732051
+    lt_weight = 0.00188042   
+[models.3-KothaEtAl2020ESHM20]    
+    sigma_mu_epsilon = 2.85697 
+    c3_epsilon = -1.732051
+    lt_weight = 0.00188042  
+[models.4-KothaEtAl2020ESHM20]     
+    sigma_mu_epsilon = 2.85697 
+    c3_epsilon = 1.732051
+    lt_weight = 0.00188042  
+[models.5-KothaEtAl2020ESHM20]     
+    sigma_mu_epsilon = -2.85697 
+    c3_epsilon = 0
+    lt_weight = 0.00749916       
+[models.6-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = 2.85697 
+    c3_epsilon = 0
+    lt_weight = 0.00749916  
+[models.7-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = -1.35563
+    c3_epsilon = -1.732051
+    lt_weight = 0.03708736
+[models.8-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = -1.35563
+    c3_epsilon = 1.730251
+    lt_weight = 0.03708736
+[models.9-KothaEtAl2020ESHM20]    
+    sigma_mu_epsilon = 1.35563 
+    c3_epsilon = -1.732051
+    lt_weight = 0.03708736
+[models.10-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = 1.35563 
+    c3_epsilon = 1.732051
+    lt_weight = 0.03708736
+[models.11-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = 0 
+    c3_epsilon = -1.732051
+    lt_weight = 0.08906444
+[models.12-KothaEtAl2020ESHM20]    
+    sigma_mu_epsilon = 0
+    c3_epsilon = 1.732051
+    lt_weight = 0.08906444  
+[models.13-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = -1.35563 
+    c3_epsilon = 0
+    lt_weight = 0.14790528
+[models.14-KothaEtAl2020ESHM20]
+    sigma_mu_epsilon = 1.35563 
+    c3_epsilon = 0
+    lt_weight = 0.14790528
+[models.15-KothaEtAl2020ESHM20]    
+    sigma_mu_epsilon = 0
+    c3_epsilon = 0
+    lt_weight = 0.35519112

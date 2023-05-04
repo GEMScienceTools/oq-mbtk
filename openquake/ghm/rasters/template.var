@@ -1,0 +1,9 @@
+<OGRVRTDataSource>
+    <OGRVRTLayer name="${LAY}">
+        <SrcDataSource>${CSV}</SrcDataSource>
+        <SrcLayer>${SL}</SrcLayer>
+        <GeometryType>wkbPoint</GeometryType>
+        <LayerSRS>WGS84</LayerSRS>
+        <GeometryField encoding="PointFromColumns" x="lon" y="lat" z="${LAY}"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>
