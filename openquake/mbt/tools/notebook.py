@@ -66,7 +66,7 @@ def run(notebook_filename, inps, reports_folder=None, key=None):
             #
             #
             filename = os.path.join(reports_folder, '%s.html' % key)
-            with open(filename, 'w') as f:
+            with open(filename, 'w', encoding='utf-8') as f:
                 f.write(shtml[0])
             print('Report in {:s}'.format(filename))
             ok = True
