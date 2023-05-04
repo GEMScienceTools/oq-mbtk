@@ -173,7 +173,12 @@ def plot_disagg_MDE(fname, poe, imt, location, settings_fname, threshold):
 def main(fname, poe, imt, *, location='site', 
          settings_fname=None, threshold=1e-10):
     """
-    plots disaggregation by magnitude-distance-epsilon
+    plots mean disaggregation by magnitude-distance-epsilon
+    
+    Example to run:
+
+    python plot_disagg_MDE.py ../tests/tools/case_8/expected/Mag_Dist_Eps-mean-0.csv 0.002105 SA\(0.1\)
+
     """ 
     
     plot_disagg_MDE(fname, poe, imt, location=location,
