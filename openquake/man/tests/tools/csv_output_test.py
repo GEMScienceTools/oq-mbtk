@@ -5,7 +5,7 @@ import openquake.man.tools.csv_output as csv
 from openquake.man.tools.csv_output import mean_mde_for_gmt
 from openquake.calculators.tests import open8, CalculatorTestCase
 from openquake.calculators.export import export
-import case_8
+#import case_8
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 BASE_EXP_PATH = os.path.join(os.path.dirname(__file__), 'expected')
@@ -45,7 +45,7 @@ class TestMeanMDE(unittest.TestCase):
             self.assertEqual(expected_lines[ii], actual_lines[ii])
         os.remove(fout)
 
-class TestOutputFormat(CalculatorTestCase):
+class OutputTestCase(CalculatorTestCase):
 
     def test_mde_format(self):
         """
@@ -53,11 +53,11 @@ class TestOutputFormat(CalculatorTestCase):
         """
         #BASE_CASE8 = os.path.join(os.path.dirname(__file__), 'case_8')
         # run test job
-#        self.run_calc('',  'case_8/job.ini')
-        self.run_calc(case_8.__file__,  'job.ini')
+        self.run_calc('',  'case_8/job.ini')
+#        self.run_calc(case_8.__file__,  'job.ini')
         # test mre results output format
         [fname] = export(('disagg-stats', 'csv'), self.calc.datastore)
-        self.assertEqualFiles('expected/Mag_Dist_Eps-mean-0.csv', fname)
+        self.assertEqualFiles('case_8/expected/Mag_Dist_Eps-mean-0.csv', fname)
         #self.assertEqualFiles(os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv'), fname)
 
 
