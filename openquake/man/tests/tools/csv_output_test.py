@@ -5,6 +5,7 @@ import openquake.man.tools.csv_output as csv
 from openquake.man.tools.csv_output import mean_mde_for_gmt
 from openquake.calculators.tests import open8, CalculatorTestCase
 from openquake.calculators.export import export
+import case_8
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 BASE_EXP_PATH = os.path.join(os.path.dirname(__file__), 'expected')
