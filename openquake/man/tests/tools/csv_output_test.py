@@ -5,7 +5,6 @@ import openquake.man.tools.csv_output as csv
 from openquake.man.tools.csv_output import mean_mde_for_gmt
 from openquake.calculators.tests import open8, CalculatorTestCase
 from openquake.calculators.export import export
-import case_8
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 BASE_EXP_PATH = os.path.join(os.path.dirname(__file__), 'expected')
@@ -52,10 +51,10 @@ class TestOutputFormat(CalculatorTestCase):
         will fail if the output format changes
         """
         # run test job
-        self.run_calc(case_8.__file__, 'job.ini')
+        self.run_calc('', 'case_8/job.ini')
         # test mre results output format
         [fname] = export(('disagg-stats', 'csv'), self.calc.datastore)
-        self.assertEqualFiles('expected/Mag_Dist_Eps-mean-0.csv', fname)
+        self.assertEqualFiles('case_8/expected/Mag_Dist_Eps-mean-0.csv', fname)
 
 
 class TestMDeOutput(unittest.TestCase):
