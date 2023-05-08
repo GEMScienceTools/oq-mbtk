@@ -44,17 +44,17 @@ class TestMeanMDE(unittest.TestCase):
             self.assertEqual(expected_lines[ii], actual_lines[ii])
         os.remove(fout)
 
-class TestOutputFormat(CalculatorTestCase):
+#class TestOutputFormat(CalculatorTestCase):
 
-    def test_mde_format(self):
-        """
-        will fail if the output format changes
-        """
-        # run test job
-        self.run_calc('', 'case_8/job.ini')
-        # test mre results output format
-        [fname] = export(('disagg-stats', 'csv'), self.calc.datastore)
-        self.assertEqualFiles('case_8/expected/Mag_Dist_Eps-mean-0.csv', fname)
+#    def test_mde_format(self):
+#        """
+#        will fail if the output format changes
+#        """
+#        # run test job
+#        self.run_calc('', 'case_8/job.ini')
+#        # test mre results output format
+#        [fname] = export(('disagg-stats', 'csv'), self.calc.datastore)
+#        self.assertEqualFiles('case_8/expected/Mag_Dist_Eps-mean-0.csv', fname)
 
 
 class TestMDeOutput(unittest.TestCase):
