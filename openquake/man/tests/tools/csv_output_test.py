@@ -27,8 +27,7 @@ class TestMeanMDE(unittest.TestCase):
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fout)]
         self.assertEqual(len(expected_lines), len(actual_lines))
-        for ii in range(len(actual_lines)):
-            self.assertEqual(expected_lines[ii], actual_lines[ii])
+        assert expected_lines == actual_lines
         os.remove(fout)
 
 
@@ -43,12 +42,10 @@ class TestMeanMDE(unittest.TestCase):
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fout)]
         self.assertEqual(len(expected_lines), len(actual_lines))
-        for ii in range(len(actual_lines)):
-            self.assertEqual(expected_lines[ii], actual_lines[ii])
+        assert expected_lines == actual_lines
         os.remove(fout)
 
 class OutputTestCase(unittest.TestCase):
-#class OutputTestCase(CalculatorTestCase):
 
     def test_mde_format(self):
         """
@@ -57,14 +54,13 @@ class OutputTestCase(unittest.TestCase):
         BASE_CASE8 = os.path.join(os.path.dirname(__file__), 'case_8')
         # run test job
         calc = run_calc(os.path.join(BASE_CASE8, 'job.ini'))
-#        self.run_calc(case_8.__file__,  'job.ini')
         # test mre results output format
         [fname] = export(('disagg-stats', 'csv'), calc.datastore)
         expected = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fname)]
-#        self.assertEqualFiles('case_8/expected/Mag_Dist_Eps-mean-0.csv', fname)
-        #self.assertEqualFiles(os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv'), fname)
+        assert expected_lines[1:] == actual_lines[1:]
+        os.remove(fname)
 
 
 class TestMDeOutput(unittest.TestCase):
