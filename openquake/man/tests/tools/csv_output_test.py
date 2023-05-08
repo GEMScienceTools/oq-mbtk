@@ -50,11 +50,12 @@ class TestOutputFormat(CalculatorTestCase):
         """
         will fail if the output format changes
         """
+        BASE_CASE8 = os.path.join(os.path.dirname(__file__), 'case_8')
         # run test job
-        self.run_calc('', 'case_8/job.ini')
+        self.run_calc('',  os.path.join(BASE_CASE8, 'job.ini'))
         # test mre results output format
         [fname] = export(('disagg-stats', 'csv'), self.calc.datastore)
-        self.assertEqualFiles('case_8/expected/Mag_Dist_Eps-mean-0.csv', fname)
+        self.assertEqualFiles(os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv'), fname)
 
 
 class TestMDeOutput(unittest.TestCase):
