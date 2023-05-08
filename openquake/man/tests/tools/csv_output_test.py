@@ -5,9 +5,10 @@ import openquake.man.tools.csv_output as csv
 from openquake.man.tools.csv_output import mean_mde_for_gmt
 from openquake.calculators.tests import open8, CalculatorTestCase
 from openquake.calculators.export import export
-#import case_8
+import case_8
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
+BASE_EXP_PATH = os.path.join(os.path.dirname(__file__), 'expected')
 
 
 
@@ -20,7 +21,7 @@ class TestMeanMDE(unittest.TestCase):
         fname = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-1.csv')
         fout = 'test-1.csv'
         mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
-        expected = os.path.join(os.path.dirname(__file__),'expected/site_0.002105_SA01_mde-1.csv')
+        expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_mde-1.csv')
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fout)]
         self.assertEqual(len(expected_lines), len(actual_lines))
@@ -36,7 +37,7 @@ class TestMeanMDE(unittest.TestCase):
         fname = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-2.csv')
         fout = 'test-2.csv'
         mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
-        expected = os.path.join(os.path.dirname(__file__),'expected/site_0.002105_SA01_mde-2.csv')
+        expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_mde-2.csv')
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fout)]
         self.assertEqual(len(expected_lines), len(actual_lines))
@@ -44,17 +45,17 @@ class TestMeanMDE(unittest.TestCase):
             self.assertEqual(expected_lines[ii], actual_lines[ii])
         os.remove(fout)
 
-#class TestOutputFormat(CalculatorTestCase):
+class TestOutputFormat(CalculatorTestCase):
 
-#    def test_mde_format(self):
-#        """
-#        will fail if the output format changes
-#        """
-#        # run test job
-#        self.run_calc('', 'case_8/job.ini')
-#        # test mre results output format
-#        [fname] = export(('disagg-stats', 'csv'), self.calc.datastore)
-#        self.assertEqualFiles('case_8/expected/Mag_Dist_Eps-mean-0.csv', fname)
+    def test_mde_format(self):
+        """
+        will fail if the output format changes
+        """
+        # run test job
+        self.run_calc(case_8.__file__, 'job.ini')
+        # test mre results output format
+        [fname] = export(('disagg-stats', 'csv'), self.calc.datastore)
+        self.assertEqualFiles('expected/Mag_Dist_Eps-mean-0.csv', fname)
 
 
 class TestMDeOutput(unittest.TestCase):
