@@ -499,6 +499,13 @@ class Residuals(object):
                     context["Ctx"],
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
+                # If no sigma model inform user must specify sigma model in .toml
+                if np.all(stddev[0] == 0.):
+                    gmm_str = str(gmpe).split('(')[0]
+                    raise ValueError('A sigma model is not provided by default\
+                                     for %s GMPE. Specify a sigma model for %s \
+                                     GMPE for the computation of ground-motion\
+                                     residuals.' %(gmm_str, gmm_str))
                 expected[gmpe][imtx]["Mean"] = mean
                 for i, res_type in enumerate(self.types[gmpe][imtx]):
                     expected[gmpe][imtx][res_type] = stddev[i]
