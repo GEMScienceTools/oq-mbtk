@@ -492,8 +492,7 @@ class Residuals(object):
                             period > self.gmpe_sa_limits[gmpe][1]:
                         expected[gmpe][imtx] = None
                         continue
-                gsim, sigma_model_flag = mgmpe_check(gmpe, imtx, 
-                                                     task = 'residual')
+                gsim = mgmpe_check(gsim)
                 mean, stddev = gsim.get_mean_and_stddevs(
                     context["Ctx"],
                     context["Ctx"],
