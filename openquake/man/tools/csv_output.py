@@ -118,7 +118,8 @@ def get_mean_mde(fname, poe, imt):
         df_mean['poe_c'] = numpy.sum(numpy.array(new_poe), axis=0)
 
     else:
-        df_mean['poe_c'] = df['mean']
+        df_mean['poe_c'] = df_sub['mean']
+
     
     for key in ['mag', 'eps', 'dist']:
         df_mean[key] = df_sub[key]
