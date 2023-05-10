@@ -39,7 +39,7 @@ def _add_defaults(cat):
     return cat
 
 
-def dec(declustering_params, declustering_meth, cat):
+def dec(declustering_params, declustering_meth, cat, config):
 
     # Declustering parameters
     config = declustering_params
@@ -51,9 +51,9 @@ def dec(declustering_params, declustering_meth, cat):
     declusterer = my_class()
 
     # Create distance-time window
-    if 'time_distance_window' in config:
-        my_class = getattr(module, config['time_distance_window'])
-        config['time_distance_window'] = my_class()
+    #if 'time_distance_window' in config:
+    #    my_class = getattr(module, config['time_distance_window'])
+    #    config['time_distance_window'] = my_class()
 
     # Declustering
     vcl, flag = declusterer.decluster(cat, config)

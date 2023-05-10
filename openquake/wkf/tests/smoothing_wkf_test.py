@@ -17,7 +17,7 @@ HERE = os.path.dirname(__file__)
 
 DATA_PATH = os.path.relpath(os.path.join(HERE, 'data'))
 
-class SmoothingTestwkf(unittest.TestCase):
+class test_smoothing_wkf(unittest.TestCase):
 
     def setUp(self):
         fname = os.path.join(DATA_PATH, 'smooth_test.csv')
@@ -28,7 +28,7 @@ class SmoothingTestwkf(unittest.TestCase):
         self.cat = cat
         print(HERE)
         
-    def discretize_zones(self):
+    def test_discretize_zones(self):
         zones_h3_repr = os.path.join(DATA_PATH, 'zones_h3')
         #cmd = f"oqm wkf set_h3_to_zones {h3_level} {polygons} {zones_h3_repr}"
         code = os.path.join(HERE, 'wkf', 'set_h3_to_zones')
@@ -37,7 +37,7 @@ class SmoothingTestwkf(unittest.TestCase):
         cmd = fmt.format(code, self.cat, zones_h3_repr, config, fname_bcounting, -y, 2018, -w, "one")
         out = subprocess.call(cmd, shell=True)
         
-    def box_counting(self):
+    def test_box_counting(self):
         """ Run boxcounting on test data """
         h3_level = 2
         zones_h3_repr = os.path.join(DATA_PATH, 'zones_h3')
@@ -53,7 +53,7 @@ class SmoothingTestwkf(unittest.TestCase):
         print(cmd)
         out = subprocess.call(cmd, shell=True)
         
-    def smoothing_wkf(self):
+    def test_smoothing_wkf(self):
         """ Test adaptive smoothing build """
         
         config = os.path.join(DATA_PATH, 'smooth_config.toml')
