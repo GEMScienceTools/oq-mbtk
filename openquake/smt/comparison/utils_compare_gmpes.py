@@ -76,17 +76,12 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             
             for g, gmpe in enumerate(gmpe_list): 
                 
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
-                    gmpe, strike, dip, depth[l], aratio, rake) 
-
-                gmm = valid.gsim(gmpe)
                 col=colors[g]
-
-                if not Nstd ==0:
-                    gmm, gmpe_sigma_flag = mgmpe_check(gmpe, str(i), 
-                                                       task = 'comparison')
-                else:
-                    pass
+                gsim = valid.gsim(gmpe)
+                gmm = mgmpe_check(gsim)
+                
+                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
+                    gmm, strike, dip, depth[l], aratio, rake) 
 
                 mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                  strike_g,dip_g,rake,Vs30,
@@ -343,9 +338,10 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             for g, gmpe in enumerate(gmpe_list): 
                 
                 col=colors[g]
-                gmm = valid.gsim(gmpe)
-                
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(gmpe, strike,
+                gsim = valid.gsim(gmpe)
+                gmm = mgmpe_check(gsim)
+
+                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(gmm, strike,
                                                                   dip, 
                                                                   depth[l],
                                                                   aratio, rake)
@@ -377,10 +373,11 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                         rs_minus_sigma.append(rs_minus_sigma_dist)
                     sigma.append(sigma_dist)
                     
+                    
                 if 'lt_weight_plot_lt_only' not in str(gmpe):
-                    ax1.plot(period, rs_50p, color=col, linewidth=2, linestyle='-',
+                    ax1.plot(period, rs_50p, color=col, linewidth=3, linestyle='-',
                              label=gmpe)
-                    ax2.plot(period, sigma, color=col, linewidth=2, linestyle='-',
+                    ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
                              label=gmpe)
                     if Nstd != 0:
                         ax1.plot(period, rs_plus_sigma, color=col, linewidth=0.75,
@@ -391,18 +388,16 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     pass
                 
                 sigma_store = []
-                for idx_sigma, value_sigma in enumerate(rs_plus_sigma):       
-                    sigma_store.append(value_sigma[0])
+                for idx_sigma, val_sigma in enumerate(rs_plus_sigma):                    
+                    sigma_store.append(val_sigma[0])
                     
                 if Nstd != 0:
                     plus_sigma_store = []
                     minus_sigma_store = []
-                    for idx_50p_plus_sigma, value_50p_plus_sigma in enumerate(
-                            rs_plus_sigma):
-                        plus_sigma_store.append(value_50p_plus_sigma[0])
-                    for idx_50p_minus_sigma, value_50p_minus_sigma in enumerate(
-                            rs_minus_sigma):
-                        minus_sigma_store.append(value_50p_minus_sigma[0])
+                    for idx_plus_sigma, val_plus_sigma in enumerate(rs_plus_sigma):
+                        plus_sigma_store.append(val_plus_sigma[0])
+                    for idx_minus_sigma, val_minus_sigma in enumerate(rs_minus_sigma):
+                        minus_sigma_store.append(val_minus_sigma[0])
 
                     store_spectra_values['Distance = %s km' %i, 'Magnitude = '
                                          + str(m), str(gmpe).replace(
@@ -512,17 +507,17 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 
                 # Plot the logic tree
                 ax1.plot(period, np.array(pd.Series(lt_mean_per_period)),
-                         linewidth = 2, color = 'm', linestyle = '-',
+                         linewidth = 3, color = 'm', linestyle = '-',
                          label = logic_tree_config, zorder = 100)
                 
                 # Plot mean plus sigma and mean minus sigma if required
                 if Nstd != 0:
                     ax1.plot(period, np.array(pd.Series(lt_plus_sigma_per_period)),
-                             linewidth = 0.75, color = 'm', linestyle = '-.',
+                             linewidth = 3, color = 'm', linestyle = '--',
                              zorder = 100)
                     
                     ax1.plot(period, np.array(pd.Series(lt_minus_sigma_per_period)),
-                             linewidth = 0.75, color = 'm', linestyle = '-.',
+                             linewidth = 3, color = 'm', linestyle = '--',
                              zorder = 100)
                 else:
                     pass
@@ -562,9 +557,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     dict_keys = store_lt_plus_sigma_per_dist_mag[i,m].keys()
                     for key in dict_keys:
                         store_plus_sigma_per_dist_mag.append(
-                            store_lt_plus_sigma_per_dist_mag[i,m][key])
+                            store_lt_plus_sigma_per_dist_mag[i,m][key][0])
                         store_minus_sigma_per_dist_mag.append(
-                            store_lt_minus_sigma_per_dist_mag[i,m][key])
+                            store_lt_minus_sigma_per_dist_mag[i,m][key][0])
                     spectra_value_df[
                         'Distance = ' + str(i) + 'km', 'Magnitude = ' + str(m),
                         'GMPE logic tree'] = [np.array(period), np.array(pd.Series(
@@ -613,12 +608,12 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
             medians = []
             sigmas = []
             for l, m in enumerate(mag_list): #iterate though mag_list
-        
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
-                    gmpe,strike, dip, depth[l], aratio, rake) 
+                
+                gsim = valid.gsim(gmpe)
+                gmm = mgmpe_check(gsim)
 
-                gmm, gmpe_sigma_flag = mgmpe_check(gmpe, str(i),
-                                                           task = 'comparison')
+                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
+                    gmm, strike, dip, depth[l], aratio, rake) 
 
                 mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
                                                   strike_g,dip_g,rake,Vs30,Z1,
@@ -840,6 +835,9 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     if len(imt_list) > 3 and len(imt_list)/2 != int(len(imt_list)/2):
         ax = axs[np.unravel_index(n+1, (nrows, ncols))]
         ax.set_visible(False)
+    if len(imt_list) == 1:
+        axs[1].set_visible(False)
+        
 
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.4)
     pyplot.show()

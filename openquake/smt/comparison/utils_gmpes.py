@@ -188,6 +188,7 @@ def _get_z25(Vs30,region):
     return Z25
 
 def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
+    
     # specific assumptions when the param are not available from the sources
     if strike == -999: 
         strike_s = 0
@@ -203,9 +204,9 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
         dip_s = dip
 
     if depth == -999:
-        if str(valid.gsim(gmpes).DEFINED_FOR_TECTONIC_REGION_TYPE) == 'TRT.SUBDUCTION_INTERFACE':
+        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == 'TRT.SUBDUCTION_INTERFACE':
             depth_s = 30
-        elif str(valid.gsim(gmpes).DEFINED_FOR_TECTONIC_REGION_TYPE) == 'TRT.SUBDUCTION_INTRASLAB':
+        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == 'TRT.SUBDUCTION_INTRASLAB':
             depth_s = 50
         else:
             depth_s = 15
@@ -215,123 +216,62 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
     if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
-        if 'Inter' in gmpes:
+        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == 'TRT.SUBDUCTION_INTERFACE':
             aratio_s = 5
-        elif 'Slab' in gmpes:
+        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == 'TRT.SUBDUCTION_INTRASLAB':
             aratio_s = 5
         else:
             aratio_s = 2
             
     return strike_s, dip_s, depth_s, aratio_s
 
-def mgmpe_check(gmpe, imtx, task):
+def mgmpe_check(gmpe):
     """
-    Check if sigma is provided for a given GMPE and implement Al-Atik (2015)
-    sigma model if specified. Also provides a warning if GMPE sigma is not
-    provided by the specified GMPE. This function also checks if a site
-    amplification term (from openquake.hazardlib.gsim.mgmpe) should be
-    implemented for the given GMPE
+    Check if the GMPE should be modified using ModifiableGMPE
     :param gmpe:
-        GMPE to check model sigma is provided, and to check if Al-Atik (2015)
-        sigma model should be implemented for
-    :param imtx:
-        Intensity measure to perform sigma checks for with the specified GMPE
-    :param task:
-        Specify whether for computation of residuals ('residual') or use within
-        comparison module ('comparison')
+        gmpe: GMPE to be modified if required (must be a gsim class)
     """
-    # Preserve original GMPE prior to modification
+    # Preserve original GMPE prior and create base version of GMPE
     orig_gmpe = gmpe
-    
-    # Construct a generic context (M = 5.5, D = 100km) to check if sigma provided 
-    tmp_rup = get_rupture(20, 40, 15, WC1994(), 5.5, 1.5, 0, 90, 0, 'fake', None)
+    base_gsim = str(gmpe).split(']')[0].replace('[','')
 
-    if 'KothaEtAl2020ESHM20' in str(gmpe):
-        sp = {'vs30': 800, 'z1pt0': 31.07, 'z2pt5': 0.57, 'backarc': False,
-              'vs30measured': True, 'region': 0}  #Fix region to 0 for check
-    else:
-        sp = {'vs30': 800, 'z1pt0': 31.07, 'z2pt5': 0.57, 'backarc': False,
-              'vs30measured': True}  
-            
-    tmp_site = get_sites_from_rupture(tmp_rup, 'TC', 90, 'positive', 100, 50, sp)
-    
-    oqp = {'imtls': {k: [] for k in [imtx]}, 'mags': [f'{5.5:.2f}']}
-    if '_toml=' in str(gmpe):
-        tmp_gmm = valid.gsim(str(gmpe).split('_toml=')[1].replace(')',''))
-    else:
-        tmp_gmm = valid.gsim(gmpe)
-    ctxm = ContextMaker('fake', [tmp_gmm], oqp)
-    ctxs = list(ctxm.get_ctx_iter([tmp_rup], tmp_site))
-    
-    # Get model sigma and set up modifiable GMPE
-    tmp_mean, tmp_std, tmp_tau, tmp_phi = ctxm.get_mean_stds(ctxs)
-    tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
-    
-    # Kwargs for modifiable GMPE inputs
-    kwargs_al_atik = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
+    ### Sigma model implementations 
+    kwargs_al_atik = {'gmpe': {base_gsim: {'sigma_model_alatik2015': {}}},
               'sigma_model_alatik2015': {}}
+    if 'al_atik_2015_sigma' in str(gmpe):
+        gmpe = mgmpe.ModifiableGMPE(**kwargs_al_atik)
+  
     
-    # Messages for warnings/ValueError
-    msg1 = 'A sigma model is not provided by default for %s GMPE.' %tmp_gmpe
-    msg2 = 'For residual analysis a sigma model must be specified for %s GMPE.'%tmp_gmpe
+    ### Site term implementations
+    msg3 = 'An alternative sigma model and an alternative site term cannot\
+        be specified within a single GMPE implementation.'
+    msg4 = 'Two alternative site terms have been specified within the toml\
+        for a single GMPE implementation'
     
-    # Raise warning/ValueError/implement Al-Atik 2015 sigma if specified based
-    # on sigma_model_flag
-    if tmp_std.all() == 0:
-        sigma_model_flag = True
-        if task == 'residual' and 'toml=' in str(gmpe) or task == 'comparison':
-            if 'al_atik_2015_sigma' in str(gmpe): # No sigma so add
-                gmpe = mgmpe.ModifiableGMPE(**kwargs_al_atik)
-            elif task == 'residual': # A sigma model is required for residuals
-                raise ValueError(msg2)
-            elif task == 'comparison': # No sigma and not specified in toml
-                warnings.warn(msg1, stacklevel = 100)
-                gmpe = valid.gsim(gmpe.split('(')[0])
-        elif task == 'residual': # Task = 'residual' but no toml used so sigma model not specifiable
-            raise ValueError(msg2)
-    else:
-        sigma_model_flag = False
-        if 'al_atik_2015_sigma' in str(gmpe): #GMPE has sigma but override
-            gmpe = mgmpe.ModifiableGMPE(**kwargs_al_atik)
-        elif task == 'comparison': # GMPE has sigma so retain (comparison use)
-            gmpe = valid.gsim(gmpe)
-        else: # GMPE has sigma so retain (residuals use)
-            gmpe = valid.gsim(gmpe.split('(')[0])
-    
-    # Site term implementations
-    if '_toml=' in str(orig_gmpe) or task == 'comparison':
+    # Check only single site term specified
+    if 'CY14SiteTerm' in str(orig_gmpe) and 'NRCan15SiteTerm' in str(orig_gmpe):
+        raise ValueError(msg4)
         
-        msg3 = 'An alternative sigma model and an alternative site term cannot\
-            be specified within a single GMPE implementation.'
-        msg4 = 'Two alternative site terms have been specified within the toml\
-            for a single GMPE implementation'
-        
-        # Check only single site term specified
-        if 'CY14Term' in str(orig_gmpe) and 'NRCan15SiteTerm' in str(orig_gmpe):
-            raise ValueError(msg4)
-            
-        # CY14 site term
-        if 'CY14SiteTerm' in str(
-                orig_gmpe) and 'al_atik_2015_sigma' not in str(orig_gmpe):
-            gmpe = cy14_st.CY14SiteTerm(tmp_gmpe)
-        if 'CY14SiteTerm' in str(orig_gmpe) and 'al_atik_2015_sigma' in str(
-                orig_gmpe):
-            raise ValueError(msg3)
-        else:
-            pass
-        
-        # NRCAN15 site term
-        if 'NRCan15SiteTerm' in str(
-                orig_gmpe) and 'al_atik_2015_sigma' not in str(orig_gmpe):
-            gmpe = nrcan15_st.NRCan15SiteTerm(tmp_gmpe)
-        elif 'NRCan15SiteTerm' in str(
-                orig_gmpe) and 'al_atik_2015_sigma' in str(orig_gmpe):
-            raise ValueError(msg3)
-        else:
-            pass
+    # CY14 site term
+    if 'CY14SiteTerm' in str(
+            orig_gmpe) and 'al_atik_2015_sigma' not in str(orig_gmpe):
+        gmpe = cy14_st.CY14SiteTerm(base_gsim)
+    if 'CY14SiteTerm' in str(orig_gmpe) and 'al_atik_2015_sigma' in str(
+            orig_gmpe):
+        raise ValueError(msg3)
     else:
         pass
     
-    return gmpe, sigma_model_flag
+    # NRCAN15 site term
+    if 'NRCan15SiteTerm' in str(
+            orig_gmpe) and 'al_atik_2015_sigma' not in str(orig_gmpe):
+        gmpe = nrcan15_st.NRCan15SiteTerm(base_gsim)
+    elif 'NRCan15SiteTerm' in str(
+            orig_gmpe) and 'al_atik_2015_sigma' in str(orig_gmpe):
+        raise ValueError(msg3)
+    else:
+        pass
+    
+    return gmpe
 
 
