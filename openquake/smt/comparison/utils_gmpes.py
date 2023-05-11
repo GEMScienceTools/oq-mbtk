@@ -234,7 +234,7 @@ def mgmpe_check(gmpe):
     base_gsim = str(gmpe).split(']')[0].replace('[','')
 
     ### Sigma model implementations 
-    kwargs_al_atik = {'gmpe': {gmpe: {'sigma_model_alatik2015': {}}},
+    kwargs_al_atik = {'gmpe': {base_gsim: {'sigma_model_alatik2015': {}}},
               'sigma_model_alatik2015': {}}
     if 'al_atik_2015_sigma' in str(gmpe):
         gmpe = mgmpe.ModifiableGMPE(**kwargs_al_atik)
