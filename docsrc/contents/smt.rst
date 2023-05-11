@@ -119,8 +119,9 @@ We can specify the inputs to perform a residual analysis with as follows:
         gmpe_table = 'NGAEast_FRANKEL_J15.hdf5'
             
         [models.HassaniAtkinson2018]
-            d_sigma = 100
-            kappa0 = 0.04
+        d_sigma = 100
+        kappa0 = 0.04
+        sigma_model = 'al_atik_2015_sigma'
         
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
