@@ -375,9 +375,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     
                     
                 if 'lt_weight_plot_lt_only' not in str(gmpe):
-                    ax1.plot(period, rs_50p, color=col, linewidth=3, linestyle='-',
+                    ax1.plot(period, rs_50p, color=col, linewidth=2, linestyle='-',
                              label=gmpe)
-                    ax2.plot(period, sigma, color=col, linewidth=3, linestyle='-',
+                    ax2.plot(period, sigma, color=col, linewidth=2, linestyle='-',
                              label=gmpe)
                     if Nstd != 0:
                         ax1.plot(period, rs_plus_sigma, color=col, linewidth=0.75,
@@ -507,17 +507,17 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 
                 # Plot the logic tree
                 ax1.plot(period, np.array(pd.Series(lt_mean_per_period)),
-                         linewidth = 3, color = 'm', linestyle = '-',
+                         linewidth = 2, color = 'm', linestyle = '-',
                          label = logic_tree_config, zorder = 100)
                 
                 # Plot mean plus sigma and mean minus sigma if required
                 if Nstd != 0:
                     ax1.plot(period, np.array(pd.Series(lt_plus_sigma_per_period)),
-                             linewidth = 3, color = 'm', linestyle = '--',
+                             linewidth = 0.75, color = 'm', linestyle = '--',
                              zorder = 100)
                     
                     ax1.plot(period, np.array(pd.Series(lt_minus_sigma_per_period)),
-                             linewidth = 3, color = 'm', linestyle = '--',
+                             linewidth = 0.75, color = 'm', linestyle = '--',
                              zorder = 100)
                 else:
                     pass
