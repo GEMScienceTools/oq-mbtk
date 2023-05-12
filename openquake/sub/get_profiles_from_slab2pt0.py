@@ -97,7 +97,7 @@ def get_initial_traces(bb, dip_dir, spacing):
         # the profiles. We reverse the list to comply with the right hand rule
         coords = npoints_towards(
             bb[0], bb[2], 0, edge_azimuth, distance, 0, num_samples)
-        profiles = _get_profiles(coords, dip_dir, max_length)
+        tmp_profiles = _get_profiles(coords, dip_dir, max_length)
         tmp_profiles.reverse()
 
         # Top edge distance and azimuth
@@ -119,7 +119,7 @@ def get_initial_traces(bb, dip_dir, spacing):
         # Update the profile list
         profiles.extend(tmp_profiles)
 
-        return profiles
+        return profiles, distance
 
     # Bottom edge distance and azimuth. The latter is taken from the bottom
     # right to the bottom left corner
@@ -174,7 +174,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
                  str = ''):
     """
     :param fname_str:
-        The name of the Slab2.0 .grd file with the values of depth
+        The name of the Slab2.0 .grd file with the values of strike
     :param fname_dep:
         The name of the Slab2.0 .grd file with the values of depth
     :param spacing:
