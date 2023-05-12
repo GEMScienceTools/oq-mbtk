@@ -61,7 +61,7 @@ def main(fname_conf: str):
     # Name of the .grd file with the strike values
     fname_str = conf.get('fname_str', None)
 
-    # Name of the .grd file with the strike values
+    # set spacing from configuration file
     spacing = conf.get('spacing', 100.)
 
     # Name of the folder where to save the profiles
