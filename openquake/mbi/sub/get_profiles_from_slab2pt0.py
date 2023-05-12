@@ -55,7 +55,7 @@ def main(fname_conf: str):
     # Read configuration file
     conf = toml.load(fname_conf)
 
-    # Name of the .grd file with the strike values
+    # Name of the .grd file with the depth values
     fname_dep = conf.get('fname_dep', None)
 
     # Name of the .grd file with the strike values
