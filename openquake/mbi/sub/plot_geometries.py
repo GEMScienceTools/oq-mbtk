@@ -36,7 +36,7 @@ def plt_catalogue(filename, plotter, projection, max_hypo_depth=350,
     scaling = -1e2
     # Load catalogue
     cat = pickle.load(open(filename, 'rb'))
-    # Create and annay
+    # Create an array
     points = np.array([cat.data['longitude'], cat.data['latitude'],
                        cat.data['depth']]).T
     # Select
