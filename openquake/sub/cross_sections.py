@@ -84,20 +84,24 @@ class Slab2pt0(object):
             pnts = copy.copy(slab_points)
 
             # Get min and max longitude and latitude values
-            minlo, maxlo, minla, maxla, qual = cs.get_mm()
+            _, _, _, _, qual = cs.get_mm(2.0)
 
             # Find the nodes of the grid within a certain distance from the
             # plane of the cross-section
             if qual == 0:
-                minlo, maxlo, minla, maxla, qual = cs.get_mm(2.0)
+                minlo, maxlo, minla, maxla, _ = cs.get_mm(2.0)
                 idxslb, dsts = cs.get_grd_nodes_within_buffer(
                     pnts[:, 0], pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
             if qual == 1:
+                minlo, maxlo, minla, maxla, _ = cs.get_mm(2.0)
                 idxslb, dsts = cs.get_grd_nodes_within_buffer_idl(
                     pnts[:, 0], pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
 
+            info = len(idxslb) if idxslb is not None else 0
+            print(ics, cs.olo, cs.ola, info, qual)
+
             # Check if the array with cross-section data is not empty
-            if idxslb is None or len(idxslb) < 1:
+            if idxslb is None or len(idxslb) < 5:
                 continue
 
             # Points
@@ -105,8 +109,12 @@ class Slab2pt0(object):
             psec = npoints_towards(cs.olo, cs.ola, 0.0, cs.strike[0],
                                    cs.length[0], 0., num)
             p = pnts[idxslb, :]
-            interp = LinearNDInterpolator(p[:, 0:2], p[:, 2])
-            z = interp(psec[0], psec[1])
+
+            try:
+                interp = LinearNDInterpolator(p[:, 0:2], p[:, 2])
+                z = interp(psec[0], psec[1])
+            except:
+                breakpoint()
 
             iii = numpy.isfinite(z)
             pro = numpy.concatenate((numpy.expand_dims(psec[0][iii], axis=1),
@@ -676,7 +684,7 @@ class CrossSection:
             A float used to expand the bounding box computed.
         :returns:
             A tuple containing longitude min and max values, latitude min and
-            max values and a parameter that's when is equal to 1 tells that
+            max values and a parameter that when is equal to 1 tells that
             the cross-section crosses the IDL.
         """
         lomin = min(self.plo) - delta
@@ -788,18 +796,28 @@ class CrossSection:
         :parameter maxla:
             Maximum latitude
         """
+        if minlo > maxlo:
+            tmp = maxlo
+            maxlo = minlo
+            minlo = tmp
+        assert minlo < maxlo
+        assert minla < maxla
+
         line = Line([Point(lo, la) for lo, la in zip(self.plo, self.pla)])
         idxs = numpy.nonzero((x > minlo) & (x < maxlo) &
                              (y > minla) & (y < maxla))
         xs = x[idxs[0]]
         ys = y[idxs[0]]
         coo = [(lo, la) for lo, la in zip(list(xs), list(ys))]
+
         if len(coo):
             dst = get_min_distance(line, numpy.array(coo))
             iii = idxs[0][abs(dst) <= buffer_distance]
             return iii, dst[abs(dst) <= buffer_distance]
         else:
-            print('   Warning: no nodes found around the cross-section')
+            msg = '   Warning: no nodes found around the cross-section \n'
+            msg += f'   {self.plo} {self.pla}'
+            print(msg)
             return None, None
 
     def get_grd_nodes_within_buffer_idl(self, x, y, buffer_distance,
@@ -820,11 +838,18 @@ class CrossSection:
         :parameter maxlo:
         :parameter maxla:
         """
+
+        #assert self.plo[0] < self.plo[1]
+        #assert self.pla[0] < self.pla[1]
+
         line1, line2, center = self.split_at_idl()
         padding = 2.0
-        idxs1 = numpy.nonzero((x > -180.) & (x < (self.plo[0]+padding)) &
-                              (y < (center+padding)) &
-                              (y > (self.pla[0]-padding)))
+
+        idxs1 = numpy.nonzero((x > -180.) & (x < (self.plo[0]+padding)))
+        #idxs1 = numpy.nonzero((x > -180.) & (x < (self.plo[0]+padding)) &
+        #                      (y < (self.pla[1]+padding)) &
+        #                      (y > (self.pla[0]-padding)))
+
         xs1 = x[idxs1[0]]
         ys1 = y[idxs1[0]]
         coo1 = [(lo, la) for lo, la in zip(list(xs1), list(ys1))]
@@ -833,9 +858,10 @@ class CrossSection:
             dst1 = get_min_distance(line1, numpy.array(coo1))
             set1 = idxs1[0][abs(dst1) <= buffer_distance]
 
-        idxs2 = numpy.nonzero((x < 180.) & (x > (self.plo[1]-padding)) &
-                              (y < (center+padding)) &
-                              ((y > self.pla[1]-padding)))
+        idxs2 = numpy.nonzero((x < 180.) & (x > (self.plo[1]-padding)))
+        #idxs2 = numpy.nonzero((x < 180.) & (x > (self.plo[1]-padding)) &
+        #                      (y < (self.pla[1]+padding)) &
+        #                      (y > (self.pla[0]-padding)))
         xs2 = x[idxs2[0]]
         ys2 = y[idxs2[0]]
         coo2 = [(lo, la) for lo, la in zip(list(xs2), list(ys2))]
@@ -851,8 +877,10 @@ class CrossSection:
                                      axis=0)
             return use_inds, dsts
         else:
-            print('   Warning: no nodes found around the cross-section')
-            return None
+            msg = '   Warning: no nodes found around the cross-section \n'
+            msg += f'   {self.plo} {self.pla}'
+            print(msg)
+            return None, None
 
 
 def get_min_distance(line, pnts):
