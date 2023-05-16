@@ -492,7 +492,14 @@ class Residuals(object):
                             period > self.gmpe_sa_limits[gmpe][1]:
                         expected[gmpe][imtx] = None
                         continue
+                # Check if gsim needs appending with mgmpe
                 gsim = mgmpe_check(gsim)
+                # Add region parameter to sites context if specified in gsim
+                if 'eshm20_region' in gsim.kwargs:
+                    context["Ctx"].region = gsim.kwargs['eshm20_region']
+                if 'region' in gsim.kwargs and 'eshm20_region' not in gsim.kwargs:
+                    context["Ctx"].region = gsim.kwargs['region']
+                # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
                     context["Ctx"],
                     context["Ctx"],
