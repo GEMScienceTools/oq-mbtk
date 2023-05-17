@@ -215,6 +215,29 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
         
+        # Remove records with no strike, dip or rake angle
+        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Strike (deg)']==-999][
+            'Strike (deg)'].index)
+        NGAWest2=NGAWest2.drop(Index_to_drop)
+        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        
+        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Dip (deg)']==-999][
+            'Dip (deg)'].index)
+        NGAWest2=NGAWest2.drop(Index_to_drop)
+        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        
+        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Rake Angle (deg)']==-999][
+            'Rake Angle (deg)'].index)
+        NGAWest2=NGAWest2.drop(Index_to_drop)
+        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        
+        # If no ztor set to 0 km (workaround used to get ztor vals as oddly can't
+        # be found as column using conventional pandas methods)
+        ztor_column = NGAWest2.columns[32] # Column header 32 in NGAWest2 df
+        ztor_vals = NGAWest2[ztor_column]
+        ztor_vals[ztor_vals == -999] = 0
+        NGAWest2['ztor'] = ztor_vals
+        
         # Remove records with no epicentral distance
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['EpiD (km)']==-999][
             'EpiD (km)'].index)
@@ -840,11 +863,11 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "EMEC_Mw_ref":default_string,
     "event_source_id":default_string,
  
-    "es_strike":default_string,
-    "es_dip":default_string,
-    "es_rake":default_string,
+    "es_strike":NGAWest2['Strike (deg)'],
+    "es_dip":NGAWest2['Dip (deg)'],
+    "es_rake":NGAWest2['Rake Angle (deg)'],
     "es_strike_dip_rake_ref":default_string, 
-    "es_z_top":default_string,
+    "es_z_top":NGAWest2['ztor'],
     "es_z_top_ref":default_string,
     "es_length":default_string,   
     "es_width":default_string,
