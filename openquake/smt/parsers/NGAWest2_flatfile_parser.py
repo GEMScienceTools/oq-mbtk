@@ -890,7 +890,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "ec8_code_method":default_string,
     "ec8_code_ref":default_string,
     "vs30_m_sec":NGAWest2['Vs30 (m/s) selected for analysis'],
-    "vs30_ref":NGAWest2['Measured/Inferred Class'],
+    "vs30_ref":default_string,
     "vs30_calc_method":default_string, 
     "vs30_meas_type":default_string,
     "slope_deg":default_string,
