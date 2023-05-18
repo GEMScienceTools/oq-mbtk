@@ -164,15 +164,21 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                 'Hypocenter Latitude (deg)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2[
             'Hypocenter Longitude (deg)']==-999][
                 'Hypocenter Longitude (deg)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2[
             'Hypocenter Depth (km)']==-999]['Hypocenter Depth (km)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
         # If year not provided assign '0000' to work with datetime
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['YEAR']=='-999'][
@@ -220,16 +226,22 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             'Strike (deg)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Dip (deg)']==-999][
             'Dip (deg)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Rake Angle (deg)']==-999][
             'Rake Angle (deg)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
         # If no ztor set to 0 km (workaround used to get ztor vals as oddly can't
         # be found as column using conventional pandas methods)
@@ -243,6 +255,8 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             'EpiD (km)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
         # If Joyner-Boore, rupture distance, Rx or Ry = -999 reassign as empty
         Index_to_drop=np.array(NGAWest2.loc[
@@ -267,6 +281,8 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                 'Vs30 (m/s) selected for analysis'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
         # Compute Mw from seismic moment using Hanks and Kamori
         NGAWest2['Earthquake Magnitude'] = (np.log10(NGAWest2[
