@@ -901,7 +901,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "JB_dist":NGAWest2['Joyner-Boore Dist. (km)'],
     "rup_dist":NGAWest2['Campbell R Dist. (km)'],
     "Rx_dist":NGAWest2['Rx'],
-    "Ry0_dist":NGAWest2['Ry 2'],
+    "Ry0_dist":default_string,
  
     "instrument_type_code":default_string,      
     "late_triggered_flag_01":default_string,
