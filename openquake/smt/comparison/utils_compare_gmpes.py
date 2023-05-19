@@ -38,7 +38,7 @@ from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1,\
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd,
                  output_directory, custom_color_flag, custom_color_list,
-                 eshm20_region, lt_weights = None):
+                 eshm20_region, lt_weights_gmc1 = None, lt_weights_gmc2 = None):
     """
     Generate trellis plots for given run configuration
     """
@@ -62,9 +62,17 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
     
     store_trellis_values = {}
-    lt_mean_store = {}
-    lt_plus_sigma_store = {}
-    lt_minus_sigma_store = {}
+    
+    # gmc1
+    lt_mean_store_gmc1 = {}
+    lt_plus_sigma_store_gmc1 = {}
+    lt_minus_sigma_store_gmc1 = {}
+    
+    # gmc 2
+    lt_mean_store_gmc2 = {}
+    lt_plus_sigma_store_gmc2 = {}
+    lt_minus_sigma_store_gmc2 = {}
+    
     for n, i in enumerate(imt_list): #iterate though imt_list
 
         for l, m in enumerate(mag_list):  #iterate though mag_list
@@ -72,7 +80,8 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             fig.add_subplot(len(imt_list), len(mag_list), l+1+n*len(
                 mag_list)) #(#vert, #hor, #subplot)
             
-            store_lt_branch_values = {}
+            store_lt_branch_values_gmc1 = {}
+            store_lt_branch_values_gmc2 = {}
             
             for g, gmpe in enumerate(gmpe_list): 
                 
@@ -90,24 +99,20 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 mean = mean[0][0]
                 std = std[0][0]
                 
-                if 'lt_weight_plot_lt_only' not in str(gmpe):
+                if 'plot_lt_only' not in str(gmpe):
                     pyplot.plot(distances, np.exp(mean), color=col,
                                 linewidth=2, linestyle='-', label=gmpe)
-                else:
-                    pass
                 
                 plus_sigma = np.exp(mean+Nstd*std[0])
                 minus_sigma = np.exp(mean-Nstd*std[0])
                 
                 # Plot Sigma                
                 if not Nstd==0:
-                    if 'lt_weight_plot_lt_only' not in str(gmpe):
+                    if 'plot_lt_only' not in str(gmpe):
                         pyplot.plot(distances, plus_sigma, linewidth=0.75,
                                     color=col, linestyle='-.')
                         pyplot.plot(distances, minus_sigma, linewidth=0.75,
                                     color=col, linestyle='-.')
-                    else:
-                        pass
                                      
                     store_trellis_values['IM = ' + str(i), 'Magnitude = ' 
                                          + str(m), str(gmpe).replace(
@@ -117,16 +122,23 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                            np.array(minus_sigma),
                                                            np.array(distances)]
                     
-                    if lt_weights == None:
+                    if lt_weights_gmc1 == None:
                         pass
-                    elif gmpe in lt_weights:
-                        if lt_weights[gmpe] != None:
-                                store_lt_branch_values[gmpe] = {
-                                        'mean': np.exp(mean)*lt_weights[gmpe],
-                                        'plus_sigma': plus_sigma*lt_weights[gmpe],
-                                        'minus_sigma': minus_sigma*lt_weights[gmpe]}
-                        else:
-                            pass 
+                    elif gmpe in lt_weights_gmc1:
+                        if lt_weights_gmc1[gmpe] != None:
+                                store_lt_branch_values_gmc1[gmpe] = {
+                                        'mean': np.exp(mean)*lt_weights_gmc1[gmpe],
+                                        'plus_sigma': plus_sigma*lt_weights_gmc1[gmpe],
+                                        'minus_sigma': minus_sigma*lt_weights_gmc1[gmpe]}
+                        
+                    if lt_weights_gmc2 == None:
+                        pass
+                    elif gmpe in lt_weights_gmc2:
+                        if lt_weights_gmc2[gmpe] != None:
+                                store_lt_branch_values_gmc2[gmpe] = {
+                                        'mean': np.exp(mean)*lt_weights_gmc2[gmpe],
+                                        'plus_sigma': plus_sigma*lt_weights_gmc2[gmpe],
+                                        'minus_sigma': minus_sigma*lt_weights_gmc2[gmpe]}
                     
                 else:
                     store_trellis_values['IM = ' + str(i), 'Magnitude = ' +
@@ -134,17 +146,21 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                  '\n', ', ').replace(
                                                      '[', '').replace(']', '')
                                                      ] = [np.array(np.exp(mean)),
-                                                              np.array(distances)]
-                                                          
-                    if lt_weights == None:
+                                                              np.array(distances)]         
+                    if lt_weights_gmc1 == None:
                         pass
-                    elif gmpe in lt_weights:                                      
-                        if lt_weights[gmpe] != None:
-                            store_lt_branch_values[gmpe] = {
-                                    'mean': np.exp(mean)*lt_weights[gmpe]}
-                        else:
-                            pass
-                                                              
+                    elif gmpe in lt_weights_gmc1:                                      
+                        if lt_weights_gmc1[gmpe] != None:
+                            store_lt_branch_values_gmc1[gmpe] = {
+                                    'mean': np.exp(mean)*lt_weights_gmc1[gmpe]}
+                                   
+                    if lt_weights_gmc2 == None:
+                        pass
+                    elif gmpe in lt_weights_gmc2:                                      
+                        if lt_weights_gmc2[gmpe] != None:
+                            store_lt_branch_values_gmc2[gmpe] = {
+                                    'mean': np.exp(mean)*lt_weights_gmc2[gmpe]}
+                            
                 if n == 0: #top row only
                     pyplot.title('Mw=' + str(m), fontsize='16')
                 if n == len(imt_list)-1: #bottom row only
@@ -159,41 +175,89 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             pyplot.grid(axis='both', which='both', alpha=0.5)
         
             # Plot logic tree for the IMT-mag combination if weights specified
-            logic_tree_config = 'Inputted GMPE logic tree config.'
+            logic_tree_config_gmc1 = 'GMC logic tree #1'
+            logic_tree_config_gmc2 = 'GMC logic tree #2'
             
-            if store_lt_branch_values != {}:
+            # GMC1
+            if store_lt_branch_values_gmc1 != {}:
                 if not Nstd == 0:
                        
-                    lt_df = pd.DataFrame(store_lt_branch_values,
+                    lt_df_gmc1 = pd.DataFrame(store_lt_branch_values_gmc1,
                                          index = ['mean', 'plus_sigma',
                                                   'minus_sigma'])
 
-                    lt_mean = np.sum(lt_df[:].loc['mean'])
-                    lt_plus_sigma = np.sum(lt_df[:].loc['plus_sigma'])
-                    lt_minus_sigma = np.sum(lt_df[:].loc['minus_sigma'])
+                    lt_mean_gmc1 = np.sum(lt_df_gmc1[:].loc['mean'])
+                    lt_plus_sigma_gmc1 = np.sum(lt_df_gmc1[:].loc[
+                        'plus_sigma'])
+                    lt_minus_sigma_gmc1 = np.sum(lt_df_gmc1[:].loc[
+                        'minus_sigma'])
            
-                    pyplot.plot(distances, lt_mean, linewidth = 2, color = 'm',
-                                linestyle = '-', label = logic_tree_config, zorder = 100)
+                    pyplot.plot(distances, lt_mean_gmc1, linewidth = 2,
+                                color = 'm', linestyle = '-',
+                                label = logic_tree_config_gmc1, zorder = 100)
                     
-                    pyplot.plot(distances, lt_plus_sigma, linewidth = 0.75,
+                    pyplot.plot(distances, lt_plus_sigma_gmc1, linewidth = 0.75,
                                 color = 'm', linestyle = '-.', zorder = 100)
         
-                    pyplot.plot(distances, lt_minus_sigma, linewidth = 0.75,
+                    pyplot.plot(distances, lt_minus_sigma_gmc1, linewidth = 0.75,
                                 color = 'm', linestyle = '-.', zorder = 100)
                     
-                    lt_mean_store[i,m] = lt_mean
-                    lt_plus_sigma_store[i,m] = lt_plus_sigma
-                    lt_minus_sigma_store[i,m] = lt_minus_sigma
+                    lt_mean_store_gmc1[i,m] = lt_mean_gmc1
+                    lt_plus_sigma_store_gmc1[i,m] = lt_plus_sigma_gmc1
+                    lt_minus_sigma_store_gmc1[i,m] = lt_minus_sigma_gmc1
                     
                 if Nstd == 0:
-                    lt_df = pd.DataFrame(store_lt_branch_values, index = ['mean'])
+                    lt_df_gmc1 = pd.DataFrame(store_lt_branch_values_gmc1,
+                                              index = ['mean'])
                     
-                    lt_mean = np.sum(lt_df[:].loc['mean'])
+                    lt_mean_gmc1 = np.sum(lt_df_gmc1[:].loc['mean'])
                      
-                    pyplot.plot(distances, lt_mean, linewidth = 2, color = 'm',
-                                linestyle = '-', label = logic_tree_config)
+                    pyplot.plot(distances, lt_mean_gmc1, linewidth = 2,
+                                color = 'm', linestyle = '-',
+                                label = logic_tree_config_gmc1)
                     
-                    lt_mean_store[i,m] = lt_mean
+                    lt_mean_store_gmc1[i,m] = lt_mean_gmc1
+                    
+            # GMC2
+            if store_lt_branch_values_gmc2 != {}:
+                if not Nstd == 0:
+                       
+                    lt_df_gmc2 = pd.DataFrame(store_lt_branch_values_gmc2,
+                                         index = ['mean', 'plus_sigma',
+                                                  'minus_sigma'])
+            
+                    lt_mean_gmc2 = np.sum(lt_df_gmc2[:].loc['mean'])
+                    lt_plus_sigma_gmc2 = np.sum(lt_df_gmc2[:].loc[
+                        'plus_sigma'])
+                    lt_minus_sigma_gmc2 = np.sum(lt_df_gmc2[:].loc[
+                        'minus_sigma'])
+            
+                    pyplot.plot(distances, lt_mean_gmc2, linewidth = 2,
+                                color = 'tab:blue', linestyle = '-',
+                                label = logic_tree_config_gmc2, zorder = 100)
+                    
+                    pyplot.plot(distances, lt_plus_sigma_gmc2, linewidth = 0.75,
+                                color = 'tab:blue', linestyle = '-.', zorder = 100)
+            
+                    pyplot.plot(distances, lt_minus_sigma_gmc2, linewidth = 0.75,
+                                color = 'tab:blue', linestyle = '-.', zorder = 100)
+                    
+                    lt_mean_store_gmc2[i,m] = lt_mean_gmc2
+                    lt_plus_sigma_store_gmc2[i,m] = lt_plus_sigma_gmc2
+                    lt_minus_sigma_store_gmc2[i,m] = lt_minus_sigma_gmc2
+                    
+                if Nstd == 0:
+                    lt_df_gmc2 = pd.DataFrame(store_lt_branch_values_gmc2,
+                                              index = ['mean'])
+                    
+                    lt_mean_gmc2 = np.sum(lt_df_gmc2[:].loc['mean'])
+                     
+                    pyplot.plot(distances, lt_mean_gmc2, linewidth = 2,
+                                color = 'tab:blue', linestyle = '-',
+                                label = logic_tree_config_gmc2)
+                    
+                    lt_mean_store_gmc2[i,m] = lt_mean_gmc2                    
+                    
 
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(os.path.join(output_directory,'TrellisPlots.png'),
@@ -208,27 +272,49 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                  'Plus %s sigma (g)' %Nstd,
                                                  'Minus %s sigma (g)' %Nstd,
                                                      'Distance (km)'])
-        if lt_weights != None:
+        # GMC1
+        if lt_weights_gmc1 != None:
             for n, i in enumerate(imt_list): #iterate though imt_list
                 for l, m in enumerate(mag_list):  #iterate through mag_list
                     trellis_value_df['IM = ' + str(i),
-                                     'Magnitude = ' + str(m),'GMPE logic tree'] = [
-                                         lt_mean_store[i,m],lt_plus_sigma_store[i,m],
-                                         lt_minus_sigma_store[i,m], distances]
-        else:
-            pass
+                                     'Magnitude = ' + str(m),
+                                     'GMC logic tree #1'] = [
+                                         lt_mean_store_gmc1[i,m],
+                                         lt_plus_sigma_store_gmc1[i,m],
+                                         lt_minus_sigma_store_gmc1[i,m],
+                                         distances]
+        # GMC2
+        if lt_weights_gmc2 != None:
+            for n, i in enumerate(imt_list): #iterate though imt_list
+                for l, m in enumerate(mag_list):  #iterate through mag_list
+                    trellis_value_df['IM = ' + str(i),
+                                     'Magnitude = ' + str(m),
+                                     'GMC logic tree #2'] = [
+                                         lt_mean_store_gmc2[i,m],
+                                         lt_plus_sigma_store_gmc2[i,m],
+                                         lt_minus_sigma_store_gmc2[i,m],
+                                         distances]
                                          
     if Nstd == 0:
         trellis_value_df = pd.DataFrame(store_trellis_values,
                                         index = ['Mean (g)', 'Distance (km)'])
-        if lt_weights != None:
+        # GMC1
+        if lt_weights_gmc1 != None:
             for n, i in enumerate(imt_list): #iterate though imt_list
                 for l, m in enumerate(mag_list):  #iterate through mag_list
                     trellis_value_df['IM = ' + str(i), 'Magnitude = ' + str(m),
-                                     'GMPE logic tree'] = [lt_mean_store[i,m],
-                                                          distances]                                                         
+                                     'GMC logic tree #1'] = [
+                                         lt_mean_store_gmc1[i,m], distances]   
+        # GMC2
+        if lt_weights_gmc2 != None:
+            for n, i in enumerate(imt_list): #iterate though imt_list
+                for l, m in enumerate(mag_list):  #iterate through mag_list
+                    trellis_value_df['IM = ' + str(i), 'Magnitude = ' + str(m),
+                                     'GMC logic tree #2'] = [
+                                         lt_mean_store_gmc2[i,m], distances]                                                      
         else:
             pass
+        
     display(trellis_value_df)
     trellis_value_df.to_csv(os.path.join(output_directory, 'trellis_values.csv'))
     
@@ -236,7 +322,8 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
 def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
                       output_directory, custom_color_flag, custom_color_list,
-                      eshm20_region, lt_weights = None):
+                      eshm20_region, lt_weights_gmc1 = None,
+                      lt_weights_gmc2 = None):
     """
     Plot response spectra and sigma w.r.t. spectral period for given run
     configuration
@@ -315,16 +402,30 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     
     # Set dicts to store values
     store_spectra_values = {}
-    store_lt_branch_values = {}
-    store_lt_mean_per_dist_mag = {}
     
-    store_lt_branch_values_plus_sigma = OrderedDict([(gmm,
+    # Dicts for GMC1
+    store_lt_branch_values_gmc1 = {}
+    store_lt_mean_per_dist_mag_gmc1 = {}
+    
+    store_lt_branch_values_plus_sigma_gmc1 = OrderedDict([(gmm,
                                   {}) for gmm in gmpe_list])    
-    store_lt_branch_values_minus_sigma = OrderedDict([(gmm,
+    store_lt_branch_values_minus_sigma_gmc1 = OrderedDict([(gmm,
                                   {}) for gmm in gmpe_list])
     
-    store_lt_plus_sigma_per_dist_mag = {}
-    store_lt_minus_sigma_per_dist_mag = {}
+    store_lt_plus_sigma_per_dist_mag_gmc1 = {}
+    store_lt_minus_sigma_per_dist_mag_gmc1 = {}
+    
+    # Dicts for GMC2
+    store_lt_branch_values_gmc2 = {}
+    store_lt_mean_per_dist_mag_gmc2 = {}
+    
+    store_lt_branch_values_plus_sigma_gmc2 = OrderedDict([(gmm,
+                                  {}) for gmm in gmpe_list])    
+    store_lt_branch_values_minus_sigma_gmc2 = OrderedDict([(gmm,
+                                  {}) for gmm in gmpe_list])
+
+    store_lt_plus_sigma_per_dist_mag_gmc2 = {}
+    store_lt_minus_sigma_per_dist_mag_gmc2 = {}
 
     for n, i in enumerate(dist_list): #iterate though dist_list
         
@@ -362,10 +463,10 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     sigma_dist = f1(i)
                     
                     if Nstd != 0:
-                            rs_plus_sigma_dist = np.exp(f(i)+(Nstd*sigma_dist))
-                            rs_minus_sigma_dist = np.exp(f(i)-(Nstd*sigma_dist))
-                    else:
-                        pass
+                            rs_plus_sigma_dist = np.exp(f(i)+(
+                                Nstd*sigma_dist))
+                            rs_minus_sigma_dist = np.exp(f(i)-(
+                                Nstd*sigma_dist))
                  
                     rs_50p.append(rs_50p_dist)
                     if Nstd != 0:
@@ -373,30 +474,32 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                         rs_minus_sigma.append(rs_minus_sigma_dist)
                     sigma.append(sigma_dist)
                     
-                    
-                if 'lt_weight_plot_lt_only' not in str(gmpe):
-                    ax1.plot(period, rs_50p, color=col, linewidth=2, linestyle='-',
-                             label=gmpe)
-                    ax2.plot(period, sigma, color=col, linewidth=2, linestyle='-',
-                             label=gmpe)
+                # Plot individual GMPE medians
+                if 'plot_lt_only' not in str(gmpe):
+                    ax1.plot(period, rs_50p, color=col, linewidth=2,
+                             linestyle='-', label=gmpe)
                     if Nstd != 0:
-                        ax1.plot(period, rs_plus_sigma, color=col, linewidth=0.75,
-                                 linestyle='-.')
-                        ax1.plot(period, rs_minus_sigma, color=col, linewidth=0.75,
-                                 linestyle='-.')
-                else:
-                    pass
+                        ax1.plot(period, rs_plus_sigma, color=col,
+                                 linewidth=0.75, linestyle='-.')
+                        ax1.plot(period, rs_minus_sigma, color=col,
+                                 linewidth=0.75, linestyle='-.')
+                
+                # Plot sigma vs period
+                ax2.plot(period, sigma, color=col, linewidth=2, linestyle='-',
+                         label=gmpe)
                 
                 sigma_store = []
-                for idx_sigma, val_sigma in enumerate(rs_plus_sigma):                    
+                for idx_sigma, val_sigma in enumerate(sigma):                    
                     sigma_store.append(val_sigma[0])
                     
                 if Nstd != 0:
                     plus_sigma_store = []
                     minus_sigma_store = []
-                    for idx_plus_sigma, val_plus_sigma in enumerate(rs_plus_sigma):
+                    for idx_plus_sigma, val_plus_sigma in enumerate(
+                            rs_plus_sigma):
                         plus_sigma_store.append(val_plus_sigma[0])
-                    for idx_minus_sigma, val_minus_sigma in enumerate(rs_minus_sigma):
+                    for idx_minus_sigma, val_minus_sigma in enumerate(
+                            rs_minus_sigma):
                         minus_sigma_store.append(val_minus_sigma[0])
 
                     store_spectra_values['Distance = %s km' %i, 'Magnitude = '
@@ -414,36 +517,71 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                  ']', '')] = [np.array(period),
                                                             np.array(rs_50p),
                                                             sigma_store]
-                # Check if weight provided for the GMPE                            
-                if lt_weights == None:
+                                                              
+             
+                                                              
+                # Check if weight provided for the GMPE        
+
+                # GMC1                    
+                if lt_weights_gmc1 == None:
                     pass
-                elif gmpe in lt_weights:
-                    if lt_weights[gmpe] != None:
-                        rs_50p_weighted = {}
-                        rs_plus_sigma_weighted = {}
-                        rs_minus_sigma_weighted = {}
+                elif gmpe in lt_weights_gmc1:
+                    if lt_weights_gmc1[gmpe] != None:
+                        rs_50p_weighted_gmc1 = {}
+                        rs_plus_sigma_weighted_gmc1 = {}
+                        rs_minus_sigma_weighted_gmc1 = {}
                         for idx, rs in enumerate(rs_50p):
-                            rs_50p_weighted[idx] = rs_50p[idx]*lt_weights[gmpe]
+                            rs_50p_weighted_gmc1[idx] = rs_50p[
+                                idx]*lt_weights_gmc1[gmpe]
                             if Nstd != 0:
-                                rs_plus_sigma_weighted[idx] = rs_plus_sigma[
-                                    idx]*lt_weights[gmpe]
-                                rs_minus_sigma_weighted[idx] = rs_minus_sigma[
-                                    idx]*lt_weights[gmpe]
-                            else:
-                                pass
-                            
+                                rs_plus_sigma_weighted_gmc1[
+                                    idx] = rs_plus_sigma[
+                                    idx]*lt_weights_gmc1[gmpe]
+                                rs_minus_sigma_weighted_gmc1[
+                                    idx] = rs_minus_sigma[
+                                    idx]*lt_weights_gmc1[gmpe]
+
                         # If present store the weighted mean for the GMPE
-                        store_lt_branch_values[gmpe] = {'mean': rs_50p_weighted}
+                        store_lt_branch_values_gmc1[
+                            gmpe] = {'mean': rs_50p_weighted_gmc1}
                         
                         # And if Nstd != 0 store these weighted branches too
                         if Nstd != 0:
-                            store_lt_branch_values_plus_sigma[gmpe] = {
-                                'plus_sigma': rs_plus_sigma_weighted}
-                            store_lt_branch_values_minus_sigma[gmpe] = {
-                                'minus_sigma': rs_minus_sigma_weighted}
+                            store_lt_branch_values_plus_sigma_gmc1[gmpe] = {
+                                'plus_sigma': rs_plus_sigma_weighted_gmc1}
+                            store_lt_branch_values_minus_sigma_gmc1[gmpe] = {
+                                'minus_sigma': rs_minus_sigma_weighted_gmc1}
                             
-                            #print(gmpe, store_lt_branch_values_plus_sigma)
+                # GMC2                  
+                if lt_weights_gmc2 == None:
+                    pass
+                elif gmpe in lt_weights_gmc2:
+                    if lt_weights_gmc2[gmpe] != None:
+                        rs_50p_weighted_gmc2 = {}
+                        rs_plus_sigma_weighted_gmc2 = {}
+                        rs_minus_sigma_weighted_gmc2 = {}
+                        for idx, rs in enumerate(rs_50p):
+                            rs_50p_weighted_gmc2[idx] = rs_50p[
+                                idx]*lt_weights_gmc2[gmpe]
+                            if Nstd != 0:
+                                rs_plus_sigma_weighted_gmc2[
+                                    idx] = rs_plus_sigma[idx]*lt_weights_gmc2[
+                                        gmpe]
+                                rs_minus_sigma_weighted_gmc2[
+                                    idx] = rs_minus_sigma[idx]*lt_weights_gmc2[
+                                        gmpe]
                             
+                        # If present store the weighted mean for the GMPE
+                        store_lt_branch_values_gmc2[
+                            gmpe] = {'mean': rs_50p_weighted_gmc2}
+                        
+                        # And if Nstd != 0 store these weighted branches too
+                        if Nstd != 0:
+                            store_lt_branch_values_plus_sigma_gmc2[gmpe] = {
+                                'plus_sigma': rs_plus_sigma_weighted_gmc2}
+                            store_lt_branch_values_minus_sigma_gmc2[gmpe] = {
+                                'minus_sigma': rs_minus_sigma_weighted_gmc2}
+                                                                                   
                 # Continue with plot creation
                 ax1.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
                               fontsize=16, y=1.0, pad=-16)
@@ -460,73 +598,148 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             ax2.set_ylim(0.3, 1)
             
             # Plot logic tree for the dist-mag combination if weights specified
-            logic_tree_config = 'Inputted GMPE logic tree config.'
+            logic_tree_config_gmc1 = 'GMC logic tree #1'
+            logic_tree_config_gmc2 = 'GMC logic tree #2'
             
             # Create the dataframe of stored values for mean etc
-            if store_lt_branch_values != {}:
-                lt_df = pd.DataFrame(store_lt_branch_values, index = ['mean'])
+            
+            # GMC1
+            if store_lt_branch_values_gmc1 != {}:
+                lt_df_gmc1 = pd.DataFrame(store_lt_branch_values_gmc1,
+                                          index = ['mean'])
                 if Nstd != 0:
-                    lt_df_plus_sigma = pd.DataFrame(
-                        store_lt_branch_values_plus_sigma, index = ['plus_sigma'])
-                    lt_df_minus_sigma = pd.DataFrame(
-                        store_lt_branch_values_minus_sigma, index = ['minus_sigma'])
+                    lt_df_plus_sigma_gmc1 = pd.DataFrame(
+                        store_lt_branch_values_plus_sigma_gmc1,
+                        index = ['plus_sigma'])
+                    lt_df_minus_sigma_gmc1 = pd.DataFrame(
+                        store_lt_branch_values_minus_sigma_gmc1,
+                        index = ['minus_sigma'])
                     
-                weighted_mean_per_gmpe = {}
-                weighted_plus_sigma_per_gmpe = {}
-                weighted_minus_sigma_per_gmpe = {}
+                weighted_mean_per_gmpe_gmc1 = {}
+                weighted_plus_sigma_per_gmpe_gmc1 = {}
+                weighted_minus_sigma_per_gmpe_gmc1 = {}
                 
                 for gmpe in gmpe_list:
-                    if 'lt_weight' in str(gmpe):
-                        weighted_mean_per_gmpe[gmpe] = np.array(pd.Series(lt_df[
-                        gmpe].loc['mean']))
+                    if 'lt_weight_gmc1' in str(gmpe):
+                        weighted_mean_per_gmpe_gmc1[gmpe] = np.array(pd.Series(
+                            lt_df_gmc1[gmpe].loc['mean']))
                         if Nstd != 0:
-                            weighted_plus_sigma_per_gmpe[gmpe] = np.array(
-                                pd.Series(lt_df_plus_sigma[gmpe].loc[
+                            weighted_plus_sigma_per_gmpe_gmc1[gmpe] = np.array(
+                                pd.Series(lt_df_plus_sigma_gmc1[gmpe].loc[
                                     'plus_sigma']))
-                            weighted_minus_sigma_per_gmpe[gmpe] = np.array(
-                                pd.Series(lt_df_minus_sigma[gmpe].loc[
+                            weighted_minus_sigma_per_gmpe_gmc1[gmpe] = np.array(
+                                pd.Series(lt_df_minus_sigma_gmc1[gmpe].loc[
                                     'minus_sigma']))
-                    else:
-                        pass
                     
-                lt_df = pd.DataFrame(weighted_mean_per_gmpe, index = period)
-                lt_df_plus_sigma = pd.DataFrame(weighted_plus_sigma_per_gmpe,
-                                                index = period)
-                lt_df_minus_sigma = pd.DataFrame(weighted_minus_sigma_per_gmpe,
-                                                 index = period)
-                lt_mean_per_period = {}
-                lt_plus_sigma_per_period = {}
-                lt_minus_sigma_per_period = {}
+                lt_df_gmc1 = pd.DataFrame(weighted_mean_per_gmpe_gmc1,
+                                          index = period)
+                lt_df_plus_sigma_gmc1 = pd.DataFrame(
+                    weighted_plus_sigma_per_gmpe_gmc1, index = period)
+                lt_df_minus_sigma_gmc1 = pd.DataFrame(
+                    weighted_minus_sigma_per_gmpe_gmc1, index = period)
+                
+                lt_mean_per_period_gmc1 = {}
+                lt_plus_sigma_per_period_gmc1 = {}
+                lt_minus_sigma_per_period_gmc1 = {}
                 for idx, imt in enumerate(period):
-                    lt_mean_per_period[imt] = np.sum(lt_df.loc[imt])
+                    lt_mean_per_period_gmc1[imt] = np.sum(lt_df_gmc1.loc[imt])
                     if Nstd != 0:
-                        lt_plus_sigma_per_period[imt] = np.sum(
-                            lt_df_plus_sigma.loc[imt])
-                        lt_minus_sigma_per_period[imt] = np.sum(
-                            lt_df_minus_sigma.loc[imt])
+                        lt_plus_sigma_per_period_gmc1[imt] = np.sum(
+                            lt_df_plus_sigma_gmc1.loc[imt])
+                        lt_minus_sigma_per_period_gmc1[imt] = np.sum(
+                            lt_df_minus_sigma_gmc1.loc[imt])
                 
                 # Plot the logic tree
-                ax1.plot(period, np.array(pd.Series(lt_mean_per_period)),
+                ax1.plot(period, np.array(pd.Series(lt_mean_per_period_gmc1)),
                          linewidth = 2, color = 'm', linestyle = '-',
-                         label = logic_tree_config, zorder = 100)
+                         label = logic_tree_config_gmc1, zorder = 100)
                 
                 # Plot mean plus sigma and mean minus sigma if required
                 if Nstd != 0:
-                    ax1.plot(period, np.array(pd.Series(lt_plus_sigma_per_period)),
-                             linewidth = 0.75, color = 'm', linestyle = '--',
-                             zorder = 100)
+                    ax1.plot(period, np.array(pd.Series(
+                        lt_plus_sigma_per_period_gmc1)), linewidth = 0.75,
+                        color = 'm', linestyle = '--', zorder = 100)
                     
-                    ax1.plot(period, np.array(pd.Series(lt_minus_sigma_per_period)),
-                             linewidth = 0.75, color = 'm', linestyle = '--',
-                             zorder = 100)
-                else:
-                    pass
+                    ax1.plot(period, np.array(pd.Series(
+                        lt_minus_sigma_per_period_gmc1)), linewidth = 0.75,
+                        color = 'm', linestyle = '--', zorder = 100)
                 
                 # Store the logic tree plot data for .csv output
-                store_lt_mean_per_dist_mag[i,m] = lt_mean_per_period
+                store_lt_mean_per_dist_mag_gmc1[i,m] = lt_mean_per_period_gmc1
                 if Nstd != 0:
-                    store_lt_plus_sigma_per_dist_mag[i,m] = lt_plus_sigma_per_period
-                    store_lt_minus_sigma_per_dist_mag[i,m] = lt_minus_sigma_per_period
+                    store_lt_plus_sigma_per_dist_mag_gmc1[
+                        i,m] = lt_plus_sigma_per_period_gmc1
+                    store_lt_minus_sigma_per_dist_mag_gmc1[
+                        i,m] = lt_minus_sigma_per_period_gmc1
+
+            # GMC2
+            if store_lt_branch_values_gmc2 != {}:
+                lt_df_gmc2 = pd.DataFrame(store_lt_branch_values_gmc2,
+                                          index = ['mean'])
+                if Nstd != 0:
+                    lt_df_plus_sigma_gmc2 = pd.DataFrame(
+                        store_lt_branch_values_plus_sigma_gmc2,
+                        index = ['plus_sigma'])
+                    lt_df_minus_sigma_gmc2 = pd.DataFrame(
+                        store_lt_branch_values_minus_sigma_gmc2,
+                        index = ['minus_sigma'])
+                    
+                weighted_mean_per_gmpe_gmc2 = {}
+                weighted_plus_sigma_per_gmpe_gmc2 = {}
+                weighted_minus_sigma_per_gmpe_gmc2 = {}
+                
+                for gmpe in gmpe_list:
+                    if 'lt_weight_gmc2' in str(gmpe):
+                        weighted_mean_per_gmpe_gmc2[gmpe] = np.array(pd.Series(
+                            lt_df_gmc2[gmpe].loc['mean']))
+                        if Nstd != 0:
+                            weighted_plus_sigma_per_gmpe_gmc2[gmpe] = np.array(
+                                pd.Series(lt_df_plus_sigma_gmc2[gmpe].loc[
+                                    'plus_sigma']))
+                            weighted_minus_sigma_per_gmpe_gmc2[gmpe] = np.array(
+                                pd.Series(lt_df_minus_sigma_gmc2[gmpe].loc[
+                                    'minus_sigma']))
+                    
+                lt_df_gmc2 = pd.DataFrame(weighted_mean_per_gmpe_gmc2,
+                                          index = period)
+                lt_df_plus_sigma_gmc2 = pd.DataFrame(
+                    weighted_plus_sigma_per_gmpe_gmc2, index = period)
+                lt_df_minus_sigma_gmc2 = pd.DataFrame(
+                    weighted_minus_sigma_per_gmpe_gmc2, index = period)
+                
+                lt_mean_per_period_gmc2 = {}
+                lt_plus_sigma_per_period_gmc2 = {}
+                lt_minus_sigma_per_period_gmc2 = {}
+                for idx, imt in enumerate(period):
+                    lt_mean_per_period_gmc2[imt] = np.sum(lt_df_gmc2.loc[imt])
+                    if Nstd != 0:
+                        lt_plus_sigma_per_period_gmc2[imt] = np.sum(
+                            lt_df_plus_sigma_gmc2.loc[imt])
+                        lt_minus_sigma_per_period_gmc2[imt] = np.sum(
+                            lt_df_minus_sigma_gmc2.loc[imt])
+                
+                # Plot the logic tree
+                ax1.plot(period, np.array(pd.Series(lt_mean_per_period_gmc2)),
+                         linewidth = 2, color = 'tab:blue', linestyle = '-',
+                         label = logic_tree_config_gmc2, zorder = 100)
+                
+                # Plot mean plus sigma and mean minus sigma if required
+                if Nstd != 0:
+                    ax1.plot(period, np.array(pd.Series(
+                        lt_plus_sigma_per_period_gmc2)), linewidth = 0.75,
+                        color = 'tab:blue', linestyle = '--', zorder = 100)
+                    
+                    ax1.plot(period, np.array(pd.Series(
+                        lt_minus_sigma_per_period_gmc2)), linewidth = 0.75,
+                        color = 'tab:blue', linestyle = '--', zorder = 100)
+                
+                # Store the logic tree plot data for .csv output
+                store_lt_mean_per_dist_mag_gmc2[i,m] = lt_mean_per_period_gmc2
+                if Nstd != 0:
+                    store_lt_plus_sigma_per_dist_mag_gmc2[
+                        i,m] = lt_plus_sigma_per_period_gmc2
+                    store_lt_minus_sigma_per_dist_mag_gmc2[
+                        i,m] = lt_minus_sigma_per_period_gmc2
                 
     # Finalise the plots
     ax1.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
@@ -547,33 +760,62 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         spectra_value_df = pd.DataFrame(store_spectra_values,
                                         index = ['Periods', 'Median (g)',
                                                  'GMPE Sigma (natural log)'])
-        
-    if lt_weights != None:
-        store_plus_sigma_per_dist_mag = []
-        store_minus_sigma_per_dist_mag = []
+    # GMC1
+    if lt_weights_gmc1 != None:
+        store_plus_sigma_per_dist_mag_gmc1 = []
+        store_minus_sigma_per_dist_mag_gmc1 = []
         for n, i in enumerate(dist_list): #iterate though dist_list
             for l, m in enumerate(mag_list):  #iterate through mag_list
                 if Nstd != 0:
-                    dict_keys = store_lt_plus_sigma_per_dist_mag[i,m].keys()
-                    for key in dict_keys:
-                        store_plus_sigma_per_dist_mag.append(
-                            store_lt_plus_sigma_per_dist_mag[i,m][key][0])
-                        store_minus_sigma_per_dist_mag.append(
-                            store_lt_minus_sigma_per_dist_mag[i,m][key][0])
+                    dict_keys_gmc1 = store_lt_plus_sigma_per_dist_mag_gmc1[
+                        i,m].keys()
+                    for key in dict_keys_gmc1:
+                        store_plus_sigma_per_dist_mag_gmc1.append(
+                            store_lt_plus_sigma_per_dist_mag_gmc1[i,m][key][0])
+                        store_minus_sigma_per_dist_mag_gmc1.append(
+                            store_lt_minus_sigma_per_dist_mag_gmc1[i,m][key][0])
                     spectra_value_df[
                         'Distance = ' + str(i) + 'km', 'Magnitude = ' + str(m),
-                        'GMPE logic tree'] = [np.array(period), np.array(pd.Series(
-                            store_lt_mean_per_dist_mag[i,m])),
-                            store_plus_sigma_per_dist_mag,
-                            store_minus_sigma_per_dist_mag
+                        'GMC logic tree #1'] = [np.array(period), np.array(
+                            pd.Series(
+                            store_lt_mean_per_dist_mag_gmc1[i,m])),
+                            store_plus_sigma_per_dist_mag_gmc1,
+                            store_minus_sigma_per_dist_mag_gmc1
                             , '-']
                 else:
                     spectra_value_df[
                         'Distance = ' + str(i) + 'km', 'Magnitude = ' + str(m),
-                        'GMPE logic tree'] = [np.array(period), np.array(pd.Series(
-                            store_lt_mean_per_dist_mag[i,m])), '-']         
-    else:
-        pass
+                        'GMC logic tree #1'] = [np.array(period), np.array(
+                            pd.Series(store_lt_mean_per_dist_mag_gmc1[i,m])),'-']         
+ 
+    # GMC2
+    if lt_weights_gmc2 != None:
+        store_plus_sigma_per_dist_mag_gmc2 = []
+        store_minus_sigma_per_dist_mag_gmc2 = []
+        for n, i in enumerate(dist_list): #iterate though dist_list
+            for l, m in enumerate(mag_list):  #iterate through mag_list
+                if Nstd != 0:
+                    dict_keys_gmc2 = store_lt_plus_sigma_per_dist_mag_gmc2[
+                        i,m].keys()
+                    for key in dict_keys_gmc2:
+                        store_plus_sigma_per_dist_mag_gmc2.append(
+                            store_lt_plus_sigma_per_dist_mag_gmc2[i,m][key][0])
+                        store_minus_sigma_per_dist_mag_gmc2.append(
+                            store_lt_minus_sigma_per_dist_mag_gmc2[i,m][key][0])
+                    spectra_value_df[
+                        'Distance = ' + str(i) + 'km', 'Magnitude = ' + str(m),
+                        'GMC logic tree #2'] = [np.array(period), np.array(
+                            pd.Series(
+                            store_lt_mean_per_dist_mag_gmc2[i,m])),
+                            store_plus_sigma_per_dist_mag_gmc2,
+                            store_minus_sigma_per_dist_mag_gmc2
+                            , '-']
+                else:
+                    spectra_value_df[
+                        'Distance = ' + str(i) + 'km', 'Magnitude = ' + str(m),
+                        'GMC logic tree #2'] = [np.array(period), np.array(
+                            pd.Series(store_lt_mean_per_dist_mag_gmc2[i,m])),'-']         
+                            
     display(spectra_value_df)
     spectra_value_df.to_csv(os.path.join(output_directory, 'spectra_values.csv'))
 
@@ -744,7 +986,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
 
         # Get the data matrix
         data = mtxs[n]
-        coo, cost = sammon(data ,display=1)
+        coo, cost = sammon(data, display=1)
         
         fig.add_subplot(nrows, ncols, n+1) #(#vert, #hor, #subplot)
 
