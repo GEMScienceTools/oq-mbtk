@@ -423,7 +423,7 @@ Comparing GMPEs
 
 2. The tools within the Comparison module include Sammon's Maps, hierarchical clustering and matrix plots of Euclidean distance for both median and 84th percentile of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra, GMPE sigma with respect to spectral period and trellis plots are also provided in this module.
 
-   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may best capture the epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree (to plot a GMPE logic tree we assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each GMPE depending on if we want to plot said GMPE within GMC logic tree #1 or #2 (up to 2 GMC logic trees can currently be plotted within one trellis or response spectra plot at a time). To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` or ``lt_weight_gmc2_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for - see the .toml file below for an example of these potential configurations).
+   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may increase the captured epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree. To plot a GMPE logic tree we must assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each GMPE depending on if we want to plot the GMPE within GMC logic tree #1 or #2 (up to 2 GMC logic trees can currently be plotted within one trellis or response spectra plot at a time). To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` or ``lt_weight_gmc2_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for - see the .toml file below for an example of these potential configurations).
 
     .. code-block:: ini
     
@@ -464,7 +464,7 @@ Comparing GMPEs
         
         # Specify gmpes
         
-        # Plot logic tree and individual GMPEs for below GMC logic tree config (gmc1)
+        # Plot logic tree and individual GMPEs within first GMC logic tree config (gmc1)
         [models.BooreEtAl2020]
             lt_weight_gmc1 = 0.25
             
@@ -497,7 +497,9 @@ Comparing GMPEs
             c3_epsilon = -1.72    
             
             
-        # Plot logic tree only for the second GMC logic tree config (gmc2)
+        # Plot logic tree only for second GMC logic tree config (gmc2)
+        # Note this additional GMC logic tree config is simply for demonstrative
+        # purposes of how multiple logic trees can be plotted at once!
         [models.CauzziEtAl2014]
             lt_weight_gmc2_plot_lt_only = 0.50
             
