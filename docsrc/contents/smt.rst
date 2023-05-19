@@ -423,7 +423,7 @@ Comparing GMPEs
 
 2. The tools within the Comparison module include Sammon's Maps, hierarchical clustering and matrix plots of Euclidean distance for both median and 84th percentile of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra, GMPE sigma with respect to spectral period and trellis plots are also provided in this module.
 
-   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may best capture the epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree (to plot a GMPE logic tree we assign model weights using ``lt_weight`` in each model. To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_plot_lt_only`` instead).
+   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may best capture the epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree (to plot a GMPE logic tree we assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each model. To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` or ``lt_weight_gmc2_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for).
 
     .. code-block:: ini
     
@@ -436,8 +436,6 @@ Comparing GMPEs
         region = 0 # for NGAWest2 GMPE regionalisation
         eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
         Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 or 3)
-        custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
-        custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
         
         # Specify site properties
         [site_properties]
@@ -462,39 +460,54 @@ Comparing GMPEs
         
         # Specify label for gmpes
         [gmpe_labels]
-        gmpes_label = ['B20', 'L19', 'BO14', 'K1', 'K2', 'K3', 'K4', 'K5']
+        gmpes_label = ['CA15', 'AK14', 'B20', 'L19', 'BO14', 'K1', 'K2', 'K3', 'K4', 'K5']
         
         # Specify gmpes
+        
+        # Plot logic tree and individual GMPEs for below GMC logic tree config (gmc1)
         [models.BooreEtAl2020]
-            lt_weight = 0.25
+            lt_weight_gmc1 = 0.25
             
         [models.LanzanoEtAl2019_RJB_OMO]
-            lt_weight = 0.30
+            lt_weight_gmc1 = 0.30
             
         [models.BooreEtAl2014]
-            lt_weight = 0.15
+            lt_weight_gmc1 = 0.15
         
-        # Default K20_ESHM20 logic tree branches
+        # Default K20_ESHM20 logic tree branches considered in gmc1
         [models.1-KothaEtAl2020ESHM20]
-            lt_weight = 0.000862
+            lt_weight_gmc1 = 0.000862
             sigma_mu_epsilon = 2.85697 
             c3_epsilon = 1.72    
         [models.2-KothaEtAl2020ESHM20]   
-            lt_weight = 0.067767
+            lt_weight_gmc1 = 0.067767
             sigma_mu_epsilon = 1.35563
             c3_epsilon = 0
         [models.3-KothaEtAl2020ESHM20]   
-            lt_weight = 0.162742
+            lt_weight_gmc1 = 0.162742
             sigma_mu_epsilon = 0
             c3_epsilon = 0        
         [models.4-KothaEtAl2020ESHM20]
-            lt_weight = 0.067767
+            lt_weight_gmc1 = 0.067767
             sigma_mu_epsilon = -1.35563
             c3_epsilon = 0 
         [models.5-KothaEtAl2020ESHM20]
-            lt_weight = 0.000862
+            lt_weight_gmc1 = 0.000862
             sigma_mu_epsilon = -2.85697 
             c3_epsilon = -1.72    
+            
+            
+        # Plot logic tree only for the second GMC logic tree config (gmc2)
+        [models.CauzziEtAl2014]
+            lt_weight_gmc2_plot_lt_only = 0.50
+            
+        [models.AkkarEtAlRjb2014]
+            lt_weight_gmc1_plot_lt_only = 0.50
+            
+        [custom_colors]
+        custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
+        custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
+            
             
 3. Trellis Plots 
 

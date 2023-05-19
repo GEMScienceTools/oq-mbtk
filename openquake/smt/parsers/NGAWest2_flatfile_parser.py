@@ -776,7 +776,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
         
         event_time[rec] = yyyy_mm_dd + ' ' + hh_mm_ss
     
-    event_time_reformatted = pd.Series(event_time)
+    NGAWest2['event_time_reformatted'] = pd.Series(event_time)
     
     # generate event_id without delimiters
     final_event_id={}
@@ -789,7 +789,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
         delimited_event_id=delimited_event_id.replace(':','')
         delimited_event_id=delimited_event_id.replace(';','')
         final_event_id[rec] = 'Earthquake-' + delimited_event_id 
-    event_id_reformatted = pd.Series(final_event_id)
+    NGAWest2['event_id_reformatted'] = pd.Series(final_event_id)
     
     # Assign ESM18 fault_code based on code in NGA-West2
     """
@@ -856,8 +856,8 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     ESM_original_headers = pd.DataFrame(
     {
     # Non-GMIM headers   
-    "event_id":event_id_reformatted,                                       
-    "event_time":event_time_reformatted,
+    "event_id":NGAWest2['event_id_reformatted'],                                       
+    "event_time":NGAWest2['event_time_reformatted'],
     "ISC_ev_id":default_string,
     "USGS_ev_id":default_string,
     "INGV_ev_id":default_string,
