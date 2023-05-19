@@ -492,6 +492,8 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         if not os.path.exists(tmpdir):
             os.mkdir(tmpdir)
 
+        print('saving everything to {}'.format(tmpdir))
+
         # Save data
         fname = os.path.join(tmpdir, f'{key:s}_data.pkl')
         fou = open(fname, "wb")
