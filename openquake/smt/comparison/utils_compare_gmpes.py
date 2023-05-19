@@ -61,6 +61,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
     
+    ### Set the dicts
     store_trellis_values = {}
     
     # gmc1
@@ -174,7 +175,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 
             pyplot.grid(axis='both', which='both', alpha=0.5)
         
-            # Plot logic tree for the IMT-mag combination if weights specified
+            ### Plot logic tree for the IMT-mag combination if weights specified
             logic_tree_config_gmc1 = 'GMC logic tree #1'
             logic_tree_config_gmc2 = 'GMC logic tree #2'
             
@@ -265,7 +266,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     pyplot.show()
     pyplot.tight_layout()    
 
-    # Export values to csv
+    ### Export values to csv
     if not Nstd == 0:
         trellis_value_df = pd.DataFrame(store_trellis_values,
                                         index = ['Mean (g)',
@@ -317,21 +318,13 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         
     display(trellis_value_df)
     trellis_value_df.to_csv(os.path.join(output_directory, 'trellis_values.csv'))
-    
-    
-def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
-                      max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
-                      output_directory, custom_color_flag, custom_color_list,
-                      eshm20_region, lt_weights_gmc1 = None,
-                      lt_weights_gmc2 = None):
+
+def _get_period_values_for_spectra_plots(max_period):
     """
-    Plot response spectra and sigma w.r.t. spectral period for given run
-    configuration
-    :param dist_list:
-        Array of distances to generate response spectra and sigma plots for 
+    Get list of periods based on maximum period specified in comparison .toml
     :param max_period:
-        Maximum period to compute plots for (note an error will be returned if
-        this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
+        max_period: The maximum period to plot up to within response spectra
+        and sigma spectra plots
     """
     # Set initial periods with constant spacing of 0.1
     period = list(np.round(np.arange(0,max_period,0.1),1))
@@ -367,6 +360,25 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                   periods_to_re_add,'max_period': max_period})
         period = period_df.melt().value.dropna().unique()
         
+    return period
+    
+def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
+                      max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
+                      output_directory, custom_color_flag, custom_color_list,
+                      eshm20_region, lt_weights_gmc1 = None,
+                      lt_weights_gmc2 = None):
+    """
+    Plot response spectra and sigma w.r.t. spectral period for given run
+    configuration
+    :param dist_list:
+        Array of distances to generate response spectra and sigma plots for 
+    :param max_period:
+        Maximum period to compute plots for (note an error will be returned if
+        this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
+    """
+    # Get the periods to plot
+    period = _get_period_values_for_spectra_plots(max_period)
+        
     # Convert from float to imt
     period = np.round(period,1)
     base_SA_string = 'SA(_)'
@@ -400,30 +412,26 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     fig2 = pyplot.figure(figsize=(len(mag_list)*5, len(dist_list)*4))
     pyplot.rcParams.update({'font.size': 16})# sigma
     
-    # Set dicts to store values
+    ### Set dicts to store values
     store_spectra_values = {}
     
     # Dicts for GMC1
     store_lt_branch_values_gmc1 = {}
     store_lt_mean_per_dist_mag_gmc1 = {}
-    
     store_lt_branch_values_plus_sigma_gmc1 = OrderedDict([(gmm,
                                   {}) for gmm in gmpe_list])    
     store_lt_branch_values_minus_sigma_gmc1 = OrderedDict([(gmm,
                                   {}) for gmm in gmpe_list])
-    
     store_lt_plus_sigma_per_dist_mag_gmc1 = {}
     store_lt_minus_sigma_per_dist_mag_gmc1 = {}
     
     # Dicts for GMC2
     store_lt_branch_values_gmc2 = {}
     store_lt_mean_per_dist_mag_gmc2 = {}
-    
     store_lt_branch_values_plus_sigma_gmc2 = OrderedDict([(gmm,
                                   {}) for gmm in gmpe_list])    
     store_lt_branch_values_minus_sigma_gmc2 = OrderedDict([(gmm,
                                   {}) for gmm in gmpe_list])
-
     store_lt_plus_sigma_per_dist_mag_gmc2 = {}
     store_lt_minus_sigma_per_dist_mag_gmc2 = {}
 
@@ -517,10 +525,8 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                  ']', '')] = [np.array(period),
                                                             np.array(rs_50p),
                                                             sigma_store]
-                                                              
-             
-                                                              
-                # Check if weight provided for the GMPE        
+                  
+                ### Check if weight provided for the GMPE        
 
                 # GMC1                    
                 if lt_weights_gmc1 == None:
@@ -598,12 +604,12 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             ax2.set_ylim(0.3, 1)
             
             # Plot logic tree for the dist-mag combination if weights specified
+            # and create the dataframe of stored values for mean, mean + sigma,
+            # etc..
             logic_tree_config_gmc1 = 'GMC logic tree #1'
             logic_tree_config_gmc2 = 'GMC logic tree #2'
             
-            # Create the dataframe of stored values for mean etc
-            
-            # GMC1
+            # Plot and store values for GMC1
             if store_lt_branch_values_gmc1 != {}:
                 lt_df_gmc1 = pd.DataFrame(store_lt_branch_values_gmc1,
                                           index = ['mean'])
@@ -672,7 +678,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     store_lt_minus_sigma_per_dist_mag_gmc1[
                         i,m] = lt_minus_sigma_per_period_gmc1
 
-            # GMC2
+            # Plot and store values for GMC2
             if store_lt_branch_values_gmc2 != {}:
                 lt_df_gmc2 = pd.DataFrame(store_lt_branch_values_gmc2,
                                           index = ['mean'])
@@ -749,7 +755,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     fig1.savefig(os.path.join(output_directory,'ResponseSpectra.png'),
                  bbox_inches='tight',dpi=200,pad_inches = 0.2)
     
-    # Export values to csv
+    ### Export values to csv
     if Nstd != 0:
         spectra_value_df = pd.DataFrame(store_spectra_values,
                                         index = ['Periods', 'Median (g)',
