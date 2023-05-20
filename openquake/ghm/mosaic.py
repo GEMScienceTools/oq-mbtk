@@ -150,7 +150,7 @@ DATA = {'GID_0': {
                'MDA', 'MKD', 'MLT', 'MNE', 'NLD',
                'NOR', 'POL', 'PRT', 'ROU', 'RUS',
                'SRB', 'SVK', 'SVN', 'SWE', 'UKR',
-               'XKO', 'ALA'],
+               'XKO', 'ALA', 'GGY'],
        'haw': ['USA'],
        'ind': ['BGD', 'BTN', 'IND', 'Z01', 'Z04',
                'Z05', 'Z07', 'Z09', 'LKA', 'NPL'],
