@@ -119,7 +119,9 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
                             raise ValueError(msg)
                         # new depth larger than previous
                         if numpy.any(numpy.array(spro)[:-1, 2] > spro[-1][2]):
-                            raise ValueError('')
+                            # breakpoint rather than valueError for debugging
+                            breakpoint()
+                            #raise ValueError('')
 
                 #
                 # new distance left over
@@ -182,13 +184,29 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
         else:
             read_file = False
 
+        # If the file is empty, we don't want to read it!
+        # TODO: figure out why we're writing empty files...
+        if(os.stat(filename).st_size == 0):
+            read_file = False
+            print("skipping empty file ", filename)
+
         # Reading data
         if read_file:
+            #print(os.stat(filename).st_size)
             tmpa = numpy.loadtxt(filename)
+            
+            # If there's only one point, we can't do anything
+            # Need 2 to get a gradient for _get_point_at_depth!
+            if tmpa.ndim == 1:
+                continue
 
             # Select depths within the defined range
             j = numpy.nonzero((tmpa[:, 2] >= upper_depth) &
                               (tmpa[:, 2] <= lower_depth))
+            
+            # If there are no points in the profile in the depth range, skip
+            if len(j[0]) == 0:
+                continue
 
             # Upper depth
             pntt = False
@@ -209,7 +227,14 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
                 pass
             else:
                 idx = max(j[0])
-                pntb = _get_point_at_depth(tmpa[idx, :], tmpa[idx+1, :],
+                # Check if this is at the end of tmpa - if so we can't use the next point to calculate the gradient
+                # Use point before instead in this case
+                if len(tmpa[:,2]) == (idx+1):
+                    print("no events below, using event above instead")
+                    pntb = _get_point_at_depth(tmpa[idx-1, :], tmpa[idx, :],
+                                           lower_depth)
+                else:
+                    pntb = _get_point_at_depth(tmpa[idx, :], tmpa[idx+1, :],
                                            lower_depth)
             #
             # final profile
@@ -228,6 +253,18 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
 
 
 def _get_point_at_depth(coo1, coo2, depth):
+    """
+    Return location of the point at depth assuming a constant gradient.
+    Uses two point locations to calculate a gradient, and projects downwards to find the location
+    at which the required depth is reached.
+    
+    :param coo1:
+        location of first point
+    :param coo2:
+        location of second point
+    :param depth:
+        depth at which we want to recover the point location
+    """
     g = Geod(ellps='WGS84')
     az12, az21, dist = g.inv(coo1[0], coo1[1], coo2[0], coo2[1])
     grad = (dist*1e-3) / (coo2[2] - coo1[2])
