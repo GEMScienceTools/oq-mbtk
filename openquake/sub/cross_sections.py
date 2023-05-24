@@ -84,7 +84,7 @@ class Slab2pt0(object):
             pnts = copy.copy(slab_points)
 
             # Get min and max longitude and latitude values
-            _, _, _, _, qual = cs.get_mm(2.0)
+            minlo, maxlo, minla, maxla, qual = cs.get_mm(2.0)
 
             # Find the nodes of the grid within a certain distance from the
             # plane of the cross-section
@@ -98,7 +98,6 @@ class Slab2pt0(object):
                     pnts[:, 0], pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
 
             info = len(idxslb) if idxslb is not None else 0
-            print(ics, cs.olo, cs.ola, info, qual)
 
             # Check if the array with cross-section data is not empty
             if idxslb is None or len(idxslb) < 5:
@@ -679,6 +678,7 @@ class CrossSection:
     def get_mm(self, delta=0.0):
         """
         Get min and maximum values of the cross section.
+        Assumes locations are in [-180, 180] and buffers accordingly, shifts if they are not!
 
         :param delta:
             A float used to expand the bounding box computed.
@@ -687,13 +687,26 @@ class CrossSection:
             max values and a parameter that when is equal to 1 tells that
             the cross-section crosses the IDL.
         """
-        lomin = min(self.plo) - delta
+
+        # Then
+        lomin_t = min(self.plo) 
+        lomin = lomin_t - delta
+        if lomin_t < 0 or lomin < 0:
+            lomin = lomin_t + delta
+
         if lomin < -180:
             lomin += 360
+        if lomin  > 180:
+            lomin -= 360
         #
         lomax = max(self.plo) + delta
         if lomax > 180:
             lomax -= 360
+        # If lomax is below -ve we want to take away delta to buffer correctly
+        if lomax < 0:
+            lomax = max(self.plo) - delta
+        if lomax < -180:
+            lomax+= 360
         #
         lamin = min(self.pla) - delta
         if lamin < -90:
@@ -706,6 +719,7 @@ class CrossSection:
         qual = 0
         if ((lomin/lomax) < 0) & (max([lomin, lomax]) > 150.):
             qual = 1
+            lomax = max(self.plo) - delta
         return lomin, lomax, lamin, lamax, qual
 
     def split_at_idl(self):

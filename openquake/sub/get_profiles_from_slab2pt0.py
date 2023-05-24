@@ -60,6 +60,7 @@ def get_bounding_box(lons, lats, delta=0.0):
     """
     milo = np.min(lons)
     malo = np.max(lons)
+    bbox = [milo-delta, malo+delta, np.min(lats)-delta, np.max(lats)+delta]
     idl = False
     if milo < 0:
         if malo > 0:
@@ -72,13 +73,21 @@ def get_bounding_box(lons, lats, delta=0.0):
         new_lons[lons < 0] = 360 + lons[lons < 0]
         milo = np.min(new_lons)
         malo = np.max(new_lons)
+        bbox = [milo-delta, malo+delta, np.min(lats)-delta, np.max(lats)+delta]
 
-    bbox = [milo-delta, malo+delta, np.min(lats)-delta, np.max(lats)+delta]
+    #bbox = [milo-delta, malo+delta, np.min(lats)-delta, np.max(lats)+delta]
     return bbox, idl
 
 
 def get_initial_traces(box, boy, dip_dir, spacing):
+    """
+    Computes initial traces for the subduction profiles
 
+    :param box: x limits of the bounding box
+    :param boy: y limits of the bounding box
+    :param dip_dir: dip direction 
+    :param spacing: spacing between profiles
+    """
     max_length = geodetic_distance(box[0], boy[0], box[3], boy[3])
     distance = geodetic_distance(box[0], boy[0], box[1], boy[1])
 
@@ -88,7 +97,9 @@ def get_initial_traces(box, boy, dip_dir, spacing):
     coords = npoints_towards(
             box[0], boy[0], 0, edge_azimuth, distance, 0, num_samples)
     profiles = _get_profiles(coords[0], coords[1], dip_dir, max_length)
-
+    # reverse profiles to satisfy right hand rule
+    profiles.reverse()
+    
     return np.array(profiles), max_length
 
 
@@ -123,7 +134,6 @@ def aa_get_initial_traces(bb, dip_dir, spacing):
 
     points = g.fwd_intermediate(bb[1], bb[3], az21_right, num_samples_right+1, spacing_ver, initial_idx=0, terminus_idx=0)
     tmp_profiles = _get_profiles(np.array(points.lons), np.array(points.lats), dip_dir, max_length)
-    tmp_profiles.reverse()
     profiles.extend(tmp_profiles)
 
     return np.array(profiles), max_length
@@ -218,8 +228,6 @@ def tmp_get_initial_traces(bb, dip_dir, spacing):
         profiles = np.array(profiles)
         mask = profiles[:, :, 0] > 180
         profiles[mask, 0] = profiles[mask, 0] - 360
-        profiles.reverse()
-
         return profiles, distance
 
     # Bottom edge distance and azimuth. The latter is taken from the bottom
@@ -255,8 +263,6 @@ def tmp_get_initial_traces(bb, dip_dir, spacing):
 
     # Create profiles
     tmp_profiles = _get_profiles(coords, dip_dir, max_length)
-    profiles.extend(tmp_profiles)
-
     return profiles, distance
 
 
@@ -269,6 +275,8 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
         The name of the Slab2.0 .grd file with the values of depth
     :param spacing:
         The separation distance between traces
+    :param fname_fig:
+        String specifiying location in which to save output figure
     """
 
     # Reading file with strike values
@@ -296,7 +304,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
     bb = tmp_bb
     r_bb, _ = get_bounding_box(rx, ry, delta=1.)
 
-    # Compute the rotated bounding box
+    # Compute the rotated and buffered bounding box
     dlt = 3.0
     coox = [r_bb[0]-dlt, r_bb[1]+dlt, r_bb[1]+dlt, r_bb[0]-dlt]
     cooy = [r_bb[2]-dlt, r_bb[2]-dlt, r_bb[3]+dlt, r_bb[3]+dlt]
@@ -340,7 +348,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
     slb = Slab2pt0(depths, css)
     slb.compute_profiles(spacing/2)
 
-    if len(fname_fig.name) > 0:
+    if len(str(fname_fig)) > 0:
 
         dlt = 5.0
         reg = [bb[0]-dlt, bb[1]+dlt, bb[2]-dlt, bb[3]+dlt]
