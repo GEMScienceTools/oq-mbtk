@@ -34,7 +34,6 @@ from openquake.sub.get_profiles_from_slab2pt0 import (get_profiles,
                                                       rotate)
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
 
-
 HERE = pathlib.Path(__file__).parent.resolve()
 
 
@@ -75,15 +74,11 @@ class GetInitialProfiles(unittest.TestCase):
         depths = [[x, y, z] for x, y, z in tmp]
         depths = np.array(depths)
         
-        #box = [164.45, 223.15]
-        #boy = [49.4, 65.75]
-        
         cx = np.mean([bb[0:2]])
         cy = np.mean([bb[2:4]])
 
         # Rotate the grid with the fault information and get the bounding box
         rx, ry = rotate(xx.flatten(), yy.flatten(), cx, cy, -dip_dir)
-        #bb = tmp_bb
         r_bb, _ = get_bounding_box(rx, ry, delta=1.)
 
         # Compute the rotated and buffered bounding box
@@ -106,11 +101,14 @@ class GetInitialProfiles(unittest.TestCase):
         slb = Slab2pt0(depths, css)
         slb.compute_profiles(spacing/2)
         
-        if True:
+        # set plot to True if pygmt installed
+        plot = False
+        if plot:
+            
             import pygmt
             import netCDF4
 
-            grid = True
+            # grid = False
 
             # Reading file with strike values
             #if grid:
@@ -169,13 +167,15 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         depth_fname = HERE / 'data' / 'slab2pt0' / 'alu_slab2_dep_02.23.18.grd'
         spacing = 50.
         tmp_dir = tempfile.mkdtemp()
-        fname_fig = pathlib.Path(tmp_dir) / 'figure.png'
-        slb = get_profiles(strike_fname, depth_fname, spacing, fname_fig)
+        # if pygmt is installed, uncomment the next line and add fname_fig to get_profiles call
+        #fname_fig = pathlib.Path(tmp_dir) / 'figure.png'
+        slb = get_profiles(strike_fname, depth_fname, spacing)
 
     def test_central_america(self):
         strike_fname = HERE / 'data' / 'slab2pt0' / 'cam_slab2_str_02.24.18.grd'
         depth_fname = HERE / 'data' / 'slab2pt0' / 'cam_slab2_dep_02.24.18.grd'
         spacing = 50.
         tmp_dir = tempfile.mkdtemp()
-        fname_fig = pathlib.Path(tmp_dir) / 'figure.png'
-        slb = get_profiles(strike_fname, depth_fname, spacing, fname_fig)
+        # if pygmt is installed, uncomment the next line and add fname_fig to get_profiles call
+        #fname_fig = pathlib.Path(tmp_dir) / 'figure.png'
+        slb = get_profiles(strike_fname, depth_fname, spacing)
