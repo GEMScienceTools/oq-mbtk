@@ -45,7 +45,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue', 'gold', '0.8',
             'mediumseagreen', '0.5','tab:orange', 'tab:purple', 'tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:red',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm',
             'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
@@ -194,14 +194,14 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                         'minus_sigma'])
            
                     pyplot.plot(distances, lt_mean_gmc1, linewidth = 2,
-                                color = 'm', linestyle = '-',
+                                color = 'tab:red', linestyle = '-',
                                 label = logic_tree_config_gmc1, zorder = 100)
                     
                     pyplot.plot(distances, lt_plus_sigma_gmc1, linewidth = 0.75,
-                                color = 'm', linestyle = '-.', zorder = 100)
+                                color = 'tab:red', linestyle = '-.', zorder = 100)
         
                     pyplot.plot(distances, lt_minus_sigma_gmc1, linewidth = 0.75,
-                                color = 'm', linestyle = '-.', zorder = 100)
+                                color = 'tab:red', linestyle = '-.', zorder = 100)
                     
                     lt_mean_store_gmc1[i,m] = lt_mean_gmc1
                     lt_plus_sigma_store_gmc1[i,m] = lt_plus_sigma_gmc1
@@ -214,7 +214,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     lt_mean_gmc1 = np.sum(lt_df_gmc1[:].loc['mean'])
                      
                     pyplot.plot(distances, lt_mean_gmc1, linewidth = 2,
-                                color = 'm', linestyle = '-',
+                                color = 'tab:red', linestyle = '-',
                                 label = logic_tree_config_gmc1)
                     
                     lt_mean_store_gmc1[i,m] = lt_mean_gmc1
@@ -323,8 +323,8 @@ def _get_period_values_for_spectra_plots(max_period):
     """
     Get list of periods based on maximum period specified in comparison .toml
     :param max_period:
-        max_period: The maximum period to plot up to within response spectra
-        and sigma spectra plots
+        Maximum period to compute plots for (note an error will be returned if
+        this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
     """
     # Set initial periods with constant spacing of 0.1
     period = list(np.round(np.arange(0,max_period,0.1),1))
@@ -359,7 +359,7 @@ def _get_period_values_for_spectra_plots(max_period):
         period_df = pd.DataFrame({'periods':period,'periods_to_re_add':
                                   periods_to_re_add,'max_period': max_period})
         period = period_df.melt().value.dropna().unique()
-        
+    
     return period
     
 def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
@@ -402,7 +402,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
             'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:red',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm',
             'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
@@ -416,25 +416,26 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     store_spectra_values = {}
     
     # Dicts for GMC1
-    store_lt_branch_values_gmc1 = {}
+    store_lt_branch_values_gmc1  = {}
     store_lt_mean_per_dist_mag_gmc1 = {}
-    store_lt_branch_values_plus_sigma_gmc1 = OrderedDict([(gmm,
-                                  {}) for gmm in gmpe_list])    
-    store_lt_branch_values_minus_sigma_gmc1 = OrderedDict([(gmm,
-                                  {}) for gmm in gmpe_list])
+    store_lt_branch_values_plus_sigma_gmc1 = OrderedDict(
+        [(gmm, {}) for gmm in gmpe_list])  
+    store_lt_branch_values_minus_sigma_gmc1 = OrderedDict(
+        [(gmm, {}) for gmm in gmpe_list])  
     store_lt_plus_sigma_per_dist_mag_gmc1 = {}
     store_lt_minus_sigma_per_dist_mag_gmc1 = {}
     
     # Dicts for GMC2
     store_lt_branch_values_gmc2 = {}
     store_lt_mean_per_dist_mag_gmc2 = {}
-    store_lt_branch_values_plus_sigma_gmc2 = OrderedDict([(gmm,
-                                  {}) for gmm in gmpe_list])    
-    store_lt_branch_values_minus_sigma_gmc2 = OrderedDict([(gmm,
-                                  {}) for gmm in gmpe_list])
+    store_lt_branch_values_plus_sigma_gmc2 = OrderedDict(
+        [(gmm, {}) for gmm in gmpe_list])  
+    store_lt_branch_values_minus_sigma_gmc2 = OrderedDict(
+        [(gmm, {}) for gmm in gmpe_list])  
     store_lt_plus_sigma_per_dist_mag_gmc2 = {}
     store_lt_minus_sigma_per_dist_mag_gmc2 = {}
 
+    ### Plot the data and store for output in csv format
     for n, i in enumerate(dist_list): #iterate though dist_list
         
         for l, m in enumerate(mag_list):  #iterate through mag_list
@@ -443,7 +444,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 mag_list)) #(#vert, #hor, #subplot)
             ax2 = fig2.add_subplot(len(dist_list), len(mag_list), l+1+n*len(
                 mag_list)) #(#vert, #hor, #subplot)
-
+            
             for g, gmpe in enumerate(gmpe_list): 
                 
                 col=colors[g]
@@ -510,21 +511,18 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                             rs_minus_sigma):
                         minus_sigma_store.append(val_minus_sigma[0])
 
-                    store_spectra_values['Distance = %s km' %i, 'Magnitude = '
-                                         + str(m), str(gmpe).replace(
-                                             '\n', ', ').replace('[', '').replace(
-                                                 ']', '')] = [np.array(period),
-                                                            np.array(rs_50p),
-                                                            plus_sigma_store,
-                                                            minus_sigma_store,
-                                                            sigma_store]                  
+                    store_spectra_values[
+                        'Distance = %s km' %i, 'Magnitude = ' + str(m), str(
+                            gmpe).replace('\n', ', ').replace('[', '').replace(
+                                ']', '')] = [np.array(period), np.array(rs_50p),
+                                             plus_sigma_store, minus_sigma_store,
+                                             sigma_store]                  
                 else:
-                    store_spectra_values['Distance = %s km' %i, 'Magnitude = '
-                                         + str(m), str(gmpe).replace(
-                                             '\n', ', ').replace('[', '').replace(
-                                                 ']', '')] = [np.array(period),
-                                                            np.array(rs_50p),
-                                                            sigma_store]
+                    store_spectra_values[
+                        'Distance = %s km' %i, 'Magnitude = ' + str(m), str(
+                            gmpe).replace('\n', ', ').replace('[', '').replace(
+                                ']', '')] = [np.array(period), np.array(rs_50p),
+                                             sigma_store]
                   
                 ### Check if weight provided for the GMPE        
 
@@ -657,18 +655,18 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 
                 # Plot the logic tree
                 ax1.plot(period, np.array(pd.Series(lt_mean_per_period_gmc1)),
-                         linewidth = 2, color = 'm', linestyle = '-',
+                         linewidth = 2, color = 'tab:red', linestyle = '-',
                          label = logic_tree_config_gmc1, zorder = 100)
                 
                 # Plot mean plus sigma and mean minus sigma if required
                 if Nstd != 0:
                     ax1.plot(period, np.array(pd.Series(
                         lt_plus_sigma_per_period_gmc1)), linewidth = 0.75,
-                        color = 'm', linestyle = '--', zorder = 100)
+                        color = 'tab:red', linestyle = '--', zorder = 100)
                     
                     ax1.plot(period, np.array(pd.Series(
                         lt_minus_sigma_per_period_gmc1)), linewidth = 0.75,
-                        color = 'm', linestyle = '--', zorder = 100)
+                        color = 'tab:red', linestyle = '--', zorder = 100)
                 
                 # Store the logic tree plot data for .csv output
                 store_lt_mean_per_dist_mag_gmc1[i,m] = lt_mean_per_period_gmc1
@@ -970,7 +968,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
     # Plots: color for GMPEs
     colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
             'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'tab:red',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm',
             'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
