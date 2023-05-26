@@ -832,24 +832,24 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     station_id_reformatted = pd.Series(final_station_id)
     
     # Create nation code (not provided in NGA-West-2 so assign flag)
-    nation_code_default_string = np.full(len(NGAWest2),str(
+    nation_code_default_string = np.full(len(NGAWest2['Station Name']),str(
         "NGAWest2_does_not_provide_nation_codes")) 
     default_nation_code = pd.Series(nation_code_default_string)
     
     # Create channel codes for horizontal components as within NGAWest2 format
-    H1_string = np.full(len(NGAWest2),str("H1"))
+    H1_string = np.full(len(NGAWest2['Station Name']),str("H1"))
     default_H1_string = pd.Series(H1_string)
-    H2_string = np.full(len(NGAWest2),str("H2"))
+    H2_string = np.full(len(NGAWest2['Station Name']),str("H2"))
     default_H2_string = pd.Series(H2_string)
-    V_string = np.full(len(NGAWest2),str("V"))
+    V_string = np.full(len(NGAWest2['Station Name']),str("V"))
     default_V_string = pd.Series(V_string)
     
     # Create default value of 0 for location code string (arbitrary)
-    location_string = np.full(len(NGAWest2),str("0.0"))
+    location_string = np.full(len(NGAWest2['Station Name']),str("0.0"))
     location_code_string = pd.Series(location_string)  
     
     # Create default values for headers not readily available or required
-    r_string = np.full(len(NGAWest2),str(""))
+    r_string = np.full(len(NGAWest2['Station Name']),str(""))
     default_string = pd.Series(r_string)    
     
     # Construct dataframe with original ESM 2018 format 
