@@ -780,7 +780,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     
     # generate event_id without delimiters
     final_event_id={}
-    for rec in range(0,len(NGAWest2)):
+    for rec in range(0,len(NGAWest2['Earthquake Name'])):
         delimited_event_id=str(NGAWest2['Earthquake Name'][rec])
         delimited_event_id=delimited_event_id.replace(',','')
         delimited_event_id=delimited_event_id.replace(' ','')
