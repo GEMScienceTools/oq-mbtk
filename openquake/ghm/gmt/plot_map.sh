@@ -25,7 +25,8 @@ delete_temporary_folders()
     do
         DIRECTORY=$ROOT$i
         if [ -d "$DIRECTORY" ]; then
-            rm -rf $DIRECTORY
+		echo "Not erasing anything"
+           # rm -rf $DIRECTORY
         fi
     done
 }
@@ -63,10 +64,12 @@ plot()
 
     # Input cpt
     CPTT2="./cpt/gm.cpt"
+    CPTT2="./cpt/gm_new.cpt"
     # Input topography
-    GTOPO=$DATA"/gem/gmt/globalGTOPO30.grd"
+    #GTOPO=$DATA"/gem/gmt/globalGTOPO30.grd"
+    GTOPO=$DATA"/dem/ETOPO1_Ice_g_gmt4.grd"
     # Input bathymetry
-    bat_grd=$DATA"/gem/gmt/ETOPO1_Ice_g_gmt4.grd"
+    bat_grd=$DATA"/dem/ETOPO1_Ice_g_gmt4.grd"
 
     PS=$ROOT"/fig/out.ps"
     PNG=$ROOT"/fig/out.png"
@@ -129,9 +132,10 @@ plot()
     gmt grdimage $GRDB -R$EXTE $PRO -I$bat_shadow -C$CPTT2 -O -K -nb -V -Q >> $PS
 
     # Finishing
-    gmt pscoast -R$EXTE $PRO $ORI -Df -EGL,SJ+gwhite -O -K  >> $PS
+    gmt pscoast -R$EXTE $PRO $ORI -Df -ESJ+gwhite -O -K  >> $PS
     gmt psxy ./../data/gis/islands.gmt -R$EXTE $PRO -Gp500/9:BlightgreyFwhite -O -K -V >> $PS
-    gmt pscoast -R$EXTE $PRO $ORI -Df -A$AREA+as+l -O -K -N1,thinnest,darkgray -Lg-125/-52.7+c0+w5000+f -Wthinnest,black -V >> $PS
+    gmt pscoast -R$EXTE $PRO $ORI -Df -A$AREA+as+l -O -K -N1/thinnest,darkgray -Lg-125/-52.7+c0+w5000+f -Wthinnest,black -V >> $PS
+    #gmt pscoast -R$EXTE $PRO $ORI -Df -A$AREA+as+l -O -K -N1,thinnest,darkgray -Lg-125/-52.7+c0+w5000+f -Wthinnest,black -V >> $PS
 
     # Plotting the colorscale
     gmt psscale -Dg95/-52.7+w13c/0.3c+e+h -O -C$CPTT2 -L -S -R$EXTE $PRO >> $PS
@@ -141,7 +145,7 @@ plot()
     date
 
     # Cleaning
-    rm gmt.*
+    #rm gmt.*
 }
 
 
