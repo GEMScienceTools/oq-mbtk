@@ -153,11 +153,11 @@ class ESM23FlatfileParser(SMDatabaseReader):
             if pd.isnull(ESM23.vs30_m_s[idx]):
                 ESM23['vs30_m_s'].iloc[idx]=ESM23['vs30_m_s_wa'].iloc[idx]
         
-        # If vs30 still empty drop record
-        for idx in range(0,len(ESM23)):
-            if pd.isnull(ESM23.vs30_m_s[idx]):
-                ESM23=ESM23.drop(index=idx)
-        ESM23 = ESM23.reset_index()
+        # Drop if Vs30 still empty
+        Index_to_drop=np.array(ESM23.loc[ESM23['vs30_m_s'].isnull()][
+            'vs30_m_s'].index)
+        ESM23 = ESM23.drop(Index_to_drop)
+        ESM23 = ESM23.reset_index().drop(columns='index')
         
         # Create default values for headers not considered in ESM23 format
         default_string = pd.Series(np.full(np.size(ESM23.esm_event_id),
