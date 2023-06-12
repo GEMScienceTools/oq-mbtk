@@ -486,6 +486,7 @@ class Residuals(object):
             expected[gmpe] = OrderedDict([(imtx, {}) for imtx in self.imts])
             for imtx in self.imts:
                 gsim = self.gmpe_list[gmpe]
+                gsim_orig = gsim # If gsim into mgmpe retain pot. region for ctx
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < self.gmpe_sa_limits[gmpe][0] or\
@@ -495,10 +496,10 @@ class Residuals(object):
                 # Check if gsim needs appending with mgmpe
                 gsim = mgmpe_check(gsim)
                 # Add region parameter to sites context if specified in gsim
-                if 'eshm20_region' in gsim.kwargs:
-                    context["Ctx"].region = gsim.kwargs['eshm20_region']
-                if 'region' in gsim.kwargs and 'eshm20_region' not in gsim.kwargs:
-                    context["Ctx"].region = gsim.kwargs['region']
+                if 'eshm20_region' in gsim_orig.kwargs:
+                    context["Ctx"].region = gsim_orig.kwargs['eshm20_region']
+                if 'region' in gsim_orig.kwargs and 'eshm20_region' not in gsim.kwargs:
+                    context["Ctx"].region = gsim_orig.kwargs['region']
                 # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
                     context["Ctx"],

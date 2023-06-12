@@ -88,15 +88,16 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 
                 col=colors[g]
                 gsim = valid.gsim(gmpe)
+                gmm_orig = gsim
                 gmm = mgmpe_check(gsim)
                 
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     gmm, strike, dip, depth[l], aratio, rake) 
 
-                mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
-                                                 strike_g,dip_g,rake,Vs30,
-                                                 Z1,Z25,maxR,step,i,1,
-                                                 eshm20_region) 
+                mean, std, distances = att_curves(gmm, gmm_orig, depth[l],m,
+                                                  aratio_g, strike_g, dip_g,
+                                                  rake,Vs30, Z1, Z25, maxR, 
+                                                  step, i, 1, eshm20_region) 
                 mean = mean[0][0]
                 std = std[0][0]
                 
@@ -449,6 +450,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 
                 col=colors[g]
                 gsim = valid.gsim(gmpe)
+                gmm_orig = gsim
                 gmm = mgmpe_check(gsim)
 
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(gmm, strike,
@@ -459,10 +461,10 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 rs_50p, rs_plus_sigma, rs_minus_sigma, sigma = [], [], [], []
                 
                 for k, imt in enumerate(imt_list): 
-                    mu, std, distances = att_curves(gmm,depth[l],m,aratio_g,
-                                                    strike_g,dip_g,rake,Vs30,
-                                                    Z1,Z25,300,0.1,imt,1,
-                                                    eshm20_region) 
+                    mu, std, distances = att_curves(gmm, gmm_orig, depth[l], m,
+                                                    aratio_g, strike_g, dip_g, 
+                                                    rake,Vs30, Z1, Z25, 300, 
+                                                    0.1, imt, 1, eshm20_region) 
                     
                     mu = mu[0][0]
                     f = interpolate.interp1d(distances,mu)
@@ -856,14 +858,16 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
             for l, m in enumerate(mag_list): #iterate though mag_list
                 
                 gsim = valid.gsim(gmpe)
+                gmm_orig = gsim
                 gmm = mgmpe_check(gsim)
 
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     gmm, strike, dip, depth[l], aratio, rake) 
 
-                mean, std, distances = att_curves(gmm,depth[l],m,aratio_g,
-                                                  strike_g,dip_g,rake,Vs30,Z1,
-                                                  Z25,maxR,step,i,1,eshm20_region) 
+                mean, std, distances = att_curves(gmm, gmm_orig, depth[l], m, 
+                                                  aratio_g, strike_g, dip_g, 
+                                                  rake, Vs30, Z1, Z25, maxR, 
+                                                  step, i, 1, eshm20_region) 
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians,(np.exp(mean)))
