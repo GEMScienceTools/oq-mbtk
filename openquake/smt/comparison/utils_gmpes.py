@@ -127,15 +127,18 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
     rup.hypo_depth = dep
     return rup
 
-def att_curves(gmpe, orig_gmpe, depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,step,
-              imt,ztor,eshm20_region):    
+def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30, 
+               Z1, Z25, maxR, step, imt, ztor, eshm20_region):    
+    """
+    Compute predicted ground-motion intensities w.r.t considered distance using
+    the given GMPE
+    """
     trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
     
     rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
                       strike=strike, dip=dip, rake=rake, trt=trt, ztor=ztor)
     
     if 'KothaEtAl2020ESHM20' in str(orig_gmpe):
-        print('test')
         props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
                  'vs30measured': True,'region': eshm20_region}  
     else:
