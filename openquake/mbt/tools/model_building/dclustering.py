@@ -14,7 +14,6 @@ import numpy
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
-
 def _add_defaults(cat):
     """
     Adds default values for month, day, hour, minute and second
@@ -39,23 +38,34 @@ def _add_defaults(cat):
     return cat
 
 
-def dec(declustering_params, declustering_meth, cat, config):
+def dec(declustering_params, declustering_meth, cat):
 
     # Declustering parameters
     config = declustering_params
-
     # Create declusterer
-    modstr = 'openquake.hmtk.seismicity'
-    module = importlib.import_module(modstr)
-    my_class = getattr(module, declustering_meth)
-    declusterer = my_class()
+
+    if declustering_meth == 'GardnerKnopoffType1':
+        modstr = 'openquake.hmtk.seismicity'
+        module = importlib.import_module(modstr)
+        my_class = getattr(module, declustering_meth)
+        declusterer = my_class()
+    elif declustering_meth == "Reasenberg":
+        from openquake.hmtk.seismicity.declusterer.dec_reasenberg import Reasenberg
+        declusterer = Reasenberg()
+    elif declustering_meth == "Zaliapin":
+        from openquake.hmtk.seismicity.declusterer.dec_zaliapin import Zaliapin
+        declusterer = Zaliapin()
 
     # Create distance-time window
-    #if 'time_distance_window' in config:
-    #    my_class = getattr(module, config['time_distance_window'])
-    #    config['time_distance_window'] = my_class()
+    if 'time_distance_window' in config:
+        my_class = getattr(module, config['time_distance_window'])
+        config['time_distance_window'] = my_class()
 
     # Declustering
+
+    #declusterer = Zaliapin()
+    #declusterer = declustering_meth
+     #   vcl, flagvector = dec.decluster(self.cat, config)
     vcl, flag = declusterer.decluster(cat, config)
 
     return vcl, flag
