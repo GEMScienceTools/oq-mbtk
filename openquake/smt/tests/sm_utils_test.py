@@ -19,17 +19,14 @@
 Tests the GM database parsing and selection
 """
 import os
-# import shutil
-import sys
-from datetime import datetime
-# import json
-# import pprint
 import unittest
 import numpy as np
 from scipy.constants import g
 
 from openquake.smt.sm_utils import convert_accel_units, SCALAR_XY
 
+
+BASE_DATA_PATH = os.path.join(os.path.dirname(__file__))
 
 # OLD IMPLEMENTATION OF CONVERT ACCELERATION UNITS. USED HERE
 # TO COMPARE RESULTS
@@ -142,7 +139,7 @@ class SmUtilsTestCase(unittest.TestCase):
                     self.assertTrue(equals)
                 except AssertionError:
                     asd = 9
-                    
+                
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
