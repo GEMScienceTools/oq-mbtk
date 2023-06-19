@@ -125,8 +125,7 @@ DATA = {'GID_0': {
        'arb': ['ARE', 'BHR', 'OMN', 'QAT', 'SAU',
                'YEM'],
        'aus': ['AUS'],
-       #'can': ['CAN'], ##temporary fix to use CND and not CAN
-       'cnd': ['CAN'],
+       'can': ['CAN'], 
        'cca': ['ABW', 'AIA', 'ATG', 'BHS', 'BLZ',
                'BRB', 'CCY', 'CRI', 'CUB', 'CYM',
                'DMA', 'DOM', 'GLP', 'GRD', 'GTM',
