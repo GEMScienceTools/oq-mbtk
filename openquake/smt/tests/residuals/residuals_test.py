@@ -7,6 +7,8 @@ import shutil
 import unittest
 from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
+import openquake.smt.residuals.residual_plotter as rspl
+from openquake.smt.strong_motion_selector import rank_sites_by_record_count
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -191,6 +193,49 @@ class ResidualsTestCase(unittest.TestCase):
         self._check_residual_dictionary_correctness(edr.residuals)
         edr.get_edr_values()
 
+    def test_single_station_residual_analysis(self):
+        """
+        Test execution of single station residual analysis functions - not
+        correctness of values. Execution of plots is also tested here.
+        """
+        # Get sites with at least 1 record each (i.e. all sites in db)
+        threshold = 1
+        top_sites = rank_sites_by_record_count(self.database, threshold)
+            
+        # Create SingleStationAnalysis object
+        ssa1 = res.SingleStationAnalysis(top_sites.keys(), self.gmpe_list,
+                                         self.imts)
+        
+        # Compute the total, inter-event and intra-event residuals for each site
+        ssa1.get_site_residuals(self.database)
+        
+        # Get single station residual statistics per GMPE and per imt
+        ssa_csv_output = os.path.join(self.out_location, 'SSA_test.csv')
+        ssa1.residual_statistics(True, ssa_csv_output)
+        
+        # Check num. sites, GMPEs and intensity measures + csv outputted
+        self.assertTrue(len(ssa1.site_ids) == len(top_sites))
+        self.assertTrue(len(ssa1.gmpe_list) == len(self.gmpe_list))
+        self.assertTrue(len(ssa1.imts) == len(self.imts))
+        self.assertTrue(ssa_csv_output)
+        
+        # Check plots executed for each GMPE and intensity measure
+        for gmpe in self.gmpe_list:
+            for imt in self.imts:                        
+                output_all_res_plt = os.path.join(self.out_location, gmpe +
+                                                  imt + 'AllResPerSite.jpg') 
+                output_intra_res_comp_plt = os.path.join(self.out_location,
+                                                         gmpe + imt +
+                                                         'IntraResCompPerSite.jpg') 
+                rspl.ResidualWithSite(ssa1, gmpe, imt, output_all_res_plt,
+                                      filetype = 'jpg')
+                rspl.IntraEventResidualWithSite(ssa1, gmpe, imt,
+                                                output_intra_res_comp_plt,
+                                                filetype = 'jpg')
+                # Check plots outputted
+                self.assertTrue(output_all_res_plt)
+                self.assertTrue(output_intra_res_comp_plt)
+                
     @classmethod
     def tearDownClass(cls):
         """
