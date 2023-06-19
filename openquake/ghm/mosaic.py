@@ -137,14 +137,17 @@ DATA = {'GID_0': {
        'cea': ['KAZ', 'KGZ', 'TJK', 'TKM', 'UZB'],
        'chn': ['CHN', 'Z02', 'Z03', 'Z08'],
        'gld': ['GRL'],
+       # for placing Turkey, Cyprus, North Cyprus in MIE
        #'mie': ['AFG', 'ARM', 'AZE', 'CYP', 'GEO',
        #        'IRN', 'IRQ', 'ISR', 'JOR', 'KWT',
        #        'LBN', 'PAK', 'Z06', 'PSA', 'PSE',
        #        'SYR', 'TUR', 'ZNC'],
+       # for placing Turkey, Cyprus, North Cyprus in EUR
        'mie': ['AFG', 'ARM', 'AZE', 'GEO',
                'IRN', 'IRQ', 'ISR', 'JOR', 'KWT',
                'LBN', 'PAK', 'Z06', 'PSA', 'PSE',
                'SYR'],
+       # for placing Turkey, Cyprus, North Cyprus in EUR
        'eur': ['ALB', 'AND', 'AUT', 'BEL', 'BGR',
                'BIH', 'BLR', 'CHE', 'CZE', 'DEU',
                'DNK', 'ESP', 'EST', 'FIN', 'FRA',
@@ -188,7 +191,6 @@ DATA = {'GID_0': {
                'UGA', 'ZMB', 'ZWE'],
        'twn': ['TWN'],
        'usa': ['USA', 'CAL'],
-#        'ucf': ['CAL'], ## UCF merged with USA
        'waf': ['AGO', 'BEN', 'BFA', 'BWA', 'CAF',
                'CIV', 'CMR', 'COD', 'COG', 'DZA',
                'GAB', 'GHA', 'GIN', 'GMB', 'GNB',
