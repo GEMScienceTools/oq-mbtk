@@ -1,0 +1,25 @@
+name = "Test"
+mmin = 4.8
+bin_width = 0.1
+source_prefix = "L01"
+
+[declustering]
+method = "Reasenberg"
+taumin =  40.0
+taumax = 50.0
+P = 0.95
+xk = 0.5
+xmeff = 1.5
+rfact = 10
+horiz_error = 0.5
+depth_error = 2.0
+interaction_formula = "WellsCoppersmith1994"
+max_interaction_dist = 100 
+
+[smoothing]
+[completeness]
+
+[sources.00]
+completeness_table = [ [ 2000.0, 4.4,], [ 1990.0, 5.2,], [ 1985.0, 5.5,],]
+mmax_obs = 5.98
+mmax = 5.98

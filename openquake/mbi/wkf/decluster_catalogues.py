@@ -46,7 +46,6 @@ def decluster_catalogue(fname: str, config: str,  output_folder: str,
     """
     # Load the config folder
     config = toml.load(config)
-    print(config)
     create_folder(output_folder)
     create_folder('./tmp')
 
@@ -61,13 +60,12 @@ def decluster_catalogue(fname: str, config: str,  output_folder: str,
     labels = ['undef']
     
     declustering_meth = config['declustering']['method']
-    print(declustering_meth)
     # Check correct parameters are included for given method
     
     ## Windowing
     if declustering_meth == "windowing":
         declustering_meth = 'GardnerKnopoffType1'
-        declustering_params = {'time_distance_window': config['time_distance_window'], 'fs_time_prop': config['fs_time_prop']}
+        declustering_params = {'time_distance_window': config['declustering']['time_distance_window'], 'fs_time_prop': config['declustering']['fs_time_prop']}
         
      
         out = decluster(fname,
@@ -77,13 +75,13 @@ def decluster_catalogue(fname: str, config: str,  output_folder: str,
                     labels=labels,
                     tr_fname=tr_fname,
                     subcatalogues=subcatalogues,
-                    olab= config['time_distance_window'],
+                    olab= config['declustering']['time_distance_window'],
                     save_af=True,
                     fix_defaults=True)
     
     ## Reasenberg
     elif declustering_meth == "Reasenberg":
-        declustering_params = {'taumin' : config['taumin'],  # look ahead time for not clustered events, days
+        declustering_params = {'taumin' : config['declustering']['taumin'],  # look ahead time for not clustered events, days
             'taumax' : config['declustering']['taumax'],  # maximum look ahead time for clustered events, days
             'P' : config['declustering']['P'],  # confidence level that this is next event in sequence
             'xk' : config['declustering']['xk'],  # factor used with xmeff to define magnitude cutoff

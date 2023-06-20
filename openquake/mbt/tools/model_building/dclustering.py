@@ -60,7 +60,7 @@ def dec(declustering_params, declustering_meth, cat):
     if 'time_distance_window' in config:
         my_class = getattr(module, config['time_distance_window'])
         config['time_distance_window'] = my_class()
-        
+
     vcl, flag = declusterer.decluster(cat, config)
 
     return vcl, flag
@@ -178,7 +178,8 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         cat.write_catalogue(out_fname)
         print('Writing catalogue to file: {:s}'.format(out_fname))
         if save_af:
-            cat.write_catalogue(outfa_fname)
+            print("saving aftershocks")
+            catt.write_catalogue(outfa_fname)
     elif fmat == 'pkl':
         fou = open(out_fname, 'wb')
         pickle.dump(cat, fou)
