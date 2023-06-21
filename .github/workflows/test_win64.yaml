@@ -1,9 +1,6 @@
 name: Installation and test on Windows
 
 on:
-  push:
-    branches:
-      - 'ae-310action'
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
