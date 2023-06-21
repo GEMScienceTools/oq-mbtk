@@ -27,7 +27,6 @@ class test_smoothing_wkf(unittest.TestCase):
         cat = parser.read_file()
         cat.sort_catalogue_chronologically()
         self.cat = cat
-        print(HERE)
         
     def test_discretize_zones(self):
         """ test function for generating h3 cells per zone """
@@ -49,13 +48,10 @@ class test_smoothing_wkf(unittest.TestCase):
         zones_h3_repr = os.path.join(DATA_PATH, 'zones_h3')
         fname_bcounting = os.path.join(DATA_PATH, 'box_counting')
         config = os.path.join(DATA_PATH, 'smooth_config.toml')
-        #cmd = f"oqm wkf wkf_boxcounting_h3 {os.path.join(DATA_PATH, 'smooth_test.csv')} {zones_h3_repr} {config}"
-        #cmd = f"{cmd} {h3_level} {fname_bcounting} -y 2018 -w \"one\""
 
         code = os.path.join(CODE, 'bin', 'wkf_boxcounting_h3.jl')
         fmt = '{:s} {:s} {:s} {:s}'
         cmd = fmt.format(code, fname, zones_h3_repr, config)
-        #, h3_level, fname_bcounting, -y, 2018, -w,"one")
         cmd = f"{cmd} {h3_level} {fname_bcounting} -y 2018 -w \"one\""
 
         p = subprocess.run(cmd, shell=True)
@@ -63,15 +59,14 @@ class test_smoothing_wkf(unittest.TestCase):
         bc = pd.read_csv(os.path.join(DATA_PATH, 'box_counting', 'box_counting_h3_smooth_test.csv'))
         exp = np.array([1, 1, 1, 1, 1])
         np.testing.assert_equal(bc['count'], exp )
-        #np.testing.assert_almost_equal(bc['h3idx'], (5.86504791023157E+017, 5.87132612162617E+017, 5.87008917104493E+017, 5.86991324918448E+017, 5.86991324918448E+017))
-        #out = subprocess.call(cmd, shell=True)
+        
         
     def test_smoothing_wkf(self):
         """ Test adaptive smoothing build """
         
         config = os.path.join(DATA_PATH, 'smooth_config.toml')
         fname_bcounting = os.path.join(DATA_PATH, 'box_counting', 'box_counting_h3_smooth_test.csv')
-        fname_out = os.path.join(HERE, 'smooth.csv')
+        fname_out = os.path.join(DATA_PATH, 'smooth.csv')
         
         # Run the code
         code = os.path.join(CODE, 'bin', 'wkf_smoothing.jl')
@@ -91,3 +86,5 @@ class test_smoothing_wkf(unittest.TestCase):
         # set up an expected....
         computed = pd.read_csv(os.path.join(HERE, 'smooth.csv'))
         np.testing.assert_almost_equal(expected, computed['nocc'], decimal=4)
+
+
