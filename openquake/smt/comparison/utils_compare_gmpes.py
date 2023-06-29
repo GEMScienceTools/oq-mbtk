@@ -35,6 +35,7 @@ from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1,\
     _get_z25, _param_gmpes, mgmpe_check
 
+
 def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd,
                  output_directory, custom_color_flag, custom_color_list,
@@ -186,8 +187,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
 
                 pyplot.loglog()
                 pyplot.ylim(0.001, 10)
-                #pyplot.xlim(distances[0], distances[len(distances)-1])
-                pyplot.xlim(1, maxR)
+                pyplot.xlim(distances[0], distances[len(distances)-1])
                 
             pyplot.grid(axis='both', which='both', alpha=0.5)
         
@@ -378,6 +378,7 @@ def _get_period_values_for_spectra_plots(max_period):
     
     return period
     
+
 def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
                       output_directory, custom_color_flag, custom_color_list,
@@ -896,7 +897,9 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
 
             matrix_medians[:][g]= medians
         mtxs_median[n] = matrix_medians
+        
     return mtxs_median
+
 
 def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     """
@@ -965,6 +968,7 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()        
+    
     return matrix_Dist
 
     
