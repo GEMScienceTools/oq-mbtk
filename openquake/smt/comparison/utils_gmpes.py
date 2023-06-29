@@ -31,8 +31,6 @@ from openquake.hazardlib.scalerel import WC1994
 from openquake.hazardlib.const import TRT, StdDev
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
-from openquake.hazardlib.gsim.mgmpe import cy14_site_term as cy14_st
-from openquake.hazardlib.gsim.mgmpe import nrcan15_site_term as nrcan15_st
 
 
 def _get_first_point(rup, from_point):
@@ -62,6 +60,7 @@ def _get_first_point(rup, from_point):
     return Point(sfc.corner_lons[idx],
                  sfc.corner_lats[idx],
                  sfc.corner_depths[idx])
+
 
 def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
                            direction='positive', hdist=100, step=5.,
@@ -115,6 +114,7 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
 
     return SiteCollection(sites)
 
+
 def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
                 ztor=None):
     """
@@ -126,6 +126,7 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
     rup = BaseRupture(mag, rake, trt, hypoc, srf)
     rup.hypo_depth = dep
     return rup
+
 
 def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30, 
                Z1, Z25, maxR, step, imt, ztor, eshm20_region):    
@@ -174,7 +175,9 @@ def _get_z1(Vs30,region):
         Z1 = np.exp(-5.23/2*np.log((Vs30**2+412.39**2)/(1360**2+412.39**2)))
     else:
         Z1 = np.exp(-7.15/4*np.log((Vs30**4+570.94**4)/(1360**4+570.94**4)))
+
     return Z1
+
 
 def _get_z25(Vs30,region):
     """
@@ -189,7 +192,9 @@ def _get_z25(Vs30,region):
     else:
         Z25 = np.exp(7.089 - 1.144 * np.log(Vs30))
         Z25A_default = np.exp(7.089 - 1.144 * np.log(1100))           
+
     return Z25
+
 
 def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
     
@@ -228,6 +233,7 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
             aratio_s = 2
             
     return strike_s, dip_s, depth_s, aratio_s
+
 
 def mgmpe_check(gmpe):
     """
@@ -271,15 +277,21 @@ def mgmpe_check(gmpe):
                              sigma_model_alatik2015=params)
     
     ### Site term implementations
-    msg_multiple_site_terms = 'An alternative sigma model and an alternative \
+    msg_sigma_and_site_term = 'An alternative sigma model and an alternative \
         site term cannot be specified within a single GMPE implementation.'
-    msg_sigma_and_site_term = 'Two alternative site terms have been specified \
+    msg_multiple_site_terms = 'Two alternative site terms have been specified \
         within the toml for a single GMPE implementation'
     
     # Check only single site term specified
     if 'CY14SiteTerm' in str(orig_gmpe) and 'NRCan15SiteTerm' in str(orig_gmpe):
-        raise ValueError(msg_sigma_and_site_term)
+        raise ValueError(msg_multiple_site_terms)
     
+    # Check if site term an dsigma model specified
+    if 'CY14SiteTerm' in str(orig_gmpe) and 'al_atik_2015_sigma' in str(
+            orig_gmpe) or 'CY14SiteTerm' in str(orig_gmpe) and \
+        'al_atik_2015_sigma' in str(orig_gmpe):
+        raise ValueError(msg_sigma_and_site_term)
+        
     # CY14SiteTerm
     if 'CY14SiteTerm' in str(orig_gmpe):
         params = {}
