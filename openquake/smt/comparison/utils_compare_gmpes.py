@@ -74,41 +74,52 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     lt_plus_sigma_store_gmc2 = {}
     lt_minus_sigma_store_gmc2 = {}
     
-    for n, i in enumerate(imt_list): #iterate though imt_list
-
-        for l, m in enumerate(mag_list):  #iterate though mag_list
-
+    # For each imt...
+    for n, i in enumerate(imt_list):
+        
+        # For each mag...
+        for l, m in enumerate(mag_list):
+            
+            # Add subplots
             fig.add_subplot(len(imt_list), len(mag_list), l+1+n*len(
                 mag_list)) #(#vert, #hor, #subplot)
             
+            # Set dicts to store...
             store_lt_branch_values_gmc1 = {}
             store_lt_branch_values_gmc2 = {}
             
+            # For gmpe...
             for g, gmpe in enumerate(gmpe_list): 
                 
+                # Perform mgmpe check and retain orginal + get colors
                 col=colors[g]
                 gsim = valid.gsim(gmpe)
                 gmm_orig = gsim
                 gmm = mgmpe_check(gsim)
                 
+                # Get gmpe params
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     gmm, strike, dip, depth[l], aratio, rake) 
-
+                
+                # Get attenuation curves
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l],m,
                                                   aratio_g, strike_g, dip_g,
                                                   rake,Vs30, Z1, Z25, maxR, 
-                                                  step, i, 1, eshm20_region) 
+                                                  step, i, 1, eshm20_region)
+                
+                # Get mean and sigma
                 mean = mean[0][0]
                 std = std[0][0]
-                
+                # If only logic tree to plot...
                 if 'plot_lt_only' not in str(gmpe):
                     pyplot.plot(distances, np.exp(mean), color=col,
                                 linewidth=2, linestyle='-', label=gmpe)
                 
+                # Get mean +/- sigma
                 plus_sigma = np.exp(mean+Nstd*std[0])
                 minus_sigma = np.exp(mean-Nstd*std[0])
                 
-                # Plot Sigma                
+                # Plot Sigma
                 if not Nstd==0:
                     if 'plot_lt_only' not in str(gmpe):
                         pyplot.plot(distances, plus_sigma, linewidth=0.75,
@@ -124,6 +135,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                            np.array(minus_sigma),
                                                            np.array(distances)]
                     
+                    # If logic tree store values for these...
                     if lt_weights_gmc1 == None:
                         pass
                     elif gmpe in lt_weights_gmc1:
@@ -143,6 +155,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                         'minus_sigma': minus_sigma*lt_weights_gmc2[gmpe]}
                     
                 else:
+                    # If no sigma plotted just store mean
                     store_trellis_values['IM = ' + str(i), 'Magnitude = ' +
                                              str(m), str(gmpe).replace(
                                                  '\n', ', ').replace(
@@ -163,6 +176,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                             store_lt_branch_values_gmc2[gmpe] = {
                                     'mean': np.exp(mean)*lt_weights_gmc2[gmpe]}
                             
+                # Back to plotting...
                 if n == 0: #top row only
                     pyplot.title('Mw=' + str(m), fontsize='16')
                 if n == len(imt_list)-1: #bottom row only
@@ -172,6 +186,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
 
                 pyplot.loglog()
                 pyplot.ylim(0.001, 10)
+                #pyplot.xlim(distances[0], distances[len(distances)-1])
                 pyplot.xlim(1, maxR)
                 
             pyplot.grid(axis='both', which='both', alpha=0.5)
@@ -260,7 +275,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     
                     lt_mean_store_gmc2[i,m] = lt_mean_gmc2                    
                     
-
+    # Plot config
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(os.path.join(output_directory,'TrellisPlots.png'),
                    bbox_inches='tight',dpi=200,pad_inches = 0.2)
@@ -296,7 +311,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                          lt_plus_sigma_store_gmc2[i,m],
                                          lt_minus_sigma_store_gmc2[i,m],
                                          distances]
-                                         
+    # If no sigma plotted...                                    
     if Nstd == 0:
         trellis_value_df = pd.DataFrame(store_trellis_values,
                                         index = ['Mean (g)', 'Distance (km)'])
