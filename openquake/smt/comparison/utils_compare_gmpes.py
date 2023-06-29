@@ -1038,7 +1038,9 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
     pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
+    
     return coo
+
 
 def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     """
