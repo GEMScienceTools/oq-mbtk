@@ -162,6 +162,7 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     
     return mean, std, distances
 
+
 def _get_z1(Vs30,region):
     """
     :param region:
