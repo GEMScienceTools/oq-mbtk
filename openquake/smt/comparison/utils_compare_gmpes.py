@@ -44,10 +44,9 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     Generate trellis plots for given run configuration
     """
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','k','dodgerblue', 'gold', '0.8',
-            'mediumseagreen', '0.5','tab:orange', 'tab:purple', 'tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm',
-            'aquamarine']
+    colors=['r', 'g', 'b', 'y', 'lime','k', 'dodgerblue', 'gold', '0.8',
+            'mediumseagreen', '0.5', 'tab:orange', 'tab:purple', 'tab:brown',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
@@ -55,10 +54,10 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     
     # Set Z1 and Z25
     if  Z1 == -999:
-        Z1 = _get_z1(Vs30,region)
+        Z1 = _get_z1(Vs30, region)
 
     if  Z25 == -999:
-        Z25 = _get_z25(Vs30,region)
+        Z25 = _get_z25(Vs30, region)
     
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
     
@@ -93,7 +92,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             for g, gmpe in enumerate(gmpe_list): 
                 
                 # Perform mgmpe check and retain orginal + get colors
-                col=colors[g]
+                col = colors[g]
                 gsim = valid.gsim(gmpe)
                 gmm_orig = gsim
                 gmm = mgmpe_check(gsim)
@@ -113,28 +112,27 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 std = std[0][0]
                 # If only logic tree to plot...
                 if 'plot_lt_only' not in str(gmpe):
-                    pyplot.plot(distances, np.exp(mean), color=col,
-                                linewidth=2, linestyle='-', label=gmpe)
+                    pyplot.plot(distances, np.exp(mean), color = col,
+                                linewidth = 2, linestyle = '-', label = gmpe)
                 
                 # Get mean +/- sigma
                 plus_sigma = np.exp(mean+Nstd*std[0])
                 minus_sigma = np.exp(mean-Nstd*std[0])
                 
                 # Plot Sigma
-                if not Nstd==0:
+                if not Nstd == 0:
                     if 'plot_lt_only' not in str(gmpe):
-                        pyplot.plot(distances, plus_sigma, linewidth=0.75,
-                                    color=col, linestyle='-.')
-                        pyplot.plot(distances, minus_sigma, linewidth=0.75,
-                                    color=col, linestyle='-.')
+                        pyplot.plot(distances, plus_sigma, linewidth = 0.75,
+                                    color = col, linestyle = '-.')
+                        pyplot.plot(distances, minus_sigma, linewidth = 0.75,
+                                    color = col, linestyle = '-.')
                                      
-                    store_trellis_values['IM = ' + str(i), 'Magnitude = ' 
-                                         + str(m), str(gmpe).replace(
-                                             '\n', ', ').replace('[', '').replace(
-                                                 ']', '')] = [np.array(np.exp(mean)),
-                                                           np.array(plus_sigma),
-                                                           np.array(minus_sigma),
-                                                           np.array(distances)]
+                    store_trellis_values[
+                        'IM = ' + str(i), 'Magnitude = ' + str(m), str(
+                            gmpe).replace('\n', ', ').replace(
+                                '[', '').replace(']', '')] = [
+                                    np.array(np.exp(mean)), np.array(plus_sigma),
+                                    np.array(minus_sigma), np.array(distances)]
                     
                     # If logic tree store values for these...
                     if lt_weights_gmc1 == None:
@@ -157,12 +155,12 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     
                 else:
                     # If no sigma plotted just store mean
-                    store_trellis_values['IM = ' + str(i), 'Magnitude = ' +
-                                             str(m), str(gmpe).replace(
-                                                 '\n', ', ').replace(
-                                                     '[', '').replace(']', '')
-                                                     ] = [np.array(np.exp(mean)),
-                                                              np.array(distances)]         
+                    store_trellis_values[
+                        'IM = ' + str(i), 'Magnitude = ' + str(m), str(
+                            gmpe).replace('\n', ', ').replace('[', '').replace(
+                                ']', '')] = [
+                                    np.array(np.exp(mean)), np.array(distances)]     
+                                    
                     if lt_weights_gmc1 == None:
                         pass
                     elif gmpe in lt_weights_gmc1:                                      
@@ -189,7 +187,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 pyplot.ylim(0.001, 10)
                 pyplot.xlim(distances[0], distances[len(distances)-1])
                 
-            pyplot.grid(axis='both', which='both', alpha=0.5)
+            pyplot.grid(axis = 'both', which = 'both', alpha = 0.5)
         
             ### Plot logic tree for the IMT-mag combination if weights specified
             logic_tree_config_gmc1 = 'GMC logic tree #1'
@@ -253,11 +251,13 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                 color = 'tab:blue', linestyle = '-',
                                 label = logic_tree_config_gmc2, zorder = 100)
                     
-                    pyplot.plot(distances, lt_plus_sigma_gmc2, linewidth = 0.75,
-                                color = 'tab:blue', linestyle = '-.', zorder = 100)
+                    pyplot.plot(
+                        distances, lt_plus_sigma_gmc2, linewidth = 0.75,
+                        color = 'tab:blue', linestyle = '-.', zorder = 100)
             
-                    pyplot.plot(distances, lt_minus_sigma_gmc2, linewidth = 0.75,
-                                color = 'tab:blue', linestyle = '-.', zorder = 100)
+                    pyplot.plot(
+                        distances, lt_minus_sigma_gmc2, linewidth = 0.75, 
+                        color = 'tab:blue', linestyle = '-.', zorder = 100)
                     
                     lt_mean_store_gmc2[i,m] = lt_mean_gmc2
                     lt_plus_sigma_store_gmc2[i,m] = lt_plus_sigma_gmc2
@@ -273,12 +273,13 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                 color = 'tab:blue', linestyle = '-',
                                 label = logic_tree_config_gmc2)
                     
-                    lt_mean_store_gmc2[i,m] = lt_mean_gmc2                    
+                    lt_mean_store_gmc2[i, m] = lt_mean_gmc2                    
                     
     # Plot config
-    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
-    pyplot.savefig(os.path.join(output_directory,'TrellisPlots.png'),
-                   bbox_inches='tight',dpi=200,pad_inches = 0.2)
+    pyplot.legend(loc = "center left", bbox_to_anchor = (1.1, 1.05),
+                  fontsize = '16')
+    pyplot.savefig(os.path.join(output_directory, 'TrellisPlots.png'),
+                   bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()    
 
@@ -335,6 +336,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     display(trellis_value_df)
     trellis_value_df.to_csv(os.path.join(output_directory, 'trellis_values.csv'))
 
+
 def _get_period_values_for_spectra_plots(max_period):
     """
     Get list of periods based on maximum period specified in comparison .toml
@@ -343,7 +345,7 @@ def _get_period_values_for_spectra_plots(max_period):
         this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
     """
     # Set initial periods with constant spacing of 0.1
-    period = list(np.round(np.arange(0,max_period,0.1),1))
+    period = list(np.round(np.arange(0, max_period, 0.1), 1))
     period.append(max_period)
     # if period extends beyond 1 s reduce interval to 0.2 s
     period = pd.Series(period)
@@ -351,29 +353,29 @@ def _get_period_values_for_spectra_plots(max_period):
         for SA in range(0,len(period)):
             if period[SA] > 1:
                 period=period.drop(SA)
-        periods_to_re_add = pd.Series(np.arange(1,max_period,0.2))
-        period_df = pd.DataFrame({'periods':period,'periods_to_re_add':
+        periods_to_re_add = pd.Series(np.arange(1, max_period, 0.2))
+        period_df = pd.DataFrame({'periods': period, 'periods_to_re_add':
                                   periods_to_re_add, 'max_period': max_period})
         period = period_df.melt().value.dropna().unique()
     # if period extends beyond 2 s then reduce interval to 0.5 s
     period = pd.Series(period)
     if max(period) > 2:
-        for SA in range(0,len(period)):
+        for SA in range(0, len(period)):
             if period[SA] > 2:
                 period=period.drop(SA)
-        periods_to_re_add = pd.Series(np.arange(2,max_period,0.5))
+        periods_to_re_add = pd.Series(np.arange(2, max_period, 0.5))
         period_df = pd.DataFrame({'periods':period,'periods_to_re_add':
                                   periods_to_re_add,'max_period': max_period})
         period = period_df.melt().value.dropna().unique()
     # if period extends beyond 5 s then reduce interval to 1 s
     period = pd.Series(period)
     if max(period) > 5:
-        for SA in range(0,len(period)):
+        for SA in range(0, len(period)):
             if period[SA] > 2:
                 period=period.drop(SA)
-        periods_to_re_add = pd.Series(np.arange(5,max_period,1))
-        period_df = pd.DataFrame({'periods':period,'periods_to_re_add':
-                                  periods_to_re_add,'max_period': max_period})
+        periods_to_re_add = pd.Series(np.arange(5, max_period, 1))
+        period_df = pd.DataFrame({'periods': period, 'periods_to_re_add':
+                                  periods_to_re_add, 'max_period': max_period})
         period = period_df.melt().value.dropna().unique()
     
     return period
@@ -411,22 +413,21 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     
     # Set Z1 and Z25
     if  Z1 == -999:
-        Z1 = _get_z1(Vs30,region)
+        Z1 = _get_z1(Vs30, region)
 
     if  Z25 == -999:
-        Z25 = _get_z25(Vs30,region)
+        Z25 = _get_z25(Vs30, region)
         
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
-            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm',
-            'aquamarine']
+    colors=['r', 'g', 'b', 'y', 'lime', 'k', 'dodgerblue', 'gold', '0.8',
+            'mediumseagreen', '0.5', 'tab:orange', 'tab:purple', 'tab:brown',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
     
-    fig1 = pyplot.figure(figsize=(len(mag_list)*5, len(dist_list)*4))
+    fig1 = pyplot.figure(figsize = (len(mag_list)*5, len(dist_list)*4))
     pyplot.rcParams.update({'font.size': 16})# response spectra
-    fig2 = pyplot.figure(figsize=(len(mag_list)*5, len(dist_list)*4))
+    fig2 = pyplot.figure(figsize = (len(mag_list)*5, len(dist_list)*4))
     pyplot.rcParams.update({'font.size': 16})# sigma
     
     ### Set dicts to store values
@@ -464,14 +465,13 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
             
             for g, gmpe in enumerate(gmpe_list): 
                 
-                col=colors[g]
+                col = colors[g]
                 gsim = valid.gsim(gmpe)
                 gmm_orig = gsim
                 gmm = mgmpe_check(gsim)
 
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(gmm, strike,
-                                                                  dip, 
-                                                                  depth[l],
+                                                                  dip, depth[l],
                                                                   aratio, rake)
                 
                 rs_50p, rs_plus_sigma, rs_minus_sigma, sigma = [], [], [], []
@@ -483,10 +483,10 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                     0.1, imt, 1, eshm20_region) 
                     
                     mu = mu[0][0]
-                    f = interpolate.interp1d(distances,mu)
+                    f = interpolate.interp1d(distances, mu)
                     rs_50p_dist = np.exp(f(i))
                     
-                    f1 = interpolate.interp1d(distances,std[0])
+                    f1 = interpolate.interp1d(distances, std[0])
                     sigma_dist = f1(i)
                     
                     if Nstd != 0:
@@ -503,17 +503,17 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     
                 # Plot individual GMPE medians
                 if 'plot_lt_only' not in str(gmpe):
-                    ax1.plot(period, rs_50p, color=col, linewidth=2,
-                             linestyle='-', label=gmpe)
+                    ax1.plot(period, rs_50p, color = col, linewidth = 2,
+                             linestyle = '-', label = gmpe)
                     if Nstd != 0:
-                        ax1.plot(period, rs_plus_sigma, color=col,
-                                 linewidth=0.75, linestyle='-.')
-                        ax1.plot(period, rs_minus_sigma, color=col,
-                                 linewidth=0.75, linestyle='-.')
+                        ax1.plot(period, rs_plus_sigma, color = col,
+                                 linewidth = 0.75, linestyle = '-.')
+                        ax1.plot(period, rs_minus_sigma, color = col,
+                                 linewidth = 0.75, linestyle = '-.')
                 
                 # Plot sigma vs period
-                ax2.plot(period, sigma, color=col, linewidth=2, linestyle='-',
-                         label=gmpe)
+                ax2.plot(period, sigma, color=col, linewidth=2, linestyle = '-',
+                         label = gmpe)
                 
                 sigma_store = []
                 for idx_sigma, val_sigma in enumerate(sigma):                    
@@ -606,15 +606,15 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                                                    
                 # Continue with plot creation
                 ax1.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
-                              fontsize=16, y=1.0, pad=-16)
+                              fontsize = 16, y = 1.0, pad = -16)
                 ax2.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
-                              fontsize=16, y=1.0, pad=-16)
+                              fontsize = 16, y = 1.0, pad = -16)
                 if n == len(dist_list)-1: #bottom row only
-                    ax1.set_xlabel('Period (s)', fontsize=16)
-                    ax2.set_xlabel('Period (s)', fontsize=16)
+                    ax1.set_xlabel('Period (s)', fontsize = 16)
+                    ax2.set_xlabel('Period (s)', fontsize = 16)
                 if l == 0: # left row only
-                    ax1.set_ylabel('Sa (g)', fontsize=16) 
-                    ax2.set_ylabel(r'$\sigma$', fontsize=16) 
+                    ax1.set_ylabel('Sa (g)', fontsize = 16) 
+                    ax2.set_ylabel(r'$\sigma$', fontsize = 16) 
             ax1.grid(True)
             ax2.grid(True)
             ax2.set_ylim(0.3, 1)
@@ -865,7 +865,7 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
  
     for n, i in enumerate(imt_list): #iterate though imt_list
 
-        matrix_medians=np.zeros((len(gmpe_list),(len(mag_list)*int((
+        matrix_medians=np.zeros((len(gmpe_list), (len(mag_list)*int((
             maxR/step)))))
 
         for g, gmpe in enumerate(gmpe_list): 
@@ -886,13 +886,13 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                                                   step, i, 1, eshm20_region) 
                 
                 if mtxs_type == 'median':
-                    medians = np.append(medians,(np.exp(mean)))
+                    medians = np.append(medians, (np.exp(mean)))
                 if mtxs_type == '84th_perc':
                     Nstd = 1 # median + 1std = ~84th percentile
-                    medians = np.append(medians,(np.exp(mean+Nstd*std[0])))
+                    medians = np.append(medians, (np.exp(mean+Nstd*std[0])))
                 if mtxs_type == '16th_perc':
                     Nstd = 1 # median - 1std = ~16th percentile
-                    medians = np.append(medians,(np.exp(mean-Nstd*std[0])))   
+                    medians = np.append(medians, (np.exp(mean-Nstd*std[0])))   
                 sigmas = np.append(sigmas,std[0])
 
             matrix_medians[:][g]= medians
@@ -965,7 +965,7 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         ax = axs2[np.unravel_index(n+1, (nrows, ncols))]
         ax.set_visible(False)
 
-    pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
+    pyplot.savefig(namefig, bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()        
     
@@ -989,10 +989,9 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y','lime','k','dodgerblue','gold','0.8',
-            'mediumseagreen','0.5','tab:orange', 'tab:purple','tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm',
-            'aquamarine']
+    colors=['r', 'g', 'b', 'y', 'lime', 'k', 'dodgerblue', 'gold', '0.8',
+            'mediumseagreen', '0.5', 'tab:orange', 'tab:purple', 'tab:brown',
+            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
@@ -1013,17 +1012,17 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
 
         # Get the data matrix
         data = mtxs[n]
-        coo, cost = sammon(data, display=1)
+        coo, cost = sammon(data, display = 1)
         
         fig.add_subplot(nrows, ncols, n+1) #(#vert, #hor, #subplot)
 
         for g, gmpe in enumerate(gmpe_list): 
             col=colors[g]
-            pyplot.plot(coo[g,0], coo[g,1], 'o', markersize=9, color=colors[
+            pyplot.plot(coo[g, 0], coo[g, 1], 'o', markersize=9, color=colors[
                 g], label=gmpe)
             texts.append(pyplot.text(coo[g, 0]+np.abs(coo[g, 0])*0.02,
                                      coo[g, 1]+np.abs(coo[g, 1])*0.,
-                                     gmpe_list[g], ha='left', color=col))
+                                     gmpe_list[g], ha = 'left', color = col))
 
         pyplot.title(str(i), fontsize='16')
         if mtxs_type == 'median':
@@ -1034,8 +1033,9 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
             pyplot.title(str(i) + ' (16th percentile)', fontsize = '14')
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
-    pyplot.legend(loc="center left", bbox_to_anchor=(1.25, 0.50), fontsize='16')
-    pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.2)
+    pyplot.legend(loc = "center left", bbox_to_anchor = (1.25, 0.50),
+                  fontsize = '16')
+    pyplot.savefig(namefig, bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
     pyplot.show()
     pyplot.tight_layout()
     
@@ -1075,8 +1075,8 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         data = mtxs[n]
 
         # Agglomerative clustering
-        Z = hierarchy.linkage(data, method='ward', metric='euclidean',
-                              optimal_ordering=True)
+        Z = hierarchy.linkage(data, method = 'ward', metric = 'euclidean',
+                              optimal_ordering = True)
         matrix_Z[n] = Z
         ymax[n] = Z.max(axis=0)[2]
 
@@ -1110,7 +1110,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         axs[1].set_visible(False)
         
 
-    pyplot.savefig(namefig, bbox_inches='tight',dpi=200,pad_inches = 0.4)
+    pyplot.savefig(namefig, bbox_inches = 'tight', dpi = 200, pad_inches = 0.4)
     pyplot.show()
     pyplot.tight_layout() 
     return matrix_Z
