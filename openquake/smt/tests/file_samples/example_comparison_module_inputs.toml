@@ -1,113 +1,81 @@
 ### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
 
 [general]
-name_analysis = 'demonstration'
-imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)','SA(2.0)']
-max_period = 2 # max period for response spectra
-maxR = 300 # max distance to consider
-dist_list = [10, 100, 250] # distances for use in response spectra + sigma wrt period plots
-region = 0 # for NGAWest2 regionalisation
-eshm20_region = 4 # for use in KothaEtAl2020 ESHM20 version
-Nstd = 1 # number of standard deviations to sample sigma for 
-custom_colors_flag = 'False' # set to "True" for custom colours in RS + trellis)
-custom_colors_list = ['lime','dodgerblue','gold','0.8']
+imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
+max_period = 2 # max period for spectra plots
+maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
+dist_list = [10, 100, 250] # distance intervals for use in spectra plots
+region = 0 # for NGAWest2 GMPE regionalisation
+eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
+Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 or 3)
 
+# Specify site properties
 [site_properties]
 vs30 = 800
 Z1 = -999
 Z25 = -999
 
-[source_properties] # characterise earthquake for the region
+# Characterise earthquake for the region of interest
+[source_properties]
 strike = -999
-dip =  60
-rake = 90
-trellis_mag_list = [5,6,7] # mags used only for trellis
-trellis_depths = [20,20,20] # depth per magnitude
+dip =  60 # (Albania has predominantly reverse faulting)
+rake = 90 # (+ 90 for compression, -90 for extension)
+trellis_mag_list = [5, 6, 7] # mags used only for trellis
+trellis_depths = [20, 20, 20] # depth per magnitude
 
-# Specify mag values for use in Sammons, Euclidean dist and clustering
+# Specify magnitude array for Sammons, Euclidean dist and clustering
 [mag_values_non_trellis_functions]
 mmin = 5
 mmax = 7
 spacing = 0.1
-non_trellis_depths = [[5,25],[6,30],[7,35]] # [[mag,depth],[mag,depth],[mag,depth]] --> e.g. if mag = 5.3 will be assigned depth of 25, if mag = 5.8 will be assigned depth of 30
+non_trellis_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
 
-# Specify label for gmpes (make sure matches number of gmpes we specify below!)
+# Specify label for gmpes
 [gmpe_labels]
-gmpes_label = ['AG20_glo','AG20_cas','YA15', 'HA18', 'B20','K1','K2','K3','K4','K5','K6','K7','K8','K9','K10','K11','K12','K13','K14','K15']
+gmpes_label = ['CA15', 'AK14', 'B20', 'L19', 'BO14', 'K1', 'K2', 'K3', 'K4', 'K5']
 
 # Specify gmpes
-[models]      
 
-# Some models with varying inputs specifiable within the .toml format
-[models.1-AbrahamsonGulerce2020SInter]
-region = "GLO"
-[models.2-AbrahamsonGulerce2020SInter]
-region = "CAS"
-[models.YenierAtkinson2015BSSA]
-sigma_model = 'al_atik_2015_sigma'
-[models.HassaniAtkinson2018]
-    d_sigma = 100
-    kappa0 = 0.04
+# Plot logic tree and individual GMPEs for below GMC logic tree config (gmc1)
 [models.BooreEtAl2020]
+    lt_weight_gmc1 = 0.25
+    
+[models.LanzanoEtAl2019_RJB_OMO]
+    lt_weight_gmc1 = 0.30
+    
+[models.BooreEtAl2014]
+    lt_weight_gmc1 = 0.15
 
-# Default K20_ESHM20 logic tree branches with weights assigned to plot logic tree config
+# Default K20_ESHM20 logic tree branches considered in gmc1
 [models.1-KothaEtAl2020ESHM20]
-    sigma_mu_epsilon = -2.85697 
-    c3_epsilon = 1.732051
-    lt_weight = 0.00188042
-[models.2-KothaEtAl2020ESHM20]
-    sigma_mu_epsilon = -2.85697 
-    c3_epsilon = -1.732051
-    lt_weight = 0.00188042   
-[models.3-KothaEtAl2020ESHM20]    
+    lt_weight_gmc1 = 0.000862
     sigma_mu_epsilon = 2.85697 
-    c3_epsilon = -1.732051
-    lt_weight = 0.00188042  
-[models.4-KothaEtAl2020ESHM20]     
-    sigma_mu_epsilon = 2.85697 
-    c3_epsilon = 1.732051
-    lt_weight = 0.00188042  
-[models.5-KothaEtAl2020ESHM20]     
-    sigma_mu_epsilon = -2.85697 
+    c3_epsilon = 1.72    
+[models.2-KothaEtAl2020ESHM20]   
+    lt_weight_gmc1 = 0.067767
+    sigma_mu_epsilon = 1.35563
     c3_epsilon = 0
-    lt_weight = 0.00749916       
-[models.6-KothaEtAl2020ESHM20]
-    sigma_mu_epsilon = 2.85697 
-    c3_epsilon = 0
-    lt_weight = 0.00749916  
-[models.7-KothaEtAl2020ESHM20]
-    sigma_mu_epsilon = -1.35563
-    c3_epsilon = -1.732051
-    lt_weight = 0.03708736
-[models.8-KothaEtAl2020ESHM20]
-    sigma_mu_epsilon = -1.35563
-    c3_epsilon = 1.730251
-    lt_weight = 0.03708736
-[models.9-KothaEtAl2020ESHM20]    
-    sigma_mu_epsilon = 1.35563 
-    c3_epsilon = -1.732051
-    lt_weight = 0.03708736
-[models.10-KothaEtAl2020ESHM20]
-    sigma_mu_epsilon = 1.35563 
-    c3_epsilon = 1.732051
-    lt_weight = 0.03708736
-[models.11-KothaEtAl2020ESHM20]
-    sigma_mu_epsilon = 0 
-    c3_epsilon = -1.732051
-    lt_weight = 0.08906444
-[models.12-KothaEtAl2020ESHM20]    
+[models.3-KothaEtAl2020ESHM20]   
+    lt_weight_gmc1 = 0.162742
     sigma_mu_epsilon = 0
-    c3_epsilon = 1.732051
-    lt_weight = 0.08906444  
-[models.13-KothaEtAl2020ESHM20]
-    sigma_mu_epsilon = -1.35563 
-    c3_epsilon = 0
-    lt_weight = 0.14790528
-[models.14-KothaEtAl2020ESHM20]
-    sigma_mu_epsilon = 1.35563 
-    c3_epsilon = 0
-    lt_weight = 0.14790528
-[models.15-KothaEtAl2020ESHM20]    
-    sigma_mu_epsilon = 0
-    c3_epsilon = 0
-    lt_weight = 0.35519112
+    c3_epsilon = 0        
+[models.4-KothaEtAl2020ESHM20]
+    lt_weight_gmc1 = 0.067767
+    sigma_mu_epsilon = -1.35563
+    c3_epsilon = 0 
+[models.5-KothaEtAl2020ESHM20]
+    lt_weight_gmc1 = 0.000862
+    sigma_mu_epsilon = -2.85697 
+    c3_epsilon = -1.72    
+    
+    
+# Plot logic tree only for the second GMC logic tree config (gmc2)
+[models.CauzziEtAl2014]
+    lt_weight_gmc2_plot_lt_only = 0.50
+    
+[models.AkkarEtAlRjb2014]
+    lt_weight_gmc1_plot_lt_only = 0.50
+    
+[custom_colors]
+custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
+custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']

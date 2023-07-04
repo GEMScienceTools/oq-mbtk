@@ -601,7 +601,7 @@ def _get_ESM18_headers(ESM22,default_string,r_fm_type,r_datetime):
     "ML_ref":default_string,
     "Mw":ESM22.MW,
     "Mw_ref":default_string,
-    "Ms":ESM22.MW,
+    "Ms":default_string,
     "Ms_ref":default_string,
     "EMEC_Mw":ESM22.MW,
     "EMEC_Mw_type":default_string,

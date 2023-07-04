@@ -17,8 +17,6 @@ dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt pe
 region = 0
 eshm20_region = 4 # region for ESHM20 implementation of Kotha et al. 2020 GMPE (default is zero)
 Nstd = 2 # number of standard deviations to sample sigma for 
-custom_colors_flag = 'False' #By default set to "False" (set to "True" for custom colours)
-custom_colors_list = ['lime','dodgerblue','gold','0.8']
 
 [site_properties]
 vs30 = 800
@@ -49,3 +47,7 @@ gmpes_label = ['CY14','CB14','BSSA14','KO2020']
 [models.CampbellBozorgnia2014]
 [models.BooreEtAl2014]
 [models.KothaEtAl2020]
+
+[custom_colors]
+custom_colors_flag = 'False' #By default set to "False" (set to "True" for custom colours)
+custom_colors_list = ['lime','dodgerblue','gold','0.8']
