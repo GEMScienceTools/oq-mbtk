@@ -146,8 +146,10 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
         props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
                  'vs30measured': True}
                 
+    # Add 50 km to maxR to ensure can always interpolate (rrup is used for
+    # the returned distances so can be affected by rupture dip)
     sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
-                                   direction='positive', hdist=maxR, step=step,
+                                   direction='positive', hdist=maxR+50, step=step,
                                    site_props=props)
     
     mag_str = [f'{mag:.2f}']
