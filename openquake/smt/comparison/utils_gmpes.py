@@ -145,7 +145,8 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     else:
         props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
                  'vs30measured': True}
-                
+    
+    
     sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
                                    direction='positive', hdist=maxR, step=step,
                                    site_props=props)
@@ -160,6 +161,9 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
     distances = ctxs.rrup
+    
+    # Ensures can interpolate to max value in dist_list (within RS plotting)
+    distances[len(distances)-1] = maxR
     
     return mean, std, distances
 
