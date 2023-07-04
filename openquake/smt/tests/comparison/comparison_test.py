@@ -253,7 +253,7 @@ class ComparisonTestCase(unittest.TestCase):
                      config.maxR, config.gmpes_list, config.aratio,
                      config.Nstd, self.output_directory, config.custom_color_flag,
                      config.custom_color_list, config.eshm20_region,
-                     config.lt_weights)
+                     config.lt_weights_gmc1, config.lt_weights_gmc2)
         
         # Spectra plots 
         plot_spectra_util(config.rake, config.strike, config.dip,
@@ -263,7 +263,7 @@ class ComparisonTestCase(unittest.TestCase):
                           config.gmpes_list, config.aratio, config.Nstd,
                           self.output_directory, config.custom_color_flag,
                           config.custom_color_list, config.eshm20_region,
-                          config.lt_weights) 
+                          config.lt_weights_gmc1, config.lt_weights_gmc2) 
        
         # Specify target files
         target_file_trellis = (os.path.join(self.output_directory,'TrellisPlots.png'))
