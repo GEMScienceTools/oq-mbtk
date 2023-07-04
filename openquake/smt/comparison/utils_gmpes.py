@@ -28,7 +28,7 @@ from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.scalerel import WC1994
-from openquake.hazardlib.const import TRT, StdDev
+from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
 
@@ -213,9 +213,9 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
         dip_s = dip
 
     if depth == -999:
-        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == 'TRT.SUBDUCTION_INTERFACE':
+        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTERFACE:
             depth_s = 30
-        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == 'TRT.SUBDUCTION_INTRASLAB':
+        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTRASLAB:
             depth_s = 50
         else:
             depth_s = 15
@@ -225,9 +225,9 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
     if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
-        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == 'TRT.SUBDUCTION_INTERFACE':
+        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTERFACE:
             aratio_s = 5
-        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == 'TRT.SUBDUCTION_INTRASLAB':
+        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTRASLAB:
             aratio_s = 5
         else:
             aratio_s = 2
