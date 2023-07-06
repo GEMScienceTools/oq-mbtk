@@ -185,7 +185,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
 
                 pyplot.loglog()
                 pyplot.ylim(0.001, 10)
-                pyplot.xlim(distances[0], distances[len(distances)-1])
+                pyplot.xlim(distances[0], distances[len(distances)-2])
                 
             pyplot.grid(axis = 'both', which = 'both', alpha = 0.5)
         
@@ -479,9 +479,10 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 for k, imt in enumerate(imt_list): 
                     mu, std, distances = att_curves(gmm, gmm_orig, depth[l], m,
                                                     aratio_g, strike_g, dip_g, 
-                                                    rake,Vs30, Z1, Z25, 300, 
-                                                    0.1, imt, 1, eshm20_region) 
-                    
+                                                    rake,Vs30, Z1, Z25, np.max(
+                                                    dist_list), 0.1, imt, 1,
+                                                    eshm20_region) 
+
                     mu = mu[0][0]
                     f = interpolate.interp1d(distances, mu)
                     rs_50p_dist = np.exp(f(i))
