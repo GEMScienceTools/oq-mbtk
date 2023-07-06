@@ -115,9 +115,6 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     pyplot.plot(distances, np.exp(mean), color = col,
                                 linewidth = 2, linestyle = '-', label = gmpe)
                 
-                if 'Kanno2006Shallow' in str(gmpe):
-                    print(distances)
-                
                 # Get mean +/- sigma
                 plus_sigma = np.exp(mean+Nstd*std[0])
                 minus_sigma = np.exp(mean-Nstd*std[0])
