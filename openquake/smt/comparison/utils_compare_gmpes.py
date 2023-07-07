@@ -385,7 +385,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
                       output_directory, custom_color_flag, custom_color_list,
                       eshm20_region, lt_weights_gmc1 = None,
-                      lt_weights_gmc2 = None):
+                      lt_weights_gmc2 = None, obs_spectra = None):
     """
     Plot response spectra and sigma w.r.t. spectral period for given run
     configuration
@@ -479,8 +479,8 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 for k, imt in enumerate(imt_list): 
                     mu, std, distances = att_curves(gmm, gmm_orig, depth[l], m,
                                                     aratio_g, strike_g, dip_g, 
-                                                    rake,Vs30, Z1, Z25, np.max(
-                                                    dist_list), 0.1, imt, 1,
+                                                    rake,Vs30, Z1, Z25, i,
+                                                    0.1, imt, 1,
                                                     eshm20_region) 
 
                     mu = mu[0][0]
@@ -604,7 +604,28 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                 'plus_sigma': rs_plus_sigma_weighted_gmc2}
                             store_lt_branch_values_minus_sigma_gmc2[gmpe] = {
                                 'minus_sigma': rs_minus_sigma_weighted_gmc2}
-                                                                                   
+                                                                                  
+                # Plot an observed spectra if inputted...
+                if obs_spectra is not None and g == len(gmpe_list)-1:
+                    # Plot only for corresponding magnitude and focal depth...
+                    # NOTE: User should ensure earthquake Mw and depth match
+                    # between input toml (for at least one mag - focal depth
+                    # pair) and the obs_spectra csv (inherently necessary when
+                    # comparing an observed spectra to GMPE outputs!)
+                    if float(obs_spectra['Mw'].iloc[0]) == m and \
+                       float(obs_spectra['Depth (km)'].iloc[0]) == depth[l]:
+                        EQ_ID = str(obs_spectra['EQ ID'].iloc[0])
+                        MW = str(obs_spectra['Mw'].iloc[0])
+                        DEP = str(obs_spectra['Depth (km)'].iloc[0])
+                        ST = str(obs_spectra['Station Code'].iloc[0])
+                        DIST = str(obs_spectra['Hdist (km)'].iloc[0])
+                        obs_string = (EQ_ID + 'EQ\n (Mw = ' + MW + ', depth = ' + DEP + 
+                                      ' km) \n recorded at ' + ST + ' (' 
+                                      + DIST + ' km)')
+                        ax1.plot(obs_spectra['Period (s)'], obs_spectra['SA (g)'],
+                                 color = 'r', linewidth = 3, linestyle = '-',
+                                 label = obs_string)    
+                    
                 # Continue with plot creation
                 ax1.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
                               fontsize = 16, y = 1.0, pad = -16)
@@ -616,6 +637,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 if l == 0: # left row only
                     ax1.set_ylabel('Sa (g)', fontsize = 16) 
                     ax2.set_ylabel(r'$\sigma$', fontsize = 16) 
+            ax1.set_xlim(min(period), max(period))
             ax1.grid(True)
             ax2.grid(True)
             ax2.set_ylim(0.3, 1)
