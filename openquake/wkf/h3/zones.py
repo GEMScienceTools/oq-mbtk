@@ -38,7 +38,6 @@ def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
 
     h3_level = int(h3_level)
     create_folder(folder_out)
-
     tmp = "mapping_h{:d}.csv".format(h3_level)
     fname_out = os.path.join(folder_out, tmp)
 
@@ -47,13 +46,11 @@ def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
     
     if len(use) > 0: 
         use = get_list(use)
-        use = map(int, use)
         polygons_gdf = polygons_gdf[polygons_gdf['id'].isin(use)]
 
     # Select point in polygon
     fout = open(fname_out, 'w')
     for idx, poly in polygons_gdf.iterrows():
-
         tmps = shapely.geometry.mapping(poly.geometry)
         geojson_poly = eval(json.dumps(tmps))
         if geojson_poly['type'] == 'MultiPolygon':

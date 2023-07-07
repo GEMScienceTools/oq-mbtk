@@ -53,6 +53,7 @@ def main(catalogue, h3_map, config, outputfile, plot=False):
 
     # Load config file to get smoothing parameters
     config = toml.load(config)
+    config = config['smoothing']
 
     # Load catalogue csv. Uses CsvCatalogueParser for compatability with
     # hmtk catalogue outputs. Should work with any csv so long as

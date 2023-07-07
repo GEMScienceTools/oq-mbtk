@@ -9,9 +9,11 @@ time_distance_window = "GardnerKnopoffWindow"
 fs_time_prop = 0.9
 
 [smoothing]
+
 [completeness]
 
-[sources.00]
+[sources.1]
 completeness_table = [ [ 2000.0, 4.4,], [ 1990.0, 5.2,], [ 1985.0, 5.5,],]
 mmax_obs = 5.98
 mmax = 5.98
+

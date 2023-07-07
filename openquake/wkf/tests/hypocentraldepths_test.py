@@ -43,9 +43,7 @@ class Test_hypocentral_depth:
 		def setUp(self):
 			#self.out_folder = tempfile.mkdtemp()
 			self.out_folder = os.path.join(DATA, "out")
-			source = os.path.join(DATA, "config", "wkf_testconfig_GK.toml")
-			destination = os.path.join(DATA, "config", "depth_test.toml")
-			shutil.copy(source, destination)
+			
 
 		def test_depth_histo(self):
 			source = os.path.join(DATA, "config", "wkf_testconfig_GK.toml")

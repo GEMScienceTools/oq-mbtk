@@ -56,7 +56,7 @@ def mmax_per_zone(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab,
         print('Updated {:s}'.format(fname_conf))
 
 
-def main(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab, *,
+def main(fname_poly: str, fname_cat: str, fname_conf: str, cat_lab,
          use: str = [], skip: str = []):
     mmax_per_zone(fname_poly, fname_cat, fname_conf, cat_lab, use, skip)
 

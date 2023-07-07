@@ -36,7 +36,7 @@ import geopandas as gpd
 from typing import Type
 from shapely.geometry import Point
 from openquake.hmtk.seismicity.catalogue import Catalogue
-from openquake.wkf.utils import create_folder
+from openquake.wkf.utils import create_folder, get_list
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
 
 
@@ -149,10 +149,14 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
 
     # Read polygons
     polygons_gdf = gpd.read_file(fname_polygons)
+    
+    if len(source_ids) > 0: 
+        source_ids = get_list(source_ids)
+        
 
     # Select point in polygon
-    columns = ['eventID', 'year', 'month', 'day', 'magnitude', 'longitude',
-               'latitude', 'depth']
+    columns = ['eventID', 'year', 'month', 'day', 'hour', 'minute', 'second', 'magnitude', 'longitude',
+               'latitude', 'depth', 'sigmaMagnitude', 'depth_error', 'time_error', 'Agency']
 
     # Iterate over sources
     out_fnames = []
