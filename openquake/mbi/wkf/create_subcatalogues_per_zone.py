@@ -5,8 +5,8 @@ from openquake.baselib import sap
 from openquake.wkf.catalogue import create_subcatalogues
 
 
-def main(fname_polygons: str, fname_cat: str, folder_out: str, *,
-         source_ids: list=[]):
+def main(fname_polygons: str, fname_cat: str, folder_out: str,
+         source_ids: str=[]):
     """
     Given a file (e.g. a shapefile) with a set of polygons and an earthquake
     catalogue, it creates a set of .csv files each one containing the
