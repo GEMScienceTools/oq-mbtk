@@ -607,25 +607,24 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                                                                   
                 # Plot an observed spectra if inputted...
                 if obs_spectra is not None and g == len(gmpe_list)-1:
-                    # Plot only for corresponding magnitude and focal depth...
-                    # NOTE: User should ensure earthquake Mw and depth match
-                    # between input toml (for at least one mag - focal depth
-                    # pair) and the obs_spectra csv (inherently necessary when
-                    # comparing an observed spectra to GMPE outputs!)
-                    if float(obs_spectra['Mw'].iloc[0]) == m and \
-                       float(obs_spectra['Depth (km)'].iloc[0]) == depth[l]:
-                        EQ_ID = str(obs_spectra['EQ ID'].iloc[0])
-                        MW = str(obs_spectra['Mw'].iloc[0])
-                        DEP = str(obs_spectra['Depth (km)'].iloc[0])
-                        ST = str(obs_spectra['Station Code'].iloc[0])
-                        DIST = str(obs_spectra['Hdist (km)'].iloc[0])
-                        obs_string = (EQ_ID + 'EQ\n (Mw = ' + MW + ', depth = ' + DEP + 
-                                      ' km) \n recorded at ' + ST + ' (' 
-                                      + DIST + ' km)')
-                        ax1.plot(obs_spectra['Period (s)'], obs_spectra['SA (g)'],
-                                 color = 'r', linewidth = 3, linestyle = '-',
-                                 label = obs_string)    
-                    
+                    # Get values from obs_spectra dataframe...
+                    eq_id = str(obs_spectra['EQ ID'].iloc[0])
+                    mw = str(obs_spectra['Mw'].iloc[0])
+                    dep = str(obs_spectra['Depth (km)'].iloc[0])
+                    st = str(obs_spectra['Station Code'].iloc[0])
+                    d_spec = str(obs_spectra['Hdist (km)'].iloc[0])
+                    # Get label for spectra plot
+                    obs_string = (eq_id + '\nrecorded at ' + st + ' (R = '
+                                  + d_spec + ' km, ' + '\nMw = ' + mw +
+                                  ', depth = ' + dep + ' km)')
+                                  
+                                  
+                            
+                    # Plot the observed spectra
+                    ax1.plot(obs_spectra['Period (s)'], obs_spectra['SA (g)'],
+                             color = 'r', linewidth = 3, linestyle = '-',
+                             label = obs_string)    
+                
                 # Continue with plot creation
                 ax1.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
                               fontsize = 16, y = 1.0, pad = -16)

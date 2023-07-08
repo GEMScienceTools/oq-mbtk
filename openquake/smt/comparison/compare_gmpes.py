@@ -196,8 +196,7 @@ def plot_spectra(filename, output_directory, obs_spectra = None):
         toml file providing configuration for use within comparative
         plotting methods.
     :param obs_spectra:
-        csv of an observed spectra to plot (also must contain earthquake
-        magnitude, focal depth, source-to-site distance etc (optional).
+        csv of an observed spectra to plot and associated event information.
         An example file can be found in openquake.smt.tests.file_samples.
     """
     # Generate config object
