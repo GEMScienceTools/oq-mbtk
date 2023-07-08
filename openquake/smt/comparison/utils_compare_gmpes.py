@@ -612,14 +612,11 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     mw = str(obs_spectra['Mw'].iloc[0])
                     dep = str(obs_spectra['Depth (km)'].iloc[0])
                     st = str(obs_spectra['Station Code'].iloc[0])
-                    d_spec = str(obs_spectra['Hdist (km)'].iloc[0])
+                    d_spec = str(obs_spectra['R (km)'].iloc[0])
                     # Get label for spectra plot
                     obs_string = (eq_id + '\nrecorded at ' + st + ' (R = '
                                   + d_spec + ' km, ' + '\nMw = ' + mw +
                                   ', depth = ' + dep + ' km)')
-                                  
-                                  
-                            
                     # Plot the observed spectra
                     ax1.plot(obs_spectra['Period (s)'], obs_spectra['SA (g)'],
                              color = 'r', linewidth = 3, linestyle = '-',
