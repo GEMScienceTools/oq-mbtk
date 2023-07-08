@@ -177,9 +177,9 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                             
                 # Back to plotting...
                 if n == 0: #top row only
-                    pyplot.title('Mw=' + str(m), fontsize='16')
+                    pyplot.title('Mw = ' + str(m), fontsize='16')
                 if n == len(imt_list)-1: #bottom row only
-                    pyplot.xlabel('Rrup (km)', fontsize='14')
+                    pyplot.xlabel('Rrup (km)', fontsize='16')
                 if l == 0: #left row only
                     pyplot.ylabel(str(i) + ' (g)', fontsize='16')
 
@@ -623,7 +623,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                              label = obs_string)    
                 
                 # Continue with plot creation
-                ax1.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
+                ax1.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
                               fontsize = 16, y = 1.0, pad = -16)
                 ax2.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
                               fontsize = 16, y = 1.0, pad = -16)
@@ -783,12 +783,18 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                         i,m] = lt_minus_sigma_per_period_gmc2
                 
     # Finalise the plots
-    ax1.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
-    ax2.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
+    if len(mag_list) * len(dist_list) == 1:
+        bbox_coo = (1.1, 0.5)
+        fs = '10'
+    else:
+        bbox_coo = (1.1, 1.05)
+        fs = '16'
+    ax1.legend(loc = "center left", bbox_to_anchor = bbox_coo, fontsize = fs)
+    ax2.legend(loc = "center left", bbox_to_anchor = bbox_coo, fontsize = fs)
     fig2.savefig(os.path.join(output_directory,'sigma.png'),
-                 bbox_inches='tight',dpi=200,pad_inches = 0.2)
-    fig1.savefig(os.path.join(output_directory,'ResponseSpectra.png'),
-                 bbox_inches='tight',dpi=200,pad_inches = 0.2)
+                 bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
+    fig1.savefig(os.path.join(output_directory, 'ResponseSpectra.png'),
+                 bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
     
     ### Export values to csv
     if Nstd != 0:
