@@ -1,4 +1,4 @@
-Period (s),SA (g),Mw,Depth (km),R (km),EQ ID,Station Code,,#Note that a horizontal distance (in the longitudinal plane) between the earthquake epicentre and the recording station should be used in the  input toml. This is necessary because the response spectra tools read in horizontal distances to compute rrup (note also the station is assumed to be up-dip of the rupture). By specifying horizontal distances within the input toml we can improve the fairness of the comparison between the observed spectra and the GMPEs.
+Period (s),SA (g),Mw,Depth (km),R (km),EQ ID,Station Code,,#Note that for a fair comparison between the observed spectra and the GMPEs that a horizontal distance (in the longitudinal plane) between the earthquake epicentre and the recording station should be used in the  input toml. This is necessary because the response spectra tools read in horizontal distances to compute rrup (note also the station is assumed to be up-dip of the rupture).
 4.00E-02,9.16E-02,6.6,21,29,Chamoli 1991-03-28 19:05:11,UKHI,,
 4.20E-02,9.59E-02,,,,,,,
 4.40E-02,9.41E-02,,,,,,,
