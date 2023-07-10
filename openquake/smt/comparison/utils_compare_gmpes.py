@@ -44,9 +44,9 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     Generate trellis plots for given run configuration
     """
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y', 'lime','k', 'dodgerblue', 'gold', '0.8',
-            'mediumseagreen', '0.5', 'tab:orange', 'tab:purple', 'tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
+    colors=['g', 'b', 'y', 'lime', 'k', 'dodgerblue', 'gold', '0.8', '0.5', 'r',
+            'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', 'tab:pink',
+            'tab:red', 'tab:blue', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
@@ -105,7 +105,8 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l],m,
                                                   aratio_g, strike_g, dip_g,
                                                   rake,Vs30, Z1, Z25, maxR, 
-                                                  step, i, 1, eshm20_region)
+                                                  step, i, 1, eshm20_region,
+                                                  up_or_down_dip = None)
                 
                 # Get mean and sigma
                 mean = mean[0][0]
@@ -177,9 +178,9 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                             
                 # Back to plotting...
                 if n == 0: #top row only
-                    pyplot.title('Mw=' + str(m), fontsize='16')
+                    pyplot.title('Mw = ' + str(m), fontsize='16')
                 if n == len(imt_list)-1: #bottom row only
-                    pyplot.xlabel('Rrup (km)', fontsize='14')
+                    pyplot.xlabel('Rrup (km)', fontsize='16')
                 if l == 0: #left row only
                     pyplot.ylabel(str(i) + ' (g)', fontsize='16')
 
@@ -208,14 +209,14 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                         'minus_sigma'])
            
                     pyplot.plot(distances, lt_mean_gmc1, linewidth = 2,
-                                color = 'tab:red', linestyle = '-',
+                                color = 'k', linestyle = '--',
                                 label = logic_tree_config_gmc1, zorder = 100)
                     
                     pyplot.plot(distances, lt_plus_sigma_gmc1, linewidth = 0.75,
-                                color = 'tab:red', linestyle = '-.', zorder = 100)
+                                color = 'k', linestyle = '-.', zorder = 100)
         
                     pyplot.plot(distances, lt_minus_sigma_gmc1, linewidth = 0.75,
-                                color = 'tab:red', linestyle = '-.', zorder = 100)
+                                color = 'k', linestyle = '-.', zorder = 100)
                     
                     lt_mean_store_gmc1[i,m] = lt_mean_gmc1
                     lt_plus_sigma_store_gmc1[i,m] = lt_plus_sigma_gmc1
@@ -228,7 +229,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     lt_mean_gmc1 = np.sum(lt_df_gmc1[:].loc['mean'])
                      
                     pyplot.plot(distances, lt_mean_gmc1, linewidth = 2,
-                                color = 'tab:red', linestyle = '-',
+                                color = 'k', linestyle = '--',
                                 label = logic_tree_config_gmc1)
                     
                     lt_mean_store_gmc1[i,m] = lt_mean_gmc1
@@ -248,16 +249,16 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                         'minus_sigma'])
             
                     pyplot.plot(distances, lt_mean_gmc2, linewidth = 2,
-                                color = 'tab:blue', linestyle = '-',
+                                color = 'tab:grey', linestyle = '--',
                                 label = logic_tree_config_gmc2, zorder = 100)
                     
                     pyplot.plot(
                         distances, lt_plus_sigma_gmc2, linewidth = 0.75,
-                        color = 'tab:blue', linestyle = '-.', zorder = 100)
+                        color = 'tab:grey', linestyle = '-.', zorder = 100)
             
                     pyplot.plot(
                         distances, lt_minus_sigma_gmc2, linewidth = 0.75, 
-                        color = 'tab:blue', linestyle = '-.', zorder = 100)
+                        color = 'tab:grey', linestyle = '-.', zorder = 100)
                     
                     lt_mean_store_gmc2[i,m] = lt_mean_gmc2
                     lt_plus_sigma_store_gmc2[i,m] = lt_plus_sigma_gmc2
@@ -270,7 +271,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     lt_mean_gmc2 = np.sum(lt_df_gmc2[:].loc['mean'])
                      
                     pyplot.plot(distances, lt_mean_gmc2, linewidth = 2,
-                                color = 'tab:blue', linestyle = '-',
+                                color = 'tab:grey', linestyle = '--',
                                 label = logic_tree_config_gmc2)
                     
                     lt_mean_store_gmc2[i, m] = lt_mean_gmc2                    
@@ -385,16 +386,38 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
                       output_directory, custom_color_flag, custom_color_list,
                       eshm20_region, lt_weights_gmc1 = None,
-                      lt_weights_gmc2 = None):
+                      lt_weights_gmc2 = None, obs_spectra = None):
     """
     Plot response spectra and sigma w.r.t. spectral period for given run
-    configuration
+    configuration. Can also plot an observed spectrum and the corresponding
+    predictions by the specified GMPEs
     :param dist_list:
         Array of distances to generate response spectra and sigma plots for 
     :param max_period:
         Maximum period to compute plots for (note an error will be returned if
         this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
     """
+    # If obs_spectra get info from csv
+    if obs_spectra is not None:
+        # Get values from obs_spectra dataframe...
+        eq_id = str(obs_spectra['EQ ID'].iloc[0])
+        mw = float(obs_spectra['Mw'].iloc[0])
+        dep = float(obs_spectra['Depth (km)'].iloc[0])
+        rrup = float(obs_spectra['Rrup (km)'].iloc[0])
+        st = str(obs_spectra['Station Code'].iloc[0])
+        # Overwrite toml params to get single scenario specific params...
+        mag_list = np.array([mw])
+        dist_list = np.array([rrup])
+        depth = np.array([dep])
+        strike = float(obs_spectra['Strike'].iloc[0])
+        dip = float(obs_spectra['Dip'].iloc[0])
+        rake = float(obs_spectra['Rake'].iloc[0])
+        vs30 = float(obs_spectra['Vs30'].iloc[0])
+        up_or_down_dip = float(
+            obs_spectra['Site up-dip of rupture (1 = True, 0 = False)'].iloc[0])
+    else:
+        up_or_down_dip = None
+        
     # Get the periods to plot
     period = _get_period_values_for_spectra_plots(max_period)
         
@@ -419,9 +442,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         Z25 = _get_z25(Vs30, region)
         
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y', 'lime', 'k', 'dodgerblue', 'gold', '0.8',
-            'mediumseagreen', '0.5', 'tab:orange', 'tab:purple', 'tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
+    colors=['g', 'b', 'y', 'lime', 'k', 'dodgerblue', 'gold', '0.8', '0.5', 'r',
+            'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', 'tab:pink',
+            'tab:red', 'tab:blue', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
     
@@ -477,12 +500,20 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 rs_50p, rs_plus_sigma, rs_minus_sigma, sigma = [], [], [], []
                 
                 for k, imt in enumerate(imt_list): 
+                    if obs_spectra is not None:
+                        dist = 1000 # Set to 1000 km
+                        Vs30 = vs30 # Set to vs30 in obs_spectra
+                        if i > 1000:
+                            raise ValueError('Rrup provided for the observed\
+                                             spectra is greater than 1000 km')
+                    else:
+                        dist = i
+                    
                     mu, std, distances = att_curves(gmm, gmm_orig, depth[l], m,
                                                     aratio_g, strike_g, dip_g, 
-                                                    rake,Vs30, Z1, Z25, np.max(
-                                                    dist_list), 0.1, imt, 1,
-                                                    eshm20_region) 
-
+                                                    rake, Vs30, Z1, Z25, dist,
+                                                    0.1, imt, 1, eshm20_region,
+                                                    up_or_down_dip) 
                     mu = mu[0][0]
                     f = interpolate.interp1d(distances, mu)
                     rs_50p_dist = np.exp(f(i))
@@ -604,9 +635,20 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                                 'plus_sigma': rs_plus_sigma_weighted_gmc2}
                             store_lt_branch_values_minus_sigma_gmc2[gmpe] = {
                                 'minus_sigma': rs_minus_sigma_weighted_gmc2}
-                                                                                   
+                                                                                  
+                # Plot an observed spectra if inputted...
+                if obs_spectra is not None and g == len(gmpe_list)-1:
+                    # Get label for spectra plot
+                    obs_string = (eq_id + '\nrecorded at ' + st + ' (Rrup = '
+                                  + str(rrup) + ' km, ' + '\nMw = ' + str(mw) +
+                                  ', depth = ' + str(dep) + ' km)')
+                    # Plot the observed spectra
+                    ax1.plot(obs_spectra['Period (s)'], obs_spectra['SA (g)'],
+                             color = 'r', linewidth = 3, linestyle = '-',
+                             label = obs_string)    
+                
                 # Continue with plot creation
-                ax1.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
+                ax1.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
                               fontsize = 16, y = 1.0, pad = -16)
                 ax2.set_title('Mw = ' + str(m) + ' - R = ' + str(i) + ' km',
                               fontsize = 16, y = 1.0, pad = -16)
@@ -616,6 +658,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 if l == 0: # left row only
                     ax1.set_ylabel('Sa (g)', fontsize = 16) 
                     ax2.set_ylabel(r'$\sigma$', fontsize = 16) 
+            ax1.set_xlim(min(period), max(period))
             ax1.grid(True)
             ax2.grid(True)
             ax2.set_ylim(0.3, 1)
@@ -674,18 +717,18 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 
                 # Plot the logic tree
                 ax1.plot(period, np.array(pd.Series(lt_mean_per_period_gmc1)),
-                         linewidth = 2, color = 'tab:red', linestyle = '-',
+                         linewidth = 2, color = 'k', linestyle = '--',
                          label = logic_tree_config_gmc1, zorder = 100)
                 
                 # Plot mean plus sigma and mean minus sigma if required
                 if Nstd != 0:
                     ax1.plot(period, np.array(pd.Series(
                         lt_plus_sigma_per_period_gmc1)), linewidth = 0.75,
-                        color = 'tab:red', linestyle = '--', zorder = 100)
+                        color = 'k', linestyle = '-.', zorder = 100)
                     
                     ax1.plot(period, np.array(pd.Series(
                         lt_minus_sigma_per_period_gmc1)), linewidth = 0.75,
-                        color = 'tab:red', linestyle = '--', zorder = 100)
+                        color = 'k', linestyle = '-.', zorder = 100)
                 
                 # Store the logic tree plot data for .csv output
                 store_lt_mean_per_dist_mag_gmc1[i,m] = lt_mean_per_period_gmc1
@@ -743,18 +786,18 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 
                 # Plot the logic tree
                 ax1.plot(period, np.array(pd.Series(lt_mean_per_period_gmc2)),
-                         linewidth = 2, color = 'tab:blue', linestyle = '-',
+                         linewidth = 2, color = 'tab:grey', linestyle = '--',
                          label = logic_tree_config_gmc2, zorder = 100)
                 
                 # Plot mean plus sigma and mean minus sigma if required
                 if Nstd != 0:
                     ax1.plot(period, np.array(pd.Series(
                         lt_plus_sigma_per_period_gmc2)), linewidth = 0.75,
-                        color = 'tab:blue', linestyle = '--', zorder = 100)
+                        color = 'tab:grey', linestyle = '-.', zorder = 100)
                     
                     ax1.plot(period, np.array(pd.Series(
                         lt_minus_sigma_per_period_gmc2)), linewidth = 0.75,
-                        color = 'tab:blue', linestyle = '--', zorder = 100)
+                        color = 'tab:grey', linestyle = '-.', zorder = 100)
                 
                 # Store the logic tree plot data for .csv output
                 store_lt_mean_per_dist_mag_gmc2[i,m] = lt_mean_per_period_gmc2
@@ -765,12 +808,18 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                         i,m] = lt_minus_sigma_per_period_gmc2
                 
     # Finalise the plots
-    ax1.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
-    ax2.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
+    if len(mag_list) * len(dist_list) == 1:
+        bbox_coo = (1.1, 0.5)
+        fs = '10'
+    else:
+        bbox_coo = (1.1, 1.05)
+        fs = '16'
+    ax1.legend(loc = "center left", bbox_to_anchor = bbox_coo, fontsize = fs)
+    ax2.legend(loc = "center left", bbox_to_anchor = bbox_coo, fontsize = fs)
     fig2.savefig(os.path.join(output_directory,'sigma.png'),
-                 bbox_inches='tight',dpi=200,pad_inches = 0.2)
-    fig1.savefig(os.path.join(output_directory,'ResponseSpectra.png'),
-                 bbox_inches='tight',dpi=200,pad_inches = 0.2)
+                 bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
+    fig1.savefig(os.path.join(output_directory, 'ResponseSpectra.png'),
+                 bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
     
     ### Export values to csv
     if Nstd != 0:
@@ -884,7 +933,8 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l], m, 
                                                   aratio_g, strike_g, dip_g, 
                                                   rake, Vs30, Z1, Z25, maxR, 
-                                                  step, i, 1, eshm20_region) 
+                                                  step, i, 1, eshm20_region,
+                                                  up_or_down_dip = None) 
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians, (np.exp(mean)))
@@ -990,9 +1040,9 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Plots: color for GMPEs
-    colors=['r', 'g', 'b', 'y', 'lime', 'k', 'dodgerblue', 'gold', '0.8',
-            'mediumseagreen', '0.5', 'tab:orange', 'tab:purple', 'tab:brown',
-            'tab:pink', 'tab:grey', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
+    colors=['g', 'b', 'y', 'lime', 'k', 'dodgerblue', 'gold', '0.8', '0.5',
+            'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', 'tab:pink',
+            'tab:red', 'tab:blue', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
             

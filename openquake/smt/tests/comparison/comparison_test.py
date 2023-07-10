@@ -263,7 +263,8 @@ class ComparisonTestCase(unittest.TestCase):
                           config.gmpes_list, config.aratio, config.Nstd,
                           self.output_directory, config.custom_color_flag,
                           config.custom_color_list, config.eshm20_region,
-                          config.lt_weights_gmc1, config.lt_weights_gmc2) 
+                          config.lt_weights_gmc1, config.lt_weights_gmc2,
+                          obs_spectra = None) 
        
         # Specify target files
         target_file_trellis = (os.path.join(self.output_directory,'TrellisPlots.png'))
