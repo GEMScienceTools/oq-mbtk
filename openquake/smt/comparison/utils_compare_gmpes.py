@@ -44,9 +44,10 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     Generate trellis plots for given run configuration
     """
     # Plots: color for GMPEs
-    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r', 'k',
-            'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', 'tab:pink',
-            'tab:red', 'tab:blue', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
+    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r',
+              'm', 'mediumseagreen', 'tab:pink', 'tab:orange', 'tab:purple',
+              'tab:brown', 'tab:pink', 'tab:red', 'tab:blue', 'tab:cyan',
+              'tab:olive', 'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
@@ -443,9 +444,10 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         Z25 = _get_z25(Vs30, region)
         
     # Plots: color for GMPEs
-    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r', 'k',
-            'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', 'tab:pink',
-            'tab:red', 'tab:blue', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
+    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r',
+              'm', 'mediumseagreen', 'tab:pink', 'tab:orange', 'tab:purple',
+              'tab:brown', 'tab:pink', 'tab:red', 'tab:blue', 'tab:cyan',
+              'tab:olive', 'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
     
@@ -1052,9 +1054,10 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Plots: color for GMPEs
-    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r', 'k',
-            'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', 'tab:pink',
-            'tab:red', 'tab:blue', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
+    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r',
+              'm', 'mediumseagreen', 'tab:pink', 'tab:orange', 'tab:purple',
+              'tab:brown', 'tab:pink', 'tab:red', 'tab:blue', 'tab:cyan',
+              'tab:olive', 'aquamarine']
     if custom_color_flag == 'True':
         colors = custom_color_list
             
