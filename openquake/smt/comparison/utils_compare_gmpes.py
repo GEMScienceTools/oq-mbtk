@@ -44,7 +44,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     Generate trellis plots for given run configuration
     """
     # Plots: color for GMPEs
-    colors=['g', 'b', 'y', 'lime', 'k', 'dodgerblue', 'gold', '0.8', '0.5', 'r',
+    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r', 'k',
             'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', 'tab:pink',
             'tab:red', 'tab:blue', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
     if custom_color_flag == 'True':
@@ -399,12 +399,13 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     """
     # If obs_spectra get info from csv
     if obs_spectra is not None:
+        print('Plotting of an observed spectra has been specified')
         # Get values from obs_spectra dataframe...
         eq_id = str(obs_spectra['EQ ID'].iloc[0])
         mw = float(obs_spectra['Mw'].iloc[0])
         dep = float(obs_spectra['Depth (km)'].iloc[0])
         rrup = float(obs_spectra['Rrup (km)'].iloc[0])
-        st = str(obs_spectra['Station Code'].iloc[0])
+        st_id = str(obs_spectra['Station Code'].iloc[0])
         # Overwrite toml params to get single scenario specific params...
         mag_list = np.array([mw])
         dist_list = np.array([rrup])
@@ -442,7 +443,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         Z25 = _get_z25(Vs30, region)
         
     # Plots: color for GMPEs
-    colors=['g', 'b', 'y', 'lime', 'k', 'dodgerblue', 'gold', '0.8', '0.5', 'r',
+    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r', 'k',
             'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', 'tab:pink',
             'tab:red', 'tab:blue', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
     if custom_color_flag == 'True':
@@ -639,14 +640,14 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 # Plot an observed spectra if inputted...
                 if obs_spectra is not None and g == len(gmpe_list)-1:
                     # Get label for spectra plot
-                    obs_string = (eq_id + '\nrecorded at ' + st + ' (Rrup = '
+                    obs_string = (eq_id + '\nrecorded at ' + st_id + ' (Rrup = '
                                   + str(rrup) + ' km, ' + '\nMw = ' + str(mw) +
                                   ', depth = ' + str(dep) + ' km)')
                     # Plot the observed spectra
                     ax1.plot(obs_spectra['Period (s)'], obs_spectra['SA (g)'],
                              color = 'r', linewidth = 3, linestyle = '-',
                              label = obs_string)    
-                
+                    
                 # Continue with plot creation
                 ax1.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
                               fontsize = 16, y = 1.0, pad = -16)
@@ -816,11 +817,22 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         fs = '16'
     ax1.legend(loc = "center left", bbox_to_anchor = bbox_coo, fontsize = fs)
     ax2.legend(loc = "center left", bbox_to_anchor = bbox_coo, fontsize = fs)
+    
+    # Save spectra plot (if obs_spectra append filename with record info)
+    if obs_spectra is None:
+        fig1.savefig(os.path.join(output_directory, 'ResponseSpectra.png'),
+                     bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
+    else:
+        rec_str = str(eq_id + '_recorded_at_' + st_id)
+        rec_str = rec_str.replace(' ','_').replace(':','_').replace('-','_')
+        fname = 'ResponseSpectra_' + rec_str + '.png'
+        fig1.savefig(os.path.join(output_directory, fname), bbox_inches = 'tight',
+                     dpi = 200, pad_inches = 0.2)
+    
+    # Save sigma plot
     fig2.savefig(os.path.join(output_directory,'sigma.png'),
                  bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
-    fig1.savefig(os.path.join(output_directory, 'ResponseSpectra.png'),
-                 bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
-    
+
     ### Export values to csv
     if Nstd != 0:
         spectra_value_df = pd.DataFrame(store_spectra_values,
@@ -1040,7 +1052,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Plots: color for GMPEs
-    colors=['g', 'b', 'y', 'lime', 'k', 'dodgerblue', 'gold', '0.8', '0.5',
+    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r', 'k',
             'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', 'tab:pink',
             'tab:red', 'tab:blue', 'tab:cyan', 'tab:olive', 'm', 'aquamarine']
     if custom_color_flag == 'True':
