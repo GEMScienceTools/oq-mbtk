@@ -156,11 +156,13 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     # Check if site up-dip or down-dip of site
     if up_or_down_dip is None or up_or_down_dip == 1:
         direction = 'positive'
+        from_point = 'TC'
     elif up_or_down_dip == 0:
+        from_point = 'BC'
         direction = 'negative'
     
     # Get sites
-    sites = get_sites_from_rupture(rup, from_point = 'TC', toward_azimuth = 90,
+    sites = get_sites_from_rupture(rup, from_point, toward_azimuth = 90,
                                    direction = direction, hdist = maxR,
                                    step = step, site_props = props)
     
