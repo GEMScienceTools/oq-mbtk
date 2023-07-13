@@ -118,9 +118,9 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
                                                                          samp)
                             raise ValueError(msg)
                         # new depth larger than previous
-                        if numpy.any(numpy.array(spro)[:-1, 2] > spro[-1][2]):
+                        #if numpy.any(numpy.array(spro)[:-1, 2] > spro[-1][2]):
                             # breakpoint rather than valueError for debugging
-                            breakpoint()
+                            #breakpoint()
                             #raise ValueError('')
 
                 #
