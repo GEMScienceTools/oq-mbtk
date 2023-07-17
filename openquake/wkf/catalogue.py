@@ -156,7 +156,7 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
 
     # Select point in polygon
     columns = ['eventID', 'year', 'month', 'day', 'hour', 'minute', 'second', 'magnitude', 'longitude',
-               'latitude', 'depth', 'sigmaMagnitude', 'depth_error', 'time_error', 'Agency']
+               'latitude', 'depth', 'sigmaMagnitude', 'Agency']
 
     # Iterate over sources
     out_fnames = []
