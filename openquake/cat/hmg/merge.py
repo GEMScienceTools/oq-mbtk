@@ -194,10 +194,7 @@ def process_catalogues(settings_fname: str) -> None:
     # Check that the file
     if len(settings["catalogues"]) < 1:
         raise ValueError("Please specify a catalogue in the settings")
-        
-    #if "log_file" in settings["general"]:
-    #    log_fle = settings["general"]["log_file"]
-
+       
     # Process the catalogue. `tdict` is dictionary with the info
     # required to merge one specific catalogue.
     for icat, tdict in enumerate(settings["catalogues"]):
@@ -296,7 +293,6 @@ def process_catalogues(settings_fname: str) -> None:
                 logfle = tdict["log_file"]
             #
             print(f"   Log file: {logfle:s}".format())
-            print(logfle)
             # Perform the merge
             meth = catroot.add_external_idf_formatted_catalogue
             out = meth(tmpcat, delta_ll, delta_t, timezone, buff_t, buff_ll, use_kms,
