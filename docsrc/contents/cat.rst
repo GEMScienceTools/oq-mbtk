@@ -17,7 +17,8 @@ Setting up a bash script
 The bash script specifies all file locations and steps for generating a homogenised model. AT each step, we provide a different .toml file specifying the necessary parameters. If you have all the neccessary files set out as below (and named run_all.sh) you should have no problems in running the script with ./run_all.sh
 Further details on each step follow.
 
-.. code-block :: ini
+.. code-block:: ini
+
 	#!/usr/bin/env bash
 
 	CASE="homogenisedcat"
@@ -52,6 +53,7 @@ The first step in compiling a catalogue is merging information from different so
 As we see in the bash script above, we run the merge with `oqm cat merge merge.toml` where merge.toml contains all the necessary information for the merge. The `merge` function takes the toml file as its single argument. An example of merge .toml file might look like this: 
  
 .. code-block:: ini
+
 	[general]
 	## Set these or your output files will have bad names and be in very confusing places!
 	output_path = "./../h5/"
@@ -166,6 +168,7 @@ The next step in creating a catalogue is the homogenisation of magnitudes to mom
 Using the above functions, we can query our catalogues to identify events that are present in both catalogues in both magnitude types. We can then use these to build a regression model and identify a relationship between different magnitude types. In the example below, we select mw magnitudes from our `local` catalogue and Mw magnitudes from `ISCGEM`. We specify a polynomial fit to the data, with starting parameter estimates for the regression of 1.2 and 0.7
 
 .. code-block:: ini 
+
 	agency = "local"
 	magtype = "mw"
 	amA = {magtype: [agency]}
@@ -184,6 +187,7 @@ Using the above functions, we can query our catalogues to identify events that a
 Alternatively, if we wanted a example with a bilinear fit with a break in slope at M5.8, we could say
 
 .. code-block:: ini
+
 	results = regress.run_regression("2segmentM5.8", [0.3, 1.0, 4.5])
 
 This would give us a different fit to our data and a different equation to supply to the homogenisation toml.
@@ -193,36 +197,37 @@ This would give us a different fit to our data and a different equation to suppl
 The final homogenisation step itself is also controlled by a toml file, where each observed magnitude is specified individually and the regression coefficients and uncertainty are included. It is also necessary to specify a hierarchy of catalogues so that a preferred catalogue is used for the magnitude where the event has multiple entries. In the example below, we merge the ISCGEM and a local catalogue, preferring ISCGEM magnitudes where available as specified in the ranking. Because the ISCGEM already provides magnitudes in Mw, we simply retain all Mw magnitudes from ISCGEM. In this example, our local catalogue has two different magnitude types for which we have derived a regression. We specify how to convert to the standardised Mw from the local.mw and the standard deviations, which are outputs of the fitting we carried out above. 
 
 .. code-block:: ini
-# This file contains a set of rules for the selection of origins and
-# the homogenisation of magnitudes. Used for the construction of the global catalogue
-# This version uses ad-hoc conversion parameters for ms and mb magnitudes, and that all Mw magnitudes are consistent
-#
-# Origin selection
-#
 
-[origin]
-# Specify preferred origin when multiple are available.
-ranking = ["ISCGEM",  "local"]
+	# This file contains a set of rules for the selection of origins and
+	# the homogenisation of magnitudes. Used for the construction of the global catalogue
+	# This version uses ad-hoc conversion parameters for ms and mb magnitudes, and that all Mw magnitudes are consistent
+	#
+	# Origin selection
+	#
 
-#
-# Magnitude-conversion: Mw
-#
-# These are magnitudes we are happy with: don't convert
-# Homogenise all catalogues to iscgem Mw
-[magnitude.ISCGEM.Mw]
-low_mags = [0.0]
-conv_eqs = ["m"]
+	[origin]
+	# Specify preferred origin when multiple are available.
+	ranking = ["ISCGEM",  "local"]
 
-[magnitude.local.mw]
-low_mags = [0.0]
-conv_eqs = ["0.1079 + 0.9806 * m"]
-std_devs = [0.0063, 0.0011]
+	#
+	# Magnitude-conversion: Mw
+	#
+	# These are magnitudes we are happy with: don't convert
+	# Homogenise all catalogues to iscgem Mw
+	[magnitude.ISCGEM.Mw]
+	low_mags = [0.0]
+	conv_eqs = ["m"]
+
+	[magnitude.local.mw]
+	low_mags = [0.0]
+	conv_eqs = ["0.1079 + 0.9806 * m"]
+	std_devs = [0.0063, 0.0011]
 
 
-[magnitude.local.mww]
-low_mags = [0.0]
-conv_eqs = ["0.1928 + 0.9757 * m"]
-std_devs = [0.0091, 0.0016]
+	[magnitude.local.mww]
+	low_mags = [0.0]
+	conv_eqs = ["0.1928 + 0.9757 * m"]
+	std_devs = [0.0091, 0.0016]
 
 The actual homogenisation step is carried out by calling
 oqm cat homogenise $ARG1 $ARG2 $ARG3
@@ -235,18 +240,20 @@ A common issue when merging catalogues is that their are differences in earthqua
 We can check how well we have achieved this by looking at events that are retained in the final catalogue but fall within a certain time and space window. We can use the `check_duplicates` function to do this, which takes in a check.toml file and the homogenised catalogue h5 file. A check.toml file might look like this:
 
 .. code-block:: ini
-[general]
-delta_ll = 0.3
-delta_t = 10.0
-output_path = "./tmp/"
+
+	[general]
+	delta_ll = 0.3
+	delta_t = 10.0
+	output_path = "./tmp/"
 
 where delta_ll and dela_t specify the time and space windows (in seconds and degrees respctively) to test for duplicate events. Again, we can specify different time limits and write the limits as functions of magnitudes i.e.:
 
 .. code-block :: ini
-[general]
-delta_ll = [['1899', '100*m']]
-delta_t = [['1899', '30*m']]
-output_path = "./tmp/"
+
+	[general]
+	delta_ll = [['1899', '100*m']]
+	delta_t = [['1899', '30*m']]
+	output_path = "./tmp/"
 
  The check_duplicates output is a geojson file that draws lines between events that meet the criteria in the check.toml file. Each line segment contains the details of the two events, including their original magnitudes, the agencies that the events are taken from and the time and spatial distance between the two events, so that a user can check if they are happy for these events to be retained or would prefer to iterate on the parameters.
 
