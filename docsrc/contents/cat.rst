@@ -14,7 +14,8 @@ The module contains tools to transform between these different catalogue types, 
 Setting up a bash script
 ========================
 
-The bash script specifies all file locations and steps for generating a homogenised model. AT each step, we provide a different .toml file specifying the necessary parameters. If you have all the neccessary files set out as below (and named run_all.sh) you should have no problems in running the script with ./run_all.sh
+The bash script specifies all file locations and steps for generating a homogenised model. At each step, we provide a different .toml file specifying the necessary parameters. If you have all the neccessary files set out as below (and named run_all.sh) you should have no problems in running the script with ./run_all.sh
+
 Further details on each step follow.
 
 .. code-block:: ini
@@ -50,7 +51,7 @@ Merging
 
 The first step in compiling a catalogue is merging information from different sources. This might include a global catalogue (e.g. ISC-GEM or GCMT), and various local catalogues that are more likely to have recorded smaller magnitude events, or contain more accurate locations. The merge tools are designed to allow multiple catalogues to be combined into one, regardless of original catalogue formats, and to retain only unique events across the catalogues. 
 
-As we see in the bash script above, we run the merge with `oqm cat merge merge.toml` where merge.toml contains all the necessary information for the merge. The `merge` function takes the toml file as its single argument. An example of merge .toml file might look like this: 
+As we see in the bash script above, we run the merge with :code:`oqm cat merge merge.toml` where merge.toml contains all the necessary information for the merge. The :code:`merge` function takes the toml file as its single argument. An example of merge .toml file might look like this: 
  
 .. code-block:: ini
 
@@ -80,9 +81,9 @@ As we see in the bash script above, we run the merge with `oqm cat merge merge.t
 This contains some general settings for the output, namely the path where the output should be saved and a prefix that will be used to name the file. If you are running the merge function as part of a homogenisation bash script, it is strongly recommended to make this consistent with the CASE argument (as in the example)! The toml file should also be named merge_$CASE. A minimumn magnitude can also be specified here, which will filter the catalogue to events above the specified minimum, and a polygon describing a geographic area of interest can also be added to filter the catalogue to that region.
 The rest of the merge toml should contain the details of the catalogues to be merged. For each catalogue, it is necessary to specify a code, name, file location and catalogue type. The code and name are for the user to choose, but the code should be short as it will feature in the final catalogue to indicate which catalogue the event came from. The type argument will be used to process the catalogue, so should be one of "csv", "isf" or "gcmt".
 
-To ensure events are not duplicated, the user can specify space-time windows over which events are considered to be the same. These are specified using `delta_t` for time and `delta_ll` for distance, where `delta_ll` can be specified in latitude-longitude or kms by specifying `use_km = True`. For both parameters, these can be specified as a single value, as a year-value pair to allow for changes in location/temporal accuracy in different time periods, or as a function of magnitude m, which is particularly useful when using the GCMT catalogue, which has some significant differences in location/time compared to other catalogues due to the moment tensor inversion considering these as model parameters. This can result in significant differences for large events, some of which may be so large that they are better removed manually (for example, the 3.5 minute time difference between ISC_GEM and GCMT for the 2004 Sumatra-Andaman earthquake). For the window parameters, we can also specify a buffer (`buff_ll` or `buff_t`) which highlights events which fall within some space/time of the window parameter and flags these as potential duplicates. The units for `buff_ll` should be consistent with those used in `delta_ll` and specified using the `use_kms` argument (i.e. set use_kms = True to use km units or use_kms = False to use lat/lon). In the case where catalogues to be merged might come from the same source or otherwise have matching event ids, the `use_ids` argument will remove duplicated event ids directly. 
+To ensure events are not duplicated, the user can specify space-time windows over which events are considered to be the same. These are specified using :code:`delta_t` for time and :code:`delta_ll` for distance, where :code:`delta_ll` can be specified in degrees or kms by specifying :code:`use_km = True`. For both parameters, these can be specified as a single value, as a year-value pair to allow for changes in location/temporal accuracy in different time periods, or as a function of magnitude m, which is particularly useful when using the GCMT catalogue, which has some significant differences in location/time compared to other catalogues due to the moment tensor inversion considering these as model parameters. This can result in significant differences for large events, some of which may be so large that they are better removed manually (for example, the 3.5 minute time difference between ISC_GEM and GCMT for the 2004 Sumatra-Andaman earthquake). For the window parameters, we can also specify a buffer (:code:`buff_ll` or :code:`buff_t`) which highlights events which fall within some space/time of the window parameter and flags these as potential duplicates. The units for :code:`buff_ll` should be consistent with those used in :code:`delta_ll` and specified using the :code:`use_kms` argument (i.e. set use_kms = True to use km units or use_kms = False to use lat/lon). In the case where catalogues to be merged might come from the same source or otherwise have matching event ids, the :code:`use_ids` argument will remove duplicated event ids directly. 
 
-The output of the `merge` function will be two h5 files specifying information on the origin `_otab.h5` and the magnitudes `_mtab.h5`. The origin file will contain the event locations, depths, agency information and focal mechanism parameters where available, while the magnitudes file will include information on the event magnitude and uncertainties.
+The output of the :code:`merge` function will be two h5 files specifying information on the origin :code:`_otab.h5` and the magnitudes :code:`_mtab.h5`. The origin file will contain the event locations, depths, agency information and focal mechanism parameters where available, while the magnitudes file will include information on the event magnitude and uncertainties.
 
 Homogenisation
 ==============
@@ -229,13 +230,13 @@ The final homogenisation step itself is also controlled by a toml file, where ea
 	std_devs = [0.0091, 0.0016]
 
 The actual homogenisation step is carried out by calling
-oqm cat homogenise $ARG1 $ARG2 $ARG3
+:code: `oqm cat homogenise $ARG1 $ARG2 $ARG3`
 as in the bash script example, where $ARG1 is the homogenisation toml file and and $ARG2 and $ARG3 are the hdf5 file outputs from the merge step, describing the origins and magnitude information for the merged catalogue respectively.
 
 Checking for duplicate events
 =============================
 
-A common issue when merging catalogues is that their are differences in earthquake metadata in different catalogues. To avoid creating a catalogue with duplicate events, we specify the time and space criteria in the merge stage, so that events that are very close in time and space will not be added to the catalogue.  
+A common issue when merging catalogues is that there are differences in earthquake metadata in different catalogues. To avoid creating a catalogue with duplicate events, we specify the time and space criteria in the merge stage, so that events that are very close in time and space will not be added to the catalogue.  
 We can check how well we have achieved this by looking at events that are retained in the final catalogue but fall within a certain time and space window. We can use the `check_duplicates` function to do this, which takes in a check.toml file and the homogenised catalogue h5 file. A check.toml file might look like this:
 
 .. code-block:: ini
