@@ -107,15 +107,15 @@ The next step in creating a catalogue is the homogenisation of magnitudes to mom
     	:return:
         	A string defining a query for an instance of :class:`pandas.DataFrame`
     	"""
-    	query = ""
-    	i = 0
-    	for mag_type in mag_agencies:
+    	    query = ""
+    	    i = 0
+    	    for mag_type in mag_agencies:
         	logic = "\" if logic_connector == 'or' else "&"
         	for agency in mag_agencies[mag_type]:
-        	    	cnd = get_mag_selection_condition(agency, mag_type, df_name="mdf")
-        	    	query += " {:s} ({:s})".format(logic, cnd) if i > 0 else "({:s})".format(cnd)
-        	    	i += 1
-    	return query
+        	    cnd = get_mag_selection_condition(agency, mag_type, df_name="mdf")
+        	    query += " {:s} ({:s})".format(logic, cnd) if i > 0 else "({:s})".format(cnd)
+        	    i += 1
+    	    return query
 
 
 	def get_data(res):
@@ -126,26 +126,25 @@ The next step in creating a catalogue is the homogenisation of magnitudes to mom
     	:param res:
         :class:`pandas.DataFrame`
     	"""
-        
-    	data = np.zeros((len(res), 4))
-    	data[:, 0] = res["value_x"].values
-    	data[:, 1] = res["sigma_x"].values
-    	data[:, 2] = res["value_y"].values
-    	data[:, 3] = res["sigma_y"].values
-    	return data
+    	    data = np.zeros((len(res), 4))
+    	    data[:, 0] = res["value_x"].values
+            data[:, 1] = res["sigma_x"].values
+    	    data[:, 2] = res["value_y"].values
+    	    data[:, 3] = res["sigma_y"].values
+    	    return data
         
 	def getd(mdf, agenciesA, agenciesB):
-        queryA = build_magnitude_query(agenciesA, "or")
-    	queryB = build_magnitude_query(agenciesB, "or")
+        	queryA = build_magnitude_query(agenciesA, "or")
+    		queryB = build_magnitude_query(agenciesB, "or")
         
-    	selA = mdf.loc[eval(queryA), :]
-    	selB = mdf.loc[eval(queryB), :]
+    		selA = mdf.loc[eval(queryA), :]
+    		selB = mdf.loc[eval(queryB), :]
         
-    	res = selA.merge(selB, on=["eventID"], how="inner")
-    	print("Number of values: {:d}".format(len(res)))
+    		res = selA.merge(selB, on=["eventID"], how="inner")
+    		print("Number of values: {:d}".format(len(res)))
          
-    	data = get_data(res)
-    	return data
+    		data = get_data(res)
+    		return data
         
 	def print_mbt_conversion(results, agency, magtype, **kwargs):
     		print("\n")
@@ -250,10 +249,10 @@ where delta_ll and dela_t specify the time and space windows (in seconds and deg
 
 .. code-block :: ini
 
-	[general]
-	delta_ll = [['1899', '100*m']]
-	delta_t = [['1899', '30*m']]
-	output_path = "./tmp/"
+[general]
+delta_ll = [['1899', '100*m']]
+delta_t = [['1899', '30*m']]
+output_path = "./tmp/"
 
  The check_duplicates output is a geojson file that draws lines between events that meet the criteria in the check.toml file. Each line segment contains the details of the two events, including their original magnitudes, the agencies that the events are taken from and the time and spatial distance between the two events, so that a user can check if they are happy for these events to be retained or would prefer to iterate on the parameters.
 
