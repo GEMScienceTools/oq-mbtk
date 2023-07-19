@@ -11,36 +11,37 @@ The formats of the original catalogues supported are:
 
 The module contains tools to transform between these different catalogue types, retaining the most neccessary information. The easiest way to build a homogenised catalogue within this framework is to run a bash script which includes the required inputs for each stage of the model and to specify the parameters with a toml file. We demonstrate below how to set this up, but individual steps can also be called directly in python if preffered. 
 
-## Setting up a bash script
+Setting up a bash script
+========================
 
 The bash script specifies all file locations and steps for generating a homogenised model. AT each step, we provide a different .toml file specifying the necessary parameters. If you have all the neccessary files set out as below (and named run_all.sh) you should have no problems in running the script with ./run_all.sh
 Further details on each step follow.
 
-'''code-bloc
-#!/usr/bin/env bash
+. . code-bloc :: ini
+	#!/usr/bin/env bash
 
-CASE="homogenisedcat"
+	CASE="homogenisedcat"
 
-# Merging catalogues
-ARG1=./settings/merge_$CASE.toml
-oqm cat merge $ARG1
+	# Merging catalogues
+	ARG1=./settings/merge_$CASE.toml
+	oqm cat merge $ARG1
 
-# Creating the homogenised catalogue 
-ARG1=./settings/homogenise_$CASE.toml
-ARG2=./h5/$CASE_otab.h5
-ARG3=./h5/$CASE_mtab.h5
+	# Creating the homogenised catalogue 
+	ARG1=./settings/homogenise_$CASE.toml
+	ARG2=./h5/$CASE_otab.h5
+	ARG3=./h5/$CASE_mtab.h5
 
-oqm cat homogenise $ARG1 $ARG2 $ARG3
+	oqm cat homogenise $ARG1 $ARG2 $ARG3
 
-# Checking the homogenised catalogue 
-ARG1=./settings/check_$CASE.toml
-ARG2=./h5/$CASE_homogenised.h5
+	# Checking the homogenised catalogue 
+	ARG1=./settings/check_$CASE.toml
+	ARG2=./h5/$CASE_homogenised.h5
 
-oqm cat check_duplicates $ARG1 $ARG2
+	oqm cat check_duplicates $ARG1 $ARG2
 
-# Create .csv
-ARG3=./csv/catalogue_$CASE.csv
-oqm cat create_csv $ARG2 $ARG3
+	# Create .csv
+	ARG3=./csv/catalogue_$CASE.csv
+	oqm cat create_csv $ARG2 $ARG3
 
 
 ## Merging
@@ -48,29 +49,29 @@ The first step in compiling a catalogue is merging information from different so
 
 As we see in the bash script above, we run the merge with `oqm cat merge merge.toml` where merge.toml contains all the necessary information for the merge. The `merge` function takes the toml file as its single argument. An example of merge .toml file might look like this: 
  
-. . code-block:: toml
-[general]
-## Set these or your output files will have bad names and be in very confusing places!
-output_path = "./../h5/"
-output_prefix = "homogenisedcat_"
+. . code-block:: ini
+	[general]
+	## Set these or your output files will have bad names and be in very confusing places!
+	output_path = "./../h5/"
+	output_prefix = "homogenisedcat_"
 
-[[catalogues]]
-code = "ISCGEM"
-name = "ISC GEM Version 10.0"
-filename = "./iscgem10pt0.csv"
-type = "csv"
+	[[catalogues]]
+	code = "ISCGEM"
+	name = "ISC GEM Version 10.0"
+	filename = "./iscgem10pt0.csv"
+	type = "csv"
 
-[[catalogues]]
-code = "local"
-name = "local version 0.0"
-filename = "./local_00_cat.csv"
-type = "csv"
-delta_ll = 30
-delta_t =  10
-buff_ll = 0.0
-buff_t = 5.0
-use_kms = true
-#use_ids = true
+	[[catalogues]]
+	code = "local"
+	name = "local version 0.0"
+	filename = "./local_00_cat.csv"
+	type = "csv"
+	delta_ll = 30
+	delta_t =  10
+	buff_ll = 0.0
+	buff_t = 5.0
+	use_kms = true
+	#use_ids = true
 
 This contains some general settings for the output, namely the path where the output should be saved and a prefix that will be used to name the file. If you are running the merge function as part of a homogenisation bash script, it is strongly recommended to make this consistent with the CASE argument (as in the example)! The toml file should also be named merge_$CASE. A minimumn magnitude can also be specified here, which will filter the catalogue to events above the specified minimum, and a polygon describing a geographic area of interest can also be added to filter the catalogue to that region.
 The rest of the merge toml should contain the details of the catalogues to be merged. For each catalogue, it is necessary to specify a code, name, file location and catalogue type. The code and name are for the user to choose, but the code should be short as it will feature in the final catalogue to indicate which catalogue the event came from. The type argument will be used to process the catalogue, so should be one of "csv", "isf" or "gcmt".
@@ -82,82 +83,81 @@ The output of the `merge` function will be two h5 files specifying information o
 ## Homogenisation
 The next step in creating a catalogue is the homogenisation of magnitudes to moment magnitude M_w. The catalogue toolkit provides different tools to help with this. Homogenising magnitudes is normally done by using a regression to map from one magnitude to a desired magnitude. This requires that an event would need to be recorded in both magnitudes, and ideally a good number of matching events to ensure a significant result. In the toolkit, we use odr regression with scipy to find the best fit model, with options to fit a simple linear regression, an exponential regression, a polynomial regression, or a bilinear regression with a fixed point of change in slope. The function outputs parameters for the chosen fit, plus uncertainty that should be passed on to the next stage.
 
-	. . code-block:: ini
+. . code-block:: ini
 
-	> from openquake.cat.catalogue_query_tools import CatalogueRegressor
-	> from openquake.cat.hmg.hmg import get_mag_selection_condition
-	> import pandas as pd
-	> import numpy as np
-        >
-	> def build_magnitude_query(mag_agencies, logic_connector):
-    	> """
-    	> Creates a string for querying a DataFrame with magnitude data.
-        >
-    	> :param mag_agency:
-        > 	A dictionary with magnitude type as key and a list of magnitude agencies as values
-    	> :param logic_connector"
-        > 	A string.  Can be either "and"  or "or"
-    	> :return:
-        > 	A string defining a query for an instance of :class:`pandas.DataFrame`
-    	> """
-    	> query = ""
-    	> i = 0
-    	> for mag_type in mag_agencies:
-        >	logic = "\" if logic_connector == 'or' else "&"
-        >	for agency in mag_agencies[mag_type]:
-        >    	cnd = get_mag_selection_condition(agency, mag_type, df_name="mdf")
-        >    	query += " {:s} ({:s})".format(logic, cnd) if i > 0 else "({:s})".format(cnd)
-        >    	i += 1
-    	> return query
+	from openquake.cat.catalogue_query_tools import CatalogueRegressor
+	from openquake.cat.hmg.hmg import get_mag_selection_condition
+	import pandas as pd
+	import numpy as np
+        
+        def build_magnitude_query(mag_agencies, logic_connector):
+    	"""
+    	Creates a string for querying a DataFrame with magnitude data.
+        
+    	:param mag_agency:
+        	A dictionary with magnitude type as key and a list of magnitude agencies as values
+    	:param logic_connector"
+        	A string.  Can be either "and"  or "or"
+    	:return:
+        	A string defining a query for an instance of :class:`pandas.DataFrame`
+    	"""
+    	query = ""
+    	i = 0
+    	for mag_type in mag_agencies:
+        	logic = "\" if logic_connector == 'or' else "&"
+        	for agency in mag_agencies[mag_type]:
+        	    	cnd = get_mag_selection_condition(agency, mag_type, df_name="mdf")
+        	    	query += " {:s} ({:s})".format(logic, cnd) if i > 0 else "({:s})".format(cnd)
+        	    	i += 1
+    	return query
 
 
-	> def get_data(res):
-    	> """
-    	> From a DataFrame obtained by merging two magnitude DataFrames it creates the input needed 
-    	> for performing orthogonal regression.
-        >
-    	> :param res:
-        >	A :class:`pandas.DataFrame`
-    	> """
-        >
-    	> data = np.zeros((len(res), 4))
-    	> data[:, 0] = res["value_x"].values
-    	> data[:, 1] = res["sigma_x"].values
-    	> data[:, 2] = res["value_y"].values
-    	> data[:, 3] = res["sigma_y"].values
-    	> return data
-        >
-	> def getd(mdf, agenciesA, agenciesB):
-        >
-    	>queryA = build_magnitude_query(agenciesA, "or")
-    	>queryB = build_magnitude_query(agenciesB, "or")
-        >
-    	>selA = mdf.loc[eval(queryA), :]
-    	>selB = mdf.loc[eval(queryB), :]
-        >
-    	>res = selA.merge(selB, on=["eventID"], how="inner")
-    	>print("Number of values: {:d}".format(len(res)))
-        > 
-    	>data = get_data(res)
-    	>return data
-        >
-	>def print_mbt_conversion(results, agency, magtype, **kwargs):
-    	>print("\n")
-    	>print("[magnitude.{:s}.{:s}]".format(agency, magtype))
-    	>print("# This is an ad-hoc conversion equation")
-        >
-    	>if "corner" in kwargs:
-        >	print("low_mags = [0.0, {:.1f}]".format(float(kwargs["corner"])))
-        >	fmt = "conv_eqs = [\"{:.4f} + {:.4f} * m\"]"
-        >	print(fmt.format(results.beta[0], results.beta[1]))
-    	>else:
-        >	print("low_mags = [0.0]")
-        >	fmt = "conv_eqs = [\"{:.4f} + {:.4f} * m\"]"
-        >	print(fmt.format(results.beta[0], results.beta[1]))
-    	>
-    	>fmt = "std_devs = [{:.4f}, {:.4f}]"
-    	>print(fmt.format(results.sd_beta[0], results.sd_beta[1]))
-    	> print("\n")
+	def get_data(res):
+    	"""
+    	From a DataFrame obtained by merging two magnitude DataFrames it creates the input needed 
+    	for performing orthogonal regression.
+        
+    	:param res:
+        :class:`pandas.DataFrame`
+    	"""
+        
+    	data = np.zeros((len(res), 4))
+    	data[:, 0] = res["value_x"].values
+    	data[:, 1] = res["sigma_x"].values
+    	data[:, 2] = res["value_y"].values
+    	data[:, 3] = res["sigma_y"].values
+    	return data
+        
+	def getd(mdf, agenciesA, agenciesB):
+        queryA = build_magnitude_query(agenciesA, "or")
+    	queryB = build_magnitude_query(agenciesB, "or")
+        
+    	selA = mdf.loc[eval(queryA), :]
+    	selB = mdf.loc[eval(queryB), :]
+        
+    	res = selA.merge(selB, on=["eventID"], how="inner")
+    	print("Number of values: {:d}".format(len(res)))
+         
+    	data = get_data(res)
+    	return data
+        
+	def print_mbt_conversion(results, agency, magtype, **kwargs):
+    		print("\n")
+    		print("[magnitude.{:s}.{:s}]".format(agency, magtype))
+    		print("# This is an ad-hoc conversion equation")
+        
+    		if "corner" in kwargs:
+        		print("low_mags = [0.0, {:.1f}]".format(float(kwargs["corner"])))
+        		fmt = "conv_eqs = [\"{:.4f} + {:.4f} * m\"]"
+         		print(fmt.format(results.beta[0], results.beta[1]))
+    		else:
+        		print("low_mags = [0.0]")
+        		fmt = "conv_eqs = [\"{:.4f} + {:.4f} * m\"]"
+       			print(fmt.format(results.beta[0], results.beta[1]))
+    	
+    		fmt = "std_devs = [{:.4f}, {:.4f}]"
+    		print(fmt.format(results.sd_beta[0], results.sd_beta[1]))
+    		print("\n")
 
 Using the above functions, we can query our catalogues to identify events that are present in both catalogues in both magnitude types. We can then use these to build a regression model and identify a relationship between different magnitude types. In the example below, we select mw magnitudes from our `local` catalogue and Mw magnitudes from `ISCGEM`. We specify a polynomial fit to the data, with starting parameter estimates for the regression of 1.2 and 0.7
 . . code-block:: python 
