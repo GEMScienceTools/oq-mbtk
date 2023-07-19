@@ -17,7 +17,7 @@ Setting up a bash script
 The bash script specifies all file locations and steps for generating a homogenised model. AT each step, we provide a different .toml file specifying the necessary parameters. If you have all the neccessary files set out as below (and named run_all.sh) you should have no problems in running the script with ./run_all.sh
 Further details on each step follow.
 
-. . code-bloc :: ini
+.. code-bloc :: ini
 	#!/usr/bin/env bash
 
 	CASE="homogenisedcat"
@@ -49,7 +49,7 @@ The first step in compiling a catalogue is merging information from different so
 
 As we see in the bash script above, we run the merge with `oqm cat merge merge.toml` where merge.toml contains all the necessary information for the merge. The `merge` function takes the toml file as its single argument. An example of merge .toml file might look like this: 
  
-. . code-block:: ini
+.. code-block:: ini
 	[general]
 	## Set these or your output files will have bad names and be in very confusing places!
 	output_path = "./../h5/"
@@ -83,7 +83,7 @@ The output of the `merge` function will be two h5 files specifying information o
 ## Homogenisation
 The next step in creating a catalogue is the homogenisation of magnitudes to moment magnitude M_w. The catalogue toolkit provides different tools to help with this. Homogenising magnitudes is normally done by using a regression to map from one magnitude to a desired magnitude. This requires that an event would need to be recorded in both magnitudes, and ideally a good number of matching events to ensure a significant result. In the toolkit, we use odr regression with scipy to find the best fit model, with options to fit a simple linear regression, an exponential regression, a polynomial regression, or a bilinear regression with a fixed point of change in slope. The function outputs parameters for the chosen fit, plus uncertainty that should be passed on to the next stage.
 
-. . code-block:: ini
+.. code-block:: ini
 
 	from openquake.cat.catalogue_query_tools import CatalogueRegressor
 	from openquake.cat.hmg.hmg import get_mag_selection_condition
