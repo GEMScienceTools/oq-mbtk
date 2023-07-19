@@ -230,14 +230,14 @@ The final homogenisation step itself is also controlled by a toml file, where ea
 	std_devs = [0.0091, 0.0016]
 
 The actual homogenisation step is carried out by calling
-:code: `oqm cat homogenise $ARG1 $ARG2 $ARG3`
+:code:`oqm cat homogenise $ARG1 $ARG2 $ARG3`
 as in the bash script example, where $ARG1 is the homogenisation toml file and and $ARG2 and $ARG3 are the hdf5 file outputs from the merge step, describing the origins and magnitude information for the merged catalogue respectively.
 
 Checking for duplicate events
 =============================
 
 A common issue when merging catalogues is that there are differences in earthquake metadata in different catalogues. To avoid creating a catalogue with duplicate events, we specify the time and space criteria in the merge stage, so that events that are very close in time and space will not be added to the catalogue.  
-We can check how well we have achieved this by looking at events that are retained in the final catalogue but fall within a certain time and space window. We can use the `check_duplicates` function to do this, which takes in a check.toml file and the homogenised catalogue h5 file. A check.toml file might look like this:
+We can check how well we have achieved this by looking at events that are retained in the final catalogue but fall within a certain time and space window. We can use the :code:`check_duplicates` function to do this, which takes in a check.toml file and the homogenised catalogue h5 file. A :code:`check.toml` file might look like this:
 
 .. code-block:: ini
 
