@@ -183,7 +183,7 @@ Using the above functions, we can query our catalogues to identify events that a
 	# plot the regression 
 	regress.plot_model_density(overlay=False, sample=0)
 	
-Alternatively, if we wanted a example with a bilinear fit with a break in slope at M5.8, we could say
+Alternatively, if we wanted an example with a bilinear fit with a break in slope at M5.8, we could say
 
 .. code-block:: ini
 
@@ -191,7 +191,7 @@ Alternatively, if we wanted a example with a bilinear fit with a break in slope 
 
 This would give us a different fit to our data and a different equation to supply to the homogenisation toml.
 
- Where there are not enough events to allow for a direct regression or we are unhappy with the fit for our data, there are many conversions in the literature which may be useful. This process may take some revising and iterating - it is sometimes very difficult to identify a best fit, especially where we have few datapoints or highly uncertain data. Once we are happy with the fits to our data, we can add the regression equation to the homogenisation .toml file. This process should be repeated for every magnitude we wish to convert to Mw. 
+Where there are not enough events to allow for a direct regression or we are unhappy with the fit for our data, there are many conversions in the literature which may be useful. This process may take some revising and iterating - it is sometimes very difficult to identify a best fit, especially where we have few datapoints or highly uncertain data. Once we are happy with the fits to our data, we can add the regression equation to the homogenisation .toml file. This process should be repeated for every magnitude we wish to convert to Mw. 
 
 The final homogenisation step itself is also controlled by a toml file, where each observed magnitude is specified individually and the regression coefficients and uncertainty are included. It is also necessary to specify a hierarchy of catalogues so that a preferred catalogue is used for the magnitude where the event has multiple entries. In the example below, we merge the ISCGEM and a local catalogue, preferring ISCGEM magnitudes where available as specified in the ranking. Because the ISCGEM already provides magnitudes in Mw, we simply retain all Mw magnitudes from ISCGEM. In this example, our local catalogue has two different magnitude types for which we have derived a regression. We specify how to convert to the standardised Mw from the local.mw and the standard deviations, which are outputs of the fitting we carried out above. 
 
@@ -249,12 +249,12 @@ where delta_ll and dela_t specify the time and space windows (in seconds and deg
 
 .. code-block :: ini
 
-[general]
-delta_ll = [['1899', '100*m']]
-delta_t = [['1899', '30*m']]
-output_path = "./tmp/"
+	[general]
+	delta_ll = [['1899', '100*m']]
+	delta_t = [['1899', '30*m']]
+	output_path = "./tmp/"
 
- The check_duplicates output is a geojson file that draws lines between events that meet the criteria in the check.toml file. Each line segment contains the details of the two events, including their original magnitudes, the agencies that the events are taken from and the time and spatial distance between the two events, so that a user can check if they are happy for these events to be retained or would prefer to iterate on the parameters.
+The check_duplicates output is a geojson file that draws lines between events that meet the criteria in the check.toml file. Each line segment contains the details of the two events, including their original magnitudes, the agencies that the events are taken from and the time and spatial distance between the two events, so that a user can check if they are happy for these events to be retained or would prefer to iterate on the parameters.
 
 The process of building a reliable homogenised catalogue is iterative: at any step we may identify changes that should be made to merge criteria or regression parameters. It is also important to look at the resulting frequency-magnitude distribution to idenitfy any obvious changes in slope, which may indicate that our regressions are not performing as well as we would like. 
 
