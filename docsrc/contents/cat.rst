@@ -17,7 +17,7 @@ Setting up a bash script
 The bash script specifies all file locations and steps for generating a homogenised model. AT each step, we provide a different .toml file specifying the necessary parameters. If you have all the neccessary files set out as below (and named run_all.sh) you should have no problems in running the script with ./run_all.sh
 Further details on each step follow.
 
-.. code-bloc :: ini
+.. code-block :: ini
 	#!/usr/bin/env bash
 
 	CASE="homogenisedcat"
@@ -44,7 +44,9 @@ Further details on each step follow.
 	oqm cat create_csv $ARG2 $ARG3
 
 
-## Merging
+Merging
+=======
+
 The first step in compiling a catalogue is merging information from different sources. This might include a global catalogue (e.g. ISC-GEM or GCMT), and various local catalogues that are more likely to have recorded smaller magnitude events, or contain more accurate locations. The merge tools are designed to allow multiple catalogues to be combined into one, regardless of original catalogue formats, and to retain only unique events across the catalogues. 
 
 As we see in the bash script above, we run the merge with `oqm cat merge merge.toml` where merge.toml contains all the necessary information for the merge. The `merge` function takes the toml file as its single argument. An example of merge .toml file might look like this: 
@@ -80,7 +82,9 @@ To ensure events are not duplicated, the user can specify space-time windows ove
 
 The output of the `merge` function will be two h5 files specifying information on the origin `_otab.h5` and the magnitudes `_mtab.h5`. The origin file will contain the event locations, depths, agency information and focal mechanism parameters where available, while the magnitudes file will include information on the event magnitude and uncertainties.
 
-## Homogenisation
+Homogenisation
+==============
+
 The next step in creating a catalogue is the homogenisation of magnitudes to moment magnitude M_w. The catalogue toolkit provides different tools to help with this. Homogenising magnitudes is normally done by using a regression to map from one magnitude to a desired magnitude. This requires that an event would need to be recorded in both magnitudes, and ideally a good number of matching events to ensure a significant result. In the toolkit, we use odr regression with scipy to find the best fit model, with options to fit a simple linear regression, an exponential regression, a polynomial regression, or a bilinear regression with a fixed point of change in slope. The function outputs parameters for the chosen fit, plus uncertainty that should be passed on to the next stage.
 
 .. code-block:: ini
@@ -160,7 +164,8 @@ The next step in creating a catalogue is the homogenisation of magnitudes to mom
     		print("\n")
 
 Using the above functions, we can query our catalogues to identify events that are present in both catalogues in both magnitude types. We can then use these to build a regression model and identify a relationship between different magnitude types. In the example below, we select mw magnitudes from our `local` catalogue and Mw magnitudes from `ISCGEM`. We specify a polynomial fit to the data, with starting parameter estimates for the regression of 1.2 and 0.7
-. . code-block:: python 
+
+.. code-block:: ini 
 	agency = "local"
 	magtype = "mw"
 	amA = {magtype: [agency]}
@@ -178,7 +183,7 @@ Using the above functions, we can query our catalogues to identify events that a
 	
 Alternatively, if we wanted a example with a bilinear fit with a break in slope at M5.8, we could say
 
-. . code-block:: python
+.. code-block:: ini
 	results = regress.run_regression("2segmentM5.8", [0.3, 1.0, 4.5])
 
 This would give us a different fit to our data and a different equation to supply to the homogenisation toml.
@@ -187,7 +192,7 @@ This would give us a different fit to our data and a different equation to suppl
 
 The final homogenisation step itself is also controlled by a toml file, where each observed magnitude is specified individually and the regression coefficients and uncertainty are included. It is also necessary to specify a hierarchy of catalogues so that a preferred catalogue is used for the magnitude where the event has multiple entries. In the example below, we merge the ISCGEM and a local catalogue, preferring ISCGEM magnitudes where available as specified in the ranking. Because the ISCGEM already provides magnitudes in Mw, we simply retain all Mw magnitudes from ISCGEM. In this example, our local catalogue has two different magnitude types for which we have derived a regression. We specify how to convert to the standardised Mw from the local.mw and the standard deviations, which are outputs of the fitting we carried out above. 
 
-. . code-block:: toml
+.. code-block:: ini
 # This file contains a set of rules for the selection of origins and
 # the homogenisation of magnitudes. Used for the construction of the global catalogue
 # This version uses ad-hoc conversion parameters for ms and mb magnitudes, and that all Mw magnitudes are consistent
@@ -223,11 +228,13 @@ The actual homogenisation step is carried out by calling
 oqm cat homogenise $ARG1 $ARG2 $ARG3
 as in the bash script example, where $ARG1 is the homogenisation toml file and and $ARG2 and $ARG3 are the hdf5 file outputs from the merge step, describing the origins and magnitude information for the merged catalogue respectively.
 
-## Checking for duplicate events
+Checking for duplicate events
+=============================
+
 A common issue when merging catalogues is that their are differences in earthquake metadata in different catalogues. To avoid creating a catalogue with duplicate events, we specify the time and space criteria in the merge stage, so that events that are very close in time and space will not be added to the catalogue.  
 We can check how well we have achieved this by looking at events that are retained in the final catalogue but fall within a certain time and space window. We can use the `check_duplicates` function to do this, which takes in a check.toml file and the homogenised catalogue h5 file. A check.toml file might look like this:
 
-. . code-block:: toml
+.. code-block:: ini
 [general]
 delta_ll = 0.3
 delta_t = 10.0
@@ -235,7 +242,7 @@ output_path = "./tmp/"
 
 where delta_ll and dela_t specify the time and space windows (in seconds and degrees respctively) to test for duplicate events. Again, we can specify different time limits and write the limits as functions of magnitudes i.e.:
 
-. . code-block :: toml
+.. code-block :: ini
 [general]
 delta_ll = [['1899', '100*m']]
 delta_t = [['1899', '30*m']]
