@@ -82,82 +82,82 @@ The output of the `merge` function will be two h5 files specifying information o
 ## Homogenisation
 The next step in creating a catalogue is the homogenisation of magnitudes to moment magnitude M_w. The catalogue toolkit provides different tools to help with this. Homogenising magnitudes is normally done by using a regression to map from one magnitude to a desired magnitude. This requires that an event would need to be recorded in both magnitudes, and ideally a good number of matching events to ensure a significant result. In the toolkit, we use odr regression with scipy to find the best fit model, with options to fit a simple linear regression, an exponential regression, a polynomial regression, or a bilinear regression with a fixed point of change in slope. The function outputs parameters for the chosen fit, plus uncertainty that should be passed on to the next stage.
 
-. . code-block:: python
+	. . code-block:: ini
 
-	from openquake.cat.catalogue_query_tools import CatalogueRegressor
-	from openquake.cat.hmg.hmg import get_mag_selection_condition
-	import pandas as pd
-	import numpy as np
+	> from openquake.cat.catalogue_query_tools import CatalogueRegressor
+	> from openquake.cat.hmg.hmg import get_mag_selection_condition
+	> import pandas as pd
+	> import numpy as np
+        >
+	> def build_magnitude_query(mag_agencies, logic_connector):
+    	> """
+    	> Creates a string for querying a DataFrame with magnitude data.
+        >
+    	> :param mag_agency:
+        > 	A dictionary with magnitude type as key and a list of magnitude agencies as values
+    	> :param logic_connector"
+        > 	A string.  Can be either "and"  or "or"
+    	> :return:
+        > 	A string defining a query for an instance of :class:`pandas.DataFrame`
+    	> """
+    	> query = ""
+    	> i = 0
+    	> for mag_type in mag_agencies:
+        >	logic = "\" if logic_connector == 'or' else "&"
+        >	for agency in mag_agencies[mag_type]:
+        >    	cnd = get_mag_selection_condition(agency, mag_type, df_name="mdf")
+        >    	query += " {:s} ({:s})".format(logic, cnd) if i > 0 else "({:s})".format(cnd)
+        >    	i += 1
+    	> return query
 
-	def build_magnitude_query(mag_agencies, logic_connector):
-    	"""
-    	Creates a string for querying a DataFrame with magnitude data.
 
-    	:param mag_agency:
-        	A dictionary with magnitude type as key and a list of magnitude agencies as values
-    	:param logic_connector"
-        	A string.  Can be either "and"  or "or"
-    	:return:
-        	A string defining a query for an instance of :class:`pandas.DataFrame`
-    	"""
-    	query = ""
-    	i = 0
-    	for mag_type in mag_agencies:
-        	logic = "\" if logic_connector == 'or' else "&"
-        	for agency in mag_agencies[mag_type]:
-            	cnd = get_mag_selection_condition(agency, mag_type, df_name="mdf")
-            	query += " {:s} ({:s})".format(logic, cnd) if i > 0 else "({:s})".format(cnd)
-            	i += 1
-    	return query
-
-
-	def get_data(res):
-    	"""
-    	From a DataFrame obtained by merging two magnitude DataFrames it creates the input needed 
-    	for performing orthogonal regression.
-
-    	:param res:
-        	A :class:`pandas.DataFrame`
-    	"""
-
-    	data = np.zeros((len(res), 4))
-    	data[:, 0] = res["value_x"].values
-    	data[:, 1] = res["sigma_x"].values
-    	data[:, 2] = res["value_y"].values
-    	data[:, 3] = res["sigma_y"].values
-    	return data
-
-	def getd(mdf, agenciesA, agenciesB):
-    
-    	queryA = build_magnitude_query(agenciesA, "or")
-    	queryB = build_magnitude_query(agenciesB, "or")
-
-    	selA = mdf.loc[eval(queryA), :]
-    	selB = mdf.loc[eval(queryB), :]
-
-    	res = selA.merge(selB, on=["eventID"], how="inner")
-    	print("Number of values: {:d}".format(len(res)))
-    
-    	data = get_data(res)
-    	return data
-
-	def print_mbt_conversion(results, agency, magtype, **kwargs):
-    	print("\n")
-    	print("[magnitude.{:s}.{:s}]".format(agency, magtype))
-    	print("# This is an ad-hoc conversion equation")
-    
-    	if "corner" in kwargs:
-        	print("low_mags = [0.0, {:.1f}]".format(float(kwargs["corner"])))
-        	fmt = "conv_eqs = [\"{:.4f} + {:.4f} * m\"]"
-        	print(fmt.format(results.beta[0], results.beta[1]))
-    	else:
-        	print("low_mags = [0.0]")
-        	fmt = "conv_eqs = [\"{:.4f} + {:.4f} * m\"]"
-        	print(fmt.format(results.beta[0], results.beta[1]))
-    	#
-    	fmt = "std_devs = [{:.4f}, {:.4f}]"
-    	print(fmt.format(results.sd_beta[0], results.sd_beta[1]))
-    	print("\n")
+	> def get_data(res):
+    	> """
+    	> From a DataFrame obtained by merging two magnitude DataFrames it creates the input needed 
+    	> for performing orthogonal regression.
+        >
+    	> :param res:
+        >	A :class:`pandas.DataFrame`
+    	> """
+        >
+    	> data = np.zeros((len(res), 4))
+    	> data[:, 0] = res["value_x"].values
+    	> data[:, 1] = res["sigma_x"].values
+    	> data[:, 2] = res["value_y"].values
+    	> data[:, 3] = res["sigma_y"].values
+    	> return data
+        >
+	> def getd(mdf, agenciesA, agenciesB):
+        >
+    	>queryA = build_magnitude_query(agenciesA, "or")
+    	>queryB = build_magnitude_query(agenciesB, "or")
+        >
+    	>selA = mdf.loc[eval(queryA), :]
+    	>selB = mdf.loc[eval(queryB), :]
+        >
+    	>res = selA.merge(selB, on=["eventID"], how="inner")
+    	>print("Number of values: {:d}".format(len(res)))
+        > 
+    	>data = get_data(res)
+    	>return data
+        >
+	>def print_mbt_conversion(results, agency, magtype, **kwargs):
+    	>print("\n")
+    	>print("[magnitude.{:s}.{:s}]".format(agency, magtype))
+    	>print("# This is an ad-hoc conversion equation")
+        >
+    	>if "corner" in kwargs:
+        >	print("low_mags = [0.0, {:.1f}]".format(float(kwargs["corner"])))
+        >	fmt = "conv_eqs = [\"{:.4f} + {:.4f} * m\"]"
+        >	print(fmt.format(results.beta[0], results.beta[1]))
+    	>else:
+        >	print("low_mags = [0.0]")
+        >	fmt = "conv_eqs = [\"{:.4f} + {:.4f} * m\"]"
+        >	print(fmt.format(results.beta[0], results.beta[1]))
+    	>
+    	>fmt = "std_devs = [{:.4f}, {:.4f}]"
+    	>print(fmt.format(results.sd_beta[0], results.sd_beta[1]))
+    	> print("\n")
 
 Using the above functions, we can query our catalogues to identify events that are present in both catalogues in both magnitude types. We can then use these to build a regression model and identify a relationship between different magnitude types. In the example below, we select mw magnitudes from our `local` catalogue and Mw magnitudes from `ISCGEM`. We specify a polynomial fit to the data, with starting parameter estimates for the regression of 1.2 and 0.7
 . . code-block:: python 
