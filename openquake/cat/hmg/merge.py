@@ -235,7 +235,7 @@ def process_catalogues(settings_fname: str) -> None:
 
             # Set log files
             if "log_file" not in tdict:
-                logfle = "/tmp/tmp_merge_{:02d}.tmp".format(icat)
+                logfle = os.path.join(path, f"tmp_merge_{icat:02d}.tmp".format(icat))
             else:
                 logfle = tdict["log_file"]
             print("   Log file: {:s}".format(logfle))
@@ -282,7 +282,7 @@ def process_catalogues(settings_fname: str) -> None:
 
             # Set the name of the log file
             if "log_file" not in tdict:
-                logfle = f"/tmp/tmp_merge_{icat:02d}.tmp"
+                logfle = os.path.join(path, f"tmp_merge_{icat:02d}.tmp" )
             else:
                 logfle = tdict["log_file"]
             print(f"   Log file: {logfle:s}".format())
