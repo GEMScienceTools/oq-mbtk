@@ -356,7 +356,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
         cla = np.mean([bb[2], bb[3]])
 
         fig = pygmt.Figure()
-        pygmt.makecpt(cmap="jet", series=[0.0, 600])
+        pygmt.makecpt(cmap="jet", series=[0.0, 800])
         # fig.basemap(region=reg, projection="M20c", frame=True)
         fig.basemap(region=reg, projection=f"T{clo}/{cla}/12c", frame=True)
 
