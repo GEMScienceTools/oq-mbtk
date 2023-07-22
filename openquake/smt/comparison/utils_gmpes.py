@@ -39,9 +39,9 @@ def _get_first_point(rup, from_point):
     :param from_point:
     """
     sfc = rup.surface
-    if from_point == 'TC':
+    if from_point == 'TC': # Get the up-dip edge centre point
         return sfc._get_top_edge_centroid()
-    elif from_point == 'BC':
+    elif from_point == 'BC': # Get the down-dip edge centre point
         lon, lat = geo_utils.get_middle_point(
             sfc.corner_lons[2], sfc.corner_lats[2],
             sfc.corner_lons[3], sfc.corner_lats[3]
@@ -62,9 +62,9 @@ def _get_first_point(rup, from_point):
                  sfc.corner_depths[idx])
 
 
-def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
-                           direction='positive', hdist=100, step=5.,
-                           site_props=''):
+def get_sites_from_rupture(rup, from_point = 'TC', toward_azimuth = 90,
+                           direction = 'positive', hdist = 100, step = 5.,
+                           site_props = ''):
     """
     :param rup:
     :param from_point:
@@ -98,20 +98,23 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
     keys = set(site_props.keys()) - set(['vs30', 'z1pt0', 'z2pt5'])
 
     if len(pointsn):
-        for lon, lat in reversed(pointsn[0][idx:], pointsn[1])[idx:]:
+        lons = reversed(pointsn[0][idx:])
+        lats = reversed(pointsn[1][idx:])
+        for lon, lat in zip(lons, lats):
             site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
                         z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
             for key in list(keys):
                 setattr(site, key, site_props[key])
             sites.append(site)
 
-    for lon, lat in zip(pointsp[0], pointsp[1]):
-        site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
-                    z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
-        for key in list(keys):
-            setattr(site, key, site_props[key])
-        sites.append(site)
-
+    if len(pointsp):
+        for lon, lat in zip(pointsp[0], pointsp[1]):
+            site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
+                        z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
+            for key in list(keys):
+                setattr(site, key, site_props[key])
+            sites.append(site)
+            
     return SiteCollection(sites)
 
 
@@ -129,16 +132,20 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
 
 
 def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30, 
-               Z1, Z25, maxR, step, imt, ztor, eshm20_region):    
+               Z1, Z25, maxR, step, imt, ztor, eshm20_region, up_or_down_dip = None):    
     """
     Compute predicted ground-motion intensities w.r.t considered distance using
     the given GMPE
     """
+    # Get trt
     trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
     
-    rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
-                      strike=strike, dip=dip, rake=rake, trt=trt, ztor=ztor)
+    # Get rup
+    rup = get_rupture(0.0, 0.0, depth, WC1994(), mag = mag, aratio = aratio,
+                      strike = strike, dip = dip, rake = rake, trt = trt,
+                      ztor = ztor)
     
+    # Set site props
     if 'KothaEtAl2020ESHM20' in str(orig_gmpe):
         props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
                  'vs30measured': True,'region': eshm20_region}  
@@ -146,10 +153,20 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
         props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
                  'vs30measured': True}
     
-    sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
-                                   direction='positive', hdist=maxR, step=step,
-                                   site_props=props)
+    # Check if site up-dip or down-dip of site
+    if up_or_down_dip is None or up_or_down_dip == 1:
+        direction = 'positive'
+        from_point = 'TC'
+    elif up_or_down_dip == 0:
+        from_point = 'BC'
+        direction = 'negative'
     
+    # Get sites
+    sites = get_sites_from_rupture(rup, from_point, toward_azimuth = 90,
+                                   direction = direction, hdist = maxR,
+                                   step = step, site_props = props)
+    
+    # Create context
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
     ctxm = ContextMaker(trt, [gmpe], oqp)
@@ -158,6 +175,7 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     ctxs = ctxs[0]
     ctxs.occurrence_rate = 0.0
     
+    # Compute ground-motions
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
     distances = ctxs.rrup
     
@@ -200,13 +218,16 @@ def _get_z25(Vs30,region):
 
 
 def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
-    
-    # specific assumptions when the param are not available from the sources
+    """
+    Get proxies for strike, dip, depth and aspect ratio if not provided
+    """
+    # Strike
     if strike == -999: 
         strike_s = 0
     else:
         strike_s = strike
 
+    # Dip
     if dip == -999:
         if rake == 0:
             dip_s = 90 # strike slip
@@ -215,6 +236,7 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
     else:
         dip_s = dip
 
+    # Depth
     if depth == -999:
         if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTERFACE:
             depth_s = 30
@@ -225,6 +247,7 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
     else:
         depth_s = depth
         
+    # a-ratio
     if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
@@ -244,8 +267,6 @@ def mgmpe_check(gmpe):
     :param gmpe:
         gmpe: GMPE to be modified if required (must be a gsim class)
     """
-    # Site term still not allowing additional inputs (right now using base gsim)
-    
     # Preserve original GMPE prior and create base version of GMPE
     orig_gmpe = gmpe
     base_gsim = str(gmpe).splitlines()[0].replace('[','').replace(']','')

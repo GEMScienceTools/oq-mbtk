@@ -188,16 +188,25 @@ def plot_trellis(filename, output_directory):
                       config.custom_color_list, config.eshm20_region,
                       config.lt_weights_gmc1, config.lt_weights_gmc2) 
                 
-def plot_spectra(filename, output_directory):
+def plot_spectra(filename, output_directory, obs_spectra = None):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
     configuration
     :param  filename:
         toml file providing configuration for use within comparative
         plotting methods.
+    :param obs_spectra:
+        csv of an observed spectra to plot and associated event information.
+        An example file can be found in openquake.smt.tests.file_samples.
     """
     # Generate config object
     config = Configurations(filename)
+    
+    # Get observed spectra information if obs_spectra
+    if obs_spectra is not None:
+        obs_spectra = pd.read_csv(obs_spectra)
+    else:
+        obs_spectra = None
     
     plot_spectra_util(config.rake, config.strike, config.dip,
                       config.trellis_depth, config.Z1, config.Z25, config.Vs30,
@@ -205,7 +214,7 @@ def plot_spectra(filename, output_directory):
                       config.dist_list, config.gmpes_list, config.aratio,
                       config.Nstd, output_directory, config.custom_color_flag,
                       config.custom_color_list, config.eshm20_region,
-                      config.lt_weights_gmc1, config.lt_weights_gmc2) 
+                      config.lt_weights_gmc1, config.lt_weights_gmc2, obs_spectra) 
 
 def plot_cluster(filename, output_directory):
     """
