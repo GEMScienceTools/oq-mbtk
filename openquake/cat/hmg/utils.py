@@ -50,7 +50,7 @@ def to_hmtk_catalogue(cdf: pd.DataFrame, polygon=None):
         cgdf = gpd.GeoDataFrame(cgdf, geometry=tmp, crs="EPSG:4326")
 
         # Reading shapefile and dissolving polygons into a single one
-        boundaries = gpd.read_file(shapefile_fname)
+        boundaries = gpd.read_file(polygon)
         boundaries['dummy'] = 'dummy'
         geom = boundaries.dissolve(by='dummy').geometry[0]
 
