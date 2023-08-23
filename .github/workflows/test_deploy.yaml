@@ -33,6 +33,7 @@ jobs:
     - name: Run test with pytest
       run: |
         cd openquake
+        oq dbserver start
         pytest -vsx cat ghm man mbt sub wkf smt
 
   pages:
