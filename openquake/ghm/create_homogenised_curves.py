@@ -29,6 +29,7 @@ import os
 import re
 import glob
 import copy
+import shutil
 import pickle
 import warnings
 import logging
@@ -65,28 +66,46 @@ def get_poly_from_str(tstr):
     return coo
 
 
-def find_hazard_curve_file(datafolder, key, imt_str):
+def find_hazard_curve_file(datafolder, vs30_flag, key, imt_str):
     """
     Searches for a file in a folder given a key
 
     :param str datafolder:
         The name of the folder where to search
+
     :param str key:
         The pattern to be used for searching the file
-    :param imt_str:
+
+    :param str imt_str:
         String specifying the desired intensity measure type
+
+    :param bool vs30_flag:
+        True (1) if building vs30 maps
+
     :return:
         A list with the files matching the pattern
     """
     # First search for mean results
     tmps = 'hazard_curve-mean-{:s}*.csv'.format(imt_str)
     key = re.sub('[0-9]', '', key)
-    data_path = os.path.join(datafolder, key.upper(), 'out*', tmps)
+
+    if float(vs30_flag)==1:
+        data_path = os.path.join(datafolder, key.upper(), 'out/vs30*', tmps)
+    else:
+        data_path = os.path.join(datafolder, key.upper(), 'out*', tmps)
+
     data_fname = glob.glob(data_path)
+
     if len(data_fname) == 0:
         tmps = 'hazard_curve-rlz-*-{:s}*.csv'.format(imt_str)
-        data_path = os.path.join(datafolder, key.upper(), 'out*', tmps)
+
+        if float(vs30_flag)==1:
+            data_path = os.path.join(datafolder, key.upper(), 'out/vs30*', tmps)
+        else:
+            data_path = os.path.join(datafolder, key.upper(), 'out*', tmps)
+
         data_fname = glob.glob(data_path)
+
     return data_fname
 
 
@@ -190,7 +209,8 @@ def get_imtls(poes):
 
 def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
          imt_str, inland_shp, models_list=None, only_buffers=False,
-         buf=50, h3_resolution=6, mosaic_key='GID_0'):
+         buf=50, h3_resolution=6, mosaic_key='GID_0',vs30_flag=False,
+         overwrite=False, sub=False):
     """
     This function processes all the models listed in the mosaic.DATA
     dictionary. The code creates for the models in contact with other models
@@ -218,6 +238,12 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         [optional] The h3 resolution
     :param mosaic_key:
         [optional] The key used to identify models
+    :param bool vs30_flag:
+        True (1) if building vs30 maps
+    :param bool overwrite:
+        True (1) to overwrite existing files
+    :param bool sub:
+        True (1) to create buffer map only for models in models_list
     """
     shapely.speedups.enable()
     # Buffer distance in [m]
@@ -231,7 +257,10 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         lst = glob.glob(os.path.join(outpath, '*.json'))
         lst += glob.glob(os.path.join(outpath, '*.txt'))
         if len(lst):
-            raise ValueError(f'The code requires an empty folder\n{outpath}')
+            if overwrite==True:
+                print('Warning: overwriting existing files in {}'.format(outpath))
+            else:
+                raise ValueError(f'The code requires an empty folder\n{outpath}')
     else:
         os.mkdir(outpath)
     # Read the shapefile with the contacts between models
@@ -247,6 +276,8 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
     if models_list is None:
         models_list = []
         for key in mosaic_data.keys():
+            if vs30_flag and key=='gld':
+                continue
             models_list.append(re.sub('[0-9]+', '', key))
 
     # Loop over the various models. TODO the value of the buffer here must
@@ -258,13 +289,14 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         buffer_data = {}
         buffer_poes = {}
         coords = {}
-
         # Skip models not included in the list
         if re.sub('[0-9]+', '', key) not in models_list:
             continue
         # Find name of the file with hazard curves
         print_model_info(i, key)
-        data_fname = find_hazard_curve_file(datafolder, key, imt_str)
+        data_fname = find_hazard_curve_file(datafolder, vs30_flag, key, imt_str)
+        print(data_fname[0])
+
 
         # Read hazard curves
         map_gdf, header = get_hcurves_geodataframe(data_fname[0])
@@ -296,7 +328,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         # TODO can we remove this now?
         if key in ['waf', 'ssa']:
             from shapely.geometry import Polygon
-            coo = get_poly_from_str(mosaic.SUBSETS[key]['AO'][0])
+            coo = get_poly_from_str(mosaic.SUBSETS['GID_0'][key]['AGO'][0])
             df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
             dft = gpd.GeoDataFrame(df, geometry='geo')
             idx = map_gdf.geometry.intersects(dft.geometry[0])
@@ -475,6 +507,8 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         if not os.path.exists(tmpdir):
             os.mkdir(tmpdir)
 
+        print('saving everything to {}'.format(tmpdir))
+
         # Save data
         fname = os.path.join(tmpdir, f'{key:s}_data.pkl')
         fou = open(fname, "wb")
@@ -493,10 +527,10 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         pickle.dump(coords, fou)
         fou.close()
 
-    buffer_processing(outpath, imt_str, models_list, poelabs, buf)
+    buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, sub)
 
 
-def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
+def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, sub=True):
     """
     Buffer processing
 
@@ -511,6 +545,8 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
         and containing the hazard curves
     :param buf:
         The buffer distance in km
+    :param bool vs30_flag:
+        True (1) if building vs30 maps
     """
 
     print('Buffer processing')
@@ -524,8 +560,12 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
     tmpdir = os.path.join(outpath, 'temp')
     for i, key in enumerate(sorted(mosaic_data)):
 
-        # Skip models not included in the list
-        if re.sub('[0-9]+', '', key) not in models_list:
+        # Skip models not included in the list.
+        # comment out these lines if wanting to join 
+        # all the models, but some have been produced in former runs
+        if re.sub('[0-9]+', '', key) not in models_list and sub==True:
+            continue
+        if key == 'gld' and vs30_flag == 1:
             continue
         print(f'  Loading {key:s}')
 
@@ -630,17 +670,25 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf):
     fou.close()
     fuu.close()
 
-
 def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
-            imt_str, inland_shp, buf, *, models_list=None, only_buffers=False,
-            h3_resolution=6, mosaic_key='GID_0'):
+            imt_str, inland_shp, buf, vs30_flag, *, models_list=None, only_buffers=False,
+            h3_resolution=6, mosaic_key='GID_0', foverwrite=False, sub=False):
     """
     This function processes all the models listed in the mosaic.DATA dictionary
     and creates homogenised curves.
+
+    Example use that recreates the curves (model and buffer regions) for EUR and MIE models, 
+    overwriting them in their existing folder (/home/hazard/mosaic/../ghm/PGA-rock) and 
+    generating the buffer shapefiles for the full globe
+
+    ./create_homogenised_curves.py ./../data/gis/contacts_between_models.shp 
+    /home/hazard/mosaic/../ghm/PGA-rock /home/hazard/mosaic ../GGrid/trigrd_split_9_spacing_13 
+    /home/hazard/mosaic/../gadm_410_level_0.gpkg PGA ./../data/gis/inland.shp 50.0 0 
+    -m "eur,mie" -f 1
     """
     proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
          imt_str, inland_shp, models_list, only_buffers, buf, h3_resolution,
-         mosaic_key)
+         mosaic_key, vs30_flag, float(foverwrite), sub)
 
 
 process.contacts_shp = 'Name of shapefile with contacts'
@@ -651,9 +699,13 @@ process.boundaries_shp = 'Name of shapefile with boundaries'
 process.imt_str = 'String with the intensity measure type'
 process.inland_shp = 'Name of shapefile with inland territories'
 process.buf = 'Buffer distance'
+process.vs30_flag = 'Boolean flag to set path for reading hazard curves'
 process.models_list = 'List of models to be processed'
 process.h3_resolution = 'H3 resolution used to create the grid of sites'
 process.mosaic_key = 'The key used to specify countries'
+process.foverwrite = 'Boolean to allow overwriting of files'
+process.sub = 'Boolean to create subset according to models_list'
 
 if __name__ == "__main__":
     sap.run(process)
+
