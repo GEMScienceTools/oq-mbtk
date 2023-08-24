@@ -31,4 +31,4 @@ jobs:
         cd mbtk
         dir
         cd oq-mbtk\openquake
-        pytest -vsx cat ghm man mbt sub wkf smt 
+        pytest -vs cat ghm man mbt sub wkf smt 
