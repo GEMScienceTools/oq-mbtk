@@ -38,7 +38,7 @@ create_temporary_folders()
     for i in "/tmp" "/grd" "/fig" "/cpt";
     do
         DIRECTORY=$ROOT$i
-        mkdir $DIRECTORY
+        mkdir -p $DIRECTORY 
     done
 }
 
@@ -63,11 +63,16 @@ plot()
     EXTE=$(set_map_extent)
 
     # Input cpt
-    CPTT2="./cpt/gm.cpt"
-    CPTT2="./cpt/gm_new.cpt"
-    # Input topography
+    CPTT2=$DATA"./gmt/gm.cpt"
+    CPTT2=$DATA"./gmt/gm_2023.cpt"
+
+    ISLANDS=$DATA"./gmt/islands.gmt"
+    ISLANDS=$DATA"./gmt/islands_with_gld.gmt"
+ 
+    # Input Topography
     #GTOPO=$DATA"/gem/gmt/globalGTOPO30.grd"
     GTOPO=$DATA"/dem/ETOPO1_Ice_g_gmt4.grd"
+
     # Input bathymetry
     bat_grd=$DATA"/dem/ETOPO1_Ice_g_gmt4.grd"
 
@@ -84,12 +89,12 @@ plot()
     bat_grd_cut=$ROOT"/grd/bathymetry_cut.grd"
     bat_shadow=$ROOT"/grd/bathymetry_shadow.grd"
 
-    # shaded relief
+    # Sshaded relief
     RES="5k"
 
     if $GRADIENT; then
-        rm $ROOT"/grd/*.*"
-        rm $ROOT"/grdtopo/*.*"
+        rm $ROOT"grd/*.*"
+        rm $ROOT"grdtopo/*.*"
 
         gmt nearneighbor $INPUT -R$EXTE -I$RES -G$GRD0 -V -N4/2 -S20k
         gmt grdsample $GRD0 -I$RES -R$ext -G$GRDHAZ -r
@@ -133,7 +138,7 @@ plot()
 
     # Finishing
     gmt pscoast -R$EXTE $PRO $ORI -Df -ESJ+gwhite -O -K  >> $PS
-    gmt psxy ./../data/gis/islands.gmt -R$EXTE $PRO -Gp500/9:BlightgreyFwhite -O -K -V >> $PS
+    gmt psxy $ISLANDS -R$EXTE $PRO -Gp500/9:BlightgreyFwhite -O -K -V >> $PS
     gmt pscoast -R$EXTE $PRO $ORI -Df -A$AREA+as+l -O -K -N1/thinnest,darkgray -Lg-125/-52.7+c0+w5000+f -Wthinnest,black -V >> $PS
     #gmt pscoast -R$EXTE $PRO $ORI -Df -A$AREA+as+l -O -K -N1,thinnest,darkgray -Lg-125/-52.7+c0+w5000+f -Wthinnest,black -V >> $PS
 
