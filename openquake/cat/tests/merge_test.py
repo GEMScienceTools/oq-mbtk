@@ -134,6 +134,7 @@ use_ids = false
 SETTINGS_COMCAT = """
 
 [general]
+log_file = "{:s}"
 
 [[catalogues]]
 code = "ISCGEM"
@@ -158,6 +159,7 @@ SETTINGS_GLOBAL = """
 [general]
 output_path = "{:s}"
 output_prefix = "global_"
+log_file = "{:s}"
 
 # Catalogues
 
@@ -208,6 +210,7 @@ class MergeGCMTTestCase(unittest.TestCase):
         # are escaped correctly and the resulting TOML file is valid
         td = toml.loads(SETTINGS)
         td["general"]["output_path"] = self.tmpd
+        
         td["general"]["log_file"] = os.path.join(self.tmpd, "log.txt")
         td["general"]["region_shp"] = \
             os.path.join(data_path, "shp", "test_area.shp")
@@ -216,6 +219,8 @@ class MergeGCMTTestCase(unittest.TestCase):
         td["catalogues"][1]["filename"] = \
             os.path.join(data_path, "test_gcmt.csv")
 
+        #td["catalogues"][0]["log_file"] = os.path.join(data_path, "log_isc.txt")
+        #td["catalogues"][1]["log_file"] = os.path.join(data_path, "log_gcmt.txt")
         # Create settings file
         self.settings = os.path.join(self.tmpd, "settings.toml")
         with open(self.settings, "w") as fou:
@@ -375,8 +380,7 @@ class MergeGlobalTestCase(unittest.TestCase):
         # are escaped correctly and the resulting TOML file is valid
         td = toml.loads(SETTINGS_GLOBAL)
         td["general"]["output_path"] = self.tmpd
-        print(td["catalogues"])
-        #td["general"]["log_file"] = os.path.join(self.tmpd, "log.txt")
+        td["general"]["log_file"] = os.path.join(self.tmpd, "log.txt")
         td["general"]["region_shp"] = \
             os.path.join(data_path, "shp", "test_area.shp")
         td["catalogues"][0]["filename"] = \

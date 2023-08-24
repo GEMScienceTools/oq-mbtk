@@ -19,17 +19,16 @@
 Module with utility functions for gmpes
 """
 import numpy as np
-import warnings
+import pandas as pd
 
 from openquake.hazardlib.geo import Point
-from openquake.hazardlib import valid
 from openquake.hazardlib.geo.surface import PlanarSurface
 from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.scalerel import WC1994
-from openquake.hazardlib.const import TRT, StdDev
+from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
 
@@ -40,9 +39,9 @@ def _get_first_point(rup, from_point):
     :param from_point:
     """
     sfc = rup.surface
-    if from_point == 'TC':
+    if from_point == 'TC': # Get the up-dip edge centre point
         return sfc._get_top_edge_centroid()
-    elif from_point == 'BC':
+    elif from_point == 'BC': # Get the down-dip edge centre point
         lon, lat = geo_utils.get_middle_point(
             sfc.corner_lons[2], sfc.corner_lats[2],
             sfc.corner_lons[3], sfc.corner_lats[3]
@@ -62,9 +61,10 @@ def _get_first_point(rup, from_point):
                  sfc.corner_lats[idx],
                  sfc.corner_depths[idx])
 
-def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
-                           direction='positive', hdist=100, step=5.,
-                           site_props=''):
+
+def get_sites_from_rupture(rup, from_point = 'TC', toward_azimuth = 90,
+                           direction = 'positive', hdist = 100, step = 5.,
+                           site_props = ''):
     """
     :param rup:
     :param from_point:
@@ -98,21 +98,25 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
     keys = set(site_props.keys()) - set(['vs30', 'z1pt0', 'z2pt5'])
 
     if len(pointsn):
-        for lon, lat in reversed(pointsn[0][idx:], pointsn[1])[idx:]:
+        lons = reversed(pointsn[0][idx:])
+        lats = reversed(pointsn[1][idx:])
+        for lon, lat in zip(lons, lats):
             site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
                         z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
             for key in list(keys):
                 setattr(site, key, site_props[key])
             sites.append(site)
 
-    for lon, lat in zip(pointsp[0], pointsp[1]):
-        site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
-                    z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
-        for key in list(keys):
-            setattr(site, key, site_props[key])
-        sites.append(site)
-
+    if len(pointsp):
+        for lon, lat in zip(pointsp[0], pointsp[1]):
+            site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
+                        z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
+            for key in list(keys):
+                setattr(site, key, site_props[key])
+            sites.append(site)
+            
     return SiteCollection(sites)
+
 
 def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
                 ztor=None):
@@ -126,24 +130,43 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
     rup.hypo_depth = dep
     return rup
 
-def att_curves(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,step,
-              imt,ztor,eshm20_region):    
+
+def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30, 
+               Z1, Z25, maxR, step, imt, ztor, eshm20_region, up_or_down_dip = None):    
+    """
+    Compute predicted ground-motion intensities w.r.t considered distance using
+    the given GMPE
+    """
+    # Get trt
     trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
     
-    rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
-                      strike=strike, dip=dip, rake=rake, trt=trt, ztor=ztor)
+    # Get rup
+    rup = get_rupture(0.0, 0.0, depth, WC1994(), mag = mag, aratio = aratio,
+                      strike = strike, dip = dip, rake = rake, trt = trt,
+                      ztor = ztor)
     
-    if 'KothaEtAl2020ESHM20' in str(gmpe):
+    # Set site props
+    if 'KothaEtAl2020ESHM20' in str(orig_gmpe):
         props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
                  'vs30measured': True,'region': eshm20_region}  
     else:
         props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
                  'vs30measured': True}
-                
-    sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
-                                   direction='positive', hdist=maxR, step=step,
-                                   site_props=props)
     
+    # Check if site up-dip or down-dip of site
+    if up_or_down_dip is None or up_or_down_dip == 1:
+        direction = 'positive'
+        from_point = 'TC'
+    elif up_or_down_dip == 0:
+        from_point = 'BC'
+        direction = 'negative'
+    
+    # Get sites
+    sites = get_sites_from_rupture(rup, from_point, toward_azimuth = 90,
+                                   direction = direction, hdist = maxR,
+                                   step = step, site_props = props)
+    
+    # Create context
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
     ctxm = ContextMaker(trt, [gmpe], oqp)
@@ -152,10 +175,15 @@ def att_curves(gmpe,depth,mag,aratio,strike,dip,rake,Vs30,Z1,Z25,maxR,step,
     ctxs = ctxs[0]
     ctxs.occurrence_rate = 0.0
     
+    # Compute ground-motions
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
     distances = ctxs.rrup
     
+    # Ensures can interpolate to max value in dist_list (within RS plotting)
+    distances[len(distances)-1] = maxR
+    
     return mean, std, distances
+
 
 def _get_z1(Vs30,region):
     """
@@ -168,7 +196,9 @@ def _get_z1(Vs30,region):
         Z1 = np.exp(-5.23/2*np.log((Vs30**2+412.39**2)/(1360**2+412.39**2)))
     else:
         Z1 = np.exp(-7.15/4*np.log((Vs30**4+570.94**4)/(1360**4+570.94**4)))
+
     return Z1
+
 
 def _get_z25(Vs30,region):
     """
@@ -183,15 +213,21 @@ def _get_z25(Vs30,region):
     else:
         Z25 = np.exp(7.089 - 1.144 * np.log(Vs30))
         Z25A_default = np.exp(7.089 - 1.144 * np.log(1100))           
+
     return Z25
 
+
 def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
-    # specific assumptions when the param are not available from the sources
+    """
+    Get proxies for strike, dip, depth and aspect ratio if not provided
+    """
+    # Strike
     if strike == -999: 
         strike_s = 0
     else:
         strike_s = strike
 
+    # Dip
     if dip == -999:
         if rake == 0:
             dip_s = 90 # strike slip
@@ -200,92 +236,104 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
     else:
         dip_s = dip
 
+    # Depth
     if depth == -999:
-        if str(valid.gsim(gmpes).DEFINED_FOR_TECTONIC_REGION_TYPE) == 'TRT.SUBDUCTION_INTERFACE':
+        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTERFACE:
             depth_s = 30
-        elif str(valid.gsim(gmpes).DEFINED_FOR_TECTONIC_REGION_TYPE) == 'TRT.SUBDUCTION_INTRASLAB':
+        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTRASLAB:
             depth_s = 50
         else:
             depth_s = 15
     else:
         depth_s = depth
         
+    # a-ratio
     if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
-        if 'Inter' in gmpes:
+        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTERFACE:
             aratio_s = 5
-        elif 'Slab' in gmpes:
+        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTRASLAB:
             aratio_s = 5
         else:
             aratio_s = 2
             
     return strike_s, dip_s, depth_s, aratio_s
 
-def al_atik_sigma_check(gmpe, imtx, task):
-    """
-    Check if sigma is provided for a given GMPE and implement Al-Atik (2015)
-    sigma model if specified. Also provides a warning if GMPE sigma is not
-    provided by the specified GMPE. 
-    :param gmpe:
-        GMPE to check model sigma is provided, and to check if Al-Atik (2015)
-        sigma model should be implemented for
-    :param imtx:
-        Intensity measure to perform sigma checks for with the specified GMPE
-    :param task:
-        Specify whether for computation of residuals ('residual') or use within
-        comparison module ('comparison')
-    """
-    # Construct a generic context (M = 5.5, D = 100km) to check if sigma provided 
-    tmp_rup = get_rupture(20, 40, 15, WC1994(), 5.5, 1.5, 0, 90, 0, 'fake', None)
 
-    if 'KothaEtAl2020ESHM20' in str(gmpe):
-        sp = {'vs30': 800, 'z1pt0': 31.07, 'z2pt5': 0.57, 'backarc': False,
-              'vs30measured': True, 'region': 0}  #Fix region to 0 for check
-    else:
-        sp = {'vs30': 800, 'z1pt0': 31.07, 'z2pt5': 0.57, 'backarc': False,
-              'vs30measured': True}  
-            
-    tmp_site = get_sites_from_rupture(tmp_rup, 'TC', 90, 'positive', 100, 50, sp)
+def mgmpe_check(gmpe):
+    """
+    Check if the GMPE should be modified using ModifiableGMPE
+    :param gmpe:
+        gmpe: GMPE to be modified if required (must be a gsim class)
+    """
+    # Preserve original GMPE prior and create base version of GMPE
+    orig_gmpe = gmpe
+    base_gsim = str(gmpe).splitlines()[0].replace('[','').replace(']','')
     
-    oqp = {'imtls': {k: [] for k in [imtx]}, 'mags': [f'{5.5:.2f}']}
-    if '_toml=' in str(gmpe):
-        tmp_gmm = valid.gsim(str(gmpe).split('_toml=')[1].replace(')',''))
-    else:
-        tmp_gmm = valid.gsim(gmpe)
-    ctxm = ContextMaker('fake', [tmp_gmm], oqp)
-    ctxs = list(ctxm.get_ctx_iter([tmp_rup], tmp_site))
+    # Get the additional params if specified    
+    inputs = pd.Series(str(gmpe).splitlines()[1:], dtype = 'object')
+    add_inputs = {}
+    add_as_int = ['eshm20_region']
+    add_as_str = ['region', 'gmpe_table', 'volc_arc_file']
     
-    # Get model sigma and set up modifiable GMPE
-    tmp_mean, tmp_std, tmp_tau, tmp_phi = ctxm.get_mean_stds(ctxs)
-    tmp_gmpe = str(tmp_gmm).split(']')[0].replace('[','')
-    kwargs = {'gmpe': {tmp_gmpe: {'sigma_model_alatik2015': {}}},
-              'sigma_model_alatik2015': {}}
+    if len(inputs) > 0: # If greater than 0 must add required gsim inputs 
+        idx_to_drop = []
+        for idx, par in enumerate(inputs):
+            # Drop mgmpe params from the other gsim inputs
+            if 'al_atik_2015_sigma' in str(par) or 'SiteTerm' in str(par):
+                idx_to_drop.append(idx)
+        inputs = inputs.drop(np.array(idx_to_drop))
+        for idx, par in enumerate(inputs):
+            key = str(par).split('=')[0].strip()
+            if key in add_as_str:
+                val = par.split('=')[1].replace('"','').strip()
+            elif key in add_as_int:
+                val = int(par.split('=')[1])
+            else:
+                val = float(str(par).split('=')[1])
+            add_inputs[key] = val
     
-    # Messages for warnings/ValueError
-    msg1 = 'A sigma model is not provided by default for %s GMPE.' %tmp_gmpe
-    msg2 = 'For residual analysis a sigma model must be specified for %s GMPE.'%tmp_gmpe
+    ### Sigma model implementation 
+    if 'al_atik_2015_sigma' in str(orig_gmpe):
+        params = {"tau_model": "global", "ergodic": False}
+        gmpe = mgmpe.ModifiableGMPE(gmpe={base_gsim: add_inputs},
+                             sigma_model_alatik2015=params)
     
-    # Raise warning/ValueError/implement Al-Atik 2015 sigma if specified based
-    # on sigma_model_flag
-    if tmp_std.all() == 0:
-        sigma_model_flag = True
-        if task == 'residual' and 'toml=' in str(gmpe) or task == 'comparison':
-            if 'al_atik_2015_sigma' in str(gmpe): # No sigma so add
-                gmpe = mgmpe.ModifiableGMPE(**kwargs)
-            elif task == 'residual': # A sigma model is required for residuals
-                raise ValueError(msg2)
-            elif task == 'comparison': # No sigma and not specified in toml
-                warnings.warn(msg1, stacklevel = 100)
-                gmpe = valid.gsim(gmpe.split('(')[0])
-        elif task == 'residual': # Task = 'residual' but no toml used so sigma model not specifiable
-            raise ValueError(msg2)
-    else:
-        sigma_model_flag = False
-        if 'al_atik_2015_sigma' in str(gmpe): #GMPE has sigma but override
-            gmpe = mgmpe.ModifiableGMPE(**kwargs)
-        elif task == 'comparison': # GMPE has sigma so retain (comparison use)
-            gmpe = valid.gsim(gmpe)
-        else: # GMPE has sigma so retain (residuals use)
-            gmpe = valid.gsim(gmpe.split('(')[0])
-    return gmpe, sigma_model_flag
+    ### Site term implementations
+    msg_sigma_and_site_term = 'An alternative sigma model and an alternative \
+        site term cannot be specified within a single GMPE implementation.'
+    msg_multiple_site_terms = 'Two alternative site terms have been specified \
+        within the toml for a single GMPE implementation'
+    
+    # Check only single site term specified
+    if 'CY14SiteTerm' in str(orig_gmpe) and 'NRCan15SiteTerm' in str(orig_gmpe):
+        raise ValueError(msg_multiple_site_terms)
+    
+    # Check if site term an dsigma model specified
+    if 'CY14SiteTerm' in str(orig_gmpe) and 'al_atik_2015_sigma' in str(
+            orig_gmpe) or 'CY14SiteTerm' in str(orig_gmpe) and \
+        'al_atik_2015_sigma' in str(orig_gmpe):
+        raise ValueError(msg_sigma_and_site_term)
+        
+    # CY14SiteTerm
+    if 'CY14SiteTerm' in str(orig_gmpe):
+        params = {}
+        gmpe = mgmpe.ModifiableGMPE(gmpe={base_gsim: add_inputs},
+                                    cy14_site_term=params)
+    
+    # NRCan15SiteTerm (kind = base)
+    if 'NRCan15SiteTerm' in str(orig_gmpe) and 'NRCan15SiteTermLinear' not \
+        in str(orig_gmpe):
+            params = {'kind': 'base'}
+            gmpe = mgmpe.ModifiableGMPE(gmpe={base_gsim: add_inputs},
+                                        nrcan15_site_term=params)
+    # NRCan15SiteTerm (kind = linear)
+    if 'NRCan15SiteTermLinear' in str(orig_gmpe):
+            params = {'kind': 'linear'}
+            gmpe = mgmpe.ModifiableGMPE(gmpe={base_gsim: add_inputs},
+                                        nrcan15_site_term=params)
+
+    return gmpe
+
+

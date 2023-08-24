@@ -52,8 +52,9 @@ class Configurations(object):
         self.dist_list = config_file['general']['dist_list']
         self.Nstd = config_file['general']['Nstd']
         self.max_period = config_file['general']['max_period']
-        self.custom_color_flag = config_file['general']['custom_colors_flag']
-        self.custom_color_list = config_file['general']['custom_colors_list']
+        
+        self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
+        self.custom_color_list = config_file['custom_colors']['custom_colors_list']
         
         self.Vs30 = config_file['site_properties']['vs30']
         self.Z1 = config_file['site_properties']['Z1']
@@ -136,23 +137,38 @@ class Configurations(object):
             raise ValueError("Number of labels must match number of GMPEs.")
 
         # If weight is assigned to a GMPE get it + check sum of weights for 
-        # GMPEs with weights allocated = 1
-        get_weights = {}
+        # GMPEs with weights allocated = 1 (up to 2 GMC logic trees max)
+        get_weights_gmc1 = {}
+        get_weights_gmc2 = {}
         for gmpe in self.gmpes_list:
             if 'lt_weight' in gmpe:
                 split_gmpe_str = str(gmpe).splitlines()
                 for idx, component in enumerate(split_gmpe_str):
-                    if 'lt_weight' in component:
-                        get_weights[gmpe] = float(split_gmpe_str[idx].split('=')[1])
+                    if 'lt_weight_gmc1' in component:
+                        get_weights_gmc1[gmpe] = float(split_gmpe_str[
+                            idx].split('=')[1])
+                    if 'lt_weight_gmc2' in component:
+                        get_weights_gmc2[gmpe] = float(split_gmpe_str[
+                            idx].split('=')[1])
             else:
                 pass
-        if get_weights != {}:
-            check_weights = np.array(pd.Series(get_weights))
-            if np.sum(check_weights, axis = 0) != 1.0:
-                raise ValueError("For GMPEs to which logic tree weights are assigned the total of these weights must sum to 1.0")
-            self.lt_weights = get_weights
+            
+        # Check weights for each logic tree (if present) equal 1.0
+        if get_weights_gmc1 != {}:
+            check_weights_gmc1 = np.array(pd.Series(get_weights_gmc1))
+            if np.sum(check_weights_gmc1, axis = 0) != 1.0:
+                raise ValueError("GMPE logic tree weights must total 1.0")
+            self.lt_weights_gmc1 = get_weights_gmc1
         else:
-            self.lt_weights = None
+            self.lt_weights_gmc1 = None
+        
+        if get_weights_gmc2 != {}:
+            check_weights_gmc2 = np.array(pd.Series(get_weights_gmc2))
+            if np.sum(check_weights_gmc2, axis = 0) != 1.0:
+                raise ValueError("GMPE logic tree weights must total 1.0")
+            self.lt_weights_gmc2 = get_weights_gmc2
+        else:
+            self.lt_weights_gmc2 = None
 
 def plot_trellis(filename, output_directory):
     """
@@ -161,7 +177,6 @@ def plot_trellis(filename, output_directory):
         toml file providing configuration for use within comparative
         plotting methods.
     """ 
-    
     # Generate config object
     config = Configurations(filename)
     
@@ -171,19 +186,27 @@ def plot_trellis(filename, output_directory):
                       config.maxR, config.gmpes_list, config.aratio,
                       config.Nstd, output_directory, config.custom_color_flag,
                       config.custom_color_list, config.eshm20_region,
-                      config.lt_weights) 
+                      config.lt_weights_gmc1, config.lt_weights_gmc2) 
                 
-def plot_spectra(filename, output_directory):
+def plot_spectra(filename, output_directory, obs_spectra = None):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
     configuration
     :param  filename:
         toml file providing configuration for use within comparative
         plotting methods.
-    """ 
-    
+    :param obs_spectra:
+        csv of an observed spectra to plot and associated event information.
+        An example file can be found in openquake.smt.tests.file_samples.
+    """
     # Generate config object
     config = Configurations(filename)
+    
+    # Get observed spectra information if obs_spectra
+    if obs_spectra is not None:
+        obs_spectra = pd.read_csv(obs_spectra)
+    else:
+        obs_spectra = None
     
     plot_spectra_util(config.rake, config.strike, config.dip,
                       config.trellis_depth, config.Z1, config.Z25, config.Vs30,
@@ -191,7 +214,7 @@ def plot_spectra(filename, output_directory):
                       config.dist_list, config.gmpes_list, config.aratio,
                       config.Nstd, output_directory, config.custom_color_flag,
                       config.custom_color_list, config.eshm20_region,
-                      config.lt_weights) 
+                      config.lt_weights_gmc1, config.lt_weights_gmc2, obs_spectra) 
 
 def plot_cluster(filename, output_directory):
     """
