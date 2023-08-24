@@ -42,7 +42,7 @@ def read_hazard_curve_files(path_in, prefix=''):
     :param prefix:
         Prefix of the files in `path_in`
     """
-    data_path = os.path.join(path_in, '{:s}*'.format(prefix))
+    data_path = os.path.join(path_in, '{:s}*json'.format(prefix))
 
     lons = []
     lats = []
