@@ -25,7 +25,7 @@ Z25 = -999
 
 [source_properties]
 trt = 'ASCR'
-ztor = 1.5
+ztor = 1.5 # Set to string of 'None' to NOT consider hypo depth constraint
 strike = -999
 dip = -999
 rake = 60

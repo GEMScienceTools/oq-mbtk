@@ -63,6 +63,8 @@ class Configurations(object):
         
         self.trt = config_file['source_properties']['trt']
         self.ztor = config_file['source_properties']['ztor']
+        if self.ztor == 'None':
+            self.ztor = None
         self.strike = config_file['source_properties']['strike']
         self.dip = config_file['source_properties']['dip']
         self.rake = config_file['source_properties']['rake']

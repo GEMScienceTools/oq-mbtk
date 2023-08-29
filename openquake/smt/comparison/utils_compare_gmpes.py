@@ -401,13 +401,13 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
     # If obs_spectra get info from csv
     if obs_spectra is not None:
         print('Plotting of an observed spectra has been specified')
+        
         # Get values from obs_spectra dataframe...
         eq_id = str(obs_spectra['EQ ID'].iloc[0])
         mw = float(obs_spectra['Mw'].iloc[0])
         dep = float(obs_spectra['Depth (km)'].iloc[0])
         rrup = float(obs_spectra['Rrup (km)'].iloc[0])
         st_id = str(obs_spectra['Station Code'].iloc[0])
-        # Overwrite toml params to get single scenario specific params...
         mag_list = np.array([mw])
         dist_list = np.array([rrup])
         depth = np.array([dep])
@@ -415,6 +415,9 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
         dip = float(obs_spectra['Dip'].iloc[0])
         rake = float(obs_spectra['Rake'].iloc[0])
         vs30 = float(obs_spectra['Vs30'].iloc[0])
+        ztor = str(obs_spectra['ztor'].iloc[0])
+        if ztor == 'None':
+            ztor = None
         trt = str(obs_spectra['trt'].iloc[0])
         up_or_down_dip = float(
             obs_spectra['Site up-dip of rupture (1 = True, 0 = False)'].iloc[0])
