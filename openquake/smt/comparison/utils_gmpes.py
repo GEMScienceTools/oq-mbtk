@@ -156,7 +156,7 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     if trt == 'Induced_Geothermal':
         rup_trt = TRT.GEOTHERMAL
     if trt == -999:
-        rup_trt = gmpe.tectonic_region_type
+        rup_trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
     if rup_trt is None:
      raise ValueError('Specify a TRT string within the toml file: ASCR, \
                        InSlab, Interface, Stable, Upper_Mantle, Volcanic, \
