@@ -454,11 +454,11 @@ Comparing GMPEs
         trellis_depths = [20, 20, 20] # depth per magnitude for trellis and response spectra
         
         # Specify magnitude array for Sammons, Euclidean dist and clustering
-        [mag_values_non_trellis_functions]
+        [mag_values_non_trellis_or_spectra_functions]
         mmin = 5
         mmax = 7
         spacing = 0.1
-        non_trellis_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+        non_trellis_or_spectra_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
         
         # Specify label for gmpes
         [gmpe_labels]

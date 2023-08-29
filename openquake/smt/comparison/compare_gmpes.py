@@ -77,7 +77,7 @@ class Configurations(object):
                     self.trellis_mag_list[mag])
         
         # One set of magnitudes for use in other functions 
-        mag_params = config_file['mag_values_non_trellis_functions']
+        mag_params = config_file['mag_values_non_trellis_or_spectra_functions']
         mag_array = np.arange(mag_params['mmin'],mag_params['mmax'],
                               mag_params['spacing'])
         self.mag_list =  mag_array
@@ -90,7 +90,8 @@ class Configurations(object):
             
         # Create depth array for non trellis functions 
         non_trellis_depths = pd.DataFrame(config_file[
-            'mag_values_non_trellis_functions']['non_trellis_depths'],
+            'mag_values_non_trellis_or_spectra_functions'][
+                'non_trellis_or_spectra_depths'],
             columns=['mag','depth'])
         
         # Round each mag interval to closest integer for depth assignment
