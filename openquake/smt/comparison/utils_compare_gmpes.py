@@ -100,7 +100,7 @@ def plot_trellis_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
                 
                 # Get gmpe params
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
-                    gmm, strike, dip, depth[l], aratio, rake) 
+                    strike, dip, depth[l], aratio, rake, trt) 
                 
                 # Get attenuation curves (assume site up dip of rupture)
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l],m,
@@ -497,9 +497,10 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
                 gmm_orig = gsim
                 gmm = mgmpe_check(gsim)
 
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(gmm, strike,
-                                                                  dip, depth[l],
-                                                                  aratio, rake)
+                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(strike, dip,
+                                                                  depth[l],
+                                                                  aratio, rake,
+                                                                  trt)
                 
                 rs_50p, rs_plus_sigma, rs_minus_sigma, sigma = [], [], [], []
                 
@@ -943,7 +944,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                 gmm = mgmpe_check(gsim)
 
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
-                    gmm, strike, dip, depth[l], aratio, rake) 
+                    strike, dip, depth[l], aratio, rake, trt) 
 
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l], m, 
                                                   aratio_g, strike_g, dip_g, 

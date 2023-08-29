@@ -239,7 +239,7 @@ def _get_z25(Vs30,region):
     return Z25
 
 
-def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
+def _param_gmpes(strike, dip, depth, aratio, rake, trt):
     """
     Get proxies for strike, dip, depth and aspect ratio if not provided
     """
@@ -260,9 +260,9 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
 
     # Depth
     if depth == -999:
-        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTERFACE:
+        if trt == 'Interface':
             depth_s = 30
-        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTRASLAB:
+        if trt == 'InSlab':
             depth_s = 50
         else:
             depth_s = 15
@@ -273,9 +273,7 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
     if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
-        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTERFACE:
-            aratio_s = 5
-        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == TRT.SUBDUCTION_INTRASLAB:
+        if trt == 'InSlab' or trt == 'Interface':
             aratio_s = 5
         else:
             aratio_s = 2
