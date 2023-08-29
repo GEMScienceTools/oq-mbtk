@@ -191,8 +191,8 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     # Create context
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
-    ctxm = ContextMaker(trt, [gmpe], oqp)
-
+    ctxm = ContextMaker(rup_trt, [gmpe], oqp)
+    
     ctxs = list(ctxm.get_ctx_iter([rup], sites)) 
     ctxs = ctxs[0]
     ctxs.occurrence_rate = 0.0
