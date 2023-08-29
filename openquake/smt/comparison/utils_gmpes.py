@@ -132,17 +132,39 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
 
 
 def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30, 
-               Z1, Z25, maxR, step, imt, ztor, eshm20_region, up_or_down_dip = None):    
+               Z1, Z25, maxR, step, imt, ztor, eshm20_region, trt,
+               up_or_down_dip = None):    
     """
     Compute predicted ground-motion intensities w.r.t considered distance using
     the given GMPE
     """
-    # Get trt
-    trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
-    
+    rup_trt = None
+    if trt == 'ASCR':
+        rup_trt = TRT.ACTIVE_SHALLOW_CRUST 
+    if trt == 'InSlab':
+        rup_trt = TRT.SUBDUCTION_INTRASLAB
+    if trt == 'Interface':
+        rup_trt = TRT.SUBDUCTION_INTERFACE
+    if trt == 'Stable':
+        rup_trt = TRT.STABLE_CONTINENTAL
+    if trt == 'Upper_Mantle':
+        rup_trt = TRT.UPPER_MANTLE
+    if trt == 'Volcanic':
+        rup_trt = TRT.VOLCANIC
+    if trt == 'Induced':
+        rup_trt = TRT.INDUCED
+    if trt == 'Induced_Geothermal':
+        rup_trt = TRT.GEOTHERMAL
+    if trt == -999:
+        rup_trt = gmpe.tectonic_region_type
+    if rup_trt is None:
+     raise ValueError('Specify a TRT string within the toml file: ASCR, \
+                       InSlab, Interface, Stable, Upper_Mantle, Volcanic, \
+                       Induced, Induced_Geothermal')
+                        
     # Get rup
     rup = get_rupture(0.0, 0.0, depth, WC1994(), mag = mag, aratio = aratio,
-                      strike = strike, dip = dip, rake = rake, trt = trt,
+                      strike = strike, dip = dip, rake = rake, trt = rup_trt,
                       ztor = ztor)
     
     # Set site props
@@ -170,7 +192,7 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
     ctxm = ContextMaker(trt, [gmpe], oqp)
-    
+
     ctxs = list(ctxm.get_ctx_iter([rup], sites)) 
     ctxs = ctxs[0]
     ctxs.occurrence_rate = 0.0

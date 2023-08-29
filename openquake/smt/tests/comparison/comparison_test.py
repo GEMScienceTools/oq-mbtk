@@ -41,6 +41,8 @@ TARGET_MAG = [5. , 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6. ,
 TARGET_IMTS = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
 TARGET_GMPES = [valid.gsim('ChiouYoungs2014'),valid.gsim('CampbellBozorgnia2014'), 
                 valid.gsim('BooreEtAl2014'),valid.gsim('KothaEtAl2020')]
+TARGET_TRT = 'ASCR'
+TARGET_ZTOR = 1.5
 
 class ComparisonTestCase(unittest.TestCase):
     """
@@ -66,6 +68,12 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
+        
+        # Check for target TRT
+        self.assertEqual(config.trt,TARGET_TRT)
+        
+        # Check for target ZTOR
+        self.assertEqual(config.ztor, TARGET_ZTOR)
         
         # Check for target Vs30
         self.assertEqual(config.Vs30,TARGET_VS30)
@@ -107,15 +115,15 @@ class ComparisonTestCase(unittest.TestCase):
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
         
-        mtxs_medians = compute_matrix_gmpes(config.imt_list, config.mag_list,
-                                                config.gmpes_list, config.rake,
-                                                config.strike, config.dip, 
-                                                config.depth_for_non_trellis_functions,
-                                                config.Z1, config.Z25,
-                                                config.Vs30, config.region,
-                                                config.maxR, config.aratio,
-                                                config.eshm20_region,
-                                                mtxs_type = 'median')
+        mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor, config.imt_list,
+                                            config.mag_list, config.gmpes_list,
+                                            config.rake, config.strike, config.dip, 
+                                            config.depth_for_non_trellis_functions,
+                                            config.Z1, config.Z25,
+                                            config.Vs30, config.region,
+                                            config.maxR, config.aratio,
+                                            config.eshm20_region,
+                                            mtxs_type = 'median')
         
         # Check correct number of imts
         self.assertEqual(len(mtxs_medians),len(TARGET_IMTS))
@@ -133,15 +141,15 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
            
             
-        mtxs_medians = compute_matrix_gmpes(config.imt_list, config.mag_list,
-                                                config.gmpes_list, config.rake,
-                                                config.strike, config.dip, 
-                                                config.depth_for_non_trellis_functions,
-                                                config.Z1, config.Z25,
-                                                config.Vs30, config.region,
-                                                config.maxR, config.aratio,
-                                                config.eshm20_region,
-                                                mtxs_type = 'median')
+        mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor, config.imt_list,
+                                            config.mag_list, config.gmpes_list,
+                                            config.rake, config.strike, config.dip, 
+                                            config.depth_for_non_trellis_functions,
+                                            config.Z1, config.Z25,
+                                            config.Vs30, config.region,
+                                            config.maxR, config.aratio,
+                                            config.eshm20_region,
+                                            mtxs_type = 'median')
                 
         # Sammons checks
         coo = plot_sammons_util(config.imt_list, config.gmpe_labels,
@@ -181,15 +189,16 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
         
         # Median clustering checks
-        mtxs_medians = compute_matrix_gmpes(config.imt_list, config.mag_list,
-                                                config.gmpes_list, config.rake,
-                                                config.strike, config.dip, 
-                                                config.depth_for_non_trellis_functions,
-                                                config.Z1, config.Z25,
-                                                config.Vs30, config.region,
-                                                config.maxR, config.aratio,
-                                                config.eshm20_region,
-                                                mtxs_type = 'median')
+        mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor,
+                                            config.imt_list, config.mag_list,
+                                            config.gmpes_list, config.rake,
+                                            config.strike, config.dip, 
+                                            config.depth_for_non_trellis_functions,
+                                            config.Z1, config.Z25,
+                                            config.Vs30, config.region,
+                                            config.maxR, config.aratio,
+                                            config.eshm20_region,
+                                            mtxs_type = 'median')
     
         Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
                                      mtxs_medians, os.path.join(
@@ -214,15 +223,16 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
         
         # Median clustering checks
-        mtxs_medians = compute_matrix_gmpes(config.imt_list, config.mag_list,
-                                                config.gmpes_list, config.rake,
-                                                config.strike, config.dip, 
-                                                config.depth_for_non_trellis_functions,
-                                                config.Z1, config.Z25,
-                                                config.Vs30, config.region,
-                                                config.maxR, config.aratio,
-                                                config.eshm20_region,
-                                                mtxs_type = '84th_perc')
+        mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor,
+                                            config.imt_list, config.mag_list,
+                                            config.gmpes_list, config.rake,
+                                            config.strike, config.dip, 
+                                            config.depth_for_non_trellis_functions,
+                                            config.Z1, config.Z25,
+                                            config.Vs30, config.region,
+                                            config.maxR, config.aratio,
+                                            config.eshm20_region,
+                                            mtxs_type = '84th_perc')
     
         Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
                                      mtxs_medians, os.path.join(
@@ -247,17 +257,18 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
         
         # Trellis plots
-        plot_trellis_util(config.rake, config.strike, config.dip,
-                     config.trellis_depth, config.Z1, config.Z25, config.Vs30,
-                     config.region, config.imt_list, config.trellis_mag_list,
-                     config.maxR, config.gmpes_list, config.aratio,
-                     config.Nstd, self.output_directory, config.custom_color_flag,
-                     config.custom_color_list, config.eshm20_region,
-                     config.lt_weights_gmc1, config.lt_weights_gmc2)
+        plot_trellis_util(config.trt, config.ztor, config.rake, config.strike,
+                          config.dip, config.trellis_depth, config.Z1, config.Z25,
+                          config.Vs30, config.region, config.imt_list,
+                          config.trellis_mag_list, config.maxR, config.gmpes_list,
+                          config.aratio, config.Nstd, self.output_directory,
+                          config.custom_color_flag, config.custom_color_list,
+                          config.eshm20_region, config.lt_weights_gmc1,
+                          config.lt_weights_gmc2)
         
         # Spectra plots 
-        plot_spectra_util(config.rake, config.strike, config.dip,
-                          config.trellis_depth, config.Z1, config.Z25,
+        plot_spectra_util(config.trt, config.ztor, config.rake, config.strike,
+                          config.dip, config.trellis_depth, config.Z1, config.Z25,
                           config.Vs30, config.region, config.max_period,
                           config.trellis_mag_list, config.dist_list,
                           config.gmpes_list, config.aratio, config.Nstd,

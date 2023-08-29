@@ -445,6 +445,8 @@ Comparing GMPEs
         
         # Characterise earthquake for the region of interest
         [source_properties]
+        trt = 'ASCR' # Specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal
+        ztor = 1.5
         strike = -999
         dip =  60 # (Albania has predominantly reverse faulting)
         rake = 90 # (+ 90 for compression, -90 for extension)
@@ -529,7 +531,7 @@ Comparing GMPEs
    
 4. Spectra Plots
 
-   We can also plot response spectra and GMPE sigma spectra (sigma versus spectral period). Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples): 
+   We can also plot response spectra and GMPE sigma spectra (sigma versus spectral period). Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples, and the functions within openquake.smt.comparison for a more details): 
 
     .. code-block:: ini
     

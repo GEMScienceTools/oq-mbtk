@@ -36,7 +36,7 @@ from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1,\
     _get_z25, _param_gmpes, mgmpe_check
 
 
-def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
+def plot_trellis_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd,
                  output_directory, custom_color_flag, custom_color_list,
                  eshm20_region, lt_weights_gmc1 = None, lt_weights_gmc2 = None):
@@ -102,12 +102,12 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     gmm, strike, dip, depth[l], aratio, rake) 
                 
-                # Get attenuation curves
+                # Get attenuation curves (assume site up dip of rupture)
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l],m,
                                                   aratio_g, strike_g, dip_g,
                                                   rake,Vs30, Z1, Z25, maxR, 
-                                                  step, i, 1, eshm20_region,
-                                                  up_or_down_dip = None)
+                                                  step, i, ztor, eshm20_region,
+                                                  trt, up_or_down_dip = None)
                 
                 # Get mean and sigma
                 mean = mean[0][0]
@@ -186,7 +186,7 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     pyplot.ylabel(str(i) + ' (g)', fontsize='16')
 
                 pyplot.loglog()
-                pyplot.ylim(0.001, 10)
+                pyplot.ylim(0.001, 100)
                 pyplot.xlim(distances[0], distances[len(distances)-2])
                 
             pyplot.grid(axis = 'both', which = 'both', alpha = 0.5)
@@ -278,8 +278,8 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     lt_mean_store_gmc2[i, m] = lt_mean_gmc2                    
                     
     # Plot config
-    pyplot.legend(loc = "center left", bbox_to_anchor = (1.1, 1.05),
-                  fontsize = '16')
+    pyplot.legend(loc = "center left", bbox_to_anchor = (0.47, 0.90),
+                  fontsize = '7')
     pyplot.savefig(os.path.join(output_directory, 'TrellisPlots.png'),
                    bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
     pyplot.show()
@@ -383,7 +383,7 @@ def _get_period_values_for_spectra_plots(max_period):
     return period
     
 
-def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
+def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
                       output_directory, custom_color_flag, custom_color_list,
                       eshm20_region, lt_weights_gmc1 = None,
@@ -415,6 +415,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         dip = float(obs_spectra['Dip'].iloc[0])
         rake = float(obs_spectra['Rake'].iloc[0])
         vs30 = float(obs_spectra['Vs30'].iloc[0])
+        trt = str(obs_spectra['trt'].iloc[0])
         up_or_down_dip = float(
             obs_spectra['Site up-dip of rupture (1 = True, 0 = False)'].iloc[0])
     else:
@@ -515,8 +516,8 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     mu, std, distances = att_curves(gmm, gmm_orig, depth[l], m,
                                                     aratio_g, strike_g, dip_g, 
                                                     rake, Vs30, Z1, Z25, dist,
-                                                    0.1, imt, 1, eshm20_region,
-                                                    up_or_down_dip) 
+                                                    0.1, imt, ztor, eshm20_region,
+                                                    trt, up_or_down_dip) 
                     mu = mu[0][0]
                     f = interpolate.interp1d(distances, mu)
                     rs_50p_dist = np.exp(f(i))
@@ -906,7 +907,7 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     spectra_value_df.to_csv(os.path.join(output_directory, 'spectra_values.csv'))
 
 
-def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
+def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                          dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio,
                          eshm20_region,mtxs_type):
     """
@@ -947,8 +948,8 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l], m, 
                                                   aratio_g, strike_g, dip_g, 
                                                   rake, Vs30, Z1, Z25, maxR, 
-                                                  step, i, 1, eshm20_region,
-                                                  up_or_down_dip = None) 
+                                                  step, i, ztor, eshm20_region,
+                                                  trt, up_or_down_dip = None) 
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians, (np.exp(mean)))
