@@ -446,7 +446,7 @@ Comparing GMPEs
         # Characterise earthquake for the region of interest
         [source_properties]
         trt = 'ASCR' # Specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal
-        ztor = 1.5 # Set to string of 'None' to NOT consider hypo depth constraint
+        ztor = 1.5 # Set to string of 'None' to NOT consider this hypo depth constraint
         strike = -999
         dip =  60 # (Albania has predominantly reverse faulting)
         rake = 90 # (+ 90 for compression, -90 for extension)
