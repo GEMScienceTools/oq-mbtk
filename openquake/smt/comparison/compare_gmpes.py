@@ -60,6 +60,8 @@ class Configurations(object):
         self.Vs30 = config_file['site_properties']['vs30']
         self.Z1 = config_file['site_properties']['Z1']
         self.Z25 = config_file['site_properties']['Z25']
+        up_or_down_dip = config_file['site_properties']['up_or_down_dip']
+        self.up_or_down_dip = float(up_or_down_dip)
         
         self.trt = config_file['source_properties']['trt']
         self.ztor = config_file['source_properties']['ztor']
@@ -193,7 +195,8 @@ def plot_trellis(filename, output_directory):
                       config.maxR, config.gmpes_list, config.aratio,
                       config.Nstd, output_directory, config.custom_color_flag,
                       config.custom_color_list, config.eshm20_region,
-                      config.lt_weights_gmc1, config.lt_weights_gmc2) 
+                      config.lt_weights_gmc1, config.lt_weights_gmc2,
+                      config.up_or_down_dip) 
 
                 
 def plot_spectra(filename, output_directory, obs_spectra = None):
@@ -222,7 +225,8 @@ def plot_spectra(filename, output_directory, obs_spectra = None):
                       config.dist_list, config.gmpes_list, config.aratio,
                       config.Nstd, output_directory, config.custom_color_flag,
                       config.custom_color_list, config.eshm20_region,
-                      config.lt_weights_gmc1, config.lt_weights_gmc2, obs_spectra) 
+                      config.lt_weights_gmc1, config.lt_weights_gmc2, obs_spectra,
+                      config.up_or_down_dip) 
 
 
 def plot_cluster(filename, output_directory):
@@ -246,7 +250,8 @@ def plot_cluster(filename, output_directory):
                                         config.depth_for_non_trellis_functions,
                                         config.Z1, config.Z25, config.Vs30,
                                         config.region, config.maxR, config.aratio,
-                                        config.eshm20_region,mtxs_type='median')
+                                        config.eshm20_region,mtxs_type='median',
+                                        up_or_down = config.up_or_down_dip)
 
     mtxs_84th_perc = compute_matrix_gmpes(config.trt, config.ztor, config.imt_list,
                                           config.mag_list, config.gmpes_list,
@@ -254,7 +259,8 @@ def plot_cluster(filename, output_directory):
                                           config.depth_for_non_trellis_functions,
                                           config.Z1, config.Z25, config.Vs30,
                                           config.region, config.maxR, config.aratio,
-                                          config.eshm20_region,mtxs_type='84th_perc')
+                                          config.eshm20_region,mtxs_type='84th_perc',
+                                          up_or_down = config.up_or_down_dip)
     
     mtxs_16th_perc = compute_matrix_gmpes(config.trt, config.ztor, config.imt_list,
                                           config.mag_list, config.gmpes_list,
@@ -262,7 +268,8 @@ def plot_cluster(filename, output_directory):
                                           config.depth_for_non_trellis_functions,
                                           config.Z1, config.Z25, config.Vs30,
                                           config.region, config.maxR, config.aratio,
-                                          config.eshm20_region,mtxs_type='16th_perc')
+                                          config.eshm20_region,mtxs_type='16th_perc',
+                                          up_or_down = config.up_or_down_dip)
     
     # Cluster by median
     plot_cluster_util(config.imt_list, config.gmpe_labels, mtxs_medians,
@@ -300,7 +307,8 @@ def plot_sammons(filename, output_directory):
                                         config.depth_for_non_trellis_functions,
                                         config.Z1, config.Z25, config.Vs30, 
                                         config.region, config.maxR, config.aratio,
-                                        config.eshm20_region,mtxs_type='median')
+                                        config.eshm20_region,mtxs_type='median',
+                                        up_or_down = config.up_or_down_dip)
     
     mtxs_84th_perc = compute_matrix_gmpes(config.trt, config.ztor, config.imt_list,
                                           config.mag_list, config.gmpes_list,
@@ -308,7 +316,8 @@ def plot_sammons(filename, output_directory):
                                           config.depth_for_non_trellis_functions,
                                           config.Z1, config.Z25, config.Vs30,
                                           config.region, config.maxR, config.aratio,
-                                          config.eshm20_region,mtxs_type='84th_perc')
+                                          config.eshm20_region,mtxs_type='84th_perc',
+                                          up_or_down = config.up_or_down_dip)
     
     mtxs_16th_perc = compute_matrix_gmpes(config.trt, config.ztor, config.imt_list,
                                           config.mag_list, config.gmpes_list,
@@ -316,7 +325,8 @@ def plot_sammons(filename, output_directory):
                                           config.depth_for_non_trellis_functions,
                                           config.Z1, config.Z25, config.Vs30,
                                           config.region, config.maxR, config.aratio,
-                                          config.eshm20_region,mtxs_type='16th_perc')
+                                          config.eshm20_region,mtxs_type='16th_perc',
+                                          up_or_down = config.up_or_down_dip)
     
     plot_sammons_util(config.imt_list, config.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,'Median_SammonMaps.png'),
@@ -354,7 +364,8 @@ def plot_euclidean(filename, output_directory):
                                         config.depth_for_non_trellis_functions,
                                         config.Z1, config.Z25, config.Vs30,
                                         config.region, config.maxR, config.aratio,
-                                        config.eshm20_region,mtxs_type='median')
+                                        config.eshm20_region,mtxs_type='median',
+                                        up_or_down = config.up_or_down_dip)
     
     mtxs_84th_perc = compute_matrix_gmpes(config.trt, config.ztor, config.imt_list,
                                           config.mag_list, config.gmpes_list,
@@ -362,7 +373,8 @@ def plot_euclidean(filename, output_directory):
                                           config.depth_for_non_trellis_functions,
                                           config.Z1, config.Z25, config.Vs30,
                                           config.region, config.maxR, config.aratio,
-                                          config.eshm20_region,mtxs_type='84th_perc')
+                                          config.eshm20_region,mtxs_type='84th_perc',
+                                          up_or_down = config.up_or_down_dip)
     
     mtxs_16th_perc = compute_matrix_gmpes(config.trt, config.ztor, config.imt_list,
                                           config.mag_list, config.gmpes_list,
@@ -370,7 +382,8 @@ def plot_euclidean(filename, output_directory):
                                           config.depth_for_non_trellis_functions,
                                           config.Z1, config.Z25, config.Vs30,
                                           config.region, config.maxR, config.aratio,
-                                          config.eshm20_region,mtxs_type='16th_perc')
+                                          config.eshm20_region,mtxs_type='16th_perc',
+                                          up_or_down = config.up_or_down_dip)
     
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_medians,
                         os.path.join(output_directory,'Median_Euclidean.png'),

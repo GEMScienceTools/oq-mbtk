@@ -123,7 +123,8 @@ class ComparisonTestCase(unittest.TestCase):
                                             config.Vs30, config.region,
                                             config.maxR, config.aratio,
                                             config.eshm20_region,
-                                            mtxs_type = 'median')
+                                            mtxs_type = 'median',
+                                            up_or_down_dip = config.up_or_down_dip)
         
         # Check correct number of imts
         self.assertEqual(len(mtxs_medians),len(TARGET_IMTS))
@@ -149,7 +150,8 @@ class ComparisonTestCase(unittest.TestCase):
                                             config.Vs30, config.region,
                                             config.maxR, config.aratio,
                                             config.eshm20_region,
-                                            mtxs_type = 'median')
+                                            mtxs_type = 'median',
+                                            up_or_down_dip = config.up_or_down_dip)
                 
         # Sammons checks
         coo = plot_sammons_util(config.imt_list, config.gmpe_labels,
@@ -198,7 +200,8 @@ class ComparisonTestCase(unittest.TestCase):
                                             config.Vs30, config.region,
                                             config.maxR, config.aratio,
                                             config.eshm20_region,
-                                            mtxs_type = 'median')
+                                            mtxs_type = 'median',
+                                            up_or_down_dip = config.up_or_down_dip)
     
         Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
                                      mtxs_medians, os.path.join(
@@ -232,7 +235,8 @@ class ComparisonTestCase(unittest.TestCase):
                                             config.Vs30, config.region,
                                             config.maxR, config.aratio,
                                             config.eshm20_region,
-                                            mtxs_type = '84th_perc')
+                                            mtxs_type = '84th_perc',
+                                            up_or_down_dip = config.up_or_down_dip)
     
         Z_matrix = plot_cluster_util(config.imt_list, config.gmpe_labels,
                                      mtxs_medians, os.path.join(
@@ -264,7 +268,7 @@ class ComparisonTestCase(unittest.TestCase):
                           config.aratio, config.Nstd, self.output_directory,
                           config.custom_color_flag, config.custom_color_list,
                           config.eshm20_region, config.lt_weights_gmc1,
-                          config.lt_weights_gmc2)
+                          config.lt_weights_gmc2, up_or_down_dip = config.up_or_down_dip)
         
         # Spectra plots 
         plot_spectra_util(config.trt, config.ztor, config.rake, config.strike,
@@ -275,7 +279,7 @@ class ComparisonTestCase(unittest.TestCase):
                           self.output_directory, config.custom_color_flag,
                           config.custom_color_list, config.eshm20_region,
                           config.lt_weights_gmc1, config.lt_weights_gmc2,
-                          obs_spectra = None) 
+                          obs_spectra = None, up_or_down_dip = config.up_or_down_dip) 
        
         # Specify target files
         target_file_trellis = (os.path.join(self.output_directory,'TrellisPlots.png'))

@@ -133,7 +133,7 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
 
 def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30, 
                Z1, Z25, maxR, step, imt, ztor, eshm20_region, trt,
-               up_or_down_dip = None):    
+               up_or_down_dip):    
     """
     Compute predicted ground-motion intensities w.r.t considered distance using
     the given GMPE
@@ -176,10 +176,10 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
                  'vs30measured': True}
     
     # Check if site up-dip or down-dip of site
-    if up_or_down_dip is None or up_or_down_dip == 1:
+    if up_or_down_dip == float(1):
         direction = 'positive'
         from_point = 'TC'
-    elif up_or_down_dip == 0:
+    elif up_or_down_dip == float(0):
         from_point = 'BC'
         direction = 'negative'
     

@@ -39,7 +39,8 @@ from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1,\
 def plot_trellis_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd,
                  output_directory, custom_color_flag, custom_color_list,
-                 eshm20_region, lt_weights_gmc1 = None, lt_weights_gmc2 = None):
+                 eshm20_region, lt_weights_gmc1 = None, lt_weights_gmc2 = None,
+                 up_or_down_dip = None):
     """
     Generate trellis plots for given run configuration
     """
@@ -102,12 +103,12 @@ def plot_trellis_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     strike, dip, depth[l], aratio, rake, trt) 
                 
-                # Get attenuation curves (assume site up dip of rupture)
+                # Get attenuation curves
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l],m,
                                                   aratio_g, strike_g, dip_g,
                                                   rake,Vs30, Z1, Z25, maxR, 
                                                   step, i, ztor, eshm20_region,
-                                                  trt, up_or_down_dip = None)
+                                                  trt, up_or_down_dip)
                 
                 # Get mean and sigma
                 mean = mean[0][0]
@@ -186,7 +187,7 @@ def plot_trellis_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
                     pyplot.ylabel(str(i) + ' (g)', fontsize='16')
 
                 pyplot.loglog()
-                pyplot.ylim(0.001, 100)
+                pyplot.ylim(0.001, 10)
                 pyplot.xlim(distances[0], distances[len(distances)-2])
                 
             pyplot.grid(axis = 'both', which = 'both', alpha = 0.5)
@@ -278,8 +279,8 @@ def plot_trellis_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
                     lt_mean_store_gmc2[i, m] = lt_mean_gmc2                    
                     
     # Plot config
-    pyplot.legend(loc = "center left", bbox_to_anchor = (0.47, 0.90),
-                  fontsize = '7')
+    pyplot.legend(loc = "center left", bbox_to_anchor = (1.1, 1.05),
+                  fontsize = '16')
     pyplot.savefig(os.path.join(output_directory, 'TrellisPlots.png'),
                    bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
     pyplot.show()
@@ -387,7 +388,8 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
                       output_directory, custom_color_flag, custom_color_list,
                       eshm20_region, lt_weights_gmc1 = None,
-                      lt_weights_gmc2 = None, obs_spectra = None):
+                      lt_weights_gmc2 = None, obs_spectra = None,
+                      up_or_down_dip = None):
     """
     Plot response spectra and sigma w.r.t. spectral period for given run
     configuration. Can also plot an observed spectrum and the corresponding
@@ -421,8 +423,6 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
         trt = str(obs_spectra['trt'].iloc[0])
         up_or_down_dip = float(
             obs_spectra['Site up-dip of rupture (1 = True, 0 = False)'].iloc[0])
-    else:
-        up_or_down_dip = None
         
     # Get the periods to plot
     period = _get_period_values_for_spectra_plots(max_period)
@@ -913,7 +913,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
 
 def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                          dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio,
-                         eshm20_region,mtxs_type):
+                         eshm20_region,mtxs_type, up_or_down_dip):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
     given run configuration for use within Euclidean distance matrix plots,
@@ -953,7 +953,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                                                   aratio_g, strike_g, dip_g, 
                                                   rake, Vs30, Z1, Z25, maxR, 
                                                   step, i, ztor, eshm20_region,
-                                                  trt, up_or_down_dip = None) 
+                                                  trt, up_or_down_dip) 
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians, (np.exp(mean)))

@@ -22,6 +22,7 @@ Nstd = 2 # number of standard deviations to sample sigma for
 vs30 = 800
 Z1 = -999
 Z25 = -999
+up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
 
 [source_properties] # Characterise EQ as finite rupture
 trt = 'ASCR'

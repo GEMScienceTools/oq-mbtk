@@ -442,6 +442,7 @@ Comparing GMPEs
         vs30 = 800
         Z1 = -999
         Z25 = -999
+        up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
         
         # Characterise earthquake for the region of interest as finite rupture
         [source_properties]
