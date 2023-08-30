@@ -23,9 +23,9 @@ vs30 = 800
 Z1 = -999
 Z25 = -999
 
-[source_properties]
+[source_properties] # Characterise EQ as finite rupture
 trt = 'ASCR'
-ztor = 1.5 # Set to string of 'None' to NOT consider
+ztor = 'None' # Set to string of 'None' to NOT consider
 strike = -999
 dip = -999
 rake = 60
