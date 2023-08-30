@@ -16,9 +16,12 @@ nbstripout >= 0.3.0
 notebook >= 5.0.0
 pylint >= 2.1.1
 rtree >= 0.9.4
-netCDF4 < 1.7.0
-xarray==2022.09 
-#
+jupyter-server==2.7.2
+xarray==2023.5.0
+pandas == 1.4.0
+pyzmq == 24
+pyproj <= 3.4.0
+
 # Generic
 openpyxl
 xlrd
