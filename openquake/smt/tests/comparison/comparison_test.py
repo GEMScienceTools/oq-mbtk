@@ -42,7 +42,7 @@ TARGET_IMTS = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
 TARGET_GMPES = [valid.gsim('ChiouYoungs2014'),valid.gsim('CampbellBozorgnia2014'), 
                 valid.gsim('BooreEtAl2014'),valid.gsim('KothaEtAl2020')]
 TARGET_TRT = 'ASCR'
-TARGET_ZTOR = 1.5
+TARGET_ZTOR = None
 
 class ComparisonTestCase(unittest.TestCase):
     """
