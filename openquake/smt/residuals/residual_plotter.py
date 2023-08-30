@@ -318,10 +318,10 @@ class ResidualPlot(ResidualHistogramPlot):
         sigma_type = res_type
         if res_type == 'Total':
             sigma_type = 'Total Res.'
-        elif res_type == 'Inter-Event Res.':
-            sigma_type = 'Within-Event Res.'
-        elif res_type == 'Intra-Event Res.':
+        elif res_type == 'Inter event':
             sigma_type = 'Between-Event Res.'
+        elif res_type == 'Intra event':
+            sigma_type = 'Within-Event Res.'
         
         mean, stddev = res_data["mean"], res_data["stddev"]
         return "%s - %s\n Mean = %7.3f, Std Dev = %7.3f" % (str(
