@@ -73,6 +73,7 @@ setup(
         'prettytable',
         'tqdm',
         'h3',
+        'reportlab',
         # 'GDAL',
     ],
     python_requires='>=3.8',
