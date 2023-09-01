@@ -45,7 +45,7 @@ from openquake.hazardlib.geo.surface import SimpleFaultSurface
 from openquake.hazardlib.mfd.multi_mfd import MultiMFD
 from openquake.hazardlib.pmf import PMF
 
-PLOTTING = False
+PLOTTING = True
 
 
 def get_bounding_box(src):
@@ -208,7 +208,6 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
     ssm_faults = to_python(fname, sourceconv)
 
     # Loading all the point sources in the distributed seismicity model
-    ii = 0
     for fname in glob.glob(path_point_sources):
         coo_pnt_src = []
         pnt_srcs = []
@@ -266,6 +265,7 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
             pnt_ii, sel_pnt_srcs, sel_pnt_coo, rjb = get_data(src, coo_pnt_src,
                                                               pnt_srcs)
 
+            # If we find some point sources around the fault
             if pnt_ii is not None:
 
                 # Find the index of points within the buffer zone
@@ -278,18 +278,22 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
 
                 for isrc in idxs:
 
-                    # explode sources
+                    # Explode sources. i.e. create individual point sources at
+                    # each individual hypocentral depth
                     pnt_srcs_exp = explode(pnt_srcs[isrc])
 
+                    # Check which of the individual point sources are within
+                    # the buffer
+                    cnt = 0
                     for pnt_src_exp in pnt_srcs_exp:
                         _, _, _, rrup = get_data(src, [], pnt_src_exp,
                                                  dist_type='rrup')
 
+                        # Updating mmax for the point source
                         if rrup < dst:
-                            # Updating mmax for the point source
                             pnt_src_exp.mfd.max_mag = threshold_mag
 
-                    # Adding point source to the buffer
+                    # Adding point sources to the buffer
                     buffer_pts.extend(pnt_srcs_exp)
                     bco.append([coo_pnt_src[isrc, 0], coo_pnt_src[isrc, 1]])
 
@@ -321,8 +325,6 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
         fname_out = os.path.join(out_path, tmp)
         write_source_model(fname_out, buffer_pts, 'Distributed seismicity')
         logging.info(f'Created: {fname_out}')
-
-        ii += 1
 
 
 def from_list_ps_to_multipoint(srcs, src_id):

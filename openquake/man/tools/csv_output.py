@@ -35,22 +35,22 @@ def get_disagg_header_info(header, var, fl=False):
     """
     This function gets information about disagg by MDE from the header
     of the output file (bins, weights, etc.).
-    Returns a list of the values 
+    Returns a list of the values
 
-    : param str header: 
+    : param str header:
         header line of disagg output
     : param str var:
-        desired value from header 
+        desired value from header
     : param boolean fl:
         if true, first converts the list values to floats
     """
     # get term from header
-    
+
     first_break = header.index(var)
-    strt = header[first_break+len(var):]
+    strt = header[first_break + len(var):]
     end_first = strt.index(']')
-    
-    if fl==True:
+
+    if fl is True:
         return [float(i) for i in strt[:end_first].split(', ')]
     else:
         return strt[:end_first].split(', ')
@@ -58,20 +58,20 @@ def get_disagg_header_info(header, var, fl=False):
 
 def get_rlzs_mde(header):
     """
-    This function returns dictionary of realizations and weights from 
+    This function returns dictionary of realizations and weights from
     a disaggregation by MDE
 
-    :param str header:      
-        header of file with results for disagg by Mag_Dist_Eps- ... 
+    :param str header:
+        header of file with results for disagg by Mag_Dist_Eps- ...
     """
-        
+
     rlz = get_disagg_header_info(header, 'rlz_ids=[')
     wei = get_disagg_header_info(header, 'weights=[')
-    
+
     each_rlz = {}
-    for w,r in zip(wei,rlz):
-        each_rlz['rlz'+r] = float(w)
-        
+    for w, r in zip(wei, rlz):
+        each_rlz['rlz' + r] = float(w)
+
     return each_rlz
 
 
@@ -79,36 +79,35 @@ def get_mean_mde(fname, poe, imt):
     """
     gets the mean disagg by mde by weighting all realazations using
     information from the header
-    
-    :param str fname:      
-        name of file with results, usually includes Mag_Dist_Eps- ... 
-    :param float poe:        
-        poe to be isolated/plotted, corresponding to investigation 
+
+    :param str fname:
+        name of file with results, usually includes Mag_Dist_Eps- ...
+    :param float poe:
+        poe to be isolated/plotted, corresponding to investigation
         time specified in job
-    :param str imt:        
+    :param str imt:
         imt to be isolated/plotted
     """
 
     # read in the rest of the outputs
-    df = pd.read_csv(fname, skiprows = 1)
+    df = pd.read_csv(fname, skiprows=1)
 
     # take only the rows of interest based on poe, imt
-    df_sub = df.loc[(df['poe']==float(poe)) & (df['imt']==imt)].reset_index()
+    df_sub = (df.loc[(df['poe'] == float(poe)) &
+                     (df['imt'] == imt)].reset_index())
 
     # create dataframe for mean results
-    df_mean = pd.DataFrame(columns=['mag','dist','eps','poe_c'])
+    df_mean = pd.DataFrame(columns=['mag', 'dist', 'eps', 'poe_c'])
 
     if 'mean' not in df:
 
         # get header from disagg output
         with open(fname) as f:
             header = f.readline()
-    
+
         each_rlz = get_rlzs_mde(header)
         rlzkeys = [*each_rlz]
-    
 
-    
         new_poe = []
         for r in rlzkeys:
             poes = numpy.array([float(f) for f in df_sub[r].values])
@@ -120,36 +119,35 @@ def get_mean_mde(fname, poe, imt):
     else:
         df_mean['poe_c'] = df_sub['mean']
 
-    
     for key in ['mag', 'eps', 'dist']:
         df_mean[key] = df_sub[key]
-        
+
     return df_mean
+
 
 def mean_mde_for_gmt(fname, fout, poe, imt, threshold):
     """
     puts mean disagg outputs into csv file format to be plotted by GMT;
     may supersede mde_for_gmt
-    
-    :param str fname:      
-        name of file with results, usually includes Mag_Dist_Eps- ... 
-    :param float poe:        
-        poe to be isolated/plotted, corresponding to investigation 
+
+    :param str fname:
+        name of file with results, usually includes Mag_Dist_Eps- ...
+    :param float poe:
+        poe to be isolated/plotted, corresponding to investigation
         time specified in job
-    :param str imt:        
+    :param str imt:
         imt to be isolated/plotted
-    :param str fout:       
+    :param str fout:
         root of output filename
-    :param float threshold:  
+    :param float threshold:
         contribution included in output if above this value
     """
-    
+
     df_mean = get_mean_mde(fname, poe, imt)
-    
-    fou = open(fout,'w')
+
+    fou = open(fout, 'w')
 
     base_dic = {}
-    #import pdb; pdb.set_trace()
     for ind in list(df_mean.index):
         line = df_mean.loc[ind]
 
@@ -165,12 +163,12 @@ def mean_mde_for_gmt(fname, fout, poe, imt, threshold):
         #
         # Formatting the output
         fmt = '{0:7.5e} {1:7.5e} {2:7.5e} {3:7.5e} {4:7.5e}'
-        outs = fmt.format(line.mag, line.dist, base+line.poe_c,
+        outs = fmt.format(line.mag, line.dist, base + line.poe_c,
                           line.eps, base)
 
         if float(line.poe_c) > threshold:
-            fou.write(outs+'\n')
-        
+            fou.write(outs + '\n')
+
     print('Written to {}'.format(fout))
 
 
@@ -224,11 +222,11 @@ def mde_for_gmt(filename, froot):
                 # Formatting the output:
                 # magnitude, distance, z, height, upp,
                 fmt = '{:7.5e} {:7.5e} {:7.5e} {:7.5e} {:7.5e}'
-                outs = fmt.format(row.mag, row.dist, base+row[rlz], row.eps,
+                outs = fmt.format(row.mag, row.dist, base + row[rlz], row.eps,
                                   base)
 
                 if row[rlz] > 1e-8:
-                    fou.write(outs+'\n')
+                    fou.write(outs + '\n')
             fou.close()
     return flist
 
@@ -463,8 +461,6 @@ def get_catalogue_from_ses(fname, duration):
     lons = []
     lats = []
     deps = []
-    print(ses['rup_id'])
-    print('Columns:', ses.columns)
     for i in range(len(ses)):
         nevents = ses['multiplicity'][i]
         for j in range(nevents):
