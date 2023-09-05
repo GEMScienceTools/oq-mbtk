@@ -41,16 +41,16 @@ class TestMeanMDE(unittest.TestCase):
         assert expected_lines == actual_lines
         os.remove(fout)
 
-    @unittest.skip('I do not understand the meaning of this test')
+#    @unittest.skip('I do not understand the meaning of this test')
     def test_output_mre_3(self):
         """
-        test reorg of one instance of an MDE file; mean, start with 2 imts
+        tests that if a MDE output file includes more than one IMT, the 
+        function mean_mde_for_gmt considers only the specified IMT when 
+        creating the file that will be plotted by GMT
         """
         fname1 = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-mean-0.csv')
-        # fout1 = 'test-1.csv'
         fout1, path1 = tempfile.mkstemp()
         fname2 = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
-        # fout2 = 'test-2.csv'
         fout2, path2 = tempfile.mkstemp()
         mean_mde_for_gmt(fname1, path1, 0.002105, 'SA(0.1)', 1e-10)
         mean_mde_for_gmt(fname2, path2, 0.002105, 'SA(0.1)', 1e-10)
