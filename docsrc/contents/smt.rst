@@ -442,9 +442,12 @@ Comparing GMPEs
         vs30 = 800
         Z1 = -999
         Z25 = -999
+        up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
         
-        # Characterise earthquake for the region of interest
+        # Characterise earthquake for the region of interest as finite rupture
         [source_properties]
+        trt = 'ASCR' # Specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal
+        ztor = 'None' # Set to string of 'None' to NOT consider
         strike = -999
         dip =  60 # (Albania has predominantly reverse faulting)
         rake = 90 # (+ 90 for compression, -90 for extension)
@@ -452,11 +455,11 @@ Comparing GMPEs
         trellis_depths = [20, 20, 20] # depth per magnitude for trellis and response spectra
         
         # Specify magnitude array for Sammons, Euclidean dist and clustering
-        [mag_values_non_trellis_functions]
+        [mag_values_non_trellis_or_spectra_functions]
         mmin = 5
         mmax = 7
         spacing = 0.1
-        non_trellis_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+        non_trellis_or_spectra_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
         
         # Specify label for gmpes
         [gmpe_labels]
@@ -529,7 +532,7 @@ Comparing GMPEs
    
 4. Spectra Plots
 
-   We can also plot response spectra and GMPE sigma spectra (sigma versus spectral period). Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples): 
+   We can also plot response spectra and GMPE sigma spectra (sigma versus spectral period). Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples, and the functions within openquake.smt.comparison for a more details): 
 
     .. code-block:: ini
     
