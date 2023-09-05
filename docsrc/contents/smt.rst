@@ -532,7 +532,7 @@ Comparing GMPEs
    
 4. Spectra Plots
 
-   We can also plot response spectra and GMPE sigma spectra (sigma versus spectral period). Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples, and the functions within openquake.smt.comparison for a more details): 
+   We can also plot response spectra and GMPE sigma spectra (sigma versus spectral period). Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples, and the functions within openquake.smt.comparison for more details): 
 
     .. code-block:: ini
     
