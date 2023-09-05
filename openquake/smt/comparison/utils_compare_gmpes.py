@@ -36,10 +36,11 @@ from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1,\
     _get_z25, _param_gmpes, mgmpe_check
 
 
-def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
+def plot_trellis_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region,
                  imt_list, mag_list, maxR, gmpe_list, aratio, Nstd,
                  output_directory, custom_color_flag, custom_color_list,
-                 eshm20_region, lt_weights_gmc1 = None, lt_weights_gmc2 = None):
+                 eshm20_region, lt_weights_gmc1 = None, lt_weights_gmc2 = None,
+                 up_or_down_dip = None):
     """
     Generate trellis plots for given run configuration
     """
@@ -100,14 +101,14 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 
                 # Get gmpe params
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
-                    gmm, strike, dip, depth[l], aratio, rake) 
+                    strike, dip, depth[l], aratio, rake, trt) 
                 
                 # Get attenuation curves
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l],m,
                                                   aratio_g, strike_g, dip_g,
                                                   rake,Vs30, Z1, Z25, maxR, 
-                                                  step, i, 1, eshm20_region,
-                                                  up_or_down_dip = None)
+                                                  step, i, ztor, eshm20_region,
+                                                  trt, up_or_down_dip)
                 
                 # Get mean and sigma
                 mean = mean[0][0]
@@ -181,12 +182,12 @@ def plot_trellis_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 if n == 0: #top row only
                     pyplot.title('Mw = ' + str(m), fontsize='16')
                 if n == len(imt_list)-1: #bottom row only
-                    pyplot.xlabel('Rrup (km)', fontsize='16')
+                    pyplot.xlabel('Rhypo (km)', fontsize='16')
                 if l == 0: #left row only
                     pyplot.ylabel(str(i) + ' (g)', fontsize='16')
 
                 pyplot.loglog()
-                pyplot.ylim(0.001, 10)
+                pyplot.ylim(0.00001, 1)
                 pyplot.xlim(distances[0], distances[len(distances)-2])
                 
             pyplot.grid(axis = 'both', which = 'both', alpha = 0.5)
@@ -383,11 +384,12 @@ def _get_period_values_for_spectra_plots(max_period):
     return period
     
 
-def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
+def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region,
                       max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
                       output_directory, custom_color_flag, custom_color_list,
                       eshm20_region, lt_weights_gmc1 = None,
-                      lt_weights_gmc2 = None, obs_spectra = None):
+                      lt_weights_gmc2 = None, obs_spectra = None,
+                      up_or_down_dip = None):
     """
     Plot response spectra and sigma w.r.t. spectral period for given run
     configuration. Can also plot an observed spectrum and the corresponding
@@ -401,13 +403,13 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     # If obs_spectra get info from csv
     if obs_spectra is not None:
         print('Plotting of an observed spectra has been specified')
+        
         # Get values from obs_spectra dataframe...
         eq_id = str(obs_spectra['EQ ID'].iloc[0])
         mw = float(obs_spectra['Mw'].iloc[0])
         dep = float(obs_spectra['Depth (km)'].iloc[0])
         rrup = float(obs_spectra['Rrup (km)'].iloc[0])
         st_id = str(obs_spectra['Station Code'].iloc[0])
-        # Overwrite toml params to get single scenario specific params...
         mag_list = np.array([mw])
         dist_list = np.array([rrup])
         depth = np.array([dep])
@@ -415,10 +417,12 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
         dip = float(obs_spectra['Dip'].iloc[0])
         rake = float(obs_spectra['Rake'].iloc[0])
         vs30 = float(obs_spectra['Vs30'].iloc[0])
+        ztor = str(obs_spectra['ztor'].iloc[0])
+        if ztor == 'None':
+            ztor = None
+        trt = str(obs_spectra['trt'].iloc[0])
         up_or_down_dip = float(
             obs_spectra['Site up-dip of rupture (1 = True, 0 = False)'].iloc[0])
-    else:
-        up_or_down_dip = None
         
     # Get the periods to plot
     period = _get_period_values_for_spectra_plots(max_period)
@@ -496,9 +500,10 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                 gmm_orig = gsim
                 gmm = mgmpe_check(gsim)
 
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(gmm, strike,
-                                                                  dip, depth[l],
-                                                                  aratio, rake)
+                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(strike, dip,
+                                                                  depth[l],
+                                                                  aratio, rake,
+                                                                  trt)
                 
                 rs_50p, rs_plus_sigma, rs_minus_sigma, sigma = [], [], [], []
                 
@@ -515,8 +520,8 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
                     mu, std, distances = att_curves(gmm, gmm_orig, depth[l], m,
                                                     aratio_g, strike_g, dip_g, 
                                                     rake, Vs30, Z1, Z25, dist,
-                                                    0.1, imt, 1, eshm20_region,
-                                                    up_or_down_dip) 
+                                                    0.1, imt, ztor, eshm20_region,
+                                                    trt, up_or_down_dip) 
                     mu = mu[0][0]
                     f = interpolate.interp1d(distances, mu)
                     rs_50p_dist = np.exp(f(i))
@@ -906,9 +911,9 @@ def plot_spectra_util(rake, strike, dip, depth, Z1, Z25, Vs30, region,
     spectra_value_df.to_csv(os.path.join(output_directory, 'spectra_values.csv'))
 
 
-def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
+def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                          dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio,
-                         eshm20_region,mtxs_type):
+                         eshm20_region,mtxs_type, up_or_down_dip):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
     given run configuration for use within Euclidean distance matrix plots,
@@ -942,13 +947,13 @@ def compute_matrix_gmpes(imt_list, mag_list, gmpe_list, rake, strike,
                 gmm = mgmpe_check(gsim)
 
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
-                    gmm, strike, dip, depth[l], aratio, rake) 
+                    strike, dip, depth[l], aratio, rake, trt) 
 
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l], m, 
                                                   aratio_g, strike_g, dip_g, 
                                                   rake, Vs30, Z1, Z25, maxR, 
-                                                  step, i, 1, eshm20_region,
-                                                  up_or_down_dip = None) 
+                                                  step, i, ztor, eshm20_region,
+                                                  trt, up_or_down_dip) 
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians, (np.exp(mean)))
