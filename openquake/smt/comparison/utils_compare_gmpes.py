@@ -423,7 +423,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
         dip = float(obs_spectra['Dip'].iloc[0])
         rake = float(obs_spectra['Rake'].iloc[0])
         vs30 = float(obs_spectra['Vs30'].iloc[0])
-        ztor = str(obs_spectra['ztor'].iloc[0])
+        ztor = [str(obs_spectra['ztor'].iloc[0])] # Must be list for iterating
         if ztor == 'None':
             ztor = None
         trt = str(obs_spectra['trt'].iloc[0])
