@@ -99,6 +99,11 @@ def plot_trellis_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
                 gmm_orig = gsim
                 gmm = mgmpe_check(gsim)
                 
+                if ztor is not None:
+                    ztor_m = ztor[l]
+                else:
+                    ztor_m = None
+                
                 # Get gmpe params
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     strike, dip, depth[l], aratio, rake, trt) 
@@ -107,8 +112,9 @@ def plot_trellis_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l],m,
                                                   aratio_g, strike_g, dip_g,
                                                   rake,Vs30, Z1, Z25, maxR, 
-                                                  step, i, ztor, eshm20_region,
-                                                  trt, up_or_down_dip)
+                                                  step, i, ztor_m,
+                                                  eshm20_region, trt,
+                                                  up_or_down_dip)
                 
                 # Get mean and sigma
                 mean = mean[0][0]
@@ -517,11 +523,17 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
                     else:
                         dist = i
                     
+                    if ztor is not None:
+                        ztor_m = ztor[l]
+                    else:
+                        ztor_m = None
+                    
                     mu, std, distances = att_curves(gmm, gmm_orig, depth[l], m,
                                                     aratio_g, strike_g, dip_g, 
                                                     rake, Vs30, Z1, Z25, dist,
-                                                    0.1, imt, ztor, eshm20_region,
-                                                    trt, up_or_down_dip) 
+                                                    0.1, imt, ztor_m,
+                                                    eshm20_region, trt,
+                                                    up_or_down_dip) 
                     mu = mu[0][0]
                     f = interpolate.interp1d(distances, mu)
                     rs_50p_dist = np.exp(f(i))
@@ -948,12 +960,18 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
 
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     strike, dip, depth[l], aratio, rake, trt) 
+                
+                if ztor is not None:
+                    ztor_m = ztor[l]
+                else:
+                    ztor_m = None
 
                 mean, std, distances = att_curves(gmm, gmm_orig, depth[l], m, 
                                                   aratio_g, strike_g, dip_g, 
                                                   rake, Vs30, Z1, Z25, maxR, 
-                                                  step, i, ztor, eshm20_region,
-                                                  trt, up_or_down_dip) 
+                                                  step, i, ztor_m,
+                                                  eshm20_region, trt,
+                                                  up_or_down_dip) 
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians, (np.exp(mean)))
