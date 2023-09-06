@@ -182,12 +182,12 @@ def plot_trellis_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
                 if n == 0: #top row only
                     pyplot.title('Mw = ' + str(m), fontsize='16')
                 if n == len(imt_list)-1: #bottom row only
-                    pyplot.xlabel('Rhypo (km)', fontsize='16')
+                    pyplot.xlabel('Rrup (km)', fontsize='16')
                 if l == 0: #left row only
                     pyplot.ylabel(str(i) + ' (g)', fontsize='16')
 
                 pyplot.loglog()
-                pyplot.ylim(0.00001, 1)
+                pyplot.ylim(0.001, 10)
                 pyplot.xlim(distances[0], distances[len(distances)-2])
                 
             pyplot.grid(axis = 'both', which = 'both', alpha = 0.5)
