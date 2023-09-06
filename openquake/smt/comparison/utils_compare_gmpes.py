@@ -194,7 +194,7 @@ def plot_trellis_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region
 
                 pyplot.loglog()
                 pyplot.ylim(0.001, 10)
-                pyplot.xlim(distances[0], distances[len(distances)-2])
+                pyplot.xlim(distances[1], distances[len(distances)-2])
                 
             pyplot.grid(axis = 'both', which = 'both', alpha = 0.5)
         
