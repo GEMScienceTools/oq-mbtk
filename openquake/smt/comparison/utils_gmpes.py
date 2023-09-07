@@ -199,9 +199,7 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     
     # Compute ground-motions
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
-    distances = ctxs.rrup
-    
-    # Ensures can interpolate to max value in dist_list (within RS plotting)
+    distances = ctxs.rrup # Can be changed to rjb if required
     distances[len(distances)-1] = maxR
     
     return mean, std, distances
