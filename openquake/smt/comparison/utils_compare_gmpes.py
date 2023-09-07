@@ -234,7 +234,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                 # Plot obs spectra if required
                 plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mw, dep, rrup)
                 
-                # Continue with plot creation
+                # Update plots
                 update_spec_plots(ax1, ax2, m, i, n, l, dist_list)
             
             # Set axis limits and add grid
@@ -557,9 +557,8 @@ def get_z1_z25(Z1, Z25, Vs30, region):
 def trellis_data(Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
                  lt_weights_gmc1, lt_vals_gmc1, lt_weights_gmc2, lt_vals_gmc2):
     """
-    Function has two purposes:
-        1. Plot predictions of a single GMPE if required
-        2. Compute logic tree weighted predictions and return store of them
+    Plot predictions of a single GMPE (if required) and compute weighted
+    predictions from logic tree(s) (again if required)
     """
     if not Nstd == 0: # If sigma is sampled from
         if 'plot_lt_only' not in str(gmpe): # If only plotting individual GMPEs
@@ -609,9 +608,9 @@ def lt_trel(r_vals, Nstd, i, m,
             lt_vals_gmc1, mean_gmc1, plus_sig_gmc1, minus_sig_gmc1,
             lt_vals_gmc2, mean_gmc2, plus_sig_gmc2, minus_sig_gmc2):
     """
-    Plot any specified GMPE logic trees
+    If required plot spectra from the GMPE logic tree(s)
     """
-    # GMC1
+    # Logic tree #1
     if lt_vals_gmc1 != {}:
         if not Nstd == 0:
                
@@ -646,7 +645,7 @@ def lt_trel(r_vals, Nstd, i, m,
             
             mean_gmc1[i,m] = lt_mean_gmc1
             
-    # GMC2
+    # Logic tree #2
     if lt_vals_gmc2 != {}:
         if not Nstd == 0:
                
@@ -775,7 +774,7 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
     """
     If required get the logic tree weighted predictions
     """
-    # GMC1                    
+    # Logic tree #1
     if lt_weights_gmc1 == None:
         pass
     elif gmpe in lt_weights_gmc1:
@@ -784,19 +783,15 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
             rs_plus_sigma_weighted_gmc1 = {}
             rs_minus_sigma_weighted_gmc1 = {}
             for idx, rs in enumerate(rs_50p):
-                rs_50p_weighted_gmc1[idx] = rs_50p[
-                    idx]*lt_weights_gmc1[gmpe]
+                rs_50p_weighted_gmc1[idx] = rs_50p[idx]*lt_weights_gmc1[gmpe]
                 if Nstd != 0:
-                    rs_plus_sigma_weighted_gmc1[
-                        idx] = rs_plus_sigma[
+                    rs_plus_sigma_weighted_gmc1[idx] = rs_plus_sigma[
                         idx]*lt_weights_gmc1[gmpe]
-                    rs_minus_sigma_weighted_gmc1[
-                        idx] = rs_minus_sigma[
+                    rs_minus_sigma_weighted_gmc1[idx] = rs_minus_sigma[
                         idx]*lt_weights_gmc1[gmpe]
 
             # If present store the weighted mean for the GMPE
-            lt_vals_gmc1[
-                gmpe] = {'mean': rs_50p_weighted_gmc1}
+            lt_vals_gmc1[gmpe] = {'mean': rs_50p_weighted_gmc1}
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
@@ -805,28 +800,23 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
                 lt_vals_minus_sig_gmc1[gmpe] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc1}
                 
-    # GMC2                  
+    # Logic tree #2              
     if lt_weights_gmc2 == None:
         pass
     elif gmpe in lt_weights_gmc2:
         if lt_weights_gmc2[gmpe] != None:
             rs_50p_weighted_gmc2 = {}
-            rs_plus_sigma_weighted_gmc2 = {}
-            rs_minus_sigma_weighted_gmc2 = {}
+            rs_plus_sigma_weighted_gmc2, rs_minus_sigma_weighted_gmc2 = {}, {}
             for idx, rs in enumerate(rs_50p):
-                rs_50p_weighted_gmc2[idx] = rs_50p[
-                    idx]*lt_weights_gmc2[gmpe]
+                rs_50p_weighted_gmc2[idx] = rs_50p[idx]*lt_weights_gmc2[gmpe]
                 if Nstd != 0:
-                    rs_plus_sigma_weighted_gmc2[
-                        idx] = rs_plus_sigma[idx]*lt_weights_gmc2[
-                            gmpe]
-                    rs_minus_sigma_weighted_gmc2[
-                        idx] = rs_minus_sigma[idx]*lt_weights_gmc2[
-                            gmpe]
+                    rs_plus_sigma_weighted_gmc2[idx] = rs_plus_sigma[
+                        idx]*lt_weights_gmc2[gmpe]
+                    rs_minus_sigma_weighted_gmc2[idx] = rs_minus_sigma[
+                        idx]*lt_weights_gmc2[gmpe]
                 
             # If present store the weighted mean for the GMPE
-            lt_vals_gmc2[
-                gmpe] = {'mean': rs_50p_weighted_gmc2}
+            lt_vals_gmc2[gmpe] = {'mean': rs_50p_weighted_gmc2}
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
@@ -840,12 +830,12 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
 
 
 def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period,
-                     lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-                     lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2):
+               lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
+               lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2):
     """
-    If required plot logic tree of GMPEs
+    If required plot spectra from the GMPE logic tree(s)
     """    
-    # Plot and store values for GMC1
+    # Plot and store values for logic tree #1
     if lt_vals_gmc1 != {}:
         lt_df_gmc1 = pd.DataFrame(lt_vals_gmc1, index=['mean'])
         if Nstd != 0:
@@ -855,8 +845,7 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period,
                                                   index=['minus_sigma'])
             
         wt_mean_per_gmpe_gmc1 = {}
-        wt_plus_sigma_per_gmpe_gmc1 = {}
-        wt_minus_sigma_per_gmpe_gmc1 = {}
+        wt_plus_sigma_per_gmpe_gmc1, wt_minus_sigma_per_gmpe_gmc1 = {}, {}
         
         for gmpe in gmpe_list:
             if 'lt_weight_gmc1' in str(gmpe):
@@ -877,30 +866,28 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period,
                                               index=period)
         
         lt_mean_per_period_gmc1 = {}
-        lt_plus_sigma_per_period_gmc1 = {}
-        lt_minus_sigma_per_period_gmc1 = {}
+        lt_plus_sigma_per_period_gmc1, lt_minus_sigma_per_period_gmc1 = {}, {}
         for idx, imt in enumerate(period):
             lt_mean_per_period_gmc1[imt] = np.sum(lt_df_gmc1.loc[imt])
             if Nstd != 0:
-                lt_plus_sigma_per_period_gmc1[imt] = np.sum(lt_df_plus_sigma_gmc1.loc[imt])
-                lt_minus_sigma_per_period_gmc1[imt] = np.sum(lt_df_minus_sigma_gmc1.loc[imt])
+                lt_plus_sigma_per_period_gmc1[imt] = np.sum(
+                    lt_df_plus_sigma_gmc1.loc[imt])
+                lt_minus_sigma_per_period_gmc1[imt] = np.sum(
+                    lt_df_minus_sigma_gmc1.loc[imt])
         
-        # Plot the logic tree
-        ax1.plot(period, np.array(pd.Series(lt_mean_per_period_gmc1)),
-                 linewidth=2, color='k', linestyle='--',
-                 label = 'Logic Tree 1', zorder=100)
+        # Plot logic tree #1
+        ax1.plot(period, np.array(lt_mean_per_period_gmc1), linewidth=2,
+                 color='k', linestyle='--', label = 'Logic Tree 1', zorder=100)
         
         # Plot mean plus sigma and mean minus sigma if required
         if Nstd != 0:
-            ax1.plot(period, np.array(pd.Series(
-                lt_plus_sigma_per_period_gmc1)), linewidth=0.75,
-                color='k', linestyle='-.', zorder=100)
+            ax1.plot(period, np.array(lt_plus_sigma_per_period_gmc1),
+                     linewidth=0.75, color='k', linestyle='-.', zorder=100)
             
-            ax1.plot(period, np.array(pd.Series(
-                lt_minus_sigma_per_period_gmc1)), linewidth=0.75,
-                color='k', linestyle='-.', zorder=100)
+            ax1.plot(period, np.array(lt_minus_sigma_per_period_gmc1),
+                     linewidth=0.75, color='k', linestyle='-.', zorder=100)
 
-    # Plot and store values for GMC2
+    # Plot and store values for logic tree #2
     if lt_vals_gmc2 != {}:
         lt_df_gmc2 = pd.DataFrame(lt_vals_gmc2, index = ['mean'])
         if Nstd != 0:
@@ -910,9 +897,8 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period,
                                                   index=['minus_sigma'])
             
         wt_mean_per_gmpe_gmc2 = {}
-        wt_plus_sigma_per_gmpe_gmc2 = {}
-        wt_minus_sigma_per_gmpe_gmc2 = {}
-        
+        wt_plus_sigma_per_gmpe_gmc2, wt_minus_sigma_per_gmpe_gmc2 = {}, {}
+
         for gmpe in gmpe_list:
             if 'lt_weight_gmc2' in str(gmpe):
                 wt_mean_per_gmpe_gmc2[gmpe] = np.array(pd.Series(
@@ -926,12 +912,13 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period,
                             'minus_sigma']))
             
         lt_df_gmc2 = pd.DataFrame(wt_mean_per_gmpe_gmc2, index = period)
-        lt_df_plus_sigma_gmc2 = pd.DataFrame(wt_plus_sigma_per_gmpe_gmc2, index = period)
-        lt_df_minus_sigma_gmc2 = pd.DataFrame(wt_minus_sigma_per_gmpe_gmc2, index = period)
+        lt_df_plus_sigma_gmc2 = pd.DataFrame(wt_plus_sigma_per_gmpe_gmc2,
+                                             index = period)
+        lt_df_minus_sigma_gmc2 = pd.DataFrame(wt_minus_sigma_per_gmpe_gmc2,
+                                              index = period)
         
         lt_mean_per_period_gmc2 = {}
-        lt_plus_sigma_per_period_gmc2 = {}
-        lt_minus_sigma_per_period_gmc2 = {}
+        lt_plus_sigma_per_period_gmc2, lt_minus_sigma_per_period_gmc2 = {}, {}
         for idx, imt in enumerate(period):
             lt_mean_per_period_gmc2[imt] = np.sum(lt_df_gmc2.loc[imt])
             if Nstd != 0:
@@ -940,21 +927,20 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period,
                 lt_minus_sigma_per_period_gmc2[imt] = np.sum(
                     lt_df_minus_sigma_gmc2.loc[imt])
         
-        # Plot the logic tree
-        ax1.plot(period, np.array(pd.Series(lt_mean_per_period_gmc2)),
-                 linewidth=2, color='tab:grey', linestyle='--',
-                 label='Logic Tree 2', zorder=100)
+        # Plot logic tree #2
+        ax1.plot(period, np.array(lt_mean_per_period_gmc2), linewidth=2,
+                 color='tab:grey', linestyle='--', label='Logic Tree 2',
+                 zorder=100)
         
         # Plot mean plus sigma and mean minus sigma if required
         if Nstd != 0:
-            ax1.plot(period, np.array(pd.Series(
-                lt_plus_sigma_per_period_gmc2)), linewidth=0.75,
-                color='tab:grey', linestyle='-.', zorder=100)
+            ax1.plot(period, np.array(lt_plus_sigma_per_period_gmc2),
+                     linewidth=0.75, color='tab:grey', linestyle='-.',
+                     zorder=100)
             
-            ax1.plot(period, np.array(pd.Series(
-                lt_minus_sigma_per_period_gmc2)), linewidth=0.75,
-                color='tab:grey', linestyle='-.', zorder=100)
-
+            ax1.plot(period, np.array(lt_minus_sigma_per_period_gmc2),
+                     linewidth=0.75, color='tab:grey', linestyle='-.',
+                     zorder=100)
 
 
 def load_obs_spectra(obs_spectra):
