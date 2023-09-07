@@ -122,11 +122,6 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
     Plot response spectra and sigma w.r.t. spectral period for given run
     configuration. Can also plot an observed spectrum and the corresponding
     predictions by the specified GMPEs
-    :param dist_list:
-        Array of distances to generate response spectra and sigma plots for 
-    :param max_period:
-        Maximum period to compute plots for (note an error will be returned if
-        this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
     """
     # If obs_spectra get info from csv
     if obs_spectra is not None:
@@ -705,7 +700,7 @@ def update_trellis_plots(m, i, n, l, r_vals, imt_list):
         pyplot.ylabel(str(i) + ' (g)', fontsize='16')
     pyplot.loglog()
     pyplot.ylim(0.001, 10)
-    pyplot.xlim(r_vals[1], r_vals[len(r_vals)-2])
+    pyplot.xlim(r_vals[0], r_vals[len(r_vals)-2])
                 
 
 ### Spectra utils
