@@ -125,7 +125,7 @@ class ComparisonTestCase(unittest.TestCase):
                                             config.Z1, config.Z25, config.Vs30,
                                             config.region, config.maxR,
                                             config.aratio, config.eshm20_region,
-                                            mtxs_type='median',
+                                            config.dist_type, mtxs_type='median',
                                             up_or_down_dip=config.up_or_down_dip)
         
         # Check correct number of imts
@@ -152,7 +152,7 @@ class ComparisonTestCase(unittest.TestCase):
                                             config.Z1, config.Z25, config.Vs30,
                                             config.region, config.maxR,
                                             config.aratio, config.eshm20_region,
-                                            mtxs_type='median',
+                                            config.dist_type, mtxs_type='median',
                                             up_or_down_dip=config.up_or_down_dip)
                 
         # Sammons checks
@@ -202,6 +202,7 @@ class ComparisonTestCase(unittest.TestCase):
                                             config.Vs30, config.region,
                                             config.maxR, config.aratio,
                                             config.eshm20_region,
+                                            config.dist_type,
                                             mtxs_type='median',
                                             up_or_down_dip=config.up_or_down_dip)
     
@@ -237,6 +238,7 @@ class ComparisonTestCase(unittest.TestCase):
                                             config.Vs30, config.region,
                                             config.maxR, config.aratio,
                                             config.eshm20_region,
+                                            config.dist_type,
                                             mtxs_type='84th_perc',
                                             up_or_down_dip=config.up_or_down_dip)
     
@@ -269,8 +271,8 @@ class ComparisonTestCase(unittest.TestCase):
                           config.trellis_mag_list, config.maxR, config.gmpes_list,
                           config.aratio, config.Nstd, self.output_directory,
                           config.custom_color_flag, config.custom_color_list,
-                          config.eshm20_region, config.lt_weights_gmc1,
-                          config.lt_weights_gmc2,
+                          config.eshm20_region, config.dist_type,
+                          config.lt_weights_gmc1, config.lt_weights_gmc2,
                           up_or_down_dip=config.up_or_down_dip)
         
         # Spectra plots 
@@ -281,9 +283,9 @@ class ComparisonTestCase(unittest.TestCase):
                           config.dist_list, config.gmpes_list, config.aratio,
                           config.Nstd, self.output_directory,
                           config.custom_color_flag, config.custom_color_list,
-                          config.eshm20_region, config.lt_weights_gmc1,
-                          config.lt_weights_gmc2, obs_spectra=None,
-                          up_or_down_dip=config.up_or_down_dip) 
+                          config.eshm20_region, config.dist_type, 
+                          config.lt_weights_gmc1, config.lt_weights_gmc2,
+                          obs_spectra=None, up_or_down_dip=config.up_or_down_dip) 
        
         # Specify target files
         target_file_trellis = (os.path.join(
