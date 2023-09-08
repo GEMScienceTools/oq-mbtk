@@ -132,7 +132,7 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
 
 
 def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30, 
-               Z1, Z25, maxR, step, imt, ztor, eshm20_region, trt,
+               Z1, Z25, maxR, step, imt, ztor, eshm20_region, dist_type, trt,
                up_or_down_dip):    
     """
     Compute predicted ground-motion intensities w.r.t considered distance using
@@ -192,14 +192,17 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
     ctxm = ContextMaker(rup_trt, [gmpe], oqp)
-
-    ctxs = list(ctxm.get_ctx_iter([rup], sites)) 
+    ctxs = list(ctxm.get_ctx_iter([rup], sites))
     ctxs = ctxs[0]
     ctxs.occurrence_rate = 0.0
     
     # Compute ground-motions
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
-    distances = ctxs.rrup # Can be changed to rjb if required
+    if dist_type == 'rrup':
+        distances = ctxs.rrup
+    if dist_type == 'rjb':
+        distances = ctxs.rjb
+    distances = ctxs.rrup
     distances[len(distances)-1] = maxR
     
     return mean, std, distances

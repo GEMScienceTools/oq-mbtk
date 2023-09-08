@@ -39,7 +39,7 @@ from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1,\
 def plot_trellis_util(
         trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region, imt_list,
         mag_list, maxR, gmpe_list, aratio, Nstd, output_directory,
-        custom_color_flag, custom_color_list, eshm20_region,
+        custom_color_flag, custom_color_list, eshm20_region, dist_type,
         lt_weights_gmc1 = None, lt_weights_gmc2 = None, up_or_down_dip = None):
     """
     Generate trellis plots for given run configuration
@@ -79,7 +79,7 @@ def plot_trellis_util(
                                                aratio_g, strike_g, dip_g,
                                                rake,Vs30, Z1, Z25, maxR, 
                                                step, i, ztor_m, eshm20_region,
-                                               trt, up_or_down_dip)
+                                               dist_type, trt, up_or_down_dip)
                 
                 # Get mean, sigma, mean plus sigma and mean minus sigma
                 mean = mean[0][0]
@@ -96,7 +96,7 @@ def plot_trellis_util(
                     lt_weights_gmc1, lt_vals_gmc1, lt_weights_gmc2, lt_vals_gmc2)
                 
                 # update plots
-                update_trellis_plots(m, i, n, l, r_vals, imt_list)
+                update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type)
 
             pyplot.grid(axis='both', which='both', alpha=0.5)
         
@@ -115,7 +115,7 @@ def plot_trellis_util(
 def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                       region, max_period, mag_list, dist_list, gmpe_list,
                       aratio, Nstd, output_directory, custom_color_flag,
-                      custom_color_list, eshm20_region,
+                      custom_color_list, eshm20_region, dist_type,
                       lt_weights_gmc1 = None, lt_weights_gmc2 = None,
                       obs_spectra = None, up_or_down_dip = None):
     """
@@ -190,7 +190,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                                                  aratio_g, strike_g, dip_g, 
                                                  rake, Vs30, Z1, Z25, dist,
                                                  0.1, imt, ztor_m, eshm20_region,
-                                                 trt, up_or_down_dip) 
+                                                 dist_type, trt, up_or_down_dip) 
                     mu = mu[0][0]
                     f = interpolate.interp1d(r_vals, mu)
                     rs_50p_dist = np.exp(f(i))
@@ -263,8 +263,8 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
 
 
 def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
-                         dip, depth, Z1, Z25, Vs30, region,  maxR,  aratio,
-                         eshm20_region,mtxs_type, up_or_down_dip):
+                         dip, depth, Z1, Z25, Vs30, region, maxR, aratio,
+                         eshm20_region, dist_type, mtxs_type, up_or_down_dip):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
     given run configuration for use within Euclidean distance matrix plots,
@@ -300,9 +300,8 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                 mean, std, r_vals = att_curves(gmm, gmm_orig, depth[l], m, 
                                                   aratio_g, strike_g, dip_g, 
                                                   rake, Vs30, Z1, Z25, maxR, 
-                                                  step, i, ztor_m,
-                                                  eshm20_region, trt,
-                                                  up_or_down_dip) 
+                                                  step, i, ztor_m, eshm20_region,
+                                                  dist_type, trt, up_or_down_dip) 
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians, (np.exp(mean)))
@@ -689,14 +688,18 @@ def lt_trel(r_vals, Nstd, i, m,
         mean_gmc2, plus_sig_gmc2, minus_sig_gmc2
 
 
-def update_trellis_plots(m, i, n, l, r_vals, imt_list):
+def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
     """
     Add titles and axis labels to trellis plots
     """
+    if dist_type == 'rrup':
+        label = 'Rrup (km)'
+    if dist_type == 'rjb':
+        label = 'Rjb (km)'
     if n == 0: #top row only
         pyplot.title('Mw = ' + str(m), fontsize='16')
     if n == len(imt_list)-1: #bottom row only
-        pyplot.xlabel('Rrup (km)', fontsize='16') # Mod to rjb if using instead
+        pyplot.xlabel(label, fontsize='16') # Mod to rjb if using instead
     if l == 0: #left row only
         pyplot.ylabel(str(i) + ' (g)', fontsize='16')
     pyplot.loglog()
