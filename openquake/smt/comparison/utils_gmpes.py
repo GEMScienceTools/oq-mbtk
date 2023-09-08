@@ -135,8 +135,7 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
                Z1, Z25, maxR, step, imt, ztor, eshm20_region, dist_type, trt,
                up_or_down_dip):    
     """
-    Compute predicted ground-motion intensities w.r.t considered distance using
-    the given GMPE
+    Compute predicted ground-motion intensities
     """
     rup_trt = None
     if trt == 'ASCR':
@@ -163,9 +162,9 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
                        Induced, Induced_Geothermal')
                         
     # Get rup
-    rup = get_rupture(0.0, 0.0, depth, WC1994(), mag = mag, aratio = aratio,
-                      strike = strike, dip = dip, rake = rake, trt = rup_trt,
-                      ztor = ztor)
+    rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
+                      strike=strike, dip=dip, rake=rake, trt=rup_trt,
+                      ztor=ztor)
     
     # Set site props
     if 'KothaEtAl2020ESHM20' in str(orig_gmpe):
@@ -184,7 +183,7 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
         direction = 'negative'
     
     # Get sites
-    sites = get_sites_from_rupture(rup, from_point, toward_azimuth = 90,
+    sites = get_sites_from_rupture(rup, from_point, toward_azimuth=90,
                                    direction = direction, hdist = maxR,
                                    step = step, site_props = props)
     
@@ -201,7 +200,7 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     if dist_type == 'rrup':
         distances = ctxs.rrup
     if dist_type == 'rjb':
-        distances = ctxs.rjb
+        distances = ctxs.jb
     distances[len(distances)-1] = maxR
     
     return mean, std, distances
@@ -233,12 +232,9 @@ def _get_z25(Vs30, region):
     """
     if region == 2:  # in Japan
         Z25 = np.exp(5.359 - 1.102 * np.log(Vs30))
-        # Not used
-        #  Z25A_default = np.exp(7.089 - 1.144 * np.log(1100))
     else:
         Z25 = np.exp(7.089 - 1.144 * np.log(Vs30))
-        # Not used
-        #  Z25A_default = np.exp(7.089 - 1.144 * np.log(1100))
+
     return Z25
 
 
