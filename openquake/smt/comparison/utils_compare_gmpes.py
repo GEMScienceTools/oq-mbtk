@@ -244,9 +244,11 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
             ax2.grid(True)
             
             # Plot logic trees if required
-            lt_spectra(ax1, gmpe, gmpe_list, Nstd, period,
-                       lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-                       lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2)
+            lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, 'gmc1',
+                lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1)
+            
+            lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, 'gmc2',
+                lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2)
                 
     # Finalise the plots and save fig
     if len(mag_list) * len(dist_list) == 1:
@@ -829,119 +831,72 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
            lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2
 
 
-def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period,
-               lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-               lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2):
+def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, gmc1_or_gmc2,
+               lt_vals_gmc, lt_vals_plus_sig_gmc, lt_vals_minus_sig_gmc):
     """
     If required plot spectra from the GMPE logic tree(s)
     """    
-    # Plot and store values for logic tree #1
-    if lt_vals_gmc1 != {}:
-        lt_df_gmc1 = pd.DataFrame(lt_vals_gmc1, index=['mean'])
+    if gmc1_or_gmc2 == 'gmc1':
+        check = 'lt_weight_gmc1'
+        label = 'Logic Tree 1'
+        col = 'k'
+    if gmc1_or_gmc2 == 'gmc2':
+        check = 'lt_weight_gmc2'
+        label = 'Logic Tree 2'
+        col = 'tab:grey'
+    
+    # Plot
+    if lt_vals_gmc != {}:
+        lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['mean'])
         if Nstd != 0:
-            lt_df_plus_sigma_gmc1 = pd.DataFrame(lt_vals_plus_sig_gmc1,
+            lt_df_plus_sigma_gmc = pd.DataFrame(lt_vals_plus_sig_gmc,
                                                  index=['plus_sigma'])
-            lt_df_minus_sigma_gmc1 = pd.DataFrame(lt_vals_minus_sig_gmc1,
+            lt_df_minus_sigma_gmc = pd.DataFrame(lt_vals_minus_sig_gmc,
                                                   index=['minus_sigma'])
             
-        wt_mean_per_gmpe_gmc1 = {}
-        wt_plus_sigma_per_gmpe_gmc1, wt_minus_sigma_per_gmpe_gmc1 = {}, {}
+        wt_mean_per_gmpe_gmc = {}
+        wt_plus_sigma_per_gmpe_gmc, wt_minus_sigma_per_gmpe_gmc = {}, {}
         
         for gmpe in gmpe_list:
-            if 'lt_weight_gmc1' in str(gmpe):
-                wt_mean_per_gmpe_gmc1[gmpe] = np.array(pd.Series(
-                    lt_df_gmc1[gmpe].loc['mean']))
+            if check in str(gmpe):
+                wt_mean_per_gmpe_gmc[gmpe] = np.array(pd.Series(
+                    lt_df_gmc[gmpe].loc['mean']))
                 if Nstd != 0:
-                    wt_plus_sigma_per_gmpe_gmc1[gmpe] = np.array(
-                        pd.Series(lt_df_plus_sigma_gmc1[gmpe].loc[
+                    wt_plus_sigma_per_gmpe_gmc[gmpe] = np.array(
+                        pd.Series(lt_df_plus_sigma_gmc[gmpe].loc[
                             'plus_sigma']))
-                    wt_minus_sigma_per_gmpe_gmc1[gmpe] = np.array(
-                        pd.Series(lt_df_minus_sigma_gmc1[gmpe].loc[
+                    wt_minus_sigma_per_gmpe_gmc[gmpe] = np.array(
+                        pd.Series(lt_df_minus_sigma_gmc[gmpe].loc[
                             'minus_sigma']))
             
-        lt_df_gmc1 = pd.DataFrame(wt_mean_per_gmpe_gmc1, index=period)
-        lt_df_plus_sigma_gmc1 = pd.DataFrame(wt_plus_sigma_per_gmpe_gmc1,
+        lt_df_gmc = pd.DataFrame(wt_mean_per_gmpe_gmc, index=period)
+        lt_df_plus_sigma_gmc = pd.DataFrame(wt_plus_sigma_per_gmpe_gmc,
                                              index=period)
-        lt_df_minus_sigma_gmc1 = pd.DataFrame(wt_minus_sigma_per_gmpe_gmc1,
+        lt_df_minus_sigma_gmc = pd.DataFrame(wt_minus_sigma_per_gmpe_gmc,
                                               index=period)
         
-        lt_mean_per_period_gmc1 = {}
-        lt_plus_sigma_per_period_gmc1, lt_minus_sigma_per_period_gmc1 = {}, {}
+        lt_mean_per_period_gmc = {}
+        lt_plus_sigma_per_period_gmc, lt_minus_sigma_per_period_gmc = {}, {}
         for idx, imt in enumerate(period):
-            lt_mean_per_period_gmc1[imt] = np.sum(lt_df_gmc1.loc[imt])
+            lt_mean_per_period_gmc[imt] = np.sum(lt_df_gmc.loc[imt])
             if Nstd != 0:
-                lt_plus_sigma_per_period_gmc1[imt] = np.sum(
-                    lt_df_plus_sigma_gmc1.loc[imt])
-                lt_minus_sigma_per_period_gmc1[imt] = np.sum(
-                    lt_df_minus_sigma_gmc1.loc[imt])
+                lt_plus_sigma_per_period_gmc[imt] = np.sum(
+                    lt_df_plus_sigma_gmc.loc[imt])
+                lt_minus_sigma_per_period_gmc[imt] = np.sum(
+                    lt_df_minus_sigma_gmc.loc[imt])
         
-        # Plot logic tree #1
-        ax1.plot(period, np.array(lt_mean_per_period_gmc1), linewidth=2,
-                 color='k', linestyle='--', label = 'Logic Tree 1', zorder=100)
+        # Plot logic tree #
+        ax1.plot(period, np.array(pd.Series(lt_mean_per_period_gmc)), linewidth=2,
+                 color=col, linestyle='--', label = label, zorder=100)
         
         # Plot mean plus sigma and mean minus sigma if required
         if Nstd != 0:
-            ax1.plot(period, np.array(lt_plus_sigma_per_period_gmc1),
-                     linewidth=0.75, color='k', linestyle='-.', zorder=100)
+            ax1.plot(period, np.array(pd.Series(lt_plus_sigma_per_period_gmc)),
+                     linewidth=0.75, color=col, linestyle='-.', zorder=100)
             
-            ax1.plot(period, np.array(lt_minus_sigma_per_period_gmc1),
-                     linewidth=0.75, color='k', linestyle='-.', zorder=100)
-
-    # Plot and store values for logic tree #2
-    if lt_vals_gmc2 != {}:
-        lt_df_gmc2 = pd.DataFrame(lt_vals_gmc2, index = ['mean'])
-        if Nstd != 0:
-            lt_df_plus_sigma_gmc2 = pd.DataFrame(lt_vals_plus_sig_gmc2,
-                                                 index=['plus_sigma'])
-            lt_df_minus_sigma_gmc2 = pd.DataFrame(lt_vals_minus_sig_gmc2,
-                                                  index=['minus_sigma'])
+            ax1.plot(period, np.array(pd.Series(lt_minus_sigma_per_period_gmc)),
+                     linewidth=0.75, color=col, linestyle='-.', zorder=100)
             
-        wt_mean_per_gmpe_gmc2 = {}
-        wt_plus_sigma_per_gmpe_gmc2, wt_minus_sigma_per_gmpe_gmc2 = {}, {}
-
-        for gmpe in gmpe_list:
-            if 'lt_weight_gmc2' in str(gmpe):
-                wt_mean_per_gmpe_gmc2[gmpe] = np.array(pd.Series(
-                    lt_df_gmc2[gmpe].loc['mean']))
-                if Nstd != 0:
-                    wt_plus_sigma_per_gmpe_gmc2[gmpe] = np.array(
-                        pd.Series(lt_df_plus_sigma_gmc2[gmpe].loc[
-                            'plus_sigma']))
-                    wt_minus_sigma_per_gmpe_gmc2[gmpe] = np.array(
-                        pd.Series(lt_df_minus_sigma_gmc2[gmpe].loc[
-                            'minus_sigma']))
-            
-        lt_df_gmc2 = pd.DataFrame(wt_mean_per_gmpe_gmc2, index = period)
-        lt_df_plus_sigma_gmc2 = pd.DataFrame(wt_plus_sigma_per_gmpe_gmc2,
-                                             index = period)
-        lt_df_minus_sigma_gmc2 = pd.DataFrame(wt_minus_sigma_per_gmpe_gmc2,
-                                              index = period)
-        
-        lt_mean_per_period_gmc2 = {}
-        lt_plus_sigma_per_period_gmc2, lt_minus_sigma_per_period_gmc2 = {}, {}
-        for idx, imt in enumerate(period):
-            lt_mean_per_period_gmc2[imt] = np.sum(lt_df_gmc2.loc[imt])
-            if Nstd != 0:
-                lt_plus_sigma_per_period_gmc2[imt] = np.sum(
-                    lt_df_plus_sigma_gmc2.loc[imt])
-                lt_minus_sigma_per_period_gmc2[imt] = np.sum(
-                    lt_df_minus_sigma_gmc2.loc[imt])
-        
-        # Plot logic tree #2
-        ax1.plot(period, np.array(lt_mean_per_period_gmc2), linewidth=2,
-                 color='tab:grey', linestyle='--', label='Logic Tree 2',
-                 zorder=100)
-        
-        # Plot mean plus sigma and mean minus sigma if required
-        if Nstd != 0:
-            ax1.plot(period, np.array(lt_plus_sigma_per_period_gmc2),
-                     linewidth=0.75, color='tab:grey', linestyle='-.',
-                     zorder=100)
-            
-            ax1.plot(period, np.array(lt_minus_sigma_per_period_gmc2),
-                     linewidth=0.75, color='tab:grey', linestyle='-.',
-                     zorder=100)
-
 
 def load_obs_spectra(obs_spectra):
     """
