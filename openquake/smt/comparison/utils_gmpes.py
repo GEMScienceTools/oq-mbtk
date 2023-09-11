@@ -200,7 +200,7 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     if dist_type == 'rrup':
         distances = ctxs.rrup
     if dist_type == 'rjb':
-        distances = ctxs.jb
+        distances = ctxs.rjb
     distances[len(distances)-1] = maxR
     
     return mean, std, distances
