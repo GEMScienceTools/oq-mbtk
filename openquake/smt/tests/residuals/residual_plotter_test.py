@@ -92,12 +92,12 @@ class ResidualsTestCase(unittest.TestCase):
         for gsim in self.gsims:
             for imt in self.imts:
                 ResidualPlot(residuals, gsim, imt, bin_width=0.1)
-                # assert we called pyplot show:
-                self.assertTrue(mock_pyplot.show.call_count == 1)
+                # assert we have not called pyplot show:
+                self.assertTrue(mock_pyplot.show.call_count == 0)
                 ResidualPlot(residuals, gsim, imt, bin_width=0.1,
                              show=False)
-                # assert we did NOT call pyplot show (call count still 1):
-                self.assertTrue(mock_pyplot.show.call_count == 1)
+                # assert still not called pyplot show (call count still 1):
+                self.assertTrue(mock_pyplot.show.call_count == 0)
                 # reset mock:
                 mock_pyplot.show.reset_mock()
 
@@ -126,12 +126,12 @@ class ResidualsTestCase(unittest.TestCase):
         for gsim in self.gsims:
             for imt in self.imts:
                 LikelihoodPlot(residuals, gsim, imt, bin_width=0.1)
-                # assert we called pyplot show:
-                self.assertTrue(mock_pyplot.show.call_count == 1)
+                # assert we have not called pyplot show:
+                self.assertTrue(mock_pyplot.show.call_count == 0)
                 LikelihoodPlot(residuals, gsim, imt, bin_width=0.1,
                                show=False)
-                # assert we did NOT call pyplot show (call count still 1):
-                self.assertTrue(mock_pyplot.show.call_count == 1)
+                # assert still not called pyplot show (call count still 0):
+                self.assertTrue(mock_pyplot.show.call_count == 0)
                 # reset mock:
                 mock_pyplot.show.reset_mock()
 
@@ -164,11 +164,11 @@ class ResidualsTestCase(unittest.TestCase):
                                   ResidualWithDepth,
                                   ResidualWithVs30]:
                     plotClass(residuals, gsim, imt, bin_width=0.1)
-                    # assert we called pyplot show:
-                    self.assertTrue(mock_pyplot.show.call_count == 1)
+                    # assert we have not called pyplot show:
+                    self.assertTrue(mock_pyplot.show.call_count == 0)
                     plotClass(residuals, gsim, imt, bin_width=0.1, show=False)
-                    # assert we did NOT call pyplot show (call count still 1):
-                    self.assertTrue(mock_pyplot.show.call_count == 1)
+                    # assert still not called pyplot show (call count still 0):
+                    self.assertTrue(mock_pyplot.show.call_count == 0)
                     # reset mock:
                     mock_pyplot.show.reset_mock()
 
@@ -210,16 +210,16 @@ class ResidualsTestCase(unittest.TestCase):
                         with self.assertRaises(AttributeError):
                             ResidualWithDistance(residuals, gsim, imt,
                                                  distance_type=dist,
-                                                 show=True)
+                                                 show=False)
                         continue
 
                     ResidualWithDistance(residuals, gsim, imt, bin_width=0.1)
-                    # assert we called pyplot show:
-                    self.assertTrue(mock_pyplot.show.call_count == 1)
+                    # assert we have not called pyplot show:
+                    self.assertTrue(mock_pyplot.show.call_count == 0)
                     ResidualWithDistance(residuals, gsim, imt, bin_width=0.1,
                                          show=False)
-                    # assert we did NOT call pyplot show (call count still 1):
-                    self.assertTrue(mock_pyplot.show.call_count == 1)
+                    # assert still not called pyplot show (call count still 0):
+                    self.assertTrue(mock_pyplot.show.call_count == 0)
                     # reset mock:
                     mock_pyplot.show.reset_mock()
 

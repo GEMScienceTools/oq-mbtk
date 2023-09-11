@@ -96,7 +96,7 @@ class BaseResidualPlot(object):
             else:
                 self.figure_size = kwargs.get("figure_size",  (9, 9))
             
-        self.show = kwargs.get("show", True)
+        self.show = kwargs.get("show", False)
         self.create_plot()
 
     def _assertion_check(self, residuals):
