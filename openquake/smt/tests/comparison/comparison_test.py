@@ -140,6 +140,8 @@ class ComparisonTestCase(unittest.TestCase):
         Check expected outputs based on given input parameters for median Sammons
         and Euclidean distance matrix plotting functions
         """
+        TARGET_GMPES.append('mean') # Add mean here to gmpe_list
+        
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
            
