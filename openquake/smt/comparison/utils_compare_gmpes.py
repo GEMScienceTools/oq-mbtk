@@ -101,9 +101,15 @@ def plot_trellis_util(
             pyplot.grid(axis='both', which='both', alpha=0.5)
         
             ### Plot logic trees if specified
-            lt_trel(r_vals, Nstd, i, m,
-                    lt_vals_gmc1, mean_gmc1, plus_sig_gmc1, minus_sig_gmc1,
-                    lt_vals_gmc2, mean_gmc2, plus_sig_gmc2, minus_sig_gmc2)
+            gmc1_or_gmc2 = 'gmc1'
+            mean_gmc1, plus_sig_gmc1, minus_sig_gmc1 = lt_trel(
+                r_vals, Nstd, i, m, gmc1_or_gmc2,
+                lt_vals_gmc1, mean_gmc1, plus_sig_gmc1, minus_sig_gmc1)
+            
+            gmc1_or_gmc2 = 'gmc2'
+            mean_gmc2, plus_sig_gmc2, minus_sig_gmc2 = lt_trel(
+                r_vals, Nstd, i, m, gmc1_or_gmc2,
+                lt_vals_gmc2, mean_gmc2, plus_sig_gmc2, minus_sig_gmc2)
             
     # Finalise plots
     pyplot.legend(loc = "center left", bbox_to_anchor = (1.1, 1.05),
@@ -403,6 +409,9 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
+    # Get mean per imt over the gmpes
+    means = sammons_mean(mtxs, imt_list, gmpe_list)
+    
     # Setup
     colors = get_cols(custom_color_flag, custom_color_list)
     texts = []
@@ -602,87 +611,53 @@ def trellis_data(Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
     return lt_vals_gmc1, lt_vals_gmc2
 
 
-def lt_trel(r_vals, Nstd, i, m,
-            lt_vals_gmc1, mean_gmc1, plus_sig_gmc1, minus_sig_gmc1,
-            lt_vals_gmc2, mean_gmc2, plus_sig_gmc2, minus_sig_gmc2):
+def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2,
+            lt_vals_gmc, mean_gmc, plus_sig_gmc, minus_sig_gmc):
     """
     If required plot spectra from the GMPE logic tree(s)
     """
-    # Logic tree #1
-    if lt_vals_gmc1 != {}:
+    if gmc1_or_gmc2 == 'gmc1':
+        label = 'Logic Tree 1'
+        col = 'k'
+    if gmc1_or_gmc2 == 'gmc2':
+        label = 'Logic Tree 2'
+        col = 'tab:grey'
+    
+    if lt_vals_gmc != {}:
         if not Nstd == 0:
                
-            lt_df_gmc1 = pd.DataFrame(
-                lt_vals_gmc1, index=['mean', 'plus_sigma', 'minus_sigma'])
+            lt_df_gmc = pd.DataFrame(
+                lt_vals_gmc, index=['mean', 'plus_sigma', 'minus_sigma'])
 
-            lt_mean_gmc1 = np.sum(lt_df_gmc1[:].loc['mean'])
-            lt_plus_sigma_gmc1 = np.sum(lt_df_gmc1[:].loc['plus_sigma'])
-            lt_minus_sigma_gmc1 = np.sum(lt_df_gmc1[:].loc['minus_sigma'])
+            lt_mean_gmc = np.sum(lt_df_gmc[:].loc['mean'])
+            lt_plus_sigma_gmc = np.sum(lt_df_gmc[:].loc['plus_sigma'])
+            lt_minus_sigma_gmc = np.sum(lt_df_gmc[:].loc['minus_sigma'])
    
-            pyplot.plot(r_vals, lt_mean_gmc1, linewidth=2, color='k',
-                        linestyle='--', label='GMC logic tree #1',
+            pyplot.plot(r_vals, lt_mean_gmc, linewidth=2, color=col,
+                        linestyle='--', label=label,
                         zorder=100)
             
-            pyplot.plot(r_vals, lt_plus_sigma_gmc1, linewidth=0.75,
-                        color='k', linestyle='-.', zorder=100)
+            pyplot.plot(r_vals, lt_plus_sigma_gmc, linewidth=0.75,
+                        color=col, linestyle='-.', zorder=100)
 
-            pyplot.plot(r_vals, lt_minus_sigma_gmc1, linewidth=0.75,
-                        color='k', linestyle='-.', zorder=100)
+            pyplot.plot(r_vals, lt_minus_sigma_gmc, linewidth=0.75,
+                        color=col, linestyle='-.', zorder=100)
             
-            mean_gmc1[i,m] = lt_mean_gmc1
-            plus_sig_gmc1[i,m] = lt_plus_sigma_gmc1
-            minus_sig_gmc1[i,m] = lt_minus_sigma_gmc1
+            mean_gmc[i,m] = lt_mean_gmc
+            plus_sig_gmc[i,m] = lt_plus_sigma_gmc
+            minus_sig_gmc[i,m] = lt_minus_sigma_gmc
             
         if Nstd == 0:
-            lt_df_gmc1 = pd.DataFrame(lt_vals_gmc1, index = ['mean'])
+            lt_df_gmc = pd.DataFrame(lt_vals_gmc, index = ['mean'])
             
-            lt_mean_gmc1 = np.sum(lt_df_gmc1[:].loc['mean'])
+            lt_mean_gmc = np.sum(lt_df_gmc[:].loc['mean'])
              
-            pyplot.plot(r_vals, lt_mean_gmc1, linewidth=2, color='k',
-                        linestyle='--', label='GMC logic tree #1')
+            pyplot.plot(r_vals, lt_mean_gmc, linewidth=2, color=col,
+                        linestyle='--', label=label)
             
-            mean_gmc1[i,m] = lt_mean_gmc1
-            
-    # Logic tree #2
-    if lt_vals_gmc2 != {}:
-        if not Nstd == 0:
-               
-            lt_df_gmc2 = pd.DataFrame(
-                lt_vals_gmc2, index=['mean', 'plus_sigma', 'minus_sigma'])
-    
-            lt_mean_gmc2 = np.sum(lt_df_gmc2[:].loc['mean'])
-            lt_plus_sigma_gmc2 = np.sum(lt_df_gmc2[:].loc['plus_sigma'])
-            lt_minus_sigma_gmc2 = np.sum(lt_df_gmc2[:].loc['minus_sigma'])
-    
-            pyplot.plot(r_vals, lt_mean_gmc2, linewidth=2,
-                        color='tab:grey', linestyle='--',
-                        label='GMC logic tree #2', zorder=100)
-            
-            pyplot.plot(
-                r_vals, lt_plus_sigma_gmc2, linewidth=0.75,
-                color='tab:grey', linestyle='-.', zorder=100)
-    
-            pyplot.plot(
-                r_vals, lt_minus_sigma_gmc2, linewidth=0.75, 
-                color='tab:grey', linestyle='-.', zorder=100)
-            
-            mean_gmc2[i,m] = lt_mean_gmc2
-            plus_sig_gmc2[i,m] = lt_plus_sigma_gmc2
-            minus_sig_gmc2[i,m] = lt_minus_sigma_gmc2
-            
-        if Nstd == 0:
-            lt_df_gmc2 = pd.DataFrame(lt_vals_gmc2, index = ['mean'])
-            
-            lt_mean_gmc2 = np.sum(lt_df_gmc2[:].loc['mean'])
-             
-            pyplot.plot(r_vals, lt_mean_gmc2, linewidth=2,
-                        color='tab:grey', linestyle='--',
-                        label='GMC logic tree #2')
-            
-            mean_gmc2[i, m] = lt_mean_gmc2 
+            mean_gmc[i,m] = lt_mean_gmc
 
-    return mean_gmc1, plus_sig_gmc1, minus_sig_gmc1, \
-        mean_gmc2, plus_sig_gmc2, minus_sig_gmc2
+    return mean_gmc, plus_sig_gmc, minus_sig_gmc
 
 
 def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
@@ -976,4 +951,18 @@ def save_spectra_plot(f1, f2, obs_spectra, output_dir, eq_id=None, st_id=None):
         
     # Save sigma plot
     f2.savefig(os.path.join(output_dir,'sigma.png'), bbox_inches = 'tight',
-               dpi = 200, pad_inches = 0.2)
+               dpi = 200, pad_inches = 0.2)    
+
+
+### Sammons utils
+def sammons_mean(mtxs, imt_list, gmpe_list):
+    """
+    For a matrix of predicted ground-motions computed the arithmetic mean
+    per IMT w.r.t. the number of GMPEs within the gmpe_list
+    """
+    means = {}
+    for imt_idx, imt in enumerate(mtxs): # Per imt in matrix
+        means[imt_idx] = np.mean((mtxs[imt])) # Mean over the gmpes
+    
+    return means
+        
