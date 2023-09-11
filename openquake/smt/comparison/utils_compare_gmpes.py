@@ -382,7 +382,6 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         ax.set_visible(False)
 
     pyplot.savefig(namefig, bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
-    pyplot.show()
     pyplot.tight_layout()        
     
     return matrix_Dist
@@ -445,7 +444,6 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
     pyplot.legend(loc = "center left", bbox_to_anchor = (1.25, 0.50),
                   fontsize = '16')
     pyplot.savefig(namefig, bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
-    pyplot.show()
     pyplot.tight_layout()
     
     return coo
@@ -518,7 +516,6 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         
 
     pyplot.savefig(namefig, bbox_inches = 'tight', dpi = 200, pad_inches = 0.4)
-    pyplot.show()
     pyplot.tight_layout() 
     
     return matrix_Z
