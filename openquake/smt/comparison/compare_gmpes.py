@@ -92,27 +92,10 @@ class Configurations(object):
             'trellis_depths']
         for depth_val in range(0,len(self.trellis_depth)):
             self.trellis_depth[depth_val] = float(self.trellis_depth[depth_val])
-            
-        # Create depth array for non trellis functions 
-        non_trellis_depths = pd.DataFrame(config_file[
-            'mag_values_non_trellis_or_spectra_functions'][
-                'non_trellis_or_spectra_depths'],
-            columns=['mag','depth'])
         
-        # Round each mag interval to closest integer for depth assignment
-        mag_to_nearest_int = pd.Series(dtype='float')
-        for mag in mag_array:
-            mag_to_nearest_int[mag] = np.round(mag+0.001)
-        
-        # Assign depth to closest integer
-        depth_array_initial = []
-        for mag in mag_to_nearest_int:
-            for idx in range(0,len(non_trellis_depths['mag'])):
-                if mag == non_trellis_depths['mag'][idx]:
-                    depth_to_store = non_trellis_depths['depth'][idx]
-                    depth_array_initial.append(depth_to_store)
-            
-        self.depth_for_non_trellis_functions = pd.Series(depth_array_initial) 
+        # Get depths for Sammons, Euclidean distance and clustering
+        self.depth_for_non_trellis_functions = assign_depths_per_mag_bin(
+            config_file, mag_array)
         
         # Get imts
         self.imt_list = config_file['general']['imt_list']
@@ -304,7 +287,7 @@ def plot_sammons(filename, output_directory):
     
     if len(config.gmpes_list) < 2:
         raise ValueError("Cannot perform Sammons Mapping for a single GMPE.")
-        
+
     mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor, config.imt_list,
                                         config.mag_list, config.gmpes_list,
                                         config.rake, config.strike, config.dip, 
@@ -406,3 +389,31 @@ def plot_euclidean(filename, output_directory):
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
                         os.path.join(output_directory,'16th_perc_Euclidean.png'),
                         mtxs_type = '16th_perc')
+    
+    
+def assign_depths_per_mag_bin(config_file, mag_array):
+    """
+    For each magnitude considered within the Sammons Maps, Euclidean distance
+    and clustering plots assign a depth
+    """
+    # Create depth array
+    non_trellis_or_spectra_depths = pd.DataFrame(config_file[
+        'mag_values_non_trellis_or_spectra_functions'][
+            'non_trellis_or_spectra_depths'], columns=['mag','depth'])
+    
+    # Round each mag interval to closest integer for depth assignment
+    mag_to_nearest_int = pd.Series(dtype='float')
+    for mag in mag_array:
+        mag_to_nearest_int[mag] = np.round(mag+0.001)
+    
+    # Assign depth to closest integer
+    depth_array_initial = []
+    for mag in mag_to_nearest_int:
+        for idx in range(0,len(non_trellis_or_spectra_depths['mag'])):
+            if mag == non_trellis_or_spectra_depths['mag'][idx]:
+                depth_to_store = non_trellis_or_spectra_depths['depth'][idx]
+                depth_array_initial.append(depth_to_store)
+        
+    depths = pd.Series(depth_array_initial) 
+    
+    return depths
