@@ -26,7 +26,6 @@ from matplotlib import pyplot
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist, squareform
 from scipy import interpolate
-from IPython.display import display
 from collections import OrderedDict
 
 from openquake.smt.comparison.sammons import sammon
@@ -371,11 +370,11 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         ax.imshow(matrix_Dist[n],cmap='gray') 
         
         if mtxs_type == 'median':
-            ax.set_title(str(i) + ' (median)', fontsize = '14')
+            ax.set_title(str(i) + ' (median)', fontsize='14')
         if mtxs_type == '84th_perc':
-            ax.set_title(str(i) + ' (84th percentile)', fontsize = '14')
+            ax.set_title(str(i) + ' (84th percentile)', fontsize='14')
         if mtxs_type == '16th_perc':
-            ax.set_title(str(i) + ' (16th percentile)', fontsize = '14')
+            ax.set_title(str(i) + ' (16th percentile)', fontsize='14')
 
         ax.xaxis.set_ticks([n for n in range(len(gmpe_list))])
         ax.xaxis.set_ticklabels(gmpe_list,rotation=40)
@@ -387,7 +386,7 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         ax = axs2[np.unravel_index(n+1, (nrows, ncols))]
         ax.set_visible(False)
 
-    pyplot.savefig(namefig, bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
+    pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.tight_layout()        
     
     return matrix_Dist
@@ -410,49 +409,52 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Get mean per imt over the gmpes
-    means = sammons_mean(mtxs, imt_list, gmpe_list)
+    mtxs, gmpe_list = sammons_mean(mtxs, imt_list, gmpe_list)
     
     # Setup
     colors = get_cols(custom_color_flag, custom_color_list)
     texts = []
-    
-    ncols = 2    
     if len(imt_list) < 3:
         nrows = 1
     else:
-        nrows = int(np.ceil(len(imt_list) / 2)) 
-    
+        nrows = int(np.ceil(len(imt_list)/2)) 
     fig = pyplot.figure()
     fig.set_size_inches(12, 6*nrows)
     
-    for n, i in enumerate(imt_list): #iterate though imt_list
-
-        # Get the data matrix
-        data = mtxs[n]
-        coo, cost = sammon(data, display = 1)
+    for n, i in enumerate(imt_list):
         
-        fig.add_subplot(nrows, ncols, n+1) #(#vert, #hor, #subplot)
+        data = mtxs[n] # Get the data matrix
+        coo, cost = sammon(data, display = 1)
+        fig.add_subplot(nrows, 2, n+1)
 
-        for g, gmpe in enumerate(gmpe_list): 
-            col=colors[g]
-            pyplot.plot(coo[g, 0], coo[g, 1], 'o', markersize=9, color=colors[
-                g], label=gmpe)
+        for g, gmpe in enumerate(gmpe_list):
+            # Get colors and marker
+            if g == len(gmpe_list)-1:
+                col = 'k'
+                marker = 'x'
+            else:
+                marker = 'o'
+                col = colors[g]
+            
+            # Plot data
+            pyplot.plot(coo[g, 0], coo[g, 1], marker, markersize=9, color=col,
+                        label=gmpe)
             texts.append(pyplot.text(coo[g, 0]+np.abs(coo[g, 0])*0.02,
                                      coo[g, 1]+np.abs(coo[g, 1])*0.,
-                                     gmpe_list[g], ha = 'left', color = col))
+                                     gmpe_list[g], ha='left', color=col))
 
         pyplot.title(str(i), fontsize='16')
         if mtxs_type == 'median':
-            pyplot.title(str(i) + ' (median)', fontsize = '14')
+            pyplot.title(str(i) + ' (median)', fontsize='14')
         if mtxs_type == '84th_perc':
-            pyplot.title(str(i) + ' (84th percentile)', fontsize = '14')
+            pyplot.title(str(i) + ' (84th percentile)', fontsize='14')
         if mtxs_type == '16th_perc':
-            pyplot.title(str(i) + ' (16th percentile)', fontsize = '14')
+            pyplot.title(str(i) + ' (16th percentile)', fontsize='14')
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
-    pyplot.legend(loc = "center left", bbox_to_anchor = (1.25, 0.50),
-                  fontsize = '16')
-    pyplot.savefig(namefig, bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
+    pyplot.legend(loc="center left", bbox_to_anchor=(1.25, 0.50),
+                  fontsize='16')
+    pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.tight_layout()
     
     return coo
@@ -480,7 +482,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     else:
         nrows = int(np.ceil(len(imt_list) / 2)) 
     matrix_Z = {}
-    ymax =  [0] * len(imt_list)
+    ymax = [0] * len(imt_list)
 
     # Loop over IMTs
     for n, i in enumerate(imt_list):
@@ -508,13 +510,13 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         # Plot dendrogram
         dn1 = hierarchy.dendrogram(matrix_Z[n], ax=ax, orientation='right',
                                    labels=gmpe_list)
-        ax.set_xlabel('Euclidean Distance', fontsize = '12')
+        ax.set_xlabel('Euclidean Distance', fontsize='12')
         if mtxs_type == 'median':
-            ax.set_title(str(i) + ' (median)', fontsize = '12')
+            ax.set_title(str(i) + ' (median)', fontsize='12')
         if mtxs_type == '84th_perc':
-            ax.set_title(str(i) + ' (84th percentile)', fontsize = '12')
+            ax.set_title(str(i) + ' (84th percentile)', fontsize='12')
         if mtxs_type == '16th_perc':
-            ax.set_title(str(i) + ' (16th percentile)', fontsize = '12')
+            ax.set_title(str(i) + ' (16th percentile)', fontsize='12')
             
     # Remove final plot if not required
     if len(imt_list) > 3 and len(imt_list)/2 != int(len(imt_list)/2):
@@ -523,8 +525,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     if len(imt_list) == 1:
         axs[1].set_visible(False)
         
-
-    pyplot.savefig(namefig, bbox_inches = 'tight', dpi = 200, pad_inches = 0.4)
+    pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.4)
     pyplot.tight_layout() 
     
     return matrix_Z
@@ -941,28 +942,38 @@ def save_spectra_plot(f1, f2, obs_spectra, output_dir, eq_id=None, st_id=None):
     """
     if obs_spectra is None:
         f1.savefig(os.path.join(output_dir, 'ResponseSpectra.png'),
-                     bbox_inches = 'tight', dpi = 200, pad_inches = 0.2)
+                     bbox_inches='tight', dpi=200, pad_inches=0.2)
     else:
         rec_str = str(eq_id + '_recorded_at_' + st_id)
         rec_str = rec_str.replace(' ','_').replace(':','_').replace('-','_')
         fname = 'ResponseSpectra_' + rec_str + '.png'
-        f1.savefig(os.path.join(output_dir, fname), bbox_inches = 'tight',
-                   dpi = 200, pad_inches = 0.2)
+        f1.savefig(os.path.join(output_dir, fname), bbox_inches='tight',
+                   dpi=200, pad_inches=0.2)
         
     # Save sigma plot
-    f2.savefig(os.path.join(output_dir,'sigma.png'), bbox_inches = 'tight',
-               dpi = 200, pad_inches = 0.2)    
+    f2.savefig(os.path.join(output_dir,'sigma.png'), bbox_inches='tight',
+               dpi=200, pad_inches=0.2)    
 
 
 ### Sammons utils
 def sammons_mean(mtxs, imt_list, gmpe_list):
     """
-    For a matrix of predicted ground-motions computed the arithmetic mean
-    per IMT w.r.t. the number of GMPEs within the gmpe_list
+    For a matrix of predicted ground-motions computed the arithmetic mean per
+    prediction per IMT w.r.t. the number of GMPEs within the gmpe_list
     """
-    means = {}
-    for imt_idx, imt in enumerate(mtxs): # Per imt in matrix
-        means[imt_idx] = np.mean((mtxs[imt])) # Mean over the gmpes
+    for imt_idx, imt in enumerate(mtxs):
+        store_vals = []
+        for idx_gmpe, gmpe in enumerate(mtxs[imt]):
+            store_vals.append(
+                pd.Series(mtxs[imt][idx_gmpe])) # store per gmpe for imt 
+        
+        # Into df and get mean val per column (one column per prediction)
+        val_df = pd.DataFrame(store_vals)
+        mean = (val_df.mean(axis=0)) 
+        mtxs[imt] = np.concatenate((mtxs[imt], [mean]))
     
-    return means
+    if 'mean' not in gmpe_list:
+        gmpe_list.append('mean')
+    
+    return mtxs, gmpe_list
         
