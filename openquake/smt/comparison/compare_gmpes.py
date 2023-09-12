@@ -77,30 +77,28 @@ class Configurations(object):
         # One set of magnitudes for use in trellis plots
         self.trellis_mag_list = config_file['source_properties'][
             'trellis_mag_list']
-        for mag in range(0,len(self.trellis_mag_list)):
-                self.trellis_mag_list[mag] = float(
-                    self.trellis_mag_list[mag])
-        
-        # One set of magnitudes for use in other functions 
-        mag_params = config_file['mag_values_non_trellis_or_spectra_functions']
-        mag_array = np.arange(mag_params['mmin'],mag_params['mmax'],
-                              mag_params['spacing'])
-        self.mag_list =  mag_array
+        for idx, mag in enumerate(self.trellis_mag_list):
+                self.trellis_mag_list[idx] = float(self.trellis_mag_list[idx])
         
         # Depths per magnitude for trellis plots
         self.trellis_depth = config_file['source_properties'][
             'trellis_depths']
-        for depth_val in range(0,len(self.trellis_depth)):
-            self.trellis_depth[depth_val] = float(self.trellis_depth[depth_val])
+        for idx, depth in enumerate(self.trellis_depth):
+            self.trellis_depth[idx] = float(self.trellis_depth[idx])
+        
+        # Get mags for Sammons, Euclidean distance and clustering
+        mag_params = config_file['mag_values_non_trellis_or_spectra_functions']
+        self.mag_list = np.arange(
+            mag_params['mmin'], mag_params['mmax'], mag_params['spacing'])
         
         # Get depths for Sammons, Euclidean distance and clustering
         self.depth_for_non_trel_or_rs_fun = assign_depths_per_mag_bin(
-            config_file, mag_array)
+            config_file, self.mag_list)
         
         # Get imts
         self.imt_list = config_file['general']['imt_list']
-        for imt in range(0,len(self.imt_list)):
-            self.imt_list[imt] = from_string(str(self.imt_list[imt]))  
+        for idx, imt in enumerate(self.imt_list):
+            self.imt_list[idx] = from_string(str(self.imt_list[idx]))  
         
         # Get model labels
         self.gmpe_labels = config_file['gmpe_labels']['gmpes_label']
@@ -121,8 +119,8 @@ class Configurations(object):
             gmpes_list_initial.append(valid.gsim(value))
             
         self.gmpes_list = []
-        for gmpe in range(0,len(gmpes_list_initial)):
-            self.gmpes_list.append(str(gmpes_list_initial[gmpe]))
+        for idx, gmpe in enumerate(gmpes_list_initial):
+            self.gmpes_list.append(str(gmpes_list_initial[idx]))
 
         # Check number of GMPEs matches number of GMPE labels
         if len(self.gmpes_list) != len(self.gmpe_labels):
@@ -142,8 +140,6 @@ class Configurations(object):
                     if 'lt_weight_gmc2' in component:
                         get_weights_gmc2[gmpe] = float(split_gmpe_str[
                             idx].split('=')[1])
-            else:
-                pass
             
         # Check weights for each logic tree (if present) equal 1.0
         if get_weights_gmc1 != {}:
@@ -403,20 +399,20 @@ def assign_depths_per_mag_bin(config_file, mag_array):
     non_trellis_or_spectra_depths = pd.DataFrame(config_file[
         'mag_values_non_trellis_or_spectra_functions'][
             'non_trellis_or_spectra_depths'], columns=['mag','depth'])
-    
+            
     # Round each mag interval to closest integer for depth assignment
     mag_to_nearest_int = pd.Series(dtype='float')
     for mag in mag_array:
-        mag_to_nearest_int[mag] = np.round(mag+0.001)
-    
+        mag_to_nearest_int[mag] = np.round(mag+0.0001)
+
     # Assign depth to closest integer
     depth_array_initial = []
     for mag in mag_to_nearest_int:
-        for idx in range(0,len(non_trellis_or_spectra_depths['mag'])):
+        for idx, mag in enumerate(non_trellis_or_spectra_depths['mag']):
             if mag == non_trellis_or_spectra_depths['mag'][idx]:
                 depth_to_store = non_trellis_or_spectra_depths['depth'][idx]
                 depth_array_initial.append(depth_to_store)
-        
+    
     depths = pd.Series(depth_array_initial) 
     
     return depths
