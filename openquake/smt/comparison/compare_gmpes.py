@@ -75,16 +75,18 @@ class Configurations(object):
         self.aratio = -999
         
         # One set of magnitudes for use in trellis plots
-        self.trellis_mag_list = config_file['source_properties'][
-            'trellis_mag_list']
-        for idx, mag in enumerate(self.trellis_mag_list):
-                self.trellis_mag_list[idx] = float(self.trellis_mag_list[idx])
+        self.trellis_and_rs_mag_list = config_file['source_properties'][
+            'trellis_and_rs_mag_list']
+        for idx, mag in enumerate(self.trellis_and_rs_mag_list):
+                self.trellis_and_rs_mag_list[idx] = float(
+                    self.trellis_and_rs_mag_list[idx])
         
         # Depths per magnitude for trellis plots
-        self.trellis_depth = config_file['source_properties'][
-            'trellis_depths']
-        for idx, depth in enumerate(self.trellis_depth):
-            self.trellis_depth[idx] = float(self.trellis_depth[idx])
+        self.trellis_and_rs_depth = config_file['source_properties'][
+            'trellis_and_rs_depths']
+        for idx, depth in enumerate(self.trellis_and_rs_depth):
+            self.trellis_and_rs_depth[idx] = float(
+                self.trellis_and_rs_depth[idx])
         
         # Get mags for Sammons, Euclidean distance and clustering
         mag_params = config_file['mag_values_non_trellis_or_spectra_functions']
@@ -170,14 +172,14 @@ def plot_trellis(filename, output_directory):
     config = Configurations(filename)
     
     plot_trellis_util(config.trt, config.ztor, config.rake, config.strike,
-                      config.dip, config.trellis_depth, config.Z1, config.Z25,
-                      config.Vs30, config.region, config.imt_list,
-                      config.trellis_mag_list, config.maxR, config.gmpes_list,
-                      config.aratio, config.Nstd, output_directory,
-                      config.custom_color_flag, config.custom_color_list,
-                      config.eshm20_region, config.dist_type,
-                      config.lt_weights_gmc1, config.lt_weights_gmc2,
-                      config.up_or_down_dip) 
+                      config.dip, config.trellis_and_rs_depth, config.Z1,
+                      config.Z25, config.Vs30, config.region, config.imt_list,
+                      config.trellis_and_rs_mag_list, config.maxR,
+                      config.gmpes_list, config.aratio, config.Nstd,
+                      output_directory, config.custom_color_flag,
+                      config.custom_color_list, config.eshm20_region,
+                      config.dist_type, config.lt_weights_gmc1,
+                      config.lt_weights_gmc2, config.up_or_down_dip) 
 
                 
 def plot_spectra(filename, output_directory, obs_spectra = None):
@@ -201,9 +203,9 @@ def plot_spectra(filename, output_directory, obs_spectra = None):
         obs_spectra = None
     
     plot_spectra_util(config.trt, config.ztor, config.rake, config.strike,
-                      config.dip, config.trellis_depth, config.Z1, config.Z25,
-                      config.Vs30, config.region, config.max_period,
-                      config.trellis_mag_list, config.dist_list,
+                      config.dip, config.trellis_and_rs_depth, config.Z1,
+                      config.Z25, config.Vs30, config.region, config.max_period,
+                      config.trellis_and_rs_mag_list, config.dist_list,
                       config.gmpes_list, config.aratio, config.Nstd,
                       output_directory, config.custom_color_flag,
                       config.custom_color_list, config.eshm20_region,

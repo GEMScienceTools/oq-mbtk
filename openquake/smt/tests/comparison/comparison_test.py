@@ -84,7 +84,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.region,TARGET_REGION)      
             
         # Check for target depths (other functions use arrays from these depths)
-        self.assertEqual(config.trellis_depth, TARGET_TRELLIS_DEPTHS)     
+        self.assertEqual(config.trellis_and_rs_depth, TARGET_TRELLIS_DEPTHS)     
         
         # Check for target Rmax
         self.assertEqual(config.maxR,TARGET_RMAX) 
@@ -93,8 +93,8 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.Nstd,TARGET_NSTD) 
         
         # Check for target trellis mag
-        for mag in range(0,len(config.trellis_mag_list)):
-            self.assertEqual(config.trellis_mag_list[mag],TARGET_TRELLIS_MAG[
+        for mag in range(0,len(config.trellis_and_rs_mag_list)):
+            self.assertEqual(config.trellis_and_rs_mag_list[mag],TARGET_TRELLIS_MAG[
                 mag])
                 
         # Check for target mag
@@ -268,9 +268,9 @@ class ComparisonTestCase(unittest.TestCase):
         
         # Trellis plots
         plot_trellis_util(config.trt, config.ztor, config.rake, config.strike,
-                          config.dip, config.trellis_depth, config.Z1,
+                          config.dip, config.trellis_and_rs_depth, config.Z1,
                           config.Z25, config.Vs30, config.region, config.imt_list,
-                          config.trellis_mag_list, config.maxR, config.gmpes_list,
+                          config.trellis_and_rs_mag_list, config.maxR, config.gmpes_list,
                           config.aratio, config.Nstd, self.output_directory,
                           config.custom_color_flag, config.custom_color_list,
                           config.eshm20_region, config.dist_type,
@@ -279,9 +279,9 @@ class ComparisonTestCase(unittest.TestCase):
         
         # Spectra plots 
         plot_spectra_util(config.trt, config.ztor, config.rake, config.strike,
-                          config.dip, config.trellis_depth, config.Z1,
+                          config.dip, config.trellis_and_rs_depth, config.Z1,
                           config.Z25, config.Vs30, config.region,
-                          config.max_period, config.trellis_mag_list,
+                          config.max_period, config.trellis_and_rs_mag_list,
                           config.dist_list, config.gmpes_list, config.aratio,
                           config.Nstd, self.output_directory,
                           config.custom_color_flag, config.custom_color_list,
