@@ -260,17 +260,17 @@ def plot_cluster(filename, output_directory):
     # Cluster by median
     plot_cluster_util(config.imt_list, config.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,'Median_Clustering.png'),
-                      mtxs_type = 'median')    
+                      mtxs_type='median')    
     
     # Cluster by 84th percentile
     plot_cluster_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
                       os.path.join(output_directory,'84th_perc_Clustering.png'),
-                      mtxs_type = '84th_perc')                    
+                      mtxs_type='84th_perc')                    
 
     # Cluster by 16th percentile
     plot_cluster_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
                       os.path.join(output_directory,'16th_perc_Clustering.png'),
-                      mtxs_type = '16th_perc')  
+                      mtxs_type='16th_perc')  
 
 
 def plot_sammons(filename, output_directory):
@@ -320,17 +320,17 @@ def plot_sammons(filename, output_directory):
     plot_sammons_util(config.imt_list, config.gmpe_labels, mtxs_medians,
                       os.path.join(output_directory,'Median_SammonMaps.png'),
                       config.custom_color_flag, config.custom_color_list,
-                      mtxs_type = 'median')
+                      mtxs_type='median')
     
     plot_sammons_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
                       os.path.join(output_directory,'84th_perc_SammonMaps.png'),
                       config.custom_color_flag, config.custom_color_list,
-                      mtxs_type = '84th_perc')
+                      mtxs_type='84th_perc')
     
     plot_sammons_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
                       os.path.join(output_directory,'16th_perc_SammonMaps.png'),
                       config.custom_color_flag, config.custom_color_list,
-                      mtxs_type = '16th_perc')
+                      mtxs_type='16th_perc')
    
     
 def plot_euclidean(filename, output_directory):
@@ -379,15 +379,15 @@ def plot_euclidean(filename, output_directory):
     
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_medians,
                         os.path.join(output_directory,'Median_Euclidean.png'),
-                        mtxs_type = 'median')
+                        mtxs_type='median')
     
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
                         os.path.join(output_directory,'84th_perc_Euclidean.png'),
-                        mtxs_type = '84th_perc')
+                        mtxs_type='84th_perc')
     
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
                         os.path.join(output_directory,'16th_perc_Euclidean.png'),
-                        mtxs_type = '16th_perc')
+                        mtxs_type='16th_perc')
     
     
 def assign_depths_per_mag_bin(config_file, mag_array):
@@ -395,24 +395,24 @@ def assign_depths_per_mag_bin(config_file, mag_array):
     For each magnitude considered within the Sammons Maps, Euclidean distance
     and clustering plots assign a depth
     """
-    # Create depth array
+    # Create dataframe of depth to assign per mag bin
     non_trellis_or_spectra_depths = pd.DataFrame(config_file[
         'mag_values_non_trellis_or_spectra_functions'][
             'non_trellis_or_spectra_depths'], columns=['mag','depth'])
             
-    # Round each mag interval to closest integer for depth assignment
+    # Round each mag in mag_array to closest integer
     mag_to_nearest_int = pd.Series(dtype='float')
     for mag in mag_array:
-        mag_to_nearest_int[mag] = np.round(mag+0.0001)
+        mag_to_nearest_int[mag] = np.round(mag+0.001)
 
-    # Assign depth to closest integer
+    # Assign depth to each mag in mag_array using rounded mags
     depth_array_initial = []
-    for mag in mag_to_nearest_int:
-        for idx, mag in enumerate(non_trellis_or_spectra_depths['mag']):
-            if mag == non_trellis_or_spectra_depths['mag'][idx]:
+    for idx_mag, rounded_mag in enumerate(mag_to_nearest_int):
+        for idx, val in enumerate(non_trellis_or_spectra_depths['mag']):
+            if rounded_mag == non_trellis_or_spectra_depths['mag'][idx]:
                 depth_to_store = non_trellis_or_spectra_depths['depth'][idx]
                 depth_array_initial.append(depth_to_store)
-    
+        
     depths = pd.Series(depth_array_initial) 
     
     return depths
