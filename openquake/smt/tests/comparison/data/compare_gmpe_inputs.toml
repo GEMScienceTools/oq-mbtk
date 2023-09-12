@@ -31,8 +31,8 @@ ztor = 'None' # Set to string of 'None' to NOT consider
 strike = -999
 dip = -999
 rake = 60
-trellis_mag_list = [5,6,7] # mags used only for trellis
-trellis_depths = [20,25,30] # depth per magnitude for trellis
+trellis_and_rs_mag_list = [5,6,7] # mags used only for trellis
+trellis_and_rs_depths = [20,25,30] # depth per magnitude for trellis
 
 # Specify mag values and depths for use in Sammons, Euclidean dist and clustering
 [mag_values_non_trellis_or_spectra_functions]
