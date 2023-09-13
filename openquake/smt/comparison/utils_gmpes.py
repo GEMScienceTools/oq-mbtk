@@ -131,58 +131,78 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
     return rup
 
 
-def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
-               Z1, Z25, maxR, step, imt, ztor, eshm20_region,
-               up_or_down_dip=None):
+def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30, 
+               Z1, Z25, maxR, step, imt, ztor, eshm20_region, dist_type, trt,
+               up_or_down_dip):    
     """
-    Compute predicted ground-motion intensities w.r.t considered distance using
-    the given GMPE
+    Compute predicted ground-motion intensities
     """
-    # Get trt
-    trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
-
+    rup_trt = None
+    if trt == 'ASCR':
+        rup_trt = TRT.ACTIVE_SHALLOW_CRUST 
+    if trt == 'InSlab':
+        rup_trt = TRT.SUBDUCTION_INTRASLAB
+    if trt == 'Interface':
+        rup_trt = TRT.SUBDUCTION_INTERFACE
+    if trt == 'Stable':
+        rup_trt = TRT.STABLE_CONTINENTAL
+    if trt == 'Upper_Mantle':
+        rup_trt = TRT.UPPER_MANTLE
+    if trt == 'Volcanic':
+        rup_trt = TRT.VOLCANIC
+    if trt == 'Induced':
+        rup_trt = TRT.INDUCED
+    if trt == 'Induced_Geothermal':
+        rup_trt = TRT.GEOTHERMAL
+    if trt == -999:
+        rup_trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
+    if rup_trt is None:
+     raise ValueError('Specify a TRT string within the toml file: ASCR, \
+                       InSlab, Interface, Stable, Upper_Mantle, Volcanic, \
+                       Induced, Induced_Geothermal')
+                        
     # Get rup
     rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
-                      strike=strike, dip=dip, rake=rake, trt=trt,
+                      strike=strike, dip=dip, rake=rake, trt=rup_trt,
                       ztor=ztor)
-
+    
     # Set site props
     if 'KothaEtAl2020ESHM20' in str(orig_gmpe):
         props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
-                 'vs30measured': True, 'region': eshm20_region}
+                 'vs30measured': True,'region': eshm20_region}  
     else:
         props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
                  'vs30measured': True}
-
+    
     # Check if site up-dip or down-dip of site
-    if up_or_down_dip is None or up_or_down_dip == 1:
+    if up_or_down_dip == float(1):
         direction = 'positive'
         from_point = 'TC'
-    elif up_or_down_dip == 0:
+    elif up_or_down_dip == float(0):
         from_point = 'BC'
         direction = 'negative'
-
+    
     # Get sites
     sites = get_sites_from_rupture(rup, from_point, toward_azimuth=90,
-                                   direction=direction, hdist=maxR,
-                                   step=step, site_props=props)
-
+                                   direction = direction, hdist = maxR,
+                                   step = step, site_props = props)
+    
     # Create context
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
-    ctxm = ContextMaker(trt, [gmpe], oqp)
-
+    ctxm = ContextMaker(rup_trt, [gmpe], oqp)
     ctxs = list(ctxm.get_ctx_iter([rup], sites))
     ctxs = ctxs[0]
     ctxs.occurrence_rate = 0.0
-
+    
     # Compute ground-motions
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
-    distances = ctxs.rrup
-
-    # Ensures can interpolate to max value in dist_list (within RS plotting)
-    distances[len(distances) - 1] = maxR
-
+    if dist_type == 'rrup':
+        distances = ctxs.rrup
+    if dist_type == 'rjb':
+        distances = ctxs.rjb
+    distances[len(distances)-1] = maxR
+    
     return mean, std, distances
 
 
@@ -212,21 +232,18 @@ def _get_z25(Vs30, region):
     """
     if region == 2:  # in Japan
         Z25 = np.exp(5.359 - 1.102 * np.log(Vs30))
-        # Not used
-        #  Z25A_default = np.exp(7.089 - 1.144 * np.log(1100))
     else:
         Z25 = np.exp(7.089 - 1.144 * np.log(Vs30))
-        # Not used
-        #  Z25A_default = np.exp(7.089 - 1.144 * np.log(1100))
+
     return Z25
 
 
-def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
+def _param_gmpes(strike, dip, depth, aratio, rake, trt):
     """
     Get proxies for strike, dip, depth and aspect ratio if not provided
     """
     # Strike
-    if strike == -999:
+    if strike == -999: 
         strike_s = 0
     else:
         strike_s = strike
@@ -234,36 +251,32 @@ def _param_gmpes(gmpes, strike, dip, depth, aratio, rake):
     # Dip
     if dip == -999:
         if rake == 0:
-            dip_s = 90  # strike slip
+            dip_s = 90 # strike slip
         else:
-            dip_s = 45  # reverse or normal fault
+            dip_s = 45 # reverse or normal fault 
     else:
         dip_s = dip
 
     # Depth
-    trt_sint = TRT.SUBDUCTION_INTERFACE
-    trt_slab = TRT.SUBDUCTION_INTRASLAB
     if depth == -999:
-        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == trt_sint:
+        if trt == 'Interface':
             depth_s = 30
-        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == trt_slab:
+        if trt == 'InSlab':
             depth_s = 50
         else:
             depth_s = 15
     else:
         depth_s = depth
-
+        
     # a-ratio
     if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
-        if gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == trt_sint:
-            aratio_s = 5
-        elif gmpes.DEFINED_FOR_TECTONIC_REGION_TYPE == trt_slab:
+        if trt == 'InSlab' or trt == 'Interface':
             aratio_s = 5
         else:
             aratio_s = 2
-
+            
     return strike_s, dip_s, depth_s, aratio_s
 
 

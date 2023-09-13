@@ -13,6 +13,7 @@
 imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)'] # imts to compute gm for
 max_period = 2 # max period for response spectra (can't exceed maximum period in a specified GMPE)
 maxR = 300 # max distance to consider
+dist_type = 'rrup' # specify distance metric used in trellis plots
 dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
 region = 0
 eshm20_region = 4 # region for ESHM20 implementation of Kotha et al. 2020 GMPE (default is zero)
@@ -22,20 +23,23 @@ Nstd = 2 # number of standard deviations to sample sigma for
 vs30 = 800
 Z1 = -999
 Z25 = -999
+up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
 
-[source_properties]
+[source_properties] # Characterise EQ as finite rupture
+trt = 'ASCR'
+ztor = 'None' # Set to string of 'None' to NOT consider
 strike = -999
 dip = -999
 rake = 60
-trellis_mag_list = [5,6,7] # mags used only for trellis
-trellis_depths = [20,25,30] # depth per magnitude for trellis
+trellis_and_rs_mag_list = [5,6,7] # mags used only for trellis
+trellis_and_rs_depths = [20,25,30] # depth per magnitude for trellis
 
 # Specify mag values and depths for use in Sammons, Euclidean dist and clustering
-[mag_values_non_trellis_functions]
+[mag_values_non_trellis_or_spectra_functions]
 mmin = 5
 mmax = 7
 spacing = 0.1
-non_trellis_depths = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth],[mag,depth]] 
+non_trellis_or_spectra_depths = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth],[mag,depth]] 
 
 # Specify label for gmpes
 [gmpe_labels]
