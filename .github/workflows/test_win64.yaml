@@ -27,9 +27,22 @@ jobs:
         Write-Host "Current Working Directory: $curDir"
         Get-ChildItem -Path .\windows –recurse
         .\windows\install_oqmbtk.ps1
+        $mypath = $env:USERPROFILE += "\mbtk"
+        $Env:PATH += ";$mypath"
+        $Env:PATH += ";$mypath\Scripts"
+        $Env:PYTHONUTF8=1
+        $Env:PY_PIP=$mypath += '\Scripts'
+        $Env:PY_HOME=$mypath
+        $Env:PY_LIBS="$mypath\Lib;$mypath\Lib\site-package"
+        Start-Job -ScriptBlock{& 'oq.exe' dbserver start}
+        sleep 15
+        oq.exe --version
+        Write-Host "Print all environments variables to check"
+        dir env:
+        Write-Host "Print all pypip packages"
+        pip freeze
         cd $env:USERPROFILE
         cd mbtk
         dir
         cd oq-mbtk\openquake
-        pip freeze
-        pytest -vs cat ghm man mbt sub wkf smt 
+        pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt 
