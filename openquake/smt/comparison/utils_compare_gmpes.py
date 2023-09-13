@@ -303,10 +303,10 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                     ztor_m = None
 
                 mean, std, r_vals = att_curves(gmm, gmm_orig, depth[l], m, 
-                                                  aratio_g, strike_g, dip_g, 
-                                                  rake, Vs30, Z1, Z25, maxR, 
-                                                  step, i, ztor_m, eshm20_region,
-                                                  dist_type, trt, up_or_down_dip) 
+                                               aratio_g, strike_g, dip_g, 
+                                               rake, Vs30, Z1, Z25, maxR, 
+                                               step, i, ztor_m, eshm20_region,
+                                               dist_type, trt, up_or_down_dip) 
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians, (np.exp(mean)))
@@ -395,7 +395,9 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
                       custom_color_list, mtxs_type):
     """
-    Plot Sammons maps for given run configuration
+    Plot Sammons maps for given run configuration. The mean of the GMPE
+    predictions is also considered, which can be useful for selecting
+    a backbone model from a suite of GMMs when no recordings are available.
     :param imt_list:
         A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
     :param gmpe_list:
@@ -409,7 +411,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Get mean per imt over the gmpes
-    mtxs, gmpe_list = sammons_mean(mtxs, imt_list, gmpe_list)
+    mtxs, gmpe_list = matrix_mean(mtxs, imt_list, gmpe_list)
     
     # Setup
     colors = get_cols(custom_color_flag, custom_color_list)
@@ -462,7 +464,9 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
 
 def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     """
-    Plot hierarchical clusters for given run configuration
+    Plot hierarchical clusters for given run configuration. The mean of the
+    GMPE predictions is also considered, which can be useful for selecting
+    a backbone model from a suite of GMMs when no recordings are available.
     :param imt_list:
         A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
     :param gmpe_list:
@@ -475,6 +479,9 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
+    # Get mean per imt over the gmpes
+    mtxs, gmpe_list = matrix_mean(mtxs, imt_list, gmpe_list)
+    
     # Setup
     ncols = 2    
     if len(imt_list) < 3:
@@ -670,16 +677,16 @@ def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
     if dist_type == 'rjb':
         label = 'Rjb (km)'
     if n == 0: #top row only
-        pyplot.title('Mw = ' + str(m), fontsize='16')
+        pyplot.title('Mw = ' + str(m), fontsize='16') # Mod if required
     if n == len(imt_list)-1: #bottom row only
-        pyplot.xlabel(label, fontsize='16') # Mod to rjb if using instead
+        pyplot.xlabel(label, fontsize='16')
     if l == 0: #left row only
         pyplot.ylabel(str(i) + ' (g)', fontsize='16')
     pyplot.loglog()
-    pyplot.ylim(0.001, 10) # Mod if required
-    #pyplot.xlim(r_vals[0], r_vals[len(r_vals)-1]) # Mod if required
-                
-
+    #pyplot.ylim(0.001, 10) # Mod if required
+    #pyplot.xlim(r_vals[2], max(r_vals)) # Mod if required
+    
+    
 ### Spectra utils
 def _get_period_values_for_spectra_plots(max_period):
     """
@@ -955,8 +962,8 @@ def save_spectra_plot(f1, f2, obs_spectra, output_dir, eq_id=None, st_id=None):
                dpi=200, pad_inches=0.2)    
 
 
-### Sammons utils
-def sammons_mean(mtxs, imt_list, gmpe_list):
+### Utils for other plots
+def matrix_mean(mtxs, imt_list, gmpe_list):
     """
     For a matrix of predicted ground-motions computed the arithmetic mean per
     prediction per IMT w.r.t. the number of GMPEs within the gmpe_list
