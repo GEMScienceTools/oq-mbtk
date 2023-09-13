@@ -27,6 +27,7 @@ from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import (
     compute_matrix_gmpes, plot_trellis_util, plot_spectra_util, 
     plot_cluster_util, plot_sammons_util, plot_euclidean_util)
+from openquake.smt.comparison.backbone import plot_abs_ratio_trellis_util
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
@@ -61,6 +62,7 @@ class ComparisonTestCase(unittest.TestCase):
         # set the output
         if not os.path.exists(self.output_directory): os.makedirs(
                 self.output_directory)
+    
     
     def test_configuration_object_check(self):
         """
@@ -109,6 +111,7 @@ class ComparisonTestCase(unittest.TestCase):
         for imt in range(0,len(config.imt_list)):
             self.assertEqual(str(config.imt_list[imt]),TARGET_IMTS[imt])
     
+    
     def test_mtxs_median_calculation(self):
         """
         Check for matches bewteen the matrix of medians computed using
@@ -135,6 +138,7 @@ class ComparisonTestCase(unittest.TestCase):
         for imt in mtxs_medians:
             self.assertEqual(len(mtxs_medians[imt]), len(TARGET_GMPES))
         
+    
     def test_sammons_and_euclidean_distance_matrix_functions(self):
         """
         Check expected outputs based on given input parameters for median Sammons
@@ -186,12 +190,13 @@ class ComparisonTestCase(unittest.TestCase):
             for gmpe in range(0,len(matrix_Dist[imt])):
                 self.assertEqual(len(matrix_Dist[imt][gmpe]),len(TARGET_GMPES))
     
+    
     def test_clustering_median(self):
         """
         Check clustering functions for median predicted ground-motion of
         considered GMPEs in the configuration
         """
-        # Check each parameter matches target
+        # Get config
         config = comp.Configurations(self.input_file)
         
         # Median clustering checks
@@ -222,12 +227,13 @@ class ComparisonTestCase(unittest.TestCase):
             for gmpe in range(0,len(Z_matrix[imt])):
                 self.assertEqual(len(Z_matrix[imt][gmpe]), len(TARGET_GMPES))
                 
+    
     def test_clustering_84th_perc(self):
         """
         Check clustering of 84th percentile of predicted ground-motion of
         considered GMPEs in the configuration
         """
-        # Check each parameter matches target
+        # Get config
         config = comp.Configurations(self.input_file)
         
         # Median clustering checks
@@ -258,19 +264,21 @@ class ComparisonTestCase(unittest.TestCase):
             for gmpe in range(0,len(Z_matrix[imt])):
                 self.assertEqual(len(Z_matrix[imt][gmpe]), len(TARGET_GMPES))        
     
+    
     def test_trellis_and_spectra_functions(self):
         """
         Check trellis, response spectra and GMPE sigma w.r.t. spectral period
         plotting functions are executed 
         """
-        # Check each parameter matches target
+        # Get config
         config = comp.Configurations(self.input_file)
         
         # Trellis plots
         plot_trellis_util(config.trt, config.ztor, config.rake, config.strike,
                           config.dip, config.trellis_and_rs_depth, config.Z1,
-                          config.Z25, config.Vs30, config.region, config.imt_list,
-                          config.trellis_and_rs_mag_list, config.maxR, config.gmpes_list,
+                          config.Z25, config.Vs30, config.region,
+                          config.imt_list, config.trellis_and_rs_mag_list,
+                          config.maxR, config.gmpes_list,
                           config.aratio, config.Nstd, self.output_directory,
                           config.custom_color_flag, config.custom_color_list,
                           config.eshm20_region, config.dist_type,
@@ -302,6 +310,37 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertTrue(target_file_spectra)
         self.assertTrue(target_file_sigma)
         
+    
+    def test_backbone_functions(self):
+        """
+        Check functions of the backbone sub-module are executing correctly
+        """
+        # Get config
+        config = comp.Configurations(self.input_file)
+            
+        # Plot the trellis of absolute ratio (of mean of GMPEs vs each GMPE)
+        plot_abs_ratio_trellis_util(config.trt, config.ztor, config.rake,
+                                    config.strike, config.dip,
+                                    config.trellis_and_rs_depth, config.Z1,
+                                    config.Z25, config.Vs30, config.region,
+                                    config.imt_list,
+                                    config.trellis_and_rs_mag_list,
+                                    config.maxR, config.gmpes_list,
+                                    config.aratio, config.Nstd,
+                                    self.output_directory,
+                                    config.custom_color_flag,
+                                    config.custom_color_list,
+                                    config.eshm20_region,
+                                    config.dist_type, config.up_or_down_dip)
+        
+        # Specify target files
+        target_file_abs_dif_trellis = (os.path.join(
+            self.output_directory,'abs_ratio_plots.png'))
+ 
+        # Check target file created and outputted in expected location
+        self.assertTrue(target_file_abs_dif_trellis)
+        
+    
     @classmethod
     def tearDownClass(self):
         """

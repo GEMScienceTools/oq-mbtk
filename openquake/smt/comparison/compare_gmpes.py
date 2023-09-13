@@ -28,9 +28,14 @@ import os
 
 from openquake.hazardlib.imt import from_string
 from openquake.hazardlib import valid
-from openquake.smt.comparison.utils_compare_gmpes import plot_trellis_util, \
-    plot_spectra_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util,\
-        compute_matrix_gmpes
+from openquake.smt.comparison.backbone import plot_abs_ratio_trellis_util
+from openquake.smt.comparison.utils_compare_gmpes import (plot_trellis_util,
+                                                          plot_spectra_util,
+                                                          plot_cluster_util,
+                                                          plot_sammons_util,
+                                                          plot_euclidean_util,
+                                                          compute_matrix_gmpes)
+
 
 
 class Configurations(object):
@@ -390,6 +395,26 @@ def plot_euclidean(filename, output_directory):
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
                         os.path.join(output_directory,'16th_perc_Euclidean.png'),
                         mtxs_type='16th_perc')
+    
+def plot_abs_ratio_trellis(filename, output_directory):
+    """
+    Plot absolute difference between the mean prediction of a suite of GMPEs
+    and each GMPE individually against distance
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.    
+    """
+    # Generate config object
+    config = Configurations(filename)
+    
+    plot_abs_ratio_trellis_util(config.trt, config.ztor, config.rake, config.strike,
+                                config.dip, config.trellis_and_rs_depth, config.Z1,
+                                config.Z25, config.Vs30, config.region, config.imt_list,
+                                config.trellis_and_rs_mag_list, config.maxR,
+                                config.gmpes_list, config.aratio, config.Nstd,
+                                output_directory, config.custom_color_flag,
+                                config.custom_color_list, config.eshm20_region,
+                                config.dist_type, config.up_or_down_dip)
     
     
 def assign_depths_per_mag_bin(config_file, mag_array):

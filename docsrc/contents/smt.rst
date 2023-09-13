@@ -414,7 +414,7 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
 Comparing GMPEs
 ***************
 
-1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals (within the residual module as demonstrated above), we can also evaluate GMPEs with respect to the predicted ground-motion for a given earthquake scenario. Such evaluations are useful in general, but especially so when the user has selected a shortlist of potentially viable GMPEs for a GMPE logic tree and wishes to further compare them, or wishes to examine how different scalings of a backbone GMPE affect the predicted ground-motion. The tools for comparing GMPEs are found within the Comparison module.
+1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals (within the residual module as demonstrated above), we can also evaluate GMPEs with respect to the predicted ground-motion for a given earthquake scenario. Such evaluations are useful in general, but especially so when the user has selected a shortlist of potentially viable GMPEs for a GMPE logic tree and wishes to further compare them, or wishes to examine how different scalings of a backbone GMPE affect the predicted ground-motion. The tools for comparing GMPEs are found within the Comparison module. An additional sub-module found in openquake.smt.comparison.backbone provides tools for various aspects of developing a backbone GMC. For an overview of these more advanced GMC capabilities the user is adviced to consult the functions within this sub-module directly.
     
     .. code-block:: ini
     
