@@ -41,11 +41,11 @@ jobs:
         dir env:
         Write-Host "Print all pypip packages"
         pip freeze
-        cd $mypath
         pip list
+        Write-Host "Print MyPath folder: $mypath"
+        Set-Location -Path $mypath
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
         Get-ChildItem -Path .\windows –recurse
-
         cd oq-mbtk\openquake
         pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt 
