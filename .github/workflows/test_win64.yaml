@@ -31,4 +31,5 @@ jobs:
         cd mbtk
         dir
         cd oq-mbtk\openquake
+        pip freeze
         pytest -vs cat ghm man mbt sub wkf smt 
