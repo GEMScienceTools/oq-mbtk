@@ -85,9 +85,6 @@ def plot_trellis_util(
                 std = std[0][0]
                 plus_sigma = np.exp(mean+Nstd*std[0])
                 minus_sigma = np.exp(mean-Nstd*std[0])
-                if 'plot_lt_only' not in str(gmpe): # If not plotting lt only
-                    pyplot.plot(r_vals, np.exp(mean), color = col, linewidth=2,
-                                linestyle='-', label=gmpe)
                 
                 # Plot and get lt weighted predictions
                 lt_vals_gmc1, lt_vals_gmc2 = trellis_data(
@@ -382,7 +379,7 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         ax.yaxis.set_ticklabels(gmpe_list)
 
     # Remove final plot if not required
-    if len(imt_list) > 3 and len(imt_list)/2 != int(len(imt_list)/2):
+    if len(imt_list) >= 3 and len(imt_list)/2 != int(len(imt_list)/2):
         ax = axs2[np.unravel_index(n+1, (nrows, ncols))]
         ax.set_visible(False)
 
@@ -526,7 +523,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax.set_title(str(i) + ' (16th percentile)', fontsize='12')
             
     # Remove final plot if not required
-    if len(imt_list) > 3 and len(imt_list)/2 != int(len(imt_list)/2):
+    if len(imt_list) >= 3 and len(imt_list)/2 != int(len(imt_list)/2):
         ax = axs[np.unravel_index(n+1, (nrows, ncols))]
         ax.set_visible(False)
     if len(imt_list) == 1:
@@ -575,6 +572,10 @@ def trellis_data(Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
     Plot predictions of a single GMPE (if required) and compute weighted
     predictions from logic tree(s) (again if required)
     """
+    if 'plot_lt_only' not in str(gmpe): # If not plotting lt only
+        pyplot.plot(r_vals, np.exp(mean), color = col, linewidth=2,
+                    linestyle='-', label=gmpe)
+    
     if not Nstd == 0: # If sigma is sampled from
         if 'plot_lt_only' not in str(gmpe): # If only plotting individual GMPEs
             pyplot.plot(r_vals, plus_sigma, linewidth=0.75, 
