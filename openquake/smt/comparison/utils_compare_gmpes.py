@@ -85,9 +85,6 @@ def plot_trellis_util(
                 std = std[0][0]
                 plus_sigma = np.exp(mean+Nstd*std[0])
                 minus_sigma = np.exp(mean-Nstd*std[0])
-                if 'plot_lt_only' not in str(gmpe): # If not plotting lt only
-                    pyplot.plot(r_vals, np.exp(mean), color = col, linewidth=2,
-                                linestyle='-', label=gmpe)
                 
                 # Plot and get lt weighted predictions
                 lt_vals_gmc1, lt_vals_gmc2 = trellis_data(
@@ -575,6 +572,10 @@ def trellis_data(Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
     Plot predictions of a single GMPE (if required) and compute weighted
     predictions from logic tree(s) (again if required)
     """
+    if 'plot_lt_only' not in str(gmpe): # If not plotting lt only
+        pyplot.plot(r_vals, np.exp(mean), color = col, linewidth=2,
+                    linestyle='-', label=gmpe)
+    
     if not Nstd == 0: # If sigma is sampled from
         if 'plot_lt_only' not in str(gmpe): # If only plotting individual GMPEs
             pyplot.plot(r_vals, plus_sigma, linewidth=0.75, 
