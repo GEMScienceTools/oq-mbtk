@@ -48,13 +48,12 @@ class TrTestCase(unittest.TestCase):
             bool_to_int = []
             for val in f['crustal'][:]:
                 if val == True:
-                    bool_to_int.append(1)
-                if val == False:
-                    bool_to_int.append(0)
-            computed =  numpy.array(bool_to_int)
+                    bool_to_int.append(float(0))
+                else:
+                    bool_to_int.append(float(1))
+            computed = numpy.array(bool_to_int)
         else:
-            computed = f['crustal'][:]
-        
+            computed = f['slab_deep'][:]
         numpy.testing.assert_array_equal(computed, expected)
         #
         # testing slab
@@ -63,12 +62,12 @@ class TrTestCase(unittest.TestCase):
             bool_to_int = []
             for val in f['slab_deep'][:]:
                 if val == True:
-                    bool_to_int.append(1)
-                if val == False:
-                    bool_to_int.append(0)
-            computed =  numpy.array(bool_to_int)
+                    bool_to_int.append(float(0))
+                else:
+                    bool_to_int.append(float(1))
+            computed = numpy.array(bool_to_int)
         else:
-            computed = f['crustal'][:]
+            computed = f['slab_deep'][:]
         numpy.testing.assert_array_equal(computed, expected)
         #
         f.close()
