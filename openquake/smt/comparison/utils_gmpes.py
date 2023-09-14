@@ -24,43 +24,13 @@ import pandas as pd
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib.geo.surface import PlanarSurface
 from openquake.hazardlib.source.rupture import BaseRupture
-from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.scalerel import WC1994
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
-
-
-def _get_first_point(rup, from_point):
-    """
-    :param rup:
-    :param from_point:
-    """
-    sfc = rup.surface
-    if from_point == 'TC':  # Get the up-dip edge centre point
-        return sfc._get_top_edge_centroid()
-    elif from_point == 'BC':  # Get the down-dip edge centre point
-        lon, lat = geo_utils.get_middle_point(
-            sfc.corner_lons[2], sfc.corner_lats[2],
-            sfc.corner_lons[3], sfc.corner_lats[3]
-        )
-        return Point(lon, lat, sfc.corner_depths[2])
-    elif from_point == 'TL':
-        idx = 0
-    elif from_point == 'TR':
-        idx = 1
-    elif from_point == 'BR':
-        idx = 2
-    elif from_point == 'BL':
-        idx = 3
-    else:
-        raise ValueError('Unsupported option from first point')
-    return Point(sfc.corner_lons[idx],
-                 sfc.corner_lats[idx],
-                 sfc.corner_depths[idx])
-
+    
 
 def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
                            direction='positive', hdist=100, step=5.,
@@ -72,34 +42,32 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
     :return:
         A :class:`openquake.hazardlib.site.SiteCollection` instance
     """
-    from_pnt = _get_first_point(rup, from_point)
-    lon = from_pnt.longitude
-    lat = from_pnt.latitude
-    depth = 0
+    from_pnt = rup.surface._get_top_edge_centroid() # Get up-dip edge centroid
+    r_lon = from_pnt.longitude
+    r_lat = from_pnt.latitude
+    r_dep = 0
     vdist = 0
     npoints = hdist / step
     strike = rup.surface.strike
     pointsp = []
     pointsn = []
 
-    if not len(site_props):
-        raise ValueError()
-
-    if direction in ['positive', 'both']:
+    if direction=='positive':
         azi = (strike + toward_azimuth) % 360
-        pointsp = npoints_towards(lon, lat, depth, azi, hdist, vdist, npoints)
+        pointsp = npoints_towards(r_lon, r_lat, r_dep,
+                                  azi, hdist, vdist, npoints)
 
-    if direction in ['negative', 'both']:
-        idx = 0 if direction == 'negative' else 1
+    if direction=='negative':
         azi = (strike + toward_azimuth + 180) % 360
-        pointsn = npoints_towards(lon, lat, depth, azi, hdist, vdist, npoints)
+        pointsn = npoints_towards(r_lon, r_lat, r_dep,
+                                  azi, hdist, vdist, npoints)
 
     sites = []
     keys = set(site_props.keys()) - set(['vs30', 'z1pt0', 'z2pt5'])
 
     if len(pointsn):
-        lons = reversed(pointsn[0][idx:])
-        lats = reversed(pointsn[1][idx:])
+        lons = reversed(pointsn[0][0:])
+        lats = reversed(pointsn[1][0:])
         for lon, lat in zip(lons, lats):
             site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
                         z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
@@ -177,15 +145,13 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     # Check if site up-dip or down-dip of site
     if up_or_down_dip == float(1):
         direction = 'positive'
-        from_point = 'TC'
     elif up_or_down_dip == float(0):
-        from_point = 'BC'
         direction = 'negative'
     
     # Get sites
-    sites = get_sites_from_rupture(rup, from_point, toward_azimuth=90,
-                                   direction = direction, hdist = maxR,
-                                   step = step, site_props = props)
+    sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
+                                   direction=direction, hdist=maxR,
+                                   step=step, site_props=props)
     
     # Create context
     mag_str = [f'{mag:.2f}']
@@ -201,8 +167,9 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
         distances = ctxs.rrup
     if dist_type == 'rjb':
         distances = ctxs.rjb
-    distances[len(distances)-1] = maxR
     
+    distances[len(distances)-1] = maxR
+
     return mean, std, distances
 
 
