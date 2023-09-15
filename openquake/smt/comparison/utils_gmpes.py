@@ -24,14 +24,14 @@ import pandas as pd
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib.geo.surface import PlanarSurface
 from openquake.hazardlib.source.rupture import BaseRupture
-from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.geo.geodetic import npoints_towards
+from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.scalerel import WC1994
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
-
+    
 
 def _get_first_point(rup, from_point):
     """
@@ -73,33 +73,31 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
         A :class:`openquake.hazardlib.site.SiteCollection` instance
     """
     from_pnt = _get_first_point(rup, from_point)
-    lon = from_pnt.longitude
-    lat = from_pnt.latitude
-    depth = 0
+    r_lon = from_pnt.longitude
+    r_lat = from_pnt.latitude
+    r_dep = 0
     vdist = 0
     npoints = hdist / step
     strike = rup.surface.strike
     pointsp = []
     pointsn = []
 
-    if not len(site_props):
-        raise ValueError()
-
-    if direction in ['positive', 'both']:
+    if direction=='positive':
         azi = (strike + toward_azimuth) % 360
-        pointsp = npoints_towards(lon, lat, depth, azi, hdist, vdist, npoints)
+        pointsp = npoints_towards(r_lon, r_lat, r_dep,
+                                  azi, hdist, vdist, npoints)
 
-    if direction in ['negative', 'both']:
-        idx = 0 if direction == 'negative' else 1
+    if direction=='negative':
         azi = (strike + toward_azimuth + 180) % 360
-        pointsn = npoints_towards(lon, lat, depth, azi, hdist, vdist, npoints)
+        pointsn = npoints_towards(r_lon, r_lat, r_dep,
+                                  azi, hdist, vdist, npoints)
 
     sites = []
     keys = set(site_props.keys()) - set(['vs30', 'z1pt0', 'z2pt5'])
 
     if len(pointsn):
-        lons = reversed(pointsn[0][idx:])
-        lats = reversed(pointsn[1][idx:])
+        lons = reversed(pointsn[0][0:])
+        lats = reversed(pointsn[1][0:])
         for lon, lat in zip(lons, lats):
             site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
                         z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
@@ -177,16 +175,22 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     # Check if site up-dip or down-dip of site
     if up_or_down_dip == float(1):
         direction = 'positive'
-        from_point = 'TC'
     elif up_or_down_dip == float(0):
-        from_point = 'BC'
         direction = 'negative'
     
     # Get sites
-    sites = get_sites_from_rupture(rup, from_point, toward_azimuth=90,
-                                   direction = direction, hdist = maxR,
-                                   step = step, site_props = props)
+    sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
+                                   direction=direction, hdist=maxR,
+                                   step=step, site_props=props)
     
+    # Add main R types to gmpe so can plot against repi, rrup, rjb and rhypo
+    core_r_types = ['repi', 'rrup', 'rjb', 'rhypo']
+    orig_r_types = list(gmpe.REQUIRES_DISTANCES)
+    for core in core_r_types:
+        if core not in orig_r_types:
+            orig_r_types.append(core)
+    gmpe.REQUIRES_DISTANCES = frozenset(orig_r_types)
+
     # Create context
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
@@ -197,12 +201,17 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     
     # Compute ground-motions
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
+    if dist_type == 'repi':
+        distances = ctxs.repi
     if dist_type == 'rrup':
         distances = ctxs.rrup
     if dist_type == 'rjb':
         distances = ctxs.rjb
-    distances[len(distances)-1] = maxR
+    if dist_type == 'rhypo':
+        distances = ctxs.rhypo
     
+    distances[len(distances)-1] = maxR
+
     return mean, std, distances
 
 
