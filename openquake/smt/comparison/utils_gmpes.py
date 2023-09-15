@@ -153,6 +153,14 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
                                    direction=direction, hdist=maxR,
                                    step=step, site_props=props)
     
+    # Add main R types to gmpe so can plot against repi, rrup, rjb and rhypo
+    core_r_types = ['repi', 'rrup', 'rjb', 'rhypo']
+    orig_r_types = list(gmpe.REQUIRES_DISTANCES)
+    for core in core_r_types:
+        if core not in orig_r_types:
+            orig_r_types.append(core)
+    gmpe.REQUIRES_DISTANCES = frozenset(orig_r_types)
+
     # Create context
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
@@ -163,10 +171,14 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     
     # Compute ground-motions
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
+    if dist_type == 'repi':
+        distances = ctxs.repi
     if dist_type == 'rrup':
         distances = ctxs.rrup
     if dist_type == 'rjb':
         distances = ctxs.rjb
+    if dist_type == 'rhypo':
+        distances = ctxs.rhypo
     
     distances[len(distances)-1] = maxR
 
