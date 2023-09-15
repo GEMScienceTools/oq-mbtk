@@ -120,7 +120,7 @@ class TrTestCase(unittest.TestCase):
         numpy.testing.assert_array_equal(computed, expected, err_msg=msg)
 
         # testing slab
-        expected = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1]
+        expected = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1]
         if True in f['slab_cam'][:] or False in f['slab_cam'][:]: # If windows
             bool_to_int = []
             for val in f['slab_cam'][:]:

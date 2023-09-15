@@ -673,10 +673,14 @@ def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
     """
     Add titles and axis labels to trellis plots
     """
+    if dist_type == 'repi':
+        label = 'Repi (km)'
     if dist_type == 'rrup':
         label = 'Rrup (km)'
     if dist_type == 'rjb':
         label = 'Rjb (km)'
+    if dist_type == 'rhypo':
+        label = 'Rhypo (km)'
     if n == 0: #top row only
         pyplot.title('Mw = ' + str(m), fontsize='16') # Mod if required
     if n == len(imt_list)-1: #bottom row only
