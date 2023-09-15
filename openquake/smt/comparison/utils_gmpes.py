@@ -25,12 +25,42 @@ from openquake.hazardlib.geo import Point
 from openquake.hazardlib.geo.surface import PlanarSurface
 from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.geo.geodetic import npoints_towards
+from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.scalerel import WC1994
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
     
+
+def _get_first_point(rup, from_point):
+    """
+    :param rup:
+    :param from_point:
+    """
+    sfc = rup.surface
+    if from_point == 'TC':  # Get the up-dip edge centre point
+        return sfc._get_top_edge_centroid()
+    elif from_point == 'BC':  # Get the down-dip edge centre point
+        lon, lat = geo_utils.get_middle_point(
+            sfc.corner_lons[2], sfc.corner_lats[2],
+            sfc.corner_lons[3], sfc.corner_lats[3]
+        )
+        return Point(lon, lat, sfc.corner_depths[2])
+    elif from_point == 'TL':
+        idx = 0
+    elif from_point == 'TR':
+        idx = 1
+    elif from_point == 'BR':
+        idx = 2
+    elif from_point == 'BL':
+        idx = 3
+    else:
+        raise ValueError('Unsupported option from first point')
+    return Point(sfc.corner_lons[idx],
+                 sfc.corner_lats[idx],
+                 sfc.corner_depths[idx])
+
 
 def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
                            direction='positive', hdist=100, step=5.,
@@ -42,7 +72,7 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
     :return:
         A :class:`openquake.hazardlib.site.SiteCollection` instance
     """
-    from_pnt = rup.surface._get_top_edge_centroid() # Get up-dip edge centroid
+    from_pnt = _get_first_point(rup, from_point)
     r_lon = from_pnt.longitude
     r_lat = from_pnt.latitude
     r_dep = 0
