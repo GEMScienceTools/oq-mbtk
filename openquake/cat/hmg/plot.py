@@ -259,7 +259,7 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     # Save figure
     folder = os.path.dirname(fname)
     Path(folder).mkdir(parents=True, exist_ok=True)
-    plt.savefig(fname)
+    plt.savefig(fname,bbox_inches='tight')
 
     if "xlim" in kwargs:
         ax.set_xlim(kwargs["xlim"])
