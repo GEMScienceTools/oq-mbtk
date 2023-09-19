@@ -416,7 +416,10 @@ class Residuals(object):
         # Contexts is in either case a list of dictionaries
         self.contexts = []
         for context in contexts:
-
+            # If no rvolc provide as zero (ensure rvolc gsims usable)
+            if 'rvolc' not in context['Ctx']._slots_:
+                context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi,
+                                                     dtype = float)
             # convert all IMTS with acceleration units, which are supposed to
             # be in cm/s/s, to g:
             for a_imt in accel_imts:
