@@ -53,7 +53,9 @@ DATAMAP = [("eventID", "U20"), ("originID", "U20"), ("Agency", "U14"),
            ("longitude", "f4"), ("latitude", "f4"), ("depth", "f4"),
            ("depthSolution", "U1"), ("semimajor90", "f4"),
            ("semiminor90", "f4"), ("error_strike", "f2"),
-           ("depth_error", "f4"), ("prime", "i1")]
+           ("depth_error", "f4"), ("prime", "i1"), ("dip1", "f4"), 
+           ("rake1", "f4"), ("str1", "f4"), ("dip2", "f4"),
+           ("rake2", "f4"), ("str2", "f4")]
 
 MAGDATAMAP = [("eventID", "U20"), ("originID", "U20"), ("magnitudeID", "U40"),
               ("value", "f4"), ("sigma", "f4"), ("magType", "U6"),
@@ -163,7 +165,9 @@ class Magnitude(object):
 
 class Location(object):
     '''
-    Instance of a magnitude location
+    Instance of a magnitude location. Contains spatial information for a given event to be stored in the origins output.
+    Note that order is very important here. 
+    
     :param int origin_id:
         Identifier as origin ID
     :param float longitude:
@@ -184,10 +188,23 @@ class Location(object):
         Strike of the semimajor axis of the error ellipse
     :param float depth_error:
         1 s.d. Error on the depth value (km)
+    :param float str1:
+        strike from 1st nodal plane
+    :param float dip1:
+        dip from 1st nodal plane
+    :param float rake1:
+        rake from 1st nodal plane
+    :param float str2:
+        strike from 2nd nodal plane
+    :param float dip2:
+        dip from 2nd nodal plane
+    :param float rake2:
+        rake from 2nd nodal plane 
     '''
     def __init__(self, origin_id, longitude: float, latitude: float,
                  depth: float, depthSolution=None, semimajor90=None,
-                 semiminor90=None, error_strike=None, depth_error=None):
+                 semiminor90=None, error_strike=None, depth_error=None, 
+                 str1=None, dip1= None, rake1= None,  str2=None, dip2= None, rake2= None):
         """
         """
         self.identifier = origin_id
@@ -201,6 +218,12 @@ class Location(object):
         self.semiminor90 = semiminor90
         self.error_strike = error_strike
         self.depth_error = depth_error
+        self.str1 = str1
+        self.dip1 = dip1
+        self.rake1 = rake1
+        self.str2 = str2
+        self.dip2 = dip2
+        self.rake2 = rake2
 
     def __str__(self):
         """
@@ -275,6 +298,7 @@ class Origin(object):
         self.time_rms = time_rms
         self.date_time_str = "|".join([str(self.date).replace("-", "|"),
                                        str(self.time).replace(":", "|")])
+        
 
     def get_number_magnitudes(self):
         """
@@ -1167,6 +1191,7 @@ class ISFCatalogue(object):
                 else:
                     depth_error = 0.0
 
+
                 if (orig.location.depthSolution == 'None' or
                         orig.location.depthSolution == '' or
                         orig.location.depthSolution is None):
@@ -1176,7 +1201,7 @@ class ISFCatalogue(object):
                 else:
                     print('Location:', orig.location.depthSolution)
                     raise ValueError("Unsupported case")
-
+                
                 if (orig.location.depth == 'None' or
                         orig.location.depth == '' or
                         orig.location.depth is None):
@@ -1195,7 +1220,37 @@ class ISFCatalogue(object):
                     prime = 1
                 else:
                     prime = 0
-
+                    
+                if orig.location.dip1:
+                    dip1 = orig.location.dip1
+                else:    
+                    dip1 = 0
+                    
+                if orig.location.str1:
+                    str1 = orig.location.str1
+                else:    
+                    str1 = 0
+                
+                if orig.location.rake1:
+                    rake1 = orig.location.rake1
+                else:    
+                    rake1 = 0
+                    
+                if orig.location.dip2:
+                    dip2 = orig.location.dip2
+                else:    
+                    dip2 = 0
+                    
+                if orig.location.str2:
+                    str2 = orig.location.str2
+                else:    
+                    str2 = 0
+                
+                if orig.location.rake2:  
+                    rake2 = orig.location.rake2
+                else:    
+                    rake2 = 0
+                
                 origin_data[o_counter] = (eq.id, orig.id, orig.author,
                                           orig.date.year, orig.date.month,
                                           orig.date.day, orig.time.hour,
@@ -1205,7 +1260,8 @@ class ISFCatalogue(object):
                                           depth,
                                           depthSolution,
                                           semimajor90, semiminor90,
-                                          error_strike, depth_error, prime)
+                                          error_strike, depth_error, prime,
+                                          dip1,rake1,str1,dip2, rake2, str2 )
 
                 o_counter += 1
 
