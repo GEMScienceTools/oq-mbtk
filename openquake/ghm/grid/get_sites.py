@@ -116,7 +116,8 @@ def main(model, folder_out, fname_conf, example=False):
     out_file = os.path.join(folder_out, f'{model}.geojson')
     one_polygon.columns = one_polygon.columns.astype(str)
     one_polygon.to_file(out_file, driver='GeoJSON')
-    selection.to_file('/tmp/chk.shp')
+    check_file = os.path.join(folder_out, 'check.shp')
+    selection.to_file(check_file)
 
     # Params
     h3_resolution = conf['main']['h3_resolution']
@@ -219,8 +220,8 @@ def _get_sites(model, folder_out, conf, root_path=''):
                     feature_coll = gpd.GeoSeries([tpoly]).__geo_interface__
                     tmp = feature_coll['features'][0]['geometry']
                     tidx_b = h3.polyfill_geojson(tmp, h3_resolution)
-                    tidx_a = list(set(tidx_a) & set(tidx_b))
-                    sites_indices.extend(tidx_a)
+                    tidx_c = list(set(tidx_a) & set(tidx_b))
+                    sites_indices.extend(tidx_c)
             else:
                 sites_indices.extend(tidx_a)
 

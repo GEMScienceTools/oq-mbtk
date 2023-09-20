@@ -153,12 +153,6 @@ class ESM23FlatfileParser(SMDatabaseReader):
             if pd.isnull(ESM23.vs30_m_s[idx]):
                 ESM23['vs30_m_s'].iloc[idx]=ESM23['vs30_m_s_wa'].iloc[idx]
         
-        # If vs30 still empty drop record
-        for idx in range(0,len(ESM23)):
-            if pd.isnull(ESM23.vs30_m_s[idx]):
-                ESM23=ESM23.drop(index=idx)
-        ESM23 = ESM23.reset_index()
-        
         # Create default values for headers not considered in ESM23 format
         default_string = pd.Series(np.full(np.size(ESM23.esm_event_id),
                                            str("")))
@@ -660,14 +654,14 @@ def _get_ESM18_headers(ESM23,default_string,r_fm_type,r_datetime):
     "st_longitude":ESM23.st_longitude,
     "st_elevation":ESM23.st_elevation,
     
-    "ec8_code":default_string,
-    "ec8_code_method":ESM23.ec8_code_from_topography,
-    "ec8_code_ref":default_string,
-    "vs30_m_sec":ESM23.vs30_m_s_wa,
-    "vs30_ref":ESM23.vs30_meas_type,
+    "ec8_code":ESM23.ec8_code,
+    "ec8_code_method":ESM23.preferred_estimation_method_vs30_ec8,
+    "ec8_code_ref":ESM23.ec8_ref_programme,
+    "vs30_m_sec":ESM23.vs30_m_s,
+    "vs30_ref":ESM23.vs30_ref_auth,
     "vs30_calc_method":default_string, 
-    "vs30_meas_type":default_string,
-    "slope_deg":default_string,
+    "vs30_meas_type":ESM23.vs30_meas_type,
+    "slope_deg":ESM23.slope_deg,
     "vs30_m_sec_WA":ESM23.vs30_m_s_wa,
  
     "epi_dist":ESM23.epi_dist,

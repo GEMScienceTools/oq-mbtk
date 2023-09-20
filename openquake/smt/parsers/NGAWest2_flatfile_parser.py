@@ -164,15 +164,21 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                 'Hypocenter Latitude (deg)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2[
             'Hypocenter Longitude (deg)']==-999][
                 'Hypocenter Longitude (deg)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2[
             'Hypocenter Depth (km)']==-999]['Hypocenter Depth (km)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
         # If year not provided assign '0000' to work with datetime
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['YEAR']=='-999'][
@@ -215,11 +221,42 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
         
+        # Remove records with no strike, dip or rake angle
+        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Strike (deg)']==-999][
+            'Strike (deg)'].index)
+        NGAWest2=NGAWest2.drop(Index_to_drop)
+        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
+        
+        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Dip (deg)']==-999][
+            'Dip (deg)'].index)
+        NGAWest2=NGAWest2.drop(Index_to_drop)
+        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
+        
+        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Rake Angle (deg)']==-999][
+            'Rake Angle (deg)'].index)
+        NGAWest2=NGAWest2.drop(Index_to_drop)
+        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
+        
+        # If no ztor set to 0 km (workaround used to get ztor vals as oddly can't
+        # be found as column using conventional pandas methods)
+        ztor_column = NGAWest2.columns[32] # Column header 32 in NGAWest2 df
+        ztor_vals = NGAWest2[ztor_column]
+        ztor_vals[ztor_vals == -999] = 0
+        NGAWest2['ztor'] = ztor_vals
+        
         # Remove records with no epicentral distance
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['EpiD (km)']==-999][
             'EpiD (km)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
         # If Joyner-Boore, rupture distance, Rx or Ry = -999 reassign as empty
         Index_to_drop=np.array(NGAWest2.loc[
@@ -244,6 +281,8 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                 'Vs30 (m/s) selected for analysis'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
         NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
+        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
         # Compute Mw from seismic moment using Hanks and Kamori
         NGAWest2['Earthquake Magnitude'] = (np.log10(NGAWest2[
@@ -737,11 +776,11 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
         
         event_time[rec] = yyyy_mm_dd + ' ' + hh_mm_ss
     
-    event_time_reformatted = pd.Series(event_time)
+    NGAWest2['event_time_reformatted'] = pd.Series(event_time)
     
     # generate event_id without delimiters
     final_event_id={}
-    for rec in range(0,len(NGAWest2)):
+    for rec in range(0,len(NGAWest2['Earthquake Name'])):
         delimited_event_id=str(NGAWest2['Earthquake Name'][rec])
         delimited_event_id=delimited_event_id.replace(',','')
         delimited_event_id=delimited_event_id.replace(' ','')
@@ -750,7 +789,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
         delimited_event_id=delimited_event_id.replace(':','')
         delimited_event_id=delimited_event_id.replace(';','')
         final_event_id[rec] = 'Earthquake-' + delimited_event_id 
-    event_id_reformatted = pd.Series(final_event_id)
+    NGAWest2['event_id_reformatted'] = pd.Series(final_event_id)
     
     # Assign ESM18 fault_code based on code in NGA-West2
     """
@@ -793,32 +832,32 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     station_id_reformatted = pd.Series(final_station_id)
     
     # Create nation code (not provided in NGA-West-2 so assign flag)
-    nation_code_default_string = np.full(len(NGAWest2),str(
+    nation_code_default_string = np.full(len(NGAWest2['Station Name']),str(
         "NGAWest2_does_not_provide_nation_codes")) 
     default_nation_code = pd.Series(nation_code_default_string)
     
     # Create channel codes for horizontal components as within NGAWest2 format
-    H1_string = np.full(len(NGAWest2),str("H1"))
+    H1_string = np.full(len(NGAWest2['Station Name']),str("H1"))
     default_H1_string = pd.Series(H1_string)
-    H2_string = np.full(len(NGAWest2),str("H2"))
+    H2_string = np.full(len(NGAWest2['Station Name']),str("H2"))
     default_H2_string = pd.Series(H2_string)
-    V_string = np.full(len(NGAWest2),str("V"))
+    V_string = np.full(len(NGAWest2['Station Name']),str("V"))
     default_V_string = pd.Series(V_string)
     
     # Create default value of 0 for location code string (arbitrary)
-    location_string = np.full(len(NGAWest2),str("0.0"))
+    location_string = np.full(len(NGAWest2['Station Name']),str("0.0"))
     location_code_string = pd.Series(location_string)  
     
     # Create default values for headers not readily available or required
-    r_string = np.full(len(NGAWest2),str(""))
+    r_string = np.full(len(NGAWest2['Station Name']),str(""))
     default_string = pd.Series(r_string)    
     
     # Construct dataframe with original ESM 2018 format 
     ESM_original_headers = pd.DataFrame(
     {
     # Non-GMIM headers   
-    "event_id":event_id_reformatted,                                       
-    "event_time":event_time_reformatted,
+    "event_id":NGAWest2['event_id_reformatted'],                                       
+    "event_time":NGAWest2['event_time_reformatted'],
     "ISC_ev_id":default_string,
     "USGS_ev_id":default_string,
     "INGV_ev_id":default_string,
@@ -840,11 +879,11 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "EMEC_Mw_ref":default_string,
     "event_source_id":default_string,
  
-    "es_strike":default_string,
-    "es_dip":default_string,
-    "es_rake":default_string,
+    "es_strike":NGAWest2['Strike (deg)'],
+    "es_dip":NGAWest2['Dip (deg)'],
+    "es_rake":NGAWest2['Rake Angle (deg)'],
     "es_strike_dip_rake_ref":default_string, 
-    "es_z_top":default_string,
+    "es_z_top":NGAWest2['ztor'],
     "es_z_top_ref":default_string,
     "es_length":default_string,   
     "es_width":default_string,
@@ -867,7 +906,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "ec8_code_method":default_string,
     "ec8_code_ref":default_string,
     "vs30_m_sec":NGAWest2['Vs30 (m/s) selected for analysis'],
-    "vs30_ref":NGAWest2['Measured/Inferred Class'],
+    "vs30_ref":default_string,
     "vs30_calc_method":default_string, 
     "vs30_meas_type":default_string,
     "slope_deg":default_string,
@@ -878,7 +917,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "JB_dist":NGAWest2['Joyner-Boore Dist. (km)'],
     "rup_dist":NGAWest2['Campbell R Dist. (km)'],
     "Rx_dist":NGAWest2['Rx'],
-    "Ry0_dist":NGAWest2['Ry 2'],
+    "Ry0_dist":default_string,
  
     "instrument_type_code":default_string,      
     "late_triggered_flag_01":default_string,
