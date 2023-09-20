@@ -53,6 +53,8 @@ plot()
     ROOT=$3
     GRADIENT=$4
 
+    DISTANCE_SCALE=false
+
     set_defaults
     echo "root: "$ROOT
     delete_temporary_folders $ROOT
@@ -63,8 +65,9 @@ plot()
     EXTE=$(set_map_extent)
 
     # Input cpt
-    CPTT2="./cpt/gm.cpt"
-    CPTT2="./cpt/gm_new.cpt"
+    CPTT2="./cpt/gm_1pt5.cpt"
+    #CPTT2="./cpt/gm_new.cpt"
+
     # Input topography
     #GTOPO=$DATA"/gem/gmt/globalGTOPO30.grd"
     GTOPO=$DATA"/dem/ETOPO1_Ice_g_gmt4.grd"
@@ -134,8 +137,13 @@ plot()
     # Finishing
     gmt pscoast -R$EXTE $PRO $ORI -Df -ESJ+gwhite -O -K  >> $PS
     gmt psxy ./../data/gis/islands.gmt -R$EXTE $PRO -Gp500/9:BlightgreyFwhite -O -K -V >> $PS
-    gmt pscoast -R$EXTE $PRO $ORI -Df -A$AREA+as+l -O -K -N1/thinnest,darkgray -Lg-125/-52.7+c0+w5000+f -Wthinnest,black -V >> $PS
-    #gmt pscoast -R$EXTE $PRO $ORI -Df -A$AREA+as+l -O -K -N1,thinnest,darkgray -Lg-125/-52.7+c0+w5000+f -Wthinnest,black -V >> $PS
+
+    # Here we have two options 
+    if [DISTANCE_SCALE = true] ; then
+        gmt pscoast -R$EXTE $PRO $ORI -Df -A$AREA+as+l -O -K -N1/thinnest,darkgray -Lg-125/-52.7+c0+w5000+f -Wthinnest,black -V >> $PS
+    else
+        gmt pscoast -R$EXTE $PRO $ORI -Df -A$AREA+as+l -O -K -N1/thinnest,darkgray -Wthinnest,black -V >> $PS
+    fi
 
     # Plotting the colorscale
     gmt psscale -Dg95/-52.7+w13c/0.3c+e+h -O -C$CPTT2 -L -S -R$EXTE $PRO >> $PS
