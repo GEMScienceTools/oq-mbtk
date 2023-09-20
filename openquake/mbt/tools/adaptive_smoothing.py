@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from openquake.baselib import sap
 from openquake.hazardlib.geo.geodetic import geodetic_distance, distance, _prepare_coords 
-
+import h3
 
 class AdaptiveSmoothing(object):
     '''
@@ -90,10 +90,14 @@ class AdaptiveSmoothing(object):
         	x = self.locations[0]
         	y = self.locations[1]
         	
-	# Remember that python indexing starts at 0! Make sure this is the correct value.
-        n_v = (config['n_v']-1)
+	
+        n_v = (config['n_v'])
         kernel = config['kernel']
-       
+        maxdist = config['maxdist']
+        h3res = config['h3res']
+
+        maxdistk = int(np.ceil(maxdist/h3.edge_length(h3res, 'km')))
+
         # Use depths if 3D model required, otherwise all depths set to 0
         if self.use_3d:
             depth = data[:,2]
@@ -101,12 +105,42 @@ class AdaptiveSmoothing(object):
             depth = np.zeros(len(data))
         
         d_i = np.empty(len(data))
+        def lat_lng_to_h3(row):
+            return h3.geo_to_h3(row.lon, row.lat, h3res)
+
+        h3_df = pd.DataFrame(data)
+        h3_df.columns = ['lon', 'lat', 'depth', 'mag']
+        #print(h3_df.columns)
+        h3_df['h3'] = h3_df.apply(lat_lng_to_h3, axis=1)
+        #h3_ids = h3_df['h3'].tolist()
+        #pts_h3 = h3.geo_to_h3(catalogue.data['latitude'], catalogue.data['longitude'], h3res)
+        
+            
         # Get smoothing parameter d for each earthquake
         for iloc in range(0, len(data)):
-            r = distance(data[:, 0], data[:, 1], depth, data[iloc, 0], data[iloc, 1], depth[iloc])
-            r = np.delete(r, iloc)
-            r.sort()
-            d_i[iloc] = r[n_v]
+            base = h3_df['h3'][iloc]
+            tmp_idxs = h3.k_ring(base, maxdistk)
+            
+            # Removing invalid indexes
+            #idxs = []
+            #for i in tmp_idxs:
+            #    if h3IsValid(i):
+            #        np.append(idxs, i)
+
+            ref_locs = h3_df.loc[h3_df['h3'].isin(tmp_idxs)]
+            #subdata = data[ref_locs, :]
+            #quick_dist = np.sqrt((data[:, 0] - data[iloc, 0])**2 + (data[:,1] - data[iloc, 1])**2)
+            #subdata = data[quick_dist < 1]
+            #print("num of depths ", len(depth))
+            #subdepth = depth[quick_dist < 1]
+            r = distance(ref_locs['lon'], ref_locs['lat'], ref_locs['depth'], data[iloc, 0], data[iloc, 1], depth[iloc])
+            #r = np.delete(r, iloc)
+            r = r.sort_values(ascending = True)
+            r = r.dropna()
+            if len(r) >= (n_v + 1):
+                d_i[iloc] = r.iloc[n_v]
+            else:
+                d_i[iloc] = 1000 
 
        # Set minimum d_i
         
@@ -115,7 +149,7 @@ class AdaptiveSmoothing(object):
         
 	# Calculate mu at each location 
         for iloc in range(0, len(x)):
- 		   # Distance from each event to the location
+ 	    # Distance from each event to the location
             r_dists = distance(data[:, 0], data[:, 1], depth, x[iloc], y[iloc], 0)
             mu_loc[iloc] = self.mu_int(r_dists, d_i, kernel = kernel)
 
