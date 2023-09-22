@@ -60,6 +60,8 @@ def main(cat_fname, fname_out):
     create_folder(os.path.dirname(fname_out))
 
     # Save file
+    # writing magnitudes more precisely
+    df.magMw = df.magMw.apply(lambda x: round(x, 5))
     df.to_csv(fname_out, index=False)
 
     # Create hmtk file
@@ -68,6 +70,8 @@ def main(cat_fname, fname_out):
     tmps = ofle.split('.')
     ofle = f'{tmps[0]}_hmtk.csv'
     odf = to_hmtk_catalogue(df)
+    # writing magnitudes more precisely
+    odf.magnitude = odf.magnitude.apply(lambda x: round(x, 5))
     odf.to_csv(os.path.join(odir, ofle), index=False)
 
 

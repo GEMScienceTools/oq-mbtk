@@ -56,7 +56,7 @@ def get_hists(df, bins, agencies=None, column="magMw"):
     out = []
     out_agencies = []
     for key in agencies:
-        mw = df[df['magAgency'] == key][column]
+        mw = df[df['magAgency'] == key][column].apply(lambda x: round(x, 5))
         if len(mw):
             hist, _ = np.histogram(mw, bins=bins)
             out.append(hist)
@@ -212,7 +212,8 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     mpl.rcParams['axes.labelsize'] = 16
 
     # Data
-    mw = df[column].values
+#    mw = df[column].values
+    mw = df[column].apply(lambda x: round(x, 5)).values
 
     # Creating bins and total histogram
     mmi = np.floor(min(mw)/wdt)*wdt-wdt
