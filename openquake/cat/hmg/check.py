@@ -64,7 +64,7 @@ def get_features(cat, idx, idxsel):
         fmt = "Unsupported format for EventID: {:s}"
         raise ValueError(fmt.format(type(tmp).__name__))
 
-    mag2 = cat.loc[idxsel, 'value'].apply(lambda x: float(x))
+    mag2 = cat.loc[list(idxsel), 'value'].apply(lambda x: float(x))
     # reference agency used for idx
     ref_agency = cat.loc[idx, 'Agency']
 
@@ -119,7 +119,7 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms = False):
     # datetime can only cover 548 years starting in 1677
     # general advice will be to exclude historic events and
     # add those later
-    subcat = cat[cat['year'] > 1800]
+    subcat = cat[(cat['year'] > 1800) & (cat['value'] > 1.0)]
     
     for index, row in tqdm(subcat.iterrows()):
         # Take the index from delta_ll - this is needed
@@ -130,7 +130,7 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms = False):
                 
         ll_thrs = ll_d[idx_t][idx_mag]
         sel_thrs = time_d[idx_t][idx_mag]
-        sel_thrs = sel_thrs.total_seconds()
+        #sel_thrs = sel_thrs.total_seconds()
         
         # Find events close in time
         tmp = abs(subcat.loc[:, 'datetime'] - row.datetime).astype('timedelta64[s]') < sel_thrs
@@ -142,7 +142,8 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms = False):
             minla = row.latitude - ll_thrs
             maxlo = row.longitude + ll_thrs
             maxla = row.latitude + ll_thrs
-            idx_dist = list(sidx.intersection((minlo, minla, maxlo, maxla)))
+            idx_dist_ind = list(sidx.intersection((minlo, minla, maxlo, maxla)))
+            idx_dist = cat.index[idx_dist_ind]
 
         else:
             tmp_dist = abs(geodetic_distance(row.longitude, row.latitude, subcat.loc[:,'longitude'], subcat.loc[:,'latitude'])) < ll_thrs
