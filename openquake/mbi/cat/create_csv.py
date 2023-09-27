@@ -71,7 +71,7 @@ def main(cat_fname, fname_out):
     ofle = f'{tmps[0]}_hmtk.csv'
     odf = to_hmtk_catalogue(df)
     # writing magnitudes more precisely
-    odf.magnitude = odf.magnitude.apply(lambda x: round(x, 5))
+    odf.magnitude = odf.magnitude.apply(lambda x: round(x, 2))
     odf.to_csv(os.path.join(odir, ofle), index=False)
 
 
