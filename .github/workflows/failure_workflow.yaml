@@ -1,10 +1,11 @@
 ---
-name: Windows test fails
+name: Failure on Workflow
 
 on:
   workflow_run:
     workflows: 
       - "Windows Test"
+      - "test and make pages"
     types:
       - completed
 
