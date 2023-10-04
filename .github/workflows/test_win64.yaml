@@ -1,34 +1,17 @@
-name: Installation and test on Windows
-
+---
+name: Windows Test
 on:
   push:
+    branches:
+      - ae-workflow
   schedule:
     - cron: "0 7 * * *"
   workflow_dispatch:
-
 jobs:
-  on-failure:
-  runs-on: ubuntu-latest
-  if: github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'timed_out'
-  steps:
-    - uses: ravsamhq/notify-slack-action@v2
-      with:
-        status: ${{ github.event.workflow_run.conclusion }}
-        notification_title: " ${{github.event.workflow_run.name}} - ${{github.event.workflow_run.conclusion}} on ${{github.event.workflow_run.head_branch}} - <${{github.server_url}}/${{github.repository}}/actions/runs/${{github.event.workflow_run.id}}|View Failure>"
-        message_format: ":fire: *${{github.event.workflow_run.name}}* ${{github.event.workflow_run.conclusion}} in <${{github.server_url}}/${{github.repository}}/${{github.event.workflow_run.head_branch}}|${{github.repository}}>"
-        footer: "Linked Repo <${{github.server_url}}/${{github.repository}}|${{github.repository}}> | <${{github.server_url}}/${{github.repository}}/actions/runs/${{github.event.workflow_run.id}}|View Failure>"
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.MONITORING_SLACK }}
-
   test:
     name: Windows Installation
     runs-on: windows-latest
-
     steps:
-    - name: Extract branch name
-      shell: bash
-      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-      id: extract_branch
     - uses: actions/checkout@v3
     - name: Run scripts to install on windows
       run: |
