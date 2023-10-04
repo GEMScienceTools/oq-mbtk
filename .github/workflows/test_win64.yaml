@@ -2,11 +2,10 @@ name: Installation and test on Windows
 
 on:
   push:
-    branches:
-      - 'ae-310action'
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "0 7 * * *"
   workflow_dispatch:
+
 jobs:
   on-failure:
   runs-on: ubuntu-latest
