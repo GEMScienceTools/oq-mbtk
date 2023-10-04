@@ -46,5 +46,4 @@ jobs:
         Write-Host "Current Working Directory: $curDir"
         Get-ChildItem -Path .\windows –recurse
         cd oq-mbtk\openquake
-        pytest -vs --color=yes --durations=10 mbt
-        #pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt
+        pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt
