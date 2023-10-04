@@ -1,7 +1,6 @@
 name: Installation and test on Windows
 
 on:
-  push:
   schedule:
     - cron: "0 7 * * *"
   workflow_dispatch:
@@ -25,10 +24,6 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Extract branch name
-      shell: bash
-      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-      id: extract_branch
     - uses: actions/checkout@v3
     - name: Run scripts to install on windows
       run: |
