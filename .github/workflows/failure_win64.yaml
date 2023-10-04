@@ -1,4 +1,7 @@
+---
 name: Windows test fails
+
+on:
 workflow_run:
   workflows: ["Windows Test"]
   types:
