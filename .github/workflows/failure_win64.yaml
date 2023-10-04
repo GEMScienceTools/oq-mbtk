@@ -2,10 +2,11 @@
 name: Windows test fails
 
 on:
-workflow_run:
-  workflows: ["Windows Test"]
-  types:
-    - completed
+  workflow_run:
+    workflows: 
+      - "Windows Test"
+    types:
+      - completed
 
 jobs:
   on-failure:
