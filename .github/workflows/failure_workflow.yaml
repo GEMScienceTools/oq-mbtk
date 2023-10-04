@@ -5,7 +5,7 @@ on:
   workflow_run:
     workflows: 
       - "Windows Test"
-      - "test and make pages""
+      - "test and make pages"
     types:
       - completed
 
