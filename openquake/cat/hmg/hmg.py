@@ -59,12 +59,13 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
     fmt2 = "m[m >= {:.2f}]"
 
     # Temporary assigning magnitude
-    m = rows['value'].values
+    m = np.round(rows['value'].values, 3)
     tmp = np.zeros_like(m)
 
     for mlow, conversion in zip(low_mags, conv_eqs):
+        m_inds = m >= mlow
         if conversion == 'm':
-            tmp = m
+            tmp[m_inds] = m[m_inds]
         else:
             tmpstr = re.sub('m', fmt2.format(mlow), conversion)
             cmd = "tmp[m >= {:.2f}] = {:s}".format(mlow, tmpstr)
@@ -77,6 +78,7 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
 
     rows = rows.copy()
     rows.loc[:, 'magMw'] = tmp
+    rows = rows.drop(rows[rows['magMw']==0.0].index)
     save = save.copy()
     save = pd.concat([save, rows], ignore_index=True, sort=False)
 
@@ -84,6 +86,7 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
     eids = rows['eventID'].values
     cond = work['eventID'].isin(eids)
     work.drop(work.loc[cond, :].index, inplace=True)
+    #import pdb; pdb.set_trace()
 
     return save, work
 
@@ -205,10 +208,14 @@ def process_magnitude(work, mag_rules):
             # not take the best information available.
             # Remove duplicates. This can happen when we process a magnitude
             # type without specifying the agency
+
             flag = rows["eventID"].duplicated(keep='first')
+
             if any(flag):
-                tmp = rows[~flag].copy()
-                rows = tmp
+                # this line is so the larger M is taken - expiremental based on MEX issue
+                rows = rows.sort_values("value", ascending=False).drop_duplicates('eventID').sort_index()
+                #tmp = sorted_rows[~flag].copy()
+                #rows = tmp
 
             # Magnitude conversion
             if len(rows) > 0:
