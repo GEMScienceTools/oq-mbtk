@@ -42,39 +42,41 @@ def main(fname_cat, fname_cat_out, fname_csv):
     else:
         raise ValueError("Backup file already exists")
 
-    if not os.path.exists(fname_cat_out+'.bak'):
-        copyfile(fname_cat_out, fname_cat_out+'.bak')
-    else:
-        raise ValueError("Backup file already exists")
+  #  if not os.path.exists(fname_cat_out+'.bak'):
+  #      copyfile(fname_cat_out, fname_cat_out+'.bak')
+  #  else:
+  #      raise ValueError("Backup file already exists")
 
     #
     # Read catalogue
     cat = pd.read_hdf(fname_cat)
-    cat_out = pd.read_hdf(fname_cat_out)
+   # cat_out = pd.read_hdf(fname_cat_out)
     print('The catalogue contains {:d} earthquakes'.format(len(cat)))
 
     #
     # Read file with the list of IDs
-    fle = open(fname_csv, mode='r')
-    keys = []
-    for line in fle:
-        aa = line.rstrip().split(',')
-        keys.append([re.sub(' ', '', aa[0]), re.sub(' ', '', aa[1])])
-    fle.close()
+   # fle = open(fname_csv, mode='r')
+   # keys = []
+    #for line in fle:
+    #    aa = line.rstrip().split(',')
+    #    keys.append([re.sub(' ', '', aa[0]), re.sub(' ', '', aa[1])])
+    #fle.close()
+    event_df = pd.read_csv(fname_csv)
 
     #
     # Move events
-    for key in keys:
-        series = cat[cat[key[0]] == key[1]]
-        cat_out.append(series)
-    cat_out.to_hdf(fname_cat_out, '/events', append=False)
+    #for key in keys:
+    #    series = cat[cat[key[0]] == key[1]]
+    #    cat_out.append(series)
+    #cat_out.to_hdf(fname_cat_out, '/events', append=False)
 
     #
     # Drop events
-    for key in keys:
-        cat.drop(cat[cat[key[0]] == key[1]].index, inplace=True)
+    for key in event_df['eventID'].values:
+        #import pdb; pdb.set_trace()
+        cat.drop(cat[cat['eventID'] == key].index, inplace=True)
     print('The catalogue contains {:d} earthquakes'.format(len(cat)))
-    cat.to_hdf(fname_cat, '/events', append=False)
+    cat.to_hdf(fname_cat_out, '/events', append=False)
 
 
 main.fname_cat = '.h5 file with origins'

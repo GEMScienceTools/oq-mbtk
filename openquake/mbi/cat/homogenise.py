@@ -39,6 +39,8 @@ def main(settings, odf_fname, mdf_fname, outfolder='./h5/'):
 
     # Homogenise
     save, work = process_dfs(odf_fname, mdf_fname, settings)
+    save.magMw = save.magMw.apply(lambda x: round(x, 5))
+
 
     # Outname
     fname = os.path.basename(odf_fname).split('_')[0]
