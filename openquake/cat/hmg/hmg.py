@@ -33,6 +33,115 @@ import numpy as np
 import pandas as pd
 
 
+def apply_mag_conversion_rule_keep_all(low_mags, conv_eqs, rows, save):
+    """
+    This function applies sequentially a set of rules to the information in
+    the `save` :class:`pandas.DataFrame` instance.
+
+    :param low_mags:
+        A list
+    :param conv_eqs:
+        A list
+    :param rows:
+        The :class:`pandas.DataFrame` instance containing the information
+        still to be processed
+    :param save:
+        One :class:`pandas.DataFrame` instance
+        :return:
+        One :class:`pandas.DataFrame` instances  with the
+        homogenised magnitudes.
+    """
+
+    # Formatting
+    fmt2 = "m[m >= {:.2f}]"
+
+    # Temporary assigning magnitude
+    m = np.round(rows['value'].values, 3)
+    tmp = np.zeros_like(m)
+
+    for mlow, conversion in zip(low_mags, conv_eqs):
+        m_inds = m >= mlow
+        if conversion == 'm':
+            tmp[m_inds] = m[m_inds]
+        else:
+            tmpstr = re.sub('m', fmt2.format(mlow), conversion)
+            cmd = "tmp[m >= {:.2f}] = {:s}".format(mlow, tmpstr)
+
+            try:
+                exec(cmd)
+            except ValueError:
+                fmt = 'Cannot execute the following conversion rule:\n{:s}'
+                print(fmt.format(conversion))
+
+    rows = rows.copy()
+    rows.loc[:, 'magMw'] = tmp
+    save = save.copy()
+    save = pd.concat([save, rows], ignore_index=True, sort=False)
+
+    return save
+
+
+def process_magnitude_keep_all(work, mag_rules):
+    """
+    :param work:
+        A :class:`pandas.DataFrame` instance obtained by joining the origin
+        and magnitude dataframes
+    :param mag_rules:
+        A dictionary with the rules to be used for processing the catalogue
+    :return:
+        Two :class:`pandas.DataFrame` instances. The first one with the
+        homogenised catalogue, the second one with the information not
+        processed (if any).
+    """
+
+    # Add a column for destination
+    if "magMw" not in list(work.columns):
+        work["magMw"] = np.nan
+
+    # This is a new dataframe used to store the processed events
+    save = pd.DataFrame(columns=work.columns)
+
+    # Looping over agencies
+    for agency in mag_rules.keys():
+        print('   Agency: {:s} ('.format(agency), end="")
+
+        # Looping over magnitude-types
+        for mag_type in mag_rules[agency].keys():
+            print('{:s} '.format(mag_type), end='')
+
+            # Create the first selection condition and select rows
+            cond = get_mag_selection_condition(agency, mag_type)
+            try:
+                rows = work.loc[eval(cond), :]
+            except ValueError:
+                fmt = 'Cannot evaluate the following condition:\n {:s}'
+                print(fmt.format(cond))
+
+            # TODO
+            # This is an initial solution that is not ideal since it does
+            # not take the best information available.
+            # Remove duplicates. This can happen when we process a magnitude
+            # type without specifying the agency
+
+            flag = rows["eventID"].duplicated(keep='first')
+
+            if any(flag):
+                # this line is so the larger M is taken - expiremental based on MEX issue
+                rows = rows.sort_values("value", ascending=False).drop_duplicates('eventID').sort_index()
+                #tmp = sorted_rows[~flag].copy()
+                #rows = tmp
+
+            # Magnitude conversion
+            if len(rows) > 0:
+                low_mags = mag_rules[agency][mag_type]['low_mags']
+                conv_eqs = mag_rules[agency][mag_type]['conv_eqs']
+                save = apply_mag_conversion_rule_keep_all(low_mags, conv_eqs,
+                                                       rows, save)
+        print(")")
+
+    return save
+
+
 def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
     """
     This function applies sequentially a set of rules to the information in
@@ -86,7 +195,6 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, rows, save, work):
     eids = rows['eventID'].values
     cond = work['eventID'].isin(eids)
     work.drop(work.loc[cond, :].index, inplace=True)
-    #import pdb; pdb.set_trace()
 
     return save, work
 
@@ -269,6 +377,9 @@ def process_dfs(odf_fname, mdf_fname, settings_fname=None):
         work = pd.merge(odf, mdf, on=["eventID"])
         save, work = process_magnitude(work, rules['magnitude'])
 
+        work_all_m = pd.merge(odf, mdf, on=["eventID"])
+        save_all_m = process_magnitude_keep_all(work_all_m, rules['magnitude'])
+
     print("Number of origins with final mag type {:d}\n".format(len(save)))
 
     computed = len(save)
@@ -278,4 +389,4 @@ def process_dfs(odf_fname, mdf_fname, settings_fname=None):
         msg = fmt.format(computed - expected)
         warnings.warn(msg)
 
-    return save, work
+    return save, work, save_all_m
