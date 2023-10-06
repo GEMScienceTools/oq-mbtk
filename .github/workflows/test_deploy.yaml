@@ -30,17 +30,19 @@ jobs:
     - name: Run test with pytest
       run: |
         source ~/openquake/bin/activate
-        pip install pytest
         oq dbserver start
         # Wait the DbServer to come up
-        echo "Waiting DBServer up on port 1907...."
+        echo "Waiting DBServer up on port 1908...."
         while ! nc -z localhost 1908; do
           sleep 2 # wait for 1/10 of the second before check again
         done
-        sleep 3
         oq --version
+        sleep 3
+        pip3 install pytest
         cd openquake
-        pytest -vsx cat ghm man mbt sub wkf smt
+        export MPLBACKEND=Agg
+        pip list
+        pytest -vs --color=yes cat ghm man mbt sub wkf smt
   pages:
     name: pages
     runs-on: ubuntu-latest
