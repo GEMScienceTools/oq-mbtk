@@ -41,7 +41,6 @@ class TestMeanMDE(unittest.TestCase):
         assert expected_lines == actual_lines
         os.remove(fout)
 
-#    @unittest.skip('I do not understand the meaning of this test')
     def test_output_mre_3(self):
         """
         tests that if a MDE output file includes more than one IMT, the 
