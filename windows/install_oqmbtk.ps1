@@ -60,10 +60,6 @@ cd ..
 Write-Host "clone of the branch $branch for oq-mbtk and install in developer mode"
 git clone --depth=1 https://github.com/GEMScienceTools/oq-mbtk.git
 cd .\oq-mbtk\
-pip install pandas==1.4.0
-pip install pyzmq==24
-pip install jupyter-server==2.6.0
-pip install xarray==2023.5.0
 pip install -r .\requirements_win64.txt
 pip install -e .
 Write-Host "End of installation"
