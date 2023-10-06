@@ -30,15 +30,16 @@ import os
 import sys
 import toml
 import pandas as pd
-import datetime as dt
 import geopandas as gpd
 import numpy as np
+import datetime
 
 from openquake.baselib import sap
 from openquake.mbi.cat.create_csv import create_folder
 from geojson import LineString, Feature, FeatureCollection, dump
 from openquake.cat.isf_catalogue import get_threshold_matrices
 from openquake.hazardlib.geo.geodetic import geodetic_distance
+
 
 def get_features(cat, idx, idxsel):
     """
@@ -55,7 +56,7 @@ def get_features(cat, idx, idxsel):
     tmp = cat.loc[idx, 'eventID']
     mag1 = float(cat.loc[idx, 'value'])
     time1 = cat.loc[idx, 'datetime']
-    print('ref time ',time1)
+    print('ref time ', time1)
     if type(tmp).__name__ == 'str':
         evid = tmp
     elif type(tmp).__name__ in ['int', 'int64', 'int32']:
@@ -64,14 +65,14 @@ def get_features(cat, idx, idxsel):
         fmt = "Unsupported format for EventID: {:s}"
         raise ValueError(fmt.format(type(tmp).__name__))
 
-    mag2 = cat.loc[idxsel, 'value'].apply(lambda x: float(x))
+    # mag2 = cat.loc[idxsel, 'value'].apply(lambda x: float(x))
     # reference agency used for idx
     ref_agency = cat.loc[idx, 'Agency']
 
     for i in idxsel:
         lon2 = float(cat.loc[i, 'longitude'])
         lat2 = float(cat.loc[i, 'latitude'])
-        
+
         londiff = abs(lon1 - lon2)
         latdiff = abs(lat1 - lat2)
         km_diff = geodetic_distance(lon1, lat1, lon2, lat2)
@@ -81,13 +82,16 @@ def get_features(cat, idx, idxsel):
         # Time difference between events
         t_del = abs(time1 - cat.loc[i, 'datetime']).total_seconds()
         line = LineString([(lon1, lat1), (lon2, lat2)])
-        features.append(Feature(geometry=line, properties={"eventID": evid, "magDiff":mag_diff, "delta_t":t_del, "lon_diff": londiff, "lat_diff": latdiff, "km_diff":km_diff,  "m1": mag1, "agency" : cat.loc[i, 'Agency'], "ref_agency":ref_agency, "mag_type":  cat.loc[i, 'magType']}))
-        
+        props = {"eventID": evid, "magDiff": mag_diff, "delta_t": t_del,
+                 "lon_diff": londiff, "lat_diff": latdiff, "km_diff": km_diff,
+                 "m1": mag1, "agency": cat.loc[i, 'Agency'],
+                 "ref_agency": ref_agency, "mag_type":  cat.loc[i, 'magType']}
+        features.append(Feature(geometry=line, properties=props))
 
     return features
 
 
-def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms = False):
+def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms=False):
     """
     :param cat
         A pandas geodataframe instance containing a homogenised catalogue as
@@ -103,15 +107,17 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms = False):
         Name of the output .geojson file which will contains the lines
         connecting the possibly duplicated events.
     :param use_kms:
-        Specify if distance buffer should use kms (default is False, use degrees)
+        Specify if distance buffer should use kms (default is False, use
+        degrees)
     """
-    
+
     features = []
     found = set()
-    #delta_t = dt.timedelta(seconds=delta_t)
+    # delta_t = dt.timedelta(seconds=delta_t)
     # Get the edges of magnitude and time plus the matrixes with the
     # delta values that should be used
-    mag_low_edges, time_low_edges, time_d, ll_d = get_threshold_matrices(delta_t, delta_ll)
+    gtm = get_threshold_matrices
+    mag_low_edges, time_low_edges, time_d, ll_d = gtm(delta_t, delta_ll)
     cnt = 0
 
     from tqdm import tqdm
@@ -120,24 +126,26 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms = False):
     # general advice will be to exclude historic events and
     # add those later
     subcat = cat[cat['year'] > 1800]
-    
+
     for index, row in tqdm(subcat.iterrows()):
         # Take the index from delta_ll - this is needed
         # when delta_ll varies with time.
-        #magnitude = row.value
+        # magnitude = row.value
         idx_mag = max(np.argwhere(row.value > mag_low_edges))[0]
         idx_t = max(np.argwhere(np.float64(row.year) >= time_low_edges))[0]
-                
+
         ll_thrs = ll_d[idx_t][idx_mag]
         sel_thrs = time_d[idx_t][idx_mag]
         sel_thrs = sel_thrs.total_seconds()
-        
+
         # Find events close in time
-        tmp = abs(subcat.loc[:, 'datetime'] - row.datetime).astype('timedelta64[s]') < sel_thrs
+        tmp_dff = abs(subcat.loc[:, 'datetime'] - pd.to_datetime(row.datetime))
+        threshold = datetime.timedelta(seconds=sel_thrs)
+        tmp = tmp_dff.astype('timedelta64[s]') < threshold
         idx_time = list(tmp[tmp].index)
-        
+
         if use_kms is False:
-        # Select events that occurred close in space
+            # Select events that occurred close in space
             minlo = row.longitude - ll_thrs
             minla = row.latitude - ll_thrs
             maxlo = row.longitude + ll_thrs
@@ -145,7 +153,9 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms = False):
             idx_dist = list(sidx.intersection((minlo, minla, maxlo, maxla)))
 
         else:
-            tmp_dist = abs(geodetic_distance(row.longitude, row.latitude, subcat.loc[:,'longitude'], subcat.loc[:,'latitude'])) < ll_thrs
+            tmp_dist = abs(geodetic_distance(
+                row.longitude, row.latitude, subcat.loc[:, 'longitude'],
+                subcat.loc[:, 'latitude'])) < ll_thrs
             idx_dist = list(tmp_dist[tmp_dist].index)
 
         # Find the index of the events that are matching temporal and spatial
@@ -217,9 +227,8 @@ def check_catalogue(catalogue_fname, settings_fname):
     delta_ll = settings["general"]["delta_ll"]
     delta_t = settings["general"]["delta_t"]
     # Check for use_kms parameter and set to False if not in settings
-    use_kms = settings["general"].get("use_kms", False)
+    # use_kms = settings["general"].get("use_kms", False)
     nchecks = process(cat, sindex, delta_ll, delta_t, geojson_fname)
-
     return nchecks
 
 
