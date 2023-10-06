@@ -9,13 +9,11 @@ on:
     - cron: "0 2 * * *"
 
 jobs:
-
   test:
     name: hazard test
     runs-on: ubuntu-latest
     env:
       MPLBACKEND: 'Agg'
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -34,10 +32,15 @@ jobs:
         source ~/openquake/bin/activate
         pip install pytest
         oq dbserver start
-        cd ~/work/oq-engine/oq-engine
-        oq dbserver start
+        # Wait the DbServer to come up
+        echo "Waiting DBServer up on port 1907...."
+        while ! nc -z localhost 1907; do
+          sleep 2 # wait for 1/10 of the second before check again
+        done
+        sleep 3
+        oq --version
+        cd openquake
         pytest -vsx cat ghm man mbt sub wkf smt
-
   pages:
     name: pages
     runs-on: ubuntu-latest
