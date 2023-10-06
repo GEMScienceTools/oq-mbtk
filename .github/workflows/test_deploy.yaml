@@ -52,14 +52,16 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: "3.10"
     - name: Install dependencies
       run: |
         sudo apt-get install pandoc
         python -m pip install --upgrade pip
         git clone --depth=1 https://github.com/gem/oq-engine.git
-        pip -q install -r oq-engine/requirements-py38-linux64.txt
-        pip -q install -e oq-engine
+        cd oq-engine
+        python3 install.py devel
+        sleep 3
+        source ~/openquake/bin/activate
         pip install sphinx
         pip install recommonmark
         pip install sphinx_rtd_theme
