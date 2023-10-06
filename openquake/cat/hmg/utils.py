@@ -63,10 +63,10 @@ def to_hmtk_catalogue(cdf: pd.DataFrame, polygon=None):
     # Check if catalogue contains strike/dip/rake and retain if it does
     if 'str1' in cdf.columns:
         col_list = ['eventID', 'Agency', 'year', 'month', 'day','hour','minute','second', 'longitude',
-               'latitude', 'depth', 'magMw', 'str1', 'dip1', 'rake1', 'str2', 'dip2', 'rake2']
+               'latitude', 'depth', 'magMw', 'sigma', 'str1', 'dip1', 'rake1', 'str2', 'dip2', 'rake2']
     else:
         col_list = ['eventID', 'Agency', 'year', 'month', 'day', 'hour','minute','second', 'longitude',
-               'latitude', 'depth', 'magMw']
+               'latitude', 'depth', 'magMw', 'sigma']
     
     cdf = cdf[col_list]
 

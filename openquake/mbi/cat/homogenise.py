@@ -38,7 +38,7 @@ def main(settings, odf_fname, mdf_fname, outfolder='./h5/'):
     """
 
     # Homogenise
-    save, work = process_dfs(odf_fname, mdf_fname, settings)
+    save, work, save_all_m = process_dfs(odf_fname, mdf_fname, settings)
     save.magMw = save.magMw.apply(lambda x: round(x, 5))
 
 
@@ -53,6 +53,10 @@ def main(settings, odf_fname, mdf_fname, outfolder='./h5/'):
     fmt = '{:s}_leftout.h5'
     tmp = os.path.join(outfolder, fmt.format(fname))
     work.to_hdf(tmp, '/events', append=False)
+
+    fmt = '{:s}_all_m.h5'
+    tmp = os.path.join(outfolder, fmt.format(fname))
+    save_all_m.to_hdf(tmp, '/events', append=False)
 
 
 main.settings = '.toml file with the settings'
