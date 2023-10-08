@@ -20,6 +20,7 @@ Module with utility functions for gmpes
 """
 import numpy as np
 import pandas as pd
+import ast
 
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib.geo.surface import PlanarSurface
@@ -295,7 +296,6 @@ def mgmpe_check(gmpe):
     :param gmpe:
         gmpe: GMPE to be modified if required (must be a gsim class)
     """
-
     # Preserve original GMPE prior and create base version of GMPE
     orig_gmpe = gmpe
     base_gsim = str(gmpe).splitlines()[0].replace('[', '').replace(']', '')
@@ -305,64 +305,88 @@ def mgmpe_check(gmpe):
     add_inputs = {}
     add_as_int = ['eshm20_region']
     add_as_str = ['region', 'gmpe_table', 'volc_arc_file']
-
+    
     if len(inputs) > 0:  # If greater than 0 must add required gsim inputs
         idx_to_drop = []
         for idx, par in enumerate(inputs):
+            par = str(par)
             # Drop mgmpe params from the other gsim inputs
-            if 'al_atik_2015_sigma' in str(par) or 'SiteTerm' in str(par):
+            if 'sigma_model' in par or 'site_term' in par:
                 idx_to_drop.append(idx)
+            if 'fix_total_sigma' in par:
+                idx_to_drop.append(idx)
+                base_vector = par.split('=')[1].replace('"','')
+                fixed_sigma_vector = ast.literal_eval(base_vector)
+            if 'with_betw_ratio' in par:
+                idx_to_drop.append(idx)
+                with_betw_ratio = float(par.split('=')[1])
+            if 'scaling' in par:
+                idx_to_drop.append(idx)
+                if 'median_scaling_scalar' in par:
+                    median_scalar = float(par.split('=')[1])
+                if 'median_scaling_vector' in par:
+                    base_vector = par.split('=')[1].replace('"','')
+                    median_vector = ast.literal_eval(base_vector)
+                if 'sigma_scaling_scalar' in par:
+                    sigma_scalar = float(par.split('=')[1])
+                if 'sigma_scaling_vector' in par:
+                    base_vector = par.split('=')[1].replace('"','')
+                    sigma_vector = ast.literal_eval(base_vector)
+                    
         inputs = inputs.drop(np.array(idx_to_drop))
         for idx, par in enumerate(inputs):
-            key = str(par).split('=')[0].strip()
+            key = par.split('=')[0].strip()
             if key in add_as_str:
                 val = par.split('=')[1].replace('"', '').strip()
             elif key in add_as_int:
                 val = int(par.split('=')[1])
             else:
-                val = float(str(par).split('=')[1])
+                val = float(par.split('=')[1])
             add_inputs[key] = val
 
-    # Sigma model implementation
+    kwargs = {'gmpe':{base_gsim: add_inputs}} # reconstruct the gmpe as kwargs
+
+    # Al Atik 2015 sigma model
     if 'al_atik_2015_sigma' in str(orig_gmpe):
-        params = {"tau_model": "global", "ergodic": False}
-        gmpe = mgmpe.ModifiableGMPE(gmpe={base_gsim: add_inputs},
-                                    sigma_model_alatik2015=params)
-
-    # Site term implementations
-    msg_sigma_and_site_term = 'An alternative sigma model and an alternative \
-        site term cannot be specified within a single GMPE implementation.'
-    msg_multiple_site_terms = 'Two alternative site terms have been specified \
-        within the toml for a single GMPE implementation'
-
-    # Check only single site term specified
-    if ('CY14SiteTerm' in str(orig_gmpe) and
-            'NRCan15SiteTerm' in str(orig_gmpe)):
-        raise ValueError(msg_multiple_site_terms)
-
-    # Check if site term an dsigma model specified
-    if ('CY14SiteTerm' in str(orig_gmpe) and
-            'al_atik_2015_sigma' in str(orig_gmpe) or
-            'CY14SiteTerm' in str(orig_gmpe) and
-            'al_atik_2015_sigma' in str(orig_gmpe)):
-        raise ValueError(msg_sigma_and_site_term)
-
+        kwargs['sigma_model_alatik2015'] = {"tau_model": "global", "ergodic": False}
+        
+    # Fix total sigma per imt
+    if 'fix_total_sigma' in str(orig_gmpe):
+        kwargs['set_fixed_total_sigma'] = {'total_sigma':fixed_sigma_vector}
+        
+    # Partition total sigma of gsim using a specified ratio of within:between
+    if 'with_betw_ratio' in str(orig_gmpe):
+        kwargs['add_between_within_stds'] = {'with_betw_ratio': with_betw_ratio}
+        
+    # Scale median by constant factor over all imts
+    if 'median_scaling_scalar' in str(orig_gmpe):
+        kwargs['set_scale_median_scalar'] = {'scaling_factor':median_scalar}
+    
+    # Scale median by imt-dependent factor
+    if 'median_scaling_vector' in str(orig_gmpe):
+        kwargs['set_scale_median_vector'] = {'scaling_factor':median_vector}
+        
+    # Scale sigma by constant factor over all imts
+    if 'sigma_scaling_scalar' in str(orig_gmpe):
+        kwargs['set_scale_total_sigma_scalar'] = {'scaling_factor': sigma_scalar}
+        
+    # Scale sigma by imt-dependent factor
+    if 'sigma_scaling_vector' in str(orig_gmpe):
+        kwargs['set_scale_total_sigma_vector'] = {'scaling_factor': sigma_vector}
+    
     # CY14SiteTerm
     if 'CY14SiteTerm' in str(orig_gmpe):
-        params = {}
-        gmpe = mgmpe.ModifiableGMPE(gmpe={base_gsim: add_inputs},
-                                    cy14_site_term=params)
-
+        kwargs['cy14_site_term'] = {}
+        
     # NRCan15SiteTerm (kind = base)
     if ('NRCan15SiteTerm' in str(orig_gmpe) and
-            'NRCan15SiteTermLinear' not in str(orig_gmpe)):
-        params = {'kind': 'base'}
-        gmpe = mgmpe.ModifiableGMPE(gmpe={base_gsim: add_inputs},
-                                    nrcan15_site_term=params)
+        'NRCan15SiteTermLinear' not in str(orig_gmpe)):
+        kwargs['nrcan15_site_term'] = {'kind': 'base'}
+        
     # NRCan15SiteTerm (kind = linear)
     if 'NRCan15SiteTermLinear' in str(orig_gmpe):
-        params = {'kind': 'linear'}
-        gmpe = mgmpe.ModifiableGMPE(gmpe={base_gsim: add_inputs},
-                                    nrcan15_site_term=params)
+        kwargs['nrcan15_site_term'] = {'kind': 'linear'}
+    
+    gmpe = mgmpe.ModifiableGMPE(**kwargs) # remake gmpe using mgmpe
 
     return gmpe
