@@ -348,8 +348,7 @@ def mgmpe_check(gmpe):
 
     # Al Atik 2015 sigma model
     if 'al_atik_2015_sigma' in str(orig_gmpe):
-        kwargs['sigma_model_alatik2015'] = {"tau_model": "global",
-                                            "ergodic": False}
+        kwargs['sigma_model_alatik2015'] = {"tau_model": "global", "ergodic": False}
         
     # Fix total sigma per imt
     if 'fix_total_sigma' in str(orig_gmpe):
