@@ -298,7 +298,7 @@ def mgmpe_check(gmpe):
     """
     # Preserve original GMPE prior and create base version of GMPE
     orig_gmpe = gmpe
-    base_gsim = str(gmpe).splitlines()[0].replace('[', '').replace(']', '')
+    base_gsim = gmpe.__class__.__name__
 
     # Get the additional params if specified
     inputs = pd.Series(str(gmpe).splitlines()[1:], dtype='object')
