@@ -114,7 +114,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
         
         [models.1-CampbellBozorgnia2014]
-        with_betw_ratio = 1.4 # add between-event and within-event sigma using ratio of 1.4 to partition total sigma
+        with_betw_ratio = 1.8 # add between-event and within-event sigma using ratio of 1.4 to partition total sigma
         
         [models.2-CampbellBozorgnia2014]
         fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # fix total sigma per imt
@@ -139,9 +139,6 @@ We can specify the inputs to perform a residual analysis with as follows:
         
         [models.3-BooreEtAl2014]
         site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
-        
-        [models.4-BooreEtAl2014]
-        site_term = ''
         
         [models.NGAEastGMPE]
         gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
