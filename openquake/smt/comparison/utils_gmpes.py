@@ -320,6 +320,9 @@ def mgmpe_check(gmpe):
             if 'with_betw_ratio' in par:
                 idx_to_drop.append(idx)
                 with_betw_ratio = float(par.split('=')[1])
+            if 'set_between_epsilon' in par:
+                idx_to_drop.append(idx)
+                between_epsilon = float(par.split('=')[1])
             if 'scaling' in par:
                 idx_to_drop.append(idx)
                 if 'median_scaling_scalar' in par:
@@ -357,6 +360,10 @@ def mgmpe_check(gmpe):
     # Partition total sigma of gsim using a specified ratio of within:between
     if 'with_betw_ratio' in str(orig_gmpe):
         kwargs['add_between_within_stds'] = {'with_betw_ratio': with_betw_ratio}
+        
+    # Set epsilon for tau
+    if 'set_between_epsilon' in str(orig_gmpe):
+        kwargs['set_between_epsilon'] = {'epsilon_tau':between_epsilon}
         
     # Scale median by constant factor over all imts
     if 'median_scaling_scalar' in str(orig_gmpe):

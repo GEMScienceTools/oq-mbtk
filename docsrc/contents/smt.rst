@@ -112,13 +112,16 @@ We can specify the inputs to perform a residual analysis with as follows:
         
         [models.YenierAtkinson2015BSSA]
         sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
-        
+
         [models.1-CampbellBozorgnia2014]
-        with_betw_ratio = 1.8 # add between-event and within-event sigma using ratio of 1.4 to partition total sigma
+        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # fix total sigma per imt
         
         [models.2-CampbellBozorgnia2014]
-        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # fix total sigma per imt
+        with_betw_ratio = 1.8 # add between-event and within-event sigma using ratio of 1.4 to partition total sigma
                 
+        [models.3-CampbellBozorgnia2014]
+        set_between_epsilon = 1.5 # set between-event epsilon (i.e. tau epsilon)
+                               
         [models.1-AbrahamsonEtAl2014]
         median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
         
