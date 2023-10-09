@@ -213,7 +213,7 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     
     distances[len(distances)-1] = maxR
 
-    return mean, std, distances
+    return mean, std, distances, tau, phi
 
 
 def _get_z1(Vs30, region):

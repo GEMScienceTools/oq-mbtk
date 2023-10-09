@@ -74,11 +74,10 @@ def plot_trellis_util(
                     strike, dip, depth[l], aratio, rake, trt) 
                 
                 # Get attenuation curves
-                mean, std, r_vals = att_curves(gmm, gmm_orig, depth[l],m, 
-                                               aratio_g, strike_g, dip_g,
-                                               rake,Vs30, Z1, Z25, maxR, 
-                                               step, i, ztor_m, eshm20_region,
-                                               dist_type, trt, up_or_down_dip)
+                mean, std, r_vals, tau, phi = att_curves(
+                    gmm, gmm_orig, depth[l], m, aratio_g, strike_g, dip_g, 
+                    rake,Vs30, Z1, Z25, maxR, step, i, ztor_m, eshm20_region,
+                    dist_type, trt, up_or_down_dip)
                 
                 # Get mean, sigma, mean plus sigma and mean minus sigma
                 mean = mean[0][0]
@@ -169,7 +168,8 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                                                                   aratio, rake,
                                                                   trt)
                 
-                rs_50p, rs_plus_sigma, rs_minus_sigma, sigma = [], [], [], []
+                rs_50p, rs_plus_sigma, rs_minus_sigma = [], [], []
+                sigma_store, tau_store, phi_store = [], [], []
                 
                 for k, imt in enumerate(imt_list): 
                     if obs_spectra is not None:
@@ -188,18 +188,28 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                         ztor_m = None
                     
                     # Get mean and sigma
-                    mu, std, r_vals = att_curves(gmm, gmm_orig, depth[l], m,
-                                                 aratio_g, strike_g, dip_g, 
-                                                 rake, Vs30, Z1, Z25, dist,
-                                                 0.1, imt, ztor_m, eshm20_region,
-                                                 dist_type, trt, up_or_down_dip) 
+                    mu, std, r_vals, tau, phi = att_curves(
+                        gmm, gmm_orig, depth[l], m, aratio_g, strike_g, dip_g, 
+                        rake, Vs30, Z1, Z25, dist, 0.1, imt, ztor_m, eshm20_region,
+                        dist_type, trt, up_or_down_dip) 
+                    
+                    # Interpolate for distances and store
                     mu = mu[0][0]
                     f = interpolate.interp1d(r_vals, mu)
                     rs_50p_dist = np.exp(f(i))
                     rs_50p.append(rs_50p_dist)
+                    
                     f1 = interpolate.interp1d(r_vals, std[0])
                     sigma_dist = f1(i)
-                    sigma.append(sigma_dist)
+                    sigma_store.append(sigma_dist)
+                    
+                    f2 = interpolate.interp1d(r_vals, tau[0])
+                    tau_dist = f2(i)
+                    tau_store.append(tau_dist)
+                    
+                    f3 = interpolate.interp1d(r_vals, phi[0])
+                    phi_dist = f3(i)
+                    phi_store.append(phi_dist)
                     
                     if Nstd != 0:
                             rs_plus_sigma_dist = np.exp(f(i)+(Nstd*sigma_dist))
@@ -220,8 +230,13 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                                  linewidth=0.75, linestyle='-.')
                 
                 # Plot sigma vs period
-                ax2.plot(period, sigma, color=col, linewidth=2, linestyle='-',
-                         label=gmpe)
+                ax2.plot(period, sigma_store, color=col, linewidth=2,
+                         linestyle='-', label=gmpe + ' sigma')
+                ax2.plot(period, phi_store, color=col, linewidth=2,
+                         linestyle='-.', label=gmpe + ' phi')
+                ax2.plot(period, tau_store, color=col, linewidth=2,
+                         linestyle='--', label=gmpe + ' tau')
+                
                     
                 # Weight the predictions using logic tree weights
                 lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1, \
@@ -241,7 +256,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
             
             # Set axis limits and add grid
             ax1.set_xlim(min(period), max(period))
-            ax2.set_ylim(0.3, 1)
+            ax2.set_ylim(0, 1)
             ax1.grid(True)
             ax2.grid(True)
             
@@ -299,11 +314,10 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                 else:
                     ztor_m = None
 
-                mean, std, r_vals = att_curves(gmm, gmm_orig, depth[l], m, 
-                                               aratio_g, strike_g, dip_g, 
-                                               rake, Vs30, Z1, Z25, maxR, 
-                                               step, i, ztor_m, eshm20_region,
-                                               dist_type, trt, up_or_down_dip) 
+                mean, std, r_vals, tau, phi = att_curves(
+                    gmm, gmm_orig, depth[l], m, aratio_g, strike_g, dip_g,
+                    rake, Vs30, Z1, Z25, maxR, step, i, ztor_m, eshm20_region,
+                    dist_type, trt, up_or_down_dip) 
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians, (np.exp(mean)))
