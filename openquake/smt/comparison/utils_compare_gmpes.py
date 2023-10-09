@@ -231,12 +231,11 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                 
                 # Plot sigma vs period
                 ax2.plot(period, sigma_store, color=col, linewidth=2,
-                         linestyle='-', label=gmpe + ' sigma')
+                         linestyle='-', label='Total sigma \n' + gmpe)
                 ax2.plot(period, phi_store, color=col, linewidth=2,
-                         linestyle='-.', label=gmpe + ' phi')
+                         linestyle='-.', label='Within-event \n' + gmpe)
                 ax2.plot(period, tau_store, color=col, linewidth=2,
-                         linestyle='--', label=gmpe + ' tau')
-                
+                         linestyle='--', label='Between-event \n' + gmpe)
                     
                 # Weight the predictions using logic tree weights
                 lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1, \
