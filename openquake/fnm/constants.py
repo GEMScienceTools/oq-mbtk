@@ -1,0 +1,1 @@
+SHEAR_MODULUS = 32e9
