@@ -203,13 +203,13 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                     sigma_dist = f1(i)
                     sigma_store.append(sigma_dist)
                     
-                    f2 = interpolate.interp1d(r_vals, tau[0])
-                    tau_dist = f2(i)
-                    tau_store.append(tau_dist)
-                    
-                    f3 = interpolate.interp1d(r_vals, phi[0])
-                    phi_dist = f3(i)
+                    f2 = interpolate.interp1d(r_vals, phi[0])
+                    phi_dist = f2(i)
                     phi_store.append(phi_dist)
+                    
+                    f3 = interpolate.interp1d(r_vals, tau[0])
+                    tau_dist = f3(i)
+                    tau_store.append(tau_dist)
                     
                     if Nstd != 0:
                             rs_plus_sigma_dist = np.exp(f(i)+(Nstd*sigma_dist))
