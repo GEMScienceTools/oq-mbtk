@@ -42,7 +42,7 @@ from openquake.hazardlib import imt
 import openquake.smt.intensity_measures as ims
 from openquake.smt.strong_motion_selector import SMRecordSelector
 from openquake.smt.sm_utils import convert_accel_units, check_gsim_list
-from openquake.smt.comparison.utils_gmpes import  al_atik_sigma_check
+from openquake.smt.comparison.utils_gmpes import mgmpe_check
 
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
@@ -416,7 +416,10 @@ class Residuals(object):
         # Contexts is in either case a list of dictionaries
         self.contexts = []
         for context in contexts:
-
+            # If no rvolc provide as zero (ensure rvolc gsims usable)
+            if 'rvolc' not in context['Ctx']._slots_:
+                context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi,
+                                                     dtype = float)
             # convert all IMTS with acceleration units, which are supposed to
             # be in cm/s/s, to g:
             for a_imt in accel_imts:
@@ -486,20 +489,34 @@ class Residuals(object):
             expected[gmpe] = OrderedDict([(imtx, {}) for imtx in self.imts])
             for imtx in self.imts:
                 gsim = self.gmpe_list[gmpe]
+                gsim_orig = gsim # If gsim into mgmpe retain pot. region for ctx
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < self.gmpe_sa_limits[gmpe][0] or\
                             period > self.gmpe_sa_limits[gmpe][1]:
                         expected[gmpe][imtx] = None
                         continue
-                gsim, sigma_model_flag = al_atik_sigma_check(gmpe, imtx,
-                                                             task = 'residual')
+                # Check if gsim needs appending with mgmpe
+                gsim = mgmpe_check(gsim)
+                # Add region parameter to sites context if specified in gsim
+                if 'eshm20_region' in gsim_orig.kwargs:
+                    context["Ctx"].region = gsim_orig.kwargs['eshm20_region']
+                if 'region' in gsim_orig.kwargs and 'eshm20_region' not in gsim.kwargs:
+                    context["Ctx"].region = gsim_orig.kwargs['region']
+                # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
                     context["Ctx"],
                     context["Ctx"],
                     context["Ctx"],
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
+                # If no sigma model inform user must specify sigma model in .toml
+                if np.all(stddev[0] == 0.):
+                    gmm_str = str(gmpe).split('(')[0]
+                    raise ValueError('A sigma model is not provided by default\
+                                     for %s GMPE. Specify a sigma model for %s \
+                                     GMPE for the computation of ground-motion\
+                                     residuals.' %(gmm_str, gmm_str))
                 expected[gmpe][imtx]["Mean"] = mean
                 for i, res_type in enumerate(self.types[gmpe][imtx]):
                     expected[gmpe][imtx][res_type] = stddev[i]
