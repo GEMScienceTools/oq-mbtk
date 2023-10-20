@@ -155,8 +155,7 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
         
 
     # Select point in polygon
-    columns = ['eventID', 'year', 'month', 'day', 'hour', 'minute', 'second', 'magnitude', 'longitude',
-               'latitude', 'depth', 'sigmaMagnitude', 'Agency']
+    columns = ['eventID', 'year', 'month', 'day', 'hour', 'minute', 'second', 'magnitude', 'longitude', 'latitude', 'depth', 'sigmaMagnitude', 'Agency', 'semimajor90', 'semiminor90', 'depth_error', 'dip1', 'rake1', 'str1', 'dip2', 'rake2', 'str2']
 
     # Iterate over sources
     out_fnames = []
@@ -175,7 +174,8 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
             fname = f'subcatalogue_zone_{poly.id}.csv'
         out_fname = os.path.join(folder_out, fname)
         out_fnames.append(out_fname)
-        within.to_csv(out_fname, index=False, columns=columns)
+        within.to_csv(out_fname, index=False, columns = columns)
+        #columns=columns
 
     return out_fnames
 
