@@ -329,7 +329,8 @@ def process_gcmt_datafames(fname_folder: str, folder_out: str):
         ext = "png"
         fmt = "zone_{:s}.{:s}"
         figure_name = os.path.join(folder_out, fmt.format(src_id, ext))
-
+        cat_name = os.path.join(folder_out, fmt.format(src_id, "csv"))
+	
         fmclassification = {}
         eventfm = {}
         dip_1 = {}
@@ -370,5 +371,8 @@ def process_gcmt_datafames(fname_folder: str, folder_out: str):
 
         plt.savefig(figure_name, format=ext)
         plt.close()
+        
+        df['fm'] = eventfm
+        df.to_csv(cat_name)
 
     return fmclassification
