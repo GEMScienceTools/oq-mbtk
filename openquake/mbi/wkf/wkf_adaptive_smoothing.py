@@ -47,10 +47,11 @@ def main(catalogue:str, h3_map: str, config:str, outputfile:str,  use: str = [])
     h3_idx = pd.read_csv(h3_map, names = ("h3", "id"))
     
     if len(use) > 0:
+        l1 = use
         use = get_list(use)
         use = map(int, use)
         h3_idx = h3_idx[h3_idx['id'].isin(use)]
-        print("Using zones ", use)
+        print("Using zones ", l1)
        
     # Get lat/lon locations for each h3 cell, convert to seperate lat and
     # lon columns of dataframe

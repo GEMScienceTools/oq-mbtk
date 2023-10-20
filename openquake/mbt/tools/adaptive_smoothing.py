@@ -68,6 +68,7 @@ class AdaptiveSmoothing(object):
             * 'n_v' - number of nearest neighbour to use for smoothing distance (int)
             * 'd_i_min' - minimum smoothing distance d_i, should be chosen based on location uncertainty. Default of 0.5 in Helmstetter et al. (float)
             
+            
         :returns:
             Smoothed seismicity data as np.ndarray, of the form
             [Longitude, Latitude, Smoothed_value]
@@ -110,7 +111,6 @@ class AdaptiveSmoothing(object):
 
         h3_df = pd.DataFrame(data)
         h3_df.columns = ['lon', 'lat', 'depth', 'mag']
-        #print(h3_df.columns)
         h3_df['h3'] = h3_df.apply(lat_lng_to_h3, axis=1)
         #h3_ids = h3_df['h3'].tolist()
         #pts_h3 = h3.geo_to_h3(catalogue.data['latitude'], catalogue.data['longitude'], h3res)
