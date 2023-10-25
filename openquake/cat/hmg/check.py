@@ -125,13 +125,8 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms=False):
     # datetime can only cover 548 years starting in 1677
     # general advice will be to exclude historic events and
     # add those later
-<<<<<<< HEAD
     subcat = cat[(cat['year'] > 1800) & (cat['value'] > 1.0)]
     
-=======
-    subcat = cat[cat['year'] > 1800]
-
->>>>>>> 065ce0a49f862a9b16f82fc68b6f57c42390a9e4
     for index, row in tqdm(subcat.iterrows()):
         # Take the index from delta_ll - this is needed
         # when delta_ll varies with time.
@@ -141,13 +136,8 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms=False):
 
         ll_thrs = ll_d[idx_t][idx_mag]
         sel_thrs = time_d[idx_t][idx_mag]
-<<<<<<< HEAD
         #sel_thrs = sel_thrs.total_seconds()
         
-=======
-        sel_thrs = sel_thrs.total_seconds()
-
->>>>>>> 065ce0a49f862a9b16f82fc68b6f57c42390a9e4
         # Find events close in time
         tmp_dff = abs(subcat.loc[:, 'datetime'] - pd.to_datetime(row.datetime))
         threshold = datetime.timedelta(seconds=sel_thrs)
