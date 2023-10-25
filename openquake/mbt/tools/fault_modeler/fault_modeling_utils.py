@@ -772,10 +772,8 @@ def trace_from_coords(fault_dict, defaults=defaults, param_map=param_map,
 
         dip = get_dip(fault_dict, defaults=defaults, param_map=param_map)
 
-        if slip_type not in ('Strike-Slip', 'Dextral', 'Sinistral'):
-            if dip < 90.:
-
-                fault_trace = _check_trace_coord_ordering(fault_dict,
+        if dip < 90.:
+            fault_trace = _check_trace_coord_ordering(fault_dict,
                                                           fault_trace,
                                                           defaults=defaults,
                                                           param_map=param_map)
@@ -863,11 +861,9 @@ def _check_trace_coord_ordering(fault_dict, fault_trace,
         warnings.warn('Given dip direction <15 degrees of strike')
 
     if trend_angle_diff > reverse_angle_threshold:
-        new_fault_trace = deepcopy(fault_trace)
-        new_fault_trace.points.reverse()
-        return new_fault_trace
-    else:
-        return fault_trace
+        fault_trace.flip()
+
+    return fault_trace
 
 
 def angle_difference(trend_1, trend_2, return_abs=True):
