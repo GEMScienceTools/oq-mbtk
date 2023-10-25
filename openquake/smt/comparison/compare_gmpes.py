@@ -65,6 +65,8 @@ class Configurations(object):
         self.up_or_down_dip = float(up_or_down_dip)
         
         self.trt = config_file['source_properties']['trt']
+        if self.trt == 'None':
+            self.trt = None
         self.ztor = config_file['source_properties']['ztor']
         if self.ztor == 'None':
             self.ztor = None

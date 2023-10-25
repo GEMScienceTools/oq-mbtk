@@ -153,12 +153,10 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
         rup_trt = TRT.INDUCED
     if trt == 'Induced_Geothermal':
         rup_trt = TRT.GEOTHERMAL
-    if trt == -999:
-        rup_trt = gmpe.DEFINED_FOR_TECTONIC_REGION_TYPE
-    if rup_trt is None:
-     raise ValueError('Specify a TRT string within the toml file: ASCR, \
-                       InSlab, Interface, Stable, Upper_Mantle, Volcanic, \
-                       Induced, Induced_Geothermal')
+    if rup_trt is None and aratio == -999:
+     raise ValueError(
+         'An ratio must be provided by the user, or alternatively specify a \
+          TRT string within the toml file to assign a trt-dependent aratio proxy.')
                         
     # Get rup
     rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
