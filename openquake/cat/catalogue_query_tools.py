@@ -1079,7 +1079,6 @@ class CatalogueRegressor(object):
                  linewidth=2.0,
                  label=title_string)
         plt.legend(loc=2, frameon=False)
-        import pdb; pdb.set_trace()
         if filename:
             utils._save_image(filename, filetype, resolution)
         if not overlay:
@@ -1101,7 +1100,6 @@ class CatalogueRegressor(object):
                  linewidth=2.0,
                  label=title_string)
 
-        import pdb; pdb.set_trace()
         #plt.title(r"{:s}".format(title_string), fontsize=14)
         plt.legend(loc=2, frameon=False)
         if filename:
