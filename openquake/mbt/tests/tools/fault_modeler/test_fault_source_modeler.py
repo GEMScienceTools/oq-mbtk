@@ -156,8 +156,8 @@ class TestDatabaseIO(unittest.TestCase):
     def test_build_source_model_config_file(self):
 
         # Configuration, target and reference files
-        conf_file = os.path.join(BASE_DATA_PATH, 'data', 'config.ini')
-        test_file = os.path.join(BASE_DATA_PATH, 'data',
+        conf_file = os.path.join(BASE_DATA_PATH, 'config.ini')
+        test_file = os.path.join(BASE_DATA_PATH, 
                                  'fault_model_04.test.xml')
         base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_04.base.xml')
