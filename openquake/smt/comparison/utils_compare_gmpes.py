@@ -701,7 +701,6 @@ def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
     if l == 0: #left row only
         pyplot.ylabel(str(i) + ' (g)', fontsize='16')
     pyplot.loglog()
-    pyplot.ylim(0.001, 10) # Mod if required
     pyplot.xlim(1, np.max(r_vals)) # Mod if required
     
     
