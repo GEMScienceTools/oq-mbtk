@@ -24,13 +24,20 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-import pygmt
+
 import netCDF4
 import numpy as np
 from numba import njit
 from openquake.hazardlib.geo.geodetic import (
     point_at, npoints_towards, geodetic_distance, azimuth)
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
+
+pygmt_available = False
+try:
+    import pygmt
+except ImportError:
+    pygmt_available = True
+    pass
 
 
 @njit
@@ -77,7 +84,7 @@ def get_bounding_box(lons, lats, delta=0.0):
         bbox = [milo - delta, malo + delta, np.min(lats) - delta,
                 np.max(lats) + delta]
 
-    #bbox = [milo-delta, malo+delta, np.min(lats)-delta, np.max(lats)+delta]
+    # bbox = [milo-delta, malo+delta, np.min(lats)-delta, np.max(lats)+delta]
     return bbox, idl
 
 
@@ -363,35 +370,37 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
         clo = np.mean([bb[0], bb[1]])
         cla = np.mean([bb[2], bb[3]])
 
-        fig = pygmt.Figure()
-        pygmt.makecpt(cmap="jet", series=[0.0, 800])
-        # fig.basemap(region=reg, projection="M20c", frame=True)
-        fig.basemap(region=reg, projection=f"T{clo}/{cla}/12c", frame=True)
-        fig.coast(land="gray", water="skyblue")
+        if pygmt_available:
 
-        # Profile traces
-        for i, pro in enumerate(traces):
-            fig.plot(x=pro[:, 0], y=pro[:, 1], pen="red")
-            fig.text(x=pro[0, 0], y=pro[0, 1], text=f'{i}', font="4p")
+            fig = pygmt.Figure()
+            pygmt.makecpt(cmap="jet", series=[0.0, 800])
+            # fig.basemap(region=reg, projection="M20c", frame=True)
+            fig.basemap(region=reg, projection=f"T{clo}/{cla}/12c", frame=True)
+            fig.coast(land="gray", water="skyblue")
 
-        # Grid
-        fig.plot(x=depths[:, 0], y=depths[:, 1],
-                 color=-depths[:, 2],
-                 style='c0.025c',
-                 cmap=True)
+            # Profile traces
+            for i, pro in enumerate(traces):
+                fig.plot(x=pro[:, 0], y=pro[:, 1], pen="red")
+                fig.text(x=pro[0, 0], y=pro[0, 1], text=f'{i}', font="4p")
 
-        # Profiles
-        for key in slb.profiles:
-            pro = slb.profiles[key]
-            if pro.shape[0] > 0:
-                fig.plot(x=pro[:, 0],
-                         y=pro[:, 1],
-                         color=pro[:, 2],
-                         cmap=True,
-                         style="h0.025c",
-                         pen='black')
-        fig.savefig(fname_fig)
-        fig.show()
+            # Grid
+            fig.plot(x=depths[:, 0], y=depths[:, 1],
+                     color=-depths[:, 2],
+                     style='c0.025c',
+                     cmap=True)
+
+            # Profiles
+            for key in slb.profiles:
+                pro = slb.profiles[key]
+                if pro.shape[0] > 0:
+                    fig.plot(x=pro[:, 0],
+                             y=pro[:, 1],
+                             color=pro[:, 2],
+                             cmap=True,
+                             style="h0.025c",
+                             pen='black')
+            fig.savefig(fname_fig)
+            fig.show()
 
     return slb
 
