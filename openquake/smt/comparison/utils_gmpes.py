@@ -250,7 +250,8 @@ def _get_z25(Vs30, region):
 
 def _param_gmpes(strike, dip, depth, aratio, rake, trt):
     """
-    Get proxies for strike, dip, depth and aspect ratio if not provided
+    Get (crude) proxies for strike, dip, depth and aspect ratio if not provided
+    by the user.
     """
     # Strike
     if strike == -999: 

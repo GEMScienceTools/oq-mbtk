@@ -72,7 +72,7 @@ class Configurations(object):
         self.dip = config_file['source_properties']['dip']
         self.rake = config_file['source_properties']['rake']
 
-        self.aratio = -999
+        self.aratio = config_file['source_properties']['aratio']
         
         # One set of magnitudes for use in trellis plots
         self.trellis_and_rs_mag_list = config_file['source_properties'][
