@@ -479,6 +479,7 @@ Comparing GMPEs
         strike = -999
         dip =  60 # (Albania has predominantly reverse faulting)
         rake = 90 # (+ 90 for compression, -90 for extension)
+        aratio  = 2
         trellis_and_rs_mag_list = [5, 6, 7] # mags used only for trellis and response spectra
         trellis_and_rs_depths = [20, 20, 20] # depth per magnitude for trellis and response spectra
         
