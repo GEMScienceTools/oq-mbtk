@@ -699,7 +699,10 @@ def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
     if n == len(imt_list)-1: #bottom row only
         pyplot.xlabel(label, fontsize='16')
     if l == 0: #left row only
-        pyplot.ylabel(str(i) + ' (g)', fontsize='16')
+        if str(i) != 'PGV':
+            pyplot.ylabel(str(i) + ' (g)', fontsize='16')
+        else:
+            pyplot.ylabel('PGV (cm/s)', fontsize='16')
     pyplot.loglog()
     pyplot.xlim(1, np.max(r_vals)) # Mod if required
     
