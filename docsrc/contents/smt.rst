@@ -474,12 +474,12 @@ Comparing GMPEs
         
         # Characterise earthquake for the region of interest as finite rupture
         [source_properties]
-        trt = 'ASCR' # Specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal 
+        trt = 'None' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
         ztor = 'None' # Set to string of 'None' to NOT consider otherwise specify as array matching number of mag and depth values
         strike = -999
         dip =  60 # (Albania has predominantly reverse faulting)
         rake = 90 # (+ 90 for compression, -90 for extension)
-        aratio  = 2 # If set to -999 the trt will be used to assign a default trt-dependent aratio
+        aratio  = 2 # If set to -999 the user-provided trt string will be used to assign a default trt-dependent aratio
         trellis_and_rs_mag_list = [5, 6, 7] # mags used only for trellis and response spectra
         trellis_and_rs_depths = [20, 20, 20] # depth per magnitude for trellis and response spectra
         
