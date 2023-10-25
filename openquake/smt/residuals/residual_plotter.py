@@ -27,7 +27,6 @@ from copy import deepcopy
 from collections import OrderedDict
 from math import floor, ceil
 from scipy.stats import norm
-from IPython.display import display
 from cycler import cycler
 
 from openquake.hazardlib.imt import imt2tup
@@ -965,7 +964,6 @@ def loglikelihood_table(residuals, filename):
              '\n',', ') + ' LLH'
     final_llh_df_output.columns = list(pd.Series(llh_columns_all_output))
     final_llh_df_output.to_csv(filename, sep = ',')
-    display(final_llh_df_output)
     
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
@@ -1019,12 +1017,18 @@ def llh_weights_table(residuals, filename):
         model_weights_df[gmpe] = pd.Series(model_weights.loc[gmpe])
     model_weights_df.columns = model_weights_columns
     
-    model_weights_avg = np.array(np.mean(model_weights_df))
-    model_weights_avg_df = pd.DataFrame([model_weights_avg],index=
+    mean_per_gmm = []
+    for gmm in model_weights_df.columns:
+        store_wts = []
+        for imt in model_weights_df[gmm]:
+            store_wts.append(imt)
+        mean_per_gmm.append(np.mean(store_wts))
+        
+    model_weights_avg_df = pd.DataFrame([mean_per_gmm],index=
                                       ['Avg over all periods'])
     model_weights_avg_df.columns = model_weights_columns
     final_model_weights_df = pd.concat([model_weights_df, model_weights_avg_df])
-    
+
     # Table and display outputs (need to assign simplified GMPE names)
     final_model_weights_df_output = final_model_weights_df
     model_weights_columns_all_output = {}
@@ -1035,7 +1039,6 @@ def llh_weights_table(residuals, filename):
     final_model_weights_df_output.columns = list(pd.Series(
         model_weights_columns_all_output))
     final_model_weights_df_output.to_csv(filename, sep = ',')
-    display(final_model_weights_df_output)
     
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
@@ -1110,7 +1113,6 @@ def edr_weights_table(residuals, filename):
     final_model_weights_df_output.columns = list(pd.Series(
         model_weights_columns_all_output))
     final_model_weights_df_output.to_csv(filename, sep = ',')
-    display(final_model_weights_df_output)
     
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
@@ -1153,7 +1155,6 @@ def edr_table(residuals, filename):
                 '.csv','') + '_%s' %(
                 str(residuals.gmpe_list[gmpe]).replace('\n','_').replace(
                     ' ','')).replace('"','') + '.csv', sep = ',')
-        display(final_EDR_metrics_df_output)
         
 def pdf_table(residuals, filename):
     """
@@ -1242,7 +1243,6 @@ def pdf_table(residuals, filename):
     combined_df_output.columns = list(pd.Series(gmpe_headers))
     
     combined_df_output.to_csv(filename, sep = ',')
-    display(combined_df_output)
 
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts  

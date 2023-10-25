@@ -1,23 +1,17 @@
-name: Installation and test on Windows
-
+---
+name: Windows Test
 on:
   push:
     branches:
-      - 'ae-310action'
+      - ae-workflow
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "0 7 * * *"
   workflow_dispatch:
 jobs:
-
   test:
     name: Windows Installation
     runs-on: windows-latest
-
     steps:
-    - name: Extract branch name
-      shell: bash
-      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-      id: extract_branch
     - uses: actions/checkout@v3
     - name: Run scripts to install on windows
       run: |
