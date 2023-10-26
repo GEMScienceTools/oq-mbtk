@@ -1,13 +1,38 @@
-#!/usr/bin/env python
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# ------------------- FERMI: Fault nEtwoRks ModellIng -------------------------
+# Copyright (C) 2023 GEM Foundation
+#         .-.
+#        /    \                                        .-.
+#        | .`. ;    .--.    ___ .-.     ___ .-. .-.   ( __)
+#        | |(___)  /    \  (   )   \   (   )   '   \  (''")
+#        | |_     |  .-. ;  | ' .-. ;   |  .-.  .-. ;  | |
+#       (   __)   |  | | |  |  / (___)  | |  | |  | |  | |
+#        | |      |  |/  |  | |         | |  | |  | |  | |
+#        | |      |  ' _.'  | |         | |  | |  | |  | |
+#        | |      |  .'.-.  | |         | |  | |  | |  | |
+#        | |      '  `-' /  | |         | |  | |  | |  | |
+#       (___)      `.__.'  (___)       (___)(___)(___)(___)
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
 import numpy as np
-from numba import jit, njit
-
+from numba import njit
+from openquake.fnm.constants import PI, EARTH_RADIUS
 from openquake.hazardlib.geo.mesh import Mesh
-
-PI = 3.1415926535
-EARTH_RADIUS = 6371.0
 
 
 def get_min_distance(mesh1: Mesh, mesh2: Mesh) -> float:
@@ -27,8 +52,9 @@ def get_min_distance(mesh1: Mesh, mesh2: Mesh) -> float:
 
 
 @njit
-def _get_min_distance(lon1: np.ndarray, lat1: np.ndarray, dep1: np.ndarray,
-                      lon2: np.ndarray, lat2: np.ndarray, dep2: np.ndarray) -> float:
+def _get_min_distance(
+        lon1: np.ndarray, lat1: np.ndarray, dep1: np.ndarray,
+        lon2: np.ndarray, lat2: np.ndarray, dep2: np.ndarray) -> float:
 
     lo1r = lon1.flatten() * PI / 180.0
     la1r = lat1.flatten() * PI / 180.0
@@ -70,7 +96,8 @@ def get_mesh_polygon(mesh: Mesh) -> np.ndarray:
 
 
 @njit
-def _get_mesh_polygon(lons: np.ndarray, lats: np.ndarray, deps: np.ndarray) -> np.ndarray:
+def _get_mesh_polygon(
+        lons: np.ndarray, lats: np.ndarray, deps: np.ndarray) -> np.ndarray:
     # Get the number of points needed to describe the perimeter
     num_points = lons.shape[1] * 2 + lons.shape[0] * 2 - 2
     out = np.zeros((num_points, 3))
@@ -85,12 +112,12 @@ def _get_mesh_polygon(lons: np.ndarray, lats: np.ndarray, deps: np.ndarray) -> n
         out[cnt, 1] = lats[i, -1]
         out[cnt, 2] = deps[i, -1]
         cnt += 1
-    for i in np.arange(lons.shape[1]-1, 0, -1):
+    for i in np.arange(lons.shape[1] - 1, 0, -1):
         out[cnt, 0] = lons[-1, i]
         out[cnt, 1] = lats[-1, i]
         out[cnt, 2] = deps[-1, i]
         cnt += 1
-    for i in np.arange(lons.shape[0]-1, -1, -1):
+    for i in np.arange(lons.shape[0] - 1, -1, -1):
         out[cnt, 0] = lons[i, 0]
         out[cnt, 1] = lats[i, 0]
         out[cnt, 2] = deps[i, 0]

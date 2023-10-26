@@ -1,15 +1,115 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# ------------------- FERMI: Fault nEtwoRks ModellIng -------------------------
+# Copyright (C) 2023 GEM Foundation
+#         .-.
+#        /    \                                        .-.
+#        | .`. ;    .--.    ___ .-.     ___ .-. .-.   ( __)
+#        | |(___)  /    \  (   )   \   (   )   '   \  (''")
+#        | |_     |  .-. ;  | ' .-. ;   |  .-.  .-. ;  | |
+#       (   __)   |  | | |  |  / (___)  | |  | |  | |  | |
+#        | |      |  |/  |  | |         | |  | |  | |  | |
+#        | |      |  ' _.'  | |         | |  | |  | |  | |
+#        | |      |  .'.-.  | |         | |  | |  | |  | |
+#        | |      '  `-' /  | |         | |  | |  | |  | |
+#       (___)      `.__.'  (___)       (___)(___)(___)(___)
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
+from typing import Optional
+
 
 import numpy as np
+import pandas as pd
 import geopandas as gpd
 
-from geojson import Polygon, Feature, FeatureCollection, dump
 from pyproj import Transformer
-from shapely.geometry import MultiLineString
+from scipy.stats import poisson
 from datetime import datetime, timezone
+from shapely.geometry import MultiLineString
+from geojson import Polygon, Feature, FeatureCollection, dump
+
+from openquake.hazardlib.source import MultiFaultSource
+from openquake.hazardlib.geo import Point, Line
+from openquake.hazardlib.geo.surface import KiteSurface
+
+from openquake.fnm.section import get_subsection
 
 
-def export_subsections(fsys, fname: str = None, format: str = 'geojson'):
+def _get_profiles(kite_surf):
+    lons, lats, depths = kite_surf.mesh.array
+
+    n_profiles = lons.shape[1]
+    profiles = []
+
+    profiles = [
+        list(zip(lons[:, col], lats[:, col], depths[:, col]))
+        for col in range(n_profiles)
+    ]
+
+    profiles = [Line([Point(*p) for p in profile]) for profile in profiles]
+
+    return profiles
+
+
+def make_multifault_source(
+    fsys,
+    ruptures: pd.DataFrame,
+    source_id: str = "test_source",
+    name: str = "Test Source",
+    tectonic_region_type: str = "Active Shallow Crust",
+    investigation_time=0.0,
+    infer_occur_rates: bool = False,
+):
+    surfaces = []
+    for fault, subsecs in fsys:
+        fault_mesh = fault.mesh
+        for subsec in subsecs[0]:
+            subsec_mesh = get_subsection(fault_mesh, subsec)
+            subsec_surface = KiteSurface(subsec_mesh)
+            profiles = _get_profiles(subsec_surface)
+            subsec_surface.profiles = profiles
+            surfaces.append(subsec_surface)
+
+    rupture_idxs = ruptures.subsections.values.tolist()
+    mags = ruptures.M.values
+    rakes = ruptures.rake.values
+
+    pmfs = [
+        poisson.pmf([0, 1, 2, 3, 4], r).tolist()
+        for r in ruptures.occurrence_rate.values
+    ]
+
+    mfs = MultiFaultSource(
+        source_id=source_id,
+        name=name,
+        tectonic_region_type=tectonic_region_type,
+        rupture_idxs=rupture_idxs,
+        occurrence_probs=pmfs,
+        magnitudes=mags,
+        rakes=rakes,
+        investigation_time=investigation_time,
+        infer_occur_rates=infer_occur_rates,
+    )
+
+    mfs.sections = surfaces
+
+    return mfs
+
+
+def export_subsections(fsys, fname: str = None, format: str = "geojson"):
     """
     Exports subsections.
 
@@ -41,7 +141,7 @@ def export_subsections(fsys, fname: str = None, format: str = 'geojson'):
                 # single-section rupture
                 subs = subs.astype(int)
                 submesh = mesh[
-                    :, subs[0]: subs[0] + subs[2], subs[1]: subs[1] + subs[3]
+                    :, subs[0] : subs[0] + subs[2], subs[1] : subs[1] + subs[3]
                 ]
 
                 # Top
@@ -103,7 +203,14 @@ def export_subsections(fsys, fname: str = None, format: str = 'geojson'):
             dump(feature_collection, f)
 
 
-def export_ruptures(rups, single_rups, fsys, mags, fname: str = None):
+def export_ruptures(
+    rups,
+    single_rups,
+    fsys,
+    mags,
+    rates: Optional[np.ndarray] = None,
+    fname: str = None,
+):
     """
     Exports subsections.
 
@@ -124,6 +231,11 @@ def export_ruptures(rups, single_rups, fsys, mags, fname: str = None):
     if fname is None:
         fname = "ruptures.gpkg"
 
+    if fname.split(".")[-1] != "gpkg":
+        driver = "GPKG"
+    elif fname.split(".")[-1] != "geojson":
+        driver = "GeoJSON"
+
     # Geographic coordinates converter
     transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857")
 
@@ -134,6 +246,8 @@ def export_ruptures(rups, single_rups, fsys, mags, fname: str = None):
     data["datetime"] = []
     data["num_sections"] = []
     data["magnitude"] = []
+    if rates is not None:
+        data["occurrence_rate"] = []
     for i_rup, (rup, mag) in enumerate(zip(rups, mags)):
         # Loop through the single section ruptures composing the rupture
         lines = []
@@ -163,7 +277,9 @@ def export_ruptures(rups, single_rups, fsys, mags, fname: str = None):
         data["datetime"].append(tmp_time)
         data["num_sections"].append(len(rup))
         data["magnitude"].append(float(f"{mag:.2f}"))
+        if rates is not None:
+            data["occurrence_rate"].append(rates[i_rup])
 
     gdf = gpd.GeoDataFrame(data)
     gdf = gdf.set_crs(3857, allow_override=True)
-    gdf.to_file(fname, layer="ruptures", driver="GPKG")
+    gdf.to_file(fname, layer="ruptures", driver=driver)

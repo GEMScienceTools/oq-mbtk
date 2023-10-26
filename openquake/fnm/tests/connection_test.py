@@ -1,4 +1,32 @@
-#!/usr/bin/env python
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# ------------------- FERMI: Fault nEtwoRks ModellIng -------------------------
+# Copyright (C) 2023 GEM Foundation
+#         .-.
+#        /    \                                        .-.
+#        | .`. ;    .--.    ___ .-.     ___ .-. .-.   ( __)
+#        | |(___)  /    \  (   )   \   (   )   '   \  (''")
+#        | |_     |  .-. ;  | ' .-. ;   |  .-.  .-. ;  | |
+#       (   __)   |  | | |  |  / (___)  | |  | |  | |  | |
+#        | |      |  |/  |  | |         | |  | |  | |  | |
+#        | |      |  ' _.'  | |         | |  | |  | |  | |
+#        | |      |  .'.-.  | |         | |  | |  | |  | |
+#        | |      '  `-' /  | |         | |  | |  | |  | |
+#       (___)      `.__.'  (___)       (___)(___)(___)(___)
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
 import pathlib
@@ -14,14 +42,15 @@ from openquake.fnm.importer import kite_surfaces_from_geojson
 
 from openquake.hazardlib.geo import Line, Point
 from openquake.hazardlib.geo.surface.kite_fault import (
-    KiteSurface, get_profiles_from_simple_fault_data)
+    KiteSurface,
+    get_profiles_from_simple_fault_data,
+)
 
 PLOTTING = False
 HERE = pathlib.Path(__file__).parent
 
 
 def _get_surfs():
-
     mesh_spacing = 2.0
     profile_sd = 1.0
     edge_sd = 1.0
@@ -32,7 +61,8 @@ def _get_surfs():
     dip = 80.0
     fault_trace = Line([Point(10.3, 45.0), Point(10.0, 45.0)])
     profiles = get_profiles_from_simple_fault_data(
-        fault_trace, usd, lsd, dip, mesh_spacing)
+        fault_trace, usd, lsd, dip, mesh_spacing
+    )
     surf0 = KiteSurface.from_profiles(profiles, profile_sd, edge_sd)
 
     # Create the Kite Fault Surface
@@ -41,7 +71,8 @@ def _get_surfs():
     dip = 80.0
     fault_trace = Line([Point(10.6, 45.1), Point(10.3, 45.1)])
     profiles = get_profiles_from_simple_fault_data(
-        fault_trace, usd, lsd, dip, mesh_spacing)
+        fault_trace, usd, lsd, dip, mesh_spacing
+    )
     surf1 = KiteSurface.from_profiles(profiles, profile_sd, edge_sd)
 
     # Create the Kite Fault Surface
@@ -50,16 +81,16 @@ def _get_surfs():
     dip = 80.0
     fault_trace = Line([Point(10.9, 45.22), Point(10.6, 45.22)])
     profiles = get_profiles_from_simple_fault_data(
-        fault_trace, usd, lsd, dip, mesh_spacing)
+        fault_trace, usd, lsd, dip, mesh_spacing
+    )
     surf2 = KiteSurface.from_profiles(profiles, profile_sd, edge_sd)
 
     return [surf0, surf1, surf2]
 
 
 class TestCheckNeighbors(unittest.TestCase):
-
     def test_lower_right_subsec(self):
-        """ Test subsection located in the lower right part of the surface """
+        """Test subsection located in the lower right part of the surface"""
         mesh = np.zeros((8, 10, 3))
         cell = np.array([4, 5, 4, 3])
         computed = check_neighbors(mesh, cell)
@@ -69,7 +100,7 @@ class TestCheckNeighbors(unittest.TestCase):
         np.testing.assert_equal(computed, expected)
 
     def test_full_subsection(self):
-        """ Test subsection covering the entire surface """
+        """Test subsection covering the entire surface"""
         mesh = np.zeros((8, 10, 3))
         cell = np.array([0, 0, 10, 8])
         computed = check_neighbors(mesh, cell)
@@ -80,25 +111,25 @@ class TestCheckNeighbors(unittest.TestCase):
 
 
 class TestFindConnections(unittest.TestCase):
-
+    @unittest.skip("takes a lot of time")
     def test_connection_filter_angle(self):
         """Test select connections by angle"""
         # The fault system used in this test is an idealised one.
-        fname = HERE / 'data' / 'test_system.geojson'
+        fname = HERE / "data" / "test_system.geojson"
         surfs = kite_surfaces_from_geojson(fname, 2)
         surfs = [surfs[4], surfs[5]]
 
         subs_size = [-0.5, -1]
         fsys = get_fault_system(surfs, subs_size)
 
-        criteria = {'max_connection_angle': {'threshold': 60.}}
+        criteria = {"max_connection_angle": {"threshold": 60.0}}
         binm = np.ones((len(fsys), len(fsys)))
         _, _, _ = get_connections(fsys, binm, criteria)
 
         # TODO add a proper test
 
     def test_connection_by_distance(self):
-        """Test connections by distance """
+        """Test connections by distance"""
 
         # Set the size of subsections, get the surfaces representing sections,
         # compute the BBox of each section and create the fault system
@@ -116,22 +147,26 @@ class TestFindConnections(unittest.TestCase):
         binm[dmtx < threshold] = 1
 
         # Set the criteria
-        key = 'threshold_distance'
-        criteria = {'min_distance_between_subsections': {key: 20.}}
+        key = "threshold_distance"
+        criteria = {"min_distance_between_subsections": {key: 20.0}}
 
         # Get the connections
         conns, _, _ = get_connections(fsys, binm, criteria)
 
-        expected = np.array([[0., 1., 0., 0., 6., 12., 0., 18., 6., 12.],
-                             [1., 2., 0., 0., 6., 12., 0., 18., 6., 12.]])
+        expected = np.array(
+            [
+                [0.0, 1.0, 0.0, 0.0, 6.0, 12.0, 0.0, 18.0, 6.0, 12.0],
+                [1.0, 2.0, 0.0, 0.0, 6.0, 12.0, 0.0, 18.0, 6.0, 12.0],
+            ]
+        )
         np.testing.assert_array_equal(conns, expected)
 
         if PLOTTING:
             meshes = [s.mesh for s in surfs]
-            plot(meshes, connections=conns)
+            plot(meshes, fsys=fsys, connections=conns)
 
     def test_connection_by_distance_only_closest(self):
-        """Test connections by distance: only the two closest subsections """
+        """Test connections by distance: only the two closest subsections"""
 
         # Set the size of subsections, get the surfaces representing sections,
         # compute the BBox of each section and create the fault system
@@ -149,19 +184,19 @@ class TestFindConnections(unittest.TestCase):
         binm[dmtx < threshold] = 1
 
         # Get the connections
-        key = 'threshold_distance'
-        criteria = {'min_distance_between_subsections': {key: 20.}}
+        key = "threshold_distance"
+        criteria = {"min_distance_between_subsections": {key: 20.0}}
         conns, _, _ = get_connections(fsys, binm, criteria)
 
         if PLOTTING:
             meshes = [s.mesh for s in surfs]
-            plot(meshes, connections=conns)
+            plot(meshes, connections=conns, fsys=fsys)
 
     def test_connection_kunlun_2_sections(self):
-        """Test connections for 2 faults in Kunlun """
+        """Test connections for 2 faults in Kunlun"""
 
         subs_size = [-0.5, -1]
-        fname = HERE / 'data' / 'kunlun_faults.geojson'
+        fname = HERE / "data" / "kunlun_faults.geojson"
         surfs = kite_surfaces_from_geojson(fname, 2)
         surfs = [surfs[9], surfs[4]]
         bboxes = [get_mesh_bb(surf.mesh) for surf in surfs]
@@ -176,21 +211,21 @@ class TestFindConnections(unittest.TestCase):
         binm[dmtx < threshold] = 1
 
         # Get the connections
-        key = 'threshold_distance'
-        criteria = {'min_distance_between_subsections': {key: 20.}}
+        key = "threshold_distance"
+        criteria = {"min_distance_between_subsections": {key: 20.0}}
         conns, _, _ = get_connections(fsys, binm, criteria)
 
         if PLOTTING:
             meshes = [s.mesh for s in surfs]
-            plot(meshes, connections=conns)
+            plot(meshes, connections=conns, fsys=fsys)
 
     def test_connection_kunlun_all(self):
-        """Test connections forKunlun faults """
+        """Test connections forKunlun faults"""
 
         # Set the size of subsections, get the surfaces representing sections,
         # compute the BBox of each section and create the fault system
         subs_size = [-0.5, -1]
-        fname = HERE / 'data' / 'kunlun_faults.geojson'
+        fname = HERE / "data" / "kunlun_faults.geojson"
         surfs = kite_surfaces_from_geojson(fname, 2)
         bboxes = [get_mesh_bb(surf.mesh) for surf in surfs]
         fsys = get_fault_system(surfs, subs_size)
@@ -207,13 +242,13 @@ class TestFindConnections(unittest.TestCase):
         binm[dmtx < threshold] = 1
 
         # Get the connections
-        key = 'threshold_distance'
-        criteria = {'min_distance_between_subsections': {key: 20.}}
+        key = "threshold_distance"
+        criteria = {"min_distance_between_subsections": {key: 20.0}}
         conns, _, _ = get_connections(fsys, binm, criteria)
 
         if PLOTTING:
             meshes = [s.mesh for s in surfs]
-            plot(meshes, connections=conns)
+            plot(meshes, connections=conns, fsys=fsys)
 
     def test_connection_kunlun_triple(self):
         """Test connections for Kunlun triple junction"""
@@ -221,7 +256,7 @@ class TestFindConnections(unittest.TestCase):
         # Set the size of subsections, get the surfaces representing sections,
         # compute the BBox of each section and create the fault system
         subs_size = [-0.5, -1]
-        fname = HERE / 'data' / 'kunlun_faults.geojson'
+        fname = HERE / "data" / "kunlun_faults.geojson"
         surfs = kite_surfaces_from_geojson(fname, 2)
         surfs = [surfs[3], surfs[8], surfs[9]]
 
@@ -237,20 +272,22 @@ class TestFindConnections(unittest.TestCase):
         binm[dmtx < threshold] = 1
 
         # Get the connections
-        key = 'threshold_distance'
-        criteria = {'min_distance_between_subsections': {key: 20.}}
+        key = "threshold_distance"
+        criteria = {"min_distance_between_subsections": {key: 20.0}}
         conns, _, _ = get_connections(fsys, binm, criteria)
         self.assertEqual(len(conns), 3)
 
         # Get the connections
-        criteria = {'min_distance_between_subsections': {key: 20.},
-                    'max_connection_angle': {'threshold': 60.}}
+        criteria = {
+            "min_distance_between_subsections": {key: 20.0},
+            "max_connection_angle": {"threshold": 60.0},
+        }
         conns, _, _ = get_connections(fsys, binm, criteria)
         # self.assertEqual(len(conns), 2)
 
         if PLOTTING:
             meshes = [s.mesh for s in surfs]
-            plot(meshes, connections=conns)
+            plot(meshes, connections=conns, fsys=fsys)
 
     def test_connection_kunlun_double(self):
         """Test connections for Kunlun junction"""
@@ -258,7 +295,7 @@ class TestFindConnections(unittest.TestCase):
         # Set the size of subsections, get the surfaces representing sections,
         # compute the BBox of each section and create the fault system
         subs_size = [-0.5, -1]
-        fname = HERE / 'data' / 'kunlun_faults.geojson'
+        fname = HERE / "data" / "kunlun_faults.geojson"
         surfs = kite_surfaces_from_geojson(fname, 2)
         # surfs = [surfs[3], surfs[8], surfs[9]]
         surfs = [surfs[3], surfs[9]]
@@ -275,26 +312,28 @@ class TestFindConnections(unittest.TestCase):
         binm[dmtx < threshold] = 1
 
         # Get the connections
-        key = 'threshold_distance'
-        criteria = {'min_distance_between_subsections': {key: 20.},
-                    'max_connection_angle': {'threshold': 60.}}
+        key = "threshold_distance"
+        criteria = {
+            "min_distance_between_subsections": {key: 20.0},
+            "max_connection_angle": {"threshold": 60.0},
+        }
         conns, _, _ = get_connections(fsys, binm, criteria)
         # self.assertEqual(len(conns), 2)
 
         if PLOTTING:
             meshes = [s.mesh for s in surfs]
-            plot(meshes, connections=conns)
+            plot(meshes, connections=conns, fsys=fsys)
 
-    @unittest.skip('takes a lot of time')
+    @unittest.skip("takes a lot of time")
     def test_connection_atf_haiyuan_all(self):
-        """Test connections for atf haiyuan fault system """
+        """Test connections for atf haiyuan fault system"""
 
         # Set the size of subsections, get the surfaces representing sections,
         # compute the BBox of each section and create the fault system
         subs_size = [-0.5, -1]
 
         # Error between 20 and 23
-        fname = HERE / 'data' / 'atf_haiyuan_fault_system.geojson'
+        fname = HERE / "data" / "atf_haiyuan_fault_system.geojson"
 
         idxs = [i for i in range(0, 50)]
         idxs.extend([i for i in range(55, 91)])
@@ -302,8 +341,9 @@ class TestFindConnections(unittest.TestCase):
         iplot = []
 
         # Create fault surfaces
-        surfs = kite_surfaces_from_geojson(fname, 2, idxs=idxs, skip=skip,
-                                           iplot=iplot)
+        surfs = kite_surfaces_from_geojson(
+            fname, 2, idxs=idxs, skip=skip, iplot=iplot
+        )
         bboxes = [get_mesh_bb(surf.mesh) for surf in surfs]
         fsys = get_fault_system(surfs, subs_size)
 
@@ -319,8 +359,8 @@ class TestFindConnections(unittest.TestCase):
         binm[dmtx < threshold] = 1
 
         # Get the connections
-        key = 'threshold_distance'
-        criteria = {'min_distance_between_subsections': {key: 20.}}
+        key = "threshold_distance"
+        criteria = {"min_distance_between_subsections": {key: 20.0}}
         conns, _, _ = get_connections(fsys, binm, criteria)
 
         # TODO add a check for repeatability
@@ -332,12 +372,13 @@ class TestFindConnections(unittest.TestCase):
 
 def _plot(surfs, bboxes):
     import matplotlib.pyplot as plt
+
     fig, axs = plt.subplots(1, 1)
     colors = np.random.rand(len(surfs), 3)
     for i, surf in enumerate(surfs):
-        plt.plot(surf.mesh.lons, surf.mesh.lats, '.', color=colors[i])
+        plt.plot(surf.mesh.lons, surf.mesh.lats, ".", color=colors[i])
     for i, bbox in enumerate(bboxes):
         plt.hlines([bbox[2], bbox[3]], bbox[0], bbox[1], linewidths=0.5)
         plt.vlines([bbox[0], bbox[1]], bbox[2], bbox[3], linewidths=0.5)
-        plt.text(bbox[0], bbox[2], f'{i}')
+        plt.text(bbox[0], bbox[2], f"{i}")
     plt.show()

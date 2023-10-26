@@ -1,4 +1,32 @@
-#!/usr/bin/env python
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# ------------------- FERMI: Fault nEtwoRks ModellIng -------------------------
+# Copyright (C) 2023 GEM Foundation
+#         .-.
+#        /    \                                        .-.
+#        | .`. ;    .--.    ___ .-.     ___ .-. .-.   ( __)
+#        | |(___)  /    \  (   )   \   (   )   '   \  (''")
+#        | |_     |  .-. ;  | ' .-. ;   |  .-.  .-. ;  | |
+#       (   __)   |  | | |  |  / (___)  | |  | |  | |  | |
+#        | |      |  |/  |  | |         | |  | |  | |  | |
+#        | |      |  ' _.'  | |         | |  | |  | |  | |
+#        | |      |  .'.-.  | |         | |  | |  | |  | |
+#        | |      '  `-' /  | |         | |  | |  | |  | |
+#       (___)      `.__.'  (___)       (___)(___)(___)(___)
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
 import unittest
@@ -50,7 +78,7 @@ class TestCreateSubSections(unittest.TestCase):
         # corresponds to 6 (i.e. 2.5 rows times 2 cols, the former
         # considered as three)
         msg = 'The number of subsections does not match the expected number'
-        self.assertEqual(tmp_ul.shape[0]*tmp_ul.shape[1], 6, msg)
+        self.assertEqual(tmp_ul.shape[0] * tmp_ul.shape[1], 6, msg)
 
         if PLOTTING:
             _plot_mesh(mesh)
@@ -69,7 +97,7 @@ class TestCreateSubSections(unittest.TestCase):
 
         # These are full width subsections
         msg = 'The number of subsections does not match the expected number'
-        self.assertEqual(tmp_ul.shape[0]*tmp_ul.shape[1], 4, msg)
+        self.assertEqual(tmp_ul.shape[0] * tmp_ul.shape[1], 4, msg)
 
         # Test number of cells
         msg = 'The number of cells along the strike is wrong'
@@ -90,9 +118,9 @@ class TestCreateSubSections(unittest.TestCase):
         mesh = surf.mesh
         tmp_ul = split_into_subsections(mesh, nc_stk=size[0], nc_dip=size[1])
         if PLOTTING:
-            plot([mesh], subsections=tmp_ul)
+            plot([mesh])
         msg = 'The number of subsections does not match the expected number'
-        self.assertEqual(tmp_ul.shape[0]*tmp_ul.shape[1], 3, msg)
+        self.assertEqual(tmp_ul.shape[0] * tmp_ul.shape[1], 3, msg)
 
     def test_create_subsections_kunlun_0(self):
         size = [-.5, -1]
@@ -102,15 +130,15 @@ class TestCreateSubSections(unittest.TestCase):
         mesh = surf.mesh
         tmp_ul = split_into_subsections(mesh, nc_stk=size[0], nc_dip=size[1])
         if PLOTTING:
-            plot([mesh], subsections=tmp_ul)
+            plot([mesh])
         msg = 'The number of subsections does not match the expected number'
-        self.assertEqual(tmp_ul.shape[0]*tmp_ul.shape[1], 31, msg)
+        self.assertEqual(tmp_ul.shape[0] * tmp_ul.shape[1], 31, msg)
 
 
 def _plot_mesh(mesh):
     import pyvista as pv
     pl = pv.Plotter()
-    scl = 1./100
+    scl = 1. / 100
     grd = np.zeros((mesh.lons.size, 3))
     grd[:, 0] = mesh.lons.flatten()
     grd[:, 1] = mesh.lats.flatten()

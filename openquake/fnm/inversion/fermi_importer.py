@@ -1,13 +1,54 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# ------------------- FERMI: Fault nEtwoRks ModellIng -------------------------
+# Copyright (C) 2023 GEM Foundation
+#         .-.
+#        /    \                                        .-.
+#        | .`. ;    .--.    ___ .-.     ___ .-. .-.   ( __)
+#        | |(___)  /    \  (   )   \   (   )   '   \  (''")
+#        | |_     |  .-. ;  | ' .-. ;   |  .-.  .-. ;  | |
+#       (   __)   |  | | |  |  / (___)  | |  | |  | |  | |
+#        | |      |  |/  |  | |         | |  | |  | |  | |
+#        | |      |  ' _.'  | |         | |  | |  | |  | |
+#        | |      |  .'.-.  | |         | |  | |  | |  | |
+#        | |      '  `-' /  | |         | |  | |  | |  | |
+#       (___)      `.__.'  (___)       (___)(___)(___)(___)
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
+
 import json
 
 import toml
 import numpy as np
 import pandas as pd
 
+from ast import literal_eval
+
+from openquake.fnm.section import get_subsection
 from openquake.fnm.fault_system import get_rups_fsys
 from openquake.fnm.importer import kite_surfaces_from_geojson
+from openquake.fnm.inversion.soe_builder import make_eqns
 
-from .utils import get_rupture_displacement, weighted_mean
+from openquake.fnm.inversion.utils import (
+    get_rupture_displacement,
+    weighted_mean,
+    subsection_df_to_fault_dicts,
+    rup_df_to_rupture_dicts,
+)
 
 
 def build_subsec_fault_indices(fsys):
@@ -123,18 +164,31 @@ def build_subsection_df(
     slip_rate_err_key="net_slip_rate_err",
     rake_key="rake",
     rake_err_key="rake_err",
+    clean_nans=True,
 ):
     # strike and dip will be calculated from the surface of each subsection
     subsec_strikes = []
     subsec_dips = []
+    subsec_traces = []
+    areas = []
     for fault, subsecs in fsys:
-        # fault_mesh = fault.mesh
+        fault_mesh = fault.mesh
         for subsec in subsecs[0]:
-            # subsec_mesh = get_subsection(fault_mesh, subsec)
-            # subsec_surface =
+            subsec_mesh = get_subsection(fault_mesh, subsec)
+            (cell_centers, cell_lengths, cell_widths, cell_areas
+             ) = subsec_mesh.get_cell_dimensions()
+
+            area = np.sum(cell_areas)
+            areas.append(area)
+            subsec_trace = np.array(list(zip(subsec_mesh.lons[0],
+                                             subsec_mesh.lats[0],
+                                             subsec_mesh.depths[0])))
+            if clean_nans:
+                subsec_trace = subsec_trace[~np.isnan(subsec_trace).any(axis=1)]
+            subsec_traces.append(subsec_trace)
+
             strike = fault.get_strike()
             dip = fault.get_dip()
-
             subsec_strikes.append(strike)
             subsec_dips.append(dip)
 
@@ -178,6 +232,10 @@ def build_subsection_df(
         slip_vector_azimuth(*params)
         for params in zip(df.strike.values, df.dip.values, df.rake.values)
     ]
+
+    df["trace"] = subsec_traces
+
+    df["area"] = areas
 
     return df
 
@@ -254,6 +312,7 @@ def build_info_from_faults(
     slip_rate_err_key="net_slip_rate_err",
     rake_key="rake",
     rake_err_key="rake_err",
+    edge_sampling_dist=2.0,
 ):
     if settings is None:
         if settings_file is None:
@@ -268,7 +327,8 @@ def build_info_from_faults(
         fgj = json.load(f)
         faults = fgj["features"]
 
-    surfaces = kite_surfaces_from_geojson(fault_geojson_file)
+    surfaces = kite_surfaces_from_geojson(fault_geojson_file,
+                                          edge_sd=edge_sampling_dist)
 
     rup_fault_data = get_rups_fsys(surfaces, settings)
 
@@ -295,3 +355,32 @@ def build_info_from_faults(
     )
 
     return rup_fault_data, subsection_df, rupture_df
+
+
+def build_system_of_equations(rup_df, subsection_df, **soe_kwargs):
+    ruptures = rup_df_to_rupture_dicts(rup_df)
+    faults = subsection_df_to_fault_dicts(subsection_df)
+
+    lhs, rhs, errs = make_eqns(ruptures, faults, **soe_kwargs)
+
+    return lhs, rhs, errs
+
+
+def read_rup_csv(rup_csv_file):
+    rup_df = pd.read_csv(rup_csv_file, index_col=0)
+
+    cols = [
+        "single_ruptures",
+        "frac_areas",
+        "connection_angles",
+        "connection_distances",
+        "subsections",
+        "slip_azimuths",
+        "faults",
+    ]
+
+    for col in cols:
+        if col in rup_df.columns:
+            rup_df[col] = rup_df[col].apply(literal_eval)
+
+    return rup_df

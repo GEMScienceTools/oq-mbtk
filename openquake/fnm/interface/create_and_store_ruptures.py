@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # ------------------- The OpenQuake Model Building Toolkit --------------------
 # ------------------- FERMI: Fault nEtwoRks ModellIng -------------------------
 # Copyright (C) 2023 GEM Foundation
@@ -29,21 +30,50 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import toml
+import pathlib
 
-rup_A = {"idx": "A", "D": 1.0, "M": 6.0, "faults": ["f1"]}
-
-rup_B = {"idx": "B", "D": 1.0, "M": 6.0, "faults": ["f2"]}
-
-rup_C = {"idx": "C", "D": 2.5, "M": 7.0, "faults": ["f1", "f2"]}
-
-rup_D = {"idx": "D", "D": 1.75, "M": 6.5, "faults": ["f1", "f2"]}
-
-f1 = {"id": "f1", "slip_rate": 1.0, "slip_rate_err": 1.0}
-
-f2 = {"id": "f2", "slip_rate": 1.0, "slip_rate_err": 1.0}
+from openquake.baselib import sap
+from openquake.fnm.datastore import write
+from openquake.fnm.importer import kite_surfaces_from_geojson
+from openquake.fnm.fault_system import get_rups_fsys
 
 
-simple_test_rups = [rup_A, rup_B, rup_C, rup_D]
-simple_test_faults = [f1, f2]
+def main(settings_fname: str, **kwargs):
 
-simple_test_fault_adjacence = {0: [1], 1: [0]}
+    # Read the configuration
+    settings = toml.load(settings_fname)
+
+    for key in kwargs:
+        if isinstance(kwargs[key], dict):
+            for subkey in kwargs[key]:
+                if key not in settings:
+                    settings[key] = {}
+                settings[key][subkey] = kwargs[key][subkey]
+        else:
+            print('aa')
+            settings[key] = kwargs[key]
+
+    # Path to the settings file. This is the root folder.
+    root = pathlib.Path(settings_fname).parent
+
+    # Get the name of the file with faults. This can either formatted as a
+    # .geojson or a .shapefile. TODO need to add a check on the attributes.
+    fname_faults = str(root / settings['general']['fname_sections'])
+
+    # Create surfaces using the information in the .geojson file
+    surfs = kite_surfaces_from_geojson(fname_faults)
+
+    # Create the ruptures
+    out = get_rups_fsys(surfs, settings)
+
+    # Save results
+    fname = str(root / settings['general']['output_datastore'])
+    write(fname, out)
+
+
+descr = "The name of the file with the settings"
+main.settings_fname = descr
+
+if __name__ == "__main__":
+    sap.run(main)

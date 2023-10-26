@@ -1,3 +1,34 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# ------------------- FERMI: Fault nEtwoRks ModellIng -------------------------
+# Copyright (C) 2023 GEM Foundation
+#         .-.
+#        /    \                                        .-.
+#        | .`. ;    .--.    ___ .-.     ___ .-. .-.   ( __)
+#        | |(___)  /    \  (   )   \   (   )   '   \  (''")
+#        | |_     |  .-. ;  | ' .-. ;   |  .-.  .-. ;  | |
+#       (   __)   |  | | |  |  / (___)  | |  | |  | |  | |
+#        | |      |  |/  |  | |         | |  | |  | |  | |
+#        | |      |  ' _.'  | |         | |  | |  | |  | |
+#        | |      |  .'.-.  | |         | |  | |  | |  | |
+#        | |      '  `-' /  | |         | |  | |  | |  | |
+#       (___)      `.__.'  (___)       (___)(___)(___)(___)
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -109,24 +140,24 @@ def plot_soln_slip_rates(soln, slip_rates, lhs, errs=None, units="mm/yr"):
     pred_slip_rates = lhs.dot(soln)[: len(slip_rates)] * coeff
 
     plt.plot(
-        [0.0, slip_rates.max() * 1.1 * coeff],
+        [0.0, slip_rates.max() * 1.1],
         [
             0.0,
-            slip_rates.max() * 1.1 * coeff,
+            slip_rates.max() * 1.1,
         ],
         "k-",
         lw=0.2,
     )
     if errs is not None:
         plt.errorbar(
-            slip_rates * coeff,
-            slip_rates * coeff,
-            yerr=errs * coeff,
+            slip_rates,
+            slip_rates,
+            yerr=errs,
             fmt="k,",
             lw=0.2,
         )
 
-    plt.plot(slip_rates * coeff, pred_slip_rates, ".")
+    plt.plot(slip_rates, pred_slip_rates, ".")
 
     plt.axis("equal")
     plt.xlabel("Observed slip rate")
