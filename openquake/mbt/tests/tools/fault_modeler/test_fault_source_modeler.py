@@ -2,6 +2,9 @@ import unittest
 import os
 import json
 import filecmp
+import configparser
+import tempfile
+import pathlib
 
 import openquake.mbt.tools.fault_modeler.fault_source_modeler as fsm
 
@@ -42,7 +45,7 @@ class TestDatabaseIO(unittest.TestCase):
         fault_db = fsm.FaultDatabase()
         fault_db.import_from_geojson(self.geojson_file,
                                      param_map=self.param_map,
-                                     select_list=[1, 2], 
+                                     select_list=[1, 2],
                                      update_keys=True)
         # Adding a key/value to all faults
         fault_db.add_property('lower_seismogenic_depth', value=25)
@@ -82,17 +85,17 @@ class TestDatabaseIO(unittest.TestCase):
                                      select_list=[1, 2])
 
         # Create and export the model
-        # this test didn't work because the length_scaling method 
+        # this test didn't work because the length_scaling method
         # is used to get the lower_seismo_depth, and that doesn't permit
         # using the default value (the one being tested against in the base
         # output file -> 35 km). length_scaling was being set as the default
         # in build_model_from_db (fault_source_modeler line 91). I changed it
         # to 'seismo_depth' here but we should discuss the optimal default.
         # the mfds did not match because the reference file was created before
-        # the implementation of m_cli, so the mfds were being computed with 
-        # different ranges of magnitudes, so I added the default m_min (I 
+        # the implementation of m_cli, so the mfds were being computed with
+        # different ranges of magnitudes, so I added the default m_min (I
         # double checked this in a separate notebook that I can share). Lastly,
-        # the lons and lats and mfds didn't match because of decimal places, 
+        # the lons and lats and mfds didn't match because of decimal places,
         # so I changed the test to read in teh sources and compare attributes
         fsm.build_model_from_db(fault_db, xml_output=test_file,
                                 param_map=self.param_map,
@@ -124,7 +127,7 @@ class TestDatabaseIO(unittest.TestCase):
                               lower_seismogenic_depth=30.)
 
         # Compare files
-        
+
 #        raise unittest.SkipTest('Marco Pagani: this test is broken!')
         self.assertTrue(filecmp.cmp(base_file, test_file))
         os.remove(test_file)
@@ -157,15 +160,28 @@ class TestDatabaseIO(unittest.TestCase):
 
         # Configuration, target and reference files
         conf_file = os.path.join(BASE_DATA_PATH, 'config.ini')
-        test_file = os.path.join(BASE_DATA_PATH, 
-                                 'fault_model_04.test.xml')
+
+
+        config = configparser.ConfigParser()
+        config.read(conf_file)
+        test_dir = pathlib.Path(tempfile.mkdtemp())
+        test_file = test_dir / 'fault_model_04.test.xml'
+        config['config']['xml_output'] = str(test_file)
+        # config['config']['xml_output'] = 'test04.xml'
+        new_config_fname = test_dir / 'config.ini'
+        data_path = pathlib.Path(BASE_DATA_PATH)
+        geojson_original_path = data_path / config['config']['geojson_file']
+        tmp = os.path.relpath(str(geojson_original_path), str(new_config_fname))
+        config['config']['geojson_file'] = tmp
+
+        with open(new_config_fname, 'w') as configfile:
+            config.write(configfile)
+
         base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_04.base.xml')
 
         # Create and export the model
-        fsm.build_fault_model(cfg_file=conf_file)
+        fsm.build_fault_model(cfg_file=new_config_fname)
 
         # Compare files
-  #      raise unittest.SkipTest('Marco Pagani: this test is broken!')
         self.assertTrue(filecmp.cmp(base_file, test_file))
-        os.remove(test_file)
