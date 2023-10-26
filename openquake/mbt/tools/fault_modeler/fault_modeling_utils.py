@@ -277,29 +277,27 @@ def construct_sfs_dict(fault_dict,
     # rupture_mesh_spacing, magnitude_scaling_relation,
     # rupture_aspect_ratio, temporal_occurrence_model
     sfs.update(write_rupture_params(
-                    fault_dict,
-                    magnitude_scaling_relation=magnitude_scaling_relation,
-                    defaults=defaults,
-                    param_map=param_map))
+               fault_dict,
+               magnitude_scaling_relation=magnitude_scaling_relation,
+               defaults=defaults,
+               param_map=param_map))
 
     mfd, slr = calc_mfd_from_fault_params(
-                    fault_dict,
-                    mfd_type=mfd_type,
-                    area_method=area_method,
-                    width_method=width_method,
-                    width_scaling_relation=width_scaling_relation,
-                    slip_class=slip_class,
-                    magnitude_scaling_relation=magnitude_scaling_relation,
-                    m_min=m_min, m_max=m_max,
-                    m_cli=m_cli,
-                    m_char=m_char,
-                    b_value=b_value,
-                    slip_rate=slip_rate,
-                    aseismic_coefficient=aseismic_coefficient,
-                    bin_width=bin_width,
-                    fault_area=fault_area,
-                    defaults=defaults,
-                    param_map=param_map)
+        fault_dict, mfd_type=mfd_type, area_method=area_method,
+        width_method=width_method,
+        width_scaling_relation=width_scaling_relation,
+        slip_class=slip_class,
+        magnitude_scaling_relation=magnitude_scaling_relation,
+        m_min=m_min, m_max=m_max,
+        m_cli=m_cli,
+        m_char=m_char,
+        b_value=b_value,
+        slip_rate=slip_rate,
+        aseismic_coefficient=aseismic_coefficient,
+        bin_width=bin_width,
+        fault_area=fault_area,
+        defaults=defaults,
+        param_map=param_map)
 
     # mfd and slip rate
     sfs.update({'mfd': mfd, 'seismic_slip_rate': slr})
@@ -774,9 +772,9 @@ def trace_from_coords(fault_dict, defaults=defaults, param_map=param_map,
 
         if dip < 90.:
             fault_trace = _check_trace_coord_ordering(fault_dict,
-                                                          fault_trace,
-                                                          defaults=defaults,
-                                                          param_map=param_map)
+                                                      fault_trace,
+                                                      defaults=defaults,
+                                                      param_map=param_map)
 
     return fault_trace
 

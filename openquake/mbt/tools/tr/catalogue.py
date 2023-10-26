@@ -21,7 +21,7 @@ def get_catalogue(catalogue_filename, force_csv=False):
         parser = CsvCatalogueParser(catalogue_filename)
         catalogue = parser.read_file()
         pickle.dump(catalogue, open(cat_pickle_filename, 'wb'))
-    elif ext == '.pkl' or ext == '.p':
+    elif ext in ['.pkl', '.p', '.pickle']:
         catalogue = pickle.load(open(catalogue_filename, 'rb'))
     elif ext == '.ndk':
         parser = ParseNDKtoGCMT(catalogue_filename)
