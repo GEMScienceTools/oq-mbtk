@@ -108,7 +108,7 @@ class TestModelingUtils(unittest.TestCase):
                                       check_coord_order=True)
 
         exp_trace = fmu.line_from_trace_coords(fault['coords'])
-        exp_trace.points.reverse()
+        exp_trace.flip()
 
         self.assertEqual(trace.points, exp_trace.points)
 
