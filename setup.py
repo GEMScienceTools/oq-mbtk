@@ -75,6 +75,7 @@ setup(
         'h3',
         'reportlab',
         'netCDF4',
+        'igraph',
         # 'GDAL',
     ],
     python_requires='>=3.8',
