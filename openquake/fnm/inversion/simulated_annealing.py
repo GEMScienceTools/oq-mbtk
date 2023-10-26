@@ -1,15 +1,43 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# ------------------- FERMI: Fault nEtwoRks ModellIng -------------------------
+# Copyright (C) 2023 GEM Foundation
+#         .-.
+#        /    \                                        .-.
+#        | .`. ;    .--.    ___ .-.     ___ .-. .-.   ( __)
+#        | |(___)  /    \  (   )   \   (   )   '   \  (''")
+#        | |_     |  .-. ;  | ' .-. ;   |  .-.  .-. ;  | |
+#       (   __)   |  | | |  |  / (___)  | |  | |  | |  | |
+#        | |      |  |/  |  | |         | |  | |  | |  | |
+#        | |      |  ' _.'  | |         | |  | |  | |  | |
+#        | |      |  .'.-.  | |         | |  | |  | |  | |
+#        | |      '  `-' /  | |         | |  | |  | |  | |
+#       (___)      `.__.'  (___)       (___)(___)(___)(___)
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
+
 import time
-from math import log
 
 import numpy as np
 import scipy.sparse as ssp
-from numba import jit, njit, prange, float64, int64, int32
+from numba import njit, prange, float64, int64, int32
 from numba.experimental import jitclass
 
 from .fastmath import cscmatvec
-
-
-from IPython.core.debugger import Pdb
 
 
 @jitclass
@@ -294,7 +322,7 @@ def find_first(item, vec):
 def simulated_annealing(
     A,
     d,
-    x0,
+    x0=None,
     weights=None,
     min_bounds=1e-20,
     max_bounds=1e-2,
@@ -318,6 +346,9 @@ def simulated_annealing(
 
     alpha = 1 - (10 / max_iters)
 
+    if x0 is None:
+        x0 = np.zeros(A.shape[1])
+
     if np.isscalar(min_bounds):
         min_bounds = np.ones(x0.shape) * min_bounds
 
@@ -332,10 +363,7 @@ def simulated_annealing(
         Aw = A
         dw = d
 
-    print(Aw.todense())
-    print(dw)
-
-    if ssp.isspmatrix(Aw):
+    if ssp.issparse(Aw):
         Asp = csc_matrix_to_spmatrix(ssp.csc_array(Aw))
 
     else:
@@ -345,7 +373,7 @@ def simulated_annealing(
 
     misfit_history = np.ones(max_iters) * misfit_default
 
-    if parallel == False:
+    if parallel is False:
         x = x0
         T = initial_temp
         best_misfit = _eval_x(Asp, x0, dw, np.zeros(dw.shape))
@@ -368,7 +396,7 @@ def simulated_annealing(
             replace_num=replace_num,
         )
         misfit_history = current_misfits
-        if current_misfits[-1] > best_misfit:
+        if np.min(current_misfits) > best_misfit:
             x = x0
 
     else:
@@ -402,7 +430,7 @@ def simulated_annealing(
                 replace_num=replace_num,
             )
             try:
-                misfit_history[i : i + meetup_iters] = current_misfits
+                misfit_history[i: i + meetup_iters] = current_misfits
             except:
                 n_vals_left = max_iters - i
 

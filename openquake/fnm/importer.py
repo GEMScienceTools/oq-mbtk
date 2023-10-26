@@ -1,7 +1,38 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# ------------------- FERMI: Fault nEtwoRks ModellIng -------------------------
+# Copyright (C) 2023 GEM Foundation
+#         .-.
+#        /    \                                        .-.
+#        | .`. ;    .--.    ___ .-.     ___ .-. .-.   ( __)
+#        | |(___)  /    \  (   )   \   (   )   '   \  (''")
+#        | |_     |  .-. ;  | ' .-. ;   |  .-.  .-. ;  | |
+#       (   __)   |  | | |  |  / (___)  | |  | |  | |  | |
+#        | |      |  |/  |  | |         | |  | |  | |  | |
+#        | |      |  ' _.'  | |         | |  | |  | |  | |
+#        | |      |  .'.-.  | |         | |  | |  | |  | |
+#        | |      '  `-' /  | |         | |  | |  | |  | |
+#       (___)      `.__.'  (___)       (___)(___)(___)(___)
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
+
 
 import geojson
 import numpy as np
+import matplotlib.pyplot as plt
 
 from pyproj import Proj
 
@@ -28,6 +59,45 @@ def fix_right_hand(trace, dip_dir):
     else:
         trace.flip()
         return trace
+
+
+def plot_profiles_plt(profiles, trace, mesh=None):
+
+
+    problem = []
+    for i_pro, pro in enumerate(profiles):
+        if np.any(np.isnan(pro.coo[:, 0])):
+            problem.append(i_pro)
+            continue
+
+    cells = []
+    if mesh is not None:
+        for i in range(0, mesh.lons.shape[0] - 1):
+            for j in range(0, mesh.lons.shape[1] - 1):
+                if np.all(np.isfinite(mesh.lons[i:i + 1, j:j + 1])):
+                    cells.append([[mesh.lons[i, j], mesh.lats[i, j]],
+                                  [mesh.lons[i, j + 1], mesh.lats[i, j + 1]],
+                                  [mesh.lons[i + 1, j + 1],
+                                   mesh.lats[i + 1, j + 1]],
+                                  [mesh.lons[i + 1, j], mesh.lats[i + 1, j]],
+                                  [mesh.lons[i, j], mesh.lats[i, j]]])
+        cells = np.array(cells)
+
+    fig = plt.figure()
+    plt.plot(trace.coo[:, 0], trace.coo[:, 1], 'r')
+
+    for pro in profiles:
+        plt.plot(pro.coo[:, 0], pro.coo[:, 1], "k", lw=0.25)
+
+    for idx in problem:
+        pro = profiles[idx]
+        plt.plot(pro.coo[:, 0], pro.coo[:, 1], "g", lw=0.5)
+
+    if mesh is not None:
+        for cell in cells:
+            plt.plot(cell[:, 0], cell[:, 1], "orange", lw=0.5)
+
+    plt.show() 
 
 
 def plot_profiles(profiles, trace, mesh=None):
@@ -134,7 +204,6 @@ def create_surfaces(
     """
     # Creates the surfaces
     surfs = []
-    edge_sd = 2.0
     for i_fea, fea in enumerate(data['features']):
 
         # Get info
@@ -181,7 +250,7 @@ def create_surfaces(
         fault_trace = Line([Point(*c) for c in zip(smo_lo, smo_la)])
 
         # Check the length of the trace wrt the edge sampling
-        msg = f'Fault id: {fid} - Trace lenght shorter than 2 * edge_sd'
+        msg = f'Fault id: {fid} - Trace length shorter than 2 * edge_sd'
         if fault_trace.get_length() < edge_sd * 2:
             logging.warning(msg)
 
@@ -193,19 +262,34 @@ def create_surfaces(
         upp_sd = prop.get("usd", None)
         low_sd = prop.get("lsd", None)
         profs = get_profiles_from_simple_fault_data(
-            fault_trace, upp_sd, low_sd, dip, 2.0)
+            fault_trace, upp_sd, low_sd, dip, edge_sd)
 
         try:
             surf = KiteSurface.from_profiles(
-                profs, profile_sd=2.0, edge_sd=edge_sd_res)
+                profs, align=True, profile_sd=2.0, edge_sd=edge_sd_res)
+
+            if np.any(np.isnan(surf.mesh.array)):
+                if pygmt is not None:
+                    plot_profiles(profs, fault_trace, surf.mesh)
+                    plt.title(f'Feature {i_fea}')
+                else:
+                    print(f'Feature {i_fea} has NaNs in the mesh')
+                    #plt.plot(surf.mesh.lons, surf.mesh.lats, 'b.')
+                    #plt.plot(fault_trace.coo[:,0], fault_trace.coo[:,1], 'r')
+                    #plt.show()
+                    #plot_profiles_plt(profs, fault_trace, surf.mesh)
+            else:
+                #plot_profiles_plt(profs, fault_trace, surf.mesh)
+                pass
+
         except ValueError('Cannot build kite Surface'):
-            import matplotlib.pyplot as plt
             plt.plot(smo_lo, smo_la, 'r')
             plt.plot(coo[:, 0], coo[:, 1], 'b')
             for pro in profs:
                 plt.plot(pro.coo[:, 0], pro.coo[:, 1], '-')
             plt.title(f'Feature {i_fea}')
             plt.show()
+
 
         # Check the number of columns composing this surface
         msg = f'Fault id: {fid} - Surface with less than 2 columns'
@@ -215,9 +299,8 @@ def create_surfaces(
         if surf.mesh.lons.shape[0] < 2:
             logging.warning(msg)
 
-        if np.any(np.isnan(surf.mesh.lons)) and pygmt is not None:
-            plot_profiles(profs, fault_trace, surf.mesh)
-            plt.title(f'Feature {i_fea}')
+
+
 
         # Update the list of surfaces created
         surfs.append(surf)

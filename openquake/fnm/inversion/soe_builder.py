@@ -1,8 +1,39 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# ------------------- FERMI: Fault nEtwoRks ModellIng -------------------------
+# Copyright (C) 2023 GEM Foundation
+#         .-.
+#        /    \                                        .-.
+#        | .`. ;    .--.    ___ .-.     ___ .-. .-.   ( __)
+#        | |(___)  /    \  (   )   \   (   )   '   \  (''")
+#        | |_     |  .-. ;  | ' .-. ;   |  .-.  .-. ;  | |
+#       (   __)   |  | | |  |  / (___)  | |  | |  | |  | |
+#        | |      |  |/  |  | |         | |  | |  | |  | |
+#        | |      |  ' _.'  | |         | |  | |  | |  | |
+#        | |      |  .'.-.  | |         | |  | |  | |  | |
+#        | |      '  `-' /  | |         | |  | |  | |  | |
+#       (___)      `.__.'  (___)       (___)(___)(___)(___)
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
+
 import numpy as np
 import scipy.sparse as ssp
 
 import openquake.hazardlib as hz
-from openquake.baselib.general import AccumDict
 
 from .utils import SHEAR_MODULUS
 
@@ -162,7 +193,7 @@ def mean_slip_rate(fault_sections: list, faults: list):
 
 def make_frac_mfd_eqns(rups, faults, mfd, mag_decimals=1, weight=1.0):
     mag_counts = get_mag_counts(rups)
-    unique_mags = sorted(mag_counts.keys())
+    unique_mags = sorted(mag_counts.keys())  # TODO this is not used
 
     mfd_occ_rates = get_mfd_occurrence_rates(mfd, mag_decimals=mag_decimals)
 
@@ -245,12 +276,13 @@ def make_abs_mfd_eqns(
         if rup_fractions is None:
             for i, M in enumerate(unique_mags):
                 abs_mag_eqns[i, mag_rup_idxs[M]] = 1.0
-                mfd_abs_rhs[i] = mfd_occ_rates[M]
+                mfd_abs_rhs[i] = mfd_occ_rates.get(M, 0.)
         else:
             for i, M in enumerate(unique_mags):
                 for j, mm in enumerate(mag_rup_idxs[M]):
                     abs_mag_eqns[i, mm] = mag_rup_fracs[M][j]
-                mfd_abs_rhs[i] = mfd_occ_rates[M]
+                # mfd_abs_rhs[i] = mfd_occ_rates[M]
+                mfd_abs_rhs[i] = mfd_occ_rates.get(M, 0.)
     else:
         pass
 
@@ -331,10 +363,14 @@ def make_eqns(
     err_set = []
 
     if seismic_slip_rate_frac is None and mfd is not None:
-        fault_moment = sum(
+        fault_moments = np.array([
             fault["area"] * 1e6 * shear_modulus * fault["slip_rate"] * 1e-3
             for fault in faults
-        )
+        ])
+
+        print("fault moments: ", fault_moments)
+
+        fault_moment = np.sum(fault_moments)
 
         mfd_moment = sum(
             [
@@ -354,19 +390,18 @@ def make_eqns(
         print("setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac)
         seismic_slip_rate_frac = 1.0
 
-    if slip_rate_eqns == True:
+    if slip_rate_eqns is True:
         print("Making slip rate eqns")
         slip_rate_lhs, slip_rate_rhs, slip_rate_errs = make_slip_rate_eqns(
             rups,
             faults,
             seismic_slip_rate_frac=seismic_slip_rate_frac,
-            verbose=verbose,
         )
         lhs_set.append(slip_rate_lhs)
         rhs_set.append(slip_rate_rhs)
         err_set.append(slip_rate_errs)
 
-    if mfd_rel_eqns == True:
+    if mfd_rel_eqns is True:
         print("Making MFD relative eqns")
         (mfd_rel_lhs, mfd_rel_rhs, mfd_rel_errs) = make_rel_gr_mfd_eqns(
             rups,
@@ -377,7 +412,7 @@ def make_eqns(
         rhs_set.append(mfd_rel_rhs)
         err_set.append(mfd_rel_errs)
 
-    if mfd_abs_rates == True:
+    if mfd_abs_rates is True:
         print("Making MFD absolute eqns")
         mfd_abs_lhs, mfd_abs_rhs, mfd_abs_errs = make_abs_mfd_eqns(
             rups,
@@ -402,7 +437,7 @@ def make_eqns(
                 rhs_set.append(reg_abs_rhs)
                 err_set.append(reg_abs_errs)
 
-    if slip_rate_smoothing == True:
+    if slip_rate_smoothing is True:
         print("Making slip rate smoothing eqns")
         (
             slip_smooth_lhs,

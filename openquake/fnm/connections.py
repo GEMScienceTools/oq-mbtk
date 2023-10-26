@@ -1,4 +1,34 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# ------------------- FERMI: Fault nEtwoRks ModellIng -------------------------
+# Copyright (C) 2023 GEM Foundation
+#         .-.
+#        /    \                                        .-.
+#        | .`. ;    .--.    ___ .-.     ___ .-. .-.   ( __)
+#        | |(___)  /    \  (   )   \   (   )   '   \  (''")
+#        | |_     |  .-. ;  | ' .-. ;   |  .-.  .-. ;  | |
+#       (   __)   |  | | |  |  / (___)  | |  | |  | |  | |
+#        | |      |  |/  |  | |         | |  | |  | |  | |
+#        | |      |  ' _.'  | |         | |  | |  | |  | |
+#        | |      |  .'.-.  | |         | |  | |  | |  | |
+#        | |      '  `-' /  | |         | |  | |  | |  | |
+#       (___)      `.__.'  (___)       (___)(___)(___)(___)
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
+
 
 import copy
 import numpy as np
@@ -66,7 +96,8 @@ def get_connections(fsys: list, binm: np.ndarray, criteria: dict) -> list:
 
             # Get connections between subsections in sections
             conns, dists, angles = get_connections_between_subs(
-                sbs_a, sbs_b, mesh_a, mesh_b, criteria)
+                sbs_a, sbs_b, mesh_a, mesh_b, criteria
+            )
 
             # Checking
             if len(conns):
@@ -82,8 +113,8 @@ def get_connections(fsys: list, binm: np.ndarray, criteria: dict) -> list:
     all_angls = np.array(all_angls)
 
     # A posteriori filtering connections
-    criteria_distance = criteria.get('min_distance_between_subsections', {})
-    if len(all_conns) and criteria_distance.get('shortest_only', True):
+    criteria_distance = criteria.get("min_distance_between_subsections", {})
+    if len(all_conns) and criteria_distance.get("shortest_only", True):
         idxs = filter_connections(all_conns, all_dists)
         all_conns = all_conns[idxs]
         all_dists = all_dists[idxs]
@@ -225,7 +256,7 @@ def get_connections_between_subs(sbs_a, sbs_b, mesh_a, mesh_b, criteria):
                     continue
 
             # If all the tests are passing
-            if np.all(np.array([checks[k] for key in checks.keys()])):
+            if np.all(np.array([checks[key] for key in checks.keys()])):
                 conns.append(
                     [
                         0,
@@ -287,10 +318,10 @@ def filter_jumps_conns(conns, mesh_a, mesh_b):
     mdists = []
     for conn in conns:
         s_msh_a = mesh_a[
-            conn[2]:conn[2] + conn[5], conn[3]:conn[3] + conn[4]
+            conn[2]: conn[2] + conn[5], conn[3]: conn[3] + conn[4]
         ]
         s_msh_b = mesh_b[
-            conn[6]:conn[6] + conn[9], conn[7]:conn[7] + conn[8]
+            conn[6]: conn[6] + conn[9], conn[7]: conn[7] + conn[8]
         ]
         idx_a, idx_b, dst = get_idxs_closest_points(s_msh_a, s_msh_b)
         mdists.append(dst)
@@ -319,8 +350,8 @@ def filter_jumps_conns(conns, mesh_a, mesh_b):
 
     # Get the angle between the two planes
     conn = conns[idx]
-    s_msh_a = mesh_a[conn[2]:conn[2] + conn[5], conn[3]:conn[3] + conn[4]]
-    s_msh_b = mesh_b[conn[6]:conn[6] + conn[9], conn[7]:conn[7] + conn[8]]
+    s_msh_a = mesh_a[conn[2]: conn[2] + conn[5], conn[3]: conn[3] + conn[4]]
+    s_msh_b = mesh_b[conn[6]: conn[6] + conn[9], conn[7]: conn[7] + conn[8]]
     angle_dih, angle_top = get_angles(s_msh_a, s_msh_b)
 
     # Outputs
@@ -346,27 +377,35 @@ def get_angles(s_msh_a, s_msh_b):
     """
 
     # Get the closest points on the two meshes
-    idx_a, idx_b, dst = get_idxs_closest_points(s_msh_a, s_msh_b)
+    #idx_a, idx_b, dst = get_idxs_closest_points(s_msh_a, s_msh_b)
 
     # Find the plane equation for the two subsections
     in_a = np.reshape(s_msh_a.array, (3, -1)).T
     in_b = np.reshape(s_msh_b.array, (3, -1)).T
+    
+    in_a = in_a[~np.isnan(in_a).any(axis=1)]
+    in_b = in_b[~np.isnan(in_b).any(axis=1)]
+
 
     m_lon = np.mean(in_a[:, 0])
     m_lat = np.mean(in_a[:, 1])
-    proj = Proj(proj="lcc", lon_0=m_lon, lat_1=m_lat - 10.0,
-                lat_2=m_lat + 10.0)
+    proj = Proj(
+        proj="lcc", lon_0=m_lon, lat_1=m_lat - 10.0, lat_2=m_lat + 10.0)
 
     in_ap = copy.copy(in_a)
     in_bp = copy.copy(in_b)
+
     in_ap[:, 0], in_ap[:, 1] = proj(in_a[:, 0], in_a[:, 1])
     in_bp[:, 0], in_bp[:, 1] = proj(in_b[:, 0], in_b[:, 1])
     in_ap[:, 0:2] = in_ap[:, 0:2] / 1000  # to km as the depth
     in_bp[:, 0:2] = in_bp[:, 0:2] / 1000  # to km as the depth
 
     # Fit a plane on the surface of the subsection
-    pnt_a, cos_a = plane_fit(in_ap)
-    pnt_b, cos_b = plane_fit(in_bp)
+    try:
+        pnt_a, cos_a = plane_fit(in_ap)
+        pnt_b, cos_b = plane_fit(in_bp)
+    except:
+        return 0.0, 0.0
     num = np.sum([a * b for a, b in zip(cos_a, cos_b)])
     den1 = np.sqrt(np.sum([a**2 for a in cos_a]))
     den2 = np.sqrt(np.sum([a**2 for a in cos_b]))
