@@ -277,29 +277,27 @@ def construct_sfs_dict(fault_dict,
     # rupture_mesh_spacing, magnitude_scaling_relation,
     # rupture_aspect_ratio, temporal_occurrence_model
     sfs.update(write_rupture_params(
-                    fault_dict,
-                    magnitude_scaling_relation=magnitude_scaling_relation,
-                    defaults=defaults,
-                    param_map=param_map))
+               fault_dict,
+               magnitude_scaling_relation=magnitude_scaling_relation,
+               defaults=defaults,
+               param_map=param_map))
 
     mfd, slr = calc_mfd_from_fault_params(
-                    fault_dict,
-                    mfd_type=mfd_type,
-                    area_method=area_method,
-                    width_method=width_method,
-                    width_scaling_relation=width_scaling_relation,
-                    slip_class=slip_class,
-                    magnitude_scaling_relation=magnitude_scaling_relation,
-                    m_min=m_min, m_max=m_max,
-                    m_cli=m_cli,
-                    m_char=m_char,
-                    b_value=b_value,
-                    slip_rate=slip_rate,
-                    aseismic_coefficient=aseismic_coefficient,
-                    bin_width=bin_width,
-                    fault_area=fault_area,
-                    defaults=defaults,
-                    param_map=param_map)
+        fault_dict, mfd_type=mfd_type, area_method=area_method,
+        width_method=width_method,
+        width_scaling_relation=width_scaling_relation,
+        slip_class=slip_class,
+        magnitude_scaling_relation=magnitude_scaling_relation,
+        m_min=m_min, m_max=m_max,
+        m_cli=m_cli,
+        m_char=m_char,
+        b_value=b_value,
+        slip_rate=slip_rate,
+        aseismic_coefficient=aseismic_coefficient,
+        bin_width=bin_width,
+        fault_area=fault_area,
+        defaults=defaults,
+        param_map=param_map)
 
     # mfd and slip rate
     sfs.update({'mfd': mfd, 'seismic_slip_rate': slr})
@@ -486,11 +484,11 @@ def get_vals_from_tuple(tup):
         if tup == '':
             raise ValueError("Value is ''")
         vals = tuple_to_vals(tup)
-        vals = [np.float(v) for v in vals if len(v) > 0]
+        vals = [float(v) for v in vals if len(v) > 0]
     elif np.isscalar(tup):
         try:
-            num_check = np.float(tup)
-            vals = [np.float(tup)]
+            num_check = float(tup)
+            vals = [float(tup)]
         except Exception as e:
             raise ValueError
     elif type(tup) in [tuple, list, np.ndarray]:
@@ -772,13 +770,11 @@ def trace_from_coords(fault_dict, defaults=defaults, param_map=param_map,
 
         dip = get_dip(fault_dict, defaults=defaults, param_map=param_map)
 
-        if slip_type not in ('Strike-Slip', 'Dextral', 'Sinistral'):
-            if dip < 90.:
-
-                fault_trace = _check_trace_coord_ordering(fault_dict,
-                                                          fault_trace,
-                                                          defaults=defaults,
-                                                          param_map=param_map)
+        if dip < 90.:
+            fault_trace = _check_trace_coord_ordering(fault_dict,
+                                                      fault_trace,
+                                                      defaults=defaults,
+                                                      param_map=param_map)
 
     return fault_trace
 
@@ -863,11 +859,9 @@ def _check_trace_coord_ordering(fault_dict, fault_trace,
         warnings.warn('Given dip direction <15 degrees of strike')
 
     if trend_angle_diff > reverse_angle_threshold:
-        new_fault_trace = deepcopy(fault_trace)
-        new_fault_trace.points.reverse()
-        return new_fault_trace
-    else:
-        return fault_trace
+        fault_trace.flip()
+
+    return fault_trace
 
 
 def angle_difference(trend_1, trend_2, return_abs=True):
@@ -2736,11 +2730,11 @@ def calc_double_truncated_GR_mfd_from_fault_params(
         slip_class = fetch_param_val(fault_dict, 'slip_class',
                                      defaults=defaults, param_map=param_map)
     if m_cli is None:
-        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults, 
+        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults,
                                 param_map=param_map)
-    
+
     if m_min is None:
-        m_min = fetch_param_val(fault_dict, 'm_min', defaults=defaults, 
+        m_min = fetch_param_val(fault_dict, 'm_min', defaults=defaults,
                                 param_map=param_map)
     if m_max is None:
         m_max = get_m_max(
@@ -2821,7 +2815,7 @@ def calc_double_truncated_GR_mfd_from_fault_params(
 
     # first, round rates to 12 decimals (this makes tests easier - other ideas?)
     bin_rates_cli = [b.round(12) for b in bin_rates_cli]
-    
+
     # Using rates from m_cli to m_max
     mfd = hz.mfd.EvenlyDiscretizedMFD(bin_mags_cli[0],
                                       bin_width,
@@ -2975,9 +2969,9 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
                                      defaults=defaults, param_map=param_map)
 
     if m_cli is None:
-        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults, 
+        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults,
                                 param_map=param_map)
-    
+
     if m_min is None:
         m_min = fetch_param_val(fault_dict, 'm_min', defaults=defaults,
                                 param_map=param_map)
@@ -3051,7 +3045,7 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
                                                                  m_char,
                                                                  moment_rate,
                                                                  bin_width)
-   
+
     # using only rates from m_cli to m_max
     mfd_rates = mfd.get_annual_occurrence_rates()
 

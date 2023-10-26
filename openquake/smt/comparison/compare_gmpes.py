@@ -65,6 +65,8 @@ class Configurations(object):
         self.up_or_down_dip = float(up_or_down_dip)
         
         self.trt = config_file['source_properties']['trt']
+        if self.trt == 'None':
+            self.trt = None
         self.ztor = config_file['source_properties']['ztor']
         if self.ztor == 'None':
             self.ztor = None
@@ -72,7 +74,7 @@ class Configurations(object):
         self.dip = config_file['source_properties']['dip']
         self.rake = config_file['source_properties']['rake']
 
-        self.aratio = -999
+        self.aratio = config_file['source_properties']['aratio']
         
         # One set of magnitudes for use in trellis plots
         self.trellis_and_rs_mag_list = config_file['source_properties'][
