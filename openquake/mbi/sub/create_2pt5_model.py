@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#!/usr/bin/env python
 # ------------------- The OpenQuake Model Building Toolkit --------------------
 # Copyright (C) 2022 GEM Foundation
 #           _______  _______        __   __  _______  _______  ___   _
@@ -26,19 +25,31 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-import unittest
-import numpy as np
-import tempfile
-from openquake.sub.cross_sections import Trench
+import sys
+
+from pyproj import Geod
+from openquake.baselib import sap
+from openquake.sub.create_2pt5_model import create_2pt5_model
+from openquake.hazardlib.geo.geodetic import distance
 
 
-class TrenchAzimuthTest(unittest.TestCase):
+def main(in_path, out_path, *, maximum_sampling_distance=25.):
+    """
+    From a set of profiles it creates the top surface of the slab
+    """
 
-    def test_simple_case(self):
-        """ Test calculation of average azimuth: trivial case"""
-        coo = np.array([[0.0, 0.0],
-                        [1.0, 0.0]])
-        trench = Trench(coo)
-        computed = trench.get_azimuth()
-        expected = 90.0
-        np.testing.assert_almost_equal(computed, expected)
+    if in_path == out_path:
+        tmps = '\nError: the input folder cannot be also the output one\n'
+        tmps += '    input: {0:s}\n'.format(in_path)
+        tmps += '    input: {0:s}\n'.format(out_path)
+        print(tmps)
+        exit(0)
+
+    create_2pt5_model(in_path, out_path, float(maximum_sampling_distance))
+
+main.in_path = 'Folder with the profiles'
+main.out_path = 'Folder where to store the output'
+main.maximum_sampling_distance = 'Sampling distance [km]'
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

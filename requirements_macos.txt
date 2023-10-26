@@ -27,3 +27,4 @@ tables
 h3
 pygmt
 reportlab
+netCDF4
