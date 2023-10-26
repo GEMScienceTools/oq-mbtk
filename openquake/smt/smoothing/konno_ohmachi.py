@@ -26,6 +26,7 @@ import numpy as np
 import warnings
 from openquake.smt.smoothing.base import BaseSpectralSmoother
 
+
 def konnoOhmachiSmoothingWindow(frequencies, center_frequency, bandwidth=40.0,
                                 normalize=False):
     """
@@ -127,14 +128,14 @@ def calculateSmoothingMatrix(frequencies, bandwidth=40.0, normalize=False):
     sm_matrix = np.empty((len(frequencies), len(frequencies)),
                          frequencies.dtype)
     for _i, freq in enumerate(frequencies):
-        sm_matrix[_i, :] = konnoOhmachiSmoothingWindow(frequencies, freq,
-                                              bandwidth, normalize=normalize)
+        sm_matrix[_i, :] = konnoOhmachiSmoothingWindow(
+            frequencies, freq, bandwidth, normalize=normalize)
     return sm_matrix
 
 
 def konnoOhmachiSmoothing(spectra, frequencies, bandwidth=40, count=1,
-                  enforce_no_matrix=False, max_memory_usage=512,
-                  normalize=False):
+                          enforce_no_matrix=False, max_memory_usage=512,
+                          normalize=False):
     """
     Smoothes a matrix containing one spectra per row with the Konno-Ohmachi
     smoothing window.
@@ -188,8 +189,8 @@ def konnoOhmachiSmoothing(spectra, frequencies, bandwidth=40, count=1,
         size = 8.0
     # Calculate the approximate usage needs for the smoothing matrix algorithm.
     length = len(frequencies)
-    approx_mem_usage = (length * length + 2 * len(spectra) + length) * \
-            size / 1048576.0
+    approx_mem_usage = ((length * length + 2 * len(spectra) + length) *
+                        size / 1048576.0)
     # If smaller than the allowed maximum memory consumption build a smoothing
     # matrix and apply to each spectrum. Also only use when more then one
     # spectrum is to be smoothed.
@@ -200,7 +201,7 @@ def konnoOhmachiSmoothing(spectra, frequencies, bandwidth=40, count=1,
         temp = np.geterr()
         np.seterr(all='ignore')
         smoothing_matrix = calculateSmoothingMatrix(frequencies, bandwidth,
-                                             normalize=normalize)
+                                                    normalize=normalize)
         np.seterr(**temp)
         new_spec = np.dot(spectra, smoothing_matrix)
         # Eventually apply more than once.
@@ -218,7 +219,9 @@ def konnoOhmachiSmoothing(spectra, frequencies, bandwidth=40, count=1,
             np.seterr(all='ignore')
             for _i in range(len(frequencies)):
                 window = konnoOhmachiSmoothingWindow(frequencies,
-                        frequencies[_i], bandwidth, normalize=normalize)
+                                                     frequencies[_i],
+                                                     bandwidth,
+                                                     normalize=normalize)
                 new_spec[_i] = (window * spectra).sum()
             np.seterr(**temp)
         # Reuse smoothing window if more than one spectrum.
@@ -229,21 +232,24 @@ def konnoOhmachiSmoothing(spectra, frequencies, bandwidth=40, count=1,
             np.seterr(all='ignore')
             for _i in range(len(frequencies)):
                 window = konnoOhmachiSmoothingWindow(frequencies,
-                        frequencies[_i], bandwidth, normalize=normalize)
+                                                     frequencies[_i],
+                                                     bandwidth,
+                                                     normalize=normalize)
                 for _j, spec in enumerate(spectra):
                     new_spec[_j, _i] = (window * spec).sum()
             np.seterr(**temp)
         # Eventually apply more than once.
         while count > 1:
             new_spec = konnoOhmachiSmoothing(new_spec, frequencies, bandwidth,
-                                enforce_no_matrix=True, normalize=normalize)
+                                             enforce_no_matrix=True,
+                                             normalize=normalize)
             count -= 1
         return new_spec
 
 
 class KonnoOhmachi(BaseSpectralSmoother):
     """
-    
+
     """
     def _check_params(self, params):
         """
@@ -255,11 +261,11 @@ class KonnoOhmachi(BaseSpectralSmoother):
         assert "count" in params_keys
         assert params["bandwidth"] > 0.0
         assert params["count"] > 0
-        if not "enforce_no_matrix" in params_keys:
+        if "enforce_no_matrix" not in params_keys:
             params["enforce_no_matrix"] = False
-        if not "max_memory_usage" in params_keys:
+        if "max_memory_usage" not in params_keys:
             params["max_memory_usage"] = 512
-        if not "normalize" in params_keys:
+        if "normalize" not in params_keys:
             params["normalize"] = False
         return params
 
