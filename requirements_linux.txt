@@ -31,3 +31,4 @@ h3
 pygmt
 reportlab
 netCDF4
+igraph
