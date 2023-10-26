@@ -486,11 +486,11 @@ def get_vals_from_tuple(tup):
         if tup == '':
             raise ValueError("Value is ''")
         vals = tuple_to_vals(tup)
-        vals = [np.float(v) for v in vals if len(v) > 0]
+        vals = [float(v) for v in vals if len(v) > 0]
     elif np.isscalar(tup):
         try:
-            num_check = np.float(tup)
-            vals = [np.float(tup)]
+            num_check = float(tup)
+            vals = [float(tup)]
         except Exception as e:
             raise ValueError
     elif type(tup) in [tuple, list, np.ndarray]:
@@ -2732,11 +2732,11 @@ def calc_double_truncated_GR_mfd_from_fault_params(
         slip_class = fetch_param_val(fault_dict, 'slip_class',
                                      defaults=defaults, param_map=param_map)
     if m_cli is None:
-        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults, 
+        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults,
                                 param_map=param_map)
-    
+
     if m_min is None:
-        m_min = fetch_param_val(fault_dict, 'm_min', defaults=defaults, 
+        m_min = fetch_param_val(fault_dict, 'm_min', defaults=defaults,
                                 param_map=param_map)
     if m_max is None:
         m_max = get_m_max(
@@ -2817,7 +2817,7 @@ def calc_double_truncated_GR_mfd_from_fault_params(
 
     # first, round rates to 12 decimals (this makes tests easier - other ideas?)
     bin_rates_cli = [b.round(12) for b in bin_rates_cli]
-    
+
     # Using rates from m_cli to m_max
     mfd = hz.mfd.EvenlyDiscretizedMFD(bin_mags_cli[0],
                                       bin_width,
@@ -2971,9 +2971,9 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
                                      defaults=defaults, param_map=param_map)
 
     if m_cli is None:
-        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults, 
+        m_cli = fetch_param_val(fault_dict, 'm_cli', defaults=defaults,
                                 param_map=param_map)
-    
+
     if m_min is None:
         m_min = fetch_param_val(fault_dict, 'm_min', defaults=defaults,
                                 param_map=param_map)
@@ -3047,7 +3047,7 @@ def calc_youngs_coppersmith_mfd_from_fault_params(
                                                                  m_char,
                                                                  moment_rate,
                                                                  bin_width)
-   
+
     # using only rates from m_cli to m_max
     mfd_rates = mfd.get_annual_occurrence_rates()
 
