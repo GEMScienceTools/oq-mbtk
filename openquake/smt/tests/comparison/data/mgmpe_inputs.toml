@@ -8,7 +8,7 @@ dist_type = 'rrup' # specify distance metric used in trellis plots
 dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
 region = 0 # region for NGAWest2 GMMs
 eshm20_region = 0 # region for ESHM20 GMMs 
-Nstd = 0 # number of standard deviations to sample sigma for 
+Nstd = 1 # number of standard deviations to sample sigma for 
 
 [site_properties]
 vs30 = 800
