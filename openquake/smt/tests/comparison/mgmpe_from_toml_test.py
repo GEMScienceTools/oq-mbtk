@@ -74,8 +74,8 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         target_mtxs = pd.read_csv(os.path.join(base, 'target_medians.csv'))
 
         # Check equal   
-        np.testing.assert_allclose(np.array(observ_mtxs),
-                                   np.array(target_mtxs), atol=ATOL)
+        np.testing.assert_allclose(
+            np.array(observ_mtxs), np.array(target_mtxs), atol=ATOL)
         
     @classmethod
     def tearDownClass(self):
