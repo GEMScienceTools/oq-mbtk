@@ -78,7 +78,7 @@ def plot_trellis_util(
                     gmm, gmm_orig, depth[l], m, aratio_g, strike_g, dip_g, 
                     rake,Vs30, Z1, Z25, maxR, step, i, ztor_m, eshm20_region,
                     dist_type, trt, up_or_down_dip)
-                
+
                 # Get mean, sigma, mean plus sigma and mean minus sigma
                 mean = mean[0][0]
                 std = std[0][0]
@@ -686,6 +686,7 @@ def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
     """
     Add titles and axis labels to trellis plots
     """
+    # Labels
     if dist_type == 'repi':
         label = 'Repi (km)'
     if dist_type == 'rrup':
@@ -694,15 +695,22 @@ def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
         label = 'Rjb (km)'
     if dist_type == 'rhypo':
         label = 'Rhypo (km)'
-    if n == 0: #top row only
-        pyplot.title('Mw = ' + str(m), fontsize='16') # Mod if required
-    if n == len(imt_list)-1: #bottom row only
+    if n == 0: # Top row only
+        pyplot.title('Mw = ' + str(m), fontsize='16')
+    if n == len(imt_list)-1: # Bottom row only
         pyplot.xlabel(label, fontsize='16')
-    if l == 0: #left row only
+    if l == 0: # Left row only
         if str(i) != 'PGV':
             pyplot.ylabel(str(i) + ' (g)', fontsize='16')
         else:
             pyplot.ylabel('PGV (cm/s)', fontsize='16')
+            
+    # xlims
+    if str(i) != 'PGV':
+        pyplot.ylim(1e-03, 2) # g
+    else:
+        pyplot.ylim(0.1, 650) # cm/s
+    
     pyplot.loglog()
     pyplot.xlim(1, np.max(r_vals)) # Mod if required
     
