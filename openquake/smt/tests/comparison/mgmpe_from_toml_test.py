@@ -77,13 +77,6 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         np.testing.assert_allclose(np.array(observ_mtxs),
                                    np.array(target_mtxs), atol=ATOL)
         
-        
-       
-        
-        
-        
-        
-        
     @classmethod
     def tearDownClass(self):
         """
