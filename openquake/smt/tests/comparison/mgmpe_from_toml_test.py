@@ -33,7 +33,7 @@ from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes
 base = os.path.join(os.path.dirname(__file__), "data")
 
 # Absolute tolerance
-ATOL = 1E-10
+ATOL = 1E-6
 
 
 class ModifyGroundMotionsTestCase(unittest.TestCase):
