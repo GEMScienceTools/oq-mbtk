@@ -1,0 +1,83 @@
+### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
+
+[general]
+imt_list = ['PGA','SA(0.1)','SA(0.5)'] # imts to compute gm for
+max_period = 2 # max period for response spectra (can't exceed maximum period in a specified GMPE)
+maxR = 300 # max distance to consider
+dist_type = 'rrup' # specify distance metric used in trellis plots
+dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
+region = 0 # region for NGAWest2 GMMs
+eshm20_region = 0 # region for ESHM20 GMMs 
+Nstd = 0 # number of standard deviations to sample sigma for 
+
+[site_properties]
+vs30 = 800
+Z1 = -999
+Z25 = -999
+up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
+
+[source_properties] # Characterise EQ as finite rupture
+trt = 'ASCR'
+ztor = 'None' # Set to string of 'None' to NOT consider
+strike = -999
+dip = -999
+rake = 60
+aratio = 2
+trellis_and_rs_mag_list = [5,6,7] # mags used only for trellis
+trellis_and_rs_depths = [20,25,30] # depth per magnitude for trellis
+
+# Specify mag values and depths for use in Sammons, Euclidean dist and clustering
+[mag_values_non_trellis_or_spectra_functions]
+mmin = 5
+mmax = 7
+spacing = 0.1
+non_trellis_or_spectra_depths = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth],[mag,depth]] 
+
+# Specify label for gmpes
+[gmpe_labels]
+gmpes_label = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
+
+[models.YenierAtkinson2015BSSA]
+sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
+
+[models.1-CampbellBozorgnia2014]
+fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # fix total sigma per imt
+
+[models.2-CampbellBozorgnia2014]
+with_betw_ratio = 1.7 # add between-event and within-event sigma using ratio of 1.7 to partition total sigma
+        
+[models.3-CampbellBozorgnia2014]
+set_between_epsilon = 1.5 # set between-event epsilon (i.e. tau epsilon)
+                       
+[models.1-AbrahamsonEtAl2014]
+median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
+
+[models.2-AbrahamsonEtAl2014]
+median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
+
+[models.1-KothaEtAl2020]
+sigma_scaling_scalar = 1.05 # scale sigma by factor of 1.05 over all imts
+
+[models.2-KothaEtAl2020]
+sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # scale sigma by imt-dependent factor
+
+[models.1-BooreEtAl2014]
+site_term = 'CY14SiteTerm' # use CY14 site term
+
+[models.2-BooreEtAl2014]
+site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
+
+[models.3-BooreEtAl2014]
+site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
+
+[models.NGAEastGMPE]
+gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
+    
+[models.HassaniAtkinson2018]
+d_sigma = 100 # gmpe specific param
+kappa0 = 0.04
+        
+
+[custom_colors]
+custom_colors_flag = 'False' #By default set to "False" (set to "True" for custom colours)
+custom_colors_list = ['lime','dodgerblue','gold','0.8']

@@ -128,7 +128,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.2-AbrahamsonEtAl2014]
         median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
         
-        [models.1-KothaEtAl202]
+        [models.1-KothaEtAl2020]
         sigma_scaling_scalar = 1.05 # scale sigma by factor of 1.05 over all imts
         
         [models.2-KothaEtAl2020]
