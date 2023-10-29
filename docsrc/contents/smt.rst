@@ -150,6 +150,11 @@ We can specify the inputs to perform a residual analysis with as follows:
         d_sigma = 100 # gmpe specific param
         kappa0 = 0.04
         
+        [models.KothaEtAl2020ESHM20] # ESHM20 model
+        sigma_mu_epsilon = 2.85697 
+        c3_epsilon = 1.72    
+        region = 4 # Note that within residuals specify region here, whereas in comparison module toml (below) we specify using the eshm20_region param
+        
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
         
