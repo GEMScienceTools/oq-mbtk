@@ -791,15 +791,6 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
         final_event_id[rec] = 'Earthquake-' + delimited_event_id 
         
         # Assign ESM18 fault_code based on code in NGA-West2
-        """
-        Strike-Slip = 00 (SS)
-        Normal = 01 (NF)
-        Reverse = 02 (RF)
-        Reverse - Oblique = 03 (RF)
-        Normal - Oblique = 04 (NF)
-        
-        Assign strike-slip if -999 provided (i.e. fm_type_code unknown in NGAWest2)
-        """
         if NGAWest2['Mechanism Based on Rake Angle'][rec]==0 or NGAWest2[
                 'Mechanism Based on Rake Angle'][rec]==-999:
             ESM18_equivalent_fm_type_code='SS'
