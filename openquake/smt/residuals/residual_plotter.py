@@ -776,7 +776,7 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 
     Mean_Sigma_Total_df = pd.DataFrame(Mean_Sigma_Total)
 
     # Create figure
-    fig, ax = plt.subplots(nrows = 3, ncols = 2, figsize = (14, 14)) 
+    fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(14, 14)) 
 
     # Plot mean of zero and sigma of 1 for standard normal dist
     for ax_idx in range(0, 3):
@@ -784,29 +784,17 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 
                           color = 'k', linestyle = '--')
         ax[ax_idx, 1].plot(imts_to_plot.imt_float, np.ones(len(imts_to_plot)),
                           color = 'k', linestyle = '--')
-
-    # Produce series of residuals.gmpe_list
-    gmpe_list_series = pd.Series(pd.DataFrame(
-        residuals.gmpe_list, index = np.arange(0, len(residuals.gmpe_list) ,1)).
-        columns)
     
     # Define colours for plots
     colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime', 'dodgerblue', 'k',
                                    'gold', '0.8', 'mediumseagreen', '0.5',
                                    'tab:orange', 'tab:purple','tab:brown',
-                                   'tab:pink'])*cycler(marker = ['x']))
+                                   'tab:pink'])*cycler(marker=['x']))
     
-    if type(custom_cycler) == type(cycler(colour = 'b')):
+    if type(custom_cycler) == type(cycler(colour='b')):
        colour_cycler = custom_cycler
-    colour_cycler_df=pd.DataFrame(colour_cycler)
-    
-    gmpe_colour = {}
-    gmpe_marker = {}
-    for gmpe in range(0,np.size(gmpe_list_series)):
-        gmpe_colour[gmpe] = colour_cycler_df.color.iloc[gmpe]
-        gmpe_marker[gmpe] = colour_cycler_df.marker.iloc[gmpe]
-    colour_cycler_df_appended = colour_cycler_df[:len(residuals.gmpe_list)]
-    colour_cycler_df_appended['gmpe'] = residuals.gmpe_list
+    colour_cycler_df = pd.DataFrame(colour_cycler)[:len(residuals.gmpe_list)]
+    colour_cycler_df['gmpe'] = residuals.gmpe_list.keys()
 
     # Set plots
     Mean_ymax = np.max([Mean_Sigma_Intra_df.loc['Mean'],
@@ -840,10 +828,10 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 
     ax[0, 1].set_title('Sigma of GMPE Residuals')
 
     # Plot data
-    for gmpe in residuals.gmpe_list:
+    for gmpe in residuals.gmpe_list.keys():
         # Assign colour and marker to each gmpe
-        input_df = pd.DataFrame(colour_cycler_df_appended.loc[
-            colour_cycler_df_appended['gmpe'] == gmpe])
+        input_df = pd.DataFrame(
+            colour_cycler_df.loc[colour_cycler_df['gmpe'] == gmpe])
         input_df.reset_index()
         color_input_non_total = 'w'
         color_input = input_df['color'].iloc[0]
