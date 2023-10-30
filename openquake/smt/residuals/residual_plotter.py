@@ -707,8 +707,8 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler = 0
 def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 0,
                                       filetype = 'jpg', dpi = 200):
     """
-    Definition to create a simple plot of residual mean and residual sigma 
-    for each GMPE (y-axis) versus spectral period (x-axis)
+    Create a simple plot of residual mean and residual sigma for each GMPE 
+    (y-axis) versus spectral period (x-axis)
     
     :param custom_cycler: Default set to 0, to assign specific colours
     and linestyle to each GMPE, a cycler can instead be specified manually,
@@ -721,7 +721,7 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 
     # Preserve original residuals.imts
     preserve_imts = residuals.imts
     
-    # Remove non-acceleration imts from residuals.imts for generation of metrics
+    # Remove non-acceleration imts from residuals.imts
     imt_append = pd.DataFrame(residuals.imts, index = residuals.imts)
     imt_append.columns = ['imt']
     for imt_idx in range(0, np.size(residuals.imts)):
@@ -882,8 +882,7 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 
     
 def loglikelihood_table(residuals, filename):
     """
-    Definition to create a table of loglikelihood values per GMPE per imt
-    (Scherbaum et al. 2009)
+    Create a table of loglikelihood values per GMPE per imt (Scherbaum et al. 2009)
     """
     # Preserve original residuals.imts
     preserve_imts = residuals.imts
@@ -962,8 +961,8 @@ def loglikelihood_table(residuals, filename):
     
 def llh_weights_table(residuals, filename):
     """
-    Definition to create a table of model weights per imt based
-    on sample loglikelihood (Scherbaum et al. 2009)
+    Create a table of model weights per imt based on sample loglikelihood 
+    (Scherbaum et al. 2009)
     """       
     # Preserve original residuals.imts
     preserve_imts = residuals.imts
@@ -1037,8 +1036,8 @@ def llh_weights_table(residuals, filename):
 
 def edr_weights_table(residuals, filename):
     """
-    Definition to create a table of model weights per imt based
-    on Euclidean distance based ranking (Kale and Akkar, 2013)
+    Create a table of model weights per imt based on Euclidean distance based
+    ranking (Kale and Akkar, 2013)
     """     
     # Preserve original residuals.imts
     preserve_imts = residuals.imts
@@ -1107,8 +1106,7 @@ def edr_weights_table(residuals, filename):
 
 def edr_table(residuals, filename):
     """
-    Definition to create a table of MDE Norm, sqrt(kappa) and 
-    EDR per imt per spectal period (Kale and Akkar, 2013)
+    Create a table of MDE Norm, sqrt(kappa) and EDR per imt (Kale and Akkar, 2013)
     """
     # Generate attributes required from residuals for table
     residuals.get_edr_values_wrt_spectral_period()
@@ -1146,46 +1144,9 @@ def edr_table(residuals, filename):
         
 def pdf_table(residuals, filename):
     """
-    Definition to create a table of mean and standard deviation for total,
-    inter- and intra-event residual distributions (for each GMPE at each
-    spectral period
-    """  
-    # Preserve original residuals.imts
-    preserve_imts = residuals.imts
-    
-    # Remove non-acceleration imts from residuals.imts for generation of metrics
-    imt_append = pd.DataFrame(residuals.imts, index = residuals.imts)
-    imt_append.columns = ['imt']
-    for imt_idx in range(0, np.size(residuals.imts)):
-        if residuals.imts[imt_idx] == 'PGV':
-            imt_append = imt_append.drop(imt_append.loc['PGV'])
-        if residuals.imts[imt_idx] == 'PGD':
-           imt_append = imt_append.drop(imt_append.loc['PGD'])
-        if residuals.imts[imt_idx] == 'CAV':
-           imt_append = imt_append.drop(imt_append.loc['CAV'])
-        if residuals.imts[imt_idx] == 'Ia':
-           imt_append = imt_append.drop(imt_append.loc['Ia'])
-        
-    imt_append_list = pd.DataFrame()
-    for idx in range(0, len(imt_append)):
-        imt_append_list[idx] = imt_append.iloc[idx]
-    imt_append = imt_append.reset_index()
-    imt_append_list.columns = imt_append.imt
-    residuals.imts = list(imt_append_list)
-    
-    # Convert imt_list to array
-    if len(residuals.imts) == 1 and residuals.imts[0] == 'PGA':
-        input_imt_string = [('PGA', 0)]
-        imts_to_plot = pd.DataFrame(input_imt_string, columns=[
-            'imt_str','imt_float'])
-    else:
-        imts_to_plot=pd.DataFrame([imt2tup(imts) for imts in residuals.imts],
-                              columns=['imt_str', 'imt_float'])
-    for imt_idx in range(0, np.size(residuals.imts)):
-        if imts_to_plot.imt_str[imt_idx] == 'PGA':
-           imts_to_plot.imt_float.iloc[imt_idx] = 0
-    imts_to_plot = imts_to_plot.dropna() # Remove any non-acceleration imt
-
+    Create a table of mean and standard deviation for total, inter- and 
+    intra-event residual distributions
+    """
     # Get all residuals for all gmpes at all imts
     res_statistics = {}
     for gmpe in residuals.gmpe_list:
@@ -1231,9 +1192,6 @@ def pdf_table(residuals, filename):
     combined_df_output.columns = list(pd.Series(gmpe_headers))
     
     combined_df_output.to_csv(filename, sep = ',')
-
-    # Reassign original imts to residuals.imts
-    residuals.imts = preserve_imts  
     
     
 class ResidualWithSite(ResidualPlot):
@@ -1292,18 +1250,7 @@ class ResidualWithSite(ResidualPlot):
                 zorder=-32)
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
-        
-        # Truncate string if NGAWest2 format station ID (will potentially need
-        # to add more station name truncations as add additional database parsers)
-        if 'StationName' in str(list(self.residuals.site_ids)[0]):
-            xtick_label = {}
-            for site_idx, site in enumerate(self.residuals.site_ids):
-                xtick_label[site_idx] = list(self.residuals.site_ids)[
-                    site_idx].split('StationName-')[1]
-                if site_idx == len(self.residuals.site_ids) - 1:
-                    xtick_label = pd.Series(xtick_label)
-        else:
-            xtick_label = self.residuals.site_ids
+        xtick_label = self.residuals.site_ids
         ax.set_xticklabels(xtick_label, rotation="vertical")
         
         sigma_type = res_type
@@ -1418,18 +1365,7 @@ class IntraEventResidualWithSite(ResidualPlot):
                     'Error bar')
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
-        
-        # Truncate string if NGAWest2 format station ID (will potentially need
-        # to add more station name truncations as add additional database parsers)
-        if 'StationName' in str(list(self.residuals.site_ids)[0]):
-            xtick_label = {}
-            for site_idx, site in enumerate(self.residuals.site_ids):
-                xtick_label[site_idx] = list(self.residuals.site_ids)[
-                    site_idx].split('StationName-')[1]
-                if site_idx == len(self.residuals.site_ids) - 1:
-                    xtick_label = pd.Series(xtick_label)
-        else:
-            xtick_label = self.residuals.site_ids
+        xtick_label = self.residuals.site_ids
         ax.set_xticklabels(xtick_label, rotation="vertical")
         
         max_lim = ceil(np.max(np.fabs(dwess)))
