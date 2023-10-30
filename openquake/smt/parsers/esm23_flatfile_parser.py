@@ -641,10 +641,10 @@ def _get_ESM18_headers(ESM23, default_string, r_fm_type, r_datetime):
     "st_elevation":ESM23.st_elevation,
     
     "ec8_code":ESM23.ec8_code,
-    "ec8_code_method":ESM23.preferred_estimation_method_vs30_ec8,
-    "ec8_code_ref":ESM23.ec8_ref_programme,
+    "ec8_code_method":default_string,
+    "ec8_code_ref":default_string,
     "vs30_m_sec":ESM23.vs30_m_s,
-    "vs30_ref":ESM23.vs30_ref_auth,
+    "vs30_ref":default_string,
     "vs30_calc_method":default_string, 
     "vs30_meas_type":ESM23.vs30_meas_type,
     "slope_deg":ESM23.slope_deg,
