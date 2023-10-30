@@ -243,12 +243,8 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2 = NGAWest2.reset_index().drop(columns='index')
         NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
-        # If no ztor set to 0 km (workaround used to get ztor vals as oddly can't
-        # be found as column using conventional pandas methods)
-        ztor_column = NGAWest2.columns[32] # Column header 32 in NGAWest2 df
-        ztor_vals = NGAWest2[ztor_column]
-        ztor_vals[ztor_vals == -999] = 0
-        NGAWest2['ztor'] = ztor_vals
+        # Replace -999 ztor with empty
+        NGAWest2['Depth to Top Of Fault Rupture Model'].replace(-999, '')
         
         # Remove records with no epicentral distance
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['EpiD (km)']==-999][
@@ -740,15 +736,19 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                     scalars["U"][key] * scalars["V"][key])
         return scalars, spectra
 
-def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
+def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     
     """
-    Convert first from NGAWest2 format flatfile to ESM18 format flatfile 
+    Convert from NGAWest2 format flatfile to ESM18 format flatfile 
     """
-    
-    # Construct event_time in yyyy-mm-dd hh:mm:ss format
-    event_time={}
+    # Reformat to ESM18 format
+    event_time = {}
+    final_event_id = {}
+    fm_type_code_converted = {}
+    final_station_id = {}
     for rec in range(0,len(NGAWest2)):
+        
+        # Event time
         event_time_year=NGAWest2.YEAR.iloc[rec]
         event_time_month_and_day=str(NGAWest2.MODY.iloc[rec])
         
@@ -776,11 +776,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
         
         event_time[rec] = yyyy_mm_dd + ' ' + hh_mm_ss
     
-    NGAWest2['event_time_reformatted'] = pd.Series(event_time)
-    
-    # generate event_id without delimiters
-    final_event_id={}
-    for rec in range(0,len(NGAWest2['Earthquake Name'])):
+        # Reformat event id
         delimited_event_id=str(NGAWest2['Earthquake Name'][rec])
         delimited_event_id=delimited_event_id.replace(',','')
         delimited_event_id=delimited_event_id.replace(' ','')
@@ -789,21 +785,8 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
         delimited_event_id=delimited_event_id.replace(':','')
         delimited_event_id=delimited_event_id.replace(';','')
         final_event_id[rec] = 'Earthquake-' + delimited_event_id 
-    NGAWest2['event_id_reformatted'] = pd.Series(final_event_id)
-    
-    # Assign ESM18 fault_code based on code in NGA-West2
-    """
-    Strike-Slip = 00 (SS)
-    Normal = 01 (NF)
-    Reverse = 02 (RF)
-    Reverse - Oblique = 03 (RF)
-    Normal - Oblique = 04 (NF)
-    
-    Assign strike-slip if -999 provided (i.e. fm_type_code unknown in NGAWest2)
-    """
-    
-    fm_type_code_converted={}
-    for rec in range(0,len(NGAWest2)):
+        
+        # Assign ESM18 fault_code based on code in NGA-West2
         if NGAWest2['Mechanism Based on Rake Angle'][rec]==0 or NGAWest2[
                 'Mechanism Based on Rake Angle'][rec]==-999:
             ESM18_equivalent_fm_type_code='SS'
@@ -816,11 +799,8 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
                 rec]==2 or NGAWest2['Mechanism Based on Rake Angle'][rec]==3:
             ESM18_equivalent_fm_type_code='TF'
         fm_type_code_converted[rec] = ESM18_equivalent_fm_type_code
-    reformatted_fm_type_code = pd.Series(fm_type_code_converted)
-    
-    # Station code without delimiters
-    final_station_id={}
-    for rec in range(0,len(NGAWest2)):
+        
+        # Station id
         delimited_station_id=str(NGAWest2['Station Name'][rec])
         delimited_station_id=delimited_station_id.replace(',','')
         delimited_station_id=delimited_station_id.replace(' ','')
@@ -829,27 +809,32 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
         delimited_station_id=delimited_station_id.replace(':','')
         delimited_station_id=delimited_station_id.replace(';','')
         final_station_id[rec] = 'StationName-'+delimited_station_id
-    station_id_reformatted = pd.Series(final_station_id)
     
+    # Into df
+    NGAWest2['fm_type'] = pd.Series(fm_type_code_converted)
+    NGAWest2['station_id'] = pd.Series(final_station_id)
+    NGAWest2['event_time_reformatted'] = pd.Series(event_time)
+    NGAWest2['event_id_reformatted'] = pd.Series(final_event_id)
+
     # Create nation code (not provided in NGA-West-2 so assign flag)
-    nation_code_default_string = np.full(len(NGAWest2['Station Name']),str(
-        "NGAWest2_does_not_provide_nation_codes")) 
+    nation_code_default_string = np.full(len(NGAWest2['Station Name']),
+        "NGAWest2_does_not_provide_nation_codes") 
     default_nation_code = pd.Series(nation_code_default_string)
     
     # Create channel codes for horizontal components as within NGAWest2 format
-    H1_string = np.full(len(NGAWest2['Station Name']),str("H1"))
+    H1_string = np.full(len(NGAWest2['Station Name']), "H1")
     default_H1_string = pd.Series(H1_string)
-    H2_string = np.full(len(NGAWest2['Station Name']),str("H2"))
+    H2_string = np.full(len(NGAWest2['Station Name']), "H2")
     default_H2_string = pd.Series(H2_string)
-    V_string = np.full(len(NGAWest2['Station Name']),str("V"))
+    V_string = np.full(len(NGAWest2['Station Name']), "V")
     default_V_string = pd.Series(V_string)
     
     # Create default value of 0 for location code string (arbitrary)
-    location_string = np.full(len(NGAWest2['Station Name']),str("0.0"))
+    location_string = np.full(len(NGAWest2['Station Name']), "0.0")
     location_code_string = pd.Series(location_string)  
     
     # Create default values for headers not readily available or required
-    r_string = np.full(len(NGAWest2['Station Name']),str(""))
+    r_string = np.full(len(NGAWest2['Station Name']), "")
     default_string = pd.Series(r_string)    
     
     # Construct dataframe with original ESM 2018 format 
@@ -867,7 +852,7 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "ev_longitude":NGAWest2['Hypocenter Longitude (deg)'],   
     "ev_depth_km":NGAWest2['Hypocenter Depth (km)'],
     "ev_hyp_ref":default_string,
-    "fm_type_code":reformatted_fm_type_code,
+    "fm_type_code":NGAWest2['fm_type'],
     "ML":default_string,
     "ML_ref":default_string,
     "Mw":NGAWest2['Earthquake Magnitude'],
@@ -883,14 +868,14 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "es_dip":NGAWest2['Dip (deg)'],
     "es_rake":NGAWest2['Rake Angle (deg)'],
     "es_strike_dip_rake_ref":default_string, 
-    "es_z_top":NGAWest2['ztor'],
+    "es_z_top":NGAWest2['Depth to Top Of Fault Rupture Model'],
     "es_z_top_ref":default_string,
     "es_length":default_string,   
     "es_width":default_string,
     "es_geometry_ref":default_string,
  
     "network_code": NGAWest2['Owner'],
-    "station_code":station_id_reformatted,
+    "station_code":NGAWest2['station_id'],
     "location_code":location_code_string,
     "instrument_code":default_string,     
     "sensor_depth_m":default_string,
@@ -934,20 +919,20 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "V_lp":default_string,
     "W_lp":default_string,
      
-    "U_pga":NGAWest2['PGA (g)']*981,
-    "V_pga":NGAWest2['PGA (g)']*981,
+    "U_pga":default_string,
+    "V_pga":default_string,
     "W_pga":NGAWest2_vertical['PGA (g)']*981,
     "rotD50_pga":NGAWest2['PGA (g)']*981,
     "rotD100_pga":default_string,
     "rotD00_pga":default_string,
-    "U_pgv":NGAWest2['PGV (cm/sec)'],
-    "V_pgv":NGAWest2['PGV (cm/sec)'],
+    "U_pgv":default_string,
+    "V_pgv":default_string,
     "W_pgv":NGAWest2_vertical['PGV (cm/sec)'],
     "rotD50_pgv":NGAWest2['PGV (cm/sec)'],
     "rotD100_pgv":default_string,
     "rotD00_pgv":default_string,
-    "U_pgd":NGAWest2['PGD (cm)'],
-    "V_pgd":NGAWest2['PGD (cm)'],
+    "U_pgd":default_string,
+    "V_pgd":default_string,
     "W_pgd":NGAWest2_vertical['PGD (cm)'],
     "rotD50_pgd":NGAWest2['PGD (cm)'],
     "rotD100_pgd":default_string,
@@ -978,80 +963,79 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     "rotD100_ia":default_string,
     "rotD00_ia":default_string,
     
-    # Compute each horiz. comp. from RotD50 (assuming geo mean = RotD50) 
-    "U_T0_010":NGAWest2['T0.010S']*981,
-    "U_T0_025":NGAWest2['T0.025S']*981,
-    "U_T0_040":NGAWest2['T0.040S']*981,
-    "U_T0_050":NGAWest2['T0.050S']*981,
-    "U_T0_070":NGAWest2['T0.070S']*981,
-    "U_T0_100":NGAWest2['T0.100S']*981,
-    "U_T0_150":NGAWest2['T0.150S']*981,
-    "U_T0_200":NGAWest2['T0.200S']*981,
-    "U_T0_250":NGAWest2['T0.250S']*981,
-    "U_T0_300":NGAWest2['T0.300S']*981,
-    "U_T0_350":NGAWest2['T0.350S']*981,
-    "U_T0_400":NGAWest2['T0.400S']*981,
-    "U_T0_450":NGAWest2['T0.450S']*981,
-    "U_T0_500":NGAWest2['T0.500S']*981,
-    "U_T0_600":NGAWest2['T0.600S']*981,
-    "U_T0_700":NGAWest2['T0.700S']*981,
-    "U_T0_750":NGAWest2['T0.750S']*981,
-    "U_T0_800":NGAWest2['T0.800S']*981,
-    "U_T0_900":NGAWest2['T0.900S']*981,
-    "U_T1_000":NGAWest2['T1.000S']*981,
-    "U_T1_200":NGAWest2['T1.200S']*981,
-    "U_T1_400":NGAWest2['T1.400S']*981,
-    "U_T1_600":NGAWest2['T1.600S']*981,
-    "U_T1_800":NGAWest2['T1.800S']*981,
-    "U_T2_000":NGAWest2['T2.000S']*981,
-    "U_T2_500":NGAWest2['T2.500S']*981,
-    "U_T3_000":NGAWest2['T3.000S']*981,
-    "U_T3_500":NGAWest2['T3.500S']*981,
-    "U_T4_000":NGAWest2['T4.000S']*981,
-    "U_T4_500":NGAWest2['T4.500S']*981,
-    "U_T5_000":NGAWest2['T5.000S']*981,
-    "U_T6_000":NGAWest2['T6.000S']*981,
-    "U_T7_000":NGAWest2['T7.000S']*981,
-    "U_T8_000":NGAWest2['T8.000S']*981,
-    "U_T9_000":NGAWest2['T9.000S']*981,
-    "U_T10_000":NGAWest2['T10.000S']*981,
+    "U_T0_010":default_string,
+    "U_T0_025":default_string,
+    "U_T0_040":default_string,
+    "U_T0_050":default_string,
+    "U_T0_070":default_string,
+    "U_T0_100":default_string,
+    "U_T0_150":default_string,
+    "U_T0_200":default_string,
+    "U_T0_250":default_string,
+    "U_T0_300":default_string,
+    "U_T0_350":default_string,
+    "U_T0_400":default_string,
+    "U_T0_450":default_string,
+    "U_T0_500":default_string,
+    "U_T0_600":default_string,
+    "U_T0_700":default_string,
+    "U_T0_750":default_string,
+    "U_T0_800":default_string,
+    "U_T0_900":default_string,
+    "U_T1_000":default_string,
+    "U_T1_200":default_string,
+    "U_T1_400":default_string,
+    "U_T1_600":default_string,
+    "U_T1_800":default_string,
+    "U_T2_000":default_string,
+    "U_T2_500":default_string,
+    "U_T3_000":default_string,
+    "U_T3_500":default_string,
+    "U_T4_000":default_string,
+    "U_T4_500":default_string,
+    "U_T5_000":default_string,
+    "U_T6_000":default_string,
+    "U_T7_000":default_string,
+    "U_T8_000":default_string,
+    "U_T9_000":default_string,
+    "U_T10_000":default_string,
     
-    "V_T0_010":NGAWest2['T0.010S']*981,
-    "V_T0_025":NGAWest2['T0.025S']*981,
-    "V_T0_040":NGAWest2['T0.040S']*981,
-    "V_T0_050":NGAWest2['T0.050S']*981,
-    "V_T0_070":NGAWest2['T0.070S']*981,
-    "V_T0_100":NGAWest2['T0.100S']*981,
-    "V_T0_150":NGAWest2['T0.150S']*981,
-    "V_T0_200":NGAWest2['T0.200S']*981,
-    "V_T0_250":NGAWest2['T0.250S']*981,
-    "V_T0_300":NGAWest2['T0.300S']*981,
-    "V_T0_350":NGAWest2['T0.350S']*981,
-    "V_T0_400":NGAWest2['T0.400S']*981,
-    "V_T0_450":NGAWest2['T0.450S']*981,
-    "V_T0_500":NGAWest2['T0.500S']*981,
-    "V_T0_600":NGAWest2['T0.600S']*981,
-    "V_T0_700":NGAWest2['T0.700S']*981,
-    "V_T0_750":NGAWest2['T0.750S']*981,
-    "V_T0_800":NGAWest2['T0.800S']*981,
-    "V_T0_900":NGAWest2['T0.900S']*981,
-    "V_T1_000":NGAWest2['T1.000S']*981,
-    "V_T1_200":NGAWest2['T1.200S']*981,
-    "V_T1_400":NGAWest2['T1.400S']*981,
-    "V_T1_600":NGAWest2['T1.600S']*981,
-    "V_T1_800":NGAWest2['T1.800S']*981,
-    "V_T2_000":NGAWest2['T2.000S']*981,
-    "V_T2_500":NGAWest2['T2.500S']*981,
-    "V_T3_000":NGAWest2['T3.000S']*981,
-    "V_T3_500":NGAWest2['T3.500S']*981,
-    "V_T4_000":NGAWest2['T4.000S']*981,
-    "V_T4_500":NGAWest2['T4.500S']*981,
-    "V_T5_000":NGAWest2['T5.000S']*981,
-    "V_T6_000":NGAWest2['T6.000S']*981,
-    "V_T7_000":NGAWest2['T7.000S']*981,
-    "V_T8_000":NGAWest2['T8.000S']*981,
-    "V_T9_000":NGAWest2['T9.000S']*981,
-    "V_T10_000":NGAWest2['T10.000S']*981,   
+    "V_T0_010":default_string,
+    "V_T0_025":default_string,
+    "V_T0_040":default_string,
+    "V_T0_050":default_string,
+    "V_T0_070":default_string,
+    "V_T0_100":default_string,
+    "V_T0_150":default_string,
+    "V_T0_200":default_string,
+    "V_T0_250":default_string,
+    "V_T0_300":default_string,
+    "V_T0_350":default_string,
+    "V_T0_400":default_string,
+    "V_T0_450":default_string,
+    "V_T0_500":default_string,
+    "V_T0_600":default_string,
+    "V_T0_700":default_string,
+    "V_T0_750":default_string,
+    "V_T0_800":default_string,
+    "V_T0_900":default_string,
+    "V_T1_000":default_string,
+    "V_T1_200":default_string,
+    "V_T1_400":default_string,
+    "V_T1_600":default_string,
+    "V_T1_800":default_string,
+    "V_T2_000":default_string,
+    "V_T2_500":default_string,
+    "V_T3_000":default_string,
+    "V_T3_500":default_string,
+    "V_T4_000":default_string,
+    "V_T4_500":default_string,
+    "V_T5_000":default_string,
+    "V_T6_000":default_string,
+    "V_T7_000":default_string,
+    "V_T8_000":default_string,
+    "V_T9_000":default_string,
+    "V_T10_000":default_string,
         
     "W_T0_010":NGAWest2_vertical['T0.010S']*981,
     "W_T0_025":NGAWest2_vertical['T0.025S']*981,
@@ -1203,9 +1187,8 @@ def _get_ESM18_headers(NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size):
     
     # Output to folder where converted flatfile read into parser   
     DATA = os.path.abspath('')
-    temp_folder=tempfile.mkdtemp()
-    converted_base_data_path = os.path.join(DATA,temp_folder,
-                                            'converted_flatfile.csv')
+    tmp=tempfile.mkdtemp()
+    converted_base_data_path = os.path.join(DATA, tmp, 'converted_flatfile.csv')
     ESM_original_headers.to_csv(converted_base_data_path,sep=';')
 
     print(Initial_NGAWest2_size - len(NGAWest2),
