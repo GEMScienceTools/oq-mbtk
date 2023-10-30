@@ -243,12 +243,8 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2 = NGAWest2.reset_index().drop(columns='index')
         NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
-        # If no ztor set to 0 km (workaround used to get ztor vals as oddly can't
-        # be found as column using conventional pandas methods)
-        ztor_column = NGAWest2.columns[32] # Column header 32 in NGAWest2 df
-        ztor_vals = NGAWest2[ztor_column]
-        ztor_vals[ztor_vals == -999] = 0
-        NGAWest2['ztor'] = ztor_vals
+        # Replace -999 ztor with empty
+        NGAWest2['ztor'].replace(-999,'')
         
         # Remove records with no epicentral distance
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['EpiD (km)']==-999][
@@ -820,6 +816,11 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     NGAWest2['event_time_reformatted'] = pd.Series(event_time)
     NGAWest2['event_id_reformatted'] = pd.Series(final_event_id)
 
+    # Create nation code (not provided in NGA-West-2 so assign flag)
+    nation_code_default_string = np.full(len(NGAWest2['Station Name']),
+        "NGAWest2_does_not_provide_nation_codes") 
+    default_nation_code = pd.Series(nation_code_default_string)
+    
     # Create channel codes for horizontal components as within NGAWest2 format
     H1_string = np.full(len(NGAWest2['Station Name']), "H1")
     default_H1_string = pd.Series(H1_string)
@@ -827,6 +828,10 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     default_H2_string = pd.Series(H2_string)
     V_string = np.full(len(NGAWest2['Station Name']), "V")
     default_V_string = pd.Series(V_string)
+    
+    # Create default value of 0 for location code string (arbitrary)
+    location_string = np.full(len(NGAWest2['Station Name']), "0.0")
+    location_code_string = pd.Series(location_string)  
     
     # Create default values for headers not readily available or required
     r_string = np.full(len(NGAWest2['Station Name']), "")
@@ -842,7 +847,7 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     "USGS_ev_id":default_string,
     "INGV_ev_id":default_string,
     "EMSC_ev_id":default_string,
-    "ev_nation_code":default_string,
+    "ev_nation_code":default_nation_code,
     "ev_latitude":NGAWest2['Hypocenter Latitude (deg)'],    
     "ev_longitude":NGAWest2['Hypocenter Longitude (deg)'],   
     "ev_depth_km":NGAWest2['Hypocenter Depth (km)'],
@@ -871,7 +876,7 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
  
     "network_code": NGAWest2['Owner'],
     "station_code":NGAWest2['station_id'],
-    "location_code":default_string,
+    "location_code":location_code_string,
     "instrument_code":default_string,     
     "sensor_depth_m":default_string,
     "proximity_code":default_string,
