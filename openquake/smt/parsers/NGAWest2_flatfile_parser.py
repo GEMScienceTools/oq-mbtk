@@ -244,7 +244,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
         
         # Replace -999 ztor with empty
-        NGAWest2['ztor'].replace(-999,'')
+        NGAWest2['Depth to Top Of Fault Rupture Model'].replace(-999, '')
         
         # Remove records with no epicentral distance
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['EpiD (km)']==-999][
@@ -868,7 +868,7 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     "es_dip":NGAWest2['Dip (deg)'],
     "es_rake":NGAWest2['Rake Angle (deg)'],
     "es_strike_dip_rake_ref":default_string, 
-    "es_z_top":NGAWest2['ztor'],
+    "es_z_top":NGAWest2['Depth to Top Of Fault Rupture Model'],
     "es_z_top_ref":default_string,
     "es_length":default_string,   
     "es_width":default_string,
