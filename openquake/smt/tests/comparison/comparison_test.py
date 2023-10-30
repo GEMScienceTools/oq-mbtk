@@ -28,7 +28,9 @@ from openquake.smt.comparison.utils_compare_gmpes import (
     compute_matrix_gmpes, plot_trellis_util, plot_spectra_util, 
     plot_cluster_util, plot_sammons_util, plot_euclidean_util)
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+
+# Base path
+base = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
 TARGET_VS30 = 800
@@ -47,18 +49,17 @@ TARGET_GMPES = [valid.gsim('ChiouYoungs2014'),
 TARGET_TRT = 'ASCR'
 TARGET_ZTOR = None
 
+
 class ComparisonTestCase(unittest.TestCase):
     """
     Core test case for the comparison module
     """
     @classmethod 
     def setUpClass(self):
-        self.input_file = os.path.join(BASE_DATA_PATH,
-                                "compare_gmpe_inputs.toml")
-    
-        self.output_directory = os.path.join(BASE_DATA_PATH,
-                                        'compare_gmpes_test')
-        # set the output
+        self.input_file = os.path.join(base, "compare_gmpe_inputs.toml")
+        self.output_directory = os.path.join(base, 'compare_gmpes_test')
+        
+        # Set the output
         if not os.path.exists(self.output_directory): os.makedirs(
                 self.output_directory)
     
@@ -145,7 +146,7 @@ class ComparisonTestCase(unittest.TestCase):
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
            
-            
+        # Get medians
         mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor,
                                             config.imt_list,
                                             config.mag_list, config.gmpes_list,
