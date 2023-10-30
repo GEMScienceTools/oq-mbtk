@@ -539,8 +539,8 @@ class ResidualWithVs30(ResidualScatterPlot):
         return np.min(x)-20, np.max(x)+20
         
     
-def plot_loglikelihood_with_spectral_period(residuals, filename, custom_cycler = 0,
-                                        filetype = 'jpg', dpi = 200):
+def plot_loglikelihood_with_spectral_period(residuals, filename, custom_cycler=0,
+                                        filetype='jpg', dpi=200):
     """
     Definition to create a simple plot of loglikelihood values of Scherbaum
     et al. 2009 (y-axis) versus spectral period (x-axis)
@@ -619,8 +619,8 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, custom_cycler =
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
     
-def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler = 0,
-                              filetype = 'jpg', dpi = 200):
+def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler=0,
+                              filetype='jpg', dpi=200):
     """
     Definition to create a simple plots of EDR, the median pred. correction
     factor and normalised MDE computed using Kale and Akkar (2013) (y-axis)
@@ -704,8 +704,8 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler = 0
     ax_MDE.legend(loc = 'upper right', ncol = 2, fontsize = 'medium')
     _save_image(os.path.join(filename + '_MDE'), plt.gcf(), filetype, dpi)
     
-def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler = 0,
-                                      filetype = 'jpg', dpi = 200):
+def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
+                                      filetype='jpg', dpi=200):
     """
     Create a simple plot of residual mean and residual sigma for each GMPE 
     (y-axis) versus spectral period (x-axis)
