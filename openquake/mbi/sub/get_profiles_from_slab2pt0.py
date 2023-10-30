@@ -55,13 +55,13 @@ def main(fname_conf: str):
     # Read configuration file
     conf = toml.load(fname_conf)
 
-    # Name of the .grd file with the strike values
+    # Name of the .grd file with the depth values
     fname_dep = conf.get('fname_dep', None)
 
     # Name of the .grd file with the strike values
     fname_str = conf.get('fname_str', None)
 
-    # Name of the .grd file with the strike values
+    # set spacing from configuration file
     spacing = conf.get('spacing', 100.)
 
     # Name of the folder where to save the profiles

@@ -31,6 +31,7 @@ ztor = 'None' # Set to string of 'None' to NOT consider
 strike = -999
 dip = -999
 rake = 60
+aratio = 2
 trellis_and_rs_mag_list = [5,6,7] # mags used only for trellis
 trellis_and_rs_depths = [20,25,30] # depth per magnitude for trellis
 
