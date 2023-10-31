@@ -1,14 +1,20 @@
 import os
+import sys
 import shutil
-import pickle
 import tempfile
 import unittest
 import numpy as np
 import pandas as pd
+
 from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
 
+
+if sys.version_info[0] >= 3:
+    import pickle
+else:
+    import cPickle as pickle
 
 DATA = os.path.dirname(__file__)
 
@@ -156,7 +162,3 @@ class RankingMetricsTestCase(unittest.TestCase):
         """
         shutil.rmtree(cls.output_database)
         shutil.rmtree(cls.output_directory)
-        
-        
-if __name__ == "__main__":
-    unittest.main()
