@@ -13,12 +13,13 @@ import openquake.smt.residuals.residual_plotter as rspl
 DATA = os.path.dirname(__file__)
 
 
-class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
+class RankingMetricsTestCase(unittest.TestCase):
     """
     Test LLH and EDR wrt imt functions. Also tests the functions which 
     normalise the LLH and EDR scores to provide model weights
     """
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         """
         Parse the test flatfile, create the metadata and get the residuals.
         """
@@ -31,9 +32,9 @@ class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
             "000", "ranking metrics wrt period test", output_database, input_fi)       
         
         # Create the metadata
-        self.metadata_directory = os.path.join(DATA, 'data', 'metadata')
+        cls.metadata_directory = os.path.join(DATA, 'data', 'metadata')
         metadata_file = 'metadatafile.pkl'
-        metadata = os.path.join(self.metadata_directory, metadata_file)
+        metadata = os.path.join(cls.metadata_directory, metadata_file)
         sm_database = pickle.load(open(metadata,"rb"))
     
         gmpe_list = ['ChiouYoungs2014','CampbellBozorgnia2014',
@@ -41,12 +42,12 @@ class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
         imts = ['PGA', 'SA(1.0)']
         
         # Get the residuals
-        self.residuals = res.Residuals(gmpe_list, imts)
-        self.residuals.get_residuals(sm_database)
+        cls.residuals = res.Residuals(gmpe_list, imts)
+        cls.residuals.get_residuals(sm_database)
     
         # Set filename
-        self.output_directory = tempfile.mkdtemp()
-        self.filename = os.path.join(self.output_directory, 'edr_llh_wrt_imt.csv')
+        cls.output_directory = tempfile.mkdtemp()
+        cls.filename = os.path.join(cls.output_directory, 'edr_llh_wrt_imt.csv')
 
     def llh_test(self):
         """
@@ -148,9 +149,14 @@ class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
         else:
             pass
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         """
         Remove outputs
         """
-        shutil.rmtree(self.output_database)
-        shutil.rmtree(self.output_directory)
+        shutil.rmtree(cls.output_database)
+        shutil.rmtree(cls.output_directory)
+        
+        
+if __name__ == "__main__":
+    unittest.main()
