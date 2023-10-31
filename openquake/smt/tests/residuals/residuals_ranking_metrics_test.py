@@ -30,10 +30,6 @@ class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
     vs spectral period + tables of EDR and LLH scores + normalised model 
     weights).
     """
-    """
-    Parse the test flatfile and get the residuals
-    """
-    
     def setUp(self):
         """
         Parse the test flatfile, create the metadata and get the residuals/
