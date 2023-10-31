@@ -1,14 +1,3 @@
-"""
-Test for functions added to gmpe_residuals (get_edr_values_wrt_spectral_period,
-_get_edr_gmpe_information_wrt_spectral_period and _get_edr_wrt_spectral_period)
-and residual_plotter (PlotLoglikelihoodWithSpectralPeriod,
-PlotLLHModelWeightsWithSpectralPeriod, PlotEDRWithSpectralPeriod,
-LoglikelihoodTable, LLHWeightsTable and EDRTable) to output loglikelihood values
-and sample loglikelihood based GMPE weightings (Scherbaum et al., 2009) and EDR
-metrics (Kale and Akkar, 2013) w.r.t. spectral period (rather than aggregated
-over all intensity measures as before).
-"""
-
 import os
 import shutil
 import pickle
@@ -26,9 +15,8 @@ DATA = os.path.dirname(__file__)
 
 class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
     """
-    Test for the additional ranking metric functions (plotting of LLH and EDR
-    vs spectral period + tables of EDR and LLH scores + normalised model 
-    weights).
+    Test LLH and EDR wrt imt functions. Also tests the functions which 
+    normalise the LLH and EDR scores to provide model weights
     """
     def setUp(self):
         """
