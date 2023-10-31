@@ -20,10 +20,10 @@ class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
     """
     def setUp(self):
         """
-        Parse the test flatfile, create the metadata and get the residuals/
+        Parse the test flatfile, create the metadata and get the residuals.
         """
         # Parse test flatfile
-        input_fi = os.path.join(DATA, 'data','Ranking_Metrics_Test_Flatfile.csv')
+        input_fi = os.path.join(DATA, 'data','ranking_metrics_test_flatfile.csv')
         output_database = os.path.join(DATA, 'data', 'metadata')
         if os.path.exists(output_database):
             shutil.rmtree(output_database)
@@ -31,9 +31,9 @@ class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
             "000", "ranking metrics wrt period test", output_database, input_fi)       
         
         # Create the metadata
-        metadata_directory = os.path.join(DATA, 'data', 'metadata')
+        self.metadata_directory = os.path.join(DATA, 'data', 'metadata')
         metadata_file = 'metadatafile.pkl'
-        metadata = os.path.join(metadata_directory, metadata_file)
+        metadata = os.path.join(self.metadata_directory, metadata_file)
         sm_database = pickle.load(open(metadata,"rb"))
     
         gmpe_list = ['ChiouYoungs2014','CampbellBozorgnia2014',
@@ -46,7 +46,7 @@ class gmpe_ranking_metrics_wrt_imt_test(unittest.TestCase):
     
         # Set filename
         self.output_directory = tempfile.mkdtemp()
-        self.filename = os.path.join(self.output_directory, 'test.csv')
+        self.filename = os.path.join(self.output_directory, 'edr_llh_wrt_imt.csv')
 
     def llh_test(self):
         """
