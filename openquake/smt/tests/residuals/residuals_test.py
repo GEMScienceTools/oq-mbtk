@@ -242,8 +242,3 @@ class ResidualsTestCase(unittest.TestCase):
         Deletes the database
         """
         shutil.rmtree(cls.out_location)
-
-
-if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()
