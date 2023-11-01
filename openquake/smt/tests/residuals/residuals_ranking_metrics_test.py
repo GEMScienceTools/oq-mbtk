@@ -31,11 +31,11 @@ class RankingMetricsTestCase(unittest.TestCase):
         """
         # Parse test flatfile
         input_fi = os.path.join(DATA, 'data','ranking_metrics_test_flatfile.csv')
-        output_database = os.path.join(DATA, 'data', 'metadata')
-        if os.path.exists(output_database):
-            shutil.rmtree(output_database)
+        cls.output_database = os.path.join(DATA, 'data', 'metadata')
+        if os.path.exists(cls.output_database):
+            shutil.rmtree(cls.output_database)
         parser = ESMFlatfileParser.autobuild(
-            "000", "ranking metrics wrt period test", output_database, input_fi)       
+            "000", "ranking metrics wrt period test", cls.output_database, input_fi)       
         
         # Create the metadata
         cls.metadata_directory = os.path.join(DATA, 'data', 'metadata')
@@ -55,7 +55,7 @@ class RankingMetricsTestCase(unittest.TestCase):
         cls.output_directory = tempfile.mkdtemp()
         cls.filename = os.path.join(cls.output_directory, 'edr_llh_wrt_imt.csv')
 
-    def llh_test(self):
+    def test_llh(self):
         """
         Check LLH and LLH-based weights per imt when aggregated over said imts
         match those of the original LLH function.
@@ -73,7 +73,7 @@ class RankingMetricsTestCase(unittest.TestCase):
         avg_llh_orig = pd.Series(avg_llh_orig)
     
         # Get LLH per imt
-        llh_per_imt = self.rspl.loglikelihood_table(self.residuals, self.filename) 
+        llh_per_imt = rspl.loglikelihood_table(self.residuals, self.filename) 
         avg_llh_over_imts = llh_per_imt.loc['Avg over all periods']
         avg_llh_new = np.array(pd.Series(avg_llh_over_imts))
     
@@ -94,7 +94,7 @@ class RankingMetricsTestCase(unittest.TestCase):
         else:
             raise ValueError('Too large a relative difference between LLH functions')
 
-    def edr_test(self):
+    def test_edr(self):
         """
         Check EDR and EDR-based weights per imt when aggregated over said imts 
         match those of the original LLH function.
@@ -113,8 +113,8 @@ class RankingMetricsTestCase(unittest.TestCase):
            # Compute 'original' kappa ratio
            mu_a = np.mean(obs)
            mu_y = np.mean(expected)
-           b_1 = np.sum((obs - mu_a) * (expected - mu_y)) /\
-    np.sum((obs - mu_a) ** 2.)
+           b_1 = np.sum(
+               (obs - mu_a) * (expected - mu_y))/np.sum((obs - mu_a) ** 2.)
            b_0 = mu_y - b_1 * mu_a
            y_c = expected - ((b_0 + b_1 * obs) - obs)
            de_orig = np.sum((obs - expected) ** 2.)
