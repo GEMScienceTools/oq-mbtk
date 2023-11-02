@@ -633,10 +633,10 @@ def _get_ESM18_headers(ESM22,default_string,r_fm_type,r_datetime):
     "st_elevation":ESM22.st_elevation,
     
     "ec8_code":ESM22.preferred_ec8_code,
-    "ec8_code_method":default_string,
+    "ec8_code_method":ESM22.method_ec8_vs30,
     "ec8_code_ref":default_string,
     "vs30_m_sec":ESM22.preferred_vs30_m_s,
-    "vs30_ref":ESM22.method_ec8_vs30,
+    "vs30_ref":default_string,
     "vs30_calc_method":default_string,
     "vs30_meas_type":default_string,
     "slope_deg":default_string,
@@ -663,10 +663,6 @@ def _get_ESM18_headers(ESM22,default_string,r_fm_type,r_datetime):
     "U_lp":ESM22.U_lp,
     "V_lp":ESM22.V_lp,
     "W_lp":ESM22.W_lp,
-
-    # GMIM headers --> equivalency assumed for geometric mean and RotD50 within
-    # parser if RotD50 empty (RotD is not provided in ESM22 format flatfile 
-    # from web service)
      
     "U_pga":ESM22.U_pga,
     "V_pga":ESM22.V_pga,

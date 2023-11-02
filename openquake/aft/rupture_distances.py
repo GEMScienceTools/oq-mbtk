@@ -1,5 +1,30 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022-2023 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
 import logging
-from multiprocessing import Pool
 from typing import Dict, Sequence, Optional, Tuple, Union
 
 import h5py
@@ -251,7 +276,7 @@ def split_rows(
             block_idx = row_ids[start:stop]
 
             this["array_stack"] = stacked_array[
-                row_ids[start] : row_ids[stop], :
+                row_ids[start]: row_ids[stop], :
             ]
 
             this["row_idxs"] = block_idx - block_idx[0]
@@ -260,7 +285,7 @@ def split_rows(
             start = closest_first_inds[i]
             block_idx = row_ids[start:]
 
-            this["array_stack"] = stacked_array[row_ids[start] :, :]
+            this["array_stack"] = stacked_array[row_ids[start]:, :]
             this["row_idxs"] = block_idx - block_idx[0]
 
     return data_splits

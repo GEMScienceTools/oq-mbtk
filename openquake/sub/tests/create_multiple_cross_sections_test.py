@@ -26,7 +26,6 @@ class CrossSectionIntersectionTest(unittest.TestCase):
         cs_depth = 100
         intd = 100
         handle, tmp_fname = tempfile.mkstemp()
-        print(tmp_fname)
         get_cs(self.trench, 'tmp.txt', cs_length, cs_depth, intd, 0, tmp_fname)
 
         if PLOT:

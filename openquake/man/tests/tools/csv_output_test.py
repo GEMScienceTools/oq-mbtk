@@ -1,19 +1,84 @@
 import os
 import unittest
+import tempfile
 
 import openquake.man.tools.csv_output as csv
+from openquake.man.tools.csv_output import mean_mde_for_gmt
+from openquake.calculators.tests import open8
+from openquake.calculators.export import export
+from openquake.calculators.base import run_calc
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
+BASE_EXP_PATH = os.path.join(os.path.dirname(__file__), 'expected')
+BASE_CASE8 = os.path.join(os.path.dirname(__file__), 'case_8')
 
 
+class TestMeanMDE(unittest.TestCase):
+
+    def test_output_mre(self):
+        """
+        test reorg of one instance of an MDE file; one rlz
+        """
+        fname = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-1.csv')
+        fout = 'test-1.csv'
+        mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_mde-1.csv')
+        expected_lines = [line for line in open8(expected)]
+        actual_lines = [line for line in open8(fout)]
+        assert expected_lines == actual_lines
+        os.remove(fout)
+
+    def test_output_mre_2(self):
+        """
+        test reorg of one instance of an MDE file; two rlzs
+        """
+        fname = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-2.csv')
+        fout = 'test-2.csv'
+        mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_mde-2.csv')
+        expected_lines = [line for line in open8(expected)]
+        actual_lines = [line for line in open8(fout)]
+        assert expected_lines == actual_lines
+        os.remove(fout)
+
+    def test_output_mre_3(self):
+        """
+        tests that if a MDE output file includes more than one IMT, the 
+        function mean_mde_for_gmt considers only the specified IMT when 
+        creating the file that will be plotted by GMT
+        """
+        fname1 = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-mean-0.csv')
+        fout1, path1 = tempfile.mkstemp()
+        fname2 = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
+        fout2, path2 = tempfile.mkstemp()
+        mean_mde_for_gmt(fname1, path1, 0.002105, 'SA(0.1)', 1e-10)
+        mean_mde_for_gmt(fname2, path2, 0.002105, 'SA(0.1)', 1e-10)
+        expected_lines1 = [line for line in open8(path1)]
+        expected_lines2 = [line for line in open8(path2)]
+        assert expected_lines1 == expected_lines2
+
+
+class OutputTestCase(unittest.TestCase):
+
+    def test_mde_format(self):
+        """
+        will fail if the output format changes
+        """
+        # run test job
+        calc = run_calc(os.path.join(BASE_CASE8, 'job.ini'))
+        # test mre results output format
+        [fname] = export(('disagg-stats', 'csv'), calc.datastore)
+        expected = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
+        expected_lines = [line for line in open8(expected)]
+        actual_lines = [line for line in open8(fname)]
+        assert expected_lines[1:] == actual_lines[1:]
+        os.remove(fname)
 
 
 class TestMDeOutput(unittest.TestCase):
 
     def test_read_mre(self):
         fname = os.path.join(BASE_DATA_PATH, 'mde.csv')
-
-
 
 
 class TestReadHeader(unittest.TestCase):
@@ -72,7 +137,6 @@ class CatalogueFromSESTest(unittest.TestCase):
         catalogue = csv.get_catalogue_from_ses(fname, 10)
         msg = 'Total number of events not matching'
         self.assertEqual(catalogue.get_number_events(), 51, msg)
-        #
         dat = [[6.05, 21], [6.15, 11], [6.25, 8], [6.35, 11]]
         for mag, expected in dat:
             fmt = 'Number of events with magnitude {:.2f} not matching'

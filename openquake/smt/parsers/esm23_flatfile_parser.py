@@ -141,21 +141,11 @@ class ESM23FlatfileParser(SMDatabaseReader):
         """
         Quick and dirty full database builder!
         """
-        
         # Import ESM 2023 format strong-motion flatfile
         ESM23 = pd.read_csv(ESM23_flatfile_directory)
-        
-        # Store for count of records removed during quality checks
-        ESM23_initial_size = len(ESM23)
- 
-         # If vs30 is empty use topographic approximation    
-        for idx in range(0,len(ESM23)):
-            if pd.isnull(ESM23.vs30_m_s[idx]):
-                ESM23['vs30_m_s'].iloc[idx]=ESM23['vs30_m_s_wa'].iloc[idx]
-        
+    
         # Create default values for headers not considered in ESM23 format
-        default_string = pd.Series(np.full(np.size(ESM23.esm_event_id),
-                                           str("")))
+        default_string = pd.Series(np.full(np.size(ESM23.esm_event_id), ""))
         
         # Assign strike-slip to unknown faulting mechanism
         r_fm_type = ESM23.fm_type_code.fillna('SS') 
@@ -164,7 +154,7 @@ class ESM23FlatfileParser(SMDatabaseReader):
         r_datetime = ESM23.event_time.str.replace('T',' ')
     
         converted_base_data_path=_get_ESM18_headers(
-            ESM23,default_string,r_fm_type,r_datetime)
+            ESM23, default_string, r_fm_type, r_datetime)
         
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
@@ -182,9 +172,6 @@ class ESM23FlatfileParser(SMDatabaseReader):
         print("Storing metadata to file %s" % metadata_file)
         with open(metadata_file, "wb+") as f:
             pickle.dump(database.database, f)
-        
-        print(ESM23_initial_size - len(ESM23),
-              'records removed from imported ESM23 flatfile during quality checks.')
             
         return database
 
@@ -598,12 +585,11 @@ class ESM23FlatfileParser(SMDatabaseReader):
                     scalars["U"][key] * scalars["V"][key])
         return scalars, spectra
 
-def _get_ESM18_headers(ESM23,default_string,r_fm_type,r_datetime):
+def _get_ESM18_headers(ESM23, default_string, r_fm_type, r_datetime):
     
     """
-    Convert first from ESM23 format flatfile to ESM18 format flatfile
+    Convert from ESM23 format flatfile to ESM18 format flatfile
     """
-    
     # Construct dataframe with original ESM format 
     ESM_original_headers = pd.DataFrame(
     {
@@ -654,14 +640,14 @@ def _get_ESM18_headers(ESM23,default_string,r_fm_type,r_datetime):
     "st_longitude":ESM23.st_longitude,
     "st_elevation":ESM23.st_elevation,
     
-    "ec8_code":default_string,
-    "ec8_code_method":ESM23.ec8_code_from_topography,
+    "ec8_code":ESM23.ec8_code,
+    "ec8_code_method":default_string,
     "ec8_code_ref":default_string,
-    "vs30_m_sec":ESM23.vs30_m_s_wa,
-    "vs30_ref":ESM23.vs30_meas_type,
+    "vs30_m_sec":ESM23.vs30_m_s,
+    "vs30_ref":default_string,
     "vs30_calc_method":default_string, 
-    "vs30_meas_type":default_string,
-    "slope_deg":default_string,
+    "vs30_meas_type":ESM23.vs30_meas_type,
+    "slope_deg":ESM23.slope_deg,
     "vs30_m_sec_WA":ESM23.vs30_m_s_wa,
  
     "epi_dist":ESM23.epi_dist,
@@ -954,9 +940,9 @@ def _get_ESM18_headers(ESM23,default_string,r_fm_type,r_datetime):
     
     # Output to folder where converted flatfile read into parser   
     DATA = os.path.abspath('')
-    temp_folder=tempfile.mkdtemp()
-    converted_base_data_path = os.path.join(DATA,temp_folder,
+    tmp = tempfile.mkdtemp()
+    converted_base_data_path = os.path.join(DATA, tmp,
                                             'converted_flatfile.csv')
-    ESM_original_headers.to_csv(converted_base_data_path,sep=';')
+    ESM_original_headers.to_csv(converted_base_data_path, sep=';')
 
     return converted_base_data_path
