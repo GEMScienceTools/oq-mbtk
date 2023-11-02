@@ -25,27 +25,48 @@
 # coding: utf-8
 
 import pandas as pd
+import geopandas as gpd
 
 
-def to_hmtk_catalogue(cdf: pd.DataFrame):
+def to_hmtk_catalogue(cdf: pd.DataFrame, polygon=None):
     """
     Converts a catalogue obtained from the homogenisation into a format
     compatible with the oq-hmtk.
 
     :param cdf:
         An instance of :class:`pd.DataFrame`
+    :param polygon:
+        Polygon as shapefile which will be used to clip the catalogue extent 
     :returns:
         An instance of :class:`pd.DataFrame`
     """
 
+    # if there is a polygon clip the catalogue to it
+    if polygon:
+
+        # convert df to gdf
+        cgdf = pd.DataFrame(cdf)
+        tmp = gpd.points_from_xy(cgdf.longitude.values, cgdf.latitude.values)
+        cgdf = gpd.GeoDataFrame(cgdf, geometry=tmp, crs="EPSG:4326")
+
+        # Reading shapefile and dissolving polygons into a single one
+        boundaries = gpd.read_file(polygon)
+        boundaries['dummy'] = 'dummy'
+        geom = boundaries.dissolve(by='dummy').geometry[0]
+
+        # clip the catalogue
+        tmpgeo = {'geometry': [geom]}
+        gdf = gpd.GeoDataFrame(tmpgeo, crs="EPSG:4326")
+        cdf = gpd.sjoin(cgdf, gdf, how="inner", op='intersects')
+
     # Select columns
     # Check if catalogue contains strike/dip/rake and retain if it does
     if 'str1' in cdf.columns:
-        col_list = ['eventID', 'Agency', 'year', 'month', 'day', 'longitude',
-               'latitude', 'depth', 'magMw', 'str1', 'dip1', 'rake1', 'str2', 'dip2', 'rake2']
+        col_list = ['eventID', 'Agency', 'year', 'month', 'day','hour','minute','second', 'longitude',
+               'latitude', 'depth', 'magMw', 'sigma', 'str1', 'dip1', 'rake1', 'str2', 'dip2', 'rake2']
     else:
-        col_list = ['eventID', 'Agency', 'year', 'month', 'day', 'longitude',
-               'latitude', 'depth', 'magMw']
+        col_list = ['eventID', 'Agency', 'year', 'month', 'day', 'hour','minute','second', 'longitude',
+               'latitude', 'depth', 'magMw', 'sigma']
     
     cdf = cdf[col_list]
 

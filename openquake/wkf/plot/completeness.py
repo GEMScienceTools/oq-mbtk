@@ -66,7 +66,7 @@ def completeness_plot(fname_input_pattern, fname_config, outdir, skip=[],
         if len(yealim) > 0:
             tmp = yealim.split(',')
             tmp = numpy.array(tmp)
-            tmp = tmp.astype(numpy.float)
+            tmp = tmp.astype(float)
             plt.xlim(tmp)
 
         if 'xlim' in kwargs:
@@ -80,11 +80,11 @@ def completeness_plot(fname_input_pattern, fname_config, outdir, skip=[],
                 'completeness_table' in model['sources'][src_id]):
             print(' source specific completeness')
             ctab = numpy.array(model['sources'][src_id]['completeness_table'])
-            ctab = ctab.astype(numpy.float)
+            ctab = ctab.astype(float)
         else:
             print(' default completeness')
             ctab = numpy.array(model['default']['completeness_table'])
-            ctab = ctab.astype(numpy.float)
+            ctab = ctab.astype(float)
 
         print(ctab)
         _plot_ctab(ctab)
