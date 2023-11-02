@@ -377,7 +377,6 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
             # fig.basemap(region=reg, projection="M20c", frame=True)
             fig.basemap(region=reg, projection=f"T{clo}/{cla}/12c", frame=True)
             fig.coast(land="gray", water="skyblue")
-            import pdb; pdb.set_trace()
 
             # Profile traces
             for i, pro in enumerate(traces):
