@@ -28,15 +28,15 @@
 import netCDF4
 import numpy as np
 from numba import njit
-from openquake.hazardlib.geo.geodetic import (
-    point_at, npoints_towards, geodetic_distance, azimuth)
+from openquake.hazardlib.geo.geodetic import (point_at, npoints_towards, 
+        geodetic_distance, azimuth)
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
 
 pygmt_available = False
 try:
     import pygmt
-except ImportError:
     pygmt_available = True
+except ImportError:
     pass
 
 
@@ -377,6 +377,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
             # fig.basemap(region=reg, projection="M20c", frame=True)
             fig.basemap(region=reg, projection=f"T{clo}/{cla}/12c", frame=True)
             fig.coast(land="gray", water="skyblue")
+            import pdb; pdb.set_trace()
 
             # Profile traces
             for i, pro in enumerate(traces):
@@ -401,6 +402,28 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
                              pen='black')
             fig.savefig(fname_fig)
             fig.show()
+
+        else:
+            from matplotlib import pyplot as plt
+            plt.scatter(depths[:, 0], depths[:, 1], c=-depths[:, 2])
+            for i, pro in enumerate(traces):
+                plt.plot(pro[:, 0], pro[:, 1], 'k')
+                plt.text(pro[0, 0], pro[0, 1], f'{i}')
+
+            for key in slb.profiles:
+                pro = slb.profiles[key]
+                if pro.shape[0] > 0:
+                    plt.plot(pro[:, 0], pro[:, 1], c='r')
+
+            if max(reg[0], reg[1]) > 180:
+                xmin = reg[0]-360; xmax = reg[1]-360
+            else:
+                xmin = reg[0]; xmax = reg[1]
+            plt.xlim([xmin, xmax])
+            plt.colorbar(label='depth to slab (km)')
+            plt.savefig(fname_fig)
+
+            
 
     return slb
 
