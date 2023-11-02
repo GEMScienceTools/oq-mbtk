@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 import re
-import sys
 import glob
 import numpy
 
@@ -25,9 +24,9 @@ def get_profiles_length(sps):
     for key in sorted(sps.keys()):
         dat = sps[key]
         total_length = 0
-        for idx in range(0, len(dat)-1):
+        for idx in range(0, len(dat) - 1):
             dst = distance(dat[idx, 0], dat[idx, 1], dat[idx, 2],
-                           dat[idx+1, 0], dat[idx+1, 1], dat[idx+1, 2])
+                           dat[idx + 1, 0], dat[idx + 1, 1], dat[idx + 1, 2])
             total_length += dst
         lengths[key] = total_length
         if longest_length < total_length:
@@ -42,7 +41,7 @@ def get_profiles_length(sps):
 def get_interpolated_profiles(sps, lengths, number_of_samples):
     """
     :parameter dict sps:
-        A dictionary containing the subduction profiles key is a string and
+        A dictionary containing the subduction profiles. key is a string and
         value is an instance of :class:`numpy.ndarray`
     :parameter dict lengths:
         A dictionary containing the subduction profiles lengths
@@ -53,83 +52,78 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
     """
     ssps = {}
     for key in sorted(sps.keys()):
-        #
+
         # calculate the sampling distance
         samp = lengths[key] / number_of_samples
-        #
+
         # set data for the profile
         dat = sps[key]
-        #
+
         # projecting profile coordinates
         g = Geod(ellps='WGS84')
-        #
+
         # horizontal 'slope'
         az_prof, _, _ = g.inv(dat[0, 0], dat[0, 1], dat[-1, 0], dat[-1, 1])
-        #
+
         # initialise
         idx = 0
         cdst = 0
         spro = [[dat[0, 0], dat[0, 1], dat[0, 2]]]
-        #
+
         # process the segments composing the profile
-        while idx < len(dat)-1:
-            #
+        while idx < len(dat) - 1:
+
             # segment length
             _, _, dst = g.inv(dat[idx, 0], dat[idx, 1],
-                              dat[idx+1, 0], dat[idx+1, 1])
+                              dat[idx + 1, 0], dat[idx + 1, 1])
             dst /= 1e3
-            dst = (dst**2 + (dat[idx, 2] - dat[idx+1, 2])**2)**.5
-            #
+            dst = (dst**2 + (dat[idx, 2] - dat[idx + 1, 2])**2)**.5
+
             # calculate total distance i.e. cumulated + new segment
             total_dst = cdst + dst
-            #
+
             # number of new points
-            num_new_points = int(numpy.floor(total_dst/samp))
-            #
+            num_new_points = int(numpy.floor(total_dst / samp))
+
             # take samples if possible
             if num_new_points > 0:
-                dipr = numpy.arcsin((dat[idx+1, 2]-dat[idx, 2])/dst)
+                dipr = numpy.arcsin((dat[idx + 1, 2] - dat[idx, 2]) / dst)
                 hfact = numpy.cos(dipr)
                 vfact = numpy.sin(dipr)
-                #
-                #
+
                 for i in range(0, num_new_points):
-                    tdst = (i+1) * samp - cdst
+                    tdst = (i + 1) * samp - cdst
                     hdst = tdst * hfact
                     vdst = tdst * vfact
                     # tlo, tla = p((x[idx] + hdst*xfact)*1e3,
                     #              (y[idx] + hdst*yfact)*1e3, inverse=True)
                     tlo, tla, _ = g.fwd(dat[idx, 0], dat[idx, 1], az_prof,
-                                        hdst*1e3)
-                    spro.append([tlo, tla, dat[idx, 2]+vdst])
-                    #
+                                        hdst * 1e3)
+                    spro.append([tlo, tla, dat[idx, 2] + vdst])
+
                     # check that the h and v distances are coherent with
                     # the original distance
-                    assert abs(tdst-(hdst**2+vdst**2)**.5) < 1e-4
-                    #
+                    assert abs(tdst - (hdst**2 + vdst**2)**.5) < 1e-4
+
                     # check distance with the previous point and depths Vs
                     # previous points
                     if i > 0:
-                        check = distance(tlo, tla, dat[idx, 2]+vdst,
+                        check = distance(tlo, tla, dat[idx, 2] + vdst,
                                          spro[-2][0], spro[-2][1], spro[-2][2])
-                        if abs(check - samp) > samp*0.15:
+                        if abs(check - samp) > samp * 0.15:
                             msg = 'Distance between consecutive points'
                             msg += ' is incorrect: {:.3f} {:.3f}'.format(check,
                                                                          samp)
                             raise ValueError(msg)
-                        # new depth larger than previous
-                        if numpy.any(numpy.array(spro)[:-1, 2] > spro[-1][2]):
-                            raise ValueError('')
 
-                #
                 # new distance left over
                 cdst = (dst + cdst) - num_new_points * samp
             else:
                 cdst += dst
-            #
+
             # updating index
             idx += 1
-        #
+
         # Saving results
         if len(spro):
             ssps[key] = numpy.array(spro)
@@ -182,13 +176,28 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
         else:
             read_file = False
 
+        # If the file is empty, we don't want to read it!
+        # TODO: figure out why we're writing empty files...
+        if (os.stat(filename).st_size == 0):
+            read_file = False
+            print("skipping empty file ", filename)
+
         # Reading data
         if read_file:
             tmpa = numpy.loadtxt(filename)
 
+            # If there's only one point, we can't do anything
+            # Need 2 to get a gradient for _get_point_at_depth!
+            if tmpa.ndim == 1:
+                continue
+
             # Select depths within the defined range
             j = numpy.nonzero((tmpa[:, 2] >= upper_depth) &
                               (tmpa[:, 2] <= lower_depth))
+
+            # If there are no points in the profile in the depth range, skip
+            if len(j[0]) == 0:
+                continue
 
             # Upper depth
             pntt = False
@@ -199,18 +208,26 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
                 continue
             else:
                 idx = min(j[0])
-                pntt = _get_point_at_depth(tmpa[idx-1, :], tmpa[idx, :],
+                pntt = _get_point_at_depth(tmpa[idx - 1, :], tmpa[idx, :],
                                            upper_depth)
 
             # Lower depth
             pntb = False
-            if len(j[0]) > 1 and max(j[0]) == len(tmpa[:, 2])-1:
+            if len(j[0]) > 1 and max(j[0]) == len(tmpa[:, 2]) - 1:
                 # reached bottom
                 pass
             else:
                 idx = max(j[0])
-                pntb = _get_point_at_depth(tmpa[idx, :], tmpa[idx+1, :],
-                                           lower_depth)
+                # Check if this is at the end of tmpa - if so we can't use the
+                # next point to calculate the gradient Use point before instead
+                # in this case
+                if len(tmpa[:, 2]) == (idx + 1):
+                    print("no events below, using event above instead")
+                    pntb = _get_point_at_depth(tmpa[idx - 1, :], tmpa[idx, :],
+                                               lower_depth)
+                else:
+                    pntb = _get_point_at_depth(tmpa[idx, :], tmpa[idx + 1, :],
+                                               lower_depth)
             #
             # final profile
             if len(j[0]) > 1:
@@ -228,9 +245,21 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
 
 
 def _get_point_at_depth(coo1, coo2, depth):
+    """
+    Return location of the point at depth assuming a constant gradient.  Uses
+    two point locations to calculate a gradient, and projects downwards to find
+    the location at which the required depth is reached.
+
+    :param coo1:
+        location of first point
+    :param coo2:
+        location of second point
+    :param depth:
+        depth at which we want to recover the point location
+    """
     g = Geod(ellps='WGS84')
     az12, az21, dist = g.inv(coo1[0], coo1[1], coo2[0], coo2[1])
-    grad = (dist*1e-3) / (coo2[2] - coo1[2])
+    grad = (dist * 1e-3) / (coo2[2] - coo1[2])
     dx = (depth - coo1[2]) * grad * 1e3
     lon, lat, _ = g.fwd(coo1[0], coo1[1], az12, dx)
     return [lon, lat, depth]
@@ -246,7 +275,7 @@ def write_profiles_csv(sps, foldername):
     """
     if not os.path.exists(foldername):
         os.mkdir(foldername)
-    for key in sorted(sps):
+    for key in sorted(sps.keys()):
         dat = numpy.array(sps[key])
         fname = os.path.join(foldername, 'cs_%s.csv' % (key))
         numpy.savetxt(fname, dat)
@@ -265,7 +294,7 @@ def write_edges_csv(sps, foldername):
     #
     # run for all the edges i.e. number of
     max_num = len(sps[list(sps.keys())[0]])
-    for idx in range(0, max_num-1):
+    for idx in range(0, max_num - 1):
         dat = []
         for key in sorted(sps):
             dat.append(sps[key][idx, :])
@@ -273,29 +302,16 @@ def write_edges_csv(sps, foldername):
         numpy.savetxt(fname, numpy.array(dat))
 
 
-def main(argv):
+def create_2pt5_model(in_path, out_path, maximum_sampling_distance=25.):
     """
-    argv[0] - Folder name
-    argv[1] - Sampling distance [km]
-    argv[2] - Output folder name
-    argv[3] - Maximum sampling distance
+    :param in_path:
+        Folder name with profiles
+    :param out_path:
+        Output folder name
+    :param maximum_sampling_distance:
+        Maximum sampling distance used to create the mesh [km]
     """
-    in_path = os.path.abspath(argv[0])
-    out_path = os.path.abspath(argv[2])
-    #
-    # Check input
-    if len(argv) < 3:
-        tmps = 'Usage: create_2pt5_model.py <in_folder>'
-        tmps += ' <ini_filename> <out_folder>'
-        print(tmps)
-        exit(0)
-    #
-    # Sampling distance [km]
-    if len(argv) < 4:
-        maximum_sampling_distance = 25.
-    else:
-        maximum_sampling_distance = float(argv[3])
-    #
+
     # Check folders
     if in_path == out_path:
         tmps = '\nError: the input folder cannot be also the output one\n'
@@ -303,29 +319,25 @@ def main(argv):
         tmps += '    input: {0:s}\n'.format(out_path)
         print(tmps)
         exit(0)
-    #
+
     # Read profiles
     sps, dmin, dmax = read_profiles_csv(in_path)
-    #
+
     # Compute lengths
     lengths, longest_key, shortest_key = get_profiles_length(sps)
     number_of_samples = numpy.ceil(lengths[longest_key] /
                                    maximum_sampling_distance)
     print('Number of subsegments:', number_of_samples)
-    tmp = lengths[shortest_key]/number_of_samples
+    tmp = lengths[shortest_key] / number_of_samples
     print('Shortest sampling [%s]: %.4f' % (shortest_key, tmp))
-    tmp = lengths[longest_key]/number_of_samples
+    tmp = lengths[longest_key] / number_of_samples
     print('Longest sampling  [%s]: %.4f' % (longest_key, tmp))
-    #
+
     # Resampled profiles
     rsps = get_interpolated_profiles(sps, lengths, number_of_samples)
-    #
+
     # Store profiles
     write_profiles_csv(rsps, out_path)
-    #
+
     # Store edges
     write_edges_csv(rsps, out_path)
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])

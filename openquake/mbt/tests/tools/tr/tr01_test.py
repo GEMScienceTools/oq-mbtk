@@ -81,29 +81,57 @@ class TrTestCase(unittest.TestCase):
         # testing crustal active
         msg = 'Indexes of different elements: \n'
         expected = [1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0]
-        dff = numpy.where(numpy.abs(expected - f['crustal'][:]) > 0)
+        if True in f['crustal'][:] or False in f['crustal'][:]: # If windows
+            bool_to_int = []
+            for val in f['crustal'][:]:
+                if val == True:
+                    bool_to_int.append(1)
+                if val == False:
+                    bool_to_int.append(0)
+            computed =  numpy.array(bool_to_int)
+        else:
+            computed = f['crustal'][:]
+        dff = numpy.where(numpy.abs(expected - computed) > 0)
         if len(dff[0]):
             for val in dff[0]:
                 breakpoint()
                 msg += f'{val:.0f}'
-        numpy.testing.assert_array_equal(f['crustal'][:], expected,
-                                         err_msg=msg)
+        numpy.testing.assert_array_equal(computed, expected, err_msg=msg)
 
         # testing interface
         #           0           4                10
         msg = 'Indexes of different elements: \n'
         expected = [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0]
-        dff = numpy.where(numpy.abs(expected - f['int_cam'][:]) > 0)
+        if True in f['int_cam'][:] or False in f['int_cam'][:]: # If windows
+            bool_to_int = []
+            for val in f['int_cam'][:]:
+                if val == True:
+                    bool_to_int.append(1)
+                if val == False:
+                    bool_to_int.append(0)
+            computed =  numpy.array(bool_to_int)
+        else:
+            computed = f['int_cam'][:]
+        dff = numpy.where(numpy.abs(expected - computed) > 0)
         if len(dff[0]):
             for val in dff[0]:
                 breakpoint()
                 msg += f'{val:.0f}'
-        numpy.testing.assert_array_equal(f['int_cam'][:], expected,
-                                         err_msg=msg)
+        numpy.testing.assert_array_equal(computed, expected, err_msg=msg)
 
         # testing slab
         expected = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1]
-        numpy.testing.assert_array_equal(f['slab_cam'][:], expected)
+        if True in f['slab_cam'][:] or False in f['slab_cam'][:]: # If windows
+            bool_to_int = []
+            for val in f['slab_cam'][:]:
+                if val == True:
+                    bool_to_int.append(1)
+                else:
+                    bool_to_int.append(0)
+            computed = numpy.array(bool_to_int)
+        else:
+            computed = f['slab_cam'][:]
+        numpy.testing.assert_array_equal(computed, expected)
         f.close()
 
         if PLOT:

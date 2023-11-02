@@ -290,8 +290,7 @@ def build_complex_surface_from_edges(foldername):
     if np.any(chks > 0.):
         for i, chk in enumerate(chks):
             if chk < 0:
-                edge = tedges[i]
-                tedges[i].points = edge.points[::-1]
+                tedges[i].flip()
                 print('flipping')
     #
     # build complex fault surface
