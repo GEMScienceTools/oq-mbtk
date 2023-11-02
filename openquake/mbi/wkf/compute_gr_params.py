@@ -8,7 +8,6 @@ from openquake.wkf.compute_gr_params import weichert_analysis
 def main(fname_input_pattern, fname_config, folder_out=None,
          folder_out_figs=None, *, skip=[], binw=0.1, plt_show=False):
 
-    print(fname_input_pattern)
     weichert_analysis(fname_input_pattern, fname_config, folder_out,
                       folder_out_figs, skip, binw, plt_show)
 
