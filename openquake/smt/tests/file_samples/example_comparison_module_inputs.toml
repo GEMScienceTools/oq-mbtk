@@ -4,6 +4,7 @@
 imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
 max_period = 2 # max period for spectra plots
 maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
+dist_type = 'rrup' # or rjb, repi or rhypo (dist type used in trellis plots)
 dist_list = [10, 100, 250] # distance intervals for use in spectra plots
 region = 0 # for NGAWest2 GMPE regionalisation
 eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
@@ -14,21 +15,25 @@ Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 o
 vs30 = 800
 Z1 = -999
 Z25 = -999
+up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
 
-# Characterise earthquake for the region of interest
+# Characterise earthquake for the region of interest as finite rupture
 [source_properties]
+trt = 'ASCR'
+ztor = 'None' # Set to string of 'None' to NOT consider
 strike = -999
 dip =  60 # (Albania has predominantly reverse faulting)
 rake = 90 # (+ 90 for compression, -90 for extension)
-trellis_mag_list = [5, 6, 7] # mags used only for trellis and response spectra
-trellis_depths = [20, 20, 20] # depth per magnitude and response spectra
+aratio = 2
+trellis_and_rs_mag_list = [5, 6, 7] # mags used only for trellis and response spectra
+trellis_and_rs_depths = [20, 20, 20] # depth per magnitude and response spectra
 
 # Specify magnitude array for Sammons, Euclidean dist and clustering
-[mag_values_non_trellis_functions]
+[mag_values_non_trellis_or_spectra_functions]
 mmin = 5
 mmax = 7
 spacing = 0.1
-non_trellis_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+non_trellis_or_spectra_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
 
 # Specify label for gmpes
 [gmpe_labels]

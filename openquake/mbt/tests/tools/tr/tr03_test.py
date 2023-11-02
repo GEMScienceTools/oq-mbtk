@@ -44,10 +44,30 @@ class TrTestCase(unittest.TestCase):
         #
         # testing crustal active
         expected = numpy.ones(c_num)
-        numpy.testing.assert_array_equal(f['crustal'][:], expected)
+        if True in f['crustal'][:] or False in f['crustal'][:]: # If windows
+            bool_to_int = []
+            for val in f['crustal'][:]:
+                if val == True:
+                    bool_to_int.append(float(1))
+                else:
+                    bool_to_int.append(float(0))
+            computed = numpy.array(bool_to_int)
+        else:
+            computed = f['slab_deep'][:]
+        numpy.testing.assert_array_equal(computed, expected)
         #
         # testing slab
         expected = numpy.zeros(c_num)
-        numpy.testing.assert_array_equal(f['slab_deep'][:], expected)
+        if True in f['slab_deep'][:] or False in f['slab_deep'][:]: # If windows
+            bool_to_int = []
+            for val in f['slab_deep'][:]:
+                if val == True:
+                    bool_to_int.append(float(1))
+                else:
+                    bool_to_int.append(float(0))
+            computed = numpy.array(bool_to_int)
+        else:
+            computed = f['slab_deep'][:]
+        numpy.testing.assert_array_equal(computed, expected)
         #
         f.close()
