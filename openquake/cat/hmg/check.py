@@ -136,7 +136,7 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms=False):
 
         ll_thrs = ll_d[idx_t][idx_mag]
         sel_thrs = time_d[idx_t][idx_mag]
-        #sel_thrs = sel_thrs.total_seconds()
+        sel_thrs = sel_thrs.total_seconds()
         
         # Find events close in time
         tmp_dff = abs(subcat.loc[:, 'datetime'] - pd.to_datetime(row.datetime))
