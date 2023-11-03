@@ -128,7 +128,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.2-AbrahamsonEtAl2014]
         median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
         
-        [models.1-KothaEtAl202]
+        [models.1-KothaEtAl2020]
         sigma_scaling_scalar = 1.05 # scale sigma by factor of 1.05 over all imts
         
         [models.2-KothaEtAl2020]
@@ -149,6 +149,11 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.HassaniAtkinson2018]
         d_sigma = 100 # gmpe specific param
         kappa0 = 0.04
+        
+        [models.KothaEtAl2020ESHM20] # ESHM20 model
+        sigma_mu_epsilon = 2.85697 
+        c3_epsilon = 1.72    
+        region = 4 # Note that within residuals specify region here, whereas in comparison module toml (below) we specify using the eshm20_region param
         
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
@@ -477,9 +482,9 @@ Comparing GMPEs
         trt = 'None' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
         ztor = 'None' # Set to string of 'None' to NOT consider otherwise specify as array matching number of mag and depth values
         strike = -999
-        dip =  60 # (Albania has predominantly reverse faulting)
-        rake = 90 # (+ 90 for compression, -90 for extension)
-        aratio  = 2 # If set to -999 the user-provided trt string will be used to assign a default trt-dependent aratio
+        dip =  60
+        rake = 90 # (+90 for compression, -90 for extension)
+        aratio  = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
         trellis_and_rs_mag_list = [5, 6, 7] # mags used only for trellis and response spectra
         trellis_and_rs_depths = [20, 20, 20] # depth per magnitude for trellis and response spectra
         

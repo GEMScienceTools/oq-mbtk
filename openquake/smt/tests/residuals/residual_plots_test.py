@@ -54,7 +54,6 @@ class ResidualsTestCase(unittest.TestCase):
     """
     Core test case for the residuals objects
     """
-
     @classmethod
     def setUpClass(cls):
         """
@@ -272,7 +271,3 @@ class ResidualsTestCase(unittest.TestCase):
         Deletes the database
         """
         shutil.rmtree(cls.out_location)
-
-
-if __name__ == "__main__":
-    unittest.main()
