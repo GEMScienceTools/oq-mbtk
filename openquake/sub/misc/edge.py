@@ -21,9 +21,7 @@ from openquake.hazardlib.geo.geodetic import npoints_towards
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-EDGE_TOL = 0.2
-PROF_TOL = 0.4
-TOL = 0.5
+TOL = 0.7
 
 
 def line_between_two_points(pnt1, pnt2):
