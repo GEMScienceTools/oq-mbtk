@@ -13,7 +13,7 @@ class AdaptiveSmoothingTest(unittest.TestCase):
     
     def setUp(self):
 
-        fname = os.path.join(DATA_PATH, 'data', 'adap_test_cat.csv')
+        fname = os.path.join(DATA_PATH, 'data', 'smooth_test.csv')
         self.fname = fname
         parser = CsvCatalogueParser(fname)
         cat = parser.read_file()
