@@ -132,12 +132,12 @@ class AdaptiveSmoothing(object):
             
                 ref_locs = h3_df.loc[h3_df['h3'].isin(tmp_idxs)]
                 r = distance(ref_locs['lon'], ref_locs['lat'], ref_locs['depth'], data[iloc, 0], data[iloc, 1], depth[iloc])
-                r = np.delete(r, iloc)
-                r.sort()
+                # because of filtering, we are now working with a series so treat accordingly!
+                r.sort_values(inplace = True)
 
                 if len(r) >= (n_v + 1):
-                    
-                    d_i[iloc] = r[n_v]
+                    # Haven't removed the distance to self, so take n_v + 1
+                    d_i[iloc] = r.iloc[(n_v +1)]
                 else:
                     # no n_vth neighour within maximum distance, set d_i to maxdist
                     d_i[iloc] = maxdist 
