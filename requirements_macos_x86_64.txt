@@ -32,3 +32,4 @@ pygmt
 reportlab
 netCDF4
 igraph
+pyvista

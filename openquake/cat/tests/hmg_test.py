@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # ------------------- The OpenQuake Model Building Toolkit --------------------
 # Copyright (C) 2022 GEM Foundation
 #           _______  _______        __   __  _______  _______  ___   _
@@ -26,51 +25,54 @@
 # coding: utf-8
 
 import os
-import re
+import unittest
+import tempfile
+import numpy as np
 import pandas as pd
+import toml
 
-from shutil import copyfile
-from openquake.baselib import sap
+from openquake.cat.hmg.hmg import process_dfs, process_magnitude
 
-
-def main(fname_cat, fname_cat_out, fname_csv):
-    # :param cat_fname:
-    #   Name of the .h5 file with the homogenised catalogue
-
-    if not os.path.exists(fname_cat+'.bak'):
-        copyfile(fname_cat, fname_cat+'.bak')
-    else:
-        raise ValueError("Backup file already exists")
-
-    if not os.path.exists(fname_cat_out+'.bak'):
-        copyfile(fname_cat_out, fname_cat_out+'.bak')
-    else:
-        raise ValueError("Backup file already exists")
-
-    #
-    # Read catalogue
-    cat = pd.read_hdf(fname_cat)
-    print('The catalogue contains {:d} earthquakes'.format(len(cat)))
-
-    #
-    # Read file with the list of IDs
-    event_df = pd.read_csv(fname_csv)
-
-    #
-    # Drop events
-    for key in event_df['eventID'].values:
-        cat.drop(cat[cat['eventID'] == key].index, inplace=True)
-    print('The catalogue contains {:d} earthquakes'.format(len(cat)))
-    cat.to_hdf(fname_cat_out, '/events', append=False)
+aeq = np.testing.assert_equal
+aaeq = np.testing.assert_almost_equal
 
 
-main.fname_cat = '.h5 file with origins'
-main.fname_cat_out = '.h5 file with origins excluded'
-main.fname_csv = '.csv file with the list of events ID to purge'
+BASE_PATH = os.path.dirname(__file__)
 
-if __name__ == "__main__":
-    """
-    This removes from the catalogue the events indicated in the the
-    `fname_csv` file.
-    """
-    sap.run(main)
+SETTINGS_HOMOG = """
+[magnitude.NEIC.mb] 
+#from weatherill
+low_mags = [5.0, 6.0]
+conv_eqs = ["0.8 * m + 0.2", "m"]
+sigma = [0.283]
+"""
+
+
+
+class HomogeniseNEICmbTestCase(unittest.TestCase):
+
+    def setUp(self):
+
+        self.data_path = os.path.join(BASE_PATH, 'data', 'test_hmg')
+
+    def test_case01(self):
+        """
+        tests that magnitudes are converted correctly for an example
+        with two "low_mags" values, neither of which is 0
+        """
+        td = toml.loads(SETTINGS_HOMOG)
+
+        # Reading otab and mtab
+        fname_otab = os.path.join(self.data_path, "test_hmg_otab.h5")
+        odf = pd.read_hdf(fname_otab)
+        fname_mtab = os.path.join(self.data_path, "test_hmg_mtab_clip.h5")
+        mdf = pd.read_hdf(fname_mtab)
+        work = pd.merge(odf, mdf, on=["eventID", "originID"])
+        save = pd.DataFrame(columns=work.columns)
+
+        rules = toml.loads(SETTINGS_HOMOG)
+        save, work = process_magnitude(work, rules['magnitude'])
+
+        results = save.magMw.values
+        expected = [4.36, 4.76, 6.8 ]
+        aaeq(results, expected, decimal=6)
