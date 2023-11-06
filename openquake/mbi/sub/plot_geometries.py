@@ -89,7 +89,7 @@ def plot_edges(foldername, plotter, p1, color):
         _ = plotter.add_mesh(tube, smooth_shading=True, color=color)
 
 
-def main(fname_config, plot_catalogue, *, plot_classification=False):
+def main(fname_config, plot_catalogue, plot_classification):
 
     if plot_catalogue in ['true', 'True', 'TRUE']:
         plot_catalogue = True
@@ -126,20 +126,21 @@ def main(fname_config, plot_catalogue, *, plot_classification=False):
         plt_catalogue(catalogue_filename, plotter, projection, point_size=5,
                       color='white')
 
-    # Open the file with the classification
-    classification_fname = os.path.join(rf, 'classified.hdf5')
-    classification = h5py.File(classification_fname, 'r')
+    # find classification fname
+    classification_fname = os.path.join(rf, config['general']['treg_filename'])
 
     for section in config.sections():
 
         if section == 'general':
             pass
         elif section == 'crustal':
-            mask = classification['crustal'][:]
-            # Plot classified earthquakes
             if plot_classification:
+                classification = h5py.File(classification_fname, 'r')
+                mask = classification['crustal'][:]
+            # Plot classified earthquakes
                 plt_catalogue(catalogue_filename, plotter, projection,
                               mask=mask, color='cyan')
+                classification.close()
         else:
             foldername = config[section]['folder']
             foldername = os.path.join(rf, foldername)
@@ -153,12 +154,13 @@ def main(fname_config, plot_catalogue, *, plot_classification=False):
                 plot_profiles(foldername, plotter, projection)
             # Plot classified earthquakes
             if plot_classification:
+                classification = h5py.File(classification_fname, 'r')
                 mask = classification[section][:]
                 if sum(mask) > 0:
                     plt_catalogue(catalogue_filename, plotter, projection,
                                   mask=mask, color=color, point_size=15)
+                classification.close()
 
-    classification.close()
     _ = plotter.show(interactive=True)
 
 
