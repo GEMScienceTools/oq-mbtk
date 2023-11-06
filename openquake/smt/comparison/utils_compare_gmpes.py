@@ -45,8 +45,8 @@ def plot_trellis_util(
     """
     # Setup
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
-    mean_gmc1, plus_sig_gmc1, minus_sig_gmc1 = {}, {}, {}
-    mean_gmc2, plus_sig_gmc2, minus_sig_gmc2 = {}, {}, {}
+    median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = {}, {}, {}
+    median_gmc2, plus_sig_gmc2, minus_sig_gmc2 = {}, {}, {}
     
     Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
     colors = get_cols(custom_color_flag, custom_color_list)     
@@ -97,14 +97,14 @@ def plot_trellis_util(
         
             ### Plot logic trees if specified
             gmc1_or_gmc2 = 'gmc1'
-            mean_gmc1, plus_sig_gmc1, minus_sig_gmc1 = lt_trel(
+            median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = lt_trel(
                 r_vals, Nstd, i, m, gmc1_or_gmc2,
-                lt_vals_gmc1, mean_gmc1, plus_sig_gmc1, minus_sig_gmc1)
+                lt_vals_gmc1, median_gmc1, plus_sig_gmc1, minus_sig_gmc1)
             
             gmc1_or_gmc2 = 'gmc2'
-            mean_gmc2, plus_sig_gmc2, minus_sig_gmc2 = lt_trel(
+            median_gmc2, plus_sig_gmc2, minus_sig_gmc2 = lt_trel(
                 r_vals, Nstd, i, m, gmc1_or_gmc2,
-                lt_vals_gmc2, mean_gmc2, plus_sig_gmc2, minus_sig_gmc2)
+                lt_vals_gmc2, median_gmc2, plus_sig_gmc2, minus_sig_gmc2)
             
     # Finalise plots
     pyplot.legend(loc = "center left", bbox_to_anchor = (1.1, 1.05),
@@ -238,14 +238,14 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                          linestyle='--', label='Between-event \n' + gmpe)
                     
                 # Weight the predictions using logic tree weights
-                lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1, \
-                lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2 =\
-                    spectra_data(gmpe, Nstd,
-                                 rs_50p, rs_plus_sigma, rs_minus_sigma,
-                                 lt_vals_gmc1, lt_vals_gmc2,
-                                 lt_weights_gmc1, lt_weights_gmc2,
-                                 lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-                                 lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2)
+                (lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
+                 lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2
+                 ) = spectra_data(gmpe, Nstd,
+                                  rs_50p, rs_plus_sigma, rs_minus_sigma,
+                                  lt_vals_gmc1, lt_vals_gmc2,
+                                  lt_weights_gmc1, lt_weights_gmc2,
+                                  lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
+                                  lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2)
 
                 # Plot obs spectra if required
                 plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mw, dep, rrup)
@@ -406,8 +406,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
                       custom_color_list, mtxs_type):
     """
     Plot Sammons maps for given run configuration. The mean of the GMPE
-    predictions is also considered, which can be useful for selecting
-    a backbone model from a suite of GMMs when no recordings are available.
+    predictions is also considered.
     :param imt_list:
         A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
     :param gmpe_list:
@@ -475,8 +474,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
 def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     """
     Plot hierarchical clusters for given run configuration. The mean of the
-    GMPE predictions is also considered, which can be useful for selecting
-    a backbone model from a suite of GMMs when no recordings are available.
+    GMPE predictions is also considered.
     :param imt_list:
         A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
     :param gmpe_list:
@@ -602,7 +600,7 @@ def trellis_data(Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
         elif gmpe in lt_weights_gmc1:
             if lt_weights_gmc1[gmpe] != None:
                 lt_vals_gmc1[gmpe] = {
-                            'mean': np.exp(mean)*lt_weights_gmc1[gmpe],
+                            'median': np.exp(mean)*lt_weights_gmc1[gmpe],
                             'plus_sigma': plus_sigma*lt_weights_gmc1[gmpe],
                             'minus_sigma': minus_sigma*lt_weights_gmc1[gmpe]}
             
@@ -611,7 +609,7 @@ def trellis_data(Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
         elif gmpe in lt_weights_gmc2:
             if lt_weights_gmc2[gmpe] != None:
                 lt_vals_gmc2[gmpe] = {
-                            'mean': np.exp(mean)*lt_weights_gmc2[gmpe],
+                            'median': np.exp(mean)*lt_weights_gmc2[gmpe],
                             'plus_sigma': plus_sigma*lt_weights_gmc2[gmpe],
                             'minus_sigma': minus_sigma*lt_weights_gmc2[gmpe]}
         
@@ -621,20 +619,20 @@ def trellis_data(Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
         elif gmpe in lt_weights_gmc1:                                      
             if lt_weights_gmc1[gmpe] != None:
                 lt_vals_gmc1[gmpe] = {
-                        'mean': np.exp(mean)*lt_weights_gmc1[gmpe]}
+                        'median': np.exp(mean)*lt_weights_gmc1[gmpe]}
                        
         if lt_weights_gmc2 == None:
             pass
         elif gmpe in lt_weights_gmc2:                                      
             if lt_weights_gmc2[gmpe] != None:
                 lt_vals_gmc2[gmpe] = {
-                        'mean': np.exp(mean)*lt_weights_gmc2[gmpe]}
+                        'median': np.exp(mean)*lt_weights_gmc2[gmpe]}
 
     return lt_vals_gmc1, lt_vals_gmc2
 
 
 def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2,
-            lt_vals_gmc, mean_gmc, plus_sig_gmc, minus_sig_gmc):
+            lt_vals_gmc, median_gmc, plus_sig_gmc, minus_sig_gmc):
     """
     If required plot spectra from the GMPE logic tree(s)
     """
@@ -649,13 +647,13 @@ def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2,
         if not Nstd == 0:
                
             lt_df_gmc = pd.DataFrame(
-                lt_vals_gmc, index=['mean', 'plus_sigma', 'minus_sigma'])
+                lt_vals_gmc, index=['median', 'plus_sigma', 'minus_sigma'])
 
-            lt_mean_gmc = np.sum(lt_df_gmc[:].loc['mean'])
+            lt_median_gmc = np.sum(lt_df_gmc[:].loc['median'])
             lt_plus_sigma_gmc = np.sum(lt_df_gmc[:].loc['plus_sigma'])
             lt_minus_sigma_gmc = np.sum(lt_df_gmc[:].loc['minus_sigma'])
    
-            pyplot.plot(r_vals, lt_mean_gmc, linewidth=2, color=col,
+            pyplot.plot(r_vals, lt_median_gmc, linewidth=2, color=col,
                         linestyle='--', label=label,
                         zorder=100)
             
@@ -665,21 +663,21 @@ def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2,
             pyplot.plot(r_vals, lt_minus_sigma_gmc, linewidth=0.75,
                         color=col, linestyle='-.', zorder=100)
             
-            mean_gmc[i,m] = lt_mean_gmc
+            median_gmc[i,m] = lt_median_gmc
             plus_sig_gmc[i,m] = lt_plus_sigma_gmc
             minus_sig_gmc[i,m] = lt_minus_sigma_gmc
             
         if Nstd == 0:
-            lt_df_gmc = pd.DataFrame(lt_vals_gmc, index = ['mean'])
+            lt_df_gmc = pd.DataFrame(lt_vals_gmc, index = ['median'])
             
-            lt_mean_gmc = np.sum(lt_df_gmc[:].loc['mean'])
+            lt_median_gmc = np.sum(lt_df_gmc[:].loc['median'])
              
-            pyplot.plot(r_vals, lt_mean_gmc, linewidth=2, color=col,
+            pyplot.plot(r_vals, lt_median_gmc, linewidth=2, color=col,
                         linestyle='--', label=label)
             
-            mean_gmc[i,m] = lt_mean_gmc
+            median_gmc[i,m] = lt_median_gmc
 
-    return mean_gmc, plus_sig_gmc, minus_sig_gmc
+    return median_gmc, plus_sig_gmc, minus_sig_gmc
 
 
 def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
@@ -803,8 +801,8 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
                     rs_minus_sigma_weighted_gmc1[idx] = rs_minus_sigma[
                         idx]*lt_weights_gmc1[gmpe]
 
-            # If present store the weighted mean for the GMPE
-            lt_vals_gmc1[gmpe] = {'mean': rs_50p_weighted_gmc1}
+            # If present store the weighted median for the GMPE
+            lt_vals_gmc1[gmpe] = {'median': rs_50p_weighted_gmc1}
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
@@ -828,8 +826,8 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
                     rs_minus_sigma_weighted_gmc2[idx] = rs_minus_sigma[
                         idx]*lt_weights_gmc2[gmpe]
                 
-            # If present store the weighted mean for the GMPE
-            lt_vals_gmc2[gmpe] = {'mean': rs_50p_weighted_gmc2}
+            # If present store the weighted median for the GMPE
+            lt_vals_gmc2[gmpe] = {'median': rs_50p_weighted_gmc2}
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
@@ -838,8 +836,8 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
                 lt_vals_minus_sig_gmc2[gmpe] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc2}
         
-    return lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1, \
-           lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2
+    return (lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
+            lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2)
 
 
 def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, gmc1_or_gmc2,
@@ -858,20 +856,20 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, gmc1_or_gmc2,
     
     # Plot
     if lt_vals_gmc != {}:
-        lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['mean'])
+        lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['median'])
         if Nstd != 0:
             lt_df_plus_sigma_gmc = pd.DataFrame(lt_vals_plus_sig_gmc,
                                                  index=['plus_sigma'])
             lt_df_minus_sigma_gmc = pd.DataFrame(lt_vals_minus_sig_gmc,
                                                   index=['minus_sigma'])
             
-        wt_mean_per_gmpe_gmc = {}
+        wt_per_gmpe_gmc = {}
         wt_plus_sigma_per_gmpe_gmc, wt_minus_sigma_per_gmpe_gmc = {}, {}
         
         for gmpe in gmpe_list:
             if check in str(gmpe):
-                wt_mean_per_gmpe_gmc[gmpe] = np.array(pd.Series(
-                    lt_df_gmc[gmpe].loc['mean']))
+                wt_per_gmpe_gmc[gmpe] = np.array(pd.Series(
+                    lt_df_gmc[gmpe].loc['median']))
                 if Nstd != 0:
                     wt_plus_sigma_per_gmpe_gmc[gmpe] = np.array(
                         pd.Series(lt_df_plus_sigma_gmc[gmpe].loc[
@@ -880,16 +878,16 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, gmc1_or_gmc2,
                         pd.Series(lt_df_minus_sigma_gmc[gmpe].loc[
                             'minus_sigma']))
             
-        lt_df_gmc = pd.DataFrame(wt_mean_per_gmpe_gmc, index=period)
+        lt_df_gmc = pd.DataFrame(wt_per_gmpe_gmc, index=period)
         lt_df_plus_sigma_gmc = pd.DataFrame(wt_plus_sigma_per_gmpe_gmc,
                                              index=period)
         lt_df_minus_sigma_gmc = pd.DataFrame(wt_minus_sigma_per_gmpe_gmc,
                                               index=period)
         
-        lt_mean_per_period_gmc = {}
+        lt_per_period_gmc = {}
         lt_plus_sigma_per_period_gmc, lt_minus_sigma_per_period_gmc = {}, {}
         for idx, imt in enumerate(period):
-            lt_mean_per_period_gmc[imt] = np.sum(lt_df_gmc.loc[imt])
+            lt_per_period_gmc[imt] = np.sum(lt_df_gmc.loc[imt])
             if Nstd != 0:
                 lt_plus_sigma_per_period_gmc[imt] = np.sum(
                     lt_df_plus_sigma_gmc.loc[imt])
@@ -897,7 +895,7 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, gmc1_or_gmc2,
                     lt_df_minus_sigma_gmc.loc[imt])
         
         # Plot logic tree #
-        ax1.plot(period, np.array(pd.Series(lt_mean_per_period_gmc)), linewidth=2,
+        ax1.plot(period, np.array(pd.Series(lt_per_period_gmc)), linewidth=2,
                  color=col, linestyle='--', label = label, zorder=100)
         
         # Plot mean plus sigma and mean minus sigma if required
