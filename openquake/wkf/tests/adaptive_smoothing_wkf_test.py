@@ -67,8 +67,20 @@ class AdaptiveSmoothingTestwkf(unittest.TestCase):
         expected = np.array([0.000984, 0.000983, 0.001360, 0.001375,0.002249,
         0.002325, 0.000881, 0.001852, 0.001765, 0.002598, 0.002911, 0.000004,
         0.000044, 0.000926, 0.000099, 0.002677, 0.001304])
-
+        out = pd.DataFrame(out)
+        out.columns = ["lon", "lat", "nocc"]
+        
         np.testing.assert_almost_equal(expected, out['nocc'], decimal=4)
+
+        tmpdir = Path(tempfile.gettempdir())
+        if not os.path.exists(tmpdir):
+            os.makedirs(tmpdir)
+        
+        folder_out = tempfile.mkdtemp(suffix='adapsmooth', prefix=None, dir=tmpdir)
+        fname_out = '{}/smooth_adap.csv'.format(folder_out)
+        print(fname_out)
+
+        out.to_csv(fname_out, header=True)
     
     def test_adap_smoothing_wkf(self):
         """ Test adaptive smoothing build """
