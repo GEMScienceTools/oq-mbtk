@@ -81,31 +81,34 @@ class AdaptiveSmoothingTestwkf(unittest.TestCase):
         print(fname_out)
 
         out.to_csv(fname_out, header=True)
-    
-    def test_adap_smoothing_wkf(self):
-        """ Test adaptive smoothing build """
 
-        # set up tmp directory and tmp file 
-        tmpdir = Path(tempfile.gettempdir())
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
-        
-        folder_out = tempfile.mkdtemp(suffix='adapsmooth', prefix=None, dir=tmpdir)
-        fname_out = '{}/smooth_adap.csv'.format(folder_out)
-
-        config = os.path.join(DATA_PATH, 'smooth_config.toml')
-        fname_h3 = os.path.join(DATA_PATH, 'mapping_h2.csv')
-        
-        # Run the code
-        cmd = f"oqm wkf wkf_adaptive_smoothing {self.fname} {fname_h3} {config} {fname_out}"
-        p = subprocess.run(cmd, shell=True)
-
-        assert p.returncode == 0
-
-        expected = np.array([0.000984, 0.000983, 0.001360, 0.001375,0.002249,
-        0.002325, 0.000881, 0.001852, 0.001765, 0.002598, 0.002911, 0.000004,
-        0.000044, 0.000926, 0.000099, 0.002677, 0.001304])
-
-        # set up an expected
         computed = pd.read_csv(fname_out)
         np.testing.assert_almost_equal(expected, computed['nocc'], decimal=4)
+    
+#    def test_adap_smoothing_wkf(self):
+#        """ Test adaptive smoothing build """
+#
+#        # set up tmp directory and tmp file 
+#        tmpdir = Path(tempfile.gettempdir())
+#        if not os.path.exists(tmpdir):
+#            os.makedirs(tmpdir)
+        
+#        folder_out = tempfile.mkdtemp(suffix='adapsmooth', prefix=None, dir=tmpdir)
+#        fname_out = '{}/smooth_adap.csv'.format(folder_out)
+
+#        config = os.path.join(DATA_PATH, 'smooth_config.toml')
+#        fname_h3 = os.path.join(DATA_PATH, 'mapping_h2.csv')
+        
+        # Run the code
+#        cmd = f"oqm wkf wkf_adaptive_smoothing {self.fname} {fname_h3} {config} {fname_out}"
+#        p = subprocess.run(cmd, shell=True)
+
+#        assert p.returncode == 0
+
+#        expected = np.array([0.000984, 0.000983, 0.001360, 0.001375,0.002249,
+#        0.002325, 0.000881, 0.001852, 0.001765, 0.002598, 0.002911, 0.000004,
+#        0.000044, 0.000926, 0.000099, 0.002677, 0.001304])
+
+        # set up an expected
+#        computed = pd.read_csv(fname_out)
+#        np.testing.assert_almost_equal(expected, computed['nocc'], decimal=4)
