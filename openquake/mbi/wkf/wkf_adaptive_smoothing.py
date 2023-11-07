@@ -86,11 +86,10 @@ def main(catalogue:str, h3_map: str, config:str, outputfile:str,  use: str = [])
             "d_i_min": config['d_i_min'], "h3res": config['h3res'], "maxdist": config['maxdist']}
     out = smooth.run_adaptive_smooth(cat, conf)
     # Make output into dataframe with named columns and write to a csv
-    # file in specified loctaion
+    # file in specified location
     out = pd.DataFrame(out)
     out.columns = ["lon", "lat", "nocc"]
 
-    out["nocc"] = out["nocc"]
     out.to_csv(outputfile, header=True)
 
 

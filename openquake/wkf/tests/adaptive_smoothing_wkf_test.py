@@ -30,7 +30,7 @@ class AdaptiveSmoothingTestwkf(unittest.TestCase):
     def test_adap_smoothing_wkf(self):
         """ Test adaptive smoothing build """
 
-        
+        # set up tmp directory and tmp file 
         tmpdir = Path(tempfile.gettempdir())
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
@@ -44,6 +44,8 @@ class AdaptiveSmoothingTestwkf(unittest.TestCase):
         # Run the code
         cmd = f"oqm wkf wkf_adaptive_smoothing {self.fname} {fname_h3} {config} {fname_out}"
         p = subprocess.run(cmd, shell=True)
+
+        assert p.returncode == 0
 
         expected = np.array([0.000984, 0.000983, 0.001360, 0.001375,0.002249,
         0.002325, 0.000881, 0.001852, 0.001765, 0.002598, 0.002911, 0.000004,
