@@ -214,36 +214,18 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     return mean, std, distances, tau, phi
 
 
-def _get_z1(Vs30, region):
+def _get_z1(Vs30):
     """
-    :param region:
-        Choose among: region= 0 for global; 1 for California; 2 for Japan;
-        3 for China; 4 for Italy; 5 for Turkey (locally = 3); 6 for Taiwan (
-        locally = 0)
+    Approximate z1pt0 using Vs30
     """
-    if region == 2:   # in California and non-Japan region
-        Z1 = (np.exp(-5.23 / 2 * np.log((Vs30**2 + 412.39**2) /
-                                        (1360**2 + 412.39**2))))
-    else:
-        Z1 = (np.exp(-7.15 / 4 * np.log((Vs30**4 + 570.94**4) /
-                                        (1360**4 + 570.94**4))))
-
-    return Z1
+    return np.exp(-7.15/4*np.log((Vs30**4 + 570.94**4)/(1360**4 + 570.94**4)))
 
 
-def _get_z25(Vs30, region):
+def _get_z25(Vs30):
     """
-    :param region:
-        Choose among: region= 0 for global; 1 for California; 2 for Japan;
-        3 for China; 4 for Italy; 5 for Turkey (locally = 3); 6 for Taiwan (
-        locally = 0)
+    approximate z2pt5 using Vs30
     """
-    if region == 2:  # in Japan
-        Z25 = np.exp(5.359 - 1.102 * np.log(Vs30))
-    else:
-        Z25 = np.exp(7.089 - 1.144 * np.log(Vs30))
-
-    return Z25
+    return np.exp(7.089 - 1.144 * np.log(Vs30))
 
 
 def _param_gmpes(strike, dip, depth, aratio, rake, trt):

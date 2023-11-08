@@ -36,10 +36,10 @@ from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1,\
 
 
 def plot_trellis_util(
-        trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region, imt_list,
-        mag_list, maxR, gmpe_list, aratio, Nstd, output_directory,
-        custom_color_flag, custom_color_list, eshm20_region, dist_type,
-        lt_weights_gmc1 = None, lt_weights_gmc2 = None, up_or_down_dip = None):
+        trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, imt_list, mag_list,
+        maxR, gmpe_list, aratio, Nstd, output_directory, custom_color_flag,
+        custom_color_list, eshm20_region, dist_type, lt_weights_gmc1=None,
+        lt_weights_gmc2=None, up_or_down_dip=None):
     """
     Generate trellis plots for given run configuration
     """
@@ -48,7 +48,7 @@ def plot_trellis_util(
     median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = {}, {}, {}
     median_gmc2, plus_sig_gmc2, minus_sig_gmc2 = {}, {}, {}
     
-    Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
+    Z1, Z25 = get_z1_z25(Z1, Z25, Vs30)
     colors = get_cols(custom_color_flag, custom_color_list)     
     step = 1
     for n, i in enumerate(imt_list):
@@ -114,11 +114,11 @@ def plot_trellis_util(
     
 
 def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
-                      region, max_period, mag_list, dist_list, gmpe_list,
-                      aratio, Nstd, output_directory, custom_color_flag,
-                      custom_color_list, eshm20_region, dist_type,
-                      lt_weights_gmc1 = None, lt_weights_gmc2 = None,
-                      obs_spectra = None, up_or_down_dip = None):
+                      max_period, mag_list, dist_list, gmpe_list, aratio, Nstd,
+                      output_directory, custom_color_flag, custom_color_list,
+                      eshm20_region, dist_type, lt_weights_gmc1=None,
+                      lt_weights_gmc2=None, obs_spectra=None,
+                      up_or_down_dip=None):
     """
     Plot response spectra and sigma w.r.t. spectral period for given run
     configuration. Can also plot an observed spectrum and the corresponding
@@ -138,7 +138,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
     imt_list = _get_imts(period)
     
     # Setup    
-    Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
+    Z1, Z25 = get_z1_z25(Z1, Z25, Vs30)
     colors = get_cols(custom_color_flag, custom_color_list)     
     fig1 = pyplot.figure(figsize = (len(mag_list)*5, len(dist_list)*4))
     fig2 = pyplot.figure(figsize = (len(mag_list)*5, len(dist_list)*4))
@@ -279,8 +279,8 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
 
 
 def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
-                         dip, depth, Z1, Z25, Vs30, region, maxR, aratio,
-                         eshm20_region, dist_type, mtxs_type, up_or_down_dip):
+                         dip, depth, Z1, Z25, Vs30, maxR, aratio, eshm20_region,
+                         dist_type, mtxs_type, up_or_down_dip):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
     given run configuration for use within Euclidean distance matrix plots,
@@ -292,7 +292,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
     # Setup
     mtxs_median = {}
     step = 1
-    Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
+    Z1, Z25 = get_z1_z25(Z1, Z25, Vs30)
     for n, i in enumerate(imt_list): #iterate though imt_list
         matrix_medians=np.zeros((len(gmpe_list), (len(mag_list)*int((maxR/step)))))
 
@@ -563,15 +563,15 @@ def get_cols(custom_color_flag, custom_color_list):
     return colors
 
 
-def get_z1_z25(Z1, Z25, Vs30, region):
+def get_z1_z25(Z1, Z25, Vs30):
     """
     Get z1pt0 and z2pt5
     """
     # Set Z1 and Z25
     if  Z1 == -999:
-        Z1 = _get_z1(Vs30, region)
+        Z1 = _get_z1(Vs30)
     if  Z25 == -999:
-        Z25 = _get_z25(Vs30, region)
+        Z25 = _get_z25(Vs30)
         
     return Z1, Z25
 
