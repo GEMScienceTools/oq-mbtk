@@ -2,7 +2,10 @@
 # OQ mbtk requirements
 
 # From OQ wheels
-https://wheelhouse.openquake.org/v3/linux/py38/GDAL-3.2.2-cp38-cp38-manylinux1_x86_64.whl
+https://wheelhouse.openquake.org/v3/linux/py310/GDAL-3.4.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+https://wheelhouse.openquake.org/v3/linux/py310/Fiona-1.8.21-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+https://wheelhouse.openquake.org/v3/linux/py310/pyproj-3.4.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+https://wheelhouse.openquake.org/v3/linux/py310/numpy-1.23.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 
 # Version specific
 geopandas >= 0.10.2
@@ -11,7 +14,7 @@ ipython >= 6.2.0
 jupyter_client >= 5.0.0
 matplotlib >= 3.4.2
 nbstripout >= 0.3.0
-notebook >= 5.0.0 
+notebook >= 5.0.0
 pylint >= 2.1.1
 rtree >= 0.9.4
 
@@ -27,3 +30,6 @@ tables
 h3
 pygmt
 reportlab
+netCDF4
+igraph
+pyvista

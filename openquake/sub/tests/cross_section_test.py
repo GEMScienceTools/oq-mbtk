@@ -90,6 +90,7 @@ class GetMMTest(unittest.TestCase):
         """
         cs = CrossSection(10.0, 45.0, [100], [45])
         computed = cs.get_mm()
+        #print(cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1])
         expected = [cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1], 0]
         numpy.testing.assert_almost_equal(computed, expected)
 
@@ -99,6 +100,7 @@ class GetMMTest(unittest.TestCase):
         """
         cs = CrossSection(-179.0, -50.0, [500], [-90])
         computed = cs.get_mm()
+        #print(cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1])
         expected = [cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1], 1]
         numpy.testing.assert_almost_equal(computed, expected)
 
@@ -106,9 +108,12 @@ class GetMMTest(unittest.TestCase):
         """
         Test cross section across idl + delta
         """
-        cs = CrossSection(-179.5, -50.0, [200], [90])
+        # If this dips 90 degrees it doesn't cross idl (so dip -90 like previous test)
+        cs = CrossSection(-179.5, -50.0, [500], [-90])
         computed = cs.get_mm(1.0)
-        expected = [179.5, -175.70311203864779, -51.0, -48.966369263787726, 1]
+        print(cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1])
+        #expected = [179.5, -175.70311203864779, -51.0, -48.966369263787726, 1]
+        expected = [-178.5, 172.5247868, -51.0, -48.790282, 1]
         numpy.testing.assert_almost_equal(computed, expected)
 
 

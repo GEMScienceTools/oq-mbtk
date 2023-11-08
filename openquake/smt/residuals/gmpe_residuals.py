@@ -42,7 +42,7 @@ from openquake.hazardlib import imt
 import openquake.smt.intensity_measures as ims
 from openquake.smt.strong_motion_selector import SMRecordSelector
 from openquake.smt.sm_utils import convert_accel_units, check_gsim_list
-from openquake.smt.comparison.utils_gmpes import  al_atik_sigma_check
+from openquake.smt.comparison.utils_gmpes import mgmpe_check
 
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
@@ -416,7 +416,10 @@ class Residuals(object):
         # Contexts is in either case a list of dictionaries
         self.contexts = []
         for context in contexts:
-
+            # If no rvolc provide as zero (ensure rvolc gsims usable)
+            if 'rvolc' not in context['Ctx']._slots_:
+                context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi,
+                                                     dtype = float)
             # convert all IMTS with acceleration units, which are supposed to
             # be in cm/s/s, to g:
             for a_imt in accel_imts:
@@ -486,20 +489,34 @@ class Residuals(object):
             expected[gmpe] = OrderedDict([(imtx, {}) for imtx in self.imts])
             for imtx in self.imts:
                 gsim = self.gmpe_list[gmpe]
+                gsim_orig = gsim # If gsim into mgmpe retain pot. region for ctx
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < self.gmpe_sa_limits[gmpe][0] or\
                             period > self.gmpe_sa_limits[gmpe][1]:
                         expected[gmpe][imtx] = None
                         continue
-                gsim, sigma_model_flag = al_atik_sigma_check(gmpe, imtx,
-                                                             task = 'residual')
+                # Check if gsim needs appending with mgmpe
+                gsim = mgmpe_check(gsim)
+                # Add region parameter to sites context if specified in gsim
+                if 'eshm20_region' in gsim_orig.kwargs:
+                    context["Ctx"].region = gsim_orig.kwargs['eshm20_region']
+                if 'region' in gsim_orig.kwargs and 'eshm20_region' not in gsim.kwargs:
+                    context["Ctx"].region = gsim_orig.kwargs['region']
+                # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
                     context["Ctx"],
                     context["Ctx"],
                     context["Ctx"],
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
+                # If no sigma model inform user must specify sigma model in .toml
+                if np.all(stddev[0] == 0.):
+                    gmm_str = str(gmpe).split('(')[0]
+                    raise ValueError('A sigma model is not provided by default\
+                                     for %s GMPE. Specify a sigma model for %s \
+                                     GMPE for the computation of ground-motion\
+                                     residuals.' %(gmm_str, gmm_str))
                 expected[gmpe][imtx]["Mean"] = mean
                 for i, res_type in enumerate(self.types[gmpe][imtx]):
                     expected[gmpe][imtx][res_type] = stddev[i]
@@ -913,7 +930,7 @@ class Residuals(object):
             edr_values[gmpe]["EDR"] = results[2]
         return edr_values
     
-    def get_edr_values_wrt_spectral_period(self, bandwidth=0.01,
+    def get_edr_values_wrt_imt(self, bandwidth=0.01,
                                            multiplier=3.0):
         """
         Calculates the EDR values for each GMPE according to the Euclidean
@@ -930,12 +947,12 @@ class Residuals(object):
         :param float multiplier:
             "Multiplier of standard deviation (equation 8 of Kale and Akkar)
         """
-        
         self.edr_values_wrt_imt = OrderedDict([(gmpe, {}) for 
                                                gmpe in self.gmpe_list])
         for gmpe in self.gmpe_list:
-            obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt = self._get_edr_gmpe_information_wrt_spectral_period(gmpe)
-            results = self._get_edr_wrt_spectral_period(obs_wrt_imt,
+            (obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt
+             ) = self._get_edr_gmpe_information_wrt_imt(gmpe)
+            results = self._get_edr_wrt_imt(obs_wrt_imt,
                                     expected_wrt_imt,
                                     stddev_wrt_imt,
                                     bandwidth,
@@ -948,7 +965,7 @@ class Residuals(object):
     def _get_edr_gmpe_information(self, gmpe):
         """
         Extract the observed ground motions, expected and total standard
-        deviation for the GMPE (aggregating over all IMS)
+        deviation for the GMPE (aggregating over all IMTs)
         """
         obs = np.array([], dtype=float)
         expected = np.array([], dtype=float)
@@ -962,35 +979,16 @@ class Residuals(object):
                                     context["Expected"][gmpe][imtx]["Total"]])
         return obs, expected, stddev
     
-    def _get_edr_gmpe_information_wrt_spectral_period(self, gmpe):
+    def _get_edr_gmpe_information_wrt_imt(self, gmpe):
         """
         Extract the observed ground motions, expected and total standard
         deviation for the GMPE (per imt)
         """  
-        #Remove non-acceleration imts from residuals.imts
-        imt_append=pd.DataFrame(self.imts,index=self.imts)
-        imt_append.columns=['imt']
-        for imt_idx in range(0,np.size(self.imts)):
-             if self.imts[imt_idx]=='PGV':
-                 imt_append=imt_append.drop(imt_append.loc['PGV'])
-             if self.imts[imt_idx]=='PGD':
-                 imt_append=imt_append.drop(imt_append.loc['PGD'])
-             if self.imts[imt_idx]=='CAV':
-                 imt_append=imt_append.drop(imt_append.loc['CAV'])
-             if self.imts[imt_idx]=='Ia':
-                 imt_append=imt_append.drop(imt_append.loc['Ia'])
-            
-        imt_append_list=pd.DataFrame()
-        for idx in range(0,len(imt_append)):
-             imt_append_list[idx]=imt_append.iloc[idx]
-        imt_append=imt_append.reset_index()
-        imt_append_list.columns=imt_append.imt
-        self.imts_appended=list(imt_append_list)
-        
+        # Get EDR values per imt
         obs_wrt_imt={}
         expected_wrt_imt={}
         stddev_wrt_imt={}
-        for imtx in self.imts_appended:
+        for imtx in self.imts:
             obs = np.array([], dtype=float)
             expected = np.array([], dtype=float)
             stddev = np.array([], dtype=float)
@@ -1003,7 +1001,7 @@ class Residuals(object):
             obs_wrt_imt[imtx]=obs
             expected_wrt_imt[imtx]=expected
             stddev_wrt_imt[imtx]=stddev
-            
+        
         return obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt
     
     def _get_edr(self, obs, expected, stddev, bandwidth=0.01, multiplier=3.0):
@@ -1040,7 +1038,7 @@ class Residuals(object):
         edr = np.sqrt(kappa * inv_n * np.sum(mde ** 2.))
         return mde_norm, np.sqrt(kappa), edr            
     
-    def _get_edr_wrt_spectral_period(self, obs_wrt_imt, expected_wrt_imt,
+    def _get_edr_wrt_imt(self, obs_wrt_imt, expected_wrt_imt,
                                      stddev_wrt_imt, bandwidth=0.01,
                                      multiplier=3.0):
         """
@@ -1051,16 +1049,16 @@ class Residuals(object):
         edr_wrt_imt={}
         kappa_wrt_imt={}
 
-        for imt in self.imts_appended:
-            nvals = len(obs_wrt_imt[imt])
+        for imtx in self.imts:
+            nvals = len(obs_wrt_imt[imtx])
             min_d = bandwidth / 2.
-            kappa_wrt_imt[imt] = self._get_edr_kappa(obs_wrt_imt[imt],
-                                                     expected_wrt_imt[imt])
-            mu_d = obs_wrt_imt[imt] - expected_wrt_imt[imt]
-            d1c = np.fabs(obs_wrt_imt[imt] - (expected_wrt_imt[imt] - (
-                multiplier * stddev_wrt_imt[imt])))
-            d2c = np.fabs(obs_wrt_imt[imt] - (expected_wrt_imt[imt] + (
-                multiplier * stddev_wrt_imt[imt])))
+            kappa_wrt_imt[imtx] = self._get_edr_kappa(obs_wrt_imt[imtx],
+                                                     expected_wrt_imt[imtx])
+            mu_d = obs_wrt_imt[imtx] - expected_wrt_imt[imtx]
+            d1c = np.fabs(obs_wrt_imt[imtx] - (expected_wrt_imt[imtx] - (
+                multiplier * stddev_wrt_imt[imtx])))
+            d2c = np.fabs(obs_wrt_imt[imtx] - (expected_wrt_imt[imtx] + (
+                multiplier * stddev_wrt_imt[imtx])))
             dc_max = ceil(np.max(np.array([np.max(d1c), np.max(d2c)])))
             num_d = len(np.arange(min_d, dc_max, bandwidth))
             mde_wrt_imt = np.zeros(nvals)
@@ -1068,14 +1066,14 @@ class Residuals(object):
                 d_val = (min_d + (float(iloc) * bandwidth)) * np.ones(nvals)
                 d_1 = d_val - min_d
                 d_2 = d_val + min_d
-                p_1 = norm.cdf((d_1 - mu_d) / stddev_wrt_imt[imt]) -\
-                norm.cdf((-d_1 - mu_d) / stddev_wrt_imt[imt])
-                p_2 = norm.cdf((d_2 - mu_d) / stddev_wrt_imt[imt]) -\
-                norm.cdf((-d_2 - mu_d) / stddev_wrt_imt[imt])
+                p_1 = norm.cdf((d_1 - mu_d) / stddev_wrt_imt[imtx]) -\
+                norm.cdf((-d_1 - mu_d) / stddev_wrt_imt[imtx])
+                p_2 = norm.cdf((d_2 - mu_d) / stddev_wrt_imt[imtx]) -\
+                norm.cdf((-d_2 - mu_d) / stddev_wrt_imt[imtx])
                 mde_wrt_imt += (p_2 - p_1) * d_val
             inv_n = 1.0 / float(nvals)
-            mde_norm_wrt_imt[imt] = np.sqrt(inv_n * np.sum(mde_wrt_imt ** 2.))
-            edr_wrt_imt[imt] = np.sqrt(kappa_wrt_imt[imt] * inv_n * np.sum(
+            mde_norm_wrt_imt[imtx] = np.sqrt(inv_n * np.sum(mde_wrt_imt ** 2.))
+            edr_wrt_imt[imtx] = np.sqrt(kappa_wrt_imt[imtx] * inv_n * np.sum(
                 mde_wrt_imt ** 2.))
 
         return mde_norm_wrt_imt, np.sqrt(pd.Series(kappa_wrt_imt)), edr_wrt_imt            

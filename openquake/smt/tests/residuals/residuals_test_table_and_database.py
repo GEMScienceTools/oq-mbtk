@@ -49,7 +49,6 @@ class ResidualsTestCase(unittest.TestCase):
     """
     Core test case for the residuals objects
     """
-    
     @classmethod
     def setUpClass(cls):
         """
@@ -78,7 +77,7 @@ class ResidualsTestCase(unittest.TestCase):
         self.assertListEqual([rec.id for rec in self.database],
                              EXPECTED_IDS)
 
-    def _check_residual_dictionary_correctness(self, res_dict):
+    def test_check_residual_dictionary_correctness(self, res_dict):
         """
         Basic check for correctness of the residual dictionary
         """
@@ -111,7 +110,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         residuals1 = res.Residuals(self.gsims, self.imts)
         residuals1.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(residuals1.residuals)
+        self.test_check_residual_dictionary_correctness(residuals1.residuals)
         stats1 = residuals1.get_residual_statistics()
 
         # yes, we said we do not check for correctness of values.
@@ -194,8 +193,3 @@ class ResidualsTestCase(unittest.TestCase):
         Deletes the database
         """
         shutil.rmtree(cls.out_location)
-
-
-if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()

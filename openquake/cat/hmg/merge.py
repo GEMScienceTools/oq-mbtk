@@ -34,6 +34,7 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 import geopandas as gpd
+import tempfile
 
 from openquake.cat.parsers.isf_catalogue_reader import ISFReader
 from openquake.cat.parsers.converters import GenericCataloguetoISFParser
@@ -235,7 +236,11 @@ def process_catalogues(settings_fname: str) -> None:
 
             # Set log files
             if "log_file" not in tdict:
-                logfle = "/tmp/tmp_merge_{:02d}.tmp".format(icat)
+                if "log_file" in settings["general"]:
+                    logfle = settings["general"]["log_file"]
+                else:
+                    fle = tempfile.NamedTemporaryFile(mode = 'w', delete=False)
+                    logfle=fle.name
             else:
                 logfle = tdict["log_file"]
             print("   Log file: {:s}".format(logfle))
@@ -282,11 +287,17 @@ def process_catalogues(settings_fname: str) -> None:
 
             # Set the name of the log file
             if "log_file" not in tdict:
-                logfle = f"/tmp/tmp_merge_{icat:02d}.tmp"
+                if "log_file" in settings["general"]:
+                    logfle = settings["general"]["log_file"]
+                else:
+                    fle = tempfile.NamedTemporaryFile(mode = 'w', delete=False)
+                    logfle=fle.name
+                    
+
             else:
                 logfle = tdict["log_file"]
+            
             print(f"   Log file: {logfle:s}".format())
-
             # Perform the merge
             meth = catroot.add_external_idf_formatted_catalogue
             out = meth(tmpcat, delta_ll, delta_t, timezone, buff_t, buff_ll, use_kms,

@@ -96,7 +96,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         
 3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for specifying the inputs of GMPEs with user-specifiable input parameters e.g. regionalisation parameter or logic tree branch parameters. Note that here the GMPEs listed in the first ``.toml`` file are not appropriate for our target region, but have been selected to demonstrate how GMPEs with additional inputs can be specified within a ``.toml`` file. The second ``.toml`` file provides the GMPEs and intensity measures we use for running this demonstration analysis.
 
-   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``). Note also that a GMPE sigma model must be provided by the GMPE for the computation of residuals. If a sigma model is not provided by the GMPE, it can be specified as demonstrated below for the YenierAtkinson2015BSSA GMPE.
+   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``, or for ModifiableGMPE features in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``). Note also that a GMPE sigma model must be provided by the GMPE for the computation of residuals. If a sigma model is not provided by the GMPE, it can be specified as demonstrated below.
    
    The ``.toml`` file for specifying GMPEs and intensity measures to consider within a residual analysis should be specified as follows:
    
@@ -104,23 +104,56 @@ We can specify the inputs to perform a residual analysis with as follows:
     
         [models]
     
-        [models.AbrahamsonGulerce2020SInter]
+        [models.1-AbrahamsonGulerce2020SInter]
         region = "GLO"
         
-        [models.AbrahamsonGulerce2020SInter]
+        [models.2-AbrahamsonGulerce2020SInter]
         region = "CAS"
         
-        [models.AbrahamsonGulerce2020SInterCascadia]
-        
         [models.YenierAtkinson2015BSSA]
-        sigma_model = 'al_atik_2015_sigma'
+        sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
+
+        [models.1-CampbellBozorgnia2014]
+        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # fix total sigma per imt
+        
+        [models.2-CampbellBozorgnia2014]
+        with_betw_ratio = 1.7 # add between-event and within-event sigma using ratio of 1.7 to partition total sigma
+                
+        [models.3-CampbellBozorgnia2014]
+        set_between_epsilon = 1.5 # set between-event epsilon (i.e. tau epsilon)
+                               
+        [models.1-AbrahamsonEtAl2014]
+        median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
+        
+        [models.2-AbrahamsonEtAl2014]
+        median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
+        
+        [models.1-KothaEtAl2020]
+        sigma_scaling_scalar = 1.05 # scale sigma by factor of 1.05 over all imts
+        
+        [models.2-KothaEtAl2020]
+        sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # scale sigma by imt-dependent factor
+        
+        [models.1-BooreEtAl2014]
+        site_term = 'CY14SiteTerm' # use CY14 site term
+        
+        [models.2-BooreEtAl2014]
+        site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
+        
+        [models.3-BooreEtAl2014]
+        site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
         
         [models.NGAEastGMPE]
-        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5'
+        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
             
         [models.HassaniAtkinson2018]
-            d_sigma = 100
-            kappa0 = 0.04
+        d_sigma = 100 # gmpe specific param
+        kappa0 = 0.04
+        
+        [models.KothaEtAl2020ESHM20] # ESHM20 model
+        sigma_mu_epsilon = 2.85697 
+        c3_epsilon = 1.72    
+        region = 4 # Note that within residuals specify region here, whereas in comparison module toml (below) we specify using the eshm20_region param
         
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
@@ -422,7 +455,7 @@ Comparing GMPEs
 
 2. The tools within the Comparison module include Sammon's Maps, hierarchical clustering and matrix plots of Euclidean distance for both median and 84th percentile of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra, GMPE sigma with respect to spectral period and trellis plots are also provided in this module.
 
-   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may best capture the epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree (to plot a GMPE logic tree we assign model weights using ``lt_weight`` in each model. To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_plot_lt_only`` instead).
+   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. GMPE parameters can be specified as within the example ``.toml`` file provided above for us in residual analysis. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may increase the captured epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree. To plot a GMPE logic tree we must assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each GMPE depending on if we want to plot the GMPE within GMC logic tree #1 or #2 (up to 2 GMC logic trees can currently be plotted within one trellis or response spectra plot at a time). To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` or ``lt_weight_gmc2_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for - see the .toml file below for an example of these potential configurations).
 
     .. code-block:: ini
     
@@ -431,69 +464,89 @@ Comparing GMPEs
         imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
         max_period = 2 # max period for spectra plots
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
+        dist_type = 'rrup' # or rjb, repi or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         region = 0 # for NGAWest2 GMPE regionalisation
         eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
         Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 or 3)
-        custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
-        custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
         
         # Specify site properties
         [site_properties]
         vs30 = 800
         Z1 = -999
         Z25 = -999
+        up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
         
-        # Characterise earthquake for the region of interest
+        # Characterise earthquake for the region of interest as finite rupture
         [source_properties]
+        trt = 'None' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
+        ztor = 'None' # Set to string of 'None' to NOT consider otherwise specify as array matching number of mag and depth values
         strike = -999
-        dip =  60 # (Albania has predominantly reverse faulting)
-        rake = 90 # (+ 90 for compression, -90 for extension)
-        trellis_mag_list = [5, 6, 7] # mags used only for trellis
-        trellis_depths = [20, 20, 20] # depth per magnitude
+        dip =  60
+        rake = 90 # (+90 for compression, -90 for extension)
+        aratio  = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
+        trellis_and_rs_mag_list = [5, 6, 7] # mags used only for trellis and response spectra
+        trellis_and_rs_depths = [20, 20, 20] # depth per magnitude for trellis and response spectra
         
         # Specify magnitude array for Sammons, Euclidean dist and clustering
-        [mag_values_non_trellis_functions]
+        [mag_values_non_trellis_or_spectra_functions]
         mmin = 5
         mmax = 7
         spacing = 0.1
-        non_trellis_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+        non_trellis_or_spectra_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
         
         # Specify label for gmpes
         [gmpe_labels]
-        gmpes_label = ['B20', 'L19', 'BO14', 'K1', 'K2', 'K3', 'K4', 'K5']
+        gmpes_label = ['CA15', 'AK14', 'B20', 'L19', 'BO14', 'K1', 'K2', 'K3', 'K4', 'K5']
         
         # Specify gmpes
+        
+        # Plot logic tree and individual GMPEs within first GMC logic tree config (gmc1)
         [models.BooreEtAl2020]
-            lt_weight = 0.25
+            lt_weight_gmc1 = 0.25
             
         [models.LanzanoEtAl2019_RJB_OMO]
-            lt_weight = 0.30
+            lt_weight_gmc1 = 0.30
             
         [models.BooreEtAl2014]
-            lt_weight = 0.15
+            lt_weight_gmc1 = 0.15
         
-        # Default K20_ESHM20 logic tree branches
+        # Default K20_ESHM20 logic tree branches considered in gmc1
         [models.1-KothaEtAl2020ESHM20]
-            lt_weight = 0.000862
+            lt_weight_gmc1 = 0.000862
             sigma_mu_epsilon = 2.85697 
             c3_epsilon = 1.72    
         [models.2-KothaEtAl2020ESHM20]   
-            lt_weight = 0.067767
+            lt_weight_gmc1 = 0.067767
             sigma_mu_epsilon = 1.35563
             c3_epsilon = 0
         [models.3-KothaEtAl2020ESHM20]   
-            lt_weight = 0.162742
+            lt_weight_gmc1 = 0.162742
             sigma_mu_epsilon = 0
             c3_epsilon = 0        
         [models.4-KothaEtAl2020ESHM20]
-            lt_weight = 0.067767
+            lt_weight_gmc1 = 0.067767
             sigma_mu_epsilon = -1.35563
             c3_epsilon = 0 
         [models.5-KothaEtAl2020ESHM20]
-            lt_weight = 0.000862
+            lt_weight_gmc1 = 0.000862
             sigma_mu_epsilon = -2.85697 
             c3_epsilon = -1.72    
+            
+            
+        # Plot logic tree only for second GMC logic tree config (gmc2)
+        # Note this additional GMC logic tree config is simply for demonstrative
+        # purposes of how multiple logic trees can be plotted at once!
+        [models.CauzziEtAl2014]
+            lt_weight_gmc2_plot_lt_only = 0.50
+            
+        [models.AkkarEtAlRjb2014]
+            lt_weight_gmc2_plot_lt_only = 0.50
+            
+        [custom_colors]
+        custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
+        custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
+            
             
 3. Trellis Plots 
 
@@ -513,7 +566,7 @@ Comparing GMPEs
    
 4. Spectra Plots
 
-   We can plot response spectra and GMPE sigma spectra (sigma versus spectral period) as follows: 
+   We can also plot response spectra and GMPE sigma spectra (sigma versus spectral period). Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples, and the functions within openquake.smt.comparison for more details): 
 
     .. code-block:: ini
     
