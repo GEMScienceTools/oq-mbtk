@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from openquake.baselib import sap
-from openquake.wkf.catalogue import create_subcatalogues
+from openquake.wkf.catalogue import create_subcatalogues_nongeopd
 
 
 def main(fname_polygons: str, fname_cat: str, folder_out: str,
@@ -12,7 +12,7 @@ def main(fname_polygons: str, fname_cat: str, folder_out: str,
     catalogue, it creates a set of .csv files each one containing the
     earthquakes inside each polygon.
     """
-    _ = create_subcatalogues(fname_polygons, fname_cat, folder_out, source_ids)
+    _ = create_subcatalogues_nongeopd(fname_polygons, fname_cat, folder_out, source_ids)
 
 
 main.fname_polygons = 'Name of a shapefile with polygons'

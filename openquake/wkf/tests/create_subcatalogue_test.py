@@ -32,8 +32,8 @@ class test_create_subcatalogue(unittest.TestCase):
     """ test the assignment of events to subcatalogues """
     
     def setUp(self):
-        #self.out_folder = tempfile.mkdtemp()
-        self.out_folder = "~/tests/test_out"
+        self.out_folder = tempfile.mkdtemp()
+        #self.out_folder = "~/tests/test_out"
     def test_create_subcatalogue_simple(self):
         """ simple case of one polygon loaded from geojson"""
         
@@ -41,18 +41,23 @@ class test_create_subcatalogue(unittest.TestCase):
         polygons =  os.path.join(DATA_PATH, 'test_poly.geojson')
         cat = os.path.join(DATA_PATH, 'simple_poly_test_cat.csv')
         subcatalogues_folder = self.out_folder
-
-        code = os.path.join(CODE, 'mbi', 'wkf', 'create_subcatalogues_per_zone.py')
+        
+        print(cat)
+        #code = os.path.join(CODE, 'mbi', 'wkf', 'create_subcatalogues_per_zone.py')
         #fmt = '{:s} {:s} {:s} {:s}'
         #cmd = fmt.format(code, polygons, cat, subcatalogues_folder)
         #out = subprocess.call(cmd, shell=True)
 
-        #code = os.path.join(HERE, 'create_subcatalogues_per_zone')
+        code = os.path.join(HERE, 'create_subcatalogues_per_zone.py')
+        print(code)
         fmt = '{:s} {:s} {:s} {:s}'
         cmd = fmt.format(code, polygons, cat, subcatalogues_folder)
         out = subprocess.call(cmd, shell=True)
+        #assert out.returncode == 0
         
-        res = pd.read_csv(os.path.join(self.out_folder, 'subcatalogue_zone_1.csv'))
+        out_fname = os.path.join(self.out_folder, 'subcatalogue_zone_1.csv')
+        print(out_fname)
+        res = pd.read_csv(out_fname)
         print("simple cataloue contains ", len(res), "events")
         assert(len(res) == 10)
         
@@ -69,6 +74,7 @@ class test_create_subcatalogue(unittest.TestCase):
         fmt = '{:s} {:s} {:s} {:s}'
         cmd = fmt.format(code, polygons, cat, subcatalogues_folder)
         out = subprocess.call(cmd, shell=True)
+        #assert out.returncode == 0
         
         ## This should contain 3 events
         res = pd.read_csv(os.path.join(self.out_folder, 'subcatalogue_zone_1.csv'))
@@ -92,8 +98,10 @@ class test_create_subcatalogue(unittest.TestCase):
         #code = os.path.join(HERE, 'create_subcatalogues_per_zone')
         fmt = '{:s} {:s} {:s} {:s}'
         cmd = fmt.format(code, polygons, cat, subcatalogues_folder)
+        # diff between subprocess.run and subprocess.call
         out = subprocess.call(cmd, shell=True)
-        
+        #assert out.returncode == 0
+               
         res = pd.read_csv(os.path.join(self.out_folder, 'subcatalogue_zone_1.csv'))
         print("international date line test contains ", len(res), "events")
         assert(len(res) == 3)
