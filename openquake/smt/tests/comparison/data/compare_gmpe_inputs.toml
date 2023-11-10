@@ -14,7 +14,7 @@ vs30 = 800
 Z1 = -999
 Z25 = -999
 up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-region = 0 # region specific basin effects
+region = 'Global' # region specific basin effects
 
 [source_properties] # Characterise EQ as finite rupture
 trt = 'ASCR'
