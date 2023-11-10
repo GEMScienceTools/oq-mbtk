@@ -475,7 +475,7 @@ Comparing GMPEs
         Z1 = -999
         Z25 = -999
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-        region = 0 # get region specific z1pt0 and zpt50  --> Choose among: region= 0 for global; 1 for California; 2 for Japan; 3 for China; 4 for Italy; 5 for Turkey (locally = 3); 6 for Taiwan, (locally = 0)
+        region = 0 # get region specific z1pt0 and zpt50 ('Global' or 'Japan') 
         
         # Characterise earthquake for the region of interest as finite rupture
         [source_properties]
