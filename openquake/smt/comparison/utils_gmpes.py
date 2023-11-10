@@ -216,32 +216,23 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
 
 def _get_z1(Vs30, region):
     """
-    :param region:
-        Choose among: region= 0 for global; 1 for California; 2 for Japan;
-        3 for China; 4 for Italy; 5 for Turkey (locally = 3); 6 for Taiwan (
-        locally = 0)
+    Get z1pt0 using Chiou and Youngs (2014) relationship.
     """
-    if region == 2:   # in California and non-Japan region
-        Z1 = (np.exp(-5.23 / 2 * np.log((Vs30**2 + 412.39**2) /
-                                        (1360**2 + 412.39**2))))
-    else:
-        Z1 = (np.exp(-7.15 / 4 * np.log((Vs30**4 + 570.94**4) /
-                                        (1360**4 + 570.94**4))))
-
+    if region == 'Global': # California and non-Japan regions
+        Z1 = np.exp(-7.15/4*np.log((Vs30**4 + 570.94**4)/(1360**4 + 570.94**4)))
+    else: # Japan
+        Z1 = np.exp(-5.23/2*np.log((Vs30**2 + 412.39**2)/(1360**2 + 412.39**2)))
     return Z1
 
 
 def _get_z25(Vs30, region):
     """
-    :param region:
-        Choose among: region= 0 for global; 1 for California; 2 for Japan;
-        3 for China; 4 for Italy; 5 for Turkey (locally = 3); 6 for Taiwan (
-        locally = 0)
+    Get z2pt5 using Campbell and Bozorgnia (2014) relationship.
     """
-    if region == 2:  # in Japan
-        Z25 = np.exp(5.359 - 1.102 * np.log(Vs30))
-    else:
+    if region == 'Global': # California and non-Japan regions
         Z25 = np.exp(7.089 - 1.144 * np.log(Vs30))
+    else: # Japan
+        Z25 = np.exp(5.359 - 1.102 * np.log(Vs30))
 
     return Z25
 
