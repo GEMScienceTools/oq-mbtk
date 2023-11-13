@@ -120,7 +120,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         with_betw_ratio = 1.7 # add between-event and within-event sigma using ratio of 1.7 to partition total sigma
                 
         [models.3-CampbellBozorgnia2014]
-        set_between_epsilon = 1.5 # set between-event epsilon (i.e. tau epsilon)
+        set_between_epsilon = 0.5 # Shift the mean with formula mean --> mean + epsilon_tau * between event
                                
         [models.1-AbrahamsonEtAl2014]
         median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
