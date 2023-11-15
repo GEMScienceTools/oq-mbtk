@@ -31,7 +31,7 @@ jobs:
         $Env:PY_HOME=$MYPATH
         $Env:PY_LIBS="$MYPATH\Lib;$MYPATH\Lib\site-package"
         Write-Host "MYPATH Directory: $MYPATH"
-        sleep 15
+        Start-Job -ScriptBlock{& 'oq.exe' dbserver upgrade}
         oq.exe --version
         Write-Host "Print all environments variables to check"
         dir env:
