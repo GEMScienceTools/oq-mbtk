@@ -34,12 +34,7 @@ jobs:
     - name: Run test with pytest
       run: |
         source ~/openquake/bin/activate
-        oq dbserver start
-        # Wait the DbServer to come up
-        echo "Waiting DBServer up on port 1908...."
-        while ! nc -z localhost 1908; do
-          sleep 2 # wait for 1/10 of the second before check again
-        done
+        oq dbserver upgrade
         oq --version
         sleep 3
         cd openquake
