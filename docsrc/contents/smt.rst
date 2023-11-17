@@ -120,7 +120,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         with_betw_ratio = 1.7 # add between-event and within-event sigma using ratio of 1.7 to partition total sigma
                 
         [models.3-CampbellBozorgnia2014]
-        set_between_epsilon = 1.5 # set between-event epsilon (i.e. tau epsilon)
+        set_between_epsilon = 0.5 # Shift the mean with formula mean --> mean + epsilon_tau * between event
                                
         [models.1-AbrahamsonEtAl2014]
         median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
@@ -153,7 +153,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.KothaEtAl2020ESHM20] # ESHM20 model
         sigma_mu_epsilon = 2.85697 
         c3_epsilon = 1.72    
-        region = 4 # Note that within residuals specify region here, whereas in comparison module toml (below) we specify using the eshm20_region param
+        region = 4 # Note that within the residuals toml we specify the region here, whereas in the comparison module toml (below) we specify the region for all ESHM20 GMMs uniformly using the eshm20_region param
         
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
@@ -466,7 +466,6 @@ Comparing GMPEs
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_type = 'rrup' # or rjb, repi or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
-        region = 0 # for NGAWest2 GMPE regionalisation
         eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
         Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 or 3)
         
@@ -476,6 +475,7 @@ Comparing GMPEs
         Z1 = -999
         Z25 = -999
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
+        region = 'Global' # get region specific z1pt0 and zpt50 ('Global' or 'Japan') 
         
         # Characterise earthquake for the region of interest as finite rupture
         [source_properties]

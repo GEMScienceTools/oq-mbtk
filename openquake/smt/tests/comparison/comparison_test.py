@@ -34,7 +34,7 @@ base = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
 TARGET_VS30 = 800
-TARGET_REGION = 0
+TARGET_REGION = 'Global'
 TARGET_TRELLIS_DEPTHS = [20,25,30]
 TARGET_RMAX = 300
 TARGET_NSTD = 2
@@ -118,15 +118,24 @@ class ComparisonTestCase(unittest.TestCase):
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
         
-        mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor,
-                                            config.imt_list, config.mag_list,
-                                            config.gmpes_list, config.rake,
-                                            config.strike, config.dip, 
+        mtxs_medians = compute_matrix_gmpes(config.trt,
+                                            config.ztor,
+                                            config.imt_list,
+                                            config.mag_list,
+                                            config.gmpes_list,
+                                            config.rake,
+                                            config.strike,
+                                            config.dip, 
                                             config.depth_for_non_trel_or_rs_fun,
-                                            config.Z1, config.Z25, config.Vs30,
-                                            config.region, config.maxR,
-                                            config.aratio, config.eshm20_region,
-                                            config.dist_type, mtxs_type='median',
+                                            config.Z1,
+                                            config.Z25,
+                                            config.Vs30,
+                                            config.region,
+                                            config.maxR,
+                                            config.aratio,
+                                            config.eshm20_region,
+                                            config.dist_type,
+                                            mtxs_type='median',
                                             up_or_down_dip=config.up_or_down_dip)
         
         # Check correct number of imts
@@ -147,15 +156,24 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
            
         # Get medians
-        mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor,
+        mtxs_medians = compute_matrix_gmpes(config.trt,
+                                            config.ztor,
                                             config.imt_list,
-                                            config.mag_list, config.gmpes_list,
-                                            config.rake, config.strike, config.dip, 
+                                            config.mag_list,
+                                            config.gmpes_list,
+                                            config.rake,
+                                            config.strike,
+                                            config.dip, 
                                             config.depth_for_non_trel_or_rs_fun,
-                                            config.Z1, config.Z25, config.Vs30,
-                                            config.region, config.maxR,
-                                            config.aratio, config.eshm20_region,
-                                            config.dist_type, mtxs_type='median',
+                                            config.Z1,
+                                            config.Z25,
+                                            config.Vs30,
+                                            config.region,
+                                            config.maxR,
+                                            config.aratio,
+                                            config.eshm20_region,
+                                            config.dist_type,
+                                            mtxs_type='median',
                                             up_or_down_dip=config.up_or_down_dip)
                 
         # Sammons checks
@@ -196,14 +214,21 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
         
         # Median clustering checks
-        mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor,
-                                            config.imt_list, config.mag_list,
-                                            config.gmpes_list, config.rake,
-                                            config.strike, config.dip, 
+        mtxs_medians = compute_matrix_gmpes(config.trt,
+                                            config.ztor,
+                                            config.imt_list,
+                                            config.mag_list,
+                                            config.gmpes_list,
+                                            config.rake,
+                                            config.strike,
+                                            config.dip, 
                                             config.depth_for_non_trel_or_rs_fun,
-                                            config.Z1, config.Z25,
-                                            config.Vs30, config.region,
-                                            config.maxR, config.aratio,
+                                            config.Z1,
+                                            config.Z25,
+                                            config.Vs30,
+                                            config.region,
+                                            config.maxR,
+                                            config.aratio,
                                             config.eshm20_region,
                                             config.dist_type,
                                             mtxs_type='median',
@@ -232,14 +257,21 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
         
         # Median clustering checks
-        mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor,
-                                            config.imt_list, config.mag_list,
-                                            config.gmpes_list, config.rake,
-                                            config.strike, config.dip, 
+        mtxs_medians = compute_matrix_gmpes(config.trt,
+                                            config.ztor,
+                                            config.imt_list,
+                                            config.mag_list,
+                                            config.gmpes_list,
+                                            config.rake,
+                                            config.strike,
+                                            config.dip, 
                                             config.depth_for_non_trel_or_rs_fun,
-                                            config.Z1, config.Z25,
-                                            config.Vs30, config.region,
-                                            config.maxR, config.aratio,
+                                            config.Z1,
+                                            config.Z25,
+                                            config.Vs30,
+                                            config.region,
+                                            config.maxR,
+                                            config.aratio,
                                             config.eshm20_region,
                                             config.dist_type,
                                             mtxs_type='84th_perc',
@@ -268,27 +300,56 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
         
         # Trellis plots
-        plot_trellis_util(config.trt, config.ztor, config.rake, config.strike,
-                          config.dip, config.trellis_and_rs_depth, config.Z1,
-                          config.Z25, config.Vs30, config.region, config.imt_list,
-                          config.trellis_and_rs_mag_list, config.maxR, config.gmpes_list,
-                          config.aratio, config.Nstd, self.output_directory,
-                          config.custom_color_flag, config.custom_color_list,
-                          config.eshm20_region, config.dist_type,
-                          config.lt_weights_gmc1, config.lt_weights_gmc2,
+        plot_trellis_util(config.trt,
+                          config.ztor,
+                          config.rake, config.strike,
+                          config.dip,
+                          config.trellis_and_rs_depth,
+                          config.Z1,
+                          config.Z25,
+                          config.Vs30,
+                          config.region,
+                          config.imt_list,
+                          config.trellis_and_rs_mag_list,
+                          config.maxR,
+                          config.gmpes_list,
+                          config.aratio,
+                          config.Nstd,
+                          self.output_directory,
+                          config.custom_color_flag,
+                          config.custom_color_list,
+                          config.eshm20_region,
+                          config.dist_type,
+                          config.lt_weights_gmc1,
+                          config.lt_weights_gmc2,
                           up_or_down_dip=config.up_or_down_dip)
         
         # Spectra plots 
-        plot_spectra_util(config.trt, config.ztor, config.rake, config.strike,
-                          config.dip, config.trellis_and_rs_depth, config.Z1,
-                          config.Z25, config.Vs30, config.region,
-                          config.max_period, config.trellis_and_rs_mag_list,
-                          config.dist_list, config.gmpes_list, config.aratio,
-                          config.Nstd, self.output_directory,
-                          config.custom_color_flag, config.custom_color_list,
-                          config.eshm20_region, config.dist_type, 
-                          config.lt_weights_gmc1, config.lt_weights_gmc2,
-                          obs_spectra=None, up_or_down_dip=config.up_or_down_dip) 
+        plot_spectra_util(config.trt,
+                          config.ztor,
+                          config.rake,
+                          config.strike,
+                          config.dip,
+                          config.trellis_and_rs_depth,
+                          config.Z1,
+                          config.Z25,
+                          config.Vs30,
+                          config.region,
+                          config.max_period,
+                          config.trellis_and_rs_mag_list,
+                          config.dist_list,
+                          config.gmpes_list,
+                          config.aratio,
+                          config.Nstd,
+                          self.output_directory,
+                          config.custom_color_flag,
+                          config.custom_color_list,
+                          config.eshm20_region,
+                          config.dist_type, 
+                          config.lt_weights_gmc1,
+                          config.lt_weights_gmc2,
+                          obs_spectra=None,
+                          up_or_down_dip=config.up_or_down_dip) 
        
         # Specify target files
         target_file_trellis = (os.path.join(
