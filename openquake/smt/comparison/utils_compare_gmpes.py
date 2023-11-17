@@ -212,13 +212,11 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                     tau_store.append(tau_dist)
                     
                     if Nstd != 0:
-                            rs_plus_sigma_dist = np.exp(f(i)+(Nstd*sigma_dist))
-                            rs_minus_sigma_dist = np.exp(f(i)-(Nstd*sigma_dist))
-                   
-                    if Nstd != 0:
+                        rs_plus_sigma_dist = np.exp(f(i)+(Nstd*sigma_dist))
+                        rs_minus_sigma_dist = np.exp(f(i)-(Nstd*sigma_dist))
                         rs_plus_sigma.append(rs_plus_sigma_dist)
                         rs_minus_sigma.append(rs_minus_sigma_dist)
-                    
+                        
                 # Plot individual GMPEs
                 if 'plot_lt_only' not in str(gmpe):
                     ax1.plot(period, rs_50p, color = col, linewidth=2,
@@ -806,9 +804,9 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
-                lt_vals_plus_sig_gmc1[gmpe] = {
+                lt_vals_plus_sig_gmc1[gmpe,'p_sig'] = {
                     'plus_sigma': rs_plus_sigma_weighted_gmc1}
-                lt_vals_minus_sig_gmc1[gmpe] = {
+                lt_vals_minus_sig_gmc1[gmpe,'m_sig'] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc1}
                 
     # Logic tree #2              
@@ -831,9 +829,9 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
-                lt_vals_plus_sig_gmc2[gmpe] = {
+                lt_vals_plus_sig_gmc2[gmpe,'p_sig'] = {
                     'plus_sigma': rs_plus_sigma_weighted_gmc2}
-                lt_vals_minus_sig_gmc2[gmpe] = {
+                lt_vals_minus_sig_gmc2[gmpe,'m_sig'] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc2}
         
     return (lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
@@ -872,10 +870,10 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, gmc1_or_gmc2,
                     lt_df_gmc[gmpe].loc['median']))
                 if Nstd != 0:
                     wt_plus_sigma_per_gmpe_gmc[gmpe] = np.array(
-                        pd.Series(lt_df_plus_sigma_gmc[gmpe].loc[
+                        pd.Series(lt_df_plus_sigma_gmc[gmpe,'p_sig'].loc[
                             'plus_sigma']))
                     wt_minus_sigma_per_gmpe_gmc[gmpe] = np.array(
-                        pd.Series(lt_df_minus_sigma_gmc[gmpe].loc[
+                        pd.Series(lt_df_minus_sigma_gmc[gmpe,'m_sig'].loc[
                             'minus_sigma']))
             
         lt_df_gmc = pd.DataFrame(wt_per_gmpe_gmc, index=period)
