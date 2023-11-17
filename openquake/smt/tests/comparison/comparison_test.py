@@ -34,7 +34,7 @@ base = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
 TARGET_VS30 = 800
-TARGET_REGION = 0
+TARGET_REGION = 'Global'
 TARGET_TRELLIS_DEPTHS = [20,25,30]
 TARGET_RMAX = 300
 TARGET_NSTD = 2
