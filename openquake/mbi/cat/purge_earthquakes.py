@@ -55,11 +55,11 @@ def main(fname_cat, fname_cat_out, fname_csv):
     #
     # Read file with the list of IDs
     event_df = pd.read_csv(fname_csv)
+    dup_ids = [str(d) for d in event_df['eventID'].values]
 
     #
     # Drop events
-    for key in event_df['eventID'].values:
-        cat.drop(cat[cat['eventID'] == key].index, inplace=True)
+    cat = cat[~cat['eventID'].isin(dup_ids)]
     print('The catalogue contains {:d} earthquakes'.format(len(cat)))
     cat.to_hdf(fname_cat_out, '/events', append=False)
 
