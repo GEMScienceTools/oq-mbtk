@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # ------------------- The OpenQuake Model Building Toolkit --------------------
 # Copyright (C) 2022 GEM Foundation
 #           _______  _______        __   __  _______  _______  ___   _
@@ -26,36 +25,42 @@
 # coding: utf-8
 
 import os
-import re
+import unittest
+import filecmp
+import numpy as np
 import pandas as pd
+import toml
 
-from shutil import copyfile
-from openquake.baselib import sap
-from openquake.cat.hmg import purge
+from openquake.cat.hmg.purge import purge 
 
+# -----------------------------------------------------------------------------
 
-def main(fname_cat, fname_cat_out, fname_csv):
-    """
-    :param fname_cat:
-       Name of the .h5 file with the homogenised catalogue
-    :param fname_cat_out:
-       Name of the .h5 file where the new catalogue will be stored
-       once duplicates are removed
-    :param fname_csv:
-        name of the csv file with one column "eventID" that lists
-        duplicates to be removed from the catalogue 
-    """
+BASE_DATA_PATH = os.path.dirname(__file__)
 
-    purge(fname_cat, fname_cat_out, fname_csv) 
+# -----------------------------------------------------------------------------
 
 
-main.fname_cat = '.h5 file with origins'
-main.fname_cat_out = '.h5 file with origins excluded'
-main.fname_csv = '.csv file with the list of events ID to purge'
+class PurgeTestCase(unittest.TestCase):
 
-if __name__ == "__main__":
-    """
-    This removes from the catalogue the events indicated in the the
-    `fname_csv` file.
-    """
-    sap.run(main)
+    def setUp(self):
+
+        self.data_path = os.path.join(BASE_DATA_PATH, 'data', 'test_purge')
+
+    def test_case01(self):
+        """
+        tests that two events are purged from a catlogue 
+        """
+        # Reading h5 
+        fname_cat = os.path.join(self.data_path, "test_h5_in.h5")
+        test_file = os.path.join(self.data_path, "test_h5_purged.h5")
+        base_file = os.path.join(self.data_path, "test_h5_purged_expected.h5")
+        dups = os.path.join(self.data_path, "duplicates.csv")
+        purge(fname_cat, test_file, dups) 
+        os.remove(fname_cat+'.bak')
+
+        # compare files
+        cat1 = pd.read_hdf(test_file)
+        cat2 = pd.read_hdf(base_file)
+        self.assertTrue(cat1.equals(cat2))
+#        self.assertTrue(filecmp.cmp(base_file, test_file))
+        os.remove(test_file)

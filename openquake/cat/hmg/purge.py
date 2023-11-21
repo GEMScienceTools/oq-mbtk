@@ -31,10 +31,9 @@ import pandas as pd
 
 from shutil import copyfile
 from openquake.baselib import sap
-from openquake.cat.hmg import purge
 
 
-def main(fname_cat, fname_cat_out, fname_csv):
+def purge(fname_cat, fname_cat_out, fname_csv):
     """
     :param fname_cat:
        Name of the .h5 file with the homogenised catalogue
@@ -46,16 +45,30 @@ def main(fname_cat, fname_cat_out, fname_csv):
         duplicates to be removed from the catalogue 
     """
 
-    purge(fname_cat, fname_cat_out, fname_csv) 
+    # make backup file
+    if not os.path.exists(fname_cat+'.bak'):
+        copyfile(fname_cat, fname_cat+'.bak')
+    else:
+        raise ValueError("Backup file already exists")
 
+    if os.path.exists(fname_cat_out):
+        if not os.path.exists(fname_cat_out+'.bak'):
+            copyfile(fname_cat_out, fname_cat_out+'.bak')
+        else:
+            raise ValueError("Backup file already exists")
 
-main.fname_cat = '.h5 file with origins'
-main.fname_cat_out = '.h5 file with origins excluded'
-main.fname_csv = '.csv file with the list of events ID to purge'
+    #
+    # Read catalogue
+    cat = pd.read_hdf(fname_cat)
+    print('The catalogue contains {:d} earthquakes'.format(len(cat)))
 
-if __name__ == "__main__":
-    """
-    This removes from the catalogue the events indicated in the the
-    `fname_csv` file.
-    """
-    sap.run(main)
+    #
+    # Read file with the list of IDs
+    event_df = pd.read_csv(fname_csv)
+    dup_ids = [str(d) for d in event_df['eventID'].values]
+
+    #
+    # Drop events
+    cat = cat[~cat['eventID'].isin(dup_ids)]
+    print('The catalogue contains {:d} earthquakes'.format(len(cat)))
+    cat.to_hdf(fname_cat_out, '/events', append=False)
