@@ -51,10 +51,11 @@ def purge(fname_cat, fname_cat_out, fname_csv):
     else:
         raise ValueError("Backup file already exists")
 
-    if not os.path.exists(fname_cat_out+'.bak'):
-        copyfile(fname_cat_out, fname_cat_out+'.bak')
-    else:
-        raise ValueError("Backup file already exists")
+    if os.path.exists(fname_cat_out):
+        if not os.path.exists(fname_cat_out+'.bak'):
+            copyfile(fname_cat_out, fname_cat_out+'.bak')
+        else:
+            raise ValueError("Backup file already exists")
 
     #
     # Read catalogue
