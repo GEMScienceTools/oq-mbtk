@@ -30,6 +30,7 @@ jobs:
         cd ..
         source ~/openquake/bin/activate
         pip list
+        pip install -e .
         pip install pytest
     - name: Run test with pytest
       run: |
