@@ -2,11 +2,12 @@ name: test and make pages
 
 on:
   push:
-    branches: [ ae-py310 ]
+    branches: [ test ]
   pull_request:
     branches: [ master ]
   schedule:
     - cron: "0 2 * * *"
+  workflow_dispatch:
 
 jobs:
   test:
