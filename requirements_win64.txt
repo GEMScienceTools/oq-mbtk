@@ -1,8 +1,8 @@
 #Openquake wheelhouse
-https://wheelhouse.openquake.org/v3/windows/py310/GDAL-3.4.3-cp310-cp310-win_amd64.whl
-https://wheelhouse.openquake.org/v3/windows/py310/Fiona-1.8.21-cp310-cp310-win_amd64.whl
-https://wheelhouse.openquake.org/v3/windows/py310/pyproj-3.4.0-cp310-cp310-win_amd64.whl
 https://wheelhouse.openquake.org/v3/windows/py310/numpy-1.23.3-cp310-cp310-win_amd64.whl
+https://wheelhouse.openquake.org/v3/windows/py310/pyproj-3.6.1-cp310-cp310-win_amd64.whl
+https://wheelhouse.openquake.org/v3/windows/py310/GDAL-3.7.3-cp310-cp310-win_amd64.whl
+https://wheelhouse.openquake.org/v3/windows/py310/fiona-1.9.5-cp310-cp310-win_amd64.whl
 
 # OQ mbtk requirements
 
@@ -19,12 +19,10 @@ jupyter-server==2.6.0
 xarray==2023.5.0
 pandas == 1.4.0
 pyzmq == 24
-pyproj <= 3.4.0
-
+#
 # Generic
 toml 
 nbformat
-pyproj
 geojson
 nbconvert
 obspy
