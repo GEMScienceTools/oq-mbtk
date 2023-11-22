@@ -3,7 +3,7 @@ name: Windows Test
 on:
   push:
     branches:
-      - ae-workflow
+      - test
   schedule:
     - cron: "0 7 * * *"
   workflow_dispatch:
