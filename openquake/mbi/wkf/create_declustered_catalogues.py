@@ -27,11 +27,11 @@ from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 
 
 def catalogue_declustering(fname: str, output_folder: str,
-                           subcatalogues: bool = False):
+                           subcatalogues: bool = False,
+                           fs_time_prop: float = 0.1):
     """
     Declusters a catalogue using a standard set of declustering algorithms.
     """
-
     create_folder(output_folder)
     create_folder('./tmp')
 
@@ -48,7 +48,7 @@ def catalogue_declustering(fname: str, output_folder: str,
     # Declustering with the classical GK algorithm
     declustering_meth = 'GardnerKnopoffType1'
     declustering_params = {'time_distance_window': 'GardnerKnopoffWindow',
-                           'fs_time_prop': 0.9}
+                           'fs_time_prop': fs_time_prop}
     out = decluster(fname,
                     declustering_meth,
                     declustering_params,
@@ -62,7 +62,7 @@ def catalogue_declustering(fname: str, output_folder: str,
 
     declustering_meth = 'GardnerKnopoffType1'
     declustering_params = {'time_distance_window': 'UhrhammerWindow',
-                           'fs_time_prop': 0.9}
+                           'fs_time_prop': fs_time_prop}
     out = decluster(fname,
                     declustering_meth,
                     declustering_params,
@@ -77,7 +77,7 @@ def catalogue_declustering(fname: str, output_folder: str,
 
     declustering_meth = 'GardnerKnopoffType1'
     declustering_params = {'time_distance_window': 'GruenthalWindow',
-                           'fs_time_prop': 0.9}
+                           'fs_time_prop': fs_time_prop}
     _ = decluster(fname,
                   declustering_meth,
                   declustering_params,
@@ -90,7 +90,8 @@ def catalogue_declustering(fname: str, output_folder: str,
                   fix_defaults=True)
 
 
-def main(fname: str, output_folder: str, *, subcatalogues: bool = False):
+def main(fname: str, output_folder: str, *, subcatalogues: bool = False,
+         fs_time_prop: float = 0.1):
     """
     Creates catalogues with mainshocks and after/foreshocks using the GK
     algorithm and three declustering windows:
@@ -105,6 +106,7 @@ main.fname = 'Name of the .csv formatted catalogue'
 main.output_folder = 'Path to the output folder'
 msg = 'Boolean, when true it creates subcatalogues'
 main.subcatalogues = msg
+main.fs_time_prop = msg
 
 if __name__ == '__main__':
     sap.run(main)

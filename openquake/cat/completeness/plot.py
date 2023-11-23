@@ -59,23 +59,36 @@ def get_xy(ctab, ymax=2015, rndx=0.0, rndy=0.0):
     return np.array([(a, b) for a, b in zip(x, y)])
 
 
-def main(folder, ymin=1900, ymax=2020, mmin=4.0, mmax=8.0):
-
-    perms = np.load(os.path.join(folder, 'dispositions.npy'))
-    mags = np.load(os.path.join(folder, 'mags.npy'))
-    years = np.load(os.path.join(folder, 'years.npy'))
+def plot_completeness(
+    perms, mags, years, ymin=1900, ymax=2020, mmin=4.0, mmax=8.0, fname='',
+    apriori={}, apriori_in={}):
+    """
+    Plots the set of completeness windows defined in by the `perms`, `mags`,
+    `years` triple.
+    """
 
     fig, ax = plt.subplots()
     lines = []
     colors = np.random.rand(len(perms), 3)
-
+    labls = []
     for i, prm in enumerate(perms):
         idx = prm.astype(int)
         tmp = np.array([(y, m) for y, m in zip(years, mags[idx])])
         ctab = clean_completeness(tmp)
         coo = get_xy(ctab, rndx=0.0, rndy=0.1)
-        # ax.plot(coo[:, 0], coo[:, 1], color=colors[i, :])
         lines.append(tuple([(x, y) for x, y in zip(coo[:, 0], coo[:, 1])]))
+        labls.append(f'{i}')
+
+    for key in apriori:
+        mag = float(apriori[key])
+        yea = float(key)
+        plt.plot(yea, mag, 'o', color='red')
+
+    for key in apriori_in:
+        mag = float(apriori_in[key])
+        yea = float(key)
+        print(mag, yea)
+        plt.plot(yea, mag, 'o', markersize=10., color='green')
 
     coll = matplotlib.collections.LineCollection(lines, colors=colors)
     ax.add_collection(coll)
@@ -86,8 +99,23 @@ def main(folder, ymin=1900, ymax=2020, mmin=4.0, mmax=8.0):
     ax.set_xlim(ymin, ymax)
     ax.set_ylim(mmin, mmax)
 
-    plt.savefig('completeness.png')
+    if len(fname):
+        plt.savefig(fname)
     plt.show()
+
+
+def main(folder, ymin=1900, ymax=2020, mmin=4.0, mmax=8.0):
+    """
+    Plots the set of completeness windows defined by the `perms`, `mags`,
+    `years` triple files in a given folder.
+    """
+
+    perms = np.load(os.path.join(folder, 'dispositions.npy'))
+    mags = np.load(os.path.join(folder, 'mags.npy'))
+    years = np.load(os.path.join(folder, 'years.npy'))
+
+    fname = 'completeness.png'
+    plot_completeness(perms, mags, years, ymin, ymax, mmin, mmax, fname)
 
 
 main.folder = 'Folder containing the completeness files'
