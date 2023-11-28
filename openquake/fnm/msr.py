@@ -38,3 +38,9 @@ def area_to_mag(area, type='generic'):
         return np.log10(area) + 4.0
     else:
         raise ValueError("MSR not supported")
+
+def mag_to_area(area, type='generic'):
+    if type == 'generic':
+        return 10**(area - 4.0)
+    else:
+        raise ValueError("MSR not supported")
