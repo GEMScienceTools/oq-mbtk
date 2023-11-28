@@ -40,7 +40,8 @@ from ast import literal_eval
 
 from openquake.fnm.section import get_subsection
 from openquake.fnm.fault_system import get_rups_fsys
-from openquake.fnm.importer import kite_surfaces_from_geojson
+from openquake.fnm.importer import (kite_surfaces_from_geojson, 
+                                    simple_fault_surfaces_from_geojson)
 from openquake.fnm.inversion.soe_builder import make_eqns
 
 from openquake.fnm.inversion.utils import (
@@ -313,6 +314,7 @@ def build_info_from_faults(
     rake_key="rake",
     rake_err_key="rake_err",
     edge_sampling_dist=2.0,
+    surface_type='kite',
 ):
     if settings is None:
         if settings_file is None:
@@ -327,8 +329,12 @@ def build_info_from_faults(
         fgj = json.load(f)
         faults = fgj["features"]
 
-    surfaces = kite_surfaces_from_geojson(fault_geojson_file,
-                                          edge_sd=edge_sampling_dist)
+    if surface_type == 'kite':
+        surfaces = kite_surfaces_from_geojson(fault_geojson_file,
+                                              edge_sd=edge_sampling_dist)
+    elif surface_type == 'simple_fault':
+        surfaces = simple_fault_surfaces_from_geojson(fault_geojson_file,
+                                                      edge_sd=edge_sampling_dist)
 
     rup_fault_data = get_rups_fsys(surfaces, settings)
 
