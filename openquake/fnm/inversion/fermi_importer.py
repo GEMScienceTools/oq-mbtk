@@ -314,7 +314,7 @@ def build_info_from_faults(
     rake_key="rake",
     rake_err_key="rake_err",
     edge_sampling_dist=2.0,
-    surface_type='kite',
+    surface_type='simple_fault',
 ):
     if settings is None:
         if settings_file is None:

@@ -35,6 +35,8 @@ import numpy.typing as npt
 from numba import njit, int64, boolean
 from openquake.fnm.msr import area_to_mag
 
+from openquake.hazardlib.geo.surface import SimpleFaultSurface
+
 
 def get_mags_and_areas(rups: list, areas: npt.ArrayLike, key: str = "generic"):
     """
@@ -77,7 +79,8 @@ def _get_rupture_area(surfs: list, rups: npt.ArrayLike) -> npt.ArrayLike:
         surf = surfs[int(subr[6])]
 
         # Compute the surface of each cell composing the surface
-        if hasattr(surf, "get_area"):
+        #if hasattr(surf, "get_area"):
+        if isinstance(surf, SimpleFaultSurface):
             surf_area = surf.get_area()
             area += surf_area
         else:
