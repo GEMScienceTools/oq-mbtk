@@ -23,6 +23,8 @@ jobs:
         Write-Host ${env:PATH}
     - name: Run scripts to install on windows
       run: |
+        Write-Host "Set LIBRARY PATH for GMT"
+        $Env:GMT_LIBRARY_PATH="C:\programs\gmt6\bin"
         Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
         #
         $curDir = Get-Location
