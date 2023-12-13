@@ -146,12 +146,6 @@ def subdivide_simple_fault_surface(
 
     n_subsec_pts_strike = ((n_pts_strike - 1) / num_segs_along_strike) + 1
 
-    if n_subsec_pts_strike != round(n_subsec_pts_strike):
-        pass
-        # from IPython.core.debugger import set_trace
-
-        # set_trace()
-
     assert n_subsec_pts_strike % 1 == 0.0, (
         "Resampled trace not dividing equally among subsegments: "
         + f"{n_subsec_pts_strike}"
@@ -293,6 +287,8 @@ def get_subsections_from_fault(
         ).get_length()
         subfault['width'] = subfault['surface'].get_width()
         subfault["area"] = subfault["surface"].get_area()
+        subfault["strike"] = subfault["surface"].get_strike()
+        subfault["dip"] = subfault["surface"].get_dip()
         subfault["subsec_id"] = i
 
         subsections.append(subfault)
@@ -305,25 +301,13 @@ def make_subfault_df(all_subfaults):
     subfault_df = subfault_df.reset_index(drop=True)
     subfault_df.index.name = "subfault_id"
 
-    strikes = []
-    dips = []
-
-    for row in subfault_df.itertuples():
-        strikes.append(row.surface.get_strike())
-        dips.append(row.surface.get_dip())
-
-    subfault_df['strike'] = strikes
-    subfault_df['dip'] = dips
-
     return subfault_df
 
 
 def group_subfaults_by_fault(subfaults: list[dict]) -> dict:
-    subfault_dict = {}
-    for fault_group in subfaults:
-        if fault_group[0]['fid'] not in subfault_dict:
-            subfault_dict[fault_group[0]['fid']] = []
-        subfault_dict[fault_group[0]['fid']].append(fault_group)
+    subfault_dict = {
+        fault_group[0]['fid']: fault_group for fault_group in subfaults
+    }
 
     return subfault_dict
 
@@ -481,3 +465,96 @@ def make_rupture_gdf(rupture_df, subfault_gdf, keep_sequences=False):
         del rupture_gdf['frac_area']
 
     return rupture_gdf
+
+
+def merge_meshes(arrays, positions):
+    """
+    Merge multiple 2D numpy arrays into a larger 2D array based on their relative positions,
+    allowing for arbitrary starting indices.
+
+    :param arrays: List of 2D numpy arrays.
+    :param positions: List of tuples indicating the row and column positions of each array in the larger array.
+    :return: Merged 2D numpy array.
+    """
+    # Adjust the positions so that the minimum starts at 0
+    min_row = min(pos[0] for pos in positions)
+    min_col = min(pos[1] for pos in positions)
+    adjusted_positions = [(r - min_row, c - min_col) for r, c in positions]
+
+    # Determine the size of the final array
+    max_row = max(
+        pos[0] + arr.shape[0] for arr, pos in zip(arrays, adjusted_positions)
+    )
+    max_col = max(
+        pos[1] + arr.shape[1] for arr, pos in zip(arrays, adjusted_positions)
+    )
+    final_array = np.zeros((max_row, max_col))
+
+    # Track placed array positions
+    placed = np.zeros_like(final_array, dtype=bool)
+
+    for arr, pos in zip(arrays, adjusted_positions):
+        r, c = pos
+        end_r, end_c = r + arr.shape[0], c + arr.shape[1]
+
+        # Handle overlapping rows and columns
+        overlap_rows = np.any(placed[r:end_r, c:end_c], axis=1)
+        overlap_cols = np.any(placed[r:end_r, c:end_c], axis=0)
+
+        # Remove the duplicated edges
+        arr_adjusted = arr[~overlap_rows, :][:, ~overlap_cols]
+
+        # Place the array
+        final_array[
+            r : r + arr_adjusted.shape[0], c : c + arr_adjusted.shape[1]
+        ] = arr_adjusted
+
+        # Update the placed positions
+        placed[
+            r : r + arr_adjusted.shape[0], c : c + arr_adjusted.shape[1]
+        ] = True
+
+    return final_array
+
+
+def make_mesh_from_subfaults(subfaults):
+    if len(subfaults) == 1:
+        return subfaults[0]['surface'].mesh
+
+    big_lons = merge_meshes(
+        [sf['surface'].mesh.lons for sf in subfaults],
+        [sf['fault_position'] for sf in subfaults],
+    )
+
+    big_lats = merge_meshes(
+        [sf['surface'].mesh.lats for sf in subfaults],
+        [sf['fault_position'] for sf in subfaults],
+    )
+    big_depths = merge_meshes(
+        [sf['surface'].mesh.depths for sf in subfaults],
+        [sf['fault_position'] for sf in subfaults],
+    )
+
+    return RectangularMesh(big_lons, big_lats, big_depths)
+
+
+def make_sf_rupture_mesh(rupture_indices, subfaults):
+    subs = [subfaults[i] for i in rupture_indices]
+    mesh = make_mesh_from_subfaults(subs)
+    return mesh
+
+
+def make_sf_rupture_meshes(all_rupture_indices, faults, all_subfaults):
+    grouped_subfaults = group_subfaults_by_fault(all_subfaults)
+
+    rup_meshes = []
+
+    for i, rup_indices in enumerate(all_rupture_indices):
+        try:
+            subs_for_fault = grouped_subfaults[faults[i]]
+            mesh = make_sf_rupture_mesh(rup_indices, subs_for_fault)
+            rup_meshes.append(mesh)
+        except IndexError:
+            print(i)
+
+    return rup_meshes
