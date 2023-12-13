@@ -84,31 +84,6 @@ def get_fault_property_for_rup(i, prop, single_sec_rups, faults, f_idx=6):
     return props[prop]
 
 
-def slip_vector_azimuth(strike, dip, rake):
-    # Convert degrees to radians
-    strike_rad = np.radians(strike)
-    dip_rad = np.radians(dip)
-    rake_rad = np.radians(rake) * -1
-
-    # Calculate the 3D Cartesian coordinates of the slip vector
-    slip_x = -np.sin(rake_rad) * np.sin(strike_rad) - np.cos(rake_rad) * np.sin(
-        dip_rad
-    ) * np.cos(strike_rad)
-    slip_y = np.sin(rake_rad) * np.cos(strike_rad) - np.cos(rake_rad) * np.sin(
-        dip_rad
-    ) * np.sin(strike_rad)
-
-    # Calculate the azimuth of the slip vector
-    azimuth = np.degrees(np.arctan2(slip_y, slip_x))
-
-    # Ensure the azimuth is between 0 and 360 degrees
-    if azimuth < 0:
-        azimuth += 360
-    if azimuth >= 360.0:
-        azimuth -= 360.0
-
-    return azimuth
-
 
 def match_rup_with_subsecs(rup, subsecs, subsec_start_index=0):
     matching_subsecs = []

@@ -52,8 +52,13 @@ from openquake.fnm.msr import area_to_mag
 from openquake.fnm.inversion.utils import (
     weighted_mean,
     get_rupture_displacement,
+    SHEAR_MODULUS,
+    slip_vector_azimuth,
+    rup_df_to_rupture_dicts,
+    subsection_df_to_fault_dicts,
 )
 
+from openquake.fnm.inversion.soe_builder import make_eqns
 
 logging.basicConfig(
     format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
@@ -300,6 +305,14 @@ def make_subfault_df(all_subfaults):
     subfault_df = pd.concat(pd.DataFrame(sf) for sf in all_subfaults)
     subfault_df = subfault_df.reset_index(drop=True)
     subfault_df.index.name = "subfault_id"
+    subfault_df['slip_azimuth'] = [
+        slip_vector_azimuth(*params)
+        for params in zip(
+            subfault_df.strike.values,
+            subfault_df.dip.values,
+            subfault_df.rake.values,
+        )
+    ]
 
     return subfault_df
 
@@ -373,6 +386,9 @@ def make_rupture_df(
     rupture_df['mean_rake'] = np.round(mean_rakes, 1)
     rupture_df['mag'] = np.round(mags, 2)
     rupture_df['area'] = np.round(all_areas, 1)
+    rupture_df['displacement'] = get_rupture_displacement(
+        rupture_df['mag'], rupture_df['area'], shear_modulus=SHEAR_MODULUS
+    )
 
     return rupture_df
 
@@ -558,3 +574,30 @@ def make_sf_rupture_meshes(all_rupture_indices, faults, all_subfaults):
             print(i)
 
     return rup_meshes
+
+
+def build_system_of_equations(
+    rup_df,
+    subsection_df,
+    mag_col='mag',
+    subfaults_col='subfaults',
+    displacement_col='displacement',
+    slip_rate_col='net_slip_rate',
+    slip_rate_err_col='net_slip_rate_err',
+    **soe_kwargs,
+):
+    ruptures = rup_df_to_rupture_dicts(
+        rup_df,
+        mag_col=mag_col,
+        displacement_col=displacement_col,
+        subfaults_col=subfaults_col,
+    )
+    faults = subsection_df_to_fault_dicts(
+        subsection_df,
+        slip_rate_col=slip_rate_col,
+        slip_rate_err_col=slip_rate_err_col,
+    )
+
+    lhs, rhs, errs = make_eqns(ruptures, faults, **soe_kwargs)
+
+    return lhs, rhs, errs
