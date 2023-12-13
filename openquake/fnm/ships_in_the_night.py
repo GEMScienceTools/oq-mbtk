@@ -14,9 +14,11 @@ from openquake.aft.rupture_distances import (
     RupDistType,
 )
 
+from openquake.fnm.connections import get_angles
 from openquake.fnm.once_more_with_feeling import (
     get_subsections_from_fault,
     get_simple_fault_from_feature,
+    make_sf_rupture_meshes,
 )
 
 
@@ -43,7 +45,7 @@ def get_bounding_box_distances(
 
     fault_bb_dists = get_sequence_pairwise_dists(cart_pts, cart_pts)
 
-    logging.info(" Filtering fault adjacence by distance")
+    logging.info("  Filtering fault adjacence by distance")
     if max_dist is not None:
         fault_bb_dists = fault_bb_dists[fault_bb_dists["d"] <= max_dist]
 
@@ -59,7 +61,7 @@ def get_close_faults(faults, max_dist: Optional[float] = None):
 
 def get_rupture_patches_from_single_fault(
     subfaults,
-    min_aspect_ratio: float = 1.0,
+    min_aspect_ratio: float = 0.8,
     max_aspect_ratio: float = 3.0,
 ):
     num_rows = len(np.unique([sf['fault_position'][0] for sf in subfaults]))
@@ -90,7 +92,7 @@ def get_rupture_patches_from_single_fault(
     return {identifier: single_fault_rups}
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def get_all_contiguous_subsecs(
     NS: int,
     ND: int,
@@ -261,6 +263,40 @@ def make_binary_distance_matrix(dist_matrix, max_dist: float = 10.0):
     binary_dist_matrix[(dist_matrix > 0.0) & (dist_matrix <= max_dist)] = 1
 
     return binary_dist_matrix
+
+
+def get_proximal_rup_angles(sf_meshes, binary_distance_matrix):
+    rup_angles = {}
+    for i, mesh_0 in enumerate(sf_meshes):
+        for j, mesh_1 in enumerate(sf_meshes):
+            if binary_distance_matrix[i, j] == 1:
+                rup_angles[(i, j)] = get_angles(mesh_0, mesh_1)
+    return rup_angles
+
+
+def filter_bin_adj_matrix_by_rupture_angle(
+    single_rup_df,
+    subfaults,
+    binary_adjacence_matrix,
+    threshold_angle=60.0,
+    angle_type='trace',
+):
+    if angle_type == 'trace':
+        angle_index = 1
+    elif angle_type == 'dihedral':
+        angle_index = 0
+
+    sf_meshes = make_sf_rupture_meshes(
+        single_rup_df['patches'], single_rup_df['fault'], subfaults
+    )
+
+    rup_angles = get_proximal_rup_angles(sf_meshes, binary_adjacence_matrix)
+
+    for (i, j), angles in rup_angles.items():
+        if angles[angle_index] < threshold_angle:
+            binary_adjacence_matrix[i, j] = 0
+
+    return binary_adjacence_matrix
 
 
 def get_multifault_ruptures(
