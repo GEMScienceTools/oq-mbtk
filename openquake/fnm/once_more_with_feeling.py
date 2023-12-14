@@ -67,7 +67,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-def get_simple_fault_from_feature(
+def simple_fault_from_feature(
     feature: dict,
     edge_sd: float = 2.0,
     lsd_default: float = 20.0,
@@ -265,6 +265,10 @@ def get_subsections_from_fault(
     #        )
     #    elif surface_type == "kite_surface":
     #        pass
+
+    if np.isscalar(subsection_size):  # len(subsection_size) == 1:
+        # or should we raise an error?
+        subsection_size = [subsection_size, subsection_size]
 
     subsections = []
     subsec_meshes = subdivide_simple_fault_surface(
