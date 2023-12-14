@@ -17,7 +17,7 @@ from openquake.aft.rupture_distances import (
 from openquake.fnm.connections import get_angles
 from openquake.fnm.once_more_with_feeling import (
     get_subsections_from_fault,
-    get_simple_fault_from_feature,
+    simple_fault_from_feature,
     make_sf_rupture_meshes,
 )
 
@@ -75,7 +75,7 @@ def get_rupture_patches_from_single_fault(
     sub_length = subfaults[0]['length']
     sub_width = subfaults[0]['width']
 
-    single_fault_rup_indices = get_all_contiguous_subsecs(
+    single_fault_rup_indices = get_all_contiguous_subfaults(
         num_cols,
         num_rows,
         s_length=sub_length,
@@ -93,16 +93,16 @@ def get_rupture_patches_from_single_fault(
 
 
 # @jit(nopython=True)
-def get_all_contiguous_subsecs(
+def get_all_contiguous_subfaults(
     NS: int,
     ND: int,
     s_length: float = 10.0,
     d_length: float = 10.0,
-    min_aspect_ratio: float = 1.0,
+    min_aspect_ratio: float = 0.8,
     max_aspect_ratio: float = 3.0,
 ):
     subarrays = []
-    if NS == 1:
+    if NS == 1:  # single column
         return [[(d, 0)] for d in range(ND)]
     for row_start in range(ND):
         for col_start in range(NS):
@@ -117,8 +117,10 @@ def get_all_contiguous_subsecs(
                     aspect_ratio = along_strike_length / down_dip_width
 
                     if (
-                        min_aspect_ratio <= aspect_ratio <= max_aspect_ratio
-                    ) or (min_aspect_ratio <= aspect_ratio and n_rows == ND):
+                        (min_aspect_ratio <= aspect_ratio <= max_aspect_ratio)
+                        or (min_aspect_ratio <= aspect_ratio and n_rows == ND)
+                        or (n_rows == 1 and n_cols == 1)
+                    ):
                         subarray = [
                             (r, c)
                             for r in range(row_start, row_end + 1)

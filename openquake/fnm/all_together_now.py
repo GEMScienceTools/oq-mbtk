@@ -11,7 +11,7 @@ logger.addHandler(logging.NullHandler())
 
 from openquake.fnm.once_more_with_feeling import (
     get_subsections_from_fault,
-    get_simple_fault_from_feature,
+    simple_fault_from_feature,
     make_subfault_df,
     make_rupture_df,
 )
@@ -55,7 +55,7 @@ def build_fault_network(
     t0 = time.time()
     if faults is None:
         if surface_type == 'simple':
-            build_surface = get_simple_fault_from_feature
+            build_surface = simple_fault_from_feature
         else:
             raise NotImplementedError(
                 f'Surface type {surface_type} not implemented'
