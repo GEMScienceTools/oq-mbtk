@@ -45,8 +45,8 @@ def get_bounding_box_distances(
 
     fault_bb_dists = get_sequence_pairwise_dists(cart_pts, cart_pts)
 
-    logging.info("  Filtering fault adjacence by distance")
     if max_dist is not None:
+        logging.info("  Filtering fault adjacence by distance")
         fault_bb_dists = fault_bb_dists[fault_bb_dists["d"] <= max_dist]
 
     return fault_bb_dists
@@ -138,6 +138,8 @@ def subfaults_are_adjacent(subfault_1, subfault_2):
         pos1[1] == pos2[1] and np.abs(pos1[0] - pos2[0]) == 1
     ):
         return True
+    else:
+        return False
 
 
 def get_single_fault_rupture_coordinates(rupture, single_fault_subfaults):
@@ -196,7 +198,7 @@ def get_rupture_adjacency_matrix(
     faults,
     all_subfaults=None,
     multifaults_on_same_fault: bool = False,
-    max_dist: float = 20.0,
+    max_dist: Optional[float] = 20.0,
 ):
     if all_subfaults is None:
         all_subfaults = [
@@ -218,11 +220,16 @@ def get_rupture_adjacency_matrix(
 
     nrups = single_fault_rup_df.shape[0]
 
-    fault_dists = get_close_faults(faults)
+    # increasing distance to make up for discrepancy between bb dist and
+    # actual rupture distances; this is a filtering step.
+    fault_dists = get_close_faults(faults, max_dist=max_dist * 1.5)
 
     fault_dists = {(i, j): d for i, j, d in fault_dists}
 
     dist_adj_matrix = np.zeros((nrups, nrups), dtype=np.float32)
+
+    if max_dist is None:
+        max_dist = np.inf
 
     row_count = 0
     for i, f1 in enumerate(faults):
@@ -240,7 +247,7 @@ def get_rupture_adjacency_matrix(
                 else:
                     pass
             elif i < j:
-                if fault_dists[(i, j)] <= max_dist:
+                if fault_dists[(i, j)] <= max_dist * 1.5:
                     pw_source_dists = get_sequence_pairwise_dists(
                         single_fault_rup_coords[i],
                         single_fault_rup_coords[j],
@@ -257,10 +264,12 @@ def get_rupture_adjacency_matrix(
             col_count += ncols
         row_count += nrows
 
+    dist_adj_matrix[dist_adj_matrix > max_dist] = 0.0
+
     return single_fault_rup_df, dist_adj_matrix
 
 
-def make_binary_distance_matrix(dist_matrix, max_dist: float = 10.0):
+def make_binary_adjacency_matrix(dist_matrix, max_dist: float = 10.0):
     binary_dist_matrix = np.zeros(dist_matrix.shape, dtype=np.int32)
     binary_dist_matrix[(dist_matrix > 0.0) & (dist_matrix <= max_dist)] = 1
 
@@ -314,7 +323,7 @@ def get_multifault_ruptures(
     elif max_sf_rups_per_mf_rup > n_rups:
         max_sf_rups_per_mf_rup = n_rups
 
-    dist_adj_binary = make_binary_distance_matrix(dist_adj_matrix, max_dist)
+    dist_adj_binary = make_binary_adjacency_matrix(dist_adj_matrix, max_dist)
 
     graph = ig.Graph.Adjacency(dist_adj_binary)
 
@@ -336,11 +345,32 @@ def get_multifault_ruptures(
 
 @jit(nopython=True)
 def rdist_to_dist_matrix(rdist: RupDistType, nrows: int = -1, ncols: int = -1):
+    # can't raise informative error in nopython mode
     if nrows == -1:
-        nrows = np.max(rdist['r1'])
+        nrows = np.max(rdist['r1']) + 1
+    else:
+        row_max = np.max(rdist['r1'])
+        if nrows < row_max + 1:
+            raise ValueError
+            # raise ValueError(
+            #    "nrows (",
+            #    nrows,
+            #    ") must be larger than the max row index ",
+            #    row_max,
+            # )
 
     if ncols == -1:
-        ncols = np.max(rdist['r2'])
+        ncols = np.max(rdist['r2']) + 1
+    else:
+        col_max = np.max(rdist['r2'])
+        if ncols < col_max + 1:
+            raise ValueError
+            # raise ValueError(
+            #    "ncols (",
+            #    ncols,
+            #    ") must be larger than the max col index ",
+            #    col_max,
+            # )
 
     dist_matrix = np.zeros((nrows, ncols), dtype=np.float32)
 
