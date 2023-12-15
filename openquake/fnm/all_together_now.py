@@ -20,7 +20,7 @@ from openquake.fnm.once_more_with_feeling import (
 from openquake.fnm.ships_in_the_night import (
     get_rupture_adjacency_matrix,
     get_multifault_ruptures,
-    make_binary_distance_matrix,
+    make_binary_adjacency_matrix,
     filter_bin_adj_matrix_by_rupture_angle,
 )
 
@@ -113,7 +113,7 @@ def build_fault_network(
         f"\t{'{:,}'.format(len(fault_network['single_rup_df']))} single-fault ruptures"
     )
 
-    binary_adjacence_matrix = make_binary_distance_matrix(
+    binary_adjacence_matrix = make_binary_adjacency_matrix(
         fault_network['dist_mat'], max_dist=settings['max_jump_distance']
     )
 
