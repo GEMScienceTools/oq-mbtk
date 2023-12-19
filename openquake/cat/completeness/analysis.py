@@ -320,7 +320,6 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
         # Compute occurrence
         
-
         cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
         if len(cent_mag) == 0:
             continue
@@ -496,7 +495,7 @@ def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
     bmax = config[key].get('bmax', 1.2)
     # Options: 'largest_rate', 'match_rate', 'optimize'
     criterion = config[key].get('optimization_criterion', 'optimize')
-    #print(criterion)
+    print(criterion)
 
     # Reading completeness data
     print(f'Reading completeness data from: {folder_in:s}')
@@ -519,13 +518,11 @@ def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
         if isinstance(skip, str):
             skip = get_list(skip)
         print('Skipping: ', skip)
-
+        
     # Processing subcatalogues
     for fname in glob.glob(fname_input_pattern):
-
         # Get source ID
         src_id = _get_src_id(fname)
-
         # If necessary skip the source
         if src_id in skip:
             continue
@@ -542,7 +539,7 @@ def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
                                      folder_out_figs=folder_out_figs,
                                      folder_out=folder_out,
                                      rewrite=False)
-
+        print(len(res))
         if len(res) == 0:
             continue
 

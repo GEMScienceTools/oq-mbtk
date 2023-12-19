@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from glob import glob
 from openquake.wkf.utils import create_folder, _get_src_id
-
+#plt.set_loglevel('WARNING') 
 
 KAVERINA = {'N': 'blue',
             'SS': 'green',
@@ -17,6 +17,7 @@ KAVERINA = {'N': 'blue',
             'SS-N': 'palegreen',
             'R-SS': 'goldenrod',
             'SS-R': 'yellow'}
+
 
 
 def get_simpler(dct):

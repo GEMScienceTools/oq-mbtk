@@ -118,6 +118,7 @@ def main(fname_config, plot_catalogue, plot_classification):
     # Plotting catalogue for display purposes
     catalogue_filename = config['general']['catalogue_filename']
     catalogue_filename = os.path.join(rf, catalogue_filename)
+    print(catalogue_filename)
     if plot_catalogue:
         plt_catalogue(catalogue_filename, plotter, projection, point_size=5)
 
@@ -128,7 +129,7 @@ def main(fname_config, plot_catalogue, plot_classification):
 
     # find classification fname
     classification_fname = os.path.join(rf, config['general']['treg_filename'])
-
+    print(classification_fname)
     for section in config.sections():
 
         if section == 'general':
