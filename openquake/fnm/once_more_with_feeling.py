@@ -120,15 +120,18 @@ def subdivide_simple_fault_surface(
     fault_length = fault_trace.get_length()
     fault_width = fault_surface.get_width()
 
+    if subsection_size[1] > 0:
+        subsec_width_init = subsection_size[1]
+    elif subsection_size[1] < 0:
+        assert (
+            subsection_size[1] % 1 == 0.0
+        ), "Negative down-dip number of sections must be integer"
+        subsec_width_init = fault_width / abs(subsection_size[1])
+
     if subsection_size[0] > 0:
         subsec_length_init = subsection_size[0]
     elif subsection_size[0] < 0:
         subsec_length_init = fault_length / abs(subsection_size[0])
-
-    if subsection_size[1] > 0:
-        subsec_width_init = subsection_size[1]
-    elif subsection_size[1] < 0:
-        subsec_width_init = fault_width / abs(subsection_size[1])
 
     # calculate number of segments and point spacing along strike
     num_segs_along_strike = max(
@@ -136,7 +139,7 @@ def subdivide_simple_fault_surface(
     )
     subsec_length = fault_length / num_segs_along_strike
     pt_spacing = subsec_length / round(subsec_length / edge_sd)
-    n_pts_strike = (fault_length / pt_spacing) + 1
+    n_pts_strike = fault_length / pt_spacing  # + 1
     assert (n_pts_strike % 1 <= 1e-5) or (n_pts_strike % 1 >= (1.0 - 1e-5)), (
         "Resampled trace not integer length: " + f"{n_pts_strike}"
     )
@@ -149,7 +152,7 @@ def subdivide_simple_fault_surface(
         + f"{new_trace.coo.shape[0]} != {n_pts_strike}"
     )
 
-    n_subsec_pts_strike = ((n_pts_strike - 1) / num_segs_along_strike) + 1
+    n_subsec_pts_strike = (n_pts_strike) / num_segs_along_strike
 
     assert n_subsec_pts_strike % 1 == 0.0, (
         "Resampled trace not dividing equally among subsegments: "
@@ -169,7 +172,7 @@ def subdivide_simple_fault_surface(
 
     hor_dip_spacing = dip_pt_spacing * np.cos(np.radians(dip))
     vert_dip_spacing = dip_pt_spacing * np.sin(np.radians(dip))
-    n_level_sets = int(round(fault_width / dip_pt_spacing)) + 1
+    n_level_sets = int(round(fault_width / dip_pt_spacing))
 
     for i in range(n_level_sets):
         level_mesh = [
@@ -182,7 +185,7 @@ def subdivide_simple_fault_surface(
     resampled_mesh = RectangularMesh.from_points_list(surface_points)
 
     n_pts_dip = resampled_mesh.lons.shape[0]
-    n_subsec_pts_dip = ((n_pts_dip - 1) / num_segs_down_dip) + 1
+    n_subsec_pts_dip = (n_pts_dip) / num_segs_down_dip
     assert (
         n_subsec_pts_dip % 1 == 0.0
     ), f"Resampled mesh not dividing equally among subsegments down-dip"
@@ -194,21 +197,21 @@ def subdivide_simple_fault_surface(
         resampled_mesh.depths,
         num_segs_down_dip,
         num_segs_along_strike,
-        n_subsec_pts_strike,
         n_subsec_pts_dip,
+        n_subsec_pts_strike,
     )
 
     return subsec_meshes
 
 
 def subdivide_rupture_mesh(
-    lons,
-    lats,
-    depths,
-    num_segs_down_dip,
-    num_segs_along_strike,
-    n_subsec_pts_strike,
-    n_subsec_pts_dip,
+    lons: np.ndarray,
+    lats: np.ndarray,
+    depths: np.ndarray,
+    num_segs_down_dip: int,
+    num_segs_along_strike: int,
+    n_subsec_pts_dip: int,
+    n_subsec_pts_strike: int,
 ):
     subsec_meshes = []
 
@@ -228,8 +231,8 @@ def subdivide_rupture_mesh(
             )
             subsec_meshes.append({'row': i, 'col': j, 'mesh': subsec_mesh})
 
-            j_start += n_subsec_pts_strike - 1
-        i_start += n_subsec_pts_dip - 1
+            j_start += n_subsec_pts_strike  # - 1
+        i_start += n_subsec_pts_dip  # - 1
 
     return subsec_meshes
 
@@ -252,19 +255,6 @@ def get_subsections_from_fault(
         "rake",
         "rake_err",
     ]
-
-    # With the current code organization, this causes a circular import
-    # if surface is None:
-    #    if surface_type == "simple_fault_surface":
-    #        surface = simple_fault_surface_from_feature(
-    #            fault,
-    #            edge_sd=edge_sd,
-    #            # dip_sd=dip_sd,
-    #            lsd_default=lsd_default,
-    #            usd_default=usd_default,
-    #        )
-    #    elif surface_type == "kite_surface":
-    #        pass
 
     if np.isscalar(subsection_size):  # len(subsection_size) == 1:
         # or should we raise an error?
@@ -329,6 +319,22 @@ def group_subfaults_by_fault(subfaults: list[dict]) -> dict:
     return subfault_dict
 
 
+def angular_mean_degrees(angles):
+    mean_angle = np.arctan2(
+        np.mean(np.sin(np.radians(angles))),
+        np.mean(np.cos(np.radians(angles))),
+    )
+    return np.degrees(mean_angle)
+
+
+def weighted_angular_mean_degrees(angles, weights):
+    mean_angle = np.arctan2(
+        np.sum(weights * np.sin(np.radians(angles))),
+        np.sum(weights * np.cos(np.radians(angles))),
+    )
+    return np.degrees(mean_angle)
+
+
 def make_rupture_df(
     single_fault_rup_df,
     multi_fault_rups,
@@ -378,7 +384,8 @@ def make_rupture_df(
         frac_areas.append(np.round(area_fracs, 2))
 
         rakes = np.array([rake_lookup[sf] for sf in row.subfaults])
-        mean_rake = weighted_mean(rakes, area_fracs)
+        # mean_rake = weighted_mean(rakes, area_fracs)
+        mean_rake = weighted_angular_mean_degrees(rakes, area_fracs)
         mean_rakes.append(mean_rake)
 
         mags.append(
@@ -390,8 +397,11 @@ def make_rupture_df(
     rupture_df['mean_rake'] = np.round(mean_rakes, 1)
     rupture_df['mag'] = np.round(mags, 2)
     rupture_df['area'] = np.round(all_areas, 1)
-    rupture_df['displacement'] = get_rupture_displacement(
-        rupture_df['mag'], rupture_df['area'], shear_modulus=SHEAR_MODULUS
+    rupture_df['displacement'] = np.round(
+        get_rupture_displacement(
+            rupture_df['mag'], rupture_df['area'], shear_modulus=SHEAR_MODULUS
+        ),
+        3,
     )
 
     return rupture_df
@@ -487,52 +497,40 @@ def make_rupture_gdf(rupture_df, subfault_gdf, keep_sequences=False):
     return rupture_gdf
 
 
-def merge_meshes(arrays, positions):
-    """
-    Merge multiple 2D numpy arrays into a larger 2D array based on their relative positions,
-    allowing for arbitrary starting indices.
+def merge_meshes_no_overlap(arrays, positions):
+    # Check that all arrays have the same shape
+    first_shape = arrays[0].shape
+    for arr in arrays:
+        assert arr.shape == first_shape, "All arrays must have the same shape"
 
-    :param arrays: List of 2D numpy arrays.
-    :param positions: List of tuples indicating the row and column positions of each array in the larger array.
-    :return: Merged 2D numpy array.
-    """
+    # check that all positions are unique and accounted for
+    all_rows = sorted(list(set(pos[0] for pos in positions)))
+    all_cols = sorted(list(set(pos[1] for pos in positions)))
+    for row in all_rows:
+        for col in all_cols:
+            assert (row, col) in positions, f"Missing position: {(row, col)}"
+            assert (
+                len([pos for pos in positions if pos == (row, col)]) == 1
+            ), f"Duplicate position: {(row, col)}"
+
     # Adjust the positions so that the minimum starts at 0
     min_row = min(pos[0] for pos in positions)
     min_col = min(pos[1] for pos in positions)
     adjusted_positions = [(r - min_row, c - min_col) for r, c in positions]
 
-    # Determine the size of the final array
-    max_row = max(
-        pos[0] + arr.shape[0] for arr, pos in zip(arrays, adjusted_positions)
-    )
-    max_col = max(
-        pos[1] + arr.shape[1] for arr, pos in zip(arrays, adjusted_positions)
-    )
-    final_array = np.zeros((max_row, max_col))
+    # Determine the size of the final array (assuming no overlaps)
+    n_rows = len(all_rows) * first_shape[0]
+    n_cols = len(all_cols) * first_shape[1]
 
-    # Track placed array positions
-    placed = np.zeros_like(final_array, dtype=bool)
+    final_array = np.zeros((n_rows, n_cols))
 
     for arr, pos in zip(arrays, adjusted_positions):
-        r, c = pos
-        end_r, end_c = r + arr.shape[0], c + arr.shape[1]
+        start_row = pos[0] * first_shape[0]
+        end_row = start_row + arr.shape[0]
+        start_col = pos[1] * first_shape[1]
+        end_col = start_col + arr.shape[1]
 
-        # Handle overlapping rows and columns
-        overlap_rows = np.any(placed[r:end_r, c:end_c], axis=1)
-        overlap_cols = np.any(placed[r:end_r, c:end_c], axis=0)
-
-        # Remove the duplicated edges
-        arr_adjusted = arr[~overlap_rows, :][:, ~overlap_cols]
-
-        # Place the array
-        final_array[
-            r : r + arr_adjusted.shape[0], c : c + arr_adjusted.shape[1]
-        ] = arr_adjusted
-
-        # Update the placed positions
-        placed[
-            r : r + arr_adjusted.shape[0], c : c + arr_adjusted.shape[1]
-        ] = True
+        final_array[start_row:end_row, start_col:end_col] += arr
 
     return final_array
 
@@ -541,16 +539,16 @@ def make_mesh_from_subfaults(subfaults):
     if len(subfaults) == 1:
         return subfaults[0]['surface'].mesh
 
-    big_lons = merge_meshes(
+    big_lons = merge_meshes_no_overlap(
         [sf['surface'].mesh.lons for sf in subfaults],
         [sf['fault_position'] for sf in subfaults],
     )
 
-    big_lats = merge_meshes(
+    big_lats = merge_meshes_no_overlap(
         [sf['surface'].mesh.lats for sf in subfaults],
         [sf['fault_position'] for sf in subfaults],
     )
-    big_depths = merge_meshes(
+    big_depths = merge_meshes_no_overlap(
         [sf['surface'].mesh.depths for sf in subfaults],
         [sf['fault_position'] for sf in subfaults],
     )
