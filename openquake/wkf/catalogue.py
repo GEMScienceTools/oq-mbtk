@@ -167,16 +167,14 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
     
 
     # Select point in polygon
-    columns = ['eventID', 'year', 'month', 'day', 'magnitude', 'longitude',
+    columns = ['eventID', 'year', 'month', 'day', 'hour', 'minute', 'second', 'magnitude', 'longitude',
                'latitude', 'depth']
 
     # Iterate over sources
     out_fnames = []
     for idx, poly in polygons_gdf.iterrows():
-
-        if len(source_ids) > 0 and poly.id not in source_ids:
+        if len(source_ids) > 0 and int(poly.id) not in eval(source_ids):
             continue
-
         df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
         gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
         within = gpd.sjoin(gdf, gdf_poly, op='within')
