@@ -466,8 +466,8 @@ Comparing GMPEs
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_type = 'rrup' # or rjb, repi or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
-        eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
-        Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 or 3)
+        eshm20_region = 2 # for ESHM20 GMPE regionalisation
+        Nstd = 1 # num. of sigma to sample from sigma distribution
         
         # Specify site properties
         [site_properties]
@@ -511,7 +511,7 @@ Comparing GMPEs
         [models.BooreEtAl2014]
             lt_weight_gmc1 = 0.15
         
-        # Default K20_ESHM20 logic tree branches considered in gmc1
+        # Default ESHM20 logic tree branches considered in gmc1
         [models.1-KothaEtAl2020ESHM20]
             lt_weight_gmc1 = 0.000862
             sigma_mu_epsilon = 2.85697 
