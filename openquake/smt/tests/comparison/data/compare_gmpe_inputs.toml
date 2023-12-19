@@ -7,7 +7,7 @@ maxR = 300 # max distance to consider
 dist_type = 'rrup' # specify distance metric used in trellis plots
 dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
 eshm20_region = 0 # region for ESHM20 GMMs 
-Nstd = 2 # number of standard deviations to sample sigma for 
+Nstd = 2 # number of standard deviations to sample from sigma distribution 
 
 [site_properties]
 vs30 = 800
