@@ -24,20 +24,13 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-
+import pygmt
 import netCDF4
 import numpy as np
 from numba import njit
-from openquake.hazardlib.geo.geodetic import (point_at, npoints_towards, 
-        geodetic_distance, azimuth)
+from openquake.hazardlib.geo.geodetic import (
+    point_at, npoints_towards, geodetic_distance, azimuth)
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
-
-pygmt_available = False
-try:
-    import pygmt
-    pygmt_available = True
-except ImportError:
-    pass
 
 
 @njit
@@ -67,8 +60,7 @@ def get_bounding_box(lons, lats, delta=0.0):
     """
     milo = np.min(lons)
     malo = np.max(lons)
-    bbox = [milo - delta, malo + delta, np.min(lats) - delta,
-            np.max(lats) + delta]
+    bbox = [milo-delta, malo+delta, np.min(lats)-delta, np.max(lats)+delta]
     idl = False
     if milo < 0:
         if malo > 0:
@@ -81,10 +73,9 @@ def get_bounding_box(lons, lats, delta=0.0):
         new_lons[lons < 0] = 360 + lons[lons < 0]
         milo = np.min(new_lons)
         malo = np.max(new_lons)
-        bbox = [milo - delta, malo + delta, np.min(lats) - delta,
-                np.max(lats) + delta]
+        bbox = [milo-delta, malo+delta, np.min(lats)-delta, np.max(lats)+delta]
 
-    # bbox = [milo-delta, malo+delta, np.min(lats)-delta, np.max(lats)+delta]
+    #bbox = [milo-delta, malo+delta, np.min(lats)-delta, np.max(lats)+delta]
     return bbox, idl
 
 
@@ -94,7 +85,7 @@ def get_initial_traces(box, boy, dip_dir, spacing):
 
     :param box: x limits of the bounding box
     :param boy: y limits of the bounding box
-    :param dip_dir: dip direction
+    :param dip_dir: dip direction 
     :param spacing: spacing between profiles
     """
     max_length = geodetic_distance(box[0], boy[0], box[3], boy[3])
@@ -103,12 +94,12 @@ def get_initial_traces(box, boy, dip_dir, spacing):
     edge_azimuth = azimuth(box[0], boy[0], box[1], boy[1])
     num_samples = np.ceil(distance / spacing)
 
-    coords = npoints_towards(box[0], boy[0], 0, edge_azimuth, distance,
-                             0, num_samples)
+    coords = npoints_towards(
+            box[0], boy[0], 0, edge_azimuth, distance, 0, num_samples)
     profiles = _get_profiles(coords[0], coords[1], dip_dir, max_length)
     # reverse profiles to satisfy right hand rule
     profiles.reverse()
-
+    
     return np.array(profiles), max_length
 
 
@@ -136,19 +127,13 @@ def aa_get_initial_traces(bb, dip_dir, spacing):
 
     num_samples_low = np.floor(distance_low / spacing_hor)
     distance_remaining = distance_low - num_samples_low * spacing_hor
-    num_samples_right = np.floor((distance_right - distance_remaining) /
-                                 spacing_ver)
+    num_samples_right = np.floor((distance_right - distance_remaining) / spacing_ver)
 
-    points = g.fwd_intermediate(bb[0], bb[2], az12_low, num_samples_low + 1,
-                                spacing_hor, initial_idx=0, terminus_idx=0)
-    profiles = _get_profiles(np.array(points.lons), np.array(points.lats),
-                             dip_dir, max_length)
+    points = g.fwd_intermediate(bb[0], bb[2], az12_low, num_samples_low+1, spacing_hor, initial_idx=0, terminus_idx=0)
+    profiles = _get_profiles(np.array(points.lons), np.array(points.lats), dip_dir, max_length)
 
-    points = g.fwd_intermediate(bb[1], bb[3], az21_right,
-                                num_samples_right + 1, spacing_ver,
-                                initial_idx=0, terminus_idx=0)
-    tmp_profiles = _get_profiles(np.array(points.lons), np.array(points.lats),
-                                 dip_dir, max_length)
+    points = g.fwd_intermediate(bb[1], bb[3], az21_right, num_samples_right+1, spacing_ver, initial_idx=0, terminus_idx=0)
+    tmp_profiles = _get_profiles(np.array(points.lons), np.array(points.lats), dip_dir, max_length)
     profiles.extend(tmp_profiles)
 
     return np.array(profiles), max_length
@@ -212,7 +197,7 @@ def tmp_get_initial_traces(bb, dip_dir, spacing):
         edge_azimuth = azimuth(bb[1], bb[3], bb[1], bb[2])
 
         # Number of samples
-        num_samples = np.ceil(distance / spacing_lat)
+        num_samples = np.ceil(distance/spacing_lat)
         spacing_lat = distance / num_samples
         distance = spacing_lon * num_samples
 
@@ -228,7 +213,7 @@ def tmp_get_initial_traces(bb, dip_dir, spacing):
         edge_azimuth = azimuth(bb[1], bb[3], bb[0], bb[3])
 
         # Number of samples
-        num_samples = np.ceil(distance / spacing_lon)
+        num_samples = np.ceil(distance/spacing_lon)
         spacing_lon = distance / num_samples
         distance = spacing_lon * num_samples
 
@@ -251,7 +236,7 @@ def tmp_get_initial_traces(bb, dip_dir, spacing):
     edge_azimuth = azimuth(bb[1], bb[2], bb[0], bb[2])
 
     # Number of samples
-    num_samples = np.round(distance / spacing_lon)
+    num_samples = np.round(distance/spacing_lon)
     spacing_lon = distance / num_samples
     distance = spacing_lon * num_samples
 
@@ -268,7 +253,7 @@ def tmp_get_initial_traces(bb, dip_dir, spacing):
     edge_azimuth = azimuth(bb[0], bb[2], bb[0], bb[3])
 
     # Number of samples
-    num_samples = np.ceil(distance / spacing_lat)
+    num_samples = np.ceil(distance/spacing_lat)
     spacing_lat = distance / num_samples
     distance = spacing_lat * num_samples
 
@@ -321,8 +306,8 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
 
     # Compute the rotated and buffered bounding box
     dlt = 3.0
-    coox = [r_bb[0] - dlt, r_bb[1] + dlt, r_bb[1] + dlt, r_bb[0] - dlt]
-    cooy = [r_bb[2] - dlt, r_bb[2] - dlt, r_bb[3] + dlt, r_bb[3] + dlt]
+    coox = [r_bb[0]-dlt, r_bb[1]+dlt, r_bb[1]+dlt, r_bb[0]-dlt]
+    cooy = [r_bb[2]-dlt, r_bb[2]-dlt, r_bb[3]+dlt, r_bb[3]+dlt]
     nbbx, nbby = rotate(coox, cooy, cx, cy, dip_dir)
 
     # Get traces
@@ -361,68 +346,46 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
 
     # Slab 2.0
     slb = Slab2pt0(depths, css)
-    slb.compute_profiles(spacing / 2)
+    slb.compute_profiles(spacing/2)
 
     if len(str(fname_fig)) > 0:
 
         dlt = 5.0
-        reg = [bb[0] - dlt, bb[1] + dlt, bb[2] - dlt, bb[3] + dlt]
+        reg = [bb[0]-dlt, bb[1]+dlt, bb[2]-dlt, bb[3]+dlt]
         clo = np.mean([bb[0], bb[1]])
         cla = np.mean([bb[2], bb[3]])
 
-        if pygmt_available:
+        fig = pygmt.Figure()
+        pygmt.makecpt(cmap="jet", series=[0.0, 800])
+        # fig.basemap(region=reg, projection="M20c", frame=True)
+        fig.basemap(region=reg, projection=f"T{clo}/{cla}/12c", frame=True)
 
-            fig = pygmt.Figure()
-            pygmt.makecpt(cmap="jet", series=[0.0, 800])
-            # fig.basemap(region=reg, projection="M20c", frame=True)
-            fig.basemap(region=reg, projection=f"T{clo}/{cla}/12c", frame=True)
-            fig.coast(land="gray", water="skyblue")
+        fig.coast(land="gray", water="skyblue")
 
-            # Profile traces
-            for i, pro in enumerate(traces):
-                fig.plot(x=pro[:, 0], y=pro[:, 1], pen="red")
-                fig.text(x=pro[0, 0], y=pro[0, 1], text=f'{i}', font="4p")
+        # Profile traces
+        for i, pro in enumerate(traces):
+            fig.plot(x=pro[:, 0], y=pro[:, 1], pen="red")
+            fig.text(x=pro[0, 0], y=pro[0, 1], text=f'{i}', font="4p")
 
-            # Grid
-            fig.plot(x=depths[:, 0], y=depths[:, 1],
-                     color=-depths[:, 2],
-                     style='c0.025c',
-                     cmap=True)
+        # Grid
+        fig.plot(x=depths[:, 0], y=depths[:, 1],
+                 color=-depths[:, 2],
+                 style='c0.025c',
+                 cmap=True)
 
-            # Profiles
-            for key in slb.profiles:
-                pro = slb.profiles[key]
-                if pro.shape[0] > 0:
-                    fig.plot(x=pro[:, 0],
-                             y=pro[:, 1],
-                             color=pro[:, 2],
-                             cmap=True,
-                             style="h0.025c",
-                             pen='black')
-            fig.savefig(fname_fig)
-            fig.show()
-
-        else:
-            from matplotlib import pyplot as plt
-            plt.scatter(depths[:, 0], depths[:, 1], c=-depths[:, 2])
-            for i, pro in enumerate(traces):
-                plt.plot(pro[:, 0], pro[:, 1], 'k')
-                plt.text(pro[0, 0], pro[0, 1], f'{i}')
-
-            for key in slb.profiles:
-                pro = slb.profiles[key]
-                if pro.shape[0] > 0:
-                    plt.plot(pro[:, 0], pro[:, 1], c='r')
-
-            if max(reg[0], reg[1]) > 180:
-                xmin = reg[0]-360; xmax = reg[1]-360
-            else:
-                xmin = reg[0]; xmax = reg[1]
-            plt.xlim([xmin, xmax])
-            plt.colorbar(label='depth to slab (km)')
-            plt.savefig(fname_fig)
-
-            
+        # Profiles
+        for key in slb.profiles:
+            pro = slb.profiles[key]
+            if pro.shape[0] > 0:
+                fig.plot(x=pro[:, 0],
+                         y=pro[:, 1],
+                         color=pro[:, 2],
+                         cmap=True,
+                         style="h0.025c",
+                         pen='black')
+        fig.savefig(fname_fig)
+        fig.show()
+        print(fname_fig)
 
     return slb
 

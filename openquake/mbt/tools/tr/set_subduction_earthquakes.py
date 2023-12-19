@@ -137,9 +137,9 @@ class SetSubductionEarthquakes:
         # Create the spatial index
         sidx = get_rtree_index(catalogue)
 
+        #breakpoint()
         # Build the complex fault surface
         tedges = _read_edges(edges_folder)
-        print(edges_folder)
         surface = build_complex_surface_from_edges(edges_folder)
         mesh = surface.mesh
 
@@ -264,7 +264,7 @@ class SetSubductionEarthquakes:
         # sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
         #                      method='cubic')
         rbfi = RBFInterpolator(data[:, 0:2], values, kernel='multiquadric',
-                               epsilon=1)
+                               epsilon=1, neighbors = 50)
         sub_depths = rbfi(points[:, 0:2])
 
         # Save the distances to a file
@@ -347,6 +347,7 @@ class SetSubductionEarthquakes:
                 logging.info(fmt.format(len(np.nonzero(old)[0])))
                 del f[tkey]
                 old[iii] = False
+
                 f[tkey] = old
                 fmt = '     after: {:d}'
                 logging.info(fmt.format(len(np.nonzero(old)[0])))

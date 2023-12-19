@@ -25,7 +25,7 @@ def get_crust_model(filename):
     sidx = index.Index(_generator_function(crust))
     #
     out = np.array(crust)
-    out[:, 2] = -1*out[:, 2]
+    #out[:, 2] = -1*out[:, 2]
     return out, sidx
 
 
