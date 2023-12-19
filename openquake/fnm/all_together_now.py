@@ -150,6 +150,7 @@ def build_fault_network(
     logging.info("Getting multifault ruptures")
     fault_network['multifault_inds'] = get_multifault_ruptures(
         fault_network['dist_mat'],
+        max_dist=settings['max_jump_distance'],
         max_sf_rups_per_mf_rup=settings['max_sf_rups_per_mf_rup'],
     )
     t5 = time.time()
