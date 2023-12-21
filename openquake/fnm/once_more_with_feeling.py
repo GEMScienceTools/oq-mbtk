@@ -143,7 +143,7 @@ def subdivide_simple_fault_surface(
     assert (n_pts_strike % 1 <= 1e-5) or (n_pts_strike % 1 >= (1.0 - 1e-5)), (
         "Resampled trace not integer length: " + f"{n_pts_strike}"
     )
-    n_pts_strike = int(round(n_pts_strike))
+    n_pts_strike = max(int(round(n_pts_strike)), 2)
 
     # resample fault trace and calculate number of points along strike
     new_trace = fault_trace.resample_to_num_points(n_pts_strike)
@@ -164,7 +164,10 @@ def subdivide_simple_fault_surface(
     # calculate number of segments and point spacing down dip
     num_segs_down_dip = max(int(round(fault_width / subsec_width_init)), 1)
     subsec_width = fault_width / num_segs_down_dip
-    dip_pt_spacing = subsec_width / round(subsec_width / dip_sd)
+    if round(subsec_width / dip_sd) > 0:
+        dip_pt_spacing = subsec_width / round(subsec_width / dip_sd)
+    else:  # when width is much larger than dip_sd
+        dip_pt_spacing = subsec_width
 
     azimuth = (strike + 90) % 360
 
@@ -172,7 +175,7 @@ def subdivide_simple_fault_surface(
 
     hor_dip_spacing = dip_pt_spacing * np.cos(np.radians(dip))
     vert_dip_spacing = dip_pt_spacing * np.sin(np.radians(dip))
-    n_level_sets = int(round(fault_width / dip_pt_spacing))
+    n_level_sets = max(int(round(fault_width / dip_pt_spacing)), 2)
 
     for i in range(n_level_sets):
         level_mesh = [
@@ -336,7 +339,7 @@ def weighted_angular_mean_degrees(angles, weights):
 
 
 def make_rupture_df(
-    single_fault_rup_df,
+    single_fault_rup_df: pd.DataFrame,
     multi_fault_rups,
     subfault_df,
     area_mag_msr='Leonard2014_Interplate',
@@ -355,6 +358,14 @@ def make_rupture_df(
     srup_lookup = {i: row.subfaults for i, row in rupture_df.iterrows()}
     area_lookup = {i: row.area for i, row in subfault_df.iterrows()}
     rake_lookup = {i: row.rake for i, row in subfault_df.iterrows()}
+    slip_az_lookup = {i: row.slip_azimuth for i, row in subfault_df.iterrows()}
+
+    sf_rup_azimuths = {}
+    for row in single_fault_rup_df.itertuples():
+        row_slip_azimuths = [slip_az_lookup[sf] for sf in row.subfaults]
+        sf_rup_azimuths[row.Index] = round(
+            angular_mean_degrees(row_slip_azimuths), 1
+        )
 
     mf_subs = []
     for mf in multi_fault_rups:
@@ -373,18 +384,20 @@ def make_rupture_df(
 
     frac_areas = []
     mean_rakes = []
+    slip_azimuths = []
     all_areas = []
     mags = []
 
     # mean_slip_azimuths = []
-    for i, row in rupture_df.iterrows():
+    for row in rupture_df.itertuples():
         areas = np.array([area_lookup[sf] for sf in row.subfaults])
         sum_area = areas.sum()
         area_fracs = areas / sum_area
         frac_areas.append(np.round(area_fracs, 2))
 
         rakes = np.array([rake_lookup[sf] for sf in row.subfaults])
-        # mean_rake = weighted_mean(rakes, area_fracs)
+        azimuths = [sf_rup_azimuths[sf] for sf in row.ruptures]
+        slip_azimuths.append(azimuths)
         mean_rake = weighted_angular_mean_degrees(rakes, area_fracs)
         mean_rakes.append(mean_rake)
 
@@ -395,6 +408,7 @@ def make_rupture_df(
 
     rupture_df['frac_area'] = frac_areas
     rupture_df['mean_rake'] = np.round(mean_rakes, 1)
+    rupture_df['slip_azimuth'] = slip_azimuths
     rupture_df['mag'] = np.round(mags, 2)
     rupture_df['area'] = np.round(all_areas, 1)
     rupture_df['displacement'] = np.round(

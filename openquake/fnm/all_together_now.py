@@ -24,6 +24,11 @@ from openquake.fnm.ships_in_the_night import (
     filter_bin_adj_matrix_by_rupture_angle,
 )
 
+from openquake.fnm.rupture_filtering import (
+    get_rupture_plausibilities,
+    filter_proportionally_to_plausibility,
+)
+
 
 default_settings = {
     'subsection_size': [15.0, 15.0],
@@ -32,6 +37,7 @@ default_settings = {
     'max_jump_distance': 10.0,
     'max_sf_rups_per_mf_rup': 10,
     'rupture_angle_threshold': 60.0,
+    'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
 }
 
 
@@ -41,18 +47,22 @@ def build_fault_network(
     settings=None,
     surface_type='simple',
     filter_by_angle=True,
+    filter_by_plausibility=True,
     **kwargs,
 ):
     build_settings = deepcopy(default_settings)
     if settings is not None:
         build_settings.update(settings)
     build_settings.update(kwargs)
-    if settings is None:
-        settings = build_settings
+
+    settings = build_settings
 
     fault_network = {}
 
+    event_times = []
+
     t0 = time.time()
+    event_times.append(t0)
     if faults is None:
         if surface_type == 'simple':
             build_surface = simple_fault_from_feature
@@ -79,22 +89,31 @@ def build_fault_network(
         else:
             raise ValueError('No faults provided')
     t1 = time.time()
+    event_times.append(t1)
     logging.info(f"\tdone in {round(t1-t0, 1)} s")
 
     logging.info("Making subfaults")
-    fault_network['subfaults'] = [
-        get_subsections_from_fault(
-            fault,
-            subsection_size=build_settings['subsection_size'],
-            edge_sd=build_settings['edge_sd'],
-            dip_sd=build_settings['dip_sd'],
-            surface=fault['surface'],
-        )
-        for fault in faults
-    ]
+    fault_network['subfaults'] = []
+    for i, fault in enumerate(faults):
+        try:
+            fault_network['subfaults'].append(
+                get_subsections_from_fault(
+                    fault,
+                    subsection_size=build_settings['subsection_size'],
+                    edge_sd=build_settings['edge_sd'],
+                    dip_sd=build_settings['dip_sd'],
+                    surface=fault['surface'],
+                )
+            )
+        except Exception as e:
+            logging.error(f"Error with fault {i}: {e}")
+            # yield fault_network
+            raise e
+            # return faults
 
     n_subfaults = sum([len(sf) for sf in fault_network['subfaults']])
     t2 = time.time()
+    event_times.append(t2)
     logging.info(f"\tdone in {round(t2-t1, 1)} s")
     logging.info(f"\t{n_subfaults} subfaults from {len(faults)} faults")
 
@@ -108,6 +127,7 @@ def build_fault_network(
         max_dist=settings['max_jump_distance'],
     )
     t3 = time.time()
+    event_times.append(t3)
     logging.info(f"\tdone in {round(t3-t2, 1)} s")
     logging.info(
         f"\t{'{:,}'.format(len(fault_network['single_rup_df']))} single-fault ruptures"
@@ -135,8 +155,9 @@ def build_fault_network(
             binary_adjacence_matrix,
             threshold_angle=settings['rupture_angle_threshold'],
         )
-        t3 = time.time()
-        # logging.info(f"\tdone in {round(t3-t2, 1)} s")
+        t3_ = time.time()
+        event_times.append(t3_)
+        logging.info(f"\tdone in {round(t3_-t3, 1)} s")
         n_connections = binary_adjacence_matrix.sum()
         logging.info(f"\t{'{:,}'.format(n_connections)} connections remaining")
         # filter continuous distance matrix
@@ -145,6 +166,7 @@ def build_fault_network(
     logging.info("Building subfault dataframe")
     fault_network['subfault_df'] = make_subfault_df(fault_network['subfaults'])
     t4 = time.time()
+    event_times.append(t4)
     logging.info(f"\tdone in {round(t4-t3, 1)} s")
 
     logging.info("Getting multifault ruptures")
@@ -154,10 +176,52 @@ def build_fault_network(
         max_sf_rups_per_mf_rup=settings['max_sf_rups_per_mf_rup'],
     )
     t5 = time.time()
+    event_times.append(t5)
     logging.info(f"\tdone in {round(t5-t4, 1)} s")
     logging.info(
         f"\t{'{:,}'.format(len(fault_network['multifault_inds']))} multifault ruptures"
     )
 
-    logging.info(f"total time: {round(t5-t0, 1)} s")
+    t6 = time.time()
+    event_times.append(t6)
+    logging.info("Making rupture dataframe")
+    fault_network['rupture_df'] = make_rupture_df(
+        fault_network['single_rup_df'],
+        fault_network['multifault_inds'],
+        fault_network['subfault_df'],
+    )
+    logging.info(f"\tdone in {round(t6-t5, 1)} s")
+
+    if filter_by_plausibility:
+        t7 = time.time()
+        event_times.append(t7)
+        logging.info("Filtering ruptures by plausibility")
+        fault_network['plausibility'] = get_rupture_plausibilities(
+            fault_network['rupture_df'],
+            distance_matrix=fault_network['dist_mat'],
+            connection_distance_threshold=settings['max_jump_distance'],
+            connection_distance_plausibility_threshold=settings[
+                'rupture_filtering_connection_distance_plausibility_threshold'
+            ],
+        )
+
+        fault_network[
+            'rupture_df_keep'
+        ] = filter_proportionally_to_plausibility(
+            fault_network['rupture_df'],
+            fault_network['plausibility']['total'],
+        )
+        t8 = time.time()
+        event_times.append(t8)
+        n_rups_start = len(fault_network['rupture_df'])
+        n_rups_filtered = len(fault_network['rupture_df_keep'])
+
+        logging.info(f"\tdone in {round(t8-t7, 1)} s")
+        logging.info(
+            f"\t{'{:,}'.format(n_rups_filtered)} "
+            + "ruptures remaining ("
+            + f"{round(n_rups_filtered / n_rups_start*100, 1)} %)"
+        )
+
+    logging.info(f"total time: {round(event_times[-1]-event_times[0], 1)} s")
     return fault_network
