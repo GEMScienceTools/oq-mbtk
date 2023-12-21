@@ -151,6 +151,7 @@ class AdaptiveSmoothing(object):
 
         # Set minimum d_i
         d_i[d_i < config['d_i_min']] = config['d_i_min']
+        
         mu_loc = np.empty(len(x))
         
 	    # Calculate mu at each location 
