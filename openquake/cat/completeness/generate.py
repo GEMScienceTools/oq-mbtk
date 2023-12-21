@@ -82,15 +82,17 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
     dlt = 1 if flexible else 0
     idxs = np.arange(len(mags)+dlt)
     idxs[::-1].sort()
-
+    
+    print(mags)
     # Find index of the minimum magnitude of completeness
     if min_mag_compl is None:
-        min_mag_compl = min(mags)
+        min_mag = min(mags)
+    else: min_mag = min_mag_compl
 
-    if len(np.where(min_mag_compl <= mags)) < 1:
+    if len(np.where(min_mag <= mags)) < 1:
         msg = 'None of the magnitude intervals above the min_mag_compl'
         raise ValueError(msg)
-    max_first_idx = np.min(np.where(min_mag_compl <= mags))
+    max_first_idx = np.min(np.where(min_mag <= mags))
 
     # Info
     print('Total number of combinations : {:,d}'.format(len(mags)**len(years)))
@@ -140,20 +142,25 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
 
     # Selecting only the completeness whose first magnitude index is
     # lower or equal than a threshold
-    perms = perms[perms[:, 0] <= max_first_idx, :]
+    # earlier max_first_idx is set to smallest magnitude if no minimum is provided
+    # But also doesn't even seem to apply this correctly?
+    if min_mag_compl is not None:
+    	print("setting minimum completeness magnitude")
+    	perms = perms[perms[:, 0] >= max_first_idx, :]
 
     # Applying a-priori conditions
     for yea_str in apriori_conditions.keys():
         yea = float(yea_str)
         mag = float(apriori_conditions[yea_str])
         idx_yea = np.minimum(np.max(np.where(years >= yea)), len(years)-1)
+
         idx_mag = np.max(np.where(mag >= mags))
         # idxs = np.minimum(perms[:, idx_yea], len(mags)-1-dlt)
         # perms = perms[idxs <= idx_mag, :]
         perms = perms[perms[:, idx_yea] <= idx_mag, :]
 
     print(f'Total number selected        : {len(perms):,d}')
-
+ 
     # Replacing the index of the 'buffer;' magnitude
     if flexible:
         perms = np.where(perms == len(mags), -1, perms)
