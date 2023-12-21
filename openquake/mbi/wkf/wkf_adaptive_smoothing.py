@@ -14,12 +14,7 @@ from openquake.wkf.utils import get_list
 def main(catalogue:str, h3_map: str, config:str, outputfile:str,  use: str = []):
     '''
     Runs an analysis of adaptive smoothed seismicity of Helmstetter et
-    al. (2007). Note that the wkf version of this method uses use_maxdist = True in the
-    call to the adaptive smoothing and therefore requires the parameters 'h3res' and 'maxdist' 
-    are specified in the config. 'maxdist' sets a maximum upper bound over which to consider 
-    events neighbours - these will speed up computation in large source zones by not calculating distances
-    to very distant events. This is also important in areas of sparse seismicity so that the 
-    smoothing distance is set to something reasonable (ie there will always be a maximum). 
+    al. (2007).
 
     :param catalogue:
         An earthquake catalogue csv file containing the following columns -
@@ -36,8 +31,6 @@ def main(catalogue:str, h3_map: str, config:str, outputfile:str,  use: str = [])
         * 'd_i_min' - minimum smoothing distance d_i, should be chosen
             based on location uncertainty. Default of 0.5 in Helmstetter
             et al. (float)
-        * 'h3res' - specifying resolution of h3 cells
-        * 'maxdist' - maximum distance to consider events
 
     :param output_file:
         String specifying location in which to save output.
@@ -81,15 +74,16 @@ def main(catalogue:str, h3_map: str, config:str, outputfile:str,  use: str = [])
     # Run adaptive smoothing over chosen area, don't grid the data (h3
     # locs, already done!), don't use depths.
     smooth = ak.AdaptiveSmoothing([locations.lon, locations.lat],
-                                  grid=False, use_3d=False, use_maxdist = True)
+                                  grid=False, use_3d=False)
     conf = {"kernel": config["kernel"], "n_v": config['n_v'],
             "d_i_min": config['d_i_min'], "h3res": config['h3res'], "maxdist": config['maxdist']}
     out = smooth.run_adaptive_smooth(cat, conf)
     # Make output into dataframe with named columns and write to a csv
-    # file in specified location
+    # file in specified loctaion
     out = pd.DataFrame(out)
     out.columns = ["lon", "lat", "nocc"]
 
+    out["nocc"] = out["nocc"]
     out.to_csv(outputfile, header=True)
 
 
