@@ -247,7 +247,9 @@ def get_rupture_adjacency_matrix(
                 else:
                     pass
             elif i < j:
-                if fault_dists[(i, j)] <= max_dist * 1.5:
+                if (i, j) not in fault_dists:
+                    pass
+                elif fault_dists[(i, j)] <= max_dist * 1.5:
                     pw_source_dists = get_sequence_pairwise_dists(
                         single_fault_rup_coords[i],
                         single_fault_rup_coords[j],
@@ -383,7 +385,21 @@ def rdist_to_dist_matrix(rdist: RupDistType, nrows: int = -1, ncols: int = -1):
 
 
 def get_mf_distances_from_adj_matrix(mf, dist_adj_matrix):
+    if len(mf) == 1:
+        return np.zeros(1)
     distances = np.empty(len(mf) - 1)
     for i in range(len(distances)):
         distances[i] = dist_adj_matrix[mf[i], mf[i + 1]]
+    return distances
+
+
+def get_multifault_rupture_distances(rupture_df, distance_matrix):
+    distances = pd.Series(
+        data=[
+            get_mf_distances_from_adj_matrix(row.ruptures, distance_matrix)
+            for row in rupture_df.itertuples()
+        ],
+        index=rupture_df.index,
+    )
+
     return distances
