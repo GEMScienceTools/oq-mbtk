@@ -125,9 +125,9 @@ def plot_gmt(fname, fout, settings_fname=None):
     cmd = f'gmt coast {EXT} {PRO} -JZ5 {VIEW} -Sazure2 -Gwheat -Wfaint -A1000'
     cmds.append(cmd)
 
-    cmd = f'echo {lon} {lat} 0 0.3 > site.txt'  
+    cmd = f'echo {lon} {lat} 0 0.5 > site.txt'  
     cmds.append(cmd)
-    cmd = f'gmt psxyz site.txt {PRO} {EXT} {VIEW} -JZ5 -Sa -Ggreen -W0.2 -Baf '
+    cmd = f'gmt psxyz site.txt {PRO} {EXT} {VIEW} -JZ5 -Sa -Ggreen -W0.3 -Baf '
     cmds.append(cmd)
 
     cmd = 'gmt psxyz tmp.txt {} {} -JZ5 {} -C{} -t5 '.format(PRO, EXT, VIEW, CPTT1)
