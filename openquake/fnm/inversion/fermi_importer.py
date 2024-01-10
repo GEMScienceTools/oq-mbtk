@@ -40,8 +40,10 @@ from ast import literal_eval
 
 from openquake.fnm.section import get_subsection
 from openquake.fnm.fault_system import get_rups_fsys
-from openquake.fnm.importer import (kite_surfaces_from_geojson, 
-                                    simple_fault_surfaces_from_geojson)
+from openquake.fnm.importer import (
+    kite_surfaces_from_geojson,
+    simple_fault_surfaces_from_geojson,
+)
 from openquake.fnm.inversion.soe_builder import make_eqns
 
 from openquake.fnm.inversion.utils import (
@@ -49,6 +51,7 @@ from openquake.fnm.inversion.utils import (
     weighted_mean,
     subsection_df_to_fault_dicts,
     rup_df_to_rupture_dicts,
+    slip_vector_azimuth,
 )
 
 
@@ -82,7 +85,6 @@ def get_fault_property_for_rup(i, prop, single_sec_rups, faults, f_idx=6):
     fault_idx = single_sec_rups[i, f_idx]
     props = faults[fault_idx]["properties"]
     return props[prop]
-
 
 
 def match_rup_with_subsecs(rup, subsecs, subsec_start_index=0):
@@ -151,16 +153,28 @@ def build_subsection_df(
         fault_mesh = fault.mesh
         for subsec in subsecs[0]:
             subsec_mesh = get_subsection(fault_mesh, subsec)
-            (cell_centers, cell_lengths, cell_widths, cell_areas
-             ) = subsec_mesh.get_cell_dimensions()
+            (
+                cell_centers,
+                cell_lengths,
+                cell_widths,
+                cell_areas,
+            ) = subsec_mesh.get_cell_dimensions()
 
             area = np.sum(cell_areas)
             areas.append(area)
-            subsec_trace = np.array(list(zip(subsec_mesh.lons[0],
-                                             subsec_mesh.lats[0],
-                                             subsec_mesh.depths[0])))
+            subsec_trace = np.array(
+                list(
+                    zip(
+                        subsec_mesh.lons[0],
+                        subsec_mesh.lats[0],
+                        subsec_mesh.depths[0],
+                    )
+                )
+            )
             if clean_nans:
-                subsec_trace = subsec_trace[~np.isnan(subsec_trace).any(axis=1)]
+                subsec_trace = subsec_trace[
+                    ~np.isnan(subsec_trace).any(axis=1)
+                ]
             subsec_traces.append(subsec_trace)
 
             strike = fault.get_strike()
@@ -261,7 +275,8 @@ def build_rupture_dataframe(
         df["connection_distances"] = connection_distances
 
     df["faults"] = [
-        [single_sec_rups[i, fault_idx] for i in rss] for rss in rup_sub_sections
+        [single_sec_rups[i, fault_idx] for i in rss]
+        for rss in rup_sub_sections
     ]
 
     single_sec_subsections = match_rups_with_subsecs(
@@ -305,11 +320,13 @@ def build_info_from_faults(
         faults = fgj["features"]
 
     if surface_type == 'kite':
-        surfaces = kite_surfaces_from_geojson(fault_geojson_file,
-                                              edge_sd=edge_sampling_dist)
+        surfaces = kite_surfaces_from_geojson(
+            fault_geojson_file, edge_sd=edge_sampling_dist
+        )
     elif surface_type == 'simple_fault':
-        surfaces = simple_fault_surfaces_from_geojson(fault_geojson_file,
-                                                      edge_sd=edge_sampling_dist)
+        surfaces = simple_fault_surfaces_from_geojson(
+            fault_geojson_file, edge_sd=edge_sampling_dist
+        )
 
     rup_fault_data = get_rups_fsys(surfaces, settings)
 
