@@ -29,10 +29,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-import json
-import time
 import logging
-from copy import deepcopy
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -73,6 +70,31 @@ def simple_fault_from_feature(
     lsd_default: float = 20.0,
     usd_default: float = 0.0,
 ) -> dict:
+    """
+    Builds a fault (a dictionary with the required parameters for the
+    seismic source model, including a SimpeFaultSurface) from a GeoJSON
+    feature.
+
+    Parameters
+    ----------
+    feature : dict
+        GeoJSON feature containing fault parameters. Required parameters
+        are `fid` (the fault ID), `net_slip_rate`, `net_slip_rate_err`,
+        and `rake`. The `geometry` key must contain a `LineString`
+        representing the fault trace.
+    edge_sd : float
+        Edge sampling distance in km.
+    lsd_default : float
+        Lower seismogenic depth in km.
+    usd_default : float
+        Upper seismogenic depth in km.
+
+    Returns
+    -------
+    fault : dict
+        Dictionary containing fault parameters, formatted for further use
+        in Fermi.
+    """
     props_to_keep = [
         "fid",
         "net_slip_rate",
@@ -104,6 +126,30 @@ def subdivide_simple_fault_surface(
     dip_sd=2.0,
     dip=None,
 ):
+    """
+    Divides a fault surface into subsections of equal size,
+    as close to the specified parameters as possible.
+
+    Parameters
+    ----------
+    fault_surface : SimpleFaultSurface
+        Surface to divide into subsections.
+    subsection_size : list of float or integers.
+        Size of subsections in km. If negative, the number of subsections
+        along strike (dip) is given by the absolute value of the number.
+    edge_sd : float
+        Edge (along-strike) sampling distance in km.
+    dip_sd : float
+        Down-dip sampling distance in km.
+    dip : float
+        Dip of the fault surface in degrees.
+
+    Returns
+    -------
+    subsec_meshes : list of SimpleFaultSurface
+        List of subsections.
+    """
+
     fault_mesh = fault_surface.mesh
     fault_trace = Line(
         [
@@ -216,6 +262,32 @@ def subdivide_rupture_mesh(
     n_subsec_pts_dip: int,
     n_subsec_pts_strike: int,
 ):
+    """
+    Breaks a mesh (represented by arrays of lons, lats, and depths) into
+    subsections of equal size.
+
+    Parameters
+    ----------
+    lons : np.ndarray
+        Array of longitudes.
+    lats : np.ndarray
+        Array of latitudes.
+    depths : np.ndarray
+        Array of depths.
+    num_segs_down_dip : int
+        Number of subsections down dip.
+    num_segs_along_strike : int
+        Number of subsections along strike.
+    n_subsec_pts_dip : int
+        Number of points in each subsection down dip.
+    n_subsec_pts_strike : int
+        Number of points in each subsection along strike.
+
+    Returns
+    -------
+    subsec_meshes : list of RectangularMesh
+        List of subsection meshes.
+    """
     subsec_meshes = []
 
     i_start = 0
@@ -251,6 +323,35 @@ def get_subsections_from_fault(
     surface=None,
     surface_type="simple_fault_surface",
 ) -> list[dict]:
+    """
+    Divides a fault (represented as a dictionary of parameters) and an
+    OpenQuake SimpleFaultSurface into subsections of close to equal size.
+
+    Parameters
+    ----------
+    fault : dict
+        Dictionary containing fault parameters. Required parameters are `fid`
+        (the fault ID), `net_slip_rate`, `net_slip_rate_err`, and `rake`.
+    subsection_size : list of float or integers.
+        Size of subsections in km. If negative, the number of subsections
+        along strike (dip) is given by the absolute value of the number.
+    edge_sd : float
+        Edge (along-strike) sampling distance in km.
+    dip_sd : float
+        Down-dip sampling distance in km.
+    surface : SimpleFaultSurface
+        Surface to use for subsectioning.
+    surface_type : str
+        Type of surface to use for subsectioning. Currently,
+        "simple_fault_surface" is the only option, though "kite_surface"
+        will be supported in the future.
+
+    Returns
+    -------
+    subsections : list of dicts
+        List of dictionaries containing information about each subsection.
+    """
+
     props_to_keep = [
         "fid",
         "net_slip_rate",
@@ -282,7 +383,7 @@ def get_subsections_from_fault(
         if surface_type == "simple_fault_surface":
             subfault["surface"] = SimpleFaultSurface(mesh)
         elif surface_type == "kite_surface":
-            pass
+            raise NotImplementedError("Kite surface not currently supported")
 
         subfault['length'] = Line(
             [Point(*p) for p in subfault['trace']]
@@ -299,6 +400,21 @@ def get_subsections_from_fault(
 
 
 def make_subfault_df(all_subfaults):
+    """
+    Makes a Pandas DataFrame for each subfault (subsection) in
+    the fault network.
+
+    Parameters
+    ----------
+    all_subfaults : list of dicts
+        List of dictionaries containing information about each subfault.
+        See `get_subsections_from_fault` for more information on the format.
+
+    Returns
+    -------
+    subfault_df : pd.DataFrame
+        DataFrame containing information about each subfault.
+    """
     subfault_df = pd.concat(pd.DataFrame(sf) for sf in all_subfaults)
     subfault_df = subfault_df.reset_index(drop=True)
     subfault_df.index.name = "subfault_id"
@@ -315,6 +431,17 @@ def make_subfault_df(all_subfaults):
 
 
 def group_subfaults_by_fault(subfaults: list[dict]) -> dict:
+    """
+    Creates a dictionary with all of the subfaults from each fault as
+    values, with the fault ID as the key.
+
+    Parameters
+    ----------
+    subfaults : list of dicts
+
+    Returns
+
+    """
     subfault_dict = {
         fault_group[0]['fid']: fault_group for fault_group in subfaults
     }
@@ -322,7 +449,20 @@ def group_subfaults_by_fault(subfaults: list[dict]) -> dict:
     return subfault_dict
 
 
-def angular_mean_degrees(angles):
+def angular_mean_degrees(angles) -> float:
+    """
+    Calculates the angular mean of a list/array of angles in degrees.
+
+    Parameters
+    ----------
+    angles : list or array of floats
+        Angles in degrees.
+
+    Returns
+    -------
+    mean_angle : float
+        Angular mean in degrees.
+    """
     mean_angle = np.arctan2(
         np.mean(np.sin(np.radians(angles))),
         np.mean(np.cos(np.radians(angles))),
@@ -331,6 +471,21 @@ def angular_mean_degrees(angles):
 
 
 def weighted_angular_mean_degrees(angles, weights):
+    """
+    Calculates the weighted angular mean of a list/array of angles in degrees.
+
+    Parameters
+    ----------
+    angles : list or array of floats
+        Angles in degrees.
+    weights : list or array of floats
+        Weights for each angle.
+
+    Returns
+    -------
+    mean_angle : float
+        Weighted angular mean in degrees.
+    """
     mean_angle = np.arctan2(
         np.sum(weights * np.sin(np.radians(angles))),
         np.sum(weights * np.cos(np.radians(angles))),
@@ -343,7 +498,29 @@ def make_rupture_df(
     multi_fault_rups,
     subfault_df,
     area_mag_msr='Leonard2014_Interplate',
-):
+) -> pd.DataFrame:
+    """
+    Makes a Pandas DataFrame, with a row for each rupture in the fault network.
+
+    Parameters
+    ----------
+    single_fault_rup_df : pd.DataFrame
+        DataFrame containing information about each single-fault rupture.
+        See `get_single_fault_ruptures` for more information on the format.
+    multi_fault_rups : list of lists
+        List of lists of subfault indices for each multi-fault rupture.
+    subfault_df : pd.DataFrame
+        DataFrame containing information about each subfault.
+        See `make_subfault_df` for more information on the format.
+    area_mag_msr : str
+        Area-to-magnitude scaling relationship to use. Must
+        be in the `openquake.fnm.msr` library of scaling relationships.
+
+    Returns
+    -------
+    rupture_df : pd.DataFrame
+        DataFrame containing information about each rupture.
+    """
     rups_involved = [[int(r)] for r in single_fault_rup_df.index.values]
     rupture_df = single_fault_rup_df[['subfaults']]
 
@@ -422,8 +599,21 @@ def make_rupture_df(
 
 
 def get_boundary_3d(smsh):
-    """Returns a polygon"""
-    poly = []
+    """
+    Builds a fault trace and a 3D boundary from a Surface mesh.
+
+    Parameters
+    ----------
+    smsh : openquake.hazardlib.geo.mesh.Mesh
+        Surface mesh.
+
+    Returns
+    -------
+    trace : shapely.geometry.LineString
+        Fault trace.
+    boundary : shapely.geometry.Polygon
+        3D boundary.
+    """
     coo = []
 
     # Upper boundary + trace
@@ -496,7 +686,30 @@ def make_subfault_gdf(subfault_df, keep_surface=False, keep_trace=False):
     return subfault_gdf
 
 
-def make_rupture_gdf(rupture_df, subfault_gdf, keep_sequences=False):
+def make_rupture_gdf(
+    rupture_df, subfault_gdf, keep_sequences=False
+) -> gpd.GeoDataFrame:
+    """
+    Makes a GeoDataFrame, with a row for each rupture in the fault network.
+
+    Parameters
+    ----------
+    rupture_df : pd.DataFrame
+        DataFrame containing information about each rupture.
+        See `make_rupture_df` for more information on the format.
+    subfault_gdf : gpd.GeoDataFrame
+        GeoDataFrame containing information about each subfault.
+        See `make_subfault_gdf` for more information on the format.
+    keep_sequences : bool
+        Whether to keep the subfault sequences (i.e., the list or tuple of
+        subfault indices that make up any given rupture) in the rupture_df.
+        This defaults to False, as GeoPandas won't serialize these to GeoJSON.
+
+    Returns
+    -------
+    rupture_gdf : gpd.GeoDataFrame
+        GeoDataFrame containing information about each rupture.
+    """
     geoms = []
 
     for row in rupture_df.itertuples():
@@ -511,7 +724,24 @@ def make_rupture_gdf(rupture_df, subfault_gdf, keep_sequences=False):
     return rupture_gdf
 
 
-def merge_meshes_no_overlap(arrays, positions):
+def merge_meshes_no_overlap(arrays, positions) -> np.ndarray:
+    """
+    Merges a list of arrays into a single array, with no overlap between
+    the arrays.
+
+    Parameters
+    ----------
+    arrays : list of np.ndarray
+        List of arrays to merge.
+    positions : list of tuples
+        List of tuples containing the position of each array in the final
+        array. Each tuple should be in the format (row, column).
+
+    Returns
+    -------
+    final_array : np.ndarray
+        Merged array.
+    """
     # Check that all arrays have the same shape
     first_shape = arrays[0].shape
     for arr in arrays:
@@ -549,7 +779,20 @@ def merge_meshes_no_overlap(arrays, positions):
     return final_array
 
 
-def make_mesh_from_subfaults(subfaults):
+def make_mesh_from_subfaults(subfaults: list[dict]) -> RectangularMesh:
+    """
+    Makes a RectangularMesh from a list of subfaults.
+
+    Parameters
+    ----------
+    subfaults : list of dicts
+        List of subfaults.
+
+    Returns
+    -------
+    mesh : RectangularMesh
+        Mesh composed of the meshes from all the subfaults.
+    """
     if len(subfaults) == 1:
         return subfaults[0]['surface'].mesh
 
@@ -570,13 +813,48 @@ def make_mesh_from_subfaults(subfaults):
     return RectangularMesh(big_lons, big_lats, big_depths)
 
 
-def make_sf_rupture_mesh(rupture_indices, subfaults):
+def make_sf_rupture_mesh(rupture_indices, subfaults) -> RectangularMesh:
+    """
+    Makes a single-fault rupture mesh from a list of subfaults. This is
+    a contiguous surface, unlike a multi-fault rupture surface.
+
+    Parameters
+    ----------
+    rupture_indices : list of int
+        List of subfault indices.
+    subfaults : list of dicts
+        List of subfaults.
+
+    Returns
+    -------
+    mesh : RectangularMesh
+        Mesh composed of the meshes from all the subfaults in the rupture.
+    """
     subs = [subfaults[i] for i in rupture_indices]
     mesh = make_mesh_from_subfaults(subs)
     return mesh
 
 
-def make_sf_rupture_meshes(all_rupture_indices, faults, all_subfaults):
+def make_sf_rupture_meshes(
+    all_rupture_indices, faults, all_subfaults
+) -> list[RectangularMesh]:
+    """
+    Makes a list of rupture meshes from a list of single-fault ruptures.
+
+    Parameters
+    ----------
+    all_rupture_indices : list of lists
+        List of lists of subfault indices for each single-fault rupture.
+    faults : list of dicts
+        List of faults.
+    all_subfaults : list of dicts
+        List of subfaults.
+
+    Returns
+    -------
+    rup_meshes : list of RectangularMesh
+        List of rupture meshes.
+    """
     grouped_subfaults = group_subfaults_by_fault(all_subfaults)
 
     rup_meshes = []
@@ -601,7 +879,50 @@ def build_system_of_equations(
     slip_rate_col='net_slip_rate',
     slip_rate_err_col='net_slip_rate_err',
     **soe_kwargs,
-):
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Builds a system of linear equations to solve in order to estimate
+    the annual occurrence rate for each rupture, from the fault slip
+    rates and magnitude-frequency distribution information.
+
+    Parameters
+    ----------
+    rup_df : pd.DataFrame
+        DataFrame containing information about each rupture.
+        See `make_rupture_df` for more information on the format.
+    subsection_df : pd.DataFrame
+        DataFrame containing information about each subfault.
+        See `make_subfault_df` for more information on the format.
+    mag_col : str
+        Name of the column in `rup_df` containing the rupture magnitudes.
+    subfaults_col : str
+        Name of the column in `rup_df` containing the subfault indices
+        for each rupture.
+    displacement_col : str
+        Name of the column in `rup_df` containing the rupture displacements.
+    slip_rate_col : str
+        Name of the column in `subsection_df` containing the slip rates.
+    slip_rate_err_col : str
+        Name of the column in `subsection_df` containing the slip rate errors.
+    soe_kwargs : dict
+        Additional keyword arguments to pass to `openquake.fnm.soe.make_eqns`,
+        with (for example) magnitude-frequency distribution information.
+
+    Returns
+    -------
+    lhs : np.ndarray
+        Left-hand side of the system of equations, i.e. the equations,
+        of shape (m,n) where m is the number of constraints and n is
+        the number of ruptures. The rows correspond to the ruptures and the
+        columns correspond to the constraints.
+    rhs : np.ndarray
+        Right-hand side of the system of equations, i.e. the data. The shape
+        is (m,1) where m is the number of constraints.
+    errs : np.ndarray
+        Errors for each equation. These are the standard devations of the
+        data or analogous uncertainties that are used to weight the
+        inversion. The shape is (m,1) where m is the number of constraints.
+    """
     ruptures = rup_df_to_rupture_dicts(
         rup_df,
         mag_col=mag_col,
