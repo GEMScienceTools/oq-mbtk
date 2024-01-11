@@ -50,6 +50,42 @@ def build_fault_network(
     filter_by_plausibility=True,
     **kwargs,
 ):
+    """
+    Build a fault network from a list of faults or a fault geojson file. This
+    is the main data preparatory step for building a fault-based seismic source
+    model.
+
+    Parameters
+    ----------
+    faults : list of fault dictionaries, optional
+        List of faults in dictionary format. The default is None.
+    fault_geojson : str, optional
+        Path to a fault geojson file. The default is None.
+    settings : dict, optional
+        Settings for building the fault network. The default is None.
+    surface_type : str, optional
+        Type of surface to build from a fault. The default is 'simple'.
+    filter_by_angle : bool, optional
+        Whether to filter the fault network by rupture angle. The default is
+        True.
+    filter_by_plausibility : bool, optional
+        Whether to filter the fault network by rupture plausibility. The
+        default is True.
+    **kwargs : dict
+        Additional settings. These will overwrite the settings provided in the
+        settings dictionary.
+
+    Returns
+    -------
+    fault_network : dict
+        Dictionary containing the fault networkBuild a fault network from a
+        list of faults or a geojson file.
+
+    Parameters
+    ----------
+    faults: list of dictionaries, optional. Each fault
+    """
+
     build_settings = deepcopy(default_settings)
     if settings is not None:
         build_settings.update(settings)
@@ -130,7 +166,8 @@ def build_fault_network(
     event_times.append(t3)
     logging.info(f"\tdone in {round(t3-t2, 1)} s")
     logging.info(
-        f"\t{'{:,}'.format(len(fault_network['single_rup_df']))} single-fault ruptures"
+        f"\t{'{:,}'.format(len(fault_network['single_rup_df']))} "
+        + "single-fault ruptures"
     )
 
     binary_adjacence_matrix = make_binary_adjacency_matrix(
@@ -179,7 +216,8 @@ def build_fault_network(
     event_times.append(t5)
     logging.info(f"\tdone in {round(t5-t4, 1)} s")
     logging.info(
-        f"\t{'{:,}'.format(len(fault_network['multifault_inds']))} multifault ruptures"
+        f"\t{'{:,}'.format(len(fault_network['multifault_inds']))} "
+        + "multifault ruptures"
     )
 
     t6 = time.time()
