@@ -37,7 +37,9 @@ default_settings = {
     'max_jump_distance': 10.0,
     'max_sf_rups_per_mf_rup': 10,
     'rupture_angle_threshold': 60.0,
+    'filter_by_plausibility': True,
     'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
+    'skip_bad_faults': False,
 }
 
 
@@ -111,11 +113,28 @@ def build_fault_network(
             logging.info("Building faults from geojson")
             with open(fault_geojson) as f:
                 fault_gj = json.load(f)
-            faults = [
-                build_surface(feature) for feature in fault_gj['features']
-            ]
+            faults = []
+            fault_fids = []
+            for feature in fault_gj['features']:
+                try:
+                    surf = build_surface(
+                        feature,
+                        edge_sd=settings['edge_sd'],
+                    )
+                    faults.append(surf)
+                    fault_fids.append(feature['properties']['fid'])
+                except Exception as e:
+                    logging.error(
+                        f"Cannot build fault {feature['properties']['fid']}"
+                    )
+                    if settings["skip_bad_faults"] is True:
+                        logging.error(
+                            f"\tskipping fault {feature['properties']['fid']}"
+                        )
+                        logging.error(f"\t{e}")
+                    else:
+                        raise e
 
-            fault_fids = [fault['fid'] for fault in faults]
             duplicated_fids = [
                 fid for fid in set(fault_fids) if fault_fids.count(fid) > 1
             ]
@@ -230,7 +249,7 @@ def build_fault_network(
     )
     logging.info(f"\tdone in {round(t6-t5, 1)} s")
 
-    if filter_by_plausibility:
+    if settings['filter_by_plausibility']:
         t7 = time.time()
         event_times.append(t7)
         logging.info("Filtering ruptures by plausibility")
