@@ -14,6 +14,9 @@ from openquake.fnm.once_more_with_feeling import (
     simple_fault_from_feature,
     make_subfault_df,
     make_rupture_df,
+    rup_df_to_rupture_dicts,
+    subsection_df_to_fault_dicts,
+    make_eqns,
 )
 
 
@@ -49,7 +52,6 @@ def build_fault_network(
     settings=None,
     surface_type='simple',
     filter_by_angle=True,
-    filter_by_plausibility=True,
     **kwargs,
 ):
     """
@@ -282,3 +284,73 @@ def build_fault_network(
 
     logging.info(f"total time: {round(event_times[-1]-event_times[0], 1)} s")
     return fault_network
+
+
+def build_system_of_equations(
+    rup_df,
+    subsection_df,
+    mag_col='mag',
+    subfaults_col='subfaults',
+    displacement_col='displacement',
+    slip_rate_col='net_slip_rate',
+    slip_rate_err_col='net_slip_rate_err',
+    **soe_kwargs,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Builds a system of linear equations to solve in order to estimate
+    the annual occurrence rate for each rupture, from the fault slip
+    rates and magnitude-frequency distribution information.
+
+    Parameters
+    ----------
+    rup_df : pd.DataFrame
+        DataFrame containing information about each rupture.
+        See `make_rupture_df` for more information on the format.
+    subsection_df : pd.DataFrame
+        DataFrame containing information about each subfault.
+        See `make_subfault_df` for more information on the format.
+    mag_col : str
+        Name of the column in `rup_df` containing the rupture magnitudes.
+    subfaults_col : str
+        Name of the column in `rup_df` containing the subfault indices
+        for each rupture.
+    displacement_col : str
+        Name of the column in `rup_df` containing the rupture displacements.
+    slip_rate_col : str
+        Name of the column in `subsection_df` containing the slip rates.
+    slip_rate_err_col : str
+        Name of the column in `subsection_df` containing the slip rate errors.
+    soe_kwargs : dict
+        Additional keyword arguments to pass to `openquake.fnm.soe.make_eqns`,
+        with (for example) magnitude-frequency distribution information.
+
+    Returns
+    -------
+    lhs : np.ndarray
+        Left-hand side of the system of equations, i.e. the equations,
+        of shape (m,n) where m is the number of constraints and n is
+        the number of ruptures. The rows correspond to the ruptures and the
+        columns correspond to the constraints.
+    rhs : np.ndarray
+        Right-hand side of the system of equations, i.e. the data. The shape
+        is (m,1) where m is the number of constraints.
+    errs : np.ndarray
+        Errors for each equation. These are the standard devations of the
+        data or analogous uncertainties that are used to weight the
+        inversion. The shape is (m,1) where m is the number of constraints.
+    """
+    ruptures = rup_df_to_rupture_dicts(
+        rup_df,
+        mag_col=mag_col,
+        displacement_col=displacement_col,
+        subfaults_col=subfaults_col,
+    )
+    faults = subsection_df_to_fault_dicts(
+        subsection_df,
+        slip_rate_col=slip_rate_col,
+        slip_rate_err_col=slip_rate_err_col,
+    )
+
+    lhs, rhs, errs = make_eqns(ruptures, faults, **soe_kwargs)
+
+    return lhs, rhs, errs
