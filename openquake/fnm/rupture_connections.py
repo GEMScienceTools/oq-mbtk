@@ -15,7 +15,7 @@ from openquake.aft.rupture_distances import (
 )
 
 from openquake.fnm.connections import get_angles
-from openquake.fnm.once_more_with_feeling import (
+from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
     make_sf_rupture_meshes,

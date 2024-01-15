@@ -39,7 +39,7 @@ import pandas as pd
 from openquake.hazardlib.geo.mesh import RectangularMesh
 from openquake.hazardlib.geo.surface import SimpleFaultSurface
 
-from openquake.fnm.once_more_with_feeling import (
+from openquake.fnm.fault_modeler import (
     simple_fault_from_feature,
     subdivide_simple_fault_surface,
     subdivide_rupture_mesh,
@@ -56,7 +56,7 @@ from openquake.fnm.once_more_with_feeling import (
     make_sf_rupture_meshes,
 )
 
-from openquake.fnm.ships_in_the_night import (
+from openquake.fnm.rupture_connections import (
     get_rupture_adjacency_matrix,
     make_binary_adjacency_matrix,
     get_multifault_ruptures,

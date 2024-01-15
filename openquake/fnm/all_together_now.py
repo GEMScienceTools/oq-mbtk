@@ -3,13 +3,15 @@ import json
 import logging
 from copy import deepcopy
 
+import numpy as np
+
 logging.basicConfig(
     format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
 )
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-from openquake.fnm.once_more_with_feeling import (
+from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
     make_subfault_df,
@@ -20,7 +22,7 @@ from openquake.fnm.once_more_with_feeling import (
 )
 
 
-from openquake.fnm.ships_in_the_night import (
+from openquake.fnm.rupture_connections import (
     get_rupture_adjacency_matrix,
     get_multifault_ruptures,
     make_binary_adjacency_matrix,

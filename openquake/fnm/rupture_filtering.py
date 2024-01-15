@@ -39,7 +39,7 @@ from numba.core import types
 
 from openquake.fnm.inversion.utils import slip_vector_azimuth
 
-from openquake.fnm.ships_in_the_night import get_multifault_rupture_distances
+from openquake.fnm.rupture_connections import get_multifault_rupture_distances
 
 
 def connection_angle_plausibility(
