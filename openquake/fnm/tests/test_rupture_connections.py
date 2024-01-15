@@ -43,13 +43,13 @@ from openquake.hazardlib.geo.surface.kite_fault import (
 )
 from openquake.aft.rupture_distances import RupDistType
 
-from openquake.fnm.once_more_with_feeling import (
+from openquake.fnm.fault_modeler import (
     simple_fault_from_feature,
     get_subsections_from_fault,
     group_subfaults_by_fault,
     make_sf_rupture_meshes,
 )
-from openquake.fnm.ships_in_the_night import (
+from openquake.fnm.rupture_connections import (
     get_bb_from_surface,
     get_bounding_box_distances,
     get_close_faults,

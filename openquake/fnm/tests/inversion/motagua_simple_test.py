@@ -53,6 +53,7 @@ settings = {
 
 from openquake.fnm.all_together_now import (
     build_fault_network,
+    build_system_of_equations,
 )
 
 from openquake.fnm.inversion.utils import (
@@ -60,9 +61,6 @@ from openquake.fnm.inversion.utils import (
     subsection_df_to_fault_dicts,
 )
 
-from openquake.fnm.once_more_with_feeling import (
-    build_system_of_equations,
-)
 
 from openquake.fnm.inversion.simulated_annealing import simulated_annealing
 
