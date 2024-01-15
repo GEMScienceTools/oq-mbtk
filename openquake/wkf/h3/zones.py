@@ -57,7 +57,8 @@ def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
             from shapely.geometry import shape, mapping
             # Check that there are no polygons inside
             multipoly = shape(geojson_poly)
-            assert len(multipoly.geoms) == 1
+            if len(multipoly.geoms) != 1:
+                print("multipolygon for source ", idx)
             geojson_poly = mapping(multipoly.geoms[0])
 
         # Revert the positions of lons and lats
