@@ -34,6 +34,7 @@ from openquake.fnm.rupture_filtering import (
     filter_proportionally_to_plausibility,
 )
 
+from openquake.fnm.inversion.utils import SHEAR_MODULUS
 
 default_settings = {
     'subsection_size': [15.0, 15.0],
@@ -45,6 +46,7 @@ default_settings = {
     'filter_by_plausibility': True,
     'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
     'skip_bad_faults': False,
+    'shear_modulus': SHEAR_MODULUS,
 }
 
 
@@ -147,6 +149,7 @@ def build_fault_network(
 
         else:
             raise ValueError('No faults provided')
+    fault_network['faults'] = faults
     t1 = time.time()
     event_times.append(t1)
     logging.info(f"\tdone in {round(t1-t0, 1)} s")

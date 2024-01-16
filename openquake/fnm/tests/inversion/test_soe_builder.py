@@ -110,6 +110,10 @@ def test_make_rel_gr_mfd_eqns():
         ),
     )
 
+    np.testing.assert_array_almost_equal(
+        err, np.array([1.77827941, 3.16227766])
+    )
+
     np.testing.assert_array_almost_equal(rhs, np.array([0.0, 0.0]))
 
 

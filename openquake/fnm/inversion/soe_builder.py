@@ -86,7 +86,8 @@ def rel_gr_mfd_rates(mags, b=1.0):
 
 
 def make_rel_gr_mfd_eqns(rups, b=1.0, rup_include_list=None, weight=1.0):
-    """ " Creates a set of equations that enforce a relative Gutenberg-Richter
+    """
+    Creates a set of equations that enforce a relative Gutenberg-Richter
     magnitude frequency distribution. The resulting set of equations has
     M rows representing the number of unique magnitudes in the rupture set,
     and N columns representing each rupture.
@@ -116,7 +117,9 @@ def make_rel_gr_mfd_eqns(rups, b=1.0, rup_include_list=None, weight=1.0):
     mag_rup_idxs = {}
     for M in unique_mags:
         if rup_include_list is None:
-            mag_rup_idxs[M] = [i for i, rup in enumerate(rups) if rup["M"] == M]
+            mag_rup_idxs[M] = [
+                i for i, rup in enumerate(rups) if rup["M"] == M
+            ]
         else:
             mag_rup_idxs[M] = [
                 i
@@ -142,7 +145,7 @@ def make_rel_gr_mfd_eqns(rups, b=1.0, rup_include_list=None, weight=1.0):
 
     rel_mag_eqns_lhs = rel_mag_eqns
     rel_mag_eqns_rhs = np.zeros(rel_mag_eqns_lhs.shape[0])  # flat, not column
-    rel_mag_eqns_errs = np.sqrt([(rel_rates_adj[M]) for M in unique_mags])
+    rel_mag_eqns_errs = np.sqrt([(rel_rates_adj[M]) for M in unique_mags[1:]])
     rel_mag_eqns_errs /= weight
 
     return rel_mag_eqns_lhs, rel_mag_eqns_rhs, rel_mag_eqns_errs
@@ -205,7 +208,8 @@ def make_frac_mfd_eqns(rups, faults, mfd, mag_decimals=1, weight=1.0):
     for M in mfd_occ_rates.keys():
         M_rups = [rup for rup in rups if rup["M"] == M]
         slip_rates = {
-            i: weighted_slip_rates[i] for i in [rup["rup_id"] for rup in M_rups]
+            i: weighted_slip_rates[i]
+            for i in [rup["rup_id"] for rup in M_rups]
         }
         slip_rate_fracs = {
             i: wsr / sum(slip_rates.values()) for i, wsr in slip_rates.items()
@@ -276,13 +280,13 @@ def make_abs_mfd_eqns(
         if rup_fractions is None:
             for i, M in enumerate(unique_mags):
                 abs_mag_eqns[i, mag_rup_idxs[M]] = 1.0
-                mfd_abs_rhs[i] = mfd_occ_rates.get(M, 0.)
+                mfd_abs_rhs[i] = mfd_occ_rates.get(M, 0.0)
         else:
             for i, M in enumerate(unique_mags):
                 for j, mm in enumerate(mag_rup_idxs[M]):
                     abs_mag_eqns[i, mm] = mag_rup_fracs[M][j]
                 # mfd_abs_rhs[i] = mfd_occ_rates[M]
-                mfd_abs_rhs[i] = mfd_occ_rates.get(M, 0.)
+                mfd_abs_rhs[i] = mfd_occ_rates.get(M, 0.0)
     else:
         pass
 
@@ -363,10 +367,12 @@ def make_eqns(
     err_set = []
 
     if seismic_slip_rate_frac is None and mfd is not None:
-        fault_moments = np.array([
-            fault["area"] * 1e6 * shear_modulus * fault["slip_rate"] * 1e-3
-            for fault in faults
-        ])
+        fault_moments = np.array(
+            [
+                fault["area"] * 1e6 * shear_modulus * fault["slip_rate"] * 1e-3
+                for fault in faults
+            ]
+        )
 
         print("fault moments: ", fault_moments)
 
@@ -385,7 +391,9 @@ def make_eqns(
 
         if mfd_moment < fault_moment:
             seismic_slip_rate_frac = mfd_moment / fault_moment
-            print("setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac)
+            print(
+                "setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
+            )
     elif seismic_slip_rate_frac is None and mfd is None:
         print("setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac)
         seismic_slip_rate_frac = 1.0
