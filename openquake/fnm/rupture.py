@@ -35,6 +35,8 @@ import numpy.typing as npt
 from numba import njit, int64, boolean
 from openquake.fnm.msr import area_to_mag
 
+from openquake.hazardlib.geo.surface import SimpleFaultSurface
+
 
 def get_mags_and_areas(rups: list, areas: npt.ArrayLike, key: str = "generic"):
     """
@@ -77,21 +79,27 @@ def _get_rupture_area(surfs: list, rups: npt.ArrayLike) -> npt.ArrayLike:
         surf = surfs[int(subr[6])]
 
         # Compute the surface of each cell composing the surface
-        _, _, _, cell_area = surf.get_cell_dimensions()
+        #if hasattr(surf, "get_area"):
+        if isinstance(surf, SimpleFaultSurface):
+            surf_area = surf.get_area()
+            area += surf_area
+        else:
+        
+            _, _, _, cell_area = surf.get_cell_dimensions()
 
-        idx = np.isfinite(cell_area)
-        i_row = np.arange(0, surf.mesh.lons.shape[0] - 1, 1)
-        i_col = np.arange(0, surf.mesh.lons.shape[1] - 1, 1)
-        mesh_col, mesh_row = np.meshgrid(i_col, i_row)
-        mask_row = np.logical_and(
-            mesh_row >= subr[0], mesh_row < subr[0] + subr[3]
-        )
-        mask_col = np.logical_and(
-            mesh_col >= subr[1], mesh_col < subr[1] + subr[2]
-        )
-        mask_all = np.logical_and(mask_row, mask_col)
-        mask = np.logical_and(mask_all, idx)
-        area += np.sum(cell_area[mask])
+            idx = np.isfinite(cell_area)
+            i_row = np.arange(0, surf.mesh.lons.shape[0] - 1, 1)
+            i_col = np.arange(0, surf.mesh.lons.shape[1] - 1, 1)
+            mesh_col, mesh_row = np.meshgrid(i_col, i_row)
+            mask_row = np.logical_and(
+                mesh_row >= subr[0], mesh_row < subr[0] + subr[3]
+            )
+            mask_col = np.logical_and(
+                mesh_col >= subr[1], mesh_col < subr[1] + subr[2]
+            )
+            mask_all = np.logical_and(mask_row, mask_col)
+            mask = np.logical_and(mask_all, idx)
+            area += np.sum(cell_area[mask])
 
     return area
 
