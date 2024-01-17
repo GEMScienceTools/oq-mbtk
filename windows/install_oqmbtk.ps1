@@ -48,6 +48,7 @@ Set-Alias -Name python -Value $Env:PY_HOME\python.exe
 Set-Alias -Name pip -Value $Env:PY_PIP\pip.exe
 #
 python .\get-pip.py
+Write-Host "don't delete or move python310._pth"
 #Move-Item .\python310._pth .\python310._pth.old
 #
 pip install pytest
