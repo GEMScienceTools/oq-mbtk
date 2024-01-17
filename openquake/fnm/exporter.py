@@ -72,16 +72,21 @@ def make_multifault_source(
     tectonic_region_type: str = "Active Shallow Crust",
     investigation_time=0.0,
     infer_occur_rates: bool = False,
+    surface_type="kite",
 ):
     surfaces = []
-    for fault, subsecs in fsys:
-        fault_mesh = fault.mesh
-        for subsec in subsecs[0]:
-            subsec_mesh = get_subsection(fault_mesh, subsec)
-            subsec_surface = KiteSurface(subsec_mesh)
-            profiles = _get_profiles(subsec_surface)
-            subsec_surface.profiles = profiles
-            surfaces.append(subsec_surface)
+    if surface_type == "kite":
+        for fault, subsecs in fsys:
+            fault_mesh = fault.mesh
+            for subsec in subsecs[0]:
+                subsec_mesh = get_subsection(fault_mesh, subsec)
+                subsec_surface = KiteSurface(subsec_mesh)
+                profiles = _get_profiles(subsec_surface)
+                subsec_surface.profiles = profiles
+                surfaces.append(subsec_surface)
+
+    elif surface_type == 'simple_fault':
+        pass
 
     rupture_idxs = ruptures.subsections.values.tolist()
     mags = ruptures.M.values

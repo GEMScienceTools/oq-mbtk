@@ -37,6 +37,10 @@ from numba import jit, prange
 from numba.typed import Dict, List
 from numba.core import types
 
+from openquake.fnm.inversion.utils import slip_vector_azimuth
+
+from openquake.fnm.rupture_connections import get_multifault_rupture_distances
+
 
 def connection_angle_plausibility(
     connection_angles, function_type="cosine", no_connection_val=1
@@ -163,7 +167,9 @@ def get_single_rupture_plausibilities(
 
 
 def get_rupture_plausibilities(
-    ruptures,
+    rupture_df,
+    distances=None,
+    distance_matrix=None,
     connection_angle_function="cosine",
     connection_distance_function="exponent",
     slip_azimuth_function="cosine",
@@ -171,10 +177,21 @@ def get_rupture_plausibilities(
     connection_distance_threshold=15.0,
     connection_distance_plausibility_threshold=0.1,
 ):
+    # connection angle filtering not currently implemented
+
+    if distances is None:
+        if distance_matrix is None:
+            raise ValueError(
+                "Either distances or distance_matrix must be provided."
+            )
+        distances = get_multifault_rupture_distances(
+            rupture_df, distance_matrix
+        )
+
     plausibilities = pd.DataFrame(
-        index=ruptures.index,
+        index=rupture_df.index,
         columns=[
-            "connection_angle",
+            # "connection_angle",
             "connection_distance",
             "slip_azimuth",
             "total",
@@ -182,31 +199,31 @@ def get_rupture_plausibilities(
         dtype=np.float64,
     )
 
-    for i, rupture in ruptures.iterrows():
-        plausibilities.loc[i][
-            "connection_angle"
-        ] = connection_angle_plausibility(
-            rupture["connection_angles"],
-            function_type=connection_angle_function,
-            no_connection_val=connection_angle_threshold,
-        )
+    for i, rupture in rupture_df.iterrows():
+        # plausibilities.loc[i][
+        #    "connection_angle"
+        # ] = connection_angle_plausibility(
+        #    rupture["connection_angles"],
+        #    function_type=connection_angle_function,
+        #    no_connection_val=connection_angle_threshold,
+        # )
 
         plausibilities.loc[i][
             "connection_distance"
         ] = connection_distance_plausibility(
-            rupture["connection_distances"],
+            distances.loc[i],
             function_type=connection_distance_function,
             dist_threshold=connection_distance_threshold,
             prob_threshold=connection_distance_plausibility_threshold,
         )
 
         plausibilities.loc[i]["slip_azimuth"] = slip_azimith_plausibility(
-            rupture["slip_azimuths"], function_type=slip_azimuth_function
+            rupture["slip_azimuth"], function_type=slip_azimuth_function
         )
 
     plausibilities["total"] = (
-        plausibilities.connection_angle
-        * plausibilities.connection_distance
+        # plausibilities.connection_angle
+        plausibilities.connection_distance
         * plausibilities.slip_azimuth
     )
 
