@@ -51,11 +51,11 @@ python .\get-pip.py
 Move-Item .\python310._pth .\python310._pth.old
 #
 pip install pytest
-pip install setuptools==68.2.2
 Write-Host "clone of the branch $branch for oq-engine and install in developer mode"
 git clone --depth=1 https://github.com/gem/oq-engine.git
 cd .\oq-engine\
 pip install -r .\requirements-py310-win64.txt
+pip install setuptools==69.0.3
 pip install -e .
 cd ..
 Write-Host "clone of the branch $branch for oq-mbtk and install in developer mode"
