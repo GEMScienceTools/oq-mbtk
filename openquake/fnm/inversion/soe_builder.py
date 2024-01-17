@@ -60,27 +60,34 @@ def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
     return slip_rate_lhs, slip_rate_rhs, slip_rate_err
 
 
-def get_mag_counts(rups):
+def get_mag_counts(rups, key="M"):
     mag_counts = {}
     for rup in rups:
-        if rup["M"] in mag_counts:
-            mag_counts[rup["M"]] += 1
+        if rup[key] in mag_counts:
+            mag_counts[rup[key]] += 1
         else:
-            mag_counts[rup["M"]] = 1
+            mag_counts[rup[key]] = 1
 
     return mag_counts
 
 
-def rel_gr_mfd_rates(mags, b=1.0):
-    a = 5.0  # does't matter what this is
-    ref_mag = mags[0]
-    N_ref_mag = 10.0 ** (a - b * ref_mag)
+def rel_gr_mfd_rates(mags, b=1.0, a=4.0, rel=True):
+    mags = np.sort(mags)
+    bin_widths = np.diff(mags)
+    bin_widths = np.insert(bin_widths, 0, np.median(bin_widths))
+    bin_widths = np.append(bin_widths, np.median(bin_widths))
 
-    rel_rates = {ref_mag: 1.0}
+    rel_rates = {}
 
-    for mag in mags[1:]:
-        N_mag = 10.0 ** (a - b * mag)
-        rel_rates[mag] = N_mag / N_ref_mag
+    for i, mag in enumerate(mags):
+        mag_rate = 10.0 ** (a - b * (mag - bin_widths[i] / 2.0)) - 10.0 ** (
+            a - b * (mag + bin_widths[i + 1] / 2.0)
+        )
+
+        rel_rates[mag] = mag_rate
+
+        if rel is True:
+            rel_rates[mag] /= rel_rates[mags[0]]
 
     return rel_rates
 

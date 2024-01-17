@@ -36,6 +36,7 @@ import geopandas as gpd
 
 from shapely.geometry import LineString, Polygon, MultiLineString, MultiPolygon
 
+from openquake.baselib.general import AccumDict
 from openquake.hazardlib.geo import Point, Line
 from openquake.hazardlib.geo.mesh import RectangularMesh, Mesh
 from openquake.hazardlib.geo.surface import SimpleFaultSurface
@@ -529,6 +530,7 @@ def make_rupture_df(
         data={
             'subfaults': single_fault_rup_df.subfaults,
             'ruptures': rups_involved,
+            'faults': [[fault] for fault in single_fault_rup_df.fault],
         },
     )
 
@@ -536,6 +538,8 @@ def make_rupture_df(
     area_lookup = {i: row.area for i, row in subfault_df.iterrows()}
     rake_lookup = {i: row.rake for i, row in subfault_df.iterrows()}
     slip_az_lookup = {i: row.slip_azimuth for i, row in subfault_df.iterrows()}
+    fault_lookup = {i: row.faults[0] for i, row in rupture_df.iterrows()}
+    sub_fid_lookup = {i: row.fid for i, row in subfault_df.iterrows()}
 
     sf_rup_azimuths = {}
     for row in single_fault_rup_df.itertuples():
@@ -545,16 +549,24 @@ def make_rupture_df(
         )
 
     mf_subs = []
+    mf_faults_unique = []
     for mf in multi_fault_rups:
         subs = []
+        faults = []
         for sf in mf:
             subs.extend(srup_lookup[sf])
+            faults.append(fault_lookup[sf])
 
         mf_subs.append(subs)
+        mf_faults_unique.append(faults)
 
     mf_df = pd.DataFrame(
         index=np.arange(len(mf_subs)) + len(rupture_df),
-        data={'subfaults': mf_subs, 'ruptures': multi_fault_rups},
+        data={
+            'subfaults': mf_subs,
+            'ruptures': multi_fault_rups,
+            'faults': mf_faults_unique,
+        },
     )
 
     rupture_df = pd.concat([rupture_df, mf_df], axis=0)
@@ -564,8 +576,8 @@ def make_rupture_df(
     slip_azimuths = []
     all_areas = []
     mags = []
+    fault_frac_areas = []
 
-    # mean_slip_azimuths = []
     for row in rupture_df.itertuples():
         areas = np.array([area_lookup[sf] for sf in row.subfaults])
         sum_area = areas.sum()
@@ -583,7 +595,21 @@ def make_rupture_df(
         )
         all_areas.append(sum_area)
 
+        if len(row.faults) == 1:
+            f_areas = [1.0]
+        else:
+            f_areas = []
+            f_area_d = AccumDict()
+            for sf in row.subfaults:
+                f_area_d += {sub_fid_lookup[sf]: area_lookup[sf]}
+            f_area_d /= sum(f_area_d.values())
+            for fault in row.faults:
+                f_areas.append(round(f_area_d[fault], 1))
+
+        fault_frac_areas.append(f_areas)
+
     rupture_df['frac_area'] = frac_areas
+    rupture_df['fault_frac_area'] = fault_frac_areas
     rupture_df['mean_rake'] = np.round(mean_rakes, 1)
     rupture_df['slip_azimuth'] = slip_azimuths
     rupture_df['mag'] = np.round(mags, 2)
