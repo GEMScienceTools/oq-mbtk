@@ -48,8 +48,8 @@ Set-Alias -Name python -Value $Env:PY_HOME\python.exe
 Set-Alias -Name pip -Value $Env:PY_PIP\pip.exe
 #
 python .\get-pip.py
-Write-Host "don't delete or move python310._pth"
-#Move-Item .\python310._pth .\python310._pth.old
+Write-Host " rename python310._pth to your_exe_name._pth "
+Move-Item .\python310._pth .\oq._pth
 #
 pip install pytest
 Write-Host "clone of the branch $branch for oq-engine and install in developer mode"
