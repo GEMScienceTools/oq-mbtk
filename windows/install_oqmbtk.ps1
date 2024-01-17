@@ -55,7 +55,7 @@ Write-Host "clone of the branch $branch for oq-engine and install in developer m
 git clone --depth=1 https://github.com/gem/oq-engine.git
 cd .\oq-engine\
 pip install -r .\requirements-py310-win64.txt
-pip install setuptools==69.0.3
+pip install setuptools==59.8.0
 pip install -e .
 cd ..
 Write-Host "clone of the branch $branch for oq-mbtk and install in developer mode"
