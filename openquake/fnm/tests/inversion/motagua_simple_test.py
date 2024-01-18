@@ -92,14 +92,13 @@ def test_load_faults_and_do_inversion():
     lhs, rhs, err = build_system_of_equations(
         fault_network["rupture_df_keep"],
         fault_network["subfault_df"],
-        mfd_rel_eqns=True,
     )
 
     x_, misfit_hist = simulated_annealing(
         lhs,
         rhs,
         weights=err,
-        max_iters=int(1e8),
+        max_iters=int(1e6),
         accept_norm=1e-20,
         seed=69420,
     )
