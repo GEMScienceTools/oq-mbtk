@@ -248,14 +248,16 @@ def make_fault_mfd(
     min_mag=5.0,
     max_mag=8.0,
     bin_width=0.1,
+    moment_rate=None,
 ):
-    moment_rate = (
-        fault['surface'].get_area()
-        * fault['net_slip_rate']
-        * SHEAR_MODULUS
-        * 1e3
-        * seismic_fraction
-    )
+    if moment_rate is None:
+        moment_rate = (
+            fault['surface'].get_area()
+            * fault['net_slip_rate']
+            * SHEAR_MODULUS
+            * 1e3
+            * seismic_fraction
+        )
 
     if mfd_type == 'TruncatedGRMFD':
         mfd = TruncatedGRMFD.from_moment(
@@ -313,7 +315,7 @@ def get_mfd_occurrence_rates(mfd, mag_decimals=1):
 
 
 def set_single_fault_rupture_rates_by_mfd(
-    ruptures, mfd, mag_decimals=1, scale_moment=True
+    ruptures, mfd, mag_decimals=1, scale_moment_rate=True, moment_rate=None
 ):
     mfd_rates = get_mfd_occurrence_rates(mfd, mag_decimals=mag_decimals)
     mfd_mags = np.array(list(mfd_rates.keys()))
@@ -333,11 +335,11 @@ def set_single_fault_rupture_rates_by_mfd(
         data=rup_rates, index=[rup['idx'] for rup in ruptures]
     )
 
-    if scale_moment is True:
+    if scale_moment_rate is True:
         # check that this is the same as what is passed to the MFD!!
-        mag_moment = sum(
-            [mag_to_mo(mag) * rate for mag, rate in mfd_rates.items()]
-        )
+        # mag_moment = sum(
+        #    [mag_to_mo(mag) * rate for mag, rate in mfd_rates.items()]
+        # )
         fault = None
         for rup in ruptures:
             if len(rup['faults_orig']) == 1:
@@ -355,7 +357,7 @@ def set_single_fault_rupture_rates_by_mfd(
             ]
         )
 
-        rup_freq_adjust = mag_moment / all_rup_moment
+        rup_freq_adjust = moment_rate / all_rup_moment
         rup_rates *= rup_freq_adjust
 
     return rup_rates
@@ -369,11 +371,20 @@ def set_single_fault_rup_rates(
     seismic_fraction=1.0,
     rup_df='rupture_df',
     mfd_type='TruncatedGRMFD',
+    scale_moment_rate=True,
 ):
     fault = _get_fault_by_id(fault_id, fault_network['faults'])
     fault_rup_df = get_ruptures_on_fault(fault_id, fault_network[rup_df])
     rups = rup_df_to_rupture_dicts(
         fault_rup_df, mag_col='mag', displacement_col='displacement'
+    )
+
+    moment_rate = (
+        fault['surface'].get_area()
+        * fault['net_slip_rate']
+        * SHEAR_MODULUS
+        * 1e3
+        * seismic_fraction
     )
 
     if mfd is None:
@@ -384,8 +395,11 @@ def set_single_fault_rup_rates(
             seismic_fraction=seismic_fraction,
             mfd_type=mfd_type,
             b_val=b_val,
+            moment_rate=moment_rate,
         )
-    rup_rates = set_single_fault_rupture_rates_by_mfd(rups, mfd)
+    rup_rates = set_single_fault_rupture_rates_by_mfd(
+        rups, mfd, scale_moment_rate=scale_moment_rate, moment_rate=moment_rate
+    )
 
     return rup_rates
 
@@ -415,6 +429,7 @@ def get_rup_rates_from_fault_slip_rates(
     plot_fault_moment_rates=False,
     seismic_fraction=1.0,
     rupture_set_for_rates_from_slip_rates='filtered',
+    fix_moment_rates=True,
     **kwargs,
 ):
     """
@@ -531,21 +546,21 @@ def get_rup_rates_from_fault_slip_rates(
 
         fault_moment_rates_slip = {}
         for fault in fault_network['faults']:
-            # moment_rate = (
-            #    fault['surface'].get_area()
-            #    * fault['net_slip_rate']
-            #    * SHEAR_MODULUS
-            #    * 1e3
-            #    * seismic_fraction
-            # )
-            moment_rate = sum(
-                [
-                    mag_to_mo(mag) * rate
-                    for mag, rate in get_mfd_occurrence_rates(
-                        fault_mfds[fault['fid']]
-                    ).items()
-                ]
+            moment_rate = (
+                fault['surface'].get_area()
+                * fault['net_slip_rate']
+                * SHEAR_MODULUS
+                * 1e3
+                * seismic_fraction
             )
+            # moment_rate = sum(
+            #    [
+            #        mag_to_mo(mag) * rate
+            #        for mag, rate in get_mfd_occurrence_rates(
+            #            fault_mfds[fault['fid']]
+            #        ).items()
+            #    ]
+            # )
             fault_moment_rates_slip[fault['fid']] = moment_rate
 
         plt.plot(
@@ -562,10 +577,7 @@ def get_rup_rates_from_fault_slip_rates(
             ],
             '.',
         )
-        plt.xlabel(
-            "Fault moment rate from slip rates\n"
-            + "(corrected for moment release below M_min)"
-        )
+        plt.xlabel("Fault moment rate from slip rates")
         plt.ylabel("Fault moment rate from ruptures")
         plt.title("Fault moment rates from slip rate and rupture rates")
         plt.show()
