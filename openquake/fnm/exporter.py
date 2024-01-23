@@ -47,7 +47,6 @@ from openquake.hazardlib.geo.surface import KiteSurface
 
 from openquake.fnm.section import get_subsection
 
-
 def _get_profiles(kite_surf):
     lons, lats, depths = kite_surf.mesh.array
 
