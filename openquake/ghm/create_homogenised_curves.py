@@ -335,6 +335,24 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             xdf = copy.deepcopy(map_gdf[idx])
             map_gdf = xdf
 
+        if key in ['idn']:
+            from shapely.geometry import Polygon
+            coo = get_poly_from_str(mosaic.SUBSETS['GID_0'][key]['MYS'][0])
+            df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
+            dft = gpd.GeoDataFrame(df, geometry='geo')
+            idx = map_gdf.geometry.intersects(dft.geometry[0])
+            xdf = copy.deepcopy(map_gdf[idx])
+            map_gdf = xdf
+
+        if key in ['eur']:
+            from shapely.geometry import Polygon
+            coo = get_poly_from_str(mosaic.SUBSETS['GID_0'][key]['RUS'][0])
+            df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
+            dft = gpd.GeoDataFrame(df, geometry='geo')
+            idx = map_gdf.geometry.intersects(dft.geometry[0])
+            xdf = copy.deepcopy(map_gdf[idx])
+            map_gdf = xdf
+
         # Read the shapefile with the polygons of countries. The explode
         # function converts multipolygons into a single multipolygon.
         tmpdf = gpd.read_file(boundaries_shp)
@@ -401,6 +419,9 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     p_geo = p_geo.set_crs('epsg:4326')
 
                     # Computing the distances
+                    if sum(idx)==0:
+                        continue
+#                    import pdb; pdb.set_trace()
                     aeqd_local = pyproj.Proj(proj='aeqd', ellps='WGS84',
                                              datum='WGS84',
                                              lat_0=tmpdf.lat.mean(),
@@ -454,6 +475,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     # store hazard curves and their position (i.e. inside
                     # or outside the polygon of a model)
                     c += 1
+
                     for iii, (p, d, o) in enumerate(zip(tmpdf.geometry,
                                                         tmpdf['distance'],
                                                         tmpdf['outside'])):
@@ -527,7 +549,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         pickle.dump(coords, fou)
         fou.close()
 
-    buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, sub)
+    buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, sub=sub)
 
 
 def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, sub=True):
@@ -688,7 +710,7 @@ def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
     """
     proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
          imt_str, inland_shp, models_list, only_buffers, buf, h3_resolution,
-         mosaic_key, vs30_flag, float(foverwrite), sub)
+         mosaic_key, vs30_flag, float(foverwrite), int(sub))
 
 
 process.contacts_shp = 'Name of shapefile with contacts'
