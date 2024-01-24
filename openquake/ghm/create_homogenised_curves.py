@@ -353,6 +353,15 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             xdf = copy.deepcopy(map_gdf[idx])
             map_gdf = xdf
 
+        if key in ['sam']:
+            from shapely.geometry import Polygon
+            coo = get_poly_from_str(mosaic.SUBSETS['GID_0'][key]['COL'][0])
+            df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
+            dft = gpd.GeoDataFrame(df, geometry='geo')
+            idx = map_gdf.geometry.intersects(dft.geometry[0])
+            xdf = copy.deepcopy(map_gdf[idx])
+            map_gdf = xdf
+
         # Read the shapefile with the polygons of countries. The explode
         # function converts multipolygons into a single multipolygon.
         tmpdf = gpd.read_file(boundaries_shp)
