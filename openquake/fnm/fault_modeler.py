@@ -102,15 +102,23 @@ def simple_fault_from_feature(
         "net_slip_rate",
         "net_slip_rate_err",
         "rake",
-        "rake_err",
     ]
+    optional_props_to_keep = [
+        "lsd",
+        "rake_err",
+        "usd",
+    ]
+
     fault = {prop: feature['properties'][prop] for prop in props_to_keep}
+    for prop in optional_props_to_keep:
+        if prop in feature['properties']:
+            fault[prop] = feature['properties'][prop]
 
     fault['surface'] = simple_fault_surface_from_feature(
         feature,
         edge_sd=edge_sd,
-        lsd_default=lsd_default,
-        usd_default=usd_default,
+        lsd_default=fault.get("lsd", lsd_default),
+        usd_default=fault.get("usd", usd_default),
     )
 
     fault['trace'] = feature['geometry']['coordinates']
@@ -359,6 +367,8 @@ def get_subsections_from_fault(
         "net_slip_rate",
         "net_slip_rate_err",
         "rake",
+    ]
+    optional_props_to_keep = [
         "rake_err",
     ]
 
@@ -377,6 +387,10 @@ def get_subsections_from_fault(
     for i, sub_mesh in enumerate(subsec_meshes):
         mesh = sub_mesh['mesh']
         subfault = {prop: fault[prop] for prop in props_to_keep}
+        for prop in optional_props_to_keep:
+            if prop in fault:
+                subfault[prop] = fault[prop]
+
         subfault['fault_position'] = (sub_mesh['row'], sub_mesh['col'])
         subfault["trace"] = [
             [lon, mesh.lats[0, i], mesh.depths[0, i]]
