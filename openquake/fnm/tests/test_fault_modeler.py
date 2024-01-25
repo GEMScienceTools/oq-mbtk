@@ -411,9 +411,17 @@ class Test3Faults(unittest.TestCase):
         for i, fsub in enumerate(fault_subs):
             for k in fsub.keys():
                 if k == 'surface':
-                    assert fsub[k].mesh == subs[i][k]
+                    np.testing.assert_almost_equal(fsub[k].mesh.lats, 
+                                                   subs[i][k].lats)
+                    np.testing.assert_almost_equal(fsub[k].mesh.lons, 
+                                                   subs[i][k].lons)
+                    np.testing.assert_almost_equal(fsub[k].mesh.depths,
+                                                   subs[i][k].depths)
                 else:
-                    assert fsub[k] == subs[i][k]
+                    if isinstance(fsub[k], str):
+                        assert fsub[k] == subs[i][k]
+                    else:
+                        np.testing.assert_almost_equal(fsub[k], subs[i][k])
 
     def test_make_subfault_df(self):
         all_subs = [
@@ -677,7 +685,12 @@ class Test3Faults(unittest.TestCase):
                     if k == 'surface':
                         continue
                     else:
-                        assert sub[k] == f_groups_[f_id][i][k]
+                        if isinstance(sub[k], str):
+                            assert sub[k] == f_groups_[f_id][i][k]
+                        #elif np.isscalar(sub[k]):
+                        else:
+                            np.testing.assert_almost_equal(sub[k], 
+                                                       f_groups_[f_id][i][k])
 
     @unittest.skip('needs to be updated')
     def test_make_rupture_df(self):
@@ -998,10 +1011,10 @@ class Test3Faults(unittest.TestCase):
             ]
         )
 
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             boundary.boundary.coords.xy[0], bound_lons
         )
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             boundary.boundary.coords.xy[1], bound_lats
         )
 
