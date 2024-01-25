@@ -29,17 +29,20 @@ Module create_map_test
 """
 
 import os
-import re
-import shutil
+import pathlib
 import tempfile
 import unittest
 import numpy as np
+import pandas as pd
 import geopandas as gpd
 
 from openquake.ghm.create_homogenised_curves import proc
 
+aac = np.testing.assert_allclose
+
 #
 HERE = os.path.dirname(__file__)
+HERE_PATH = pathlib.Path(HERE)
 
 
 @unittest.skipUnless('GEM_DATA' in os.environ, 'please set GEMDATA')
@@ -96,3 +99,25 @@ class CreateCurvesTestCase(unittest.TestCase):
              sub=True)
 
         print(outpath)
+        expected_folder = HERE_PATH / 'results' / 'buf_35_mie_eur'
+        computed_folder = pathlib.Path(outpath)
+
+        tmp_fname = expected_folder / 'buf_unique.txt'
+        unique_expected = np.loadtxt(tmp_fname, skiprows=1, delimiter=',')
+        tmp_fname = computed_folder / 'buf_unique.txt'
+        unique_computed = np.loadtxt(tmp_fname, skiprows=1, delimiter=',')
+        aac(unique_computed, unique_computed)
+
+        tmp_fname = expected_folder / 'buf.txt'
+        unique_expected = np.loadtxt(tmp_fname, skiprows=1, delimiter=',')
+        tmp_fname = computed_folder / 'buf.txt'
+        unique_computed = np.loadtxt(tmp_fname, skiprows=1, delimiter=',')
+        aac(unique_computed, unique_computed)
+
+        tmp_fname = expected_folder / 'map_buffer.json'
+        gdf_expected = gpd.read_file(tmp_fname)
+        tmp_fname = computed_folder / 'map_buffer.json'
+        gdf_computed = gpd.read_file(tmp_fname)
+        pd.testing.assert_frame_equal(gdf_expected, gdf_computed)
+
+
