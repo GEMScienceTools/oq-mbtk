@@ -47,6 +47,12 @@ from openquake.baselib import sap
 from openquake.ghm.utils import create_query
 from openquake.man.tools.csv_output import _get_header1
 
+logging.basicConfig(
+    format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
 
 def get_poly_from_str(tstr):
     """
@@ -246,6 +252,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         True (1) to create buffer map only for models in models_list
     """
     shapely.speedups.enable()
+
     # Buffer distance in [m]
     buf = float(buf) * 1000
 
@@ -263,11 +270,16 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                 raise ValueError(f'The code requires an empty folder\n{outpath}')
     else:
         os.mkdir(outpath)
+
     # Read the shapefile with the contacts between models
     contacts_df = gpd.read_file(contacts_shp)
 
     # Read the shapefile with inland areas
     inland_df = gpd.read_file(boundaries_shp)
+
+    # Info
+    msg = 'Completed reading shapefiles'
+    logging.info(msg)
 
     # Load the spatial index
     # sidx = index.Rtree(sidx_fname)
@@ -289,14 +301,15 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         buffer_data = {}
         buffer_poes = {}
         coords = {}
+
         # Skip models not included in the list
         if re.sub('[0-9]+', '', key) not in models_list:
             continue
+
         # Find name of the file with hazard curves
         print_model_info(i, key)
         data_fname = find_hazard_curve_file(datafolder, vs30_flag, key, imt_str)
         print(data_fname[0])
-
 
         # Read hazard curves
         map_gdf, header = get_hcurves_geodataframe(data_fname[0])
@@ -344,7 +357,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             xdf = copy.deepcopy(map_gdf[idx])
             map_gdf = xdf
 
-        if key in ['eur']:
+        if key in ['eur'] and False:
             from shapely.geometry import Polygon
             coo = get_poly_from_str(mosaic.SUBSETS['GID_0'][key]['RUS'][0])
             df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
@@ -356,8 +369,6 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         # Read the shapefile with the polygons of countries. The explode
         # function converts multipolygons into a single multipolygon.
         tmpdf = gpd.read_file(boundaries_shp)
-
-        # inpt = explode(tmpdf)
         inpt = tmpdf.explode(index_parts=True)
         inpt['MODEL'] = key
 
@@ -366,10 +377,11 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         selection = create_query(inpt, mosaic_key, mosaic_data[key])
         one_polygon = selection.dissolve(by='MODEL')
 
-        # PROJECTING
-        aeqd = pyproj.Proj(proj='aeqd', ellps='WGS84',
-                           datum='WGS84', lat_0=map_gdf.lat.mean(),
-                           lon_0=map_gdf.lon.mean()).srs
+        # Projecting the coordinates of the sites with the hazard results
+        lat_0 = np.mean(map_gdf[np.isfinite(map_gdf.lat)].lat)
+        lon_0 = np.mean(map_gdf[np.isfinite(map_gdf.lon)].lon)
+        aeqd = pyproj.Proj(proj='aeqd', ellps='WGS84', datum='WGS84',
+                           lat_0=lat_0, lon_0=lon_0).srs
         p4326 = pyproj.CRS.from_string("epsg:4326")
         map_gdf = map_gdf.set_crs('epsg:4326')
         map_gdf_pro = map_gdf.to_crs(crs=aeqd)
@@ -421,11 +433,11 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     # Computing the distances
                     if sum(idx)==0:
                         continue
-#                    import pdb; pdb.set_trace()
+                    lat_0 = np.mean(tmpdf[np.isfinite(tmpdf.lat)].lat)
+                    lon_0 = np.mean(tmpdf[np.isfinite(tmpdf.lon)].lon)
                     aeqd_local = pyproj.Proj(proj='aeqd', ellps='WGS84',
-                                             datum='WGS84',
-                                             lat_0=tmpdf.lat.mean(),
-                                             lon_0=tmpdf.lon.mean()).srs
+                                             datum='WGS84', lat_0=lat_0,
+                                             lon_0=lon_0).srs
                     tmpdf_pro = tmpdf.to_crs(crs=aeqd_local)
                     p_geo_pro = p_geo.to_crs(crs=aeqd_local)
 
@@ -459,7 +471,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     # Update the polygon containing just internal points i.e.
                     # points within the model but outside of the buffers. The
                     # points in the buffer but outside the model are True.
-                    poly_pp = poly_pro.buffer(0)
+                    poly_pp = poly_pro.make_valid()
                     poly_pp = poly_pp.difference(tpoly.buffer(buf)[0])
                     poly_pro = poly_pp
 
@@ -583,7 +595,7 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, su
     for i, key in enumerate(sorted(mosaic_data)):
 
         # Skip models not included in the list.
-        # comment out these lines if wanting to join 
+        # comment out these lines if wanting to join
         # all the models, but some have been produced in former runs
         if re.sub('[0-9]+', '', key) not in models_list and sub==True:
             continue
@@ -699,13 +711,13 @@ def process(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
     This function processes all the models listed in the mosaic.DATA dictionary
     and creates homogenised curves.
 
-    Example use that recreates the curves (model and buffer regions) for EUR and MIE models, 
-    overwriting them in their existing folder (/home/hazard/mosaic/../ghm/PGA-rock) and 
+    Example use that recreates the curves (model and buffer regions) for EUR and MIE models,
+    overwriting them in their existing folder (/home/hazard/mosaic/../ghm/PGA-rock) and
     generating the buffer shapefiles for the full globe
 
-    ./create_homogenised_curves.py ./../data/gis/contacts_between_models.shp 
-    /home/hazard/mosaic/../ghm/PGA-rock /home/hazard/mosaic ../GGrid/trigrd_split_9_spacing_13 
-    /home/hazard/mosaic/../gadm_410_level_0.gpkg PGA ./../data/gis/inland.shp 50.0 0 
+    ./create_homogenised_curves.py ./../data/gis/contacts_between_models.shp
+    /home/hazard/mosaic/../ghm/PGA-rock /home/hazard/mosaic ../GGrid/trigrd_split_9_spacing_13
+    /home/hazard/mosaic/../gadm_410_level_0.gpkg PGA ./../data/gis/inland.shp 50.0 0
     -m "eur,mie" -f 1
     """
     proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
