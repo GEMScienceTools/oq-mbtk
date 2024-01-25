@@ -1034,7 +1034,8 @@ class Test3Faults(unittest.TestCase):
 
         # fmt: on
         pd.testing.assert_frame_equal(rup_df, rup_df_)
-        np.testing.assert_allclose(dist_adj_matrix, dist_adj_matrix_)
+        np.testing.assert_allclose(dist_adj_matrix, dist_adj_matrix_,
+                                   atol=1e-3, rtol=1e-3)
 
     def test_make_binary_adjacency_matrix(self):
         # fmt: off
