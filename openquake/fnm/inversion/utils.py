@@ -176,6 +176,7 @@ def rup_df_to_rupture_dicts(
     subfaults_col='subfaults',
     faults_col='faults',
     fault_fracs_col='fault_frac_area',
+    subfault_fracs_col='frac_area',
 ):
     rupture_dicts = []
     for i, rup in rup_df.iterrows():
@@ -188,6 +189,10 @@ def rup_df_to_rupture_dicts(
                 "faults_orig": {
                     f: rup[fault_fracs_col][i]
                     for i, f in enumerate(rup[faults_col])
+                },
+                "subfault_fracs": {
+                    f: rup[subfault_fracs_col][i]
+                    for i, f in enumerate(rup[subfaults_col])
                 },
             }
         )
@@ -315,7 +320,12 @@ def get_mfd_occurrence_rates(mfd, mag_decimals=1):
 
 
 def set_single_fault_rupture_rates_by_mfd(
-    ruptures, mfd, mag_decimals=1, scale_moment_rate=True, moment_rate=None
+    ruptures,
+    mfd,
+    mag_decimals=1,
+    scale_moment_rate=True,
+    moment_rate=None,
+    faults_or_subfaults='faults',
 ):
     mfd_rates = get_mfd_occurrence_rates(mfd, mag_decimals=mag_decimals)
     mfd_mags = np.array(list(mfd_rates.keys()))
@@ -336,14 +346,21 @@ def set_single_fault_rupture_rates_by_mfd(
     )
 
     if scale_moment_rate is True:
+        if faults_or_subfaults == 'faults':
+            fault_key = 'faults_orig'
+        elif faults_or_subfaults == 'subfaults':
+            fault_key = 'subfault_fracs'
         # check that this is the same as what is passed to the MFD!!
-        # mag_moment = sum(
-        #    [mag_to_mo(mag) * rate for mag, rate in mfd_rates.items()]
-        # )
+
+        if moment_rate is None:
+            moment_rate = sum(
+                [mag_to_mo(mag) * rate for mag, rate in mfd_rates.items()]
+            )
+
         fault = None
         for rup in ruptures:
-            if len(rup['faults_orig']) == 1:
-                fault = list(rup['faults_orig'].keys())[0]
+            if len(rup[fault_key]) == 1:
+                fault = list(rup[fault_key].keys())[0]
                 break
         if fault is None:
             raise ValueError("cannot determine fault")
@@ -352,7 +369,7 @@ def set_single_fault_rupture_rates_by_mfd(
             [
                 mag_to_mo(rup['M'])
                 * rup_rates[rup['idx']]
-                * rup['faults_orig'][fault]
+                * rup[fault_key][fault]
                 for rup in ruptures
             ]
         )
@@ -372,20 +389,29 @@ def set_single_fault_rup_rates(
     rup_df='rupture_df',
     mfd_type='TruncatedGRMFD',
     scale_moment_rate=True,
+    faults_or_subfaults='faults',
+    moment_rate=None,
 ):
-    fault = _get_fault_by_id(fault_id, fault_network['faults'])
-    fault_rup_df = get_ruptures_on_fault(fault_id, fault_network[rup_df])
+    if faults_or_subfaults == 'faults':
+        fault = _get_fault_by_id(fault_id, fault_network['faults'])
+    elif faults_or_subfaults == 'subfaults':
+        fault = fault_network['subfault_df'].loc[fault_id]
+
+    fault_rup_df = get_ruptures_on_fault(
+        fault_id, fault_network[rup_df], key=faults_or_subfaults
+    )
     rups = rup_df_to_rupture_dicts(
         fault_rup_df, mag_col='mag', displacement_col='displacement'
     )
 
-    moment_rate = (
-        fault['surface'].get_area()
-        * fault['net_slip_rate']
-        * SHEAR_MODULUS
-        * 1e3
-        * seismic_fraction
-    )
+    if moment_rate is None:
+        moment_rate = (
+            fault['surface'].get_area()
+            * fault['net_slip_rate']
+            * SHEAR_MODULUS
+            * 1e3
+            * seismic_fraction
+        )
 
     if mfd is None:
         mfd = make_fault_mfd(
@@ -398,8 +424,18 @@ def set_single_fault_rup_rates(
             moment_rate=moment_rate,
         )
     rup_rates = set_single_fault_rupture_rates_by_mfd(
-        rups, mfd, scale_moment_rate=scale_moment_rate, moment_rate=moment_rate
+        rups,
+        mfd,
+        scale_moment_rate=scale_moment_rate,
+        moment_rate=moment_rate,
+        faults_or_subfaults=faults_or_subfaults,
     )
+
+    ## check moment rate
+    # mag_moment = sum(
+    #    mag_to_mo(rup['M']) * rup_rates[rup['idx']] for rup in rups
+    # )
+    # np.testing.assert_almost_equal(mag_moment, moment_rate)
 
     return rup_rates
 
@@ -418,8 +454,12 @@ def _get_fault_by_id(fault_id, faults):
     return fault
 
 
-def get_ruptures_on_fault(fault_id, rupture_df):
-    return rupture_df[rupture_df['faults'].apply(lambda x: fault_id in x)]
+def get_ruptures_on_fault(fault_id, rupture_df, key='faults'):
+    """
+    Gets all ruptures on a given fault or subfault, indicated by the fault_id.
+    Pass `key='subfaults'` to get subfaults.
+    """
+    return rupture_df[rupture_df[key].apply(lambda x: fault_id in x)]
 
 
 def get_rup_rates_from_fault_slip_rates(
@@ -428,8 +468,9 @@ def get_rup_rates_from_fault_slip_rates(
     mfd_type='TruncatedGRMFD',
     plot_fault_moment_rates=False,
     seismic_fraction=1.0,
-    rupture_set_for_rates_from_slip_rates='filtered',
+    rupture_set_for_rates_from_slip_rates='all',
     fix_moment_rates=True,
+    faults_or_subfaults='faults',
     **kwargs,
 ):
     """
@@ -467,6 +508,14 @@ def get_rup_rates_from_fault_slip_rates(
         rup_df_key = 'rupture_df_keep'
     elif rupture_set_for_rates_from_slip_rates == 'all':
         rup_df_key = 'rupture_df'
+
+    if faults_or_subfaults == 'faults':
+        fault_id_key = 'fid'
+        _key_ = 'faults'
+
+    elif faults_or_subfaults == 'subfaults':
+        fault_id_key = 'subfault_id'
+        _key_ = 'subfaults'
 
     fault_mfds = {}
     for fault in fault_network['faults']:
