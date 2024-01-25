@@ -440,6 +440,26 @@ def set_single_fault_rup_rates(
     return rup_rates
 
 
+def _get_surface_moment_rate(
+    surface_area: float,
+    slip_rate: float,
+    seismic_fraction: float = 1.0,
+    shear_modulus: float = SHEAR_MODULUS,
+) -> float:
+    return surface_area * slip_rate * shear_modulus * 1e3 * seismic_fraction
+
+
+def get_fault_moment_rate(
+    fault, seismic_fraction=1.0, shear_modulus=SHEAR_MODULUS
+):
+    return _get_surface_moment_rate(
+        fault['surface'].get_area(),
+        fault['net_slip_rate'],
+        seismic_fraction=seismic_fraction,
+        shear_modulus=shear_modulus,
+    )
+
+
 def _get_fault_by_id(fault_id, faults):
     for flt in faults:
         if flt['fid'] == fault_id:
@@ -510,41 +530,59 @@ def get_rup_rates_from_fault_slip_rates(
         rup_df_key = 'rupture_df'
 
     if faults_or_subfaults == 'faults':
-        fault_id_key = 'fid'
         _key_ = 'faults'
-
+        fault_iterator = {
+            fault['fid']: fault for fault in fault_network['faults']
+        }
     elif faults_or_subfaults == 'subfaults':
-        fault_id_key = 'subfault_id'
         _key_ = 'subfaults'
+        fault_iterator = {
+            sub_idx: fault
+            for sub_idx, fault in fault_network['subfault_df'].iterrows()
+        }
 
-    fault_mfds = {}
-    for fault in fault_network['faults']:
-        fault_mfds[fault['fid']] = make_fault_mfd(
+    fault_moment_rates = {
+        id: get_fault_moment_rate(fault)
+        for id, fault in fault_iterator.items()
+    }
+
+    fault_mfds = {
+        id: make_fault_mfd(
             fault,
             max_mag=get_ruptures_on_fault(
-                fault['fid'], fault_network[rup_df_key]
+                id, fault_network[rup_df_key], key=_key_
             ).mag.max(),
             mfd_type=mfd_type,
             b_val=b_val,
             seismic_fraction=seismic_fraction,
+            moment_rate=fault_moment_rates[id],
             **kwargs,
         )
+        for id, fault in fault_iterator.items()
+    }
 
     all_rup_rates = {
-        fault['fid']: set_single_fault_rup_rates(
-            fault['fid'],
+        id: set_single_fault_rup_rates(
+            id,
             fault_network,
-            mfd=fault_mfds[fault['fid']],
+            mfd=fault_mfds[id],
             rup_df=rup_df_key,
             b_val=b_val,
             mfd_type=mfd_type,
             seismic_fraction=seismic_fraction,
+            faults_or_subfaults=faults_or_subfaults,
             **kwargs,
         )
-        for fault in fault_network['faults']
+        for id in fault_iterator.keys()
     }
 
-    sf_inds = fault_network['single_rup_df'].index
+    sf_inds = []
+    if faults_or_subfaults == 'faults':
+        sf_inds = fault_network['single_rup_df'].index
+    elif faults_or_subfaults == 'subfaults':
+        for ind, sfs in fault_network[rup_df_key].subfaults.items():
+            if len(sfs) == 1:
+                sf_inds.append(ind)
 
     final_rup_rates = {}
     mf_rates = {}
@@ -563,9 +601,14 @@ def get_rup_rates_from_fault_slip_rates(
 
     mf_rup_rates = {}
     for rup, rates in mf_rates.items():
-        faults, fault_fracs = fault_network['rupture_df'].loc[
-            rup, ['faults', 'fault_frac_area']
-        ]
+        if faults_or_subfaults == 'faults':
+            faults, fault_fracs = fault_network['rupture_df'].loc[
+                rup, ['faults', 'fault_frac_area']
+            ]
+        elif faults_or_subfaults == 'subfaults':
+            faults, fault_fracs = fault_network['rupture_df'].loc[
+                rup, ['subfaults', 'frac_area']
+            ]
         fault_weights = fault_fracs
         fault_rates = [rates[flt] for flt in faults]
         weighted_mean_rate = weighted_mean(fault_rates, fault_weights)
@@ -581,10 +624,14 @@ def get_rup_rates_from_fault_slip_rates(
 
         rups = rup_df_to_rupture_dicts(fault_network['rupture_df'])
         fault_moment_rates_rup = {}
+        if faults_or_subfaults == 'faults':
+            frac_key = 'faults_orig'
+        elif faults_or_subfaults == 'subfaults':
+            frac_key = 'subfault_fracs'
         for rup in rups:
-            for fault in rup['faults_orig']:
+            for fault in rup[frac_key]:
                 rup_moment_rate = (
-                    rup['faults_orig'][fault]
+                    rup[frac_key][fault]
                     * mag_to_mo(rup['M'])
                     * final_rup_rates[rup['idx']]
                 )
@@ -593,36 +640,17 @@ def get_rup_rates_from_fault_slip_rates(
                 else:
                     fault_moment_rates_rup[fault] += rup_moment_rate
 
-        fault_moment_rates_slip = {}
-        for fault in fault_network['faults']:
-            moment_rate = (
-                fault['surface'].get_area()
-                * fault['net_slip_rate']
-                * SHEAR_MODULUS
-                * 1e3
-                * seismic_fraction
-            )
-            # moment_rate = sum(
-            #    [
-            #        mag_to_mo(mag) * rate
-            #        for mag, rate in get_mfd_occurrence_rates(
-            #            fault_mfds[fault['fid']]
-            #        ).items()
-            #    ]
-            # )
-            fault_moment_rates_slip[fault['fid']] = moment_rate
-
         plt.plot(
-            [0, max(fault_moment_rates_slip.values())],
-            [0, max(fault_moment_rates_slip.values())],
+            [0, max(fault_moment_rates.values())],
+            [0, max(fault_moment_rates.values())],
             '--',
             lw=0.25,
         )
         plt.plot(
-            fault_moment_rates_slip.values(),
+            fault_moment_rates.values(),
             [
                 fault_moment_rates_rup[fault]
-                for fault in fault_moment_rates_slip.keys()
+                for fault in fault_moment_rates.keys()
             ],
             '.',
         )
