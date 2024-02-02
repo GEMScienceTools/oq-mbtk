@@ -217,13 +217,13 @@ class CrossSectionData:
             slab1pt0[idx[0], 0] = slab1pt0[idx[0], 0] - 360.
         if qual == 0:
             minlo, maxlo, minla, maxla, qual = self.csec.get_mm(2.0)
-            idxslb = self.csec.get_grd_nodes_within_buffer(slab1pt0[:, 0],
+            idxslb, dst = self.csec.get_grd_nodes_within_buffer(slab1pt0[:, 0],
                                                            slab1pt0[:, 1],
                                                            bffer,
                                                            minlo, maxlo,
                                                            minla, maxla)
         if qual == 1:
-            idxslb = self.csec.get_grd_nodes_within_buffer_idl(slab1pt0[:, 0],
+            idxslb, dst = self.csec.get_grd_nodes_within_buffer_idl(slab1pt0[:, 0],
                                                                slab1pt0[:, 1],
                                                                bffer,
                                                                minlo, maxlo,
@@ -288,7 +288,7 @@ class CrossSectionData:
         if idxl is not None and len(idxl):
             boo = numpy.zeros_like(dataa[:, 0], dtype=int)
             boo[idxl[0]] = 1
-            self.litho = numpy.squeeze(dataa[idxl, :])
+            self.litho = numpy.squeeze(dataa[idxl[0], :])
 
     def set_gcmt(self, filename, bffer=75.):
         """
@@ -351,7 +351,7 @@ class CrossSectionData:
         if idxb is not None and len(idxb):
             boo = numpy.zeros_like(datab[:, 0], dtype=int)
             boo[idxb[0]] = 1
-            self.topo = numpy.squeeze(datab[idxb, :])
+            self.topo = numpy.squeeze(datab[idxb[0], :])
 
     def set_volcano(self, filename, bffer=75.):
         """
@@ -386,7 +386,7 @@ class CrossSectionData:
         if idxv is not None and len(idxv):
             voo = numpy.zeros_like(vulc[:, 0], dtype=int)
             voo[idxv[0]] = 1
-            self.volc = numpy.squeeze(vulc[idxv, :])
+            self.volc = numpy.squeeze(vulc[idxv[0], :])
         fin.close()
         print(self.volc)
 

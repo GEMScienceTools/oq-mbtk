@@ -345,7 +345,7 @@ def _plot_volc(axes, csda):
     ola = csda.csec.ola
     patches = []
 
-    if (len(csda.volc)-1) >= 1:
+    if (len(csda.volc)-1) >= 2:
         vuls = geodetic_distance(olo, ola,
                                  csda.volc[:, 0],
                                  csda.volc[:, 1])
@@ -564,7 +564,7 @@ def plt_cs(olo, ola, depp, lnght, strike, ids, ini_filename):
 
     config = configparser.ConfigParser()
     config.read(ini_filename)
-    fname_trench = config['data']['trench_axis_filename']
+#    fname_trench = config['data']['trench_axis_filename']
     fname_eqk_cat = config['data']['catalogue_pickle_filename']
     fname_slab = config['data']['slab1pt0_filename']
     fname_crust = config['data']['crust1pt0_filename']
@@ -574,7 +574,7 @@ def plt_cs(olo, ola, depp, lnght, strike, ids, ini_filename):
     fname_litho = config['data']['litho_filename']
     fname_volc = config['data']['volc_filename']
 
-    csda.set_trench_axis(fname_trench)
+#    csda.set_trench_axis(fname_trench)
     cat = pickle.load(open(fname_eqk_cat, 'rb'))
     csda.set_catalogue(cat)
     if re.search('[a-z]', fname_slab):
