@@ -6,7 +6,9 @@ from copy import deepcopy
 import numpy as np
 
 logging.basicConfig(
-    format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
+    format='%(asctime)s - %(message)s',
+    datefmt='%d-%b-%y %H:%M:%S',
+    level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
