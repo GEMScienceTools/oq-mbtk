@@ -6,8 +6,8 @@ with the PowerShell installer.
 
 Requirements are:
 
-- Windows 10 (64bit)
-- 4 GB of RAM (8 GB recommended)
+- Windows 10 or Windows 11
+- 8 GB of RAM (16 GB recommended)
 - 1.5 GB of free disk space
 - Git on Windows
   The most official build is available for download on the Git website. Just go to https://git-scm.com/download/win and the download will start automatically.
@@ -33,7 +33,7 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 
 ## Installation
 
-To install the OQ-MBTK on Windows 10 run the following command from the PowerShell (not the normal CMD command prompt):
+To install the OQ-MBTK on Windows run the following command from the Windows Terminal :
 
 ```
 C:\>curl.exe -LO https://raw.githubusercontent.com/GEMScienceTools/oq-mbtk/master/windows/install_oqmbtk.ps1
@@ -44,7 +44,7 @@ This will install the OQ-MBTK software and OpenQuake Engine in a new folder call
 and create two cmd files on the Desktop to load the OQ-MBTK environment and Openquake environment
 
 - this Installer includes its own distribution of the dependencies needed 
-    - Python 3.8.10
+    - Python 3.11.7
     - Python dependencies (pip, numpy, scipy, and more)
 
 To use the environment just activate from the command files on the desktop:
