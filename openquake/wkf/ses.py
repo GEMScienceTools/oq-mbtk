@@ -68,7 +68,7 @@ def from_df(df, end_year=None):
 def to_df(cat):
     df = pd.DataFrame()
     for key in cat.data:
-        if key not in ['comment', 'flag']:
+        if key not in ['comment', 'flag'] and len(cat.data[key]):
             df.loc[:, key] = cat.data[key]
     return df
 
@@ -159,16 +159,17 @@ def check_ses_vs_catalogue(fname: str, *, example_flag: bool = False):
         dfr = dfr.loc[dfr['trt_smr'] == tectonic_region]
 
     # Reading geojson polygon and create the shapely geometry
+    """
     with open(polygon_fname) as json_file:
         data = json.load(json_file)
     polygon = data['features'][0]['geometry']
     tmp = eval(geoj.dumps(polygon))
     geom = shape(tmp)
+    """
 
-    # Get region limits
-    coo = []
-    for poly in geom.geoms:
-        coo += list(zip(*poly.exterior.coords.xy))
+    gdf = gpd.read_file(polygon_fname)
+    geom = gdf.iloc[0].geometry
+    coo = list(zip(*geom.exterior.coords.xy))
     coo = np.array(coo)
     minlo = np.min(coo[:, 0])
     minla = np.min(coo[:, 1])
@@ -212,7 +213,7 @@ def check_ses_vs_catalogue(fname: str, *, example_flag: bool = False):
 
     selcat.data["dtime"] = selcat.get_decimal_time()
     cent_mag, t_per, n_obs = get_completeness_counts(selcat, ctab, binw)
-    tmp = n_obs/t_per
+    tmp = n_obs / t_per
     hiscml_cat = np.array([np.sum(tmp[i:]) for i in range(0, len(tmp))])
 
     # Take into account possible multiple occurrences in the SES
@@ -257,7 +258,7 @@ def check_ses_vs_catalogue(fname: str, *, example_flag: bool = False):
         fig.plot(x=dfr.loc[idx].hypo_0,
                  y=dfr.loc[idx].hypo_1,
                  style="c",
-                 color=dfr.loc[idx].hypo_2,
+                 fill=dfr.loc[idx].hypo_2,
                  cmap=True,
                  size=0.01 * (1.5 ** dfr.loc[idx].mag),
                  pen="black")
@@ -273,7 +274,7 @@ def check_ses_vs_catalogue(fname: str, *, example_flag: bool = False):
         fig.plot(x=selcat_df.longitude,
                  y=selcat_df.latitude,
                  style="c",
-                 color=selcat_df.depth,
+                 fill=selcat_df.depth,
                  cmap=True,
                  size=0.01 * (1.5 ** selcat_df.magnitude),
                  pen="black")
