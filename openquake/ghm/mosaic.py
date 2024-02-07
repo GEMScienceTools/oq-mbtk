@@ -159,6 +159,7 @@ DATA = {'GID_0': {
                'LBN', 'PAK', 'Z06', 'PSA', 'PSE',
                'SYR'],
        # for placing Turkey, Cyprus, North Cyprus in EUR
+       #'eur': ['TUR'],
        'eur': ['ALB', 'AND', 'AUT', 'BEL', 'BGR',
                'BIH', 'BLR', 'CHE', 'CZE', 'DEU',
                'DNK', 'ESP', 'EST', 'FIN', 'FRA',
