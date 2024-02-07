@@ -32,7 +32,7 @@ if (Test-Path -Path $workDir) {
 }
 Write-Host "Current Working Directory: $workDir"
 Write-Host "Download and Installation of python embeddable package"
-Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.11.7/python-3.11.7-embed-amd64.zip -OutFile .\python.zip
+Invoke-WebRequest -Uri https://ftp.openquake.org/windows/thirdparties/python-3.11.6-win64.zip -OutFile .\python.zip
 Expand-Archive -Path .\python.zip -DestinationPath .\mbtk -Verbose
 Remove-Item .\python.zip
 cd $workDir
