@@ -58,6 +58,7 @@ def build_fault_network(
     settings=None,
     surface_type='simple',
     filter_by_angle=True,
+    return_faults_only=False,
     **kwargs,
 ):
     """
@@ -155,6 +156,8 @@ def build_fault_network(
     t1 = time.time()
     event_times.append(t1)
     logging.info(f"\tdone in {round(t1-t0, 1)} s")
+    if return_faults_only:
+        return fault_network
 
     logging.info("Making subfaults")
     fault_network['subfaults'] = []
