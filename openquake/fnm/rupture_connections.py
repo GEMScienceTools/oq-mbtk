@@ -7,7 +7,8 @@ import igraph as ig
 import pandas as pd
 from numba import jit
 
-from openquake.hazardlib.geo.geodetic import spherical_to_cartesian
+from openquake.hazardlib.geo import Point, Line
+from openquake.hazardlib.geo.geodetic import spherical_to_cartesian, azimuth
 
 from openquake.aft.rupture_distances import (
     get_sequence_pairwise_dists,
@@ -19,7 +20,12 @@ from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
     make_sf_rupture_meshes,
+    get_trace_from_mesh,
 )
+
+
+from openquake.fnm.mesh import get_mesh_bb
+from openquake.fnm.bbox import get_bb_distance
 
 
 def get_bb_from_surface(surface):
@@ -73,6 +79,20 @@ def get_bounding_box_distances(
     return fault_bb_dists
 
 
+def get_bounding_box_distances_marco(
+    fault_surfaces, max_dist: Optional[float] = None
+):
+    mesh_bbs = [get_mesh_bb(surface.mesh) for surface in fault_surfaces]
+    dists = {}
+    for i in range(len(mesh_bbs)):
+        for j in range(i + 1, len(mesh_bbs)):
+            dist = get_bb_distance(mesh_bbs[i], mesh_bbs[j])
+            if max_dist is None or dist <= max_dist:
+                dists[(i, j)] = dist
+                dists[(j, i)] = dist
+    return dists
+
+
 def get_close_faults(
     faults: list[dict], max_dist: Optional[float] = None
 ) -> RupDistType:
@@ -98,7 +118,10 @@ def get_close_faults(
             d: distance between the bounding boxes (float)
     """
     surfaces = [fault['surface'] for fault in faults]
-    fault_bb_dists = get_bounding_box_distances(surfaces, max_dist=max_dist)
+    # fault_bb_dists = get_bounding_box_distances(surfaces, max_dist=max_dist)
+    fault_bb_dists = get_bounding_box_distances_marco(
+        surfaces, max_dist=max_dist
+    )
 
     return fault_bb_dists
 
@@ -421,7 +444,7 @@ def get_rupture_adjacency_matrix(
     # actual rupture distances; this is a filtering step.
     fault_dists = get_close_faults(faults, max_dist=max_dist * 1.5)
 
-    fault_dists = {(i, j): d for i, j, d in fault_dists}
+    # fault_dists = {(i, j): d for i, j, d in fault_dists}
 
     dist_adj_matrix = np.zeros((nrups, nrups), dtype=np.float32)
 
@@ -443,7 +466,8 @@ def get_rupture_adjacency_matrix(
                     )
                 else:
                     pass
-            elif i < j:
+            # elif i < j:
+            else:
                 if (i, j) not in fault_dists:
                     pass
                 elif fault_dists[(i, j)] <= max_dist * 1.5:
@@ -451,8 +475,8 @@ def get_rupture_adjacency_matrix(
                         single_fault_rup_coords[i],
                         single_fault_rup_coords[j],
                     )
-            else:
-                pass
+            # else:
+            #    pass
 
             if pw_source_dists is not None:
                 dist_adj_matrix[
@@ -494,8 +518,95 @@ def make_binary_adjacency_matrix(
     return binary_dist_matrix
 
 
+def sp_pt(lon, lat):
+    phi = np.radians(lat)
+    lamb = np.radians(lon)
+
+    return np.array(
+        [np.cos(phi) * np.cos(lamb), np.cos(phi) * np.sin(lamb), np.sin(phi)]
+    )
+
+
+def sp_to_pt(sp):
+    x, y, z = sp
+    phi = np.arctan2(z, np.sqrt(x**2 + y**2))
+    lamb = np.arctan2(y, x)
+
+    lon, lat = np.degrees([lamb, phi])
+    return lon, lat
+
+
+def sp_vec(lon, lat, bearing):
+    phi, lamb, theta = np.radians([lat, lon, bearing])
+
+    C = np.array(
+        [
+            np.sin(lamb) * np.cos(theta)
+            - np.sin(phi) * np.cos(lamb) * np.sin(theta),
+            -np.cos(lamb) * np.cos(theta)
+            - np.sin(phi) * np.sin(lamb) * np.sin(theta),
+            np.cos(phi) * np.sin(theta),
+        ]
+    )
+    return C
+
+
+def intersection_pt(
+    lon_a, lat_a, strike_a, lon_b, lat_b, strike_b, return_closest=True
+):
+    p_a = sp_pt(lon_a, lat_a)
+    p_b = sp_pt(lon_b, lat_b)
+
+    c_a = sp_vec(lon_a, lat_a, strike_a)
+    c_b = sp_vec(lon_b, lat_b, strike_b)
+
+    n1 = np.cross(c_a, c_b)
+    n2 = np.cross(c_b, c_a)
+
+    pt_1 = sp_to_pt(n1)
+    pt_2 = sp_to_pt(n2)
+
+    if return_closest:
+        d1 = np.arccos(p_a.dot(n1))
+        d2 = np.arccos(p_b.dot(n2))
+        if d1 <= d2:
+            return pt_1
+        else:
+            return pt_2
+    else:
+        return pt_1, pt_2
+
+
+def find_intersection_angle(trace_1, trace_2):
+    if not isinstance(trace_1, Line):
+        tr1 = Line([Point(*coords) for coords in trace_1])
+        tr2 = Line([Point(*coords) for coords in trace_2])
+    else:
+        tr1 = trace_1
+        tr2 = trace_2
+
+    az_1 = tr1.average_azimuth()
+    az_2 = tr2.average_azimuth()
+
+    pt_1_x, pt_1_y = trace_1[0].x, trace_1[0].y
+    pt_2_x, pt_2_y = trace_2[0].x, trace_2[0].y
+
+    int_pt = intersection_pt(pt_1_x, pt_1_y, az_1, pt_2_x, pt_2_y, az_2)
+
+    az_pt_1, az_pt_2 = azimuth(
+        [pt_1_x, pt_2_x], [pt_1_y, pt_2_y], int_pt[0], int_pt[1]
+    )
+
+    angle_between = np.abs(az_pt_1 - az_pt_2) % 360
+
+    if angle_between > 180.0:
+        angle_between = 360 - angle_between
+
+    return int_pt, angle_between
+
+
 def get_proximal_rup_angles(
-    sf_meshes, binary_distance_matrix
+    sf_traces, binary_distance_matrix
 ) -> dict[tuple[int, int], tuple[float, float]]:
     """
     Get the rupture angles between proximal ruptures (i.e., those considered
@@ -518,11 +629,18 @@ def get_proximal_rup_angles(
         Dictionary of rupture angles. The keys are tuples of rupture indices,
         and the values are tuples of rupture angles in degrees.
     """
+    if not isinstance(sf_traces[0], Line):
+        sf_traces = [
+            Line([Point(*coords) for coords in trace]) for trace in sf_traces
+        ]
+
     rup_angles = {}
-    for i, mesh_0 in enumerate(sf_meshes):
-        for j, mesh_1 in enumerate(sf_meshes):
+    for i, trace_0 in enumerate(sf_traces):
+        for j, trace_1 in enumerate(sf_traces):
             if binary_distance_matrix[i, j] == 1:
-                rup_angles[(i, j)] = get_angles(mesh_0, mesh_1)
+                rup_angles[(i, j)] = find_intersection_angle(trace_0, trace_1)[
+                    1
+                ]
     return rup_angles
 
 
@@ -562,19 +680,23 @@ def filter_bin_adj_matrix_by_rupture_angle(
     np.ndarray
         Filtered binary adjacency matrix.
     """
-    if angle_type == 'trace':
-        angle_index = 1
-    elif angle_type == 'dihedral':
-        angle_index = 0
+    # if angle_type == 'trace':
+    #    angle_index = 1
+    # elif angle_type == 'dihedral':
+    #    angle_index = 0
 
     sf_meshes = make_sf_rupture_meshes(
         single_rup_df['patches'], single_rup_df['fault'], subfaults
     )
 
-    rup_angles = get_proximal_rup_angles(sf_meshes, binary_adjacence_matrix)
+    sf_traces = [get_trace_from_mesh(mesh) for mesh in sf_meshes]
 
-    for (i, j), angles in rup_angles.items():
-        if angles[angle_index] < threshold_angle:
+    rup_angles = get_proximal_rup_angles(sf_traces, binary_adjacence_matrix)
+
+    for (i, j), angle in rup_angles.items():
+        # for (i, j), angles in rup_angles.items():
+        # if angles[angle_index] < threshold_angle:
+        if angle < threshold_angle:
             binary_adjacence_matrix[i, j] = 0
 
     return binary_adjacence_matrix
@@ -583,7 +705,7 @@ def filter_bin_adj_matrix_by_rupture_angle(
 def get_multifault_ruptures(
     dist_adj_matrix,
     max_dist: float = 10.0,
-    check_unique: bool = False,
+    check_unique: bool = True,
     max_sf_rups_per_mf_rup: int = 10,
 ) -> list[list[int]]:
     """
