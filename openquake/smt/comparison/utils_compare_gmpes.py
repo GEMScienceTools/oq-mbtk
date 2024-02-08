@@ -249,7 +249,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                 plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mw, dep, rrup)
                 
                 # Update plots
-                update_spec_plots(ax1, ax2, m, i, n, l, dist_list)
+                update_spec_plots(ax1, ax2, m, i, n, l, dist_list, dist_type)
             
             # Set axis limits and add grid
             ax1.set_xlim(min(period), max(period))
@@ -951,13 +951,21 @@ def plot_obs_spectra(ax1, obs_spectra, g, gmpe_list,  dep=None, rrup=None,
                  label=obs_string)    
         
         
-def update_spec_plots(ax1, ax2, m, i, n, l, dist_list):
+def update_spec_plots(ax1, ax2, m, i, n, l, dist_list, dist_type):
     """
     Add titles and axis labels to spectra plots
     """
-    ax1.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
+    if dist_type == 'repi':
+        r_type = 'Repi'
+    if dist_type == 'rrup':
+        r_type = 'Rrup'
+    if dist_type == 'rjb':
+        r_type = 'Rjb'
+    if dist_type == 'rhypo':
+        r_type = 'Rhypo'
+    ax1.set_title('Mw = ' + str(m) + ', ' + r_type + ' = ' + str(i) + ' km',
                   fontsize=16, y=1.0, pad=-16)
-    ax2.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
+    ax2.set_title('Mw = ' + str(m) + ', ' + r_type + ' = ' + str(i) + ' km',
                   fontsize=16, y=1.0, pad=-16)
     if n == len(dist_list)-1: #bottom row only
         ax1.set_xlabel('Period (s)', fontsize=16)
