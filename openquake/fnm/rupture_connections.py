@@ -6,6 +6,7 @@ import numpy as np
 import igraph as ig
 import pandas as pd
 from numba import jit
+from scipy.sparse import dok_array, issparse
 
 from openquake.hazardlib.geo import Point, Line
 from openquake.hazardlib.geo.geodetic import spherical_to_cartesian, azimuth
@@ -384,6 +385,7 @@ def get_rupture_adjacency_matrix(
     all_subfaults=None,
     multifaults_on_same_fault: bool = False,
     max_dist: Optional[float] = 20.0,
+    sparse: bool = True,
 ) -> tuple[pd.DataFrame, np.ndarray]:
     """
     Get the rupture adjacency matrix for a set of faults. Adjacency values
@@ -420,6 +422,17 @@ def get_rupture_adjacency_matrix(
         equal to the number of ruptures. The values are the distances between
         the ruptures in km.
     """
+
+    if sparse:
+
+        def sparsify_maybe(dist_matrix):
+            return dok_array(dist_matrix)
+
+    else:
+
+        def sparsify_maybe(dist_matrix):
+            return dist_matrix
+
     if all_subfaults is None:
         all_subfaults = [
             get_subsections_from_fault(fault, surface=fault['surface'])
@@ -446,7 +459,9 @@ def get_rupture_adjacency_matrix(
 
     # fault_dists = {(i, j): d for i, j, d in fault_dists}
 
-    dist_adj_matrix = np.zeros((nrups, nrups), dtype=np.float32)
+    dist_adj_matrix = sparsify_maybe(
+        np.zeros((nrups, nrups), dtype=np.float32)
+    )
 
     if max_dist is None:
         max_dist = np.inf
@@ -466,8 +481,7 @@ def get_rupture_adjacency_matrix(
                     )
                 else:
                     pass
-            # elif i < j:
-            else:
+            elif i < j:  # upper triangular matrix
                 if (i, j) not in fault_dists:
                     pass
                 elif fault_dists[(i, j)] <= max_dist * 1.5:
@@ -479,15 +493,21 @@ def get_rupture_adjacency_matrix(
             #    pass
 
             if pw_source_dists is not None:
+                local_dist_matrix = rdist_to_dist_matrix(
+                    pw_source_dists, nrows, ncols
+                )
+                local_dist_matrix[local_dist_matrix > max_dist] = 0.0
+
                 dist_adj_matrix[
                     row_count : row_count + nrows,
                     col_count : col_count + ncols,
-                ] = rdist_to_dist_matrix(pw_source_dists, nrows, ncols)
+                ] = sparsify_maybe(local_dist_matrix)
 
             col_count += ncols
         row_count += nrows
 
-    dist_adj_matrix[dist_adj_matrix > max_dist] = 0.0
+    # make the matrix symmetric
+    dist_adj_matrix += dist_adj_matrix.T
 
     return single_fault_rup_df, dist_adj_matrix
 
@@ -514,6 +534,35 @@ def make_binary_adjacency_matrix(
     """
     binary_dist_matrix = np.zeros(dist_matrix.shape, dtype=np.int32)
     binary_dist_matrix[(dist_matrix > 0.0) & (dist_matrix <= max_dist)] = 1
+
+    return binary_dist_matrix
+
+
+def make_binary_adjacency_matrix_sparse(
+    dist_matrix, max_dist: float = 10.0
+) -> dok_array:
+    """
+    Make a binary adjacency matrix from a distance matrix. The binary
+    adjacency matrix is 1 if the distance is less than or equal to
+    `max_dist`, and 0 otherwise.
+
+    Parameters
+    ----------
+    dist_matrix : np.ndarray
+        Distance matrix.
+    max_dist : float, optional
+        Maximum distance between ruptures in km. The default is 10.0.
+
+    Returns
+    -------
+    dok_array
+        Binary adjacency matrix.
+    """
+    binary_dist_matrix = dok_array(dist_matrix.shape, dtype=np.int32)
+    for (row, col), distance in dist_matrix.items():
+        if 0.0 < distance <= max_dist:
+            binary_dist_matrix[row, col] = 1
+    # binary_dist_matrix[(dist_matrix > 0.0) & (dist_matrix <= max_dist)] = 1
 
     return binary_dist_matrix
 
@@ -649,7 +698,6 @@ def filter_bin_adj_matrix_by_rupture_angle(
     subfaults,
     binary_adjacence_matrix,
     threshold_angle=60.0,
-    angle_type='trace',
 ) -> np.ndarray:
     """
     Filter the rupture adjacency matrix by rupture angle, so that only
@@ -671,9 +719,6 @@ def filter_bin_adj_matrix_by_rupture_angle(
         Binary adjacency matrix.
     threshold_angle : float, optional
         Threshold angle in degrees. The default is 60.0.
-    angle_type : str, optional
-        Type of angle to use for filtering. The default is 'trace', but
-        'dihedral' is also supported.
 
     Returns
     -------
@@ -697,13 +742,16 @@ def filter_bin_adj_matrix_by_rupture_angle(
         # for (i, j), angles in rup_angles.items():
         # if angles[angle_index] < threshold_angle:
         if angle < threshold_angle:
-            binary_adjacence_matrix[i, j] = 0
+            if issparse(binary_adjacence_matrix):
+                del binary_adjacence_matrix[i, j]
+            else:
+                binary_adjacence_matrix[i, j] = 0
 
     return binary_adjacence_matrix
 
 
 def get_multifault_ruptures(
-    dist_adj_matrix,
+    dist_adj_binary,
     max_dist: float = 10.0,
     check_unique: bool = True,
     max_sf_rups_per_mf_rup: int = 10,
@@ -715,7 +763,7 @@ def get_multifault_ruptures(
 
     Parameters
     ----------
-    dist_adj_matrix : np.ndarray
+    dist_adj_binary : np.ndarray
         Rupture adjacency matrix.
     max_dist : float, optional
         Maximum distance between ruptures in km. The default is 10.0.
@@ -731,17 +779,20 @@ def get_multifault_ruptures(
         List of multifault ruptures. Each rupture is a list of rupture
         indices.
     """
-    n_rups = dist_adj_matrix.shape[0]
+    n_rups = dist_adj_binary.shape[0]
 
     if max_sf_rups_per_mf_rup == -1:
         max_sf_rups_per_mf_rup = n_rups
     elif max_sf_rups_per_mf_rup > n_rups:
         max_sf_rups_per_mf_rup = n_rups
 
-    dist_adj_binary = make_binary_adjacency_matrix(dist_adj_matrix, max_dist)
+    if issparse(dist_adj_binary):
+        dist_adj_binary = dist_adj_binary.tocoo()
 
+    logging.info("\tmaking graph")
     graph = ig.Graph.Adjacency(dist_adj_binary)
 
+    logging.info("\tgetting all simple paths")
     paths = []
     for i in range(n_rups):
         ps = graph.get_all_simple_paths(
