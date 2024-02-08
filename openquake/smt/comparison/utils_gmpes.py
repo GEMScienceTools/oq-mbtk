@@ -41,7 +41,7 @@ def _get_first_point(rup, from_point):
     """
     sfc = rup.surface
     if from_point == 'TC':  # Get the up-dip edge centre point
-        return sfc._get_top_edge_centroid()
+        return sfc.get_top_edge_centroid()
     elif from_point == 'BC':  # Get the down-dip edge centre point
         lon, lat = geo_utils.get_middle_point(
             sfc.corner_lons[2], sfc.corner_lats[2],
