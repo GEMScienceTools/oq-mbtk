@@ -28,6 +28,7 @@ from openquake.fnm.rupture_connections import (
     get_rupture_adjacency_matrix,
     get_multifault_ruptures,
     make_binary_adjacency_matrix,
+    make_binary_adjacency_matrix_sparse,
     filter_bin_adj_matrix_by_rupture_angle,
 )
 
@@ -49,6 +50,7 @@ default_settings = {
     'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
     'skip_bad_faults': False,
     'shear_modulus': SHEAR_MODULUS,
+    'sparse_distance_matrix': False,
 }
 
 
@@ -192,6 +194,7 @@ def build_fault_network(
         faults,
         all_subfaults=fault_network['subfaults'],
         max_dist=settings['max_jump_distance'],
+        sparse=settings['sparse_distance_matrix'],
     )
     t3 = time.time()
     event_times.append(t3)
@@ -201,9 +204,14 @@ def build_fault_network(
         + "single-fault ruptures"
     )
 
-    binary_adjacence_matrix = make_binary_adjacency_matrix(
-        fault_network['dist_mat'], max_dist=settings['max_jump_distance']
-    )
+    if settings['sparse_distance_matrix'] is True:
+        binary_adjacence_matrix = make_binary_adjacency_matrix_sparse(
+            fault_network['dist_mat'], max_dist=settings['max_jump_distance']
+        )
+    else:
+        binary_adjacence_matrix = make_binary_adjacency_matrix(
+            fault_network['dist_mat'], max_dist=settings['max_jump_distance']
+        )
 
     n_connections = binary_adjacence_matrix.sum()
     n_possible_connections = len(fault_network['dist_mat']) ** 2
@@ -239,7 +247,8 @@ def build_fault_network(
 
     logging.info("Getting multifault ruptures")
     fault_network['multifault_inds'] = get_multifault_ruptures(
-        fault_network['dist_mat'],
+        # fault_network['dist_mat'],
+        binary_adjacence_matrix,
         max_dist=settings['max_jump_distance'],
         max_sf_rups_per_mf_rup=settings['max_sf_rups_per_mf_rup'],
     )
