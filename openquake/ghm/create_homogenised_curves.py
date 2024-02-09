@@ -111,7 +111,7 @@ def find_hazard_curve_file(datafolder, vs30_flag, key, imt_str):
     return data_fname
 
 
-def homogenise_curves(dat, poes, buf):
+def homogenise_curves(dist, out, poes, buf):
     """
     Homogenise the hazard curves within a buffer zone.
 
@@ -129,13 +129,15 @@ def homogenise_curves(dat, poes, buf):
     """
 
     # Initialize array with weights
-    tmp = np.zeros_like((dat[:, 0]))
+    tmp = np.zeros_like(dist)
 
     # Points inside a model
-    tmp[dat[:, 1] == 0] = buf + dat[dat[:, 1] == 0, 0]
+    idx_in = [i for i in range(len(out)) if out[i] == 0]
+    tmp[idx_in] = buf + dist[idx_in]
 
     # Points outside a model
-    tmp[dat[:, 1] == 1] = buf - dat[dat[:, 1] == 1, 0]
+    idx_out = [i for i in range(len(out)) if out[i] == 1]
+    tmp[idx_out] = buf - dist[idx_out]
 
     # Compute mean curve
     meanhc = np.zeros((poes.shape[1]))
@@ -272,9 +274,6 @@ def proc(contacts_shp, outpath, datafolder, boundaries_shp,
     # Read the shapefile with inland areas
     inland_df = gpd.read_file(boundaries_shp)
 
-    # Load the spatial index
-    # sidx = index.Rtree(sidx_fname)
-
     # Get the list of the models from the data folder
     if models_list is None:
         models_list = []
@@ -283,19 +282,11 @@ def proc(contacts_shp, outpath, datafolder, boundaries_shp,
                 continue
             models_list.append(re.sub('[0-9]+', '', key))
 
-    # Loop over the various models. TODO the value of the buffer here must
-    # be converted into a distance in km.
+    # Loop over the various models. 
     header_save = None
     imts_save = None
     for i, key in enumerate(sorted(mosaic_data)):
 
-       # buffer_resT, buffer_dataT, buffer_poesT, coordsT  = [], [], [], []
-        buffer_resT, buffer_dataT, buffer_poesT, lonT, latT  = [], [], [], [], []
-        pkind = 0
-
-        #buffer_data = {}
-        #buffer_poes = {}
-        #coords = {}
         # Skip models not included in the list
         if re.sub('[0-9]+', '', key) not in models_list:
             continue
@@ -353,21 +344,14 @@ def proc(contacts_shp, outpath, datafolder, boundaries_shp,
             xdf = copy.deepcopy(map_gdf[idx])
             map_gdf = xdf
 
-        if key in ['sam']:
-            from shapely.geometry import Polygon
-            coo = get_poly_from_str(mosaic.SUBSETS['GID_0'][key]['COL'][0])
-            df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
-            dft = gpd.GeoDataFrame(df, geometry='geo')
-            idx = map_gdf.geometry.intersects(dft.geometry[0])
-            xdf = copy.deepcopy(map_gdf[idx])
-            map_gdf = xdf
-
         # Read the shapefile with the polygons of countries. The explode
         # function converts multipolygons into a single multipolygon.
-        tmpdf = gpd.read_file(boundaries_shp)
+        # KJ: renaming because the var name tmpdf is used later
+        #tmpdf = gpd.read_file(boundaries_shp)
+        bound = gpd.read_file(boundaries_shp)
 
         # inpt = explode(tmpdf)
-        inpt = tmpdf.explode(index_parts=True)
+        inpt = bound.explode(index_parts=True)
         inpt['MODEL'] = key
 
         # Select polygons composing the given model and merge them into a
@@ -385,6 +369,7 @@ def proc(contacts_shp, outpath, datafolder, boundaries_shp,
 
         # Now we process the polygons composing the selected model
         for poly in one_polygon.geometry:
+            dfind = 0
 
             tmp = gpd.GeoSeries([poly], crs='epsg:4326')
             poly_pro = tmp.to_crs(crs=aeqd)
@@ -415,6 +400,9 @@ def proc(contacts_shp, outpath, datafolder, boundaries_shp,
                     selection = create_query(inpt, mosaic_key,
                                              mosaic_data[other.lower()])
                     other_polygon = selection.dissolve(by='MODEL')
+
+                    # here is where we need to take the subsets 
+
                     if not len(other_polygon):
                         raise ValueError('Empty dataframe')
 
@@ -440,7 +428,6 @@ def proc(contacts_shp, outpath, datafolder, boundaries_shp,
 
                     # Original distance is in [m]
                     dst = tmpdf_pro.distance(p_geo_pro.iloc[0].geometry)
-                    # dst = tmpdf.distance(geo)
                     tmpdf = tmpdf.assign(distance=dst)
 
                     # Create a geodataframe with the geometry of the polygon
@@ -456,20 +443,21 @@ def proc(contacts_shp, outpath, datafolder, boundaries_shp,
                     # Select the points contained in the buffer and belonging
                     # to the other model. 'tmpdf' contains the points in the
                     # buffer. These points are labelled.
-                    #  idx_other = tmpdf.geometry.intersects(g)
-                    res = gpd.sjoin(tmpdf, xgdf)
+                    resa = gpd.sjoin(tmpdf, xgdf)
+
+                    # save some polygons and csvs
+#                    tmpdf.to_csv(f'{key}-tmpdf-{dfind}.csv',index=None)
+#                    xgdf.to_file(f'{key}-xgdf-{dfind}.geojson', driver='GeoJSON')
 
                     # Assign a new column to the dataframe
-                    #  tmpdf = tmpdf.assign(outside=idx_other)
                     tmpdf = tmpdf.assign(outside=False)
-                    tmpdf.loc[res.index, 'outside'] = 1
+                    tmpdf.loc[resa.index, 'outside'] = 1
                     tmpdf.outside = tmpdf.outside.astype(int)
 
                     # Update the polygon containing just internal points i.e.
                     # points within the model but outside of the buffers. The
                     # points in the buffer but outside the model are True.
                     poly_pp = poly_pro.buffer(0)
-                    breakpoint()
                     poly_pp = poly_pp.difference(tpoly.buffer(buf)[0])
                     poly_pro = poly_pp
 
@@ -493,74 +481,27 @@ def proc(contacts_shp, outpath, datafolder, boundaries_shp,
                     print('saving everything to {}'.format(tmpdir))
 
                     print('BEFORE dictionary loop: RAM memory % used:', psutil.virtual_memory()[2])
-
-                    for iii, (p, d, o) in enumerate(zip(tmpdf.geometry,
-                                                        tmpdf['distance'],
-                                                        tmpdf['outside'])):
-
-                        # pidx = tmpdf.index.values[iii]
-                        # get only poes for the various IMLs
-                        tmp = tmpdf[poelabs]
-                        poe = tmp.iloc[iii].values
-
-                        # Using rtree we find the closest point on the
-                        # reference grid. Check that there is a single index.
-                        # res = list(sidx.nearest((p.x, p.y, p.x, p.y), 1))
-
-                        # Handling the v4.0 Vs. v3.0 synthax
-                        #try:
-                        #    res = h3.latlng_to_cell(p.y, p.x, h3_resolution)
-                       # except:
-                        res = h3.geo_to_h3(p.y, p.x, h3_resolution)
-
-
-                        # Update the information for the reference point
-                        # found. The buffer_data dictionary contains
-                        # distance and position information of the point
-                        # in the buffer
-                        
-                        # testing arrays
-                        buffer_resT.append(res)
-                        buffer_dataT.append([d, o])
-                        buffer_poesT.append(poe.tolist())
-                        lonT.append([p.x])
-                        latT.append([p.y])
-#                        coordsT.append([p.x, p.y])
-
-                        if len(buffer_resT)>10000:
-                            fname1 = os.path.join(tmpdir, f'{key:s}_out_{pkind}.csv')
-                            print(fname1)
-                            df = pd.DataFrame({'res': buffer_resT, 'data': buffer_dataT,
-                                               'poes': buffer_poesT, 'lon': lonT, 'lat': latT})
-                                               #'poes': buffer_poesT, 'coords': coordsT})
-                            df.to_csv(fname1, index=False)
-
-                            del df
-                            buffer_resT, buffer_dataT, buffer_poesT, lonT, latT  = [], [], [], [], []
-                            #buffer_resT, buffer_dataT, buffer_poesT, coordsT  = [], [], [], []
-                            pkind += 1
                     
-                    fname1 = os.path.join(tmpdir, f'{key:s}_out_{pkind}.csv')
-                    print(fname1, f'total length: {len(buffer_resT)}')
-                    df = pd.DataFrame({'res': buffer_resT, 'data': buffer_dataT,
-                                               'poes': buffer_poesT, 'lon': lonT, 'lat': latT})
-#                                               'poes': buffer_poesT, 'coords': coordsT})
-                    df.to_csv(fname1, index=False)
-                    pkind += 1    
+                    res = []
+                    for p in tmpdf.geometry:
+                        res.append(h3.geo_to_h3(p.y, p.x, h3_resolution))
+                    tmpdf['res'] = res
 
-                    print('BEFORE: RAM memory % used:', psutil.virtual_memory()[2])
-                    del tmpdf
-                    print('AFTER: RAM memory % used:', psutil.virtual_memory()[2])
+                    del tmpdf['depth']
+                    del tmpdf['COUNTRY']
+                    del tmpdf['old_index_right']
+                    del tmpdf['Coordinates']
+                    del tmpdf['GID_0']
 
+                    tmpdf.to_csv(f'{tmpdir}/{key}-{dfind}-buf.csv', index=None)
+
+                    dfind += 1
+                    
                 
 
 
             #  Write information outside the buffers
             if not only_buffers:
-                #df = pd.DataFrame({'Name': [key], 'Polygon': [poly_pro]})
-                #gdf = gpd.GeoDataFrame(df, geometry='Polygon')
-                #gdf = gdf.set_crs('epsg:4326')
-                #gdf_pro = gdf.to_crs(crs=aeqd)
                 tmp = gpd.GeoDataFrame(geometry=poly_pro)
                 within = gpd.sjoin(map_gdf_pro, tmp, predicate='within')
                 # Write results after going back to geographic projection
@@ -596,12 +537,6 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, su
     mosaic_data = mosaic.DATA['GID_0']
     buf = float(buf)
 
-    buffer_resT, buffer_dataT, buffer_poesT, coordsT  = [], [], [], []
-
-    buffer_data = {}
-    buffer_poes = {}
-    coords = {}
-
     tmpdir = os.path.join(outpath, 'temp')
 
     df_outputs = pd.DataFrame()
@@ -619,94 +554,60 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, su
         print(f'  Loading {key:s}')
 
         # join all df files
-        csv_files = glob.glob(tmpdir+f'/{key}_out*csv')
+        csv_files = glob.glob(tmpdir+f'/{key}*buf*csv')
         for file in csv_files:
 
             print(file)
             df = pd.read_csv(file)
             df_outputs = pd.concat([df, df_outputs], ignore_index=True)
 
+    # make poe columns into a single one
+    poes = df_outputs[poelabs]    
+    plists = [poes.iloc[ii].values.tolist() for ii in range(len(poes))] 
+    df_outputs['poes'] = plists
+    
+    # delete extra columns (so we can re-add some later)
+    for pl in poelabs: del df_outputs[pl]
+    del df_outputs['depth']
+    del df_outputs['COUNTRY']
+    del df_outputs['old_index_right']
+    del df_outputs['Coordinates']
+    del df_outputs['GID_0']
 
-    # Here we process the points in the buffer
-    msg = '\n   Final processing'
-    logging.info(msg)
-    fname = os.path.join(outpath, 'buf.txt')
-    fou = open(fname, 'w')
 
-    # TODO
-    header = 'i,lon,lat'
-    for lab in poelabs:
-        header += ','+lab
-    fou.write(header)
+    # create weight column and fil according to whether it's inside or out
+    df_outputs['weight'] = [0] * len(df_outputs)
+    idx = df_outputs.outside == 1
+    outidx = idx[idx==True].index
+    inidx = idx[idx==False].index
+    df_outputs['weight'].iloc[outidx] = [buf - dist for dist in df_outputs.iloc[outidx].distance]
+    df_outputs['weight'].iloc[inidx] = [buf + dist for dist in df_outputs.iloc[inidx].distance]
 
-    # This is the file with points that have only one value (in theory this is
-    # impossible)
+    # group according to res / location
+    df3 = df_outputs.groupby('res').agg(list).reset_index()
+     
+    # write sites with only one curve
+    idxs = [i for i in range(len(df3)) if (df3.outside.iloc[i] == [1]) | (df3.outside.iloc[i] == [0])]
+    df3_uniq = df3.iloc[idxs]
+    lons = [l[0] for l in df3_uniq.lon]
+    lats = [l[0] for l in df3_uniq.lat]
     fname = os.path.join(outpath, 'buf_unique.txt')
-    fuu = open(fname, 'w')
-    fuu.write(header)
+    pd.DataFrame({'lon':lons,'lat':lats}).to_csv(fname, index=None)
+    
 
-    # get unique sites
-    res_unq = set(df_outputs.res.values)
+    # for sites with 2+, homogenise the curves
+    df3['sum_weights'] = [sum(w) for w in df3['weight']]
+    df3['scaled_poes'] = [np.dot(w,p)/s for w,p,s in zip(df3['weight'],df3['poes'],df3['sum_weights'])]
+    df3[poelabs] = df3['scaled_poes'].apply(lambda x: pd.Series(x))
 
-    # This is the array we use to store the hazard curves for the points within
-    # a buffer
-    buffer_array = np.empty((len(res_unq), len(poelabs)+2))
-
-    # Process information within the buffers
-    c = 0
-    for key in res_unq:
-        c += 1
-        dfsub = df_outputs[df_outputs.res == key]
-        dat = np.array([eval(d) for d in dfsub.data.values])
-        
-        lon = eval(dfsub.lon.values[0])
-        lat = eval(dfsub.lat.values[0])
-        #coords = eval(dfsub.coords.values[0])
-
-        if lon > 180 or lon < -180:
-            raise ValueError('out of bounds')
-
-        if len(dat) > 1:
-            poe = np.array([eval(p) for p in dfsub.poes.values])
-            meanhc = homogenise_curves(dat, poe, buf)
-            
-
-        else:
-            RuntimeWarning('Zero values')
-            meanhc = eval(dfsub.poes.values[0])
-            
-           
-            # Write poes
-            tmps = f'{c:d},{lon:f},{lat:f}'
-            #tmps = f'{c:d},{coords[0]:f},{coords[1]:f}'
-            for prob in meanhc:
-                tmps += f',{prob:f}'
-                fou.write(tmps+'\n')
-        
-       # tmps = f'{c:d},{coords[0]:f},{coords[1]:f}'
-        tmps = f'{c:d},{lon:f},{lat:f}'
-        for prob in meanhc:
-            tmps += f',{prob:f}'
-        fou.write(tmps+'\n')   
-       # buffer_array[c-1, :] = [coords[0], coords[1]] + \
-        buffer_array[c-1, :] = [lon[0], lat[1]] + \
-            list(meanhc)
-        
-    columns = ['lon', 'lat'] + poelabs
-    bdf = pd.DataFrame(buffer_array, columns=columns)
-    bdf['Coordinates'] = list(zip(bdf.lon, bdf.lat))
-    bdf['Coordinates'] = bdf['Coordinates'].apply(Point)
-    gbdf = gpd.GeoDataFrame(bdf, geometry='Coordinates')
+    # create geodata frame and store 
+    geometry = [Point(x[0],y[0]) for x,y in zip(df3.lon, df3.lat)]
+    df_out = df3[poelabs]
+    gdf = gpd.GeoDataFrame(df_out, crs="EPSG:4326", geometry=geometry)
     fname = os.path.join(outpath, 'map_buffer.json')
-    
-    if len(gbdf):
-        gbdf.to_file(fname, driver='GeoJSON')
-    else:
-        print('Empty buffer')
-    
-    fou.close()
-    fuu.close()
-    
+    gdf.to_file(fname, driver='GeoJSON')
+
+
 
 def process(contacts_shp, outpath, datafolder, boundaries_shp,
             imt_str, inland_shp, buf, vs30_flag, *, models_list=None, only_buffers=False,
