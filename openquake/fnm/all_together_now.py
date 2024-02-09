@@ -27,6 +27,8 @@ from openquake.fnm.fault_modeler import (
 from openquake.fnm.rupture_connections import (
     get_rupture_adjacency_matrix,
     get_multifault_ruptures,
+    get_multifault_ruptures_fast,
+    get_multifault_ruptures_numba,
     make_binary_adjacency_matrix,
     make_binary_adjacency_matrix_sparse,
     filter_bin_adj_matrix_by_rupture_angle,
@@ -51,6 +53,7 @@ default_settings = {
     'skip_bad_faults': False,
     'shear_modulus': SHEAR_MODULUS,
     'sparse_distance_matrix': False,
+    'parallel_multifault_search': False,
 }
 
 
@@ -246,11 +249,14 @@ def build_fault_network(
     logging.info(f"\tdone in {round(t4-t3, 1)} s")
 
     logging.info("Getting multifault ruptures")
-    fault_network['multifault_inds'] = get_multifault_ruptures(
+    # fault_network['multifault_inds'] = get_multifault_ruptures(
+    fault_network['multifault_inds'] = get_multifault_ruptures_fast(
+        # fault_network['multifault_inds'] = get_multifault_ruptures_numba(
         # fault_network['dist_mat'],
         binary_adjacence_matrix,
-        max_dist=settings['max_jump_distance'],
+        # max_dist=settings['max_jump_distance'],
         max_sf_rups_per_mf_rup=settings['max_sf_rups_per_mf_rup'],
+        parallel=settings['parallel_multifault_search'],
     )
     t5 = time.time()
     event_times.append(t5)
@@ -260,14 +266,14 @@ def build_fault_network(
         + "multifault ruptures"
     )
 
-    t6 = time.time()
-    event_times.append(t6)
     logging.info("Making rupture dataframe")
     fault_network['rupture_df'] = make_rupture_df(
         fault_network['single_rup_df'],
         fault_network['multifault_inds'],
         fault_network['subfault_df'],
     )
+    t6 = time.time()
+    event_times.append(t6)
     logging.info(f"\tdone in {round(t6-t5, 1)} s")
 
     if settings['filter_by_plausibility']:
@@ -301,6 +307,7 @@ def build_fault_network(
             + f"{round(n_rups_filtered / n_rups_start*100, 1)} %)"
         )
 
+    fault_network['bin_dist_mat'] = binary_adjacence_matrix
     logging.info(f"total time: {round(event_times[-1]-event_times[0], 1)} s")
     return fault_network
 

@@ -1,11 +1,14 @@
 import logging
 from typing import Optional
+from functools import partial
+from collections import deque
 from multiprocessing import Pool, Array
 
 import numpy as np
 import igraph as ig
 import pandas as pd
-from numba import jit
+from numba import jit, njit, int16, int32
+from numba.typed import List
 from scipy.sparse import dok_array, issparse
 
 from openquake.hazardlib.geo import Point, Line
@@ -558,6 +561,7 @@ def make_binary_adjacency_matrix_sparse(
     dok_array
         Binary adjacency matrix.
     """
+    dist_matrix = dist_matrix.todok()
     binary_dist_matrix = dok_array(dist_matrix.shape, dtype=np.int32)
     for (row, col), distance in dist_matrix.items():
         if 0.0 < distance <= max_dist:
@@ -790,23 +794,326 @@ def get_multifault_ruptures(
         dist_adj_binary = dist_adj_binary.tocoo()
 
     logging.info("\tmaking graph")
-    graph = ig.Graph.Adjacency(dist_adj_binary)
+    graph = ig.Graph.Adjacency(dist_adj_binary, mode="undirected")
 
     logging.info("\tgetting all simple paths")
     paths = []
     for i in range(n_rups):
-        ps = graph.get_all_simple_paths(
-            i, to=None, cutoff=max_sf_rups_per_mf_rup, mode='out'
-        )
+        for j in range(i + 1, n_rups):
+            ps = graph.get_all_simple_paths(
+                i, to=j, cutoff=max_sf_rups_per_mf_rup - 1, mode="out"
+            )
+            paths.extend(ps)
+        # ps = graph.get_all_simple_paths(
+        #    i, to=None, cutoff=max_sf_rups_per_mf_rup, mode='all'
+        # )
         paths.extend(ps)
 
     paths = [(p) for p in paths if len(p) > 1]
+    logging.info("\t%d paths found", len(paths))
 
     if check_unique:
         paths = [frozenset(p) for p in paths if len(p) > 1]
         paths = set(paths)
         paths = [list(p) for p in paths]
+
+    logging.info("\t%d unique paths found", len(paths))
     return paths
+
+
+def sparse_to_adjlist(sparse_matrix):
+    """
+    Converts a scipy.sparse adjacency matrix to an adjacency list.
+
+    Parameters:
+    - sparse_matrix: The sparse adjacency matrix (csr_matrix).
+
+    Returns:
+    - adj_list: A list of lists, where each sublist represents the neighbors of a vertex.
+    """
+    adj_list = []
+    n = sparse_matrix.shape[0]  # Number of vertices
+
+    for i in range(n):
+        # Extract indices of non-zero elements in row i, which are the neighbors
+        neighbors = sparse_matrix[[i], :].nonzero()[1].tolist()
+        adj_list.append(neighbors)
+
+    return adj_list
+
+
+def sparse_to_adj_dict(sparse_matrix):
+    """
+    Converts a scipy.sparse adjacency matrix to an adjacency dictionary.
+
+    Parameters:
+    - sparse_matrix: The sparse adjacency matrix (csr_matrix).
+
+    Returns:
+    - adj_dict: A dictionary, where the keys are the vertices and the values are the neighbors.
+    """
+    adj_dict = {}
+    n = sparse_matrix.shape[0]  # Number of vertices
+    if n < 32767:
+        int_type = np.int16
+    else:
+        int_type = np.int32
+
+    for i in range(n):
+        # Extract indices of non-zero elements in row i, which are the neighbors
+        neighbors = sparse_matrix[[i], :].nonzero()[1].tolist()
+        adj_dict[i] = [int_type(neighbor) for neighbor in neighbors]
+
+    return adj_dict
+
+
+# def get_unique_vertex_sets(adj_list, max_vertices=10):
+#    """
+#    Get all unique vertex sets from an adjacency list.
+#
+#    Parameters:
+#    - adj_list: A list of lists, where each sublist represents the neighbors of a vertex.
+#
+#    Returns:
+#    - vertex_sets: A list of lists, where each sublist is a unique vertex set.
+#    """
+#    all_subsets = set()
+#    n = len(adj_list)  # Number of vertices
+#
+#    def explore(vertex, current_set):
+#        if 1 < len(current_set) <= max_vertices:
+#            all_subsets.add(frozenset(current_set))
+#
+#        if len(current_set) == max_vertices:
+#            return
+#
+#        for neighbor in adj_list[vertex]:
+#            if neighbor not in current_set:
+#                explore(neighbor, current_set | {neighbor})
+#
+#    logging.info("\tgetting all contiguous vertex sets")
+#    for vertex in range(n):
+#        explore(vertex, {vertex})
+#
+#    vertex_sets = sorted([sorted(list(subset)) for subset in all_subsets])
+#    logging.info("\t%d unique vertex sets found", len(vertex_sets))
+#    return vertex_sets
+
+
+def find_connected_subsets_dfs(adj_dict, max_vertices=10):
+    all_subsets = set()
+
+    def explore(vertex, current_set):
+        if 1 < len(current_set) <= max_vertices:
+            # Add the current set as an immutable set to avoid duplicates
+            all_subsets.add(frozenset(current_set))
+
+        if len(current_set) == max_vertices:
+            return
+
+        for neighbor in adj_dict[vertex]:
+            if neighbor not in current_set:
+                # Explore further only if the neighbor is not already in the current set
+                explore(neighbor, current_set | {neighbor})
+
+    for vertex in adj_dict.keys():
+        explore(vertex, {vertex})
+
+    return [list(subset) for subset in all_subsets]
+
+
+def find_connected_subsets_bfs(adj_dict, max_vertices=10):
+    """
+    Find all connected subsets of vertices up to a specified size using BFS.
+
+    Parameters:
+    - adj_dict: A dictionary where each key is a vertex and the value is a list of neighbors.
+    - cutoff: The maximum size of vertex subsets to find.
+
+    Returns:
+    - A list of sets, each representing a connected subset of vertices up to the cutoff size.
+    """
+    all_subsets = set()  # Use a set to store unique subsets
+
+    for start_vertex in adj_dict.keys():
+        # Queue items are tuples (vertex, subset) where 'subset' includes 'vertex'
+        queue = deque([(start_vertex, frozenset([start_vertex]))])
+
+        while queue:
+            vertex, current_set = queue.popleft()
+
+            # Add the current subset to the collection if it's within the size limit
+            if 1 < len(current_set) <= max_vertices:
+                all_subsets.add(current_set)
+
+            if len(current_set) < max_vertices:
+                # Only consider neighbors not already in the current subset
+                for neighbor in adj_dict[vertex]:
+                    if neighbor not in current_set:
+                        new_set = current_set | frozenset([neighbor])
+                        queue.append((neighbor, new_set))
+
+    # Convert frozensets back to lists or regular sets if necessary
+    return [set(subset) for subset in all_subsets]
+
+
+def find_connected_components(adj_dict):
+    """
+    Find connected components in a graph represented as an adjacency dictionary.
+
+    Parameters:
+    - adj_dict: A dictionary where each key is a vertex and the value is a list of neighbors.
+
+    Returns:
+    - A list of sets, where each set contains the vertices of a connected component.
+    """
+    visited = set()  # To keep track of visited vertices
+    connected_components = []
+
+    def dfs(vertex, component):
+        """
+        Depth-First Search to explore and mark vertices of the current component.
+        """
+        visited.add(vertex)
+        component.add(vertex)
+        for neighbor in adj_dict[vertex]:
+            if neighbor not in visited:
+                dfs(neighbor, component)
+
+    for vertex in adj_dict.keys():
+        if vertex not in visited:
+            component = set()
+            dfs(vertex, component)
+            connected_components.append(component)
+
+    return connected_components
+
+
+def subgraphs_from_connected_components(adj_dict, connected_components):
+    subgraphs = []
+    for component in connected_components:
+        subgraph = {
+            v: [n for n in adj_dict[v] if n in component] for v in component
+        }
+        subgraphs.append(subgraph)
+
+    return subgraphs
+
+
+def find_connected_subgraphs(adj_dict, filter=True):
+    connected_components = find_connected_components(adj_dict)
+    subgraphs = subgraphs_from_connected_components(
+        adj_dict, connected_components
+    )
+    if filter:
+        subgraphs = [sg for sg in subgraphs if len(sg) > 1]
+    return subgraphs
+
+
+def get_multifault_ruptures_fast(
+    dist_adj_binary,
+    max_sf_rups_per_mf_rup: int = 10,
+    parallel=False,
+    min_parallel_subgraphs: int = 5,
+) -> list[list[int]]:
+    all_subsets = set()
+    n = dist_adj_binary.shape[0]  # Number of vertices
+
+    adj_list = sparse_to_adj_dict(dist_adj_binary)
+
+    logging.info("\tfinding connected subgraphs")
+    subgraphs = find_connected_subgraphs(adj_list, filter=True)
+    logging.info("\t%d connected subgraphs found", len(subgraphs))
+
+    logging.info("\tgetting all contiguous vertex sets")
+    if parallel and len(subgraphs) > min_parallel_subgraphs:
+        vertex_sets = get_multifault_ruptures_parallel(
+            subgraphs, max_sf_rups_per_mf_rup
+        )
+    else:
+        vertex_sets = []
+        for i, subgraph in enumerate(subgraphs):
+            vertex_sets.extend(
+                find_connected_subsets_dfs(subgraph, max_sf_rups_per_mf_rup)
+            )
+            logging.info("\t\tfinished subgraph %d", i + 1)
+    return vertex_sets
+
+
+def get_multifault_ruptures_parallel(subgraphs, max_sf_rups_per_mf_rup=10):
+    with Pool() as pool:
+        vertex_sets = pool.map(
+            partial(
+                find_connected_subsets_dfs, max_vertices=max_sf_rups_per_mf_rup
+            ),
+            subgraphs,
+        )
+    return vertex_sets
+
+
+# def convert_to_numba_list_of_arrays(adj_list):
+#    """
+#    Convert a Python list of lists to a Numba typed list of numpy arrays.
+#    """
+#    # if int_len == 32:
+#    #    dtype = np.int32
+#    # elif int_len == 16:
+#    #    dtype = np.int16
+#    numba_list = List()
+#    for sublist in adj_list:
+#        numba_list.append(np.array(sublist, dtype=np.int32))
+#    return numba_list
+#
+#
+# @njit
+# def explore(vertex, current_set, adj_list, results, cutoff):
+#    # if int_len == 32:
+#    #    dtype = np.int32
+#    # elif int_len == 16:
+#    #    dtype = np.int16
+#    dtype = np.int32
+#    if 1 < len(current_set) <= cutoff:
+#        results.append(np.array(list(current_set), dtype=dtype))
+#
+#    if len(current_set) == cutoff:
+#        return
+#
+#    for neighbor in adj_list[vertex]:
+#        if neighbor not in current_set:
+#            new_set = current_set.copy()
+#            new_set.add(neighbor)
+#            explore(neighbor, new_set, adj_list, results, cutoff)
+#
+#
+# @jit
+# def find_connected_subsets(adj_list, cutoff, results):
+#    for vertex in range(len(adj_list)):
+#        explore(vertex, set([vertex]), adj_list, results, cutoff)
+#
+#    unique_results = set([frozenset(res) for res in results])
+#    return unique_results
+
+
+def get_multifault_ruptures_numba(
+    dist_adj_binary, max_sf_rups_per_mf_rup: int = 10
+) -> list[list[int]]:
+    # if dist_adj_binary.shape[0] < 32767:
+    # if dist_adj_binary.shape[0] < 1:
+    #    int_len = 16
+    #    int_type = int16
+    # else:
+    #    int_len = 32
+    #    int_type = int32
+
+    adj_list = sparse_to_adjlist(dist_adj_binary)
+    numba_adj_list = convert_to_numba_list_of_arrays(adj_list)
+    results = List.empty_list(int32[:])
+    logging.info("\tgetting all contiguous vertex sets")
+    unique_results = find_connected_subsets(
+        numba_adj_list, max_sf_rups_per_mf_rup, results
+    )
+    logging.info("\t%d unique vertex sets found", len(unique_results))
+    return [list(res) for res in unique_results]
 
 
 @jit(nopython=True)
