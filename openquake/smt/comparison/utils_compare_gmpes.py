@@ -107,8 +107,7 @@ def plot_trellis_util(
                 lt_vals_gmc2, median_gmc2, plus_sig_gmc2, minus_sig_gmc2)
             
     # Finalise plots
-    pyplot.legend(loc = "center left", bbox_to_anchor = (1.1, 1.05),
-                  fontsize = '16')
+    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize = '16')
     pyplot.savefig(os.path.join(output_directory, 'TrellisPlots.png'),
                    bbox_inches='tight', dpi=200, pad_inches=0.2)
     
