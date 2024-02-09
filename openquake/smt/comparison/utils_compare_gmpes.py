@@ -701,14 +701,17 @@ def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
         else:
             pyplot.ylabel('PGV (cm/s)', fontsize='16')
             
-    # xlims
+    # axis lims
     if str(i) != 'PGV':
-        pyplot.ylim(1e-03, 2) # g
+        pyplot.ylim(1e-03, 3) # g
     else:
         pyplot.ylim(0.1, 650) # cm/s
     
     pyplot.loglog()
-    pyplot.xlim(1, np.max(r_vals)) # Mod if required
+    if dist_type != 'rrup':
+        pyplot.xlim(1, np.max(r_vals))
+    else:
+        pyplot.xlim(np.min(r_vals), np.max(r_vals))
     
     
 ### Spectra utils
