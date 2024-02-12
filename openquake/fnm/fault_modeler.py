@@ -35,11 +35,11 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 
-from shapely.geometry import LineString, Polygon, MultiLineString, MultiPolygon
+from shapely.geometry import LineString, Polygon, MultiPolygon
 
 from openquake.baselib.general import AccumDict
 from openquake.hazardlib.geo import Point, Line
-from openquake.hazardlib.geo.mesh import RectangularMesh, Mesh
+from openquake.hazardlib.geo.mesh import RectangularMesh
 from openquake.hazardlib.geo.surface import SimpleFaultSurface
 
 from openquake.fnm.importer import (
@@ -49,15 +49,10 @@ from openquake.fnm.importer import (
 from openquake.fnm.msr import area_to_mag
 
 from openquake.fnm.inversion.utils import (
-    weighted_mean,
     get_rupture_displacement,
     SHEAR_MODULUS,
     slip_vector_azimuth,
-    rup_df_to_rupture_dicts,
-    subsection_df_to_fault_dicts,
 )
-
-from openquake.fnm.inversion.soe_builder import make_eqns
 
 logging.basicConfig(
     format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
@@ -247,7 +242,7 @@ def subdivide_simple_fault_surface(
     n_subsec_pts_dip = (n_pts_dip) / num_segs_down_dip
     assert (
         n_subsec_pts_dip % 1 == 0.0
-    ), f"Resampled mesh not dividing equally among subsegments down-dip"
+    ), "Resampled mesh not dividing equally among subsegments down-dip"
     n_subsec_pts_dip = int(n_subsec_pts_dip)
 
     subsec_meshes = subdivide_rupture_mesh(
@@ -606,7 +601,7 @@ def make_rupture_df(
         mean_rakes.append(mean_rake)
 
         mags.append(
-            area_to_mag(areas.sum(), type=area_mag_msr, rake=mean_rake)
+            area_to_mag(areas.sum(), mstype=area_mag_msr, rake=mean_rake)
         )
         all_areas.append(sum_area)
 
@@ -727,7 +722,8 @@ def make_subfault_gdf(subfault_df, keep_surface=False, keep_trace=False):
     return subfault_gdf
 
 
-def make_rupture_gdf(fault_network, rup_df_key='rupture_df', keep_sequences=False
+def make_rupture_gdf(
+    fault_network, rup_df_key='rupture_df', keep_sequences=False
 ) -> gpd.GeoDataFrame:
     """
     Makes a GeoDataFrame, with a row for each rupture in the fault network.
@@ -754,9 +750,9 @@ def make_rupture_gdf(fault_network, rup_df_key='rupture_df', keep_sequences=Fals
     subfaults = fault_network['subfaults']
     rupture_df = fault_network[rup_df_key]
     sf_meshes = make_sf_rupture_meshes(
-            single_rup_df['patches'],
-            single_rup_df['fault'],
-            subfaults)
+        single_rup_df['patches'],
+        single_rup_df['fault'],
+        subfaults)
     # converting to surfaces because get_boundary_3d doesn't take meshes
     sf_surfs = [SimpleFaultSurface(sf_mesh) for sf_mesh in sf_meshes]
 
@@ -765,7 +761,7 @@ def make_rupture_gdf(fault_network, rup_df_key='rupture_df', keep_sequences=Fals
         rup_polies = [get_boundary_3d(sf_surfs[sf_rup])[1]
                       for sf_rup in rup.ruptures]
         rup_meshes.append(MultiPolygon(rup_polies))
-    
+
     rupture_gdf = gpd.GeoDataFrame(rupture_df, geometry=rup_meshes)
     if not keep_sequences:
         rupture_gdf['subfaults'] = [str(sf) for sf in rupture_gdf.subfaults]
@@ -926,28 +922,29 @@ def make_sf_rupture_meshes(
 def shapely_multipoly_to_geojson(multipoly, return_type='coords'):
     out_polies = [[[list(pt) for pt in poly.exterior.coords]]
                   for poly in multipoly.geoms]
-    if return_type=='coords':
+    if return_type == 'coords':
         return out_polies
     elif return_type == "geometry":
         return {"type": "MultiPolygon",
                 "coordinates": out_polies,
                 }
-    elif return_type=='feature':
+    elif return_type == 'feature':
         return {"type": "Feature",
                 "properties": {},
                 "geometry": {
                     "type": "MultiPolygon",
-                    "coordinates": out_polies,
+                    "coordinates": out_polies
                 },
-               }
+                }
 
 
 def export_ruptures_new(fault_network, rup_df_key='rupture_df_keep',
                         outfile=None):
 
-    subfault_gdf = make_subfault_gdf(fault_network['subfault_df'])
+    # TODO apparently not used
+    # subfault_gdf = make_subfault_gdf(fault_network['subfault_df'])
     rupture_gdf = make_rupture_gdf(
-            fault_network, rup_df_key=rup_df_key, keep_sequences=True)
+        fault_network, rup_df_key=rup_df_key, keep_sequences=True)
 
     outfile_type = outfile.split('.')[-1]
 
@@ -960,7 +957,7 @@ def export_ruptures_new(fault_network, rup_df_key='rupture_df_keep',
         features = []
         for i, rj in rup_json.items():
             f = geoms[i]
-            f["properties"] = {k:v for k, v in rj.items()}
+            f["properties"] = {k: v for k, v in rj.items()}
             features.append(f)
 
         out_geojson = {"type": "FeatureCollection", "features": features}
@@ -970,4 +967,3 @@ def export_ruptures_new(fault_network, rup_df_key='rupture_df_keep',
         else:
             with open(outfile, 'w') as f:
                 json.dump(out_geojson, f)
-
