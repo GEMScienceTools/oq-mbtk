@@ -63,8 +63,7 @@ class TestDatabaseIO(unittest.TestCase):
     def test_fault_database(self):
 
         # Target and reference files
-        test_file = os.path.join(BASE_DATA_PATH, 'data',
-                                 'fault_database.test.geojson')
+        _, test_file = tempfile.mkstemp()
         base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_database.base.geojson')
 
@@ -135,8 +134,6 @@ class TestDatabaseIO(unittest.TestCase):
     def test_build_source_model_single_args(self):
 
         # Target and reference files
-        # test_file = os.path.join(BASE_DATA_PATH, 'data',
-        #                         'fault_model_02.test.xml')
         _, test_file = tempfile.mkstemp()
         base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_02.base.xml')
@@ -156,12 +153,10 @@ class TestDatabaseIO(unittest.TestCase):
         self.assertTrue(filecmp.cmp(base_file, test_file))
         os.remove(test_file)
 
-#    @unittest.skip('find better way to compare outputs!')
     def test_build_source_model_dictionary(self):
 
         # Target and reference files
-        test_file = os.path.join(BASE_DATA_PATH, 'data',
-                                 'fault_model_03.test.xml')
+        _, test_file = tempfile.mkstemp()
         base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_03.base.xml')
 
@@ -170,32 +165,30 @@ class TestDatabaseIO(unittest.TestCase):
         fsm.build_fault_model(geojson_file=self.geojson_file,
                               xml_output=test_file,
                               param_map=self.param_map,
+                              project_name='fault_model_03.test',
                               defaults={'upper_seismogenic_depth': 10.,
                                         'lower_seismogenic_depth': 30.,
                                         'm_min': 6.0})
 
         # Compare files
-  #      raise unittest.SkipTest('Marco Pagani: this test is broken!')
         self.assertTrue(filecmp.cmp(base_file, test_file))
         os.remove(test_file)
 
- #   @unittest.skip('find better way to compare outputs!')
     def test_build_source_model_config_file(self):
 
         # Configuration, target and reference files
         conf_file = os.path.join(BASE_DATA_PATH, 'config.ini')
-
 
         config = configparser.ConfigParser()
         config.read(conf_file)
         test_dir = pathlib.Path(tempfile.mkdtemp())
         test_file = test_dir / 'fault_model_04.test.xml'
         config['config']['xml_output'] = str(test_file)
-        # config['config']['xml_output'] = 'test04.xml'
         new_config_fname = test_dir / 'config.ini'
         data_path = pathlib.Path(BASE_DATA_PATH)
         geojson_original_path = data_path / config['config']['geojson_file']
-        tmp = os.path.relpath(str(geojson_original_path), str(new_config_fname))
+        tmp = os.path.relpath(
+            str(geojson_original_path), str(new_config_fname))
         config['config']['geojson_file'] = tmp
 
         with open(new_config_fname, 'w') as configfile:
