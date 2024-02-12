@@ -1,7 +1,34 @@
-import unittest
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
+
 import os
 import json
 import filecmp
+import unittest
 import configparser
 import tempfile
 import pathlib
@@ -73,8 +100,7 @@ class TestDatabaseIO(unittest.TestCase):
     def test_build_model_from_db(self):
 
         # Target and reference files
-        test_file = os.path.join(BASE_DATA_PATH, 'data',
-                                 'fault_model_01.test.xml')
+        _, test_file = tempfile.mkstemp()
         base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_01.base.xml')
 
@@ -99,20 +125,19 @@ class TestDatabaseIO(unittest.TestCase):
         # so I changed the test to read in teh sources and compare attributes
         fsm.build_model_from_db(fault_db, xml_output=test_file,
                                 param_map=self.param_map,
+                                project_name='fault_model_01.test',
                                 width_method='seismo_depth',
                                 defaults=self.defaults)
 
         # Compare files
-#        raise unittest.SkipTest('Marco Pagani: this test is broken!')
         self.assertTrue(filecmp.cmp(base_file, test_file))
-        os.remove(test_file)
 
-#    @unittest.skip('find better way to compare outputs!')
     def test_build_source_model_single_args(self):
 
         # Target and reference files
-        test_file = os.path.join(BASE_DATA_PATH, 'data',
-                                 'fault_model_02.test.xml')
+        # test_file = os.path.join(BASE_DATA_PATH, 'data',
+        #                         'fault_model_02.test.xml')
+        _, test_file = tempfile.mkstemp()
         base_file = os.path.join(BASE_DATA_PATH, 'data',
                                  'fault_model_02.base.xml')
 
@@ -124,11 +149,10 @@ class TestDatabaseIO(unittest.TestCase):
                               black_list=[1, 2, 3],
                               param_map=self.param_map,
                               m_max=8.2, m_min=6.0,
+                              project_name='fault_model_02.test',
                               lower_seismogenic_depth=30.)
 
         # Compare files
-
-#        raise unittest.SkipTest('Marco Pagani: this test is broken!')
         self.assertTrue(filecmp.cmp(base_file, test_file))
         os.remove(test_file)
 
