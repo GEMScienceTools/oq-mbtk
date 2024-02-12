@@ -80,7 +80,6 @@ class TestDatabaseIO(unittest.TestCase):
 #        raise unittest.SkipTest('Marco Pagani: this test is broken!')
         fault_db.add_property('m_max', value=7., id=1)
         fault_db.add_property('m_max', value=7.5, id=2)
-
         fault_db.remove_property('name')
 
         # Export the augmented database
@@ -151,7 +150,6 @@ class TestDatabaseIO(unittest.TestCase):
 
         # Compare files
         self.assertTrue(filecmp.cmp(base_file, test_file))
-        os.remove(test_file)
 
     def test_build_source_model_dictionary(self):
 
@@ -172,7 +170,6 @@ class TestDatabaseIO(unittest.TestCase):
 
         # Compare files
         self.assertTrue(filecmp.cmp(base_file, test_file))
-        os.remove(test_file)
 
     def test_build_source_model_config_file(self):
 
