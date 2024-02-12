@@ -61,6 +61,7 @@ class TestDatabaseIO(unittest.TestCase):
     defaults = {'m_min': 6.0}
 
     def test_fault_database(self):
+        filecmp.clear_cache()
 
         # Target and reference files
         _, test_file = tempfile.mkstemp()
@@ -96,6 +97,7 @@ class TestDatabaseIO(unittest.TestCase):
 
 #    @unittest.skip('find better way to compare outputs!')
     def test_build_model_from_db(self):
+        filecmp.clear_cache()
 
         # Target and reference files
         _, test_file = tempfile.mkstemp()
@@ -131,6 +133,7 @@ class TestDatabaseIO(unittest.TestCase):
         self.assertTrue(filecmp.cmp(base_file, test_file))
 
     def test_build_source_model_single_args(self):
+        filecmp.clear_cache()
 
         # Target and reference files
         _, test_file = tempfile.mkstemp()
@@ -152,6 +155,7 @@ class TestDatabaseIO(unittest.TestCase):
         self.assertTrue(filecmp.cmp(base_file, test_file))
 
     def test_build_source_model_dictionary(self):
+        filecmp.clear_cache()
 
         # Target and reference files
         _, test_file = tempfile.mkstemp()
@@ -172,6 +176,7 @@ class TestDatabaseIO(unittest.TestCase):
         self.assertTrue(filecmp.cmp(base_file, test_file))
 
     def test_build_source_model_config_file(self):
+        filecmp.clear_cache()
 
         # Configuration, target and reference files
         conf_file = os.path.join(BASE_DATA_PATH, 'config.ini')
