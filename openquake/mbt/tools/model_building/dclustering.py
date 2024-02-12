@@ -45,7 +45,7 @@ def dec(declustering_params, declustering_meth, cat):
     config = declustering_params
 
     # Create declusterer
-    modstr = 'openquake.hmtk.seismicity'
+    modstr = 'openquake.hmtk.seismicity.declusterer'
     module = importlib.import_module(modstr)
     my_class = getattr(module, declustering_meth)
     declusterer = my_class()
@@ -103,7 +103,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         if len(labels) < 2:
             lbl = labels[0]
         else:
-            lbl = '-'.join([l for l in labels])
+            lbl = '-'.join([lab for lab in labels])
         assert tr_fname is not None
         assert os.path.exists(tr_fname)
         ext = '_dec_{:s}_{:s}.{:s}'.format(olab, lbl, fmat)
@@ -111,7 +111,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         ext = '_dec_{:s}_{:s}.{:s}'.format(olab, out_fname_ext, fmat)
 
     # Output filename
-    out_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
+    out_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem + ext
     if output_path is not None:
         assert os.path.exists(output_path)
     else:
@@ -155,7 +155,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
     catt.select_catalogue_events(numpy.where(flag != 0)[0])
     if save_af:
         ext = '_dec_af_{:s}_{:s}.{:s}'.format(olab, lbl, fmat)
-        outfa_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
+        outfa_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem + ext
         outfa_fname = os.path.abspath(os.path.join(output_path, outfa_fname))
 
     # Select mainshocks
@@ -211,7 +211,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             # Info
             tmps = 'Cat: {:s}\n'
             tmps += '    Earthquakes: {:5d} Mainshocks {:5d} {:4.1f}%'
-            pct = sum(kkk)/sum(idx_tmp)*100.
+            pct = sum(kkk) / sum(idx_tmp) * 100.
             tmpr = '    mmin: {:5.2f} mmax {:5.2f}'
             tmpsum1 = int(sum(idx_tmp))
             tmpsum2 = int(sum(kkk))
@@ -222,7 +222,8 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             #
             # Output filename
             ext = '_dec_{:s}_{:s}.{:s}'.format(olab, lab, fmat)
-            tcat_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem+ext
+            tcat_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem
+            tcat_fname = tcat_fname + ext
             tmps = os.path.join(output_path, tcat_fname)
             tcat_fname = os.path.abspath(tmps)
             if save_af:
