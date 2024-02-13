@@ -49,8 +49,6 @@ def main(fname_config: str, copy_loc: str, use: str = []):
 			if all(i in declust_params for i in ('fractal_dim', 'b_value', 'threshold', 'depth', 'output_nearest_neighbor_distances')):
 				print("All parameters specified for Zaliapin declustering")
 			else:
-				breakpoint()
-				print(declust_params)
 				print("Check Zaliapin declustering parameters. Should contain: 'fractal_dim', 'b_value', 'threshold', 'depth', 'output_nearest_neighbor_distances'.")
 
 		elif declust_params['method'] == 'Reasenberg':
