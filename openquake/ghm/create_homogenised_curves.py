@@ -496,6 +496,8 @@ def proc(contacts_shp, outpath, datafolder, boundaries_shp,
                     tmpdf.to_csv(f'{tmpdir}/{key}-{dfind}-buf.csv', index=None)
 
                     dfind += 1
+
+                    del tmpdf
                     
                 
 
@@ -510,6 +512,7 @@ def proc(contacts_shp, outpath, datafolder, boundaries_shp,
                 final.to_file(fname, driver='GeoJSON')
 
 
+            
 
     buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, sub=sub)
 
@@ -568,12 +571,6 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, su
     
     # delete extra columns (so we can re-add some later)
     for pl in poelabs: del df_outputs[pl]
-    del df_outputs['depth']
-    del df_outputs['COUNTRY']
-    del df_outputs['old_index_right']
-    del df_outputs['Coordinates']
-    del df_outputs['GID_0']
-
 
     # create weight column and fil according to whether it's inside or out
     df_outputs['weight'] = [0] * len(df_outputs)
@@ -603,6 +600,8 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, su
     # create geodata frame and store 
     geometry = [Point(x[0],y[0]) for x,y in zip(df3.lon, df3.lat)]
     df_out = df3[poelabs]
+    df_out['lon'] = lons
+    df_out['lat'] = lats
     gdf = gpd.GeoDataFrame(df_out, crs="EPSG:4326", geometry=geometry)
     fname = os.path.join(outpath, 'map_buffer.json')
     gdf.to_file(fname, driver='GeoJSON')
