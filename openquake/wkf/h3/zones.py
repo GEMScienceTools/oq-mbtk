@@ -55,11 +55,18 @@ def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
         geojson_poly = eval(json.dumps(tmps))
         if geojson_poly['type'] == 'MultiPolygon':
             from shapely.geometry import shape, mapping
-            # Check that there are no polygons inside
+            # Check that there are no polygons inside other polygons
             multipoly = shape(geojson_poly)
             if len(multipoly.geoms) != 1:
                 print("multipolygon for source ", idx)
-            geojson_poly = mapping(multipoly.geoms[0])
+                # sometimes multipolygons are crossing the antimeridian (180W/180E)
+            	# check if poly crosses antimeridian and if so get points for both sections
+                if ((multipoly.bounds[0] < -179) & (multipoly.bounds[2] > 179)) == True:
+                    print("source ", idx, " crosses antimeridian")
+                    geojson_poly = mapping(multipoly.convex_hull)
+
+            else:
+                geojson_poly = mapping(multipoly.geoms[0])
 
         # Revert the positions of lons and lats
         coo = [[c[1], c[0]] for c in geojson_poly['coordinates'][0]]

@@ -21,10 +21,12 @@
 import toml
 import shutil
 import os
+from openquake.wkf.utils import get_list
+
 
 HERE = os.path.dirname(__file__)
 
-def main(fname_config: str, copy_loc: str):
+def main(fname_config: str, copy_loc: str, use: str = []):
 	""" Check config file contains all necessary parameters and make a working copy
 	
 	:param fname_config:
@@ -35,11 +37,11 @@ def main(fname_config: str, copy_loc: str):
 	"""
 	model = toml.load(fname_config)
 
-	if all(i in model for i in ('name', 'mmin', 'bin_width')):
-		print("Checking model ", model.get('name'))
+	if all(i in model for i in ('name', 'mmin', 'bin_width', 'rupture_mesh_spacing')):
+	    print("Checking model ", model.get('name'))
 	else: 
-		print("missing default data (name, mmin or bin_width not found)")
-
+		print("missing default data (name, mmin, bin_width or rupture_mesh_spacing not found)")
+		
 	# Check for declustering parameters
 	if 'declustering' in model:
 		declust_params = model['declustering']
@@ -77,7 +79,7 @@ def main(fname_config: str, copy_loc: str):
 		gauss = False
 		adap = False
 		smoothing_params = model['smoothing']
-		if all(i in smoothing_params for i in ('n_v', 'kernel', 'd_i_min')):
+		if all(i in smoothing_params for i in ('n_v', 'kernel', 'd_i_min', 'maxdist', 'h3res')):
 			print("Found parameters for adaptive smoothing")
 			adap = True
 		if all(i in smoothing_params for i in ('kernel_maximum_distance', 'kernel_smoothing')):
@@ -85,16 +87,30 @@ def main(fname_config: str, copy_loc: str):
 			gauss = True
 
 		if adap == False and gauss == False:
-			print("Smoothing paramaters missing. 'kernel_maximum_distance', 'kernel_smoothing' needed for Gaussian smoothing. 'n_v', 'kernel', 'd_i_min' needed for adaptive smoothing. ")
+			print("Smoothing paramaters missing. 'kernel_maximum_distance', 'kernel_smoothing' needed for Gaussian smoothing. 'n_v', 'kernel', 'd_i_min', 'maxdist', 'h3res' needed for adaptive smoothing. ")
 
 	else:
 		print("No smoothing parameters found")
-
-	if 'sources' in model:
+		
+	# check sources
+	if len(use) > 0:
+		use = get_list(use)
+		for src_id in use:
+		# Add sources specified by use
+			if src_id not in model['sources']:
+				model['sources'][src_id] = {}
+		# Should remove sources not in use, but for some reason this is stupidly difficult to find out how to do!
+		print("Configured ", len(use), "sources as specified by use argument")
+	    
+	elif 'sources' in model:
 		print("Found ", len(model['sources']), " sources in model config")
+
 	else:
 		print("No sources found. Please add some!")
 
+	# Check for msr section
+	if 'msr' not in model: 
+		print("No magnitude scaling relationships defined")
 
 	print("copying toml to ", copy_loc)
 	source = fname_config

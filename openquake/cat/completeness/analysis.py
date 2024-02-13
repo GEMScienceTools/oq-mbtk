@@ -243,17 +243,21 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     # Checking input
     if criterion not in ['match_rate', 'largest_rate', 'optimize', 'weichert', 'poisson']:
         raise ValueError('Unknown optimization criterion')
-
+    
+    print('\nSOURCE:', src_id)
     tcat = _load_catalogue(fname)
-    tcat = _add_defaults(tcat)
-    tcat.data["dtime"] = tcat.get_decimal_time()
-
+    if (len(tcat.data)) == 0:
+        print("no events in this source zone, please check")
     # Info
     # Should have option to specify a mag_low != ref_mag
     mag_low = ref_mag
     idx = tcat.data["magnitude"] >= mag_low
     fmt = 'Catalogue contains {:d} events equal or above {:.1f}'
-    print('\nSOURCE:', src_id)
+    
+
+    tcat = _add_defaults(tcat)
+    tcat.data["dtime"] = tcat.get_decimal_time() 
+    
     print(fmt.format(sum(idx), mag_low))
 
     # Loading all the completeness tables to be considered in the analysis
