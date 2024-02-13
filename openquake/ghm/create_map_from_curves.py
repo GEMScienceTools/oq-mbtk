@@ -30,102 +30,100 @@ import os
 import sys
 import glob
 import numpy as np
+import pandas as pd
 import geopandas as gpd
 from openquake.baselib import sap
-from openquake.man.tools import csv_output as csvt
+from openquake.hazardlib.probability_map import compute_hazard_maps
 
 
-def read_hazard_curve_files(path_in, prefix=''):
+def read_all_maps(data_path):
     """
-    :param path_in:
-        Path of the folder with the .json files with the hazard curves
-    :param prefix:
-        Prefix of the files in `path_in`
+    :param data_path: 
+        path to map json files
+
+    returns a geodataframe with all the maps joined
     """
-    data_path = os.path.join(path_in, '{:s}*json'.format(prefix))
+
+    dfm = gpd.GeoDataFrame()
+
+    # read in all files into one dataframe
+    for fname in sorted(glob.glob(data_path)):
+        print(fname)
+        df = gpd.read_file(fname)
+        dfm = gpd.GeoDataFrame( pd.concat([df, dfm], ignore_index=True) )
+    return dfm
+
+
+def create_map(path_in, prefix, fnames_out, path_out, imt_str, pexs):
+    """
+    :param path_in: 
+    """
+    from time import process_time 
+    t1_start = process_time()  
 
     lons = []
     lats = []
     poes = []
-    for i, fname in enumerate(sorted(glob.glob(data_path))):
 
-        print(fname)
-        df = gpd.read_file(fname)
+    # set datapath to maps and read them
+    data_path = os.path.join(path_in, f'{prefix}*json')
+    dfm = read_all_maps(data_path)
 
-        # Extract IMLs from names
-        if i == 0:
-            imls = []
-            for tmps in list(df.columns):
-                m = re.search(r'^poe-(\d*\.\d*)', tmps)
-                if m:
-                    imls.append(float(m.group(1)))
+    t2_read = process_time()  
+    t12 = t2_read - t1_start
+    print(f'Time to read: {t12}s')
 
-        # Save coordinates
-        for p in df['geometry']:
-            lons.append(p.x)
-            lats.append(p.y)
+    
+    # get the coordinates 
+    lons = [p.x for p in dfm.geometry]
+    lats = [p.y for p in dfm.geometry]
+    
+    # take the columns with the poe data
+    poelabs = [k for k in dfm.keys() if 'poe' in k]
+    poes = dfm[poelabs]
+    poesnp = np.array(poes)
 
-        # Save data
-        tmp_poes = df.filter(regex=("poe*")).values
-        for row in list(tmp_poes):
-            poes.append(row)
+    # get the imls 
+    imlsnp = np.array([float(k.replace('poe-','')) for k in poelabs])
 
-    return lons, lats, np.array(poes), np.array(imls)
+    # get map values from curves via engine interpolation
+    mapvals = compute_hazard_maps(poesnp, imlsnp, pexs)
 
+    t3_read = process_time()  
+    t23 = t3_read - t2_read
+    print(f'Time to get maps: {t23}s')
 
-def write_hazard_map(filename, lons, lats, pex, gms, imt):
-    fou = open(filename, 'w')
-    fou.write('# mean, investigation_time=1.0\n')
-    fou.write('lon,lat,{:s}-{:f}\n'.format(imt, pex))
-    for lo, la, gm in zip(lons, lats, gms):
-        fou.write('{:f},{:f},{:e}\n'.format(lo, la, gm))
-    fou.close()
-    print('Created:\n{:s}'.format(filename))
-
-
-def create_map(path_in, prefix, fname_out, path_out, imt_str, pex=None,
-               iml=None):
-    """
-    :param path_in:
-        Name of folder with the .json files containing the hazard curves
-    """
-
-    pex = float(pex)
-    lons, lats, poes, imls = read_hazard_curve_files(path_in, prefix)
-
-    # Check is output path exists
-    if not os.path.exists(path_out):
-        os.mkdir(path_out)
-
-    # Read the file with the hazard curves
-    # lons, lats, poes, hea, imls = csvt.read_hazard_curve_csv(fname_csv)
-    # Compute the hazard maps
-    if pex is not None and iml is None:
-        dat = csvt.get_map_from_curves(imls, poes, pex)
-    elif pex is None and iml is not None:
-        raise ValueError('Not yet supported')
-    else:
-        raise ValueError('You cannot set both iml and pex')
-
-    # Save the hazard map
-    path_out = os.path.join(path_out, fname_out)
-    write_hazard_map(path_out, lons, lats, pex, dat, imt_str)
+    # write to files
+    for i, pex in enumerate(pexs):
+        fout = os.path.join(path_out, fnames_out[i])
+        pd.DataFrame({'lon': lons, 'lat': lats, f'{imt_str}-{pex}': mapvals[:,i]}).to_csv(fout, index=False)
 
 
-def map(path_in, prefix, fname_out, path_out, imt_str, pex=None, iml=None):
+
+def map(path_in, prefix, fnames_out, path_out, imt_str, pexs=None):
     """
     Creates a hazard map from a set of hazard curves
+
+    Example use:
+
+    ./create_map_from_curves.py PGA-rock map "['PGA-rock-475.csv', 'PGA-rock-2475.csv']" 
+    maps_out PGA "[0.002105, 0.000404]"
     """
-    create_map(path_in, prefix, fname_out, path_out, imt_str, pex, iml)
+
+    if not os.path.exists(path_out):
+        os.makedirs(path_out)
+
+    pexs = eval(pexs)
+    fnames_out = eval(fnames_out)
+    create_map(path_in, prefix, fnames_out, path_out, imt_str, pexs)
 
 
 map.path_in = 'Name of the folder with input .json files'
 map.prefix = 'Prefix for selecting files'
-map.fname_out = 'Name output csv file'
+map.fnames_out = 'List with names of output csv files'
 map.path_out = 'Path to the output folder'
 map.imt_str = 'String describing the IMT'
-map.pex = 'Probability of exceedance'
-map.iml = 'Intensity measure level used for building the maps'
+map.pexs = 'List with probabilities of exceedance, same lenght as fnames_out'
 
 
 if __name__ == "__main__":
