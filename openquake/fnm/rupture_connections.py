@@ -12,7 +12,11 @@ from numba.typed import List
 from scipy.sparse import dok_array, issparse
 
 from openquake.hazardlib.geo import Point, Line
-from openquake.hazardlib.geo.geodetic import spherical_to_cartesian, azimuth
+from openquake.hazardlib.geo.geodetic import (
+    spherical_to_cartesian,
+    azimuth,
+    distances,
+)
 
 from openquake.aft.rupture_distances import (
     get_sequence_pairwise_dists,
@@ -320,6 +324,7 @@ def get_single_fault_rups(
             subfaults: list of subfault indices in the rupture
             fault: fault identifier
     """
+    num_subfaults = len(subfaults)
     fault_rups = get_rupture_patches_from_single_fault(subfaults)
     rup_patches = list(fault_rups.values())[0]
     rup_subfaults = [
@@ -336,6 +341,9 @@ def get_single_fault_rups(
         },
     )
     rupture_df['fault'] = list(fault_rups.keys())[0]
+    rupture_df['full_fault_rupture'] = [
+        len(rup) == num_subfaults for rup in rup_patches
+    ]
 
     return rupture_df
 
@@ -389,6 +397,7 @@ def get_rupture_adjacency_matrix(
     multifaults_on_same_fault: bool = False,
     max_dist: Optional[float] = 20.0,
     sparse: bool = True,
+    full_fault_only_mf_ruptures: bool = True,
 ) -> tuple[pd.DataFrame, np.ndarray]:
     """
     Get the rupture adjacency matrix for a set of faults. Adjacency values
@@ -508,6 +517,42 @@ def get_rupture_adjacency_matrix(
 
             col_count += ncols
         row_count += nrows
+
+    logging.info(" dist matrix type: %s", type(dist_adj_matrix))
+    if full_fault_only_mf_ruptures:
+        if sparse:
+            full_fault_ruptures = set(
+                [
+                    i
+                    for i, rup in single_fault_rup_df.iterrows()
+                    if rup['full_fault_rupture']
+                ]
+            )
+            nnz_keys = dist_adj_matrix.keys()
+            keys_to_keep = set(
+                [
+                    key
+                    for key in nnz_keys
+                    if (
+                        key[0] in full_fault_ruptures
+                        and key[1] in full_fault_ruptures
+                    )
+                ]
+            )
+
+            new_dist_adj_matrix = dok_array((nrups, nrups), dtype=np.float32)
+            for key in keys_to_keep:
+                new_dist_adj_matrix[key] = dist_adj_matrix[key]
+            dist_adj_matrix = new_dist_adj_matrix
+
+        else:
+            partial_fault_ruptures = [
+                i
+                for i, rup in single_fault_rup_df.iterrows()
+                if not rup['full_fault_rupture']
+            ]
+            dist_adj_matrix[partial_fault_ruptures, :] = 0
+            dist_adj_matrix[:, partial_fault_ruptures] = 0
 
     # make the matrix symmetric
     dist_adj_matrix += dist_adj_matrix.T
@@ -641,10 +686,34 @@ def find_intersection_angle(trace_1, trace_2):
     az_1 = tr1.average_azimuth()
     az_2 = tr2.average_azimuth()
 
-    pt_1_x, pt_1_y = trace_1[0].x, trace_1[0].y
-    pt_2_x, pt_2_y = trace_2[0].x, trace_2[0].y
+    pt_1_x, pt_1_y = tr1[0].x, tr1[0].y
+    pt_2_x, pt_2_y = tr2[0].x, tr2[0].y
 
     int_pt = intersection_pt(pt_1_x, pt_1_y, az_1, pt_2_x, pt_2_y, az_2)
+
+    # use the farther point from int_pt on each trace to calculate the angle
+    dists_1 = distances(
+        int_pt[0],
+        int_pt[1],
+        np.array([c[0] for c in tr1.coo]),
+        np.array([c[1] for c in tr1.coo]),
+    )
+
+    dists_2 = distances(
+        int_pt[0],
+        int_pt[1],
+        np.array([c[0] for c in tr2.coo]),
+        np.array([c[1] for c in tr2.coo]),
+    )
+
+    pt_1_x, pt_1_y = (
+        trace_1[np.argmax(dists_1)].x,
+        trace_1[np.argmax(dists_1)].y,
+    )
+    pt_2_x, pt_2_y = (
+        trace_2[np.argmax(dists_2)].x,
+        trace_2[np.argmax(dists_2)].y,
+    )
 
     az_pt_1, az_pt_2 = azimuth(
         [pt_1_x, pt_2_x], [pt_1_y, pt_2_y], int_pt[0], int_pt[1]

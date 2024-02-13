@@ -54,6 +54,7 @@ default_settings = {
     'shear_modulus': SHEAR_MODULUS,
     'sparse_distance_matrix': False,
     'parallel_multifault_search': False,
+    'full_fault_only_mf_ruptures': True,
 }
 
 
@@ -289,11 +290,11 @@ def build_fault_network(
             ],
         )
 
-        fault_network[
-            'rupture_df_keep'
-        ] = filter_proportionally_to_plausibility(
-            fault_network['rupture_df'],
-            fault_network['plausibility']['total'],
+        fault_network['rupture_df_keep'] = (
+            filter_proportionally_to_plausibility(
+                fault_network['rupture_df'],
+                fault_network['plausibility']['total'],
+            )
         )
         t8 = time.time()
         event_times.append(t8)
