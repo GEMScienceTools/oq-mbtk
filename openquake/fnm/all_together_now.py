@@ -52,7 +52,7 @@ default_settings = {
     'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
     'skip_bad_faults': False,
     'shear_modulus': SHEAR_MODULUS,
-    'sparse_distance_matrix': False,
+    'sparse_distance_matrix': True,
     'parallel_multifault_search': False,
     'full_fault_only_mf_ruptures': True,
 }
