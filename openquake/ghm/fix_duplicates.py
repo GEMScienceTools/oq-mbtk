@@ -70,8 +70,8 @@ def fix_duplicates(root, mosaic, imt, sc):
         print(str(fname), key)
     
         # TODO remove
-        #if key not in ['eur', 'naf']:
-        #    continue
+        if key not in ['eur', 'naf']:
+            continue
     
         # Read geodataframe
         print('   read geojson')

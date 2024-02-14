@@ -96,7 +96,8 @@ def create_map(path_in, prefix, fnames_out, path_out, imt_str, pexs):
     # write to files
     for i, pex in enumerate(pexs):
         fout = os.path.join(path_out, fnames_out[i])
-        pd.DataFrame({'lon': lons, 'lat': lats, f'{imt_str}-{pex}': mapvals[:,i]}).to_csv(fout, index=False)
+        dfout = pd.DataFrame({'lon': lons, 'lat': lats, f'{imt_str}-{pex}': mapvals[:,i]})
+        dfout.to_csv(fout, index=False, float_format='%.5f')
 
 
 

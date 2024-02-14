@@ -509,7 +509,10 @@ def proc(contacts_shp, outpath, datafolder, boundaries_shp,
                 # Write results after going back to geographic projection
                 fname = os.path.join(outpath, 'map_{:s}.json'.format(key))
                 final = within.to_crs(crs=p4326)
-                final.to_file(fname, driver='GeoJSON')
+                geoa = [Point(np.round(p.x,5),np.round(p.y,5)) for p in final.geometry]
+                final.geometry = geoa
+                final.to_file(fname, driver='GeoJSON')#, float_format='%.5f')
+                #final.to_file(fname, driver='GeoJSON', float_format='%.5f')
 
 
             
@@ -596,15 +599,18 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, su
     df3['sum_weights'] = [sum(w) for w in df3['weight']]
     df3['scaled_poes'] = [np.dot(w,p)/s for w,p,s in zip(df3['weight'],df3['poes'],df3['sum_weights'])]
     df3[poelabs] = df3['scaled_poes'].apply(lambda x: pd.Series(x))
+    lons_fi = [lo[0] for lo in df3.lon]
+    lats_fi = [la[0] for la in df3.lat]
+    df3['lat'] = lats_fi
+    df3['lon'] = lons_fi
 
     # create geodata frame and store 
-    geometry = [Point(x[0],y[0]) for x,y in zip(df3.lon, df3.lat)]
-    df_out = df3[poelabs]
-    df_out['lon'] = lons
-    df_out['lat'] = lats
+    geometry = [Point(x,y) for x,y in zip(df3.lon, df3.lat)]
+    df_out = df3[['lon', 'lat'] + poelabs]
     gdf = gpd.GeoDataFrame(df_out, crs="EPSG:4326", geometry=geometry)
     fname = os.path.join(outpath, 'map_buffer.json')
     gdf.to_file(fname, driver='GeoJSON')
+    #gdf.to_file(fname, driver='GeoJSON', float_format='%.5f')
 
 
 
