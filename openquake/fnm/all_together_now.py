@@ -43,8 +43,8 @@ from openquake.fnm.inversion.utils import SHEAR_MODULUS
 
 default_settings = {
     'subsection_size': [15.0, 15.0],
-    'edge_sd': 2.0,
-    'dip_sd': 2.0,
+    'edge_sd': 5.0,
+    'dip_sd': 5.0,
     'max_jump_distance': 10.0,
     'max_sf_rups_per_mf_rup': 10,
     'rupture_angle_threshold': 60.0,

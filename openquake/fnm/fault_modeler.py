@@ -68,7 +68,7 @@ logger.addHandler(logging.NullHandler())
 
 def simple_fault_from_feature(
     feature: dict,
-    edge_sd: float = 2.0,
+    edge_sd: float = 5.0,
     lsd_default: float = 20.0,
     usd_default: float = 0.0,
 ) -> dict:
@@ -156,8 +156,8 @@ def subdivide_simple_fault_surface(
         15.0,
         15.0,
     ],
-    edge_sd=2.0,
-    dip_sd=2.0,
+    edge_sd=5.0,
+    dip_sd=5.0,
     dip=None,
 ):
     """
