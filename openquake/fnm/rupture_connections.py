@@ -15,7 +15,7 @@ from openquake.hazardlib.geo import Point, Line
 from openquake.hazardlib.geo.geodetic import (
     spherical_to_cartesian,
     azimuth,
-    distances,
+    geodetic_distance,
 )
 
 from openquake.aft.rupture_distances import (
@@ -692,14 +692,14 @@ def find_intersection_angle(trace_1, trace_2):
     int_pt = intersection_pt(pt_1_x, pt_1_y, az_1, pt_2_x, pt_2_y, az_2)
 
     # use the farther point from int_pt on each trace to calculate the angle
-    dists_1 = distances(
+    dists_1 = geodetic_distance(
         int_pt[0],
         int_pt[1],
         np.array([c[0] for c in tr1.coo]),
         np.array([c[1] for c in tr1.coo]),
     )
 
-    dists_2 = distances(
+    dists_2 = geodetic_distance(
         int_pt[0],
         int_pt[1],
         np.array([c[0] for c in tr2.coo]),
@@ -760,10 +760,172 @@ def get_proximal_rup_angles(
     for i, trace_0 in enumerate(sf_traces):
         for j, trace_1 in enumerate(sf_traces):
             if binary_distance_matrix[i, j] == 1:
-                rup_angles[(i, j)] = find_intersection_angle(trace_0, trace_1)[
-                    1
-                ]
+                rup_angles[(i, j)] = find_intersection_angle(trace_0, trace_1)
     return rup_angles
+
+
+def angle_difference(angle_1, angle_2):
+    return np.abs(angle_1 - angle_2) % 360
+
+
+def get_dists_and_azimuths_from_pt(trace, pt):
+    endpts_x = np.array([trace[0].x, trace[-1].x])
+    endpts_y = np.array([trace[0].y, trace[-1].y])
+
+    dists = geodetic_distance(pt[0], pt[1], endpts_x, endpts_y)
+    azimuths = azimuth(pt[0], pt[1], endpts_x, endpts_y)
+
+    return dists, azimuths
+
+
+def adjust_distances_based_on_azimuth(pairs):
+    # Convert list of tuples to a NumPy array for easier manipulation
+    data = np.array(pairs)
+
+    # Normalize azimuths to a 0-360 range
+    azimuths = data[:, 1] % 360
+
+    # Initialize variables to track the best fit
+    best_fit_count = -1
+    best_fit_start = None
+
+    # Check ranges starting from each azimuth
+    for azimuth in azimuths:
+        start = azimuth
+        end = (start + 90) % 360
+
+        if end > start:
+            count = np.sum((azimuths >= start) & (azimuths < end))
+        else:  # Handle wrap-around
+            count = np.sum((azimuths >= start) | (azimuths < end))
+
+        # Update if this range fits more azimuths
+        if count > best_fit_count:
+            best_fit_count = count
+            best_fit_start = start
+
+    # Adjust distances based on the identified range
+    adjusted_pairs = []
+    for distance, azimuth in pairs:
+        azimuth_normalized = azimuth % 360
+        if best_fit_start is not None:
+            end = (best_fit_start + 90) % 360
+            if end > best_fit_start:
+                if not (best_fit_start <= azimuth_normalized < end):
+                    distance = -distance
+            else:  # Handle wrap-around
+                if not (
+                    azimuth_normalized >= best_fit_start
+                    or azimuth_normalized < end
+                ):
+                    distance = -distance
+        adjusted_pairs.append((distance, azimuth))
+
+    return adjusted_pairs
+
+
+def _check_overlap(segment1, segment2):
+    # Convert segments to numpy arrays for easier manipulation
+    A = np.asarray(sorted(segment1))
+    B = np.asarray(sorted(segment2))
+
+    # Determine the maximum start point and minimum end point
+    overlap_start = np.max([A[0], B[0]])
+    overlap_end = np.min([A[1], B[1]])
+
+    # Calculate the overlap length
+    overlap_length = np.max([0, overlap_end - overlap_start])
+
+    # Categorize the overlap
+    if overlap_length == 0.0:
+        return ("none", 0.0)
+    elif A[0] == B[0] and A[1] == B[1]:
+        return ("equality", overlap_length)
+    elif (A[0] >= B[0] and A[1] <= B[1]) or (B[0] >= A[0] and B[1] <= A[1]):
+        return ("full", overlap_length)
+    else:
+        return ("partial", overlap_length)
+
+
+def calc_rupture_overlap(trace_1, trace_2, intersection_pt=None):
+    if not isinstance(trace_1, Line):
+        tr1 = Line([Point(*coords) for coords in trace_1])
+        tr2 = Line([Point(*coords) for coords in trace_2])
+    else:
+        tr1 = trace_1
+        tr2 = trace_2
+
+    if intersection_pt is None:
+        intersection_pt = find_intersection_angle(tr1, tr2)[0]
+
+    dists_1, az_1 = get_dists_and_azimuths_from_pt(tr1, intersection_pt)
+    dists_2, az_2 = get_dists_and_azimuths_from_pt(tr2, intersection_pt)
+    print(dists_1, dists_2)
+
+    dist_az_pairs = list(zip(dists_1, az_1))
+    dist_az_pairs.extend(zip(dists_2, az_2))
+
+    dist_az_pairs = adjust_distances_based_on_azimuth(dist_az_pairs)
+
+    dists_1 = [dist_az_pairs[0][0], dist_az_pairs[1][0]]
+    dists_2 = [dist_az_pairs[2][0], dist_az_pairs[3][0]]
+
+    print(dists_1, dists_2)
+
+    overlap_type, overlap_length = _check_overlap(dists_1, dists_2)
+    return overlap_type, overlap_length
+
+
+def _is_strike_slip(rake):
+    return (
+        -45.0 < rake < 45.0 or 135.0 < rake < 180.0 or -180.0 < rake < -135.0
+    )
+
+
+def filter_bin_adj_matrix_by_rupture_overlap(
+    single_rup_df,
+    subfaults,
+    binary_adjacence_matrix,
+    strike_slip_only: bool = True,
+    threshold_overlap: float = 20.0,
+    threshold_angle: float = 45.0,
+):
+
+    sf_meshes = make_sf_rupture_meshes(
+        single_rup_df['patches'], single_rup_df['fault'], subfaults
+    )
+    sf_traces = [get_trace_from_mesh(mesh) for mesh in sf_meshes]
+    rup_angles = get_proximal_rup_angles(sf_traces, binary_adjacence_matrix)
+    fault_rake_lookup = {ff[0]['fid']: ff[0]['rake'] for ff in subfaults}
+    rakes = {
+        i: fault_rake_lookup[ff] for i, ff in enumerate(single_rup_df['fault'])
+    }
+
+    # for (i, j), (int_pt, angle) in rup_angles.items():
+    if strike_slip_only:
+        strike_slip_filter = {}
+        for (i, j), _ in rup_angles.items():
+            if _is_strike_slip(rakes[i]) and _is_strike_slip(rakes[j]):
+                strike_slip_filter[(i, j)] = True
+            else:
+                strike_slip_filter[(i, j)] = False
+    else:
+        strike_slip_filter = {k: True for k in rup_angles.keys()}
+
+    for (i, j), (int_pt, angle) in rup_angles.items():
+        if angle < threshold_angle:
+            if strike_slip_filter[(i, j)]:
+                overlap = calc_rupture_overlap(
+                    sf_traces[i], sf_traces[j], intersection_pt=int_pt
+                )
+                print(i, j, overlap[1])
+                if overlap[1] > threshold_overlap:
+                    if issparse(binary_adjacence_matrix):
+                        del binary_adjacence_matrix[i, j]
+                    else:
+                        binary_adjacence_matrix[i, j] = 0
+
+    return binary_adjacence_matrix, rup_angles
 
 
 def filter_bin_adj_matrix_by_rupture_angle(
@@ -811,7 +973,7 @@ def filter_bin_adj_matrix_by_rupture_angle(
 
     rup_angles = get_proximal_rup_angles(sf_traces, binary_adjacence_matrix)
 
-    for (i, j), angle in rup_angles.items():
+    for (i, j), (int_pt, angle) in rup_angles.items():
         # for (i, j), angles in rup_angles.items():
         # if angles[angle_index] < threshold_angle:
         if angle < threshold_angle:
