@@ -66,125 +66,101 @@ class TrTestCase(unittest.TestCase):
 
     def tearDown(self):
         # Remove tmp folder
-        # shutil.rmtree(self.tmp)
-        pass
+        shutil.rmtree(self.tmp)
 
     def testcase01(self):
         """
         Testing TR
         """
 
-        # classify
+        PLOT = False
+        if PLOT:
+            _plot(self.ini_fname, self.config)
+
+        # Run classification
         classify(self.ini_fname, True, self.root_folder)
         f = h5py.File(self.treg_filename, 'r')
 
-        # testing crustal active
+        # Testing Crustal Seismicity
         msg = 'Indexes of different elements: \n'
+        expected = [1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0]
         expected = [1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0]
-        if True in f['crustal'][:] or False in f['crustal'][:]: # If windows
-            bool_to_int = []
-            for val in f['crustal'][:]:
-                if val == True:
-                    bool_to_int.append(1)
-                if val == False:
-                    bool_to_int.append(0)
-            computed =  numpy.array(bool_to_int)
-        else:
-            computed = f['crustal'][:]
+
+        computed = f['crustal'][:].astype(int)
         dff = numpy.where(numpy.abs(expected - computed) > 0)
         if len(dff[0]):
             for val in dff[0]:
-                breakpoint()
                 msg += f'{val:.0f}'
         numpy.testing.assert_array_equal(computed, expected, err_msg=msg)
 
         # testing interface
-        #           0           4                10
         msg = 'Indexes of different elements: \n'
-        expected = [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0]
-        if True in f['int_cam'][:] or False in f['int_cam'][:]: # If windows
-            bool_to_int = []
-            for val in f['int_cam'][:]:
-                if val == True:
-                    bool_to_int.append(1)
-                if val == False:
-                    bool_to_int.append(0)
-            computed =  numpy.array(bool_to_int)
-        else:
-            computed = f['int_cam'][:]
-        dff = numpy.where(numpy.abs(expected - computed) > 0)
+        expected = [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0]
+        computed = f['int_cam'][:].astype(int)
         if len(dff[0]):
             for val in dff[0]:
-                breakpoint()
                 msg += f'{val:.0f}'
         numpy.testing.assert_array_equal(computed, expected, err_msg=msg)
 
         # testing slab
         expected = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1]
-        if True in f['slab_cam'][:] or False in f['slab_cam'][:]: # If windows
-            bool_to_int = []
-            for val in f['slab_cam'][:]:
-                if val == True:
-                    bool_to_int.append(1)
-                else:
-                    bool_to_int.append(0)
-            computed = numpy.array(bool_to_int)
-        else:
-            computed = f['slab_cam'][:]
+        computed = f['slab_cam'][:].astype(int)
         numpy.testing.assert_array_equal(computed, expected)
         f.close()
 
-        if PLOT:
-            scl = -0.01
-            root = os.path.dirname(self.ini_fname)
 
-            tmp = self.config['general']['catalogue_filename']
-            fname = os.path.join(root, tmp)
-            df = pd.read_csv(fname, delimiter=',')
-            cat = numpy.zeros((len(df), 3))
-            cat[:, 0] = df.longitude.to_numpy()
-            cat[:, 1] = df.latitude.to_numpy()
-            cat[:, 2] = df.depth.to_numpy() * scl
-            size = numpy.ones((len(df))) * 0.1
+def _plot(ini_fname, config):
+    scl = -0.01
+    root = os.path.dirname(ini_fname)
 
-            # Plot hypocenters
-            pl = pv.Plotter()
-            pdata = get_pv_points(cat, size)
-            pl.add_mesh(pdata, color='red')
+    tmp = config['general']['catalogue_filename']
+    fname = os.path.join(root, tmp)
+    df = pd.read_csv(fname, delimiter=',')
+    cat = numpy.zeros((len(df), 3))
+    cat[:, 0] = df.longitude.to_numpy()
+    cat[:, 1] = df.latitude.to_numpy()
+    cat[:, 2] = df.depth.to_numpy() * scl
+    size = numpy.ones((len(df))) * 0.1
 
-            pdata = pv.PolyData(cat)
-            pdata["labels"] = [f"{i}" for i in range(len(cat))]
-            pl.add_point_labels(pdata, "labels", font_size=36)
+    # Plot hypocenters
+    pl = pv.Plotter()
+    pdata = get_pv_points(cat, size)
+    pl.add_mesh(pdata, color='red')
 
-            # Plot profiles interface
-            tmp_path = self.config['int_cam']['folder']
-            pattern = os.path.join(root, tmp_path, 'edge_*.csv')
-            for fname in glob.glob(pattern):
-                dat = numpy.loadtxt(fname)
-                dat[:, 2] *= scl
-                pdata = get_pv_line(dat)
-                pl.add_mesh(pdata, color='green')
+    pdata = pv.PolyData(cat)
+    pdata["labels"] = [f"{i}" for i in range(len(cat))]
+    pl.add_point_labels(pdata, "labels", font_size=36)
 
-            # Plot profiles interfacea - Below
-            tmp_path = self.config['int_cam']['folder']
-            pattern = os.path.join(root, tmp_path, 'edge_*.csv')
-            for fname in glob.glob(pattern):
-                dat = numpy.loadtxt(fname)
-                dat[:, 2] += float(self.config['int_cam']['distance_buffer_below'])
-                dat[:, 2] *= scl
-                pdata = get_pv_line(dat)
-                pl.add_mesh(pdata, color='lightgreen')
+    # Plot profiles interface
+    tmp_path = config['int_cam']['folder']
+    pattern = os.path.join(root, tmp_path, 'edge_*.csv')
+    for fname in glob.glob(pattern):
+        dat = numpy.loadtxt(fname)
+        dat[:, 2] *= scl
+        pdata = get_pv_line(dat)
+        pl.add_mesh(pdata, color='green')
 
-            # Plot profiles slab
-            tmp_path = self.config['slab_cam']['folder']
-            pattern = os.path.join(root, tmp_path, 'edge_*.csv')
-            for fname in glob.glob(pattern):
-                dat = numpy.loadtxt(fname)
-                dat[:, 2] *= scl
-                pdata = get_pv_line(dat)
-                pl.add_mesh(pdata, color='blue')
+    # Plot profiles interface - Below
+    tmp_path = config['int_cam']['folder']
+    pattern = os.path.join(root, tmp_path, 'edge_*.csv')
+    for fname in glob.glob(pattern):
+        dat = numpy.loadtxt(fname)
+        val = float(config['int_cam']['distance_buffer_below'])
+        dat[:, 2] += val
+        dat[:, 2] *= scl
+        pdata = get_pv_line(dat)
+        pl.add_mesh(pdata, color='lightgreen')
 
-            pl.view_isometric()
-            pl.set_viewup((0, 0, 1))
-            pl.show_grid()
-            pl.show(interactive=True)
+    # Plot profiles slab
+    tmp_path = config['slab_cam']['folder']
+    pattern = os.path.join(root, tmp_path, 'edge_*.csv')
+    for fname in glob.glob(pattern):
+        dat = numpy.loadtxt(fname)
+        dat[:, 2] *= scl
+        pdata = get_pv_line(dat)
+        pl.add_mesh(pdata, color='blue')
+
+    pl.view_isometric()
+    pl.set_viewup((0, 0, 1))
+    pl.show_grid()
+    pl.show(interactive=True)
