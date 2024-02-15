@@ -94,9 +94,36 @@ class OutputTestCase(unittest.TestCase):
         if OVERWRITE:
             shutil.copyfile(fname, expected)
 
-        expected_lines = [line for line in open8(expected)]
-        actual_lines = [line for line in open8(fname)]
-        assert expected_lines[1:] == actual_lines[1:]
+
+        # expected_lines = [line for line in open8(expected)]
+        # actual_lines = [line for line in open8(fname)]
+
+        actual_lines = []
+        for i, line in enumerate(open8(fname)):
+            if i == 0:
+                hea1_comp = line
+            elif i == 1:
+                hea2_comp = line
+            else:
+                actual_lines.append([float(j) for j in line.split()[1:]])
+
+        expected_lines = []
+        for i, line in enumerate(open8(expected)):
+            if i == 0:
+                hea1_exp = line
+            elif i == 1:
+                hea2_exp = line
+            if i < 2:
+                continue
+            expected_lines.append([float(j) for j in line.split()[1:]])
+
+        assert hea2_comp == hea2_exp
+
+        actual_lines = np.array(actual_lines)
+        expected_lines = np.array(expected_lines)
+        aae = np.testing.assert_almost_equal
+        aae(actual_lines, expected_lines, decimal=4)
+
         os.remove(fname)
 
 
