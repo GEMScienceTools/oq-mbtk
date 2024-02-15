@@ -83,8 +83,8 @@ class TrTestCase(unittest.TestCase):
 
         # Testing Crustal Seismicity
         msg = 'Indexes of different elements: \n'
-        expected = [1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0]
-        expected = [1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0]
+        expected = [1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0]
+        expected = [1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0]
 
         computed = f['crustal'][:].astype(int)
         dff = numpy.where(numpy.abs(expected - computed) > 0)
@@ -95,7 +95,7 @@ class TrTestCase(unittest.TestCase):
 
         # testing interface
         msg = 'Indexes of different elements: \n'
-        expected = [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0]
+        expected = [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0]
         computed = f['int_cam'][:].astype(int)
         if len(dff[0]):
             for val in dff[0]:
@@ -103,7 +103,7 @@ class TrTestCase(unittest.TestCase):
         numpy.testing.assert_array_equal(computed, expected, err_msg=msg)
 
         # testing slab
-        expected = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1]
+        expected = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1]
         computed = f['slab_cam'][:].astype(int)
         numpy.testing.assert_array_equal(computed, expected)
         f.close()
