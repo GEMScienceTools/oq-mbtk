@@ -42,10 +42,11 @@ class TestBuildComplexFaultSurface(unittest.TestCase):
 
     def test_build_surface_01(self):
         """
+        The deeper edge must be flipped
         """
 
         # srfc assigned but never used
-        srfc = build_complex_surface_from_edges(EDGE_FOLDER)
+        _ = build_complex_surface_from_edges(EDGE_FOLDER)
 
 
 class TestCheckEdges(unittest.TestCase):
