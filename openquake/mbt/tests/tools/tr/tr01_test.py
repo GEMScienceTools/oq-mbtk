@@ -53,10 +53,12 @@ class TrTestCase(unittest.TestCase):
     def setUp(self):
 
         self.root_folder = os.path.join(BASE_PATH)
-        self.ini_fname = os.path.join(BASE_PATH, '../../data/tr01/tr01.ini')
-        self.treg_filename = os.path.join(BASE_PATH, '../../tmp/test02.hdf5')
+        self.ini_fname = os.path.join(
+            BASE_PATH, '..', '..', 'data', 'tr01', 'tr01.ini')
+        self.treg_filename = os.path.join(
+            BASE_PATH, '..', '..', 'tmp', 'test02.hdf5')
 
-        self.tmp = os.path.join(BASE_PATH, '../../tmp/')
+        self.tmp = os.path.join(BASE_PATH, '..', '..', 'tmp')
         if os.path.exists(self.tmp):
             shutil.rmtree(self.tmp)
         os.makedirs(self.tmp)
