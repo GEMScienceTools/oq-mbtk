@@ -44,8 +44,8 @@ BASE_DATA_PATH = os.path.dirname(__file__)
 
 class TestDatabaseIO(unittest.TestCase):
 
-    geojson_file = os.path.join(BASE_DATA_PATH, 'data',
-                                'ne_asia_faults_rates.geojson')
+    geojson_file = os.path.join(
+        BASE_DATA_PATH, 'data', 'ne_asia_faults_rates.geojson')
 
     param_map = {'source_id': 'ogc_fid',
                  'name': 'ns_name',
