@@ -91,8 +91,6 @@ def classify(ini_fname, compute_distances, rf):
 
     # Log filename
     _, log_fname = tempfile.mkstemp()
-    if os.path.exists(log_fname):
-        os.remove(log_fname)
     logger.info('Log file: {:s}'.format(log_fname))
     logger.info('Creating: {:s}'.format(treg_filename))
     f = h5py.File(treg_filename, 'w')
