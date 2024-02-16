@@ -182,7 +182,7 @@ def _plot_slab1pt0(axes, csda):
     iii = numpy.argsort(slb_dst)
     if len(iii) > 2:
         plt.plot(slb_dst[iii], -1*slb_dep[iii], '-b', linewidth=3, zorder=30)
-        plt.text(slb_dst[iii[-1]], -1*slb_dep[iii[-1]], 'Slab1.0', fontsize=8)
+        plt.text(slb_dst[iii[-1]], -1*slb_dep[iii[-1]], 'Slab2.0', fontsize=8)
 
 
 def _plot_np_intersection(axes, csda):

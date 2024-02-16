@@ -32,8 +32,8 @@ import pandas as pd
 from openquake.baselib import sap
 from openquake.hazardlib.geo.geodetic import azimuth
 
-def make_cs_coords(cs_dir, outfi):
-    cs_files = glob.glob(f'{cs_dir}/*csv')
+def make_cs_coords(cs_dir, outfi, ini_fname, cs_length=300., cs_depth=300.):
+    cs_files = sorted(glob.glob(f'{cs_dir}/*csv'))
     lines = []
     for fi in cs_files:
         sz = os.path.getsize(fi)
@@ -44,9 +44,10 @@ def make_cs_coords(cs_dir, outfi):
         az = azimuth(df.lon[0], df.lat[0], df.lon.values[-1], df.lat.values[-1])
 
         csid = fi.split('/')[-1][3:].replace('.csv','')
-        line = f'{df.lon[0]} {df.lat[0]} 700.0 300.0 {az} {csid} cs.ini \n'
-        lines.append(line) 
-    
+        line = f'{df.lon[0]} {df.lat[0]} {cs_length} {cs_depth} '
+        line += f'{az:.4} {csid} {ini_fname} \n'
+        lines.append(line)
+
     os.remove(outfi) if os.path.exists(outfi) else None
 
     with open(outfi, 'w') as f:
@@ -56,6 +57,9 @@ def make_cs_coords(cs_dir, outfi):
 
 make_cs_coords.cs_dir = 'directory with cross section coordinates'
 make_cs_coords.outfi = 'output filename'
+make_cs_coords.ini_fname = 'name of ini file specifying data paths'
+make_cs_coords.cs_length = 'length of cross sections (default 300)'
+make_cs_coords.cs_depth = 'depth extent of cross sections (default 300 km)'
 
 if __name__ == "__main__":
     sap.run(make_cs_coords)
