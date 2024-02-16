@@ -5,9 +5,10 @@ import os
 import sys
 from plot_cross_section import plt_cs
 import matplotlib.pyplot as plt
+from openquake.baselib import sap
 
 
-def main(argv):
+def pcs(argv):
     if len(argv) < 2:
         folder = './'
     else:

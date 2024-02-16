@@ -12,7 +12,7 @@ from matplotlib.patches import Circle
 from matplotlib.collections import PatchCollection
 
 from openquake.sub.cross_sections import Trench
-
+from openquake.baselib import sap
 
 def get_cs(trench, ini_filename, cs_len, cs_depth, interdistance, qual,
            fname_out_cs='cs_traces.cs'):
@@ -81,8 +81,6 @@ def plot(trench, cat, cs_dict, interdistance):
     midlo = (minlo+maxlo)/2
     midla = (minla+maxla)/2
 
-    # Plot the traces of cross-sections
-    ts = trench.resample(interdistance)
 
     _ = plt.figure(figsize=(12, 9))
 
@@ -95,7 +93,7 @@ def plot(trench, cat, cs_dict, interdistance):
     #
     # Draw paralleles and meridians with labels
     # labels = [left,right,top,bottom]
-    m.drawcoastlines()
+#    m.drawcoastlines()
     m.drawmeridians(numpy.arange(numpy.floor(minlo/10.)*10,
                                  numpy.ceil(maxlo/10.)*10, 5.),
                     labels=[False, False, False, True])
@@ -121,12 +119,17 @@ def plot(trench, cat, cs_dict, interdistance):
 
     x, y = m(trench.axis[:, 0], trench.axis[:, 1])
     plt.plot(x, y, '-g', linewidth=2, zorder=10)
-    x, y = m(ts.axis[:, 0], ts.axis[:, 1])
     plt.plot(x, y, '--y', linewidth=4, zorder=20)
 
-    for key in cs_dict:
-        cs = cs_dict[key]
-        if cs is not None:
+    # Plot the traces of cross-sections
+    if interdistance != 0:
+        ts = trench.resample(interdistance)
+        x, y = m(ts.axis[:, 0], ts.axis[:, 1])
+
+    else:
+        for key in cs_dict:
+            cs = cs_dict[key]
+        #if cs is not None:
             x, y = m(cs.plo, cs.pla)
             plt.plot(x, y, ':r', linewidth=2, zorder=20)
             text = plt.text(x[0], y[0], '%s' % key, ha='center',
@@ -135,17 +138,18 @@ def plot(trench, cat, cs_dict, interdistance):
                             va='center', size=10, zorder=30)
             text.set_path_effects([PathEffects.withStroke(linewidth=3,
                                                           foreground="w")])
+    m.drawcoastlines(zorder=26)
     plt.show()
 
 
-def main(argv):
+def main(config_fname):
     """
-    argv[0] is the .ini file
+    config_fname is the .ini file
     """
 
     # Parse .ini file
     config = configparser.ConfigParser()
-    config.read(argv[0])
+    config.read(config_fname)
     fname_trench = config['data']['trench_axis_filename']
     fname_eqk_cat = config['data']['catalogue_pickle_filename']
     cs_length = float(config['section']['lenght'])
@@ -179,6 +183,7 @@ def main(argv):
     if False:
         plot(trench, cat, cs_dict, interdistance)
 
+main.config = 'config file for creating cross sections from trench axis'
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sap.run(main)
