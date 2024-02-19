@@ -110,6 +110,15 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.2-AbrahamsonGulerce2020SInter]
         region = "CAS"
         
+        [models.AbrahamsonEtAl2014]
+        
+        [models.AbrahamsonEtAl2014RegJPN]
+        region = "JPN" # nb currently a bug for this gmm in the SMT where the user must still specify the region param despite the class name differentiating as regionalised variant!
+        
+        [models.BooreEtAl2014]
+        
+        [models.BooreEtAl2014LowQ]
+        
         [models.YenierAtkinson2015BSSA]
         sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
 
