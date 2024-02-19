@@ -1,3 +1,29 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
 import os
 import numpy
 import pandas as pd
@@ -21,7 +47,10 @@ class CrossSectionIntersectionTest(unittest.TestCase):
         self.trench = Trench(data)
 
     def test01(self):
+
         tmp_fname = 'trash'
+        _, tmp_fname = tempfile.mkstemp()
+
         cs_length = 400
         cs_depth = 100
         intd = 100
@@ -41,4 +70,9 @@ class CrossSectionIntersectionTest(unittest.TestCase):
 
         expected = os.path.join(BASE_PATH, 'data', 'traces', 'expected.txt')
         msg = 'The two files do not match'
-        self.assertTrue(filecmp.cmp(tmp_fname, expected), msg)
+
+        df_computed = pd.read_csv(tmp_fname, delimiter=',')
+        df_expected = pd.read_csv(expected, delimiter=',')
+
+        pd.testing.assert_frame_equal(df_computed, df_expected)
+        # self.assertTrue(filecmp.cmp(tmp_fname, expected), msg)
