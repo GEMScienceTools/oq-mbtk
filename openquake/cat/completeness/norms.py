@@ -27,7 +27,6 @@
 import copy
 import scipy
 from scipy.stats import poisson
-from math import log, exp, sqrt, pi
 import numpy as np
 from openquake.wkf.compute_gr_params import (get_weichert_confidence_intervals)
 
@@ -80,19 +79,20 @@ def get_completeness_matrix(tcat, ctab, mbinw, ybinw):
 
     return oin, out, cmags, cyeas
 
+
 def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, info=False):
     """
-    Calculates an optimized completeness using a norm. The norm is calculated by 
-    finding the difference between observed events and the number of expected events
-    in each magnitude bin assuming GR distribution with Weichert a and b-values.
-    The norm is then the weighted sum of the differences between observed and
-    expected.
+    Calculates an optimized completeness using a norm. The norm is calculated
+    by finding the difference between observed events and the number of
+    expected events in each magnitude bin assuming GR distribution with
+    Weichert a and b-values.  The norm is then the weighted sum of the
+    differences between observed and expected.
 
-    :param aval: 
+    :param aval:
         GR a-value
-    :param bval: 
+    :param bval:
         GR b-value
-    :param ctab: 
+    :param ctab:
         completeness table
     :param cmag:
         An array with the magnitude values at the center of each occurrence
@@ -104,9 +104,10 @@ def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, info=False):
     :param last_year:
         end year of completeness windows (end of catalogue)
     :param info:
-        boolean controlling whether to print information as the function proceeds
+        boolean controlling whether to print information as the function
+        proceeds
     """
-    
+
     occ = np.zeros((ctab.shape[0]))
     dur = np.zeros((ctab.shape[0]))
     mags = np.array(list(ctab[:, 1])+[10])
@@ -118,23 +119,16 @@ def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, info=False):
             dur[i] = t_per[np.min(np.nonzero(idx))]
         else:
             occ[i] = 0
+            # TODO last year undefined
             dur[i] = (last_year-ctab[i, 0])
 
     # Rates of occurrence in each magnitude bin from GR with a and b
     rates = (10**(-bval * mags[:-1] + aval) -
              10**(-bval * mags[1:] + aval)) * dur
 
-    # Standard deviation of the poisson model.
-    ## This probably doesn't need to be Poisson at all - just where n > 0
-    # Also this is the poisson std for the GR data NOT the observed
-    #stds_poisson = scipy.stats.poisson.std(rates)
-    #idx = stds_poisson > 0
     idx = rates > 0
     if not np.any(idx):
         return None
-
-    if info:
-        print('stds', stds_poisson)
 
     # Widths of the magnitude intervals
     wdts = np.diff(mags)
@@ -142,7 +136,7 @@ def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, info=False):
 
     # Difference between modelled and observed occurrences
     occ_diff = (np.abs(rates[idx] - occ[idx]))**0.5 / dur[idx]**0.5
-    
+
     # Checking weights
     msg = '{:f} ≠ {:f}'.format(np.sum(wdts[idx] / mag_diff), 1.)
     if np.abs(np.sum(wdts[idx] / mag_diff) - 1.0) > 1e-5:
@@ -160,15 +154,16 @@ def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, info=False):
     norm = np.mean(occ_diff * wdts[idx]) / mag_diff
     norm /= np.sum(idx)
 
-   
     return norm
 
 
-def get_norm_optimize_a(aval, bval, ctab, binw,  cmag, n_obs, t_per, info=False):
+def get_norm_optimize_a(
+        aval, bval, ctab, binw,  cmag, n_obs, t_per, info=False):
     """
     Computes a norm using a slightly different strategy than the one used in
-    `get_norm_optimize` - based on the probability of observing n events in each
-    magnitude bin relative to an exponential (GR) frequency-magnitude distribution
+    `get_norm_optimize` - based on the probability of observing n events in
+    each magnitude bin relative to an exponential (GR) frequency-magnitude
+    distribution
 
     :param aval:
         GR a-value
@@ -183,11 +178,10 @@ def get_norm_optimize_a(aval, bval, ctab, binw,  cmag, n_obs, t_per, info=False)
     :param n_obs:
     :param last_year:
     :param info:
-    """ 
+    """
     # Rates of occurrence in each magnitude bin in the completeness interval
-    rates = (10**(-bval * (cmag - binw/2) + aval) -
-             10**(-bval * (cmag + binw/2) + aval))*t_per
-
+    rates = (10**(-bval * (cmag - binw / 2) + aval) -
+             10**(-bval * (cmag + binw / 2) + aval)) * t_per
 
     # Probability of observing n-occurrences in each magnitude bin
     # but these are Poisson probabilities
@@ -197,11 +191,12 @@ def get_norm_optimize_a(aval, bval, ctab, binw,  cmag, n_obs, t_per, info=False)
     occ_prob = np.ones_like(rates) * 0.999999
     num = (rates)**n_obs * np.exp(-rates)
     occ_prob = num / scipy.special.factorial(n_obs)
-    
+
     n_obs = n_obs.astype(int)
     log_prob = np.ones_like(n_obs) * 0.999999
     for i, obs in enumerate(n_obs):
-        log_prob[i] = (-rates[i]) + (n_obs[i]*np.math.log(rates[i])) - np.math.log(np.math.factorial(n_obs[i]))
+        log_prob[i] = ((-rates[i]) + (n_obs[i] * np.log(rates[i])) -
+                       np.log(scipy.special.factorial(n_obs[i])))
 
     norm = 1 - np.prod(np.exp(log_prob))
     return norm
@@ -211,7 +206,7 @@ def get_norm_optimize_b(aval, bval, ctab, tcat, mbinw, ybinw, back=5, mmin=-1,
                         mmax=10):
     """
     Computes a norm using a slightly different strategy than the one used in
-    `get_norm_optimize`. Norm is based on the ratio of events within/outwith 
+    `get_norm_optimize`. Norm is based on the ratio of events within/outwith
     completeness windows
 
     :param aval:
@@ -245,8 +240,8 @@ def get_norm_optimize_b(aval, bval, ctab, tcat, mbinw, ybinw, back=5, mmin=-1,
     out = out[idx, :]
 
     # Compute the eqks in each magnitude bin using the GR parameters provided
-    rates = ((10**(aval-(bval*(cmags-mbinw/2))) -
-              10**(aval-(bval*(cmags+mbinw/2)))) * ybinw)
+    rates = ((10**(aval - (bval * (cmags - mbinw / 2))) -
+              10**(aval - (bval * (cmags + mbinw / 2)))) * ybinw)
 
     # Assuming a Poisson process, compute the standard deviation of the rates
     # stds_poi = scipy.stats.poisson.std(rates)
@@ -255,8 +250,8 @@ def get_norm_optimize_b(aval, bval, ctab, tcat, mbinw, ybinw, back=5, mmin=-1,
     rates = np.tile(np.expand_dims(rates, 1), (1, len(cyeas)))
 
     # Compute the year from when to count the occurrences
-    mag_bins = cmags-mbinw/2
-    mag_bins = np.append(mag_bins, cmags[-1]-mbinw/2)
+    mag_bins = cmags - mbinw / 2
+    mag_bins = np.append(mag_bins, cmags[-1] - mbinw / 2)
     tmp = np.digitize(ctab[:, 1], mag_bins) - 1 - back
     tmp = np.maximum(np.zeros_like(tmp), tmp)
 
@@ -277,9 +272,9 @@ def get_norm_optimize_b(aval, bval, ctab, tcat, mbinw, ybinw, back=5, mmin=-1,
 
     if np.sum(diff_out) == 0 or np.sum(idxin) == 0 or np.sum(idxout) == 0:
         norm = -1E-10
-    else: 
-        norm = np.sum(diff_in) / np.sum(diff_out) / np.sum(idxin) * np.sum(idxout)
-
+    else:
+        norm = (np.sum(diff_in) / np.sum(diff_out) / np.sum(idxin)
+                * np.sum(idxout))
     return norm
 
 
@@ -287,44 +282,44 @@ def get_idx_compl(mag, compl):
     if mag < compl[0, 1]:
         return None
     for i, com in enumerate(compl[:-1, :]):
-        if mag >= com[1] and mag < compl[i+1, 1]:
+        if mag >= com[1] and mag < compl[i + 1, 1]:
             return i
-    return len(compl)-1
+    return len(compl) - 1
 
-def poiss_prob_int_time(rate, n, t, log_out = False):
+
+def poiss_prob_int_time(rate, n, t, log_out=False):
     """
-    Calculate poisson probability of observing n events in some time step t given rate
-    Log probability is more robust here, especially with large n.
+    Calculate poisson probability of observing n events in some time step t
+    given rate Log probability is more robust here, especially with large n.
 
     : param rate:
         poisson rate
-    : param n: 
+    : param n:
         number of observations to test
-    : param t: 
+    : param t:
         time window over which to assess poisson probability
     : param log_out:
         option to return a log probability (preferred)
     """
-    
-    #prob = ((rate**n)*(t**n)/np.math.log(np.math.factorial(n)))*(np.exp(-rate*t))
-    #log_prob = -(rate*t) + n*(np.log(rate.astype(float)) + np.log(t.astype(float))) - np.math.log(np.math.factorial(n))
-    log_prob = -(rate*t) + n*(np.log(rate) + np.log(t)) - np.math.log(np.math.factorial(n))
-    if log_out == False:
+
+    log_prob = (-(rate * t) + n * (np.log(rate) + np.log(t)) -
+                np.log(scipy.special.factorial(n)))
+    if log_out is False:
         prob = np.exp(log_prob)
     else:
         prob = log_prob
     return prob
 
 
-
-def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, binw=0.1):
+def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None,
+                        binw=0.1):
 
     """
     Computes a norm using a slightly different strategy than the one used in
-    `get_norm_optimize`. Norm is based on the ratio of events within/outwith 
+    `get_norm_optimize`. Norm is based on the ratio of events within/outwith
     completeness windows
 
-    :param cat: 
+    :param cat:
         a catalogue instance
     :param agr:
         GR a-value
@@ -348,11 +343,11 @@ def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, bin
     mmax = max(mags) if mmax is None else mmax
     # check minimum magnitude is greater than ref_mag
     mvals = np.arange(ref_mag, mmax+binw/10, binw)
-    
+
     rates = list(10**(agr-bgr * mvals[:-1]) - 10**(agr - bgr * mvals[1:]))
     pocc = rates / sum(rates)
 
-    
+
     # Because we use logs and sum, set initial prob to 0
     prob = 0
     first_year = min(yeas)
@@ -369,26 +364,26 @@ def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, bin
         if idxco is None:
             nocc_in = 0
             nocc_out = tot_n
-            continue 
+            continue
 
         elif mag >= compl[idxco, 1]:
             # count all events within completeness
             idx = (mags >= mag) & (mags < mvals[imag+1]) & (yeas >= compl[idxco, 0])
             nocc_in = sum(idx)
-        
+
         else:
             # This *should* never happen, but if we are keeping events that
             # are not within our specified completeness, flag it
             print("how did this get here?", compl[idxco, 0], mag )
             nocc_in = 0
-    
+
         delta = (last_year - compl[idxco, 0])
         # events in bin before completeness
         idx = ((mags >= mag) & (mags < mvals[imag+1]) &
                (yeas < compl[idxco, 0]))
-        
-        nocc_out = sum(idx) 
-        
+
+        nocc_out = sum(idx)
+
         #if mag < compl[idxco, 0]:
         #    nocc_out = 0
 
@@ -407,9 +402,9 @@ def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, bin
         pmf = poiss_prob_int_time(rates[imag], nocc_in, dur_compl, log_out = True)
 
         std_in = poisson.std(dur_compl*rates[imag])
-        
+
         pmf_out = poiss_prob_int_time(rates[imag], nocc_out, dur_out_compl, log_out = True)
-        
+
         prob += pmf +  (np.log(1.0) - pmf_out)
 
     return prob
@@ -417,10 +412,10 @@ def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, bin
 def get_norm_optimize_poisson(cat, agr, bgr, compl, last_year, mmax=None, binw=0.1):
     """
 
-    This version loops over the time increments - this is where we should be checking for 
+    This version loops over the time increments - this is where we should be checking for
     Poisson after all
 
-    :param cat: 
+    :param cat:
         a catalogue instance
     :param agr:
         GR a-value
@@ -453,7 +448,7 @@ def get_norm_optimize_poisson(cat, agr, bgr, compl, last_year, mmax=None, binw=0
     for imag, mag in enumerate(mvals[:-1]):
         idxco = get_idx_compl(mag, compl)
 
-        
+
         # if this magnitude bin is < mc in this window, nocc will be zero
         # Rather this disgards events outwith the completeness window, as it should!
         if mag >= compl[idxco, 0]:
@@ -466,8 +461,8 @@ def get_norm_optimize_poisson(cat, agr, bgr, compl, last_year, mmax=None, binw=0
         #print(nocc_in)
 
         delta = (last_year - compl[idxco, 0])
-        
-        idx = ((mags >= mag) & (mags < mvals[imag+1]) & (yeas < compl[idxco, 0]) 
+
+        idx = ((mags >= mag) & (mags < mvals[imag+1]) & (yeas < compl[idxco, 0])
             & (yeas > (compl[idxco, 0] - delta)))
         nocc_out = sum(idx)
 
@@ -491,7 +486,7 @@ def get_norm_optimize_poisson(cat, agr, bgr, compl, last_year, mmax=None, binw=0
         std_in = poisson.std(dur_compl*rates[imag])
 
         pmf_out = poiss_prob_int_time(rates[imag], nocc_out, dur_out_compl, log_out = True)
- 
+
         prob += pmf +  (np.log(1.0) - pmf_out)
 
     return prob
@@ -523,21 +518,21 @@ def get_norm_optimize_d(cat, agr, bgr, compl, last_year, mmax=None, binw=0.1):
 
         if j == (len(compl) - 1):
             upper_time = last_year
-        else: 
+        else:
             upper_time = compl[j+1, 0]
 
 
         window_mags_idx = (mags >= window[1]) & (yeas >= window[0]) & (yeas < upper_time)
         window_mags = mags[window_mags_idx]
         # test if this time window has exponential GR?
-        
+
 
         dur_compl = upper_time - window[0]
 
-        
+
         # Loop over all magnitude bins, calculate poiss probability for bin
         for imag, mag in enumerate(mvals[:-1]):
-        
+
             idxco = get_idx_compl(mag, compl)
 
             #print(window_mags >= mag)
@@ -547,7 +542,7 @@ def get_norm_optimize_d(cat, agr, bgr, compl, last_year, mmax=None, binw=0.1):
                 nocc_in = sum(idx)
             else:
                 nocc_in = 0
-            
+
             #idx = (window_mags >= mag) & (window_mags < mvals[imag+1])
             #nocc_in = sum(idx)
             #print(nocc_in)
@@ -564,8 +559,8 @@ def get_norm_optimize_d(cat, agr, bgr, compl, last_year, mmax=None, binw=0.1):
 
             # Compute the duration for the completeness interval and the time
             # interval outside of completeness
-            
-        
+
+
 
             #pmf = poisson.pmf(nocc_in, dur_compl*rates[imag])
             pmf = poiss_prob_int_time(rates[imag], nocc_in, dur_compl, log_out = True)
@@ -578,8 +573,8 @@ def get_norm_optimize_d(cat, agr, bgr, compl, last_year, mmax=None, binw=0.1):
         #print(pmf_out)
         #
             prob += pmf +  (np.log(1.0) - pmf_out)
-        
-        
+
+
         llhood = llhood + prob
         #print(prob)
 
@@ -591,18 +586,18 @@ def get_norm_optimize_weichert(cat, agr, bgr, compl, last_year, mmax=None, binw=
     Calculate norm using weichert - ie select model which gives best weichert likelihood
     NB: this is not currently functional because we can't meaningingfully compare
     likelihoods that are based on different data. If you try this approach, it will always
-    choose the most recent possible completeness combination because this will contain most 
-    events and therefore have the higher likelihood. 
-    However, this statistical constraint is very annoying to me and I think there should be 
+    choose the most recent possible completeness combination because this will contain most
+    events and therefore have the higher likelihood.
+    However, this statistical constraint is very annoying to me and I think there should be
     some way to menaingfully use a Weichert likelihood when calculating the completeness.
 
     :param tcat:
         catalogue
-    :param aval: 
+    :param aval:
         GR a-value
-    :param bval: 
+    :param bval:
         GR b-value
-    :param ctab: 
+    :param ctab:
         completeness table
     :param cmag:
         An array with the magnitude values at the center of each occurrence
@@ -639,14 +634,14 @@ def get_norm_optimize_weichert(cat, agr, bgr, compl, last_year, mmax=None, binw=
 
         if j == (len(compl) - 1):
             upper_time = last_year
-        else: 
+        else:
             upper_time = compl[j+1, 0]
 
 
         window_mags_idx = (mags >= window[1]) & (yeas >= window[0]) & (yeas < upper_time)
         window_mags = mags[window_mags_idx]
         # TO ADD: test if this time window has exponential GR?
-        
+
 
         dur_compl = upper_time - window[0]
 
@@ -654,43 +649,43 @@ def get_norm_optimize_weichert(cat, agr, bgr, compl, last_year, mmax=None, binw=
         p_i = [0]*len(mvals)
         # Loop over all magnitude bins, counting events in each and calculate p_i from weichert (see eqn 5)
         for imag, mag in enumerate(mvals[:-1]):
-            
-            idx = (window_mags >= mag) & (window_mags < mvals[imag+1]) 
+
+            idx = (window_mags >= mag) & (window_mags < mvals[imag+1])
             n_i[imag] = sum(idx)
-            
+
             p_i[imag] = dur_compl*np.exp(-beta*mag)
 
         log_sum_p_i = 0
-        log_fact_n = logfactorial(n_i)
-        log_fact_n = np.nan_to_num(log_fact_n, nan = 0.0)
-         
-        #calculate L(Beta|n_i, m_i, t_i)
+        log_fact_n = scipy.special.factorial(n_i)
+        log_fact_n = np.nan_to_num(log_fact_n, nan=0.0)
+
         for i in range(0, len(mvals)):
             p_j = np.delete(p_i, [i], axis=0)
             prob_j = sum(p_j)
             prob_i = p_i[i] / prob_j
-            prob_inc = n_i[i]*np.log(prob_i)
+            prob_inc = n_i[i] * np.log(prob_i)
             if p_i[i] == 0:
                 prob_inc = 0
             log_sum_p_i = log_sum_p_i + prob_inc
             # weichert likelihood for magnitude bin
-            weichert_llhood = np.math.log(np.math.factorial(N)) - np.sum(log_fact_n) + log_sum_p_i
+            weichert_llhood = (np.log(scipy.special.factorial(N)) - np.sum(log_fact_n)
+                               + log_sum_p_i)
             weichert_ll_allM[j] = weichert_ll_allM[j] + weichert_llhood
 
     weichert_per_t = sum(weichert_ll_allM)
-        
-       
+
+
     return weichert_per_t
 
 def get_norm_optimize_gft(tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year):
     """
     :param tcat:
         catalogue
-    :param aval: 
+    :param aval:
         GR a-value
-    :param bval: 
+    :param bval:
         GR b-value
-    :param ctab: 
+    :param ctab:
         completeness table
     :param cmag:
         An array with the magnitude values at the center of each occurrence
@@ -712,7 +707,7 @@ def get_norm_optimize_gft(tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year)
     gwci = get_weichert_confidence_intervals
     lcl, ucl, ex_rates, ex_rates_scaled = gwci(
                 cmag, n_obs, t_per, bval)
-    
+
     # Rates of occurrence in each magnitude bin from GR with a and b
 
     cum_rates = 10**(aval-bval*cmag)
