@@ -45,6 +45,7 @@ base = os.path.join(os.path.dirname(__file__), "data")
 TARGET_VS30 = 800
 TARGET_REGION = 'Global'
 TARGET_TRELLIS_DEPTHS = [20, 25, 30]
+TARGET_RMIN = 0
 TARGET_RMAX = 300
 TARGET_NSTD = 2
 TARGET_TRELLIS_MAG = [5.0, 6.0, 7.0]
@@ -97,6 +98,9 @@ class ComparisonTestCase(unittest.TestCase):
         # depths)
         self.assertEqual(config.trellis_and_rs_depth, TARGET_TRELLIS_DEPTHS)
 
+        # Check for target Rmin
+        self.assertEqual(config.minR, TARGET_RMIN)
+
         # Check for target Rmax
         self.assertEqual(config.maxR, TARGET_RMAX)
 
@@ -132,7 +136,7 @@ class ComparisonTestCase(unittest.TestCase):
             config.trt, config.ztor, config.imt_list, config.mag_list,
             config.gmpes_list, config.rake, config.strike, config.dip,
             config.depth_for_non_trel_or_rs_fun, config.Z1, config.Z25,
-            config.Vs30, config.region, config.maxR, config.aratio,
+            config.Vs30, config.region, config.minR, config.maxR, config.aratio,
             config.eshm20_region, config.dist_type, mtxs_type='median',
             up_or_down_dip=config.up_or_down_dip)
 
@@ -158,7 +162,7 @@ class ComparisonTestCase(unittest.TestCase):
             config.trt, config.ztor, config.imt_list, config.mag_list,
             config.gmpes_list, config.rake, config.strike, config.dip,
             config.depth_for_non_trel_or_rs_fun, config.Z1, config.Z25,
-            config.Vs30, config.region, config.maxR, config.aratio,
+            config.Vs30, config.region, config.minR, config.maxR, config.aratio,
             config.eshm20_region, config.dist_type, mtxs_type='median',
             up_or_down_dip=config.up_or_down_dip)
 
@@ -205,7 +209,7 @@ class ComparisonTestCase(unittest.TestCase):
             config.trt, config.ztor, config.imt_list, config.mag_list,
             config.gmpes_list, config.rake, config.strike, config.dip,
             config.depth_for_non_trel_or_rs_fun, config.Z1, config.Z25,
-            config.Vs30, config.region, config.maxR, config.aratio,
+            config.Vs30, config.region, config.minR, config.maxR, config.aratio,
             config.eshm20_region, config.dist_type, mtxs_type='median',
             up_or_down_dip=config.up_or_down_dip)
 
@@ -235,7 +239,7 @@ class ComparisonTestCase(unittest.TestCase):
             config.trt, config.ztor, config.imt_list, config.mag_list,
             config.gmpes_list, config.rake, config.strike, config.dip,
             config.depth_for_non_trel_or_rs_fun, config.Z1, config.Z25,
-            config.Vs30, config.region, config.maxR, config.aratio,
+            config.Vs30, config.region, config.minR, config.maxR, config.aratio,
             config.eshm20_region, config.dist_type, mtxs_type='84th_perc',
             up_or_down_dip=config.up_or_down_dip)
 
@@ -272,6 +276,7 @@ class ComparisonTestCase(unittest.TestCase):
                           config.region,
                           config.imt_list,
                           config.trellis_and_rs_mag_list,
+                          config.minR,
                           config.maxR,
                           config.gmpes_list,
                           config.aratio,

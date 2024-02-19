@@ -3,7 +3,8 @@
 [general]
 imt_list = ['PGA','SA(0.1)','SA(0.5)'] # imts to compute gm for
 max_period = 2 # max period for response spectra (can't exceed maximum period in a specified GMPE)
-maxR = 300 # max distance to consider
+minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
+maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
 dist_type = 'rrup' # specify distance metric used in trellis plots
 dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
 eshm20_region = 0 # region for ESHM20 GMMs 

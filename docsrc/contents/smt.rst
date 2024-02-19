@@ -113,7 +113,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.AbrahamsonEtAl2014]
         
         [models.AbrahamsonEtAl2014RegJPN]
-        region = "JPN" # nb currently a bug for this gmm in the SMT where the user must still specify the region param despite the class name differentiating as regionalised variant!
+        region = "JPN" # nb currently a bug for specifically this gmm in the SMT where the user must still specify the region param despite the class name differentiating as regionalised variant!
         
         [models.BooreEtAl2014]
         
@@ -472,6 +472,7 @@ Comparing GMPEs
         [general]
         imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
         max_period = 2 # max period for spectra plots
+        minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_type = 'rrup' # or rjb, repi or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
