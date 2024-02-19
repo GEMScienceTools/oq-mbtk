@@ -28,6 +28,7 @@
 import os
 import re
 import logging
+import tempfile
 import configparser
 import h5py
 
@@ -58,27 +59,26 @@ def classify(ini_fname, compute_distances, rf):
         surfaces and the earthquakes in the catalog
     """
     logger = logging.getLogger('classify')
-    #
-    #
+
+    # Check existence of .ini file
     assert os.path.exists(ini_fname)
-    #
+
     # Parse .ini file
     config = configparser.ConfigParser()
     config.read(ini_fname)
-    #
-    #
+
     if rf is False:
         assert 'root_folder' in config['general']
         rf = config['general']['root_folder']
-    #
+
     # set root folder
     distance_folder = os.path.join(rf, config['general']['distance_folder'])
     catalogue_fname = os.path.join(rf, config['general']['catalogue_filename'])
     assert os.path.exists(catalogue_fname)
-    #
+
     # Read priority list
     priorityl = str_to_list(config['general']['priority'])
-    #
+
     # Tectonic regionalisation fname
     tmps = config['general']['treg_filename']
     treg_filename = os.path.join(rf, tmps)
@@ -88,11 +88,10 @@ def classify(ini_fname, compute_distances, rf):
         f.close()
     else:
         logger.info('{:s} exists'.format(treg_filename))
-    #
+
     # Log filename
-    log_fname = 'log.hdf5'
-    if os.path.exists(log_fname):
-        os.remove(log_fname)
+    _, log_fname = tempfile.mkstemp()
+    logger.info('Log file: {:s}'.format(log_fname))
     logger.info('Creating: {:s}'.format(treg_filename))
     f = h5py.File(treg_filename, 'w')
     f.close()
