@@ -19,7 +19,8 @@ def main(pattern: str, fname_output: str = "profiles.geojson"):
         print(fname)
         dat = np.loadtxt(fname)
         tmp = LineString([(x, y) for x, y in zip(dat[:, 0], dat[:, 1])])
-        features.append(Feature(geometry=tmp))
+        prop = {'csid': fname.split('_')[1].replace('.csv','')}
+        features.append(Feature(geometry=tmp, properties=prop))
     feature_collection = FeatureCollection(features)
     with open(fname_output, 'w') as f:
         dump(feature_collection, f)

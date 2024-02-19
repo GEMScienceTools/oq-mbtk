@@ -345,7 +345,7 @@ def _plot_volc(axes, csda):
     ola = csda.csec.ola
     patches = []
 
-    
+
 
     if (len(csda.volc)-1) >= 1:
         if str(csda.volc.shape) == '(2,)':
@@ -358,12 +358,13 @@ def _plot_volc(axes, csda):
             patches.append(square)
 
     else:
-        breakpoint()
-        vuls = geodetic_distance(olo, ola,
-                                 csda.volc[0],
-                                 csda.volc[1])
-        square = Rectangle((vuls, -10.0), 7, 12)
-        patches.append(square)
+        print(csda.volc)
+    # breakpoint()
+       # vuls = geodetic_distance(olo, ola,
+       #                          csda.volc[0],
+       #                          csda.volc[1])
+       # square = Rectangle((vuls, -10.0), 7, 12)
+       # patches.append(square)
 
     vv = PatchCollection(patches, zorder=6, color='red', edgecolors='red')
     vv.set_alpha(0.85)

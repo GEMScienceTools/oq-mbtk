@@ -3,18 +3,16 @@
 import re
 import os
 import sys
-from plot_cross_section import plt_cs
 import matplotlib.pyplot as plt
 from openquake.baselib import sap
+from openquake.sub.plotting.plot_cross_section import plt_cs
 
 
-def pcs(argv):
-    if len(argv) < 2:
-        folder = './'
-    else:
-        folder = argv[1]
+def pcs(cs_fname, out_folder=None):
+    if out_folder == None:
+        out_folder = './'
 
-    fin = open(argv[0], 'r')
+    fin = open(cs_fname, 'r')
     for line in fin:
 
         aa = re.split('\\s+', line.rstrip())
@@ -28,11 +26,13 @@ def pcs(argv):
 
         fig = plt_cs(olo, ola, depth, lnght, strike, ids, ini_fle)
         name = 'section_%s.pdf' % (ids)
-        path = os.path.join(folder, name)
+        path = os.path.join(out_folder, name)
         fig.savefig(path, bbox_inches='tight')
         print('Created %s' % (path))
         plt.close()
 
+pcs.cs_fname = 'file with cross sections details'
+pcs.out_folder = 'place to store the pdfs'
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sap.run(pcs)
