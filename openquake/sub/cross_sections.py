@@ -315,7 +315,7 @@ class CrossSectionData:
                                                              minlo, maxlo,
                                                              minla, maxla)
         if idxs is not None:
-            cmt_cat.select_catalogue_events(idxs)
+            cmt_cat.select_catalogue_events(idxs[0])
             self.gcmt = cmt_cat
 
     def set_topo(self, filename, bffer=0.25):
@@ -388,7 +388,6 @@ class CrossSectionData:
             voo[idxv[0]] = 1
             self.volc = numpy.squeeze(vulc[idxv[0], :])
         fin.close()
-        print(self.volc)
 
 
 class Trench:
