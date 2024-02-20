@@ -50,7 +50,7 @@ from openquake.hmtk.seismicity.occurrence.weichert import Weichert
 
 warnings.filterwarnings("ignore")
 
-MAXIMISE = ['get_norm_optimize_a', 'get_norm_optimize_b', 'get_norm_optimize_c', 'get_norm_optimize_d', 'get_norm_optimize_weichert', 'get_norm_optimize_gft']
+MAXIMISE = ['optimize_a', 'optimize_b', 'optimize_c', 'optimize_d', 'optimize_weichert', 'optimize_gft', 'poisson']
 
 def get_earliest_year_with_n_occurrences(ctab, cat, occ_threshold=2):
     """
@@ -280,6 +280,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         norm = -1e1000
     else:
         norm = 1
+    print("starting norm = ", norm)
 
     rate = -1e10
     save = []
