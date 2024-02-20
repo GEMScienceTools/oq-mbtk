@@ -33,7 +33,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from openquake.cat.completeness.norms import (get_norm_optimize_b,
+from openquake.cat.completeness.norms import (get_norm_optimize,
+                                              get_norm_optimize_b,
                                               get_norm_optimize_a,
                                               get_norm_optimize_c,
                                               get_norm_optimize_d,
@@ -49,6 +50,7 @@ from openquake.hmtk.seismicity.occurrence.weichert import Weichert
 
 warnings.filterwarnings("ignore")
 
+MAXIMISE = ['get_norm_optimize_a', 'get_norm_optimize_b', 'get_norm_optimize_c', 'get_norm_optimize_d', 'get_norm_optimize_weichert', 'get_norm_optimize_gft']
 
 def get_earliest_year_with_n_occurrences(ctab, cat, occ_threshold=2):
     """
@@ -173,6 +175,10 @@ def check_criterion(criterion, rate, previous_norm, tvars):
             tmp_rate -= 10**(-bval * mmax_tmp + aval)
         norm = abs(tmp_rate - rate_ma)
 
+    elif criterion == 'optimize':
+        tmp_rate = -1
+        norm = get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, info=False)
+
     elif criterion == 'optimize_a':
         tmp_rate = -1
         norm = get_norm_optimize_a(aval, bval, ctab, binw, cmag, n_obs, t_per)
@@ -201,16 +207,14 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     if norm is None or np.isnan(norm):
         return False, -1, previous_norm
 
-    # if previous_norm > norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
-    #    check = True
-    # Why norm < norm?
-    # for optimize_a (at least) the previous norm = -inf so this is never
-    # passing...
-    if previous_norm < norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
-        # for optimize_a, assume norm wants to be larger than prev norm for
-        # optimize_aic we want lowest aic so check if norm is less than
-        # previous print(norm, previous_norm, norm < previous_norm) if norm <
-        # previous_norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
+    print(norm, previous_norm, norm < previous_norm)
+    # for maximise criteria, assume norm wants to be larger than prev norm 
+    if criterion in MAXIMISE:
+        if previous_norm < norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
+            check = True
+
+    # for any other criteria, assume norm wants to be smaller than prev norm 
+    elif previous_norm > norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
         check = True
 
     return check, tmp_rate, norm
