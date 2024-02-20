@@ -329,7 +329,7 @@ def poiss_prob_int_time(rate, n, t, log_out = False):
 def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, binw=0.1):
     """
     Variation on Poisson optimization of completeness windows
-    
+
     """
 
     mags = cat.data['magnitude']
@@ -430,21 +430,19 @@ def get_norm_optimize_poisson(cat, agr, bgr, compl, last_year, mmax=None, binw=0
 
     pocc = rates / sum(rates)
 
-    #prob = 1
-    # If using log (and not multiplicative) set initial prob to 0
+    # Using log (and not multiplicative) set initial prob to 0
     prob = 0
     first_year = min(yeas)
     for imag, mag in enumerate(mvals[:-1]):
         idxco = get_idx_compl(mag, compl)
 
         
-        # if this magnitude bin is < mc in this window, nocc will be zero
-        # Rather this disgards events outwith the completeness window, as it should!
+        # if this magnitude bin is < mc in this window, nocc_in will be zero
+        # This disgards events outwith the completeness window, as it should!
         if mag >= compl[idxco, 0]:
             idx = (mags >= mag) & (mags < mvals[imag+1]) & (yeas >= compl[idxco, 0])
             nocc_in = sum(idx)
-        #elif mag < min(cat.data['magnitude']):
-        #    nocc_in = 0
+        
         else:
             nocc_in = 0
         #print(nocc_in)
@@ -472,9 +470,7 @@ def get_norm_optimize_poisson(cat, agr, bgr, compl, last_year, mmax=None, binw=0
         # I think I want to limit this to the time interval of the completeness window
         dur_compl = last_year - compl[idxco, 0]
 
-        #pmf = poisson.pmf(nocc_in, dur_compl*rates[imag])
         pmf = poiss_prob_int_time(rates[imag], nocc_in, dur_compl, log_out = True)
-        #print(pmf)
 
         std_in = poisson.std(dur_compl*rates[imag])
         # cdf = poisson.cdf(nocc_out, delta*rates[imag])
