@@ -474,7 +474,7 @@ def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
     bmin = config[key].get('bmin', 0.8)
     bmax = config[key].get('bmax', 1.2)
     # Options: 'largest_rate', 'match_rate', 'optimize'
-    criterion = config[key].get('optimization_criterion', 'match_rate', 'optimize', 'poisson')
+    criterion = config[key].get('optimization_criterion', 'optimize')
     print(criterion)
 
     # Reading completeness data
