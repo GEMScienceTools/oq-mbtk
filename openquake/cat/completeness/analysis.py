@@ -251,7 +251,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
     # Checking input
     if criterion not in ['match_rate', 'largest_rate', 'optimize', 'weichert',
-                         'poisson']:
+                         'poisson', 'optimize_a', 'optimize_b', 'optimize_d']:
         raise ValueError('Unknown optimization criterion')
 
     tcat = _load_catalogue(fname)
@@ -277,11 +277,12 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     weichert = Weichert()
 
     # Initial settings
+    if criterion in MAXIMISE:
+        norm = -1e1000
+    else:
+        norm = 1
+
     rate = -1e10
-    norm = -1e1000
-    # surely initial norm should be large...? For optimize, yes, Check others.
-    # norm = 0.1
-    # norm = -10
     save = []
     wei = None
     count = {'complete': 0, 'warning': 0, 'else': 0, 'early': 0}
