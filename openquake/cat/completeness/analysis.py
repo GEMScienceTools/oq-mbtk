@@ -207,7 +207,6 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     if norm is None or np.isnan(norm):
         return False, -1, previous_norm
 
-    print(norm, previous_norm, norm < previous_norm)
     # for maximise criteria, assume norm wants to be larger than prev norm 
     if criterion in MAXIMISE:
         if previous_norm < norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
@@ -475,7 +474,7 @@ def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
     bmin = config[key].get('bmin', 0.8)
     bmax = config[key].get('bmax', 1.2)
     # Options: 'largest_rate', 'match_rate', 'optimize'
-    criterion = config[key].get('optimization_criterion', 'optimize')
+    criterion = config[key].get('optimization_criterion', 'match_rate', 'optimize', 'poisson')
     print(criterion)
 
     # Reading completeness data
@@ -520,7 +519,7 @@ def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
                                      folder_out_figs=folder_out_figs,
                                      folder_out=folder_out,
                                      rewrite=False)
-        print(len(res))
+        #print(len(res))
         if len(res) == 0:
             continue
 
