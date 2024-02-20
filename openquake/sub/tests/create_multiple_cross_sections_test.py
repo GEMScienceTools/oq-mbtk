@@ -75,4 +75,3 @@ class CrossSectionIntersectionTest(unittest.TestCase):
         df_expected = pd.read_csv(expected, delimiter=',')
 
         pd.testing.assert_frame_equal(df_computed, df_expected)
-        # self.assertTrue(filecmp.cmp(tmp_fname, expected), msg)
