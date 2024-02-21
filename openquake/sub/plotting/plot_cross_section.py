@@ -586,7 +586,13 @@ def plt_cs(olo, ola, depp, lnght, strike, ids, ini_filename):
     if re.search('[a-z]', fname_slab):
         csda.set_slab1pt0(fname_slab)
     csda.set_crust1pt0_moho_depth(fname_crust)
-    csda.set_gcmt(fname_gcmt)
+
+    try:
+        gcmt_mag = float(config['params']['gcmt_mag_lower_limit'])
+    except:
+        gcmt_mag = 0.0
+
+    csda.set_gcmt(fname_gcmt, gcmt_mag=gcmt_mag)
     csda.set_topo(fname_topo)
     csda.set_litho_moho_depth(fname_litho)
     csda.set_volcano(fname_volc)
