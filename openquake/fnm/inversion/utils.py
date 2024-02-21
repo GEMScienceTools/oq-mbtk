@@ -490,7 +490,7 @@ def get_rup_rates_from_fault_slip_rates(
     seismic_fraction=1.0,
     rupture_set_for_rates_from_slip_rates='all',
     fix_moment_rates=True,
-    faults_or_subfaults='faults',
+    faults_or_subfaults='subfaults',
     **kwargs,
 ):
     """
@@ -540,6 +540,11 @@ def get_rup_rates_from_fault_slip_rates(
             sub_idx: fault
             for sub_idx, fault in fault_network['subfault_df'].iterrows()
         }
+    else:
+        raise ValueError(
+            "faults_or_subfaults must be 'faults' or 'subfaults', not"
+            + f"{faults_or_subfaults}"
+        )
 
     fault_moment_rates = {
         id: get_fault_moment_rate(fault)
