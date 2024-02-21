@@ -39,7 +39,11 @@ from openquake.fnm.rupture_filtering import (
     filter_proportionally_to_plausibility,
 )
 
-from openquake.fnm.inversion.utils import SHEAR_MODULUS
+from openquake.fnm.inversion.utils import (
+    SHEAR_MODULUS,
+    get_rup_rates_from_fault_slip_rates,
+)
+
 
 default_settings = {
     'subsection_size': [15.0, 15.0],
@@ -52,6 +56,11 @@ default_settings = {
     'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
     'skip_bad_faults': False,
     'shear_modulus': SHEAR_MODULUS,
+    'fault_mfd_b_value': 1.0,
+    'fault_mfd_type': 'TruncatedGRMFD',
+    'seismic_fraction': 0.7,
+    'rupture_set_for_rates_from_slip_rates': 'all',
+    'plot_fault_moment_rates': False,
     'sparse_distance_matrix': True,
     'parallel_multifault_search': False,
     'full_fault_only_mf_ruptures': True,
@@ -64,6 +73,7 @@ def build_fault_network(
     settings=None,
     surface_type='simple',
     filter_by_angle=True,
+    calculate_rates_from_slip_rates: bool = False,
     return_faults_only=False,
     **kwargs,
 ):
@@ -95,14 +105,17 @@ def build_fault_network(
     Returns
     -------
     fault_network : dict
-        Dictionary containing the fault networkBuild a fault network from a
-        list of faults or a geojson file.
-
-    Parameters
-    ----------
-    faults: list of dictionaries, optional. Each fault
+        Dictionary containing the fault network and rupture data. The keys are:
+            - 'faults': list of fault dictionaries
+            - 'subfaults': list of subfault dictionaries
+            - 'single_rup_df': DataFrame of single-fault ruptures
+            - 'dist_mat': continuous distance matrix
+            - 'subfault_df': DataFrame of subfaults
+            - 'multifault_inds': list of multifault rupture indices
+            - 'rupture_df': DataFrame of all ruptures
+            - 'plausibility': DataFrame of rupture plausibilities
+            - 'rupture_df_keep': DataFrame of ruptures after filtering
     """
-
     build_settings = deepcopy(default_settings)
     if settings is not None:
         build_settings.update(settings)
@@ -155,6 +168,7 @@ def build_fault_network(
             ]
             if len(duplicated_fids) > 0:
                 raise ValueError(f'Duplicated fault fids: {duplicated_fids}')
+            logging.info(f"\t{len(faults)} faults built from geojson")
 
         else:
             raise ValueError('No faults provided')
@@ -307,6 +321,28 @@ def build_fault_network(
             + "ruptures remaining ("
             + f"{round(n_rups_filtered / n_rups_start*100, 1)} %)"
         )
+
+    if calculate_rates_from_slip_rates:
+        logging.info("Calculating rates from slip rates")
+        if settings['rupture_set_for_rates_from_slip_rates'] == 'filtered':
+            rup_df_key = 'rupture_df_keep'
+        elif settings['rupture_set_for_rates_from_slip_rates'] == 'all':
+            rup_df_key = 'rupture_df'
+
+        rupture_rates = get_rup_rates_from_fault_slip_rates(
+            fault_network,
+            b_val=settings['fault_mfd_b_value'],
+            mfd_type=settings['fault_mfd_type'],
+            seismic_fraction=settings['seismic_fraction'],
+            rupture_set_for_rates_from_slip_rates=settings[
+                'rupture_set_for_rates_from_slip_rates'
+            ],
+            plot_fault_moment_rates=settings['plot_fault_moment_rates'],
+        )
+        fault_network[rup_df_key]['annual_occurrence_rate'] = rupture_rates
+        t9 = time.time()
+        event_times.append(t9)
+        logging.info(f"\tdone in {round(t9-t8, 1)} s")
 
     fault_network['bin_dist_mat'] = binary_adjacence_matrix
     logging.info(f"total time: {round(event_times[-1]-event_times[0], 1)} s")

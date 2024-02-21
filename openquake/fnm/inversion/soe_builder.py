@@ -35,7 +35,11 @@ import scipy.sparse as ssp
 
 import openquake.hazardlib as hz
 
-from .utils import SHEAR_MODULUS
+from .utils import (
+    SHEAR_MODULUS,
+    get_mag_counts,
+    get_mfd_occurrence_rates,
+)
 
 
 def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
@@ -58,17 +62,6 @@ def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
     slip_rate_rhs *= seismic_slip_rate_frac
 
     return slip_rate_lhs, slip_rate_rhs, slip_rate_err
-
-
-def get_mag_counts(rups, key="M"):
-    mag_counts = {}
-    for rup in rups:
-        if rup[key] in mag_counts:
-            mag_counts[rup[key]] += 1
-        else:
-            mag_counts[rup[key]] = 1
-
-    return mag_counts
 
 
 def rel_gr_mfd_rates(mags, b=1.0, a=4.0, rel=True):
@@ -156,22 +149,6 @@ def make_rel_gr_mfd_eqns(rups, b=1.0, rup_include_list=None, weight=1.0):
     rel_mag_eqns_errs /= weight
 
     return rel_mag_eqns_lhs, rel_mag_eqns_rhs, rel_mag_eqns_errs
-
-
-def get_mfd_occurrence_rates(mfd, mag_decimals=1):
-    if hasattr(mfd, "get_annual_occurrence_rates"):
-        mfd_occ_rates = {
-            np.round(r[0], mag_decimals): r[1]
-            for r in mfd.get_annual_occurrence_rates()
-        }
-    elif isinstance(mfd, dict):
-        mfd_occ_rates = {
-            np.round(M, mag_decimals): rate for M, rate in mfd.items()
-        }
-    else:
-        raise ValueError("mfd must be a dictionary or an MFD object")
-
-    return mfd_occ_rates
 
 
 def mean_slip_rate(fault_sections: list, faults: list):
