@@ -6,6 +6,13 @@ from openquake.sub.utils import  mecclass
 from matplotlib.gridspec import GridSpec
 import numpy as np
 
+KAVERINA = {'N': 'blue',
+            'SS': 'green',
+            'R': 'red',
+            'N-SS': 'turquoise',
+            'SS-N': 'palegreen',
+            'R-SS': 'goldenrod',
+            'SS-R': 'yellow'}
 
 def focal_mech_loc_plots(fname, figsize = (15, 10), width = 0.5, size = 0.1):
     """
