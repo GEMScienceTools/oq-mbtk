@@ -355,13 +355,17 @@ def simple_fault_surface_from_feature(
 
     fault_trace = Line([Point(c[0], c[1]) for c in geom["coordinates"]])
 
+    final_exception = None
+
     while edge_sd > min_sd:
         try:
             return SimpleFaultSurface.from_fault_data(
                 fault_trace, usd, lsd, dip, edge_sd
             )
-        except (ValueError, AssertionError):
+        except (ValueError, AssertionError) as e:
+            final_exception = e
             edge_sd /= 2.0
+    raise final_exception
 
 
 def simple_fault_surfaces_from_geojson(
