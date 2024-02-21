@@ -64,7 +64,7 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
                                             config.strike, config.dip, 
                                             config.depth_for_non_trel_or_rs_fun,
                                             config.Z1, config.Z25, config.Vs30,
-                                            config.region, config.maxR,
+                                            config.region, config.minR, config.maxR,
                                             config.aratio, config.eshm20_region,
                                             config.dist_type, mtxs_type='median',
                                             up_or_down_dip=config.up_or_down_dip)

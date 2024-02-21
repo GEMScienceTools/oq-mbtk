@@ -154,9 +154,9 @@ def att_curves(gmpe, orig_gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     if trt == 'Induced_Geothermal':
         rup_trt = TRT.GEOTHERMAL
     if rup_trt is None and aratio == -999:
-        msg = 'An ratio must be provided by the user, or alternatively specify'
-        msg += ' a TRT string within the toml file to assign a trt-dependent'
-        msg += 'aratio proxy.'
+        msg = 'An aspect ratio must be provided by the user, or alternatively'
+        msg += ' specify a TRT string within the toml file to assign a'
+        msg += ' trt-dependent aratio proxy.'
         raise ValueError(msg)
 
     # Get rup
