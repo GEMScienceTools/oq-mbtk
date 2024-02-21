@@ -5,20 +5,18 @@ from copy import deepcopy
 
 import numpy as np
 
-logging.basicConfig(
-    format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
+from openquake.fnm.inversion.utils import (
+    rup_df_to_rupture_dicts,
+    subsection_df_to_fault_dicts,
 )
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+
+from openquake.fnm.inversion.soe_builder import make_eqns
 
 from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
     make_subfault_df,
     make_rupture_df,
-    rup_df_to_rupture_dicts,
-    subsection_df_to_fault_dicts,
-    make_eqns,
 )
 
 
@@ -34,6 +32,13 @@ from openquake.fnm.rupture_filtering import (
     filter_proportionally_to_plausibility,
 )
 
+from openquake.fnm.inversion.utils import SHEAR_MODULUS
+
+logging.basicConfig(
+    format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 default_settings = {
     'subsection_size': [15.0, 15.0],
@@ -45,6 +50,7 @@ default_settings = {
     'filter_by_plausibility': True,
     'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
     'skip_bad_faults': False,
+    'shear_modulus': SHEAR_MODULUS,
 }
 
 
@@ -147,6 +153,7 @@ def build_fault_network(
 
         else:
             raise ValueError('No faults provided')
+    fault_network['faults'] = faults
     t1 = time.time()
     event_times.append(t1)
     logging.info(f"\tdone in {round(t1-t0, 1)} s")
