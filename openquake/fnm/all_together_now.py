@@ -53,6 +53,7 @@ default_settings = {
     'max_sf_rups_per_mf_rup': 10,
     'rupture_angle_threshold': 60.0,
     'filter_by_plausibility': True,
+    'filter_by_angle': True,
     'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
     'skip_bad_faults': False,
     'shear_modulus': SHEAR_MODULUS,
@@ -64,6 +65,7 @@ default_settings = {
     'sparse_distance_matrix': True,
     'parallel_multifault_search': False,
     'full_fault_only_mf_ruptures': True,
+    'calculate_rates_from_slip_rates': True,
 }
 
 
@@ -71,9 +73,6 @@ def build_fault_network(
     faults=None,
     fault_geojson=None,
     settings=None,
-    surface_type='simple',
-    filter_by_angle=True,
-    calculate_rates_from_slip_rates: bool = False,
     return_faults_only=False,
     **kwargs,
 ):
@@ -241,7 +240,7 @@ def build_fault_network(
         + f" ({round(n_connections/n_possible_connections*100, 1)}%)"
     )
 
-    if filter_by_angle:
+    if settings['filter_by_angle']:
         logging.info("  Filtering by rupture angle")
         binary_adjacence_matrix = filter_bin_adj_matrix_by_rupture_angle(
             fault_network['single_rup_df'],
@@ -322,7 +321,7 @@ def build_fault_network(
             + f"{round(n_rups_filtered / n_rups_start*100, 1)} %)"
         )
 
-    if calculate_rates_from_slip_rates:
+    if settings['calculate_rates_from_slip_rates']:
         logging.info("Calculating rates from slip rates")
         if settings['rupture_set_for_rates_from_slip_rates'] == 'filtered':
             rup_df_key = 'rupture_df_keep'
