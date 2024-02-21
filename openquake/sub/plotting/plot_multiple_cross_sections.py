@@ -11,6 +11,8 @@ from openquake.sub.plotting.plot_cross_section import plt_cs
 def pcs(cs_fname, out_folder=None):
     if out_folder == None:
         out_folder = './'
+    if not os.path.exists(out_folder):
+        os.makedirs(out_folder)
 
     fin = open(cs_fname, 'r')
     for line in fin:

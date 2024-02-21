@@ -290,7 +290,7 @@ class CrossSectionData:
             boo[idxl[0]] = 1
             self.litho = numpy.squeeze(dataa[idxl[0], :])
 
-    def set_gcmt(self, filename, bffer=75.):
+    def set_gcmt(self, filename, gcmt_mag=0.0, bffer=75.):
         """
         :parameter cmt_cat:
             Name of a file in the .ndk format
@@ -298,6 +298,9 @@ class CrossSectionData:
         print('setting gcmt')
         parser = ParseNDKtoGCMT(filename)
         cmt_cat = parser.read_file()
+        # prune to magnitude range
+        mags = cmt_cat.data['magnitude']
+        cmt_cat.select_catalogue_events(mags > gcmt_mag)
         loc = cmt_cat.data['longitude']
         lac = cmt_cat.data['latitude']
 
