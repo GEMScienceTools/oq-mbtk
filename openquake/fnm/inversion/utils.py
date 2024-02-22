@@ -29,12 +29,13 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import logging
+from math import prod
+
 import numpy as np
 import pandas as pd
 import pyproj as pj
 import geopandas as gpd
-
-from math import prod
 
 from shapely.ops import transform
 from shapely.geometry import Point, LineString
@@ -615,6 +616,9 @@ def get_rup_rates_from_fault_slip_rates(
                 rup, ['subfaults', 'frac_area']
             ]
         fault_weights = fault_fracs
+        if sum(fault_fracs) == 0.0:
+            logging.warning(f"rupture {rup} has zero fault fraction")
+            # need to handle this better probably
         fault_rates = [rates[flt] for flt in faults]
         weighted_mean_rate = weighted_mean(fault_rates, fault_weights)
         mf_rup_rates[rup] = weighted_mean_rate
