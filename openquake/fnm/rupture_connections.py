@@ -20,6 +20,7 @@ from openquake.hazardlib.geo.geodetic import (
 
 from openquake.aft.rupture_distances import (
     get_sequence_pairwise_dists,
+    calc_pairwise_distances,
     RupDistType,
 )
 
@@ -455,14 +456,6 @@ def get_rupture_adjacency_matrix(
         all_subfaults
     )
 
-    single_fault_rup_coords = [
-        [
-            get_single_fault_rupture_coordinates(rup, subfaults)
-            for rup in single_fault_rups[i]
-        ]
-        for i, subfaults in enumerate(all_subfaults)
-    ]
-
     nrups = single_fault_rup_df.shape[0]
 
     # increasing distance to make up for discrepancy between bb dist and
@@ -478,81 +471,98 @@ def get_rupture_adjacency_matrix(
     if max_dist is None:
         max_dist = np.inf
 
-    row_count = 0
-    for i, f1 in enumerate(faults):
-        nrows = len(single_fault_rups[i])
-        col_count = 0
-        for j, f2 in enumerate(faults):
-            ncols = len(single_fault_rups[j])
-            pw_source_dists = None
-            if i == j:
-                if multifaults_on_same_fault:
-                    pw_source_dists = get_sequence_pairwise_dists(
-                        single_fault_rup_coords[i],
-                        single_fault_rup_coords[j],
-                    )
-                else:
-                    pass
-            elif i < j:  # upper triangular matrix
-                if (i, j) not in fault_dists:
-                    pass
-                elif fault_dists[(i, j)] <= max_dist * 1.5:
-                    pw_source_dists = get_sequence_pairwise_dists(
-                        single_fault_rup_coords[i],
-                        single_fault_rup_coords[j],
-                    )
-            # else:
-            #    pass
-
-            if pw_source_dists is not None:
-                local_dist_matrix = rdist_to_dist_matrix(
-                    pw_source_dists, nrows, ncols
-                )
-                local_dist_matrix[local_dist_matrix > max_dist] = 0.0
-
-                dist_adj_matrix[
-                    row_count : row_count + nrows,
-                    col_count : col_count + ncols,
-                ] = sparsify_maybe(local_dist_matrix)
-
-            col_count += ncols
-        row_count += nrows
-
-    logging.info(" dist matrix type: %s", type(dist_adj_matrix))
     if full_fault_only_mf_ruptures:
-        if sparse:
-            full_fault_ruptures = set(
+        fault_lookup = {fault['fid']: i for i, fault in enumerate(faults)}
+
+        full_fault_ruptures = sorted(
+            set(
                 [
                     i
                     for i, rup in single_fault_rup_df.iterrows()
                     if rup['full_fault_rupture']
                 ]
             )
-            nnz_keys = dist_adj_matrix.keys()
-            keys_to_keep = set(
-                [
-                    key
-                    for key in nnz_keys
-                    if (
-                        key[0] in full_fault_ruptures
-                        and key[1] in full_fault_ruptures
-                    )
-                ]
+        )
+        full_fault_rup_coords = {}
+        for ff in full_fault_ruptures:
+            fault_idx = fault_lookup[single_fault_rup_df.loc[ff, 'fault']]
+            full_fault_rup_coords[ff] = get_single_fault_rupture_coordinates(
+                single_fault_rup_df.loc[ff, 'patches'],
+                all_subfaults[fault_idx],
             )
 
-            new_dist_adj_matrix = dok_array((nrups, nrups), dtype=np.float32)
-            for key in keys_to_keep:
-                new_dist_adj_matrix[key] = dist_adj_matrix[key]
-            dist_adj_matrix = new_dist_adj_matrix
-
-        else:
-            partial_fault_ruptures = [
-                i
-                for i, rup in single_fault_rup_df.iterrows()
-                if not rup['full_fault_rupture']
+        for row_ff in full_fault_ruptures:
+            row_fault_ind = fault_lookup[
+                single_fault_rup_df.loc[row_ff, 'fault']
             ]
-            dist_adj_matrix[partial_fault_ruptures, :] = 0
-            dist_adj_matrix[:, partial_fault_ruptures] = 0
+            for col_ff in full_fault_ruptures:
+                col_fault_ind = fault_lookup[
+                    single_fault_rup_df.loc[col_ff, 'fault']
+                ]
+
+                if (row_ff < col_ff) and (
+                    row_fault_ind,
+                    col_fault_ind,
+                ) in fault_dists:
+                    dist = np.min(
+                        calc_pairwise_distances(
+                            full_fault_rup_coords[row_ff],
+                            full_fault_rup_coords[col_ff],
+                        )
+                    )
+                    if dist <= max_dist:
+                        dist_adj_matrix[row_ff, col_ff] = dist
+
+    else:
+        single_fault_rup_coords = [
+            [
+                get_single_fault_rupture_coordinates(rup, subfaults)
+                for rup in single_fault_rups[i]
+            ]
+            for i, subfaults in enumerate(all_subfaults)
+        ]
+
+        row_count = 0
+        for i, f1 in enumerate(faults):
+            nrows = len(single_fault_rups[i])
+            col_count = 0
+            for j, f2 in enumerate(faults):
+                ncols = len(single_fault_rups[j])
+                pw_source_dists = None
+                if i == j:
+                    if multifaults_on_same_fault:
+                        pw_source_dists = get_sequence_pairwise_dists(
+                            single_fault_rup_coords[i],
+                            single_fault_rup_coords[j],
+                        )
+                    else:
+                        pass
+                elif i < j:  # upper triangular matrix
+                    if (i, j) not in fault_dists:
+                        pass
+                    elif fault_dists[(i, j)] <= max_dist * 1.5:
+                        pw_source_dists = get_sequence_pairwise_dists(
+                            single_fault_rup_coords[i],
+                            single_fault_rup_coords[j],
+                        )
+                # else:
+                #    pass
+
+                if pw_source_dists is not None:
+                    local_dist_matrix = rdist_to_dist_matrix(
+                        pw_source_dists, nrows, ncols
+                    )
+                    local_dist_matrix[local_dist_matrix > max_dist] = 0.0
+
+                    dist_adj_matrix[
+                        row_count : row_count + nrows,
+                        col_count : col_count + ncols,
+                    ] = sparsify_maybe(local_dist_matrix)
+
+                col_count += ncols
+            row_count += nrows
+
+    logging.debug(" dist matrix type: %s", type(dist_adj_matrix))
 
     # make the matrix symmetric
     dist_adj_matrix += dist_adj_matrix.T
