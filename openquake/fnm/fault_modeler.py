@@ -616,7 +616,7 @@ def make_rupture_df(
         areas = np.array([area_lookup[sf] for sf in row.subfaults])
         sum_area = areas.sum()
         area_fracs = areas / sum_area
-        frac_areas.append(np.round(area_fracs, 2).tolist())
+        frac_areas.append(np.round(area_fracs, 4).tolist())
 
         rakes = np.array([rake_lookup[sf] for sf in row.subfaults])
         azimuths = [sf_rup_azimuths[sf] for sf in row.ruptures]

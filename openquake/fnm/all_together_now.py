@@ -66,6 +66,7 @@ default_settings = {
     'parallel_multifault_search': False,
     'full_fault_only_mf_ruptures': True,
     'calculate_rates_from_slip_rates': True,
+    'surface_type': 'simple',
 }
 
 
@@ -129,11 +130,11 @@ def build_fault_network(
     t0 = time.time()
     event_times.append(t0)
     if faults is None:
-        if surface_type == 'simple':
+        if settings['surface_type'] == 'simple':
             build_surface = simple_fault_from_feature
         else:
             raise NotImplementedError(
-                f'Surface type {surface_type} not implemented'
+                f'Surface type {settings["surface_type"]} not implemented'
             )
 
         if fault_geojson is not None:
