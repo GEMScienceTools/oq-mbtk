@@ -3,18 +3,28 @@ name: Windows Test
 on:
   push:
     branches:
-      - ae-workflow
+      - test
   schedule:
     - cron: "0 7 * * *"
   workflow_dispatch:
 jobs:
   test:
     name: Windows Installation
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - name: Installation of GMT from standalone
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/GenericMappingTools/gmt/releases/download/6.4.0/gmt-6.4.0-win64.exe" -OutFile $HOME\gmt.exe
+        cd $HOME
+        $Install = Get-ChildItem -Filter gmt*.exe
+        Start-Process -FilePath $Install.Fullname -ArgumentList "/S" -Wait
+        $Env:PATH += ";C:\programs\gmt6\bin"
+        Write-Host ${env:PATH}
     - name: Run scripts to install on windows
       run: |
+        Write-Host "Set LIBRARY PATH for GMT"
+        $Env:GMT_LIBRARY_PATH="C:\programs\gmt6\bin"
         Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
         #
         $curDir = Get-Location
@@ -31,19 +41,16 @@ jobs:
         $Env:PY_HOME=$MYPATH
         $Env:PY_LIBS="$MYPATH\Lib;$MYPATH\Lib\site-package"
         Write-Host "MYPATH Directory: $MYPATH"
-        Start-Job -ScriptBlock{& 'oq.exe' dbserver start}
-        sleep 15
+        Start-Job -ScriptBlock{& 'oq.exe' dbserver upgrade}
         oq.exe --version
         Write-Host "Print all environments variables to check"
         dir env:
         Write-Host "Print all pypip packages"
-        pip freeze
         pip list
         $MBTK = $HOME + "\mbtk"
         Write-Host "MBTK Directory: $MBTK"
         Set-Location -Path $MBTK
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
-        Get-ChildItem -Path .\windows –recurse
         cd oq-mbtk\openquake
         pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt

@@ -9,8 +9,12 @@ import numpy
 import pickle
 import configparser
 import numpy as np
-import pyvista as pv
 import matplotlib.pyplot as plt
+
+try:
+    import pyvista as pv
+except:
+    PLOT = False
 
 from pyproj import Proj
 
@@ -90,6 +94,9 @@ def plot_edges(foldername, plotter, p1, color):
 
 
 def main(fname_config, plot_catalogue, plot_classification):
+
+    if PLOT is False:
+        raise ImportError('This function requires pyvista')
 
     if plot_catalogue in ['true', 'True', 'TRUE']:
         plot_catalogue = True

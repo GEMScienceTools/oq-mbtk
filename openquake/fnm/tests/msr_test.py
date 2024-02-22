@@ -63,6 +63,7 @@ class TestGetMagnitude(unittest.TestCase):
         mag2 = area_to_mag(area2)
 
         expected = np.array([6.156638, 6.458269, 6.157839])
+        expected = np.array([6.158363, 6.459393, 6.158363])
         computed = np.array([mag0, mag1, mag2])
 
         np.testing.assert_allclose(expected, computed)

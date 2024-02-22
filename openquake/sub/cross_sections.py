@@ -1,3 +1,30 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
+
 """
 Module :mod:`openquake.sub.cross_section` defines :class:`Trench`,
 :class:`Slab2pt0`, :class:`CrossSectionData` and :class:`CrossSection`
@@ -522,10 +549,10 @@ def check_intersections(cs, css):
                                          max(mm[1], cmm[1]),
                                          min(mm[2], cmm[2]),
                                          min(mm[3], cmm[3]))
-            ox, oy = prj(cs.plo, cs.pla)
-            cx, cy = prj(cc.plo, cc.pla)
+            ox, oy = prj(numpy.float64(cs.plo), numpy.float64(cs.pla))
+            cx, cy = prj(numpy.float64(cc.plo), numpy.float64(cc.pla))
 
-            for i in range(len(ox)-1):
+            for i in range(len(ox) - 1):
                 pa = numpy.array([ox[i], oy[i]])
                 pb = numpy.array([ox[i+1], oy[i+1]])
                 for j in range(len(cx)-1):
@@ -689,7 +716,7 @@ class CrossSection:
         """
 
         # Then
-        lomin_t = min(self.plo) 
+        lomin_t = min(self.plo)
         lomin = lomin_t - delta
         if lomin_t < 0 or lomin < 0:
             lomin = lomin_t + delta
@@ -717,7 +744,7 @@ class CrossSection:
             raise ValueError('Latitude greater than 90')
         #
         qual = 0
-        if ((lomin/lomax) < 0) & (max([lomin, lomax]) > 150.):
+        if ((lomin / lomax) < 0) & (max([lomin, lomax]) > 150.):
             qual = 1
             lomax = max(self.plo) - delta
         return lomin, lomax, lamin, lamax, qual
