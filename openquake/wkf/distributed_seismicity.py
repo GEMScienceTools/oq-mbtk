@@ -45,7 +45,7 @@ from openquake.hazardlib.geo.surface import SimpleFaultSurface
 from openquake.hazardlib.mfd.multi_mfd import MultiMFD
 from openquake.hazardlib.pmf import PMF
 
-PLOTTING = True
+PLOTTING = False
 
 
 def get_bounding_box(src):
@@ -323,8 +323,9 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
         # hypocentral distribution
         tmp = f"src_buffers_{fname.split('_')[1]}"
         fname_out = os.path.join(out_path, tmp)
-        write_source_model(fname_out, buffer_pts, 'Distributed seismicity')
-        logging.info(f'Created: {fname_out}')
+        if buffer_pts:
+            write_source_model(fname_out, buffer_pts, 'Distributed seismicity')
+            logging.info(f'Created: {fname_out}')
 
 
 def from_list_ps_to_multipoint(srcs, src_id):
