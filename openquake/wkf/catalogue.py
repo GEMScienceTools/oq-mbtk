@@ -151,7 +151,7 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
     polygons_gdf = gpd.read_file(fname_polygons)
 
     # Select point in polygon
-    columns = ['eventID', 'year', 'month', 'day', 'magnitude', 'longitude',
+    columns = ['eventID', 'year', 'month', 'day', 'hour', 'minute', 'second', 'magnitude', 'longitude',
                'latitude', 'depth']
 
     # Iterate over sources
