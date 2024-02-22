@@ -47,6 +47,7 @@ from openquake.hazardlib.geo.surface import KiteSurface
 
 from openquake.fnm.section import get_subsection
 
+
 def _get_profiles(kite_surf):
     lons, lats, depths = kite_surf.mesh.array
 
@@ -64,6 +65,65 @@ def _get_profiles(kite_surf):
 
 
 def make_multifault_source(
+    fault_network,
+    source_id: str = "test_source",
+    name: str = "Test Source",
+    tectonic_region_type: str = "Active Shallow Crust",
+    investigation_time=0.0,
+    infer_occur_rates: bool = False,
+    surface_type="kite",
+    ruptures_for_output='all',
+):
+    surfaces = []
+    if surface_type == "kite":
+        for sub_surface in fault_network['subfault_df']['surface']:
+            if isinstance(sub_surface, KiteSurface):
+                profiles = _get_profiles(sub_surface)
+                sub_surface.profiles = profiles
+                surfaces.append(sub_surface)
+            else:
+                sf_kite_surface = KiteSurface(sub_surface.mesh)
+
+    elif surface_type == 'simple_fault':
+        raise NotImplementedError(
+            "Cannot use simple_fault surfaces with multifault sources"
+        )
+
+    if ruptures_for_output == 'all':
+        rup_df = fault_network['rupture_df']
+    elif ruptures_for_output == 'filtered':
+        rup_df = fault_network['rupture_df_keep']
+    else:
+        raise ValueError(
+            "`ruptures_for_output` must be `all` or `filtered`, not %s",
+            ruptures_for_output,
+        )
+
+    rupture_idxs = rup_df['subfaults'].values.tolist()
+    mags = rup_df['mag'].values
+    rakes = rup_df['mean_rake'].values
+
+    pmfs = [
+        poisson.pmf([0, 1, 2, 3, 4], r).tolist()
+        for r in rup_df['annual_occurrence_rate'].values
+    ]
+
+    mfs = MultiFaultSource(
+        source_id=source_id,
+        name=name,
+        tectonic_region_type=tectonic_region_type,
+        rupture_idxs=rupture_idxs,
+        occurrence_probs=pmfs,
+        magnitudes=mags,
+        rakes=rakes,
+        investigation_time=investigation_time,
+        infer_occur_rates=infer_occur_rates,
+    )
+
+    mfs.sections = surfaces
+
+
+def make_multifault_source_old(
     fsys,
     ruptures: pd.DataFrame,
     source_id: str = "test_source",
