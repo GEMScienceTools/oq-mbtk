@@ -91,7 +91,8 @@ def plot_trellis_util(
                     lt_weights_gmc1, lt_vals_gmc1, lt_weights_gmc2, lt_vals_gmc2)
                 
                 # update plots
-                update_trellis_plots(m, i, n, l, minR, r_vals, imt_list, dist_type)
+                update_trellis_plots(m, i, n, l, minR, maxR,
+                                     r_vals, imt_list, dist_type)
 
             pyplot.grid(axis='both', which='both', alpha=0.5)
         
@@ -685,7 +686,7 @@ def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2, lt_vals_gmc, median_gmc,
     return median_gmc, plus_sig_gmc, minus_sig_gmc
 
 
-def update_trellis_plots(m, i, n, l, minR, r_vals, imt_list, dist_type):
+def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
     """
     Add titles and axis labels to trellis plots
     """
@@ -717,7 +718,7 @@ def update_trellis_plots(m, i, n, l, minR, r_vals, imt_list, dist_type):
     # xlims
     pyplot.loglog()
     min_r_val = min(r_vals[r_vals>=1])
-    pyplot.xlim(np.max([min_r_val, minR]), np.max(r_vals))
+    pyplot.xlim(np.max([min_r_val, minR]), maxR)
     
     
 ### Spectra utils
