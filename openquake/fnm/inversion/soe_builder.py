@@ -185,7 +185,7 @@ def make_frac_mfd_eqns(rups, faults, mfd, mag_decimals=1, weight=1.0):
     mfd_occ_rates = get_mfd_occurrence_rates(mfd, mag_decimals=mag_decimals)
 
     weighted_slip_rates = {
-        rup["rup_id"]: mean_slip_rate(rup["faults"], faults) for rup in rups
+        rup["idx"]: mean_slip_rate(rup["faults"], faults) for rup in rups
     }
 
     mfd_slip_rate_fracs = {}
@@ -206,7 +206,7 @@ def make_frac_mfd_eqns(rups, faults, mfd, mag_decimals=1, weight=1.0):
     for i, rup in enumerate(rups):
         rhs[i] = (
             mfd_occ_rates[rup["M"]]
-            * mfd_slip_rate_fracs[rup["M"]][rup["rup_id"]]
+            * mfd_slip_rate_fracs[rup["M"]][rup["idx"]]
         )
 
     return lhs, rhs
@@ -419,15 +419,17 @@ def make_eqns(
         if regional_abs_mfds is not None:
             print("Making regional MFD absolute eqns")
             for reg, reg_mfd_data in regional_abs_mfds.items():
-                reg_abs_lhs, reg_abs_rhs, reg_abs_errs = make_abs_mfd_eqns(
-                    rups,
-                    reg_mfd_data["mfd"],
-                    rup_include_list=reg_mfd_data["rups_include"],
-                    rup_fractions=reg_mfd_data["rup_fractions"],
-                )
-                lhs_set.append(reg_abs_lhs)
-                rhs_set.append(reg_abs_rhs)
-                err_set.append(reg_abs_errs)
+                if ('rups_include' in reg_mfd_data.keys()) and (
+                    len(reg_mfd_data['rups_include']) > 0):
+                    reg_abs_lhs, reg_abs_rhs, reg_abs_errs = make_abs_mfd_eqns(
+                        rups,
+                        reg_mfd_data["mfd"],
+                        rup_include_list=reg_mfd_data["rups_include"],
+                        rup_fractions=reg_mfd_data["rup_fractions"],
+                    )
+                    lhs_set.append(reg_abs_lhs)
+                    rhs_set.append(reg_abs_rhs)
+                    err_set.append(reg_abs_errs)
 
     if slip_rate_smoothing is True:
         print("Making slip rate smoothing eqns")
