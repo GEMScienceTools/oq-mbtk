@@ -474,7 +474,7 @@ Comparing GMPEs
         max_period = 2 # max period for spectra plots
         minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
-        dist_type = 'rrup' # or rjb, repi or rhypo (dist type used in trellis plots)
+        dist_type = 'repi' # or rjb, repi or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         eshm20_region = 2 # for ESHM20 GMPE regionalisation
         Nstd = 1 # num. of sigma to sample from sigma distribution
@@ -507,19 +507,16 @@ Comparing GMPEs
         
         # Specify label for gmpes
         [gmpe_labels]
-        gmpes_label = ['CA15', 'AK14', 'B20', 'L19', 'BO14', 'K1', 'K2', 'K3', 'K4', 'K5']
+        gmpes_label = ['CA15', 'AK14', 'B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5']
         
         # Specify gmpes
         
         # Plot logic tree and individual GMPEs within first GMC logic tree config (gmc1)
         [models.BooreEtAl2020]
-            lt_weight_gmc1 = 0.25
-            
-        [models.LanzanoEtAl2019_RJB_OMO]
             lt_weight_gmc1 = 0.30
             
-        [models.BooreEtAl2014]
-            lt_weight_gmc1 = 0.15
+        [models.LanzanoEtAl2019_RJB_OMO]
+            lt_weight_gmc1 = 0.40
         
         # Default ESHM20 logic tree branches considered in gmc1
         [models.1-KothaEtAl2020ESHM20]
@@ -542,7 +539,6 @@ Comparing GMPEs
             lt_weight_gmc1 = 0.000862
             sigma_mu_epsilon = -2.85697 
             c3_epsilon = -1.72    
-            
             
         # Plot logic tree only for second GMC logic tree config (gmc2)
         # Note this additional GMC logic tree config is simply for demonstrative
@@ -576,7 +572,7 @@ Comparing GMPEs
    
 4. Spectra Plots
 
-   We can also plot response spectra and GMPE sigma spectra (sigma versus spectral period). Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples, and the functions within openquake.smt.comparison for more details): 
+   We can also plot response spectra. Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples, and the functions within openquake.smt.comparison for more details): 
 
     .. code-block:: ini
     
@@ -591,9 +587,9 @@ Comparing GMPEs
    
 5. Sammon's Maps
 
-   We can plot Sammon's Maps to examine how similar the median (and 84th percentile) of predicted ground-motion is by each GMPE for the ground-shaking scenario specified within the ``.toml`` file (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon's mapping procedure).
+   We can plot Sammon's Maps to examine how similar the medians (and 16th and 84th percentiles) of predicted ground-motion of each GMPE are (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon's mapping procedure).
    
-   A larger distance between two plotted GMPEs represents a greater difference in the predicted ground-motion. Therefore, if two or more GMPEs have a small distance between each other relative to the other GMPEs plotted, then only one of these adjacent GMPEs should be retained in the final GMPE logic tree (similarly predicting GMPEs minimises the epistemic uncertainty captured in the logic tree). It should be noted that: (1) more than one 2D configuration can exist for a given set of GMPEs and (2) that the absolute numbers on the axes do not have a physical meaning.
+   A larger distance between two plotted GMPEs represents a greater difference in the predicted ground-motion. It should be noted that: (1) more than one 2D configuration can exist for a given set of GMPEs and (2) that the absolute numbers on the axes do not have a physical meaning.
   
    Sammon's Maps can be generated as follows:
    
