@@ -474,7 +474,7 @@ Comparing GMPEs
         max_period = 2 # max period for spectra plots
         minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
-        dist_type = 'repi' # or rjb, repi or rhypo (dist type used in trellis plots)
+        dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         eshm20_region = 2 # for ESHM20 GMPE regionalisation
         Nstd = 1 # num. of sigma to sample from sigma distribution

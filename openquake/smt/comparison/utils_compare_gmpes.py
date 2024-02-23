@@ -85,12 +85,12 @@ def plot_trellis_util(
                 plus_sigma = np.exp(mean+Nstd*std[0])
                 minus_sigma = np.exp(mean-Nstd*std[0])
                 
-                # Plot and get lt weighted predictions
+                # Plot predictions and get lt weighted predictions
                 lt_vals_gmc1, lt_vals_gmc2 = trellis_data(
                     Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
                     lt_weights_gmc1, lt_vals_gmc1, lt_weights_gmc2, lt_vals_gmc2)
                 
-                # update plots
+                # Update plots
                 update_trellis_plots(m, i, n, l, minR, maxR,
                                      r_vals, imt_list, dist_type)
 
@@ -173,11 +173,10 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                 
                 for k, imt in enumerate(imt_list): 
                     if obs_spectra is not None:
-                        dist = 1000 # Set to 1000 km
                         Vs30 = vs30 # Set to vs30 in obs_spectra
-                        if i > 1000:
+                        if i > 500:
                             raise ValueError('Rrup provided for the observed\
-                                             spectra is greater than 1000 km')
+                                             spectra is greater than 500 km')
                     else:
                         dist = i
                     
@@ -249,7 +248,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                 plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mw, dep, rrup)
                 
                 # Update plots
-                update_spec_plots(ax1, ax2, m, i, n, l, dist_list, dist_type)
+                update_spec_plots(ax1, ax2, m, i, n, l, dist_list)
             
             # Set axis limits and add grid
             ax1.set_xlim(min(period), max(period))
@@ -651,7 +650,6 @@ def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2, lt_vals_gmc, median_gmc,
     
     if lt_vals_gmc != {}:
         if not Nstd == 0:
-               
             lt_df_gmc = pd.DataFrame(
                 lt_vals_gmc, index=['median', 'plus_sigma', 'minus_sigma'])
 
@@ -961,21 +959,13 @@ def plot_obs_spectra(ax1, obs_spectra, g, gmpe_list,  dep=None, rrup=None,
                  label=obs_string)    
         
         
-def update_spec_plots(ax1, ax2, m, i, n, l, dist_list, dist_type):
+def update_spec_plots(ax1, ax2, m, i, n, l, dist_list):
     """
     Add titles and axis labels to spectra plots
     """
-    if dist_type == 'repi':
-        r_type = 'Repi'
-    if dist_type == 'rrup':
-        r_type = 'Rrup'
-    if dist_type == 'rjb':
-        r_type = 'Rjb'
-    if dist_type == 'rhypo':
-        r_type = 'Rhypo'
-    ax1.set_title('Mw = ' + str(m) + ', ' + r_type + ' = ' + str(i) + ' km',
+    ax1.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
                   fontsize=16, y=1.0, pad=-16)
-    ax2.set_title('Mw = ' + str(m) + ', ' + r_type + ' = ' + str(i) + ' km',
+    ax2.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
                   fontsize=16, y=1.0, pad=-16)
     if n == len(dist_list)-1: #bottom row only
         ax1.set_xlabel('Period (s)', fontsize=16)
