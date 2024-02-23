@@ -35,11 +35,11 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 
-from shapely.geometry import LineString, Polygon, MultiLineString, MultiPolygon
+from shapely.geometry import LineString, Polygon, MultiPolygon
 
 from openquake.baselib.general import AccumDict
 from openquake.hazardlib.geo import Point, Line
-from openquake.hazardlib.geo.mesh import RectangularMesh, Mesh
+from openquake.hazardlib.geo.mesh import RectangularMesh
 from openquake.hazardlib.geo.surface import SimpleFaultSurface
 
 from openquake.fnm.importer import (
@@ -49,15 +49,10 @@ from openquake.fnm.importer import (
 from openquake.fnm.msr import area_to_mag
 
 from openquake.fnm.inversion.utils import (
-    weighted_mean,
     get_rupture_displacement,
     SHEAR_MODULUS,
     slip_vector_azimuth,
-    rup_df_to_rupture_dicts,
-    subsection_df_to_fault_dicts,
 )
-
-from openquake.fnm.inversion.soe_builder import make_eqns
 
 logging.basicConfig(
     format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
@@ -266,7 +261,7 @@ def subdivide_simple_fault_surface(
     n_subsec_pts_dip = (n_pts_dip) / num_segs_down_dip
     assert (
         n_subsec_pts_dip % 1 == 0.0
-    ), f"Resampled mesh not dividing equally among subsegments down-dip"
+    ), "Resampled mesh not dividing equally among subsegments down-dip"
     n_subsec_pts_dip = int(n_subsec_pts_dip)
 
     subsec_meshes = subdivide_rupture_mesh(
@@ -625,7 +620,7 @@ def make_rupture_df(
         mean_rakes.append(mean_rake)
 
         mags.append(
-            area_to_mag(areas.sum(), type=area_mag_msr, rake=mean_rake)
+            area_to_mag(areas.sum(), mstype=area_mag_msr, rake=mean_rake)
         )
         all_areas.append(sum_area)
 

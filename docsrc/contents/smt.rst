@@ -110,6 +110,15 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.2-AbrahamsonGulerce2020SInter]
         region = "CAS"
         
+        [models.AbrahamsonEtAl2014]
+        
+        [models.AbrahamsonEtAl2014RegJPN]
+        region = "JPN" # nb currently a bug for specifically this gmm in the SMT where the user must still specify the region param despite the class name differentiating as regionalised variant (will be fixed!)
+        
+        [models.BooreEtAl2014]
+        
+        [models.BooreEtAl2014LowQ]
+        
         [models.YenierAtkinson2015BSSA]
         sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
 
@@ -463,11 +472,12 @@ Comparing GMPEs
         [general]
         imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
         max_period = 2 # max period for spectra plots
+        minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_type = 'rrup' # or rjb, repi or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
-        eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
-        Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 or 3)
+        eshm20_region = 2 # for ESHM20 GMPE regionalisation
+        Nstd = 1 # num. of sigma to sample from sigma distribution
         
         # Specify site properties
         [site_properties]
@@ -511,7 +521,7 @@ Comparing GMPEs
         [models.BooreEtAl2014]
             lt_weight_gmc1 = 0.15
         
-        # Default K20_ESHM20 logic tree branches considered in gmc1
+        # Default ESHM20 logic tree branches considered in gmc1
         [models.1-KothaEtAl2020ESHM20]
             lt_weight_gmc1 = 0.000862
             sigma_mu_epsilon = 2.85697 
