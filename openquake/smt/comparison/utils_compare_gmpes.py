@@ -643,10 +643,10 @@ def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2, lt_vals_gmc, median_gmc,
     """
     if gmc1_or_gmc2 == 'gmc1':
         label = 'Logic Tree 1'
-        col = 'k'
+        col = 'r'
     if gmc1_or_gmc2 == 'gmc2':
         label = 'Logic Tree 2'
-        col = 'tab:grey'
+        col = 'b'
     
     if lt_vals_gmc != {}:
         if not Nstd == 0:
@@ -716,7 +716,8 @@ def update_trellis_plots(m, i, n, l, minR, r_vals, imt_list, dist_type):
         
     # xlims
     pyplot.loglog()
-    pyplot.xlim(minR, np.max(r_vals))
+    min_r_val = min(r_vals[r_vals>=1])
+    pyplot.xlim(np.max([min_r_val, minR]), np.max(r_vals))
     
     
 ### Spectra utils
@@ -854,11 +855,11 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, gmc1_or_gmc2,
     if gmc1_or_gmc2 == 'gmc1':
         check = 'lt_weight_gmc1'
         label = 'Logic Tree 1'
-        col = 'k'
+        col = 'r'
     if gmc1_or_gmc2 == 'gmc2':
         check = 'lt_weight_gmc2'
         label = 'Logic Tree 2'
-        col = 'tab:grey'
+        col = 'b'
     
     # Plot
     if lt_vals_gmc != {}:
