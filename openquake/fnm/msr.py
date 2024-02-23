@@ -29,22 +29,19 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-
 import numpy as np
 
-from openquake.hazardlib.scalerel import (
-    Leonard2014_Interplate,
-    Leonard2014_SCR,
-)
+from openquake.hazardlib.scalerel import get_available_magnitude_scalerel
+
+MSRS = get_available_magnitude_scalerel()
 
 
-def area_to_mag(area, type='generic', rake: float = 0.0):
-    if type == 'generic':
+def area_to_mag(area, mstype='generic', rake: float = 0.0):
+    if mstype == 'generic':
         return np.log10(area) + 4.0
-    elif type == 'Leonard2014_Interplate':
-        return Leonard2014_Interplate().get_median_mag(area, rake=rake)
-    elif type == 'Leonard2014_SCR':
-        return Leonard2014_SCR().get_median_mag(area, rake=rake)
+    elif mstype in MSRS:
+        msr = MSRS[mstype]()
+        return msr.get_median_mag(area, rake)
     else:
         raise ValueError("MSR not supported")
 

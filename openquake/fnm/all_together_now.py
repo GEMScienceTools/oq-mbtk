@@ -10,17 +10,14 @@ logging.basicConfig(
     datefmt='%d-%b-%y %H:%M:%S',
     level=logging.INFO,
 )
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+
+from openquake.fnm.inversion.soe_builder import make_eqns
 
 from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
     make_subfault_df,
     make_rupture_df,
-    rup_df_to_rupture_dicts,
-    subsection_df_to_fault_dicts,
-    make_eqns,
 )
 
 
@@ -44,6 +41,12 @@ from openquake.fnm.inversion.utils import (
     get_rup_rates_from_fault_slip_rates,
 )
 
+
+logging.basicConfig(
+    format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 default_settings = {
     'subsection_size': [15.0, 15.0],

@@ -37,7 +37,7 @@ from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1,\
 
 def plot_trellis_util(
         trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region, imt_list,
-        mag_list, maxR, gmpe_list, aratio, Nstd, output_directory,
+        mag_list, minR, maxR, gmpe_list, aratio, Nstd, output_directory,
         custom_color_flag, custom_color_list, eshm20_region, dist_type,
         lt_weights_gmc1 = None, lt_weights_gmc2 = None, up_or_down_dip = None):
     """
@@ -91,24 +91,23 @@ def plot_trellis_util(
                     lt_weights_gmc1, lt_vals_gmc1, lt_weights_gmc2, lt_vals_gmc2)
                 
                 # update plots
-                update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type)
+                update_trellis_plots(m, i, n, l, minR, r_vals, imt_list, dist_type)
 
             pyplot.grid(axis='both', which='both', alpha=0.5)
         
             ### Plot logic trees if specified
             gmc1_or_gmc2 = 'gmc1'
             median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = lt_trel(
-                r_vals, Nstd, i, m, gmc1_or_gmc2,
-                lt_vals_gmc1, median_gmc1, plus_sig_gmc1, minus_sig_gmc1)
+                r_vals, Nstd, i, m, gmc1_or_gmc2, lt_vals_gmc1, median_gmc1,
+                plus_sig_gmc1, minus_sig_gmc1)
             
             gmc1_or_gmc2 = 'gmc2'
             median_gmc2, plus_sig_gmc2, minus_sig_gmc2 = lt_trel(
-                r_vals, Nstd, i, m, gmc1_or_gmc2,
-                lt_vals_gmc2, median_gmc2, plus_sig_gmc2, minus_sig_gmc2)
+                r_vals, Nstd, i, m, gmc1_or_gmc2, lt_vals_gmc2, median_gmc2,
+                plus_sig_gmc2, minus_sig_gmc2)
             
     # Finalise plots
-    pyplot.legend(loc = "center left", bbox_to_anchor = (1.1, 1.05),
-                  fontsize = '16')
+    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize = '16')
     pyplot.savefig(os.path.join(output_directory, 'TrellisPlots.png'),
                    bbox_inches='tight', dpi=200, pad_inches=0.2)
     
@@ -249,7 +248,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                 plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mw, dep, rrup)
                 
                 # Update plots
-                update_spec_plots(ax1, ax2, m, i, n, l, dist_list)
+                update_spec_plots(ax1, ax2, m, i, n, l, dist_list, dist_type)
             
             # Set axis limits and add grid
             ax1.set_xlim(min(period), max(period))
@@ -277,7 +276,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
 
 
 def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
-                         dip, depth, Z1, Z25, Vs30, region, maxR, aratio,
+                         dip, depth, Z1, Z25, Vs30, region, minR, maxR, aratio,
                          eshm20_region, dist_type, mtxs_type, up_or_down_dip):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
@@ -289,14 +288,15 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
     """
     # Setup
     mtxs_median = {}
-    step = 1
+    d_step = 1
     Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
-    for n, i in enumerate(imt_list): #iterate though imt_list
-        matrix_medians=np.zeros((len(gmpe_list), (len(mag_list)*int((maxR/step)))))
+    for n, i in enumerate(imt_list): # Iterate though imt_list
+        matrix_medians=np.zeros((len(gmpe_list),
+                                (len(mag_list)*int((maxR-minR)/d_step))))
 
         for g, gmpe in enumerate(gmpe_list): 
             medians, sigmas = [], []
-            for l, m in enumerate(mag_list): #iterate though mag_list
+            for l, m in enumerate(mag_list): # Iterate though mag_list
                 
                 gsim = valid.gsim(gmpe)
                 gmm_orig = gsim
@@ -313,19 +313,26 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
 
                 mean, std, r_vals, tau, phi = att_curves(
                     gmm, gmm_orig, depth[l], m, aratio_g, strike_g, dip_g,
-                    rake, Vs30, Z1, Z25, maxR, step, i, ztor_m, eshm20_region,
+                    rake, Vs30, Z1, Z25, maxR, d_step, i, ztor_m, eshm20_region,
                     dist_type, trt, up_or_down_dip) 
+                
+                # Get means further than minR
+                idx = np.argwhere(r_vals>minR).flatten()
+                mean = [mean[0][0][idx]]
+                std = [std[0][0][idx]]
+                tau = [tau[0][0][idx]]
+                phi = [phi[0][0][idx]]
                 
                 if mtxs_type == 'median':
                     medians = np.append(medians, (np.exp(mean)))
                 if mtxs_type == '84th_perc':
-                    Nstd = 1 # median + 1std = ~84th percentile
+                    Nstd = 1 # Median + 1std = ~84th percentile
                     medians = np.append(medians, (np.exp(mean+Nstd*std[0])))
                 if mtxs_type == '16th_perc':
-                    Nstd = 1 # median - 1std = ~16th percentile
+                    Nstd = 1 # Median - 1std = ~16th percentile
                     medians = np.append(medians, (np.exp(mean-Nstd*std[0])))   
                 sigmas = np.append(sigmas,std[0])
-
+                
             matrix_medians[:][g]= medians
         mtxs_median[n] = matrix_medians
         
@@ -629,8 +636,8 @@ def trellis_data(Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
     return lt_vals_gmc1, lt_vals_gmc2
 
 
-def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2,
-            lt_vals_gmc, median_gmc, plus_sig_gmc, minus_sig_gmc):
+def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2, lt_vals_gmc, median_gmc,
+            plus_sig_gmc, minus_sig_gmc):
     """
     If required plot spectra from the GMPE logic tree(s)
     """
@@ -678,7 +685,7 @@ def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2,
     return median_gmc, plus_sig_gmc, minus_sig_gmc
 
 
-def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
+def update_trellis_plots(m, i, n, l, minR, r_vals, imt_list, dist_type):
     """
     Add titles and axis labels to trellis plots
     """
@@ -701,14 +708,15 @@ def update_trellis_plots(m, i, n, l, r_vals, imt_list, dist_type):
         else:
             pyplot.ylabel('PGV (cm/s)', fontsize='16')
             
-    # xlims
+    # ylims
     if str(i) != 'PGV':
-        pyplot.ylim(1e-03, 2) # g
+        pyplot.ylim(1e-03, 3) # g
     else:
         pyplot.ylim(0.1, 650) # cm/s
-    
+        
+    # xlims
     pyplot.loglog()
-    pyplot.xlim(1, np.max(r_vals)) # Mod if required
+    pyplot.xlim(minR, np.max(r_vals))
     
     
 ### Spectra utils
@@ -951,13 +959,21 @@ def plot_obs_spectra(ax1, obs_spectra, g, gmpe_list,  dep=None, rrup=None,
                  label=obs_string)    
         
         
-def update_spec_plots(ax1, ax2, m, i, n, l, dist_list):
+def update_spec_plots(ax1, ax2, m, i, n, l, dist_list, dist_type):
     """
     Add titles and axis labels to spectra plots
     """
-    ax1.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
+    if dist_type == 'repi':
+        r_type = 'Repi'
+    if dist_type == 'rrup':
+        r_type = 'Rrup'
+    if dist_type == 'rjb':
+        r_type = 'Rjb'
+    if dist_type == 'rhypo':
+        r_type = 'Rhypo'
+    ax1.set_title('Mw = ' + str(m) + ', ' + r_type + ' = ' + str(i) + ' km',
                   fontsize=16, y=1.0, pad=-16)
-    ax2.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
+    ax2.set_title('Mw = ' + str(m) + ', ' + r_type + ' = ' + str(i) + ' km',
                   fontsize=16, y=1.0, pad=-16)
     if n == len(dist_list)-1: #bottom row only
         ax1.set_xlabel('Period (s)', fontsize=16)
