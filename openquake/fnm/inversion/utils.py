@@ -548,7 +548,7 @@ def get_rup_rates_from_fault_slip_rates(
         )
 
     fault_moment_rates = {
-        id: get_fault_moment_rate(fault)
+        id: get_fault_moment_rate(fault, seismic_fraction=seismic_fraction)
         for id, fault in fault_iterator.items()
     }
 
@@ -608,11 +608,11 @@ def get_rup_rates_from_fault_slip_rates(
     mf_rup_rates = {}
     for rup, rates in mf_rates.items():
         if faults_or_subfaults == 'faults':
-            faults, fault_fracs = fault_network['rupture_df'].loc[
+            faults, fault_fracs = fault_network[rup_df_key].loc[
                 rup, ['faults', 'fault_frac_area']
             ]
         elif faults_or_subfaults == 'subfaults':
-            faults, fault_fracs = fault_network['rupture_df'].loc[
+            faults, fault_fracs = fault_network[rup_df_key].loc[
                 rup, ['subfaults', 'frac_area']
             ]
         fault_weights = fault_fracs
@@ -631,7 +631,7 @@ def get_rup_rates_from_fault_slip_rates(
     if plot_fault_moment_rates:
         import matplotlib.pyplot as plt
 
-        rups = rup_df_to_rupture_dicts(fault_network['rupture_df'])
+        rups = rup_df_to_rupture_dicts(fault_network[rup_df_key])
         fault_moment_rates_rup = {}
         if faults_or_subfaults == 'faults':
             frac_key = 'faults_orig'
