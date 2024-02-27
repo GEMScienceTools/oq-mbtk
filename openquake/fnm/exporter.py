@@ -28,6 +28,7 @@
 # -----------------------------------------------------------------------------
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
+import os
 from typing import Optional
 
 
@@ -41,8 +42,11 @@ from datetime import datetime, timezone
 from shapely.geometry import MultiLineString
 from geojson import Polygon, Feature, FeatureCollection, dump
 
-from openquake.hazardlib.source import MultiFaultSource
+from openquake.hazardlib.sourcewriter import write_source_model
+from openquake.hazardlib.sourceconverter import SourceGroup
+from openquake.hazardlib.nrml import SourceModel
 from openquake.hazardlib.geo import Point, Line
+from openquake.hazardlib.source import MultiFaultSource
 from openquake.hazardlib.geo.surface import KiteSurface
 
 from openquake.fnm.section import get_subsection
@@ -69,7 +73,7 @@ def make_multifault_source(
     source_id: str = "test_source",
     name: str = "Test Source",
     tectonic_region_type: str = "Active Shallow Crust",
-    investigation_time=0.0,
+    investigation_time=1.0,
     infer_occur_rates: bool = False,
     surface_type="kite",
     ruptures_for_output='all',
@@ -83,6 +87,9 @@ def make_multifault_source(
                 surfaces.append(sub_surface)
             else:
                 sf_kite_surface = KiteSurface(sub_surface.mesh)
+                profiles = _get_profiles(sf_kite_surface)
+                sf_kite_surface.profiles = profiles
+                surfaces.append(sf_kite_surface)
 
     elif surface_type == 'simple_fault':
         raise NotImplementedError(
@@ -121,6 +128,23 @@ def make_multifault_source(
     )
 
     mfs.sections = surfaces
+
+    return mfs
+
+
+def write_multifault_source(out_path, mf_source,
+                            trt="Active Shallow Crust",
+                            group_name=None,
+                            source_name=None,
+                            investigation_time=1.0,
+                            ):
+
+    if source_name is None:
+        source_name = mf_source.source_id
+
+    xml_outpath = os.path.join(out_path, f"{source_name}.xml")
+    write_source_model(xml_outpath, [mf_source],
+                       investigation_time=investigation_time)
 
 
 def make_multifault_source_old(
