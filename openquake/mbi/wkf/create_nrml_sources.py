@@ -1,3 +1,6 @@
+
+
+
 #!/usr/bin/env python
 # coding: utf-8
 
@@ -10,12 +13,12 @@ import numpy as np
 from glob import glob
 from openquake.wkf.utils import create_folder
 
-import importlib
 from openquake.baselib import sap
 from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.hazardlib.source import PointSource, MultiPointSource
 from openquake.hazardlib.mfd import TruncatedGRMFD
-from openquake.hazardlib.mfd. multi_mfd import MultiMFD
+from openquake.hazardlib.mfd.multi_mfd import MultiMFD
+from openquake.hazardlib.scalerel import get_available_magnitude_scalerel
 
 from shapely.geometry import Point as PointShapely
 from openquake.hazardlib.geo.point import Point
@@ -39,14 +42,42 @@ def _get_hypocenter_distribution(data):
     return PMF(out)
 
 
-def write_as_multipoint_sources(df, model, src_id, module, subzones,
+def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
                                 model_subz, mmin, bwid, rms, tom, folder_out):
+    """
+    Write a set of point sources to NRML as a multi-point
 
-    # We do not support subzones in this case
+    :param df:
+        A dataframe where each row is a point source
+    :param model:
+        A dictionary with the model representation
+    :param src_id:
+        A string with the ID of the source
+    :param msr_dict:
+        A dictionary created with  the `get_available_magnitude_scalerel`
+        function available in OQ Engine
+    :param subzones:
+        Must be false since we do not support this feature
+    :param model_subz:
+        ditto
+    :param mmin:
+        A float defining the minimum magnitude of the newly created source
+    :param bwid:
+        A float defining the width of the magnitude bins for the MFD of the
+        newly created source
+    :param rms:
+        A float specifying the rupture mesh spacing
+    :param tom:
+        An instance of :class:`openquake.hazardlib.tom.BaseTOM` subclasses
+    :param folder_out:
+        The output folder
+    """
+
+    # We do not support subzones in this case hence 'subzones' must be False
     assert subzones is False
     srcd = model['sources'][src_id]
 
-    # Prefix
+    # Get the prefix
     pfx = model.get("source_prefix", "")
     pfx += "_" if len(pfx) else pfx
 
@@ -69,8 +100,8 @@ def write_as_multipoint_sources(df, model, src_id, module, subzones,
             trt = srcd['tectonic_region_type']
             msr_str = model['msr'][trt]
 
-            my_class = getattr(module, msr_str)
-            msr = my_class()
+            # Get the MSR instance
+            msr = msr_dict[msr_str]()
 
             key = 'rupture_aspect_ratio'
             rar = get_param(srcd, model['default'], key)
@@ -169,10 +200,19 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
                         folder_out: str, as_multipoint: bool,
                         fname_subzone_shp: str = "",
                         fname_subzone_config: str = "",):
+    """
+    :param fname_input_pattern:
+    :param fname_config:
+    :param folder_out:
+    :param as_multipoint:
+    :param fname_subzone_shp:
+    :param fname_subzone_config:
+    """
 
+    # Create the output folder
     create_folder(folder_out)
 
-    # If true we take some of the information from subzones
+    # If `subzones` is true we take some of the information from subzones
     subzones = (len(fname_subzone_shp) > 0 and len(fname_subzone_config) > 0)
     model_subz = None
     if subzones:
@@ -181,6 +221,7 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
 
     # This is used to instantiate the MSR
     module = importlib.import_module('openquake.hazardlib.scalerel')
+    msr_dict = get_available_magnitude_scalerel
 
     # Parsing config
     model = toml.load(fname_config)
@@ -210,11 +251,11 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
             df = gpd.sjoin(gdf, tdf, op='within')
 
         if as_multipoint:
-            write_as_multipoint_sources(df, model, src_id, module, subzones,
+            write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
                                         model_subz, mmin, bwid, rms, tom,
                                         folder_out)
         else:
-            write_as_set_point_sources(df, model, src_id, module, subzones,
+            write_as_set_point_sources(df, model, src_id, msr_dict, subzones,
                                        model_subz, mmin, bwid, rms, tom,
                                        folder_out)
 
