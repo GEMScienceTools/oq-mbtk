@@ -35,11 +35,12 @@ from openquake.sub.get_profiles_from_slab2pt0 import (get_profiles,
                                                       get_profiles_geojson)
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
 
-#pygmt_available = True
-#try:
-#    import pygmt
-#except ImportError:
 pygmt_available = False
+try:
+    import pygmt
+    pygmt_available = True
+except ImportError:
+    pass
 
 HERE = pathlib.Path(__file__).parent.resolve()
 PLOTTING = False
