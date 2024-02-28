@@ -35,11 +35,11 @@ from openquake.hazardlib.geo.geodetic import (
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
 
 pygmt_available = False
-#try:
-#    import pygmt
-#    pygmt_available = True
-#except ImportError:
-#    pass
+try:
+    import pygmt
+    pygmt_available = True
+except ImportError:
+    pass
 
 
 @njit
