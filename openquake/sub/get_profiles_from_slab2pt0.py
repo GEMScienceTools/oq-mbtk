@@ -295,15 +295,17 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
     :param fname_fig:
         String specifiying location in which to save output figure
     """
-    f_strike = netCDF4.Dataset(fname_dep)
-    strikes = np.array(f_strike.variables['z'])
-    mask = np.where(np.isfinite(strikes))
-    strikes = strikes[mask]
-
+    
+    # Reading file with depth values
+    f_dep = netCDF4.Dataset(fname_dep)
+    depths = np.array(f_dep.variables['z'])
+    mask = np.where(np.isfinite(depths))
+    
     # Mesh
-    x = np.array(f_strike.variables['x'])
-    y = np.array(f_strike.variables['y'])
+    x = np.array(f_dep.variables['x'])
+    y = np.array(f_dep.variables['y'])
     xx, yy = np.meshgrid(x, y)
+    
     css = []
     gdf = gpd.read_file(geojson)
     gdf['coords'] = gdf.geometry.apply(lambda geom: list(geom.coords))
@@ -333,11 +335,6 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
                           (gdf_pro.length[index] / 1000), gdf.dipdir[index])
         css.append(cs)
 
-    # Reading file with depth values
-    f_dep = netCDF4.Dataset(fname_dep)
-    depths = np.array(f_dep.variables['z'])
-    mask = np.where(np.isfinite(depths))
-
     # Filter
     depths = depths[mask]
     xx = xx[mask]
@@ -358,31 +355,26 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
     slb = Slab2pt0(depths, css)
     slb.compute_profiles(spacing / 2)
     
-    '''
+    
     if len(str(fname_fig)) > 0:
         bb = np.array([min_lo, min_la, max_lo, max_la])
         dlt = 5.0
-        reg = [bb - dlt, bb[1] + dlt, bb[2] - dlt, bb[3] + dlt]
+        reg = [bb[0] - dlt, bb[2] + dlt, bb[1] - dlt, bb[3] + dlt]
         clo = np.mean([bb[0], bb[1]])
         cla = np.mean([bb[2], bb[3]])
-      
+        
         if pygmt_available:
             fig = pygmt.Figure()
             pygmt.makecpt(cmap="jet", series=[0.0, 800])
-            # fig.basemap(region=reg, projection="M20c", frame=True)
             fig.basemap(region=reg, projection=f"T{clo}/{cla}/12c", frame=True)
             fig.coast(land="gray", water="skyblue")
-            # Profile traces
-            for i, pro in enumerate(traces):
-                fig.plot(x=pro[:, 0], y=pro[:, 1], pen="red")
-                fig.text(x=pro[0, 0], y=pro[0, 1], text=f'{i}', font="4p")
-            # Grid
+            
             fig.plot(x=depths[:, 0], y=depths[:, 1],
                      color=-depths[:, 2],
                      style='c0.025c',
                      cmap=True)
             # Profiles
-            for key in slb.profiles:
+            for i, key in enumerate(slb.profiles):
                 pro = slb.profiles[key]
                 if pro.shape[0] > 0:
                     fig.plot(x=pro[:, 0],
@@ -391,6 +383,8 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
                              cmap=True,
                              style="h0.025c",
                              pen='black')
+                    fig.text(x=(pro[0, 0] + 0.3), y=pro[0, 1], 
+                             text=f'{i}', font="4p") 
             fig.savefig(fname_fig)
             fig.show()
         else:
@@ -410,7 +404,7 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
             plt.xlim([xmin, xmax])
             plt.colorbar(label='depth to slab (km)')
             plt.savefig(fname_fig)
-        '''
+        
     return slb
 
 
