@@ -11,6 +11,9 @@ def main(pattern: str, fname_output: str = "profiles.geojson"):
     """
     Creates a geojson file with all the sections included in the text files
     matching the pattern
+
+    Example use: 
+    oqm sub geojson_from_profiles 'openquake/sub/tests/data/cs_cam/cs*csv'
     """
 
     features = []
