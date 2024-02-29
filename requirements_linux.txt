@@ -31,3 +31,4 @@ reportlab
 netCDF4
 igraph
 pyvista
+basemap
