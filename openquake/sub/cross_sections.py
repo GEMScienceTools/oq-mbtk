@@ -137,13 +137,14 @@ class Slab2pt0(object):
                                    cs.length[0], 0., num)
             p = pnts[idxslb, :]
 
+            try: 
+                interp = LinearNDInterpolator(p[:, 0:2], p[:, 2])
+                z = interp(psec[0], psec[1])
 
-            dff_lo = numpy.max(p[0]) - numpy.min(p[0])
-            dff_la = numpy.max(p[1]) - numpy.min(p[1])
-
-            tri = Delaunay(numpy.c_[(p[:, 0], p[:,1])], qhull_options = "QJ")
-            ip = LinearNDInterpolator(tri, p[:,2])
-            z = ip(psec[0], psec[1])
+            except:
+                tri = Delaunay(numpy.c_[(p[:, 0], p[:,1])], qhull_options = "QJ")
+                ip = LinearNDInterpolator(tri, p[:,2])
+                z = ip(psec[0], psec[1])
             
 
             iii = numpy.isfinite(z)
