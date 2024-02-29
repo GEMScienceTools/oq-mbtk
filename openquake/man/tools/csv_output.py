@@ -518,7 +518,6 @@ def read_hazard_curve_csv_pd(filename):
             - Longitudes
             - Latitudes
             - PoEs
-            - String with the header
             - IMLs
     """
     lats = []
