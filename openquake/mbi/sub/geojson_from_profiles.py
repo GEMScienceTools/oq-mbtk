@@ -14,9 +14,7 @@ def main(pattern: str, fname_output: str = "profiles.geojson"):
     """
 
     features = []
-    print(pattern)
     for fname in glob.glob(pattern):
-        print(fname)
         dat = np.loadtxt(fname)
         tmp = LineString([(x, y) for x, y in zip(dat[:, 0], dat[:, 1])])
         prop = {'csid': fname.split('_')[1].replace('.csv','')}
@@ -24,6 +22,7 @@ def main(pattern: str, fname_output: str = "profiles.geojson"):
     feature_collection = FeatureCollection(features)
     with open(fname_output, 'w') as f:
         dump(feature_collection, f)
+    print(f'profiles written to {fname_output}')
 
 
 descr = 'The pattern to the text files with the profiles'
