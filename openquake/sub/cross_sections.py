@@ -45,7 +45,7 @@ from openquake.hazardlib.geo.geodetic import (
     min_distance_to_segment, point_at, azimuth, geodetic_distance)
 
 from openquake.hazardlib.geo.utils import OrthographicProjection
-from scipy.interpolate import LinearNDInterpolator, RBFInterpolator
+from scipy.interpolate import LinearNDInterpolator
 from scipy.spatial import Delaunay
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.parsers.catalogue.csv_catalogue_parser import CsvCatalogueParser
