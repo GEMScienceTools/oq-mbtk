@@ -10,6 +10,11 @@ def main(cs_dir, outfi, ini_fname, cs_length=300., cs_depth=300.):
     Output file is a list for each cross section with the format:
 
         lon lat length depth azimuth id <config>.ini
+
+    Example use: 
+
+    oqm sub make_cs_coords openquake/sub/tests/data/cs_cam cs_profiles.csv 
+                example.ini 300 300
     """
 
     make_cs_coords(cs_dir, outfi, ini_fname, cs_length, cs_depth)
