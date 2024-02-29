@@ -9,6 +9,12 @@ from openquake.sub.plotting.plot_cross_section import plt_cs
 
 
 def pcs(cs_fname, out_folder=None):
+    """
+    plots cross sections based on lines in cs_fname of format
+
+        lon lat length depth azimuth id <config>.ini
+
+    """
     if out_folder == None:
         out_folder = './'
     if not os.path.exists(out_folder):
