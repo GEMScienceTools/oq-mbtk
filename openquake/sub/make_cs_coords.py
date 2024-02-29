@@ -33,6 +33,12 @@ from openquake.baselib import sap
 from openquake.hazardlib.geo.geodetic import azimuth
 
 def make_cs_coords(cs_dir, outfi, ini_fname, cs_length=300., cs_depth=300.):
+    """
+    Creates cs_coords file of format to be used by plotting script, in the
+    case that the profiles have been generated in any other way than by
+    the create_multiple_cross_sections.py
+    """
+
     cs_files = sorted(glob.glob(f'{cs_dir}/*csv'))
     lines = []
     for fi in cs_files:
