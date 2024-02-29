@@ -35,11 +35,11 @@ from openquake.hazardlib.geo.geodetic import (
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
 
 pygmt_available = False
-#try:
-#    import pygmt
-#    pygmt_available = True
-#except ImportError:
-#    pass
+try:
+    import pygmt
+    pygmt_available = True
+except ImportError:
+    pass
 
 
 @njit
@@ -329,7 +329,6 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
 
     # Create cross-sections
     for index, row in gdf.iterrows():
-        print(gdf.coords[index][0][0], gdf.coords[index][0][1])
         cs = CrossSection(gdf.coords[index][0][0], gdf.coords[index][0][1],
                           (gdf_pro.length[index] / 1000), gdf.dipdir[index])
         css.append(cs)
@@ -358,13 +357,15 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
     # Slab 2.0
     slb = Slab2pt0(depths, css)
     slb.compute_profiles(spacing / 2)
+    
+    '''
     if len(str(fname_fig)) > 0:
-        bb = np.array([125, 5, 160, 20])
+        bb = np.array([min_lo, min_la, max_lo, max_la])
         dlt = 5.0
         reg = [bb - dlt, bb[1] + dlt, bb[2] - dlt, bb[3] + dlt]
         clo = np.mean([bb[0], bb[1]])
         cla = np.mean([bb[2], bb[3]])
-        """
+      
         if pygmt_available:
             fig = pygmt.Figure()
             pygmt.makecpt(cmap="jet", series=[0.0, 800])
@@ -409,7 +410,7 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
             plt.xlim([xmin, xmax])
             plt.colorbar(label='depth to slab (km)')
             plt.savefig(fname_fig)
-        """
+        '''
     return slb
 
 
