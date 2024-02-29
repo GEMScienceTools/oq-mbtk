@@ -290,7 +290,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
     mtxs_median = {}
     d_step = 1
     Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
-    for n, i in enumerate(imt_list): # Iterate though imt_list
+    for n, i in enumerate(imt_list): # Iterate through imt_list
         matrix_medians=np.zeros((len(gmpe_list),
                                 (len(mag_list)*int((maxR-minR)/d_step))))
 

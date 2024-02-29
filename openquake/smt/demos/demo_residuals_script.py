@@ -96,6 +96,8 @@ def get_residuals():
     rspl.plot_residual_pdf_with_spectral_period(residuals, fi_pdf)
     rspl.pdf_table(residuals, fi_pdf_table)
 
+    return residuals
+
 
 def main():
     """
@@ -106,7 +108,7 @@ def main():
     parse_into_metadata()
      
     # Get the residuals per trt
-    res_per_trt = get_residuals()
+    res = get_residuals()
 
 
 if __name__ == '__main__':
