@@ -93,7 +93,6 @@ def plot(trench, cat, cs_dict, interdistance):
     #
     # Draw paralleles and meridians with labels
     # labels = [left,right,top,bottom]
-#    m.drawcoastlines()
     m.drawmeridians(numpy.arange(numpy.floor(minlo/10.)*10,
                                  numpy.ceil(maxlo/10.)*10, 5.),
                     labels=[False, False, False, True])
@@ -129,7 +128,6 @@ def plot(trench, cat, cs_dict, interdistance):
     else:
         for key in cs_dict:
             cs = cs_dict[key]
-        #if cs is not None:
             x, y = m(cs.plo, cs.pla)
             plt.plot(x, y, ':r', linewidth=2, zorder=20)
             text = plt.text(x[0], y[0], '%s' % key, ha='center',
