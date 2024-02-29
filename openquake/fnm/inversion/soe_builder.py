@@ -205,8 +205,7 @@ def make_frac_mfd_eqns(rups, faults, mfd, mag_decimals=1, weight=1.0):
 
     for i, rup in enumerate(rups):
         rhs[i] = (
-            mfd_occ_rates[rup["M"]]
-            * mfd_slip_rate_fracs[rup["M"]][rup["idx"]]
+            mfd_occ_rates[rup["M"]] * mfd_slip_rate_fracs[rup["M"]][rup["idx"]]
         )
 
     return lhs, rhs
@@ -335,7 +334,6 @@ def make_eqns(
     mfd_rel_eqns=False,
     mfd_rel_b_val=1.0,
     mfd_rel_weight=1.0,
-    mfd_abs_rates=False,
     mfd_abs_weight=1.0,
     regional_abs_mfds=None,
     mfd_abs_normalize=False,
@@ -346,6 +344,7 @@ def make_eqns(
     verbose=False,
     shear_modulus=SHEAR_MODULUS,
 ):
+
     lhs_set = []
     rhs_set = []
     err_set = []
@@ -404,12 +403,12 @@ def make_eqns(
         rhs_set.append(mfd_rel_rhs)
         err_set.append(mfd_rel_errs)
 
-    if mfd_abs_rates is True:
+    if mfd is not None:
         print("Making MFD absolute eqns")
         mfd_abs_lhs, mfd_abs_rhs, mfd_abs_errs = make_abs_mfd_eqns(
             rups,
-            mfd,  # errs=mfd_abs_err
-            weight=mfd_abs_weight,
+            mfd,
+            weight=1 / mfd_abs_weight,  # ^ mfd_abs_weight reduces relevance
             normalize=mfd_abs_normalize,
         )
         lhs_set.append(mfd_abs_lhs)
@@ -420,7 +419,8 @@ def make_eqns(
             print("Making regional MFD absolute eqns")
             for reg, reg_mfd_data in regional_abs_mfds.items():
                 if ('rups_include' in reg_mfd_data.keys()) and (
-                    len(reg_mfd_data['rups_include']) > 0):
+                    len(reg_mfd_data['rups_include']) > 0
+                ):
                     reg_abs_lhs, reg_abs_rhs, reg_abs_errs = make_abs_mfd_eqns(
                         rups,
                         reg_mfd_data["mfd"],

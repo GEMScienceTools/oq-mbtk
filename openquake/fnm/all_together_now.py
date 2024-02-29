@@ -11,15 +11,12 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-from openquake.fnm.inversion.soe_builder import make_eqns
-
 from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
     make_subfault_df,
     make_rupture_df,
 )
-
 
 from openquake.fnm.rupture_connections import (
     get_rupture_adjacency_matrix,
@@ -37,10 +34,19 @@ from openquake.fnm.rupture_filtering import (
 )
 
 from openquake.fnm.inversion.utils import (
+    rup_df_to_rupture_dicts,
+    subsection_df_to_fault_dicts,
     SHEAR_MODULUS,
     get_rup_rates_from_fault_slip_rates,
 )
 
+from openquake.fnm.inversion.soe_builder import make_eqns
+from openquake.fnm.inversion.simulated_annealing import simulated_annealing
+
+from openquake.fnm.exporter import (
+    make_multifault_source,
+    write_multifault_source,
+)
 
 logging.basicConfig(
     format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
@@ -70,6 +76,8 @@ default_settings = {
     'full_fault_only_mf_ruptures': True,
     'calculate_rates_from_slip_rates': True,
     'surface_type': 'simple',
+    'min_mag': None,
+    'max_mag': None,
 }
 
 
@@ -290,6 +298,19 @@ def build_fault_network(
         fault_network['multifault_inds'],
         fault_network['subfault_df'],
     )
+
+    if settings['min_mag'] is not None:
+        logging.info("Filtering ruptures by minimum magnitude")
+        fault_network['rupture_df'] = fault_network['rupture_df'][
+            fault_network['rupture_df']['mag'] >= settings['min_mag']
+        ]
+
+    if settings['max_mag'] is not None:
+        logging.info("Filtering ruptures by maximum magnitude")
+        fault_network['rupture_df'] = fault_network['rupture_df'][
+            fault_network['rupture_df']['mag'] <= settings['max_mag']
+        ]
+
     t6 = time.time()
     event_times.append(t6)
     logging.info(f"\tdone in {round(t6-t5, 1)} s")
@@ -326,6 +347,7 @@ def build_fault_network(
         )
 
     if settings['calculate_rates_from_slip_rates']:
+        t_slip_rate_start = time.time()
         logging.info("Calculating rates from slip rates")
         if settings['rupture_set_for_rates_from_slip_rates'] == 'filtered':
             rup_df_key = 'rupture_df_keep'
@@ -343,9 +365,11 @@ def build_fault_network(
             plot_fault_moment_rates=settings['plot_fault_moment_rates'],
         )
         fault_network[rup_df_key]['annual_occurrence_rate'] = rupture_rates
-        t9 = time.time()
-        event_times.append(t9)
-        logging.info(f"\tdone in {round(t9-t8, 1)} s")
+        t_slip_rate_end = time.time()
+        event_times.append(t_slip_rate_end)
+        logging.info(
+            f"\tdone in {round(t_slip_rate_end-t_slip_rate_start, 1)} s"
+        )
 
     fault_network['bin_dist_mat'] = binary_adjacence_matrix
     logging.info(f"total time: {round(event_times[-1]-event_times[0], 1)} s")

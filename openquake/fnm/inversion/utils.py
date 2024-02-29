@@ -31,6 +31,7 @@
 
 import logging
 from math import prod
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -40,6 +41,7 @@ import geopandas as gpd
 from shapely.ops import transform
 from shapely.geometry import Point, LineString
 
+from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.mfd import (
     TruncatedGRMFD,
     TaperedGRMFD,
@@ -96,6 +98,23 @@ def get_rupture_displacement(
 
 def weighted_mean(values, fracs):
     return sum(prod(vals) for vals in zip(values, fracs)) / sum(fracs)
+
+
+def b_mle(mags, min_mag=4.0):
+    mags_include = mags[mags >= min_mag]
+
+    beta = 1 / (mags_include.mean() - min_mag)
+    b = np.log10(np.e) * beta
+    return b
+
+
+def get_a_b(mags, min_mag=4.0, cat_duration=40.0, b=None):
+    if b is None:
+        b = b_mle(mags, min_mag)
+
+    N = len(mags[mags >= min_mag]) / cat_duration
+    a = np.log10(N) + b * min_mag
+    return a, b
 
 
 def slip_vector_azimuth(strike, dip, rake):
@@ -266,15 +285,22 @@ def make_fault_mfd(
         )
 
     if mfd_type == 'TruncatedGRMFD':
-        mfd = TruncatedGRMFD.from_moment(
-            min_mag=min_mag,
-            max_mag=max_mag,
-            bin_width=bin_width,
-            b_val=b_val,
-            moment_rate=moment_rate,
-        )
-    elif mfd_type == 'TaperedGRMFD':
-        raise NotImplementedError("only truncated grmfd for now")
+        try:
+            mfd = TruncatedGRMFD.from_moment(
+                min_mag=min_mag,
+                max_mag=max_mag,
+                bin_width=bin_width,
+                b_val=b_val,
+                moment_rate=moment_rate,
+            )
+        except ValueError:
+            mfd = TruncatedGRMFD.from_moment(
+                min_mag=min_mag - 0.5,
+                max_mag=max_mag,
+                bin_width=bin_width,
+                b_val=b_val,
+                moment_rate=moment_rate,
+            )
     elif mfd_type == 'YoungsCoppersmith1985MFD':
         if min_mag >= (max_mag - 0.5):
             raise ValueError(
@@ -288,7 +314,9 @@ def make_fault_mfd(
             bin_width=bin_width,
         )
     else:
-        raise NotImplementedError("only truncated grmfd for now")
+        raise NotImplementedError(
+            "only truncated and youngscoppersmith for now"
+        )
 
     return mfd
 
@@ -669,3 +697,23 @@ def get_rup_rates_from_fault_slip_rates(
         plt.show()
 
     return final_rup_rates
+
+
+def get_earthquake_fault_distances(eqs, faults, dist: Optional[float] = None):
+    eq_mesh = Mesh(eqs.longitude.values, eqs.latitude.values, eqs.depth.values)
+    dist_df = np.zeros((len(eqs), len(faults)))
+
+    for i, fault in enumerate(faults):
+        dist_df[:, i] = fault['surface'].get_min_distance(eq_mesh)
+
+    dist_df = pd.DataFrame(
+        data=dist_df, columns=[f['fid'] for f in faults], index=eqs.index
+    )
+    dist_df_min_vals = dist_df.min(axis=1)
+
+    eqs['fault_dist'] = dist_df_min_vals
+
+    if dist is not None:
+        eqs = eqs.loc[(eqs['fault_dist'] <= dist)]
+
+    return eqs
