@@ -7,10 +7,12 @@ from openquake.sub.plotting.plot_multiple_cross_sections_map import plot
 
 def main(config_fname, cs_file=None):
     """
-    Creates file with parameters needed to plot cross sections.
-    Output file is a list for each cross section with the format:
+    Plots map of cross sections with earthquake data
 
-        lon lat length depth azimuth id <config>.ini
+    Example:
+        oqm sub plot_cross_sections_map config.ini cs_profiles.cs
+
+    Note: paths in config.ini are relative to cwd
     """
 
     plot(config_fname, cs_file)
