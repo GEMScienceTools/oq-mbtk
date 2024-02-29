@@ -79,5 +79,4 @@ plot.config_file = 'config file to datasets'
 plot.cs_file = 'existing cross sections details'
 
 if __name__ == "__main__":
-    #main(sys.argv[1:])
     sap.run(plot)
