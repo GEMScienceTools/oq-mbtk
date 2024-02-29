@@ -317,7 +317,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                     dist_type, trt, up_or_down_dip) 
                 
                 # Get means further than minR
-                idx = np.argwhere(r_vals>minR).flatten()
+                idx = np.argwhere(r_vals>=minR).flatten()
                 mean = [mean[0][0][idx]]
                 std = [std[0][0][idx]]
                 tau = [tau[0][0][idx]]
@@ -331,7 +331,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                 if mtxs_type == '16th_perc':
                     Nstd = 1 # Median - 1std = ~16th percentile
                     medians = np.append(medians, (np.exp(mean-Nstd*std[0])))   
-                sigmas = np.append(sigmas,std[0])
+                sigmas = np.append(sigmas, std[0])
                 
             matrix_medians[:][g]= medians
         mtxs_median[n] = matrix_medians

@@ -480,28 +480,28 @@ class Residuals(object):
         """
         Calculate the expected ground motions from the context
         """
-        # TODO Rake hack will be removed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if not context["Ctx"].rake:
-            context["Ctx"].rake = 0.0
+            context["Ctx"].rake = 0.0 # Assume strike
         expected = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
         # Period range for GSIM
         for gmpe in self.gmpe_list:
             expected[gmpe] = OrderedDict([(imtx, {}) for imtx in self.imts])
             for imtx in self.imts:
                 gsim = self.gmpe_list[gmpe]
-                gsim_orig = gsim # If gsim into mgmpe retain pot. region for ctx
+                gsim_orig = gsim # Retain before using mgmpe
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < self.gmpe_sa_limits[gmpe][0] or\
                             period > self.gmpe_sa_limits[gmpe][1]:
                         expected[gmpe][imtx] = None
                         continue
-                # Check if gsim needs appending with mgmpe
+                # Check if gsim needs modifying with mgmpe
                 gsim = mgmpe_check(gsim)
                 # Add region parameter to sites context if specified in gsim
                 if 'eshm20_region' in gsim_orig.kwargs:
                     context["Ctx"].region = gsim_orig.kwargs['eshm20_region']
-                if 'region' in gsim_orig.kwargs and 'eshm20_region' not in gsim.kwargs:
+                if ('region' in gsim_orig.kwargs and
+                    'eshm20_region' not in gsim.kwargs):
                     context["Ctx"].region = gsim_orig.kwargs['region']
                 # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
