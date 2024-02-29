@@ -995,7 +995,8 @@ class GroundMotionDatabase(ContextDB):
     SCALAR_IMTS = ["PGA", "PGV"]
 
     def get_observations(self, imtx, records, component="Geometric"):
-        """Return observed values for the given imt, as numpy array.
+        """
+        Return observed values for the given imt, as numpy array.
         See superclass docstring for details
         """
 
@@ -1236,7 +1237,7 @@ class GroundMotionDatabase(ContextDB):
 
     def _get_site_id(self, str_id):
         """
-        TODO 
+        Get site id 
         """
         if str_id not in self.site_ids:
             self.site_ids.append(str_id)
