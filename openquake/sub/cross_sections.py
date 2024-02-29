@@ -45,8 +45,8 @@ from openquake.hazardlib.geo.geodetic import (
     min_distance_to_segment, point_at, azimuth, geodetic_distance)
 
 from openquake.hazardlib.geo.utils import OrthographicProjection
-from scipy.interpolate import LinearNDInterpolator
-
+from scipy.interpolate import LinearNDInterpolator, RBFInterpolator
+from scipy.spatial import Delaunay
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.parsers.catalogue.csv_catalogue_parser import CsvCatalogueParser
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
@@ -141,17 +141,10 @@ class Slab2pt0(object):
             dff_lo = numpy.max(p[0]) - numpy.min(p[0])
             dff_la = numpy.max(p[1]) - numpy.min(p[1])
 
-            if dff_lo > dff_la:
-                z = numpy.interp(psec[0], p[0], p[2])
-            else:
-                z = numpy.interp(psec[1], p[1], p[2])
-
-            try:
-                # interp = LinearNDInterpolator(p[:, 0:2], p[:, 2])
-                # z = interp(psec[0], psec[1])
-                pass
-            except:
-                breakpoint()
+            tri = Delaunay(numpy.c_[(p[:, 0], p[:,1])], qhull_options = "QJ")
+            ip = LinearNDInterpolator(tri, p[:,2])
+            z = ip(psec[0], psec[1])
+            
 
             iii = numpy.isfinite(z)
             pro = numpy.concatenate((numpy.expand_dims(psec[0][iii], axis=1),
