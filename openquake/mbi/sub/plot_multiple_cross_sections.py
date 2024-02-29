@@ -7,10 +7,13 @@ from openquake.sub.plotting.plot_multiple_cross_sections import pcs
 
 def main(cs_file, output_folder=None):
     """
-    Creates file with parameters needed to plot cross sections.
-    Output file is a list for each cross section with the format:
+    Plots cross section of data for each cross section in
+    cs_file including the data in the ini file referenced
+    in the cs_file lines. Saves pdfs to output_folder
 
-        lon lat length depth azimuth id <config>.ini
+    Example:
+
+        oqm sub plot_multiple_cross_sections cs_profiles.cs pdf 
     """
 
     pcs(cs_file, output_folder)
