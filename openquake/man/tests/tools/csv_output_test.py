@@ -6,7 +6,7 @@ import tempfile
 import numpy as np
 
 import openquake.man.tools.csv_output as csv
-from openquake.man.tools.csv_output import mean_mde_for_gmt
+from openquake.man.tools.csv_output import mean_mde_for_gmt, mean_llt_for_gmt
 from openquake.calculators.tests import open8
 from openquake.calculators.export import export
 from openquake.calculators.base import run_calc
@@ -76,6 +76,19 @@ class TestMeanMDE(unittest.TestCase):
         expect_lines2 = np.array(expect_lines2)
         aae = np.testing.assert_almost_equal
         aae(expect_lines1, expect_lines2, decimal=4)
+
+    def test_output_llt(self):
+        """
+        test reorg of one instance of an MDE file; one rlz
+        """
+        fname = os.path.join(BASE_DATA_PATH, 'TRT_Lon_Lat-mean-0.csv')
+        fout = 'test-1.csv'
+        mean_llt_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_llt.csv')
+        expected_lines = [line for line in open8(expected)]
+        actual_lines = [line for line in open8(fout)]
+        assert expected_lines == actual_lines
+        os.remove(fout)
 
 
 class OutputTestCase(unittest.TestCase):
