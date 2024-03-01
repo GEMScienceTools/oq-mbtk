@@ -29,14 +29,15 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import numpy as np
 import pandas as pd
 import pyproj as pj
 import geopandas as gpd
 
 from math import prod
 
-from shapely.geometry import Point, LineString
 from shapely.ops import transform
+from shapely.geometry import Point, LineString
 
 from openquake.baselib.general import AccumDict
 from openquake.hazardlib.mfd.tapered_gr_mfd import mag_to_mo
@@ -91,6 +92,32 @@ def weighted_mean(values, fracs):
     return sum(prod(vals) for vals in zip(values, fracs)) / sum(fracs)
 
 
+def slip_vector_azimuth(strike, dip, rake):
+    # Convert degrees to radians
+    strike_rad = np.radians(strike)
+    dip_rad = np.radians(dip)
+    rake_rad = np.radians(rake) * -1
+
+    # Calculate the 3D Cartesian coordinates of the slip vector
+    slip_x = -np.sin(rake_rad) * np.sin(strike_rad) - np.cos(
+        rake_rad
+    ) * np.sin(dip_rad) * np.cos(strike_rad)
+    slip_y = np.sin(rake_rad) * np.cos(strike_rad) - np.cos(rake_rad) * np.sin(
+        dip_rad
+    ) * np.sin(strike_rad)
+
+    # Calculate the azimuth of the slip vector
+    azimuth = np.degrees(np.arctan2(slip_y, slip_x))
+
+    # Ensure the azimuth is between 0 and 360 degrees
+    if azimuth < 0:
+        azimuth += 360
+    if azimuth >= 360.0:
+        azimuth -= 360.0
+
+    return azimuth
+
+
 def check_fault_in_poly(fault, polies, id_key='id'):
     poly_membership = []
 
@@ -112,7 +139,9 @@ def faults_in_polies(faults, polies, id_key='id'):
         faults_ = faults
     traces_proj, polies_proj = project_faults_and_polies(faults_, polies)
     fault_poly_membership = {
-        faults_[i]["id"]: check_fault_in_poly(trace, polies_proj, id_key=id_key)
+        faults_[i]["id"]: check_fault_in_poly(
+            trace, polies_proj, id_key=id_key
+        )
         for i, trace in enumerate(traces_proj)
     }
 
@@ -135,28 +164,34 @@ def get_rup_poly_fracs(rup, fpm):
     return rpf
 
 
-def rup_df_to_rupture_dicts(rup_df):
+def rup_df_to_rupture_dicts(
+    rup_df, mag_col='M', displacement_col='D', subfaults_col='subfaults'
+):
     rupture_dicts = []
     for i, rup in rup_df.iterrows():
         rupture_dicts.append(
             {
                 "idx": i,
-                "M": rup["M"],
-                "D": rup["D"],
-                "faults": rup["subsections"],
+                "M": rup[mag_col],
+                "D": rup[displacement_col],
+                "faults": rup[subfaults_col],
             }
         )
     return rupture_dicts
 
 
-def subsection_df_to_fault_dicts(subsection_df):
+def subsection_df_to_fault_dicts(
+    subsection_df,
+    slip_rate_col='slip_rate',
+    slip_rate_err_col='slip_rate_err',
+):
     fault_dicts = []
     for i, fault in subsection_df.iterrows():
         fault_dicts.append(
             {
                 "id": i,
-                "slip_rate": fault["slip_rate"],
-                "slip_rate_err": fault["slip_rate_err"],
+                "slip_rate": fault[slip_rate_col],
+                "slip_rate_err": fault[slip_rate_err_col],
                 "trace": fault["trace"],
                 "area": fault["area"],
             }
@@ -164,12 +199,17 @@ def subsection_df_to_fault_dicts(subsection_df):
     return fault_dicts
 
 
-def get_rupture_regions(rup_df: pd.DataFrame, subsection_df: pd.DataFrame,
-                        seis_regions: gpd.GeoDataFrame, id_key='id'):
-
+def get_rupture_regions(
+    rup_df: pd.DataFrame,
+    subsection_df: pd.DataFrame,
+    seis_regions: gpd.GeoDataFrame,
+    id_key='id',
+):
     fault_poly_membership = faults_in_polies(subsection_df, seis_regions)
-    rup_region_fracs = [get_rup_poly_fracs(r, fault_poly_membership)
-                        for i, r in rup_df.iterrows()]
+    rup_region_fracs = [
+        get_rup_poly_fracs(r, fault_poly_membership)
+        for i, r in rup_df.iterrows()
+    ]
 
     regional_rup_fractions = {}
 

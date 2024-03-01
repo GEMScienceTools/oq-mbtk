@@ -1,12 +1,12 @@
 
 # OQ mbtk requirements
-
+#
 # From OQ wheels
 https://wheelhouse.openquake.org/macos/arm64/py310/numpy-1.23.3-cp310-cp310-macosx_11_0_arm64.whl
-https://wheelhouse.openquake.org/macos/arm64/py310/Fiona-1.8.21-cp310-cp310-macosx_11_0_arm64.whl
-https://wheelhouse.openquake.org/macos/arm64/py310/GDAL-3.4.3-cp310-cp310-macosx_11_0_arm64.whl
-https://wheelhouse.openquake.org/macos/arm64/py310/pyproj-3.4.0-cp310-cp310-macosx_11_0_arm64.whl
-
+https://wheelhouse.openquake.org/macos/arm64/py310/pyproj-3.6.1-cp310-cp310-macosx_11_0_arm64.whl
+https://wheelhouse.openquake.org/macos/arm64/py310/GDAL-3.7.3-cp310-cp310-macosx_11_0_arm64.whl
+https://wheelhouse.openquake.org/macos/arm64/py310/fiona-1.9.5-cp310-cp310-macosx_11_0_arm64.whl
+#
 # Version specific
 geopandas >= 0.10.2
 ipykernel >= 4.8.0
@@ -17,10 +17,9 @@ nbstripout >= 0.3.0
 notebook >= 5.0.0
 pylint >= 2.1.1
 rtree >= 0.9.4
-
+#
 # Generic
 nbformat
-pyproj
 geojson
 nbconvert
 obspy
@@ -33,3 +32,4 @@ reportlab
 netCDF4
 igraph
 pyvista
+basemap
