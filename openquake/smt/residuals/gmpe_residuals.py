@@ -368,7 +368,7 @@ class Residuals(object):
     def from_toml(cls, filename):
         """
         Read in gmpe_list and imts from .toml file. This method allows use of
-        gmpes with additional parameters and input files within SMT
+        gmpes with additional parameters and input files within the SMT
         """
         # Read in toml file with dict of gmpes and subdict of imts
         config_file = toml.load(filename)
@@ -1219,7 +1219,7 @@ class SingleStationAnalysis(object):
     def from_toml(cls, site_id_list, filename):
         """
         Read in gmpe_list and imts from .toml file. This method allows use of
-        non-ergodic GMPEs and gmpes with additional input files within SMT
+        gmpes with additional parameters and input files within the SMT
         """
         # Read in toml file with dict of gmpes and subdict of imts
         config_file = toml.load(filename)

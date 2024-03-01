@@ -22,7 +22,7 @@ import os
 import sys
 import shutil
 import unittest
-from openquake.smt.parsers.ngaw2_flatfile_parser import NGAWest2FlatfileParser
+from openquake.smt.parsers.ngawest2_flatfile_parser import NGAWest2FlatfileParser
 
 if sys.version_info[0] >= 3:
     import pickle
