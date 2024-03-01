@@ -16,13 +16,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests parsing of the ESM22 flatfile format (i.e. flatfile downloaded from web service) in SMT
+Tests parsing of a flatfile downloaded from ESM custom URL database
+
+This parser assumes you have selected all available headers in your URL search
+when downloading the flatfile
 """
 import os
 import sys
 import shutil
 import unittest
-from openquake.smt.parsers.esm22_flatfile_parser import ESM22FlatfileParser
+from openquake.smt.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -30,50 +33,41 @@ else:
     import cPickle as pickle
 
 # Defines the record IDs for the target data set
-
 TARGET_IDS = [
-"EMSC_20161029_0000147_AC_DURR_0.0",
-"EMSC_20160831_0000112_AC_DURR_0.0",
-"EMSC_20191128_0000157_AC_DURR_0.0",
-"EMSC_20150207_0000001_AC_DURR_0.0",
-"EMSC_20170127_0000087_AC_DURR_0.0",
-"EMSC_20191128_0000068_AC_DURR_0.0",
-"EMSC_20151101_0000023_AC_DURR_0.0",
-"EMSC_20190921_0000063_AC_DURR_0.0",
-"EMSC_20151031_0000024_AC_DURR_0.0",
-"EMSC_20161104_0000026_AC_DURR_0.0",
-"EMSC_20170918_0000091_HI_VAS2_",
-"EMSC_20161029_0000147_HI_VAS2_",
-"EMSC_20140512_0000004_HI_VAS2_",
-"EMSC_20140519_0000003_HI_VAS2_",
-"EMSC_20210112_0000070_HI_VAS2_",
-"EMSC_20150403_0000004_AC_TIR1_0.0",
-"EMSC_20191128_0000157_AC_TIR1_0.0",
-"EMSC_20140520_0000006_AC_TIR1_0.0",
-"EMSC_20150207_0000001_AC_TIR1_0.0"]
+"EMSC_20110702_0000061_GE_IMMV_",
+"EMSC_20110728_0000038_GE_KARP_",
+"EMSC_20110801_0000064_GE_KTHA_",
+"EMSC_20110910_0000003_HI_CH01_",
+"EMSC_20110910_0000021_HI_KSS1_",
+"EMSC_20110915_0000035_HI_MYT1_",
+"EMSC_20111025_0000141_HI_NAX1_",
+"EMSC_20111105_0000125_HI_RDI1_",
+"EMSC_20111221_0000032_HI_RGE1_"]
 
+#Specify base directory
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
-class ESM22FlatfileParserTestCase(unittest.TestCase):
+class ESMFlatfileParserURLTestCase(unittest.TestCase):
     """
-    Tests the parsing of the reformatted ESM22 flatfile
+    Tests the parsing of an ESM URL format flatfile
     """
     @classmethod
     def setUpClass(cls):
-        #Specify base directory
-        cls.ESM22_flatfile_directory = os.path.join(BASE_DATA_PATH,"ESM22_Albania_filtered_test.csv")
-        cls.db_file = os.path.join(BASE_DATA_PATH, "ESM22_conversion_test_metadata")    
-        
-    def test_esm22_flatfile_parser(self):
+        cls.ESM_flatfile_directory = os.path.join(BASE_DATA_PATH,
+                                                  "ESM_URL_Greece_test.csv")
+        cls.db_file = os.path.join(BASE_DATA_PATH,
+                                   "ESM_URL_conversion_test_metadata")       
+
+    def test_esm_flatfile_parser(self):
         """
-        Tests the parsing of the reformatted ESM22 flatfile
+        Tests the parsing of the reformatted ESM flatfile
         """
-        parser = ESM22FlatfileParser.autobuild("000", "ESM22_conversion_test",
-                                             self.db_file, self.ESM22_flatfile_directory)
+        parser = ESMFlatfileParserURL.autobuild("000", "ESM_conversion_test",
+                                             self.db_file, self.ESM_flatfile_directory)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
-        # Should contain 19 records
-        self.assertEqual(len(db), 19)
+        # Should contain 9 records
+        self.assertEqual(len(db), 9)
         # Record IDs should be equal to the specified target IDs
         for rec in db:
             print(rec.id)
