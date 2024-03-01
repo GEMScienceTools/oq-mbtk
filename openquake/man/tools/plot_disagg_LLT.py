@@ -9,19 +9,19 @@ import subprocess
 
 from openquake.man.tools.csv_output import (make_llt_df, get_rlz_llt, 
                                             write_gmt_llt, get_disagg_header_info,
-                                            make_gmt_file_llt)
+                                            mean_llt_for_gmt)
 from openquake.baselib import sap
 
 """
 used to plot mean disaggregation by MDE results using GMT
 
-example of usage: 
+usage:
 
 ./plot_disagg_LLT.py <filename> <probability of exceedance> <IMT>
 
-example of usage (filename is absolute path): 
+example of usage (filename is relative path):
 
-./plot_disagg_LLT.py ../tests/tools/data/TRT_Lon_Lat-mean-1.csv 0.002105 SA\(0.1\)
+./plot_disagg_LLT.py ../tests/tools/case_8/expected/TRT_Lon_Lat-mean-0.csv 0.002105 SA\(0.1\)
 
 """
 
@@ -29,17 +29,17 @@ example of usage (filename is absolute path):
 def get_plt_settings(settings_fname, stt_plot, stt_default):
     """
     gets settings for gmt plot
-    
-    :param str settings_fname: 
+
+    :param str settings_fname:
         name of file with gmt settings; optional
-    :param dict stt_plot: 
-        settings for this particular plot. currently only 
+    :param dict stt_plot:
+        settings for this particular plot. currently only
         supports VIEW but can add others
-    :param dict stt_default: 
+    :param dict stt_default:
         gmt default settings, i.e. font sizes
-    """ 
+    """
     settings = toml.load(settings_fname)
-    
+
     if 'main' in settings.keys():
         for key in settings['main'].keys():
             stt_default[key] = settings['main'][key]
@@ -47,24 +47,26 @@ def get_plt_settings(settings_fname, stt_plot, stt_default):
     if 'plot' in settings.keys():
         for key in settings['plot'].keys():
             stt_plot[key] = settings['plot'][key]
-        
-    return stt_plot, stt_default
-    
 
-def plot_gmt(fname, fout, settings_fname=None):
+    return stt_plot, stt_default
+
+
+def plot_gmt(fname, fout, settings_fname=None, fsave=False):
     """
     creates gmt plot
-    :param str fname:      
-        name of file with results, usually includes Mag_Dist_Eps- ... 
-    :param str fout:   
+    :param str fname:
+        name of file with results, usually includes Mag_Dist_Eps- ...
+    :param str fout:
         root of csv file name with mean disagg values and to for plot
-    :param str settings_fname: 
-        name of file with gmt settings; optional, 
+    :param str settings_fname:
+        name of file with gmt settings; optional,
         not currently very useful
-    """ 
-    
+    :param bool _script:
+        true if want to  the gmt script
+    """
+
     cmds = []
-    
+
     # set plot defaults    
     stt_default = {'MAP_GRID_CROSS_SIZE_PRIMARY':'0.2i',
                  'MAP_FRAME_TYPE': 'PLAIN',
@@ -72,56 +74,64 @@ def plot_gmt(fname, fout, settings_fname=None):
                  'FONT_TITLE': '18p',
                  'FONT_LABEL': '12p',
                  'FONT_ANNOT_PRIMARY': '12p'}
-    
+
     stt_plot = {'VIEW': "-p140/50"}
-    
+
     if settings_fname is not None:
         stt_plot, stt_default = get_plt_settings(settings_fname, stt_plot, stt_default)
-        
+
     for key in stt_default.keys():
         cmds.append('gmt set {} = {}'.format(key, stt_default[key]))
-    
-    VIEW = stt_plot['VIEW'] 
-    
+
+    VIEW = stt_plot['VIEW']
+
     # get header from disagg output
     with open(fname) as f:
         header = f.readline()
     coords = header.split('lon=')[1]
     lon = coords.split(',')[0]
     lat = coords.split('lat=')[1].strip()[:-1]
-        
+
     # create color palette
     lim = get_disagg_header_info(header, 'tectonic_region_types=[')
     LIM="0.5/{}/1".format(len(lim)+0.5)
     CPTT1="./tmp/rel.cpt"
     if not os.path.exists('tmp'):
-        os.makedirs('tmp')   
+        os.makedirs('tmp')
     cmds.append('gmt makecpt -Cpolar -T{} > {}'.format(LIM,CPTT1))
-                
+
     # get other limits           
     if 'EXT0' in stt_plot.keys():
         EXT0 = stt_plot['EXT0']
     else:
         cmd = 'gmt info {} -I0.1'.format(fout)
         EXT0 = subprocess.check_output(cmd, shell=True).decode("utf-8").strip()
+        limf = [float(l) for l in EXT0[2:].split('/')]
+        # adjust if bad ratio
+        xr = abs(limf[0]-limf[1]); yr = abs(limf[2]-limf[3])
+        if xr/yr < 0.5:
+            limf[0] -= 0.25*yr; limf[1] += 0.25*yr
+        if yr/xr < 0.5:
+            limf[2] -= 0.25*xr; limf[3] += 0.25*xr
+        EXT0 = f"-R{'/'.join([str(l) for l in limf])}"
 
     if 'PRO' in stt_plot.keys():
         PRO = stt_plot['PRO']
     else:
         PRO = "-Jx3.2d/3.2d"
-                
+
     # create gmt script
     cmd = 'gmt info {} -T0.00001+c2'.format(fout)
     ZRA = subprocess.check_output(cmd, shell=True).decode("utf-8").strip()
     ZLIM = float(ZRA.split('/')[1])*1.2
     EXT = EXT0+f'/0.0/{ZLIM}'
-                
+
     cmd = "awk 'FNR==NR{sum+=$3;next;}{print $1, $2, $3, $4, $5}'"
     cmd += f" {fout} {fout} > tmp.txt"
     subprocess.call(cmd, shell=True)
 
     cmds.append('gmt begin {} png'.format(fout.replace('.csv', '')))
-    
+
     cmd = f'gmt coast {EXT} {PRO} -JZ5 {VIEW} -Sazure2 -Gwheat -Wfaint -A1000'
     cmds.append(cmd)
 
@@ -142,11 +152,18 @@ def plot_gmt(fname, fout, settings_fname=None):
     
     for cmd in cmds:
         out = subprocess.call(cmd, shell=True) 
+
+    if fsave==True:
+        f = open("plot_llt.sh", "a")
+        f.writelines(cmds)
+        f.close()
+        print('Script saved to plot_llt.sh')
     
-    print('plotted to {}.png'.format(fout))
+    print('plotted to {}.png'.format(fout.replace('.csv','')))
     
 
-def plot_disagg_LLT(fname, poe, imt, location, settings_fname, threshold): 
+def plot_disagg_LLT(fname, poe, imt, location, settings_fname, threshold,
+                    fsave=False): 
     """
     plots the mean disaggregation by LLT
     
@@ -166,14 +183,16 @@ def plot_disagg_LLT(fname, poe, imt, location, settings_fname, threshold):
     """
     
     # format outputs to be plotted by GMT
-    fout = make_gmt_file_llt(fname, poe, imt, location, threshold)    
-    
+    imt_short = re.sub('[\W_]+', '', imt)
+    fout = '{}-{}-{}-llt.csv'.format(location, poe, imt_short)
+    mean_llt_for_gmt(fname, fout, poe, imt, threshold)    
+
     # make plot
-    plot_gmt(fname, fout, settings_fname)
+    plot_gmt(fname, fout, settings_fname, fsave=fsave)
 
 
 def main(fname, poe, imt, *, location='site', 
-         settings_fname=None, threshold=1e-9):
+         settings_fname=None, threshold=1e-9, fsave=False):
     """
     plots mean disaggregation by magnitude-distance-epsilon
     
@@ -184,7 +203,8 @@ def main(fname, poe, imt, *, location='site',
     """ 
     
     plot_disagg_LLT(fname, poe, imt, location=location,
-              settings_fname=settings_fname, threshold=float(threshold))
+                    settings_fname=settings_fname, threshold=float(threshold),
+                    fsave=bool(fsave))
 
 
 main.fname = 'Name of the file with disaggregation results'
@@ -193,6 +213,7 @@ main.imt = 'Intensity measure type'
 main.location = 'String to be used in file output names'
 main.settings_fname = 'filename that includes gmt settings'
 main.threshold = 'contribution threshold above which to include'
+main.fsave = 'True if want to save gmt script'
 
 if __name__ == '__main__':
     sap.run(main)
