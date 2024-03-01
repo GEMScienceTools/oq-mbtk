@@ -376,8 +376,8 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         # Compute the measure expressing the performance of the current
         # completeness. If the norm is smaller than the previous one
         # `check` is True
-        rates = [n/t for n,t in zip(n_obs, t_per)]
-        stmags = [float(m) for m in cent_mag]
+        rates = np.array([n/t for n,t in zip(n_obs, t_per)])
+        stmags = np.array([float(m) for m in cent_mag])
         check, trate, tnorm = check_criterion(criterion, rate, tnorm, tvars)
         all_res.append([iper, aval, bval, tnorm, stmags, rates])
 
