@@ -10,7 +10,7 @@ import shutil
 import pickle
 
 from openquake.baselib import sap
-from openquake.smt.parsers.esm23_flatfile_parser import ESM23FlatfileParser
+from openquake.smt.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals import residual_plotter as rspl
 
@@ -37,7 +37,7 @@ def parse_into_metadata():
         shutil.rmtree(metadata_dir)
             
     # Parse the metadata
-    ESM23FlatfileParser.autobuild("000", 'db', metadata_dir, db)
+    ESMFlatfileParserURL.autobuild("000", 'db', metadata_dir, db)
             
     
 def get_residuals():
@@ -103,8 +103,7 @@ def main():
     """
     Run the demo workflow
     """
-    
-    # Parse each flatfile into metadata
+    # Parse flatfile into metadata
     parse_into_metadata()
      
     # Get the residuals per trt
