@@ -182,7 +182,7 @@ def _plot_slab1pt0(axes, csda):
     iii = numpy.argsort(slb_dst)
     if len(iii) > 2:
         plt.plot(slb_dst[iii], -1*slb_dep[iii], '-b', linewidth=3, zorder=30)
-        plt.text(slb_dst[iii[-1]], -1*slb_dep[iii[-1]], 'Slab1.0', fontsize=8)
+        plt.text(slb_dst[iii[-1]], -1*slb_dep[iii[-1]], 'Slab2.0', fontsize=8)
 
 
 def _plot_np_intersection(axes, csda):
@@ -345,7 +345,11 @@ def _plot_volc(axes, csda):
     ola = csda.csec.ola
     patches = []
 
+
+
     if (len(csda.volc)-1) >= 1:
+        if str(csda.volc.shape) == '(2,)':
+            csda.volc = csda.volc.reshape(1,2)
         vuls = geodetic_distance(olo, ola,
                                  csda.volc[:, 0],
                                  csda.volc[:, 1])
@@ -354,11 +358,7 @@ def _plot_volc(axes, csda):
             patches.append(square)
 
     else:
-        vuls = geodetic_distance(olo, ola,
-                                 csda.volc[0],
-                                 csda.volc[1])
-        square = Rectangle((vuls, -10.0), 7, 12)
-        patches.append(square)
+        print(csda.volc)
 
     vv = PatchCollection(patches, zorder=6, color='red', edgecolors='red')
     vv.set_alpha(0.85)
@@ -564,7 +564,11 @@ def plt_cs(olo, ola, depp, lnght, strike, ids, ini_filename):
 
     config = configparser.ConfigParser()
     config.read(ini_filename)
-    fname_trench = config['data']['trench_axis_filename']
+    try:
+        fname_trench = config['data']['trench_axis_filename']
+        csda.set_trench_axis(fname_trench)
+    except: 
+        fname_trench = None
     fname_eqk_cat = config['data']['catalogue_pickle_filename']
     fname_slab = config['data']['slab1pt0_filename']
     fname_crust = config['data']['crust1pt0_filename']
@@ -574,13 +578,18 @@ def plt_cs(olo, ola, depp, lnght, strike, ids, ini_filename):
     fname_litho = config['data']['litho_filename']
     fname_volc = config['data']['volc_filename']
 
-    csda.set_trench_axis(fname_trench)
     cat = pickle.load(open(fname_eqk_cat, 'rb'))
     csda.set_catalogue(cat)
     if re.search('[a-z]', fname_slab):
         csda.set_slab1pt0(fname_slab)
     csda.set_crust1pt0_moho_depth(fname_crust)
-    csda.set_gcmt(fname_gcmt)
+
+    try:
+        gcmt_mag = float(config['params']['gcmt_mag_lower_limit'])
+    except:
+        gcmt_mag = 0.0
+
+    csda.set_gcmt(fname_gcmt, gcmt_mag=gcmt_mag)
     csda.set_topo(fname_topo)
     csda.set_litho_moho_depth(fname_litho)
     csda.set_volcano(fname_volc)

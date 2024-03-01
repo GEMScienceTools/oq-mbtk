@@ -16,7 +16,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
-# details.
+# details=>=>.
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -56,21 +56,32 @@ def get_completenesses(fname_config, folder_out):
     apriori_conditions = config[key].get('apriori_conditions', {})
     cref = config[key].get('completeness_ref', None)
     step = config[key].get('step', 8)
-    flexible = config[key].get('flexible', False)
 
     _get_completenesses(mags, years, folder_out, num_steps, min_mag_compl,
-                        apriori_conditions, cref, step, flexible)
+                        apriori_conditions, cref, step)
 
 
 def _get_completenesses(mags, years, folder_out=None, num_steps=0,
                         min_mag_compl=None, apriori_conditions={},
-                        completeness_ref=None,
-                        step=6, flexible=False):
+                        completeness_ref=None, step=6):
     """
     :param mags:
         A list or numpy array in increasing order
     :param years:
         A list or numpy array in increasing order
+    :param folder_out:
+        If not None it writes an .hdf5 file in this folder
+    :param num_steps:
+        The minimum number of steps in the completeness
+    :param min_mag_compl:
+        The minimum magnitude for which the completeness windows must be
+        computed
+    :param apriori_conditions:
+        A dictionary with key a value of magnitude and value a year. This
+        combination of values must be included in the generated completeness
+        windows
+    :param step:
+        The minimum number of steps in the completeness windows
     """
     start = time.perf_counter()
 
@@ -78,32 +89,33 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
     assert np.all(np.diff(years) > 0), msg
     msg = 'Mags must be in ascending order'
     assert np.all(np.diff(mags) > 0), msg
-
     years = np.flipud(years)
 
-    # If flexible is true we add an additional magnitude to relax the condition
-    # that the lowest time interval must contain the largest magnitude
-    dlt = 1 if flexible else 0
-    idxs = np.arange(len(mags)+dlt)
+    dlt = 0
+    idxs = np.arange(len(mags) + dlt)
     idxs[::-1].sort()
 
     # Find index of the minimum magnitude of completeness
     if min_mag_compl is None:
-        min_mag_compl = min(mags)
+        min_mag = min(mags)
+    else:
+        min_mag = min_mag_compl
 
-    if len(np.where(min_mag_compl <= mags)) < 1:
+    if len(np.where(min_mag <= mags)) < 1:
         msg = 'None of the magnitude intervals above the min_mag_compl'
         raise ValueError(msg)
-    max_first_idx = np.min(np.where(min_mag_compl <= mags))
+    max_first_idx = np.min(np.where(min_mag <= mags))
 
     # Info
     print('Total number of combinations : {:,d}'.format(len(mags)**len(years)))
     print(f'Index of first magnitude     : {max_first_idx:,d}')
+    print(f'Step                         : {step}')
 
     # Creating the possible completenesses
     perms = []
-    for y in [years[i:min(i+step, len(years))] for i in range(0, len(years),
+    for y in [years[i:min(i + step, len(years))] for i in range(0, len(years),
                                                               step)]:
+        print(y)
         with multiprocessing.Pool(processes=8) as pool:
             p = pool.map(mm, product(idxs, repeat=len(y)))
             p = np.array(p)
@@ -142,24 +154,32 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
     i = np.count_nonzero(np.diff(perms, axis=1) > 0, axis=1)
     perms = perms[i >= num_steps, :]
 
-    # Selecting only the completeness whose first magnitude index is
-    # lower or equal than a threshold
-    perms = perms[perms[:, 0] <= max_first_idx, :]
+    # Selecting only the completeness whose first magnitude index is lower or
+    # equal than a threshold earlier max_first_idx is set to smallest magnitude
+    # if no minimum is provided But also doesn't even seem to apply this
+    # correctly?
+    if min_mag_compl is not None:
+        print("setting minimum completeness magnitude")
+        perms = perms[perms[:, 0] >= max_first_idx, :]
 
     # Applying a-priori conditions
     for yea_str in apriori_conditions.keys():
+
         yea = float(yea_str)
         mag = float(apriori_conditions[yea_str])
-        idx_yea = np.minimum(np.max(np.where(years >= yea)), len(years)-1)
+
+        # Get the index of the year
+        idx_yea = np.minimum(np.min(np.where(years <= yea)), len(years) - 1)
+
+        # Get the index of the magnitude
         idx_mag = np.max(np.where(mag >= mags))
-        # idxs = np.minimum(perms[:, idx_yea], len(mags)-1-dlt)
-        # perms = perms[idxs <= idx_mag, :]
-        perms = perms[perms[:, idx_yea] <= idx_mag, :]
+
+        # Keep the completeness windows that include the current apriori
+        # constraint i.e. we keep all the completenesses that include this
+        # magnitude-year tuple
+        perms = perms[perms[:, idx_yea] >= idx_mag, :]
 
 
-    # Replacing the index of the 'buffer;' magnitude
-    if flexible:
-        perms = np.where(perms == len(mags), -1, perms)
 
     if completeness_ref:
         from openquake.cat.completeness.analysis import clean_completeness
@@ -167,12 +187,11 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
         mags_ref = [c[1] for c in completeness_ref]
         rem = []
         for iper, prm in enumerate(perms):
-        
             tmp = []
             for yea, j in zip(years, prm):
                 if j >= -1e-10:
                     tmp.append([yea, mags[int(j)]])
-    
+
             tmp = np.array(tmp)
             ctab = clean_completeness(tmp)
             for yr, mg in ctab:
