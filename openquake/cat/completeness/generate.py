@@ -31,6 +31,7 @@ import toml
 import numpy as np
 import multiprocessing
 from openquake.wkf.utils import create_folder
+import time
 
 
 def mm(a):
@@ -53,15 +54,17 @@ def get_completenesses(fname_config, folder_out):
     num_steps = config[key].get('num_steps', 0)
     min_mag_compl = config[key].get('min_mag_compl', None)
     apriori_conditions = config[key].get('apriori_conditions', {})
+    cref = config[key].get('completeness_ref', None)
     step = config[key].get('step', 8)
     flexible = config[key].get('flexible', False)
 
     _get_completenesses(mags, years, folder_out, num_steps, min_mag_compl,
-                        apriori_conditions, step, flexible)
+                        apriori_conditions, cref, step, flexible)
 
 
 def _get_completenesses(mags, years, folder_out=None, num_steps=0,
                         min_mag_compl=None, apriori_conditions={},
+                        completeness_ref=None,
                         step=6, flexible=False):
     """
     :param mags:
@@ -69,6 +72,7 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
     :param years:
         A list or numpy array in increasing order
     """
+    start = time.perf_counter()
 
     msg = 'Years must be in ascending order'
     assert np.all(np.diff(years) > 0), msg
@@ -152,11 +156,33 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
         # perms = perms[idxs <= idx_mag, :]
         perms = perms[perms[:, idx_yea] <= idx_mag, :]
 
-    print(f'Total number selected        : {len(perms):,d}')
 
     # Replacing the index of the 'buffer;' magnitude
     if flexible:
         perms = np.where(perms == len(mags), -1, perms)
+
+    if completeness_ref:
+        from openquake.cat.completeness.analysis import clean_completeness
+        years_ref = [c[0] for c in completeness_ref]
+        mags_ref = [c[1] for c in completeness_ref]
+        rem = []
+        for iper, prm in enumerate(perms):
+        
+            tmp = []
+            for yea, j in zip(years, prm):
+                if j >= -1e-10:
+                    tmp.append([yea, mags[int(j)]])
+    
+            tmp = np.array(tmp)
+            ctab = clean_completeness(tmp)
+            for yr, mg in ctab:
+                index = years_ref.index(yr)
+                mdiff = abs(mags_ref[index] - mg)
+                if mdiff > 1:
+                     rem.append(iper)
+        perms = np.delete(perms, rem, 0)
+
+    print(f'Total number selected        : {len(perms):,d}')
 
     if folder_out is not None:
         print(f'Saving completeness tables in: {folder_out:s}')
@@ -164,4 +190,6 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
         np.save(os.path.join(folder_out, 'mags.npy'), mags)
         np.save(os.path.join(folder_out, 'years.npy'), years)
 
+    end = time.perf_counter()
+    print('Time taken {}: ', start-end)
     return perms, mags, years
