@@ -287,7 +287,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     wei = None
     count = {'complete': 0, 'warning': 0, 'else': 0, 'early': 0}
 
-    all_res = []
+    all_res, all_mags, all_rates = [], [], []
     # For each permuation of completeness windows, check compatability
     for iper, prm in enumerate(perms):
         tnorm = norm
@@ -299,7 +299,6 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         for yea, j in zip(years, prm):
             if j >= -1e-10:
                 tmp.append([yea, mags[int(j)]])
-        #breakpoint()
         tmp = np.array(tmp)
 
         if len(tmp) > 0:
@@ -379,7 +378,9 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         rates = [n/t for n,t in zip(n_obs, t_per)]
         stmags = [float(m) for m in cent_mag]
         check, trate, tnorm = check_criterion(criterion, rate, tnorm, tvars)
-        all_res.append([iper, aval, bval, tnorm, stmags, rates])
+        all_res.append([iper, aval, bval, tnorm])
+        all_mags.append(stmags)
+        all_rates.append(rates)
 
         # Saving the information for the current completeness table.
         if check:
@@ -440,13 +441,10 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     if folder_out is not None:
         if not os.path.exists(folder_out):
             create_folder(folder_out)
-        columns = ['id', 'agr', 'bgr', 'norm', 'mags', 'rates']
-        mags = [m[4] for m in all_res]
-        rates = [m[5] for m in all_res]
-        all_res_red = [m[0:4] for m in all_res]
-        df = pd.DataFrame(data=np.array(all_res_red), columns=columns[0:4])
-        df['mags'] = mags
-        df['rates'] = rates
+        columns = ['id', 'agr', 'bgr', 'norm']
+        df = pd.DataFrame(data=np.array(all_res), columns=columns)
+        df['mags'] = all_mags
+        df['rates'] = all_rates
         fname = os.path.join(folder_out, f'full.results_{src_id:s}.csv')
         df.to_csv(fname, index=False)
 
