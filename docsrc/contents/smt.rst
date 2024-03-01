@@ -110,6 +110,15 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.2-AbrahamsonGulerce2020SInter]
         region = "CAS"
         
+        [models.AbrahamsonEtAl2014]
+        
+        [models.AbrahamsonEtAl2014RegJPN]
+        region = "JPN" # nb currently a bug for specifically this gmm in the SMT where the user must still specify the region param despite the class name differentiating as regionalised variant (will be fixed!)
+        
+        [models.BooreEtAl2014]
+        
+        [models.BooreEtAl2014LowQ]
+        
         [models.YenierAtkinson2015BSSA]
         sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
 
@@ -446,16 +455,16 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
 Comparing GMPEs
 ***************
 
-1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals (within the residual module as demonstrated above), we can also evaluate GMPEs with respect to the predicted ground-motion for a given earthquake scenario. Such evaluations are useful in general, but especially so when the user has selected a shortlist of potentially viable GMPEs for a GMPE logic tree and wishes to further compare them, or wishes to examine how different scalings of a backbone GMPE affect the predicted ground-motion. The tools for comparing GMPEs are found within the Comparison module.
+1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals (within the residual module as demonstrated above), we can also evaluate GMPEs with respect to the predicted ground-motion for a given earthquake scenario. The tools for comparing GMPEs are found within the Comparison module.
     
     .. code-block:: ini
     
        > # Import GMPE comparison tools
        > from openquake.smt.comparison import compare_gmpes as comp
 
-2. The tools within the Comparison module include Sammon's Maps, hierarchical clustering and matrix plots of Euclidean distance for both median and 84th percentile of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra, GMPE sigma with respect to spectral period and trellis plots are also provided in this module.
+2. The tools within the Comparison module include Sammon's Maps, hierarchical clustering plots and matrix plots of Euclidean distance for the median (and 16th and 84th percentiles) of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra and attenuation curves (trellis plots) are also provided in this module.
 
-   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. GMPE parameters can be specified as within the example ``.toml`` file provided above for us in residual analysis. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified a selection of GMPEs which may increase the captured epistemic uncertainty associated with predicting the ground-shaking from earthquakes in/near Albania if implemented in a GMPE logic tree. To plot a GMPE logic tree we must assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each GMPE depending on if we want to plot the GMPE within GMC logic tree #1 or #2 (up to 2 GMC logic trees can currently be plotted within one trellis or response spectra plot at a time). To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` or ``lt_weight_gmc2_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for - see the .toml file below for an example of these potential configurations).
+   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. GMPE parameters can be specified as within the example ``.toml`` file provided above for us in residual analysis. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified some GMPEs which were found to perform well in the residual analysis against Albania ground-motion data. To plot a GMPE logic tree we must assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each GMPE depending on if we want to plot the GMPE within GMC logic tree #1 or #2 (up to 2 GMC logic trees can currently be plotted within one trellis or response spectra plot at a time). To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` or ``lt_weight_gmc2_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for - see the .toml file below for an example of these potential configurations).
 
     .. code-block:: ini
     
@@ -463,11 +472,12 @@ Comparing GMPEs
         [general]
         imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
         max_period = 2 # max period for spectra plots
+        minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
-        dist_type = 'rrup' # or rjb, repi or rhypo (dist type used in trellis plots)
+        dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
-        eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
-        Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 or 3)
+        eshm20_region = 2 # for ESHM20 GMPE regionalisation
+        Nstd = 1 # num. of sigma to sample from sigma distribution
         
         # Specify site properties
         [site_properties]
@@ -497,21 +507,18 @@ Comparing GMPEs
         
         # Specify label for gmpes
         [gmpe_labels]
-        gmpes_label = ['CA15', 'AK14', 'B20', 'L19', 'BO14', 'K1', 'K2', 'K3', 'K4', 'K5']
+        gmpes_label = ['CA15', 'AK14', 'B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5']
         
         # Specify gmpes
         
         # Plot logic tree and individual GMPEs within first GMC logic tree config (gmc1)
         [models.BooreEtAl2020]
-            lt_weight_gmc1 = 0.25
-            
-        [models.LanzanoEtAl2019_RJB_OMO]
             lt_weight_gmc1 = 0.30
             
-        [models.BooreEtAl2014]
-            lt_weight_gmc1 = 0.15
+        [models.LanzanoEtAl2019_RJB_OMO]
+            lt_weight_gmc1 = 0.40
         
-        # Default K20_ESHM20 logic tree branches considered in gmc1
+        # Default ESHM20 logic tree branches considered in gmc1
         [models.1-KothaEtAl2020ESHM20]
             lt_weight_gmc1 = 0.000862
             sigma_mu_epsilon = 2.85697 
@@ -532,7 +539,6 @@ Comparing GMPEs
             lt_weight_gmc1 = 0.000862
             sigma_mu_epsilon = -2.85697 
             c3_epsilon = -1.72    
-            
             
         # Plot logic tree only for second GMC logic tree config (gmc2)
         # Note this additional GMC logic tree config is simply for demonstrative
@@ -566,7 +572,7 @@ Comparing GMPEs
    
 4. Spectra Plots
 
-   We can also plot response spectra and GMPE sigma spectra (sigma versus spectral period). Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples, and the functions within openquake.smt.comparison for more details): 
+   We can also plot response spectra. Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples, and the functions within openquake.smt.comparison for more details): 
 
     .. code-block:: ini
     
@@ -581,9 +587,9 @@ Comparing GMPEs
    
 5. Sammon's Maps
 
-   We can plot Sammon's Maps to examine how similar the median (and 84th percentile) of predicted ground-motion is by each GMPE for the ground-shaking scenario specified within the ``.toml`` file (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon's mapping procedure).
+   We can plot Sammon's Maps to examine how similar the medians (and 16th and 84th percentiles) of predicted ground-motion of each GMPE are (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon's mapping procedure).
    
-   A larger distance between two plotted GMPEs represents a greater difference in the predicted ground-motion. Therefore, if two or more GMPEs have a small distance between each other relative to the other GMPEs plotted, then only one of these adjacent GMPEs should be retained in the final GMPE logic tree (similarly predicting GMPEs minimises the epistemic uncertainty captured in the logic tree). It should be noted that: (1) more than one 2D configuration can exist for a given set of GMPEs and (2) that the absolute numbers on the axes do not have a physical meaning.
+   A larger distance between two plotted GMPEs represents a greater difference in the predicted ground-motion. It should be noted that: (1) more than one 2D configuration can exist for a given set of GMPEs and (2) that the absolute numbers on the axes do not have a physical meaning.
   
    Sammon's Maps can be generated as follows:
    

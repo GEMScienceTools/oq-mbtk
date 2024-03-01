@@ -120,10 +120,7 @@ def write_gmt_llt(df_final, fout, threshold):
         cnt += 1
 
 
-def make_gmt_file_llt(filein, poe, imt, location, threshold):
-    # create outfile name
-    imt_short = re.sub('[\W_]+', '', imt)
-    fout = f'llt_{poe}_{imt_short}_{location}.csv'
+def mean_llt_for_gmt(filein, fout, poe, imt, threshold):
     # read in the rest of the data
     df = pd.read_csv(filein, skiprows = 1)
     # take for only the poe of interest
@@ -147,9 +144,6 @@ def make_gmt_file_llt(filein, poe, imt, location, threshold):
         trt_id[trt] = i+1
     print('Tectonic region type IDs: \n')
     print(trt_id)
-
-    return fout
-
 
 
 def get_disagg_header_info(header, var, fl=False):
@@ -518,7 +512,6 @@ def read_hazard_curve_csv_pd(filename):
             - Longitudes
             - Latitudes
             - PoEs
-            - String with the header
             - IMLs
     """
     lats = []
