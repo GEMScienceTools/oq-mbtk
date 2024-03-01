@@ -172,7 +172,7 @@ def check_criterion(criterion, rate, previous_norm, tvars):
         #norm = get_norm_optimize_a(aval, bval, ctab, cmag, t_per, n_obs, binw, info=False)
         #norm = get_norm_optimize_b(aval, bval, ctab, tcat, binw, ybinw=10.,
         #                           mmin=ref_mag, mmax=ref_upp_mag)
-        norm = get_norm_optimize_c(tcat, aval, bval, ctab, last_year)
+        norm = get_norm_optimize_c(tcat, aval, bval, ctab, last_year, binw=binw)
 
     if norm is None:
         return False, -1, previous_norm
@@ -256,6 +256,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         for yea, j in zip(years, prm):
             if j >= -1e-10:
                 tmp.append([yea, mags[int(j)]])
+        #breakpoint()
         tmp = np.array(tmp)
         ctab = clean_completeness(tmp)
 
@@ -315,12 +316,14 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
             tvars['n_obs'] = n_obs
             tvars['cmag'] = cent_mag
             tvars['tcat'] = tcat
-
+            
             # Compute the measure expressing the performance of the current
             # completeness. If the norm is smaller than the previous one
             # `check` is True
+            rates = [n/t for n,t in zip(n_obs, t_per)]
+            stmags = [float(m) for m in cent_mag]
             check, trate, tnorm = check_criterion(criterion, rate, norm, tvars)
-            all_res.append([iper, aval, bval, tnorm])
+            all_res.append([iper, aval, bval, tnorm, stmags, rates])
 
 
             # Saving the information for the current completeness table.
@@ -395,7 +398,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     if folder_out is not None:
         if not os.path.exists(folder_out):
             create_folder(folder_out)
-        columns = ['id', 'agr', 'bgr', 'norm']
+        columns = ['id', 'agr', 'bgr', 'norm', 'mags', 'rates']
         df = pd.DataFrame(data=np.array(all_res), columns=columns)
         fname = os.path.join(folder_out, f'full.results_{src_id:s}.csv')
         df.to_csv(fname, index=False)
