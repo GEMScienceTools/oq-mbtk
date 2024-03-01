@@ -581,9 +581,6 @@ Comparing GMPEs
 
     Response spectra plots for input parameters specified in toml file:
         .. image:: /contents/smt_images/ResponseSpectra.png
-        
-    GMPE sigma spectra plots for input parameters specified in toml file:
-        .. image:: /contents/smt_images/sigma.png
    
 5. Sammon's Maps
 
