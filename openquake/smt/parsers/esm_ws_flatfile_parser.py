@@ -17,6 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Parser for a flatfile downloaded from the ESM web service
+--> https://esm-db.eu/#/waveform/search
 """
 import pandas as pd
 import os, sys
@@ -605,7 +606,7 @@ def _get_ESM18_headers(ESM, default_string, r_fm_type, r_datetime):
     "EMEC_Mw_ref":default_string,
     "event_source_id":default_string,
     
-    # Nodal plane information not provided in ESM web service format flatfile
+    # Nodal plane information not provided in raw ESM web service format flatfile
     "es_strike":default_string,
     "es_dip":default_string,
     "es_rake":default_string,
@@ -815,7 +816,7 @@ def _get_ESM18_headers(ESM, default_string, r_fm_type, r_datetime):
     "W_T9_000":ESM.W_T9_000,
     "W_T10_000":ESM.W_T10_000,
     
-    # No RotD intensity measures provided in web service format ESM flatfile
+    # No RotD intensity measures provided in raw web service format ESM flatfile
     "rotD50_T0_010":default_string,
     "rotD50_T0_025":default_string,
     "rotD50_T0_040":default_string,

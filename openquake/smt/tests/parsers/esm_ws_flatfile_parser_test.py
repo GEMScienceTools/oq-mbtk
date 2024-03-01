@@ -18,6 +18,7 @@
 """
 Tests parsing of the ESM flatfile format (i.e. flatfile downloaded from ESM 
 web service)
+--> https://esm-db.eu/#/waveform/search
 """
 import os
 import sys
