@@ -80,26 +80,29 @@ class TestMeanMDE(unittest.TestCase):
 
 class OutputTestCase(unittest.TestCase):
 
-    def test_mde_format(self):
+    def test_mde_llt_format(self):
         """
         will fail if the output format changes
         """
         # run test job
-        calc = run_calc(os.path.join(BASE_CASE8, 'job.ini'))
+        calc1 = run_calc(os.path.join(BASE_CASE8, 'job_mde.ini'))
+        calc2 = run_calc(os.path.join(BASE_CASE8, 'job_llt.ini'))
 
         # test mre results output format
-        [fname] = export(('disagg-stats', 'csv'), calc.datastore)
-        expected = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
+        [fname_mde] = export(('disagg-stats', 'csv'), calc1.datastore)
+        exp_mde = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
+        [fname_llt] = export(('disagg-stats', 'csv'), calc2.datastore)
+        exp_llt = os.path.join(BASE_CASE8, 'expected/TRT_Lon_Lat-mean-0.csv')
 
         if OVERWRITE:
-            shutil.copyfile(fname, expected)
+            shutil.copyfile(fname_llt, exp_mde)
+            shutil.copyfile(fname_mde, exp_llt)
 
 
-        # expected_lines = [line for line in open8(expected)]
-        # actual_lines = [line for line in open8(fname)]
+        # test MDE format
 
         actual_lines = []
-        for i, line in enumerate(open8(fname)):
+        for i, line in enumerate(open8(fname_mde)):
             if i == 0:
                 hea1_comp = line
             elif i == 1:
@@ -108,7 +111,7 @@ class OutputTestCase(unittest.TestCase):
                 actual_lines.append([float(j) for j in line.split()[1:]])
 
         expected_lines = []
-        for i, line in enumerate(open8(expected)):
+        for i, line in enumerate(open8(exp_mde)):
             if i == 0:
                 hea1_exp = line
             elif i == 1:
@@ -124,7 +127,49 @@ class OutputTestCase(unittest.TestCase):
         aae = np.testing.assert_almost_equal
         aae(actual_lines, expected_lines, decimal=4)
 
-        os.remove(fname)
+        os.remove(fname_mde)
+
+        # test LLT format
+
+        actual_lines_floats = []
+        actual_lines_strings = []
+
+        inds = [1, 2, 4, 5, 6]
+        for i, line in enumerate(open8(fname_llt)):
+            if i == 0:
+                hea1_comp = line
+            elif i == 1:
+                hea2_comp = line
+            else:
+                line_tmp = line.split(',')
+                line = [line_tmp[i] for i in inds]
+                actual_lines_floats.append([float(j) for j in line])
+                actual_lines_strings.append([line_tmp[0],line_tmp[3]])
+
+        expected_lines_floats = []
+        expected_lines_strings = []
+        for i, line in enumerate(open8(exp_llt)):
+            if i == 0:
+                hea1_exp = line
+            elif i == 1:
+                hea2_exp = line
+            if i < 2:
+                continue
+            line_tmp = line.split(',')
+            line = [line_tmp[i] for i in inds]
+            expected_lines_floats.append([float(j) for j in line])
+            expected_lines_strings.append([line_tmp[0],line_tmp[3]])
+
+        assert hea2_comp == hea2_exp
+
+        actual_lines_floats = np.array(actual_lines_floats)
+        expected_lines_floats = np.array(expected_lines_floats)
+        aae = np.testing.assert_almost_equal
+        aae(actual_lines, expected_lines, decimal=4)
+
+        assert actual_lines_strings == expected_lines_strings
+
+        os.remove(fname_llt)
 
 
 class TestReadHeader(unittest.TestCase):
