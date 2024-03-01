@@ -35,15 +35,15 @@ import unittest
 
 
 from openquake.fnm.inversion.utils import (
-    geom_from_line_trace,
-    project_fualts_and_polies,
+    geom_from_fault_trace,
+    project_faults_and_polies,
     lines_in_polygon,
     get_rupture_displacement,
     weighted_mean,
     slip_vector_azimuth,
     check_fault_in_poly,
     faults_in_polies,
-    get_rup_poy_fracs,
+    get_rup_poly_fracs,
     rup_df_to_rupture_dicts,
     subsection_df_to_fault_dicts,
     get_rupture_regions,
