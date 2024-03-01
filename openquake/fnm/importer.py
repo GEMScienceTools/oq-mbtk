@@ -42,6 +42,7 @@ except:
     pygmt = None
 
 from openquake.hazardlib.geo import Point, Line
+from openquake.hazardlib.geo.surface import SimpleFaultSurface
 from openquake.hazardlib.geo.surface.kite_fault import (
     get_profiles_from_simple_fault_data,
     KiteSurface,
@@ -326,4 +327,52 @@ def kite_surfaces_from_geojson(fname: str, edge_sd: float = 2.0,
     with open(fname) as f:
         data = geojson.load(f)
     surfs = create_surfaces(data, edge_sd, idxs=idxs, skip=skip, iplot=iplot)
+    return surfs
+
+
+def simple_fault_surface_from_feature(feature: dict, lsd_default=20.0, usd_default=0.,
+                                      edge_sd: float = 2.0):
+    geom = feature['geometry']
+    prop = feature['properties']
+    dip = prop.get("dip", None)
+    lsd = prop.get("lsd", lsd_default)
+    usd = prop.get("usd", usd_default)
+    
+
+    fault_trace = Line([Point(c[0], c[1]) for c in geom["coordinates"]])
+
+    return SimpleFaultSurface.from_fault_data(fault_trace, usd, lsd, dip, edge_sd)
+
+
+def simple_fault_surfaces_from_geojson(fname: str, edge_sd: float = 2.0,
+                               idxs: list = [], skip: list = [],
+                               ) -> list:
+    """
+    Create OQ simple fault surfaces from a geojson file.
+
+    :returns:
+        A list of :class:`openquake.hazardlib.geo.surface.SimpleFaultSurface`
+        instances.
+    """
+    # Read .geojson file with fault info
+    with open(fname) as f:
+        data = geojson.load(f)
+    #surfs = create_surfaces(data, edge_sd, idxs=idxs, skip=skip, iplot=iplot)
+    surfs = []
+
+    for i_fea, feature in enumerate(data['features']):
+        fid = feature['properties'].get("fid", None)
+
+        if len(idxs) and i_fea not in idxs:
+            continue
+
+        # Skip feature if requested
+        if i_fea in skip:
+            msg = f'Skipping feature with fid = {fid}'
+            logging.info(msg)
+            continue
+
+        surf = simple_fault_surface_from_feature(feature, edge_sd=edge_sd)
+        surfs.append(surf)
+
     return surfs

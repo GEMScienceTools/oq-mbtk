@@ -48,6 +48,7 @@ class Configurations(object):
         
         # Get input params from .toml file
         self.eshm20_region = config_file['general']['eshm20_region']
+        self.minR = config_file['general']['minR']
         self.maxR = config_file['general']['maxR']
         self.dist_type = config_file['general']['dist_type']
         self.dist_list = config_file['general']['dist_list']
@@ -185,6 +186,7 @@ def plot_trellis(filename, output_directory):
                       config.region,
                       config.imt_list,
                       config.trellis_and_rs_mag_list,
+                      config.minR,
                       config.maxR,
                       config.gmpes_list,
                       config.aratio,
@@ -274,6 +276,7 @@ def plot_cluster(filename, output_directory):
                                         config.Z25,
                                         config.Vs30,
                                         config.region,
+                                        config.minR,
                                         config.maxR,
                                         config.aratio,
                                         config.eshm20_region,
@@ -294,6 +297,7 @@ def plot_cluster(filename, output_directory):
                                           config.Z25,
                                           config.Vs30,
                                           config.region,
+                                          config.minR,
                                           config.maxR,
                                           config.aratio,
                                           config.eshm20_region,
@@ -314,6 +318,7 @@ def plot_cluster(filename, output_directory):
                                           config.Z25,
                                           config.Vs30,
                                           config.region,
+                                          config.minR,
                                           config.maxR,
                                           config.aratio,
                                           config.eshm20_region,
@@ -364,6 +369,7 @@ def plot_sammons(filename, output_directory):
                                         config.Z25,
                                         config.Vs30, 
                                         config.region,
+                                        config.minR,
                                         config.maxR, 
                                         config.aratio,
                                         config.eshm20_region,
@@ -384,6 +390,7 @@ def plot_sammons(filename, output_directory):
                                           config.Z25,
                                           config.Vs30,
                                           config.region,
+                                          config.minR,
                                           config.maxR,
                                           config.aratio,
                                           config.eshm20_region,
@@ -404,6 +411,7 @@ def plot_sammons(filename, output_directory):
                                           config.Z25,
                                           config.Vs30,
                                           config.region,
+                                          config.minR,
                                           config.maxR,
                                           config.aratio,
                                           config.eshm20_region,
@@ -454,6 +462,7 @@ def plot_euclidean(filename, output_directory):
                                         config.Z25,
                                         config.Vs30,
                                         config.region,
+                                        config.minR,
                                         config.maxR,
                                         config.aratio,
                                         config.eshm20_region,
@@ -474,6 +483,7 @@ def plot_euclidean(filename, output_directory):
                                           config.Z25,
                                           config.Vs30,
                                           config.region,
+                                          config.minR,
                                           config.maxR,
                                           config.aratio,
                                           config.eshm20_region,
@@ -494,6 +504,7 @@ def plot_euclidean(filename, output_directory):
                                           config.Z25,
                                           config.Vs30,
                                           config.region,
+                                          config.minR,
                                           config.maxR,
                                           config.aratio,
                                           config.eshm20_region,
