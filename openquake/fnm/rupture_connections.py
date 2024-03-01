@@ -42,10 +42,10 @@ def get_bb_from_surface(surface):
 
     return np.array(
         [
-            [sphere_bb.north, sphere_bb.east],
-            [sphere_bb.north, sphere_bb.west],
-            [sphere_bb.south, sphere_bb.west],
-            [sphere_bb.south, sphere_bb.east],
+            [sphere_bb[3], sphere_bb[0]],
+            [sphere_bb[3], sphere_bb[1]],
+            [sphere_bb[2], sphere_bb[1]],
+            [sphere_bb[2], sphere_bb[0]],
         ]
     )
 
@@ -626,7 +626,7 @@ def make_binary_adjacency_matrix_sparse(
     return binary_dist_matrix
 
 
-def sp_pt(lon, lat):
+def _latlon_to_xyz(lon, lat):
     phi = np.radians(lat)
     lamb = np.radians(lon)
 
@@ -635,7 +635,7 @@ def sp_pt(lon, lat):
     )
 
 
-def sp_to_pt(sp):
+def _xyz_to_latlon(sp):
     x, y, z = sp
     phi = np.arctan2(z, np.sqrt(x**2 + y**2))
     lamb = np.arctan2(y, x)
@@ -644,7 +644,7 @@ def sp_to_pt(sp):
     return lon, lat
 
 
-def sp_vec(lon, lat, bearing):
+def _geog_vec_to_xyz(lon, lat, bearing):
     phi, lamb, theta = np.radians([lat, lon, bearing])
 
     C = np.array(
@@ -662,17 +662,17 @@ def sp_vec(lon, lat, bearing):
 def intersection_pt(
     lon_a, lat_a, strike_a, lon_b, lat_b, strike_b, return_closest=True
 ):
-    p_a = sp_pt(lon_a, lat_a)
-    p_b = sp_pt(lon_b, lat_b)
+    p_a = _latlon_to_xyz(lon_a, lat_a)
+    p_b = _latlon_to_xyz(lon_b, lat_b)
 
-    c_a = sp_vec(lon_a, lat_a, strike_a)
-    c_b = sp_vec(lon_b, lat_b, strike_b)
+    c_a = _geog_vec_to_xyz(lon_a, lat_a, strike_a)
+    c_b = _geog_vec_to_xyz(lon_b, lat_b, strike_b)
 
     n1 = np.cross(c_a, c_b)
     n2 = np.cross(c_b, c_a)
 
-    pt_1 = sp_to_pt(n1)
-    pt_2 = sp_to_pt(n2)
+    pt_1 = _xyz_to_latlon(n1)
+    pt_2 = _xyz_to_latlon(n2)
 
     if return_closest:
         d1 = np.arccos(p_a.dot(n1))
@@ -870,7 +870,6 @@ def calc_rupture_overlap(trace_1, trace_2, intersection_pt=None):
 
     dists_1, az_1 = get_dists_and_azimuths_from_pt(tr1, intersection_pt)
     dists_2, az_2 = get_dists_and_azimuths_from_pt(tr2, intersection_pt)
-    print(dists_1, dists_2)
 
     dist_az_pairs = list(zip(dists_1, az_1))
     dist_az_pairs.extend(zip(dists_2, az_2))
@@ -879,8 +878,6 @@ def calc_rupture_overlap(trace_1, trace_2, intersection_pt=None):
 
     dists_1 = [dist_az_pairs[0][0], dist_az_pairs[1][0]]
     dists_2 = [dist_az_pairs[2][0], dist_az_pairs[3][0]]
-
-    print(dists_1, dists_2)
 
     overlap_type, overlap_length = _check_overlap(dists_1, dists_2)
     return overlap_type, overlap_length
@@ -928,7 +925,6 @@ def filter_bin_adj_matrix_by_rupture_overlap(
                 overlap = calc_rupture_overlap(
                     sf_traces[i], sf_traces[j], intersection_pt=int_pt
                 )
-                print(i, j, overlap[1])
                 if overlap[1] > threshold_overlap:
                     if issparse(binary_adjacence_matrix):
                         del binary_adjacence_matrix[i, j]
