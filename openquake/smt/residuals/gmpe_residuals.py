@@ -59,7 +59,6 @@ def get_geometric_mean(fle):
     :param fle:
         Instance of :class: h5py.File
     """
-    # periods = fle["IMS/X/Spectra/Response/Periods"].value
     if not ("H" in fle["IMS"].keys()):
         # Horizontal spectra not in record
         x_spc = fle["IMS/X/Spectra/Response/Acceleration/damping_05"].values
