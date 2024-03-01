@@ -17,6 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Tests parsing of a flatfile downloaded from ESM custom URL database
+--> (https://esm-db.eu/esmws/flatfile/1/)
 
 This parser assumes you have selected all available headers in your URL search
 when downloading the flatfile
