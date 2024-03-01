@@ -297,7 +297,6 @@ class Residuals(object):
         :param  imts:
             A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
         """
-             
         # Residuals object
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.number_gmpes = len(self.gmpe_list)
@@ -312,8 +311,8 @@ class Residuals(object):
             gmpe_dict_1 = OrderedDict([])
             gmpe_dict_2 = OrderedDict([])
             self.unique_indices[gmpe] = {}
+            
             # Get the period range and the coefficient types
-            # gmpe_i = GSIM_LIST[gmpe]()
             gmpe_i = self.gmpe_list[gmpe]
             for c in dir(gmpe_i):
                 if 'COEFFS' in c:
@@ -348,6 +347,7 @@ class Residuals(object):
                         gmpe_dict_2[imtx][res_type] = []
                         self.types[gmpe][imtx].append(res_type)
                     gmpe_dict_2[imtx]["Mean"] = []
+           
                 # For handling of GMPEs with total sigma only
                 else: 
                     for res_type in self.gmpe_list[
