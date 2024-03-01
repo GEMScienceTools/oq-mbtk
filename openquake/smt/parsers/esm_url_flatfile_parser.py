@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parser for a flatfile downloaded from the ESM custom url database
+Parser for a flatfile downloaded from the ESM custom url database 
+--> (https://esm-db.eu/esmws/flatfile/1/)
 
 This parser assumes you have selected all available headers in your URL search
 when downloading the flatfile
