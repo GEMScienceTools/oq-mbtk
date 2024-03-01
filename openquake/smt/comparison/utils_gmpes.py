@@ -292,7 +292,7 @@ def mgmpe_check(gmpe):
     # Preserve original GMPE prior and create base version of GMPE
     orig_gmpe = gmpe
     base_gsim = gmpe.__class__.__name__
-
+    
     # Get the additional params if specified
     inputs = pd.Series(str(gmpe).splitlines()[1:], dtype='object')
     add_inputs = {}
@@ -339,15 +339,28 @@ def mgmpe_check(gmpe):
             else:
                 val = float(par.split('=')[1])
             add_inputs[key] = val
+    
+    # Crude workaround for retaining ASK14 gsim regionalisation parameter
+    # without needing to specify the region param in the toml (this issue
+    # is very specific to this gsim because of how add_alias is used in 
+    # the ASK14 gsim in combination with how gsims are read in from tomls)
+    if ('Reg' in orig_gmpe._toml and
+        orig_gmpe.__class__.__name__ == 'AbrahamsonEtAl2014'):
+        if 'RegTWN' in orig_gmpe._toml:
+            add_inputs['region'] = 'TWN'
+        if 'RegCHN' in orig_gmpe._toml:
+            add_inputs['region'] = 'CHN'
+        if 'RegJPN' in orig_gmpe._toml:
+            add_inputs['region'] = 'JPN'
 
-    # reconstruct the gmpe as kwargs
+    # Reconstruct the gmpe as kwargs
     kwargs = {'gmpe': {base_gsim: add_inputs}}
 
     # Al Atik 2015 sigma model
     if 'al_atik_2015_sigma' in str(orig_gmpe):
-        kwargs['sigma_model_alatik2015'] = {"tau_model": "global",
-                                            "ergodic": False}
-
+        kwargs['sigma_model_alatik2015'] = {
+            "tau_model": "global", "ergodic": False}
+    
     # Fix total sigma per imt
     if 'fix_total_sigma' in str(orig_gmpe):
         kwargs['set_fixed_total_sigma'] = {'total_sigma': fixed_sigma_vector}
