@@ -340,10 +340,7 @@ def mgmpe_check(gmpe):
                 val = float(par.split('=')[1])
             add_inputs[key] = val
     
-    # Crude workaround for ensuring retention of the ASK14 gsim regionalisation
-    # parameter without needing to specify the region param in the toml (this
-    # issue is specific to this gsim because of how add_alias is used in the 
-    # ASK14 gsim in combination with how gsims are read in from tomls)
+    # Crude workaround to ensure regionalisation of the ASK14 gmm
     if ('Reg' in orig_gmpe._toml and
         orig_gmpe.__class__.__name__ == 'AbrahamsonEtAl2014'):
         if 'RegTWN' in orig_gmpe._toml:
