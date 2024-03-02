@@ -340,7 +340,7 @@ def mgmpe_check(gmpe):
                 val = float(par.split('=')[1])
             add_inputs[key] = val
     
-    # Crude workaround to ensure regionalisation of the ASK14 gmm
+    # Workaround to ensure regionalisation of the ASK14 gmm
     if ('Reg' in orig_gmpe._toml and
         orig_gmpe.__class__.__name__ == 'AbrahamsonEtAl2014'):
         if 'RegTWN' in orig_gmpe._toml:
