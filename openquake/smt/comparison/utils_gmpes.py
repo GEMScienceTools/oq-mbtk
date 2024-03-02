@@ -242,8 +242,8 @@ def _get_z25(Vs30, region):
 
 def _param_gmpes(strike, dip, depth, aratio, rake, trt):
     """
-    Get (crude) proxies for strike, dip, depth and aspect ratio if not provided
-    by the user.
+    Get (crude) proxies for strike, dip, rake, depth and aspect ratio if not
+    provided by the user.
     """
     # Strike
     if strike == -999:
@@ -253,32 +253,32 @@ def _param_gmpes(strike, dip, depth, aratio, rake, trt):
 
     # Dip
     if dip == -999:
-        if rake == 0:
-            dip_s = 90  # strike slip
+        if rake == 0 or rake == 180:
+            dip_s = 90  # Strike slip
         else:
-            dip_s = 45  # reverse or normal fault
+            dip_s = 45  # Reverse or normal fault
     else:
         dip_s = dip
 
     # Depth
     if depth == -999:
         if trt == 'Interface':
-            depth_s = 30
+            depth_s = 40
         if trt == 'InSlab':
-            depth_s = 50
+            depth_s = 150
         else:
-            depth_s = 15
+            depth_s = 15 # Crustal
     else:
         depth_s = depth
 
-    # a-ratio
+    # Aspect ratio
     if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
-        if trt == 'InSlab' or trt == 'Interface':
+        if trt in ['InSlab', 'Interface']:
             aratio_s = 5
         else:
-            aratio_s = 2
+            aratio_s = 2 # Crustal
 
     return strike_s, dip_s, depth_s, aratio_s
 

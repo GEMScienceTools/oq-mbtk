@@ -488,7 +488,7 @@ Comparing GMPEs
         ztor = 'None' # Set to string of 'None' to NOT consider otherwise specify as array matching number of mag and depth values
         strike = -999
         dip =  60
-        rake = 90 # (+90 for compression, -90 for extension)
+        rake = 90 # Must be provided. Strike and dip can be approximated if either set to -999
         aratio  = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
         trellis_and_rs_mag_list = [5, 6, 7] # mags used only for trellis and response spectra
         trellis_and_rs_depths = [20, 20, 20] # depth per magnitude for trellis and response spectra
