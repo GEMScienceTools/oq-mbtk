@@ -480,7 +480,7 @@ class Residuals(object):
         Calculate the expected ground motions from the context
         """
         if not context["Ctx"].rake:
-            context["Ctx"].rake = 0.0 # Assume strike
+            context["Ctx"].rake = 0.0 # Assume strike-slip
         expected = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
         # Period range for GSIM
         for gmpe in self.gmpe_list:
