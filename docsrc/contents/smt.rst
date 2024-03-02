@@ -110,6 +110,11 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.2-AbrahamsonGulerce2020SInter]
         region = "CAS"
         
+        [models.AbrahamsonEtAl2014]
+        
+        [models.AbrahamsonEtAl2014RegJPN]
+        region = "JPN" # NB currently a bug for specifically this gmm in the SMT where the user must still specify the region param despite the class name differentiating as regionalised variant (will be fixed!)
+        
         [models.BooreEtAl2014]
         
         [models.BooreEtAl2014LowQ]
@@ -126,10 +131,10 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.3-CampbellBozorgnia2014]
         set_between_epsilon = 0.5 # Shift the mean with formula mean --> mean + epsilon_tau * between event
                                
-        [models.1-AbrahamsonEtAl2014]
+        [models.1-ChiouYoungs2014]
         median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
         
-        [models.2-AbrahamsonEtAl2014]
+        [models.2-ChiouYoungs2014]
         median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
         
         [models.1-KothaEtAl2020]

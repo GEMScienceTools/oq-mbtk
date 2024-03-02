@@ -339,16 +339,6 @@ def mgmpe_check(gmpe):
             else:
                 val = float(par.split('=')[1])
             add_inputs[key] = val
-    
-    # Workaround to ensure regionalisation of the ASK14 gmm (add_alias use in
-    # this gsim causes bug where region param not read in from gsim class name)
-    if 'AbrahamsonEtAl2014Reg' in orig_gmpe.__class__.__name__:
-        if 'TWN' in orig_gmpe._toml:
-            add_inputs['region'] = 'TWN'
-        if 'CHN' in orig_gmpe._toml:
-            add_inputs['region'] = 'CHN'
-        if 'JPN' in orig_gmpe._toml:
-            add_inputs['region'] = 'JPN'
 
     # Reconstruct the gmpe as kwargs
     kwargs = {'gmpe': {base_gsim: add_inputs}}
@@ -402,6 +392,6 @@ def mgmpe_check(gmpe):
     if 'NRCan15SiteTermLinear' in str(orig_gmpe):
         kwargs['nrcan15_site_term'] = {'kind': 'linear'}
 
-    gmpe = mgmpe.ModifiableGMPE(**kwargs)  # remake gmpe using mgmpe
+    gmpe = mgmpe.ModifiableGMPE(**kwargs)  # Remake gmpe using mgmpe
 
     return gmpe
