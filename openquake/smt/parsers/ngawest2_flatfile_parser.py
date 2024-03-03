@@ -875,6 +875,7 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     "V_lp":NGAWest2['LP-H2 (Hz)'],
     "W_lp":NGAWest2_vertical['LP-V (Hz)'], 
      
+    # In effect taking RotD50 as proxy for geometric mean of horizontal comps
     "U_pga":NGAWest2['PGA (g)']*981,
     "V_pga":NGAWest2['PGA (g)']*981,
     "W_pga":NGAWest2_vertical['PGA (g)']*981,
