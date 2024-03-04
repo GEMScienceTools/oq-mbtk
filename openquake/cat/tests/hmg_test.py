@@ -44,7 +44,7 @@ SETTINGS_HOMOG = """
 #from weatherill
 low_mags = [5.0, 6.0]
 conv_eqs = ["0.8 * m + 0.2", "m"]
-sigma = [0.283]
+sigma = [0.283, 0.283]
 """
 
 
@@ -71,6 +71,7 @@ class HomogeniseNEICmbTestCase(unittest.TestCase):
         save = pd.DataFrame(columns=work.columns)
 
         rules = toml.loads(SETTINGS_HOMOG)
+        #breakpoint()
         save, work = process_magnitude(work, rules['magnitude'])
 
         results = save.magMw.values
