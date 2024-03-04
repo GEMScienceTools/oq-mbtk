@@ -76,6 +76,12 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
     :param min_mag_compl:
         The minimum magnitude for which the completeness windows must be
         computed
+    :param completeness_ref:
+        Completness table indicating the years to be used in the possible
+        tables allowed. Only magniutdes within 1.0 of the ones defined in the
+        table will be included in the final set of tables. Years must be
+        the same as those given in the param `years`. Default is None, which
+        means no filtering of the possible tables will occur.
     :param apriori_conditions:
         A dictionary with key a value of magnitude and value a year. This
         combination of values must be included in the generated completeness
@@ -195,10 +201,15 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
             tmp = np.array(tmp)
             ctab = clean_completeness(tmp)
             for yr, mg in ctab:
+                if not yr in years_ref:
+                    rem.append(iper)
+                    continue
                 index = years_ref.index(yr)
                 mdiff = abs(mags_ref[index] - mg)
                 if mdiff > 1:
-                     rem.append(iper)
+                    rem.append(iper)
+                    continue
+
         perms = np.delete(perms, rem, 0)
 
     print(f'Total number selected        : {len(perms):,d}')
