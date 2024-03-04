@@ -66,19 +66,26 @@ HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
 HEADERS = set(HEADER_STR.split(";"))
 
 COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AZ": "Azerbaijan", "BA": "Bosnia and Herzegowina",
-                 "BG": "Bulgaria", "CH": "Switzerland", "CY": "Cyprus",
-                 "CZ": "Czech Republic", "DE": "Germany",  "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia",
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary",
-                 "IL": "Israel", "IR": "Iran", "IS": "Iceland", "IT": "Italy",
-                 "JO": "Jordan",  "LI": "Lichtenstein", "MA": "Morocco",
-                 "MC": "Monaco", "MD": "Moldova", "ME": "Montenegro",
-                 "MK": "Macedonia", "MT": "Malta", "PL": "Poland",
-                 "PT": "Portugal", "RO": "Romania", "RS": "Serbia",
-                 "RU": "Russia", "SI": "Slovenia", "SM": "San Marino",
-                 "SY": "Syria", "TM": "Turkmenistan", "TR": "Turkey",
-                 "UA": "Ukraine", "UZ": "Uzbekistan", "XK": "Kosovo"}
+                 "AR": "Argentina", "AZ": "Azerbaijan",
+                 "BA": "Bosnia and Herzegowina", "BG": "Bulgaria",
+                 "CH": "Switzerland", "CL": "Chile", "CN": "China", 
+                 "CR": "Costa Rica", "CY": "Cyprus", "CZ": "Czech Republic",
+                 "DE": "Germany", "DJ": "Djibouti", "DZ": "Algeria",
+                 "ES": "Spain", "FR": "France", "GE": "Georgia", "GH": "Ghana", 
+                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary", 
+                 "IL": "Israel", "ID": "Indonesia", "IR": "Iran",
+                 "IS": "Iceland", "IT": "Italy", "JO": "Jordan", "KE":"Kenya",
+                 "KG": "Kyrgyzstan", "KZ": "Kazakhstan", "LI": "Lichtenstein",
+                 "MA": "Morocco", "MC": "Monaco", "MD": "Moldova",
+                 "ME": "Montenegro", "MK": "Macedonia", "MM": "Myanmar",
+                 "MT": "Malta", "MX": "Mexico", "NI": "Nicaragua",
+                 "NO": "Norway", "PA": "Panama", "PG": "Papa New Guinea",
+                 "PL": "Poland", "PT": "Portugal", "PS": "Palestine",
+                 "RO": "Romania", "RS": "Serbia", "RU": "Russia",
+                 "SI": "Slovenia", "SM": "San Marino", "SY": "Syria",
+                 "TM": "Turkmenistan", "TR": "Turkey", "TW": "Taiwan",
+                 "UA": "Ukraine", "US": "United States", "UZ": "Uzbekistan",
+                 "VU": "Vanuatu", "XK": "Kosovo", "YE": "Yemen"}
 
 
 class ESMFlatfileParserWS(SMDatabaseReader):
