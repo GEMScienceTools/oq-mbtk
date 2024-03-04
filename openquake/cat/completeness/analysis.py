@@ -219,6 +219,19 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     return check, tmp_rate, norm
 
 
+def _make_ctab(prm, years, mags):
+
+    tmp = []
+    for yea, j in zip(years, prm):
+        if j >= -1e-10:
+            tmp.append([yea, mags[int(j)]])
+    tmp = np.array(tmp)
+    if len(tmp) > 0:
+        return clean_completeness(tmp)
+    else:
+        return 'skip'
+
+
 def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
                            bgrlim, criterion, compl_tables, src_id=None,
                            folder_out_figs=None, rewrite=False,
@@ -295,16 +308,20 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         # Info
         print(f'Iteration: {iper:05d} norm: {norm:12.6e}', end="\r")
 
-        tmp = []
-        for yea, j in zip(years, prm):
-            if j >= -1e-10:
-                tmp.append([yea, mags[int(j)]])
-        tmp = np.array(tmp)
-
-        if len(tmp) > 0:
-            ctab = clean_completeness(tmp)
-        else:
+        ctab = _make_ctab(prm, years, mags)
+        if isinstance(ctab, str):
             continue
+
+        #tmp = []
+        #for yea, j in zip(years, prm):
+        #    if j >= -1e-10:
+        #        tmp.append([yea, mags[int(j)]])
+        #tmp = np.array(tmp)
+
+        #if len(tmp) > 0:
+        #    ctab = clean_completeness(tmp)
+        #else:
+        #    continue
 
         # Check compatibility between catalogue and completeness table. This
         # function finds in each magnitude interval defined in the completeness
