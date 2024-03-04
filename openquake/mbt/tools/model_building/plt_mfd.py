@@ -25,7 +25,7 @@ def _compute_mfd(cat, compl_table, mwid):
     weichert_config = {'magnitude_interval': mwid,
                        'reference_magnitude': 0.0}
     weichert = Weichert()
-    bval_wei, sigmab, aval_wei, sigmaa = weichert.calculate(cat,
+    bval_wei, sigmab, aval_wei, sigmaa = weichert.calc(cat,
                                                             weichert_config,
                                                             compl_table)
     #
