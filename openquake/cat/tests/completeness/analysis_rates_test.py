@@ -46,7 +46,7 @@ class ComputeGRParametersTest(unittest.TestCase):
         tmp_folder = tempfile.mkdtemp()
 
         # Folder with the catalogue
-        self.fname_input_pattern = os.path.join(DATA_PATH, 'subcat_00c.csv')
+        self.fname_input_pattern = os.path.join(DATA_PATH, 'subcat_00*.csv')
         ref_config = os.path.join(DATA_PATH, 'config.toml')
 
         # Load the config template
@@ -76,25 +76,24 @@ class ComputeGRParametersTest(unittest.TestCase):
         conf = toml.load(self.fname_config)
 
         # Tests
-        """
-        expected = 5.217742014665241
-        computed = conf['sources']['00']['agr_weichert']
+
+        expected = 5.2725
+        computed = conf['sources']['00c']['agr_weichert']
         self.assertAlmostEqual(computed, expected, msg='aGR', places=5)
 
-        expected = 1.1531979338923517
-        computed = conf['sources']['00']['bgr_weichert']
+        expected = 0.97468
+        computed = conf['sources']['00c']['bgr_weichert']
         self.assertAlmostEqual(computed, expected, msg='bGR', places=5)
 
-        expected = 4.4
-        computed = conf['sources']['00']['rmag']
+        expected = 5.0
+        computed = conf['sources']['00c']['rmag']
         self.assertAlmostEqual(computed, expected, msg='rmag', places=5)
 
-        expected = 1.3921021542700736
-        computed = conf['sources']['00']['rmag_rate']
+        expected = 2.50674
+        computed = conf['sources']['00c']['rmag_rate']
         self.assertAlmostEqual(computed, expected, msg='rmag_rate', places=5)
 
-        expected = 0.2500289278698006
-        computed = conf['sources']['00']['rmag_rate_sig']
+        expected = 0.2627786
+        computed = conf['sources']['00c']['rmag_rate_sig']
         self.assertAlmostEqual(computed, expected, msg='rmag_rate_sig',
                                places=5)
-        """
