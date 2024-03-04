@@ -61,7 +61,7 @@ def get_residuals():
     for gmm in residuals.gmpe_list:
         
         # Create output directory
-        gmm_dir = residuals.gmpe_list[gmm]._toml
+        gmm_dir = residuals.gmpe_list[gmm]._toml.split('\n')[0]
         out = os.path.join('residuals', gmm_dir)
         if not os.path.exists(out): os.makedirs(out)
 
