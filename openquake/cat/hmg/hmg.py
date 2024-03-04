@@ -179,6 +179,13 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, conv_sigs, rows, save, work, m
     tmpsiga = np.zeros_like(m)
     tmpsigb = np.zeros_like(m)
 
+    try:
+        assert len(low_mags) == len(conv_eqs) == len(conv_sigs)
+    except ValueError:
+        fmt = 'Must include a low mangitude and sigma for each'
+        fmt += ' conversion equation.'
+        print(fmt)
+
     for mlow, conversion, sigma in zip(low_mags, conv_eqs, conv_sigs):
         m_inds = m >= mlow
         if conversion == 'm':
