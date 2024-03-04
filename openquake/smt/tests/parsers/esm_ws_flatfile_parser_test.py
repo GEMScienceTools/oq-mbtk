@@ -67,7 +67,7 @@ class ESMFlatfileParserWSTestCase(unittest.TestCase):
             BASE_DATA_PATH, "ESM_WS_Albania_filtered_test.csv")
         cls.db_file = os.path.join(BASE_DATA_PATH, "ESM_ws_conversion_test_metadata")    
         
-    def test_esm_flatfile_parser(self):
+    def test_esm_ws_flatfile_parser(self):
         """
         Tests the parsing of the reformatted ESM flatfile
         """

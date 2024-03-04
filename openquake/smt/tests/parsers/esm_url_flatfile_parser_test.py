@@ -59,7 +59,7 @@ class ESMFlatfileParserURLTestCase(unittest.TestCase):
         cls.db_file = os.path.join(BASE_DATA_PATH,
                                    "ESM_URL_conversion_test_metadata")       
 
-    def test_esm_flatfile_parser(self):
+    def test_esm_url_flatfile_parser(self):
         """
         Tests the parsing of the reformatted ESM flatfile
         """
