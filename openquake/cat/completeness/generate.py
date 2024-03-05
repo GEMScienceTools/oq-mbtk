@@ -26,11 +26,13 @@
 
 import os
 import copy
+import time
 from itertools import product
 import toml
 import numpy as np
 import multiprocessing
 from openquake.wkf.utils import create_folder
+from openquake.cat.completeness.analysis import _make_ctab
 
 
 def mm(a):
@@ -53,15 +55,16 @@ def get_completenesses(fname_config, folder_out):
     num_steps = config[key].get('num_steps', 0)
     min_mag_compl = config[key].get('min_mag_compl', None)
     apriori_conditions = config[key].get('apriori_conditions', {})
+    cref = config[key].get('completeness_ref', None)
     step = config[key].get('step', 8)
 
     _get_completenesses(mags, years, folder_out, num_steps, min_mag_compl,
-                        apriori_conditions, step)
+                        apriori_conditions, cref, step)
 
 
 def _get_completenesses(mags, years, folder_out=None, num_steps=0,
                         min_mag_compl=None, apriori_conditions={},
-                        step=6):
+                        completeness_ref=None, step=6):
     """
     :param mags:
         A list or numpy array in increasing order
@@ -74,6 +77,12 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
     :param min_mag_compl:
         The minimum magnitude for which the completeness windows must be
         computed
+    :param completeness_ref:
+        Completness table indicating the years to be used in the possible
+        tables allowed. Only magniutdes within 1.0 of the ones defined in the
+        table will be included in the final set of tables. Years must be
+        the same as those given in the param `years`. Default is None, which
+        means no filtering of the possible tables will occur.
     :param apriori_conditions:
         A dictionary with key a value of magnitude and value a year. This
         combination of values must be included in the generated completeness
@@ -81,6 +90,7 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
     :param step:
         The minimum number of steps in the completeness windows
     """
+    start = time.perf_counter()
 
     msg = 'Years must be in ascending order'
     assert np.all(np.diff(years) > 0), msg
@@ -176,6 +186,34 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
         # magnitude-year tuple
         perms = perms[perms[:, idx_yea] >= idx_mag, :]
 
+
+
+    if completeness_ref:
+        from openquake.cat.completeness.analysis import clean_completeness
+        years_ref = [c[0] for c in completeness_ref]
+        mags_ref = [c[1] for c in completeness_ref]
+        rem = []
+        for iper, prm in enumerate(perms):
+            #tmp = []
+            #for yea, j in zip(years, prm):
+            #    if j >= -1e-10:
+            #        tmp.append([yea, mags[int(j)]])
+#
+#            tmp = np.array(tmp)
+#            ctab = clean_completeness(tmp)
+            ctab = _make_ctab(prm, years, mags)
+            for yr, mg in ctab:
+                if not yr in years_ref:
+                    rem.append(iper)
+                    continue
+                index = years_ref.index(yr)
+                mdiff = abs(mags_ref[index] - mg)
+                if mdiff > 1:
+                    rem.append(iper)
+                    continue
+
+        perms = np.delete(perms, rem, 0)
+
     print(f'Total number selected        : {len(perms):,d}')
 
     if folder_out is not None:
@@ -184,4 +222,6 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
         np.save(os.path.join(folder_out, 'mags.npy'), mags)
         np.save(os.path.join(folder_out, 'years.npy'), years)
 
+    end = time.perf_counter()
+    print('Time taken {}: ', start-end)
     return perms, mags, years
