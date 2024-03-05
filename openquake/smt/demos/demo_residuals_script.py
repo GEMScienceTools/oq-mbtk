@@ -14,6 +14,9 @@ from openquake.smt.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals import residual_plotter as rspl
 
+import warnings
+warnings.filterwarnings("ignore")
+
 """USER INPUTS"""
 
 #Specify absolute path
