@@ -132,19 +132,20 @@ def make_multifault_source(
     return mfs
 
 
-def write_multifault_source(out_path, mf_source,
-                            trt="Active Shallow Crust",
-                            group_name=None,
-                            source_name=None,
-                            investigation_time=1.0,
-                            ):
+def write_multifault_source(
+    out_path,
+    mf_source,
+    source_name=None,
+    investigation_time=1.0,
+):
 
     if source_name is None:
         source_name = mf_source.source_id
 
     xml_outpath = os.path.join(out_path, f"{source_name}.xml")
-    write_source_model(xml_outpath, [mf_source],
-                       investigation_time=investigation_time)
+    write_source_model(
+        xml_outpath, [mf_source], investigation_time=investigation_time
+    )
 
 
 def make_multifault_source_old(
