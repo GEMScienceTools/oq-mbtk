@@ -8,6 +8,8 @@ import os
 import toml
 from openquake.smt.comparison import compare_gmpes as comp
 
+import warnings
+warnings.filterwarnings("ignore")
 
 # User input (can add more input tomls to run multiple analyses if required)
 file_list = ['demo_comparison_analysis_inputs.toml']
