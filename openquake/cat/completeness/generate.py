@@ -26,12 +26,13 @@
 
 import os
 import copy
+import time
 from itertools import product
 import toml
 import numpy as np
 import multiprocessing
 from openquake.wkf.utils import create_folder
-import time
+from openquake.cat.completeness.analysis import _make_ctab
 
 
 def mm(a):
@@ -193,13 +194,14 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
         mags_ref = [c[1] for c in completeness_ref]
         rem = []
         for iper, prm in enumerate(perms):
-            tmp = []
-            for yea, j in zip(years, prm):
-                if j >= -1e-10:
-                    tmp.append([yea, mags[int(j)]])
-
-            tmp = np.array(tmp)
-            ctab = clean_completeness(tmp)
+            #tmp = []
+            #for yea, j in zip(years, prm):
+            #    if j >= -1e-10:
+            #        tmp.append([yea, mags[int(j)]])
+#
+#            tmp = np.array(tmp)
+#            ctab = clean_completeness(tmp)
+            ctab = _make_ctab(prm, years, mags)
             for yr, mg in ctab:
                 if not yr in years_ref:
                     rem.append(iper)
