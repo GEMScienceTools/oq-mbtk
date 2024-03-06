@@ -74,7 +74,7 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
 
 
     # Read the profiles
-    sps, dmin, dmax = read_profiles_csv(in_path,
+    sps, dmin, dmax, addlim = read_profiles_csv(in_path,
                                         float(upper_depth),
                                         float(lower_depth),
                                         from_id, to_id)
@@ -107,7 +107,9 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
     logging.info('Longest sampling  [%s]: %.4f' % (longest_key, tmp))
 
     # Resampled profiles
-    rsps = get_interpolated_profiles(sps, lengths, number_of_samples)
+#    breakpoint()
+    rsps = get_interpolated_profiles(sps, lengths, number_of_samples,
+                                     include_limit=addlim)
 
     # Store new profiles
     write_profiles_csv(rsps, out_path)

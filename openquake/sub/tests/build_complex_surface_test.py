@@ -38,7 +38,7 @@ class BuildComplexSurfaceTest(unittest.TestCase):
         to_id = '.*'
         #
         # read profiles
-        sps, odmin, odmax = read_profiles_csv(self.in_path, upper_depth,
+        sps, odmin, odmax, _ = read_profiles_csv(self.in_path, upper_depth,
                                               lower_depth, from_id, to_id)
         #
         # build the complex surface
@@ -46,7 +46,7 @@ class BuildComplexSurfaceTest(unittest.TestCase):
                               upper_depth, lower_depth, from_id, to_id)
         #
         # read the output profiles
-        sps, edmin, edmax = read_profiles_csv(self.out_path, upper_depth,
+        sps, edmin, edmax, _ = read_profiles_csv(self.out_path, upper_depth,
                                               lower_depth, from_id, to_id)
         #
         #

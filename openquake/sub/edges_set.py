@@ -10,6 +10,7 @@ from openquake.hazardlib.tom import PoissonTOM
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.mfd import TruncatedGRMFD
 from openquake.hazardlib.scalerel.strasser2010 import StrasserInterface
+from openquake.hazardlib.source import KiteFaultSource
 
 DEFAULTS = {'source_id': '0',
             'name': 'None',
@@ -72,4 +73,38 @@ class EdgesSet():
                                   p['rupture_aspect_ratio'],
                                   p['temporal_occurrence_model'],
                                   self.edges,
+                                  p['rake'])
+
+    def get_kite_fault(self, params={}, section_length=None):
+        """
+        :param params:
+        :param params:
+        """
+        p = DEFAULTS
+
+        # update the default parameters
+        for key in params:
+            p[key] = params[key]
+
+        assert len(set([len(e.coo) for e in self.edges])) == 1
+
+        profiles = []
+        for ii in range(len(self.edges[0].coo)):
+            line = []
+            for edge in self.edges:
+                coords = edge.coo[ii]
+                pt = Point(coords[0], coords[1], coords[2])
+                line.append(pt)
+            profiles.append(Line(line))
+
+        # create the kite fault source instance
+        return KiteFaultSource(p['source_id'],
+                                  p['name'],
+                                  p['tectonic_region_type'],
+                                  p['mfd'],
+                                  p['rupture_mesh_spacing'],
+                                  p['magnitude_scaling_relationship'],
+                                  p['rupture_aspect_ratio'],
+                                  p['temporal_occurrence_model'],
+                                  profiles,
                                   p['rake'])

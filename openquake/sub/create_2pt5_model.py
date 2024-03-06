@@ -5,7 +5,7 @@ import glob
 import numpy
 
 from pyproj import Geod
-from openquake.hazardlib.geo.geodetic import distance
+from openquake.hazardlib.geo.geodetic import distance, azimuth, point_at
 
 
 def get_profiles_length(sps):
@@ -38,7 +38,8 @@ def get_profiles_length(sps):
     return lengths, longest_key, shortest_key
 
 
-def get_interpolated_profiles(sps, lengths, number_of_samples):
+def get_interpolated_profiles(sps, lengths, number_of_samples,
+                              include_limit=False):
     """
     :parameter dict sps:
         A dictionary containing the subduction profiles. key is a string and
@@ -54,7 +55,8 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
     for key in sorted(sps.keys()):
 
         # calculate the sampling distance
-        samp = lengths[key] / number_of_samples
+        samp = lengths[key] / (number_of_samples )
+        print(lengths[key], samp)
 
         # set data for the profile
         dat = sps[key]
@@ -63,7 +65,8 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
         g = Geod(ellps='WGS84')
 
         # horizontal 'slope'
-        az_prof, _, _ = g.inv(dat[0, 0], dat[0, 1], dat[-1, 0], dat[-1, 1])
+        #az_prof, _, _ = g.inv(dat[0, 0], dat[0, 1], dat[-1, 0], dat[-1, 1])
+        az_prof = azimuth(dat[0, 0], dat[0, 1], dat[-1, 0], dat[-1, 1])
 
         # initialise
         idx = 0
@@ -74,10 +77,13 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
         while idx < len(dat) - 1:
 
             # segment length
-            _, _, dst = g.inv(dat[idx, 0], dat[idx, 1],
-                              dat[idx + 1, 0], dat[idx + 1, 1])
-            dst /= 1e3
-            dst = (dst**2 + (dat[idx, 2] - dat[idx + 1, 2])**2)**.5
+            #_, _, dst = g.inv(dat[idx, 0], dat[idx, 1],
+            #                  dat[idx + 1, 0], dat[idx + 1, 1])
+            #dst /= 1e3
+            #dst = (dst**2 + (dat[idx, 2] - dat[idx + 1, 2])**2)**.5
+
+            dst = distance(dat[idx, 0], dat[idx, 1], dat[idx,2],
+                           dat[idx+1, 0], dat[idx+1, 1], dat[idx+1,2])
 
             # calculate total distance i.e. cumulated + new segment
             total_dst = cdst + dst
@@ -97,8 +103,9 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
                     vdst = tdst * vfact
                     # tlo, tla = p((x[idx] + hdst*xfact)*1e3,
                     #              (y[idx] + hdst*yfact)*1e3, inverse=True)
-                    tlo, tla, _ = g.fwd(dat[idx, 0], dat[idx, 1], az_prof,
-                                        hdst * 1e3)
+#                    tlo, tla, _ = g.fwd(dat[idx, 0], dat[idx, 1], az_prof,
+#                                        hdst * 1e3)
+                    tlo, tla = point_at(dat[idx, 0], dat[idx, 1], az_prof, hdst)
                     spro.append([tlo, tla, dat[idx, 2] + vdst])
 
                     # check that the h and v distances are coherent with
@@ -116,6 +123,7 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
                                                                          samp)
                             raise ValueError(msg)
 
+
                 # new distance left over
                 cdst = (dst + cdst) - num_new_points * samp
             else:
@@ -124,6 +132,8 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
             # updating index
             idx += 1
 
+        if include_limit == True:
+            spro.append([dat[-1, 0], dat[-1, 1], dat[-1, 2]])
         # Saving results
         if len(spro):
             ssps[key] = numpy.array(spro)
@@ -152,6 +162,7 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
 
     # Reading files
     pattern = os.path.join(foldername, 'cs*.csv')
+    addlim = False
     for filename in sorted(glob.glob(pattern)):
 
         # Get the filename ID
@@ -234,6 +245,7 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
                 tmpl = tmpa[j[0], :].tolist()
                 if pntb:
                     tmpl.append(pntb)
+                    addlim = True
                 if pntt:
                     tmpl = [pntt] + tmpl
                 #
@@ -241,7 +253,7 @@ def read_profiles_csv(foldername, upper_depth=0, lower_depth=1000,
                 sps[sid] = numpy.array(tmpl)
                 dmin = min(min(sps[sid][:, 2]), dmin)
                 dmax = max(max(sps[sid][:, 2]), dmax)
-    return sps, dmin, dmax
+    return sps, dmin, dmax, addlim
 
 
 def _get_point_at_depth(coo1, coo2, depth):

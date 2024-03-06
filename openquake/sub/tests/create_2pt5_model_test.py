@@ -36,7 +36,7 @@ class WriteProfilesEdgesTest(unittest.TestCase):
         """
         #
         # read data and compute distances
-        sps, dmin, dmax = read_profiles_csv(CS_DATA_PATH)
+        sps, dmin, dmax, _ = read_profiles_csv(CS_DATA_PATH)
         lengths, longest_key, shortest_key = get_profiles_length(sps)
         maximum_sampling_distance = 15
         num_sampl = np.ceil(lengths[longest_key] / maximum_sampling_distance)
@@ -63,7 +63,7 @@ class ReadProfilesTest(unittest.TestCase):
         """
         Test reading a profile file
         """
-        sps, dmin, dmax = read_profiles_csv(CS_DATA_PATH)
+        sps, dmin, dmax, _ = read_profiles_csv(CS_DATA_PATH)
         # check the minimum and maximum depths computed
         assert dmin == 0
         assert dmax == 40.0
@@ -82,7 +82,7 @@ class ReadProfilesTest(unittest.TestCase):
         """
         Read CAM profiles
         """
-        sps, dmin, dmax = read_profiles_csv(CAM_DATA_PATH, upper_depth=0,
+        sps, dmin, dmax, _ = read_profiles_csv(CAM_DATA_PATH, upper_depth=0,
                                             lower_depth=1000, from_id="13",
                                             to_id="32")
 
@@ -92,7 +92,7 @@ class ReadProfilesTest(unittest.TestCase):
         """
         lower_depth = 30
         upper_depth = 20
-        sps, dmin, dmax = read_profiles_csv(CAM_DATA_PATH, upper_depth,
+        sps, dmin, dmax, _ = read_profiles_csv(CAM_DATA_PATH, upper_depth,
                                             lower_depth, from_id="13",
                                             to_id="32")
         assert dmin >= upper_depth
@@ -106,7 +106,7 @@ class GetProfilesLengthTest(unittest.TestCase):
         Test computing the lenght of profiles
         """
         # read data and compute distances
-        sps, dmin, dmax = read_profiles_csv(CS_DATA_PATH)
+        sps, dmin, dmax, _ = read_profiles_csv(CS_DATA_PATH)
         lengths, longest_key, shortest_key = get_profiles_length(sps)
         # check shortest and longest profiles
         assert longest_key == '003'
@@ -124,7 +124,7 @@ class GetInterpolatedProfilesTest(unittest.TestCase):
         Test profile interpolation: simple case | sampling: 30 km
         """
         # read data and compute distances
-        sps, dmin, dmax = read_profiles_csv(CS_DATA_PATH)
+        sps, dmin, dmax, _ = read_profiles_csv(CS_DATA_PATH)
         lengths, longest_key, shortest_key = get_profiles_length(sps)
         maximum_sampling_distance = 30
         num_sampl = np.ceil(lengths[longest_key] / maximum_sampling_distance)
@@ -148,12 +148,13 @@ class GetInterpolatedProfilesTest(unittest.TestCase):
             self.assertListEqual([odat[0, 0], odat[0, 1]],
                                  [dat[0, 0], dat[0, 1]])
             # check that the depth of the profiles is always increasing
-            computed = np.all(np.sign(np.diff(dat[:-1, 2]-dat[1:, 2])) < 0)
+            computed = np.all(np.sign(dat[:-1, 2]-dat[1:, 2]) < 0)
             self.assertTrue(computed)
         #
         # check that all the profiles have all the same length
         dff = np.diff(np.array(lll))
         zeros = np.zeros_like(dff)
+        breakpoint()
         np.testing.assert_allclose(dff, zeros, rtol=2)
 
     def test_interpolation_simple_20km(self):
@@ -174,7 +175,7 @@ class GetInterpolatedProfilesTest(unittest.TestCase):
         """
         #
         # read data and compute distances
-        sps, dmin, dmax = read_profiles_csv(CAM_DATA_PATH)
+        sps, dmin, dmax, _ = read_profiles_csv(CAM_DATA_PATH)
         lengths, longest_key, shortest_key = get_profiles_length(sps)
         maximum_sampling_distance = 30.
         num_sampl = np.ceil(lengths[longest_key] / maximum_sampling_distance)
@@ -238,7 +239,7 @@ def interpolation(foldername, maximum_sampling_distance):
     """
     #
     # read data and compute distances
-    sps, dmin, dmax = read_profiles_csv(foldername)
+    sps, dmin, dmax, _ = read_profiles_csv(foldername)
     lengths, longest_key, shortest_key = get_profiles_length(sps)
     num_sampl = np.ceil(lengths[longest_key] / maximum_sampling_distance)
     #
