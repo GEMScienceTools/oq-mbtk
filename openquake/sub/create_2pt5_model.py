@@ -123,6 +123,18 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
 
             # updating index
             idx += 1
+        # add last point if it's far
+        if len(spro) == number_of_samples:
+            dist_chk = distance(spro[-1][0], spro[-1][1], spro[-1][2],
+                                dat[-1, 0], dat[-1, 1], dat[-1, 2])
+            if abs(1-dist_chk/samp) < 0.1:
+                spro.append([dat[-1, 0], dat[-1, 1], dat[-1, 2]])
+            dchks = []
+            for ii in range(len(spro)-2):
+                p2p_dst = distance(spro[ii][0], spro[ii][1], spro[ii][2],
+                                    spro[ii+1][0], spro[ii+1][1], spro[ii+1][2])
+                dchks.append(p2p_dst.round(0))
+            assert len(set(dchks)) == 1
 
         # Saving results
         if len(spro):
