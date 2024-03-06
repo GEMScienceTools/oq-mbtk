@@ -306,11 +306,14 @@ def write_edges_csv(sps, foldername):
     #
     # run for all the edges i.e. number of
     max_num = len(sps[list(sps.keys())[0]])
-    for idx in range(0, max_num - 1):
+    for idx in range(0, max_num ):
         dat = []
         for key in sorted(sps):
             dat.append(sps[key][idx, :])
+        print(sps[key][idx,:])
         fname = os.path.join(foldername, 'edge_%03d.csv' % (idx))
+        if idx == 12:
+            breakpoint()
         numpy.savetxt(fname, numpy.array(dat))
 
 
