@@ -1,16 +1,26 @@
 import logging
 from typing import Optional
+from functools import partial
+from collections import deque
 from multiprocessing import Pool, Array
 
 import numpy as np
 import igraph as ig
 import pandas as pd
-from numba import jit
+from numba import jit, njit, int16, int32
+from numba.typed import List
+from scipy.sparse import dok_array, issparse
 
-from openquake.hazardlib.geo.geodetic import spherical_to_cartesian
+from openquake.hazardlib.geo import Point, Line
+from openquake.hazardlib.geo.geodetic import (
+    spherical_to_cartesian,
+    azimuth,
+    geodetic_distance,
+)
 
 from openquake.aft.rupture_distances import (
     get_sequence_pairwise_dists,
+    calc_pairwise_distances,
     RupDistType,
 )
 
@@ -19,7 +29,12 @@ from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
     make_sf_rupture_meshes,
+    get_trace_from_mesh,
 )
+
+
+from openquake.fnm.mesh import get_mesh_bb
+from openquake.fnm.bbox import get_bb_distance
 
 
 def get_bb_from_surface(surface):
@@ -27,10 +42,10 @@ def get_bb_from_surface(surface):
 
     return np.array(
         [
-            [sphere_bb.north, sphere_bb.east],
-            [sphere_bb.north, sphere_bb.west],
-            [sphere_bb.south, sphere_bb.west],
-            [sphere_bb.south, sphere_bb.east],
+            [sphere_bb[3], sphere_bb[0]],
+            [sphere_bb[3], sphere_bb[1]],
+            [sphere_bb[2], sphere_bb[1]],
+            [sphere_bb[2], sphere_bb[0]],
         ]
     )
 
@@ -73,6 +88,20 @@ def get_bounding_box_distances(
     return fault_bb_dists
 
 
+def get_bounding_box_distances_marco(
+    fault_surfaces, max_dist: Optional[float] = None
+):
+    mesh_bbs = [get_mesh_bb(surface.mesh) for surface in fault_surfaces]
+    dists = {}
+    for i in range(len(mesh_bbs)):
+        for j in range(i + 1, len(mesh_bbs)):
+            dist = get_bb_distance(mesh_bbs[i], mesh_bbs[j])
+            if max_dist is None or dist <= max_dist:
+                dists[(i, j)] = dist
+                dists[(j, i)] = dist
+    return dists
+
+
 def get_close_faults(
     faults: list[dict], max_dist: Optional[float] = None
 ) -> RupDistType:
@@ -98,7 +127,10 @@ def get_close_faults(
             d: distance between the bounding boxes (float)
     """
     surfaces = [fault['surface'] for fault in faults]
-    fault_bb_dists = get_bounding_box_distances(surfaces, max_dist=max_dist)
+    # fault_bb_dists = get_bounding_box_distances(surfaces, max_dist=max_dist)
+    fault_bb_dists = get_bounding_box_distances_marco(
+        surfaces, max_dist=max_dist
+    )
 
     return fault_bb_dists
 
@@ -293,6 +325,7 @@ def get_single_fault_rups(
             subfaults: list of subfault indices in the rupture
             fault: fault identifier
     """
+    num_subfaults = len(subfaults)
     fault_rups = get_rupture_patches_from_single_fault(subfaults)
     rup_patches = list(fault_rups.values())[0]
     rup_subfaults = [
@@ -309,6 +342,9 @@ def get_single_fault_rups(
         },
     )
     rupture_df['fault'] = list(fault_rups.keys())[0]
+    rupture_df['full_fault_rupture'] = [
+        len(rup) == num_subfaults for rup in rup_patches
+    ]
 
     return rupture_df
 
@@ -361,6 +397,8 @@ def get_rupture_adjacency_matrix(
     all_subfaults=None,
     multifaults_on_same_fault: bool = False,
     max_dist: Optional[float] = 20.0,
+    sparse: bool = True,
+    full_fault_only_mf_ruptures: bool = True,
 ) -> tuple[pd.DataFrame, np.ndarray]:
     """
     Get the rupture adjacency matrix for a set of faults. Adjacency values
@@ -397,6 +435,17 @@ def get_rupture_adjacency_matrix(
         equal to the number of ruptures. The values are the distances between
         the ruptures in km.
     """
+
+    if sparse:
+
+        def sparsify_maybe(dist_matrix):
+            return dok_array(dist_matrix)
+
+    else:
+
+        def sparsify_maybe(dist_matrix):
+            return dist_matrix
+
     if all_subfaults is None:
         all_subfaults = [
             get_subsections_from_fault(fault, surface=fault['surface'])
@@ -407,63 +456,116 @@ def get_rupture_adjacency_matrix(
         all_subfaults
     )
 
-    single_fault_rup_coords = [
-        [
-            get_single_fault_rupture_coordinates(rup, subfaults)
-            for rup in single_fault_rups[i]
-        ]
-        for i, subfaults in enumerate(all_subfaults)
-    ]
-
     nrups = single_fault_rup_df.shape[0]
 
     # increasing distance to make up for discrepancy between bb dist and
     # actual rupture distances; this is a filtering step.
     fault_dists = get_close_faults(faults, max_dist=max_dist * 1.5)
 
-    fault_dists = {(i, j): d for i, j, d in fault_dists}
+    # fault_dists = {(i, j): d for i, j, d in fault_dists}
 
-    dist_adj_matrix = np.zeros((nrups, nrups), dtype=np.float32)
+    dist_adj_matrix = sparsify_maybe(
+        np.zeros((nrups, nrups), dtype=np.float32)
+    )
 
     if max_dist is None:
         max_dist = np.inf
 
-    row_count = 0
-    for i, f1 in enumerate(faults):
-        nrows = len(single_fault_rups[i])
-        col_count = 0
-        for j, f2 in enumerate(faults):
-            ncols = len(single_fault_rups[j])
-            pw_source_dists = None
-            if i == j:
-                if multifaults_on_same_fault:
-                    pw_source_dists = get_sequence_pairwise_dists(
-                        single_fault_rup_coords[i],
-                        single_fault_rup_coords[j],
+    if full_fault_only_mf_ruptures:
+        fault_lookup = {fault['fid']: i for i, fault in enumerate(faults)}
+
+        full_fault_ruptures = sorted(
+            set(
+                [
+                    i
+                    for i, rup in single_fault_rup_df.iterrows()
+                    if rup['full_fault_rupture']
+                ]
+            )
+        )
+        full_fault_rup_coords = {}
+        for ff in full_fault_ruptures:
+            fault_idx = fault_lookup[single_fault_rup_df.loc[ff, 'fault']]
+            full_fault_rup_coords[ff] = get_single_fault_rupture_coordinates(
+                single_fault_rup_df.loc[ff, 'patches'],
+                all_subfaults[fault_idx],
+            )
+
+        for row_ff in full_fault_ruptures:
+            row_fault_ind = fault_lookup[
+                single_fault_rup_df.loc[row_ff, 'fault']
+            ]
+            for col_ff in full_fault_ruptures:
+                col_fault_ind = fault_lookup[
+                    single_fault_rup_df.loc[col_ff, 'fault']
+                ]
+
+                if (row_ff < col_ff) and (
+                    row_fault_ind,
+                    col_fault_ind,
+                ) in fault_dists:
+                    dist = np.min(
+                        calc_pairwise_distances(
+                            full_fault_rup_coords[row_ff],
+                            full_fault_rup_coords[col_ff],
+                        )
                     )
-                else:
-                    pass
-            elif i < j:
-                if (i, j) not in fault_dists:
-                    pass
-                elif fault_dists[(i, j)] <= max_dist * 1.5:
-                    pw_source_dists = get_sequence_pairwise_dists(
-                        single_fault_rup_coords[i],
-                        single_fault_rup_coords[j],
+                    if dist <= max_dist:
+                        dist_adj_matrix[row_ff, col_ff] = dist
+
+    else:
+        single_fault_rup_coords = [
+            [
+                get_single_fault_rupture_coordinates(rup, subfaults)
+                for rup in single_fault_rups[i]
+            ]
+            for i, subfaults in enumerate(all_subfaults)
+        ]
+
+        row_count = 0
+        for i, f1 in enumerate(faults):
+            nrows = len(single_fault_rups[i])
+            col_count = 0
+            for j, f2 in enumerate(faults):
+                ncols = len(single_fault_rups[j])
+                pw_source_dists = None
+                if i == j:
+                    if multifaults_on_same_fault:
+                        pw_source_dists = get_sequence_pairwise_dists(
+                            single_fault_rup_coords[i],
+                            single_fault_rup_coords[j],
+                        )
+                    else:
+                        pass
+                elif i < j:  # upper triangular matrix
+                    if (i, j) not in fault_dists:
+                        pass
+                    elif fault_dists[(i, j)] <= max_dist * 1.5:
+                        pw_source_dists = get_sequence_pairwise_dists(
+                            single_fault_rup_coords[i],
+                            single_fault_rup_coords[j],
+                        )
+                # else:
+                #    pass
+
+                if pw_source_dists is not None:
+                    local_dist_matrix = rdist_to_dist_matrix(
+                        pw_source_dists, nrows, ncols
                     )
-            else:
-                pass
+                    local_dist_matrix[local_dist_matrix > max_dist] = 0.0
 
-            if pw_source_dists is not None:
-                dist_adj_matrix[
-                    row_count : row_count + nrows,
-                    col_count : col_count + ncols,
-                ] = rdist_to_dist_matrix(pw_source_dists, nrows, ncols)
+                    dist_adj_matrix[
+                        row_count : row_count + nrows,
+                        col_count : col_count + ncols,
+                    ] = sparsify_maybe(local_dist_matrix)
 
-            col_count += ncols
-        row_count += nrows
+                col_count += ncols
+            row_count += nrows
 
-    dist_adj_matrix[dist_adj_matrix > max_dist] = 0.0
+    logging.debug(" dist matrix type: %s", type(dist_adj_matrix))
+
+    # make the matrix symmetric
+    dist_adj_matrix += dist_adj_matrix.T
 
     return single_fault_rup_df, dist_adj_matrix
 
@@ -494,8 +596,149 @@ def make_binary_adjacency_matrix(
     return binary_dist_matrix
 
 
+def make_binary_adjacency_matrix_sparse(
+    dist_matrix, max_dist: float = 10.0
+) -> dok_array:
+    """
+    Make a binary adjacency matrix from a distance matrix. The binary
+    adjacency matrix is 1 if the distance is less than or equal to
+    `max_dist`, and 0 otherwise.
+
+    Parameters
+    ----------
+    dist_matrix : np.ndarray
+        Distance matrix.
+    max_dist : float, optional
+        Maximum distance between ruptures in km. The default is 10.0.
+
+    Returns
+    -------
+    dok_array
+        Binary adjacency matrix.
+    """
+    dist_matrix = dist_matrix.todok()
+    binary_dist_matrix = dok_array(dist_matrix.shape, dtype=np.int32)
+    for (row, col), distance in dist_matrix.items():
+        if 0.0 < distance <= max_dist:
+            binary_dist_matrix[row, col] = 1
+    # binary_dist_matrix[(dist_matrix > 0.0) & (dist_matrix <= max_dist)] = 1
+
+    return binary_dist_matrix
+
+
+def _latlon_to_xyz(lon, lat):
+    phi = np.radians(lat)
+    lamb = np.radians(lon)
+
+    return np.array(
+        [np.cos(phi) * np.cos(lamb), np.cos(phi) * np.sin(lamb), np.sin(phi)]
+    )
+
+
+def _xyz_to_latlon(sp):
+    x, y, z = sp
+    phi = np.arctan2(z, np.sqrt(x**2 + y**2))
+    lamb = np.arctan2(y, x)
+
+    lon, lat = np.degrees([lamb, phi])
+    return lon, lat
+
+
+def _geog_vec_to_xyz(lon, lat, bearing):
+    phi, lamb, theta = np.radians([lat, lon, bearing])
+
+    C = np.array(
+        [
+            np.sin(lamb) * np.cos(theta)
+            - np.sin(phi) * np.cos(lamb) * np.sin(theta),
+            -np.cos(lamb) * np.cos(theta)
+            - np.sin(phi) * np.sin(lamb) * np.sin(theta),
+            np.cos(phi) * np.sin(theta),
+        ]
+    )
+    return C
+
+
+def intersection_pt(
+    lon_a, lat_a, strike_a, lon_b, lat_b, strike_b, return_closest=True
+):
+    p_a = _latlon_to_xyz(lon_a, lat_a)
+    p_b = _latlon_to_xyz(lon_b, lat_b)
+
+    c_a = _geog_vec_to_xyz(lon_a, lat_a, strike_a)
+    c_b = _geog_vec_to_xyz(lon_b, lat_b, strike_b)
+
+    n1 = np.cross(c_a, c_b)
+    n2 = np.cross(c_b, c_a)
+
+    pt_1 = _xyz_to_latlon(n1)
+    pt_2 = _xyz_to_latlon(n2)
+
+    if return_closest:
+        d1 = np.arccos(p_a.dot(n1))
+        d2 = np.arccos(p_b.dot(n2))
+        if d1 <= d2:
+            return pt_1
+        else:
+            return pt_2
+    else:
+        return pt_1, pt_2
+
+
+def find_intersection_angle(trace_1, trace_2):
+    if not isinstance(trace_1, Line):
+        tr1 = Line([Point(*coords) for coords in trace_1])
+        tr2 = Line([Point(*coords) for coords in trace_2])
+    else:
+        tr1 = trace_1
+        tr2 = trace_2
+
+    az_1 = tr1.average_azimuth()
+    az_2 = tr2.average_azimuth()
+
+    pt_1_x, pt_1_y = tr1[0].x, tr1[0].y
+    pt_2_x, pt_2_y = tr2[0].x, tr2[0].y
+
+    int_pt = intersection_pt(pt_1_x, pt_1_y, az_1, pt_2_x, pt_2_y, az_2)
+
+    # use the farther point from int_pt on each trace to calculate the angle
+    dists_1 = geodetic_distance(
+        int_pt[0],
+        int_pt[1],
+        np.array([c[0] for c in tr1.coo]),
+        np.array([c[1] for c in tr1.coo]),
+    )
+
+    dists_2 = geodetic_distance(
+        int_pt[0],
+        int_pt[1],
+        np.array([c[0] for c in tr2.coo]),
+        np.array([c[1] for c in tr2.coo]),
+    )
+
+    pt_1_x, pt_1_y = (
+        trace_1[np.argmax(dists_1)].x,
+        trace_1[np.argmax(dists_1)].y,
+    )
+    pt_2_x, pt_2_y = (
+        trace_2[np.argmax(dists_2)].x,
+        trace_2[np.argmax(dists_2)].y,
+    )
+
+    az_pt_1, az_pt_2 = azimuth(
+        [pt_1_x, pt_2_x], [pt_1_y, pt_2_y], int_pt[0], int_pt[1]
+    )
+
+    angle_between = np.abs(az_pt_1 - az_pt_2) % 360
+
+    if angle_between > 180.0:
+        angle_between = 360 - angle_between
+
+    return int_pt, angle_between
+
+
 def get_proximal_rup_angles(
-    sf_meshes, binary_distance_matrix
+    sf_traces, binary_distance_matrix
 ) -> dict[tuple[int, int], tuple[float, float]]:
     """
     Get the rupture angles between proximal ruptures (i.e., those considered
@@ -518,12 +761,177 @@ def get_proximal_rup_angles(
         Dictionary of rupture angles. The keys are tuples of rupture indices,
         and the values are tuples of rupture angles in degrees.
     """
+    if not isinstance(sf_traces[0], Line):
+        sf_traces = [
+            Line([Point(*coords) for coords in trace]) for trace in sf_traces
+        ]
+
     rup_angles = {}
-    for i, mesh_0 in enumerate(sf_meshes):
-        for j, mesh_1 in enumerate(sf_meshes):
+    for i, trace_0 in enumerate(sf_traces):
+        for j, trace_1 in enumerate(sf_traces):
             if binary_distance_matrix[i, j] == 1:
-                rup_angles[(i, j)] = get_angles(mesh_0, mesh_1)
+                rup_angles[(i, j)] = find_intersection_angle(trace_0, trace_1)
     return rup_angles
+
+
+def angle_difference(angle_1, angle_2):
+    return np.abs(angle_1 - angle_2) % 360
+
+
+def get_dists_and_azimuths_from_pt(trace, pt):
+    endpts_x = np.array([trace[0].x, trace[-1].x])
+    endpts_y = np.array([trace[0].y, trace[-1].y])
+
+    dists = geodetic_distance(pt[0], pt[1], endpts_x, endpts_y)
+    azimuths = azimuth(pt[0], pt[1], endpts_x, endpts_y)
+
+    return dists, azimuths
+
+
+def adjust_distances_based_on_azimuth(pairs):
+    # Convert list of tuples to a NumPy array for easier manipulation
+    data = np.array(pairs)
+
+    # Normalize azimuths to a 0-360 range
+    azimuths = data[:, 1] % 360
+
+    # Initialize variables to track the best fit
+    best_fit_count = -1
+    best_fit_start = None
+
+    # Check ranges starting from each azimuth
+    for azimuth in azimuths:
+        start = azimuth
+        end = (start + 90) % 360
+
+        if end > start:
+            count = np.sum((azimuths >= start) & (azimuths < end))
+        else:  # Handle wrap-around
+            count = np.sum((azimuths >= start) | (azimuths < end))
+
+        # Update if this range fits more azimuths
+        if count > best_fit_count:
+            best_fit_count = count
+            best_fit_start = start
+
+    # Adjust distances based on the identified range
+    adjusted_pairs = []
+    for distance, azimuth in pairs:
+        azimuth_normalized = azimuth % 360
+        if best_fit_start is not None:
+            end = (best_fit_start + 90) % 360
+            if end > best_fit_start:
+                if not (best_fit_start <= azimuth_normalized < end):
+                    distance = -distance
+            else:  # Handle wrap-around
+                if not (
+                    azimuth_normalized >= best_fit_start
+                    or azimuth_normalized < end
+                ):
+                    distance = -distance
+        adjusted_pairs.append((distance, azimuth))
+
+    return adjusted_pairs
+
+
+def _check_overlap(segment1, segment2):
+    # Convert segments to numpy arrays for easier manipulation
+    A = np.asarray(sorted(segment1))
+    B = np.asarray(sorted(segment2))
+
+    # Determine the maximum start point and minimum end point
+    overlap_start = np.max([A[0], B[0]])
+    overlap_end = np.min([A[1], B[1]])
+
+    # Calculate the overlap length
+    overlap_length = np.max([0, overlap_end - overlap_start])
+
+    # Categorize the overlap
+    if overlap_length == 0.0:
+        return ("none", 0.0)
+    elif A[0] == B[0] and A[1] == B[1]:
+        return ("equality", overlap_length)
+    elif (A[0] >= B[0] and A[1] <= B[1]) or (B[0] >= A[0] and B[1] <= A[1]):
+        return ("full", overlap_length)
+    else:
+        return ("partial", overlap_length)
+
+
+def calc_rupture_overlap(trace_1, trace_2, intersection_pt=None):
+    if not isinstance(trace_1, Line):
+        tr1 = Line([Point(*coords) for coords in trace_1])
+        tr2 = Line([Point(*coords) for coords in trace_2])
+    else:
+        tr1 = trace_1
+        tr2 = trace_2
+
+    if intersection_pt is None:
+        intersection_pt = find_intersection_angle(tr1, tr2)[0]
+
+    dists_1, az_1 = get_dists_and_azimuths_from_pt(tr1, intersection_pt)
+    dists_2, az_2 = get_dists_and_azimuths_from_pt(tr2, intersection_pt)
+
+    dist_az_pairs = list(zip(dists_1, az_1))
+    dist_az_pairs.extend(zip(dists_2, az_2))
+
+    dist_az_pairs = adjust_distances_based_on_azimuth(dist_az_pairs)
+
+    dists_1 = [dist_az_pairs[0][0], dist_az_pairs[1][0]]
+    dists_2 = [dist_az_pairs[2][0], dist_az_pairs[3][0]]
+
+    overlap_type, overlap_length = _check_overlap(dists_1, dists_2)
+    return overlap_type, overlap_length
+
+
+def _is_strike_slip(rake):
+    return (
+        -45.0 < rake < 45.0 or 135.0 < rake < 180.0 or -180.0 < rake < -135.0
+    )
+
+
+def filter_bin_adj_matrix_by_rupture_overlap(
+    single_rup_df,
+    subfaults,
+    binary_adjacence_matrix,
+    strike_slip_only: bool = True,
+    threshold_overlap: float = 20.0,
+    threshold_angle: float = 45.0,
+):
+
+    sf_meshes = make_sf_rupture_meshes(
+        single_rup_df['patches'], single_rup_df['fault'], subfaults
+    )
+    sf_traces = [get_trace_from_mesh(mesh) for mesh in sf_meshes]
+    rup_angles = get_proximal_rup_angles(sf_traces, binary_adjacence_matrix)
+    fault_rake_lookup = {ff[0]['fid']: ff[0]['rake'] for ff in subfaults}
+    rakes = {
+        i: fault_rake_lookup[ff] for i, ff in enumerate(single_rup_df['fault'])
+    }
+
+    # for (i, j), (int_pt, angle) in rup_angles.items():
+    if strike_slip_only:
+        strike_slip_filter = {}
+        for (i, j), _ in rup_angles.items():
+            if _is_strike_slip(rakes[i]) and _is_strike_slip(rakes[j]):
+                strike_slip_filter[(i, j)] = True
+            else:
+                strike_slip_filter[(i, j)] = False
+    else:
+        strike_slip_filter = {k: True for k in rup_angles.keys()}
+
+    for (i, j), (int_pt, angle) in rup_angles.items():
+        if angle < threshold_angle:
+            if strike_slip_filter[(i, j)]:
+                overlap = calc_rupture_overlap(
+                    sf_traces[i], sf_traces[j], intersection_pt=int_pt
+                )
+                if overlap[1] > threshold_overlap:
+                    if issparse(binary_adjacence_matrix):
+                        del binary_adjacence_matrix[i, j]
+                    else:
+                        binary_adjacence_matrix[i, j] = 0
+
+    return binary_adjacence_matrix, rup_angles
 
 
 def filter_bin_adj_matrix_by_rupture_angle(
@@ -531,7 +939,6 @@ def filter_bin_adj_matrix_by_rupture_angle(
     subfaults,
     binary_adjacence_matrix,
     threshold_angle=60.0,
-    angle_type='trace',
 ) -> np.ndarray:
     """
     Filter the rupture adjacency matrix by rupture angle, so that only
@@ -553,37 +960,41 @@ def filter_bin_adj_matrix_by_rupture_angle(
         Binary adjacency matrix.
     threshold_angle : float, optional
         Threshold angle in degrees. The default is 60.0.
-    angle_type : str, optional
-        Type of angle to use for filtering. The default is 'trace', but
-        'dihedral' is also supported.
 
     Returns
     -------
     np.ndarray
         Filtered binary adjacency matrix.
     """
-    if angle_type == 'trace':
-        angle_index = 1
-    elif angle_type == 'dihedral':
-        angle_index = 0
+    # if angle_type == 'trace':
+    #    angle_index = 1
+    # elif angle_type == 'dihedral':
+    #    angle_index = 0
 
     sf_meshes = make_sf_rupture_meshes(
         single_rup_df['patches'], single_rup_df['fault'], subfaults
     )
 
-    rup_angles = get_proximal_rup_angles(sf_meshes, binary_adjacence_matrix)
+    sf_traces = [get_trace_from_mesh(mesh) for mesh in sf_meshes]
 
-    for (i, j), angles in rup_angles.items():
-        if angles[angle_index] < threshold_angle:
-            binary_adjacence_matrix[i, j] = 0
+    rup_angles = get_proximal_rup_angles(sf_traces, binary_adjacence_matrix)
+
+    for (i, j), (int_pt, angle) in rup_angles.items():
+        # for (i, j), angles in rup_angles.items():
+        # if angles[angle_index] < threshold_angle:
+        if angle < threshold_angle:
+            if issparse(binary_adjacence_matrix):
+                del binary_adjacence_matrix[i, j]
+            else:
+                binary_adjacence_matrix[i, j] = 0
 
     return binary_adjacence_matrix
 
 
 def get_multifault_ruptures(
-    dist_adj_matrix,
+    dist_adj_binary,
     max_dist: float = 10.0,
-    check_unique: bool = False,
+    check_unique: bool = True,
     max_sf_rups_per_mf_rup: int = 10,
 ) -> list[list[int]]:
     """
@@ -593,7 +1004,7 @@ def get_multifault_ruptures(
 
     Parameters
     ----------
-    dist_adj_matrix : np.ndarray
+    dist_adj_binary : np.ndarray
         Rupture adjacency matrix.
     max_dist : float, optional
         Maximum distance between ruptures in km. The default is 10.0.
@@ -609,31 +1020,337 @@ def get_multifault_ruptures(
         List of multifault ruptures. Each rupture is a list of rupture
         indices.
     """
-    n_rups = dist_adj_matrix.shape[0]
+    n_rups = dist_adj_binary.shape[0]
 
     if max_sf_rups_per_mf_rup == -1:
         max_sf_rups_per_mf_rup = n_rups
     elif max_sf_rups_per_mf_rup > n_rups:
         max_sf_rups_per_mf_rup = n_rups
 
-    dist_adj_binary = make_binary_adjacency_matrix(dist_adj_matrix, max_dist)
+    if issparse(dist_adj_binary):
+        dist_adj_binary = dist_adj_binary.tocoo()
 
-    graph = ig.Graph.Adjacency(dist_adj_binary)
+    logging.info("\tmaking graph")
+    graph = ig.Graph.Adjacency(dist_adj_binary, mode="undirected")
 
+    logging.info("\tgetting all simple paths")
     paths = []
     for i in range(n_rups):
-        ps = graph.get_all_simple_paths(
-            i, to=None, cutoff=max_sf_rups_per_mf_rup, mode='out'
-        )
+        for j in range(i + 1, n_rups):
+            ps = graph.get_all_simple_paths(
+                i, to=j, cutoff=max_sf_rups_per_mf_rup - 1, mode="out"
+            )
+            paths.extend(ps)
+        # ps = graph.get_all_simple_paths(
+        #    i, to=None, cutoff=max_sf_rups_per_mf_rup, mode='all'
+        # )
         paths.extend(ps)
 
     paths = [(p) for p in paths if len(p) > 1]
+    logging.info("\t%d paths found", len(paths))
 
     if check_unique:
         paths = [frozenset(p) for p in paths if len(p) > 1]
         paths = set(paths)
         paths = [list(p) for p in paths]
+
+    logging.info("\t%d unique paths found", len(paths))
     return paths
+
+
+def sparse_to_adjlist(sparse_matrix):
+    """
+    Converts a scipy.sparse adjacency matrix to an adjacency list.
+
+    Parameters:
+    - sparse_matrix: The sparse adjacency matrix (csr_matrix).
+
+    Returns:
+    - adj_list: A list of lists, where each sublist represents the neighbors of a vertex.
+    """
+    adj_list = []
+    n = sparse_matrix.shape[0]  # Number of vertices
+
+    for i in range(n):
+        # Extract indices of non-zero elements in row i, which are the neighbors
+        neighbors = sparse_matrix[[i], :].nonzero()[1].tolist()
+        adj_list.append(neighbors)
+
+    return adj_list
+
+
+def sparse_to_adj_dict(sparse_matrix):
+    """
+    Converts a scipy.sparse adjacency matrix to an adjacency dictionary.
+
+    Parameters:
+    - sparse_matrix: The sparse adjacency matrix (csr_matrix).
+
+    Returns:
+    - adj_dict: A dictionary, where the keys are the vertices and the values are the neighbors.
+    """
+    adj_dict = {}
+    n = sparse_matrix.shape[0]  # Number of vertices
+    if n < 32767:
+        int_type = np.int16
+    else:
+        int_type = np.int32
+
+    for i in range(n):
+        # Extract indices of non-zero elements in row i, which are the neighbors
+        neighbors = sparse_matrix[[i], :].nonzero()[1].tolist()
+        adj_dict[i] = [int_type(neighbor) for neighbor in neighbors]
+
+    return adj_dict
+
+
+# def get_unique_vertex_sets(adj_list, max_vertices=10):
+#    """
+#    Get all unique vertex sets from an adjacency list.
+#
+#    Parameters:
+#    - adj_list: A list of lists, where each sublist represents the neighbors of a vertex.
+#
+#    Returns:
+#    - vertex_sets: A list of lists, where each sublist is a unique vertex set.
+#    """
+#    all_subsets = set()
+#    n = len(adj_list)  # Number of vertices
+#
+#    def explore(vertex, current_set):
+#        if 1 < len(current_set) <= max_vertices:
+#            all_subsets.add(frozenset(current_set))
+#
+#        if len(current_set) == max_vertices:
+#            return
+#
+#        for neighbor in adj_list[vertex]:
+#            if neighbor not in current_set:
+#                explore(neighbor, current_set | {neighbor})
+#
+#    logging.info("\tgetting all contiguous vertex sets")
+#    for vertex in range(n):
+#        explore(vertex, {vertex})
+#
+#    vertex_sets = sorted([sorted(list(subset)) for subset in all_subsets])
+#    logging.info("\t%d unique vertex sets found", len(vertex_sets))
+#    return vertex_sets
+
+
+def find_connected_subsets_dfs(adj_dict, max_vertices=10):
+    all_subsets = set()
+
+    def explore(vertex, current_set):
+        if 1 < len(current_set) <= max_vertices:
+            # Add the current set as an immutable set to avoid duplicates
+            all_subsets.add(frozenset(current_set))
+
+        if len(current_set) == max_vertices:
+            return
+
+        for neighbor in adj_dict[vertex]:
+            if neighbor not in current_set:
+                # Explore further only if the neighbor is not already in the current set
+                explore(neighbor, current_set | {neighbor})
+
+    for vertex in adj_dict.keys():
+        explore(vertex, {vertex})
+
+    return [list(subset) for subset in all_subsets]
+
+
+def find_connected_subsets_bfs(adj_dict, max_vertices=10):
+    """
+    Find all connected subsets of vertices up to a specified size using BFS.
+
+    Parameters:
+    - adj_dict: A dictionary where each key is a vertex and the value is a list of neighbors.
+    - cutoff: The maximum size of vertex subsets to find.
+
+    Returns:
+    - A list of sets, each representing a connected subset of vertices up to the cutoff size.
+    """
+    all_subsets = set()  # Use a set to store unique subsets
+
+    for start_vertex in adj_dict.keys():
+        # Queue items are tuples (vertex, subset) where 'subset' includes 'vertex'
+        queue = deque([(start_vertex, frozenset([start_vertex]))])
+
+        while queue:
+            vertex, current_set = queue.popleft()
+
+            # Add the current subset to the collection if it's within the size limit
+            if 1 < len(current_set) <= max_vertices:
+                all_subsets.add(current_set)
+
+            if len(current_set) < max_vertices:
+                # Only consider neighbors not already in the current subset
+                for neighbor in adj_dict[vertex]:
+                    if neighbor not in current_set:
+                        new_set = current_set | frozenset([neighbor])
+                        queue.append((neighbor, new_set))
+
+    # Convert frozensets back to lists or regular sets if necessary
+    return [set(subset) for subset in all_subsets]
+
+
+def find_connected_components(adj_dict):
+    """
+    Find connected components in a graph represented as an adjacency dictionary.
+
+    Parameters:
+    - adj_dict: A dictionary where each key is a vertex and the value is a list of neighbors.
+
+    Returns:
+    - A list of sets, where each set contains the vertices of a connected component.
+    """
+    visited = set()  # To keep track of visited vertices
+    connected_components = []
+
+    def dfs(vertex, component):
+        """
+        Depth-First Search to explore and mark vertices of the current component.
+        """
+        visited.add(vertex)
+        component.add(vertex)
+        for neighbor in adj_dict[vertex]:
+            if neighbor not in visited:
+                dfs(neighbor, component)
+
+    for vertex in adj_dict.keys():
+        if vertex not in visited:
+            component = set()
+            dfs(vertex, component)
+            connected_components.append(component)
+
+    return connected_components
+
+
+def subgraphs_from_connected_components(adj_dict, connected_components):
+    subgraphs = []
+    for component in connected_components:
+        subgraph = {
+            v: [n for n in adj_dict[v] if n in component] for v in component
+        }
+        subgraphs.append(subgraph)
+
+    return subgraphs
+
+
+def find_connected_subgraphs(adj_dict, filter=True):
+    connected_components = find_connected_components(adj_dict)
+    subgraphs = subgraphs_from_connected_components(
+        adj_dict, connected_components
+    )
+    if filter:
+        subgraphs = [sg for sg in subgraphs if len(sg) > 1]
+    return subgraphs
+
+
+def get_multifault_ruptures_fast(
+    dist_adj_binary,
+    max_sf_rups_per_mf_rup: int = 10,
+    parallel=False,
+    min_parallel_subgraphs: int = 5,
+) -> list[list[int]]:
+    all_subsets = set()
+    n = dist_adj_binary.shape[0]  # Number of vertices
+
+    adj_list = sparse_to_adj_dict(dist_adj_binary)
+
+    logging.info("\tfinding connected subgraphs")
+    subgraphs = find_connected_subgraphs(adj_list, filter=True)
+    logging.info("\t%d connected subgraphs found", len(subgraphs))
+
+    logging.info("\tgetting all contiguous vertex sets")
+    if parallel and len(subgraphs) > min_parallel_subgraphs:
+        vertex_sets = get_multifault_ruptures_parallel(
+            subgraphs, max_sf_rups_per_mf_rup
+        )
+    else:
+        vertex_sets = []
+        for i, subgraph in enumerate(subgraphs):
+            vertex_sets.extend(
+                find_connected_subsets_dfs(subgraph, max_sf_rups_per_mf_rup)
+            )
+            logging.info("\t\tfinished subgraph %d", i + 1)
+    return vertex_sets
+
+
+def get_multifault_ruptures_parallel(subgraphs, max_sf_rups_per_mf_rup=10):
+    with Pool() as pool:
+        vertex_sets = pool.map(
+            partial(
+                find_connected_subsets_dfs, max_vertices=max_sf_rups_per_mf_rup
+            ),
+            subgraphs,
+        )
+    return vertex_sets
+
+
+# def convert_to_numba_list_of_arrays(adj_list):
+#    """
+#    Convert a Python list of lists to a Numba typed list of numpy arrays.
+#    """
+#    # if int_len == 32:
+#    #    dtype = np.int32
+#    # elif int_len == 16:
+#    #    dtype = np.int16
+#    numba_list = List()
+#    for sublist in adj_list:
+#        numba_list.append(np.array(sublist, dtype=np.int32))
+#    return numba_list
+#
+#
+# @njit
+# def explore(vertex, current_set, adj_list, results, cutoff):
+#    # if int_len == 32:
+#    #    dtype = np.int32
+#    # elif int_len == 16:
+#    #    dtype = np.int16
+#    dtype = np.int32
+#    if 1 < len(current_set) <= cutoff:
+#        results.append(np.array(list(current_set), dtype=dtype))
+#
+#    if len(current_set) == cutoff:
+#        return
+#
+#    for neighbor in adj_list[vertex]:
+#        if neighbor not in current_set:
+#            new_set = current_set.copy()
+#            new_set.add(neighbor)
+#            explore(neighbor, new_set, adj_list, results, cutoff)
+#
+#
+# @jit
+# def find_connected_subsets(adj_list, cutoff, results):
+#    for vertex in range(len(adj_list)):
+#        explore(vertex, set([vertex]), adj_list, results, cutoff)
+#
+#    unique_results = set([frozenset(res) for res in results])
+#    return unique_results
+
+
+def get_multifault_ruptures_numba(
+    dist_adj_binary, max_sf_rups_per_mf_rup: int = 10
+) -> list[list[int]]:
+    # if dist_adj_binary.shape[0] < 32767:
+    # if dist_adj_binary.shape[0] < 1:
+    #    int_len = 16
+    #    int_type = int16
+    # else:
+    #    int_len = 32
+    #    int_type = int32
+
+    adj_list = sparse_to_adjlist(dist_adj_binary)
+    numba_adj_list = convert_to_numba_list_of_arrays(adj_list)
+    results = List.empty_list(int32[:])
+    logging.info("\tgetting all contiguous vertex sets")
+    unique_results = find_connected_subsets(
+        numba_adj_list, max_sf_rups_per_mf_rup, results
+    )
+    logging.info("\t%d unique vertex sets found", len(unique_results))
+    return [list(res) for res in unique_results]
 
 
 @jit(nopython=True)
