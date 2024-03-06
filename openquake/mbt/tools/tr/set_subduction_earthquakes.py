@@ -38,6 +38,7 @@ from openquake.mbt.tools.tr.catalogue_hmtk import (get_rtree_index,
                                                    get_distances_from_surface)
 from openquake.sub.utils import (_read_edges,
                                  build_complex_surface_from_edges,
+                                 build_kite_surface_from_profiles,
                                  plot_complex_surface)
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
@@ -140,21 +141,24 @@ class SetSubductionEarthquakes:
         # Build the complex fault surface
         tedges = _read_edges(edges_folder)
         print(edges_folder)
-        surface = build_complex_surface_from_edges(edges_folder)
+#        surface = build_complex_surface_from_edges(edges_folder)
+        surface = build_kite_surface_from_profiles(edges_folder)
         mesh = surface.mesh
 
         # Create polygon encompassing the mesh
-        plo = list(mesh.lons[0, :])
-        pla = list(mesh.lats[0, :])
-        #
-        plo += list(mesh.lons[:, -1])
-        pla += list(mesh.lats[:, -1])
-        #
-        plo += list(mesh.lons[-1, ::-1])
-        pla += list(mesh.lats[-1, ::-1])
-        #
-        plo += list(mesh.lons[::-1, 0])
-        pla += list(mesh.lats[::-1, 0])
+#        plo = list(mesh.lons[0, :])
+#        pla = list(mesh.lats[0, :])
+#        #
+#        plo += list(mesh.lons[:, -1])
+#        pla += list(mesh.lats[:, -1])
+#        #
+#        plo += list(mesh.lons[-1, ::-1])
+#        pla += list(mesh.lats[-1, ::-1])
+#        #
+#        plo += list(mesh.lons[::-1, 0])
+#        pla += list(mesh.lats[::-1, 0])
+        plo = surface.surface_projection[0]
+        pla = surface.surface_projection[1]
 
         # Set variables used in griddata
         data = np.array([mesh.lons.flatten().T, mesh.lats.flatten().T]).T
@@ -167,10 +171,10 @@ class SetSubductionEarthquakes:
             grp.create_dataset('mesh', data=ddd)
 
         # Set the bounding box of the subduction surface
-        min_lo_sub = np.amin(mesh.lons)
-        min_la_sub = np.amin(mesh.lats)
-        max_lo_sub = np.amax(mesh.lons)
-        max_la_sub = np.amax(mesh.lats)
+        min_lo_sub = np.nanmin(mesh.lons)
+        min_la_sub = np.nanmin(mesh.lats)
+        max_lo_sub = np.nanmax(mesh.lons)
+        max_la_sub = np.nanmax(mesh.lats)
 
         # Select the earthquakes within the bounding box
         idxs = sorted(list(sidx.intersection((min_lo_sub-DELTA,
@@ -261,10 +265,16 @@ class SetSubductionEarthquakes:
 
         # Compute the depth of the top of the slab at every epicenter using
         # interpolation
-        # sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
+        from scipy.interpolate import griddata
+#        breakpoint()
+        val_red = values[~np.isnan(values)]
+        dat_red = data[~np.isnan(data)]
+        dat_red_fi = dat_red.reshape(len(val_red), 2)
+        #sub_depths = griddata(dat_red_fi, val_red, (points[:, 0], points[:, 1]),
         #                      method='cubic')
-        rbfi = RBFInterpolator(data[:, 0:2], values, kernel='multiquadric',
-                               epsilon=1)
+        #breakpoint()
+        rbfi = RBFInterpolator(dat_red_fi[:, 0:2], val_red, kernel='multiquadric',
+                               epsilon=1, neighbors=50)
         sub_depths = rbfi(points[:, 0:2])
 
         # Save the distances to a file
