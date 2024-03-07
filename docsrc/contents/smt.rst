@@ -589,6 +589,8 @@ Comparing GMPEs
     .. code-block:: ini
     
        > # Generate plot of observed spectra and predictions by GMMs
+       > # Note we use spectra from a record for the 1991 Chamoli EQ in this
+       > # example rather than from a record from an earthquake in/near Albania
        > comp.plot_spectra(filename, output_directory, obs_spectra = 'spectra_chamoli_1991_station_UKHI.csv') 
 
     Response spectra plots for input parameters specified in toml file:
