@@ -28,6 +28,7 @@
 # -----------------------------------------------------------------------------
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
+import os
 from typing import Optional
 
 
@@ -41,11 +42,15 @@ from datetime import datetime, timezone
 from shapely.geometry import MultiLineString
 from geojson import Polygon, Feature, FeatureCollection, dump
 
-from openquake.hazardlib.source import MultiFaultSource
+from openquake.hazardlib.sourcewriter import write_source_model
+from openquake.hazardlib.sourceconverter import SourceGroup
+from openquake.hazardlib.nrml import SourceModel
 from openquake.hazardlib.geo import Point, Line
+from openquake.hazardlib.source import MultiFaultSource
 from openquake.hazardlib.geo.surface import KiteSurface
 
 from openquake.fnm.section import get_subsection
+
 
 def _get_profiles(kite_surf):
     lons, lats, depths = kite_surf.mesh.array
@@ -64,6 +69,85 @@ def _get_profiles(kite_surf):
 
 
 def make_multifault_source(
+    fault_network,
+    source_id: str = "test_source",
+    name: str = "Test Source",
+    tectonic_region_type: str = "Active Shallow Crust",
+    investigation_time=1.0,
+    infer_occur_rates: bool = False,
+    surface_type="kite",
+    ruptures_for_output='all',
+):
+    surfaces = []
+    if surface_type == "kite":
+        for sub_surface in fault_network['subfault_df']['surface']:
+            if isinstance(sub_surface, KiteSurface):
+                profiles = _get_profiles(sub_surface)
+                sub_surface.profiles = profiles
+                surfaces.append(sub_surface)
+            else:
+                sf_kite_surface = KiteSurface(sub_surface.mesh)
+                profiles = _get_profiles(sf_kite_surface)
+                sf_kite_surface.profiles = profiles
+                surfaces.append(sf_kite_surface)
+
+    elif surface_type == 'simple_fault':
+        raise NotImplementedError(
+            "Cannot use simple_fault surfaces with multifault sources"
+        )
+
+    if ruptures_for_output == 'all':
+        rup_df = fault_network['rupture_df']
+    elif ruptures_for_output == 'filtered':
+        rup_df = fault_network['rupture_df_keep']
+    else:
+        raise ValueError(
+            "`ruptures_for_output` must be `all` or `filtered`, not %s",
+            ruptures_for_output,
+        )
+
+    rupture_idxs = rup_df['subfaults'].values.tolist()
+    mags = rup_df['mag'].values
+    rakes = rup_df['mean_rake'].values
+
+    pmfs = [
+        poisson.pmf([0, 1, 2, 3, 4], r).tolist()
+        for r in rup_df['annual_occurrence_rate'].values
+    ]
+
+    mfs = MultiFaultSource(
+        source_id=source_id,
+        name=name,
+        tectonic_region_type=tectonic_region_type,
+        rupture_idxs=rupture_idxs,
+        occurrence_probs=pmfs,
+        magnitudes=mags,
+        rakes=rakes,
+        investigation_time=investigation_time,
+        infer_occur_rates=infer_occur_rates,
+    )
+
+    mfs.sections = surfaces
+
+    return mfs
+
+
+def write_multifault_source(out_path, mf_source,
+                            trt="Active Shallow Crust",
+                            group_name=None,
+                            source_name=None,
+                            investigation_time=1.0,
+                            ):
+
+    if source_name is None:
+        source_name = mf_source.source_id
+
+    xml_outpath = os.path.join(out_path, f"{source_name}.xml")
+    write_source_model(xml_outpath, [mf_source],
+                       investigation_time=investigation_time)
+
+
+def make_multifault_source_old(
     fsys,
     ruptures: pd.DataFrame,
     source_id: str = "test_source",

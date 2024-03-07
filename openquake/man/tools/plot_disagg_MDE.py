@@ -118,7 +118,7 @@ def plot_gmt(fname, fout, settings_fname=None):
         fac_y = size / (dists[-1] - dists[0])
         PRO = "-Jx{}i/{}i".format(fac_x, fac_y)
                 
-    cmd = 'gmt info {}.csv -T0.00001+c4'.format(fout)
+    cmd = 'gmt info {}.csv -T0.00001+c2'.format(fout)
     ZRA = subprocess.check_output(cmd, shell=True).decode("utf-8").strip()
     ZLIM = float(ZRA.split('/')[1])*1.2
     EXT = '-R{}/{}/{}/{}/0.0/{}'.format(mags[0], mags[-1], dists[0], dists[-1], ZLIM)
