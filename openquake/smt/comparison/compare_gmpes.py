@@ -201,7 +201,7 @@ def plot_trellis(filename, output_directory):
                       config.up_or_down_dip) 
 
                 
-def plot_spectra(filename, output_directory, obs_spectra = None):
+def plot_spectra(filename, output_directory, obs_spectra=None):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
     configuration
