@@ -3,11 +3,8 @@ This demo script runs a single stationresidual analysis using a subset of the
 ESM flatfile filtered geographically to Albania + an approximately 100 km buffer.
 """
 import os
-import numpy as np
-import pandas as pd
 import pickle
 import shutil
-import toml
 
 from openquake.baselib import sap
 from openquake.smt.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
