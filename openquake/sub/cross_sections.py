@@ -46,7 +46,7 @@ from openquake.hazardlib.geo.geodetic import (
 
 from openquake.hazardlib.geo.utils import OrthographicProjection
 from scipy.interpolate import LinearNDInterpolator
-
+from scipy.spatial import Delaunay
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
 
@@ -136,11 +136,15 @@ class Slab2pt0(object):
                                    cs.length[0], 0., num)
             p = pnts[idxslb, :]
 
-            try:
+            try: 
                 interp = LinearNDInterpolator(p[:, 0:2], p[:, 2])
                 z = interp(psec[0], psec[1])
+
             except:
-                breakpoint()
+                tri = Delaunay(numpy.c_[(p[:, 0], p[:,1])], qhull_options = "QJ")
+                ip = LinearNDInterpolator(tri, p[:,2])
+                z = ip(psec[0], psec[1])
+            
 
             iii = numpy.isfinite(z)
             pro = numpy.concatenate((numpy.expand_dims(psec[0][iii], axis=1),
