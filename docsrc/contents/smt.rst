@@ -9,7 +9,7 @@ Here, we will demonstrate how each of these components can be implemented, in th
 
 Please note that this documentation assumes an elementary knowledge of GMPEs, residual analysis and ground-motion characterisation. Therefore, this documentation's purpose is to facilitate the application of the smt by user who is already familiar with the underlying theory. References are provided throughout for useful overviews of such theory!
 
-Performing a Residual Analysis within the smt
+Performing a Residual Analysis
 *********************************************
 The smt provides capabilities (parsers) for the parsing of an inputted dataset into metadata for the performing of a residual analysis, so as to evaluate GMPE performance against the inputted dataset.
 
@@ -572,7 +572,7 @@ Comparing GMPEs
    
 4. Spectra Plots
 
-   We can also plot response spectra. Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` input variable for the spectra plotting function (see the example spectra file in openquake.smt.tests.file_samples, and the functions within openquake.smt.comparison for more details): 
+   We can also plot response spectra:
 
     .. code-block:: ini
     
@@ -581,8 +581,21 @@ Comparing GMPEs
 
     Response spectra plots for input parameters specified in toml file:
         .. image:: /contents/smt_images/ResponseSpectra.png
-   
-5. Sammon's Maps
+
+5. Plot of Spectra from a Record
+
+   The spectra of a processed record can also be plotted along with predictions by the selected GMMs for the same ground-shaking scenario. An example of the input for the record spectra is provided in the demo files:
+
+    .. code-block:: ini
+    
+       > # Generate plot of observed spectra and predictions by GMMs
+       > comp.plot_spectra(filename, output_directory, obs_spectra = 'spectra_chamoli_1991_station_UKHI.csv') 
+
+    Response spectra plots for input parameters specified in toml file:
+        .. image:: /contents/smt_images/ObsSpectra.png
+      
+
+6. Sammon's Maps
 
    We can plot Sammon's Maps to examine how similar the medians (and 16th and 84th percentiles) of predicted ground-motion of each GMPE are (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon's mapping procedure).
    
@@ -598,7 +611,7 @@ Comparing GMPEs
     Sammon's Maps (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_SammonMaps.png
     
-6. Hierarchical Clustering
+7. Hierarchical Clustering
 
    Dendrograms can be plotted as an alternative tool to evaluate how similarly the predicted ground-motion is by each GMPE.
    
@@ -614,7 +627,7 @@ Comparing GMPEs
     Dendrograms (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Clustering.png
          
-7. Matrix Plots of Euclidean Distance
+8. Matrix Plots of Euclidean Distance
 
    In addition to Sammon's Maps and hierarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
    
