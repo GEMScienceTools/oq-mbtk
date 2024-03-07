@@ -971,7 +971,7 @@ def update_spec_plots(ax1, ax2, m, i, n, l, dist_list):
         ax1.set_xlabel('Period (s)', fontsize=16)
         ax2.set_xlabel('Period (s)', fontsize=16)
     if l == 0: # left row only
-        ax1.set_ylabel('Sa (g)', fontsize=16) 
+        ax1.set_ylabel('SA (g)', fontsize=16) 
         ax2.set_ylabel(r'$\sigma$', fontsize=16) 
 
 
