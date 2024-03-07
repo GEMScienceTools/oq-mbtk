@@ -54,7 +54,8 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
     for key in sorted(sps.keys()):
 
         # calculate the sampling distance
-        samp = lengths[key] / number_of_samples
+        # multiplier is making the last point be closer to the original end pt
+        samp = lengths[key] / number_of_samples  * 0.99
 
         # set data for the profile
         dat = sps[key]
@@ -123,18 +124,6 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
 
             # updating index
             idx += 1
-        # add last point if it's far
-        if len(spro) == number_of_samples:
-            dist_chk = distance(spro[-1][0], spro[-1][1], spro[-1][2],
-                                dat[-1, 0], dat[-1, 1], dat[-1, 2])
-            if abs(1-dist_chk/samp) < 0.1:
-                spro.append([dat[-1, 0], dat[-1, 1], dat[-1, 2]])
-            dchks = []
-            for ii in range(len(spro)-2):
-                p2p_dst = distance(spro[ii][0], spro[ii][1], spro[ii][2],
-                                    spro[ii+1][0], spro[ii+1][1], spro[ii+1][2])
-                dchks.append(p2p_dst.round(0))
-            assert len(set(dchks)) == 1
 
         # Saving results
         if len(spro):
@@ -312,8 +301,8 @@ def write_edges_csv(sps, foldername):
             dat.append(sps[key][idx, :])
         print(sps[key][idx,:])
         fname = os.path.join(foldername, 'edge_%03d.csv' % (idx))
-        if idx == 12:
-            breakpoint()
+        #if idx == 12:
+            #breakpoint()
         numpy.savetxt(fname, numpy.array(dat))
 
 

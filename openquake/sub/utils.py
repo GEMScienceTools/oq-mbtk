@@ -34,9 +34,10 @@ from pyproj import Proj, CRS
 
 from mpl_toolkits.mplot3d import Axes3D
 from openquake.hazardlib.geo import Line, Point
-from openquake.hazardlib.geo.surface import ComplexFaultSurface
+from openquake.hazardlib.geo.surface import ComplexFaultSurface, KiteSurface
 from openquake.hazardlib.scalerel.wc1994 import WC1994
 from openquake.hazardlib.geo.utils import plane_fit
+from openquake.sub.profiles import ProfileSet
 
 
 def mecclass(plungt, plungb, plungp):
@@ -225,6 +226,34 @@ def _read_edges(foldername):
         tedges.append(_read_edge_file(fle))
     return tedges
 
+def _read_edge_file(filename):
+    """
+    :parameter str filename:
+        The name of the edge file
+    :return:
+        An instance of :class:`openquake.hazardlib.geo.line.Line`
+    """
+    points = []
+    for line in open(filename, 'r'):
+        aa = re.split('\\s+', line)
+        points.append(Point(float(aa[0]),
+                            float(aa[1]),
+                            float(aa[2])))
+    return Line(points)
+
+def _read_profiles(foldername):
+    """
+    :parameter foldername:
+        The folder containing the `cs_*` files
+    :return:
+        A list of :class:`openquake.hazardlib.geo.line.Line` instances
+    """
+    path = os.path.join(foldername, 'cs*.*')
+    tprofiles = []
+    for fle in sorted(glob.glob(path)):
+        tprofiles.append(_read_pro_file(fle))
+    return tprofiles
+
 
 def _get_array(tedges):
     """
@@ -323,6 +352,28 @@ def build_complex_surface_from_edges(foldername):
 
     # Build complex fault surface
     surface = ComplexFaultSurface.from_fault_data(tedges, mesh_spacing=5.0)
+
+    return surface
+
+
+def build_kite_surface_from_profiles(foldername):
+    """
+    :parameter str foldername:
+        The folder containing the `edge_*` files
+    :return:
+        An instance of :class:`openquake.hazardlib.geo.surface`
+    """
+
+    # Read edges
+    profiles = ProfileSet.from_files(foldername)
+
+    # Kite fault source
+    from openquake.sub.profiles import get_kite_fault
+    kf_src = get_kite_fault(profiles)
+    surface = kf_src.surface
+
+    # Build kite fault surface
+#    surface = KiteSurface.from_profiles(profiles.profiles, 5, 5)
 
     return surface
 

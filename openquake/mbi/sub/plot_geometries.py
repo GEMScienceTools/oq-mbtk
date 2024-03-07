@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 
 try:
     import pyvista as pv
+    PLOT = True
 except:
     PLOT = False
 
