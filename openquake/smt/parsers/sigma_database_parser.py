@@ -44,10 +44,9 @@ class SigmaDatabaseMetadataReader(SMDatabaseReader):
 
     def parse(self):
         """
-
+        Parse the database
         """
         file_list = os.listdir(self.filename)
-        num_files = len(file_list)
         self.database = GroundMotionDatabase(self.id, self.name)
         for file_str in file_list:
             if "DS_Store" in file_str:
@@ -177,7 +176,7 @@ class SigmaDatabaseMetadataReader(SMDatabaseReader):
 
     def _parse_rupture(self, eq_id, eq_name, magnitude, metadata):
         """
-
+        Parse rupture
         """
         return Rupture(eq_id,
                        eq_name,
@@ -345,9 +344,8 @@ class SigmaRecordParser(SMTimeSeriesReader):
 
     def _parse_time_history(self, ifile):
         """
-
+        Parse time history
         """
-
         output = {}
         acc_hist = []
         cases = {0: self._get_datetime,
@@ -454,14 +452,11 @@ class SigmaRecordParser(SMTimeSeriesReader):
     
     def _get_units(self, output, line):
         """
-
+        # Get units
         """
         output['Units'] = "cm/s/s"
         return output
 
     def _get_timehist_line(self, line):
-        """
-
-        """
         idx = np.arange(0, len(line) + 14, 14)
         return [float(line[idx[i]:idx[i + 1]]) for i in range(len(idx) - 1)]

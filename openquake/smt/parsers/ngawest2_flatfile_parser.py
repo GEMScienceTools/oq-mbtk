@@ -63,11 +63,9 @@ HEADERS = set(HEADER_STR.split(";"))
 
 
 class NGAWest2FlatfileParser(SMDatabaseReader):
-    
     """
-    Parses the metadata from the flatfile to a set of metadata objects
+    Parses the data from flatfile to a set of metadata objects
     """
-    
     M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
     BUILD_FINITE_DISTANCES = False
 

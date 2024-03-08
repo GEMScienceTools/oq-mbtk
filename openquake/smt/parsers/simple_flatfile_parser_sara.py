@@ -574,8 +574,6 @@ class SimpleFlatfileParserV9(SMDatabaseReader):
             return xcomp, ycomp, None
 
 
-
-
 class NearFaultFlatFileParser(SimpleFlatfileParserV9):
 
     def parse(self):

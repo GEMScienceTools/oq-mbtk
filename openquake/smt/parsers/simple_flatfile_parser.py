@@ -198,9 +198,6 @@ class SimpleFlatfileParser(SMDatabaseReader):
                               length,
                               width,
                               ztor)
-        #    get_float(metadata["Fault Rupture Length (km)"]),
-        #    get_float(metadata["Fault Rupture Width (km)"]),
-        #    get_float(metadata["Depth to Top Of Fault Rupture Model"]))
         eqk.rupture.get_area()
         return eqk
             
@@ -234,7 +231,8 @@ class SimpleFlatfileParser(SMDatabaseReader):
         :class: openquake.smt.sm_database.RecordDistance
         """
         # Compute various distance metrics
-        # Add calculation of Repi, Rhypo from event and station localizations (latitudes, longitudes, depth, elevation)?
+        # Add calculation of Repi, Rhypo from event and station localizations
+        # (latitudes, longitudes, depth, elevation)?
         target_site = Mesh(np.array([site.longitude]),
                            np.array([site.latitude]),
                            np.array([0.0]))
@@ -281,13 +279,6 @@ class SimpleFlatfileParser(SMDatabaseReader):
             ry0 = float(Ry0))
         distance.azimuth = get_float(metadata["Source to Site Azimuth (deg)"])
         distance.hanging_wall = get_float(metadata["FW/HW Indicator"])
-#        distance = RecordDistance(
-#            get_float(metadata["EpiD (km)"]),
-#            get_float(metadata["HypD (km)"]),
-#            get_float(metadata["Joyner-Boore Dist. (km)"]),
-#            get_float(metadata["Campbell R Dist. (km)"]))
-#        distance.azimuth = get_float(metadata["Source to Site Azimuth (deg)"])
-#        distance.hanging_wall = get_float(metadata["FW/HW Indicator"])
         return distance
 
     def _parse_site_data(self, metadata):

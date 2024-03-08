@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -17,7 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parse ESM format flatfile into SMT metadata
+Parse the GEM globally homogenised flatfile (currently internal use only) into
+SMT data
 """
 import os, sys
 import csv
@@ -80,9 +81,9 @@ COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
                  "UA": "Ukraine", "UZ": "Uzbekistan", "XK": "Kosovo"}
 
 
-class ESMFlatfileParser(SMDatabaseReader):
+class FlatfileParser(SMDatabaseReader):
     """
-    Parses the data from the flatfile to a set of metadata objects
+    Parses the data from the ESM flatfile to a set of metadata objects
     """
     M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
     BUILD_FINITE_DISTANCES = False
@@ -234,6 +235,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         """
         If rupture data is available - parse it, otherwise return None
         """
+
         sof = metadata["fm_type_code"]
         if not metadata["event_source_id"].strip():
             # No rupture model available. Mechanism is limited to a style
@@ -547,3 +549,4 @@ class ESMFlatfileParser(SMDatabaseReader):
                 scalars["Geometric"][key] = np.sqrt(
                     scalars["U"][key] * scalars["V"][key])
         return scalars, spectra
+
