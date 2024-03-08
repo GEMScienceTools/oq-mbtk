@@ -541,13 +541,14 @@ def _prioritise_rotd50(df, removal=None):
     """
     If a record has RotD50 take this instead of geometric mean from the global
     flatfile. If no RotD50 use the horizontal components if available (crude
-    proxy). If no horizontal components log the record or remove is specified.
+    proxy). If no horizontal components log the record or remove if specified.
     
     :param  removal:
         If set to true records with out acceleration values for all of the
         required spectral periods are removed, else the number of records
         lacking this information will be printed instead
     """
+    # Manage RotD50 vs horizontal components
     log = []
     for idx, rec in df.iterrows():
         for col in rec.index:
