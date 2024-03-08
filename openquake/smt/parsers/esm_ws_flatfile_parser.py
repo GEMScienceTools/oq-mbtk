@@ -88,12 +88,10 @@ COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
                  "VU": "Vanuatu", "XK": "Kosovo", "YE": "Yemen"}
 
 
-class ESMFlatfileParserWS(SMDatabaseReader):
-    
+class ESMFlatfileParserWS(SMDatabaseReader):   
     """
-    Parses the ESM metadata from the flatfile to a set of metadata objects
+    Parses the data from the flatfile to a set of metadata objects
     """
-    
     M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
     BUILD_FINITE_DISTANCES = False
 

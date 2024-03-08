@@ -431,8 +431,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
 class ESMTimeSeriesParser(SMTimeSeriesReader):
     """
     Parses time series in the European Strong Motion Database Format
-    """ 
-        
+    """  
     def parse_records(self, record=None):
         """
         Parses the time series

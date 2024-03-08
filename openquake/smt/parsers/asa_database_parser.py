@@ -66,7 +66,6 @@ def _get_metadata_from_file(file_str):
     version as an ordered dictionary. Note that every file contains
     the metadata corresponding to all 3 components.
     """
-
     metadata = {}
     for i in range(7, 81):
         # Exclude lines with "==", websites, and with lenghts < 42
@@ -94,7 +93,6 @@ def _get_metadata_from_file(file_str):
 
 
 class ASADatabaseMetadataReader(SMDatabaseReader):
-
     """
     Reader for the metadata database of the UNAM and CICESE files (ASA format)
     """
@@ -102,7 +100,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
 
     def parse(self):
         """
-        Parses the record
+        Parse the record
         """
         self.database = GroundMotionDatabase(self.id, self.name)
         self._sort_files()
@@ -140,7 +138,6 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         """
         Parses the metadata dictionary
         """
-
         file_str = metadata["NOMBRE DEL ARCHIVO"]
         file_info = _get_info_from_archive_name(file_str)
 
@@ -178,7 +175,6 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         openquake.smt.sm_database.Earthquake. Coordinates in western hemisphere
         are returned as negative values.
         """
-
         months = {'ENERO': 1, 'FEBRERO': 2, 'MARZO': 3, 'ABRIL': 4, 'MAYO': 5,
                  'JUNIO': 6, 'JULIO': 7, 'AGOSTO': 8, 'SEPTIEMBRE': 9,
                  'OCTUBURE': 10, 'NOVIEMBRE': 11, 'DICIEMBRE': 12}
@@ -328,7 +324,6 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         openquake.smt.sm_database.RecordDistance. Coordinates in western hemisphere
         are converted to negative values.
         """
-
         epi_lon = -get_float(
             metadata["COORDENADAS DEL EPICENTRO"].split(" ")[3])
         epi_lat = get_float(
@@ -431,7 +426,6 @@ class ASATimeSeriesParser(SMTimeSeriesReader):
         """
         Parses the time series
         """
-
         time_series = OrderedDict([
             ("X", {"Original": {}, "SDOF": {}}),
             ("Y", {"Original": {}, "SDOF": {}}),
@@ -454,7 +448,6 @@ class ASATimeSeriesParser(SMTimeSeriesReader):
         components are defined with various names, and are not always
         given in the same order
         """
-
         # The components are definied using the following names
         comp_names = {'X': ['ENE', 'N90E', 'N90E;', 'N90W', 'N90W;',
                             'S90E', 'S90W', 'E--W', 'S9OE'],
