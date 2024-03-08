@@ -277,8 +277,9 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2_vertical['T4.500S']=(NGAWest2_vertical[
             'T4.400S']+NGAWest2_vertical['T4.600S'])/2        
         
+        # Get path to tmp csv once modified dataframe
         converted_base_data_path=_get_ESM18_headers(
-            NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size)
+            NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size)
                 
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
