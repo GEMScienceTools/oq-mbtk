@@ -17,10 +17,13 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Parse the GEM globally homogenised flatfile (currently available internally only)
-into SMT metadata. The flatfile already has ESM18 flatfile formatting, but this
-parser allows some additional management of the records within this homogenised
-flatfile (additional capabilities will be added to this parser in the future)
+into SMT metadata.
+
+The flatfile already has formatting (ESM18 format) permitting parsing into SMT
+metadata. More capabilities for managing the records and information within
+the GEM global flatfile will be added to this parser in the future.
 """
+
 import pandas as pd
 import os, sys
 import tempfile
