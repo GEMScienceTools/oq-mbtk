@@ -16,11 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parser for a flatfile downloaded from the ESM custom url database 
---> (https://esm-db.eu/esmws/flatfile/1/)
-
-This parser assumes you have selected all available headers in your URL search
-when downloading the flatfile
+Parse the GEM globally homogenised flatfile (currently for internal use only)
+into SMT metadata
 """
 import pandas as pd
 import os, sys
@@ -72,29 +69,8 @@ HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
 
 HEADERS = set(HEADER_STR.split(";"))
 
-COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AR": "Argentina", "AZ": "Azerbaijan",
-                 "BA": "Bosnia and Herzegowina", "BG": "Bulgaria",
-                 "CH": "Switzerland", "CL": "Chile", "CN": "China", 
-                 "CR": "Costa Rica", "CY": "Cyprus", "CZ": "Czech Republic",
-                 "DE": "Germany", "DJ": "Djibouti", "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia", "GH": "Ghana", 
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary", 
-                 "IL": "Israel", "ID": "Indonesia", "IR": "Iran",
-                 "IS": "Iceland", "IT": "Italy", "JO": "Jordan", "KE":"Kenya",
-                 "KG": "Kyrgyzstan", "KZ": "Kazakhstan", "LI": "Lichtenstein",
-                 "MA": "Morocco", "MC": "Monaco", "MD": "Moldova",
-                 "ME": "Montenegro", "MK": "Macedonia", "MM": "Myanmar",
-                 "MT": "Malta", "MX": "Mexico", "NI": "Nicaragua",
-                 "NO": "Norway", "PA": "Panama", "PG": "Papa New Guinea",
-                 "PL": "Poland", "PT": "Portugal", "PS": "Palestine",
-                 "RO": "Romania", "RS": "Serbia", "RU": "Russia",
-                 "SI": "Slovenia", "SM": "San Marino", "SY": "Syria",
-                 "TM": "Turkmenistan", "TR": "Turkey", "TW": "Taiwan",
-                 "UA": "Ukraine", "US": "United States", "UZ": "Uzbekistan",
-                 "VU": "Vanuatu", "XK": "Kosovo", "YE": "Yemen"}
 
-class ESMFlatfileParserURL(SMDatabaseReader):
+class GEMFlatfileParser(SMDatabaseReader):
     """
     Parses the data from the flatfile to a set of metadata objects
     """
@@ -128,31 +104,23 @@ class ESMFlatfileParserURL(SMDatabaseReader):
                 print("Record with sequence number %s is null/invalid"
                       % "{:s}-{:s}".format(row["event_id"],
                                            row["station_code"]))
-            if (counter % 100) == 0:
+            if (counter % 1) == 0:
                 print("Processed record %s - %s" % (str(counter),
                                                     record.id))
                 
             counter += 1
 
     @classmethod
-    def autobuild(cls, dbid, dbname, output_location, ESM_flatfile_directory):
+    def autobuild(cls, dbid, dbname, output_location, ESM_flatfile_directory,
+                  removal=None):
         """
         Quick and dirty full database builder!
         """
-        # Import ESM URL format strong-motion flatfile
-        ESM = pd.read_csv(ESM_flatfile_directory)
+        # Import GEM strong-motion flatfile
+        GEM = pd.read_csv(ESM_flatfile_directory)
     
-        # Create default values
-        default_string = pd.Series(np.full(np.size(ESM.esm_event_id), ""))
-        
-        # Assign strike-slip to unknown faulting mechanism
-        r_fm_type = ESM.fm_type_code.fillna('SS') 
-
-        # Reformat datetime
-        r_datetime = ESM.event_time.str.replace('T',' ')
-    
-        converted_base_data_path=_get_ESM18_headers(
-            ESM, default_string, r_fm_type, r_datetime)
+        # Get path to tmp csv once modified dataframe
+        converted_base_data_path=_prioritise_rotd50(GEM, removal)
         
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
@@ -205,10 +173,6 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         eq_name = metadata["event_id"]
         # Country
         cntry_code = metadata["ev_nation_code"].strip()
-        if cntry_code and cntry_code in COUNTRY_CODES:
-            eq_country = COUNTRY_CODES[cntry_code]
-        else:
-            eq_country = None
         # Date and time
         eq_datetime = valid.date_time(metadata["event_time"],
                                      "%Y-%m-%d %H:%M:%S")
@@ -220,7 +184,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
             eq_depth = 0.0
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet
-                         eq_country=eq_country)
+                         eq_country=None)
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
         eqk.magnitude = pref_mag
@@ -382,15 +346,9 @@ class ESMFlatfileParserURL(SMDatabaseReader):
             vs30_measured = False
         else:
             vs30_measured = False
-        st_nation_code = metadata["st_nation_code"].strip()
-        if st_nation_code:
-            st_country = COUNTRY_CODES[st_nation_code]
-        else:
-            st_country = None
         site = RecordSite(site_id, station_code, station_code, site_lon,
                           site_lat, elevation, vs30, vs30_measured,
-                          network_code=network_code,
-                          country=st_country)
+                          network_code=network_code, country=None)
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
         site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
                                          "sensor_depth_m")
@@ -579,7 +537,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         return scalars, spectra
 
 
-def prioritise_rotd50(df, removal=None):
+def _prioritise_rotd50(df, removal=None):
     """
     If a record has RotD50 take this instead of geometric mean from the global
     flatfile. If no RotD50 use the horizontal components if available (crude
@@ -592,7 +550,6 @@ def prioritise_rotd50(df, removal=None):
     """
     log = []
     for idx, rec in df.iterrows():
-        print(idx)
         for col in rec.index:
             if 'U_T' in col or 'V_T' in col or 'U_pga' in col or 'V_pga' in col:
                 if 'T90' not in col:
@@ -606,7 +563,7 @@ def prioritise_rotd50(df, removal=None):
                     else:
                         log.append(idx)
                             
-    # Drop if required, else just inform number of records missing acc values
+    # Drop if req. or else just inform number of recs missing acceleration values
     no_vals = len(pd.Series(log).unique())
     if removal is True and log!= []:
         df = df.drop(log).reset_index()
@@ -614,8 +571,7 @@ def prioritise_rotd50(df, removal=None):
         msg =+ ' removed from flatfile (%s records)' % no_vals
         print(msg)
         if len(df) == 0:
-            raise ValueError('All records have been removed from the flatfile')
-        
+            raise ValueError('All records have been removed from the flatfile')        
     elif log != []:
         print('%s records do not have acc. values at required periods' % no_vals)
               
@@ -623,5 +579,5 @@ def prioritise_rotd50(df, removal=None):
     tmp = tempfile.mkdtemp()
     converted_base_data_path = os.path.join(DATA, tmp, 'converted_flatfile.csv')
     df.to_csv(converted_base_data_path, sep=';')
-
+    
     return converted_base_data_path

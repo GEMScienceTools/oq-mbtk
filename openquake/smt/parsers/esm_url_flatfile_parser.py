@@ -72,28 +72,6 @@ HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
 
 HEADERS = set(HEADER_STR.split(";"))
 
-COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AR": "Argentina", "AZ": "Azerbaijan",
-                 "BA": "Bosnia and Herzegowina", "BG": "Bulgaria",
-                 "CH": "Switzerland", "CL": "Chile", "CN": "China", 
-                 "CR": "Costa Rica", "CY": "Cyprus", "CZ": "Czech Republic",
-                 "DE": "Germany", "DJ": "Djibouti", "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia", "GH": "Ghana", 
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary", 
-                 "IL": "Israel", "ID": "Indonesia", "IR": "Iran",
-                 "IS": "Iceland", "IT": "Italy", "JO": "Jordan", "KE":"Kenya",
-                 "KG": "Kyrgyzstan", "KZ": "Kazakhstan", "LI": "Lichtenstein",
-                 "MA": "Morocco", "MC": "Monaco", "MD": "Moldova",
-                 "ME": "Montenegro", "MK": "Macedonia", "MM": "Myanmar",
-                 "MT": "Malta", "MX": "Mexico", "NI": "Nicaragua",
-                 "NO": "Norway", "PA": "Panama", "PG": "Papa New Guinea",
-                 "PL": "Poland", "PT": "Portugal", "PS": "Palestine",
-                 "RO": "Romania", "RS": "Serbia", "RU": "Russia",
-                 "SI": "Slovenia", "SM": "San Marino", "SY": "Syria",
-                 "TM": "Turkmenistan", "TR": "Turkey", "TW": "Taiwan",
-                 "UA": "Ukraine", "US": "United States", "UZ": "Uzbekistan",
-                 "VU": "Vanuatu", "XK": "Kosovo", "YE": "Yemen"}
-
 class ESMFlatfileParserURL(SMDatabaseReader):
     """
     Parses the data from the flatfile to a set of metadata objects
@@ -141,18 +119,9 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         """
         # Import ESM URL format strong-motion flatfile
         ESM = pd.read_csv(ESM_flatfile_directory)
-    
-        # Create default values
-        default_string = pd.Series(np.full(np.size(ESM.esm_event_id), ""))
-        
-        # Assign strike-slip to unknown faulting mechanism
-        r_fm_type = ESM.fm_type_code.fillna('SS') 
 
-        # Reformat datetime
-        r_datetime = ESM.event_time.str.replace('T',' ')
-    
-        converted_base_data_path=_get_ESM18_headers(
-            ESM, default_string, r_fm_type, r_datetime)
+        # Get path to tmp csv once modified dataframe
+        converted_base_data_path=_get_ESM18_headers(ESM)
         
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
@@ -195,7 +164,6 @@ class ESMFlatfileParserURL(SMDatabaseReader):
                                   xcomp, ycomp,
                                   vertical=vertical)
 
-
     def _parse_event_data(self, metadata):
         """
         Parses the event metadata
@@ -203,12 +171,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         # ID and Name (name not in file so use ID again)
         eq_id = metadata["event_id"]
         eq_name = metadata["event_id"]
-        # Country
-        cntry_code = metadata["ev_nation_code"].strip()
-        if cntry_code and cntry_code in COUNTRY_CODES:
-            eq_country = COUNTRY_CODES[cntry_code]
-        else:
-            eq_country = None
+        
         # Date and time
         eq_datetime = valid.date_time(metadata["event_time"],
                                      "%Y-%m-%d %H:%M:%S")
@@ -220,7 +183,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
             eq_depth = 0.0
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet
-                         eq_country=eq_country)
+                         eq_country=None)
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
         eqk.magnitude = pref_mag
@@ -382,15 +345,9 @@ class ESMFlatfileParserURL(SMDatabaseReader):
             vs30_measured = False
         else:
             vs30_measured = False
-        st_nation_code = metadata["st_nation_code"].strip()
-        if st_nation_code:
-            st_country = COUNTRY_CODES[st_nation_code]
-        else:
-            st_country = None
         site = RecordSite(site_id, station_code, station_code, site_lon,
                           site_lat, elevation, vs30, vs30_measured,
-                          network_code=network_code,
-                          country=st_country)
+                          network_code=network_code, country=None)
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
         site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
                                          "sensor_depth_m")
@@ -579,11 +536,20 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         return scalars, spectra
 
 
-def _get_ESM18_headers(ESM, default_string, r_fm_type, r_datetime):
+def _get_ESM18_headers(ESM):
     
     """
     Convert from ESM URL format flatfile to ESM18 format flatfile
     """
+    # Create default values
+    default_string = pd.Series(np.full(np.size(ESM.esm_event_id), ""))
+
+    # Reformat datetime
+    r_datetime = ESM.event_time.str.replace('T',' ')
+    
+    # Assign unknown to NaN values for faulting mechanism
+    ESM['fm_type_code'] = ESM.fm_type_code.fillna('U') 
+    
     # Construct dataframe with original ESM format 
     ESM_original_headers = pd.DataFrame(
     {
@@ -599,7 +565,7 @@ def _get_ESM18_headers(ESM, default_string, r_fm_type, r_datetime):
     "ev_longitude":ESM.ev_longitude,   
     "ev_depth_km":ESM.ev_depth_km,
     "ev_hyp_ref":default_string,
-    "fm_type_code":r_fm_type,
+    "fm_type_code":ESM.fm_type_code,
     "ML":ESM.ml,
     "ML_ref":ESM.ml_ref,
     "Mw":ESM.mw,
