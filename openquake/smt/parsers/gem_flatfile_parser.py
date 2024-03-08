@@ -1,8 +1,7 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -17,10 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parse the GEM globally homogenised flatfile (currently internal use only) into
-SMT data
+Parser for a flatfile downloaded from the ESM custom url database 
+--> (https://esm-db.eu/esmws/flatfile/1/)
+
+This parser assumes you have selected all available headers in your URL search
+when downloading the flatfile
 """
+import pandas as pd
 import os, sys
+import tempfile
 import csv
 import numpy as np
 import copy
@@ -45,6 +49,9 @@ else:
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
+# Base path
+DATA = os.path.abspath('')
+
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
 HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
@@ -66,31 +73,36 @@ HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
 HEADERS = set(HEADER_STR.split(";"))
 
 COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AZ": "Azerbaijan", "BA": "Bosnia and Herzegowina",
-                 "BG": "Bulgaria", "CH": "Switzerland", "CY": "Cyprus",
-                 "CZ": "Czech Republic", "DE": "Germany",  "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia",
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary",
-                 "IL": "Israel", "IR": "Iran", "IS": "Iceland", "IT": "Italy",
-                 "JO": "Jordan",  "LI": "Lichtenstein", "MA": "Morocco",
-                 "MC": "Monaco", "MD": "Moldova", "ME": "Montenegro",
-                 "MK": "Macedonia", "MT": "Malta", "PL": "Poland",
-                 "PT": "Portugal", "RO": "Romania", "RS": "Serbia",
-                 "RU": "Russia", "SI": "Slovenia", "SM": "San Marino",
-                 "SY": "Syria", "TM": "Turkmenistan", "TR": "Turkey",
-                 "UA": "Ukraine", "UZ": "Uzbekistan", "XK": "Kosovo"}
+                 "AR": "Argentina", "AZ": "Azerbaijan",
+                 "BA": "Bosnia and Herzegowina", "BG": "Bulgaria",
+                 "CH": "Switzerland", "CL": "Chile", "CN": "China", 
+                 "CR": "Costa Rica", "CY": "Cyprus", "CZ": "Czech Republic",
+                 "DE": "Germany", "DJ": "Djibouti", "DZ": "Algeria",
+                 "ES": "Spain", "FR": "France", "GE": "Georgia", "GH": "Ghana", 
+                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary", 
+                 "IL": "Israel", "ID": "Indonesia", "IR": "Iran",
+                 "IS": "Iceland", "IT": "Italy", "JO": "Jordan", "KE":"Kenya",
+                 "KG": "Kyrgyzstan", "KZ": "Kazakhstan", "LI": "Lichtenstein",
+                 "MA": "Morocco", "MC": "Monaco", "MD": "Moldova",
+                 "ME": "Montenegro", "MK": "Macedonia", "MM": "Myanmar",
+                 "MT": "Malta", "MX": "Mexico", "NI": "Nicaragua",
+                 "NO": "Norway", "PA": "Panama", "PG": "Papa New Guinea",
+                 "PL": "Poland", "PT": "Portugal", "PS": "Palestine",
+                 "RO": "Romania", "RS": "Serbia", "RU": "Russia",
+                 "SI": "Slovenia", "SM": "San Marino", "SY": "Syria",
+                 "TM": "Turkmenistan", "TR": "Turkey", "TW": "Taiwan",
+                 "UA": "Ukraine", "US": "United States", "UZ": "Uzbekistan",
+                 "VU": "Vanuatu", "XK": "Kosovo", "YE": "Yemen"}
 
-
-class FlatfileParser(SMDatabaseReader):
+class ESMFlatfileParserURL(SMDatabaseReader):
     """
-    Parses the data from the ESM flatfile to a set of metadata objects
+    Parses the data from the flatfile to a set of metadata objects
     """
     M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
     BUILD_FINITE_DISTANCES = False
 
-    def parse(self, location="./"):
+    def parse(self, location='./'):
         """
-        Parse the metadata
         """
         assert os.path.isfile(self.filename)
         headers = getline(self.filename, 1).rstrip("\n").split(";")
@@ -119,14 +131,29 @@ class FlatfileParser(SMDatabaseReader):
             if (counter % 100) == 0:
                 print("Processed record %s - %s" % (str(counter),
                                                     record.id))
-
+                
             counter += 1
 
     @classmethod
-    def autobuild(cls, dbid, dbname, output_location, flatfile_location):
+    def autobuild(cls, dbid, dbname, output_location, ESM_flatfile_directory):
         """
         Quick and dirty full database builder!
         """
+        # Import ESM URL format strong-motion flatfile
+        ESM = pd.read_csv(ESM_flatfile_directory)
+    
+        # Create default values
+        default_string = pd.Series(np.full(np.size(ESM.esm_event_id), ""))
+        
+        # Assign strike-slip to unknown faulting mechanism
+        r_fm_type = ESM.fm_type_code.fillna('SS') 
+
+        # Reformat datetime
+        r_datetime = ESM.event_time.str.replace('T',' ')
+    
+        converted_base_data_path=_get_ESM18_headers(
+            ESM, default_string, r_fm_type, r_datetime)
+        
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
@@ -134,7 +161,7 @@ class FlatfileParser(SMDatabaseReader):
         # Add on the records folder
         os.mkdir(os.path.join(output_location, "records"))
         # Create an instance of the parser class
-        database = cls(dbid, dbname, flatfile_location)
+        database = cls(dbid, dbname, converted_base_data_path)
         # Parse the records
         print("Parsing Records ...")
         database.parse(location=output_location)
@@ -143,6 +170,7 @@ class FlatfileParser(SMDatabaseReader):
         print("Storing metadata to file %s" % metadata_file)
         with open(metadata_file, "wb+") as f:
             pickle.dump(database.database, f)
+            
         return database
 
     def _parse_record(self, metadata):
@@ -492,9 +520,10 @@ class FlatfileParser(SMDatabaseReader):
         record.datafile = filename
         return record
 
+
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
-        Get the ground motion data from a row (record) in the database
+        Get the ground-motion data from a row (record) in the database
         """
         imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
         spectra = []
@@ -529,7 +558,6 @@ class FlatfileParser(SMDatabaseReader):
                         values.append(np.fabs(float(value)))
                     else:
                         values.append(np.nan)
-                    #values.append(np.fabs(float(row[header].strip())))
             periods = np.array(periods)
             values = np.array(values)
             idx = np.argsort(periods)
@@ -550,3 +578,50 @@ class FlatfileParser(SMDatabaseReader):
                     scalars["U"][key] * scalars["V"][key])
         return scalars, spectra
 
+
+def prioritise_rotd50(df, removal=None):
+    """
+    If a record has RotD50 take this instead of geometric mean from the global
+    flatfile. If no RotD50 use the horizontal components if available (crude
+    proxy). If no horizontal components log the record or remove is specified.
+    
+    :param  removal:
+        If set to true records with out acceleration values for all of the
+        required spectral periods are removed, else the number of records
+        lacking this information will be printed instead
+    """
+    log = []
+    for idx, rec in df.iterrows():
+        print(idx)
+        for col in rec.index:
+            if 'U_T' in col or 'V_T' in col or 'U_pga' in col or 'V_pga' in col:
+                if 'T90' not in col:
+                    if 'U_' in col:    
+                        rotd50_col = col.replace('U_', 'rotD50_')
+                    if 'V_' in col:
+                        rotd50_col = col.replace('V_', 'rotD50_')
+                        
+                    if not pd.isnull(rec[rotd50_col]): # If RotD50... 
+                        df[col].iloc[idx] = rec[rotd50_col] # Assign to H1, H2
+                    else:
+                        log.append(idx)
+                            
+    # Drop if required, else just inform number of records missing acc values
+    no_vals = len(pd.Series(log).unique())
+    if removal is True and log!= []:
+        df = df.drop(log).reset_index()
+        msg = 'Records without acc. values at required periods have been'
+        msg =+ ' removed from flatfile (%s records)' % no_vals
+        print(msg)
+        if len(df) == 0:
+            raise ValueError('All records have been removed from the flatfile')
+        
+    elif log != []:
+        print('%s records do not have acc. values at required periods' % no_vals)
+              
+    # Output to folder where converted flatfile read into parser   
+    tmp = tempfile.mkdtemp()
+    converted_base_data_path = os.path.join(DATA, tmp, 'converted_flatfile.csv')
+    df.to_csv(converted_base_data_path, sep=';')
+
+    return converted_base_data_path
