@@ -114,7 +114,7 @@ class GEMFlatfileParser(SMDatabaseReader):
 
     @classmethod
     def autobuild(cls, dbid, dbname, output_location, ESM_flatfile_directory,
-                  removal=None):
+                  check_up_to=None, removal=None):
         """
         Quick and dirty full database builder!
         """
@@ -122,7 +122,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         GEM = pd.read_csv(ESM_flatfile_directory)
     
         # Get path to tmp csv once modified dataframe
-        converted_base_data_path=_prioritise_rotd50(GEM, removal)
+        converted_base_data_path=_prioritise_rotd50(GEM, check_up_to, removal)
         
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
@@ -541,14 +541,21 @@ class GEMFlatfileParser(SMDatabaseReader):
 
 def _prioritise_rotd50(df, removal=None):
     """
-    If a record has RotD50 take this instead of geometric mean from the global
-    flatfile. If no RotD50 use the horizontal components if available (crude
-    proxy). If no horizontal components log the record or remove if specified.
+    If a record has RotD50 take this instead of geometric mean of horizontal
+    components from the global flatfile for use in residual analysis (this is
+    done by assigning RotD50 to H1 and H2).
+    
+    If no RotD50 use the horizontal components (from which the geometric mean
+    is calculated if available (crude but acceptable proxy for RotD50).
+    
+    Records lacking acceleration values for any of the required spectral periods
+    can also be removed (this information can alternatively just be printed)
     
     :param  removal:
-        If set to true records with out acceleration values for all of the
-        required spectral periods are removed, else the number of records
-        lacking this information will be printed instead
+        If set to true records without acceleration values for any of the
+        required spectral periods are removed (that is if for neither RotD50 or
+        horz. comps), else the number of records lacking this information will
+        be printed instead
     """
     # Manage RotD50 vs horizontal components
     log = []
@@ -564,19 +571,20 @@ def _prioritise_rotd50(df, removal=None):
                     if not pd.isnull(rec[rotd50_col]): # If RotD50... 
                         df[col].iloc[idx] = rec[rotd50_col] # Assign to H1, H2
                     else:
-                        log.append(idx)
+                        if pd.isnull(rec[col]):
+                            log.append(idx) # No acc for this imt for horz either
                             
     # Drop if req. or else just inform number of recs missing acceleration values
     no_vals = len(pd.Series(log).unique())
     if removal is True and log!= []:
         df = df.drop(log).reset_index()
-        msg = 'Records without acc. values at required periods have been'
-        msg =+ ' removed from flatfile (%s records)' % no_vals
+        msg = 'Records without RotD50 acc. values at required periods'
+        msg =+ ' have been removed from flatfile (%s records)' % no_vals
         print(msg)
         if len(df) == 0:
             raise ValueError('All records have been removed from the flatfile')        
     elif log != []:
-        print('%s records do not have acc. values at required periods' % no_vals)
+        print('%s records do not have RotD50 acc. values at required periods' % no_vals)
               
     # Output to folder where converted flatfile read into parser   
     tmp = tempfile.mkdtemp()
