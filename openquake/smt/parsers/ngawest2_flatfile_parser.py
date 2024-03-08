@@ -864,9 +864,7 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     "V_lp":NGAWest2['LP-H2 (Hz)'],
     "W_lp":NGAWest2_vertical['LP-V (Hz)'], 
      
-    # SMT uses GM of two horizontal components so place RotD50 in both to use
-    # in computation of residuals (should improve SMT to use definition const.
-    # with the GMM rather than always using the values provided in H1 and H2).
+    # SMT uses GM of two horizontal components so place RotD50 here
     "U_pga":NGAWest2['PGA (g)']*981,
     "V_pga":NGAWest2['PGA (g)']*981,
     "W_pga":NGAWest2_vertical['PGA (g)']*981,
