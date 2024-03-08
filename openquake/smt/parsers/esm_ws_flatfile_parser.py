@@ -45,6 +45,9 @@ else:
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
+# Define base path
+DATA = os.path.abspath('')
+
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
 HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
@@ -924,7 +927,6 @@ def _get_ESM18_headers(ESM, default_string, r_fm_type, r_datetime):
     "rotD00_T10_000":default_string})
     
     # Output to folder where converted flatfile read into parser   
-    DATA = os.path.abspath('')
     temp_folder=tempfile.mkdtemp()
     converted_base_data_path = os.path.join(DATA,temp_folder, 
                                             'converted_flatfile.csv')
