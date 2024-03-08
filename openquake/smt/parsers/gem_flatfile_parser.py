@@ -125,7 +125,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         GEM = pd.read_csv(ESM_flatfile_directory)
     
         # Get path to tmp csv once modified dataframe
-        converted_base_data_path=_prioritise_rotd50(GEM, check_up_to, removal)
+        converted_base_data_path=_prioritise_rotd50(GEM, removal)
         
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
