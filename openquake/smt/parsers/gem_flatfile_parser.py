@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -16,14 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parse the GEM globally homogenised flatfile (currently available internally only)
-into SMT metadata.
-
-The flatfile already has formatting (ESM18 format) permitting parsing into SMT
-metadata. More capabilities for managing the records and information within
-the GEM global flatfile will be added to this parser in the future.
+Parse the GEM globally homogenised flatfile into SMT metadata.
 """
-
 import pandas as pd
 import os, sys
 import tempfile
@@ -117,7 +111,7 @@ class GEMFlatfileParser(SMDatabaseReader):
 
     @classmethod
     def autobuild(cls, dbid, dbname, output_location, ESM_flatfile_directory,
-                  check_up_to=None, removal=None):
+                  proxy=None, removal=None):
         """
         Quick and dirty full database builder!
         """
@@ -125,7 +119,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         GEM = pd.read_csv(ESM_flatfile_directory)
     
         # Get path to tmp csv once modified dataframe
-        converted_base_data_path=_prioritise_rotd50(GEM, removal)
+        converted_base_data_path=_prioritise_rotd50(GEM, proxy, removal)
         
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
@@ -542,28 +536,34 @@ class GEMFlatfileParser(SMDatabaseReader):
         return scalars, spectra
 
 
-def _prioritise_rotd50(df, removal=None):
+def _prioritise_rotd50(df, proxy=None, removal=None):
     """
-    If a record has RotD50 take this instead of geometric mean of horizontal
-    components from the global flatfile for use in residual analysis (this is
-    done by assigning RotD50 to H1 and H2).
+    Assign RotD50 values to accelerations for computation of residuals. RotD50
+    is available for the vast majority of the records in the GEM flatfile for
+    PGA to 10 s (KikNet subset of records is limited to up to 5 s because we
+    use Beyes and Bommer 2006 to convert from horizontals to RotD50).
     
-    If no RotD50 use the horizontal components (from which the geometric mean
-    is calculated if available (crude but acceptable proxy for RotD50).
+    If no RotD50 use the geometric mean if available (if specified) as a proxy
+    for RotD50.
     
     Records lacking acceleration values for any of the required spectral periods
     can also be removed (this information can alternatively just be printed)
     
+    :param  proxy:
+        If set to true, if a record is missing RotD50 try and use the geometric
+        mean of the horizontal components
+    
     :param  removal:
-        If set to true records without acceleration values for any of the
-        required spectral periods are removed (that is if for neither RotD50 or
-        horz. comps), else the number of records lacking this information will
-        be printed instead
+        If set to true records without complete RotD50 (or complete RotD50 with
+        use of geometric mean as proxy - if proxy is True) for any of the required
+        spectral periods are removed.
     """
     # Manage RotD50 vs horizontal components
-    log = []
+    log, cols = [], []
     for idx, rec in df.iterrows():
         for col in rec.index:
+            if 'rotD' in col:
+                cols.append(col)
             if 'U_T' in col or 'V_T' in col or 'U_pga' in col or 'V_pga' in col:
                 if 'T90' not in col:
                     if 'U_' in col:    
@@ -571,24 +571,34 @@ def _prioritise_rotd50(df, removal=None):
                     if 'V_' in col:
                         rotd50_col = col.replace('V_', 'rotD50_')
                         
-                    if not pd.isnull(rec[rotd50_col]): # If RotD50... 
-                        df[col].iloc[idx] = rec[rotd50_col] # Assign to H1, H2
+                    # If RotD50...
+                    if not pd.isnull(rec[rotd50_col]):
+                        df[col].iloc[idx] = rec[rotd50_col] # Assign to h1, h2
+                        
+                    # Otherwise...
                     else:
-                        if pd.isnull(rec[col]):
-                            log.append(idx) # No acc for this imt for horz either
+                        if proxy is True: # Use geo. mean as proxy
+                            if not pd.isnull(rec[col]):
+                                pass # Can use geo. mean from h1, h2 as proxy 
+                        else:
+                            log.append(idx) # Log rec as incomplete RotD50 vals
                             
+    # Tidy dataframe
+    cols = pd.Series(cols).unique()
+    df = df.drop(columns=cols)
+    
     # Drop if req. or else just inform number of recs missing acceleration values
     no_vals = len(pd.Series(log).unique())
     if removal is True and log!= []:
         df = df.drop(log).reset_index()
-        msg = 'Records without RotD50 acc. values at required periods'
-        msg =+ ' have been removed from flatfile (%s records)' % no_vals
+        msg = 'Records without RotD50 acc. values at all required periods'
+        msg += ' have been removed from flatfile (%s records)' % no_vals
         print(msg)
         if len(df) == 0:
             raise ValueError('All records have been removed from the flatfile')        
     elif log != []:
-        print('%s records do not have RotD50 acc. values at required periods' % no_vals)
-              
+        print('%s records do not have RotD50 for all req. periods' % no_vals)
+        
     # Output to folder where converted flatfile read into parser   
     tmp = tempfile.mkdtemp()
     converted_base_data_path = os.path.join(DATA, tmp, 'converted_flatfile.csv')
