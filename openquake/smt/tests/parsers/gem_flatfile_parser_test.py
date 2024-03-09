@@ -53,10 +53,16 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
 
     def test_gem_flatfile_parser(self):
         """
-        Tests the parsing of the GEM flatfile
+        Tests the parsing of the GEM flatfile. 
+        
+        Checks the proxy will give the KiKNet record the geometric mean of the
+        horizontal components as a proxy for the missing RotD50 acc values beyond
+        5 s + the removal option will then not discard this record as RotD50 is
+        now 'complete' for all required spectral periods
         """
         parser = GEMFlatfileParser.autobuild("000", "GEM_conversion_test",
-                                             self.db_file, self.GEM_flatfile_directory)
+                                             self.db_file, self.GEM_flatfile_directory,
+                                             removal=True, proxy=True)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
         # Should contain 5 records
