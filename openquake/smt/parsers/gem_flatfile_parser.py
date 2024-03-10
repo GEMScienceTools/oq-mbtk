@@ -60,7 +60,7 @@ HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
              "proximity_code;housing_code;installation_code;st_nation_code;"\
              "st_latitude;st_longitude;st_elevation;ec8_code;"\
              "ec8_code_method;ec8_code_ref;vs30_m_sec;vs30_ref;"\
-             "vs30_calc_method;vs30_meas_type;slope_deg;vs30_m_sec_WA;"\
+             "vs30_calc_method;vs30_meas_type;slope_deg;"\
              "epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;Ry0_dist;"\
              "instrument_type_code;late_triggered_flag_01;U_channel_code;"\
              "U_azimuth_deg;V_channel_code;V_azimuth_deg;W_channel_code;"\
@@ -337,14 +337,10 @@ class GEMFlatfileParser(SMDatabaseReader):
         elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
 
         vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
-        vs30_topo = valid.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
-        if vs30:
-            vs30_measured = True
-        elif vs30_topo:
-            vs30 = vs30_topo
-            vs30_measured = False
-        else:
-            vs30_measured = False
+        vs30_measured = None # User should check selected records (many diff. 
+                             # flatfiles --> see vs30_meas_type column for if
+                             # vs30 if available was measured of inferred)
+        
         site = RecordSite(site_id, station_code, station_code, site_lon,
                           site_lat, elevation, vs30, vs30_measured,
                           network_code=network_code, country=None)
