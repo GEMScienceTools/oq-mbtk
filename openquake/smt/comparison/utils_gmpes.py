@@ -297,7 +297,7 @@ def mgmpe_check(gmpe):
     inputs = pd.Series(str(gmpe).splitlines()[1:], dtype='object')
     add_inputs = {}
     add_as_int = ['eshm20_region']
-    add_as_str = ['region', 'gmpe_table', 'volc_arc_file']
+    add_as_str = ['region', 'saturation_region', 'gmpe_table', 'volc_arc_file']
 
     if len(inputs) > 0:  # If greater than 0 must add required gsim inputs
         idx_to_drop = []

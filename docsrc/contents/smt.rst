@@ -113,7 +113,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.AbrahamsonEtAl2014]
         
         [models.AbrahamsonEtAl2014RegJPN]
-        region = "JPN" # nb currently a bug for specifically this gmm in the SMT where the user must still specify the region param despite the class name differentiating as regionalised variant (will be fixed!)
+        region = "JPN" # nb currently a bug for GMMs which use add_alias to regionalise from class name (currently need to still specify corresponding regionalisation params in toml) 
         
         [models.BooreEtAl2014]
         
