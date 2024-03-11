@@ -71,6 +71,8 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
         tmps += '    output: {0:s}\n'.format(out_path)
         sys.exit()
 
+
+
     # Read the profiles
     sps, dmin, dmax = read_profiles_csv(in_path,
                                         float(upper_depth),

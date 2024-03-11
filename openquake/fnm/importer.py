@@ -49,8 +49,10 @@ from openquake.hazardlib.geo.surface.kite_fault import (
 )
 
 import logging
-logging.basicConfig(format='%(asctime)s - %(message)s',
-                    datefmt='%d-%b-%y %H:%M:%S')
+
+logging.basicConfig(
+    format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
+)
 
 
 def fix_right_hand(trace, dip_dir):
@@ -64,7 +66,6 @@ def fix_right_hand(trace, dip_dir):
 
 def plot_profiles_plt(profiles, trace, mesh=None):
 
-
     problem = []
     for i_pro, pro in enumerate(profiles):
         if np.any(np.isnan(pro.coo[:, 0])):
@@ -75,13 +76,16 @@ def plot_profiles_plt(profiles, trace, mesh=None):
     if mesh is not None:
         for i in range(0, mesh.lons.shape[0] - 1):
             for j in range(0, mesh.lons.shape[1] - 1):
-                if np.all(np.isfinite(mesh.lons[i:i + 1, j:j + 1])):
-                    cells.append([[mesh.lons[i, j], mesh.lats[i, j]],
-                                  [mesh.lons[i, j + 1], mesh.lats[i, j + 1]],
-                                  [mesh.lons[i + 1, j + 1],
-                                   mesh.lats[i + 1, j + 1]],
-                                  [mesh.lons[i + 1, j], mesh.lats[i + 1, j]],
-                                  [mesh.lons[i, j], mesh.lats[i, j]]])
+                if np.all(np.isfinite(mesh.lons[i : i + 1, j : j + 1])):
+                    cells.append(
+                        [
+                            [mesh.lons[i, j], mesh.lats[i, j]],
+                            [mesh.lons[i, j + 1], mesh.lats[i, j + 1]],
+                            [mesh.lons[i + 1, j + 1], mesh.lats[i + 1, j + 1]],
+                            [mesh.lons[i + 1, j], mesh.lats[i + 1, j]],
+                            [mesh.lons[i, j], mesh.lats[i, j]],
+                        ]
+                    )
         cells = np.array(cells)
 
     fig = plt.figure()
@@ -98,7 +102,7 @@ def plot_profiles_plt(profiles, trace, mesh=None):
         for cell in cells:
             plt.plot(cell[:, 0], cell[:, 1], "orange", lw=0.5)
 
-    plt.show() 
+    plt.show()
 
 
 def plot_profiles(profiles, trace, mesh=None):
@@ -129,13 +133,16 @@ def plot_profiles(profiles, trace, mesh=None):
     if mesh is not None:
         for i in range(0, mesh.lons.shape[0] - 1):
             for j in range(0, mesh.lons.shape[1] - 1):
-                if np.all(np.isfinite(mesh.lons[i:i + 1, j:j + 1])):
-                    cells.append([[mesh.lons[i, j], mesh.lats[i, j]],
-                                  [mesh.lons[i, j + 1], mesh.lats[i, j + 1]],
-                                  [mesh.lons[i + 1, j + 1],
-                                   mesh.lats[i + 1, j + 1]],
-                                  [mesh.lons[i + 1, j], mesh.lats[i + 1, j]],
-                                  [mesh.lons[i, j], mesh.lats[i, j]]])
+                if np.all(np.isfinite(mesh.lons[i : i + 1, j : j + 1])):
+                    cells.append(
+                        [
+                            [mesh.lons[i, j], mesh.lats[i, j]],
+                            [mesh.lons[i, j + 1], mesh.lats[i, j + 1]],
+                            [mesh.lons[i + 1, j + 1], mesh.lats[i + 1, j + 1]],
+                            [mesh.lons[i + 1, j], mesh.lats[i + 1, j]],
+                            [mesh.lons[i, j], mesh.lats[i, j]],
+                        ]
+                    )
         cells = np.array(cells)
 
     fig = pygmt.Figure()
@@ -233,8 +240,9 @@ def create_surfaces(
         coo_p = np.zeros((coo.shape[0], 2))
         m_lon = np.mean(coo[:, 0])
         m_lat = np.mean(coo[:, 1])
-        proj = Proj(proj='lcc', lon_0=m_lon,
-                    lat_1=m_lat - 10., lat_2=m_lat + 10.)
+        proj = Proj(
+            proj='lcc', lon_0=m_lon, lat_1=m_lat - 10.0, lat_2=m_lat + 10.0
+        )
         coo_p[:, 0], coo_p[:, 1] = proj(coo[:, 0], coo[:, 1])
 
         # Smoothing fault trace
@@ -263,11 +271,13 @@ def create_surfaces(
         upp_sd = prop.get("usd", None)
         low_sd = prop.get("lsd", None)
         profs = get_profiles_from_simple_fault_data(
-            fault_trace, upp_sd, low_sd, dip, edge_sd)
+            fault_trace, upp_sd, low_sd, dip, edge_sd
+        )
 
         try:
             surf = KiteSurface.from_profiles(
-                profs, align=True, profile_sd=2.0, edge_sd=edge_sd_res)
+                profs, align=True, profile_sd=2.0, edge_sd=edge_sd_res
+            )
 
             if np.any(np.isnan(surf.mesh.array)):
                 if pygmt is not None:
@@ -275,12 +285,12 @@ def create_surfaces(
                     plt.title(f'Feature {i_fea}')
                 else:
                     print(f'Feature {i_fea} has NaNs in the mesh')
-                    #plt.plot(surf.mesh.lons, surf.mesh.lats, 'b.')
-                    #plt.plot(fault_trace.coo[:,0], fault_trace.coo[:,1], 'r')
-                    #plt.show()
-                    #plot_profiles_plt(profs, fault_trace, surf.mesh)
+                    # plt.plot(surf.mesh.lons, surf.mesh.lats, 'b.')
+                    # plt.plot(fault_trace.coo[:,0], fault_trace.coo[:,1], 'r')
+                    # plt.show()
+                    # plot_profiles_plt(profs, fault_trace, surf.mesh)
             else:
-                #plot_profiles_plt(profs, fault_trace, surf.mesh)
+                # plot_profiles_plt(profs, fault_trace, surf.mesh)
                 pass
 
         except ValueError('Cannot build kite Surface'):
@@ -291,7 +301,6 @@ def create_surfaces(
             plt.title(f'Feature {i_fea}')
             plt.show()
 
-
         # Check the number of columns composing this surface
         msg = f'Fault id: {fid} - Surface with less than 2 columns'
         if surf.mesh.lons.shape[1] < 2:
@@ -299,9 +308,6 @@ def create_surfaces(
         msg = f'Fault id: {fid} - Surface with less than 2 rows'
         if surf.mesh.lons.shape[0] < 2:
             logging.warning(msg)
-
-
-
 
         # Update the list of surfaces created
         surfs.append(surf)
@@ -313,9 +319,13 @@ def create_surfaces(
     return surfs
 
 
-def kite_surfaces_from_geojson(fname: str, edge_sd: float = 2.0,
-                               idxs: list = [], skip: list = [],
-                               iplot: list = []) -> list:
+def kite_surfaces_from_geojson(
+    fname: str,
+    edge_sd: float = 2.0,
+    idxs: list = [],
+    skip: list = [],
+    iplot: list = [],
+) -> list:
     """
     Create OQ kite surfaces from a geojson file.
 
@@ -330,23 +340,40 @@ def kite_surfaces_from_geojson(fname: str, edge_sd: float = 2.0,
     return surfs
 
 
-def simple_fault_surface_from_feature(feature: dict, lsd_default=20.0, usd_default=0.,
-                                      edge_sd: float = 2.0):
+def simple_fault_surface_from_feature(
+    feature: dict,
+    lsd_default=20.0,
+    usd_default=0.0,
+    edge_sd: float = 2.0,
+    min_sd=0.5,
+) -> SimpleFaultSurface:
     geom = feature['geometry']
     prop = feature['properties']
     dip = prop.get("dip", None)
     lsd = prop.get("lsd", lsd_default)
     usd = prop.get("usd", usd_default)
-    
 
     fault_trace = Line([Point(c[0], c[1]) for c in geom["coordinates"]])
 
-    return SimpleFaultSurface.from_fault_data(fault_trace, usd, lsd, dip, edge_sd)
+    final_exception = None
+
+    while edge_sd > min_sd:
+        try:
+            return SimpleFaultSurface.from_fault_data(
+                fault_trace, usd, lsd, dip, edge_sd
+            )
+        except (ValueError, AssertionError) as e:
+            final_exception = e
+            edge_sd /= 2.0
+    raise final_exception
 
 
-def simple_fault_surfaces_from_geojson(fname: str, edge_sd: float = 2.0,
-                               idxs: list = [], skip: list = [],
-                               ) -> list:
+def simple_fault_surfaces_from_geojson(
+    fname: str,
+    edge_sd: float = 2.0,
+    idxs: list = [],
+    skip: list = [],
+) -> list:
     """
     Create OQ simple fault surfaces from a geojson file.
 
@@ -357,7 +384,7 @@ def simple_fault_surfaces_from_geojson(fname: str, edge_sd: float = 2.0,
     # Read .geojson file with fault info
     with open(fname) as f:
         data = geojson.load(f)
-    #surfs = create_surfaces(data, edge_sd, idxs=idxs, skip=skip, iplot=iplot)
+    # surfs = create_surfaces(data, edge_sd, idxs=idxs, skip=skip, iplot=iplot)
     surfs = []
 
     for i_fea, feature in enumerate(data['features']):
