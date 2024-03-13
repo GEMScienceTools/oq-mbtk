@@ -89,7 +89,7 @@ class ESMFlatfileParser(SMDatabaseReader):
 
     def parse(self, location="./"):
         """
-        Parse the metadata
+        Parse the flatfile
         """
         assert os.path.isfile(self.filename)
         headers = getline(self.filename, 1).rstrip("\n").split(";")
