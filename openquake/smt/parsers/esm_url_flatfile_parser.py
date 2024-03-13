@@ -509,7 +509,6 @@ class ESMFlatfileParserURL(SMDatabaseReader):
                         # Not a spectral period but T90
                         continue
                     iky = header.replace(key, "").replace("_", ".")
-                    #print imt, key, header, iky
                     periods.append(float(iky))
                     value = row[header].strip()
                     if value:
