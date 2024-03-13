@@ -78,7 +78,6 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         assert os.path.isfile(self.filename)
         headers = getline(self.filename, 1).rstrip("\n").split(";")
-        print(HEADERS)
         for hdr in HEADERS:
             if hdr not in headers:
                 raise ValueError("Required header %s is missing in file"
@@ -495,7 +494,6 @@ class GEMFlatfileParser(SMDatabaseReader):
                         # Not a spectral period but T90
                         continue
                     iky = header.replace(key, "").replace("_", ".")
-                    #print imt, key, header, iky
                     periods.append(float(iky))
                     value = row[header].strip()
                     if value:
