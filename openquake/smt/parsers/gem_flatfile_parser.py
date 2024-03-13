@@ -52,19 +52,15 @@ SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
 HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
              "EMSC_ev_id;ev_nation_code;ev_latitude;ev_longitude;"\
-             "ev_depth_km;ev_hyp_ref;fm_type_code;ML;ML_ref;Mw;Mw_ref;Ms;"\
-             "Ms_ref;EMEC_Mw;EMEC_Mw_type;EMEC_Mw_ref;event_source_id;"\
+             "ev_depth_km;fm_type_code;ML;Mw;Ms;event_source_id;"\
              "es_strike;es_dip;es_rake;es_strike_dip_rake_ref;es_z_top;"\
-             "es_z_top_ref;es_length;es_width;es_geometry_ref;network_code;"\
-             "station_code;location_code;instrument_code;sensor_depth_m;"\
-             "proximity_code;housing_code;installation_code;st_nation_code;"\
-             "st_latitude;st_longitude;st_elevation;ec8_code;"\
-             "ec8_code_method;ec8_code_ref;vs30_m_sec;vs30_ref;"\
-             "vs30_calc_method;vs30_meas_type;slope_deg;"\
-             "epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;Ry0_dist;"\
-             "instrument_type_code;late_triggered_flag_01;U_channel_code;"\
-             "U_azimuth_deg;V_channel_code;V_azimuth_deg;W_channel_code;"\
-             "U_hp;V_hp;W_hp;U_lp;V_lp;W_lp"
+             "es_length;es_width;network_code;station_code;location_code;"\
+             "instrument_code;sensor_depth_m;housing_code;installation_code;"\
+             "st_nation_code;st_latitude;st_longitude;st_elevation;vs30_m_sec;"\
+             "slope_deg;vs30_meas_type;epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;"\
+             "Ry0_dist;late_triggered_flag_01;U_channel_code;U_azimuth_deg;"\
+             "V_channel_code;V_azimuth_deg;W_channel_code;U_hp;V_hp;W_hp;U_lp;"\
+             "V_lp;W_lp"
 
 HEADERS = set(HEADER_STR.split(";"))
 
@@ -73,14 +69,16 @@ class GEMFlatfileParser(SMDatabaseReader):
     """
     Parses the data from the flatfile to a set of metadata objects
     """
-    M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
+    M_PRECEDENCE = ["Mw", "Ms", "ML"]
     BUILD_FINITE_DISTANCES = False
 
     def parse(self, location='./'):
         """
+        Parse the dataset
         """
         assert os.path.isfile(self.filename)
         headers = getline(self.filename, 1).rstrip("\n").split(";")
+        print(HEADERS)
         for hdr in HEADERS:
             if hdr not in headers:
                 raise ValueError("Required header %s is missing in file"
@@ -197,23 +195,16 @@ class GEMFlatfileParser(SMDatabaseReader):
 
     def _parse_magnitudes(self, metadata):
         """
-        So, here things get tricky. Up to four magnitudes are defined in the
-        flatfile (EMEC Mw, MW, Ms and ML). An order of precedence is required
-        and the preferred magnitude will be the highest found
+        An order of precedence is required and the preferred magnitude will be
+        the highest found
         """
         pref_mag = None
         mag_list = []
         for key in self.M_PRECEDENCE:
             mvalue = metadata[key].strip()
             if mvalue:
-                if key == "EMEC_Mw":
-                    mtype = "Mw"
-                    msource = "EMEC({:s}|{:s})".format(
-                        metadata["EMEC_Mw_type"],
-                        metadata["EMEC_Mw_ref"])
-                else:
-                    mtype = key
-                    msource = metadata[key + "_ref"].strip()
+                mtype = key
+                msource = metadata[key + "_ref"].strip()
                 mag = Magnitude(float(mvalue),
                                 mtype,
                                 source=msource)
