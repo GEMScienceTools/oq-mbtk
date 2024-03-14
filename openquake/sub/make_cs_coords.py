@@ -26,36 +26,46 @@
 # coding: utf-8
 
 import os
-import re
+import glob
 import pandas as pd
 
-from shutil import copyfile
 from openquake.baselib import sap
-from openquake.cat.hmg.purge import purge
+from openquake.hazardlib.geo.geodetic import azimuth
 
-
-def main(fname_cat, fname_cat_out, fname_csv):
+def make_cs_coords(cs_dir, outfi, ini_fname, cs_length=300., cs_depth=300.):
     """
-    :param fname_cat:
-       Name of the .h5 file with the homogenised catalogue
-    :param fname_cat_out:
-       Name of the .h5 file where the new catalogue will be stored
-       once duplicates are removed
-    :param fname_csv:
-        name of the csv file with one column "eventID" that lists
-        duplicates to be removed from the catalogue 
+    Creates cs_coords file of format to be used by plotting script, in the
+    case that the profiles have been generated in any other way than by
+    the create_multiple_cross_sections.py
     """
 
-    purge(fname_cat, fname_cat_out, fname_csv) 
+    cs_files = sorted(glob.glob(f'{cs_dir}/*csv'))
+    lines = []
+    for fi in cs_files:
+        sz = os.path.getsize(fi)
+        if sz == 0:
+            continue
 
+        df = pd.read_csv(fi, sep=' ', names=["lon", "lat", "depth"])
+        az = azimuth(df.lon[0], df.lat[0], df.lon.values[-1], df.lat.values[-1])
 
-main.fname_cat = '.h5 file with origins'
-main.fname_cat_out = '.h5 file with origins excluded'
-main.fname_csv = '.csv file with the list of events ID to purge'
+        csid = fi.split('/')[-1][3:].replace('.csv','')
+        line = f'{df.lon[0]} {df.lat[0]} {cs_length} {cs_depth} '
+        line += f'{az:.4} {csid} {ini_fname} \n'
+        lines.append(line)
+
+    os.remove(outfi) if os.path.exists(outfi) else None
+
+    with open(outfi, 'w') as f:
+        for line in lines:
+            f.write(line)
+    print(f'Written to {outfi}')
+
+make_cs_coords.cs_dir = 'directory with cross section coordinates'
+make_cs_coords.outfi = 'output filename'
+make_cs_coords.ini_fname = 'name of ini file specifying data paths'
+make_cs_coords.cs_length = 'length of cross sections (default 300)'
+make_cs_coords.cs_depth = 'depth extent of cross sections (default 300 km)'
 
 if __name__ == "__main__":
-    """
-    This removes from the catalogue the events indicated in the the
-    `fname_csv` file.
-    """
-    sap.run(main)
+    sap.run(make_cs_coords)

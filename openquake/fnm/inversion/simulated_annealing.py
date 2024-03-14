@@ -273,6 +273,7 @@ def _parallel_anneal(
     sample_scale=1.0,
     replace_frac: float64 = 0.001,
     replace_num: int64 = 0,
+    sample_with_T: bool = False,
 ):
     best_misfit = current_misfit
 
@@ -297,6 +298,7 @@ def _parallel_anneal(
             sample_scale=sample_scale,
             replace_frac=replace_frac,
             replace_num=replace_num,
+            sample_with_T=sample_with_T,
         )
         thread_final_misfits[i] = thread_misfits[i, -1]
 
@@ -338,6 +340,7 @@ def simulated_annealing(
     seed=None,
     replace_frac: float = 0.01,
     replace_num: int = 0,
+    sample_with_T: bool = False,
 ):
     t0 = time.time()
 
@@ -394,6 +397,7 @@ def simulated_annealing(
             sample_scale=scale,
             replace_frac=replace_frac,
             replace_num=replace_num,
+            sample_with_T=sample_with_T,
         )
         misfit_history = current_misfits
         if np.min(current_misfits) > best_misfit:
@@ -428,6 +432,7 @@ def simulated_annealing(
                 sample_scale=scale,
                 replace_frac=replace_frac,
                 replace_num=replace_num,
+                sample_with_T=sample_with_T,
             )
             try:
                 misfit_history[i: i + meetup_iters] = current_misfits
