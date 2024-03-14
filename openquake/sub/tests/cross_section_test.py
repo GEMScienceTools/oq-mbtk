@@ -11,7 +11,8 @@ from openquake.sub.cross_sections import get_min_distance
 
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.line import Line
-
+from openquake.sub.tests import __file__ as tests__init__
+from openquake.sub.make_cs_coords import make_cs_coords
 
 BASE_PATH = os.path.dirname(__file__)
 tmp = 'data/crust/crust_except.xyz'
@@ -136,3 +137,17 @@ class MinDistTest(unittest.TestCase):
         pnts = numpy.array([[10.3, 45.0], [9.0, 45.0]])
         line = Line([Point(lo, la) for lo, la in zip(lons, lats)])
         get_min_distance(line, pnts)
+
+
+class edge2profileTest(unittest.TestCase):
+
+    def test_cs_generator(self):
+        """
+        Tests cross section files generated from exisiting profiles
+        """
+
+        reference_file = os.path.join(BASE_PATH, 'expected', 'cs_file.cs')
+        cs_dir = os.path.join(BASE_PATH, 'data', 'cs')
+        outfi = os.path.join('/tmp/cs_file.cs')
+        make_cs_coords(cs_dir, outfi, 'cs.ini')
+        assert filecmp.cmp(outfi, reference_file) == True
