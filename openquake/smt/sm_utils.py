@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Strong motion utilities.
+Strong motion utilities
 """
 # WARNING: this module is intended to collect functions used in various places
 # throughout the code. Consequently, try to limit the amount of stuff here and in
