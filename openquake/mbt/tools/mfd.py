@@ -229,8 +229,35 @@ def get_evenlyDiscretizedMFD_from_multiMFD(mfd, bin_width=None):
             else:
                 tmfd = EEvenlyDiscretizedMFD(min_m, binw, occ)
                 emfd.stack(tmfd)
+                 
+    elif mfd.kind == 'truncGutenbergRichterMFD':
+        aval = mfd.kwargs['a_val']
+        bval = mfd.kwargs['b_val']
+        min_mag = mfd.kwargs['min_mag']
+        max_mag = mfd.kwargs['max_mag']
+        binw = mfd.kwargs['bin_width'][0]
+
+        for i in range(mfd.size):
+            bgr = bval[0] if len(bval) == 1 else bval[i]
+            agr = aval[0] if len(aval) == 1 else aval[i]
+            min_m = min_mag[0] if len(min_mag) == 1 else min_mag[i]
+            max_m = max_mag[0] if len(max_mag) == 1 else max_mag[i]
+            
+            left = np.arange(min_m, max_m, binw)
+            rates = 10.**(agr-bgr*left)-10.**(agr-bgr*(left+binw))
+            
+            if i == 0:
+                emfd = EEvenlyDiscretizedMFD(min_m+binw/2.,
+                                binw,
+                                list(rates))
+            else:
+                tmfd = EEvenlyDiscretizedMFD(min_m+binw/2.,
+                                binw,
+                                list(rates))
+                emfd.stack(tmfd)
+    
     else:
-        raise ValueError('Unsupported MFD type')
+        raise ValueError('Unsupported MFD type ', mfd.kind)
 
     return emfd
 
