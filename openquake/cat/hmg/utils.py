@@ -61,17 +61,21 @@ def to_hmtk_catalogue(cdf: pd.DataFrame, polygon=None):
 
     # Select columns
     # Check if catalogue contains strike/dip/rake and retain if it does
+    cdf['Agencies'] = [f'{oA}|{mA}' for oA, mA in zip(cdf.Agency, cdf.magAgency)]
     if 'str1' in cdf.columns:
-        col_list = ['eventID', 'Agency', 'year', 'month', 'day','hour','minute','second', 'longitude',
-               'latitude', 'depth', 'magMw', 'sigma', 'str1', 'dip1', 'rake1', 'str2', 'dip2', 'rake2']
+        col_list = ['eventID', 'Agencies', 'year', 'month', 'day','hour','minute','second', 'longitude',
+               'latitude', 'depth', 'magMw', 'sig_tot', 'str1', 'dip1', 'rake1', 'str2', 'dip2', 'rake2']
+               #'latitude', 'depth', 'magMw', 'sigma', 'str1', 'dip1', 'rake1', 'str2', 'dip2', 'rake2']
     else:
-        col_list = ['eventID', 'Agency', 'year', 'month', 'day', 'hour','minute','second', 'longitude',
-               'latitude', 'depth', 'magMw', 'sigma']
+        col_list = ['eventID', 'Agencies', 'year', 'month', 'day', 'hour','minute','second', 'longitude',
+               'latitude', 'depth', 'magMw', 'sig_tot']
+               #'latitude', 'depth', 'magMw', 'sigma']
     
     cdf = cdf[col_list]
 
     # Rename columns
-    cdf = cdf.rename(columns={"magMw": "magnitude"})
+    cdf = cdf.rename(columns={"magMw": "magnitude", "sig_tot": "sigmaMagnitude",
+                              "Agencies": "Agency"})
 
     return cdf
 

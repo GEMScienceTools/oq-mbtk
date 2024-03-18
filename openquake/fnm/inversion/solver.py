@@ -291,7 +291,16 @@ def solve_dual_annealing(G, d, min_bounds=None, max_bounds=None, **kwargs):
     return x
 
 
-def solve_llsq(G, d, **kwargs):
+def solve_llsq(G, d, weights=None, **kwargs):
+
+    if weights is not None:
+        if ssp.issparse(G):
+            G = ssp.csc_array(np.diag(weights)) @ G
+        else:
+            G = np.diag(weights) @ G
+        d = weights * d
+
+
     if ssp.issparse(G):
         x = ssp.linalg.lsqr(G, d, **kwargs)[0]
         resids = G @ x - d

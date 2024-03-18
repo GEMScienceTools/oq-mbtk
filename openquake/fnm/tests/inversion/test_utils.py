@@ -29,24 +29,43 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-import numpy as np
-
-from openquake.hazardlib.scalerel import get_available_magnitude_scalerel
-
-MSRS = get_available_magnitude_scalerel()
+import os
+import pathlib
+import unittest
 
 
-def area_to_mag(area, mstype='generic', rake: float = 0.0):
-    if mstype == 'generic':
-        return np.log10(area) + 4.0
-    elif mstype in MSRS:
-        msr = MSRS[mstype]()
-        return msr.get_median_mag(area, rake)
-    else:
-        raise ValueError("MSR not supported")
+from openquake.fnm.inversion.utils import (
+    geom_from_fault_trace,
+    project_faults_and_polies,
+    lines_in_polygon,
+    get_rupture_displacement,
+    weighted_mean,
+    slip_vector_azimuth,
+    check_fault_in_poly,
+    faults_in_polies,
+    get_rup_poly_fracs,
+    rup_df_to_rupture_dicts,
+    subsection_df_to_fault_dicts,
+    get_rupture_regions,
+    _nearest,
+    make_fault_mfd,
+    get_mag_counts,
+    get_mfd_occurrence_rates,
+    set_single_fault_rupture_rates_by_mfd,
+    set_single_fault_rup_rates,
+    _get_surface_moment_rate,
+    get_fault_moment_rate,
+    _get_fault_by_id,
+    get_ruptures_on_fault,
+    get_rup_rates_from_fault_slip_rates,
+)
 
-def mag_to_area(area, type='generic'):
-    if type == 'generic':
-        return 10**(area - 4.0)
-    else:
-        raise ValueError("MSR not supported")
+from openquake.fnm.all_together_now import build_fault_network
+
+HERE = pathlib.Path(__file__).parent.absolute()
+
+
+class Test3Faults(unittest.TestCase):
+    def setUp(self):
+        test_data_dir = HERE / ".." / 'data'
+        fgj_name = os.path.join(test_data_dir, "motagua_3_faults.geojson")

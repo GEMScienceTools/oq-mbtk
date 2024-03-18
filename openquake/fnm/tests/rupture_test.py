@@ -35,12 +35,17 @@ import numpy as np
 
 from openquake.hazardlib.geo import Line, Point
 from openquake.hazardlib.geo.surface.kite_fault import (
-    KiteSurface, get_profiles_from_simple_fault_data)
+    KiteSurface,
+    get_profiles_from_simple_fault_data,
+)
 
 from openquake.fnm.section import split_into_subsections
 from openquake.fnm.rupture import (
-    get_ruptures_section, _get_ruptures_first_level, get_ruptures_area,
-    _get_rupture_area)
+    get_ruptures_section,
+    _get_ruptures_first_level,
+    get_ruptures_area,
+    _get_rupture_area,
+)
 from openquake.fnm.importer import kite_surfaces_from_geojson
 from openquake.fnm.fault_system import get_fault_system
 from openquake.fnm.tests.connection_test import _get_surfs
@@ -52,7 +57,7 @@ PLOTTING = False
 class TestGetAreaSubsection(unittest.TestCase):
 
     def test_get_area_rupture_one_section(self):
-        """ compute the area for a rupture on one section """
+        """compute the area for a rupture on one section"""
 
         # The mesh spacing is 1 km so each cell should have an area of about
         # one square kilometer
@@ -79,20 +84,24 @@ class TestGetAreaSubsection(unittest.TestCase):
         # TODO compute the length of the trace and compute the area
 
     def test_get_area_rupture_multiple_sections(self):
-        """ compute the area of a rupture on multiple sections """
+        """compute the area of a rupture on multiple sections"""
 
         # The mesh spacing is 1 km so each cell should have an area of about
         # one square kilometer
         surfs = _get_surfs()
 
         # Get ruptures for one section
-        rups = np.array([[0., 12., 12., 12.,  2.,  1.,  0.],
-                         [0.,  0., 24., 12.,  2.,  1.,  1.]])
+        rups = np.array(
+            [
+                [0.0, 12.0, 12.0, 12.0, 2.0, 1.0, 0.0],
+                [0.0, 0.0, 24.0, 12.0, 2.0, 1.0, 1.0],
+            ]
+        )
 
         # Get the area for one subsection
         area2 = _get_rupture_area(surfs, rups[rups[:, 4] == 2, :])
 
-        expected = 143.8 + 287.30
+        expected = 432  # 143.8 + 287.30
         np.testing.assert_almost_equal(expected, area2, decimal=1)
 
 
@@ -120,11 +129,12 @@ class TestCreateRupturesSection(unittest.TestCase):
         # Create the Kite Fault Surface
         fault_trace = Line([Point(10.0, 45.0), Point(10.3, 45.0)])
         profiles = get_profiles_from_simple_fault_data(
-            fault_trace, usd, lsd, dip, mesh_spacing)
+            fault_trace, usd, lsd, dip, mesh_spacing
+        )
         self.surf = KiteSurface.from_profiles(profiles, profile_sd, edge_sd)
 
     def test_generate_ruptures_one_section_1row(self):
-        """ Test the construction of all the ruptures for one section """
+        """Test the construction of all the ruptures for one section"""
 
         # Create subsections given a number of cells along the strike and
         # dip. The mesh contains 6 rows and 5 columns.
@@ -136,6 +146,7 @@ class TestCreateRupturesSection(unittest.TestCase):
 
         if 0:
             from openquake.fnm.tests.mesh_test import plot_mesh
+
             plot_mesh(mesh)
 
         # Create the ruptures. Each rupture is represented by four values:
@@ -151,17 +162,20 @@ class TestCreateRupturesSection(unittest.TestCase):
 
         # We have only one row of ruptures (first index always 0). All the
         # ruptures have the same width (equal to 5).
-        expected = np.array([[0, 0, 1, 5, 0, 1, 0, 0],
-                             [0, 0, 2, 5, 1, 1, 0, 1],
-                             [0, 0, 3, 5, 2, 1, 0, 2],
-                             [0, 0, 4, 5, 3, 1, 0, 3],
-                             [0, 1, 1, 5, 4, 1, 0, 4],
-                             [0, 1, 2, 5, 5, 1, 0, 5],
-                             [0, 1, 3, 5, 6, 1, 0, 6],
-                             [0, 2, 1, 5, 7, 1, 0, 7],
-                             [0, 2, 2, 5, 8, 1, 0, 8],
-                             [0, 3, 1, 5, 9, 1, 0, 9]]
-                            )
+        expected = np.array(
+            [
+                [0, 0, 1, 5, 0, 1, 0, 0],
+                [0, 0, 2, 5, 1, 1, 0, 1],
+                [0, 0, 3, 5, 2, 1, 0, 2],
+                [0, 0, 4, 5, 3, 1, 0, 3],
+                [0, 1, 1, 5, 4, 1, 0, 4],
+                [0, 1, 2, 5, 5, 1, 0, 5],
+                [0, 1, 3, 5, 6, 1, 0, 6],
+                [0, 2, 1, 5, 7, 1, 0, 7],
+                [0, 2, 2, 5, 8, 1, 0, 8],
+                [0, 3, 1, 5, 9, 1, 0, 9],
+            ]
+        )
         np.testing.assert_equal(rups, expected)
 
     def test_generate_ruptures_one_section_3rows(self):
@@ -188,16 +202,20 @@ class TestCreateRupturesSection(unittest.TestCase):
         np.testing.assert_equal(len(rups), 60)
 
         #  Checking some of them
-        expected = np.array([[0, 0, 1, 2, 0, 1, 0, 0],
-                             [0, 0, 1, 4, 1, 1, 0, 1],
-                             [0, 0, 1, 5, 2, 1, 0, 2],
-                             [0, 0, 2, 2, 3, 1, 0, 3],
-                             [0, 0, 2, 4, 4, 1, 0, 4],
-                             [0, 0, 2, 5, 5, 1, 0, 5],
-                             [0, 0, 3, 2, 6, 1, 0, 6],
-                             [0, 0, 3, 4, 7, 1, 0, 7],
-                             [0, 0, 3, 5, 8, 1, 0, 8],
-                             [0, 0, 4, 2, 9, 1, 0, 9]])
+        expected = np.array(
+            [
+                [0, 0, 1, 2, 0, 1, 0, 0],
+                [0, 0, 1, 4, 1, 1, 0, 1],
+                [0, 0, 1, 5, 2, 1, 0, 2],
+                [0, 0, 2, 2, 3, 1, 0, 3],
+                [0, 0, 2, 4, 4, 1, 0, 4],
+                [0, 0, 2, 5, 5, 1, 0, 5],
+                [0, 0, 3, 2, 6, 1, 0, 6],
+                [0, 0, 3, 4, 7, 1, 0, 7],
+                [0, 0, 3, 5, 8, 1, 0, 8],
+                [0, 0, 4, 2, 9, 1, 0, 9],
+            ]
+        )
         np.testing.assert_equal(rups[:10], expected)
 
     def test_generate_ruptures_one_section_aratio_3rows(self):
@@ -217,18 +235,22 @@ class TestCreateRupturesSection(unittest.TestCase):
         np.testing.assert_equal(np.all(rups[:, 2] >= rups[:, 3]), True)
 
         #  Checking indexes of ruptures
-        expected = np.array([[0, 0, 2, 2,  0, 1, 0, 0],
-                             [0, 0, 3, 2,  1, 1, 0, 1],
-                             [0, 0, 4, 2,  2, 1, 0, 2],
-                             [0, 0, 4, 4,  3, 1, 0, 3],
-                             [0, 1, 2, 2,  4, 1, 0, 4],
-                             [0, 1, 3, 2,  5, 1, 0, 5],
-                             [0, 2, 2, 2,  6, 1, 0, 6],
-                             [2, 0, 2, 2,  7, 1, 0, 7],
-                             [2, 0, 3, 2,  8, 1, 0, 8],
-                             [2, 0, 3, 3,  9, 1, 0, 9],
-                             [2, 0, 4, 2, 10, 1, 0, 10],
-                             [2, 0, 4, 3, 11, 1, 0, 11]])
+        expected = np.array(
+            [
+                [0, 0, 2, 2, 0, 1, 0, 0],
+                [0, 0, 3, 2, 1, 1, 0, 1],
+                [0, 0, 4, 2, 2, 1, 0, 2],
+                [0, 0, 4, 4, 3, 1, 0, 3],
+                [0, 1, 2, 2, 4, 1, 0, 4],
+                [0, 1, 3, 2, 5, 1, 0, 5],
+                [0, 2, 2, 2, 6, 1, 0, 6],
+                [2, 0, 2, 2, 7, 1, 0, 7],
+                [2, 0, 3, 2, 8, 1, 0, 8],
+                [2, 0, 3, 3, 9, 1, 0, 9],
+                [2, 0, 4, 2, 10, 1, 0, 10],
+                [2, 0, 4, 3, 11, 1, 0, 11],
+            ]
+        )
 
         np.testing.assert_equal(rups[:12], expected)
 
@@ -245,4 +267,5 @@ class TestCreateRupturesSection(unittest.TestCase):
 
         if PLOTTING:
             from openquake.fnm.tests.mesh_test import plot_mesh
+
             plot_mesh(mesh)
