@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
-from openquake.wkf.utils import create_folder
+from openquake.wkf.utils import create_folder, get_list
 from openquake.baselib import sap
 from shapely.geometry import Point
 from shapely import wkt
@@ -17,7 +17,7 @@ def main(fname_points: str, fname_polygons: str, folder_out: str='/tmp',
 
 
 def create_smoothing_per_zone(fname_points: str, fname_polygons: str,
-                              folder_out: str='/tmp', skip=[]):
+                              folder_out: str='/tmp', skip=[], use = []):
     """
     Creates subsets of points, one for each of the polygons included in the
     `fname_polygons` shapefile. The attibute table must have an 'id' attribute.
@@ -33,6 +33,9 @@ def create_smoothing_per_zone(fname_points: str, fname_polygons: str,
     """
 
     create_folder(folder_out)
+    
+    if len(use) > 0:
+        use=get_list(use)
 
     # Create a geodataframe with the point sources
     df = pd.read_csv(fname_points)
@@ -46,6 +49,9 @@ def create_smoothing_per_zone(fname_points: str, fname_polygons: str,
     for idx, poly in polygons_gdf.iterrows():
 
         if poly.id in skip:
+            continue
+            
+        if len(use) > 0 and poly.id not in use:
             continue
 
         # Create a geodataframe with the polygon in question

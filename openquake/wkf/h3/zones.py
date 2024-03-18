@@ -30,12 +30,15 @@ import h3
 import json
 import shapely
 import geopandas as gpd
-from openquake.wkf.utils import create_folder
+from openquake.wkf.utils import create_folder, get_list
 
 
 def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
-                                  folder_out: str):
-
+                                  folder_out: str, use: str = []):
+    
+    if len(use) > 0:
+        use = get_list(use)
+        
     h3_level = int(h3_level)
     create_folder(folder_out)
 
@@ -48,6 +51,9 @@ def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
     # Select point in polygon
     fout = open(fname_out, 'w')
     for idx, poly in polygons_gdf.iterrows():
+    
+        if len(use) > 0 and poly.id not in use:
+            continue
 
         tmps = shapely.geometry.mapping(poly.geometry)
         geojson_poly = eval(json.dumps(tmps))

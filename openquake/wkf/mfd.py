@@ -35,6 +35,7 @@ from openquake.hazardlib.sourceconverter import SourceConverter
 from openquake.mbt.tools.mfd import (
     EEvenlyDiscretizedMFD,
     get_evenlyDiscretizedMFD_from_truncatedGRMFD)
+from openquake.hazardlib.mfd.multi_mfd import MultiMFD
 
 
 def check_mfds(fname_input_pattern: str, fname_config: str, *,
@@ -47,6 +48,7 @@ def check_mfds(fname_input_pattern: str, fname_config: str, *,
     """
 
     for fname in sorted(glob(fname_input_pattern)):
+        print(fname)
 
         if src_id is None:
             src_id = _get_src_id(fname)
@@ -60,7 +62,6 @@ def check_mfds(fname_input_pattern: str, fname_config: str, *,
         ssm = to_python(fname, sourceconv)
 
         for grp in ssm:
-
             for i, src in enumerate(grp):
                 if i == 0:
                     nmfd = EEvenlyDiscretizedMFD.from_mfd(src.mfd, binw)
