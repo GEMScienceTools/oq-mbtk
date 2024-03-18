@@ -104,20 +104,8 @@ We can specify the inputs to perform a residual analysis with as follows:
     
         [models]
     
-        [models.1-AbrahamsonGulerce2020SInter]
-        region = "GLO"
-        
-        [models.2-AbrahamsonGulerce2020SInter]
+        [models.AbrahamsonGulerce2020SInter]
         region = "CAS"
-        
-        [models.AbrahamsonEtAl2014]
-        
-        [models.AbrahamsonEtAl2014RegJPN]
-        region = "JPN" # nb currently a bug for GMMs which use add_alias to regionalise from class name (currently need to still specify corresponding regionalisation params in toml) 
-        
-        [models.BooreEtAl2014]
-        
-        [models.BooreEtAl2014LowQ]
         
         [models.YenierAtkinson2015BSSA]
         sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
@@ -151,9 +139,6 @@ We can specify the inputs to perform a residual analysis with as follows:
         
         [models.3-BooreEtAl2014]
         site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
-        
-        [models.NGAEastGMPE]
-        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
             
         [models.HassaniAtkinson2018]
         d_sigma = 100 # gmpe specific param
@@ -163,6 +148,19 @@ We can specify the inputs to perform a residual analysis with as follows:
         sigma_mu_epsilon = 2.85697 
         c3_epsilon = 1.72    
         region = 4 # Note that within the residuals toml we specify the region here, whereas in the comparison module toml (below) we specify the region for all ESHM20 GMMs uniformly using the eshm20_region param
+    
+        [models.NGAEastGMPE]
+        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
+    
+        # Note: currently a bug for GMMs which use add_alias to specify gsim
+        # class (will be fixed - current workarounds demonstrated below)
+        
+        [models.AbrahamsonEtAl2014RegJPN]
+        region = "JPN" # add_alias bug means must still specify 'JPN' region param
+        
+        [models.NGAEastUSGSGMPE]
+        gmpe_table = 'usgs17.hdf5' # another example of add_alias bug
+        
         
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
