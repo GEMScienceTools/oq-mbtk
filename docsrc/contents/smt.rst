@@ -94,7 +94,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         > gmpe_list = ['AkkarEtAlRjb2014', 'BooreEtAl2014', 'BooreEtAl2020', 'CauzziEtAl2014', 'KothaEtAl2020regional', 'LanzanoEtAl2019_RJB_OMO']
         > imt_list = ['PGA','SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']
         
-3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for specifying the inputs of GMPEs with user-specifiable input parameters e.g. regionalisation parameter or logic tree branch parameters. Note that here the GMPEs listed in the first ``.toml`` file are not appropriate for our target region, but have been selected to demonstrate how GMPEs with additional inputs can be specified within a ``.toml`` file. The second ``.toml`` file provides the GMPEs and intensity measures we use for running this demonstration analysis.
+3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for the use of GMPEs with user-specifiable input parameters. Note that here the GMPEs listed in this example ``.toml`` file are not appropriate for our target region, but have been selected to demonstrate how GMPEs with additional inputs can be specified.
 
    The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``, or for ModifiableGMPE features in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``). Note also that a GMPE sigma model must be provided by the GMPE for the computation of residuals. If a sigma model is not provided by the GMPE, it can be specified as demonstrated below.
    
@@ -164,42 +164,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
-        
-    Adhering to this formatting, we here provide the GMPEs and intensity measures we consider within the subsequent analysis:
-    
-    .. code-block:: ini
-    
-        [models]
-    
-        [models.AbrahamsonEtAl2014]
-    
-        [models.AkkarEtAlRjb2014]
-    
-        [models.AmeriEtAl2017Rjb]
-    
-        [models.BindiEtAl2014Rjb]
-    
-        [models.BooreEtAl2014]
-    
-        [models.BooreEtAl2020]
-    
-        [models.CauzziEtAl2014]
-    
-        [models.CampbellBozorgnia2014]
-    
-        [models.ChiouYoungs2014]
-    
-        [models.HassaniAtkinson2020Asc]
-    
-        [models.KaleEtAl2015Turkey]
-    
-        [models.KothaEtAl2020regional]
-    
-        [models.LanzanoEtAl2019_RJB_OMO]
-    
-        [imts]
-        imt_list = ["PGA","SA(0.1)","SA(0.2)","SA(0.5)","SA(1.0)","SA(2.0)"]    
-    
+          
 4. Following specification of the GMPEs and intensity measures, we can now compute the ground-motion residuals using the Residuals module.
 
    We first need to get the metadata from the parsed ``.pkl`` file (stored within the metadata folder):
