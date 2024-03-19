@@ -20,6 +20,8 @@ from openquake.cat.completeness.generate import get_completenesses
 from openquake.cat.completeness.analysis import (_completeness_analysis, 
                                                  read_compl_params,
                                                  read_compl_data)
+from openquake.cat.completeness.mfd_eval_plots import make_all_plots
+
 
 def _get_truncated_normal(mean=0, sd=1, low=0, upp=10):
     return truncnorm(
@@ -119,7 +121,7 @@ def _create_catalogue_versions(catfi, outdir, numcats=None, stype='random'):
 
 
 
-def _decl_all_cats(outdir, cat, dcl_toml_tmp):
+def _decl_all_cats(outdir, cat, dcl_toml_tmp, decdir):
 
     """
     """
@@ -127,10 +129,9 @@ def _decl_all_cats(outdir, cat, dcl_toml_tmp):
 
     config = toml.load(dcl_toml_tmp)
     config['main']['save_aftershocks'] = False
-    dec_outdir = 'dec_' + outdir
     for cat in catvs: 
         config['main']['catalogue'] = cat
-        config['main']['output'] = dec_outdir
+        config['main']['output'] = decdir
         tmpfi = 'tmp-config-dcl.toml'
         with open(tmpfi, 'w') as f:
             f.write(toml.dumps(config))
@@ -142,10 +143,9 @@ def _decl_all_cats(outdir, cat, dcl_toml_tmp):
         if re.search('^case', key):
             labels.extend(config[key]['regions'])
 
-    return dec_outdir, labels
 
 
-def _gen_comple(compl_toml, dec_outdir):
+def _gen_comple(compl_toml, dec_outdir, compdir, tmpfi):
     """
     """
     config = toml.load(compl_toml)
@@ -162,34 +162,29 @@ def _gen_comple(compl_toml, dec_outdir):
         mags_cref = [c[1] for c in cref]
         mags_min = min(mags_cref) - mrange
         mags_max = max(mags_cref) + mrange
-        mags_lo = np.arange(mags_min, 5.8, 0.1)
-        mags_hi = np.arange(5.8, mags_max, 0.2)
-        mags_all = mags_lo.tolist() + mags_hi.tolist()
+        mags_all = np.arange(mags_min, mags_max, 0.2)
+        #mags_lo = np.arange(mags_min, 5.8, 0.1)
+        #mags_hi = np.arange(5.8, mags_max, 0.2)
+        #mags_all = mags_lo.tolist() + mags_hi.tolist()
         mags = list(set([round(m,2) for m in mags_all if m >= mmin_compl ]))
         mags.sort()
         print(mags)
-        
+
         years = [c[0] for c in cref]
         years.sort()
 
     config['completeness']['mags'] = mags
     config['completeness']['years'] = years
-    
-    tmpfi = 'tmp-config-compl.toml'
-    
+
     with open(tmpfi, 'w') as f:
         f.write(toml.dumps(config))
-        
-    compdir = dec_outdir.replace('dec', 'compl')
+
     get_completenesses(tmpfi, compdir)
-    
-    return compdir, tmpfi
 
 
-def _compl_analysis(decdir, compdir, compl_toml, labels, fout):
+def _compl_analysis(decdir, compdir, compl_toml, labels, fout, fout_figs):
     """
     """
-    fout_figs = fout + '_figs'
     ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(compl_toml)
     compl_tables, mags_chk, years_chk = read_compl_data(compdir)
 
@@ -199,59 +194,80 @@ def _compl_analysis(decdir, compdir, compl_toml, labels, fout):
 
     for lab in labels:
         dec_catvs = glob.glob(os.path.join(decdir, f'*{lab}*'))
-        fout = compdir.replace('dec_', 'compl_') + f'_{lab}'
-        fout_figs = fout + '_figs'
+        fout_lab = os.path.join(fout, lab)
+        fout_figs_lab = os.path.join(fout_figs, lab, 'mfds')
         for ii, cat in enumerate(dec_catvs):
             try:
                 res = _completeness_analysis(cat, yrs, ms, bw, r_m,
                                       r_up_m, [bmin, bmax], crit,
                                       compl_tables, f'{ii}',
-                                      folder_out_figs=fout_figs,
-                                      folder_out=fout,
+                                      folder_out_figs=fout_figs_lab,
+                                      folder_out=fout_lab,
                                       rewrite=False)
-            except: 
+            except:
                 print(f'Impossible for catalogue {ii}')
 
-    return res
+
+def main(configfile):
+    """
+    """
+
+    config = toml.load(configfile)
+
+    # read basic inputs
+    catfi = config['main']['catalogue_filename']
+    outdir = config['main']['output_directory']
+    labs = config['mfds'].get('labels', None)
 
 
-def main(catfi, outdir, dcl_toml_tmpl, compl_toml, labels=None,
-                   numcats=10, stype='random'):
-#    """
-#    """
-#    # create versions of catalogue that are sampling the sigma
-    
-    dec_outdir = 'dec_' + outdir
-    compdir = dec_outdir.replace('dec', 'compl')
-    #tmpconf = 'tmp-config-compl.toml'
+    # make subdirs based on outdir name
+    catdir = os.path.join(outdir, 'catalogues')
+    decdir = os.path.join(outdir, 'declustered')
+    compdir = os.path.join(outdir, 'completeness')
+    resdir = os.path.join(outdir, 'results')
+    figdir = os.path.join(outdir, 'figures')
+    tmpconf = os.path.join(outdir, 'tmp-config-compl.toml')
 
-    if labels:
-        labs = labels.split(',')
-    if 0:
-        ncats = int(numcats)
-        _create_catalogue_versions(catfi, outdir, numcats=ncats, 
-                                             stype='random')
 
-    # perform all the declustering possibilities - links TRTs
-    if 0:
-        dec_outdir, labels_all = _decl_all_cats(outdir, catfi, dcl_toml_tmpl)
+    # if create_cats, make the sampled catalogues
+    create_cats = config['catalogues'].get('create_catalogues', True)
+    if create_cats:
+        ncats = int(config['catalogues'].get('number', 1000))
+        stype = config['catalogues'].get('sampling_type', 'random')
+        _create_catalogue_versions(catfi, catdir, numcats=ncats, stype=stype)
 
-    if 1:
-        if labels == None:
-            labs = labels_all
-            
-        compdir, tmpconf = _gen_comple(compl_toml, dec_outdir)
+    # perform all the declustering possibilities - links TRTs following configs
+    decluster = config['decluster'].get('decluster_catalogues', True)
+    if decluster:
+        dcl_toml_tmpl = config['decluster']['decluster_settings']
+        _decl_all_cats(catdir, catfi, dcl_toml_tmpl, decdir)
 
-        res = _compl_analysis(dec_outdir, compdir, tmpconf, labs, compdir+'_res')
 
-main.catfi = 'Name of the original catalogue file, pkl or hmtk format'
-main.outdir = 'Directory in which to save the iterations of the catalogue'
-main.dcl_toml_tmpl = 'template declustering settings file'
-main.compl_toml = 'completeness analysis settings file'
-main.labels = 'list of trt labels, if not all'
-main.numcats = 'number of catalogues to make'
-main.stype = 'random or with an increment through magnitude sigma'
+    # generate the completeness tables 
+    generate = config['completeness'].get('generate_completeness', True)
+    if generate:
+        compl_toml = config['completeness']['completeness_settings']
+        _gen_comple(compl_toml, decdir, compdir, tmpconf)
 
-if __name__ == '__main__': 
+    # create the mfds for the given TRT labels 
+    mfds = config['mfds'].get('create_mfds', True)
+    if mfds:
+        if not labs:
+            print('Must specify the TRTs')
+            sys.exit()
+
+        _compl_analysis(decdir, compdir, tmpconf, labs, resdir, figdir)
+
+    plots = config['plot'].get('make_plots', True)
+    if plots:
+        if not labs:
+            print('Must specify the TRTs')
+            sys.exit()
+        make_all_plots(resdir, compdir, figdir, labs)
+
+
+main.configfile = 'path to configuration file'
+
+if __name__ == '__main__':
     freeze_support()
     sap.run(main)
