@@ -141,7 +141,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
             
         [models.HassaniAtkinson2018]
-        d_sigma = 100 # gmpe specific param
+        d_sigma = 100
         kappa0 = 0.04
         
         [models.KothaEtAl2020ESHM20] # ESHM20 model
