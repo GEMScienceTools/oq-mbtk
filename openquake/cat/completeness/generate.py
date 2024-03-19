@@ -50,7 +50,7 @@ def get_completenesses(fname_config, folder_out):
     create_folder(folder_out)
     config = toml.load(fname_config)
     key = 'completeness'
-    mags = np.array(config[key]['mags'])
+    mags = np.array(config[key]['mags'], dtype=np.float32)
     years = np.array(config[key]['years'])
     num_steps = config[key].get('num_steps', 0)
     min_mag_compl = config[key].get('min_mag_compl', None)
