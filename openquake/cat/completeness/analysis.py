@@ -458,11 +458,9 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
     return save
 
-def read_compl_params(fname_config):
+def read_compl_params(config):
     """
     """
-    # Loading configuration
-    config = toml.load(fname_config)
 
     # Read parameters for completeness analysis
     key = 'completeness'
@@ -512,16 +510,19 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
         List with the IDs of the sources to skip
     """
 
-    ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(f_config)
+    # Loading configuration
+    config = toml.load(f_config)
+
+    ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(config)
 
     compl_tables, mags_chk, years_chk = read_compl_data(folder_in)
 
     # Fixing sorting of years
-    if np.all(np.diff(years)) >= 0:
-        years = np.flipud(years)
+    if np.all(np.diff(yrs)) >= 0:
+        yrs = np.flipud(yrs)
 
-    np.testing.assert_array_equal(ms, mags_chk)
-    np.testing.assert_array_equal(yrs, years_chk)
+    np.testing.assert_array_almost_equal(ms, mags_chk)
+    np.testing.assert_array_almost_equal(yrs, years_chk)
 
     # Info
     if len(skip) > 0:
@@ -569,6 +570,6 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
         # Updating configuration
         config['sources'][src_id] = var
 
-    with open(fname_config, 'w', encoding='utf-8') as fou:
+    with open(f_config, 'w', encoding='utf-8') as fou:
         fou.write(toml.dumps(config))
-        print(f'Updated {fname_config:s}')
+        print(f'Updated {f_config:s}')
