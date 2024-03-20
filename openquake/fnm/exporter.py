@@ -77,6 +77,7 @@ def make_multifault_source(
     infer_occur_rates: bool = False,
     surface_type="kite",
     ruptures_for_output='all',
+    rupture_occurrence_rates=None,
 ):
     surfaces = []
     if surface_type == "kite":
@@ -110,9 +111,12 @@ def make_multifault_source(
     mags = rup_df['mag'].values
     rakes = rup_df['mean_rake'].values
 
+    if rupture_occurrence_rates is None:
+        occurrence_rates = rup_df['annual_occurrence_rate'].values
+
     pmfs = [
         poisson.pmf([0, 1, 2, 3, 4], r).tolist()
-        for r in rup_df['annual_occurrence_rate'].values
+        for r in rupture_occurrence_rates
     ]
 
     mfs = MultiFaultSource(
