@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2023 GEM Foundation
+# Copyright (C) 2014-2024 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -242,8 +242,8 @@ def _get_z25(Vs30, region):
 
 def _param_gmpes(strike, dip, depth, aratio, rake, trt):
     """
-    Get (crude) proxies for strike, dip, depth and aspect ratio if not provided
-    by the user.
+    Get (crude) proxies for strike, dip, rake, depth and aspect ratio if not
+    provided by the user.
     """
     # Strike
     if strike == -999:
@@ -253,32 +253,32 @@ def _param_gmpes(strike, dip, depth, aratio, rake, trt):
 
     # Dip
     if dip == -999:
-        if rake == 0:
-            dip_s = 90  # strike slip
+        if rake == 0 or rake == 180:
+            dip_s = 90  # Strike slip
         else:
-            dip_s = 45  # reverse or normal fault
+            dip_s = 45  # Reverse or normal fault
     else:
         dip_s = dip
 
     # Depth
     if depth == -999:
         if trt == 'Interface':
-            depth_s = 30
+            depth_s = 40
         if trt == 'InSlab':
-            depth_s = 50
+            depth_s = 150
         else:
-            depth_s = 15
+            depth_s = 15 # Crustal
     else:
         depth_s = depth
 
-    # a-ratio
+    # Aspect ratio
     if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
-        if trt == 'InSlab' or trt == 'Interface':
+        if trt in ['InSlab', 'Interface']:
             aratio_s = 5
         else:
-            aratio_s = 2
+            aratio_s = 2 # Crustal
 
     return strike_s, dip_s, depth_s, aratio_s
 
@@ -292,12 +292,12 @@ def mgmpe_check(gmpe):
     # Preserve original GMPE prior and create base version of GMPE
     orig_gmpe = gmpe
     base_gsim = gmpe.__class__.__name__
-
+    
     # Get the additional params if specified
     inputs = pd.Series(str(gmpe).splitlines()[1:], dtype='object')
     add_inputs = {}
     add_as_int = ['eshm20_region']
-    add_as_str = ['region', 'gmpe_table', 'volc_arc_file']
+    add_as_str = ['region', 'saturation_region', 'gmpe_table', 'volc_arc_file']
 
     if len(inputs) > 0:  # If greater than 0 must add required gsim inputs
         idx_to_drop = []
@@ -340,14 +340,14 @@ def mgmpe_check(gmpe):
                 val = float(par.split('=')[1])
             add_inputs[key] = val
 
-    # reconstruct the gmpe as kwargs
+    # Reconstruct the gmpe as kwargs
     kwargs = {'gmpe': {base_gsim: add_inputs}}
 
     # Al Atik 2015 sigma model
     if 'al_atik_2015_sigma' in str(orig_gmpe):
-        kwargs['sigma_model_alatik2015'] = {"tau_model": "global",
-                                            "ergodic": False}
-
+        kwargs['sigma_model_alatik2015'] = {
+            "tau_model": "global", "ergodic": False}
+    
     # Fix total sigma per imt
     if 'fix_total_sigma' in str(orig_gmpe):
         kwargs['set_fixed_total_sigma'] = {'total_sigma': fixed_sigma_vector}
@@ -392,6 +392,6 @@ def mgmpe_check(gmpe):
     if 'NRCan15SiteTermLinear' in str(orig_gmpe):
         kwargs['nrcan15_site_term'] = {'kind': 'linear'}
 
-    gmpe = mgmpe.ModifiableGMPE(**kwargs)  # remake gmpe using mgmpe
+    gmpe = mgmpe.ModifiableGMPE(**kwargs)  # Remake gmpe using mgmpe
 
     return gmpe
