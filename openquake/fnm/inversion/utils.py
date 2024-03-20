@@ -557,6 +557,11 @@ def get_rup_rates_from_fault_slip_rates(
         rup_df_key = 'rupture_df_keep'
     elif rupture_set_for_rates_from_slip_rates == 'all':
         rup_df_key = 'rupture_df'
+    else:
+        raise ValueError(
+            "rupture_set_for_rates_from_slip_rates must be 'filtered' or 'all'"
+            + f", not '{rupture_set_for_rates_from_slip_rates}'",
+        )
 
     if faults_or_subfaults == 'faults':
         _key_ = 'faults'
@@ -576,7 +581,10 @@ def get_rup_rates_from_fault_slip_rates(
         )
 
     fault_moment_rates = {
-        id: get_fault_moment_rate(fault, seismic_fraction=seismic_fraction)
+        id: get_fault_moment_rate(
+            fault,
+            seismic_fraction=fault.get("seismic_fraction", seismic_fraction),
+        )
         for id, fault in fault_iterator.items()
     }
 
@@ -588,7 +596,7 @@ def get_rup_rates_from_fault_slip_rates(
             ).mag.max(),
             mfd_type=mfd_type,
             b_val=b_val,
-            seismic_fraction=seismic_fraction,
+            seismic_fraction=fault.get("seismic_fraction", seismic_fraction),
             moment_rate=fault_moment_rates[id],
             **kwargs,
         )
@@ -603,11 +611,11 @@ def get_rup_rates_from_fault_slip_rates(
             rup_df=rup_df_key,
             b_val=b_val,
             mfd_type=mfd_type,
-            seismic_fraction=seismic_fraction,
+            seismic_fraction=fault.get("seismic_fraction", seismic_fraction),
             faults_or_subfaults=faults_or_subfaults,
             **kwargs,
         )
-        for id in fault_iterator.keys()
+        for id, fault in fault_iterator.items()
     }
 
     sf_inds = []
