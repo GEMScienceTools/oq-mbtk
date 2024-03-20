@@ -435,8 +435,8 @@ class Residuals(object):
                         continue
                     for res_type in self.residuals[gmpe][imtx].keys():
                         if res_type == "Inter event":
-                            inter_ev = \
-                                context["Residual"][gmpe][imtx][res_type]
+                            inter_ev =  context["Residual"][gmpe][imtx][
+                                res_type]
                             if np.all(
                                     np.fabs(inter_ev - inter_ev[0]) < 1.0E-12):
                                 # Single inter-event residual
