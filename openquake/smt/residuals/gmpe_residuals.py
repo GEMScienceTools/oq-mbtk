@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2017 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -59,7 +59,6 @@ def get_geometric_mean(fle):
     :param fle:
         Instance of :class: h5py.File
     """
-    # periods = fle["IMS/X/Spectra/Response/Periods"].value
     if not ("H" in fle["IMS"].keys()):
         # Horizontal spectra not in record
         x_spc = fle["IMS/X/Spectra/Response/Acceleration/damping_05"].values
@@ -297,7 +296,6 @@ class Residuals(object):
         :param  imts:
             A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
         """
-             
         # Residuals object
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.number_gmpes = len(self.gmpe_list)
@@ -312,8 +310,8 @@ class Residuals(object):
             gmpe_dict_1 = OrderedDict([])
             gmpe_dict_2 = OrderedDict([])
             self.unique_indices[gmpe] = {}
+            
             # Get the period range and the coefficient types
-            # gmpe_i = GSIM_LIST[gmpe]()
             gmpe_i = self.gmpe_list[gmpe]
             for c in dir(gmpe_i):
                 if 'COEFFS' in c:
@@ -348,6 +346,7 @@ class Residuals(object):
                         gmpe_dict_2[imtx][res_type] = []
                         self.types[gmpe][imtx].append(res_type)
                     gmpe_dict_2[imtx]["Mean"] = []
+           
                 # For handling of GMPEs with total sigma only
                 else: 
                     for res_type in self.gmpe_list[
@@ -369,7 +368,7 @@ class Residuals(object):
     def from_toml(cls, filename):
         """
         Read in gmpe_list and imts from .toml file. This method allows use of
-        non-ergodic GMPEs and gmpes with additional input files within SMT
+        gmpes with additional parameters and input files within the SMT
         """
         # Read in toml file with dict of gmpes and subdict of imts
         config_file = toml.load(filename)
@@ -403,7 +402,7 @@ class Residuals(object):
             See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase` for an
             example
         """
-
+        # Get contexts
         contexts = ctx_database.get_contexts(nodal_plane_index, self.imts,
                                              component)
 
@@ -436,8 +435,8 @@ class Residuals(object):
                         continue
                     for res_type in self.residuals[gmpe][imtx].keys():
                         if res_type == "Inter event":
-                            inter_ev = \
-                                context["Residual"][gmpe][imtx][res_type]
+                            inter_ev =  context["Residual"][gmpe][imtx][
+                                res_type]
                             if np.all(
                                     np.fabs(inter_ev - inter_ev[0]) < 1.0E-12):
                                 # Single inter-event residual
@@ -480,28 +479,28 @@ class Residuals(object):
         """
         Calculate the expected ground motions from the context
         """
-        # TODO Rake hack will be removed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if not context["Ctx"].rake:
-            context["Ctx"].rake = 0.0
+            context["Ctx"].rake = 0.0 # Assume strike-slip
         expected = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
         # Period range for GSIM
         for gmpe in self.gmpe_list:
             expected[gmpe] = OrderedDict([(imtx, {}) for imtx in self.imts])
             for imtx in self.imts:
                 gsim = self.gmpe_list[gmpe]
-                gsim_orig = gsim # If gsim into mgmpe retain pot. region for ctx
+                gsim_orig = gsim # Retain before using mgmpe
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < self.gmpe_sa_limits[gmpe][0] or\
                             period > self.gmpe_sa_limits[gmpe][1]:
                         expected[gmpe][imtx] = None
                         continue
-                # Check if gsim needs appending with mgmpe
+                # Check if gsim needs modifying with mgmpe
                 gsim = mgmpe_check(gsim)
                 # Add region parameter to sites context if specified in gsim
                 if 'eshm20_region' in gsim_orig.kwargs:
                     context["Ctx"].region = gsim_orig.kwargs['eshm20_region']
-                if 'region' in gsim_orig.kwargs and 'eshm20_region' not in gsim.kwargs:
+                if ('region' in gsim_orig.kwargs and
+                    'eshm20_region' not in gsim.kwargs):
                     context["Ctx"].region = gsim_orig.kwargs['region']
                 # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
@@ -1220,7 +1219,7 @@ class SingleStationAnalysis(object):
     def from_toml(cls, site_id_list, filename):
         """
         Read in gmpe_list and imts from .toml file. This method allows use of
-        non-ergodic GMPEs and gmpes with additional input files within SMT
+        gmpes with additional parameters and input files within the SMT
         """
         # Read in toml file with dict of gmpes and subdict of imts
         config_file = toml.load(filename)

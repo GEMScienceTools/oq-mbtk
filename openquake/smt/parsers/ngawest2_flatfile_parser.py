@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2017 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -45,53 +45,33 @@ else:
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
-SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
+SCALAR_LIST = ["PGA", "PGV", "PGD"]
 
-HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
-             "EMSC_ev_id;ev_nation_code;ev_latitude;ev_longitude;"\
-             "ev_depth_km;ev_hyp_ref;fm_type_code;ML;ML_ref;Mw;Mw_ref;Ms;"\
-             "Ms_ref;EMEC_Mw;EMEC_Mw_type;EMEC_Mw_ref;event_source_id;"\
-             "es_strike;es_dip;es_rake;es_strike_dip_rake_ref;es_z_top;"\
-             "es_z_top_ref;es_length;es_width;es_geometry_ref;network_code;"\
-             "station_code;location_code;instrument_code;sensor_depth_m;"\
-             "proximity_code;housing_code;installation_code;st_nation_code;"\
-             "st_latitude;st_longitude;st_elevation;ec8_code;"\
-             "ec8_code_method;ec8_code_ref;vs30_m_sec;vs30_ref;"\
-             "vs30_calc_method;vs30_meas_type;slope_deg;vs30_m_sec_WA;"\
-             "epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;Ry0_dist;"\
+HEADER_STR = "event_id;event_time;ev_nation_code;ev_latitude;ev_longitude;"\
+             "ev_depth_km;fm_type_code;ML;ML_ref;Mw;Mw_ref;Ms;Ms_ref;EMEC_Mw;"\
+             "EMEC_Mw_type;EMEC_Mw_ref;event_source_id;es_strike;es_dip;"\
+             "es_rake;es_strike_dip_rake_ref;es_z_top;es_length;es_width;"\
+             "network_code;station_code;location_code;instrument_code;"\
+             "sensor_depth_m;proximity_code;housing_code;st_nation_code;"\
+             "st_latitude;st_longitude;st_elevation;vs30_m_sec;slope_deg;"\
+             "vs30_m_sec_WA;epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;Ry0_dist;"\
              "instrument_type_code;late_triggered_flag_01;U_channel_code;"\
              "U_azimuth_deg;V_channel_code;V_azimuth_deg;W_channel_code;"\
              "U_hp;V_hp;W_hp;U_lp;V_lp;W_lp"
 
 HEADERS = set(HEADER_STR.split(";"))
 
-COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AZ": "Azerbaijan", "BA": "Bosnia and Herzegowina",
-                 "BG": "Bulgaria", "CH": "Switzerland", "CY": "Cyprus",
-                 "CZ": "Czech Republic", "DE": "Germany",  "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia",
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary",
-                 "IL": "Israel", "IR": "Iran", "IS": "Iceland", "IT": "Italy",
-                 "JO": "Jordan",  "LI": "Lichtenstein", "MA": "Morocco",
-                 "MC": "Monaco", "MD": "Moldova", "ME": "Montenegro",
-                 "MK": "Macedonia", "MT": "Malta", "PL": "Poland",
-                 "PT": "Portugal", "RO": "Romania", "RS": "Serbia",
-                 "RU": "Russia", "SI": "Slovenia", "SM": "San Marino",
-                 "SY": "Syria", "TM": "Turkmenistan", "TR": "Turkey",
-                 "UA": "Ukraine", "UZ": "Uzbekistan", "XK": "Kosovo"}
-
 
 class NGAWest2FlatfileParser(SMDatabaseReader):
-    
     """
-    Parses the metadata from the flatfile to a set of metadata objects
+    Parses the data from flatfile to a set of metadata objects
     """
-    
     M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
     BUILD_FINITE_DISTANCES = False
 
     def parse(self, location='./'):
         """
+        Parse the metadata
         """
         assert os.path.isfile(self.filename)
         headers = getline(self.filename, 1).rstrip("\n").split(";")
@@ -101,24 +81,22 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                                  % hdr)
         # Read in csv
         reader = csv.DictReader(open(self.filename, "r"), delimiter=";")
-        metadata = []
         self.database = GroundMotionDatabase(self.id, self.name)
         counter = 0
         for row in reader:
-            if self._sanitise(row, reader):
-                # Build the metadata
-                record = self._parse_record(row)
-                if record:
-                    # Parse the strong motion
-                    record = self._parse_ground_motion(
-                        os.path.join(location, "records"),
-                        row, record, headers)
-                    self.database.records.append(record)
+            # Build the metadata
+            record = self._parse_record(row)
+            if record:
+                # Parse the strong motion
+                record = self._parse_ground_motion(
+                    os.path.join(location, "records"),
+                    row, record, headers)
+                self.database.records.append(record)
 
-                else:
-                    print("Record with sequence number %s is null/invalid"
-                          % "{:s}-{:s}".format(row["event_id"],
-                                               row["station_code"]))
+            else:
+                print("Record with sequence number %s is null/invalid"
+                      % "{:s}-{:s}".format(row["event_id"],
+                                           row["station_code"]))
             if (counter % 100) == 0:
                 print("Processed record %s - %s" % (str(counter),
                                                     record.id))
@@ -206,7 +184,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(
             columns='index')
 
-        #Remove records with no seismic moment to compute moment magnitude from
+        # Remove records with no seismic moment to compute moment magnitude from
         Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Mo (dyne.cm)']==-999][
             'Mo (dyne.cm)'].index)
         NGAWest2=NGAWest2.drop(Index_to_drop)
@@ -299,8 +277,9 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         NGAWest2_vertical['T4.500S']=(NGAWest2_vertical[
             'T4.400S']+NGAWest2_vertical['T4.600S'])/2        
         
+        # Get path to tmp csv once modified dataframe
         converted_base_data_path=_get_ESM18_headers(
-            NGAWest2,NGAWest2_vertical,Initial_NGAWest2_size)
+            NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size)
                 
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
@@ -321,18 +300,10 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
     
         return database
 
-    def _sanitise(self, row, reader):
-        """
-        TODO - Not implemented yet!
-        """
-        return True
-
     def _parse_record(self, metadata):
-        # Conc. NGAWest2 record info to identify each record in flatfile:
-        # --> event_id = NGAWest2['Earthquake Name'] 
-        # --> station_id = NGAWest2['Station Name'] 
-        # --> network_code = NGAWest2['Owner']
-        # --> location_code = NGAWest2['Station ID No.']
+        """
+        Parse a record
+        """
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
                          metadata["station_code"], metadata["location_code"]])
         wfid = wfid.replace("-", "_")
@@ -350,7 +321,6 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                                   xcomp, ycomp,
                                   vertical=vertical)
 
-
     def _parse_event_data(self, metadata):
         """
         Parses the event metadata
@@ -358,12 +328,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # ID and Name (name not in file so use ID again)
         eq_id = metadata["event_id"]
         eq_name = metadata["event_id"]
-        # Country
-        cntry_code = metadata["ev_nation_code"].strip()
-        if cntry_code and cntry_code in COUNTRY_CODES:
-            eq_country = COUNTRY_CODES[cntry_code]
-        else:
-            eq_country = None
+            
         # Date and time
         eq_datetime = valid.date_time(metadata["event_time"],
                                      "%Y-%m-%d %H:%M:%S")
@@ -372,10 +337,10 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         eq_lon = valid.longitude(metadata["ev_longitude"])
         eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
-            eq_depth = 0.0
+            raise ValueError('Depth missing for one or more events in flatfile')
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
-                         None, # Magnitude not defined yet
-                         eq_country=eq_country)
+                         magnitude=None, eq_country=None)
+        
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
         eqk.magnitude = pref_mag
@@ -524,7 +489,6 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         network_code = metadata["network_code"].strip()
         station_code = metadata["station_code"].strip()
         site_id = "{:s}-{:s}".format(network_code, station_code)
-        location_code = metadata["location_code"].strip()
         site_lon = valid.longitude(metadata["st_longitude"])
         site_lat = valid.latitude(metadata["st_latitude"])
         elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
@@ -538,15 +502,9 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             vs30_measured = False
         else:
             vs30_measured = False
-        st_nation_code = metadata["st_nation_code"].strip()
-        if st_nation_code:
-            st_country = COUNTRY_CODES[st_nation_code]
-        else:
-            st_country = None
         site = RecordSite(site_id, station_code, station_code, site_lon,
                           site_lat, elevation, vs30, vs30_measured,
-                          network_code=network_code,
-                          country=st_country)
+                          network_code=network_code, country=None)
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
         site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
                                          "sensor_depth_m")
@@ -680,7 +638,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
-
+        Get the ground-motion data from a row (record) in the database
         """
         imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
         spectra = []
@@ -715,7 +673,6 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                         values.append(np.fabs(float(value)))
                     else:
                         values.append(np.nan)
-                    #values.append(np.fabs(float(row[header].strip())))
             periods = np.array(periods)
             values = np.array(values)
             idx = np.argsort(periods)
@@ -735,6 +692,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                 scalars["Geometric"][key] = np.sqrt(
                     scalars["U"][key] * scalars["V"][key])
         return scalars, spectra
+
 
 def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     
@@ -843,15 +801,10 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     # Non-GMIM headers   
     "event_id":NGAWest2['event_id_reformatted'],                                       
     "event_time":NGAWest2['event_time_reformatted'],
-    "ISC_ev_id":default_string,
-    "USGS_ev_id":default_string,
-    "INGV_ev_id":default_string,
-    "EMSC_ev_id":default_string,
     "ev_nation_code":default_nation_code,
     "ev_latitude":NGAWest2['Hypocenter Latitude (deg)'],    
     "ev_longitude":NGAWest2['Hypocenter Longitude (deg)'],   
     "ev_depth_km":NGAWest2['Hypocenter Depth (km)'],
-    "ev_hyp_ref":default_string,
     "fm_type_code":NGAWest2['fm_type'],
     "ML":default_string,
     "ML_ref":default_string,
@@ -869,10 +822,8 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     "es_rake":NGAWest2['Rake Angle (deg)'],
     "es_strike_dip_rake_ref":default_string, 
     "es_z_top":NGAWest2['Depth to Top Of Fault Rupture Model'],
-    "es_z_top_ref":default_string,
-    "es_length":default_string,   
-    "es_width":default_string,
-    "es_geometry_ref":default_string,
+    "es_length":NGAWest2['Fault Rupture Length for Calculation of Ry (km)'],   
+    "es_width":NGAWest2['Fault Rupture Width (km)'],
  
     "network_code": NGAWest2['Owner'],
     "station_code":NGAWest2['station_id'],
@@ -881,19 +832,12 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     "sensor_depth_m":default_string,
     "proximity_code":default_string,
     "housing_code":default_string,
-    "installation_code":default_string,
     "st_nation_code":default_string,
     "st_latitude":NGAWest2['Station Latitude'],
     "st_longitude":NGAWest2['Station Longitude'],
     "st_elevation":default_string,
     
-    "ec8_code":default_string,
-    "ec8_code_method":default_string,
-    "ec8_code_ref":default_string,
     "vs30_m_sec":NGAWest2['Vs30 (m/s) selected for analysis'],
-    "vs30_ref":default_string,
-    "vs30_calc_method":default_string, 
-    "vs30_meas_type":default_string,
     "slope_deg":default_string,
     "vs30_m_sec_WA":default_string,
  
@@ -912,130 +856,97 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     "V_azimuth_deg":NGAWest2['H2 azimith (degrees)'],
     "W_channel_code":default_V_string, 
         
-    "U_hp":default_string,
-    "V_hp":default_string,
-    "W_hp":default_string,  
-    "U_lp":default_string,
-    "V_lp":default_string,
-    "W_lp":default_string,
+    "U_hp":NGAWest2['HP-H1 (Hz)'],
+    "V_hp":NGAWest2['HP-H2 (Hz)'],
+    "W_hp":NGAWest2_vertical['HP-V (Hz)'],  
+    "U_lp":NGAWest2['LP-H1 (Hz)'],
+    "V_lp":NGAWest2['LP-H2 (Hz)'],
+    "W_lp":NGAWest2_vertical['LP-V (Hz)'], 
      
-    "U_pga":default_string,
-    "V_pga":default_string,
+    # SMT uses GM of two horizontal components so place RotD50 here
+    "U_pga":NGAWest2['PGA (g)']*981,
+    "V_pga":NGAWest2['PGA (g)']*981,
     "W_pga":NGAWest2_vertical['PGA (g)']*981,
-    "rotD50_pga":NGAWest2['PGA (g)']*981,
-    "rotD100_pga":default_string,
-    "rotD00_pga":default_string,
-    "U_pgv":default_string,
-    "V_pgv":default_string,
+    "U_pgv":NGAWest2['PGV (cm/sec)'],
+    "V_pgv":NGAWest2['PGV (cm/sec)'],
     "W_pgv":NGAWest2_vertical['PGV (cm/sec)'],
-    "rotD50_pgv":NGAWest2['PGV (cm/sec)'],
-    "rotD100_pgv":default_string,
-    "rotD00_pgv":default_string,
-    "U_pgd":default_string,
-    "V_pgd":default_string,
+    "U_pgd":NGAWest2['PGD (cm)'],
+    "V_pgd":NGAWest2['PGD (cm)'],
     "W_pgd":NGAWest2_vertical['PGD (cm)'],
-    "rotD50_pgd":NGAWest2['PGD (cm)'],
-    "rotD100_pgd":default_string,
-    "rotD00_pgd":default_string,
         
-    "U_T90":default_string,
-    "V_T90":default_string,
-    "W_T90":default_string,
-    "rotD50_T90":default_string,
-    "rotD100_T90":default_string,
-    "rotD00_T90":default_string, 
-    "U_housner":default_string,
-    "V_housner":default_string,
-    "W_housner":default_string,
-    "rotD50_housner":default_string,
-    "rotD100_housner":default_string,
-    "rotD00_housner":default_string,
-    "U_CAV":default_string,
-    "V_CAV":default_string,
-    "W_CAV":default_string,
-    "rotD50_CAV":default_string,
-    "rotD100_CAV":default_string,
-    "rotD00_CAV":default_string,
-    "U_ia":default_string,
-    "V_ia":default_string,
-    "W_ia":default_string,
-    "rotD50_ia":default_string,
-    "rotD100_ia":default_string,
-    "rotD00_ia":default_string,
+    "U_T0_010":NGAWest2['T0.010S']*981,
+    "U_T0_025":NGAWest2['T0.025S']*981,
+    "U_T0_040":NGAWest2['T0.040S']*981,
+    "U_T0_050":NGAWest2['T0.050S']*981,
+    "U_T0_070":NGAWest2['T0.070S']*981,
+    "U_T0_100":NGAWest2['T0.100S']*981,
+    "U_T0_150":NGAWest2['T0.150S']*981,
+    "U_T0_200":NGAWest2['T0.200S']*981,
+    "U_T0_250":NGAWest2['T0.250S']*981,
+    "U_T0_300":NGAWest2['T0.300S']*981,
+    "U_T0_350":NGAWest2['T0.350S']*981,
+    "U_T0_400":NGAWest2['T0.400S']*981,
+    "U_T0_450":NGAWest2['T0.450S']*981,
+    "U_T0_500":NGAWest2['T0.500S']*981,
+    "U_T0_600":NGAWest2['T0.600S']*981,
+    "U_T0_700":NGAWest2['T0.700S']*981,
+    "U_T0_750":NGAWest2['T0.750S']*981,
+    "U_T0_800":NGAWest2['T0.800S']*981,
+    "U_T0_900":NGAWest2['T0.900S']*981,
+    "U_T1_000":NGAWest2['T1.000S']*981,
+    "U_T1_200":NGAWest2['T1.200S']*981,
+    "U_T1_400":NGAWest2['T1.400S']*981,
+    "U_T1_600":NGAWest2['T1.600S']*981,
+    "U_T1_800":NGAWest2['T1.800S']*981,
+    "U_T2_000":NGAWest2['T2.000S']*981,
+    "U_T2_500":NGAWest2['T2.500S']*981,
+    "U_T3_000":NGAWest2['T3.000S']*981,
+    "U_T3_500":NGAWest2['T3.500S']*981,
+    "U_T4_000":NGAWest2['T4.000S']*981,
+    "U_T4_500":NGAWest2['T4.500S']*981,
+    "U_T5_000":NGAWest2['T5.000S']*981,
+    "U_T6_000":NGAWest2['T6.000S']*981,
+    "U_T7_000":NGAWest2['T7.000S']*981,
+    "U_T8_000":NGAWest2['T8.000S']*981,
+    "U_T9_000":NGAWest2['T9.000S']*981,
+    "U_T10_000":NGAWest2['T10.000S']*981,
     
-    "U_T0_010":default_string,
-    "U_T0_025":default_string,
-    "U_T0_040":default_string,
-    "U_T0_050":default_string,
-    "U_T0_070":default_string,
-    "U_T0_100":default_string,
-    "U_T0_150":default_string,
-    "U_T0_200":default_string,
-    "U_T0_250":default_string,
-    "U_T0_300":default_string,
-    "U_T0_350":default_string,
-    "U_T0_400":default_string,
-    "U_T0_450":default_string,
-    "U_T0_500":default_string,
-    "U_T0_600":default_string,
-    "U_T0_700":default_string,
-    "U_T0_750":default_string,
-    "U_T0_800":default_string,
-    "U_T0_900":default_string,
-    "U_T1_000":default_string,
-    "U_T1_200":default_string,
-    "U_T1_400":default_string,
-    "U_T1_600":default_string,
-    "U_T1_800":default_string,
-    "U_T2_000":default_string,
-    "U_T2_500":default_string,
-    "U_T3_000":default_string,
-    "U_T3_500":default_string,
-    "U_T4_000":default_string,
-    "U_T4_500":default_string,
-    "U_T5_000":default_string,
-    "U_T6_000":default_string,
-    "U_T7_000":default_string,
-    "U_T8_000":default_string,
-    "U_T9_000":default_string,
-    "U_T10_000":default_string,
-    
-    "V_T0_010":default_string,
-    "V_T0_025":default_string,
-    "V_T0_040":default_string,
-    "V_T0_050":default_string,
-    "V_T0_070":default_string,
-    "V_T0_100":default_string,
-    "V_T0_150":default_string,
-    "V_T0_200":default_string,
-    "V_T0_250":default_string,
-    "V_T0_300":default_string,
-    "V_T0_350":default_string,
-    "V_T0_400":default_string,
-    "V_T0_450":default_string,
-    "V_T0_500":default_string,
-    "V_T0_600":default_string,
-    "V_T0_700":default_string,
-    "V_T0_750":default_string,
-    "V_T0_800":default_string,
-    "V_T0_900":default_string,
-    "V_T1_000":default_string,
-    "V_T1_200":default_string,
-    "V_T1_400":default_string,
-    "V_T1_600":default_string,
-    "V_T1_800":default_string,
-    "V_T2_000":default_string,
-    "V_T2_500":default_string,
-    "V_T3_000":default_string,
-    "V_T3_500":default_string,
-    "V_T4_000":default_string,
-    "V_T4_500":default_string,
-    "V_T5_000":default_string,
-    "V_T6_000":default_string,
-    "V_T7_000":default_string,
-    "V_T8_000":default_string,
-    "V_T9_000":default_string,
-    "V_T10_000":default_string,
+    "V_T0_010":NGAWest2['T0.010S']*981,
+    "V_T0_025":NGAWest2['T0.025S']*981,
+    "V_T0_040":NGAWest2['T0.040S']*981,
+    "V_T0_050":NGAWest2['T0.050S']*981,
+    "V_T0_070":NGAWest2['T0.070S']*981,
+    "V_T0_100":NGAWest2['T0.100S']*981,
+    "V_T0_150":NGAWest2['T0.150S']*981,
+    "V_T0_200":NGAWest2['T0.200S']*981,
+    "V_T0_250":NGAWest2['T0.250S']*981,
+    "V_T0_300":NGAWest2['T0.300S']*981,
+    "V_T0_350":NGAWest2['T0.350S']*981,
+    "V_T0_400":NGAWest2['T0.400S']*981,
+    "V_T0_450":NGAWest2['T0.450S']*981,
+    "V_T0_500":NGAWest2['T0.500S']*981,
+    "V_T0_600":NGAWest2['T0.600S']*981,
+    "V_T0_700":NGAWest2['T0.700S']*981,
+    "V_T0_750":NGAWest2['T0.750S']*981,
+    "V_T0_800":NGAWest2['T0.800S']*981,
+    "V_T0_900":NGAWest2['T0.900S']*981,
+    "V_T1_000":NGAWest2['T1.000S']*981,
+    "V_T1_200":NGAWest2['T1.200S']*981,
+    "V_T1_400":NGAWest2['T1.400S']*981,
+    "V_T1_600":NGAWest2['T1.600S']*981,
+    "V_T1_800":NGAWest2['T1.800S']*981,
+    "V_T2_000":NGAWest2['T2.000S']*981,
+    "V_T2_500":NGAWest2['T2.500S']*981,
+    "V_T3_000":NGAWest2['T3.000S']*981,
+    "V_T3_500":NGAWest2['T3.500S']*981,
+    "V_T4_000":NGAWest2['T4.000S']*981,
+    "V_T4_500":NGAWest2['T4.500S']*981,
+    "V_T5_000":NGAWest2['T5.000S']*981,
+    "V_T6_000":NGAWest2['T6.000S']*981,
+    "V_T7_000":NGAWest2['T7.000S']*981,
+    "V_T8_000":NGAWest2['T8.000S']*981,
+    "V_T9_000":NGAWest2['T9.000S']*981,
+    "V_T10_000":NGAWest2['T10.000S']*981,
         
     "W_T0_010":NGAWest2_vertical['T0.010S']*981,
     "W_T0_025":NGAWest2_vertical['T0.025S']*981,
@@ -1072,118 +983,7 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     "W_T7_000":NGAWest2_vertical['T7.000S']*981,
     "W_T8_000":NGAWest2_vertical['T8.000S']*981,
     "W_T9_000":NGAWest2_vertical['T9.000S']*981,
-    "W_T10_000":NGAWest2_vertical['T10.000S']*981,
-        
-    "rotD50_T0_010":NGAWest2['T0.010S']*981,
-    "rotD50_T0_025":NGAWest2['T0.025S']*981,
-    "rotD50_T0_040":NGAWest2['T0.040S']*981,
-    "rotD50_T0_050":NGAWest2['T0.050S']*981,
-    "rotD50_T0_070":NGAWest2['T0.070S']*981,
-    "rotD50_T0_100":NGAWest2['T0.100S']*981,
-    "rotD50_T0_150":NGAWest2['T0.150S']*981,
-    "rotD50_T0_200":NGAWest2['T0.200S']*981,
-    "rotD50_T0_250":NGAWest2['T0.250S']*981,
-    "rotD50_T0_300":NGAWest2['T0.300S']*981,
-    "rotD50_T0_350":NGAWest2['T0.350S']*981,
-    "rotD50_T0_400":NGAWest2['T0.400S']*981,
-    "rotD50_T0_450":NGAWest2['T0.450S']*981,
-    "rotD50_T0_500":NGAWest2['T0.500S']*981,
-    "rotD50_T0_600":NGAWest2['T0.600S']*981,
-    "rotD50_T0_700":NGAWest2['T0.700S']*981,
-    "rotD50_T0_750":NGAWest2['T0.750S']*981,
-    "rotD50_T0_800":NGAWest2['T0.800S']*981,
-    "rotD50_T0_900":NGAWest2['T0.900S']*981,
-    "rotD50_T1_000":NGAWest2['T1.000S']*981,
-    "rotD50_T1_200":NGAWest2['T1.200S']*981,
-    "rotD50_T1_400":NGAWest2['T1.400S']*981,
-    "rotD50_T1_600":NGAWest2['T1.600S']*981,
-    "rotD50_T1_800":NGAWest2['T1.800S']*981,
-    "rotD50_T2_000":NGAWest2['T2.000S']*981,
-    "rotD50_T2_500":NGAWest2['T2.500S']*981,
-    "rotD50_T3_000":NGAWest2['T3.000S']*981,
-    "rotD50_T3_500":NGAWest2['T3.500S']*981,
-    "rotD50_T4_000":NGAWest2['T4.000S']*981,
-    "rotD50_T4_500":NGAWest2['T4.500S']*981,
-    "rotD50_T5_000":NGAWest2['T5.000S']*981,
-    "rotD50_T6_000":NGAWest2['T6.000S']*981,
-    "rotD50_T7_000":NGAWest2['T7.000S']*981,
-    "rotD50_T8_000":NGAWest2['T8.000S']*981,
-    "rotD50_T9_000":NGAWest2['T9.000S']*981,
-    "rotD50_T10_000":NGAWest2['T10.000S']*981,
-     
-    "rotD00_T0_010":default_string,
-    "rotD00_T0_025":default_string,
-    "rotD00_T0_040":default_string,
-    "rotD00_T0_050":default_string,
-    "rotD00_T0_070":default_string,
-    "rotD00_T0_100":default_string,
-    "rotD00_T0_150":default_string,
-    "rotD00_T0_200":default_string,
-    "rotD00_T0_250":default_string,
-    "rotD00_T0_300":default_string,
-    "rotD00_T0_350":default_string,
-    "rotD00_T0_400":default_string,
-    "rotD00_T0_450":default_string,
-    "rotD00_T0_500":default_string,
-    "rotD00_T0_600":default_string,
-    "rotD00_T0_700":default_string,
-    "rotD00_T0_750":default_string,
-    "rotD00_T0_800":default_string,
-    "rotD00_T0_900":default_string,
-    "rotD00_T1_000":default_string,
-    "rotD00_T1_200":default_string,
-    "rotD00_T1_400":default_string,
-    "rotD00_T1_600":default_string,
-    "rotD00_T1_800":default_string,
-    "rotD00_T2_000":default_string,
-    "rotD00_T2_500":default_string,
-    "rotD00_T3_000":default_string,
-    "rotD00_T3_500":default_string,
-    "rotD00_T4_000":default_string,
-    "rotD00_T4_500":default_string,
-    "rotD00_T5_000":default_string,
-    "rotD00_T6_000":default_string,
-    "rotD00_T7_000":default_string,
-    "rotD00_T8_000":default_string,
-    "rotD00_T9_000":default_string,
-    "rotD00_T10_000":default_string,
-    
-    "rotD100_T0_010":default_string,
-    "rotD100_T0_025":default_string,
-    "rotD100_T0_040":default_string,
-    "rotD100_T0_050":default_string,
-    "rotD100_T0_070":default_string,
-    "rotD100_T0_100":default_string,
-    "rotD100_T0_150":default_string,
-    "rotD100_T0_200":default_string,
-    "rotD100_T0_250":default_string,
-    "rotD100_T0_300":default_string,
-    "rotD100_T0_350":default_string,
-    "rotD100_T0_400":default_string,
-    "rotD100_T0_450":default_string,
-    "rotD100_T0_500":default_string,
-    "rotD100_T0_600":default_string,
-    "rotD100_T0_700":default_string,
-    "rotD100_T0_750":default_string,
-    "rotD100_T0_800":default_string,
-    "rotD100_T0_900":default_string,
-    "rotD100_T1_000":default_string,
-    "rotD100_T1_200":default_string,
-    "rotD100_T1_400":default_string,
-    "rotD100_T1_600":default_string,
-    "rotD100_T1_800":default_string,
-    "rotD100_T2_000":default_string,
-    "rotD100_T2_500":default_string,
-    "rotD100_T3_000":default_string,
-    "rotD100_T3_500":default_string,
-    "rotD100_T4_000":default_string,
-    "rotD100_T4_500":default_string,
-    "rotD100_T5_000":default_string,
-    "rotD100_T6_000":default_string,
-    "rotD100_T7_000":default_string,
-    "rotD100_T8_000":default_string,
-    "rotD100_T9_000":default_string,
-    "rotD100_T10_000":default_string})
+    "W_T10_000":NGAWest2_vertical['T10.000S']*981})
     
     # Output to folder where converted flatfile read into parser   
     DATA = os.path.abspath('')

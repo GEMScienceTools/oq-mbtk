@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2018 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -22,7 +22,7 @@ import os
 import sys
 import shutil
 import unittest
-from openquake.smt.parsers.ngaw2_flatfile_parser import NGAWest2FlatfileParser
+from openquake.smt.parsers.ngawest2_flatfile_parser import NGAWest2FlatfileParser
 
 if sys.version_info[0] >= 3:
     import pickle

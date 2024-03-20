@@ -1,8 +1,7 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -17,9 +16,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parse ESM format flatfile into SMT metadata
+Parse the GEM globally homogenised flatfile into SMT metadata.
 """
+import pandas as pd
 import os, sys
+import tempfile
 import csv
 import numpy as np
 import copy
@@ -44,52 +45,36 @@ else:
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
+# Base path
+DATA = os.path.abspath('')
+
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
 HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
              "EMSC_ev_id;ev_nation_code;ev_latitude;ev_longitude;"\
-             "ev_depth_km;ev_hyp_ref;fm_type_code;ML;ML_ref;Mw;Mw_ref;Ms;"\
-             "Ms_ref;EMEC_Mw;EMEC_Mw_type;EMEC_Mw_ref;event_source_id;"\
+             "ev_depth_km;fm_type_code;ML;Mw;Ms;event_source_id;"\
              "es_strike;es_dip;es_rake;es_strike_dip_rake_ref;es_z_top;"\
-             "es_z_top_ref;es_length;es_width;es_geometry_ref;network_code;"\
-             "station_code;location_code;instrument_code;sensor_depth_m;"\
-             "proximity_code;housing_code;installation_code;st_nation_code;"\
-             "st_latitude;st_longitude;st_elevation;ec8_code;"\
-             "ec8_code_method;ec8_code_ref;vs30_m_sec;vs30_ref;"\
-             "vs30_calc_method;vs30_meas_type;slope_deg;vs30_m_sec_WA;"\
-             "epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;Ry0_dist;"\
-             "instrument_type_code;late_triggered_flag_01;U_channel_code;"\
-             "U_azimuth_deg;V_channel_code;V_azimuth_deg;W_channel_code;"\
-             "U_hp;V_hp;W_hp;U_lp;V_lp;W_lp"
+             "es_length;es_width;network_code;station_code;location_code;"\
+             "instrument_code;sensor_depth_m;housing_code;installation_code;"\
+             "st_nation_code;st_latitude;st_longitude;st_elevation;vs30_m_sec;"\
+             "slope_deg;vs30_meas_type;epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;"\
+             "Ry0_dist;late_triggered_flag_01;U_channel_code;U_azimuth_deg;"\
+             "V_channel_code;V_azimuth_deg;W_channel_code;U_hp;V_hp;W_hp;U_lp;"\
+             "V_lp;W_lp"
 
 HEADERS = set(HEADER_STR.split(";"))
 
-COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AZ": "Azerbaijan", "BA": "Bosnia and Herzegowina",
-                 "BG": "Bulgaria", "CH": "Switzerland", "CY": "Cyprus",
-                 "CZ": "Czech Republic", "DE": "Germany",  "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia",
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary",
-                 "IL": "Israel", "IR": "Iran", "IS": "Iceland", "IT": "Italy",
-                 "JO": "Jordan",  "LI": "Lichtenstein", "MA": "Morocco",
-                 "MC": "Monaco", "MD": "Moldova", "ME": "Montenegro",
-                 "MK": "Macedonia", "MT": "Malta", "PL": "Poland",
-                 "PT": "Portugal", "RO": "Romania", "RS": "Serbia",
-                 "RU": "Russia", "SI": "Slovenia", "SM": "San Marino",
-                 "SY": "Syria", "TM": "Turkmenistan", "TR": "Turkey",
-                 "UA": "Ukraine", "UZ": "Uzbekistan", "XK": "Kosovo"}
 
-
-class ESMFlatfileParser(SMDatabaseReader):
+class GEMFlatfileParser(SMDatabaseReader):
     """
     Parses the data from the flatfile to a set of metadata objects
     """
-    M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
+    M_PRECEDENCE = ["Mw", "Ms", "ML"]
     BUILD_FINITE_DISTANCES = False
 
-    def parse(self, location="./"):
+    def parse(self, location='./'):
         """
-        Parse the flatfile
+        Parse the dataset
         """
         assert os.path.isfile(self.filename)
         headers = getline(self.filename, 1).rstrip("\n").split(";")
@@ -115,17 +100,24 @@ class ESMFlatfileParser(SMDatabaseReader):
                 print("Record with sequence number %s is null/invalid"
                       % "{:s}-{:s}".format(row["event_id"],
                                            row["station_code"]))
-            if (counter % 100) == 0:
+            if (counter % 1) == 0:
                 print("Processed record %s - %s" % (str(counter),
                                                     record.id))
-
+                
             counter += 1
 
     @classmethod
-    def autobuild(cls, dbid, dbname, output_location, flatfile_location):
+    def autobuild(cls, dbid, dbname, output_location, ESM_flatfile_directory,
+                  proxy=None, removal=None):
         """
         Quick and dirty full database builder!
         """
+        # Import GEM strong-motion flatfile
+        GEM = pd.read_csv(ESM_flatfile_directory)
+    
+        # Get path to tmp csv once modified dataframe
+        converted_base_data_path=_prioritise_rotd50(GEM, proxy, removal)
+        
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
@@ -133,7 +125,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         # Add on the records folder
         os.mkdir(os.path.join(output_location, "records"))
         # Create an instance of the parser class
-        database = cls(dbid, dbname, flatfile_location)
+        database = cls(dbid, dbname, converted_base_data_path)
         # Parse the records
         print("Parsing Records ...")
         database.parse(location=output_location)
@@ -142,6 +134,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         print("Storing metadata to file %s" % metadata_file)
         with open(metadata_file, "wb+") as f:
             pickle.dump(database.database, f)
+            
         return database
 
     def _parse_record(self, metadata):
@@ -176,10 +169,6 @@ class ESMFlatfileParser(SMDatabaseReader):
         eq_name = metadata["event_id"]
         # Country
         cntry_code = metadata["ev_nation_code"].strip()
-        if cntry_code and cntry_code in COUNTRY_CODES:
-            eq_country = COUNTRY_CODES[cntry_code]
-        else:
-            eq_country = None
         # Date and time
         eq_datetime = valid.date_time(metadata["event_time"],
                                      "%Y-%m-%d %H:%M:%S")
@@ -191,7 +180,7 @@ class ESMFlatfileParser(SMDatabaseReader):
             eq_depth = 0.0
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet
-                         eq_country=eq_country)
+                         eq_country=None)
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
         eqk.magnitude = pref_mag
@@ -205,23 +194,16 @@ class ESMFlatfileParser(SMDatabaseReader):
 
     def _parse_magnitudes(self, metadata):
         """
-        So, here things get tricky. Up to four magnitudes are defined in the
-        flatfile (EMEC Mw, MW, Ms and ML). An order of precedence is required
-        and the preferred magnitude will be the highest found
+        An order of precedence is required and the preferred magnitude will be
+        the highest found
         """
         pref_mag = None
         mag_list = []
         for key in self.M_PRECEDENCE:
             mvalue = metadata[key].strip()
             if mvalue:
-                if key == "EMEC_Mw":
-                    mtype = "Mw"
-                    msource = "EMEC({:s}|{:s})".format(
-                        metadata["EMEC_Mw_type"],
-                        metadata["EMEC_Mw_ref"])
-                else:
-                    mtype = key
-                    msource = metadata[key + "_ref"].strip()
+                mtype = key
+                msource = metadata[key + "_ref"].strip()
                 mag = Magnitude(float(mvalue),
                                 mtype,
                                 source=msource)
@@ -234,6 +216,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         """
         If rupture data is available - parse it, otherwise return None
         """
+
         sof = metadata["fm_type_code"]
         if not metadata["event_source_id"].strip():
             # No rupture model available. Mechanism is limited to a style
@@ -344,23 +327,13 @@ class ESMFlatfileParser(SMDatabaseReader):
         elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
 
         vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
-        vs30_topo = valid.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
-        if vs30:
-            vs30_measured = True
-        elif vs30_topo:
-            vs30 = vs30_topo
-            vs30_measured = False
-        else:
-            vs30_measured = False
-        st_nation_code = metadata["st_nation_code"].strip()
-        if st_nation_code:
-            st_country = COUNTRY_CODES[st_nation_code]
-        else:
-            st_country = None
+        vs30_measured = None # User should check selected records (many diff. 
+                             # flatfiles --> see vs30_meas_type column for if
+                             # vs30 if available was measured of inferred)
+        
         site = RecordSite(site_id, station_code, station_code, site_lon,
                           site_lat, elevation, vs30, vs30_measured,
-                          network_code=network_code,
-                          country=st_country)
+                          network_code=network_code, country=None)
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
         site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
                                          "sensor_depth_m")
@@ -490,9 +463,10 @@ class ESMFlatfileParser(SMDatabaseReader):
         record.datafile = filename
         return record
 
+
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
-        Get the ground motion data from a row (record) in the database
+        Get the ground-motion data from a row (record) in the database
         """
         imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
         spectra = []
@@ -526,7 +500,6 @@ class ESMFlatfileParser(SMDatabaseReader):
                         values.append(np.fabs(float(value)))
                     else:
                         values.append(np.nan)
-                    #values.append(np.fabs(float(row[header].strip())))
             periods = np.array(periods)
             values = np.array(values)
             idx = np.argsort(periods)
@@ -546,3 +519,74 @@ class ESMFlatfileParser(SMDatabaseReader):
                 scalars["Geometric"][key] = np.sqrt(
                     scalars["U"][key] * scalars["V"][key])
         return scalars, spectra
+
+
+def _prioritise_rotd50(df, proxy=None, removal=None):
+    """
+    Assign RotD50 values to accelerations for computation of residuals. RotD50
+    is available for the vast majority of the records in the GEM flatfile for
+    PGA to 10 s (KikNet subset of records is limited to up to 5 s because we
+    use Beyes and Bommer 2006 to convert from horizontals to RotD50).
+    
+    If no RotD50 use the geometric mean if available (if specified) as a proxy
+    for RotD50.
+    
+    Records lacking acceleration values for any of the required spectral periods
+    can also be removed (this information can alternatively just be printed)
+    
+    :param  proxy:
+        If set to true, if a record is missing RotD50 try and use the geometric
+        mean of the horizontal components
+    
+    :param  removal:
+        If set to true records without complete RotD50 (or complete RotD50 with
+        use of geometric mean as proxy - if proxy is True) for any of the required
+        spectral periods are removed.
+    """
+    # Manage RotD50 vs horizontal components
+    log, cols = [], []
+    for idx, rec in df.iterrows():
+        for col in rec.index:
+            if 'rotD' in col:
+                cols.append(col)
+            if 'U_T' in col or 'V_T' in col or 'U_pga' in col or 'V_pga' in col:
+                if 'T90' not in col:
+                    if 'U_' in col:    
+                        rotd50_col = col.replace('U_', 'rotD50_')
+                    if 'V_' in col:
+                        rotd50_col = col.replace('V_', 'rotD50_')
+                        
+                    # If RotD50...
+                    if not pd.isnull(rec[rotd50_col]):
+                        df[col].iloc[idx] = rec[rotd50_col] # Assign to h1, h2
+                        
+                    # Otherwise...
+                    else:
+                        if proxy is True: # Use geo. mean as proxy
+                            if not pd.isnull(rec[col]):
+                                pass # Can use geo. mean from h1, h2 as proxy 
+                        else:
+                            log.append(idx) # Log rec as incomplete RotD50 vals
+                            
+    # Tidy dataframe
+    cols = pd.Series(cols).unique()
+    df = df.drop(columns=cols)
+    
+    # Drop if req. or else just inform number of recs missing acceleration values
+    no_vals = len(pd.Series(log).unique())
+    if removal is True and log!= []:
+        df = df.drop(log).reset_index()
+        msg = 'Records without RotD50 acc. values at all required periods'
+        msg += ' have been removed from flatfile (%s records)' % no_vals
+        print(msg)
+        if len(df) == 0:
+            raise ValueError('All records have been removed from the flatfile')        
+    elif log != []:
+        print('%s records do not have RotD50 for all req. periods' % no_vals)
+        
+    # Output to folder where converted flatfile read into parser   
+    tmp = tempfile.mkdtemp()
+    converted_base_data_path = os.path.join(DATA, tmp, 'converted_flatfile.csv')
+    df.to_csv(converted_base_data_path, sep=';')
+    
+    return converted_base_data_path
