@@ -6,7 +6,7 @@ from openquake.wkf.mfd import check_mfds
 
 
 def main(fname_input_pattern, fname_config, *, src_id=None):
-    check_mfds(fname_input_pattern, fname_config, src_id)
+    check_mfds(fname_input_pattern, fname_config)
 
 
 main.fname_input_pattern = "Pattern to as set of OQ Engine .xml files with a SSM"
