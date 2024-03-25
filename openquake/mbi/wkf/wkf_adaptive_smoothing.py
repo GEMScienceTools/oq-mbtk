@@ -44,7 +44,7 @@ def main(catalogue:str, h3_map: str, config:str, outputfile:str,  use: str = [])
     '''
 
     # Read h3 indices from mapping file
-    h3_idx = pd.read_csv(h3_map, names = ("h3", "id"))
+    h3_idx = pd.read_csv(h3_map)
     
     if len(use) > 0:
         l1 = use
@@ -52,12 +52,16 @@ def main(catalogue:str, h3_map: str, config:str, outputfile:str,  use: str = [])
         use = map(int, use)
         h3_idx = h3_idx[h3_idx['id'].isin(use)]
         print("Using zones ", l1)
-       
-    # Get lat/lon locations for each h3 cell, convert to seperate lat and
-    # lon columns of dataframe
-    h3_idx['latlon'] = h3_idx.loc[:,"h3"].apply(h3.h3_to_geo)
-    locations = pd.DataFrame(h3_idx['latlon'].tolist())
-    locations.columns = ["lat", "lon"]
+    
+    if 'lon' in h3_idx: 
+        locations = h3_idx[['lat','lon']]
+ 
+    else:
+        # Get lat/lon locations for each h3 cell, convert to seperate lat and
+        # lon columns of dataframe
+        h3_idx['latlon'] = h3_idx.loc[:,"h3idx"].apply(h3.h3_to_geo)
+        locations = pd.DataFrame(h3_idx['latlon'].tolist())
+        locations.columns = ["lat", "lon"]
 
     # Load config file to get smoothing parameters
     config = toml.load(config)
