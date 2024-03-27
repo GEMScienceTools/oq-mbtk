@@ -25,8 +25,10 @@
 # coding: utf-8
 
 import os
+import re
 import toml
 import numpy
+import pathlib
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -197,7 +199,8 @@ def _compute_a_value(tcat, ctab, bval, binw):
 
 def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
                     folder_out: str, use: str = '',
-                    folder_out_figs: str = None, plt_show=False):
+                    folder_out_figs: str = None, plt_show=False,
+                    src_id_pattern: str = None):
     """
     This function assignes an a-value to each source with a file selected by
     the provided `fname_input_pattern`.
@@ -235,7 +238,13 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
     for fname in sorted(fname_list):
 
         # Get source ID
-        src_id = _get_src_id(fname)
+        if src_id_pattern is not None:
+            tpath = pathlib.Path(fname)
+            mtch = re.match(src_id_pattern, tpath.stem)
+            src_id = mtch.group(1)
+        else:
+            src_id = _get_src_id(fname)
+
         if len(use) > 0 and src_id not in use:
             continue
         print(fname)
