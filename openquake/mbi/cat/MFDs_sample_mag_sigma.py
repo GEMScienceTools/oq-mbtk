@@ -163,9 +163,6 @@ def _gen_comple(compl_toml, dec_outdir, compdir, tmpfi):
         mags_min = min(mags_cref) - mrange
         mags_max = max(mags_cref) + mrange
         mags_all = np.arange(mags_min, mags_max, 0.2)
-        #mags_lo = np.arange(mags_min, 5.8, 0.1)
-        #mags_hi = np.arange(5.8, mags_max, 0.2)
-        #mags_all = mags_lo.tolist() + mags_hi.tolist()
         mags = list(set([round(m,2) for m in mags_all if m >= mmin_compl ]))
         mags.sort()
         print(mags)
@@ -185,7 +182,10 @@ def _gen_comple(compl_toml, dec_outdir, compdir, tmpfi):
 def _compl_analysis(decdir, compdir, compl_toml, labels, fout, fout_figs):
     """
     """
-    ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(compl_toml)
+    # load configs
+    config = toml.load(compl_toml)
+
+    ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(config)
     compl_tables, mags_chk, years_chk = read_compl_data(compdir)
 
     # Fixing sorting of years
@@ -193,7 +193,7 @@ def _compl_analysis(decdir, compdir, compl_toml, labels, fout, fout_figs):
         yrs = np.flipud(yrs)
 
     for lab in labels:
-        dec_catvs = glob.glob(os.path.join(decdir, f'*{lab}*'))
+        dec_catvs = glob.glob(os.path.join(decdir, f'*{lab}.csv'))
         fout_lab = os.path.join(fout, lab)
         fout_figs_lab = os.path.join(fout_figs, lab, 'mfds')
         for ii, cat in enumerate(dec_catvs):

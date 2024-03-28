@@ -146,17 +146,17 @@ class SetSubductionEarthquakes:
         mesh = surface.mesh
 
         # Create polygon encompassing the mesh
-#        plo = list(mesh.lons[0, :])
-#        pla = list(mesh.lats[0, :])
-#        #
-#        plo += list(mesh.lons[:, -1])
-#        pla += list(mesh.lats[:, -1])
-#        #
-#        plo += list(mesh.lons[-1, ::-1])
-#        pla += list(mesh.lats[-1, ::-1])
-#        #
-#        plo += list(mesh.lons[::-1, 0])
-#        pla += list(mesh.lats[::-1, 0])
+        #plo = list(mesh.lons[0, :])
+        #pla = list(mesh.lats[0, :])
+        #
+        #plo += list(mesh.lons[:, -1])
+        #pla += list(mesh.lats[:, -1])
+        #
+        #plo += list(mesh.lons[-1, ::-1])
+        #pla += list(mesh.lats[-1, ::-1])
+        #
+        #plo += list(mesh.lons[::-1, 0])
+        #pla += list(mesh.lats[::-1, 0])
         plo = surface.surface_projection[0]
         pla = surface.surface_projection[1]
 
@@ -265,16 +265,14 @@ class SetSubductionEarthquakes:
 
         # Compute the depth of the top of the slab at every epicenter using
         # interpolation
-        from scipy.interpolate import griddata
-#        breakpoint()
-        val_red = values[~np.isnan(values)]
-        dat_red = data[~np.isnan(data)]
-        dat_red_fi = dat_red.reshape(len(val_red), 2)
-        #sub_depths = griddata(dat_red_fi, val_red, (points[:, 0], points[:, 1]),
+        # sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
         #                      method='cubic')
-        #breakpoint()
-        rbfi = RBFInterpolator(dat_red_fi[:, 0:2], val_red, kernel='multiquadric',
-                               epsilon=1, neighbors=50)
+        val_red = values[~np.isnan(values)]
+        dat_red = data[~np.isnan(data)].reshape(-1, 2)
+#        dat_red_fi = dat_red.reshape(len(val_red), 2)
+
+        rbfi = RBFInterpolator(dat_red[:, 0:2], val_red, kernel='multiquadric',
+                               epsilon=1, neighbors=100)
         sub_depths = rbfi(points[:, 0:2])
 
         # Save the distances to a file

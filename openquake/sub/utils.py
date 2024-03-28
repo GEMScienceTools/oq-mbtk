@@ -368,12 +368,12 @@ def build_kite_surface_from_profiles(foldername):
     profiles = ProfileSet.from_files(foldername)
 
     # Kite fault source
-    from openquake.sub.profiles import get_kite_fault
-    kf_src = get_kite_fault(profiles)
-    surface = kf_src.surface
+    #from openquake.sub.profiles import get_kite_fault
+   # kf_src = get_kite_fault(profiles)
+   # surface = kf_src.surface
 
     # Build kite fault surface
-#    surface = KiteSurface.from_profiles(profiles.profiles, 5, 5)
+    surface = KiteSurface.from_profiles(profiles.profiles, 5, 5)
 
     return surface
 
