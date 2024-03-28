@@ -1,0 +1,46 @@
+openquake.man package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.man.single
+   openquake.man.tests
+
+Submodules
+----------
+
+openquake.man.mfd module
+------------------------
+
+.. automodule:: openquake.man.mfd
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.man.model module
+--------------------------
+
+.. automodule:: openquake.man.model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.man.utils module
+--------------------------
+
+.. automodule:: openquake.man.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.man
+   :members:
+   :undoc-members:
+   :show-inheritance:

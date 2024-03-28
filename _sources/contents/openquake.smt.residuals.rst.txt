@@ -1,0 +1,45 @@
+openquake.smt.residuals package
+===============================
+
+Submodules
+----------
+
+openquake.smt.residuals.context\_db module
+------------------------------------------
+
+.. automodule:: openquake.smt.residuals.context_db
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.gmpe\_residuals module
+----------------------------------------------
+
+.. automodule:: openquake.smt.residuals.gmpe_residuals
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.residual\_plots module
+----------------------------------------------
+
+.. automodule:: openquake.smt.residuals.residual_plots
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.residual\_plotter module
+------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.residual_plotter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.residuals
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,35 @@
+openquake.mbi package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.mbi.cat
+   openquake.mbi.ccl
+   openquake.mbi.plt
+   openquake.mbi.rep
+   openquake.mbi.sub
+   openquake.mbi.unc
+   openquake.mbi.wkf
+
+Submodules
+----------
+
+openquake.mbi.mbi module
+------------------------
+
+.. automodule:: openquake.mbi.mbi
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbi
+   :members:
+   :undoc-members:
+   :show-inheritance:

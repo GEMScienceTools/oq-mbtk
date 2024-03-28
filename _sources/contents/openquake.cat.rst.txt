@@ -1,0 +1,87 @@
+openquake.cat package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.cat.hmg
+   openquake.cat.parsers
+   openquake.cat.tests
+
+Submodules
+----------
+
+openquake.cat.catalogue\_query\_tools module
+--------------------------------------------
+
+.. automodule:: openquake.cat.catalogue_query_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.gcmt\_catalogue module
+------------------------------------
+
+.. automodule:: openquake.cat.gcmt_catalogue
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.gcmt\_utils module
+--------------------------------
+
+.. automodule:: openquake.cat.gcmt_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.isc\_downloader module
+------------------------------------
+
+.. automodule:: openquake.cat.isc_downloader
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.isc\_homogenisor module
+-------------------------------------
+
+.. automodule:: openquake.cat.isc_homogenisor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.isf\_catalogue module
+-----------------------------------
+
+.. automodule:: openquake.cat.isf_catalogue
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.regression\_models module
+---------------------------------------
+
+.. automodule:: openquake.cat.regression_models
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.utils module
+--------------------------
+
+.. automodule:: openquake.cat.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.cat
+   :members:
+   :undoc-members:
+   :show-inheritance:
