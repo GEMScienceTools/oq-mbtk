@@ -24,6 +24,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import os
 import unittest
 import numpy as np
 from openquake.hmtk.seismicity.catalogue import Catalogue

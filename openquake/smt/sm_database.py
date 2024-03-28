@@ -1,8 +1,7 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2017 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -16,7 +15,6 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
-
 """
 Basic Pseudo-database built on top of hdf5 for a set of processed strong
 motion records
@@ -995,7 +993,8 @@ class GroundMotionDatabase(ContextDB):
     SCALAR_IMTS = ["PGA", "PGV"]
 
     def get_observations(self, imtx, records, component="Geometric"):
-        """Return observed values for the given imt, as numpy array.
+        """
+        Return observed values for the given imt, as numpy array.
         See superclass docstring for details
         """
 
@@ -1236,7 +1235,7 @@ class GroundMotionDatabase(ContextDB):
 
     def _get_site_id(self, str_id):
         """
-        TODO 
+        Get site id 
         """
         if str_id not in self.site_ids:
             self.site_ids.append(str_id)

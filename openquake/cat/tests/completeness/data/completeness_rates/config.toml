@@ -14,6 +14,6 @@ bmin = 0.8
 bmax = 1.2
 optimization_criterion = "optimize"
 
-[sources.00]
+[sources.00c]
 mmax_obs = 5.98
 mmax = 5.98

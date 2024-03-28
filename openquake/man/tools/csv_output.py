@@ -31,6 +31,121 @@ from scipy import interpolate
 from openquake.hmtk.seismicity.catalogue import Catalogue
 
 
+def make_llt_df(df, each_rlz, threshold=1e-08):
+    # get the keys for all the realizations
+    rlzkeys = [*each_rlz]
+    
+    # instantiate new dataframe
+    df_mean = pd.DataFrame(columns=['lon','lat','trt','poe_c'])
+    
+    new_poe = []
+    for r in rlzkeys:
+        tmp_array = each_rlz[r] * df[r]
+        new_poe.append(list(tmp_array.values))
+        
+    final_poe = np.sum(np.array(new_poe), axis=0) 
+    
+    df_mean['lon'] = df['lon']
+    df_mean['lat'] = df['lat']
+    df_mean['trt'] = df['trt']
+    df_mean['poe_c'] = final_poe
+    
+    # take only rows >0
+    df_final = df_mean[df_mean['poe_c']>threshold]
+    
+    return df_final
+
+
+def get_rlz_llt(filein):
+    with open(filein) as f:
+        header = f.readline()
+        
+    # get rlzs
+    first_break = header.index('rlz_ids=[')
+    rlzs_strt = header[first_break+9:]
+    end_first = rlzs_strt.index(']')
+    rlzs = rlzs_strt[:end_first]
+    realizations = rlzs.split(', ')
+    
+    # get weights
+    first_break = header.index('weights=[')
+    wei_strt = header[first_break+9:]
+    end_first = wei_strt.index(']')
+    wei = wei_strt[:end_first-1]
+    weights = wei.split(', ')
+    
+    # set up rlz -> weight dictionary
+    each_rlz = {}
+    for w,r in zip(weights,realizations):
+        each_rlz['poe'+r] = float(w)
+        
+    return each_rlz
+
+
+def write_gmt_llt(df_final, fout, threshold):
+    
+    # find set of TRTs and give each an index starting with 1
+    trts = set(df_final['trt'])
+    trt_id = {}
+    strts = sorted(trts)
+    for i, trt in enumerate(strts):
+        trt_id[trt] = i+1
+        
+    fou = open(fout,'w')
+    base_dic = {}
+    cnt = 0
+
+    maxim = 0
+    for ind in list(df_final.index):
+        line = df_final.loc[ind]
+        if cnt > 2:
+            key = '{0:s}_{1:s}'.format(str(line.lon), str(line.lat))
+            #
+            # Updating the base level of the bin
+            if key in base_dic:
+                base = base_dic[key]
+            else:
+                base = 0.
+                base_dic[key] = 0.
+            base_dic[key] += line.poe_c
+            #
+            maxim = base_dic[key] if base_dic[key] > maxim else maxim
+            # Formatting the output
+            fmt = '{0:7.5e} {1:7.5e} {2:7.5e} {3:7.5e} {4:7.5e}'
+            outs = fmt.format(line.lon, line.lat, base+line.poe_c,
+                              trt_id[line.trt], base)
+            if float(line.poe_c) > threshold:
+                fou.write(outs+'\n')
+
+        cnt += 1
+
+
+def mean_llt_for_gmt(filein, fout, poe, imt, threshold):
+    # read in the rest of the data
+    df = pd.read_csv(filein, skiprows = 1)
+    # take for only the poe of interest
+    df_poe = df[(df.poe == float(poe)) & (df.imt == imt)]
+    # get unique eps, dist, get unique mag
+    df_adjusted_weights = pd.DataFrame()
+    df_adjusted_weights['lon'] = df_poe['lon']
+    df_adjusted_weights['lat'] = df_poe['lat']
+    df_adjusted_weights['trt'] = df_poe['trt']
+    df_adjusted_weights['poe_c'] = df_poe['mean']
+    
+    # create final dataframe and write to txt file for gmt
+    df_final = df_adjusted_weights[df_adjusted_weights['poe_c'] >= 0.0]
+    write_gmt_llt(df_final, fout, threshold)
+
+    # make trt dict
+    trts = set(df_poe['trt'])
+    trt_id = {}
+    strts = sorted(trts)
+    for i, trt in enumerate(strts):
+        trt_id[trt] = i+1
+    print('Tectonic region type IDs: \n')
+    print(trt_id)
+
+
 def get_disagg_header_info(header, var, fl=False):
     """
     This function gets information about disagg by MDE from the header
@@ -248,9 +363,12 @@ def read_dsg_ll(fname):
             _ = line
         else:
             aa = re.split('\\,', re.sub('^\\s*', '', line))
-            lons.append(float(aa[0]))
-            lats.append(float(aa[1]))
-            poes.append(float(aa[2]))
+            shift = 0
+            if aa[0] == 'custom_site_id':
+                shift = 1
+            lons.append(float(aa[0+shift]))
+            lats.append(float(aa[1+shift]))
+            poes.append(float(aa[2+shift]))
     return numpy.array(lons), numpy.array(lats), numpy.array(poes)
 
 
@@ -300,10 +418,16 @@ def get_map_from_curves(imls, poes, pex):
 def _get_header_curve2(line):
     imls = []
     aa = re.split('\\,', line)
-    for bb in aa[3:]:
-        tmp = re.sub('^[a-zA-Z]*\\(*[0-9]*\\.*[0-9]*\\)*-', '',
-                     re.sub(':float32', '', bb))
-        imls.append(float(tmp))
+    if aa[0] == 'custom_site_id':
+        for bb in aa[4:]:
+            tmp = re.sub('^[a-zA-Z]*\\(*[0-9]*\\.*[0-9]*\\)*-', '',
+                          re.sub(':float32', '', bb))
+            imls.append(float(tmp))
+    else:
+        for bb in aa[3:]:
+            tmp = re.sub('^[a-zA-Z]*\\(*[0-9]*\\.*[0-9]*\\)*-', '',
+                         re.sub(':float32', '', bb))
+            imls.append(float(tmp))
     return imls
 
 
@@ -334,10 +458,13 @@ def read_uhs_csv(filename):
         elif idx == 1:
             rps, prs = _get_header_uhs2(line)
         else:
-            aa = re.split('\\,', line)
-            lons.append(float(aa[0]))
-            lats.append(float(aa[1]))
-            uhss.append([float(bb) for bb in aa[2:]])
+            aa = re.split('\\,', re.sub('^\\s*', '', line))
+            shift = 0
+            if aa[0] == 'custom_site_id':
+                shift = 1
+            lons.append(float(aa[0+shift]))
+            lats.append(float(aa[1+shift]))
+            uhss.append([float(bb) for bb in aa[2+shift:]])
     return numpy.array(lons), numpy.array(lats), numpy.array(uhss), header1, \
         rps, prs
 
@@ -365,13 +492,44 @@ def read_hazard_curve_csv(filename):
         elif idx == 1:
             imls = _get_header_curve2(line)
         else:
-            aa = re.split('\\,', line)
+            aa = re.split('\\,', re.sub('^\\s*', '', line))
             lons.append(float(aa[0]))
             lats.append(float(aa[1]))
+            poes.append(float(aa[2]))
             curs.append([float(bb) for bb in aa[3:]])
     assert len(lons) == len(lats) == len(curs)
     return numpy.array(lons), numpy.array(lats), numpy.array(curs), header1, \
         numpy.array(imls)
+
+
+def read_hazard_curve_csv_pd(filename):
+    """
+    Read a csv file containing hazard curves.
+    :param str filename:
+        Name of the .csv file containing the data
+    :return:
+        A tuple with the following information:
+            - Longitudes
+            - Latitudes
+            - PoEs
+            - IMLs
+    """
+    lats = []
+    lons = []
+    imls = []
+    curs = []
+    df = pd.read_csv(filename, header=1)
+    index = [idx for idx, s in enumerate(df.keys()) if 'poe' in s][0]
+    for ii in range(len(df)):
+        row = df.iloc[ii]
+        lons.append(row.lon)
+        lats.append(row.lat)
+        curs.append([float(bb) for bb in df.iloc[ii][index:]])
+    imls = [float(s.split('-')[1]) for s in df.keys()[index:]]
+    assert len(lons) == len(lats) == len(curs)
+    return numpy.array(lons), numpy.array(lats), numpy.array(curs), \
+        numpy.array(imls)
+
 
 
 def _get_header1(line):

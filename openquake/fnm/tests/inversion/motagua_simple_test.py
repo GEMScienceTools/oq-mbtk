@@ -166,4 +166,5 @@ def test_load_faults_and_do_inversion():
 
     plt.show()
 
-    return fault_network
+    # return fault_network
+    return

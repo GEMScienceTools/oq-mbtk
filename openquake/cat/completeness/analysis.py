@@ -219,6 +219,19 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     return check, tmp_rate, norm
 
 
+def _make_ctab(prm, years, mags):
+
+    tmp = []
+    for yea, j in zip(years, prm):
+        if j >= -1e-10:
+            tmp.append([yea, mags[int(j)]])
+    tmp = np.array(tmp)
+    if len(tmp) > 0:
+        return clean_completeness(tmp)
+    else:
+        return 'skip'
+
+
 def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
                            bgrlim, criterion, compl_tables, src_id=None,
                            folder_out_figs=None, rewrite=False,
@@ -287,7 +300,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     wei = None
     count = {'complete': 0, 'warning': 0, 'else': 0, 'early': 0}
 
-    all_res = []
+    all_res, all_mags, all_rates = [], [], []
     # For each permuation of completeness windows, check compatability
     for iper, prm in enumerate(perms):
         tnorm = norm
@@ -295,16 +308,20 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         # Info
         print(f'Iteration: {iper:05d} norm: {norm:12.6e}', end="\r")
 
-        tmp = []
-        for yea, j in zip(years, prm):
-            if j >= -1e-10:
-                tmp.append([yea, mags[int(j)]])
-        tmp = np.array(tmp)
-
-        if len(tmp) > 0:
-            ctab = clean_completeness(tmp)
-        else:
+        ctab = _make_ctab(prm, years, mags)
+        if isinstance(ctab, str):
             continue
+
+        #tmp = []
+        #for yea, j in zip(years, prm):
+        #    if j >= -1e-10:
+        #        tmp.append([yea, mags[int(j)]])
+        #tmp = np.array(tmp)
+
+        #if len(tmp) > 0:
+        #    ctab = clean_completeness(tmp)
+        #else:
+        #    continue
 
         # Check compatibility between catalogue and completeness table. This
         # function finds in each magnitude interval defined in the completeness
@@ -375,8 +392,12 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         # Compute the measure expressing the performance of the current
         # completeness. If the norm is smaller than the previous one
         # `check` is True
+        rates = [n/t for n,t in zip(n_obs, t_per)]
+        stmags = [float(m) for m in cent_mag]
         check, trate, tnorm = check_criterion(criterion, rate, tnorm, tvars)
         all_res.append([iper, aval, bval, tnorm])
+        all_mags.append(stmags)
+        all_rates.append(rates)
 
         # Saving the information for the current completeness table.
         if check:
@@ -439,6 +460,8 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
             create_folder(folder_out)
         columns = ['id', 'agr', 'bgr', 'norm']
         df = pd.DataFrame(data=np.array(all_res), columns=columns)
+        df['mags'] = all_mags
+        df['rates'] = all_rates
         fname = os.path.join(folder_out, f'full.results_{src_id:s}.csv')
         df.to_csv(fname, index=False)
 
