@@ -33,8 +33,7 @@ from openquake.sub.create_2pt5_model import create_2pt5_model
 from openquake.hazardlib.geo.geodetic import distance
 
 
-def main(in_path, out_path, *, maximum_sampling_distance=25., 
-         start=None, end=None):
+def main(in_path, out_path, *, maximum_sampling_distance=25.)
     """
     From a set of profiles it creates the top surface of the slab
     """
@@ -52,8 +51,6 @@ def main(in_path, out_path, *, maximum_sampling_distance=25.,
 main.in_path = 'Folder with the profiles'
 main.out_path = 'Folder where to store the output'
 main.maximum_sampling_distance = 'Sampling distance [km]'
-main.start = 'id of first profile to include'
-main.end = 'id of last profile to include'
 
 if __name__ == "__main__":
     main(sys.argv[1:])
