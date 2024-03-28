@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2023 GEM Foundation
+# Copyright (C) 2014-2024 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -85,13 +85,14 @@ def plot_trellis_util(
                 plus_sigma = np.exp(mean+Nstd*std[0])
                 minus_sigma = np.exp(mean-Nstd*std[0])
                 
-                # Plot and get lt weighted predictions
+                # Plot predictions and get lt weighted predictions
                 lt_vals_gmc1, lt_vals_gmc2 = trellis_data(
                     Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
                     lt_weights_gmc1, lt_vals_gmc1, lt_weights_gmc2, lt_vals_gmc2)
                 
-                # update plots
-                update_trellis_plots(m, i, n, l, minR, r_vals, imt_list, dist_type)
+                # Update plots
+                update_trellis_plots(m, i, n, l, minR, maxR,
+                                     r_vals, imt_list, dist_type)
 
             pyplot.grid(axis='both', which='both', alpha=0.5)
         
@@ -172,11 +173,10 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                 
                 for k, imt in enumerate(imt_list): 
                     if obs_spectra is not None:
-                        dist = 1000 # Set to 1000 km
                         Vs30 = vs30 # Set to vs30 in obs_spectra
-                        if i > 1000:
+                        if i > 500:
                             raise ValueError('Rrup provided for the observed\
-                                             spectra is greater than 1000 km')
+                                             spectra is greater than 500 km')
                     else:
                         dist = i
                     
@@ -248,7 +248,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                 plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mw, dep, rrup)
                 
                 # Update plots
-                update_spec_plots(ax1, ax2, m, i, n, l, dist_list, dist_type)
+                update_spec_plots(ax1, ax2, m, i, n, l, dist_list)
             
             # Set axis limits and add grid
             ax1.set_xlim(min(period), max(period))
@@ -290,7 +290,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
     mtxs_median = {}
     d_step = 1
     Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
-    for n, i in enumerate(imt_list): # Iterate though imt_list
+    for n, i in enumerate(imt_list): # Iterate through imt_list
         matrix_medians=np.zeros((len(gmpe_list),
                                 (len(mag_list)*int((maxR-minR)/d_step))))
 
@@ -317,7 +317,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                     dist_type, trt, up_or_down_dip) 
                 
                 # Get means further than minR
-                idx = np.argwhere(r_vals>minR).flatten()
+                idx = np.argwhere(r_vals>=minR).flatten()
                 mean = [mean[0][0][idx]]
                 std = [std[0][0][idx]]
                 tau = [tau[0][0][idx]]
@@ -331,7 +331,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                 if mtxs_type == '16th_perc':
                     Nstd = 1 # Median - 1std = ~16th percentile
                     medians = np.append(medians, (np.exp(mean-Nstd*std[0])))   
-                sigmas = np.append(sigmas,std[0])
+                sigmas = np.append(sigmas, std[0])
                 
             matrix_medians[:][g]= medians
         mtxs_median[n] = matrix_medians
@@ -643,14 +643,13 @@ def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2, lt_vals_gmc, median_gmc,
     """
     if gmc1_or_gmc2 == 'gmc1':
         label = 'Logic Tree 1'
-        col = 'k'
+        col = 'r'
     if gmc1_or_gmc2 == 'gmc2':
         label = 'Logic Tree 2'
-        col = 'tab:grey'
+        col = 'b'
     
     if lt_vals_gmc != {}:
         if not Nstd == 0:
-               
             lt_df_gmc = pd.DataFrame(
                 lt_vals_gmc, index=['median', 'plus_sigma', 'minus_sigma'])
 
@@ -685,7 +684,7 @@ def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2, lt_vals_gmc, median_gmc,
     return median_gmc, plus_sig_gmc, minus_sig_gmc
 
 
-def update_trellis_plots(m, i, n, l, minR, r_vals, imt_list, dist_type):
+def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
     """
     Add titles and axis labels to trellis plots
     """
@@ -716,7 +715,8 @@ def update_trellis_plots(m, i, n, l, minR, r_vals, imt_list, dist_type):
         
     # xlims
     pyplot.loglog()
-    pyplot.xlim(minR, np.max(r_vals))
+    min_r_val = min(r_vals[r_vals>=1])
+    pyplot.xlim(np.max([min_r_val, minR]), maxR)
     
     
 ### Spectra utils
@@ -854,11 +854,11 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, gmc1_or_gmc2,
     if gmc1_or_gmc2 == 'gmc1':
         check = 'lt_weight_gmc1'
         label = 'Logic Tree 1'
-        col = 'k'
+        col = 'r'
     if gmc1_or_gmc2 == 'gmc2':
         check = 'lt_weight_gmc2'
         label = 'Logic Tree 2'
-        col = 'tab:grey'
+        col = 'b'
     
     # Plot
     if lt_vals_gmc != {}:
@@ -959,27 +959,19 @@ def plot_obs_spectra(ax1, obs_spectra, g, gmpe_list,  dep=None, rrup=None,
                  label=obs_string)    
         
         
-def update_spec_plots(ax1, ax2, m, i, n, l, dist_list, dist_type):
+def update_spec_plots(ax1, ax2, m, i, n, l, dist_list):
     """
     Add titles and axis labels to spectra plots
     """
-    if dist_type == 'repi':
-        r_type = 'Repi'
-    if dist_type == 'rrup':
-        r_type = 'Rrup'
-    if dist_type == 'rjb':
-        r_type = 'Rjb'
-    if dist_type == 'rhypo':
-        r_type = 'Rhypo'
-    ax1.set_title('Mw = ' + str(m) + ', ' + r_type + ' = ' + str(i) + ' km',
+    ax1.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
                   fontsize=16, y=1.0, pad=-16)
-    ax2.set_title('Mw = ' + str(m) + ', ' + r_type + ' = ' + str(i) + ' km',
+    ax2.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
                   fontsize=16, y=1.0, pad=-16)
     if n == len(dist_list)-1: #bottom row only
         ax1.set_xlabel('Period (s)', fontsize=16)
         ax2.set_xlabel('Period (s)', fontsize=16)
     if l == 0: # left row only
-        ax1.set_ylabel('Sa (g)', fontsize=16) 
+        ax1.set_ylabel('SA (g)', fontsize=16) 
         ax2.set_ylabel(r'$\sigma$', fontsize=16) 
 
 

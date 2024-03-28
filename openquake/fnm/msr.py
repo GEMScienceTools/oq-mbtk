@@ -44,3 +44,9 @@ def area_to_mag(area, mstype='generic', rake: float = 0.0):
         return msr.get_median_mag(area, rake)
     else:
         raise ValueError("MSR not supported")
+
+def mag_to_area(area, type='generic'):
+    if type == 'generic':
+        return 10**(area - 4.0)
+    else:
+        raise ValueError("MSR not supported")

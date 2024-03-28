@@ -125,7 +125,9 @@ def get_close_source_pairs(
 
 
 @njit(fastmath=True, parallel=True)
-def calc_pairwise_distances(vec_1: np.ndarray, vec_2: np.ndarray) -> np.ndarray:
+def calc_pairwise_distances(
+    vec_1: np.ndarray, vec_2: np.ndarray
+) -> np.ndarray:
     """
     Calculates the pairwise Cartesian distance between two 3D vectors.  Runs in
     parallel over `vec_1`.
@@ -258,7 +260,8 @@ def split_rows(
     split_starts = [split[0] for split in splits]
 
     closest_first_inds = [
-        np.argmin(np.abs(row_ids - split_start)) for split_start in split_starts
+        np.argmin(np.abs(row_ids - split_start))
+        for split_start in split_starts
     ]
 
     closest_first_inds = np.unique(closest_first_inds)
@@ -276,7 +279,7 @@ def split_rows(
             block_idx = row_ids[start:stop]
 
             this["array_stack"] = stacked_array[
-                row_ids[start]: row_ids[stop], :
+                row_ids[start] : row_ids[stop], :
             ]
 
             this["row_idxs"] = block_idx - block_idx[0]
@@ -285,7 +288,7 @@ def split_rows(
             start = closest_first_inds[i]
             block_idx = row_ids[start:]
 
-            this["array_stack"] = stacked_array[row_ids[start]:, :]
+            this["array_stack"] = stacked_array[row_ids[start] :, :]
             this["row_idxs"] = block_idx - block_idx[0]
 
     return data_splits
@@ -376,7 +379,7 @@ def check_dists_by_mag(
     return dist <= dist_constant * 10.0 ** (-2.943 + 0.681 * mag)
 
 
-@jit
+@jit(nopython=False)
 def filter_dists_by_mag(
     min_rup_dists: RupDistType,
     mags: Sequence[float],
@@ -421,7 +424,7 @@ def filter_dists_by_mag(
     ]
 
 
-@jit
+@jit(nopython=False)
 def filter_dists_by_dist(
     min_rup_dists: RupDistType,
     dist_threshold=4.0,

@@ -31,7 +31,7 @@ import pandas as pd
 
 from shutil import copyfile
 from openquake.baselib import sap
-from openquake.cat.hmg import purge
+from openquake.cat.hmg.purge import purge
 
 
 def main(fname_cat, fname_cat_out, fname_csv):
