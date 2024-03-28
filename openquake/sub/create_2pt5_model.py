@@ -304,8 +304,7 @@ def write_edges_csv(sps, foldername):
         numpy.savetxt(fname, numpy.array(dat))
 
 
-def create_2pt5_model(in_path, out_path, maximum_sampling_distance=25., 
-                      from_id=".*", to_id=".*"):
+def create_2pt5_model(in_path, out_path, maximum_sampling_distance=25.):
     """
     :param in_path:
         Folder name with profiles
@@ -324,7 +323,7 @@ def create_2pt5_model(in_path, out_path, maximum_sampling_distance=25.,
         exit(0)
 
     # Read profiles
-    sps, dmin, dmax = read_profiles_csv(in_path, from_id, to_id)
+    sps, dmin, dmax = read_profiles_csv(in_path)
 
     # Compute lengths
     lengths, longest_key, shortest_key = get_profiles_length(sps)
