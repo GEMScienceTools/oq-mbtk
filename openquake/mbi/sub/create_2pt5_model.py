@@ -45,8 +45,7 @@ def main(in_path, out_path, *, maximum_sampling_distance=25.):
         print(tmps)
         exit(0)
 
-    create_2pt5_model(in_path, out_path, float(maximum_sampling_distance), 
-                      start, end)
+    create_2pt5_model(in_path, out_path, float(maximum_sampling_distance))
 
 main.in_path = 'Folder with the profiles'
 main.out_path = 'Folder where to store the output'
