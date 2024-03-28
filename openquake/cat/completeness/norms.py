@@ -98,7 +98,8 @@ def get_completeness_matrix(tcat, ctab, mbinw, ybinw):
 
     return oin, out, cmags, cyeas
 
-def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, info=False):
+def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year,
+                      info=False):
     """
     :param aval: 
         GR a-value

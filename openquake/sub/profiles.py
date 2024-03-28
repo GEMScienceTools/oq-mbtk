@@ -9,6 +9,15 @@ from pathlib import Path
 from scipy import interpolate
 
 from openquake.hazardlib.geo import Line, Point
+from openquake.sub.edges_set import DEFAULTS
+
+from openquake.hazardlib.geo import Line, Point
+from openquake.hazardlib.source import ComplexFaultSource
+from openquake.hazardlib.source import KiteFaultSource
+from openquake.hazardlib.tom import PoissonTOM
+from openquake.hazardlib.const import TRT
+from openquake.hazardlib.mfd import TruncatedGRMFD
+from openquake.hazardlib.scalerel.strasser2010 import StrasserInterface
 
 
 def _from_lines_to_array(lines):
@@ -101,3 +110,27 @@ class ProfileSet():
             plt.show()
 
         return grd
+
+
+def get_kite_fault(profiles, params={}, section_length=None):
+     """
+     :param params:
+     :param params:
+     """
+     p = DEFAULTS
+
+     # update the default parameters
+     for key in params:
+         p[key] = params[key]
+
+     # create the kite fault source instance
+     return KiteFaultSource(p['source_id'],
+                               p['name'],
+                               p['tectonic_region_type'],
+                               p['mfd'],
+                               p['rupture_mesh_spacing'],
+                               p['magnitude_scaling_relationship'],
+                               p['rupture_aspect_ratio'],
+                               p['temporal_occurrence_model'],
+                               profiles.profiles,
+                               p['rake'])
