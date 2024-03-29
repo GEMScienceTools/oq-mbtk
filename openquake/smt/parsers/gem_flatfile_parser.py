@@ -53,8 +53,8 @@ SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 HEADER_STR = "event_id;event_time;ISC_ev_id;ev_latitude;ev_longitude;"\
              "ev_depth_km;fm_type_code;ML;Mw;Ms;event_source_id;"\
              "es_strike;es_dip;es_rake;es_z_top;es_length;es_width;"\
-             "network_code;station_code;location_code;instrument_code;"\
-             "sensor_depth_m;housing_code;installation_code;st_nation_code;"\
+             "network_code;station_code;location_code;"\
+             "sensor_depth_m;"\
              "st_latitude;st_longitude;st_elevation;vs30_m_sec;slope_deg;"\
              "vs30_meas_type;epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;"\
              "Ry0_dist;late_triggered_flag_01;U_channel_code;U_azimuth_deg;"\
@@ -335,13 +335,9 @@ class GEMFlatfileParser(SMDatabaseReader):
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
         site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
                                          "sensor_depth_m")
-        site.instrument_type = metadata["instrument_code"].strip()
         if site.vs30:
             site.z1pt0 = vs30_to_z1pt0_cy14(vs30)
             site.z2pt5 = vs30_to_z2pt5_cb14(vs30)
-        housing_code = metadata["housing_code"].strip()
-        if housing_code and (housing_code in HOUSING):
-            site.building_structure = HOUSING[housing_code]
         return site
 
     def _parse_waveform_data(self, metadata, wfid):
@@ -351,15 +347,14 @@ class GEMFlatfileParser(SMDatabaseReader):
         late_trigger = valid.vint(metadata["late_triggered_flag_01"],
                                   "late_triggered_flag_01")
         # U channel - usually east
-        xorientation = metadata["U_channel_code"].strip()
         xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
         xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
                    "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
         xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
                           units="cm/s/s")
         xcomp.late_trigger = late_trigger
+        
         # V channel - usually North
-        vorientation = metadata["V_channel_code"].strip()
         vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
         vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
                    "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
@@ -521,10 +516,9 @@ class GEMFlatfileParser(SMDatabaseReader):
 
 def _prioritise_rotd50(df, proxy=None, removal=None):
     """
-    Assign RotD50 values to accelerations for computation of residuals. RotD50
-    is available for the vast majority of the records in the GEM flatfile for
-    PGA to 10 s (KikNet subset of records is limited to up to 5 s because we
-    use Beyes and Bommer 2006 to convert from horizontals to RotD50).
+    Assign RotD50 values to horizontal accelerations for computation of
+    residuals. RotD50 is available for the vast majority of the records in the
+    GEM flatfile for PGA to 10 s.
     
     If no RotD50 use the geometric mean if available (if specified) as a proxy
     for RotD50.
