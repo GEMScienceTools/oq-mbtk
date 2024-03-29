@@ -52,7 +52,7 @@ SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
 HEADER_STR = "event_id;event_time;ISC_ev_id;ev_latitude;ev_longitude;"\
              "ev_depth_km;fm_type_code;ML;Mw;Ms;event_source_id;"\
-             "es_strike;es_dip;es_rake;es_z_top;;es_length;es_width;"\
+             "es_strike;es_dip;es_rake;es_z_top;es_length;es_width;"\
              "network_code;station_code;location_code;instrument_code;"\
              "sensor_depth_m;housing_code;installation_code;st_nation_code;"\
              "st_latitude;st_longitude;st_elevation;vs30_m_sec;slope_deg;"\
