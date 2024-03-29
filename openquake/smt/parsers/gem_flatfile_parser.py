@@ -167,17 +167,15 @@ class GEMFlatfileParser(SMDatabaseReader):
         # ID and Name (name not in file so use ID again)
         eq_id = metadata["event_id"]
         eq_name = metadata["event_id"]
-        # Country
-        cntry_code = metadata["ev_nation_code"].strip()
         # Date and time
-        eq_datetime = valid.date_time(metadata["event_time"],
-                                     "%Y-%m-%d %H:%M:%S")
-        # Latitude, longitude and depth
+        eq_datetime = pd.to_datetime(metadata["event_time"], format='mixed')
+        # Location
         eq_lat = valid.latitude(metadata["ev_latitude"])
         eq_lon = valid.longitude(metadata["ev_longitude"])
         eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
             eq_depth = 0.0
+        # Make eq
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet
                          eq_country=None)

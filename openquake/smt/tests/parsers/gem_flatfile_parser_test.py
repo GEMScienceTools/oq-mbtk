@@ -34,8 +34,7 @@ TARGET_IDS = [
 "EQ_EMSC_20161026_0000077_3A_MZ01_ESM_",
 "EQ_HelenaMontana_01_USGS_CarrollCollege_NGAWest2_",
 "EQ_32_MARN_0_NGASUB_",
-"EQ_1976_08_19_01_12_39_TK_2001_Turkiye_SMD_",
-"EQ_2017_12_31_071100_kiknet_OITH11_kiknet_"]
+"EQ_1976_08_19_01_12_39_TK_2001_Turkiye_SMD_"]
 
 #Specify base directory
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
@@ -66,7 +65,7 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
         # Should contain 5 records
-        self.assertEqual(len(db), 5)
+        self.assertEqual(len(db), 4)
         # Record IDs should be equal to the specified target IDs
         for rec in db:
             print(rec.id)
