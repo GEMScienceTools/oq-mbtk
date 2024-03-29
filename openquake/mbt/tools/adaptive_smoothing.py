@@ -124,6 +124,7 @@ class AdaptiveSmoothing(object):
             h3_df.columns = ['lon', 'lat', 'depth', 'mag']
             h3_df['h3'] = h3_df.apply(lat_lng_to_h3, axis=1)
             maxdistk = int(np.ceil(maxdist/h3.edge_length(h3res, 'km')))
+            n_v_fix = n_v + 1
 
             # Consider only neighbours within maxdistk
             for iloc in range(0, len(data)):
@@ -134,10 +135,13 @@ class AdaptiveSmoothing(object):
                 r = distance(ref_locs['lon'], ref_locs['lat'], ref_locs['depth'], data[iloc, 0], data[iloc, 1], depth[iloc])
                 # because of filtering, we are now working with a series so treat accordingly!
                 r.sort_values(inplace = True)
-
-                if len(r) >= (n_v + 1):
-                    # Haven't removed the distance to self, so take n_v + 1
-                    d_i[iloc] = r.iloc[(n_v +1)]
+                
+                if len(r) >= n_v_fix:
+                    try: 
+                        # Haven't removed the distance to self, so take n_v + 1
+                        d_i[iloc] = r.iloc[n_v]
+                    except: 
+                        print("something fishy here! len(r) = ", len(r), " and n_v = ", n_v)
                 else:
                     # no n_vth neighour within maximum distance, set d_i to maxdist
                     d_i[iloc] = maxdist 
@@ -293,26 +297,70 @@ class AdaptiveSmoothing(object):
              
         '''
         
+        IG = _information_gain(out = self.out, counts = counts, T = 1, read_counts_from_file = False, fname_counts = None)
+        
+        return IG
+        
+def poiss_loglik(rate_lambda, obs, T=1):
+        '''
+        Calculate the poisson likelihood, given the observed number of events and the forecast rate. 
+        
+        :param rate_lambda:
+            expected number of events 
+        :param obs:
+            observed number of events
+        :param T:
+            Scaling of forecast to observations. For example, a forecast built with 100 years of data tested over a ten year testing period should have T = 0.1, or a 1 year forecast tested over 5 years would have T = 5
+            
+        :returns:
+            likelihood value 
+        '''
+        l = -rate_lambda*T - np.log(sp.special.factorial(obs)) + np.log(rate_lambda*T)* obs
+        return l
+        
+def _information_gain(out, counts, T = 1, read_counts_from_file = False, fname_counts = None):
+        '''
+        Calculates the information gain per event given a smoothing model and a list of model counts
+        Counting results should match the cells of the smoothed rates. 
+        This version works on an output, so is applicable to a Gaussian smoothing model as well as 
+        an adaptive-smoothing object.
+        
+        :param outs: 
+            smoothing output, should contain columns 'lon', 'lat', 'nocc' 
+            This is the standard output from both adaptive and Gaussian smoothing
+        :param counts:
+            counts in grid cells matching the smoothed cells stored in self.out
+        :param T:
+            optional time scaling for testing rates over a fixed time period
+        :param read_counts_from_file:
+            if True, read count data from a csv instead of using directly supplied counts
+        :param fname_counts:
+            if read_counts_from_file is True, read counts from specified file.
+             
+        '''
+        
         # Set counts from a file if provided, or using count array directly
         if (read_counts_from_file == True):
             loc_df = pd.read_csv(fname_counts)
             loc_counts = gpd.GeoDataFrame(loc_df, crs='epsg:4326', geometry=[Point(xy) for xy
                        in zip(loc_df.lon, loc_df.lat)])
         else:
-            loc_counts = pd.DataFrame({'lon': self.out['lon'], 'lat' : self.out['lat'], 'nocc' : self.out['nocc']})
+            loc_counts = pd.DataFrame({'lon': out['lon'], 'lat' : out['lat'], 'nocc' : out['nocc']})
     
-        # Uniform rate = total sum distributed over all hexagons, so uniform count is sum/num hexagons
+        # Uniform rate = total sum distributed over all hexagons, so uniform count is sum/num cells
         unif_cnt = sum(loc_counts['nocc'])/len(loc_counts)
         # Calculate poisson likelihood of uniform model
-        unif_llhood = self.poiss_loglik(unif_cnt, loc_counts['nocc'], T)
+        unif_llhood = poiss_loglik(unif_cnt, loc_counts['nocc'], T)
     
-        smoothed = self.out
-        smoothed = gpd.GeoDataFrame(smoothed, crs='epsg:4326', geometry=[Point(xy) for xy
-                       in zip(smoothed.lon, smoothed.lat)])
+        #smoothed = out
+        smoothed = gpd.GeoDataFrame(out, crs='epsg:4326', geometry=[Point(xy) for xy
+              in zip(out.lon, out.lat)])
+        
         # Model likelihood
-        mod_llhood = self.poiss_loglik(smoothed['nocc'], loc_counts['nocc'], T)
-    
+        mod_llhood = poiss_loglik(smoothed['nocc'], loc_counts['nocc'], T)
+        # replace nan values with 0 likelihood
+        mod_llhood = mod_llhood.fillna(0)
+        
         # Information gain = exp(llhood - unif_llhood)/total_event_num
         IG = np.exp((sum(mod_llhood)-sum(unif_llhood))/sum(loc_counts['nocc']))
         return IG
-
