@@ -50,8 +50,7 @@ DATA = os.path.abspath('')
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
-HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
-             "EMSC_ev_id;ev_nation_code;ev_latitude;ev_longitude;"\
+HEADER_STR = "event_id;event_time;ISC_ev_id;ev_latitude;ev_longitude;"\
              "ev_depth_km;fm_type_code;ML;Mw;Ms;event_source_id;"\
              "es_strike;es_dip;es_rake;es_strike_dip_rake_ref;es_z_top;"\
              "es_length;es_width;network_code;station_code;location_code;"\
@@ -168,7 +167,6 @@ class GEMFlatfileParser(SMDatabaseReader):
         eq_id = metadata["event_id"]
         eq_name = metadata["event_id"]
         # Country
-        cntry_code = metadata["ev_nation_code"].strip()
         # Date and time
         eq_datetime = valid.date_time(metadata["event_time"],
                                      "%Y-%m-%d %H:%M:%S")
