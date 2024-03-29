@@ -49,7 +49,7 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
         cls.GEM_flatfile_directory = os.path.join(BASE_DATA_PATH,
                                                   "GEM_flatfile_test.csv")
         cls.db_file = os.path.join(BASE_DATA_PATH,
-                                   "ESM_conversion_test_metadata")       
+                                   "GEM_conversion_test_metadata")       
 
     def test_gem_flatfile_parser(self):
         """
@@ -61,7 +61,8 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
         now 'complete' for all required spectral periods
         """
         parser = GEMFlatfileParser.autobuild("000", "GEM_conversion_test",
-                                             self.db_file, self.GEM_flatfile_directory,
+                                             self.db_file,
+                                             self.GEM_flatfile_directory,
                                              removal=True, proxy=True)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
