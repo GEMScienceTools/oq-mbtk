@@ -66,11 +66,11 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
                                              removal=True, proxy=True)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
+        
         # Should contain 5 records
         self.assertEqual(len(db), 5)
+        
         # Record IDs should be equal to the specified target IDs
-        for rec in db:
-            print(rec.id)
         self.assertListEqual([rec.id for rec in db], TARGET_IDS)
         del parser
 
