@@ -112,11 +112,12 @@ class Slab2pt0(object):
 
             # Get min and max longitude and latitude values
             minlo, maxlo, minla, maxla, qual = cs.get_mm(2.0)
-
+            
+            #Sbreakpoint()
             # Find the nodes of the grid within a certain distance from the
             # plane of the cross-section
             if qual == 0:
-                minlo, maxlo, minla, maxla, _ = cs.get_mm(2.0)
+                minlo, maxlo, minla, maxla, _ = cs.get_mm(5.0)
                 idxslb, dsts = cs.get_grd_nodes_within_buffer(
                     pnts[:, 0], pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
             if qual == 1:
@@ -141,6 +142,7 @@ class Slab2pt0(object):
                 z = interp(psec[0], psec[1])
 
             except:
+                print("trying altered qhull for interpolation")
                 tri = Delaunay(numpy.c_[(p[:, 0], p[:,1])], qhull_options = "QJ")
                 ip = LinearNDInterpolator(tri, p[:,2])
                 z = ip(psec[0], psec[1])
