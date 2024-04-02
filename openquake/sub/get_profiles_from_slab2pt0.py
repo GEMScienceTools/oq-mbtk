@@ -322,7 +322,7 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
         max_lo = np.max([max_lo, np.max(coo[:, 0])])
         max_la = np.max([max_la, np.max(coo[:, 1])])
     lon_c = min_lo + (max_lo - min_lo) / 2
-    lat_c = min_la + (max_la - min_la) / 2
+    lat_c = min_la + (max_la - min_la) / 2            
 
     # Define the forward projection
     aeqd = pyproj.Proj(proj='aeqd', ellps='WGS84', datum='WGS84',
@@ -331,8 +331,11 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
 
     # Create cross-sections
     for index, row in gdf.iterrows():
+        # calculate dipdir and lengths from profiles directly
+        azim = azimuth(gdf.coords[index][0][0], gdf.coords[index][0][1], gdf.coords[index][-1][0], gdf.coords[index][-1][1])
+        length = geodetic_distance(gdf.coords[index][0][0], gdf.coords[index][0][1], gdf.coords[index][-1][0], gdf.coords[index][-1][1])
         cs = CrossSection(gdf.coords[index][0][0], gdf.coords[index][0][1],
-                          (gdf_pro.length[index] / 1000), gdf.dipdir[index])
+                          length, azim)
         css.append(cs)
 
     # Filter
@@ -353,7 +356,7 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
 
     # Slab 2.0
     slb = Slab2pt0(depths, css)
-    slb.compute_profiles(spacing / 2)
+    slb.compute_profiles(spacing)
     
     
     if len(str(fname_fig)) > 0:
