@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2018 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests parsing of the ESM23 flatfile format (i.e. flatfile downloaded from custom
-header URL) in SMT
+Tests parsing of a flatfile downloaded from ESM custom URL database
+--> (https://esm-db.eu/esmws/flatfile/1/)
 
 This parser assumes you have selected all available headers in your URL search
 when downloading the flatfile
@@ -26,7 +26,7 @@ import os
 import sys
 import shutil
 import unittest
-from openquake.smt.parsers.esm23_flatfile_parser import ESM23FlatfileParser
+from openquake.smt.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -48,21 +48,23 @@ TARGET_IDS = [
 #Specify base directory
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
-class ESM23FlatfileParserTestCase(unittest.TestCase):
+class ESMFlatfileParserURLTestCase(unittest.TestCase):
     """
-    Tests the parsing of the reformatted ESM23 flatfile
+    Tests the parsing of an ESM URL format flatfile
     """
     @classmethod
     def setUpClass(cls):
-        cls.ESM23_flatfile_directory = os.path.join(BASE_DATA_PATH,"ESM23_Greece_test.csv")
-        cls.db_file = os.path.join(BASE_DATA_PATH, "ESM23_conversion_test_metadata")       
+        cls.ESM_flatfile_directory = os.path.join(BASE_DATA_PATH,
+                                                  "ESM_URL_Greece_test.csv")
+        cls.db_file = os.path.join(BASE_DATA_PATH,
+                                   "ESM_URL_conversion_test_metadata")       
 
-    def test_esm23_flatfile_parser(self):
+    def test_esm_url_flatfile_parser(self):
         """
-        Tests the parsing of the reformatted ESM23 flatfile
+        Tests the parsing of the reformatted ESM flatfile
         """
-        parser = ESM23FlatfileParser.autobuild("000", "ESM23_conversion_test",
-                                             self.db_file, self.ESM23_flatfile_directory)
+        parser = ESMFlatfileParserURL.autobuild("000", "ESM_conversion_test",
+                                             self.db_file, self.ESM_flatfile_directory)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
         # Should contain 9 records

@@ -77,6 +77,7 @@ def make_multifault_source(
     infer_occur_rates: bool = False,
     surface_type="kite",
     ruptures_for_output='all',
+    rupture_occurrence_rates=None,
 ):
     surfaces = []
     if surface_type == "kite":
@@ -110,9 +111,12 @@ def make_multifault_source(
     mags = rup_df['mag'].values
     rakes = rup_df['mean_rake'].values
 
+    if rupture_occurrence_rates is None:
+        occurrence_rates = rup_df['annual_occurrence_rate'].values
+
     pmfs = [
         poisson.pmf([0, 1, 2, 3, 4], r).tolist()
-        for r in rup_df['annual_occurrence_rate'].values
+        for r in rupture_occurrence_rates
     ]
 
     mfs = MultiFaultSource(
@@ -132,19 +136,20 @@ def make_multifault_source(
     return mfs
 
 
-def write_multifault_source(out_path, mf_source,
-                            trt="Active Shallow Crust",
-                            group_name=None,
-                            source_name=None,
-                            investigation_time=1.0,
-                            ):
+def write_multifault_source(
+    out_path,
+    mf_source,
+    source_name=None,
+    investigation_time=1.0,
+):
 
     if source_name is None:
         source_name = mf_source.source_id
 
     xml_outpath = os.path.join(out_path, f"{source_name}.xml")
-    write_source_model(xml_outpath, [mf_source],
-                       investigation_time=investigation_time)
+    write_source_model(
+        xml_outpath, [mf_source], investigation_time=investigation_time
+    )
 
 
 def make_multifault_source_old(

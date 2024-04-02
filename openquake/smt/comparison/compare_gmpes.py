@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2023 GEM Foundation
+# Copyright (C) 2014-2024 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -201,7 +201,7 @@ def plot_trellis(filename, output_directory):
                       config.up_or_down_dip) 
 
                 
-def plot_spectra(filename, output_directory, obs_spectra = None):
+def plot_spectra(filename, output_directory, obs_spectra=None):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
     configuration

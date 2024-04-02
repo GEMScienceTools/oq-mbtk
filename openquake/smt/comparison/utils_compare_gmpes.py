@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2023 GEM Foundation
+# Copyright (C) 2014-2024 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -290,7 +290,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
     mtxs_median = {}
     d_step = 1
     Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
-    for n, i in enumerate(imt_list): # Iterate though imt_list
+    for n, i in enumerate(imt_list): # Iterate through imt_list
         matrix_medians=np.zeros((len(gmpe_list),
                                 (len(mag_list)*int((maxR-minR)/d_step))))
 
@@ -317,7 +317,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                     dist_type, trt, up_or_down_dip) 
                 
                 # Get means further than minR
-                idx = np.argwhere(r_vals>minR).flatten()
+                idx = np.argwhere(r_vals>=minR).flatten()
                 mean = [mean[0][0][idx]]
                 std = [std[0][0][idx]]
                 tau = [tau[0][0][idx]]
@@ -331,7 +331,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                 if mtxs_type == '16th_perc':
                     Nstd = 1 # Median - 1std = ~16th percentile
                     medians = np.append(medians, (np.exp(mean-Nstd*std[0])))   
-                sigmas = np.append(sigmas,std[0])
+                sigmas = np.append(sigmas, std[0])
                 
             matrix_medians[:][g]= medians
         mtxs_median[n] = matrix_medians
@@ -971,7 +971,7 @@ def update_spec_plots(ax1, ax2, m, i, n, l, dist_list):
         ax1.set_xlabel('Period (s)', fontsize=16)
         ax2.set_xlabel('Period (s)', fontsize=16)
     if l == 0: # left row only
-        ax1.set_ylabel('Sa (g)', fontsize=16) 
+        ax1.set_ylabel('SA (g)', fontsize=16) 
         ax2.set_ylabel(r'$\sigma$', fontsize=16) 
 
 
