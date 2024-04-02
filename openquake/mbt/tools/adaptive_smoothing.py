@@ -164,8 +164,12 @@ class AdaptiveSmoothing(object):
             r_dists = distance(data[:, 0], data[:, 1], depth, x[iloc], y[iloc], 0)
             mu_loc[iloc] = self.mu_int(r_dists, d_i, kernel = kernel)
 
-
-        self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc' : mu_loc})
+        # normalise mu_loc to number of observed events
+        mu_norm = mu_loc/sum(mu_loc)
+        nocc = mu_norm*len(data) 
+        
+        self.out = pd.DataFrame({'lon': x, 'lat' : y, 'mu_loc': mu_loc, 'mu_norm': mu_norm, 'nocc' : nocc})
+        #self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc' : mu_loc})
 
         return self.out
 
