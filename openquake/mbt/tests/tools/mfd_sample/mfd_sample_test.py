@@ -1,14 +1,16 @@
 import os
+import shutil
 import unittest
 import tempfile
 import numpy as np
 import pandas as pd
 
-from openquake.mbt.tools.mfd_sample.make_mfds import _create_catalogue_versions
+from openquake.mbt.tools.mfd_sample.make_mfds import (_create_catalogue_versions,
+                                                      make_many_mfds)
 
 BASE_PATH = os.path.dirname(__file__)
 
-class TestWorkflow(unittest.TestCase):
+class TestGenCats(unittest.TestCase):
 
     def setUp(self):
         self.catfi = os.path.join(BASE_PATH, 'data', 'catalogue.csv')
@@ -27,3 +29,20 @@ class TestWorkflow(unittest.TestCase):
         expected = pd.read_csv(mags_exp_fi)
         output = pd.read_csv(mags_out_fi)
         assert expected.equals(output)
+
+        shutil.rmtree(self.tmpd)
+
+class TestWorkflow(unittest.TestCase):
+
+    def test_full_wkflow(self):
+        config_fi = os.path.join(BASE_PATH, 'config', 'test.toml')
+        make_many_mfds(config_fi)
+
+        expected_fi = os.path.join(BASE_PATH, 'expected2', 'mfd-results.csv')
+        output_fi = os.path.join(BASE_PATH, 'test', 'mfd-results.csv')
+        expected = pd.read_csv(expected_fi)
+        output = pd.read_csv(output_fi)
+        assert expected.equals(output)
+
+        shutil.rmtree('test')
+        os.remove('tmp-config-dcl.toml')
