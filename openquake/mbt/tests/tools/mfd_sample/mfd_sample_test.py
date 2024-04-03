@@ -35,7 +35,8 @@ class TestGenCats(unittest.TestCase):
 class TestWorkflow(unittest.TestCase):
 
     def test_full_wkflow(self):
-        config_fi = os.path.join(BASE_PATH, 'config', 'test.toml')
+        config_fi = os.path.join(BASE_PATH, 'test.toml')
+        #config_fi = os.path.join(BASE_PATH, 'config', 'test.toml')
         make_many_mfds(config_fi)
 
         expected_fi = os.path.join(BASE_PATH, 'expected2', 'mfd-results.csv')
