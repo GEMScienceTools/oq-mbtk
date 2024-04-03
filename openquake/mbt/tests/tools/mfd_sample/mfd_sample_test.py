@@ -66,7 +66,7 @@ class TestWorkflow(unittest.TestCase):
         toml.dump(config_dec, decfile)
         decfile.close()
 
-        make_many_mfds(config_fi_new)
+        make_many_mfds(config_fi_new, BASE_PATH)
 
         expected_fi = os.path.join(BASE_PATH, 'expected2', 'mfd-results.csv')
         output_fi = os.path.join(BASE_PATH, 'test', 'mfd-results.csv')

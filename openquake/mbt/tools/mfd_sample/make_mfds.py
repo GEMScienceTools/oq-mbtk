@@ -22,7 +22,6 @@ from openquake.cat.completeness.analysis import (_completeness_analysis,
                                                  read_compl_data)
 from openquake.cat.completeness.mfd_eval_plots import make_all_plots
 
-
 def _get_truncated_normal(mean=0, sd=1, low=0, upp=10):
     return truncnorm(
         (low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
@@ -207,7 +206,7 @@ def _compl_analysis(decdir, compdir, compl_toml, labels, fout, fout_figs):
                 print(f'Impossible for catalogue {ii}')
 
 
-def make_many_mfds(configfile):
+def make_many_mfds(configfile, basedir=None):
     """
     """
 
@@ -265,8 +264,12 @@ def make_many_mfds(configfile):
         if not labs:
             print('Must specify the TRTs')
             sys.exit()
-        make_all_plots(resdir, compdir, figdir, labs)
-
+        labels, agrs, bgrs = make_all_plots(resdir, compdir, figdir, labs)
+        fin = pd.DataFrame({'label': labels, 'a-values': agrs, 'b-values': bgrs})
+        if basedir:
+            fin.to_csv(os.path.join(basedir, outdir, 'mfd-results.csv'))
+        else:
+            fin.to_csv(os.path.join(outdir, 'mfd-results.csv'))
 
 make_many_mfds.configfile = 'path to configuration file'
 
