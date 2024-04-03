@@ -1,4 +1,5 @@
 import os
+import toml
 import shutil
 import unittest
 import tempfile
@@ -35,8 +36,22 @@ class TestGenCats(unittest.TestCase):
 class TestWorkflow(unittest.TestCase):
 
     def test_full_wkflow(self):
-        config_fi = os.path.join(BASE_PATH, 'test.toml')
-        #config_fi = os.path.join(BASE_PATH, 'config', 'test.toml')
+        config_fi = os.path.join(BASE_PATH, 'config', 'test.toml')
+        config = toml.load(config_fi)
+        cat_fi_name = config['main']['catalogue_filename']
+        cat_fi_name_new = os.path.join(BASE_PATH, cat_fi_name)
+        config['main']['catalogue_filename'] = cat_fi_name_new
+        dec_toml = config['decluster']['decluster_settings']
+        dec_toml_new = os.path.join(BASE_PATH, dec_toml)
+        config['decluster']['decluster_settings'] = dec_toml_new
+        comp_toml = config['completeness']['completeness_settings']
+        comp_toml_new = os.path.join(BASE_PATH, comp_toml)
+        config['completeness']['completeness_settings'] = comp_toml_new
+
+        config_fi_new = os.path.join(BASE_PATH, 'test_tmp.toml')
+        file=open(config_fi_new,"w")
+        toml.dump(config, file)
+
         make_many_mfds(config_fi)
 
         expected_fi = os.path.join(BASE_PATH, 'expected2', 'mfd-results.csv')
