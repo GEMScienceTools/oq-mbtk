@@ -157,6 +157,11 @@ def classify(ini_fname, compute_distances, rf=''):
             if 'upp_mag' in config[key]:
                 upp_mag = float(config[key]['upp_mag'])
 
+            # specifying surface type
+            surftype = 'ComplexFault'
+            if 'surface_type' in config[key]:
+                surftype = config[key]['surface_type']
+
             #
             sse = SetSubductionEarthquakes(trlab,
                                            treg_filename,
@@ -171,7 +176,7 @@ def classify(ini_fname, compute_distances, rf=''):
                                            upp_year,
                                            low_mag,
                                            upp_mag)
-            sse.classify(compute_distances, remove_from)
+            sse.classify(compute_distances, remove_from, surftype)
 
         # crustal earthquakes
         elif re.search('^crustal', key) or re.search('^volcanic', key):

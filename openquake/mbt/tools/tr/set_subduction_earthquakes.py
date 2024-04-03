@@ -96,7 +96,7 @@ class SetSubductionEarthquakes:
         self.low_mag = float(low_mag)
         self.upp_mag = float(upp_mag)
 
-    def classify(self, compute_distances, remove_from):
+    def classify(self, compute_distances, remove_from, surftype='ComplexFault'):
         """
         :param bool compute_distances:
             A boolean indicating if distances between earthquakes and the
@@ -141,24 +141,32 @@ class SetSubductionEarthquakes:
         # Build the complex fault surface
         tedges = _read_edges(edges_folder)
         print(edges_folder)
-#        surface = build_complex_surface_from_edges(edges_folder)
-        surface = build_kite_surface_from_profiles(edges_folder)
-        mesh = surface.mesh
+        if surftype == 'ComplexFault':
+            surface = build_complex_surface_from_edges(edges_folder)
+            # Create polygon encompassing the mesh
+            mesh = surface.mesh
+            plo = list(mesh.lons[0, :])
+            pla = list(mesh.lats[0, :])
+            #
+            plo += list(mesh.lons[:, -1])
+            pla += list(mesh.lats[:, -1])
+            #
+            plo += list(mesh.lons[-1, ::-1])
+            pla += list(mesh.lats[-1, ::-1])
+            #
+            plo += list(mesh.lons[::-1, 0])
+            pla += list(mesh.lats[::-1, 0])
 
-        # Create polygon encompassing the mesh
-        #plo = list(mesh.lons[0, :])
-        #pla = list(mesh.lats[0, :])
-        #
-        #plo += list(mesh.lons[:, -1])
-        #pla += list(mesh.lats[:, -1])
-        #
-        #plo += list(mesh.lons[-1, ::-1])
-        #pla += list(mesh.lats[-1, ::-1])
-        #
-        #plo += list(mesh.lons[::-1, 0])
-        #pla += list(mesh.lats[::-1, 0])
-        plo = surface.surface_projection[0]
-        pla = surface.surface_projection[1]
+        elif surftype == 'KiteFault':
+            surface = build_kite_surface_from_profiles(edges_folder)
+            # Create polygon encompassing the mesh
+            mesh = surface.mesh
+            plo = surface.surface_projection[0]
+            pla = surface.surface_projection[1]
+        else:
+            msg = f'surface type {surftype} not supported'
+            raise ValueError(msg)
+
 
         # Set variables used in griddata
         data = np.array([mesh.lons.flatten().T, mesh.lats.flatten().T]).T
