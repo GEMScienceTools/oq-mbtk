@@ -28,7 +28,7 @@ import toml
 import numpy as np
 from openquake.baselib import sap
 
-from openquake.mbt.mfds_sample.make_mfds import make_many_mfds
+from openquake.mbt.tools.mfd_sample.make_mfds import make_many_mfds
 
 
 def main(fname_config):

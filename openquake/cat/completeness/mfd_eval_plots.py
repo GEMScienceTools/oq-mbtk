@@ -69,9 +69,15 @@ def _make_a_b_histos(df_all, df_best, figsdir):
     ax[1].tick_params(axis='y', labelcolor=color)
     
     for ii, idx in enumerate(set(df_all.idx)):
+
         df_sub = df_all[df_all.idx == idx]
-        ax[0].hist(df_sub.agr, bins=binsA, color='gray', alpha=10/num_cats)
-        ax[1].hist(df_sub.bgr, bins=binsB, color='gray', alpha=10/num_cats)
+        if num_cats < 10:
+            alpha = 0.1
+        else: 
+            alpha = 10/num_cats
+
+        ax[0].hist(df_sub.agr, bins=binsA, color='gray', alpha=alpha)
+        ax[1].hist(df_sub.bgr, bins=binsB, color='gray', alpha=alpha)
     ax2a = ax[0].twinx()
     ax2b = ax[1].twinx()
     ax2a.hist(df_best.agr, bins=binsA, color='red', alpha=0.2)
@@ -159,13 +165,18 @@ def plot_best_mfds(df_best, figsdir):
                          linewidth=0.1, zorder=0, label='Cumulative MFD')
 
         else: 
+            if num <= 10:
+                alpha1 = 0.1
+            else:
+                alpha1 = 10/num
+
             plt.scatter(row.mags, row.rates, marker='_', color='r', 
-                        alpha=10/num)
+                        alpha=alpha1)
             plt.scatter(row.mags, row.cm_rates, marker='.', color='b', 
-                        alpha=10/num)
-            plt.semilogy(mfd_m, mfd_r, color='r', alpha=30/num, linewidth=0.1, 
+                        alpha=alpha1)
+            plt.semilogy(mfd_m, mfd_r, color='r', alpha=3*alpha1, linewidth=0.1, 
                          zorder=0)
-            plt.semilogy(mfd_m, mfd_cr, color='b', alpha=50/num, 
+            plt.semilogy(mfd_m, mfd_cr, color='b', alpha=5*alpha1, 
                          linewidth=0.1, zorder=0)
 
     plt.xlabel('Magnitude')
@@ -273,6 +284,8 @@ def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0,
     plt.savefig(fout, dpi=300)
     plt.close()
 
+    return center_x, center_y, major_x1, major_y1, major_x2, major_y2
+
 
 
 def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, figname=None):
@@ -314,11 +327,16 @@ def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, fign
         mgrts = mfd.get_annual_occurrence_rates()
         mfd_m = [m[0] for m in mgrts]
         mfd_r = [m[1] for m in mgrts]
+        if len(df_best) <=30:
+            alpha = 0.1
+        else:  
+            alpha=30/len(df_best)
+        
         if field == 'cm_rates':
             mfd_cr = [sum(mfd_r[ii:]) for ii in range(len(mfd_r))]
-            plt.semilogy(mfd_m, mfd_cr, color='maroon', linewidth=0.2, zorder=10, alpha=30/len(df_best))
+            plt.semilogy(mfd_m, mfd_cr, color='maroon', linewidth=0.2, zorder=10, alpha=alpha)
         else:
-            plt.semilogy(mfd_m, mfd_r, color='maroon', linewidth=0.2, zorder=10, alpha=30/len(df_best))
+            plt.semilogy(mfd_m, mfd_r, color='maroon', linewidth=0.2, zorder=10, alpha=alpha)
 
     if figname==None:
         figname = f'mfds_all_{field}.png'
@@ -334,6 +352,7 @@ def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, fign
 
 
 def make_all_plots(resdir_base, compdir, figsdir_base, labels):
+    agrs, bgrs, labs = [], [], []
     for label in labels:
         print(f'Running for {label}')
         resdir = os.path.join(resdir_base, label)
@@ -368,5 +387,11 @@ def make_all_plots(resdir_base, compdir, figsdir_base, labels):
         plot_all_mfds(df_all, df_thresh, figsdir, field='cm_rates', bins=60, 
                       figname='mfds_thresh_cmrates.png')
         print('plotting covariance')
-        plot_weighted_covariance_ellipse(df_best, figsdir)
+        cx, cy, mx1, my1, mx2, my2 = plot_weighted_covariance_ellipse(df_best, figsdir)
         plot_weighted_covariance_ellipse(df_thresh, figsdir, figname=f'{label}-20percent.png')
+
+        labs.extend([f'{label}-center', f'{label}-low', f'{label}-high'])
+        agrs.extend([cx, mx1, mx2])
+        bgrs.extend([cy, my1, my2])
+
+    return labs, agrs, bgrs
