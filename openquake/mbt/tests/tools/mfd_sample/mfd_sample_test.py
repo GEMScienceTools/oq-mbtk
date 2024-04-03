@@ -36,6 +36,7 @@ class TestGenCats(unittest.TestCase):
 class TestWorkflow(unittest.TestCase):
 
     def test_full_wkflow(self):
+        # reassign main configs
         config_fi = os.path.join(BASE_PATH, 'config', 'test.toml')
         config = toml.load(config_fi)
         cat_fi_name = config['main']['catalogue_filename']
@@ -43,15 +44,27 @@ class TestWorkflow(unittest.TestCase):
         config['main']['catalogue_filename'] = cat_fi_name_new
         dec_toml = config['decluster']['decluster_settings']
         dec_toml_new = os.path.join(BASE_PATH, dec_toml)
-        config['decluster']['decluster_settings'] = dec_toml_new
         comp_toml = config['completeness']['completeness_settings']
         comp_toml_new = os.path.join(BASE_PATH, comp_toml)
         config['completeness']['completeness_settings'] = comp_toml_new
+
+        # reassign decluster configs
+        config_dec = toml.load(dec_toml_new)
+        config_dec['main']['catalogue'] = cat_fi_name_new
+        dec_tr = config_dec['main']['tr_file']
+        dec_tr_new = os.path.join(BASE_PATH, dec_tr)
+        config_dec['main']['tr_file'] = dec_tr_new
+        config_dec_fi_new = os.path.join(BASE_PATH, 'test_dec_tmp.toml')
+        config['decluster']['decluster_settings'] = config_dec_fi_new
 
         config_fi_new = os.path.join(BASE_PATH, 'test_tmp.toml')
         file=open(config_fi_new,"w")
         toml.dump(config, file)
         file.close()
+
+        decfile=open(config_dec_fi_new,"w")
+        toml.dump(config_dec, decfile)
+        decfile.close()
 
         make_many_mfds(config_fi_new)
 
