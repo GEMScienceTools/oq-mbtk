@@ -394,4 +394,4 @@ def make_all_plots(resdir_base, compdir, figsdir_base, labels):
         agrs.extend([cx, mx1, mx2])
         bgrs.extend([cy, my1, my2])
 
-    return labs, agrs, bgrs
+    return labs, np.round(agrs, 3), np.round(bgrs, 3)
