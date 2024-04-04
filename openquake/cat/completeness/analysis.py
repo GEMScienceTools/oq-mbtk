@@ -177,7 +177,8 @@ def check_criterion(criterion, rate, previous_norm, tvars):
 
     elif criterion == 'optimize':
         tmp_rate = -1
-        norm = get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, info=False)
+        norm = get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, 
+                                 last_year, info=False)
 
     elif criterion == 'optimize_a':
         tmp_rate = -1
@@ -309,19 +310,9 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         print(f'Iteration: {iper:05d} norm: {norm:12.6e}', end="\r")
 
         ctab = _make_ctab(prm, years, mags)
+        print(ctab)
         if isinstance(ctab, str):
             continue
-
-        #tmp = []
-        #for yea, j in zip(years, prm):
-        #    if j >= -1e-10:
-        #        tmp.append([yea, mags[int(j)]])
-        #tmp = np.array(tmp)
-
-        #if len(tmp) > 0:
-        #    ctab = clean_completeness(tmp)
-        #else:
-        #    continue
 
         # Check compatibility between catalogue and completeness table. This
         # function finds in each magnitude interval defined in the completeness
@@ -467,8 +458,42 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
     return save
 
+def read_compl_params(config):
+    """
+    """
 
-def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
+    # Read parameters for completeness analysis
+    key = 'completeness'
+    ms = np.array(config[key]['mags'], dtype=float)
+    yrs = np.array(config[key]['years'])
+    bw = config.get('bin_width', 0.1)
+    r_m = config[key].get('ref_mag', 5.0)
+    r_up_m = config[key].get('ref_upp_mag', None)
+    bmin = config[key].get('bmin', 0.8)
+    bmax = config[key].get('bmax', 1.2)
+    # Options: 'largest_rate', 'match_rate', 'optimize'
+    crit = config[key].get('optimization_criterion', 'optimize')
+
+    return ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit
+
+
+def read_compl_data(folder_in):
+    """
+    """
+    # Reading completeness data
+    print(f'Reading completeness data from: {folder_in:s}')
+    fname_disp = os.path.join(folder_in, 'dispositions.npy')
+    perms = np.load(fname_disp)
+    mags_chk = np.load(os.path.join(folder_in, 'mags.npy'))
+    years_chk = np.load(os.path.join(folder_in, 'years.npy'))
+    compl_tables = {'perms': perms, 'mags_chk': mags_chk,
+                    'years_chk': years_chk}
+
+    return compl_tables, mags_chk, years_chk
+
+
+
+def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
                           folder_in, folder_out, skip=''):
     """
     :param fname_input_pattern:
@@ -486,36 +511,18 @@ def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
     """
 
     # Loading configuration
-    config = toml.load(fname_config)
+    config = toml.load(f_config)
 
-    # Read parameters for completeness analysis
-    key = 'completeness'
-    mags = np.array(config[key]['mags'])
-    years = np.array(config[key]['years'])
-    binw = config.get('bin_width', 0.1)
-    ref_mag = config[key].get('ref_mag', 5.0)
-    ref_upp_mag = config[key].get('ref_upp_mag', None)
-    bmin = config[key].get('bmin', 0.8)
-    bmax = config[key].get('bmax', 1.2)
-    # Options: 'largest_rate', 'match_rate', 'optimize'
-    criterion = config[key].get('optimization_criterion', 'optimize')
-    print(criterion)
+    ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(config)
 
-    # Reading completeness data
-    print(f'Reading completeness data from: {folder_in:s}')
-    fname_disp = os.path.join(folder_in, 'dispositions.npy')
-    perms = np.load(fname_disp)
-    mags_chk = np.load(os.path.join(folder_in, 'mags.npy'))
-    years_chk = np.load(os.path.join(folder_in, 'years.npy'))
-    compl_tables = {'perms': perms, 'mags_chk': mags_chk,
-                    'years_chk': years_chk}
+    compl_tables, mags_chk, years_chk = read_compl_data(folder_in)
 
     # Fixing sorting of years
-    if np.all(np.diff(years)) >= 0:
-        years = np.flipud(years)
+    if np.all(np.diff(yrs)) >= 0:
+        yrs = np.flipud(yrs)
 
-    np.testing.assert_array_equal(mags, mags_chk)
-    np.testing.assert_array_equal(years, years_chk)
+    np.testing.assert_array_almost_equal(ms, mags_chk)
+    np.testing.assert_array_almost_equal(yrs, years_chk)
 
     # Info
     if len(skip) > 0:
@@ -537,8 +544,8 @@ def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
         else:
             var = {}
 
-        res = _completeness_analysis(fname, years, mags, binw, ref_mag,
-                                     ref_upp_mag, [bmin, bmax], criterion,
+        res = _completeness_analysis(fname, yrs, ms, bw, r_m,
+                                     r_up_m, [bmin, bmax], crit,
                                      compl_tables, src_id,
                                      folder_out_figs=folder_out_figs,
                                      folder_out=folder_out,
@@ -563,6 +570,6 @@ def completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
         # Updating configuration
         config['sources'][src_id] = var
 
-    with open(fname_config, 'w', encoding='utf-8') as fou:
+    with open(f_config, 'w', encoding='utf-8') as fou:
         fou.write(toml.dumps(config))
-        print(f'Updated {fname_config:s}')
+        print(f'Updated {f_config:s}')

@@ -1,0 +1,21 @@
+name = "CAM test"
+mmin = 4.0
+bin_width = 0.2
+rupture_mesh_spacing = 2.5
+kernel_maximum_distance = 120.0
+kernel_smoothing = [ [ 0.8, 20.0,], [ 0.15, 40.0,], [ 0.05, 80.0,],]
+source_prefix = "L01"
+                                                                   
+[completeness]
+mags = []
+years = []
+completeness_ref = [  [ 1980.0, 4.0,], [ 1964.0, 5.0,], [ 1904.0, 7.0,],]
+deviation = 1.7
+ref_mag = 2.0
+ref_upp_mag = 10.0
+min_mag_compl = 4.0
+bmin = 0.7
+bmax = 1.3
+flexible = true
+num_steps = 2
+optimization_criterion = "optimize"  

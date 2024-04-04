@@ -48,6 +48,7 @@ from openquake.hazardlib.geo.utils import OrthographicProjection
 from scipy.interpolate import LinearNDInterpolator
 
 from openquake.hmtk.seismicity.selector import CatalogueSelector
+from openquake.hmtk.parsers.catalogue.csv_catalogue_parser import CsvCatalogueParser
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
 
 
@@ -178,6 +179,9 @@ class CrossSectionData:
         self.topo = None
         self.litho = None
         self.volc = None
+        self.cs = None
+        self.c_eqks = None
+        self.count = [0]*4
 
     def set_trench_axis(self, filename):
         """
@@ -214,6 +218,58 @@ class CrossSectionData:
         selector = CatalogueSelector(catalogue, create_copy=True)
         newcat = selector.select_catalogue(boo)
         self.ecat = newcat
+
+
+    def set_catalogue_classified(self, classes, classlist, bffer=75.):
+        """
+        """
+        print('setting catalogue')
+
+        types = classlist.split(',')
+        datal = []
+        for file_n in types:
+            filen = os.path.join(classes.format(file_n))
+            print(filen)
+            parser = CsvCatalogueParser(filen)
+            catalogueA = parser.read_file()
+            sel1 = CatalogueSelector(catalogueA, create_copy=True)
+            catalogue = sel1.within_magnitude_range(lower_mag=None,upper_mag=None)
+            print(len(catalogue.data['depth']))
+            _,_,_,_,qual = self.csec.get_mm()
+            if qual==1:
+                idxs = self.csec.get_eqks_within_buffer_idl(catalogue, bffer)
+            else:
+                idxs = self.csec.get_eqks_within_buffer(catalogue, bffer)
+            boo = numpy.zeros_like(catalogue.data['magnitude'], dtype=int)
+            boo[idxs] = 1
+            selector = CatalogueSelector(catalogue, create_copy=True)
+            selector = CatalogueSelector(catalogue, create_copy=True)
+            newcat = selector.select_catalogue(boo)
+            lon = newcat.data['longitude']
+            lon = ([x+360 if x<0 else x for x in lon])
+            lat = newcat.data['latitude']
+            depth = newcat.data['depth']
+            mag = newcat.data['magnitude']
+            cl_len = len(lat)
+            if str.lower(filen).find('crustal')>0:
+                cla = [1]*cl_len
+                self.count[0] = cl_len
+            if str.lower(filen).find('int')>0:
+                cla = [2]*cl_len
+                self.count[1] = cl_len
+            if str.lower(filen).find('slab')>0:
+                cla = [3]*cl_len
+                self.count[2] = cl_len
+            if str.lower(filen).find('unc')>0:
+                cla = [4]*cl_len
+                self.count[3] = cl_len
+            for g in range(len(lat)):
+                datal.append([lon[g], lat[g], depth[g], cla[g], mag[g]])
+
+            dataa = numpy.array(datal)
+            if len(cla):
+                self.c_eqks = numpy.squeeze(dataa[:, :])
+
 
     def set_slab1pt0(self, filename, bffer=2.0):
         """
@@ -333,19 +389,19 @@ class CrossSectionData:
 
         minlo, maxlo, minla, maxla, qual = self.csec.get_mm()
         if qual == 0:
-            idxs = self.csec.get_grd_nodes_within_buffer(loc,
+            idxs, _ = self.csec.get_grd_nodes_within_buffer(loc,
                                                          lac,
                                                          bffer,
                                                          minlo, maxlo,
                                                          minla, maxla)
         if qual == 1:
-            idxs = self.csec.get_grd_nodes_within_buffer_idl(loc,
+            idxs, _ = self.csec.get_grd_nodes_within_buffer_idl(loc,
                                                              lac,
                                                              bffer,
                                                              minlo, maxlo,
                                                              minla, maxla)
         if idxs is not None:
-            cmt_cat.select_catalogue_events(idxs[0])
+            cmt_cat.select_catalogue_events(idxs)
             self.gcmt = cmt_cat
 
     def set_topo(self, filename, bffer=0.25):

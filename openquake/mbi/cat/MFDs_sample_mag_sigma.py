@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # ------------------- The OpenQuake Model Building Toolkit --------------------
 # Copyright (C) 2022 GEM Foundation
 #           _______  _______        __   __  _______  _______  ___   _
@@ -25,30 +24,25 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-import sys
-
-from pyproj import Geod
+import toml
+import numpy as np
 from openquake.baselib import sap
-from openquake.sub.create_2pt5_model import create_2pt5_model
-from openquake.hazardlib.geo.geodetic import distance
 
-def main(in_path, out_path, *, maximum_sampling_distance=25.):
+from openquake.mbt.tools.mfd_sample.make_mfds import make_many_mfds
+
+
+def main(fname_config):
     """
-    From a set of profiles it creates the top surface of the slab
+    Runs the workflow that samples the magnitude sigma for each event, creating
+    many catalogues, then declusters them all based on their TRT, then runs 
+    completeness analysis that jointly solves for the MFD, and finally returns
+    three mfds based on the center and 1-sigma of the a-b covariance
     """
+    make_many_mfds(fname_config)
 
-    if in_path == out_path:
-        tmps = '\nError: the input folder cannot be also the output one\n'
-        tmps += '    input: {0:s}\n'.format(in_path)
-        tmps += '    input: {0:s}\n'.format(out_path)
-        print(tmps)
-        exit(0)
 
-    create_2pt5_model(in_path, out_path, float(maximum_sampling_distance))
+msg = 'Name of the .toml file with configuration parameters'
+main.fname_config = msg
 
-main.in_path = 'Folder with the profiles'
-main.out_path = 'Folder where to store the output'
-main.maximum_sampling_distance = 'Sampling distance [km]'
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
+if __name__ == '__main__':
+    sap.run(main)
