@@ -119,7 +119,7 @@ def _create_catalogue_versions(catfi, outdir, numcats=None, stype='random',
 
 
 
-def _decl_all_cats(outdir, cat, dcl_toml_tmp, decdir):
+def _decl_all_cats(outdir, dcl_toml_tmp, decdir):
 
     """
     """
@@ -241,7 +241,7 @@ def make_many_mfds(configfile, basedir=None):
     decluster = config['decluster'].get('decluster_catalogues', True)
     if decluster:
         dcl_toml_tmpl = config['decluster']['decluster_settings']
-        _decl_all_cats(catdir, catfi, dcl_toml_tmpl, decdir)
+        _decl_all_cats(catdir, dcl_toml_tmpl, decdir)
 
 
     # generate the completeness tables 
