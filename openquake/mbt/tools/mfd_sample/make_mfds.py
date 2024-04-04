@@ -47,12 +47,12 @@ def _create_catalogue_versions(catfi, outdir, numcats=None, stype='random',
     # check if output folder is empty
 
     if os.path.exists(outdir):
-        tmps = f'\nError: {outdir} already exists! '
-        tmps += '\n Choose an empty directory.'
+        tmps = f'\nWarning: {outdir} already exists! '
+        tmps += '\n Overwriting files.'
         print(tmps)
-        sys.exit(1)
-    else:
-        os.makedirs(outdir)
+   #     sys.exit(1)
+    #else:
+    os.makedirs(outdir)
 
     csvout = os.path.join(outdir, 'v{}_'+catfi.split('/')[-1])
     fileout = os.path.join(outdir, 'v_mags.csv')
