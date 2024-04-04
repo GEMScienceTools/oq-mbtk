@@ -41,7 +41,10 @@ class TestWorkflow(unittest.TestCase):
         config = toml.load(config_fi)
         cat_fi_name = config['main']['catalogue_filename']
         cat_fi_name_new = os.path.join(BASE_PATH, cat_fi_name)
+        outdir_name = config['main']['output_directory']
+        outdir_name_new = os.path.join(BASE_PATH, outdir_name)
         config['main']['catalogue_filename'] = cat_fi_name_new
+        config['main']['output_directory'] = outdir_name_new
         dec_toml = config['decluster']['decluster_settings']
         dec_toml_new = os.path.join(BASE_PATH, dec_toml)
         comp_toml = config['completeness']['completeness_settings']
