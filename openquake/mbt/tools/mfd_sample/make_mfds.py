@@ -51,10 +51,10 @@ def _create_catalogue_versions(catfi, outdir, numcats=None, stype='random',
         tmps += '\n Overwriting files.'
         print(tmps)
    #     sys.exit(1)
-    #else:
-    os.makedirs(outdir)
+    else:
+        os.makedirs(outdir)
 
-    csvout = os.path.join(outdir, 'v{}_'+catfi.split('/')[-1])
+    csvout = os.path.join(outdir, 'v{}_catalogue.pkl')
     fileout = os.path.join(outdir, 'v_mags.csv')
     factors = np.arange(-1,1,0.1)
 
