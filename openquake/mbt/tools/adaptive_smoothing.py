@@ -168,7 +168,7 @@ class AdaptiveSmoothing(object):
         mu_norm = mu_loc/sum(mu_loc)
         nocc = mu_norm*len(data) 
         
-        self.out = pd.DataFrame({'lon': x, 'lat' : y, 'mu_loc': mu_loc, 'mu_norm': mu_norm, 'nocc' : nocc})
+        self.out = pd.DataFrame({'lon': x, 'lat' : y, 'mu_loc': mu_loc})
         #self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc' : mu_loc})
 
         return self.out
