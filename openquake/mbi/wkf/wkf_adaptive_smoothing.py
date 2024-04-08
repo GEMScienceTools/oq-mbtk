@@ -31,6 +31,9 @@ def main(catalogue:str, h3_map: str, config:str, outputfile:str,  use: str = [])
         * 'd_i_min' - minimum smoothing distance d_i, should be chosen
             based on location uncertainty. Default of 0.5 in Helmstetter
             et al. (float)
+        * 'h3res' - h3 resolution for the model
+        * 'maxdist' - maximum distance to consider a neighbour
+        
 
     :param output_file:
         String specifying location in which to save output.
@@ -78,9 +81,10 @@ def main(catalogue:str, h3_map: str, config:str, outputfile:str,  use: str = [])
     # Run adaptive smoothing over chosen area, don't grid the data (h3
     # locs, already done!), don't use depths.
     smooth = ak.AdaptiveSmoothing([locations.lon, locations.lat],
-                                  grid=False, use_3d=False)
-    conf = {"kernel": config["kernel"], "n_v": config['n_v'],
-            "d_i_min": config['d_i_min'], "h3res": config['h3res'], "maxdist": config['maxdist']}
+                                  grid=False, use_3d=False, use_maxdist = True)
+    conf = {"kernel": config['kernel'], "n_v": config['n_v'],
+            "d_i_min": config['d_i_min'], "h3res": config['h3res'], 
+            "maxdist": config['maxdist']}
     out = smooth.run_adaptive_smooth(cat, conf)
     # Make output into dataframe with named columns and write to a csv
     # file in specified loctaion

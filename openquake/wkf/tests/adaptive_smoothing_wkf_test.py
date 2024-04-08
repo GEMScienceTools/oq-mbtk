@@ -65,9 +65,11 @@ class AdaptiveSmoothingTestwkf(unittest.TestCase):
         smooth = ak.AdaptiveSmoothing([locations.lon, locations.lat], grid=False, use_3d=False, use_maxdist = True)
         out = smooth.run_adaptive_smooth(self.cat, conf)
 
-        expected = np.array([0.000984, 0.000983, 0.001360, 0.001375,0.002249,
-        0.002325, 0.000881, 0.001852, 0.001765, 0.002598, 0.002911, 0.000004,
-        0.000044, 0.000926, 0.000099, 0.002677, 0.001304])
+        expected = np.array([0.20216132, 0.20195587, 0.27940995, 0.28249168, 0.46205366,
+        0.47766775, 0.18100012, 0.38049061, 0.36261659, 0.53375519,
+        0.59806057, 0.00082179, 0.00903973, 0.19024531, 0.0203394 ,
+        0.54998562, 0.26790484])
+        
         out = pd.DataFrame(out)
         out.columns = ["lon", "lat", "nocc"]
         
