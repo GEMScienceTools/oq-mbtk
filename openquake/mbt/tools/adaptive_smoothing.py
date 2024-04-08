@@ -77,6 +77,7 @@ class AdaptiveSmoothing(object):
             * 'h3res' - the h3 resolution for the smoothing calculations
             
             
+            
         :returns:
             Smoothed seismicity data as np.ndarray, of the form
             [Longitude, Latitude, Smoothed_value]
@@ -163,14 +164,17 @@ class AdaptiveSmoothing(object):
  	    # Distance from each event to the location
             r_dists = distance(data[:, 0], data[:, 1], depth, x[iloc], y[iloc], 0)
             mu_loc[iloc] = self.mu_int(r_dists, d_i, kernel = kernel)
-
-        # normalise mu_loc to number of observed events
-        mu_norm = mu_loc/sum(mu_loc)
-        nocc = mu_norm*len(data) 
         
-        self.out = pd.DataFrame({'lon': x, 'lat' : y, 'mu_loc': mu_loc, 'mu_norm':mu_norm, 'nocc': nocc})
+        if self.use_maxdist == True:
+            # normalise mu_loc to number of observed events
+            mu_norm = mu_loc/sum(mu_loc)
+            nocc = mu_norm*len(mu_loc) 
+        
+            self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc': nocc})
         #self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc' : mu_loc})
-
+        else:
+            self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc': mu_loc})
+        
         return self.out
 
     

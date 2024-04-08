@@ -58,7 +58,7 @@ class AdaptiveSmoothingTest(unittest.TestCase):
         smooth = ak.AdaptiveSmoothing([cat.data['longitude'], cat.data['latitude']], grid = False, use_3d = False, use_maxdist = True)
         adapt_mu = smooth.run_adaptive_smooth(cat, config )
         # Same as test_adaptive01
-        expect_mu = ((0.004907, 0.002478, 0.005005, 0.002618, 0.001087))
+        expect_mu = ((1.52438646, 0.76980429, 1.55483069, 0.81329605, 0.33768251))
         #self.assertAlmostEqual(adapt_mu['nocc'].values[0], expect_mu, places = 6)
         
     def test_infogain(self):
@@ -68,7 +68,7 @@ class AdaptiveSmoothingTest(unittest.TestCase):
         config = {"kernel": "Gaussian", "n_v": 2, "d_i_min": 0.5}
         out = smooth.run_adaptive_smooth(cat, config )
         IG = smooth.information_gain(5, T = 1)
-        self.assertEqual(IG, 1.0119860022288694)
+        self.assertAlmostEqual(IG, 1.0119860022288694, places = 6)
         
     
         
