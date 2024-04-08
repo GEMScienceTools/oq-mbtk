@@ -50,6 +50,7 @@ class RuptureCreationSmoothedTest(unittest.TestCase):
         config['main']['profile_folder'] = self.out_path
         # Spatial distribution controlled by smoothing
         config['main']['uniform_fraction'] = '0.0'
+        config['main']['sort_catalogue'] = 'True'
 
         # Save the new .ini
         self.ini = os.path.join(self.out_path, 'test.ini')

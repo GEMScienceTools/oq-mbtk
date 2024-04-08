@@ -478,7 +478,6 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         record.datafile = filename
         return record
 
-
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
         Get the ground-motion data from a row (record) in the database

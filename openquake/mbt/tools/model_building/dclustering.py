@@ -62,9 +62,9 @@ def dec(declustering_params, declustering_meth, cat):
 
 
 def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
-              output_path, labels=None, tr_fname=None, subcatalogues=False,
-              fmat='csv', olab='', save_af=False, out_fname_ext='',
-              fix_defaults=False):
+              output_path, labels=None, tr_fname=None, 
+              subcatalogues=False, fmat='csv', olab='', save_af=False, 
+              out_fname_ext='', fix_defaults=False):
     """
     :param str catalogue_hmtk_fname:
         Full path to the file containing the initial catalogue
@@ -124,7 +124,7 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
         cat = _add_defaults(cat)
     cato = copy.deepcopy(cat)
 
-    # Select earthquakes belonging to a given TR. When necessary combining
+       # Select earthquakes belonging to a given TR. When necessary combining
     # multiple TRs, use label <TR_1>,<TR_2>AND...
     idx = numpy.full(cat.data['magnitude'].shape, True, dtype=bool)
     sumchk = 0
@@ -216,40 +216,44 @@ def decluster(catalogue_hmtk_fname, declustering_meth, declustering_params,
             tmpsum1 = int(sum(idx_tmp))
             tmpsum2 = int(sum(kkk))
             logging.info(tmps.format(lab, tmpsum1, tmpsum2, pct))
-            print(tmps.format(lab, tmpsum1, tmpsum2, pct))
-            print(tmpr.format(min(ooo.data['magnitude']),
+            try:
+                print(tmps.format(lab, tmpsum1, tmpsum2, pct))
+                print(tmpr.format(min(ooo.data['magnitude']),
                               max(ooo.data['magnitude'])))
-            #
-            # Output filename
-            ext = '_dec_{:s}_{:s}.{:s}'.format(olab, lab, fmat)
-            tcat_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem
-            tcat_fname = tcat_fname + ext
-            tmps = os.path.join(output_path, tcat_fname)
-            tcat_fname = os.path.abspath(tmps)
-            if save_af:
-                ext = '_dec_af_{:s}_{:s}.{:s}'.format(olab, lab, fmat)
-                tcataf_fname = Path(
-                    os.path.basename(catalogue_hmtk_fname)).stem + ext
-                tmps = os.path.join(output_path, tcataf_fname)
-                tcataf_fname = os.path.abspath(tmps)
-            #
-            # Dumping data into the pickle file
-            if ooo is not None:
-                if fmat == 'csv':
-                    ooo.write_catalogue(tcat_fname)
-                    if save_af:
-                        aaa.write_catalogue(tcataf_fname)
-                elif fmat == 'pkl':
-                    fou = open(tcat_fname, 'wb')
-                    pickle.dump(ooo, fou)
-                    fou.close()
-                    if save_af:
-                        fou = open(tcataf_fname, 'wb')
-                        pickle.dump(aaa, fou)
+                #
+                # Output filename
+                ext = '_dec_{:s}_{:s}.{:s}'.format(olab, lab, fmat)
+                tcat_fname = Path(os.path.basename(catalogue_hmtk_fname)).stem
+                tcat_fname = tcat_fname + ext
+                tmps = os.path.join(output_path, tcat_fname)
+                tcat_fname = os.path.abspath(tmps)
+                if save_af:
+                    ext = '_dec_af_{:s}_{:s}.{:s}'.format(olab, lab, fmat)
+                    tcataf_fname = Path(
+                        os.path.basename(catalogue_hmtk_fname)).stem + ext
+                    tmps = os.path.join(output_path, tcataf_fname)
+                    tcataf_fname = os.path.abspath(tmps)
+                #
+                # Dumping data into the pickle file
+                if ooo is not None:
+                    if fmat == 'csv':
+                        ooo.write_catalogue(tcat_fname)
+                        if save_af:
+                            aaa.write_catalogue(tcataf_fname)
+                    elif fmat == 'pkl':
+                        fou = open(tcat_fname, 'wb')
+                        pickle.dump(ooo, fou)
                         fou.close()
-            else:
-                tstr = 'Catalogue for region {:s} is empty'.format(lab)
-                logging.warning(tstr)
+                        if save_af:
+                            fou = open(tcataf_fname, 'wb')
+                            pickle.dump(aaa, fou)
+                            fou.close()
+                else:
+                    tstr = 'Catalogue for region {:s} is empty'.format(lab)
+                    logging.warning(tstr)
+            except:
+                continue
+
         f.close()
 
     outl = [out_fname]
