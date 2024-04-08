@@ -159,7 +159,6 @@ class ESMFlatfileParserWS(SMDatabaseReader):
                                   xcomp, ycomp,
                                   vertical=vertical)
 
-
     def _parse_event_data(self, metadata):
         """
         Parses the event metadata
@@ -472,7 +471,6 @@ class ESMFlatfileParserWS(SMDatabaseReader):
             hspec_dset.attrs["Units"] = "cm/s/s"
         record.datafile = filename
         return record
-
 
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
