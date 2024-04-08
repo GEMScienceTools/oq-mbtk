@@ -69,9 +69,11 @@ class AdaptiveSmoothing(object):
 
         :param dict config:
             Configuration settings of the algorithm:
-            * 'kernel' - Kernel choice for adaptive smoothing. Options are "Gaussian" or "PowerLaw" (string)
+            * 'kernel' - Kernel choice for adaptive smoothing. Options are "Gaussian" 
+               or "PowerLaw" (string)
             * 'n_v' - number of nearest neighbour to use for smoothing distance (int)
-            * 'd_i_min' - minimum smoothing distance d_i, should be chosen based on location uncertainty. Default of 0.5 in Helmstetter et al. (float)
+            * 'd_i_min' - minimum smoothing distance d_i, should be chosen based on 
+              location uncertainty. Default of 0.5 in Helmstetter et al. (float)
             Optional (required only when use_maxdist = True)
             * 'maxdist' - in km, the maximum distance at which to consider other events
             * 'h3res' - the h3 resolution for the smoothing calculations
@@ -81,6 +83,9 @@ class AdaptiveSmoothing(object):
         :returns:
             Smoothed seismicity data as np.ndarray, of the form
             [Longitude, Latitude, Smoothed_value]
+            if maxdist == True, the smoothed values will be normalised to the number of 
+            events in the catalogue. This makes the output directly comparable with the 
+            Gaussian smoothing options in the mbtk
         '''
 
         
@@ -116,6 +121,7 @@ class AdaptiveSmoothing(object):
 
         if self.use_maxdist == True:
             maxdist = config['maxdist']
+            print(maxdist)
             h3res = config['h3res']
 
             def lat_lng_to_h3(row):
@@ -131,7 +137,6 @@ class AdaptiveSmoothing(object):
             for iloc in range(0, len(data)):
                 base = h3_df['h3'][iloc]
                 tmp_idxs = h3.k_ring(base, maxdistk)
-            
                 ref_locs = h3_df.loc[h3_df['h3'].isin(tmp_idxs)]
                 r = distance(ref_locs['lon'], ref_locs['lat'], ref_locs['depth'], data[iloc, 0], data[iloc, 1], depth[iloc])
                 # because of filtering, we are now working with a series so treat accordingly!
@@ -139,8 +144,8 @@ class AdaptiveSmoothing(object):
                 
                 if len(r) >= n_v_fix:
                     try: 
-                        # Haven't removed the distance to self, so take n_v + 1
-                        d_i[iloc] = r.iloc[n_v]
+                        # Have not removed distance to self here, so add 1 to n_v
+                        d_i[iloc] = r.iloc[n_v + 1]
                     except: 
                         print("something fishy here! len(r) = ", len(r), " and n_v = ", n_v)
                 else:
@@ -156,7 +161,7 @@ class AdaptiveSmoothing(object):
 
         # Set minimum d_i
         d_i[d_i < config['d_i_min']] = config['d_i_min']
-        
+        print(d_i)
         mu_loc = np.empty(len(x))
         
 	    # Calculate mu at each location 
@@ -168,13 +173,12 @@ class AdaptiveSmoothing(object):
         if self.use_maxdist == True:
             # normalise mu_loc to number of observed events
             mu_norm = mu_loc/sum(mu_loc)
-            nocc = mu_norm*len(mu_loc) 
+            nocc = mu_norm*len(catalogue.data['longitude']) 
         
             self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc': nocc})
-        #self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc' : mu_loc})
+
         else:
             self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc': mu_loc})
-        
         return self.out
 
     
