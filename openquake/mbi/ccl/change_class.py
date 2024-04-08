@@ -25,30 +25,21 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-import sys
+from openquake.mbt.tools.tr.change_class import change 
 
-from pyproj import Geod
 from openquake.baselib import sap
-from openquake.sub.create_2pt5_model import create_2pt5_model
-from openquake.hazardlib.geo.geodetic import distance
 
-def main(in_path, out_path, *, maximum_sampling_distance=25.):
-    """
-    From a set of profiles it creates the top surface of the slab
-    """
+def main(cat_pickle_filename, treg, eqlist):
 
-    if in_path == out_path:
-        tmps = '\nError: the input folder cannot be also the output one\n'
-        tmps += '    input: {0:s}\n'.format(in_path)
-        tmps += '    input: {0:s}\n'.format(out_path)
-        print(tmps)
-        exit(0)
+    change(cat_pickle_filename, treg, eqlist)
 
-    create_2pt5_model(in_path, out_path, float(maximum_sampling_distance))
 
-main.in_path = 'Folder with the profiles'
-main.out_path = 'Folder where to store the output'
-main.maximum_sampling_distance = 'Sampling distance [km]'
+msg = 'Pickled catalogue file'
+main.cat_pickle_filename = msg
+msg = 'hdf5 file with classifications'
+main.treg = msg
+msg = 'File of format <eqid>,<target label>'
+main.eqlist = msg
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sap.run(main)

@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import os
+import sys
 
 from openquake.baselib import sap
 from openquake.sub.build_complex_surface import build_complex_surface

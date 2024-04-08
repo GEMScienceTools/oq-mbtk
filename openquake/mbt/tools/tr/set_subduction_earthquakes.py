@@ -38,6 +38,7 @@ from openquake.mbt.tools.tr.catalogue_hmtk import (get_rtree_index,
                                                    get_distances_from_surface)
 from openquake.sub.utils import (_read_edges,
                                  build_complex_surface_from_edges,
+                                 build_kite_surface_from_profiles,
                                  plot_complex_surface)
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
@@ -95,7 +96,7 @@ class SetSubductionEarthquakes:
         self.low_mag = float(low_mag)
         self.upp_mag = float(upp_mag)
 
-    def classify(self, compute_distances, remove_from):
+    def classify(self, compute_distances, remove_from, surftype='ComplexFault'):
         """
         :param bool compute_distances:
             A boolean indicating if distances between earthquakes and the
@@ -140,21 +141,32 @@ class SetSubductionEarthquakes:
         # Build the complex fault surface
         tedges = _read_edges(edges_folder)
         print(edges_folder)
-        surface = build_complex_surface_from_edges(edges_folder)
-        mesh = surface.mesh
+        if surftype == 'ComplexFault':
+            surface = build_complex_surface_from_edges(edges_folder)
+            # Create polygon encompassing the mesh
+            mesh = surface.mesh
+            plo = list(mesh.lons[0, :])
+            pla = list(mesh.lats[0, :])
+            #
+            plo += list(mesh.lons[:, -1])
+            pla += list(mesh.lats[:, -1])
+            #
+            plo += list(mesh.lons[-1, ::-1])
+            pla += list(mesh.lats[-1, ::-1])
+            #
+            plo += list(mesh.lons[::-1, 0])
+            pla += list(mesh.lats[::-1, 0])
 
-        # Create polygon encompassing the mesh
-        plo = list(mesh.lons[0, :])
-        pla = list(mesh.lats[0, :])
-        #
-        plo += list(mesh.lons[:, -1])
-        pla += list(mesh.lats[:, -1])
-        #
-        plo += list(mesh.lons[-1, ::-1])
-        pla += list(mesh.lats[-1, ::-1])
-        #
-        plo += list(mesh.lons[::-1, 0])
-        pla += list(mesh.lats[::-1, 0])
+        elif surftype == 'KiteFault':
+            surface = build_kite_surface_from_profiles(edges_folder)
+            # Create polygon encompassing the mesh
+            mesh = surface.mesh
+            plo = surface.surface_projection[0]
+            pla = surface.surface_projection[1]
+        else:
+            msg = f'surface type {surftype} not supported'
+            raise ValueError(msg)
+
 
         # Set variables used in griddata
         data = np.array([mesh.lons.flatten().T, mesh.lats.flatten().T]).T
@@ -167,10 +179,10 @@ class SetSubductionEarthquakes:
             grp.create_dataset('mesh', data=ddd)
 
         # Set the bounding box of the subduction surface
-        min_lo_sub = np.amin(mesh.lons)
-        min_la_sub = np.amin(mesh.lats)
-        max_lo_sub = np.amax(mesh.lons)
-        max_la_sub = np.amax(mesh.lats)
+        min_lo_sub = np.nanmin(mesh.lons)
+        min_la_sub = np.nanmin(mesh.lats)
+        max_lo_sub = np.nanmax(mesh.lons)
+        max_la_sub = np.nanmax(mesh.lats)
 
         # Select the earthquakes within the bounding box
         idxs = sorted(list(sidx.intersection((min_lo_sub-DELTA,
@@ -263,8 +275,12 @@ class SetSubductionEarthquakes:
         # interpolation
         # sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
         #                      method='cubic')
-        rbfi = RBFInterpolator(data[:, 0:2], values, kernel='multiquadric',
-                               epsilon=1)
+        val_red = values[~np.isnan(values)]
+        dat_red = data[~np.isnan(data)].reshape(-1, 2)
+#        dat_red_fi = dat_red.reshape(len(val_red), 2)
+
+        rbfi = RBFInterpolator(dat_red[:, 0:2], val_red, kernel='multiquadric',
+                               epsilon=1, neighbors=100)
         sub_depths = rbfi(points[:, 0:2])
 
         # Save the distances to a file

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import re
+import sys
 import glob
 import numpy
 
@@ -54,7 +55,8 @@ def get_interpolated_profiles(sps, lengths, number_of_samples):
     for key in sorted(sps.keys()):
 
         # calculate the sampling distance
-        samp = lengths[key] / number_of_samples
+        # multiplier is making the last point be closer to the original end pt
+        samp = lengths[key] / number_of_samples  * 0.99
 
         # set data for the profile
         dat = sps[key]
@@ -294,7 +296,7 @@ def write_edges_csv(sps, foldername):
     #
     # run for all the edges i.e. number of
     max_num = len(sps[list(sps.keys())[0]])
-    for idx in range(0, max_num - 1):
+    for idx in range(0, max_num ):
         dat = []
         for key in sorted(sps):
             dat.append(sps[key][idx, :])
