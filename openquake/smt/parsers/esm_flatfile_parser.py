@@ -166,7 +166,6 @@ class ESMFlatfileParser(SMDatabaseReader):
                                   xcomp, ycomp,
                                   vertical=vertical)
 
-
     def _parse_event_data(self, metadata):
         """
         Parses the event metadata

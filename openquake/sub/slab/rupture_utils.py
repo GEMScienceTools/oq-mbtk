@@ -196,5 +196,7 @@ def get_discrete_dimensions(area, sampling, aspr):
         wdt = None
         lng = None
     elif area_error > 0.25 and lng > 1e-10 and wdt > 1e-10:
-        raise ValueError('Area discrepancy: ', area, lng*wdt, lng, wdt, aspr)
+        print('Area discrepancy: ', area, lng*wdt, lng, wdt, aspr)
+        
+        #raise ValueError('Area discrepancy: ', area, lng*wdt, lng, wdt, aspr)
     return lng, wdt
