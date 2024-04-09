@@ -131,7 +131,6 @@ class AdaptiveSmoothing(object):
             h3_df.columns = ['lon', 'lat', 'depth', 'mag']
             h3_df['h3'] = h3_df.apply(lat_lng_to_h3, axis=1)
             maxdistk = int(np.ceil(maxdist/h3.edge_length(h3res, 'km')))
-            n_v_fix = n_v + 1
 
             # Consider only neighbours within maxdistk
             for iloc in range(0, len(data)):
@@ -142,12 +141,10 @@ class AdaptiveSmoothing(object):
                 # because of filtering, we are now working with a series so treat accordingly!
                 r.sort_values(inplace = True)
                 
-                if len(r) >= n_v_fix:
-                    try: 
-                        # Have not removed distance to self here, so add 1 to n_v
-                        d_i[iloc] = r.iloc[n_v + 1]
-                    except: 
-                        print("something fishy here! len(r) = ", len(r), " and n_v = ", n_v)
+                if len(r) > (n_v + 1): 
+                    # Have not removed distance to self here, so add 1 to n_v
+                    d_i[iloc] = r.iloc[n_v + 1]
+                    
                 else:
                     # no n_vth neighour within maximum distance, set d_i to maxdist
                     d_i[iloc] = maxdist 
