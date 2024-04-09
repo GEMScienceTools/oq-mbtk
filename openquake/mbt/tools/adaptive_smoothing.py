@@ -21,7 +21,7 @@ class AdaptiveSmoothing(object):
     
     '''
     
-    def __init__(self, locations, grid=False, use_3d=False, bvalue=None, use_maxdist = False):
+    def __init__(self, locations, grid=False, use_3d=False, bvalue=None, use_maxdist = False, weight = None):
         '''
         Instantiate class with locations at which to calculate intensity
 
@@ -121,7 +121,6 @@ class AdaptiveSmoothing(object):
 
         if self.use_maxdist == True:
             maxdist = config['maxdist']
-            print(maxdist)
             h3res = config['h3res']
 
             def lat_lng_to_h3(row):
@@ -158,7 +157,6 @@ class AdaptiveSmoothing(object):
 
         # Set minimum d_i
         d_i[d_i < config['d_i_min']] = config['d_i_min']
-        print(d_i)
         mu_loc = np.empty(len(x))
         
 	    # Calculate mu at each location 
