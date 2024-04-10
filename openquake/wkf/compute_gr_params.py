@@ -103,7 +103,6 @@ def compute_a_value_from_density(fname_input_pattern: str,
     # Saving results into the config file
     with open(fname_config, 'w') as fou:
         fou.write(toml.dumps(model))
-        print(f'Updated {fname_config:s}')
 
 
 def get_mmax_ctab(model, src_id):
@@ -113,6 +112,7 @@ def get_mmax_ctab(model, src_id):
                 'mmax' in model['sources'][src_id]):
             mmax = model['sources'][src_id]['mmax']
         else:
+            print(f'{src_id} misses mmax')
             mmax = model['default']['mmax']
         if (src_id in model['sources'] and
                 'completeness_table' in model['sources'][src_id]):
@@ -247,7 +247,6 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
 
         if len(use) > 0 and src_id not in use:
             continue
-        print(fname)
 
         # Processing catalogue
         tcat = _load_catalogue(fname)
@@ -317,7 +316,6 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
     # Saving results into the config file
     with open(fname_config, 'w', encoding='utf-8') as fou:
         fou.write(toml.dumps(model))
-        print(f'Updated {fname_config:s}')
 
 
 def get_weichert_confidence_intervals(mag, occ, tcompl, bgr):
@@ -723,4 +721,3 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
     if fname_config is not None:
         with open(fname_config, 'w') as f:
             f.write(toml.dumps(model))
-            print('Updated {:s}'.format(fname_config))
