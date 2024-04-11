@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2018 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -16,13 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests parsing of the ESM22 flatfile format (i.e. flatfile downloaded from web service) in SMT
+Tests parsing of the ESM flatfile format (i.e. flatfile downloaded from ESM 
+web service)
+--> https://esm-db.eu/#/waveform/search
 """
 import os
 import sys
 import shutil
 import unittest
-from openquake.smt.parsers.esm22_flatfile_parser import ESM22FlatfileParser
+from openquake.smt.parsers.esm_ws_flatfile_parser import ESMFlatfileParserWS
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -54,22 +56,23 @@ TARGET_IDS = [
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
-class ESM22FlatfileParserTestCase(unittest.TestCase):
+class ESMFlatfileParserWSTestCase(unittest.TestCase):
     """
-    Tests the parsing of the reformatted ESM22 flatfile
+    Tests the parsing of a flatfile downloaded from the ESM web service
     """
     @classmethod
     def setUpClass(cls):
-        #Specify base directory
-        cls.ESM22_flatfile_directory = os.path.join(BASE_DATA_PATH,"ESM22_Albania_filtered_test.csv")
-        cls.db_file = os.path.join(BASE_DATA_PATH, "ESM22_conversion_test_metadata")    
+        # Specify base directory
+        cls.ESM_flatfile_directory = os.path.join(
+            BASE_DATA_PATH, "ESM_WS_Albania_filtered_test.csv")
+        cls.db_file = os.path.join(BASE_DATA_PATH, "ESM_ws_conversion_test_metadata")    
         
-    def test_esm22_flatfile_parser(self):
+    def test_esm_ws_flatfile_parser(self):
         """
-        Tests the parsing of the reformatted ESM22 flatfile
+        Tests the parsing of the reformatted ESM flatfile
         """
-        parser = ESM22FlatfileParser.autobuild("000", "ESM22_conversion_test",
-                                             self.db_file, self.ESM22_flatfile_directory)
+        parser = ESMFlatfileParserWS.autobuild("000", "ESM_conversion_test",
+                                               self.db_file, self.ESM_flatfile_directory)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
         # Should contain 19 records

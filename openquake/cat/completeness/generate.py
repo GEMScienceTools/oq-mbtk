@@ -50,21 +50,22 @@ def get_completenesses(fname_config, folder_out):
     create_folder(folder_out)
     config = toml.load(fname_config)
     key = 'completeness'
-    mags = np.array(config[key]['mags'])
+    mags = np.array(config[key]['mags'], dtype=np.float32)
     years = np.array(config[key]['years'])
     num_steps = config[key].get('num_steps', 0)
     min_mag_compl = config[key].get('min_mag_compl', None)
     apriori_conditions = config[key].get('apriori_conditions', {})
     cref = config[key].get('completeness_ref', None)
     step = config[key].get('step', 8)
+    mrange = config['completeness'].get('deviation', 1.0) 
 
     _get_completenesses(mags, years, folder_out, num_steps, min_mag_compl,
-                        apriori_conditions, cref, step)
+                        apriori_conditions, cref, step, mrange)
 
 
 def _get_completenesses(mags, years, folder_out=None, num_steps=0,
                         min_mag_compl=None, apriori_conditions={},
-                        completeness_ref=None, step=6):
+                        completeness_ref=None, step=6, mrange=1.0):
     """
     :param mags:
         A list or numpy array in increasing order
@@ -194,13 +195,7 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
         mags_ref = [c[1] for c in completeness_ref]
         rem = []
         for iper, prm in enumerate(perms):
-            #tmp = []
-            #for yea, j in zip(years, prm):
-            #    if j >= -1e-10:
-            #        tmp.append([yea, mags[int(j)]])
-#
-#            tmp = np.array(tmp)
-#            ctab = clean_completeness(tmp)
+
             ctab = _make_ctab(prm, years, mags)
             for yr, mg in ctab:
                 if not yr in years_ref:
@@ -208,7 +203,7 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
                     continue
                 index = years_ref.index(yr)
                 mdiff = abs(mags_ref[index] - mg)
-                if mdiff > 1:
+                if mdiff > mrange:
                     rem.append(iper)
                     continue
 

@@ -102,6 +102,7 @@ def simple_fault_from_feature(
         "lsd",
         "rake_err",
         "usd",
+        "seismic_fraction",
     ]
 
     fault = {prop: feature['properties'][prop] for prop in props_to_keep}
@@ -384,6 +385,7 @@ def get_subsections_from_fault(
     ]
     optional_props_to_keep = [
         "rake_err",
+        "seismic_fraction",
     ]
 
     if np.isscalar(subsection_size):  # len(subsection_size) == 1:
