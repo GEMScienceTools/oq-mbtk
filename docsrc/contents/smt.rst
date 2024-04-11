@@ -9,7 +9,7 @@ Here, we will demonstrate how each of these components can be implemented, in th
 
 Please note that this documentation assumes an elementary knowledge of GMPEs, residual analysis and ground-motion characterisation. Therefore, this documentation's purpose is to facilitate the application of the smt by user who is already familiar with the underlying theory. References are provided throughout for useful overviews of such theory!
 
-Performing a Residual Analysis within the smt
+Performing a Residual Analysis
 *********************************************
 The smt provides capabilities (parsers) for the parsing of an inputted dataset into metadata for the performing of a residual analysis, so as to evaluate GMPE performance against the inputted dataset.
 
@@ -94,7 +94,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         > gmpe_list = ['AkkarEtAlRjb2014', 'BooreEtAl2014', 'BooreEtAl2020', 'CauzziEtAl2014', 'KothaEtAl2020regional', 'LanzanoEtAl2019_RJB_OMO']
         > imt_list = ['PGA','SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']
         
-3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for specifying the inputs of GMPEs with user-specifiable input parameters e.g. regionalisation parameter or logic tree branch parameters. Note that here the GMPEs listed in the first ``.toml`` file are not appropriate for our target region, but have been selected to demonstrate how GMPEs with additional inputs can be specified within a ``.toml`` file. The second ``.toml`` file provides the GMPEs and intensity measures we use for running this demonstration analysis.
+3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for the use of GMPEs with user-specifiable input parameters. Note that here the GMPEs listed in this example ``.toml`` file are not appropriate for our target region, but have been selected to demonstrate how GMPEs with additional inputs can be specified.
 
    The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``, or for ModifiableGMPE features in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``). Note also that a GMPE sigma model must be provided by the GMPE for the computation of residuals. If a sigma model is not provided by the GMPE, it can be specified as demonstrated below.
    
@@ -104,20 +104,8 @@ We can specify the inputs to perform a residual analysis with as follows:
     
         [models]
     
-        [models.1-AbrahamsonGulerce2020SInter]
-        region = "GLO"
-        
-        [models.2-AbrahamsonGulerce2020SInter]
+        [models.AbrahamsonGulerce2020SInter]
         region = "CAS"
-        
-        [models.AbrahamsonEtAl2014]
-        
-        [models.AbrahamsonEtAl2014RegJPN]
-        region = "JPN" # nb currently a bug for specifically this gmm in the SMT where the user must still specify the region param despite the class name differentiating as regionalised variant (will be fixed!)
-        
-        [models.BooreEtAl2014]
-        
-        [models.BooreEtAl2014LowQ]
         
         [models.YenierAtkinson2015BSSA]
         sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
@@ -131,10 +119,10 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models.3-CampbellBozorgnia2014]
         set_between_epsilon = 0.5 # Shift the mean with formula mean --> mean + epsilon_tau * between event
                                
-        [models.1-AbrahamsonEtAl2014]
+        [models.1-ChiouYoungs2014]
         median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
         
-        [models.2-AbrahamsonEtAl2014]
+        [models.2-ChiouYoungs2014]
         median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
         
         [models.1-KothaEtAl2020]
@@ -151,57 +139,32 @@ We can specify the inputs to perform a residual analysis with as follows:
         
         [models.3-BooreEtAl2014]
         site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
-        
-        [models.NGAEastGMPE]
-        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
             
         [models.HassaniAtkinson2018]
-        d_sigma = 100 # gmpe specific param
+        d_sigma = 100
         kappa0 = 0.04
         
         [models.KothaEtAl2020ESHM20] # ESHM20 model
         sigma_mu_epsilon = 2.85697 
         c3_epsilon = 1.72    
         region = 4 # Note that within the residuals toml we specify the region here, whereas in the comparison module toml (below) we specify the region for all ESHM20 GMMs uniformly using the eshm20_region param
+    
+        [models.NGAEastGMPE]
+        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
+    
+        # Note: currently a bug for GMMs which use add_alias to specify gsim
+        # class (will be fixed - current workarounds demonstrated below)
+        
+        [models.AbrahamsonEtAl2014RegJPN]
+        region = "JPN" # add_alias bug means must still specify 'JPN' region param
+        
+        [models.NGAEastUSGSGMPE]
+        gmpe_table = 'usgs17.hdf5' # another example of add_alias bug
+        
         
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
-        
-    Adhering to this formatting, we here provide the GMPEs and intensity measures we consider within the subsequent analysis:
-    
-    .. code-block:: ini
-    
-        [models]
-    
-        [models.AbrahamsonEtAl2014]
-    
-        [models.AkkarEtAlRjb2014]
-    
-        [models.AmeriEtAl2017Rjb]
-    
-        [models.BindiEtAl2014Rjb]
-    
-        [models.BooreEtAl2014]
-    
-        [models.BooreEtAl2020]
-    
-        [models.CauzziEtAl2014]
-    
-        [models.CampbellBozorgnia2014]
-    
-        [models.ChiouYoungs2014]
-    
-        [models.HassaniAtkinson2020Asc]
-    
-        [models.KaleEtAl2015Turkey]
-    
-        [models.KothaEtAl2020regional]
-    
-        [models.LanzanoEtAl2019_RJB_OMO]
-    
-        [imts]
-        imt_list = ["PGA","SA(0.1)","SA(0.2)","SA(0.5)","SA(1.0)","SA(2.0)"]    
-    
+          
 4. Following specification of the GMPEs and intensity measures, we can now compute the ground-motion residuals using the Residuals module.
 
    We first need to get the metadata from the parsed ``.pkl`` file (stored within the metadata folder):
@@ -338,7 +301,7 @@ Single Station Residual Analysis
    
    Finally, the standard deviation of the :math:`\delta W_{o,es}` term (:math:`\phi_{SS}`) is representative of the single-station standard deviation of the GMPE, and is an estimate of the non-ergodic standard deviation of the model.
 
-   As previously, we can specify the GMPEs and intensity measures to compute the residuals per site for using either a GMPE list and intensity measure list, or from a .toml file.
+   As previously, we can specify the GMPEs and intensity measures to compute the residuals per site for using either a GMPE list and intensity measure list, or from a ``.toml`` file.
     
     .. code-block:: ini
     
@@ -493,7 +456,7 @@ Comparing GMPEs
         ztor = 'None' # Set to string of 'None' to NOT consider otherwise specify as array matching number of mag and depth values
         strike = -999
         dip =  60
-        rake = 90 # (+90 for compression, -90 for extension)
+        rake = 90 # Must be provided. Strike and dip can be approximated if either set to -999
         aratio  = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
         trellis_and_rs_mag_list = [5, 6, 7] # mags used only for trellis and response spectra
         trellis_and_rs_depths = [20, 20, 20] # depth per magnitude for trellis and response spectra
@@ -572,7 +535,7 @@ Comparing GMPEs
    
 4. Spectra Plots
 
-   We can also plot response spectra. Note that a spectra computed from a recorded ground-motion and the corresponding ground-motions predicted by the considered GMPEs can be plotted (instead of iterating through the provided magnitudes and distances) by specifying the path to a ``.csv`` of the spectra using the ``obs_spectra`` variable (see the example spectra file in openquake.smt.tests.file_samples, and the functions within openquake.smt.comparison for more details): 
+   We can also plot response spectra:
 
     .. code-block:: ini
     
@@ -581,11 +544,23 @@ Comparing GMPEs
 
     Response spectra plots for input parameters specified in toml file:
         .. image:: /contents/smt_images/ResponseSpectra.png
-        
-    GMPE sigma spectra plots for input parameters specified in toml file:
-        .. image:: /contents/smt_images/sigma.png
-   
-5. Sammon's Maps
+
+5. Plot of Spectra from a Record
+
+   The spectra of a processed record can also be plotted along with predictions by the selected GMMs for the same ground-shaking scenario. An example of the input for the record spectra is provided in the demo files:
+
+    .. code-block:: ini
+    
+       > # Generate plot of observed spectra and predictions by GMMs
+       > # Note we use spectra from a record for the 1991 Chamoli EQ in this
+       > # example rather than from a record from an earthquake in/near Albania
+       > comp.plot_spectra(filename, output_directory, obs_spectra = 'spectra_chamoli_1991_station_UKHI.csv') 
+
+    Response spectra plots for input parameters specified in toml file:
+        .. image:: /contents/smt_images/ObsSpectra.png
+      
+
+6. Sammon's Maps
 
    We can plot Sammon's Maps to examine how similar the medians (and 16th and 84th percentiles) of predicted ground-motion of each GMPE are (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon's mapping procedure).
    
@@ -601,7 +576,7 @@ Comparing GMPEs
     Sammon's Maps (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_SammonMaps.png
     
-6. Hierarchical Clustering
+7. Hierarchical Clustering
 
    Dendrograms can be plotted as an alternative tool to evaluate how similarly the predicted ground-motion is by each GMPE.
    
@@ -617,7 +592,7 @@ Comparing GMPEs
     Dendrograms (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Clustering.png
          
-7. Matrix Plots of Euclidean Distance
+8. Matrix Plots of Euclidean Distance
 
    In addition to Sammon's Maps and hierarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
    
