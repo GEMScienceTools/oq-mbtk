@@ -59,7 +59,7 @@ def create_smoothing_per_zone(fname_points: str, fname_polygons: str,
         gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
 
         # Find the point sources from the smoothing inside the polygon
-        within = gpd.sjoin(gdf, gdf_poly, op='within')
+        within = gpd.sjoin(gdf, gdf_poly, predicate='within')
 
         within['lon'] = within['geometry'].x
         within['lat'] = within['geometry'].y
