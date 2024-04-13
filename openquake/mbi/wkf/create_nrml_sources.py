@@ -23,6 +23,7 @@ from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.geo.nodalplane import NodalPlane
 from openquake.hazardlib.tom import PoissonTOM
+from openquake.hazardlib.scalerel import get_available_magnitude_scalerel
 
 
 def _get_nodal_plane_distribution(data):
@@ -67,10 +68,10 @@ def write_as_multipoint_sources(df, model, src_id, module, subzones,
         if not settings:
 
             trt = srcd['tectonic_region_type']
-            msr_str = model['msr'][trt]
 
-            my_class = getattr(module, msr_str)
-            msr = my_class()
+            msr_str = model['msr'][trt]
+            msrs = get_available_magnitude_scalerel()
+            msr = msrs[msr_str]()
 
             key = 'rupture_aspect_ratio'
             rar = get_param(srcd, model['default'], key)
@@ -125,10 +126,10 @@ def write_as_set_point_sources(df, model, src_id, module, subzones,
         sid = '{:s}{:s}_{:d}'.format(pfx, src_id, idx)
 
         trt = srcd['tectonic_region_type']
-        msr_str = model['msr'][trt]
 
-        my_class = getattr(module, msr_str)
-        msr = my_class()
+        msr_str = model['msr'][trt]
+        msrs = get_available_magnitude_scalerel()
+        msr = msrs[msr_str]()
 
         # Get mmax and set the MFD
         mmx = srcd['mmax']

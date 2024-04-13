@@ -5,6 +5,7 @@ from openquake.baselib import sap
 from openquake.wkf.h3.zones import discretize_zones_with_h3_grid
 
 
+
 def main(h3_level: str, fname_poly: str, folder_out: str,*, use: str = []):
     """
     Given a set of polygons, using H3 this creates grids representing in a

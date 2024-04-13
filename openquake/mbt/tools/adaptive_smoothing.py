@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from openquake.baselib import sap
 from openquake.hazardlib.geo.geodetic import geodetic_distance, distance, _prepare_coords 
-
+import h3
 
 class AdaptiveSmoothing(object):
     '''
@@ -21,7 +21,7 @@ class AdaptiveSmoothing(object):
     
     '''
     
-    def __init__(self, locations, grid=False, use_3d=False, bvalue=None):
+    def __init__(self, locations, grid=False, use_3d=False, bvalue=None, use_maxdist = False, weight = None):
         '''
         Instantiate class with locations at which to calculate intensity
 
@@ -34,6 +34,10 @@ class AdaptiveSmoothing(object):
 
         :param float bval:
             b-value for analysis
+
+        :param bool use_maxdist:
+            Use to impose maximum distance on events to consider as neighbour. If True, config should contain additional parameters:
+            'maxdist' (km) and 'h3res' for required resolution.
         '''
         self.locations = locations
         self.catalogue = None
@@ -47,6 +51,7 @@ class AdaptiveSmoothing(object):
         self.data = None
 
         self.kernel = None
+        self.use_maxdist = use_maxdist
 
     
     def run_adaptive_smooth(self, catalogue, config):
@@ -64,13 +69,23 @@ class AdaptiveSmoothing(object):
 
         :param dict config:
             Configuration settings of the algorithm:
-            * 'kernel' - Kernel choice for adaptive smoothing. Options are "Gaussian" or "PowerLaw" (string)
+            * 'kernel' - Kernel choice for adaptive smoothing. Options are "Gaussian" 
+               or "PowerLaw" (string)
             * 'n_v' - number of nearest neighbour to use for smoothing distance (int)
-            * 'd_i_min' - minimum smoothing distance d_i, should be chosen based on location uncertainty. Default of 0.5 in Helmstetter et al. (float)
+            * 'd_i_min' - minimum smoothing distance d_i, should be chosen based on 
+              location uncertainty. Default of 0.5 in Helmstetter et al. (float)
+            Optional (required only when use_maxdist = True)
+            * 'maxdist' - in km, the maximum distance at which to consider other events
+            * 'h3res' - the h3 resolution for the smoothing calculations
+            
+            
             
         :returns:
             Smoothed seismicity data as np.ndarray, of the form
             [Longitude, Latitude, Smoothed_value]
+            if maxdist == True, the smoothed values will be normalised to the number of 
+            events in the catalogue. This makes the output directly comparable with the 
+            Gaussian smoothing options in the mbtk
         '''
 
         
@@ -90,10 +105,10 @@ class AdaptiveSmoothing(object):
         	x = self.locations[0]
         	y = self.locations[1]
         	
-	# Remember that python indexing starts at 0! Make sure this is the correct value.
-        n_v = (config['n_v']-1)
+	
+        n_v = (config['n_v'] -1)
         kernel = config['kernel']
-       
+
         # Use depths if 3D model required, otherwise all depths set to 0
         if self.use_3d:
             depth = data[:,2]
@@ -101,27 +116,64 @@ class AdaptiveSmoothing(object):
             depth = np.zeros(len(data))
         
         d_i = np.empty(len(data))
-        # Get smoothing parameter d for each earthquake
-        for iloc in range(0, len(data)):
-            r = distance(data[:, 0], data[:, 1], depth, data[iloc, 0], data[iloc, 1], depth[iloc])
-            r = np.delete(r, iloc)
-            r.sort()
-            d_i[iloc] = r[n_v]
-
-       # Set minimum d_i
         
+        # Get smoothing parameter d for each earthquake 
+
+        if self.use_maxdist == True:
+            maxdist = config['maxdist']
+            h3res = config['h3res']
+
+            def lat_lng_to_h3(row):
+                return h3.geo_to_h3(row.lon, row.lat, h3res)
+
+            h3_df = pd.DataFrame(data)
+            h3_df.columns = ['lon', 'lat', 'depth', 'mag']
+            h3_df['h3'] = h3_df.apply(lat_lng_to_h3, axis=1)
+            maxdistk = int(np.ceil(maxdist/h3.edge_length(h3res, 'km')))
+
+            # Consider only neighbours within maxdistk
+            for iloc in range(0, len(data)):
+                base = h3_df['h3'][iloc]
+                tmp_idxs = h3.k_ring(base, maxdistk)
+                ref_locs = h3_df.loc[h3_df['h3'].isin(tmp_idxs)]
+                r = distance(ref_locs['lon'], ref_locs['lat'], ref_locs['depth'], data[iloc, 0], data[iloc, 1], depth[iloc])
+                # because of filtering, we are now working with a series so treat accordingly!
+                r.sort_values(inplace = True)
+                
+                if len(r) > (n_v + 1): 
+                    # Have not removed distance to self here, so add 1 to n_v
+                    d_i[iloc] = r.iloc[n_v + 1]
+                    
+                else:
+                    # no n_vth neighour within maximum distance, set d_i to maxdist
+                    d_i[iloc] = maxdist 
+        else:
+            # Get smoothing parameter d for each earthquake
+            for iloc in range(0, len(data)):
+                r = distance(data[:, 0], data[:, 1], depth, data[iloc, 0], data[iloc, 1], depth[iloc])
+                r = np.delete(r, iloc)
+                r.sort()
+                d_i[iloc] = r[n_v]
+
+        # Set minimum d_i
         d_i[d_i < config['d_i_min']] = config['d_i_min']
         mu_loc = np.empty(len(x))
         
-	# Calculate mu at each location 
+	    # Calculate mu at each location 
         for iloc in range(0, len(x)):
- 		   # Distance from each event to the location
+ 	    # Distance from each event to the location
             r_dists = distance(data[:, 0], data[:, 1], depth, x[iloc], y[iloc], 0)
             mu_loc[iloc] = self.mu_int(r_dists, d_i, kernel = kernel)
+        
+        if self.use_maxdist == True:
+            # normalise mu_loc to number of observed events
+            mu_norm = mu_loc/sum(mu_loc)
+            nocc = mu_norm*len(catalogue.data['longitude']) 
+        
+            self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc': nocc})
 
-
-        self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc' : mu_loc})
-
+        else:
+            self.out = pd.DataFrame({'lon': x, 'lat' : y, 'nocc': mu_loc})
         return self.out
 
     
@@ -252,26 +304,70 @@ class AdaptiveSmoothing(object):
              
         '''
         
+        IG = _information_gain(out = self.out, counts = counts, T = 1, read_counts_from_file = False, fname_counts = None)
+        
+        return IG
+        
+def poiss_loglik(rate_lambda, obs, T=1):
+        '''
+        Calculate the poisson likelihood, given the observed number of events and the forecast rate. 
+        
+        :param rate_lambda:
+            expected number of events 
+        :param obs:
+            observed number of events
+        :param T:
+            Scaling of forecast to observations. For example, a forecast built with 100 years of data tested over a ten year testing period should have T = 0.1, or a 1 year forecast tested over 5 years would have T = 5
+            
+        :returns:
+            likelihood value 
+        '''
+        l = -rate_lambda*T - np.log(sp.special.factorial(obs)) + np.log(rate_lambda*T)* obs
+        return l
+        
+def _information_gain(out, counts, T = 1, read_counts_from_file = False, fname_counts = None):
+        '''
+        Calculates the information gain per event given a smoothing model and a list of model counts
+        Counting results should match the cells of the smoothed rates. 
+        This version works on an output, so is applicable to a Gaussian smoothing model as well as 
+        an adaptive-smoothing object.
+        
+        :param outs: 
+            smoothing output, should contain columns 'lon', 'lat', 'nocc' 
+            This is the standard output from both adaptive and Gaussian smoothing
+        :param counts:
+            counts in grid cells matching the smoothed cells stored in self.out
+        :param T:
+            optional time scaling for testing rates over a fixed time period
+        :param read_counts_from_file:
+            if True, read count data from a csv instead of using directly supplied counts
+        :param fname_counts:
+            if read_counts_from_file is True, read counts from specified file.
+             
+        '''
+        
         # Set counts from a file if provided, or using count array directly
         if (read_counts_from_file == True):
             loc_df = pd.read_csv(fname_counts)
             loc_counts = gpd.GeoDataFrame(loc_df, crs='epsg:4326', geometry=[Point(xy) for xy
                        in zip(loc_df.lon, loc_df.lat)])
         else:
-            loc_counts = pd.DataFrame({'lon': self.out['lon'], 'lat' : self.out['lat'], 'nocc' : self.out['nocc']})
+            loc_counts = pd.DataFrame({'lon': out['lon'], 'lat' : out['lat'], 'nocc' : out['nocc']})
     
-        # Uniform rate = total sum distributed over all hexagons, so uniform count is sum/num hexagons
+        # Uniform rate = total sum distributed over all hexagons, so uniform count is sum/num cells
         unif_cnt = sum(loc_counts['nocc'])/len(loc_counts)
         # Calculate poisson likelihood of uniform model
-        unif_llhood = self.poiss_loglik(unif_cnt, loc_counts['nocc'], T)
+        unif_llhood = poiss_loglik(unif_cnt, loc_counts['nocc'], T)
     
-        smoothed = self.out
-        smoothed = gpd.GeoDataFrame(smoothed, crs='epsg:4326', geometry=[Point(xy) for xy
-                       in zip(smoothed.lon, smoothed.lat)])
+        #smoothed = out
+        smoothed = gpd.GeoDataFrame(out, crs='epsg:4326', geometry=[Point(xy) for xy
+              in zip(out.lon, out.lat)])
+        
         # Model likelihood
-        mod_llhood = self.poiss_loglik(smoothed['nocc'], loc_counts['nocc'], T)
-    
+        mod_llhood = poiss_loglik(smoothed['nocc'], loc_counts['nocc'], T)
+        # replace nan values with 0 likelihood
+        mod_llhood = mod_llhood.fillna(0)
+        
         # Information gain = exp(llhood - unif_llhood)/total_event_num
         IG = np.exp((sum(mod_llhood)-sum(unif_llhood))/sum(loc_counts['nocc']))
         return IG
-
