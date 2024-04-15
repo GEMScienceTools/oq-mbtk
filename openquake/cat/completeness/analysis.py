@@ -310,7 +310,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         print(f'Iteration: {iper:05d} norm: {norm:12.6e}', end="\r")
 
         ctab = _make_ctab(prm, years, mags)
-        print(ctab)
+        #print(ctab)
         if isinstance(ctab, str):
             continue
 

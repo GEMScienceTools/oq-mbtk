@@ -36,9 +36,6 @@ from openquake.wkf.utils import create_folder, get_list
 def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
                                   folder_out: str, use: str = []):
     
-    if len(use) > 0:
-        use = get_list(use)
-        
     h3_level = int(h3_level)
     create_folder(folder_out)
     tmp = "mapping_h{:d}.csv".format(h3_level)
@@ -64,8 +61,11 @@ def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
             from shapely.geometry import shape, mapping
             # Check that there are no polygons inside
             multipoly = shape(geojson_poly)
-            assert len(multipoly.geoms) == 1
-            geojson_poly = mapping(multipoly.geoms[0])
+            try:
+                assert len(multipoly.geoms) == 1
+                geojson_poly = mapping(multipoly.geoms[0])
+            except:
+                print(poly.id)
 
         # Revert the positions of lons and lats
         coo = [[c[1], c[0]] for c in geojson_poly['coordinates'][0]]
