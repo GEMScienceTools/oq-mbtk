@@ -283,22 +283,24 @@ def _param_gmpes(strike, dip, depth, aratio, rake, trt):
     return strike_s, dip_s, depth_s, aratio_s
 
 
-def mgmpe_check(gmpe):
+def mgmpe_check(orig_gmpe):
     """
-    Check if the GMPE should be modified using ModifiableGMPE
-    :param gmpe:
-        gmpe: GMPE to be modified if required (must be a gsim class)
+    Check if the GMPE should be modified using ModifiableGMPE.
+
+    :param orig_gmpe:
+        gmpe instance or TOML string for the gmpe
     """
+    if not isinstance(orig_gmpe, str):  # assume GMPE instance
+        orig_gmpe= str(orig_gmpe)
+
     # Preserve original GMPE prior and create base version of GMPE
-    orig_gmpe = gmpe
-    base_gsim = gmpe.__class__.__name__
+    base_gsim, *lines = orig_gmpe.splitlines()
     
     # Get the additional params if specified
-    inputs = pd.Series(str(gmpe).splitlines()[1:], dtype='object')
+    inputs = pd.Series(lines, dtype='object')
     add_inputs = {}
     add_as_int = ['eshm20_region']
     add_as_str = ['region', 'saturation_region', 'gmpe_table', 'volc_arc_file']
-
     if len(inputs) > 0:  # If greater than 0 must add required gsim inputs
         idx_to_drop = []
         for idx, par in enumerate(inputs):
@@ -341,55 +343,55 @@ def mgmpe_check(gmpe):
             add_inputs[key] = val
 
     # Reconstruct the gmpe as kwargs
-    kwargs = {'gmpe': {base_gsim: add_inputs}}
+    kwargs = {'gmpe': {base_gsim.strip('[] '): add_inputs}}
 
     # Al Atik 2015 sigma model
-    if 'al_atik_2015_sigma' in str(orig_gmpe):
+    if 'al_atik_2015_sigma' in orig_gmpe:
         kwargs['sigma_model_alatik2015'] = {
             "tau_model": "global", "ergodic": False}
     
     # Fix total sigma per imt
-    if 'fix_total_sigma' in str(orig_gmpe):
+    if 'fix_total_sigma' in orig_gmpe:
         kwargs['set_fixed_total_sigma'] = {'total_sigma': fixed_sigma_vector}
 
     # Partition total sigma of gsim using a specified ratio of within:between
-    if 'with_betw_ratio' in str(orig_gmpe):
+    if 'with_betw_ratio' in orig_gmpe:
         kwargs['add_between_within_stds'] = {
             'with_betw_ratio': with_betw_ratio}
 
     # Set epsilon for tau
-    if 'set_between_epsilon' in str(orig_gmpe):
+    if 'set_between_epsilon' in orig_gmpe:
         kwargs['set_between_epsilon'] = {'epsilon_tau': between_epsilon}
 
     # Scale median by constant factor over all imts
-    if 'median_scaling_scalar' in str(orig_gmpe):
+    if 'median_scaling_scalar' in orig_gmpe:
         kwargs['set_scale_median_scalar'] = {'scaling_factor': median_scalar}
 
     # Scale median by imt-dependent factor
-    if 'median_scaling_vector' in str(orig_gmpe):
+    if 'median_scaling_vector' in orig_gmpe:
         kwargs['set_scale_median_vector'] = {'scaling_factor': median_vector}
 
     # Scale sigma by constant factor over all imts
-    if 'sigma_scaling_scalar' in str(orig_gmpe):
+    if 'sigma_scaling_scalar' in orig_gmpe:
         kwargs['set_scale_total_sigma_scalar'] = {
             'scaling_factor': sigma_scalar}
 
     # Scale sigma by imt-dependent factor
-    if 'sigma_scaling_vector' in str(orig_gmpe):
+    if 'sigma_scaling_vector' in orig_gmpe:
         kwargs['set_scale_total_sigma_vector'] = {
             'scaling_factor': sigma_vector}
 
     # CY14SiteTerm
-    if 'CY14SiteTerm' in str(orig_gmpe):
+    if 'CY14SiteTerm' in orig_gmpe:
         kwargs['cy14_site_term'] = {}
 
     # NRCan15SiteTerm (kind = base)
-    if ('NRCan15SiteTerm' in str(orig_gmpe) and
-            'NRCan15SiteTermLinear' not in str(orig_gmpe)):
+    if ('NRCan15SiteTerm' in orig_gmpe and
+            'NRCan15SiteTermLinear' not in orig_gmpe):
         kwargs['nrcan15_site_term'] = {'kind': 'base'}
 
     # NRCan15SiteTerm (kind = linear)
-    if 'NRCan15SiteTermLinear' in str(orig_gmpe):
+    if 'NRCan15SiteTermLinear' in orig_gmpe:
         kwargs['nrcan15_site_term'] = {'kind': 'linear'}
 
     gmpe = mgmpe.ModifiableGMPE(**kwargs)  # Remake gmpe using mgmpe
