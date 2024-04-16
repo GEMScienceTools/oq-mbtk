@@ -58,17 +58,18 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
         
         # Get matrix of predicted ground-motions per GMM
-        mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor,
-                                            config.imt_list, config.mag_list,
-                                            config.gmpes_list, config.rake,
-                                            config.strike, config.dip, 
-                                            config.depth_for_non_trel_or_rs_fun,
-                                            config.Z1, config.Z25, config.Vs30,
-                                            config.region, config.minR, config.maxR,
-                                            config.aratio, config.eshm20_region,
-                                            config.dist_type, mtxs_type='median',
-                                            up_or_down_dip=config.up_or_down_dip)
-        
+        mtxs_medians = compute_matrix_gmpes(
+            config.trt, config.ztor,
+            config.imt_list, config.mag_list,
+            config.gmpes_list, config.rake,
+            config.strike, config.dip, 
+            config.depth_for_non_trel_or_rs_fun,
+            config.Z1, config.Z25, config.Vs30,
+            config.region, config.minR, config.maxR,
+            config.aratio, config.eshm20_region,
+            config.dist_type, mtxs_type='median',
+            up_or_down_dip=config.up_or_down_dip)
+
         # Get observed values and target values
         observ_mtxs = pd.DataFrame(mtxs_medians[0])
         target_mtxs = pd.read_csv(os.path.join(base, 'target_medians.csv'))
