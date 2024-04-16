@@ -487,7 +487,6 @@ class Residuals(object):
             expected[gmpe] = OrderedDict([(imtx, {}) for imtx in self.imts])
             for imtx in self.imts:
                 gsim = self.gmpe_list[gmpe]
-                gsim_orig = gsim # Retain before using mgmpe
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < self.gmpe_sa_limits[gmpe][0] or\
@@ -497,11 +496,11 @@ class Residuals(object):
                 # Check if gsim needs modifying with mgmpe
                 gsim = mgmpe_check(gsim)
                 # Add region parameter to sites context if specified in gsim
-                if 'eshm20_region' in gsim_orig.kwargs:
-                    context["Ctx"].region = gsim_orig.kwargs['eshm20_region']
-                if ('region' in gsim_orig.kwargs and
+                if 'eshm20_region' in gsim.kwargs:
+                    context["Ctx"].region = gsim.kwargs['eshm20_region']
+                if ('region' in gsim.kwargs and
                     'eshm20_region' not in gsim.kwargs):
-                    context["Ctx"].region = gsim_orig.kwargs['region']
+                    context["Ctx"].region = gsim.kwargs['region']
                 # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
                     context["Ctx"],
@@ -785,11 +784,11 @@ class Residuals(object):
             )
         # Get weights with imt
         self.model_weights_with_imt={}
-        for imt in self.imts:
-            weights_with_imt = np.array([2.0 ** -self.llh[gmpe][imt]
+        for im in self.imts:
+            weights_with_imt = np.array([2.0 ** -self.llh[gmpe][im]
                                          for gmpe in self.gmpe_list])
             weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
-            self.model_weights_with_imt[imt] = OrderedDict([(gmpe, 
+            self.model_weights_with_imt[im] = OrderedDict([(gmpe, 
                                                              weights_with_imt
                                                              [iloc])
                                                             for iloc, gmpe

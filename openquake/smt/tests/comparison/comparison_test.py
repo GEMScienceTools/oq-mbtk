@@ -42,10 +42,8 @@ TARGET_TRELLIS_MAG = [5.0, 6.0, 7.0]
 TARGET_MAG = [5., 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6.,
               6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]
 TARGET_IMTS = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
-TARGET_GMPES = [valid.gsim('ChiouYoungs2014'),
-                valid.gsim('CampbellBozorgnia2014'),
-                valid.gsim('BooreEtAl2014'),
-                valid.gsim('KothaEtAl2020')]
+TARGET_GMPES = ['[ChiouYoungs2014]', '[CampbellBozorgnia2014]',
+                '[BooreEtAl2014]', '[KothaEtAl2020]']
 TARGET_TRT = 'ASCR'
 TARGET_ZTOR = None
 
@@ -108,7 +106,7 @@ class ComparisonTestCase(unittest.TestCase):
                                    TARGET_MAG[mag], delta=0.000001)
         # Check for target gmpes
         for gmpe in range(0, len(config.gmpes_list)):
-            self.assertEqual(config.gmpes_list[gmpe], str(TARGET_GMPES[gmpe]))
+            self.assertEqual(config.gmpes_list[gmpe], TARGET_GMPES[gmpe])
 
         # Check for target imts
         for imt in range(0, len(config.imt_list)):

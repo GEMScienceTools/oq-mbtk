@@ -27,7 +27,6 @@ import toml
 import os
 
 from openquake.hazardlib.imt import from_string
-from openquake.hazardlib import valid
 from openquake.smt.comparison.utils_compare_gmpes import plot_trellis_util, \
     plot_spectra_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util,\
         compute_matrix_gmpes
@@ -121,11 +120,11 @@ class Configurations(object):
             if len(config['models'][key]):
                config['models'][key].pop('style', None)
                value += '\n' + str(toml.dumps(config['models'][key]))
-            gmpes_list_initial.append(value)
+            gmpes_list_initial.append(value.strip())
             
         self.gmpes_list = []
         for idx, gmpe in enumerate(gmpes_list_initial):
-            self.gmpes_list.append(gmpes_list_initial[idx].strip())
+            self.gmpes_list.append(str(gmpes_list_initial[idx]))
 
         # Check number of GMPEs matches number of GMPE labels
         if len(self.gmpes_list) != len(self.gmpe_labels):
@@ -137,7 +136,7 @@ class Configurations(object):
         get_weights_gmc2 = {}
         for gmpe in self.gmpes_list:
             if 'lt_weight' in gmpe:
-                split_gmpe_str = gmpe.splitlines()
+                split_gmpe_str = str(gmpe).splitlines()
                 for idx, component in enumerate(split_gmpe_str):
                     if 'lt_weight_gmc1' in component:
                         get_weights_gmc1[gmpe] = float(split_gmpe_str[
