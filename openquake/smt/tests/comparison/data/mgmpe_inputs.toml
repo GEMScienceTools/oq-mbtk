@@ -2,7 +2,7 @@
 
 [general]
 imt_list = ['PGA','SA(0.1)','SA(0.5)'] # imts to compute gm for
-max_period = 2 # max period for response spectra (can't exceed maximum period in a specified GMPE)
+max_period = 0.5 # max period for response spectra (can't exceed maximum period in a specified GMPE)
 minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
 dist_type = 'rrup' # specify distance metric used in trellis plots
@@ -38,37 +38,48 @@ non_trellis_or_spectra_depths = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth
 [gmpe_labels]
 gmpes_label = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
 
-[models.YenierAtkinson2015BSSA]
+[models.0-ModifiableGMPE]
+gmpe = 'YenierAtkinson2015BSSA'
 sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
 
-[models.1-CampbellBozorgnia2014]
+[models.1-ModifiableGMPE]
+gmpe = 'CampbellBozorgnia2014'
 fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # fix total sigma per imt
 
-[models.2-CampbellBozorgnia2014]
+[models.2-ModifiableGMPE]
+gmpe = 'CampbellBozorgnia2014'
 with_betw_ratio = 1.7 # add between-event and within-event sigma using ratio of 1.7 to partition total sigma
         
-[models.3-CampbellBozorgnia2014]
+[models.3-ModifiableGMPE]
+gmpe = 'CampbellBozorgnia2014'
 set_between_epsilon = 1.5 # set between-event epsilon (i.e. tau epsilon)
                        
-[models.1-AbrahamsonEtAl2014]
+[models.4-ModifiableGMPE]
+gmpe = 'AbrahamsonEtAl2014'
 median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
 
-[models.2-AbrahamsonEtAl2014]
+[models.5-ModifiableGMPE]
+gmpe = 'AbrahamsonEtAl2014'
 median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
 
-[models.1-KothaEtAl2020]
+[models.6-ModifiableGMPE]
+gmpe = 'KothaEtAl2020'
 sigma_scaling_scalar = 1.05 # scale sigma by factor of 1.05 over all imts
 
-[models.2-KothaEtAl2020]
+[models.7-ModifiableGMPE]
+gmpe = 'KothaEtAl2020'
 sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # scale sigma by imt-dependent factor
 
-[models.1-BooreEtAl2014]
+[models.8-ModifiableGMPE]
+gmpe = 'BooreEtAl2014'
 site_term = 'CY14SiteTerm' # use CY14 site term
 
-[models.2-BooreEtAl2014]
+[models.9-ModifiableGMPE]
+gmpe = 'BooreEtAl2014'
 site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
 
-[models.3-BooreEtAl2014]
+[models.10-ModifiableGMPE]
+gmpe = 'BooreEtAl2014'
 site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
 
 [models.NGAEastGMPE]
@@ -77,7 +88,6 @@ gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
 [models.HassaniAtkinson2018]
 d_sigma = 100 # gmpe specific param
 kappa0 = 0.04
-        
 
 [custom_colors]
 custom_colors_flag = 'False' #By default set to "False" (set to "True" for custom colours)

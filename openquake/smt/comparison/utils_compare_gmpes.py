@@ -29,7 +29,6 @@ from scipy import interpolate
 from collections import OrderedDict
 
 from openquake.smt.comparison.sammons import sammon
-from openquake.hazardlib import valid
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_gmpes import att_curves, _get_z1,\
     _get_z25, _param_gmpes, mgmpe_check
@@ -59,9 +58,7 @@ def plot_trellis_util(
                 
                 # Perform mgmpe check
                 col = colors[g]
-                gsim = valid.gsim(gmpe)
-                gmm_orig = gsim
-                gmm = mgmpe_check(gsim)
+                gmm = mgmpe_check(gmpe)
                 
                 # ZTOR value
                 if ztor is not None:
@@ -75,7 +72,7 @@ def plot_trellis_util(
                 
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(
-                    gmm, gmm_orig, depth[l], m, aratio_g, strike_g, dip_g, 
+                    gmm, depth[l], m, aratio_g, strike_g, dip_g, 
                     rake,Vs30, Z1, Z25, maxR, step, i, ztor_m, eshm20_region,
                     dist_type, trt, up_or_down_dip)
 
@@ -160,9 +157,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
             
             for g, gmpe in enumerate(gmpe_list):     
                 col = colors[g]
-                gsim = valid.gsim(gmpe)
-                gmm_orig = gsim
-                gmm = mgmpe_check(gsim)
+                gmm = mgmpe_check(gmpe)
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(strike, dip,
                                                                   depth[l],
                                                                   aratio, rake,
@@ -188,7 +183,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                     
                     # Get mean and sigma
                     mu, std, r_vals, tau, phi = att_curves(
-                        gmm, gmm_orig, depth[l], m, aratio_g, strike_g, dip_g, 
+                        gmm, depth[l], m, aratio_g, strike_g, dip_g, 
                         rake, Vs30, Z1, Z25, dist, 0.1, imt, ztor_m, eshm20_region,
                         dist_type, trt, up_or_down_dip) 
                     
@@ -297,7 +292,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
         for g, gmpe in enumerate(gmpe_list): 
             medians, sigmas = [], []
             for l, m in enumerate(mag_list): # Iterate though mag_list
-
+                
                 gmm = mgmpe_check(gmpe)
 
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
@@ -310,7 +305,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                     ztor_m = None
 
                 mean, std, r_vals, tau, phi = att_curves(
-                    gmm, gmm.gmpe, depth[l], m, aratio_g, strike_g, dip_g,
+                    gmm, depth[l], m, aratio_g, strike_g, dip_g,
                     rake, Vs30, Z1, Z25, maxR, d_step, i, ztor_m, eshm20_region,
                     dist_type, trt, up_or_down_dip) 
                 

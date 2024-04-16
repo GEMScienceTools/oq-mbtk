@@ -105,44 +105,55 @@ We can specify the inputs to perform a residual analysis with as follows:
         [models]
     
         [models.AbrahamsonGulerce2020SInter]
-        region = "CAS"
+        region = "CAS" # GMPE specific parameters
         
-        [models.YenierAtkinson2015BSSA]
+        [models.0-ModifiableGMPE]
+        gmpe = 'YenierAtkinson2015BSSA'
         sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
 
-        [models.1-CampbellBozorgnia2014]
+        [models.1-ModifiableGMPE]
+        gmpe = CampbellBozorgnia2014
         fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # fix total sigma per imt
         
-        [models.2-CampbellBozorgnia2014]
+        [models.2-ModifiableGMPE]
+        gmpe = CampbellBozorgnia2014
         with_betw_ratio = 1.7 # add between-event and within-event sigma using ratio of 1.7 to partition total sigma
                 
-        [models.3-CampbellBozorgnia2014]
+        [models.3-ModifiableGMPE]
+        gmpe = CampbellBozorgnia2014
         set_between_epsilon = 0.5 # Shift the mean with formula mean --> mean + epsilon_tau * between event
                                
-        [models.1-ChiouYoungs2014]
+        [models.4-ModifiableGMPE]
+        gmpe = 'ChiouYoungs2014'
         median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
         
-        [models.2-ChiouYoungs2014]
+        [models.5-ModifiableGMPE]
+        gmpe = 'ChiouYoungs2014'
         median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
         
-        [models.1-KothaEtAl2020]
-        sigma_scaling_scalar = 1.05 # scale sigma by factor of 1.05 over all imts
+        [models.6-ModifiableGMPE]
+        gmpe = 'KothaEtAl2020'
+        sigma_scaling_scalar = 1.25 # scale sigma by factor of 1.25 over all imts
         
-        [models.2-KothaEtAl2020]
+        [models.7-ModifiableGMPE]
+        gmpe = 'KothaEtAl2020'
         sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # scale sigma by imt-dependent factor
         
-        [models.1-BooreEtAl2014]
+        [models.8-ModifiableGMPE]
+        gmpe = 'BooreEtAl2014'
         site_term = 'CY14SiteTerm' # use CY14 site term
         
-        [models.2-BooreEtAl2014]
+        [models.9-ModifiableGMPE]
+        gmpe = 'BooreEtAl2014'
         site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
         
-        [models.3-BooreEtAl2014]
+        [models.10-ModifiableGMPE]
+        gmpe = 'BooreEtAl2014'
         site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
             
         [models.HassaniAtkinson2018]
         d_sigma = 100
-        kappa0 = 0.04
+        kappa0 = 0.04 # GMPE specific parameters
         
         [models.KothaEtAl2020ESHM20] # ESHM20 model
         sigma_mu_epsilon = 2.85697 
@@ -155,13 +166,9 @@ We can specify the inputs to perform a residual analysis with as follows:
         # Note: currently a bug for GMMs which use add_alias to specify gsim
         # class (will be fixed - current workarounds demonstrated below)
         
-        [models.AbrahamsonEtAl2014RegJPN]
+        [models.AbrahamsonEtAl2014]
         region = "JPN" # add_alias bug means must still specify 'JPN' region param
-        
-        [models.NGAEastUSGSGMPE]
-        gmpe_table = 'usgs17.hdf5' # another example of add_alias bug
-        
-        
+            
         [imts]
         imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
           
