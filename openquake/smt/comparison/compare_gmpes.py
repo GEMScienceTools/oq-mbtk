@@ -124,7 +124,7 @@ class Configurations(object):
             
         self.gmpes_list = []
         for idx, gmpe in enumerate(gmpes_list_initial):
-            self.gmpes_list.append(str(gmpes_list_initial[idx]))
+            self.gmpes_list.append(gmpes_list_initial[idx])
 
         # Check number of GMPEs matches number of GMPE labels
         if len(self.gmpes_list) != len(self.gmpe_labels):
