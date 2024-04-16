@@ -42,7 +42,6 @@ from openquake.hazardlib import imt
 import openquake.smt.intensity_measures as ims
 from openquake.smt.strong_motion_selector import SMRecordSelector
 from openquake.smt.sm_utils import convert_accel_units, check_gsim_list
-from openquake.smt.comparison.utils_gmpes import mgmpe_check
 
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
@@ -289,7 +288,7 @@ class Residuals(object):
     Class to derive sets of residuals for a list of ground motion residuals
     according to the GMPEs
     """
-    def __init__(self, gmpe_list, imts):
+    def __init__(self, gmpe_list, imts, eshm20_regions=None):
         """
         :param  gmpe_list:
             A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
@@ -306,6 +305,8 @@ class Residuals(object):
         self.unique_indices = {}
         self.gmpe_sa_limits = {}
         self.gmpe_scalars = {}
+        self.eshm20_regions = eshm20_regions
+        
         for gmpe in self.gmpe_list:
             gmpe_dict_1 = OrderedDict([])
             gmpe_dict_2 = OrderedDict([])
@@ -375,8 +376,9 @@ class Residuals(object):
              
         # Parsing file with models
         gmpe_list = []
+        eshm20_regions = {}
         config = copy.deepcopy(config_file)
-        for key in config['models']:
+        for idx_k, key in enumerate(config['models']):
         # If the key contains a number we take the second part
             if re.search("^\\d+\\-", key):
                 tmp = re.sub("^\\d+\\-", "", key)
@@ -386,10 +388,31 @@ class Residuals(object):
             if len(config['models'][key]):
                config['models'][key].pop('style', None)
                value += '\n' + str(toml.dumps(config['models'][key]))
+               
+            # Get eshm20 region param and drop from gmpe to permit validation
+            eshm20_region = None
+            if 'eshm20_region' in value:
+                vals = value.splitlines()
+                idx_to_drop = []
+                for idx_v, val in enumerate(vals):
+                    if 'eshm20_region' in val:
+                        idx_to_drop.append(idx_v)
+                        eshm20_region = int(val.split('=')[1])
+                vals = pd.Series(vals).drop(idx_to_drop)
+                clean = vals.iloc[0]
+                for idx_v, val in enumerate(vals):
+                    if idx_v > 0:
+                        clean = clean + '\n' + val
+                value = clean
+            eshm20_regions[idx_k] = eshm20_region
+            
+            # Create valid gsim
             gmpe_list.append(valid.gsim(value))
-        
+            
+        # Get imts    
         imts = config_file['imts']['imt_list']     
-        return cls(gmpe_list,imts)
+        
+        return cls(gmpe_list, imts, eshm20_regions)
 
     def get_residuals(self, ctx_database, nodal_plane_index=1,
                       component="Geometric", normalise=True):
@@ -483,7 +506,7 @@ class Residuals(object):
             context["Ctx"].rake = 0.0 # Assume strike-slip
         expected = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
         # Period range for GSIM
-        for gmpe in self.gmpe_list:
+        for idx_gmpe, gmpe in enumerate(self.gmpe_list):
             expected[gmpe] = OrderedDict([(imtx, {}) for imtx in self.imts])
             for imtx in self.imts:
                 gsim = self.gmpe_list[gmpe]
@@ -493,13 +516,11 @@ class Residuals(object):
                             period > self.gmpe_sa_limits[gmpe][1]:
                         expected[gmpe][imtx] = None
                         continue
-                # Check if gsim needs modifying with mgmpe
-                gsim = mgmpe_check(gsim)
-                # Add region parameter to sites context if specified in gsim
-                if 'eshm20_region' in gsim.kwargs:
-                    context["Ctx"].region = gsim.kwargs['eshm20_region']
-                if ('region' in gsim.kwargs and
-                    'eshm20_region' not in gsim.kwargs):
+                # Add region parameter to sites context if specified
+                if self.eshm20_regions:
+                    if self.eshm20_regions[idx_gmpe] is not None:
+                        context["Ctx"].region = self.eshm20_regions[idx_gmpe]
+                elif 'region' in gsim.kwargs:
                     context["Ctx"].region = gsim.kwargs['region']
                 # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
@@ -508,13 +529,11 @@ class Residuals(object):
                     context["Ctx"],
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
-                # If no sigma model inform user must specify sigma model in .toml
+                # If no sigma model inform user
                 if np.all(stddev[0] == 0.):
-                    gmm_str = str(gmpe).split('(')[0]
-                    raise ValueError('A sigma model is not provided by default\
-                                     for %s GMPE. Specify a sigma model for %s \
-                                     GMPE for the computation of ground-motion\
-                                     residuals.' %(gmm_str, gmm_str))
+                    gs = str(gmpe).split('(')[0]
+                    m = 'A sigma model is not provided by default for %s' %gs
+                    raise ValueError(m)
                 expected[gmpe][imtx]["Mean"] = mean
                 for i, res_type in enumerate(self.types[gmpe][imtx]):
                     expected[gmpe][imtx][res_type] = stddev[i]
@@ -1222,7 +1241,7 @@ class SingleStationAnalysis(object):
         """
         # Read in toml file with dict of gmpes and subdict of imts
         config_file = toml.load(filename)
-             
+        
         # Parsing file with models
         gmpe_list = []
         config = copy.deepcopy(config_file)

@@ -292,124 +292,119 @@ def mgmpe_check(gmpe):
     :param gmpe:
         gmpe: GMPE to be modified if required
     """
-    # If read in from toml will be a string of inputs
-    if isinstance(gmpe, str):
-        if '[ModifiableGMPE]' in gmpe:
-            params = pd.Series(gmpe.splitlines(), dtype=object)
-            base_gsim = params.iloc[1].split('=')[1].strip().replace('"','')
-            
-            # Get the mgmpe params
-            idx_params = []
-            for idx, par in enumerate(params):
-                if idx > 1:
-                    par = str(par)
-                    if 'sigma_model' in par or 'site_term' in par:
-                        idx_params.append(idx)
-                    if 'fix_total_sigma' in par:
-                        idx_params.append(idx)
-                        base_vector = par.split('=')[1].replace('"', '')
-                        fixed_sigma_vector = ast.literal_eval(base_vector)
-                    if 'with_betw_ratio' in par:
-                        idx_params.append(idx)
-                        with_betw_ratio = float(par.split('=')[1])
-                    if 'set_between_epsilon' in par:
-                        idx_params.append(idx)
-                        between_epsilon = float(par.split('=')[1])
-                    if 'scaling' in par:
-                        idx_params.append(idx)
-                        if 'median_scaling_scalar' in par:
-                            median_scalar = float(par.split('=')[1])
-                        if 'median_scaling_vector' in par:
-                            base_vector = par.split('=')[1].replace('"', '')
-                            median_vector = ast.literal_eval(base_vector)
-                        if 'sigma_scaling_scalar' in par:
-                            sigma_scalar = float(par.split('=')[1])
-                        if 'sigma_scaling_vector' in par:
-                            base_vector = par.split('=')[1].replace('"', '')
-                            sigma_vector = ast.literal_eval(base_vector)
-                            
-            # Now create kwargs
-            kwargs = {}
-            kwargs['gmpe'] = {base_gsim: {}}
-            
-            # Add the non-gmpe kwargs
-            for idx_p, param in enumerate(params):
-                if idx_p > 1 and idx_p not in idx_params:
-                    dic_key =  param.split('=')[0].strip().replace('"','')
-                    dic_val =  param.split('=')[1].strip().replace('"','')
-                    kwargs['gmpe'][base_gsim][dic_key] = dic_val
-                    
-            # Al Atik 2015 sigma model
-            if 'al_atik_2015_sigma' in gmpe:
-                kwargs['sigma_model_alatik2015'] = {
-                    "tau_model": "global", "ergodic": False}
-                
-            # Fix total sigma per imt
-            if 'fix_total_sigma' in gmpe:
-                kwargs['set_fixed_total_sigma'] = {
-                    'total_sigma': fixed_sigma_vector}
-    
-            # Partition total sigma using a specified ratio of within:between
-            if 'with_betw_ratio' in gmpe:
-                kwargs['add_between_within_stds'] = {
-                    'with_betw_ratio': with_betw_ratio}
-    
-            # Set epsilon for tau
-            if 'set_between_epsilon' in gmpe:
-                kwargs['set_between_epsilon'] = {'epsilon_tau':
-                                                 between_epsilon}
-    
-            # Scale median by constant factor over all imts
-            if 'median_scaling_scalar' in gmpe:
-                kwargs['set_scale_median_scalar'] = {'scaling_factor':
-                                                     median_scalar}
-    
-            # Scale median by imt-dependent factor
-            if 'median_scaling_vector' in gmpe:
-                kwargs['set_scale_median_vector'] = {'scaling_factor':
-                                                     median_vector}
-    
-            # Scale sigma by constant factor over all imts
-            if 'sigma_scaling_scalar' in gmpe:
-                kwargs['set_scale_total_sigma_scalar'] = {
-                    'scaling_factor': sigma_scalar}
-    
-            # Scale sigma by imt-dependent factor
-            if 'sigma_scaling_vector' in gmpe:
-                kwargs['set_scale_total_sigma_vector'] = {
-                    'scaling_factor': sigma_vector}
-    
-            # CY14SiteTerm
-            if 'CY14SiteTerm' in gmpe: kwargs['cy14_site_term'] = {}
-    
-            # NRCan15SiteTerm (kind = base)
-            if ('NRCan15SiteTerm' in gmpe and
-                    'NRCan15SiteTermLinear' not in gmpe):
-                kwargs['nrcan15_site_term'] = {'kind': 'base'}
-    
-            # NRCan15SiteTerm (kind = linear)
-            if 'NRCan15SiteTermLinear' in gmpe:
-                kwargs['nrcan15_site_term'] = {'kind': 'linear'}
-            
-            gmm = mgmpe.ModifiableGMPE(**kwargs)
+    if '[ModifiableGMPE]' in gmpe:
+        params = pd.Series(gmpe.splitlines(), dtype=object)
+        base_gsim = params.iloc[1].split('=')[1].strip().replace('"','')
         
-        # Not using ModifiableGMPE
-        else:
-            # Clean to ensure arguments can be passed (logic tree weights are
-            # retained in original GMM strings in utils_compare_gmpes)
-            params = pd.Series(gmpe.splitlines())
-            idx_to_drop = []
-            for idx_p, par in enumerate(params):
-                if 'lt_weight_gmc' in par:
-                    idx_to_drop.append(idx_p)
-            params = params.drop(idx_to_drop)
-            gmpe_clean = params.iloc[0].strip()
-            for idx_p, par in enumerate(params):
-                if idx_p > 0:
-                    gmpe_clean = gmpe_clean + '\n' + par
-            gmm = valid.gsim(gmpe_clean)
+        # Get the mgmpe params
+        idx_params = []
+        for idx, par in enumerate(params):
+            if idx > 1:
+                par = str(par)
+                if 'sigma_model' in par or 'site_term' in par:
+                    idx_params.append(idx)
+                if 'fix_total_sigma' in par:
+                    idx_params.append(idx)
+                    base_vector = par.split('=')[1].replace('"', '')
+                    fixed_sigma_vector = ast.literal_eval(base_vector)
+                if 'with_betw_ratio' in par:
+                    idx_params.append(idx)
+                    with_betw_ratio = float(par.split('=')[1])
+                if 'set_between_epsilon' in par:
+                    idx_params.append(idx)
+                    between_epsilon = float(par.split('=')[1])
+                if 'scaling' in par:
+                    idx_params.append(idx)
+                    if 'median_scaling_scalar' in par:
+                        median_scalar = float(par.split('=')[1])
+                    if 'median_scaling_vector' in par:
+                        base_vector = par.split('=')[1].replace('"', '')
+                        median_vector = ast.literal_eval(base_vector)
+                    if 'sigma_scaling_scalar' in par:
+                        sigma_scalar = float(par.split('=')[1])
+                    if 'sigma_scaling_vector' in par:
+                        base_vector = par.split('=')[1].replace('"', '')
+                        sigma_vector = ast.literal_eval(base_vector)
+                        
+        # Now create kwargs
+        kwargs = {}
+        kwargs['gmpe'] = {base_gsim: {}}
+        
+        # Add the non-gmpe kwargs
+        for idx_p, param in enumerate(params):
+            if idx_p > 1 and idx_p not in idx_params:
+                dic_key =  param.split('=')[0].strip().replace('"','')
+                dic_val =  param.split('=')[1].strip().replace('"','')
+                kwargs['gmpe'][base_gsim][dic_key] = dic_val
+                
+        # Al Atik 2015 sigma model
+        if 'al_atik_2015_sigma' in gmpe:
+            kwargs['sigma_model_alatik2015'] = {
+                "tau_model": "global", "ergodic": False}
+            
+        # Fix total sigma per imt
+        if 'fix_total_sigma' in gmpe:
+            kwargs['set_fixed_total_sigma'] = {
+                'total_sigma': fixed_sigma_vector}
+
+        # Partition total sigma using a specified ratio of within:between
+        if 'with_betw_ratio' in gmpe:
+            kwargs['add_between_within_stds'] = {
+                'with_betw_ratio': with_betw_ratio}
+
+        # Set epsilon for tau
+        if 'set_between_epsilon' in gmpe:
+            kwargs['set_between_epsilon'] = {'epsilon_tau':
+                                             between_epsilon}
+
+        # Scale median by constant factor over all imts
+        if 'median_scaling_scalar' in gmpe:
+            kwargs['set_scale_median_scalar'] = {'scaling_factor':
+                                                 median_scalar}
+
+        # Scale median by imt-dependent factor
+        if 'median_scaling_vector' in gmpe:
+            kwargs['set_scale_median_vector'] = {'scaling_factor':
+                                                 median_vector}
+
+        # Scale sigma by constant factor over all imts
+        if 'sigma_scaling_scalar' in gmpe:
+            kwargs['set_scale_total_sigma_scalar'] = {
+                'scaling_factor': sigma_scalar}
+
+        # Scale sigma by imt-dependent factor
+        if 'sigma_scaling_vector' in gmpe:
+            kwargs['set_scale_total_sigma_vector'] = {
+                'scaling_factor': sigma_vector}
+
+        # CY14SiteTerm
+        if 'CY14SiteTerm' in gmpe: kwargs['cy14_site_term'] = {}
+
+        # NRCan15SiteTerm (kind = base)
+        if ('NRCan15SiteTerm' in gmpe and
+                'NRCan15SiteTermLinear' not in gmpe):
+            kwargs['nrcan15_site_term'] = {'kind': 'base'}
+
+        # NRCan15SiteTerm (kind = linear)
+        if 'NRCan15SiteTermLinear' in gmpe:
+            kwargs['nrcan15_site_term'] = {'kind': 'linear'}
+        
+        gmm = mgmpe.ModifiableGMPE(**kwargs)
     
-    else: # Read in from old-style list of gsims which are already valid gsims
-        gmm = gmpe
+    # Not using ModifiableGMPE
+    else:
+        # Clean to ensure arguments can be passed (logic tree weights are
+        # retained in original GMM strings in utils_compare_gmpes)
+        params = pd.Series(gmpe.splitlines())
+        idx_to_drop = []
+        for idx_p, par in enumerate(params):
+            if 'lt_weight_gmc' in par:
+                idx_to_drop.append(idx_p)
+        params = params.drop(idx_to_drop)
+        gmpe_clean = params.iloc[0].strip()
+        for idx_p, par in enumerate(params):
+            if idx_p > 0:
+                gmpe_clean = gmpe_clean + '\n' + par
+        gmm = valid.gsim(gmpe_clean)
         
     return gmm
