@@ -333,9 +333,10 @@ def mgmpe_check(gmpe):
         # Add the non-gmpe kwargs
         for idx_p, param in enumerate(params):
             if idx_p > 1 and idx_p not in idx_params:
-                dic_key =  param.split('=')[0].strip().replace('"','')
-                dic_val =  param.split('=')[1].strip().replace('"','')
-                kwargs['gmpe'][base_gsim][dic_key] = dic_val
+                if 'lt_weight' not in param: # Skip if weight for logic tree
+                    dic_key =  param.split('=')[0].strip().replace('"','')
+                    dic_val =  param.split('=')[1].strip().replace('"','')
+                    kwargs['gmpe'][base_gsim][dic_key] = dic_val
                 
         # Al Atik 2015 sigma model
         if 'al_atik_2015_sigma' in gmpe:
