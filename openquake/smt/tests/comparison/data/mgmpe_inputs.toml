@@ -1,4 +1,4 @@
-### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
+# Test input file for checking execution of GMPEs requiring mgmpe_check function found in openquake.smt.comparison.utils_gmpes.py
 
 [general]
 imt_list = ['PGA','SA(0.1)','SA(0.5)'] # imts to compute gm for
@@ -90,5 +90,5 @@ d_sigma = 100 # gmpe specific param
 kappa0 = 0.04
 
 [custom_colors]
-custom_colors_flag = 'False' #By default set to "False" (set to "True" for custom colours)
+custom_colors_flag = 'False' # By default set to "False" (set to "True" for custom colours)
 custom_colors_list = ['lime','dodgerblue','gold','0.8']

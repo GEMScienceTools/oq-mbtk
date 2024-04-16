@@ -84,6 +84,8 @@ class ResidualsTestCase(unittest.TestCase):
             cls.database = pickle.load(f)
         cls.gmpe_list = ["AkkarEtAlRjb2014",  "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]
+        cls.toml = os.path.join(BASE_DATA_PATH,
+                                'residuals_from_toml_test.toml')
 
     def test_correct_build_load(self):
         """
@@ -125,6 +127,15 @@ class ResidualsTestCase(unittest.TestCase):
         residuals = res.Residuals(self.gmpe_list, self.imts)
         residuals.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(residuals.residuals)
+        residuals.get_residual_statistics()
+
+    def test_residuals_execution_from_toml(self):
+        """
+        Tests basic execution of residuals when specifying gmpe and imts to get
+        residuals for from a toml file - not correctness of values
+        """
+        residuals = res.Residuals.from_toml(self.toml)
+        residuals.get_residuals(self.database, component="Geometric")
         residuals.get_residual_statistics()
 
     def test_likelihood_execution(self):
