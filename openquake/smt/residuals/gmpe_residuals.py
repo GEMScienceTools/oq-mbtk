@@ -397,7 +397,7 @@ class Residuals(object):
                config['models'][key].pop('style', None)
                value += '\n' + str(toml.dumps(config['models'][key]))
             value = value.strip()
-               
+            
             # Get eshm20 region param and drop from gmpe to permit validation
             eshm20_region = None
             if 'eshm20_region' in value:
@@ -541,7 +541,7 @@ class Residuals(object):
                 # If no sigma model inform user
                 if np.all(stddev[0] == 0.):
                     gs = str(gmpe).split('(')[0]
-                    m = 'A sigma model is not provided by default for %s' %gs
+                    m = 'A sigma model is not provided for %s' %gs
                     raise ValueError(m)
                 expected[gmpe][imtx]["Mean"] = mean
                 for i, res_type in enumerate(self.types[gmpe][imtx]):
