@@ -114,7 +114,8 @@ We can specify the inputs to perform a residual analysis with as follows:
         
        [models.LanzanoEtAl2019_RJB_OMO]
     
-       # Examples below of some GMPEs not considered in this residual analysis with additional parameters than be specified within a toml file
+       # Examples below of some GMPEs not considered in this residual analysis with additional 
+       # parameters than be specified within a toml file
     
        [models.AbrahamsonGulerce2020SInter]
        region = "CAS" # GMPE specific parameters                
@@ -122,12 +123,19 @@ We can specify the inputs to perform a residual analysis with as follows:
        [models.KothaEtAl2020ESHM20]
        sigma_mu_epsilon = 2.85697 
        c3_epsilon = 1.72    
-       eshm20_region = 4 # Note that only a single eshm20 region (eshm20 attenuation cluster) can be evaluated in a single residual analysis run in the SMT. If multiple variants of the KothaEtAl2020ESHM20 GMPE are specified in a single residuals toml the results of the last variant of the GMPE will overwrite the others (and only the results of the last variant in the toml will be plotted too). This bug will be fixed.
+       eshm20_region = 4 # Note that only a single eshm20 region (eshm20 attenuation cluster) 
+                         # can be evaluated in a single residual analysis run in the SMT. If
+                         # multiple variants of the KothaEtAl2020ESHM20 GMPE are specified in
+                         # a single residuals toml the results of the last variant of the GMPE
+                         # will overwrite the others (and only the results of the last variant 
+                         # in the toml will be plotted too). This bug will be fixed.
     
        [models.NGAEastGMPE]
        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
        
-       # Note that a bug exists for GMPEs which use the add_alias feature, meaning that the user must specify parameters that should be inherently used by specifiying the gsim class (to be fixed). Some examples of how to circumvent this bug are provided below
+       # Note that a bug exists for GMPEs which use the add_alias feature, meaning that the user
+       # must specify parameters that should be inherently used by specifiying the gsim class (to
+       # be fixed). Some examples of how to circumvent this bug are provided below
        
        [models.AbrahamsonEtAl2014] # Use instead of specifying AbrahamsonEtAl2014RegJPN
        region = "JPN"
@@ -200,7 +208,9 @@ Plotting of Residuals
        > imt_list = list(imt_list)
        >
        > # Plot residual probability density function for a specified GMPE from gmpe_list and intensity measure from imt_list
-       > rspl.ResidualPlot(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg') # Plot for gmpe in position 5 in gmpe_list and intensity measure in position 0 in imt_list
+       > rspl.ResidualPlot(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg') # Plot for gmpe in position 5 
+                                                                                          # in gmpe_list and intensity
+                                                                                          # measure in position 0 in imt_list
         
 Residual distribution plot for Boore et al. 2020 and PGA:
     .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_bias+sigma.jpeg
@@ -425,14 +435,21 @@ Comparing GMPEs
         
         # Characterise earthquake for the region of interest as finite rupture
         [source_properties]
-        trt = 'None' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
-        ztor = 'None' # Set to string of 'None' to NOT consider otherwise specify as array matching number of mag and depth values
+        trt = 'None' # Either string of 'None' to use user-provided aratio OR specify a 
+                     # TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle,
+                     # Volcanic, Induced, Induced_Geothermal to assign a trt-dependent
+                     # proxy aratio
+        ztor = 'None' # Set to string of 'None' to NOT consider otherwise specify as
+                      # array matching number of mag and depth values
         strike = -999
         dip =  60
-        rake = 90 # Must be provided. Strike and dip can be approximated if either set to -999
-        aratio  = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
-        trellis_and_rs_mag_list = [5, 6, 7] # mags used only for trellis and response spectra
-        trellis_and_rs_depths = [20, 20, 20] # depth per magnitude for trellis and response spectra
+        rake = 90 # Must be provided. Strike and dip can be approximated if either
+                  # set to -999
+        aratio  = 2 # If set to -999 the user-provided trt string will be used 
+                    # to assign a trt-dependent aratio
+        trellis_and_rs_mag_list = [5, 6, 7] # Mags used only for trellis and response spectra
+        trellis_and_rs_depths = [20, 20, 20] # Depth per magnitude for trellis and
+                                             # response spectra
         
         # Specify magnitude array for Sammons, Euclidean dist and clustering
         [mag_values_non_trellis_or_spectra_functions]
@@ -486,7 +503,7 @@ Comparing GMPEs
             lt_weight_gmc2_plot_lt_only = 0.50
             
         [custom_colors]
-        custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
+        custom_colors_flag = 'False' # (Set to "True" for custom colours in plots)
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
             
             
@@ -587,7 +604,7 @@ Comparing GMPEs
    
    Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per imt), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
 
-   Some examples of how the ModifiableGMPE can be used within a ``.toml`` in the comparison module toml when specifying GMPEs is provided below:
+   Some examples of how the ModifiableGMPE can be used within an input ``.toml`` in the comparison module when specifying GMPEs is provided below:
    
     .. code-block:: ini
 
@@ -601,7 +618,8 @@ Comparing GMPEs
         
         [models.2-ModifiableGMPE]
         gmpe = 'CampbellBozorgnia2014'
-        with_betw_ratio = 1.7 # add between-event and within-event sigma using ratio of 1.7 to partition total sigma
+        with_betw_ratio = 1.7 # add between-event and within-event sigma using
+                              # ratio of 1.7 to partition total sigma
                 
         [models.3-ModifiableGMPE]
         gmpe = 'CampbellBozorgnia2014'
