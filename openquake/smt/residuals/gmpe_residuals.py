@@ -379,6 +379,7 @@ class Residuals(object):
         eshm20_regions = {}
         config = copy.deepcopy(config_file)
         for idx_k, key in enumerate(config['models']):
+            
         # If the key contains a number we take the second part
             if re.search("^\\d+\\-", key):
                 tmp = re.sub("^\\d+\\-", "", key)
@@ -1209,7 +1210,7 @@ class SingleStationAnalysis(object):
     """
     Class to analyse residual sets recorded at specific stations
     """
-    def __init__(self, site_id_list, gmpe_list, imts):
+    def __init__(self, site_id_list, gmpe_list, imts, eshm20_regions=None):
         # Initiate SSA object
         self.site_ids = site_id_list
         if len(self.site_ids) < 1:
@@ -1219,6 +1220,7 @@ class SingleStationAnalysis(object):
         self.imts = imts
         self.site_residuals = []
         self.types = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
+        self.eshm20_regions = eshm20_regions
         for gmpe in self.gmpe_list:
             for imtx in self.imts:
                 self.types[gmpe][imtx] = []
@@ -1244,8 +1246,10 @@ class SingleStationAnalysis(object):
         
         # Parsing file with models
         gmpe_list = []
+        eshm20_regions = {}
         config = copy.deepcopy(config_file)
-        for key in config['models']:
+        for idx_k, key in enumerate(config['models']):
+            
         # If the key contains a number we take the second part
             if re.search("^\\d+\\-", key):
                 tmp = re.sub("^\\d+\\-", "", key)
@@ -1255,10 +1259,31 @@ class SingleStationAnalysis(object):
             if len(config['models'][key]):
                config['models'][key].pop('style', None)
                value += '\n' + str(toml.dumps(config['models'][key]))
+               
+            # Get eshm20 region param and drop from gmpe to permit validation
+            eshm20_region = None
+            if 'eshm20_region' in value:
+                vals = value.splitlines()
+                idx_to_drop = []
+                for idx_v, val in enumerate(vals):
+                    if 'eshm20_region' in val:
+                        idx_to_drop.append(idx_v)
+                        eshm20_region = int(val.split('=')[1])
+                vals = pd.Series(vals).drop(idx_to_drop)
+                clean = vals.iloc[0]
+                for idx_v, val in enumerate(vals):
+                    if idx_v > 0:
+                        clean = clean + '\n' + val
+                value = clean
+            eshm20_regions[idx_k] = eshm20_region
+            
+            # Create valid gsim
             gmpe_list.append(valid.gsim(value))
-        
-        imts = config_file['imts']['imt_list']             
-        return cls(site_id_list, gmpe_list, imts)
+            
+        # Get imts    
+        imts = config_file['imts']['imt_list']   
+            
+        return cls(site_id_list, gmpe_list, imts, eshm20_regions)
 
     def get_site_residuals(self, database, component="Geometric"):
         """

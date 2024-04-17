@@ -21,7 +21,6 @@ Tests for execution of comparison module
 import os
 import shutil
 import unittest
-from openquake.hazardlib import valid
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import (
     compute_matrix_gmpes, plot_trellis_util, plot_spectra_util,
@@ -56,6 +55,10 @@ class ComparisonTestCase(unittest.TestCase):
     def setUpClass(self):
         self.input_file = os.path.join(base, "compare_gmpe_inputs.toml")
         self.output_directory = os.path.join(base, 'compare_gmpes_test')
+        self.input_file_plot_obs_spectra = os.path.join(
+            base, 'Chamoli_1999_03_28_EQ.toml')
+        self.input_file_obs_spectra_csv = os.path.join(
+            base, 'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -246,8 +249,7 @@ class ComparisonTestCase(unittest.TestCase):
 
     def test_trellis_and_spectra_functions(self):
         """
-        Check trellis, response spectra and GMPE sigma w.r.t. spectral period
-        plotting functions are executed
+        Check trellis and response spectra plotting functions are executed
         """
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
@@ -310,13 +312,53 @@ class ComparisonTestCase(unittest.TestCase):
             self.output_directory, 'TrellisPlots.png'))
         target_file_spectra = (os.path.join(
             self.output_directory, 'ResponseSpectra.png'))
-        target_file_sigma = (os.path.join(
-            self.output_directory, 'sigma.png'))
 
         # Check target file created and outputted in expected location
         self.assertTrue(target_file_trellis)
         self.assertTrue(target_file_spectra)
-        self.assertTrue(target_file_sigma)
+
+    def test_plot_observed_spectra(self):
+        """
+        Test execution of plotting an observed spectra from a csv against
+        predictions from gmpes
+        """
+        # Get config and obs spectra
+        config = comp.Configurations(self.input_file_plot_obs_spectra)
+        obs_sp = self.input_file_obs_spectra_csv
+        
+        # Spectra plots including obs spectra
+        plot_spectra_util(config.trt,
+                          config.ztor,
+                          config.rake,
+                          config.strike,
+                          config.dip,
+                          config.trellis_and_rs_depth,
+                          config.Z1,
+                          config.Z25,
+                          config.Vs30,
+                          config.region,
+                          config.max_period,
+                          config.trellis_and_rs_mag_list,
+                          config.dist_list,
+                          config.gmpes_list,
+                          config.aratio,
+                          config.Nstd,
+                          self.output_directory,
+                          config.custom_color_flag,
+                          config.custom_color_list,
+                          config.eshm20_region,
+                          config.dist_type,
+                          config.lt_weights_gmc1,
+                          config.lt_weights_gmc2,
+                          obs_spectra=obs_sp,
+                          up_or_down_dip=config.up_or_down_dip)
+        
+        # Specify target files
+        target_file_spectra = (os.path.join(
+            self.output_directory, 'ResponseSpectraPlotObserved.png'))
+
+        # Check target file created and outputted in expected location
+        self.assertTrue(target_file_spectra)
 
     @classmethod
     def tearDownClass(self):

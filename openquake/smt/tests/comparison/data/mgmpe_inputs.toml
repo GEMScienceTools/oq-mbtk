@@ -6,7 +6,7 @@ max_period = 0.5 # max period for response spectra (can't exceed maximum period 
 minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
 dist_type = 'rrup' # specify distance metric used in trellis plots
-dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
+dist_list = [10, 50, 200] # distances for use in response spectra
 eshm20_region = 0 # region for ESHM20 GMM
 Nstd = 1 # number of standard deviations to sample from sigma distribution
 
@@ -24,8 +24,8 @@ strike = -999
 dip = -999
 rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
 aratio = 2
-trellis_and_rs_mag_list = [5,6,7] # mags used only for trellis
-trellis_and_rs_depths = [20,25,30] # depth per magnitude for trellis
+trellis_and_rs_mag_list = [5,6,7] # mags used only for trellis and response spectra
+trellis_and_rs_depths = [20,25,30] # depth per magnitude for trellis and response spectra
 
 # Specify mag values and depths for use in Sammons, Euclidean dist and clustering
 [mag_values_non_trellis_or_spectra_functions]

@@ -214,12 +214,6 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
     # Generate config object
     config = Configurations(filename)
     
-    # Get observed spectra information if obs_spectra
-    if obs_spectra is not None:
-        obs_spectra = pd.read_csv(obs_spectra)
-    else:
-        obs_spectra = None
-    
     plot_spectra_util(config.trt,
                       config.ztor,
                       config.rake,

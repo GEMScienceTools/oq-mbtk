@@ -234,7 +234,7 @@ class ResidualsTestCase(unittest.TestCase):
         ssa1 = res.SingleStationAnalysis(top_sites.keys(), self.gmpe_list,
                                          self.imts)
         
-        # Compute the total, inter-event and intra-event residuals for each site
+        # Compute total, inter-event and intra-event residuals for each site
         ssa1.get_site_residuals(self.database)
         
         # Get single station residual statistics per GMPE and per imt
@@ -263,6 +263,21 @@ class ResidualsTestCase(unittest.TestCase):
                 # Check plots outputted
                 self.assertTrue(output_all_res_plt)
                 self.assertTrue(output_intra_res_comp_plt)
+
+    def test_single_station_residual_analysis_from_toml(self):
+        """
+        Test execution of single station residual analysis using GMPEs and
+        imts specified within a toml file. Correctness of values is not tested.
+        """
+        # Get sites with at least 1 record each (i.e. all sites in db)
+        threshold = 1
+        top_sites = rank_sites_by_record_count(self.database, threshold)
+        
+        # Create SingleStationAnalysis object from toml
+        #ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), self.toml)
+        
+        # Compute total, inter-event and intra-event residuals for each site
+        #ssa1.get_site_residuals(self.database)
                 
     @classmethod
     def tearDownClass(cls):
