@@ -380,7 +380,7 @@ class Residuals(object):
         config = copy.deepcopy(config_file)
         for idx_k, key in enumerate(config['models']):
             
-        # If the key contains a number we take the second part
+            # If the key contains a number we take the second part
             if re.search("^\\d+\\-", key):
                 tmp = re.sub("^\\d+\\-", "", key)
                 value = f"[{tmp}] "
@@ -389,6 +389,7 @@ class Residuals(object):
             if len(config['models'][key]):
                config['models'][key].pop('style', None)
                value += '\n' + str(toml.dumps(config['models'][key]))
+            value = value.strip()
                
             # Get eshm20 region param and drop from gmpe to permit validation
             eshm20_region = None
@@ -1249,7 +1250,7 @@ class SingleStationAnalysis(object):
         config = copy.deepcopy(config_file)
         for idx_k, key in enumerate(config['models']):
             
-        # If the key contains a number we take the second part
+            # If the key contains a number we take the second part
             if re.search("^\\d+\\-", key):
                 tmp = re.sub("^\\d+\\-", "", key)
                 value = f"[{tmp}] "
@@ -1258,6 +1259,7 @@ class SingleStationAnalysis(object):
             if len(config['models'][key]):
                config['models'][key].pop('style', None)
                value += '\n' + str(toml.dumps(config['models'][key]))
+            value = value.strip()
                
             # Get eshm20 region param and drop from gmpe to permit validation
             eshm20_region = None
@@ -1275,7 +1277,7 @@ class SingleStationAnalysis(object):
                         clean = clean + '\n' + val
                 value = clean
             eshm20_regions[idx_k] = eshm20_region
-            
+        
             # Create valid gsim
             gmpe_list.append(valid.gsim(value))
             

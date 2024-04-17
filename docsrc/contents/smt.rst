@@ -126,9 +126,14 @@ We can specify the inputs to perform a residual analysis with as follows:
     
        [models.NGAEastGMPE]
        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
-        
-       [models.AbrahamsonEtAl2014]
-       region = "JPN" # add_alias bug means must still specify 'JPN' region (i.e. this GMPE will not be regionalised if specifying region using class name of AbrahamsonEtAl2014RegJPN, this bug applies to other GMPEs which use add_alias also - will be fixed)
+       
+       # Note that a bug exists for GMPEs which use the add_alias feature, meaning that the user must specify parameters that should be inherently used by specifiying the gsim class (to be fixed). Some examples of how to circumvent this bug are provided below
+       
+       [models.AbrahamsonEtAl2014] # Use instead of specifying AbrahamsonEtAl2014RegJPN
+       region = "JPN"
+       
+       [models.NGAEastUSGSGMPE]  # Use instead of specifying NGAEastUSGSSeed1CCSP or 1CCSP gsim classes
+       gmpe_table = 'nga_east_1CCSP.hdf5'
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
