@@ -2,6 +2,10 @@
 
 [models.AbrahamsonGulerce2020SInter]
 region = "CAS" # GMPE specific parameters
+    
+#[models.HassaniAtkinson2018]
+#d_sigma = 100
+#kappa0 = 0.04 # GMPE specific parameters
 
 [models.KothaEtAl2020ESHM20]
 sigma_mu_epsilon = 2.85697 
