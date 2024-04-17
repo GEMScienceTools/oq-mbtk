@@ -111,7 +111,8 @@ class Configurations(object):
         gmpes_list_initial = []
         config = copy.deepcopy(config_file)
         for key in config['models']:
-        # If the key contains a number we take the second part
+            
+            # If the key contains a number we take the second part
             if re.search("^\\d+\\-", key):
                 tmp = re.sub("^\\d+\\-", "", key)
                 value = f"[{tmp}] "
@@ -120,6 +121,7 @@ class Configurations(object):
             if len(config['models'][key]):
                config['models'][key].pop('style', None)
                value += '\n' + str(toml.dumps(config['models'][key]))
+            value = value.strip()
             gmpes_list_initial.append(value.strip())
             
         self.gmpes_list = []
