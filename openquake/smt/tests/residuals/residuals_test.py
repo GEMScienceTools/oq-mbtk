@@ -250,16 +250,15 @@ class ResidualsTestCase(unittest.TestCase):
         # Check plots executed for each GMPE and intensity measure
         for gmpe in self.gmpe_list:
             for imt in self.imts:                        
-                output_all_res_plt = os.path.join(self.out_location, gmpe +
-                                                  imt + 'AllResPerSite.jpg') 
-                output_intra_res_comp_plt = os.path.join(self.out_location,
-                                                         gmpe + imt +
-                                                         'IntraResCompPerSite.jpg') 
-                rspl.ResidualWithSite(ssa1, gmpe, imt, output_all_res_plt,
-                                      filetype = 'jpg')
+                output_all_res_plt = os.path.join(
+                    self.out_location, gmpe + imt + 'AllResPerSite.jpg') 
+                output_intra_res_comp_plt = os.path.join(
+                    self.out_location, gmpe + imt + 'IntraResCompPerSite.jpg') 
+                rspl.ResidualWithSite(
+                    ssa1, gmpe, imt, output_all_res_plt, filetype='jpg')
                 rspl.IntraEventResidualWithSite(ssa1, gmpe, imt,
                                                 output_intra_res_comp_plt,
-                                                filetype = 'jpg')
+                                                filetype='jpg')
                 # Check plots outputted
                 self.assertTrue(output_all_res_plt)
                 self.assertTrue(output_intra_res_comp_plt)
@@ -274,10 +273,10 @@ class ResidualsTestCase(unittest.TestCase):
         top_sites = rank_sites_by_record_count(self.database, threshold)
         
         # Create SingleStationAnalysis object from toml
-        #ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), self.toml)
+        ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), self.toml)
         
         # Compute total, inter-event and intra-event residuals for each site
-        #ssa1.get_site_residuals(self.database)
+        ssa1.get_site_residuals(self.database)
                 
     @classmethod
     def tearDownClass(cls):

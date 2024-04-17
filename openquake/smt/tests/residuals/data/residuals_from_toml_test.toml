@@ -1,5 +1,8 @@
 # Test input file for checking execution of get_residuals.from_toml function using some GMPEs with additional parameters specifiable within the toml file
 
+[models.AbrahamsonEtAl2014]
+region = "JPN" # add_alias bug means must still specify 'JPN' region
+
 [models.AbrahamsonGulerce2020SInter]
 region = "CAS" # GMPE specific parameters
     
@@ -14,9 +17,6 @@ eshm20_region = 4
 
 [models.NGAEastGMPE]
 gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
-
-[models.AbrahamsonEtAl2014]
-region = "JPN" # add_alias bug means must still specify 'JPN' region
 
 [imts]
 imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)']    
