@@ -122,7 +122,7 @@ We can specify the inputs to perform a residual analysis with as follows:
        [models.KothaEtAl2020ESHM20]
        sigma_mu_epsilon = 2.85697 
        c3_epsilon = 1.72    
-       eshm20_region = 4
+       eshm20_region = 4 # Note that only a single eshm20 region (eshm20 attenuation cluster) can be evaluated in a single residual analysis run in the SMT. If multiple variants of the KothaEtAl2020ESHM20 GMPE are specified in a single residuals toml the results of the last variant of the GMPE will overwrite the others (and only the results of the last variant in the toml will be plotted too). This bug will be fixed.
     
        [models.NGAEastGMPE]
        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
