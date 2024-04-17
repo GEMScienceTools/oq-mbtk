@@ -295,10 +295,12 @@ class Residuals(object):
         :param  imts:
             A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
         :param eshm20_regions:
-            Dictionary where each key corresponds to position of a GMPE in
-            the GMPE list and the value is an integer representing the attenuation
+            Dictionary where each key corresponds to the position of a GMPE in
+            the GMPE list and the value is an integer representing the atten.
             cluster within ESHM20's backbone model for active shallow crustal
-            tectonic localities
+            tectonic localities. This is used by the KothaEtAl2020ESHM20 gsim
+            class and must be specified to ensure the correct attenuation
+            cluster is applied when computing the ground-motion residuals
         """
         # Residuals object
         self.gmpe_list = check_gsim_list(gmpe_list)
