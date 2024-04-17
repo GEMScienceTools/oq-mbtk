@@ -513,8 +513,8 @@ class Residuals(object):
                 gsim = self.gmpe_list[gmpe]
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
-                    if period < self.gmpe_sa_limits[gmpe][0] or\
-                            period > self.gmpe_sa_limits[gmpe][1]:
+                    if (period < self.gmpe_sa_limits[gmpe][0] or
+                        period > self.gmpe_sa_limits[gmpe][1]):
                         expected[gmpe][imtx] = None
                         continue
                 # Add region parameter to sites context if specified
@@ -595,8 +595,8 @@ class Residuals(object):
             for imtx in self.imts:
                 if not self.residuals[gmpe][imtx]:
                     continue
-                statistics[gmpe][imtx] = \
-                    self.get_residual_statistics_for(gmpe, imtx)
+                statistics[
+                    gmpe][imtx] = self.get_residual_statistics_for(gmpe, imtx)
         return statistics
 
     def get_residual_statistics_for(self, gmpe, imtx):
@@ -736,8 +736,7 @@ class Residuals(object):
                 for res_type, data in values.items():
                     l_h, median_lh = data
                     lh_values[gmpe][imtx][res_type] = l_h
-                    statistics[gmpe][imtx][res_type]["Median LH"] =\
-                        median_lh
+                    statistics[gmpe][imtx][res_type]["Median LH"] = median_lh
         return lh_values, statistics
 
     def _get_likelihood_values_for(self, gmpe, imt):
@@ -793,8 +792,8 @@ class Residuals(object):
                     asll])
                 self.llh[gmpe][imtx] = -(1.0 / float(len(asll))) * np.sum(asll)
 
-            self.llh[gmpe]["All"] = -(1. / float(len(log_residuals[gmpe]))) *\
-                np.sum(log_residuals[gmpe])
+            self.llh[gmpe]["All"] = -(1. / float(len(
+                log_residuals[gmpe]))) * np.sum(log_residuals[gmpe])
         # Get mean weights
         weights = np.array([2.0 ** -self.llh[gmpe]["All"]
                             for gmpe in self.gmpe_list])
@@ -1046,10 +1045,10 @@ class Residuals(object):
             d_val = (min_d + (float(iloc) * bandwidth)) * np.ones(nvals)
             d_1 = d_val - min_d
             d_2 = d_val + min_d
-            p_1 = norm.cdf((d_1 - mu_d) / stddev) -\
-                norm.cdf((-d_1 - mu_d) / stddev)
-            p_2 = norm.cdf((d_2 - mu_d) / stddev) -\
-                norm.cdf((-d_2 - mu_d) / stddev)
+            p_1 = norm.cdf((d_1 - mu_d) / stddev) - norm.cdf(
+                (-d_1 - mu_d) / stddev)
+            p_2 = norm.cdf((d_2 - mu_d) / stddev) - norm.cdf(
+                (-d_2 - mu_d) / stddev)
             mde += (p_2 - p_1) * d_val
         inv_n = 1.0 / float(nvals)
         mde_norm = np.sqrt(inv_n * np.sum(mde ** 2.))
@@ -1102,8 +1101,8 @@ class Residuals(object):
         """
         mu_a = np.mean(obs)
         mu_y = np.mean(expected)
-        b_1 = np.sum((obs - mu_a) * (expected - mu_y)) /\
-            np.sum((obs - mu_a) ** 2.)
+        b_1 = np.sum(
+            (obs - mu_a) * (expected - mu_y)) / np.sum((obs - mu_a) ** 2.)
         b_0 = mu_y - b_1 * mu_a
         y_c = expected - ((b_0 + b_1 * obs) - obs)
         de_orig = np.sum((obs - expected) ** 2.)
