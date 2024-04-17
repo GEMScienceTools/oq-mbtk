@@ -294,6 +294,11 @@ class Residuals(object):
             A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
         :param  imts:
             A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
+        :param eshm20_regions:
+            Dictionary where each key corresponds to position of a GMPE in
+            the GMPE list and the value is an integer representing the attenuation
+            cluster within ESHM20's backbone model for active shallow crustal
+            tectonic localities
         """
         # Residuals object
         self.gmpe_list = check_gsim_list(gmpe_list)
@@ -366,7 +371,7 @@ class Residuals(object):
         self.contexts = None
 
     @classmethod
-    def from_toml(cls, filename):
+    def from_toml(cls, filename, add_sigma=None):
         """
         Read in gmpe_list and imts from .toml file. This method allows use of
         gmpes with additional parameters and input files within the SMT
