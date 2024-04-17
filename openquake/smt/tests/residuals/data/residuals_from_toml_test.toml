@@ -19,6 +19,8 @@ eshm20_region = 4
 gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
 
 [models.NGAEastUSGSGMPE]
+gmpe_table = 'nga_east_1CCSP.hdf5'
+sigma_model = 'PANEL'
 
 [imts]
 imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)']    
