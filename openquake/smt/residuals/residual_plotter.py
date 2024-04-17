@@ -85,15 +85,15 @@ class BaseResidualPlot(object):
         if hasattr(residuals,'residuals') == True:
             if 'Inter event' and 'Intra event' not in residuals.residuals[
                     gmpe][imt] == True:
-                self.figure_size = kwargs.get("figure_size",  (8, 6))
+                self.figure_size = kwargs.get("figure_size",(8,6))
             else:
-                self.figure_size = kwargs.get("figure_size",  (8, 8))
+                self.figure_size = kwargs.get("figure_size",(8,8))
         elif hasattr(residuals,'site_residuals') == True:
             if 'Inter event' and 'Intra event' not in residuals.site_residuals[
                     0].residuals[gmpe][imt]:
-                self.figure_size = kwargs.get("figure_size",  (8, 6))
+                self.figure_size = kwargs.get("figure_size",(8,6))
             else:
-                self.figure_size = kwargs.get("figure_size",  (9, 9))
+                self.figure_size = kwargs.get("figure_size",(9,9))
             
         self.show = kwargs.get("show", False)
         self.create_plot()
@@ -149,8 +149,8 @@ class BaseResidualPlot(object):
 
     def _residual_plot(self, ax, res_data, res_type):
         """
-        Plots the reisudal data on the given axis. This method should in
-            principle not be overridden by sub-classes
+        Plots the residual data on the given axis. This method should in
+        principle not be overridden by sub-classes
         """
         self.draw(ax, res_data, res_type)
         ax.set_xlim(*self.get_axis_xlim(res_data, res_type))
