@@ -1242,7 +1242,7 @@ class SingleStationAnalysis(object):
         """
         # Read in toml file with dict of gmpes and subdict of imts
         config_file = toml.load(filename)
-        
+             
         # Parsing file with models
         gmpe_list = []
         eshm20_regions = {}
@@ -1280,8 +1280,8 @@ class SingleStationAnalysis(object):
             gmpe_list.append(valid.gsim(value))
             
         # Get imts    
-        imts = config_file['imts']['imt_list']   
-            
+        imts = config_file['imts']['imt_list']     
+        
         return cls(site_id_list, gmpe_list, imts, eshm20_regions)
 
     def get_site_residuals(self, database, component="Geometric"):
@@ -1292,7 +1292,8 @@ class SingleStationAnalysis(object):
         for site_id in self.site_ids:
             selector = SMRecordSelector(database)
             site_db = selector.select_from_site_id(site_id, as_db=True)
-            resid = Residuals(self.input_gmpe_list, self.imts)
+            resid = Residuals(self.input_gmpe_list, self.imts,
+                              self.eshm20_regions)
             resid.get_residuals(site_db, normalise=False, component=component)
             setattr(
                 resid,
