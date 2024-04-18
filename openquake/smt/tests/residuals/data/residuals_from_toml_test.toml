@@ -22,5 +22,7 @@ gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
 gmpe_table = 'nga_east_1CCSP.hdf5'
 sigma_model = 'PANEL'
 
+#[models.1-NGAEastUSGSGMPE]
+
 [imts]
 imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)']    
