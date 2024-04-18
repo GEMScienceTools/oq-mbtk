@@ -939,7 +939,7 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, gmc1_or_gmc2,
                 lt_minus_sigma_per_period_gmc[imt] = np.sum(
                     lt_df_minus_sigma_gmc.loc[imt])
         
-        # Plot logic tree #
+        # Plot logic tree
         ax1.plot(period, np.array(pd.Series(lt_per_period_gmc)), linewidth=2,
                  color=col, linestyle='--', label = label, zorder=100)
         
