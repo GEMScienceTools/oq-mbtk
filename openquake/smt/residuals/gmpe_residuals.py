@@ -373,7 +373,7 @@ class Residuals(object):
         self.contexts = None
 
     @classmethod
-    def from_toml(cls, filename, add_sigma=None):
+    def from_toml(cls, filename):
         """
         Read in gmpe_list and imts from .toml file. This method allows use of
         gmpes with additional parameters and input files within the SMT
