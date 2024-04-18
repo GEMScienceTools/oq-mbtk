@@ -399,6 +399,7 @@ class Residuals(object):
             value = value.strip()
             
             # Get eshm20 region param and drop from gmpe to permit validation
+            # (re-added to context when computing residuals if required)
             eshm20_region = None
             if 'eshm20_region' in value:
                 vals = value.splitlines()
@@ -415,7 +416,7 @@ class Residuals(object):
                 value = clean
             eshm20_regions[idx_k] = eshm20_region
             
-            # Create valid gsim
+            # Create valid gsim object
             gmpe_list.append(valid.gsim(value))
             
         # Get imts    
@@ -1285,7 +1286,7 @@ class SingleStationAnalysis(object):
                         clean = clean + '\n' + val
                 value = clean
             eshm20_regions[idx_k] = eshm20_region
-        
+
             # Create valid gsim
             gmpe_list.append(valid.gsim(value))
             
