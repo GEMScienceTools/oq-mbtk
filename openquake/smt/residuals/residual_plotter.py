@@ -596,9 +596,9 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, custom_cycler=0
     colour_cycler = (cycler(color = ['r', 'g', 'b', 'y', 'lime', 'k', 'dodgerblue',
                                    'gold', '0.8', 'mediumseagreen', '0.5',
                                    'tab:orange', 'tab:purple', 'tab:brown',
-                                   'tab:pink'])*cycler(linestyle = ['-']))
+                                   'tab:pink'])*cycler(linestyle=['-']))
     
-    if type(custom_cycler) == type(cycler(colour = 'b')):
+    if type(custom_cycler) == type(cycler(colour='b')):
        colour_cycler = custom_cycler
         
     # Plot LLH values w.r.t. spectral period
@@ -612,8 +612,9 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, custom_cycler=0
         ax_llh.plot(x_llh.imt_float, y_llh,label = tmp.split('(')[0])
     ax_llh.set_xlabel('Spectral Period (s)')
     ax_llh.set_ylabel('Loglikelihood Value')
-    ax_llh.set_title('Scherbaum et al. (2009) Loglikelihood Values', fontsize = '16')
-    ax_llh.legend(loc = 'upper right', ncol = 2, fontsize = 'medium')
+    ax_llh.set_title('Scherbaum et al. (2009) Loglikelihood Values',
+                     fontsize='16')
+    ax_llh.legend(loc='upper right', ncol=2, fontsize='medium')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
     # Reassign original imts to residuals.imts
@@ -652,25 +653,25 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler=0,
     colour_cycler = (cycler(color=['r', 'g', 'b', 'y', 'lime', 'k', 'dodgerblue',
                                    'gold', '0.8', 'mediumseagreen','0.5',
                                    'tab:orange', 'tab:purple', 'tab:brown',
-                                   'tab:pink'])*cycler(linestyle = ['-']))
-    if type(custom_cycler) == type(cycler(colour = 'b')):
+                                   'tab:pink'])*cycler(linestyle=['-']))
+    if type(custom_cycler) == type(cycler(colour='b')):
        colour_cycler = custom_cycler
     
     # Plot EDR w.r.t. spectral period
     EDR_with_imt = {}
-    fig_EDR, ax_EDR = plt.subplots(figsize = (10, 8))
+    fig_EDR, ax_EDR = plt.subplots(figsize=(10, 8))
     ax_EDR.set_prop_cycle(colour_cycler)
     for gmpe in residuals.gmpe_list:
         EDR_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_EDR = EDR_with_imt.EDR
         tmp = str(residuals.gmpe_list[gmpe])
         ax_EDR.scatter(x_with_imt.imt_float, y_EDR)
-        ax_EDR.plot(x_with_imt.imt_float, y_EDR, label = tmp.split('(')[0])
+        ax_EDR.plot(x_with_imt.imt_float, y_EDR, label=tmp.split('(')[0])
     ax_EDR.set_xlabel('Spectral Period (s)')
     ax_EDR.set_ylabel('EDR')
     ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)',
                      fontsize = '16')
-    ax_EDR.legend(loc = 'upper right', ncol = 2, fontsize = 'medium')
+    ax_EDR.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename + '_EDR_value'), plt.gcf(), filetype, dpi)
     
     # Plot median pred. correction factor w.r.t. spectral period
@@ -682,29 +683,29 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler=0,
         y_kappa = kappa_with_imt["sqrt Kappa"]
         tmp = str(residuals.gmpe_list[gmpe])
         ax_kappa.scatter(x_with_imt.imt_float, y_kappa)
-        ax_kappa.plot(x_with_imt.imt_float, y_kappa, label = tmp.split('(')[0])
+        ax_kappa.plot(x_with_imt.imt_float, y_kappa, label=tmp.split('(')[0])
     ax_kappa.set_xlabel('Spectral Period (s)')
     ax_kappa.set_ylabel('k^0.5')
     ax_kappa.set_title('Median Pred. Correction Factor (k) (Kale and Akkar, 2013)',
                        fontsize = '16')
-    ax_kappa.legend(loc = 'upper right', ncol = 2, fontsize = 'medium')
+    ax_kappa.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename + '_EDR_correction_factor'), plt.gcf(),
                 filetype, dpi)
     
     # Plot MDE w.r.t. spectral period
     MDE_with_imt = {}
-    fig_MDE, ax_MDE = plt.subplots(figsize = (10, 8))
+    fig_MDE, ax_MDE = plt.subplots(figsize=(10, 8))
     ax_MDE.set_prop_cycle(colour_cycler)
     for gmpe in residuals.gmpe_list:
         MDE_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_MDE = MDE_with_imt["MDE Norm"]
         tmp = str(residuals.gmpe_list[gmpe])
         ax_MDE.scatter(x_with_imt.imt_float, y_MDE)
-        ax_MDE.plot(x_with_imt.imt_float, y_MDE, label = tmp.split('(')[0])
+        ax_MDE.plot(x_with_imt.imt_float, y_MDE, label=tmp.split('(')[0])
     ax_MDE.set_xlabel('Spectral Period (s)')
     ax_MDE.set_ylabel('MDE Norm')
     ax_MDE.set_title('Normalised MDE (Kale and Akkar, 2013)',fontsize='16')
-    ax_MDE.legend(loc = 'upper right', ncol = 2, fontsize = 'medium')
+    ax_MDE.legend(loc = 'upper right', ncol = 2, fontsize='medium')
     _save_image(os.path.join(filename + '_MDE'), plt.gcf(), filetype, dpi)
     
     # Reassign original imts to residuals.imts
@@ -844,43 +845,41 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
         marker_input = input_df['marker'].iloc[0]
         
         # Plot mean
-        if Mean_Sigma_Intra_df[gmpe].loc['Mean'].all() == 0 and Mean_Sigma_Inter_df[
-                gmpe].loc['Mean'].all() == 0:
+        if (Mean_Sigma_Intra_df[gmpe].loc['Mean'].all() == 0 and
+            Mean_Sigma_Inter_df[gmpe].loc['Mean'].all() == 0):
             ax[2, 0].scatter(imts_to_plot.imt_float, Mean_Sigma_Intra_df[
                 gmpe].loc['Mean'], color = color_input_non_total,
-                marker = marker_input, zorder = 0)
+                marker=marker_input, zorder=0)
             ax[1, 0].scatter(imts_to_plot.imt_float, Mean_Sigma_Inter_df[
                 gmpe].loc['Mean'], color = color_input_non_total,
-                marker = marker_input, zorder = 0)
+                marker=marker_input, zorder=0)
         else:
-            ax[2, 0].scatter(imts_to_plot.imt_float,Mean_Sigma_Intra_df[
-                gmpe].loc['Mean'], color = color_input, marker = marker_input)
+            ax[2, 0].scatter(imts_to_plot.imt_float, Mean_Sigma_Intra_df[
+                gmpe].loc['Mean'], color=color_input, marker=marker_input)
             ax[1, 0].scatter(imts_to_plot.imt_float, Mean_Sigma_Inter_df[
-                gmpe].loc['Mean'], color = color_input, marker = marker_input)
+                gmpe].loc['Mean'], color=color_input, marker=marker_input)
         ax[0, 0].scatter(imts_to_plot.imt_float, Mean_Sigma_Total_df[gmpe].loc[
-            'Mean'], label = residuals.gmpe_list[gmpe], color = color_input,
-            marker = marker_input)
+            'Mean'], label=residuals.gmpe_list[gmpe], color=color_input,
+            marker=marker_input)
        
         # Plot sigma
-        if Mean_Sigma_Intra_df[gmpe].loc['Std Dev'].all() == 0 and Mean_Sigma_Inter_df[
-                gmpe].loc['Std Dev'].all() == 0:
+        if (Mean_Sigma_Intra_df[gmpe].loc['Std Dev'].all() == 0 and
+            Mean_Sigma_Inter_df[gmpe].loc['Std Dev'].all() == 0):
             ax[2, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Intra_df[
                 gmpe].loc['Std Dev'], color = color_input_non_total,
-                marker = marker_input, zorder = 0)
+                marker=marker_input, zorder=0)
             ax[1, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Inter_df[
                 gmpe].loc['Std Dev'], color = color_input_non_total,
-                marker = marker_input, zorder = 0)
+                marker=marker_input, zorder=0)
         else:
             ax[2, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Intra_df[
-                gmpe].loc['Std Dev'], color = color_input,
-                marker = marker_input)
+                gmpe].loc['Std Dev'], color=color_input, marker=marker_input)
             ax[1, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Inter_df[
-                gmpe].loc['Std Dev'], color = color_input,
-                marker = marker_input)
+                gmpe].loc['Std Dev'], color=color_input, marker=marker_input)
         ax[0, 1].scatter(imts_to_plot.imt_float, Mean_Sigma_Total_df[gmpe].loc[
-            'Std Dev'], color = color_input, marker = marker_input)
+            'Std Dev'], color=color_input, marker=marker_input)
         
-    ax[0, 0].legend(loc = 'upper right', ncol = 2, fontsize = 6)
+    ax[0, 0].legend(loc='upper right', ncol=2, fontsize=6)
     _save_image(filename, plt.gcf(), filetype, dpi)
     
     # Reassign original imts to residuals.imts
@@ -906,7 +905,7 @@ def loglikelihood_table(residuals, filename):
         llh_metrics[gmpe] = pd.DataFrame({llh_columns:(pd.Series(residuals.llh))
                                         [gmpe]}, index=residuals.imts)
         llh_metrics_df[gmpe] = pd.DataFrame(llh_metrics[gmpe],
-                                          index = residuals.imts)
+                                            index=residuals.imts)
 
     llh_metrics_df = pd.DataFrame()
     for gmpe in range(0, np.size(gmpe_list_series)):
@@ -916,7 +915,7 @@ def loglikelihood_table(residuals, filename):
     llh_metrics_df.columns = llh_columns_all
     
     average_llh_over_imts = np.arange(0, np.size(gmpe_list_series), 1,
-                                    dtype = 'float')
+                                    dtype='float')
     for gmpe in range(0, np.size(gmpe_list_series)):
         average_llh_over_imts[gmpe] = np.array(np.mean(
             llh_metrics_df[llh_columns_all[gmpe]]))
@@ -933,7 +932,7 @@ def loglikelihood_table(residuals, filename):
          llh_columns_all_output[gmpe] =  tmp.split('(')[0].replace(
              '\n',', ') + ' LLH'
     final_llh_df_output.columns = list(pd.Series(llh_columns_all_output))
-    final_llh_df_output.to_csv(filename, sep = ',')
+    final_llh_df_output.to_csv(filename, sep=',')
     
     return final_llh_df
     
@@ -990,9 +989,9 @@ def edr_weights_table(residuals, filename):
     ranking (Kale and Akkar, 2013)
     """     
     # Produce series of residuals.gmpe_list
-    gmpe_list_series = pd.Series(pd.DataFrame(residuals.gmpe_list, index=
-                                        np.arange(0, len(residuals.gmpe_list)
-                                                  , 1)).columns)
+    gmpe_list_series = pd.Series(
+        pd.DataFrame(residuals.gmpe_list, index=np.arange(
+            0, len(residuals.gmpe_list), 1)).columns)
     
     # Compute EDR based model weights
     EDR_for_weights = residuals.get_edr_values_wrt_imt()
@@ -1044,7 +1043,7 @@ def edr_table(residuals, filename):
                          str(gmpe) + ' sqrt Kappa', 'EDR': str(gmpe) + ' EDR'})
         EDR_metrics_df = EDR_metrics[gmpe]
         average_EDR_metrics_per_gmpe = np.arange(0, len(EDR_metrics_df.columns),
-                                               1, dtype = 'float')
+                                               1, dtype='float')
         for EDR_metric in range(0, len(EDR_metrics_df.columns)):
             average_EDR_metrics_per_gmpe[EDR_metric] = np.array(np.mean(
                 EDR_metrics_df[EDR_metrics_df.columns[EDR_metric]]))      
@@ -1087,8 +1086,10 @@ def pdf_table(residuals, filename):
             Mean_Sigma_Total[gmpe, imt] = res_statistics[gmpe, imt]['Total']
             if 'Intra event' in residuals.residuals[gmpe][
                     imt] and 'Inter event' in residuals.residuals[gmpe][imt]:
-                Mean_Sigma_Intra[gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
-                Mean_Sigma_Inter[gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
+                Mean_Sigma_Intra[gmpe, imt] = res_statistics[
+                    gmpe, imt]['Intra event']
+                Mean_Sigma_Inter[gmpe, imt] = res_statistics[
+                    gmpe, imt]['Inter event']
             else:
                 Mean_Sigma_Intra[gmpe, imt] = dummy_values
                 Mean_Sigma_Inter[gmpe, imt] = dummy_values
@@ -1097,12 +1098,11 @@ def pdf_table(residuals, filename):
     Mean_Sigma_Inter_df = pd.DataFrame(Mean_Sigma_Inter)
     Mean_Sigma_Total_df = pd.DataFrame(Mean_Sigma_Total)
     
-    combined_df = pd.concat([Mean_Sigma_Total_df,
-                           Mean_Sigma_Inter_df,
-                           Mean_Sigma_Intra_df])
-    combined_df.index = ['Total Mean', 'Total Std Dev', 'Inter-Event Mean',
-                         'Inter-Event Std Dev','Intra-Event Mean',
-                         'Intra-Event Std Dev']
+    combined_df = pd.concat(
+        [Mean_Sigma_Total_df, Mean_Sigma_Inter_df, Mean_Sigma_Intra_df])
+    combined_df.index = ['Total Mean', 'Total Std Dev',
+                         'Inter-Event Mean', 'Inter-Event Std Dev',
+                         'Intra-Event Mean', 'Intra-Event Std Dev']
     
     # Create additional dataframe for renaming of headers
     combined_df_output = combined_df
@@ -1115,7 +1115,7 @@ def pdf_table(residuals, filename):
             
     combined_df_output.columns = list(pd.Series(gmpe_headers))
     
-    combined_df_output.to_csv(filename, sep = ',')
+    combined_df_output.to_csv(filename, sep=',')
     
     
 class ResidualWithSite(ResidualPlot):
@@ -1251,7 +1251,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         else:
             warnings.warn('This implementation of %s GMPE does not have a mixed'
                          ' effects sigma model - plotting skipped' %self.gmpe,
-                         stacklevel = 10)
+                         stacklevel=10)
             pass
 
     def _residual_plot(self, fig, data, phi_ss, phi_s2ss):
@@ -1285,8 +1285,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.plot(xvals, dwess, 'x', markeredgecolor='k', markerfacecolor='k',
                 markersize=8, zorder=-32, label = '$\delta W_{es}$')
         ax.errorbar(xmean, mean, yerr=stddevs, ecolor="r", elinewidth=3.0,
-                    barsabove=True, fmt="s", mfc="r", mec="k", ms=6, label =
-                    'Error bar')
+                    barsabove=True, fmt="s", mfc="r", mec="k", ms=6,
+                    label='Error bar')
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         xtick_label = self.residuals.site_ids
