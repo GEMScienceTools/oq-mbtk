@@ -4,11 +4,7 @@
 region = "JPN" # add_alias bug means must still specify 'JPN' region
 
 [models.AbrahamsonGulerce2020SInter]
-region = "CAS" # GMPE specific parameters
-    
-#[models.HassaniAtkinson2018]
-#d_sigma = 100
-#kappa0 = 0.04 # GMPE specific parameters
+region = "CAS"
 
 [models.KothaEtAl2020ESHM20]
 sigma_mu_epsilon = 2.85697 
@@ -16,13 +12,11 @@ c3_epsilon = 1.72
 eshm20_region = 4
 
 [models.NGAEastGMPE]
-gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
+gmpe_table = 'NGAEast_FRANKEL_J15.hdf5'
 
 [models.0-NGAEastUSGSGMPE]
 gmpe_table = 'nga_east_1CCSP.hdf5'
 sigma_model = 'PANEL'
-
-#[models.1-NGAEastUSGSGMPE]
 
 [imts]
 imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)']    
