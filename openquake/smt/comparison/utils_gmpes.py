@@ -313,6 +313,12 @@ def mgmpe_check(gmpe):
                 if 'set_between_epsilon' in par:
                     idx_params.append(idx)
                     between_epsilon = float(par.split('=')[1])
+                if 'add_delta_sigma_to_total_sigma' in par:
+                    idx_params.append(idx)
+                    delta_std = float(par.split('=')[1])
+                if 'set_total_sigma_as_tau_plus_delta' in par:
+                    idx_params.append(idx)
+                    total_set_to_tau_and_delta = float(par.split('=')[1])
                 if 'scaling' in par:
                     idx_params.append(idx)
                     if 'median_scaling_scalar' in par:
@@ -353,11 +359,20 @@ def mgmpe_check(gmpe):
             kwargs['add_between_within_stds'] = {
                 'with_betw_ratio': with_betw_ratio}
 
-        # Set epsilon for tau
+        # Set epsilon for tau and use instead of total sigma
         if 'set_between_epsilon' in gmpe:
             kwargs['set_between_epsilon'] = {'epsilon_tau':
                                              between_epsilon}
-
+            
+        # Add delta to total sigma
+        if 'add_delta_sigma_to_total_sigma' in gmpe:
+            kwargs['add_delta_std_to_total_std'] = {'delta': delta_std}
+                
+        # Set total sigma to sqrt(tau**2 + delta**2)
+        if 'set_total_sigma_as_tau_plus_delta' in gmpe:
+            kwargs['set_total_std_as_tau_plus_delta'
+                   ] = {'delta': total_set_to_tau_and_delta}
+        
         # Scale median by constant factor over all imts
         if 'median_scaling_scalar' in gmpe:
             kwargs['set_scale_median_scalar'] = {'scaling_factor':
