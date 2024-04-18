@@ -396,12 +396,12 @@ def mgmpe_check(gmpe):
         # CY14SiteTerm
         if 'CY14SiteTerm' in gmpe: kwargs['cy14_site_term'] = {}
 
-        # NRCan15SiteTerm (kind = base)
+        # NRCan15SiteTerm (Regular)
         if ('NRCan15SiteTerm' in gmpe and
                 'NRCan15SiteTermLinear' not in gmpe):
             kwargs['nrcan15_site_term'] = {'kind': 'base'}
 
-        # NRCan15SiteTerm (kind = linear)
+        # NRCan15SiteTerm (linear)
         if 'NRCan15SiteTermLinear' in gmpe:
             kwargs['nrcan15_site_term'] = {'kind': 'linear'}
         
