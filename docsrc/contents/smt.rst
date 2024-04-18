@@ -626,30 +626,38 @@ Comparing GMPEs
         set_between_epsilon = 0.5 # Shift the mean with formula mean --> mean + epsilon_tau * between event
                                
         [models.4-ModifiableGMPE]
+        gmpe = 'CampbellBozorgnia2014'
+        add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
+        
+        [models.5-ModifiableGMPE]
+        gmpe = 'CampbellBozorgnia2014'
+        set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
+                               
+        [models.6-ModifiableGMPE]
         gmpe = 'ChiouYoungs2014'
         median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
         
-        [models.5-ModifiableGMPE]
+        [models.7-ModifiableGMPE]
         gmpe = 'ChiouYoungs2014'
         median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
         
-        [models.6-ModifiableGMPE]
+        [models.8-ModifiableGMPE]
         gmpe = 'KothaEtAl2020'
         sigma_scaling_scalar = 1.25 # scale sigma by factor of 1.25 over all imts
         
-        [models.7-ModifiableGMPE]
+        [models.9-ModifiableGMPE]
         gmpe = 'KothaEtAl2020'
         sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # scale sigma by imt-dependent factor
         
-        [models.8-ModifiableGMPE]
+        [models.10-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'CY14SiteTerm' # use CY14 site term
         
-        [models.9-ModifiableGMPE]
+        [models.11-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
         
-        [models.10-ModifiableGMPE]
+        [models.12-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
     
