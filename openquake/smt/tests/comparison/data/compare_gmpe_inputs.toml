@@ -1,0 +1,50 @@
+### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
+
+[general]
+imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)'] # imts to compute gm for
+max_period = 2 # max period for response spectra (can't exceed maximum period in a specified GMPE)
+minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
+maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
+dist_type = 'rrup' # specify distance metric used in trellis plots
+dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
+eshm20_region = 0 # region for ESHM20 GMM
+Nstd = 2 # number of standard deviations to sample from sigma distribution 
+
+[site_properties]
+vs30 = 800
+Z1 = -999
+Z25 = -999
+up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
+region = 'Global' # region specific basin effects
+
+[source_properties] # Characterise EQ as finite rupture
+trt = 'ASCR'
+ztor = 'None' # Set to string of 'None' to NOT consider
+strike = -999
+dip = -999
+rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
+aratio = 2
+trellis_and_rs_mag_list = [5,6,7] # mags used only for trellis
+trellis_and_rs_depths = [20,25,30] # depth per magnitude for trellis
+
+# Specify mag values and depths for use in Sammons, Euclidean dist and clustering
+[mag_values_non_trellis_or_spectra_functions]
+mmin = 5
+mmax = 7
+spacing = 0.1
+non_trellis_or_spectra_depths = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth],[mag,depth]] 
+
+# Specify label for gmpes
+[gmpe_labels]
+gmpes_label = ['CY14','CB14','BSSA14','KO2020']
+
+# Specify gmpes
+[models] 
+[models.ChiouYoungs2014]
+[models.CampbellBozorgnia2014]
+[models.BooreEtAl2014]
+[models.KothaEtAl2020]
+
+[custom_colors]
+custom_colors_flag = 'False' #By default set to "False" (set to "True" for custom colours)
+custom_colors_list = ['lime','dodgerblue','gold','0.8']

@@ -12,7 +12,7 @@ from openquake.sub.misc.profile import _read_profiles
 from openquake.sub.misc.edge import create_from_profiles
 from openquake.hazardlib.geo.geodetic import distance
 
-PLT = True
+PLT = False
 
 if PLT:
     from openquake.sub.misc.utils_plot import plotter

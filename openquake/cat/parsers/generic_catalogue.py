@@ -49,7 +49,7 @@ class GeneralCsvCatalogue(object):
                             'SemiMajor90', 'SemiMinor90', 'ErrorStrike',
                             'depth', 'depthError', 'magnitude',
                             'sigmaMagnitude', 'moment', 'mpp', 'mpr', 'mrr',
-                            'mrt', 'mtp', 'mtt']
+                            'mrt', 'mtp', 'mtt', 'dip1', 'str1', 'rake1', 'dip2', 'str2', 'rake2']
 
     INT_ATTRIBUTE_LIST = ['year', 'month', 'day', 'hour', 'minute',
                           'flag', 'scaling']
@@ -86,6 +86,9 @@ class GeneralCsvCatalogue(object):
         """
 
         df = pd.read_csv(filename, delimiter=',')
+        # Replace any whitespace with nan
+        df.replace(r'^\s*$', np.nan, regex=True)
+
 
         # Checking information included in the original
         if 'day' in df.columns:
@@ -98,16 +101,40 @@ class GeneralCsvCatalogue(object):
             df.drop(df[df.minute > 59.599999].index, inplace=True)
         if 'hour' in df.columns:
             df.drop(df[df.hour > 23.99999].index, inplace=True)
-
+            
+        if 'str1' in df.columns:
+            df['str1'] = pd.to_numeric(df['str1'], errors='coerce')
+        
+        if 'dip1' in df.columns:
+            df['dip1'] = pd.to_numeric(df['dip1'], errors='coerce')
+ 
+        if 'rake1' in df.columns:
+            df['rake1'] = pd.to_numeric(df['rake1'], errors='coerce')
+            
+        if 'str2' in df.columns:
+            df['str2'] = pd.to_numeric(df['str2'], errors='coerce')
+            
+        if 'dip2' in df.columns:
+            df['dip2'] = pd.to_numeric(df['dip2'], errors='coerce')
+            
+        if 'rake2' in df.columns:
+            df['rake2'] = pd.to_numeric(df['rake2'], errors='coerce')
+        
+        if 'SemiMinor90' in df.columns:
+            df['SemiMinor90']= pd.to_numeric(df['SemiMinor90'], errors='coerce') 
+        
+        if 'SemiMajor90' in df.columns:
+            df['SemiMajor90']= pd.to_numeric(df['SemiMajor90'], errors='coerce') 
         # Processing columns and updating the catalogue
         for col in df.columns:
             if col in self.TOTAL_ATTRIBUTE_LIST:
                 if (col in self.FLOAT_ATTRIBUTE_LIST or
                         col in self.INT_ATTRIBUTE_LIST):
                     self.data[col] = df[col].to_numpy()
+
                 else:
                     self.data[col] = df[col].to_list()
-
+                    
     def get_number_events(self):
         """
         Returns the number of events
@@ -198,7 +225,6 @@ class GeneralCsvCatalogue(object):
         eqcat.isf_catalogue.ISFCatalogue
         """
         isf_cat = ISFCatalogue(catalogue_id, name)
-        print('write_to', self.get_number_events())
 
         for iloc in range(0, self.get_number_events()):
             # Origin ID
@@ -250,34 +276,59 @@ class GeneralCsvCatalogue(object):
                 error_strike = self.data['ErrorStrike'][iloc]
             else:
                 error_strike = np.nan
-            if len(self.data['ErrorStrike']):
+            if len(self.data['depthError']):
                 depth_error = self.data['depthError'][iloc]
             else:
                 depth_error = np.nan
-            #
-            if np.isnan(semimajor90):
+            if len(self.data['str1']):
+                str1 = self.data['str1'][iloc]
+            else:
+                str1 = np.nan
+            if len(self.data['dip1']):
+                dip1 = self.data['dip1'][iloc]
+            else:
+                dip1 = np.nan
+            if len(self.data['rake1']):
+                rake1 = self.data['rake1'][iloc]
+            else:
+                rake1 = np.nan
+            if len(self.data['str2']):
+                str2 = self.data['str2'][iloc]
+            else:
+                str2 = np.nan
+            if len(self.data['dip2']):
+                dip2 = self.data['dip2'][iloc]
+            else:
+                dip2 = np.nan
+            if len(self.data['rake2']):
+                rake2 = self.data['rake2'][iloc]
+            else:
+                rake2 = np.nan
+
+            if pd.isnull(semimajor90):
                 semimajor90 = None
-            if np.isnan(semiminor90):
+            if pd.isnull(semiminor90):
                 semiminor90 = None
-            if np.isnan(error_strike):
+            if pd.isnull(error_strike):
                 error_strike = None
-            if np.isnan(depth_error):
-                depth_error = None
+            if pd.isnull(depth_error):
+               depth_error = None
 
             # Depth
             if self.data['depth'][iloc] == 'None':
                 tmp_depth = None
             else:
                 tmp_depth = float(self.data['depth'][iloc])
-
+            depthSolution = None
             locn = Location(origin_id,
                             self.data['longitude'][iloc],
                             self.data['latitude'][iloc],
                             tmp_depth,
+                            depthSolution,
                             semimajor90,
                             semiminor90,
                             error_strike,
-                            depth_error)
+                            depth_error, str1, dip1, rake1, str2, dip2, rake2)
 
             # Create Origin
             # Date
@@ -380,11 +431,12 @@ class MixedMagnitudeCsvCatalogue(GeneralCsvCatalogue):
                             self.data['longitude'][iloc],
                             self.data['latitude'][iloc],
                             self.data['depth'][iloc],
+                            depthSolution,
                             semimajor90,
                             semiminor90,
                             error_strike,
                             depth_error)
-
+                                        
             # Create Origin
             # Date
             eq_date = datetime.date(self.data['year'][iloc],

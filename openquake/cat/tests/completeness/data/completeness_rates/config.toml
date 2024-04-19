@@ -1,0 +1,19 @@
+name = "Test"
+mmin = 4.8
+bin_width = 0.1
+
+[completeness]
+num_steps = 0
+step = 8
+flexible = true
+mags = [ 4.4, 4.6, 4.8, 5.0, 5.2, 5.4, 5.6, 5.8, ]
+years = [ 1980, 1985, 1990, 1995, 2000, 2005,]
+ref_mag = 4.6
+ref_upp_mag = 10.0
+bmin = 0.8
+bmax = 1.2
+optimization_criterion = "optimize"
+
+[sources.00c]
+mmax_obs = 5.98
+mmax = 5.98

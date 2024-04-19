@@ -1,4 +1,29 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
+
 import os
 import h5py
 import numpy as np
@@ -6,17 +31,18 @@ import matplotlib.pyplot as plt
 import pickle
 import logging
 
-from scipy.interpolate import Rbf
+from scipy.interpolate import RBFInterpolator
 from openquake.mbt.tools.tr.catalogue import get_catalogue
 from openquake.mbt.tools.geo import get_idx_points_inside_polygon
 from openquake.mbt.tools.tr.catalogue_hmtk import (get_rtree_index,
                                                    get_distances_from_surface)
 from openquake.sub.utils import (_read_edges,
                                  build_complex_surface_from_edges,
+                                 build_kite_surface_from_profiles,
                                  plot_complex_surface)
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
-#
+
 # Buffer around the brounding box
 DELTA = 0.3
 
@@ -70,7 +96,7 @@ class SetSubductionEarthquakes:
         self.low_mag = float(low_mag)
         self.upp_mag = float(upp_mag)
 
-    def classify(self, compute_distances, remove_from):
+    def classify(self, compute_distances, remove_from, surftype='ComplexFault'):
         """
         :param bool compute_distances:
             A boolean indicating if distances between earthquakes and the
@@ -80,7 +106,7 @@ class SetSubductionEarthquakes:
             A list of labels identifying TR from where the earthquakes assigned
             to this TR must be removed
         """
-        #
+
         # set parameters
         treg_filename = self.treg_filename
         distance_folder = self.distance_folder
@@ -91,8 +117,9 @@ class SetSubductionEarthquakes:
         lower_depth = self.lower_depth
         if lower_depth is None:
             lower_depth = 400
-        #
-        # open log file and prepare the group
+
+        # Open log file and prepare the group
+        print(f'Log filename: {self.log_fname}\n')
         flog = h5py.File(self.log_fname, 'a')
         if self.label not in flog.keys():
             grp = flog.create_group('/{:s}'.format(self.label))
@@ -114,21 +141,32 @@ class SetSubductionEarthquakes:
         # Build the complex fault surface
         tedges = _read_edges(edges_folder)
         print(edges_folder)
-        surface = build_complex_surface_from_edges(edges_folder)
-        mesh = surface.mesh
+        if surftype == 'ComplexFault':
+            surface = build_complex_surface_from_edges(edges_folder)
+            # Create polygon encompassing the mesh
+            mesh = surface.mesh
+            plo = list(mesh.lons[0, :])
+            pla = list(mesh.lats[0, :])
+            #
+            plo += list(mesh.lons[:, -1])
+            pla += list(mesh.lats[:, -1])
+            #
+            plo += list(mesh.lons[-1, ::-1])
+            pla += list(mesh.lats[-1, ::-1])
+            #
+            plo += list(mesh.lons[::-1, 0])
+            pla += list(mesh.lats[::-1, 0])
 
-        # Create polygon encompassing the mesh
-        plo = list(mesh.lons[0, :])
-        pla = list(mesh.lats[0, :])
-        #
-        plo += list(mesh.lons[:, -1])
-        pla += list(mesh.lats[:, -1])
-        #
-        plo += list(mesh.lons[-1, ::-1])
-        pla += list(mesh.lats[-1, ::-1])
-        #
-        plo += list(mesh.lons[::-1, 0])
-        pla += list(mesh.lats[::-1, 0])
+        elif surftype == 'KiteFault':
+            surface = build_kite_surface_from_profiles(edges_folder)
+            # Create polygon encompassing the mesh
+            mesh = surface.mesh
+            plo = surface.surface_projection[0]
+            pla = surface.surface_projection[1]
+        else:
+            msg = f'surface type {surftype} not supported'
+            raise ValueError(msg)
+
 
         # Set variables used in griddata
         data = np.array([mesh.lons.flatten().T, mesh.lats.flatten().T]).T
@@ -141,10 +179,10 @@ class SetSubductionEarthquakes:
             grp.create_dataset('mesh', data=ddd)
 
         # Set the bounding box of the subduction surface
-        min_lo_sub = np.amin(mesh.lons)
-        min_la_sub = np.amin(mesh.lats)
-        max_lo_sub = np.amax(mesh.lons)
-        max_la_sub = np.amax(mesh.lats)
+        min_lo_sub = np.nanmin(mesh.lons)
+        min_la_sub = np.nanmin(mesh.lats)
+        max_lo_sub = np.nanmax(mesh.lons)
+        max_la_sub = np.nanmax(mesh.lats)
 
         # Select the earthquakes within the bounding box
         idxs = sorted(list(sidx.intersection((min_lo_sub-DELTA,
@@ -153,37 +191,38 @@ class SetSubductionEarthquakes:
                                               max_lo_sub+DELTA,
                                               max_la_sub+DELTA,
                                               lower_depth))))
-        #
+
         # Select earthquakes within the bounding box of the surface
         # projection of the fault
         sidx = get_idx_points_inside_polygon(catalogue.data['longitude'][idxs],
                                              catalogue.data['latitude'][idxs],
                                              plo, pla,
                                              idxs, buff_distance=5000.)
-        #
-        # Select earthuakes and store indexes of selected ones
+
+        # Select earthquakes and store indexes of selected ones
         ccc = []
         idxs = []
         for idx in sidx:
-            #
-            # Preselection based on magitude and time of occurrence
+
+            # Preselection based on magnitude and time of occurrence
             if ((catalogue.data['magnitude'][idx] >= self.low_mag) &
                     (catalogue.data['magnitude'][idx] <= self.upp_mag) &
                     (catalogue.data['year'][idx] >= self.low_year) &
                     (catalogue.data['year'][idx] <= self.upp_year)):
                 idxs.append(idx)
-                #
+
                 # Update the log file
                 ccc.append([catalogue.data['longitude'][idx],
                             catalogue.data['latitude'][idx],
                             catalogue.data['depth'][idx]])
+
         if self.label not in flog.keys():
             grp.create_dataset('cat', data=np.array(ccc))
-        #
+
         # Prepare array for the selection of the catalogue
         flags = np.full((len(catalogue.data['longitude'])), False, dtype=bool)
         flags[idxs] = True
-        #
+
         # Create a selector for the catalogue and select earthquakes within
         # bounding box
         sel = CatalogueSelector(catalogue, create_copy=True)
@@ -199,14 +238,13 @@ class SetSubductionEarthquakes:
             f[self.label] = treg
             f.close()
             return
-        #
+
         # compute distances between the earthquakes in the catalogue and
         # the surface of the fault
         out_filename = os.path.join(distance_folder,
                                     'dist_{:s}.pkl'.format(self.label))
-        #
-        #
         surf_dist = get_distances_from_surface(cat, surface)
+
         """
         if compute_distances:
             tmps = 'Computing distances'
@@ -222,31 +260,35 @@ class SetSubductionEarthquakes:
             tmps = '    number of values loaded: {:d}'
             logging.info(tmps.format(len(surf_dist)))
         """
-        #
+
         # info
         neqks = len(cat.data['longitude'])
         tmps = 'Number of eqks in the new catalogue     : {:d}'
         logging.info(tmps.format(neqks))
-        #
+
         # Calculate the depth of the top of the slab for every earthquake
         # location
         points = np.array([[lo, la] for lo, la in zip(cat.data['longitude'],
                                                       cat.data['latitude'])])
-        #
-        # compute the depth of the top of the slab at every epicenter
+
+        # Compute the depth of the top of the slab at every epicenter using
+        # interpolation
         # sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
         #                      method='cubic')
-        #
-        # interpolation
-        rbfi = Rbf(data[:, 0], data[:, 1], values)
-        sub_depths = rbfi(points[:, 0], points[:, 1])
-        #
-        # saving the distances to a file
+        val_red = values[~np.isnan(values)]
+        dat_red = data[~np.isnan(data)].reshape(-1, 2)
+#        dat_red_fi = dat_red.reshape(len(val_red), 2)
+
+        rbfi = RBFInterpolator(dat_red[:, 0:2], val_red, kernel='multiquadric',
+                               epsilon=1, neighbors=100)
+        sub_depths = rbfi(points[:, 0:2])
+
+        # Save the distances to a file
         tmps = 'vert_dist_to_slab_{:s}.pkl'.format(self.label)
         out_filename = os.path.join(distance_folder, tmps)
         if not os.path.exists(out_filename):
             pickle.dump(surf_dist, open(out_filename, 'wb'))
-        #
+
         # Let's find earthquakes close to the top of the slab
         idxa = np.nonzero((np.isfinite(surf_dist) &
                            np.isfinite(sub_depths) &
@@ -255,6 +297,7 @@ class SetSubductionEarthquakes:
                            (sub_depths > cat.data['depth'])) |
                           ((surf_dist < distance_buffer_above) &
                            (sub_depths <= cat.data['depth'])))[0]
+
         idxa = []
         for srfd, subd, dept in zip(surf_dist, sub_depths, cat.data['depth']):
             if np.isfinite(srfd) & np.isfinite(subd) & np.isfinite(dept):
@@ -272,22 +315,22 @@ class SetSubductionEarthquakes:
             else:
                 idxa.append(False)
         idxa = np.array(idxa)
-        #
-        # checking the size of lists
+
+        # Check the size of lists
         assert len(idxa) == len(cat.data['longitude']) == len(idxs)
-        #
-        #
+
         self.surf_dist = surf_dist
         self.sub_depths = sub_depths
         self.tedges = tedges
         self.idxa = idxa
         self.treg = treg
-        #
-        #
+
+        # Store log data
         tl = np.zeros(len(idxa),
-                      dtype={'names': ('eid', 'lon', 'lat', 'dep', 'subd', 'srfd',
-                                       'idx'),
-                             'formats': ('S15', 'f8', 'f8', 'f8', 'f8', 'f8', 'i4')})
+                      dtype={'names': ('eid', 'lon', 'lat', 'dep', 'subd',
+                                       'srfd', 'idx'),
+                             'formats': ('S15', 'f8', 'f8', 'f8', 'f8', 'f8',
+                                         'i4')})
         tl['eid'] = cat.data['eventID']
         tl['lon'] = cat.data['longitude']
         tl['lat'] = cat.data['latitude']
@@ -295,12 +338,9 @@ class SetSubductionEarthquakes:
         tl['subd'] = sub_depths
         tl['srfd'] = surf_dist
         tl['idx'] = idxa
-        #
-        # store log data
-
         grp.create_dataset('data', data=np.array(tl))
-        #
-        # updating the selection array
+
+        # Update the selection array
         for uuu, iii in enumerate(list(idxa)):
             aaa = idxs[uuu]
             assert catalogue.data['eventID'][aaa] == cat.data['eventID'][uuu]
@@ -308,8 +348,8 @@ class SetSubductionEarthquakes:
                 treg[aaa] = True
             else:
                 treg[aaa] = False
-        #
-        # storing results in the .hdf5 file
+
+        # Store results in the .hdf5 file
         logging.info('Storing data in:\n{:s}'.format(treg_filename))
         f = h5py.File(treg_filename, "a")
         if len(remove_from):
@@ -326,13 +366,13 @@ class SetSubductionEarthquakes:
                 f[tkey] = old
                 fmt = '     after: {:d}'
                 logging.info(fmt.format(len(np.nonzero(old)[0])))
-        #
-        # Removing the old classification and adding the new one
+
+        # Remove the old classification and adding the new one
         if self.label in f.keys():
             del f[self.label]
         f[self.label] = treg
-        #
-        # closing files
+
+        # Close files
         f.close()
         flog.close()
 

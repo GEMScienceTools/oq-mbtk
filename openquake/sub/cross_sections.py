@@ -1,3 +1,30 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
+
 """
 Module :mod:`openquake.sub.cross_section` defines :class:`Trench`,
 :class:`Slab2pt0`, :class:`CrossSectionData` and :class:`CrossSection`
@@ -14,13 +41,14 @@ from openquake.hazardlib.geo.geodetic import distance
 from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.geo.line import Line
 from openquake.hazardlib.geo.point import Point
-from openquake.hazardlib.geo.geodetic import (min_distance_to_segment,
-                                              point_at, azimuth)
+from openquake.hazardlib.geo.geodetic import (
+    min_distance_to_segment, point_at, azimuth, geodetic_distance)
 
 from openquake.hazardlib.geo.utils import OrthographicProjection
 from scipy.interpolate import LinearNDInterpolator
 
 from openquake.hmtk.seismicity.selector import CatalogueSelector
+from openquake.hmtk.parsers.catalogue.csv_catalogue_parser import CsvCatalogueParser
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
 
 
@@ -84,20 +112,23 @@ class Slab2pt0(object):
             pnts = copy.copy(slab_points)
 
             # Get min and max longitude and latitude values
-            minlo, maxlo, minla, maxla, qual = cs.get_mm()
+            minlo, maxlo, minla, maxla, qual = cs.get_mm(2.0)
 
             # Find the nodes of the grid within a certain distance from the
             # plane of the cross-section
             if qual == 0:
-                minlo, maxlo, minla, maxla, qual = cs.get_mm(2.0)
+                minlo, maxlo, minla, maxla, _ = cs.get_mm(2.0)
                 idxslb, dsts = cs.get_grd_nodes_within_buffer(
                     pnts[:, 0], pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
             if qual == 1:
+                minlo, maxlo, minla, maxla, _ = cs.get_mm(2.0)
                 idxslb, dsts = cs.get_grd_nodes_within_buffer_idl(
                     pnts[:, 0], pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
 
+            info = len(idxslb) if idxslb is not None else 0
+
             # Check if the array with cross-section data is not empty
-            if idxslb is None:
+            if idxslb is None or len(idxslb) < 5:
                 continue
 
             # Points
@@ -105,8 +136,12 @@ class Slab2pt0(object):
             psec = npoints_towards(cs.olo, cs.ola, 0.0, cs.strike[0],
                                    cs.length[0], 0., num)
             p = pnts[idxslb, :]
-            interp = LinearNDInterpolator(p[:, 0:2], p[:, 2])
-            z = interp(psec[0], psec[1])
+
+            try:
+                interp = LinearNDInterpolator(p[:, 0:2], p[:, 2])
+                z = interp(psec[0], psec[1])
+            except:
+                breakpoint()
 
             iii = numpy.isfinite(z)
             pro = numpy.concatenate((numpy.expand_dims(psec[0][iii], axis=1),
@@ -144,6 +179,9 @@ class CrossSectionData:
         self.topo = None
         self.litho = None
         self.volc = None
+        self.cs = None
+        self.c_eqks = None
+        self.count = [0]*4
 
     def set_trench_axis(self, filename):
         """
@@ -181,6 +219,58 @@ class CrossSectionData:
         newcat = selector.select_catalogue(boo)
         self.ecat = newcat
 
+
+    def set_catalogue_classified(self, classes, classlist, bffer=75.):
+        """
+        """
+        print('setting catalogue')
+
+        types = classlist.split(',')
+        datal = []
+        for file_n in types:
+            filen = os.path.join(classes.format(file_n))
+            print(filen)
+            parser = CsvCatalogueParser(filen)
+            catalogueA = parser.read_file()
+            sel1 = CatalogueSelector(catalogueA, create_copy=True)
+            catalogue = sel1.within_magnitude_range(lower_mag=None,upper_mag=None)
+            print(len(catalogue.data['depth']))
+            _,_,_,_,qual = self.csec.get_mm()
+            if qual==1:
+                idxs = self.csec.get_eqks_within_buffer_idl(catalogue, bffer)
+            else:
+                idxs = self.csec.get_eqks_within_buffer(catalogue, bffer)
+            boo = numpy.zeros_like(catalogue.data['magnitude'], dtype=int)
+            boo[idxs] = 1
+            selector = CatalogueSelector(catalogue, create_copy=True)
+            selector = CatalogueSelector(catalogue, create_copy=True)
+            newcat = selector.select_catalogue(boo)
+            lon = newcat.data['longitude']
+            lon = ([x+360 if x<0 else x for x in lon])
+            lat = newcat.data['latitude']
+            depth = newcat.data['depth']
+            mag = newcat.data['magnitude']
+            cl_len = len(lat)
+            if str.lower(filen).find('crustal')>0:
+                cla = [1]*cl_len
+                self.count[0] = cl_len
+            if str.lower(filen).find('int')>0:
+                cla = [2]*cl_len
+                self.count[1] = cl_len
+            if str.lower(filen).find('slab')>0:
+                cla = [3]*cl_len
+                self.count[2] = cl_len
+            if str.lower(filen).find('unc')>0:
+                cla = [4]*cl_len
+                self.count[3] = cl_len
+            for g in range(len(lat)):
+                datal.append([lon[g], lat[g], depth[g], cla[g], mag[g]])
+
+            dataa = numpy.array(datal)
+            if len(cla):
+                self.c_eqks = numpy.squeeze(dataa[:, :])
+
+
     def set_slab1pt0(self, filename, bffer=2.0):
         """
         :parameter filename:
@@ -210,13 +300,13 @@ class CrossSectionData:
             slab1pt0[idx[0], 0] = slab1pt0[idx[0], 0] - 360.
         if qual == 0:
             minlo, maxlo, minla, maxla, qual = self.csec.get_mm(2.0)
-            idxslb = self.csec.get_grd_nodes_within_buffer(slab1pt0[:, 0],
+            idxslb, dst = self.csec.get_grd_nodes_within_buffer(slab1pt0[:, 0],
                                                            slab1pt0[:, 1],
                                                            bffer,
                                                            minlo, maxlo,
                                                            minla, maxla)
         if qual == 1:
-            idxslb = self.csec.get_grd_nodes_within_buffer_idl(slab1pt0[:, 0],
+            idxslb, dst = self.csec.get_grd_nodes_within_buffer_idl(slab1pt0[:, 0],
                                                                slab1pt0[:, 1],
                                                                bffer,
                                                                minlo, maxlo,
@@ -281,9 +371,9 @@ class CrossSectionData:
         if idxl is not None and len(idxl):
             boo = numpy.zeros_like(dataa[:, 0], dtype=int)
             boo[idxl[0]] = 1
-            self.litho = numpy.squeeze(dataa[idxl, :])
+            self.litho = numpy.squeeze(dataa[idxl[0], :])
 
-    def set_gcmt(self, filename, bffer=75.):
+    def set_gcmt(self, filename, gcmt_mag=0.0, bffer=75.):
         """
         :parameter cmt_cat:
             Name of a file in the .ndk format
@@ -291,18 +381,21 @@ class CrossSectionData:
         print('setting gcmt')
         parser = ParseNDKtoGCMT(filename)
         cmt_cat = parser.read_file()
+        # prune to magnitude range
+        mags = cmt_cat.data['magnitude']
+        cmt_cat.select_catalogue_events(mags > gcmt_mag)
         loc = cmt_cat.data['longitude']
         lac = cmt_cat.data['latitude']
 
         minlo, maxlo, minla, maxla, qual = self.csec.get_mm()
         if qual == 0:
-            idxs = self.csec.get_grd_nodes_within_buffer(loc,
+            idxs, _ = self.csec.get_grd_nodes_within_buffer(loc,
                                                          lac,
                                                          bffer,
                                                          minlo, maxlo,
                                                          minla, maxla)
         if qual == 1:
-            idxs = self.csec.get_grd_nodes_within_buffer_idl(loc,
+            idxs, _ = self.csec.get_grd_nodes_within_buffer_idl(loc,
                                                              lac,
                                                              bffer,
                                                              minlo, maxlo,
@@ -344,7 +437,7 @@ class CrossSectionData:
         if idxb is not None and len(idxb):
             boo = numpy.zeros_like(datab[:, 0], dtype=int)
             boo[idxb[0]] = 1
-            self.topo = numpy.squeeze(datab[idxb, :])
+            self.topo = numpy.squeeze(datab[idxb[0], :])
 
     def set_volcano(self, filename, bffer=75.):
         """
@@ -379,9 +472,8 @@ class CrossSectionData:
         if idxv is not None and len(idxv):
             voo = numpy.zeros_like(vulc[:, 0], dtype=int)
             voo[idxv[0]] = 1
-            self.volc = numpy.squeeze(vulc[idxv, :])
+            self.volc = numpy.squeeze(vulc[idxv[0], :])
         fin.close()
-        print(self.volc)
 
 
 class Trench:
@@ -422,7 +514,20 @@ class Trench:
         az[-1] = az[-2]
         return Trench(naxis, az)
 
-    def iterate_cross_sections(self, distance, length, azim=[]):
+    def get_azimuth(self):
+        lons = self.axis[:, 0]
+        lats = self.axis[:, 1]
+        # Azimuths
+        azims = azimuth(lons[:-1], lats[:-1], lons[1:], lats[1:])
+        # Lenghts of segments
+        lengs = geodetic_distance(lons[:-1], lats[:-1], lons[1:], lats[1:])
+        weigs = lengs / numpy.sum(lengs)
+        # Compute average azimuth
+        sins = numpy.mean(numpy.sin(numpy.radians(azims)))
+        coss = numpy.mean(numpy.cos(numpy.radians(azims)))
+        return numpy.degrees(numpy.arctan2(sins, coss))
+
+    def iterate_cross_sections(self, distance, length, wei1=1.0):
         """
         A cross-section iterator
 
@@ -430,16 +535,31 @@ class Trench:
             Distance between traces along the trench axis [in km]
         :parameter length:
             The length of each trace [in km]
+        :parameter wei1:
+            The direction of each cross section is a weighted average of the
+            overall dip direction and the local dip computed. `wei1` is the
+            weight assigned to local azimuth. The default is 1 for back
+            compatibility.
         """
+        weis = numpy.array([wei1, 1-wei1])
+        avg_azim = self.get_azimuth()
+        overall_azim = (avg_azim + 90) % 360
+
         trch = self.resample(distance)
         css = []
         lng = length
         for idx, coo in enumerate(trch.axis.tolist()):
             if idx < len(trch.axis[:, 1]):
-                cs = CrossSection(coo[0], coo[1], [lng], [(coo[2]+90) % 360])
+
+                azims = numpy.array([(coo[2]+90) % 360, overall_azim])
+                sins = numpy.mean(numpy.sin(numpy.radians(azims)) * weis)
+                coss = numpy.mean(numpy.cos(numpy.radians(azims)) * weis)
+                azim = numpy.degrees(numpy.arctan2(sins, coss))
+
+                cs = CrossSection(coo[0], coo[1], [lng], [azim])
                 out = check_intersections(cs, css) if len(css) else None
                 tmp = out if out is not None else lng
-                cs = CrossSection(coo[0], coo[1], [tmp], [(coo[2]+90) % 360])
+                cs = CrossSection(coo[0], coo[1], [tmp], [azim])
                 css.append(cs)
                 yield cs, tmp
             else:
@@ -487,10 +607,10 @@ def check_intersections(cs, css):
                                          max(mm[1], cmm[1]),
                                          min(mm[2], cmm[2]),
                                          min(mm[3], cmm[3]))
-            ox, oy = prj(cs.plo, cs.pla)
-            cx, cy = prj(cc.plo, cc.pla)
+            ox, oy = prj(numpy.float64(cs.plo), numpy.float64(cs.pla))
+            cx, cy = prj(numpy.float64(cc.plo), numpy.float64(cc.pla))
 
-            for i in range(len(ox)-1):
+            for i in range(len(ox) - 1):
                 pa = numpy.array([ox[i], oy[i]])
                 pb = numpy.array([ox[i+1], oy[i+1]])
                 for j in range(len(cx)-1):
@@ -643,21 +763,35 @@ class CrossSection:
     def get_mm(self, delta=0.0):
         """
         Get min and maximum values of the cross section.
+        Assumes locations are in [-180, 180] and buffers accordingly, shifts if they are not!
 
         :param delta:
             A float used to expand the bounding box computed.
         :returns:
             A tuple containing longitude min and max values, latitude min and
-            max values and a parameter that's when is equal to 1 tells that
+            max values and a parameter that when is equal to 1 tells that
             the cross-section crosses the IDL.
         """
-        lomin = min(self.plo) - delta
+
+        # Then
+        lomin_t = min(self.plo)
+        lomin = lomin_t - delta
+        if lomin_t < 0 or lomin < 0:
+            lomin = lomin_t + delta
+
         if lomin < -180:
             lomin += 360
+        if lomin  > 180:
+            lomin -= 360
         #
         lomax = max(self.plo) + delta
         if lomax > 180:
             lomax -= 360
+        # If lomax is below -ve we want to take away delta to buffer correctly
+        if lomax < 0:
+            lomax = max(self.plo) - delta
+        if lomax < -180:
+            lomax+= 360
         #
         lamin = min(self.pla) - delta
         if lamin < -90:
@@ -668,8 +802,9 @@ class CrossSection:
             raise ValueError('Latitude greater than 90')
         #
         qual = 0
-        if ((lomin/lomax) < 0) & (max([lomin, lomax]) > 150.):
+        if ((lomin / lomax) < 0) & (max([lomin, lomax]) > 150.):
             qual = 1
+            lomax = max(self.plo) - delta
         return lomin, lomax, lamin, lamax, qual
 
     def split_at_idl(self):
@@ -760,19 +895,29 @@ class CrossSection:
         :parameter maxla:
             Maximum latitude
         """
+        if minlo > maxlo:
+            tmp = maxlo
+            maxlo = minlo
+            minlo = tmp
+        assert minlo < maxlo
+        assert minla < maxla
+
         line = Line([Point(lo, la) for lo, la in zip(self.plo, self.pla)])
         idxs = numpy.nonzero((x > minlo) & (x < maxlo) &
                              (y > minla) & (y < maxla))
         xs = x[idxs[0]]
         ys = y[idxs[0]]
         coo = [(lo, la) for lo, la in zip(list(xs), list(ys))]
+
         if len(coo):
             dst = get_min_distance(line, numpy.array(coo))
             iii = idxs[0][abs(dst) <= buffer_distance]
             return iii, dst[abs(dst) <= buffer_distance]
         else:
-            print('   Warning: no nodes found around the cross-section')
-            return None
+            msg = '   Warning: no nodes found around the cross-section \n'
+            msg += f'   {self.plo} {self.pla}'
+            print(msg)
+            return None, None
 
     def get_grd_nodes_within_buffer_idl(self, x, y, buffer_distance,
                                         minlo=-180, maxlo=180,
@@ -792,11 +937,18 @@ class CrossSection:
         :parameter maxlo:
         :parameter maxla:
         """
+
+        #assert self.plo[0] < self.plo[1]
+        #assert self.pla[0] < self.pla[1]
+
         line1, line2, center = self.split_at_idl()
         padding = 2.0
-        idxs1 = numpy.nonzero((x > -180.) & (x < (self.plo[0]+padding)) &
-                              (y < (center+padding)) &
-                              (y > (self.pla[0]-padding)))
+
+        idxs1 = numpy.nonzero((x > -180.) & (x < (self.plo[0]+padding)))
+        #idxs1 = numpy.nonzero((x > -180.) & (x < (self.plo[0]+padding)) &
+        #                      (y < (self.pla[1]+padding)) &
+        #                      (y > (self.pla[0]-padding)))
+
         xs1 = x[idxs1[0]]
         ys1 = y[idxs1[0]]
         coo1 = [(lo, la) for lo, la in zip(list(xs1), list(ys1))]
@@ -805,9 +957,10 @@ class CrossSection:
             dst1 = get_min_distance(line1, numpy.array(coo1))
             set1 = idxs1[0][abs(dst1) <= buffer_distance]
 
-        idxs2 = numpy.nonzero((x < 180.) & (x > (self.plo[1]-padding)) &
-                              (y < (center+padding)) &
-                              ((y > self.pla[1]-padding)))
+        idxs2 = numpy.nonzero((x < 180.) & (x > (self.plo[1]-padding)))
+        #idxs2 = numpy.nonzero((x < 180.) & (x > (self.plo[1]-padding)) &
+        #                      (y < (self.pla[1]+padding)) &
+        #                      (y > (self.pla[0]-padding)))
         xs2 = x[idxs2[0]]
         ys2 = y[idxs2[0]]
         coo2 = [(lo, la) for lo, la in zip(list(xs2), list(ys2))]
@@ -823,8 +976,10 @@ class CrossSection:
                                      axis=0)
             return use_inds, dsts
         else:
-            print('   Warning: no nodes found around the cross-section')
-            return None
+            msg = '   Warning: no nodes found around the cross-section \n'
+            msg += f'   {self.plo} {self.pla}'
+            print(msg)
+            return None, None
 
 
 def get_min_distance(line, pnts):
