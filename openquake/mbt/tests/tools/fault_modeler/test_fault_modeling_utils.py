@@ -49,7 +49,11 @@ class TestModelingUtils(unittest.TestCase):
         self.assertEqual(meta_dict, {
             'source_id': 0,
             'name': "Karakoram Fault (Gar Basin segment)",
-            'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST})
+            'tectonic_region_type': 'Active Shallow Crust'})
+        # KJ: using the constant is now causing problems with the source 
+        # writer. the other option is to add .value to the end, but I
+        # don't see a problem with using a string as the default value'
+            #'tectonic_region_type': hz.const.TRT.ACTIVE_SHALLOW_CRUST})
 
     # Geometry tests
     def test_get_dip(self):
@@ -104,7 +108,7 @@ class TestModelingUtils(unittest.TestCase):
                                       check_coord_order=True)
 
         exp_trace = fmu.line_from_trace_coords(fault['coords'])
-        exp_trace.points.reverse()
+        exp_trace.flip()
 
         self.assertEqual(trace.points, exp_trace.points)
 

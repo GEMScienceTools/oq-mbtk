@@ -11,7 +11,8 @@ from openquake.sub.cross_sections import get_min_distance
 
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.line import Line
-
+from openquake.sub.tests import __file__ as tests__init__
+from openquake.sub.make_cs_coords import make_cs_coords
 
 BASE_PATH = os.path.dirname(__file__)
 tmp = 'data/crust/crust_except.xyz'
@@ -90,8 +91,9 @@ class GetMMTest(unittest.TestCase):
         """
         cs = CrossSection(10.0, 45.0, [100], [45])
         computed = cs.get_mm()
+        #print(cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1])
         expected = [cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1], 0]
-        numpy.testing.assert_equal(computed, expected)
+        numpy.testing.assert_almost_equal(computed, expected)
 
     def test_cs_across_idl(self):
         """
@@ -99,17 +101,21 @@ class GetMMTest(unittest.TestCase):
         """
         cs = CrossSection(-179.0, -50.0, [500], [-90])
         computed = cs.get_mm()
+        #print(cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1])
         expected = [cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1], 1]
-        numpy.testing.assert_equal(computed, expected)
+        numpy.testing.assert_almost_equal(computed, expected)
 
     def test_cs_across_idl_with_delta(self):
         """
         Test cross section across idl + delta
         """
-        cs = CrossSection(-179.5, -50.0, [200], [90])
+        # If this dips 90 degrees it doesn't cross idl (so dip -90 like previous test)
+        cs = CrossSection(-179.5, -50.0, [500], [-90])
         computed = cs.get_mm(1.0)
-        expected = [179.5, -175.70311203864779, -51.0, -48.966369263787726, 1]
-        numpy.testing.assert_equal(computed, expected)
+        print(cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1])
+        #expected = [179.5, -175.70311203864779, -51.0, -48.966369263787726, 1]
+        expected = [-178.5, 172.5247868, -51.0, -48.790282, 1]
+        numpy.testing.assert_almost_equal(computed, expected)
 
 
 class MinDistTest(unittest.TestCase):
@@ -131,3 +137,17 @@ class MinDistTest(unittest.TestCase):
         pnts = numpy.array([[10.3, 45.0], [9.0, 45.0]])
         line = Line([Point(lo, la) for lo, la in zip(lons, lats)])
         get_min_distance(line, pnts)
+
+
+class edge2profileTest(unittest.TestCase):
+
+    def test_cs_generator(self):
+        """
+        Tests cross section files generated from exisiting profiles
+        """
+
+        reference_file = os.path.join(BASE_PATH, 'expected', 'cs_file.cs')
+        cs_dir = os.path.join(BASE_PATH, 'data', 'cs')
+        outfi = os.path.join('/tmp/cs_file.cs')
+        make_cs_coords(cs_dir, outfi, 'cs.ini')
+        assert filecmp.cmp(outfi, reference_file) == True

@@ -41,24 +41,27 @@ fault_source_modeler.py -cfg config.ini
 
 ### Optional Parameters
 
-Several optional parameters can be passed, either as arguments or within the configuration file.
+Several optional parameters can be passed, either as arguments or within the configuration file. If these parameters are not passed, then the default values will be used, or default algorithms will compute the values. **Thus, it is best practice for the user to assign each parameter value using one of the following approaches.**
+
 Modifiable parameters are:
 
 | Key | Description | Default Value |
 |:----|:------------|:--------|
-| b_value | ... | ... |
-| M_min | ... | ... |
-| M_max | ... | ... |
-| M_upp | ... | ... |
-| bin_width | ... | ... |
-| aseismic_coefficient | ... | ... |
-| rupture_aspect_ratio | ... | ... |
-| rupture_mesh_spacing | ... | ... |
-| minimum_fault_length | ... | ... |
-| tectonic_region_type | ... | ... |
-| upper_seismogenic_depth | ... | ... |
-| lower_seismogenic_depth | ... | ... |
-| magnitude_scaling_relationship | ... | ... |
+| b_value | Gutenberg-Richter b-value of the derived MFD for each fault | 1.0 |
+| m_min | Minimum magnitude of the MFD for each fault; seimsic moment is distributed between m_min and m_max  | 4.0 |
+| m_max | Maximum magnitude of the MFD for each fault; seimsic moment is distributed between m_min and m_max | None |
+| m_cli | Minimum magnitude of rupture to be admitted by the fault source; does not affect distribution of seismic moment | 6.0 |
+| m_upp | maximum possible magnitude, which can not be exceeded regardless of fault dimensions | 10.0 |
+| bin_width | Bin width of the MFD for each fault | 0.1 |
+| aseismic_coefficient | Coefficient used to scale slip rate according to the portion released aseismically; 0.0 means all slip is seismic | 0.0 |
+| rupture_aspect_ratio | Ratio used by OQ to deterimine length and width dimensions of ruptures  | 2.0 |
+| rupture_mesh_spacing | OQ parameter, dimension of mesh cells on a rupture | 5.0 |
+| minimum_fault_length | threshold below which fault sources won't be generated | 5.0 |
+| tectonic_region_type | OQ parameter, tectonic region type of the fault source | 'Active Shallow Crust' |
+| upper_seismogenic_depth | upper (shallow) limit of fault rupture | 0.0 |
+| lower_seismogenic_depth | lower (deep) limit of fault rupture | 35.0 or computed from rupture length |
+| magnitude_scaling_relationship | empirical relationship used to convert between rupture area and magnitude | Leonard2014_Interplate |
+| mfd_type | shape of the MFD produced for each fault | DoubleTruncatedGR | 
 
 A single parameter can be passed as optional argument like:
 

@@ -1,0 +1,7 @@
+name = "Test baseline"
+add_baseline = true
+
+[baseline]
+h3_level = 5
+a_value = 0.863
+b_value = 1.2

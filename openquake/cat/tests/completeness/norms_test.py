@@ -24,15 +24,19 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import os
 import unittest
 import numpy as np
 from openquake.hmtk.seismicity.catalogue import Catalogue
 from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
 from openquake.mbt.tools.model_building.dclustering import _add_defaults
-from openquake.cat.completeness.norms import get_norm_optimize_b
+from openquake.cat.completeness.norms import (
+    get_norm_optimize_b, get_norm_optimize_c, get_norm_optimize_poisson)
+
+DATA = os.path.join(os.path.dirname(__file__), 'data')
 
 
-class NormTest(unittest.TestCase):
+class NormBTest(unittest.TestCase):
 
     def setUp(self):
         dat = [[1900, 6.0],
@@ -56,5 +60,44 @@ class NormTest(unittest.TestCase):
         bval = 1.0
         cmag, t_per, n_obs = get_completeness_counts(self.cat, self.compl,
                                                      mbinw)
-        norm = get_norm_optimize_b(aval, bval, self.compl, self.cat, mbinw,
-                                   ybinw)
+        _ = get_norm_optimize_b(aval, bval, self.compl, self.cat, mbinw, ybinw)
+
+    def test_case02(self):
+
+        mbinw = 0.1
+        tmp = np.loadtxt(os.path.join(DATA, 'cat_norm_02.csv'), skiprows=1,
+                         delimiter=',')
+
+        cat = Catalogue()
+        cat.load_from_array(['year', 'magnitude'], tmp)
+        cat = _add_defaults(cat)
+        cat.data["dtime"] = cat.get_decimal_time()
+
+        compl = np.array([[2000, 4.4], [1985, 5.8]])
+        aval = 3.8004918570326267
+        bval = 0.8114202323942403
+
+        cmag, t_per, n_obs = get_completeness_counts(cat, compl, mbinw)
+        norm = get_norm_optimize_c(cat, aval, bval, compl, 2022, ref_mag=4.4)
+        print(f'{norm:.5e}')
+
+
+    def test_poisson(self):
+
+        mbinw = 0.1
+        aval = 4.6
+        bval = 1.0
+
+        tmp = np.loadtxt(os.path.join(DATA, 'cat_norm_02.csv'), skiprows=1,
+                         delimiter=',')
+
+        cat = Catalogue()
+        cat.load_from_array(['year', 'magnitude'], tmp)
+        cat = _add_defaults(cat)
+        cat.data["dtime"] = cat.get_decimal_time()
+
+        compl = np.array([[2000, 4.4], [1990, 5.0], [1980, 5.8]])
+
+        cmag, t_per, n_obs = get_completeness_counts(cat, compl, mbinw)
+        norm = get_norm_optimize_poisson(cat, aval, bval, compl, 2022)
+        print(f'{norm:.5e}')

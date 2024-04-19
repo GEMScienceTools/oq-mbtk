@@ -266,8 +266,8 @@ class GCMTMomentTensor(object):
         """
         if self.ref_frame == 'USE':
             # Rotate
-            return utils.use_to_ned(self.tensor), \
-                   utils.use_to_ned(self.tensor_sigma)
+            return (utils.use_to_ned(self.tensor),
+                    utils.use_to_ned(self.tensor_sigma))
         elif self.ref_frame == 'NED':
             # Already NED
             return self.tensor, self.tensor_sigma
@@ -281,8 +281,8 @@ class GCMTMomentTensor(object):
         '''
         if self.ref_frame == 'NED':
             # Rotate
-            return utils.ned_to_use(self.tensor), \
-                   utils.ned_to_use(self.tensor_sigma)
+            return (utils.ned_to_use(self.tensor),
+                    utils.ned_to_use(self.tensor_sigma))
         elif self.ref_frame == 'USE':
             # Already USE
             return self.tensor, self.tensor_sigma
@@ -321,27 +321,27 @@ class GCMTMomentTensor(object):
                                                     [0., 0., 0.],
                                                     [-1., 0., 0.]]))
         rotation_matrix = (np.matrix(evect * rot_vec.T)).T
-        if  np.linalg.det(rotation_matrix) < 0.:
+        if np.linalg.det(rotation_matrix) < 0.:
             rotation_matrix *= -1.
         flip_dc = np.matrix([[0., 0., -1.], [0., -1., 0.], [-1., 0., 0.]])
         rotation_matrices = sorted(
             [rotation_matrix, flip_dc * rotation_matrix], cmp=cmp_mat)
         nodal_planes = GCMTNodalPlanes()
-        dip, strike, rake = [(180. / pi) * angle
-            for angle in utils.matrix_to_euler(rotation_matrices[0])]
+        dip, strike, rake = [
+            (180. / pi) * angle for angle in
+            utils.matrix_to_euler(rotation_matrices[0])]
         # 1st Nodal Plane
         nodal_planes.nodal_plane_1 = {'strike': strike % 360,
                                       'dip': dip,
                                       'rake': -rake}
 
         # 2nd Nodal Plane
-        dip, strike, rake = [(180. / pi) * angle
-            for angle in utils.matrix_to_euler(rotation_matrices[1])]
+        dip, strike, rake = [(180. / pi) * angle for angle in
+                             utils.matrix_to_euler(rotation_matrices[1])]
         nodal_planes.nodal_plane_2 = {'strike': strike % 360.,
                                       'dip': dip,
                                       'rake': -rake}
         return nodal_planes
-
 
     def get_principal_axes(self):
         '''
@@ -369,7 +369,6 @@ class GCMTMomentTensor(object):
         principal_axes.t_axis['azimuth'] = azim
         principal_axes.t_axis['plunge'] = plun
         return principal_axes
-
 
 
 class GCMTEvent(object):
@@ -415,10 +414,10 @@ class GCMTEvent(object):
             # Principal axes not yet defined for moment tensor - raises error
             raise ValueError('Principal Axes not defined!')
 
-        denominator = np.max(np.array([
-            fabs(self.principal_axes.t_axis['eigenvalue']),
-            fabs(self.principal_axes.p_axis['eigenvalue'])
-            ]))
+        denominator = np.max(
+            np.array([fabs(self.principal_axes.t_axis['eigenvalue']),
+                      fabs(self.principal_axes.p_axis['eigenvalue'])]
+                     ))
         self.f_clvd = -self.principal_axes.b_axis['eigenvalue'] / denominator
         return self.f_clvd
 
@@ -445,6 +444,7 @@ class GCMTEvent(object):
         '''
         '''
         raise NotImplementedError('Not implemented yet!')
+
 
 class GCMTCatalogue(object):
     """
@@ -492,7 +492,6 @@ class GCMTCatalogue(object):
         for gcmt in self.gcmts:
             yield gcmt
 
-
     def gcmt_to_simple_array(self, centroid_location=True):
         '''
         Converts the GCMT catalogue to a simple array of
@@ -510,8 +509,8 @@ class GCMTCatalogue(object):
                 catalogue[iloc, 4] = float(tensor.centroid.time.hour)
                 catalogue[iloc, 5] = float(tensor.centroid.time.minute)
                 catalogue[iloc, 6] = np.round(
-                    np.float(tensor.centroid.time.second) +
-                    np.float(tensor.centroid.time.microsecond) / 1000000., 2)
+                    float(tensor.centroid.time.second) +
+                    float(tensor.centroid.time.microsecond) / 1000000., 2)
                 catalogue[iloc, 7] = tensor.centroid.longitude
                 catalogue[iloc, 8] = tensor.centroid.latitude
                 catalogue[iloc, 9] = tensor.centroid.depth
@@ -522,8 +521,8 @@ class GCMTCatalogue(object):
                 catalogue[iloc, 4] = float(tensor.hypocentre.time.hour)
                 catalogue[iloc, 5] = float(tensor.hypocentre.time.minute)
                 catalogue[iloc, 6] = np.round(
-                    np.float(tensor.centroid.time.second) +
-                    np.float(tensor.centroid.time.microsecond) / 1000000., 2)
+                    float(tensor.centroid.time.second) +
+                    float(tensor.centroid.time.microsecond) / 1000000., 2)
                 catalogue[iloc, 7] = tensor.hypocentre.longitude
                 catalogue[iloc, 8] = tensor.hypocentre.latitude
                 catalogue[iloc, 9] = tensor.hypocentre.depth
@@ -546,7 +545,6 @@ class GCMTCatalogue(object):
             catalogue[iloc, 24] = tensor.principal_axes.t_axis['azimuth']
             catalogue[iloc, 25] = tensor.principal_axes.t_axis['plunge']
         return catalogue
-
 
     def get_locations(self, use_centroids=True):
         '''
@@ -583,9 +581,10 @@ class GCMTCatalogue(object):
         comptibility with the GEM Hazard Modeller's Toolkit
         '''
         header_list = ['eventID', 'Agency', 'year', 'month', 'day', 'hour',
-                   'minute', 'second', 'timeError', 'longitude', 'latitude',
-                   'SemiMajor90', 'SemiMinor90', 'ErrorStrike', 'depth',
-                   'depthError', 'magnitude', 'sigmaMagnitude']
+                       'minute', 'second', 'timeError', 'longitude',
+                       'latitude', 'SemiMajor90', 'SemiMinor90', 'ErrorStrike',
+                       'depth', 'depthError', 'magnitude', 'sigmaMagnitude',
+                       'str1', 'dip1', 'rake1', 'str2', 'dip2', 'rake2']
         with open(filename, 'wt') as fid:
             writer = csv.DictWriter(fid, fieldnames=header_list)
             headers = dict((header, header) for header in header_list)
@@ -601,7 +600,13 @@ class GCMTCatalogue(object):
                             'magnitude': tensor.magnitude,
                             'sigmaMagnitude': None,
                             'depth': None,
-                            'depthError': None}
+                            'depthError': None,
+                            'str1': None,
+                            'dip1': None,
+                            'rake1': None,
+                            'str2': None,
+                            'dip2': None,
+                            'rake2': None}
 
                 if centroid_location:
                     # Time and location come from centroid
@@ -611,13 +616,25 @@ class GCMTCatalogue(object):
                     cmt_dict['hour'] = tensor.centroid.time.hour
                     cmt_dict['minute'] = tensor.centroid.time.minute
                     cmt_dict['second'] = np.round(
-                        np.float(tensor.centroid.time.second) +
-                        np.float(tensor.centroid.time.microsecond) / 1000000., 2)
+                        float(tensor.centroid.time.second) +
+                        float(tensor.centroid.time.microsecond) / 1000000., 2)
                     cmt_dict['timeError'] = tensor.centroid.time_error
                     cmt_dict['longitude'] = tensor.centroid.longitude
                     cmt_dict['latitude'] = tensor.centroid.latitude
                     cmt_dict['depth'] = tensor.centroid.depth
                     cmt_dict['depthError'] = tensor.centroid.depth_error
+                    cmt_dict['str1'] = \
+                        tensor.nodal_planes.nodal_plane_1['strike']
+                    cmt_dict['rake1'] = \
+                        tensor.nodal_planes.nodal_plane_1['rake']
+                    cmt_dict['dip1'] = \
+                        tensor.nodal_planes.nodal_plane_1['dip']
+                    cmt_dict['str2'] = \
+                        tensor.nodal_planes.nodal_plane_2['strike']
+                    cmt_dict['rake2'] = \
+                        tensor.nodal_planes.nodal_plane_2['rake']
+                    cmt_dict['dip2'] = \
+                        tensor.nodal_planes.nodal_plane_2['dip']
                 else:
                     # Time and location come from hypocentre
                     cmt_dict['year'] = tensor.hypocentre.date.year
@@ -626,8 +643,9 @@ class GCMTCatalogue(object):
                     cmt_dict['hour'] = tensor.hypocentre.time.hour
                     cmt_dict['minute'] = tensor.hypocentre.time.minute
                     cmt_dict['second'] = np.round(
-                        np.float(tensor.hypocentre.time.second) +
-                        np.float(tensor.hypocentre.time.microsecond) / 1000000., 2)
+                        float(tensor.hypocentre.time.second) +
+                        float(tensor.hypocentre.time.microsecond) /
+                        1000000., 2)
                     cmt_dict['timeError'] = None
                     cmt_dict['longitude'] = tensor.hypocentre.longitude
                     cmt_dict['latitude'] = tensor.hypocentre.latitude

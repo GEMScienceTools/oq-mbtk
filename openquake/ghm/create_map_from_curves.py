@@ -38,15 +38,20 @@ from openquake.man.tools import csv_output as csvt
 def read_hazard_curve_files(path_in, prefix=''):
     """
     :param path_in:
-    :param pattern:
+        Path of the folder with the .json files with the hazard curves
+    :param prefix:
+        Prefix of the files in `path_in`
     """
-    data_path = os.path.join(path_in, '{:s}*'.format(prefix))
+    data_path = os.path.join(path_in, '{:s}*json'.format(prefix))
+
     lons = []
     lats = []
     poes = []
     for i, fname in enumerate(sorted(glob.glob(data_path))):
+
         print(fname)
         df = gpd.read_file(fname)
+
         # Extract IMLs from names
         if i == 0:
             imls = []
@@ -54,14 +59,17 @@ def read_hazard_curve_files(path_in, prefix=''):
                 m = re.search(r'^poe-(\d*\.\d*)', tmps)
                 if m:
                     imls.append(float(m.group(1)))
+
         # Save coordinates
         for p in df['geometry']:
             lons.append(p.x)
             lats.append(p.y)
+
         # Save data
         tmp_poes = df.filter(regex=("poe*")).values
         for row in list(tmp_poes):
             poes.append(row)
+
     return lons, lats, np.array(poes), np.array(imls)
 
 
@@ -78,14 +86,17 @@ def write_hazard_map(filename, lons, lats, pex, gms, imt):
 def create_map(path_in, prefix, fname_out, path_out, imt_str, pex=None,
                iml=None):
     """
-    :param fname:
-        Name of the .csv file with the hazard curves
+    :param path_in:
+        Name of folder with the .json files containing the hazard curves
     """
+
     pex = float(pex)
     lons, lats, poes, imls = read_hazard_curve_files(path_in, prefix)
+
     # Check is output path exists
     if not os.path.exists(path_out):
         os.mkdir(path_out)
+
     # Read the file with the hazard curves
     # lons, lats, poes, hea, imls = csvt.read_hazard_curve_csv(fname_csv)
     # Compute the hazard maps
@@ -95,6 +106,7 @@ def create_map(path_in, prefix, fname_out, path_out, imt_str, pex=None,
         raise ValueError('Not yet supported')
     else:
         raise ValueError('You cannot set both iml and pex')
+
     # Save the hazard map
     path_out = os.path.join(path_out, fname_out)
     write_hazard_map(path_out, lons, lats, pex, dat, imt_str)
@@ -107,7 +119,7 @@ def map(path_in, prefix, fname_out, path_out, imt_str, pex=None, iml=None):
     create_map(path_in, prefix, fname_out, path_out, imt_str, pex, iml)
 
 
-map.path_in = 'Name of the file with input .json files'
+map.path_in = 'Name of the folder with input .json files'
 map.prefix = 'Prefix for selecting files'
 map.fname_out = 'Name output csv file'
 map.path_out = 'Path to the output folder'
