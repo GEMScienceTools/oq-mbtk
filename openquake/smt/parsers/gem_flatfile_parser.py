@@ -570,13 +570,13 @@ def _prioritise_rotd50(df, proxy=None, removal=None):
     no_vals = len(pd.Series(log).unique())
     if removal is True and log!= []:
         df = df.drop(log).reset_index()
-        msg = 'Records without RotD50 acc. values at all required periods'
+        msg = 'Records without RotD50 acc. values for all periods between 1s and 10s'
         msg += ' have been removed from flatfile (%s records)' % no_vals
         print(msg)
         if len(df) == 0:
             raise ValueError('All records have been removed from the flatfile')        
     elif log != []:
-        print('%s records do not have RotD50 for all req. periods' % no_vals)
+        print('%s records do not have RotD50 for all periods between 1 s and 10 s' % no_vals)
     
     # Output to folder where converted flatfile read into parser   
     tmp = tempfile.mkdtemp()
