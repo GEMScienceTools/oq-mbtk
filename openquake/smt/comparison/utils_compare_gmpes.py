@@ -750,7 +750,7 @@ def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
             
     # ylims
     if str(i) != 'PGV':
-        pyplot.ylim(1e-05, 5) # g
+        pyplot.ylim(1e-05, 3) # g
     else:
         pyplot.ylim(0.1, 650) # cm/s
         
