@@ -38,7 +38,7 @@ def plot_trellis_util(
         trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region, imt_list,
         mag_list, minR, maxR, gmpe_list, aratio, Nstd, output_directory,
         custom_color_flag, custom_color_list, eshm20_region, dist_type,
-        lt_weights_gmc1 = None, lt_weights_gmc2 = None, up_or_down_dip = None):
+        lt_weights_gmc1=None, lt_weights_gmc2=None, up_or_down_dip=None):
     """
     Generate trellis plots for given run configuration
     """
@@ -750,7 +750,7 @@ def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
             
     # ylims
     if str(i) != 'PGV':
-        pyplot.ylim(1e-03, 3) # g
+        pyplot.ylim(1e-05, 5) # g
     else:
         pyplot.ylim(0.1, 650) # cm/s
         
