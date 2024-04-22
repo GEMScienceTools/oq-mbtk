@@ -423,7 +423,7 @@ Comparing GMPEs
         dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         eshm20_region = 2 # for ESHM20 GMPE regionalisation
-        Nstd = 1 # num. of sigma to sample from sigma distribution
+        Nstd = 1 # num. of standard deviations to sample from sigma distribution
         
         # Specify site properties
         [site_properties]
