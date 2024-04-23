@@ -599,8 +599,8 @@ class Residuals(object):
                           the corresponding GMPE sigma components
         """
         nvals = float(len(mean))
-        total = nvals*(inter**2.)+(intra**2.) # array of total sigma
-        inter_res = ((inter ** 2.) * sum(obs - mean)) / total
+        v = nvals * (inter ** 2.) + (intra ** 2.)
+        inter_res = ((inter ** 2.) * sum(obs - mean)) / v
         intra_res = obs - (mean + inter_res)
         if normalise:
             return inter_res / inter, intra_res / intra
