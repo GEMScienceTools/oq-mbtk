@@ -586,10 +586,20 @@ class Residuals(object):
         """
         Calculates the random effects residuals using the inter-event
         residual formula described in Abrahamson & Youngs (1992) Eq. 10
+        
+        :param obs: array of observed ground-shaking values for a single ctx
+                    for a given imt.
+        :param mean: array of ground-shaking values predicted by the given
+                     GMPE and imt.
+        :param inter: float representing the inter-event component of GMPE
+                      sigma for a given imt.
+        :param intra: float representing the intra-event component of GMPE
+                      sigma for a given imt.
+        :param normalise: bool which if True normalises the residuals using
+                          the corresponding GMPE sigma components
         """
         nvals = float(len(mean))
-        inter_res = ((inter ** 2.) * sum(obs - mean)) /\
-            (nvals * (inter ** 2.) + (intra ** 2.))
+        inter_res = ((inter**2.)*sum(obs-mean))/(nvals*(inter**2.)+(intra**2.))
         intra_res = obs - (mean + inter_res)
         if normalise:
             return inter_res / inter, intra_res / intra
