@@ -588,9 +588,9 @@ class Residuals(object):
         residual formula described in Abrahamson & Youngs (1992) Eq. 10
         
         :param obs: array of observed ground-shaking values for a single ctx
-                    for a given imt in natural log.
-        :param mean: array of ground-shaking values predicted by the given
-                     GMPE and imt in natural log.
+                    (i.e. event) for a given imt, in natural log.
+        :param mean: array of ground-shaking values for the same ctx 
+                     predicted by the given GMPE and imt, in natural log.
         :param inter: float representing the inter-event component of GMPE
                       sigma for a given imt.
         :param intra: float representing the intra-event component of GMPE
