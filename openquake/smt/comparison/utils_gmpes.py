@@ -37,8 +37,7 @@ from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
 
 def _get_first_point(rup, from_point):
     """
-    :param rup:
-    :param from_point:
+    Get the first point in the collection of sites from the rupture
     """
     sfc = rup.surface
     if from_point == 'TC':  # Get the up-dip edge centre point
@@ -68,7 +67,9 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
                            direction='positive', hdist=100, step=5.,
                            site_props=''):
     """
+    Get the sites from the rupture to create the context with
     :param rup:
+        Rupture object
     :param from_point:
         A string. Options: 'TC', 'TL', 'TR'
     :return:
@@ -135,7 +136,7 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
                Z1, Z25, maxR, step, imt, ztor, eshm20_region, dist_type, trt,
                up_or_down_dip):
     """
-    Compute predicted ground-motion intensities
+    Compute the ground-motion intensities for the given context created here
     """
     rup_trt = None
     if trt == 'ASCR':
