@@ -10,7 +10,7 @@ def main(h3_level: str, fname_poly: str, folder_out: str,*, use: str = []):
     Given a set of polygons, using H3 this creates grids representing in a
     'discrete' sense the original geometries
     """
-    discretize_zones_with_h3_grid(h3_level, fname_poly, folder_out, use)
+    discretize_zones_with_h3_grid(h3_level, fname_poly, folder_out, use = use)
 
 
 descr = 'The level of the H3 grid'
