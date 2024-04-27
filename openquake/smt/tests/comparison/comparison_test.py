@@ -108,7 +108,7 @@ class ComparisonTestCase(unittest.TestCase):
                                    TARGET_MAG[mag], delta=0.000001)
         # Check for target gmpes
         for gmpe in range(0, len(config.gmpes_list)):
-            self.assertEqual(config.gmpes_list[gmpe], TARGET_GMPES[gmpe])
+            self.assertEqual(config.gmpes_list[gmpe], str(TARGET_GMPES[gmpe]))
 
         # Check for target imts
         for imt in range(0, len(config.imt_list)):

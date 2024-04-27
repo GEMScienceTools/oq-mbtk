@@ -297,10 +297,8 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
         for g, gmpe in enumerate(gmpe_list): 
             medians, sigmas = [], []
             for l, m in enumerate(mag_list): # Iterate though mag_list
-                
-                gsim = valid.gsim(gmpe)
-                gmm_orig = gsim
-                gmm = mgmpe_check(gsim)
+
+                gmm = mgmpe_check(gmpe)
 
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
                     strike, dip, depth[l], aratio, rake, trt) 
@@ -312,7 +310,7 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
                     ztor_m = None
 
                 mean, std, r_vals, tau, phi = att_curves(
-                    gmm, gmm_orig, depth[l], m, aratio_g, strike_g, dip_g,
+                    gmm, gmm.gmpe, depth[l], m, aratio_g, strike_g, dip_g,
                     rake, Vs30, Z1, Z25, maxR, d_step, i, ztor_m, eshm20_region,
                     dist_type, trt, up_or_down_dip) 
                 
