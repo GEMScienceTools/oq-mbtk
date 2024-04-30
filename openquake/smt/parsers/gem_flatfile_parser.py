@@ -528,12 +528,14 @@ def _prioritise_rotd50(df, proxy=None, removal=None):
     
     :param  proxy:
         If set to true, if a record is missing RotD50 try and use the geometric
-        mean of the horizontal components
+        mean of the horizontal components (geometric mean is computed when
+        calculating the residuals, here we just parse the two horizontals)
     
     :param  removal:
-        If set to true records without complete RotD50 (or complete RotD50 with
-        use of geometric mean as proxy - if proxy is True) for any of the required
-        spectral periods are removed.
+        If set to true records without complete RotD50 for any of the required
+        spectral periods are removed. In instances that proxy is True, records
+        without complete RotD50 even with use of geometric mean as a proxy are
+        dropped
     """
     # Manage RotD50 vs horizontal components
     log, cols = [], []
@@ -568,14 +570,14 @@ def _prioritise_rotd50(df, proxy=None, removal=None):
     no_vals = len(pd.Series(log).unique())
     if removal is True and log!= []:
         df = df.drop(log).reset_index()
-        msg = 'Records without RotD50 acc. values at all required periods'
+        msg = 'Records without RotD50 acc. values for all periods between 0.01 s and 10 s'
         msg += ' have been removed from flatfile (%s records)' % no_vals
         print(msg)
         if len(df) == 0:
             raise ValueError('All records have been removed from the flatfile')        
     elif log != []:
-        print('%s records do not have RotD50 for all req. periods' % no_vals)
-        
+        print('%s records do not have RotD50 for all periods between 0.01 s and 10 s' % no_vals)
+    
     # Output to folder where converted flatfile read into parser   
     tmp = tempfile.mkdtemp()
     converted_base_data_path = os.path.join(DATA, tmp, 'converted_flatfile.csv')
