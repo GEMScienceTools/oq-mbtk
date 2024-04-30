@@ -36,6 +36,7 @@ from openquake.smt import surface_utils
 from openquake.smt.residuals.context_db import ContextDB
 from openquake.hazardlib.geo import geodetic
 
+
 class Magnitude(object):
     """
     Class to hold magnitude attributes
