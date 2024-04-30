@@ -7,7 +7,7 @@ The main components of the Strong-Motion Tools (smt) comprise of (1) parsing cap
 
 Here, we will demonstrate how each of these components can be implemented, in the context of aiming to develop a GMPE logic-tree approach GMC for Albania.
 
-Please note that this documentation assumes an elementary knowledge of GMPEs, residual analysis and ground-motion characterisation. Therefore, this documentation's purpose is to facilitate the application of the smt by user who is already familiar with the underlying theory. References are provided throughout for useful overviews of such theory!
+Please note that this documentation assumes an elementary knowledge of GMPEs, residual analysis and ground-motion characterisation. Therefore, this documentation's purpose is to facilitate the application of the smt by user who is already familiar with the underlying theory. References are provided throughout for useful overviews of such theory.
 
 Performing a Residual Analysis
 *********************************************
@@ -94,76 +94,57 @@ We can specify the inputs to perform a residual analysis with as follows:
         > gmpe_list = ['AkkarEtAlRjb2014', 'BooreEtAl2014', 'BooreEtAl2020', 'CauzziEtAl2014', 'KothaEtAl2020regional', 'LanzanoEtAl2019_RJB_OMO']
         > imt_list = ['PGA','SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']
         
-3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for the use of GMPEs with user-specifiable input parameters. Note that here the GMPEs listed in this example ``.toml`` file are not appropriate for our target region, but have been selected to demonstrate how GMPEs with additional inputs can be specified.
+3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for the use of GMPEs with user-specifiable input parameters.
 
-   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``, or for ModifiableGMPE features in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``). Note also that a GMPE sigma model must be provided by the GMPE for the computation of residuals. If a sigma model is not provided by the GMPE, it can be specified as demonstrated below.
+   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``). or for ModifiableGMPE features in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``).
    
    The ``.toml`` file for specifying GMPEs and intensity measures to consider within a residual analysis should be specified as follows:
    
     .. code-block:: ini
     
-        [models]
+       [models.AkkarEtAlRjb2014]
+        
+       [models.BooreEtAl2014]
+        
+       [models.BooreEtAl2020]
+        
+       [models.CauzziEtal2014]
+        
+       [models.KothaEtAl2020regional]
+        
+       [models.LanzanoEtAl2019_RJB_OMO]
     
-        [models.AbrahamsonGulerce2020SInter]
-        region = "CAS"
+       # Examples below of some GMPEs not considered in this residual analysis with additional 
+       # parameters than be specified within a toml file
+    
+       [models.AbrahamsonGulerce2020SInter]
+       region = "CAS" # GMPE specific parameters                
         
-        [models.YenierAtkinson2015BSSA]
-        sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
-
-        [models.1-CampbellBozorgnia2014]
-        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # fix total sigma per imt
-        
-        [models.2-CampbellBozorgnia2014]
-        with_betw_ratio = 1.7 # add between-event and within-event sigma using ratio of 1.7 to partition total sigma
-                
-        [models.3-CampbellBozorgnia2014]
-        set_between_epsilon = 0.5 # Shift the mean with formula mean --> mean + epsilon_tau * between event
-                               
-        [models.1-ChiouYoungs2014]
-        median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
-        
-        [models.2-ChiouYoungs2014]
-        median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
-        
-        [models.1-KothaEtAl2020]
-        sigma_scaling_scalar = 1.05 # scale sigma by factor of 1.05 over all imts
-        
-        [models.2-KothaEtAl2020]
-        sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # scale sigma by imt-dependent factor
-        
-        [models.1-BooreEtAl2014]
-        site_term = 'CY14SiteTerm' # use CY14 site term
-        
-        [models.2-BooreEtAl2014]
-        site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
-        
-        [models.3-BooreEtAl2014]
-        site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
+       [models.KothaEtAl2020ESHM20]
+       sigma_mu_epsilon = 2.85697 
+       c3_epsilon = 1.72    
+       eshm20_region = 4 # Note that only a single eshm20 region (eshm20 attenuation cluster) 
+                         # can be evaluated in a single residual analysis run in the SMT. If
+                         # multiple variants of the KothaEtAl2020ESHM20 GMPE are specified in
+                         # a single residuals toml the results of the last variant of the GMPE
+                         # will overwrite the others (and only the results of the last variant 
+                         # in the toml will be plotted too). This bug will be fixed.
+    
+       [models.NGAEastGMPE]
+       gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
+       
+       # Note that a bug exists for GMPEs which use the add_alias feature, meaning that the user
+       # must specify parameters that should be inherently used by specifiying the gsim class (to
+       # be fixed). Some examples of how to circumvent this bug are provided below
+       
+       [models.AbrahamsonEtAl2014] # Use instead of specifying AbrahamsonEtAl2014RegJPN
+       region = "JPN"
+       
+       [models.NGAEastUSGSGMPE]  # Use instead of specifying NGAEastUSGSSeed1CCSP or 1CCSP gsim classes
+       gmpe_table = 'nga_east_1CCSP.hdf5'
             
-        [models.HassaniAtkinson2018]
-        d_sigma = 100
-        kappa0 = 0.04
-        
-        [models.KothaEtAl2020ESHM20] # ESHM20 model
-        sigma_mu_epsilon = 2.85697 
-        c3_epsilon = 1.72    
-        region = 4 # Note that within the residuals toml we specify the region here, whereas in the comparison module toml (below) we specify the region for all ESHM20 GMMs uniformly using the eshm20_region param
-    
-        [models.NGAEastGMPE]
-        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
-    
-        # Note: currently a bug for GMMs which use add_alias to specify gsim
-        # class (will be fixed - current workarounds demonstrated below)
-        
-        [models.AbrahamsonEtAl2014RegJPN]
-        region = "JPN" # add_alias bug means must still specify 'JPN' region param
-        
-        [models.NGAEastUSGSGMPE]
-        gmpe_table = 'usgs17.hdf5' # another example of add_alias bug
-        
-        
-        [imts]
-        imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)', 'SA(1.0']    
+       [imts]
+       imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
           
 4. Following specification of the GMPEs and intensity measures, we can now compute the ground-motion residuals using the Residuals module.
 
@@ -227,7 +208,9 @@ Plotting of Residuals
        > imt_list = list(imt_list)
        >
        > # Plot residual probability density function for a specified GMPE from gmpe_list and intensity measure from imt_list
-       > rspl.ResidualPlot(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg') # Plot for gmpe in position 5 in gmpe_list and intensity measure in position 0 in imt_list
+       > rspl.ResidualPlot(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg') # Plot for gmpe in position 5 
+                                                                                          # in gmpe_list and intensity
+                                                                                          # measure in position 0 in imt_list
         
 Residual distribution plot for Boore et al. 2020 and PGA:
     .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_bias+sigma.jpeg
@@ -440,7 +423,7 @@ Comparing GMPEs
         dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         eshm20_region = 2 # for ESHM20 GMPE regionalisation
-        Nstd = 1 # num. of sigma to sample from sigma distribution
+        Nstd = 1 # num. of standard deviations to sample from sigma distribution
         
         # Specify site properties
         [site_properties]
@@ -452,14 +435,21 @@ Comparing GMPEs
         
         # Characterise earthquake for the region of interest as finite rupture
         [source_properties]
-        trt = 'None' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
-        ztor = 'None' # Set to string of 'None' to NOT consider otherwise specify as array matching number of mag and depth values
+        trt = 'None' # Either string of 'None' to use user-provided aratio OR specify a 
+                     # TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle,
+                     # Volcanic, Induced, Induced_Geothermal to assign a trt-dependent
+                     # proxy aratio
+        ztor = 'None' # Set to string of 'None' to NOT consider otherwise specify as
+                      # array matching number of mag and depth values
         strike = -999
         dip =  60
-        rake = 90 # Must be provided. Strike and dip can be approximated if either set to -999
-        aratio  = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
-        trellis_and_rs_mag_list = [5, 6, 7] # mags used only for trellis and response spectra
-        trellis_and_rs_depths = [20, 20, 20] # depth per magnitude for trellis and response spectra
+        rake = 90 # Must be provided. Strike and dip can be approximated if either
+                  # set to -999
+        aratio  = 2 # If set to -999 the user-provided trt string will be used 
+                    # to assign a trt-dependent aratio
+        trellis_and_rs_mag_list = [5, 6, 7] # Mags used only for trellis and response spectra
+        trellis_and_rs_depths = [20, 20, 20] # Depth per magnitude for trellis and
+                                             # response spectra
         
         # Specify magnitude array for Sammons, Euclidean dist and clustering
         [mag_values_non_trellis_or_spectra_functions]
@@ -513,7 +503,7 @@ Comparing GMPEs
             lt_weight_gmc2_plot_lt_only = 0.50
             
         [custom_colors]
-        custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
+        custom_colors_flag = 'False' # (Set to "True" for custom colours in plots)
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
             
             
@@ -607,6 +597,69 @@ Comparing GMPEs
 
     Matrix plots of Euclidean distance between GMPEs (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Euclidean.png
+    
+9. Using ModifiableGMPE to modify GMPEs within a ``.toml``. 
+
+   In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``).
+   
+   Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per imt), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
+
+   Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml``):
+   
+    .. code-block:: ini
+
+        [models.0-ModifiableGMPE]
+        gmpe = 'YenierAtkinson2015BSSA'
+        sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
+
+        [models.1-ModifiableGMPE]
+        gmpe = 'CampbellBozorgnia2014'
+        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # fix total sigma per imt
+        
+        [models.2-ModifiableGMPE]
+        gmpe = 'CampbellBozorgnia2014'
+        with_betw_ratio = 1.7 # add between-event and within-event sigma using
+                              # ratio of 1.7 to partition total sigma
+                
+        [models.3-ModifiableGMPE]
+        gmpe = 'CampbellBozorgnia2014'
+        set_between_epsilon = 0.5 # Shift the mean with formula mean --> mean + epsilon_tau * between event
+                               
+        [models.4-ModifiableGMPE]
+        gmpe = 'CampbellBozorgnia2014'
+        add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
+        
+        [models.5-ModifiableGMPE]
+        gmpe = 'CampbellBozorgnia2014'
+        set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
+                               
+        [models.6-ModifiableGMPE]
+        gmpe = 'ChiouYoungs2014'
+        median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
+        
+        [models.7-ModifiableGMPE]
+        gmpe = 'ChiouYoungs2014'
+        median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
+        
+        [models.8-ModifiableGMPE]
+        gmpe = 'KothaEtAl2020'
+        sigma_scaling_scalar = 1.25 # scale sigma by factor of 1.25 over all imts
+        
+        [models.9-ModifiableGMPE]
+        gmpe = 'KothaEtAl2020'
+        sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # scale sigma by imt-dependent factor
+        
+        [models.10-ModifiableGMPE]
+        gmpe = 'BooreEtAl2014'
+        site_term = 'CY14SiteTerm' # use CY14 site term
+        
+        [models.11-ModifiableGMPE]
+        gmpe = 'BooreEtAl2014'
+        site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
+        
+        [models.12-ModifiableGMPE]
+        gmpe = 'BooreEtAl2014'
+        site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
     
 References
 ==========
