@@ -36,7 +36,7 @@ import geopandas as gpd
 from typing import Type
 from shapely.geometry import Point
 from openquake.hmtk.seismicity.catalogue import Catalogue
-from openquake.wkf.utils import create_folder
+from openquake.wkf.utils import create_folder, get_list
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
 
 
@@ -121,7 +121,7 @@ def from_df(df, end_year=None) -> Type[Catalogue]:
 
 
 def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
-                         source_ids: list = []):
+                         source_ids: str = []):
     """
     Given a catalogue and a gis-file with polygons (e.g. shapefile or
     .geojson), this code creates for each polygon a subcatalogue with the
@@ -141,7 +141,10 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
 
     # Create output folder
     create_folder(folder_out)
-
+    
+    if len(source_ids) > 0:
+        source_ids = get_list(source_ids)
+        
     # Create geodataframe with the catalogue
     df = pd.read_csv(fname_cat)
     gdf = gpd.GeoDataFrame(df, crs='epsg:4326', geometry=[Point(xy) for xy
