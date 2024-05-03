@@ -7,9 +7,9 @@ Some notes on setup
 ********************
 Though most of the tools we use in model construction are in python, some steps are executed in `Julia <https://julialang.org/>`_ using the `PSHAModelBuilder <https://github.com/GEMScienceTools/PSHAModelBuilder>`_ tools. We use this for the boxcounting, Gaussian smoothing, and rate distribution steps, because these steps are particularly intensive and Julia makes the process more efficient. See `the PSHAModelBuilder Github <https://github.com/GEMScienceTools/PSHAModelBuilder>`_  for details on setup.
 
-In general, the components of the workflow are designed so that they can be run directly in a terminal. In the examples below, we use a jupyter notebook and the python ``subprocess`` module to run the commands. To instead run from terminal, use the cmd output directly. You can see that most of these calls are to the wkf module specifically, but in many cases these functions are wrappers to other functions within the mbt or elsewhere in the mbtk. You can use ``oqm wkf -h`` to see the available functions within the wkf and ``oqm wkf subcmd --help`` to see the input parameters for each function.
+In general, the components of the workflow are designed so that they can be run directly in a terminal. In the examples below, we use a jupyter notebook and the python ``subprocess`` module to run the commands. To instead run from terminal, use the cmd output directly. You can see that most of these calls are to the wkf module specifically, but in many cases these functions are wrappers to other functions within the mbt or elsewhere in the mbtk. You can use ``oqm wkf -h`` to see the available functions within the wkf and ``oqm wkf <subcmd_name> --help`` to see the input parameters for each function.
 
-If you are running in a jupyter notebook, we suggest setting up as below, using ``os`` to manage paths and specifying the locations of the wkf tools (and Julia when using Windows): 
+If you are running in a jupyter notebook, we suggest setting up as below, using tools in the package ``os`` or ``pathlib`` to manage paths and specifying the locations of the wkf tools (and Julia when using Windows): 
 
 .. code-block:: python
 
@@ -35,7 +35,7 @@ Workflow inputs
 The workflow starts from three inputs as outlined below:
 	1. A homogenised earthquake catalogue in hmtk catalogue format. This can be a direct output of a catalogue prepared using the `catalogue toolkit <https://gemsciencetools.github.io/oq-mbtk/contents/cat.html>`_ or a catalogue (from a csv or ndk file) converted using the catalogue parsers in the hmtk. 
 	2. Source polygons covering the area of interest. These should ideally be supplied as .geojson files. 
-	3. A source parameter configuration file supplied as a .toml file. The toml file will set up paramaters for many steps of the workflow and be modified while running the code. The configuration toml is created by the modeller. An example is shown below. 
+	3. A source parameter configuration file supplied as a .toml file. The toml file will set up paramaters for many steps of the workflow and be modified while running the code. The configuration toml is created by the modeller. Please note that for all the relative paths in the .toml file, the reference folder is the one where the .toml configuration file is located. An example is shown below. 
 
 .. code-block:: ini   	
 
@@ -86,7 +86,7 @@ The workflow starts from three inputs as outlined below:
 
 	[sources.38]
 
-The .toml file will be read by different functions at different stages of the workflow. In this example, a source model will consist of sources 26, 34 and 38 from the source polygons, and these are all active shallow crustal sources. If using the completeness_analysis function, sources will be added to the model after this step, but at least one named source will be required to start the analysis and if there are too few events in a source to establish mc and GR parameters these sources will be omitted, so best practice remains to specify the sources clearly in the toml. Source names or abbreviations can also be used here - it is not necessary to use only numeric source identifiers.
+The .toml file will be read by different functions at different stages of the workflow. In this example, a source model will consist of sources 26, 34 and 38 from the source polygons, and these are all active shallow crustal sources. If using the completeness_analysis function, sources will be added to the model after this step, but at least one named source will be required to start the analysis and if there are too few events in a source to establish magnitude of completeness (mc) and GR parameters these sources will be omitted, so best practice remains to specify the sources clearly in the toml. Source names or abbreviations can also be used here - it is not necessary to use only numeric source identifiers. Still, we recommend using a numbering scheme based on a standard format e.g. ASC001 (for source number 1 in active shallow crust), ASC002 and so on.
 
 At various stages of the workflow, values will be added to the .toml file or modified as the model is constructed. 
 
@@ -122,7 +122,7 @@ For efficient handling of spatial datasets, we use the `h3 <https://h3geo.org/do
 
 We also set some depth limits for events to consider in the source model: in this case we are dealing with crustal earthquakes and so the limits for the depths of events are set to 0-35km. Note that some catalogues may contain negative depths if topography has been considered in the catalogue processing!
 
-The parameter ``mmax_delta`` sets a fixed delta value to add to the observed largest event in the catalogue when considering suitable mmax per zone. If generate_completeness_tables is True, the code will process completeness for each zone. It is useful to be able to turn off this step where you are running the workflow multiple times as this step can be quite slow.
+The parameter ``mmax_delta`` sets a fixed delta value to add to the observed largest event in the catalogue when considering suitable mmax per zone. If ``generate_completeness_tables`` is True, the code will process completeness for each zone. It is useful to be able to turn off this step where you are running the workflow multiple times as this step can be quite slow.
 
 Finally we specify the location of the configuration toml file that contains further parameters for our models and will contain zone-based information to construct the source zones. 
 
@@ -277,7 +277,7 @@ will take the hypocentral distribution (and any other parameters from defaults) 
 
 Discretise model to h3 zones
 ******************************
-Building a smoothed seismicity model can be particularly computationally intensive due to the spatial distribution we are trying to model. We use (link) h3 to help with this, by covering our area of interest in hexagonal cells at a specified resolution (which we set earlier as h3_level). This step in the workflow generates the collection of h3 cells that covers our source polygons. The cell indices are written to the specified output repository, where they will be called in the next steps of the smoothing. 
+Building a smoothed seismicity model can be particularly computationally intensive due to the spatial distribution we are trying to model. We use `h3 <https://h3geo.org/docs/>`_ to help with this, by covering our area of interest in hexagonal cells at a specified resolution (which we set earlier as h3_level). This step in the workflow generates the collection of h3 cells that covers our source polygons. The cell indices are written to the specified output repository, where they will be called in the next steps of the smoothing. 
 
 .. code-block:: python  
 
@@ -310,6 +310,7 @@ Apply smoothing
 There are currently two options for smoothing included in the mbt. For either approach, the required parameters should be included in the toml file under the 'smoothing' section (see example above). In both cases, the output file is a smoothed rate in each h3 cell. Note that the rate returned by these functions comes from the events in the declustered catalogue. The next step will normalise these rates to be consistent with the rates from the FMD for each zone. 
 
 Option 1: Gaussian smoothing kernels
+=====================================
 
 This approach applies Gaussian spatial kernels of fixed distance around each event in the catalogue. Multiple kernels and weightings can be specified. The ``kernel_smoothing`` in the config specifies the smoothing distances and their associated weights - in this case we apply three kernels with decreasing weight for increased smoothing distance. We also specify a ``kernel_maximum_distance`` as the upper limit on the Gaussian smoothing. The Gaussian smoothing approach takes the results of the boxcounting directly, so any specified weights in the previous step will be applied to the smoothing in this step. The boxcounting results file will be inside the boxcounting folder, and we set up a file to contain the smoothing results. 
 
@@ -322,6 +323,7 @@ This approach applies Gaussian spatial kernels of fixed distance around each eve
     p = subprocess.run(cmd, shell=True)
 
 Option 2: Helmstetter (2007) adaptive smoothing
+================================================
 
 This approach determines a smoothing distance for each event based on its proximity to other events. This means that the smoothing distance will be small in areas with many earthquakes and larger where there are fewer, further spaced events.
 In this case, the parameters to be specified are a minimum smoothing distance (ideally close to the location uncertainty of a given catalogue), the nth neighbour to use for the smoothing distance (e.g. to use the distance to the 5th closest neighbour, we would specify n_v = 5) and the spatial kernel we want to use (either power-law or Gaussian), as well as a maximum smoothing distance (maxdist). Because the adaptive smoothing considers all events in the catalogue potential neighbours, including a ``maxdist`` is especially important for catalogues with sparse events covering large areas, but in practice we have found it does not impact the final smoothing results (either in terms of spatial pattern or information gain). These parameters should be specified in the [smoothing] part of the toml file. 
@@ -348,7 +350,7 @@ Distribute rates in sources
 *****************************
 Now that we have determined a smoothing, we want to distribute the total earthquake rate for a source polygon in such a way that the rate is highest where the intensity of events is highest, that is we wish to distribute the total rate of events spatially. 
 
-eps_a and eps_b are epsilons to be applied to the sigma values from applying the weichert method. If set to zero, the agr and bgr are used, but if there is an epsilon and a reference magnitude (the a-value type sigma is for the rate above a reference magnitude), then the zonal mfd is adjusted accordingly before distributing the rates.
+``eps_a`` and ``eps_b`` are epsilons to be applied to the sigma values from applying the weichert method. If set to zero, the ``agr`` and ``bgr`` are used, but if there is an epsilon and a reference magnitude (the a-value type sigma is for the rate above a reference magnitude), then the zonal mfd is adjusted accordingly before distributing the rates.
 
 This will output point_src_input for each polygon.
 
