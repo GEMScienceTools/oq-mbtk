@@ -158,7 +158,6 @@ class Configurations(object):
         # Check weights for each logic tree (if present) equal 1.0
         if get_weights_gmc1 != {}:
             check_weights_gmc1 = np.array(pd.Series(get_weights_gmc1))
-            breakpoint()
             if np.sum(check_weights_gmc1, axis=0) != 1.0:
                 raise ValueError("GMPE logic tree weights must total 1.0")
             self.lt_weights_gmc1 = get_weights_gmc1
