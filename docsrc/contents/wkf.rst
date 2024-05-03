@@ -86,7 +86,7 @@ The workflow starts from three inputs as outlined below:
 
 	[sources.38]
 
-The .toml file will be read by different functions at different stages of the workflow. In this example, a source model will consist of sources 26, 34 and 38 from the source polygons, and these are all active shallow crustal sources. If using the completeness_analysis function, sources will be added to the model after this step, but at least one named source will be required to start the analysis and if there are too few events in a source to establish magnitude of completeness (mc) and GR parameters these sources will be omitted, so best practice remains to specify the sources clearly in the toml. Source names or abbreviations can also be used here - it is not necessary to use only numeric source identifiers. Still, we recommend using a numbering scheme based on a standard format e.g. ASC001 (for source number 1 in active shallow crust), ASC002 and so on.
+The .toml file will be read by different functions at different stages of the workflow. In this example, a source model will consist of sources 26, 34 and 38 from the source polygons, and these are all active shallow crustal sources. If using the ``completeness_analysis`` function, sources will be added to the model after this step, but at least one named source will be required to start the analysis and if there are too few events in a source to establish magnitude of completeness (mc) and GR parameters these sources will be omitted, so best practice remains to specify the sources clearly in the toml. Source names or abbreviations can also be used here - it is not necessary to use only numeric source identifiers. Still, we recommend using a numbering scheme based on a standard format e.g. ASC001 (for source number 1 in active shallow crust), ASC002 and so on.
 
 At various stages of the workflow, values will be added to the .toml file or modified as the model is constructed. 
 
@@ -144,8 +144,8 @@ Calculate and apply completeness
 At this step, we wish to apply some completeness constraints. You may prefer to perform a completeness analysis separately, taking into account changes in expected completeness (for example, due to known changes in local recording stations or equipment). In this case, the identified completeness for each zone can be added to the .toml file before the other steps of the workflow are carried out. Alternatively, there are tools within the mbt for performing a completeness analysis.
 
 The ``completeness_analysis`` tool takes in a set of possible years and magnitudes and tests all possible completeness windows from these sets for their respective fit to the best-fitting FMD given the specified windows. Different optimisation criteria are available for testing the goodness of fit of the different completeness windows, from a norm difference between observed rates and expected to a Poisson likelihood of observing events based on the window selection. As such there are two steps to the completeness analysis in the workflow: 
-1) generating the initial completeness windows from the provided years and magnitudes in the config .toml [completeness] section using ``completeness_generate``; and
-2) running the analysis for each subcatalogue with ``completeness_analysis``.
+1. generating the initial completeness windows from the provided years and magnitudes in the config .toml [completeness] section using ``completeness_generate``; and
+2. running the analysis for each subcatalogue with ``completeness_analysis``.
 
 .. code-block:: python   
  
