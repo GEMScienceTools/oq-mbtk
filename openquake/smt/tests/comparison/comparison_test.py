@@ -287,7 +287,7 @@ class ComparisonTestCase(unittest.TestCase):
                                             config.aratio,
                                             config.eshm20_region,
                                             config.dist_type,
-                                            mtxs_type='median',
+                                            mtxs_type='84th_perc',
                                             up_or_down_dip=config.up_or_down_dip)
         
         # Get clustering matrix
