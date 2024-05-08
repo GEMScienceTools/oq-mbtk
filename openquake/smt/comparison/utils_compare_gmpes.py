@@ -47,6 +47,7 @@ def plot_trellis_util(
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
     
     # Stores
+    store = {}
     median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = {}, {}, {}
     median_gmc2, plus_sig_gmc2, minus_sig_gmc2 = {}, {}, {}
     median_gmc3, plus_sig_gmc3, minus_sig_gmc3 = {}, {}, {}
@@ -58,13 +59,19 @@ def plot_trellis_util(
     step = 1
     
     # Compute attenuation curves
+    store_per_imt = {}
     for n, i in enumerate(imt_list):
+        store_per_mag = {}
         for l, m in enumerate(mag_list):
             fig.add_subplot(len(imt_list), len(mag_list), l+1+n*len(mag_list))
             (lt_vals_gmc1, lt_vals_gmc2,
              lt_vals_gmc3, lt_vals_gmc4) = {}, {}, {}, {}
+            store_per_gmpe = {}
             for g, gmpe in enumerate(gmpe_list): 
                 
+                # Need another dict here
+                store_per_gmpe[gmpe] = {}
+                                
                 # Perform mgmpe check
                 col = colors[g]
                 gmm = mgmpe_check(gmpe)
@@ -129,12 +136,28 @@ def plot_trellis_util(
                                                             lt_weights_gmc4,
                                                             lt_vals_gmc4)
                 
+                # Store per gmpe
+                if str(i) != 'PGV':
+                    unit = 'g'
+                else:
+                    unit = 'cm/s' # Otherwise imt = PGV
+                store_per_gmpe[gmpe]['median (%s)' %unit] = np.exp(mean)
+                store_per_gmpe[gmpe]['sigma (ln)'] = std
+                store_per_gmpe[gmpe][
+                    'median plus sigma (%s)' %unit] = np.exp(plus_sigma)
+                store_per_gmpe[gmpe][
+                    'median minus sigma (%s)' %unit] = np.exp(minus_sigma)
+                   
                 # Update plots
                 update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list,
                                      dist_type)
 
+            # Store per gmpe
+            store_per_mag['Mw = %s, depth = %s km, dip = %s deg, rake = %s deg'
+                          %(m, depth[l], dip_g, rake)] = store_per_gmpe
+
             pyplot.grid(axis='both', which='both', alpha=0.5)
-        
+         
             ### Plot logic trees if specified
             spec_gmc = 'gmc1'
             median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = lt_trel(r_vals,
@@ -180,10 +203,20 @@ def plot_trellis_util(
                                                                  plus_sig_gmc4,
                                                                  minus_sig_gmc4)
             
+        # Store per imt
+        store_per_imt[str(i)] = store_per_mag
+        
+    # Final store to add vs30 and Nstd into key
+    store['vs30 = %s m/s, GMM sigma epsilon = %s' %(Vs30, Nstd)
+          ] = store_per_imt
+            
     # Finalise plots
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(os.path.join(output_directory, 'TrellisPlots.png'),
                    bbox_inches='tight', dpi=200, pad_inches=0.2)
+    
+    return store
+    
     
 
 def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
