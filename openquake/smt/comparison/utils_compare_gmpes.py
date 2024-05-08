@@ -69,7 +69,7 @@ def plot_trellis_util(
             store_per_gmpe = {}
             for g, gmpe in enumerate(gmpe_list): 
                 
-                # Need another dict here
+                # Sub dicts for median, gmm sigma, median +/- Nstd * gmm sigma
                 store_per_gmpe[gmpe] = {}
                                 
                 # Perform mgmpe check
