@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2017 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -16,11 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parser for the ESM23 flatfile format (i.e. flatfile downloaded from custom
-header URL) to SMT
-
-This parser assumes you have selected all available headers in your URL search
-when downloading the flatfile
+Parse the GEM globally homogenised flatfile into SMT metadata.
 """
 import pandas as pd
 import os, sys
@@ -49,59 +45,35 @@ else:
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
+# Base path
+DATA = os.path.abspath('')
+
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
-HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
-             "EMSC_ev_id;ev_nation_code;ev_latitude;ev_longitude;"\
-             "ev_depth_km;ev_hyp_ref;fm_type_code;ML;ML_ref;Mw;Mw_ref;Ms;"\
-             "Ms_ref;EMEC_Mw;EMEC_Mw_type;EMEC_Mw_ref;event_source_id;"\
-             "es_strike;es_dip;es_rake;es_strike_dip_rake_ref;es_z_top;"\
-             "es_z_top_ref;es_length;es_width;es_geometry_ref;network_code;"\
-             "station_code;location_code;instrument_code;sensor_depth_m;"\
-             "proximity_code;housing_code;installation_code;st_nation_code;"\
-             "st_latitude;st_longitude;st_elevation;ec8_code;"\
-             "ec8_code_method;ec8_code_ref;vs30_m_sec;vs30_ref;"\
-             "vs30_calc_method;vs30_meas_type;slope_deg;vs30_m_sec_WA;"\
-             "epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;Ry0_dist;"\
-             "instrument_type_code;late_triggered_flag_01;U_channel_code;"\
-             "U_azimuth_deg;V_channel_code;V_azimuth_deg;W_channel_code;"\
-             "U_hp;V_hp;W_hp;U_lp;V_lp;W_lp"
+HEADER_STR = "event_id;event_time;ISC_ev_id;ev_latitude;ev_longitude;"\
+             "ev_depth_km;fm_type_code;ML;Mw;Ms;event_source_id;"\
+             "es_strike;es_dip;es_rake;es_z_top;es_length;es_width;"\
+             "network_code;station_code;location_code;"\
+             "sensor_depth_m;"\
+             "st_latitude;st_longitude;st_elevation;vs30_m_sec;slope_deg;"\
+             "vs30_meas_type;epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;"\
+             "Ry0_dist;late_triggered_flag_01;U_channel_code;U_azimuth_deg;"\
+             "V_channel_code;V_azimuth_deg;W_channel_code;U_hp;V_hp;W_hp;U_lp;"\
+             "V_lp;W_lp"
 
 HEADERS = set(HEADER_STR.split(";"))
 
-COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AR": "Argentina", "AZ": "Azerbaijan",
-                 "BA": "Bosnia and Herzegowina", "BG": "Bulgaria",
-                 "CH": "Switzerland", "CL": "Chile", "CN": "China", 
-                 "CR": "Costa Rica", "CY": "Cyprus", "CZ": "Czech Republic",
-                 "DE": "Germany", "DJ": "Djibouti", "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia", "GH": "Ghana", 
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary", 
-                 "IL": "Israel", "ID": "Indonesia", "IR": "Iran",
-                 "IS": "Iceland", "IT": "Italy", "JO": "Jordan", "KE":"Kenya",
-                 "KG": "Kyrgyzstan", "KZ": "Kazakhstan", "LI": "Lichtenstein",
-                 "MA": "Morocco", "MC": "Monaco", "MD": "Moldova",
-                 "ME": "Montenegro", "MK": "Macedonia", "MM": "Myanmar",
-                 "MT": "Malta", "MX": "Mexico", "NI": "Nicaragua",
-                 "NO": "Norway", "PA": "Panama", "PG": "Papa New Guinea",
-                 "PL": "Poland", "PT": "Portugal", "PS": "Palestine",
-                 "RO": "Romania", "RS": "Serbia", "RU": "Russia",
-                 "SI": "Slovenia", "SM": "San Marino", "SY": "Syria",
-                 "TM": "Turkmenistan", "TR": "Turkey", "TW": "Taiwan",
-                 "UA": "Ukraine", "US": "United States", "UZ": "Uzbekistan",
-                 "VU": "Vanuatu", "XK": "Kosovo", "YE": "Yemen"}
 
-class ESM23FlatfileParser(SMDatabaseReader):
-    
+class GEMFlatfileParser(SMDatabaseReader):
     """
-    Parses the ESM metadata from the flatfile to a set of metadata objects
+    Parses the data from the flatfile to a set of metadata objects
     """
-    
-    M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
+    M_PRECEDENCE = ["Mw", "Ms", "ML"]
     BUILD_FINITE_DISTANCES = False
 
     def parse(self, location='./'):
         """
+        Parse the dataset
         """
         assert os.path.isfile(self.filename)
         headers = getline(self.filename, 1).rstrip("\n").split(";")
@@ -111,50 +83,39 @@ class ESM23FlatfileParser(SMDatabaseReader):
                                  % hdr)
         # Read in csv
         reader = csv.DictReader(open(self.filename, "r"), delimiter=";")
-        metadata = []
         self.database = GroundMotionDatabase(self.id, self.name)
         counter = 0
         for row in reader:
-            if self._sanitise(row, reader):
-                # Build the metadata
-                record = self._parse_record(row)
-                if record:
-                    # Parse the strong motion
-                    record = self._parse_ground_motion(
-                        os.path.join(location, "records"),
-                        row, record, headers)
-                    self.database.records.append(record)
+            # Build the metadata
+            record = self._parse_record(row)
+            if record:
+                # Parse the strong motion
+                record = self._parse_ground_motion(
+                    os.path.join(location, "records"),
+                    row, record, headers)
+                self.database.records.append(record)
 
-                else:
-                    print("Record with sequence number %s is null/invalid"
-                          % "{:s}-{:s}".format(row["event_id"],
-                                               row["station_code"]))
-            if (counter % 100) == 0:
+            else:
+                print("Record with sequence number %s is null/invalid"
+                      % "{:s}-{:s}".format(row["event_id"],
+                                           row["station_code"]))
+            if (counter % 1) == 0:
                 print("Processed record %s - %s" % (str(counter),
                                                     record.id))
                 
             counter += 1
 
     @classmethod
-    def autobuild(cls, dbid, dbname, output_location, 
-                  ESM23_flatfile_directory):
+    def autobuild(cls, dbid, dbname, output_location, ESM_flatfile_directory,
+                  proxy=None, removal=None):
         """
         Quick and dirty full database builder!
         """
-        # Import ESM 2023 format strong-motion flatfile
-        ESM23 = pd.read_csv(ESM23_flatfile_directory)
+        # Import GEM strong-motion flatfile
+        GEM = pd.read_csv(ESM_flatfile_directory)
     
-        # Create default values for headers not considered in ESM23 format
-        default_string = pd.Series(np.full(np.size(ESM23.esm_event_id), ""))
-        
-        # Assign strike-slip to unknown faulting mechanism
-        r_fm_type = ESM23.fm_type_code.fillna('SS') 
-
-        # Reformat datetime
-        r_datetime = ESM23.event_time.str.replace('T',' ')
-    
-        converted_base_data_path=_get_ESM18_headers(
-            ESM23, default_string, r_fm_type, r_datetime)
+        # Get path to tmp csv once modified dataframe
+        converted_base_data_path=_prioritise_rotd50(GEM, proxy, removal)
         
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
@@ -175,13 +136,10 @@ class ESM23FlatfileParser(SMDatabaseReader):
             
         return database
 
-    def _sanitise(self, row, reader):
-        """
-        TODO - Not implemented yet!
-        """
-        return True
-
     def _parse_record(self, metadata):
+        """
+        Parse a record
+        """
         # Waveform ID not provided in file so concatenate Event and Station ID
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
                          metadata["station_code"], metadata["location_code"]])
@@ -209,11 +167,6 @@ class ESM23FlatfileParser(SMDatabaseReader):
         eq_id = metadata["event_id"]
         eq_name = metadata["event_id"]
         # Country
-        cntry_code = metadata["ev_nation_code"].strip()
-        if cntry_code and cntry_code in COUNTRY_CODES:
-            eq_country = COUNTRY_CODES[cntry_code]
-        else:
-            eq_country = None
         # Date and time
         eq_datetime = valid.date_time(metadata["event_time"],
                                      "%Y-%m-%d %H:%M:%S")
@@ -225,7 +178,7 @@ class ESM23FlatfileParser(SMDatabaseReader):
             eq_depth = 0.0
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet
-                         eq_country=eq_country)
+                         eq_country=None)
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
         eqk.magnitude = pref_mag
@@ -239,23 +192,16 @@ class ESM23FlatfileParser(SMDatabaseReader):
 
     def _parse_magnitudes(self, metadata):
         """
-        So, here things get tricky. Up to four magnitudes are defined in the
-        flatfile (EMEC Mw, MW, Ms and ML). An order of precedence is required
-        and the preferred magnitude will be the highest found
+        An order of precedence is required and the preferred magnitude will be
+        the highest found
         """
         pref_mag = None
         mag_list = []
         for key in self.M_PRECEDENCE:
             mvalue = metadata[key].strip()
             if mvalue:
-                if key == "EMEC_Mw":
-                    mtype = "Mw"
-                    msource = "EMEC({:s}|{:s})".format(
-                        metadata["EMEC_Mw_type"],
-                        metadata["EMEC_Mw_ref"])
-                else:
-                    mtype = key
-                    msource = metadata[key + "_ref"].strip()
+                mtype = key
+                msource = metadata[key + "_ref"].strip()
                 mag = Magnitude(float(mvalue),
                                 mtype,
                                 source=msource)
@@ -374,39 +320,24 @@ class ESM23FlatfileParser(SMDatabaseReader):
         network_code = metadata["network_code"].strip()
         station_code = metadata["station_code"].strip()
         site_id = "{:s}-{:s}".format(network_code, station_code)
-        location_code = metadata["location_code"].strip()
         site_lon = valid.longitude(metadata["st_longitude"])
         site_lat = valid.latitude(metadata["st_latitude"])
         elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
 
         vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
-        vs30_topo = valid.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
-        if vs30:
-            vs30_measured = True
-        elif vs30_topo:
-            vs30 = vs30_topo
-            vs30_measured = False
-        else:
-            vs30_measured = False
-        st_nation_code = metadata["st_nation_code"].strip()
-        if st_nation_code:
-            st_country = COUNTRY_CODES[st_nation_code]
-        else:
-            st_country = None
+        vs30_measured = None # User should check selected records (many diff. 
+                             # flatfiles --> see vs30_meas_type column for if
+                             # vs30 if available was measured of inferred)
+        
         site = RecordSite(site_id, station_code, station_code, site_lon,
                           site_lat, elevation, vs30, vs30_measured,
-                          network_code=network_code,
-                          country=st_country)
+                          network_code=network_code, country=None)
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
         site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
                                          "sensor_depth_m")
-        site.instrument_type = metadata["instrument_code"].strip()
         if site.vs30:
             site.z1pt0 = vs30_to_z1pt0_cy14(vs30)
             site.z2pt5 = vs30_to_z2pt5_cb14(vs30)
-        housing_code = metadata["housing_code"].strip()
-        if housing_code and (housing_code in HOUSING):
-            site.building_structure = HOUSING[housing_code]
         return site
 
     def _parse_waveform_data(self, metadata, wfid):
@@ -416,15 +347,14 @@ class ESM23FlatfileParser(SMDatabaseReader):
         late_trigger = valid.vint(metadata["late_triggered_flag_01"],
                                   "late_triggered_flag_01")
         # U channel - usually east
-        xorientation = metadata["U_channel_code"].strip()
         xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
         xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
                    "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
         xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
                           units="cm/s/s")
         xcomp.late_trigger = late_trigger
+        
         # V channel - usually North
-        vorientation = metadata["V_channel_code"].strip()
         vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
         vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
                    "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
@@ -529,7 +459,7 @@ class ESM23FlatfileParser(SMDatabaseReader):
 
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
-
+        Get the ground-motion data from a row (record) in the database
         """
         imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
         spectra = []
@@ -557,14 +487,12 @@ class ESM23FlatfileParser(SMDatabaseReader):
                         # Not a spectral period but T90
                         continue
                     iky = header.replace(key, "").replace("_", ".")
-                    #print imt, key, header, iky
                     periods.append(float(iky))
                     value = row[header].strip()
                     if value:
                         values.append(np.fabs(float(value)))
                     else:
                         values.append(np.nan)
-                    #values.append(np.fabs(float(row[header].strip())))
             periods = np.array(periods)
             values = np.array(values)
             idx = np.argsort(periods)
@@ -585,364 +513,74 @@ class ESM23FlatfileParser(SMDatabaseReader):
                     scalars["U"][key] * scalars["V"][key])
         return scalars, spectra
 
-def _get_ESM18_headers(ESM23, default_string, r_fm_type, r_datetime):
-    
-    """
-    Convert from ESM23 format flatfile to ESM18 format flatfile
-    """
-    # Construct dataframe with original ESM format 
-    ESM_original_headers = pd.DataFrame(
-    {
-    # Non-GMIM headers   
-    "event_id":ESM23.esm_event_id,                                       
-    "event_time":r_datetime,
-    "ISC_ev_id":ESM23.isc_event_id,
-    "USGS_ev_id":ESM23.usgs_event_id,
-    "INGV_ev_id":ESM23.ingv_event_id,
-    "EMSC_ev_id":ESM23.emsc_event_id,
-    "ev_nation_code":ESM23.ev_nation_code,
-    "ev_latitude":ESM23.ev_latitude,    
-    "ev_longitude":ESM23.ev_longitude,   
-    "ev_depth_km":ESM23.ev_depth_km,
-    "ev_hyp_ref":default_string,
-    "fm_type_code":r_fm_type,
-    "ML":ESM23.ml,
-    "ML_ref":ESM23.ml_ref,
-    "Mw":ESM23.mw,
-    "Mw_ref":ESM23.mw_ref,
-    "Ms":ESM23.ms,
-    "Ms_ref":ESM23.ms_ref,
-    "EMEC_Mw":ESM23.emec_mw,
-    "EMEC_Mw_type":ESM23.emec_mw_type,
-    "EMEC_Mw_ref":ESM23.emec_mw_ref,
-    "event_source_id":ESM23.event_source_id,
 
-    "es_strike":ESM23.es_strike,
-    "es_dip":ESM23.es_dip,
-    "es_rake":ESM23.es_rake,
-    "es_strike_dip_rake_ref":default_string, 
-    "es_z_top":ESM23.z_top,
-    "es_z_top_ref":ESM23.es_z_top_ref,
-    "es_length":ESM23.es_length,   
-    "es_width":ESM23.es_width,
-    "es_geometry_ref":ESM23.es_geometry_ref,
- 
-    "network_code":ESM23.network_code,
-    "station_code":ESM23.station_code,
-    "location_code":ESM23.location_code,
-    "instrument_code":ESM23.instrument_type_code,     
-    "sensor_depth_m":ESM23.sensor_depth_m,
-    "proximity_code":ESM23.proximity,
-    "housing_code":ESM23.hounsing,    # Currently typo in their database header
-    "installation_code":ESM23.installation,
-    "st_nation_code":ESM23.st_nation_code,
-    "st_latitude":ESM23.st_latitude,
-    "st_longitude":ESM23.st_longitude,
-    "st_elevation":ESM23.st_elevation,
+def _prioritise_rotd50(df, proxy=None, removal=None):
+    """
+    Assign RotD50 values to horizontal accelerations for computation of
+    residuals. RotD50 is available for the vast majority of the records in the
+    GEM flatfile for PGA to 10 s.
     
-    "ec8_code":ESM23.ec8_code,
-    "ec8_code_method":default_string,
-    "ec8_code_ref":default_string,
-    "vs30_m_sec":ESM23.vs30_m_s,
-    "vs30_ref":default_string,
-    "vs30_calc_method":default_string, 
-    "vs30_meas_type":ESM23.vs30_meas_type,
-    "slope_deg":ESM23.slope_deg,
-    "vs30_m_sec_WA":ESM23.vs30_m_s_wa,
- 
-    "epi_dist":ESM23.epi_dist,
-    "epi_az":ESM23.epi_az,  
-    "JB_dist":ESM23.jb_dist,
-    "rup_dist":ESM23.rup_dist, 
-    "Rx_dist":ESM23.rx_dist, 
-    "Ry0_dist":ESM23.ry0_dist,
- 
-    "instrument_type_code":ESM23.instrument_type_code,      
-    "late_triggered_flag_01":ESM23.late_triggered_event_01,
-    "U_channel_code":ESM23.u_channel_code,
-    "U_azimuth_deg":ESM23.u_azimuth_deg,
-    "V_channel_code":ESM23.v_channel_code,
-    "V_azimuth_deg":ESM23.v_azimuth_deg,
-    "W_channel_code":ESM23.w_channel_code,
+    If no RotD50 use the geometric mean if available (if specified) as a proxy
+    for RotD50.
     
-    "U_hp":ESM23.u_hp,
-    "V_hp":ESM23.v_hp,
-    "W_hp":ESM23.w_hp,  
-    "U_lp":ESM23.u_lp,
-    "V_lp":ESM23.v_lp,
-    "W_lp":ESM23.w_lp,
-     
-    "U_pga":ESM23.u_pga,
-    "V_pga":ESM23.v_pga,
-    "W_pga":ESM23.w_pga,
-    "rotD50_pga":ESM23.rotd50_pga,
-    "rotD100_pga":ESM23.rotd100_pga,
-    "rotD00_pga":ESM23.rotd00_pga,
-    "U_pgv":ESM23.u_pgv,
-    "V_pgv":ESM23.v_pgv,
-    "W_pgv":ESM23.w_pgv,
-    "rotD50_pgv":ESM23.rotd50_pgv,
-    "rotD100_pgv":ESM23.rotd100_pgv,
-    "rotD00_pgv":ESM23.rotd00_pgv,
-    "U_pgd":ESM23.u_pgd,
-    "V_pgd":ESM23.v_pgd,
-    "W_pgd":ESM23.w_pgd,
-    "rotD50_pgd":ESM23.rotd50_pgd,
-    "rotD100_pgd":ESM23.rotd100_pgd,
-    "rotD00_pgd":ESM23.rotd00_pgv,
-    "U_T90":ESM23.u_t90,
-    "V_T90":ESM23.v_t90,
-    "W_T90":ESM23.w_t90,
-    "rotD50_T90":ESM23.rotd50_t90,
-    "rotD100_T90":ESM23.rotd100_t90,
-    "rotD00_T90":ESM23.rot_d00_t90, # This header has typo in current db version 
-    "U_housner":ESM23.u_housner,
-    "V_housner":ESM23.v_housner,
-    "W_housner":ESM23.w_housner,
-    "rotD50_housner":ESM23.rotd50_housner,
-    "rotD100_housner":ESM23.rotd100_housner,
-    "rotD00_housner":ESM23.rotd00_housner,
-    "U_CAV":ESM23.u_cav,
-    "V_CAV":ESM23.v_cav,
-    "W_CAV":ESM23.w_cav,
-    "rotD50_CAV":ESM23.rotd50_cav,
-    "rotD100_CAV":ESM23.rotd100_cav,
-    "rotD00_CAV":ESM23.rotd00_cav,
-    "U_ia":ESM23.u_ia,
-    "V_ia":ESM23.v_ia,
-    "W_ia":ESM23.w_ia,
-    "rotD50_ia":ESM23.rotd50_ia,
-    "rotD100_ia":ESM23.rotd100_ia,
-    "rotD00_ia":ESM23.rotd00_ia,
+    Records lacking acceleration values for any of the required spectral periods
+    can also be removed (this information can alternatively just be printed)
     
-    "U_T0_010":ESM23.u_t0_010,
-    "U_T0_025":ESM23.u_t0_025,
-    "U_T0_040":ESM23.u_t0_040,
-    "U_T0_050":ESM23.u_t0_050,
-    "U_T0_070":ESM23.u_t0_070,
-    "U_T0_100":ESM23.u_t0_100,
-    "U_T0_150":ESM23.u_t0_150,
-    "U_T0_200":ESM23.u_t0_200,
-    "U_T0_250":ESM23.u_t0_250,
-    "U_T0_300":ESM23.u_t0_300,
-    "U_T0_350":ESM23.u_t0_350,
-    "U_T0_400":ESM23.u_t0_400,
-    "U_T0_450":ESM23.u_t0_450,
-    "U_T0_500":ESM23.u_t0_500,
-    "U_T0_600":ESM23.u_t0_600,
-    "U_T0_700":ESM23.u_t0_700,
-    "U_T0_750":ESM23.u_t0_750,
-    "U_T0_800":ESM23.u_t0_800,
-    "U_T0_900":ESM23.u_t0_900,
-    "U_T1_000":ESM23.u_t1_000,
-    "U_T1_200":ESM23.u_t1_200,
-    "U_T1_400":ESM23.u_t1_400,
-    "U_T1_600":ESM23.u_t1_600,
-    "U_T1_800":ESM23.u_t1_800,
-    "U_T2_000":ESM23.u_t2_000,
-    "U_T2_500":ESM23.u_t2_500,
-    "U_T3_000":ESM23.u_t3_000,
-    "U_T3_500":ESM23.u_t3_500,
-    "U_T4_000":ESM23.u_t4_000,
-    "U_T4_500":ESM23.u_t4_500,
-    "U_T5_000":ESM23.u_t5_000,
-    "U_T6_000":ESM23.u_t6_000,
-    "U_T7_000":ESM23.u_t7_000,
-    "U_T8_000":ESM23.u_t8_000,
-    "U_T9_000":ESM23.u_t9_000,
-    "U_T10_000":ESM23.u_t10_000,
-       
-    "V_T0_010":ESM23.v_t0_010,
-    "V_T0_025":ESM23.v_t0_025,
-    "V_T0_040":ESM23.v_t0_040,
-    "V_T0_050":ESM23.v_t0_050,
-    "V_T0_070":ESM23.v_t0_070,
-    "V_T0_100":ESM23.v_t0_100,
-    "V_T0_150":ESM23.v_t0_150,
-    "V_T0_200":ESM23.v_t0_200,
-    "V_T0_250":ESM23.v_t0_250,
-    "V_T0_300":ESM23.v_t0_300,
-    "V_T0_350":ESM23.v_t0_350,
-    "V_T0_400":ESM23.v_t0_400,
-    "V_T0_450":ESM23.v_t0_450,
-    "V_T0_500":ESM23.v_t0_500,
-    "V_T0_600":ESM23.v_t0_600,
-    "V_T0_700":ESM23.v_t0_700,
-    "V_T0_750":ESM23.v_t0_750,
-    "V_T0_800":ESM23.v_t0_800,
-    "V_T0_900":ESM23.v_t0_900,
-    "V_T1_000":ESM23.v_t1_000,
-    "V_T1_200":ESM23.v_t1_200,
-    "V_T1_400":ESM23.v_t1_400,
-    "V_T1_600":ESM23.v_t1_600,
-    "V_T1_800":ESM23.v_t1_800,
-    "V_T2_000":ESM23.v_t2_000,
-    "V_T2_500":ESM23.v_t2_500,
-    "V_T3_000":ESM23.v_t3_000,
-    "V_T3_500":ESM23.v_t3_500,
-    "V_T4_000":ESM23.v_t4_000,
-    "V_T4_500":ESM23.v_t4_500,
-    "V_T5_000":ESM23.v_t5_000,
-    "V_T6_000":ESM23.v_t6_000,
-    "V_T7_000":ESM23.v_t7_000,
-    "V_T8_000":ESM23.v_t8_000,
-    "V_T9_000":ESM23.v_t9_000,
-    "V_T10_000":ESM23.v_t10_000,
+    :param  proxy:
+        If set to true, if a record is missing RotD50 try and use the geometric
+        mean of the horizontal components (geometric mean is computed when
+        calculating the residuals, here we just parse the two horizontals)
     
-    "W_T0_010":ESM23.w_t0_010,
-    "W_T0_025":ESM23.w_t0_025,
-    "W_T0_040":ESM23.w_t0_040,
-    "W_T0_050":ESM23.w_t0_050,
-    "W_T0_070":ESM23.w_t0_070,
-    "W_T0_100":ESM23.w_t0_100,
-    "W_T0_150":ESM23.w_t0_150,
-    "W_T0_200":ESM23.w_t0_200,
-    "W_T0_250":ESM23.w_t0_250,
-    "W_T0_300":ESM23.w_t0_300,
-    "W_T0_350":ESM23.w_t0_350,
-    "W_T0_400":ESM23.w_t0_400,
-    "W_T0_450":ESM23.w_t0_450,
-    "W_T0_500":ESM23.w_t0_500,
-    "W_T0_600":ESM23.w_t0_600,
-    "W_T0_700":ESM23.w_t0_700,
-    "W_T0_750":ESM23.w_t0_750,
-    "W_T0_800":ESM23.w_t0_800,
-    "W_T0_900":ESM23.w_t0_900,
-    "W_T1_000":ESM23.w_t1_000,
-    "W_T1_200":ESM23.w_t1_200,
-    "W_T1_400":ESM23.w_t1_400,
-    "W_T1_600":ESM23.w_t1_600,
-    "W_T1_800":ESM23.w_t1_800,
-    "W_T2_000":ESM23.w_t2_000,
-    "W_T2_500":ESM23.w_t2_500,
-    "W_T3_000":ESM23.w_t3_000,
-    "W_T3_500":ESM23.w_t3_500,
-    "W_T4_000":ESM23.w_t4_000,
-    "W_T4_500":ESM23.w_t4_500,
-    "W_T5_000":ESM23.w_t5_000,
-    "W_T6_000":ESM23.w_t6_000,
-    "W_T7_000":ESM23.w_t7_000,
-    "W_T8_000":ESM23.w_t8_000,
-    "W_T9_000":ESM23.w_t9_000,
-    "W_T10_000":ESM23.w_t10_000,
+    :param  removal:
+        If set to true records without complete RotD50 for any of the required
+        spectral periods are removed. In instances that proxy is True, records
+        without complete RotD50 even with use of geometric mean as a proxy are
+        dropped
+    """
+    # Manage RotD50 vs horizontal components
+    log, cols = [], []
+    for idx, rec in df.iterrows():
+        for col in rec.index:
+            if 'rotD' in col:
+                cols.append(col)
+            if 'U_T' in col or 'V_T' in col or 'U_pga' in col or 'V_pga' in col:
+                if 'T90' not in col:
+                    if 'U_' in col:    
+                        rotd50_col = col.replace('U_', 'rotD50_')
+                    if 'V_' in col:
+                        rotd50_col = col.replace('V_', 'rotD50_')
+                        
+                    # If RotD50...
+                    if not pd.isnull(rec[rotd50_col]):
+                        df[col].iloc[idx] = rec[rotd50_col] # Assign to h1, h2
+                        
+                    # Otherwise...
+                    else:
+                        if proxy is True: # Use geo. mean as proxy
+                            if not pd.isnull(rec[col]):
+                                pass # Can use geo. mean from h1, h2 as proxy 
+                        else:
+                            log.append(idx) # Log rec as incomplete RotD50 vals
+                            
+    # Tidy dataframe
+    cols = pd.Series(cols).unique()
+    df = df.drop(columns=cols)
     
-    "rotD50_T0_010":ESM23.rotd50_t0_010,
-    "rotD50_T0_025":ESM23.rotd50_t0_025,
-    "rotD50_T0_040":ESM23.rotd50_t0_040,
-    "rotD50_T0_050":ESM23.rotd50_t0_050,
-    "rotD50_T0_070":ESM23.rotd50_t0_070,
-    "rotD50_T0_100":ESM23.rotd50_t0_100,
-    "rotD50_T0_150":ESM23.rotd50_t0_150,
-    "rotD50_T0_200":ESM23.rotd50_t0_200,
-    "rotD50_T0_250":ESM23.rotd50_t0_250,
-    "rotD50_T0_300":ESM23.rotd50_t0_300,
-    "rotD50_T0_350":ESM23.rotd50_t0_350,
-    "rotD50_T0_400":ESM23.rotd50_t0_400,
-    "rotD50_T0_450":ESM23.rotd50_t0_450,
-    "rotD50_T0_500":ESM23.rotd50_t0_500,
-    "rotD50_T0_600":ESM23.rotd50_t0_600,
-    "rotD50_T0_700":ESM23.rotd50_t0_700,
-    "rotD50_T0_750":ESM23.rotd50_t0_750,
-    "rotD50_T0_800":ESM23.rotd50_t0_800,
-    "rotD50_T0_900":ESM23.rotd50_t0_900,
-    "rotD50_T1_000":ESM23.rotd50_t1_000,
-    "rotD50_T1_200":ESM23.rotd50_t1_200,
-    "rotD50_T1_400":ESM23.rotd50_t1_400,
-    "rotD50_T1_600":ESM23.rotd50_t1_600,
-    "rotD50_T1_800":ESM23.rotd50_t1_800,
-    "rotD50_T2_000":ESM23.rotd50_t2_000,
-    "rotD50_T2_500":ESM23.rotd50_t2_500,
-    "rotD50_T3_000":ESM23.rotd50_t3_000,
-    "rotD50_T3_500":ESM23.rotd50_t3_500,
-    "rotD50_T4_000":ESM23.rotd50_t4_000,
-    "rotD50_T4_500":ESM23.rotd50_t4_500,
-    "rotD50_T5_000":ESM23.rotd50_t5_000,
-    "rotD50_T6_000":ESM23.rotd50_t6_000,
-    "rotD50_T7_000":ESM23.rotd50_t7_000,
-    "rotD50_T8_000":ESM23.rotd50_t8_000,
-    "rotD50_T9_000":ESM23.rotd50_t9_000,
-    "rotD50_T10_000":ESM23.rotd50_t10_000,
-       
-    
-    "rotD100_T0_010":ESM23.rotd100_t0_010,
-    "rotD100_T0_025":ESM23.rotd100_t0_025,
-    "rotD100_T0_040":ESM23.rotd100_t0_040,
-    "rotD100_T0_050":ESM23.rotd100_t0_050,
-    "rotD100_T0_070":ESM23.rotd100_t0_070,
-    "rotD100_T0_100":ESM23.rotd100_t0_100,
-    "rotD100_T0_150":ESM23.rotd100_t0_150,
-    "rotD100_T0_200":ESM23.rotd100_t0_200,
-    "rotD100_T0_250":ESM23.rotd100_t0_250,
-    "rotD100_T0_300":ESM23.rotd100_t0_300,
-    "rotD100_T0_350":ESM23.rotd100_t0_350,
-    "rotD100_T0_400":ESM23.rotd100_t0_400,
-    "rotD100_T0_450":ESM23.rotd100_t0_450,
-    "rotD100_T0_500":ESM23.rotd100_t0_500,
-    "rotD100_T0_600":ESM23.rotd100_t0_600,
-    "rotD100_T0_700":ESM23.rotd100_t0_700,
-    "rotD100_T0_750":ESM23.rotd100_t0_750,
-    "rotD100_T0_800":ESM23.rotd100_t0_800,
-    "rotD100_T0_900":ESM23.rotd100_t0_900,
-    "rotD100_T1_000":ESM23.rotd100_t1_000,
-    "rotD100_T1_200":ESM23.rotd100_t1_200,
-    "rotD100_T1_400":ESM23.rotd100_t1_400,
-    "rotD100_T1_600":ESM23.rotd100_t1_600,
-    "rotD100_T1_800":ESM23.rotd100_t1_800,
-    "rotD100_T2_000":ESM23.rotd100_t2_000,
-    "rotD100_T2_500":ESM23.rotd100_t2_500,
-    "rotD100_T3_000":ESM23.rotd100_t3_000,
-    "rotD100_T3_500":ESM23.rotd100_t3_500,
-    "rotD100_T4_000":ESM23.rotd100_t4_000,
-    "rotD100_T4_500":ESM23.rotd100_t4_500,
-    "rotD100_T5_000":ESM23.rotd100_t5_000,
-    "rotD100_T6_000":ESM23.rotd100_t6_000,
-    "rotD100_T7_000":ESM23.rotd100_t7_000,
-    "rotD100_T8_000":ESM23.rotd100_t8_000,
-    "rotD100_T9_000":ESM23.rotd100_t9_000,
-    "rotD100_T10_000":ESM23.rotd100_t10_000,      
- 
-    "rotD00_T0_010":ESM23.rotd00_t0_010,
-    "rotD00_T0_025":ESM23.rotd00_t0_025,
-    "rotD00_T0_040":ESM23.rotd00_t0_040,
-    "rotD00_T0_050":ESM23.rotd00_t0_050,
-    "rotD00_T0_070":ESM23.rotd00_t0_070,
-    "rotD00_T0_100":ESM23.rotd00_t0_100,
-    "rotD00_T0_150":ESM23.rotd00_t0_150,
-    "rotD00_T0_200":ESM23.rotd00_t0_200,
-    "rotD00_T0_250":ESM23.rotd00_t0_250,
-    "rotD00_T0_300":ESM23.rotd00_t0_300,
-    "rotD00_T0_350":ESM23.rotd00_t0_350,
-    "rotD00_T0_400":ESM23.rotd00_t0_400,
-    "rotD00_T0_450":ESM23.rotd00_t0_450,
-    "rotD00_T0_500":ESM23.rotd00_t0_500,
-    "rotD00_T0_600":ESM23.rotd00_t0_600,
-    "rotD00_T0_700":ESM23.rotd00_t0_700,
-    "rotD00_T0_750":ESM23.rotd00_t0_750,
-    "rotD00_T0_800":ESM23.rotd00_t0_800,
-    "rotD00_T0_900":ESM23.rotd00_t0_900,
-    "rotD00_T1_000":ESM23.rotd00_t1_000,
-    "rotD00_T1_200":ESM23.rotd00_t1_200,
-    "rotD00_T1_400":ESM23.rotd00_t1_400,
-    "rotD00_T1_600":ESM23.rotd00_t1_600,
-    "rotD00_T1_800":ESM23.rotd00_t1_800,
-    "rotD00_T2_000":ESM23.rotd00_t2_000,
-    "rotD00_T2_500":ESM23.rotd00_t2_500,
-    "rotD00_T3_000":ESM23.rotd00_t3_000,
-    "rotD00_T3_500":ESM23.rotd00_t3_500,
-    "rotD00_T4_000":ESM23.rotd00_t4_000,
-    "rotD00_T4_500":ESM23.rotd00_t4_500,
-    "rotD00_T5_000":ESM23.rotd00_t5_000,
-    "rotD00_T6_000":ESM23.rotd00_t6_000,
-    "rotD00_T7_000":ESM23.rotd00_t7_000,
-    "rotD00_T8_000":ESM23.rotd00_t8_000,
-    "rotD00_T9_000":ESM23.rotd00_t9_000,
-    "rotD00_T10_000":ESM23.rotd00_t10_000})
+    # Drop if req. or else just inform number of recs missing acceleration values
+    no_vals = len(pd.Series(log).unique())
+    if removal is True and log!= []:
+        df = df.drop(log).reset_index()
+        msg = 'Records without RotD50 acc. values for all periods between 0.01 s and 10 s'
+        msg += ' have been removed from flatfile (%s records)' % no_vals
+        print(msg)
+        if len(df) == 0:
+            raise ValueError('All records have been removed from the flatfile')        
+    elif log != []:
+        print('%s records do not have RotD50 for all periods between 0.01 s and 10 s' % no_vals)
     
     # Output to folder where converted flatfile read into parser   
-    DATA = os.path.abspath('')
     tmp = tempfile.mkdtemp()
-    converted_base_data_path = os.path.join(DATA, tmp,
-                                            'converted_flatfile.csv')
-    ESM_original_headers.to_csv(converted_base_data_path, sep=';')
-
+    converted_base_data_path = os.path.join(DATA, tmp, 'converted_flatfile.csv')
+    df.to_csv(converted_base_data_path, sep=';')
+    
     return converted_base_data_path

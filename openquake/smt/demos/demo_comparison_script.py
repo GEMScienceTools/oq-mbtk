@@ -1,13 +1,14 @@
 """
-This notebook provides a simple and efficient script for comparing candidate 
-GMPEs in terms of median predicted ground-motion using trellis plots,
-hierarchical clustering plots, Euclidean distance matrix plots and Sammons Maps
-plotting functions available within the SMT's comparison module.
+This notebook provides a simple script for comparing candidate GMMs using
+trellis plots, hierarchical clustering plots, Euclidean distance matrix plots
+and Sammons Maps plotting functions available within the SMT's comparison module.
 """
 import os
 import toml
 from openquake.smt.comparison import compare_gmpes as comp
 
+import warnings
+warnings.filterwarnings("ignore")
 
 # User input (can add more input tomls to run multiple analyses if required)
 file_list = ['demo_comparison_analysis_inputs.toml']
