@@ -37,6 +37,7 @@ from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.sourcewriter import write_source_model
 
 HERE = Path(__file__).parent
+PLOTTING = False
 
 
 class ClipDSAroundFaultsTest(unittest.TestCase):
@@ -175,7 +176,9 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
         # Plotting 
         fname_points = folder_out / 'src_points_01.xml'
         fname_buffer = folder_out / 'src_buffers_01.xml'
-        plot_results(faults_fname, fname_points, fname_buffer)
+
+        if PLOTTING:
+            plot_results(faults_fname, fname_points, fname_buffer)
 
 
 def plot_results(fname_faults, fname_points, fname_buffer):
