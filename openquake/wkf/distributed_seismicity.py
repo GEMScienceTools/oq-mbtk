@@ -338,16 +338,19 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
             else:
                 continue
 
+        # Plot option used for debugging
         if PLOTTING:
             bco = np.array(bco)
             plt.plot(bco[:, 0], bco[:, 1], 'x')
             plt.show()
 
+        # Create the multi-point source
         tmpsrc = from_list_ps_to_multipoint(pnt_srcs, 'pnts')
+
+        # Save the multipoint source to a nrml file
         tmp = pathlib.Path(fname)
         tmp_name = f"src_points_{tmp.stem.split('_')[-1]}.xml"
         fname_out = out_path / tmp_name
-
         write_source_model(fname_out, [tmpsrc], 'Distributed seismicity')
         logging.info(f'Created: {fname_out}')
 
@@ -357,6 +360,7 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
         tmp_name = f"src_buffers_{tmp.stem.split('_')[-1]}.xml"
         fname_out =  out_path / tmp_name
 
+        # Save the point sources within the buffers to a nrml file
         if buffer_pts:
             write_source_model(fname_out, buffer_pts, 'Distributed seismicity')
             logging.info(f'Created: {fname_out}')
@@ -393,7 +397,6 @@ def from_list_ps_to_multipoint(srcs: list, src_id: str):
         lats.append(src.location.latitude)
 
         if not settings:
-
             trt = src.tectonic_region_type
             msr = src.magnitude_scaling_relationship
             rar = src.rupture_aspect_ratio
@@ -402,8 +405,10 @@ def from_list_ps_to_multipoint(srcs: list, src_id: str):
             npd = src.nodal_plane_distribution
             hyd = src.hypocenter_distribution
 
+    # Set maximum magnitude
     mmaxs = [mmaxs[0]] if np.all(np.abs(np.diff(mmaxs)) < 0.01) else mmaxs
 
+    # Instantiate the multi MFD
     name = src_id
     mmfd = MultiMFD('truncGutenbergRichterMFD',
                     size=len(avals),
@@ -413,8 +418,10 @@ def from_list_ps_to_multipoint(srcs: list, src_id: str):
                     b_val=[src.mfd.b_val],
                     a_val=avals)
 
+    # Set a temporal occurrence model
     tom = PoissonTOM(1)
 
+    # Instantiate the multi-point source
     mesh = Mesh(np.array(lons), np.array(lats))
     srcmp = MultiPointSource(src_id, name, trt, mmfd, msr, rar, usd, lsd,
                              npd, hyd, mesh, tom)
