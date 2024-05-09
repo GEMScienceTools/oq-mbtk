@@ -20,9 +20,14 @@ import unittest
 import numpy as np
 import subprocess
 import tempfile
+import pathlib
 
 from pathlib import Path
 from glob import glob
+
+from openquake.hazardlib.nrml import to_python
+from openquake.hazardlib.sourceconverter import SourceConverter
+
 from openquake.hazardlib.source import PointSource, SimpleFaultSource
 from openquake.hazardlib.scalerel import PointMSR, WC1994
 from openquake.hazardlib.tom import PoissonTOM
@@ -141,3 +146,99 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
 
         for f1, f2 in zip(files, files_e):
             self.assertEqualFiles(f1, f2)
+
+
+    def test_area_sources(self):
+
+        # Clip the area sources around the faults
+        area_fnames = HERE / 'data' / 'areas_and_faults' / 'area_01.xml'
+        faults_fname = HERE / 'data' / 'areas_and_faults' / 'fault_01.xml'
+
+        # Output folder
+        tmpdir = Path(tempfile.gettempdir())
+        if not os.path.exists(tmpdir):
+            os.makedirs(tmpdir)
+        folder_out = tempfile.mkdtemp(suffix='out', prefix=None, dir=tmpdir)
+        folder_out = pathlib.Path(folder_out)
+
+        # Running the code that merges the sources 
+        cmd = "oqm wkf remove_buffer_around_faults "
+        cmd += f"{faults_fname} '{area_fnames}' {folder_out} 10.0 6.5"
+        out = subprocess.run(cmd, shell=True)
+
+        # Check if the execution was successful
+        msg = f'Execution was not successful {out}'
+        self.assertTrue(out.returncode == 0, msg)
+
+        print(f'Output stored in: {tmpdir}')
+
+        # Plotting 
+        fname_points = folder_out / 'src_points_01.xml'
+        fname_buffer = folder_out / 'src_buffers_01.xml'
+        plot_results(faults_fname, fname_points, fname_buffer)
+
+
+def plot_results(fname_faults, fname_points, fname_buffer):
+
+    sconv = SourceConverter(
+        investigation_time=1.0,
+        rupture_mesh_spacing=5.0,
+        complex_fault_mesh_spacing=10.0,
+        width_of_mfd_bin=0.1,
+        area_source_discretization=5.0)
+
+    # Point sources outside the buffer
+    ssm = to_python(fname_points, sconv)
+    data = []
+    for grp in ssm:
+        for srcs in grp:
+            for src in srcs:
+                mmin, mmax = src.mfd.get_min_max_mag()
+                data.append([src.location.longitude,
+                             src.location.latitude,
+                             mmax])
+    data = np.array(data)
+
+    # Point sources inside buffers
+    buff = []
+    ssm = to_python(fname_buffer, sconv)
+    for grp in ssm:
+        for srcs in grp:
+            for src in srcs:
+                mmin, mmax = src.mfd.get_min_max_mag()
+                buff.append([src.location.longitude,
+                             src.location.latitude,
+                             mmax])
+    buff = np.array(buff)
+
+    import pygmt
+    dlt = 0.1
+    pygmt.makecpt(cmap="jet", series=[6.4, 7.4], continuous=False)
+    fig = pygmt.Figure()
+    fig.coast(region=[np.min(data[:, 0]),
+                      np.max(data[:, 0]),
+                      np.min(data[:, 1]),
+                      np.max(data[:, 1])], shorelines=True, frame="a")
+
+    # Plot Outside of buffer
+    fig.plot(
+        x=data[:, 0],
+        y=data[:, 1],
+        fill=data[:, 2],
+        cmap=True,
+        style="c0.3c",
+        pen="black",
+    )
+
+    # Buffer
+    fig.plot(
+        x=buff[:, 0],
+        y=buff[:, 1],
+        fill=buff[:, 2],
+        cmap=True,
+        style="s0.3c",
+        pen="red",
+    )
+
+    fig.colorbar(frame="xaf+lMax magnitude []")
+    fig.show()

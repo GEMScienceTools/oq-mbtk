@@ -27,6 +27,7 @@
 import os
 import glob
 import copy
+import pathlib
 
 import logging
 import numpy as np
@@ -40,7 +41,9 @@ from openquake.hazardlib.sourceconverter import SourceGroup
 from openquake.hazardlib.nrml import SourceModel
 from openquake.mbt.tools.mfd import EEvenlyDiscretizedMFD
 from openquake.hazardlib.sourcewriter import write_source_model
-from openquake.hazardlib.source import SimpleFaultSource, MultiPointSource
+from openquake.hazardlib.source import (
+        SimpleFaultSource, MultiPointSource, AreaSource, PointSource,
+        BaseSeismicSource)
 from openquake.hazardlib.geo.surface import SimpleFaultSurface
 from openquake.hazardlib.mfd.multi_mfd import MultiMFD
 from openquake.hazardlib.pmf import PMF
@@ -94,6 +97,8 @@ def get_data(src, coo_pnt_src, pnt_srcs, dist_type='rjb', buffer=1.0):
 
     # Get the bounding box
     if dist_type == 'rjb':
+
+        # 
         bbox = get_bounding_box(src)
 
         # Find the point sources within the extended buffer arround the fault
@@ -116,11 +121,12 @@ def get_data(src, coo_pnt_src, pnt_srcs, dist_type='rjb', buffer=1.0):
         # Create the mesh
         mesh = Mesh(sel_pnt_coo[:, 0], sel_pnt_coo[:, 1])
 
-        # compute rjb
+        # Compute rjb
         dist = sfc.get_joyner_boore_distance(mesh)
 
     elif dist_type == 'rrup':
-        # crete the mesh
+
+        # Create the mesh
         lld = pnt_srcs.location
         lld.depth = pnt_srcs.hypocenter_distribution.data[0][1]
         mesh = Mesh.from_points_list([lld])
@@ -167,7 +173,8 @@ def explode(srcs):
                 nsrc.mfd.a_val = wei * src.mfd.a_val
                 nsrc.hypocenter_distribution = PMF([(1.0, dep)])
             else:
-                print('Not implementd for MFD of type {}'.format(src.mfd))
+                msg = 'Not implementd for MFD of type {}'.format(src.mfd)
+                raise ValueError(msg)
             exploded_srcs.append(nsrc)
 
     return exploded_srcs
@@ -195,6 +202,7 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
     :returns:
         A .xml file with the ajusted point sources
     """
+    out_path = pathlib.Path(out_path)
 
     if len(use) > 0:
         use = get_list(use)
@@ -204,11 +212,14 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
     sourceconv = SourceConverter(investigation_time=1.0,
                                  rupture_mesh_spacing=5.0,
                                  complex_fault_mesh_spacing=5.0,
-                                 width_of_mfd_bin=binw)
+                                 width_of_mfd_bin=binw,
+                                 area_source_discretization=5.0,
+                                 )
     ssm_faults = to_python(fname, sourceconv)
 
     # Loading all the point sources in the distributed seismicity model
     for fname in glob.glob(path_point_sources):
+
         coo_pnt_src = []
         pnt_srcs = []
 
@@ -221,19 +232,35 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
             logging.info(f'Skipping {fname}')
             continue
 
-        # Reading file content
+        # Read the file content
         tssm = to_python(fname, sourceconv)
 
+        # Create a list of groups 
+        grps = []
         if isinstance(tssm, SourceModel):
-            tssm = tssm[0]
+            grps = [grp for grp in tssm]
+        elif isinstance(tssm, SourceGroup):
+            grps = [tssm]
+        elif isinstance(tssm, BaseSeismicSource):
+            grps = [[tssm]]
 
-        if isinstance(tssm, SourceGroup):
-            # Convert the multi-point source into a list of point sources
-            if isinstance(tssm[0], MultiPointSource):
-                tmp = [s for s in tssm[0]]
-                wsrc = tmp
-            else:
-                wsrc = tssm
+        wsrc = []
+        for grp in grps:
+            for src in grp:
+                # Convert the multi-point source into a list of point sources
+                if isinstance(src, (MultiPointSource, AreaSource)):
+                    tmp = [s for s in src]
+                    tmpmx = np.max([s.mfd.get_min_max_mag()[1] +
+                                    s.mfd.bin_width/2 for s in tmp])
+                    msg = f'Reading source {src.source_id}: {len(tmp)} points'
+                    msg += f' max mag {tmpmx}'
+                    logging.info(msg)
+                    wsrc.extend(tmp)
+                elif isinstance(src, PointSource):
+                    wsrc.extend(ssm)
+                else:
+                    msg = f'{type(src)} not supported'
+                    raise ValueError(msg)
 
         # Create an array with the coordinates of the point sources
         tcoo = np.array([(p.location.longitude, p.location.latitude) for p in
@@ -261,9 +288,9 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
             # fault `src`. `coo_pnt_src` is a numpy.array with two columns
             # (i.e. lon and lat). `pnt_srcs` is a list containing the point
             # sources that collectively describe the distributed seismicity
-            # souces provided as input
-            pnt_ii, sel_pnt_srcs, sel_pnt_coo, rjb = get_data(src, coo_pnt_src,
-                                                              pnt_srcs)
+            # sources provided as input.
+            pnt_ii, sel_pnt_srcs, sel_pnt_coo, rjb = get_data(
+                    src, coo_pnt_src, pnt_srcs)
 
             # If we find some point sources around the fault
             if pnt_ii is not None:
@@ -276,6 +303,7 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
                     plt.plot(coo_pnt_src[idxs, 0], coo_pnt_src[idxs, 1], 'or',
                              mfc='none')
 
+                # Loop over the indexes of the point sources within the buffer
                 for isrc in idxs:
 
                     # Explode sources. i.e. create individual point sources at
@@ -301,6 +329,8 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
                     # outside of buffers
                     pnt_srcs.remove(pnt_srcs[isrc])
 
+                # Update the array containing the coordinates of the point 
+                # sources 
                 mask = np.ones(len(coo_pnt_src), dtype=bool)
                 mask[pnt_ii[within_idx]] = False
                 coo_pnt_src = coo_pnt_src[mask, :]
@@ -314,35 +344,50 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
             plt.show()
 
         tmpsrc = from_list_ps_to_multipoint(pnt_srcs, 'pnts')
-        fname_out = os.path.join(out_path, f"src_points_{fname.split('_')[1]}")
+        tmp = pathlib.Path(fname)
+        tmp_name = f"src_points_{tmp.stem.split('_')[-1]}.xml"
+        fname_out = out_path / tmp_name
+
         write_source_model(fname_out, [tmpsrc], 'Distributed seismicity')
         logging.info(f'Created: {fname_out}')
 
-        # currently must print the buffer points as single point sources, then
+        # Currently must print the buffer points as single point sources, then
         # upgrade nrml because the function below won't handle correctly the
         # hypocentral distribution
-        tmp = f"src_buffers_{fname.split('_')[1]}"
-        fname_out = os.path.join(out_path, tmp)
+        tmp_name = f"src_buffers_{tmp.stem.split('_')[-1]}.xml"
+        fname_out =  out_path / tmp_name
+
         if buffer_pts:
             write_source_model(fname_out, buffer_pts, 'Distributed seismicity')
             logging.info(f'Created: {fname_out}')
 
 
-def from_list_ps_to_multipoint(srcs, src_id):
+def from_list_ps_to_multipoint(srcs: list, src_id: str):
+    """
+    Converts a list of point sources into a multi-point source
+
+    :param srcs:
+        A list of point sources
+    :param src_id:
+        The ID of the multipoint source created
+    """
 
     # Looping over the points
     lons = []
     lats = []
     avals = []
+    mmaxs = []
     settings = False
 
     for src in srcs:
 
         minmaxmag = src.get_min_max_mag()
-        mmx = minmaxmag[1]
-        mmin = minmaxmag[0]
+        mmx = minmaxmag[1] + src.mfd.bin_width/2
+        mmin = minmaxmag[0] - src.mfd.bin_width/2
 
+        # Update list
         avals.append(src.mfd.a_val)
+        mmaxs.append(mmx)
 
         lons.append(src.location.longitude)
         lats.append(src.location.latitude)
@@ -357,11 +402,13 @@ def from_list_ps_to_multipoint(srcs, src_id):
             npd = src.nodal_plane_distribution
             hyd = src.hypocenter_distribution
 
+    mmaxs = [mmaxs[0]] if np.all(np.abs(np.diff(mmaxs)) < 0.01) else mmaxs
+
     name = src_id
     mmfd = MultiMFD('truncGutenbergRichterMFD',
                     size=len(avals),
                     min_mag=[mmin],
-                    max_mag=[mmx],
+                    max_mag=mmaxs,
                     bin_width=[src.mfd.bin_width],
                     b_val=[src.mfd.b_val],
                     a_val=avals)
