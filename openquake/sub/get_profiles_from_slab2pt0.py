@@ -28,7 +28,7 @@
 import netCDF4
 import numpy as np
 from numba import njit
-from openquake.hazardlib.geo.geodetic import (point_at, npoints_towards, 
+from openquake.hazardlib.geo.geodetic import (point_at, npoints_towards,
         geodetic_distance, azimuth)
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
 
