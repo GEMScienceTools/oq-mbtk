@@ -34,6 +34,7 @@ import numpy as np
 from numba import jit
 
 from .fastmath import spmat_multivec_mul
+from .simulated_annealing import add_weights_to_matrices
 
 
 def evaluate_fitness(G, d, x):
@@ -88,10 +89,11 @@ def update_particle_position(x_i, v_i, min_bounds, max_bounds):
 
 
 def lls_particle_swarm(
-    G,
+    A,
     d,
     bounds,
     x0=None,
+    weights=None,
     swarm_size=50,
     max_iterations=100,
     inertia=0.7,
@@ -101,12 +103,14 @@ def lls_particle_swarm(
     print_updates="update",
 ):
     if x0 is None:
-        x0 = np.zeros(G.shape[1])
+        x0 = np.zeros(A.shape[1])
     num_variables = x0.shape[0]
 
     # Extract minimum and maximum bounds for each variable
     min_bounds = bounds[0]
     max_bounds = bounds[1]
+
+    Asp, dw = add_weights_to_matrices(A, d, weights)
 
     # Initialize swarm
     swarm_pos = np.zeros((swarm_size, num_variables))
@@ -132,7 +136,7 @@ def lls_particle_swarm(
 
     # Main optimization loop
     for iteration in range(max_iterations):
-        swarm_fitness = evaluate_swarm_fitness(G, d, swarm_pos)
+        swarm_fitness = evaluate_swarm_fitness(Asp, dw, swarm_pos)
 
         better_fits = swarm_fitness < swarm_best_fitness
         swarm_best_fitness[better_fits] = swarm_fitness[better_fits]
