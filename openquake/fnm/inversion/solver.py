@@ -46,7 +46,7 @@ def weight_from_error(error, zero_error=1e-10):
     if error == 0:
         error = zero_error
 
-    return 1 / error**2
+    return 1 / error  # **2
 
 
 def weights_from_errors(errors, zero_error=1e-10):
@@ -74,7 +74,7 @@ def solve_dense_svd(A, d):
     x0 = A_pinv @ d
 
     # Find the null space of A from the SVD
-    null_space = Vt[sigma.size:]
+    null_space = Vt[sigma.size :]
 
     return x0, null_space
 
@@ -102,7 +102,7 @@ def solve_sparse_svd(A, d):
     x0 = A_pinv @ d
 
     # Find the null space of A from the SVD
-    null_space = Vt[sigma.size:]
+    null_space = Vt[sigma.size :]
 
     return x0, null_space
 
@@ -299,7 +299,6 @@ def solve_llsq(G, d, weights=None, **kwargs):
         else:
             G = np.diag(weights) @ G
         d = weights * d
-
 
     if ssp.issparse(G):
         x = ssp.linalg.lsqr(G, d, **kwargs)[0]
