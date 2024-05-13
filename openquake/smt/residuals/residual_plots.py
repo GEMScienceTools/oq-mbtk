@@ -262,6 +262,9 @@ def residuals_with_vs30(residuals, gmpe, imt, as_json=False):
 
 
 def _get_vs30(residuals, gmpe, imt, res_type):
+    """
+    Return required vs30 values
+    """
     vs30 = np.array([])
     for i, ctxt in enumerate(residuals.contexts):
         if res_type == "Inter event":
@@ -319,7 +322,7 @@ def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb",
 
 def _get_distances(residuals, gmpe, imt, res_type, distance_type):
     """
-
+    Return required distances
     """
     distances = np.array([])
     for i, ctxt in enumerate(residuals.contexts):
@@ -408,13 +411,16 @@ def _nanlinregress(x, y):
     return linregress(x[finite], y[finite])
 
 
-def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type):
+def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type, distance_type=None):
     """
     Compute mean total, inter- and inter-event residual within bin for given
     variable. This is plotted within the scatter plots of residuals w.r.t.
     the given variable
     :param var_type: Specifies variable which residuals are plotted against
     """
+    # If no distance type use rjb
+    if distance_type is None: distance_type = 'rjb'
+    
     # Get total and intra residuals and variable (per record)
     if 'Intra event' in residuals.residuals[gmpe][imt]:
         intra_res = pd.Series(residuals.residuals[gmpe][imt]['Intra event'])
@@ -429,8 +435,7 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type):
                                    residuals.imts, 'Total'))
     elif var_type == 'distance':
         vals = pd.Series(_get_distances(residuals, residuals.gmpe_list[gmpe],
-                                        residuals.imts,'Total',
-                                        distance_type='rjb'))        
+                                        residuals.imts,'Total', distance_type))        
     elif var_type == 'depth':
         vals = pd.Series(_get_depths(residuals, residuals.gmpe_list[gmpe],
                                      residuals.imts, 'Total'))        
