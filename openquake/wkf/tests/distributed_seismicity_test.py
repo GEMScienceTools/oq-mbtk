@@ -31,6 +31,7 @@ import subprocess
 import tempfile
 import pathlib
 import filecmp
+import shutil
 
 from pathlib import Path
 from glob import glob
@@ -47,7 +48,8 @@ from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.sourcewriter import write_source_model
 
 HERE = Path(__file__).parent
-PLOTTING = True
+PLOTTING = False
+OVERWRITE = False
 
 
 class ClipDSAroundFaultsTest(unittest.TestCase):
@@ -59,6 +61,7 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
         if not os.path.exists(outdir):
             os.makedirs(outdir)
         outdir = tempfile.mkdtemp(suffix=None, prefix='mpoint', dir=outdir)
+        outdir = pathlib.Path(outdir)
 
         faults_fname = HERE / 'data' / 'multipoint' / 'src-fault_02.xml'
         mpoints_fname = HERE / 'data' / 'multipoint' / 'src-mpoints_01.xml'
@@ -66,6 +69,19 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
         cmd = 'oqm wkf remove_buffer_around_faults '
         cmd += f'{faults_fname} {mpoints_fname} {outdir} 10 6.0'
         _ = subprocess.run(cmd, shell=True)
+
+        # Check if new files match the ones in expected
+        expc_dir = pathlib.Path('./expected/ds_test_02')
+        files = sorted([f for f in outdir.glob('*.xml')])
+        if OVERWRITE:
+            shutil.copyfile(files[0], HERE / expc_dir / 'src_buffers_01.xml')
+            shutil.copyfile(files[1], HERE / expc_dir / 'src_points_01.xml')
+        files_e = sorted([f for f in expc_dir.glob('*.xml')])
+
+        # Compare files
+        for f1, f2 in zip(files, files_e):
+            assert filecmp.cmp(f1, f2, shallow=True)
+
 
     def test_two_point_srcs_files_two_faults(self):
         """ Test clipping distributed seismicity around 2 faults """
@@ -147,13 +163,20 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
         # Clip the point sources around the faults
         points_fnames = points_dir + '/sources*.xml'
         folder_out = tempfile.mkdtemp(suffix='out', prefix=None, dir=tmpdir)
+        folder_out = pathlib.Path(folder_out)
         cmd = "oqm wkf remove_buffer_around_faults "
         cmd += f"{faults_fname} '{points_fnames}' {folder_out} 10.0 6.5"
         _ = subprocess.run(cmd, shell=True)
 
         # Check if new files match the ones in expected
-        files = glob(os.path.join(folder_out, '*.xml'))
-        files_e = glob(os.path.join('expected/ds_test_01', '*.xml'))
+        expc_dir = pathlib.Path('./expected/ds_test_02')
+        files = sorted([f for f in folder_out.glob('*.xml')])
+        if OVERWRITE:
+            shutil.copyfile(files[0], HERE / expc_dir / 'src_buffers_01.xml')
+            shutil.copyfile(files[1], HERE / expc_dir / 'src_buffers_02.xml')
+            shutil.copyfile(files[2], HERE / expc_dir / 'src_points_01.xml')
+            shutil.copyfile(files[3], HERE / expc_dir / 'src_points_02.xml')
+        files_e = sorted([f for f in expc_dir.glob('*.xml')])
 
         for f1, f2 in zip(files, files_e):
             assert filecmp.cmp(f1, f2, shallow=True)
@@ -190,6 +213,17 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
         if PLOTTING:
             plot_results(faults_fname, fname_points, fname_buffer)
 
+        # Check if new files match the ones in expected
+        expc_dir = pathlib.Path('./expected/ds_test_02')
+        files = sorted([f for f in folder_out.glob('*.xml')])
+        if OVERWRITE:
+            shutil.copyfile(files[0], HERE / expc_dir / 'src_buffers_01.xml')
+            shutil.copyfile(files[1], HERE / expc_dir / 'src_points_01.xml')
+        files_e = sorted([f for f in expc_dir.glob('*.xml')])
+
+        for f1, f2 in zip(files, files_e):
+            assert filecmp.cmp(f1, f2, shallow=True)
+
     def test_area_sources_multif(self):
 
         # Clip the area sources around the faults
@@ -220,6 +254,17 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
 
         if PLOTTING:
             plot_results(faults_fname, fname_points, fname_buffer)
+
+        # Check if new files match the ones in expected
+        expc_dir = pathlib.Path('./expected/ds_test_02')
+        files = sorted([f for f in folder_out.glob('*.xml')])
+        if OVERWRITE:
+            shutil.copyfile(files[0], HERE / expc_dir / 'src_buffers_01.xml')
+            shutil.copyfile(files[1], HERE / expc_dir / 'src_points_01.xml')
+        files_e = sorted([f for f in expc_dir.glob('*.xml')])
+
+        for f1, f2 in zip(files, files_e):
+            assert filecmp.cmp(f1, f2, shallow=True)
 
 
 def plot_results(fname_faults, fname_points, fname_buffer):
