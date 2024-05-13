@@ -413,9 +413,9 @@ def _nanlinregress(x, y):
 
 def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type, distance_type=None):
     """
-    Compute mean total, inter- and inter-event residual within bin for given
-    variable. This is plotted within the scatter plots of residuals w.r.t.
-    the given variable
+    Compute mean total, inter-event and inter-event residual within bin for
+    given variable. This is plotted within the scatter plots of residuals
+    w.r.t. the given variable
     :param var_type: Specifies variable which residuals are plotted against
     """
     # If no distance type use rjb
