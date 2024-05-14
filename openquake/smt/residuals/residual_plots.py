@@ -488,7 +488,7 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type, distance_type=None):
     elif var_type == 'vs30':
         val_bin = 100
     elif var_type == 'distance':
-        val_bin = 25
+        val_bin = 10
     elif var_type == 'depth':
         val_bin = 5
     val_bins = np.arange(np.min(vals), np.max(vals), val_bin)
