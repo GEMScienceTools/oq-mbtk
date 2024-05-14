@@ -144,9 +144,9 @@ def plot_trellis_util(
                 store_per_gmpe[gmpe]['median (%s)' %unit] = np.exp(mean)
                 store_per_gmpe[gmpe]['sigma (ln)'] = std
                 store_per_gmpe[gmpe][
-                    'median plus sigma (%s)' %unit] = np.exp(plus_sigma)
+                    'median plus sigma (%s)' %unit] = plus_sigma
                 store_per_gmpe[gmpe][
-                    'median minus sigma (%s)' %unit] = np.exp(minus_sigma)
+                    'median minus sigma (%s)' %unit] = minus_sigma
                    
                 # Update plots
                 update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list,
