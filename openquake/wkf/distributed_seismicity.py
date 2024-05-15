@@ -46,6 +46,13 @@ from openquake.hazardlib.source import (
         BaseSeismicSource, MultiFaultSource)
 from openquake.hazardlib.geo.surface import SimpleFaultSurface
 from openquake.hazardlib.mfd.multi_mfd import MultiMFD
+from openquake.hazardlib.mfd import (
+        EvenlyDiscretizedMFD,
+        TruncatedGRMFD,
+        YoungsCoppersmith1985MFD,
+        ArbitraryMFD,
+        TaperedGRMFD,
+)
 from openquake.hazardlib.pmf import PMF
 
 PLOTTING = False
@@ -161,12 +168,21 @@ def explode(srcs):
             nsrc = copy.deepcopy(src)
             dep = h[1]
             wei = h[0]
-            if 'TruncatedGRMFD' in str(type(src.mfd)):
+            if isinstance(src.mfd, (TruncatedGRMFD, TaperedGRMFD)):
                 nsrc.mfd.a_val = np.log10(wei * 10.0**src.mfd.a_val)
-                nsrc.hypocenter_distribution = PMF([(1.0, dep)])
+            elif isinstance(src.mfd, YoungsCoppersmith1985MFD):
+                nsrc.mfd.a_val = np.log10(wei * 10.0**src.mfd.a_val)
+                nsrc.mfd.char_rate *= wei
+                nsrc.mfd.check_constraints()
+            elif isinstance(src.mfd, (EvenlyDiscretizedMFD, ArbitraryMFD)):
+                nsrc.mfd.occurrence_rates = [
+                        wei * rate for rate in nsrc.mfd.occurrence_rates
+                ]
+                nsrc.mfd.check_constraints()
             else:
                 msg = 'Not implementd for MFD of type {}'.format(src.mfd)
-                raise ValueError(msg)
+                raise NotImplementedError(msg)
+            nsrc.hypocenter_distribution = PMF([(1.0, dep)])
             exploded_srcs.append(nsrc)
 
     return exploded_srcs
