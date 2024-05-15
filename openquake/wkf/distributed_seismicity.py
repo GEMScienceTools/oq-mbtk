@@ -212,22 +212,22 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
     faults = _get_fault_surfaces(fname, sourceconv)
 
     # Process the point sources in the distributed seismicity model
-    for fname in glob.glob(path_point_sources):
+    for point_fname in glob.glob(path_point_sources):
 
         coo_pnt_src = []
         pnt_srcs = []
 
         # Info
-        logging.info(f'Processing: {fname}')
+        logging.info(f'Processing: {point_fname}')
 
         # Check if the source must be processed
-        src_id = _get_src_id(fname)
+        src_id = _get_src_id(point_fname)
         if len(use) > 0 and src_id not in use:
-            logging.info(f'Skipping {fname}')
+            logging.info(f'Skipping {point_fname}')
             continue
 
         # Read the file content
-        tssm = to_python(fname, sourceconv)
+        tssm = to_python(point_fname, sourceconv)
 
         # Get the point sources used to model distributed seismicity
         wsrc = _get_point_sources(tssm)
