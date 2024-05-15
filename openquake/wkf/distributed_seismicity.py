@@ -1,5 +1,5 @@
 # ------------------- The OpenQuake Model Building Toolkit --------------------
-# Copyright (C) 2022 GEM Foundation
+# Copyright (C) 2024 GEM Foundation
 #           _______  _______        __   __  _______  _______  ___   _
 #          |       ||       |      |  |_|  ||  _    ||       ||   | | |
 #          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
@@ -43,7 +43,7 @@ from openquake.mbt.tools.mfd import EEvenlyDiscretizedMFD
 from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.hazardlib.source import (
         SimpleFaultSource, MultiPointSource, AreaSource, PointSource,
-        BaseSeismicSource)
+        BaseSeismicSource, MultiFaultSource)
 from openquake.hazardlib.geo.surface import SimpleFaultSurface
 from openquake.hazardlib.mfd.multi_mfd import MultiMFD
 from openquake.hazardlib.pmf import PMF
@@ -51,7 +51,7 @@ from openquake.hazardlib.pmf import PMF
 PLOTTING = False
 
 
-def get_bounding_box(src):
+def get_bounding_box(sfc):
     """
     Get the bounding box of a simple fault source
 
@@ -62,18 +62,19 @@ def get_bounding_box(src):
         upper right corners of the bounding box.
     """
 
+    breakpoint()
     # This provides the convex hull of the surface projection
     coo = np.array(src.polygon.coords)
     return [min(coo[:, 0]), min(coo[:, 1]), max(coo[:, 0]), max(coo[:, 1])]
 
 
-def get_data(src, coo_pnt_src, pnt_srcs, dist_type='rjb', buffer=1.0):
+def get_data(sfc, coo_pnt_src, pnt_srcs, dist_type='rjb', buffer=1.0):
     """
     Computes point sources within the bounding box and the corresponding
     rjb distances.
 
-    :param src:
-        An instance of :class:`openquake.hazardlib.source.SimpleFaultSource`
+    :param sfc:
+        An instance of :class:`openquake.hazardlib.geo.surface.BaseSurface`
     :param coo_pnt_src:
         An array with the coordinates of the point sources
     :param pnt_srcs:
@@ -86,20 +87,11 @@ def get_data(src, coo_pnt_src, pnt_srcs, dist_type='rjb', buffer=1.0):
         sources are considered within the buffer surrounding the fault.
     """
 
-    # Get the fault surface and compute rjb
-    if isinstance(src, SimpleFaultSource):
-        sfc = SimpleFaultSurface.from_fault_data(src.fault_trace,
-                                                 src.upper_seismogenic_depth,
-                                                 src.lower_seismogenic_depth,
-                                                 src.dip, 1.0)
-    else:
-        raise ValueError('Not supported fault type')
-
     # Get the bounding box
     if dist_type == 'rjb':
 
-        # 
-        bbox = get_bounding_box(src)
+        # Bounding box
+        bbox = sfc.get_bounding_box()
 
         # Find the point sources within the extended buffer arround the fault
         # bounding box
@@ -207,7 +199,7 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
     if len(use) > 0:
         use = get_list(use)
 
-    # Load fault sources
+    # Create a source converter
     binw = 0.1
     sourceconv = SourceConverter(investigation_time=1.0,
                                  rupture_mesh_spacing=5.0,
@@ -215,9 +207,11 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
                                  width_of_mfd_bin=binw,
                                  area_source_discretization=5.0,
                                  )
-    ssm_faults = to_python(fname, sourceconv)
 
-    # Loading all the point sources in the distributed seismicity model
+    # Get the surfaces representing the faults
+    faults = _get_fault_surfaces(fname, sourceconv)
+
+    # Process the point sources in the distributed seismicity model
     for fname in glob.glob(path_point_sources):
 
         coo_pnt_src = []
@@ -235,32 +229,8 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
         # Read the file content
         tssm = to_python(fname, sourceconv)
 
-        # Create a list of groups 
-        grps = []
-        if isinstance(tssm, SourceModel):
-            grps = [grp for grp in tssm]
-        elif isinstance(tssm, SourceGroup):
-            grps = [tssm]
-        elif isinstance(tssm, BaseSeismicSource):
-            grps = [[tssm]]
-
-        wsrc = []
-        for grp in grps:
-            for src in grp:
-                # Convert the multi-point source into a list of point sources
-                if isinstance(src, (MultiPointSource, AreaSource)):
-                    tmp = [s for s in src]
-                    tmpmx = np.max([s.mfd.get_min_max_mag()[1] +
-                                    s.mfd.bin_width/2 for s in tmp])
-                    msg = f'Reading source {src.source_id}: {len(tmp)} points'
-                    msg += f' max mag {tmpmx}'
-                    logging.info(msg)
-                    wsrc.extend(tmp)
-                elif isinstance(src, PointSource):
-                    wsrc.extend(ssm)
-                else:
-                    msg = f'{type(src)} not supported'
-                    raise ValueError(msg)
+        # Get the point sources used to model distributed seismicity
+        wsrc = _get_point_sources(tssm)
 
         # Create an array with the coordinates of the point sources
         tcoo = np.array([(p.location.longitude, p.location.latitude) for p in
@@ -268,12 +238,6 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
         pnt_srcs.extend(wsrc)
         coo_pnt_src.extend(tcoo)
         coo_pnt_src = np.array(coo_pnt_src)
-
-        # Getting the list of faults
-        faults = []
-        for grp in ssm_faults:
-            for s in grp:
-                faults.append(s)
 
         if PLOTTING:
             fig, axs = plt.subplots(1, 1)
@@ -364,6 +328,76 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
         if buffer_pts:
             write_source_model(fname_out, buffer_pts, 'Distributed seismicity')
             logging.info(f'Created: {fname_out}')
+
+
+def _get_fault_surfaces(fname: str, sourceconv: SourceConverter) -> list:
+    """
+    :param fname:
+    :param sourceconv:
+        An instance of the class
+        :class:`openquake.hazardlib.sourceconverter.SourceConverter`
+    """
+
+    fname = pathlib.Path(fname)
+
+    # Read file the fault sources
+    ssm_faults = to_python(fname, sourceconv)
+
+    # Check content of the seismic source model. We want only one group.
+    msg = 'The seismic source model for fault contains more than one group'
+    assert len(ssm_faults) == 1
+
+    # Read sections in case of a multi fault source.
+    fname = pathlib.Path(str(fname.parent / fname.stem) + '_sections.xml')
+    if fname.exists():
+        geom = to_python(fname, sourceconv)
+        ssm_faults[0][0].sections = geom
+
+    # Create surfaces
+    surfaces = []
+    for src in ssm_faults[0]:
+        if isinstance(src, SimpleFaultSource):
+            sfc = SimpleFaultSurface.from_fault_data(
+                    src.fault_trace, src.upper_seismogenic_depth,
+                    src.lower_seismogenic_depth, src.dip, 1.0)
+            surfaces.append(sfc)
+        elif isinstance(src, MultiFaultSource):
+            for key in src.sections.sections:
+                surfaces.append(src.sections.sections[key])
+        else:
+            raise ValueError('Not supported fault type')
+    return surfaces
+
+
+def _get_point_sources(tssm):
+
+    # Create a list of groups 
+    grps = []
+    if isinstance(tssm, SourceModel):
+        grps = [grp for grp in tssm]
+    elif isinstance(tssm, SourceGroup):
+        grps = [tssm]
+    elif isinstance(tssm, BaseSeismicSource):
+        grps = [[tssm]]
+
+    wsrc = []
+    for grp in grps:
+        for src in grp:
+            # Convert the multi-point source into a list of point sources
+            if isinstance(src, (MultiPointSource, AreaSource)):
+                tmp = [s for s in src]
+                tmpmx = np.max([s.mfd.get_min_max_mag()[1] +
+                                s.mfd.bin_width/2 for s in tmp])
+                msg = f'Reading source {src.source_id}: {len(tmp)} points'
+                msg += f' max mag {tmpmx}'
+                logging.info(msg)
+                wsrc.extend(tmp)
+            elif isinstance(src, PointSource):
+                wsrc.append(src)
+            else:
+                msg = f'{type(src)} not supported'
+                raise ValueError(msg)
+    return wsrc
 
 
 def from_list_ps_to_multipoint(srcs: list, src_id: str):
