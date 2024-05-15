@@ -5,13 +5,16 @@ on:
     branches:
       - test
   schedule:
-    - cron: "0 7 * * *"
+    - cron: "0 4 * * *"
   workflow_dispatch:
 jobs:
   test:
     name: Windows Installation
-    runs-on: windows-2019
-    steps:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-2022, windows-2019]
+
     - uses: actions/checkout@v4
     - name: Installation of GMT from standalone
       run: |
