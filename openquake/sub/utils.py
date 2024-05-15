@@ -1,3 +1,29 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
 import os
 import re
 import glob
@@ -8,9 +34,10 @@ from pyproj import Proj, CRS
 
 from mpl_toolkits.mplot3d import Axes3D
 from openquake.hazardlib.geo import Line, Point
-from openquake.hazardlib.geo.surface import ComplexFaultSurface
+from openquake.hazardlib.geo.surface import ComplexFaultSurface, KiteSurface
 from openquake.hazardlib.scalerel.wc1994 import WC1994
 from openquake.hazardlib.geo.utils import plane_fit
+from openquake.sub.profiles import ProfileSet
 
 
 def mecclass(plungt, plungb, plungp):
@@ -74,9 +101,9 @@ def get_direction_cosines(strike, dip):
     else:
         c = 0.
         h = 1.
-    a = h*np.sin(np.radians(strike+90.))
-    b = h*np.cos(np.radians(strike+90.))
-    den = np.sqrt(a**2.+b**2.+c**2.)
+    a = h * np.sin(np.radians(strike + 90.))
+    b = h * np.cos(np.radians(strike + 90.))
+    den = np.sqrt(a**2. + b**2. + c**2.)
     a /= den
     b /= den
     c /= den
@@ -143,7 +170,7 @@ def plot_planes_at(x, y, strikes, dips, magnitudes, strike_cs, dip_cs,
     """
 
     if axis is None:
-        ax = plt.gca()
+        _ = plt.gca()
     else:
         plt.sca(axis)
 
@@ -156,18 +183,18 @@ def plot_planes_at(x, y, strikes, dips, magnitudes, strike_cs, dip_cs,
 
         area = msr.get_median_area(mag, None)
         width = (area / aratio)**.5
-        t = np.arange(-width/2, width/2, 0.1)
+        t = np.arange(-width / 2, width / 2, 0.1)
 
         inter = get_line_of_intersection(strike, dip, strike_cs, dip_cs)
-        xl = t*inter[0]
-        yl = t*inter[1]
-        zl = t*inter[2]
-        ds = -np.sign(t)*(xl**2+yl**2)**.5 + x
+        xl = t * inter[0]
+        yl = t * inter[1]
+        zl = t * inter[2]
+        ds = -np.sign(t) * (xl**2 + yl**2)**.5 + x
 
         if color is not None:
             col = color
 
-        plt.plot(ds, zl+y, zorder=zorder, color=col, linewidth=linewidth)
+        plt.plot(ds, zl + y, zorder=zorder, color=col, linewidth=linewidth)
 
 
 def _read_edge_file(filename):
@@ -198,6 +225,34 @@ def _read_edges(foldername):
     for fle in sorted(glob.glob(path)):
         tedges.append(_read_edge_file(fle))
     return tedges
+
+def _read_edge_file(filename):
+    """
+    :parameter str filename:
+        The name of the edge file
+    :return:
+        An instance of :class:`openquake.hazardlib.geo.line.Line`
+    """
+    points = []
+    for line in open(filename, 'r'):
+        aa = re.split('\\s+', line)
+        points.append(Point(float(aa[0]),
+                            float(aa[1]),
+                            float(aa[2])))
+    return Line(points)
+
+def _read_profiles(foldername):
+    """
+    :parameter foldername:
+        The folder containing the `cs_*` files
+    :return:
+        A list of :class:`openquake.hazardlib.geo.line.Line` instances
+    """
+    path = os.path.join(foldername, 'cs*.*')
+    tprofiles = []
+    for fle in sorted(glob.glob(path)):
+        tprofiles.append(_read_pro_file(fle))
+    return tprofiles
 
 
 def _get_array(tedges):
@@ -240,7 +295,7 @@ def _check_edges(edges):
     # Project the points using Lambert Conic Conformal
     fmt = "+proj=lcc +lon_0={:f} +lat_1={:f} +lat_2={:f}"
     mla = np.mean(pnts[:, 1])
-    srs = CRS.from_proj4(fmt.format(np.mean(pnts[:, 0]), mla-10, mla+10))
+    srs = CRS.from_proj4(fmt.format(np.mean(pnts[:, 0]), mla - 10, mla + 10))
     p = Proj(srs)
 
     # From m to km
@@ -255,14 +310,16 @@ def _check_edges(edges):
     # Analyse the edges
     chks = []
     for edge in edges:
+
         epnts = np.array([[pnt.longitude, pnt.latitude, pnt.depth] for pnt in
                           edge.points[0:2]])
         ex, ey = p(epnts[:, 0], epnts[:, 1])
         ex = ex / 1e3
         ey = ey / 1e3
 
-        # Check the edge direction Vs plane perpendicular
-        edgv = np.array([np.diff(ex[0:2])[0], np.diff(ey[0:2])[0]])
+        # Check the edge direction Vs the perpendicular to the plane
+        idx = [0, -1]
+        edgv = np.array([np.diff(ex[idx])[0], np.diff(ey[idx])[0]])
         chks.append(np.sign(np.cross(ppar[:2], edgv)))
 
     return np.array(chks)
@@ -275,26 +332,44 @@ def build_complex_surface_from_edges(foldername):
     :return:
         An instance of :class:`openquake.hazardlib.geo.surface`
     """
-    #
-    # read edges
+
+    # Read edges
     tedges = _read_edges(foldername)
-    #
-    # check edges
+
+    # Check edges
     try:
         chks = _check_edges(tedges)
     except ValueError:
         msg = 'Error while checking the edges in {.s}'.format(foldername)
         print(msg)
-    #
-    # fix edges
+
+    # Fix edges
     if np.any(chks > 0.):
         for i, chk in enumerate(chks):
             if chk < 0:
-                tedges[i].flip()
+                tedges[i] = tedges[i].flip()
                 print('flipping')
-    #
-    # build complex fault surface
+
+    # Build complex fault surface
     surface = ComplexFaultSurface.from_fault_data(tedges, mesh_spacing=5.0)
+
+    return surface
+
+
+def build_kite_surface_from_profiles(foldername):
+    """
+    :parameter str foldername:
+        The folder containing the `edge_*` files
+    :return:
+        An instance of :class:`openquake.hazardlib.geo.surface`
+    """
+
+    # Read edges
+    profiles = ProfileSet.from_files(foldername)
+
+    # Build kite fault surface
+    surface = KiteSurface.from_profiles(profiles.profiles, 5, 5)
+
     return surface
 
 
@@ -303,11 +378,11 @@ def plot_complex_surface(tedges):
     :parameter list tedges:
         A list of :class:`openquake.hazardlib.geo.line.Line` instances
     """
-    #
+
     # create the figure
     fig = plt.figure(figsize=(15, 10))
     ax = fig.add_subplot(111, projection='3d')
-    #
+
     # plotting edges
     for edge in tedges:
         coo = [(edge.points[i].longitude,

@@ -16,6 +16,7 @@ from openquake.hazardlib.geo.geodetic import distance
 
 
 CS_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data/cs')
+CS_DATA_PATH2 = os.path.join(os.path.dirname(__file__), 'data/cs2')
 CAM_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data/cs_cam')
 PAISL_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data/cs_paisl')
 
@@ -54,7 +55,7 @@ class WriteProfilesEdgesTest(unittest.TestCase):
         tmp = []
         for fname in glob.glob(os.path.join(self.test_dir, 'edge*')):
             tmp.append(fname)
-        self.assertEqual(len(tmp), 7)
+        self.assertEqual(len(tmp), 8)
 
 
 class ReadProfilesTest(unittest.TestCase):
@@ -124,7 +125,7 @@ class GetInterpolatedProfilesTest(unittest.TestCase):
         Test profile interpolation: simple case | sampling: 30 km
         """
         # read data and compute distances
-        sps, dmin, dmax = read_profiles_csv(CS_DATA_PATH)
+        sps, dmin, dmax = read_profiles_csv(CS_DATA_PATH2, 0, 28)
         lengths, longest_key, shortest_key = get_profiles_length(sps)
         maximum_sampling_distance = 30
         num_sampl = np.ceil(lengths[longest_key] / maximum_sampling_distance)

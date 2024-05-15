@@ -84,7 +84,7 @@ def _get_rupture_area(surfs: list, rups: npt.ArrayLike) -> npt.ArrayLike:
             surf_area = surf.get_area()
             area += surf_area
         else:
-        
+
             _, _, _, cell_area = surf.get_cell_dimensions()
 
             idx = np.isfinite(cell_area)

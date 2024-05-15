@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2017 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parser from the ESM Flatfile to SMT
+Parse ESM format flatfile into SMT metadata
 """
 import os, sys
 import csv
@@ -82,14 +82,14 @@ COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
 
 class ESMFlatfileParser(SMDatabaseReader):
     """
-    Parses the ESM metadata from the flatfile to a set of metadata objects
+    Parses the data from the flatfile to a set of metadata objects
     """
     M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
     BUILD_FINITE_DISTANCES = False
 
     def parse(self, location="./"):
         """
-
+        Parse the flatfile
         """
         assert os.path.isfile(self.filename)
         headers = getline(self.filename, 1).rstrip("\n").split(";")
@@ -99,24 +99,22 @@ class ESMFlatfileParser(SMDatabaseReader):
                                  % hdr)
         # Read in csv
         reader = csv.DictReader(open(self.filename, "r"), delimiter=";")
-        metadata = []
         self.database = GroundMotionDatabase(self.id, self.name)
         counter = 0
         for row in reader:
-            if self._sanitise(row, reader):
-                # Build the metadata
-                record = self._parse_record(row)
-                if record:
-                    # Parse the strong motion
-                    record = self._parse_ground_motion(
-                        os.path.join(location, "records"),
-                        row, record, headers)
-                    self.database.records.append(record)
+            # Build the metadata
+            record = self._parse_record(row)
+            if record:
+                # Parse the strong motion
+                record = self._parse_ground_motion(
+                    os.path.join(location, "records"),
+                    row, record, headers)
+                self.database.records.append(record)
 
-                else:
-                    print("Record with sequence number %s is null/invalid"
-                          % "{:s}-{:s}".format(row["event_id"],
-                                               row["station_code"]))
+            else:
+                print("Record with sequence number %s is null/invalid"
+                      % "{:s}-{:s}".format(row["event_id"],
+                                           row["station_code"]))
             if (counter % 100) == 0:
                 print("Processed record %s - %s" % (str(counter),
                                                     record.id))
@@ -146,13 +144,10 @@ class ESMFlatfileParser(SMDatabaseReader):
             pickle.dump(database.database, f)
         return database
 
-    def _sanitise(self, row, reader):
-        """
-        TODO - Not implemented yet!
-        """
-        return True
-
     def _parse_record(self, metadata):
+        """
+        Parse a record
+        """
         # Waveform ID not provided in file so concatenate Event and Station ID
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
                          metadata["station_code"], metadata["location_code"]])
@@ -170,7 +165,6 @@ class ESMFlatfileParser(SMDatabaseReader):
                                   event, distances, site,
                                   xcomp, ycomp,
                                   vertical=vertical)
-
 
     def _parse_event_data(self, metadata):
         """
@@ -239,7 +233,6 @@ class ESMFlatfileParser(SMDatabaseReader):
         """
         If rupture data is available - parse it, otherwise return None
         """
-
         sof = metadata["fm_type_code"]
         if not metadata["event_source_id"].strip():
             # No rupture model available. Mechanism is limited to a style
@@ -345,7 +338,6 @@ class ESMFlatfileParser(SMDatabaseReader):
         network_code = metadata["network_code"].strip()
         station_code = metadata["station_code"].strip()
         site_id = "{:s}-{:s}".format(network_code, station_code)
-        location_code = metadata["location_code"].strip()
         site_lon = valid.longitude(metadata["st_longitude"])
         site_lat = valid.latitude(metadata["st_latitude"])
         elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
@@ -497,10 +489,9 @@ class ESMFlatfileParser(SMDatabaseReader):
         record.datafile = filename
         return record
 
-
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
-
+        Get the ground motion data from a row (record) in the database
         """
         imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
         spectra = []
@@ -528,7 +519,6 @@ class ESMFlatfileParser(SMDatabaseReader):
                         # Not a spectral period but T90
                         continue
                     iky = header.replace(key, "").replace("_", ".")
-                    #print imt, key, header, iky
                     periods.append(float(iky))
                     value = row[header].strip()
                     if value:
@@ -555,4 +545,3 @@ class ESMFlatfileParser(SMDatabaseReader):
                 scalars["Geometric"][key] = np.sqrt(
                     scalars["U"][key] * scalars["V"][key])
         return scalars, spectra
-

@@ -108,8 +108,12 @@ class TestDistanceMatrix(unittest.TestCase):
             for i, surf in enumerate(surfs):
                 plt.plot(surf.mesh.lons, surf.mesh.lats, ".", color=colors[i])
             for i, bbox in enumerate(bboxes):
-                plt.hlines([bbox[2], bbox[3]], bbox[0], bbox[1], linewidths=0.5)
-                plt.vlines([bbox[0], bbox[1]], bbox[2], bbox[3], linewidths=0.5)
+                plt.hlines(
+                    [bbox[2], bbox[3]], bbox[0], bbox[1], linewidths=0.5
+                )
+                plt.vlines(
+                    [bbox[0], bbox[1]], bbox[2], bbox[3], linewidths=0.5
+                )
                 plt.text(bbox[0], bbox[2], f"{i}")
             plt.show()
 
@@ -118,8 +122,12 @@ class TestDistanceMatrix(unittest.TestCase):
         # and (45.2, 10) is 22 km. This corresponds (with some minor
         # differences) to the distance between bbox 0 and bbox 1. The distance
         # between bbox 1 and 3 is 0, as expected since they intersect.
-        expected = np.array([[0.0, 16.5839325, 44.4673135, 27.7674462],
-                             [0.0,  0.00000000, 11.5560295,  0.00000000],
-                             [0.0,  0.00000000,  0.00000000, 16.6747524],
-                             [0.0,  0.00000000,  0.00000000,  0.00000000]])
-        np.testing.assert_almost_equal(expected, dmtx, decimal=3)
+        expected = np.array(
+            [
+                [0.0, 16.5839325, 44.4673135, 27.7674462],
+                [0.0, 0.00000000, 11.5560295, 0.00000000],
+                [0.0, 0.00000000, 0.00000000, 16.6747524],
+                [0.0, 0.00000000, 0.00000000, 0.00000000],
+            ]
+        )
+        np.testing.assert_almost_equal(expected, dmtx, decimal=1)

@@ -1,0 +1,16 @@
+[main]
+
+catalogue = './data2/sub_cat.pkl'
+tr_file = './data2/classified_test.hdf5'
+        
+create_subcatalogues = 'true'
+catalogue_add_defaults = 'true'
+
+[method1]
+name = 'GardnerKnopoffType1'
+params = {'time_distance_window' = 'UhrhammerWindow', 'fs_time_prop' = 0.1}
+label = 'UH'
+
+[case1]
+regions = ['crustal', 'intA']
+label = 'int_cru'

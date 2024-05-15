@@ -6,6 +6,7 @@ import numpy
 
 from openquake.hazardlib.geo import Line, Point
 from openquake.hazardlib.source import ComplexFaultSource
+from openquake.hazardlib.source import KiteFaultSource
 from openquake.hazardlib.tom import PoissonTOM
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.mfd import TruncatedGRMFD
@@ -73,3 +74,4 @@ class EdgesSet():
                                   p['temporal_occurrence_model'],
                                   self.edges,
                                   p['rake'])
+
