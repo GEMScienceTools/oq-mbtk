@@ -312,7 +312,7 @@ def remove_buffer_around_faults(fname: str, path_point_sources: str,
         tmpsrc = from_list_ps_to_multipoint(pnt_srcs, 'pnts')
 
         # Save the multipoint source to a nrml file
-        tmp = pathlib.Path(fname)
+        tmp = pathlib.Path(point_fname)
         tmp_name = f"src_points_{tmp.stem.split('_')[-1]}.xml"
         fname_out = out_path / tmp_name
         write_source_model(fname_out, [tmpsrc], 'Distributed seismicity')
