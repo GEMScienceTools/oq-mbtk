@@ -6,26 +6,25 @@ from copy import deepcopy
 import numpy as np
 
 logging.basicConfig(
-    format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
+    format='%(asctime)s - %(message)s',
+    datefmt='%d-%b-%y %H:%M:%S',
+    level=logging.INFO,
 )
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
     make_subfault_df,
     make_rupture_df,
-    rup_df_to_rupture_dicts,
-    subsection_df_to_fault_dicts,
-    make_eqns,
 )
-
 
 from openquake.fnm.rupture_connections import (
     get_rupture_adjacency_matrix,
     get_multifault_ruptures,
+    get_multifault_ruptures_fast,
+    get_multifault_ruptures_numba,
     make_binary_adjacency_matrix,
+    make_binary_adjacency_matrix_sparse,
     filter_bin_adj_matrix_by_rupture_angle,
 )
 
@@ -34,17 +33,51 @@ from openquake.fnm.rupture_filtering import (
     filter_proportionally_to_plausibility,
 )
 
+from openquake.fnm.inversion.utils import (
+    rup_df_to_rupture_dicts,
+    subsection_df_to_fault_dicts,
+    SHEAR_MODULUS,
+    get_rup_rates_from_fault_slip_rates,
+)
+
+from openquake.fnm.inversion.soe_builder import make_eqns
+from openquake.fnm.inversion.simulated_annealing import simulated_annealing
+
+from openquake.fnm.exporter import (
+    make_multifault_source,
+    write_multifault_source,
+)
+
+logging.basicConfig(
+    format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 default_settings = {
     'subsection_size': [15.0, 15.0],
-    'edge_sd': 2.0,
-    'dip_sd': 2.0,
+    'edge_sd': 5.0,
+    'dip_sd': 5.0,
     'max_jump_distance': 10.0,
     'max_sf_rups_per_mf_rup': 10,
     'rupture_angle_threshold': 60.0,
     'filter_by_plausibility': True,
+    'filter_by_angle': True,
     'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
     'skip_bad_faults': False,
+    'shear_modulus': SHEAR_MODULUS,
+    'fault_mfd_b_value': 1.0,
+    'fault_mfd_type': 'TruncatedGRMFD',
+    'seismic_fraction': 0.7,
+    'rupture_set_for_rates_from_slip_rates': 'all',
+    'plot_fault_moment_rates': False,
+    'sparse_distance_matrix': True,
+    'parallel_multifault_search': False,
+    'full_fault_only_mf_ruptures': True,
+    'calculate_rates_from_slip_rates': True,
+    'surface_type': 'simple',
+    'min_mag': None,
+    'max_mag': None,
 }
 
 
@@ -52,8 +85,7 @@ def build_fault_network(
     faults=None,
     fault_geojson=None,
     settings=None,
-    surface_type='simple',
-    filter_by_angle=True,
+    return_faults_only=False,
     **kwargs,
 ):
     """
@@ -84,14 +116,17 @@ def build_fault_network(
     Returns
     -------
     fault_network : dict
-        Dictionary containing the fault networkBuild a fault network from a
-        list of faults or a geojson file.
-
-    Parameters
-    ----------
-    faults: list of dictionaries, optional. Each fault
+        Dictionary containing the fault network and rupture data. The keys are:
+            - 'faults': list of fault dictionaries
+            - 'subfaults': list of subfault dictionaries
+            - 'single_rup_df': DataFrame of single-fault ruptures
+            - 'dist_mat': continuous distance matrix
+            - 'subfault_df': DataFrame of subfaults
+            - 'multifault_inds': list of multifault rupture indices
+            - 'rupture_df': DataFrame of all ruptures
+            - 'plausibility': DataFrame of rupture plausibilities
+            - 'rupture_df_keep': DataFrame of ruptures after filtering
     """
-
     build_settings = deepcopy(default_settings)
     if settings is not None:
         build_settings.update(settings)
@@ -106,11 +141,11 @@ def build_fault_network(
     t0 = time.time()
     event_times.append(t0)
     if faults is None:
-        if surface_type == 'simple':
+        if settings['surface_type'] == 'simple':
             build_surface = simple_fault_from_feature
         else:
             raise NotImplementedError(
-                f'Surface type {surface_type} not implemented'
+                f'Surface type {settings["surface_type"]} not implemented'
             )
 
         if fault_geojson is not None:
@@ -144,12 +179,16 @@ def build_fault_network(
             ]
             if len(duplicated_fids) > 0:
                 raise ValueError(f'Duplicated fault fids: {duplicated_fids}')
+            logging.info(f"\t{len(faults)} faults built from geojson")
 
         else:
             raise ValueError('No faults provided')
+    fault_network['faults'] = faults
     t1 = time.time()
     event_times.append(t1)
     logging.info(f"\tdone in {round(t1-t0, 1)} s")
+    if return_faults_only:
+        return fault_network
 
     logging.info("Making subfaults")
     fault_network['subfaults'] = []
@@ -184,6 +223,7 @@ def build_fault_network(
         faults,
         all_subfaults=fault_network['subfaults'],
         max_dist=settings['max_jump_distance'],
+        sparse=settings['sparse_distance_matrix'],
     )
     t3 = time.time()
     event_times.append(t3)
@@ -193,9 +233,14 @@ def build_fault_network(
         + "single-fault ruptures"
     )
 
-    binary_adjacence_matrix = make_binary_adjacency_matrix(
-        fault_network['dist_mat'], max_dist=settings['max_jump_distance']
-    )
+    if settings['sparse_distance_matrix'] is True:
+        binary_adjacence_matrix = make_binary_adjacency_matrix_sparse(
+            fault_network['dist_mat'], max_dist=settings['max_jump_distance']
+        )
+    else:
+        binary_adjacence_matrix = make_binary_adjacency_matrix(
+            fault_network['dist_mat'], max_dist=settings['max_jump_distance']
+        )
 
     n_connections = binary_adjacence_matrix.sum()
     n_possible_connections = len(fault_network['dist_mat']) ** 2
@@ -207,7 +252,7 @@ def build_fault_network(
         + f" ({round(n_connections/n_possible_connections*100, 1)}%)"
     )
 
-    if filter_by_angle:
+    if settings['filter_by_angle']:
         logging.info("  Filtering by rupture angle")
         binary_adjacence_matrix = filter_bin_adj_matrix_by_rupture_angle(
             fault_network['single_rup_df'],
@@ -230,10 +275,14 @@ def build_fault_network(
     logging.info(f"\tdone in {round(t4-t3, 1)} s")
 
     logging.info("Getting multifault ruptures")
-    fault_network['multifault_inds'] = get_multifault_ruptures(
-        fault_network['dist_mat'],
-        max_dist=settings['max_jump_distance'],
+    # fault_network['multifault_inds'] = get_multifault_ruptures(
+    fault_network['multifault_inds'] = get_multifault_ruptures_fast(
+        # fault_network['multifault_inds'] = get_multifault_ruptures_numba(
+        # fault_network['dist_mat'],
+        binary_adjacence_matrix,
+        # max_dist=settings['max_jump_distance'],
         max_sf_rups_per_mf_rup=settings['max_sf_rups_per_mf_rup'],
+        parallel=settings['parallel_multifault_search'],
     )
     t5 = time.time()
     event_times.append(t5)
@@ -243,14 +292,27 @@ def build_fault_network(
         + "multifault ruptures"
     )
 
-    t6 = time.time()
-    event_times.append(t6)
     logging.info("Making rupture dataframe")
     fault_network['rupture_df'] = make_rupture_df(
         fault_network['single_rup_df'],
         fault_network['multifault_inds'],
         fault_network['subfault_df'],
     )
+
+    if settings['min_mag'] is not None:
+        logging.info("Filtering ruptures by minimum magnitude")
+        fault_network['rupture_df'] = fault_network['rupture_df'][
+            fault_network['rupture_df']['mag'] >= settings['min_mag']
+        ]
+
+    if settings['max_mag'] is not None:
+        logging.info("Filtering ruptures by maximum magnitude")
+        fault_network['rupture_df'] = fault_network['rupture_df'][
+            fault_network['rupture_df']['mag'] <= settings['max_mag']
+        ]
+
+    t6 = time.time()
+    event_times.append(t6)
     logging.info(f"\tdone in {round(t6-t5, 1)} s")
 
     if settings['filter_by_plausibility']:
@@ -266,11 +328,11 @@ def build_fault_network(
             ],
         )
 
-        fault_network[
-            'rupture_df_keep'
-        ] = filter_proportionally_to_plausibility(
-            fault_network['rupture_df'],
-            fault_network['plausibility']['total'],
+        fault_network['rupture_df_keep'] = (
+            filter_proportionally_to_plausibility(
+                fault_network['rupture_df'],
+                fault_network['plausibility']['total'],
+            )
         )
         t8 = time.time()
         event_times.append(t8)
@@ -284,6 +346,32 @@ def build_fault_network(
             + f"{round(n_rups_filtered / n_rups_start*100, 1)} %)"
         )
 
+    if settings['calculate_rates_from_slip_rates']:
+        t_slip_rate_start = time.time()
+        logging.info("Calculating rates from slip rates")
+        if settings['rupture_set_for_rates_from_slip_rates'] == 'filtered':
+            rup_df_key = 'rupture_df_keep'
+        elif settings['rupture_set_for_rates_from_slip_rates'] == 'all':
+            rup_df_key = 'rupture_df'
+
+        rupture_rates = get_rup_rates_from_fault_slip_rates(
+            fault_network,
+            b_val=settings['fault_mfd_b_value'],
+            mfd_type=settings['fault_mfd_type'],
+            seismic_fraction=settings['seismic_fraction'],
+            rupture_set_for_rates_from_slip_rates=settings[
+                'rupture_set_for_rates_from_slip_rates'
+            ],
+            plot_fault_moment_rates=settings['plot_fault_moment_rates'],
+        )
+        fault_network[rup_df_key]['annual_occurrence_rate'] = rupture_rates
+        t_slip_rate_end = time.time()
+        event_times.append(t_slip_rate_end)
+        logging.info(
+            f"\tdone in {round(t_slip_rate_end-t_slip_rate_start, 1)} s"
+        )
+
+    fault_network['bin_dist_mat'] = binary_adjacence_matrix
     logging.info(f"total time: {round(event_times[-1]-event_times[0], 1)} s")
     return fault_network
 

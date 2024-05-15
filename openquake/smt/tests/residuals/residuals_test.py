@@ -1,3 +1,20 @@
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+#
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Core test suite for the database and residuals construction
 """
@@ -67,6 +84,8 @@ class ResidualsTestCase(unittest.TestCase):
             cls.database = pickle.load(f)
         cls.gmpe_list = ["AkkarEtAlRjb2014",  "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]
+        cls.toml = os.path.join(BASE_DATA_PATH,
+                                'residuals_from_toml_test.toml')
 
     def test_correct_build_load(self):
         """
@@ -108,6 +127,15 @@ class ResidualsTestCase(unittest.TestCase):
         residuals = res.Residuals(self.gmpe_list, self.imts)
         residuals.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(residuals.residuals)
+        residuals.get_residual_statistics()
+
+    def test_residuals_execution_from_toml(self):
+        """
+        Tests basic execution of residuals when specifying gmpe and imts to get
+        residuals for from a toml file - not correctness of values
+        """
+        residuals = res.Residuals.from_toml(self.toml)
+        residuals.get_residuals(self.database, component="Geometric")
         residuals.get_residual_statistics()
 
     def test_likelihood_execution(self):
@@ -206,7 +234,7 @@ class ResidualsTestCase(unittest.TestCase):
         ssa1 = res.SingleStationAnalysis(top_sites.keys(), self.gmpe_list,
                                          self.imts)
         
-        # Compute the total, inter-event and intra-event residuals for each site
+        # Compute total, inter-event and intra-event residuals for each site
         ssa1.get_site_residuals(self.database)
         
         # Get single station residual statistics per GMPE and per imt
@@ -222,19 +250,33 @@ class ResidualsTestCase(unittest.TestCase):
         # Check plots executed for each GMPE and intensity measure
         for gmpe in self.gmpe_list:
             for imt in self.imts:                        
-                output_all_res_plt = os.path.join(self.out_location, gmpe +
-                                                  imt + 'AllResPerSite.jpg') 
-                output_intra_res_comp_plt = os.path.join(self.out_location,
-                                                         gmpe + imt +
-                                                         'IntraResCompPerSite.jpg') 
-                rspl.ResidualWithSite(ssa1, gmpe, imt, output_all_res_plt,
-                                      filetype = 'jpg')
+                output_all_res_plt = os.path.join(
+                    self.out_location, gmpe + imt + 'AllResPerSite.jpg') 
+                output_intra_res_comp_plt = os.path.join(
+                    self.out_location, gmpe + imt + 'IntraResCompPerSite.jpg') 
+                rspl.ResidualWithSite(
+                    ssa1, gmpe, imt, output_all_res_plt, filetype='jpg')
                 rspl.IntraEventResidualWithSite(ssa1, gmpe, imt,
                                                 output_intra_res_comp_plt,
-                                                filetype = 'jpg')
+                                                filetype='jpg')
                 # Check plots outputted
                 self.assertTrue(output_all_res_plt)
                 self.assertTrue(output_intra_res_comp_plt)
+
+    def test_single_station_residual_analysis_from_toml(self):
+        """
+        Test execution of single station residual analysis using GMPEs and
+        imts specified within a toml file. Correctness of values is not tested.
+        """
+        # Get sites with at least 1 record each (i.e. all sites in db)
+        threshold = 1
+        top_sites = rank_sites_by_record_count(self.database, threshold)
+        
+        # Create SingleStationAnalysis object from toml
+        ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), self.toml)
+        
+        # Compute total, inter-event and intra-event residuals for each site
+        ssa1.get_site_residuals(self.database)
                 
     @classmethod
     def tearDownClass(cls):

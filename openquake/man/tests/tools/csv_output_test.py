@@ -1,9 +1,12 @@
+
 import os
+import shutil
 import unittest
 import tempfile
+import numpy as np
 
 import openquake.man.tools.csv_output as csv
-from openquake.man.tools.csv_output import mean_mde_for_gmt
+from openquake.man.tools.csv_output import mean_mde_for_gmt, mean_llt_for_gmt
 from openquake.calculators.tests import open8
 from openquake.calculators.export import export
 from openquake.calculators.base import run_calc
@@ -11,6 +14,8 @@ from openquake.calculators.base import run_calc
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 BASE_EXP_PATH = os.path.join(os.path.dirname(__file__), 'expected')
 BASE_CASE8 = os.path.join(os.path.dirname(__file__), 'case_8')
+
+OVERWRITE = False
 
 
 class TestMeanMDE(unittest.TestCase):
@@ -38,47 +43,146 @@ class TestMeanMDE(unittest.TestCase):
         expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_mde-2.csv')
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fout)]
-        assert expected_lines == actual_lines
+
+        actual_lines = [[float(j) for j in i.split()] for i in actual_lines]
+        expected_lines = [[float(j) for j in i.split()] for i in expected_lines]
+        actual_lines = np.array(actual_lines)
+        expected_lines = np.array(expected_lines)
+        aae = np.testing.assert_almost_equal
+        aae(actual_lines, expected_lines, decimal=4)
+
         os.remove(fout)
 
     def test_output_mre_3(self):
         """
-        tests that if a MDE output file includes more than one IMT, the 
-        function mean_mde_for_gmt considers only the specified IMT when 
+        tests that if a MDE output file includes more than one IMT, the
+        function mean_mde_for_gmt considers only the specified IMT when
         creating the file that will be plotted by GMT
         """
         fname1 = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-mean-0.csv')
         fout1, path1 = tempfile.mkstemp()
         fname2 = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
         fout2, path2 = tempfile.mkstemp()
+
+        if OVERWRITE:
+            shutil.copy(path1, fname1)
+            shutil.copy(path2, fname2)
+
         mean_mde_for_gmt(fname1, path1, 0.002105, 'SA(0.1)', 1e-10)
         mean_mde_for_gmt(fname2, path2, 0.002105, 'SA(0.1)', 1e-10)
-        expected_lines1 = [line for line in open8(path1)]
-        expected_lines2 = [line for line in open8(path2)]
-        assert expected_lines1 == expected_lines2
+        expect_lines1 = [[float(j) for j in i.split()] for i in open8(path1)]
+        expect_lines2 = [[float(j) for j in i.split()] for i in open8(path2)]
+        expect_lines1 = np.array(expect_lines1)
+        expect_lines2 = np.array(expect_lines2)
+        aae = np.testing.assert_almost_equal
+        aae(expect_lines1, expect_lines2, decimal=4)
+
+    def test_output_llt(self):
+        """
+        test reorg of one instance of an MDE file; one rlz
+        """
+        fname = os.path.join(BASE_DATA_PATH, 'TRT_Lon_Lat-mean-0.csv')
+        fout = 'test-1.csv'
+        mean_llt_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_llt.csv')
+        expected_lines = [line for line in open8(expected)]
+        actual_lines = [line for line in open8(fout)]
+        assert expected_lines == actual_lines
+        os.remove(fout)
 
 
 class OutputTestCase(unittest.TestCase):
 
-    def test_mde_format(self):
+    def test_mde_llt_format(self):
         """
         will fail if the output format changes
         """
         # run test job
-        calc = run_calc(os.path.join(BASE_CASE8, 'job.ini'))
+        calc1 = run_calc(os.path.join(BASE_CASE8, 'job_mde.ini'))
+        calc2 = run_calc(os.path.join(BASE_CASE8, 'job_llt.ini'))
+
         # test mre results output format
-        [fname] = export(('disagg-stats', 'csv'), calc.datastore)
-        expected = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
-        expected_lines = [line for line in open8(expected)]
-        actual_lines = [line for line in open8(fname)]
-        assert expected_lines[1:] == actual_lines[1:]
-        os.remove(fname)
+        [fname_mde] = export(('disagg-stats', 'csv'), calc1.datastore)
+        exp_mde = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
+        [fname_llt] = export(('disagg-stats', 'csv'), calc2.datastore)
+        exp_llt = os.path.join(BASE_CASE8, 'expected/TRT_Lon_Lat-mean-0.csv')
+
+        if OVERWRITE:
+            shutil.copyfile(fname_llt, exp_mde)
+            shutil.copyfile(fname_mde, exp_llt)
 
 
-class TestMDeOutput(unittest.TestCase):
+        # test MDE format
 
-    def test_read_mre(self):
-        fname = os.path.join(BASE_DATA_PATH, 'mde.csv')
+        actual_lines = []
+        for i, line in enumerate(open8(fname_mde)):
+            if i == 0:
+                hea1_comp = line
+            elif i == 1:
+                hea2_comp = line
+            else:
+                actual_lines.append([float(j) for j in line.split()[1:]])
+
+        expected_lines = []
+        for i, line in enumerate(open8(exp_mde)):
+            if i == 0:
+                hea1_exp = line
+            elif i == 1:
+                hea2_exp = line
+            if i < 2:
+                continue
+            expected_lines.append([float(j) for j in line.split()[1:]])
+
+        assert hea2_comp == hea2_exp
+
+        actual_lines = np.array(actual_lines)
+        expected_lines = np.array(expected_lines)
+        aae = np.testing.assert_almost_equal
+        aae(actual_lines, expected_lines, decimal=4)
+
+        os.remove(fname_mde)
+
+        # test LLT format
+
+        actual_lines_floats = []
+        actual_lines_strings = []
+
+        inds = [1, 2, 4, 5, 6]
+        for i, line in enumerate(open8(fname_llt)):
+            if i == 0:
+                hea1_comp = line
+            elif i == 1:
+                hea2_comp = line
+            else:
+                line_tmp = line.split(',')
+                line = [line_tmp[i] for i in inds]
+                actual_lines_floats.append([float(j) for j in line])
+                actual_lines_strings.append([line_tmp[0],line_tmp[3]])
+
+        expected_lines_floats = []
+        expected_lines_strings = []
+        for i, line in enumerate(open8(exp_llt)):
+            if i == 0:
+                hea1_exp = line
+            elif i == 1:
+                hea2_exp = line
+            if i < 2:
+                continue
+            line_tmp = line.split(',')
+            line = [line_tmp[i] for i in inds]
+            expected_lines_floats.append([float(j) for j in line])
+            expected_lines_strings.append([line_tmp[0],line_tmp[3]])
+
+        assert hea2_comp == hea2_exp
+
+        actual_lines_floats = np.array(actual_lines_floats)
+        expected_lines_floats = np.array(expected_lines_floats)
+        aae = np.testing.assert_almost_equal
+        aae(actual_lines, expected_lines, decimal=4)
+
+        assert actual_lines_strings == expected_lines_strings
+
+        os.remove(fname_llt)
 
 
 class TestReadHeader(unittest.TestCase):

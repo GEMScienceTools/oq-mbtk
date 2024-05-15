@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2017 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -42,7 +42,6 @@ from openquake.hazardlib import imt
 import openquake.smt.intensity_measures as ims
 from openquake.smt.strong_motion_selector import SMRecordSelector
 from openquake.smt.sm_utils import convert_accel_units, check_gsim_list
-from openquake.smt.comparison.utils_gmpes import mgmpe_check
 
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
@@ -59,7 +58,6 @@ def get_geometric_mean(fle):
     :param fle:
         Instance of :class: h5py.File
     """
-    # periods = fle["IMS/X/Spectra/Response/Periods"].value
     if not ("H" in fle["IMS"].keys()):
         # Horizontal spectra not in record
         x_spc = fle["IMS/X/Spectra/Response/Acceleration/damping_05"].values
@@ -290,14 +288,20 @@ class Residuals(object):
     Class to derive sets of residuals for a list of ground motion residuals
     according to the GMPEs
     """
-    def __init__(self, gmpe_list, imts):
+    def __init__(self, gmpe_list, imts, eshm20_regions=None):
         """
         :param  gmpe_list:
             A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
         :param  imts:
             A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
+        :param eshm20_regions:
+            Dictionary where each key corresponds to the position of a GMPE in
+            the GMPE list and the value is an integer representing the atten.
+            cluster within ESHM20's backbone model for active shallow crustal
+            tectonic localities. This is used by the KothaEtAl2020ESHM20 gsim
+            class and must be specified to ensure the correct attenuation
+            cluster is applied when computing the ground-motion residuals
         """
-             
         # Residuals object
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.number_gmpes = len(self.gmpe_list)
@@ -308,12 +312,14 @@ class Residuals(object):
         self.unique_indices = {}
         self.gmpe_sa_limits = {}
         self.gmpe_scalars = {}
+        self.eshm20_regions = eshm20_regions
+        
         for gmpe in self.gmpe_list:
             gmpe_dict_1 = OrderedDict([])
             gmpe_dict_2 = OrderedDict([])
             self.unique_indices[gmpe] = {}
+            
             # Get the period range and the coefficient types
-            # gmpe_i = GSIM_LIST[gmpe]()
             gmpe_i = self.gmpe_list[gmpe]
             for c in dir(gmpe_i):
                 if 'COEFFS' in c:
@@ -348,6 +354,7 @@ class Residuals(object):
                         gmpe_dict_2[imtx][res_type] = []
                         self.types[gmpe][imtx].append(res_type)
                     gmpe_dict_2[imtx]["Mean"] = []
+           
                 # For handling of GMPEs with total sigma only
                 else: 
                     for res_type in self.gmpe_list[
@@ -369,16 +376,18 @@ class Residuals(object):
     def from_toml(cls, filename):
         """
         Read in gmpe_list and imts from .toml file. This method allows use of
-        non-ergodic GMPEs and gmpes with additional input files within SMT
+        gmpes with additional parameters and input files within the SMT
         """
         # Read in toml file with dict of gmpes and subdict of imts
         config_file = toml.load(filename)
              
         # Parsing file with models
         gmpe_list = []
+        eshm20_regions = {}
         config = copy.deepcopy(config_file)
-        for key in config['models']:
-        # If the key contains a number we take the second part
+        for idx_k, key in enumerate(config['models']):
+            
+            # If the key contains a number we take the second part
             if re.search("^\\d+\\-", key):
                 tmp = re.sub("^\\d+\\-", "", key)
                 value = f"[{tmp}] "
@@ -387,10 +396,33 @@ class Residuals(object):
             if len(config['models'][key]):
                config['models'][key].pop('style', None)
                value += '\n' + str(toml.dumps(config['models'][key]))
+            value = value.strip()
+            
+            # Get eshm20 region param and drop from gmpe to permit validation
+            # (re-added to context when computing residuals if required)
+            eshm20_region = None
+            if 'eshm20_region' in value:
+                vals = value.splitlines()
+                idx_to_drop = []
+                for idx_v, val in enumerate(vals):
+                    if 'eshm20_region' in val:
+                        idx_to_drop.append(idx_v)
+                        eshm20_region = int(val.split('=')[1])
+                vals = pd.Series(vals).drop(idx_to_drop)
+                clean = vals.iloc[0]
+                for idx_v, val in enumerate(vals):
+                    if idx_v > 0:
+                        clean = clean + '\n' + val
+                value = clean
+            eshm20_regions[idx_k] = eshm20_region
+            
+            # Create valid gsim object
             gmpe_list.append(valid.gsim(value))
-        
+            
+        # Get imts    
         imts = config_file['imts']['imt_list']     
-        return cls(gmpe_list,imts)
+        
+        return cls(gmpe_list, imts, eshm20_regions)
 
     def get_residuals(self, ctx_database, nodal_plane_index=1,
                       component="Geometric", normalise=True):
@@ -403,7 +435,7 @@ class Residuals(object):
             See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase` for an
             example
         """
-
+        # Get contexts
         contexts = ctx_database.get_contexts(nodal_plane_index, self.imts,
                                              component)
 
@@ -436,8 +468,8 @@ class Residuals(object):
                         continue
                     for res_type in self.residuals[gmpe][imtx].keys():
                         if res_type == "Inter event":
-                            inter_ev = \
-                                context["Residual"][gmpe][imtx][res_type]
+                            inter_ev =  context["Residual"][gmpe][imtx][
+                                res_type]
                             if np.all(
                                     np.fabs(inter_ev - inter_ev[0]) < 1.0E-12):
                                 # Single inter-event residual
@@ -480,29 +512,26 @@ class Residuals(object):
         """
         Calculate the expected ground motions from the context
         """
-        # TODO Rake hack will be removed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if not context["Ctx"].rake:
-            context["Ctx"].rake = 0.0
+            context["Ctx"].rake = 0.0 # Assume strike-slip
         expected = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
         # Period range for GSIM
-        for gmpe in self.gmpe_list:
+        for idx_gmpe, gmpe in enumerate(self.gmpe_list):
             expected[gmpe] = OrderedDict([(imtx, {}) for imtx in self.imts])
             for imtx in self.imts:
                 gsim = self.gmpe_list[gmpe]
-                gsim_orig = gsim # If gsim into mgmpe retain pot. region for ctx
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
-                    if period < self.gmpe_sa_limits[gmpe][0] or\
-                            period > self.gmpe_sa_limits[gmpe][1]:
+                    if (period < self.gmpe_sa_limits[gmpe][0] or
+                        period > self.gmpe_sa_limits[gmpe][1]):
                         expected[gmpe][imtx] = None
                         continue
-                # Check if gsim needs appending with mgmpe
-                gsim = mgmpe_check(gsim)
-                # Add region parameter to sites context if specified in gsim
-                if 'eshm20_region' in gsim_orig.kwargs:
-                    context["Ctx"].region = gsim_orig.kwargs['eshm20_region']
-                if 'region' in gsim_orig.kwargs and 'eshm20_region' not in gsim.kwargs:
-                    context["Ctx"].region = gsim_orig.kwargs['region']
+                # Add region parameter to sites context if specified
+                if self.eshm20_regions:
+                    if self.eshm20_regions[idx_gmpe] is not None:
+                        context["Ctx"].region = self.eshm20_regions[idx_gmpe]
+                elif 'region' in gsim.kwargs:
+                    context["Ctx"].region = gsim.kwargs['region']
                 # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
                     context["Ctx"],
@@ -510,13 +539,12 @@ class Residuals(object):
                     context["Ctx"],
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
-                # If no sigma model inform user must specify sigma model in .toml
+                # If no sigma inform user that residuals can't be computed for
+                # this GMPE
                 if np.all(stddev[0] == 0.):
-                    gmm_str = str(gmpe).split('(')[0]
-                    raise ValueError('A sigma model is not provided by default\
-                                     for %s GMPE. Specify a sigma model for %s \
-                                     GMPE for the computation of ground-motion\
-                                     residuals.' %(gmm_str, gmm_str))
+                    gs = str(gmpe).split('(')[0]
+                    m = 'A sigma model is not provided for %s' %gs
+                    raise ValueError(m)
                 expected[gmpe][imtx]["Mean"] = mean
                 for i, res_type in enumerate(self.types[gmpe][imtx]):
                     expected[gmpe][imtx][res_type] = stddev[i]
@@ -558,10 +586,21 @@ class Residuals(object):
         """
         Calculates the random effects residuals using the inter-event
         residual formula described in Abrahamson & Youngs (1992) Eq. 10
+        
+        :param obs: array of observed ground-shaking values for a single ctx
+                    (i.e. event) for a given imt, in natural log.
+        :param mean: array of ground-shaking values for the same ctx 
+                     predicted by the given GMPE and imt, in natural log.
+        :param inter: float representing the inter-event component of GMPE
+                      sigma for a given imt.
+        :param intra: float representing the intra-event component of GMPE
+                      sigma for a given imt.
+        :param normalise: bool which if True normalises the residuals using
+                          the corresponding GMPE sigma components
         """
         nvals = float(len(mean))
-        inter_res = ((inter ** 2.) * sum(obs - mean)) /\
-            (nvals * (inter ** 2.) + (intra ** 2.))
+        v = nvals * (inter ** 2.) + (intra ** 2.)
+        inter_res = ((inter ** 2.) * sum(obs - mean)) / v
         intra_res = obs - (mean + inter_res)
         if normalise:
             return inter_res / inter, intra_res / intra
@@ -577,8 +616,8 @@ class Residuals(object):
             for imtx in self.imts:
                 if not self.residuals[gmpe][imtx]:
                     continue
-                statistics[gmpe][imtx] = \
-                    self.get_residual_statistics_for(gmpe, imtx)
+                statistics[
+                    gmpe][imtx] = self.get_residual_statistics_for(gmpe, imtx)
         return statistics
 
     def get_residual_statistics_for(self, gmpe, imtx):
@@ -718,8 +757,7 @@ class Residuals(object):
                 for res_type, data in values.items():
                     l_h, median_lh = data
                     lh_values[gmpe][imtx][res_type] = l_h
-                    statistics[gmpe][imtx][res_type]["Median LH"] =\
-                        median_lh
+                    statistics[gmpe][imtx][res_type]["Median LH"] = median_lh
         return lh_values, statistics
 
     def _get_likelihood_values_for(self, gmpe, imt):
@@ -775,8 +813,8 @@ class Residuals(object):
                     asll])
                 self.llh[gmpe][imtx] = -(1.0 / float(len(asll))) * np.sum(asll)
 
-            self.llh[gmpe]["All"] = -(1. / float(len(log_residuals[gmpe]))) *\
-                np.sum(log_residuals[gmpe])
+            self.llh[gmpe]["All"] = -(1. / float(len(
+                log_residuals[gmpe]))) * np.sum(log_residuals[gmpe])
         # Get mean weights
         weights = np.array([2.0 ** -self.llh[gmpe]["All"]
                             for gmpe in self.gmpe_list])
@@ -786,11 +824,11 @@ class Residuals(object):
             )
         # Get weights with imt
         self.model_weights_with_imt={}
-        for imt in self.imts:
-            weights_with_imt = np.array([2.0 ** -self.llh[gmpe][imt]
+        for im in self.imts:
+            weights_with_imt = np.array([2.0 ** -self.llh[gmpe][im]
                                          for gmpe in self.gmpe_list])
             weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
-            self.model_weights_with_imt[imt] = OrderedDict([(gmpe, 
+            self.model_weights_with_imt[im] = OrderedDict([(gmpe, 
                                                              weights_with_imt
                                                              [iloc])
                                                             for iloc, gmpe
@@ -1028,10 +1066,10 @@ class Residuals(object):
             d_val = (min_d + (float(iloc) * bandwidth)) * np.ones(nvals)
             d_1 = d_val - min_d
             d_2 = d_val + min_d
-            p_1 = norm.cdf((d_1 - mu_d) / stddev) -\
-                norm.cdf((-d_1 - mu_d) / stddev)
-            p_2 = norm.cdf((d_2 - mu_d) / stddev) -\
-                norm.cdf((-d_2 - mu_d) / stddev)
+            p_1 = norm.cdf((d_1 - mu_d) / stddev) - norm.cdf(
+                (-d_1 - mu_d) / stddev)
+            p_2 = norm.cdf((d_2 - mu_d) / stddev) - norm.cdf(
+                (-d_2 - mu_d) / stddev)
             mde += (p_2 - p_1) * d_val
         inv_n = 1.0 / float(nvals)
         mde_norm = np.sqrt(inv_n * np.sum(mde ** 2.))
@@ -1084,8 +1122,8 @@ class Residuals(object):
         """
         mu_a = np.mean(obs)
         mu_y = np.mean(expected)
-        b_1 = np.sum((obs - mu_a) * (expected - mu_y)) /\
-            np.sum((obs - mu_a) ** 2.)
+        b_1 = np.sum(
+            (obs - mu_a) * (expected - mu_y)) / np.sum((obs - mu_a) ** 2.)
         b_0 = mu_y - b_1 * mu_a
         y_c = expected - ((b_0 + b_1 * obs) - obs)
         de_orig = np.sum((obs - expected) ** 2.)
@@ -1192,7 +1230,7 @@ class SingleStationAnalysis(object):
     """
     Class to analyse residual sets recorded at specific stations
     """
-    def __init__(self, site_id_list, gmpe_list, imts):
+    def __init__(self, site_id_list, gmpe_list, imts, eshm20_regions=None):
         # Initiate SSA object
         self.site_ids = site_id_list
         if len(self.site_ids) < 1:
@@ -1202,6 +1240,7 @@ class SingleStationAnalysis(object):
         self.imts = imts
         self.site_residuals = []
         self.types = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
+        self.eshm20_regions = eshm20_regions
         for gmpe in self.gmpe_list:
             for imtx in self.imts:
                 self.types[gmpe][imtx] = []
@@ -1220,16 +1259,18 @@ class SingleStationAnalysis(object):
     def from_toml(cls, site_id_list, filename):
         """
         Read in gmpe_list and imts from .toml file. This method allows use of
-        non-ergodic GMPEs and gmpes with additional input files within SMT
+        gmpes with additional parameters and input files within the SMT
         """
         # Read in toml file with dict of gmpes and subdict of imts
         config_file = toml.load(filename)
              
         # Parsing file with models
         gmpe_list = []
+        eshm20_regions = {}
         config = copy.deepcopy(config_file)
-        for key in config['models']:
-        # If the key contains a number we take the second part
+        for idx_k, key in enumerate(config['models']):
+            
+            # If the key contains a number we take the second part
             if re.search("^\\d+\\-", key):
                 tmp = re.sub("^\\d+\\-", "", key)
                 value = f"[{tmp}] "
@@ -1238,10 +1279,32 @@ class SingleStationAnalysis(object):
             if len(config['models'][key]):
                config['models'][key].pop('style', None)
                value += '\n' + str(toml.dumps(config['models'][key]))
+            value = value.strip()
+               
+            # Get eshm20 region param and drop from gmpe to permit validation
+            eshm20_region = None
+            if 'eshm20_region' in value:
+                vals = value.splitlines()
+                idx_to_drop = []
+                for idx_v, val in enumerate(vals):
+                    if 'eshm20_region' in val:
+                        idx_to_drop.append(idx_v)
+                        eshm20_region = int(val.split('=')[1])
+                vals = pd.Series(vals).drop(idx_to_drop)
+                clean = vals.iloc[0]
+                for idx_v, val in enumerate(vals):
+                    if idx_v > 0:
+                        clean = clean + '\n' + val
+                value = clean
+            eshm20_regions[idx_k] = eshm20_region
+
+            # Create valid gsim
             gmpe_list.append(valid.gsim(value))
+            
+        # Get imts    
+        imts = config_file['imts']['imt_list']     
         
-        imts = config_file['imts']['imt_list']             
-        return cls(site_id_list, gmpe_list, imts)
+        return cls(site_id_list, gmpe_list, imts, eshm20_regions)
 
     def get_site_residuals(self, database, component="Geometric"):
         """
@@ -1251,7 +1314,8 @@ class SingleStationAnalysis(object):
         for site_id in self.site_ids:
             selector = SMRecordSelector(database)
             site_db = selector.select_from_site_id(site_id, as_db=True)
-            resid = Residuals(self.input_gmpe_list, self.imts)
+            resid = Residuals(self.input_gmpe_list, self.imts,
+                              self.eshm20_regions)
             resid.get_residuals(site_db, normalise=False, component=component)
             setattr(
                 resid,

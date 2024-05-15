@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
+import sys
+
 from openquake.baselib import sap
 from openquake.sub.build_complex_surface import build_complex_surface
 
@@ -11,6 +14,16 @@ def main(in_path, max_sampl_dist, out_path, upper_depth=0,
     Builds edges that can be used to generate a complex fault surface
     starting from a set of profiles
     """
+    # check if output folder is empty
+    if os.path.exists(out_path):
+        tmps = f'\nError: {out_path} already exists and contains profiles and '
+        tmps += '\n edges from a previous run! Specify empty output directory.'
+        print(tmps)
+        sys.exit()
+    # otherwise create directory
+    else:
+        os.makedirs(out_path)
+
     build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth,
                           lower_depth, from_id, to_id)
 

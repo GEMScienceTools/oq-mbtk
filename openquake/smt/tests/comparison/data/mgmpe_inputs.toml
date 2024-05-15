@@ -1,13 +1,14 @@
-### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
+# Test input file for checking execution of GMPEs requiring mgmpe_check function found in openquake.smt.comparison.utils_gmpes.py
 
 [general]
 imt_list = ['PGA','SA(0.1)','SA(0.5)'] # imts to compute gm for
-max_period = 2 # max period for response spectra (can't exceed maximum period in a specified GMPE)
-maxR = 300 # max distance to consider
+max_period = 0.5 # max period for response spectra (can't exceed maximum period in a specified GMPE)
+minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
+maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
 dist_type = 'rrup' # specify distance metric used in trellis plots
-dist_list = [10, 50, 200] # distances for use in response spectra + sigma wrt period plots
-eshm20_region = 0 # region for ESHM20 GMMs 
-Nstd = 1 # number of standard deviations to sample sigma for 
+dist_list = [10, 50, 200] # distances for use in response spectra
+eshm20_region = 0 # region for ESHM20 GMM
+Nstd = 1 # number of standard deviations to sample from sigma distribution
 
 [site_properties]
 vs30 = 800
@@ -17,14 +18,14 @@ up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
 region = 'Global' # region specific basin effects
 
 [source_properties] # Characterise EQ as finite rupture
-trt = 'ASCR'
+trt = 'ASCR' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
 ztor = 'None' # Set to string of 'None' to NOT consider
 strike = -999
 dip = -999
-rake = 60
-aratio = 2
-trellis_and_rs_mag_list = [5,6,7] # mags used only for trellis
-trellis_and_rs_depths = [20,25,30] # depth per magnitude for trellis
+rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
+aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
+trellis_and_rs_mag_list = [5,6,7] # mags used only for trellis and response spectra
+trellis_and_rs_depths = [20,25,30] # depth per magnitude for trellis and response spectra
 
 # Specify mag values and depths for use in Sammons, Euclidean dist and clustering
 [mag_values_non_trellis_or_spectra_functions]
@@ -35,49 +36,67 @@ non_trellis_or_spectra_depths = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth
 
 # Specify label for gmpes
 [gmpe_labels]
-gmpes_label = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
+gmpes_label = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
 
-[models.YenierAtkinson2015BSSA]
+[models.0-ModifiableGMPE]
+gmpe = 'YenierAtkinson2015BSSA'
 sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
 
-[models.1-CampbellBozorgnia2014]
+[models.1-ModifiableGMPE]
+gmpe = 'CampbellBozorgnia2014'
 fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # fix total sigma per imt
 
-[models.2-CampbellBozorgnia2014]
+[models.2-ModifiableGMPE]
+gmpe = 'CampbellBozorgnia2014'
 with_betw_ratio = 1.7 # add between-event and within-event sigma using ratio of 1.7 to partition total sigma
         
-[models.3-CampbellBozorgnia2014]
+[models.3-ModifiableGMPE]
+gmpe = 'CampbellBozorgnia2014'
 set_between_epsilon = 1.5 # set between-event epsilon (i.e. tau epsilon)
                        
-[models.1-AbrahamsonEtAl2014]
+[models.4-ModifiableGMPE]
+gmpe = 'AbrahamsonEtAl2014'
 median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
 
-[models.2-AbrahamsonEtAl2014]
+[models.5-ModifiableGMPE]
+gmpe = 'AbrahamsonEtAl2014'
 median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
 
-[models.1-KothaEtAl2020]
+[models.6-ModifiableGMPE]
+gmpe = 'KothaEtAl2020'
 sigma_scaling_scalar = 1.05 # scale sigma by factor of 1.05 over all imts
 
-[models.2-KothaEtAl2020]
+[models.7-ModifiableGMPE]
+gmpe = 'KothaEtAl2020'
 sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # scale sigma by imt-dependent factor
 
-[models.1-BooreEtAl2014]
+[models.8-ModifiableGMPE]
+gmpe = 'BooreEtAl2014'
 site_term = 'CY14SiteTerm' # use CY14 site term
 
-[models.2-BooreEtAl2014]
+[models.9-ModifiableGMPE]
+gmpe = 'BooreEtAl2014'
 site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
 
-[models.3-BooreEtAl2014]
+[models.10-ModifiableGMPE]
+gmpe = 'BooreEtAl2014'
 site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
 
+[models.11-ModifiableGMPE]
+gmpe = 'CampbellBozorgnia2014'
+add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
+
+[models.12-ModifiableGMPE]
+gmpe = 'CampbellBozorgnia2014'
+set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
+                               
 [models.NGAEastGMPE]
 gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
     
 [models.HassaniAtkinson2018]
 d_sigma = 100 # gmpe specific param
 kappa0 = 0.04
-        
 
 [custom_colors]
-custom_colors_flag = 'False' #By default set to "False" (set to "True" for custom colours)
+custom_colors_flag = 'False' # By default set to "False" (set to "True" for custom colours)
 custom_colors_list = ['lime','dodgerblue','gold','0.8']

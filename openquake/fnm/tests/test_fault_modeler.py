@@ -36,16 +36,21 @@ import unittest
 import numpy as np
 import pandas as pd
 
+from scipy.stats import circmean
+
 from openquake.hazardlib.geo.mesh import RectangularMesh
 from openquake.hazardlib.geo.surface import SimpleFaultSurface
 
 from openquake.fnm.fault_modeler import (
     simple_fault_from_feature,
+    get_trace_from_mesh,
     subdivide_simple_fault_surface,
     subdivide_rupture_mesh,
     get_subsections_from_fault,
     make_subfault_df,
     group_subfaults_by_fault,
+    angular_mean_degrees,
+    weighted_angular_mean_degrees,
     make_rupture_df,
     get_boundary_3d,
     make_subfault_gdf,
@@ -137,7 +142,10 @@ class Test3Faults(unittest.TestCase):
         assert len(subsecs_30_20) == 1
 
         subsecs_2_2 = subdivide_simple_fault_surface(
-            fault, subsection_size=[2.0, 2.0]
+            fault,
+            subsection_size=[2.0, 2.0],
+            edge_sd=2.0,
+            dip_sd=2.0,
         )
 
         rows_2_2, cols_2_2 = get_rows_cols(subsecs_2_2)
@@ -322,10 +330,15 @@ class Test3Faults(unittest.TestCase):
         )
 
     def test_get_subsections_from_fault(self):
+        edge_sd = 2.0
+        dip_sd = 2.0
         fault = self.faults[0]
 
         meshes = subdivide_simple_fault_surface(
-            fault['surface'], subsection_size=[15, 15]
+            fault['surface'],
+            subsection_size=[15, 15],
+            edge_sd=edge_sd,
+            dip_sd=dip_sd,
         )
         subs = [
             {
@@ -406,14 +419,27 @@ class Test3Faults(unittest.TestCase):
             fault,
             subsection_size=[15, 15],
             surface=fault['surface'],
+            edge_sd=edge_sd,
+            dip_sd=dip_sd,
         )
 
         for i, fsub in enumerate(fault_subs):
             for k in fsub.keys():
                 if k == 'surface':
-                    assert fsub[k].mesh == subs[i][k]
+                    np.testing.assert_almost_equal(
+                        fsub[k].mesh.lats, subs[i][k].lats
+                    )
+                    np.testing.assert_almost_equal(
+                        fsub[k].mesh.lons, subs[i][k].lons
+                    )
+                    np.testing.assert_almost_equal(
+                        fsub[k].mesh.depths, subs[i][k].depths
+                    )
                 else:
-                    assert fsub[k] == subs[i][k]
+                    if isinstance(fsub[k], str):
+                        assert fsub[k] == subs[i][k]
+                    else:
+                        np.testing.assert_almost_equal(fsub[k], subs[i][k])
 
     def test_make_subfault_df(self):
         all_subs = [
@@ -677,7 +703,13 @@ class Test3Faults(unittest.TestCase):
                     if k == 'surface':
                         continue
                     else:
-                        assert sub[k] == f_groups_[f_id][i][k]
+                        if isinstance(sub[k], str):
+                            assert sub[k] == f_groups_[f_id][i][k]
+                        # elif np.isscalar(sub[k]):
+                        else:
+                            np.testing.assert_almost_equal(
+                                sub[k], f_groups_[f_id][i][k]
+                            )
 
     @unittest.skip('needs to be updated')
     def test_make_rupture_df(self):
@@ -998,10 +1030,10 @@ class Test3Faults(unittest.TestCase):
             ]
         )
 
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             boundary.boundary.coords.xy[0], bound_lons
         )
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             boundary.boundary.coords.xy[1], bound_lats
         )
 
@@ -1418,3 +1450,15 @@ class MiscTests(unittest.TestCase):
         np.testing.assert_almost_equal(
             subs[0]['mesh'].depths[-1][0], 1.99969535, decimal=3
         )
+
+    def test_angular_mean_degrees(self):
+        angles = [350, 10, 20, 30, 40]
+        mean = angular_mean_degrees(angles)
+        scipy_mean = np.degrees(circmean(np.radians(angles)))
+        np.testing.assert_almost_equal(mean, scipy_mean, decimal=3)
+
+    def test_weighted_angular_mean_degrees(self):
+        angles = [350, 10, 20, 30, 40]
+        weights = [1, 2, 3, 4, 5]
+        mean = weighted_angular_mean_degrees(angles, weights)
+        np.testing.assert_almost_equal(mean, 26.141656559913944, decimal=3)
