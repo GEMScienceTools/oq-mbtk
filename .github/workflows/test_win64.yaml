@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-2022, windows-2019]
-
+    steps: 
     - uses: actions/checkout@v4
     - name: Installation of GMT from standalone
       run: |
