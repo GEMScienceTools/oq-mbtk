@@ -53,4 +53,6 @@ jobs:
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
         cd oq-mbtk\openquake
+        Write-Host "Install pytest and run tests"
+        pip install pytest==8.1.2
         pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt
