@@ -162,7 +162,7 @@ def explode(srcs):
             dep = h[1]
             wei = h[0]
             if 'TruncatedGRMFD' in str(type(src.mfd)):
-                nsrc.mfd.a_val = wei * src.mfd.a_val
+                nsrc.mfd.a_val = np.log10(wei * 10.0**src.mfd.a_val)
                 nsrc.hypocenter_distribution = PMF([(1.0, dep)])
             else:
                 msg = 'Not implementd for MFD of type {}'.format(src.mfd)
