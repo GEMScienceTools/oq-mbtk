@@ -37,6 +37,9 @@ jobs:
         $Env:PATH += ";$MYPATH"
         $Env:PATH += ";$MYPATH\python3\Scripts"
         $Env:PYTHONUTF8=1
+        #Added to disable TCL
+        $Env:MPLBACKEND="AGG"
+        $Env:PY_PIP=$MYPATH += '\Scripts'
         $Env:PY_PIP=$MYPATH += '\python3\Scripts'
         $Env:PY_HOME=$MYPATH
         $Env:PY_LIBS="$MYPATH\python3\Lib;$MYPATH\python3\Lib\site-package"
