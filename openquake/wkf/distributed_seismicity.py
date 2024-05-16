@@ -484,6 +484,15 @@ def from_list_ps_to_multipoint(srcs: list, src_id: str):
     elif mfd_type == EvenlyDiscretizedMFD:
         return _from_list_ps_to_multipoint_even_disc_mfd(srcs, src_id)
 
+    elif mfd_type == ArbitraryMFD:
+        return _from_list_ps_to_multipoint_arbitrary_mfd(srcs, src_id)
+
+    elif mfd_type == YoungsCoppersmith1985MFD:
+        raise NotImplementedError('YoungsCoppersmith MFD not supported')
+
+    elif mfd_type == TaperedGRMFD:
+        raise NotImplementedError('TaperedGRMFD MultiMFD not supported')
+
     else:
         raise NotImplementedError(f'MFD type {mfd_type} not supported')
 
@@ -541,14 +550,59 @@ def _from_list_ps_to_multipoint_even_disc_mfd(
     return srcmp
 
 
-def _from_list_ps_to_multipoint_trunc_grmfd(srcs: list, src_id: str):
+def _from_list_ps_to_multipoint_arbitrary_mfd(
+    srcs: list, src_id: str, settings=False
+):
+    lons = []
+    lats = []
+    magnitudes = []
+    rates = []
+
+    for src in srcs:
+        lons.append(src.location.longitude)
+        lats.append(src.location.latitude)
+        magnitudes.append(src.mfd.magnitudes)
+        rates.append(src.mfd.occurrence_rates)
+
+    # Instantiate the multi MFD
+    mmfd = MultiMFD(
+        'arbitraryMFD',
+        size=len(lons),
+        magnitudes=magnitudes,
+        occurRates=rates,
+    )
+
+    if not settings:
+        trt = srcs[0].tectonic_region_type
+        msr = srcs[0].magnitude_scaling_relationship
+        rar = srcs[0].rupture_aspect_ratio
+        usd = srcs[0].upper_seismogenic_depth
+        lsd = srcs[0].lower_seismogenic_depth
+        npd = srcs[0].nodal_plane_distribution
+        hyd = srcs[0].hypocenter_distribution
+
+    # Set a temporal occurrence model
+    tom = PoissonTOM(1)
+
+    # Instantiate the multi-point source
+    name = src_id
+    mesh = Mesh(np.array(lons), np.array(lats))
+    srcmp = MultiPointSource(
+        src_id, name, trt, mmfd, msr, rar, usd, lsd, npd, hyd, mesh, tom
+    )
+
+    return srcmp
+
+
+def _from_list_ps_to_multipoint_trunc_grmfd(
+    srcs: list, src_id: str, settings=False
+):
 
     # Looping over the points
     lons = []
     lats = []
     avals = []
     mmaxs = []
-    settings = False
 
     for src in srcs:
 
