@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2023 GEM Foundation
+# Copyright (C) 2014-2024 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -27,7 +27,6 @@ import toml
 import os
 
 from openquake.hazardlib.imt import from_string
-from openquake.hazardlib import valid
 from openquake.smt.comparison.utils_compare_gmpes import plot_trellis_util, \
     plot_spectra_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util,\
         compute_matrix_gmpes
@@ -112,7 +111,8 @@ class Configurations(object):
         gmpes_list_initial = []
         config = copy.deepcopy(config_file)
         for key in config['models']:
-        # If the key contains a number we take the second part
+            
+            # If the key contains a number we take the second part
             if re.search("^\\d+\\-", key):
                 tmp = re.sub("^\\d+\\-", "", key)
                 value = f"[{tmp}] "
@@ -121,20 +121,23 @@ class Configurations(object):
             if len(config['models'][key]):
                config['models'][key].pop('style', None)
                value += '\n' + str(toml.dumps(config['models'][key]))
-            gmpes_list_initial.append(valid.gsim(value))
+            value = value.strip()
+            gmpes_list_initial.append(value.strip())
             
         self.gmpes_list = []
         for idx, gmpe in enumerate(gmpes_list_initial):
-            self.gmpes_list.append(str(gmpes_list_initial[idx]))
+            self.gmpes_list.append(gmpes_list_initial[idx])
 
         # Check number of GMPEs matches number of GMPE labels
         if len(self.gmpes_list) != len(self.gmpe_labels):
             raise ValueError("Number of labels must match number of GMPEs.")
 
         # If weight is assigned to a GMPE get it + check sum of weights for 
-        # GMPEs with weights allocated = 1 (up to 2 GMC logic trees max)
+        # GMPEs with weights allocated = 1
         get_weights_gmc1 = {}
         get_weights_gmc2 = {}
+        get_weights_gmc3 = {}
+        get_weights_gmc4 = {}
         for gmpe in self.gmpes_list:
             if 'lt_weight' in gmpe:
                 split_gmpe_str = str(gmpe).splitlines()
@@ -144,12 +147,18 @@ class Configurations(object):
                             idx].split('=')[1])
                     if 'lt_weight_gmc2' in component:
                         get_weights_gmc2[gmpe] = float(split_gmpe_str[
+                            idx].split('=')[1])                       
+                    if 'lt_weight_gmc3' in component:
+                        get_weights_gmc3[gmpe] = float(split_gmpe_str[
+                            idx].split('=')[1])
+                    if 'lt_weight_gmc4' in component:
+                        get_weights_gmc4[gmpe] = float(split_gmpe_str[
                             idx].split('=')[1])
             
         # Check weights for each logic tree (if present) equal 1.0
         if get_weights_gmc1 != {}:
             check_weights_gmc1 = np.array(pd.Series(get_weights_gmc1))
-            if np.sum(check_weights_gmc1, axis = 0) != 1.0:
+            if np.sum(check_weights_gmc1, axis=0) != 1.0:
                 raise ValueError("GMPE logic tree weights must total 1.0")
             self.lt_weights_gmc1 = get_weights_gmc1
         else:
@@ -157,12 +166,27 @@ class Configurations(object):
         
         if get_weights_gmc2 != {}:
             check_weights_gmc2 = np.array(pd.Series(get_weights_gmc2))
-            if np.sum(check_weights_gmc2, axis = 0) != 1.0:
+            if np.sum(check_weights_gmc2, axis=0) != 1.0:
                 raise ValueError("GMPE logic tree weights must total 1.0")
             self.lt_weights_gmc2 = get_weights_gmc2
         else:
             self.lt_weights_gmc2 = None
 
+        if get_weights_gmc3 != {}:
+            check_weights_gmc3 = np.array(pd.Series(get_weights_gmc3))
+            if np.sum(check_weights_gmc3, axis=0) != 1.0:
+                raise ValueError("GMPE logic tree weights must total 1.0")
+            self.lt_weights_gmc3 = get_weights_gmc3
+        else:
+            self.lt_weights_gmc3 = None
+            
+        if get_weights_gmc4 != {}:
+            check_weights_gmc4 = np.array(pd.Series(get_weights_gmc4))
+            if np.sum(check_weights_gmc4, axis=0) != 1.0:
+                raise ValueError("GMPE logic tree weights must total 1.0")
+            self.lt_weights_gmc4 = get_weights_gmc4
+        else:
+            self.lt_weights_gmc4 = None
 
 def plot_trellis(filename, output_directory):
     """
@@ -174,34 +198,37 @@ def plot_trellis(filename, output_directory):
     # Generate config object
     config = Configurations(filename)
     
-    plot_trellis_util(config.trt,
-                      config.ztor,
-                      config.rake,
-                      config.strike,
-                      config.dip,
-                      config.trellis_and_rs_depth,
-                      config.Z1,
-                      config.Z25,
-                      config.Vs30,
-                      config.region,
-                      config.imt_list,
-                      config.trellis_and_rs_mag_list,
-                      config.minR,
-                      config.maxR,
-                      config.gmpes_list,
-                      config.aratio,
-                      config.Nstd,
-                      output_directory,
-                      config.custom_color_flag,
-                      config.custom_color_list,
-                      config.eshm20_region,
-                      config.dist_type,
-                      config.lt_weights_gmc1,
-                      config.lt_weights_gmc2,
-                      config.up_or_down_dip) 
-
+    store = plot_trellis_util(config.trt,
+                              config.ztor,
+                              config.rake,
+                              config.strike,
+                              config.dip,
+                              config.trellis_and_rs_depth,
+                              config.Z1,
+                              config.Z25,
+                              config.Vs30,
+                              config.region,
+                              config.imt_list,
+                              config.trellis_and_rs_mag_list,
+                              config.minR,
+                              config.maxR,
+                              config.gmpes_list,
+                              config.aratio,
+                              config.Nstd,
+                              output_directory,
+                              config.custom_color_flag,
+                              config.custom_color_list,
+                              config.eshm20_region,
+                              config.dist_type,
+                              config.lt_weights_gmc1,
+                              config.lt_weights_gmc2,
+                              config.lt_weights_gmc3,
+                              config.lt_weights_gmc4,
+                              config.up_or_down_dip) 
+    
+    return store
                 
-def plot_spectra(filename, output_directory, obs_spectra = None):
+def plot_spectra(filename, output_directory, obs_spectra=None):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
     configuration
@@ -214,12 +241,6 @@ def plot_spectra(filename, output_directory, obs_spectra = None):
     """
     # Generate config object
     config = Configurations(filename)
-    
-    # Get observed spectra information if obs_spectra
-    if obs_spectra is not None:
-        obs_spectra = pd.read_csv(obs_spectra)
-    else:
-        obs_spectra = None
     
     plot_spectra_util(config.trt,
                       config.ztor,
@@ -244,6 +265,8 @@ def plot_spectra(filename, output_directory, obs_spectra = None):
                       config.dist_type,
                       config.lt_weights_gmc1,
                       config.lt_weights_gmc2,
+                      config.lt_weights_gmc3,
+                      config.lt_weights_gmc4,
                       obs_spectra,
                       config.up_or_down_dip) 
 

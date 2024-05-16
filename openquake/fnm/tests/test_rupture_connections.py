@@ -36,12 +36,18 @@ import unittest
 import numpy as np
 import pandas as pd
 
+from scipy.sparse import dok_array
+
 from openquake.hazardlib.geo import Line, Point
 from openquake.hazardlib.geo.surface.kite_fault import (
     KiteSurface,
     get_profiles_from_simple_fault_data,
 )
 from openquake.aft.rupture_distances import RupDistType
+
+from openquake.fnm.all_together_now import (
+    build_fault_network,
+)
 
 from openquake.fnm.fault_modeler import (
     simple_fault_from_feature,
@@ -66,6 +72,26 @@ from openquake.fnm.rupture_connections import (
     get_multifault_ruptures,
     rdist_to_dist_matrix,
     get_mf_distances_from_adj_matrix,
+    make_binary_adjacency_matrix_sparse,
+    _latlon_to_xyz,
+    _xyz_to_latlon,
+    _geog_vec_to_xyz,
+    intersection_pt,
+    find_intersection_angle,
+    angle_difference,
+    get_dists_and_azimuths_from_pt,
+    adjust_distances_based_on_azimuth,
+    _check_overlap,
+    calc_rupture_overlap,
+    _is_strike_slip,
+    filter_bin_adj_matrix_by_rupture_overlap,
+    sparse_to_adj_dict,
+    sparse_to_adjlist,
+    find_connected_subsets_dfs,
+    find_connected_components,
+    find_connected_subgraphs,
+    get_multifault_rupture_distances,
+    subgraphs_from_connected_components,
 )
 
 HERE = pathlib.Path(__file__).parent.absolute()
@@ -120,12 +146,14 @@ class TestDistanceMatrix(unittest.TestCase):
     def test_get_bb_from_kite_surface(self):
         """ """
         bb = get_bb_from_surface(self.surf1)
+
         expected = np.array(
-            [[45.0, 10.254], [45.0, 10.0], [44.98, 10.0], [44.98, 10.254]]
+            [[44.98, 10.0], [44.98, 10.254], [45.0, 10.254], [45.0, 10.0]]
         )
+
         np.testing.assert_almost_equal(expected, bb, decimal=3)
 
-    def test_get_dist_matrix(self):
+    def test_get_bounding_box_distances(self):
         """ """
         dmtx = get_bounding_box_distances(
             [
@@ -156,23 +184,23 @@ class TestDistanceMatrix(unittest.TestCase):
         expected = np.array(
             [
                 (0, 0, 0.0),
-                (0, 1, 16.699274),
-                (0, 2, 44.057846),
-                (0, 3, 27.632025),
-                (1, 0, 16.699274),
+                (0, 1, 16.696556),
+                (0, 2, 44.050705),
+                (0, 3, 27.633398),
+                (1, 0, 16.696556),
                 (1, 1, 0.0),
-                (1, 2, 11.687302),
-                (1, 3, 9.169806),
-                (2, 0, 44.057846),
-                (2, 1, 11.687302),
+                (1, 2, 11.687619),
+                (1, 3, 9.183205),
+                (2, 0, 44.050705),
+                (2, 1, 11.687619),
                 (2, 2, 0.0),
-                (2, 3, 16.439398),
-                (3, 0, 27.632025),
-                (3, 1, 9.169806),
-                (3, 2, 16.439398),
+                (2, 3, 16.434488),
+                (3, 0, 27.633398),
+                (3, 1, 9.183205),
+                (3, 2, 16.434488),
                 (3, 3, 0.0),
             ],
-            dtype=RupDistType,
+            dtype=[('r1', '<i4'), ('r2', '<i4'), ('d', '<f4')],
         )
 
         for i, row in enumerate(dmtx):
@@ -202,10 +230,10 @@ class Test3Faults(unittest.TestCase):
     def test_get_bb_from_simple_fault_surface(self):
         bb = np.array(
             [
-                [14.90267166, -89.5385221],
-                [14.90267166, -89.64507513],
                 [14.82076928, -89.64507513],
                 [14.82076928, -89.5385221],
+                [14.90267166, -89.5385221],
+                [14.90267166, -89.64507513],
             ]
         )
 
@@ -258,55 +286,31 @@ class Test3Faults(unittest.TestCase):
 
     def test_get_close_faults_no_max_dist(self):
         close_fault_dists = get_close_faults(self.faults, max_dist=None)
+        close_fault_dists_ = {
+            (0, 1): 18.880685516364007,
+            (1, 0): 18.880685516364007,
+            (0, 2): 0.4039877204355394,
+            (2, 0): 0.4039877204355394,
+            (1, 2): 0.4347642767151649,
+            (2, 1): 0.4347642767151649,
+        }
 
-        close_faults = np.zeros(9, dtype=RupDistType)
-        close_faults['r1'] = np.array(
-            [0, 0, 0, 1, 1, 1, 2, 2, 2], dtype=np.int32
-        )
-        close_faults['r2'] = np.array(
-            [0, 1, 2, 0, 1, 2, 0, 1, 2], dtype=np.int32
-        )
-        close_faults['d'] = np.array(
-            [
-                0.0,
-                0.68141705,
-                7.1189256,
-                0.68141705,
-                0.0,
-                5.3932385,
-                7.1189256,
-                5.3932385,
-                0.0,
-            ],
-            dtype=np.float32,
-        )
-
-        np.testing.assert_array_almost_equal(
-            close_fault_dists['r1'], close_faults['r1']
-        )
-        np.testing.assert_array_almost_equal(
-            close_fault_dists['r2'], close_faults['r2']
-        )
+        assert set(close_fault_dists.keys()) == set(close_fault_dists_.keys())
+        for k, v in close_fault_dists.items():
+            assert np.isclose(v, close_fault_dists_[k])
 
     def test_get_close_faults_with_max_dist(self):
         close_fault_dists = get_close_faults(self.faults, max_dist=3.0)
-        close_fault_dists_ = np.zeros(5, dtype=RupDistType)
-        close_fault_dists_['r1'] = np.array([0, 0, 1, 1, 2], dtype=np.int32)
-        close_fault_dists_['r2'] = np.array([0, 1, 0, 1, 2], dtype=np.int32)
-        close_fault_dists_['d'] = np.array(
-            [0.0, 0.68141705, 0.68141705, 0.0, 0.0],
-            dtype=np.float32,
-        )
+        close_fault_dists_ = {
+            (0, 2): 0.4039877204355394,
+            (2, 0): 0.4039877204355394,
+            (1, 2): 0.4347642767151649,
+            (2, 1): 0.4347642767151649,
+        }
 
-        np.testing.assert_array_almost_equal(
-            close_fault_dists['r1'], close_fault_dists_['r1']
-        )
-        np.testing.assert_array_almost_equal(
-            close_fault_dists['r2'], close_fault_dists_['r2']
-        )
-        np.testing.assert_array_almost_equal(
-            close_fault_dists['d'], close_fault_dists_['d']
-        )
+        assert set(close_fault_dists.keys()) == set(close_fault_dists_.keys())
+        for k, v in close_fault_dists.items():
+            assert np.isclose(v, close_fault_dists_[k])
 
     def test_get_rupture_patches_from_single_fault_1_row(self):
         rup_patches = get_rupture_patches_from_single_fault(
@@ -599,6 +603,15 @@ class Test3Faults(unittest.TestCase):
                     'ccaf148',
                     'ccaf148',
                 ],
+                'full_fault_rupture': [
+                    False,
+                    False,
+                    True,
+                    False,
+                    False,
+                    False,
+                    False,
+                ],
             },
             index=np.arange(7) + 10,
         )
@@ -768,6 +781,37 @@ class Test3Faults(unittest.TestCase):
                     'ccaf148',
                     'ccaf148',
                 ],
+                'full_fault_rupture': [
+                    False,
+                    False,
+                    False,
+                    False,
+                    True,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    True,
+                    False,
+                    False,
+                    False,
+                    False,
+                ],
             },
             index=[
                 0,
@@ -818,10 +862,11 @@ class Test3Faults(unittest.TestCase):
             all_subfaults=all_subs,
             multifaults_on_same_fault=False,
             max_dist=20.0,
+            full_fault_only_mf_ruptures=False,
         )
 
         close_faults = get_close_faults(self.faults, max_dist=20.0 * 1.5)
-        close_faults = {(i, j): d for i, j, d in close_faults}
+        # close_faults = {(i, j): d for i, j, d in close_faults}
         fault_lookup = {fault['fid']: i for i, fault in enumerate(self.faults)}
 
         sub_groups = group_subfaults_by_fault(all_subs)
@@ -957,6 +1002,12 @@ class Test3Faults(unittest.TestCase):
                     'ccaf134','ccaf134','ccaf148','ccaf148','ccaf148',
                     'ccaf148','ccaf148','ccaf148','ccaf148',
                 ],
+                'full_fault_rupture': [
+                    False, False, False, False,  True, False, False, False, 
+                    False, False, False, False, False, False, False, False, 
+                    False, False, False, False, False, False, False, False,  
+                    True, False, False, False, False
+                ]
                 # fmt: on
             },
             # fmt: off
@@ -967,75 +1018,18 @@ class Test3Faults(unittest.TestCase):
             # fmt: on
         )
         # fmt: off
-        dist_adj_matrix_ = np.array([
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         19.380192,0.,3.1237752,3.1237752,3.1237752,12.188208,8.766257,
-         8.766257,15.226081],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         19.380192,0.,3.1237752,3.1237752,3.1237752,12.188208,8.766257,
-         8.766257,15.226081],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         19.380192,0.,3.1237752,3.1237752,3.1237752,12.188208,8.766257,
-         8.766257,15.226081],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         19.380192,0.,3.1237752,3.1237752,3.1237752,12.188208,8.766257,
-         8.766257,15.226081],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         19.380192,0.,3.1237752,3.1237752,3.1237752,12.188208,8.766257,
-         8.766257,15.226081],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         13.172465,13.172465,13.172465,0.,14.537128,14.537128,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         13.172465,13.172465,13.172465,0.,14.537128,14.537128,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         13.172465,13.172465,13.172465,0.,14.537128,14.537128,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         13.172465,13.172465,13.172465,0.,14.537128,14.537128,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         9.248052,9.248052,9.248052,16.588821,10.572162,10.572162,17.470583],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         9.248052,9.248052,9.248052,16.588821,10.572162,10.572162,17.470583],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         15.64578,15.64578,15.64578,0.,15.926161,15.926161,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         15.64578,15.64578,15.64578,0.,15.926161,15.926161,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         9.547133,0.4397656,0.4397656,0.4397656,13.116865,6.2569666,6.2569666],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         13.72707,5.6867633,5.6867633,5.6867633,14.100633,6.4014144,6.4014144],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.],
-        [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
-         0.,0.,0.,0.,0.,0.]], dtype=np.float32)
+        dist_adj_matrix_ = dok_array(np.zeros((29, 29), dtype=np.float32))
+        dist_adj_matrix_[(4, 24)] = 3.1237957
+        dist_adj_matrix_[(24, 4)] = 3.1237957
 
         # fmt: on
         pd.testing.assert_frame_equal(rup_df, rup_df_)
-        np.testing.assert_allclose(dist_adj_matrix, dist_adj_matrix_,
-                                   atol=1e-3, rtol=1e-3)
+        np.testing.assert_allclose(
+            dist_adj_matrix.todense(),
+            dist_adj_matrix_.todense(),
+            atol=1e-3,
+            rtol=1e-3,
+        )
 
     def test_make_binary_adjacency_matrix(self):
         # fmt: off
@@ -1052,6 +1046,7 @@ class Test3Faults(unittest.TestCase):
 
         np.testing.assert_array_equal(bin_adj_mat, bin_adj_mat_)
 
+    @unittest.skip("Deprecated function")
     def test_get_proximal_rup_angles(self):
         all_subs = [
             get_subsections_from_fault(
@@ -1093,6 +1088,7 @@ class Test3Faults(unittest.TestCase):
                     rup_angles_[subs][i], angles[i], decimal=3
                 )
 
+    @unittest.skip("Deprecated function")
     def test_filter_bin_adj_matrix_by_rupture_angle(self):
         all_subs = [
             get_subsections_from_fault(
@@ -1216,8 +1212,26 @@ class Test3Faults(unittest.TestCase):
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.93904],
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.93904],
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4397656],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [
+                    19.357016,
+                    19.357016,
+                    19.357016,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.4397656,
+                ],
+                [
+                    3.1237752,
+                    3.1237752,
+                    3.1237752,
+                    15.93904,
+                    15.93904,
+                    0.0,
+                    0.4397656,
+                    0.0,
+                ],
             ],
             dtype=np.float32,
         )
@@ -1226,7 +1240,48 @@ class Test3Faults(unittest.TestCase):
             dist_adj_matrix, max_dist=10.0
         )
 
-        multifault_ruptures_ = [[0, 7], [1, 7], [2, 7], [6, 7]]
+        multifault_ruptures_ = [
+            [0, 2, 6, 7],
+            [0, 1, 7],
+            [0, 2, 3, 6, 7],
+            [2, 6],
+            [1, 3, 6, 7],
+            [1, 2, 6, 7],
+            [0, 2, 4, 6, 7],
+            [0, 4, 7],
+            [1, 4, 7],
+            [0, 6],
+            [1, 7],
+            [0, 2, 6],
+            [1, 2, 7],
+            [1, 3, 7],
+            [1, 6, 7],
+            [0, 1, 6, 7],
+            [0, 7],
+            [1, 6],
+            [1, 2, 6],
+            [0, 2, 7],
+            [4, 7],
+            [1, 2, 4, 6, 7],
+            [3, 4, 7],
+            [3, 7],
+            [2, 6, 7],
+            [2, 3, 7],
+            [0, 3, 6, 7],
+            [0, 1, 6],
+            [2, 7],
+            [2, 4, 7],
+            [0, 1, 2, 6, 7],
+            [0, 3, 7],
+            [0, 1, 4, 6, 7],
+            [0, 6, 7],
+            [0, 1, 3, 6, 7],
+            [1, 2, 3, 6, 7],
+            [2, 3, 6, 7],
+            [1, 4, 6, 7],
+            [2, 4, 6, 7],
+            [0, 4, 6, 7],
+        ]
 
         assert multifault_ruptures == multifault_ruptures_
 
@@ -1239,8 +1294,26 @@ class Test3Faults(unittest.TestCase):
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.93904],
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.93904],
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4397656],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [
+                    19.357016,
+                    19.357016,
+                    19.357016,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.4397656,
+                ],
+                [
+                    3.1237752,
+                    3.1237752,
+                    3.1237752,
+                    15.93904,
+                    15.93904,
+                    0.0,
+                    0.4397656,
+                    0.0,
+                ],
             ],
             dtype=np.float32,
         )
@@ -1248,3 +1321,137 @@ class Test3Faults(unittest.TestCase):
         mf_dist = get_mf_distances_from_adj_matrix([0, 7], dist_adj_matrix)
 
         np.testing.assert_array_almost_equal(mf_dist, np.array([3.1237752]))
+
+
+class TestRuptureAngle(unittest.TestCase):
+
+    def setUp(self):
+        test_data_dir = HERE / 'data'
+        fgj_name = os.path.join(
+            test_data_dir, "rupture_angle_test_faults.geojson"
+        )
+
+        settings = {
+            "max_jump_distance": 15.0,
+        }
+
+        self.fnn = build_fault_network(
+            fault_geojson=fgj_name, settings=settings
+        )
+
+        self.ff = {
+            f['fid']: Line([Point(*coords) for coords in f['trace']])
+            for f in self.fnn['faults']
+        }
+
+    def test_find_intersection_angle(self):
+        pt1, ang1 = find_intersection_angle(self.ff['0'], self.ff['1'])
+        np.testing.assert_almost_equal(ang1, 23.43694989335944, decimal=3)
+        np.testing.assert_almost_equal(pt1[0], -94.08663435482701, decimal=3)
+        np.testing.assert_almost_equal(pt1[1], 36.16509951930527, decimal=3)
+
+        pt_1_1, ang_1_1 = find_intersection_angle(self.ff['1'], self.ff['0'])
+        assert pt1 == pt_1_1
+        assert ang1 == ang_1_1
+
+        pt2, ang2 = find_intersection_angle(self.ff['2'], self.ff['0'])
+        np.testing.assert_almost_equal(ang2, 172.39985367835723, decimal=3)
+        np.testing.assert_almost_equal(pt2[0], -94.23742852059331, decimal=3)
+        np.testing.assert_almost_equal(pt2[1], 35.96270244712509, decimal=3)
+
+        pt3, ang3 = find_intersection_angle(self.ff['3'], self.ff['4'])
+        np.testing.assert_almost_equal(ang3, 172.08426757800999, decimal=3)
+        np.testing.assert_almost_equal(pt3[0], -93.39321640386562, decimal=3)
+        np.testing.assert_almost_equal(pt3[1], 36.40119252015622, decimal=3)
+
+        pt4, ang4 = find_intersection_angle(self.ff['6'], self.ff['7'])
+        np.testing.assert_almost_equal(ang4, 170.12816378838227, decimal=3)
+        np.testing.assert_almost_equal(pt4[0], -92.95468876195562, decimal=3)
+        np.testing.assert_almost_equal(pt4[1], 35.43799949715642, decimal=3)
+
+        pt5, ang5 = find_intersection_angle(self.ff['5'], self.ff['7'])
+        np.testing.assert_almost_equal(ang5, 168.31057889585173, decimal=3)
+        np.testing.assert_almost_equal(pt5[0], -92.31044905834094, decimal=3)
+        np.testing.assert_almost_equal(pt5[1], 35.542955886288354, decimal=3)
+
+        pt6, ang6 = find_intersection_angle(self.ff['5'], self.ff['6'])
+        np.testing.assert_almost_equal(ang6, 1.8673365279969403, decimal=3)
+        np.testing.assert_almost_equal(pt6[0], -89.36589556390788, decimal=3)
+        np.testing.assert_almost_equal(pt6[1], 36.566661543292504, decimal=3)
+
+    def test_calc_rupture_overlap(self):
+        ov1 = calc_rupture_overlap(self.ff['6'], self.ff['7'])
+        np.testing.assert_almost_equal(ov1[1], 7.619135308500439, decimal=3)
+        assert ov1[0] == 'partial'
+
+        ov2 = calc_rupture_overlap(self.ff['6'], self.ff['5'])
+        np.testing.assert_almost_equal(ov2[1], 52.09827524556749, decimal=3)
+        assert ov2[0] == 'partial'
+
+        ov3 = calc_rupture_overlap(self.ff['3'], self.ff['4'])
+        assert ov3 == ('none', 0.0)
+
+        ov4 = calc_rupture_overlap(self.ff['0'], self.ff['8'])
+        assert ov4[0] == 'full'
+        np.testing.assert_almost_equal(ov4[1], 38.54035180548081, decimal=3)
+
+        ov5 = calc_rupture_overlap(self.ff['0'], self.ff['0'])
+        assert ov5[0] == 'equality'
+        np.testing.assert_almost_equal(ov5[1], 21.302702515507917, decimal=3)
+
+    def test_filter_bin_adj_matrix_by_rupture_overlap(self):
+        filtered_bin_adj_mat, rup_angles = (
+            filter_bin_adj_matrix_by_rupture_overlap(
+                self.fnn['single_rup_df'],
+                self.fnn['subfaults'],
+                self.fnn['bin_dist_mat'],
+                strike_slip_only=True,
+                threshold_overlap=20.0,
+                threshold_angle=45.0,
+            )
+        )
+
+        _rup_angles = {
+            (3, 121): (
+                (-94.23745270604606, 35.96267798197013),
+                172.46587766701364,
+            ),
+            (15, 85): (
+                (-92.95494494712885, 35.43752901940287),
+                170.0622416474218,
+            ),
+            (26, 39): (
+                (-93.38581598681843, 36.40534133795235),
+                172.3923990528838,
+            ),
+            (39, 26): (
+                (-93.38581598681843, 36.40534133795235),
+                172.3923990528838,
+            ),
+            (85, 15): (
+                (-92.95494494712885, 35.43752901940287),
+                170.0622416474218,
+            ),
+            (121, 3): (
+                (-94.23745270604606, 35.96267798197013),
+                172.46587766701364,
+            ),
+        }
+        for rup, angles in rup_angles.items():
+            for i in [0, 1]:
+                np.testing.assert_almost_equal(
+                    _rup_angles[rup][i], angles[i], decimal=3
+                )
+        assert set(rup_angles.keys()) == set(_rup_angles.keys())
+
+        filt_bin_mat_adj_dict = {k: v for k, v in filtered_bin_adj_mat.items()}
+        _filt_bin_mat_adj_dict = {
+            (3, 121): 1,
+            (15, 85): 1,
+            (26, 39): 1,
+            (121, 3): 1,
+            (85, 15): 1,
+            (39, 26): 1,
+        }
+
+        assert filt_bin_mat_adj_dict == _filt_bin_mat_adj_dict

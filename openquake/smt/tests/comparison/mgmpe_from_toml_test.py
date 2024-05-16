@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2023 GEM Foundation
+# Copyright (C) 2014-2024 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -58,15 +58,25 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
         
         # Get matrix of predicted ground-motions per GMM
-        mtxs_medians = compute_matrix_gmpes(config.trt, config.ztor,
-                                            config.imt_list, config.mag_list,
-                                            config.gmpes_list, config.rake,
-                                            config.strike, config.dip, 
+        mtxs_medians = compute_matrix_gmpes(config.trt,
+                                            config.ztor,
+                                            config.imt_list,
+                                            config.mag_list,
+                                            config.gmpes_list,
+                                            config.rake,
+                                            config.strike,
+                                            config.dip, 
                                             config.depth_for_non_trel_or_rs_fun,
-                                            config.Z1, config.Z25, config.Vs30,
-                                            config.region, config.minR, config.maxR,
-                                            config.aratio, config.eshm20_region,
-                                            config.dist_type, mtxs_type='median',
+                                            config.Z1,
+                                            config.Z25,
+                                            config.Vs30,
+                                            config.region,
+                                            config.minR,
+                                            config.maxR,
+                                            config.aratio,
+                                            config.eshm20_region,
+                                            config.dist_type,
+                                            mtxs_type='median',
                                             up_or_down_dip=config.up_or_down_dip)
         
         # Get observed values and target values
