@@ -35,9 +35,13 @@ import tempfile
 from openquake.sub.slab.rupture import calculate_ruptures
 from openquake.sub.create_inslab_nrml import create
 from openquake.sub.build_complex_surface import build_complex_surface
+from openquake.sub.create_2pt5_model import read_profiles_csv
+
+from openquake.hazardlib.geo.surface.kite_fault import _dbg_plot
 
 BASE_DATA_PATH = os.path.dirname(__file__)
 HERE = pathlib.Path(__file__).parent
+PLOTTING = False
 
 
 class RuptureCreationCAMTest(unittest.TestCase):
@@ -62,16 +66,21 @@ class RuptureCreationCAMTest(unittest.TestCase):
                               upper_depth=50, lower_depth=200)
         print(self.out_path)
 
-
-    """
-    def test(self):
-
-        kwargs = {'only_plt': False, 'profile_folder': self.out_path}
-        calculate_ruptures(self.ini_fname, **kwargs)
+        if PLOTTING:
+            # Read the profiles
+            sps, _, _ = read_profiles_csv(in_path)
+            pro = [sps[k] for k in sps.keys()]
+            _dbg_plot(profs=pro, ref_idx=0)
 
     def step01(self):
 
-        kwargs = {'only_plt': False}
+        out_path = pathlib.Path(tempfile.mkdtemp())
+        out_hdf5_fname = out_path / 'ruptures.hdf5'
+        out_hdf5_smoothing_fname = out_path / 'smoothing.hdf5'
+        kwargs = {'only_plt': False,
+                  'profile_folder': self.out_path,
+                  'out_hdf5_fname': out_hdf5_fname,
+                  'out_hdf5_smoothing_fname': out_hdf5_smoothing_fname}
         calculate_ruptures(self.ini_fname, **kwargs)
 
         # check the existence of the rupture file
@@ -86,11 +95,6 @@ class RuptureCreationCAMTest(unittest.TestCase):
         rupture_hdf5_fname = os.path.abspath(os.path.join(BASE_DATA_PATH,
                                                           tmps))
         output_folder = os.path.join(BASE_DATA_PATH, '../tmp/')
-
-        # Create the tmp objects
-        out_path = pathlib.Path(tempfile.mkdtemp())
-        out_hdf5_fname = out_path / 'ruptures.hdf5'
-        out_hdf5_smoothing_fname = out_path / 'smoothing.hdf5'
 
         # Create nrml
         investigation_t = '1.'
@@ -107,4 +111,3 @@ class RuptureCreationCAMTest(unittest.TestCase):
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-    """
