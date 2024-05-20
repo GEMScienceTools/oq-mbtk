@@ -37,6 +37,7 @@ import numpy as np
 import pandas as pd
 import pyproj as pj
 import geopandas as gpd
+import scipy.sparse as ssp
 
 from shapely.ops import transform
 from shapely.geometry import Point, LineString
@@ -157,9 +158,19 @@ def check_fault_in_poly(fault, polies, id_key='id'):
     return poly_membership
 
 
-def faults_in_polies(faults, polies, id_key='id'):
+def faults_in_polies(
+    faults,
+    polies,
+    id_key='id',
+    slip_rate_col='net_slip_rate',
+    slip_rate_err_col='net_slip_rate_err',
+):
     if isinstance(faults, pd.DataFrame):
-        faults_ = subsection_df_to_fault_dicts(faults)
+        faults_ = subsection_df_to_fault_dicts(
+            faults,
+            slip_rate_col=slip_rate_col,
+            slip_rate_err_col=slip_rate_err_col,
+        )
     else:
         faults_ = faults
     traces_proj, polies_proj = project_faults_and_polies(faults_, polies)
@@ -173,10 +184,10 @@ def faults_in_polies(faults, polies, id_key='id'):
     return fault_poly_membership
 
 
-def get_rup_poly_fracs(rup, fpm):
+def get_rup_poly_fracs(rup, fpm, fault_key='faults'):
     rpf = AccumDict()
 
-    for sec in rup["faults"]:
+    for sec in rup[fault_key]:
         polies = fpm[sec]
         if len(polies) > 0:
             poly_fracs = {p: 1 / len(polies) for p in polies}
@@ -243,10 +254,11 @@ def get_rupture_regions(
     subsection_df: pd.DataFrame,
     seis_regions: gpd.GeoDataFrame,
     id_key='id',
+    fault_key='faults',
 ):
     fault_poly_membership = faults_in_polies(subsection_df, seis_regions)
     rup_region_fracs = [
-        get_rup_poly_fracs(r, fault_poly_membership)
+        get_rup_poly_fracs(r, fault_poly_membership, fault_key=fault_key)
         for i, r in rup_df.iterrows()
     ]
 
@@ -259,6 +271,8 @@ def get_rupture_regions(
             if i in rup:
                 regional_rup_fractions[i]['rups'].append(j)
                 regional_rup_fractions[i]['fracs'].append(rup[i])
+
+    return regional_rup_fractions
 
 
 def _nearest(val, vals):

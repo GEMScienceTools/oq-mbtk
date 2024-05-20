@@ -29,6 +29,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import logging
 
 import numpy as np
 import scipy.sparse as ssp
@@ -40,6 +41,7 @@ from .utils import (
     get_mag_counts,
     get_mfd_occurrence_rates,
 )
+from .solver import weights_from_errors
 
 
 def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
@@ -55,8 +57,12 @@ def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
                 pass  # this is necessary until i figure out multi-region rups
 
     slip_rate_rhs = np.array([fault["slip_rate"] * 1e-3 for fault in faults])
-    slip_rate_err = np.array(
-        [(fault["slip_rate_err"] * 1e-3) for fault in faults]
+    # slip_rate_err = np.array(
+    #    [(fault["slip_rate_err"] * 1e-3) for fault in faults]
+    # )
+    slip_rate_err = weights_from_errors(
+        [fault["slip_rate_err"] * 1e-3 for fault in faults],
+        zero_error=1.0,
     )
 
     slip_rate_rhs *= seismic_slip_rate_frac
@@ -240,20 +246,6 @@ def make_abs_mfd_eqns(
                         rup_fractions[rup_include_list.index(i)]
                     )
 
-    #    for M in unique_mags:
-    #        if rup_include_list == None:
-    #            mag_rup_idxs[M] = [i for i, rup in enumerate(rups) if rup["M"] == M]
-    #        else:
-    #            mag_rup_idxs[M] = [
-    #                i
-    #                for i, rup in enumerate(rups)
-    #                if rup["M"] == M and i in rup_include_list
-    #            ]
-    #
-    #            if rup_fractions is not None:
-    #                mag_rup_fracs[M] = []
-    #                for i, rup in enumerate(rups):
-
     if len(unique_mags) > 2:
         abs_mag_eqns = np.vstack(
             [[np.zeros(len(rups))] for i in range(len(unique_mags))]
@@ -279,7 +271,8 @@ def make_abs_mfd_eqns(
         mfd_abs_rhs /= norm_constant
         abs_mag_eqns /= norm_constant
 
-    mfd_abs_errs = np.sqrt(mfd_abs_rhs) / weight
+    mfd_abs_errs = np.sqrt(mfd_abs_rhs) * weight
+    # mfd_abs_errs[mfd_abs_errs == 0.0] = 1.0
 
     return abs_mag_eqns, mfd_abs_rhs, mfd_abs_errs
 
@@ -325,12 +318,44 @@ def make_slip_rate_smoothing_eqns(
     return smooth_lhs, smooth_rhs, smooth_errs
 
 
+def get_fault_moment(faults, shear_modulus=SHEAR_MODULUS):
+    fault_moments = np.array(
+        [
+            fault["area"] * 1e6 * shear_modulus * fault["slip_rate"] * 1e-3
+            for fault in faults
+        ]
+    )
+
+    fault_moment = np.sum(fault_moments)
+
+    return fault_moment
+
+
+def get_mfd_moment(mfd):
+    mfd_moment = sum(
+        [
+            hz.mfd.tapered_gr_mfd.mag_to_mo(k) * v
+            for k, v in get_mfd_occurrence_rates(mfd).items()
+        ]
+    )
+    return mfd_moment
+
+
+def get_slip_rate_fraction(faults, mfd):
+    fault_moment = get_fault_moment(faults)
+    mfd_moment = get_mfd_moment(mfd)
+
+    seismic_slip_rate_frac = mfd_moment / fault_moment
+    return seismic_slip_rate_frac
+
+
 def make_eqns(
     rups,
     faults,
     mfd=None,
     slip_rate_eqns=True,
     seismic_slip_rate_frac=1.0,
+    regional_slip_rate_fracs=None,
     mfd_rel_eqns=False,
     mfd_rel_b_val=1.0,
     mfd_rel_weight=1.0,
@@ -350,30 +375,13 @@ def make_eqns(
     err_set = []
 
     if seismic_slip_rate_frac is None and mfd is not None:
-        fault_moments = np.array(
-            [
-                fault["area"] * 1e6 * shear_modulus * fault["slip_rate"] * 1e-3
-                for fault in faults
-            ]
-        )
+        fault_moment = get_fault_moment(faults, shear_modulus=shear_modulus)
+        mfd_moment = get_mfd_moment(mfd)
 
-        print("fault moments: ", fault_moments)
-
-        fault_moment = np.sum(fault_moments)
-
-        mfd_moment = sum(
-            [
-                hz.mfd.tapered_gr_mfd.mag_to_mo(k) * v
-                for k, v in get_mfd_occurrence_rates(mfd).items()
-            ]
-        )
-
-        print("Fault moment: ", fault_moment)
-        print("MFD moment: ", mfd_moment)
-        print("frac: ", mfd_moment / fault_moment)
-
-        if mfd_moment < fault_moment:
-            seismic_slip_rate_frac = mfd_moment / fault_moment
+        seismic_slip_rate_frac = mfd_moment / fault_moment
+        if verbose:
+            print("fault_moment", fault_moment)
+            print("mfd_moment", mfd_moment)
             print(
                 "setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
             )
@@ -408,28 +416,29 @@ def make_eqns(
         mfd_abs_lhs, mfd_abs_rhs, mfd_abs_errs = make_abs_mfd_eqns(
             rups,
             mfd,
-            weight=1 / mfd_abs_weight,  # ^ mfd_abs_weight reduces relevance
+            weight=mfd_abs_weight,  # ^ mfd_abs_weight reduces relevance
             normalize=mfd_abs_normalize,
         )
         lhs_set.append(mfd_abs_lhs)
         rhs_set.append(mfd_abs_rhs)
         err_set.append(mfd_abs_errs)
 
-        if regional_abs_mfds is not None:
-            print("Making regional MFD absolute eqns")
-            for reg, reg_mfd_data in regional_abs_mfds.items():
-                if ('rups_include' in reg_mfd_data.keys()) and (
-                    len(reg_mfd_data['rups_include']) > 0
-                ):
-                    reg_abs_lhs, reg_abs_rhs, reg_abs_errs = make_abs_mfd_eqns(
-                        rups,
-                        reg_mfd_data["mfd"],
-                        rup_include_list=reg_mfd_data["rups_include"],
-                        rup_fractions=reg_mfd_data["rup_fractions"],
-                    )
-                    lhs_set.append(reg_abs_lhs)
-                    rhs_set.append(reg_abs_rhs)
-                    err_set.append(reg_abs_errs)
+    if regional_abs_mfds is not None:
+        print("Making regional MFD absolute eqns")
+        for reg, reg_mfd_data in regional_abs_mfds.items():
+            if ('rups_include' in reg_mfd_data.keys()) and (
+                len(reg_mfd_data['rups_include']) > 0
+            ):
+                reg_abs_lhs, reg_abs_rhs, reg_abs_errs = make_abs_mfd_eqns(
+                    rups,
+                    reg_mfd_data["mfd"],
+                    rup_include_list=reg_mfd_data["rups_include"],
+                    rup_fractions=reg_mfd_data["rup_fractions"],
+                    weight=mfd_abs_weight,
+                )
+                lhs_set.append(reg_abs_lhs)
+                rhs_set.append(reg_abs_rhs)
+                err_set.append(reg_abs_errs)
 
     if slip_rate_smoothing is True:
         print("Making slip rate smoothing eqns")
