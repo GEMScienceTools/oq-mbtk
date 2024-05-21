@@ -306,15 +306,15 @@ class Test3Faults(unittest.TestCase):
         )
         np.testing.assert_array_equal(
             meshes[1]['mesh'].lons,
-            lons[:n_subsec_pts_dip, n_subsec_pts_strike - 1 :],
+            lons[:n_subsec_pts_dip, n_subsec_pts_strike-1:],
         )
         np.testing.assert_array_equal(
             meshes[2]['mesh'].lons,
-            lons[n_subsec_pts_dip - 1 :, :n_subsec_pts_strike],
+            lons[n_subsec_pts_dip-1:, :n_subsec_pts_strike],
         )
         np.testing.assert_array_equal(
             meshes[3]['mesh'].lons,
-            lons[n_subsec_pts_dip - 1 :, n_subsec_pts_strike - 1 :],
+            lons[n_subsec_pts_dip-1:, n_subsec_pts_strike-1:],
         )
 
     def test_get_subsections_from_fault(self):
