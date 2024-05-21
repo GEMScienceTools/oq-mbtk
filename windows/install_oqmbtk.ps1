@@ -49,7 +49,6 @@ Set-Alias -Name pip -Value $Env:PY_PIP\pip.exe
 #
 python .\get-pip.py
 #
-pip install pytest
 cd $workDir
 Write-Host "clone of the branch $branch for oq-engine and install in developer mode"
 git clone --depth=1 https://github.com/gem/oq-engine.git
