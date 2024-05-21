@@ -5,13 +5,16 @@ on:
     branches:
       - test
   schedule:
-    - cron: "0 7 * * *"
+    - cron: "0 4 * * *"
   workflow_dispatch:
 jobs:
   test:
     name: Windows Installation
-    runs-on: windows-2019
-    steps:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-2022, windows-2019]
+    steps: 
     - uses: actions/checkout@v4
     - name: Installation of GMT from standalone
       run: |
@@ -37,6 +40,9 @@ jobs:
         $Env:PATH += ";$MYPATH"
         $Env:PATH += ";$MYPATH\python3\Scripts"
         $Env:PYTHONUTF8=1
+        #Added to disable TCL
+        $Env:MPLBACKEND="AGG"
+        $Env:PY_PIP=$MYPATH += '\Scripts'
         $Env:PY_PIP=$MYPATH += '\python3\Scripts'
         $Env:PY_HOME=$MYPATH
         $Env:PY_LIBS="$MYPATH\python3\Lib;$MYPATH\python3\Lib\site-package"
@@ -53,4 +59,6 @@ jobs:
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
         cd oq-mbtk\openquake
+        Write-Host "Install pytest and run tests"
+        pip install pytest==8.1.2
         pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt
