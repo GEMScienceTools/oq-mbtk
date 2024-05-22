@@ -31,9 +31,10 @@ from openquake.cat.hmg.merge import process_catalogues
 
 def main(settings: str):
     """
-    Reads the information in the settings file and creates two .h5 files
-    containing the origins and magnitudes included in the catalogues
-    specified in the settings
+    Merges the information contained in a number of catalogues. The output is
+    a couple of .h5 files (you can read them using pandas.read_hdf) which
+    contain the origins and the magnitudes of the earthquakes in the
+    catalogues specified in the settings.
     """
     process_catalogues(settings)
 
