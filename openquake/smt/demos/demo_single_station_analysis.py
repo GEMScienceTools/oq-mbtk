@@ -24,18 +24,18 @@ db = 'demo_flatfile.csv'
 gmms_imts = 'demo_residual_analysis_inputs.toml'
 
 # Specify results folder name
-run_folder = 'results_single_station_analysis'
+run_folder = 'single_station_analysis_demo'
 
 # Minimum number of records for a site to be considered in SSA
 threshold = 45
 
 
-def get_residuals():
+def get_residual_metadata():
     """
     Compute the residuals from the example flatfile, GMMs and imts
     """
     # Create metadata directory
-    metadata_dir = 'metadata'
+    metadata_dir = run_folder + '_metadata'
     if os.path.exists(metadata_dir):
         shutil.rmtree(metadata_dir)
             
@@ -43,12 +43,12 @@ def get_residuals():
     ESMFlatfileParserURL.autobuild("000", 'db', metadata_dir, db)
     
     # Get inputs
-    metadata = os.path.join('metadata', 'metadatafile.pkl')
+    metadata = os.path.join(metadata_dir, 'metadatafile.pkl')
     sm_database = pickle.load(open(metadata,"rb")) 
     
     # If output directory for residuals exists remove and remake 
-    if os.path.exists('residuals'):
-        shutil.rmtree('residuals')
+    if os.path.exists(run_folder):
+        shutil.rmtree(run_folder)
     
     # Get residuals
     residuals = res.Residuals.from_toml(gmms_imts)
@@ -122,7 +122,7 @@ def main():
     Run the demo for single station residual analysis
     """
     # Get residuals
-    sm_database = get_residuals()
+    sm_database = get_residual_metadata()
     
     # Run the single station analysis
     single_station_analysis(sm_database)

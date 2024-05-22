@@ -295,12 +295,14 @@ def get_single_fault_rupture_coordinates(
         Array of subfault coordinates with a shape of (n,3), where each
         row is a point with x,y,z coordinates (in km from the Earth's center).
     """
+
     if len(rupture) == 1:
         return single_fault_subfaults[rupture[0]]['surface'].mesh.xyz
     else:
-        return np.vstack(
+        coords = np.vstack(
             [single_fault_subfaults[i]['surface'].mesh.xyz for i in rupture]
         )
+        return np.unique(coords, axis=0)
 
 
 def get_single_fault_rups(
