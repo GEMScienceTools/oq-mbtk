@@ -98,7 +98,7 @@ def get_completeness_matrix(tcat, ctab, mbinw, ybinw):
 
     return oin, out, cmags, cyeas
 
-def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year,
+def get_norm_optimize(tcat, aval, bval, ctab, binw, cmag, n_obs, t_per, last_year,
                       info=False):
     """
     This calculates the difference between the number of observed vs computed events in each completeness bin. 
@@ -111,6 +111,9 @@ def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year,
         GR b-value
     :param ctab: 
         completeness table
+    :param binw:
+        binwidth for completeness analysis, specified in toml. This is the width of bins for checking fit
+        (previously for optimize this was = 1)
     :param cmag:
         An array with the magnitude values at the center of each occurrence
         bins. Output from hmtk.seismicity.occurrence.utils.get_completeness_counts
@@ -130,7 +133,8 @@ def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year,
     
     occ = np.zeros((ctab.shape[0]))
     dur = np.zeros((ctab.shape[0]))
-    mags = np.array(list(ctab[:, 1])+[10])
+    #mags = np.array(list(ctab[:, 1])+[10])
+    mags = np.array(np.arange(ctab[:, 1], 10, binw))
 
     for i, mag in enumerate(mags[:-1]):
         idx = (cmag >= mags[i]) & (cmag < mags[i+1])
