@@ -4,7 +4,7 @@
 #
 # LICENSE
 #
-# Copyright (c) 2015 GEM Foundation
+# Copyright (c) 2015-2024 GEM Foundation
 #
 # The Catalogue Toolkit is free software: you can redistribute 
 # it and/or modify it under the terms of the GNU Affero General Public 
@@ -14,4 +14,4 @@
 # You should have received a copy of the GNU Affero General Public License
 # with this download. If not, see <http://www.gnu.org/licenses/>
 
-#!/usr/bin/env/python
+#!/usr/bin/env python

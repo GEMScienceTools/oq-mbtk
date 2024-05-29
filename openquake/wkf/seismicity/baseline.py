@@ -109,6 +109,9 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         An updated set of .csv files
     """
 
+    if folder_name == 'None' or folder_name == 'none':
+        folder_name = None
+
     if len(use) > 0:
         use = get_list(use)
 
