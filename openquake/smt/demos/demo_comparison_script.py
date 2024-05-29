@@ -13,6 +13,7 @@ warnings.filterwarnings("ignore")
 # User input (can add more input tomls to run multiple analyses if required)
 file_list = ['demo_comparison_analysis_inputs.toml']
 
+attenuation_curve_data = {}
 for file in file_list:
     
     filename = file
@@ -25,8 +26,14 @@ for file in file_list:
     if not os.path.exists(output_directory): os.makedirs(output_directory)
     
     #Generate plots from config object
-    comp.plot_trellis(filename,output_directory)
+    attenuation_curve_data[file] = comp.plot_trellis(filename,output_directory)
     comp.plot_spectra(filename,output_directory)
     comp.plot_cluster(filename,output_directory)
     comp.plot_sammons(filename,output_directory)
     comp.plot_euclidean(filename,output_directory)
+    
+# The attenuation_curve_data variable stores the attenuation curves for each
+# imt-mag-depth combo per gmpe, per a config file (within which can be specified
+# additionally the eq source properties, vs30 and other params). This allows the
+# user to extract the predicted ground-motions and manipulate as they wish. Use
+# the keys of this variable to understand how the predictions are stored.

@@ -210,7 +210,7 @@ def subdivide_simple_fault_surface(
     )
     subsec_length = fault_length / num_segs_along_strike
     pt_spacing = subsec_length / round(subsec_length / edge_sd)
-    n_pts_strike = fault_length / pt_spacing  # + 1
+    n_pts_strike = fault_length / pt_spacing + 1
     assert (n_pts_strike % 1 <= 1e-5) or (n_pts_strike % 1 >= (1.0 - 1e-5)), (
         "Resampled trace not integer length: " + f"{n_pts_strike}"
     )
@@ -223,7 +223,7 @@ def subdivide_simple_fault_surface(
         + f"{new_trace.coo.shape[0]} != {n_pts_strike}"
     )
 
-    n_subsec_pts_strike = (n_pts_strike) / num_segs_along_strike
+    n_subsec_pts_strike = ((n_pts_strike - 1) / num_segs_along_strike) + 1
 
     assert n_subsec_pts_strike % 1 == 0.0, (
         "Resampled trace not dividing equally among subsegments: "
@@ -246,7 +246,7 @@ def subdivide_simple_fault_surface(
 
     hor_dip_spacing = dip_pt_spacing * np.cos(np.radians(dip))
     vert_dip_spacing = dip_pt_spacing * np.sin(np.radians(dip))
-    n_level_sets = max(int(round(fault_width / dip_pt_spacing)), 2)
+    n_level_sets = max(int(round(fault_width / dip_pt_spacing)) + 1, 2)
 
     for i in range(n_level_sets):
         level_mesh = [
@@ -259,10 +259,11 @@ def subdivide_simple_fault_surface(
     resampled_mesh = RectangularMesh.from_points_list(surface_points)
 
     n_pts_dip = resampled_mesh.lons.shape[0]
-    n_subsec_pts_dip = (n_pts_dip) / num_segs_down_dip
-    assert (
-        n_subsec_pts_dip % 1 == 0.0
-    ), "Resampled mesh not dividing equally among subsegments down-dip"
+    n_subsec_pts_dip = ((n_pts_dip - 1) / num_segs_down_dip) + 1
+    assert n_subsec_pts_dip % 1 == 0.0, (
+        "Resampled mesh not dividing equally among subsegments down-dip: "
+        + f"{n_pts_dip}, {num_segs_along_strike}"
+    )
     n_subsec_pts_dip = int(n_subsec_pts_dip)
 
     subsec_meshes = subdivide_rupture_mesh(
@@ -313,6 +314,19 @@ def subdivide_rupture_mesh(
     subsec_meshes : list of RectangularMesh
         List of subsection meshes.
     """
+    assert (
+        lons.shape == lats.shape == depths.shape
+    ), "Lons, lats, and depths must have the same shape"
+
+    assert (
+        n_subsec_pts_dip == ((lons.shape[0] - 1) / num_segs_down_dip) + 1
+    ), "Mesh does not divide equally among subsegments down-dip"
+
+    assert (
+        n_subsec_pts_strike
+        == ((lons.shape[1] - 1) / num_segs_along_strike) + 1
+    ), "Mesh does not divide equally among subsegments along-strike"
+
     subsec_meshes = []
 
     i_start = 0
@@ -331,8 +345,8 @@ def subdivide_rupture_mesh(
             )
             subsec_meshes.append({'row': i, 'col': j, 'mesh': subsec_mesh})
 
-            j_start += n_subsec_pts_strike  # - 1
-        i_start += n_subsec_pts_dip  # - 1
+            j_start += n_subsec_pts_strike - 1
+        i_start += n_subsec_pts_dip - 1
 
     return subsec_meshes
 
