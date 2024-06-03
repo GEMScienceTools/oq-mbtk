@@ -45,43 +45,46 @@ gmpes_label = ['CA15', 'AK14', 'B20', 'L19', 'BO14', 'K1', 'K2', 'K3', 'K4', 'K5
 
 # Plot logic tree and individual GMPEs for below GMC logic tree config (gmc1)
 [models.BooreEtAl2020]
-    lt_weight_gmc1 = 0.25
+lt_weight_gmc1 = 0.25
     
 [models.LanzanoEtAl2019_RJB_OMO]
-    lt_weight_gmc1 = 0.30
+lt_weight_gmc1 = 0.30
     
 [models.BooreEtAl2014]
-    lt_weight_gmc1 = 0.15
+lt_weight_gmc1 = 0.15
 
 # Default K20_ESHM20 logic tree branches considered in gmc1
 [models.1-KothaEtAl2020ESHM20]
-    lt_weight_gmc1 = 0.000862
-    sigma_mu_epsilon = 2.85697 
-    c3_epsilon = 1.72    
+lt_weight_gmc1 = 0.000862
+sigma_mu_epsilon = 2.85697 
+c3_epsilon = 1.72    
+
 [models.2-KothaEtAl2020ESHM20]   
-    lt_weight_gmc1 = 0.067767
-    sigma_mu_epsilon = 1.35563
-    c3_epsilon = 0
+lt_weight_gmc1 = 0.067767
+sigma_mu_epsilon = 1.35563
+c3_epsilon = 0
+
 [models.3-KothaEtAl2020ESHM20]   
-    lt_weight_gmc1 = 0.162742
-    sigma_mu_epsilon = 0
-    c3_epsilon = 0        
+lt_weight_gmc1 = 0.162742
+sigma_mu_epsilon = 0
+c3_epsilon = 0        
+
 [models.4-KothaEtAl2020ESHM20]
-    lt_weight_gmc1 = 0.067767
-    sigma_mu_epsilon = -1.35563
-    c3_epsilon = 0 
+lt_weight_gmc1 = 0.067767
+sigma_mu_epsilon = -1.35563
+c3_epsilon = 0 
+
 [models.5-KothaEtAl2020ESHM20]
-    lt_weight_gmc1 = 0.000862
-    sigma_mu_epsilon = -2.85697 
-    c3_epsilon = -1.72    
-    
-    
+lt_weight_gmc1 = 0.000862
+sigma_mu_epsilon = -2.85697 
+c3_epsilon = -1.72    
+        
 # Plot logic tree only for the second GMC logic tree config (gmc2)
 [models.CauzziEtAl2014]
-    lt_weight_gmc2_plot_lt_only = 0.50
+lt_weight_gmc2_plot_lt_only = 0.50
     
 [models.AkkarEtAlRjb2014]
-    lt_weight_gmc2_plot_lt_only = 0.50
+lt_weight_gmc2_plot_lt_only = 0.50
     
 [custom_colors]
 custom_colors_flag = 'False' #(set to "True" for custom colours in plots)

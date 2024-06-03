@@ -612,8 +612,6 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, custom_cycler=0
         ax_llh.plot(x_llh.imt_float, y_llh,label = tmp.split('(')[0])
     ax_llh.set_xlabel('Spectral Period (s)')
     ax_llh.set_ylabel('Loglikelihood Value')
-    ax_llh.set_title('Scherbaum et al. (2009) Loglikelihood Values',
-                     fontsize='16')
     ax_llh.legend(loc='upper right', ncol=2, fontsize='medium')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
@@ -669,8 +667,6 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler=0,
         ax_EDR.plot(x_with_imt.imt_float, y_EDR, label=tmp.split('(')[0])
     ax_EDR.set_xlabel('Spectral Period (s)')
     ax_EDR.set_ylabel('EDR')
-    ax_EDR.set_title('Euclidean-Based Distance Ranking (Kale and Akkar, 2013)',
-                     fontsize = '16')
     ax_EDR.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename + '_EDR_value'), plt.gcf(), filetype, dpi)
     
@@ -686,8 +682,6 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler=0,
         ax_kappa.plot(x_with_imt.imt_float, y_kappa, label=tmp.split('(')[0])
     ax_kappa.set_xlabel('Spectral Period (s)')
     ax_kappa.set_ylabel('k^0.5')
-    ax_kappa.set_title('Median Pred. Correction Factor (k) (Kale and Akkar, 2013)',
-                       fontsize = '16')
     ax_kappa.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename + '_EDR_correction_factor'), plt.gcf(),
                 filetype, dpi)
@@ -704,7 +698,6 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler=0,
         ax_MDE.plot(x_with_imt.imt_float, y_MDE, label=tmp.split('(')[0])
     ax_MDE.set_xlabel('Spectral Period (s)')
     ax_MDE.set_ylabel('MDE Norm')
-    ax_MDE.set_title('Normalised MDE (Kale and Akkar, 2013)',fontsize='16')
     ax_MDE.legend(loc = 'upper right', ncol = 2, fontsize='medium')
     _save_image(os.path.join(filename + '_MDE'), plt.gcf(), filetype, dpi)
     
