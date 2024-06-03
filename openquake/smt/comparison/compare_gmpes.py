@@ -133,9 +133,11 @@ class Configurations(object):
             raise ValueError("Number of labels must match number of GMPEs.")
 
         # If weight is assigned to a GMPE get it + check sum of weights for 
-        # GMPEs with weights allocated = 1 (up to 2 GMC logic trees max)
+        # GMPEs with weights allocated = 1
         get_weights_gmc1 = {}
         get_weights_gmc2 = {}
+        get_weights_gmc3 = {}
+        get_weights_gmc4 = {}
         for gmpe in self.gmpes_list:
             if 'lt_weight' in gmpe:
                 split_gmpe_str = str(gmpe).splitlines()
@@ -145,12 +147,18 @@ class Configurations(object):
                             idx].split('=')[1])
                     if 'lt_weight_gmc2' in component:
                         get_weights_gmc2[gmpe] = float(split_gmpe_str[
+                            idx].split('=')[1])                       
+                    if 'lt_weight_gmc3' in component:
+                        get_weights_gmc3[gmpe] = float(split_gmpe_str[
+                            idx].split('=')[1])
+                    if 'lt_weight_gmc4' in component:
+                        get_weights_gmc4[gmpe] = float(split_gmpe_str[
                             idx].split('=')[1])
             
         # Check weights for each logic tree (if present) equal 1.0
         if get_weights_gmc1 != {}:
             check_weights_gmc1 = np.array(pd.Series(get_weights_gmc1))
-            if np.sum(check_weights_gmc1, axis = 0) != 1.0:
+            if np.sum(check_weights_gmc1, axis=0) != 1.0:
                 raise ValueError("GMPE logic tree weights must total 1.0")
             self.lt_weights_gmc1 = get_weights_gmc1
         else:
@@ -158,12 +166,27 @@ class Configurations(object):
         
         if get_weights_gmc2 != {}:
             check_weights_gmc2 = np.array(pd.Series(get_weights_gmc2))
-            if np.sum(check_weights_gmc2, axis = 0) != 1.0:
+            if np.sum(check_weights_gmc2, axis=0) != 1.0:
                 raise ValueError("GMPE logic tree weights must total 1.0")
             self.lt_weights_gmc2 = get_weights_gmc2
         else:
             self.lt_weights_gmc2 = None
 
+        if get_weights_gmc3 != {}:
+            check_weights_gmc3 = np.array(pd.Series(get_weights_gmc3))
+            if np.sum(check_weights_gmc3, axis=0) != 1.0:
+                raise ValueError("GMPE logic tree weights must total 1.0")
+            self.lt_weights_gmc3 = get_weights_gmc3
+        else:
+            self.lt_weights_gmc3 = None
+            
+        if get_weights_gmc4 != {}:
+            check_weights_gmc4 = np.array(pd.Series(get_weights_gmc4))
+            if np.sum(check_weights_gmc4, axis=0) != 1.0:
+                raise ValueError("GMPE logic tree weights must total 1.0")
+            self.lt_weights_gmc4 = get_weights_gmc4
+        else:
+            self.lt_weights_gmc4 = None
 
 def plot_trellis(filename, output_directory):
     """
@@ -175,32 +198,35 @@ def plot_trellis(filename, output_directory):
     # Generate config object
     config = Configurations(filename)
     
-    plot_trellis_util(config.trt,
-                      config.ztor,
-                      config.rake,
-                      config.strike,
-                      config.dip,
-                      config.trellis_and_rs_depth,
-                      config.Z1,
-                      config.Z25,
-                      config.Vs30,
-                      config.region,
-                      config.imt_list,
-                      config.trellis_and_rs_mag_list,
-                      config.minR,
-                      config.maxR,
-                      config.gmpes_list,
-                      config.aratio,
-                      config.Nstd,
-                      output_directory,
-                      config.custom_color_flag,
-                      config.custom_color_list,
-                      config.eshm20_region,
-                      config.dist_type,
-                      config.lt_weights_gmc1,
-                      config.lt_weights_gmc2,
-                      config.up_or_down_dip) 
-
+    store = plot_trellis_util(config.trt,
+                              config.ztor,
+                              config.rake,
+                              config.strike,
+                              config.dip,
+                              config.trellis_and_rs_depth,
+                              config.Z1,
+                              config.Z25,
+                              config.Vs30,
+                              config.region,
+                              config.imt_list,
+                              config.trellis_and_rs_mag_list,
+                              config.minR,
+                              config.maxR,
+                              config.gmpes_list,
+                              config.aratio,
+                              config.Nstd,
+                              output_directory,
+                              config.custom_color_flag,
+                              config.custom_color_list,
+                              config.eshm20_region,
+                              config.dist_type,
+                              config.lt_weights_gmc1,
+                              config.lt_weights_gmc2,
+                              config.lt_weights_gmc3,
+                              config.lt_weights_gmc4,
+                              config.up_or_down_dip) 
+    
+    return store
                 
 def plot_spectra(filename, output_directory, obs_spectra=None):
     """
@@ -239,6 +265,8 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
                       config.dist_type,
                       config.lt_weights_gmc1,
                       config.lt_weights_gmc2,
+                      config.lt_weights_gmc3,
+                      config.lt_weights_gmc4,
                       obs_spectra,
                       config.up_or_down_dip) 
 

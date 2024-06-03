@@ -38,24 +38,40 @@ def plot_trellis_util(
         trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region, imt_list,
         mag_list, minR, maxR, gmpe_list, aratio, Nstd, output_directory,
         custom_color_flag, custom_color_list, eshm20_region, dist_type,
-        lt_weights_gmc1=None, lt_weights_gmc2=None, up_or_down_dip=None):
+        lt_weights_gmc1=None, lt_weights_gmc2=None, lt_weights_gmc3=None,
+        lt_weights_gmc4=None, up_or_down_dip=None):
     """
     Generate trellis plots for given run configuration
     """
     # Setup
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
+    
+    # Stores
+    store = {}
     median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = {}, {}, {}
     median_gmc2, plus_sig_gmc2, minus_sig_gmc2 = {}, {}, {}
+    median_gmc3, plus_sig_gmc3, minus_sig_gmc3 = {}, {}, {}
+    median_gmc4, plus_sig_gmc4, minus_sig_gmc4 = {}, {}, {}
     
+    # Get basin params + colors
     Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
     colors = get_cols(custom_color_flag, custom_color_list)     
     step = 1
+    
+    # Compute attenuation curves
+    store_per_imt = {}
     for n, i in enumerate(imt_list):
+        store_per_mag = {}
         for l, m in enumerate(mag_list):
             fig.add_subplot(len(imt_list), len(mag_list), l+1+n*len(mag_list))
-            lt_vals_gmc1, lt_vals_gmc2 = {}, {}
+            (lt_vals_gmc1, lt_vals_gmc2,
+             lt_vals_gmc3, lt_vals_gmc4) = {}, {}, {}, {}
+            store_per_gmpe = {}
             for g, gmpe in enumerate(gmpe_list): 
                 
+                # Sub dicts for median, gmm sigma, median +/- Nstd * gmm sigma
+                store_per_gmpe[gmpe] = {}
+                                
                 # Perform mgmpe check
                 col = colors[g]
                 gmm = mgmpe_check(gmpe)
@@ -101,53 +117,106 @@ def plot_trellis_util(
                 minus_sigma = np.exp(mean-Nstd*std[0])
                 
                 # Plot predictions and get lt weighted predictions
-                lt_vals_gmc1, lt_vals_gmc2 = trellis_data(Nstd,
-                                                          gmpe,
-                                                          r_vals,
-                                                          mean,
-                                                          plus_sigma,
-                                                          minus_sigma,
-                                                          col,
-                                                          i,
-                                                          m,
-                                                          lt_weights_gmc1,
-                                                          lt_vals_gmc1,
-                                                          lt_weights_gmc2,
-                                                          lt_vals_gmc2)
+                (lt_vals_gmc1, lt_vals_gmc2,
+                 lt_vals_gmc3, lt_vals_gmc4) = trellis_data(Nstd,
+                                                            gmpe,
+                                                            r_vals,
+                                                            mean,
+                                                            plus_sigma,
+                                                            minus_sigma,
+                                                            col,
+                                                            i,
+                                                            m,
+                                                            lt_weights_gmc1,
+                                                            lt_vals_gmc1,
+                                                            lt_weights_gmc2,
+                                                            lt_vals_gmc2,
+                                                            lt_weights_gmc3,
+                                                            lt_vals_gmc3,
+                                                            lt_weights_gmc4,
+                                                            lt_vals_gmc4)
                 
+                # Store per gmpe
+                if str(i) != 'PGV':
+                    unit = 'g'
+                else:
+                    unit = 'cm/s' # Otherwise imt = PGV
+                store_per_gmpe[gmpe]['median (%s)' %unit] = np.exp(mean)
+                store_per_gmpe[gmpe]['sigma (ln)'] = std
+                store_per_gmpe[gmpe][
+                    'median plus sigma (%s)' %unit] = plus_sigma
+                store_per_gmpe[gmpe][
+                    'median minus sigma (%s)' %unit] = minus_sigma
+                   
                 # Update plots
                 update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list,
                                      dist_type)
 
+            # Store per gmpe
+            store_per_mag['Mw = %s, depth = %s km, dip = %s deg, rake = %s deg'
+                          %(m, depth[l], dip_g, rake)] = store_per_gmpe
+
             pyplot.grid(axis='both', which='both', alpha=0.5)
-        
+         
             ### Plot logic trees if specified
-            gmc1_or_gmc2 = 'gmc1'
+            spec_gmc = 'gmc1'
             median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = lt_trel(r_vals,
                                                                  Nstd,
                                                                  i,
                                                                  m,
-                                                                 gmc1_or_gmc2,
+                                                                 spec_gmc,
                                                                  lt_vals_gmc1,
                                                                  median_gmc1,
                                                                  plus_sig_gmc1,
                                                                  minus_sig_gmc1)
             
-            gmc1_or_gmc2 = 'gmc2'
+            spec_gmc = 'gmc2'
             median_gmc2, plus_sig_gmc2, minus_sig_gmc2 = lt_trel(r_vals,
                                                                  Nstd,
                                                                  i,
                                                                  m,
-                                                                 gmc1_or_gmc2,
+                                                                 spec_gmc,
                                                                  lt_vals_gmc2,
                                                                  median_gmc2,
                                                                  plus_sig_gmc2,
                                                                  minus_sig_gmc2)
+ 
+            spec_gmc = 'gmc3'
+            median_gmc3, plus_sig_gmc3, minus_sig_gmc3 = lt_trel(r_vals,
+                                                                 Nstd,
+                                                                 i,
+                                                                 m,
+                                                                 spec_gmc,
+                                                                 lt_vals_gmc3,
+                                                                 median_gmc3,
+                                                                 plus_sig_gmc3,
+                                                                 minus_sig_gmc3)
+            
+            spec_gmc = 'gmc4'
+            median_gmc4, plus_sig_gmc4, minus_sig_gmc4 = lt_trel(r_vals,
+                                                                 Nstd,
+                                                                 i,
+                                                                 m,
+                                                                 spec_gmc,
+                                                                 lt_vals_gmc4,
+                                                                 median_gmc4,
+                                                                 plus_sig_gmc4,
+                                                                 minus_sig_gmc4)
+            
+        # Store per imt
+        store_per_imt[str(i)] = store_per_mag
+        
+    # Final store to add vs30 and Nstd into key
+    store['vs30 = %s m/s, GMM sigma epsilon = %s' %(Vs30, Nstd)
+          ] = store_per_imt
             
     # Finalise plots
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(os.path.join(output_directory, 'TrellisPlots.png'),
                    bbox_inches='tight', dpi=200, pad_inches=0.2)
+    
+    return store
+    
     
 
 def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
@@ -155,6 +224,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                       aratio, Nstd, output_directory, custom_color_flag,
                       custom_color_list, eshm20_region, dist_type,
                       lt_weights_gmc1=None, lt_weights_gmc2=None,
+                      lt_weights_gmc3=None, lt_weights_gmc4=None,
                       obs_spectra=None, up_or_down_dip=None):
     """
     Plot response spectra for given run configuration. Can also plot an observed
@@ -187,9 +257,11 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
     
     ### Set dicts to store values
     dic = OrderedDict([(gmm, {}) for gmm in gmpe_list])  
-    lt_vals_gmc1, lt_vals_gmc2 = {}, {}
+    lt_vals_gmc1, lt_vals_gmc2, lt_vals_gmc3, lt_vals_gmc4 = {}, {}, {}, {}
     lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1 = dic, dic
     lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2 = dic, dic
+    lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3 = dic, dic
+    lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4 = dic, dic
 
     ### Plot the data
     for n, i in enumerate(dist_list):
@@ -280,13 +352,19 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                 
                 # Weight the predictions using logic tree weights
                 (lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-                 lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2
+                 lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2,
+                 lt_vals_gmc3, lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3,
+                 lt_vals_gmc4, lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4,
                  ) = spectra_data(gmpe, Nstd,
                                   rs_50p, rs_plus_sigma, rs_minus_sigma,
                                   lt_vals_gmc1, lt_vals_gmc2,
+                                  lt_vals_gmc3, lt_vals_gmc4,
                                   lt_weights_gmc1, lt_weights_gmc2,
+                                  lt_weights_gmc3, lt_weights_gmc4,
                                   lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-                                  lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2)
+                                  lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2,
+                                  lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3,
+                                  lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4)
 
                 # Plot obs spectra if required
                 if obs_spectra is not None:
@@ -306,6 +384,12 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
             
             lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, 'gmc2',
                 lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2)
+            
+            lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, 'gmc3',
+                lt_vals_gmc3, lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3)
+            
+            lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, 'gmc4',
+                lt_vals_gmc4, lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4)
                 
     # Finalise the plots and save fig
     if len(mag_list) * len(dist_list) == 1:
@@ -624,7 +708,8 @@ def get_z1_z25(Z1, Z25, Vs30, region):
 
 ### Trellis utils
 def trellis_data(Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
-                 lt_weights_gmc1, lt_vals_gmc1, lt_weights_gmc2, lt_vals_gmc2):
+                 lt_weights_gmc1, lt_vals_gmc1, lt_weights_gmc2, lt_vals_gmc2,
+                 lt_weights_gmc3, lt_vals_gmc3, lt_weights_gmc4, lt_vals_gmc4):
     """
     Plot predictions of a single GMPE (if required) and compute weighted
     predictions from logic tree(s) (again if required)
@@ -658,7 +743,25 @@ def trellis_data(Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
                             'median': np.exp(mean)*lt_weights_gmc2[gmpe],
                             'plus_sigma': plus_sigma*lt_weights_gmc2[gmpe],
                             'minus_sigma': minus_sigma*lt_weights_gmc2[gmpe]}
-        
+                
+        if lt_weights_gmc3 == None:
+            pass
+        elif gmpe in lt_weights_gmc3:
+            if lt_weights_gmc3[gmpe] != None:
+                lt_vals_gmc3[gmpe] = {
+                            'median': np.exp(mean)*lt_weights_gmc3[gmpe],
+                            'plus_sigma': plus_sigma*lt_weights_gmc3[gmpe],
+                            'minus_sigma': minus_sigma*lt_weights_gmc3[gmpe]}
+ 
+        if lt_weights_gmc4 == None:
+            pass
+        elif gmpe in lt_weights_gmc4:
+            if lt_weights_gmc4[gmpe] != None:
+                lt_vals_gmc4[gmpe] = {
+                            'median': np.exp(mean)*lt_weights_gmc4[gmpe],
+                            'plus_sigma': plus_sigma*lt_weights_gmc4[gmpe],
+                            'minus_sigma': minus_sigma*lt_weights_gmc4[gmpe]}
+               
     else:                        
         if lt_weights_gmc1 == None:
             pass
@@ -674,21 +777,43 @@ def trellis_data(Nstd, gmpe, r_vals, mean, plus_sigma, minus_sigma, col, i, m,
                 lt_vals_gmc2[gmpe] = {
                         'median': np.exp(mean)*lt_weights_gmc2[gmpe]}
 
-    return lt_vals_gmc1, lt_vals_gmc2
+        if lt_weights_gmc3 == None:
+            pass
+        elif gmpe in lt_weights_gmc3:                                      
+            if lt_weights_gmc3[gmpe] != None:
+                lt_vals_gmc3[gmpe] = {
+                        'median': np.exp(mean)*lt_weights_gmc3[gmpe]}
+                
+        if lt_weights_gmc4 == None:
+            pass
+        elif gmpe in lt_weights_gmc4:                                      
+            if lt_weights_gmc4[gmpe] != None:
+                lt_vals_gmc4[gmpe] = {
+                        'median': np.exp(mean)*lt_weights_gmc4[gmpe]}
 
 
-def lt_trel(r_vals, Nstd, i, m, gmc1_or_gmc2, lt_vals_gmc, median_gmc,
-            plus_sig_gmc, minus_sig_gmc):
+    return lt_vals_gmc1, lt_vals_gmc2, lt_vals_gmc3, lt_vals_gmc4
+
+
+def lt_trel(r_vals, Nstd, i, m, spec_gmc, lt_vals_gmc,
+            median_gmc, plus_sig_gmc, minus_sig_gmc):
     """
     If required plot spectra from the GMPE logic tree(s)
     """
-    if gmc1_or_gmc2 == 'gmc1':
+    # Get plotting colour
+    if spec_gmc == 'gmc1':
         label = 'Logic Tree 1'
         col = 'r'
-    if gmc1_or_gmc2 == 'gmc2':
+    if spec_gmc == 'gmc2':
         label = 'Logic Tree 2'
         col = 'b'
-    
+    if spec_gmc == 'gmc3':
+        label = 'Logic Tree 3'
+        col = 'g'    
+    if spec_gmc == 'gmc4':
+        label = 'Logic Tree 4'
+        col = 'k'        
+
     if lt_vals_gmc != {}:
         if not Nstd == 0:
             lt_df_gmc = pd.DataFrame(
@@ -826,9 +951,13 @@ def _get_imts(period):
 
 
 def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
-                 lt_vals_gmc1, lt_vals_gmc2, lt_weights_gmc1, lt_weights_gmc2,
+                 lt_vals_gmc1, lt_vals_gmc2, lt_vals_gmc3, lt_vals_gmc4,
+                 lt_weights_gmc1, lt_weights_gmc2,
+                 lt_weights_gmc3, lt_weights_gmc4,
                  lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-                 lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2):
+                 lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2,
+                 lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3,
+                 lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4):
     """
     If required get the logic tree weighted predictions
     """
@@ -882,24 +1011,85 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
                     'plus_sigma': rs_plus_sigma_weighted_gmc2}
                 lt_vals_minus_sig_gmc2[gmpe,'m_sig'] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc2}
+
+    # Logic tree #3            
+    if lt_weights_gmc3 == None:
+        pass
+    elif gmpe in lt_weights_gmc3:
+        if lt_weights_gmc3[gmpe] != None:
+            rs_50p_weighted_gmc3 = {}
+            rs_plus_sigma_weighted_gmc3, rs_minus_sigma_weighted_gmc3 = {}, {}
+            for idx, rs in enumerate(rs_50p):
+                rs_50p_weighted_gmc3[idx] = rs_50p[idx]*lt_weights_gmc3[gmpe]
+                if Nstd != 0:
+                    rs_plus_sigma_weighted_gmc3[idx] = rs_plus_sigma[
+                        idx]*lt_weights_gmc3[gmpe]
+                    rs_minus_sigma_weighted_gmc3[idx] = rs_minus_sigma[
+                        idx]*lt_weights_gmc3[gmpe]
+                
+            # If present store the weighted median for the GMPE
+            lt_vals_gmc3[gmpe] = {'median': rs_50p_weighted_gmc3}
+            
+            # And if Nstd != 0 store these weighted branches too
+            if Nstd != 0:
+                lt_vals_plus_sig_gmc3[gmpe,'p_sig'] = {
+                    'plus_sigma': rs_plus_sigma_weighted_gmc3}
+                lt_vals_minus_sig_gmc3[gmpe,'m_sig'] = {
+                    'minus_sigma': rs_minus_sigma_weighted_gmc3}
+        
+    # Logic tree #4         
+    if lt_weights_gmc4 == None:
+        pass
+    elif gmpe in lt_weights_gmc4:
+        if lt_weights_gmc4[gmpe] != None:
+            rs_50p_weighted_gmc4 = {}
+            rs_plus_sigma_weighted_gmc4, rs_minus_sigma_weighted_gmc4 = {}, {}
+            for idx, rs in enumerate(rs_50p):
+                rs_50p_weighted_gmc4[idx] = rs_50p[idx]*lt_weights_gmc4[gmpe]
+                if Nstd != 0:
+                    rs_plus_sigma_weighted_gmc4[idx] = rs_plus_sigma[
+                        idx]*lt_weights_gmc4[gmpe]
+                    rs_minus_sigma_weighted_gmc4[idx] = rs_minus_sigma[
+                        idx]*lt_weights_gmc4[gmpe]
+                
+            # If present store the weighted median for the GMPE
+            lt_vals_gmc4[gmpe] = {'median': rs_50p_weighted_gmc4}
+            
+            # And if Nstd != 0 store these weighted branches too
+            if Nstd != 0:
+                lt_vals_plus_sig_gmc4[gmpe,'p_sig'] = {
+                    'plus_sigma': rs_plus_sigma_weighted_gmc4}
+                lt_vals_minus_sig_gmc4[gmpe,'m_sig'] = {
+                    'minus_sigma': rs_minus_sigma_weighted_gmc4}
+
         
     return (lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-            lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2)
+            lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2,
+            lt_vals_gmc3, lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3,
+            lt_vals_gmc4, lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4)
 
 
-def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, gmc1_or_gmc2,
+def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, spec_gmc,
                lt_vals_gmc, lt_vals_plus_sig_gmc, lt_vals_minus_sig_gmc):
     """
     If required plot spectra from the GMPE logic tree(s)
     """    
-    if gmc1_or_gmc2 == 'gmc1':
+    if spec_gmc == 'gmc1':
         check = 'lt_weight_gmc1'
         label = 'Logic Tree 1'
         col = 'r'
-    if gmc1_or_gmc2 == 'gmc2':
+    if spec_gmc == 'gmc2':
         check = 'lt_weight_gmc2'
         label = 'Logic Tree 2'
-        col = 'b'
+        col = 'b' 
+    if spec_gmc == 'gmc3':
+        check = 'lt_weight_gmc3'
+        label = 'Logic Tree 3'
+        col = 'g'        
+    if spec_gmc == 'gmc4':
+        check = 'lt_weight_gmc4'
+        label = 'Logic Tree 4'
+        col = 'k'
     
     # Plot
     if lt_vals_gmc != {}:
