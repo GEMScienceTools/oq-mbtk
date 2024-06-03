@@ -38,7 +38,7 @@ from openquake.mbt.tools.mfd import (
 from openquake.hazardlib.mfd.multi_mfd import MultiMFD
 
 
-def check_mfds(fname_input_pattern: str, fname_config: str, *,
+def check_mfds(fname_input_pattern: str, fname_config: str = None,  *,
                src_id: str = None):
     """
     Given a set of .xml files and a configuration file with GR params, this
@@ -46,12 +46,12 @@ def check_mfds(fname_input_pattern: str, fname_config: str, *,
     configuration file. The ID of the source if not provided is taken from the
     name of the files (i.e., last label preceded by `_`)
     """
-
     for fname in sorted(glob(fname_input_pattern)):
 
-        #if src_id is None:
-        src_id = _get_src_id(fname)
-        model = toml.load(fname_config)
+        srcs = _get_src_id(fname)
+        if src_id is not None and srcs not in src_id:
+        	continue
+        
 
         binw = 0.1
         sourceconv = SourceConverter(investigation_time=1.0,
@@ -70,16 +70,18 @@ def check_mfds(fname_input_pattern: str, fname_config: str, *,
                     nmfd.stack(tmfd)
             
             occ = np.array(nmfd.get_annual_occurrence_rates())
-            
-            bgr = model["sources"][src_id]["bgr"]
-            agr = model["sources"][src_id]["agr"]
 
-            tmp = occ[:, 0] - binw
-            mfd = 10.0**(agr-bgr*tmp[:-1])-10.0**(agr-bgr*(tmp[:-1]+binw))
+            if fname_config:
+                model = toml.load(fname_config)
+                bgr = model["sources"][srcs]["bgr"]
+                agr = model["sources"][srcs]["agr"]
+                tmp = occ[:, 0] - binw
+                mfd = 10.0**(agr-bgr*tmp[:-1])-10.0**(agr-bgr*(tmp[:-1]+binw))
 
             _ = plt.figure(figsize=(8, 6))
             plt.plot(occ[:, 0], occ[:, 1], 'o', label = 'model')
-            plt.plot(tmp[:-1]+binw/2, mfd, 'x', label = ('config: a = ', agr, ", b = ", bgr))
+            if fname_config:
+                plt.plot(tmp[:-1]+binw/2, mfd, 'x', label = ('config: a = ', agr, ", b = ", bgr))
             plt.title(fname)
             plt.xlabel('Magnitude')
             plt.ylabel('Annual occurrence rate')
