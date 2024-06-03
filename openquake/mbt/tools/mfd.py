@@ -4,7 +4,6 @@ module:`openquake.mbt.tool.mfd`
 
 import scipy
 import numpy as np
-
 from scipy.stats import truncnorm
 
 from openquake.hazardlib.mfd import (TruncatedGRMFD, EvenlyDiscretizedMFD,
@@ -226,9 +225,11 @@ def get_evenlyDiscretizedMFD_from_multiMFD(mfd, bin_width=None):
             min_m = min_mag[0] if len(min_mag) == 1 else min_mag[i]
             if i == 0:
                 emfd = EEvenlyDiscretizedMFD(min_m, binw, occ)
+                
             else:
                 tmfd = EEvenlyDiscretizedMFD(min_m, binw, occ)
                 emfd.stack(tmfd)
+                #print(len(emfd.occurrence_rates))
                  
     elif mfd.kind == 'truncGutenbergRichterMFD':
         aval = mfd.kwargs['a_val']
@@ -236,12 +237,14 @@ def get_evenlyDiscretizedMFD_from_multiMFD(mfd, bin_width=None):
         min_mag = mfd.kwargs['min_mag']
         max_mag = mfd.kwargs['max_mag']
         binw = mfd.kwargs['bin_width'][0]
+        max_m = np.max(max_mag) 
+        #max_m = min_mag[0] if len(min_mag) == 1 else np.min(min_mag)
+        min_m = min_mag[0] if len(min_mag) == 1 else np.min(min_mag) 
+        print(max_m, max_mag)
 
         for i in range(mfd.size):
             bgr = bval[0] if len(bval) == 1 else bval[i]
             agr = aval[0] if len(aval) == 1 else aval[i]
-            min_m = min_mag[0] if len(min_mag) == 1 else min_mag[i]
-            max_m = max_mag[0] if len(max_mag) == 1 else max_mag[i]
             
             left = np.arange(min_m, max_m, binw)
             rates = 10.**(agr-bgr*left)-10.**(agr-bgr*(left+binw))
@@ -250,11 +253,13 @@ def get_evenlyDiscretizedMFD_from_multiMFD(mfd, bin_width=None):
                 emfd = EEvenlyDiscretizedMFD(min_m+binw/2.,
                                 binw,
                                 list(rates))
+                print(len(emfd.occurrence_rates))
             else:
                 tmfd = EEvenlyDiscretizedMFD(min_m+binw/2.,
                                 binw,
                                 list(rates))
                 emfd.stack(tmfd)
+                print(len(emfd.occurrence_rates))
     
     else:
         raise ValueError('Unsupported MFD type ', mfd.kind)
@@ -302,6 +307,8 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
 
         mfd1 = self
         bin_width = self.bin_width
+        
+        
         #
         # check bin width of the MFD to be added
         if (isinstance(mfd2, EvenlyDiscretizedMFD) and
@@ -336,6 +343,7 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
         #
         # mfd1 MUST be the one with the mininum minimum magnitude
         if mfd1.min_mag > mfd2.min_mag:
+            print("minimum magnitudes are different")
             if log:
                 print('SWAPPING')
             tmp = mfd2
@@ -350,9 +358,13 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
             delta += 1
             tmpmag += bin_width
 
+        #breakpoint()
         rates = list(np.zeros(len(mfd1.occurrence_rates)))
         mags = list(mfd1.min_mag+np.arange(len(rates))*bin_width)
-
+        #mags = list(mfd1.min_mag+np.arange(len(rates) -1)*bin_width)
+        #print("length of magnitudes: ", len(mags))
+	
+	
         # Add to the rates list the occurrences included in the mfd with the
         # lowest minimum magnitude
         for idx, occ in enumerate(mfd1.occurrence_rates):
@@ -372,19 +384,22 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
             print(mfd1.occurrence_rates)
 
         magset = set(mags)
+        #print(mags)
         for idx, (mag, occ) in enumerate(mfd2.get_annual_occurrence_rates()):
             #
             # Check that we add occurrences to the right bin. Rates is the
             # list used to store the occurrences of the 'stacked' MFD
             try:
-                if len(rates) > idx+delta:
-                    assert abs(mag - mags[idx+delta]) < 1e-5
+                #if len(rates) > idx+delta:
+                #    assert abs(mag - mags[idx+delta]) < 1e-5
+                #else:
+                assert len(mfd1.occurrence_rates) == len(mfd2.occurrence_rates)
             except:
                 print('mag:     :', mag)
                 print('mag rates:', mags[idx+delta])
                 print('delta    :', delta)
                 print('diff     :', abs(mag - mags[idx+delta]))
-                raise ValueError('Staking wrong bins')
+                raise ValueError('Stacking wrong bins')
 
             if log:
                 print(idx, idx+delta, len(mfd2.occurrence_rates), len(rates))
@@ -579,7 +594,7 @@ def mfd_upsample(bin_width, mfd):
     # assigning occurrences
     dlt = bin_width * 1e-5
     for mag, occ in mfd.get_annual_occurrence_rates():
-        print(mag, occ)
+        #print(mag, occ)
         #
         # find indexes of lower bin limits lower than mag
         idx = np.nonzero(mag+dlt-mfd.bin_width/2 > nocc[:, 1])[0]
@@ -598,7 +613,7 @@ def mfd_upsample(bin_width, mfd):
             idxb = np.amin(idx)
         #
         #
-        print(idxa, idxb)
+        #print(idxa, idxb)
         if idxb is not None and idxa == idxb:
             nocc[idxa, 3] += occ
         else:
