@@ -48,7 +48,6 @@ def check_mfds(fname_input_pattern: str, fname_config: str, *,
     """
 
     for fname in sorted(glob(fname_input_pattern)):
-        print(fname)
 
         if src_id is None:
             src_id = _get_src_id(fname)
@@ -79,8 +78,8 @@ def check_mfds(fname_input_pattern: str, fname_config: str, *,
             mfd = 10.0**(agr-bgr*tmp[:-1])-10.0**(agr-bgr*(tmp[:-1]+binw))
 
             _ = plt.figure(figsize=(8, 6))
-            plt.plot(occ[:, 0], occ[:, 1], 'o')
-            plt.plot(tmp[:-1]+binw/2, mfd, 'x')
+            plt.plot(occ[:, 0], occ[:, 1], 'o', label = 'model')
+            plt.plot(tmp[:-1]+binw/2, mfd, 'x', label = 'config')
             plt.title(fname)
             plt.xlabel('Magnitude')
             plt.ylabel('Annual occurrence rate')
