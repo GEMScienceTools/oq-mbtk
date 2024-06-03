@@ -30,7 +30,6 @@ import netCDF4
 import numpy as np
 import geopandas as gpd
 from numba import njit
-<<<<<<< HEAD
 from openquake.hazardlib.geo.geodetic import (
     point_at, npoints_towards, geodetic_distance, azimuth)
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
