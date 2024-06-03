@@ -79,9 +79,11 @@ def check_mfds(fname_input_pattern: str, fname_config: str = None,  *,
                 mfd = 10.0**(agr-bgr*tmp[:-1])-10.0**(agr-bgr*(tmp[:-1]+binw))
 
             _ = plt.figure(figsize=(8, 6))
-            plt.plot(occ[:, 0], occ[:, 1], 'o', label = 'model')
+            plt.plot(occ[:, 0], occ[:, 1], 'o', 
+                label = 'model occurrence rate for source')
             if fname_config:
-                plt.plot(tmp[:-1]+binw/2, mfd, 'x', label = ('config: a = ', agr, ", b = ", bgr))
+                plt.plot(tmp[:-1]+binw/2, mfd, 'x', 
+                    label = ('config: a = ', agr, ", b = ", bgr))
             plt.title(fname)
             plt.xlabel('Magnitude')
             plt.ylabel('Annual occurrence rate')
