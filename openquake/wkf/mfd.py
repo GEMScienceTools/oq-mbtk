@@ -49,8 +49,8 @@ def check_mfds(fname_input_pattern: str, fname_config: str, *,
 
     for fname in sorted(glob(fname_input_pattern)):
 
-        if src_id is None:
-            src_id = _get_src_id(fname)
+        #if src_id is None:
+        src_id = _get_src_id(fname)
         model = toml.load(fname_config)
 
         binw = 0.1
@@ -68,20 +68,21 @@ def check_mfds(fname_input_pattern: str, fname_config: str, *,
                     ged = get_evenlyDiscretizedMFD_from_truncatedGRMFD
                     tmfd = ged(src.mfd, nmfd.bin_width)
                     nmfd.stack(tmfd)
-
+            
             occ = np.array(nmfd.get_annual_occurrence_rates())
-
-            bgr = model["sources"][src_id]["bgr_weichert"]
-            agr = model["sources"][src_id]["agr_weichert"]
+            
+            bgr = model["sources"][src_id]["bgr"]
+            agr = model["sources"][src_id]["agr"]
 
             tmp = occ[:, 0] - binw
             mfd = 10.0**(agr-bgr*tmp[:-1])-10.0**(agr-bgr*(tmp[:-1]+binw))
 
             _ = plt.figure(figsize=(8, 6))
             plt.plot(occ[:, 0], occ[:, 1], 'o', label = 'model')
-            plt.plot(tmp[:-1]+binw/2, mfd, 'x', label = 'config')
+            plt.plot(tmp[:-1]+binw/2, mfd, 'x', label = ('config: a = ', agr, ", b = ", bgr))
             plt.title(fname)
             plt.xlabel('Magnitude')
             plt.ylabel('Annual occurrence rate')
             plt.yscale('log')
+            plt.legend()
             plt.show()
