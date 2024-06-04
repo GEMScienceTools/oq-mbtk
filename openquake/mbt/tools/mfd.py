@@ -12,7 +12,7 @@ from openquake.hazardlib.mfd.multi_mfd import MultiMFD
 from openquake.hazardlib.mfd.youngs_coppersmith_1985 import (
         YoungsCoppersmith1985MFD)
 
-log = True
+#log = True
 log = False
 
 
@@ -381,10 +381,9 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
             # Check that we add occurrences to the right bin. Rates is the
             # list used to store the occurrences of the 'stacked' MFD
             try:
-                #if len(rates) > idx+delta:
-                #    assert abs(mag - mags[idx+delta]) < 1e-5
-                #else:
-                assert len(mfd1.occurrence_rates) == len(mfd2.occurrence_rates)
+                if len(rates) > idx+delta:
+                    assert abs(mag - mags[idx+delta]) < 1e-5
+                    
             except:
                 print('mag:     :', mag)
                 print('mag rates:', mags[idx+delta])
