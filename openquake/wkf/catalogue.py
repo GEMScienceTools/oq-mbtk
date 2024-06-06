@@ -152,17 +152,27 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
 
     # Read polygons
     polygons_gdf = gpd.read_file(fname_polygons)
-
+    
+    # check there are no duplicate ids
+    assert(polygons_gdf['id'].is_unique)
+    
+    # explode for any multipolygons
+    polygons_gdf = polygons_gdf.explode()
+    
     # Iterate over sources
+    # actually this should maybe iterate over *sources* rather than the polygons, because then we could 
+    # handle the multipolygons more smoothly
     out_fnames = []
     for idx, poly in polygons_gdf.iterrows():
 
         if len(source_ids) > 0 and poly.id not in source_ids:
             continue
-
+            
         df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
         gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
         within = gpd.sjoin(gdf, gdf_poly, op='within')
+        
+        # check if there are other polygons for this source
         # Create output file
         if isinstance(poly.id, int):
             fname = f'subcatalogue_zone_{poly.id:d}.csv'
