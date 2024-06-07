@@ -825,16 +825,16 @@ class Residuals(object):
         # Get weights with imt
         self.model_weights_with_imt={}
         for im in self.imts:
+            
             weights_with_imt = np.array([2.0 ** -self.llh[gmpe][im]
                                          for gmpe in self.gmpe_list])
+            
             weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
-            self.model_weights_with_imt[im] = OrderedDict([(gmpe, 
-                                                             weights_with_imt
-                                                             [iloc])
-                                                            for iloc, gmpe
-                                                            in enumerate(
-                                                                self.gmpe_list
-                                                                )])
+            
+            self.model_weights_with_imt[im] = OrderedDict(
+                [(gmpe, weights_with_imt[iloc]) for iloc, gmpe in enumerate(
+                    self.gmpe_list)])
+            
         return self.llh, self.model_weights, self.model_weights_with_imt
         
     # Mak et al multivariate LLH functions
@@ -893,16 +893,15 @@ class Residuals(object):
         if parallelize:
             raise NotImplementedError("Parellelisation not turned on yet!")
         else:
-            for j in range(number_bootstraps):
+            for j in range(number_bootstraps):        
                 print("Bootstrap {:g} of {:g}".format(j + 1,
                       number_bootstraps))
-                outputs[:, :, j] = bootstrap_llh(j,
-                                                 self.contexts,
-                                                 self.gmpe_list,
-                                                 self.imts)
-        distinctiveness = self.get_distinctiveness(outputs,
-                                                   number_bootstraps,
-                                                   sum_imts)
+                outputs[:, :, j] = bootstrap_llh(
+                    j, self.contexts, self.gmpe_list, self.imts)
+                
+        distinctiveness = self.get_distinctiveness(
+            outputs, number_bootstraps, sum_imts)
+        
         return distinctiveness, outputs
 
     def get_distinctiveness(self, outputs, number_bootstraps, sum_imts):
