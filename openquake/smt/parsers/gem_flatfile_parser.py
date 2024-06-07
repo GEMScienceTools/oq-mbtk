@@ -99,7 +99,7 @@ class GEMFlatfileParser(SMDatabaseReader):
                 print("Record with sequence number %s is null/invalid"
                       % "{:s}-{:s}".format(row["event_id"],
                                            row["station_code"]))
-            if (counter % 1) == 0:
+            if (counter % 100) == 0:
                 print("Processed record %s - %s" % (str(counter),
                                                     record.id))
                 
