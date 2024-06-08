@@ -982,8 +982,6 @@ def loglikelihood_table(residuals, filename):
     final_llh_df_output.columns = list(pd.Series(llh_columns_all_output))
     final_llh_df_output.to_csv(filename, sep=',')
     
-    return final_llh_df
-    
 def llh_weights_table(residuals, filename):
     """
     Create a table of model weights per imt based on sample loglikelihood 
@@ -1029,8 +1027,6 @@ def llh_weights_table(residuals, filename):
     final_model_weights_df_output.columns = [
         pd.Series(model_weights_columns_all_output)]
     final_model_weights_df_output.to_csv(filename, sep=',')
-    
-    return final_model_weights_df
 
 def edr_table(residuals, filename):
     """
@@ -1163,8 +1159,6 @@ def stochastic_area_table(residuals, filename):
              '\n',', ') + ' stochastic_area'
     final_sto_df_output.columns = list(pd.Series(sto_columns_all_output))
     final_sto_df_output.to_csv(filename, sep=',')
-    
-    return final_sto_df
 
 def stochastic_area_weights_table(residuals, filename):
     """
@@ -1211,10 +1205,6 @@ def stochastic_area_weights_table(residuals, filename):
     final_model_weights_df_output.columns = list(pd.Series(
         model_weights_columns_all_output))
     final_model_weights_df_output.to_csv(filename, sep=',')
-    
-    breakpoint()
-    
-    return final_model_weights_df_output
     
 def pdf_table(residuals, filename):
     """
@@ -1265,7 +1255,6 @@ def pdf_table(residuals, filename):
                 '(')[0].replace('\n',' ')
             
     combined_df_output.columns = list(pd.Series(gmpe_headers))
-    
     combined_df_output.to_csv(filename, sep=',')
     
     
@@ -1528,4 +1517,5 @@ class IntraEventResidualWithSite(ResidualPlot):
                 resid.site_analysis[self.gmpe][self.imt]["dWo,es"]
             data[site_id]["x-val"] =(float(iloc) + 0.5) *\
                 np.ones_like(data[site_id]["Intra event"])
+                
         return data
