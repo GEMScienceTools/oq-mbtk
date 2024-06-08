@@ -185,41 +185,6 @@ class ResidualsTestCase(unittest.TestCase):
                     "MultivariateLLH", "EDR"]:
             _ = res.GSIM_MODEL_DATA_TESTS[key](residuals, config)
 
-    def test_likelihood_execution_old(self):
-        """
-        Tests basic execution of residuals - not correctness of values
-        """
-        lkh = res.Likelihood(self.gmpe_list, self.imts)
-        lkh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(lkh.residuals)
-        lkh.get_likelihood_values()
-
-    def test_llh_execution_old(self):
-        """
-        Tests execution of LLH - not correctness of values
-        """
-        llh = res.LLH(self.gmpe_list, self.imts)
-        llh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(llh.residuals)
-        llh.get_loglikelihood_values(self.imts)
-
-    def test_multivariate_llh_execution_old(self):
-        """
-        Tests execution of multivariate llh - not correctness of values
-        """
-        multi_llh = res.MultivariateLLH(self.gmpe_list, self.imts)
-        multi_llh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(multi_llh.residuals)
-        multi_llh.get_multivariate_loglikelihood_values()
-
-    def test_edr_execution_old(self):
-        """
-        Tests execution of EDR - not correctness of values
-        """
-        edr = res.EDR(self.gmpe_list, self.imts)
-        edr.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(edr.residuals)
-        edr.get_edr_values()
 
     def test_single_station_residual_analysis(self):
         """
