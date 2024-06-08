@@ -15,7 +15,7 @@ The smt provides capabilities (parsers) for the parsing of an inputted dataset i
 
 The inputted dataset usually comprises of a ground-motion record flatfile. Many seismological institutions provide flatfiles of processed ground-motion records. These flatfiles often slightly differ in format, but generally follow a template of a .csv file in which each row represents a single ground-motion record, that is, a recording of the observed ground-motion at a single station. Each record contains information for (1) the associated earthquake (e.g. moment magnitude, hypocentral location, focal depth), (2) the associated site parameters (e.g. shear-wave velocity in the upper 30m of a site (Vs30)), (3) source-to-site distance metrics (e.g. epicentral distance, Joyner-Boore distance) and (4) ground-motion intensity values for various intensity measures (e.g. peak-ground acceleration (PGA), peak-ground velocity (PGV), spectral acceleration (SA) for various spectral ordinates).  
 
-Within a residual analysis, the information provided in each ground-motion record is used to evaluate how closely a selection of GMPEs predict the expected (observed) ground-motion. The ground-motion records within a flatfile will usually comprise of earthquakes from the same region and of the same tectonic region type. This is because, if for example, we are trying to identify the best performing GMPEs for Albania, we will only want to examine how well the considered GMPEs predict the (observed) ground-motion for earthquakes originating from Albania and potentially the surrounding (tectonically similar) regions if we need supplementary ground-motion records to improve the dataset's coverage with respect to magnitude, distance etc.
+Within a residual analysis, the information provided in each ground-motion record is used to evaluate how closely a selection of GMPEs predict the expected (observed) ground-motion. The ground-motion records within a flatfile will usually comprise of earthquakes from the same region and of the same tectonic region type. 
 Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2).
 
 In this example, we will consider the ESM 2018 format parser for the parsing of a ESM 2018 flatfile comprising of earthquakes from Albania and the surrounding regions. We will then evaluate appropriate GMPEs using the parsed metadata in the explanations of the subsequent smt components.
@@ -44,7 +44,7 @@ Following the geographical filtering of the ESM 2018 flatfile for only earthquak
         > DATA = os.path.abspath('')
         >
         > # Specify flatfile location
-        > flatfile_directory = os.path.join(DATA, 'ESM_flatfile_SA_geographically_filtered.csv')
+        > flatfile_directory = os.path.join(DATA, 'demo_flatfile.csv')
         >
         > # Specify metadata output location
         > output_database = os.path.join(DATA, 'metadata')
@@ -91,7 +91,7 @@ We can specify the inputs to perform a residual analysis with as follows:
     .. code-block:: ini
     
         > # Specify some GMPEs and intensity measures within command line
-        > gmpe_list = ['AkkarEtAlRjb2014', 'BooreEtAl2014', 'BooreEtAl2020', 'CauzziEtAl2014', 'KothaEtAl2020regional', 'LanzanoEtAl2019_RJB_OMO']
+        > gmpe_list = ['AbrahamsonEtAl2014', 'AkkarEtAlRjb2014', 'BooreEtAl2014', 'BooreEtAl2020', 'CauzziEtAl2014', 'CampbellBozorgnia2014', 'ChiouYoungs2014', 'KothaEtAl2020', 'LanzanoEtAl2019_RJB_OMO']
         > imt_list = ['PGA','SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']
         
 3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for the use of GMPEs with user-specifiable input parameters.
@@ -102,23 +102,32 @@ We can specify the inputs to perform a residual analysis with as follows:
    
     .. code-block:: ini
     
-       [models.AkkarEtAlRjb2014]
+        [models.AbrahamsonEtAl2014]
         
-       [models.BooreEtAl2014]
+        [models.AkkarEtAlRjb2014]
         
-       [models.BooreEtAl2020]
+        [models.BooreEtAl2014]
         
-       [models.CauzziEtal2014]
+        [models.BooreEtAl2020]
         
-       [models.KothaEtAl2020regional]
+        [models.CauzziEtAl2014]
         
-       [models.LanzanoEtAl2019_RJB_OMO]
+        [models.CampbellBozorgnia2014]
+        
+        [models.ChiouYoungs2014]
+        
+        [models.KothaEtAl2020]
+        
+        [models.LanzanoEtAl2019_RJB_OMO]
     
        # Examples below of some GMPEs not considered in this residual analysis with additional 
        # parameters than be specified within a toml file
     
        [models.AbrahamsonGulerce2020SInter]
-       region = "CAS" # GMPE specific parameters                
+       region = "CAS" # GMPE specific parameters        
+       
+       [models.NGAEastGMPE]
+       gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table        
         
        [models.KothaEtAl2020ESHM20]
        sigma_mu_epsilon = 2.85697 
@@ -129,9 +138,6 @@ We can specify the inputs to perform a residual analysis with as follows:
                          # a single residuals toml the results of the last variant of the GMPE
                          # will overwrite the others (and only the results of the last variant 
                          # in the toml will be plotted too). This bug will be fixed.
-    
-       [models.NGAEastGMPE]
-       gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
        
        # Note that a bug exists for GMPEs which use the add_alias feature, meaning that the user
        # must specify parameters that should be inherently used by specifiying the gsim class (to
@@ -381,7 +387,7 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
        > res.get_edr_values_wrt_spectral_period(resid1)
        >
        > # Generate a .csv table of EDR values for each GMPE
-       > rspl.edr_table(resid1, filename=EDR_table_output)
+       > rspl.edr_table(resid1, filename)
        >
        > # Generate a .csv table of EDR-based model weights for GMPE logic tree
        > rspl.edr_weights_table(resid1, filename)   
@@ -398,6 +404,28 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
     MDE versus spectral acceleration for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_EDR_plot_MDE.jpg      
 
+Stochastic Area Based Ranking (Sunny et al. 2021)
+=======================================================
+
+   The stochastic area ranking metric considers the absolute difference between the integrals of the cumulative distribution function of the GMPE and the empirical distribution function of the observations. A smaller value is representative of a better fit between the GMPE and the observed ground-motions.
+
+    .. code-block:: ini
+    
+       > # Get stochastic area metric for each considered imt
+       > res.get_stochastic_area_wrt_imt(resid1)
+       >
+       > # Generate a .csv table of stochastic area values for each GMPE
+       > rspl.stochastic_area_table(resid1, filename)
+       >
+       > # Generate a .csv table of stochastic area-based model weights for GMPE logic tree
+       > rspl.stochastic_area_weights_table(resid1, filename)   
+       >
+       > # Plot stochastic area vs imt
+       > rspl.plot_stochastic_area_with_spectral_period(resid1, filename)
+
+    Stochastic area versus spectral acceleration plot for considered GMPEs:
+       .. image:: /contents/smt_images/all_gmpes_stochastic_area_plot.jpg
+
 Comparing GMPEs
 ***************
 
@@ -410,7 +438,7 @@ Comparing GMPEs
 
 2. The tools within the Comparison module include Sammon's Maps, hierarchical clustering plots and matrix plots of Euclidean distance for the median (and 16th and 84th percentiles) of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra and attenuation curves (trellis plots) are also provided in this module.
 
-   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. GMPE parameters can be specified as within the example ``.toml`` file provided above for us in residual analysis. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified some GMPEs which were found to perform well in the residual analysis against Albania ground-motion data. To plot a GMPE logic tree we must assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each GMPE depending on if we want to plot the GMPE within GMC logic tree #1, #2, #3 or #4 (up to 4 GMC logic trees can currently be plotted within one trellis or response spectra plot at a time). To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for - see the .toml file below for an example of these potential configurations).
+   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. GMPE parameters can be specified as within the example ``.toml`` file provided above for us in residual analysis. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified some GMPEs which were found to perform well in the residual analysis against Albania ground-motion data. To plot a GMPE logic tree we must assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each GMPE depending on which GMC logic tree we wish to include the GMPE within (up to 4 GMC logic trees can currently be plotted within one analysis). To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for - see the .toml file below for an example of these potential configurations).
 
     .. code-block:: ini
     

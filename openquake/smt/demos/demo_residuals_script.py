@@ -27,6 +27,7 @@ db = 'demo_flatfile.csv'
 # Specify output folder
 out_dir = 'demo_run'
 
+
 def parse_into_metadata():
     """
     Parse the flatfile into metadata which can be used by the SMT's residuals
@@ -41,7 +42,8 @@ def parse_into_metadata():
     ESMFlatfileParserURL.autobuild("000", 'db', metadata_dir, db)
             
     return metadata_dir
-    
+
+
 def get_residual_metadata(metadata_dir):
     """
     Get the residuals for the preselected GMMs and intensity measure types in
@@ -66,7 +68,7 @@ def get_residual_metadata(metadata_dir):
         gmm_dir = residuals.gmpe_list[gmm]._toml.split('\n')[0]
         out = os.path.join(out_dir, gmm_dir)
         if not os.path.exists(out): os.makedirs(out)
-
+        
         # Per IMT
         for imt in residuals.imts:
             
@@ -84,20 +86,20 @@ def get_residual_metadata(metadata_dir):
             rspl.ResidualWithDistance(
                 residuals, gmm, imt, fi_dist, filetype='jpeg')
         
-    # Get llh, edr and residual summary plot
+    # Get fipaths for llh, edr, stochastic area and residual plots + tables
     fi_llh = os.path.join(out_dir, 'all_gmpes_LLH_plot')
     fi_edr = os.path.join(out_dir, 'all_gmpes_EDR_plot')
+    fi_sto = os.path.join(out_dir, 'all_gmpes_stochastic_area_plot')
     fi_pdf = os.path.join(out_dir, 'all_gmpes_PDF_vs_imt_plot')
-    
-    # Get table of residuals
     fi_pdf_table = os.path.join(out_dir, 'pdf_table.csv')
 
-    # Get plots
+    # Get plots and tables
     rspl.plot_loglikelihood_with_spectral_period(residuals, fi_llh)
     rspl.plot_edr_metrics_with_spectral_period(residuals, fi_edr)
+    rspl.plot_stochastic_area_with_spectral_period(residuals, fi_sto)
     rspl.plot_residual_pdf_with_spectral_period(residuals, fi_pdf)
     rspl.pdf_table(residuals, fi_pdf_table)
-
+    
     return residuals
 
 
@@ -110,6 +112,8 @@ def main():
      
     # Get the residuals per trt
     res = get_residual_metadata(metadata_dir)
+    
+    breakpoint()
 
 
 if __name__ == '__main__':

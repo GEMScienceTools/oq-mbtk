@@ -823,7 +823,7 @@ class Residuals(object):
             (gmpe, weights[iloc]) for iloc, gmpe in enumerate(self.gmpe_list)]
             )
         # Get weights with imt
-        self.model_weights_with_imt={}
+        self.model_weights_with_imt = {}
         for im in self.imts:
             
             weights_with_imt = np.array([2.0 ** -self.llh[gmpe][im]
@@ -1022,9 +1022,9 @@ class Residuals(object):
         deviation for the GMPE (per imt)
         """  
         # Get EDR values per imt
-        obs_wrt_imt={}
-        expected_wrt_imt={}
-        stddev_wrt_imt={}
+        obs_wrt_imt = {}
+        expected_wrt_imt = {}
+        stddev_wrt_imt = {}
         for imtx in self.imts:
             obs = np.array([], dtype=float)
             expected = np.array([], dtype=float)
@@ -1082,9 +1082,9 @@ class Residuals(object):
         Calculated the Euclidean Distanced-Based Rank for a set of
         observed and expected values from a particular GMPE over imts
         """
-        mde_norm_wrt_imt={}
-        edr_wrt_imt={}
-        kappa_wrt_imt={}
+        mde_norm_wrt_imt = {}
+        edr_wrt_imt = {}
+        kappa_wrt_imt = {}
 
         for imtx in self.imts:
             nvals = len(obs_wrt_imt[imtx])
@@ -1128,7 +1128,88 @@ class Residuals(object):
         de_orig = np.sum((obs - expected) ** 2.)
         de_corr = np.sum((obs - y_c) ** 2.)
         return de_orig / de_corr
-
+    
+    def cdf(self, data):
+        """
+        Get the cumulative distribution function (cdf) of the ground-motion
+        values
+        """
+        x1 = np.sort(data)
+        x = x1.tolist()
+        n = len(x)
+        p = 1/n
+        pvalues = list(np.linspace(p,1,n))
+        
+        return x, pvalues
+    
+    def step_data(self, x,y):
+        """
+        Step the ecdf
+        """
+        xx,yy = x*2, y*2
+        xx.sort()
+        yy.sort()
+        return xx, [0.]+yy[:-1]
+    
+    def get_cdf_data(self, data, step_flag=None):
+        """
+        Get the cdf (for the predicted ground-motions) or the ecdf for the
+        observed ground-motions
+        """
+        x, p = self.cdf(data)
+        if step_flag is True:
+            return self.step_data(x, p)
+        else:
+            return x, p
+    
+    def get_stochastic_area_wrt_imt(self):
+        """
+        Calculates the stochastic area values per imt for each GMPE according
+        to the Stochastic Area Ranking method of Sunny et al. (2021).
+        
+        Sunny, J., M. DeAngelis, and B. Edwards (2021). Ranking and Selection
+        of Earthquake GroundMotion Models Using the Stochastic Area Metric,
+        Seismol. Res. Lett. 93, 787–797, doi: 10.1785/0220210216
+        """
+        # Create store of values per gmm
+        stoch_area_store = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
+        
+        # Get the observed and predicted per gmm per imt
+        for gmpe in self.gmpe_list:
+            stoch_area_wrt_imt = {}
+            for imtx in self.imts:
+                obs = np.array([], dtype=float)
+                expected = np.array([], dtype=float)
+                stddev = np.array([], dtype=float)
+                for context in self.contexts:
+                    obs = np.hstack([obs, np.log(context["Observations"][imtx])])
+                    expected = np.hstack([expected,context["Expected"][gmpe]
+                                          [imtx]["Mean"]])
+                    stddev = np.hstack([stddev,context["Expected"][gmpe]
+                                        [imtx]["Total"]])
+                
+                # Get the ECDF for distribution from data
+                x_ecdf, y_ecdf = self.get_cdf_data(list(obs), step_flag=True)
+                
+                # Get the CDF for distribution from gmm
+                x_cdf, y_cdf = self.get_cdf_data(list(expected))
+                
+                # Get area under each curve
+                area_data = np.trapz(y_ecdf, x_ecdf)
+                area_gmm = np.trapz(y_cdf, x_cdf)
+                
+                # Get absolute of difference in areas - eq 3 of paper
+                stoch_area_wrt_imt[imtx] = np.abs(area_gmm-area_data) 
+             
+            # Store the stoch area per imt per gmm
+            stoch_area_store[gmpe] = stoch_area_wrt_imt
+    
+        # Add to residuals object
+        self.stoch_areas_wrt_imt = stoch_area_store
+        
+        return self.stoch_areas_wrt_imt
+        
+    
 GSIM_MODEL_DATA_TESTS = {
     "Residuals": lambda residuals, config:
         residuals.get_residual_statistics(),

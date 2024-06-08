@@ -542,8 +542,8 @@ class ResidualWithVs30(ResidualScatterPlot):
 def plot_loglikelihood_with_spectral_period(residuals, filename, custom_cycler=0,
                                         filetype='jpg', dpi=200):
     """
-    Definition to create a simple plot of loglikelihood values of Scherbaum
-    et al. 2009 (y-axis) versus spectral period (x-axis)
+    Create a simple plot of loglikelihood values of Scherbaum et al. 2009
+    (y-axis) versus spectral period (x-axis)
     
     :param custom_cycler: Default set to 0, to assign specific colours
     and linestyle to each GMPE, a cycler can instead be specified manually,
@@ -584,7 +584,7 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, custom_cycler=0
             x_llh.imt_float.iloc[imt_idx] = 0
     x_llh=x_llh.dropna() # Remove any non-acceleration imt   
     
-    # Generate attributes required from residuals for table
+    # Get required values
     residuals.get_loglikelihood_values(residuals.imts)
 
     # Produce series of residuals.gmpe_list used to index llh_with_imt
@@ -621,9 +621,8 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, custom_cycler=0
 def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler=0,
                               filetype='jpg', dpi=200):
     """
-    Definition to create a simple plots of EDR, the median pred. correction
-    factor and normalised MDE computed using Kale and Akkar (2013) (y-axis)
-    versus spectral period (x-axis)
+    Create plots of EDR, the median pred. correction factor and normalised MDE
+    computed using Kale and Akkar (2013) (y-axis) versus spectral period (x-axis)
     
     :param custom_cycler: Default set to 0, to assign specific colours
     and linestyle to each GMPE, a cycler can instead be specified manually,
@@ -636,7 +635,7 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler=0,
     # Preserve original residuals.imts
     preserve_imts = residuals.imts
     
-    # Generate attributes required from residuals for table    
+    # Get required values 
     residuals.get_edr_values_wrt_imt()
     
     # Convert imt_list to array
@@ -704,6 +703,62 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, custom_cycler=0,
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
     
+def plot_stochastic_area_with_spectral_period(residuals, filename,
+                                              custom_cycler=0, filetype='jpg',
+                                              dpi=200):
+    """
+    Definition to create plot of the stochastic area metric computed using Sunny
+    et al. (2021) versus spectral period (x-axis)
+    
+    :param custom_cycler: Default set to 0, to assign specific colours
+    and linestyle to each GMPE, a cycler can instead be specified manually,
+    where index value in the cycler corresponds to gmpe in residuals.gmpe_list
+    """
+    # Check enough imts to plot w.r.t. spectral period
+    if len(residuals.imts) == 1:
+        raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
+    
+    # Preserve original residuals.imts
+    preserve_imts = residuals.imts
+    
+    # Get required values
+    residuals.get_stochastic_area_wrt_imt()
+    
+    # Convert imt_list to array
+    x_with_imt = pd.DataFrame([imt2tup(imts) for imts in residuals.imts],
+                                columns=['imt_str', 'imt_float'])
+    for imt_idx in range(0, np.size(residuals.imts)):
+         if x_with_imt.imt_str[imt_idx] == 'PGA':
+            x_with_imt.imt_float.iloc[imt_idx] = 0
+    x_with_imt = x_with_imt.dropna() #Remove any non-acceleration imt
+
+    # Define colours for plots
+    colour_cycler = (cycler(color=['r', 'g', 'b', 'y', 'lime', 'k', 'dodgerblue',
+                                   'gold', '0.8', 'mediumseagreen','0.5',
+                                   'tab:orange', 'tab:purple', 'tab:brown',
+                                   'tab:pink'])*cycler(linestyle=['-']))
+    if type(custom_cycler) == type(cycler(colour='b')):
+       colour_cycler = custom_cycler
+    
+    # Plot stochastic area w.r.t. spectral period
+    sto_with_imt = {}
+    fig_sto, ax_sto = plt.subplots(figsize=(10, 8))
+    ax_sto.set_prop_cycle(colour_cycler)
+    for gmpe in residuals.gmpe_list:
+        sto_with_imt = pd.Series(residuals.stoch_areas_wrt_imt[gmpe])
+        y_sto = sto_with_imt.values
+        tmp = str(residuals.gmpe_list[gmpe])
+        ax_sto.scatter(x_with_imt.imt_float, y_sto)
+        ax_sto.plot(x_with_imt.imt_float, y_sto, label=tmp.split('(')[0])
+    ax_sto.set_xlabel('Spectral Period (s)')
+    ax_sto.set_ylabel('Stochastic Area')
+    ax_sto.legend(loc = 'upper right', ncol=2, fontsize='medium')
+    _save_image(os.path.join(filename), plt.gcf(),
+                filetype, dpi)
+        
+    # Reassign original imts to residuals.imts
+    residuals.imts = preserve_imts
+
 def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
                                       filetype='jpg', dpi=200):
     """
@@ -887,7 +942,7 @@ def loglikelihood_table(residuals, filename):
         pd.DataFrame(residuals.gmpe_list, index=np.arange(
             0, len(residuals.gmpe_list), 1)).columns)
     
-    # Generate attributes required from residuals for table
+    # Get required values
     residuals.get_loglikelihood_values(residuals.imts)
 
     # Get loglikelihood values per imt
@@ -935,15 +990,15 @@ def llh_weights_table(residuals, filename):
     (Scherbaum et al. 2009)
     """       
     # Produce series of residuals.gmpe_list
-    gmpe_list_series = pd.Series(pd.DataFrame(residuals.gmpe_list, index=
-                                        np.arange(0, len(residuals.gmpe_list)
-                                                  , 1)).columns)
+    gmpe_list_series = pd.Series(
+        pd.DataFrame(residuals.gmpe_list,
+                     index=np.arange(0, len(residuals.gmpe_list),1)).columns)
     
-    # Generate attributes required from residuals for table
+    # Get required values
     residuals.get_loglikelihood_values(residuals.imts)
     
     # Get model weights per imt
-    model_weights_columns = pd.Series(gmpe_list_series) +' weighting'
+    model_weights_columns = pd.Series(gmpe_list_series) + ' weighting'
     model_weights = pd.DataFrame(residuals.model_weights_with_imt)
 
     model_weights_df = pd.DataFrame()
@@ -958,10 +1013,11 @@ def llh_weights_table(residuals, filename):
             store_wts.append(imt)
         mean_per_gmm.append(np.mean(store_wts))
         
-    model_weights_avg_df = pd.DataFrame([mean_per_gmm],index=
-                                      ['Avg over all periods'])
+    model_weights_avg_df = pd.DataFrame([mean_per_gmm],
+                                        index=['Avg over all periods'])
     model_weights_avg_df.columns = model_weights_columns
-    final_model_weights_df = pd.concat([model_weights_df, model_weights_avg_df])
+    final_model_weights_df = pd.concat([model_weights_df,
+                                        model_weights_avg_df])
 
     # Table and display outputs (need to assign simplified GMPE names)
     final_model_weights_df_output = final_model_weights_df
@@ -976,55 +1032,11 @@ def llh_weights_table(residuals, filename):
     
     return final_model_weights_df
 
-def edr_weights_table(residuals, filename):
-    """
-    Create a table of model weights per imt based on Euclidean distance based
-    ranking (Kale and Akkar, 2013)
-    """     
-    # Produce series of residuals.gmpe_list
-    gmpe_list_series = pd.Series(
-        pd.DataFrame(residuals.gmpe_list, index=np.arange(
-            0, len(residuals.gmpe_list), 1)).columns)
-    
-    # Compute EDR based model weights
-    EDR_for_weights = residuals.get_edr_values_wrt_imt()
-    EDR_per_gmpe = {}
-    for gmpe in EDR_for_weights.keys():
-        EDR_per_gmpe[gmpe] = EDR_for_weights[gmpe]['EDR']
-    EDR_per_gmpe_df = pd.DataFrame(EDR_per_gmpe)
-    
-    GMPE_EDR_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
-    for imt in EDR_per_gmpe_df.index:
-        total_EDR_per_imt = np.sum(EDR_per_gmpe_df.loc[imt]**-1)
-        for gmpe in EDR_for_weights.keys():
-            GMPE_EDR_weight[gmpe][imt] = EDR_per_gmpe_df.loc[imt][
-                gmpe]**-1/total_EDR_per_imt
-    GMPE_EDR_weight_df = pd.DataFrame(GMPE_EDR_weight)
-    
-    Avg_EDR_weight_per_GMPE = {}
-    for gmpe in residuals.gmpe_list:
-        Avg_EDR_weight_per_GMPE[gmpe] = np.mean(GMPE_EDR_weight_df[gmpe])
-        
-    Avg_GMPE_EDR_weight_df = pd.DataFrame(Avg_EDR_weight_per_GMPE, index = [
-        'Avg over all periods'])
-    Final_EDR_weight_df = pd.concat([GMPE_EDR_weight_df, Avg_GMPE_EDR_weight_df])
-
-    # Table and display outputs (need to assign simplified GMPE names)
-    final_model_weights_df_output = Final_EDR_weight_df
-    model_weights_columns_all_output={}
-    for gmpe in range(0, len(residuals.gmpe_list)):
-         tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
-         model_weights_columns_all_output[gmpe] = tmp.split('(')[0].replace(
-             '\n',', ') + ' EDR Based Model Weight'
-    final_model_weights_df_output.columns = list(pd.Series(
-        model_weights_columns_all_output))
-    final_model_weights_df_output.to_csv(filename, sep=',')
-    
 def edr_table(residuals, filename):
     """
     Create a table of MDE Norm, sqrt(kappa) and EDR per imt (Kale and Akkar, 2013)
     """
-    # Generate attributes required from residuals for table
+    # Get required values
     residuals.get_edr_values_wrt_imt()
     
     # Get Kale and Akkar (2013) ranking metrics
@@ -1057,7 +1069,153 @@ def edr_table(residuals, filename):
                 '.csv','') + '_%s' %(
                 str(residuals.gmpe_list[gmpe]).replace('\n','_').replace(
                     ' ','')).replace('"','') + '.csv', sep = ',')
+
+def edr_weights_table(residuals, filename):
+    """
+    Create a table of model weights per imt based on Euclidean distance based
+    ranking (Kale and Akkar, 2013)
+    """     
+    # Produce series of residuals.gmpe_list
+    gmpe_list_series = pd.Series(
+        pd.DataFrame(residuals.gmpe_list, index=np.arange(
+            0, len(residuals.gmpe_list), 1)).columns)
+    
+    # Compute EDR based model weights
+    EDR_for_weights = residuals.get_edr_values_wrt_imt()
+    EDR_per_gmpe = {}
+    for gmpe in EDR_for_weights.keys():
+        EDR_per_gmpe[gmpe] = EDR_for_weights[gmpe]['EDR']
+    EDR_per_gmpe_df = pd.DataFrame(EDR_per_gmpe)
+    
+    GMPE_EDR_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
+    for imt in EDR_per_gmpe_df.index:
+        total_EDR_per_imt = np.sum(EDR_per_gmpe_df.loc[imt]**-1)
+        for gmpe in EDR_for_weights.keys():
+            GMPE_EDR_weight[gmpe][imt] = EDR_per_gmpe_df.loc[imt][
+                gmpe]**-1/total_EDR_per_imt
+    GMPE_EDR_weight_df = pd.DataFrame(GMPE_EDR_weight)
+    
+    Avg_EDR_weight_per_GMPE = {}
+    for gmpe in residuals.gmpe_list:
+        Avg_EDR_weight_per_GMPE[gmpe] = np.mean(GMPE_EDR_weight_df[gmpe])
         
+    Avg_GMPE_EDR_weight_df = pd.DataFrame(Avg_EDR_weight_per_GMPE,
+                                          index=['Avg over all periods'])
+    Final_EDR_weight_df = pd.concat([GMPE_EDR_weight_df, Avg_GMPE_EDR_weight_df])
+
+    # Table and display outputs (need to assign simplified GMPE names)
+    final_model_weights_df_output = Final_EDR_weight_df
+    model_weights_columns_all_output={}
+    for gmpe in range(0, len(residuals.gmpe_list)):
+         tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
+         model_weights_columns_all_output[gmpe] = tmp.split('(')[0].replace(
+             '\n',', ') + ' EDR Based Model Weight'
+    final_model_weights_df_output.columns = list(pd.Series(
+        model_weights_columns_all_output))
+    final_model_weights_df_output.to_csv(filename, sep=',')
+        
+def stochastic_area_table(residuals, filename):
+    """
+    Create a table of stochastic area ranking metric per GMPE per imt (Sunny et
+    al. 2021)
+    """
+    # Produce series of residuals.gmpe_list
+    gmpe_list_series = pd.Series(
+        pd.DataFrame(residuals.gmpe_list, index=np.arange(
+            0, len(residuals.gmpe_list), 1)).columns)
+    
+    # Get required values
+    residuals.get_stochastic_area_wrt_imt()
+
+    # Get stochastic area value per imt
+    sto_metrics = {}
+    sto_metrics_df = {}
+    for gmpe in range(0, np.size(gmpe_list_series)):
+        sto_columns = pd.Series(gmpe_list_series)[gmpe]+ ' stochastic_area'
+        sto_metrics[gmpe] = pd.DataFrame({sto_columns:(pd.Series(
+            residuals.stoch_areas_wrt_imt))[gmpe]}, index=residuals.imts)
+        sto_metrics_df[gmpe] = pd.DataFrame(sto_metrics[gmpe],
+                                            index=residuals.imts)
+
+    sto_metrics_df = pd.DataFrame()
+    for gmpe in range(0, np.size(gmpe_list_series)):
+        sto_metrics_df[gmpe] = pd.DataFrame(sto_metrics[gmpe],
+                                            index=residuals.imts)
+    sto_columns_all = pd.Series(gmpe_list_series) +' stochastic_area' 
+    sto_metrics_df.columns = sto_columns_all
+    
+    average_sto_over_imts = np.arange(0, np.size(gmpe_list_series), 1,
+                                      dtype='float')
+    for gmpe in range(0, np.size(gmpe_list_series)):
+        average_sto_over_imts[gmpe] = np.array(np.mean(
+            sto_metrics_df[sto_columns_all[gmpe]]))
+    average_sto_over_imts_df = pd.DataFrame([average_sto_over_imts],
+                                          index = ['Avg over all periods'])
+    average_sto_over_imts_df.columns = sto_columns_all
+    final_sto_df = pd.concat([sto_metrics_df, average_sto_over_imts_df])
+    
+    # Table and display outputs (need to assign simplified GMPE names)
+    final_sto_df_output = final_sto_df
+    sto_columns_all_output = {}
+    for gmpe in range(0, len(residuals.gmpe_list)):
+         tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
+         sto_columns_all_output[gmpe] =  tmp.split('(')[0].replace(
+             '\n',', ') + ' stochastic_area'
+    final_sto_df_output.columns = list(pd.Series(sto_columns_all_output))
+    final_sto_df_output.to_csv(filename, sep=',')
+    
+    return final_sto_df
+
+def stochastic_area_weights_table(residuals, filename):
+    """
+    Create a table of model weights per imt based on sample stochastic area
+    (Sunny et al. 2021))
+    """       
+    # Produce series of residuals.gmpe_list
+    gmpe_list_series = pd.Series(
+        pd.DataFrame(residuals.gmpe_list,
+                     index=np.arange(0, len(residuals.gmpe_list),1)).columns)
+    
+    # Get required values
+    sto_for_weights = residuals.get_stochastic_area_wrt_imt()
+    
+    # Compute stochastic area based model weights
+    sto_per_gmpe = {}
+    for gmpe in sto_for_weights.keys():
+        sto_per_gmpe[gmpe] = sto_for_weights[gmpe]
+    sto_per_gmpe_df = pd.DataFrame(sto_per_gmpe)
+    
+    GMPE_sto_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
+    for imt in sto_per_gmpe_df.index:
+        total_sto_per_imt = np.sum(sto_per_gmpe_df.loc[imt]**-1)
+        for gmpe in sto_for_weights.keys():
+            GMPE_sto_weight[gmpe][imt] = sto_per_gmpe_df.loc[imt][
+                gmpe]**-1/total_sto_per_imt
+    GMPE_sto_weight_df = pd.DataFrame(GMPE_sto_weight)
+    
+    Avg_sto_weight_per_GMPE = {}
+    for gmpe in residuals.gmpe_list:
+        Avg_sto_weight_per_GMPE[gmpe] = np.mean(GMPE_sto_weight_df[gmpe])
+        
+    Avg_GMPE_sto_weight_df = pd.DataFrame(Avg_sto_weight_per_GMPE,
+                                          index=['Avg over all periods'])
+    Final_sto_weight_df = pd.concat([GMPE_sto_weight_df, Avg_GMPE_sto_weight_df])
+
+    # Table and display outputs (need to assign simplified GMPE names)
+    final_model_weights_df_output = Final_sto_weight_df
+    model_weights_columns_all_output={}
+    for gmpe in range(0, len(residuals.gmpe_list)):
+         tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
+         model_weights_columns_all_output[gmpe] = tmp.split('(')[0].replace(
+             '\n',', ') + ' EDR Based Model Weight'
+    final_model_weights_df_output.columns = list(pd.Series(
+        model_weights_columns_all_output))
+    final_model_weights_df_output.to_csv(filename, sep=',')
+    
+    breakpoint()
+    
+    return final_model_weights_df_output
+    
 def pdf_table(residuals, filename):
     """
     Create a table of mean and standard deviation for total, inter- and 
