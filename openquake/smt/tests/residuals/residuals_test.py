@@ -21,6 +21,7 @@ Core test suite for the database and residuals construction
 import os
 import sys
 import shutil
+import tempfile
 import unittest
 from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
@@ -35,6 +36,8 @@ else:
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
+# Temp file for residuals/ranking metric tables 
+tmp = os.path.join(tempfile.mkdtemp(), 'temp_table.csv')
 
 EXPECTED_IDS = [
     "EMSC_20040918_0000026_RA_PYAS_0", "EMSC_20040918_0000026_RA_PYAT_0",
@@ -173,6 +176,15 @@ class ResidualsTestCase(unittest.TestCase):
         edr.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(edr.residuals)
         edr.get_edr_values()
+          
+    def test_stochastic_area_execution(self):
+        """
+        Tests execution of stochastic area metric - not correctness of values
+        """
+        stoch = res.Residuals(self.gmpe_list, self.imts)
+        stoch.get_residuals(self.database, component="Geometric")
+        self._check_residual_dictionary_correctness(stoch.residuals)
+        stoch.get_stochastic_area_wrt_imt()
 
     def test_multiple_metrics(self):
         """
@@ -185,7 +197,24 @@ class ResidualsTestCase(unittest.TestCase):
                     "MultivariateLLH", "EDR"]:
             _ = res.GSIM_MODEL_DATA_TESTS[key](residuals, config)
 
-
+    def test_table_execution(self):
+        """
+        Tests execution of table exporting functions
+        """
+        residuals = res.Residuals(self.gmpe_list, self.imts)
+        residuals.get_residuals(self.database, component="Geometric")
+        
+        # Tables of values
+        rspl.pdf_table(residuals, tmp)
+        rspl.loglikelihood_table(residuals, tmp)
+        rspl.edr_table(residuals, tmp)
+        rspl.stochastic_area_table(residuals, tmp)
+        
+        # Tables of weights
+        rspl.llh_weights_table(residuals, tmp)
+        rspl.edr_weights_table(residuals, tmp)
+        rspl.stochastic_area_weights_table(residuals, tmp)
+        
     def test_single_station_residual_analysis(self):
         """
         Test execution of single station residual analysis functions - not
