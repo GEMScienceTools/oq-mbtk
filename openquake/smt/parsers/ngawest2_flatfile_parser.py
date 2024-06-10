@@ -19,12 +19,13 @@
 Parser for the NGAWest2 flatfile format
 """
 import pandas as pd
-import os, sys
+import os
 import tempfile
 import csv
 import numpy as np
 import copy
 import h5py
+import pickle
 from math import sqrt
 from linecache import getline
 from collections import OrderedDict
@@ -36,11 +37,6 @@ from openquake.smt.sm_utils import  MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14
     vs30_to_z2pt5_cb14
 from openquake.smt.parsers.base_database_parser import SMDatabaseReader
 from openquake.smt.parsers import valid
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
