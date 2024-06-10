@@ -50,18 +50,18 @@ DATA = os.path.abspath('')
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
-HEADER_STR = "event_id;event_time;ISC_ev_id;ev_latitude;ev_longitude;"\
-             "ev_depth_km;fm_type_code;ML;Mw;Ms;event_source_id;"\
-             "es_strike;es_dip;es_rake;es_z_top;es_length;es_width;"\
-             "network_code;station_code;location_code;"\
-             "sensor_depth_m;"\
-             "st_latitude;st_longitude;st_elevation;vs30_m_sec;slope_deg;"\
-             "vs30_meas_type;epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;"\
-             "Ry0_dist;late_triggered_flag_01;U_channel_code;U_azimuth_deg;"\
-             "V_channel_code;V_azimuth_deg;W_channel_code;U_hp;V_hp;W_hp;U_lp;"\
-             "V_lp;W_lp"
+HEADER_STR = "event_id,event_time,ISC_ev_id,ev_latitude,ev_longitude,"\
+             "ev_depth_km,fm_type_code,ML,Mw,Ms,event_source_id,"\
+             "es_strike,es_dip,es_rake,es_z_top,es_length,es_width,"\
+             "network_code,station_code,location_code,"\
+             "sensor_depth_m,"\
+             "st_latitude,st_longitude,st_elevation,vs30_m_sec,slope_deg,"\
+             "vs30_meas_type,epi_dist,epi_az,JB_dist,rup_dist,Rx_dist,"\
+             "Ry0_dist,late_triggered_flag_01,U_channel_code,U_azimuth_deg,"\
+             "V_channel_code,V_azimuth_deg,W_channel_code,U_hp,V_hp,W_hp,U_lp,"\
+             "V_lp,W_lp"
 
-HEADERS = set(HEADER_STR.split(";"))
+HEADERS = set(HEADER_STR.split(","))
 
 
 class GEMFlatfileParser(SMDatabaseReader):
@@ -111,6 +111,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         Quick and dirty full database builder!
         """
+        # Check if output location already exists
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
