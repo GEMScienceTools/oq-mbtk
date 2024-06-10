@@ -105,8 +105,7 @@ class GEMFlatfileParser(SMDatabaseReader):
             counter += 1
 
     @classmethod
-    def autobuild(cls, dbid, dbname, output_location, flatfile_location,
-                  proxy=None, removal=None):
+    def autobuild(cls, dbid, dbname, output_location, flatfile_location):
         """
         Quick and dirty full database builder!
         """
