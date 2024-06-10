@@ -18,7 +18,6 @@
 """
 Parse the GEM globally homogenised flatfile into SMT metadata.
 """
-import pandas as pd
 import os, sys
 import csv
 import numpy as np
