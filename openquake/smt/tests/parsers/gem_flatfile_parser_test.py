@@ -32,6 +32,7 @@ else:
 # Defines the record IDs for the target data set
 TARGET_IDS = [
 "EQ_EMSC_20161026_0000077_3A_MZ01_ESM_",
+"EQ_HelenaMontana_01_USGS_CarrollCollege_NGAWest2_",
 "EQ_32_MARN_0_NGASUB_",
 "EQ_1976_08_19_01_12_39_TK_2001_Turkiye_SMD_",
 "EQ_2017_12_31_071100_kiknet_OITH11_kiknet_"]
@@ -53,15 +54,21 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
     def test_gem_flatfile_parser(self):
         """
         Tests the parsing of the GEM flatfile. 
+        
+        Checks the proxy will give the KiKNet record the geometric mean of the
+        horizontal components as a proxy for the missing RotD50 acc values beyond
+        5 s + the removal option will then not discard this record as RotD50 is
+        now 'complete' for all required spectral periods
         """
         parser = GEMFlatfileParser.autobuild("000", "GEM_conversion_test",
                                              self.db_file,
-                                             self.GEM_flatfile_directory)
+                                             self.GEM_flatfile_directory,
+                                             removal=True, proxy=True)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
         
-        # Should contain 4 records
-        self.assertEqual(len(db), 4)
+        # Should contain 5 records
+        self.assertEqual(len(db), 5)
         
         # Record IDs should be equal to the specified target IDs
         self.assertListEqual([rec.id for rec in db], TARGET_IDS)
