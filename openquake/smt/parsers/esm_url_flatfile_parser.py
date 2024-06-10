@@ -22,13 +22,14 @@ Parser for a flatfile downloaded from the ESM custom url database
 This parser assumes you have selected all available headers in your URL search
 when downloading the flatfile
 """
+import os
 import pandas as pd
-import os, sys
 import tempfile
 import csv
 import numpy as np
 import copy
 import h5py
+import pickle
 from math import sqrt
 from linecache import getline
 from collections import OrderedDict
@@ -41,16 +42,8 @@ from openquake.smt.sm_utils import MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14,
 from openquake.smt.parsers import valid
 from openquake.smt.parsers.base_database_parser import SMDatabaseReader
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
-
 # Import the ESM dictionaries
 from .esm_dictionaries import *
-
-# Define base path
-DATA = os.path.abspath('')
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
@@ -114,12 +107,12 @@ class ESMFlatfileParserURL(SMDatabaseReader):
             counter += 1
 
     @classmethod
-    def autobuild(cls, dbid, dbname, output_location, ESM_flatfile_directory):
+    def autobuild(cls, dbid, dbname, output_location, flatfile_location):
         """
         Quick and dirty full database builder!
         """
         # Import ESM URL format strong-motion flatfile
-        ESM = pd.read_csv(ESM_flatfile_directory)
+        ESM = pd.read_csv(flatfile_location)
 
         # Get path to tmp csv once modified dataframe
         converted_base_data_path=_get_ESM18_headers(ESM)
@@ -899,7 +892,7 @@ def _get_ESM18_headers(ESM):
     
     # Output to folder where converted flatfile read into parser
     tmp = tempfile.mkdtemp()
-    converted_base_data_path = os.path.join(DATA, tmp, 'converted_flatfile.csv')
+    converted_base_data_path = os.path.join(tmp, 'converted_flatfile.csv')
     ESM_original_headers.to_csv(converted_base_data_path, sep=';')
 
     return converted_base_data_path
