@@ -517,8 +517,11 @@ class GEMFlatfileParser(SMDatabaseReader):
 def _prioritise_rotd50(df, proxy=None, removal=None):
     """
     Assign RotD50 values to horizontal accelerations for computation of
-    residuals. RotD50 is available for the vast majority of the records in the
-    GEM flatfile for PGA to 10 s.
+    residuals using RotD50 instead of geometric mean of H1 and H2. RotD50 is
+    available for the vast majority of the records in the GEM flatfile for PGA
+    to 10 s.
+    --> This is a bit hacky, need to investigate why SMT is otherwise always
+        using geometric mean even if specifying component to retrieve as RotD.
     
     If no RotD50 use the geometric mean if available (if specified) as a proxy
     for RotD50.
@@ -527,12 +530,12 @@ def _prioritise_rotd50(df, proxy=None, removal=None):
     can also be removed (this information can alternatively just be printed)
     
     :param  proxy:
-        If set to true, if a record is missing RotD50 try and use the geometric
+        If set to True, if a record is missing RotD50 try and use the geometric
         mean of the horizontal components (geometric mean is computed when
         calculating the residuals, here we just parse the two horizontals)
     
     :param  removal:
-        If set to true records without complete RotD50 for any of the required
+        If set to True records without complete RotD50 for any of the required
         spectral periods are removed. In instances that proxy is True, records
         without complete RotD50 even with use of geometric mean as a proxy are
         dropped
@@ -570,13 +573,14 @@ def _prioritise_rotd50(df, proxy=None, removal=None):
     no_vals = len(pd.Series(log).unique())
     if removal is True and log!= []:
         df = df.drop(log).reset_index()
-        msg = 'Records without RotD50 acc. values for all periods between 0.01 s and 10 s'
-        msg += ' have been removed from flatfile (%s records)' % no_vals
+        msg = 'Records lacking RotD50 acc. for all periods between 0.01 s and 10 s'
+        msg += ' have been removed from the flatfile (%s records)' % no_vals
         print(msg)
         if len(df) == 0:
             raise ValueError('All records have been removed from the flatfile')        
     elif log != []:
-        print('%s records do not have RotD50 for all periods between 0.01 s and 10 s' % no_vals)
+        print('%s records lack RotD50 for all periods betwen 0.01 s and 10 s' %
+              no_vals)
     
     # Output to folder where converted flatfile read into parser   
     tmp = tempfile.mkdtemp()
