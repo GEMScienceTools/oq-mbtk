@@ -96,7 +96,7 @@ def get_residual_metadata(metadata_dir):
     # Get plots
     rspl.plot_loglikelihood_with_spectral_period(residuals, fi_llh)
     rspl.plot_edr_metrics_with_spectral_period(residuals, fi_edr)
-    rspl.plot_stochastic_area_with_spectra_period(residuals, fi_sto)
+    rspl.plot_stochastic_area_with_spectral_period(residuals, fi_sto)
     rspl.plot_residual_pdf_with_spectral_period(residuals, fi_pdf)
     rspl.pdf_table(residuals, fi_pdf_table)
 
