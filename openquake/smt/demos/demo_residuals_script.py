@@ -19,7 +19,7 @@ DATA = os.path.abspath('')
 """USER INPUTS"""
 
 # Specify toml providing GMMs and intensity measure types to get residuals for
-gmms_imts = 'gmpes_and_imts_to_test.toml'
+gmms_imts = 'demo_residual_analysis_inputs.toml'
 
 # Specify dataset
 db = 'demo_flatfile.csv'
@@ -115,7 +115,4 @@ def main():
 
 
 if __name__ == '__main__':
-    sap.run(main)
-    
-    
-    
+    sap.run(main)    
