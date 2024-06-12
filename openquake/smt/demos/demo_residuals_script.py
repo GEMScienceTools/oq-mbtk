@@ -19,7 +19,7 @@ DATA = os.path.abspath('')
 """USER INPUTS"""
 
 # Specify toml providing GMMs and intensity measure types to get residuals for
-gmms_imts = 'demo_residual_analysis_inputs.toml'
+gmms_imts = 'gmpes_and_imts_to_test.toml'
 
 # Specify dataset
 db = 'demo_flatfile.csv'
@@ -84,9 +84,10 @@ def get_residual_metadata(metadata_dir):
             rspl.ResidualWithDistance(
                 residuals, gmm, imt, fi_dist, filetype='jpeg')
         
-    # Get llh, edr and residual summary plot
+    # Get llh, edr, stochastic area and residual summary plot
     fi_llh = os.path.join(out_dir, 'all_gmpes_LLH_plot')
     fi_edr = os.path.join(out_dir, 'all_gmpes_EDR_plot')
+    fi_sto = os.path.join(out_dir, 'all_gmpes_stochastic_area_plot')
     fi_pdf = os.path.join(out_dir, 'all_gmpes_PDF_vs_imt_plot')
     
     # Get table of residuals
@@ -95,6 +96,7 @@ def get_residual_metadata(metadata_dir):
     # Get plots
     rspl.plot_loglikelihood_with_spectral_period(residuals, fi_llh)
     rspl.plot_edr_metrics_with_spectral_period(residuals, fi_edr)
+    rspl.plot_stochastic_area_with_spectra_period(residuals, fi_sto)
     rspl.plot_residual_pdf_with_spectral_period(residuals, fi_pdf)
     rspl.pdf_table(residuals, fi_pdf_table)
 
