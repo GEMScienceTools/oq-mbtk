@@ -17,7 +17,7 @@ def main(fname_points: str, fname_polygons: str, folder_out: str='/tmp',
 
 
 def create_smoothing_per_zone(fname_points: str, fname_polygons: str,
-                              folder_out: str='/tmp', skip=[], use = []):
+                              folder_out: str='/tmp', *, skip=[], use = []):
     """
     Creates subsets of points, one for each of the polygons included in the
     `fname_polygons` shapefile. The attibute table must have an 'id' attribute.
