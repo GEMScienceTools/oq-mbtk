@@ -33,6 +33,7 @@ import os
 import re
 import h5py
 import numpy as np
+import pandas as pd
 import rtree
 import logging
 import configparser
@@ -58,12 +59,14 @@ from openquake.baselib import sap
 from openquake.hazardlib.mfd import TruncatedGRMFD
 from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.scalerel import get_available_scalerel
+from openquake.hazardlib.geo.geodetic import distance
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hazardlib.geo.surface.gridded import GriddedSurface
 
 from openquake.mbt.tools.smooth3d import Smoothing3D
 from openquake.man.checks.catalogue import load_catalogue
 from openquake.wkf.utils import create_folder
+from openquake.hmtk.parsers.catalogue import CsvCatalogueParser
 
 PLOTTING = False
 
@@ -179,7 +182,7 @@ def spatial_index(smooth):
 
 def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
                     r, values, oms, tspan, hdf5_filename, uniform_fraction,
-                    proj, idl, align=False):
+                    proj, idl, min_depth=0, align=False):
     """
     Create inslab ruptures using an MFD and a time span. The dictionary 'oms'
     contains lists of profiles for various values of dip. The ruptures are
@@ -246,15 +249,19 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
 
             # Filter out small virtual fault surfaces i.e. surfaces defined
             # by less than three profiles
-            if len(lines) < 3:
+            if len(lines) < 10:
                 continue
+
 
             # Check initial profiles
             min_de = 1e10
             max_de = -1e10
+
+            ref_mins = []
             for lne in lines:
                 ps = np.array([[p.longitude, p.latitude, p.depth] for p in
                                lne.points])
+                ref_mins.append(ps[0])
                 min_de = np.min([min_de, np.min(ps[:, 2])])
                 max_de = np.max([max_de, np.max(ps[:, 2])])
                 assert not np.any(np.isnan(ps))
@@ -271,6 +278,21 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
             smsh[..., 0] = ks.mesh.lons
             smsh[..., 1] = ks.mesh.lats
             smsh[..., 2] = ks.mesh.depths
+
+            # turning to nan the ones outside the min_depth zone
+            if min_depth: 
+                aa, bb, cc = smsh.shape
+                refs = smsh[:][0]
+                for ii in range(bb):
+                    for jj in range(aa):
+                        if smsh[jj][ii][2] < min_depth:
+                            smsh[jj][ii] = [np.nan, np.nan, np.nan]
+                        else:
+                            p = refs[jj]
+                            dist = distance(p[0],p[1],p[2],
+                                            smsh[jj][ii][0],smsh[jj][ii][1],smsh[jj][ii][2])
+                            if ( dist < 20 ) & ( smsh[jj][ii][2] <= 1.5 * min_depth ): 
+                                smsh[jj][ii] = [np.nan, np.nan, np.nan]
 
             # Store data describing the geometry of the virtual fault into the
             # hdf5 file
@@ -312,6 +334,8 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
                         msg = f'{msg} will not be defined'
                         logging.warning(msg)
                         continue
+
+
 
                     # Rupture lenght and rupture width as multiples of the
                     # mesh sampling distance
@@ -367,6 +391,23 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
                         rx = rup[0][ij].flatten()
                         ry = rup[1][ij].flatten()
                         rz = rup[2][ij].flatten()
+
+                        # discard if above the minimum depth
+                        if min(rz) < min_depth:
+                            continue
+
+#                        intdel = 20
+#                        if min(rz) <= min_depth + 0.5*intdel:
+#                            rdf = pd.DataFrame({'x': rx, 'y': ry, 'z': rz})
+#                            rdfsub = rdf[rdf['z'] == min(rz)]
+#                            all_dists = []
+#                            for ii in range(len(rdfsub)):
+#                                rpt = rdfsub.iloc[ii]
+#                                all_dists.extend([distance(p[0],p[1],p[2],rpt[ii],rpt[ii],rpt[ii])
+#                                                  for p in ref_mins])
+#                            if (min(all_dists) < intdel):
+#                                continue
+
 
                         # Create the gridded surface. We need at least four
                         # vertexes.
@@ -525,9 +566,9 @@ def dict_of_floats_from_string(istr):
     return out
 
 
-# def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
-#                        bgr=None, mmin=None, mmax=None, **kwargs):
-def calculate_ruptures(ini_fname, **kwargs):
+def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
+                        bgr=None, mmin=None, mmax=None, **kwargs):
+    #def calculate_ruptures(ini_fname, **kwargs):
     """
     Using the information in a configuration file,
 
@@ -548,12 +589,11 @@ def calculate_ruptures(ini_fname, **kwargs):
     logging.basicConfig(format='rupture:%(levelname)s:%(message)s')
 
     # Reference folder
-    if 'reference_folder' in kwargs:
-        ref_fdr = kwargs.get('reference_folder')
-    elif 'reference_folder' in config['main']:
+    if ref_fdr is None:
+        if 'reference_folder' not in config['main']:
+            msg = 'The .ini file does not contain the reference_folder param'
+            raise ValueError(msg)
         ref_fdr = config.get('main', 'reference_folder')
-    else:
-        ref_fdr = pathlib.Path(ini_fname).parent
 
     # Set parameters
     profile_sd_topsl = config.getfloat('main', 'profile_sd_topsl')
@@ -564,16 +604,34 @@ def calculate_ruptures(ini_fname, **kwargs):
     float_strike = config.getfloat('main', 'float_strike')
     float_dip = config.getfloat('main', 'float_dip')
     slab_thickness = config.getfloat('main', 'slab_thickness')
-    label = config.get('main', 'label')
+    #label = config.get('main', 'label')
     hspa = config.getfloat('main', 'hspa')
     vspa = config.getfloat('main', 'vspa')
     uniform_fraction = config.getfloat('main', 'uniform_fraction')
+    
+    # get pre-made smoothing
+    if config.has_option('main', 'in_hdf5_smoothing_fname'):
+        pre_smoothing = os.path.join(ref_fdr, 
+                                     config.get('main', 'in_hdf5_smoothing_fname'))
+    else:
+        pre_smoothing = None
+    
+
+    # get minimum hypocenter depth
+    if config.has_option('main', 'minimum_hypocenter_depth'):
+        min_depth = float(config.get('main', 'minimum_hypocenter_depth'))
+    else:
+        min_depth = 0.
 
     # MFD params
-    agr = kwargs.get('agr', config.getfloat('main', 'agr'))
-    bgr = kwargs.get('bgr', config.getfloat('main', 'bgr'))
-    mmax = kwargs.get('mmax', config.getfloat('main', 'mmax'))
-    mmin = kwargs.get('mmin', config.getfloat('main', 'mmin'))
+    if agr is None:
+        agr = config.getfloat('main', 'agr')
+    if bgr is None:
+        bgr = config.getfloat('main', 'bgr')
+    if mmax is None:
+        mmax = config.getfloat('main', 'mmax')
+    if mmin is None:
+        mmin = config.getfloat('main', 'mmin')
 
     # IDL
     idl = kwargs.get('idl', config.getboolean('main', 'idl', fallback=False))
@@ -619,6 +677,12 @@ def calculate_ruptures(ini_fname, **kwargs):
         treg_filename = None
     else:
         treg_filename = os.path.abspath(os.path.join(ref_fdr, treg_filename))
+
+    if '.csv' in treg_filename: 
+        treg_type = 'csv'
+    else: 
+        treg_type = 'hdf5'
+        label = config.get('main', 'label')
 
     # Dip angles used to create the virtual faults within the slab
     dips = list_of_floats_from_string(config.get('main', 'dips'))
@@ -735,10 +799,10 @@ def calculate_ruptures(ini_fname, **kwargs):
     # slab volume
     mlo, mla, mde = msh3d.get_coordinates_vectors()
 
-    if False:
+    if True:
         import pandas as pd
         df = pd.DataFrame({'mlo': mlo, 'mla': mla, 'mde': mde})
-        df.to_csv('mesh_coords.csv')
+        df.to_csv(f'mesh_coords-{profile_sd_topsl}-{edge_sd_topsl}.csv', index=None)
 
     # Removing pre-exising hdf5 file
     if os.path.exists(hdf5_filename):
@@ -757,12 +821,24 @@ def calculate_ruptures(ini_fname, **kwargs):
     fh5.close()
 
     # Get earthquake catalogue
-    catalogue = get_catalogue(cat_pickle_fname, treg_filename, label,
+    if treg_type == 'hdf5': 
+        catalogue = get_catalogue(cat_pickle_fname, treg_filename, label, 
                               sort_cat)
+    else: 
+        parser = CsvCatalogueParser(treg_filename)
+        catalogue = parser.read_file()
+
+
 
     # Smooth the seismicity within the volume of the slab
     values, smooth = smoothing(mlo, mla, mde, catalogue, hspa, vspa,
                                out_hdf5_smoothing_fname)
+
+    # replace values with pre-smoothed if exist
+    if pre_smoothing:
+        df_smooth = pd.read_csv(pre_smoothing)
+        values = df_smooth.avg_smooth.values
+
 
     # Create the spatial index
     r, proj = spatial_index(smooth)
@@ -775,7 +851,7 @@ def calculate_ruptures(ini_fname, **kwargs):
     # in this case
     _ = create_ruptures(mfd, dips, sampling, msr, asprs, float_strike,
                         float_dip, r, values, ohs, 1., hdf5_filename,
-                        uniform_fraction, proj, idl, align)
+                        uniform_fraction, proj, idl, min_depth, align)
 
 
 calculate_ruptures.ini_fname = '.ini filename'

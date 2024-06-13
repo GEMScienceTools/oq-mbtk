@@ -191,7 +191,7 @@ def _compl_analysis(decdir, compdir, compl_toml, labels, fout, fout_figs):
         yrs = np.flipud(yrs)
 
     for lab in labels:
-        dec_catvs = glob.glob(os.path.join(decdir, f'*{lab}.csv'))
+        dec_catvs = glob.glob(os.path.join(decdir, f'*_{lab}.csv'))
         fout_lab = os.path.join(fout, lab)
         fout_figs_lab = os.path.join(fout_figs, lab, 'mfds')
         for ii, cat in enumerate(dec_catvs):
@@ -220,9 +220,12 @@ def make_many_mfds(configfile, basedir=None):
 
     # make subdirs based on outdir name
     catdir = os.path.join(outdir, 'catalogues')
-    decdir = os.path.join(outdir, 'declustered')
-    compdir = os.path.join(outdir, 'completeness')
+    if config['decluster']['decl_directory']:
+        decdir = config['decluster']['decl_directory']
+    else:
+        decdir = os.path.join(outdir, 'declustered')
     resdir = os.path.join(outdir, 'results')
+    compdir = os.path.join(outdir, 'completeness')
     figdir = os.path.join(outdir, 'figures')
     tmpconf = os.path.join(outdir, 'tmp-config-compl.toml')
 
