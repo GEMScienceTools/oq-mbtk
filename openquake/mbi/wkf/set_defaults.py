@@ -7,7 +7,7 @@ from openquake.baselib import sap
 from openquake.wkf.utils import get_list
 
 
-def main(fname_conf: str, fname_defaults: str,  use: str = [], skip: str = []):
+def main(fname_conf: str, fname_defaults: str, *, use: str = [], skip: str = []):
 
     if len(use) > 0:
         use = get_list(use)
