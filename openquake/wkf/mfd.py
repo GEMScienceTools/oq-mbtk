@@ -35,7 +35,6 @@ from openquake.hazardlib.sourceconverter import SourceConverter
 from openquake.mbt.tools.mfd import (
     EEvenlyDiscretizedMFD,
     get_evenlyDiscretizedMFD_from_truncatedGRMFD)
-from openquake.hazardlib.mfd.multi_mfd import MultiMFD
 
 
 def check_mfds(fname_input_pattern: str, fname_config: str = None,  *,
