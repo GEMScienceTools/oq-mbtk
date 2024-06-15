@@ -19,7 +19,7 @@
 Parse the GEM globally homogenised flatfile into SMT metadata.
 """
 import pandas as pd
-import os, sys
+import os
 import tempfile
 import csv
 import numpy as np
@@ -510,8 +510,8 @@ class GEMFlatfileParser(SMDatabaseReader):
 def _prioritise_rotd50(df, proxy=None, removal=None):
     """
     Assign RotD50 values to horizontal acceleration columns for computation of
-    residuals. If no RotD50 use the geometric mean if available (if specified)
-    as a proxy for RotD50.
+    residuals. If no RotD50 use the geometric mean if available (if specified
+    in parser arguments) as a proxy for RotD50.
     
     RotD50 is available for the vast majority of the records in the GEM
     flatfile for PGA to 10 s.
@@ -533,7 +533,8 @@ def _prioritise_rotd50(df, proxy=None, removal=None):
     # TODO this approach is a bit hacky given we can use 'component' argument
     # within residuals.get_residuals() to specify if we want RotD50 or geometric
     # mean, but this function allows maximum number of records to be used in an
-    # analysis by taking RotD50 if available, and then geometric mean if not.
+    # analysis by taking RotD50 if available, and then computing geometric mean
+    # from the horizontal components if not.
     
     # Manage RotD50 vs horizontal components
     log, cols = [], []
