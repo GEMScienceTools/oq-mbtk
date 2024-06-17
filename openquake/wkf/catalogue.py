@@ -36,7 +36,7 @@ import geopandas as gpd
 from typing import Type
 from shapely.geometry import Point
 from openquake.hmtk.seismicity.catalogue import Catalogue
-from openquake.wkf.utils import create_folder
+from openquake.wkf.utils import create_folder, get_list
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
 
 
@@ -121,7 +121,7 @@ def from_df(df, end_year=None) -> Type[Catalogue]:
 
 
 def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
-                         source_ids: list = []):
+                         source_ids: str = []):
     """
     Given a catalogue and a gis-file with polygons (e.g. shapefile or
     .geojson), this code creates for each polygon a subcatalogue with the
@@ -141,7 +141,10 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
 
     # Create output folder
     create_folder(folder_out)
-
+    
+    if len(source_ids) > 0:
+        source_ids = get_list(source_ids)
+        
     # Create geodataframe with the catalogue
     df = pd.read_csv(fname_cat)
     gdf = gpd.GeoDataFrame(df, crs='epsg:4326', geometry=[Point(xy) for xy
@@ -149,21 +152,27 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
 
     # Read polygons
     polygons_gdf = gpd.read_file(fname_polygons)
-
-    # Select point in polygon
-    columns = ['eventID', 'year', 'month', 'day', 'magnitude', 'longitude',
-               'latitude', 'depth']
-
+    
+    # check there are no duplicate ids
+    assert(polygons_gdf['id'].is_unique)
+    
+    # explode for any multipolygons
+    polygons_gdf = polygons_gdf.explode()
+    
     # Iterate over sources
+    # actually this should maybe iterate over *sources* rather than the polygons, because then we could 
+    # handle the multipolygons more smoothly
     out_fnames = []
     for idx, poly in polygons_gdf.iterrows():
 
         if len(source_ids) > 0 and poly.id not in source_ids:
             continue
-
+            
         df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
         gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
         within = gpd.sjoin(gdf, gdf_poly, op='within')
+        
+        # check if there are other polygons for this source
         # Create output file
         if isinstance(poly.id, int):
             fname = f'subcatalogue_zone_{poly.id:d}.csv'
@@ -171,7 +180,7 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
             fname = f'subcatalogue_zone_{poly.id}.csv'
         out_fname = os.path.join(folder_out, fname)
         out_fnames.append(out_fname)
-        within.to_csv(out_fname, index=False, columns=columns)
+        within.to_csv(out_fname, index=False)
 
     return out_fnames
 

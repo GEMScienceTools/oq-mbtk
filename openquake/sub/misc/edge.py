@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 TOL = 0.7
-
+#TOL = 1.5
 
 def line_between_two_points(pnt1, pnt2):
     """
