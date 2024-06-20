@@ -46,10 +46,6 @@ from openquake.smt.sm_utils import convert_accel_units, check_gsim_list
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
 
-# SCALAR_IMTS = ["PGA", "PGV", "PGD", "CAV", "Ia"]
-SCALAR_IMTS = ["PGA", "PGV"]
-STDDEV_KEYS = ["Mean", "Total", "Inter event", "Intra event"]
-
 
 def get_geometric_mean(fle):
     """
