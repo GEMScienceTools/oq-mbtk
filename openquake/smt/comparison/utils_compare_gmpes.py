@@ -1229,6 +1229,7 @@ def save_spectra_plot(f1, obs_spectra, output_dir, eq_id, st_id):
         f1.savefig(os.path.join(output_dir, fname), bbox_inches='tight',
                    dpi=200, pad_inches=0.2)
 
+
 ### Utils for other plots
 def matrix_mean(mtxs, imt_list, gmpe_list):
     """
