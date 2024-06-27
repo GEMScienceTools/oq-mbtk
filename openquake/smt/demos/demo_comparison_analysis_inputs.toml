@@ -39,7 +39,7 @@ non_trellis_or_spectra_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [ma
 
 # Specify label for gmpes
 [gmpe_labels]
-gmpes_label = ['CA15', 'AK14', 'B20', 'L19', 'BO14', 'K1', 'K2', 'K3', 'K4', 'K5']
+gmpes_label = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CA15', 'AK14']
 
 # Specify gmpes
 
