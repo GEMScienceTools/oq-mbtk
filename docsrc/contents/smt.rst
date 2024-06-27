@@ -488,7 +488,7 @@ Comparing GMPEs
         
         # Specify label for gmpes
         [gmpe_labels]
-        gmpes_label = ['CA15', 'AK14', 'B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5']
+        gmpes_label = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CA15', 'AK14']
         
         # Specify gmpes
         
