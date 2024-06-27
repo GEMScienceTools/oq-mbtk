@@ -521,9 +521,7 @@ Comparing GMPEs
             sigma_mu_epsilon = -2.85697 
             c3_epsilon = -1.72    
             
-        # Plot logic tree only for second GMC logic tree config (gmc2)
-        # Note this additional GMC logic tree config is simply for demonstrative
-        # purposes of how multiple logic trees can be plotted at once!
+        # Plot logic tree only for a second GMC logic tree config (gmc2)
         [models.CauzziEtAl2014]
             lt_weight_gmc2_plot_lt_only = 0.50
             
@@ -531,7 +529,7 @@ Comparing GMPEs
             lt_weight_gmc2_plot_lt_only = 0.50
             
         [custom_colors]
-        custom_colors_flag = 'False' # (Set to "True" for custom colours in plots)
+        custom_colors_flag = 'False' # Set to "True" for custom colours in plots
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
             
             
@@ -638,15 +636,15 @@ Comparing GMPEs
 
         [models.0-ModifiableGMPE]
         gmpe = 'YenierAtkinson2015BSSA'
-        sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
+        sigma_model = 'al_atik_2015_sigma' # Use Al Atik (2015) sigma model
 
         [models.1-ModifiableGMPE]
         gmpe = 'CampbellBozorgnia2014'
-        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # fix total sigma per imt
+        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # Fix total sigma per imt
         
         [models.2-ModifiableGMPE]
         gmpe = 'CampbellBozorgnia2014'
-        with_betw_ratio = 1.7 # add between-event and within-event sigma using
+        with_betw_ratio = 1.7 # Add between-event and within-event sigma using
                               # ratio of 1.7 to partition total sigma
                 
         [models.3-ModifiableGMPE]
@@ -663,31 +661,31 @@ Comparing GMPEs
                                
         [models.6-ModifiableGMPE]
         gmpe = 'ChiouYoungs2014'
-        median_scaling_scalar = 1.4 # scale median by factor of 1.4 over all imts
+        median_scaling_scalar = 1.4 # Scale median by factor of 1.4 over all imts
         
         [models.7-ModifiableGMPE]
         gmpe = 'ChiouYoungs2014'
-        median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # scale median by imt-dependent factor
+        median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # Scale median by imt-dependent factor
         
         [models.8-ModifiableGMPE]
         gmpe = 'KothaEtAl2020'
-        sigma_scaling_scalar = 1.25 # scale sigma by factor of 1.25 over all imts
+        sigma_scaling_scalar = 1.25 # Scale sigma by factor of 1.25 over all imts
         
         [models.9-ModifiableGMPE]
         gmpe = 'KothaEtAl2020'
-        sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # scale sigma by imt-dependent factor
+        sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # Scale sigma by imt-dependent factor
         
         [models.10-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
-        site_term = 'CY14SiteTerm' # use CY14 site term
+        site_term = 'CY14SiteTerm' # Use CY14 site term
         
         [models.11-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
-        site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
+        site_term = 'NRCan15SiteTerm' # Use NRCan15 non-linear site term
         
         [models.12-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
-        site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
+        site_term = 'NRCan15SiteTermLinear' # Use NRCan15 linear site term
     
 References
 ==========
