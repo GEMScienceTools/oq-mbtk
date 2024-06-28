@@ -19,34 +19,28 @@
 Parse the GEM globally homogenised flatfile into SMT metadata.
 """
 import pandas as pd
-import os, sys
+import os
 import tempfile
 import csv
 import numpy as np
 import copy
 import h5py
+import pickle
 from math import sqrt
 from linecache import getline
 from collections import OrderedDict
 
-from openquake.smt.sm_database import GroundMotionDatabase, GroundMotionRecord,\
-    Earthquake, Magnitude, Rupture, FocalMechanism, GCMTNodalPlanes,\
-    Component, RecordSite, RecordDistance
-from openquake.smt.sm_utils import MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14,\
-    vs30_to_z2pt5_cb14
+from openquake.smt.sm_database import (GroundMotionDatabase, GroundMotionRecord,
+                                       Earthquake, Magnitude, Rupture,
+                                       FocalMechanism, GCMTNodalPlanes,
+                                       Component, RecordSite, RecordDistance)
+from openquake.smt.sm_utils import (MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14,
+                                    vs30_to_z2pt5_cb14)
 from openquake.smt.parsers import valid
 from openquake.smt.parsers.base_database_parser import SMDatabaseReader
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
-
 # Import the ESM dictionaries
 from .esm_dictionaries import *
-
-# Base path
-DATA = os.path.abspath('')
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
@@ -99,23 +93,22 @@ class GEMFlatfileParser(SMDatabaseReader):
                 print("Record with sequence number %s is null/invalid"
                       % "{:s}-{:s}".format(row["event_id"],
                                            row["station_code"]))
-            if (counter % 1) == 0:
-                print("Processed record %s - %s" % (str(counter),
-                                                    record.id))
+            if (counter % 100) == 0:
+                print("Processed record %s - %s" % (str(counter), record.id))
                 
             counter += 1
 
     @classmethod
-    def autobuild(cls, dbid, dbname, output_location, ESM_flatfile_directory,
+    def autobuild(cls, dbid, dbname, output_location, flatfile_directory,
                   proxy=None, removal=None):
         """
         Quick and dirty full database builder!
         """
         # Import GEM strong-motion flatfile
-        GEM = pd.read_csv(ESM_flatfile_directory)
+        GEM = pd.read_csv(flatfile_directory)
     
         # Get path to tmp csv once modified dataframe
-        converted_base_data_path=_prioritise_rotd50(GEM, proxy, removal)
+        conv_pth= prioritise_rotd50(GEM, proxy, removal)
         
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
@@ -124,7 +117,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         # Add on the records folder
         os.mkdir(os.path.join(output_location, "records"))
         # Create an instance of the parser class
-        database = cls(dbid, dbname, converted_base_data_path)
+        database = cls(dbid, dbname, conv_pth)
         # Parse the records
         print("Parsing Records ...")
         database.parse(location=output_location)
@@ -214,7 +207,6 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         If rupture data is available - parse it, otherwise return None
         """
-
         sof = metadata["fm_type_code"]
         if not metadata["event_source_id"].strip():
             # No rupture model available. Mechanism is limited to a style
@@ -514,14 +506,14 @@ class GEMFlatfileParser(SMDatabaseReader):
         return scalars, spectra
 
 
-def _prioritise_rotd50(df, proxy=None, removal=None):
+def prioritise_rotd50(df, proxy=None, removal=None):
     """
-    Assign RotD50 values to horizontal accelerations for computation of
-    residuals. RotD50 is available for the vast majority of the records in the
-    GEM flatfile for PGA to 10 s.
+    Assign RotD50 values to horizontal acceleration columns for computation of
+    residuals. If no RotD50 use the geometric mean if available (if specified
+    in parser arguments) as a proxy for RotD50.
     
-    If no RotD50 use the geometric mean if available (if specified) as a proxy
-    for RotD50.
+    RotD50 is available for the vast majority of the records in the GEM
+    flatfile for PGA to 10 s.
     
     Records lacking acceleration values for any of the required spectral periods
     can also be removed (this information can alternatively just be printed)
@@ -537,6 +529,12 @@ def _prioritise_rotd50(df, proxy=None, removal=None):
         without complete RotD50 even with use of geometric mean as a proxy are
         dropped
     """
+    # TODO this approach is a bit hacky given we can use 'component' argument
+    # within residuals.get_residuals() to specify if we want RotD50 or geometric
+    # mean, but this function allows maximum number of records to be used in an
+    # analysis by taking RotD50 if available, and then computing geometric mean
+    # from the horizontal components if not.
+    
     # Manage RotD50 vs horizontal components
     log, cols = [], []
     for idx, rec in df.iterrows():
@@ -566,21 +564,21 @@ def _prioritise_rotd50(df, proxy=None, removal=None):
     cols = pd.Series(cols).unique()
     df = df.drop(columns=cols)
     
-    # Drop if req. or else just inform number of recs missing acceleration values
+    # Drop if req. or else just inform number of recs missing acc. values
     no_vals = len(pd.Series(log).unique())
     if removal is True and log!= []:
         df = df.drop(log).reset_index()
-        msg = 'Records without RotD50 acc. values for all periods between 0.01 s and 10 s'
-        msg += ' have been removed from flatfile (%s records)' % no_vals
+        msg = 'Records without RotD50 acc. values for all periods between 0.01'
+        msg += ' s and 10 s have been removed from flatfile (%s records)' %no_vals
         print(msg)
         if len(df) == 0:
             raise ValueError('All records have been removed from the flatfile')        
     elif log != []:
-        print('%s records do not have RotD50 for all periods between 0.01 s and 10 s' % no_vals)
+        print('%s records do not have RotD50 for all periods between 0.01 s and 10 s'
+              % no_vals)
     
-    # Output to folder where converted flatfile read into parser   
-    tmp = tempfile.mkdtemp()
-    converted_base_data_path = os.path.join(DATA, tmp, 'converted_flatfile.csv')
-    df.to_csv(converted_base_data_path, sep=';')
+    # Output to temp folder where converted flatfile read into parser   
+    conv_pth = os.path.join(tempfile.mkdtemp(), 'conv_flatfile_tmp.csv')
+    df.to_csv(conv_pth, sep=';')
     
-    return converted_base_data_path
+    return conv_pth

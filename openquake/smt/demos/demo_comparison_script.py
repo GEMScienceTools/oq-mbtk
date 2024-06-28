@@ -1,7 +1,8 @@
 """
 This notebook provides a simple script for comparing candidate GMMs using
-trellis plots, hierarchical clustering plots, Euclidean distance matrix plots
-and Sammons Maps plotting functions available within the SMT's comparison module.
+trellis plots, response spectra, hierarchical clustering plots, Euclidean
+distance matrix plots and Sammons Maps plotting functions available within
+the SMT's comparison module.
 """
 import os
 import toml
