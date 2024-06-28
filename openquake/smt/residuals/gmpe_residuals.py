@@ -668,7 +668,7 @@ class Residuals(object):
 
     def _pprint_event(self, fid, event, sep):
         """
-        Pretty print the information for each event
+        Print the information for each event
         """
         # Print rupture info
         rupture_str = sep.join([
