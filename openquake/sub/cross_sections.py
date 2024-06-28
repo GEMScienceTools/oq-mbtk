@@ -46,7 +46,7 @@ from openquake.hazardlib.geo.geodetic import (
 
 from openquake.hazardlib.geo.utils import OrthographicProjection
 from scipy.interpolate import LinearNDInterpolator
-
+from scipy.spatial import Delaunay
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.parsers.catalogue.csv_catalogue_parser import CsvCatalogueParser
 from openquake.hmtk.parsers.catalogue.gcmt_ndk_parser import ParseNDKtoGCMT
@@ -113,11 +113,12 @@ class Slab2pt0(object):
 
             # Get min and max longitude and latitude values
             minlo, maxlo, minla, maxla, qual = cs.get_mm(2.0)
-
+            
+            #Sbreakpoint()
             # Find the nodes of the grid within a certain distance from the
             # plane of the cross-section
             if qual == 0:
-                minlo, maxlo, minla, maxla, _ = cs.get_mm(2.0)
+                minlo, maxlo, minla, maxla, _ = cs.get_mm(5.0)
                 idxslb, dsts = cs.get_grd_nodes_within_buffer(
                     pnts[:, 0], pnts[:, 1], bffer, minlo, maxlo, minla, maxla)
             if qual == 1:
@@ -137,11 +138,16 @@ class Slab2pt0(object):
                                    cs.length[0], 0., num)
             p = pnts[idxslb, :]
 
-            try:
+            try: 
                 interp = LinearNDInterpolator(p[:, 0:2], p[:, 2])
                 z = interp(psec[0], psec[1])
+
             except:
-                breakpoint()
+                print("trying altered qhull for interpolation")
+                tri = Delaunay(numpy.c_[(p[:, 0], p[:,1])], qhull_options = "QJ")
+                ip = LinearNDInterpolator(tri, p[:,2])
+                z = ip(psec[0], psec[1])
+            
 
             iii = numpy.isfinite(z)
             pro = numpy.concatenate((numpy.expand_dims(psec[0][iii], axis=1),
