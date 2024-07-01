@@ -264,12 +264,11 @@ def build_fault_model(*, cfg_file=None,
     # Import arguments from INI configuration file
     if cfg_file is not None:
         cfg_dict = read_config_file(cfg_file)
-        basedir = pathlib.Path(cfg_file).parent
 
         if 'config' in cfg_dict:
             config = cfg_dict['config']
             if 'geojson_file' in config:
-                geojson_file = basedir / config['geojson_file']
+                geojson_file = config['geojson_file']
             if 'xml_output' in config:
                 xml_output = config['xml_output']
             if 'black_list' in config:
