@@ -15,11 +15,12 @@ $ python3 install.py devel
 $ source ~/openquake/bin/activate
 ```
 
-* Go to the folder where you cloned the oq-mbtk repository and complete the installation:
+* Go to the folder where you cloned the oq-mbtk repository and complete the installation,
+using in the command below the file of requirements corresponding to the correct python version
+and operating system, in place of `requirements-py311-linux.txt`:
 
 ```bash
 $ pip install -e .
 $ pip install -r requirements-py311-linux.txt
 ```
 
-replacing ``py311-linux`` with the file indicating the correct python version and operating system.
