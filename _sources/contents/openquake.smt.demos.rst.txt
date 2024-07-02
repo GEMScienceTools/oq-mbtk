@@ -1,0 +1,37 @@
+openquake.smt.demos package
+===========================
+
+Submodules
+----------
+
+openquake.smt.demos.demo\_comparison\_script module
+---------------------------------------------------
+
+.. automodule:: openquake.smt.demos.demo_comparison_script
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.demos.demo\_residuals\_script module
+--------------------------------------------------
+
+.. automodule:: openquake.smt.demos.demo_residuals_script
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.demos.demo\_single\_station\_analysis module
+----------------------------------------------------------
+
+.. automodule:: openquake.smt.demos.demo_single_station_analysis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.demos
+   :members:
+   :undoc-members:
+   :show-inheritance:

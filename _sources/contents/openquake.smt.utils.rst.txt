@@ -1,0 +1,10 @@
+openquake.smt.utils package
+===========================
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,45 @@
+openquake.fnm.tests.inversion package
+=====================================
+
+Submodules
+----------
+
+openquake.fnm.tests.inversion.motagua\_simple\_test module
+----------------------------------------------------------
+
+.. automodule:: openquake.fnm.tests.inversion.motagua_simple_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.inversion.simple\_test\_data module
+-------------------------------------------------------
+
+.. automodule:: openquake.fnm.tests.inversion.simple_test_data
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.inversion.test\_soe\_builder module
+-------------------------------------------------------
+
+.. automodule:: openquake.fnm.tests.inversion.test_soe_builder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.inversion.test\_utils module
+------------------------------------------------
+
+.. automodule:: openquake.fnm.tests.inversion.test_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.fnm.tests.inversion
+   :members:
+   :undoc-members:
+   :show-inheritance:
