@@ -553,7 +553,8 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
     tmps = os.path.join(ref_fdr, out_hdf5_smoothing_fname)
     out_hdf5_smoothing_fname = os.path.abspath(tmps)
     # create the smoothing directory if it doesn't exist
-    smoothing_dir = '/'.join(out_hdf5_smoothing_fname.split('/')[:-1])
+    smoothing_dir = os.path.sep.join(
+        out_hdf5_smoothing_fname.split(os.path.sep)[:-1])
     if not os.path.exists(smoothing_dir):
         os.makedirs(smoothing_dir)
 
