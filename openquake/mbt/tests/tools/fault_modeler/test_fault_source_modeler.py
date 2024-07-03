@@ -191,9 +191,7 @@ class TestDatabaseIO(unittest.TestCase):
         new_config_fname = test_dir / 'config.ini'
         data_path = pathlib.Path(BASE_DATA_PATH)
         geojson_original_path = data_path / config['config']['geojson_file']
-        tmp = os.path.relpath(
-            str(geojson_original_path), str(new_config_fname))
-        config['config']['geojson_file'] = tmp
+        config['config']['geojson_file'] = str(geojson_original_path)
 
         with open(new_config_fname, 'w') as configfile:
             config.write(configfile)
