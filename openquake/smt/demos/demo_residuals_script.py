@@ -10,6 +10,7 @@ from openquake.baselib import sap
 from openquake.smt.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals import residual_plotter as rspl
+from openquake.smt.database_visualiser import db_magnitude_distance
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -54,6 +55,11 @@ def get_residual_metadata(metadata_dir):
     # If output directory exists remove
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
+    os.mkdir(out_dir)
+
+    # Export magnitude distance plot
+    mag_dist = os.path.join(out_dir, 'mag_dist.png')
+    db_magnitude_distance(database, dist_type='repi', filename=mag_dist)
 
     # Get residuals
     residuals = res.Residuals.from_toml(gmms_imts)
@@ -66,7 +72,7 @@ def get_residual_metadata(metadata_dir):
         gmm_dir = residuals.gmpe_list[gmm]._toml.split('\n')[0]
         out = os.path.join(out_dir, gmm_dir)
         if not os.path.exists(out): os.makedirs(out)
-
+        
         # Per IMT
         for imt in residuals.imts:
             
