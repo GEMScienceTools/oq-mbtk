@@ -110,9 +110,11 @@ def plot_trellis_util(
                                                          trt,
                                                          up_or_down_dip)
 
-                # Get mean, sigma, mean plus sigma and mean minus sigma
+                # Get mean, sigma components, mean plus/minus sigma
                 mean = mean[0][0]
                 std = std[0][0]
+                tau = tau[0][0]
+                phi = phi[0][0]
                 plus_sigma = np.exp(mean+Nstd*std[0])
                 minus_sigma = np.exp(mean-Nstd*std[0])
                 
@@ -141,12 +143,17 @@ def plot_trellis_util(
                     unit = 'g'
                 else:
                     unit = 'cm/s' # Otherwise imt = PGV
+                store_per_gmpe[gmpe]['%s (km)' %dist_type] = r_vals
                 store_per_gmpe[gmpe]['median (%s)' %unit] = np.exp(mean)
                 store_per_gmpe[gmpe]['sigma (ln)'] = std
-                store_per_gmpe[gmpe][
-                    'median plus sigma (%s)' %unit] = plus_sigma
-                store_per_gmpe[gmpe][
-                    'median minus sigma (%s)' %unit] = minus_sigma
+                store_per_gmpe[gmpe]['tau (ln)'] = tau
+                store_per_gmpe[gmpe]['phi (ln)'] = phi
+                
+                if Nstd != 0: # Only export mean plus/minus sigma if Nstd > 0
+                    store_per_gmpe[gmpe][
+                        'median plus sigma (%s)' %unit] = plus_sigma
+                    store_per_gmpe[gmpe][
+                        'median minus sigma (%s)' %unit] = minus_sigma
                    
                 # Update plots
                 update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list,
@@ -205,7 +212,7 @@ def plot_trellis_util(
             
         # Store per imt
         store_per_imt[str(i)] = store_per_mag
-        
+    
     # Final store to add vs30 and Nstd into key
     store['vs30 = %s m/s, GMM sigma epsilon = %s' %(Vs30, Nstd)
           ] = store_per_imt
