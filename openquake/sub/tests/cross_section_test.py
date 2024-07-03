@@ -1,7 +1,6 @@
 import os
 import re
 import numpy
-import filecmp
 import unittest
 import tempfile
 
@@ -13,6 +12,7 @@ from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.line import Line
 from openquake.sub.tests import __file__ as tests__init__
 from openquake.sub.make_cs_coords import make_cs_coords
+from openquake.utils import are_equal_ignoring_line_endings
 
 BASE_PATH = os.path.dirname(__file__)
 tmp = 'data/crust/crust_except.xyz'
@@ -150,4 +150,4 @@ class edge2profileTest(unittest.TestCase):
         cs_dir = os.path.join(BASE_PATH, 'data', 'cs')
         outfi = os.path.join('/tmp/cs_file.cs')
         make_cs_coords(cs_dir, outfi, 'cs.ini')
-        assert filecmp.cmp(outfi, reference_file) == True
+        self.assertTrue(are_equal_ignoring_line_endings(outfi, reference_file))

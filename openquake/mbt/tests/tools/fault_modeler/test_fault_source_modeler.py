@@ -32,6 +32,7 @@ import configparser
 import tempfile
 import pathlib
 
+from openquake.utils import are_equal_ignoring_line_endings
 import openquake.mbt.tools.fault_modeler.fault_source_modeler as fsm
 
 # -----------------------------------------------------------------------------
@@ -39,15 +40,6 @@ import openquake.mbt.tools.fault_modeler.fault_source_modeler as fsm
 BASE_DATA_PATH = os.path.dirname(__file__)
 
 # -----------------------------------------------------------------------------
-
-
-def are_equal_ignoring_line_endings(filename1, filename2):
-    with open(filename1, "r") as a:
-        with open(filename2, "r") as b:
-            # Note that "all" and "zip" are lazy
-            # (will stop at the first line that's not identical)
-            return all(lineA == lineB
-                       for lineA, lineB in zip(a, b))
 
 
 class TestDatabaseIO(unittest.TestCase):
