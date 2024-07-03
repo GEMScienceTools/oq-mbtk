@@ -380,9 +380,6 @@ class SMRecordSelector(object):
                 if alt_value and (alt_value >= alternative[1]) and\
                     (alt_value <= alternative[2]):
                     idx.append(iloc)
-#                else:
-#                    raise ValueError("Record %s is missing selected distance "
-#                        "metric and alternative metric" % record.id)
             else:
                 print("Record {:s} is missing selected distance metric".format(
                       record.id))

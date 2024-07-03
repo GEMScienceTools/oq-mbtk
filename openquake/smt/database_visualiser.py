@@ -79,11 +79,10 @@ def db_magnitude_distance(db1, dist_type, figure_size=(7, 5),
     plt.semilogx(np.array(dists), np.array(mags), "o", mec='k', mew=0.5)
     plt.xlabel(DISTANCE_LABEL[dist_type], fontsize=14)
     plt.ylabel("Magnitude", fontsize=14)
+    plt.grid()
     if figure_title:
         plt.title(figure_title, fontsize=18)
     _save_image(filename, plt.gcf(), filetype, dpi)
-    plt.grid()
-    plt.show()
 
 
 NEHRP_BOUNDS = {
