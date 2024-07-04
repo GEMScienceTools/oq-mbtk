@@ -5,7 +5,12 @@ Note that this procedure implies the installation of the OpenQuake engine.
 It was tested on Mac OS and Linux systems.
 
 * Open a terminal and move to the folder where to intend to install the tools;
-* Upgrade pip: ``python -m pip install --upgrade pip``
+* Upgrade pip:
+
+```bash
+python -m pip install --upgrade pip
+```
+
 * Install the OpenQuake engine and activate its virtual environment:
 
 ```bash
@@ -16,8 +21,8 @@ $ source ~/openquake/bin/activate
 ```
 
 * Go to the folder where you cloned the oq-mbtk repository and complete the installation,
-using in the command below the file of requirements corresponding to the correct python version
-and operating system, in place of `requirements-py311-linux.txt`:
+making sure to replace `requirements-py311-linux.txt` with the file
+corresponding to the correct python version and operating system.
 
 ```bash
 $ pip install -e .
