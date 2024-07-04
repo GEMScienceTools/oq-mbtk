@@ -50,14 +50,17 @@ Set-Alias -Name pip -Value $Env:PY_PIP\pip.exe
 python .\get-pip.py
 #
 cd $workDir
+# FIXME: this installs engine master
 Write-Host "clone of the branch $branch for oq-engine and install in developer mode"
 git clone --depth=1 https://github.com/gem/oq-engine.git
 cd .\oq-engine\
 pip install -r .\requirements-py311-win64.txt
 pip install -e .
 cd ..
+# FIXME: this installs oq-mbtk master
 Write-Host "clone of the branch $branch for oq-mbtk and install in developer mode"
-git clone --depth=1 https://github.com/GEMScienceTools/oq-mbtk.git
+# FIXME: temporarily using fix-tests branch
+git clone --depth=1 https://github.com/GEMScienceTools/oq-mbtk.git -b fix-tests
 cd .\oq-mbtk\
 pip install -r .\requirements_win64.txt
 pip install -e .
