@@ -33,7 +33,7 @@ jobs:
         $curDir = Get-Location
         Write-Host "Current Working Directory: $curDir"
         Get-ChildItem -Path .\windows –recurse
-        .\windows\install_oqmbtk.ps1
+        .\windows\install_oqmbtk.ps1 -mbtk_branch $GITHUB_REF
         $MYPATH = $HOME + "\mbtk"
         Write-Host "Print USERPROFILE folder: $env:USERPROFILE"
         Write-Host "Print MYPATH folder: $MYPATH"

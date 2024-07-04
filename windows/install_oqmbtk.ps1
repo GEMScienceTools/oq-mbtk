@@ -18,6 +18,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 #
+
+param (
+    [string]$mbtk_branch = "master"  # default
+)
+
 cd $ENV:USERPROFILE
 $curDir = Get-Location
 $workDir = $curDir.Path + "\mbtk"
@@ -57,9 +62,8 @@ cd .\oq-engine\
 pip install -r .\requirements-py311-win64.txt
 pip install -e .
 cd ..
-# TODO: make it possible to checkout a different branch instead of master
-Write-Host "clone oq-mbtk and install it"
-git clone --depth=1 https://github.com/GEMScienceTools/oq-mbtk.git
+Write-Host "clone oq-mbtk on branch $mbtk_branch and install it"
+git clone --depth=1 https://github.com/GEMScienceTools/oq-mbtk.git -b $mbtk_branch
 cd .\oq-mbtk\
 pip install -r .\requirements_win64.txt
 pip install -e .
