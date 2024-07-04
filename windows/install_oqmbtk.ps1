@@ -59,7 +59,6 @@ pip install -e .
 cd ..
 # TODO: make it possible to checkout a different branch instead of master
 Write-Host "clone oq-mbtk and install it"
-# FIXME: temporarily using fix-tests branch
 git clone --depth=1 https://github.com/GEMScienceTools/oq-mbtk.git
 cd .\oq-mbtk\
 pip install -r .\requirements_win64.txt
