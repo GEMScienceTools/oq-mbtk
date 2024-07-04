@@ -24,11 +24,9 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-import sys
 import ast
 import json
 from copy import deepcopy
-import pathlib
 import configparser
 import warnings
 
@@ -313,8 +311,6 @@ def build_fault_model(*, cfg_file=None,
 
     if xml_output is None:
         return srcl
-
-
 
     msg = 'Parameter configuration file (.ini)'
     build_fault_model.cfg_file = msg
