@@ -32,6 +32,7 @@ import pandas as pd
 from openquake.baselib import sap
 from openquake.hazardlib.geo.geodetic import azimuth
 
+
 def make_cs_coords(cs_dir, outfi, ini_fname, cs_length=300., cs_depth=300.):
     """
     Creates cs_coords file of format to be used by plotting script, in the
@@ -47,7 +48,8 @@ def make_cs_coords(cs_dir, outfi, ini_fname, cs_length=300., cs_depth=300.):
             continue
 
         df = pd.read_csv(fi, sep=' ', names=["lon", "lat", "depth"])
-        az = azimuth(df.lon[0], df.lat[0], df.lon.values[-1], df.lat.values[-1])
+        az = azimuth(
+            df.lon[0], df.lat[0], df.lon.values[-1], df.lat.values[-1])
 
         csid = fi.split(os.path.sep)[-1][3:].replace('.csv', '')
         line = f'{df.lon[0]} {df.lat[0]} {cs_length} {cs_depth} '
@@ -60,6 +62,7 @@ def make_cs_coords(cs_dir, outfi, ini_fname, cs_length=300., cs_depth=300.):
         for line in lines:
             f.write(line)
     print(f'Written to {outfi}')
+
 
 make_cs_coords.cs_dir = 'directory with cross section coordinates'
 make_cs_coords.outfi = 'output filename'
