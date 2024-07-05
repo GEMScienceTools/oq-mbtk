@@ -40,7 +40,7 @@ from openquake.hazardlib import valid
 from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib import imt
 import openquake.smt.intensity_measures as ims
-from openquake.smt.residuals.sm_selector import SMRecordSelector
+from openquake.smt.residuals.sm_database_selector import SMRecordSelector
 from openquake.smt.sm_utils import convert_accel_units, check_gsim_list
 
 GSIM_LIST = get_available_gsims()
