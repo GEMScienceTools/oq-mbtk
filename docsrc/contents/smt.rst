@@ -25,7 +25,7 @@ Parsing a Ground-Motion Flatfile into Metadata
 
 Herein we provide a brief description of the various steps for the parsing of an ESM 2018 flatfile. Note that we use the symbol ``>`` as the prompt in a terminal, hence every time you find some code starting with this symbol this indicate a command you must type in your terminal. 
 
-Following the geographical filtering of the ESM 2018 flatfile for only earthquakes from Albania and the surrounding regions in this example, we can parse the flatfile using the ``ESM_flatfile_parser``. The currently available parsers within the smt module can be found in ``oq-mbtk.openquake.smt.parsers``.
+Following the geographical filtering of the ESM 2018 flatfile for only earthquakes from Albania and the surrounding regions in this example, we can parse the flatfile using the ``ESM_flatfile_parser``. The currently available parsers within the smt module can be found in ``oq-mbtk.openquake.smt.residuals.parsers``.
 
 1. First we must import the ``ESMFlatfileParser`` and the required python modules for managing the output directories:
     
@@ -34,7 +34,7 @@ Following the geographical filtering of the ESM 2018 flatfile for only earthquak
         > # Import required python modules
         > import os
         > import shutil
-        > from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+        > from openquake.smt.residuals.parsers.esm_flatfile_parser import ESMFlatfileParser
 
 2. Next we need to specify the base path, the flatfile location and the output location:
 

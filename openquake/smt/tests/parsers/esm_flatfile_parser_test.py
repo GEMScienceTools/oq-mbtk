@@ -20,15 +20,13 @@
 Tests for execution of ESM Flatfile Parser
 """
 import os
-import sys
 import shutil
 import unittest
-from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+import pickle
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from openquake.smt.residuals.parsers.esm_flatfile_parser import \
+    ESMFlatfileParser
+
 
 # Defines the record IDs for the target data set
 TARGET_IDS = ["AM_1988_0001_A_GUK_0", "AM_1988_0002_A_GUK_0",

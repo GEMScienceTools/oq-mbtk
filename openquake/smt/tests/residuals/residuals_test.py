@@ -19,19 +19,16 @@
 Core test suite for the database and residuals construction
 """
 import os
-import sys
 import shutil
 import tempfile
 import unittest
-from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+import pickle
+
+from openquake.smt.residuals.parsers.esm_flatfile_parser import \
+    ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
 from openquake.smt.strong_motion_selector import rank_sites_by_record_count
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
