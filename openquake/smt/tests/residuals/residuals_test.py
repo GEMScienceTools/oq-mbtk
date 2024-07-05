@@ -28,7 +28,8 @@ from openquake.smt.residuals.parsers.esm_flatfile_parser import \
     ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
-from openquake.smt.residuals.sm_selector import rank_sites_by_record_count
+from openquake.smt.residuals.sm_database_selector import \
+    rank_sites_by_record_count
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
