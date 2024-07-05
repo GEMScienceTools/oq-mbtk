@@ -174,11 +174,3 @@ def multi_surface_from_dict(data, mesh_spacing=1.):
 
 
 surfaces_from_dict["MultiSurface"] = multi_surface_from_dict
-
-
-# surfaces_to_dict = {
-#    "PlanarSurface": planar_fault_surface_to_dict,
-#    "SimpleFaultSurface": simple_fault_surface_to_dict,
-#    "ComplexFaultSurface": complex_fault_surface_to_dict,
-#    "MultiSurface": multi_surface_to_dict
-#    }
