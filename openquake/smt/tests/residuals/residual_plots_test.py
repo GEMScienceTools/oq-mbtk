@@ -28,7 +28,7 @@ from scipy.stats import linregress
 
 from openquake.smt.residuals.parsers.esm_flatfile_parser import ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
-from openquake.smt.database_visualiser import DISTANCES
+from openquake.smt.residuals.sm_database_visualiser import DISTANCES
 from openquake.smt.residuals.residual_plots import (
     residuals_density_distribution, likelihood, residuals_with_depth,
     residuals_with_magnitude, residuals_with_vs30, residuals_with_distance,

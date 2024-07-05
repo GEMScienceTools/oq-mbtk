@@ -23,7 +23,7 @@ import shutil
 import json
 import pprint
 import unittest
-from openquake.smt.sm_database import load_database
+from openquake.smt.residuals.sm_database import load_database
 from openquake.smt.residuals.parsers.esm_flatfile_parser import ESMFlatfileParser
 
 
