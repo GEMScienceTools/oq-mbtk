@@ -30,7 +30,7 @@ from datetime import datetime
 from openquake.hazardlib.scalerel.wc1994 import WC1994
 from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.geo.point import Point
-from openquake.smt.sm_database import *
+from openquake.smt.residuals.sm_database import *
 from openquake.smt.sm_utils import (convert_accel_units, create_planar_surface,
     get_hypocentre_on_planar_surface, z1pt0_to_z2pt5, vs30_to_z1pt0_as08)
 from openquake.smt.residua.sparsers.base_database_parser import (

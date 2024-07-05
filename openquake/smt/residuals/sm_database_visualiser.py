@@ -21,7 +21,7 @@ Tool for creating visualisation of database information
 import numpy as np
 import matplotlib.pyplot as plt
 from openquake.smt.sm_utils import _save_image
-from openquake.smt.strong_motion_selector import SMRecordSelector 
+from openquake.smt.residuals.sm_selector import SMRecordSelector 
 
 
 DISTANCES = {

@@ -16,15 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Simple Python Script to integrate a strong motion record using
-the Newmark-Beta method
+Simple Python Script to integrate a strong motion record using the
+Newmark-Beta method
 """
 import numpy as np
 from math import sqrt
 
 import matplotlib.pyplot as plt
-from openquake.smt.sm_utils import (_save_image, get_time_vector, convert_accel_units,
-                           get_velocity_displacement)
+from openquake.smt.sm_utils import (
+    _save_image, get_time_vector, convert_accel_units, get_velocity_displacement)
                      
 
 class ResponseSpectrum(object):
