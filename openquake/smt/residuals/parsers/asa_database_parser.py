@@ -30,7 +30,7 @@ from collections import OrderedDict
 from datetime import datetime
 from math import sqrt
 from openquake.hazardlib.geo import *
-from openquake.smt.sm_database import *
+from openquake.smt.residuals.sm_database import *
 from openquake.smt.sm_utils import convert_accel_units, get_time_vector
 from openquake.smt.residuals.parsers.base_database_parser import (
     get_float, get_int, SMDatabaseReader, SMTimeSeriesReader)

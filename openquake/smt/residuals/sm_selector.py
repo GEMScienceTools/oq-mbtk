@@ -24,7 +24,7 @@ from collections import OrderedDict
 from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.polygon import Polygon
-from openquake.smt.sm_database import GroundMotionDatabase
+from openquake.smt.residuals.sm_database import GroundMotionDatabase
 
 def rank_sites_by_record_count(database, threshold=0):
     """

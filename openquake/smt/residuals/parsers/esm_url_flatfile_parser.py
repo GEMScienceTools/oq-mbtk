@@ -34,9 +34,9 @@ from math import sqrt
 from linecache import getline
 from collections import OrderedDict
 
-from openquake.smt.sm_database import (GroundMotionDatabase, GroundMotionRecord,
-    Earthquake, Magnitude, Rupture, FocalMechanism, GCMTNodalPlanes,
-    Component, RecordSite, RecordDistance)
+from openquake.smt.residuals.sm_database import (
+    GroundMotionDatabase, GroundMotionRecord, Earthquake, Magnitude, Rupture,
+    FocalMechanism, GCMTNodalPlanes, Component, RecordSite, RecordDistance)
 from openquake.smt.sm_utils import (
     MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14)
 from openquake.smt.residuals.parsers import valid
