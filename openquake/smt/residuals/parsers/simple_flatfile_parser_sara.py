@@ -38,11 +38,9 @@ from openquake.hazardlib.geo.surface.simple_fault import SimpleFaultSurface
 from openquake.smt.sm_database import *
 from openquake.smt.sm_utils import convert_accel_units, create_planar_surface,\
     get_hypocentre_on_planar_surface, z1pt0_to_z2pt5, vs30_to_z1pt0_as08
-from openquake.smt.parsers.base_database_parser import (get_float, get_int,
-                                               get_positive_float,
-                                               get_positive_int,
-                                               SMDatabaseReader,
-                                               SMTimeSeriesReader)
+from openquake.smt.residuals.parsers.base_database_parser import (
+    get_float, get_int, get_positive_float, get_positive_int, SMDatabaseReader,
+    SMTimeSeriesReader)
 
 HEADER_LIST = set([
     'Record Sequence Number', 'EQID', 'Earthquake Name', 'Country', 'Year', 
