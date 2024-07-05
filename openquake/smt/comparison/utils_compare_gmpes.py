@@ -243,11 +243,9 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
     else:
         obs_spectra = None
     
-    # Overwrite toml info with info in obs_spectra file to ensure GMMs give
-    # predictions for same ground-shaking scenario
+    # Get some info from observed spectra if required
     if obs_spectra is not None:
-        (eq_id, st_id, mag_list, dist_list, depth, strike, dip, rake, vs30,
-         ztor, trt, up_or_down_dip, max_period) = load_obs_spectra(obs_spectra)
+        max_period, eq_id, st_id = load_obs_spectra(obs_spectra)
     else:
         eq_id, st_id = None, None
         
@@ -292,7 +290,6 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                 
                 for k, imt in enumerate(imt_list): 
                     if obs_spectra is not None:
-                        Vs30 = vs30 # Set to vs30 of obs spectra rec
                         dist = dist_list[n] # Set to rrup of obs spectra rec
                     else:
                         dist = i
@@ -1154,37 +1151,15 @@ def load_obs_spectra(obs_spectra):
     If an obs spectra has been specified get values from csvs for comparison
     of observed spectra and spectra computed using GMPE predictions.
     
-    These values are used to compute the predictions from the GMPEs (in effect
-    the ground-shaking scenario parameters provided in the toml are overwritten
-    if an observed spectra is plotted)
+    Returns the max period of the spectra, eq_id and st_id
     """
     # Get values from obs_spectra dataframe...
     eq_id = str(obs_spectra['EQ ID'].iloc[0])
     st_id = str(obs_spectra['Station Code'].iloc[0])
     
-    mag_list = np.array([float(obs_spectra['Mw'].iloc[0])])
-    dist_list = np.array([float(obs_spectra['Rrup (km)'].iloc[0])])
-    depth = np.array([float(obs_spectra['Depth (km)'].iloc[0])])
-    
-    ztor = [obs_spectra['ztor'].iloc[0]]
-    if pd.isnull(ztor[0]):
-        ztor = None
-    
-    trt = str(obs_spectra['trt'].iloc[0])
-    
-    strike = float(obs_spectra['Strike'].iloc[0])
-    dip = float(obs_spectra['Dip'].iloc[0])
-    rake = float(obs_spectra['Rake'].iloc[0])
-    
-    vs30 = float(obs_spectra['Vs30'].iloc[0])
-    
-    up_or_down_dip = float(
-        obs_spectra['Site up-dip of rupture (1 = True, 0 = False)'].iloc[0])
-    
     max_period = obs_spectra['Period (s)'].max()
     
-    return (eq_id, st_id, mag_list, dist_list, depth, strike, dip, rake, vs30,
-            ztor, trt, up_or_down_dip, max_period)
+    return max_period, eq_id, st_id
 
 
 def plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mag_list, depth,
