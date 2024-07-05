@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
@@ -17,9 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parse ESM format flatfile into SMT metadata
+Parser for a flatfile downloaded from the ESM custom url database 
+--> (https://esm-db.eu/esmws/flatfile/1/)
+
+This parser assumes you have selected all available headers in your URL search
+when downloading the flatfile
 """
 import os
+import pandas as pd
+import tempfile
 import csv
 import numpy as np
 import copy
@@ -29,13 +34,13 @@ from math import sqrt
 from linecache import getline
 from collections import OrderedDict
 
-from openquake.smt.sm_database import GroundMotionDatabase, GroundMotionRecord,\
-    Earthquake, Magnitude, Rupture, FocalMechanism, GCMTNodalPlanes,\
-    Component, RecordSite, RecordDistance
-from openquake.smt.sm_utils import MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14,\
-    vs30_to_z2pt5_cb14
-from openquake.smt.parsers import valid
-from openquake.smt.parsers.base_database_parser import SMDatabaseReader
+from openquake.smt.sm_database import (GroundMotionDatabase, GroundMotionRecord,
+    Earthquake, Magnitude, Rupture, FocalMechanism, GCMTNodalPlanes,
+    Component, RecordSite, RecordDistance)
+from openquake.smt.sm_utils import (
+    MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14)
+from openquake.smt.residuals.parsers import valid
+from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
@@ -60,30 +65,14 @@ HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
 
 HEADERS = set(HEADER_STR.split(";"))
 
-COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AZ": "Azerbaijan", "BA": "Bosnia and Herzegowina",
-                 "BG": "Bulgaria", "CH": "Switzerland", "CY": "Cyprus",
-                 "CZ": "Czech Republic", "DE": "Germany",  "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia",
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary",
-                 "IL": "Israel", "IR": "Iran", "IS": "Iceland", "IT": "Italy",
-                 "JO": "Jordan",  "LI": "Lichtenstein", "MA": "Morocco",
-                 "MC": "Monaco", "MD": "Moldova", "ME": "Montenegro",
-                 "MK": "Macedonia", "MT": "Malta", "PL": "Poland",
-                 "PT": "Portugal", "RO": "Romania", "RS": "Serbia",
-                 "RU": "Russia", "SI": "Slovenia", "SM": "San Marino",
-                 "SY": "Syria", "TM": "Turkmenistan", "TR": "Turkey",
-                 "UA": "Ukraine", "UZ": "Uzbekistan", "XK": "Kosovo"}
-
-
-class ESMFlatfileParser(SMDatabaseReader):
+class ESMFlatfileParserURL(SMDatabaseReader):
     """
     Parses the data from the flatfile to a set of metadata objects
     """
     M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
     BUILD_FINITE_DISTANCES = False
 
-    def parse(self, location="./"):
+    def parse(self, location='./'):
         """
         Parse the flatfile
         """
@@ -114,7 +103,7 @@ class ESMFlatfileParser(SMDatabaseReader):
             if (counter % 100) == 0:
                 print("Processed record %s - %s" % (str(counter),
                                                     record.id))
-
+                
             counter += 1
 
     @classmethod
@@ -122,6 +111,12 @@ class ESMFlatfileParser(SMDatabaseReader):
         """
         Quick and dirty full database builder!
         """
+        # Import ESM URL format strong-motion flatfile
+        ESM = pd.read_csv(flatfile_location)
+
+        # Get path to tmp csv once modified dataframe
+        converted_base_data_path=_get_ESM18_headers(ESM)
+        
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
@@ -129,7 +124,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         # Add on the records folder
         os.mkdir(os.path.join(output_location, "records"))
         # Create an instance of the parser class
-        database = cls(dbid, dbname, flatfile_location)
+        database = cls(dbid, dbname, converted_base_data_path)
         # Parse the records
         print("Parsing Records ...")
         database.parse(location=output_location)
@@ -138,6 +133,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         print("Storing metadata to file %s" % metadata_file)
         with open(metadata_file, "wb+") as f:
             pickle.dump(database.database, f)
+            
         return database
 
     def _parse_record(self, metadata):
@@ -169,12 +165,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         # ID and Name (name not in file so use ID again)
         eq_id = metadata["event_id"]
         eq_name = metadata["event_id"]
-        # Country
-        cntry_code = metadata["ev_nation_code"].strip()
-        if cntry_code and cntry_code in COUNTRY_CODES:
-            eq_country = COUNTRY_CODES[cntry_code]
-        else:
-            eq_country = None
+        
         # Date and time
         eq_datetime = valid.date_time(metadata["event_time"],
                                      "%Y-%m-%d %H:%M:%S")
@@ -186,7 +177,7 @@ class ESMFlatfileParser(SMDatabaseReader):
             eq_depth = 0.0
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet
-                         eq_country=eq_country)
+                         eq_country=None)
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
         eqk.magnitude = pref_mag
@@ -229,6 +220,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         """
         If rupture data is available - parse it, otherwise return None
         """
+
         sof = metadata["fm_type_code"]
         if not metadata["event_source_id"].strip():
             # No rupture model available. Mechanism is limited to a style
@@ -347,15 +339,9 @@ class ESMFlatfileParser(SMDatabaseReader):
             vs30_measured = False
         else:
             vs30_measured = False
-        st_nation_code = metadata["st_nation_code"].strip()
-        if st_nation_code:
-            st_country = COUNTRY_CODES[st_nation_code]
-        else:
-            st_country = None
         site = RecordSite(site_id, station_code, station_code, site_lon,
                           site_lat, elevation, vs30, vs30_measured,
-                          network_code=network_code,
-                          country=st_country)
+                          network_code=network_code, country=None)
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
         site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
                                          "sensor_depth_m")
@@ -487,7 +473,7 @@ class ESMFlatfileParser(SMDatabaseReader):
 
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
-        Get the ground motion data from a row (record) in the database
+        Get the ground-motion data from a row (record) in the database
         """
         imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
         spectra = []
@@ -521,7 +507,6 @@ class ESMFlatfileParser(SMDatabaseReader):
                         values.append(np.fabs(float(value)))
                     else:
                         values.append(np.nan)
-                    #values.append(np.fabs(float(row[header].strip())))
             periods = np.array(periods)
             values = np.array(values)
             idx = np.argsort(periods)
@@ -541,3 +526,373 @@ class ESMFlatfileParser(SMDatabaseReader):
                 scalars["Geometric"][key] = np.sqrt(
                     scalars["U"][key] * scalars["V"][key])
         return scalars, spectra
+
+
+def _get_ESM18_headers(ESM):
+    
+    """
+    Convert from ESM URL format flatfile to ESM18 format flatfile
+    """
+    # Create default values
+    default_string = pd.Series(np.full(np.size(ESM.esm_event_id), ""))
+
+    # Reformat datetime
+    r_datetime = ESM.event_time.str.replace('T',' ')
+    
+    # Assign unknown to NaN values for faulting mechanism
+    ESM['fm_type_code'] = ESM.fm_type_code.fillna('U') 
+    
+    # Construct dataframe with original ESM format 
+    ESM_original_headers = pd.DataFrame(
+    {
+    # Non-GMIM headers   
+    "event_id":ESM.esm_event_id,                                       
+    "event_time":r_datetime,
+    "ISC_ev_id":ESM.isc_event_id,
+    "USGS_ev_id":ESM.usgs_event_id,
+    "INGV_ev_id":ESM.ingv_event_id,
+    "EMSC_ev_id":ESM.emsc_event_id,
+    "ev_nation_code":ESM.ev_nation_code,
+    "ev_latitude":ESM.ev_latitude,    
+    "ev_longitude":ESM.ev_longitude,   
+    "ev_depth_km":ESM.ev_depth_km,
+    "ev_hyp_ref":default_string,
+    "fm_type_code":ESM.fm_type_code,
+    "ML":ESM.ml,
+    "ML_ref":ESM.ml_ref,
+    "Mw":ESM.mw,
+    "Mw_ref":ESM.mw_ref,
+    "Ms":ESM.ms,
+    "Ms_ref":ESM.ms_ref,
+    "EMEC_Mw":ESM.emec_mw,
+    "EMEC_Mw_type":ESM.emec_mw_type,
+    "EMEC_Mw_ref":ESM.emec_mw_ref,
+    "event_source_id":ESM.event_source_id,
+
+    "es_strike":ESM.es_strike,
+    "es_dip":ESM.es_dip,
+    "es_rake":ESM.es_rake,
+    "es_strike_dip_rake_ref":default_string, 
+    "es_z_top":ESM.z_top,
+    "es_z_top_ref":ESM.es_z_top_ref,
+    "es_length":ESM.es_length,   
+    "es_width":ESM.es_width,
+    "es_geometry_ref":ESM.es_geometry_ref,
+ 
+    "network_code":ESM.network_code,
+    "station_code":ESM.station_code,
+    "location_code":ESM.location_code,
+    "instrument_code":ESM.instrument_type_code,     
+    "sensor_depth_m":ESM.sensor_depth_m,
+    "proximity_code":ESM.proximity,
+    "housing_code":ESM.hounsing,    # Currently typo in their database header
+    "installation_code":ESM.installation,
+    "st_nation_code":ESM.st_nation_code,
+    "st_latitude":ESM.st_latitude,
+    "st_longitude":ESM.st_longitude,
+    "st_elevation":ESM.st_elevation,
+    
+    "ec8_code":ESM.ec8_code,
+    "ec8_code_method":default_string,
+    "ec8_code_ref":default_string,
+    "vs30_m_sec":ESM.vs30_m_s,
+    "vs30_ref":default_string,
+    "vs30_calc_method":default_string, 
+    "vs30_meas_type":ESM.vs30_meas_type,
+    "slope_deg":ESM.slope_deg,
+    "vs30_m_sec_WA":ESM.vs30_m_s_wa,
+ 
+    "epi_dist":ESM.epi_dist,
+    "epi_az":ESM.epi_az,  
+    "JB_dist":ESM.jb_dist,
+    "rup_dist":ESM.rup_dist, 
+    "Rx_dist":ESM.rx_dist, 
+    "Ry0_dist":ESM.ry0_dist,
+ 
+    "instrument_type_code":ESM.instrument_type_code,      
+    "late_triggered_flag_01":ESM.late_triggered_event_01,
+    "U_channel_code":ESM.u_channel_code,
+    "U_azimuth_deg":ESM.u_azimuth_deg,
+    "V_channel_code":ESM.v_channel_code,
+    "V_azimuth_deg":ESM.v_azimuth_deg,
+    "W_channel_code":ESM.w_channel_code,
+    
+    "U_hp":ESM.u_hp,
+    "V_hp":ESM.v_hp,
+    "W_hp":ESM.w_hp,  
+    "U_lp":ESM.u_lp,
+    "V_lp":ESM.v_lp,
+    "W_lp":ESM.w_lp,
+     
+    "U_pga":ESM.u_pga,
+    "V_pga":ESM.v_pga,
+    "W_pga":ESM.w_pga,
+    "rotD50_pga":ESM.rotd50_pga,
+    "rotD100_pga":ESM.rotd100_pga,
+    "rotD00_pga":ESM.rotd00_pga,
+    "U_pgv":ESM.u_pgv,
+    "V_pgv":ESM.v_pgv,
+    "W_pgv":ESM.w_pgv,
+    "rotD50_pgv":ESM.rotd50_pgv,
+    "rotD100_pgv":ESM.rotd100_pgv,
+    "rotD00_pgv":ESM.rotd00_pgv,
+    "U_pgd":ESM.u_pgd,
+    "V_pgd":ESM.v_pgd,
+    "W_pgd":ESM.w_pgd,
+    "rotD50_pgd":ESM.rotd50_pgd,
+    "rotD100_pgd":ESM.rotd100_pgd,
+    "rotD00_pgd":ESM.rotd00_pgv,
+    "U_T90":ESM.u_t90,
+    "V_T90":ESM.v_t90,
+    "W_T90":ESM.w_t90,
+    "rotD50_T90":ESM.rotd50_t90,
+    "rotD100_T90":ESM.rotd100_t90,
+    "rotD00_T90":ESM.rot_d00_t90, # This header has typo in current db version 
+    "U_housner":ESM.u_housner,
+    "V_housner":ESM.v_housner,
+    "W_housner":ESM.w_housner,
+    "rotD50_housner":ESM.rotd50_housner,
+    "rotD100_housner":ESM.rotd100_housner,
+    "rotD00_housner":ESM.rotd00_housner,
+    "U_CAV":ESM.u_cav,
+    "V_CAV":ESM.v_cav,
+    "W_CAV":ESM.w_cav,
+    "rotD50_CAV":ESM.rotd50_cav,
+    "rotD100_CAV":ESM.rotd100_cav,
+    "rotD00_CAV":ESM.rotd00_cav,
+    "U_ia":ESM.u_ia,
+    "V_ia":ESM.v_ia,
+    "W_ia":ESM.w_ia,
+    "rotD50_ia":ESM.rotd50_ia,
+    "rotD100_ia":ESM.rotd100_ia,
+    "rotD00_ia":ESM.rotd00_ia,
+    
+    "U_T0_010":ESM.u_t0_010,
+    "U_T0_025":ESM.u_t0_025,
+    "U_T0_040":ESM.u_t0_040,
+    "U_T0_050":ESM.u_t0_050,
+    "U_T0_070":ESM.u_t0_070,
+    "U_T0_100":ESM.u_t0_100,
+    "U_T0_150":ESM.u_t0_150,
+    "U_T0_200":ESM.u_t0_200,
+    "U_T0_250":ESM.u_t0_250,
+    "U_T0_300":ESM.u_t0_300,
+    "U_T0_350":ESM.u_t0_350,
+    "U_T0_400":ESM.u_t0_400,
+    "U_T0_450":ESM.u_t0_450,
+    "U_T0_500":ESM.u_t0_500,
+    "U_T0_600":ESM.u_t0_600,
+    "U_T0_700":ESM.u_t0_700,
+    "U_T0_750":ESM.u_t0_750,
+    "U_T0_800":ESM.u_t0_800,
+    "U_T0_900":ESM.u_t0_900,
+    "U_T1_000":ESM.u_t1_000,
+    "U_T1_200":ESM.u_t1_200,
+    "U_T1_400":ESM.u_t1_400,
+    "U_T1_600":ESM.u_t1_600,
+    "U_T1_800":ESM.u_t1_800,
+    "U_T2_000":ESM.u_t2_000,
+    "U_T2_500":ESM.u_t2_500,
+    "U_T3_000":ESM.u_t3_000,
+    "U_T3_500":ESM.u_t3_500,
+    "U_T4_000":ESM.u_t4_000,
+    "U_T4_500":ESM.u_t4_500,
+    "U_T5_000":ESM.u_t5_000,
+    "U_T6_000":ESM.u_t6_000,
+    "U_T7_000":ESM.u_t7_000,
+    "U_T8_000":ESM.u_t8_000,
+    "U_T9_000":ESM.u_t9_000,
+    "U_T10_000":ESM.u_t10_000,
+       
+    "V_T0_010":ESM.v_t0_010,
+    "V_T0_025":ESM.v_t0_025,
+    "V_T0_040":ESM.v_t0_040,
+    "V_T0_050":ESM.v_t0_050,
+    "V_T0_070":ESM.v_t0_070,
+    "V_T0_100":ESM.v_t0_100,
+    "V_T0_150":ESM.v_t0_150,
+    "V_T0_200":ESM.v_t0_200,
+    "V_T0_250":ESM.v_t0_250,
+    "V_T0_300":ESM.v_t0_300,
+    "V_T0_350":ESM.v_t0_350,
+    "V_T0_400":ESM.v_t0_400,
+    "V_T0_450":ESM.v_t0_450,
+    "V_T0_500":ESM.v_t0_500,
+    "V_T0_600":ESM.v_t0_600,
+    "V_T0_700":ESM.v_t0_700,
+    "V_T0_750":ESM.v_t0_750,
+    "V_T0_800":ESM.v_t0_800,
+    "V_T0_900":ESM.v_t0_900,
+    "V_T1_000":ESM.v_t1_000,
+    "V_T1_200":ESM.v_t1_200,
+    "V_T1_400":ESM.v_t1_400,
+    "V_T1_600":ESM.v_t1_600,
+    "V_T1_800":ESM.v_t1_800,
+    "V_T2_000":ESM.v_t2_000,
+    "V_T2_500":ESM.v_t2_500,
+    "V_T3_000":ESM.v_t3_000,
+    "V_T3_500":ESM.v_t3_500,
+    "V_T4_000":ESM.v_t4_000,
+    "V_T4_500":ESM.v_t4_500,
+    "V_T5_000":ESM.v_t5_000,
+    "V_T6_000":ESM.v_t6_000,
+    "V_T7_000":ESM.v_t7_000,
+    "V_T8_000":ESM.v_t8_000,
+    "V_T9_000":ESM.v_t9_000,
+    "V_T10_000":ESM.v_t10_000,
+    
+    "W_T0_010":ESM.w_t0_010,
+    "W_T0_025":ESM.w_t0_025,
+    "W_T0_040":ESM.w_t0_040,
+    "W_T0_050":ESM.w_t0_050,
+    "W_T0_070":ESM.w_t0_070,
+    "W_T0_100":ESM.w_t0_100,
+    "W_T0_150":ESM.w_t0_150,
+    "W_T0_200":ESM.w_t0_200,
+    "W_T0_250":ESM.w_t0_250,
+    "W_T0_300":ESM.w_t0_300,
+    "W_T0_350":ESM.w_t0_350,
+    "W_T0_400":ESM.w_t0_400,
+    "W_T0_450":ESM.w_t0_450,
+    "W_T0_500":ESM.w_t0_500,
+    "W_T0_600":ESM.w_t0_600,
+    "W_T0_700":ESM.w_t0_700,
+    "W_T0_750":ESM.w_t0_750,
+    "W_T0_800":ESM.w_t0_800,
+    "W_T0_900":ESM.w_t0_900,
+    "W_T1_000":ESM.w_t1_000,
+    "W_T1_200":ESM.w_t1_200,
+    "W_T1_400":ESM.w_t1_400,
+    "W_T1_600":ESM.w_t1_600,
+    "W_T1_800":ESM.w_t1_800,
+    "W_T2_000":ESM.w_t2_000,
+    "W_T2_500":ESM.w_t2_500,
+    "W_T3_000":ESM.w_t3_000,
+    "W_T3_500":ESM.w_t3_500,
+    "W_T4_000":ESM.w_t4_000,
+    "W_T4_500":ESM.w_t4_500,
+    "W_T5_000":ESM.w_t5_000,
+    "W_T6_000":ESM.w_t6_000,
+    "W_T7_000":ESM.w_t7_000,
+    "W_T8_000":ESM.w_t8_000,
+    "W_T9_000":ESM.w_t9_000,
+    "W_T10_000":ESM.w_t10_000,
+    
+    "rotD50_T0_010":ESM.rotd50_t0_010,
+    "rotD50_T0_025":ESM.rotd50_t0_025,
+    "rotD50_T0_040":ESM.rotd50_t0_040,
+    "rotD50_T0_050":ESM.rotd50_t0_050,
+    "rotD50_T0_070":ESM.rotd50_t0_070,
+    "rotD50_T0_100":ESM.rotd50_t0_100,
+    "rotD50_T0_150":ESM.rotd50_t0_150,
+    "rotD50_T0_200":ESM.rotd50_t0_200,
+    "rotD50_T0_250":ESM.rotd50_t0_250,
+    "rotD50_T0_300":ESM.rotd50_t0_300,
+    "rotD50_T0_350":ESM.rotd50_t0_350,
+    "rotD50_T0_400":ESM.rotd50_t0_400,
+    "rotD50_T0_450":ESM.rotd50_t0_450,
+    "rotD50_T0_500":ESM.rotd50_t0_500,
+    "rotD50_T0_600":ESM.rotd50_t0_600,
+    "rotD50_T0_700":ESM.rotd50_t0_700,
+    "rotD50_T0_750":ESM.rotd50_t0_750,
+    "rotD50_T0_800":ESM.rotd50_t0_800,
+    "rotD50_T0_900":ESM.rotd50_t0_900,
+    "rotD50_T1_000":ESM.rotd50_t1_000,
+    "rotD50_T1_200":ESM.rotd50_t1_200,
+    "rotD50_T1_400":ESM.rotd50_t1_400,
+    "rotD50_T1_600":ESM.rotd50_t1_600,
+    "rotD50_T1_800":ESM.rotd50_t1_800,
+    "rotD50_T2_000":ESM.rotd50_t2_000,
+    "rotD50_T2_500":ESM.rotd50_t2_500,
+    "rotD50_T3_000":ESM.rotd50_t3_000,
+    "rotD50_T3_500":ESM.rotd50_t3_500,
+    "rotD50_T4_000":ESM.rotd50_t4_000,
+    "rotD50_T4_500":ESM.rotd50_t4_500,
+    "rotD50_T5_000":ESM.rotd50_t5_000,
+    "rotD50_T6_000":ESM.rotd50_t6_000,
+    "rotD50_T7_000":ESM.rotd50_t7_000,
+    "rotD50_T8_000":ESM.rotd50_t8_000,
+    "rotD50_T9_000":ESM.rotd50_t9_000,
+    "rotD50_T10_000":ESM.rotd50_t10_000,
+       
+    
+    "rotD100_T0_010":ESM.rotd100_t0_010,
+    "rotD100_T0_025":ESM.rotd100_t0_025,
+    "rotD100_T0_040":ESM.rotd100_t0_040,
+    "rotD100_T0_050":ESM.rotd100_t0_050,
+    "rotD100_T0_070":ESM.rotd100_t0_070,
+    "rotD100_T0_100":ESM.rotd100_t0_100,
+    "rotD100_T0_150":ESM.rotd100_t0_150,
+    "rotD100_T0_200":ESM.rotd100_t0_200,
+    "rotD100_T0_250":ESM.rotd100_t0_250,
+    "rotD100_T0_300":ESM.rotd100_t0_300,
+    "rotD100_T0_350":ESM.rotd100_t0_350,
+    "rotD100_T0_400":ESM.rotd100_t0_400,
+    "rotD100_T0_450":ESM.rotd100_t0_450,
+    "rotD100_T0_500":ESM.rotd100_t0_500,
+    "rotD100_T0_600":ESM.rotd100_t0_600,
+    "rotD100_T0_700":ESM.rotd100_t0_700,
+    "rotD100_T0_750":ESM.rotd100_t0_750,
+    "rotD100_T0_800":ESM.rotd100_t0_800,
+    "rotD100_T0_900":ESM.rotd100_t0_900,
+    "rotD100_T1_000":ESM.rotd100_t1_000,
+    "rotD100_T1_200":ESM.rotd100_t1_200,
+    "rotD100_T1_400":ESM.rotd100_t1_400,
+    "rotD100_T1_600":ESM.rotd100_t1_600,
+    "rotD100_T1_800":ESM.rotd100_t1_800,
+    "rotD100_T2_000":ESM.rotd100_t2_000,
+    "rotD100_T2_500":ESM.rotd100_t2_500,
+    "rotD100_T3_000":ESM.rotd100_t3_000,
+    "rotD100_T3_500":ESM.rotd100_t3_500,
+    "rotD100_T4_000":ESM.rotd100_t4_000,
+    "rotD100_T4_500":ESM.rotd100_t4_500,
+    "rotD100_T5_000":ESM.rotd100_t5_000,
+    "rotD100_T6_000":ESM.rotd100_t6_000,
+    "rotD100_T7_000":ESM.rotd100_t7_000,
+    "rotD100_T8_000":ESM.rotd100_t8_000,
+    "rotD100_T9_000":ESM.rotd100_t9_000,
+    "rotD100_T10_000":ESM.rotd100_t10_000,      
+ 
+    "rotD00_T0_010":ESM.rotd00_t0_010,
+    "rotD00_T0_025":ESM.rotd00_t0_025,
+    "rotD00_T0_040":ESM.rotd00_t0_040,
+    "rotD00_T0_050":ESM.rotd00_t0_050,
+    "rotD00_T0_070":ESM.rotd00_t0_070,
+    "rotD00_T0_100":ESM.rotd00_t0_100,
+    "rotD00_T0_150":ESM.rotd00_t0_150,
+    "rotD00_T0_200":ESM.rotd00_t0_200,
+    "rotD00_T0_250":ESM.rotd00_t0_250,
+    "rotD00_T0_300":ESM.rotd00_t0_300,
+    "rotD00_T0_350":ESM.rotd00_t0_350,
+    "rotD00_T0_400":ESM.rotd00_t0_400,
+    "rotD00_T0_450":ESM.rotd00_t0_450,
+    "rotD00_T0_500":ESM.rotd00_t0_500,
+    "rotD00_T0_600":ESM.rotd00_t0_600,
+    "rotD00_T0_700":ESM.rotd00_t0_700,
+    "rotD00_T0_750":ESM.rotd00_t0_750,
+    "rotD00_T0_800":ESM.rotd00_t0_800,
+    "rotD00_T0_900":ESM.rotd00_t0_900,
+    "rotD00_T1_000":ESM.rotd00_t1_000,
+    "rotD00_T1_200":ESM.rotd00_t1_200,
+    "rotD00_T1_400":ESM.rotd00_t1_400,
+    "rotD00_T1_600":ESM.rotd00_t1_600,
+    "rotD00_T1_800":ESM.rotd00_t1_800,
+    "rotD00_T2_000":ESM.rotd00_t2_000,
+    "rotD00_T2_500":ESM.rotd00_t2_500,
+    "rotD00_T3_000":ESM.rotd00_t3_000,
+    "rotD00_T3_500":ESM.rotd00_t3_500,
+    "rotD00_T4_000":ESM.rotd00_t4_000,
+    "rotD00_T4_500":ESM.rotd00_t4_500,
+    "rotD00_T5_000":ESM.rotd00_t5_000,
+    "rotD00_T6_000":ESM.rotd00_t6_000,
+    "rotD00_T7_000":ESM.rotd00_t7_000,
+    "rotD00_T8_000":ESM.rotd00_t8_000,
+    "rotD00_T9_000":ESM.rotd00_t9_000,
+    "rotD00_T10_000":ESM.rotd00_t10_000})
+    
+    # Output to folder where converted flatfile read into parser
+    tmp = tempfile.mkdtemp()
+    converted_base_data_path = os.path.join(tmp, 'converted_flatfile.csv')
+    ESM_original_headers.to_csv(converted_base_data_path, sep=';')
+
+    return converted_base_data_path

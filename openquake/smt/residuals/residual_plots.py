@@ -23,7 +23,6 @@ accomplish the task without unnecessary overhead.
 All non-private functions should return the same dicts (see docstrings
 for details)
 """
-
 import numpy as np
 import pandas as pd
 from collections import OrderedDict

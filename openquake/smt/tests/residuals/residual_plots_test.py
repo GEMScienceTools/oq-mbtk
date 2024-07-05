@@ -20,24 +20,19 @@ Test suite for the `residual_plots` module responsible for calculating the
 data used for plotting (see `residual_plotter`)
 """
 import os
-import sys
 import shutil
 import unittest
+import pickle
 import numpy as np
 from scipy.stats import linregress
 
-from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+from openquake.smt.residuals.parsers.esm_flatfile_parser import ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
 from openquake.smt.database_visualiser import DISTANCES
-from openquake.smt.residuals.residual_plots import residuals_density_distribution,\
-    likelihood, residuals_with_depth, residuals_with_magnitude,\
-    residuals_with_vs30, residuals_with_distance, _tojson, _nanlinregress
-
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from openquake.smt.residuals.residual_plots import (
+    residuals_density_distribution, likelihood, residuals_with_depth,
+    residuals_with_magnitude, residuals_with_vs30, residuals_with_distance,
+    _tojson, _nanlinregress)
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")

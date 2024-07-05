@@ -26,10 +26,8 @@ import numpy as np
 from collections import OrderedDict
 from datetime import datetime
 from openquake.smt.sm_database import *
-from openquake.smt.parsers.base_database_parser import (get_float, get_int,
-                                               SMDatabaseReader,
-                                               SMTimeSeriesReader,
-                                               SMSpectraReader)
+from openquake.smt.residuals.parsers.base_database_parser import (
+    get_float, get_int, SMDatabaseReader, SMTimeSeriesReader, SMSpectraReader)
 
 class SigmaDatabaseMetadataReader(SMDatabaseReader):
     """
