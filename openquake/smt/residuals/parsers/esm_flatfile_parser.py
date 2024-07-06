@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parse ESM format flatfile into SMT metadata
+Parse ESM18 format flatfile into SMT metadata
 """
 import os
 import csv
