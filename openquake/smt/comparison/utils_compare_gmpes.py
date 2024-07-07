@@ -65,9 +65,9 @@ def plot_trellis_util(config, output_directory):
                 
                 # Sub dicts for median, gmm sigma, median +/- Nstd * gmm sigma
                 store_per_gmpe[gmpe] = {}
-                                
+                col = colors[g]                
+                
                 # Perform mgmpe check
-                col = colors[g]
                 gmm = mgmpe_check(gmpe)
                 
                 # ZTOR value
