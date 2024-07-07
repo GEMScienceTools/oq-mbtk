@@ -201,10 +201,8 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     ### Set dicts to store values
     dic = OrderedDict([(gmm, {}) for gmm in config.gmpes_list])  
     lt_vals = [{}, {}, {}, {}]
-    ltv_plus_sig1, ltv_minus_sig1 = dic, dic
-    ltv_plus_sig2, ltv_minus_sig2 = dic, dic
-    ltv_plus_sig3, ltv_minus_sig3 = dic, dic
-    ltv_plus_sig4, ltv_minus_sig4 = dic, dic
+    lt_vals_plus = [dic, dic, dic, dic]
+    lt_vals_minus = [dic, dic, dic, dic]
 
     ### Plot the data
     for n, i in enumerate(dist_list):
@@ -279,22 +277,9 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                                  linewidth=0.75, linestyle='-.')
                 
                 # Weight the predictions using logic tree weights
-                (lt_vals_gmc1, ltv_plus_sig1, ltv_minus_sig1,
-                 lt_vals_gmc2, ltv_plus_sig2, ltv_minus_sig2,
-                 lt_vals_gmc3, ltv_plus_sig3, ltv_minus_sig3,
-                 lt_vals_gmc4, ltv_plus_sig4, ltv_minus_sig4,
-                 ) = spectra_data(gmpe, config.Nstd, rs_50p,
-                                  rs_plus_sigma, rs_minus_sigma,
-                                  lt_vals[0], lt_vals[1],
-                                  lt_vals[2], lt_vals[3],
-                                  config.lt_weights_gmc1,
-                                  config.lt_weights_gmc2,
-                                  config.lt_weights_gmc3,
-                                  config.lt_weights_gmc4,
-                                  ltv_plus_sig1, ltv_minus_sig1,
-                                  ltv_plus_sig2, ltv_minus_sig2,
-                                  ltv_plus_sig3, ltv_minus_sig3,
-                                  ltv_plus_sig4, ltv_minus_sig4)
+                gmc_vals = spectra_data(
+                    gmpe, config.Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
+                    lt_vals, lt_vals_plus, lt_vals_minus, config)
 
                 # Plot obs spectra if required
                 if obs_spectra is not None:
@@ -312,16 +297,16 @@ def plot_spectra_util(config, output_directory, obs_spectra):
             # Plot logic trees if required
             lt_spectra(
                 ax1, gmpe, config.gmpes_list, config.Nstd, periods, 'gmc1',
-                lt_vals_gmc1, ltv_plus_sig1, ltv_minus_sig1)
+                gmc_vals[0][0], gmc_vals[0][1], gmc_vals[0][2])
             lt_spectra(
                 ax1, gmpe, config.gmpes_list, config.Nstd, periods, 'gmc2',
-                lt_vals_gmc2, ltv_plus_sig2, ltv_minus_sig2)
+                gmc_vals[1][0], gmc_vals[1][1], gmc_vals[1][2])
             lt_spectra(
                 ax1, gmpe, config.gmpes_list, config.Nstd, periods, 'gmc3',
-                lt_vals_gmc3, ltv_plus_sig3, ltv_minus_sig3)
+                gmc_vals[2][0], gmc_vals[2][1], gmc_vals[2][2])
             lt_spectra(
                 ax1, gmpe, config.gmpes_list, config.Nstd, periods, 'gmc4',
-                lt_vals_gmc4, ltv_plus_sig4, ltv_minus_sig4)
+                gmc_vals[3][0], gmc_vals[3][1], gmc_vals[3][2])
                 
     # Finalise the plots and save fig
     if len(mag_list) * len(dist_list) == 1:
@@ -892,122 +877,117 @@ def _get_imts(max_period):
 
 
 def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
-                 lt_vals_gmc1, lt_vals_gmc2, lt_vals_gmc3, lt_vals_gmc4,
-                 lt_weights_gmc1, lt_weights_gmc2,
-                 lt_weights_gmc3, lt_weights_gmc4,
-                 ltv_plus_sig1, ltv_minus_sig1,
-                 ltv_plus_sig2, ltv_minus_sig2,
-                 ltv_plus_sig3, ltv_minus_sig3,
-                 ltv_plus_sig4, ltv_minus_sig4):
+                 lt_vals, lt_vals_plus, lt_vals_minus, config):
     """
     If required get the logic tree weighted predictions
     """
     # Logic tree #1
-    if lt_weights_gmc1 == None:
+    if config.lt_weights_gmc1 == None:
         pass
-    elif gmpe in lt_weights_gmc1:
-        if lt_weights_gmc1[gmpe] != None:
+    elif gmpe in config.lt_weights_gmc1:
+        if config.lt_weights_gmc1[gmpe] != None:
             rs_50p_weighted_gmc1 = {}
             rs_plus_sigma_weighted_gmc1 = {}
             rs_minus_sigma_weighted_gmc1 = {}
             for idx, rs in enumerate(rs_50p):
-                rs_50p_weighted_gmc1[idx] = rs_50p[idx]*lt_weights_gmc1[gmpe]
+                rs_50p_weighted_gmc1[idx] = rs_50p[idx]*config.lt_weights_gmc1[gmpe]
                 if Nstd != 0:
                     rs_plus_sigma_weighted_gmc1[idx] = rs_plus_sigma[
-                        idx]*lt_weights_gmc1[gmpe]
+                        idx]*config.lt_weights_gmc1[gmpe]
                     rs_minus_sigma_weighted_gmc1[idx] = rs_minus_sigma[
-                        idx]*lt_weights_gmc1[gmpe]
+                        idx]*config.lt_weights_gmc1[gmpe]
 
             # If present store the weighted median for the GMPE
-            lt_vals_gmc1[gmpe] = {'median': rs_50p_weighted_gmc1}
+            lt_vals[0][gmpe] = {'median': rs_50p_weighted_gmc1}
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
-                ltv_plus_sig1[gmpe,'p_sig'] = {
+                lt_vals_plus[0][gmpe,'p_sig'] = {
                     'plus_sigma': rs_plus_sigma_weighted_gmc1}
-                ltv_minus_sig1[gmpe,'m_sig'] = {
+                lt_vals_minus[0][gmpe,'m_sig'] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc1}
                 
     # Logic tree #2              
-    if lt_weights_gmc2 == None:
+    if config.lt_weights_gmc2 == None:
         pass
-    elif gmpe in lt_weights_gmc2:
-        if lt_weights_gmc2[gmpe] != None:
+    elif gmpe in config.lt_weights_gmc2:
+        if config.lt_weights_gmc2[gmpe] != None:
             rs_50p_weighted_gmc2 = {}
             rs_plus_sigma_weighted_gmc2, rs_minus_sigma_weighted_gmc2 = {}, {}
             for idx, rs in enumerate(rs_50p):
-                rs_50p_weighted_gmc2[idx] = rs_50p[idx]*lt_weights_gmc2[gmpe]
+                rs_50p_weighted_gmc2[idx] = rs_50p[idx]*config.lt_weights_gmc2[gmpe]
                 if Nstd != 0:
                     rs_plus_sigma_weighted_gmc2[idx] = rs_plus_sigma[
-                        idx]*lt_weights_gmc2[gmpe]
+                        idx]*config.lt_weights_gmc2[gmpe]
                     rs_minus_sigma_weighted_gmc2[idx] = rs_minus_sigma[
-                        idx]*lt_weights_gmc2[gmpe]
+                        idx]*config.lt_weights_gmc2[gmpe]
                 
             # If present store the weighted median for the GMPE
-            lt_vals_gmc2[gmpe] = {'median': rs_50p_weighted_gmc2}
+            lt_vals[1][gmpe] = {'median': rs_50p_weighted_gmc2}
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
-                ltv_plus_sig2[gmpe,'p_sig'] = {
+                lt_vals_plus[1][gmpe,'p_sig'] = {
                     'plus_sigma': rs_plus_sigma_weighted_gmc2}
-                ltv_minus_sig2[gmpe,'m_sig'] = {
+                lt_vals_minus[1][gmpe,'m_sig'] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc2}
 
     # Logic tree #3            
-    if lt_weights_gmc3 == None:
+    if config.lt_weights_gmc3 == None:
         pass
-    elif gmpe in lt_weights_gmc3:
-        if lt_weights_gmc3[gmpe] != None:
+    elif gmpe in config.lt_weights_gmc3:
+        if config.lt_weights_gmc3[gmpe] != None:
             rs_50p_weighted_gmc3 = {}
             rs_plus_sigma_weighted_gmc3, rs_minus_sigma_weighted_gmc3 = {}, {}
             for idx, rs in enumerate(rs_50p):
-                rs_50p_weighted_gmc3[idx] = rs_50p[idx]*lt_weights_gmc3[gmpe]
+                rs_50p_weighted_gmc3[idx] = rs_50p[idx]*config.lt_weights_gmc3[gmpe]
                 if Nstd != 0:
                     rs_plus_sigma_weighted_gmc3[idx] = rs_plus_sigma[
-                        idx]*lt_weights_gmc3[gmpe]
+                        idx]*config.lt_weights_gmc3[gmpe]
                     rs_minus_sigma_weighted_gmc3[idx] = rs_minus_sigma[
-                        idx]*lt_weights_gmc3[gmpe]
+                        idx]*config.lt_weights_gmc3[gmpe]
                 
             # If present store the weighted median for the GMPE
-            lt_vals_gmc3[gmpe] = {'median': rs_50p_weighted_gmc3}
+            lt_vals[2][gmpe] = {'median': rs_50p_weighted_gmc3}
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
-                ltv_plus_sig3[gmpe,'p_sig'] = {
+                lt_vals_plus[2][gmpe,'p_sig'] = {
                     'plus_sigma': rs_plus_sigma_weighted_gmc3}
-                ltv_minus_sig3[gmpe,'m_sig'] = {
+                lt_vals_minus[2][gmpe,'m_sig'] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc3}
         
     # Logic tree #4         
-    if lt_weights_gmc4 == None:
+    if config.lt_weights_gmc4 == None:
         pass
-    elif gmpe in lt_weights_gmc4:
-        if lt_weights_gmc4[gmpe] != None:
+    elif gmpe in config.lt_weights_gmc4:
+        if config.lt_weights_gmc4[gmpe] != None:
             rs_50p_weighted_gmc4 = {}
             rs_plus_sigma_weighted_gmc4, rs_minus_sigma_weighted_gmc4 = {}, {}
             for idx, rs in enumerate(rs_50p):
-                rs_50p_weighted_gmc4[idx] = rs_50p[idx]*lt_weights_gmc4[gmpe]
+                rs_50p_weighted_gmc4[idx] = rs_50p[idx]*config.lt_weights_gmc4[gmpe]
                 if Nstd != 0:
                     rs_plus_sigma_weighted_gmc4[idx] = rs_plus_sigma[
-                        idx]*lt_weights_gmc4[gmpe]
+                        idx]*config.lt_weights_gmc4[gmpe]
                     rs_minus_sigma_weighted_gmc4[idx] = rs_minus_sigma[
-                        idx]*lt_weights_gmc4[gmpe]
+                        idx]*config.lt_weights_gmc4[gmpe]
                 
             # If present store the weighted median for the GMPE
-            lt_vals_gmc4[gmpe] = {'median': rs_50p_weighted_gmc4}
+            lt_vals[3][gmpe] = {'median': rs_50p_weighted_gmc4}
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
-                ltv_plus_sig4[gmpe,'p_sig'] = {
+                lt_vals_plus[3][gmpe,'p_sig'] = {
                     'plus_sigma': rs_plus_sigma_weighted_gmc4}
-                ltv_minus_sig4[gmpe,'m_sig'] = {
+                lt_vals_minus[3][gmpe,'m_sig'] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc4}
-
+                
+    gmc1_vals = [lt_vals[0], lt_vals_plus[0], lt_vals_minus[0]]
+    gmc2_vals = [lt_vals[1], lt_vals_plus[1], lt_vals_minus[1]]
+    gmc3_vals = [lt_vals[2], lt_vals_plus[2], lt_vals_minus[2]]
+    gmc4_vals = [lt_vals[3], lt_vals_plus[3], lt_vals_minus[3]]
         
-    return (lt_vals_gmc1, ltv_plus_sig1, ltv_minus_sig1,
-            lt_vals_gmc2, ltv_plus_sig2, ltv_minus_sig2,
-            lt_vals_gmc3, ltv_plus_sig3, ltv_minus_sig3,
-            lt_vals_gmc4, ltv_plus_sig4, ltv_minus_sig4)
+    return gmc1_vals, gmc2_vals, gmc3_vals, gmc4_vals
 
 
 def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, spec_gmc,
