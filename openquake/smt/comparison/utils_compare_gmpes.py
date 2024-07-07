@@ -277,15 +277,13 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                                  linewidth=0.75, linestyle='-.')
                 
                 # Weight the predictions using logic tree weights
-                gmc_vals = spectra_data(gmpe,
+                gmc_vals = spectra_data(gmpe, config,
                                         rs_50p, rs_plus_sigma, rs_minus_sigma,
-                                        lt_vals, lt_vals_plus, lt_vals_minus,
-                                        config)
+                                        lt_vals, lt_vals_plus, lt_vals_minus)
 
                 # Plot obs spectra if required
                 if obs_spectra is not None:
-                    plot_obs_spectra(
-                        ax1, obs_spectra, g, config.gmpes_list,
+                    plot_obs_spectra(ax1, obs_spectra, g, config.gmpes_list,
                         mag_list, dep_list, dist_list, eq_id, st_id)
                 
                 # Update plots
@@ -877,8 +875,8 @@ def _get_imts(max_period):
     return imt_list, periods
 
 
-def spectra_data(gmpe, rs_50p, rs_plus_sigma, rs_minus_sigma,
-                 lt_vals, lt_vals_plus, lt_vals_minus, config):
+def spectra_data(gmpe, config, rs_50p, rs_plus_sigma, rs_minus_sigma,
+                 lt_vals, lt_vals_plus, lt_vals_minus):
     """
     If required get the logic tree weighted predictions
     """
