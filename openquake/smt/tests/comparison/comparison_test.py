@@ -21,6 +21,7 @@ Tests for execution of comparison module
 import os
 import shutil
 import unittest
+
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import (
     compute_matrix_gmpes, plot_trellis_util, plot_spectra_util,
@@ -36,7 +37,7 @@ TARGET_REGION = 'Global'
 TARGET_TRELLIS_DEPTHS = [20, 25, 30]
 TARGET_RMIN = 0
 TARGET_RMAX = 300
-TARGET_NSTD = 2
+TARGET_NSTD = 0
 TARGET_TRELLIS_MAG = [5.0, 6.0, 7.0]
 TARGET_MAG = [5., 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6.,
               6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]
@@ -61,6 +62,8 @@ class ComparisonTestCase(unittest.TestCase):
             base, 'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
             base, 'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
+        self.spectra_gmc_expected = os.path.join(
+            base, 'expected_gmc_values.csv')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -240,7 +243,8 @@ class ComparisonTestCase(unittest.TestCase):
         plot_trellis_util(config, self.output_directory)
 
         # Spectra plots
-        plot_spectra_util(config, self.output_directory, obs_spectra=None)
+        gmc_vals = plot_spectra_util(
+            config, self.output_directory, obs_spectra=None)
 
         # Specify target files
         target_file_trellis = (os.path.join(
