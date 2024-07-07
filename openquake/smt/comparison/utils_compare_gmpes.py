@@ -120,22 +120,21 @@ def plot_trellis_util(config, output_directory):
 
             # Store per gmpe
             store_per_mag['Mw = %s, depth = %s km, dip = %s deg, rake = %s deg'
-                          % (m, dep_list[l], dip_g, config.rake)
-                          ] = store_per_gmpe
-            pyplot.grid(axis='both', which='both', alpha=0.5)
+                          % (m, dep_list[l], dip_g, config.rake)] = store_per_gmpe
          
             #Plot logic trees if specified
             for idx_gmc, gmc in enumerate(lt_weights):
                 median_gmc, plus_sig_gmc, minus_sig_gmc = lt_trel(
                     r_vals, config.Nstd, i, m, idx_gmc, lt_vals_gmc[idx_gmc],
                     gmc_p[idx_gmc][0], gmc_p[idx_gmc][1], gmc_p[idx_gmc][2])
+            pyplot.grid(axis='both', which='both', alpha=0.5)
             
         # Store per imt
         store_per_imt[str(i)] = store_per_mag
     
     # Final store to add vs30 and Nstd into key
-    store['vs30 = %s m/s, GMM sigma epsilon = %s' % (config.Vs30, config.Nstd)
-          ] = store_per_imt
+    store['vs30 = %s m/s, GMM sigma epsilon = %s' % (
+        config.Vs30, config.Nstd)] = store_per_imt
             
     # Finalise plots
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
