@@ -185,6 +185,7 @@ class Configurations(object):
         else:
             self.lt_weights_gmc4 = None
 
+
 def plot_trellis(filename, output_directory):
     """
     Plot trellis for given run configuration
@@ -198,6 +199,7 @@ def plot_trellis(filename, output_directory):
     store = plot_trellis_util(config, output_directory) 
     
     return store
+
                 
 def plot_spectra(filename, output_directory, obs_spectra=None):
     """
@@ -213,7 +215,9 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
     # Generate config object
     config = Configurations(filename)
     
-    plot_spectra_util(config, output_directory, obs_spectra)
+    gmc_vals = plot_spectra_util(config, output_directory, obs_spectra)
+
+    return gmc_vals
 
 
 def plot_cluster(filename, output_directory):
