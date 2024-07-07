@@ -506,8 +506,8 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         data = mtxs[n]
 
         # Agglomerative clustering
-        Z = hierarchy.linkage(data, method = 'ward', metric = 'euclidean',
-                              optimal_ordering = True)
+        Z = hierarchy.linkage(data, method='ward', metric='euclidean',
+                              optimal_ordering=True)
         matrix_Z[n] = Z
         ymax[n] = Z.max(axis=0)[2]
 
