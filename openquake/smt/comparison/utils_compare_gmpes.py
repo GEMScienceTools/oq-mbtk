@@ -124,7 +124,7 @@ def plot_trellis_util(config, output_directory):
                           ] = store_per_gmpe
             pyplot.grid(axis='both', which='both', alpha=0.5)
          
-            ### Plot logic trees if specified
+            #Plot logic trees if specified
             for idx_gmc, gmc in enumerate(lt_weights):
                 median_gmc, plus_sig_gmc, minus_sig_gmc = lt_trel(
                     r_vals, config.Nstd, i, m, idx_gmc, lt_vals_gmc[idx_gmc],
@@ -169,13 +169,13 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     colors = get_cols(config.custom_color_flag, config.custom_color_list)     
     figure = pyplot.figure(figsize = (len(mag_list)*5, len(config.dist_list)*4))
     
-    ### Set dicts to store values
+    # Set dicts to store values
     dic = OrderedDict([(gmm, {}) for gmm in config.gmpes_list])  
     lt_vals = [{}, {}, {}, {}]
     lt_vals_plus = [dic, dic, dic, dic]
     lt_vals_minus = [dic, dic, dic, dic]
 
-    ### Plot the data
+    # Plot the data
     for n, dist in enumerate(config.dist_list):
         for l, m in enumerate(mag_list):
             
