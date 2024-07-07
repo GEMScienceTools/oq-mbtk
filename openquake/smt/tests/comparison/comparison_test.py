@@ -313,32 +313,7 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
 
         # Trellis plots
-        plot_trellis_util(config.trt,
-                          config.ztor,
-                          config.rake, config.strike,
-                          config.dip,
-                          config.trellis_and_rs_depth_list,
-                          config.Z1,
-                          config.Z25,
-                          config.Vs30,
-                          config.region,
-                          config.imt_list,
-                          config.trellis_and_rs_mag_list,
-                          config.minR,
-                          config.maxR,
-                          config.gmpes_list,
-                          config.aratio,
-                          config.Nstd,
-                          self.output_directory,
-                          config.custom_color_flag,
-                          config.custom_color_list,
-                          config.eshm20_region,
-                          config.dist_type,
-                          config.lt_weights_gmc1,
-                          config.lt_weights_gmc2,
-                          config.lt_weights_gmc3,
-                          config.lt_weights_gmc4,
-                          up_or_down_dip=config.up_or_down_dip)
+        plot_trellis_util(config, self.output_directory)
 
         # Spectra plots
         plot_spectra_util(config.trt,

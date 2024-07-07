@@ -198,7 +198,7 @@ def plot_trellis(filename, output_directory):
     # Generate config object
     config = Configurations(filename)
     
-    store = plot_trellis_util(config) 
+    store = plot_trellis_util(config, output_directory) 
     
     return store
                 

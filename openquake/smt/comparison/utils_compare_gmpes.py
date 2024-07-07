@@ -34,15 +34,14 @@ from openquake.smt.comparison.utils_gmpes import (att_curves, _get_z1, _get_z25,
                                                   _param_gmpes, mgmpe_check)
 
 
-def plot_trellis_util(
-        trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30, region, imt_list,
-        mag_list, minR, maxR, gmpe_list, aratio, Nstd, output_directory,
-        custom_color_flag, custom_color_list, eshm20_region, dist_type,
-        lt_weights_gmc1=None, lt_weights_gmc2=None, lt_weights_gmc3=None,
-        lt_weights_gmc4=None, up_or_down_dip=None):
+def plot_trellis_util(config, output_directory):
     """
     Generate trellis plots for given run configuration
     """
+    mag_list = config.trellis_and_rs_mag_list
+    dep_list = config.trellis_and_rs_depth_list
+    imt_list = config.imt_list
+    
     # Setup
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
     
@@ -54,8 +53,8 @@ def plot_trellis_util(
     median_gmc4, plus_sig_gmc4, minus_sig_gmc4 = {}, {}, {}
     
     # Get basin params + colors
-    Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
-    colors = get_cols(custom_color_flag, custom_color_list)     
+    Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
+    colors = get_cols(config.custom_color_flag, config.custom_color_list)     
     step = 1
     
     # Compute attenuation curves
@@ -67,7 +66,7 @@ def plot_trellis_util(
             (lt_vals_gmc1, lt_vals_gmc2,
              lt_vals_gmc3, lt_vals_gmc4) = {}, {}, {}, {}
             store_per_gmpe = {}
-            for g, gmpe in enumerate(gmpe_list): 
+            for g, gmpe in enumerate(config.gmpes_list): 
                 
                 # Sub dicts for median, gmm sigma, median +/- Nstd * gmm sigma
                 store_per_gmpe[gmpe] = {}
@@ -77,50 +76,47 @@ def plot_trellis_util(
                 gmm = mgmpe_check(gmpe)
                 
                 # ZTOR value
-                if ztor is not None:
-                    ztor_m = ztor[l]
+                if config.ztor is not None:
+                    ztor_m = config.ztor[l]
                 else:
                     ztor_m = None
                 
                 # Get gmpe params
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(strike,
-                                                                  dip,
-                                                                  depth[l],
-                                                                  aratio,
-                                                                  rake,
-                                                                  trt) 
+                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
+                    config.strike, config.dip, dep_list[l], config.aratio,
+                    config.rake, config.trt) 
                 
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(gmm,
-                                                         depth[l],
+                                                         dep_list[l],
                                                          m,
                                                          aratio_g,
                                                          strike_g,
                                                          dip_g, 
-                                                         rake,
-                                                         Vs30,
+                                                         config.rake,
+                                                         config.Vs30,
                                                          Z1,
                                                          Z25,
-                                                         maxR,
+                                                         config.maxR,
                                                          step,
                                                          i,
                                                          ztor_m,
-                                                         eshm20_region,
-                                                         dist_type,
-                                                         trt,
-                                                         up_or_down_dip)
+                                                         config.eshm20_region,
+                                                         config.dist_type,
+                                                         config.trt,
+                                                         config.up_or_down_dip)
 
                 # Get mean, sigma components, mean plus/minus sigma
                 mean = mean[0][0]
                 std = std[0][0]
                 tau = tau[0][0]
                 phi = phi[0][0]
-                plus_sigma = np.exp(mean+Nstd*std[0])
-                minus_sigma = np.exp(mean-Nstd*std[0])
+                plus_sigma = np.exp(mean+config.Nstd*std[0])
+                minus_sigma = np.exp(mean-config.Nstd*std[0])
                 
                 # Plot predictions and get lt weighted predictions
                 (lt_vals_gmc1, lt_vals_gmc2,
-                 lt_vals_gmc3, lt_vals_gmc4) = trellis_data(Nstd,
+                 lt_vals_gmc3, lt_vals_gmc4) = trellis_data(config.Nstd,
                                                             gmpe,
                                                             r_vals,
                                                             mean,
@@ -129,13 +125,13 @@ def plot_trellis_util(
                                                             col,
                                                             i,
                                                             m,
-                                                            lt_weights_gmc1,
+                                                            config.lt_weights_gmc1,
                                                             lt_vals_gmc1,
-                                                            lt_weights_gmc2,
+                                                            config.lt_weights_gmc2,
                                                             lt_vals_gmc2,
-                                                            lt_weights_gmc3,
+                                                            config.lt_weights_gmc3,
                                                             lt_vals_gmc3,
-                                                            lt_weights_gmc4,
+                                                            config.lt_weights_gmc4,
                                                             lt_vals_gmc4)
                 
                 # Store per gmpe
@@ -143,32 +139,33 @@ def plot_trellis_util(
                     unit = 'g'
                 else:
                     unit = 'cm/s' # Otherwise imt = PGV
-                store_per_gmpe[gmpe]['%s (km)' %dist_type] = r_vals
-                store_per_gmpe[gmpe]['median (%s)' %unit] = np.exp(mean)
+                store_per_gmpe[gmpe]['%s (km)' % config.dist_type] = r_vals
+                store_per_gmpe[gmpe]['median (%s)' % unit] = np.exp(mean)
                 store_per_gmpe[gmpe]['sigma (ln)'] = std
                 store_per_gmpe[gmpe]['tau (ln)'] = tau
                 store_per_gmpe[gmpe]['phi (ln)'] = phi
                 
-                if Nstd != 0: # Only export mean plus/minus sigma if Nstd > 0
+                if config.Nstd != 0:
                     store_per_gmpe[gmpe][
                         'median plus sigma (%s)' %unit] = plus_sigma
                     store_per_gmpe[gmpe][
                         'median minus sigma (%s)' %unit] = minus_sigma
                    
                 # Update plots
-                update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list,
-                                     dist_type)
+                update_trellis_plots(m, i, n, l, config.minR, config.maxR,
+                                     r_vals, imt_list, config.dist_type)
 
             # Store per gmpe
             store_per_mag['Mw = %s, depth = %s km, dip = %s deg, rake = %s deg'
-                          %(m, depth[l], dip_g, rake)] = store_per_gmpe
+                          %(m, dep_list[l], dip_g, config.rake)
+                          ] = store_per_gmpe
 
             pyplot.grid(axis='both', which='both', alpha=0.5)
          
             ### Plot logic trees if specified
             spec_gmc = 'gmc1'
             median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = lt_trel(r_vals,
-                                                                 Nstd,
+                                                                 config.Nstd,
                                                                  i,
                                                                  m,
                                                                  spec_gmc,
@@ -179,7 +176,7 @@ def plot_trellis_util(
             
             spec_gmc = 'gmc2'
             median_gmc2, plus_sig_gmc2, minus_sig_gmc2 = lt_trel(r_vals,
-                                                                 Nstd,
+                                                                 config.Nstd,
                                                                  i,
                                                                  m,
                                                                  spec_gmc,
@@ -190,7 +187,7 @@ def plot_trellis_util(
  
             spec_gmc = 'gmc3'
             median_gmc3, plus_sig_gmc3, minus_sig_gmc3 = lt_trel(r_vals,
-                                                                 Nstd,
+                                                                 config.Nstd,
                                                                  i,
                                                                  m,
                                                                  spec_gmc,
@@ -201,7 +198,7 @@ def plot_trellis_util(
             
             spec_gmc = 'gmc4'
             median_gmc4, plus_sig_gmc4, minus_sig_gmc4 = lt_trel(r_vals,
-                                                                 Nstd,
+                                                                 config.Nstd,
                                                                  i,
                                                                  m,
                                                                  spec_gmc,
@@ -214,7 +211,7 @@ def plot_trellis_util(
         store_per_imt[str(i)] = store_per_mag
     
     # Final store to add vs30 and Nstd into key
-    store['vs30 = %s m/s, GMM sigma epsilon = %s' %(Vs30, Nstd)
+    store['vs30 = %s m/s, GMM sigma epsilon = %s' % (config.Vs30, config.Nstd)
           ] = store_per_imt
             
     # Finalise plots
