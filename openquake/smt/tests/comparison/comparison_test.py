@@ -243,9 +243,8 @@ class ComparisonTestCase(unittest.TestCase):
         plot_trellis_util(config, self.output_directory)
 
         # Spectra plots
-        gmc_vals = plot_spectra_util(
-            config, self.output_directory, obs_spectra=None)
-
+        plot_spectra_util(config, self.output_directory, obs_spectra=None)
+        
         # Specify target files
         target_file_trellis = (os.path.join(
             self.output_directory, 'TrellisPlots.png'))

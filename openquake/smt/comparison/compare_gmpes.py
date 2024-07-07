@@ -215,9 +215,7 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
     # Generate config object
     config = Configurations(filename)
     
-    gmc_vals = plot_spectra_util(config, output_directory, obs_spectra)
-
-    return gmc_vals
+    plot_spectra_util(config, output_directory, obs_spectra)
 
 
 def plot_cluster(filename, output_directory):

@@ -263,8 +263,6 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     ax1.legend(loc="center left", bbox_to_anchor=bbox_coo, fontsize=fs)
     save_spectra_plot(figure, obs_spectra, output_directory, eq_id, st_id)
 
-    return gmc_vals
-
 
 def compute_matrix_gmpes(config, mtxs_type):
     """
@@ -523,8 +521,8 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax = axs[np.unravel_index(n, (nrows, ncols))]       
         
         # Plot dendrogram
-        dn1 = hierarchy.dendrogram(matrix_Z[n], ax=ax, orientation='right',
-                                   labels=gmpe_list)
+        dn1 = hierarchy.dendrogram(
+            matrix_Z[n], ax=ax, orientation='right', labels=gmpe_list)
         ax.set_xlabel('Euclidean Distance', fontsize='12')
         if mtxs_type == 'median':
             ax.set_title(str(i) + ' (median)', fontsize='12')
