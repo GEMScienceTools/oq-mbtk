@@ -178,10 +178,9 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     Plot response spectra for given run configuration. Can also plot an observed
     spectrum and the corresponding predictions by the specified GMPEs
     """
-    # Get mag, dep and imt lists
+    # Get mag and dep lists
     mag_list = config.trellis_and_rs_mag_list
     dep_list = config.trellis_and_rs_depth_list
-    dist_list = config.dist_list
     
     # If obs spectra csv provided load the data
     if obs_spectra is not None:
@@ -196,7 +195,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     # Setup    
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
     colors = get_cols(config.custom_color_flag, config.custom_color_list)     
-    fig1 = pyplot.figure(figsize = (len(mag_list)*5, len(dist_list)*4))
+    fig1 = pyplot.figure(figsize = (len(mag_list)*5, len(config.dist_list)*4))
     
     ### Set dicts to store values
     dic = OrderedDict([(gmm, {}) for gmm in config.gmpes_list])  
@@ -205,10 +204,10 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     lt_vals_minus = [dic, dic, dic, dic]
 
     ### Plot the data
-    for n, i in enumerate(dist_list):
+    for n, i in enumerate(config.dist_list):
         for l, m in enumerate(mag_list):
             
-            ax1 = fig1.add_subplot(len(dist_list), len(mag_list),
+            ax1 = fig1.add_subplot(len(config.dist_list), len(mag_list),
                                    l+1+n*len(mag_list))
             
             for g, gmpe in enumerate(config.gmpes_list):     
@@ -223,7 +222,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                 
                 for k, imt in enumerate(imt_list): 
                     if obs_spectra is not None:
-                        dist = dist_list[n] # Set to rrup of obs spectra rec
+                        dist = config.dist_list[n] # Set to rrup of obs spectra rec
                     else:
                         dist = i
                     
@@ -284,10 +283,10 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                 # Plot obs spectra if required
                 if obs_spectra is not None:
                     plot_obs_spectra(ax1, obs_spectra, g, config.gmpes_list,
-                        mag_list, dep_list, dist_list, eq_id, st_id)
+                        mag_list, dep_list, config.dist_list, eq_id, st_id)
                 
                 # Update plots
-                update_spec_plots(ax1, m, i, n, l, dist_list)
+                update_spec_plots(ax1, m, i, n, l, config.dist_list)
             
             # Set axis limits and add grid
             ax1.set_xlim(min(periods), max(periods))
@@ -308,7 +307,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                 gmc_vals[3][0], gmc_vals[3][1], gmc_vals[3][2])
                 
     # Finalise the plots and save fig
-    if len(mag_list) * len(dist_list) == 1:
+    if len(mag_list) * len(config.dist_list) == 1:
         bbox_coo = (1.1, 0.5)
         fs = '10'
     else:
