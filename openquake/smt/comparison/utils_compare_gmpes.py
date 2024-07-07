@@ -183,23 +183,15 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     dep_list = config.trellis_and_rs_depth_list
     dist_list = config.dist_list
     
-    # If obs spectra csv provided load into a dataframe
+    # If obs spectra csv provided load the data
     if obs_spectra is not None:
         obs_spectra = pd.read_csv(obs_spectra)
-    else:
-        obs_spectra = None
-    
-    # Get some info from observed spectra if required
-    if obs_spectra is not None:
         max_period, eq_id, st_id = load_obs_spectra(obs_spectra)
     else:
-        eq_id, st_id = None, None
+        obs_spectra, eq_id, st_id = None, None, None
         
     # Get the periods to plot
-    period = _get_period_values_for_spectra_plots(config.max_period)
-    
-    # Convert periods from floats to imts
-    imt_list = _get_imts(period)
+    imt_list, periods = _get_imts(config.max_period)
     
     # Setup    
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
@@ -278,12 +270,12 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                         
                 # Plot individual GMPEs
                 if 'plot_lt_only' not in str(gmpe):
-                    ax1.plot(period, rs_50p, color = col, linewidth=2,
+                    ax1.plot(periods, rs_50p, color = col, linewidth=2,
                              linestyle='-', label=gmpe)
                     if config.Nstd != 0:
-                        ax1.plot(period, rs_plus_sigma, color=col,
+                        ax1.plot(periods, rs_plus_sigma, color=col,
                                  linewidth=0.75, linestyle='-.')
-                        ax1.plot(period, rs_minus_sigma, color=col,
+                        ax1.plot(periods, rs_minus_sigma, color=col,
                                  linewidth=0.75, linestyle='-.')
                 
                 # Weight the predictions using logic tree weights
@@ -314,21 +306,21 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                 update_spec_plots(ax1, m, i, n, l, dist_list)
             
             # Set axis limits and add grid
-            ax1.set_xlim(min(period), max(period))
+            ax1.set_xlim(min(periods), max(periods))
             ax1.grid(True)
             
             # Plot logic trees if required
             lt_spectra(
-                ax1, gmpe, config.gmpes_list, config.Nstd, period, 'gmc1',
+                ax1, gmpe, config.gmpes_list, config.Nstd, periods, 'gmc1',
                 lt_vals_gmc1, ltv_plus_sig1, ltv_minus_sig1)
             lt_spectra(
-                ax1, gmpe, config.gmpes_list, config.Nstd, period, 'gmc2',
+                ax1, gmpe, config.gmpes_list, config.Nstd, periods, 'gmc2',
                 lt_vals_gmc2, ltv_plus_sig2, ltv_minus_sig2)
             lt_spectra(
-                ax1, gmpe, config.gmpes_list, config.Nstd, period, 'gmc3',
+                ax1, gmpe, config.gmpes_list, config.Nstd, periods, 'gmc3',
                 lt_vals_gmc3, ltv_plus_sig3, ltv_minus_sig3)
             lt_spectra(
-                ax1, gmpe, config.gmpes_list, config.Nstd, period, 'gmc4',
+                ax1, gmpe, config.gmpes_list, config.Nstd, periods, 'gmc4',
                 lt_vals_gmc4, ltv_plus_sig4, ltv_minus_sig4)
                 
     # Finalise the plots and save fig
@@ -351,18 +343,19 @@ def compute_matrix_gmpes(config, mtxs_type):
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median, 84th or 16th percentile)
     """
+    # Get mag, imt and depth lists
     mag_list = config.mag_list
     imt_list = config.imt_list
     dep_list = config.depth_for_non_trel_or_rs_fun
     
-    # Setup
+    # Set store and get z1pt0, z2pt5
     mtxs_median = {}
-    d_step = 1
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
+    
     for n, i in enumerate(imt_list): # Iterate through imt_list
         matrix_medians=np.zeros(
             (len(config.gmpes_list), (len(mag_list)*int((
-                config.maxR-config.minR)/d_step))))
+                config.maxR-config.minR)/1))))
 
         for g, gmpe in enumerate(config.gmpes_list): 
             medians, sigmas = [], []
@@ -382,7 +375,7 @@ def compute_matrix_gmpes(config, mtxs_type):
 
                 mean, std, r_vals, tau, phi = att_curves(
                     gmm, dep_list[l], m, aratio_g, strike_g, dip_g,
-                    config.rake, config.Vs30, Z1, Z25, config.maxR, d_step,
+                    config.rake, config.Vs30, Z1, Z25, config.maxR, 1,
                     i, ztor_m, config.eshm20_region, config.dist_type,
                     config.trt, config.up_or_down_dip) 
                 
@@ -875,12 +868,15 @@ def _get_period_values_for_spectra_plots(max_period):
     return period
 
 
-def _get_imts(period):
+def _get_imts(max_period):
     """
     Convert period floats to imt classes
     """
+    # Get periods
+    periods = _get_period_values_for_spectra_plots(max_period)
+    
     # Convert from float to imt
-    period = np.round(period,1)
+    period = np.round(periods,1)
     base_SA_string = 'SA(_)'
     imt_list = []
     for imt in range(0,len(period)):
@@ -892,7 +888,7 @@ def _get_imts(period):
     for imt in range(0,len(imt_list)):
         imt_list[imt] = from_string(str(imt_list[imt]))
     
-    return imt_list
+    return imt_list, periods
 
 
 def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
