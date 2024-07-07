@@ -127,26 +127,7 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
 
         # Get medians
-        mtxs_medians = compute_matrix_gmpes(config.trt,
-                                            config.ztor,
-                                            config.imt_list,
-                                            config.mag_list,
-                                            config.gmpes_list,
-                                            config.rake,
-                                            config.strike,
-                                            config.dip,
-                                            config.depth_for_non_trel_or_rs_fun, 
-                                            config.Z1,
-                                            config.Z25,
-                                            config.Vs30,
-                                            config.region,
-                                            config.minR,
-                                            config.maxR,
-                                            config.aratio,
-                                            config.eshm20_region,
-                                            config.dist_type,
-                                            mtxs_type='median',
-                                            up_or_down_dip=config.up_or_down_dip)
+        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
 
         # Check correct number of imts
         self.assertEqual(len(mtxs_medians), len(TARGET_IMTS))
@@ -166,26 +147,7 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
 
         # Get medians
-        mtxs_medians = compute_matrix_gmpes(config.trt,
-                                            config.ztor,
-                                            config.imt_list,
-                                            config.mag_list,
-                                            config.gmpes_list,
-                                            config.rake,
-                                            config.strike,
-                                            config.dip,
-                                            config.depth_for_non_trel_or_rs_fun, 
-                                            config.Z1,
-                                            config.Z25,
-                                            config.Vs30,
-                                            config.region,
-                                            config.minR,
-                                            config.maxR,
-                                            config.aratio,
-                                            config.eshm20_region,
-                                            config.dist_type,
-                                            mtxs_type='median',
-                                            up_or_down_dip=config.up_or_down_dip)
+        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
 
         # Sammons checks
         coo = plot_sammons_util(
@@ -226,26 +188,7 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
 
         # Get medians
-        mtxs_medians = compute_matrix_gmpes(config.trt,
-                                            config.ztor,
-                                            config.imt_list,
-                                            config.mag_list,
-                                            config.gmpes_list,
-                                            config.rake,
-                                            config.strike,
-                                            config.dip,
-                                            config.depth_for_non_trel_or_rs_fun, 
-                                            config.Z1,
-                                            config.Z25,
-                                            config.Vs30,
-                                            config.region,
-                                            config.minR,
-                                            config.maxR,
-                                            config.aratio,
-                                            config.eshm20_region,
-                                            config.dist_type,
-                                            mtxs_type='median',
-                                            up_or_down_dip=config.up_or_down_dip)
+        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
         
         # Get clustering matrix
         Z_matrix = plot_cluster_util(
@@ -270,26 +213,7 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
 
         # Get medians
-        mtxs_medians = compute_matrix_gmpes(config.trt,
-                                            config.ztor,
-                                            config.imt_list,
-                                            config.mag_list,
-                                            config.gmpes_list,
-                                            config.rake,
-                                            config.strike,
-                                            config.dip,
-                                            config.depth_for_non_trel_or_rs_fun, 
-                                            config.Z1,
-                                            config.Z25,
-                                            config.Vs30,
-                                            config.region,
-                                            config.minR,
-                                            config.maxR,
-                                            config.aratio,
-                                            config.eshm20_region,
-                                            config.dist_type,
-                                            mtxs_type='84th_perc',
-                                            up_or_down_dip=config.up_or_down_dip)
+        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='84th_perc')
         
         # Get clustering matrix
         lab = '84th_perc_Clustering_Vs30.png'
@@ -316,33 +240,7 @@ class ComparisonTestCase(unittest.TestCase):
         plot_trellis_util(config, self.output_directory)
 
         # Spectra plots
-        plot_spectra_util(config.trt,
-                          config.ztor,
-                          config.rake,
-                          config.strike,
-                          config.dip,
-                          config.trellis_and_rs_depth_list,
-                          config.Z1,
-                          config.Z25,
-                          config.Vs30,
-                          config.region,
-                          config.max_period,
-                          config.trellis_and_rs_mag_list,
-                          config.dist_list,
-                          config.gmpes_list,
-                          config.aratio,
-                          config.Nstd,
-                          self.output_directory,
-                          config.custom_color_flag,
-                          config.custom_color_list,
-                          config.eshm20_region,
-                          config.dist_type,
-                          config.lt_weights_gmc1,
-                          config.lt_weights_gmc2,
-                          config.lt_weights_gmc3,
-                          config.lt_weights_gmc4,
-                          obs_spectra=None,
-                          up_or_down_dip=config.up_or_down_dip)
+        plot_spectra_util(config, self.output_directory, obs_spectra=None)
 
         # Specify target files
         target_file_trellis = (os.path.join(
@@ -364,33 +262,7 @@ class ComparisonTestCase(unittest.TestCase):
         obs_sp = self.input_file_obs_spectra_csv
         
         # Spectra plots including obs spectra
-        plot_spectra_util(config.trt,
-                          config.ztor,
-                          config.rake,
-                          config.strike,
-                          config.dip,
-                          config.trellis_and_rs_depth_list,
-                          config.Z1,
-                          config.Z25,
-                          config.Vs30,
-                          config.region,
-                          config.max_period,
-                          config.trellis_and_rs_mag_list,
-                          config.dist_list,
-                          config.gmpes_list,
-                          config.aratio,
-                          config.Nstd,
-                          self.output_directory,
-                          config.custom_color_flag,
-                          config.custom_color_list,
-                          config.eshm20_region,
-                          config.dist_type,
-                          config.lt_weights_gmc1,
-                          config.lt_weights_gmc2,
-                          config.lt_weights_gmc3,
-                          config.lt_weights_gmc4,
-                          obs_spectra=obs_sp,
-                          up_or_down_dip=config.up_or_down_dip)
+        plot_spectra_util(config, self.output_directory, obs_sp)
         
         # Specify target files
         target_file_spectra = (os.path.join(
