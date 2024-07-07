@@ -134,57 +134,54 @@ class Configurations(object):
 
         # If weight is assigned to a GMPE get it + check sum of weights for 
         # GMPEs with weights allocated = 1
-        get_weights_gmc1 = {}
-        get_weights_gmc2 = {}
-        get_weights_gmc3 = {}
-        get_weights_gmc4 = {}
+        weights = [{}, {}, {}, {}]
         for gmpe in self.gmpes_list:
             if 'lt_weight' in gmpe:
                 split_gmpe_str = str(gmpe).splitlines()
                 for idx, component in enumerate(split_gmpe_str):
                     if 'lt_weight_gmc1' in component:
-                        get_weights_gmc1[gmpe] = float(split_gmpe_str[
+                        weights[0][gmpe] = float(split_gmpe_str[
                             idx].split('=')[1])
                     if 'lt_weight_gmc2' in component:
-                        get_weights_gmc2[gmpe] = float(split_gmpe_str[
+                        weights[1][gmpe] = float(split_gmpe_str[
                             idx].split('=')[1])                       
                     if 'lt_weight_gmc3' in component:
-                        get_weights_gmc3[gmpe] = float(split_gmpe_str[
+                        weights[2][gmpe] = float(split_gmpe_str[
                             idx].split('=')[1])
                     if 'lt_weight_gmc4' in component:
-                        get_weights_gmc4[gmpe] = float(split_gmpe_str[
+                        weights[3][gmpe] = float(split_gmpe_str[
                             idx].split('=')[1])
             
         # Check weights for each logic tree (if present) equal 1.0
-        if get_weights_gmc1 != {}:
-            check_weights_gmc1 = np.array(pd.Series(get_weights_gmc1))
+        if weights[0] != {}:
+            check_weights_gmc1 = np.array(pd.Series(weights[0]))
             if np.sum(check_weights_gmc1, axis=0) != 1.0:
                 raise ValueError("GMPE logic tree weights must total 1.0")
-            self.lt_weights_gmc1 = get_weights_gmc1
+            self.lt_weights_gmc1 = weights[0]
         else:
             self.lt_weights_gmc1 = None
         
-        if get_weights_gmc2 != {}:
-            check_weights_gmc2 = np.array(pd.Series(get_weights_gmc2))
+        if weights[1] != {}:
+            check_weights_gmc2 = np.array(pd.Series(weights[1]))
             if np.sum(check_weights_gmc2, axis=0) != 1.0:
                 raise ValueError("GMPE logic tree weights must total 1.0")
-            self.lt_weights_gmc2 = get_weights_gmc2
+            self.lt_weights_gmc2 = weights[1]
         else:
             self.lt_weights_gmc2 = None
 
-        if get_weights_gmc3 != {}:
-            check_weights_gmc3 = np.array(pd.Series(get_weights_gmc3))
+        if weights[2] != {}:
+            check_weights_gmc3 = np.array(pd.Series(weights[2]))
             if np.sum(check_weights_gmc3, axis=0) != 1.0:
                 raise ValueError("GMPE logic tree weights must total 1.0")
-            self.lt_weights_gmc3 = get_weights_gmc3
+            self.lt_weights_gmc3 = weights[2]
         else:
             self.lt_weights_gmc3 = None
             
-        if get_weights_gmc4 != {}:
-            check_weights_gmc4 = np.array(pd.Series(get_weights_gmc4))
+        if weights[3] != {}:
+            check_weights_gmc4 = np.array(pd.Series(weights[3]))
             if np.sum(check_weights_gmc4, axis=0) != 1.0:
                 raise ValueError("GMPE logic tree weights must total 1.0")
-            self.lt_weights_gmc4 = get_weights_gmc4
+            self.lt_weights_gmc4 = weights[3]
         else:
             self.lt_weights_gmc4 = None
 
@@ -216,33 +213,7 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
     # Generate config object
     config = Configurations(filename)
     
-    plot_spectra_util(config.trt,
-                      config.ztor,
-                      config.rake,
-                      config.strike,
-                      config.dip,
-                      config.trellis_and_rs_depth_list,
-                      config.Z1,
-                      config.Z25,
-                      config.Vs30,
-                      config.region,
-                      config.max_period,
-                      config.trellis_and_rs_mag_list,
-                      config.dist_list,
-                      config.gmpes_list,
-                      config.aratio,
-                      config.Nstd,
-                      output_directory,
-                      config.custom_color_flag,
-                      config.custom_color_list,
-                      config.eshm20_region,
-                      config.dist_type,
-                      config.lt_weights_gmc1,
-                      config.lt_weights_gmc2,
-                      config.lt_weights_gmc3,
-                      config.lt_weights_gmc4,
-                      obs_spectra,
-                      config.up_or_down_dip) 
+    plot_spectra_util(config, output_directory, obs_spectra)
 
 
 def plot_cluster(filename, output_directory):
@@ -260,71 +231,12 @@ def plot_cluster(filename, output_directory):
         raise ValueError("Cannot perform clustering for a single GMPE.")   
 
     # Cluster median predicted ground-motion
-    mtxs_medians = compute_matrix_gmpes(config.trt,
-                                        config.ztor,
-                                        config.imt_list,
-                                        config.mag_list,
-                                        config.gmpes_list,
-                                        config.rake,
-                                        config.strike,
-                                        config.dip, 
-                                        config.depth_for_non_trel_or_rs_fun,
-                                        config.Z1,
-                                        config.Z25,
-                                        config.Vs30,
-                                        config.region,
-                                        config.minR,
-                                        config.maxR,
-                                        config.aratio,
-                                        config.eshm20_region,
-                                        config.dist_type,
-                                        mtxs_type='median',
-                                        up_or_down_dip = config.up_or_down_dip)
-
-    mtxs_84th_perc = compute_matrix_gmpes(config.trt,
-                                          config.ztor,
-                                          config.imt_list,
-                                          config.mag_list,
-                                          config.gmpes_list,
-                                          config.rake,
-                                          config.strike,
-                                          config.dip, 
-                                          config.depth_for_non_trel_or_rs_fun,
-                                          config.Z1,
-                                          config.Z25,
-                                          config.Vs30,
-                                          config.region,
-                                          config.minR,
-                                          config.maxR,
-                                          config.aratio,
-                                          config.eshm20_region,
-                                          config.dist_type,
-                                          mtxs_type='84th_perc',
-                                          up_or_down_dip = config.up_or_down_dip)
-    
-    mtxs_16th_perc = compute_matrix_gmpes(config.trt,
-                                          config.ztor,
-                                          config.imt_list,
-                                          config.mag_list,
-                                          config.gmpes_list,
-                                          config.rake,
-                                          config.strike,
-                                          config.dip, 
-                                          config.depth_for_non_trel_or_rs_fun,
-                                          config.Z1,
-                                          config.Z25,
-                                          config.Vs30,
-                                          config.region,
-                                          config.minR,
-                                          config.maxR,
-                                          config.aratio,
-                                          config.eshm20_region,
-                                          config.dist_type,
-                                          mtxs_type='16th_perc',
-                                          up_or_down_dip = config.up_or_down_dip)
+    mtxs_50th_perc = compute_matrix_gmpes(config, mtxs_type='median')
+    mtxs_84th_perc = compute_matrix_gmpes(config, mtxs_type='84th_perc')
+    mtxs_16th_perc = compute_matrix_gmpes(config, mtxs_type='16th_perc')
     
     # Cluster by median
-    plot_cluster_util(config.imt_list, config.gmpe_labels, mtxs_medians,
+    plot_cluster_util(config.imt_list, config.gmpe_labels, mtxs_50th_perc,
                       os.path.join(output_directory,'Median_Clustering.png'),
                       mtxs_type='median')    
     
@@ -353,70 +265,13 @@ def plot_sammons(filename, output_directory):
     if len(config.gmpes_list) < 2:
         raise ValueError("Cannot perform Sammons Mapping for a single GMPE.")
 
-    mtxs_medians = compute_matrix_gmpes(config.trt,
-                                        config.ztor,
-                                        config.imt_list,
-                                        config.mag_list,
-                                        config.gmpes_list,
-                                        config.rake,
-                                        config.strike,
-                                        config.dip, 
-                                        config.depth_for_non_trel_or_rs_fun,
-                                        config.Z1,
-                                        config.Z25,
-                                        config.Vs30, 
-                                        config.region,
-                                        config.minR,
-                                        config.maxR, 
-                                        config.aratio,
-                                        config.eshm20_region,
-                                        config.dist_type,
-                                        mtxs_type='median',
-                                        up_or_down_dip = config.up_or_down_dip)
+    mtxs_50th_perc = compute_matrix_gmpes(config, mtxs_type='median')
     
-    mtxs_84th_perc = compute_matrix_gmpes(config.trt,
-                                          config.ztor,
-                                          config.imt_list,
-                                          config.mag_list,
-                                          config.gmpes_list,
-                                          config.rake,
-                                          config.strike,
-                                          config.dip, 
-                                          config.depth_for_non_trel_or_rs_fun,
-                                          config.Z1,
-                                          config.Z25,
-                                          config.Vs30,
-                                          config.region,
-                                          config.minR,
-                                          config.maxR,
-                                          config.aratio,
-                                          config.eshm20_region,
-                                          config.dist_type,
-                                          mtxs_type='84th_perc',
-                                          up_or_down_dip = config.up_or_down_dip)
+    mtxs_84th_perc = compute_matrix_gmpes(config, mtxs_type='84th_perc')
     
-    mtxs_16th_perc = compute_matrix_gmpes(config.trt,
-                                          config.ztor,
-                                          config.imt_list,
-                                          config.mag_list,
-                                          config.gmpes_list,
-                                          config.rake,
-                                          config.strike,
-                                          config.dip, 
-                                          config.depth_for_non_trel_or_rs_fun,
-                                          config.Z1,
-                                          config.Z25,
-                                          config.Vs30,
-                                          config.region,
-                                          config.minR,
-                                          config.maxR,
-                                          config.aratio,
-                                          config.eshm20_region,
-                                          config.dist_type,
-                                          mtxs_type='16th_perc',
-                                          up_or_down_dip = config.up_or_down_dip)
+    mtxs_16th_perc = compute_matrix_gmpes(config, mtxs_type='16th_perc')
     
-    plot_sammons_util(config.imt_list, config.gmpe_labels, mtxs_medians,
+    plot_sammons_util(config.imt_list, config.gmpe_labels, mtxs_50th_perc,
                       os.path.join(output_directory,'Median_SammonMaps.png'),
                       config.custom_color_flag, config.custom_color_list,
                       mtxs_type='median')
@@ -446,69 +301,13 @@ def plot_euclidean(filename, output_directory):
     if len(config.gmpes_list) < 2:
         raise ValueError("Cannot perform Euclidean distance matrix plotting for a single GMPE.")
         
-    mtxs_medians = compute_matrix_gmpes(config.trt,
-                                        config.ztor,
-                                        config.imt_list,
-                                        config.mag_list,
-                                        config.gmpes_list,
-                                        config.rake,
-                                        config.strike,
-                                        config.dip,
-                                        config.depth_for_non_trel_or_rs_fun,
-                                        config.Z1,
-                                        config.Z25,
-                                        config.Vs30,
-                                        config.region,
-                                        config.minR,
-                                        config.maxR,
-                                        config.aratio,
-                                        config.eshm20_region,
-                                        config.dist_type,
-                                        mtxs_type='median',
-                                        up_or_down_dip = config.up_or_down_dip)
+    mtxs_50th_perc = compute_matrix_gmpes(config, mtxs_type='median')
     
-    mtxs_84th_perc = compute_matrix_gmpes(config.trt,
-                                          config.ztor,
-                                          config.imt_list,
-                                          config.mag_list,
-                                          config.gmpes_list,
-                                          config.rake,
-                                          config.strike,
-                                          config.dip, 
-                                          config.depth_for_non_trel_or_rs_fun,
-                                          config.Z1,
-                                          config.Z25,
-                                          config.Vs30,
-                                          config.region,
-                                          config.minR,
-                                          config.maxR,
-                                          config.aratio,
-                                          config.eshm20_region,
-                                          config.dist_type,
-                                          mtxs_type='84th_perc',
-                                          up_or_down_dip = config.up_or_down_dip)
+    mtxs_84th_perc = compute_matrix_gmpes(config, mtxs_type='84th_perc')
     
-    mtxs_16th_perc = compute_matrix_gmpes(config.trt,
-                                          config.ztor,
-                                          config.imt_list,
-                                          config.mag_list,
-                                          config.gmpes_list,
-                                          config.rake,
-                                          config.strike,
-                                          config.dip, 
-                                          config.depth_for_non_trel_or_rs_fun,
-                                          config.Z1,
-                                          config.Z25,
-                                          config.Vs30,
-                                          config.region,
-                                          config.minR,
-                                          config.maxR,
-                                          config.aratio,
-                                          config.eshm20_region,
-                                          config.dist_type, mtxs_type='16th_perc',
-                                          up_or_down_dip = config.up_or_down_dip)
+    mtxs_16th_perc = compute_matrix_gmpes(config, mtxs_type='16th_perc')
     
-    plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_medians,
+    plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_50th_perc,
                         os.path.join(output_directory,'Median_Euclidean.png'),
                         mtxs_type='median')
     

@@ -38,6 +38,7 @@ def plot_trellis_util(config, output_directory):
     """
     Generate trellis plots for given run configuration
     """
+    # Get mag, dep and imt lists
     mag_list = config.trellis_and_rs_mag_list
     dep_list = config.trellis_and_rs_depth_list
     imt_list = config.imt_list
@@ -47,10 +48,7 @@ def plot_trellis_util(config, output_directory):
     
     # Stores
     store = {}
-    median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = {}, {}, {}
-    median_gmc2, plus_sig_gmc2, minus_sig_gmc2 = {}, {}, {}
-    median_gmc3, plus_sig_gmc3, minus_sig_gmc3 = {}, {}, {}
-    median_gmc4, plus_sig_gmc4, minus_sig_gmc4 = {}, {}, {}
+    gmc_percs = [[{}, {}, {}], [{}, {}, {}], [{}, {}, {}], [{}, {}, {}]]
     
     # Get basin params + colors
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
@@ -87,24 +85,11 @@ def plot_trellis_util(config, output_directory):
                     config.rake, config.trt) 
                 
                 # Get attenuation curves
-                mean, std, r_vals, tau, phi = att_curves(gmm,
-                                                         dep_list[l],
-                                                         m,
-                                                         aratio_g,
-                                                         strike_g,
-                                                         dip_g, 
-                                                         config.rake,
-                                                         config.Vs30,
-                                                         Z1,
-                                                         Z25,
-                                                         config.maxR,
-                                                         step,
-                                                         i,
-                                                         ztor_m,
-                                                         config.eshm20_region,
-                                                         config.dist_type,
-                                                         config.trt,
-                                                         config.up_or_down_dip)
+                mean, std, r_vals, tau, phi = att_curves(
+                    gmm, dep_list[l], m, aratio_g, strike_g, dip_g,
+                    config.rake, config.Vs30, Z1, Z25, config.maxR,
+                    step, i, ztor_m, config.eshm20_region, config.dist_type,
+                    config.trt, config.up_or_down_dip)
 
                 # Get mean, sigma components, mean plus/minus sigma
                 mean = mean[0][0]
@@ -116,23 +101,13 @@ def plot_trellis_util(config, output_directory):
                 
                 # Plot predictions and get lt weighted predictions
                 (lt_vals_gmc1, lt_vals_gmc2,
-                 lt_vals_gmc3, lt_vals_gmc4) = trellis_data(config.Nstd,
-                                                            gmpe,
-                                                            r_vals,
-                                                            mean,
-                                                            plus_sigma,
-                                                            minus_sigma,
-                                                            col,
-                                                            i,
-                                                            m,
-                                                            config.lt_weights_gmc1,
-                                                            lt_vals_gmc1,
-                                                            config.lt_weights_gmc2,
-                                                            lt_vals_gmc2,
-                                                            config.lt_weights_gmc3,
-                                                            lt_vals_gmc3,
-                                                            config.lt_weights_gmc4,
-                                                            lt_vals_gmc4)
+                 lt_vals_gmc3, lt_vals_gmc4) = trellis_data(
+                     config.Nstd, gmpe, r_vals, mean, 
+                     plus_sigma, minus_sigma, col, i, m, 
+                     config.lt_weights_gmc1, lt_vals_gmc1,
+                     config.lt_weights_gmc2, lt_vals_gmc2,
+                     config.lt_weights_gmc3, lt_vals_gmc3,
+                     config.lt_weights_gmc4, lt_vals_gmc4)
                 
                 # Store per gmpe
                 if str(i) != 'PGV':
@@ -164,48 +139,24 @@ def plot_trellis_util(config, output_directory):
          
             ### Plot logic trees if specified
             spec_gmc = 'gmc1'
-            median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = lt_trel(r_vals,
-                                                                 config.Nstd,
-                                                                 i,
-                                                                 m,
-                                                                 spec_gmc,
-                                                                 lt_vals_gmc1,
-                                                                 median_gmc1,
-                                                                 plus_sig_gmc1,
-                                                                 minus_sig_gmc1)
+            median_gmc1, plus_sig_gmc1, minus_sig_gmc1 = lt_trel(
+                r_vals, config.Nstd, i, m, spec_gmc, lt_vals_gmc1,
+                gmc_percs[0][0], gmc_percs[0][1], gmc_percs[0][2])
             
             spec_gmc = 'gmc2'
-            median_gmc2, plus_sig_gmc2, minus_sig_gmc2 = lt_trel(r_vals,
-                                                                 config.Nstd,
-                                                                 i,
-                                                                 m,
-                                                                 spec_gmc,
-                                                                 lt_vals_gmc2,
-                                                                 median_gmc2,
-                                                                 plus_sig_gmc2,
-                                                                 minus_sig_gmc2)
+            median_gmc2, plus_sig_gmc2, minus_sig_gmc2 = lt_trel(
+                r_vals, config.Nstd, i, m, spec_gmc, lt_vals_gmc2,
+                gmc_percs[1][0], gmc_percs[1][1], gmc_percs[1][2])
  
             spec_gmc = 'gmc3'
-            median_gmc3, plus_sig_gmc3, minus_sig_gmc3 = lt_trel(r_vals,
-                                                                 config.Nstd,
-                                                                 i,
-                                                                 m,
-                                                                 spec_gmc,
-                                                                 lt_vals_gmc3,
-                                                                 median_gmc3,
-                                                                 plus_sig_gmc3,
-                                                                 minus_sig_gmc3)
+            median_gmc3, plus_sig_gmc3, minus_sig_gmc3 = lt_trel(
+                r_vals, config.Nstd, i, m, spec_gmc, lt_vals_gmc3,
+                gmc_percs[2][0], gmc_percs[2][1], gmc_percs[2][2])
             
             spec_gmc = 'gmc4'
-            median_gmc4, plus_sig_gmc4, minus_sig_gmc4 = lt_trel(r_vals,
-                                                                 config.Nstd,
-                                                                 i,
-                                                                 m,
-                                                                 spec_gmc,
-                                                                 lt_vals_gmc4,
-                                                                 median_gmc4,
-                                                                 plus_sig_gmc4,
-                                                                 minus_sig_gmc4)
+            median_gmc4, plus_sig_gmc4, minus_sig_gmc4 = lt_trel(
+                r_vals, config.Nstd, i, m, spec_gmc, lt_vals_gmc4,
+                gmc_percs[3][0], gmc_percs[3][1], gmc_percs[3][2])
             
         # Store per imt
         store_per_imt[str(i)] = store_per_mag
@@ -221,19 +172,17 @@ def plot_trellis_util(config, output_directory):
     
     return store
     
-    
 
-def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
-                      region, max_period, mag_list, dist_list, gmpe_list,
-                      aratio, Nstd, output_directory, custom_color_flag,
-                      custom_color_list, eshm20_region, dist_type,
-                      lt_weights_gmc1=None, lt_weights_gmc2=None,
-                      lt_weights_gmc3=None, lt_weights_gmc4=None,
-                      obs_spectra=None, up_or_down_dip=None):
+def plot_spectra_util(config, output_directory, obs_spectra):
     """
     Plot response spectra for given run configuration. Can also plot an observed
     spectrum and the corresponding predictions by the specified GMPEs
     """
+    # Get mag, dep and imt lists
+    mag_list = config.trellis_and_rs_mag_list
+    dep_list = config.trellis_and_rs_depth_list
+    dist_list = config.dist_list
+    
     # If obs spectra csv provided load into a dataframe
     if obs_spectra is not None:
         obs_spectra = pd.read_csv(obs_spectra)
@@ -247,23 +196,23 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
         eq_id, st_id = None, None
         
     # Get the periods to plot
-    period = _get_period_values_for_spectra_plots(max_period)
+    period = _get_period_values_for_spectra_plots(config.max_period)
     
     # Convert periods from floats to imts
     imt_list = _get_imts(period)
     
     # Setup    
-    Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
-    colors = get_cols(custom_color_flag, custom_color_list)     
+    Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
+    colors = get_cols(config.custom_color_flag, config.custom_color_list)     
     fig1 = pyplot.figure(figsize = (len(mag_list)*5, len(dist_list)*4))
     
     ### Set dicts to store values
-    dic = OrderedDict([(gmm, {}) for gmm in gmpe_list])  
-    lt_vals_gmc1, lt_vals_gmc2, lt_vals_gmc3, lt_vals_gmc4 = {}, {}, {}, {}
-    lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1 = dic, dic
-    lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2 = dic, dic
-    lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3 = dic, dic
-    lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4 = dic, dic
+    dic = OrderedDict([(gmm, {}) for gmm in config.gmpes_list])  
+    lt_vals = [{}, {}, {}, {}]
+    ltv_plus_sig1, ltv_minus_sig1 = dic, dic
+    ltv_plus_sig2, ltv_minus_sig2 = dic, dic
+    ltv_plus_sig3, ltv_minus_sig3 = dic, dic
+    ltv_plus_sig4, ltv_minus_sig4 = dic, dic
 
     ### Plot the data
     for n, i in enumerate(dist_list):
@@ -272,15 +221,12 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
             ax1 = fig1.add_subplot(len(dist_list), len(mag_list),
                                    l+1+n*len(mag_list))
             
-            for g, gmpe in enumerate(gmpe_list):     
+            for g, gmpe in enumerate(config.gmpes_list):     
                 col = colors[g]
                 gmm = mgmpe_check(gmpe)
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(strike,
-                                                                  dip,
-                                                                  depth[l],
-                                                                  aratio,
-                                                                  rake,
-                                                                  trt)
+                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
+                    config.strike, config.dip, dep_list[l], config.aratio,
+                    config.rake, config.trt)
                 
                 rs_50p, rs_plus_sigma, rs_minus_sigma = [], [], []
                 sigma_store, tau_store, phi_store = [], [], []
@@ -292,30 +238,17 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                         dist = i
                     
                     # ZTOR
-                    if ztor is not None:
-                        ztor_m = ztor[l]
+                    if config.ztor is not None:
+                        ztor_m = config.ztor[l]
                     else:
                         ztor_m = None
                         
                     # Get mean and sigma
-                    mu, std, r_vals, tau, phi = att_curves(gmm,
-                                                           depth[l],
-                                                           m,
-                                                           aratio_g,
-                                                           strike_g,
-                                                           dip_g,
-                                                           rake,
-                                                           Vs30,
-                                                           Z1,
-                                                           Z25,
-                                                           dist,
-                                                           0.1,
-                                                           imt,
-                                                           ztor_m,
-                                                           eshm20_region,
-                                                           dist_type,
-                                                           trt,
-                                                           up_or_down_dip) 
+                    mu, std, r_vals, tau, phi = att_curves(
+                        gmm, dep_list[l], m, aratio_g, strike_g, dip_g,
+                        config.rake, config.Vs30, Z1, Z25, dist, 0.1,
+                        imt, ztor_m, config.eshm20_region, config.dist_type,
+                        config.trt, config.up_or_down_dip) 
                     
                     # Interpolate for distances and store
                     mu = mu[0][0]
@@ -335,9 +268,11 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                     tau_dist = f3(i)
                     tau_store.append(tau_dist)
                     
-                    if Nstd != 0:
-                        rs_plus_sigma_dist = np.exp(f(i)+(Nstd*sigma_dist))
-                        rs_minus_sigma_dist = np.exp(f(i)-(Nstd*sigma_dist))
+                    if config.Nstd != 0:
+                        rs_plus_sigma_dist =\
+                            np.exp(f(i)+(config.Nstd*sigma_dist))
+                        rs_minus_sigma_dist =\
+                            np.exp(f(i)-(config.Nstd*sigma_dist))
                         rs_plus_sigma.append(rs_plus_sigma_dist)
                         rs_minus_sigma.append(rs_minus_sigma_dist)
                         
@@ -345,32 +280,35 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
                 if 'plot_lt_only' not in str(gmpe):
                     ax1.plot(period, rs_50p, color = col, linewidth=2,
                              linestyle='-', label=gmpe)
-                    if Nstd != 0:
+                    if config.Nstd != 0:
                         ax1.plot(period, rs_plus_sigma, color=col,
                                  linewidth=0.75, linestyle='-.')
                         ax1.plot(period, rs_minus_sigma, color=col,
                                  linewidth=0.75, linestyle='-.')
                 
                 # Weight the predictions using logic tree weights
-                (lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-                 lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2,
-                 lt_vals_gmc3, lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3,
-                 lt_vals_gmc4, lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4,
-                 ) = spectra_data(gmpe, Nstd,
-                                  rs_50p, rs_plus_sigma, rs_minus_sigma,
-                                  lt_vals_gmc1, lt_vals_gmc2,
-                                  lt_vals_gmc3, lt_vals_gmc4,
-                                  lt_weights_gmc1, lt_weights_gmc2,
-                                  lt_weights_gmc3, lt_weights_gmc4,
-                                  lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-                                  lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2,
-                                  lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3,
-                                  lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4)
+                (lt_vals_gmc1, ltv_plus_sig1, ltv_minus_sig1,
+                 lt_vals_gmc2, ltv_plus_sig2, ltv_minus_sig2,
+                 lt_vals_gmc3, ltv_plus_sig3, ltv_minus_sig3,
+                 lt_vals_gmc4, ltv_plus_sig4, ltv_minus_sig4,
+                 ) = spectra_data(gmpe, config.Nstd, rs_50p,
+                                  rs_plus_sigma, rs_minus_sigma,
+                                  lt_vals[0], lt_vals[1],
+                                  lt_vals[2], lt_vals[3],
+                                  config.lt_weights_gmc1,
+                                  config.lt_weights_gmc2,
+                                  config.lt_weights_gmc3,
+                                  config.lt_weights_gmc4,
+                                  ltv_plus_sig1, ltv_minus_sig1,
+                                  ltv_plus_sig2, ltv_minus_sig2,
+                                  ltv_plus_sig3, ltv_minus_sig3,
+                                  ltv_plus_sig4, ltv_minus_sig4)
 
                 # Plot obs spectra if required
                 if obs_spectra is not None:
-                    plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mag_list,
-                                     depth, dist_list, eq_id, st_id)
+                    plot_obs_spectra(
+                        ax1, obs_spectra, g, config.gmpes_list,
+                        mag_list, dep_list, dist_list, eq_id, st_id)
                 
                 # Update plots
                 update_spec_plots(ax1, m, i, n, l, dist_list)
@@ -380,17 +318,18 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
             ax1.grid(True)
             
             # Plot logic trees if required
-            lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, 'gmc1',
-                lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1)
-            
-            lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, 'gmc2',
-                lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2)
-            
-            lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, 'gmc3',
-                lt_vals_gmc3, lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3)
-            
-            lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, 'gmc4',
-                lt_vals_gmc4, lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4)
+            lt_spectra(
+                ax1, gmpe, config.gmpes_list, config.Nstd, period, 'gmc1',
+                lt_vals_gmc1, ltv_plus_sig1, ltv_minus_sig1)
+            lt_spectra(
+                ax1, gmpe, config.gmpes_list, config.Nstd, period, 'gmc2',
+                lt_vals_gmc2, ltv_plus_sig2, ltv_minus_sig2)
+            lt_spectra(
+                ax1, gmpe, config.gmpes_list, config.Nstd, period, 'gmc3',
+                lt_vals_gmc3, ltv_plus_sig3, ltv_minus_sig3)
+            lt_spectra(
+                ax1, gmpe, config.gmpes_list, config.Nstd, period, 'gmc4',
+                lt_vals_gmc4, ltv_plus_sig4, ltv_minus_sig4)
                 
     # Finalise the plots and save fig
     if len(mag_list) * len(dist_list) == 1:
@@ -403,9 +342,7 @@ def plot_spectra_util(trt, ztor, rake, strike, dip, depth, Z1, Z25, Vs30,
     save_spectra_plot(fig1, obs_spectra, output_directory, eq_id, st_id)
 
 
-def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
-                         dip, depth, Z1, Z25, Vs30, region, minR, maxR, aratio,
-                         eshm20_region, dist_type, mtxs_type, up_or_down_dip):
+def compute_matrix_gmpes(config, mtxs_type):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
     given run configuration for use within Euclidean distance matrix plots,
@@ -414,36 +351,43 @@ def compute_matrix_gmpes(trt, ztor, imt_list, mag_list, gmpe_list, rake, strike,
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median, 84th or 16th percentile)
     """
+    mag_list = config.mag_list
+    imt_list = config.imt_list
+    dep_list = config.depth_for_non_trel_or_rs_fun
+    
     # Setup
     mtxs_median = {}
     d_step = 1
-    Z1, Z25 = get_z1_z25(Z1, Z25, Vs30, region)
+    Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
     for n, i in enumerate(imt_list): # Iterate through imt_list
-        matrix_medians=np.zeros((len(gmpe_list),
-                                (len(mag_list)*int((maxR-minR)/d_step))))
+        matrix_medians=np.zeros(
+            (len(config.gmpes_list), (len(mag_list)*int((
+                config.maxR-config.minR)/d_step))))
 
-        for g, gmpe in enumerate(gmpe_list): 
+        for g, gmpe in enumerate(config.gmpes_list): 
             medians, sigmas = [], []
             for l, m in enumerate(mag_list): # Iterate though mag_list
                 
                 gmm = mgmpe_check(gmpe)
 
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
-                    strike, dip, depth[l], aratio, rake, trt) 
+                    config.strike, config.dip, dep_list[l], config.aratio,
+                    config.rake, config.trt) 
                 
                 # ZTOR                
-                if ztor is not None:
-                    ztor_m = ztor[l]
+                if config.ztor is not None:
+                    ztor_m = config.ztor[l]
                 else:
                     ztor_m = None
 
                 mean, std, r_vals, tau, phi = att_curves(
-                    gmm, depth[l], m, aratio_g, strike_g, dip_g,
-                    rake, Vs30, Z1, Z25, maxR, d_step, i, ztor_m, eshm20_region,
-                    dist_type, trt, up_or_down_dip) 
+                    gmm, dep_list[l], m, aratio_g, strike_g, dip_g,
+                    config.rake, config.Vs30, Z1, Z25, config.maxR, d_step,
+                    i, ztor_m, config.eshm20_region, config.dist_type,
+                    config.trt, config.up_or_down_dip) 
                 
                 # Get means further than minR
-                idx = np.argwhere(r_vals>=minR).flatten()
+                idx = np.argwhere(r_vals>=config.minR).flatten()
                 mean = [mean[0][0][idx]]
                 std = [std[0][0][idx]]
                 tau = [tau[0][0][idx]]
@@ -955,10 +899,10 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
                  lt_vals_gmc1, lt_vals_gmc2, lt_vals_gmc3, lt_vals_gmc4,
                  lt_weights_gmc1, lt_weights_gmc2,
                  lt_weights_gmc3, lt_weights_gmc4,
-                 lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-                 lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2,
-                 lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3,
-                 lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4):
+                 ltv_plus_sig1, ltv_minus_sig1,
+                 ltv_plus_sig2, ltv_minus_sig2,
+                 ltv_plus_sig3, ltv_minus_sig3,
+                 ltv_plus_sig4, ltv_minus_sig4):
     """
     If required get the logic tree weighted predictions
     """
@@ -983,9 +927,9 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
-                lt_vals_plus_sig_gmc1[gmpe,'p_sig'] = {
+                ltv_plus_sig1[gmpe,'p_sig'] = {
                     'plus_sigma': rs_plus_sigma_weighted_gmc1}
-                lt_vals_minus_sig_gmc1[gmpe,'m_sig'] = {
+                ltv_minus_sig1[gmpe,'m_sig'] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc1}
                 
     # Logic tree #2              
@@ -1008,9 +952,9 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
-                lt_vals_plus_sig_gmc2[gmpe,'p_sig'] = {
+                ltv_plus_sig2[gmpe,'p_sig'] = {
                     'plus_sigma': rs_plus_sigma_weighted_gmc2}
-                lt_vals_minus_sig_gmc2[gmpe,'m_sig'] = {
+                ltv_minus_sig2[gmpe,'m_sig'] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc2}
 
     # Logic tree #3            
@@ -1033,9 +977,9 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
-                lt_vals_plus_sig_gmc3[gmpe,'p_sig'] = {
+                ltv_plus_sig3[gmpe,'p_sig'] = {
                     'plus_sigma': rs_plus_sigma_weighted_gmc3}
-                lt_vals_minus_sig_gmc3[gmpe,'m_sig'] = {
+                ltv_minus_sig3[gmpe,'m_sig'] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc3}
         
     # Logic tree #4         
@@ -1058,20 +1002,20 @@ def spectra_data(gmpe, Nstd, rs_50p, rs_plus_sigma, rs_minus_sigma,
             
             # And if Nstd != 0 store these weighted branches too
             if Nstd != 0:
-                lt_vals_plus_sig_gmc4[gmpe,'p_sig'] = {
+                ltv_plus_sig4[gmpe,'p_sig'] = {
                     'plus_sigma': rs_plus_sigma_weighted_gmc4}
-                lt_vals_minus_sig_gmc4[gmpe,'m_sig'] = {
+                ltv_minus_sig4[gmpe,'m_sig'] = {
                     'minus_sigma': rs_minus_sigma_weighted_gmc4}
 
         
-    return (lt_vals_gmc1, lt_vals_plus_sig_gmc1, lt_vals_minus_sig_gmc1,
-            lt_vals_gmc2, lt_vals_plus_sig_gmc2, lt_vals_minus_sig_gmc2,
-            lt_vals_gmc3, lt_vals_plus_sig_gmc3, lt_vals_minus_sig_gmc3,
-            lt_vals_gmc4, lt_vals_plus_sig_gmc4, lt_vals_minus_sig_gmc4)
+    return (lt_vals_gmc1, ltv_plus_sig1, ltv_minus_sig1,
+            lt_vals_gmc2, ltv_plus_sig2, ltv_minus_sig2,
+            lt_vals_gmc3, ltv_plus_sig3, ltv_minus_sig3,
+            lt_vals_gmc4, ltv_plus_sig4, ltv_minus_sig4)
 
 
 def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, spec_gmc,
-               lt_vals_gmc, lt_vals_plus_sig_gmc, lt_vals_minus_sig_gmc):
+               lt_vals_gmc, ltv_plus_sig, ltv_minus_sig):
     """
     If required plot spectra from the GMPE logic tree(s)
     """    
@@ -1097,9 +1041,9 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, spec_gmc,
         lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['median'])
         if Nstd != 0:
             lt_df_plus_sigma_gmc = pd.DataFrame(
-                lt_vals_plus_sig_gmc, index=['plus_sigma'])
+                ltv_plus_sig, index=['plus_sigma'])
             lt_df_minus_sigma_gmc = pd.DataFrame(
-                lt_vals_minus_sig_gmc, index=['minus_sigma'])    
+                ltv_minus_sig, index=['minus_sigma'])    
         wt_per_gmpe_gmc = {}
         wt_plus_sigma_per_gmpe_gmc, wt_minus_sigma_per_gmpe_gmc = {}, {}
         for gmpe in gmpe_list:
@@ -1159,7 +1103,7 @@ def load_obs_spectra(obs_spectra):
     return max_period, eq_id, st_id
 
 
-def plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mag_list, depth,
+def plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mag_list, dep_list,
                      dist_list, eq_id, st_id):
     """
     Check if an observed spectra must be plotted, and if so plot
@@ -1170,7 +1114,7 @@ def plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mag_list, depth,
         # Get rup params
         mw = mag_list[0]
         rrup = dist_list[0]
-        depth = depth[0]
+        depth = dep_list[0]
         
         # Get label for spectra plot
         obs_string = (eq_id + '\nrecorded at ' + st_id + ' (Rrup = '
