@@ -89,7 +89,8 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Check for target depths (other functions use arrays from these
         # depths)
-        self.assertEqual(config.trellis_and_rs_depth, TARGET_TRELLIS_DEPTHS)
+        self.assertEqual(config.trellis_and_rs_depth_list,
+                         TARGET_TRELLIS_DEPTHS)
 
         # Check for target Rmin
         self.assertEqual(config.minR, TARGET_RMIN)
@@ -316,7 +317,7 @@ class ComparisonTestCase(unittest.TestCase):
                           config.ztor,
                           config.rake, config.strike,
                           config.dip,
-                          config.trellis_and_rs_depth,
+                          config.trellis_and_rs_depth_list,
                           config.Z1,
                           config.Z25,
                           config.Vs30,
@@ -345,7 +346,7 @@ class ComparisonTestCase(unittest.TestCase):
                           config.rake,
                           config.strike,
                           config.dip,
-                          config.trellis_and_rs_depth,
+                          config.trellis_and_rs_depth_list,
                           config.Z1,
                           config.Z25,
                           config.Vs30,
@@ -393,7 +394,7 @@ class ComparisonTestCase(unittest.TestCase):
                           config.rake,
                           config.strike,
                           config.dip,
-                          config.trellis_and_rs_depth,
+                          config.trellis_and_rs_depth_list,
                           config.Z1,
                           config.Z25,
                           config.Vs30,

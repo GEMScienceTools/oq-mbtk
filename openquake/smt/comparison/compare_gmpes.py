@@ -84,11 +84,11 @@ class Configurations(object):
                     self.trellis_and_rs_mag_list[idx])
         
         # Depths per magnitude for trellis plots
-        self.trellis_and_rs_depth = config_file['source_properties'][
+        self.trellis_and_rs_depth_list = config_file['source_properties'][
             'trellis_and_rs_depths']
-        for idx, depth in enumerate(self.trellis_and_rs_depth):
-            self.trellis_and_rs_depth[idx] = float(
-                self.trellis_and_rs_depth[idx])
+        for idx, depth in enumerate(self.trellis_and_rs_depth_list):
+            self.trellis_and_rs_depth_list[idx] = float(
+                self.trellis_and_rs_depth_list[idx])
         
         # Get mags for Sammons, Euclidean distance and clustering
         mag_params = config_file['mag_values_non_trellis_or_spectra_functions']
@@ -198,33 +198,7 @@ def plot_trellis(filename, output_directory):
     # Generate config object
     config = Configurations(filename)
     
-    store = plot_trellis_util(config.trt,
-                              config.ztor,
-                              config.rake,
-                              config.strike,
-                              config.dip,
-                              config.trellis_and_rs_depth,
-                              config.Z1,
-                              config.Z25,
-                              config.Vs30,
-                              config.region,
-                              config.imt_list,
-                              config.trellis_and_rs_mag_list,
-                              config.minR,
-                              config.maxR,
-                              config.gmpes_list,
-                              config.aratio,
-                              config.Nstd,
-                              output_directory,
-                              config.custom_color_flag,
-                              config.custom_color_list,
-                              config.eshm20_region,
-                              config.dist_type,
-                              config.lt_weights_gmc1,
-                              config.lt_weights_gmc2,
-                              config.lt_weights_gmc3,
-                              config.lt_weights_gmc4,
-                              config.up_or_down_dip) 
+    store = plot_trellis_util(config) 
     
     return store
                 
@@ -247,7 +221,7 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
                       config.rake,
                       config.strike,
                       config.dip,
-                      config.trellis_and_rs_depth,
+                      config.trellis_and_rs_depth_list,
                       config.Z1,
                       config.Z25,
                       config.Vs30,
