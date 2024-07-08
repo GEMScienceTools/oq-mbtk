@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Module with utility functions for generating trellis plots, hierarchical
-clustering plots, Sammons maps and Euclidean distance matrix plots
+Module with utility functions for generating trellis plots, response spectra,
+hierarchical clustering plots, Sammons maps and Euclidean distance matrix plots
 """
 import numpy as np
 import pandas as pd
@@ -45,14 +45,19 @@ def plot_trellis_util(config, output_directory):
     # Median, plus sigma, minus sigma per gmc for up to 4 gmc logic trees
     gmc_p= [[{}, {}, {}], [{}, {}, {}], [{}, {}, {}], [{}, {}, {}]]
     
-    # Get model weights + basin params + colors
+    # Get model weights + basin params + colors + config key
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
     colors = get_cols(config.custom_color_flag, config.custom_color_list) 
     lt_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
                   config.lt_weights_gmc3, config.lt_weights_gmc4]
+    cfg_key = 'vs30 = %s m/s, GMM sigma epsilon = %s' % (
+        config.Vs30, config.Nstd)
     
     # Compute attenuation curves
-    store_gmm_curves, store_per_imt = {}, {}
+    store_gmm_curves, store_per_imt = {}, {} # For exporting gmm att curves
+    store_gmm_curves[cfg_key] = {}
+    store_gmm_curves[cfg_key]['gmm att curves per imt-mag'] = {}
+    store_gmm_curves[cfg_key]['gmc logic tree curves per imt-mag'] = {}
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
     for n, i in enumerate(config.imt_list):
         store_per_mag = {}
@@ -82,11 +87,16 @@ def plot_trellis_util(config, output_directory):
                     config.rake, config.trt) 
                 
                 # Get attenuation curves
-                mean, std, r_vals, tau, phi = att_curves(
-                    gmm, dep_list[l], m, aratio_g, strike_g, dip_g,
-                    config.rake, config.Vs30, Z1, Z25, config.maxR,
-                    1, i, ztor_m, config.eshm20_region, config.dist_type,
-                    config.trt, config.up_or_down_dip)
+                mean, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
+                                                         aratio_g, strike_g,
+                                                         dip_g, config.rake,
+                                                         config.Vs30, Z1, Z25,
+                                                         config.maxR, 1, i,
+                                                         ztor_m,
+                                                         config.eshm20_region,
+                                                         config.dist_type,
+                                                         config.trt,
+                                                         config.up_or_down_dip)
 
                 # Get mean, sigma components, mean plus/minus sigma
                 mean = mean[0][0]
@@ -95,9 +105,9 @@ def plot_trellis_util(config, output_directory):
                 minus_sigma = np.exp(mean-config.Nstd*std[0])
                 
                 # Plot predictions and get lt weighted predictions
-                lt_vals_gmc = trellis_data(
-                    gmpe, r_vals, mean,plus_sigma, minus_sigma, col, i, m,
-                    config.Nstd, lt_vals_gmc, lt_weights)
+                lt_vals_gmc = trellis_data(gmpe, r_vals, mean,plus_sigma,
+                                           minus_sigma, col, i, m, config.Nstd,
+                                           lt_vals_gmc, lt_weights)
                 
                 # Store per gmpe
                 if str(i) != 'PGV':
@@ -107,7 +117,6 @@ def plot_trellis_util(config, output_directory):
                 store_per_gmpe[gmpe]['%s (km)' % config.dist_type] = r_vals
                 store_per_gmpe[gmpe]['median (%s)' % unit] = np.exp(mean)
                 store_per_gmpe[gmpe]['sigma (ln)'] = std
-                
                 if config.Nstd != 0:
                     store_per_gmpe[gmpe][
                         'median plus sigma (%s)' % unit] = plus_sigma
@@ -118,22 +127,16 @@ def plot_trellis_util(config, output_directory):
                 update_trellis_plots(m, i, n, l, config.minR, config.maxR,
                                      r_vals, config.imt_list, config.dist_type)
          
-            #Plot logic trees if specified and also store
+            # Plot logic trees if specified and also store
             for idx_gmc, gmc in enumerate(lt_weights):
-                if gmc is not None:
-                    lt_key = 'gmc logic tree %s' % str(idx_gmc+1)
-                    store_per_gmpe[lt_key] = {}
-                    median, plus_sig, minus_sig = lt_trel(
-                        r_vals, config.Nstd, i, m, idx_gmc, lt_vals_gmc[idx_gmc],
-                        gmc_p[idx_gmc][0], gmc_p[idx_gmc][1], gmc_p[idx_gmc][2])
-                    store_per_gmpe[
-                        lt_key]['median (%s)' % unit] = median
-                    if config.Nstd != 0:
-                        store_per_gmpe[lt_key][
-                            'median plus sigma (%s)' % unit] = plus_sig
-                        store_per_gmpe[lt_key][
-                            'median minus sigma (%s)' % unit] = minus_sig
-                
+                store_gmm_curves = trel_logic_trees(idx_gmc, gmc,
+                                                    lt_vals_gmc[idx_gmc],
+                                                    gmc_p[idx_gmc],
+                                                    store_gmm_curves,
+                                                    r_vals, config.Nstd,
+                                                    i, m, dep_list[l], dip_g,
+                                                    config.rake, cfg_key, unit)
+                    
             # Store per gmpe
             mag_key = 'Mw = %s, depth = %s km, dip = %s deg, rake = %s deg' % (
                 m, dep_list[l], dip_g, config.rake)
@@ -144,9 +147,8 @@ def plot_trellis_util(config, output_directory):
         store_per_imt[str(i)] = store_per_mag
     
     # Final store to add vs30 and Nstd into key
-    store_gmm_curves['vs30 = %s m/s, GMM sigma epsilon = %s' % (
-        config.Vs30, config.Nstd)] = store_per_imt
-            
+    store_gmm_curves[cfg_key]['gmm att curves per imt-mag'] = store_per_imt
+    
     # Finalise plots
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(os.path.join(output_directory, 'TrellisPlots.png'),
@@ -160,7 +162,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     Plot response spectra for given run configuration. Can also plot an
     observed spectrum and the corresponding predictions by the specified GMPEs
     """
-    # Get mag and dep lists
+    # Get mag and depth lists
     mag_list = config.trellis_and_rs_mag_list
     dep_list = config.trellis_and_rs_depth_list
     
@@ -171,11 +173,13 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     else:
         obs_spectra, eq_id, st_id = None, None, None
         
-    # Setup
+    # Get gmc lt weights, imts, periods and basin params
     gmc_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
                    config.lt_weights_gmc3, config.lt_weights_gmc4]
     imt_list, periods = _get_imts(config.max_period)
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
+    
+    # Get colours and make the figure
     colors = get_cols(config.custom_color_flag, config.custom_color_list)     
     figure = pyplot.figure(figsize=(len(mag_list)*5, len(config.dist_list)*4))
     
@@ -206,11 +210,15 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                         ztor_m = None
                         
                     # Get mean and sigma
-                    mu, std, r_vals, tau, phi = att_curves(
-                        gmm, dep_list[l], m, aratio_g, strike_g, dip_g,
-                        config.rake, config.Vs30, Z1, Z25, dist, 0.1,
-                        imt, ztor_m, config.eshm20_region, config.dist_type,
-                        config.trt, config.up_or_down_dip) 
+                    mu, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
+                                                           aratio_g, strike_g,
+                                                           dip_g, config.rake,
+                                                           config.Vs30, Z1, Z25,
+                                                           dist, 0.1, imt, ztor_m,
+                                                           config.eshm20_region,
+                                                           config.dist_type,
+                                                           config.trt,
+                                                           config.up_or_down_dip) 
                     
                     # Interpolate for distances and store
                     mu = mu[0][0]
@@ -312,11 +320,16 @@ def compute_matrix_gmpes(config, mtxs_type):
                 else:
                     ztor_m = None
 
-                mean, std, r_vals, tau, phi = att_curves(
-                    gmm, dep_list[l], m, aratio_g, strike_g, dip_g,
-                    config.rake, config.Vs30, Z1, Z25, config.maxR, 1,
-                    i, ztor_m, config.eshm20_region, config.dist_type,
-                    config.trt, config.up_or_down_dip) 
+                mean, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
+                                                         aratio_g, strike_g,
+                                                         dip_g, config.rake,
+                                                         config.Vs30, Z1, Z25,
+                                                         config.maxR, 1, i, 
+                                                         ztor_m, 
+                                                         config.eshm20_region,
+                                                         config.dist_type,
+                                                         config.trt,
+                                                         config.up_or_down_dip) 
                 
                 # Get means further than minR
                 idx = np.argwhere(r_vals>=config.minR).flatten()
@@ -622,8 +635,41 @@ def trellis_data(gmpe, r_vals, mean,plus_sigma, minus_sigma, col, i, m, Nstd,
     return lt_vals_gmc
 
 
-def lt_trel(r_vals, Nstd, i, m, idx_gmc, lt_vals_gmc, median_gmc, plus_sig_gmc,
-            minus_sig_gmc):
+def trel_logic_trees(idx_gmc, gmc, lt_vals_gmc, gmc_p, store_gmm_curves,
+                     r_vals, Nstd, i, m, dep, dip, rake, cfg_key, unit):
+    """
+    Manages plotting of the logic tree attenuation curves and adds them to the
+    store of exported attenuation curves 
+    """
+    # If logic tree provided plot and add to attenuation curve store
+    if gmc is not None:
+        lt_key = 'gmc logic tree %s' % str(idx_gmc+1)
+        
+        median, plus_sig, minus_sig = lt_trel(r_vals, Nstd, i, m, dep, dip, 
+                                              rake, idx_gmc, lt_vals_gmc,
+                                              gmc_p[0], gmc_p[1], gmc_p[2])
+        
+        store_gmm_curves[cfg_key][
+            'gmc logic tree curves per imt-mag'][lt_key] = {}
+        store_gmm_curves[cfg_key][
+            'gmc logic tree curves per imt-mag'][lt_key][
+                'median (%s)' % unit] = median
+        
+        if Nstd != 0:
+            store_gmm_curves[
+                cfg_key]['gmc logic tree curves per imt-mag'][
+                    lt_key]['median plus sigma (%s)' % unit
+                            ] = plus_sig
+            store_gmm_curves[
+                cfg_key]['gmc logic tree curves per imt-mag'][
+                    lt_key]['median minus sigma (%s)' % unit
+                            ] = plus_sig
+    
+    return store_gmm_curves
+
+
+def lt_trel(r_vals, Nstd, i, m, dep, dip, rake, idx_gmc, lt_vals_gmc,
+            median_gmc, plus_sig_gmc, minus_sig_gmc):
     """
     If required plot spectra from the GMPE logic tree(s)
     """
@@ -632,12 +678,16 @@ def lt_trel(r_vals, Nstd, i, m, idx_gmc, lt_vals_gmc, median_gmc, plus_sig_gmc,
     col = colours[idx_gmc]
     label = 'Logic Tree ' + str(idx_gmc+1)
     
+    # Get key describing mag-imt combo and some other event info    
+    mk = 'IMT = %s, Mw = %s, depth = %s km, dip = %s deg, rake = %s deg' % (
+        i, m, dep, dip, rake)
+    
     # Get logic tree 
     lt_df_gmc = pd.DataFrame(
         lt_vals_gmc, index=['median', 'plus_sigma', 'minus_sigma'])
 
     lt_median_gmc = np.sum(lt_df_gmc[:].loc['median'])
-    median_gmc[i,m] = lt_median_gmc
+    median_gmc[mk] = lt_median_gmc
     
     pyplot.plot(r_vals, lt_median_gmc, linewidth=2, color=col,
                 linestyle='--', label=label,
@@ -648,8 +698,8 @@ def lt_trel(r_vals, Nstd, i, m, idx_gmc, lt_vals_gmc, median_gmc, plus_sig_gmc,
         lt_plus_sigma_gmc = np.sum(lt_df_gmc[:].loc['plus_sigma'])
         lt_minus_sigma_gmc = np.sum(lt_df_gmc[:].loc['minus_sigma'])
         
-        plus_sig_gmc[i,m] = lt_plus_sigma_gmc
-        minus_sig_gmc[i,m] = lt_minus_sigma_gmc
+        plus_sig_gmc[mk] = lt_plus_sigma_gmc
+        minus_sig_gmc[mk] = lt_minus_sigma_gmc
         
         pyplot.plot(r_vals, lt_plus_sigma_gmc, linewidth=0.75,
                     color=col, linestyle='-.', zorder=100)
@@ -693,7 +743,7 @@ def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
     min_r_val = min(r_vals[r_vals>=1])
     pyplot.xlim(np.max([min_r_val, minR]), maxR)
     
-    
+
 ### Spectra utils
 def _get_period_values_for_spectra_plots(max_period):
     """
