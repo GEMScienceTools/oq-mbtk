@@ -21,6 +21,7 @@ Tests for execution of comparison module
 import os
 import shutil
 import unittest
+import pandas as pd
 
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import (
@@ -56,12 +57,13 @@ class ComparisonTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(self):
-        self.input_file = os.path.join(base, "compare_gmpe_inputs.toml")
-        self.output_directory = os.path.join(base, 'compare_gmpes_test')
+        self.input_file = os.path.join(base,"compare_gmpe_inputs.toml")
+        self.output_directory = os.path.join(base,'compare_gmpes_test')
         self.input_file_plot_obs_spectra = os.path.join(
-            base, 'Chamoli_1999_03_28_EQ.toml')
+            base,'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
-            base, 'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
+            base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
+        self.expected_att_curve_store = os.path.join(base,'exp_att_curves.csv')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -238,7 +240,11 @@ class ComparisonTestCase(unittest.TestCase):
         config = comp.Configurations(self.input_file)
 
         # Trellis plots
-        plot_trellis_util(config, self.output_directory)
+        att_curves = plot_trellis_util(config, self.output_directory)
+        obs_curves = pd.DataFrame(att_curves)
+        exp_curves = pd.read_csv(
+            self.expected_att_curve_store, index_col='Unnamed: 0')
+        assert str(obs_curves) == str(exp_curves)
 
         # Spectra plots
         plot_spectra_util(config, self.output_directory, obs_spectra=None)

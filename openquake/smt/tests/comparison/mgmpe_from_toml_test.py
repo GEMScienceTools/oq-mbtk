@@ -62,7 +62,8 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         
         # Get observed values and target values
         observ_mtxs = pd.DataFrame(mtxs_medians[0])
-        target_mtxs = pd.read_csv(os.path.join(base, 'target_medians.csv'))
+        target_mtxs = pd.read_csv(
+            os.path.join(base, 'target_medians_matrix.csv'))
 
         # Check equal   
         np.testing.assert_allclose(
