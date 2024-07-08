@@ -25,7 +25,7 @@ from scipy.integrate import cumtrapz
 from scipy import constants
 import matplotlib.pyplot as plt
 import openquake.smt.response_spectrum as rsp
-from openquake.smt.smoothing import konno_ohmachi
+from openquake.smt import smoothing
 from openquake.smt.sm_utils import get_time_vector, _save_image, nextpow2
 
 RESP_METHOD = {
@@ -34,7 +34,7 @@ RESP_METHOD = {
 }
 
 
-SMOOTHING = {"KonnoOhmachi": konno_ohmachi.KonnoOhmachi}
+SMOOTHING = {"KonnoOhmachi": smoothing.KonnoOhmachi}
 
 
 def get_peak_measures(time_step, acceleration, get_vel=False, get_disp=False):

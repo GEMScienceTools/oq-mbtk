@@ -25,7 +25,7 @@ import h5py
 import numpy as np
 import openquake.smt.response_spectrum as rsp
 import openquake.smt.intensity_measures as ims
-import openquake.smt.smoothing.konno_ohmachi as ko
+import openquake.smt.smoothing as smo
 
 
 BASE_DATA_PATH = os.path.dirname(__file__)
@@ -246,7 +246,7 @@ class FourierSpectrumBuildSmooth(BaseIMSTestCase):
         # Smoother inputs
         smoother_config = {"bandwidth": 30., "count": 1, "normalize": True}
         # Smooth the FAS
-        smoother = ko.KonnoOhmachi(smoother_config)
+        smoother = smo.KonnoOhmachi(smoother_config)
         smoothed_fas = smoother(fas, freq)
         np.testing.assert_array_almost_equal(
             smoothed_fas, self.fle["TEST2/FAS_SMOOTHED"][:], 5)
