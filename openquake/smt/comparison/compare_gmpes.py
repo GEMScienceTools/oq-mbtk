@@ -27,9 +27,9 @@ import toml
 import os
 
 from openquake.hazardlib.imt import from_string
-from openquake.smt.comparison.utils_compare_gmpes import plot_trellis_util, \
-    plot_spectra_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util,\
-        compute_matrix_gmpes
+from openquake.smt.comparison.utils_compare_gmpes import (
+    plot_trellis_util, plot_spectra_util, plot_cluster_util, plot_sammons_util,
+    plot_euclidean_util, compute_matrix_gmpes)
 
 
 class Configurations(object):
@@ -54,8 +54,10 @@ class Configurations(object):
         self.Nstd = config_file['general']['Nstd']
         self.max_period = config_file['general']['max_period']
         
-        self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
-        self.custom_color_list = config_file['custom_colors']['custom_colors_list']
+        self.custom_color_flag = config_file['custom_colors'][
+            'custom_colors_flag']
+        self.custom_color_list = config_file['custom_colors'][
+            'custom_colors_list']
         
         self.Vs30 = config_file['site_properties']['vs30']
         self.Z1 = config_file['site_properties']['Z1']
@@ -301,7 +303,8 @@ def plot_euclidean(filename, output_directory):
     config = Configurations(filename)
     
     if len(config.gmpes_list) < 2:
-        raise ValueError("Cannot perform Euclidean distance matrix plotting for a single GMPE.")
+        raise ValueError(
+            "Cannot perform Euclidean dist matrix plotting for a single GMPE.")
         
     mtxs_50th_perc = compute_matrix_gmpes(config, mtxs_type='median')
     
