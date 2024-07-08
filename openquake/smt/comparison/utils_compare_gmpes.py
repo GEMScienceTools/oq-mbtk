@@ -41,10 +41,9 @@ def plot_trellis_util(config, output_directory):
     # Get mag, dep and imt lists
     mag_list = config.trellis_and_rs_mag_list
     dep_list = config.trellis_and_rs_depth_list
-    imt_list = config.imt_list
+    imt_list = config.imt_list    
     
-    # Setup
-    fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
+    # Median, plus sigma, minus sigma per gmc
     gmc_p= [[{}, {}, {}], [{}, {}, {}], [{}, {}, {}], [{}, {}, {}]]
     
     # Get basin params + colors + model weights
@@ -54,7 +53,8 @@ def plot_trellis_util(config, output_directory):
                   config.lt_weights_gmc3, config.lt_weights_gmc4]
     
     # Compute attenuation curves
-    store, store_per_imt = {}, {}
+    store_gmm_curves, store_per_imt = {}, {}
+    fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
     for n, i in enumerate(imt_list):
         store_per_mag = {}
         for l, m in enumerate(mag_list):
@@ -127,13 +127,15 @@ def plot_trellis_util(config, output_directory):
                 median_gmc, plus_sig_gmc, minus_sig_gmc = lt_trel(
                     r_vals, config.Nstd, i, m, idx_gmc, lt_vals_gmc[idx_gmc],
                     gmc_p[idx_gmc][0], gmc_p[idx_gmc][1], gmc_p[idx_gmc][2])
+                
+                
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
         # Store per imt
         store_per_imt[str(i)] = store_per_mag
     
     # Final store to add vs30 and Nstd into key
-    store['vs30 = %s m/s, GMM sigma epsilon = %s' % (
+    store_gmm_curves['vs30 = %s m/s, GMM sigma epsilon = %s' % (
         config.Vs30, config.Nstd)] = store_per_imt
             
     # Finalise plots
@@ -141,7 +143,7 @@ def plot_trellis_util(config, output_directory):
     pyplot.savefig(os.path.join(output_directory, 'TrellisPlots.png'),
                    bbox_inches='tight', dpi=200, pad_inches=0.2)
     
-    return store
+    return store_gmm_curves
     
 
 def plot_spectra_util(config, output_directory, obs_spectra):
@@ -166,7 +168,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     imt_list, periods = _get_imts(config.max_period)
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
     colors = get_cols(config.custom_color_flag, config.custom_color_list)     
-    figure = pyplot.figure(figsize = (len(mag_list)*5, len(config.dist_list)*4))
+    figure = pyplot.figure(figsize=(len(mag_list)*5, len(config.dist_list)*4))
     
     # Set dicts to store values
     dic = OrderedDict([(gmm, {}) for gmm in config.gmpes_list])  
