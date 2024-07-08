@@ -38,15 +38,14 @@ def plot_trellis_util(config, output_directory):
     """
     Generate trellis plots for given run configuration
     """
-    # Get mag, dep and imt lists
+    # Get mag and dep lists
     mag_list = config.trellis_and_rs_mag_list
     dep_list = config.trellis_and_rs_depth_list
-    imt_list = config.imt_list    
     
-    # Median, plus sigma, minus sigma per gmc
+    # Median, plus sigma, minus sigma per gmc for up to 4 gmc logic trees
     gmc_p= [[{}, {}, {}], [{}, {}, {}], [{}, {}, {}], [{}, {}, {}]]
     
-    # Get basin params + colors + model weights
+    # Get model weights + basin params + colors
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
     colors = get_cols(config.custom_color_flag, config.custom_color_list) 
     lt_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
@@ -54,11 +53,12 @@ def plot_trellis_util(config, output_directory):
     
     # Compute attenuation curves
     store_gmm_curves, store_per_imt = {}, {}
-    fig = pyplot.figure(figsize=(len(mag_list)*5, len(imt_list)*4))
-    for n, i in enumerate(imt_list):
+    fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
+    for n, i in enumerate(config.imt_list):
         store_per_mag = {}
         for l, m in enumerate(mag_list):
-            fig.add_subplot(len(imt_list), len(mag_list), l+1+n*len(mag_list))
+            fig.add_subplot(
+                len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
             lt_vals_gmc = [{}, {}, {}, {}]
             store_per_gmpe = {}
             for g, gmpe in enumerate(config.gmpes_list): 
@@ -116,18 +116,28 @@ def plot_trellis_util(config, output_directory):
                    
                 # Update plots
                 update_trellis_plots(m, i, n, l, config.minR, config.maxR,
-                                     r_vals, imt_list, config.dist_type)
-
-            # Store per gmpe
-            store_per_mag['Mw = %s, depth = %s km, dip = %s deg, rake = %s deg'
-                          % (m, dep_list[l], dip_g, config.rake)] = store_per_gmpe
+                                     r_vals, config.imt_list, config.dist_type)
          
-            #Plot logic trees if specified
+            #Plot logic trees if specified and also store
             for idx_gmc, gmc in enumerate(lt_weights):
-                median_gmc, plus_sig_gmc, minus_sig_gmc = lt_trel(
-                    r_vals, config.Nstd, i, m, idx_gmc, lt_vals_gmc[idx_gmc],
-                    gmc_p[idx_gmc][0], gmc_p[idx_gmc][1], gmc_p[idx_gmc][2])
+                if gmc is not None:
+                    lt_key = 'gmc logic tree %s' % str(idx_gmc+1)
+                    store_per_gmpe[lt_key] = {}
+                    median, plus_sig, minus_sig = lt_trel(
+                        r_vals, config.Nstd, i, m, idx_gmc, lt_vals_gmc[idx_gmc],
+                        gmc_p[idx_gmc][0], gmc_p[idx_gmc][1], gmc_p[idx_gmc][2])
+                    store_per_gmpe[
+                        lt_key]['median (%s)' % unit] = median
+                    if config.Nstd != 0:
+                        store_per_gmpe[lt_key][
+                            'median plus sigma (%s)' % unit] = plus_sig
+                        store_per_gmpe[lt_key][
+                            'median minus sigma (%s)' % unit] = minus_sig
                 
+            # Store per gmpe
+            mag_key = 'Mw = %s, depth = %s km, dip = %s deg, rake = %s deg' % (
+                m, dep_list[l], dip_g, config.rake)
+            store_per_mag[mag_key] = store_per_gmpe
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
         # Store per imt
@@ -622,39 +632,30 @@ def lt_trel(r_vals, Nstd, i, m, idx_gmc, lt_vals_gmc, median_gmc, plus_sig_gmc,
     colours = ['r', 'b', 'g', 'k']
     col = colours[idx_gmc]
     label = 'Logic Tree ' + str(idx_gmc+1)
+    
+    # Get logic tree 
+    lt_df_gmc = pd.DataFrame(
+        lt_vals_gmc, index=['median', 'plus_sigma', 'minus_sigma'])
 
-    if lt_vals_gmc != {}:
-        if not Nstd == 0:
-            lt_df_gmc = pd.DataFrame(
-                lt_vals_gmc, index=['median', 'plus_sigma', 'minus_sigma'])
-
-            lt_median_gmc = np.sum(lt_df_gmc[:].loc['median'])
-            lt_plus_sigma_gmc = np.sum(lt_df_gmc[:].loc['plus_sigma'])
-            lt_minus_sigma_gmc = np.sum(lt_df_gmc[:].loc['minus_sigma'])
-   
-            pyplot.plot(r_vals, lt_median_gmc, linewidth=2, color=col,
-                        linestyle='--', label=label,
-                        zorder=100)
-            
-            pyplot.plot(r_vals, lt_plus_sigma_gmc, linewidth=0.75,
-                        color=col, linestyle='-.', zorder=100)
-
-            pyplot.plot(r_vals, lt_minus_sigma_gmc, linewidth=0.75,
-                        color=col, linestyle='-.', zorder=100)
-            
-            median_gmc[i,m] = lt_median_gmc
-            plus_sig_gmc[i,m] = lt_plus_sigma_gmc
-            minus_sig_gmc[i,m] = lt_minus_sigma_gmc
-            
-        if Nstd == 0:
-            lt_df_gmc = pd.DataFrame(lt_vals_gmc, index = ['median'])
-            
-            lt_median_gmc = np.sum(lt_df_gmc[:].loc['median'])
-             
-            pyplot.plot(r_vals, lt_median_gmc, linewidth=2, color=col,
-                        linestyle='--', label=label)
-            
-            median_gmc[i,m] = lt_median_gmc
+    lt_median_gmc = np.sum(lt_df_gmc[:].loc['median'])
+    median_gmc[i,m] = lt_median_gmc
+    
+    pyplot.plot(r_vals, lt_median_gmc, linewidth=2, color=col,
+                linestyle='--', label=label,
+                zorder=100)
+    
+    if Nstd != 0:
+        
+        lt_plus_sigma_gmc = np.sum(lt_df_gmc[:].loc['plus_sigma'])
+        lt_minus_sigma_gmc = np.sum(lt_df_gmc[:].loc['minus_sigma'])
+        
+        plus_sig_gmc[i,m] = lt_plus_sigma_gmc
+        minus_sig_gmc[i,m] = lt_minus_sigma_gmc
+        
+        pyplot.plot(r_vals, lt_plus_sigma_gmc, linewidth=0.75,
+                    color=col, linestyle='-.', zorder=100)
+        pyplot.plot(r_vals, lt_minus_sigma_gmc, linewidth=0.75,
+                    color=col, linestyle='-.', zorder=100)
 
     return median_gmc, plus_sig_gmc, minus_sig_gmc
 
