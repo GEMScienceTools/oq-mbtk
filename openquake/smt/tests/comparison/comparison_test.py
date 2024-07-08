@@ -63,7 +63,8 @@ class ComparisonTestCase(unittest.TestCase):
             base,'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
             base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.expected_att_curve_store = os.path.join(base,'exp_att_curves.csv')
+        self.expected_att_curves = os.path.join(base,'exp_att_curves.csv')
+        self.expected_spectra = os.path.join(base, 'exp_spectra.csv')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -236,7 +237,7 @@ class ComparisonTestCase(unittest.TestCase):
         """
         Check trellis and response spectra plotting functions are correctly
         executed. Also checks correct values are returned for the gmm
-        attenuation curves and the gmc logic trees which consider the same gmms.
+        attenuation curves and spectra.
         """
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
@@ -245,11 +246,16 @@ class ComparisonTestCase(unittest.TestCase):
         att_curves = plot_trellis_util(config, self.output_directory)
         obs_curves = pd.DataFrame(att_curves)
         exp_curves = pd.read_csv(
-            self.expected_att_curve_store, index_col='Unnamed: 0')
+            self.expected_att_curves, index_col='Unnamed: 0')
         assert str(obs_curves) == str(exp_curves)
 
         # Spectra plots
-        plot_spectra_util(config, self.output_directory, obs_spectra=None)
+        gmc_lts = plot_spectra_util(
+            config, self.output_directory, obs_spectra=None)
+        obs_spectra = pd.DataFrame(gmc_lts)
+        exp_spectra = pd.read_csv(
+            self.expected_spectra, index_col='Unnamed: 0')
+        assert str(obs_spectra) == str(exp_spectra)
         
         # Specify target files
         target_file_trellis = (os.path.join(
