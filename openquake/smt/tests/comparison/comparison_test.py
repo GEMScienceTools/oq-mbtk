@@ -234,7 +234,9 @@ class ComparisonTestCase(unittest.TestCase):
 
     def test_trellis_and_spectra_functions(self):
         """
-        Check trellis and response spectra plotting functions are executed
+        Check trellis and response spectra plotting functions are correctly
+        executed. Also checks correct values are returned for the gmm
+        attenuation curves and the gmc logic trees which consider the same gmms.
         """
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
