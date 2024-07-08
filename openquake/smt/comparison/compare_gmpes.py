@@ -198,9 +198,9 @@ def plot_trellis(filename, output_directory):
     # Generate config object
     config = Configurations(filename)
     
-    store = plot_trellis_util(config, output_directory) 
+    store_gmm_curves = plot_trellis_util(config, output_directory) 
     
-    return store
+    return store_gmm_curves
 
                 
 def plot_spectra(filename, output_directory, obs_spectra=None):
