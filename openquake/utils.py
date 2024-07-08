@@ -26,9 +26,9 @@
 
 
 def are_equal_ignoring_line_endings(filename1, filename2):
-    with open(filename1, "r") as a:
-        with open(filename2, "r") as b:
+    with open(filename1, "r") as f1:
+        with open(filename2, "r") as f2:
             # Note that "all" and "zip" are lazy
             # (will stop at the first line that's not identical)
-            return all(lineA == lineB
-                       for lineA, lineB in zip(a, b))
+            return all(line1 == line2
+                       for line1, line2 in zip(f1, f2))
