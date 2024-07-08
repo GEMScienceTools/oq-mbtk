@@ -39,8 +39,8 @@ TARGET_RMIN = 0
 TARGET_RMAX = 300
 TARGET_NSTD = 0
 TARGET_TRELLIS_MAG = [5.0, 6.0, 7.0]
-TARGET_MAG = [5., 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6.,
-              6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]
+TARGET_MAG = [5., 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9,
+              6., 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]
 TARGET_IMTS = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
 TARGET_GMPES = ['[ChiouYoungs2014] \nlt_weight_gmc1 = 0.5',
                 '[CampbellBozorgnia2014] \nlt_weight_gmc1 = 0.5',
