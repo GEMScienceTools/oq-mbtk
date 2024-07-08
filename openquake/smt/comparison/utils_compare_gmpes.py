@@ -30,8 +30,8 @@ from collections import OrderedDict
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib.imt import from_string
-from openquake.smt.comparison.utils_gmpes import (att_curves, _get_z1, _get_z25,
-                                                  _param_gmpes, mgmpe_check)
+from openquake.smt.comparison.utils_gmpes import (
+    att_curves, _get_z1, _get_z25, _param_gmpes, mgmpe_check)
 
 
 def plot_trellis_util(config, output_directory):
@@ -146,8 +146,8 @@ def plot_trellis_util(config, output_directory):
 
 def plot_spectra_util(config, output_directory, obs_spectra):
     """
-    Plot response spectra for given run configuration. Can also plot an observed
-    spectrum and the corresponding predictions by the specified GMPEs
+    Plot response spectra for given run configuration. Can also plot an
+    observed spectrum and the corresponding predictions by the specified GMPEs
     """
     # Get mag and dep lists
     mag_list = config.trellis_and_rs_mag_list
@@ -938,4 +938,3 @@ def matrix_mean(mtxs, imt_list, gmpe_list):
         gmpe_list.append('mean')
     
     return mtxs, gmpe_list
-        
