@@ -285,14 +285,13 @@ def compute_matrix_gmpes(config, mtxs_type):
     """
     # Get mag, imt and depth lists
     mag_list = config.mag_list
-    imt_list = config.imt_list
     dep_list = config.depth_for_non_trel_or_rs_fun
     
     # Set store and get z1pt0, z2pt5
     mtxs_median = {}
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
     
-    for n, i in enumerate(imt_list): # Iterate through imt_list
+    for n, i in enumerate(config.imt_list): # Iterate through imt_list
         matrix_medians=np.zeros(
             (len(config.gmpes_list), (len(mag_list)*int((
                 config.maxR-config.minR)/1))))
