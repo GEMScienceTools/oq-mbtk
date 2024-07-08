@@ -128,7 +128,6 @@ def plot_trellis_util(config, output_directory):
                     r_vals, config.Nstd, i, m, idx_gmc, lt_vals_gmc[idx_gmc],
                     gmc_p[idx_gmc][0], gmc_p[idx_gmc][1], gmc_p[idx_gmc][2])
                 
-                
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
         # Store per imt
