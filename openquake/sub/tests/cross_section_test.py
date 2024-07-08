@@ -1,7 +1,6 @@
 import os
 import re
 import numpy
-import filecmp
 import unittest
 import tempfile
 
@@ -13,6 +12,7 @@ from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.line import Line
 from openquake.sub.tests import __file__ as tests__init__
 from openquake.sub.make_cs_coords import make_cs_coords
+from openquake.utils import are_equal_ignoring_line_endings
 
 BASE_PATH = os.path.dirname(__file__)
 tmp = 'data/crust/crust_except.xyz'
@@ -91,7 +91,7 @@ class GetMMTest(unittest.TestCase):
         """
         cs = CrossSection(10.0, 45.0, [100], [45])
         computed = cs.get_mm()
-        #print(cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1])
+        # print(cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1])
         expected = [cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1], 0]
         numpy.testing.assert_almost_equal(computed, expected)
 
@@ -101,7 +101,7 @@ class GetMMTest(unittest.TestCase):
         """
         cs = CrossSection(-179.0, -50.0, [500], [-90])
         computed = cs.get_mm()
-        #print(cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1])
+        # print(cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1])
         expected = [cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1], 1]
         numpy.testing.assert_almost_equal(computed, expected)
 
@@ -109,11 +109,13 @@ class GetMMTest(unittest.TestCase):
         """
         Test cross section across idl + delta
         """
-        # If this dips 90 degrees it doesn't cross idl (so dip -90 like previous test)
+        # If this dips 90 degrees it doesn't cross idl (so dip -90 like
+        # previous test)
         cs = CrossSection(-179.5, -50.0, [500], [-90])
         computed = cs.get_mm(1.0)
         print(cs.plo[0], cs.plo[1], cs.pla[0], cs.pla[1])
-        #expected = [179.5, -175.70311203864779, -51.0, -48.966369263787726, 1]
+        # expected = [
+        #     179.5, -175.70311203864779, -51.0, -48.966369263787726, 1]
         expected = [-178.5, 172.5247868, -51.0, -48.790282, 1]
         numpy.testing.assert_almost_equal(computed, expected)
 
@@ -150,4 +152,4 @@ class edge2profileTest(unittest.TestCase):
         cs_dir = os.path.join(BASE_PATH, 'data', 'cs')
         outfi = os.path.join('/tmp/cs_file.cs')
         make_cs_coords(cs_dir, outfi, 'cs.ini')
-        assert filecmp.cmp(outfi, reference_file) == True
+        self.assertTrue(are_equal_ignoring_line_endings(outfi, reference_file))
