@@ -188,7 +188,8 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     lt_vals = [{}, {}, {}, {}]
     lt_vals_plus = [dic, dic, dic, dic]
     lt_vals_minus = [dic, dic, dic, dic]
-
+    store_gmc_lts = []
+    
     # Plot the data
     for n, dist in enumerate(config.dist_list):
         for l, m in enumerate(mag_list):
@@ -267,9 +268,13 @@ def plot_spectra_util(config, output_directory, obs_spectra):
             
             # Plot logic trees if required
             for idx_gmc, gmc in enumerate(gmc_weights):
-                lt_spectra(ax1, gmpe, config.gmpes_list, config.Nstd, periods,
-                           idx_gmc, gmc_vals[idx_gmc][0], gmc_vals[idx_gmc][1],
-                           gmc_vals[idx_gmc][2])
+                if gmc_vals[idx_gmc][0] != {}:
+                    checks = lt_spectra(ax1, gmpe, config.gmpes_list,
+                                        config.Nstd, periods, idx_gmc,
+                                        gmc_vals[idx_gmc][0],
+                                        gmc_vals[idx_gmc][1],
+                                        gmc_vals[idx_gmc][2])
+                    store_gmc_lts.append(checks)    
                 
     # Finalise the plots and save fig
     if len(mag_list) * len(config.dist_list) == 1:
@@ -280,6 +285,8 @@ def plot_spectra_util(config, output_directory, obs_spectra):
         fs = '16'
     ax1.legend(loc="center left", bbox_to_anchor=bbox_coo, fontsize=fs)
     save_spectra_plot(figure, obs_spectra, output_directory, eq_id, st_id)
+
+    return store_gmc_lts # Returned for unit tests of gmc lt values
 
 
 def compute_matrix_gmpes(config, mtxs_type):
@@ -853,7 +860,7 @@ def spectra_data(gmpe, Nstd, gmc_weights, rs_50p, rs_plus_sigma, rs_minus_sigma,
 def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, idx_gmc,
                lt_vals_gmc, ltv_plus_sig, ltv_minus_sig):
     """
-    If required plot spectra from the GMPE logic tree(s)
+    Plot spectra for the GMPE logic tree
     """    
     # Get colors and string for checks
     colours = ['r', 'b', 'g', 'k']
@@ -861,47 +868,48 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, idx_gmc,
     check = 'lt_weight_gmc' + str(idx_gmc+1)
     label = 'Logic Tree ' + str(idx_gmc+1)
     
-    # Plot
-    if lt_vals_gmc != {}:
-        lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['median'])
-        if Nstd != 0:
-            lt_plus_sig = pd.DataFrame(ltv_plus_sig, index=['plus_sigma'])
-            lt_minus_sig = pd.DataFrame(ltv_minus_sig, index=['minus_sigma'])    
-        wt_per_gmpe_gmc, wt_plus_sig, wt_minus_sig = {}, {}, {}
-        for gmpe in gmpe_list:
-            if check in str(gmpe):
-                wt_per_gmpe_gmc[gmpe] = np.array(pd.Series(
-                    lt_df_gmc[gmpe].loc['median']))
-                if Nstd != 0:
-                    wt_plus_sig[gmpe] = np.array(
-                        pd.Series(lt_plus_sig[gmpe,'p_sig'].loc[
-                            'plus_sigma']))
-                    wt_minus_sig[gmpe] = np.array(
-                        pd.Series(lt_minus_sig[gmpe,'m_sig'].loc[
-                            'minus_sigma']))
-            
-        lt_df_gmc = pd.DataFrame(wt_per_gmpe_gmc, index=period)
-        lt_plus_sig = pd.DataFrame(wt_plus_sig, index=period)
-        lt_minus_sig = pd.DataFrame(wt_minus_sig, index=period)
-        lt_per_imt_gmc, lt_plus_sig_per_imt, lt_minus_sig_per_imt = {}, {}, {}
-        for idx, imt in enumerate(period):
-            lt_per_imt_gmc[imt] = np.sum(lt_df_gmc.loc[imt])
+    # Plot   
+    lt_per_imt_gmc, lt_plus_sig_per_imt, lt_minus_sig_per_imt = {}, {}, {}
+    lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['median'])
+    if Nstd != 0:
+        lt_plus_sig = pd.DataFrame(ltv_plus_sig, index=['plus_sigma'])
+        lt_minus_sig = pd.DataFrame(ltv_minus_sig, index=['minus_sigma'])    
+    wt_per_gmpe_gmc, wt_plus_sig, wt_minus_sig = {}, {}, {}
+    for gmpe in gmpe_list:
+        if check in str(gmpe):
+            wt_per_gmpe_gmc[gmpe] = np.array(pd.Series(
+                lt_df_gmc[gmpe].loc['median']))
             if Nstd != 0:
-                lt_plus_sig_per_imt[imt] = np.sum(lt_plus_sig.loc[imt])
-                lt_minus_sig_per_imt[imt] = np.sum(lt_minus_sig.loc[imt])
+                wt_plus_sig[gmpe] = np.array(
+                    pd.Series(lt_plus_sig[gmpe,'p_sig'].loc[
+                        'plus_sigma']))
+                wt_minus_sig[gmpe] = np.array(
+                    pd.Series(lt_minus_sig[gmpe,'m_sig'].loc[
+                        'minus_sigma']))
         
-        # Plot logic tree
-        ax1.plot(period, np.array(pd.Series(lt_per_imt_gmc)), linewidth=2,
-                 color=col, linestyle='--', label = label, zorder=100)
-        
-        # Plot mean plus sigma and mean minus sigma if required
+    lt_df_gmc = pd.DataFrame(wt_per_gmpe_gmc, index=period)
+    lt_plus_sig = pd.DataFrame(wt_plus_sig, index=period)
+    lt_minus_sig = pd.DataFrame(wt_minus_sig, index=period)
+    for idx, imt in enumerate(period):
+        lt_per_imt_gmc[imt] = np.sum(lt_df_gmc.loc[imt])
         if Nstd != 0:
-            ax1.plot(period, np.array(pd.Series(lt_plus_sig_per_imt)),
-                     linewidth=0.75, color=col, linestyle='-.', zorder=100)     
-            ax1.plot(period, np.array(pd.Series(lt_minus_sig_per_imt)),
-                     linewidth=0.75, color=col, linestyle='-.', zorder=100)
-            
-            
+            lt_plus_sig_per_imt[imt] = np.sum(lt_plus_sig.loc[imt])
+            lt_minus_sig_per_imt[imt] = np.sum(lt_minus_sig.loc[imt])
+    
+    # Plot logic tree
+    ax1.plot(period, np.array(pd.Series(lt_per_imt_gmc)), linewidth=2,
+             color=col, linestyle='--', label = label, zorder=100)
+    
+    # Plot mean plus sigma and mean minus sigma if required
+    if Nstd != 0:
+        ax1.plot(period, np.array(pd.Series(lt_plus_sig_per_imt)),
+                 linewidth=0.75, color=col, linestyle='-.', zorder=100)     
+        ax1.plot(period, np.array(pd.Series(lt_minus_sig_per_imt)),
+                 linewidth=0.75, color=col, linestyle='-.', zorder=100)
+        
+    return [lt_per_imt_gmc, lt_plus_sig_per_imt, lt_minus_sig_per_imt]
+        
+   
 def load_obs_spectra(obs_spectra):
     """
     If an obs spectra has been specified get values from csvs for comparison
