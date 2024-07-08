@@ -62,8 +62,6 @@ class ComparisonTestCase(unittest.TestCase):
             base, 'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
             base, 'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.spectra_gmc_expected = os.path.join(
-            base, 'expected_gmc_values.csv')
 
         # Set the output
         if not os.path.exists(self.output_directory):
