@@ -24,9 +24,10 @@ from math import pi
 from scipy.integrate import cumtrapz
 from scipy import constants
 import matplotlib.pyplot as plt
-import openquake.smt.response_spectrum as rsp
-from openquake.smt import smoothing
-from openquake.smt.sm_utils import get_time_vector, _save_image, nextpow2
+import openquake.smt.utils_response_spectrum as rsp
+from openquake.smt import utils_smoothing
+from openquake.smt.utils_strong_motion import (
+    get_time_vector, _save_image, nextpow2)
 
 RESP_METHOD = {
     'Newmark-Beta': rsp.NewmarkBeta,
@@ -34,7 +35,7 @@ RESP_METHOD = {
 }
 
 
-SMOOTHING = {"KonnoOhmachi": smoothing.KonnoOhmachi}
+SMOOTHING = {"KonnoOhmachi": utils_smoothing.KonnoOhmachi}
 
 
 def get_peak_measures(time_step, acceleration, get_vel=False, get_disp=False):

@@ -26,15 +26,18 @@ from datetime import datetime
 from collections import OrderedDict
 import numpy as np
 import h5py
+
 from openquake.hazardlib import imt
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
-from openquake.smt.sm_utils import vs30_to_z1pt0_as08, z1pt0_to_z2pt5
-from openquake.smt.sm_utils import vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14
-import openquake.smt.sm_utils as utils
+from openquake.hazardlib.geo import geodetic
 from openquake.smt.residuals import sm_database_surface_utils
 from openquake.smt.residuals.context_db import ContextDB
-from openquake.hazardlib.geo import geodetic
+import openquake.smt.utils_strong_motion as utils
+from openquake.smt.utils_strong_motion import (vs30_to_z1pt0_cy14,
+                                               vs30_to_z2pt5_cb14,
+                                               vs30_to_z1pt0_as08,
+                                               z1pt0_to_z2pt5)
 
 
 class Magnitude(object):

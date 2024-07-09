@@ -30,7 +30,7 @@ from scipy.stats import norm
 from cycler import cycler
 
 from openquake.hazardlib.imt import imt2tup
-from openquake.smt.sm_utils import _save_image
+from openquake.smt.utils_strong_motion import _save_image
 from openquake.smt.residuals.gmpe_residuals import (
     Residuals, SingleStationAnalysis)
 from openquake.smt.residuals.residual_plots import (
