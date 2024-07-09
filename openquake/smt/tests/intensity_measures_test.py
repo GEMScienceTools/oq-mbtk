@@ -23,9 +23,9 @@ import unittest
 import os
 import h5py
 import numpy as np
-import openquake.smt.response_spectrum as rsp
-import openquake.smt.intensity_measures as ims
-import openquake.smt.smoothing as smo
+import openquake.smt.utils_response_spectrum as rsp
+import openquake.smt.utils_intensity_measures as ims
+import openquake.smt.utils_smoothing as smo
 
 
 BASE_DATA_PATH = os.path.dirname(__file__)

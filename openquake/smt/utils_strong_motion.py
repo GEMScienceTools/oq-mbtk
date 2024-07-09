@@ -22,8 +22,8 @@ Strong motion utilities.
 # throughout the code. Consequently, try to limit the amount of stuff here and in
 # particular the amount of imports, which might slow down the code unnecessarily
 import os
-import sys
 import re
+import pickle
 import numpy as np
 from scipy.integrate import cumtrapz
 from scipy.constants import g
@@ -34,12 +34,6 @@ from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib.scalerel.peer import PeerMSR
 from openquake.hazardlib.gsim.gmpe_table import GMPETable
 from openquake.hazardlib.gsim.base import GMPE
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle  # pylint: disable=import-error
-
 
 # Get a list of the available GSIMs
 AVAILABLE_GSIMS = get_available_gsims()
@@ -211,17 +205,18 @@ def _save_image(filename, fig, format='png', dpi=300, **kwargs):  # noqa
 
 def load_pickle(pickle_file):
     """
-    Python 2 & 3 compatible way of loading a Python Pickle file
+    Load pickle file
     """
-    try:
-        with open(pickle_file, 'rb') as f:
+    with open(pickle_file, 'rb') as f:
             pickle_data = pickle.load(f)
+    """        
     except UnicodeDecodeError as e:
         with open(pickle_file, 'rb') as f:
             pickle_data = pickle.load(f, encoding='latin1')
     except Exception as e:
         print('Unable to load data ', pickle_file, ':', e)
         raise
+    """
     return pickle_data
 
 
