@@ -208,19 +208,10 @@ def load_pickle(pickle_file):
     Load pickle file
     """
     with open(pickle_file, 'rb') as f:
-            pickle_data = pickle.load(f)
-    """        
-    except UnicodeDecodeError as e:
-        with open(pickle_file, 'rb') as f:
-            pickle_data = pickle.load(f, encoding='latin1')
-    except Exception as e:
-        print('Unable to load data ', pickle_file, ':', e)
-        raise
-    """
-    return pickle_data
+        return pickle.load(f)
 
 
-# Moved from sm_database: Mechanism type to Rake conversion:
+# Mechanism type to Rake conversion:
 MECHANISM_TYPE = {
     "Normal": -90.0,
     "Strike-Slip": 0.0,
