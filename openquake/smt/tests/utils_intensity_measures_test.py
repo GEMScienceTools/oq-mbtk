@@ -66,8 +66,8 @@ class BaseIMSTestCase(unittest.TestCase):
         """
         Connect to hdf5 data store
         """
-        self.fle = h5py.File(os.path.join(BASE_DATA_PATH,
-                                          "smt_ims_test_data.hdf5"), "r")
+        self.fle = h5py.File(os.path.join(
+            BASE_DATA_PATH, "utils_intensity_measures_test_data.hdf5"), "r")
         self.periods = self.fle["INPUTS/periods"][:]
 
     def tearDown(self):
