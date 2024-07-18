@@ -165,7 +165,7 @@ class NewmarkBeta(ResponseSpectrum):
         disp = np.zeros([self.num_steps, self.num_per], dtype=float)
         a_t = np.zeros([self.num_steps, self.num_per], dtype=float)
         # Initial line
-        accel[0, :] =(-self.acceleration[0] - (cval * vel[0, :])) - \
+        accel[0, :] = (-self.acceleration[0] - (cval * vel[0, :])) - \
                       (kval * disp[0, :])
         a_t[0, :] = accel[0, :] + accel[0, :]
         for j in range(1, self.num_steps):

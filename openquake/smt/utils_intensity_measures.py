@@ -54,7 +54,7 @@ def get_peak_measures(time_step, acceleration, get_vel=False, get_disp=False):
         * pgv - Peak Ground Velocity
         * pgd - Peak Ground Displacement
         * velocity - Velocity Time Series
-        * dispalcement - Displacement Time series
+        * displacement - Displacement Time series
     """
     pga = np.max(np.fabs(acceleration))
     velocity = None
