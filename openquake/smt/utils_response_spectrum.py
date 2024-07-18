@@ -164,20 +164,31 @@ class NewmarkBeta(ResponseSpectrum):
         vel = np.zeros([self.num_steps, self.num_per], dtype=float)
         disp = np.zeros([self.num_steps, self.num_per], dtype=float)
         a_t = np.zeros([self.num_steps, self.num_per], dtype=float)
+        
         # Initial line
         accel[0, :] = (-self.acceleration[0] - (cval * vel[0, :])) - \
                       (kval * disp[0, :])
         a_t[0, :] = accel[0, :] + accel[0, :]
+        
+        # Now compute
         for j in range(1, self.num_steps):
+            
+            # Displacement
             disp[j, :] = disp[j-1, :] + (self.d_t * vel[j-1, :]) + \
                 (((self.d_t ** 2.) / 2.) * accel[j-1, :])
-                         
+                
+            # Acceleration
             accel[j, :] = (1./ (1. + self.d_t * 0.5 * cval)) * \
                 (-self.acceleration[j] - kval * disp[j, :] - cval *
                 (vel[j-1, :] + (self.d_t * 0.5) * accel[j-1, :]));
+            
+            # Velocity
             vel[j, :] = vel[j - 1, :] + self.d_t * (0.5 * accel[j - 1, :] +
                 0.5 * accel[j, :])
+            
+            # Acceleration response
             a_t[j, :] = self.acceleration[j] + accel[j, :]
+            
         return accel, vel, disp, a_t
 
 
