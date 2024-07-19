@@ -434,34 +434,34 @@ class ResidualScatterPlot(BaseResidualPlot):
         zero_line = np.zeros(len(x_zero))
         pts_styling_kwargs = dict(markeredgecolor='Gray',
                                   markerfacecolor='LightSteelBlue',
-                                  label = 'residual')
+                                  label='residual')
         if self.plot_type == "log":
             ax.semilogx(x, y, 'o', **pts_styling_kwargs)
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
-                       marker = 's', color = 'b', label = 'mean', zorder = 4)
+                       marker='s', color='b', label='mean', zorder=4)
             
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                -1*res_data['sigma_res']), marker = 'x', color = 'b', zorder = 4)
+                -1*res_data['sigma_res']), marker='x', color='b', zorder=4)
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                res_data['sigma_res']), marker = 'x', color = 'b',
-                label = '+/- 1 Std.', zorder = 4)
+                res_data['sigma_res']), marker='x', color='b',
+                label='+/- 1 Std.', zorder=4)
             
-            ax.plot(x_zero, zero_line, color = 'k', linestyle = '--',
-                    linewidth = 1.25)
+            ax.plot(x_zero, zero_line, color='k', linestyle='--',
+                    linewidth=1.25)
         else:
             ax.plot(x, y, 'o', **pts_styling_kwargs)
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
-                       marker = 's', color = 'b', label = 'mean', zorder = 4)
+                       marker='s', color='b', label='mean', zorder=4)
             
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                -1*res_data['sigma_res']), marker = 'x', color = 'b', zorder = 4)
+                -1*res_data['sigma_res']), marker='x', color='b', zorder=4)
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                res_data['sigma_res']), marker = 'x', color = 'b',
-                label = '+/- 1 Std.', zorder = 4)
+                res_data['sigma_res']), marker='x', color='b',
+                label='+/- 1 Std.', zorder=4)
             
-            ax.plot(x_zero, zero_line, color = 'k', linestyle = '--',
-                    linewidth = 1.25)
-        ax.legend(loc = 'upper right', fontsize = 'xx-small')
+            ax.plot(x_zero, zero_line, color='k', linestyle='--',
+                    linewidth=1.25)
+        ax.legend(loc='upper right', fontsize='xx-small')
 
 
 class ResidualWithDistance(ResidualScatterPlot):
