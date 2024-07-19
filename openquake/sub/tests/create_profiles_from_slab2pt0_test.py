@@ -35,10 +35,6 @@ from openquake.sub.get_profiles_from_slab2pt0 import (get_profiles,
                                                       get_profiles_geojson)
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
 
-import os
-
-os.environ['HDF5_USE_FILE_LOCKING']='FALSE'
-
 
 pygmt_available = False
 try:
