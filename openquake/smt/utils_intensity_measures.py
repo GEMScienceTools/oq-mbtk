@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-General Class for extracting Ground Motion Intensity Measures (IMs) from a
-set of acceleration time series
+General Class for extracting Ground Motion Intensity Measures (IMs) from a set of acceleration time series
 """
 import numpy as np
 from math import pi
