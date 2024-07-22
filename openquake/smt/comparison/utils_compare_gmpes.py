@@ -110,10 +110,22 @@ def plot_trellis_util(config, output_directory):
                                            lt_vals_gmc, lt_weights)
                 
                 # Store per gmpe
-                if str(i) != 'PGV':
-                    unit = 'g'
+                if str(i) in ['PGD', 'SDi']:
+                    unit = 'cm' # PGD, inelastic spectral displacement
+                elif str(i) in ['PGV']:
+                    unit = 'cm/s' # PGV
+                elif str(i) in ['IA']:
+                    unit = 'm/s' # Arias intensity
+                elif str(i) in ['RSD', 'RSD595', 'RSD575', 'RSD2080', 'DRVT']:
+                    unit = 's' # Relative significant duration, DRVT
+                elif str(i) in ['CAV']:
+                    unit = 'g-sec' # Cumulative absolute velocity
+                elif str(i) in ['MMI']:
+                    unit = 'MMI' # Modified Mercalli Intensity
+                elif str(i) in ['FAS', 'EAS']:
+                    pyplot.ylabel(str(i) + ' (Hz)') # Fourier/Eff. Amp. Spectrum
                 else:
-                    unit = 'cm/s' # Otherwise imt = PGV
+                    unit = 'g' # PGA, SA, AvgSA
                 store_per_gmpe[gmpe]['%s (km)' % config.dist_type] = r_vals
                 store_per_gmpe[gmpe]['median (%s)' % unit] = np.exp(mean)
                 store_per_gmpe[gmpe]['sigma (ln)'] = std
@@ -734,16 +746,22 @@ def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
     if n == len(imt_list)-1: # Bottom row only
         pyplot.xlabel(label, fontsize='16')
     if l == 0: # Left row only
-        if str(i) != 'PGV':
-            pyplot.ylabel(str(i) + ' (g)', fontsize='16')
+        if str(i) in ['PGD', 'SDi']:
+            pyplot.ylabel(str(i) + ' (cm)', fontsize='16')
+        elif str(i) in ['PGV']:
+            pyplot.ylabel(str(i) + ' (cm/s)', fontsize='16')
+        elif str(i) in ['IA']:
+            pyplot.ylabel(str(i) + ' (m/s)', fontsize='16')
+        elif str(i) in ['RSD', 'RSD595', 'RSD575', 'RSD2080', 'DRVT']:
+            pyplot.ylabel(str(i) + ' (s)', fontsize='16')
+        elif str(i) in ['CAV']:
+            pyplot.ylabel(str(i) + ' (g-sec)', fontsize='16')
+        elif str(i) in ['MMI']:
+            pyplot.ylabel(str(i) + ' (MMI)', fontsize='16')
+        elif str(i) in ['FAS', 'EAS']:
+            pyplot.ylabel(str(i) + ' (Hz)')
         else:
-            pyplot.ylabel('PGV (cm/s)', fontsize='16')
-            
-    # ylims
-    if str(i) != 'PGV':
-        pyplot.ylim(1e-05, 3) # g
-    else:
-        pyplot.ylim(0.1, 650) # cm/s
+            pyplot.ylabel(str(i) + ' (g)', fontsize='16')
         
     # xlims
     pyplot.loglog()
