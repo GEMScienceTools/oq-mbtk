@@ -761,8 +761,16 @@ def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
         elif str(i) in ['FAS', 'EAS']:
             pyplot.ylabel(str(i) + ' (Hz)')
         else:
-            pyplot.ylabel(str(i) + ' (g)', fontsize='16')
-        
+            pyplot.ylabel(str(i) + ' (g)', fontsize='16') # PGA, SA, AvgSA
+    
+    # ylim
+    if str(i) in ['PGA', 'SA', 'AvgSA']:
+        pyplot.ylim(1E-03, 3) # g
+    elif str(i) in ['PGV']:
+        pyplot.ylim(1, 650) # cm/s
+    else:
+        print('User may want to manually specify y-axis limits')
+
     # xlims
     pyplot.loglog()
     min_r_val = min(r_vals[r_vals>=1])
