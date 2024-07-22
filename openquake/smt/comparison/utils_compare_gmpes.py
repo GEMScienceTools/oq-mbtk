@@ -319,9 +319,8 @@ def compute_matrix_gmpes(config, mtxs_type):
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
     
     for n, i in enumerate(config.imt_list): # Iterate through imt_list
-        matrix_medians=np.zeros(
-            (len(config.gmpes_list), (len(mag_list)*int((
-                config.maxR-config.minR)/1))))
+        matrix_medians=np.zeros((len(config.gmpes_list), (len(mag_list)*int((
+            config.maxR-config.minR)/1))))
 
         for g, gmpe in enumerate(config.gmpes_list): 
             medians, sigmas = [], []
