@@ -763,7 +763,7 @@ def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
             pyplot.ylabel(str(i) + ' (g)', fontsize='16') # PGA, SA, AvgSA
     
     # ylim
-    if str(i) in ['PGA', 'SA', 'AvgSA']:
+    if 'SA' in str(i) or str(i)=='PGA':
         pyplot.ylim(1E-03, 3) # g
     elif str(i) in ['PGV']:
         pyplot.ylim(1, 650) # cm/s
