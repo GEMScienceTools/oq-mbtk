@@ -1,4 +1,5 @@
 import os
+import re
 import glob
 import numpy as np
 import pandas as pd
@@ -50,9 +51,44 @@ def get_params(ssm, mmin = 0, total_for_zone = False):
 	else: 
 		return np.array(data)
 
+def get_params_points(ssm, mmin = 0, total_for_zone = False):
+	'''
+	Retrieve source parameters from xml source file for point sources
+	Specify total_for_zone to retain only total a value summed over all points
+
+	:param ssm:
+	    seismic source model retreived from xml file with to_python
+	:param mmin:
+	    minimum magnitude to consider
+	:param total_for_zone:
+	    if True, returns the total a-value for the zone. 
+	    if False, returns a-values at point locations
+	'''
+	total_rate_above_zero = 0
+	data = []
+
+	import pdb 
+	#pdb.set_trace()
+	for ps in ssm[0]:
+		agr = ps.mfd.a_val
+		bgr = ps.mfd.b_val
+		mmax = ps.mfd.max_mag
+		lo = ps.location.longitude
+		la = ps.location.latitude
+		log_rate_above = agr - bgr * mmin
+		total_rate_above_zero += 10**(agr)
+			
+		data.append([lo, la, log_rate_above, bgr, mmax])
+
+	if total_for_zone == True:  
+		#total_rate_above += 10**(agr - bgr * m_min)
+		return np.log10(total_rate_above_zero), bgr, mmax
+	else: 
+		return np.array(data)
+
 def plot_sources(folder_name, region, mmin, fig_folder,
 				 rate_range = [-9, 3, 0.2], mmax_range = [6.0, 9.0, 0.2], 
-				 sconv = DEFAULT, poly_name = '', plot_poly = False):
+				 sconv = DEFAULT, poly_name = '', plot_poly = False, pointsource = False):
 	'''
 	Create plots of source rates and mmax for each source in folder_name
 
@@ -74,6 +110,8 @@ def plot_sources(folder_name, region, mmin, fig_folder,
 		location of file containing the model source polygon (optional)
 	:param plot_poly:
 	    boolean specifying if polygon outline should be plotted
+	:param pointsource:
+		alternative where point sources are used instead of multipoint
 	'''
 	path = pathlib.Path(folder_name)
 
@@ -96,7 +134,7 @@ def plot_sources(folder_name, region, mmin, fig_folder,
 		poly["x"] = poly.representative_point().x
 		poly["y"] = poly.representative_point().y
 
-	for fname in sorted(path.glob('src*.xml')):
+	for fname in sorted(path.glob('src_*.xml')):
 		ssm = to_python(fname, sconv)
 		fig_a = pygmt.Figure()
 		fig_a.basemap(region=region, projection="M15c", frame=True)
@@ -108,12 +146,16 @@ def plot_sources(folder_name, region, mmin, fig_folder,
     
 		vmin = +1e10
 		vmax = -1e10
-    
-		for grp in ssm:
-			for src in grp:
-				name = src.name    
         
-		data = get_params(ssm, mmin=mmin, total_for_zone = False)
+		if pointsource == False:
+			data = get_params(ssm, mmin=mmin, total_for_zone = False)
+			for grp in ssm:
+				for src in grp:
+					name = src.name	
+		else:
+			data = get_params_points(ssm, mmin=mmin, total_for_zone = False)
+			name = ssm.name
+
 		vmin = np.min([vmin, min(data[:,2])])
 		vmax = np.max([vmin, max(data[:,2])])
 
@@ -162,7 +204,7 @@ def simulate_occurrence(agr, bgr, rate, minmag, mmax, time_span, N=2000):
 	num_occ = np.random.poisson(rate*time_span, N)
 	return(num_occ)
 
-def occurence_table(path_oq_input, path_to_subcatalogues, minmag, minyear, maxyear, N, src_ids, sconv = DEFAULT):
+def occurence_table(path_oq_input, path_to_subcatalogues, minmag, minyear, maxyear, N, src_ids = [], sconv = DEFAULT, pointsource = False):
 	'''
 	Check number of events expected from the source model against the number of observations.
 	Uses N samples from a Poisson distribution with rate from source a and b value.
@@ -184,10 +226,21 @@ def occurence_table(path_oq_input, path_to_subcatalogues, minmag, minyear, maxye
 	    list of sources to use
 	:param sconv:
 	    source converter object specifying model setup
+	:param pointsource:
+		specify True if using set point source model rather than 
 	'''
 	table = []
 	time_span = maxyear - minyear
 
+	if len(src_ids) == 0:
+		src_ids = []
+    	# if source ids are not specified, take them from names of files in the specified folder
+		dir_URL = Path(path_oq_input)
+		filename_list = [file.name for file in dir_URL.glob("*.xml")]
+		for f in filename_list:
+			m = re.search(r'(?<=_)\w+', f)
+			src_ids.append(m.group(0))
+            
 	for src_id in sorted(src_ids):
 
 		fname_src = os.path.join(path_oq_input, "src_{:s}.xml".format(src_id))
@@ -199,7 +252,11 @@ def occurence_table(path_oq_input, path_to_subcatalogues, minmag, minyear, maxye
 		df = df.loc[(df.year >= minyear) & (df.year <= maxyear)]
 		obs = len(df)
 
-		agr, bgr, mmax = get_params(ssm, minmag, total_for_zone = True) 
+		if pointsource == False:
+			agr, bgr, mmax = get_params(ssm, minmag, total_for_zone = True) 
+		else:
+			agr, bgr, mmax = get_params_points(ssm, minmag, total_for_zone = True) 
+
 		rate = 10.0**(agr-minmag*bgr)-10.0**(agr-mmax*bgr)
 		num_occ_per_time_span = simulate_occurrence(agr, bgr, rate, minmag, mmax, time_span, N)
     	
