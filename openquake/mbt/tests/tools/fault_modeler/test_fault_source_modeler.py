@@ -27,12 +27,12 @@
 
 import os
 import json
-import filecmp
 import unittest
 import configparser
 import tempfile
 import pathlib
 
+from openquake.utils import are_equal_ignoring_line_endings
 import openquake.mbt.tools.fault_modeler.fault_source_modeler as fsm
 
 # -----------------------------------------------------------------------------
@@ -61,7 +61,6 @@ class TestDatabaseIO(unittest.TestCase):
     defaults = {'m_min': 6.0}
 
     def test_fault_database(self):
-        filecmp.clear_cache()
 
         # Target and reference files
         _, test_file = tempfile.mkstemp()
@@ -97,7 +96,6 @@ class TestDatabaseIO(unittest.TestCase):
 
 #    @unittest.skip('find better way to compare outputs!')
     def test_build_model_from_db(self):
-        filecmp.clear_cache()
 
         # Target and reference files
         _, test_file = tempfile.mkstemp()
@@ -130,11 +128,10 @@ class TestDatabaseIO(unittest.TestCase):
                                 defaults=self.defaults)
 
         # Compare files
-        self.assertTrue(filecmp.cmp(base_file, test_file))
+        self.assertTrue(are_equal_ignoring_line_endings(base_file, test_file))
 
     @unittest.skip('RS to check the output file which has traces reverted')
     def test_build_source_model_single_args(self):
-        filecmp.clear_cache()
 
         # Target and reference files
         _, test_file = tempfile.mkstemp()
@@ -153,11 +150,10 @@ class TestDatabaseIO(unittest.TestCase):
                               lower_seismogenic_depth=30.)
 
         # Compare files
-        self.assertTrue(filecmp.cmp(base_file, test_file))
+        self.assertTrue(are_equal_ignoring_line_endings(base_file, test_file))
 
     @unittest.skip('RS to check the output file which has traces reverted')
     def test_build_source_model_dictionary(self):
-        filecmp.clear_cache()
 
         # Target and reference files
         _, test_file = tempfile.mkstemp()
@@ -175,10 +171,9 @@ class TestDatabaseIO(unittest.TestCase):
                                         'm_min': 6.0})
 
         # Compare files
-        self.assertTrue(filecmp.cmp(base_file, test_file))
+        self.assertTrue(are_equal_ignoring_line_endings(base_file, test_file))
 
     def test_build_source_model_config_file(self):
-        filecmp.clear_cache()
 
         # Configuration, target and reference files
         conf_file = os.path.join(BASE_DATA_PATH, 'config.ini')
@@ -191,9 +186,7 @@ class TestDatabaseIO(unittest.TestCase):
         new_config_fname = test_dir / 'config.ini'
         data_path = pathlib.Path(BASE_DATA_PATH)
         geojson_original_path = data_path / config['config']['geojson_file']
-        tmp = os.path.relpath(
-            str(geojson_original_path), str(new_config_fname))
-        config['config']['geojson_file'] = tmp
+        config['config']['geojson_file'] = str(geojson_original_path)
 
         with open(new_config_fname, 'w') as configfile:
             config.write(configfile)
@@ -205,4 +198,4 @@ class TestDatabaseIO(unittest.TestCase):
         fsm.build_fault_model(cfg_file=new_config_fname)
 
         # Compare files
-        self.assertTrue(filecmp.cmp(base_file, test_file))
+        self.assertTrue(are_equal_ignoring_line_endings(base_file, test_file))
