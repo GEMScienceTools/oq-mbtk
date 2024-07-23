@@ -737,13 +737,13 @@ def llh_weights_table(residuals, filename):
     imt_idx = []
     for imt in residuals.imts:
         imt_idx.append(imt)
-    imt_idx.append('All') # Avg over all imts
+    imt_idx.append('Avg over imts') # Avg over all imts
     llh_weights = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
             llh_weights[gmpe].loc[imt] = \
                 residuals.model_weights_with_imt[imt][gmpe]
-        llh_weights[gmpe].loc['All'] = llh_weights[gmpe].mean()
+        llh_weights[gmpe].loc['Avg over imts'] = llh_weights[gmpe].mean()
     llh_weights.columns = llh_weights.columns + ' LLH-based weights'
 
     # Export table
@@ -751,86 +751,60 @@ def llh_weights_table(residuals, filename):
 
 def edr_table(residuals, filename):
     """
-    Create a table of MDE Norm, sqrt(kappa) and EDR per imt (Kale and Akkar,
+    Create a table of MDE Norm, sqrt(kappa) and EDR gmpe per imt (Kale and Akkar,
     2013)
     """
     # Get required values
     residuals.get_edr_values_wrt_imt()
-    
+
     # Get Kale and Akkar (2013) ranking metrics
-    EDR_metrics = {}
+    edr_dfs = []
     for gmpe in residuals.gmpe_list:
-        EDR_metrics[gmpe] = pd.DataFrame(
-            residuals.edr_values_wrt_imt[gmpe]).rename(
-                columns = {'MDE Norm':str(gmpe) + ' MDE Norm', 'sqrt Kappa': 
-                         str(gmpe) + ' sqrt Kappa', 'EDR': str(gmpe) + ' EDR'})
-        EDR_metrics_df = EDR_metrics[gmpe]
-        average_EDR_metrics_per_gmpe = np.arange(0, len(EDR_metrics_df.columns),
-                                               1, dtype='float')
-        for EDR_metric in range(0, len(EDR_metrics_df.columns)):
-            average_EDR_metrics_per_gmpe[EDR_metric] = np.array(np.mean(
-                EDR_metrics_df[EDR_metrics_df.columns[EDR_metric]]))      
-            average_EDR_metrics_over_imts_df = pd.DataFrame(
-                [average_EDR_metrics_per_gmpe], index=['Avg over all periods'])
-            average_EDR_metrics_over_imts_df.columns = EDR_metrics_df.columns
-            final_EDR_metrics_df = pd.concat([EDR_metrics_df,
-                                            average_EDR_metrics_over_imts_df])
-            
-            # Rename to assign simplified GMPE names for outputted files
-            final_EDR_metrics_df_output = final_EDR_metrics_df
-            tmp = str(residuals.gmpe_list[gmpe])
-            final_EDR_metrics_df_output.columns = list(pd.Series({
-                'MDE Norm':tmp.split('(')[0].replace('\n',' ') + ' MDE Norm',
-                'sqrt Kappa':tmp.split('(')[0].replace('\n',' ') +' sqrt Kappa',
-                'EDR':tmp.split('(')[0].replace('\n',' ') + ' EDR'}))
-            final_EDR_metrics_df_output.to_csv(filename.replace(
-                '.csv','') + '_%s' %(
-                str(residuals.gmpe_list[gmpe]).replace('\n','_').replace(
-                    ' ','')).replace('"','') + '.csv', sep = ',')
+        col = {'MDE Norm':str(gmpe) + ' MDE Norm',
+               'sqrt Kappa':str(gmpe) + ' sqrt Kappa',
+               'EDR': str(gmpe) + ' EDR'}
+        edr = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe]).rename(col)
+        means = []
+        for metric in edr.columns: # Get average values over imts
+            mean = edr[metric].mean()
+            means.append(mean)
+        edr.loc['Avg over imts'] = means
+        edr.columns = edr.columns + ' ' + gmpe
+        edr_dfs.append(edr)
+
+    # Combine and export
+    edr_df = pd.concat(edr_dfs, axis=1)
+    edr_df.to_csv(filename, sep=',')
 
 def edr_weights_table(residuals, filename):
     """
     Create a table of model weights per imt based on Euclidean distance based
     ranking (Kale and Akkar, 2013)
     """     
-    # Produce series of residuals.gmpe_list
-    gmpe_list_series = pd.Series(
-        pd.DataFrame(residuals.gmpe_list, index=np.arange(
-            0, len(residuals.gmpe_list), 1)).columns)
-    
     # Compute EDR based model weights
-    EDR_for_weights = residuals.get_edr_values_wrt_imt()
-    EDR_per_gmpe = {}
-    for gmpe in EDR_for_weights.keys():
-        EDR_per_gmpe[gmpe] = EDR_for_weights[gmpe]['EDR']
-    EDR_per_gmpe_df = pd.DataFrame(EDR_per_gmpe)
-    
-    GMPE_EDR_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
-    for imt in EDR_per_gmpe_df.index:
-        total_EDR_per_imt = np.sum(EDR_per_gmpe_df.loc[imt]**-1)
-        for gmpe in EDR_for_weights.keys():
-            GMPE_EDR_weight[gmpe][imt] = EDR_per_gmpe_df.loc[imt][
-                gmpe]**-1/total_EDR_per_imt
-    GMPE_EDR_weight_df = pd.DataFrame(GMPE_EDR_weight)
-    
-    Avg_EDR_weight_per_GMPE = {}
-    for gmpe in residuals.gmpe_list:
-        Avg_EDR_weight_per_GMPE[gmpe] = np.mean(GMPE_EDR_weight_df[gmpe])
-        
-    Avg_GMPE_EDR_weight_df = pd.DataFrame(Avg_EDR_weight_per_GMPE,
-                                          index=['Avg over all periods'])
-    Final_EDR_weight_df = pd.concat([GMPE_EDR_weight_df, Avg_GMPE_EDR_weight_df])
+    edr_for_weights = residuals.get_edr_values_wrt_imt()
+    edr_per_gmpe = {}
+    for gmpe in edr_for_weights.keys():
+        edr_per_gmpe[gmpe] = edr_for_weights[gmpe]['EDR']
+    edr_per_gmpe_df = pd.DataFrame(edr_per_gmpe)
 
-    # Table and display outputs (need to assign simplified GMPE names)
-    final_model_weights_df_output = Final_EDR_weight_df
-    model_weights_columns_all_output={}
-    for gmpe in range(0, len(residuals.gmpe_list)):
-         tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
-         model_weights_columns_all_output[gmpe] = tmp.split('(')[0].replace(
-             '\n',', ') + ' EDR Based Model Weight'
-    final_model_weights_df_output.columns = list(pd.Series(
-        model_weights_columns_all_output))
-    final_model_weights_df_output.to_csv(filename, sep=',')
+    gmpe_edr_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
+    for imt in edr_per_gmpe_df.index:
+        total_edr_per_imt = np.sum(edr_per_gmpe_df.loc[imt]**-1)
+        for gmpe in edr_for_weights.keys():
+            gmpe_edr_weight[gmpe][imt] = \
+                edr_per_gmpe_df.loc[imt][gmpe]**-1/total_edr_per_imt
+    gmpe_edr_weight_df = pd.DataFrame(gmpe_edr_weight)
+    
+    avg_edr_weight_per_gmpe = {}
+    for gmpe in residuals.gmpe_list:
+        avg_edr_weight_per_gmpe[gmpe] = np.mean(gmpe_edr_weight_df[gmpe])
+    avg_gmpe_edr_weight_df = \
+        pd.DataFrame(avg_edr_weight_per_gmpe, index=['Avg over imts'])
+
+    # Export table
+    final_edr_weight_df = pd.concat([gmpe_edr_weight_df, avg_gmpe_edr_weight_df])
+    final_edr_weight_df.to_csv(filename, sep=',')
         
 def stochastic_area_table(residuals, filename):
     """
@@ -844,13 +818,13 @@ def stochastic_area_table(residuals, filename):
     imt_idx = []
     for imt in residuals.imts:
         imt_idx.append(imt)
-    imt_idx.append('All')
+    imt_idx.append('Avg over imts')
     sto_metrics = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
             sto_metrics[gmpe].loc[imt] = \
                 residuals.stoch_areas_wrt_imt[gmpe][imt]
-        sto_metrics[gmpe].loc['All'] = sto_metrics[gmpe].mean()
+        sto_metrics[gmpe].loc['Avg over imts'] = sto_metrics[gmpe].mean()
     sto_metrics.columns = sto_metrics.columns + ' stochastic area'
 
     # Export table
@@ -880,7 +854,8 @@ def stochastic_area_weights_table(residuals, filename):
         avg_sto_weight_per_gmpe[gmpe] = np.mean(gmpe_sto_weight_df[gmpe])
 
     # Export table
-    avg_gmpe_sto_weights = pd.DataFrame(avg_sto_weight_per_gmpe, index=['All'])
+    avg_gmpe_sto_weights = \
+        pd.DataFrame(avg_sto_weight_per_gmpe, index=['Avg over imts'])
     final_sto_weights = pd.concat([gmpe_sto_weight_df, avg_gmpe_sto_weights])
     final_sto_weights.to_csv(filename, sep=',')
 
