@@ -116,8 +116,7 @@ def likelihood(residuals, gmpe, imt, bin_width=0.1, as_json=False):
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
     representing the plot data.
-    Additional keys: 'median' (float) representing
-    the median of the data
+    Additional keys: 'median' (float) representing the median of the data
     '''
     plot_data = {}
     data = residuals._get_likelihood_values_for(gmpe, imt)
