@@ -184,6 +184,106 @@ def plot_sources(folder_name, region, mmin, fig_folder,
 		out = os.path.join(fig_folder, 'mmax', name+'_mmax.png')
 		fig_b.savefig(out)
 
+def plot_all_sources(folder_name, region, mmin, fig_folder,
+				 rate_range = [-9, 3, 0.2], mmax_range = [6.0, 9.0, 0.2], 
+				 sconv = DEFAULT, poly_name = '', plot_poly = False, pointsource = False, plot_fname = ""):
+	'''
+	Plots a single plot of source rates and mmax using each source in folder_name
+
+	:param folder_name:
+		folder containing source xml files
+	:param region:
+	    region for pygmt plotting
+	:param mmin:
+		minimum magnitude to be used in model
+	:param fig_folder:
+		folder in which to store plots
+	:param rate_range:
+		range of rate to use in colour scale,
+		specified as [min, max, interval]
+	:param mmax_range:
+	    range of mmax for colour scale, 
+	    specified as [min, max, interval]
+	:param poly_name:
+		location of file containing the model source polygon (optional)
+	:param plot_poly:
+	    boolean specifying if polygon outline should be plotted
+	:param pointsource:
+		alternative where point sources are used instead of multipoint
+	'''
+	path = pathlib.Path(folder_name)
+
+	# make rate and mmax folders if they do not exist
+	if os.path.exists(os.path.join(os.path.join(fig_folder, 'rate'))):
+		print("found folders at ", os.path.join(os.path.join(fig_folder, 'rate')))
+	else:
+		os.mkdir(os.path.join(fig_folder, 'rate'))
+		os.mkdir(os.path.join(fig_folder, 'mmax'))
+
+	# set up colour scales
+	cpt_rate = os.path.join(fig_folder, 'rate.cpt')
+	pygmt.makecpt(cmap="turbo", series=rate_range, output=cpt_rate)
+	cpt_mmax = os.path.join(fig_folder, 'mmax.cpt')
+	pygmt.makecpt(cmap="rainbow", series=mmax_range, output=cpt_mmax)
+    
+	if poly_name:
+    	# set plotting polygon
+		poly = gpd.read_file(poly_name)
+		poly["x"] = poly.representative_point().x
+		poly["y"] = poly.representative_point().y
+
+	dataset = np.empty([1,5])
+
+	for fname in sorted(path.glob('src_*.xml')):
+		ssm = to_python(fname, sconv)
+		fig_a = pygmt.Figure()
+		fig_a.basemap(region=region, projection="M15c", frame=True)
+		fig_a.coast(land="grey", water="white")
+
+		fig_b = pygmt.Figure()
+		fig_b.basemap(region=region, projection="M15c", frame=True)
+		fig_b.coast(land="grey", water="white")    
+    
+		vmin = +1e10
+		vmax = -1e10
+        
+		if pointsource == False:
+			data = get_params(ssm, mmin=mmin, total_for_zone = False)
+			dataset = np.concatenate((dataset, data))
+
+		else:
+			data = get_params_points(ssm, mmin=mmin, total_for_zone = False)
+			dataset = np.concatenate((dataset, data))
+		
+	vmin = np.min([vmin, min(dataset[:,2])])
+	vmax = np.max([vmin, max(dataset[:,2])])
+
+	fig_a.plot(x=dataset[:,0], 
+		y=dataset[:,1], 
+		style="h0.5", 
+		color=dataset[:, 2],
+		cmap=cpt_rate)
+ 
+	fig_b.plot(x=dataset[:,0], 
+		y=dataset[:,1], 
+		style="h0.5", 
+		color=dataset[:, 4],
+		cmap=cpt_mmax)
+        
+	if plot_poly == True:
+		fig_a.plot(data=poly, pen=".5p,black")
+		fig_b.plot(data=poly, pen=".5p,black")
+    
+	fig_a.colorbar(frame=f'af+l"Log((N(m)>{mmin}))"', cmap=cpt_rate)    
+	fig_b.colorbar(frame='af+l"Mmax"', cmap=cpt_mmax)
+
+	out = os.path.join(fig_folder, 'rate', plot_fname+'_rate.png')
+	fig_a.savefig(out)
+    
+	out = os.path.join(fig_folder, 'mmax', plot_fname+'_mmax.png')
+	fig_b.savefig(out)
+
+
 def simulate_occurrence(agr, bgr, rate, minmag, mmax, time_span, N=2000):
 	'''
 	Simulate number of occurrences from a Poisson distribution given the FMD parameters
