@@ -204,7 +204,7 @@ class ResidualsTestCase(unittest.TestCase):
         
         # Tables of values
         rspl.pdf_table(residuals, tmp)
-        rspl.loglikelihood_table(residuals, tmp)
+        rspl.llh_table(residuals, tmp)
         rspl.edr_table(residuals, tmp)
         rspl.stochastic_area_table(residuals, tmp)
         
