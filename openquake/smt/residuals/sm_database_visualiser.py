@@ -20,6 +20,8 @@ Tool for creating visualisation of database information
 """
 import numpy as np
 import matplotlib.pyplot as plt
+
+from openquake.calculators.postproc.plots import add_borders
 from openquake.smt.utils_strong_motion import _save_image
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector 
 
@@ -42,9 +44,34 @@ DISTANCE_LABEL = {
 }
 
 
+def get_eq_and_st_coordinates(db1):
+    """
+    From the strong motion database, returns lists of latitudes and longitudes
+    of the events and stations
+    """
+    eq_coos, st_coos = [], []
+    for record in db1.records:
+        eq_coo = (record.event.longitude, record.event.latitude)
+        st_coo = (record.site.longitude, record.site.latitude)
+        if eq_coo not in eq_coos:
+            eq_coos.append(eq_coo)
+        if st_coo not in st_coos:
+            st_coos.append(st_coo)
+    e_lon, e_lat = [], []
+    for eq in eq_coos:
+        e_lon.append(eq[0])
+        e_lat.append(eq[1])
+    s_lon, s_lat = [], []
+    for st in st_coos:
+        s_lon.append(st[0])
+        s_lat.append(st[1])
+
+    return np.array(e_lon), np.array(e_lat), np.array(s_lon), np.array(s_lat)
+
+
 def get_magnitude_distances(db1, dist_type):
     """
-    From the Strong Motion database, returns lists of magnitude and distance
+    From the strong motion database, returns lists of magnitude and distance
     pairs
     """
     mags = []
@@ -82,6 +109,30 @@ def db_magnitude_distance(db1, dist_type, figure_size=(7, 5),
     plt.grid()
     if figure_title:
         plt.title(figure_title, fontsize=18)
+    _save_image(filename, plt.gcf(), filetype, dpi)
+
+
+def db_geographical_coverage(db1, figure_size=(7, 5), figure_title=None,
+                             filename=None, filetype='png', dpi=300):
+    """
+    Creates a plot of the locations of event hypocenters and station locations
+    for a strong motion database
+    """
+    fig = plt.figure(figsize=figure_size)
+    ax = fig.add_subplot(111)
+    eq_lons, eq_lats, st_lons, st_lats = get_eq_and_st_coordinates(db1)
+    ax.scatter(st_lons, st_lats, marker='^', color='g',
+               label='Station locations')
+    ax.scatter(eq_lons, eq_lats, marker='*', color='r',
+               label='Event hypocenters')
+    ax = add_borders(ax)
+    lons = np.concatenate([eq_lons, st_lons])
+    lats = np.concatenate([eq_lats, st_lats])
+    ax.set_xlim(np.floor(np.min(lons)-0.25), np.ceil(np.max(lons))+0.25)
+    ax.set_ylim(np.floor(np.min(lats)-0.25), np.ceil(np.max(lats))+0.25)
+    ax.set_xlabel('Longitude')
+    ax.set_ylabel('Latitude')
+    ax.legend()
     _save_image(filename, plt.gcf(), filetype, dpi)
 
 
