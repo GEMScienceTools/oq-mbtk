@@ -540,7 +540,9 @@ def prioritise_rotd50(df, proxy=None, removal=None):
         for col in rec.index:
             if 'rotD' in col:
                 cols.append(col)
-            if 'U_T' in col or 'V_T' in col or 'U_pga' in col or 'V_pga' in col:
+            if ('U_T' in col or 'V_T' in col or 'U_pga' in col or 'V_pga' in
+                col or 'U_pgv' in col or 'V_pga' in col or 'U_pgd' in col or
+                'V_pgd' in col):
                 if 'T90' not in col:
                     if 'U_' in col:    
                         rotd50_col = col.replace('U_', 'rotD50_')
