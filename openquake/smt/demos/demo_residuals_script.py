@@ -11,7 +11,8 @@ from openquake.smt.residuals.parsers.esm_url_flatfile_parser import\
     ESMFlatfileParserURL
 from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals import residual_plotter as rspl
-from openquake.smt.residuals.sm_database_visualiser import db_magnitude_distance
+from openquake.smt.residuals.sm_database_visualiser import (
+    db_magnitude_distance, db_geographical_coverage)
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -58,9 +59,11 @@ def get_residual_metadata(metadata_dir):
         shutil.rmtree(out_dir)
     os.mkdir(out_dir)
 
-    # Export magnitude distance plot
+    # Export magnitude distance plot and geographical coverage of eqs/stations
     mag_dist = os.path.join(out_dir, 'mag_dist.png')
+    map_gmdb = os.path.join(out_dir, 'map_gmdb.png')
     db_magnitude_distance(database, dist_type='repi', filename=mag_dist)
+    db_geographical_coverage(database, filename=map_gmdb)
 
     # Get residuals
     residuals = res.Residuals.from_toml(gmms_imts)
