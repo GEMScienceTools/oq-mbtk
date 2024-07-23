@@ -889,9 +889,9 @@ def llh_weights_table(residuals, filename):
             llh_weights[gmpe].loc[imt] = \
                 residuals.model_weights_with_imt[imt][gmpe]
         llh_weights[gmpe].loc['All'] = llh_weights[gmpe].mean()
+    llh_weights.columns = llh_weights.columns + ' LLH-based weights'
 
     llh_weights.to_csv(filename, sep=',')
-
 
 def edr_table(residuals, filename):
     """
@@ -1084,9 +1084,7 @@ def pdf_table(residuals, filename):
             res_statistics[gmpe, imt] = residuals.get_residual_statistics_for(
                 gmpe, imt)
     
-    Mean_Sigma_Intra = {}
-    Mean_Sigma_Inter = {}
-    Mean_Sigma_Total = {}
+    Mean_Sigma_Intra, Mean_Sigma_Inter, Mean_Sigma_Total = {}, {}, {}
     dummy_values = {'Mean': 'Total sigma only', 'Std Dev': 'Total sigma only'}
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
