@@ -536,25 +536,17 @@ class ResidualWithVs30(ResidualScatterPlot):
     def get_axis_xlim(self, res_data, res_type):
         x = res_data['x']
         return np.min(x)-20, np.max(x)+20
-        
-    
-def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
-                                            dpi=200):
+
+
+def manage_imts(residuals):
     """
-    Create a simple plot of loglikelihood values of Scherbaum et al. 2009
-    (y-axis) versus spectral period (x-axis)
-    
-    :param custom_cycler: Default set to 0, to assign specific colours
-    and linestyle to each GMPE, a cycler can instead be specified manually,
-    where index value in the cycler corresponds to gmpe in residuals.gmpe_list
+    Removes the non-acceleration IMTs from the imts attribute of the residuals
+    object and create an array of the remaining IMTs. This is a utility function
+    used for plotting of GMM ranking metrics vs period.
     """
-    # Check enough imts to plot w.r.t. spectral period
-    if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
-                
     # Preserve original residuals.imts
     preserve_imts = residuals.imts
-    
+
     # Remove non-acceleration imts from residuals.imts for generation of metrics
     idx_to_drop = []
     for imt_idx, imt in enumerate(residuals.imts):
@@ -563,35 +555,45 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
     residuals.imts = pd.Series(residuals.imts).drop(idx_to_drop).values
 
     # Convert imt_list to array
-    x_llh = pd.DataFrame([imt2tup(imts) for imts in residuals.imts], columns=
-                         ['imt_str', 'imt_float'])
+    x_with_imt = pd.DataFrame([imt2tup(imts) for imts in residuals.imts],
+                                columns=['imt_str', 'imt_float'])
     for imt_idx in range(0, np.size(residuals.imts)):
-         if x_llh.imt_str[imt_idx] == 'PGA':
-            x_llh.imt_float.iloc[imt_idx] = 0
-    x_llh=x_llh.dropna() # Remove any non-acceleration imt   
-    
+         if x_with_imt.imt_str[imt_idx] == 'PGA':
+            x_with_imt.imt_float.iloc[imt_idx] = 0
+    x_with_imt = x_with_imt.dropna() #Remove any non-acceleration imt
+
+    return residuals, preserve_imts, x_with_imt
+
+def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
+                                            dpi=200):
+    """
+    Create a simple plot of loglikelihood values of Scherbaum et al. 2009
+    (y-axis) versus spectral period (x-axis)
+    """
+    # Check enough imts to plot w.r.t. spectral period
+    if len(residuals.imts) == 1:
+        raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
+                
+    # Manage imts
+    residuals, preserve_imts, x_llh = manage_imts(residuals)
+
     # Get required values
     residuals.get_loglikelihood_values(residuals.imts)
 
-    # Produce series of residuals.gmpe_list used to index llh_with_imt
-    gmpe_list_series = pd.Series(pd.DataFrame(
-        residuals.gmpe_list, index=np.arange(0, len(residuals.gmpe_list), 1)).
-        columns)
-    
     # Define colours for plots
     colour_cycler = (cycler(color=['r', 'g', 'b', 'y', 'lime', 'k', 'dodgerblue',
                                    'gold', '0.8', 'mediumseagreen','0.5',
                                    'tab:orange', 'tab:purple', 'tab:brown',
-                                   'tab:pink'])*cycler(linestyle=['-','--','-.']))
+                                   'tab:pink'])*cycler(linestyle=['-']))
         
     # Plot LLH values w.r.t. spectral period
     llh_with_imt = pd.DataFrame(residuals.llh).drop('All')
     fig_llh, ax_llh = plt.subplots(figsize=(10, 8))
     ax_llh.set_prop_cycle(colour_cycler)
-    for gmpe in range(0, len(gmpe_list_series)):
-        y_llh = np.array(llh_with_imt[gmpe_list_series[gmpe]])
+    for gmpe in residuals.gmpe_list:
+        y_llh = np.array(llh_with_imt[gmpe])
         ax_llh.scatter(x_llh.imt_float, y_llh)
-        tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
+        tmp = str(residuals.gmpe_list[gmpe])
         ax_llh.plot(x_llh.imt_float, y_llh,label = tmp.split('(')[0])
     ax_llh.set_xlabel('Spectral Period (s)', fontsize='12')
     ax_llh.set_ylabel('Loglikelihood Value', fontsize='12')
@@ -611,32 +613,17 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, filetype='jpg',
     if len(residuals.imts) == 1:
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
     
-    # Preserve original residuals.imts
-    preserve_imts = residuals.imts
-
-    # Remove non-acceleration imts from residuals.imts for generation of metrics
-    idx_to_drop = []
-    for imt_idx, imt in enumerate(residuals.imts):
-        if imt != 'PGA' and 'SA' not in imt:
-            idx_to_drop.append(imt_idx)
-    residuals.imts = pd.Series(residuals.imts).drop(idx_to_drop).values
+    # Manage imts
+    residuals, preserve_imts, x_with_imt = manage_imts(residuals)
 
     # Get required values 
     residuals.get_edr_values_wrt_imt()
-    
-    # Convert imt_list to array
-    x_with_imt = pd.DataFrame([imt2tup(imts) for imts in residuals.imts],
-                                columns=['imt_str', 'imt_float'])
-    for imt_idx in range(0, np.size(residuals.imts)):
-         if x_with_imt.imt_str[imt_idx] == 'PGA':
-            x_with_imt.imt_float.iloc[imt_idx] = 0
-    x_with_imt = x_with_imt.dropna() #Remove any non-acceleration imt
 
     # Define colours for plots
     colour_cycler = (cycler(color=['r', 'g', 'b', 'y', 'lime', 'k', 'dodgerblue',
                                    'gold', '0.8', 'mediumseagreen','0.5',
                                    'tab:orange', 'tab:purple', 'tab:brown',
-                                   'tab:pink'])*cycler(linestyle=['-','--','-.']))
+                                   'tab:pink'])*cycler(linestyle=['-']))
     
     # Plot EDR w.r.t. spectral period
     EDR_with_imt = {}
@@ -697,32 +684,17 @@ def plot_stochastic_area_with_spectral_period(residuals, filename,
     if len(residuals.imts) == 1:
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
     
-    # Preserve original residuals.imts
-    preserve_imts = residuals.imts
-
-    # Remove non-acceleration imts from residuals.imts for generation of metrics
-    idx_to_drop = []
-    for imt_idx, imt in enumerate(residuals.imts):
-        if imt != 'PGA' and 'SA' not in imt:
-            idx_to_drop.append(imt_idx)
-    residuals.imts = pd.Series(residuals.imts).drop(idx_to_drop).values
+    # Manage imts
+    residuals, preserve_imts, x_with_imt = manage_imts(residuals)
     
     # Get required values
     residuals.get_stochastic_area_wrt_imt()
     
-    # Convert imt_list to array
-    x_with_imt = pd.DataFrame([imt2tup(imts) for imts in residuals.imts],
-                              columns=['imt_str', 'imt_float'])
-    for imt_idx in range(0, np.size(residuals.imts)):
-         if x_with_imt.imt_str[imt_idx] == 'PGA':
-            x_with_imt.imt_float.iloc[imt_idx] = 0
-    x_with_imt = x_with_imt.dropna() #Remove any non-acceleration imt
-
     # Define colours for plots
     colour_cycler = (cycler(color=['r', 'g', 'b', 'y', 'lime', 'k', 'dodgerblue',
                                    'gold', '0.8', 'mediumseagreen','0.5',
                                    'tab:orange', 'tab:purple', 'tab:brown',
-                                   'tab:pink'])*cycler(linestyle=['-','--','-.']))
+                                   'tab:pink'])*cycler(linestyle=['-']))
     
     # Plot stochastic area w.r.t. spectral period
     sto_with_imt = {}
@@ -756,23 +728,8 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
     if len(residuals.imts) == 1:
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
         
-    # Preserve original residuals.imts
-    preserve_imts = residuals.imts
-        
-    # Remove non-acceleration imts from residuals.imts
-    idx_to_drop = []
-    for imt_idx, imt in enumerate(residuals.imts):
-        if imt != 'PGA' and 'SA' not in imt:
-            idx_to_drop.append(imt_idx)
-    residuals.imts = pd.Series(residuals.imts).drop(idx_to_drop).values
-        
-    # Convert imt_list to array
-    imts_to_plot = pd.DataFrame([imt2tup(imts) for imts in residuals.imts],
-                              columns=['imt_str', 'imt_float'])
-    for imt_idx in range(0, np.size(residuals.imts)):
-        if imts_to_plot.imt_str[imt_idx] == 'PGA':
-           imts_to_plot.imt_float.iloc[imt_idx] = 0
-    imts_to_plot = imts_to_plot.dropna() # Remove any non-acceleration imt
+    # Manage imts
+    residuals, preserve_imts, imts_to_plot = manage_imts(residuals)
 
     # Get all residuals for all gmpes at all imts
     res_statistics = {}
@@ -788,9 +745,12 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
             Mean_Sigma_Total[gmpe, imt] = res_statistics[gmpe, imt]['Total']
-            if 'Inter event' and 'Intra event' in residuals.residuals[gmpe][imt]:
-                Mean_Sigma_Inter[gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
-                Mean_Sigma_Intra[gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
+            if ('Inter event' in residuals.residuals[gmpe][imt] and
+                'Intra event' in residuals.residuals[gmpe][imt]):
+                Mean_Sigma_Inter[gmpe, imt] = \
+                    res_statistics[gmpe, imt]['Inter event']
+                Mean_Sigma_Intra[gmpe, imt] = \
+                    res_statistics[gmpe, imt]['Intra event']
             else:
                 Mean_Sigma_Inter[gmpe, imt] = dummy_values
                 Mean_Sigma_Intra[gmpe, imt] = dummy_values
@@ -814,7 +774,7 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
     colour_cycler = (cycler(color=['r', 'g', 'b', 'y','lime', 'dodgerblue', 'k',
                                    'gold', '0.8', 'mediumseagreen', '0.5',
                                    'tab:orange', 'tab:purple','tab:brown',
-                                   'tab:pink'])*cycler(marker=['x','^','o']))
+                                   'tab:pink'])*cycler(marker=['x']))
     colour_cycler_df = pd.DataFrame(colour_cycler)[:len(residuals.gmpe_list)]
     colour_cycler_df['gmpe'] = residuals.gmpe_list.keys()
 
@@ -918,19 +878,19 @@ def loglikelihood_table(residuals, filename):
     for gmpe in range(0, np.size(gmpe_list_series)):
         llh_columns = pd.Series(gmpe_list_series)[gmpe]+ ' LLH'
         llh_metrics[gmpe] = pd.DataFrame({llh_columns:(pd.Series(residuals.llh))
-                                        [gmpe]}, index=residuals.imts)
+                                         [gmpe]}, index=residuals.imts)
         llh_metrics_df[gmpe] = pd.DataFrame(llh_metrics[gmpe],
                                             index=residuals.imts)
 
     llh_metrics_df = pd.DataFrame()
     for gmpe in range(0, np.size(gmpe_list_series)):
-        llh_metrics_df[gmpe] = pd.DataFrame(llh_metrics[gmpe], index=
-                                          residuals.imts)
+        llh_metrics_df[gmpe] = pd.DataFrame(
+            llh_metrics[gmpe], index=residuals.imts)
     llh_columns_all = pd.Series(gmpe_list_series) +' LLH' 
     llh_metrics_df.columns = llh_columns_all
     
-    average_llh_over_imts = np.arange(0, np.size(gmpe_list_series), 1,
-                                    dtype='float')
+    average_llh_over_imts = np.arange(
+        0, np.size(gmpe_list_series), 1, dtype='float')
     for gmpe in range(0, np.size(gmpe_list_series)):
         average_llh_over_imts[gmpe] = np.array(np.mean(
             llh_metrics_df[llh_columns_all[gmpe]]))
