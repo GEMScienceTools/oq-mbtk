@@ -95,19 +95,18 @@ def get_residual_metadata(metadata_dir):
                 residuals, gmm, imt, fi_dist, filetype='jpeg')
         
     # Get llh, edr, stochastic area and residual summary plot
-    fi_llh = os.path.join(out_dir, 'all_gmpes_LLH_plot')
-    fi_edr = os.path.join(out_dir, 'all_gmpes_EDR_plot')
-    fi_sto = os.path.join(out_dir, 'all_gmpes_stochastic_area_plot')
-    fi_pdf = os.path.join(out_dir, 'all_gmpes_PDF_vs_imt_plot')
+    fi_llh = os.path.join(out_dir, 'all_gmpes_LLH_plot.png')
+    fi_edr = os.path.join(out_dir, 'all_gmpes_EDR_plot.png')
+    fi_sto = os.path.join(out_dir, 'all_gmpes_stochastic_area_plot.png')
+    fi_pdf = os.path.join(out_dir, 'all_gmpes_PDF_vs_imt_plot.png')
     
-    # Get table of residuals
-    fi_pdf_table = os.path.join(out_dir, 'pdf_table.csv')
-
-    # Get plots
     rspl.plot_loglikelihood_with_spectral_period(residuals, fi_llh)
     rspl.plot_edr_metrics_with_spectral_period(residuals, fi_edr)
     rspl.plot_stochastic_area_with_spectral_period(residuals, fi_sto)
     rspl.plot_residual_pdf_with_spectral_period(residuals, fi_pdf)
+
+    # Get table of residual PDF statistics
+    fi_pdf_table = os.path.join(out_dir, 'pdf_table.csv')
     rspl.pdf_table(residuals, fi_pdf_table)
 
     return residuals
