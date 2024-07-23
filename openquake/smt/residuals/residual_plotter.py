@@ -71,8 +71,6 @@ class BaseResidualPlot(object):
         if hasattr(residuals,'residuals') == True:
              if not residuals.residuals[gmpe][imt]:
                 raise ValueError("No residuals found for %s (%s)" % (gmpe, imt))
-        else:
-            pass
         self.gmpe = gmpe
         self.imt = imt
         self.filename = filename
@@ -738,9 +736,7 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
             res_statistics[gmpe, imt] = residuals.get_residual_statistics_for(
                 gmpe, imt)
     
-    Mean_Sigma_Intra = {}
-    Mean_Sigma_Inter = {}
-    Mean_Sigma_Total = {}
+    Mean_Sigma_Intra, Mean_Sigma_Inter, Mean_Sigma_Total = {}, {}, {}
     dummy_values = {'Mean': float(0), 'Std Dev': float(0)} # Assign if only total
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
@@ -754,7 +750,6 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
             else:
                 Mean_Sigma_Inter[gmpe, imt] = dummy_values
                 Mean_Sigma_Intra[gmpe, imt] = dummy_values
-                pass
 
     Mean_Sigma_Intra_df = pd.DataFrame(Mean_Sigma_Intra)
     Mean_Sigma_Inter_df = pd.DataFrame(Mean_Sigma_Inter)
@@ -860,104 +855,48 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
     
-def loglikelihood_table(residuals, filename):
+def llh_table(residuals, filename):
     """
-    Create a table of loglikelihood values per GMPE per imt (Scherbaum et al. 2009)
+    Create a table of loglikelihood values per gmpe per imt (Scherbaum et al.
+    2009)
     """
-    # Produce series of residuals.gmpe_list
-    gmpe_list_series = pd.Series(
-        pd.DataFrame(residuals.gmpe_list, index=np.arange(
-            0, len(residuals.gmpe_list), 1)).columns)
-    
     # Get required values
     residuals.get_loglikelihood_values(residuals.imts)
 
-    # Get loglikelihood values per imt
-    llh_metrics = {}
-    llh_metrics_df = {}
-    for gmpe in range(0, np.size(gmpe_list_series)):
-        llh_columns = pd.Series(gmpe_list_series)[gmpe]+ ' LLH'
-        llh_metrics[gmpe] = pd.DataFrame({llh_columns:(pd.Series(residuals.llh))
-                                         [gmpe]}, index=residuals.imts)
-        llh_metrics_df[gmpe] = pd.DataFrame(llh_metrics[gmpe],
-                                            index=residuals.imts)
+    # Get loglikelihood values per imt per gmpe
+    llh_metrics = pd.DataFrame()
+    for gmpe in residuals.gmpe_list:
+        llh_metrics[gmpe + ' LLH'] = residuals.llh[gmpe]
 
-    llh_metrics_df = pd.DataFrame()
-    for gmpe in range(0, np.size(gmpe_list_series)):
-        llh_metrics_df[gmpe] = pd.DataFrame(
-            llh_metrics[gmpe], index=residuals.imts)
-    llh_columns_all = pd.Series(gmpe_list_series) +' LLH' 
-    llh_metrics_df.columns = llh_columns_all
-    
-    average_llh_over_imts = np.arange(
-        0, np.size(gmpe_list_series), 1, dtype='float')
-    for gmpe in range(0, np.size(gmpe_list_series)):
-        average_llh_over_imts[gmpe] = np.array(np.mean(
-            llh_metrics_df[llh_columns_all[gmpe]]))
-    average_llh_over_imts_df = pd.DataFrame([average_llh_over_imts],
-                                          index = ['Avg over all periods'])
-    average_llh_over_imts_df.columns = llh_columns_all
-    final_llh_df = pd.concat([llh_metrics_df, average_llh_over_imts_df])
-    
-    # Table and display outputs (need to assign simplified GMPE names)
-    final_llh_df_output = final_llh_df
-    llh_columns_all_output = {}
-    for gmpe in range(0, len(residuals.gmpe_list)):
-         tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
-         llh_columns_all_output[gmpe] =  tmp.split('(')[0].replace(
-             '\n',', ') + ' LLH'
-    final_llh_df_output.columns = list(pd.Series(llh_columns_all_output))
-    final_llh_df_output.to_csv(filename, sep=',')
+    llh_metrics.to_csv(filename, sep=',')
     
 def llh_weights_table(residuals, filename):
     """
-    Create a table of model weights per imt based on sample loglikelihood 
-    (Scherbaum et al. 2009)
+    Create a table of model weights per gmpe per imt based on sample
+    loglikelihood (Scherbaum et al. 2009)
     """       
-    # Produce series of residuals.gmpe_list
-    gmpe_list_series = pd.Series(
-        pd.DataFrame(residuals.gmpe_list,
-                     index=np.arange(0, len(residuals.gmpe_list),1)).columns)
-    
     # Get required values
     residuals.get_loglikelihood_values(residuals.imts)
-    
-    # Get model weights per imt
-    model_weights_columns = pd.Series(gmpe_list_series) + ' weighting'
-    model_weights = pd.DataFrame(residuals.model_weights_with_imt)
 
-    model_weights_df = pd.DataFrame()
+    # Now get weights based on them and export table
+    imt_idx = []
+    for imt in residuals.imts:
+        imt_idx.append(imt)
+    imt_idx.append('All') # Avg over all imts
+    llh_weights = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
     for gmpe in residuals.gmpe_list:
-        model_weights_df[gmpe] = pd.Series(model_weights.loc[gmpe])
-    model_weights_df.columns = model_weights_columns
-    
-    mean_per_gmm = []
-    for gmm in model_weights_df.columns:
-        store_wts = []
-        for imt in model_weights_df[gmm]:
-            store_wts.append(imt)
-        mean_per_gmm.append(np.mean(store_wts))
-        
-    model_weights_avg_df = pd.DataFrame([mean_per_gmm],
-                                        index=['Avg over all periods'])
-    model_weights_avg_df.columns = model_weights_columns
-    final_model_weights_df = pd.concat([model_weights_df,
-                                        model_weights_avg_df])
+        for imt in residuals.imts:
+            llh_weights[gmpe].loc[imt] = \
+                residuals.model_weights_with_imt[imt][gmpe]
+        llh_weights[gmpe].loc['All'] = llh_weights[gmpe].mean()
 
-    # Table and display outputs (need to assign simplified GMPE names)
-    final_model_weights_df_output = final_model_weights_df
-    model_weights_columns_all_output = {}
-    for gmpe in range(0, len(residuals.gmpe_list)):
-         tmp = str(residuals.gmpe_list[gmpe_list_series[gmpe]])
-         model_weights_columns_all_output[gmpe] = tmp.split('(')[0].replace(
-             '\n',', ') + ' LLH Based Model Weight'
-    final_model_weights_df_output.columns = [
-        pd.Series(model_weights_columns_all_output)]
-    final_model_weights_df_output.to_csv(filename, sep=',')
+    llh_weights.to_csv(filename, sep=',')
+
 
 def edr_table(residuals, filename):
     """
-    Create a table of MDE Norm, sqrt(kappa) and EDR per imt (Kale and Akkar, 2013)
+    Create a table of MDE Norm, sqrt(kappa) and EDR per imt (Kale and Akkar,
+    2013)
     """
     # Get required values
     residuals.get_edr_values_wrt_imt()
@@ -1319,7 +1258,6 @@ class IntraEventResidualWithSite(ResidualPlot):
             warnings.warn('This implementation of %s GMPE does not have a mixed'
                          ' effects sigma model - plotting skipped' %self.gmpe,
                          stacklevel=10)
-            pass
 
     def _residual_plot(self, fig, data, phi_ss, phi_s2ss):
         """
