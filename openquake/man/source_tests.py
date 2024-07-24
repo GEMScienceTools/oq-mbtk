@@ -419,3 +419,91 @@ def source_info_table(folder_name, sconv = DEFAULT):
 				sdata.loc[len(sdata.index)] = row
 	
 	print(tabulate(sdata, headers="keys", tablefmt="psql"))
+
+
+def compare_sources_plot(src1_fname, src2_fname, region, mmin, fig_folder,
+		rate_range = [-9, 3, 0.2], mmax_range = [6.0, 9.0, 0.2], 
+		sconv = DEFAULT, poly_name = '', plot_poly = False, pointsource = False, plot_fname = ""):
+	'''
+	Creates a plot showing the differences between two source models. 
+	
+	:param src1_fname:
+		location of a file describing a point or multipoint source model
+	:param src2_fname: 
+		location of a file describing a point or multipoint source model
+	:param region:
+	    region for pygmt plotting
+	:param mmin:
+		minimum magnitude to be used in model
+	:param fig_folder:
+		folder in which to store plots
+	:param rate_range:
+		range of rate to use in colour scale,
+		specified as [min, max, interval]
+	:param mmax_range:
+	    range of mmax for colour scale, 
+	    specified as [min, max, interval]
+	:param poly_name:
+		location of file containing the model source polygon (optional)
+	:param plot_poly:
+	    boolean specifying if polygon outline should be plotted
+	:param pointsource:
+		alternative where point sources are used instead of multipoint
+	'''
+
+	# set up colour scales
+	cpt_rate = os.path.join(fig_folder, 'rate.cpt')
+	pygmt.makecpt(cmap="turbo", series=rate_range, output=cpt_rate)
+    
+	if poly_name:
+    	# set plotting polygon
+		poly = gpd.read_file(poly_name)
+		poly["x"] = poly.representative_point().x
+		poly["y"] = poly.representative_point().y
+
+	ssm1 = to_python(src1_fname, sconv)
+	ssm2 = to_python(src2_fname, sconv)
+
+	if pointsource == False:
+		data1 = get_params(ssm1, mmin=mmin, total_for_zone = False)
+		data2 = get_params(ssm2, mmin=mmin, total_for_zone = False)
+
+	else:
+		data1 = get_params_points(ssm1, mmin=mmin, total_for_zone = False)
+		data2 = get_params_points(ssm2, mmin=mmin, total_for_zone = False)
+
+	#assert data1[:,0] == data2[:,0]
+	rate_diff = data1[:,2] - data2[:,2]
+	fig = pygmt.Figure()
+	fig.basemap(region=region, projection="M15c", frame=True)
+	fig.coast(land="grey", water="white")
+
+	fig.plot(x=data1[:,0], 
+		y=data1[:,1], 
+		style="h0.75", 
+		color=rate_diff,
+		cmap=cpt_rate)
+
+	fig.colorbar(frame=f'af+l"Difference in log((N(m)>{mmin}))"', cmap=cpt_rate)    
+
+	out = os.path.join(fig_folder, plot_fname+'_rate_diff.png')
+	fig.savefig(out)
+	'''
+	path1 = pathlib.Path(src1_fname)
+	path2 = pathlib.Path(src2_fname)
+
+	if os.path.isdir(src1_fname):
+		assert os.path.isdir(path2) 
+
+		dataset1 = np.empty([1,5])
+		for fname in sorted(path.glob('src_*.xml')):
+			ssm = to_python(fname, sconv)
+        
+			if pointsource == False:
+				data = get_params(ssm, mmin=mmin, total_for_zone = False)
+				dataset = np.concatenate((dataset1, data))
+
+			else:
+				data = get_params_points(ssm, mmin=mmin, total_for_zone = False)
+				dataset1 = np.concatenate((dataset1, data))
+	'''
