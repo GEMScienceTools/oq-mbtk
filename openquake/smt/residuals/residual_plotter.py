@@ -865,7 +865,7 @@ def get_res_dists(residuals):
     """
     Get the mean and sigma of the distributions of residuals per gmpe and imt
     """
-    # Get all residuals for all gmpes at all imts
+    # Get all residuals for all GMPEs at all imts
     res_statistics = {}
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
@@ -945,14 +945,17 @@ def set_res_pdf_plots(residuals, res_dists, imts_to_plot):
 def plot_res_pdf(ax, res_dists, dist_comp, gmpe, imts_to_plot, marker_input,
                  color_input):
     """
-    Plot mean for each residual distribution for a given gmpe
+    Plot mean for each residual distribution for a given GMPE
     """
     # Get axes index and gmpe label
     if dist_comp == 'Mean':
         i = 0
     elif dist_comp == 'Std Dev':
         i = 1
-    gmpe_label = gmpe.split('_toml=')[1].replace(')','')
+    try:
+        gmpe_label = gmpe.split('_toml=')[1].replace(')','')
+    except:
+        gmpe_label = gmpe # If not from toml file can't split
 
     # Plot mean
     if (res_dists[2][gmpe].loc[dist_comp].all()==0 and
@@ -1004,7 +1007,7 @@ def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
     # Set plots
     fig, ax = set_res_pdf_plots(residuals, res_dists, imts_to_plot)
 
-    # Define colours for gmpes
+    # Define colours for GMPEs
     colour_cycler = (cycler(color=colors)*cycler(marker=['x']))
     colour_cycler_df = pd.DataFrame(colour_cycler)[:len(residuals.gmpe_list)]
     colour_cycler_df['gmpe'] = residuals.gmpe_list.keys()
@@ -1039,7 +1042,7 @@ def pdf_table(residuals, filename):
     Create a table of mean and standard deviation for total, inter-event and 
     intra-event residual distributions
     """
-    # Get all residuals for all gmpes at all imts
+    # Get all residuals for all GMPEs at all imts
     stats = {}
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
