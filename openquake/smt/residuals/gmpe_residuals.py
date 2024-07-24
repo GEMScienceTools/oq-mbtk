@@ -1177,7 +1177,8 @@ class Residuals(object):
                 expected = np.array([], dtype=float)
                 stddev = np.array([], dtype=float)
                 for context in self.contexts:
-                    obs = np.hstack([obs, np.log(context["Observations"][imtx])])
+                    obs = np.hstack(
+                        [obs, np.log(context["Observations"][imtx])])
                     expected = np.hstack(
                         [expected,context["Expected"][gmpe][imtx]["Mean"]])
                     stddev = np.hstack(
