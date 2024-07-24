@@ -1178,10 +1178,10 @@ class Residuals(object):
                 stddev = np.array([], dtype=float)
                 for context in self.contexts:
                     obs = np.hstack([obs, np.log(context["Observations"][imtx])])
-                    expected = np.hstack([expected,context["Expected"][gmpe]
-                                          [imtx]["Mean"]])
-                    stddev = np.hstack([stddev,context["Expected"][gmpe]
-                                        [imtx]["Total"]])
+                    expected = np.hstack(
+                        [expected,context["Expected"][gmpe][imtx]["Mean"]])
+                    stddev = np.hstack(
+                        [stddev,context["Expected"][gmpe][imtx]["Total"]])
                 
                 # Get the ECDF for distribution from data
                 x_ecdf, y_ecdf = self.get_cdf_data(list(obs), step_flag=True)
