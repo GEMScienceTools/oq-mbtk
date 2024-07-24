@@ -535,6 +535,8 @@ def prioritise_rotd50(df, proxy=None, removal=None):
     # from the horizontal components if not. For spectral accelerations, RotD50
     # and geometric mean have been found to have a ratio close to 1 (e.g. Beyes
     # and Bommer, 2006)
+    h_cols = ['U_T', 'V_T', 'U_pga', 'V_pga', 'U_pgv', 'V_pgv', 'U_pgd', 'V_pgd',
+              'U_housner', 'V_housner', 'U_CAV', 'V_CAV', 'U_ia', 'V_ia']
     
     # Manage RotD50 vs horizontal components
     log, cols = [], []
@@ -542,40 +544,41 @@ def prioritise_rotd50(df, proxy=None, removal=None):
         for col in rec.index:
             if 'rotD' in col:
                 cols.append(col)
-            if 'U_T' in col or 'V_T' in col or 'U_pga' in col or 'V_pga' in col:
-                if 'T90' not in col:
-                    if 'U_' in col:    
-                        rotd50_col = col.replace('U_', 'rotD50_')
-                    if 'V_' in col:
-                        rotd50_col = col.replace('V_', 'rotD50_')
-                        
-                    # If RotD50...
-                    if not pd.isnull(rec[rotd50_col]):
-                        df[col].iloc[idx] = rec[rotd50_col] # Assign to h1, h2
-                        
-                    # Otherwise...
-                    else:
-                        if proxy is True: # Use geo. mean as proxy
-                            if not pd.isnull(rec[col]):
-                                pass # Can use geo. mean from h1, h2 as proxy 
+            for h_col in h_cols:
+                if h_col in col:
+                    if 'T90' not in col:
+                        if 'U_' in col:    
+                            rotd50_col = col.replace('U_', 'rotD50_')
+                        if 'V_' in col:
+                            rotd50_col = col.replace('V_', 'rotD50_')
+                            
+                        # If RotD50...
+                        if not pd.isnull(rec[rotd50_col]): # Assign to h1, h2
+                            df[col].iloc[idx] = rec[rotd50_col]
+                            
+                        # Otherwise...
                         else:
-                            log.append(idx) # Log rec as incomplete RotD50 vals
+                            if proxy is True: # Use geo. mean as proxy
+                                if not pd.isnull(rec[col]):
+                                    pass # Use geo. mean from h1, h2 as proxy 
+                            else:
+                                log.append(idx) # Log as incomplete RotD50 vals
                             
     # Tidy dataframe
     cols = pd.Series(cols).unique()
     df = df.drop(columns=cols)
-    
+
     # Drop if req. or else just inform number of recs missing acc. values
     no_vals = len(pd.Series(log).unique())
     if removal is True and log!= []:
         df = df.drop(log).reset_index()
         msg = 'Records without RotD50 acc. values for all periods between 0.01'
-        msg += ' s and 10 s have been removed from flatfile (%s records)' %no_vals
+        msg += ' s and 10 s have been removed from database (%s records)' %no_vals
         print(msg)
         if len(df) == 0:
             raise ValueError('All records have been removed from the flatfile')        
     elif log != []:
-        print('%s records do not have RotD50 for all periods between 0.01 s and 10 s'
+        print('%s records lack RotD50 for all periods between 0.01 s and 10 s'
               % no_vals)
     
     # Output to temp folder where converted flatfile read into parser   
