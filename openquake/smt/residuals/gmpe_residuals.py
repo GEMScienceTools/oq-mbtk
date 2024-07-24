@@ -1139,17 +1139,17 @@ class Residuals(object):
     
     def step_data(self, x,y):
         """
-        Step the ecdf
+        Step the cdf to obtain the ecdf
         """
-        xx,yy = x*2, y*2
+        xx, yy = x*2, y*2
         xx.sort()
         yy.sort()
         return xx, [0.]+yy[:-1]
-    
+
     def get_cdf_data(self, data, step_flag=None):
         """
-        Get the cdf (for the predicted ground-motions) or the ecdf for the
-        observed ground-motions
+        Get the cdf (for the predicted ground-motions) or the ecdf (for the
+        observed ground-motions)
         """
         x, p = self.cdf(data)
         if step_flag is True:
@@ -1163,7 +1163,7 @@ class Residuals(object):
         to the Stochastic Area Ranking method of Sunny et al. (2021).
         
         Sunny, J., M. DeAngelis, and B. Edwards (2021). Ranking and Selection
-        of Earthquake GroundMotion Models Using the Stochastic Area Metric,
+        of Earthquake Ground Motion Models Using the Stochastic Area Metric,
         Seismol. Res. Lett. 93, 787–797, doi: 10.1785/0220210216
         """
         # Create store of values per gmm
