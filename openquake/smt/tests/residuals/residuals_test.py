@@ -35,7 +35,8 @@ from openquake.smt.residuals.sm_database_selector import \
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 # Temp file for residuals/ranking metric tables 
-tmp = os.path.join(tempfile.mkdtemp(), 'temp_table.csv')
+tmp_tab = os.path.join(tempfile.mkdtemp(), 'temp_table.csv')
+tmp_fig = os.path.join(tempfile.mkdtemp(), 'temp_figure')
 
 EXPECTED_IDS = [
     "EMSC_20040918_0000026_RA_PYAS_0", "EMSC_20040918_0000026_RA_PYAT_0",
@@ -195,6 +196,19 @@ class ResidualsTestCase(unittest.TestCase):
                     "MultivariateLLH", "EDR"]:
             _ = res.GSIM_MODEL_DATA_TESTS[key](residuals, config)
 
+    def test_plot_execution(self):
+        """
+        Tests execution of gmpe ranking metric plots
+        """
+        residuals = res.Residuals(self.gmpe_list, self.imts)
+        residuals.get_residuals(self.database, component="Geometric")
+
+        # Plots of GMM ranking metrics vs period
+        rspl.plot_residual_pdf_with_spectral_period(residuals, tmp_fig)
+        rspl.plot_edr_metrics_with_spectral_period(residuals, tmp_fig)
+        rspl.plot_loglikelihood_with_spectral_period(residuals, tmp_fig)
+        rspl.plot_stochastic_area_with_spectral_period(residuals, tmp_fig)
+
     def test_table_execution(self):
         """
         Tests execution of table exporting functions
@@ -203,15 +217,15 @@ class ResidualsTestCase(unittest.TestCase):
         residuals.get_residuals(self.database, component="Geometric")
         
         # Tables of values
-        rspl.pdf_table(residuals, tmp)
-        rspl.llh_table(residuals, tmp)
-        rspl.edr_table(residuals, tmp)
-        rspl.stochastic_area_table(residuals, tmp)
+        rspl.pdf_table(residuals, tmp_tab)
+        rspl.llh_table(residuals, tmp_tab)
+        rspl.edr_table(residuals, tmp_tab)
+        rspl.stochastic_area_table(residuals, tmp_tab)
         
         # Tables of weights
-        rspl.llh_weights_table(residuals, tmp)
-        rspl.edr_weights_table(residuals, tmp)
-        rspl.stochastic_area_weights_table(residuals, tmp)
+        rspl.llh_weights_table(residuals, tmp_tab)
+        rspl.edr_weights_table(residuals, tmp_tab)
+        rspl.stochastic_area_weights_table(residuals, tmp_tab)
         
     def test_single_station_residual_analysis(self):
         """
