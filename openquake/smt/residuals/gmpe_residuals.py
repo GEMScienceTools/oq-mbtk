@@ -1141,11 +1141,11 @@ class Residuals(object):
         """
         Step the cdf to obtain the ecdf
         """
-        xx, yy = x*2, y*2
+        xx,yy = x*2, y*2
         xx.sort()
         yy.sort()
         return xx, [0.]+yy[:-1]
-
+    
     def get_cdf_data(self, data, step_flag=None):
         """
         Get the cdf (for the predicted ground-motions) or the ecdf (for the
