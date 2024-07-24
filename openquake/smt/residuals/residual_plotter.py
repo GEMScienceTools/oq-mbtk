@@ -635,7 +635,7 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, filetype='jpg',
     ax_EDR.set_ylabel('EDR', fontsize='12')
     ax_EDR.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename + '_EDR_value'), plt.gcf(), filetype, dpi)
-    
+
     # Plot median pred. correction factor w.r.t. spectral period
     kappa_with_imt = {}
     fig_kappa, ax_kappa = plt.subplots(figsize=(10, 8))
