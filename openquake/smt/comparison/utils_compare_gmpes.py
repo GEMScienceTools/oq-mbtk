@@ -978,9 +978,9 @@ def update_spec_plots(ax1, m, i, n, l, dist_list):
     """
     ax1.set_title('Mw = ' + str(m) + ', R = ' + str(i) + ' km',
                   fontsize=16, y=1.0, pad=-16)
-    if n == len(dist_list)-1: #bottom row only
+    if n == len(dist_list)-1: # Bottom row only
         ax1.set_xlabel('Period (s)', fontsize=16)
-    if l == 0: # left row only
+    if l == 0: # Left column only
         ax1.set_ylabel('SA (g)', fontsize=16) 
 
 
