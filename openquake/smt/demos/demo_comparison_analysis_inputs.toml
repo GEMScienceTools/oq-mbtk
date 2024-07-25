@@ -22,7 +22,7 @@ region = 'Global' # region specific basin effects
 # Characterise earthquake for the region of interest as finite rupture
 [source_properties]
 trt = 'None' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
-ztor = 'None' # Set to string of 'None' to NOT consider
+ztor = 'None' # Set to string of 'None' to NOT consider else list corresponding to number of mags/depths
 strike = -999
 dip =  60
 rake = 90 # Must be provided. Strike and dip can be approximated if set to -999

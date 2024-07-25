@@ -374,9 +374,9 @@ The Loglikelihood Method (Scherbaum et al. 2009)
 Euclidean Distance Based Ranking (Kale and Akkar, 2013)
 =======================================================
 
-   The Euclidean distance based ranking (EDR) method considers the probability that the absolute difference between an observed ground-motion and a predicted ground-motion is less than a specific estimate, and is repeated over a discrete set of such estimates (one set per observed ground-motion per GMPE per the specified intensity measure). The total occurrence probability for such a set is the modified Euclidean distance (MDE). The corresponding EDR value is computed by summing the MDE (one per observation), normalising by the number of observations and then introducing an additional parameter (Kappa) to penalise models displaying a larger predictive bias (here kappa is equal to the ratio of the Euclidean distance between obs. and pred. median ground-motion to the Euclidean distance between the obs. and pred. median ground-motion corrected by a predictive model derived from a linear regression of the observed data - the parameter kappa^0.5 therefore provides the performance of the median prediction per GMPE).
+   The Euclidean distance based ranking (EDR) method considers the probability that the absolute difference between an observed ground-motion and a predicted ground-motion is less than a specific estimate, and is repeated over a discrete set of such estimates (one set per observed ground-motion per GMPE per the specified intensity measure). The total occurrence probability for such a set is the modified Euclidean distance (MDE). The corresponding EDR value is computed by summing the MDE (one per observation), normalising by the number of observations and then introducing an additional parameter (Kappa) to penalise models displaying a larger predictive bias (here kappa is equal to the ratio of the Euclidean distance between obs. and pred. median ground-motion to the Euclidean distance between the obs. and pred. median ground-motion corrected by a predictive model derived from a linear regression of the observed data - the parameter sqrt(kappa) therefore provides the performance of the median prediction per GMPE).
 
-   EDR score, the normal distribution of modified Euclidean distance (MDE Norm) and k^0.5 (k is used henceforth to represent the median predicted ground-motion correction factor "Kappa" within the original methodology) per GMPE aggregated over all considered intensity measures, or per intensity measure can be computed as follows:
+   EDR score, the normal distribution of modified Euclidean distance (MDE Norm) and sqrt(k) (k is used henceforth to represent the median predicted ground-motion correction factor "Kappa" within the original methodology) per GMPE aggregated over all considered intensity measures, or per intensity measure can be computed as follows:
    
     .. code-block:: ini
     
@@ -392,7 +392,7 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
        > # Generate a .csv table of EDR-based model weights for GMPE logic tree
        > rspl.edr_weights_table(resid1, filename)   
        >
-       > # Plot EDR score, MDE norm and k^0.5 vs imt
+       > # Plot EDR score, MDE norm and sqrt(k) vs imt
        > rspl.plot_plot_edr_metrics_with_spectral_period(resid1, filename)
 
     EDR rank versus spectral acceleration plot for considered GMPEs:
