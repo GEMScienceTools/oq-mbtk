@@ -94,20 +94,31 @@ def get_residual_metadata(metadata_dir):
             rspl.ResidualWithDistance(
                 residuals, gmm, imt, fi_dist, filetype='jpeg')
         
-    # Get llh, edr, stochastic area and residual summary plot
+    # Get llh, edr, stochastic area and residual summary plots
     fi_llh = os.path.join(out_dir, 'all_gmpes_LLH_plot')
     fi_edr = os.path.join(out_dir, 'all_gmpes_EDR_plot')
     fi_sto = os.path.join(out_dir, 'all_gmpes_stochastic_area_plot')
     fi_pdf = os.path.join(out_dir, 'all_gmpes_PDF_vs_imt_plot')
-    
+
     rspl.plot_loglikelihood_with_spectral_period(residuals, fi_llh)
     rspl.plot_edr_metrics_with_spectral_period(residuals, fi_edr)
     rspl.plot_stochastic_area_with_spectral_period(residuals, fi_sto)
     rspl.plot_residual_pdf_with_spectral_period(residuals, fi_pdf)
 
-    # Get table of residual PDF statistics
+    # Get table of residuals (mean and std dev per gmm per imt)
     fi_pdf_table = os.path.join(out_dir, 'pdf_table.csv')
     rspl.pdf_table(residuals, fi_pdf_table)
+
+    """
+    # Get logic tree weights for shortlisted GMMs based on GMM ranking scores
+    fi_llh_weights = os.path.join(out_dir, 'final_weights_llh.csv')
+    fi_edr_weights = os.path.join(out_dir, 'final_weights_edr.csv')
+    fi_sto_weights = os.path.join(out_dir, 'final_weights_stochastic_area.csv')
+
+    rspl.llh_weights_table(residuals, fi_llh_weights)
+    rspl.edr_weights_table(residuals, fi_edr_weights)
+    rspl.stochastic_area_weights_table(residuals, fi_sto_weights)
+    """
 
     return residuals
 
