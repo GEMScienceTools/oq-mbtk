@@ -647,7 +647,7 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, filetype='jpg',
         ax_kappa.scatter(x_with_imt.imt_float, y_kappa)
         ax_kappa.plot(x_with_imt.imt_float, y_kappa, label=tmp.split('(')[0])
     ax_kappa.set_xlabel('Spectral Period (s)', fontsize='12')
-    ax_kappa.set_ylabel('k^0.5', fontsize='12')
+    ax_kappa.set_ylabel('sqrt(k)', fontsize='12')
     ax_kappa.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename + '_EDR_correction_factor'), plt.gcf(),
                 filetype, dpi)
