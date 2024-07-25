@@ -906,11 +906,9 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, idx_gmc,
                 lt_df_gmc[gmpe].loc['median']))
             if Nstd != 0:
                 wt_plus_sig[gmpe] = np.array(
-                    pd.Series(lt_plus_sig[gmpe,'p_sig'].loc[
-                        'plus_sigma']))
+                    pd.Series(lt_plus_sig[gmpe,'p_sig'].loc['plus_sigma']))
                 wt_minus_sig[gmpe] = np.array(
-                    pd.Series(lt_minus_sig[gmpe,'m_sig'].loc[
-                        'minus_sigma']))
+                    pd.Series(lt_minus_sig[gmpe,'m_sig'].loc['minus_sigma']))
         
     lt_df_gmc = pd.DataFrame(wt_per_gmpe_gmc, index=period)
     lt_plus_sig = pd.DataFrame(wt_plus_sig, index=period)
