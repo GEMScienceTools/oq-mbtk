@@ -155,34 +155,35 @@ class Configurations(object):
                             idx].split('=')[1])
             
         # Check weights for each logic tree (if present) equal 1.0
+        msg = "Sum of GMC logic tree weights must be 1.0"
         if weights[0] != {}:
             check_weights_gmc1 = np.array(pd.Series(weights[0]))
-            if np.sum(check_weights_gmc1, axis=0) != 1.0:
-                raise ValueError("GMPE logic tree weights must total 1.0")
+            lt_total_wt_gmc1 = np.sum(check_weights_gmc1, axis=0)
+            assert abs(lt_total_wt_gmc1-1.0) < 1e-10, msg
             self.lt_weights_gmc1 = weights[0]
         else:
             self.lt_weights_gmc1 = None
         
         if weights[1] != {}:
             check_weights_gmc2 = np.array(pd.Series(weights[1]))
-            if np.sum(check_weights_gmc2, axis=0) != 1.0:
-                raise ValueError("GMPE logic tree weights must total 1.0")
+            lt_total_wt_gmc2 = np.sum(check_weights_gmc2, axis=0)
+            assert abs(lt_total_wt_gmc2-1.0) < 1e-10, msg
             self.lt_weights_gmc2 = weights[1]
         else:
             self.lt_weights_gmc2 = None
 
         if weights[2] != {}:
             check_weights_gmc3 = np.array(pd.Series(weights[2]))
-            if np.sum(check_weights_gmc3, axis=0) != 1.0:
-                raise ValueError("GMPE logic tree weights must total 1.0")
+            lt_total_wt_gmc3 = np.sum(check_weights_gmc3, axis=0)
+            assert abs(lt_total_wt_gmc3-1.0) < 1e-10, msg
             self.lt_weights_gmc3 = weights[2]
         else:
             self.lt_weights_gmc3 = None
             
         if weights[3] != {}:
             check_weights_gmc4 = np.array(pd.Series(weights[3]))
-            if np.sum(check_weights_gmc4, axis=0) != 1.0:
-                raise ValueError("GMPE logic tree weights must total 1.0")
+            lt_total_wt_gmc4 = np.sum(check_weights_gmc4, axis=0)
+            assert abs(lt_total_wt_gmc4-1.0) < 1e-10, msg
             self.lt_weights_gmc4 = weights[3]
         else:
             self.lt_weights_gmc4 = None
