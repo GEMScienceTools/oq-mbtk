@@ -1134,7 +1134,6 @@ class Residuals(object):
         n = len(x)
         p = 1/n
         pvalues = list(np.linspace(p,1,n))
-        
         return x, pvalues
     
     def step_data(self, x,y):
@@ -1153,9 +1152,10 @@ class Residuals(object):
         """
         x, p = self.cdf(data)
         if step_flag is True:
-            return self.step_data(x, p)
+            xx, yy = self.step_data(x, p)
+            return np.array(xx), np.array(yy)
         else:
-            return x, p
+            return np.array(x), np.array(p)
     
     def get_stochastic_area_wrt_imt(self):
         """
@@ -1189,8 +1189,18 @@ class Residuals(object):
                 
                 # Get the CDF for distribution from gmm
                 x_cdf, y_cdf = self.get_cdf_data(list(exp))
-                
-                # Get area under each curve
+
+                # Get approximately overlapping subsets of ECDF and CDF
+                ecdf_xvals = [np.min(x_ecdf), np.max(x_ecdf)]
+                cdf_xvals = [np.min(x_cdf), np.max(x_cdf)]
+                xval_min = np.max([ecdf_xvals[0], cdf_xvals[0]])
+                xval_max = np.min([ecdf_xvals[1], cdf_xvals[1]])
+                idx_ecdf = np.logical_and(x_ecdf<=xval_max, x_ecdf>=xval_min)
+                idx_cdf = np.logical_and(x_cdf<=xval_max, x_cdf>=xval_min)
+                x_ecdf, y_ecdf = x_ecdf[idx_ecdf], y_ecdf[idx_ecdf]
+                x_cdf, y_cdf = x_cdf[idx_cdf], y_cdf[idx_cdf]
+
+                # Get area under each curve's overlapping portions
                 area_obs = np.trapz(y_ecdf, x_ecdf)
                 area_gmm = np.trapz(y_cdf, x_cdf)
 
