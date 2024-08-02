@@ -26,15 +26,18 @@ from datetime import datetime
 from collections import OrderedDict
 import numpy as np
 import h5py
+
 from openquake.hazardlib import imt
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
-from openquake.smt.sm_utils import vs30_to_z1pt0_as08, z1pt0_to_z2pt5
-from openquake.smt.sm_utils import vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14
-import openquake.smt.sm_utils as utils
-from openquake.smt import surface_utils
-from openquake.smt.residuals.context_db import ContextDB
 from openquake.hazardlib.geo import geodetic
+from openquake.smt.residuals import sm_database_surface_utils
+from openquake.smt.residuals.context_db import ContextDB
+import openquake.smt.utils_strong_motion as utils
+from openquake.smt.utils_strong_motion import (vs30_to_z1pt0_cy14,
+                                               vs30_to_z2pt5_cb14,
+                                               vs30_to_z1pt0_as08,
+                                               z1pt0_to_z2pt5)
 
 
 class Magnitude(object):
@@ -175,7 +178,7 @@ class Rupture(object):
                                self.hypocentre.latitude,
                                self.hypocentre.depth]
             elif key == "surface" and self.surface is not None:
-                output[key] = surface_utils.surfaces_to_dict[
+                output[key] = sm_database_surface_utils.surfaces_to_dict[
                     self.surface.__class__.__name__](self.surface)
             else:
                 output[key] = getattr(self, key)
@@ -193,8 +196,8 @@ class Rupture(object):
             if key in ["id", "name", "magnitude", "length", "width", "depth"]:
                 continue
             elif key == "surface" and data["surface"] is not None:
-                rup.surface = surface_utils.surfaces_from_dict(data[key]["type"],
-                                                               mesh_spacing)
+                rup.surface = sm_database_surface_utils.surfaces_from_dict(
+                    data[key]["type"], mesh_spacing)
             else:
                 setattr(rup, key, data[key])
         return rup

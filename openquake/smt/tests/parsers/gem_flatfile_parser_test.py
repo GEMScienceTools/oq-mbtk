@@ -19,15 +19,12 @@
 Tests parsing of the GEM globally homogenised flatfile using the parser
 """
 import os
-import sys
 import shutil
 import unittest
-from openquake.smt.parsers.gem_flatfile_parser import GEMFlatfileParser
+import pickle
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from openquake.smt.residuals.parsers.gem_flatfile_parser import GEMFlatfileParser
+
 
 # Defines the record IDs for the target data set
 TARGET_IDS = [

@@ -20,23 +20,18 @@ Test suite for the `residual_plotter` module responsible for plotting the
 plot data defined in `residual_plots`
 """
 import os
-import sys
 import shutil
 import unittest
+import pickle
 from unittest.mock import patch, MagicMock
 
-from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+from openquake.smt.residuals.parsers.esm_flatfile_parser import \
+    ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
-from openquake.smt.residuals.residual_plotter import ResidualPlot, LikelihoodPlot,\
-    ResidualWithMagnitude, ResidualWithDepth, ResidualWithVs30, \
-    ResidualWithDistance
-from openquake.smt.database_visualiser import DISTANCES
-
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from openquake.smt.residuals.residual_plotter import (
+    ResidualPlot, LikelihoodPlot, ResidualWithMagnitude, ResidualWithDepth,
+    ResidualWithVs30, ResidualWithDistance)
+from openquake.smt.residuals.sm_database_visualiser import DISTANCES
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
