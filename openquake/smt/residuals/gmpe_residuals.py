@@ -1174,28 +1174,28 @@ class Residuals(object):
             stoch_area_wrt_imt = {}
             for imtx in self.imts:
                 obs = np.array([], dtype=float)
-                expected = np.array([], dtype=float)
-                stddev = np.array([], dtype=float)
+                exp = np.array([], dtype=float)
+                std = np.array([], dtype=float)
                 for context in self.contexts:
                     obs = np.hstack(
                         [obs, np.log(context["Observations"][imtx])])
-                    expected = np.hstack(
-                        [expected,context["Expected"][gmpe][imtx]["Mean"]])
+                    exp = np.hstack(
+                        [exp,context["Expected"][gmpe][imtx]["Mean"]])
                     stddev = np.hstack(
-                        [stddev,context["Expected"][gmpe][imtx]["Total"]])
+                        [std,context["Expected"][gmpe][imtx]["Total"]])
                 
-                # Get the ECDF for distribution from data
+                # Get the ECDF for distribution from observations
                 x_ecdf, y_ecdf = self.get_cdf_data(list(obs), step_flag=True)
                 
                 # Get the CDF for distribution from gmm
-                x_cdf, y_cdf = self.get_cdf_data(list(expected))
+                x_cdf, y_cdf = self.get_cdf_data(list(exp))
                 
                 # Get area under each curve
-                area_data = np.trapz(y_ecdf, x_ecdf)
+                area_obs = np.trapz(y_ecdf, x_ecdf)
                 area_gmm = np.trapz(y_cdf, x_cdf)
-                
+
                 # Get absolute of difference in areas - eq 3 of paper
-                stoch_area_wrt_imt[imtx] = np.abs(area_gmm-area_data) 
+                stoch_area_wrt_imt[imtx] = np.abs(area_gmm-area_obs) 
              
             # Store the stoch area per imt per gmm
             stoch_area_store[gmpe] = stoch_area_wrt_imt
