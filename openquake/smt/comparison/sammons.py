@@ -63,12 +63,6 @@ def sammon(x, n=2, display=2, inputdist='raw', maxhalves=20, maxiter=500,
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
     """
-#
-#    def euclid(a,b):
-#        d = np.sqrt( ((a**2).sum(axis=1)*np.ones([1,b.shape[0]]).T).T + \
-#            np.ones([a.shape[0],1])*(b**2).sum(axis=1)-2*(np.dot(a,b.T)))
-#        return d
-
     X = x
 
     # Create distance matrix unless given by parameters
