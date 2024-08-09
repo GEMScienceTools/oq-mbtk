@@ -35,7 +35,8 @@ from openquake.smt.residuals import sm_database_surface_utils
 from openquake.smt.residuals.context_db import ContextDB
 import openquake.smt.utils_strong_motion as utils
 from openquake.smt.utils_strong_motion import (vs30_to_z1pt0_cy14,
-                                               vs30_to_z2pt5_cb14)
+                                               vs30_to_z2pt5_cb14,
+                                               z1pt0_to_z2pt5)
 
 
 class Magnitude(object):
@@ -663,7 +664,7 @@ class RecordSite(object):
         if self.z2pt5:
             z2pt5 = self.z2pt5
         else:
-            z2pt5 = vs30_to_z2pt5_cb14(z1pt0)
+            z2pt5 = z1pt0_to_z2pt5(z1pt0)
         
         location = Point(self.longitude,
                          self.latitude,
