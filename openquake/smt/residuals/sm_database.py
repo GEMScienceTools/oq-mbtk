@@ -36,7 +36,6 @@ from openquake.smt.residuals.context_db import ContextDB
 import openquake.smt.utils_strong_motion as utils
 from openquake.smt.utils_strong_motion import (vs30_to_z1pt0_cy14,
                                                vs30_to_z2pt5_cb14,
-                                               vs30_to_z1pt0_as08,
                                                z1pt0_to_z2pt5)
 
 
@@ -660,7 +659,7 @@ class RecordSite(object):
         if self.z1pt0:
             z1pt0 = self.z1pt0
         else:
-            z1pt0 = vs30_to_z1pt0_as08(vs30)
+            z1pt0 = vs30_to_z1pt0_cy14(vs30)
 
         if self.z2pt5:
             z2pt5 = self.z2pt5
