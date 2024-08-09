@@ -1,0 +1,32 @@
+openquake.mbt package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.mbt.guis
+   openquake.mbt.notebooks
+   openquake.mbt.tests
+   openquake.mbt.tools
+
+Submodules
+----------
+
+openquake.mbt.oqt\_project module
+---------------------------------
+
+.. automodule:: openquake.mbt.oqt_project
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt
+   :members:
+   :undoc-members:
+   :show-inheritance:

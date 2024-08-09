@@ -1,0 +1,61 @@
+openquake.smt.tests.parsers package
+===================================
+
+Submodules
+----------
+
+openquake.smt.tests.parsers.asa\_parser\_test module
+----------------------------------------------------
+
+.. automodule:: openquake.smt.tests.parsers.asa_parser_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.tests.parsers.esm\_flatfile\_parser\_test module
+--------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.parsers.esm_flatfile_parser_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.tests.parsers.esm\_url\_flatfile\_parser\_test module
+-------------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.parsers.esm_url_flatfile_parser_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.tests.parsers.esm\_ws\_flatfile\_parser\_test module
+------------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.parsers.esm_ws_flatfile_parser_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.tests.parsers.gem\_flatfile\_parser\_test module
+--------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.parsers.gem_flatfile_parser_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.tests.parsers.ngawest2\_flatfile\_parser\_test module
+-------------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.parsers.ngawest2_flatfile_parser_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.tests.parsers
+   :members:
+   :undoc-members:
+   :show-inheritance:
