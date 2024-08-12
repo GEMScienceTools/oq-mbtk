@@ -37,15 +37,13 @@ from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
 
 def _get_first_point(rup, from_point):
     """
-    Get the first point in the collection of sites from the rupture. Currently
-    the SMT only computes ground-shaking for up or down-dip from the up-dip edge
-    centre point.
-
-    Will be expanded to include up-or-down dip from down-dip edge centre point
-    or from a vertex of the rupture.
+    Get the first point in the collection of sites from the rupture.
+    
+    Currently the SMT only computes ground-shaking for up or down-dip from the
+    up-dip edge centre point. Will be expanded to include up-or-down dip from
+    down-dip edge centre point or from a vertex of the rupture.
     """
     sfc = rup.surface
-
     if from_point == 'TC':  # Get the up-dip edge centre point
         return sfc.get_top_edge_centroid()
 
