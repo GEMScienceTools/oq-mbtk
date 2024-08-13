@@ -219,6 +219,12 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
     else:
         raise ValueError('No valid distance type specified.')
 
+    if direction == 'positive':
+        distances[len(distances) - 1] = maxR
+    elif direction == 'negative':
+        distances[0] = maxR # Ensure can interpolate for RS if site is down-dip
+        assert distances[0] - maxR < 1
+
     return mean, std, distances, tau, phi
 
 
