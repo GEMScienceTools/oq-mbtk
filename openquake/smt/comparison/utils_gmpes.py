@@ -179,7 +179,7 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
         props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
                  'vs30measured': True}
 
-    # Check if site up-dip or down-dip of site
+    # Check if site up-dip or down-dip of site (from upper edge centroid)
     if up_or_down_dip == float(1):
         direction = 'positive'
     elif up_or_down_dip == float(0):
@@ -210,14 +210,14 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
     if dist_type == 'repi':
         distances = ctxs.repi
-    if dist_type == 'rrup':
+    elif dist_type == 'rrup':
         distances = ctxs.rrup
-    if dist_type == 'rjb':
+    elif dist_type == 'rjb':
         distances = ctxs.rjb
-    if dist_type == 'rhypo':
+    elif dist_type == 'rhypo':
         distances = ctxs.rhypo
-
-    distances[len(distances) - 1] = maxR
+    else:
+        raise ValueError('No valid distance type specified.')
 
     return mean, std, distances, tau, phi
 
