@@ -40,11 +40,16 @@ def _get_first_point(rup, from_point):
     Get the first point in the collection of sites from the rupture.
     
     Currently the SMT only computes ground-shaking for up or down-dip from the
-    up-dip edge centre point. Will be expanded to include up-or-down dip from
-    down-dip edge centre point or from a vertex of the rupture.
+    up-dip edge centre point (rrup, rjb), or from midpoint of the rupture (repi,
+    rhypo). Will be expanded to include up-or-down dip from down-dip edge centre
+    point or from a vertex of the rupture.
     """
     sfc = rup.surface
-    if from_point == 'TC':  # Get the up-dip edge centre point
+
+    if from_point == 'MP':
+        return sfc.get_middle_point() # Get midpoint of rup surface
+
+    elif from_point == 'TC':  # Get the up-dip edge centre point
         return sfc.get_top_edge_centroid()
 
     elif from_point == 'BC':  # Get the down-dip edge centre point
@@ -179,16 +184,22 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
         props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
                  'vs30measured': True}
 
-    # Check if site up-dip or down-dip of site (from upper edge centroid)
+    # Check if site up-dip or down-dip of site
     if up_or_down_dip == float(1):
         direction = 'positive'
     elif up_or_down_dip == float(0):
         direction = 'negative'
+    else:
+        raise ValueError('The site must be specified as up or down dip.')
 
     # Get sites
-    sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
-                                   direction=direction, hdist=maxR,
-                                   step=step, site_props=props)
+    if dist_type in ['repi', 'rhypo']:
+        from_pnt = 'MP' # Sites from midpoint of rup surface
+    else:
+        from_pnt = 'TC' # Sites from center of top edge
+    sites = get_sites_from_rupture(rup, from_point=from_pnt, toward_azimuth=90,
+                                   direction=direction, hdist=maxR, step=step,
+                                   site_props=props)
 
     # Add main R types to gmpe so can plot against repi, rrup, rjb and rhypo
     core_r_types = ['repi', 'rrup', 'rjb', 'rhypo']
@@ -218,12 +229,6 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
         distances = ctxs.rhypo
     else:
         raise ValueError('No valid distance type specified.')
-
-    if direction == 'positive':
-        distances[len(distances) - 1] = maxR
-    elif direction == 'negative':
-        distances[0] = maxR # Ensure can interpolate for RS if site is down-dip
-        assert distances[0] - maxR < 1
 
     return mean, std, distances, tau, phi
 
