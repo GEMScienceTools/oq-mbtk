@@ -229,7 +229,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                                                            aratio_g, strike_g,
                                                            dip_g, config.rake,
                                                            config.Vs30, Z1, Z25,
-                                                           dist, 0.1, imt, ztor_m,
+                                                           500, 0.1, imt, ztor_m,
                                                            config.eshm20_region,
                                                            config.dist_type,
                                                            config.trt,
