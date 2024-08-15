@@ -225,11 +225,12 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                         ztor_m = None
                         
                     # Get mean and sigma
-                    dist_type = 'repi' # Always set to repi to avoid possibility
-                                       # of interpolation issues if plotting
-                                       # against rupture or rjb distance (i.e. 
-                                       # user requires spectra at a rrup or rjb
-                                       # distance less than smallest available)
+                    dist_type = 'repi' # Spectra are only computed for specified
+                                       # repi distances rather than rrup or rjb
+                                       # to avoid issues with interpolating for
+                                       # ground-motion values at very small rrup
+                                       # or rjb (requested rrup or rjb can be
+                                       # smaller than min rrup or rjb in a ctx)
                     mu, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
                                                            aratio_g, strike_g,
                                                            dip_g, config.rake,
