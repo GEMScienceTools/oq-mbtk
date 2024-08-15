@@ -229,7 +229,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                                        # repi distances rather than rrup or rjb
                                        # to avoid issues with interpolating for
                                        # ground-motion values at very small rrup
-                                       # or rjb (requested rrup or rjb can be
+                                       # or rjb (specified rrup or rjb can be
                                        # smaller than min rrup or rjb in a ctx)
                     mu, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
                                                            aratio_g, strike_g,
