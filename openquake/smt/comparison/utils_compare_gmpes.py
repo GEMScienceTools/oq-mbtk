@@ -225,14 +225,18 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                         ztor_m = None
                         
                     # Get mean and sigma
+                    dist_type = 'repi' # Always set to repi to avoid possibility
+                                       # of interpolation issues if plotting
+                                       # against rupture or rjb distance (i.e. 
+                                       # user requires spectra at a rrup or rjb
+                                       # distance less than smallest available)
                     mu, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
                                                            aratio_g, strike_g,
                                                            dip_g, config.rake,
                                                            config.Vs30, Z1, Z25,
                                                            500, 0.1, imt, ztor_m,
                                                            config.eshm20_region,
-                                                           config.dist_type,
-                                                           config.trt,
+                                                           dist_type, config.trt,
                                                            config.up_or_down_dip) 
                     
                     # Interpolate for distances and store
