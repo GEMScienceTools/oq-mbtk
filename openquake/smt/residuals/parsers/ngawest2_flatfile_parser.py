@@ -285,7 +285,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                                   [None, None, None],
                                   event, distances, site,
                                   xcomp, ycomp,
-                                  vert=vert)
+                                  vertical=vert)
 
     def _parse_event_data(self, metadata):
         """
@@ -349,7 +349,6 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         """
         If rupture data is available - parse it, otherwise return None
         """
-
         sof = metadata["fm_type_code"]
         if not metadata["event_source_id"].strip():
             # No rupture model available. Mechanism is limited to a style
