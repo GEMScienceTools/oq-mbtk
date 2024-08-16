@@ -192,7 +192,6 @@ def plot_best_mfds(df_best, figsdir):
 
 # Function to calculate normalized histogram for a group
 def norm_histo(group, field='rates', bins=10):
-    #    breakpoint()
     counts, bin_edges = np.histogram(group[field], bins=bins, density=True)
     # Normalize counts to ensure the area under the histogram equals 1
     bin_widths = np.diff(bin_edges)
