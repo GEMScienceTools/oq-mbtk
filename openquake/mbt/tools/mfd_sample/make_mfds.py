@@ -220,10 +220,9 @@ def make_many_mfds(configfile, basedir=None):
 
     # make subdirs based on outdir name
     catdir = os.path.join(outdir, 'catalogues')
-    if config['decluster']['decl_directory']:
-        decdir = config['decluster']['decl_directory']
-    else:
-        decdir = os.path.join(outdir, 'declustered')
+    if config['decluster']:
+        decdirroot = config['decluster'].get('decl_directory', 'declustered')
+        decdir = os.path.join(outdir, decdirroot)
     resdir = os.path.join(outdir, 'results')
     compdir = os.path.join(outdir, 'completeness')
     figdir = os.path.join(outdir, 'figures')
