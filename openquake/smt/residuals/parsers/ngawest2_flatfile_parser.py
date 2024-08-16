@@ -101,182 +101,151 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             counter += 1
 
     @classmethod
-    def autobuild(cls, dbid, dbname, output_location, 
-                  NGAWest2_flatfile_directory, 
-                  NGAWest2_vertical_flatfile_directory):
+    def autobuild(cls, dbid, dbname, output_location, ngaw2_horz,  ngaw2_vert):
         """
         Quick and dirty full database builder!
         """
+        # Import ngawest2 format strong-motion flatfiles
+        ngawest2 = pd.read_csv(ngaw2_horz)
+        ngawest2_vert = pd.read_csv(ngaw2_vert)
         
-        # Import NGAWest2 format strong-motion flatfiles
-        NGAWest2 = pd.read_csv(NGAWest2_flatfile_directory)
-        NGAWest2_vertical = pd.read_csv(NGAWest2_vertical_flatfile_directory)
-        
-        # Check RotD50 and vertical records match
-        for rec in range(0,len(NGAWest2)):
-            if NGAWest2['Record Sequence Number'
-                        ].iloc[rec]!=NGAWest2_vertical[
-                            'Record Sequence Number'].iloc[rec]:
-                raise ValueError("Records within horizontal and vertical flatfiles do not match.")
+        # Check RotD50 and vert records match
+        for rec in range(0,len(ngawest2)):
+            if ngawest2['Record Sequence Number'].iloc[rec]!=\
+                ngawest2_vert['Record Sequence Number'].iloc[rec]:
+                raise ValueError(
+                    "Records within horz. and vert. do not match.")
         
         # Count initial size for printing number records removed during checks
-        Initial_NGAWest2_size = len(NGAWest2)
+        initial_ngaw2_size = len(ngawest2)
 
         # Remove potential duplicate records in NGA-West2 flatfile
-        NGAWest2 = NGAWest2.drop_duplicates(subset=
-                                            ['Earthquake Name',
-                                                    'Station Name'],
-                                            keep='last')
-        NGAWest2_vertical = NGAWest2_vertical.drop_duplicates(
-            subset=['Earthquake Name', 'Station Name'], keep='last')
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(
-            columns='index')
+        ngawest2 = ngawest2.drop_duplicates(
+            subset = ['Earthquake Name','Station Name'], keep='last')
+        ngawest2_vert = ngawest2_vert.drop_duplicates(
+            subset = ['Earthquake Name', 'Station Name'], keep='last')
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
 
         # Remove records if earthquake not identifiable using lat/lon metadata
-        Index_to_drop=np.array(NGAWest2.loc[
-            NGAWest2['Hypocenter Latitude (deg)']==-999][
-                'Hypocenter Latitude (deg)'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2[
-            'Hypocenter Longitude (deg)']==-999][
-                'Hypocenter Longitude (deg)'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2[
-            'Hypocenter Depth (km)']==-999]['Hypocenter Depth (km)'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
+        idx_m = ngawest2.loc[ngawest2['Hypocenter Latitude (deg)']==-999].index
+        ngawest2 = ngawest2.drop(idx_m)
+        ngawest2_vert = ngawest2_vert.drop(idx_m)
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        idx_m = ngawest2.loc[ngawest2['Hypocenter Longitude (deg)']==-999].index
+        ngawest2 = ngawest2.drop(idx_m)
+        ngawest2_vert=ngawest2_vert.drop(idx_m)
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        idx_m = ngawest2.loc[ngawest2['Hypocenter Depth (km)']==-999].index
+        ngawest2 = ngawest2.drop(idx_m)
+        ngawest2_vert=ngawest2_vert.drop(idx_m)
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
         
         # If year not provided assign '0000' to work with datetime
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['YEAR']=='-999'][
-            'YEAR'].index)
-        NGAWest2['YEAR'].iloc[Index_to_drop]='0000'
+        idx_m = ngawest2.loc[ngawest2['YEAR']=='-999'].index
+        ngawest2['YEAR'].iloc[idx_m] = '0000'
                 
         # If month and day not provided assign '1010' to work with datetime
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['MODY']=='-999'][
-            'MODY'].index)
-        NGAWest2['MODY'].iloc[Index_to_drop]='000'
+        idx_m = ngawest2.loc[ngawest2['MODY']=='-999'].index
+        ngawest2['MODY'].iloc[idx_m] = '000'
         
         # If hours and minutes not provided assign '000' to work with datetime
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical=NGAWest2_vertical.reset_index().drop(columns='index')
-        for rec in range(0,len(NGAWest2)):
-            if NGAWest2['HRMN'][rec]==-999:
-                NGAWest2['HRMN'][rec]='000'
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        for rec in range(0,len(ngawest2)):
+            if ngawest2['HRMN'][rec]==-999: ngawest2['HRMN'][rec]='000'
         
         # Remove records with no acceleration values
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['PGA (g)']==-999][
-            'PGA (g)'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(
-            columns='index')
+        idx_m = ngawest2.loc[ngawest2['PGA (g)']==-999].index
+        ngawest2 = ngawest2.drop(idx_m)
+        ngawest2_vert = ngawest2_vert.drop(idx_m)
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
 
         # Remove records with no seismic moment to compute moment magnitude from
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Mo (dyne.cm)']==-999][
-            'Mo (dyne.cm)'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(
-            columns='index')
+        idx_m = ngawest2.loc[ngawest2['Mo (dyne.cm)']==-999].index
+        ngawest2 = ngawest2.drop(idx_m)
+        ngawest2_vert=ngawest2_vert.drop(idx_m)
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
         
         # Remove records with no valid station name
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Station Name']==-999][
-            'Station Name'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
+        idx_m = ngawest2.loc[ngawest2['Station Name']==-999].index
+        ngawest2 = ngawest2.drop(idx_m)
+        ngawest2_vert=ngawest2_vert.drop(idx_m)
         
         # Remove records with no strike, dip or rake angle
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Strike (deg)']==-999][
-            'Strike (deg)'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
+        idx_m = ngawest2.loc[ngawest2['Strike (deg)']==-999].index
+        ngawest2 = ngawest2.drop(idx_m)
+        ngawest2_vert = ngawest2_vert.drop(idx_m)
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
         
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Dip (deg)']==-999][
-            'Dip (deg)'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
+        idx_m = ngawest2.loc[ngawest2['Dip (deg)']==-999].index
+        ngawest2 = ngawest2.drop(idx_m)
+        ngawest2_vert = ngawest2_vert.drop(idx_m)
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
         
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Rake Angle (deg)']==-999][
-            'Rake Angle (deg)'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
+        idx_m = ngawest2.loc[ngawest2['Rake Angle (deg)']==-999].index
+        ngawest2 = ngawest2.drop(idx_m)
+        ngawest2_vert = ngawest2_vert.drop(idx_m)
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
         
         # Replace -999 ztor with empty
-        NGAWest2['Depth to Top Of Fault Rupture Model'].replace(-999, '')
+        ngawest2['Depth to Top Of Fault Rupture Model'].replace(-999, None)
         
         # Remove records with no epicentral distance
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['EpiD (km)']==-999][
-            'EpiD (km)'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
+        idx_m = ngawest2.loc[ngawest2['EpiD (km)']==-999].index
+        ngawest2 = ngawest2.drop(idx_m)
+        ngawest2_vert = ngawest2_vert.drop(idx_m)
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
         
         # If Joyner-Boore, rupture distance, Rx or Ry = -999 reassign as empty
-        Index_to_drop=np.array(NGAWest2.loc[
-            NGAWest2['Joyner-Boore Dist. (km)']==-999][
-                'Joyner-Boore Dist. (km)'].index)
-        NGAWest2['Joyner-Boore Dist. (km)'][Index_to_drop] = ''
+        idx_m = ngawest2.loc[ngawest2['Joyner-Boore Dist. (km)']==-999].index
+        ngawest2['Joyner-Boore Dist. (km)'][idx_m] = None
     
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2[
-            'Campbell R Dist. (km)']==-999]['Campbell R Dist. (km)'].index)
-        NGAWest2['Campbell R Dist. (km)'][Index_to_drop] = ''
+        idx_m = ngawest2.loc[ngawest2['Campbell R Dist. (km)']==-999].index
+        ngawest2['Campbell R Dist. (km)'][idx_m] = None
 
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Rx']==-999]['Rx'].index)
-        NGAWest2['Rx'][Index_to_drop] = ''
+        idx_m = ngawest2.loc[ngawest2['Rx']==-999].index
+        ngawest2['Rx'][idx_m] = None
 
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Ry 2']==-999][
-            'Ry 2'].index)
-        NGAWest2['Ry 2'][Index_to_drop] = ''
+        idx_m = ngawest2.loc[ngawest2['Ry 2']==-999].index
+        ngawest2['Ry 2'][idx_m] = None
         
         # Remove records with no vs30)
-        Index_to_drop=np.array(NGAWest2.loc[
-            NGAWest2['Vs30 (m/s) selected for analysis']==-999][
-                'Vs30 (m/s) selected for analysis'].index)
-        NGAWest2=NGAWest2.drop(Index_to_drop)
-        NGAWest2_vertical=NGAWest2_vertical.drop(Index_to_drop)
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(columns='index')
+        idx_m = ngawest2.loc[ngawest2['Vs30 (m/s) selected for analysis']==-999].index
+        ngawest2 = ngawest2.drop(idx_m)
+        ngawest2_vert=ngawest2_vert.drop(idx_m)
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
         
         # Compute Mw from seismic moment using Hanks and Kamori
-        NGAWest2['Earthquake Magnitude'] = (np.log10(NGAWest2[
-            'Mo (dyne.cm)']) - 16.05)/1.5 # From NGAWest2 database rep. pp.122
+        ngawest2['Earthquake Magnitude'] = (np.log10(ngawest2[
+            'Mo (dyne.cm)']) - 16.05)/1.5 # From ngawest2 database rep. pp.122
         
-        NGAWest2 = NGAWest2.reset_index().drop(columns='index')
-        NGAWest2_vertical = NGAWest2_vertical.reset_index().drop(
+        ngawest2 = ngawest2.reset_index().drop(columns='index')
+        ngawest2_vert = ngawest2_vert.reset_index().drop(
             columns='index')
       
         # Replace -999 in 'Owner' with unknown network code
-        Index_to_drop=np.array(NGAWest2.loc[NGAWest2['Owner']=='-999'][
-            'Owner'].index)
-        NGAWest2['Owner'].iloc[Index_to_drop]='NoNetworkCode'
-        NGAWest2['Owner'] = 'NetworkCode-'+NGAWest2['Owner'] 
+        idx_m = ngawest2.loc[ngawest2['Owner']=='-999'].index
+        ngawest2['Owner'].iloc[idx_m]='NoNetworkCode'
+        ngawest2['Owner'] = 'NetworkCode-'+ngawest2['Owner'] 
         
         # Interpolate between SA(T=4.4s) and SA(T=4.6s) for SA(T=4.5)
-        NGAWest2['T4.500S']=(NGAWest2['T4.400S']+NGAWest2['T4.600S'])/2
-        NGAWest2_vertical['T4.500S']=(NGAWest2_vertical[
-            'T4.400S']+NGAWest2_vertical['T4.600S'])/2        
+        ngawest2['T4.500S'] = (ngawest2['T4.400S']+ngawest2['T4.600S'])/2
+        ngawest2_vert['T4.500S'] = (ngawest2_vert['T4.400S'] + ngawest2_vert['T4.600S'])/2        
         
         # Get path to tmp csv once modified dataframe
         converted_base_data_path=_get_ESM18_headers(
-            NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size)
+            ngawest2, ngawest2_vert, initial_ngaw2_size)
                 
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
@@ -311,12 +280,12 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Parse the station metadata
         site = self._parse_site_data(metadata)
         # Parse waveform data
-        xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
+        xcomp, ycomp, vert = self._parse_waveform_data(metadata, wfid)
         return GroundMotionRecord(wfid,
                                   [None, None, None],
                                   event, distances, site,
                                   xcomp, ycomp,
-                                  vertical=vertical)
+                                  vert=vert)
 
     def _parse_event_data(self, metadata):
         """
@@ -592,7 +561,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                                                 dtype="f")
             spectra_dset[:] = np.copy(values)
             spectra_dset.attrs["Damping"] = 5.0
-        # Add on the horizontal values
+        # Add on the horz values
         hcomp = ims_grp.create_group("H")
         # Scalars - just geometric mean for now
         hscalar = hcomp.create_group("Scalar")
@@ -691,7 +660,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         return scalars, spectra
 
 
-def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
+def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):
     
     """
     Convert from NGAWest2 format flatfile to ESM18 format flatfile 
@@ -701,11 +670,11 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     final_event_id = {}
     fm_type_code_converted = {}
     final_station_id = {}
-    for rec in range(0,len(NGAWest2)):
+    for rec in range(0,len(ngawest2)):
         
         # Event time
-        event_time_year=NGAWest2.YEAR.iloc[rec]
-        event_time_month_and_day=str(NGAWest2.MODY.iloc[rec])
+        event_time_year=ngawest2.YEAR.iloc[rec]
+        event_time_month_and_day=str(ngawest2.MODY.iloc[rec])
         
         if len(event_time_month_and_day)==3:
             month=str('0')+str(event_time_month_and_day[0])
@@ -717,7 +686,7 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
         
         yyyy_mm_dd = str(event_time_year) + '-' + month + '-' + day
         
-        event_time_hr_and_min=str(NGAWest2.HRMN.iloc[rec])
+        event_time_hr_and_min=str(ngawest2.HRMN.iloc[rec])
         
         if len(event_time_hr_and_min)==3:
             hour=str('0')+str(event_time_hr_and_min[0])
@@ -732,80 +701,80 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
         event_time[rec] = yyyy_mm_dd + ' ' + hh_mm_ss
     
         # Reformat event id
-        delimited_event_id=str(NGAWest2['Earthquake Name'][rec])
-        delimited_event_id=delimited_event_id.replace(',','')
-        delimited_event_id=delimited_event_id.replace(' ','')
-        delimited_event_id=delimited_event_id.replace('/','')
-        delimited_event_id=delimited_event_id.replace('.','')
-        delimited_event_id=delimited_event_id.replace(':','')
-        delimited_event_id=delimited_event_id.replace(';','')
+        delimited_event_id = str(ngawest2['Earthquake Name'][rec])
+        delimited_event_id = delimited_event_id.replace(',','')
+        delimited_event_id = delimited_event_id.replace(' ','')
+        delimited_event_id = delimited_event_id.replace('/','')
+        delimited_event_id = delimited_event_id.replace('.','')
+        delimited_event_id = delimited_event_id.replace(':','')
+        delimited_event_id = delimited_event_id.replace(';','')
         final_event_id[rec] = 'Earthquake-' + delimited_event_id 
         
         # Assign ESM18 fault_code based on code in NGA-West2
-        if NGAWest2['Mechanism Based on Rake Angle'][rec]==0 or NGAWest2[
+        if ngawest2['Mechanism Based on Rake Angle'][rec]==0 or ngawest2[
                 'Mechanism Based on Rake Angle'][rec]==-999:
             ESM18_equivalent_fm_type_code='SS'
-        if NGAWest2[
+        if ngawest2[
                 'Mechanism Based on Rake Angle'][
-                    rec]==1 or NGAWest2['Mechanism Based on Rake Angle'][
+                    rec]==1 or ngawest2['Mechanism Based on Rake Angle'][
                         rec]==4:
             ESM18_equivalent_fm_type_code='NF'
-        if NGAWest2['Mechanism Based on Rake Angle'][
-                rec]==2 or NGAWest2['Mechanism Based on Rake Angle'][rec]==3:
+        if ngawest2['Mechanism Based on Rake Angle'][
+                rec]==2 or ngawest2['Mechanism Based on Rake Angle'][rec]==3:
             ESM18_equivalent_fm_type_code='TF'
         fm_type_code_converted[rec] = ESM18_equivalent_fm_type_code
         
         # Station id
-        delimited_station_id=str(NGAWest2['Station Name'][rec])
-        delimited_station_id=delimited_station_id.replace(',','')
-        delimited_station_id=delimited_station_id.replace(' ','')
-        delimited_station_id=delimited_station_id.replace('/','')
-        delimited_station_id=delimited_station_id.replace('.','')
-        delimited_station_id=delimited_station_id.replace(':','')
-        delimited_station_id=delimited_station_id.replace(';','')
+        delimited_station_id = str(ngawest2['Station Name'][rec])
+        delimited_station_id = delimited_station_id.replace(',','')
+        delimited_station_id = delimited_station_id.replace(' ','')
+        delimited_station_id = delimited_station_id.replace('/','')
+        delimited_station_id = delimited_station_id.replace('.','')
+        delimited_station_id = delimited_station_id.replace(':','')
+        delimited_station_id = delimited_station_id.replace(';','')
         final_station_id[rec] = 'StationName-'+delimited_station_id
     
     # Into df
-    NGAWest2['fm_type'] = pd.Series(fm_type_code_converted)
-    NGAWest2['station_id'] = pd.Series(final_station_id)
-    NGAWest2['event_time_reformatted'] = pd.Series(event_time)
-    NGAWest2['event_id_reformatted'] = pd.Series(final_event_id)
+    ngawest2['fm_type'] = pd.Series(fm_type_code_converted)
+    ngawest2['station_id'] = pd.Series(final_station_id)
+    ngawest2['event_time_reformatted'] = pd.Series(event_time)
+    ngawest2['event_id_reformatted'] = pd.Series(final_event_id)
 
     # Create nation code (not provided in NGA-West-2 so assign flag)
-    nation_code_default_string = np.full(len(NGAWest2['Station Name']),
-        "NGAWest2_does_not_provide_nation_codes") 
+    nation_code_default_string = np.full(len(ngawest2['Station Name']),
+        "ngawest2_does_not_provide_nation_codes") 
     default_nation_code = pd.Series(nation_code_default_string)
     
-    # Create channel codes for horizontal components as within NGAWest2 format
-    H1_string = np.full(len(NGAWest2['Station Name']), "H1")
+    # Create channel codes for horz components as within ngawest2 format
+    H1_string = np.full(len(ngawest2['Station Name']), "H1")
     default_H1_string = pd.Series(H1_string)
-    H2_string = np.full(len(NGAWest2['Station Name']), "H2")
+    H2_string = np.full(len(ngawest2['Station Name']), "H2")
     default_H2_string = pd.Series(H2_string)
-    V_string = np.full(len(NGAWest2['Station Name']), "V")
+    V_string = np.full(len(ngawest2['Station Name']), "V")
     default_V_string = pd.Series(V_string)
     
     # Create default value of 0 for location code string (arbitrary)
-    location_string = np.full(len(NGAWest2['Station Name']), "0.0")
+    location_string = np.full(len(ngawest2['Station Name']), "0.0")
     location_code_string = pd.Series(location_string)  
     
     # Create default values for headers not readily available or required
-    r_string = np.full(len(NGAWest2['Station Name']), "")
+    r_string = np.full(len(ngawest2['Station Name']), "")
     default_string = pd.Series(r_string)    
     
     # Construct dataframe with original ESM 2018 format 
     ESM_original_headers = pd.DataFrame(
     {
     # Non-GMIM headers   
-    "event_id":NGAWest2['event_id_reformatted'],                                       
-    "event_time":NGAWest2['event_time_reformatted'],
+    "event_id":ngawest2['event_id_reformatted'],                                       
+    "event_time":ngawest2['event_time_reformatted'],
     "ev_nation_code":default_nation_code,
-    "ev_latitude":NGAWest2['Hypocenter Latitude (deg)'],    
-    "ev_longitude":NGAWest2['Hypocenter Longitude (deg)'],   
-    "ev_depth_km":NGAWest2['Hypocenter Depth (km)'],
-    "fm_type_code":NGAWest2['fm_type'],
+    "ev_latitude":ngawest2['Hypocenter Latitude (deg)'],    
+    "ev_longitude":ngawest2['Hypocenter Longitude (deg)'],   
+    "ev_depth_km":ngawest2['Hypocenter Depth (km)'],
+    "fm_type_code":ngawest2['fm_type'],
     "ML":default_string,
     "ML_ref":default_string,
-    "Mw":NGAWest2['Earthquake Magnitude'],
+    "Mw":ngawest2['Earthquake Magnitude'],
     "Mw_ref":default_string,
     "Ms":default_string,
     "Ms_ref":default_string,
@@ -814,173 +783,173 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     "EMEC_Mw_ref":default_string,
     "event_source_id":default_string,
  
-    "es_strike":NGAWest2['Strike (deg)'],
-    "es_dip":NGAWest2['Dip (deg)'],
-    "es_rake":NGAWest2['Rake Angle (deg)'],
+    "es_strike":ngawest2['Strike (deg)'],
+    "es_dip":ngawest2['Dip (deg)'],
+    "es_rake":ngawest2['Rake Angle (deg)'],
     "es_strike_dip_rake_ref":default_string, 
-    "es_z_top":NGAWest2['Depth to Top Of Fault Rupture Model'],
-    "es_length":NGAWest2['Fault Rupture Length for Calculation of Ry (km)'],   
-    "es_width":NGAWest2['Fault Rupture Width (km)'],
+    "es_z_top":ngawest2['Depth to Top Of Fault Rupture Model'],
+    "es_length":ngawest2['Fault Rupture Length for Calculation of Ry (km)'],   
+    "es_width":ngawest2['Fault Rupture Width (km)'],
  
-    "network_code": NGAWest2['Owner'],
-    "station_code":NGAWest2['station_id'],
+    "network_code": ngawest2['Owner'],
+    "station_code":ngawest2['station_id'],
     "location_code":location_code_string,
     "instrument_code":default_string,     
     "sensor_depth_m":default_string,
     "proximity_code":default_string,
     "housing_code":default_string,
     "st_nation_code":default_string,
-    "st_latitude":NGAWest2['Station Latitude'],
-    "st_longitude":NGAWest2['Station Longitude'],
+    "st_latitude":ngawest2['Station Latitude'],
+    "st_longitude":ngawest2['Station Longitude'],
     "st_elevation":default_string,
     
-    "vs30_m_sec":NGAWest2['Vs30 (m/s) selected for analysis'],
+    "vs30_m_sec":ngawest2['Vs30 (m/s) selected for analysis'],
     "slope_deg":default_string,
     "vs30_m_sec_WA":default_string,
  
-    "epi_dist":NGAWest2['EpiD (km)'],
+    "epi_dist":ngawest2['EpiD (km)'],
     "epi_az":default_string,
-    "JB_dist":NGAWest2['Joyner-Boore Dist. (km)'],
-    "rup_dist":NGAWest2['Campbell R Dist. (km)'],
-    "Rx_dist":NGAWest2['Rx'],
+    "JB_dist":ngawest2['Joyner-Boore Dist. (km)'],
+    "rup_dist":ngawest2['Campbell R Dist. (km)'],
+    "Rx_dist":ngawest2['Rx'],
     "Ry0_dist":default_string,
  
     "instrument_type_code":default_string,      
     "late_triggered_flag_01":default_string,
     "U_channel_code":default_H1_string,
-    "U_azimuth_deg":NGAWest2['H1 azimth (degrees)'],
+    "U_azimuth_deg":ngawest2['H1 azimth (degrees)'],
     "V_channel_code":default_H2_string,
-    "V_azimuth_deg":NGAWest2['H2 azimith (degrees)'],
+    "V_azimuth_deg":ngawest2['H2 azimith (degrees)'],
     "W_channel_code":default_V_string, 
         
-    "U_hp":NGAWest2['HP-H1 (Hz)'],
-    "V_hp":NGAWest2['HP-H2 (Hz)'],
-    "W_hp":NGAWest2_vertical['HP-V (Hz)'],  
-    "U_lp":NGAWest2['LP-H1 (Hz)'],
-    "V_lp":NGAWest2['LP-H2 (Hz)'],
-    "W_lp":NGAWest2_vertical['LP-V (Hz)'], 
+    "U_hp":ngawest2['HP-H1 (Hz)'],
+    "V_hp":ngawest2['HP-H2 (Hz)'],
+    "W_hp":ngawest2_vert['HP-V (Hz)'],  
+    "U_lp":ngawest2['LP-H1 (Hz)'],
+    "V_lp":ngawest2['LP-H2 (Hz)'],
+    "W_lp":ngawest2_vert['LP-V (Hz)'], 
      
-    # SMT uses GM of two horizontal components so place RotD50 here
-    "U_pga":NGAWest2['PGA (g)']*981,
-    "V_pga":NGAWest2['PGA (g)']*981,
-    "W_pga":NGAWest2_vertical['PGA (g)']*981,
-    "U_pgv":NGAWest2['PGV (cm/sec)'],
-    "V_pgv":NGAWest2['PGV (cm/sec)'],
-    "W_pgv":NGAWest2_vertical['PGV (cm/sec)'],
-    "U_pgd":NGAWest2['PGD (cm)'],
-    "V_pgd":NGAWest2['PGD (cm)'],
-    "W_pgd":NGAWest2_vertical['PGD (cm)'],
+    # SMT uses GM of two horz components so place RotD50 here
+    "U_pga":ngawest2['PGA (g)']*981,
+    "V_pga":ngawest2['PGA (g)']*981,
+    "W_pga":ngawest2_vert['PGA (g)']*981,
+    "U_pgv":ngawest2['PGV (cm/sec)'],
+    "V_pgv":ngawest2['PGV (cm/sec)'],
+    "W_pgv":ngawest2_vert['PGV (cm/sec)'],
+    "U_pgd":ngawest2['PGD (cm)'],
+    "V_pgd":ngawest2['PGD (cm)'],
+    "W_pgd":ngawest2_vert['PGD (cm)'],
         
-    "U_T0_010":NGAWest2['T0.010S']*981,
-    "U_T0_025":NGAWest2['T0.025S']*981,
-    "U_T0_040":NGAWest2['T0.040S']*981,
-    "U_T0_050":NGAWest2['T0.050S']*981,
-    "U_T0_070":NGAWest2['T0.070S']*981,
-    "U_T0_100":NGAWest2['T0.100S']*981,
-    "U_T0_150":NGAWest2['T0.150S']*981,
-    "U_T0_200":NGAWest2['T0.200S']*981,
-    "U_T0_250":NGAWest2['T0.250S']*981,
-    "U_T0_300":NGAWest2['T0.300S']*981,
-    "U_T0_350":NGAWest2['T0.350S']*981,
-    "U_T0_400":NGAWest2['T0.400S']*981,
-    "U_T0_450":NGAWest2['T0.450S']*981,
-    "U_T0_500":NGAWest2['T0.500S']*981,
-    "U_T0_600":NGAWest2['T0.600S']*981,
-    "U_T0_700":NGAWest2['T0.700S']*981,
-    "U_T0_750":NGAWest2['T0.750S']*981,
-    "U_T0_800":NGAWest2['T0.800S']*981,
-    "U_T0_900":NGAWest2['T0.900S']*981,
-    "U_T1_000":NGAWest2['T1.000S']*981,
-    "U_T1_200":NGAWest2['T1.200S']*981,
-    "U_T1_400":NGAWest2['T1.400S']*981,
-    "U_T1_600":NGAWest2['T1.600S']*981,
-    "U_T1_800":NGAWest2['T1.800S']*981,
-    "U_T2_000":NGAWest2['T2.000S']*981,
-    "U_T2_500":NGAWest2['T2.500S']*981,
-    "U_T3_000":NGAWest2['T3.000S']*981,
-    "U_T3_500":NGAWest2['T3.500S']*981,
-    "U_T4_000":NGAWest2['T4.000S']*981,
-    "U_T4_500":NGAWest2['T4.500S']*981,
-    "U_T5_000":NGAWest2['T5.000S']*981,
-    "U_T6_000":NGAWest2['T6.000S']*981,
-    "U_T7_000":NGAWest2['T7.000S']*981,
-    "U_T8_000":NGAWest2['T8.000S']*981,
-    "U_T9_000":NGAWest2['T9.000S']*981,
-    "U_T10_000":NGAWest2['T10.000S']*981,
+    "U_T0_010":ngawest2['T0.010S']*981,
+    "U_T0_025":ngawest2['T0.025S']*981,
+    "U_T0_040":ngawest2['T0.040S']*981,
+    "U_T0_050":ngawest2['T0.050S']*981,
+    "U_T0_070":ngawest2['T0.070S']*981,
+    "U_T0_100":ngawest2['T0.100S']*981,
+    "U_T0_150":ngawest2['T0.150S']*981,
+    "U_T0_200":ngawest2['T0.200S']*981,
+    "U_T0_250":ngawest2['T0.250S']*981,
+    "U_T0_300":ngawest2['T0.300S']*981,
+    "U_T0_350":ngawest2['T0.350S']*981,
+    "U_T0_400":ngawest2['T0.400S']*981,
+    "U_T0_450":ngawest2['T0.450S']*981,
+    "U_T0_500":ngawest2['T0.500S']*981,
+    "U_T0_600":ngawest2['T0.600S']*981,
+    "U_T0_700":ngawest2['T0.700S']*981,
+    "U_T0_750":ngawest2['T0.750S']*981,
+    "U_T0_800":ngawest2['T0.800S']*981,
+    "U_T0_900":ngawest2['T0.900S']*981,
+    "U_T1_000":ngawest2['T1.000S']*981,
+    "U_T1_200":ngawest2['T1.200S']*981,
+    "U_T1_400":ngawest2['T1.400S']*981,
+    "U_T1_600":ngawest2['T1.600S']*981,
+    "U_T1_800":ngawest2['T1.800S']*981,
+    "U_T2_000":ngawest2['T2.000S']*981,
+    "U_T2_500":ngawest2['T2.500S']*981,
+    "U_T3_000":ngawest2['T3.000S']*981,
+    "U_T3_500":ngawest2['T3.500S']*981,
+    "U_T4_000":ngawest2['T4.000S']*981,
+    "U_T4_500":ngawest2['T4.500S']*981,
+    "U_T5_000":ngawest2['T5.000S']*981,
+    "U_T6_000":ngawest2['T6.000S']*981,
+    "U_T7_000":ngawest2['T7.000S']*981,
+    "U_T8_000":ngawest2['T8.000S']*981,
+    "U_T9_000":ngawest2['T9.000S']*981,
+    "U_T10_000":ngawest2['T10.000S']*981,
     
-    "V_T0_010":NGAWest2['T0.010S']*981,
-    "V_T0_025":NGAWest2['T0.025S']*981,
-    "V_T0_040":NGAWest2['T0.040S']*981,
-    "V_T0_050":NGAWest2['T0.050S']*981,
-    "V_T0_070":NGAWest2['T0.070S']*981,
-    "V_T0_100":NGAWest2['T0.100S']*981,
-    "V_T0_150":NGAWest2['T0.150S']*981,
-    "V_T0_200":NGAWest2['T0.200S']*981,
-    "V_T0_250":NGAWest2['T0.250S']*981,
-    "V_T0_300":NGAWest2['T0.300S']*981,
-    "V_T0_350":NGAWest2['T0.350S']*981,
-    "V_T0_400":NGAWest2['T0.400S']*981,
-    "V_T0_450":NGAWest2['T0.450S']*981,
-    "V_T0_500":NGAWest2['T0.500S']*981,
-    "V_T0_600":NGAWest2['T0.600S']*981,
-    "V_T0_700":NGAWest2['T0.700S']*981,
-    "V_T0_750":NGAWest2['T0.750S']*981,
-    "V_T0_800":NGAWest2['T0.800S']*981,
-    "V_T0_900":NGAWest2['T0.900S']*981,
-    "V_T1_000":NGAWest2['T1.000S']*981,
-    "V_T1_200":NGAWest2['T1.200S']*981,
-    "V_T1_400":NGAWest2['T1.400S']*981,
-    "V_T1_600":NGAWest2['T1.600S']*981,
-    "V_T1_800":NGAWest2['T1.800S']*981,
-    "V_T2_000":NGAWest2['T2.000S']*981,
-    "V_T2_500":NGAWest2['T2.500S']*981,
-    "V_T3_000":NGAWest2['T3.000S']*981,
-    "V_T3_500":NGAWest2['T3.500S']*981,
-    "V_T4_000":NGAWest2['T4.000S']*981,
-    "V_T4_500":NGAWest2['T4.500S']*981,
-    "V_T5_000":NGAWest2['T5.000S']*981,
-    "V_T6_000":NGAWest2['T6.000S']*981,
-    "V_T7_000":NGAWest2['T7.000S']*981,
-    "V_T8_000":NGAWest2['T8.000S']*981,
-    "V_T9_000":NGAWest2['T9.000S']*981,
-    "V_T10_000":NGAWest2['T10.000S']*981,
+    "V_T0_010":ngawest2['T0.010S']*981,
+    "V_T0_025":ngawest2['T0.025S']*981,
+    "V_T0_040":ngawest2['T0.040S']*981,
+    "V_T0_050":ngawest2['T0.050S']*981,
+    "V_T0_070":ngawest2['T0.070S']*981,
+    "V_T0_100":ngawest2['T0.100S']*981,
+    "V_T0_150":ngawest2['T0.150S']*981,
+    "V_T0_200":ngawest2['T0.200S']*981,
+    "V_T0_250":ngawest2['T0.250S']*981,
+    "V_T0_300":ngawest2['T0.300S']*981,
+    "V_T0_350":ngawest2['T0.350S']*981,
+    "V_T0_400":ngawest2['T0.400S']*981,
+    "V_T0_450":ngawest2['T0.450S']*981,
+    "V_T0_500":ngawest2['T0.500S']*981,
+    "V_T0_600":ngawest2['T0.600S']*981,
+    "V_T0_700":ngawest2['T0.700S']*981,
+    "V_T0_750":ngawest2['T0.750S']*981,
+    "V_T0_800":ngawest2['T0.800S']*981,
+    "V_T0_900":ngawest2['T0.900S']*981,
+    "V_T1_000":ngawest2['T1.000S']*981,
+    "V_T1_200":ngawest2['T1.200S']*981,
+    "V_T1_400":ngawest2['T1.400S']*981,
+    "V_T1_600":ngawest2['T1.600S']*981,
+    "V_T1_800":ngawest2['T1.800S']*981,
+    "V_T2_000":ngawest2['T2.000S']*981,
+    "V_T2_500":ngawest2['T2.500S']*981,
+    "V_T3_000":ngawest2['T3.000S']*981,
+    "V_T3_500":ngawest2['T3.500S']*981,
+    "V_T4_000":ngawest2['T4.000S']*981,
+    "V_T4_500":ngawest2['T4.500S']*981,
+    "V_T5_000":ngawest2['T5.000S']*981,
+    "V_T6_000":ngawest2['T6.000S']*981,
+    "V_T7_000":ngawest2['T7.000S']*981,
+    "V_T8_000":ngawest2['T8.000S']*981,
+    "V_T9_000":ngawest2['T9.000S']*981,
+    "V_T10_000":ngawest2['T10.000S']*981,
         
-    "W_T0_010":NGAWest2_vertical['T0.010S']*981,
-    "W_T0_025":NGAWest2_vertical['T0.025S']*981,
-    "W_T0_040":NGAWest2_vertical['T0.040S']*981,
-    "W_T0_050":NGAWest2_vertical['T0.050S']*981,
-    "W_T0_070":NGAWest2_vertical['T0.070S']*981,
-    "W_T0_100":NGAWest2_vertical['T0.100S']*981,
-    "W_T0_150":NGAWest2_vertical['T0.150S']*981,
-    "W_T0_200":NGAWest2_vertical['T0.200S']*981,
-    "W_T0_250":NGAWest2_vertical['T0.250S']*981,
-    "W_T0_300":NGAWest2_vertical['T0.300S']*981,
-    "W_T0_350":NGAWest2_vertical['T0.350S']*981,
-    "W_T0_400":NGAWest2_vertical['T0.400S']*981,
-    "W_T0_450":NGAWest2_vertical['T0.450S']*981,
-    "W_T0_500":NGAWest2_vertical['T0.500S']*981,
-    "W_T0_600":NGAWest2_vertical['T0.600S']*981,
-    "W_T0_700":NGAWest2_vertical['T0.700S']*981,
-    "W_T0_750":NGAWest2_vertical['T0.750S']*981,
-    "W_T0_800":NGAWest2_vertical['T0.800S']*981,
-    "W_T0_900":NGAWest2_vertical['T0.900S']*981,
-    "W_T1_000":NGAWest2_vertical['T1.000S']*981,
-    "W_T1_200":NGAWest2_vertical['T1.200S']*981,
-    "W_T1_400":NGAWest2_vertical['T1.400S']*981,
-    "W_T1_600":NGAWest2_vertical['T1.600S']*981,
-    "W_T1_800":NGAWest2_vertical['T1.800S']*981,
-    "W_T2_000":NGAWest2_vertical['T2.000S']*981,
-    "W_T2_500":NGAWest2_vertical['T2.500S']*981,
-    "W_T3_000":NGAWest2_vertical['T3.000S']*981,
-    "W_T3_500":NGAWest2_vertical['T3.500S']*981,
-    "W_T4_000":NGAWest2_vertical['T4.000S']*981,
-    "W_T4_500":NGAWest2_vertical['T4.500S']*981,
-    "W_T5_000":NGAWest2_vertical['T5.000S']*981,
-    "W_T6_000":NGAWest2_vertical['T6.000S']*981,
-    "W_T7_000":NGAWest2_vertical['T7.000S']*981,
-    "W_T8_000":NGAWest2_vertical['T8.000S']*981,
-    "W_T9_000":NGAWest2_vertical['T9.000S']*981,
-    "W_T10_000":NGAWest2_vertical['T10.000S']*981})
+    "W_T0_010":ngawest2_vert['T0.010S']*981,
+    "W_T0_025":ngawest2_vert['T0.025S']*981,
+    "W_T0_040":ngawest2_vert['T0.040S']*981,
+    "W_T0_050":ngawest2_vert['T0.050S']*981,
+    "W_T0_070":ngawest2_vert['T0.070S']*981,
+    "W_T0_100":ngawest2_vert['T0.100S']*981,
+    "W_T0_150":ngawest2_vert['T0.150S']*981,
+    "W_T0_200":ngawest2_vert['T0.200S']*981,
+    "W_T0_250":ngawest2_vert['T0.250S']*981,
+    "W_T0_300":ngawest2_vert['T0.300S']*981,
+    "W_T0_350":ngawest2_vert['T0.350S']*981,
+    "W_T0_400":ngawest2_vert['T0.400S']*981,
+    "W_T0_450":ngawest2_vert['T0.450S']*981,
+    "W_T0_500":ngawest2_vert['T0.500S']*981,
+    "W_T0_600":ngawest2_vert['T0.600S']*981,
+    "W_T0_700":ngawest2_vert['T0.700S']*981,
+    "W_T0_750":ngawest2_vert['T0.750S']*981,
+    "W_T0_800":ngawest2_vert['T0.800S']*981,
+    "W_T0_900":ngawest2_vert['T0.900S']*981,
+    "W_T1_000":ngawest2_vert['T1.000S']*981,
+    "W_T1_200":ngawest2_vert['T1.200S']*981,
+    "W_T1_400":ngawest2_vert['T1.400S']*981,
+    "W_T1_600":ngawest2_vert['T1.600S']*981,
+    "W_T1_800":ngawest2_vert['T1.800S']*981,
+    "W_T2_000":ngawest2_vert['T2.000S']*981,
+    "W_T2_500":ngawest2_vert['T2.500S']*981,
+    "W_T3_000":ngawest2_vert['T3.000S']*981,
+    "W_T3_500":ngawest2_vert['T3.500S']*981,
+    "W_T4_000":ngawest2_vert['T4.000S']*981,
+    "W_T4_500":ngawest2_vert['T4.500S']*981,
+    "W_T5_000":ngawest2_vert['T5.000S']*981,
+    "W_T6_000":ngawest2_vert['T6.000S']*981,
+    "W_T7_000":ngawest2_vert['T7.000S']*981,
+    "W_T8_000":ngawest2_vert['T8.000S']*981,
+    "W_T9_000":ngawest2_vert['T9.000S']*981,
+    "W_T10_000":ngawest2_vert['T10.000S']*981})
     
     # Output to folder where converted flatfile read into parser   
     DATA = os.path.abspath('')
@@ -988,7 +957,7 @@ def _get_ESM18_headers(NGAWest2, NGAWest2_vertical, Initial_NGAWest2_size):
     converted_base_data_path = os.path.join(DATA, tmp, 'converted_flatfile.csv')
     ESM_original_headers.to_csv(converted_base_data_path,sep=';')
 
-    print(Initial_NGAWest2_size - len(NGAWest2),
+    print(Initial_ngawest2_size - len(ngawest2),
           'records removed from imported NGA-West-2 flatfile during data quality checks.')
     
     return converted_base_data_path
