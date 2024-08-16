@@ -21,15 +21,13 @@ web service)
 --> https://esm-db.eu/#/waveform/search
 """
 import os
-import sys
 import shutil
 import unittest
-from openquake.smt.parsers.esm_ws_flatfile_parser import ESMFlatfileParserWS
+import pickle
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from openquake.smt.residuals.parsers.esm_ws_flatfile_parser import \
+    ESMFlatfileParserWS
+
 
 # Defines the record IDs for the target data set
 

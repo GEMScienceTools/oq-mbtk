@@ -69,7 +69,7 @@ from openquake.wkf.utils import create_folder
 from openquake.hmtk.parsers.catalogue import CsvCatalogueParser
 
 PLOTTING = True
-#PLOTTING = False
+# PLOTTING = False
 
 
 def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
@@ -653,7 +653,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
     cat_pickle_fname = os.path.abspath(os.path.join(ref_fdr, cat_pickle_fname))
     try:
         sort_cat = bool(config.get('main', 'sort_catalogue'))
-    except:
+    except Exception:
         sort_cat = False
 
     # Output
@@ -793,8 +793,13 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
     # Create the 3D mesh describing the volume of the slab. This `dlt` value
     # [in degrees] is used to create a buffer around the mesh
     dlt = 5.0
-    msh3d = Grid3d(milo - dlt, mila - dlt, mide,
-                   malo + dlt, mala + dlt, made, hspa, vspa)
+    msh3d = Grid3d(milo-dlt, mila-dlt, mide, malo+dlt, mala+dlt, made, hspa,
+                   vspa)
+    # mlo, mla, mde = msh3d.select_nodes_within_two_meshesa(omsh, olmsh)
+    mlo, mla, mde = msh3d.get_coordinates_vectors()
+    if False:
+        df = pd.DataFrame({'mlo': mlo, 'mla': mla, 'mde': mde})
+        df.to_csv('mesh_coords.csv')
 
     # Create three vectors with the coordinates of the nodes describing the
     # slab volume
