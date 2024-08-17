@@ -98,6 +98,7 @@ class SigmaDatabaseMetadataReader(SMDatabaseReader):
 
     def _parse_event_data(self, metadata):
         """
+        Parse the event metadata
         """
         # Get datetime
         if len(metadata['event.datetime']) > 20:
@@ -284,7 +285,6 @@ class SigmaSpectraParser(SMSpectraReader):
         """
         Parses the Spectra to an instance of the database dictionary
         """
-        
         damping_list = ["damping_02", "damping_05", "damping_07", 
                         "damping_10", "damping_20", "damping_30"]
         sm_record = OrderedDict([
@@ -320,11 +320,11 @@ class SigmaSpectraParser(SMSpectraReader):
 
 class SigmaRecordParser(SMTimeSeriesReader):
     """
-
+    Parser for Sigma format records
     """
     def parse_records(self, record=None):
         """
-
+        Parse the time histories and append the associated record information
         """
         time_series = OrderedDict([
             ("X", {"Original": {}, "SDOF": {}}),

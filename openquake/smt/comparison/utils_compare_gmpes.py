@@ -126,7 +126,6 @@ def plot_trellis_util(config, output_directory):
                     pyplot.ylabel(str(i) + ' (Hz)') # Fourier/Eff. Amp. Spectrum
                 else:
                     unit = 'g' # PGA, SA, AvgSA
-                store_per_gmpe[gmpe]['%s (km)' % config.dist_type] = r_vals
                 store_per_gmpe[gmpe]['median (%s)' % unit] = np.exp(mean)
                 store_per_gmpe[gmpe]['sigma (ln)'] = std
                 if config.Nstd != 0:
@@ -159,7 +158,10 @@ def plot_trellis_util(config, output_directory):
         store_per_imt[str(i)] = store_per_mag
     
     # Final store to add vs30 and Nstd into key
-    store_gmm_curves[cfg_key]['gmm att curves per imt-mag'] = store_per_imt
+    store_gmm_curves[cfg_key][
+        'gmm att curves per imt-mag'] = store_per_imt
+    store_gmm_curves[cfg_key][
+        'gmm att curves per imt-mag']['%s (km)' % config.dist_type] = r_vals
     
     # Finalise plots
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
@@ -223,14 +225,19 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                         ztor_m = None
                         
                     # Get mean and sigma
+                    dist_type = 'repi' # Spectra are only computed for specified
+                                       # repi distances rather than rrup or rjb
+                                       # to avoid issues with interpolating for
+                                       # ground-motion values at very small rrup
+                                       # or rjb (specified rrup or rjb can be
+                                       # smaller than min rrup or rjb in a ctx)
                     mu, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
                                                            aratio_g, strike_g,
                                                            dip_g, config.rake,
                                                            config.Vs30, Z1, Z25,
-                                                           dist, 0.1, imt, ztor_m,
+                                                           500, 0.1, imt, ztor_m,
                                                            config.eshm20_region,
-                                                           config.dist_type,
-                                                           config.trt,
+                                                           dist_type, config.trt,
                                                            config.up_or_down_dip) 
                     
                     # Interpolate for distances and store
