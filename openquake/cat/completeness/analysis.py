@@ -233,7 +233,7 @@ def _make_ctab(prm, years, mags):
         return 'skip'
 
 
-def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
+def _completeness_analysis(fname, years, mags, binw, ref_mag, mag_low, ref_upp_mag,
                            bgrlim, criterion, compl_tables, src_id=None,
                            folder_out_figs=None, rewrite=False,
                            folder_out=None):
@@ -247,6 +247,9 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     :param ref_mag:
         The reference magnitude used to compute the rate and select the
         completeness table
+    :param mag_low:
+        The lowest magnitude to include in rate calculations.
+        Will default to ref_mag if not provided.
     :param ref_upp_mag:
         The reference upper magnitude limit used to compute the rate and
         select the completeness table
@@ -264,7 +267,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
     # Checking input
     if criterion not in ['match_rate', 'largest_rate', 'optimize', 'weichert',
-                         'poisson', 'optimize_a', 'optimize_b', 'optimize_d']:
+                         'poisson', 'optimize_a', 'optimize_b', 'optimize_c','optimize_d']:
         raise ValueError('Unknown optimization criterion')
 
     tcat = _load_catalogue(fname)
@@ -273,7 +276,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
     # Info
     # Should have option to specify a mag_low != ref_mag
-    mag_low = ref_mag
+    #mag_low = lower_mag
     idx = tcat.data["magnitude"] >= mag_low
     fmt = 'Catalogue contains {:d} events equal or above {:.1f}'
     print('\nSOURCE:', src_id)
@@ -468,13 +471,14 @@ def read_compl_params(config):
     yrs = np.array(config[key]['years'])
     bw = config.get('bin_width', 0.1)
     r_m = config[key].get('ref_mag', 5.0)
+    m_low = config[key].get('mag_low', r_m)
     r_up_m = config[key].get('ref_upp_mag', None)
     bmin = config[key].get('bmin', 0.8)
     bmax = config[key].get('bmax', 1.2)
     # Options: 'largest_rate', 'match_rate', 'optimize'
     crit = config[key].get('optimization_criterion', 'optimize')
 
-    return ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit
+    return ms, yrs, bw, r_m, m_low, r_up_m, bmin, bmax, crit
 
 
 def read_compl_data(folder_in):
@@ -513,7 +517,7 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
     # Loading configuration
     config = toml.load(f_config)
 
-    ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(config)
+    ms, yrs, bw, r_m, m_low, r_up_m, bmin, bmax, crit = read_compl_params(config)
 
     compl_tables, mags_chk, years_chk = read_compl_data(folder_in)
 
@@ -544,7 +548,7 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
         else:
             var = {}
 
-        res = _completeness_analysis(fname, yrs, ms, bw, r_m,
+        res = _completeness_analysis(fname, yrs, ms, bw, r_m, m_low,
                                      r_up_m, [bmin, bmax], crit,
                                      compl_tables, src_id,
                                      folder_out_figs=folder_out_figs,
