@@ -309,7 +309,6 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         print(f'Iteration: {iper:05d} norm: {norm:12.6e}', end="\r")
 
         ctab = _make_ctab(prm, years, mags)
-        print(ctab)
         if isinstance(ctab, str):
             continue
 
@@ -552,7 +551,7 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
                                      folder_out_figs=folder_out_figs,
                                      folder_out=folder_out,
                                      rewrite=False)
-        #print(len(res))
+
         if len(res) == 0:
             continue
 
