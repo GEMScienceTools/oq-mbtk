@@ -21,18 +21,13 @@ when created from sm_database.GroundMotionDatabase and
 sm_table.GroundMotionTable (contexts should be equal)
 """
 import os
-import sys
 import shutil
 import unittest
+import pickle
 
 import numpy as np
-from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+from openquake.smt.residuals.parsers.esm_flatfile_parser import ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
