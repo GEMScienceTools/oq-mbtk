@@ -5,9 +5,9 @@ from openquake.baselib import sap
 from openquake.wkf.seismicity.smoothing import create_smoothing_per_zone
 
 
-def main(fname_points: str, fname_polygons: str, folder_out: str='/tmp',
-         skip=[]):
-    create_smoothing_per_zone(fname_points, fname_polygons, folder_out, skip)
+def main(fname_points: str, fname_polygons: str, folder_out: str='/tmp',*,
+         skip=[], use = []):
+    create_smoothing_per_zone(fname_points, fname_polygons, folder_out, skip, use)
 
 
 main.fname_points = ".csv file created by the smoothing code"

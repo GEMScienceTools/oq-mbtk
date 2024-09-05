@@ -33,6 +33,7 @@ import os
 import re
 import h5py
 import numpy as np
+# import pandas as pd
 import rtree
 import logging
 import configparser
@@ -65,7 +66,7 @@ from openquake.mbt.tools.smooth3d import Smoothing3D
 from openquake.man.checks.catalogue import load_catalogue
 from openquake.wkf.utils import create_folder
 
-PLOTTING = False
+PLOTTING = FALSE
 
 
 def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
@@ -84,6 +85,7 @@ def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
 
     # Load the catalogue
     catalogue = load_catalogue(cat_pickle_fname)
+
     if sort_cat:
         catalogue.sort_catalogue_chronologically()
 
@@ -594,7 +596,7 @@ def calculate_ruptures(ini_fname, **kwargs):
     cat_pickle_fname = os.path.abspath(os.path.join(ref_fdr, cat_pickle_fname))
     try:
         sort_cat = bool(config.get('main', 'sort_catalogue'))
-    except:
+    except Exception:
         sort_cat = False
 
     # Output
@@ -607,9 +609,10 @@ def calculate_ruptures(ini_fname, **kwargs):
     out_hdf5_smoothing_fname = kwargs.get(key, config.get('main', key))
     tmps = os.path.join(ref_fdr, out_hdf5_smoothing_fname)
     out_hdf5_smoothing_fname = os.path.abspath(tmps)
-
-    # Create the smoothing directory if it doesn't exist
-    smoothing_dir = '/'.join(out_hdf5_smoothing_fname.split('/')[:-1])
+    
+    # create the smoothing directory if it doesn't exist
+    smoothing_dir = os.path.sep.join(
+        out_hdf5_smoothing_fname.split(os.path.sep)[:-1])
     if not os.path.exists(smoothing_dir):
         os.makedirs(smoothing_dir)
 
@@ -653,6 +656,7 @@ def calculate_ruptures(ini_fname, **kwargs):
     # are :class:`openquake.hazardlib.geo.line.Line` instances
     logging.info('Creating ruptures on virtual faults')
     ohs = create_inslab_meshes(msh, dips, slab_thickness, sampling)
+
 
     if False:
         from mayavi import mlab
@@ -728,6 +732,7 @@ def calculate_ruptures(ini_fname, **kwargs):
     # Create the 3D mesh describing the volume of the slab. This `dlt` value
     # [in degrees] is used to create a buffer around the mesh
     dlt = 5.0
+
     msh3d = Grid3d(milo - dlt, mila - dlt, mide,
                    malo + dlt, mala + dlt, made, hspa, vspa)
 

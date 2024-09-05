@@ -31,14 +31,16 @@ import numpy as np
 from openquake.sub.get_profiles_from_slab2pt0 import (get_profiles,
                                                       get_bounding_box,
                                                       get_initial_traces,
-                                                      rotate)
+                                                      rotate,
+                                                      get_profiles_geojson)
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
+
 
 pygmt_available = False
 try:
     import pygmt
-except ImportError:
     pygmt_available = True
+except ImportError:
     pass
 
 HERE = pathlib.Path(__file__).parent.resolve()
@@ -193,3 +195,10 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         # tmp_dir = tempfile.mkdtemp()
         # fname_fig = pathlib.Path(tmp_dir) / 'figure.png'
         _ = get_profiles(strike_fname, depth_fname, spacing)
+
+    def test_geojson_mariana(self):
+
+        fname = HERE / 'data' / 'izu_slab2_css.geojson'
+        fname_slab = HERE / 'data' / 'izu_slab2_dep_02.24.18.grd'
+
+        get_profiles_geojson(fname, fname_slab, spacing=10.)

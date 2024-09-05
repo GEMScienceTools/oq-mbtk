@@ -29,11 +29,11 @@ from linecache import getline
 from math import sqrt
 from copy import copy
 
-from openquake.smt.sm_utils import convert_accel_units, get_time_vector
-from openquake.smt.sm_database import *
-from openquake.smt.parsers.base_database_parser import (SMDatabaseReader,
-                                               SMTimeSeriesReader,
-                                               SMSpectraReader)
+from openquake.smt.utils_strong_motion import (convert_accel_units,
+                                               get_time_vector)
+from openquake.smt.residuals.sm_database import *
+from openquake.smt.residuals.parsers.base_database_parser import (
+    SMDatabaseReader, SMTimeSeriesReader, SMSpectraReader)
 
 FILE_INFO_KEY = ["Net", "Station", "Location", "Channel", "DM", "Date", "Time",
                  "Processing", "Waveform", "Format"]
