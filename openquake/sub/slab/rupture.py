@@ -66,7 +66,7 @@ from openquake.mbt.tools.smooth3d import Smoothing3D
 from openquake.man.checks.catalogue import load_catalogue
 from openquake.wkf.utils import create_folder
 
-PLOTTING = FALSE
+PLOTTING = False
 
 
 def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
