@@ -29,7 +29,6 @@ from math import sqrt, ceil
 import copy
 import re
 import toml
-
 import numpy as np
 import pandas as pd
 from scipy.special import erf
@@ -39,16 +38,12 @@ from scipy.linalg import solve
 from openquake.hazardlib import valid
 from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib import imt
-import openquake.smt.intensity_measures as ims
-from openquake.smt.strong_motion_selector import SMRecordSelector
-from openquake.smt.sm_utils import convert_accel_units, check_gsim_list
+import openquake.smt.utils_intensity_measures as ims
+from openquake.smt.residuals.sm_database_selector import SMRecordSelector
+from openquake.smt.utils_strong_motion import convert_accel_units, check_gsim_list
 
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
-
-# SCALAR_IMTS = ["PGA", "PGV", "PGD", "CAV", "Ia"]
-SCALAR_IMTS = ["PGA", "PGV"]
-STDDEV_KEYS = ["Mean", "Total", "Inter event", "Intra event"]
 
 
 def get_geometric_mean(fle):
@@ -672,7 +667,7 @@ class Residuals(object):
 
     def _pprint_event(self, fid, event, sep):
         """
-        Pretty print the information for each event
+        Print the information for each event
         """
         # Print rupture info
         rupture_str = sep.join([
@@ -823,18 +818,18 @@ class Residuals(object):
             (gmpe, weights[iloc]) for iloc, gmpe in enumerate(self.gmpe_list)]
             )
         # Get weights with imt
-        self.model_weights_with_imt={}
+        self.model_weights_with_imt = {}
         for im in self.imts:
+            
             weights_with_imt = np.array([2.0 ** -self.llh[gmpe][im]
                                          for gmpe in self.gmpe_list])
+            
             weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
-            self.model_weights_with_imt[im] = OrderedDict([(gmpe, 
-                                                             weights_with_imt
-                                                             [iloc])
-                                                            for iloc, gmpe
-                                                            in enumerate(
-                                                                self.gmpe_list
-                                                                )])
+            
+            self.model_weights_with_imt[im] = OrderedDict(
+                [(gmpe, weights_with_imt[iloc]) for iloc, gmpe in enumerate(
+                    self.gmpe_list)])
+            
         return self.llh, self.model_weights, self.model_weights_with_imt
         
     # Mak et al multivariate LLH functions
@@ -893,16 +888,15 @@ class Residuals(object):
         if parallelize:
             raise NotImplementedError("Parellelisation not turned on yet!")
         else:
-            for j in range(number_bootstraps):
+            for j in range(number_bootstraps):        
                 print("Bootstrap {:g} of {:g}".format(j + 1,
                       number_bootstraps))
-                outputs[:, :, j] = bootstrap_llh(j,
-                                                 self.contexts,
-                                                 self.gmpe_list,
-                                                 self.imts)
-        distinctiveness = self.get_distinctiveness(outputs,
-                                                   number_bootstraps,
-                                                   sum_imts)
+                outputs[:, :, j] = bootstrap_llh(
+                    j, self.contexts, self.gmpe_list, self.imts)
+                
+        distinctiveness = self.get_distinctiveness(
+            outputs, number_bootstraps, sum_imts)
+        
         return distinctiveness, outputs
 
     def get_distinctiveness(self, outputs, number_bootstraps, sum_imts):
@@ -1023,9 +1017,9 @@ class Residuals(object):
         deviation for the GMPE (per imt)
         """  
         # Get EDR values per imt
-        obs_wrt_imt={}
-        expected_wrt_imt={}
-        stddev_wrt_imt={}
+        obs_wrt_imt = {}
+        expected_wrt_imt = {}
+        stddev_wrt_imt = {}
         for imtx in self.imts:
             obs = np.array([], dtype=float)
             expected = np.array([], dtype=float)
@@ -1083,9 +1077,9 @@ class Residuals(object):
         Calculated the Euclidean Distanced-Based Rank for a set of
         observed and expected values from a particular GMPE over imts
         """
-        mde_norm_wrt_imt={}
-        edr_wrt_imt={}
-        kappa_wrt_imt={}
+        mde_norm_wrt_imt = {}
+        edr_wrt_imt = {}
+        kappa_wrt_imt = {}
 
         for imtx in self.imts:
             nvals = len(obs_wrt_imt[imtx])
@@ -1129,7 +1123,99 @@ class Residuals(object):
         de_orig = np.sum((obs - expected) ** 2.)
         de_corr = np.sum((obs - y_c) ** 2.)
         return de_orig / de_corr
+    
+    def cdf(self, data):
+        """
+        Get the cumulative distribution function (cdf) of the ground-motion
+        values
+        """
+        x1 = np.sort(data)
+        x = x1.tolist()
+        n = len(x)
+        p = 1/n
+        pvalues = list(np.linspace(p,1,n))
+        return x, pvalues
+    
+    def step_data(self, x,y):
+        """
+        Step the cdf to obtain the ecdf
+        """
+        xx,yy = x*2, y*2
+        xx.sort()
+        yy.sort()
+        return xx, [0.]+yy[:-1]
+    
+    def get_cdf_data(self, data, step_flag=None):
+        """
+        Get the cdf (for the predicted ground-motions) or the ecdf (for the
+        observed ground-motions)
+        """
+        x, p = self.cdf(data)
+        if step_flag is True:
+            xx, yy = self.step_data(x, p)
+            return np.array(xx), np.array(yy)
+        else:
+            return np.array(x), np.array(p)
+    
+    def get_stochastic_area_wrt_imt(self):
+        """
+        Calculates the stochastic area values per imt for each GMPE according
+        to the Stochastic Area Ranking method of Sunny et al. (2021).
+        
+        Sunny, J., M. DeAngelis, and B. Edwards (2021). Ranking and Selection
+        of Earthquake Ground Motion Models Using the Stochastic Area Metric,
+        Seismol. Res. Lett. 93, 787–797, doi: 10.1785/0220210216
+        """
+        # Create store of values per gmm
+        stoch_area_store = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
+        
+        # Get the observed and predicted per gmm per imt
+        for gmpe in self.gmpe_list:
+            stoch_area_wrt_imt = {}
+            for imtx in self.imts:
+                obs = np.array([], dtype=float)
+                exp = np.array([], dtype=float)
+                std = np.array([], dtype=float)
+                for context in self.contexts:
+                    obs = np.hstack(
+                        [obs, np.log(context["Observations"][imtx])])
+                    exp = np.hstack(
+                        [exp,context["Expected"][gmpe][imtx]["Mean"]])
+                    stddev = np.hstack(
+                        [std,context["Expected"][gmpe][imtx]["Total"]])
+                
+                # Get the ECDF for distribution from observations
+                x_ecdf, y_ecdf = self.get_cdf_data(list(obs), step_flag=True)
+                
+                # Get the CDF for distribution from gmm
+                x_cdf, y_cdf = self.get_cdf_data(list(exp))
 
+                # Get approximately overlapping subsets of ECDF and CDF
+                ecdf_xvals = [np.min(x_ecdf), np.max(x_ecdf)]
+                cdf_xvals = [np.min(x_cdf), np.max(x_cdf)]
+                xval_min = np.max([ecdf_xvals[0], cdf_xvals[0]])
+                xval_max = np.min([ecdf_xvals[1], cdf_xvals[1]])
+                idx_ecdf = np.logical_and(x_ecdf<=xval_max, x_ecdf>=xval_min)
+                idx_cdf = np.logical_and(x_cdf<=xval_max, x_cdf>=xval_min)
+                x_ecdf, y_ecdf = x_ecdf[idx_ecdf], y_ecdf[idx_ecdf]
+                x_cdf, y_cdf = x_cdf[idx_cdf], y_cdf[idx_cdf]
+
+                # Get area under each curve's overlapping portions
+                area_obs = np.trapz(y_ecdf, x_ecdf)
+                area_gmm = np.trapz(y_cdf, x_cdf)
+
+                # Get absolute of difference in areas - eq 3 of paper
+                stoch_area_wrt_imt[imtx] = np.abs(area_gmm-area_obs) 
+             
+            # Store the stoch area per imt per gmm
+            stoch_area_store[gmpe] = stoch_area_wrt_imt
+    
+        # Add to residuals object
+        self.stoch_areas_wrt_imt = stoch_area_store
+        
+        return self.stoch_areas_wrt_imt
+        
+    
 GSIM_MODEL_DATA_TESTS = {
     "Residuals": lambda residuals, config:
         residuals.get_residual_statistics(),
@@ -1141,89 +1227,6 @@ GSIM_MODEL_DATA_TESTS = {
     "EDR": lambda residuals, config: residuals.get_edr_values(
         config.get("bandwidth", 0.01), config.get("multiplier", 3.0))
 }
-
-
-# Deprecated functions for GMPE to data testing - kept here for backward
-# compatibility
-class Likelihood(Residuals):
-    """
-    Implements the likelihood function of Scherbaum et al. (2004)
-
-    Scherbaum, F., Cotton, F. and Smit, P. (2004) "On the Use of Response
-    Spectral-Reference Data for the Selection and Ranking of Ground-Motion
-    Models for Seismic Hazard Analysis in Regions of Moderate Seismicity: The
-    Case of Rock Motion". Bulletin of the Seismological Society of America,
-    94(6), 2164-2185
-
-    Now deprecated
-    """
-    def __init__(self, gmpe_list, imts):
-        warnings.warn("Likelihood tool is deprecated. Use function "
-                      "get_likelihood_values() in main Residuals class",
-                      DeprecationWarning,
-                      stacklevel=2)
-        super().__init__(gmpe_list, imts)
-
-
-class LLH(Residuals):
-    """
-    Implements the average sample log-likelihood estimator from
-    Scherbaum et al (2009).
-
-    Scherbaum, F., Delavaud, E., Riggelsen, C. (2009) "Model Selection in
-    Seismic Hazard Analysis: An Information-Theoretic Perspective", Bulletin
-    of the Seismological Society of America, 99(6), 3234-3247
-    """
-    def __init__(self, gmpe_list, imts):
-        warnings.warn("Likelihood tool is deprecated. Use function "
-                      "get_loglikelihood_values(imts) in main Residuals class",
-                      DeprecationWarning,
-                      stacklevel=2)
-        super().__init__(gmpe_list, imts)
-
-
-class MultivariateLLH(Residuals):
-    """
-    Multivariate formulation of the LLH function as proposed by Mak et al.
-    (2017)
-
-    Mak, S., Clements, R. A. and Schorlemmer, D. (2017) "Empirical
-    Evaluation of Hierarchical Ground-Motion Models: Score Uncertainty
-    and Model Weighting", Bulletin of the Seismological Society of America,
-    107(2), 949-965
-    """
-    def __init__(self, gmpe_list, imts):
-        warnings.warn("Multivariate LLH tool is deprecated. Use "
-                      "function get_multivariate_loglikelihood_values() "
-                      "in the main Residuals class",
-                      DeprecationWarning,
-                      stacklevel=2)
-        super().__init__(gmpe_list, imts)
-
-    def get_likelihood_values(self, sum_imts=False):
-        """
-        Calculates the multivariate LLH for a set of GMPEs and IMTS according
-        to the approach described in Mak et al. (2017)
-        """
-        self.get_multivariate_loglikelihood_values(sum_imts)
-
-
-class EDR(Residuals):
-    """
-    Implements the Euclidean Distance-Based Ranking Method for GMPE selection
-    by Kale & Akkar (2013)
-    Kale, O., and Akkar, S. (2013) "A New Procedure for Selecting and Ranking
-    Ground Motion Predicion Equations (GMPEs): The Euclidean Distance-Based
-    Ranking Method", Bulletin of the Seismological Society of America, 103(2A),
-    1069 - 1084.
-
-    """
-    def __init__(self, gmpe_list, imts):
-        warnings.warn("EDR tool is deprecated. Use function get_edr_values() "
-                      "in the main Residuals class",
-                      DeprecationWarning,
-                      stacklevel=2)
-        super().__init__(gmpe_list, imts)
 
 
 class SingleStationAnalysis(object):

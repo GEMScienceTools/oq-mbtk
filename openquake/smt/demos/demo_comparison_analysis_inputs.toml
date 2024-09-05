@@ -6,7 +6,7 @@ imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
 max_period = 2 # max period for spectra plots
 minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
-dist_type = 'rjb' # or rjb, repi or rhypo (dist type used in trellis plots)
+dist_type = 'rjb' # or rrup, rhypo or repi (dist type used in trellis plots)
 dist_list = [10, 100, 250] # distance intervals for use in spectra plots
 eshm20_region = 2 # for KothaEtAl2020 ESHM20 GMPE regionalisation
 Nstd = 0 # num. of std. dev. to sample from sigma distribution
@@ -22,7 +22,7 @@ region = 'Global' # region specific basin effects
 # Characterise earthquake for the region of interest as finite rupture
 [source_properties]
 trt = 'None' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
-ztor = 'None' # Set to string of 'None' to NOT consider
+ztor = 'None' # Set to string of 'None' to NOT consider else list corresponding to number of mags/depths
 strike = -999
 dip =  60
 rake = 90 # Must be provided. Strike and dip can be approximated if set to -999
@@ -39,19 +39,16 @@ non_trellis_or_spectra_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [ma
 
 # Specify label for gmpes
 [gmpe_labels]
-gmpes_label = ['CA15', 'AK14', 'B20', 'L19', 'BO14', 'K1', 'K2', 'K3', 'K4', 'K5']
+gmpes_label = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CA15', 'AK14']
 
 # Specify gmpes
 
 # Plot logic tree and individual GMPEs for below GMC logic tree config (gmc1)
 [models.BooreEtAl2020]
-lt_weight_gmc1 = 0.25
+lt_weight_gmc1 = 0.3
     
 [models.LanzanoEtAl2019_RJB_OMO]
-lt_weight_gmc1 = 0.30
-    
-[models.BooreEtAl2014]
-lt_weight_gmc1 = 0.15
+lt_weight_gmc1 = 0.40
 
 # Default K20_ESHM20 logic tree branches considered in gmc1
 [models.1-KothaEtAl2020ESHM20]
@@ -64,7 +61,7 @@ lt_weight_gmc1 = 0.067767
 sigma_mu_epsilon = 1.35563
 c3_epsilon = 0
 
-[models.3-KothaEtAl2020ESHM20]   
+[models.3-KothaEtAl2020ESHM20]
 lt_weight_gmc1 = 0.162742
 sigma_mu_epsilon = 0
 c3_epsilon = 0        
@@ -87,5 +84,5 @@ lt_weight_gmc2_plot_lt_only = 0.50
 lt_weight_gmc2_plot_lt_only = 0.50
     
 [custom_colors]
-custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
+custom_colors_flag = 'False' # Set to "True" for custom colours in plots)
 custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
