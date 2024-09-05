@@ -10,6 +10,7 @@ import numpy as np
 from glob import glob
 from openquake.wkf.utils import create_folder
 
+import importlib
 from openquake.baselib import sap
 from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.hazardlib.source import PointSource, MultiPointSource
