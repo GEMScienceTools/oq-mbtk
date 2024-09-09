@@ -196,7 +196,6 @@ def check_criterion(criterion, rate, previous_norm, tvars):
         tmp_rate = -1
         norm = get_norm_optimize_gft(tcat, aval, bval, ctab, cmag, n_obs,
                                      t_per, last_year)
-
     elif criterion == 'weichert':
         tmp_rate = -1
         norm = get_norm_optimize_weichert(tcat, aval, bval, ctab, last_year)
@@ -313,7 +312,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, mag_low, ref_upp_m
         print(f'Iteration: {iper:05d} norm: {norm:12.6e}', end="\r")
 
         ctab = _make_ctab(prm, years, mags)
-        #print(ctab)
+
         if isinstance(ctab, str):
             continue
 
@@ -469,7 +468,10 @@ def read_compl_params(config):
     key = 'completeness'
     ms = np.array(config[key]['mags'], dtype=float)
     yrs = np.array(config[key]['years'])
-    bw = config.get('bin_width', 0.1)
+    try: 
+        bw = np.array(config[key]['bin_width'], dtype =float)
+    except: 
+    	bw = config.get('bin_width', 0.1)
     r_m = config[key].get('ref_mag', 5.0)
     m_low = config[key].get('mag_low', r_m)
     r_up_m = config[key].get('ref_upp_mag', None)
@@ -554,7 +556,7 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
                                      folder_out_figs=folder_out_figs,
                                      folder_out=folder_out,
                                      rewrite=False)
-        #print(len(res))
+
         if len(res) == 0:
             continue
 
