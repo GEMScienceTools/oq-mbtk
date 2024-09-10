@@ -298,7 +298,7 @@ This toml file specifies that the window declustering with parameters of Gardner
 Creating inslab sources for the OpenQuake Engine
 *************************************************************
 
-The construction of subduction inslab sources involves the creation of `virtual faults` elongated along the stike of the slab surface and constrained within the slab volume. This requires a configuration file defining some parameters for generating the ruptures
+The construction of subduction inslab sources involves the creation of `virtual faults` elongated along the stike of the slab surface and constrained within the slab volume. This requires a configuration file defining some parameters for generating the ruptures.
     
 1. Create a configuration file
 
@@ -310,6 +310,12 @@ The construction of subduction inslab sources involves the creation of `virtual 
 
     profile_sd_topsl = 40.
     edge_sd_topsl = 40.
+    
+    # MFD
+    agr = 5.945
+    bgr = 1.057
+    mmin = 6.5
+    mmax = 7.80
 
     sampling = 10.
 
@@ -348,14 +354,62 @@ The construction of subduction inslab sources involves the creation of `virtual 
     # magnitude scaling relationship 
     mag_scaling_relation = StrasserIntraslab
 
-    # MFD
-    agr = 5.945
-    bgr = 1.057
-    mmin = 6.5
-    mmax = 7.80
+ The MFD parameters should be set by the modeller and determined from some combination of the seismicity and tectonics. The `mmin` parameter defines the lower magnitude limit at which to generate slab ruptures. A lower `mmin` will result in many more smaller ruptures which will increase the size of the rupture object, so this parameter should be chosen carefully considering the size of ruptures at slab locations that might be relevant for hazard.  
+ 
+The `sampling` parameter determines the spatial sampling to be used when simulating ruptures. The `float_strike` and `float_dip` parameters specify the strike and dip for floating ruptures, while the list of `dips` instead specifies dip angles used when creating virtual faults inside the rupture.
 
-kwargs = {'out_hdf5_fname': out_hdf5_fname, 'out_hdf5_smoothing_fname': out_hdf5_smoothing_fname}
-   
-calculate_ruptures(ini_fname, **kwargs)
+The `uniform_fraction` determines the percentage of the ruptures to be uniformly distributed across the slab. A higher uniform fraction means that the distribution of ruptures will be randomly uniform, and a lower uniform fraction means that a larger percentage of ruptures will instead be distributed according to the smoothed distribution of seismicity in the slab.  
 
+Ruptures can be created using::
+
+	> calculate_ruptures ini_fname out_hdf5_fname out_hdf5_smoothing_fname
+
+which will create two hdf5 files with the different ruptures. We then need to process these into xml files, which we can do using::
+
+	> create_inslab_nrml(model, out_hdf5_fname, out_path, investigation_t = 1)
+
+You can plot the 3D model of the subduction zone with ruptures as below:
+
+.. code-block:plot_ruptures
+xml_fname = "/home/kbayliss/projects/force/code/Pacific_Jan24/mariana_April24/xml/mar_newrup_unif/6.55.xml"
+ssm = to_python(xml_fname)
+
+hy_lo, hy_la, hy_d = [],[],[]
+mags = []
+rates = []
+for sg in ssm:
+    for src in sg:
+        for rup in src.data:
+            h = rup[0].hypocenter
+            hy_lo.append(h.longitude); hy_la.append(h.latitude); hy_d.append(-h.depth)
+            mags.append(rup[0].mag)
+            prob1 = rup[1].data[1][0]
+            rate = -1*np.log(1-prob1)
+            rates.append(rate)
+
+df = pd.DataFrame({'lons': hy_lo, 'lats': hy_la, 'depth': hy_d, 'mag': mags, 'rate': rates})
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(df.lons, df.lats, df.depth, c=df.rate)
+plt.show()
+	
+This process will create xml files for each magnitude bin, which is a little impractical. To combine these, we can do the following::
+
+path1 = glob.glob('./xml/mar_newrup/*.xml')
+data_all = []
+for p in path1: 
+    ssm = to_python(p)
+    for sg in ssm:
+        for src in sg:
+            print(len(src.data))
+            data_all.extend(src.data)
+src.data = data_all 
+src.name = 'ruptures for src_slab'
+src.source_id = 'src_slab'
+
+write_source_model('./xml/mar_newrup/slab.xml', [src], investigation_time=1.0) 
+
+Which creates a single `slab.xml` file containing all the ruptures across all magnitude bins. This file can then be used directly in OQ as a non-parametric rupture source. 
+See the process in more detail in this notebook
 
