@@ -342,7 +342,7 @@ def build_complex_surface_from_edges(foldername):
     except ValueError:
         msg = 'Error while checking the edges in {.s}'.format(foldername)
         print(msg)
-
+   
     # Fix edges
     if np.any(chks > 0.):
         for i, chk in enumerate(chks):
