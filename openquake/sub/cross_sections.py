@@ -114,7 +114,6 @@ class Slab2pt0(object):
             # Get min and max longitude and latitude values
             minlo, maxlo, minla, maxla, qual = cs.get_mm(2.0)
             
-            #Sbreakpoint()
             # Find the nodes of the grid within a certain distance from the
             # plane of the cross-section
             if qual == 0:
