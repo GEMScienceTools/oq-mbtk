@@ -16,17 +16,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-General Class for extracting Ground Motion Intensity Measures (IMs) from a
-set of acceleration time series
+General Class for extracting Ground Motion Intensity Measures (IMs) from a set of acceleration time series
 """
 import numpy as np
 from math import pi
 from scipy.integrate import cumtrapz
 from scipy import constants
 import matplotlib.pyplot as plt
-import openquake.smt.response_spectrum as rsp
-from openquake.smt.smoothing import konno_ohmachi
-from openquake.smt.sm_utils import get_time_vector, _save_image, nextpow2
+import openquake.smt.utils_response_spectrum as rsp
+from openquake.smt import utils_smoothing
+from openquake.smt.utils_strong_motion import (
+    get_time_vector, _save_image, nextpow2)
 
 RESP_METHOD = {
     'Newmark-Beta': rsp.NewmarkBeta,
@@ -34,7 +34,7 @@ RESP_METHOD = {
 }
 
 
-SMOOTHING = {"KonnoOhmachi": konno_ohmachi.KonnoOhmachi}
+SMOOTHING = {"KonnoOhmachi": utils_smoothing.KonnoOhmachi}
 
 
 def get_peak_measures(time_step, acceleration, get_vel=False, get_disp=False):
@@ -53,7 +53,7 @@ def get_peak_measures(time_step, acceleration, get_vel=False, get_disp=False):
         * pgv - Peak Ground Velocity
         * pgd - Peak Ground Displacement
         * velocity - Velocity Time Series
-        * dispalcement - Displacement Time series
+        * displacement - Displacement Time series
     """
     pga = np.max(np.fabs(acceleration))
     velocity = None

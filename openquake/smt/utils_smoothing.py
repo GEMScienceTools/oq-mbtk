@@ -17,15 +17,39 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Applies spectral smoothing via the Konno & Ohmachi (1998) smoothing algorithm
-
-The algorithm itself is taken directly from the Obspy implementation by
-Lion Krischer
+Apply spectral smoothing. Current options are the Konno & Ohmachi (1998)
+smoothing algorithm.
 """
+import abc
 import numpy as np
 import warnings
-from openquake.smt.smoothing.base import BaseSpectralSmoother
 
+
+class BaseSpectralSmoother(object):
+    """
+    Abstract base class for method to apply smoothing to a spectrum
+    :param dict params:
+        Smoothing model parameters
+    """
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, params):
+        """
+        Instantiate with dictionary of parameters
+        """
+        self.params = self._check_params(params)
+
+    def _check_params(self, params):
+        """
+        In the simple case the parameters are valid
+        """
+        return params
+    
+    @abc.abstractmethod
+    def apply_smoothing(self, spectra, frequencies):
+        """
+        Applies the smoothing to a given spectrum
+        """
 
 def konnoOhmachiSmoothingWindow(frequencies, center_frequency, bandwidth=40.0,
                                 normalize=False):
@@ -138,7 +162,8 @@ def konnoOhmachiSmoothing(spectra, frequencies, bandwidth=40, count=1,
                           normalize=False):
     """
     Smoothes a matrix containing one spectra per row with the Konno-Ohmachi
-    smoothing window.
+    smoothing window. The algorithm itself is taken directly from the Obspy
+    implementation by Lion Krischer.
 
     All spectra need to have frequency bins corresponding to the same
     frequencies.

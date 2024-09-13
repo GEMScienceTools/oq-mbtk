@@ -84,7 +84,7 @@ def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
 
     # Load the catalogue
     catalogue = load_catalogue(cat_pickle_fname)
-    if sort_cat:
+    if sort_cat is True:
         catalogue.sort_catalogue_chronologically()
 
     # If a label and a TR are provided we filter the catalogue
@@ -610,6 +610,9 @@ def calculate_ruptures(ini_fname, **kwargs):
 
     # Create the smoothing directory if it doesn't exist
     smoothing_dir = '/'.join(out_hdf5_smoothing_fname.split('/')[:-1])
+    # create the smoothing directory if it doesn't exist
+    smoothing_dir = os.path.sep.join(
+        out_hdf5_smoothing_fname.split(os.path.sep)[:-1])
     if not os.path.exists(smoothing_dir):
         os.makedirs(smoothing_dir)
 
