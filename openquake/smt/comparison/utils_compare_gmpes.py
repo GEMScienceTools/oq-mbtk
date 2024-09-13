@@ -597,10 +597,8 @@ def get_colors(custom_color_flag, custom_color_list):
     """
     Get list of colors and markers for plots
     """
-    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r',
-              'm', 'mediumseagreen', 'tab:pink', 'tab:orange', 'tab:purple',
-              'tab:brown', 'tab:pink', 'tab:red', 'tab:blue', 'tab:cyan',
-              'tab:olive', 'aquamarine']
+    colors = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
+              'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', '0.5']
     
     if custom_color_flag == 'True':
         colors = custom_color_list

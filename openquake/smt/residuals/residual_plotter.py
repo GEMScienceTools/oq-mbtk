@@ -38,10 +38,8 @@ from openquake.smt.residuals.residual_plots import (
     residuals_with_vs30, residuals_with_distance, residuals_with_depth)
 
 
-colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r',
-          'm', 'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown',
-          'tab:pink', 'tab:red', 'tab:blue', 'tab:cyan', 'tab:olive',
-          'aquamarine']
+colors = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
+          'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', '0.5']
 
 
 class BaseResidualPlot(object):
