@@ -72,11 +72,13 @@ class RuptureCreationCAMTest(unittest.TestCase):
             pro = [sps[k] for k in sps.keys()]
             _dbg_plot(profs=pro, ref_idx=0)
 
+
+
     def step01(self):
 
-        out_path = pathlib.Path(tempfile.mkdtemp())
-        out_hdf5_fname = out_path / 'ruptures.hdf5'
-        out_hdf5_smoothing_fname = out_path / 'smoothing.hdf5'
+        #out_path = pathlib.Path(tempfile.mkdtemp())
+        out_hdf5_fname = self.out_path / 'ruptures.hdf5'
+        out_hdf5_smoothing_fname = self.out_path / 'smoothing.hdf5'
         kwargs = {'only_plt': False,
                   'profile_folder': self.out_path,
                   'out_hdf5_fname': out_hdf5_fname,
@@ -84,17 +86,15 @@ class RuptureCreationCAMTest(unittest.TestCase):
         calculate_ruptures(self.ini_fname, **kwargs)
 
         # check the existence of the rupture file
-        tmps = '../data/tmp/ruptures.hdf5'
-        rupture_hdf5_fname = os.path.abspath(os.path.join(BASE_DATA_PATH,
-                                                          tmps))
-        self.assertTrue(os.path.exists(rupture_hdf5_fname))
+
+        self.assertTrue(os.path.exists(out_hdf5_fname))
+
 
     def step02(self):
         label = 'test'
-        tmps = '../data/tmp/ruptures.hdf5'
-        rupture_hdf5_fname = os.path.abspath(os.path.join(BASE_DATA_PATH,
-                                                          tmps))
-        output_folder = os.path.join(BASE_DATA_PATH, '../tmp/')
+        
+        output_folder = self.out_path
+        rupture_hdf5_fname = self.out_path / 'ruptures.hdf5'
 
         # Create nrml
         investigation_t = '1.'
