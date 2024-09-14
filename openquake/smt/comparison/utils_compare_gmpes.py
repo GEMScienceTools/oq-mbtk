@@ -47,7 +47,7 @@ def plot_trellis_util(config, output_directory):
     
     # Get model weights + basin params + colors + config key
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
-    colors = get_cols(config.custom_color_flag, config.custom_color_list) 
+    colors = get_colors(config.custom_color_flag, config.custom_color_list) 
     lt_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
                   config.lt_weights_gmc3, config.lt_weights_gmc4]
     cfg_key = 'vs30 = %s m/s, GMM sigma epsilon = %s' % (
@@ -194,7 +194,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
     
     # Get colours and make the figure
-    colors = get_cols(config.custom_color_flag, config.custom_color_list)     
+    colors = get_colors(config.custom_color_flag, config.custom_color_list)     
     figure = pyplot.figure(figsize=(len(mag_list)*5, len(config.dist_list)*4))
     
     # Set dicts to store values
@@ -468,7 +468,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
     mtxs, gmpe_list = matrix_mean(mtxs, imt_list, gmpe_list)
     
     # Setup
-    colors = get_cols(custom_color_flag, custom_color_list)
+    colors = get_colors(custom_color_flag, custom_color_list)
     texts = []
     if len(imt_list) < 3:
         nrows = 1
@@ -593,14 +593,12 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 
 ### Utils for plots
 
-def get_cols(custom_color_flag, custom_color_list):
+def get_colors(custom_color_flag, custom_color_list):
     """
     Get list of colors for plots
     """
-    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r',
-              'm', 'mediumseagreen', 'tab:pink', 'tab:orange', 'tab:purple',
-              'tab:brown', 'tab:pink', 'tab:red', 'tab:blue', 'tab:cyan',
-              'tab:olive', 'aquamarine']
+    colors = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
+              'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', '0.5']
     
     if custom_color_flag == 'True':
         colors = custom_color_list
