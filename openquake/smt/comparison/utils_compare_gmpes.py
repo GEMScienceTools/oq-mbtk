@@ -45,13 +45,19 @@ def plot_trellis_util(config, output_directory):
     # Median, plus sigma, minus sigma per gmc for up to 4 gmc logic trees
     gmc_p= [[{}, {}, {}], [{}, {}, {}], [{}, {}, {}], [{}, {}, {}]]
     
-    # Get model weights + basin params + colors + config key
+    # Get basin params
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
-    colors = get_colors(config.custom_color_flag, config.custom_color_list) 
+
+    # Get lt weights
     lt_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
                   config.lt_weights_gmc3, config.lt_weights_gmc4]
-    cfg_key = 'vs30 = %s m/s, GMM sigma epsilon = %s' % (
-        config.Vs30, config.Nstd)
+    
+    # Get config key
+    cfg_key = 'vs30 = %s m/s, GMM sigma epsilon = %s' % (config.Vs30,
+                                                         config.Nstd)
+    
+    # Get colours
+    colors = get_colors(config.custom_color_flag, config.custom_color_list) 
     
     # Compute attenuation curves
     store_gmm_curves, store_per_imt = {}, {} # For exporting gmm att curves
@@ -109,23 +115,10 @@ def plot_trellis_util(config, output_directory):
                                            minus_sigma, col, i, m, config.Nstd,
                                            lt_vals_gmc, lt_weights)
                 
+                # Get unit of imt for the store
+                unit = get_imtl_unit_for_trellis_store(i)
+
                 # Store per gmpe
-                if str(i) in ['PGD', 'SDi']:
-                    unit = 'cm' # PGD, inelastic spectral displacement
-                elif str(i) in ['PGV']:
-                    unit = 'cm/s' # PGV
-                elif str(i) in ['IA']:
-                    unit = 'm/s' # Arias intensity
-                elif str(i) in ['RSD', 'RSD595', 'RSD575', 'RSD2080', 'DRVT']:
-                    unit = 's' # Relative significant duration, DRVT
-                elif str(i) in ['CAV']:
-                    unit = 'g-sec' # Cumulative absolute velocity
-                elif str(i) in ['MMI']:
-                    unit = 'MMI' # Modified Mercalli Intensity
-                elif str(i) in ['FAS', 'EAS']:
-                    pyplot.ylabel(str(i) + ' (Hz)') # Fourier/Eff. Amp. Spectrum
-                else:
-                    unit = 'g' # PGA, SA, AvgSA
                 store_per_gmpe[gmpe]['median (%s)' % unit] = np.exp(mean)
                 store_per_gmpe[gmpe]['sigma (ln)'] = std
                 if config.Nstd != 0:
@@ -780,6 +773,31 @@ def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
     min_r_val = min(r_vals[r_vals>=1])
     pyplot.xlim(np.max([min_r_val, minR]), maxR)
     
+
+def get_imtl_unit_for_trellis_store(i):
+    """
+    Return a string of the intensity measure type's physical units of
+    measurement
+    """
+    if str(i) in ['PGD', 'SDi']:
+        unit = 'cm' # PGD, inelastic spectral displacement
+    elif str(i) in ['PGV']:
+        unit = 'cm/s' # PGV
+    elif str(i) in ['IA']:
+        unit = 'm/s' # Arias intensity
+    elif str(i) in ['RSD', 'RSD595', 'RSD575', 'RSD2080', 'DRVT']:
+        unit = 's' # Relative significant duration, DRVT
+    elif str(i) in ['CAV']:
+        unit = 'g-sec' # Cumulative absolute velocity
+    elif str(i) in ['MMI']:
+        unit = 'MMI' # Modified Mercalli Intensity
+    elif str(i) in ['FAS', 'EAS']:
+        pyplot.ylabel(str(i) + ' (Hz)') # Fourier/Eff. Amp. Spectrum
+    else:
+        unit = 'g' # PGA, SA, AvgSA
+
+    return unit
+
 
 ### Spectra utils
 def _get_period_values_for_spectra_plots(max_period):
