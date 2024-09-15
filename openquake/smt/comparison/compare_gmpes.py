@@ -345,7 +345,5 @@ def assign_depths_per_mag_bin(config_file, mag_array):
             if rounded_mag == non_trellis_or_spectra_depths['mag'][idx]:
                 depth_to_store = non_trellis_or_spectra_depths['depth'][idx]
                 depth_array_initial.append(depth_to_store)
-        
-    depths = pd.Series(depth_array_initial) 
     
-    return depths
+    return pd.Series(depth_array_initial) 
