@@ -1045,7 +1045,6 @@ def matrix_mean(mtxs, imt_list, gmpe_list):
     return mtxs, gmpe_list
 
 
-
 def plot_ratios_util(config, output_directory):
     """
     Generate GMPE/baseline GMPE plots for given run configuration
