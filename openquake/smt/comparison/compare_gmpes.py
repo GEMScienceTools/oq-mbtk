@@ -111,6 +111,7 @@ class Configurations(object):
         # Get models and model labels
         self.gmpe_labels, self.gmpes_list = get_gmpes(config_file)
 
+        # Get lt weights
         (self.lt_weights_gmc1, self.lt_weights_gmc2, self.lt_weights_gmc3,
          self.lt_weights_gmc4) = get_lt_weights(self.gmpes_list)
 
