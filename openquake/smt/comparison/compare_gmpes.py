@@ -29,7 +29,7 @@ import os
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_compare_gmpes import (
     plot_trellis_util, plot_spectra_util, plot_cluster_util, plot_sammons_util,
-    plot_euclidean_util, compute_matrix_gmpes, plot_ratios_util)
+    plot_euclidean_util, compute_matrix_gmpes)
 
 
 class Configurations(object):
@@ -109,7 +109,8 @@ class Configurations(object):
             self.imt_list[idx] = from_string(str(self.imt_list[idx]))  
         
         # Get models and model labels
-        self.gmpe_labels, self.gmpes_list = get_gmpes(config_file)
+        (self.gmpe_labels, self.gmpes_list, self.baseline_gmm) = get_gmpes(
+            config_file)
 
         # Get lt weights
         (self.lt_weights_gmc1, self.lt_weights_gmc2, self.lt_weights_gmc3,
@@ -118,29 +119,50 @@ class Configurations(object):
 
 def get_gmpes(config_file):
     """
-    Extract strings of the GMPEs from the configuration file
+    Extract strings of the GMPEs from the configuration file. Also get the 
+    labels used in Sammons maps, Clustering (dendrograms) and Euclidean distance
+    matrix plots. The baseline GMM for computing ratios with is also extracted
+    if specified within the toml file.
     """
+    # Get the GMPEs
     gmpe_labels = config_file['gmpe_labels']['gmpes_label']
     gmpe_list = []
     config = copy.deepcopy(config_file)
     for key in config['models']:
-        # If the key contains a number we take the second part
-        if re.search("^\\d+\\-", key):
-            tmp = re.sub("^\\d+\\-", "", key)
-            value = f"[{tmp}] "
-        else:
-            value = f"[{key}] "
-        if len(config['models'][key]):
-            config['models'][key].pop('style', None)
-            value += '\n' + str(toml.dumps(config['models'][key]))
-        value = value.strip()
+        value = get_model(key, config['models'])
         gmpe_list.append(value.strip())
 
     # Check number of GMPEs matches number of GMPE labels
     if len(gmpe_list) != len(gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
 
-    return gmpe_labels, gmpe_list
+    # Get the baseline GMPE used to compute ratios of GMPEs with if required
+    if 'ratios_baseline_gmm' in config_file.keys():
+        if len(config_file['ratios_baseline_gmm']) > 1:
+            raise ValueError('Only one baseline GMPE should be specified.')
+        for key in config_file['ratios_baseline_gmm']:
+            baseline_gmm = get_model(key, config['ratios_baseline_gmm'])
+    else:
+        baseline_gmm = None
+
+    return gmpe_labels, gmpe_list, baseline_gmm
+
+
+def get_model(key, models):
+    """
+    Get the model from the toml in the string format required to create an
+    OpenQuake gsim object from within mgmpe_check (in utils_gmpes.py)
+    """
+    # If the key contains a number we take the second part
+    if re.search("^\\d+\\-", key):
+        tmp = re.sub("^\\d+\\-", "", key)
+        value = f"[{tmp}] "
+    else:
+        value = f"[{key}] "
+    if len(models[key]):
+        models[key].pop('style', None)
+        value += '\n' + str(toml.dumps(models[key]))
+    return value.strip()
 
 
 def get_lt_weights(gmpe_list):
@@ -362,16 +384,3 @@ def plot_euclidean(filename, output_directory):
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
                         os.path.join(output_directory,'16th_perc_Euclidean.png'),
                         mtxs_type='16th_perc')
-    
-
-def plot_ratios(filename, output_directory):
-    """
-    Plot ratios of each GMM/a baseline GMM versus distance for given run
-    configuration
-    :param  filename:
-        toml file providing configuration for use within comparative
-        plotting methods.
-    """ 
-    config = Configurations(filename)
-    
-    plot_ratios_util(config, output_directory) 
