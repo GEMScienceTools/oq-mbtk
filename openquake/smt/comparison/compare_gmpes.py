@@ -28,8 +28,8 @@ import os
 
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_compare_gmpes import (
-    plot_trellis_util, plot_spectra_util, plot_cluster_util, plot_sammons_util,
-    plot_euclidean_util, compute_matrix_gmpes)
+    plot_trellis_util, plot_spectra_util, plot_ratios_util, plot_cluster_util,
+    plot_sammons_util, plot_euclidean_util, compute_matrix_gmpes)
 
 
 class Configurations(object):
@@ -282,6 +282,19 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
     store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra)
 
     return store_gmc_lts
+
+
+def plot_ratios(filename, output_directory):
+    """
+    Plot ratios of each GMPE/a baseline GMPE against the specified distance
+    metric for given run configuration
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.
+    """ 
+    config = Configurations(filename)
+    
+    plot_ratios_util(config, output_directory)
 
 
 def plot_cluster(filename, output_directory):
