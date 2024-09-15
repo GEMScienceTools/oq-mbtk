@@ -196,7 +196,6 @@ def plot_trellis(filename, output_directory):
         toml file providing configuration for use within comparative
         plotting methods.
     """ 
-    # Generate config object
     config = Configurations(filename)
     
     store_gmm_curves = plot_trellis_util(config, output_directory) 
@@ -215,7 +214,6 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
         csv of an observed spectra to plot and associated event information.
         An example file can be found in openquake.smt.tests.file_samples.
     """
-    # Generate config object
     config = Configurations(filename)
     
     store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra)
@@ -231,7 +229,6 @@ def plot_cluster(filename, output_directory):
         toml file providing configuration for use within comparative
         plotting methods.
     """ 
-    # Generate config object with each set of run parameters
     config = Configurations(filename)
     
     if len(config.gmpes_list) < 2:
@@ -266,7 +263,6 @@ def plot_sammons(filename, output_directory):
         toml file providing configuration for use within comparative
         plotting methods.
     """ 
-    # Generate config object with each set of run parameters
     config = Configurations(filename)
     
     if len(config.gmpes_list) < 2:
@@ -302,7 +298,6 @@ def plot_euclidean(filename, output_directory):
         toml file providing configuration for use within comparative
         plotting methods.    
     """ 
-    # Generate config object
     config = Configurations(filename)
     
     if len(config.gmpes_list) < 2:
