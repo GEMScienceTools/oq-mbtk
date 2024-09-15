@@ -1043,3 +1043,101 @@ def matrix_mean(mtxs, imt_list, gmpe_list):
         gmpe_list.append('mean')
     
     return mtxs, gmpe_list
+
+
+
+
+def plot_ratios_util(config, output_directory):
+    """
+    Generate plots of the ratios of each GMM/a baseline GMM versus distance for
+    given run configuration
+    """
+    # Get mag and dep lists
+    mag_list = config.trellis_and_rs_mag_list
+    dep_list = config.trellis_and_rs_depth_list
+    
+    # Get basin params
+    Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
+    
+    # Get config key
+    cfg_key = 'vs30 = %s m/s, GMM sigma epsilon = %s' % (config.Vs30,
+                                                         config.Nstd)
+    
+    # Get colours
+    colors = get_colors(config.custom_color_flag, config.custom_color_list) 
+    
+    # Get the baseline GMM
+    breakpoint()
+
+
+    # Compute ratios
+    fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
+    for n, i in enumerate(config.imt_list):
+        store_per_mag = {}
+        for l, m in enumerate(mag_list):
+            fig.add_subplot(
+                len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
+            store_per_gmpe = {}
+            for g, gmpe in enumerate(config.gmpes_list): 
+                
+                # Sub dicts for median, gmm sigma, median +/- Nstd * gmm sigma
+                store_per_gmpe[gmpe] = {}
+                col = colors[g]                
+                
+                # Perform mgmpe check
+                gmm = mgmpe_check(gmpe)
+                
+                # ZTOR value
+                if config.ztor is not None:
+                    ztor_m = config.ztor[l]
+                else:
+                    ztor_m = None
+                
+                # Get gmpe params
+                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
+                    config.strike, config.dip, dep_list[l], config.aratio,
+                    config.rake, config.trt) 
+                
+                # Get attenuation curves
+                mean, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
+                                                         aratio_g, strike_g,
+                                                         dip_g, config.rake,
+                                                         config.Vs30, Z1, Z25,
+                                                         config.maxR, 1, i,
+                                                         ztor_m,
+                                                         config.eshm20_region,
+                                                         config.dist_type,
+                                                         config.trt,
+                                                         config.up_or_down_dip)
+
+                # Get mean, sigma components, mean plus/minus sigma
+                mean = mean[0][0]
+                std = std[0][0]
+                plus_sigma = np.exp(mean+config.Nstd*std[0])
+                minus_sigma = np.exp(mean-config.Nstd*std[0])
+                
+                # Get unit of imt for the store
+                unit = get_imtl_unit_for_trellis_store(i)
+
+                # Store per gmpe
+                store_per_gmpe[gmpe]['median (%s)' % unit] = np.exp(mean)
+                if config.Nstd != 0:
+                    store_per_gmpe[gmpe][
+                        'median plus sigma (%s)' % unit] = plus_sigma
+                    store_per_gmpe[gmpe][
+                        'median minus sigma (%s)' % unit] = minus_sigma
+                   
+                # Update plots
+                update_trellis_plots(m, i, n, l, config.minR, config.maxR,
+                                     r_vals, config.imt_list, config.dist_type)
+                    
+            # Store per gmpe
+            mag_key = 'Mw = %s, depth = %s km, dip = %s deg, rake = %s deg' % (
+                m, dep_list[l], dip_g, config.rake)
+            store_per_mag[mag_key] = store_per_gmpe
+            pyplot.grid(axis='both', which='both', alpha=0.5)
+    
+    # Finalise plots
+    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
+    pyplot.savefig(os.path.join(output_directory, 'TrellisPlots.png'),
+                   bbox_inches='tight', dpi=200, pad_inches=0.2)
