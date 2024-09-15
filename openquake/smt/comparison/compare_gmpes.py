@@ -362,3 +362,16 @@ def plot_euclidean(filename, output_directory):
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
                         os.path.join(output_directory,'16th_perc_Euclidean.png'),
                         mtxs_type='16th_perc')
+    
+
+def plot_ratios(filename, output_directory):
+    """
+    Plot ratios of each GMM/a baseline GMM versus distance for given run
+    configuration
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.
+    """ 
+    config = Configurations(filename)
+    
+    plot_ratios_util(config, output_directory) 
