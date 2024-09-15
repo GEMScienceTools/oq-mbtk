@@ -29,7 +29,7 @@ import os
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_compare_gmpes import (
     plot_trellis_util, plot_spectra_util, plot_cluster_util, plot_sammons_util,
-    plot_euclidean_util, compute_matrix_gmpes)
+    plot_euclidean_util, compute_matrix_gmpes, plot)
 
 
 class Configurations(object):
@@ -189,6 +189,32 @@ class Configurations(object):
             self.lt_weights_gmc4 = None
 
 
+def assign_depths_per_mag_bin(config_file, mag_array):
+    """
+    For each magnitude considered within the Sammons Maps, Euclidean distance
+    and clustering plots assign a depth
+    """
+    # Create dataframe of depth to assign per mag bin
+    non_trellis_or_spectra_depths = pd.DataFrame(config_file[
+        'mag_values_non_trellis_or_spectra_functions'][
+            'non_trellis_or_spectra_depths'], columns=['mag','depth'])
+            
+    # Round each mag in mag_array to closest integer
+    mag_to_nearest_int = pd.Series(dtype='float')
+    for mag in mag_array:
+        mag_to_nearest_int[mag] = np.round(mag+0.001)
+
+    # Assign depth to each mag in mag_array using rounded mags
+    depth_array_initial = []
+    for idx_mag, rounded_mag in enumerate(mag_to_nearest_int):
+        for idx, val in enumerate(non_trellis_or_spectra_depths['mag']):
+            if rounded_mag == non_trellis_or_spectra_depths['mag'][idx]:
+                depth_to_store = non_trellis_or_spectra_depths['depth'][idx]
+                depth_array_initial.append(depth_to_store)
+    
+    return pd.Series(depth_array_initial) 
+
+
 def plot_trellis(filename, output_directory):
     """
     Plot trellis for given run configuration
@@ -321,29 +347,3 @@ def plot_euclidean(filename, output_directory):
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
                         os.path.join(output_directory,'16th_perc_Euclidean.png'),
                         mtxs_type='16th_perc')
-    
-    
-def assign_depths_per_mag_bin(config_file, mag_array):
-    """
-    For each magnitude considered within the Sammons Maps, Euclidean distance
-    and clustering plots assign a depth
-    """
-    # Create dataframe of depth to assign per mag bin
-    non_trellis_or_spectra_depths = pd.DataFrame(config_file[
-        'mag_values_non_trellis_or_spectra_functions'][
-            'non_trellis_or_spectra_depths'], columns=['mag','depth'])
-            
-    # Round each mag in mag_array to closest integer
-    mag_to_nearest_int = pd.Series(dtype='float')
-    for mag in mag_array:
-        mag_to_nearest_int[mag] = np.round(mag+0.001)
-
-    # Assign depth to each mag in mag_array using rounded mags
-    depth_array_initial = []
-    for idx_mag, rounded_mag in enumerate(mag_to_nearest_int):
-        for idx, val in enumerate(non_trellis_or_spectra_depths['mag']):
-            if rounded_mag == non_trellis_or_spectra_depths['mag'][idx]:
-                depth_to_store = non_trellis_or_spectra_depths['depth'][idx]
-                depth_array_initial.append(depth_to_store)
-    
-    return pd.Series(depth_array_initial) 
