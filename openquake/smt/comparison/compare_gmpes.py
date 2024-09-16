@@ -286,13 +286,17 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
 
 def plot_ratios(filename, output_directory):
     """
-    Plot ratios of each GMPE/a baseline GMPE against the specified distance
-    metric for given run configuration
+    Plot ratio (GMPE median attenuation/baseline GMPE median attenuation) for
+    given run configuration
     :param  filename:
         toml file providing configuration for use within comparative
         plotting methods.
     """ 
     config = Configurations(filename)
+
+    if config.baseline_gmm is None:
+        raise ValueError(
+            'User must specify a baseline GMPE to generate ratio plots')
     
     plot_ratios_util(config, output_directory)
 
