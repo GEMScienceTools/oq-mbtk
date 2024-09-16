@@ -159,6 +159,23 @@ def test_make_abs_mfd_eqns_nonnormalized():
     np.testing.assert_array_almost_equal(rhs, rhs_)
 
 
+def test_make_abs_fault_mfd_eqns_nonnormalized_cumulative():
+    mfd = hz.mfd.TruncatedGRMFD(5.0, 8.0, 0.1, 3.61759073, 1.0)
+
+    lhs, rhs, err = make_abs_mfd_eqns(
+        simple_test_rups, mfd, normalize=False, cumulative=True
+    )
+
+    lhs_ = np.array(
+        [[1.0, 1.0, 0.0, 0.0], [1.0, 1.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]
+    )
+
+    rhs_ = np.array([1.20753162e-03, 3.54892200e-04, 8.52639416e-05])
+
+    np.testing.assert_array_almost_equal(lhs, lhs_)
+    np.testing.assert_array_almost_equal(rhs, rhs_)
+
+
 def test_make_abs_mfd_eqns_normalized():
     mfd = hz.mfd.TruncatedGRMFD(5.0, 8.0, 0.1, 3.61759073, 1.0)
 

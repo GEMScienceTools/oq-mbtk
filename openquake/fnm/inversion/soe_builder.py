@@ -40,6 +40,7 @@ from .utils import (
     SHEAR_MODULUS,
     get_mag_counts,
     get_mfd_occurrence_rates,
+    breakpoint,
 )
 from .solver import weights_from_errors
 
@@ -222,29 +223,46 @@ def make_abs_mfd_eqns(
     mfd,
     mag_decimals=1,
     rup_include_list=None,
-    rup_fractions=None,  # these will need to be combined with rup_include_list
+    rup_fractions=None,
     weight=1.0,
     normalize=False,
+    cumulative=False,
 ):
     mag_counts = get_mag_counts(rups)
     unique_mags = sorted(mag_counts.keys())
 
-    mfd_occ_rates = get_mfd_occurrence_rates(mfd, mag_decimals=mag_decimals)
+    mfd_occ_rates = get_mfd_occurrence_rates(
+        mfd, mag_decimals=mag_decimals, cumulative=cumulative
+    )
+
     mag_rup_idxs = {M: [] for M in unique_mags}
     mag_rup_fracs = {M: [] for M in unique_mags}
 
     if rup_include_list is None:
         for i, rup in enumerate(rups):
-            mag_rup_idxs[rup["M"]].append(i)
-
+            if cumulative:
+                for mag in unique_mags:
+                    if rup["M"] <= mag:
+                        mag_rup_idxs[mag].append(i)
+            else:
+                mag_rup_idxs[rup["M"]].append(i)
     else:
         for i, rup in enumerate(rups):
             if i in rup_include_list:
-                mag_rup_idxs[rup["M"]].append(i)
-                if rup_fractions is not None:
-                    mag_rup_fracs[rup["M"]].append(
-                        rup_fractions[rup_include_list.index(i)]
-                    )
+                if cumulative:
+                    for mag in unique_mags:
+                        if rup["M"] <= mag:
+                            mag_rup_idxs[mag].append(i)
+                            if rup_fractions is not None:
+                                mag_rup_fracs[mag].append(
+                                    rup_fractions[rup_include_list.index(i)]
+                                )
+                else:
+                    mag_rup_idxs[rup["M"]].append(i)
+                    if rup_fractions is not None:
+                        mag_rup_fracs[rup["M"]].append(
+                            rup_fractions[rup_include_list.index(i)]
+                        )
 
     if len(unique_mags) > 2:
         abs_mag_eqns = np.vstack(
@@ -260,7 +278,6 @@ def make_abs_mfd_eqns(
             for i, M in enumerate(unique_mags):
                 for j, mm in enumerate(mag_rup_idxs[M]):
                     abs_mag_eqns[i, mm] = mag_rup_fracs[M][j]
-                # mfd_abs_rhs[i] = mfd_occ_rates[M]
                 mfd_abs_rhs[i] = mfd_occ_rates.get(M, 0.0)
     else:
         pass
@@ -271,10 +288,11 @@ def make_abs_mfd_eqns(
         mfd_abs_rhs /= norm_constant
         abs_mag_eqns /= norm_constant
 
-    mfd_abs_errs = np.sqrt(mfd_abs_rhs) * weight
+    mfd_abs_errs = np.sqrt(mfd_abs_rhs)  # * weight
+    mfd_abs_errs_weighted = weights_from_errors(mfd_abs_errs) * weight
     # mfd_abs_errs[mfd_abs_errs == 0.0] = 1.0
 
-    return abs_mag_eqns, mfd_abs_rhs, mfd_abs_errs
+    return abs_mag_eqns, mfd_abs_rhs, mfd_abs_errs_weighted
 
 
 def make_slip_rate_smoothing_eqns(
@@ -356,6 +374,8 @@ def make_eqns(
     slip_rate_eqns=True,
     seismic_slip_rate_frac=1.0,
     regional_slip_rate_fracs=None,
+    incremental_abs_mfds=True,
+    cumulative_abs_mfds=False,
     mfd_rel_eqns=False,
     mfd_rel_b_val=1.0,
     mfd_rel_weight=1.0,
@@ -383,10 +403,10 @@ def make_eqns(
             print("fault_moment", fault_moment)
             print("mfd_moment", mfd_moment)
             print(
-                "setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
+                "Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
             )
     elif seismic_slip_rate_frac is None and mfd is None:
-        print("setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac)
+        print("Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac)
         seismic_slip_rate_frac = 1.0
 
     if slip_rate_eqns is True:
@@ -412,52 +432,89 @@ def make_eqns(
         err_set.append(mfd_rel_errs)
 
     if mfd is not None:
-        print("Making MFD absolute eqns")
-        mfd_abs_lhs, mfd_abs_rhs, mfd_abs_errs = make_abs_mfd_eqns(
-            rups,
-            mfd,
-            weight=mfd_abs_weight,  # ^ mfd_abs_weight reduces relevance
-            normalize=mfd_abs_normalize,
-        )
-        lhs_set.append(mfd_abs_lhs)
-        rhs_set.append(mfd_abs_rhs)
-        err_set.append(mfd_abs_errs)
+        if incremental_abs_mfds:
+            print("Making MFD absolute eqns")
+            mfd_abs_lhs, mfd_abs_rhs, mfd_abs_errs = make_abs_mfd_eqns(
+                rups,
+                mfd,
+                weight=mfd_abs_weight,  # ^ mfd_abs_weight reduces relevance
+                normalize=mfd_abs_normalize,
+            )
+            lhs_set.append(mfd_abs_lhs)
+            rhs_set.append(mfd_abs_rhs)
+            err_set.append(mfd_abs_errs)
+
+        if cumulative_abs_mfds:
+            print("Making cumulative MFD absolute eqns")
+            mfd_abs_cum_lhs, mfd_abs_cum_rhs, mfd_abs_cum_errs = (
+                make_abs_mfd_eqns(
+                    rups,
+                    mfd,
+                    weight=mfd_abs_weight,
+                    normalize=mfd_abs_normalize,
+                    cumulative=True,
+                )
+            )
+            lhs_set.append(mfd_abs_cum_lhs)
+            rhs_set.append(mfd_abs_cum_rhs)
+            err_set.append(mfd_abs_cum_errs)
 
     if regional_abs_mfds is not None:
-        print("Making regional MFD absolute eqns")
-        for reg, reg_mfd_data in regional_abs_mfds.items():
-            if ('rups_include' in reg_mfd_data.keys()) and (
-                len(reg_mfd_data['rups_include']) > 0
-            ):
-                reg_abs_lhs, reg_abs_rhs, reg_abs_errs = make_abs_mfd_eqns(
-                    rups,
-                    reg_mfd_data["mfd"],
-                    rup_include_list=reg_mfd_data["rups_include"],
-                    rup_fractions=reg_mfd_data["rup_fractions"],
-                    weight=mfd_abs_weight,
-                )
-                lhs_set.append(reg_abs_lhs)
-                rhs_set.append(reg_abs_rhs)
-                err_set.append(reg_abs_errs)
+        if incremental_abs_mfds:
+            print("Making regional MFD absolute eqns")
+            for reg, reg_mfd_data in regional_abs_mfds.items():
+                if ('rups_include' in reg_mfd_data.keys()) and (
+                    len(reg_mfd_data['rups_include']) > 0
+                ):
+                    reg_abs_lhs, reg_abs_rhs, reg_abs_errs = make_abs_mfd_eqns(
+                        rups,
+                        reg_mfd_data["mfd"],
+                        rup_include_list=reg_mfd_data["rups_include"],
+                        rup_fractions=reg_mfd_data["rup_fractions"],
+                        weight=mfd_abs_weight,
+                    )
+                    lhs_set.append(reg_abs_lhs)
+                    rhs_set.append(reg_abs_rhs)
+                    err_set.append(reg_abs_errs)
+        if cumulative_abs_mfds:
+            print("Making regional cumulative MFD absolute eqns")
+            for reg, reg_mfd_data in regional_abs_mfds.items():
+                if ('rups_include' in reg_mfd_data.keys()) and (
+                    len(reg_mfd_data['rups_include']) > 0
+                ):
+                    reg_abs_cum_lhs, reg_abs_cum_rhs, reg_abs_cum_errs = (
+                        make_abs_mfd_eqns(
+                            rups,
+                            reg_mfd_data["mfd"],
+                            rup_include_list=reg_mfd_data["rups_include"],
+                            rup_fractions=reg_mfd_data["rup_fractions"],
+                            weight=mfd_abs_weight,
+                            cumulative=True,
+                        )
+                    )
+                    lhs_set.append(reg_abs_cum_lhs)
+                    rhs_set.append(reg_abs_cum_rhs)
+                    err_set.append(reg_abs_cum_errs)
 
     if slip_rate_smoothing is True:
-        print("Making slip rate smoothing eqns")
-        (
-            slip_smooth_lhs,
-            slip_smooth_rhs,
-            slip_smooth_errs,
-        ) = make_slip_rate_smoothing_eqns(
-            fault_adjacence,
-            faults,
-            rups,
-            slip_rate_lhs=slip_rate_lhs,
-            seismic_slip_rate_frac=seismic_slip_rate_frac,
-            # smoothing_coeff=slip_rate_smooth_coeff,
-            # smoothing_err=slip_rate_smooth_err,
-        )
-        lhs_set.append(slip_smooth_lhs)
-        rhs_set.append(slip_smooth_rhs)
-        err_set.append(slip_smooth_errs)
+        raise NotImplementedError("Smoothing not implemented")
+        # print("Making slip rate smoothing eqns")
+        # (
+        #    slip_smooth_lhs,
+        #    slip_smooth_rhs,
+        #    slip_smooth_errs,
+        # ) = make_slip_rate_smoothing_eqns(
+        #    fault_adjacence,
+        #    faults,
+        #    rups,
+        #    slip_rate_lhs=slip_rate_lhs,
+        #    seismic_slip_rate_frac=seismic_slip_rate_frac,
+        #    # smoothing_coeff=slip_rate_smooth_coeff,
+        #    # smoothing_err=slip_rate_smooth_err,
+        # )
+        # lhs_set.append(slip_smooth_lhs)
+        # rhs_set.append(slip_smooth_rhs)
+        # err_set.append(slip_smooth_errs)
 
     print("stacking results")
     if verbose:

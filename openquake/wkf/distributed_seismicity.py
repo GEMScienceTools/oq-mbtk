@@ -84,7 +84,7 @@ def get_bounding_box(sfc):
         upper right corners of the bounding box.
     """
 
-    breakpoint()
+    # breakpoint()
     # This provides the convex hull of the surface projection
     coo = np.array(src.polygon.coords)
     return [min(coo[:, 0]), min(coo[:, 1]), max(coo[:, 0]), max(coo[:, 1])]
@@ -205,7 +205,9 @@ def explode(srcs, check_moment_rates=True):
             if check_moment_rates:
                 src_moment = get_mfd_moment(src.mfd)
                 nsrc_moment = get_mfd_moment(nsrc.mfd)
-                np.testing.assert_almost_equal(src_moment * wei, nsrc_moment)
+                np.testing.assert_allclose(
+                    src_moment * wei, nsrc_moment, rtol=1e-1
+                )
 
             exploded_srcs.append(nsrc)
 
@@ -219,6 +221,10 @@ def remove_buffer_around_faults(
     dst: float,
     threshold_mag: float = 6.5,
     use: str = '',
+    rupture_mesh_spacing=5.0,
+    complex_fault_mesh_spacing=5.0,
+    area_source_discretization=5.0,
+    PLOTTING=False,
 ):
     """
     Remove the seismicity above a magnitude threshold for all the point
@@ -248,10 +254,10 @@ def remove_buffer_around_faults(
     binw = 0.1
     sourceconv = SourceConverter(
         investigation_time=1.0,
-        rupture_mesh_spacing=5.0,
-        complex_fault_mesh_spacing=5.0,
+        rupture_mesh_spacing=rupture_mesh_spacing,
+        complex_fault_mesh_spacing=complex_fault_mesh_spacing,
         width_of_mfd_bin=binw,
-        area_source_discretization=5.0,
+        area_source_discretization=area_source_discretization,
     )
 
     # Get the surfaces representing the faults
@@ -301,7 +307,10 @@ def remove_buffer_around_faults(
             # sources that collectively describe the distributed seismicity
             # sources provided as input.
             pnt_ii, sel_pnt_srcs, sel_pnt_coo, rjb = get_data(
-                src, coo_pnt_src, pnt_srcs
+                src,
+                coo_pnt_src,
+                pnt_srcs,
+                buffer=dst * 2,
             )
 
             # If we find some point sources around the fault

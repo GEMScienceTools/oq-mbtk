@@ -224,6 +224,7 @@ def build_fault_network(
         all_subfaults=fault_network['subfaults'],
         max_dist=settings['max_jump_distance'],
         sparse=settings['sparse_distance_matrix'],
+        full_fault_only_mf_ruptures=settings['full_fault_only_mf_ruptures'],
     )
     t3 = time.time()
     event_times.append(t3)
