@@ -547,6 +547,7 @@ def make_rupture_df(
     multi_fault_rups,
     subfault_df,
     area_mag_msr='Leonard2014_Interplate',
+    mag_decimals=1,
 ) -> pd.DataFrame:
     """
     Makes a Pandas DataFrame, with a row for each rupture in the fault network.
@@ -565,7 +566,7 @@ def make_rupture_df(
         Area-to-magnitude scaling relationship to use. Must
         be in the `openquake.fnm.msr` library of scaling relationships.
 
-    Returnsgg
+    Returns
     -------
     rupture_df : pd.DataFrame
         DataFrame containing information about each rupture.
@@ -660,7 +661,7 @@ def make_rupture_df(
     rupture_df['fault_frac_area'] = fault_frac_areas
     rupture_df['mean_rake'] = np.round(mean_rakes, 1)
     rupture_df['slip_azimuth'] = slip_azimuths
-    rupture_df['mag'] = np.round(mags, 2)
+    rupture_df['mag'] = np.round(mags, mag_decimals)
     rupture_df['area'] = np.round(all_areas, 1)
     rupture_df['displacement'] = np.round(
         get_rupture_displacement(
