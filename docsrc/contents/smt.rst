@@ -528,10 +528,12 @@ Comparing GMPEs
         [models.AkkarEtAlRjb2014]
             lt_weight_gmc2_plot_lt_only = 0.50
             
+        # Also specify a GMM to compute ratios of the attenuation against (GMM/baseline)
+        [ratios_baseline_gmm.BooreEtAl2020]
+         
         [custom_colors]
         custom_colors_flag = 'False' # Set to "True" for custom colours in plots
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
-            
             
 3. Trellis Plots 
 
@@ -573,10 +575,21 @@ Comparing GMPEs
        > comp.plot_spectra(filename, output_directory, obs_spectra='spectra_chamoli_1991_station_UKHI.csv') 
 
     Response spectra plots for input parameters specified in toml file:
-        .. image:: /contents/smt_images/ObsSpectra.png
-      
+        .. image:: /contents/smt_images/ObsSpectra.png      
 
-6. Sammon's Maps
+6. Plot of ratios of attenuation curves
+
+   The ratios of the median predictions from each GMM and a baseline GMM (specified in the ``.toml`` - see above) can also be plotted. An example is provided in the demo files:
+
+    .. code-block:: ini
+    
+       > # Plot ratios of median attenuation curves for each GMM/median attenuation curves for baseline GMM
+       > comp.plot_ratios(filename, output_directory) 
+
+    Ratio plots for input parameters specified in toml file:
+        .. image:: /contents/smt_images/RatioPlots.png      
+
+7. Sammon's Maps
 
    We can plot Sammon's Maps to examine how similar the medians (and 16th and 84th percentiles) of predicted ground-motion of each GMPE are (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon's mapping procedure).
    
@@ -592,7 +605,7 @@ Comparing GMPEs
     Sammon's Maps (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_SammonMaps.png
     
-7. Hierarchical Clustering
+8. Hierarchical Clustering
 
    Dendrograms can be plotted as an alternative tool to evaluate how similarly the predicted ground-motion is by each GMPE.
    
@@ -608,7 +621,7 @@ Comparing GMPEs
     Dendrograms (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Clustering.png
          
-8. Matrix Plots of Euclidean Distance
+9. Matrix Plots of Euclidean Distance
 
    In addition to Sammon's Maps and hierarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
    
@@ -624,7 +637,7 @@ Comparing GMPEs
     Matrix plots of Euclidean distance between GMPEs (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Euclidean.png
     
-9. Using ModifiableGMPE to modify GMPEs within a ``.toml``. 
+10. Using ModifiableGMPE to modify GMPEs within a ``.toml``. 
 
    In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``).
    
