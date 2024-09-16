@@ -586,7 +586,7 @@ Comparing GMPEs
        > # Plot ratios of median attenuation curves for each GMM/median attenuation curves for baseline GMM
        > comp.plot_ratios(filename, output_directory) 
 
-    Ratio plots for input parameters specified in toml file:
+    Ratio plots for input parameters specified in toml file (note that here the baseline GMM is BooreEtAl2014):
         .. image:: /contents/smt_images/RatioPlots.png      
 
 7. Sammon's Maps
