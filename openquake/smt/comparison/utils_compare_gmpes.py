@@ -178,12 +178,13 @@ def plot_spectra_util(config, output_directory, obs_spectra):
         obs_spectra = pd.read_csv(obs_spectra)
         max_period, eq_id, st_id = load_obs_spectra(obs_spectra)
     else:
+        max_period = config.max_period
         obs_spectra, eq_id, st_id = None, None, None
         
     # Get gmc lt weights, imts, periods and basin params
     gmc_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
                    config.lt_weights_gmc3, config.lt_weights_gmc4]
-    imt_list, periods = _get_imts(config.max_period)
+    imt_list, periods = _get_imts(max_period)
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
     
     # Get colours and make the figure
@@ -1049,4 +1050,6 @@ def plot_ratios_util(config, output_directory):
     """
     Generate GMPE/baseline GMPE plots for given run configuration
     """
+    
+
     breakpoint()
