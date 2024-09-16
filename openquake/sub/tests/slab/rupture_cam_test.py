@@ -76,7 +76,6 @@ class RuptureCreationCAMTest(unittest.TestCase):
 
     def step01(self):
 
-        #out_path = pathlib.Path(tempfile.mkdtemp())
         out_hdf5_fname = self.out_path / 'ruptures.hdf5'
         out_hdf5_smoothing_fname = self.out_path / 'smoothing.hdf5'
         kwargs = {'only_plt': False,
