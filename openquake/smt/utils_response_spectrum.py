@@ -16,15 +16,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Simple Python Script to integrate a strong motion record using
-the Newmark-Beta method
+Simple Python Script to integrate a strong motion record using the
+Newmark-Beta method
 """
 import numpy as np
 from math import sqrt
 
 import matplotlib.pyplot as plt
-from openquake.smt.sm_utils import (_save_image, get_time_vector, convert_accel_units,
-                           get_velocity_displacement)
+from openquake.smt.utils_strong_motion import (_save_image, get_time_vector,
+                                               convert_accel_units,
+                                               get_velocity_displacement)
                      
 
 class ResponseSpectrum(object):
@@ -163,20 +164,31 @@ class NewmarkBeta(ResponseSpectrum):
         vel = np.zeros([self.num_steps, self.num_per], dtype=float)
         disp = np.zeros([self.num_steps, self.num_per], dtype=float)
         a_t = np.zeros([self.num_steps, self.num_per], dtype=float)
+        
         # Initial line
-        accel[0, :] =(-self.acceleration[0] - (cval * vel[0, :])) - \
+        accel[0, :] = (-self.acceleration[0] - (cval * vel[0, :])) - \
                       (kval * disp[0, :])
         a_t[0, :] = accel[0, :] + accel[0, :]
+        
+        # Now compute
         for j in range(1, self.num_steps):
+            
+            # Displacement
             disp[j, :] = disp[j-1, :] + (self.d_t * vel[j-1, :]) + \
                 (((self.d_t ** 2.) / 2.) * accel[j-1, :])
-                         
+                
+            # Acceleration
             accel[j, :] = (1./ (1. + self.d_t * 0.5 * cval)) * \
                 (-self.acceleration[j] - kval * disp[j, :] - cval *
                 (vel[j-1, :] + (self.d_t * 0.5) * accel[j-1, :]));
+            
+            # Velocity
             vel[j, :] = vel[j - 1, :] + self.d_t * (0.5 * accel[j - 1, :] +
                 0.5 * accel[j, :])
+            
+            # Acceleration response
             a_t[j, :] = self.acceleration[j] + accel[j, :]
+            
         return accel, vel, disp, a_t
 
 

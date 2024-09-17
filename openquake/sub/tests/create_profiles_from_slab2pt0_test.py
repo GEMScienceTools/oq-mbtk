@@ -41,7 +41,7 @@ try:
     import pygmt
     pygmt_available = True
 except ImportError:
-    pass
+    pygmt_available = False
 
 HERE = pathlib.Path(__file__).parent.resolve()
 PLOTTING = False
