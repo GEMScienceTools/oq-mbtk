@@ -2,12 +2,11 @@ from openquake.sub.create_2pt5_model import create_2pt5_model
 from openquake.sub.get_profiles_from_slab2pt0 import get_profiles_geojson
 from openquake.sub.build_complex_surface import build_complex_surface
 from openquake.mbi.ccl import classify
-#from openquake.mbt.tools.tr.change_class import change
 import tempfile
-#import tempdir
 import pathlib
 import os 
 import configparser
+import pandas as pd
 
 HERE = pathlib.Path(__file__).parent.resolve()
 
@@ -25,9 +24,18 @@ def test_geojson_classification_workflow():
 	config = configparser.ConfigParser()
 	config.read(classification_ini)
 	config.set('general', 'root_folder', top_level)
+
 	cat = HERE / 'data' / 'mariana_full_2202.pkl'
 	config.set('general', 'catalogue_filename', str(cat))
+
+	### This data comes from CRUST1.0, part of the Reference Earth Model
+	## (http://igppweb.ucsd.edu/~gabi/rem.html)
+	## Laske, G., Masters., G., Ma, Z. and Pasyanos, M., 
+	## Update on CRUST1.0 - A 1-degree Global Model of Earth's Crust,  
+	## Geophys. Res. Abstracts, 15, Abstract EGU2013-2658, 2013.
+	## Downloaded from https://igppweb.ucsd.edu/~gabi/crust1.html#download
 	crust = HERE / 'data' / 'depthtomoho.xyz'
+	
 	config.set('crustal', 'crust_filename', str(crust))
 	with open(classification_ini, 'w') as configfile:
 		config.write(configfile)
@@ -57,3 +65,10 @@ def test_geojson_classification_workflow():
 
 
 	classify.classify(classification_ini, True)
+
+	# Test the resulting classification is as expected
+	classified = pd.read_csv(os.path.join(top_level, 'classified_earthquakes.csv'))
+	test_set = pd.read_csv(HERE / 'data' /'classified_earthquakes_test.csv')
+
+	assert len(classified['tr']) == len(test_set['tr'])
+	assert all([a == b for a, b in zip(classified['tr'], test_set['tr'])])

@@ -23,9 +23,9 @@ import unittest
 import os
 import h5py
 import numpy as np
-import openquake.smt.response_spectrum as rsp
-import openquake.smt.intensity_measures as ims
-import openquake.smt.smoothing.konno_ohmachi as ko
+import openquake.smt.utils_response_spectrum as rsp
+import openquake.smt.utils_intensity_measures as ims
+import openquake.smt.utils_smoothing as smo
 
 
 BASE_DATA_PATH = os.path.dirname(__file__)
@@ -66,8 +66,8 @@ class BaseIMSTestCase(unittest.TestCase):
         """
         Connect to hdf5 data store
         """
-        self.fle = h5py.File(os.path.join(BASE_DATA_PATH,
-                                          "smt_ims_test_data.hdf5"), "r")
+        self.fle = h5py.File(os.path.join(
+            BASE_DATA_PATH, "utils_intensity_measures_test_data.hdf5"), "r")
         self.periods = self.fle["INPUTS/periods"][:]
 
     def tearDown(self):
@@ -246,7 +246,7 @@ class FourierSpectrumBuildSmooth(BaseIMSTestCase):
         # Smoother inputs
         smoother_config = {"bandwidth": 30., "count": 1, "normalize": True}
         # Smooth the FAS
-        smoother = ko.KonnoOhmachi(smoother_config)
+        smoother = smo.KonnoOhmachi(smoother_config)
         smoothed_fas = smoother(fas, freq)
         np.testing.assert_array_almost_equal(
             smoothed_fas, self.fle["TEST2/FAS_SMOOTHED"][:], 5)

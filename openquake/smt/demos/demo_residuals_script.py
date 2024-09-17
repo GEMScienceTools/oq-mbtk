@@ -7,9 +7,12 @@ import shutil
 import pickle
 
 from openquake.baselib import sap
-from openquake.smt.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
+from openquake.smt.residuals.parsers.esm_url_flatfile_parser import\
+    ESMFlatfileParserURL
 from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals import residual_plotter as rspl
+from openquake.smt.residuals.sm_database_visualiser import (
+    db_magnitude_distance, db_geographical_coverage)
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -54,6 +57,13 @@ def get_residual_metadata(metadata_dir):
     # If output directory exists remove
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
+    os.mkdir(out_dir)
+
+    # Export magnitude distance plot and geographical coverage of eqs/stations
+    mag_dist = os.path.join(out_dir, 'mag_dist.png')
+    map_gmdb = os.path.join(out_dir, 'map_gmdb.png')
+    db_magnitude_distance(database, dist_type='repi', filename=mag_dist)
+    db_geographical_coverage(database, filename=map_gmdb)
 
     # Get residuals
     residuals = res.Residuals.from_toml(gmms_imts)
@@ -66,7 +76,7 @@ def get_residual_metadata(metadata_dir):
         gmm_dir = residuals.gmpe_list[gmm]._toml.split('\n')[0]
         out = os.path.join(out_dir, gmm_dir)
         if not os.path.exists(out): os.makedirs(out)
-
+        
         # Per IMT
         for imt in residuals.imts:
             
@@ -84,19 +94,31 @@ def get_residual_metadata(metadata_dir):
             rspl.ResidualWithDistance(
                 residuals, gmm, imt, fi_dist, filetype='jpeg')
         
-    # Get llh, edr and residual summary plot
+    # Get llh, edr, stochastic area and residual summary plots
     fi_llh = os.path.join(out_dir, 'all_gmpes_LLH_plot')
     fi_edr = os.path.join(out_dir, 'all_gmpes_EDR_plot')
+    fi_sto = os.path.join(out_dir, 'all_gmpes_stochastic_area_plot')
     fi_pdf = os.path.join(out_dir, 'all_gmpes_PDF_vs_imt_plot')
-    
-    # Get table of residuals
-    fi_pdf_table = os.path.join(out_dir, 'pdf_table.csv')
 
-    # Get plots
     rspl.plot_loglikelihood_with_spectral_period(residuals, fi_llh)
     rspl.plot_edr_metrics_with_spectral_period(residuals, fi_edr)
+    rspl.plot_stochastic_area_with_spectral_period(residuals, fi_sto)
     rspl.plot_residual_pdf_with_spectral_period(residuals, fi_pdf)
+
+    # Get table of residuals (mean and std dev per gmm per imt)
+    fi_pdf_table = os.path.join(out_dir, 'pdf_table.csv')
     rspl.pdf_table(residuals, fi_pdf_table)
+
+    """
+    # Get logic tree weights for shortlisted GMMs based on GMM ranking scores
+    fi_llh_weights = os.path.join(out_dir, 'final_weights_llh.csv')
+    fi_edr_weights = os.path.join(out_dir, 'final_weights_edr.csv')
+    fi_sto_weights = os.path.join(out_dir, 'final_weights_stochastic_area.csv')
+
+    rspl.llh_weights_table(residuals, fi_llh_weights)
+    rspl.edr_weights_table(residuals, fi_edr_weights)
+    rspl.stochastic_area_weights_table(residuals, fi_sto_weights)
+    """
 
     return residuals
 
@@ -113,7 +135,4 @@ def main():
 
 
 if __name__ == '__main__':
-    sap.run(main)
-    
-    
-    
+    sap.run(main)    
