@@ -131,11 +131,18 @@ def get_norm_optimize(tcat, aval, bval, ctab, binw, cmag, n_obs, t_per, last_yea
        calculated norm for input completeness. Smaller norm is better
     """
     
-    occ = np.zeros((ctab.shape[0]))
-    dur = np.zeros((ctab.shape[0]))
-    #mags = np.array(list(ctab[:, 1])+[10])
-    mags = np.array(np.arange(ctab[:, 1], 10, binw))
-
+    #occ = np.zeros((ctab.shape[0]))
+    #dur = np.zeros((ctab.shape[0]))
+    mags = np.array(list(ctab[:, 1])+[10])
+    print("old mags: ", mags)
+    mags = np.array(np.arange(ctab[:, 1][0], 10, binw))
+    print("new mags: ", mags)
+    occ = np.zeros(len(mags))
+    dur = np.zeros(len(mags))
+    ## Problem: we *should* be testing all the bins > completeness
+    ## This is currently binning based on the completeness windows,
+    ## which feels bad.
+    
     for i, mag in enumerate(mags[:-1]):
         idx = (cmag >= mags[i]) & (cmag < mags[i+1])
         if np.any(idx):
