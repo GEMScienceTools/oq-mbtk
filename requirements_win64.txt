@@ -20,6 +20,8 @@ netCDF4 < 1.7.0
 xarray==2022.09 
 #
 # Generic
+openpyxl
+xlrd
 nbformat
 geojson
 nbconvert

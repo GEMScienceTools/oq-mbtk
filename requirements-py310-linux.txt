@@ -19,6 +19,8 @@ rtree >= 0.9.4
 netCDF4 < 1.7.0
 #
 # Generic
+openpyxl
+xlrd
 nbformat
 geojson
 nbconvert
