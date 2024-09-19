@@ -71,24 +71,43 @@ def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
     return slip_rate_lhs, slip_rate_rhs, slip_rate_err
 
 
-def rel_gr_mfd_rates(mags, b=1.0, a=4.0, rel=True):
-    mags = np.sort(mags)
-    bin_widths = np.diff(mags)
-    bin_widths = np.insert(bin_widths, 0, np.median(bin_widths))
-    bin_widths = np.append(bin_widths, np.median(bin_widths))
+def rel_gr_mfd_rates(mags, b=1.0, a=4.0, rel=True, mfd=False):
+    """
+    Calculate the relative Gutenberg-Richter magnitude frequency distribution rates.
 
+    Parameters
+    ----------
+    mags : list
+        List of magnitudes
+    b : float
+        b-value
+    a : float
+        a-value
+    rel : bool
+        Whether to return relative rates
+    mfd : Optional MFD
+        If provided, will use this instead of the a and b values
+
+    Returns
+    -------
+    dict
+        Dictionary of relative rates
+    """
+    mags = np.sort(mags)
     rel_rates = {}
 
+    if mfd:
+        raise NotImplementedError("arbitrary MFD option not implemented")
+
     for i, mag in enumerate(mags):
-        mag_rate = 10.0 ** (a - b * (mag - bin_widths[i] / 2.0)) - 10.0 ** (
-            a - b * (mag + bin_widths[i + 1] / 2.0)
-        )
+        rel_rates[mag] = 10 ** (a - b * mag)
 
-        rel_rates[mag] = mag_rate
-
-        if rel is True:
-            rel_rates[mag] /= rel_rates[mags[0]]
-
+    if rel:
+        for i, mag in enumerate(mags):
+            if i != 0:
+                rel_rates[mag] /= rel_rates[mags[0]]
+        # do this last because it's a reference for the others
+        rel_rates[mags[0]] = 1.0 
     return rel_rates
 
 
