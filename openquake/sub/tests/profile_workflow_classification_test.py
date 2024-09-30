@@ -72,6 +72,5 @@ def test_geojson_classification_workflow():
     test_set = pd.read_csv(HERE / "data" / "classified_earthquakes_test.csv")
 
     assert len(classified["tr"]) == len(test_set["tr"])
-    for a, b in zip(classified["tr"][0:5], test_set["tr"][0:5]):
-        print(a, b)
+    for a, b in zip(classified["tr"], test_set["tr"]):
         assert a == b
