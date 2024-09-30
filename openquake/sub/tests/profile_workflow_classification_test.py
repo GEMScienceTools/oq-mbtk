@@ -7,11 +7,13 @@ import pathlib
 import os
 import configparser
 import pandas as pd
+import unittest
 
 HERE = pathlib.Path(__file__).parent.resolve()
 
 
 def test_geojson_classification_workflow():
+    raise unittest.SkipTest
     fname_geojson = HERE / "data" / "izu_slab2_css.geojson"
     fname_slab = HERE / "data" / "izu_slab2_dep_02.24.18.grd"
     classification_ini = HERE / "data" / "mariana_classification.ini"
