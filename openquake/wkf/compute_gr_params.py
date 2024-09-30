@@ -439,6 +439,10 @@ def _weichert_analysis(tcat, ctab, binw, cmag, n_obs, t_per):
     weichert_config = {'magnitude_interval': binw,
                        'reference_magnitude': numpy.min(ctab[:, 1])}
     weichert = Weichert()
+    
+    nev = len(tcat.data['magnitude'])
+    if nev < 10:
+        print("Few events in this catalogue (only ", nev, " events above completeness)") 
 
     # weichert.calculate returns bGR and its standard deviation + log10(rate)
     # for the reference magnitude and its standard deviation. In this case
@@ -447,6 +451,9 @@ def _weichert_analysis(tcat, ctab, binw, cmag, n_obs, t_per):
     # bval, sigmab, aval, sigmaa = fun(tcat, weichert_config, ctab)
     bval, sigmab, rmag_rate, rmag_rate_sigma, aval, sigmaa = fun(
         tcat, weichert_config, ctab)
+        
+    if bval < 0.5 or bval > 2:
+        print("suspicious b-value, recheck your catalogue (b = ", bval, ")")
 
     # Computing confidence intervals
     gwci = get_weichert_confidence_intervals
