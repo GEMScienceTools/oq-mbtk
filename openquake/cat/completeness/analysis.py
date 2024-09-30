@@ -266,7 +266,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, mag_low, ref_upp_m
 
     # Checking input
     if criterion not in ['match_rate', 'largest_rate', 'optimize', 'weichert',
-                         'poisson', 'optimize_a', 'optimize_b', 'optimize_c','optimize_d']:
+                         'poisson', 'optimize_a', 'optimize_b', 'optimize_c','optimize_d', 'gft']:
         raise ValueError('Unknown optimization criterion')
 
     tcat = _load_catalogue(fname)
