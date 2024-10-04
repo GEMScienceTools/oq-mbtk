@@ -37,30 +37,41 @@ from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
 
 def _get_first_point(rup, from_point):
     """
-    Get the first point in the collection of sites from the rupture
+    Get the first point in the collection of sites from the rupture.
+    
+    Currently the SMT only computes ground-shaking for up or down-dip from the
+    up-dip edge centre point (rrup, rjb), or from midpoint of the rupture (repi,
+    rhypo). Will be expanded to include up-or-down dip from down-dip edge centre
+    point or from a vertex of the rupture.
     """
     sfc = rup.surface
-    if from_point == 'TC':  # Get the up-dip edge centre point
+
+    if from_point == 'MP':
+        return sfc.get_middle_point() # Get midpoint of rup surface
+
+    elif from_point == 'TC':  # Get the up-dip edge centre point
         return sfc.get_top_edge_centroid()
+
     elif from_point == 'BC':  # Get the down-dip edge centre point
-        lon, lat = geo_utils.get_middle_point(
-            sfc.corner_lons[2], sfc.corner_lats[2],
-            sfc.corner_lons[3], sfc.corner_lats[3]
-        )
+        lon, lat = geo_utils.get_middle_point(sfc.corner_lons[2],
+                                              sfc.corner_lats[2],
+                                              sfc.corner_lons[3],
+                                              sfc.corner_lats[3])
         return Point(lon, lat, sfc.corner_depths[2])
-    elif from_point == 'TL':
+        
+    elif from_point == 'TL': # Get top left point
         idx = 0
-    elif from_point == 'TR':
+    elif from_point == 'TR': # Get top right point
         idx = 1
-    elif from_point == 'BR':
+    elif from_point == 'BR': # Get bottom right
         idx = 2
-    elif from_point == 'BL':
+    elif from_point == 'BL': # Get bottom left
         idx = 3
     else:
         raise ValueError('Unsupported option from first point')
-    return Point(sfc.corner_lons[idx],
-                 sfc.corner_lats[idx],
-                 sfc.corner_depths[idx])
+
+    return Point(
+        sfc.corner_lons[idx], sfc.corner_lats[idx], sfc.corner_depths[idx])
 
 
 def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
@@ -89,7 +100,7 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
         azi = (strike + toward_azimuth) % 360
         pointsp = npoints_towards(r_lon, r_lat, r_dep,
                                   azi, hdist, vdist, npoints)
-
+        
     if direction == 'negative':
         azi = (strike + toward_azimuth + 180) % 360
         pointsn = npoints_towards(r_lon, r_lat, r_dep,
@@ -132,9 +143,8 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
     return rup
 
 
-def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
-               Z1, Z25, maxR, step, imt, ztor, eshm20_region, dist_type, trt,
-               up_or_down_dip):
+def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
+              step, imt, ztor, eshm20_region, dist_type, trt, up_or_down_dip):
     """
     Compute the ground-motion intensities for the given context created here
     """
@@ -179,11 +189,17 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
         direction = 'positive'
     elif up_or_down_dip == float(0):
         direction = 'negative'
+    else:
+        raise ValueError('The site must be specified as up or down dip.')
 
     # Get sites
-    sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
-                                   direction=direction, hdist=maxR,
-                                   step=step, site_props=props)
+    if dist_type in ['repi', 'rhypo']:
+        from_pnt = 'MP' # Sites from midpoint of rup surface
+    else:
+        from_pnt = 'TC' # Sites from center of top edge
+    sites = get_sites_from_rupture(rup, from_point=from_pnt, toward_azimuth=90,
+                                   direction=direction, hdist=maxR, step=step,
+                                   site_props=props)
 
     # Add main R types to gmpe so can plot against repi, rrup, rjb and rhypo
     core_r_types = ['repi', 'rrup', 'rjb', 'rhypo']
@@ -205,14 +221,14 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
     if dist_type == 'repi':
         distances = ctxs.repi
-    if dist_type == 'rrup':
+    elif dist_type == 'rrup':
         distances = ctxs.rrup
-    if dist_type == 'rjb':
+    elif dist_type == 'rjb':
         distances = ctxs.rjb
-    if dist_type == 'rhypo':
+    elif dist_type == 'rhypo':
         distances = ctxs.rhypo
-
-    distances[len(distances) - 1] = maxR
+    else:
+        raise ValueError('No valid distance type specified.')
 
     return mean, std, distances, tau, phi
 
