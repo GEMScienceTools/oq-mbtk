@@ -35,7 +35,7 @@ jobs:
     - name: Run test with pytest
       run: |
         source ~/openquake/bin/activate
-        oq dbserver upgrade
+        oq engine --upgrade-db
         oq --version
         sleep 3
         cd openquake
