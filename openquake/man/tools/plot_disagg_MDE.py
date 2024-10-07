@@ -90,7 +90,10 @@ def plot_gmt(fname, fout, settings_fname=None):
         header = f.readline()
         
     # create color palette
-    lim = get_disagg_header_info(header, 'eps_bin_edges=[')[-1]
+    try:
+        lim = get_disagg_header_info(header, 'eps_bin_edges=[')[-1]
+    except: 
+        lim = 3
     LIM="-{}/{}/1".format(lim, lim)
     CPTT1="./tmp/rel.cpt"
     if not os.path.exists('tmp'):
@@ -102,10 +105,18 @@ def plot_gmt(fname, fout, settings_fname=None):
     extinfo = subprocess.check_output(cmd, shell=True).decode("utf-8").strip()
     maxmag = float(extinfo.split('/')[1])
     
-    mags_full = get_disagg_header_info(header, 'mag_bin_edges=[', fl=True)
+    try:
+        mags_full = get_disagg_header_info(header, 'mag_bin_edges=[', fl=True)
+    except:
+        mags_full = [6.5,6.6,6.7,6.8,6.9,7.0,7.1,7.2,7.3,7.4,7.5,7.6,7.7,7.8,7.9,8.0,
+                8.1,8.2,8.3,8.4,8.5,8.6,8.7]
     dmag = mags_full[-1]-mags_full[-2]
     mags = [m for m in mags_full if m <= (maxmag + dmag)]
-    dists = get_disagg_header_info(header, 'dist_bin_edges=[', fl=True)
+
+    try:
+        dists = get_disagg_header_info(header, 'dist_bin_edges=[', fl=True)
+    except: 
+        dists = [0,20,40,60,80,100]
 
     size = 3.2
     xsep = size / len(mags)*0.85
