@@ -121,7 +121,7 @@ class OutputTestCase(unittest.TestCase):
             elif i == 1:
                 hea2_comp = line
             else:
-                actual_lines.append([float(j) for j in line.split()[1:]])
+                actual_lines.append([float(j) for j in line.split(',')[1:]])
 
         expected_lines = []
         for i, line in enumerate(open8(exp_mde)):
@@ -131,10 +131,9 @@ class OutputTestCase(unittest.TestCase):
                 hea2_exp = line
             if i < 2:
                 continue
-            expected_lines.append([float(j) for j in line.split()[1:]])
+            expected_lines.append([float(j) for j in line.split(',')[1:]])
 
         assert hea2_comp == hea2_exp
-
         actual_lines = np.array(actual_lines)
         expected_lines = np.array(expected_lines)
         aae = np.testing.assert_almost_equal
