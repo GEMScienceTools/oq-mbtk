@@ -45,13 +45,19 @@ def plot_trellis_util(config, output_directory):
     # Median, plus sigma, minus sigma per gmc for up to 4 gmc logic trees
     gmc_p= [[{}, {}, {}], [{}, {}, {}], [{}, {}, {}], [{}, {}, {}]]
     
-    # Get model weights + basin params + colors + config key
+    # Get basin params
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
-    colors = get_cols(config.custom_color_flag, config.custom_color_list) 
+
+    # Get lt weights
     lt_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
                   config.lt_weights_gmc3, config.lt_weights_gmc4]
-    cfg_key = 'vs30 = %s m/s, GMM sigma epsilon = %s' % (
-        config.Vs30, config.Nstd)
+    
+    # Get config key
+    cfg_key = 'vs30 = %s m/s, GMM sigma epsilon = %s' % (config.Vs30,
+                                                         config.Nstd)
+    
+    # Get colours
+    colors = get_colors(config.custom_color_flag, config.custom_color_list) 
     
     # Compute attenuation curves
     store_gmm_curves, store_per_imt = {}, {} # For exporting gmm att curves
@@ -64,6 +70,19 @@ def plot_trellis_util(config, output_directory):
         for l, m in enumerate(mag_list):
             fig.add_subplot(
                 len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
+
+            # get ztor
+            if config.ztor is not None:
+                ztor_m = config.ztor[l]
+            else:
+                ztor_m = None
+            
+            # Get gmpe params
+            strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
+                config.strike, config.dip, dep_list[l], config.aratio,
+                config.rake, config.trt) 
+
+            # Per GMPE get attenuation curves
             lt_vals_gmc = [{}, {}, {}, {}]
             store_per_gmpe = {}
             for g, gmpe in enumerate(config.gmpes_list): 
@@ -74,17 +93,6 @@ def plot_trellis_util(config, output_directory):
                 
                 # Perform mgmpe check
                 gmm = mgmpe_check(gmpe)
-                
-                # ZTOR value
-                if config.ztor is not None:
-                    ztor_m = config.ztor[l]
-                else:
-                    ztor_m = None
-                
-                # Get gmpe params
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
-                    config.strike, config.dip, dep_list[l], config.aratio,
-                    config.rake, config.trt) 
                 
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
@@ -105,27 +113,14 @@ def plot_trellis_util(config, output_directory):
                 minus_sigma = np.exp(mean-config.Nstd*std[0])
                 
                 # Plot predictions and get lt weighted predictions
-                lt_vals_gmc = trellis_data(gmpe, r_vals, mean,plus_sigma,
-                                           minus_sigma, col, i, m, config.Nstd,
+                lt_vals_gmc = trellis_data(gmpe, r_vals, mean, plus_sigma,
+                                           minus_sigma, col, config.Nstd,
                                            lt_vals_gmc, lt_weights)
                 
+                # Get unit of imt for the store
+                unit = get_imtl_unit_for_trellis_store(i)
+
                 # Store per gmpe
-                if str(i) in ['PGD', 'SDi']:
-                    unit = 'cm' # PGD, inelastic spectral displacement
-                elif str(i) in ['PGV']:
-                    unit = 'cm/s' # PGV
-                elif str(i) in ['IA']:
-                    unit = 'm/s' # Arias intensity
-                elif str(i) in ['RSD', 'RSD595', 'RSD575', 'RSD2080', 'DRVT']:
-                    unit = 's' # Relative significant duration, DRVT
-                elif str(i) in ['CAV']:
-                    unit = 'g-sec' # Cumulative absolute velocity
-                elif str(i) in ['MMI']:
-                    unit = 'MMI' # Modified Mercalli Intensity
-                elif str(i) in ['FAS', 'EAS']:
-                    pyplot.ylabel(str(i) + ' (Hz)') # Fourier/Eff. Amp. Spectrum
-                else:
-                    unit = 'g' # PGA, SA, AvgSA
                 store_per_gmpe[gmpe]['median (%s)' % unit] = np.exp(mean)
                 store_per_gmpe[gmpe]['sigma (ln)'] = std
                 if config.Nstd != 0:
@@ -185,16 +180,17 @@ def plot_spectra_util(config, output_directory, obs_spectra):
         obs_spectra = pd.read_csv(obs_spectra)
         max_period, eq_id, st_id = load_obs_spectra(obs_spectra)
     else:
+        max_period = config.max_period
         obs_spectra, eq_id, st_id = None, None, None
         
     # Get gmc lt weights, imts, periods and basin params
     gmc_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
                    config.lt_weights_gmc3, config.lt_weights_gmc4]
-    imt_list, periods = _get_imts(config.max_period)
+    imt_list, periods = _get_imts(max_period)
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
     
     # Get colours and make the figure
-    colors = get_cols(config.custom_color_flag, config.custom_color_list)     
+    colors = get_colors(config.custom_color_flag, config.custom_color_list)     
     figure = pyplot.figure(figsize=(len(mag_list)*5, len(config.dist_list)*4))
     
     # Set dicts to store values
@@ -210,13 +206,18 @@ def plot_spectra_util(config, output_directory, obs_spectra):
             
             ax1 = figure.add_subplot(
                 len(config.dist_list), len(mag_list), l+1+n*len(mag_list))
+        
+            strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
+                                                              config.dip,
+                                                              dep_list[l],
+                                                              config.aratio,
+                                                              config.rake,
+                                                              config.trt)
+
             for g, gmpe in enumerate(config.gmpes_list):     
                 rs_50p, sig, rs_ps, rs_ms = [], [], [], []
                 col = colors[g]
                 gmm = mgmpe_check(gmpe)
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
-                    config.strike, config.dip, dep_list[l],
-                    config.aratio, config.rake, config.trt)
                 
                 for k, imt in enumerate(imt_list): 
                     if config.ztor is not None:
@@ -308,6 +309,91 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     return store_gmc_lts # Returned for unit tests of gmc lt values
 
 
+def plot_ratios_util(config, output_directory):
+    """
+    Generate ratio (GMPE median attenuation/baseline GMPE median attenuation) 
+    plots for given run configuration
+    """
+    # Get mag and dep lists
+    mag_list = config.trellis_and_rs_mag_list
+    dep_list = config.trellis_and_rs_depth_list
+
+    # Get basin params
+    Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
+    
+    # Get config key
+    cfg_key = 'vs30 = %s m/s, GMM sigma epsilon = %s' % (config.Vs30,
+                                                         config.Nstd)
+    
+    # Get colours
+    colors = get_colors(config.custom_color_flag, config.custom_color_list) 
+    
+    # Compute ratio curves
+    fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
+    ratio_store = []
+    for n, i in enumerate(config.imt_list):
+        for l, m in enumerate(mag_list):
+            fig.add_subplot(
+                len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
+            
+            # ztor value
+            if config.ztor is not None:
+                ztor_m = config.ztor[l]
+            else:
+                ztor_m = None
+            
+            # Get gmpe params
+            strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
+                config.strike, config.dip, dep_list[l], config.aratio,
+                config.rake, config.trt) 
+
+            # Load the baseline GMM and compute baseline
+            baseline = mgmpe_check(config.baseline_gmm)
+
+            # Get baseline GMM attenuation curves
+            results = att_curves(baseline, dep_list[l], m, aratio_g,
+                                 strike_g, dip_g, config.rake,
+                                 config.Vs30, Z1, Z25, config.maxR, 1, i, ztor_m,
+                                 config.eshm20_region, config.dist_type,
+                                 config.trt, config.up_or_down_dip)
+            b_mean = results[0][0][0]
+
+            # Now compute ratios for each GMM
+            for g, gmpe in enumerate(config.gmpes_list):        
+                
+                # Perform mgmpe check
+                col = colors[g]         
+                gmm = mgmpe_check(gmpe)
+                
+                # Get attenuation curves for the GMM
+                results = att_curves(gmm, dep_list[l], m, aratio_g, strike_g,
+                                     dip_g, config.rake, config.Vs30, Z1, Z25,
+                                     config.maxR, 1, i, ztor_m,
+                                     config.eshm20_region, config.dist_type,
+                                     config.trt, config.up_or_down_dip)
+
+                # Get mean and r_vals
+                mean = results[0][0][0]
+                r_vals = results[2]
+
+                # Compute GMM/baseline
+                ratio = np.exp(mean)/np.exp(b_mean)
+                ratio_store.append(ratio)
+
+                # Plot ratios
+                pyplot.semilogy(r_vals, ratio, color = col, linewidth=2, 
+                            linestyle='-', label=gmpe)
+                
+                # Update plots
+                update_ratio_plots(config.dist_type, m, i, n, l, config.imt_list,
+                                   r_vals, config.minR, config.maxR)
+    
+    # Finalise plots
+    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
+    pyplot.savefig(os.path.join(output_directory, 'RatioPlots.png'),
+                   bbox_inches='tight', dpi=200, pad_inches=0.2)
+
+
 def compute_matrix_gmpes(config, mtxs_type):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
@@ -335,11 +421,14 @@ def compute_matrix_gmpes(config, mtxs_type):
             
                 gmm = mgmpe_check(gmpe)
 
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(
-                    config.strike, config.dip, dep_list[l], config.aratio,
-                    config.rake, config.trt) 
+                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
+                                                                  config.dip,
+                                                                  dep_list[l],
+                                                                  config.aratio,
+                                                                  config.rake,
+                                                                  config.trt) 
                 
-                # ZTOR                
+                # ztor              
                 if config.ztor is not None:
                     ztor_m = config.ztor[l]
                 else:
@@ -468,7 +557,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
     mtxs, gmpe_list = matrix_mean(mtxs, imt_list, gmpe_list)
     
     # Setup
-    colors = get_cols(custom_color_flag, custom_color_list)
+    colors = get_colors(custom_color_flag, custom_color_list)
     texts = []
     if len(imt_list) < 3:
         nrows = 1
@@ -593,14 +682,12 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 
 ### Utils for plots
 
-def get_cols(custom_color_flag, custom_color_list):
+def get_colors(custom_color_flag, custom_color_list):
     """
     Get list of colors for plots
     """
-    colors = ['g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', '0.5', 'r',
-              'm', 'mediumseagreen', 'tab:pink', 'tab:orange', 'tab:purple',
-              'tab:brown', 'tab:pink', 'tab:red', 'tab:blue', 'tab:cyan',
-              'tab:olive', 'aquamarine']
+    colors = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
+              'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', '0.5']
     
     if custom_color_flag == 'True':
         colors = custom_color_list
@@ -622,7 +709,7 @@ def get_z1_z25(Z1, Z25, Vs30, region):
 
 
 ### Trellis utils
-def trellis_data(gmpe, r_vals, mean,plus_sigma, minus_sigma, col, i, m, Nstd,
+def trellis_data(gmpe, r_vals, mean,plus_sigma, minus_sigma, col, Nstd,
                  lt_vals_gmc, lt_weights):
     """
     Plot predictions of a single GMPE (if required) and compute weighted
@@ -644,7 +731,7 @@ def trellis_data(gmpe, r_vals, mean,plus_sigma, minus_sigma, col, i, m, Nstd,
             pass
         elif gmpe in lt_weights[idx_gmc]:
             if lt_weights[idx_gmc][gmpe] is not None:
-                if Nstd != 0:
+                if Nstd > 0:
                     lt_vals_gmc[idx_gmc][gmpe] = {
                                 'median': np.exp(mean)*lt_weights[
                                     idx_gmc][gmpe],
@@ -680,7 +767,7 @@ def trel_logic_trees(idx_gmc, gmc, lt_vals_gmc, gmc_p, store_gmm_curves,
             'gmc logic tree curves per imt-mag'][lt_key][
                 'median (%s)' % unit] = median
         
-        if Nstd != 0:
+        if Nstd > 0:
             store_gmm_curves[
                 cfg_key]['gmc logic tree curves per imt-mag'][
                     lt_key]['median plus sigma (%s)' % unit
@@ -718,7 +805,7 @@ def lt_trel(r_vals, Nstd, i, m, dep, dip, rake, idx_gmc, lt_vals_gmc,
                 linestyle='--', label=label,
                 zorder=100)
     
-    if Nstd != 0:
+    if Nstd > 0:
         
         lt_plus_sigma_gmc = np.sum(lt_df_gmc[:].loc['plus_sigma'])
         lt_minus_sigma_gmc = np.sum(lt_df_gmc[:].loc['minus_sigma'])
@@ -775,13 +862,38 @@ def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
     elif str(i) in ['PGV']:
         pyplot.ylim(1, 650) # cm/s
     else:
-        print('User may want to manually specify y-axis limits')
+        print('User may want to manually specify y-axis limits for %s' % i)
 
     # xlims
     pyplot.loglog()
     min_r_val = min(r_vals[r_vals>=1])
     pyplot.xlim(np.max([min_r_val, minR]), maxR)
     
+
+def get_imtl_unit_for_trellis_store(i):
+    """
+    Return a string of the intensity measure type's physical units of
+    measurement
+    """
+    if str(i) in ['PGD', 'SDi']:
+        unit = 'cm' # PGD, inelastic spectral displacement
+    elif str(i) in ['PGV']:
+        unit = 'cm/s' # PGV
+    elif str(i) in ['IA']:
+        unit = 'm/s' # Arias intensity
+    elif str(i) in ['RSD', 'RSD595', 'RSD575', 'RSD2080', 'DRVT']:
+        unit = 's' # Relative significant duration, DRVT
+    elif str(i) in ['CAV']:
+        unit = 'g-sec' # Cumulative absolute velocity
+    elif str(i) in ['MMI']:
+        unit = 'MMI' # Modified Mercalli Intensity
+    elif str(i) in ['FAS', 'EAS']:
+        pyplot.ylabel(str(i) + ' (Hz)') # Fourier/Eff. Amp. Spectrum
+    else:
+        unit = 'g' # PGA, SA, AvgSA
+
+    return unit
+
 
 ### Spectra utils
 def _get_period_values_for_spectra_plots(max_period):
@@ -865,7 +977,7 @@ def spectra_data(gmpe, Nstd, gmc_weights, rs_50p, rs_plus_sigma, rs_minus_sigma,
                 for idx, rs in enumerate(rs_50p):
                     rs_50p_w[idx] = rs_50p[idx]*gmc_weights[
                         idx_gmc][gmpe]
-                    if Nstd != 0:
+                    if Nstd > 0:
                         rs_plus_sigma_w[idx] = rs_plus_sigma[
                             idx]*gmc_weights[idx_gmc][gmpe]
                         rs_minus_sigma_w[idx] = rs_minus_sigma[
@@ -874,8 +986,8 @@ def spectra_data(gmpe, Nstd, gmc_weights, rs_50p, rs_plus_sigma, rs_minus_sigma,
                 # Store the weighted median for the GMPE
                 lt_vals[idx_gmc][gmpe] = {'median': rs_50p_w}
                 
-                # And if Nstd != 0 store these weighted branches too
-                if Nstd != 0:
+                # And if Nstd > 0 store these weighted branches too
+                if Nstd > 0:
                     lt_vals_plus[idx_gmc][gmpe,'p_sig'] = {
                         'plus_sigma': rs_plus_sigma_w}
                     lt_vals_minus[idx_gmc][gmpe,'m_sig'] = {
@@ -903,7 +1015,7 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, idx_gmc,
     # Plot   
     lt_per_imt_gmc, lt_plus_sig_per_imt, lt_minus_sig_per_imt = {}, {}, {}
     lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['median'])
-    if Nstd != 0:
+    if Nstd > 0:
         lt_plus_sig = pd.DataFrame(ltv_plus_sig, index=['plus_sigma'])
         lt_minus_sig = pd.DataFrame(ltv_minus_sig, index=['minus_sigma'])    
     wt_per_gmpe_gmc, wt_plus_sig, wt_minus_sig = {}, {}, {}
@@ -911,7 +1023,7 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, idx_gmc,
         if check in str(gmpe):
             wt_per_gmpe_gmc[gmpe] = np.array(pd.Series(
                 lt_df_gmc[gmpe].loc['median']))
-            if Nstd != 0:
+            if Nstd > 0:
                 wt_plus_sig[gmpe] = np.array(
                     pd.Series(lt_plus_sig[gmpe,'p_sig'].loc['plus_sigma']))
                 wt_minus_sig[gmpe] = np.array(
@@ -922,7 +1034,7 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, idx_gmc,
     lt_minus_sig = pd.DataFrame(wt_minus_sig, index=period)
     for idx, imt in enumerate(period):
         lt_per_imt_gmc[imt] = np.sum(lt_df_gmc.loc[imt])
-        if Nstd != 0:
+        if Nstd > 0:
             lt_plus_sig_per_imt[imt] = np.sum(lt_plus_sig.loc[imt])
             lt_minus_sig_per_imt[imt] = np.sum(lt_minus_sig.loc[imt])
     
@@ -931,7 +1043,7 @@ def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, idx_gmc,
              color=col, linestyle='--', label = label, zorder=100)
     
     # Plot mean plus sigma and mean minus sigma if required
-    if Nstd != 0:
+    if Nstd > 0:
         ax1.plot(period, np.array(pd.Series(lt_plus_sig_per_imt)),
                  linewidth=0.75, color=col, linestyle='-.', zorder=100)     
         ax1.plot(period, np.array(pd.Series(lt_minus_sig_per_imt)),
@@ -1007,6 +1119,27 @@ def save_spectra_plot(f1, obs_spectra, output_dir, eq_id, st_id):
 
 
 ### Utils for other plots
+def update_ratio_plots(dist_type, m, i, n, l, imt_list, r_vals, minR, maxR):
+    """
+    Add titles and axis labels to ratio plots
+    """
+    if dist_type == 'repi':
+        label = 'Repi (km)'
+    if dist_type == 'rrup':
+        label = 'Rrup (km)'
+    if dist_type == 'rjb':
+        label = 'Rjb (km)'
+    if dist_type == 'rhypo':
+        label = 'Rhypo (km)'
+    if n == 0: # Top row only
+        pyplot.title('Mw = ' + str(m), fontsize='16')
+    if n == len(imt_list)-1: # Bottom row only
+        pyplot.xlabel(label, fontsize='12')
+    if l == 0: # Left row only
+        pyplot.ylabel('GMM/baseline for %s' %str(i), fontsize='14')
+    min_r_val = min(r_vals[r_vals>=1])
+    pyplot.xlim(np.max([min_r_val, minR]), maxR)
+
 def matrix_mean(mtxs, imt_list, gmpe_list):
     """
     For a matrix of predicted ground-motions computed the arithmetic mean per
