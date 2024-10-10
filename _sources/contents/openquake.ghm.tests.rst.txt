@@ -1,0 +1,37 @@
+openquake.ghm.tests package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.ghm.tests.grid
+
+Submodules
+----------
+
+openquake.ghm.tests.create\_homogenised\_curves\_functions\_test module
+-----------------------------------------------------------------------
+
+.. automodule:: openquake.ghm.tests.create_homogenised_curves_functions_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.ghm.tests.create\_homogenised\_curves\_test module
+------------------------------------------------------------
+
+.. automodule:: openquake.ghm.tests.create_homogenised_curves_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.ghm.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:

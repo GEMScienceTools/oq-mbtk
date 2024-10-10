@@ -1,0 +1,21 @@
+openquake.mbt.tests.notebooks.sources\_shallow\_fault package
+=============================================================
+
+Submodules
+----------
+
+openquake.mbt.tests.notebooks.sources\_shallow\_fault.shallow\_fault\_test module
+---------------------------------------------------------------------------------
+
+.. automodule:: openquake.mbt.tests.notebooks.sources_shallow_fault.shallow_fault_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tests.notebooks.sources_shallow_fault
+   :members:
+   :undoc-members:
+   :show-inheritance:

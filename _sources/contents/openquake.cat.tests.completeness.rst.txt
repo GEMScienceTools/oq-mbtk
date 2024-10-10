@@ -1,0 +1,45 @@
+openquake.cat.tests.completeness package
+========================================
+
+Submodules
+----------
+
+openquake.cat.tests.completeness.analysis\_rates\_test module
+-------------------------------------------------------------
+
+.. automodule:: openquake.cat.tests.completeness.analysis_rates_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.tests.completeness.analysis\_test module
+------------------------------------------------------
+
+.. automodule:: openquake.cat.tests.completeness.analysis_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.tests.completeness.generate\_test module
+------------------------------------------------------
+
+.. automodule:: openquake.cat.tests.completeness.generate_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.tests.completeness.norms\_test module
+---------------------------------------------------
+
+.. automodule:: openquake.cat.tests.completeness.norms_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.cat.tests.completeness
+   :members:
+   :undoc-members:
+   :show-inheritance:
