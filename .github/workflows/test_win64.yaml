@@ -37,7 +37,12 @@ jobs:
           Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
           #
           $curDir = Get-Location
-          Write-Host "Install oqmbtk on branch ${{ github.ref_name }}"
+          Write-Host "Test python version"
+          python -V
+          Write-Host "Create venv and install OQ form master and mbtk from branch ${{ github.ref_name }}"
+          python -m venv .\win_test
+          .\win_test\bin\Activate.ps1
+          pip install -U pip
           #.\windows\install_oqmbtk.ps1 -mbtk_branch ${{ github.ref_name }}
           # do not use powershell scripts but install with devel installation
           #$MYPATH = $HOME + "\mbtk"
