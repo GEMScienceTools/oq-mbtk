@@ -18,7 +18,10 @@ pylint >= 2.1.1
 rtree >= 0.9.4
 netCDF4 < 1.7.0
 xarray==2022.09 
-#
+h3 < 4.0.0
+jupyter-server==2.7.2
+pyproj==3.6.1
+numpy==1.26.2
 # Generic
 openpyxl
 xlrd
@@ -29,7 +32,6 @@ obspy
 prettytable
 tqdm
 tables
-h3
 pygmt
 reportlab
 igraph
