@@ -1,25 +1,37 @@
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+#
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Test suite for the `residual_plotter` module responsible for plotting the
 plot data defined in `residual_plots`
 """
 import os
-import sys
 import shutil
 import unittest
+import pickle
 from unittest.mock import patch, MagicMock
 
-from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+from openquake.smt.residuals.parsers.esm_flatfile_parser import \
+    ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
-from openquake.smt.residuals.residual_plotter import ResidualPlot, LikelihoodPlot,\
-    ResidualWithMagnitude, ResidualWithDepth, ResidualWithVs30, \
-    ResidualWithDistance
-from openquake.smt.database_visualiser import DISTANCES
-
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from openquake.smt.residuals.residual_plotter import (
+    ResidualPlot, LikelihoodPlot, ResidualWithMagnitude, ResidualWithDepth,
+    ResidualWithVs30, ResidualWithDistance)
+from openquake.smt.residuals.sm_database_visualiser import DISTANCES
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
@@ -92,12 +104,12 @@ class ResidualsTestCase(unittest.TestCase):
         for gsim in self.gsims:
             for imt in self.imts:
                 ResidualPlot(residuals, gsim, imt, bin_width=0.1)
-                # assert we called pyplot show:
-                self.assertTrue(mock_pyplot.show.call_count == 1)
+                # assert we have not called pyplot show:
+                self.assertTrue(mock_pyplot.show.call_count == 0)
                 ResidualPlot(residuals, gsim, imt, bin_width=0.1,
                              show=False)
-                # assert we did NOT call pyplot show (call count still 1):
-                self.assertTrue(mock_pyplot.show.call_count == 1)
+                # assert still not called pyplot show (call count still 1):
+                self.assertTrue(mock_pyplot.show.call_count == 0)
                 # reset mock:
                 mock_pyplot.show.reset_mock()
 
@@ -126,12 +138,12 @@ class ResidualsTestCase(unittest.TestCase):
         for gsim in self.gsims:
             for imt in self.imts:
                 LikelihoodPlot(residuals, gsim, imt, bin_width=0.1)
-                # assert we called pyplot show:
-                self.assertTrue(mock_pyplot.show.call_count == 1)
+                # assert we have not called pyplot show:
+                self.assertTrue(mock_pyplot.show.call_count == 0)
                 LikelihoodPlot(residuals, gsim, imt, bin_width=0.1,
                                show=False)
-                # assert we did NOT call pyplot show (call count still 1):
-                self.assertTrue(mock_pyplot.show.call_count == 1)
+                # assert still not called pyplot show (call count still 0):
+                self.assertTrue(mock_pyplot.show.call_count == 0)
                 # reset mock:
                 mock_pyplot.show.reset_mock()
 
@@ -164,11 +176,11 @@ class ResidualsTestCase(unittest.TestCase):
                                   ResidualWithDepth,
                                   ResidualWithVs30]:
                     plotClass(residuals, gsim, imt, bin_width=0.1)
-                    # assert we called pyplot show:
-                    self.assertTrue(mock_pyplot.show.call_count == 1)
+                    # assert we have not called pyplot show:
+                    self.assertTrue(mock_pyplot.show.call_count == 0)
                     plotClass(residuals, gsim, imt, bin_width=0.1, show=False)
-                    # assert we did NOT call pyplot show (call count still 1):
-                    self.assertTrue(mock_pyplot.show.call_count == 1)
+                    # assert still not called pyplot show (call count still 0):
+                    self.assertTrue(mock_pyplot.show.call_count == 0)
                     # reset mock:
                     mock_pyplot.show.reset_mock()
 
@@ -210,16 +222,16 @@ class ResidualsTestCase(unittest.TestCase):
                         with self.assertRaises(AttributeError):
                             ResidualWithDistance(residuals, gsim, imt,
                                                  distance_type=dist,
-                                                 show=True)
+                                                 show=False)
                         continue
 
                     ResidualWithDistance(residuals, gsim, imt, bin_width=0.1)
-                    # assert we called pyplot show:
-                    self.assertTrue(mock_pyplot.show.call_count == 1)
+                    # assert we have not called pyplot show:
+                    self.assertTrue(mock_pyplot.show.call_count == 0)
                     ResidualWithDistance(residuals, gsim, imt, bin_width=0.1,
                                          show=False)
-                    # assert we did NOT call pyplot show (call count still 1):
-                    self.assertTrue(mock_pyplot.show.call_count == 1)
+                    # assert still not called pyplot show (call count still 0):
+                    self.assertTrue(mock_pyplot.show.call_count == 0)
                     # reset mock:
                     mock_pyplot.show.reset_mock()
 
@@ -243,8 +255,3 @@ class ResidualsTestCase(unittest.TestCase):
         Deletes the database
         """
         shutil.rmtree(cls.out_location)
-
-
-if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()

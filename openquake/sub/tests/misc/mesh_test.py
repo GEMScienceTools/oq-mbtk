@@ -12,7 +12,7 @@ from openquake.sub.misc.profile import _read_profiles
 from openquake.sub.misc.edge import create_from_profiles
 from openquake.hazardlib.geo.geodetic import distance
 
-PLT = True
+PLT = False
 
 if PLT:
     from openquake.sub.misc.utils_plot import plotter
@@ -71,7 +71,7 @@ class IdealisedSimpleMeshTest(unittest.TestCase):
                 dst = distance(smsh[i, j, 0], smsh[i, j, 1], smsh[i, j, 2],
                                smsh[i, k, 0], smsh[i, k, 1], smsh[i, k, 2])
                 tmp.append(dst)
-            computed.append(dst)
+            computed.append(tmp)
         computed = numpy.array(computed)
         self.assertTrue(numpy.all(abs(computed-h_sampl)/h_sampl < 0.05))
         #
@@ -84,7 +84,7 @@ class IdealisedSimpleMeshTest(unittest.TestCase):
                 dst = distance(smsh[i, j, 0], smsh[i, j, 1], smsh[i, j, 2],
                                smsh[k, j, 0], smsh[k, j, 1], smsh[k, j, 2])
                 tmp.append(dst)
-            computed.append(dst)
+            computed.append(tmp)
         computed = numpy.array(computed)
         self.assertTrue(numpy.all(abs(computed-v_sampl)/v_sampl < 0.05))
 
@@ -121,7 +121,7 @@ class IdealisedSimpleDisalignedMeshTest(unittest.TestCase):
                 dst = distance(smsh[i, j, 0], smsh[i, j, 1], smsh[i, j, 2],
                                smsh[i, k, 0], smsh[i, k, 1], smsh[i, k, 2])
                 tmp.append(dst)
-            computed.append(dst)
+            computed.append(tmp)
         computed = numpy.array(computed)
         tmp = abs(computed-self.h_sampl)/self.h_sampl
         self.assertTrue(numpy.all(tmp < 0.05))
@@ -137,7 +137,7 @@ class IdealisedSimpleDisalignedMeshTest(unittest.TestCase):
                 dst = distance(smsh[i, j, 0], smsh[i, j, 1], smsh[i, j, 2],
                                smsh[k, j, 0], smsh[k, j, 1], smsh[k, j, 2])
                 tmp.append(dst)
-            computed.append(dst)
+            computed.append(tmp)
         computed = numpy.array(computed)
         tmp = abs(computed-self.h_sampl)/self.h_sampl
         self.assertTrue(numpy.all(tmp < 0.05))

@@ -127,7 +127,5 @@ class SelectEqksWithinAreaTestCase(unittest.TestCase):
 
             plt.show()
 
-        breakpoint()
-
         # check
         self.assertEqual(len(scat.data['longitude']), 4)
