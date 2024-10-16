@@ -20,7 +20,7 @@ netCDF4 < 1.7.0
 xarray==2022.09 
 h3 < 4.0.0
 jupyter-server==2.7.2
-pyproj0=3.6.1
+pyproj==3.6.1
 numpy==1.26.2
 # Generic
 openpyxl
