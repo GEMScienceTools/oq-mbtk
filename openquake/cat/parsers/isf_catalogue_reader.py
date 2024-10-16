@@ -243,7 +243,7 @@ class ISFReader(BaseCatalogueDatabaseReader):
                     origins[-1].is_centroid = True
                 continue
 
-            comment_find = re.search("\((.*?)\)", row)
+            comment_find = re.search("\\((.*?)\\)", row)
             if comment_find and not row.startswith("Event"):
                 comment_find.group(1)
                 comment_str += "{:s}\n".format(comment_find.group(1))

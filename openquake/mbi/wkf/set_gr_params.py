@@ -45,6 +45,8 @@ def set_gr_params(fname_conf: str, use: str = "*", method: str = "weichert",
     for src_id in model['sources']:
         if exclude is not None and src_id in exclude:
             continue
+        if use != "*" and src_id not in use:
+            continue
         else:
             print("src_id:", src_id, " ", method)
             if use == "*" or src_id in use:

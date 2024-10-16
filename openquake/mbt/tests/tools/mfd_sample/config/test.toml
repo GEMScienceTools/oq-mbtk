@@ -1,0 +1,23 @@
+[main]
+catalogue_filename = './data2/sub_cat.pkl' 
+output_directory = 'test'
+
+[catalogues]
+number = 3
+sample_type = 'random'
+create_catalogues = true
+
+[decluster]
+decluster_catalogues = true
+decluster_settings = 'config/dec.toml'
+
+[completeness]
+generate_completeness = true
+completeness_settings = 'config/compl.toml'
+
+[mfds]
+create_mfds = true
+labels = ['intA','crustal']
+
+[plot]
+make_plots = true 

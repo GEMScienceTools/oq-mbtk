@@ -1,4 +1,30 @@
-import os
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022-2023 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
+import pathlib
 
 import pandas as pd
 import numpy as np
@@ -18,18 +44,21 @@ from openquake.aft.rupture_distances import (
 )
 
 from openquake.aft.aftershock_probabilities import (
-    #get_aftershock_grmfd,
-    #num_aftershocks,
-    #get_a,
+    # get_aftershock_grmfd,
+    # num_aftershocks,
+    # get_a,
     get_source_counts,
-    #get_aftershock_rup_rates,
-    #get_rup,
-    #RupDist2,
-    #make_source_dist_df,
-    #fetch_rup_from_source_dist_groups,
+    # get_aftershock_rup_rates,
+    # get_rup,
+    # RupDist2,
+    # make_source_dist_df,
+    # fetch_rup_from_source_dist_groups,
     rupture_aftershock_rates_per_source,
     prep_source_data,
 )
+
+HERE = pathlib.Path(__file__).parent.absolute()
+
 
 area_source_1 = AreaSource(
     source_id=0,
@@ -165,11 +194,12 @@ def test_get_aftershock_rup_adjustments():
     oq_rup_index = rup_df.loc[rup_adjustments.index, "oq_rup_ind"]
     rup_adjustments.index = oq_rup_index
 
-    rup_adj_df_path = os.path.join(".", "test_data", "test_get_aftershock_rup_adjustments_results.csv")
+    rup_adj_df_path = (HERE / "test_data" /
+                       "test_get_aftershock_rup_adjustments_results.csv")
     rup_adjustment_df = pd.read_csv(rup_adj_df_path, index_col=0)
 
     np.testing.assert_array_almost_equal(rup_adjustments.values,
-    rup_adjustment_df['rates'].values)
+                                         rup_adjustment_df['rates'].values)
 
     return rup_adjustments
 
@@ -184,6 +214,7 @@ def mag_to_mo(mag: float, c: float = 9.05):
 
 
 def plot_mfds():
+
     sources = [area_source_1, area_source_2, area_source_3]
     rup_df, source_groups = prep_source_data(sources)
 
@@ -223,13 +254,10 @@ def look_at_aftershock_rup_rates():
     rup_df, source_groups = prep_source_data(sources)
     source_pairs = get_close_source_pairs(sources)
 
-    rup_dists = calc_rupture_adjacence_dict_all_sources(
+    _ = calc_rupture_adjacence_dict_all_sources(
         source_pairs, rup_df, source_groups
     )
 
     source_counts, source_cum_counts, source_count_starts = get_source_counts(
         sources
     )
-
-
-#plot_mfds()

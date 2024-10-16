@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<nrml
+xmlns="http://openquake.org/xmlns/nrml/0.5"
+xmlns:gml="http://www.opengis.net/gml"
+>
+    <geometryModel investigation_time="1.0" name="Test Geometry Model">
+
+        <section id="1" >
+            <kiteSurface>
+                <profile>
+                    <gml:LineString>
+                        <gml:posList>
+                            -0.49634 0.46297 5.00 -0.48902 0.44890 15.00 
+                        </gml:posList>
+                    </gml:LineString>
+                </profile>
+                <profile>
+                    <gml:LineString>
+                        <gml:posList>
+                            0.00366 0.72297 5.00 0.01098 0.70890 15.00
+                        </gml:posList>
+                    </gml:LineString>
+                </profile>
+            </kiteSurface>
+        </section>
+
+        <section id="2" >
+            <kiteSurface>
+                <profile>
+                    <gml:LineString>
+                        <gml:posList>
+                            0.85165 0.39224 5.00 0.85495 0.37673 15.00
+                        </gml:posList>
+                    </gml:LineString>
+                </profile>
+                <profile>
+                    <gml:LineString>
+                        <gml:posList>
+                            1.32165 0.49224 5.00 1.32495 0.47673 15.00
+                        </gml:posList>
+                    </gml:LineString>
+                </profile>
+            </kiteSurface>
+        </section>
+
+    </geometryModel>
+</nrml>

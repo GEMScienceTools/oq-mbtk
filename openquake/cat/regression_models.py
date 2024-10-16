@@ -346,6 +346,7 @@ class TwoSegmentLinear(GeneralFunction):
         idx = xval > self.corner_magnitude
         yval[idx] = cval + params[1] * xval[idx]
         self.params = [[params[0], params[2]], [params[1], cval]]
+        self.std_dev = ['nan','nan','nan','nan']
         return yval
 
     def get_string(self, output_string, input_string):

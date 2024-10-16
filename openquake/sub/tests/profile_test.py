@@ -30,5 +30,4 @@ class ProfileTest(unittest.TestCase):
         Test spline construction
         """
         prfs = ProfileSet.from_files(self.fname_b)
-        # MN: 'grd' assigned but never used
         grd = prfs.smooth('cubic')

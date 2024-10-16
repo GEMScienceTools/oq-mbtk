@@ -1,0 +1,9 @@
+[smoothing]
+name = "TEST"
+h3res = 2
+maxdist = 1000
+n_v = 1
+kernel = "Gaussian"
+d_i_min = 0.5
+kernel_maximum_distance = 100
+kernel_smoothing = [ [ 0.8, 20.0,], [ 0.15, 40.0,], [ 0.05, 80.0,],]

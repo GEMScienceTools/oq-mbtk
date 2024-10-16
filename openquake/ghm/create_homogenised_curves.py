@@ -148,7 +148,7 @@ def recompute_probabilities(df, old_ivt, new_ivt):
     :param old_ivt:
     :param new_ivt:
     """
-    for key, val in df.iteritems():
+    for key, val in df.items():
         if re.search('poe', key):
             dat = val.values
             dat[dat > 0.99999999] = 0.99999999

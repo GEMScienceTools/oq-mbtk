@@ -1,0 +1,37 @@
+
+# OQ mbtk requirements
+#
+# From OQ wheels
+https://wheelhouse.openquake.org/macos/arm64/py311/numpy-1.26.2-cp311-cp311-macosx_11_0_arm64.whl
+https://wheelhouse.openquake.org/macos/arm64/py311/fiona-1.9.5-cp311-cp311-macosx_11_0_arm64.whl
+https://wheelhouse.openquake.org/macos/arm64/py311/GDAL-3.7.3-cp311-cp311-macosx_11_0_arm64.whl
+https://wheelhouse.openquake.org/macos/arm64/py311/pyproj-3.6.1-cp311-cp311-macosx_11_0_arm64.whl
+#
+# Version specific
+geopandas >= 0.10.2
+ipykernel >= 4.8.0
+ipython >= 6.2.0
+jupyter_client >= 5.0.0
+matplotlib >= 3.4.2
+nbstripout >= 0.3.0
+notebook >= 5.0.0
+pylint >= 2.1.1
+rtree >= 0.9.4
+netCDF4 < 1.7.0
+#
+# Generic
+openpyxl
+xlrd
+nbformat
+geojson
+nbconvert
+obspy
+prettytable
+tqdm
+tables
+h3
+pygmt
+reportlab
+igraph
+pyvista
+basemap

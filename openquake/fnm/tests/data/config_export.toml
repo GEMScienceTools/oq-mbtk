@@ -1,0 +1,54 @@
+# This is an example configuration file for the component of FERMI that from a
+# set of sections creates the multi-fault ruptures required for computing the
+# rates using - for example - an inversion procedure. 
+#
+# The configuration file contains four main parts:
+# - General
+# - Ruptures
+# - Connections
+# - Sections
+
+# This part contains general information about the analysis such as the name
+# of the GIS file with the geometries of the faults 
+[general] 
+
+# This is the name of the GIS file containing information on the geometry of
+# the sections. It can be either a .geojson file or a shapefile. 
+fname_sections = './test_system.geojson'
+subsection_size = [-0.5, -1.0]
+output_datastore = './test.hdf5'
+
+# Part containing information used to create the ruptures
+[ruptures]
+
+# Defines a range of aspect ratios (ARs) used to filter out the ruptures   
+# whose AS is outside of this range
+aspect_ratios = [0, 100]
+
+# Magnitude scaling relationship
+magnitude_scaling_rel = 'generic'
+
+# Part containing information used to define connections between sections
+[connections]
+
+[connections.min_distance_between_subsections]
+threshold_distance = 10.0
+
+[connections.min_connection_angle]
+threshold_angle = 10.0
+
+[connections.only_connections_on_edge]
+
+# Part containing information on sections and subsections 
+[sections]
+
+# Instructions for building the subsections. Positive values correspond to 
+# distances in km. When negative distances are provided, the code takes first 
+# the second value that specifies the number of subdivisions along the dip. 
+# When this value is equal to -1 it means that the subsections will fill the 
+# entire section width. For a value equal to -2, the code will create 2 rows 
+# of subsections along the width. The first value, when negative, is a 
+# multiplier of the subsection width. For example, for the case [-0.5, -1.0]
+# the width of subsections will be equal to the section width and the 
+# subsection length will be half of the width.
+subsections_size = [-0.5, -1.0]

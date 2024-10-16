@@ -25,8 +25,10 @@
 # coding: utf-8
 
 import os
+import re
 import toml
 import numpy
+import pathlib
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -101,7 +103,6 @@ def compute_a_value_from_density(fname_input_pattern: str,
     # Saving results into the config file
     with open(fname_config, 'w') as fou:
         fou.write(toml.dumps(model))
-        print(f'Updated {fname_config:s}')
 
 
 def get_mmax_ctab(model, src_id):
@@ -111,6 +112,7 @@ def get_mmax_ctab(model, src_id):
                 'mmax' in model['sources'][src_id]):
             mmax = model['sources'][src_id]['mmax']
         else:
+            print(f'{src_id} misses mmax')
             mmax = model['default']['mmax']
         if (src_id in model['sources'] and
                 'completeness_table' in model['sources'][src_id]):
@@ -197,7 +199,8 @@ def _compute_a_value(tcat, ctab, bval, binw):
 
 def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
                     folder_out: str, use: str = '',
-                    folder_out_figs: str = None, plt_show=False):
+                    folder_out_figs: str = None, plt_show=False,
+                    src_id_pattern: str = None):
     """
     This function assignes an a-value to each source with a file selected by
     the provided `fname_input_pattern`.
@@ -235,10 +238,15 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
     for fname in sorted(fname_list):
 
         # Get source ID
-        src_id = _get_src_id(fname)
+        if src_id_pattern is not None:
+            tpath = pathlib.Path(fname)
+            mtch = re.match(src_id_pattern, tpath.stem)
+            src_id = mtch.group(1)
+        else:
+            src_id = _get_src_id(fname)
+
         if len(use) > 0 and src_id not in use:
             continue
-        print(fname)
 
         # Processing catalogue
         tcat = _load_catalogue(fname)
@@ -308,7 +316,6 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
     # Saving results into the config file
     with open(fname_config, 'w', encoding='utf-8') as fou:
         fou.write(toml.dumps(model))
-        print(f'Updated {fname_config:s}')
 
 
 def get_weichert_confidence_intervals(mag, occ, tcompl, bgr):
@@ -714,4 +721,3 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
     if fname_config is not None:
         with open(fname_config, 'w') as f:
             f.write(toml.dumps(model))
-            print('Updated {:s}'.format(fname_config))

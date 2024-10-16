@@ -30,24 +30,30 @@ import h3
 import json
 import shapely
 import geopandas as gpd
-from openquake.wkf.utils import create_folder
+from openquake.wkf.utils import create_folder, get_list
 
 
 def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
-                                  folder_out: str):
-
+                                  folder_out: str, *, use: str = []):
+    
     h3_level = int(h3_level)
     create_folder(folder_out)
-
     tmp = "mapping_h{:d}.csv".format(h3_level)
     fname_out = os.path.join(folder_out, tmp)
 
     # Read polygons
     polygons_gdf = gpd.read_file(fname_poly)
+    
+    if len(use) > 0: 
+        use = get_list(use)
+        polygons_gdf = polygons_gdf[polygons_gdf['id'].isin(use)]
 
     # Select point in polygon
     fout = open(fname_out, 'w')
     for idx, poly in polygons_gdf.iterrows():
+    
+        if len(use) > 0 and poly.id not in use:
+            continue
 
         tmps = shapely.geometry.mapping(poly.geometry)
         geojson_poly = eval(json.dumps(tmps))
@@ -55,15 +61,18 @@ def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
             from shapely.geometry import shape, mapping
             # Check that there are no polygons inside
             multipoly = shape(geojson_poly)
-            assert len(multipoly.geoms) == 1
-            geojson_poly = mapping(multipoly.geoms[0])
+            try:
+                assert len(multipoly.geoms) == 1
+                geojson_poly = mapping(multipoly.geoms[0])
+            except:
+                print(poly.id)
 
         # Revert the positions of lons and lats
-        coo = [[c[1], c[0]] for c in geojson_poly['coordinates'][0]]
-        geojson_poly['coordinates'] = [coo]
+        #coo = [[c[1], c[0]] for c in geojson_poly['coordinates'][0]]
+        #geojson_poly['coordinates'] = [coo]
 
         # Discretizing
-        hexagons = list(h3.polyfill(geojson_poly, h3_level))
+        hexagons = list(h3.polyfill(geojson_poly, h3_level, geo_json_conformant=True))
         for hxg in hexagons:
             if isinstance(poly.id, str):
                 fout.write("{:s},{:s}\n".format(hxg, poly.id))

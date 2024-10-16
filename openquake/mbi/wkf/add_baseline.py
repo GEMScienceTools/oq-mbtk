@@ -55,7 +55,7 @@ main.fname_config = ".toml configuration file"
 MSG = "The name of the shapefile with the polygons of the area sources"
 main.fname_poly = MSG
 main.use = 'A list with the ID of sources that should be considered'
-msg = 'A string containing a list of source IDs that will not be considere'
+msg = 'A string containing a list of source IDs that will not be considered'
 main.skip = msg
 
 if __name__ == '__main__':

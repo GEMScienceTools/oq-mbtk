@@ -1,4 +1,29 @@
 #!/usr/bin/env python
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2022 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
 
 """
 Module :mod:`openquake.sub.build_complex_surface` creates a complex fault
@@ -46,6 +71,8 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
         tmps += '    output: {0:s}\n'.format(out_path)
         sys.exit()
 
+
+
     # Read the profiles
     sps, dmin, dmax = read_profiles_csv(in_path,
                                         float(upper_depth),
@@ -53,7 +80,7 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
                                         from_id, to_id)
 
     # Check
-    logging.info('Number of profiles: {:d}'.format(len(sps)))
+    logging.info(f'Number of profiles: {len(sps):d}')
     if len(sps) < 1:
         fmt = 'Did not find cross-sections in {:s}\n exiting'
         msg = fmt.format(os.path.abspath(in_path))
@@ -89,13 +116,20 @@ def build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth=0,
     write_edges_csv(rsps, out_path)
 
 
-build_complex_surface.in_path = 'Path to the input folder'
-build_complex_surface.max_sampl_dist = 'Maximum profile sampling distance'
-build_complex_surface.out_path = 'Path to the output folder'
-build_complex_surface.upper_depth = 'Upper depth'
-build_complex_surface.lower_depth = 'lower depth'
-build_complex_surface.from_id = 'Index profile where to start the sampling'
-build_complex_surface.to_id = 'Index profile where to stop the sampling'
+def main(in_path, max_sampl_dist, out_path, *, upper_depth=0, lower_depth=1000,
+         from_id='.*', to_id='.*'):
+
+    build_complex_surface(in_path, max_sampl_dist, out_path, upper_depth,
+                          lower_depth, from_id, to_id)
+
+
+main.in_path = 'Path to the input folder'
+main.max_sampl_dist = 'Maximum profile sampling distance'
+main.out_path = 'Path to the output folder'
+main.upper_depth = 'Upper depth'
+main.lower_depth = 'lower depth'
+main.from_id = 'Index profile where to start the sampling'
+main.to_id = 'Index profile where to stop the sampling'
 
 if __name__ == "__main__":
     sap.run(build_complex_surface)

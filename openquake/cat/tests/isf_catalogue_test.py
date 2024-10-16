@@ -70,7 +70,7 @@ class MergeGenericCatalogueTest(unittest.TestCase):
         # Merging the catalogue
         tz = dt.timezone(dt.timedelta(hours=8))
         out, doubts = catisf.add_external_idf_formatted_catalogue(
-                catcsv, ll_deltas=0.05, delta_t=delta, utc_time_zone=tz)
+            catcsv, ll_deltas=0.05, delta_t=delta, utc_time_zone=tz)
 
         # Testing output
         msg = 'The number of colocated events is wrong'
@@ -105,7 +105,7 @@ class MergeGenericCatalogueTest(unittest.TestCase):
         ll_delta = np.array([[1899, 0.1], [1950, 0.05]])
         delta = [[1899, delta1], [1950, delta2]]
         out, doubtss = catisf.add_external_idf_formatted_catalogue(
-                catcsv, ll_deltas=ll_delta, delta_t=delta, utc_time_zone=tz)
+            catcsv, ll_deltas=ll_delta, delta_t=delta, utc_time_zone=tz)
 
         # Testing output
         msg = 'The number of colocated events is wrong'
@@ -140,8 +140,8 @@ class MergeGenericCatalogueTest(unittest.TestCase):
         ll_delta = np.array([[1899, 0.1], [1950, 0.05]])
         delta = [[1899, 10.0], [1950, 5.0]]
         out, doubts = catisf.add_external_idf_formatted_catalogue(
-                catcsv, ll_deltas=ll_delta, delta_t=delta, utc_time_zone=tz,
-                buff_t=buff_t, buff_ll=0.02)
+            catcsv, ll_deltas=ll_delta, delta_t=delta, utc_time_zone=tz,
+            buff_t=buff_t, buff_ll=0.02)
 
         # Testing output
         msg = 'The number of colocated events is wrong'
@@ -174,13 +174,13 @@ class MergeGenericCatalogueTest(unittest.TestCase):
                 utc_time_zone=timezone, buff_t=dt.timedelta(0), buff_ll=0,
                 use_ids=True, logfle=None)
         self.assertIn('isf_catalogue.py', cm.filename)
-        self.assertEqual(919, cm.lineno)
-        
+        self.assertEqual(924, cm.lineno)
+
     def test_case05(self):
         """Testing the identification of doubtful events with use_kms"""
         # In this test the first event in the .csv file is a duplicate of
-        # the 2015 earthquake and it is therefore excluded.
-        # The 2nd and 3rd events are within the buffers and so flagged as doubtful events
+        # the 2015 earthquake and it is therefore excluded.  The 2nd and 3rd
+        # events are within the buffers and so flagged as doubtful events
 
         # Read the CSV formatted file
         parser = GenericCataloguetoISFParser(self.fname_csv3)
@@ -200,8 +200,8 @@ class MergeGenericCatalogueTest(unittest.TestCase):
         ll_delta = np.array([[1899, 10], [1950, 5]])
         delta = [[1899, 10.0], [1950, 5.0]]
         out, doubts = catisf.add_external_idf_formatted_catalogue(
-                catcsv, ll_deltas=ll_delta, delta_t=delta, utc_time_zone=tz,
-                buff_t=buff_t, buff_ll=2, use_kms = True)
+            catcsv, ll_deltas=ll_delta, delta_t=delta, utc_time_zone=tz,
+            buff_t=buff_t, buff_ll=2, use_kms=True)
 
         # Testing output
         msg = 'The number of colocated events is wrong'

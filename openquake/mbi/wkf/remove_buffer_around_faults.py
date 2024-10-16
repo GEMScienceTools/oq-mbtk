@@ -14,7 +14,7 @@ def main(fname: str, path_point_sources: str, out_path: str, dst: float,
     create_folder(out_path)
 
     # Process sources
-    remove_buffer_around_faults(fname, path_point_sources, out_path, dst, 
+    remove_buffer_around_faults(fname, path_point_sources, out_path, dst,
                                 threshold_mag, use)
 
 

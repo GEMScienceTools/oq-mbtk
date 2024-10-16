@@ -300,12 +300,14 @@ def plot_yy(gs0, dip1, dip2, stk1, stk2):
                  transform=ax.transAxes)
 
 
-def process_gcmt_datafames(fname_folder: str, folder_out: str):
+def process_gcmt_datafames(fname_folder: str, folder_out: str, save_csv: bool = False):
     """
     :param fnames:
         A list containing the names of the files to be processed or a pattern
     :param folder_out:
         The name of the output folder
+    :param save_csv:
+        If true, save a copy of the input data with an appended fm column representing the classification
     """
 
     create_folder(folder_out)
@@ -318,6 +320,12 @@ def process_gcmt_datafames(fname_folder: str, folder_out: str):
     for fname in fnames:
 
         df = pd.read_csv(fname)
+        # clean up dataframe - remove any white spaces and rows with NAs in necessary columns
+        df = df.replace(r'^\s*$', numpy.nan, regex=True)
+        df.dropna(subset = ['plunge_b', 'plunge_p', 'plunge_t'], inplace = True)
+        df.plunge_b = df.plunge_b.astype(float)
+        df.plunge_p = df.plunge_p.astype(float)
+        df.plunge_t = df.plunge_t.astype(float)
         if len(df.dip1) < 1:
             continue
 
@@ -329,7 +337,7 @@ def process_gcmt_datafames(fname_folder: str, folder_out: str):
         ext = "png"
         fmt = "zone_{:s}.{:s}"
         figure_name = os.path.join(folder_out, fmt.format(src_id, ext))
-
+        	
         fmclassification = {}
         eventfm = {}
         dip_1 = {}
@@ -337,10 +345,11 @@ def process_gcmt_datafames(fname_folder: str, folder_out: str):
         strike_1 = {}
         strike_2 = {}
         for idx, row in df.iterrows():
-
+        
             plungeb = row.loc['plunge_b']
             plungep = row['plunge_p']
             plunget = row['plunge_t']
+
             mclass = mecclass(plunget, plungeb, plungep)
             eventfm[idx] = mclass
             if mclass in fmclassification:
@@ -370,5 +379,10 @@ def process_gcmt_datafames(fname_folder: str, folder_out: str):
 
         plt.savefig(figure_name, format=ext)
         plt.close()
+        
+        if save_csv == True:
+            cat_name = os.path.join(folder_out, fmt.format(src_id, "csv"))
+            df['fm'] = eventfm
+            df.to_csv(cat_name)
 
     return fmclassification

@@ -21,10 +21,8 @@ class TrTestCase02(unittest.TestCase):
         os.makedirs(self.tmp)
 
     def tearDown(self):
-        #
-        # removing tmp folder
-        # shutil.rmtree(self.tmp)
-        pass
+        # Remove tmp folder
+        shutil.rmtree(self.tmp)
 
     @unittest.skipUnless('OQ_RUN_SLOW_TESTS' in os.environ, 'slow')
     def testcase01(self):
@@ -35,21 +33,21 @@ class TrTestCase02(unittest.TestCase):
         ini_fname = os.path.join(BASE_PATH, tmps)
         tmps = '../../tmp/SARA_V2_1500_2017_nc.hdf5'
         treg_filename = os.path.join(BASE_PATH, tmps)
-        #
+
         # classify
         classify(ini_fname, True, self.root_folder)
         f = h5py.File(treg_filename, 'r')
-        #
+
         # testing crustal active
         expected = [1, 1, 0, 0, 0, 0, 0, 0, 0]
         numpy.testing.assert_array_equal(f['crustal'][:], expected)
-        #
+
         # testing subduction interface 1
         expected = [0, 0, 0, 0, 0, 0, 1, 0, 0]
         numpy.testing.assert_array_equal(f['interface_1'][:], expected)
-        #
+
         # testing subduction interface 4a
         expected = [0, 0, 0, 0, 0, 0, 0, 1, 1]
         numpy.testing.assert_array_equal(f['interface_4a'][:], expected)
-        #
+
         f.close()

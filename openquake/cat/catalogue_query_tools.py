@@ -1058,7 +1058,7 @@ class CatalogueRegressor(object):
         regressor = odr.ODR(self.regression_data,
                             self.model,
                             initial_params)
-        regressor.set_iprint(final=2)
+        regressor.set_iprint(final=0)
         self.results = regressor.run()
         return self.results
 

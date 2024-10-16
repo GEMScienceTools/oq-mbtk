@@ -8,9 +8,10 @@ import openquake.mbt.tools.adaptive_smoothing as ak
 
 from openquake.baselib import sap
 from openquake.hmtk.parsers.catalogue import CsvCatalogueParser
+from openquake.wkf.utils import get_list
 
 
-def main(catalogue, h3_map, config, outputfile, plot=False):
+def main(catalogue:str, h3_map: str, config:str, outputfile:str,  use: str = []):
     '''
     Runs an analysis of adaptive smoothed seismicity of Helmstetter et
     al. (2007).
@@ -30,12 +31,15 @@ def main(catalogue, h3_map, config, outputfile, plot=False):
         * 'd_i_min' - minimum smoothing distance d_i, should be chosen
             based on location uncertainty. Default of 0.5 in Helmstetter
             et al. (float)
+        * 'h3res' - h3 resolution for the model
+        * 'maxdist' - maximum distance to consider a neighbour
+        
 
     :param output_file:
         String specifying location in which to save output.
 
-    :param plot:
-        Option to plot result to see smoothing
+    :param use:
+        Option to specify zone IDs to use in model
 
     :returns:
         Full smoothed seismicity data as np.ndarray, of the form
@@ -43,16 +47,28 @@ def main(catalogue, h3_map, config, outputfile, plot=False):
     '''
 
     # Read h3 indices from mapping file
-    h3_idx = pd.read_csv(h3_map)
-
+    #h3_idx = pd.read_csv(h3_map)
+    h3_idx = pd.read_csv(h3_map, names = ("h3", "id"))
+    
+    if len(use) > 0:
+        # Note that this should still consider events outside this zone, 
+        # it will simply only return the adaptively smoothed values at 
+        # locations within the zone (should be consistent with adjacent zones)
+        l1 = use
+        use = get_list(use)
+        use = map(int, use)
+        h3_idx = h3_idx[h3_idx['id'].isin(use)]
+        print("Using zones ", l1)
+    
     # Get lat/lon locations for each h3 cell, convert to seperate lat and
     # lon columns of dataframe
-    h3_idx['latlon'] = h3_idx.iloc[:, 0].apply(h3.h3_to_geo)
+    h3_idx['latlon'] = h3_idx.loc[:,"h3"].apply(h3.h3_to_geo)
     locations = pd.DataFrame(h3_idx['latlon'].tolist())
     locations.columns = ["lat", "lon"]
 
     # Load config file to get smoothing parameters
     config = toml.load(config)
+    config = config['smoothing']
 
     # Load catalogue csv. Uses CsvCatalogueParser for compatability with
     # hmtk catalogue outputs. Should work with any csv so long as
@@ -65,9 +81,10 @@ def main(catalogue, h3_map, config, outputfile, plot=False):
     # Run adaptive smoothing over chosen area, don't grid the data (h3
     # locs, already done!), don't use depths.
     smooth = ak.AdaptiveSmoothing([locations.lon, locations.lat],
-                                  grid=False, use_3d=False)
-    conf = {"kernel": config["kernel"], "n_v": config['n_v'],
-            "d_i_min": config['d_i_min']}
+                                  grid=False, use_3d=False, use_maxdist = True)
+    conf = {"kernel": config['kernel'], "n_v": config['n_v'],
+            "d_i_min": config['d_i_min'], "h3res": config['h3res'], 
+            "maxdist": config['maxdist']}
     out = smooth.run_adaptive_smooth(cat, conf)
     # Make output into dataframe with named columns and write to a csv
     # file in specified loctaion
@@ -86,6 +103,8 @@ descr = 'Config file defining the parameters for smoothing'
 main.config = descr
 descr = 'Name of file to save output to'
 main.outputfile = descr
+descr = "Source IDs to use"
+main.use = descr
 
 if __name__ == '__main__':
     sap.run(main)
