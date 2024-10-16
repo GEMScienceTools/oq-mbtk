@@ -13,6 +13,7 @@ jobs:
     name: Windows Installation
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-2022, windows-2019]
         python-version: ["3.11"]
