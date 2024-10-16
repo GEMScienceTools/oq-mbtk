@@ -16,7 +16,10 @@ nbstripout >= 0.3.0
 notebook >= 5.0.0
 pylint >= 2.1.1
 rtree >= 0.9.4
-jupyter-server==2.7.2
+netCDF4 < 1.7.0
+xarray==2022.09 
+h3 < 4.0.0
+jupyter-server==2.11.2
 pyproj==3.6.1
 numpy==1.26.2
 # Generic
