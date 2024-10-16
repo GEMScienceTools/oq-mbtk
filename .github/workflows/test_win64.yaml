@@ -37,13 +37,18 @@ jobs:
           Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
           #
           $curDir = Get-Location
+          Write-Host "Current Working Directory: $curDir"
           Write-Host "Test python version"
           python -V
           Write-Host "Install OQ form master and mbtk from branch ${{ github.ref_name }}"
           python -m pip install -U pip
           git clone --depth 1 -b master https://github.com/gem/oq-engine.git
           python -m pip install -r oq-engine/requirements-py311-win64.txt
-          python -m pip install -e /oq-engine/
+          cd oq-engine
+          python -m pip install -e .
+          cd ..
+          python -m pip install -r requirements_win64.txt
+          python -m pip install -e .
           #.\windows\install_oqmbtk.ps1 -mbtk_branch ${{ github.ref_name }}
           # do not use powershell scripts but install with devel installation
           #$MYPATH = $HOME + "\mbtk"
@@ -65,12 +70,10 @@ jobs:
           dir env:
           Write-Host "Print all pypip packages"
           pip list
-          $MBTK = $HOME + "\mbtk"
-          Write-Host "MBTK Directory: $MBTK"
-          Set-Location -Path $MBTK
+          #$MBTK = $HOME + "\mbtk"
+          #Write-Host "MBTK Directory: $MBTK"
+          #Set-Location -Path $MBTK
           $curDir = Get-Location
           Write-Host "Current Working Directory: $curDir"
-          cd oq-mbtk\openquake
-          Write-Host "Install pytest and run tests"
-          pip install pytest==8.1.2
+          cd openquake
           pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt
