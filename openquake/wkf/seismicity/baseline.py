@@ -42,6 +42,7 @@ def _get_rates(geohashes, a_value):
 
     # Get coordinates and compute area [km2] of each cell
     area = np.array([h3.cell_area(idx) for idx in geohashes])
+    breakpoint()
 
     # Compute the occurrence rate per km2 from a_gr and b_gr
     numm = 10**(a_value)
@@ -49,6 +50,7 @@ def _get_rates(geohashes, a_value):
     # Compute the output a_value in each cell
     a_cell = np.log10(numm * area)
 
+    breakpoint()
     return a_cell, area
 
 
@@ -77,7 +79,7 @@ def create_missing(geohashes, a_value, b_value, a_cell=None, area=None):
     if a_cell is None:
         a_cell, _ = _get_rates(geohashes, a_value)
     b_cell = np.ones_like(coo[:, 0]) * b_value
-
+    
     # Output dataframe
     sdf = pd.DataFrame({'lon': coo[:, 1], 'lat': coo[:, 0], 'agr': a_cell,
                         'bgr': b_cell})
@@ -129,6 +131,8 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
     h3_level = model['baseline']['h3_level']
     basel_agr = model['baseline']['a_value']
     basel_bgr = model['baseline']['b_value']
+
+    a_cell = model['baseline'].get('a_cell', None)
     set_all_cells = model['baseline'].get('set_all_cells', False)
 
     # Read polygons
@@ -210,10 +214,14 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         # Adding baseline seismicity to the dataframe for the current source
         if len(both) > 0:
             if set_all_cells is False:
-                tmp_df = create_missing(both, basel_agr, basel_bgr)
+                if a_cell:
+                    tmp_df = create_missing(both, basel_agr, basel_bgr, 
+                                        a_cell=[a_cell]*len(both))
+                else:
+                    tmp_df = create_missing(both, basel_agr, basel_bgr)
                 df = pd.concat([df, tmp_df])
             else:
-                df = create_missing(hxg_idxs, basel_agr, basel_bgr)
+                df = create_missing(hxg_idxs, basel_agr, basel_bgr, a_cell)
 
         # Creating output file
         assert len(hxg_idxs) == df.shape[0]
