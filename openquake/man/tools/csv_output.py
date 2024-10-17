@@ -237,6 +237,7 @@ def get_mean_mde(fname, poe, imt):
     for key in ['mag', 'eps', 'dist']:
         df_mean[key] = df_sub[key]
 
+
     return df_mean
 
 
@@ -283,6 +284,7 @@ def mean_mde_for_gmt(fname, fout, poe, imt, threshold):
 
         if float(line.poe_c) > threshold:
             fou.write(outs + '\n')
+    fou.close()
 
     print('Written to {}'.format(fout))
 
@@ -486,6 +488,7 @@ def read_hazard_curve_csv(filename):
     lons = []
     imls = []
     curs = []
+    poes = []
     for idx, line in enumerate(open(filename, 'r')):
         if idx == 0:
             header1 = _get_header1(line)
