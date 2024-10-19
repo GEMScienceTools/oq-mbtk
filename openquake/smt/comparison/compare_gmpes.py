@@ -28,8 +28,8 @@ import os
 
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_compare_gmpes import (
-    plot_trellis_util, plot_spectra_util, plot_cluster_util, plot_sammons_util,
-    plot_euclidean_util, compute_matrix_gmpes)
+    plot_trellis_util, plot_spectra_util, plot_ratios_util, plot_cluster_util,
+    plot_sammons_util, plot_euclidean_util, compute_matrix_gmpes)
 
 
 class Configurations(object):
@@ -45,7 +45,7 @@ class Configurations(object):
         # Import parameters for comparative plots from .toml file
         config_file = toml.load(filename) 
         
-        # Get input params from .toml file
+        # Get general params
         self.eshm20_region = config_file['general']['eshm20_region']
         self.minR = config_file['general']['minR']
         self.maxR = config_file['general']['maxR']
@@ -54,11 +54,7 @@ class Configurations(object):
         self.Nstd = config_file['general']['Nstd']
         self.max_period = config_file['general']['max_period']
         
-        self.custom_color_flag = config_file['custom_colors'][
-            'custom_colors_flag']
-        self.custom_color_list = config_file['custom_colors'][
-            'custom_colors_list']
-        
+        # Get site params
         self.Vs30 = config_file['site_properties']['vs30']
         self.Z1 = config_file['site_properties']['Z1']
         self.Z25 = config_file['site_properties']['Z25']
@@ -66,6 +62,7 @@ class Configurations(object):
         self.up_or_down_dip = float(up_or_down_dip)
         self.region = config_file['site_properties']['region']
         
+        # Get rupture params
         self.trt = config_file['source_properties']['trt']
         if self.trt == 'None':
             self.trt = None
@@ -75,9 +72,14 @@ class Configurations(object):
         self.strike = config_file['source_properties']['strike']
         self.dip = config_file['source_properties']['dip']
         self.rake = config_file['source_properties']['rake']
-
         self.aratio = config_file['source_properties']['aratio']
         
+        # Get custom colors
+        self.custom_color_flag = config_file['custom_colors'][
+            'custom_colors_flag']
+        self.custom_color_list = config_file['custom_colors'][
+            'custom_colors_list']
+
         # One set of magnitudes for use in trellis plots
         self.trellis_and_rs_mag_list = config_file['source_properties'][
             'trellis_and_rs_mag_list']
@@ -106,87 +108,148 @@ class Configurations(object):
         for idx, imt in enumerate(self.imt_list):
             self.imt_list[idx] = from_string(str(self.imt_list[idx]))  
         
-        # Get model labels
-        self.gmpe_labels = config_file['gmpe_labels']['gmpes_label']
+        # Get models and model labels
+        (self.gmpe_labels, self.gmpes_list, self.baseline_gmm) = get_gmpes(
+            config_file)
+
+        # Get lt weights
+        (self.lt_weights_gmc1, self.lt_weights_gmc2, self.lt_weights_gmc3,
+         self.lt_weights_gmc4) = get_lt_weights(self.gmpes_list)
+
+
+def get_gmpes(config_file):
+    """
+    Extract strings of the GMPEs from the configuration file. Also get the 
+    labels used in Sammons maps, Clustering (dendrograms) and Euclidean distance
+    matrix plots. The baseline GMM for computing ratios with is also extracted
+    if specified within the toml file.
+    """
+    # Get the GMPEs
+    gmpe_labels = config_file['gmpe_labels']['gmpes_label']
+    gmpe_list = []
+    config = copy.deepcopy(config_file)
+    for key in config['models']:
+        value = get_model(key, config['models'])
+        gmpe_list.append(value.strip())
+
+    # Check number of GMPEs matches number of GMPE labels
+    if len(gmpe_list) != len(gmpe_labels):
+        raise ValueError("Number of labels must match number of GMPEs.")
+
+    # Get the baseline GMPE used to compute ratios of GMPEs with if required
+    if 'ratios_baseline_gmm' in config_file.keys():
+        if len(config_file['ratios_baseline_gmm']) > 1:
+            raise ValueError('Only one baseline GMPE should be specified.')
+        for key in config_file['ratios_baseline_gmm']:
+            baseline_gmm = get_model(key, config['ratios_baseline_gmm'])
+    else:
+        baseline_gmm = None
+
+    return gmpe_labels, gmpe_list, baseline_gmm
+
+
+def get_model(key, models):
+    """
+    Get the model from the toml in the string format required to create an
+    OpenQuake gsim object from within mgmpe_check (in utils_gmpes.py)
+    """
+    # If the key contains a number we take the second part
+    if re.search("^\\d+\\-", key):
+        tmp = re.sub("^\\d+\\-", "", key)
+        value = f"[{tmp}] "
+    else:
+        value = f"[{key}] "
+    if len(models[key]):
+        models[key].pop('style', None)
+        value += '\n' + str(toml.dumps(models[key]))
+    return value.strip()
+
+
+def get_lt_weights(gmpe_list):
+    """
+    Manage the logic tree weight assigned for each GMPE in the toml (if any)
+    """
+    # If weight is assigned to a GMPE get it + check sum of weights for 
+    # GMPEs with weights allocated is about 1
+    weights = [{}, {}, {}, {}]
+    for gmpe in gmpe_list:
+        if 'lt_weight' in gmpe:
+            split_gmpe_str = str(gmpe).splitlines()
+            for idx, component in enumerate(split_gmpe_str):
+                if 'lt_weight_gmc1' in component:
+                    weights[0][gmpe] = float(split_gmpe_str[
+                        idx].split('=')[1])
+                if 'lt_weight_gmc2' in component:
+                    weights[1][gmpe] = float(split_gmpe_str[
+                        idx].split('=')[1])                       
+                if 'lt_weight_gmc3' in component:
+                    weights[2][gmpe] = float(split_gmpe_str[
+                        idx].split('=')[1])
+                if 'lt_weight_gmc4' in component:
+                    weights[3][gmpe] = float(split_gmpe_str[
+                        idx].split('=')[1])
         
-        # Get models
-        gmpes_list_initial = []
-        config = copy.deepcopy(config_file)
-        for key in config['models']:
-            
-            # If the key contains a number we take the second part
-            if re.search("^\\d+\\-", key):
-                tmp = re.sub("^\\d+\\-", "", key)
-                value = f"[{tmp}] "
-            else:
-                value = f"[{key}] "
-            if len(config['models'][key]):
-               config['models'][key].pop('style', None)
-               value += '\n' + str(toml.dumps(config['models'][key]))
-            value = value.strip()
-            gmpes_list_initial.append(value.strip())
-            
-        self.gmpes_list = []
-        for idx, gmpe in enumerate(gmpes_list_initial):
-            self.gmpes_list.append(gmpes_list_initial[idx])
+    # Check weights for each logic tree (if present) equal 1.0
+    msg = "Sum of GMC logic tree weights must be 1.0"
+    if weights[0] != {}:
+        check_weights_gmc1 = np.array(pd.Series(weights[0]))
+        lt_total_wt_gmc1 = np.sum(check_weights_gmc1, axis=0)
+        assert abs(lt_total_wt_gmc1-1.0) < 1e-10, msg
+        lt_weights_gmc1 = weights[0]
+    else:
+        lt_weights_gmc1 = None
+    
+    if weights[1] != {}:
+        check_weights_gmc2 = np.array(pd.Series(weights[1]))
+        lt_total_wt_gmc2 = np.sum(check_weights_gmc2, axis=0)
+        assert abs(lt_total_wt_gmc2-1.0) < 1e-10, msg
+        lt_weights_gmc2 = weights[1]
+    else:
+        lt_weights_gmc2 = None
 
-        # Check number of GMPEs matches number of GMPE labels
-        if len(self.gmpes_list) != len(self.gmpe_labels):
-            raise ValueError("Number of labels must match number of GMPEs.")
-
-        # If weight is assigned to a GMPE get it + check sum of weights for 
-        # GMPEs with weights allocated = 1
-        weights = [{}, {}, {}, {}]
-        for gmpe in self.gmpes_list:
-            if 'lt_weight' in gmpe:
-                split_gmpe_str = str(gmpe).splitlines()
-                for idx, component in enumerate(split_gmpe_str):
-                    if 'lt_weight_gmc1' in component:
-                        weights[0][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])
-                    if 'lt_weight_gmc2' in component:
-                        weights[1][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])                       
-                    if 'lt_weight_gmc3' in component:
-                        weights[2][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])
-                    if 'lt_weight_gmc4' in component:
-                        weights[3][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])
-            
-        # Check weights for each logic tree (if present) equal 1.0
-        msg = "Sum of GMC logic tree weights must be 1.0"
-        if weights[0] != {}:
-            check_weights_gmc1 = np.array(pd.Series(weights[0]))
-            lt_total_wt_gmc1 = np.sum(check_weights_gmc1, axis=0)
-            assert abs(lt_total_wt_gmc1-1.0) < 1e-10, msg
-            self.lt_weights_gmc1 = weights[0]
-        else:
-            self.lt_weights_gmc1 = None
+    if weights[2] != {}:
+        check_weights_gmc3 = np.array(pd.Series(weights[2]))
+        lt_total_wt_gmc3 = np.sum(check_weights_gmc3, axis=0)
+        assert abs(lt_total_wt_gmc3-1.0) < 1e-10, msg
+        lt_weights_gmc3 = weights[2]
+    else:
+        lt_weights_gmc3 = None
         
-        if weights[1] != {}:
-            check_weights_gmc2 = np.array(pd.Series(weights[1]))
-            lt_total_wt_gmc2 = np.sum(check_weights_gmc2, axis=0)
-            assert abs(lt_total_wt_gmc2-1.0) < 1e-10, msg
-            self.lt_weights_gmc2 = weights[1]
-        else:
-            self.lt_weights_gmc2 = None
+    if weights[3] != {}:
+        check_weights_gmc4 = np.array(pd.Series(weights[3]))
+        lt_total_wt_gmc4 = np.sum(check_weights_gmc4, axis=0)
+        assert abs(lt_total_wt_gmc4-1.0) < 1e-10, msg
+        lt_weights_gmc4 = weights[3]
+    else:
+        lt_weights_gmc4 = None
 
-        if weights[2] != {}:
-            check_weights_gmc3 = np.array(pd.Series(weights[2]))
-            lt_total_wt_gmc3 = np.sum(check_weights_gmc3, axis=0)
-            assert abs(lt_total_wt_gmc3-1.0) < 1e-10, msg
-            self.lt_weights_gmc3 = weights[2]
-        else:
-            self.lt_weights_gmc3 = None
+    return lt_weights_gmc1, lt_weights_gmc2, lt_weights_gmc3, lt_weights_gmc4
+
+
+def assign_depths_per_mag_bin(config_file, mag_array):
+    """
+    For each magnitude considered within the Sammons Maps, Euclidean distance
+    and clustering plots assign a depth
+    """
+    # Create dataframe of depth to assign per mag bin
+    non_trellis_or_spectra_depths = pd.DataFrame(config_file[
+        'mag_values_non_trellis_or_spectra_functions'][
+            'non_trellis_or_spectra_depths'], columns=['mag','depth'])
             
-        if weights[3] != {}:
-            check_weights_gmc4 = np.array(pd.Series(weights[3]))
-            lt_total_wt_gmc4 = np.sum(check_weights_gmc4, axis=0)
-            assert abs(lt_total_wt_gmc4-1.0) < 1e-10, msg
-            self.lt_weights_gmc4 = weights[3]
-        else:
-            self.lt_weights_gmc4 = None
+    # Round each mag in mag_array to closest integer
+    mag_to_nearest_int = pd.Series(dtype='float')
+    for mag in mag_array:
+        mag_to_nearest_int[mag] = np.round(mag+0.001)
+
+    # Assign depth to each mag in mag_array using rounded mags
+    depth_array_initial = []
+    for idx_mag, rounded_mag in enumerate(mag_to_nearest_int):
+        for idx, val in enumerate(non_trellis_or_spectra_depths['mag']):
+            if rounded_mag == non_trellis_or_spectra_depths['mag'][idx]:
+                depth_to_store = non_trellis_or_spectra_depths['depth'][idx]
+                depth_array_initial.append(depth_to_store)
+    
+    return pd.Series(depth_array_initial) 
 
 
 def plot_trellis(filename, output_directory):
@@ -196,7 +259,6 @@ def plot_trellis(filename, output_directory):
         toml file providing configuration for use within comparative
         plotting methods.
     """ 
-    # Generate config object
     config = Configurations(filename)
     
     store_gmm_curves = plot_trellis_util(config, output_directory) 
@@ -215,12 +277,28 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
         csv of an observed spectra to plot and associated event information.
         An example file can be found in openquake.smt.tests.file_samples.
     """
-    # Generate config object
     config = Configurations(filename)
     
     store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra)
 
     return store_gmc_lts
+
+
+def plot_ratios(filename, output_directory):
+    """
+    Plot ratio (GMPE median attenuation/baseline GMPE median attenuation) for
+    given run configuration
+    :param  filename:
+        toml file providing configuration for use within comparative
+        plotting methods.
+    """ 
+    config = Configurations(filename)
+
+    if config.baseline_gmm is None:
+        raise ValueError(
+            'User must specify a baseline GMPE to generate ratio plots')
+    
+    plot_ratios_util(config, output_directory)
 
 
 def plot_cluster(filename, output_directory):
@@ -231,7 +309,6 @@ def plot_cluster(filename, output_directory):
         toml file providing configuration for use within comparative
         plotting methods.
     """ 
-    # Generate config object with each set of run parameters
     config = Configurations(filename)
     
     if len(config.gmpes_list) < 2:
@@ -266,7 +343,6 @@ def plot_sammons(filename, output_directory):
         toml file providing configuration for use within comparative
         plotting methods.
     """ 
-    # Generate config object with each set of run parameters
     config = Configurations(filename)
     
     if len(config.gmpes_list) < 2:
@@ -302,7 +378,6 @@ def plot_euclidean(filename, output_directory):
         toml file providing configuration for use within comparative
         plotting methods.    
     """ 
-    # Generate config object
     config = Configurations(filename)
     
     if len(config.gmpes_list) < 2:
@@ -326,31 +401,3 @@ def plot_euclidean(filename, output_directory):
     plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
                         os.path.join(output_directory,'16th_perc_Euclidean.png'),
                         mtxs_type='16th_perc')
-    
-    
-def assign_depths_per_mag_bin(config_file, mag_array):
-    """
-    For each magnitude considered within the Sammons Maps, Euclidean distance
-    and clustering plots assign a depth
-    """
-    # Create dataframe of depth to assign per mag bin
-    non_trellis_or_spectra_depths = pd.DataFrame(config_file[
-        'mag_values_non_trellis_or_spectra_functions'][
-            'non_trellis_or_spectra_depths'], columns=['mag','depth'])
-            
-    # Round each mag in mag_array to closest integer
-    mag_to_nearest_int = pd.Series(dtype='float')
-    for mag in mag_array:
-        mag_to_nearest_int[mag] = np.round(mag+0.001)
-
-    # Assign depth to each mag in mag_array using rounded mags
-    depth_array_initial = []
-    for idx_mag, rounded_mag in enumerate(mag_to_nearest_int):
-        for idx, val in enumerate(non_trellis_or_spectra_depths['mag']):
-            if rounded_mag == non_trellis_or_spectra_depths['mag'][idx]:
-                depth_to_store = non_trellis_or_spectra_depths['depth'][idx]
-                depth_array_initial.append(depth_to_store)
-        
-    depths = pd.Series(depth_array_initial) 
-    
-    return depths
