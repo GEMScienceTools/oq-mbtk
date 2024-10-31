@@ -83,6 +83,9 @@ lt_weight_gmc2_plot_lt_only = 0.50
 [models.AkkarEtAlRjb2014]
 lt_weight_gmc2_plot_lt_only = 0.50
     
+# Also specify a GMM to compute ratios of the attenuation against (GMM/baseline)
+[ratios_baseline_gmm.BooreEtAl2020]
+
 [custom_colors]
 custom_colors_flag = 'False' # Set to "True" for custom colours in plots)
 custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']

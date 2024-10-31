@@ -73,7 +73,7 @@ setup(
         'obspy',
         'prettytable',
         'tqdm',
-        'h3',
+        'h3 <= 3.7.7',
         'reportlab',
         'igraph',
         # 'GDAL',
