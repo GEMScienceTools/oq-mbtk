@@ -52,6 +52,9 @@ lt_weight_gmc2_plot_lt_only = 0.5
 [models.KothaEtAl2020]
 lt_weight_gmc2_plot_lt_only = 0.5
 
+# Baseline GMM to compute ratios of the attenuation against (GMM/baseline)
+[ratios_baseline_gmm.BooreEtAl2014]
+
 
 [custom_colors]
 custom_colors_flag = 'False' #By default set to "False" (set to "True" for custom colours)
