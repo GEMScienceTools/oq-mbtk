@@ -35,6 +35,7 @@ import numpy as np
 import scipy.sparse as ssp
 
 import openquake.hazardlib as hz
+from openquake.hazardlib.mfd.tapered_gr_mfd import mag_to_mo
 
 from .utils import (
     SHEAR_MODULUS,
@@ -71,7 +72,7 @@ def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
     return slip_rate_lhs, slip_rate_rhs, slip_rate_err
 
 
-def rel_gr_mfd_rates(mags, b=1.0, a=4.0, rel=True, mfd=False):
+def rel_gr_mfd_rates(mags, b=1.0, a=4.0, corner_mag=None, rel=True, mfd=False):
     """
     Calculate the relative Gutenberg-Richter magnitude frequency distribution rates.
 
@@ -100,18 +101,43 @@ def rel_gr_mfd_rates(mags, b=1.0, a=4.0, rel=True, mfd=False):
         raise NotImplementedError("arbitrary MFD option not implemented")
 
     for i, mag in enumerate(mags):
-        rel_rates[mag] = 10 ** (a - b * mag)
+        if not corner_mag:
+            rel_rates[mag] = _get_gr_rate(mag, b, a)
+        else:
+            rel_rates[mag] = _get_tapered_gr_rate(mag, b, a, corner_mag)
 
     if rel:
         for i, mag in enumerate(mags):
             if i != 0:
                 rel_rates[mag] /= rel_rates[mags[0]]
         # do this last because it's a reference for the others
-        rel_rates[mags[0]] = 1.0 
+        rel_rates[mags[0]] = 1.0
     return rel_rates
 
 
-def make_rel_gr_mfd_eqns(rups, b=1.0, rup_include_list=None, weight=1.0):
+def _pareto(mo, corner_mo, min_mo, beta):
+    return (min_mo / mo) ** beta * np.exp((min_mo - mo) / corner_mo)
+
+
+def _get_gr_rate(mag, b, a):
+    return 10 ** (a - b * mag)
+
+
+def _get_tapered_gr_rate(mag, b, a, corner_mag, mag_lo=4.0, mag_hi=9.05):
+    beta = 2.0 / 3.0 * b
+    min_mo = mag_to_mo(mag_lo)
+    max_mo = mag_to_mo(mag_hi)
+    mag_mo = mag_to_mo(mag)
+    corner_mo = mag_to_mo(corner_mag)
+    scale_numerator = _pareto(mag_mo, corner_mo, min_mo, beta)
+    scale_denominator = _pareto(mag_mo, max_mo, min_mo, beta)
+    gr_rate = _get_gr_rate(mag, b, a)
+    return gr_rate * scale_numerator / scale_denominator
+
+
+def make_rel_gr_mfd_eqns(
+    rups, b=1.0, rup_include_list=None, corner_mag=None, weight=1.0
+):
     """
     Creates a set of equations that enforce a relative Gutenberg-Richter
     magnitude frequency distribution. The resulting set of equations has
@@ -137,7 +163,7 @@ def make_rel_gr_mfd_eqns(rups, b=1.0, rup_include_list=None, weight=1.0):
     unique_mags = sorted(mag_counts.keys())
     ref_mag = unique_mags[0]
 
-    rel_rates = rel_gr_mfd_rates(unique_mags, b)
+    rel_rates = rel_gr_mfd_rates(unique_mags, b, corner_mag=corner_mag)
     rel_rates_adj = {M: 1 / rel_rates[M] for M in unique_mags}
 
     mag_rup_idxs = {}
@@ -397,6 +423,7 @@ def make_eqns(
     cumulative_abs_mfds=False,
     mfd_rel_eqns=False,
     mfd_rel_b_val=1.0,
+    mfd_rel_corner_mag=None,
     mfd_rel_weight=1.0,
     mfd_abs_weight=1.0,
     regional_abs_mfds=None,
@@ -444,6 +471,7 @@ def make_eqns(
         (mfd_rel_lhs, mfd_rel_rhs, mfd_rel_errs) = make_rel_gr_mfd_eqns(
             rups,
             mfd_rel_b_val,
+            corner_mag=mfd_rel_corner_mag,
             weight=mfd_rel_weight,
         )
         lhs_set.append(mfd_rel_lhs)
@@ -549,6 +577,9 @@ def make_eqns(
 
     rhs = np.hstack(rhs_set)
     errs = np.hstack(err_set)
+
+    if verbose:
+        print("lhs total:", lhs.shape)
 
     return (
         lhs,
