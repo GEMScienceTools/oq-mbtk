@@ -318,7 +318,8 @@ def mgmpe_check(gmpe):
         for idx, par in enumerate(params):
             if idx > 1:
                 par = str(par)
-                if 'sigma_model' in par or 'site_term' in par:
+                if ('sigma_model' in par or 'site_term' in par or
+                    'basin_term' in par):
                     idx_params.append(idx)
                 if 'fix_total_sigma' in par:
                     idx_params.append(idx)
@@ -421,6 +422,10 @@ def mgmpe_check(gmpe):
         # NRCan15SiteTerm (linear)
         if 'NRCan15SiteTermLinear' in gmpe:
             kwargs['nrcan15_site_term'] = {'kind': 'linear'}
+
+        # M9 basin adjustment
+        if 'M9BasinTerm' in gmpe:
+            kwargs['m9_basin_term'] = {}
         
         gmm = mgmpe.ModifiableGMPE(**kwargs)
     

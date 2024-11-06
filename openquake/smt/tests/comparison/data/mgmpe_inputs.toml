@@ -36,7 +36,7 @@ non_trellis_or_spectra_depths = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth
 
 # Specify label for gmpes
 [gmpe_labels]
-gmpes_label = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
+gmpes_label = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
 
 [models.0-ModifiableGMPE]
 gmpe = 'YenierAtkinson2015BSSA'
@@ -89,7 +89,11 @@ add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
 [models.12-ModifiableGMPE]
 gmpe = 'CampbellBozorgnia2014'
 set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
-                               
+
+[models.13-ModifiableGMPE]
+gmpe = 'KuehnEtAl2020SInter'
+basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
+
 [models.NGAEastGMPE]
 gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
     
