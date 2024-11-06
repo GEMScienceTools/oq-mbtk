@@ -689,7 +689,7 @@ def get_colors(custom_color_flag, custom_color_list):
     colors = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
               'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', '0.5']
     
-    if custom_color_flag == 'True':
+    if custom_color_flag is True:
         colors = custom_color_list
         
     return colors
