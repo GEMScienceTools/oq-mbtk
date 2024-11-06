@@ -307,7 +307,7 @@ def plot_cluster(filename, output_directory):
     """ 
     config = Configurations(filename)
     
-    if len(config.gmpe_list) != len(config.gmpe_labels):
+    if len(config.gmpes_list) != len(config.gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
 
     if len(config.gmpes_list) < 2:
@@ -344,7 +344,7 @@ def plot_sammons(filename, output_directory):
     """ 
     config = Configurations(filename)
 
-    if len(config.gmpe_list) != len(config.gmpe_labels):
+    if len(config.gmpes_list) != len(config.gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
     
     if len(config.gmpes_list) < 2:
@@ -382,7 +382,7 @@ def plot_euclidean(filename, output_directory):
     """ 
     config = Configurations(filename)
     
-    if len(config.gmpe_list) != len(config.gmpe_labels):
+    if len(config.gmpes_list) != len(config.gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
     
     if len(config.gmpes_list) < 2:
