@@ -423,6 +423,10 @@ def mgmpe_check(gmpe):
         if 'NRCan15SiteTermLinear' in gmpe:
             kwargs['nrcan15_site_term'] = {'kind': 'linear'}
 
+        # CB14 basin term
+        if 'CB14BasinTerm' in gmpe:
+            kwargs['cb14_basin_term'] = {}
+
         # M9 basin adjustment
         if 'M9BasinTerm' in gmpe:
             kwargs['m9_basin_term'] = {}
