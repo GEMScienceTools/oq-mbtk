@@ -703,9 +703,13 @@ Comparing GMPEs
         site_term = 'NRCan15SiteTermLinear' # Use NRCan15 linear site term
 
         [models.13-ModifiableGMPE]
+        gmpe = 'AtkinsonMacias2009'
+        basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
+
+        [models.14-ModifiableGMPE]
         gmpe = 'KuehnEtAl2020SInter'
         basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
-    
+            
 References
 ==========
 

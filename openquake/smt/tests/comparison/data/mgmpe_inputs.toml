@@ -91,6 +91,10 @@ gmpe = 'CampbellBozorgnia2014'
 set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
 
 [models.13-ModifiableGMPE]
+gmpe = 'AtkinsonMacias2009'
+basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
+
+[models.14-ModifiableGMPE]
 gmpe = 'KuehnEtAl2020SInter'
 basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
 
