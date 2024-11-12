@@ -305,7 +305,8 @@ def mgmpe_check(gmpe):
     """
     Check if the GMPE should be modified using ModifiableGMPE. This function in
     effect parses the toml parameters for a GMPE into the equivalent parameters
-    required for ModifiableGMPE
+    required for ModifiableGMPE. If a ModifiableGMPE is not required, a valid
+    GSIM object with all specified kwargs is returned instead
     :param gmpe:
         gmpe: GMPE to be modified if required
     """
