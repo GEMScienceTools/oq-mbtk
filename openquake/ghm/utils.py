@@ -101,9 +101,9 @@ def read_hazard_map_csv(fname):
             pass
         else:
             if re.search('lon', line):
-                labels = re.split('\,', line)
+                labels = re.split('\\,', line)
             else:
-                aa = re.split('\,', line)
+                aa = re.split('\\,', line)
                 for l, d in zip(labels, aa):
                     if l in data:
                         data[l].append(float(d))
