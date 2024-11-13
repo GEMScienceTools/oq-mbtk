@@ -445,9 +445,12 @@ def mgmpe_check(gmpe):
                 idx_to_drop.append(idx_p)
         params = params.drop(idx_to_drop)
         gmpe_clean = params.iloc[0].strip()
-        for idx_p, par in enumerate(params):
-            if idx_p > 0:
-                gmpe_clean = gmpe_clean + '\n' + par
+        if len(params) > 1:
+            for idx_p, par in enumerate(params):
+                if idx_p > 0:
+                    gmpe_clean = gmpe_clean + '\n' + par
+        else: # Ensures GSIM aliases work
+            gmpe_clean = gmpe_clean.replace('[','').replace(']','')
         gmm = valid.gsim(gmpe_clean)
-        
+    
     return gmm
