@@ -8,14 +8,14 @@ from openquake.wkf.distributed_seismicity import remove_buffer_around_faults
 
 
 def main(fname: str, path_point_sources: str, out_path: str, dst: float,
-         threshold_mag: float=6.5, use: str=''):
+         threshold_mag: float=6.5):
 
     # Create the output folder (if needed)
     create_folder(out_path)
 
     # Process sources
     remove_buffer_around_faults(fname, path_point_sources, out_path, dst,
-                                threshold_mag, use)
+                                threshold_mag)
 
 
 main.fname = "Pattern for input .xml file with fault sources"
@@ -24,6 +24,7 @@ main.out_path = "Output folder"
 main.dst = "Distance [km] of the buffer around the fault"
 main.threshold_mag = "Threshold magnitude"
 main.use = 'A list with the ID of sources that should be considered'
+main.source_conv = 'SourceConverter object'
 
 if __name__ == '__main__':
     sap.run(main)
