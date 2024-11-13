@@ -138,16 +138,6 @@ We can specify the inputs to perform a residual analysis with as follows:
                          # a single residuals toml the results of the last variant of the GMPE
                          # will overwrite the others (and only the results of the last variant 
                          # in the toml will be plotted too). This bug will be fixed.
-       
-       # Note that a bug exists for GMPEs which use the add_alias feature, meaning that the user
-       # must specify parameters that should be inherently used by specifiying the GMPE class (to
-       # be fixed). Some examples of how to circumvent this bug are provided below
-       
-       [models.AbrahamsonEtAl2014] # Use instead of specifying AbrahamsonEtAl2014RegJPN
-       region = "JPN"
-       
-       [models.NGAEastUSGSGMPE]  # Use instead of specifying NGAEastUSGSSeed1CCSP or 1CCSP gsim classes
-       gmpe_table = 'nga_east_1CCSP.hdf5'
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
