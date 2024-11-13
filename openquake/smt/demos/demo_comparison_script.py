@@ -23,12 +23,13 @@ for file in file_list:
     name_analysis = config_file['general']['name_analysis'] 
     output_directory = os.path.join(os.path.abspath(''),name_analysis)
 
-    # set the output
+    # Set the output
     if not os.path.exists(output_directory): os.makedirs(output_directory)
     
-    #Generate plots from config object
+    # Generate plots from config object
     attenuation_curve_data[file] = comp.plot_trellis(filename,output_directory)
     comp.plot_spectra(filename,output_directory)
+    comp.plot_ratios(filename, output_directory)
     comp.plot_cluster(filename,output_directory)
     comp.plot_sammons(filename,output_directory)
     comp.plot_euclidean(filename,output_directory)
