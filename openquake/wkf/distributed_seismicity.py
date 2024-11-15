@@ -67,7 +67,7 @@ DEFAULT = SourceConverter(
         investigation_time=1.0,
         rupture_mesh_spacing=2.0,
         complex_fault_mesh_spacing=5.0,
-        width_of_mfd_bin=binw,
+        width_of_mfd_bin=0.1,
         area_source_discretization=5.0,
     )
 
@@ -226,8 +226,8 @@ def remove_buffer_around_faults(
     out_path: str,
     dst: float,
     threshold_mag: float = 6.5,
-    use: str = '',
-    source_conv: SourceConverter 
+    use: str = '', 
+    source_conv = DEFAULT
 ):
     """
     Remove the seismicity above a magnitude threshold for all the point
@@ -265,7 +265,7 @@ def remove_buffer_around_faults(
     
 
     # Get the surfaces representing the faults
-    faults = _get_fault_surfaces(fname, sourceconv)
+    faults = _get_fault_surfaces(fname, source_conv)
 
     # Process the point sources in the distributed seismicity model
     for point_fname in glob.glob(path_point_sources):
@@ -283,7 +283,8 @@ def remove_buffer_around_faults(
             continue
 
         # Read the file content
-        tssm = to_python(point_fname, sourceconv)
+        tssm = to_python(point_fname, source_conv)
+        name = tssm.name
 
         # Get the point sources used to model distributed seismicity
         wsrc = _get_point_sources(tssm)
@@ -372,7 +373,10 @@ def remove_buffer_around_faults(
             plt.show()
 
         # Create the multi-point source
-        tmpsrc = from_list_ps_to_multipoint(pnt_srcs, 'pnts')
+        #pt_src_name = f"src_points_{tmp.stem.split('_')[-1]}.xml"
+        pt_source_name = f"{name}_pnts"
+        print(pt_source_name)
+        tmpsrc = from_list_ps_to_multipoint(pnt_srcs, pt_source_name)
 
         # Save the multipoint source to a nrml file
         tmp = pathlib.Path(point_fname)
