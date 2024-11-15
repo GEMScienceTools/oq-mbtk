@@ -461,7 +461,7 @@ def _weichert_analysis(tcat, ctab, binw, cmag, n_obs, t_per):
 
     rmag = weichert_config['reference_magnitude']
     return (aval, bval, lcl, ucl, exrates, exrates_scaled, rmag, rmag_rate,
-            rmag_rate_sigma)
+            rmag_rate_sigma, sigmab, sigmaa)
 
 
 def _get_gr_double_trunc_exceedance_rates(agr, bgr, cmag, binw, mmax):
@@ -693,7 +693,7 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
 
         # Compute aGR and bGR using Weichert
         out = _weichert_analysis(tcat, ctab, binw, cent_mag, n_obs, t_per)
-        aval, bval, lcl, ucl, ex_rat, ex_rts_scl, rmag, rm_rate, rm_sig = out
+        aval, bval, lcl, ucl, ex_rat, ex_rts_scl, rmag, rm_rate, rm_sig, sigmab, sigmaa = out
 
         # Plot
         _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rts_scl,
@@ -714,6 +714,10 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
         model['sources'][src_id]['rmag_rate'] = float(tmp)
         tmp = f"{rm_sig:.5e}"
         model['sources'][src_id]['rmag_rate_sig'] = float(tmp)
+        tmp = f"{sigmab:.5e}"
+        model['sources'][src_id]['bgr_sig'] = float(tmp)
+        tmp = f"{sigmaa:.5e}"
+        model['sources'][src_id]['agr_sig'] = float(tmp)
 
         # Save figures
         if folder_out_figs is not None:
