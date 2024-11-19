@@ -76,5 +76,5 @@ jobs:
           #Set-Location -Path $MBTK
           $curDir = Get-Location
           Write-Host "Current Working Directory: $curDir"
-          cd openquake
+          cd oq-mbtk\openquake
           pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt
