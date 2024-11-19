@@ -134,7 +134,7 @@ def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
 
     # Write output file
     fname_out = os.path.join(folder_out, 'src_{:s}.xml'.format(src_id))
-    write_source_model(fname_out, [srcmp], 'Zone {:s}'.format(src_id))
+    write_source_model(fname_out, [srcmp], 'zone_{:s}'.format(src_id))
 
 
 def write_as_set_point_sources(df, model, src_id, module, subzones,
@@ -192,7 +192,7 @@ def write_as_set_point_sources(df, model, src_id, module, subzones,
 
     # Write output file
     fname_out = os.path.join(folder_out, 'src_{:s}.xml'.format(src_id))
-    write_source_model(fname_out, srcs, 'Zone {:s}'.format(src_id))
+    write_source_model(fname_out, srcs, 'zone_{:s}'.format(src_id))
 
 
 def create_nrml_sources(fname_input_pattern: str, fname_config: str,
