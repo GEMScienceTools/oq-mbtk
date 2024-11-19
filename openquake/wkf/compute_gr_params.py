@@ -715,9 +715,9 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
         tmp = f"{rm_sig:.5e}"
         model['sources'][src_id]['rmag_rate_sig'] = float(tmp)
         tmp = f"{sigmab:.5e}"
-        model['sources'][src_id]['bgr_sig'] = float(tmp)
+        model['sources'][src_id]['bgr_sig_weichert'] = float(tmp)
         tmp = f"{sigmaa:.5e}"
-        model['sources'][src_id]['agr_sig'] = float(tmp)
+        model['sources'][src_id]['agr_sig_weichert'] = float(tmp)
 
         # Save figures
         if folder_out_figs is not None:
