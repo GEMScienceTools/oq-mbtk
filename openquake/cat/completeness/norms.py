@@ -418,9 +418,13 @@ def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, bin
     mmax = max(mags) if mmax is None else mmax
     # check minimum magnitude is greater than ref mag
     mvals = np.arange(ref_mag, mmax+binw/10, binw)
-    rates = list(10**(agr-bgr * mvals[:-1]) - 10**(agr - bgr * mvals[1:]))
-
-    pocc = rates / sum(rates)
+    if len(mvals) < 1:
+        #print("no events in this window")
+        rates = [0]
+        pocc = 0
+    else:
+        rates = list(10**(agr-bgr * mvals[:-1]) - 10**(agr - bgr * mvals[1:]))
+        pocc = rates / sum(rates)
 
     # If using log (and not multiplicative) set initial prob to 0
     prob = 0
