@@ -373,8 +373,9 @@ def remove_buffer_around_faults(
             plt.show()
 
         # Create the multi-point source
-        #pt_src_name = f"src_points_{tmp.stem.split('_')[-1]}.xml"
-        pt_source_name = f"{name}_pnts"
+        tmp = pathlib.Path(point_fname)
+        pt_source_name = f"src_points_{tmp.stem.split('_')[-1]}"
+        #pt_source_name = f"{tmp}_pnts"
         print(pt_source_name)
         tmpsrc = from_list_ps_to_multipoint(pnt_srcs, pt_source_name)
 
