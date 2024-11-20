@@ -451,7 +451,7 @@ Comparing GMPEs
         Z1 = -999
         Z25 = -999
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-        region = 'Global' # get region specific z1pt0 and zpt50 ('Global' or 'Japan') 
+        z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
         
         # Characterise earthquake for the region of interest as finite rupture
         [source_properties]

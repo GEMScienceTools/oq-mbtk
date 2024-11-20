@@ -60,7 +60,7 @@ class Configurations(object):
         self.Z25 = config_file['site_properties']['Z25']
         up_or_down_dip = config_file['site_properties']['up_or_down_dip']
         self.up_or_down_dip = float(up_or_down_dip)
-        self.region = config_file['site_properties']['region']
+        self.z_basin_region = config_file['site_properties']['z_basin_region']
         
         # Get rupture params
         self.trt = config_file['source_properties']['trt']
