@@ -17,7 +17,7 @@ vs30 = 800
 Z1 = -999
 Z25 = -999
 up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-region = 'Global' # region specific basin effects
+basin_z_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
 
 # Characterise earthquake for the region of interest as finite rupture
 [source_properties]
