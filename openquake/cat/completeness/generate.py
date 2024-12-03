@@ -108,7 +108,8 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
         min_mag = min(mags)
     else:
         min_mag = min_mag_compl
-
+    
+    print("minimum magnitude is ", min_mag)
     if len(np.where(min_mag <= mags)) < 1:
         msg = 'None of the magnitude intervals above the min_mag_compl'
         raise ValueError(msg)

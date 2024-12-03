@@ -1210,8 +1210,9 @@ class ISFCatalogue(object):
                         orig.location.depth == '' or
                         orig.location.depth is None):
                     depth = np.NaN
-                elif orig.location.depth < 0.01:
+                elif orig.location.depth < -0.01:
                     depth = orig.location.depth
+                    print('Depth:', orig.location.depth)
                     fmt = "Warning, depth <= 0.0 (id:{:s})"
                     warnings.warn(fmt.format(eq.id))
                 elif orig.location.depth:
