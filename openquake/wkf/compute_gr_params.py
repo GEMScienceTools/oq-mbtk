@@ -252,6 +252,10 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
         tcat = _load_catalogue(fname)
         mmax, ctab = get_mmax_ctab(model, src_id)
         aval, cmag, n_obs, t_per, df = _compute_a_value(tcat, ctab, bval, binw)
+        asig = aval/numpy.sqrt(sum(n_obs))
+        rmag = numpy.min(ctab[:, 1])
+        rmag_rate = 10**(aval - bval*rmag)
+        rmag_rate_sig = rmag_rate/(numpy.sqrt(sum(n_obs)))
 
         if 'sources' not in model:
             model['sources'] = {}
@@ -260,8 +264,16 @@ def compute_a_value(fname_input_pattern: str, bval: float, fname_config: str,
 
         tmp = "{:.5e}".format(aval)
         model['sources'][src_id]['agr_counting'] = float(tmp)
+        tmp = "{:.5e}".format(asig)
+        model['sources'][src_id]['agr_sig_counting'] = float(tmp)
         tmp = "{:.5e}".format(bval)
         model['sources'][src_id]['bgr_counting'] = float(tmp)
+        tmp = "{:.5e}".format(rmag)
+        model['sources'][src_id]['rmag_counting'] = float(tmp)
+        tmp = "{:.5e}".format(rmag_rate)
+        model['sources'][src_id]['rmag_rate_counting'] = float(tmp)
+        tmp = "{:.5e}".format(rmag_rate_sig)
+        model['sources'][src_id]['rmag_rate_sig_counting'] = float(tmp)
 
         # Computing confidence intervals
         gwci = get_weichert_confidence_intervals
