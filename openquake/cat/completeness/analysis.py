@@ -329,8 +329,9 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, mag_low, ref_upp_m
         assert np.all(np.diff(ctab[:, 1]) >= 0)
 
         # Compute occurrence
-
+        #print('binwidth for completeness counts: ', binw)
         cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
+        #print("cmag = ", cent_mag)
         if len(cent_mag) == 0:
             continue
         wei_conf['reference_magnitude'] = min(ctab[:, 1])
