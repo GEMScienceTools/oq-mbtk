@@ -133,16 +133,22 @@ def get_norm_optimize(tcat, aval, bval, ctab, binw, cmag, n_obs, t_per, last_yea
     
     #occ = np.zeros((ctab.shape[0]))
     #dur = np.zeros((ctab.shape[0]))
-    mags = np.array(list(ctab[:, 1])+[10])
-    print("old mags: ", mags)
-    mags = np.array(np.arange(ctab[:, 1][0], 10, binw))
-    print("new mags: ", mags)
-    occ = np.zeros(len(mags))
-    dur = np.zeros(len(mags))
+    #print(ctab, ctab.shape[0])
+    #mags = np.array(list(ctab[:, 1])+[10])
+    #print("old mags: ", mags)
+    #mags = np.array(np.arange(ctab[:, 1][0], 10, binw))
+    #print("new mags: ", mags)
+    #mags = cmag
+    #occ = np.zeros(len(cmag))
+    #dur = np.zeros(len(cmag))
+    #mags = np.concatenate([[np.round(cmag[0]-0.5*binw, 2)],cmag,[np.round(cmag[-1]+0.5*binw, 2)]])
+    mags = np.array(np.arange(np.round(cmag[0]-0.5*binw, 2), np.round(cmag[-1]+0.5*binw, 2), binw))
+    occ = np.zeros(len(mags) -1)
+    dur= np.zeros(len(mags) -1)
     ## Problem: we *should* be testing all the bins > completeness
     ## This is currently binning based on the completeness windows,
     ## which feels bad.
-    
+
     for i, mag in enumerate(mags[:-1]):
         idx = (cmag >= mags[i]) & (cmag < mags[i+1])
         if np.any(idx):
@@ -151,7 +157,7 @@ def get_norm_optimize(tcat, aval, bval, ctab, binw, cmag, n_obs, t_per, last_yea
         else:
             occ[i] = 0
             dur[i] = (last_year-ctab[i, 0])
-
+  
     # Rates of occurrence in each magnitude bin from GR with a and b
     rates = (10**(-bval * mags[:-1] + aval) -
              10**(-bval * mags[1:] + aval)) * dur
