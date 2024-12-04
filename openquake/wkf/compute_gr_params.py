@@ -709,7 +709,9 @@ def weichert_analysis(fname_input_pattern, fname_config, folder_out=None,
 
         # Plot
         _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rts_scl,
-                       lcl, ucl, mmax, aval, bval, src_id, plt_show)
+                       lcl, ucl, mmax, aval, bval, src_id, plt_show,
+                       ref_mag = rmag, ref_mag_rate = rm_rate, 
+                       ref_mag_rate_sig = rm_sig, bval_sigma = sigmab)
 
         # Save results in the configuration file
         if 'sources' not in model:
