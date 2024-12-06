@@ -49,7 +49,8 @@ class GeneralCsvCatalogue(object):
                             'SemiMajor90', 'SemiMinor90', 'ErrorStrike',
                             'depth', 'depthError', 'magnitude',
                             'sigmaMagnitude', 'moment', 'mpp', 'mpr', 'mrr',
-                            'mrt', 'mtp', 'mtt', 'dip1', 'str1', 'rake1', 'dip2', 'str2', 'rake2']
+                            'mrt', 'mtp', 'mtt', 'dip1', 'str1', 'rake1',
+                            'dip2', 'str2', 'rake2']
 
     INT_ATTRIBUTE_LIST = ['year', 'month', 'day', 'hour', 'minute',
                           'flag', 'scaling']
@@ -59,8 +60,7 @@ class GeneralCsvCatalogue(object):
 
     TOTAL_ATTRIBUTE_LIST = list(
         (set(FLOAT_ATTRIBUTE_LIST).union(
-            set(INT_ATTRIBUTE_LIST))).union(
-                 set(STRING_ATTRIBUTE_LIST)))
+            set(INT_ATTRIBUTE_LIST))).union(set(STRING_ATTRIBUTE_LIST)))
 
     def __init__(self):
         """
@@ -89,7 +89,6 @@ class GeneralCsvCatalogue(object):
         # Replace any whitespace with nan
         df.replace(r'^\s*$', np.nan, regex=True)
 
-
         # Checking information included in the original
         if 'day' in df.columns:
             # Fixing day
@@ -101,30 +100,31 @@ class GeneralCsvCatalogue(object):
             df.drop(df[df.minute > 59.599999].index, inplace=True)
         if 'hour' in df.columns:
             df.drop(df[df.hour > 23.99999].index, inplace=True)
-            
+
         if 'str1' in df.columns:
             df['str1'] = pd.to_numeric(df['str1'], errors='coerce')
-        
+
         if 'dip1' in df.columns:
             df['dip1'] = pd.to_numeric(df['dip1'], errors='coerce')
- 
+
         if 'rake1' in df.columns:
             df['rake1'] = pd.to_numeric(df['rake1'], errors='coerce')
-            
+
         if 'str2' in df.columns:
             df['str2'] = pd.to_numeric(df['str2'], errors='coerce')
-            
+
         if 'dip2' in df.columns:
             df['dip2'] = pd.to_numeric(df['dip2'], errors='coerce')
-            
+
         if 'rake2' in df.columns:
             df['rake2'] = pd.to_numeric(df['rake2'], errors='coerce')
-        
+
         if 'SemiMinor90' in df.columns:
-            df['SemiMinor90']= pd.to_numeric(df['SemiMinor90'], errors='coerce') 
-        
+            df['SemiMinor90']= pd.to_numeric(df['SemiMinor90'], errors='coerce')
+
         if 'SemiMajor90' in df.columns:
-            df['SemiMajor90']= pd.to_numeric(df['SemiMajor90'], errors='coerce') 
+            df['SemiMajor90']= pd.to_numeric(df['SemiMajor90'], errors='coerce')
+
         # Processing columns and updating the catalogue
         for col in df.columns:
             if col in self.TOTAL_ATTRIBUTE_LIST:
@@ -134,7 +134,7 @@ class GeneralCsvCatalogue(object):
 
                 else:
                     self.data[col] = df[col].to_list()
-                    
+
     def get_number_events(self):
         """
         Returns the number of events
@@ -227,12 +227,15 @@ class GeneralCsvCatalogue(object):
         isf_cat = ISFCatalogue(catalogue_id, name)
 
         for iloc in range(0, self.get_number_events()):
+
             # Origin ID
             if len(self.data['eventID']) > 0:
                 event_id = str(self.data['eventID'][iloc])
             else:
-                raise ValueError('Unknown key. Line: {:d}'.format(iloc))
+                msg = 'Event ID column is empty'
+                raise ValueError(msg)
             origin_id = event_id
+
             # Create Magnitude
             sigma_mag = None
             if ('sigmaMagnitude' in self.data and
@@ -436,7 +439,7 @@ class MixedMagnitudeCsvCatalogue(GeneralCsvCatalogue):
                             semiminor90,
                             error_strike,
                             depth_error)
-                                        
+
             # Create Origin
             # Date
             eq_date = datetime.date(self.data['year'][iloc],
