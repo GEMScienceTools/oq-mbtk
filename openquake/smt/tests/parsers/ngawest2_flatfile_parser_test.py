@@ -19,15 +19,13 @@
 Tests parsing of the NGAWest2 flatfile format in SMT
 """
 import os
-import sys
 import shutil
 import unittest
-from openquake.smt.parsers.ngawest2_flatfile_parser import NGAWest2FlatfileParser
+import pickle
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from openquake.smt.residuals.parsers.ngawest2_flatfile_parser import \
+    NGAWest2FlatfileParser
+
 
 # Defines the record IDs for the target data set
 TARGET_IDS = [

@@ -28,6 +28,7 @@ import os
 import pandas as pd
 import tempfile
 import unittest
+import subprocess
 from openquake.wkf.seismicity.baseline import add_baseline_seismicity
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data', 'baseline')
@@ -36,7 +37,15 @@ DATA_PATH = os.path.join(os.path.dirname(__file__), 'data', 'baseline')
 class AddBaselineTestCase(unittest.TestCase):
     """ Adds baseline to a polygon source """
 
-    def test_add_baseline(self):
+    def setUp(self):
+
+        self.folder_name = None
+        self.folder_name_out = tempfile.mkdtemp()
+        self.fname_config = os.path.join(DATA_PATH, 'config.toml')
+        self.fname_poly = os.path.join(DATA_PATH, 'polygon.shp')
+
+
+    def test_add_baseline_cmd(self):
         """ Test adding a baseline seismicity """
         # The input polygon contains three cells given an h3 resolution equal
         # to 5. The area of the three cells is:
@@ -47,15 +56,36 @@ class AddBaselineTestCase(unittest.TestCase):
         # [i.e. 7.2946 events/(yr*km2) with magnitude larger than 0] this will
         # generate 188.65961426 * 7.2946 eqks/(yr*km2) = 1376.1917 eqks/yr.
         # This corresponds to a GR a-value of 3.1387
-        folder_name = None
-        folder_name_out = tempfile.mkdtemp()
-        fname_config = os.path.join(DATA_PATH, 'config.toml')
-        fname_poly = os.path.join(DATA_PATH, 'polygon.shp')
-        add_baseline_seismicity(folder_name, folder_name_out, fname_config,
-                                fname_poly)
-        tdf = pd.read_csv(os.path.join(folder_name_out, '0.csv'))
+
+        add_baseline_seismicity(self.folder_name,
+                                self.folder_name_out,
+                                self.fname_config,
+                                self.fname_poly)
+
+        tdf = pd.read_csv(os.path.join(self.folder_name_out, '0.csv'))
         res = tdf[(abs(tdf.lat - 0.05652207) < 1e-4) &
                   (abs(tdf.lon - 0.10945153) < 1e-4)]
+
+        msg = 'Wrong value of agr'
+        self.assertAlmostEqual(res.agr.values[0], 3.1387, places=4,
+                               msg=msg)
+
+    def test_add_baseline_oqm(self):
+
+        cmd = f"oqm wkf add_baseline '{self.folder_name}' "
+        cmd += f' {self.folder_name_out}'
+        cmd += f' {self.fname_config}'
+        cmd += f' {self.fname_poly}'
+
+        out = subprocess.call(cmd, shell=True)
+
+        msg = f"Unsuccessful excecution. Error code {out}"
+        self.assertEqual(out, 0, msg)
+
+        tdf = pd.read_csv(os.path.join(self.folder_name_out, '0.csv'))
+        res = tdf[(abs(tdf.lat - 0.05652207) < 1e-4) &
+                  (abs(tdf.lon - 0.10945153) < 1e-4)]
+
         msg = 'Wrong value of agr'
         self.assertAlmostEqual(res.agr.values[0], 3.1387, places=4,
                                msg=msg)

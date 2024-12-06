@@ -21,10 +21,12 @@ Tests for execution of comparison module
 import os
 import shutil
 import unittest
+import pandas as pd
+
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import (
     compute_matrix_gmpes, plot_trellis_util, plot_spectra_util,
-    plot_cluster_util, plot_sammons_util, plot_euclidean_util)
+    plot_ratios_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util)
 
 
 # Base path
@@ -32,19 +34,20 @@ base = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
 TARGET_VS30 = 800
-TARGET_REGION = 'Global'
+TARGET_Z_BASIN_REGION = 'Global'
 TARGET_TRELLIS_DEPTHS = [20, 25, 30]
 TARGET_RMIN = 0
 TARGET_RMAX = 300
-TARGET_NSTD = 2
+TARGET_NSTD = 0
 TARGET_TRELLIS_MAG = [5.0, 6.0, 7.0]
-TARGET_MAG = [5., 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6.,
-              6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]
+TARGET_MAG = [5., 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9,
+              6., 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]
 TARGET_IMTS = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
 TARGET_GMPES = ['[ChiouYoungs2014] \nlt_weight_gmc1 = 0.5',
                 '[CampbellBozorgnia2014] \nlt_weight_gmc1 = 0.5',
                 '[BooreEtAl2014] \nlt_weight_gmc2_plot_lt_only = 0.5',
                 '[KothaEtAl2020] \nlt_weight_gmc2_plot_lt_only = 0.5']
+TARGET_BASELINE_GMPE = '[BooreEtAl2014]'
 TARGET_TRT = 'ASCR'
 TARGET_ZTOR = None
 
@@ -55,12 +58,14 @@ class ComparisonTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(self):
-        self.input_file = os.path.join(base, "compare_gmpe_inputs.toml")
-        self.output_directory = os.path.join(base, 'compare_gmpes_test')
+        self.input_file = os.path.join(base,"compare_gmpe_inputs.toml")
+        self.output_directory = os.path.join(base,'compare_gmpes_test')
         self.input_file_plot_obs_spectra = os.path.join(
-            base, 'Chamoli_1999_03_28_EQ.toml')
+            base,'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
-            base, 'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
+            base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
+        self.expected_att_curves = os.path.join(base,'exp_att_curves.csv')
+        self.expected_spectra = os.path.join(base, 'exp_spectra.csv')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -72,24 +77,25 @@ class ComparisonTestCase(unittest.TestCase):
         the Configuration object, which stores the inputted parameters for
         each run.
         """
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Check for target TRT
         self.assertEqual(config.trt, TARGET_TRT)
 
-        # Check for target ZTOR
+        # Check for target ztor
         self.assertEqual(config.ztor, TARGET_ZTOR)
 
         # Check for target Vs30
         self.assertEqual(config.Vs30, TARGET_VS30)
 
         # Check for target region
-        self.assertEqual(config.region, TARGET_REGION)
+        self.assertEqual(config.z_basin_region, TARGET_Z_BASIN_REGION)
 
         # Check for target depths (other functions use arrays from these
         # depths)
-        self.assertEqual(config.trellis_and_rs_depth, TARGET_TRELLIS_DEPTHS)
+        self.assertEqual(config.trellis_and_rs_depth_list,
+                         TARGET_TRELLIS_DEPTHS)
 
         # Check for target Rmin
         self.assertEqual(config.minR, TARGET_RMIN)
@@ -117,35 +123,19 @@ class ComparisonTestCase(unittest.TestCase):
         for imt in range(0, len(config.imt_list)):
             self.assertEqual(str(config.imt_list[imt]), TARGET_IMTS[imt])
 
+        # Check baseline GMM used to compute ratios
+        self.assertEqual(config.baseline_gmm, TARGET_BASELINE_GMPE)
+
     def test_mtxs_median_calculation(self):
         """
         Check for matches bewteen the matrix of medians computed using
         compute_matrix_gmpes and those expected given the input parameters
         """
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Get medians
-        mtxs_medians = compute_matrix_gmpes(config.trt,
-                                            config.ztor,
-                                            config.imt_list,
-                                            config.mag_list,
-                                            config.gmpes_list,
-                                            config.rake,
-                                            config.strike,
-                                            config.dip,
-                                            config.depth_for_non_trel_or_rs_fun, 
-                                            config.Z1,
-                                            config.Z25,
-                                            config.Vs30,
-                                            config.region,
-                                            config.minR,
-                                            config.maxR,
-                                            config.aratio,
-                                            config.eshm20_region,
-                                            config.dist_type,
-                                            mtxs_type='median',
-                                            up_or_down_dip=config.up_or_down_dip)
+        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
 
         # Check correct number of imts
         self.assertEqual(len(mtxs_medians), len(TARGET_IMTS))
@@ -161,30 +151,11 @@ class ComparisonTestCase(unittest.TestCase):
         """
         TARGET_GMPES.append('mean')  # Add mean here to gmpe_list
 
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Get medians
-        mtxs_medians = compute_matrix_gmpes(config.trt,
-                                            config.ztor,
-                                            config.imt_list,
-                                            config.mag_list,
-                                            config.gmpes_list,
-                                            config.rake,
-                                            config.strike,
-                                            config.dip,
-                                            config.depth_for_non_trel_or_rs_fun, 
-                                            config.Z1,
-                                            config.Z25,
-                                            config.Vs30,
-                                            config.region,
-                                            config.minR,
-                                            config.maxR,
-                                            config.aratio,
-                                            config.eshm20_region,
-                                            config.dist_type,
-                                            mtxs_type='median',
-                                            up_or_down_dip=config.up_or_down_dip)
+        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
 
         # Sammons checks
         coo = plot_sammons_util(
@@ -221,30 +192,11 @@ class ComparisonTestCase(unittest.TestCase):
         Check clustering functions for median predicted ground-motion of
         considered GMPEs in the configuration
         """
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Get medians
-        mtxs_medians = compute_matrix_gmpes(config.trt,
-                                            config.ztor,
-                                            config.imt_list,
-                                            config.mag_list,
-                                            config.gmpes_list,
-                                            config.rake,
-                                            config.strike,
-                                            config.dip,
-                                            config.depth_for_non_trel_or_rs_fun, 
-                                            config.Z1,
-                                            config.Z25,
-                                            config.Vs30,
-                                            config.region,
-                                            config.minR,
-                                            config.maxR,
-                                            config.aratio,
-                                            config.eshm20_region,
-                                            config.dist_type,
-                                            mtxs_type='median',
-                                            up_or_down_dip=config.up_or_down_dip)
+        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
         
         # Get clustering matrix
         Z_matrix = plot_cluster_util(
@@ -265,30 +217,11 @@ class ComparisonTestCase(unittest.TestCase):
         Check clustering of 84th percentile of predicted ground-motion of
         considered GMPEs in the configuration
         """
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Get medians
-        mtxs_medians = compute_matrix_gmpes(config.trt,
-                                            config.ztor,
-                                            config.imt_list,
-                                            config.mag_list,
-                                            config.gmpes_list,
-                                            config.rake,
-                                            config.strike,
-                                            config.dip,
-                                            config.depth_for_non_trel_or_rs_fun, 
-                                            config.Z1,
-                                            config.Z25,
-                                            config.Vs30,
-                                            config.region,
-                                            config.minR,
-                                            config.maxR,
-                                            config.aratio,
-                                            config.eshm20_region,
-                                            config.dist_type,
-                                            mtxs_type='84th_perc',
-                                            up_or_down_dip=config.up_or_down_dip)
+        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='84th_perc')
         
         # Get clustering matrix
         lab = '84th_perc_Clustering_Vs30.png'
@@ -306,68 +239,28 @@ class ComparisonTestCase(unittest.TestCase):
 
     def test_trellis_and_spectra_functions(self):
         """
-        Check trellis and response spectra plotting functions are executed
+        Check trellis and response spectra plotting functions are correctly
+        executed. Also checks correct values are returned for the gmm
+        attenuation curves and spectra.
         """
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Trellis plots
-        plot_trellis_util(config.trt,
-                          config.ztor,
-                          config.rake, config.strike,
-                          config.dip,
-                          config.trellis_and_rs_depth,
-                          config.Z1,
-                          config.Z25,
-                          config.Vs30,
-                          config.region,
-                          config.imt_list,
-                          config.trellis_and_rs_mag_list,
-                          config.minR,
-                          config.maxR,
-                          config.gmpes_list,
-                          config.aratio,
-                          config.Nstd,
-                          self.output_directory,
-                          config.custom_color_flag,
-                          config.custom_color_list,
-                          config.eshm20_region,
-                          config.dist_type,
-                          config.lt_weights_gmc1,
-                          config.lt_weights_gmc2,
-                          config.lt_weights_gmc3,
-                          config.lt_weights_gmc4,
-                          up_or_down_dip=config.up_or_down_dip)
+        att_curves = plot_trellis_util(config, self.output_directory)
+        obs_curves = pd.DataFrame(att_curves)
+        exp_curves = pd.read_csv(
+            self.expected_att_curves, index_col='Unnamed: 0')
+        assert str(obs_curves) == str(exp_curves)
 
         # Spectra plots
-        plot_spectra_util(config.trt,
-                          config.ztor,
-                          config.rake,
-                          config.strike,
-                          config.dip,
-                          config.trellis_and_rs_depth,
-                          config.Z1,
-                          config.Z25,
-                          config.Vs30,
-                          config.region,
-                          config.max_period,
-                          config.trellis_and_rs_mag_list,
-                          config.dist_list,
-                          config.gmpes_list,
-                          config.aratio,
-                          config.Nstd,
-                          self.output_directory,
-                          config.custom_color_flag,
-                          config.custom_color_list,
-                          config.eshm20_region,
-                          config.dist_type,
-                          config.lt_weights_gmc1,
-                          config.lt_weights_gmc2,
-                          config.lt_weights_gmc3,
-                          config.lt_weights_gmc4,
-                          obs_spectra=None,
-                          up_or_down_dip=config.up_or_down_dip)
-
+        gmc_lts = plot_spectra_util(
+            config, self.output_directory, obs_spectra=None)
+        obs_spectra = pd.DataFrame(gmc_lts)
+        exp_spectra = pd.read_csv(
+            self.expected_spectra, index_col='Unnamed: 0')
+        assert str(obs_spectra) == str(exp_spectra)
+        
         # Specify target files
         target_file_trellis = (os.path.join(
             self.output_directory, 'TrellisPlots.png'))
@@ -388,33 +281,7 @@ class ComparisonTestCase(unittest.TestCase):
         obs_sp = self.input_file_obs_spectra_csv
         
         # Spectra plots including obs spectra
-        plot_spectra_util(config.trt,
-                          config.ztor,
-                          config.rake,
-                          config.strike,
-                          config.dip,
-                          config.trellis_and_rs_depth,
-                          config.Z1,
-                          config.Z25,
-                          config.Vs30,
-                          config.region,
-                          config.max_period,
-                          config.trellis_and_rs_mag_list,
-                          config.dist_list,
-                          config.gmpes_list,
-                          config.aratio,
-                          config.Nstd,
-                          self.output_directory,
-                          config.custom_color_flag,
-                          config.custom_color_list,
-                          config.eshm20_region,
-                          config.dist_type,
-                          config.lt_weights_gmc1,
-                          config.lt_weights_gmc2,
-                          config.lt_weights_gmc3,
-                          config.lt_weights_gmc4,
-                          obs_spectra=obs_sp,
-                          up_or_down_dip=config.up_or_down_dip)
+        plot_spectra_util(config, self.output_directory, obs_sp)
         
         # Specify target files
         target_file_spectra = (os.path.join(
@@ -422,6 +289,17 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Check target file created and outputted in expected location
         self.assertTrue(target_file_spectra)
+
+    def test_plot_ratios(self):
+        """
+        Test execution of plotting ratios (median GMM attenuation/median
+        baseline GMM attenuation). Correctness of values is not examined.
+        """
+        # Load config
+        config = comp.Configurations(self.input_file)
+
+        # Plot the ratios
+        plot_ratios_util(config, self.output_directory)
 
     @classmethod
     def tearDownClass(self):

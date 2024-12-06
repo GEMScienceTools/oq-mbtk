@@ -25,11 +25,13 @@
 # coding: utf-8
 
 
+import pyproj
 import netCDF4
 import numpy as np
+import geopandas as gpd
 from numba import njit
-from openquake.hazardlib.geo.geodetic import (point_at, npoints_towards, 
-        geodetic_distance, azimuth)
+from openquake.hazardlib.geo.geodetic import (
+    point_at, npoints_towards, geodetic_distance, azimuth)
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
 
 pygmt_available = False
@@ -281,6 +283,134 @@ def tmp_get_initial_traces(bb, dip_dir, spacing):
     return profiles, distance
 
 
+def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
+                         fname_fig: str = ''):
+    """
+    :param fname_str:
+        The name of the Slab2.0 .grd file with the values of strike
+    :param fname_dep:
+        The name of the Slab2.0 .grd file with the values of depth
+    :param spacing:
+        The separation distance between traces
+    :param fname_fig:
+        String specifiying location in which to save output figure
+    """
+    
+    # Reading file with depth values
+    f_dep = netCDF4.Dataset(fname_dep)
+    depths = np.array(f_dep.variables['z'])
+    mask = np.where(np.isfinite(depths))
+    
+    # Mesh
+    x = np.array(f_dep.variables['x'])
+    y = np.array(f_dep.variables['y'])
+    xx, yy = np.meshgrid(x, y)
+    
+    css = []
+    gdf = gpd.read_file(geojson)
+    gdf['coords'] = gdf.geometry.apply(lambda geom: list(geom.coords))
+
+    # Create cross-sections
+    min_lo = 180.0
+    min_la = 90.
+    max_lo = -180.0
+    max_la = -90.0
+    for index, row in gdf.iterrows():
+        coo = np.array(row.coords)
+        min_lo = np.min([min_lo, np.min(coo[:, 0])])
+        min_la = np.min([min_la, np.min(coo[:, 1])])
+        max_lo = np.max([max_lo, np.max(coo[:, 0])])
+        max_la = np.max([max_la, np.max(coo[:, 1])])
+    lon_c = min_lo + (max_lo - min_lo) / 2
+    lat_c = min_la + (max_la - min_la) / 2            
+
+    # Define the forward projection
+    aeqd = pyproj.Proj(proj='aeqd', ellps='WGS84', datum='WGS84',
+                       lat_0=lat_c, lon_0=lon_c).srs
+    gdf_pro = gdf.to_crs(crs=aeqd)
+
+    # Create cross-sections
+    for index, row in gdf.iterrows():
+        # calculate dipdir and lengths from profiles directly
+        azim = azimuth(gdf.coords[index][0][0], gdf.coords[index][0][1], gdf.coords[index][-1][0], gdf.coords[index][-1][1])
+        length = geodetic_distance(gdf.coords[index][0][0], gdf.coords[index][0][1], gdf.coords[index][-1][0], gdf.coords[index][-1][1])
+        cs = CrossSection(gdf.coords[index][0][0], gdf.coords[index][0][1],
+                          length, azim)
+        css.append(cs)
+
+    # Filter
+    depths = depths[mask]
+    xx = xx[mask]
+    yy = yy[mask]
+
+    # Coords
+    tmp = zip(xx.flatten(), yy.flatten(), depths.flatten())
+    depths = [[x, y, z] for x, y, z in tmp]
+    depths = np.array(depths)
+    mask = depths[:, 0] > 180
+    depths[mask, 0] = depths[mask, 0] - 360
+    milo = np.min(depths[:, 0])
+    mila = np.min(depths[:, 1])
+    print(f'Min lon {milo:.2f} Max lon {np.max(depths[:, 0]):.2f}')
+    print(f'Min lat {mila:.2f} Max lat {np.max(depths[:, 1]):.2f}')
+
+    # Slab 2.0
+    slb = Slab2pt0(depths, css)
+    slb.compute_profiles(spacing)
+    
+    
+    if len(str(fname_fig)) > 0:
+        bb = np.array([min_lo, min_la, max_lo, max_la])
+        dlt = 5.0
+        reg = [bb[0] - dlt, bb[2] + dlt, bb[1] - dlt, bb[3] + dlt]
+        clo = np.mean([bb[0], bb[1]])
+        cla = np.mean([bb[2], bb[3]])
+        
+        if pygmt_available:
+            fig = pygmt.Figure()
+            pygmt.makecpt(cmap="jet", series=[0.0, 800])
+            fig.basemap(region=reg, projection=f"T{clo}/{cla}/12c", frame=True)
+            fig.coast(land="gray", water="skyblue")
+            
+            fig.plot(x=depths[:, 0], y=depths[:, 1],
+                     color=-depths[:, 2],
+                     style='c0.025c',
+                     cmap=True)
+            # Profiles
+            for i, key in enumerate(slb.profiles):
+                pro = slb.profiles[key]
+                if pro.shape[0] > 0:
+                    fig.plot(x=pro[:, 0],
+                             y=pro[:, 1],
+                             color=pro[:, 2],
+                             cmap=True,
+                             style="h0.025c",
+                             pen='black')
+                    fig.text(x=(pro[0, 0] + 0.3), y=pro[0, 1], 
+                             text=f'{i}', font="4p") 
+            fig.savefig(fname_fig)
+            fig.show()
+        else:
+            from matplotlib import pyplot as plt
+            plt.scatter(depths[:, 0], depths[:, 1], c=-depths[:, 2])
+            for i, pro in enumerate(traces):
+                plt.plot(pro[:, 0], pro[:, 1], 'k')
+                plt.text(pro[0, 0], pro[0, 1], f'{i}')
+            for key in slb.profiles:
+                pro = slb.profiles[key]
+                if pro.shape[0] > 0:
+                    plt.plot(pro[:, 0], pro[:, 1], c='r')
+            if max(reg[0], reg[1]) > 180:
+                xmin = reg[0]-360; xmax = reg[1]-360
+            else:
+                xmin = reg[0]; xmax = reg[1]
+            plt.xlim([xmin, xmax])
+            plt.colorbar(label='depth to slab (km)')
+            plt.savefig(fname_fig)
+        
+    return slb
+
+
 def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
                  str = ''):
     """
@@ -422,7 +552,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
             plt.colorbar(label='depth to slab (km)')
             plt.savefig(fname_fig)
 
-            
+
 
     return slb
 

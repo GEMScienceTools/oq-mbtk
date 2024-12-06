@@ -9,17 +9,18 @@ import os
 import re
 import h5py
 import numpy as np
+# import pandas as pd
 import rtree
 import logging
 import configparser
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+# from mpl_toolkits.mplot3d import Axes3D
 
-#from mayavi import mlab
+# from mayavi import mlab
 from pyproj import Proj
-##from openquake.sub.plotting.tools import plot_mesh
-#from openquake.sub.plotting.tools import plot_mesh_mayavi
+# from openquake.sub.plotting.tools import plot_mesh
+# from openquake.sub.plotting.tools import plot_mesh_mayavi
 
 from openquake.sub.misc.edge import create_from_profiles
 from openquake.sub.quad.msh import create_lower_surface_mesh
@@ -41,11 +42,11 @@ from openquake.mbt.tools.smooth3d import Smoothing3D
 from openquake.man.checks.catalogue import load_catalogue
 from openquake.wkf.utils import create_folder
 
-#PLOTTING = True
-PLOTTING = False
+PLOTTING = True
+# PLOTTING = False
 
 
-def get_catalogue(cat_pickle_fname, treg_filename=None, label='', 
+def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
                   sort_cat=False):
     """
     :param cat_pickle_fname:
@@ -61,7 +62,7 @@ def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
     #
     # loading the catalogue
     catalogue = load_catalogue(cat_pickle_fname)
-    if sort_cat == True:
+    if sort_cat is True:
         catalogue.sort_catalogue_chronologically()
     #
     # if a label and a TR are provided we filter the catalogue
@@ -371,7 +372,6 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
     # Assign probability of occurrence
     for mag, occr in mfd.get_annual_occurrence_rates():
 
-
         # Create the label
         lab = '{:.2f}'.format(mag)
 
@@ -541,7 +541,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
     cat_pickle_fname = os.path.abspath(os.path.join(ref_fdr, cat_pickle_fname))
     try:
         sort_cat = bool(config.get('main', 'sort_catalogue'))
-    except:
+    except Exception:
         sort_cat = False
 
     # Output
@@ -553,10 +553,10 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
     tmps = os.path.join(ref_fdr, out_hdf5_smoothing_fname)
     out_hdf5_smoothing_fname = os.path.abspath(tmps)
     # create the smoothing directory if it doesn't exist
-    smoothing_dir = '/'.join(out_hdf5_smoothing_fname.split('/')[:-1])
+    smoothing_dir = os.path.sep.join(
+        out_hdf5_smoothing_fname.split(os.path.sep)[:-1])
     if not os.path.exists(smoothing_dir):
         os.makedirs(smoothing_dir)
-
 
     # Tectonic regionalisation
     treg_filename = config.get('main', 'treg_fname')
@@ -592,14 +592,12 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
     logging.info('Creating ruptures on virtual faults')
     print('Creating ruptures on virtual faults')
     ohs = create_inslab_meshes(msh, dips, slab_thickness, sampling)
-    #breakpoint()
 
-    #if only_plt:
+    # if only_plt:
     #    pass
     if False:
+        # TODO consider replacing wiith pyvista
 
-    # TODO consider replacing wiith pyvista
-    
         azim = 10.
         elev = 20.
         dist = 20.
@@ -633,7 +631,6 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
         mlab.show()
 
         exit(0)
-    
 
     if PLOTTING:
         vsc = 0.01
@@ -680,8 +677,8 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
     # mlo, mla, mde = msh3d.select_nodes_within_two_meshesa(omsh, olmsh)
     mlo, mla, mde = msh3d.get_coordinates_vectors()
     if False:
-        df = pd.DataFrame({'mlo': mlo, 'mla': mla, 'mde': mde}) 
-        df.to_csv('mesh_coords.csv') 
+        df = pd.DataFrame({'mlo': mlo, 'mla': mla, 'mde': mde})
+        df.to_csv('mesh_coords.csv')
 
     # save data on hdf5 file
     if os.path.exists(hdf5_filename):
@@ -698,7 +695,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
     fh5.close()
 
     # Get catalogue
-    catalogue = get_catalogue(cat_pickle_fname, treg_filename, label, 
+    catalogue = get_catalogue(cat_pickle_fname, treg_filename, label,
                               sort_cat)
 
     # smoothing
