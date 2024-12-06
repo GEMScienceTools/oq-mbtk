@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - test
+  pull_request:
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
@@ -12,54 +13,68 @@ jobs:
     name: Windows Installation
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-2022, windows-2019]
-    steps: 
-    - uses: actions/checkout@v4
-    - name: Installation of GMT from standalone
-      run: |
-        Invoke-WebRequest -Uri "https://github.com/GenericMappingTools/gmt/releases/download/6.4.0/gmt-6.4.0-win64.exe" -OutFile $HOME\gmt.exe
-        cd $HOME
-        $Install = Get-ChildItem -Filter gmt*.exe
-        Start-Process -FilePath $Install.Fullname -ArgumentList "/S" -Wait
-        $Env:PATH += ";C:\programs\gmt6\bin"
-        Write-Host ${env:PATH}
-    - name: Run scripts to install on windows
-      run: |
-        Write-Host "Set LIBRARY PATH for GMT"
-        $Env:GMT_LIBRARY_PATH="C:\programs\gmt6\bin"
-        Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
-        #
-        $curDir = Get-Location
-        Write-Host "Current Working Directory: $curDir"
-        Get-ChildItem -Path .\windows –recurse
-        Write-Host "Install oqmbtk on branch ${{ github.ref_name }}"
-        .\windows\install_oqmbtk.ps1 -mbtk_branch ${{ github.ref_name }}
-        $MYPATH = $HOME + "\mbtk"
-        Write-Host "Print USERPROFILE folder: $env:USERPROFILE"
-        Write-Host "Print MYPATH folder: $MYPATH"
-        $Env:PATH += ";$MYPATH"
-        $Env:PATH += ";$MYPATH\python3\Scripts"
-        $Env:PYTHONUTF8=1
-        #Added to disable TCL
-        $Env:MPLBACKEND="AGG"
-        $Env:PY_PIP=$MYPATH += '\Scripts'
-        $Env:PY_PIP=$MYPATH += '\python3\Scripts'
-        $Env:PY_HOME=$MYPATH
-        $Env:PY_LIBS="$MYPATH\python3\Lib;$MYPATH\python3\Lib\site-package"
-        Write-Host "MYPATH Directory: $MYPATH"
-        Start-Job -ScriptBlock{& 'oq.exe' dbserver upgrade}
-        oq.exe --version
-        Write-Host "Print all environments variables to check"
-        dir env:
-        Write-Host "Print all pypip packages"
-        pip list
-        $MBTK = $HOME + "\mbtk"
-        Write-Host "MBTK Directory: $MBTK"
-        Set-Location -Path $MBTK
-        $curDir = Get-Location
-        Write-Host "Current Working Directory: $curDir"
-        cd oq-mbtk\openquake
-        Write-Host "Install pytest and run tests"
-        pip install pytest==8.1.2
-        pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt
+        python-version: ["3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Installation of GMT from standalone
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/GenericMappingTools/gmt/releases/download/6.4.0/gmt-6.4.0-win64.exe" -OutFile $HOME\gmt.exe
+          cd $HOME
+          $Install = Get-ChildItem -Filter gmt*.exe
+          Start-Process -FilePath $Install.Fullname -ArgumentList "/S" -Wait
+          $Env:PATH += ";C:\programs\gmt6\bin"
+          Write-Host ${env:PATH}
+      - name: Run scripts to install on windows
+        run: |
+          Write-Host "Set LIBRARY PATH for GMT"
+          $Env:GMT_LIBRARY_PATH="C:\programs\gmt6\bin"
+          Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
+          #
+          $curDir = Get-Location
+          Write-Host "Current Working Directory: $curDir"
+          Write-Host "Test python version"
+          python -V
+          Write-Host "Install OQ form master and mbtk from branch ${{ github.ref_name }}"
+          python -m pip install -U pip
+          git clone --depth 1 -b master https://github.com/gem/oq-engine.git
+          python -m pip install -r oq-engine/requirements-py311-win64.txt
+          cd oq-engine
+          python -m pip install -e .
+          cd ..
+          python -m pip install -r requirements_win64.txt
+          python -m pip install -e .
+          #.\windows\install_oqmbtk.ps1 -mbtk_branch ${{ github.ref_name }}
+          # do not use powershell scripts but install with devel installation
+          #$MYPATH = $HOME + "\mbtk"
+          #Write-Host "Print USERPROFILE folder: $env:USERPROFILE"
+          #Write-Host "Print MYPATH folder: $MYPATH"
+          #$Env:PATH += ";$MYPATH"
+          #$Env:PATH += ";$MYPATH\python3\Scripts"
+          #Added to disable TCL
+          #$Env:PY_PIP=$MYPATH += '\Scripts'
+          #$Env:PY_PIP=$MYPATH += '\python3\Scripts'
+          #$Env:PY_HOME=$MYPATH
+          #$Env:PY_LIBS="$MYPATH\python3\Lib;$MYPATH\python3\Lib\site-package"
+          #Write-Host "MYPATH Directory: $MYPATH"
+          $Env:MPLBACKEND="AGG"
+          $Env:PYTHONUTF8=1
+          Start-Job -ScriptBlock{& 'oq.exe' engine --upgrade-db}
+          oq.exe --version
+          Write-Host "Print all environments variables to check"
+          dir env:
+          Write-Host "Print all pypip packages"
+          pip list
+          #$MBTK = $HOME + "\mbtk"
+          #Write-Host "MBTK Directory: $MBTK"
+          #Set-Location -Path $MBTK
+          $curDir = Get-Location
+          Write-Host "Current Working Directory: $curDir"
+          cd openquake
+          pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt

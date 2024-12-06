@@ -1,12 +1,13 @@
 # OQ mbtk requirements
 # From OQ wheels
 #
-#https://wheelhouse.openquake.org/v3/linux/py311/numpy-1.23.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+https://wheelhouse.openquake.org/v3/linux/py311/numpy-1.26.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 https://wheelhouse.openquake.org/v3/linux/py311/pyproj-3.6.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 https://wheelhouse.openquake.org/v3/linux/py311/GDAL-3.7.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 https://wheelhouse.openquake.org/v3/linux/py311/fiona-1.9.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 #
 # Version specific
+pandas == 2.0.3
 geopandas >= 0.10.2
 ipykernel >= 4.8.0
 ipython >= 6.2.0

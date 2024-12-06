@@ -26,7 +26,7 @@ import pandas as pd
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import (
     compute_matrix_gmpes, plot_trellis_util, plot_spectra_util,
-    plot_cluster_util, plot_sammons_util, plot_euclidean_util)
+    plot_ratios_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util)
 
 
 # Base path
@@ -34,7 +34,7 @@ base = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
 TARGET_VS30 = 800
-TARGET_REGION = 'Global'
+TARGET_Z_BASIN_REGION = 'Global'
 TARGET_TRELLIS_DEPTHS = [20, 25, 30]
 TARGET_RMIN = 0
 TARGET_RMAX = 300
@@ -47,6 +47,7 @@ TARGET_GMPES = ['[ChiouYoungs2014] \nlt_weight_gmc1 = 0.5',
                 '[CampbellBozorgnia2014] \nlt_weight_gmc1 = 0.5',
                 '[BooreEtAl2014] \nlt_weight_gmc2_plot_lt_only = 0.5',
                 '[KothaEtAl2020] \nlt_weight_gmc2_plot_lt_only = 0.5']
+TARGET_BASELINE_GMPE = '[BooreEtAl2014]'
 TARGET_TRT = 'ASCR'
 TARGET_ZTOR = None
 
@@ -76,20 +77,20 @@ class ComparisonTestCase(unittest.TestCase):
         the Configuration object, which stores the inputted parameters for
         each run.
         """
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Check for target TRT
         self.assertEqual(config.trt, TARGET_TRT)
 
-        # Check for target ZTOR
+        # Check for target ztor
         self.assertEqual(config.ztor, TARGET_ZTOR)
 
         # Check for target Vs30
         self.assertEqual(config.Vs30, TARGET_VS30)
 
         # Check for target region
-        self.assertEqual(config.region, TARGET_REGION)
+        self.assertEqual(config.z_basin_region, TARGET_Z_BASIN_REGION)
 
         # Check for target depths (other functions use arrays from these
         # depths)
@@ -122,12 +123,15 @@ class ComparisonTestCase(unittest.TestCase):
         for imt in range(0, len(config.imt_list)):
             self.assertEqual(str(config.imt_list[imt]), TARGET_IMTS[imt])
 
+        # Check baseline GMM used to compute ratios
+        self.assertEqual(config.baseline_gmm, TARGET_BASELINE_GMPE)
+
     def test_mtxs_median_calculation(self):
         """
         Check for matches bewteen the matrix of medians computed using
         compute_matrix_gmpes and those expected given the input parameters
         """
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Get medians
@@ -147,7 +151,7 @@ class ComparisonTestCase(unittest.TestCase):
         """
         TARGET_GMPES.append('mean')  # Add mean here to gmpe_list
 
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Get medians
@@ -188,7 +192,7 @@ class ComparisonTestCase(unittest.TestCase):
         Check clustering functions for median predicted ground-motion of
         considered GMPEs in the configuration
         """
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Get medians
@@ -213,7 +217,7 @@ class ComparisonTestCase(unittest.TestCase):
         Check clustering of 84th percentile of predicted ground-motion of
         considered GMPEs in the configuration
         """
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Get medians
@@ -239,7 +243,7 @@ class ComparisonTestCase(unittest.TestCase):
         executed. Also checks correct values are returned for the gmm
         attenuation curves and spectra.
         """
-        # Check each parameter matches target
+        # Load config
         config = comp.Configurations(self.input_file)
 
         # Trellis plots
@@ -285,6 +289,17 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Check target file created and outputted in expected location
         self.assertTrue(target_file_spectra)
+
+    def test_plot_ratios(self):
+        """
+        Test execution of plotting ratios (median GMM attenuation/median
+        baseline GMM attenuation). Correctness of values is not examined.
+        """
+        # Load config
+        config = comp.Configurations(self.input_file)
+
+        # Plot the ratios
+        plot_ratios_util(config, self.output_directory)
 
     @classmethod
     def tearDownClass(self):
