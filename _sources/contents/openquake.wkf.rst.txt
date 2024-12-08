@@ -1,0 +1,104 @@
+openquake.wkf package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.wkf.h3
+   openquake.wkf.plot
+   openquake.wkf.seismicity
+   openquake.wkf.tests
+
+Submodules
+----------
+
+openquake.wkf.catalogue module
+------------------------------
+
+.. automodule:: openquake.wkf.catalogue
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.completeness module
+---------------------------------
+
+.. automodule:: openquake.wkf.completeness
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.compute\_gr\_params module
+----------------------------------------
+
+.. automodule:: openquake.wkf.compute_gr_params
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.compute\_mmax\_from\_catalogues module
+----------------------------------------------------
+
+.. automodule:: openquake.wkf.compute_mmax_from_catalogues
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.distributed\_seismicity module
+--------------------------------------------
+
+.. automodule:: openquake.wkf.distributed_seismicity
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.mfd module
+------------------------
+
+.. automodule:: openquake.wkf.mfd
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.ses module
+------------------------
+
+.. automodule:: openquake.wkf.ses
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.utils module
+--------------------------
+
+.. automodule:: openquake.wkf.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.wkf\_h3\_zones\_cat module
+----------------------------------------
+
+.. automodule:: openquake.wkf.wkf_h3_zones_cat
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.wkf\_info\_gain module
+------------------------------------
+
+.. automodule:: openquake.wkf.wkf_info_gain
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.wkf
+   :members:
+   :undoc-members:
+   :show-inheritance:

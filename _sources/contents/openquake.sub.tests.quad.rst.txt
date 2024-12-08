@@ -1,0 +1,21 @@
+openquake.sub.tests.quad package
+================================
+
+Submodules
+----------
+
+openquake.sub.tests.quad.trapezoidal\_cells\_surface\_test module
+-----------------------------------------------------------------
+
+.. automodule:: openquake.sub.tests.quad.trapezoidal_cells_surface_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.sub.tests.quad
+   :members:
+   :undoc-members:
+   :show-inheritance:
