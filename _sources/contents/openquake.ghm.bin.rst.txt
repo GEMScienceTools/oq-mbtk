@@ -1,0 +1,10 @@
+openquake.ghm.bin package
+=========================
+
+Module contents
+---------------
+
+.. automodule:: openquake.ghm.bin
+   :members:
+   :undoc-members:
+   :show-inheritance:

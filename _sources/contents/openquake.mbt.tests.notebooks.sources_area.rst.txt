@@ -1,0 +1,29 @@
+openquake.mbt.tests.notebooks.sources\_area package
+===================================================
+
+Submodules
+----------
+
+openquake.mbt.tests.notebooks.sources\_area.compute\_double\_truncated\_GR\_from\_seismicity\_test module
+---------------------------------------------------------------------------------------------------------
+
+.. automodule:: openquake.mbt.tests.notebooks.sources_area.compute_double_truncated_GR_from_seismicity_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.notebooks.sources\_area.load\_data\_from\_shapefile\_test module
+------------------------------------------------------------------------------------
+
+.. automodule:: openquake.mbt.tests.notebooks.sources_area.load_data_from_shapefile_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tests.notebooks.sources_area
+   :members:
+   :undoc-members:
+   :show-inheritance:
