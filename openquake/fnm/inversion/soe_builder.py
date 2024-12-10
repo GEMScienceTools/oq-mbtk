@@ -197,8 +197,10 @@ def make_rel_gr_mfd_eqns(
 
     rel_mag_eqns_lhs = rel_mag_eqns
     rel_mag_eqns_rhs = np.zeros(rel_mag_eqns_lhs.shape[0])  # flat, not column
-    rel_mag_eqns_errs = np.sqrt([(rel_rates_adj[M]) for M in unique_mags[1:]])
-    rel_mag_eqns_errs /= weight
+    # rel_mag_eqns_errs = np.sqrt([(rel_rates_adj[M]) for M in unique_mags[1:]])
+    rel_mag_eqns_errs = np.array([(rel_rates_adj[M]) for M in unique_mags[1:]])
+    # rel_mag_eqns_errs = rel_mag_eqns_errs**-2
+    rel_mag_eqns_errs *= weight
 
     return rel_mag_eqns_lhs, rel_mag_eqns_rhs, rel_mag_eqns_errs
 
