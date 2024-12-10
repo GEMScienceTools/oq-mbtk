@@ -78,6 +78,7 @@ default_settings = {
     'surface_type': 'simple',
     'min_mag': None,
     'max_mag': None,
+    "filter_seed": 69,
 }
 
 
@@ -333,6 +334,7 @@ def build_fault_network(
             filter_proportionally_to_plausibility(
                 fault_network['rupture_df'],
                 fault_network['plausibility']['total'],
+                seed=settings['filter_seed'],
             )
         )
         t8 = time.time()
