@@ -207,13 +207,15 @@ def get_evenlyDiscretizedMFD_from_truncatedGRMFD(mfd, bin_width=None):
     bgr = mfd.b_val
     bin_width = mfd.bin_width
     left = np.arange(mfd.min_mag, mfd.max_mag, bin_width)
-    rates = 10.**(agr-bgr*left)-10.**(agr-bgr*(left+bin_width))
-    return EvenlyDiscretizedMFD(mfd.min_mag+bin_width/2.,
+    rates = (10.**(agr - bgr * left) -
+             10.**(agr - bgr * (left + bin_width)))
+    return EvenlyDiscretizedMFD(mfd.min_mag + bin_width / 2.,
                                 bin_width,
                                 list(rates))
 
 
 def get_evenlyDiscretizedMFD_from_multiMFD(mfd, bin_width=None):
+
     if mfd.kind == 'incrementalMFD':
 
         oc = mfd.kwargs['occurRates']
@@ -225,42 +227,71 @@ def get_evenlyDiscretizedMFD_from_multiMFD(mfd, bin_width=None):
             min_m = min_mag[0] if len(min_mag) == 1 else min_mag[i]
             if i == 0:
                 emfd = EEvenlyDiscretizedMFD(min_m, binw, occ)
-                
+
             else:
                 tmfd = EEvenlyDiscretizedMFD(min_m, binw, occ)
                 emfd.stack(tmfd)
-                 
+
     elif mfd.kind == 'truncGutenbergRichterMFD':
+
         aval = mfd.kwargs['a_val']
         bval = mfd.kwargs['b_val']
         min_mag = mfd.kwargs['min_mag']
         max_mag = mfd.kwargs['max_mag']
         binw = mfd.kwargs['bin_width'][0]
         # take max mag here so we don't have to rescale the FMD later
-        max_m = np.max(max_mag) 
-        min_m = min_mag[0] if len(min_mag) == 1 else np.min(min_mag) 
+        max_m = np.max(max_mag)
+        min_m = min_mag[0] if len(min_mag) == 1 else np.min(min_mag)
 
         for i in range(mfd.size):
             bgr = bval[0] if len(bval) == 1 else bval[i]
             agr = aval[0] if len(aval) == 1 else aval[i]
-            
+
             left = np.arange(min_m, max_m, binw)
-            rates = 10.**(agr-bgr*left)-10.**(agr-bgr*(left+binw))
-            
+            rates = (10.**(agr - bgr * left) -
+                     10.**(agr - bgr * (left + binw)))
+
             if i == 0:
-                emfd = EEvenlyDiscretizedMFD(min_m+binw/2.,
-                                binw,
-                                list(rates))
+                emfd = EEvenlyDiscretizedMFD(
+                    min_m + binw / 2., binw, list(rates))
             else:
-                tmfd = EEvenlyDiscretizedMFD(min_m+binw/2.,
-                                binw,
-                                list(rates))
+                tmfd = EEvenlyDiscretizedMFD(
+                    min_m + binw / 2., binw, list(rates))
                 emfd.stack(tmfd)
-    
+
     else:
         raise ValueError('Unsupported MFD type ', mfd.kind)
 
     return emfd
+
+
+def _from_Arbitrary_to_Evenly_MFD(mfd, bin_width):
+
+    # Compute:
+    # - m_min - left edge of the first bin
+    # - m_max - right edge of the last bin
+    assert bin_width is not None
+    m_min = np.floor(np.min(mfd.magnitudes) / bin_width) * bin_width
+    m_max = np.ceil(np.max(mfd.magnitudes) / bin_width) * bin_width
+
+    if np.abs(m_max - m_min) < bin_width * 0.1:
+        m_max += bin_width
+
+    # Centers of bins
+    m_cen = np.arange(m_min + bin_width / 2, m_max, bin_width)
+    occ = np.zeros_like(m_cen)
+
+    # Indexes
+    idxs = []
+    for m in mfd.magnitudes:
+        # import pdb; pdb.set_trace()
+        idx = np.argmin(np.abs(m - m_cen))
+        idxs.append(int(idx))
+
+    # Set the rates
+    occ[idxs] = mfd.occurrence_rates
+
+    return EEvenlyDiscretizedMFD(m_cen[0], bin_width, occ)
 
 
 class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
@@ -274,16 +305,23 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
         if isinstance(mfd, EvenlyDiscretizedMFD):
             return EEvenlyDiscretizedMFD(mfd.min_mag, mfd.bin_width,
                                          mfd.occurrence_rates)
+
         elif isinstance(mfd, TruncatedGRMFD):
             tmfd = get_evenlyDiscretizedMFD_from_truncatedGRMFD(mfd, bin_width)
             return EEvenlyDiscretizedMFD(tmfd.min_mag, tmfd.bin_width,
                                          tmfd.occurrence_rates)
+
         elif isinstance(mfd, MultiMFD):
             tmfd = get_evenlyDiscretizedMFD_from_multiMFD(mfd, bin_width)
             return tmfd
+
         elif isinstance(mfd, YoungsCoppersmith1985MFD):
             occ = np.array(mfd.get_annual_occurrence_rates())
             return EEvenlyDiscretizedMFD(occ[0, 0], mfd.bin_width, occ[:, 1])
+
+        elif isinstance(mfd, ArbitraryMFD):
+            return _from_Arbitrary_to_Evenly_MFD(mfd, bin_width)
+
         else:
             raise ValueError('Unsupported MFD type')
 
@@ -298,15 +336,17 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
         if isinstance(imfd, TruncatedGRMFD):
             mfd2 = get_evenlyDiscretizedMFD_from_truncatedGRMFD(imfd,
                                                                 self.bin_width)
+        elif isinstance(imfd, ArbitraryMFD):
+            mfd2 = _from_Arbitrary_to_Evenly_MFD(imfd, self.bin_width)
+        elif isinstance(imfd, MultiMFD):
+            mfd2 = get_evenlyDiscretizedMFD_from_multiMFD(imfd, self.bin_width)
         else:
             mfd2 = imfd
 
         mfd1 = self
         bin_width = self.bin_width
-        
-        
-        #
-        # check bin width of the MFD to be added
+
+        # Check bin width of the MFD to be added
         if (isinstance(mfd2, EvenlyDiscretizedMFD) and
                 abs(mfd2.bin_width - bin_width) > 1e-10):
             if log:
@@ -327,8 +367,6 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
         # this is the difference between the rounded mmin and the original mmin
         dff = abs(np.floor((self.min_mag+0.1*bin_width)/bin_width)*bin_width -
                   self.min_mag)
-        #
-        #
         if dff > 1e-7:
             if log:
                 print('resampling mfd1 - homogenize mmin')
@@ -336,7 +374,7 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
                 tmps = '                - original mmin: {:.2f}'
                 print(tmps.format(mfd1.min_mag))
             mfd1 = mfd_resample(bin_width, mfd1)
-        #
+
         # mfd1 MUST be the one with the mininum minimum magnitude
         if mfd1.min_mag > mfd2.min_mag:
             print("minimum magnitudes are different")
@@ -345,18 +383,18 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
             tmp = mfd2
             mfd2 = mfd1
             mfd1 = tmp
-        #
+
         # Find the delta index i.e. the shift between one MFD and the other
         # one
         delta = 0
         tmpmag = mfd1.min_mag
-        while abs(tmpmag - mfd2.min_mag) > 0.1*bin_width:
+        while abs(tmpmag - mfd2.min_mag) > 0.1 * bin_width:
             delta += 1
             tmpmag += bin_width
 
         rates = list(np.zeros(len(mfd1.occurrence_rates)))
-        mags = list(mfd1.min_mag+np.arange(len(rates))*bin_width)	
-	
+        mags = list(mfd1.min_mag + np.arange(len(rates)) * bin_width)
+
         # Add to the rates list the occurrences included in the mfd with the
         # lowest minimum magnitude
         for idx, occ in enumerate(mfd1.occurrence_rates):
@@ -381,28 +419,28 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
             # Check that we add occurrences to the right bin. Rates is the
             # list used to store the occurrences of the 'stacked' MFD
             try:
-                if len(rates) > idx+delta:
-                    assert abs(mag - mags[idx+delta]) < 1e-5
-                    
+                if len(rates) > idx + delta:
+                    assert abs(mag - mags[idx + delta]) < 1e-5
+
             except:
                 print('mag:     :', mag)
-                print('mag rates:', mags[idx+delta])
+                print('mag rates:', mags[idx + delta])
                 print('delta    :', delta)
-                print('diff     :', abs(mag - mags[idx+delta]))
+                print('diff     :', abs(mag - mags[idx + delta]))
                 raise ValueError('Stacking wrong bins')
 
             if log:
-                print(idx, idx+delta, len(mfd2.occurrence_rates), len(rates))
+                print(idx, idx + delta, len(mfd2.occurrence_rates), len(rates))
                 print(mag, occ)
 
-            if len(rates) > idx+delta:
-                rates[idx+delta] += occ
+            if len(rates) > idx + delta:
+                rates[idx + delta] += occ
             else:
                 if log:
                     print('Adding mag:', mag, occ)
 
                 tmp_mag = mags[-1] + bin_width
-                while tmp_mag < mag-0.1*bin_width:
+                while tmp_mag < mag - 0.1 * `bin_width:
                     tmp_mag += bin_width
                     delta += 1
                     if set([tmp_mag]) not in magset:
@@ -645,21 +683,21 @@ def merge(mfdexp, mfdchar, magexp=None, magchar=None):
         if magexp is not None and magchar is not None:
             midx = max(np.nonzero(magexp <= max(magchar))[0])
             out = mfdexp[:midx]
-    return out, midx 
+    return out, midx
 
 
 def mergeinv(agr, bgr, magchar, mfdchar, mwdt):
     """
     """
     mmin = 6.0
-    mupp = min(magchar) 
+    mupp = min(magchar)
     # get dt mfd
     dtmfd = TruncatedGRMFD(6.0, mupp+mwdt, mwdt, agr, bgr)
     occ = dtmfd.get_annual_occurrence_rates()
-    # 
+    #
     madt = numpy.array([d[0] for d in occ])
     ocdt = numpy.array([d[1] for d in occ])
-    # compute moment 
+    # compute moment
     modt = sum(mag_to_mo(madt)*ocdt)
     return modt
 
