@@ -42,7 +42,7 @@ def plot_mfd_accumdict(mfd, **kwargs):
 
     plt.semilogy(mags, vals, **kwargs)
     plt.xlabel("M")
-    plt.ylabel("Cumulative number of ruptures")
+    plt.ylabel("Annual Rate of Exceedance")
 
 
 def plot_mfd(mfd, errs=False, label=None, **kwargs):
@@ -121,12 +121,14 @@ def plot_seis(
     )
 
 
-def plot_soln_mfd(soln, ruptures, label=None, rup_list_include=None):
+def plot_soln_mfd(
+    soln, ruptures, label=None, rup_list_include=None, mag_key="M"
+):
     mfd = oq.baselib.general.AccumDict()
 
     if rup_list_include is None:
         for i, rup in enumerate(ruptures):
-            mfd += {rup["M"]: soln[i]}
+            mfd += {rup[mag_key]: soln[i]}
 
     plot_mfd_accumdict(mfd, label=label)
 
