@@ -1,0 +1,10 @@
+openquake.ghm.gmt.cpt package
+=============================
+
+Module contents
+---------------
+
+.. automodule:: openquake.ghm.gmt.cpt
+   :members:
+   :undoc-members:
+   :show-inheritance:

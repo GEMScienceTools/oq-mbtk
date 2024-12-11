@@ -1,0 +1,21 @@
+openquake.sub.notebooks package
+===============================
+
+Submodules
+----------
+
+openquake.sub.notebooks.plot\_multiple\_cross\_sections module
+--------------------------------------------------------------
+
+.. automodule:: openquake.sub.notebooks.plot_multiple_cross_sections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.sub.notebooks
+   :members:
+   :undoc-members:
+   :show-inheritance:

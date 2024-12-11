@@ -1,0 +1,150 @@
+openquake.fnm.tests package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.fnm.tests.data
+   openquake.fnm.tests.inversion
+
+Submodules
+----------
+
+openquake.fnm.tests.bbox\_test module
+-------------------------------------
+
+.. automodule:: openquake.fnm.tests.bbox_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.connection\_3d\_test module
+-----------------------------------------------
+
+.. automodule:: openquake.fnm.tests.connection_3d_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.connection\_angle\_test module
+--------------------------------------------------
+
+.. automodule:: openquake.fnm.tests.connection_angle_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.connection\_test module
+-------------------------------------------
+
+.. automodule:: openquake.fnm.tests.connection_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.datastore\_test module
+------------------------------------------
+
+.. automodule:: openquake.fnm.tests.datastore_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.importer\_test module
+-----------------------------------------
+
+.. automodule:: openquake.fnm.tests.importer_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.interface\_test module
+------------------------------------------
+
+.. automodule:: openquake.fnm.tests.interface_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.mesh\_test module
+-------------------------------------
+
+.. automodule:: openquake.fnm.tests.mesh_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.msr\_test module
+------------------------------------
+
+.. automodule:: openquake.fnm.tests.msr_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.rupture\_connection\_test module
+----------------------------------------------------
+
+.. automodule:: openquake.fnm.tests.rupture_connection_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.rupture\_fsys\_test module
+----------------------------------------------
+
+.. automodule:: openquake.fnm.tests.rupture_fsys_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.rupture\_section\_test module
+-------------------------------------------------
+
+.. automodule:: openquake.fnm.tests.rupture_section_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.rupture\_test module
+----------------------------------------
+
+.. automodule:: openquake.fnm.tests.rupture_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.section\_test module
+----------------------------------------
+
+.. automodule:: openquake.fnm.tests.section_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.test\_fault\_modeler module
+-----------------------------------------------
+
+.. automodule:: openquake.fnm.tests.test_fault_modeler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.tests.test\_rupture\_connections module
+-----------------------------------------------------
+
+.. automodule:: openquake.fnm.tests.test_rupture_connections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.fnm.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:

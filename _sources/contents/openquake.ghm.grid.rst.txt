@@ -1,0 +1,29 @@
+openquake.ghm.grid package
+==========================
+
+Submodules
+----------
+
+openquake.ghm.grid.get\_site\_model module
+------------------------------------------
+
+.. automodule:: openquake.ghm.grid.get_site_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.ghm.grid.get\_sites module
+------------------------------------
+
+.. automodule:: openquake.ghm.grid.get_sites
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.ghm.grid
+   :members:
+   :undoc-members:
+   :show-inheritance:

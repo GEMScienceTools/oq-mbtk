@@ -1,0 +1,53 @@
+openquake.man.single package
+============================
+
+Submodules
+----------
+
+openquake.man.single.areas module
+---------------------------------
+
+.. automodule:: openquake.man.single.areas
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.man.single.faults module
+----------------------------------
+
+.. automodule:: openquake.man.single.faults
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.man.single.info module
+--------------------------------
+
+.. automodule:: openquake.man.single.info
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.man.single.points module
+----------------------------------
+
+.. automodule:: openquake.man.single.points
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.man.single.sources module
+-----------------------------------
+
+.. automodule:: openquake.man.single.sources
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.man.single
+   :members:
+   :undoc-members:
+   :show-inheritance:
