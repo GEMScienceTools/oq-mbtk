@@ -340,10 +340,13 @@ def subdivide_rupture_mesh(
             subsec_lats = lats[i_start:i_end, j_start:j_end]
             subsec_depths = depths[i_start:i_end, j_start:j_end]
 
-            subsec_mesh = RectangularMesh(
-                subsec_lons, subsec_lats, subsec_depths
-            )
-            subsec_meshes.append({'row': i, 'col': j, 'mesh': subsec_mesh})
+            try:
+                subsec_mesh = RectangularMesh(
+                    subsec_lons, subsec_lats, subsec_depths
+                )
+                subsec_meshes.append({'row': i, 'col': j, 'mesh': subsec_mesh})
+            except:
+                print(i_start, i_end, j_start, j_end, i, j)
 
             j_start += n_subsec_pts_strike - 1
         i_start += n_subsec_pts_dip - 1
@@ -544,6 +547,7 @@ def make_rupture_df(
     multi_fault_rups,
     subfault_df,
     area_mag_msr='Leonard2014_Interplate',
+    mag_decimals=1,
 ) -> pd.DataFrame:
     """
     Makes a Pandas DataFrame, with a row for each rupture in the fault network.
@@ -562,7 +566,7 @@ def make_rupture_df(
         Area-to-magnitude scaling relationship to use. Must
         be in the `openquake.fnm.msr` library of scaling relationships.
 
-    Returnsgg
+    Returns
     -------
     rupture_df : pd.DataFrame
         DataFrame containing information about each rupture.
@@ -657,7 +661,7 @@ def make_rupture_df(
     rupture_df['fault_frac_area'] = fault_frac_areas
     rupture_df['mean_rake'] = np.round(mean_rakes, 1)
     rupture_df['slip_azimuth'] = slip_azimuths
-    rupture_df['mag'] = np.round(mags, 2)
+    rupture_df['mag'] = np.round(mags, mag_decimals)
     rupture_df['area'] = np.round(all_areas, 1)
     rupture_df['displacement'] = np.round(
         get_rupture_displacement(
@@ -697,6 +701,7 @@ def get_boundary_3d(smsh):
         )
         for i in idx
     ]
+    tmp = [c for c in tmp if c != (0.0, 0.0, -0.0)]
     trace = LineString(tmp)
     coo.extend(tmp)
 
@@ -710,6 +715,7 @@ def get_boundary_3d(smsh):
         )
         for i in idx
     ]
+    tmp = [c for c in tmp if c != (0.0, 0.0, -0.0)]
     coo.extend(tmp)
 
     # Lower boundary
@@ -722,6 +728,7 @@ def get_boundary_3d(smsh):
         )
         for i in np.flip(idx)
     ]
+    tmp = [c for c in tmp if c != (0.0, 0.0, -0.0)]
     coo.extend(tmp)
 
     # Left boundary
@@ -734,6 +741,7 @@ def get_boundary_3d(smsh):
         )
         for i in np.flip(idx)
     ]
+    tmp = [c for c in tmp if c != (0.0, 0.0, -0.0)]
     coo.extend(tmp)
 
     return trace, Polygon(coo)
@@ -758,7 +766,10 @@ def make_subfault_gdf(subfault_df, keep_surface=False, keep_trace=False):
 
 
 def make_rupture_gdf(
-    fault_network, rup_df_key='rupture_df', keep_sequences=False
+    fault_network,
+    rup_df_key='rupture_df',
+    keep_sequences=False,
+    same_size_arrays: bool = True,
 ) -> gpd.GeoDataFrame:
     """
     Makes a GeoDataFrame, with a row for each rupture in the fault network.
@@ -785,7 +796,10 @@ def make_rupture_gdf(
     subfaults = fault_network['subfaults']
     rupture_df = fault_network[rup_df_key]
     sf_meshes = make_sf_rupture_meshes(
-        single_rup_df['patches'], single_rup_df['fault'], subfaults
+        single_rup_df['patches'],
+        single_rup_df['fault'],
+        subfaults,
+        same_size_arrays=same_size_arrays,
     )
     # converting to surfaces because get_boundary_3d doesn't take meshes
     sf_surfs = [SimpleFaultSurface(sf_mesh) for sf_mesh in sf_meshes]
@@ -806,7 +820,9 @@ def make_rupture_gdf(
     return rupture_gdf
 
 
-def merge_meshes_no_overlap(arrays, positions) -> np.ndarray:
+def merge_meshes_no_overlap(
+    arrays, positions, same_size_arrays: bool = True
+) -> np.ndarray:
     """
     Merges a list of arrays into a single array, with no overlap between
     the arrays.
@@ -825,9 +841,24 @@ def merge_meshes_no_overlap(arrays, positions) -> np.ndarray:
         Merged array.
     """
     # Check that all arrays have the same shape
-    first_shape = arrays[0].shape
-    for arr in arrays:
-        assert arr.shape == first_shape, "All arrays must have the same shape"
+    # Optional, but should be used for simple faults
+    # Kite faults can have different shapes
+    if same_size_arrays:
+        first_shape = arrays[0].shape
+        for arr in arrays:
+            assert (
+                arr.shape == first_shape
+            ), "All arrays must have the same shape"
+
+    else:
+        # check to see that all arrays share the same rows or same columns
+        row_lengths = [arr.shape[0] for arr in arrays]
+        col_lengths = [arr.shape[1] for arr in arrays]
+        assert (
+            len(set(row_lengths)) == 1 or len(set(col_lengths)) == 1
+        ), "All arrays must have the same number of rows or columns"
+        # `first_shape` is, in this case, the largest array
+        first_shape = (max(row_lengths), max(col_lengths))
 
     # check that all positions are unique and accounted for
     all_rows = sorted(list(set(pos[0] for pos in positions)))
@@ -861,7 +892,9 @@ def merge_meshes_no_overlap(arrays, positions) -> np.ndarray:
     return final_array
 
 
-def make_mesh_from_subfaults(subfaults: list[dict]) -> RectangularMesh:
+def make_mesh_from_subfaults(
+    subfaults: list[dict], same_size_arrays: bool = True
+) -> RectangularMesh:
     """
     Makes a RectangularMesh from a list of subfaults.
 
@@ -881,21 +914,26 @@ def make_mesh_from_subfaults(subfaults: list[dict]) -> RectangularMesh:
     big_lons = merge_meshes_no_overlap(
         [sf['surface'].mesh.lons for sf in subfaults],
         [sf['fault_position'] for sf in subfaults],
+        same_size_arrays=same_size_arrays,
     )
 
     big_lats = merge_meshes_no_overlap(
         [sf['surface'].mesh.lats for sf in subfaults],
         [sf['fault_position'] for sf in subfaults],
+        same_size_arrays=same_size_arrays,
     )
     big_depths = merge_meshes_no_overlap(
         [sf['surface'].mesh.depths for sf in subfaults],
         [sf['fault_position'] for sf in subfaults],
+        same_size_arrays=same_size_arrays,
     )
 
     return RectangularMesh(big_lons, big_lats, big_depths)
 
 
-def make_sf_rupture_mesh(rupture_indices, subfaults) -> RectangularMesh:
+def make_sf_rupture_mesh(
+    rupture_indices, subfaults, same_size_arrays: bool = True
+) -> RectangularMesh:
     """
     Makes a single-fault rupture mesh from a list of subfaults. This is
     a contiguous surface, unlike a multi-fault rupture surface.
@@ -913,12 +951,12 @@ def make_sf_rupture_mesh(rupture_indices, subfaults) -> RectangularMesh:
         Mesh composed of the meshes from all the subfaults in the rupture.
     """
     subs = [subfaults[i] for i in rupture_indices]
-    mesh = make_mesh_from_subfaults(subs)
+    mesh = make_mesh_from_subfaults(subs, same_size_arrays=same_size_arrays)
     return mesh
 
 
 def make_sf_rupture_meshes(
-    all_rupture_indices, faults, all_subfaults
+    all_rupture_indices, faults, all_subfaults, same_size_arrays: bool = True
 ) -> list[RectangularMesh]:
     """
     Makes a list of rupture meshes from a list of single-fault ruptures.
@@ -944,7 +982,9 @@ def make_sf_rupture_meshes(
     for i, rup_indices in enumerate(all_rupture_indices):
         try:
             subs_for_fault = grouped_subfaults[faults[i]]
-            mesh = make_sf_rupture_mesh(rup_indices, subs_for_fault)
+            mesh = make_sf_rupture_mesh(
+                rup_indices, subs_for_fault, same_size_arrays=same_size_arrays
+            )
             rup_meshes.append(mesh)
         except IndexError as e:
             logging.error(f"Problems with rupture {i}: " + str(e))
@@ -979,10 +1019,13 @@ def shapely_multipoly_to_geojson(multipoly, return_type='coords'):
 def export_ruptures_new(
     fault_network, rup_df_key='rupture_df_keep', outfile=None
 ):
-    subfault_gdf = make_subfault_gdf(fault_network['subfault_df'])
-    rupture_gdf = make_rupture_gdf(
-        fault_network, rup_df_key=rup_df_key, keep_sequences=True
-    )
+    # subfault_gdf = make_subfault_gdf(fault_network['subfault_df'])
+    if rup_df_key != 'rupture_gdf':
+        rupture_gdf = make_rupture_gdf(
+            fault_network, rup_df_key=rup_df_key, keep_sequences=True
+        )
+    else:
+        rupture_gdf = fault_network['rupture_gdf']
 
     outfile_type = outfile.split('.')[-1]
 
@@ -998,7 +1041,7 @@ def export_ruptures_new(
         features = []
         for i, rj in rup_json.items():
             f = geoms[i]
-            f["properties"] = {k: v for k, v in rj.items()}
+            f["properties"] = {k: v for k, v in rj.items() if k != 'geometry'}
             features.append(f)
 
         out_geojson = {"type": "FeatureCollection", "features": features}
