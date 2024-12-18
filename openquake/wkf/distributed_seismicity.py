@@ -204,7 +204,9 @@ def explode(srcs, check_moment_rates=True):
             if check_moment_rates:
                 src_moment = get_mfd_moment(src.mfd)
                 nsrc_moment = get_mfd_moment(nsrc.mfd)
-                np.testing.assert_allclose(src_moment * wei, nsrc_moment, rtol=1e-1)
+                np.testing.assert_allclose(
+                    src_moment * wei, nsrc_moment, rtol=1e-1
+                )
 
             exploded_srcs.append(nsrc)
 
@@ -218,11 +220,11 @@ def remove_buffer_around_faults(
     dst: float,
     threshold_mag: float = 6.5,
     use: str = '',
-    rupture_mesh_spacing = 5.0,
-    complex_fault_mesh_spacing = 5.0,
-    area_source_discretization = 5.0, 
-    PLOTTING=False
-):
+    rupture_mesh_spacing=5.0,
+    complex_fault_mesh_spacing=5.0,
+    area_source_discretization=5.0,
+    PLOTTING=False,
+    ):
     """
     Remove the seismicity above a magnitude threshold for all the point
     sources within a buffer around faults.
@@ -304,7 +306,10 @@ def remove_buffer_around_faults(
             # sources that collectively describe the distributed seismicity
             # sources provided as input.
             pnt_ii, sel_pnt_srcs, sel_pnt_coo, rjb = get_data(
-                src, coo_pnt_src, pnt_srcs
+                src,
+                coo_pnt_src,
+                pnt_srcs,
+                buffer=dst * 2,
             )
 
             # If we find some point sources around the fault

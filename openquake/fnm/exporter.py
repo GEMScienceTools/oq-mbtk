@@ -48,6 +48,10 @@ from openquake.hazardlib.nrml import SourceModel
 from openquake.hazardlib.geo import Point, Line
 from openquake.hazardlib.source import MultiFaultSource
 from openquake.hazardlib.geo.surface import KiteSurface
+from openquake.hazardlib.geo.surface.multi import (
+    build_secparams,
+    build_msparams,
+)
 
 from openquake.fnm.section import get_subsection
 
@@ -132,6 +136,9 @@ def make_multifault_source(
     )
 
     mfs.sections = surfaces
+
+    # secparams = build_secparams(mfs.sections)
+    # mfs.set_msparams(secparams)
 
     return mfs
 

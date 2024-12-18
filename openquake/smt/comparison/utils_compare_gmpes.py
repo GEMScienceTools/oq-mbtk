@@ -46,7 +46,8 @@ def plot_trellis_util(config, output_directory):
     gmc_p= [[{}, {}, {}], [{}, {}, {}], [{}, {}, {}], [{}, {}, {}]]
     
     # Get basin params
-    Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
+    Z1, Z25 = get_z1_z25(config.Z1, config.Z25,
+                         config.Vs30, config.z_basin_region)
 
     # Get lt weights
     lt_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
@@ -187,7 +188,8 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     gmc_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
                    config.lt_weights_gmc3, config.lt_weights_gmc4]
     imt_list, periods = _get_imts(max_period)
-    Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
+    Z1, Z25 = get_z1_z25(config.Z1, config.Z25,
+                         config.Vs30, config.z_basin_region)
     
     # Get colours and make the figure
     colors = get_colors(config.custom_color_flag, config.custom_color_list)     
@@ -319,7 +321,8 @@ def plot_ratios_util(config, output_directory):
     dep_list = config.trellis_and_rs_depth_list
 
     # Get basin params
-    Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
+    Z1, Z25 = get_z1_z25(config.Z1, config.Z25,
+                         config.Vs30, config.z_basin_region)
     
     # Get config key
     cfg_key = 'vs30 = %s m/s, GMM sigma epsilon = %s' % (config.Vs30,
@@ -409,7 +412,8 @@ def compute_matrix_gmpes(config, mtxs_type):
     
     # Set store and get z1pt0, z2pt5
     mtxs_median = {}
-    Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.region)
+    Z1, Z25 = get_z1_z25(config.Z1, config.Z25,
+                         config.Vs30, config.z_basin_region)
     
     for n, i in enumerate(config.imt_list): # Iterate through imt_list
         matrix_medians=np.zeros((len(config.gmpes_list), (len(mag_list)*int((
@@ -689,7 +693,7 @@ def get_colors(custom_color_flag, custom_color_list):
     colors = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
               'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', '0.5']
     
-    if custom_color_flag == 'True':
+    if custom_color_flag is True:
         colors = custom_color_list
         
     return colors

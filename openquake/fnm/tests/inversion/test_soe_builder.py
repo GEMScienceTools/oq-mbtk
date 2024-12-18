@@ -92,20 +92,19 @@ def test_get_mag_counts():
     assert mag_counts == {6.0: 2, 7.0: 1, 6.5: 1}
 
 
-@unittest.skip("Not sure of correct rates")
 def test_rel_gr_mfd_rates():
     rel_rates = rel_gr_mfd_rates([6.0, 6.5, 7.0], b=1.0)
     _rel_rates = {
         6.0: 1.0,
-        6.5: 0.0038451338418645682,
-        7.0: 0.09999999999999999,
+        6.5: 0.31622776601683794,
+        7.0: 0.1,
     }
 
     for mag, rate in rel_rates.items():
         assert np.isclose(rate, _rel_rates[mag])
 
 
-@unittest.skip("Not sure of correct rates")
+#@unittest.skip("Not sure of correct rates")
 def test_make_rel_gr_mfd_eqns():
     lhs, rhs, err = make_rel_gr_mfd_eqns(simple_test_rups, b=1.0)
 
@@ -123,7 +122,7 @@ def test_make_rel_gr_mfd_eqns():
     np.testing.assert_array_almost_equal(rhs, np.array([0.0, 0.0]))
 
 
-@unittest.skip("Not sure of correct rates")
+#@unittest.skip("Not sure of correct rates")
 def test_and_solve_slip_rate_and_rel_gr_eqns(inversion_tol=1e-10):
     lhs, rhs, err = make_slip_rate_eqns(simple_test_rups, simple_test_faults)
     lhs2, rhs2, err = make_rel_gr_mfd_eqns(simple_test_rups, b=1.0)
@@ -154,6 +153,24 @@ def test_make_abs_mfd_eqns_nonnormalized():
     )
 
     rhs_ = np.array([8.52639416e-04, 2.69628258e-04, 8.52639416e-05])
+
+    np.testing.assert_array_almost_equal(lhs, lhs_)
+    np.testing.assert_array_almost_equal(rhs, rhs_)
+
+
+def test_make_abs_fault_mfd_eqns_nonnormalized_cumulative():
+    mfd = hz.mfd.TruncatedGRMFD(5.0, 8.0, 0.1, 3.61759073, 1.0)
+
+    lhs, rhs, err = make_abs_mfd_eqns(
+        simple_test_rups, mfd, normalize=False, cumulative=True
+    )
+
+    lhs_ = np.array(
+        [[1.0, 1.0, 0.0, 0.0], [1.0, 1.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]
+    )
+
+    #rhs_ = np.array([1.20753162e-03, 3.54892200e-04, 8.52639416e-05])
+    rhs_ = np.array([0.00410418, 0.00126951, 0.00037311])
 
     np.testing.assert_array_almost_equal(lhs, lhs_)
     np.testing.assert_array_almost_equal(rhs, rhs_)
