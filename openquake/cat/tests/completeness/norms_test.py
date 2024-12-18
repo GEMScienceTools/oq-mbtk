@@ -97,6 +97,8 @@ class NormBTest(unittest.TestCase):
                                                      
         norm = get_norm_optimize(self.cat, aval, bval, self.compl, cmag, n_obs, t_per, last_year)
         print(f'{norm:.5e}')
+        self.assertAlmostEqual(norm, 5.53957e-02, msg='rmag_rate', places=4)
+
 
     def test_poisson(self):
 
