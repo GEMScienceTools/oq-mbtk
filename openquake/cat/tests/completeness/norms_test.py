@@ -95,7 +95,7 @@ class NormBTest(unittest.TestCase):
         cmag, t_per, n_obs = get_completeness_counts(self.cat, self.compl,
                                                      mbinw)
                                                      
-        norm = get_norm_optimize(self.cat, aval, bval, self.compl,binw, cmag, n_obs, t_per, last_year)
+        norm = get_norm_optimize(self.cat, aval, bval, self.compl, cmag, n_obs, t_per, last_year)
         print(f'{norm:.5e}')
 
     def test_poisson(self):
