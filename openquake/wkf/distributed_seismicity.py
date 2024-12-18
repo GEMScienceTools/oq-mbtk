@@ -84,7 +84,6 @@ def get_bounding_box(sfc):
         upper right corners of the bounding box.
     """
 
-    #breakpoint()
     # This provides the convex hull of the surface projection
     coo = np.array(src.polygon.coords)
     return [min(coo[:, 0]), min(coo[:, 1]), max(coo[:, 0]), max(coo[:, 1])]
