@@ -177,8 +177,8 @@ def check_criterion(criterion, rate, previous_norm, tvars):
 
     elif criterion == 'optimize':
         tmp_rate = -1 
-        norm = get_norm_optimize(tcat, aval, bval, ctab, binw, cmag, n_obs, t_per, 
-                                 last_year, info=False)
+        norm = get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year,
+                                 info=False)
 
     elif criterion == 'optimize_a':
         tmp_rate = -1
