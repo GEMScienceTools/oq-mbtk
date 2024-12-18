@@ -62,7 +62,31 @@ from openquake.fnm.inversion.utils import (
 
 from openquake.fnm.all_together_now import build_fault_network
 
+from openquake.fnm.tests.inversion.simple_test_data import (
+    rup_A,
+    rup_B,
+    rup_C,
+    rup_D,
+    f1,
+    f2,
+    simple_test_rups,
+    simple_test_faults,
+    simple_test_fault_adjacence,
+)
+
 HERE = pathlib.Path(__file__).parent.absolute()
+
+
+def test_get_mag_counts():
+    rups = [rup_A, rup_B, rup_C, rup_D]
+    mag_counts_default = get_mag_counts(rups)
+    assert mag_counts_default == {6.0: 2, 6.5: 1, 7.0: 1}
+
+    mag_counts_incremental = get_mag_counts(rups, incremental=True)
+    assert mag_counts_incremental == {6.0: 2, 6.5: 1, 7.0: 1}
+
+    mag_counts_cumulative = get_mag_counts(rups, cumulative=True)
+    assert mag_counts_cumulative == {6.0: 2, 6.5: 3, 7.0: 4}
 
 
 class Test3Faults(unittest.TestCase):

@@ -60,7 +60,7 @@ class Configurations(object):
         self.Z25 = config_file['site_properties']['Z25']
         up_or_down_dip = config_file['site_properties']['up_or_down_dip']
         self.up_or_down_dip = float(up_or_down_dip)
-        self.region = config_file['site_properties']['region']
+        self.z_basin_region = config_file['site_properties']['z_basin_region']
         
         # Get rupture params
         self.trt = config_file['source_properties']['trt']
@@ -131,10 +131,6 @@ def get_gmpes(config_file):
     for key in config['models']:
         value = get_model(key, config['models'])
         gmpe_list.append(value.strip())
-
-    # Check number of GMPEs matches number of GMPE labels
-    if len(gmpe_list) != len(gmpe_labels):
-        raise ValueError("Number of labels must match number of GMPEs.")
 
     # Get the baseline GMPE used to compute ratios of GMPEs with if required
     if 'ratios_baseline_gmm' in config_file.keys():
@@ -311,6 +307,9 @@ def plot_cluster(filename, output_directory):
     """ 
     config = Configurations(filename)
     
+    if len(config.gmpes_list) != len(config.gmpe_labels):
+        raise ValueError("Number of labels must match number of GMPEs.")
+
     if len(config.gmpes_list) < 2:
         raise ValueError("Cannot perform clustering for a single GMPE.")   
 
@@ -344,6 +343,9 @@ def plot_sammons(filename, output_directory):
         plotting methods.
     """ 
     config = Configurations(filename)
+
+    if len(config.gmpes_list) != len(config.gmpe_labels):
+        raise ValueError("Number of labels must match number of GMPEs.")
     
     if len(config.gmpes_list) < 2:
         raise ValueError("Cannot perform Sammons Mapping for a single GMPE.")
@@ -379,6 +381,9 @@ def plot_euclidean(filename, output_directory):
         plotting methods.    
     """ 
     config = Configurations(filename)
+    
+    if len(config.gmpes_list) != len(config.gmpe_labels):
+        raise ValueError("Number of labels must match number of GMPEs.")
     
     if len(config.gmpes_list) < 2:
         raise ValueError(

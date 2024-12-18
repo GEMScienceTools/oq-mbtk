@@ -34,7 +34,7 @@ base = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
 TARGET_VS30 = 800
-TARGET_REGION = 'Global'
+TARGET_Z_BASIN_REGION = 'Global'
 TARGET_TRELLIS_DEPTHS = [20, 25, 30]
 TARGET_RMIN = 0
 TARGET_RMAX = 300
@@ -90,7 +90,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.Vs30, TARGET_VS30)
 
         # Check for target region
-        self.assertEqual(config.region, TARGET_REGION)
+        self.assertEqual(config.z_basin_region, TARGET_Z_BASIN_REGION)
 
         # Check for target depths (other functions use arrays from these
         # depths)

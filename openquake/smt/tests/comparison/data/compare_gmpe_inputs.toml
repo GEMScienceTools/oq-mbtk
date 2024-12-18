@@ -15,7 +15,7 @@ vs30 = 800
 Z1 = -999
 Z25 = -999
 up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-region = 'Global' # region specific basin effects
+z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
 
 [source_properties] # Characterise EQ as finite rupture
 trt = 'ASCR' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
@@ -57,5 +57,5 @@ lt_weight_gmc2_plot_lt_only = 0.5
 
 
 [custom_colors]
-custom_colors_flag = 'False' #By default set to "False" (set to "True" for custom colours)
+custom_colors_flag = false # Set to true for custom colours
 custom_colors_list = ['lime','dodgerblue','gold','0.8']

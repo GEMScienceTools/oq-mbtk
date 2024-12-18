@@ -15,8 +15,8 @@ Nstd = 1 # num. of std. dev. to sample sigma for in median prediction (0, 1, 2 o
 vs30 = 800
 Z1 = -999
 Z25 = -999
-up_or_down_dip = 0 # 1 = up-dip, 0 = down-dip
-region = 'Global' # region specific basin effects
+up_or_down_dip = 0 # 1 = up-dip, 0 = down-dist_type
+z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
 
 # Characterise earthquake for the region of interest (note in this case we are using information in the observed spectra csv, so this information is overwritten)
 [source_properties]
