@@ -63,14 +63,6 @@ from openquake.hazardlib.pmf import PMF
 
 PLOTTING = False
 
-DEFAULT = SourceConverter(
-        investigation_time=1.0,
-        rupture_mesh_spacing=2.0,
-        complex_fault_mesh_spacing=5.0,
-        width_of_mfd_bin=0.1,
-        area_source_discretization=5.0,
-    )
-
 
 def get_mfd_moment(mfd):
     return np.sum(
@@ -92,7 +84,7 @@ def get_bounding_box(sfc):
         upper right corners of the bounding box.
     """
 
-    breakpoint()
+    #breakpoint()
     # This provides the convex hull of the surface projection
     coo = np.array(src.polygon.coords)
     return [min(coo[:, 0]), min(coo[:, 1]), max(coo[:, 0]), max(coo[:, 1])]
@@ -213,7 +205,7 @@ def explode(srcs, check_moment_rates=True):
             if check_moment_rates:
                 src_moment = get_mfd_moment(src.mfd)
                 nsrc_moment = get_mfd_moment(nsrc.mfd)
-                #np.testing.assert_almost_equal(src_moment * wei, nsrc_moment)
+                np.testing.assert_allclose(src_moment * wei, nsrc_moment, rtol=1e-1)
 
             exploded_srcs.append(nsrc)
 
@@ -226,8 +218,11 @@ def remove_buffer_around_faults(
     out_path: str,
     dst: float,
     threshold_mag: float = 6.5,
-    use: str = '', 
-    source_conv = DEFAULT
+    use: str = '',
+    rupture_mesh_spacing = 5.0,
+    complex_fault_mesh_spacing = 5.0,
+    area_source_discretization = 5.0, 
+    PLOTTING=False
 ):
     """
     Remove the seismicity above a magnitude threshold for all the point
@@ -241,17 +236,10 @@ def remove_buffer_around_faults(
     :param out_path:
         The path where to write the output .xml file
     :param dst:
+        The distance in km of the buffer
+    :param dst:
         The threshold distance used to separate seismicity on the fault and
         in the distributed seismicity sources
-     :param threshold_mag:
-     	the magnitude to cut at faults (ie if threshold_mag = 6
-     	events M<6 are kept around faults)
-     :param use:
-     	optional list of sources to apply this to
-     :param source_conv:
-     	An instance of the class
-        :class:`openquake.hazardlib.sourceconverter.SourceConverter`
-     	
     :returns:
         A .xml file with the ajusted point sources
     """
@@ -262,10 +250,16 @@ def remove_buffer_around_faults(
 
     # Create a source converter
     binw = 0.1
+    sourceconv = SourceConverter(
+        investigation_time=1.0,
+        rupture_mesh_spacing=rupture_mesh_spacing,
+        complex_fault_mesh_spacing=complex_fault_mesh_spacing,
+        width_of_mfd_bin=binw,
+        area_source_discretization=area_source_discretization,
+    )
     
-
     # Get the surfaces representing the faults
-    faults = _get_fault_surfaces(fname, source_conv)
+    faults = _get_fault_surfaces(fname, sourceconv)
 
     # Process the point sources in the distributed seismicity model
     for point_fname in glob.glob(path_point_sources):
@@ -283,8 +277,7 @@ def remove_buffer_around_faults(
             continue
 
         # Read the file content
-        tssm = to_python(point_fname, source_conv)
-        name = tssm.name
+        tssm = to_python(point_fname, sourceconv)
 
         # Get the point sources used to model distributed seismicity
         wsrc = _get_point_sources(tssm)
@@ -373,11 +366,7 @@ def remove_buffer_around_faults(
             plt.show()
 
         # Create the multi-point source
-        tmp = pathlib.Path(point_fname)
-        pt_source_name = f"src_points_{tmp.stem.split('_')[-1]}"
-        #pt_source_name = f"{tmp}_pnts"
-        print(pt_source_name)
-        tmpsrc = from_list_ps_to_multipoint(pnt_srcs, pt_source_name)
+        tmpsrc = from_list_ps_to_multipoint(pnt_srcs, 'pnts')
 
         # Save the multipoint source to a nrml file
         tmp = pathlib.Path(point_fname)
