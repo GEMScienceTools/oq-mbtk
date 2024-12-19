@@ -98,8 +98,7 @@ def get_completeness_matrix(tcat, ctab, mbinw, ybinw):
 
     return oin, out, cmags, cyeas
 
-def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year,
-                      info=False):
+def get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year, info=False):
     """
     :param aval: 
         GR a-value
@@ -341,7 +340,8 @@ def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, bin
     mvals = np.arange(ref_mag, mmax+binw/10, binw)
     rates = list(10**(agr-bgr * mvals[:-1]) - 10**(agr - bgr * mvals[1:]))
 
-    pocc = rates / sum(rates)
+    
+    #pocc = rates / sum(rates)
 
     #prob = 1
     # If using log (and not multiplicative) set initial prob to 0
@@ -429,7 +429,7 @@ def get_norm_optimize_poisson(cat, agr, bgr, compl, last_year, mmax=None, binw=0
 
     rates = list(10**(agr-bgr * mvals[:-1]) - 10**(agr - bgr * mvals[1:]))
 
-    pocc = rates / sum(rates)
+    #pocc = rates / sum(rates)
 
     # Using log (and not multiplicative) set initial prob to 0
     prob = 0
@@ -495,7 +495,7 @@ def get_norm_optimize_d(cat, agr, bgr, compl, last_year, mmax=None, binw=0.1):
 
     rates = list(10**(agr-bgr * mvals[:-1]) - 10**(agr - bgr * mvals[1:]))
     #print(rates)
-    pocc = rates / sum(rates)
+    #pocc = rates / sum(rates)
 
     # Using log (and not multiplicative) set initial prob to 0
     prob = 0

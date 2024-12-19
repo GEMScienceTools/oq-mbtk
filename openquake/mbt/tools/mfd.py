@@ -284,6 +284,9 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
         elif isinstance(mfd, YoungsCoppersmith1985MFD):
             occ = np.array(mfd.get_annual_occurrence_rates())
             return EEvenlyDiscretizedMFD(occ[0, 0], mfd.bin_width, occ[:, 1])
+        elif isinstance(mfd, ArbitraryMFD):
+            occ = np.array(mfd.get_annual_occurrence_rates())
+            return EEvenlyDiscretizedMFD(occ[0, 0], bin_width, occ[:, 1])
         else:
             raise ValueError('Unsupported MFD type')
 
