@@ -440,7 +440,7 @@ class EEvenlyDiscretizedMFD(EvenlyDiscretizedMFD):
                     print('Adding mag:', mag, occ)
 
                 tmp_mag = mags[-1] + bin_width
-                while tmp_mag < mag - 0.1 * `bin_width:
+                while tmp_mag < mag - 0.1 * bin_width:
                     tmp_mag += bin_width
                     delta += 1
                     if set([tmp_mag]) not in magset:
