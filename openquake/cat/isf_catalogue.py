@@ -1205,12 +1205,12 @@ class ISFCatalogue(object):
                 else:
                     print('Location:', orig.location.depthSolution)
                     raise ValueError("Unsupported case")
-
+                    
                 if (orig.location.depth == 'None' or
                         orig.location.depth == '' or
                         orig.location.depth is None):
                     depth = np.NaN
-                elif orig.location.depth < -0.01:
+                elif orig.location.depth <= 0.0:
                     depth = orig.location.depth
                     print('Depth:', orig.location.depth)
                     fmt = "Warning, depth <= 0.0 (id:{:s})"
