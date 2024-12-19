@@ -177,8 +177,8 @@ def check_criterion(criterion, rate, previous_norm, tvars):
 
     elif criterion == 'optimize':
         tmp_rate = -1 
-        norm = get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year,
-                                 info=False)
+        norm = get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, 
+                                 last_year, info=False)
 
     elif criterion == 'optimize_a':
         tmp_rate = -1
@@ -202,7 +202,7 @@ def check_criterion(criterion, rate, previous_norm, tvars):
 
     elif criterion == 'poisson':
         tmp_rate = -1        
-        norm = get_norm_optimize_c(tcat, aval, bval, ctab, last_year, ref_upp_mag, binw)
+        norm = get_norm_optimize_c(tcat, aval, bval, ctab, last_year, ref_mag, ref_upp_mag, binw)
 
     if norm is None or np.isnan(norm):
         return False, -1, previous_norm
