@@ -183,7 +183,7 @@ def _compl_analysis(decdir, compdir, compl_toml, labels, fout, fout_figs):
     # load configs
     config = toml.load(compl_toml)
 
-    ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(config)
+    ms, yrs, bw, r_m, mag_low, r_up_m, bmin, bmax, crit = read_compl_params(config)
     compl_tables, mags_chk, years_chk = read_compl_data(compdir)
 
     # Fixing sorting of years
@@ -196,7 +196,7 @@ def _compl_analysis(decdir, compdir, compl_toml, labels, fout, fout_figs):
         fout_figs_lab = os.path.join(fout_figs, lab, 'mfds')
         for ii, cat in enumerate(dec_catvs):
             try:
-                res = _completeness_analysis(cat, yrs, ms, bw, r_m,
+                res = _completeness_analysis(cat, yrs, ms, bw, r_m, mag_low,
                                       r_up_m, [bmin, bmax], crit,
                                       compl_tables, f'{ii}',
                                       folder_out_figs=fout_figs_lab,
