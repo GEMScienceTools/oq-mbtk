@@ -67,8 +67,6 @@ def get_params_points(ssm, mmin = 0, total_for_zone = False):
 	total_rate_above_zero = 0
 	data = []
 
-	import pdb 
-	#pdb.set_trace()
 	for ps in ssm[0]:
 		agr = ps.mfd.a_val
 		bgr = ps.mfd.b_val
@@ -135,6 +133,7 @@ def plot_sources(folder_name, region, mmin, fig_folder,
 		poly["y"] = poly.representative_point().y
 
 	for fname in sorted(path.glob('src_*.xml')):
+		print(fname)
 		ssm = to_python(fname, sconv)
 		fig_a = pygmt.Figure()
 		fig_a.basemap(region=region, projection="M15c", frame=True)
@@ -150,6 +149,7 @@ def plot_sources(folder_name, region, mmin, fig_folder,
 		if pointsource == False:
 			data = get_params(ssm, mmin=mmin, total_for_zone = False)
 			for grp in ssm:
+				print(grp)
 				for src in grp:
 					name = src.name	
 		else:

@@ -10,7 +10,6 @@ import numpy as np
 from glob import glob
 from openquake.wkf.utils import create_folder
 
-import importlib
 from openquake.baselib import sap
 from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.hazardlib.source import PointSource, MultiPointSource
@@ -137,7 +136,7 @@ def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
     write_source_model(fname_out, [srcmp], 'zone_{:s}'.format(src_id))
 
 
-def write_as_set_point_sources(df, model, src_id, module, subzones,
+def write_as_set_point_sources(df, model, src_id, subzones,
                                model_subz, mmin, bwid, rms, tom, folder_out):
 
     srcd = model['sources'][src_id]
@@ -219,7 +218,6 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
         model_subz = toml.load(fname_subzone_config)
 
     # This is used to instantiate the MSR
-    module = importlib.import_module('openquake.hazardlib.scalerel')
     msr_dict = get_available_magnitude_scalerel
 
     # Parsing config
