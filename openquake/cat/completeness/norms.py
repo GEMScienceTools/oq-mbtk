@@ -340,10 +340,6 @@ def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, bin
     mvals = np.arange(ref_mag, mmax+binw/10, binw)
     rates = list(10**(agr-bgr * mvals[:-1]) - 10**(agr - bgr * mvals[1:]))
 
-    
-    #pocc = rates / sum(rates)
-
-    #prob = 1
     # If using log (and not multiplicative) set initial prob to 0
     prob = 0
     first_year = min(yeas)
@@ -356,8 +352,6 @@ def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, bin
 
         idxco = get_idx_compl(mag, compl)
 
-
-        #print("total events in bin: ", tot_n)
         # if this magnitude bin is < mc in this window, nocc will be zero
         # Rather this disgards events outwith the completeness window, as it should!
         if idxco is None:
@@ -375,19 +369,12 @@ def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, bin
             print("how did this get here?", compl[idxco, 0], mag )
 
             nocc_in = 0
-        #print(nocc_in)
 
         delta = (last_year - compl[idxco, 0])
         # events in bin before completeness
         idx = ((mags >= mag) & (mags < mvals[imag+1]) &
                (yeas < compl[idxco, 0]))
-        #idx2 = ((mags >= mag) & (mags < mvals[imag+1]) & (yeas > (compl[idxco, 0] - delta)))
-        #idx = ((mags >= mag) & (mags < mvals[imag+1]) & (yeas < compl[idxco, 0]) & (yeas > (compl[idxco, 0] - delta)))
         nocc_out = sum(idx) 
-        #print("nocc_in: ", nocc_in, "nocc_out: ", nocc_out, "total: ", nocc_in + nocc_out, "total events in bin: ", tot_n)
-
-        #if mag < compl[idxco, 0]:
-        #    nocc_out = 0
 
         # also is this right? should yeas[idx] extend to years before compl[idxco, 0] too?
         if np.any(idx):
@@ -405,9 +392,6 @@ def get_norm_optimize_c(cat, agr, bgr, compl, last_year, ref_mag, mmax=None, bin
 
         std_in = poisson.std(dur_compl*rates[imag])
 
-        # cdf = poisson.cdf(nocc_out, delta*rates[imag])
-        # std_out = poisson.std(dur_out_compl*rates[imag])
-        #pmf_out = poisson.pmf(nocc_out, delta*rates[imag])
         pmf_out = poiss_prob_int_time(rates[imag], nocc_out, dur_out_compl, log_out = True)
 
         prob += pmf +  (np.log(1.0) - pmf_out)
@@ -429,8 +413,6 @@ def get_norm_optimize_poisson(cat, agr, bgr, compl, last_year, mmax=None, binw=0
 
     rates = list(10**(agr-bgr * mvals[:-1]) - 10**(agr - bgr * mvals[1:]))
 
-    #pocc = rates / sum(rates)
-
     # Using log (and not multiplicative) set initial prob to 0
     prob = 0
     first_year = min(yeas)
@@ -446,15 +428,10 @@ def get_norm_optimize_poisson(cat, agr, bgr, compl, last_year, mmax=None, binw=0
         
         else:
             nocc_in = 0
-        #print(nocc_in)
 
         delta = (last_year - compl[idxco, 0])
-        #idx = ((mags >= mag) & (mags < mvals[imag+1]) &
-        #       (yeas < compl[idxco, 0]))
-               #& (yeas > (compl[idxco, 0] - delta)))
         idx = ((mags >= mag) & (mags < mvals[imag+1]) & (yeas < compl[idxco, 0]) & (yeas > (compl[idxco, 0] - delta)))
         nocc_out = sum(idx)
-        #print(nocc_out)
 
         if mag < compl[idxco, 0]:
             nocc_out = 0
@@ -474,9 +451,6 @@ def get_norm_optimize_poisson(cat, agr, bgr, compl, last_year, mmax=None, binw=0
         pmf = poiss_prob_int_time(rates[imag], nocc_in, dur_compl, log_out = True)
 
         std_in = poisson.std(dur_compl*rates[imag])
-        # cdf = poisson.cdf(nocc_out, delta*rates[imag])
-        # std_out = poisson.std(dur_out_compl*rates[imag])
-        # pmf_out = poisson.pmf(nocc_out, delta*rates[imag])
         pmf_out = poiss_prob_int_time(rates[imag], nocc_out, dur_out_compl, log_out = True)
 
         prob += pmf +  (np.log(1.0) - pmf_out)
@@ -494,8 +468,6 @@ def get_norm_optimize_d(cat, agr, bgr, compl, last_year, mmax=None, binw=0.1):
     mvals = np.arange(min(compl[:, 1]), mmax+binw/10, binw)
 
     rates = list(10**(agr-bgr * mvals[:-1]) - 10**(agr - bgr * mvals[1:]))
-    #print(rates)
-    #pocc = rates / sum(rates)
 
     # Using log (and not multiplicative) set initial prob to 0
     prob = 0
