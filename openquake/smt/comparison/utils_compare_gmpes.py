@@ -900,6 +900,24 @@ def get_imtl_unit_for_trellis_store(i):
 
 
 ### Spectra utils
+def _update_period_spacing(period, threshold, spacing, max_period):
+    """
+    Update period spacing based on maximum period provided.
+    """
+    period = pd.Series(period)
+    if max(period) > threshold:
+        for SA in range(0, len(period)):
+            if period[SA] > threshold:
+                period = period.drop(SA)
+        periods_to_re_add = pd.Series(np.arange(1, max_period, spacing))
+        period_df = pd.DataFrame({'periods': period,
+                                  'periods_to_re_add': periods_to_re_add,
+                                  'max_period': max_period})
+        return period_df.melt().value.dropna().unique()
+    else:
+        return period
+
+
 def _get_period_values_for_spectra_plots(max_period):
     """
     Get list of periods based on maximum period specified in comparison .toml
@@ -910,37 +928,16 @@ def _get_period_values_for_spectra_plots(max_period):
     # Set initial periods with constant spacing of 0.1
     period = list(np.round(np.arange(0, max_period, 0.1), 1))
     period.append(max_period)
-    # if period extends beyond 1 s reduce interval to 0.2 s
-    period = pd.Series(period)
-    if max(period) > 1:
-        for SA in range(0,len(period)):
-            if period[SA] > 1:
-                period=period.drop(SA)
-        periods_to_re_add = pd.Series(np.arange(1, max_period, 0.2))
-        period_df = pd.DataFrame({'periods': period, 'periods_to_re_add':
-                                  periods_to_re_add, 'max_period': max_period})
-        period = period_df.melt().value.dropna().unique()
-    # if period extends beyond 2 s then reduce interval to 0.5 s
-    period = pd.Series(period)
-    if max(period) > 2:
-        for SA in range(0, len(period)):
-            if period[SA] > 2:
-                period=period.drop(SA)
-        periods_to_re_add = pd.Series(np.arange(2, max_period, 0.5))
-        period_df = pd.DataFrame({'periods':period,'periods_to_re_add':
-                                  periods_to_re_add,'max_period': max_period})
-        period = period_df.melt().value.dropna().unique()
-    # if period extends beyond 5 s then reduce interval to 1 s
-    period = pd.Series(period)
-    if max(period) > 5:
-        for SA in range(0, len(period)):
-            if period[SA] > 2:
-                period=period.drop(SA)
-        periods_to_re_add = pd.Series(np.arange(5, max_period, 1))
-        period_df = pd.DataFrame({'periods': period, 'periods_to_re_add':
-                                  periods_to_re_add, 'max_period': max_period})
-        period = period_df.melt().value.dropna().unique()
+
+    # If period extends beyond 1 s reduce interval to 0.2 s
+    period = _update_period_spacing(period, 1, 0.2, max_period)
     
+    # If period extends beyond 2 s then reduce interval to 0.5 s
+    period = _update_period_spacing(period, 2, 0.5, max_period)
+    
+    # If period extends beyond 5 s then reduce interval to 1 s
+    period = _update_period_spacing(period, 5, 1.0, max_period)
+
     return period
 
 
@@ -959,7 +956,7 @@ def _get_imts(max_period):
         if imt == 0:
             SA_string = 'PGA'
         else:
-            SA_string = base_SA_string.replace('_',str(period[imt]))
+            SA_string = base_SA_string.replace('_', str(period[imt]))
         imt_list.append(SA_string)
     for imt in range(0,len(imt_list)):
         imt_list[imt] = from_string(str(imt_list[imt]))
