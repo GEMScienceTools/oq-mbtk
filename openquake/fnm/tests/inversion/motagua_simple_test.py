@@ -38,7 +38,10 @@ import matplotlib.pyplot as plt
 
 from openquake.hazardlib.sourcewriter import write_source_model
 
-# from openquake.fnm.exporter import make_multifault_source
+from openquake.fnm.exporter import (
+    make_multifault_source,
+    write_multifault_source,
+)
 from openquake.fnm.inversion.fermi_importer import read_rup_csv
 
 test_data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
@@ -109,12 +112,13 @@ def test_load_faults_and_do_inversion():
     rups_out = fault_network["rupture_df_keep"]
     rups_out["occurrence_rate"] = x_
 
-    # mfs = make_multifault_source(
-    #    rup_fault_data["fault_system"],
-    #    rups_out,
-    #    investigation_time=1.0,
-    #    infer_occur_rates=True,
-    # )
+    mfs = make_multifault_source(
+        fault_network,
+        ruptures_for_output='filtered',
+        rupture_occurrence_rates=x_,
+    )
+
+    # write_multifault_source("/Users/itchy/Desktop/tmp/motagua_multifaults", mfs)
 
     # if not os.path.exists(os.path.join(test_data_dir, "ssm")):
     #    os.mkdir(os.path.join(test_data_dir, "ssm"))
@@ -166,5 +170,5 @@ def test_load_faults_and_do_inversion():
 
     plt.show()
 
-    # return fault_network
-    return
+    return mfs
+    #return

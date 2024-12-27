@@ -37,9 +37,17 @@ import numpy as np
 import pandas as pd
 import pyproj as pj
 import geopandas as gpd
+import scipy.sparse as ssp
 
 from shapely.ops import transform
 from shapely.geometry import Point, LineString
+
+try:
+    from ipdb import set_trace
+
+    breakpoint = set_trace
+except ImportError:
+    breakpoint = breakpoint
 
 from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.mfd import (
@@ -157,9 +165,19 @@ def check_fault_in_poly(fault, polies, id_key='id'):
     return poly_membership
 
 
-def faults_in_polies(faults, polies, id_key='id'):
+def faults_in_polies(
+    faults,
+    polies,
+    id_key='id',
+    slip_rate_col='net_slip_rate',
+    slip_rate_err_col='net_slip_rate_err',
+):
     if isinstance(faults, pd.DataFrame):
-        faults_ = subsection_df_to_fault_dicts(faults)
+        faults_ = subsection_df_to_fault_dicts(
+            faults,
+            slip_rate_col=slip_rate_col,
+            slip_rate_err_col=slip_rate_err_col,
+        )
     else:
         faults_ = faults
     traces_proj, polies_proj = project_faults_and_polies(faults_, polies)
@@ -173,10 +191,10 @@ def faults_in_polies(faults, polies, id_key='id'):
     return fault_poly_membership
 
 
-def get_rup_poly_fracs(rup, fpm):
+def get_rup_poly_fracs(rup, fpm, fault_key='faults'):
     rpf = AccumDict()
 
-    for sec in rup["faults"]:
+    for sec in rup[fault_key]:
         polies = fpm[sec]
         if len(polies) > 0:
             poly_fracs = {p: 1 / len(polies) for p in polies}
@@ -243,10 +261,11 @@ def get_rupture_regions(
     subsection_df: pd.DataFrame,
     seis_regions: gpd.GeoDataFrame,
     id_key='id',
+    fault_key='faults',
 ):
     fault_poly_membership = faults_in_polies(subsection_df, seis_regions)
     rup_region_fracs = [
-        get_rup_poly_fracs(r, fault_poly_membership)
+        get_rup_poly_fracs(r, fault_poly_membership, fault_key=fault_key)
         for i, r in rup_df.iterrows()
     ]
 
@@ -259,6 +278,8 @@ def get_rupture_regions(
             if i in rup:
                 regional_rup_fractions[i]['rups'].append(j)
                 regional_rup_fractions[i]['fracs'].append(rup[i])
+
+    return regional_rup_fractions
 
 
 def _nearest(val, vals):
@@ -321,7 +342,7 @@ def make_fault_mfd(
     return mfd
 
 
-def get_mag_counts(rups, key="M"):
+def get_mag_counts(rups, key="M", cumulative=False):
     mag_counts = {}
     for rup in rups:
         if rup[key] in mag_counts:
@@ -329,10 +350,13 @@ def get_mag_counts(rups, key="M"):
         else:
             mag_counts[rup[key]] = 1
 
+    if cumulative is True:
+        mag_counts = make_cumulative(mag_counts)
+
     return mag_counts
 
 
-def get_mfd_occurrence_rates(mfd, mag_decimals=1):
+def get_mfd_occurrence_rates(mfd, mag_decimals=1, cumulative=False):
     if hasattr(mfd, "get_annual_occurrence_rates"):
         mfd_occ_rates = {
             np.round(r[0], mag_decimals): r[1]
@@ -345,7 +369,22 @@ def get_mfd_occurrence_rates(mfd, mag_decimals=1):
     else:
         raise ValueError("mfd must be a dictionary or an MFD object")
 
+    if cumulative is True:
+        mfd_occ_rates = make_cumulative(mfd_occ_rates)
+
     return mfd_occ_rates
+
+
+def make_cumulative(dic):
+    rev_keys = sorted(dic.keys(), reverse=True)
+    new_dic = {}
+    current = 0
+    for k in rev_keys:
+        current += dic[k]
+        new_dic[k] = current
+
+    new_dic = {k: new_dic[k] for k in dic.keys()}
+    return new_dic
 
 
 def set_single_fault_rupture_rates_by_mfd(
