@@ -61,6 +61,7 @@ class Configurations(object):
         up_or_down_dip = config_file['site_properties']['up_or_down_dip']
         self.up_or_down_dip = float(up_or_down_dip)
         self.z_basin_region = config_file['site_properties']['z_basin_region']
+        self.volc_ba = config_file['site_properties']['volc_back_arc']
         
         # Get rupture params
         self.trt = config_file['source_properties']['trt']

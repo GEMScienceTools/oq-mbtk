@@ -105,7 +105,8 @@ def plot_trellis_util(config, output_directory):
                                                          config.eshm20_region,
                                                          config.dist_type,
                                                          config.trt,
-                                                         config.up_or_down_dip)
+                                                         config.up_or_down_dip,
+                                                         config.volc_ba)
 
                 # Get mean, sigma components, mean plus/minus sigma
                 mean = mean[0][0]
@@ -241,7 +242,8 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                                                            500, 0.1, imt, ztor_m,
                                                            config.eshm20_region,
                                                            dist_type, config.trt,
-                                                           config.up_or_down_dip) 
+                                                           config.up_or_down_dip,
+                                                           config.volc_ba) 
                     
                     # Interpolate for distances and store
                     mu = mu[0][0]
@@ -358,7 +360,8 @@ def plot_ratios_util(config, output_directory):
                                  strike_g, dip_g, config.rake,
                                  config.Vs30, Z1, Z25, config.maxR, 1, i, ztor_m,
                                  config.eshm20_region, config.dist_type,
-                                 config.trt, config.up_or_down_dip)
+                                 config.trt, config.up_or_down_dip,
+                                 config.volc_ba)
             b_mean = results[0][0][0]
 
             # Now compute ratios for each GMM
@@ -373,7 +376,8 @@ def plot_ratios_util(config, output_directory):
                                      dip_g, config.rake, config.Vs30, Z1, Z25,
                                      config.maxR, 1, i, ztor_m,
                                      config.eshm20_region, config.dist_type,
-                                     config.trt, config.up_or_down_dip)
+                                     config.trt, config.up_or_down_dip,
+                                     config.volc_ba)
 
                 # Get mean and r_vals
                 mean = results[0][0][0]
@@ -447,7 +451,8 @@ def compute_matrix_gmpes(config, mtxs_type):
                                                          config.eshm20_region,
                                                          config.dist_type,
                                                          config.trt,
-                                                         config.up_or_down_dip) 
+                                                         config.up_or_down_dip,
+                                                         config.volc_ba) 
                 
                 # Get means further than minR
                 idx = np.argwhere(r_vals>=config.minR).flatten()
@@ -937,6 +942,8 @@ def _get_period_values_for_spectra_plots(max_period):
     
     # If period extends beyond 5 s then reduce interval to 1 s
     period = _update_period_spacing(period, 5, 1.0, max_period)
+
+    period = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1., 1.5, 2., 3, 4, 5])
 
     return period
 

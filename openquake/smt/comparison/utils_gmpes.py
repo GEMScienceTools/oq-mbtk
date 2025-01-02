@@ -107,14 +107,15 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
                                   azi, hdist, vdist, npoints)
 
     sites = []
-    keys = set(site_props.keys()) - set(['vs30', 'z1pt0', 'z2pt5'])
+    keys = set(site_props.keys()) - set(['vs30', 'z1pt0', 'z2pt5', 'z_sed'])
 
     if len(pointsn):
         lons = reversed(pointsn[0][0:])
         lats = reversed(pointsn[1][0:])
         for lon, lat in zip(lons, lats):
             site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
-                        z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
+                        z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'],
+                        z_sed=site_props['z_sed'])
             for key in list(keys):
                 setattr(site, key, site_props[key])
             sites.append(site)
@@ -122,7 +123,8 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
     if len(pointsp):
         for lon, lat in zip(pointsp[0], pointsp[1]):
             site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
-                        z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
+                        z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'],
+                        z_sed=site_props['z_sed'])
             for key in list(keys):
                 setattr(site, key, site_props[key])
             sites.append(site)
@@ -144,7 +146,8 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
 
 
 def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
-              step, imt, ztor, eshm20_region, dist_type, trt, up_or_down_dip):
+               step, imt, ztor, eshm20_region, dist_type, trt, up_or_down_dip,
+               volc_ba):
     """
     Compute the ground-motion intensities for the given context created here
     """
@@ -178,11 +181,14 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
 
     # Set site props
     if 'KothaEtAl2020ESHM20' in str(gmpe):
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
+        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': volc_ba,
                  'vs30measured': True, 'region': eshm20_region}
     else:
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
-                 'vs30measured': True}
+        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': volc_ba,
+                 'vs30measured': True, 'z_sed': 0.0} # z_sed is sediment
+                                                     # depth in USA 2023
+                                                     # model (only retained
+                                                     # here for dev purposes)
 
     # Check if site up-dip or down-dip of site
     if up_or_down_dip == float(1):
