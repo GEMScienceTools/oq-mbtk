@@ -1,0 +1,18 @@
+openquake.man.notebooks package
+===============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.man.notebooks.old_stuff
+
+Module contents
+---------------
+
+.. automodule:: openquake.man.notebooks
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,61 @@
+openquake.cat.tests package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.cat.tests.completeness
+
+Submodules
+----------
+
+openquake.cat.tests.check\_test module
+--------------------------------------
+
+.. automodule:: openquake.cat.tests.check_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.tests.hmg\_test module
+------------------------------------
+
+.. automodule:: openquake.cat.tests.hmg_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.tests.isf\_catalogue\_test module
+-----------------------------------------------
+
+.. automodule:: openquake.cat.tests.isf_catalogue_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.tests.merge\_test module
+--------------------------------------
+
+.. automodule:: openquake.cat.tests.merge_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.tests.purge\_test module
+--------------------------------------
+
+.. automodule:: openquake.cat.tests.purge_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.cat.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:
