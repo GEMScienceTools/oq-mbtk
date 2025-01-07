@@ -333,7 +333,6 @@ def occurence_table(path_oq_input, path_to_subcatalogues, minmag, minyear, maxye
 	time_span = maxyear - minyear
 
 	if len(src_ids) == 0:
-		src_ids = []
     	# if source ids are not specified, take them from names of files in the specified folder
 		dir_URL = Path(path_oq_input)
 		filename_list = [file.name for file in dir_URL.glob("*.xml")]
@@ -488,22 +487,3 @@ def compare_sources_plot(src1_fname, src2_fname, region, mmin, fig_folder,
 
 	out = os.path.join(fig_folder, plot_fname+'_rate_diff.png')
 	fig.savefig(out)
-	'''
-	path1 = pathlib.Path(src1_fname)
-	path2 = pathlib.Path(src2_fname)
-
-	if os.path.isdir(src1_fname):
-		assert os.path.isdir(path2) 
-
-		dataset1 = np.empty([1,5])
-		for fname in sorted(path.glob('src_*.xml')):
-			ssm = to_python(fname, sconv)
-        
-			if pointsource == False:
-				data = get_params(ssm, mmin=mmin, total_for_zone = False)
-				dataset = np.concatenate((dataset1, data))
-
-			else:
-				data = get_params_points(ssm, mmin=mmin, total_for_zone = False)
-				dataset1 = np.concatenate((dataset1, data))
-	'''
