@@ -943,8 +943,6 @@ def _get_period_values_for_spectra_plots(max_period):
     # If period extends beyond 5 s then reduce interval to 1 s
     period = _update_period_spacing(period, 5, 1.0, max_period)
 
-    period = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1., 1.5, 2., 3, 4, 5])
-
     return period
 
 
