@@ -51,18 +51,29 @@ def plot_mfd(mfd, errs=False, label=None, **kwargs):
     stds = np.sqrt(rates)
 
     cum_rates = np.cumsum(rates[::-1])[::-1]
-    cum_stds = np.cumsum(stds[::-1])[::-1]
+    rates_high = rates + stds
+    rates_low = rates - stds
+    rates_low[rates_low < 0] = 0
+
+    cum_std_high = np.cumsum(rates_high[::-1])[::-1]
+    cum_std_low = np.cumsum(rates_low[::-1])[::-1]
+
+    # cum_stds = np.cumsum(stds[::-1])[::-1]
+
+    # cum_std_high = cum_rates + cum_stds
+    # cum_std_low = cum_rates - cum_stds
+    # cum_std_low[cum_std_low < 0] = 0
+
+    plt.plot(mags, cum_rates, label=label, **kwargs)
 
     if errs:
-        plt.errorbar(
+        plt.fill_between(
             mags,
-            cum_rates,
-            yerr=cum_stds,
-            label=label,
+            cum_std_low,
+            cum_std_high,
+            alpha=0.5,
+            **kwargs,
         )
-
-    else:
-        plt.plot(mags, cum_rates, label=label, **kwargs)
 
     plt.yscale("log")
 
