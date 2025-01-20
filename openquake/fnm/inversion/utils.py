@@ -375,6 +375,13 @@ def get_mfd_occurrence_rates(mfd, mag_decimals=1, cumulative=False):
     return mfd_occ_rates
 
 
+def get_mfd_uncertainties(mfd, unc_type='pctile'):
+    rates = get_mfd_occurrence_rates(mfd)
+
+    if unc_type == 'std':
+        pass
+
+
 def make_cumulative(dic):
     rev_keys = sorted(dic.keys(), reverse=True)
     new_dic = {}
