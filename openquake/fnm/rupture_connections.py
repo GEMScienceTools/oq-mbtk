@@ -687,7 +687,7 @@ def intersection_pt(
         return pt_1, pt_2
 
 
-def find_intersection_angle(trace_1, trace_2):
+def find_intersection_angle(trace_1, trace_2, az_1=None, az_2=None):
     if not isinstance(trace_1, Line):
         tr1 = Line([Point(*coords) for coords in trace_1])
         tr2 = Line([Point(*coords) for coords in trace_2])
@@ -695,8 +695,10 @@ def find_intersection_angle(trace_1, trace_2):
         tr1 = trace_1
         tr2 = trace_2
 
-    az_1 = tr1.average_azimuth()
-    az_2 = tr2.average_azimuth()
+    if az_1 is None:
+        az_1 = tr1.average_azimuth()
+    if az_2 is None:
+        az_2 = tr2.average_azimuth()
 
     pt_1_x, pt_1_y = tr1[0].x, tr1[0].y
     pt_2_x, pt_2_y = tr2[0].x, tr2[0].y
@@ -740,7 +742,7 @@ def find_intersection_angle(trace_1, trace_2):
 
 
 def get_proximal_rup_angles(
-    sf_traces, binary_distance_matrix
+    sf_traces, binary_distance_matrix, verbose=False
 ) -> dict[tuple[int, int], tuple[float, float]]:
     """
     Get the rupture angles between proximal ruptures (i.e., those considered
@@ -754,8 +756,10 @@ def get_proximal_rup_angles(
     ----------
     sf_meshes : list of lists of Surfaces
         List of lists of fault surfaces.
-    binary_distance_matrix : np.ndarray
-        Binary adjacency matrix.
+    binary_distance_matrix : scipy.sparse.dok_matrix
+        Binary adjacency matrix in DOK format.
+    verbose : bool, optional
+        Whether to print progress information.
 
     Returns
     -------
@@ -764,15 +768,37 @@ def get_proximal_rup_angles(
         and the values are tuples of rupture angles in degrees.
     """
     if not isinstance(sf_traces[0], Line):
+        if verbose:
+            print(" getting traces from faults")
         sf_traces = [
             Line([Point(*coords) for coords in trace]) for trace in sf_traces
         ]
 
     rup_angles = {}
-    for i, trace_0 in enumerate(sf_traces):
-        for j, trace_1 in enumerate(sf_traces):
-            if binary_distance_matrix[i, j] == 1:
-                rup_angles[(i, j)] = find_intersection_angle(trace_0, trace_1)
+    n_faults = len(sf_traces)
+    pad_width = len(str(n_faults))
+
+    # Get the non-zero entries directly from the DOK matrix
+    nonzero_pairs = list(binary_distance_matrix.keys())
+    total_pairs = len(nonzero_pairs)
+
+    if verbose:
+        print(f" Processing {total_pairs} proximal fault pairs")
+
+    for idx, (i, j) in enumerate(nonzero_pairs, 1):
+        if verbose:
+            if idx < total_pairs:
+                print(
+                    f"  doing pair {str(idx).zfill(pad_width)} out of {total_pairs}",
+                    end="\r",
+                )
+            else:
+                print(f"  doing pair {idx} out of {total_pairs}")
+
+        trace_0 = sf_traces[i]
+        trace_1 = sf_traces[j]
+        rup_angles[(i, j)] = find_intersection_angle(trace_0, trace_1)
+
     return rup_angles
 
 

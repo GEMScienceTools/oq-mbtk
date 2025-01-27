@@ -25,7 +25,7 @@ from openquake.fnm.rupture_connections import (
     get_multifault_ruptures_numba,
     make_binary_adjacency_matrix,
     make_binary_adjacency_matrix_sparse,
-    filter_bin_adj_matrix_by_rupture_angle,
+    filter_bin_adj_matrix_by_rupture_overlap,
 )
 
 from openquake.fnm.rupture_filtering import (
@@ -62,7 +62,7 @@ default_settings = {
     'max_sf_rups_per_mf_rup': 10,
     'rupture_angle_threshold': 60.0,
     'filter_by_plausibility': True,
-    'filter_by_angle': True,
+    'filter_by_overlap': True,
     'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
     'skip_bad_faults': False,
     'shear_modulus': SHEAR_MODULUS,
@@ -254,9 +254,12 @@ def build_fault_network(
         + f" ({round(n_connections/n_possible_connections*100, 1)}%)"
     )
 
-    if settings['filter_by_angle']:
+    if settings.get('filter_by_angle'):
+        raise DeprecationWarning("Filtering by angle is deprecated.")
+
+    if settings['filter_by_overlap']:
         logging.info("  Filtering by rupture angle")
-        binary_adjacence_matrix = filter_bin_adj_matrix_by_rupture_angle(
+        binary_adjacence_matrix, _ = filter_bin_adj_matrix_by_rupture_overlap(
             fault_network['single_rup_df'],
             fault_network['subfaults'],
             binary_adjacence_matrix,
