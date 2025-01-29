@@ -82,18 +82,15 @@ class Configurations(object):
             'custom_colors_list']
 
         # One set of magnitudes for use in trellis plots
-        self.trellis_and_rs_mag_list = config_file['source_properties'][
-            'trellis_and_rs_mag_list']
-        for idx, mag in enumerate(self.trellis_and_rs_mag_list):
-                self.trellis_and_rs_mag_list[idx] = float(
-                    self.trellis_and_rs_mag_list[idx])
+        self.trellis_and_rs_mag_list = np.array(config_file['source_properties'][
+            'trellis_and_rs_mag_list'])
         
         # Depths per magnitude for trellis plots
-        self.trellis_and_rs_depth_list = config_file['source_properties'][
-            'trellis_and_rs_depths']
-        for idx, depth in enumerate(self.trellis_and_rs_depth_list):
-            self.trellis_and_rs_depth_list[idx] = float(
-                self.trellis_and_rs_depth_list[idx])
+        self.trellis_and_rs_depth_list = np.array(config_file['source_properties'][
+            'trellis_and_rs_depths'])
+        
+        # Check same length mag and depth lists to avoid indexing error
+        assert len(self.trellis_and_rs_mag_list) == len(self.trellis_and_rs_depth_list)
         
         # Get mags for Sammons, Euclidean distance and clustering
         mag_params = config_file['mag_values_non_trellis_or_spectra_functions']
