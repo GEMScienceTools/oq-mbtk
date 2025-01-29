@@ -21,6 +21,7 @@ Tests for execution of comparison module
 import os
 import shutil
 import unittest
+import numpy as np
 import pandas as pd
 
 from openquake.smt.comparison import compare_gmpes as comp
@@ -94,8 +95,8 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Check for target depths (other functions use arrays from these
         # depths)
-        self.assertEqual(config.trellis_and_rs_depth_list,
-                         TARGET_TRELLIS_DEPTHS)
+        np.testing.assert_allclose(config.trellis_and_rs_depth_list,
+                                   TARGET_TRELLIS_DEPTHS)
 
         # Check for target Rmin
         self.assertEqual(config.minR, TARGET_RMIN)
@@ -107,14 +108,12 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.Nstd, TARGET_NSTD)
 
         # Check for target trellis mag
-        for mag in range(0, len(config.trellis_and_rs_mag_list)):
-            self.assertEqual(config.trellis_and_rs_mag_list[mag],
-                             TARGET_TRELLIS_MAG[mag])
+        np.testing.assert_allclose(
+            config.trellis_and_rs_mag_list, TARGET_TRELLIS_MAG)
 
         # Check for target mag
-        for mag in range(0, len(config.mag_list)):
-            self.assertAlmostEqual(config.mag_list[mag],
-                                   TARGET_MAG[mag], delta=0.000001)
+        np.testing.assert_allclose(config.mag_list, TARGET_MAG)
+
         # Check for target gmpes
         for gmpe in range(0, len(config.gmpes_list)):
             self.assertEqual(config.gmpes_list[gmpe], TARGET_GMPES[gmpe])
