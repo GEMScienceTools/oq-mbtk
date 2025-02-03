@@ -1,0 +1,193 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secondary Perils Analysis using the OQ-MBTK &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Liquefaction and Landslide models" href="sep_docs/sep_models.html" />
+    <link rel="prev" title="Strong-Motion Tools (smt) module" href="smt.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            OpenQuake Model Building Toolkit Suite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ghm.html">Global Hazard Map (ghm) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smt.html">Strong-Motion Tools (smt) module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Secondary Perils Analysis using the OQ-MBTK</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sep_docs/sep_models.html">Liquefaction and Landslide models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html">Site characterization for probabilistic liquefaction analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sep_docs/tutorials/sep_tutorials.html">Tutorials for using the OQ-MBTK for analysis of secondary perils</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="wkf.html">SSC workflow (wkf) module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">OpenQuake Model Building Toolkit Suite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Secondary Perils Analysis using the OQ-MBTK</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contents/sep.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="secondary-perils-analysis-using-the-oq-mbtk">
+<h1>Secondary Perils Analysis using the OQ-MBTK<a class="headerlink" href="#secondary-perils-analysis-using-the-oq-mbtk" title="Link to this heading"></a></h1>
+<p>Landslides and liquefaction are well-known perils that accompany earthquakes.
+Basic models to describe their occurrence have been around for decades and are
+constantly improving. However, these models have rarely been incorporated into
+PSHA.</p>
+<p>The tools presented here are implementations of some of the more common and
+appropriate secondary perils models. The intention is seamless incorporation of
+these models into PSH(R)A calculations done through the OpenQuake Engine, though
+the incorporation is a work in progress.</p>
+<p>Tools for preparing the data for these models are also presented. This can be a
+non-trivial challenge, and consistent and correct data preparation is necessary
+for accurate secondary peril hazard and risk calculations.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sep_docs/sep_models.html">Liquefaction and Landslide models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sep_docs/sep_models.html#liquefaction-models">Liquefaction models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/sep_models.html#hazus">HAZUS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/sep_models.html#zhu-et-al-2015">Zhu et al (2015)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html">Site characterization for probabilistic liquefaction analysis</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#general-considerations">General considerations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#spatial-resolution-and-accuracy-of-data-and-site-characterization">Spatial resolution and accuracy of data and site characterization</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#hazus">HAZUS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#liquefaction-probabilities">Liquefaction probabilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#liquefaction-suscepibility-category">Liquefaction suscepibility category</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#groundwater-depth">Groundwater depth</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#lateral-spreading">Lateral spreading</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#zhu-et-al-2015-general-model">Zhu et al. 2015 (general model)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#getting-raster-values-at-sites">Getting raster values at sites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#id1">Liquefaction probabilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#vs30">Vs30</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#compound-topographic-index">Compound Topographic Index</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/liquefaction_data_prep.html#id2">Lateral spreading</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sep_docs/tutorials/sep_tutorials.html">Tutorials for using the OQ-MBTK for analysis of secondary perils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sep_docs/tutorials/liq_site_prep.html">Tutorial: Preparing site data for liquefaction analysis with the OQ-MBTK</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/tutorials/liq_site_prep.html#Joining-site-information-to-site-locations">Joining site information to site locations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sep_docs/tutorials/liq_site_prep.html#HAZUS-site-parameters">HAZUS site parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sep_docs/tutorials/liq_site_prep.html#Zhu-site-parameters">Zhu site parameters</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sep_docs/tutorials/liquefaction_analysis.html">Tutorial: Calculating liquefaction probabilities from a single earthquake</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/tutorials/liquefaction_analysis.html#Liquefaction-probabilities-using-the-HAZUS-model">Liquefaction probabilities using the HAZUS model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/tutorials/liquefaction_analysis.html#Liquefaction-probabilities-using-the-model-from-Zhu-et-al.-(2015)">Liquefaction probabilities using the model from Zhu et al. (2015)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/tutorials/liquefaction_analysis.html#Comparison">Comparison</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sep_docs/tutorials/liquefaction_analysis.html#Lateral-spreading-displacements">Lateral spreading displacements</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="smt.html" class="btn btn-neutral float-left" title="Strong-Motion Tools (smt) module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sep_docs/sep_models.html" class="btn btn-neutral float-right" title="Liquefaction and Landslide models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-2022, GEM Hazard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

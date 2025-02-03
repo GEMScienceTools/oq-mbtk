@@ -1,0 +1,21 @@
+openquake.mbt.tests.notebooks.project package
+=============================================
+
+Submodules
+----------
+
+openquake.mbt.tests.notebooks.project.create\_project\_test module
+------------------------------------------------------------------
+
+.. automodule:: openquake.mbt.tests.notebooks.project.create_project_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tests.notebooks.project
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,47 @@
+openquake.smt.tests package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.smt.tests.comparison
+   openquake.smt.tests.parsers
+   openquake.smt.tests.residuals
+
+Submodules
+----------
+
+openquake.smt.tests.database\_io\_test module
+---------------------------------------------
+
+.. automodule:: openquake.smt.tests.database_io_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.tests.utils\_intensity\_measures\_test module
+-----------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.utils_intensity_measures_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.tests.utils\_strong\_motion\_test module
+------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.utils_strong_motion_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:
