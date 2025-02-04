@@ -78,7 +78,7 @@ setup(
         'igraph',
         # 'GDAL',
     ],
-    python_requires='>=3.10,<3.12',
+    python_requires='>=3.10,<3.13',
     author='GEM Foundation',
     author_email='hazard@globalquakemodel.org',
     maintainer='GEM Foundation',
