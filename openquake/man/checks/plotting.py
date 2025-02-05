@@ -99,7 +99,7 @@ def get_ssm_files(model_dir):
     return files
 
 
-def get_sources(model_dir):
+def get_sources(model_dir, inv_time):
     """
     Load the sources in the given model and return them as a list.
     """            
@@ -114,7 +114,8 @@ def get_sources(model_dir):
               KiteFaultSource]
 
     # Read the XMLs for all srcs in the given model
-    ssm = readinput.read_source_models(files, 'tmp.hdf5', investigation_time=1,
+    ssm = readinput.read_source_models(files, 'tmp.hdf5', 
+                                       investigation_time=inv_time,
                                        rupture_mesh_spacing=5,
                                        area_source_discretization=5,
                                        width_of_mfd_bin=0.1)
@@ -186,13 +187,7 @@ def get_characteristic_mesh(src):
     """
     Get the mesh of a CharacteristicFaultSource
     """
-    # Get the surface
-    sfc = src.surface.mesh
-    
-    # Get mesh
-    mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
-
-    return mesh
+    return src.surface.mesh
     
 
 def get_simple_mesh(src):
@@ -299,7 +294,7 @@ def plot_faults(gdaf_polys, gdaf_traces, region, model_dir):
     fig.show()
 
 
-def get_fault_geojsons(model_dir, plotting=False, plotting_region=None):
+def get_fault_geojsons(model_dir, inv_time, plotting=False, plotting_region=None):
     """
     Write the fault sections and fault traces within the given hazard model
     model to geojsons.
@@ -313,7 +308,7 @@ def get_fault_geojsons(model_dir, plotting=False, plotting_region=None):
                             to define axis limits of the plotted geoJSONs
     """
     # Get the sources in the given model
-    srcs, geom_model = get_sources(model_dir)
+    srcs, geom_model = get_sources(model_dir, inv_time)
 
     # Now get the geometries
     gdaf_polys, gdaf_traces = get_geoms(srcs, geom_model)
