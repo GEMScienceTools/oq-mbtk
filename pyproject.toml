@@ -1,3 +1,95 @@
 [build-system]
-requires = ["setuptools >= 69.0"]
+requires = ["setuptools >= 69.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "openquake.mbt"
+dynamic = ["version"]
+description = "Model Building Toolkit"
+readme = """
+Python and OpenQuake-based Toolkit for the construction of Seismic Source
+Models
+Copyright (C) 2017-2025 GEM Foundation
+"""
+license = { text = "AGPL-3.0-only" }
+
+authors = [
+    { name = "GEM Foundation", email = "hazard@globalquakemodel.org" },
+]
+maintainers = [
+    { name = "GEM Foundation", email = "hazard@globalquakemodel.org" },
+]
+
+keywords = [
+    "hazard",
+    "seismic",
+    "hazard seismic",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python ",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
+
+requires-python = ">=3.10, <3.13"
+dependencies = [
+    "geojson",
+    "geopandas > 0.10.0",
+    "pandas >= 2.0.3, <= 2.2.3",
+    "h3 <= 3.7.7",
+    "igraph",
+    "ipykernel >= 4.8.0",
+    "ipython >= 6.2.0",
+    "jupyter_client >= 5.0.0",
+    "nbconvert",
+    "nbformat",
+    "nbstripout >= 0.3.0",
+    "netCDF4 < 1.7.0",
+    "notebook >= 5.0.0",
+    "obspy",
+    "prettytable",
+    "pylint >= 2.1.1",
+    "pyproj >= 3.6.1",
+    "reportlab",
+    "rtree",
+    "tables >= 3.7.0",
+    "tqdm",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/GEMScienceTools/oq-mbtk"
+Repository = "https://github.com/GEMScienceTools/oq-mbtk"
+Documentation = "https://gemsciencetools.github.io/oq-mbtk/index.html"
+
+[project.scripts]
+oqm = "openquake.mbi.__main__:oqm"
+
+[tool.setuptools]
+packages = [ "openquake.mbt" ]
+
+[tool.setuptools.packages.find]
+where = ["openquake"]
+
+[tool.setuptools.exclude-package-data]
+"*" = [
+	"tests",
+	"tests.*"
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"openquake.mbt" = [
+	'README.md',
+	'LICENSE'
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "openquake.mbt__version__"}
