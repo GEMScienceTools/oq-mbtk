@@ -70,11 +70,9 @@ Documentation = "https://gemsciencetools.github.io/oq-mbtk/index.html"
 [project.scripts]
 oqm = "openquake.mbi.__main__:oqm"
 
-[tool.setuptools]
-packages = [ "openquake.mbt" ]
-
 [tool.setuptools.packages.find]
-where = ["openquake"]
+where = ["."]
+include = ["openquake*"]
 
 [tool.setuptools.exclude-package-data]
 "*" = [
@@ -82,14 +80,5 @@ where = ["openquake"]
 	"tests.*"
 ]
 
-[tool.setuptools]
-include-package-data = true
-
-[tool.setuptools.package-data]
-"openquake.mbt" = [
-	'README.md',
-	'LICENSE'
-]
-
 [tool.setuptools.dynamic]
-version = {attr = "openquake.mbt__version__"}
+version = {attr = "openquake.mbt.__version__"}
