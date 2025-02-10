@@ -22,6 +22,7 @@ Parse ESM18 format flatfile into SMT metadata
 import os
 import csv
 import numpy as np
+import pandas as pd
 import copy
 import h5py
 import pickle
@@ -176,8 +177,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         else:
             eq_country = None
         # Date and time
-        eq_datetime = valid.date_time(metadata["event_time"],
-                                     "%Y-%m-%d %H:%M:%S")
+        eq_datetime = pd.to_datetime(metadata["event_time"])
         # Latitude, longitude and depth
         eq_lat = valid.latitude(metadata["ev_latitude"])
         eq_lon = valid.longitude(metadata["ev_longitude"])
