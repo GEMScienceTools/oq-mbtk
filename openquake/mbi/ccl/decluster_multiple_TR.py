@@ -67,6 +67,7 @@ def main(config_fname, *, root=None):
     fname_cat = os.path.join(root, config['main']['catalogue'])
     fname_reg = os.path.join(root, config['main']['tr_file'])
     fname_out = os.path.join(root, config['main']['output'])
+
     create_sc = config['main']['create_subcatalogues']
     save_afrs = config['main']['save_aftershocks']
     add_deflt = config['main']['catalogue_add_defaults']
@@ -96,7 +97,6 @@ def main(config_fname, *, root=None):
                 _ = decluster(fname_cat, meth[0], params, fname_out, regions,
                               fname_reg, create_sc, 'csv', meth[2], save_afrs,
                               cat_lab, add_deflt)
-
 
 MSG = 'Path to the configuration fname - typically a .toml file'
 main.config_fname = MSG

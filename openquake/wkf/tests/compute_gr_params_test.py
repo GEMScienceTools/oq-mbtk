@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 from openquake.wkf.compute_gr_params import weichert_analysis
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data', 'compute_gr_param')
-PLOT = True
+PLOT = False
 
 
 class ComputeGRParametersTest(unittest.TestCase):

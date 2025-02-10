@@ -61,13 +61,34 @@ class spmatrix:
 
 def csc_matrix_to_spmatrix(csc_matrix):
     return spmatrix(
-        csc_matrix.indptr, csc_matrix.indices, csc_matrix.data, csc_matrix.shape
+        csc_matrix.indptr,
+        csc_matrix.indices,
+        csc_matrix.data,
+        csc_matrix.shape,
     )
 
 
 @njit
 def geom_mean(vals):
     return np.exp(np.mean(np.log(vals)))
+
+
+def add_weights_to_matrices(A, d, weights=None):
+    if weights is not None:
+        Aw = ssp.csc_array(np.diag(weights)) @ A
+        dw = weights * d
+
+    else:
+        Aw = A
+        dw = d
+
+    if ssp.issparse(Aw):
+        Asp = csc_matrix_to_spmatrix(ssp.csc_array(Aw))
+
+    else:
+        raise ValueError("A needs to be sparse right now")
+
+    return Asp, dw
 
 
 @njit
@@ -83,7 +104,13 @@ def rup_rate_likelihood(preds, rhs_vec, rhs_std, like_min=1e-100):
 
 
 @njit
-def _eval_x(A: spmatrix, x: float64[:], d: float64[:], mult_result: float64[:]):
+def _eval_x(
+    A: spmatrix,
+    x: float64[:],
+    d: float64[:],
+    mult_result: float64[:],
+    w: float64[:],
+):
     # zero out mult_result just in case there are values in the wrong place
     mult_result *= 0.0
 
@@ -101,7 +128,7 @@ def _eval_x(A: spmatrix, x: float64[:], d: float64[:], mult_result: float64[:]):
     cscmatvec(N_col, A.indptr, A.indices, A.data, x, mult_result)
 
     # likelihood = rup_rate_likelihood(mult_result, d, np.mean(d))
-    misfit = np.sum((mult_result - d) ** 2)
+    misfit = np.sum(w * (mult_result - d) ** 2)
 
     return misfit
 
@@ -185,6 +212,7 @@ def _single_thread_anneal(
     A: spmatrix,
     d: float64[:],
     x: float64[:],
+    w: float64[:],
     min_bounds: float64[:],
     max_bounds: float64[:],
     n_iters: int64,
@@ -204,7 +232,7 @@ def _single_thread_anneal(
     mult_result = d * 0.0  # preallocate memory
 
     if current_misfit == -1.0:
-        current_misfit = _eval_x(A, x, d, mult_result)
+        current_misfit = _eval_x(A, x, d, mult_result, w)
 
     l_min_bounds = np.log(min_bounds)
     l_max_bounds = np.log(max_bounds)
@@ -227,7 +255,7 @@ def _single_thread_anneal(
             replace_num=replace_num,
         )
 
-        candidate_misfit = _eval_x(A, candidate_x, d, mult_result)
+        candidate_misfit = _eval_x(A, candidate_x, d, mult_result, w)
 
         misfits[i] = candidate_misfit
         misfit_diff = candidate_misfit - current_misfit
@@ -261,6 +289,7 @@ def _parallel_anneal(
     A: spmatrix,
     d: float64[:],
     x: float64[:],
+    w: float64[:],
     min_bounds: float64[:],
     max_bounds: float64[:],
     n_iters: int64,
@@ -273,6 +302,7 @@ def _parallel_anneal(
     sample_scale=1.0,
     replace_frac: float64 = 0.001,
     replace_num: int64 = 0,
+    sample_with_T: bool = False,
 ):
     best_misfit = current_misfit
 
@@ -285,6 +315,7 @@ def _parallel_anneal(
             A=A,
             d=d,
             x=x,
+            w=w,
             min_bounds=min_bounds,
             max_bounds=max_bounds,
             n_iters=n_iters,
@@ -297,6 +328,7 @@ def _parallel_anneal(
             sample_scale=sample_scale,
             replace_frac=replace_frac,
             replace_num=replace_num,
+            sample_with_T=sample_with_T,
         )
         thread_final_misfits[i] = thread_misfits[i, -1]
 
@@ -338,6 +370,7 @@ def simulated_annealing(
     seed=None,
     replace_frac: float = 0.01,
     replace_num: int = 0,
+    sample_with_T: bool = False,
 ):
     t0 = time.time()
 
@@ -355,19 +388,12 @@ def simulated_annealing(
     if np.isscalar(max_bounds):
         max_bounds = np.ones(x0.shape) * max_bounds
 
-    if weights is not None:
-        Aw = ssp.csc_array(np.diag(weights)) @ A
-        dw = weights * d
+    # Asp, dw = add_weights_to_matrices(A, d, weights)
+    Asp = csc_matrix_to_spmatrix(ssp.csc_array(A))
+    dw = d
 
-    else:
-        Aw = A
-        dw = d
-
-    if ssp.issparse(Aw):
-        Asp = csc_matrix_to_spmatrix(ssp.csc_array(Aw))
-
-    else:
-        raise ValueError("A needs to be sparse right now")
+    if weights is None:
+        weights = np.ones(d.shape)
 
     misfit_default = 10.0
 
@@ -376,12 +402,13 @@ def simulated_annealing(
     if parallel is False:
         x = x0
         T = initial_temp
-        best_misfit = _eval_x(Asp, x0, dw, np.zeros(dw.shape))
+        best_misfit = _eval_x(Asp, x0, dw, np.zeros(dw.shape), weights)
         print("init", best_misfit)
         x, current_misfits = _single_thread_anneal(
             A=Asp,
             d=dw,
             x=x0,
+            w=weights,
             min_bounds=min_bounds,
             max_bounds=max_bounds,
             n_iters=max_iters,
@@ -394,6 +421,7 @@ def simulated_annealing(
             sample_scale=scale,
             replace_frac=replace_frac,
             replace_num=replace_num,
+            sample_with_T=sample_with_T,
         )
         misfit_history = current_misfits
         if np.min(current_misfits) > best_misfit:
@@ -404,7 +432,7 @@ def simulated_annealing(
         i = 0
         x = x0
         T = initial_temp
-        best_misfit = _eval_x(Asp, x0, dw, np.zeros(dw.shape))
+        best_misfit = _eval_x(Asp, x0, dw, np.zeros(dw.shape), weights)
         print("init", best_misfit)
         while (
             i < max_iters
@@ -416,6 +444,7 @@ def simulated_annealing(
                 A=Asp,
                 d=dw,
                 x=x,
+                w=weights,
                 min_bounds=min_bounds,
                 max_bounds=max_bounds,
                 n_iters=meetup_iters,
@@ -428,9 +457,10 @@ def simulated_annealing(
                 sample_scale=scale,
                 replace_frac=replace_frac,
                 replace_num=replace_num,
+                sample_with_T=sample_with_T,
             )
             try:
-                misfit_history[i: i + meetup_iters] = current_misfits
+                misfit_history[i : i + meetup_iters] = current_misfits
             except:
                 n_vals_left = max_iters - i
 

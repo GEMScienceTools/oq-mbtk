@@ -29,15 +29,17 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import json
 import logging
 import numpy as np
 import pandas as pd
 import geopandas as gpd
 
-from shapely.geometry import LineString, Polygon, MultiLineString, MultiPolygon
+from shapely.geometry import LineString, Polygon, MultiPolygon
 
+from openquake.baselib.general import AccumDict
 from openquake.hazardlib.geo import Point, Line
-from openquake.hazardlib.geo.mesh import RectangularMesh, Mesh
+from openquake.hazardlib.geo.mesh import RectangularMesh
 from openquake.hazardlib.geo.surface import SimpleFaultSurface
 
 from openquake.fnm.importer import (
@@ -47,15 +49,10 @@ from openquake.fnm.importer import (
 from openquake.fnm.msr import area_to_mag
 
 from openquake.fnm.inversion.utils import (
-    weighted_mean,
     get_rupture_displacement,
     SHEAR_MODULUS,
     slip_vector_azimuth,
-    rup_df_to_rupture_dicts,
-    subsection_df_to_fault_dicts,
 )
-
-from openquake.fnm.inversion.soe_builder import make_eqns
 
 logging.basicConfig(
     format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S'
@@ -66,7 +63,7 @@ logger.addHandler(logging.NullHandler())
 
 def simple_fault_from_feature(
     feature: dict,
-    edge_sd: float = 2.0,
+    edge_sd: float = 5.0,
     lsd_default: float = 20.0,
     usd_default: float = 0.0,
 ) -> dict:
@@ -100,20 +97,53 @@ def simple_fault_from_feature(
         "net_slip_rate",
         "net_slip_rate_err",
         "rake",
-        "rake_err",
     ]
+    optional_props_to_keep = [
+        "lsd",
+        "rake_err",
+        "usd",
+        "seismic_fraction",
+    ]
+
     fault = {prop: feature['properties'][prop] for prop in props_to_keep}
+    for prop in optional_props_to_keep:
+        if prop in feature['properties']:
+            fault[prop] = feature['properties'][prop]
 
     fault['surface'] = simple_fault_surface_from_feature(
         feature,
         edge_sd=edge_sd,
-        lsd_default=lsd_default,
-        usd_default=usd_default,
+        lsd_default=fault.get("lsd", lsd_default),
+        usd_default=fault.get("usd", usd_default),
     )
 
     fault['trace'] = feature['geometry']['coordinates']
 
     return fault
+
+
+def get_trace_from_mesh(mesh):
+    """
+    Builds a fault trace from a mesh.
+
+    Parameters
+    ----------
+    mesh : openquake.hazardlib.geo.mesh.Mesh
+        Mesh to use for trace.
+
+    Returns
+    -------
+    trace : openquake.hazardlib.geo.Line
+        Fault trace.
+    """
+    trace = Line(
+        [
+            Point(lon, mesh.lats[0, i], mesh.depths[0, i])
+            for i, lon in enumerate(mesh.lons[0])
+        ]
+    )
+
+    return trace
 
 
 def subdivide_simple_fault_surface(
@@ -122,8 +152,8 @@ def subdivide_simple_fault_surface(
         15.0,
         15.0,
     ],
-    edge_sd=2.0,
-    dip_sd=2.0,
+    edge_sd=5.0,
+    dip_sd=5.0,
     dip=None,
 ):
     """
@@ -151,12 +181,7 @@ def subdivide_simple_fault_surface(
     """
 
     fault_mesh = fault_surface.mesh
-    fault_trace = Line(
-        [
-            Point(lon, fault_mesh.lats[0, i], fault_mesh.depths[0, i])
-            for i, lon in enumerate(fault_mesh.lons[0])
-        ]
-    )
+    fault_trace = get_trace_from_mesh(fault_mesh)
 
     # get basic geometric info
     if dip is None:
@@ -185,7 +210,7 @@ def subdivide_simple_fault_surface(
     )
     subsec_length = fault_length / num_segs_along_strike
     pt_spacing = subsec_length / round(subsec_length / edge_sd)
-    n_pts_strike = fault_length / pt_spacing  # + 1
+    n_pts_strike = fault_length / pt_spacing + 1
     assert (n_pts_strike % 1 <= 1e-5) or (n_pts_strike % 1 >= (1.0 - 1e-5)), (
         "Resampled trace not integer length: " + f"{n_pts_strike}"
     )
@@ -198,7 +223,7 @@ def subdivide_simple_fault_surface(
         + f"{new_trace.coo.shape[0]} != {n_pts_strike}"
     )
 
-    n_subsec_pts_strike = (n_pts_strike) / num_segs_along_strike
+    n_subsec_pts_strike = ((n_pts_strike - 1) / num_segs_along_strike) + 1
 
     assert n_subsec_pts_strike % 1 == 0.0, (
         "Resampled trace not dividing equally among subsegments: "
@@ -221,7 +246,7 @@ def subdivide_simple_fault_surface(
 
     hor_dip_spacing = dip_pt_spacing * np.cos(np.radians(dip))
     vert_dip_spacing = dip_pt_spacing * np.sin(np.radians(dip))
-    n_level_sets = max(int(round(fault_width / dip_pt_spacing)), 2)
+    n_level_sets = max(int(round(fault_width / dip_pt_spacing)) + 1, 2)
 
     for i in range(n_level_sets):
         level_mesh = [
@@ -234,10 +259,11 @@ def subdivide_simple_fault_surface(
     resampled_mesh = RectangularMesh.from_points_list(surface_points)
 
     n_pts_dip = resampled_mesh.lons.shape[0]
-    n_subsec_pts_dip = (n_pts_dip) / num_segs_down_dip
-    assert (
-        n_subsec_pts_dip % 1 == 0.0
-    ), f"Resampled mesh not dividing equally among subsegments down-dip"
+    n_subsec_pts_dip = ((n_pts_dip - 1) / num_segs_down_dip) + 1
+    assert n_subsec_pts_dip % 1 == 0.0, (
+        "Resampled mesh not dividing equally among subsegments down-dip: "
+        + f"{n_pts_dip}, {num_segs_along_strike}"
+    )
     n_subsec_pts_dip = int(n_subsec_pts_dip)
 
     subsec_meshes = subdivide_rupture_mesh(
@@ -288,6 +314,19 @@ def subdivide_rupture_mesh(
     subsec_meshes : list of RectangularMesh
         List of subsection meshes.
     """
+    assert (
+        lons.shape == lats.shape == depths.shape
+    ), "Lons, lats, and depths must have the same shape"
+
+    assert (
+        n_subsec_pts_dip == ((lons.shape[0] - 1) / num_segs_down_dip) + 1
+    ), "Mesh does not divide equally among subsegments down-dip"
+
+    assert (
+        n_subsec_pts_strike
+        == ((lons.shape[1] - 1) / num_segs_along_strike) + 1
+    ), "Mesh does not divide equally among subsegments along-strike"
+
     subsec_meshes = []
 
     i_start = 0
@@ -301,13 +340,16 @@ def subdivide_rupture_mesh(
             subsec_lats = lats[i_start:i_end, j_start:j_end]
             subsec_depths = depths[i_start:i_end, j_start:j_end]
 
-            subsec_mesh = RectangularMesh(
-                subsec_lons, subsec_lats, subsec_depths
-            )
-            subsec_meshes.append({'row': i, 'col': j, 'mesh': subsec_mesh})
+            try:
+                subsec_mesh = RectangularMesh(
+                    subsec_lons, subsec_lats, subsec_depths
+                )
+                subsec_meshes.append({'row': i, 'col': j, 'mesh': subsec_mesh})
+            except:
+                print(i_start, i_end, j_start, j_end, i, j)
 
-            j_start += n_subsec_pts_strike  # - 1
-        i_start += n_subsec_pts_dip  # - 1
+            j_start += n_subsec_pts_strike - 1
+        i_start += n_subsec_pts_dip - 1
 
     return subsec_meshes
 
@@ -357,7 +399,10 @@ def get_subsections_from_fault(
         "net_slip_rate",
         "net_slip_rate_err",
         "rake",
+    ]
+    optional_props_to_keep = [
         "rake_err",
+        "seismic_fraction",
     ]
 
     if np.isscalar(subsection_size):  # len(subsection_size) == 1:
@@ -375,6 +420,10 @@ def get_subsections_from_fault(
     for i, sub_mesh in enumerate(subsec_meshes):
         mesh = sub_mesh['mesh']
         subfault = {prop: fault[prop] for prop in props_to_keep}
+        for prop in optional_props_to_keep:
+            if prop in fault:
+                subfault[prop] = fault[prop]
+
         subfault['fault_position'] = (sub_mesh['row'], sub_mesh['col'])
         subfault["trace"] = [
             [lon, mesh.lats[0, i], mesh.depths[0, i]]
@@ -498,6 +547,7 @@ def make_rupture_df(
     multi_fault_rups,
     subfault_df,
     area_mag_msr='Leonard2014_Interplate',
+    mag_decimals=1,
 ) -> pd.DataFrame:
     """
     Makes a Pandas DataFrame, with a row for each rupture in the fault network.
@@ -529,6 +579,7 @@ def make_rupture_df(
         data={
             'subfaults': single_fault_rup_df.subfaults,
             'ruptures': rups_involved,
+            'faults': [[fault] for fault in single_fault_rup_df.fault],
         },
     )
 
@@ -536,6 +587,8 @@ def make_rupture_df(
     area_lookup = {i: row.area for i, row in subfault_df.iterrows()}
     rake_lookup = {i: row.rake for i, row in subfault_df.iterrows()}
     slip_az_lookup = {i: row.slip_azimuth for i, row in subfault_df.iterrows()}
+    fault_lookup = {i: row.faults[0] for i, row in rupture_df.iterrows()}
+    sub_fid_lookup = {i: row.fid for i, row in subfault_df.iterrows()}
 
     sf_rup_azimuths = {}
     for row in single_fault_rup_df.itertuples():
@@ -545,16 +598,24 @@ def make_rupture_df(
         )
 
     mf_subs = []
+    mf_faults_unique = []
     for mf in multi_fault_rups:
         subs = []
+        faults = []
         for sf in mf:
             subs.extend(srup_lookup[sf])
+            faults.append(fault_lookup[sf])
 
         mf_subs.append(subs)
+        mf_faults_unique.append(faults)
 
     mf_df = pd.DataFrame(
         index=np.arange(len(mf_subs)) + len(rupture_df),
-        data={'subfaults': mf_subs, 'ruptures': multi_fault_rups},
+        data={
+            'subfaults': mf_subs,
+            'ruptures': multi_fault_rups,
+            'faults': mf_faults_unique,
+        },
     )
 
     rupture_df = pd.concat([rupture_df, mf_df], axis=0)
@@ -564,13 +625,13 @@ def make_rupture_df(
     slip_azimuths = []
     all_areas = []
     mags = []
+    fault_frac_areas = []
 
-    # mean_slip_azimuths = []
     for row in rupture_df.itertuples():
         areas = np.array([area_lookup[sf] for sf in row.subfaults])
         sum_area = areas.sum()
         area_fracs = areas / sum_area
-        frac_areas.append(np.round(area_fracs, 2))
+        frac_areas.append(np.round(area_fracs, 4).tolist())
 
         rakes = np.array([rake_lookup[sf] for sf in row.subfaults])
         azimuths = [sf_rup_azimuths[sf] for sf in row.ruptures]
@@ -579,14 +640,28 @@ def make_rupture_df(
         mean_rakes.append(mean_rake)
 
         mags.append(
-            area_to_mag(areas.sum(), type=area_mag_msr, rake=mean_rake)
+            area_to_mag(areas.sum(), mstype=area_mag_msr, rake=mean_rake)
         )
         all_areas.append(sum_area)
 
+        if len(row.faults) == 1:
+            f_areas = [1.0]
+        else:
+            f_areas = []
+            f_area_d = AccumDict()
+            for sf in row.subfaults:
+                f_area_d += {sub_fid_lookup[sf]: area_lookup[sf]}
+            f_area_d /= sum(f_area_d.values())
+            for fault in row.faults:
+                f_areas.append(round(f_area_d[fault], 1))
+
+        fault_frac_areas.append(f_areas)
+
     rupture_df['frac_area'] = frac_areas
+    rupture_df['fault_frac_area'] = fault_frac_areas
     rupture_df['mean_rake'] = np.round(mean_rakes, 1)
     rupture_df['slip_azimuth'] = slip_azimuths
-    rupture_df['mag'] = np.round(mags, 2)
+    rupture_df['mag'] = np.round(mags, mag_decimals)
     rupture_df['area'] = np.round(all_areas, 1)
     rupture_df['displacement'] = np.round(
         get_rupture_displacement(
@@ -626,6 +701,7 @@ def get_boundary_3d(smsh):
         )
         for i in idx
     ]
+    tmp = [c for c in tmp if c != (0.0, 0.0, -0.0)]
     trace = LineString(tmp)
     coo.extend(tmp)
 
@@ -639,6 +715,7 @@ def get_boundary_3d(smsh):
         )
         for i in idx
     ]
+    tmp = [c for c in tmp if c != (0.0, 0.0, -0.0)]
     coo.extend(tmp)
 
     # Lower boundary
@@ -651,6 +728,7 @@ def get_boundary_3d(smsh):
         )
         for i in np.flip(idx)
     ]
+    tmp = [c for c in tmp if c != (0.0, 0.0, -0.0)]
     coo.extend(tmp)
 
     # Left boundary
@@ -663,6 +741,7 @@ def get_boundary_3d(smsh):
         )
         for i in np.flip(idx)
     ]
+    tmp = [c for c in tmp if c != (0.0, 0.0, -0.0)]
     coo.extend(tmp)
 
     return trace, Polygon(coo)
@@ -687,7 +766,10 @@ def make_subfault_gdf(subfault_df, keep_surface=False, keep_trace=False):
 
 
 def make_rupture_gdf(
-    rupture_df, subfault_gdf, keep_sequences=False
+    fault_network,
+    rup_df_key='rupture_df',
+    keep_sequences=False,
+    same_size_arrays: bool = True,
 ) -> gpd.GeoDataFrame:
     """
     Makes a GeoDataFrame, with a row for each rupture in the fault network.
@@ -710,21 +792,37 @@ def make_rupture_gdf(
     rupture_gdf : gpd.GeoDataFrame
         GeoDataFrame containing information about each rupture.
     """
-    geoms = []
+    single_rup_df = fault_network['single_rup_df']
+    subfaults = fault_network['subfaults']
+    rupture_df = fault_network[rup_df_key]
+    sf_meshes = make_sf_rupture_meshes(
+        single_rup_df['patches'],
+        single_rup_df['fault'],
+        subfaults,
+        same_size_arrays=same_size_arrays,
+    )
+    # converting to surfaces because get_boundary_3d doesn't take meshes
+    sf_surfs = [SimpleFaultSurface(sf_mesh) for sf_mesh in sf_meshes]
 
-    for row in rupture_df.itertuples():
-        polys = [subfault_gdf.loc[sf, 'geometry'] for sf in row.subfaults]
-        geoms.append(MultiPolygon(polys))
+    rup_meshes = []
+    for rup in rupture_df.itertuples():
+        rup_polies = [
+            get_boundary_3d(sf_surfs[sf_rup])[1] for sf_rup in rup.ruptures
+        ]
+        rup_meshes.append(MultiPolygon(rup_polies))
 
-    rupture_gdf = gpd.GeoDataFrame(rupture_df, geometry=geoms)
+    rupture_gdf = gpd.GeoDataFrame(rupture_df, geometry=rup_meshes)
     if not keep_sequences:
         rupture_gdf['subfaults'] = [str(sf) for sf in rupture_gdf.subfaults]
         del rupture_gdf['frac_area']
+        del rupture_gdf['fault_frac_area']
 
     return rupture_gdf
 
 
-def merge_meshes_no_overlap(arrays, positions) -> np.ndarray:
+def merge_meshes_no_overlap(
+    arrays, positions, same_size_arrays: bool = True
+) -> np.ndarray:
     """
     Merges a list of arrays into a single array, with no overlap between
     the arrays.
@@ -743,9 +841,24 @@ def merge_meshes_no_overlap(arrays, positions) -> np.ndarray:
         Merged array.
     """
     # Check that all arrays have the same shape
-    first_shape = arrays[0].shape
-    for arr in arrays:
-        assert arr.shape == first_shape, "All arrays must have the same shape"
+    # Optional, but should be used for simple faults
+    # Kite faults can have different shapes
+    if same_size_arrays:
+        first_shape = arrays[0].shape
+        for arr in arrays:
+            assert (
+                arr.shape == first_shape
+            ), "All arrays must have the same shape"
+
+    else:
+        # check to see that all arrays share the same rows or same columns
+        row_lengths = [arr.shape[0] for arr in arrays]
+        col_lengths = [arr.shape[1] for arr in arrays]
+        assert (
+            len(set(row_lengths)) == 1 or len(set(col_lengths)) == 1
+        ), "All arrays must have the same number of rows or columns"
+        # `first_shape` is, in this case, the largest array
+        first_shape = (max(row_lengths), max(col_lengths))
 
     # check that all positions are unique and accounted for
     all_rows = sorted(list(set(pos[0] for pos in positions)))
@@ -779,7 +892,9 @@ def merge_meshes_no_overlap(arrays, positions) -> np.ndarray:
     return final_array
 
 
-def make_mesh_from_subfaults(subfaults: list[dict]) -> RectangularMesh:
+def make_mesh_from_subfaults(
+    subfaults: list[dict], same_size_arrays: bool = True
+) -> RectangularMesh:
     """
     Makes a RectangularMesh from a list of subfaults.
 
@@ -799,21 +914,26 @@ def make_mesh_from_subfaults(subfaults: list[dict]) -> RectangularMesh:
     big_lons = merge_meshes_no_overlap(
         [sf['surface'].mesh.lons for sf in subfaults],
         [sf['fault_position'] for sf in subfaults],
+        same_size_arrays=same_size_arrays,
     )
 
     big_lats = merge_meshes_no_overlap(
         [sf['surface'].mesh.lats for sf in subfaults],
         [sf['fault_position'] for sf in subfaults],
+        same_size_arrays=same_size_arrays,
     )
     big_depths = merge_meshes_no_overlap(
         [sf['surface'].mesh.depths for sf in subfaults],
         [sf['fault_position'] for sf in subfaults],
+        same_size_arrays=same_size_arrays,
     )
 
     return RectangularMesh(big_lons, big_lats, big_depths)
 
 
-def make_sf_rupture_mesh(rupture_indices, subfaults) -> RectangularMesh:
+def make_sf_rupture_mesh(
+    rupture_indices, subfaults, same_size_arrays: bool = True
+) -> RectangularMesh:
     """
     Makes a single-fault rupture mesh from a list of subfaults. This is
     a contiguous surface, unlike a multi-fault rupture surface.
@@ -831,12 +951,12 @@ def make_sf_rupture_mesh(rupture_indices, subfaults) -> RectangularMesh:
         Mesh composed of the meshes from all the subfaults in the rupture.
     """
     subs = [subfaults[i] for i in rupture_indices]
-    mesh = make_mesh_from_subfaults(subs)
+    mesh = make_mesh_from_subfaults(subs, same_size_arrays=same_size_arrays)
     return mesh
 
 
 def make_sf_rupture_meshes(
-    all_rupture_indices, faults, all_subfaults
+    all_rupture_indices, faults, all_subfaults, same_size_arrays: bool = True
 ) -> list[RectangularMesh]:
     """
     Makes a list of rupture meshes from a list of single-fault ruptures.
@@ -862,9 +982,72 @@ def make_sf_rupture_meshes(
     for i, rup_indices in enumerate(all_rupture_indices):
         try:
             subs_for_fault = grouped_subfaults[faults[i]]
-            mesh = make_sf_rupture_mesh(rup_indices, subs_for_fault)
+            mesh = make_sf_rupture_mesh(
+                rup_indices, subs_for_fault, same_size_arrays=same_size_arrays
+            )
             rup_meshes.append(mesh)
-        except IndexError:
-            print(i)
+        except IndexError as e:
+            logging.error(f"Problems with rupture {i}: " + str(e))
+        except AssertionError as e:
+            logging.error(f"Problems with rupture {i}: " + str(e))
 
     return rup_meshes
+
+
+def shapely_multipoly_to_geojson(multipoly, return_type='coords'):
+    out_polies = [
+        [[list(pt) for pt in poly.exterior.coords]] for poly in multipoly.geoms
+    ]
+    if return_type == 'coords':
+        return out_polies
+    elif return_type == "geometry":
+        return {
+            "type": "MultiPolygon",
+            "coordinates": out_polies,
+        }
+    elif return_type == 'feature':
+        return {
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+                "type": "MultiPolygon",
+                "coordinates": out_polies,
+            },
+        }
+
+
+def export_ruptures_new(
+    fault_network, rup_df_key='rupture_df_keep', outfile=None
+):
+    # subfault_gdf = make_subfault_gdf(fault_network['subfault_df'])
+    if rup_df_key != 'rupture_gdf':
+        rupture_gdf = make_rupture_gdf(
+            fault_network, rup_df_key=rup_df_key, keep_sequences=True
+        )
+    else:
+        rupture_gdf = fault_network['rupture_gdf']
+
+    outfile_type = outfile.split('.')[-1]
+
+    if outfile_type in ['geojson', 'json', 'json_dict']:
+        geoms = {
+            i: shapely_multipoly_to_geojson(
+                rup['geometry'], return_type='feature'
+            )
+            for i, rup in rupture_gdf.iterrows()
+        }
+
+        rup_json = fault_network[rup_df_key].to_dict(orient='index')
+        features = []
+        for i, rj in rup_json.items():
+            f = geoms[i]
+            f["properties"] = {k: v for k, v in rj.items() if k != 'geometry'}
+            features.append(f)
+
+        out_geojson = {"type": "FeatureCollection", "features": features}
+
+        if outfile_type == 'json_dict':
+            return out_geojson
+        else:
+            with open(outfile, 'w') as f:
+                json.dump(out_geojson, f)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2017 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -20,17 +20,12 @@ Tests the IO of a database between pickle and json
 """
 import os
 import shutil
-import sys
 import json
 import pprint
 import unittest
-from openquake.smt.sm_database import load_database
-from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+from openquake.smt.residuals.sm_database import load_database
+from openquake.smt.residuals.parsers.esm_flatfile_parser import ESMFlatfileParser
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
 
 def compare_two_json_files(file1, file2):
     """

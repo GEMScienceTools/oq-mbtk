@@ -1,21 +1,33 @@
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+#
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Core test suite for the database and residuals construction
 when created from sm_database.GroundMotionDatabase and
 sm_table.GroundMotionTable (contexts should be equal)
 """
 import os
-import sys
 import shutil
 import unittest
+import pickle
 
 import numpy as np
-from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+from openquake.smt.residuals.parsers.esm_flatfile_parser import ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")

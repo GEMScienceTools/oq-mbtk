@@ -1,23 +1,42 @@
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+#
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Core test suite for the database and residuals construction
 """
 import os
-import sys
 import shutil
+import tempfile
 import unittest
-from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+import pickle
+
+from openquake.smt.residuals.parsers.esm_flatfile_parser import \
+    ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
-from openquake.smt.strong_motion_selector import rank_sites_by_record_count
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from openquake.smt.residuals.sm_database_selector import \
+    rank_sites_by_record_count
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
+# Temp file for residuals/ranking metric tables 
+tmp_tab = os.path.join(tempfile.mkdtemp(), 'temp_table.csv')
+tmp_fig = os.path.join(tempfile.mkdtemp(), 'temp_figure')
 
 EXPECTED_IDS = [
     "EMSC_20040918_0000026_RA_PYAS_0", "EMSC_20040918_0000026_RA_PYAT_0",
@@ -67,6 +86,8 @@ class ResidualsTestCase(unittest.TestCase):
             cls.database = pickle.load(f)
         cls.gmpe_list = ["AkkarEtAlRjb2014",  "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]
+        cls.toml = os.path.join(BASE_DATA_PATH,
+                                'residuals_from_toml_test.toml')
 
     def test_correct_build_load(self):
         """
@@ -110,6 +131,15 @@ class ResidualsTestCase(unittest.TestCase):
         self._check_residual_dictionary_correctness(residuals.residuals)
         residuals.get_residual_statistics()
 
+    def test_residuals_execution_from_toml(self):
+        """
+        Tests basic execution of residuals when specifying gmpe and imts to get
+        residuals for from a toml file - not correctness of values
+        """
+        residuals = res.Residuals.from_toml(self.toml)
+        residuals.get_residuals(self.database, component="Geometric")
+        residuals.get_residual_statistics()
+
     def test_likelihood_execution(self):
         """
         Tests basic execution of residuals - not correctness of values
@@ -145,6 +175,15 @@ class ResidualsTestCase(unittest.TestCase):
         edr.get_residuals(self.database, component="Geometric")
         self._check_residual_dictionary_correctness(edr.residuals)
         edr.get_edr_values()
+          
+    def test_stochastic_area_execution(self):
+        """
+        Tests execution of stochastic area metric - not correctness of values
+        """
+        stoch = res.Residuals(self.gmpe_list, self.imts)
+        stoch.get_residuals(self.database, component="Geometric")
+        self._check_residual_dictionary_correctness(stoch.residuals)
+        stoch.get_stochastic_area_wrt_imt()
 
     def test_multiple_metrics(self):
         """
@@ -157,42 +196,37 @@ class ResidualsTestCase(unittest.TestCase):
                     "MultivariateLLH", "EDR"]:
             _ = res.GSIM_MODEL_DATA_TESTS[key](residuals, config)
 
-    def test_likelihood_execution_old(self):
+    def test_plot_execution(self):
         """
-        Tests basic execution of residuals - not correctness of values
+        Tests execution of gmpe ranking metric plots
         """
-        lkh = res.Likelihood(self.gmpe_list, self.imts)
-        lkh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(lkh.residuals)
-        lkh.get_likelihood_values()
+        residuals = res.Residuals(self.gmpe_list, self.imts)
+        residuals.get_residuals(self.database, component="Geometric")
 
-    def test_llh_execution_old(self):
-        """
-        Tests execution of LLH - not correctness of values
-        """
-        llh = res.LLH(self.gmpe_list, self.imts)
-        llh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(llh.residuals)
-        llh.get_loglikelihood_values(self.imts)
+        # Plots of GMM ranking metrics vs period
+        rspl.plot_residual_pdf_with_spectral_period(residuals, tmp_fig)
+        rspl.plot_edr_metrics_with_spectral_period(residuals, tmp_fig)
+        rspl.plot_loglikelihood_with_spectral_period(residuals, tmp_fig)
+        rspl.plot_stochastic_area_with_spectral_period(residuals, tmp_fig)
 
-    def test_multivariate_llh_execution_old(self):
+    def test_table_execution(self):
         """
-        Tests execution of multivariate llh - not correctness of values
+        Tests execution of table exporting functions
         """
-        multi_llh = res.MultivariateLLH(self.gmpe_list, self.imts)
-        multi_llh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(multi_llh.residuals)
-        multi_llh.get_multivariate_loglikelihood_values()
-
-    def test_edr_execution_old(self):
-        """
-        Tests execution of EDR - not correctness of values
-        """
-        edr = res.EDR(self.gmpe_list, self.imts)
-        edr.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(edr.residuals)
-        edr.get_edr_values()
-
+        residuals = res.Residuals(self.gmpe_list, self.imts)
+        residuals.get_residuals(self.database, component="Geometric")
+        
+        # Tables of values
+        rspl.pdf_table(residuals, tmp_tab)
+        rspl.llh_table(residuals, tmp_tab)
+        rspl.edr_table(residuals, tmp_tab)
+        rspl.stochastic_area_table(residuals, tmp_tab)
+        
+        # Tables of weights
+        rspl.llh_weights_table(residuals, tmp_tab)
+        rspl.edr_weights_table(residuals, tmp_tab)
+        rspl.stochastic_area_weights_table(residuals, tmp_tab)
+        
     def test_single_station_residual_analysis(self):
         """
         Test execution of single station residual analysis functions - not
@@ -206,7 +240,7 @@ class ResidualsTestCase(unittest.TestCase):
         ssa1 = res.SingleStationAnalysis(top_sites.keys(), self.gmpe_list,
                                          self.imts)
         
-        # Compute the total, inter-event and intra-event residuals for each site
+        # Compute total, inter-event and intra-event residuals for each site
         ssa1.get_site_residuals(self.database)
         
         # Get single station residual statistics per GMPE and per imt
@@ -222,19 +256,33 @@ class ResidualsTestCase(unittest.TestCase):
         # Check plots executed for each GMPE and intensity measure
         for gmpe in self.gmpe_list:
             for imt in self.imts:                        
-                output_all_res_plt = os.path.join(self.out_location, gmpe +
-                                                  imt + 'AllResPerSite.jpg') 
-                output_intra_res_comp_plt = os.path.join(self.out_location,
-                                                         gmpe + imt +
-                                                         'IntraResCompPerSite.jpg') 
-                rspl.ResidualWithSite(ssa1, gmpe, imt, output_all_res_plt,
-                                      filetype = 'jpg')
+                output_all_res_plt = os.path.join(
+                    self.out_location, gmpe + imt + 'AllResPerSite.jpg') 
+                output_intra_res_comp_plt = os.path.join(
+                    self.out_location, gmpe + imt + 'IntraResCompPerSite.jpg') 
+                rspl.ResidualWithSite(
+                    ssa1, gmpe, imt, output_all_res_plt, filetype='jpg')
                 rspl.IntraEventResidualWithSite(ssa1, gmpe, imt,
                                                 output_intra_res_comp_plt,
-                                                filetype = 'jpg')
+                                                filetype='jpg')
                 # Check plots outputted
                 self.assertTrue(output_all_res_plt)
                 self.assertTrue(output_intra_res_comp_plt)
+
+    def test_single_station_residual_analysis_from_toml(self):
+        """
+        Test execution of single station residual analysis using GMPEs and
+        imts specified within a toml file. Correctness of values is not tested.
+        """
+        # Get sites with at least 1 record each (i.e. all sites in db)
+        threshold = 1
+        top_sites = rank_sites_by_record_count(self.database, threshold)
+        
+        # Create SingleStationAnalysis object from toml
+        ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), self.toml)
+        
+        # Compute total, inter-event and intra-event residuals for each site
+        ssa1.get_site_residuals(self.database)
                 
     @classmethod
     def tearDownClass(cls):

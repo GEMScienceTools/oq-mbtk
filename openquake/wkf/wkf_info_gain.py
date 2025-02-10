@@ -99,6 +99,11 @@ def information_gain(catalogue, h3_map, h3_level, smooth_out, T = 1, for_zone = 
     # Model likelihood
     mod_llhood = poiss_loglik(h3_idx['nocc'], h3_idx['count'], T)
     
+    if any(mod_llhood < -500):
+        print("-inf in likelihoods (probably cells with many events!)")
+        mod_llhood[mod_llhood < -500] = -500
+        unif_llhood[unif_llhood < -500] = -500
+        
     # Information gain = exp(llhood - unif_llhood)/total_event_num
     IG = np.exp((sum(mod_llhood)-sum(unif_llhood))/sum(h3_idx['count']))
     return IG
