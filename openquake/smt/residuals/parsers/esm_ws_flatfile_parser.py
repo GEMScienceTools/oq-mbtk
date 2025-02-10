@@ -162,8 +162,7 @@ class ESMFlatfileParserWS(SMDatabaseReader):
         eq_name = metadata["event_id"]
 
         # Date and time
-        eq_datetime = valid.date_time(metadata["event_time"],
-                                     "%Y-%m-%d %H:%M:%S")
+        eq_datetime = pd.to_datetime(metadata["event_time"])
         # Latitude, longitude and depth
         eq_lat = valid.latitude(metadata["ev_latitude"])
         eq_lon = valid.longitude(metadata["ev_longitude"])
