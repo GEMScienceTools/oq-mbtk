@@ -116,28 +116,27 @@ def get_sources(model_dir, inv_time):
     # Read the XMLs for all srcs in the given model
     ssm = readinput.read_source_models(files, 'tmp.hdf5', 
                                        investigation_time=inv_time,
-                                       rupture_mesh_spacing=5,
+                                       rupture_mesh_spacing=2.5,
                                        area_source_discretization=5,
                                        width_of_mfd_bin=0.1)
+    
     # Get a list of the source objects
     srcs = []
-    geom_model = []
-    for idx, ssm_obj in enumerate(ssm):
+    geom_models = []
+    for ssm_obj in ssm:
         if isinstance(ssm_obj, GeometryModel):
-            geom_model.append(ssm_obj)
-            ssm = pd.Series(ssm).drop(idx).values
+            geom_models.append(ssm_obj)
         else:
-            for idx_sg, sg in enumerate(ssm_obj.src_groups):
+            for idx_sg, _ in enumerate(ssm_obj.src_groups):
                 for src in ssm_obj[idx_sg]:
                     if type(src) in faults: # Only retain the fault sources
                         srcs.append(src)
-    assert len(geom_model) < 2 # Should be one or none
-    if len(geom_model) == 1:
-        geom_model = geom_model[0]
-    else:
-        geom_model = None
 
-    return srcs, geom_model
+    # If no MultiFaultSources set to None
+    if len(geom_models) < 1:
+        geom_models = None
+
+    return srcs, geom_models
 
 
 def get_boundary_2d(smsh):
@@ -187,7 +186,16 @@ def get_characteristic_mesh(src):
     """
     Get the mesh of a CharacteristicFaultSource
     """
-    return src.surface.mesh
+    # Get the surface
+    sfc = src.surface.mesh
+    
+    # Get mesh
+    try:
+        mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
+    except:
+        breakpoint()
+
+    return mesh
     
 
 def get_simple_mesh(src):
@@ -220,7 +228,7 @@ def get_kite_mesh(src):
     return mesh
 
 
-def get_geoms(srcs, geom_model):
+def get_geoms(srcs, geom_models):
     """
     Extract the geometry of each fault source and write to a geoJSON
     """
@@ -248,13 +256,14 @@ def get_geoms(srcs, geom_model):
         suids.append(i)
     
     # Get geometries of the MFS sources too
-    if geom_model:
-        for i, key in enumerate(geom_model.sections):
-            surf = geom_model.sections[key]
-            trace, poly = get_boundary_2d(surf.mesh)
-            traces.append(trace)
-            polys.append(poly)
-            suids.append(i)
+    if geom_models:
+        for gm in geom_models:
+            for i, key in enumerate(gm.sections):
+                surf = geom_models.sections[key]
+                trace, poly = get_boundary_2d(surf.mesh)
+                traces.append(trace)
+                polys.append(poly)
+                suids.append(i)
 
     daf = pd.DataFrame({'suid': suids, 'geometry': polys})
     gdaf_polys = gpd.GeoDataFrame(daf, geometry='geometry') 
@@ -308,10 +317,10 @@ def get_fault_geojsons(model_dir, inv_time, plotting=False, plotting_region=None
                             to define axis limits of the plotted geoJSONs
     """
     # Get the sources in the given model
-    srcs, geom_model = get_sources(model_dir, inv_time)
+    srcs, geom_models = get_sources(model_dir, inv_time)
 
     # Now get the geometries
-    gdaf_polys, gdaf_traces = get_geoms(srcs, geom_model)
+    gdaf_polys, gdaf_traces = get_geoms(srcs, geom_models)
 
     # Export into geoJSONs
     out_polys, out_traces = export_faults(gdaf_polys, gdaf_traces, model_dir)
