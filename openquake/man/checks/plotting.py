@@ -189,6 +189,8 @@ def get_characteristic_mesh(src):
     # Get the surface
     sfc = src.surface.mesh
     
+    breakpoint()
+
     # Get mesh
     mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
 
@@ -256,7 +258,7 @@ def get_geoms(srcs, geom_models):
     if geom_models:
         for gm in geom_models:
             for i, key in enumerate(gm.sections):
-                surf = geom_models.sections[key]
+                surf = gm.sections[key]
                 trace, poly = get_boundary_2d(surf.mesh)
                 traces.append(trace)
                 polys.append(poly)
