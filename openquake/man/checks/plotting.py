@@ -190,10 +190,7 @@ def get_characteristic_mesh(src):
     sfc = src.surface.mesh
     
     # Get mesh
-    try:
-        mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
-    except:
-        breakpoint()
+    mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
 
     return mesh
     
