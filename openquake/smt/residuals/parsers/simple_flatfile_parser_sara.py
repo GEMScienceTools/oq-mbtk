@@ -181,12 +181,6 @@ class SimpleFlatfileParserV9(SMDatabaseReader):
         # Date and Time
         year, month, day, hour, minute, second = self._validate_datetime(
             metadata)
-        #year = get_int(metadata["Year"])
-        #month = get_int(metadata["Month"])
-        #day = get_int(metadata["Day"])
-        #hour = get_int(metadata["Hour"])
-        #minute = get_int(metadata["Minute"])
-        #second = get_int(metadata["Second"])
         eq_datetime = datetime(year, month, day, hour, minute, second)
         # Event ID and Name
         eq_id = metadata["EQID"]
