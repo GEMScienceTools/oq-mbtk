@@ -260,13 +260,13 @@ def plot_all_sources(folder_name, region, mmin, fig_folder,
 
 	fig_a.plot(x=dataset[:,0], 
 		y=dataset[:,1], 
-		style="h0.5", 
+		style="h0.2", 
 		color=dataset[:, 2],
 		cmap=cpt_rate)
  
 	fig_b.plot(x=dataset[:,0], 
 		y=dataset[:,1], 
-		style="h0.5", 
+		style="h0.2", 
 		color=dataset[:, 4],
 		cmap=cpt_mmax)
         
