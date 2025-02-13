@@ -186,13 +186,9 @@ def get_characteristic_mesh(src):
     """
     Get the mesh of a CharacteristicFaultSource
     """
-    # Get the surface
-    sfc = src.surface.mesh
-    
-    breakpoint()
-
-    # Get mesh
-    mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
+    mesh = RectangularMesh(src.surface.mesh.lons,
+                           src.surface.mesh.lats,
+                           src.surface.mesh.sdepths)
 
     return mesh
     
