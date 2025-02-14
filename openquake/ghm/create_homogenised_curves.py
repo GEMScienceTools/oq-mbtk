@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ------------------- The OpenQuake Model Building Toolkit --------------------
-# Copyright (C) 2022 GEM Foundation
+# Copyright (C) 2025 GEM Foundation
 #           _______  _______        __   __  _______  _______  ___   _
 #          |       ||       |      |  |_|  ||  _    ||       ||   | | |
 #          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
@@ -159,7 +159,7 @@ def recompute_probabilities(df, old_ivt, new_ivt):
             dat = val.values
             dat[dat > 0.99999999] = 0.99999999
             df[key] = dat
-            rate = -np.log(1.-val)/old_ivt
+            rate = -np.log(1.-val) / old_ivt
             df[key] = 1.-np.exp(-rate*new_ivt)
     return df
 
@@ -215,7 +215,7 @@ def get_imtls(poes):
 
 def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
          imt_str, inland_shp, models_list=None, only_buffers=False,
-         buf=50, h3_resolution=6, mosaic_key='GID_0',vs30_flag=False,
+         buf=50, h3_resolution=6, mosaic_key='GID_0', vs30_flag=False,
          overwrite=False, sub=False):
     """
     This function processes all the models listed in the mosaic.DATA
@@ -264,10 +264,12 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         lst = glob.glob(os.path.join(outpath, '*.json'))
         lst += glob.glob(os.path.join(outpath, '*.txt'))
         if len(lst):
-            if overwrite==True:
-                print('Warning: overwriting existing files in {}'.format(outpath))
+            if overwrite is True:
+                tmps = f'Warning: overwriting existing files in {outpath}'
+                print(tmps)
             else:
-                raise ValueError(f'The code requires an empty folder\n{outpath}')
+                tmps = f'The code requires an empty folder\n{outpath}'
+                raise ValueError(tmps)
     else:
         os.mkdir(outpath)
 
@@ -545,11 +547,11 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                 fname = os.path.join(outpath, 'map_{:s}.json'.format(key))
                 final = within.to_crs(crs=p4326)
                 final.to_file(fname, driver='GeoJSON')
+
         # Store temporary files
         tmpdir = os.path.join(outpath, 'temp')
         if not os.path.exists(tmpdir):
             os.mkdir(tmpdir)
-
         print('saving everything to {}'.format(tmpdir))
 
         # Save data
@@ -570,22 +572,25 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         pickle.dump(coords, fou)
         fou.close()
 
-    buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, sub=sub)
+    buffer_processing(
+        outpath, imt_str, models_list, poelabs, buf, vs30_flag, sub=sub)
 
 
-def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, sub=True):
+def buffer_processing(
+        outpath, imt_str, models_list, poelabs, buf, vs30_flag, sub=True
+):
     """
-    Buffer processing
+    Buffer processing. Process the hazard data within the buffers.
 
     :param outpath:
-        Output path
+        Path to the folder where output information will be stored.
     :param imt_str:
         String with the IMT name
     :param models_list:
         A list with the IDs of the models
     :param poelabs:
         A list with the column labels used in the .csv file produced by OQ
-        and containing the hazard curves
+        containing the hazard curves
     :param buf:
         The buffer distance in km
     :param bool vs30_flag:
@@ -612,6 +617,7 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, su
             continue
         print(f'  Loading {key:s}')
 
+        # Read the file containing the information for the current model
         fname = os.path.join(tmpdir, f'{key:s}_data.pkl')
         fou = open(fname, 'rb')
         # tbuffer_data is a dictionary where the key is the ID of the site
@@ -651,7 +657,7 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, su
     # TODO
     header = 'i,lon,lat'
     for lab in poelabs:
-        header += ','+lab
+        header += ',' + lab
     fou.write(header)
 
     # This is the file with points that have only one value (in theory this is
@@ -662,7 +668,7 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, su
 
     # This is the array we use to store the hazard curves for the points within
     # a buffer
-    buffer_array = np.empty((len(buffer_data.keys()), len(poelabs)+2))
+    buffer_array = np.empty((len(buffer_data.keys()), len(poelabs) + 2))
 
     # Process information within the buffers
     c = 0
@@ -681,7 +687,7 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, su
                 tmps += f',{prob:f}'
             if key not in coords:
                 continue
-            fuu.write(tmps+'\n')
+            fuu.write(tmps + '\n')
 
         # Check key for the point
         if key not in coords:
