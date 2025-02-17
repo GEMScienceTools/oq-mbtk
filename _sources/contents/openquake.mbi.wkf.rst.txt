@@ -1,0 +1,269 @@
+openquake.mbi.wkf package
+=========================
+
+Submodules
+----------
+
+openquake.mbi.wkf.add\_baseline module
+--------------------------------------
+
+.. automodule:: openquake.mbi.wkf.add_baseline
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.add\_rmag\_params\_from\_gr module
+----------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.add_rmag_params_from_gr
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.analysis\_hypocentral\_depth module
+-----------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.analysis_hypocentral_depth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.analysis\_nodal\_plane module
+-----------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.analysis_nodal_plane
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.catalogue\_extract module
+-------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.catalogue_extract
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.check\_mfds module
+------------------------------------
+
+.. automodule:: openquake.mbi.wkf.check_mfds
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.check\_ses\_vs\_catalogue module
+--------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.check_ses_vs_catalogue
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.check\_toml module
+------------------------------------
+
+.. automodule:: openquake.mbi.wkf.check_toml
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.compute\_a\_value\_from\_catalogue module
+-----------------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.compute_a_value_from_catalogue
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.compute\_a\_value\_from\_density module
+---------------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.compute_a_value_from_density
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.compute\_gr\_params module
+--------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.compute_gr_params
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.compute\_mmax\_from\_subcatalogues module
+-----------------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.compute_mmax_from_subcatalogues
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.compute\_mmax\_per\_zone module
+-------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.compute_mmax_per_zone
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.create\_declustered\_catalogues module
+--------------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.create_declustered_catalogues
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.create\_gcmt\_subcatalogues\_per\_zone module
+---------------------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.create_gcmt_subcatalogues_per_zone
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.create\_nrml\_sources module
+----------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.create_nrml_sources
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.create\_smoothing\_per\_zone module
+-----------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.create_smoothing_per_zone
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.create\_subcatalogues\_per\_zone module
+---------------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.create_subcatalogues_per_zone
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.fix\_catalogue module
+---------------------------------------
+
+.. automodule:: openquake.mbi.wkf.fix_catalogue
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.focal\_mech\_loc\_plots module
+------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.focal_mech_loc_plots
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.plot\_completeness\_data module
+-------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.plot_completeness_data
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.remove\_buffer\_around\_faults module
+-------------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.remove_buffer_around_faults
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.set\_defaults module
+--------------------------------------
+
+.. automodule:: openquake.mbi.wkf.set_defaults
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.set\_gr\_params module
+----------------------------------------
+
+.. automodule:: openquake.mbi.wkf.set_gr_params
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.set\_h3\_to\_zones module
+-------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.set_h3_to_zones
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.set\_mmax\_plus\_delta module
+-----------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.set_mmax_plus_delta
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.set\_property module
+--------------------------------------
+
+.. automodule:: openquake.mbi.wkf.set_property
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.set\_property\_from\_default module
+-----------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.set_property_from_default
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.set\_trt module
+---------------------------------
+
+.. automodule:: openquake.mbi.wkf.set_trt
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.smooth\_flat module
+-------------------------------------
+
+.. automodule:: openquake.mbi.wkf.smooth_flat
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.wkf\_adaptive\_smoothing module
+-------------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.wkf_adaptive_smoothing
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.wkf.wkf\_h3\_zones\_cat module
+--------------------------------------------
+
+.. automodule:: openquake.mbi.wkf.wkf_h3_zones_cat
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbi.wkf
+   :members:
+   :undoc-members:
+   :show-inheritance:

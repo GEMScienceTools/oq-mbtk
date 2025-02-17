@@ -1,0 +1,444 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SSC workflow (wkf) module &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Tutorial: Calculating liquefaction probabilities from a single earthquake" href="sep_docs/tutorials/liquefaction_analysis.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            OpenQuake Model Building Toolkit Suite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ghm.html">Global Hazard Map (ghm) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smt.html">Strong-Motion Tools (smt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sep.html">Secondary Perils Analysis using the OQ-MBTK</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SSC workflow (wkf) module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#some-notes-on-setup">Some notes on setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#workflow-inputs">Workflow inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#model-set-up">Model set-up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#create-sub-catalogues-per-zone">Create sub-catalogues per zone</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#calculate-and-apply-completeness">Calculate and apply completeness</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#calculate-and-set-gutenberg-richter-parameters">Calculate  and set Gutenberg-Richter parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#estimate-and-set-maximum-magnitudes">Estimate and set maximum magnitudes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#analyse-and-set-hypocentral-depth">Analyse and set hypocentral depth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#model-focal-mechanism-distribution">Model focal mechanism distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#discretise-model-to-h3-zones">Discretise model to h3 zones</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#boxcounting-for-smoothing">Boxcounting (for smoothing)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#apply-smoothing">Apply smoothing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#option-1-gaussian-smoothing-kernels">Option 1: Gaussian smoothing kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#option-2-helmstetter-2007-adaptive-smoothing">Option 2: Helmstetter (2007) adaptive smoothing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#distribute-rates-in-sources">Distribute rates in sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#write-to-xml">Write to xml</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">OpenQuake Model Building Toolkit Suite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">SSC workflow (wkf) module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contents/wkf.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ssc-workflow-wkf-module">
+<h1>SSC workflow (wkf) module<a class="headerlink" href="#ssc-workflow-wkf-module" title="Link to this heading"></a></h1>
+<p>The <span class="target" id="index-0"></span>workflow utilises the tools in the model builder’s toolkit to construct a seismic source model step-by-step. This allows us to create a source model in xml format from a seismic catalogue, a set of source polygons and a file specifying required model parameters. Using the workflow tools, we can easily prepare different versions of the source models, which makes sensitivity analysis easier and allows us to easily build logic tree branches. Here we show the steps required to build a distributed seismicity model with smoothed sources. In practice, the order of the steps is not strictly important so long as e.g. the completeness is performed before the frequency-magnitude distributions (FMDs) are calculated.</p>
+<section id="some-notes-on-setup">
+<h2>Some notes on setup<a class="headerlink" href="#some-notes-on-setup" title="Link to this heading"></a></h2>
+<p>Though most of the tools we use in model construction are in python, some steps are executed in <a class="reference external" href="https://julialang.org/">Julia</a> using the <a class="reference external" href="https://github.com/GEMScienceTools/PSHAModelBuilder">PSHAModelBuilder</a> tools. We use this for the boxcounting, Gaussian smoothing, and rate distribution steps, because these steps are particularly intensive and Julia makes the process more efficient. See <a class="reference external" href="https://github.com/GEMScienceTools/PSHAModelBuilder">the PSHAModelBuilder Github</a>  for details on setup.</p>
+<p>In general, the components of the workflow are designed so that they can be run directly in a terminal. In the examples below, we use a jupyter notebook and the python <code class="docutils literal notranslate"><span class="pre">subprocess</span></code> module to run the commands. To instead run from terminal, use the cmd output directly. You can see that most of these calls are to the wkf module specifically, but in many cases these functions are wrappers to other functions within the mbt or elsewhere in the mbtk. You can use <code class="docutils literal notranslate"><span class="pre">oqm</span> <span class="pre">wkf</span> <span class="pre">-h</span></code> to see the available functions within the wkf and <code class="docutils literal notranslate"><span class="pre">oqm</span> <span class="pre">wkf</span> <span class="pre">&lt;subcmd_name&gt;</span> <span class="pre">--help</span></code> to see the input parameters for each function.</p>
+<p>If you are running in a jupyter notebook, we suggest setting up as below, using tools in the package <code class="docutils literal notranslate"><span class="pre">os</span></code> or <code class="docutils literal notranslate"><span class="pre">pathlib</span></code> to manage paths and specifying the locations of the wkf tools (and Julia when using Windows):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;USE_PYGEOS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;NUMEXPR_MAX_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;8&#39;</span>
+
+<span class="c1"># remember to change the path in these lines so they correspond to your computer!</span>
+<span class="n">BIND</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;/Users&#39;</span><span class="p">,</span> <span class="s1">&#39;kjohnson&#39;</span><span class="p">,</span> <span class="s1">&#39;GEM&#39;</span><span class="p">,</span><span class="s1">&#39;oq-mbtk&#39;</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">)</span>
+<span class="n">BIND1</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;/Users&#39;</span><span class="p">,</span> <span class="s1">&#39;kjohnson&#39;</span><span class="p">,</span> <span class="s1">&#39;GEM&#39;</span><span class="p">,</span> <span class="s1">&#39;oq-mbtk&#39;</span><span class="p">,</span> <span class="s1">&#39;openquake&#39;</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">BIND</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">BIND1</span><span class="p">)</span>
+
+<span class="c1"># on windows, also add these lines</span>
+<span class="c1">#PATH = os.path.join(&#39;..&#39;, &#39;..&#39;, &#39;AppData&#39;, &#39;Local&#39;, &#39;Programs&#39;, &#39;Julia-1.9.3&#39;, &#39;bin&#39;)</span>
+<span class="c1">#os.environ[&quot;PATH&quot;] = os.environ[&quot;PATH&quot;] + PATH</span>
+</pre></div>
+</div>
+</section>
+<section id="workflow-inputs">
+<h2>Workflow inputs<a class="headerlink" href="#workflow-inputs" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>The workflow starts from three inputs as outlined below:</dt><dd><ol class="arabic simple">
+<li><p>A homogenised earthquake catalogue in hmtk catalogue format. This can be a direct output of a catalogue prepared using the <a class="reference external" href="https://gemsciencetools.github.io/oq-mbtk/contents/cat.html">catalogue toolkit</a> or a catalogue (from a csv or ndk file) converted using the catalogue parsers in the hmtk.</p></li>
+<li><p>Source polygons covering the area of interest. These should ideally be supplied as .geojson files.</p></li>
+<li><p>A source parameter configuration file supplied as a .toml file. The toml file will set up paramaters for many steps of the workflow and be modified while running the code. The configuration toml is created by the modeller. Please note that for all the relative paths in the .toml file, the reference folder is the one where the .toml configuration file is located. An example is shown below.</p></li>
+</ol>
+</dd>
+</dl>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;South America&quot;</span>
+
+<span class="na">mmin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">4.0</span>
+<span class="na">bin_width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1</span>
+<span class="na">rupture_mesh_spacing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">2.5</span>
+
+<span class="k">[smoothing]</span>
+<span class="na">smoothing_method</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Gaussian&quot;</span>
+<span class="na">kernel_maximum_distance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">120.0</span>
+<span class="na">kernel_smoothing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[ [ 0.8, 20.0,], [ 0.15, 40.0,], [ 0.05, 80.0,],]</span>
+
+<span class="k">[completeness]</span>
+<span class="na">num_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span>
+<span class="na">step</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">8</span>
+<span class="na">flexible</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">true</span>
+<span class="na">years</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[ 1920, 1940, 1960, 1970, 1990, 2000, 2010,]</span>
+<span class="na">mags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[ 5.0, 5.25, 5.5, 5.75, 6.0, 6.5, 7.0, 8.0,]</span>
+<span class="na">ref_mag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">4.5</span>
+<span class="na">ref_upp_mag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10.0</span>
+<span class="na">bmin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.5</span>
+<span class="na">bmax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1.5</span>
+<span class="na">optimization_criterion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;poisson&quot;</span>
+
+<span class="k">[default]</span>
+<span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Default&quot;</span>
+<span class="na">tectonic_region_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Active Shallow Crust&quot;</span>
+<span class="na">completeness_table</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[ [ 2000.0, 4.0,], [ 1980.0, 5.0,], [ 1900.0, 6.0,],]</span>
+<span class="na">rupture_aspect_ratio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1.0</span>
+<span class="na">upper_seismogenic_depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.0</span>
+<span class="na">lower_seismogenic_depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">35.0</span>
+<span class="na">nodal_plane_distribution</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[ [ 1.0, 180.0, 45.0, 90.0,],]</span>
+<span class="na">hypocenter_distribution</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[ [ 1.0, 15.0,],]</span>
+<span class="na">agr_sig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1</span>
+<span class="na">bgr_sig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.5</span>
+<span class="na">agr_sig_weichert</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1</span>
+<span class="na">bgr_sig_weichert</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.5</span>
+<span class="na">mmax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">7.5</span>
+
+<span class="k">[msr]</span>
+<span class="na">&quot;Active Shallow Crust&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Leonard2014_Interplate&quot;</span>
+
+<span class="k">[sources.26]</span>
+
+<span class="k">[sources.34]</span>
+
+<span class="k">[sources.38]</span>
+</pre></div>
+</div>
+<p>The .toml file will be read by different functions at different stages of the workflow. In this example, a source model will consist of sources 26, 34 and 38 from the source polygons, and these are all active shallow crustal sources. If using the <code class="docutils literal notranslate"><span class="pre">completeness_analysis</span></code> function, sources will be added to the model after this step, but at least one named source will be required to start the analysis and if there are too few events in a source to establish magnitude of completeness (mc) and GR parameters these sources will be omitted, so best practice remains to specify the sources clearly in the toml. Source names or abbreviations can also be used here - it is not necessary to use only numeric source identifiers. Still, we recommend using a numbering scheme based on a standard format e.g. ASC001 (for source number 1 in active shallow crust), ASC002 and so on.</p>
+<p>At various stages of the workflow, values will be added to the .toml file or modified as the model is constructed.</p>
+<p>To avoid losing track of the original model parameters, the ‘check_toml’ function will make a copy of the .toml file that is edited and used in the construction of the source zones, and retain the original input .toml file as provided. The <code class="docutils literal notranslate"><span class="pre">check_toml</span></code> file will also report if necessary inputs are missing, if parameters are included for different types of smoothing and the number of sources in the model.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">orig_config</span> <span class="o">=</span> <span class="s2">&quot;IND_full_config.toml&quot;</span>
+<span class="n">config</span> <span class="o">=</span> <span class="s2">&quot;IND_config_working_130224.toml&quot;</span>
+
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf check_toml </span><span class="si">{</span><span class="n">orig_config</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">use</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2">&quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># returns a CompletedProcess instance</span>
+</pre></div>
+</div>
+</section>
+<section id="model-set-up">
+<h2>Model set-up<a class="headerlink" href="#model-set-up" title="Link to this heading"></a></h2>
+<p>To set-up the workflow, we start by specifying some necessary parameters we will need later.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Set the resolution level for the h3 gridding</span>
+<span class="n">h3_level</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="c1"># Set max and min depths</span>
+<span class="n">depth_max</span> <span class="o">=</span> <span class="mi">35</span>
+<span class="n">depth_min</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="n">mmax_delta</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">generate_completeness_tables</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="s2">&quot;config.toml&quot;</span>
+</pre></div>
+</div>
+<p>For efficient handling of spatial datasets, we use the <a class="reference external" href="https://h3geo.org/docs/">h3</a> package when smoothing the distributed seismicity and to create point sources. We set the resolution for these steps here for consistency. See <a class="reference external" href="https://h3geo.org/docs/core-library/restable/">the h3 website</a> for more details on h3 resolution.</p>
+<p>We also set some depth limits for events to consider in the source model: in this case we are dealing with crustal earthquakes and so the limits for the depths of events are set to 0-35km. Note that some catalogues may contain negative depths if topography has been considered in the catalogue processing!</p>
+<p>The parameter <code class="docutils literal notranslate"><span class="pre">mmax_delta</span></code> sets a fixed delta value to add to the observed largest event in the catalogue when considering suitable mmax per zone. If <code class="docutils literal notranslate"><span class="pre">generate_completeness_tables</span></code> is True, the code will process completeness for each zone. It is useful to be able to turn off this step where you are running the workflow multiple times as this step can be quite slow.</p>
+<p>Finally we specify the location of the configuration toml file that contains further parameters for our models and will contain zone-based information to construct the source zones.</p>
+</section>
+<section id="create-sub-catalogues-per-zone">
+<h2>Create sub-catalogues per zone<a class="headerlink" href="#create-sub-catalogues-per-zone" title="Link to this heading"></a></h2>
+<p>In order to create models for individual zones, we need to partition the events in our catalogue over the source zones we wish to construct. To do this, we use the <code class="docutils literal notranslate"><span class="pre">create_subcatalogues_per_zone</span></code> function. This function takes the specified catalogue and the source polygons as input, and returns a new file for each zone containing events within the zone polygon. The input catalogue should be in the hmtk catalogue format and be suitably declustered. The outputs - individual catalogue csv files for each zone - are created in the specified folder. This function uses a simple point in polygon approach to allocate events to the relevant zone, with a modification for polygons that cross the international dateline.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">polygons</span> <span class="o">=</span> <span class="s2">&quot;./data/asrc/src22.geojson&quot;</span>
+<span class="n">subcatalogues_folder</span> <span class="o">=</span> <span class="s2">&quot;./model/asc/subcatalogues/&quot;</span>
+
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf create_subcatalogues_per_zone </span><span class="si">{</span><span class="n">polygons</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">cat</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">subcatalogues_folder</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="calculate-and-apply-completeness">
+<h2>Calculate and apply completeness<a class="headerlink" href="#calculate-and-apply-completeness" title="Link to this heading"></a></h2>
+<p>At this step, we wish to apply some completeness constraints. You may prefer to perform a completeness analysis separately, taking into account changes in expected completeness (for example, due to known changes in local recording stations or equipment). In this case, the identified completeness for each zone can be added to the .toml file before the other steps of the workflow are carried out. Alternatively, there are tools within the mbt for performing a completeness analysis.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">completeness_analysis</span></code> tool takes in a set of possible years and magnitudes and tests all possible completeness windows from these sets for their respective fit to the best-fitting FMD given the specified windows. Different optimisation criteria are available for testing the goodness of fit of the different completeness windows, from a norm difference between observed rates and expected to a Poisson likelihood of observing events based on the window selection. As such there are two steps to the completeness analysis in the workflow:
+1. generating the initial completeness windows from the provided years and magnitudes in the config .toml [completeness] section using <code class="docutils literal notranslate"><span class="pre">completeness_generate</span></code>; and
+2. running the analysis for each subcatalogue with <code class="docutils literal notranslate"><span class="pre">completeness_analysis</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">completeness_param_folder</span> <span class="o">=</span> <span class="s1">&#39;./completeness_windows/&#39;</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm cat completeness_generate </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">completeness_param_folder</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">pattern</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;asc&quot;</span><span class="p">,</span> <span class="s2">&quot;subcatalogues&quot;</span><span class="p">,</span> <span class="s2">&quot;*.csv&quot;</span><span class="p">)</span>
+<span class="n">folder_figs</span> <span class="o">=</span> <span class="s2">&quot;./zone_completeness_figs&quot;</span>
+<span class="n">folder_compl_results</span> <span class="o">=</span> <span class="s2">&quot;./zone_completeness&quot;</span>
+
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm cat completeness_analysis </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2"> </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">folder_figs</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">completeness_param_folder</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">folder_compl_results</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Running the above will generate the completeness windows to test from the years and magnitudes in the config and write them to files in the specified completeness_param_folder. Then, for each csv file in the subcatalogues folder, it will test the completeness windows for the catalogue, calculate the FMD parameters for the best fitting window and write these to the config along with the completeness windows, and plot the best-fitting model in a png stored in folder_figs. In some cases, the completeness_analysis may fail to return completeness windows for a zone. This may be because there are too few events in the catalogue once the completeness windows are applied or because the calculated b-value for all of the possible complete catalogues is outwith the range specified by bmin and bmax in the [completeness] section of the .toml file. In this case, completeness can be manually added to the source or, if nothing is specified for the source, the source will be assigned the [default] completeness_table in the config.</p>
+<p>Whether you have used the <code class="docutils literal notranslate"><span class="pre">completeness_analysis</span></code> or have manually specified completeness for each zone, you may wish to check plots of event-density in time with the chosen completeness. You can easily create plots of this for each zone using <code class="docutils literal notranslate"><span class="pre">plot_completeness_data</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">folder_figs</span> <span class="o">=</span> <span class="s2">&quot;./completeness_density&quot;</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf plot_completeness_data </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2"> </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">folder_figs</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Again this will create for each zone a plot of the event density in time based on the zone catalogue and the parameters in the toml file. For any zones without a specified completeness (i.e. where the completeness_analysis fails to return a result or where completeness has not been manually added), the default completeness specified in the [defaults] section of the .toml will be used. Note that the <code class="docutils literal notranslate"><span class="pre">plot_completeness_data</span></code> function will not modify the config.toml, unlike the <code class="docutils literal notranslate"><span class="pre">completeness_analysis</span></code> step.</p>
+</section>
+<section id="calculate-and-set-gutenberg-richter-parameters">
+<h2>Calculate  and set Gutenberg-Richter parameters<a class="headerlink" href="#calculate-and-set-gutenberg-richter-parameters" title="Link to this heading"></a></h2>
+<p>For each source polygon, we wish to calculate the Gutenberg-Richter a- and b-values that define the total rate expected in that source.
+The compute_gr_params function calculates these values. To easily do this for each source zone, we supply the ‘pattern’ of naming for the source zones (if we have not already done so) to the function <code class="docutils literal notranslate"><span class="pre">compute_gr_params</span></code>, which calculates the Weichert a and b parameters using the supplied completeness in the config for each zone.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pattern</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;asc&quot;</span><span class="p">,</span> <span class="s2">&quot;subcatalogues&quot;</span><span class="p">,</span> <span class="s2">&quot;*.csv&quot;</span><span class="p">)</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;oqm wkf compute_gr_params </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="se">\&quot;</span><span class="s1"> </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">folder_figs</span><span class="si">}</span><span class="s1">&#39;</span>
+</pre></div>
+</div>
+<p>This will write a- and b-values to the config for each zone, called agr_weichert and bgr_weichert respectively.
+If using <code class="docutils literal notranslate"><span class="pre">completeness_analysis</span></code>, we will have already returned the a- and b- values called agr_weichert and bgr_weichert so the <code class="docutils literal notranslate"><span class="pre">compute_gr_parameters</span></code> step is no longer neccessary. However in either case we wish to write the calculated values to the config as agr and bgr. First we must ensure that agr_sig and bgr_sig values are available, describing the uncertainty in a- and b-values. In this case we can set from the [defaults] section where we are missing these:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;oqm wkf set_property_from_default </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s1"> agr_sig_weichert&#39;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;oqm wkf set_property_from_default </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s1"> bgr_sig_weichert&#39;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Which will update the config file to contain agr_sig_weichert and bgr_sig_weichert values. Then we can set the parameters with the <code class="docutils literal notranslate"><span class="pre">set_gr_params</span></code> function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf set_gr_params </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> -u </span><span class="se">\&quot;</span><span class="s2">*</span><span class="se">\&quot;</span><span class="s2"> -m </span><span class="se">\&quot;</span><span class="s2">weichert</span><span class="se">\&quot;</span><span class="s2">&quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This sets the GR parameters from the config. -u tells the function which zones to do this for, in this case we use * to specify we wish to do this for all zones. -m tells the function which bgr values to use - in this case weichert.</p>
+<p>In some cases, we may wish to change the b-value and find the appropriate a-value for the catalogue given this new b. To do this, we can use the compute_a_value function for a specific zone. In this example we set the b-value of zone 6 to 1.0:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openquake.wkf.compute_gr_params</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_a_value</span>
+
+<span class="n">compute_a_value</span><span class="p">(</span><span class="s2">&quot;./subcatalogues/subcatalogue_zone_6.csv&quot;</span><span class="p">,</span> <span class="n">bval</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">fname_config</span><span class="o">=</span> <span class="n">config</span><span class="p">,</span>
+                <span class="n">folder_out</span> <span class="o">=</span> <span class="n">folder_out</span><span class="p">,</span> <span class="n">folder_out_figs</span> <span class="o">=</span> <span class="n">folder_figs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will add the new b-value and the calculated a-value from the catalogue to the config as bgr_counting and agr_counting. Again, these can be set with <code class="docutils literal notranslate"><span class="pre">set_gr_params</span></code>, which will update the bgr value for zone 6:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf set_gr_params </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> --use </span><span class="se">\&quot;</span><span class="s2">&#39;6&#39;</span><span class="se">\&quot;</span><span class="s2"> -m </span><span class="se">\&quot;</span><span class="s2">counting</span><span class="se">\&quot;</span><span class="s2">&quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="estimate-and-set-maximum-magnitudes">
+<h2>Estimate and set maximum magnitudes<a class="headerlink" href="#estimate-and-set-maximum-magnitudes" title="Link to this heading"></a></h2>
+<p>The simplest approach to defining a maximum magnitude is to find the largest recorded event in the catalogue for each zone. Again, we do this on a per-zone basis. The function compute_mmax_per_zone does this for us, taking in the zone polygons, the catalogue and the config file. When running this function, we attach the “obs” label to keep track of where this value is obtained from (i.e. from observed data).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf compute_mmax_per_zone </span><span class="si">{</span><span class="n">polygons</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">cat</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> </span><span class="se">\&quot;</span><span class="s2">obs</span><span class="se">\&quot;</span><span class="s2">&quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To allow for the (significant) possibility that the largest event is not recorded in the catalogue, we add a delta value (the ‘mmax_delta’ we specified earlier) to the maximum recorded magnitude. The next step writes the maximum values to our config file. We also set a minimum maximum magnitude (in this case 7.0) so that any zones with a maximum magnitude less than M7.0 are set to have a maximum magnitude of M7.0.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf set_mmax_plus_delta </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">mmax_delta</span><span class="si">}</span><span class="s2"> 7.0&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="analyse-and-set-hypocentral-depth">
+<h2>Analyse and set hypocentral depth<a class="headerlink" href="#analyse-and-set-hypocentral-depth" title="Link to this heading"></a></h2>
+<p>Hypocentral depths are also determined from our catalogue data. In this case, we specify depth bins for the events in the catalogue. The code below will create plots of the depth distribituion of events in each zone and save them to a specified output file. It will also write a depth distribution for the zone into our config file as the fraction of events in each bin, where a bin is described by its mean (so in the example below, bins are written into our config file as 5, 15, 27.5).
+We have split the command into two lines for easier readability.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">depth_bins</span> <span class="o">=</span> <span class="s2">&quot;0.0,10.0,20.0,35.0&quot;</span>
+<span class="n">folder_figs</span> <span class="o">=</span> <span class="s1">&#39;./model/figs/hypo_depth/&#39;</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf analysis_hypocentral_depth </span><span class="si">{</span><span class="n">subcatalogues_folder</span><span class="si">}</span><span class="s2"> --f </span><span class="si">{</span><span class="n">folder_figs</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cmd</span><span class="si">}</span><span class="s2"> --depth-bins </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">depth_bins</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2"> -c </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="model-focal-mechanism-distribution">
+<h2>Model focal mechanism distribution<a class="headerlink" href="#model-focal-mechanism-distribution" title="Link to this heading"></a></h2>
+<p>Similarly our focal mechanism distribution is determined from the available catalogue. Here we can choose to either use the our existing catalogue or to use the gcmt catalogue, repeating the first few steps of breaking this into source zones. If we have focal mechanism data in our catalogue (i.e. strike, dip and rake values) then we can supply our existing catalogue here, though we should be careful to ensure that the column names are correct.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pattern</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gcmt_subcat_folder</span><span class="p">,</span> <span class="s2">&quot;*.csv&quot;</span><span class="p">)</span>
+<span class="n">folder_figs_gcmt</span> <span class="o">=</span> <span class="s2">&quot;./model/figs/focal_mech&quot;</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf analysis_nodal_plane </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2"> </span><span class="si">{</span><span class="n">folder_figs_gcmt</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>Running this code block will run the nodal plane analysis function for all files that match the specified pattern in the specified location and output figures of the nodal plane distribution to the folder_figs_gcmt folder. Rupture types are categorised according to the method of Kaverina et al. (1996).</p>
+<p>In this case, we don’t have a direct method to apply the focal mechanism distribution to our config file. This is because we often want to consider other local information when deciding on a focal mechanism distribution. Instead we review the plots from <code class="docutils literal notranslate"><span class="pre">analysis_nodal_plane</span></code> and add them to a different toml file we have named <code class="docutils literal notranslate"><span class="pre">defaults</span></code>. For each source zone, we specify a nodal_plane distribution as a list of [weight, strike, dip, rake], for example:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[sources.26]</span>
+<span class="na">nodal_plane_distribution</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[[ 1.00, 180.0, 60.0, 90.0,]]</span>
+</pre></div>
+</div>
+<p>Running</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf set_defaults </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">defaults</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>will take the hypocentral distribution (and any other parameters from defaults) and apply it to our config file where information is missing.</p>
+</section>
+<section id="discretise-model-to-h3-zones">
+<h2>Discretise model to h3 zones<a class="headerlink" href="#discretise-model-to-h3-zones" title="Link to this heading"></a></h2>
+<p>Building a smoothed seismicity model can be particularly computationally intensive due to the spatial distribution we are trying to model. We use <a class="reference external" href="https://h3geo.org/docs/">h3</a> to help with this, by covering our area of interest in hexagonal cells at a specified resolution (which we set earlier as h3_level). This step in the workflow generates the collection of h3 cells that covers our source polygons. The cell indices are written to the specified output repository, where they will be called in the next steps of the smoothing.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">zones_h3_repr</span> <span class="o">=</span> <span class="s1">&#39;./model/zones/h3/&#39;</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf set_h3_to_zones </span><span class="si">{</span><span class="n">h3_level</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">polygons</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">zones_h3_repr</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>If for some reason we don’t want to generate h3 cells for all zones in a polygon set, we can specify the polygons we do want to use by supplying a list of polygon ids</p>
+</section>
+<section id="boxcounting-for-smoothing">
+<h2>Boxcounting (for smoothing)<a class="headerlink" href="#boxcounting-for-smoothing" title="Link to this heading"></a></h2>
+<p>For Gaussian smoothing approaches, and for calculating the information gain of a smoothing model, we need to know how many events occur in each spatial cell.
+The <code class="docutils literal notranslate"><span class="pre">wkf_boxcounting</span></code> function requires the catalogue of earthquakes, the h3 mapping generated at the previous step and the config file. It will write the output - a dataframe containing locations of cells and the number of events in that cell - to the specified output folder. By default the function outputs a version with and without the h3 indices.
+Finally, we supply two extra paramters to the function directly. Firstly the end year is specified after the ‘-y’ flag. Secondly, the weighting is provided using the -w flag. There are currently three options for this weighting:
+* ‘one’ weights all earthquakes equally
+* ‘mfd’ weights according to the rate of magnitudes based on the zonal MFD, so earthquakes occurring where the occurrence rates for the given magnitude are higher get weighted more.
+* ‘completeness’ weights according to the inverse of the duration of completeness for that magnitude, so more weight is given to small earthquakes that weren’t captured in the past.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fld_box_counting</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;boxcounting&quot;</span><span class="p">)</span>
+<span class="n">tmp</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BIND</span><span class="p">,</span> <span class="s2">&quot;wkf_boxcounting_h3.jl&quot;</span><span class="p">)</span>
+<span class="n">zones_h3_repr</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">zones_h3_repr</span><span class="p">,</span> <span class="s2">&quot;mapping_h5.csv&quot;</span><span class="p">)</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;julia </span><span class="si">{</span><span class="n">tmp</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">cat</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">zones_h3_repr</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cmd</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">h3_level</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">fld_box_counting</span><span class="si">}</span><span class="s2"> -y 2018 -w </span><span class="se">\&quot;</span><span class="s2">one</span><span class="se">\&quot;</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="apply-smoothing">
+<h2>Apply smoothing<a class="headerlink" href="#apply-smoothing" title="Link to this heading"></a></h2>
+<p>There are currently two options for smoothing included in the mbt. For either approach, the required parameters should be included in the toml file under the ‘smoothing’ section (see example above). In both cases, the output file is a smoothed rate in each h3 cell. Note that the rate returned by these functions comes from the events in the declustered catalogue. The next step will normalise these rates to be consistent with the rates from the FMD for each zone.</p>
+<section id="option-1-gaussian-smoothing-kernels">
+<h3>Option 1: Gaussian smoothing kernels<a class="headerlink" href="#option-1-gaussian-smoothing-kernels" title="Link to this heading"></a></h3>
+<p>This approach applies Gaussian spatial kernels of fixed distance around each event in the catalogue. Multiple kernels and weightings can be specified. The <code class="docutils literal notranslate"><span class="pre">kernel_smoothing</span></code> in the config specifies the smoothing distances and their associated weights - in this case we apply three kernels with decreasing weight for increased smoothing distance. We also specify a <code class="docutils literal notranslate"><span class="pre">kernel_maximum_distance</span></code> as the upper limit on the Gaussian smoothing. The Gaussian smoothing approach takes the results of the boxcounting directly, so any specified weights in the previous step will be applied to the smoothing in this step. The boxcounting results file will be inside the boxcounting folder, and we set up a file to contain the smoothing results.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fname_bcounting</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;boxcounting&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;box_counting_h3_</span><span class="si">{</span><span class="n">cat</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">fname_smoothing</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;smoothing&quot;</span><span class="p">,</span> <span class="s2">&quot;smooth&quot;</span><span class="p">)</span>
+<span class="n">tmp</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BIND1</span><span class="p">,</span> <span class="s2">&quot;wkf_smoothing.jl&quot;</span><span class="p">)</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;julia </span><span class="si">{</span><span class="n">tmp</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">fname_bcounting</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">fname_smoothing</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="option-2-helmstetter-2007-adaptive-smoothing">
+<h3>Option 2: Helmstetter (2007) adaptive smoothing<a class="headerlink" href="#option-2-helmstetter-2007-adaptive-smoothing" title="Link to this heading"></a></h3>
+<p>This approach determines a smoothing distance for each event based on its proximity to other events. This means that the smoothing distance will be small in areas with many earthquakes and larger where there are fewer, further spaced events.
+In this case, the parameters to be specified are a minimum smoothing distance (ideally close to the location uncertainty of a given catalogue), the nth neighbour to use for the smoothing distance (e.g. to use the distance to the 5th closest neighbour, we would specify n_v = 5) and the spatial kernel we want to use (either power-law or Gaussian), as well as a maximum smoothing distance (maxdist). Because the adaptive smoothing considers all events in the catalogue potential neighbours, including a <code class="docutils literal notranslate"><span class="pre">maxdist</span></code> is especially important for catalogues with sparse events covering large areas, but in practice we have found it does not impact the final smoothing results (either in terms of spatial pattern or information gain). These parameters should be specified in the [smoothing] part of the toml file.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">h3_cells_loc</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">zones_h3_repr</span><span class="p">,</span> <span class="s2">&quot;mapping_h5.csv&quot;</span><span class="p">)</span>
+<span class="n">fname_smoothing</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;smoothing&quot;</span><span class="p">,</span> <span class="s2">&quot;adapsmooth_nv5.csv&quot;</span><span class="p">)</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf wkf_adaptive_smoothing </span><span class="si">{</span><span class="n">cat</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">h3_cells_loc</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">fname_smoothing</span><span class="si">}</span><span class="s2"> &quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In both cases, the output will be one large file containing the smoothing at all model locations. To split the smoothed results back into zones so that we can apply the correct rates, we use the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fname_smoothing_source</span> <span class="o">=</span> <span class="s1">&#39;./smoothing/adapn5_smooth&#39;</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf create_smoothing_per_zone </span><span class="si">{</span><span class="n">fname_smoothing</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">polygons</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">fname_smoothing_source</span><span class="si">}</span><span class="s2"> --use </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">use</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2">&quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Specifying zone ids with <code class="docutils literal notranslate"><span class="pre">use</span></code> will return the smoothing only for the specified zones. The fname_smoothing_source input specifies the output folder in which to save the results. This will return for each source a csv of smoothed rates at the specified h3 locations.</p>
+</section>
+</section>
+<section id="distribute-rates-in-sources">
+<h2>Distribute rates in sources<a class="headerlink" href="#distribute-rates-in-sources" title="Link to this heading"></a></h2>
+<p>Now that we have determined a smoothing, we want to distribute the total earthquake rate for a source polygon in such a way that the rate is highest where the intensity of events is highest, that is we wish to distribute the total rate of events spatially.</p>
+<p><code class="docutils literal notranslate"><span class="pre">eps_a</span></code> and <code class="docutils literal notranslate"><span class="pre">eps_b</span></code> are epsilons to be applied to the sigma values from applying the weichert method. If set to zero, the <code class="docutils literal notranslate"><span class="pre">agr</span></code> and <code class="docutils literal notranslate"><span class="pre">bgr</span></code> are used, but if there is an epsilon and a reference magnitude (the a-value type sigma is for the rate above a reference magnitude), then the zonal mfd is adjusted accordingly before distributing the rates.</p>
+<p>This will output point_src_input for each polygon.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">folder_point_srcs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;point_src_input&quot;</span><span class="p">)</span>
+<span class="n">tmp</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BIND1</span><span class="p">,</span> <span class="s2">&quot;wkf_rates_distribute.jl&quot;</span><span class="p">)</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;julia </span><span class="si">{</span><span class="n">tmp</span><span class="si">}</span><span class="s2"> -r 0.0 -b 0.0 </span><span class="si">{</span><span class="n">fname_smoothing_source</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">folder_point_srcs</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="write-to-xml">
+<h2>Write to xml<a class="headerlink" href="#write-to-xml" title="Link to this heading"></a></h2>
+<p>Finally, we wish to write our crustal source models to .xml files that can be used in the OpenQuake engine. For this we use the <code class="docutils literal notranslate"><span class="pre">create_nrml_sources</span></code> function which takes the point sources we created for each zone in step 11 and other information from the config file to create source models in the specified folder. At this step, it is necessary to have specified several as-yet unused parameters in the config, such as the msr and the mmin, bin_width and rupture_mesh_spacing.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pattern</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder_point_srcs</span><span class="p">,</span> <span class="s2">&quot;*.csv&quot;</span><span class="p">)</span>
+<span class="n">folder_oq</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;./ssm&quot;</span><span class="p">)</span>
+<span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;oqm wkf create_nrml_sources </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2"> </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">folder_oq</span><span class="si">}</span><span class="s2"> -a&quot;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sep_docs/tutorials/liquefaction_analysis.html" class="btn btn-neutral float-left" title="Tutorial: Calculating liquefaction probabilities from a single earthquake" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-2022, GEM Hazard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
