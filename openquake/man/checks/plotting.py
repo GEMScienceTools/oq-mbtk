@@ -99,7 +99,7 @@ def get_ssm_files(model_dir):
     return files
 
 
-def get_sources(model_dir, inv_time):
+def get_sources(model_dir, inv_time, rms):
     """
     Load the sources in the given model and return them as a list.
     """            
@@ -116,7 +116,7 @@ def get_sources(model_dir, inv_time):
     # Read the XMLs for all srcs in the given model
     ssm = readinput.read_source_models(files, 'tmp.hdf5', 
                                        investigation_time=inv_time,
-                                       rupture_mesh_spacing=2.5,
+                                       rupture_mesh_spacing=rms,
                                        area_source_discretization=5,
                                        width_of_mfd_bin=0.1)
     
@@ -298,12 +298,18 @@ def plot_faults(gdaf_polys, gdaf_traces, region, model_dir):
     fig.show()
 
 
-def get_fault_geojsons(model_dir, inv_time, plotting=False, plotting_region=None):
+def get_fault_geojsons(model_dir, inv_time, rms, plotting=False,
+                       plotting_region=None):
     """
     Write the fault sections and fault traces within the given hazard model
     model to geojsons.
 
     :param model_dir: directory containing the required hazard model
+
+    :param inv_time: Investigation time to use when parsing the SSC (for
+                     non-parametric sources)
+
+    :param rms: Rupture mesh spacing to use when parsing the SSC
 
     :param plotting: Boolean which if True creates a plot using the geoJSONs
                      of the faults in the given hazard model
@@ -312,7 +318,7 @@ def get_fault_geojsons(model_dir, inv_time, plotting=False, plotting_region=None
                             to define axis limits of the plotted geoJSONs
     """
     # Get the sources in the given model
-    srcs, geom_models = get_sources(model_dir, inv_time)
+    srcs, geom_models = get_sources(model_dir, inv_time, rms)
 
     # Now get the geometries
     gdaf_polys, gdaf_traces = get_geoms(srcs, geom_models)
