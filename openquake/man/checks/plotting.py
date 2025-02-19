@@ -194,8 +194,8 @@ def get_characteristic_mesh(src):
             lon, src.surface.mesh.lats[idx], src.surface.mesh.depths[idx])
         pnts.append(pnt)
 
-    # Use from_points_list method to avoid ndim < 2 assertion issue in JPN
-    # model characteristic mesh
+    # Use from_points_list method to avoid ndim < 2 assertion
+    # issue in some JPN model characteristic fault sources
     return RectangularMesh.from_points_list([pnts])
     
 
