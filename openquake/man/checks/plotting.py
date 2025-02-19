@@ -190,8 +190,12 @@ def get_characteristic_mesh(src):
     lons = src.surface.mesh.lons
     lats = src.surface.mesh.lats
     deps = src.surface.mesh.depths
+    if lons.ndim == 2:
+        mesh = RectangularMesh(lons, lats, deps)
+    else:
+        breakpoint()
 
-    return RectangularMesh(lons, lats, deps)
+    return mesh
     
 
 def get_simple_mesh(src):
