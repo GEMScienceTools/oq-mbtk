@@ -8,7 +8,6 @@ from shapely import Polygon as ShapelyPolygon, LineString
 
 from openquake.commonlib import readinput
 from openquake.hazardlib.nrml import GeometryModel
-from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.mesh import RectangularMesh
 from openquake.hazardlib.geo.surface.simple_fault import SimpleFaultSurface
 from openquake.hazardlib.source.multi_fault import MultiFaultSource
@@ -188,15 +187,10 @@ def get_characteristic_mesh(src):
     """
     Get the mesh of a CharacteristicFaultSource
     """
-    pnts = []
-    for idx, lon in enumerate(src.surface.mesh.lons):
-        pnt = Point(
-            lon, src.surface.mesh.lats[idx], src.surface.mesh.depths[idx])
-        pnts.append(pnt)
-
-    # Use from_points_list method to avoid ndim < 2 assertion
-    # issue in some JPN model characteristic fault sources
-    return RectangularMesh.from_points_list([pnts])
+    mesh = RectangularMesh(src.surface.mesh.lons,
+                           src.surface.mesh.lats,
+                           src.surface.mesh.depths)
+    return mesh
     
 
 def get_simple_mesh(src):
