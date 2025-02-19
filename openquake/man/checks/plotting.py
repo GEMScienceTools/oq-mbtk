@@ -174,7 +174,8 @@ def get_complex_mesh(src):
     Get the mesh of a ComplexFaultSource
     """
     # Get the surface
-    sfc = ComplexFaultSurface.from_fault_data(src.edges, mesh_spacing=5)
+    sfc = ComplexFaultSurface.from_fault_data(
+        src.edges, mesh_spacing=src.rupture_mesh_spacing)
     
     # Get mesh
     mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
@@ -186,9 +187,10 @@ def get_characteristic_mesh(src):
     """
     Get the mesh of a CharacteristicFaultSource
     """
-    mesh = RectangularMesh(src.surface.mesh.lons,
-                           src.surface.mesh.lats,
-                           src.surface.mesh.depths)
+    try:
+        mesh = RectangularMesh(src.surface.mesh.lons, src.surface.mesh.lats, src.surface.mesh.depths)
+    except:
+        return breakpoint()
 
     return mesh
     
@@ -200,7 +202,8 @@ def get_simple_mesh(src):
     # Get the surface
     sfc = SimpleFaultSurface.from_fault_data(
        src.fault_trace, src.upper_seismogenic_depth,
-       src.lower_seismogenic_depth, src.dip, mesh_spacing=5)
+       src.lower_seismogenic_depth, src.dip,
+       mesh_spacing=src.rupture_mesh_spacing)
     
     # Get mesh
     mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
