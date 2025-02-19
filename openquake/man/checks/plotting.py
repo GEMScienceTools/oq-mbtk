@@ -190,6 +190,7 @@ def get_characteristic_mesh(src):
     mesh = RectangularMesh(src.surface.mesh.lons,
                            src.surface.mesh.lats,
                            src.surface.mesh.depths)
+
     return mesh
     
 
