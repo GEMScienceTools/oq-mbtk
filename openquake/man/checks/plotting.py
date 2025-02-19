@@ -190,16 +190,8 @@ def get_characteristic_mesh(src):
     lons = src.surface.mesh.lons
     lats = src.surface.mesh.lats
     deps = src.surface.mesh.depths
-    if lons.ndim == 2:
-        mesh = RectangularMesh(lons, lats, deps)
-    else:
-        # Some char fault meshes don't have coo
-        # with ndim == 2 by def (assertion error)
-        mesh = RectangularMesh(np.array([lons]),
-                               np.array([lats]),
-                               np.array([deps]))
 
-    return mesh
+    return RectangularMesh(lons, lats, deps)
     
 
 def get_simple_mesh(src):
