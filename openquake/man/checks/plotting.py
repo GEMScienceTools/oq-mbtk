@@ -187,9 +187,17 @@ def get_characteristic_mesh(src):
     """
     Get the mesh of a CharacteristicFaultSource
     """
-    mesh = RectangularMesh(src.surface.mesh.lons,
-                           src.surface.mesh.lats,
-                           src.surface.mesh.depths)
+    lons = src.surface.mesh.lons
+    lats = src.surface.mesh.lats
+    deps = src.surface.mesh.depths
+    if lons.ndim == 2:
+        mesh = RectangularMesh(lons, lats, deps)
+    else:
+        # Some char fault meshes don't have coo
+        # with ndim == 2 by def (assertion error)
+        mesh = RectangularMesh(np.array([lons]),
+                               np.array([lats]),
+                               np.array([deps]))
 
     return mesh
     
