@@ -416,6 +416,9 @@ def mgmpe_check(gmpe):
         # CY14SiteTerm
         if 'CY14SiteTerm' in gmpe: kwargs['cy14_site_term'] = {}
 
+        # BA08SiteTerm
+        if 'BA08SiteTerm' in gmpe: kwargs['ba08_site_term'] = {}
+
         # NRCan15SiteTerm (Regular)
         if ('NRCan15SiteTerm' in gmpe and
                 'NRCan15SiteTermLinear' not in gmpe):

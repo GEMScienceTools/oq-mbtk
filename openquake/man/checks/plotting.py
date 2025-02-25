@@ -190,12 +190,8 @@ def get_characteristic_mesh(src):
     lons = src.surface.mesh.lons
     lats = src.surface.mesh.lats
     deps = src.surface.mesh.depths
-    if lons.ndim == 2:
-        mesh = RectangularMesh(lons, lats, deps)
-    else:
-        breakpoint()
 
-    return mesh
+    return RectangularMesh(lons, lats, deps)
     
 
 def get_simple_mesh(src):
@@ -244,14 +240,16 @@ def get_geoms(srcs, geom_models):
         if isinstance(src, ComplexFaultSource):
             surf = get_complex_mesh(src)
         elif isinstance(src, CharacteristicFaultSource):
-            surf = get_characteristic_mesh(src)
+            surf = get_characteristic_mesh(src) # Some 
         elif isinstance(src, SimpleFaultSource):
             surf = get_simple_mesh(src)
         elif isinstance(src, KiteFaultSource):
             surf = get_kite_mesh(src)
         else:
             raise ValueError(f"Unknown source typology admitted: ({type(src)})")
+        # Get the trace and pgn from the surface of the source
         trace, poly = get_boundary_2d(surf)        
+        # And then store them
         traces.append(trace)
         polys.append(poly)
         suids.append(i)

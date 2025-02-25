@@ -682,22 +682,26 @@ Comparing GMPEs
         sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # Scale sigma by imt-dependent factor
         
         [models.10-ModifiableGMPE]
+        gmpe = 'AtkinsonMacias2009'
+        site_term = 'BA08SiteTerm' # use BA08 site term
+
+        [models.11-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'CY14SiteTerm' # Use CY14 site term
-        
-        [models.11-ModifiableGMPE]
+
+        [models.12-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'NRCan15SiteTerm' # Use NRCan15 non-linear site term
         
-        [models.12-ModifiableGMPE]
+        [models.13-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'NRCan15SiteTermLinear' # Use NRCan15 linear site term
 
-        [models.13-ModifiableGMPE]
+        [models.14-ModifiableGMPE]
         gmpe = 'AtkinsonMacias2009'
         basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
 
-        [models.14-ModifiableGMPE]
+        [models.15-ModifiableGMPE]
         gmpe = 'KuehnEtAl2020SInter'
         basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
             
