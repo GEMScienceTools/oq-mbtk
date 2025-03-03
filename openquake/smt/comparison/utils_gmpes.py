@@ -437,7 +437,7 @@ def mgmpe_check(gmpe):
             kwargs['m9_basin_term'] = {}
         
         gmm = mgmpe.ModifiableGMPE(**kwargs)
-    
+
     # Not using ModifiableGMPE
     else:
         # Clean to ensure arguments can be passed (logic tree weights are
@@ -456,5 +456,5 @@ def mgmpe_check(gmpe):
         else: # Ensures GSIM aliases work
             gmpe_clean = gmpe_clean.replace('[','').replace(']','')
         gmm = valid.gsim(gmpe_clean)
-    
+
     return gmm
