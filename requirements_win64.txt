@@ -39,4 +39,3 @@ reportlab
 igraph
 pyvista
 basemap
-timezonefinder
