@@ -78,7 +78,7 @@ def reformat_curves(att_curves, config, out_dir):
             medians = vals[imt][scenario]
             for gmpe in medians:
                 key = imt + ', ' +  scenario + ', ' + gmpe
-                key = key.replace('\n', '')
+                key = key.replace('\n', ' ')
                 gmpe_medians = medians[gmpe]['median (g)']
                 store[key] = gmpe_medians
 
