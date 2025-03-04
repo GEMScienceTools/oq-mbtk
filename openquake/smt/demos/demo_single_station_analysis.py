@@ -81,7 +81,7 @@ def single_station_analysis(sm_database):
     csv_output = os.path.join(out_dir, 'ssa_results.csv')
     
     # Get summary of statistics and output them
-    ssa1.residual_statistics(True, csv_output)
+    ssa1.residual_statistics(pretty_print=True, filename=csv_output)
     
     # Output plots
     for gmpe in ssa1.gmpe_list:
