@@ -1157,7 +1157,7 @@ def matrix_mean(mtxs, gmpe_list):
         mean = (val_df.mean(axis=0)) 
         mtxs[imt] = np.concatenate((mtxs[imt], [mean]))
     
-    if 'mean' not in gmpe_list:
+    if not any(x == 'mean' for x in gmpe_list):
         gmpe_list.append('mean')
-    
+
     return mtxs, gmpe_list
