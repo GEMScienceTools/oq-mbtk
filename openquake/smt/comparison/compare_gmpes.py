@@ -128,7 +128,7 @@ def get_gmpes(config_file):
     config = copy.deepcopy(config_file)
     for key in config['models']:
         value = get_gmm(key, config['models'])
-        gmpe_list.append(value.strip())
+        gmpe_list.append(value)
 
     # Get the baseline GMPE used to compute ratios of GMPEs with if required
     if 'ratios_baseline_gmm' in config_file.keys():
@@ -156,6 +156,7 @@ def get_gmm(key, models):
     if len(models[key]):
         models[key].pop('style', None)
         value += '\n' + str(toml.dumps(models[key]))
+        
     return value.strip()
 
 
