@@ -39,27 +39,20 @@ def run_comparison(file):
     # Create a config object
     config = toml.load(file)
 
-    # Get name for the analysis from the config object
-    name_analysis = config['general']['name_analysis']
-
-    # Set an output directory 
-    out = os.path.join(out_dir, name_analysis)
-    os.makedirs(out)
-
     # Generate plots and retrieve attenuation curve data from config object
-    att_curves = comp.plot_trellis(file, out)
-    comp.plot_spectra(file, out)
-    comp.plot_ratios(file, out)
-    comp.plot_cluster(file, out)
-    comp.plot_sammons(file, out)
-    comp.plot_euclidean(file, out)
+    att_curves = comp.plot_trellis(file, out_dir)
+    comp.plot_spectra(file, out_dir)
+    comp.plot_ratios(file, out_dir)
+    comp.plot_cluster(file, out_dir)
+    comp.plot_sammons(file, out_dir)
+    comp.plot_euclidean(file, out_dir)
 
-    return att_curves, config, out
+    return att_curves, config
 
 
-def reformat_curves(att_curves, config, out):
+def reformat_curves(att_curves, config, out_dir):
     """
-    Export the hazard curves into a CSV for the given
+    Export the (median) hazard curves into a CSV for the given
     config (i.e. run parameters).
     """
     # Get the distance type used
@@ -93,7 +86,7 @@ def reformat_curves(att_curves, config, out):
     df = pd.DataFrame(store)
 
     # And export
-    out_hc = os.path.join(out, 'attenuation_curves.csv')
+    out_hc = os.path.join(out_dir, 'attenuation_curves.csv')
     df.to_csv(out_hc)
 
     return df # Might want to build on this so return the df...
@@ -112,10 +105,10 @@ def main():
     os.makedirs(out_dir)
 
     # Parse flatfile into metadata
-    att_curves, config, out = run_comparison(comparison_params)
+    att_curves, config = run_comparison(comparison_params)
 
     # Reformat the att_curves dictionary into a csv
-    df = reformat_curves(att_curves, config, out)
+    df = reformat_curves(att_curves, config, out_dir)
 
     # Print that the analysis has finished
     print("GMM comparison analysis has successfully finished")
