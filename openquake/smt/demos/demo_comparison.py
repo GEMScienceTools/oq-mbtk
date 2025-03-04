@@ -28,13 +28,13 @@ out_dir = os.path.join(BASE, 'outputs_demo_comparison')
 def run_comparison(file):
     """
     Run the GMM comparison for the list of input tomls and return a dictionary
-    storing the attenuation curves.
+    storing the median attenuation curves.
     
     The att_curves variable stores the attenuation curves for each
-    imt-mag-depth combo per gmpe, per a config file (within which can be specified
-    additionally the eq source properties, vs30 and other params). This allows the
-    user to extract the predicted ground-motions and manipulate as they wish. Use
-    the keys of this variable to understand how the predictions are stored.
+    imt-mag-depth combo per gmpe for the given input scenario.
+    
+    The user can examine the keys of the att_curves variable to
+    better understand the additional information stored within.
     """
     # Create a config object
     config = toml.load(file)
