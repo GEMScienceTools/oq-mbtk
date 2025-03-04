@@ -988,8 +988,8 @@ def plot_res_pdf(ax, res_dists, dist_comp, gmpe, imts_to_plot, marker_input,
                      marker=marker_input)
     return ax
 
-def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
-                                      filetype='jpg', dpi=200):
+def plot_residual_pdf_with_spectral_period(
+        residuals, filename, filetype='jpg', dpi=200):
     """
     Create a simple plot of residual mean and residual sigma for each GMPE 
     (y-axis) versus spectral period (x-axis)
