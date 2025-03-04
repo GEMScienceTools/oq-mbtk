@@ -54,8 +54,7 @@ def plot_trellis_util(config, output_directory):
                   config.lt_weights_gmc3, config.lt_weights_gmc4]
     
     # Get config key
-    cfg_key = 'vs30 = %s m/s, GMM sigma epsilon = %s' % (config.Vs30,
-                                                         config.Nstd)
+    cfg_key = f'vs30 = {config.Vs30} m/s, GMM sigma epsilon = {config.Nstd}'
     
     # Get colours
     colors = get_colors(config.custom_color_flag, config.custom_color_list) 
@@ -323,13 +322,8 @@ def plot_ratios_util(config, output_directory):
     dep_list = config.trellis_and_rs_depth_list
 
     # Get basin params
-    Z1, Z25 = get_z1_z25(config.Z1, config.Z25,
-                         config.Vs30, config.z_basin_region)
-    
-    # Get config key
-    cfg_key = 'vs30 = %s m/s, GMM sigma epsilon = %s' % (config.Vs30,
-                                                         config.Nstd)
-    
+    Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.z_basin_region)
+
     # Get colours
     colors = get_colors(config.custom_color_flag, config.custom_color_list) 
     
@@ -784,7 +778,7 @@ def trel_logic_trees(idx_gmc, gmc, lt_vals_gmc, gmc_p, store_gmm_curves,
             store_gmm_curves[
                 cfg_key]['gmc logic tree curves per imt-mag'][
                     lt_key]['median minus sigma (%s)' % unit
-                            ] = plus_sig
+                            ] = minus_sig
     
     return store_gmm_curves
 
