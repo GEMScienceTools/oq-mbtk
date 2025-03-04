@@ -103,8 +103,8 @@ class Configurations(object):
         
         # Get imts
         self.imt_list = config_file['general']['imt_list']
-        for idx, imt in enumerate(self.imt_list):
-            self.imt_list[idx] = from_string(str(self.imt_list[idx]))  
+        for idx_imt, imt in enumerate(self.imt_list):
+            self.imt_list[idx_imt] = from_string(imt)  
         
         # Get models and model labels
         (self.gmpe_labels, self.gmpes_list, self.baseline_gmm) = get_gmpes(
@@ -127,7 +127,7 @@ def get_gmpes(config_file):
     gmpe_list = []
     config = copy.deepcopy(config_file)
     for key in config['models']:
-        value = get_model(key, config['models'])
+        value = get_gmm(key, config['models'])
         gmpe_list.append(value.strip())
 
     # Get the baseline GMPE used to compute ratios of GMPEs with if required
@@ -135,14 +135,14 @@ def get_gmpes(config_file):
         if len(config_file['ratios_baseline_gmm']) > 1:
             raise ValueError('Only one baseline GMPE should be specified.')
         for key in config_file['ratios_baseline_gmm']:
-            baseline_gmm = get_model(key, config['ratios_baseline_gmm'])
+            baseline_gmm = get_gmm(key, config['ratios_baseline_gmm'])
     else:
         baseline_gmm = None
 
     return gmpe_labels, gmpe_list, baseline_gmm
 
 
-def get_model(key, models):
+def get_gmm(key, models):
     """
     Get the model from the toml in the string format required to create an
     OpenQuake gsim object from within mgmpe_check (in utils_gmpes.py)
