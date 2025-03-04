@@ -1351,7 +1351,7 @@ class SingleStationAnalysis(object):
                     if not t_resid.residuals[gmpe][imtx]:
                         continue
                     
-                    n_events = len(resid.residuals[gmpe][imtx]["Total"])
+                    n_events = len(t_resid.residuals[gmpe][imtx]["Total"])
                     resid.site_analysis[gmpe][imtx]["events"] = n_events
                     resid.site_analysis[gmpe][imtx]["Total"] = np.copy(
                         t_resid.residuals[gmpe][imtx]["Total"])
