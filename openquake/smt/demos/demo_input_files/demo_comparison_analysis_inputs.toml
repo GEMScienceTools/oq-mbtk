@@ -1,7 +1,7 @@
 ### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
 
 [general]
-name_analysis = 'comparison_outputs'
+name_analysis = 'example_comparison_inputs_1'
 imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
 max_period = 2 # max period for spectra plots
 minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots

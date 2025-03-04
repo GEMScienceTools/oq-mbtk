@@ -1367,11 +1367,10 @@ class SingleStationAnalysis(object):
                         t_resid.residuals[gmpe][imtx]["Inter event"])
 
                     delta_s2ss = self._get_delta_s2ss(
-                        resid.residuals[gmpe][imtx]["Intra event"],
-                        n_events)
-                    delta_woes = \
-                        resid.site_analysis[gmpe][imtx]["Intra event"] - \
-                        delta_s2ss
+                        resid.residuals[gmpe][imtx]["Intra event"], n_events)
+                    delta_woes = (
+                        resid.site_analysis[gmpe][imtx]["Intra event"] - 
+                        delta_s2ss)
                     resid.site_analysis[gmpe][imtx]["dS2ss"] = delta_s2ss
                     resid.site_analysis[gmpe][imtx]["dWo,es"] = delta_woes
                     
