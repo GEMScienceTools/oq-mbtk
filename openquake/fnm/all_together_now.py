@@ -55,6 +55,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 default_settings = {
+    'fault_skip_ids': [],
     'subsection_size': [15.0, 15.0],
     'edge_sd': 5.0,
     'dip_sd': 5.0,
@@ -156,6 +157,11 @@ def build_fault_network(
             faults = []
             fault_fids = []
             for feature in fault_gj['features']:
+                if feature['properties']['fid'] in settings['fault_skip_ids']:
+                    logging.info(
+                        f"skipping fault {feature['properties']['fid']}"
+                    )
+                    continue
                 try:
                     surf = build_surface(
                         feature,
@@ -390,6 +396,7 @@ def build_system_of_equations(
     displacement_col='displacement',
     slip_rate_col='net_slip_rate',
     slip_rate_err_col='net_slip_rate_err',
+    return_metadata=False,
     **soe_kwargs,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -447,6 +454,6 @@ def build_system_of_equations(
         slip_rate_err_col=slip_rate_err_col,
     )
 
-    lhs, rhs, errs = make_eqns(ruptures, faults, **soe_kwargs)
-
-    return lhs, rhs, errs
+    return make_eqns(
+        ruptures, faults, return_metadata=return_metadata, **soe_kwargs
+    )

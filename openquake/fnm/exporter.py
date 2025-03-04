@@ -114,6 +114,7 @@ def make_multifault_source(
     rupture_idxs = rup_df['subfaults'].values.tolist()
     mags = rup_df['mag'].values
     rakes = rup_df['mean_rake'].values
+    rakes[rakes == -180.0] = 180.0
 
     if rupture_occurrence_rates is None:
         occurrence_rates = rup_df['annual_occurrence_rate'].values
