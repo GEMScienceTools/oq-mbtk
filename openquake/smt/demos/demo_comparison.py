@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore")
 
 BASE = os.path.abspath('')
 
-# User input (can add more input tomls to run multiple analyses if required)
+# Inputs
 comparison_params = os.path.join(
     BASE, 'demo_input_files', 'demo_comparison_analysis_inputs.toml')
 
