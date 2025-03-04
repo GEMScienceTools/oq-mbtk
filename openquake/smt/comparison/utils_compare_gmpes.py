@@ -557,7 +557,7 @@ def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Get mean per imt over the gmpes
-    mtxs, gmpe_list = matrix_mean(mtxs, imt_list, gmpe_list)
+    mtxs, gmpe_list = matrix_mean(mtxs, gmpe_list)
     
     # Setup
     colors = get_colors(custom_color_flag, custom_color_list)
@@ -625,7 +625,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Get mean per imt over the gmpes
-    mtxs, gmpe_list = matrix_mean(mtxs, imt_list, gmpe_list)
+    mtxs, gmpe_list = matrix_mean(mtxs, gmpe_list)
     
     # Setup
     ncols = 2    
@@ -1140,23 +1140,23 @@ def update_ratio_plots(dist_type, m, i, n, l, imt_list, r_vals, minR, maxR):
     min_r_val = min(r_vals[r_vals>=1])
     pyplot.xlim(np.max([min_r_val, minR]), maxR)
 
-def matrix_mean(mtxs, imt_list, gmpe_list):
+
+def matrix_mean(mtxs, gmpe_list):
     """
-    For a matrix of predicted ground-motions computed the arithmetic mean per
-    prediction per IMT w.r.t. the number of GMPEs within the gmpe_list
+    For a matrix of predicted ground-motions compute the arithmetic mean
+    per prediction per IMT w.r.t. the number of GMPEs within the gmpe_list
     """
-    for imt_idx, imt in enumerate(mtxs):
+    for _, imt in enumerate(mtxs):
         store_vals = []
-        for idx_gmpe, gmpe in enumerate(mtxs[imt]):
+        for idx_gmpe, _ in enumerate(mtxs[imt]):
             store_vals.append(
-                pd.Series(mtxs[imt][idx_gmpe])) # store per gmpe for imt 
+                pd.Series(mtxs[imt][idx_gmpe])) # store per gmpe per imt 
         
         # Into df and get mean val per column (one column per prediction)
         val_df = pd.DataFrame(store_vals)
         mean = (val_df.mean(axis=0)) 
         mtxs[imt] = np.concatenate((mtxs[imt], [mean]))
     
-    if 'mean' not in gmpe_list:
-        gmpe_list.append('mean')
+    gmpe_list.append('mean')
     
     return mtxs, gmpe_list
