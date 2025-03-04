@@ -109,6 +109,9 @@ def simple_fault_from_feature(
     for prop in optional_props_to_keep:
         if prop in feature['properties']:
             fault[prop] = feature['properties'][prop]
+                    
+    if fault['rake'] == -180.0:
+        fault['rake'] = 180.0
 
     fault['surface'] = simple_fault_surface_from_feature(
         feature,
