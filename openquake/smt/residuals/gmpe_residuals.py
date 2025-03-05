@@ -1362,7 +1362,7 @@ class SingleStationAnalysis(object):
                         # GMPE has no within-event term - skip
                         continue
 
-                    # Get deep copy of phi and tau
+                    # Get deep copy of phi (intra) and tau (inter)
                     resid.site_analysis[gmpe][imtx]["Intra event"] = np.copy(
                         t_resid.residuals[gmpe][imtx]["Intra event"])
                     resid.site_analysis[gmpe][imtx]["Inter event"] = np.copy(
