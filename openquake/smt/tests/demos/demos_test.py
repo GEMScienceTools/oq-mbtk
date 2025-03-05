@@ -46,7 +46,7 @@ residuals_out = os.path.join(base, 'outputs_demo_residual_analysis')
 stations_out = os.path.join(base, 'outputs_demo_station_analysis')
 
 
-#@unittest.skip
+@unittest.skip # Just check this on local when modifying the SMT
 class DemosTestCase(unittest.TestCase):
     """
     Core test case for the SMT demos
