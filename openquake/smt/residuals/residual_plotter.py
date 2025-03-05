@@ -1090,7 +1090,6 @@ class ResidualWithSite(ResidualPlot):
         """
         Create residuals with site plot
         """
-        #phi_ss, phi_s2ss = self.residuals.station_residual_statistics()
         data = self._get_site_data()
         fig = plt.figure(figsize=self.figure_size)
         fig.set_tight_layout(True)
