@@ -243,9 +243,9 @@ class ResidualsTestCase(unittest.TestCase):
         # Compute total, inter-event and intra-event residuals for each site
         ssa1.get_site_residuals(self.database)
         
-        # Get single station residual statistics per GMPE and per imt
+        # Get station residual statistics per GMPE and per imt
         ssa_csv_output = os.path.join(self.out_location, 'SSA_test.csv')
-        ssa1.residual_statistics(True, ssa_csv_output)
+        ssa1.station_residual_statistics(True, ssa_csv_output)
         
         # Check num. sites, GMPEs and intensity measures + csv outputted
         self.assertTrue(len(ssa1.site_ids) == len(top_sites))
