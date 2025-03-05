@@ -25,7 +25,6 @@ for details)
 """
 import numpy as np
 import pandas as pd
-from collections import OrderedDict
 from scipy.stats import linregress
 
 
@@ -501,7 +500,7 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type, distance_type=None):
             bins_bounds[idx] = [val_bins[idx], val_bins[idx+1]]
             
     # Get indices for the residuals in each bin
-    idx_residuals_per_val_bin = OrderedDict([(idx, {}) for idx in bins_bounds])
+    idx_residuals_per_val_bin = {idx: {} for idx in bins_bounds}
     
     for idx in bins_bounds:
         for data_point in df.index:

@@ -19,9 +19,8 @@
 Module defining the interface of a Context Database (ContextDB), a database of
 data capable of yielding Contexts and Observations suitable for Residual analysis
 """
-from collections import OrderedDict  # compatibility with dicts in Python <3.7
-
 import numpy as np
+
 from openquake.hazardlib.contexts import DistancesContext, RuptureContext
 
 
@@ -97,7 +96,7 @@ class ContextDB:
             'Ctx': RuptureContext()
         }
         if imts is not None and len(imts):
-            dic["Observations"] = OrderedDict([(imt, []) for imt in imts])
+            dic["Observations"] = {imt: [] for imt in imts}
             dic["Num. Sites"] = 0
         return dic
 
