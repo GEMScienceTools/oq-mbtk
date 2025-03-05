@@ -24,6 +24,7 @@ import os
 import csv
 import numpy as np
 from datetime import datetime
+
 from openquake.smt.residuals.sm_database import *
 from openquake.smt.residuals.parsers.base_database_parser import (
     get_float, get_int, SMDatabaseReader, SMTimeSeriesReader, SMSpectraReader)

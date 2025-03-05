@@ -22,9 +22,9 @@ motion records
 import os
 import pickle
 import json
-from datetime import datetime
 import numpy as np
 import h5py
+from datetime import datetime
 
 from openquake.hazardlib import imt
 from openquake.hazardlib.site import Site, SiteCollection

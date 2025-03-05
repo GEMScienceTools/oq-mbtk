@@ -19,21 +19,14 @@
 Constructs the HDF5 database
 """
 import os
-import sys
 import re
 import csv
 import numpy as np
 import h5py
+import pickle
 import openquake.smt.intensity_measures as ims
 import openquake.smt.sm_utils as utils
 from openquake.smt.parsers.base_database_parser import get_float
-
-if sys.version_info[0] >= 3:
-    # In Python 3 pickle uses cPickle by default
-    import pickle
-else:
-    # In Python 2 use cPickle
-    import cPickle as pickle
 
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95", "Housner"]

@@ -23,6 +23,7 @@ import unittest
 import os
 import h5py
 import numpy as np
+
 import openquake.smt.utils_response_spectrum as rsp
 import openquake.smt.utils_intensity_measures as ims
 import openquake.smt.utils_smoothing as smo
