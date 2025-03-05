@@ -299,7 +299,6 @@ class Residuals(object):
         """
         # Residuals object
         self.gmpe_list = check_gsim_list(gmpe_list)
-        self.number_gmpes = len(self.gmpe_list)
         self.types = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
         self.residuals = []
         self.modelled = []
