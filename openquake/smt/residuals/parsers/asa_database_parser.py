@@ -28,12 +28,14 @@ import os
 import re
 from datetime import datetime
 from math import sqrt
+
 from openquake.hazardlib.geo import *
 from openquake.smt.residuals.sm_database import *
 from openquake.smt.residuals.parsers.base_database_parser import (
     get_float, get_int, SMDatabaseReader, SMTimeSeriesReader)
 from openquake.smt.utils_strong_motion import (convert_accel_units,
                                                get_time_vector)
+
 
 def _get_info_from_archive_name(aname):
     """

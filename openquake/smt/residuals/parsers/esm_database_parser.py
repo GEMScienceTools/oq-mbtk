@@ -83,6 +83,7 @@ def _get_metadata_from_file(file_str):
             metadata.append((row[0].strip(), row[1].strip()))
     return dict(metadata)
 
+
 def _get_xyz_metadata(file_dict):
     """
     The ESM is a bit messy mixing the station codes. Returns the metadata

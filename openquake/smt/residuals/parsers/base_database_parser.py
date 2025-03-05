@@ -22,6 +22,7 @@ Abstract base class for a strong motion database reader
 """
 import os
 import abc
+
 from openquake.baselib.python3compat import with_metaclass
 
 

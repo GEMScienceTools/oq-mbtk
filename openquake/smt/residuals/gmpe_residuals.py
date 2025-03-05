@@ -20,16 +20,17 @@ Module to get GMPE residuals - total, inter and intra
 {'GMPE': {'IMT1': {'Total': [], 'Inter event': [], 'Intra event': []},
           'IMT2': { ... }}}
 """
-from __future__ import print_function
 import sys
 import warnings
-from datetime import datetime
-from math import sqrt, ceil
 import copy
 import re
 import toml
 import numpy as np
 import pandas as pd
+
+from datetime import datetime
+from math import sqrt, ceil
+from __future__ import print_function
 from scipy.special import erf
 from scipy.stats import norm
 from scipy.linalg import solve
