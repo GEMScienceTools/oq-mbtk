@@ -20,7 +20,7 @@ Strong motion record selection tools
 """
 import numpy as np
 from datetime import datetime
-from collections import OrderedDict
+
 from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.polygon import Polygon
@@ -46,7 +46,8 @@ def rank_sites_by_record_count(database, threshold=0):
     for idx in sort_id:
         if name_id[key_vals[idx]]["Count"] >= threshold:
             output_list.append((key_vals[idx], name_id[key_vals[idx]]))
-    return OrderedDict(output_list)
+
+    return dict(output_list)
 
 
 class SMRecordSelector(object):

@@ -29,7 +29,6 @@ import h5py
 import pickle
 from math import sqrt
 from linecache import getline
-from collections import OrderedDict
 
 from openquake.smt.residuals.sm_database import (
     GroundMotionDatabase, GroundMotionRecord, Earthquake, Magnitude, Rupture,
@@ -507,8 +506,8 @@ class ESMFlatfileParserWS(SMDatabaseReader):
             spectra.append((imt, {"Periods": periods[idx],
                                    "Values": values[idx]}))
         # Add on the as-recorded geometric mean
-        spectra = OrderedDict(spectra)
-        scalars = OrderedDict(scalars)
+        spectra = dict(spectra)
+        scalars = dict(scalars)
         spectra["Geometric"] = {
             "Values": np.sqrt(spectra["U"]["Values"] *
                               spectra["V"]["Values"]),

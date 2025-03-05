@@ -26,7 +26,6 @@ from matplotlib import pyplot
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist, squareform
 from scipy import interpolate
-from collections import OrderedDict
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib.imt import from_string
@@ -196,7 +195,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     figure = pyplot.figure(figsize=(len(mag_list)*5, len(config.dist_list)*4))
     
     # Set dicts to store values
-    dic = OrderedDict([(gmm, {}) for gmm in config.gmpes_list])  
+    dic = {gmm: {} for gmm in config.gmpes_list}  
     lt_vals = [{}, {}, {}, {}]
     lt_vals_plus = [dic, dic, dic, dic]
     lt_vals_minus = [dic, dic, dic, dic]

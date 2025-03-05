@@ -23,7 +23,6 @@ Parser from the Sigma data format to SMT
 import os
 import csv
 import numpy as np
-from collections import OrderedDict
 from datetime import datetime
 from openquake.smt.residuals.sm_database import *
 from openquake.smt.residuals.parsers.base_database_parser import (
@@ -287,10 +286,10 @@ class SigmaSpectraParser(SMSpectraReader):
         """
         damping_list = ["damping_02", "damping_05", "damping_07", 
                         "damping_10", "damping_20", "damping_30"]
-        sm_record = OrderedDict([
-            ("X", {"Scalar": {}, "Spectra": {"Response": {}}}), 
-            ("Y", {"Scalar": {}, "Spectra": {"Response": {}}}), 
-            ("V", {"Scalar": {}, "Spectra": {"Response": {}}})])
+        sm_record = {
+            "X": {"Scalar": {}, "Spectra": {"Response": {}}},
+            "Y": {"Scalar": {}, "Spectra": {"Response": {}}},
+            "V": {"Scalar": {}, "Spectra": {"Response": {}}}}
         target_names = list(sm_record)
         for iloc, ifile in enumerate(self.input_files):
             if not os.path.exists(ifile):
@@ -326,11 +325,10 @@ class SigmaRecordParser(SMTimeSeriesReader):
         """
         Parse the time histories and append the associated record information
         """
-        time_series = OrderedDict([
-            ("X", {"Original": {}, "SDOF": {}}),
-            ("Y", {"Original": {}, "SDOF": {}}),
-            ("V", {"Original": {}, "SDOF": {}})])
-             
+        time_series = {
+            "X": {"Original": {}, "SDOF": {}},
+            "Y": {"Original": {}, "SDOF": {}},
+            "V": {"Original": {}, "SDOF": {}}}             
         target_names = list(time_series)
         for iloc, ifile in enumerate(self.input_files):
             if not os.path.exists(ifile):

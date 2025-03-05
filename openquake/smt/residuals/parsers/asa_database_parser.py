@@ -26,7 +26,6 @@ and the corresponding metadata
 """
 import os
 import re
-from collections import OrderedDict
 from datetime import datetime
 from math import sqrt
 from openquake.hazardlib.geo import *
@@ -54,9 +53,7 @@ def _get_info_from_archive_name(aname):
         file_info = [aname[:4], aname[4:6], aname[6:8],
                      aname[9:11], aname[11:12]]
 
-    return OrderedDict([
-        (FILE_INFO_KEY[i], file_info[i]) for i in range(len(file_info))
-    ])
+    return {FILE_INFO_KEY[i]: file_info[i] for i in range(len(file_info))}
 
 
 def _get_metadata_from_file(file_str):
@@ -425,10 +422,10 @@ class ASATimeSeriesParser(SMTimeSeriesReader):
         """
         Parses the time series
         """
-        time_series = OrderedDict([
-            ("X", {"Original": {}, "SDOF": {}}),
-            ("Y", {"Original": {}, "SDOF": {}}),
-            ("V", {"Original": {}, "SDOF": {}})])
+        time_series = {
+            "X": {"Original": {}, "SDOF": {}},
+            "Y": {"Original": {}, "SDOF": {}},
+            "V": {"Original": {}, "SDOF": {}}}
 
         target_names = list(time_series.keys())
         for iloc, ifile in enumerate(self.input_files):

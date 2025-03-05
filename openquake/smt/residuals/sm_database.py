@@ -23,7 +23,6 @@ import os
 import pickle
 import json
 from datetime import datetime
-from collections import OrderedDict
 import numpy as np
 import h5py
 
@@ -167,7 +166,7 @@ class Rupture(object):
     def to_dict(self):
         """
         """
-        output = OrderedDict([])
+        output = {}
         for key in self.__dict__:
             if key == "magnitude" and self.magnitude is not None:
                 # Parse magnitude object to dictionary
@@ -308,7 +307,7 @@ class FocalMechanism(object):
     def to_dict(self):
         """
         """
-        output = OrderedDict([])
+        output = {}
         for key in self.__dict__:
             if key in ("nodal_planes", "eigenvalues") and \
                     getattr(self, key) is not None:
@@ -400,7 +399,7 @@ class Earthquake(object):
         """
         Parses the information to a json compatible dictionary
         """
-        output = OrderedDict([])
+        output = {}
         for key in self.__dict__:
             if key == "datetime":
                 output[key] = str(self.datetime)
@@ -893,7 +892,7 @@ class GroundMotionRecord(object):
     def to_dict(self):
         """
         """
-        output = OrderedDict([])
+        output = {}
         for key in self.__dict__:
             if key in ("event", "distance", "site", "xrecord", "yrecord"):
                 output[key] = getattr(self, key).to_dict()
