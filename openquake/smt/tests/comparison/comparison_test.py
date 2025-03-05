@@ -245,19 +245,22 @@ class ComparisonTestCase(unittest.TestCase):
         # Load config
         config = comp.Configurations(self.input_file)
 
+        # Index col for expected
+        idx = ["Unnamed: 0"]
+        
         # Trellis plots
         att_curves = plot_trellis_util(config, self.output_directory)
-        obs_curves = pd.DataFrame(att_curves)
+        obs_curves = pd.DataFrame(att_curves).sort_index()
         exp_curves = pd.read_csv(
-            self.expected_att_curves, index_col='Unnamed: 0')
+            self.expected_att_curves, index_col=idx).sort_index()
         assert str(obs_curves) == str(exp_curves)
 
         # Spectra plots
         gmc_lts = plot_spectra_util(
             config, self.output_directory, obs_spectra=None)
-        obs_spectra = pd.DataFrame(gmc_lts)
+        obs_spectra = pd.DataFrame(gmc_lts).sort_index()
         exp_spectra = pd.read_csv(
-            self.expected_spectra, index_col='Unnamed: 0')
+            self.expected_spectra, index_col=idx).sort_index()
         assert str(obs_spectra) == str(exp_spectra)
         
         # Specify target files
