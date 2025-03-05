@@ -21,8 +21,8 @@ Newmark-Beta method
 """
 import numpy as np
 from math import sqrt
-
 import matplotlib.pyplot as plt
+
 from openquake.smt.utils_strong_motion import (_save_image, get_time_vector,
                                                convert_accel_units,
                                                get_velocity_displacement)

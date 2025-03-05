@@ -24,8 +24,8 @@ import os
 import shutil
 import unittest
 import pickle
-
 import numpy as np
+
 from openquake.smt.residuals.parsers.esm_flatfile_parser import ESMFlatfileParser
 import openquake.smt.residuals.gmpe_residuals as res
 
