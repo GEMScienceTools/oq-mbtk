@@ -109,7 +109,6 @@ class BaseResidualPlot(object):
         Creates a residual plot
         """
         data = self.get_plot_data()
-        # statistics = self.residuals.get_residual_statistics()
         fig = plt.figure(figsize=self.figure_size)
         fig.set_tight_layout(True)
         nrow, ncol = self.get_subplots_rowcols()
@@ -1091,7 +1090,7 @@ class ResidualWithSite(ResidualPlot):
         """
         Create residuals with site plot
         """
-        phi_ss, phi_s2ss = self.residuals.residual_statistics()
+        #phi_ss, phi_s2ss = self.residuals.station_residual_statistics()
         data = self._get_site_data()
         fig = plt.figure(figsize=self.figure_size)
         fig.set_tight_layout(True)
@@ -1197,7 +1196,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         """
         if 'Intra event' in self.residuals.site_residuals[0].residuals[self.gmpe][
                 self.imt]:
-            phi_ss, phi_s2ss = self.residuals.residual_statistics()
+            phi_ss, phi_s2ss = self.residuals.station_residual_statistics()
             data = self._get_site_data()
             fig = plt.figure(figsize=self.figure_size)
             fig.set_tight_layout(True)
