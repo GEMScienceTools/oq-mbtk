@@ -1347,6 +1347,7 @@ class SingleStationAnalysis(object):
             resid = copy.deepcopy(t_resid)
             for gmpe in self.gmpe_list:
                 for imtx in self.imts:
+
                     # If residuals for given GMM-IMT combination
                     if not t_resid.residuals[gmpe][imtx]:
                         continue
