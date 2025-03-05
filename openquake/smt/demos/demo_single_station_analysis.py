@@ -76,7 +76,7 @@ def single_station_analysis(sm_database):
     
     # Compute the total, inter-event and intra-event residuals for each site
     ssa1.get_site_residuals(sm_database)
-
+    
     # Output for summary csv
     csv_output = os.path.join(out_dir, 'ssa_results.csv')
     
