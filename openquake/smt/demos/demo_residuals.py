@@ -23,16 +23,16 @@ BASE = os.path.abspath('')
 """USER INPUTS"""
 
 # Specify toml providing GMMs and intensity measure types to get residuals for
-gmms_imts = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inputs.toml')
+demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inputs.toml')
 
 # Specify dataset
-db = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
+demo_flatfile = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
 
 # Specify output folder
-out_dir = os.path.join(BASE, 'outputs_demo_residual_analysis')
+demo_out = os.path.join(BASE, 'outputs_demo_residual_analysis')
 
 
-def parse_into_metadata():
+def parse_into_metadata(flatfile, out_dir):
     """
     Parse the flatfile into metadata which can be used by the SMT's residuals
     module
@@ -41,12 +41,12 @@ def parse_into_metadata():
     metadata_dir = os.path.join(out_dir, 'metadata')
             
     # Parse the metadata
-    ESMFlatfileParserURL.autobuild("000", 'db', metadata_dir, db)
+    ESMFlatfileParserURL.autobuild("000", 'db', metadata_dir, flatfile)
             
     return metadata_dir
 
 
-def get_residual_metadata(metadata_dir):
+def get_residual_metadata(metadata_dir, gmms_imts, out_dir):
     """
     Get the residuals for the preselected GMMs and intensity measure types in
     the example_residual_analysis.toml
@@ -119,7 +119,7 @@ def get_residual_metadata(metadata_dir):
     return residuals
 
 
-def main():
+def main(flatfile=demo_flatfile, gmms_imts=demo_inputs, out_dir=demo_out):
     """
     Run the demo residual analysis workflow
     """
@@ -132,10 +132,10 @@ def main():
     os.makedirs(out_dir)
 
     # Parse flatfile into metadata
-    metadata_dir = parse_into_metadata()
+    metadata_dir = parse_into_metadata(flatfile, out_dir)
      
     # Get the residuals per trt
-    res = get_residual_metadata(metadata_dir)
+    res = get_residual_metadata(metadata_dir, gmms_imts, out_dir)
 
     # Print that workflow has finished
     print("Residual analysis workflow successfully completed.")

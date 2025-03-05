@@ -18,14 +18,14 @@ warnings.filterwarnings("ignore")
 BASE = os.path.abspath('')
 
 # Inputs
-comparison_params = os.path.join(
+demo_input = os.path.join(
     BASE, 'demo_input_files', 'demo_comparison_analysis_inputs.toml')
 
 # Out dir
-out_dir = os.path.join(BASE, 'outputs_demo_comparison')
+demo_out = os.path.join(BASE, 'outputs_demo_comparison')
 
 
-def run_comparison(file):
+def run_comparison(file, out_dir):
     """
     Run the GMM comparison for the list of input tomls and return a dictionary
     storing the median attenuation curves.
@@ -92,7 +92,7 @@ def reformat_curves(att_curves, config, out_dir):
     return df # Might want to build on this so return the df...
 
 
-def main():
+def main(input_toml=demo_input, out_dir=demo_out):
     """
     Run the demo GMM comparison workflow
     """
@@ -105,7 +105,7 @@ def main():
     os.makedirs(out_dir)
 
     # Parse flatfile into metadata
-    att_curves, config = run_comparison(comparison_params)
+    att_curves, config = run_comparison(input_toml, out_dir)
 
     # Reformat the att_curves dictionary into a csv
     df = reformat_curves(att_curves, config, out_dir)

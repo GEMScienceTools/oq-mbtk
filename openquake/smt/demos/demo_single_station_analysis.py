@@ -21,19 +21,19 @@ BASE = os.path.abspath('')
 """USER INPUTS"""
 
 # Flatfile to use 
-db = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
+demo_flatfile = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
 
 # Specify .toml file with GMPEs and imts to use
-gmms_imts = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inputs.toml')
+demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inputs.toml')
 
 # Specify results folder name
-out_dir = os.path.join(BASE, 'outputs_demo_station_analysis')
+demo_out = os.path.join(BASE, 'outputs_demo_station_analysis')
 
 # Minimum number of records for a site to be considered in SSA
 threshold = 45
 
 
-def get_residual_metadata():
+def get_residual_metadata(flatfile, gmms_imts, out_dir):
     """
     Compute the residuals from the example flatfile, GMMs and imts
     """
@@ -41,7 +41,7 @@ def get_residual_metadata():
     metadata_dir = os.path.join(out_dir, 'metadata')
             
     # Parse the metadata
-    ESMFlatfileParserURL.autobuild("000", 'db', metadata_dir, db)
+    ESMFlatfileParserURL.autobuild("000", 'db', metadata_dir, flatfile)
     
     # Get inputs
     metadata = os.path.join(metadata_dir, 'metadatafile.pkl')
@@ -54,7 +54,7 @@ def get_residual_metadata():
     return sm_database
 
 
-def single_station_analysis(sm_database):
+def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
     """
     Perform the analysis using the demo files
     """
@@ -114,7 +114,10 @@ def single_station_analysis(sm_database):
     print("Single station residual analysis workflow successfully completed.")
 
 
-def main():
+def main(flatfile=demo_flatfile,
+         gmms_imts=demo_inputs,
+         out_dir=demo_out,
+         threshold=0):
     """
     Run the demo single station residual analysis
     """
@@ -124,10 +127,10 @@ def main():
     os.makedirs(out_dir)
 
     # Get residuals
-    sm_database = get_residual_metadata()
+    sm_database = get_residual_metadata(flatfile, gmms_imts, out_dir)
     
     # Run the single station analysis
-    single_station_analysis(sm_database)
+    single_station_analysis(sm_database, gmms_imts, out_dir, threshold)
     
     
 if __name__ == '__main__':
