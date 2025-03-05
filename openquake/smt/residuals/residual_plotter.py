@@ -24,7 +24,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
 from copy import deepcopy
-from collections import OrderedDict
 from math import floor, ceil
 from scipy.stats import norm
 from cycler import cycler
@@ -787,7 +786,7 @@ def edr_weights_table(residuals, filename):
         edr_per_gmpe[gmpe] = edr_for_weights[gmpe]['EDR']
     edr_per_gmpe_df = pd.DataFrame(edr_per_gmpe)
 
-    gmpe_edr_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
+    gmpe_edr_weight = {gmpe: {} for gmpe in residuals.gmpe_list}
     for imt in edr_per_gmpe_df.index:
         total_edr_per_imt = np.sum(edr_per_gmpe_df.loc[imt]**-1)
         for gmpe in edr_for_weights.keys():
@@ -839,7 +838,7 @@ def stochastic_area_weights_table(residuals, filename):
     sto_per_gmpe_df = pd.DataFrame(sto_for_weights)
 
     # Get weights
-    gmpe_sto_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
+    gmpe_sto_weight = {gmpe: {} for gmpe in residuals.gmpe_list}
     for imt in sto_per_gmpe_df.index:
         total_sto_per_imt = np.sum(sto_per_gmpe_df.loc[imt]**-1)
         for gmpe in sto_for_weights.keys():
@@ -1154,8 +1153,7 @@ class ResidualWithSite(ResidualPlot):
         """
         Get single station analysis residual data
         """
-        data = OrderedDict([(site_id, {}) 
-                            for site_id in self.residuals.site_ids])
+        data = {site_id: {} for site_id in self.residuals.site_ids}
         for iloc, site_resid in enumerate(self.residuals.site_residuals):
             resid = deepcopy(site_resid)
             site_id = list(self.residuals.site_ids)[iloc]
@@ -1312,8 +1310,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         Get site-specific intra-event residual components for each site for the
         GMPEs and intensity measures considered
         """
-        data = OrderedDict([(site_id, {}) 
-                            for site_id in self.residuals.site_ids])
+        data = {site_id: {} for site_id in self.residuals.site_ids}
         for iloc, site_resid in enumerate(self.residuals.site_residuals):
             resid = deepcopy(site_resid)
             site_id = list(self.residuals.site_ids)[iloc]
