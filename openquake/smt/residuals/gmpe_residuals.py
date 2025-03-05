@@ -1338,7 +1338,7 @@ class SingleStationAnalysis(object):
             (gmpe, dict([(imtx, {}) for imtx in self.imts]))
             for gmpe in self.gmpe_list])
 
-    def residual_statistics(self, pretty_print = False, filename = None):
+    def station_residual_statistics(self, pretty_print = False, filename = None):
         """
         Get single-station residual statistics for each site
         """
@@ -1351,12 +1351,15 @@ class SingleStationAnalysis(object):
                     if not t_resid.residuals[gmpe][imtx]:
                         continue
                     
+                    # Get number events, total residuals, total (GMM) expected
                     n_events = len(t_resid.residuals[gmpe][imtx]["Total"])
+                    total_res = np.copy(t_resid.residuals[gmpe][imtx]["Total"])
+                    total_exp = np.copy(t_resid.modelled[gmpe][imtx]["Total"])
+
+                    # Store
                     resid.site_analysis[gmpe][imtx]["events"] = n_events
-                    resid.site_analysis[gmpe][imtx]["Total"] = np.copy(
-                        t_resid.residuals[gmpe][imtx]["Total"])
-                    resid.site_analysis[gmpe][imtx]["Expected Total"] = \
-                        np.copy(t_resid.modelled[gmpe][imtx]["Total"])
+                    resid.site_analysis[gmpe][imtx]["Total"] = total_res
+                    resid.site_analysis[gmpe][imtx]["Expected Total"] = total_exp
                     
                     if not "Intra event" in t_resid.residuals[gmpe][imtx]:
                         # GMPE has no within-event term - skip
@@ -1370,21 +1373,22 @@ class SingleStationAnalysis(object):
 
                     # Get delta_s2ss
                     delta_s2ss = self._get_delta_s2ss(
-                        resid.residuals[gmpe][imtx]["Intra event"], n_events)
+                        resid.residuals[
+                            gmpe][imtx]["Intra event"], n_events)
                     
                     # Get delta_woes
                     delta_woes = (
-                        resid.site_analysis[gmpe][imtx]["Intra event"] - 
-                        delta_s2ss)
-                    
-                    # Store both delta_s2ss and delta_woes
-                    resid.site_analysis[gmpe][imtx]["dS2ss"] = delta_s2ss
-                    resid.site_analysis[gmpe][imtx]["dWo,es"] = delta_woes
+                        resid.site_analysis[
+                            gmpe][imtx]["Intra event"] - delta_s2ss)
                     
                     # Get phi_ss
                     phi_ss = self._get_single_station_phi(
-                        resid.residuals[gmpe][imtx]["Intra event"],
-                          delta_s2ss, n_events)
+                        resid.residuals[
+                            gmpe][imtx]["Intra event"], delta_s2ss, n_events)
+
+                    # Store 
+                    resid.site_analysis[gmpe][imtx]["dS2ss"] = delta_s2ss
+                    resid.site_analysis[gmpe][imtx]["dWo,es"] = delta_woes
                     resid.site_analysis[gmpe][imtx]["phi_ss,s"] = phi_ss
                     
                     # Get expected values too
