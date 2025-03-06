@@ -299,8 +299,8 @@ def bootstrap_llh(ij, contexts, gmpes, imts):
 
 class Residuals(object):
     """
-    Class to derive sets of residuals for a list of ground motion residuals
-    according to the GMPEs
+    Residuals object for storing ground-motion residuals computed
+    for a given list of GMMs and IMTs.
     """
     def __init__(self, gmpe_list, imts):
         """
@@ -1200,7 +1200,7 @@ GSIM_MODEL_DATA_TESTS = {
 
 class SingleStationAnalysis(object):
     """
-    Class to analyse residual sets recorded at specific stations
+    Residuals object for single station residual analysis.
     """
     def __init__(self, site_id_list, gmpe_list, imts):
         # Initiate SSA object
@@ -1239,7 +1239,7 @@ class SingleStationAnalysis(object):
             
             # Get toml representation of GMM
             gmm = get_gmm_from_toml(key, config)
-            
+
             # Create valid gsim object
             gmpe_list.append(gmm)
             
