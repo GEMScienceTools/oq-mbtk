@@ -72,23 +72,23 @@ def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
             site_id, top_sites[site_id]["Name"], top_sites [site_id]["Count"]))
 
     # Create SingleStationAnalysis object
-    ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), gmms_imts)
+    ssa = res.SingleStationAnalysis.from_toml(top_sites.keys(), gmms_imts)
     
     # Compute the total, inter-event and intra-event residuals for each site
-    ssa1.get_site_residuals(sm_database)
+    ssa.get_site_residuals(sm_database)
     
     # Output for summary csv
     csv_output = os.path.join(out_dir, 'ssa_results.csv')
     
     # Get summary of statistics and output them
-    ssa1.station_residual_statistics(pretty_print=True, filename=csv_output)
+    ssa.station_residual_statistics(pretty_print=True, filename=csv_output)
     
     # Output plots
-    for gmpe in ssa1.gmpe_list:
-        for imt in ssa1.imts:
+    for gmpe in ssa.gmpe_list:
+        for imt in ssa.imts:
             
             # Create folder for the GMM
-            gmpe_folder_name = str(ssa1.gmpe_list[gmpe]).split(
+            gmpe_folder_name = str(ssa.gmpe_list[gmpe]).split(
                 '(')[0].replace('\n','_').replace(' ','').replace('"','')
         
             gmpe_folder = os.path.join(out_dir, gmpe_folder_name)
@@ -106,9 +106,9 @@ def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
             
             # Create the plots and save
             rspl.ResidualWithSite(
-                ssa1, gmpe, imt, output_all_res_with_site, filetype='jpg')
+                ssa, gmpe, imt, output_all_res_with_site, filetype='jpg')
             rspl.IntraEventResidualWithSite(
-                ssa1, gmpe, imt, output_intra_res_components_with_site, filetype='jpg')
+                ssa, gmpe, imt, output_intra_res_components_with_site, filetype='jpg')
 
     # Print that workflow has finished
     print("Single station residual analysis workflow successfully completed.")
