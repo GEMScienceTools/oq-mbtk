@@ -25,8 +25,9 @@ from openquake.hazardlib.contexts import DistancesContext, RuptureContext
 
 
 class ContextDB:
-    """This abstract-like class represents a Database (DB) of data capable of
-    yielding Contexts and Observations suitable for Residual analysis (see
+    """
+    This abstract-like class represents a database (DB) of data capable of
+    yielding Contexts and Observations suitable for residual analysis (see
     argument `ctx_database` of :meth:`gmpe_residuals.Residuals.get_residuals`)
 
     Concrete subclasses of `ContextDB` must implement three abstract methods
@@ -35,8 +36,6 @@ class ContextDB:
      - update_context(self, ctx, records, nodal_plane_index=1)
      - get_observations(self, imtx, records, component="Geometric")
        (which is called only if `imts` is given in :meth:`self.get_contexts`)
-
-    Please refer to the functions docstring for further details
     """
     rupture_context_attrs = tuple(RuptureContext._slots_)  # noqa
     distances_context_attrs = tuple(DistancesContext._slots_)  # noqa
