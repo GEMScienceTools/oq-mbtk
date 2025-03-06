@@ -38,11 +38,16 @@ class ContextDB:
 
     Please refer to the functions docstring for further details
     """
-
     rupture_context_attrs = tuple(RuptureContext._slots_)  # noqa
     distances_context_attrs = tuple(DistancesContext._slots_)  # noqa
-    sites_context_attrs = ('vs30', 'lons', 'lats', 'depths',
-                           'vs30measured', 'z1pt0', 'z2pt5', 'backarc')
+    sites_context_attrs = ('vs30',
+                           'lons',
+                           'lats',
+                           'depths',
+                           'vs30measured',
+                           'z1pt0',
+                           'z2pt5',
+                           'backarc')
 
     def get_contexts(self, nodal_plane_index=1, imts=None, component="Geometric"):
         """Return an iterable of Contexts. Each Context is a `dict` with
@@ -65,12 +70,12 @@ class ContextDB:
                     values = self.get_observations(imtx, records, component)
                     observations[imtx] = np.asarray(values, dtype=float)
                 dic["Num. Sites"] = len(records)
-            # Legacy code??  FIXME: kind of redundant with "Num. Sites" above
             dic['Ctx'].sids = np.arange(len(records), dtype=np.uint32)
             yield dic
 
     def create_context(self, evt_id, imts=None):
-        """Create a new Context `dict`. Objects of this type will be yielded
+        """
+        Create a new Context `dict`. Objects of this type will be yielded
         by `get_context`.
 
         :param evt_id: the earthquake id (e.g. int, or str)

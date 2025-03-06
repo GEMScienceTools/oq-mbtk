@@ -1,7 +1,7 @@
 # Test input file for checking execution of get_residuals.from_toml function using some GMPEs with additional parameters specifiable within the toml file
 
 [models.AbrahamsonEtAl2014]
-region = "JPN" # add_alias bug means must still specify 'JPN' region
+region = "JPN"
 
 [models.AbrahamsonGulerce2020SInter]
 region = "CAS"
