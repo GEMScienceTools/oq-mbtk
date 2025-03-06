@@ -382,11 +382,10 @@ class Residuals(object):
         gmpes with additional parameters and input files within the SMT
         """
         # Read in toml file with dict of gmpes and subdict of imts
-        config_file = toml.load(filename)
+        config = toml.load(filename)
              
         # Parsing file with models
         gmpe_list = []
-        config = copy.deepcopy(config_file)
         for _, key in enumerate(config['models']):
             
             # Get toml representation of GMM
@@ -396,7 +395,7 @@ class Residuals(object):
             gmpe_list.append(gmm)
             
         # Get imts    
-        imts = config_file['imts']['imt_list']     
+        imts = config['imts']['imt_list']     
         
         return cls(gmpe_list, imts)
 
@@ -1232,11 +1231,10 @@ class SingleStationAnalysis(object):
         gmpes with additional parameters and input files within the SMT
         """
            # Read in toml file with dict of gmpes and subdict of imts
-        config_file = toml.load(filename)
+        config = toml.load(filename)
              
         # Parsing file with models
         gmpe_list = []
-        config = copy.deepcopy(config_file)
         for _, key in enumerate(config['models']):
             
             # Get toml representation of GMM
@@ -1246,7 +1244,7 @@ class SingleStationAnalysis(object):
             gmpe_list.append(gmm)
             
         # Get imts    
-        imts = config_file['imts']['imt_list']  
+        imts = config['imts']['imt_list']  
 
         return cls(site_id_list, gmpe_list, imts)
 
