@@ -445,15 +445,13 @@ class Residuals(object):
         for context in contexts:
             # If no rvolc provide as zero (ensure rvolc gsims usable)
             if 'rvolc' not in context['Ctx']._slots_:
-                context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi,
-                                                     dtype = float)
+                context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi)
             # convert all IMTS with acceleration units, which are supposed to
             # be in cm/s/s, to g:
             for a_imt in accel_imts:
-                context['Observations'][a_imt] = \
-                    convert_accel_units(context['Observations'][a_imt],
-                                        'cm/s/s', 'g')
-
+                context[
+                    'Observations'][a_imt] = convert_accel_units(
+                        context['Observations'][a_imt], 'cm/s/s', 'g')
             # Get the expected ground motions
             context = self.get_expected_motions(context)
             context = self.calculate_residuals(context, normalise)
