@@ -1230,7 +1230,7 @@ class SingleStationAnalysis(object):
         Read in gmpe_list and imts from .toml file. This method allows use of
         gmpes with additional parameters and input files within the SMT
         """
-           # Read in toml file with dict of gmpes and subdict of imts
+        # Read in toml file with dict of gmpes and subdict of imts
         config = toml.load(filename)
              
         # Parsing file with models
