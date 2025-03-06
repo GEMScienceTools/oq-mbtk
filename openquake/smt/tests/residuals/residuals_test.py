@@ -188,7 +188,7 @@ class ResidualsTestCase(unittest.TestCase):
         ssa1.get_site_residuals(self.database)
 
         # Get station residual statistics per GMPE and per imt
-        ssa_csv_output = os.path.join(self.out_location, 'SSA_test.csv')
+        ssa_csv_output = os.path.join(self.out_location, 'ssa_test.csv')
         ssa1.station_residual_statistics(True, ssa_csv_output)
         
         # Check exp vs obs delta_s2ss, delta_woes, phi_ss per station
