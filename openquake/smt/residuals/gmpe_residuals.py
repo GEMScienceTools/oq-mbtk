@@ -62,7 +62,7 @@ def get_gmm_from_toml(key, config):
     if len(config['models'][key]):
         config['models'][key].pop('style', None)
         value += '\n' + str(toml.dumps(config['models'][key]))
-    return value.strip()
+    return valid.gsim(value.strip())
 
 
 def get_geometric_mean(fle):
@@ -393,7 +393,7 @@ class Residuals(object):
             gmm = get_gmm_from_toml(key, config)
             
             # Create valid gsim object
-            gmpe_list.append(valid.gsim(gmm))
+            gmpe_list.append(gmm)
             
         # Get imts    
         imts = config_file['imts']['imt_list']     
@@ -1243,7 +1243,7 @@ class SingleStationAnalysis(object):
             gmm = get_gmm_from_toml(key, config)
             
             # Create valid gsim object
-            gmpe_list.append(valid.gsim(gmm))
+            gmpe_list.append(gmm)
             
         # Get imts    
         imts = config_file['imts']['imt_list']  
