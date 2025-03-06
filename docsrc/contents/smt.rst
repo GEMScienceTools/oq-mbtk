@@ -132,12 +132,6 @@ We can specify the inputs to perform a residual analysis with as follows:
        [models.KothaEtAl2020ESHM20]
        sigma_mu_epsilon = 2.85697 
        c3_epsilon = 1.72    
-       eshm20_region = 4 # Note that only a single eshm20 region (eshm20 attenuation cluster) 
-                         # can be evaluated in a single residual analysis run in the SMT. If
-                         # multiple variants of the KothaEtAl2020ESHM20 GMPE are specified in
-                         # a single residuals toml the results of the last variant of the GMPE
-                         # will overwrite the others (and only the results of the last variant 
-                         # in the toml will be plotted too). This bug will be fixed.
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
@@ -442,7 +436,6 @@ Comparing GMPEs
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
-        eshm20_region = 2 # for ESHM20 GMPE regionalisation
         Nstd = 1 # num. of standard deviations to sample from sigma distribution
         
         # Specify site properties
