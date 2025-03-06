@@ -46,7 +46,6 @@ class Configurations(object):
         config_file = toml.load(filename) 
         
         # Get general params
-        self.eshm20_region = config_file['general']['eshm20_region']
         self.minR = config_file['general']['minR']
         self.maxR = config_file['general']['maxR']
         self.dist_type = config_file['general']['dist_type']
