@@ -81,7 +81,7 @@ class ResidualsTestCase(unittest.TestCase):
         exp = pd.DataFrame(self.exp)
         pd.testing.assert_frame_equal(obs, exp) 
 
-    def test_residuals_execution_from_toml(self):
+    def test_residuals_from_toml(self):
         """
         Tests basic execution of residuals when specifying gmpe and imts to get
         residuals for from a toml file - not correctness of values
