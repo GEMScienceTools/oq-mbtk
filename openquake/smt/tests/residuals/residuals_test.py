@@ -68,6 +68,7 @@ class ResidualsTestCase(unittest.TestCase):
         cls.toml = os.path.join(
             BASE_DATA_PATH, 'residuals_from_toml_test.toml')
         cls.exp = exp
+        cls.st_rec_min = 3
         cls.exp_stations = exp_stations
 
     def test_residuals_execution(self):
@@ -177,9 +178,8 @@ class ResidualsTestCase(unittest.TestCase):
         Test execution of single station residual analysis functions - not
         correctness of values. Execution of plots is also tested here.
         """
-        # Get sites with at least 3 record eachs
-        threshold = 3
-        top_sites = rank_sites_by_record_count(self.database, threshold)
+        # Get sites with at least 3 record each
+        top_sites = rank_sites_by_record_count(self.database, self.st_rec_min)
             
         # Create SingleStationAnalysis object
         ssa1 = res.SingleStationAnalysis(top_sites.keys(), self.gmpe_list,
@@ -222,14 +222,13 @@ class ResidualsTestCase(unittest.TestCase):
                 self.assertTrue(output_all_res_plt)
                 self.assertTrue(output_intra_res_comp_plt)
 
-    def test_single_station_residual_analysis_from_toml(self):
+    def test_single_station_from_toml(self):
         """
         Test execution of single station residual analysis using GMPEs and
         imts specified within a toml file. Correctness of values is not tested.
         """
-        # Get sites with at least 1 record each (i.e. all sites in db)
-        threshold = 1
-        top_sites = rank_sites_by_record_count(self.database, threshold)
+        # Get sites with at least 3 record each
+        top_sites = rank_sites_by_record_count(self.database, self.st_rec_min)
         
         # Create SingleStationAnalysis object from toml
         ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), self.toml)
