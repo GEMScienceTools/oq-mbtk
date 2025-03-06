@@ -60,7 +60,6 @@ class ResidualsTestCase(unittest.TestCase):
         del parser
         cls.database_file = os.path.join(cls.out_location,
                                          "metadatafile.pkl")
-        cls.database = None
         with open(cls.database_file, "rb") as f:
             cls.database = pickle.load(f)
         cls.gmpe_list = ["AkkarEtAlRjb2014",  "ChiouYoungs2014"]
