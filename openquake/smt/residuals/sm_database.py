@@ -1008,8 +1008,7 @@ class GroundMotionDatabase(ContextDB):
                 values.append(self.get_scalar(fle, imtx, component))
             elif "SA(" in imtx:
                 target_period = imt.from_string(imtx).period
-                spectrum = fle[selection_string + component +
-                               "/damping_05"][:]
+                spectrum = fle[selection_string + component + "/damping_05"][:]
                 periods = fle["IMS/H/Spectra/Response/Periods"][:]
                 values.append(utils.get_interpolated_period(
                     target_period, periods, spectrum))
