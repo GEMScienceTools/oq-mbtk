@@ -50,7 +50,8 @@ class ContextDB:
                            'backarc')
 
     def get_contexts(self, nodal_plane_index=1, imts=None, component="Geometric"):
-        """Return an iterable of Contexts. Each Context is a `dict` with
+        """
+        Return an iterable of Contexts. Each Context is a `dict` with
         earthquake, sites and distances information (`dict["Ctx"]`)
         and optionally arrays of observed IMT values (`dict["Observations"]`).
         See `create_context` for details.
@@ -100,50 +101,3 @@ class ContextDB:
             dic["Observations"] = {imt: [] for imt in imts}
             dic["Num. Sites"] = 0
         return dic
-
-    def get_event_and_records(self):
-        """Yield the tuple (event_id:Any, records:Sequence)
-
-        where:
-         - `event_id` is a scalar denoting the unique earthquake id, and
-         - `records` are the database records related to the given event: it
-            must be a sequence with given length (i.e., `len(records)` must
-            work) and its elements can be any user-defined data type according
-            to the current user implementations. For instance, `records` can be
-            a pandas DataFrame, or a list of several data types such as `dict`s
-            `h5py` Datasets, `pytables` rows, `django` model instances.
-        """
-        raise NotImplementedError('')
-
-    def update_context(self, ctx, records, nodal_plane_index=1):
-        """Update the attributes of the earthquake-based context `ctx` with
-        the data in `records`.
-        See `rupture_context_attrs`, `sites_context_attrs`,
-        `distances_context_attrs`, for a list of possible attributes. Any
-        attribute of `ctx` that is non-scalar should be given as numpy array.
-
-        :param ctx: a :class:`openquake.hazardlib.contexts.RuptureContext`
-            created for a specific event. It is the key 'Ctx' of the Context dict
-            returned by `self.create_context`
-        :param records: sequence (e.g., list, tuple, pandas DataFrame) of records
-            related to the given event (see :meth:`get_event_and_records`)
-        """
-        raise NotImplementedError('')
-
-    def get_observations(self, imtx, records, component="Geometric"):
-        """Return the observed values of the given IMT `imtx` from `records`,
-        as numpy array. This method is not called if `get_contexts`is called
-        with the `imts` argument missing or `None`.
-
-        *IMPORTANT*: IMTs in acceleration units (e.g. PGA, SA) are supposed to
-        return their values in cm/s/s (which should be by convention the unit
-        in which they are stored)
-
-        :param imtx: a string denoting a given Intensity measure type.
-        :param records: sequence (e.g., list, tuple, pandas DataFrame) of records
-            related to a given event (see :meth:`get_event_and_records`)
-
-        :return: a numpy array of observations, the same length of `records`
-        """
-        # NOTE: imtx, not imt, otherwise it shadows the package imt!!
-        raise NotImplementedError('')
