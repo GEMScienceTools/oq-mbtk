@@ -49,9 +49,6 @@ class Magnitude(object):
         The magnitude uncertainty (standard deviation)
     """
     def __init__(self, value, mtype, sigma=None, source=""):
-        """
-        Instantiate the class
-        """
         self.value = value
         self.mtype = mtype
         self.sigma = sigma
@@ -105,9 +102,6 @@ class Rupture(object):
     """
     def __init__(self, eq_id, eq_name, magnitude, length, width, depth,
                  hypocentre=None, area=None, surface=None, hypo_loc=None):
-        """
-        Instantiate
-        """
         self.id = eq_id
         self.name = eq_name
         self.magnitude = magnitude
@@ -165,6 +159,7 @@ class Rupture(object):
 
     def to_dict(self):
         """
+        Parses the information to a json compatible dictionary
         """
         output = {}
         for key in self.__dict__:
@@ -206,13 +201,11 @@ class GCMTNodalPlanes(object):
     Class to represent the nodal plane distribution of the tensor
     Each nodal plane is represented as a dictionary of the form:
     {'strike':, 'dip':, 'rake':}
+    
     :param Union[dict, None] nodal_plane_1: First nodal plane
     :param Union[dict, None] nodal_plane_2: Second nodal plane
     """
     def __init__(self):
-        """
-        Instantiate with empty nodal planes
-        """
         self.nodal_plane_1 = None
         self.nodal_plane_2 = None
 
@@ -225,6 +218,7 @@ class GCMTNodalPlanes(object):
     @classmethod
     def from_dict(cls, data):
         """
+        Instantiate from a dict
         """
         nps = cls()
         for key in data:
@@ -243,9 +237,6 @@ class GCMTPrincipalAxes(object):
     :param dict | None p_axis: The eigensystem of the P-axis
     """
     def __init__(self):
-        """
-        Instantiate
-        """
         self.t_axis = None
         self.b_axis = None
         self.p_axis = None
@@ -259,6 +250,7 @@ class GCMTPrincipalAxes(object):
     @classmethod
     def from_dict(cls, data):
         """
+        Instantiate from a dict.
         """
         pas = cls()
         for key in data:
@@ -284,9 +276,6 @@ class FocalMechanism(object):
     """
     def __init__(self, eq_id, name, nodal_planes, eigenvalues,
                  moment_tensor=None, mechanism_type=None):
-        """
-        Instantiate
-        """
         self.id = eq_id
         self.name = name
         self.nodal_planes = nodal_planes
@@ -306,6 +295,7 @@ class FocalMechanism(object):
 
     def to_dict(self):
         """
+        Parses the information to a json compatible dictionary
         """
         output = {}
         for key in self.__dict__:
@@ -321,6 +311,7 @@ class FocalMechanism(object):
     @classmethod
     def from_dict(cls, data):
         """
+        Instantiate from a dict.
         """
         keys = list(data)
         if "nodal_planes" in keys and data["nodal_planes"]:
@@ -343,6 +334,7 @@ class FocalMechanism(object):
 
     def _moment_tensor_to_list(self):
         """
+        Moment tensor to list
         """
         if self.tensor is None:
             return None
@@ -378,9 +370,6 @@ class Earthquake(object):
     def __init__(self, eq_id, name, date_time, longitude, latitude, depth,
                  magnitude, focal_mechanism=None, eq_country=None,
                  tectonic_region=None):
-        """
-        Instantiate
-        """
         self.id = eq_id
         assert isinstance(date_time, datetime)
         self.datetime = date_time
@@ -472,9 +461,6 @@ class RecordDistance(object):
     """
     def __init__(self, repi, rhypo, rjb=None, rrup=None, r_x=None, ry0=None,
                  flag=None, azimuth=None, rcdpp=None, rvolc=None):
-        """
-        Instantiates class
-        """
         self.repi = repi
         self.rhypo = rhypo
         self.rjb = rjb
@@ -496,6 +482,7 @@ class RecordDistance(object):
     @classmethod
     def from_dict(cls, data):
         """
+        Instantiate from a dict.
         """
         d = cls(data["repi"], data["rhypo"])
         for key in data:
@@ -597,9 +584,6 @@ class RecordSite(object):
     def __init__(self, site_id, site_code, site_name, longitude, latitude,
                  altitude, vs30=None, vs30_measured=None, network_code=None,
                  country=None, site_class=None, backarc=False):
-        """
-
-        """
         self.id = site_id
         self.name = site_name
         self.code = site_code
@@ -635,6 +619,7 @@ class RecordSite(object):
     @classmethod
     def from_dict(cls, data):
         """
+        Instantiate from a dict.
         """
         reqs = ["id", "code", "name", "longitude", "latitude", "altitude"]
         site = cls(*[data[req] for req in reqs])
@@ -796,9 +781,6 @@ class Component(object):
     """
     def __init__(self, waveform_id, orientation, ims=None, longest_period=None,
                  waveform_filter=None, baseline=None, units=None):
-        """
-        Instantiate
-        """
         self.id = waveform_id
         self.orientation = orientation
         self.lup = longest_period
@@ -822,6 +804,7 @@ class Component(object):
     @classmethod
     def from_dict(cls, data):
         """
+        Instantiate from a dict.
         """
         comp = cls(data["id"], data["orientation"])
         for key in data:
@@ -865,8 +848,6 @@ class GroundMotionRecord(object):
     def __init__(self, gm_id, time_series_file, event, distance, record_site,
                  x_comp, y_comp, vertical=None, ims=None, longest_period=None,
                  shortest_period=None, spectra_file=None):
-        """
-        """
         self.id = gm_id
         self.time_series_file = time_series_file
         self.spectra_file = spectra_file
@@ -891,6 +872,7 @@ class GroundMotionRecord(object):
 
     def to_dict(self):
         """
+        Parses the information to a json compatible dictionary
         """
         output = {}
         for key in self.__dict__:
@@ -960,8 +942,6 @@ class GroundMotionDatabase(ContextDB):
     """
     def __init__(self, db_id, db_name, db_directory=None, records=None,
                  site_ids=None):
-        """
-        """
         self.id = db_id
         self.name = db_name
         self.directory = db_directory
@@ -999,7 +979,6 @@ class GroundMotionDatabase(ContextDB):
         Return observed values for the given imt, as numpy array.
         See superclass docstring for details
         """
-
         values = []
         selection_string = "IMS/H/Spectra/Response/Acceleration/"
         for record in records:
@@ -1018,7 +997,9 @@ class GroundMotionDatabase(ContextDB):
         return values
 
     def update_context(self, ctx, records, nodal_plane_index=1):
-        """Updates the given RuptureContext with data from `records`.
+        """
+        Updates the given RuptureContext with data from `records`.
+
         See superclass docstring for details
         """
         self._update_rupture_context(ctx, records, nodal_plane_index)
@@ -1026,8 +1007,9 @@ class GroundMotionDatabase(ContextDB):
         self._update_distances_context(ctx, records)
 
     def _update_rupture_context(self, ctx, records, nodal_plane_index=1):
-        """Called by self.update_context"""
-
+        """
+        Called by self.update_context
+        """
         record = records[0]
         ctx.mag = record.event.magnitude.value
         if nodal_plane_index == 2:
@@ -1067,8 +1049,9 @@ class GroundMotionDatabase(ContextDB):
         ctx.hypo_lon = record.event.longitude
 
     def _update_sites_context(self, ctx, records):
-        """Called by self.update_context"""
-
+        """
+        Called by self.update_context
+        """
         for attname in self.sites_context_attrs:
             setattr(ctx, attname, [])
 
@@ -1111,8 +1094,9 @@ class GroundMotionDatabase(ContextDB):
                 setattr(ctx, attname, np.asarray(attval, dtype=float))
 
     def _update_distances_context(self, ctx, records):
-        """Called by self.update_context"""
-
+        """
+        Called by self.update_context
+        """
         for attname in self.distances_context_attrs:
             setattr(ctx, attname, [])
 
@@ -1195,6 +1179,7 @@ class GroundMotionDatabase(ContextDB):
     @classmethod
     def from_json(cls, filename):
         """
+        Instantiate from a json
         """
         with open(filename, "r") as f:
             raw = json.load(f)
