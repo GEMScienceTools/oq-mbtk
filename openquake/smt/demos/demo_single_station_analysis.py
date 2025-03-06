@@ -29,8 +29,8 @@ demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inp
 # Specify results folder name
 demo_out = os.path.join(BASE, 'outputs_demo_station_analysis')
 
-# Minimum number of records for a site to be considered in SSA
-threshold = 45
+# Minimum number of records for a site to be considered in the SSA
+demo_threshold = 45
 
 
 def get_residual_metadata(flatfile, gmms_imts, out_dir):
@@ -117,7 +117,7 @@ def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
 def main(flatfile=demo_flatfile,
          gmms_imts=demo_inputs,
          out_dir=demo_out,
-         threshold=0):
+         threshold=demo_threshold):
     """
     Run the demo single station residual analysis
     """
