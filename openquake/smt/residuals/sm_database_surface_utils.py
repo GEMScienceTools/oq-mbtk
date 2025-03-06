@@ -134,6 +134,7 @@ def simple_fault_surface_from_dict(data, mesh_spacing=1.):
 
 def _3d_line_from_list(vals):
     """
+    Create OQ line object from a list of points
     """
     vertices = []
     for lon, lat, depth in vals:

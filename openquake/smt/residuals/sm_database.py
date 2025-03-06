@@ -65,8 +65,6 @@ class Magnitude(object):
         return self.__dict__
 
     def __eq__(self, m):
-        """
-        """
         same_value = np.fabs(self.value - m.value) < 1.0E-3
         if self.sigma and m.sigma:
             same_sigma = np.fabs(self.sigma - m.sigma) < 1.0E-7

@@ -56,8 +56,6 @@ class SMRecordSelector(object):
     motion database
     """
     def __init__(self, database):
-        """
-        """
         self.database = database
         self.record_ids = self._get_record_ids()
         self.event_ids = self.database._get_event_id_list()

@@ -349,8 +349,8 @@ class LikelihoodPlot(ResidualHistogramPlot):
 
     def _assertion_check(self, residuals):
         """
-            overrides the super-class method by asserting we are dealing
-            with a `Likelihood` class
+        Overrides the super-class method by asserting we are dealing
+        with a `Likelihood` class
         """
         assert isinstance(residuals, Residuals)
 
@@ -465,8 +465,8 @@ class ResidualScatterPlot(BaseResidualPlot):
 
 class ResidualWithDistance(ResidualScatterPlot):
     """
-        Class to create a simple scatter plot of strong ground motion
-        residuals (y-axis) versus distance (x-axis)
+    Class to create a simple scatter plot of strong ground motion
+    residuals (y-axis) versus distance (x-axis)
     """
 
     def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
@@ -506,8 +506,8 @@ class ResidualWithDistance(ResidualScatterPlot):
 
 class ResidualWithMagnitude(ResidualScatterPlot):
     """
-        Class to create a simple scatter plot of strong ground motion
-        residuals (y-axis) versus magnitude (x-axis)
+    Class to create a simple scatter plot of strong ground motion
+    residuals (y-axis) versus magnitude (x-axis)
     """
 
     def get_plot_data(self):
@@ -516,8 +516,8 @@ class ResidualWithMagnitude(ResidualScatterPlot):
 
 class ResidualWithDepth(ResidualScatterPlot):
     """
-        Class to create a simple scatter plot of strong ground motion
-        residuals (y-axis) versus depth (x-axis)
+    Class to create a simple scatter plot of strong ground motion
+    residuals (y-axis) versus depth (x-axis)
     """
 
     def get_plot_data(self):
@@ -1123,7 +1123,7 @@ class ResidualWithSite(ResidualPlot):
             yvals = np.hstack([yvals, data[site_id][res_type]])
         ax.plot(xvals,
                 yvals,
-                'o',
+                marker='o',
                 markeredgecolor='Gray',
                 markerfacecolor='LightSteelBlue',
                 zorder=-32)
