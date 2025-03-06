@@ -44,8 +44,7 @@ class ContextDB:
     sites_context_attrs = ('vs30', 'lons', 'lats', 'depths',
                            'vs30measured', 'z1pt0', 'z2pt5', 'backarc')
 
-    def get_contexts(self, nodal_plane_index=1,
-                     imts=None, component="Geometric"):
+    def get_contexts(self, nodal_plane_index=1, imts=None, component="Geometric"):
         """Return an iterable of Contexts. Each Context is a `dict` with
         earthquake, sites and distances information (`dict["Ctx"]`)
         and optionally arrays of observed IMT values (`dict["Observations"]`).
@@ -91,10 +90,7 @@ class ContextDB:
             NOTE: Remember 'Observations' and 'Num. Sites' are missing if `imts`
             is missing, None or an emtpy sequence.
         """
-        dic = {
-            'EventID': evt_id,
-            'Ctx': RuptureContext()
-        }
+        dic = {'EventID': evt_id, 'Ctx': RuptureContext()}
         if imts is not None and len(imts):
             dic["Observations"] = {imt: [] for imt in imts}
             dic["Num. Sites"] = 0
