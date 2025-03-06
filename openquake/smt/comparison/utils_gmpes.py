@@ -143,8 +143,23 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
     return rup
 
 
-def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
-               step, imt, ztor, eshm20_region, dist_type, trt, up_or_down_dip,
+def att_curves(gmpe,
+               depth,
+               mag,
+               aratio,
+               strike,
+               dip,
+               rake,
+               Vs30,
+               Z1,
+               Z25,
+               maxR,
+               step,
+               imt,
+               ztor,
+               dist_type,
+               trt,
+               up_or_down_dip,
                volc_ba):
     """
     Compute the ground-motion intensities for the given context created here
@@ -178,12 +193,11 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
                       ztor=ztor)
 
     # Set site props
-    if 'KothaEtAl2020ESHM20' in str(gmpe):
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': volc_ba,
-                 'vs30measured': True, 'region': eshm20_region}
-    else:
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': volc_ba,
-                 'vs30measured': True}
+    props = {'vs30': Vs30,
+             'z1pt0': Z1,
+             'z2pt5': Z25,
+             'backarc': volc_ba,
+             'vs30measured': False}
 
     # Check if site up-dip or down-dip of site
     if up_or_down_dip == float(1):

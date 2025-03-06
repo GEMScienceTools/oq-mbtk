@@ -65,8 +65,8 @@ class ComparisonTestCase(unittest.TestCase):
             base,'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
             base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.expected_att_curves = os.path.join(base,'exp_att_curves.csv')
-        self.expected_spectra = os.path.join(base, 'exp_spectra.csv')
+        self.exp_curves = os.path.join(base,'exp_curves.csv')
+        self.exp_spectra = os.path.join(base, 'exp_spectra.csv')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -251,8 +251,7 @@ class ComparisonTestCase(unittest.TestCase):
         # Trellis plots
         att_curves = plot_trellis_util(config, self.output_directory)
         obs_curves = pd.DataFrame(att_curves).sort_index()
-        exp_curves = pd.read_csv(
-            self.expected_att_curves, index_col=idx).sort_index()
+        exp_curves = pd.read_csv(self.exp_curves, index_col=idx).sort_index()
         assert str(obs_curves) == str(exp_curves)
 
         # Spectra plots
@@ -260,7 +259,7 @@ class ComparisonTestCase(unittest.TestCase):
             config, self.output_directory, obs_spectra=None)
         obs_spectra = pd.DataFrame(gmc_lts).sort_index()
         exp_spectra = pd.read_csv(
-            self.expected_spectra, index_col=idx).sort_index()
+            self.exp_spectra, index_col=idx).sort_index()
         assert str(obs_spectra) == str(exp_spectra)
         
         # Specify target files

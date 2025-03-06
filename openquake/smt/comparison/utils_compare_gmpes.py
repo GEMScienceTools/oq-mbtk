@@ -94,13 +94,20 @@ def plot_trellis_util(config, output_directory):
                 gmm = mgmpe_check(gmpe)
                 
                 # Get attenuation curves
-                mean, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
-                                                         aratio_g, strike_g,
-                                                         dip_g, config.rake,
-                                                         config.Vs30, Z1, Z25,
-                                                         config.maxR, 1, i,
+                mean, std, r_vals, tau, phi = att_curves(gmm,
+                                                         dep_list[l],
+                                                         m,
+                                                         aratio_g,
+                                                         strike_g,
+                                                         dip_g,
+                                                         config.rake,
+                                                         config.Vs30,
+                                                         Z1,
+                                                         Z25,
+                                                         config.maxR,
+                                                         1, # Step of 1 km for site spacing
+                                                         i,
                                                          ztor_m,
-                                                         config.eshm20_region,
                                                          config.dist_type,
                                                          config.trt,
                                                          config.up_or_down_dip,
@@ -233,13 +240,22 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                                        # ground-motion values at very small rrup
                                        # or rjb (specified rrup or rjb can be
                                        # smaller than min rrup or rjb in a ctx)
-                    mu, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
-                                                           aratio_g, strike_g,
-                                                           dip_g, config.rake,
-                                                           config.Vs30, Z1, Z25,
-                                                           500, 0.1, imt, ztor_m,
-                                                           config.eshm20_region,
-                                                           dist_type, config.trt,
+                    mu, std, r_vals, tau, phi = att_curves(gmm,
+                                                           dep_list[l],
+                                                           m,
+                                                           aratio_g,
+                                                           strike_g,
+                                                           dip_g,
+                                                           config.rake,
+                                                           config.Vs30,
+                                                           Z1,
+                                                           Z25,
+                                                           500, # Assume record dist < 500 km
+                                                           1, # Step of 1 km for site spacing
+                                                           imt,
+                                                           ztor_m,
+                                                           dist_type,
+                                                           config.trt,
                                                            config.up_or_down_dip,
                                                            config.volc_ba) 
                     
@@ -349,11 +365,23 @@ def plot_ratios_util(config, output_directory):
             baseline = mgmpe_check(config.baseline_gmm)
 
             # Get baseline GMM attenuation curves
-            results = att_curves(baseline, dep_list[l], m, aratio_g,
-                                 strike_g, dip_g, config.rake,
-                                 config.Vs30, Z1, Z25, config.maxR, 1, i, ztor_m,
-                                 config.eshm20_region, config.dist_type,
-                                 config.trt, config.up_or_down_dip,
+            results = att_curves(baseline,
+                                 dep_list[l],
+                                 m,
+                                 aratio_g,
+                                 strike_g,
+                                 dip_g,
+                                 config.rake,
+                                 config.Vs30,
+                                 Z1,
+                                 Z25,
+                                 config.maxR,
+                                 1, # Step of 1 km for sites
+                                 i,
+                                 ztor_m,
+                                 config.dist_type,
+                                 config.trt,
+                                 config.up_or_down_dip,
                                  config.volc_ba)
             b_mean = results[0][0][0]
 
@@ -365,11 +393,23 @@ def plot_ratios_util(config, output_directory):
                 gmm = mgmpe_check(gmpe)
                 
                 # Get attenuation curves for the GMM
-                results = att_curves(gmm, dep_list[l], m, aratio_g, strike_g,
-                                     dip_g, config.rake, config.Vs30, Z1, Z25,
-                                     config.maxR, 1, i, ztor_m,
-                                     config.eshm20_region, config.dist_type,
-                                     config.trt, config.up_or_down_dip,
+                results = att_curves(gmm,
+                                     dep_list[l],
+                                     m,
+                                     aratio_g,
+                                     strike_g,
+                                     dip_g,
+                                     config.rake,
+                                     config.Vs30,
+                                     Z1,
+                                     Z25,
+                                     config.maxR,
+                                     1, # Step of 1 km for sites
+                                     i,
+                                     ztor_m,
+                                     config.dist_type,
+                                     config.trt,
+                                     config.up_or_down_dip,
                                      config.volc_ba)
 
                 # Get mean and r_vals
@@ -435,13 +475,20 @@ def compute_matrix_gmpes(config, mtxs_type):
                 else:
                     ztor_m = None
 
-                mean, std, r_vals, tau, phi = att_curves(gmm, dep_list[l], m,
-                                                         aratio_g, strike_g,
-                                                         dip_g, config.rake,
-                                                         config.Vs30, Z1, Z25,
-                                                         config.maxR, 1, i, 
+                mean, std, r_vals, tau, phi = att_curves(gmm,
+                                                         dep_list[l],
+                                                         m,
+                                                         aratio_g,
+                                                         strike_g,
+                                                         dip_g,
+                                                         config.rake,
+                                                         config.Vs30,
+                                                         Z1,
+                                                         Z25,
+                                                         config.maxR,
+                                                         1, # Step of 1 km for site spacing
+                                                         i, 
                                                          ztor_m, 
-                                                         config.eshm20_region,
                                                          config.dist_type,
                                                          config.trt,
                                                          config.up_or_down_dip,

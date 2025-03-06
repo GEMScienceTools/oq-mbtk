@@ -300,19 +300,12 @@ class Residuals(object):
     Class to derive sets of residuals for a list of ground motion residuals
     according to the GMPEs
     """
-    def __init__(self, gmpe_list, imts, eshm20_regions=None):
+    def __init__(self, gmpe_list, imts):
         """
         :param  gmpe_list:
             A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
         :param  imts:
             A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
-        :param eshm20_regions:
-            Dictionary where each key corresponds to the position of a GMPE in
-            the GMPE list and the value is an integer representing the atten.
-            cluster within ESHM20's backbone model for active shallow crustal
-            tectonic localities. This is used by the KothaEtAl2020ESHM20 gsim
-            class and must be specified to ensure the correct attenuation
-            cluster is applied when computing the ground-motion residuals
         """
         # Residuals object
         self.gmpe_list = check_gsim_list(gmpe_list)
@@ -323,7 +316,6 @@ class Residuals(object):
         self.unique_indices = {}
         self.gmpe_sa_limits = {}
         self.gmpe_scalars = {}
-        self.eshm20_regions = eshm20_regions
         for gmpe in self.gmpe_list:
             gmpe_dict_1 = {}
             gmpe_dict_2 = {}
@@ -393,30 +385,11 @@ class Residuals(object):
              
         # Parsing file with models
         gmpe_list = []
-        eshm20_regions = {}
         config = copy.deepcopy(config_file)
         for idx_k, key in enumerate(config['models']):
             
             # Get toml representation of GMM
             gmm = get_gmm_from_toml(key, config)
-            
-            # Get eshm20 region param and drop from gmpe to permit validation
-            # (re-added to context when computing residuals if required)
-            eshm20_region = None
-            if 'eshm20_region' in gmm:
-                vals = gmm.splitlines()
-                idx_to_drop = []
-                for idx_v, val in enumerate(vals):
-                    if 'eshm20_region' in val:
-                        idx_to_drop.append(idx_v)
-                        eshm20_region = int(val.split('=')[1])
-                vals = pd.Series(vals).drop(idx_to_drop)
-                clean = vals.iloc[0]
-                for idx_v, val in enumerate(vals):
-                    if idx_v > 0:
-                        clean = clean + '\n' + val
-                gmm = clean
-            eshm20_regions[idx_k] = eshm20_region
             
             # Create valid gsim object
             gmpe_list.append(valid.gsim(gmm))
@@ -424,7 +397,7 @@ class Residuals(object):
         # Get imts    
         imts = config_file['imts']['imt_list']     
         
-        return cls(gmpe_list, imts, eshm20_regions)
+        return cls(gmpe_list, imts)
 
     def get_residuals(self, ctx_database, nodal_plane_index=1,
                       component="Geometric", normalise=True):
@@ -527,10 +500,7 @@ class Residuals(object):
                         expected[gmpe][imtx] = None
                         continue
                 # Add region parameter to sites context if specified
-                if self.eshm20_regions:
-                    if self.eshm20_regions[idx_gmpe] is not None:
-                        context["Ctx"].region = self.eshm20_regions[idx_gmpe]
-                elif 'region' in gsim.kwargs:
+                if 'region' in gsim.kwargs:
                     context["Ctx"].region = gsim.kwargs['region']
                 # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
@@ -1232,7 +1202,7 @@ class SingleStationAnalysis(object):
     """
     Class to analyse residual sets recorded at specific stations
     """
-    def __init__(self, site_id_list, gmpe_list, imts, eshm20_regions=None):
+    def __init__(self, site_id_list, gmpe_list, imts):
         # Initiate SSA object
         self.site_ids = site_id_list
         if len(self.site_ids) < 1:
@@ -1241,7 +1211,6 @@ class SingleStationAnalysis(object):
         self.imts = imts
         self.site_residuals = []
         self.types = {gmpe: {} for gmpe in self.gmpe_list}
-        self.eshm20_regions = eshm20_regions
         for gmpe in self.gmpe_list:
             for imtx in self.imts:
                 self.types[gmpe][imtx] = []
@@ -1267,30 +1236,11 @@ class SingleStationAnalysis(object):
              
         # Parsing file with models
         gmpe_list = []
-        eshm20_regions = {}
         config = copy.deepcopy(config_file)
         for idx_k, key in enumerate(config['models']):
             
             # Get toml representation of GMM
             gmm = get_gmm_from_toml(key, config)
-            
-            # Get eshm20 region param and drop from gmpe to permit validation
-            # (re-added to context when computing residuals if required)
-            eshm20_region = None
-            if 'eshm20_region' in gmm:
-                vals = gmm.splitlines()
-                idx_to_drop = []
-                for idx_v, val in enumerate(vals):
-                    if 'eshm20_region' in val:
-                        idx_to_drop.append(idx_v)
-                        eshm20_region = int(val.split('=')[1])
-                vals = pd.Series(vals).drop(idx_to_drop)
-                clean = vals.iloc[0]
-                for idx_v, val in enumerate(vals):
-                    if idx_v > 0:
-                        clean = clean + '\n' + val
-                gmm = clean
-            eshm20_regions[idx_k] = eshm20_region
             
             # Create valid gsim object
             gmpe_list.append(valid.gsim(gmm))
@@ -1298,7 +1248,7 @@ class SingleStationAnalysis(object):
         # Get imts    
         imts = config_file['imts']['imt_list']  
 
-        return cls(site_id_list, gmpe_list, imts, eshm20_regions)
+        return cls(site_id_list, gmpe_list, imts)
 
     def get_site_residuals(self, database, component="Geometric"):
         """
@@ -1308,8 +1258,7 @@ class SingleStationAnalysis(object):
         for site_id in self.site_ids:
             selector = SMRecordSelector(database)
             site_db = selector.select_from_site_id(site_id, as_db=True)
-            resid = Residuals(
-                self.gmpe_list, self.imts, self.eshm20_regions)
+            resid = Residuals(self.gmpe_list, self.imts)
             resid.get_residuals(site_db, normalise=False, component=component)
             setattr(
                 resid,
