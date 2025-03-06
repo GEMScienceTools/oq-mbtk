@@ -506,8 +506,7 @@ class Residuals(object):
                     context["Ctx"],
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
-                # If no sigma inform user that residuals can't be computed for
-                # this GMPE
+                # If no sigma for the GMM residuals can't be computed
                 if np.all(stddev[0] == 0.):
                     gs = str(gmpe).split('(')[0]
                     m = 'A sigma model is not provided for %s' %gs
