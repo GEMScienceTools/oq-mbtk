@@ -387,7 +387,7 @@ class Residuals(object):
         # Parsing file with models
         gmpe_list = []
         config = copy.deepcopy(config_file)
-        for idx_k, key in enumerate(config['models']):
+        for _, key in enumerate(config['models']):
             
             # Get toml representation of GMM
             gmm = get_gmm_from_toml(key, config)
@@ -1237,7 +1237,7 @@ class SingleStationAnalysis(object):
         # Parsing file with models
         gmpe_list = []
         config = copy.deepcopy(config_file)
-        for idx_k, key in enumerate(config['models']):
+        for _, key in enumerate(config['models']):
             
             # Get toml representation of GMM
             gmm = get_gmm_from_toml(key, config)
