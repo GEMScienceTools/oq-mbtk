@@ -489,7 +489,7 @@ class Residuals(object):
             context["Ctx"].rake = 0.0 # Assume strike-slip
         expected = {gmpe: {} for gmpe in self.gmpe_list}
         # Period range for GSIM
-        for idx_gmpe, gmpe in enumerate(self.gmpe_list):
+        for _, gmpe in enumerate(self.gmpe_list):
             expected[gmpe] = {imtx: {} for imtx in self.imts}
             for imtx in self.imts:
                 gsim = self.gmpe_list[gmpe]
