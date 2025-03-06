@@ -46,6 +46,8 @@ from openquake.smt.utils_strong_motion import convert_accel_units, check_gsim_li
 GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
 
+ALL_SIGMA = frozenset({'Inter event', 'Intra event', 'Total'})
+
 
 def get_gmm_from_toml(key, config):
     """
@@ -348,9 +350,8 @@ class Residuals(object):
                 
                 # If mixed effects GMPE or using Al-Atik 2015 fix res_type order
                 if self.gmpe_list[
-                        gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == frozenset(
-                            {'Inter event', 'Intra event', 'Total'}
-                            ) or 'al_atik_2015_sigma' in str(gmpe):
+                    gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
+                        ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
                     for res_type in ['Total','Inter event', 'Intra event']:
                         gmpe_dict_1[imtx][res_type] = []
                         gmpe_dict_2[imtx][res_type] = []
@@ -1215,9 +1216,8 @@ class SingleStationAnalysis(object):
             for imtx in self.imts:
                 self.types[gmpe][imtx] = []
                 if self.gmpe_list[
-                        gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == frozenset(
-                            {'Inter event', 'Intra event', 'Total'}
-                            ) or 'al_atik_2015_sigma' in str(gmpe):
+                    gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
+                        ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
                     for res_type in ['Total','Inter event', 'Intra event']:
                         self.types[gmpe][imtx].append(res_type)
                 else:
@@ -1424,9 +1424,8 @@ class SingleStationAnalysis(object):
                 print("%s" % gmpe_str, file=fid)
                 # If mixed effects GMPE append with intra-event res components
                 if self.gmpe_list[
-                        gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == frozenset(
-                            {'Inter event', 'Intra event', 'Total'}
-                            ) or 'al_atik_2015_sigma' in str(gmpe):
+                        gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
+                            ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
                         for imtx in self.imts:
                             print("%s, phi_ss, %12.8f, phi_s2ss(Mean),"
                                   " %12.8f, phi_s2ss(Std. Dev), %12.8f" % (
