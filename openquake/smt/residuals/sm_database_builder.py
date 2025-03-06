@@ -33,8 +33,6 @@ SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95", "Housner"]
 
 
 def _get_fieldnames_from_csv(reader):
-    """
-    """
     scalar_fieldnames = []
     spectra_fieldnames = []
     periods = []
