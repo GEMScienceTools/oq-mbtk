@@ -47,6 +47,22 @@ GSIM_LIST = get_available_gsims()
 GSIM_KEYS = set(GSIM_LIST)
 
 
+def get_gmm_from_toml(key, config):
+    """
+    Get a GMM from a TOML file
+    """
+    # If the key contains a number we take the second part
+    if re.search("^\\d+\\-", key):
+        tmp = re.sub("^\\d+\\-", "", key)
+        value = f"[{tmp}] "
+    else:
+        value = f"[{key}] "
+    if len(config['models'][key]):
+        config['models'][key].pop('style', None)
+        value += '\n' + str(toml.dumps(config['models'][key]))
+    return value.strip()
+
+
 def get_geometric_mean(fle):
     """
     Retreive geometric mean of the ground motions from the file - or calculate
@@ -308,7 +324,6 @@ class Residuals(object):
         self.gmpe_sa_limits = {}
         self.gmpe_scalars = {}
         self.eshm20_regions = eshm20_regions
-        
         for gmpe in self.gmpe_list:
             gmpe_dict_1 = {}
             gmpe_dict_2 = {}
@@ -382,22 +397,14 @@ class Residuals(object):
         config = copy.deepcopy(config_file)
         for idx_k, key in enumerate(config['models']):
             
-            # If the key contains a number we take the second part
-            if re.search("^\\d+\\-", key):
-                tmp = re.sub("^\\d+\\-", "", key)
-                value = f"[{tmp}] "
-            else:
-                value = f"[{key}] "
-            if len(config['models'][key]):
-               config['models'][key].pop('style', None)
-               value += '\n' + str(toml.dumps(config['models'][key]))
-            value = value.strip()
+            # Get toml representation of GMM
+            gmm = get_gmm_from_toml(key, config)
             
             # Get eshm20 region param and drop from gmpe to permit validation
             # (re-added to context when computing residuals if required)
             eshm20_region = None
-            if 'eshm20_region' in value:
-                vals = value.splitlines()
+            if 'eshm20_region' in gmm:
+                vals = gmm.splitlines()
                 idx_to_drop = []
                 for idx_v, val in enumerate(vals):
                     if 'eshm20_region' in val:
@@ -408,11 +415,11 @@ class Residuals(object):
                 for idx_v, val in enumerate(vals):
                     if idx_v > 0:
                         clean = clean + '\n' + val
-                value = clean
+                gmm = clean
             eshm20_regions[idx_k] = eshm20_region
             
             # Create valid gsim object
-            gmpe_list.append(valid.gsim(value))
+            gmpe_list.append(valid.gsim(gmm))
             
         # Get imts    
         imts = config_file['imts']['imt_list']     
@@ -1230,7 +1237,6 @@ class SingleStationAnalysis(object):
         self.site_ids = site_id_list
         if len(self.site_ids) < 1:
             raise ValueError('No sites meet record threshold for analysis.')
-        self.input_gmpe_list = copy.deepcopy(gmpe_list)
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.imts = imts
         self.site_residuals = []
@@ -1256,7 +1262,7 @@ class SingleStationAnalysis(object):
         Read in gmpe_list and imts from .toml file. This method allows use of
         gmpes with additional parameters and input files within the SMT
         """
-        # Read in toml file with dict of gmpes and subdict of imts
+           # Read in toml file with dict of gmpes and subdict of imts
         config_file = toml.load(filename)
              
         # Parsing file with models
@@ -1265,21 +1271,14 @@ class SingleStationAnalysis(object):
         config = copy.deepcopy(config_file)
         for idx_k, key in enumerate(config['models']):
             
-            # If the key contains a number we take the second part
-            if re.search("^\\d+\\-", key):
-                tmp = re.sub("^\\d+\\-", "", key)
-                value = f"[{tmp}] "
-            else:
-                value = f"[{key}] "
-            if len(config['models'][key]):
-               config['models'][key].pop('style', None)
-               value += '\n' + str(toml.dumps(config['models'][key]))
-            value = value.strip()
-               
+            # Get toml representation of GMM
+            gmm = get_gmm_from_toml(key, config)
+            
             # Get eshm20 region param and drop from gmpe to permit validation
+            # (re-added to context when computing residuals if required)
             eshm20_region = None
-            if 'eshm20_region' in value:
-                vals = value.splitlines()
+            if 'eshm20_region' in gmm:
+                vals = gmm.splitlines()
                 idx_to_drop = []
                 for idx_v, val in enumerate(vals):
                     if 'eshm20_region' in val:
@@ -1290,15 +1289,15 @@ class SingleStationAnalysis(object):
                 for idx_v, val in enumerate(vals):
                     if idx_v > 0:
                         clean = clean + '\n' + val
-                value = clean
+                gmm = clean
             eshm20_regions[idx_k] = eshm20_region
-
-            # Create valid gsim
-            gmpe_list.append(valid.gsim(value))
+            
+            # Create valid gsim object
+            gmpe_list.append(valid.gsim(gmm))
             
         # Get imts    
-        imts = config_file['imts']['imt_list']     
-        
+        imts = config_file['imts']['imt_list']  
+
         return cls(site_id_list, gmpe_list, imts, eshm20_regions)
 
     def get_site_residuals(self, database, component="Geometric"):
@@ -1310,7 +1309,7 @@ class SingleStationAnalysis(object):
             selector = SMRecordSelector(database)
             site_db = selector.select_from_site_id(site_id, as_db=True)
             resid = Residuals(
-                self.input_gmpe_list, self.imts, self.eshm20_regions)
+                self.gmpe_list, self.imts, self.eshm20_regions)
             resid.get_residuals(site_db, normalise=False, component=component)
             setattr(
                 resid,
