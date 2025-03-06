@@ -62,7 +62,7 @@ class ResidualsTestCase(unittest.TestCase):
                                          "metadatafile.pkl")
         with open(cls.database_file, "rb") as f:
             cls.database = pickle.load(f)
-        cls.gmpe_list = ["AkkarEtAlRjb2014",  "ChiouYoungs2014"]
+        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]
         cls.toml = os.path.join(
             BASE_DATA_PATH, 'residuals_from_toml_test.toml')
