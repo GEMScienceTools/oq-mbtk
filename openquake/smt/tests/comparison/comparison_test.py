@@ -67,7 +67,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.input_file_obs_spectra_csv = os.path.join(
             base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
         self.exp_curves = os.path.join(base,'exp_curves.pkl')
-        self.exp_spectra = os.path.join(base, 'exp_spectra.csv')
+        self.exp_spectra = os.path.join(base, 'exp_spectra.pkl')
 
         # Set the output
         if not os.path.exists(self.output_directory):
