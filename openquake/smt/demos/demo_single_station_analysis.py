@@ -49,7 +49,7 @@ def get_residual_metadata(flatfile, gmms_imts, out_dir):
     
     # Get residuals
     residuals = res.Residuals.from_toml(gmms_imts)
-    residuals.get_residuals(sm_database)
+    residuals.get_residuals(sm_database, component="Geometric")
 
     return sm_database
 
