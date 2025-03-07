@@ -64,7 +64,7 @@ def get_residual_metadata(metadata_dir, gmms_imts, out_dir):
 
     # Get residuals
     residuals = res.Residuals.from_toml(gmms_imts)
-    residuals.get_residuals(database, component='rotD50')
+    residuals.get_residuals(database, component='Geometric')
     
     # Per GMM
     for gmm in residuals.gmpe_list:
