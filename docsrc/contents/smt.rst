@@ -96,7 +96,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         
 3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for the use of GMPEs with user-specifiable input parameters.
 
-   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GSIM files (found in ``oq-engine.openquake.hazardlib.gsim``). or for ModifiableGMPE features in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``).
+   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GMPE ``.py`` files (found in ``oq-engine.openquake.hazardlib.gsim``). or for ModifiableGMPE features in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``).
    
    The ``.toml`` file for specifying GMPEs and intensity measures to consider within a residual analysis should be specified as follows:
    
@@ -138,16 +138,6 @@ We can specify the inputs to perform a residual analysis with as follows:
                          # a single residuals toml the results of the last variant of the GMPE
                          # will overwrite the others (and only the results of the last variant 
                          # in the toml will be plotted too). This bug will be fixed.
-       
-       # Note that a bug exists for GMPEs which use the add_alias feature, meaning that the user
-       # must specify parameters that should be inherently used by specifiying the gsim class (to
-       # be fixed). Some examples of how to circumvent this bug are provided below
-       
-       [models.AbrahamsonEtAl2014] # Use instead of specifying AbrahamsonEtAl2014RegJPN
-       region = "JPN"
-       
-       [models.NGAEastUSGSGMPE]  # Use instead of specifying NGAEastUSGSSeed1CCSP or 1CCSP gsim classes
-       gmpe_table = 'nga_east_1CCSP.hdf5'
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
@@ -438,7 +428,9 @@ Comparing GMPEs
 
 2. The tools within the Comparison module include Sammon's Maps, hierarchical clustering plots and matrix plots of Euclidean distance for the median (and 16th and 84th percentiles) of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra and attenuation curves (trellis plots) are also provided in this module.
 
-   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. GMPE parameters can be specified as within the example ``.toml`` file provided above for us in residual analysis. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified some GMPEs which were found to perform well in the residual analysis against Albania ground-motion data. To plot a GMPE logic tree we must assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each GMPE depending on which GMC logic tree we wish to include the GMPE within (up to 4 GMC logic trees can currently be plotted within one analysis). To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for - see the .toml file below for an example of these potential configurations).
+   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. GMPE parameters can be specified as within the example ``.toml`` file provided above for us in residual analysis. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified some GMPEs which were found to perform well in the residual analysis against Albania ground-motion data. To plot a GMPE logic tree we must assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each GMPE depending on which GMC logic tree we wish to include the GMPE within (up to 4 GMC logic trees can currently be plotted within one analysis). To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for - see the ``.toml`` file below for an example of these potential configurations).
+
+   NOTE: To specify a GMM argument which is a bool (i.e. ``True`` or ``False``), the user must specify the bool as all lowercase within the ``.toml`` file (i.e. ``true`` or ``false``). An example is provided immediately below for the ``CampbellBozorgnia2014`` GMPE.
 
     .. code-block:: ini
     
@@ -459,7 +451,8 @@ Comparing GMPEs
         Z1 = -999
         Z25 = -999
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-        region = 'Global' # get region specific z1pt0 and zpt50 ('Global' or 'Japan') 
+        z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
+        volc_back_arc = false # true or false
         
         # Characterise earthquake for the region of interest as finite rupture
         [source_properties]
@@ -494,44 +487,46 @@ Comparing GMPEs
         
         # Plot logic tree and individual GMPEs within first GMC logic tree config (gmc1)
         [models.BooreEtAl2020]
-            lt_weight_gmc1 = 0.30
+        lt_weight_gmc1 = 0.30
             
         [models.LanzanoEtAl2019_RJB_OMO]
-            lt_weight_gmc1 = 0.40
+        lt_weight_gmc1 = 0.40
         
         # Default ESHM20 logic tree branches considered in gmc1
         [models.1-KothaEtAl2020ESHM20]
-            lt_weight_gmc1 = 0.000862
-            sigma_mu_epsilon = 2.85697 
-            c3_epsilon = 1.72    
+        lt_weight_gmc1 = 0.000862
+        sigma_mu_epsilon = 2.85697 
+        c3_epsilon = 1.72    
         [models.2-KothaEtAl2020ESHM20]   
-            lt_weight_gmc1 = 0.067767
-            sigma_mu_epsilon = 1.35563
-            c3_epsilon = 0
+        lt_weight_gmc1 = 0.067767
+        sigma_mu_epsilon = 1.35563
+        c3_epsilon = 0
         [models.3-KothaEtAl2020ESHM20]   
-            lt_weight_gmc1 = 0.162742
-            sigma_mu_epsilon = 0
-            c3_epsilon = 0        
+        lt_weight_gmc1 = 0.162742
+        sigma_mu_epsilon = 0
+        c3_epsilon = 0        
         [models.4-KothaEtAl2020ESHM20]
-            lt_weight_gmc1 = 0.067767
-            sigma_mu_epsilon = -1.35563
-            c3_epsilon = 0 
+        lt_weight_gmc1 = 0.067767
+        sigma_mu_epsilon = -1.35563
+        c3_epsilon = 0 
         [models.5-KothaEtAl2020ESHM20]
-            lt_weight_gmc1 = 0.000862
-            sigma_mu_epsilon = -2.85697 
-            c3_epsilon = -1.72    
+        lt_weight_gmc1 = 0.000862
+        sigma_mu_epsilon = -2.85697 
+        c3_epsilon = -1.72    
             
         # Plot logic tree only for a second GMC logic tree config (gmc2)
         [models.CauzziEtAl2014]
-            lt_weight_gmc2_plot_lt_only = 0.50
+        lt_weight_gmc2_plot_lt_only = 0.50
             
         [models.AkkarEtAlRjb2014]
-            lt_weight_gmc2_plot_lt_only = 0.50
+        lt_weight_gmc2_plot_lt_only = 0.50
             
+        # Also specify a GMM to compute ratios of the attenuation against (GMM/baseline)
+        [ratios_baseline_gmm.BooreEtAl2020]
+         
         [custom_colors]
         custom_colors_flag = 'False' # Set to "True" for custom colours in plots
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
-            
             
 3. Trellis Plots 
 
@@ -573,10 +568,21 @@ Comparing GMPEs
        > comp.plot_spectra(filename, output_directory, obs_spectra='spectra_chamoli_1991_station_UKHI.csv') 
 
     Response spectra plots for input parameters specified in toml file:
-        .. image:: /contents/smt_images/ObsSpectra.png
-      
+        .. image:: /contents/smt_images/ObsSpectra.png      
 
-6. Sammon's Maps
+6. Plot of ratios of attenuation curves
+
+   The ratios of the median predictions from each GMM and a baseline GMM (specified in the ``.toml`` - see above) can also be plotted. An example is provided in the demo files:
+
+    .. code-block:: ini
+    
+       > # Plot ratios of median attenuation curves for each GMM/median attenuation curves for baseline GMM
+       > comp.plot_ratios(filename, output_directory) 
+
+    Ratio plots for input parameters specified in toml file (note that here the baseline GMM is ``BooreEtAl2014``):
+        .. image:: /contents/smt_images/RatioPlots.png      
+
+7. Sammon's Maps
 
    We can plot Sammon's Maps to examine how similar the medians (and 16th and 84th percentiles) of predicted ground-motion of each GMPE are (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon's mapping procedure).
    
@@ -592,7 +598,7 @@ Comparing GMPEs
     Sammon's Maps (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_SammonMaps.png
     
-7. Hierarchical Clustering
+8. Hierarchical Clustering
 
    Dendrograms can be plotted as an alternative tool to evaluate how similarly the predicted ground-motion is by each GMPE.
    
@@ -608,7 +614,7 @@ Comparing GMPEs
     Dendrograms (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Clustering.png
          
-8. Matrix Plots of Euclidean Distance
+9. Matrix Plots of Euclidean Distance
 
    In addition to Sammon's Maps and hierarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
    
@@ -624,7 +630,7 @@ Comparing GMPEs
     Matrix plots of Euclidean distance between GMPEs (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Euclidean.png
     
-9. Using ModifiableGMPE to modify GMPEs within a ``.toml``. 
+10. Using ModifiableGMPE to modify GMPEs within a ``.toml``. 
 
    In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``).
    
@@ -686,7 +692,15 @@ Comparing GMPEs
         [models.12-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'NRCan15SiteTermLinear' # Use NRCan15 linear site term
-    
+
+        [models.13-ModifiableGMPE]
+        gmpe = 'AtkinsonMacias2009'
+        basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
+
+        [models.14-ModifiableGMPE]
+        gmpe = 'KuehnEtAl2020SInter'
+        basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
+            
 References
 ==========
 

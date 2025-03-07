@@ -17,7 +17,8 @@ vs30 = 800
 Z1 = -999
 Z25 = -999
 up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-region = 'Global' # region specific basin effects
+z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
+volc_back_arc = false # true or false
 
 # Characterise earthquake for the region of interest as finite rupture
 [source_properties]
@@ -39,7 +40,7 @@ non_trellis_or_spectra_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [ma
 
 # Specify label for gmpes
 [gmpe_labels]
-gmpes_label = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CA15', 'AK14']
+gmpes_label = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CB14', 'AK14']
 
 # Specify gmpes
 
@@ -77,12 +78,16 @@ sigma_mu_epsilon = -2.85697
 c3_epsilon = -1.72    
         
 # Plot logic tree only for the second GMC logic tree config (gmc2)
-[models.CauzziEtAl2014]
+[models.CampbellBozorgnia2014]
 lt_weight_gmc2_plot_lt_only = 0.50
-    
+estimate_ztor=true
+
 [models.AkkarEtAlRjb2014]
 lt_weight_gmc2_plot_lt_only = 0.50
     
+# Also specify a GMM to compute ratios of the attenuation against (GMM/baseline)
+[ratios_baseline_gmm.BooreEtAl2020]
+
 [custom_colors]
-custom_colors_flag = 'False' # Set to "True" for custom colours in plots)
+custom_colors_flag = false # Set to true for custom colours in plots)
 custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']

@@ -7,6 +7,7 @@ https://wheelhouse.openquake.org/v3/windows/py311/GDAL-3.7.3-cp311-cp311-win_amd
 https://wheelhouse.openquake.org/v3/windows/py311/fiona-1.9.5-cp311-cp311-win_amd64.whl
 #
 # Version specific
+pandas == 2.0.3
 geopandas >= 0.10.2
 ipykernel >= 4.8.0
 ipython >= 6.2.0
@@ -17,8 +18,14 @@ notebook >= 5.0.0
 pylint >= 2.1.1
 rtree >= 0.9.4
 netCDF4 < 1.7.0
-#
+xarray==2022.09
+h3 < 4.0.0
+jupyter-server==2.11.2
+pyproj==3.6.1
+numpy==1.26.2
 # Generic
+openpyxl
+xlrd
 nbformat
 geojson
 nbconvert
@@ -26,7 +33,6 @@ obspy
 prettytable
 tqdm
 tables
-h3
 pygmt
 reportlab
 igraph

@@ -14,8 +14,9 @@ Nstd = 1 # number of standard deviations to sample from sigma distribution
 vs30 = 800
 Z1 = -999
 Z25 = -999
-up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-region = 'Global' # region specific basin effects
+up_or_down_dip = 1 # 1 = up-dip, 0 = down-dist_type
+z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
+volc_back_arc = false # true or false
 
 [source_properties] # Characterise EQ as finite rupture
 trt = 'ASCR' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
@@ -36,7 +37,7 @@ non_trellis_or_spectra_depths = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth
 
 # Specify label for gmpes
 [gmpe_labels]
-gmpes_label = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
+gmpes_label = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
 
 [models.0-ModifiableGMPE]
 gmpe = 'YenierAtkinson2015BSSA'
@@ -89,7 +90,15 @@ add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
 [models.12-ModifiableGMPE]
 gmpe = 'CampbellBozorgnia2014'
 set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
-                               
+
+[models.13-ModifiableGMPE]
+gmpe = 'AtkinsonMacias2009'
+basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
+
+[models.14-ModifiableGMPE]
+gmpe = 'KuehnEtAl2020SInter'
+basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
+
 [models.NGAEastGMPE]
 gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
     
@@ -97,6 +106,11 @@ gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
 d_sigma = 100 # gmpe specific param
 kappa0 = 0.04
 
+[ratios_baseline_gmm.ModifiableGMPE] # Check mgmpe works for loading baseline model used in ratio plots
+gmpe = 'YenierAtkinson2015BSSA'
+sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
+with_betw_ratio = 1.5
+
 [custom_colors]
-custom_colors_flag = 'False' # By default set to "False" (set to "True" for custom colours)
+custom_colors_flag = false # Set to true for custom colours
 custom_colors_list = ['lime','dodgerblue','gold','0.8']

@@ -144,7 +144,8 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
 
 
 def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
-              step, imt, ztor, eshm20_region, dist_type, trt, up_or_down_dip):
+               step, imt, ztor, eshm20_region, dist_type, trt, up_or_down_dip,
+               volc_ba):
     """
     Compute the ground-motion intensities for the given context created here
     """
@@ -178,10 +179,10 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
 
     # Set site props
     if 'KothaEtAl2020ESHM20' in str(gmpe):
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
+        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': volc_ba,
                  'vs30measured': True, 'region': eshm20_region}
     else:
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
+        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': volc_ba,
                  'vs30measured': True}
 
     # Check if site up-dip or down-dip of site
@@ -305,7 +306,8 @@ def mgmpe_check(gmpe):
     """
     Check if the GMPE should be modified using ModifiableGMPE. This function in
     effect parses the toml parameters for a GMPE into the equivalent parameters
-    required for ModifiableGMPE
+    required for ModifiableGMPE. If a ModifiableGMPE is not required, a valid
+    GSIM object with all specified kwargs is returned instead
     :param gmpe:
         gmpe: GMPE to be modified if required
     """
@@ -318,7 +320,8 @@ def mgmpe_check(gmpe):
         for idx, par in enumerate(params):
             if idx > 1:
                 par = str(par)
-                if 'sigma_model' in par or 'site_term' in par:
+                if ('sigma_model' in par or 'site_term' in par or
+                    'basin_term' in par):
                     idx_params.append(idx)
                 if 'fix_total_sigma' in par:
                     idx_params.append(idx)
@@ -421,6 +424,14 @@ def mgmpe_check(gmpe):
         # NRCan15SiteTerm (linear)
         if 'NRCan15SiteTermLinear' in gmpe:
             kwargs['nrcan15_site_term'] = {'kind': 'linear'}
+
+        # CB14 basin term
+        if 'CB14BasinTerm' in gmpe:
+            kwargs['cb14_basin_term'] = {}
+
+        # M9 basin adjustment
+        if 'M9BasinTerm' in gmpe:
+            kwargs['m9_basin_term'] = {}
         
         gmm = mgmpe.ModifiableGMPE(**kwargs)
     
@@ -435,9 +446,12 @@ def mgmpe_check(gmpe):
                 idx_to_drop.append(idx_p)
         params = params.drop(idx_to_drop)
         gmpe_clean = params.iloc[0].strip()
-        for idx_p, par in enumerate(params):
-            if idx_p > 0:
-                gmpe_clean = gmpe_clean + '\n' + par
+        if len(params) > 1:
+            for idx_p, par in enumerate(params):
+                if idx_p > 0:
+                    gmpe_clean = gmpe_clean + '\n' + par
+        else: # Ensures GSIM aliases work
+            gmpe_clean = gmpe_clean.replace('[','').replace(']','')
         gmm = valid.gsim(gmpe_clean)
-        
+    
     return gmm
