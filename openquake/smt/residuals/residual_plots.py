@@ -446,7 +446,7 @@ def get_binning_params(var_type, residuals, res_per_gmc, imts, distance_type):
     return bins_bounds, vals
 
 
-def get_ctx_vals(var_type, ctx):
+def get_ctx_vals(var_type, ctx, distance_type):
     """
     Get value(s) of the given ctx corresponding to the variable we
     are plotting the residuals against
@@ -455,15 +455,15 @@ def get_ctx_vals(var_type, ctx):
         event_val = ctx.mag
     elif var_type == 'vs30':
         event_val = ctx.vs30
-    elif var_type == 'distance': #TODO update
-        event_val = ctx.rjb 
+    elif var_type == 'distance':
+        event_val = getattr(ctx, distance_type)
     elif var_type == 'depth':
         event_val = ctx.hypo_depth
 
     return event_val
 
 
-def get_res_df(var_type, vals, res_per_imt, residuals, gmpe, imt):
+def get_res_df(var_type, vals, res_per_imt, residuals, gmpe, imt, distance_type):
     """
     Return a dataframe with the total, inter-event and intra event
     residuals w.r.t. the variable of interest for plotting
@@ -484,7 +484,7 @@ def get_res_df(var_type, vals, res_per_imt, residuals, gmpe, imt):
         for idx_eq, ctx in enumerate(residuals.contexts):
         
             # Get values of the var for given the given ctx
-            ctx_vals = get_ctx_vals(var_type, ctx["Ctx"])
+            ctx_vals = get_ctx_vals(var_type, ctx["Ctx"], distance_type)
 
             # Get the Inter event residual (mean res per event)    
             inter_res = ctx['Residual'][gmpe][imt]['Inter event']
@@ -501,7 +501,7 @@ def get_res_df(var_type, vals, res_per_imt, residuals, gmpe, imt):
         df_inter = pd.concat(store).sort_values(by="vals")
 
         # Into single df with total and intra res
-        #assert all(df_inter.vals.values == df.vals.values)
+        assert all(df_inter.vals.values == df.vals.values)
         df["inter_res"] = df_inter["inter"].values
 
     return df
@@ -556,7 +556,8 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type, distance_type=None):
         var_type, residuals, res_per_gmc, imts, distance_type)
 
     # Get residuals and the variable (per record) in a dataframe
-    df = get_res_df(var_type, vals, res_per_imt, residuals, gmpe, imt)
+    df = get_res_df(
+        var_type, vals, res_per_imt, residuals, gmpe, imt, distance_type)
 
     # Get indices for the residuals in each bin
     idx_res_per_val_bin = {idx: {} for idx in bins_bounds}
