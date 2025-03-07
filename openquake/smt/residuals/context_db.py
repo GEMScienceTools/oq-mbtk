@@ -71,7 +71,7 @@ class ContextDB:
                     observations[imtx] = np.asarray(values, dtype=float)
                 dic["Num. Sites"] = len(records)
             dic['Ctx'].sids = np.arange(len(records), dtype=np.uint32)
-            dic["Ctx"].region = 0 # TODO: Hack!!! default ESHM20 att region for K20
+            dic["Ctx"].region = 0 # TODO: Default ESHM20 attenuation region
             yield dic
 
     def create_context(self, evt_id, imts=None):
