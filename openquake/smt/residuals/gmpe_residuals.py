@@ -417,8 +417,8 @@ class Residuals(object):
         # Fetch now outside the loop for efficiency the IMTs which need
         # acceleration units conversion from cm/s/s to g. Conversion will be
         # done inside the loop:
-        accel_imts = tuple([imtx for imtx in self.imts if
-                            (imtx == "PGA" or "SA(" in imtx)])
+        accel_imts = tuple(
+            [imtx for imtx in self.imts if (imtx == "PGA" or "SA(" in imtx)])
 
         # Contexts is in either case a list of dictionaries
         self.contexts = []
