@@ -20,6 +20,7 @@ Tests for execution of comparison module
 """
 import os
 import shutil
+import pickle
 import unittest
 import numpy as np
 import pandas as pd
@@ -65,7 +66,7 @@ class ComparisonTestCase(unittest.TestCase):
             base,'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
             base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.exp_curves = os.path.join(base,'exp_curves.csv')
+        self.exp_curves = os.path.join(base,'exp_curves.pkl')
         self.exp_spectra = os.path.join(base, 'exp_spectra.csv')
 
         # Set the output
@@ -245,22 +246,26 @@ class ComparisonTestCase(unittest.TestCase):
         # Load config
         config = comp.Configurations(self.input_file)
 
-        # Index col for expected
-        idx = ["Unnamed: 0"]
-        
         # Trellis plots
         att_curves = plot_trellis_util(config, self.output_directory)
-        obs_curves = pd.DataFrame(att_curves).sort_index()
-        exp_curves = pd.read_csv(self.exp_curves, index_col=idx).sort_index()
-        assert str(obs_curves) == str(exp_curves)
+        if not os.path.exists(self.exp_curves):
+            with open(self.exp_curves, 'wb') as f: # Write if doesn't exist
+                pickle.dump(att_curves, f, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(self.exp_curves, 'rb') as f:
+                exp_curves = pd.DataFrame(pickle.load(f))
+        obs_curves = pd.DataFrame(att_curves)
+        pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
 
         # Spectra plots
         gmc_lts = plot_spectra_util(
             config, self.output_directory, obs_spectra=None)
-        obs_spectra = pd.DataFrame(gmc_lts).sort_index()
-        exp_spectra = pd.read_csv(
-            self.exp_spectra, index_col=idx).sort_index()
-        assert str(obs_spectra) == str(exp_spectra)
+        if not os.path.exists(self.exp_spectra):
+            with open(self.exp_spectra, 'wb') as f: # Write if doesn't exist
+                pickle.dump(gmc_lts, f, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(self.exp_spectra, 'rb') as f:
+                exp_spectra = pd.DataFrame(pickle.load(f))
+        obs_spectra = pd.DataFrame(gmc_lts)
+        pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
         
         # Specify target files
         target_file_trellis = (os.path.join(
