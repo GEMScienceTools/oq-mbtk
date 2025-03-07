@@ -1,6 +1,6 @@
 """
-This demo script runs a single station residual analysis using a subset of the
-ESM flatfile filtered geographically to Albania + an approximately 100 km buffer.
+This demo script runs a single station residual analysis using
+a subset of the ESM flatfile.
 """
 import os
 import pickle
