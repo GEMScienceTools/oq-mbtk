@@ -1203,6 +1203,8 @@ class SingleStationAnalysis(object):
         self.site_ids = site_id_list
         if len(self.site_ids) < 1:
             raise ValueError('No sites meet record threshold for analysis.')
+        # Copy the GMMs to avoid recursive issues with check_gsim_list 
+        self.frozen_gmpe_list = copy.deepcopy(gmpe_list) 
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.imts = imts
         self.site_residuals = []
@@ -1216,8 +1218,9 @@ class SingleStationAnalysis(object):
                     for res_type in ['Total','Inter event', 'Intra event']:
                         self.types[gmpe][imtx].append(res_type)
                 else:
-                    for res_type in (self.gmpe_list[gmpe].
-                                 DEFINED_FOR_STANDARD_DEVIATION_TYPES):
+                    for res_type in (
+                        self.gmpe_list[
+                            gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES):
                         self.types[gmpe][imtx].append(res_type)
                         
     @classmethod
@@ -1252,7 +1255,9 @@ class SingleStationAnalysis(object):
         for site_id in self.site_ids:
             selector = SMRecordSelector(database)
             site_db = selector.select_from_site_id(site_id, as_db=True)
-            resid = Residuals(self.gmpe_list, self.imts)
+            # Use a deep copied gmpe list to avoid recursive GMM instantiation
+            # issues when using check_gsim_list within Residuals obj __init__
+            resid = Residuals(self.frozen_gmpe_list, self.imts)
             resid.get_residuals(site_db, normalise=False, component=component)
             setattr(
                 resid,
