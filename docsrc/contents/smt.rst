@@ -132,12 +132,6 @@ We can specify the inputs to perform a residual analysis with as follows:
        [models.KothaEtAl2020ESHM20]
        sigma_mu_epsilon = 2.85697 
        c3_epsilon = 1.72    
-       eshm20_region = 4 # Note that only a single eshm20 region (eshm20 attenuation cluster) 
-                         # can be evaluated in a single residual analysis run in the SMT. If
-                         # multiple variants of the KothaEtAl2020ESHM20 GMPE are specified in
-                         # a single residuals toml the results of the last variant of the GMPE
-                         # will overwrite the others (and only the results of the last variant 
-                         # in the toml will be plotted too). This bug will be fixed.
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
@@ -442,7 +436,6 @@ Comparing GMPEs
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
-        eshm20_region = 2 # for ESHM20 GMPE regionalisation
         Nstd = 1 # num. of standard deviations to sample from sigma distribution
         
         # Specify site properties
@@ -682,22 +675,26 @@ Comparing GMPEs
         sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # Scale sigma by imt-dependent factor
         
         [models.10-ModifiableGMPE]
+        gmpe = 'AtkinsonMacias2009'
+        site_term = 'BA08SiteTerm' # use BA08 site term
+
+        [models.11-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'CY14SiteTerm' # Use CY14 site term
-        
-        [models.11-ModifiableGMPE]
+
+        [models.12-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'NRCan15SiteTerm' # Use NRCan15 non-linear site term
         
-        [models.12-ModifiableGMPE]
+        [models.13-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'NRCan15SiteTermLinear' # Use NRCan15 linear site term
 
-        [models.13-ModifiableGMPE]
+        [models.14-ModifiableGMPE]
         gmpe = 'AtkinsonMacias2009'
         basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
 
-        [models.14-ModifiableGMPE]
+        [models.15-ModifiableGMPE]
         gmpe = 'KuehnEtAl2020SInter'
         basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
             

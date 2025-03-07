@@ -1,5 +1,6 @@
 import os
 import unittest
+
 from openquake.smt.residuals.parsers.asa_database_parser import \
     ASADatabaseMetadataReader
 from openquake.hazardlib import valid

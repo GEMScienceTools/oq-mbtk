@@ -7,7 +7,6 @@ minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
 dist_type = 'rrup' # specify distance metric used in trellis plots
 dist_list = [10, 50, 200] # distances for use in response spectra
-eshm20_region = 0 # region for ESHM20 GMM
 Nstd = 1 # number of standard deviations to sample from sigma distribution
 
 [site_properties]
@@ -76,33 +75,37 @@ gmpe = 'BooreEtAl2014'
 site_term = 'CY14SiteTerm' # use CY14 site term
 
 [models.9-ModifiableGMPE]
-gmpe = 'BooreEtAl2014'
-site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
+gmpe = 'AtkinsonMacias2009'
+site_term = 'BA08SiteTerm' # use BA08 site term
 
 [models.10-ModifiableGMPE]
 gmpe = 'BooreEtAl2014'
-site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
+site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
 
 [models.11-ModifiableGMPE]
-gmpe = 'CampbellBozorgnia2014'
-add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
+gmpe = 'BooreEtAl2014'
+site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
 
 [models.12-ModifiableGMPE]
 gmpe = 'CampbellBozorgnia2014'
-set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
+add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
 
 [models.13-ModifiableGMPE]
+gmpe = 'CampbellBozorgnia2014'
+set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
+
+[models.14-ModifiableGMPE]
 gmpe = 'AtkinsonMacias2009'
 basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
 
-[models.14-ModifiableGMPE]
+[models.15-ModifiableGMPE]
 gmpe = 'KuehnEtAl2020SInter'
 basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
 
-[models.NGAEastGMPE]
+[models.16-NGAEastGMPE]
 gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
     
-[models.HassaniAtkinson2018]
+[models.17-HassaniAtkinson2018]
 d_sigma = 100 # gmpe specific param
 kappa0 = 0.04
 

@@ -26,7 +26,7 @@ import pickle
 import numpy as np
 from scipy.stats import linregress
 
-from openquake.smt.residuals.parsers.esm_flatfile_parser import ESMFlatfileParser
+from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 from openquake.smt.residuals.sm_database_visualiser import DISTANCES
 from openquake.smt.residuals.residual_plots import (
@@ -38,30 +38,6 @@ from openquake.smt.residuals.residual_plots import (
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 
-EXPECTED_IDS = [
-"EMSC_20040918_0000026_RA_PYAS_0", "EMSC_20040918_0000026_RA_PYAT_0",
-"EMSC_20040918_0000026_RA_PYLI_0", "EMSC_20040918_0000026_RA_PYLL_0",
-"EMSC_20041205_0000033_CH_BNALP_0", "EMSC_20041205_0000033_CH_BOURR_0",
-"EMSC_20041205_0000033_CH_DIX_0", "EMSC_20041205_0000033_CH_EMV_0",
-"EMSC_20041205_0000033_CH_LIENZ_0", "EMSC_20041205_0000033_CH_LLS_0",
-"EMSC_20041205_0000033_CH_MMK_0", "EMSC_20041205_0000033_CH_SENIN_0",
-"EMSC_20041205_0000033_CH_SULZ_0", "EMSC_20041205_0000033_CH_VDL_0",
-"EMSC_20041205_0000033_CH_ZUR_0", "EMSC_20041205_0000033_RA_STBO_0",
-"EMSC_20130103_0000020_HL_SIVA_0", "EMSC_20130103_0000020_HL_ZKR_0",
-"EMSC_20130108_0000044_HL_ALNA_0", "EMSC_20130108_0000044_HL_AMGA_0",
-"EMSC_20130108_0000044_HL_DLFA_0", "EMSC_20130108_0000044_HL_EFSA_0",
-"EMSC_20130108_0000044_HL_KVLA_0", "EMSC_20130108_0000044_HL_LIA_0",
-"EMSC_20130108_0000044_HL_NOAC_0", "EMSC_20130108_0000044_HL_PLG_0",
-"EMSC_20130108_0000044_HL_PRK_0", "EMSC_20130108_0000044_HL_PSRA_0", 
-"EMSC_20130108_0000044_HL_SMTH_0", "EMSC_20130108_0000044_HL_TNSA_0",
-"EMSC_20130108_0000044_HL_YDRA_0", "EMSC_20130108_0000044_KO_ENZZ_0",
-"EMSC_20130108_0000044_KO_FOCM_0", "EMSC_20130108_0000044_KO_GMLD_0",
-"EMSC_20130108_0000044_KO_GOKC_0", "EMSC_20130108_0000044_KO_GOMA_0",
-"EMSC_20130108_0000044_KO_GPNR_0", "EMSC_20130108_0000044_KO_KIYI_0",
-"EMSC_20130108_0000044_KO_KRBN_0", "EMSC_20130108_0000044_KO_ORLT_0", 
-"EMSC_20130108_0000044_KO_SHAP_0"]
-
-
 class ResidualsTestCase(unittest.TestCase):
     """
     Core test case for the residuals objects
@@ -71,12 +47,12 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Setup constructs the database from the ESM test data
         """
-        ifile = os.path.join(BASE_DATA_PATH, "residual_tests_esm_data.csv")
+        ifile = os.path.join(BASE_DATA_PATH, "residual_tests_data.csv")
         cls.out_location = os.path.join(BASE_DATA_PATH, "residual_tests")
         if os.path.exists(cls.out_location):
             shutil.rmtree(cls.out_location)
-        parser = ESMFlatfileParser.autobuild("000", "ESM ALL",
-                                             cls.out_location, ifile)
+        parser = ESMFlatfileParserURL.autobuild(
+            "000", "ESM ALL", cls.out_location, ifile)
         del parser
         cls.database_file = os.path.join(cls.out_location,
                                          "metadatafile.pkl")

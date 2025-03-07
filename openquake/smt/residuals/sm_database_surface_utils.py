@@ -18,7 +18,6 @@
 """
 Module for converting OpenQuake surface classes to and from dictionaries
 """
-from collections import OrderedDict  # dict compatibility with Py <3.7
 from openquake.hazardlib.geo import (PlanarSurface, SimpleFaultSurface,
                                      ComplexFaultSurface, MultiSurface,
                                      Point, Line)
@@ -29,7 +28,7 @@ def planar_fault_surface_to_dict(surface):
     """
     Parses a PlanarSurface object to a dictionary formatted for json export
     """
-    output = OrderedDict([("type", "PlanarSurface")])
+    output = {"type": "PlanarSurface"}
     # Top left
     for i, key in zip([0, 1, 3, 2],
         ["top_left", "top_right", "bottom_right", "bottom_left"]):
@@ -46,7 +45,7 @@ def simple_fault_surface_to_dict(surface):
 
     More complicated here as we need to use the surface nodes
     """
-    output = OrderedDict([("type", "SimpleFaultSurface")])
+    output = {"type": "SimpleFaultSurface"}
     for node in surface.surface_nodes[0]:
         if "LineString" in node.tag:
             trace = node[0].text
@@ -62,7 +61,7 @@ def complex_fault_surface_to_dict(surface):
     Parses a ComplexFaultSurface object ot a dictionary formatted for json
     export
     """
-    output = OrderedDict([("type", "ComplexFaultSurface")])
+    output = {"type": "ComplexFaultSurface"}
     intermediate_edges = []
     for node in surface.surface_nodes[0]:
         edge = node[0].nodes[0].text
@@ -87,7 +86,7 @@ def multi_surface_to_dict(surface):
     """
     Parses a multi
     """
-    output = OrderedDict([("type", "MultiSurface"), ("surfaces", [])])
+    output = {"type": "MultiSurface", "surfaces": []}
     for sfc in surface.surfaces:
         output["surfaces"].append(
             surfaces_to_dict[sfc.__class__.__name__](sfc))
@@ -135,6 +134,7 @@ def simple_fault_surface_from_dict(data, mesh_spacing=1.):
 
 def _3d_line_from_list(vals):
     """
+    Create OQ line object from a list of points
     """
     vertices = []
     for lon, lat, depth in vals:

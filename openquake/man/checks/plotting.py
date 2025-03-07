@@ -99,7 +99,7 @@ def get_ssm_files(model_dir):
     return files
 
 
-def get_sources(model_dir, inv_time):
+def get_sources(model_dir, inv_time, rms):
     """
     Load the sources in the given model and return them as a list.
     """            
@@ -116,7 +116,7 @@ def get_sources(model_dir, inv_time):
     # Read the XMLs for all srcs in the given model
     ssm = readinput.read_source_models(files, 'tmp.hdf5', 
                                        investigation_time=inv_time,
-                                       rupture_mesh_spacing=2.5,
+                                       rupture_mesh_spacing=rms,
                                        area_source_discretization=5,
                                        width_of_mfd_bin=0.1)
     
@@ -174,7 +174,8 @@ def get_complex_mesh(src):
     Get the mesh of a ComplexFaultSource
     """
     # Get the surface
-    sfc = ComplexFaultSurface.from_fault_data(src.edges, mesh_spacing=5)
+    sfc = ComplexFaultSurface.from_fault_data(
+        src.edges, mesh_spacing=src.rupture_mesh_spacing)
     
     # Get mesh
     mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
@@ -186,11 +187,11 @@ def get_characteristic_mesh(src):
     """
     Get the mesh of a CharacteristicFaultSource
     """
-    mesh = RectangularMesh(src.surface.mesh.lons,
-                           src.surface.mesh.lats,
-                           src.surface.mesh.depths)
+    lons = src.surface.mesh.lons
+    lats = src.surface.mesh.lats
+    deps = src.surface.mesh.depths
 
-    return mesh
+    return RectangularMesh(lons, lats, deps)
     
 
 def get_simple_mesh(src):
@@ -200,7 +201,8 @@ def get_simple_mesh(src):
     # Get the surface
     sfc = SimpleFaultSurface.from_fault_data(
        src.fault_trace, src.upper_seismogenic_depth,
-       src.lower_seismogenic_depth, src.dip, mesh_spacing=5)
+       src.lower_seismogenic_depth, src.dip,
+       mesh_spacing=src.rupture_mesh_spacing)
     
     # Get mesh
     mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
@@ -238,14 +240,16 @@ def get_geoms(srcs, geom_models):
         if isinstance(src, ComplexFaultSource):
             surf = get_complex_mesh(src)
         elif isinstance(src, CharacteristicFaultSource):
-            surf = get_characteristic_mesh(src)
+            surf = get_characteristic_mesh(src) # Some 
         elif isinstance(src, SimpleFaultSource):
             surf = get_simple_mesh(src)
         elif isinstance(src, KiteFaultSource):
             surf = get_kite_mesh(src)
         else:
             raise ValueError(f"Unknown source typology admitted: ({type(src)})")
+        # Get the trace and pgn from the surface of the source
         trace, poly = get_boundary_2d(surf)        
+        # And then store them
         traces.append(trace)
         polys.append(poly)
         suids.append(i)
@@ -298,12 +302,18 @@ def plot_faults(gdaf_polys, gdaf_traces, region, model_dir):
     fig.show()
 
 
-def get_fault_geojsons(model_dir, inv_time, plotting=False, plotting_region=None):
+def get_fault_geojsons(model_dir, inv_time, rms, plotting=False,
+                       plotting_region=None):
     """
     Write the fault sections and fault traces within the given hazard model
     model to geojsons.
 
     :param model_dir: directory containing the required hazard model
+
+    :param inv_time: Investigation time to use when parsing the SSC (for
+                     non-parametric sources)
+
+    :param rms: Rupture mesh spacing to use when parsing the SSC
 
     :param plotting: Boolean which if True creates a plot using the geoJSONs
                      of the faults in the given hazard model
@@ -312,7 +322,7 @@ def get_fault_geojsons(model_dir, inv_time, plotting=False, plotting_region=None
                             to define axis limits of the plotted geoJSONs
     """
     # Get the sources in the given model
-    srcs, geom_models = get_sources(model_dir, inv_time)
+    srcs, geom_models = get_sources(model_dir, inv_time, rms)
 
     # Now get the geometries
     gdaf_polys, gdaf_traces = get_geoms(srcs, geom_models)

@@ -25,7 +25,6 @@ import csv
 import numpy as np
 import copy
 from linecache import getline
-from collections import OrderedDict
 from datetime import datetime
 
 from openquake.hazardlib.scalerel.strasser2010 import (StrasserInterface,
@@ -685,10 +684,10 @@ class SimpleAsciiTimeseriesReader(SMTimeSeriesReader):
         """
         Parses the record set
         """
-        time_series = OrderedDict([
-            ("X", {"Original": {}, "SDOF": {}}),
-            ("Y", {"Original": {}, "SDOF": {}}),
-            ("V", {"Original": {}, "SDOF": {}})])
+        time_series = {
+            "X": {"Original": {}, "SDOF": {}},
+            "Y": {"Original": {}, "SDOF": {}},
+            "V": {"Original": {}, "SDOF": {}}}
 
         target_names = list(time_series)
         for iloc, ifile in enumerate(self.input_files):
