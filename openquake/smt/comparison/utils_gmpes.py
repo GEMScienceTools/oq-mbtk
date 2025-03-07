@@ -143,8 +143,23 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
     return rup
 
 
-def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
-               step, imt, ztor, eshm20_region, dist_type, trt, up_or_down_dip,
+def att_curves(gmpe,
+               depth,
+               mag,
+               aratio,
+               strike,
+               dip,
+               rake,
+               Vs30,
+               Z1,
+               Z25,
+               maxR,
+               step,
+               imt,
+               ztor,
+               dist_type,
+               trt,
+               up_or_down_dip,
                volc_ba):
     """
     Compute the ground-motion intensities for the given context created here
@@ -178,12 +193,11 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30, Z1, Z25, maxR,
                       ztor=ztor)
 
     # Set site props
-    if 'KothaEtAl2020ESHM20' in str(gmpe):
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': volc_ba,
-                 'vs30measured': True, 'region': eshm20_region}
-    else:
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': volc_ba,
-                 'vs30measured': True}
+    props = {'vs30': Vs30,
+             'z1pt0': Z1,
+             'z2pt5': Z25,
+             'backarc': volc_ba,
+             'vs30measured': False}
 
     # Check if site up-dip or down-dip of site
     if up_or_down_dip == float(1):
@@ -416,6 +430,9 @@ def mgmpe_check(gmpe):
         # CY14SiteTerm
         if 'CY14SiteTerm' in gmpe: kwargs['cy14_site_term'] = {}
 
+        # BA08SiteTerm
+        if 'BA08SiteTerm' in gmpe: kwargs['ba08_site_term'] = {}
+
         # NRCan15SiteTerm (Regular)
         if ('NRCan15SiteTerm' in gmpe and
                 'NRCan15SiteTermLinear' not in gmpe):
@@ -434,7 +451,7 @@ def mgmpe_check(gmpe):
             kwargs['m9_basin_term'] = {}
         
         gmm = mgmpe.ModifiableGMPE(**kwargs)
-    
+
     # Not using ModifiableGMPE
     else:
         # Clean to ensure arguments can be passed (logic tree weights are
@@ -453,5 +470,5 @@ def mgmpe_check(gmpe):
         else: # Ensures GSIM aliases work
             gmpe_clean = gmpe_clean.replace('[','').replace(']','')
         gmm = valid.gsim(gmpe_clean)
-    
+
     return gmm

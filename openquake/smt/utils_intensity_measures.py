@@ -23,6 +23,7 @@ from math import pi
 from scipy.integrate import cumtrapz
 from scipy import constants
 import matplotlib.pyplot as plt
+
 import openquake.smt.utils_response_spectrum as rsp
 from openquake.smt import utils_smoothing
 from openquake.smt.utils_strong_motion import (
@@ -30,9 +31,7 @@ from openquake.smt.utils_strong_motion import (
 
 RESP_METHOD = {
     'Newmark-Beta': rsp.NewmarkBeta,
-    'Nigam-Jennings': rsp.NigamJennings
-}
-
+    'Nigam-Jennings': rsp.NigamJennings}
 
 SMOOTHING = {"KonnoOhmachi": utils_smoothing.KonnoOhmachi}
 
