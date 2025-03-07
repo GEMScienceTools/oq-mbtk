@@ -1203,9 +1203,8 @@ class GroundMotionDatabase(ContextDB):
         """
         String with database ID and name
         """
-        return "{:s} - ID({:s}) - Name ({:s})".format(self.__class__.__name__,
-                                                      self.id,
-                                                      self.name)
+        return "{:s} - ID({:s}) - Name ({:s})".format(
+            self.__class__.__name__, self.id, self.name)
 
     def _get_event_id_list(self):
         """
@@ -1233,6 +1232,29 @@ class GroundMotionDatabase(ContextDB):
         """
         return SiteCollection([rec.site.to_openquake_site(missing_vs30)
                                for rec in self.records])
+
+    def rank_sites_by_record_count(self, threshold=0):
+        """
+        Function to determine count the number of records per site and return
+        the list ranked in descending order
+        """
+        name_id_list = [(rec.site.id, rec.site.name) for rec in self.records]
+        name_id = dict([])
+        for name_id_pair in name_id_list:
+            if name_id_pair[0] in name_id:
+                name_id[name_id_pair[0]]["Count"] += 1
+            else:
+                name_id[name_id_pair[0]] = {"Count": 1, "Name": name_id_pair[1]}
+        counts = np.array([name_id[key]["Count"] for key in name_id])
+        sort_id = np.flipud(np.argsort(counts))
+
+        key_vals = list(name_id)
+        output_list = []
+        for idx in sort_id:
+            if name_id[key_vals[idx]]["Count"] >= threshold:
+                output_list.append((key_vals[idx], name_id[key_vals[idx]]))
+
+        return dict(output_list)
 
 
 def load_database(directory):

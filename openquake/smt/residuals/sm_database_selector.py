@@ -26,29 +26,6 @@ from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo.polygon import Polygon
 from openquake.smt.residuals.sm_database import GroundMotionDatabase
 
-def rank_sites_by_record_count(database, threshold=0):
-    """
-    Function to determine count the number of records per site and return
-    the list ranked in descending order
-    """
-    name_id_list = [(rec.site.id, rec.site.name) for rec in database.records]
-    name_id = dict([])
-    for name_id_pair in name_id_list:
-        if name_id_pair[0] in name_id:
-            name_id[name_id_pair[0]]["Count"] += 1
-        else:
-            name_id[name_id_pair[0]] = {"Count": 1, "Name": name_id_pair[1]}
-    counts = np.array([name_id[key]["Count"] for key in name_id])
-    sort_id = np.flipud(np.argsort(counts))
-
-    key_vals = list(name_id)
-    output_list = []
-    for idx in sort_id:
-        if name_id[key_vals[idx]]["Count"] >= threshold:
-            output_list.append((key_vals[idx], name_id[key_vals[idx]]))
-
-    return dict(output_list)
-
 
 class SMRecordSelector(object):
     """
@@ -420,8 +397,8 @@ class SMRecordSelector(object):
                 idx.append(iloc)
         return self.select_records(idx, as_db)
 
-    def select_epicentre_within_distance_from_point(self, location, distance,
-            as_db=False):
+    def select_epicentre_within_distance_from_point(
+            self, location, distance,as_db=False):
         """
         Selects the records whose epicentres are a given distance from a
         point location
@@ -473,7 +450,6 @@ class SMRecordSelector(object):
     def select_longest_usable_period(self, lup, as_db=False):
         """
         Selects records with a longest usable period > lup
-
         """
         idx = []
         for iloc, record in enumerate(self.database.records):

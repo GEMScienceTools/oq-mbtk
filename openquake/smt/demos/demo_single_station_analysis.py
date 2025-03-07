@@ -10,10 +10,10 @@ from openquake.baselib import sap
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
-from openquake.smt.residuals.sm_database_selector import rank_sites_by_record_count
 
 import warnings
 warnings.filterwarnings("ignore")
+
 
 BASE = os.path.abspath('')
 
@@ -62,7 +62,7 @@ def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
     print("Single station residual analysis workflow has begun...")
 
     # Find sites with threshold minimum for number of records
-    top_sites = rank_sites_by_record_count(sm_database, threshold)
+    top_sites = sm_database.rank_sites_by_record_count(threshold)
     
     # For each station print some info
     msg = 'Sites with required threshold of at least %s records:' %(threshold)

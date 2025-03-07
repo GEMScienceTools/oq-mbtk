@@ -17,6 +17,7 @@ from openquake.smt.residuals.sm_database_visualiser import (
 import warnings
 warnings.filterwarnings("ignore")
 
+
 BASE = os.path.abspath('')
 
 

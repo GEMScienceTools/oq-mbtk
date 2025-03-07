@@ -30,9 +30,6 @@ from openquake.smt.residuals.parsers.esm_url_flatfile_parser import \
     ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
-from openquake.smt.residuals.sm_database_selector import \
-    rank_sites_by_record_count
-
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
@@ -178,7 +175,7 @@ class ResidualsTestCase(unittest.TestCase):
         correctness of values. Execution of plots is also tested here.
         """
         # Get sites with at least 3 record each
-        top_sites = rank_sites_by_record_count(self.database, self.st_rec_min)
+        top_sites = self.database.rank_sites_by_record_count(self.st_rec_min)
             
         # Create SingleStationAnalysis object
         ssa1 = res.SingleStationAnalysis(top_sites.keys(), self.gmpe_list,
@@ -227,7 +224,7 @@ class ResidualsTestCase(unittest.TestCase):
         imts specified within a toml file. Correctness of values is not tested.
         """
         # Get sites with at least 3 record each
-        top_sites = rank_sites_by_record_count(self.database, self.st_rec_min)
+        top_sites = self.database.rank_sites_by_record_count(self.st_rec_min)
         
         # Create SingleStationAnalysis object from toml
         ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), self.toml)
