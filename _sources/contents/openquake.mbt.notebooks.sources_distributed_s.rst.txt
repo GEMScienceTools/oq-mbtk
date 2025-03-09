@@ -1,0 +1,21 @@
+openquake.mbt.notebooks.sources\_distributed\_s package
+=======================================================
+
+Submodules
+----------
+
+openquake.mbt.notebooks.sources\_distributed\_s.utils module
+------------------------------------------------------------
+
+.. automodule:: openquake.mbt.notebooks.sources_distributed_s.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.notebooks.sources_distributed_s
+   :members:
+   :undoc-members:
+   :show-inheritance:

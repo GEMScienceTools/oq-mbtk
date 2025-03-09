@@ -1,0 +1,10 @@
+openquake.mbi.plt package
+=========================
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbi.plt
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,10 @@
+openquake.mbt.tools.site package
+================================
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tools.site
+   :members:
+   :undoc-members:
+   :show-inheritance:

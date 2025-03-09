@@ -1,0 +1,53 @@
+openquake.wkf.tests package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.wkf.tests.seismicity
+
+Submodules
+----------
+
+openquake.wkf.tests.adaptive\_smoothing\_wkf\_test module
+---------------------------------------------------------
+
+.. automodule:: openquake.wkf.tests.adaptive_smoothing_wkf_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.tests.catalogue\_test module
+------------------------------------------
+
+.. automodule:: openquake.wkf.tests.catalogue_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.tests.compute\_gr\_params\_test module
+----------------------------------------------------
+
+.. automodule:: openquake.wkf.tests.compute_gr_params_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.tests.distributed\_seismicity\_test module
+--------------------------------------------------------
+
+.. automodule:: openquake.wkf.tests.distributed_seismicity_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.wkf.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:
