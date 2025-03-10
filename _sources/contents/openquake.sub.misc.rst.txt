@@ -1,0 +1,53 @@
+openquake.sub.misc package
+==========================
+
+Submodules
+----------
+
+openquake.sub.misc.alpha\_shape module
+--------------------------------------
+
+.. automodule:: openquake.sub.misc.alpha_shape
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.misc.edge module
+------------------------------
+
+.. automodule:: openquake.sub.misc.edge
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.misc.profile module
+---------------------------------
+
+.. automodule:: openquake.sub.misc.profile
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.misc.utils module
+-------------------------------
+
+.. automodule:: openquake.sub.misc.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.misc.utils\_plot module
+-------------------------------------
+
+.. automodule:: openquake.sub.misc.utils_plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.sub.misc
+   :members:
+   :undoc-members:
+   :show-inheritance:

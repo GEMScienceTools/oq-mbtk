@@ -1,0 +1,117 @@
+openquake.smt.residuals.parsers package
+=======================================
+
+Submodules
+----------
+
+openquake.smt.residuals.parsers.asa\_database\_parser module
+------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.asa_database_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.base\_database\_parser module
+-------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.base_database_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.esm\_database\_parser module
+------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.esm_database_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.esm\_dictionaries module
+--------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.esm_dictionaries
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.esm\_flatfile\_parser module
+------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.esm_flatfile_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.esm\_url\_flatfile\_parser module
+-----------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.esm_url_flatfile_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.esm\_ws\_flatfile\_parser module
+----------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.esm_ws_flatfile_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.gem\_flatfile\_parser module
+------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.gem_flatfile_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.ngawest2\_flatfile\_parser module
+-----------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.ngawest2_flatfile_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.sigma\_database\_parser module
+--------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.sigma_database_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.simple\_flatfile\_parser module
+---------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.simple_flatfile_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.simple\_flatfile\_parser\_sara module
+---------------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.simple_flatfile_parser_sara
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.residuals.parsers.valid module
+--------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.valid
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.residuals.parsers
+   :members:
+   :undoc-members:
+   :show-inheritance:

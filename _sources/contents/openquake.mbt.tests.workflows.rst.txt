@@ -1,0 +1,37 @@
+openquake.mbt.tests.workflows package
+=====================================
+
+Submodules
+----------
+
+openquake.mbt.tests.workflows.workflow01\_test module
+-----------------------------------------------------
+
+.. automodule:: openquake.mbt.tests.workflows.workflow01_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.workflows.workflow02\_test module
+-----------------------------------------------------
+
+.. automodule:: openquake.mbt.tests.workflows.workflow02_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.workflows.workflow03\_test module
+-----------------------------------------------------
+
+.. automodule:: openquake.mbt.tests.workflows.workflow03_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tests.workflows
+   :members:
+   :undoc-members:
+   :show-inheritance:
