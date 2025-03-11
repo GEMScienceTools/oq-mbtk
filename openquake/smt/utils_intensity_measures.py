@@ -84,6 +84,7 @@ def get_gmrotd50(fle):
         sa_gmrotd50 = gmrotdpp(x_acc.value, x_acc.attrs["Time-step"],
                                y_acc.value, y_acc.attrs["Time-step"],
                                periods, 50.0)[0]
+                               
     else:
         if "GMRotD50" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
             sa_gmrotd50 = fle[
