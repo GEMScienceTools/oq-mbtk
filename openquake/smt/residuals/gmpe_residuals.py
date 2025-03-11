@@ -37,14 +37,13 @@ from scipy.linalg import solve
 
 from openquake.hazardlib import valid
 from openquake.hazardlib import imt
-import openquake.smt.utils_intensity_measures as ims
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector
 from openquake.smt.utils_strong_motion import convert_accel_units, check_gsim_list
 
 
 ALL_SIGMA = frozenset({'Inter event', 'Intra event', 'Total'})
 
-
+### Util functions
 def get_gmm_from_toml(key, config):
     """
     Get a GMM from a TOML file
@@ -61,139 +60,7 @@ def get_gmm_from_toml(key, config):
     return valid.gsim(value.strip())
 
 
-def get_geometric_mean(fle):
-    """
-    Retreive geometric mean of the ground motions from the file - or calculate
-    if not in file
-    :param fle:
-        Instance of :class: h5py.File
-    """
-    if not ("H" in fle["IMS"].keys()):
-        # Horizontal spectra not in record
-        x_spc = fle["IMS/X/Spectra/Response/Acceleration/damping_05"].values
-        y_spc = fle["IMS/Y/Spectra/Response/Acceleration/damping_05"].values
-        periods = fle["IMS/X/Spectra/Response/Periods"].values
-        sa_geom = np.sqrt(x_spc * y_spc)
-    else:
-        if "Geometric" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
-            sa_geom = fle[
-                "IMS/H/Spectra/Response/Acceleration/Geometric/damping_05"
-                ].value
-            periods = fle["IMS/X/Spectra/Periods"].values
-            idx = periods > 0
-            periods = periods[idx]
-            sa_geom = sa_geom[idx]
-        else:
-            # Horizontal spectra not in record
-            x_spc = fle[
-                "IMS/X/Spectra/Response/Acceleration/damping_05"].values
-            y_spc = fle[
-                "IMS/Y/Spectra/Response/Acceleration/damping_05"].values
-            sa_geom = np.sqrt(x_spc * y_spc)
-    return sa_geom
-
-
-def get_gmrotd50(fle):
-    """
-    Retrieve GMRotD50 from file (or calculate if not present)
-    :param fle:
-        Instance of :class: h5py.File
-    """
-    periods = fle["IMS/X/Spectra/Response/Periods"].value
-    periods = periods[periods > 0.]
-    if not ("H" in fle["IMS"].keys()):
-        # Horizontal spectra not in record
-        x_acc = ["Time Series/X/Original Record/Acceleration"]
-        y_acc = ["Time Series/Y/Original Record/Acceleration"]
-        sa_gmrotd50 = ims.gmrotdpp(x_acc.value, x_acc.attrs["Time-step"],
-                                   y_acc.value, y_acc.attrs["Time-step"],
-                                   periods, 50.0)[0]
-    else:
-        if "GMRotD50" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
-            sa_gmrotd50 = fle[
-                "IMS/H/Spectra/Response/Acceleration/GMRotD50/damping_05"
-                ].value
-        else:
-            # Horizontal spectra not in record - calculate from time series
-            x_acc = ["Time Series/X/Original Record/Acceleration"]
-            y_acc = ["Time Series/Y/Original Record/Acceleration"]
-            sa_gmrotd50 = ims.gmrotdpp(x_acc.value, x_acc.attrs["Time-step"],
-                                       y_acc.value, y_acc.attrs["Time-step"],
-                                       periods, 50.0)[0]
-    return sa_gmrotd50
-
-
-def get_gmroti50(fle):
-    """
-    Retreive GMRotI50 from file (or calculate if not present)
-    :param fle:
-        Instance of :class: h5py.File
-    """
-    periods = fle["IMS/X/Spectra/Response/Periods"].value
-    periods = periods[periods > 0.]
-    if not ("H" in fle["IMS"].keys()):
-        # Horizontal spectra not in record
-        x_acc = ["Time Series/X/Original Record/Acceleration"]
-        y_acc = ["Time Series/Y/Original Record/Acceleration"]
-        sa_gmroti50 = ims.gmrotipp(x_acc.value, x_acc.attrs["Time-step"],
-                                   y_acc.value, y_acc.attrs["Time-step"],
-                                   periods, 50.0)[0]
-    else:
-        if "GMRotI50" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
-            sa_gmroti50 = fle[
-                "IMS/H/Spectra/Response/Acceleration/GMRotI50/damping_05"
-                ].value
-        else:
-            # Horizontal spectra not in record - calculate from time series
-            x_acc = ["Time Series/X/Original Record/Acceleration"]
-            y_acc = ["Time Series/Y/Original Record/Acceleration"]
-            sa_gmroti50 = ims.gmrotipp(x_acc.value, x_acc.attrs["Time-step"],
-                                       y_acc.value, y_acc.attrs["Time-step"],
-                                       periods, 50.0)
-            # Assumes Psuedo-spectral acceleration
-            sa_gmroti50 = sa_gmroti50["PSA"]
-    return sa_gmroti50
-
-
-def get_rotd50(fle):
-    """
-    Retrieve RotD50 from file (or calculate if not present)
-    :param fle:
-        Instance of :class: h5py.File
-    """
-    periods = fle["IMS/H/Spectra/Response/Periods"].value
-    periods = periods[periods > 0.]
-    if not ("H" in fle["IMS"].keys()):
-        # Horizontal spectra not in record
-        x_acc = ["Time Series/X/Original Record/Acceleration"]
-        y_acc = ["Time Series/Y/Original Record/Acceleration"]
-        sa_rotd50 = ims.rotdpp(x_acc.value, x_acc.attrs["Time-step"],
-                               y_acc.value, y_acc.attrs["Time-step"],
-                               periods, 50.0)[0]
-    else:
-        if "RotD50" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
-            sa_rotd50 = fle[
-                "IMS/H/Spectra/Response/Acceleration/RotD50/damping_05"
-                ].value
-        else:
-            # Horizontal spectra not in record - calculate from time series
-            x_acc = ["Time Series/X/Original Record/Acceleration"]
-            y_acc = ["Time Series/Y/Original Record/Acceleration"]
-            sa_rotd50 = ims.rotdpp(x_acc.value, x_acc.attrs["Time-step"],
-                                   y_acc.value, y_acc.attrs["Time-step"],
-                                   periods, 50.0)[0]
-    return sa_rotd50
-
-
-SPECTRA_FROM_FILE = {
-    "Geometric": get_geometric_mean,
-    "GMRotI50": get_gmroti50,
-    "GMRotD50": get_gmrotd50,
-    "RotD50": get_rotd50
-}
-
-
-# The following methods are used for the MultivariateLLH function
+### The following methods are used for the MultivariateLLH function
 def _build_matrices(contexts, gmpe, imtx):
     """
     Constructs the R and Z_G matrices (based on the implementation
