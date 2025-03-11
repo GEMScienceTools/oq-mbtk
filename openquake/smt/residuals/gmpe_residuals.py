@@ -1089,6 +1089,7 @@ class SingleStationAnalysis(object):
         phi_ss = self._set_empty_dict()
         phi_s2ss = self._set_empty_dict()
         for gmpe in self.gmpe_list:
+            
             # Print GMM info to file
             if filename is not None:
                 gmpe_str = self.get_gmpe_str(gmpe)
@@ -1136,6 +1137,7 @@ class SingleStationAnalysis(object):
             for gmpe in self.gmpe_list:
                 gmpe_str = self.get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
+                
                 # If mixed effects GMPE append with intra-event res components
                 if self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
                     ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
@@ -1146,6 +1148,7 @@ class SingleStationAnalysis(object):
                                       phi_s2ss[gmpe][imtx]["StdDev"])
                             print("%s, phi_ss, %s, phi_s2ss mean, %s, "
                                   "phi_s2ss std. dev), %s" % p_data, file=fid)
+                
                 # Total sigma only for given GMM
                 else:
                     for imtx in self.imts:
