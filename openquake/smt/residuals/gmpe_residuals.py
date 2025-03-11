@@ -517,16 +517,12 @@ class Residuals(object):
         for gmpe in self.gmpe_list:
             for imtx in imts:
                 if not (imtx in self.imts) or not self.residuals[gmpe][imtx]:
-                    print("IMT %s not found in Residuals for %s"
-                          % (imtx, gmpe))
+                    print("IMT %s not found in Residuals for %s" % (imtx, gmpe))
                     continue
                 # Get log-likelihood distance for IMT
-                asll = np.log2(norm.pdf(self.residuals[gmpe][imtx]["Total"],
-                               0.,
-                               1.0))
-                log_residuals[gmpe] = np.hstack([
-                    log_residuals[gmpe],
-                    asll])
+                asll = np.log2(
+                    norm.pdf(self.residuals[gmpe][imtx]["Total"], 0., 1.0))
+                log_residuals[gmpe] = np.hstack([log_residuals[gmpe], asll])
                 self.llh[gmpe][imtx] = -(1.0 / float(len(asll))) * np.sum(asll)
 
             self.llh[gmpe]["All"] = -(1. / float(len(
@@ -535,15 +531,15 @@ class Residuals(object):
         weights = np.array([2.0 ** -self.llh[gmpe]["All"]
                             for gmpe in self.gmpe_list])
         weights = weights / np.sum(weights)
-        self.model_weights = {gmpe: weights[
-            iloc] for iloc, gmpe in enumerate(self.gmpe_list)}
+        self.model_weights = {
+            gmpe: weights[iloc] for iloc, gmpe in enumerate(self.gmpe_list)}
 
         # Get weights with imt
         self.model_weights_with_imt = {}
         for im in self.imts:
             
-            weights_with_imt = np.array([2.0 ** -self.llh[gmpe][im]
-                                         for gmpe in self.gmpe_list])
+            weights_with_imt = np.array(
+                [2.0 ** -self.llh[gmpe][im] for gmpe in self.gmpe_list])
             
             weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
             
