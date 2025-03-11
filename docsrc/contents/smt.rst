@@ -249,7 +249,7 @@ Plot of residual distributions versus spectral acceleration:
 Single Station Residual Analysis
 ********************************
 
-1. The smt's residual module also offers capabilities for performing single station residual analysis (SSA).
+1. The smt's residuals module also offers capabilities for performing single station residual analysis (SSA).
 
    We can first specify a threshold for the minimum number of records each site must have to be considered in the SSA:
    
@@ -413,7 +413,7 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
 Comparing GMPEs
 ***************
 
-1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals (within the residual module as demonstrated above), we can also evaluate GMPEs with respect to the predicted ground-motion for a given earthquake scenario. The tools for comparing GMPEs are found within the Comparison module.
+1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals (within the residuals module as demonstrated above), we can also evaluate GMPEs with respect to the predicted ground-motion for a given earthquake scenario. The tools for comparing GMPEs are found within the Comparison module.
     
     .. code-block:: ini
     

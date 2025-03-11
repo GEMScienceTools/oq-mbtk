@@ -876,12 +876,13 @@ def get_res_dists(residuals):
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
             mean_sigma_total[gmpe, imt] = res_statistics[gmpe, imt]['Total']
-            if ('Inter event' in residuals.residuals[gmpe][imt] and
+            if ('Inter event' in residuals.residuals[gmpe][imt]
+                and
                 'Intra event' in residuals.residuals[gmpe][imt]):
-                mean_sigma_inter[gmpe, imt] = \
-                    res_statistics[gmpe, imt]['Inter event']
-                mean_sigma_intra[gmpe, imt] = \
-                    res_statistics[gmpe, imt]['Intra event']
+                mean_sigma_inter[
+                    gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
+                mean_sigma_intra[
+                    gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
             else:
                 mean_sigma_inter[gmpe, imt] = dummy_values
                 mean_sigma_intra[gmpe, imt] = dummy_values
@@ -1121,12 +1122,12 @@ class ResidualWithSite(ResidualPlot):
         for site_id in self.residuals.site_ids:
             xvals = np.hstack([xvals, data[site_id]["x-val"]])
             yvals = np.hstack([yvals, data[site_id][res_type]])
-        ax.plot(xvals,
-                yvals,
-                marker='o',
-                markeredgecolor='Gray',
-                markerfacecolor='LightSteelBlue',
-                zorder=-32)
+        ax.scatter(xvals,
+                   yvals,
+                   marker='o',
+                   edgecolor='Gray',
+                   facecolor='LightSteelBlue',
+                   zorder=-32)
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         xtick_label = self.residuals.site_ids
