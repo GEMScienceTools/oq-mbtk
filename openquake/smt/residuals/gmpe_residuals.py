@@ -600,97 +600,6 @@ class Residuals(object):
                            "Std Dev": np.nanstd(residuals[res_type])}
                 for res_type in self.types[gmpe][imtx]}
 
-    def pretty_print(self, filename=None, sep=","):
-        """
-        Print the information to screen or to file
-        """
-        if filename:
-            fid = open(filename, "w")
-        else:
-            fid = sys.stdout
-        fid.write("Ground Motion Residuals\n")
-        # Print headers
-        event = self.contexts[0]
-        header_set = []
-        header_set.extend([key for key in event["Ctx"].__dict__])
-        header_set.extend(["{:s}-Obs.".format(imtx) for imtx in self.imts])
-        for imtx in self.imts:
-            for gmpe in self.gmpe_list:
-                if not event["Expected"][gmpe][imtx]:
-                    continue
-                for key in event["Expected"][gmpe][imtx].keys():
-                    header_set.append(
-                        "{:s}-{:s}-{:s}-Exp.".format(imtx, gmpe, key))
-        for imtx in self.imts:
-            for gmpe in self.gmpe_list:
-                if not event["Residual"][gmpe][imtx]:
-                    continue
-                for key in event["Residual"][gmpe][imtx].keys():
-                    header_set.append(
-                        "{:s}-{:s}-{:s}-Res.".format(imtx, gmpe, key))
-        header_set = self._extend_header_set(header_set)
-        fid.write("%s\n" % sep.join(header_set))
-        for event in self.contexts:
-            self._pprint_event(fid, event, sep)
-        if filename:
-            fid.close()
-
-    def _pprint_event(self, fid, event, sep):
-        """
-        Print the information for each event
-        """
-        # Print rupture info
-        rupture_str = sep.join([
-            "{:s}{:s}{:s}".format(key, sep, str(val))
-            for key, val in event["Rupture"].__dict__.items()])
-        fid.write("Rupture: %s %s %s\n" % (str(event["EventID"]), sep,
-                                           rupture_str))
-        # For each record
-        for i in range(event["Num. Sites"]):
-            data = []
-            # Distances
-            for key in event["Distances"].__dict__:
-                data.append("{:.4f}".format(
-                    getattr(event["Distances"], key)[i]))
-            # Sites
-            for key in event["Sites"].__dict__:
-                data.append("{:.4f}".format(getattr(event["Sites"], key)[i]))
-            # Observations
-            for imtx in self.imts:
-                data.append("{:.8e}".format(event["Observations"][imtx][i]))
-            # Expected
-            for imtx in self.imts:
-                for gmpe in self.gmpe_list:
-                    if not event["Expected"][gmpe][imtx]:
-                        continue
-                    for key in event["Expected"][gmpe][imtx].keys():
-                        data.append("{:.8e}".format(
-                            event["Expected"][gmpe][imtx][key][i]))
-            # Residuals
-            for imtx in self.imts:
-                for gmpe in self.gmpe_list:
-                    if not event["Expected"][gmpe][imtx]:
-                        continue
-                    for key in event["Residual"][gmpe][imtx].keys():
-                        data.append("{:.8e}".format(
-                            event["Residual"][gmpe][imtx][key][i]))
-            self._extend_data_print(data, event, i)
-            fid.write("%s\n" % sep.join(data))
-
-    def _extend_header_set(self, header_set):
-        """
-        Additional headers to add to the pretty print - does nothing here but
-        overwritten in subclasses
-        """
-        return header_set
-
-    def _extend_data_print(self, data, event, i):
-        """
-        Additional data to add to the pretty print - also does nothing here
-        but overwritten in subclasses
-        """
-        return data
-
     def _get_magnitudes(self):
         """
         Returns an array of magnitudes equal in length to the number of
@@ -736,7 +645,6 @@ class Residuals(object):
         lh, median_lh where the first is the array of likelihood values and
         the latter is the median of those values
         """
-
         ret = {}
         for res_type in self.types[gmpe][imt]:
             zvals = np.fabs(self.residuals[gmpe][imt][res_type])
