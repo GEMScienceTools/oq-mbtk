@@ -836,8 +836,7 @@ class Residuals(object):
             edr_values[gmpe]["EDR"] = results[2]
         return edr_values
     
-    def get_edr_values_wrt_imt(self, bandwidth=0.01,
-                                           multiplier=3.0):
+    def get_edr_values_wrt_imt(self, bandwidth=0.01, multiplier=3.0):
         """
         Calculates the EDR values for each GMPE according to the Euclidean
         Distance Ranking method of Kale & Akkar (2013) for each imt
@@ -1087,20 +1086,7 @@ class Residuals(object):
         self.stoch_areas_wrt_imt = stoch_area_store
         
         return self.stoch_areas_wrt_imt
-        
     
-GSIM_MODEL_DATA_TESTS = {
-    "Residuals": lambda residuals, config:
-        residuals.get_residual_statistics(),
-    "Likelihood": lambda residuals, config: residuals.get_likelihood_values(),
-    "LLH": lambda residuals, config: residuals.get_loglikelihood_values(
-        config.get("LLH IMTs", [imt for imt in residuals.imts])),
-    "MultivariateLLH": lambda residuals, config:
-        residuals.get_multivariate_loglikelihood_values(),
-    "EDR": lambda residuals, config: residuals.get_edr_values(
-        config.get("bandwidth", 0.01), config.get("multiplier", 3.0))
-}
-
 
 class SingleStationAnalysis(object):
     """
