@@ -56,7 +56,7 @@ def reformat_curves(att_curves, file, out_dir):
     config = toml.load(file)
 
     # Get the distance type used
-    R = config['general']['dist_type']+' (km)'
+    R = config['general']['dist_type'] +' (km)'
 
     # Get the key describing the vs30 + truncation level
     params_key = pd.Series(att_curves.keys()).values[0]
