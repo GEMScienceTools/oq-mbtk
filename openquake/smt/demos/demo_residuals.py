@@ -7,8 +7,12 @@ import shutil
 import pickle
 
 from openquake.baselib import sap
-from openquake.smt.residuals.parsers.esm_url_flatfile_parser import\
-    ESMFlatfileParserURL
+
+
+import os
+from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
+
+
 from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals import residual_plotter as rspl
 from openquake.smt.residuals.sm_database_visualiser import (
@@ -56,16 +60,18 @@ def get_residual_metadata(metadata_dir, gmms_imts, out_dir):
     metadata = os.path.join(metadata_dir, 'metadatafile.pkl')
     database = pickle.load(open(metadata,"rb")) 
 
-    # Export magnitude distance plot and geographical coverage of eqs/stations
-    mag_dist = os.path.join(out_dir, 'mag_dist.png')
-    map_gmdb = os.path.join(out_dir, 'map_gmdb.png')
-    db_magnitude_distance(database, dist_type='repi', filename=mag_dist)
-    db_geographical_coverage(database, filename=map_gmdb)
-
     # Get residuals
     residuals = res.Residuals.from_toml(gmms_imts)
     residuals.get_residuals(database, component='Geometric')
-    
+
+    return residuals
+
+
+def make_residual_plots(residuals, out_dir):
+    """
+    Generate plots of the residual distributions and also plot them
+    with respect to magnitude and distance
+    """
     # Per GMM
     for gmm in residuals.gmpe_list:
         
@@ -90,7 +96,12 @@ def get_residual_metadata(metadata_dir, gmms_imts, out_dir):
             
             rspl.ResidualWithDistance(
                 residuals, gmm, imt, fi_dist, filetype='jpeg')
-        
+            
+
+def calc_ranking_metrics(residuals, out_dir):
+    """
+    Compute LLH, EDR and Stochastic Area scores per GMM per IMT
+    """
     # Get fnames for llh, edr, stochastic area and residuals w.r.t. period
     fi_llh = os.path.join(out_dir, 'all_gmpes_LLH_plot')
     fi_edr = os.path.join(out_dir, 'all_gmpes_EDR_plot')
@@ -117,8 +128,6 @@ def get_residual_metadata(metadata_dir, gmms_imts, out_dir):
     rspl.edr_weights_table(residuals, fi_edr_weights)
     rspl.stochastic_area_weights_table(residuals, fi_sto_weights)
 
-    return residuals
-
 
 def main(flatfile=demo_flatfile, gmms_imts=demo_inputs, out_dir=demo_out):
     """
@@ -135,8 +144,14 @@ def main(flatfile=demo_flatfile, gmms_imts=demo_inputs, out_dir=demo_out):
     # Parse flatfile into metadata
     metadata_dir = parse_into_metadata(flatfile, out_dir)
      
-    # Get the residuals per trt
+    # Get the residuals
     res = get_residual_metadata(metadata_dir, gmms_imts, out_dir)
+
+    # Make the plots
+    make_residual_plots(res, out_dir)
+
+    # Compute ranking metrics
+    calc_ranking_metrics(res, out_dir)
 
     # Print that workflow has finished
     print("Residual analysis workflow successfully completed.")
