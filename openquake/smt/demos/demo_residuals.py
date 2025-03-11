@@ -8,11 +8,6 @@ import pickle
 
 from openquake.baselib import sap
 
-
-import os
-from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
-
-
 from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals import residual_plotter as rspl
 from openquake.smt.residuals.sm_database_visualiser import (
@@ -63,6 +58,12 @@ def get_residual_metadata(metadata_dir, gmms_imts, out_dir):
     # Get residuals
     residuals = res.Residuals.from_toml(gmms_imts)
     residuals.get_residuals(database, component='Geometric')
+
+    # Export magnitude distance plot and geographical coverage of eqs/stations
+    mag_dist = os.path.join(out_dir, 'mag_dist.png')
+    map_gmdb = os.path.join(out_dir, 'map_gmdb.png')
+    db_magnitude_distance(database, dist_type='repi', filename=mag_dist)
+    db_geographical_coverage(database, filename=map_gmdb)
 
     return residuals
 
