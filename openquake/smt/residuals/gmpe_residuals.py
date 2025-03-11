@@ -1183,7 +1183,7 @@ class SingleStationAnalysis(object):
         """
         return {gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
 
-    def station_residual_statistics(self, pretty_print = False, filename = None):
+    def station_residual_statistics(self, filename=None):
         """
         Get single-station residual statistics for each site
         """
@@ -1248,8 +1248,8 @@ class SingleStationAnalysis(object):
         
         # Update
         self.site_residuals = output_resid
-        
-        return self.get_total_phi_ss(pretty_print, filename)
+
+        return self.get_total_phi_ss(filename)
 
     def _get_delta_s2ss(self, intra_event, n_events):
         """
@@ -1266,34 +1266,43 @@ class SingleStationAnalysis(object):
         phiss = np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1)
         return np.sqrt(phiss)
 
-    def get_total_phi_ss(self, pretty_print = False, filename = None):
+    def get_gmpe_str(self, gmpe):
+        """
+        Return a string of the GMPE to use for printing/exporting
+        """
+        if '_toml=' in str(gmpe):
+            gmpe_str = str(
+                gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
+        else:
+            gmpe_str = gmpe
+
+        return gmpe_str
+
+    def get_total_phi_ss(self, filename=None):
         """
         Returns the station averaged single-station phi from Rodriguez-Marek
         et al. (2011) Equation 10
         """
-        if pretty_print == True:
-            if filename:
-                fid = open(filename, "w")
-            else:
-                fid = sys.stdout
+        if filename is not None:
+            fid = open(filename, "w")
+        else:
+            fid = sys.stdout
         phi_ss = self._set_empty_dict()
         phi_s2ss = self._set_empty_dict()
         for gmpe in self.gmpe_list:
-            if pretty_print == True:
-                if '_toml=' in str(gmpe):
-                    gmpe_str = str(gmpe).split('_toml=')[1].replace(
-                        ')','').replace('\n','; ')
-                else:
-                    gmpe_str = gmpe
+            # Print GMM info to file
+            if filename is not None:
+                gmpe_str = self.get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
             for imtx in self.imts:
-                if pretty_print == True:
+                # Print IMT info to file
+                if filename is not None:
                     print("%s" % imtx, file=fid)
-                if not ("Intra event" in self.site_residuals[0].site_analysis[
-                        gmpe][imtx]):
-                    warnings.warn("GMPE %s and IMT %s do not have defined "
-                          "random effects residuals" % (str(gmpe), str(imtx)),
-                          stacklevel = 10)
+                if not ("Intra event" in self.site_residuals[
+                    0].site_analysis[gmpe][imtx]):
+                    msg = (f"GMPE {gmpe} and IMT {imtx} do not have "
+                           f"defined random effects residuals")
+                    warnings.warn(msg, stacklevel = 10)
                     continue
                 n_events = []
                 numerator_sum = 0.0
@@ -1304,9 +1313,11 @@ class SingleStationAnalysis(object):
                     numerator_sum += np.sum((
                         resid.site_analysis[gmpe][imtx]["Intra event"] -
                         resid.site_analysis[gmpe][imtx]["dS2ss"]) ** 2.)
-                    if pretty_print == True:
-                        print("Site ID, %s, dS2Ss, %12.8f, "
-                              "phiss_s, %12.8f, Num Records, %s" % (
+                    
+                    # Print dS2Ss, phiss_s to file
+                    if filename is not None:
+                        print("Site ID, %s, dS2Ss, %s, "
+                              "phiss_s, %s, Num Records, %s" % (
                               list(self.site_ids)[iloc],
                               resid.site_analysis[gmpe][imtx]["dS2ss"],
                               resid.site_analysis[gmpe][imtx]["phi_ss,s"],
@@ -1319,30 +1330,30 @@ class SingleStationAnalysis(object):
                 phi_ss[gmpe][imtx] = np.sqrt(
                     numerator_sum /
                     float(np.sum(np.array(n_events)) - 1))
-                
-        if pretty_print == True:
-            print("TOTAL RESULTS FOR GMPE", file=fid)
+        
+        # Print phi_ss and phi_s2ss info to file
+        if filename is not None:
+            print("\nTOTAL RESULTS PER GMPE", file=fid)
             for gmpe in self.gmpe_list:
-                if '_toml' in str(gmpe):
-                    gmpe_str = str(gmpe).split('_toml=')[1].replace(
-                        ')','').replace('\n','; ')
-                else:
-                    gmpe_str = gmpe
+                gmpe_str = self.get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
                 # If mixed effects GMPE append with intra-event res components
-                if self.gmpe_list[
-                        gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
-                            ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
+                if self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
+                    ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
                         for imtx in self.imts:
-                            print("%s, phi_ss, %12.8f, phi_s2ss(Mean),"
-                                  " %12.8f, phi_s2ss(Std. Dev), %12.8f" % (
-                                      imtx, phi_ss[gmpe][imtx], phi_s2ss[gmpe][
-                                          imtx]["Mean"], phi_s2ss[gmpe][imtx][
-                                              "StdDev"]), file=fid)
+                            p_data = (imtx,
+                                      phi_ss[gmpe][imtx],
+                                      phi_s2ss[gmpe][imtx]["Mean"],
+                                      phi_s2ss[gmpe][imtx]["StdDev"])
+                            print("%s, phi_ss, %s, phi_s2ss mean, %s, "
+                                  "phi_s2ss std. dev), %s" % p_data, file=fid)
+                # Total sigma only for given GMM
                 else:
                     for imtx in self.imts:
-                        print("%s, phi_ss, , phi_s2ss(Mean), , phi_s2ss(Std. Dev),"
-                              % (imtx), file=fid)
-            if filename:
+                        print(f"{imtx}, phi_ss, , phi_s2ss mean, , "
+                              f"phi_s2ss (std. dev)", file=fid)
+                        
+            if filename is not None:
                 fid.close()
+
         return phi_ss, phi_s2ss
