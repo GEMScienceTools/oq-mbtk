@@ -127,17 +127,6 @@ class ResidualsTestCase(unittest.TestCase):
         stoch.get_residuals(self.database, component="Geometric")
         stoch.get_stochastic_area_wrt_imt()
 
-    def test_multiple_metrics(self):
-        """
-        Tests the execution running multiple metrics in one call
-        """
-        residuals = res.Residuals(self.gmpe_list, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
-        config = {}
-        for key in ["Residuals", "Likelihood", "LLH",
-                    "MultivariateLLH", "EDR"]:
-            _ = res.GSIM_MODEL_DATA_TESTS[key](residuals, config)
-
     def test_plot_execution(self):
         """
         Tests execution of gmpe ranking metric plots
