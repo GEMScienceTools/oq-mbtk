@@ -254,8 +254,7 @@ class Residuals(object):
             example
         """
         # Get contexts
-        contexts = ctx_database.get_contexts(nodal_plane_index, self.imts,
-                                             component)
+        contexts = ctx_database.get_contexts(nodal_plane_index, self.imts, component)
 
         # Fetch now outside the loop for efficiency the IMTs which need
         # acceleration units conversion from cm/s/s to g. Conversion will be
