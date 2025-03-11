@@ -314,6 +314,7 @@ class Residuals(object):
 
         for gmpe in self.residuals.keys():
             for imtx in self.residuals[gmpe].keys():
+                # Check residuals exist for GMM and IMT
                 if not self.residuals[gmpe][imtx]:
                     continue
                 for res_type in self.residuals[gmpe][imtx].keys():
@@ -467,6 +468,7 @@ class Residuals(object):
         lh_values = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
             for imtx in self.imts:
+                # Check residuals exist for GMM and IMT
                 if not self.residuals[gmpe][imtx]:
                     print("IMT %s not found in Residuals for %s"
                           % (imtx, gmpe))
@@ -516,9 +518,12 @@ class Residuals(object):
         self.llh = {gmpe: imt_list for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
             for imtx in imts:
+            
+                # Check residuals exist for GMM and IMT
                 if not (imtx in self.imts) or not self.residuals[gmpe][imtx]:
                     print("IMT %s not found in Residuals for %s" % (imtx, gmpe))
                     continue
+            
                 # Get log-likelihood distance for IMT
                 asll = np.log2(
                     norm.pdf(self.residuals[gmpe][imtx]["Total"], 0., 1.0))
@@ -527,6 +532,7 @@ class Residuals(object):
 
             self.llh[gmpe]["All"] = -(1. / float(len(
                 log_residuals[gmpe]))) * np.sum(log_residuals[gmpe])
+            
         # Get mean weights
         weights = np.array([2.0 ** -self.llh[gmpe]["All"]
                             for gmpe in self.gmpe_list])
@@ -537,12 +543,9 @@ class Residuals(object):
         # Get weights with imt
         self.model_weights_with_imt = {}
         for im in self.imts:
-            
             weights_with_imt = np.array(
                 [2.0 ** -self.llh[gmpe][im] for gmpe in self.gmpe_list])
-            
             weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
-            
             self.model_weights_with_imt[im] = {gmpe: weights_with_imt[
                 iloc] for iloc, gmpe in enumerate(self.gmpe_list)}
             
