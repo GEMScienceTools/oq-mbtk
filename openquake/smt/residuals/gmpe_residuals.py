@@ -30,7 +30,6 @@ import toml
 import numpy as np
 import pandas as pd
 
-from datetime import datetime
 from math import sqrt, ceil
 from scipy.special import erf
 from scipy.stats import norm
@@ -272,26 +271,6 @@ def get_multivariate_ll(contexts, gmpe, imt):
     # The function shouldn't raise anymore:
     return (float(nrecs) * np.log(2.0 * np.pi) + logdetv +
             (b_mat.T.dot(solve(v_mat, b_mat, check_finite=False)))) / 2.
-
-
-def bootstrap_llh(ij, contexts, gmpes, imts):
-    """
-    Applyies the cluster bootstrap. A set of events, equal in length to that
-    of the original data, is sampled randomly from the list of contexts. All of
-    the sigmas for that specific event are transfered to the sample
-    """
-    # Sample contexts
-    timer_on = datetime.now()
-    neqs = len(contexts)
-    isamp = np.random.randint(0, neqs, neqs)
-    new_contexts = [contexts[i] for i in isamp]
-    outputs = np.zeros([len(gmpes), len(imts)])
-    for i, gmpe in enumerate(gmpes):
-        for j, imtx in enumerate(imts):
-            outputs[i, j] = get_multivariate_ll(new_contexts, gmpe, imtx)
-    print("Bootstrap completed in {:.2f} seconds".format(
-        (datetime.now() - timer_on).total_seconds()))
-    return outputs
 
 
 class Residuals(object):
@@ -726,7 +705,7 @@ class Residuals(object):
         # Get number of events and records
         for gmpe in self.gmpe_list:
             print("GMPE = {:s}".format(gmpe))
-            for j, imtx in enumerate(self.imts):
+            for _, imtx in enumerate(self.imts):
                 if self.residuals[gmpe][imtx] is None:
                     # IMT missing for this GMPE
                     multi_llh_values[gmpe][imtx] = 0.0
@@ -741,37 +720,6 @@ class Residuals(object):
                     total_llh += multi_llh_values[gmpe][imtx]
                 multi_llh_values[gmpe] = total_llh
         return multi_llh_values
-
-    def bootstrap_multivariate_llhvalues(self, number_bootstraps,
-                                         sum_imts=False, parallelize=False,
-                                         concurrent_tasks=8):
-        """
-        Bootstrap the analysis using cluster sampling, as describe in Mak et
-        al. 2017. OpenQuake's :class: `openquake.baselib.parallel.Starmap`
-        utility is invoked to parallelise the calculations by bootstrap
-        """
-        # Setup multivariate log-likelihood dict
-        multi_llh_values = []
-        nmods = []
-        for i, gmpe in enumerate(self.gmpe_list):
-            for j, imtx in enumerate(self.imts):
-                nmods.append((i, j))
-                multi_llh_values.append((gmpe, imtx))
-        outputs = np.zeros([len(self.gmpe_list), len(self.imts),
-                            number_bootstraps])
-        if parallelize:
-            raise NotImplementedError("Parellelisation not turned on yet!")
-        else:
-            for j in range(number_bootstraps):        
-                print("Bootstrap {:g} of {:g}".format(j + 1,
-                      number_bootstraps))
-                outputs[:, :, j] = bootstrap_llh(
-                    j, self.contexts, self.gmpe_list, self.imts)
-                
-        distinctiveness = self.get_distinctiveness(
-            outputs, number_bootstraps, sum_imts)
-        
-        return distinctiveness, outputs
 
     def get_distinctiveness(self, outputs, number_bootstraps, sum_imts):
         """
