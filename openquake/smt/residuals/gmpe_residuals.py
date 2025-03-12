@@ -513,9 +513,8 @@ class Residuals(object):
         """
         imt_list = {imt: None for imt in self.imts}
         imt_list["All"] = None
-        store_llh = {}
+        self.llh = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
-            store_llh_gmm = {}
             log_residuals = np.array([])
             for imtx in self.imts:
             
@@ -527,20 +526,14 @@ class Residuals(object):
                 # Get log-likelihood distance for IMT
                 asll = np.log2(
                     norm.pdf(self.residuals[gmpe][imtx]["Total"], 0., 1.0))
-                store_llh_gmm[imtx] = -(1.0 / float(len(asll))) * np.sum(asll)
+                self.llh[gmpe][imtx] = -(1.0 / float(len(asll))) * np.sum(asll)
             
                 # Stack
                 log_residuals = np.hstack([log_residuals, asll])
 
             # Get the average over the IMTs
-            store_llh_gmm["All"] = -(
+            self.llh[gmpe]["All"] = -(
                 1. / float(len(log_residuals))) * np.sum(log_residuals)
-        
-            # Store over IMTs for given GMM
-            store_llh[gmpe] = store_llh_gmm          
-        
-        # Save to the residuals object
-        self.llh = store_llh
 
         # Get mean weights
         weights = np.array(
