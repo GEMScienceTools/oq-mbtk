@@ -500,7 +500,7 @@ class Residuals(object):
             ret[res_type] = l_h, median_lh
         return ret
 
-    def get_loglikelihood_values(self, imts):
+    def get_loglikelihood_values(self):
         """
         Returns the loglikelihood fit of the GMPEs to data using the
         loglikehood (LLH) function described in Scherbaum et al. (2009)
@@ -512,11 +512,11 @@ class Residuals(object):
             List of intensity measures for LLH calculation
         """
         log_residuals = {gmpe: np.array([]) for gmpe in self.gmpe_list}
-        imt_list = {imt: None for imt in imts}
+        imt_list = {imt: None for imt in self.imts}
         imt_list["All"] = None
         self.llh = {gmpe: imt_list for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
-            for imtx in imts:
+            for imtx in self.imts:
             
                 # Check residuals exist for GMM and IMT
                 if not (imtx in self.imts) or not self.residuals[gmpe][imtx]:

@@ -101,28 +101,41 @@ def make_residual_plots(residuals, out_dir):
 
 def calc_ranking_metrics(residuals, out_dir):
     """
-    Compute LLH, EDR and Stochastic Area scores per GMM per IMT
+    Compute LLH, EDR and Stochastic Area scores
     """
-    # Get fnames for llh, edr, stochastic area and residuals w.r.t. period
-    fi_llh = os.path.join(out_dir, 'all_gmpes_LLH_plot')
-    fi_edr = os.path.join(out_dir, 'all_gmpes_EDR_plot')
-    fi_sto = os.path.join(out_dir, 'all_gmpes_stochastic_area_plot')
-    fi_pdf = os.path.join(out_dir, 'all_gmpes_PDF_vs_imt_plot')
+    # Compute llh, edr, stochastic area and residuals w.r.t. period
+    residuals.get_llh_values_wrt_imt()
+    residuals.get_edr_values_wrt_imt()
+    residuals.get_stochastic_area_wrt_imt()
+    
+    # Set fnames for llh, edr, stochastic area and residuals tables
+    fi_llh_table = os.path.join(out_dir, 'values_llh.csv')
+    fi_edr_table = os.path.join(out_dir, 'values_edr.csv')
+    fi_sto_table = os.path.join(out_dir, 'values_stochastic_area.csv')
+    fi_pdf_table = os.path.join(out_dir, 'values_pdf_table.csv')
 
-    # Make plots for llh, edr, stochastic area and residuals w.r.t. period
-    rspl.plot_loglikelihood_with_spectral_period(residuals, fi_llh)
-    rspl.plot_edr_metrics_with_spectral_period(residuals, fi_edr)
-    rspl.plot_stochastic_area_with_spectral_period(residuals, fi_sto)
-    rspl.plot_residual_pdf_with_spectral_period(residuals, fi_pdf)
-
-    # Get table of residuals (mean and std dev per gmm per imt)
-    fi_pdf_table = os.path.join(out_dir, 'pdf_table.csv')
+    # Make tables for llh, edr, stochastic area and residuals table
+    rspl.llh_table(residuals, fi_llh_table)
+    rspl.edr_table(residuals, fi_edr_table)
+    rspl.stochastic_area_table(residuals, fi_sto_table)
     rspl.pdf_table(residuals, fi_pdf_table)
 
-    # Get fnames for CSVs of GMM logic tree weights based on ranking scores
-    fi_llh_weights = os.path.join(out_dir, 'final_weights_llh.csv')
-    fi_edr_weights = os.path.join(out_dir, 'final_weights_edr.csv')
-    fi_sto_weights = os.path.join(out_dir, 'final_weights_stochastic_area.csv')
+    # Set fnames for llh, edr, stochastic area and residuals plots w.r.t. period
+    fi_llh_plot = os.path.join(out_dir, 'LLH_vs_period_plot')
+    fi_edr_plot = os.path.join(out_dir, 'EDR_vs_period_plot')
+    fi_sto_plot = os.path.join(out_dir, 'stochastic_area_vs_period_plot')
+    fi_pdf_plot = os.path.join(out_dir, 'PDF_vs_period_plot')
+    
+    # Make plots for llh, edr, stochastic area and residuals plots w.r.t. period
+    rspl.plot_loglikelihood_with_spectral_period(residuals, fi_llh_plot)
+    rspl.plot_edr_metrics_with_spectral_period(residuals, fi_edr_plot)
+    rspl.plot_stochastic_area_with_spectral_period(residuals, fi_sto_plot)
+    rspl.plot_residual_pdf_with_spectral_period(residuals, fi_pdf_plot)
+
+    # Set fnames for CSVs of GMM logic tree weights based on ranking scores
+    fi_llh_weights = os.path.join(out_dir, 'weights_llh.csv')
+    fi_edr_weights = os.path.join(out_dir, 'weights_edr.csv')
+    fi_sto_weights = os.path.join(out_dir, 'weights_stochastic_area.csv')
 
     # Compute GMM logic tree weights based on ranking scores and export as CSVs
     rspl.llh_weights_table(residuals, fi_llh_weights)
