@@ -526,9 +526,11 @@ class Residuals(object):
                 # Get log-likelihood distance for IMT
                 asll = np.log2(
                     norm.pdf(self.residuals[gmpe][imtx]["Total"], 0., 1.0))
-                log_residuals = np.hstack([log_residuals, asll])
                 self.llh[gmpe][imtx] = -(1.0 / float(len(asll))) * np.sum(asll)
             
+                # Stack
+                log_residuals = np.hstack([log_residuals, asll])
+
             # Get the average over the IMTs
             self.llh[gmpe]["All"] = -(
                 1. / float(len(log_residuals))) * np.sum(log_residuals)
