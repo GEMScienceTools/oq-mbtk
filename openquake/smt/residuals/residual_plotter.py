@@ -577,9 +577,6 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
     # Manage imts
     residuals, preserve_imts, x_llh = manage_imts(residuals)
 
-    # Get required values
-    residuals.get_loglikelihood_values(residuals.imts)
-
     # Define colours for GMMs
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
         
@@ -612,9 +609,6 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, filetype='jpg',
     
     # Manage imts
     residuals, preserve_imts, x_with_imt = manage_imts(residuals)
-
-    # Get required values 
-    residuals.get_edr_values_wrt_imt()
 
     # Define colours for GMMs
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
@@ -681,9 +675,6 @@ def plot_stochastic_area_with_spectral_period(residuals, filename,
     # Manage imts
     residuals, preserve_imts, x_with_imt = manage_imts(residuals)
     
-    # Get required values
-    residuals.get_stochastic_area_wrt_imt()
-    
     # Define colours for plots
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
     
@@ -712,9 +703,6 @@ def llh_table(residuals, filename):
     Create a table of loglikelihood values per gmpe per imt (Scherbaum et al.
     2009)
     """
-    # Get required values
-    residuals.get_loglikelihood_values(residuals.imts)
-
     # Get loglikelihood values per imt per gmpe
     llh_metrics = pd.DataFrame()
     for gmpe in residuals.gmpe_list:
@@ -728,10 +716,7 @@ def llh_weights_table(residuals, filename):
     Create a table of model weights per gmpe per imt based on sample
     loglikelihood (Scherbaum et al. 2009)
     """       
-    # Get required values
-    residuals.get_loglikelihood_values(residuals.imts)
-
-    # Now get weights based on them and export table
+    # Get weights based on llh and export table
     imt_idx = []
     for imt in residuals.imts:
         imt_idx.append(imt)
@@ -752,9 +737,6 @@ def edr_table(residuals, filename):
     Create a table of MDE Norm, sqrt(kappa) and EDR gmpe per imt (Kale and Akkar,
     2013)
     """
-    # Get required values
-    residuals.get_edr_values_wrt_imt()
-
     # Get Kale and Akkar (2013) ranking metrics
     edr_dfs = []
     for gmpe in residuals.gmpe_list:
@@ -779,8 +761,10 @@ def edr_weights_table(residuals, filename):
     Create a table of model weights per imt based on Euclidean distance based
     ranking (Kale and Akkar, 2013)
     """     
+    # Get the EDR values from the residuals object
+    edr_for_weights = residuals.edr_values_wrt_imt
+
     # Compute EDR based model weights
-    edr_for_weights = residuals.get_edr_values_wrt_imt()
     edr_per_gmpe = {}
     for gmpe in edr_for_weights.keys():
         edr_per_gmpe[gmpe] = edr_for_weights[gmpe]['EDR']
@@ -809,9 +793,6 @@ def stochastic_area_table(residuals, filename):
     Create a table of stochastic area ranking metric per GMPE per imt (Sunny et
     al. 2021)
     """
-    # Get required values
-    residuals.get_stochastic_area_wrt_imt()
-
     # Get stochastic area value per imt
     imt_idx = []
     for imt in residuals.imts:
@@ -834,7 +815,7 @@ def stochastic_area_weights_table(residuals, filename):
     (Sunny et al. 2021))
     """       
     # Get required values
-    sto_for_weights = residuals.get_stochastic_area_wrt_imt()
+    sto_for_weights = residuals.stoch_areas_wrt_imt
     sto_per_gmpe_df = pd.DataFrame(sto_for_weights)
 
     # Get weights
