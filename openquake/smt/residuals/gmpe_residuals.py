@@ -529,13 +529,13 @@ class Residuals(object):
                 log_residuals[gmpe] = np.hstack([log_residuals[gmpe], asll])
                 self.llh[gmpe][imtx] = -(1.0 / float(len(asll))) * np.sum(asll)
             
+            # Get the average over the IMTs
             self.llh[gmpe]["All"] = -(
                 1. / float(len(log_residuals[gmpe]))) * np.sum(log_residuals[gmpe])
             
-
         # Get mean weights
-        weights = np.array([2.0 ** -self.llh[gmpe]["All"]
-                            for gmpe in self.gmpe_list])
+        weights = np.array(
+            [2.0 ** -self.llh[gmpe]["All"] for gmpe in self.gmpe_list])
         weights = weights / np.sum(weights)
         self.model_weights = {
             gmpe: weights[iloc] for iloc, gmpe in enumerate(self.gmpe_list)}
