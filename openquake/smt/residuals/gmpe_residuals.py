@@ -528,10 +528,11 @@ class Residuals(object):
                     norm.pdf(self.residuals[gmpe][imtx]["Total"], 0., 1.0))
                 log_residuals[gmpe] = np.hstack([log_residuals[gmpe], asll])
                 self.llh[gmpe][imtx] = -(1.0 / float(len(asll))) * np.sum(asll)
-
-            self.llh[gmpe]["All"] = -(1. / float(len(
-                log_residuals[gmpe]))) * np.sum(log_residuals[gmpe])
             
+            self.llh[gmpe]["All"] = -(
+                1. / float(len(log_residuals[gmpe]))) * np.sum(log_residuals[gmpe])
+            
+
         # Get mean weights
         weights = np.array([2.0 ** -self.llh[gmpe]["All"]
                             for gmpe in self.gmpe_list])
