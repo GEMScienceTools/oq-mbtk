@@ -349,7 +349,7 @@ The Loglikelihood Method (Scherbaum et al. 2009)
        > # Generate a .csv table of LLH-based model weights for GMPE logic tree
        > rspl.llh_weights_table(resid1, filename)   
        >
-       > # Plot LLH values per GMPE vs imt
+       > # Plot LLH values per GMPE vs IMT
        > rspl.plot_loglikelihood_with_spectral_period(resid1, filename)
 
     Loglikelihood versus spectral period plot for considered GMPEs:
@@ -639,7 +639,7 @@ Comparing GMPEs
 
         [models.1-ModifiableGMPE]
         gmpe = 'CampbellBozorgnia2014'
-        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # Fix total sigma per imt
+        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # Fix total sigma per IMT
         
         [models.2-ModifiableGMPE]
         gmpe = 'CampbellBozorgnia2014'
@@ -660,7 +660,7 @@ Comparing GMPEs
                                
         [models.6-ModifiableGMPE]
         gmpe = 'ChiouYoungs2014'
-        median_scaling_scalar = 1.4 # Scale median by factor of 1.4 over all imts
+        median_scaling_scalar = 1.4 # Scale median by factor of 1.4 over all IMTs
         
         [models.7-ModifiableGMPE]
         gmpe = 'ChiouYoungs2014'
@@ -668,11 +668,11 @@ Comparing GMPEs
         
         [models.8-ModifiableGMPE]
         gmpe = 'KothaEtAl2020'
-        sigma_scaling_scalar = 1.25 # Scale sigma by factor of 1.25 over all imts
+        sigma_scaling_scalar = 1.25 # Scale sigma by factor of 1.25 over all IMTs
         
         [models.9-ModifiableGMPE]
         gmpe = 'KothaEtAl2020'
-        sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # Scale sigma by imt-dependent factor
+        sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # Scale sigma by IMT-dependent factor
         
         [models.10-ModifiableGMPE]
         gmpe = 'AtkinsonMacias2009'

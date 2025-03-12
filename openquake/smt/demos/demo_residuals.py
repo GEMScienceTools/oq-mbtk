@@ -104,7 +104,7 @@ def calc_ranking_metrics(residuals, out_dir):
     Compute LLH, EDR and Stochastic Area scores
     """
     # Compute llh, edr, stochastic area and residuals w.r.t. period
-    residuals.get_llh_values_wrt_imt()
+    residuals.get_loglikelihood_values()
     residuals.get_edr_values_wrt_imt()
     residuals.get_stochastic_area_wrt_imt()
     
