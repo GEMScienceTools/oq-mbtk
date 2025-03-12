@@ -511,11 +511,11 @@ class Residuals(object):
         :param imts:
             List of intensity measures for LLH calculation
         """
-        log_residuals = {gmpe: np.array([]) for gmpe in self.gmpe_list}
         imt_list = {imt: None for imt in self.imts}
         imt_list["All"] = None
         self.llh = {gmpe: imt_list for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
+            log_residuals = np.array([])
             for imtx in self.imts:
             
                 # Check residuals exist for GMM and IMT
@@ -526,12 +526,12 @@ class Residuals(object):
                 # Get log-likelihood distance for IMT
                 asll = np.log2(
                     norm.pdf(self.residuals[gmpe][imtx]["Total"], 0., 1.0))
-                log_residuals[gmpe] = np.hstack([log_residuals[gmpe], asll])
+                log_residuals = np.hstack([log_residuals, asll])
                 self.llh[gmpe][imtx] = -(1.0 / float(len(asll))) * np.sum(asll)
             
             # Get the average over the IMTs
             self.llh[gmpe]["All"] = -(
-                1. / float(len(log_residuals[gmpe]))) * np.sum(log_residuals[gmpe])
+                1. / float(len(log_residuals))) * np.sum(log_residuals)
             
         # Get mean weights
         weights = np.array(
