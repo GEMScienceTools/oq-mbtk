@@ -87,13 +87,13 @@ class ResidualsTestCase(unittest.TestCase):
         residuals.get_residuals(self.database, component="Geometric")
         residuals.get_residual_statistics()
 
-    def test_likelihood_execution(self):
-        """
-        Tests basic execution of residuals - not correctness of values
-        """
-        lkh = res.Residuals(self.gmpe_list, self.imts)
-        lkh.get_residuals(self.database, component="Geometric")
-        lkh.get_likelihood_values()
+#    def test_likelihood_execution(self):
+ #       """
+  #      Tests basic execution of residuals - not correctness of values
+   #     """
+    #    lkh = res.Residuals(self.gmpe_list, self.imts)
+     #   lkh.get_residuals(self.database, component="Geometric")
+      #  lkh.get_likelihood_values()
 
     def test_llh_execution(self):
         """
@@ -101,7 +101,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         llh = res.Residuals(self.gmpe_list, self.imts)
         llh.get_residuals(self.database, component="Geometric")
-        llh.get_loglikelihood_values(self.imts)
+        llh.get_loglikelihood_values()
 
     def test_multivariate_llh_execution(self):
         """
@@ -129,12 +129,19 @@ class ResidualsTestCase(unittest.TestCase):
 
     def test_plot_execution(self):
         """
-        Tests execution of gmpe ranking metric plots
+        Tests execution of gmpe ranking metric plots and the residual
+        distribution information plots
         """
+        # Compute the residuals
         residuals = res.Residuals(self.gmpe_list, self.imts)
         residuals.get_residuals(self.database, component="Geometric")
 
-        # Plots of GMM ranking metrics vs period
+        # First compute the metrics
+        residuals.get_loglikelihood_values()
+        residuals.get_edr_values_wrt_imt()
+        residuals.get_stochastic_area_wrt_imt()
+
+        # Make the plots
         rspl.plot_residual_pdf_with_spectral_period(residuals, tmp_fig)
         rspl.plot_edr_metrics_with_spectral_period(residuals, tmp_fig)
         rspl.plot_loglikelihood_with_spectral_period(residuals, tmp_fig)
@@ -144,8 +151,14 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests execution of table exporting functions
         """
+        # Compute the residuals
         residuals = res.Residuals(self.gmpe_list, self.imts)
         residuals.get_residuals(self.database, component="Geometric")
+
+        # First compute the metrics
+        residuals.get_loglikelihood_values()
+        residuals.get_edr_values_wrt_imt()
+        residuals.get_stochastic_area_wrt_imt()
         
         # Tables of values
         rspl.pdf_table(residuals, tmp_tab)

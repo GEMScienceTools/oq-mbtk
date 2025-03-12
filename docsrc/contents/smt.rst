@@ -337,22 +337,22 @@ The Loglikelihood Method (Scherbaum et al. 2009)
 
     .. code-block:: ini
     
-       > # From gmpe_list and imt_list
+       > # Get LLH values from gmpe_list and imt_list (both aggregated over IMTs and per IMT)
        > llh, model_weights, model_weights_with_imt = res.get_loglikelihood_values(resid1, imt_list)
        >
        > # OR from .toml:
        > llh, model_weights, model_weights_with_imt = res.get_loglikelihood_values(resid1, resid1.imts)
        >
-       > # Generate a .csv table of LLH values
+       > # Generate a .csv table of LLH values per GMPE and per IMT
        > rspl.loglikelihood_table(resid1, filename)
        >
-       > # Generate a .csv table of LLH-based model weights for GMPE logic tree 
+       > # Generate a .csv table of LLH-based model weights for GMPE logic tree
        > rspl.llh_weights_table(resid1, filename)   
        >
-       > # Plot LLH vs imt
+       > # Plot LLH values per GMPE vs imt
        > rspl.plot_loglikelihood_with_spectral_period(resid1, filename)
 
-    Loglikelihood versus spectral acceleration plot for considered GMPEs:
+    Loglikelihood versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_LLH_plot.jpg
 
 Euclidean Distance Based Ranking (Kale and Akkar, 2013)
@@ -364,28 +364,28 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
    
     .. code-block:: ini
     
-       > # Get EDR, MDE Norm and MDE per GMPE aggregated over all imts
+       > # Get EDR, MDE Norm and MDE per GMPE aggregated over all IMTs
        > res.get_edr_values(resid1)
        >
-       > # Get EDR, MDE Norm and MDE for each considered imt
+       > # Get EDR, MDE Norm and MDE per GMPE per IMT
        > res.get_edr_values_wrt_spectral_period(resid1)
        >
-       > # Generate a .csv table of EDR values for each GMPE
+       > # Generate a .csv table of EDR values per GMPE and per IMT
        > rspl.edr_table(resid1, filename)
        >
        > # Generate a .csv table of EDR-based model weights for GMPE logic tree
        > rspl.edr_weights_table(resid1, filename)   
        >
-       > # Plot EDR score, MDE norm and sqrt(k) vs imt
+       > # Plot EDR score, MDE norm and sqrt(k) vs IMT
        > rspl.plot_plot_edr_metrics_with_spectral_period(resid1, filename)
 
-    EDR rank versus spectral acceleration plot for considered GMPEs:
+    EDR rank versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_EDR_plot_EDR_value.jpg
        
-    EDR correction factor versus spectral acceleration for considered GMPEs:
+    EDR correction factor versus spectral period for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_EDR_plot_EDR_correction_factor.jpg   
        
-    MDE versus spectral acceleration for considered GMPEs:
+    MDE versus spectral period for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_EDR_plot_MDE.jpg      
 
 Stochastic Area Based Ranking (Sunny et al. 2021)
@@ -395,19 +395,19 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
 
     .. code-block:: ini
     
-       > # Get stochastic area metric for each considered imt
+       > # Get stochastic area metric per GMPE and per IMT
        > res.get_stochastic_area_wrt_imt(resid1)
        >
-       > # Generate a .csv table of stochastic area values for each GMPE
+       > # Generate a .csv table of stochastic area values per GMPE and per IMT
        > rspl.stochastic_area_table(resid1, filename)
        >
        > # Generate a .csv table of stochastic area-based model weights for GMPE logic tree
        > rspl.stochastic_area_weights_table(resid1, filename)   
        >
-       > # Plot stochastic area vs imt
+       > # Plot stochastic area vs IMT
        > rspl.plot_stochastic_area_with_spectral_period(resid1, filename)
 
-    Stochastic area versus spectral acceleration plot for considered GMPEs:
+    Stochastic area versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_stochastic_area_plot.jpg
 
 Comparing GMPEs
