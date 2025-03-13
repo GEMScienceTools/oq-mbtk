@@ -22,7 +22,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from openquake.calculators.postproc.plots import add_borders
-from openquake.smt.utils_strong_motion import _save_image
+from openquake.smt.utils_intensity_measures import _save_image
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector 
 
 

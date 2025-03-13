@@ -38,7 +38,7 @@ from scipy.linalg import solve
 from openquake.hazardlib import valid
 from openquake.hazardlib import imt
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector
-from openquake.smt.utils_strong_motion import convert_accel_units, check_gsim_list
+from openquake.smt.utils import convert_accel_units, check_gsim_list
 
 
 ALL_SIGMA = frozenset({'Inter event', 'Intra event', 'Total'})

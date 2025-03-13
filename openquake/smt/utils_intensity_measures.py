@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 General Functions for computing intensity measures and spectra including:
-    1) General utils e.g. peak measures
+    1) General utils e.g. peak measures, converting between units of ground-motion
     1) Response spectra
     2) Fourier amplitude spectra (FAS)
     3) Horizontal-Vertical Spectral Ratio (HVSR)
@@ -26,20 +26,26 @@ General Functions for computing intensity measures and spectra including:
 """
 import numpy as np
 from math import pi
+from scipy.constants import g
 from scipy.integrate import cumtrapz
-from scipy import constants
 import matplotlib.pyplot as plt
 
-import openquake.smt.utils_response_spectrum as rsp
 from openquake.smt import utils_smoothing
-from openquake.smt.utils_strong_motion import \
-     get_time_vector, _save_image, nextpow2
+import openquake.smt.utils_response_spectrum as rsp
+from openquake.smt.utils import get_time_vector,  _save_image
 
 RESP_METHOD = {
     'Newmark-Beta': rsp.NewmarkBeta,
     'Nigam-Jennings': rsp.NigamJennings}
 
 SMOOTHING = {"KonnoOhmachi": utils_smoothing.KonnoOhmachi}
+
+# Mean utilities (geometric, arithmetic, ...):
+SCALAR_XY = {
+    "Geometric": lambda x, y: np.sqrt(x * y),
+    "Arithmetic": lambda x, y: (x + y) / 2.,
+    "Larger": lambda x, y: np.max(np.array([x, y]), axis=0),
+    "Vectorial": lambda x, y: np.sqrt(x ** 2. + y ** 2.)}
 
 
 ### General utils
@@ -89,23 +95,6 @@ def larger_pga(sax, say):
         return sax
     else:
         return say
-
-
-def rotate_horizontal(series_x, series_y, angle):
-    """
-    Rotates two time-series according to a specified angle
-    :param nunmpy.ndarray series_x:
-        Time series of x-component
-    :param nunmpy.ndarray series_y:
-        Time series of y-component
-    :param float angle:
-        Angle of rotation (decimal degrees)
-    """
-    angle = angle * (pi / 180.0)
-    rot_hist_x = (np.cos(angle) * series_x) + (np.sin(angle) * series_y)
-    rot_hist_y = (-np.sin(angle) * series_x) + (np.cos(angle) * series_y)
-    return rot_hist_x, rot_hist_y
-
 
 def equalise_series(series_x, series_y):
     """
@@ -188,6 +177,22 @@ def get_principal_axes(time_step, acc_x, acc_y, acc_z=None):
                                  "principal_sigma": np.matrix(ppal_sigma)}
 
 
+def rotate_horizontal(series_x, series_y, angle):
+    """
+    Rotates two time-series according to a specified angle
+    :param nunmpy.ndarray series_x:
+        Time series of x-component
+    :param nunmpy.ndarray series_y:
+        Time series of y-component
+    :param float angle:
+        Angle of rotation (decimal degrees)
+    """
+    angle = angle * (pi / 180.0)
+    rot_hist_x = (np.cos(angle) * series_x) + (np.sin(angle) * series_y)
+    rot_hist_y = (-np.sin(angle) * series_x) + (np.cos(angle) * series_y)
+    return rot_hist_x, rot_hist_y
+
+
 def get_rotation_angles(transf_matrix, nhist):
     """
     Function returns the angle between the third principal axis
@@ -230,6 +235,12 @@ def get_rotation_angles(transf_matrix, nhist):
         theta2y = theta1x
      
     return alpha3z, theta1x
+
+
+def nextpow2(nval):
+    m_f = np.log2(nval)
+    m_i = np.ceil(m_f)
+    return int(2.0 ** m_i)
 
 
 ### Response Spectra
@@ -366,6 +377,30 @@ def get_acceleration_spectrum_intensity(spec):
                     spec["Period"][idx])
 
 
+def get_interpolated_period(target_period, periods, values):
+    """
+    Returns the spectra interpolated in loglog space
+
+    :param float target_period: Period required for interpolation
+    :param np.ndarray periods: Spectral Periods
+    :param np.ndarray values: Ground motion values
+    """
+    if (target_period < np.min(periods)) or (target_period > np.max(periods)):
+        raise ValueError("Period not within calculated range: %s" %
+                         str(target_period))
+    lval = np.where(periods <= target_period)[0][-1]
+    uval = np.where(periods >= target_period)[0][0]
+
+    if (uval - lval) == 0:
+        return values[lval]
+
+    d_y = np.log10(values[uval]) - np.log10(values[lval])
+    d_x = np.log10(periods[uval]) - np.log10(periods[lval])
+    return 10.0 ** (
+        np.log10(values[lval]) +
+        (np.log10(target_period) - np.log10(periods[lval])) * d_y / d_x)
+
+
 ### FAS Functions
 def get_fourier_spectrum(time_series, time_step):
     """
@@ -474,7 +509,7 @@ def get_arias_intensity(acceleration, time_step, start_level=0., end_level=1.):
         Fraction of the total Arias intensity used as the end time
     """
     assert end_level >= start_level
-    arias_factor = pi / (2.0 * (constants.g * 100.))
+    arias_factor = pi / (2.0 * (g * 100.))
     husid, time_vector = get_husid(acceleration, time_step)
     husid_norm = husid / husid[-1]
     idx = np.where(np.logical_and(husid_norm >= start_level,
