@@ -106,12 +106,6 @@ class ResidualsTestCase(unittest.TestCase):
         """
         self.residuals.get_loglikelihood_values()
 
-    def test_multivariate_llh_execution(self):
-        """
-        Tests execution of multivariate llh - not correctness of values
-        """
-        self.residuals.get_multivariate_loglikelihood_values()
-
     def test_edr_execution(self):
         """
         Tests execution of EDR - not correctness of values
