@@ -21,7 +21,6 @@ motion records
 """
 import os
 import pickle
-import json
 import numpy as np
 import h5py
 from datetime import datetime
@@ -30,12 +29,10 @@ from openquake.hazardlib import imt
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo import geodetic
-from openquake.smt.residuals import sm_database_surface_utils
+
+from openquake.smt import utils
 from openquake.smt.residuals.context_db import ContextDB
-import openquake.smt.utils_strong_motion as utils
-from openquake.smt.utils_strong_motion import (vs30_to_z1pt0_cy14,
-                                               vs30_to_z2pt5_cb14,
-                                               z1pt0_to_z2pt5)
+import openquake.smt.utils_intensity_measures as utils_imts
 
 
 class Magnitude(object):
@@ -53,16 +50,6 @@ class Magnitude(object):
         self.mtype = mtype
         self.sigma = sigma
         self.source = source
-
-    @classmethod
-    def from_dict(cls, d):
-        """
-        Instantiates the object from a dictionary
-        """
-        return cls(d["value"], d["mtype"], d["sigma"], d["source"])
-
-    def to_dict(self):
-        return self.__dict__
 
     def __eq__(self, m):
         same_value = np.fabs(self.value - m.value) < 1.0E-3
@@ -155,44 +142,6 @@ class Rupture(object):
         # out of options - returning None
         return None
 
-    def to_dict(self):
-        """
-        Parses the information to a json compatible dictionary
-        """
-        output = {}
-        for key in self.__dict__:
-            if key == "magnitude" and self.magnitude is not None:
-                # Parse magnitude object to dictionary
-                output[key] = self.magnitude.__dict__
-            elif key == "hypocentre" and self.hypocentre is not None:
-                output[key] = [self.hypocentre.longitude,
-                               self.hypocentre.latitude,
-                               self.hypocentre.depth]
-            elif key == "surface" and self.surface is not None:
-                output[key] = sm_database_surface_utils.surfaces_to_dict[
-                    self.surface.__class__.__name__](self.surface)
-            else:
-                output[key] = getattr(self, key)
-        return output
-
-    @classmethod
-    def from_dict(cls, data, mesh_spacing=1.):
-        """
-        Creates an instance of the class from a json load
-        """
-        rup = cls(data["id"], data["name"],
-                  Magnitude.from_dict(data["magnitude"]),
-                  data["length"], data["width"], data["depth"])
-        for key in data:
-            if key in ["id", "name", "magnitude", "length", "width", "depth"]:
-                continue
-            elif key == "surface" and data["surface"] is not None:
-                rup.surface = sm_database_surface_utils.surfaces_from_dict(
-                    data[key]["type"], mesh_spacing)
-            else:
-                setattr(rup, key, data[key])
-        return rup
-
 
 class GCMTNodalPlanes(object):
     """
@@ -206,22 +155,6 @@ class GCMTNodalPlanes(object):
     def __init__(self):
         self.nodal_plane_1 = None
         self.nodal_plane_2 = None
-
-    def to_dict(self):
-        """
-        Returns a dictionary
-        """
-        return self.__dict__
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        Instantiate from a dict
-        """
-        nps = cls()
-        for key in data:
-            setattr(nps, key, data[key])
-        return nps
 
 
 class GCMTPrincipalAxes(object):
@@ -238,22 +171,6 @@ class GCMTPrincipalAxes(object):
         self.t_axis = None
         self.b_axis = None
         self.p_axis = None
-
-    def to_dict(self):
-        """
-        Returns a dictionary
-        """
-        return self.__dict__
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        Instantiate from a dict.
-        """
-        pas = cls()
-        for key in data:
-            setattr(pas, key, data[key])
-        return pas
 
 
 class FocalMechanism(object):
@@ -290,45 +207,6 @@ class FocalMechanism(object):
         if self.mechanism_type in utils.MECHANISM_TYPE:
             return utils.MECHANISM_TYPE[self.mechanism_type]
         return 0.0
-
-    def to_dict(self):
-        """
-        Parses the information to a json compatible dictionary
-        """
-        output = {}
-        for key in self.__dict__:
-            if key in ("nodal_planes", "eigenvalues") and \
-                    getattr(self, key) is not None:
-                output[key] = getattr(self, key).__dict__
-            elif key == "tensor":
-                output[key] = self._moment_tensor_to_list()
-            else:
-                output[key] = getattr(self, key)
-        return output
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        Instantiate from a dict.
-        """
-        keys = list(data)
-        if "nodal_planes" in keys and data["nodal_planes"]:
-            nps = GCMTNodalPlanes.from_dict(data["nodal_planes"])
-        else:
-            nps = None
-        if "eigenvalues" in keys and data["eigenvalues"]:
-            eigs =  GCMTPrincipalAxes.from_dict(data["eigenvalues"])
-        else:
-            eigs = None
-        if "tensor" in keys and data["tensor"]:
-            tensor = np.array(data["tensor"])
-        else:
-            tensor = None
-
-        foc_mech = cls(data["id"], data["name"], nps, eigs, tensor)
-        if "mechanism_type" in data:
-            setattr(foc_mech, "mechanism_type", data["mechanism_type"])
-        return foc_mech
 
     def _moment_tensor_to_list(self):
         """
@@ -382,53 +260,6 @@ class Earthquake(object):
         self.rupture = None
         self.tectonic_region = tectonic_region
 
-    def to_dict(self):
-        """
-        Parses the information to a json compatible dictionary
-        """
-        output = {}
-        for key in self.__dict__:
-            if key == "datetime":
-                output[key] = str(self.datetime)
-            elif key == "magnitude":
-                output[key] = self.magnitude.__dict__
-            elif key == "magnitude_list":
-                output[key] = [mag.__dict__ for mag in self.magnitude_list]
-            elif key in ("mechanism", "rupture") and\
-                getattr(self, key) is not None:
-                output[key] = getattr(self, key).to_dict()
-            else:
-                output[key] = getattr(self, key)
-        return output
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        Loads the class from a json compatible dictionary
-        """
-        reqs = ["id", "name", "datetime", "longitude", "latitude", "depth",
-                "magnitude"]
-        eqk = cls(data["id"], data["name"],
-                  datetime.strptime(data["datetime"], "%Y-%m-%d %H:%M:%S"),
-                  data["longitude"],
-                  data["latitude"],
-                  data["depth"],
-                  Magnitude.from_dict(data["magnitude"]))
-        
-        for key in data:
-            if key in reqs:
-                continue
-            elif key == "magnitude_list" and len(data[key]):
-                setattr(eqk, key, [Magnitude.from_dict(mag)
-                                   for mag in data[key]])
-            elif key == "mechanism" and data[key]:
-                setattr(eqk, key, FocalMechanism.from_dict(data[key]))
-            elif key == "rupture" and data[key]:
-                setattr(eqk, key, Rupture.from_dict(data[key]))
-            else:
-                setattr(eqk, key, data[key])
-        return eqk
-
 
 class RecordDistance(object):
     """
@@ -473,19 +304,6 @@ class RecordDistance(object):
         # QuakeML parameters
         self.pre_event_length = None
         self.post_event_length = None
-
-    def to_dict(self):
-        return self.__dict__
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        Instantiate from a dict.
-        """
-        d = cls(data["repi"], data["rhypo"])
-        for key in data:
-            setattr(d, key, data[key])
-        return d
 
 
 # Eurocode 8 Site Class Vs30 boundaries
@@ -610,21 +428,6 @@ class RecordSite(object):
         self.backarc = backarc
         self.morphology = None
         self.slope = None
-        
-    def to_dict(self):
-        return self.__dict__
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        Instantiate from a dict.
-        """
-        reqs = ["id", "code", "name", "longitude", "latitude", "altitude"]
-        site = cls(*[data[req] for req in reqs])
-        for key in data:
-            if key not in reqs:
-                setattr(site, key, data[key])
-        return site
 
     def to_openquake_site(self, missing_vs30=None):
         """
@@ -641,12 +444,12 @@ class RecordSite(object):
         if self.z1pt0:
             z1pt0 = self.z1pt0
         else:
-            z1pt0 = vs30_to_z1pt0_cy14(vs30)
+            z1pt0 = utils.vs30_to_z1pt0_cy14(vs30)
 
         if self.z2pt5:
             z2pt5 = self.z2pt5
         else:
-            z2pt5 = z1pt0_to_z2pt5(z1pt0)
+            z2pt5 = utils.z1pt0_to_z2pt5(z1pt0)
         
         location = Point(self.longitude,
                          self.latitude,
@@ -796,20 +599,6 @@ class Component(object):
         self.owner = None
         self.creation_info = None
 
-    def to_dict(self):
-        return self.__dict__
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        Instantiate from a dict.
-        """
-        comp = cls(data["id"], data["orientation"])
-        for key in data:
-            if not key in ["id", "orientation"]:
-                setattr(comp, key, data[key])
-        return comp
-
 
 class GroundMotionRecord(object):
     """
@@ -867,46 +656,6 @@ class GroundMotionRecord(object):
         self.directivity = None
         self.datafile = None
         self.misc = None
-
-    def to_dict(self):
-        """
-        Parses the information to a json compatible dictionary
-        """
-        output = {}
-        for key in self.__dict__:
-            if key in ("event", "distance", "site", "xrecord", "yrecord"):
-                output[key] = getattr(self, key).to_dict()
-            elif key == "vertical" and self.vertical:
-                output[key] = self.vertical.to_dict()
-            else:
-                output[key] = getattr(self, key)
-        return output
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        """
-        reqs = ["id", "time_series_file", "event", "distance", "site",
-                "xrecord", "yrecord", "vertical"]
-        evnt = cls(data["id"],
-                   data["time_series_file"],
-                   Earthquake.from_dict(data["event"]),
-                   RecordDistance.from_dict(data["distance"]),
-                   RecordSite.from_dict(data["site"]),
-                   Component.from_dict(data["xrecord"]),
-                   Component.from_dict(data["yrecord"]))
-
-        if "vertical" in data and data["vertical"]:
-            evnt.vertical = Component.from_dict(data["vertical"])
-
-        for key in data:
-            if key in reqs:
-                continue
-            elif not data[key]:
-                setattr(evnt, key, None)
-            else:
-                setattr(evnt, key, data[key])
-        return evnt
 
     def get_azimuth(self):
         """
@@ -987,7 +736,7 @@ class GroundMotionDatabase(ContextDB):
                 target_period = imt.from_string(imtx).period
                 spectrum = fle[selection_string + component + "/damping_05"][:]
                 periods = fle["IMS/H/Spectra/Response/Periods"][:]
-                values.append(utils.get_interpolated_period(
+                values.append(utils_imts.get_interpolated_period(
                     target_period, periods, spectrum))
             else:
                 raise ValueError("IMT %s is unsupported!" % imtx)
@@ -1155,37 +904,13 @@ class GroundMotionDatabase(ContextDB):
         if not ("H" in fle["IMS"].keys()):
             x_im = fle["IMS/X/Scalar/" + i_m][0]
             y_im = fle["IMS/Y/Scalar/" + i_m][0]
-            return utils.SCALAR_XY[component](x_im, y_im)
+            return utils_imts.SCALAR_XY[component](x_im, y_im)
         else:
             if i_m in fle["IMS/H/Scalar"].keys():
                 return fle["IMS/H/Scalar/" + i_m][0]
             else:
                 raise ValueError("Scalar IM %s not in record database" % i_m)
 
-    def to_json(self):
-        """
-        Exports the database to json
-        """
-        json_dict = {"id": self.id,
-                     "name": self.name,
-                     "directory": self.directory,
-                     "records": []}
-        for rec in self.records:
-            json_dict["records"].append(rec.to_dict())
-        return json.dumps(json_dict)
-
-    @classmethod
-    def from_json(cls, filename):
-        """
-        Instantiate from a json
-        """
-        with open(filename, "r") as f:
-            raw = json.load(f)
-        gmdb = cls(raw["id"], raw["name"], raw["directory"])
-        for record in raw["records"]:
-            gmdb.records.append(GroundMotionRecord.from_dict(record))
-        gmdb.site_ids = [rec.site.id for rec in gmdb.records]
-        return gmdb
 
     def number_records(self):
         """
@@ -1265,7 +990,7 @@ def load_database(directory):
     metadata_file = None
     filetype = None
     fileset = os.listdir(directory)
-    for ftype in ["pkl", "json"]:
+    for ftype in ["pkl"]:
         if ("metadatafile.%s" % ftype) in fileset:
             metadata_file = "metadatafile.%s" % ftype
             filetype = ftype
@@ -1275,10 +1000,7 @@ def load_database(directory):
             "Expected metadata file of supported type not found in %s"
             % directory)
     metadata_path = os.path.join(directory, metadata_file)
-    if filetype == "json":
-        # json metadata filetype
-        return GroundMotionDatabase.from_json(metadata_path)
-    elif filetype == "pkl":
+    if filetype == "pkl":
         # pkl file type
         with open(metadata_path, "rb") as f:
             return pickle.load(f)

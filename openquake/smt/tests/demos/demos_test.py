@@ -84,9 +84,9 @@ class DemosTestCase(unittest.TestCase):
         """
         st_demo(flatfile=self.flatfile_in,
                  gmms_imts=self.residuals_in,
-                 out_dir=self.residuals_out,
+                 out_dir=self.stations_out,
                  threshold=45)
-   
+        
     @classmethod
     def tearDownClass(self):
         """

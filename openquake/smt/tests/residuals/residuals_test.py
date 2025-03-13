@@ -48,6 +48,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Setup constructs the database from the ESM test data
         """
+        # Make the database
         ifile = os.path.join(BASE_DATA_PATH, "residual_tests_data.csv")
         cls.out_location = os.path.join(BASE_DATA_PATH, "residual_tests")
         if os.path.exists(cls.out_location):
@@ -59,22 +60,28 @@ class ResidualsTestCase(unittest.TestCase):
                                          "metadatafile.pkl")
         with open(cls.database_file, "rb") as f:
             cls.database = pickle.load(f)
+
+        # Add the GMPE list and IMTs
         cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]
+
+        # Compute residuals here to avoid repeating in each test
+        cls.residuals = res.Residuals(cls.gmpe_list, cls.imts)
+        cls.residuals.get_residuals(cls.database, component="Geometric")
+        cls.residuals.get_residual_statistics()
+
+        # Add other params to class
         cls.toml = os.path.join(
             BASE_DATA_PATH, 'residuals_from_toml_test.toml')
         cls.exp = exp
         cls.st_rec_min = 3
         cls.exp_stations = exp_stations
 
-    def test_residuals_execution_and_values(self):
+    def test_residual_values(self):
         """
-        Tests basic execution of residuals and correctness of values
+        Check correctness of values for computed residuals
         """
-        residuals = res.Residuals(self.gmpe_list, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
-        residuals.get_residual_statistics()
-        obs = pd.DataFrame(residuals.residuals)
+        obs = pd.DataFrame(self.residuals.residuals)
         exp = pd.DataFrame(self.exp)
         pd.testing.assert_frame_equal(obs, exp) 
 
@@ -91,102 +98,86 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Tests basic execution of residuals - not correctness of values
         """
-        lkh = res.Residuals(self.gmpe_list, self.imts)
-        lkh.get_residuals(self.database, component="Geometric")
-        lkh.get_likelihood_values()
+        self.residuals.get_likelihood_values()
 
     def test_llh_execution(self):
         """
         Tests execution of LLH - not correctness of values
         """
-        llh = res.Residuals(self.gmpe_list, self.imts)
-        llh.get_residuals(self.database, component="Geometric")
-        llh.get_loglikelihood_values(self.imts)
+        self.residuals.get_loglikelihood_values()
 
     def test_multivariate_llh_execution(self):
         """
         Tests execution of multivariate llh - not correctness of values
         """
-        multi_llh = res.Residuals(self.gmpe_list, self.imts)
-        multi_llh.get_residuals(self.database, component="Geometric")
-        multi_llh.get_multivariate_loglikelihood_values()
+        self.residuals.get_multivariate_loglikelihood_values()
 
     def test_edr_execution(self):
         """
         Tests execution of EDR - not correctness of values
         """
-        edr = res.Residuals(self.gmpe_list, self.imts)
-        edr.get_residuals(self.database, component="Geometric")
-        edr.get_edr_values()
+        self.residuals.get_edr_values()
           
     def test_stochastic_area_execution(self):
         """
         Tests execution of stochastic area metric - not correctness of values
         """
-        stoch = res.Residuals(self.gmpe_list, self.imts)
-        stoch.get_residuals(self.database, component="Geometric")
-        stoch.get_stochastic_area_wrt_imt()
-
-    def test_multiple_metrics(self):
-        """
-        Tests the execution running multiple metrics in one call
-        """
-        residuals = res.Residuals(self.gmpe_list, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
-        config = {}
-        for key in ["Residuals", "Likelihood", "LLH",
-                    "MultivariateLLH", "EDR"]:
-            _ = res.GSIM_MODEL_DATA_TESTS[key](residuals, config)
+        self.residuals.get_stochastic_area_wrt_imt()
 
     def test_plot_execution(self):
         """
-        Tests execution of gmpe ranking metric plots
+        Tests execution of gmpe ranking metric plots and the residual
+        distribution information plots
         """
-        residuals = res.Residuals(self.gmpe_list, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        # First compute the metrics
+        self.residuals.get_loglikelihood_values()
+        self.residuals.get_edr_values_wrt_imt()
+        self.residuals.get_stochastic_area_wrt_imt()
 
-        # Plots of GMM ranking metrics vs period
-        rspl.plot_residual_pdf_with_spectral_period(residuals, tmp_fig)
-        rspl.plot_edr_metrics_with_spectral_period(residuals, tmp_fig)
-        rspl.plot_loglikelihood_with_spectral_period(residuals, tmp_fig)
-        rspl.plot_stochastic_area_with_spectral_period(residuals, tmp_fig)
+        # Make the plots
+        rspl.plot_residual_pdf_with_spectral_period(self.residuals, tmp_fig)
+        rspl.plot_edr_metrics_with_spectral_period(self.residuals, tmp_fig)
+        rspl.plot_loglikelihood_with_spectral_period(self.residuals, tmp_fig)
+        rspl.plot_stochastic_area_with_spectral_period(self.residuals, tmp_fig)
 
     def test_table_execution(self):
         """
         Tests execution of table exporting functions
         """
-        residuals = res.Residuals(self.gmpe_list, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        # First compute the metrics
+        self.residuals.get_loglikelihood_values()
+        self.residuals.get_edr_values_wrt_imt()
+        self.residuals.get_stochastic_area_wrt_imt()
         
         # Tables of values
-        rspl.pdf_table(residuals, tmp_tab)
-        rspl.llh_table(residuals, tmp_tab)
-        rspl.edr_table(residuals, tmp_tab)
-        rspl.stochastic_area_table(residuals, tmp_tab)
+        rspl.pdf_table(self.residuals, tmp_tab)
+        rspl.llh_table(self.residuals, tmp_tab)
+        rspl.edr_table(self.residuals, tmp_tab)
+        rspl.stochastic_area_table(self.residuals, tmp_tab)
         
         # Tables of weights
-        rspl.llh_weights_table(residuals, tmp_tab)
-        rspl.edr_weights_table(residuals, tmp_tab)
-        rspl.stochastic_area_weights_table(residuals, tmp_tab)
+        rspl.llh_weights_table(self.residuals, tmp_tab)
+        rspl.edr_weights_table(self.residuals, tmp_tab)
+        rspl.stochastic_area_weights_table(self.residuals, tmp_tab)
         
     def test_single_station_execution_and_values(self):
         """
-        Test execution of single station residual analysis functions - not
+        Test execution of single station residual analysis functions and
         correctness of values. Execution of plots is also tested here.
         """
         # Get sites with at least 3 record each
         top_sites = self.database.rank_sites_by_record_count(self.st_rec_min)
             
         # Create SingleStationAnalysis object
-        ssa1 = res.SingleStationAnalysis(top_sites.keys(), self.gmpe_list,
-                                         self.imts)
+        ssa1 = res.SingleStationAnalysis(
+            top_sites.keys(), self.gmpe_list, self.imts)
         
         # Compute total, inter-event and intra-event residuals for each site
         ssa1.get_site_residuals(self.database)
 
         # Get station residual statistics per GMPE and per imt
         ssa_csv_output = os.path.join(self.out_location, 'ssa_test.csv')
-        ssa1.station_residual_statistics(True, ssa_csv_output)
+        ssa1.station_residual_statistics(ssa_csv_output)
         
         # Check exp vs obs delta_s2ss, delta_woes, phi_ss per station
         store = []
