@@ -71,86 +71,6 @@ def get_gmpe_str(gmpe):
     return gmpe_str
 
 
-### The following methods are used for the MultivariateLLH function
-def _build_matrices(contexts, gmpe, imtx):
-    """
-    Constructs the R and Z_G matrices (based on the implementation
-    in the supplement to Mak et al (2017)
-    """
-    neqs = len(contexts)
-    nrecs = sum(ctxt["Num. Sites"] for ctxt in contexts)
-
-    r_mat = np.zeros(nrecs, dtype=float)
-    z_g_mat = np.zeros([nrecs, neqs], dtype=float)
-    expected_mat = np.zeros(nrecs, dtype=float)
-    # Get observations
-    observations = np.zeros(nrecs)
-    i = 0
-    # Determine the total number of records and pass the log of the
-    # observations to the observations dictionary
-    for ctxt in contexts:
-        n_s = ctxt["Num. Sites"]
-        observations[i:(i + n_s)] = np.log(ctxt["Observations"][imtx])
-        i += n_s
-
-    i = 0
-    for j, ctxt in enumerate(contexts):
-        if not("Intra event" in ctxt["Expected"][gmpe][imtx]) and\
-                not("Inter event" in ctxt["Expected"][gmpe][imtx]):
-            # Only the total sigma exists
-            # Total sigma is used as intra-event sigma (from S. Mak)
-            n_r = len(ctxt["Expected"][gmpe][imtx]["Total"])
-            r_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Total"]
-            expected_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Mean"]
-            # Inter-event sigma is set to 0
-            i += n_r
-            continue
-        n_r = len(ctxt["Expected"][gmpe][imtx]["Intra event"])
-        r_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Intra event"]
-        # Get expected mean
-        expected_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Mean"]
-        if len(ctxt["Expected"][gmpe][imtx]["Inter event"]) == 1:
-            # Single inter event residual
-            z_g_mat[i:(i + n_r), j] =\
-                ctxt["Expected"][gmpe][imtx]["Inter event"][0]
-        else:
-            # inter-event residual given at a vector
-            z_g_mat[i:(i + n_r), j] =\
-                ctxt["Expected"][gmpe][imtx]["Inter event"]
-        i += n_r
-
-    v_mat = np.diag(r_mat ** 2.) + z_g_mat.dot(z_g_mat.T)
-    return observations, v_mat, expected_mat, neqs, nrecs
-
-
-def get_multivariate_ll(contexts, gmpe, imt):
-    """
-    Returns the multivariate loglikelihood, as described om equation 7 of
-    Mak et al. (2017)
-    """
-    observations, v_mat, expected_mat, neqs, nrecs = _build_matrices(
-        contexts, gmpe, imt)
-    sign, logdetv = np.linalg.slogdet(v_mat)
-    b_mat = observations - expected_mat
-    # `solve` below needs only finite values (see doc), but unfortunately raises
-    # in case. In order to silently skip non-finite values:
-    # 1. Check v_mat (square matrix), by simply returning nan if any cell value
-    # is nan (FIXME: handle better?):
-    if not np.isfinite(v_mat).all():
-        return np.nan
-    # 2. Check b_mat (array) by removing finite values:
-    b_finite = np.isfinite(b_mat)
-    if not b_finite.all():
-        if not b_finite.any():
-            return np.nan
-        b_mat = b_mat[b_finite]
-        v_mat = v_mat[b_finite, :][:, b_finite]
-    # call `solve(...check_finite=False)` because the check is already done.
-    # The function shouldn't raise anymore:
-    return (float(nrecs) * np.log(2.0 * np.pi) + logdetv +
-            (b_mat.T.dot(solve(v_mat, b_mat, check_finite=False)))) / 2.
-
-
 class Residuals(object):
     """
     Residuals object for storing ground-motion residuals computed
@@ -469,6 +389,8 @@ class Residuals(object):
                 ctxt["Ctx"].mag * np.ones(len(ctxt["Ctx"].repi))])
         return magnitudes
 
+
+    ### Likelihood (Scherbaum et al. 2004) functions
     def get_likelihood_values(self):
         """
         Returns the likelihood values for Total, plus inter- and intra-event
@@ -511,6 +433,8 @@ class Residuals(object):
             ret[res_type] = l_h, median_lh
         return ret
 
+
+    ### LLH (Scherbaum et al. 2009) functions
     def get_loglikelihood_values(self):
         """
         Returns the loglikelihood fit of the GMPEs to data using the
@@ -563,8 +487,9 @@ class Residuals(object):
                 idx] for idx, gmpe in enumerate(self.gmpe_list)}
             
         return self.llh, self.model_weights, self.model_weights_with_imt
-        
-    # Mak et al multivariate LLH functions
+
+
+    ### Multivariate LLH (Mak et al. 2017) functions
     def get_multivariate_loglikelihood_values(self, sum_imts=False):
         """
         Calculates the multivariate LLH for a set of GMPEs and IMTS according
@@ -581,6 +506,7 @@ class Residuals(object):
             LLH for each imt.
         """
         multi_llh_values = {gmpe: {} for gmpe in self.gmpe_list}
+
         # Get number of events and records
         for gmpe in self.gmpe_list:
             print("GMPE = {:s}".format(gmpe))
@@ -589,8 +515,9 @@ class Residuals(object):
                     # IMT missing for this GMPE
                     multi_llh_values[gmpe][imtx] = 0.0
                 else:
-                    multi_llh_values[gmpe][imtx] = get_multivariate_ll(
-                        self.contexts, gmpe, imtx)
+                    multi_llh_values[gmpe][imtx] =\
+                          self.get_multivariate_ll(
+                              self.contexts, gmpe, imtx)
             if sum_imts:
                 total_llh = 0.0
                 for imtx in self.imts:
@@ -598,7 +525,95 @@ class Residuals(object):
                         continue
                     total_llh += multi_llh_values[gmpe][imtx]
                 multi_llh_values[gmpe] = total_llh
+
         return multi_llh_values
+
+    def get_multivariate_ll(self, contexts, gmpe, imt):
+        """
+        Returns the multivariate loglikelihood, as described om equation 7 of
+        Mak et al. (2017)
+        """
+        observations, v_mat, expected_mat, neqs, nrecs = self.build_matrices(
+            contexts, gmpe, imt)
+        sign, logdetv = np.linalg.slogdet(v_mat)
+        b_mat = observations - expected_mat
+        
+        # TODO: Below needs only finite values (see doc), but unfortunately
+        # raises in case. In order to silently skip non-finite values:
+
+        # 1. Check v_mat (square matrix), by returning nan if any cell value
+        # is nan
+        if not np.isfinite(v_mat).all():
+            return np.nan
+        
+        # 2. Check b_mat (array) by removing finite values
+        b_finite = np.isfinite(b_mat)
+        if not b_finite.all():
+            if not b_finite.any():
+                return np.nan
+            b_mat = b_mat[b_finite]
+            v_mat = v_mat[b_finite, :][:, b_finite]
+        
+        return (float(nrecs) * np.log(2.0 * np.pi) + logdetv +
+                (b_mat.T.dot(solve(v_mat, b_mat, check_finite=False)))) / 2.
+
+    def build_matrices(self, contexts, gmpe, imtx):
+        """
+        Constructs the R and Z_G matrices (based on the implementation
+        in the supplement to Mak et al (2017)
+        """
+        neqs = len(contexts)
+        nrecs = sum(ctxt["Num. Sites"] for ctxt in contexts)
+
+        r_mat = np.zeros(nrecs, dtype=float)
+        z_g_mat = np.zeros([nrecs, neqs], dtype=float)
+        expected_mat = np.zeros(nrecs, dtype=float)
+        
+        # Get observations
+        observations = np.zeros(nrecs)
+        i = 0
+        
+        # Determine the total number of records
+        for ctxt in contexts:
+            n_s = ctxt["Num. Sites"]
+            observations[i:(i + n_s)] = np.log(ctxt["Observations"][imtx])
+            i += n_s
+
+        i = 0
+        for j, ctxt in enumerate(contexts):
+            if not("Intra event" in ctxt["Expected"][gmpe][imtx]) and\
+                    not("Inter event" in ctxt["Expected"][gmpe][imtx]):
+        
+                # Only the total sigma exists -  total sigma is used
+                # as intra-event sigma (from S. Mak)
+                n_r = len(ctxt["Expected"][gmpe][imtx]["Total"])
+                r_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Total"]
+                expected_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Mean"]
+            
+                # Inter-event sigma is set to 0
+                i += n_r
+                continue
+            
+            n_r = len(ctxt["Expected"][gmpe][imtx]["Intra event"])
+            r_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Intra event"]
+            
+            # Get expected mean
+            expected_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Mean"]
+            if len(ctxt["Expected"][gmpe][imtx]["Inter event"]) == 1:
+            
+                # Single inter event residual
+                z_g_mat[i:(i + n_r), j] =\
+                    ctxt["Expected"][gmpe][imtx]["Inter event"][0]
+            else:
+            
+                # inter-event residual given at a vector
+                z_g_mat[i:(i + n_r), j] =\
+                    ctxt["Expected"][gmpe][imtx]["Inter event"]
+            
+            i += n_r
+
+        v_mat = np.diag(r_mat ** 2.) + z_g_mat.dot(z_g_mat.T)
+        return observations, v_mat, expected_mat, neqs, nrecs
 
     def get_distinctiveness(self, outputs, number_bootstraps, sum_imts):
         """
@@ -608,8 +623,10 @@ class Residuals(object):
         ngmpes = len(self.gmpe_list)
         nbs = float(number_bootstraps)
         nimts = float(len(self.imts))
+
         if sum_imts:
             distinctiveness = np.zeros([ngmpes, ngmpes])
+        
             # Get only one index for each GMPE
             for i, gmpe in enumerate(self.gmpe_list):
                 for j, gmpe in enumerate(self.gmpe_list):
@@ -620,6 +637,7 @@ class Residuals(object):
                     distinctiveness[i, j] = float(np.sum(data_i < data_j) -
                         np.sum(data_j < data_i)) / (nbs * nimts)
             return distinctiveness
+        
         else:
             distinctiveness = np.zeros([ngmpes, ngmpes, len(self.imts)])
             for i, gmpe in enumerate(self.gmpe_list):
@@ -634,6 +652,8 @@ class Residuals(object):
                                   np.sum(data_j < data_i)) / nbs
         return distinctiveness
 
+
+    ### EDR (Kale and Akkar 2013) functions
     def get_edr_values(self, bandwidth=0.01, multiplier=3.0):
         """
         Calculates the EDR values for each GMPE according to the Euclidean
@@ -823,39 +843,8 @@ class Residuals(object):
         de_corr = np.sum((obs - y_c) ** 2.)
         return de_orig / de_corr
     
-    def cdf(self, data):
-        """
-        Get the cumulative distribution function (cdf) of the ground-motion
-        values
-        """
-        x1 = np.sort(data)
-        x = x1.tolist()
-        n = len(x)
-        p = 1/n
-        pvalues = list(np.linspace(p,1,n))
-        return x, pvalues
-    
-    def step_data(self, x,y):
-        """
-        Step the cdf to obtain the ecdf
-        """
-        xx,yy = x*2, y*2
-        xx.sort()
-        yy.sort()
-        return xx, [0.]+yy[:-1]
-    
-    def get_cdf_data(self, data, step_flag=None):
-        """
-        Get the cdf (for the predicted ground-motions) or the ecdf (for the
-        observed ground-motions)
-        """
-        x, p = self.cdf(data)
-        if step_flag is True:
-            xx, yy = self.step_data(x, p)
-            return np.array(xx), np.array(yy)
-        else:
-            return np.array(x), np.array(p)
-    
+
+    ### Stochastic Area (Sunny et al. 2021) functions
     def get_stochastic_area_wrt_imt(self):
         """
         Calculates the stochastic area values per imt for each GMPE according
@@ -913,6 +902,39 @@ class Residuals(object):
         self.stoch_areas_wrt_imt = stoch_area_store
         
         return self.stoch_areas_wrt_imt
+
+    def cdf(self, data):
+        """
+        Get the cumulative distribution function (cdf) of the ground-motion
+        values
+        """
+        x1 = np.sort(data)
+        x = x1.tolist()
+        n = len(x)
+        p = 1/n
+        pvalues = list(np.linspace(p,1,n))
+        return x, pvalues
+    
+    def step_data(self, x,y):
+        """
+        Step the cdf to obtain the ecdf
+        """
+        xx,yy = x*2, y*2
+        xx.sort()
+        yy.sort()
+        return xx, [0.]+yy[:-1]
+    
+    def get_cdf_data(self, data, step_flag=None):
+        """
+        Get the cdf (for the predicted ground-motions) or the ecdf (for the
+        observed ground-motions)
+        """
+        x, p = self.cdf(data)
+        if step_flag is True:
+            xx, yy = self.step_data(x, p)
+            return np.array(xx), np.array(yy)
+        else:
+            return np.array(x), np.array(p)
     
 
 class SingleStationAnalysis(object):
