@@ -29,7 +29,7 @@ from openquake.smt.utils import (
 
 class ResponseSpectrum(object):
     """
-    Base Class to implement a response spectrum calculation
+    Base class to implement a response spectrum calculation
     """
     def __init__(self, acceleration, time_step, periods, damping=0.05,
             units="cm/s/s"):
@@ -90,7 +90,6 @@ class NewmarkBeta(ResponseSpectrum):
     """
     Evaluates the response spectrum using the Newmark-Beta methodology
     """
-
     def __call__(self):
         """
         Evaluates the response spectrum
@@ -199,7 +198,6 @@ class NigamJennings(ResponseSpectrum):
     can provide estimates of the spectra at frequencies higher than that
     of the sampling frequency.
     """
-
     def __call__(self):
         """
         Define the response spectrum
