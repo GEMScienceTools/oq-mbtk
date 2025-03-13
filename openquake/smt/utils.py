@@ -31,6 +31,10 @@ from openquake.hazardlib.scalerel.peer import PeerMSR
 from openquake.hazardlib.gsim.gmpe_table import GMPETable
 from openquake.hazardlib.gsim.base import GMPE
 
+
+# Converting to radians
+TO_RAD = pi / 180.
+
 # Get a list of the available GSIMs
 AVAILABLE_GSIMS = get_available_gsims()
 
@@ -38,10 +42,7 @@ AVAILABLE_GSIMS = get_available_gsims()
 _gmpetable_regex = re.compile(r'^GMPETable\(([^)]+?)\)$')
 
 
-def get_time_vector(time_step, number_steps):
-    return np.cumsum(time_step * np.ones(number_steps, dtype=float)) - time_step
-
-
+### General utils for time series
 def convert_accel_units(acceleration, from_, to_='cm/s/s'):  # noqa
     """
     Converts acceleration from/to different units
@@ -84,6 +85,13 @@ def convert_accel_units(acceleration, from_, to_='cm/s/s'):  # noqa
                      "Should take either ''g'', ''m/s/s'' or ''cm/s/s''")
 
 
+def get_time_vector(time_step, number_steps):
+    """
+    Returns a time vector
+    """
+    return np.cumsum(time_step * np.ones(number_steps, dtype=float)) - time_step
+
+
 def get_velocity_displacement(time_step, acceleration, units="cm/s/s",
                               velocity=None, displacement=None):
     """
@@ -102,6 +110,33 @@ def get_velocity_displacement(time_step, acceleration, units="cm/s/s",
     if displacement is None:
         displacement = time_step * cumtrapz(velocity, initial=0.)
     return velocity, displacement
+
+
+def equalise_series(series_x, series_y):
+    """
+    For two time series from the same record but of different length
+    cuts both records down to the length of the shortest record
+    N.B. This assumes that the start times and the time-steps of the record
+    are the same - if not then this may introduce biases into the record
+    :param numpy.ndarray series_x:
+         X Time series
+    :param numpy.ndarray series_y:
+         Y Time series
+    """
+    n_x = len(series_x)
+    n_y = len(series_y)
+    if n_x > n_y:
+        return series_x[:n_y], series_y
+    elif n_y > n_x:
+        return series_x, series_y[:n_x]
+    else:
+        return series_x, series_y
+
+
+def nextpow2(nval):
+    m_f = np.log2(nval)
+    m_i = np.ceil(m_f)
+    return int(2.0 ** m_i)
 
 
 ### Utils for managing GMMs in the Residuals Module
@@ -223,8 +258,6 @@ def get_hypocentre_on_planar_surface(plane, hypo_loc=None):
         Hypocentre location as instance of :class:
         openquake.hazardlib.geo.point.Point
     """
-    TO_RAD = pi / 180.
-
     centroid = plane.get_middle_point()
     if hypo_loc is None:
         return centroid
@@ -319,7 +352,7 @@ def vs30_to_z1pt0_cy08(vs30):
     return np.exp(28.5 - (3.82 / 8.) * np.log((vs30 ** 8.) + (378.7 ** 8.)))
 
 
-def z1pt0_to_z2pt5(z1pt0):
+def z1pt0_to_z2pt5_cb07(z1pt0):
     """
     Calculates the depth to 2.5 km/s layer (km /s) using the model presented
     in Campbell & Bozorgnia (2007)

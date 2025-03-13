@@ -136,8 +136,14 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
     Creates a rupture given the hypocenter position
     """
     hypoc = Point(lon, lat, dep)
-    srf = PlanarSurface.from_hypocenter(hypoc, msr, mag, aratio, strike, dip,
-                                        rake, ztor)
+    srf = PlanarSurface.from_hypocenter(hypoc,
+                                        msr,
+                                        mag,
+                                        aratio,
+                                        strike,
+                                        dip,
+                                        rake,
+                                        ztor)
     rup = BaseRupture(mag, rake, trt, hypoc, srf)
     rup.hypocenter.depth = dep
     return rup
@@ -186,10 +192,18 @@ def att_curves(gmpe,
         msg += ' specify a TRT string within the toml file to assign a'
         msg += ' trt-dependent aratio proxy.'
         raise ValueError(msg)
-
-    # Get rup
-    rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
-                      strike=strike, dip=dip, rake=rake, trt=rup_trt,
+    
+    # Get rupture
+    rup = get_rupture(0.0, # Arbitrary lon
+                      0.0, # Arbitrary lat
+                      depth,
+                      WC1994(),
+                      mag=mag,
+                      aratio=aratio,
+                      strike=strike,
+                      dip=dip,
+                      rake=rake,
+                      trt=rup_trt,
                       ztor=ztor)
 
     # Set site props
