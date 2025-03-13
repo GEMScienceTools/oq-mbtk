@@ -16,19 +16,18 @@ vs30 = 800
 Z1 = -999   # If -999 compute from Vs30 using Chiou and Youngs (2014) relationship
 Z25 = -999  # If -999 compute from Vs30 using Campbell and Bozorgnia (2014) relationship
 up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
+z_basin_region = 'global' # Obtain z1pt0/z2pt5 from "global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
 volc_back_arc = false # true or false
 
-# Characterise earthquake for the region of interest as finite rupture
-[source_properties]
-trt = 'None' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
-ztor = 'None' # Set to string of 'None' to NOT consider else list corresponding to number of mags/depths
+[source_properties] # Characterise EQ as finite rupture
 strike = -999
-dip =  60
-rake = 90 # Must be provided. Strike and dip can be approximated if set to -999
+dip = -999
+rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
+mags = [5,6,7] # mags used only for trellis and response spectra
+depths = [20,25,30] # depth per magnitude for trellis and response spectra
+ztor = -999 # Set to -999 to NOT consider
 aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
-mags = [5, 6, 7] # mags used only for trellis and response spectra
-depths = [20, 20, 20] # depth per magnitude and response spectra
+trt = -999 # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
 # Specify mags and depths for Sammons, Euclidean dist and Agglomerative clustering
 [source_properties_euclidean_analysis]
