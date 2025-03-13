@@ -249,7 +249,7 @@ Plot of residual distributions versus spectral acceleration:
 Single Station Residual Analysis
 ********************************
 
-1. The smt's residual module also offers capabilities for performing single station residual analysis (SSA).
+1. The smt's residuals module also offers capabilities for performing single station residual analysis (SSA).
 
    We can first specify a threshold for the minimum number of records each site must have to be considered in the SSA:
    
@@ -337,22 +337,22 @@ The Loglikelihood Method (Scherbaum et al. 2009)
 
     .. code-block:: ini
     
-       > # From gmpe_list and imt_list
+       > # Get LLH values from gmpe_list and imt_list (both aggregated over IMTs and per IMT)
        > llh, model_weights, model_weights_with_imt = res.get_loglikelihood_values(resid1, imt_list)
        >
        > # OR from .toml:
        > llh, model_weights, model_weights_with_imt = res.get_loglikelihood_values(resid1, resid1.imts)
        >
-       > # Generate a .csv table of LLH values
+       > # Generate a .csv table of LLH values per GMPE and per IMT
        > rspl.loglikelihood_table(resid1, filename)
        >
-       > # Generate a .csv table of LLH-based model weights for GMPE logic tree 
+       > # Generate a .csv table of LLH-based model weights for GMPE logic tree
        > rspl.llh_weights_table(resid1, filename)   
        >
-       > # Plot LLH vs imt
+       > # Plot LLH values per GMPE vs IMT
        > rspl.plot_loglikelihood_with_spectral_period(resid1, filename)
 
-    Loglikelihood versus spectral acceleration plot for considered GMPEs:
+    Loglikelihood versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_LLH_plot.jpg
 
 Euclidean Distance Based Ranking (Kale and Akkar, 2013)
@@ -364,28 +364,28 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
    
     .. code-block:: ini
     
-       > # Get EDR, MDE Norm and MDE per GMPE aggregated over all imts
+       > # Get EDR, MDE Norm and MDE per GMPE aggregated over all IMTs
        > res.get_edr_values(resid1)
        >
-       > # Get EDR, MDE Norm and MDE for each considered imt
+       > # Get EDR, MDE Norm and MDE per GMPE per IMT
        > res.get_edr_values_wrt_spectral_period(resid1)
        >
-       > # Generate a .csv table of EDR values for each GMPE
+       > # Generate a .csv table of EDR values per GMPE and per IMT
        > rspl.edr_table(resid1, filename)
        >
        > # Generate a .csv table of EDR-based model weights for GMPE logic tree
        > rspl.edr_weights_table(resid1, filename)   
        >
-       > # Plot EDR score, MDE norm and sqrt(k) vs imt
+       > # Plot EDR score, MDE norm and sqrt(k) vs IMT
        > rspl.plot_plot_edr_metrics_with_spectral_period(resid1, filename)
 
-    EDR rank versus spectral acceleration plot for considered GMPEs:
+    EDR rank versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_EDR_plot_EDR_value.jpg
        
-    EDR correction factor versus spectral acceleration for considered GMPEs:
+    EDR correction factor versus spectral period for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_EDR_plot_EDR_correction_factor.jpg   
        
-    MDE versus spectral acceleration for considered GMPEs:
+    MDE versus spectral period for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_EDR_plot_MDE.jpg      
 
 Stochastic Area Based Ranking (Sunny et al. 2021)
@@ -395,25 +395,25 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
 
     .. code-block:: ini
     
-       > # Get stochastic area metric for each considered imt
+       > # Get stochastic area metric per GMPE and per IMT
        > res.get_stochastic_area_wrt_imt(resid1)
        >
-       > # Generate a .csv table of stochastic area values for each GMPE
+       > # Generate a .csv table of stochastic area values per GMPE and per IMT
        > rspl.stochastic_area_table(resid1, filename)
        >
        > # Generate a .csv table of stochastic area-based model weights for GMPE logic tree
        > rspl.stochastic_area_weights_table(resid1, filename)   
        >
-       > # Plot stochastic area vs imt
+       > # Plot stochastic area vs IMT
        > rspl.plot_stochastic_area_with_spectral_period(resid1, filename)
 
-    Stochastic area versus spectral acceleration plot for considered GMPEs:
+    Stochastic area versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_stochastic_area_plot.jpg
 
 Comparing GMPEs
 ***************
 
-1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals (within the residual module as demonstrated above), we can also evaluate GMPEs with respect to the predicted ground-motion for a given earthquake scenario. The tools for comparing GMPEs are found within the Comparison module.
+1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals (within the residuals module as demonstrated above), we can also evaluate GMPEs with respect to the predicted ground-motion for a given earthquake scenario. The tools for comparing GMPEs are found within the Comparison module.
     
     .. code-block:: ini
     
@@ -441,8 +441,8 @@ Comparing GMPEs
         # Specify site properties
         [site_properties]
         vs30 = 800
-        Z1 = -999
-        Z25 = -999
+        Z1 = -999   # If -999 compute from Vs30 using Chiou and Youngs (2014) relationship
+        Z25 = -999  # If -999 compute from Vs30 using Campbell and Bozorgnia (2014) relationship
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
         z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
         volc_back_arc = false # true or false
@@ -461,16 +461,15 @@ Comparing GMPEs
                   # set to -999
         aratio  = 2 # If set to -999 the user-provided trt string will be used 
                     # to assign a trt-dependent aratio
-        trellis_and_rs_mag_list = [5, 6, 7] # Mags used only for trellis and response spectra
-        trellis_and_rs_depths = [20, 20, 20] # Depth per magnitude for trellis and
-                                             # response spectra
+        mags = [5, 6, 7] # Mags used only for trellis and response spectra
+        depths = [20, 20, 20] # Depth per magnitude for trellis and response spectra
         
-        # Specify magnitude array for Sammons, Euclidean dist and clustering
-        [mag_values_non_trellis_or_spectra_functions]
+        # Specify mags and depths for Sammons, Euclidean dist and Agglomerative clustering
+        [source_properties_euclidean_analysis]
         mmin = 5
         mmax = 7
         spacing = 0.1
-        non_trellis_or_spectra_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+        depths_for_euclidean = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
         
         # Specify label for gmpes
         [gmpe_labels]
@@ -639,7 +638,7 @@ Comparing GMPEs
 
         [models.1-ModifiableGMPE]
         gmpe = 'CampbellBozorgnia2014'
-        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # Fix total sigma per imt
+        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # Fix total sigma per IMT
         
         [models.2-ModifiableGMPE]
         gmpe = 'CampbellBozorgnia2014'
@@ -660,7 +659,7 @@ Comparing GMPEs
                                
         [models.6-ModifiableGMPE]
         gmpe = 'ChiouYoungs2014'
-        median_scaling_scalar = 1.4 # Scale median by factor of 1.4 over all imts
+        median_scaling_scalar = 1.4 # Scale median by factor of 1.4 over all IMTs
         
         [models.7-ModifiableGMPE]
         gmpe = 'ChiouYoungs2014'
@@ -668,11 +667,11 @@ Comparing GMPEs
         
         [models.8-ModifiableGMPE]
         gmpe = 'KothaEtAl2020'
-        sigma_scaling_scalar = 1.25 # Scale sigma by factor of 1.25 over all imts
+        sigma_scaling_scalar = 1.25 # Scale sigma by factor of 1.25 over all IMTs
         
         [models.9-ModifiableGMPE]
         gmpe = 'KothaEtAl2020'
-        sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # Scale sigma by imt-dependent factor
+        sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # Scale sigma by IMT-dependent factor
         
         [models.10-ModifiableGMPE]
         gmpe = 'AtkinsonMacias2009'

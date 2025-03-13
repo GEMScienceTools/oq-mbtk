@@ -27,7 +27,7 @@ demo_out = os.path.join(BASE, 'outputs_demo_comparison')
 
 def run_comparison(file, out_dir):
     """
-    Run the GMM comparison for the list of input tomls and return a dictionary
+    Run the GMM comparison the provided toml and return a dictionary
     storing the median attenuation curves.
     
     The att_curves variable stores the attenuation curves for each
@@ -36,9 +36,6 @@ def run_comparison(file, out_dir):
     The user can examine the keys of the att_curves variable to
     better understand the additional information stored within.
     """
-    # Create a config object
-    config = toml.load(file)
-
     # Generate plots and retrieve attenuation curve data from config object
     att_curves = comp.plot_trellis(file, out_dir)
     comp.plot_spectra(file, out_dir)
@@ -47,14 +44,17 @@ def run_comparison(file, out_dir):
     comp.plot_sammons(file, out_dir)
     comp.plot_euclidean(file, out_dir)
 
-    return att_curves, config
+    return att_curves
 
 
-def reformat_curves(att_curves, config, out_dir):
+def reformat_curves(att_curves, file, out_dir):
     """
     Export the (median) hazard curves into a CSV for the given
     config (i.e. run parameters).
     """
+    # Load the config object
+    config = toml.load(file)
+
     # Get the distance type used
     R = config['general']['dist_type']+' (km)'
 
@@ -105,10 +105,10 @@ def main(input_toml=demo_input, out_dir=demo_out):
     os.makedirs(out_dir)
 
     # Parse flatfile into metadata
-    att_curves, config = run_comparison(input_toml, out_dir)
+    att_curves = run_comparison(input_toml, out_dir)
 
     # Reformat the att_curves dictionary into a csv
-    df = reformat_curves(att_curves, config, out_dir)
+    df = reformat_curves(att_curves, input_toml, out_dir)
 
     # Print that the analysis has finished
     print("GMM comparison analysis has successfully finished")

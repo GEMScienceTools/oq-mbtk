@@ -23,7 +23,8 @@ import unittest
 import numpy as np
 from scipy.constants import g
 
-from openquake.smt.utils_strong_motion import convert_accel_units, SCALAR_XY
+from openquake.smt.utils import convert_accel_units
+from openquake.smt.utils_intensity_measures import SCALAR_XY
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__))

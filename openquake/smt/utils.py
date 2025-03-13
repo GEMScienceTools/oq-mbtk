@@ -16,17 +16,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Strong motion utilities.
+Utilities used throughout the SMT (both Comparison and Residuals Module)
 """
-# WARNING: this module is intended to collect functions used in various places
-# throughout the code. Consequently, try to limit the amount of stuff here and in
-# particular the amount of imports, which might slow down the code unnecessarily
 import os
 import re
-import pickle
 import numpy as np
-from scipy.integrate import cumtrapz
 from scipy.constants import g
+from scipy.integrate import cumtrapz
 from math import sqrt, pi, sin, cos
 
 from openquake.hazardlib.geo import PlanarSurface
@@ -35,14 +31,115 @@ from openquake.hazardlib.scalerel.peer import PeerMSR
 from openquake.hazardlib.gsim.gmpe_table import GMPETable
 from openquake.hazardlib.gsim.base import GMPE
 
+
+# Converting to radians
+TO_RAD = pi / 180.
+
 # Get a list of the available GSIMs
 AVAILABLE_GSIMS = get_available_gsims()
 
 # Regular expression to get a GMPETable from string:
 _gmpetable_regex = re.compile(r'^GMPETable\(([^)]+?)\)$')
 
-TO_RAD = pi / 180.
 
+### General utils for time series
+def convert_accel_units(acceleration, from_, to_='cm/s/s'):  # noqa
+    """
+    Converts acceleration from/to different units
+
+    :param acceleration: the acceleration (numeric or numpy array)
+    :param from_: unit of `acceleration`: string in "g", "m/s/s", "m/s**2",
+        "m/s^2", "cm/s/s", "cm/s**2" or "cm/s^2"
+    :param to_: new unit of `acceleration`: string in "g", "m/s/s", "m/s**2",
+        "m/s^2", "cm/s/s", "cm/s**2" or "cm/s^2". When missing, it defaults
+        to "cm/s/s"
+
+    :return: acceleration converted to the given units (by default, 'cm/s/s')
+    """
+    m_sec_square = ("m/s/s", "m/s**2", "m/s^2")
+    cm_sec_square = ("cm/s/s", "cm/s**2", "cm/s^2")
+    acceleration = np.asarray(acceleration)
+    if from_ == 'g':
+        if to_ == 'g':
+            return acceleration
+        if to_ in m_sec_square:
+            return acceleration * g
+        if to_ in cm_sec_square:
+            return acceleration * (100 * g)
+    elif from_ in m_sec_square:
+        if to_ == 'g':
+            return acceleration / g
+        if to_ in m_sec_square:
+            return acceleration
+        if to_ in cm_sec_square:
+            return acceleration * 100
+    elif from_ in cm_sec_square:
+        if to_ == 'g':
+            return acceleration / (100 * g)
+        if to_ in m_sec_square:
+            return acceleration / 100
+        if to_ in cm_sec_square:
+            return acceleration
+
+    raise ValueError("Unrecognised time history units. "
+                     "Should take either ''g'', ''m/s/s'' or ''cm/s/s''")
+
+
+def get_time_vector(time_step, number_steps):
+    """
+    Returns a time vector
+    """
+    return np.cumsum(time_step * np.ones(number_steps, dtype=float)) - time_step
+
+
+def get_velocity_displacement(time_step, acceleration, units="cm/s/s",
+                              velocity=None, displacement=None):
+    """
+    Returns the velocity and displacement time series using simple integration
+    :param float time_step:
+        Time-series time-step (s)
+    :param numpy.ndarray acceleration:
+        Acceleration time-history
+    :returns:
+        velocity - Velocity Time series (cm/s)
+        displacement - Displacement Time series (cm)
+    """
+    acceleration = convert_accel_units(acceleration, units)
+    if velocity is None:
+        velocity = time_step * cumtrapz(acceleration, initial=0.)
+    if displacement is None:
+        displacement = time_step * cumtrapz(velocity, initial=0.)
+    return velocity, displacement
+
+
+def equalise_series(series_x, series_y):
+    """
+    For two time series from the same record but of different length
+    cuts both records down to the length of the shortest record
+    N.B. This assumes that the start times and the time-steps of the record
+    are the same - if not then this may introduce biases into the record
+    :param numpy.ndarray series_x:
+         X Time series
+    :param numpy.ndarray series_y:
+         Y Time series
+    """
+    n_x = len(series_x)
+    n_y = len(series_y)
+    if n_x > n_y:
+        return series_x[:n_y], series_y
+    elif n_y > n_x:
+        return series_x, series_y[:n_x]
+    else:
+        return series_x, series_y
+
+
+def nextpow2(nval):
+    m_f = np.log2(nval)
+    m_i = np.ceil(m_f)
+    return int(2.0 ** m_i)
+
+
+### Utils for managing GMMs in the Residuals Module
 def check_gsim_list(gsim_list):
     """
     Check the GSIM models or strings in `gsim_list`, and return a dict of
@@ -90,201 +187,17 @@ def _get_gmpe_name(gsim):
         for key in gsim.__dict__:
             if key.startswith("kwargs"):
                 continue
-            val = str(gsim.__dict__[key])  # quoting strings with json maybe?
+            val = str(gsim.__dict__[key]) 
             additional_args.append("{:s}={:s}".format(key, val))
         if len(additional_args):
             gsim_name_str = "({:s})".format(", ".join(additional_args))
             return gsim_name + gsim_name_str
         else:
             return gsim_name
+        
 
-
-def get_time_vector(time_step, number_steps):
-    """
-    General SMT utils
-    """
-    return np.cumsum(time_step * np.ones(number_steps, dtype=float)) - time_step
-
-
-def nextpow2(nval):
-    m_f = np.log2(nval)
-    m_i = np.ceil(m_f)
-    return int(2.0 ** m_i)
-
-
-def convert_accel_units(acceleration, from_, to_='cm/s/s'):  # noqa
-    """
-    Converts acceleration from/to different units
-
-    :param acceleration: the acceleration (numeric or numpy array)
-    :param from_: unit of `acceleration`: string in "g", "m/s/s", "m/s**2",
-        "m/s^2", "cm/s/s", "cm/s**2" or "cm/s^2"
-    :param to_: new unit of `acceleration`: string in "g", "m/s/s", "m/s**2",
-        "m/s^2", "cm/s/s", "cm/s**2" or "cm/s^2". When missing, it defaults
-        to "cm/s/s"
-
-    :return: acceleration converted to the given units (by default, 'cm/s/s')
-    """
-    m_sec_square = ("m/s/s", "m/s**2", "m/s^2")
-    cm_sec_square = ("cm/s/s", "cm/s**2", "cm/s^2")
-    acceleration = np.asarray(acceleration)
-    if from_ == 'g':
-        if to_ == 'g':
-            return acceleration
-        if to_ in m_sec_square:
-            return acceleration * g
-        if to_ in cm_sec_square:
-            return acceleration * (100 * g)
-    elif from_ in m_sec_square:
-        if to_ == 'g':
-            return acceleration / g
-        if to_ in m_sec_square:
-            return acceleration
-        if to_ in cm_sec_square:
-            return acceleration * 100
-    elif from_ in cm_sec_square:
-        if to_ == 'g':
-            return acceleration / (100 * g)
-        if to_ in m_sec_square:
-            return acceleration / 100
-        if to_ in cm_sec_square:
-            return acceleration
-
-    raise ValueError("Unrecognised time history units. "
-                     "Should take either ''g'', ''m/s/s'' or ''cm/s/s''")
-
-
-def get_velocity_displacement(time_step, acceleration, units="cm/s/s",
-                              velocity=None, displacement=None):
-    """
-    Returns the velocity and displacment time series using simple integration
-    :param float time_step:
-        Time-series time-step (s)
-    :param numpy.ndarray acceleration:
-        Acceleration time-history
-    :returns:
-        velocity - Velocity Time series (cm/s)
-        displacement - Displacement Time series (cm)
-    """
-    acceleration = convert_accel_units(acceleration, units)
-    if velocity is None:
-        velocity = time_step * cumtrapz(acceleration, initial=0.)
-    if displacement is None:
-        displacement = time_step * cumtrapz(velocity, initial=0.)
-    return velocity, displacement
-
-
-def _save_image(filename, fig, format='png', dpi=300, **kwargs):  # noqa
-    """
-    Saves the matplotlib figure `fig` to `filename`. Wrapper around `fig.savefig`
-    with `dpi=300` by default and `format` inferred from `filename` extension
-    or, if no extension is found, set as "png".
-    If filename is empty this function does nothing and return
-
-    :param str filename: str, the file path
-    :param figure: a :class:`matplotlib.figure.Figure` (e.g. via
-        `matplotlib.pyplot.figure()`)
-    :param format: string, the image format. Default: 'png'. This argument is
-        ignored if `filename` has a file extension, as `format` will be set
-        equal to the extension without leading dot.
-    :param str kwargs: additional keyword arguments to pass to `fig.savefig`.
-        For details, see:
-        https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
-    """
-    if not filename:
-        return
-
-    name, ext = os.path.splitext(filename)
-    if ext:
-        format = ext[1:]  # noqa
-    else:
-        filename = name + '.' + format
-
-    fig.savefig(filename, dpi=dpi, format=format, **kwargs)
-
-
-def load_pickle(pickle_file):
-    """
-    Load pickle file
-    """
-    with open(pickle_file, 'rb') as f:
-        return pickle.load(f)
-
-
-# Mechanism type to Rake conversion:
-MECHANISM_TYPE = {
-    "Normal": -90.0,
-    "Strike-Slip": 0.0,
-    "Reverse": 90.0,
-    "Oblique": 0.0,
-    "Unknown": 0.0,
-    "N": -90.0,  # Flatfile conventions
-    "S": 0.0,
-    "R": 90.0,
-    "U": 0.0,
-    "NF": -90.,  # ESM flatfile conventions
-    "SS": 0.,
-    "TF": 90.,
-    "NS": -45.,  # Normal with strike-slip component
-    "TS": 45.,  # Reverse with strike-slip component
-    "O": 0.0
-}
-
-
-DIP_TYPE = {
-    "Normal": 60.0,
-    "Strike-Slip": 90.0,
-    "Reverse": 35.0,
-    "Oblique": 60.0,
-    "Unknown": 90.0,
-    "N": 60.0,  # Flatfile conventions
-    "S": 90.0,
-    "R": 35.0,
-    "U": 90.0,
-    "NF": 60.,  # ESM flatfile conventions
-    "SS": 90.,
-    "TF": 35.,
-    "NS": 70.,  # Normal with strike-slip component
-    "TS": 45.,  # Reverse with strike-slip component
-    "O": 90.0
-}
-
-
-# mean utilities (geometric, arithmetic, ...):
-SCALAR_XY = {
-    "Geometric": lambda x, y: np.sqrt(x * y),
-    "Arithmetic": lambda x, y: (x + y) / 2.,
-    "Larger": lambda x, y: np.max(np.array([x, y]), axis=0),
-    "Vectorial": lambda x, y: np.sqrt(x ** 2. + y ** 2.)
-}
-
-
+### Utils for finite rupture construction in the Residuals module
 DEFAULT_MSR = PeerMSR()
-
-
-def get_interpolated_period(target_period, periods, values):
-    """
-    Returns the spectra interpolated in loglog space
-
-    :param float target_period: Period required for interpolation
-    :param np.ndarray periods: Spectral Periods
-    :param np.ndarray values: Ground motion values
-    """
-    if (target_period < np.min(periods)) or (target_period > np.max(periods)):
-        raise ValueError("Period not within calculated range: %s" %
-                         str(target_period))
-    lval = np.where(periods <= target_period)[0][-1]
-    uval = np.where(periods >= target_period)[0][0]
-
-    if (uval - lval) == 0:
-        return values[lval]
-
-    d_y = np.log10(values[uval]) - np.log10(values[lval])
-    d_x = np.log10(periods[uval]) - np.log10(periods[lval])
-    return 10.0 ** (
-        np.log10(values[lval]) +
-        (np.log10(target_period) - np.log10(periods[lval])) * d_y / d_x)
-
 
 def create_planar_surface(top_centroid, strike, dip, area, aspect):
     """
@@ -345,7 +258,6 @@ def get_hypocentre_on_planar_surface(plane, hypo_loc=None):
         Hypocentre location as instance of :class:
         openquake.hazardlib.geo.point.Point
     """
-
     centroid = plane.get_middle_point()
     if hypo_loc is None:
         return centroid
@@ -376,6 +288,45 @@ def get_hypocentre_on_planar_surface(plane, hypo_loc=None):
                                down_dip_azimuth)
 
 
+# Mechanism type to Rake conversion:
+MECHANISM_TYPE = {
+    "Normal": -90.0,
+    "Strike-Slip": 0.0,
+    "Reverse": 90.0,
+    "Oblique": 0.0,
+    "Unknown": 0.0,
+    "N": -90.0,  # Flatfile conventions
+    "S": 0.0,
+    "R": 90.0,
+    "U": 0.0,
+    "NF": -90.,  # ESM flatfile conventions
+    "SS": 0.,
+    "TF": 90.,
+    "NS": -45.,  # Normal with strike-slip component
+    "TS": 45.,  # Reverse with strike-slip component
+    "O": 0.0}
+
+
+# Mechanism type to dip conversion
+DIP_TYPE = {
+    "Normal": 60.0,
+    "Strike-Slip": 90.0,
+    "Reverse": 35.0,
+    "Oblique": 60.0,
+    "Unknown": 90.0,
+    "N": 60.0,  # Flatfile conventions
+    "S": 90.0,
+    "R": 35.0,
+    "U": 90.0,
+    "NF": 60.,  # ESM flatfile conventions
+    "SS": 90.,
+    "TF": 35.,
+    "NS": 70.,  # Normal with strike-slip component
+    "TS": 45.,  # Reverse with strike-slip component
+    "O": 90.0}
+
+
+### Vs30 to z1pt0 and z2pt5 relationships from GMMs
 def vs30_to_z1pt0_as08(vs30):
     """
     Extracts a depth to 1.0 km/s velocity layer using the relationship
@@ -401,7 +352,7 @@ def vs30_to_z1pt0_cy08(vs30):
     return np.exp(28.5 - (3.82 / 8.) * np.log((vs30 ** 8.) + (378.7 ** 8.)))
 
 
-def z1pt0_to_z2pt5(z1pt0):
+def z1pt0_to_z2pt5_cb07(z1pt0):
     """
     Calculates the depth to 2.5 km/s layer (km /s) using the model presented
     in Campbell & Bozorgnia (2007)
@@ -454,3 +405,33 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
         return np.exp(5.359 - 1.102 * np.log(vs30))
     else:
         return np.exp(7.089 - 1.144 * np.log(vs30))
+
+
+# Other
+def _save_image(filename, fig, format='png', dpi=300, **kwargs):  # noqa
+    """
+    Saves the matplotlib figure `fig` to `filename`. Wrapper around `fig.savefig`
+    with `dpi=300` by default and `format` inferred from `filename` extension
+    or, if no extension is found, set as "png".
+    If filename is empty this function does nothing and return
+
+    :param str filename: str, the file path
+    :param figure: a :class:`matplotlib.figure.Figure` (e.g. via
+        `matplotlib.pyplot.figure()`)
+    :param format: string, the image format. Default: 'png'. This argument is
+        ignored if `filename` has a file extension, as `format` will be set
+        equal to the extension without leading dot.
+    :param str kwargs: additional keyword arguments to pass to `fig.savefig`.
+        For details, see:
+        https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
+    """
+    if not filename:
+        return
+
+    name, ext = os.path.splitext(filename)
+    if ext:
+        format = ext[1:]  # noqa
+    else:
+        filename = name + '.' + format
+
+    fig.savefig(filename, dpi=dpi, format=format, **kwargs)

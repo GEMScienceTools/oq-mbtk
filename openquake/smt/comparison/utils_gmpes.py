@@ -23,13 +23,13 @@ import pandas as pd
 import ast
 
 from openquake.hazardlib import valid
+from openquake.hazardlib import scalerel 
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib.geo.surface import PlanarSurface
 from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.site import Site, SiteCollection
-from openquake.hazardlib.scalerel import WC1994
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
@@ -136,8 +136,14 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
     Creates a rupture given the hypocenter position
     """
     hypoc = Point(lon, lat, dep)
-    srf = PlanarSurface.from_hypocenter(hypoc, msr, mag, aratio, strike, dip,
-                                        rake, ztor)
+    srf = PlanarSurface.from_hypocenter(hypoc,
+                                        msr,
+                                        mag,
+                                        aratio,
+                                        strike,
+                                        dip,
+                                        rake,
+                                        ztor)
     rup = BaseRupture(mag, rake, trt, hypoc, srf)
     rup.hypocenter.depth = dep
     return rup
@@ -164,32 +170,40 @@ def att_curves(gmpe,
     """
     Compute the ground-motion intensities for the given context created here
     """
-    rup_trt = None
-    if trt == 'ASCR':
+    # If TRT specified assign it and an MSR
+    if trt == 'active_crustal':
         rup_trt = TRT.ACTIVE_SHALLOW_CRUST
-    if trt == 'InSlab':
+        rup_msr = scalerel.WC1994()
+    elif trt == 'slab':
         rup_trt = TRT.SUBDUCTION_INTRASLAB
-    if trt == 'Interface':
+        rup_msr = scalerel.StrasserIntraslab
+    elif trt == 'interface':
         rup_trt = TRT.SUBDUCTION_INTERFACE
-    if trt == 'Stable':
+        rup_msr = scalerel.StrasserInterface
+    elif trt == 'stable':
         rup_trt = TRT.STABLE_CONTINENTAL
-    if trt == 'Upper_Mantle':
-        rup_trt = TRT.UPPER_MANTLE
-    if trt == 'Volcanic':
-        rup_trt = TRT.VOLCANIC
-    if trt == 'Induced':
-        rup_trt = TRT.INDUCED
-    if trt == 'Induced_Geothermal':
-        rup_trt = TRT.GEOTHERMAL
-    if rup_trt is None and aratio == -999:
+        rup_msr = scalerel.WC1994()
+    else:
+        rup_trt = None
+        rup_msr = scalerel.WC1994()
+
+    if rup_trt is -999 and aratio == -999:
         msg = 'An aspect ratio must be provided by the user, or alternatively'
         msg += ' specify a TRT string within the toml file to assign a'
         msg += ' trt-dependent aratio proxy.'
         raise ValueError(msg)
-
-    # Get rup
-    rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
-                      strike=strike, dip=dip, rake=rake, trt=rup_trt,
+    
+    # Get rupture
+    rup = get_rupture(0.0, # Arbitrary lon
+                      0.0, # Arbitrary lat
+                      depth,
+                      msr=rup_msr,
+                      mag=mag,
+                      aratio=aratio,
+                      strike=strike,
+                      dip=dip,
+                      rake=rake,
+                      trt=rup_trt,
                       ztor=ztor)
 
     # Set site props
@@ -252,7 +266,7 @@ def _get_z1(Vs30, region):
     """
     Get z1pt0 using Chiou and Youngs (2014) relationship.
     """
-    if region == 'Global':  # California and non-Japan regions
+    if region == 'global':  # California and non-Japan regions
         Z1 = (np.exp(-7.15 / 4 * np.log((Vs30**4 + 570.94**4) /
                                         (1360**4 + 570.94**4))))
     else:  # Japan
@@ -265,7 +279,7 @@ def _get_z25(Vs30, region):
     """
     Get z2pt5 using Campbell and Bozorgnia (2014) relationship.
     """
-    if region == 'Global':  # California and non-Japan regions
+    if region == 'global':  # California and non-Japan regions
         Z25 = np.exp(7.089 - 1.144 * np.log(Vs30))
     else:  # Japan
         Z25 = np.exp(5.359 - 1.102 * np.log(Vs30))
@@ -295,9 +309,9 @@ def _param_gmpes(strike, dip, depth, aratio, rake, trt):
 
     # Depth
     if depth == -999:
-        if trt == 'Interface':
+        if trt == 'interface':
             depth_s = 40
-        if trt == 'InSlab':
+        if trt == 'slab':
             depth_s = 150
         else:
             depth_s = 15 # Crustal
@@ -308,7 +322,7 @@ def _param_gmpes(strike, dip, depth, aratio, rake, trt):
     if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
-        if trt in ['InSlab', 'Interface']:
+        if trt in ['slab', 'interface']:
             aratio_s = 5
         else:
             aratio_s = 2 # Crustal
