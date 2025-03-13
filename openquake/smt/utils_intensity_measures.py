@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-General Functions for computing intensity measures and spectra including:
+Utils for handling intensity measures and spectra:
     1) General intensity measure utils e.g. computing peak measures
     1) Response spectra
     2) Fourier amplitude spectra (FAS)
