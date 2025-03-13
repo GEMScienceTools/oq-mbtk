@@ -23,9 +23,8 @@ import numpy as np
 from math import sqrt
 import matplotlib.pyplot as plt
 
-from openquake.smt.utils_strong_motion import (_save_image, get_time_vector,
-                                               convert_accel_units,
-                                               get_velocity_displacement)
+from openquake.smt.utils import (
+    get_time_vector, convert_accel_units, get_velocity_displacement, _save_image,)
                      
 
 class ResponseSpectrum(object):
@@ -378,3 +377,4 @@ def plot_time_series(acceleration, time_step, velocity=[], displacement=[],
     ax.grid()
     _save_image(filename, plt.gcf(), filetype, dpi)
     plt.show()
+    

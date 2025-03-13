@@ -34,7 +34,7 @@ from openquake.smt.residuals.sm_database import (
     FocalMechanism, GCMTNodalPlanes, Component, RecordSite, RecordDistance)
 from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.utils_strong_motion import (
+from openquake.smt.utils import (
     MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14)
 
 # Import the ESM dictionaries
