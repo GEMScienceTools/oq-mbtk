@@ -41,6 +41,7 @@ from openquake.smt.utils import convert_accel_units, check_gsim_list
 
 ALL_SIGMA = frozenset({'Inter event', 'Intra event', 'Total'})
 
+
 ### Util functions
 def get_gmm_from_toml(key, config):
     """
@@ -56,6 +57,18 @@ def get_gmm_from_toml(key, config):
         config['models'][key].pop('style', None)
         value += '\n' + str(toml.dumps(config['models'][key]))
     return valid.gsim(value.strip())
+
+def get_gmpe_str(gmpe):
+    """
+    Return a string of the GMPE to use for printing/exporting
+    """
+    if '_toml=' in str(gmpe):
+        gmpe_str = str(
+            gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
+    else:
+        gmpe_str = gmpe
+
+    return gmpe_str
 
 
 ### The following methods are used for the MultivariateLLH function
@@ -1066,18 +1079,6 @@ class SingleStationAnalysis(object):
         phiss = np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1)
         return np.sqrt(phiss)
 
-    def get_gmpe_str(self, gmpe):
-        """
-        Return a string of the GMPE to use for printing/exporting
-        """
-        if '_toml=' in str(gmpe):
-            gmpe_str = str(
-                gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
-        else:
-            gmpe_str = gmpe
-
-        return gmpe_str
-
     def get_total_phi_ss(self, filename=None):
         """
         Returns the station averaged single-station phi from Rodriguez-Marek
@@ -1093,7 +1094,7 @@ class SingleStationAnalysis(object):
             
             # Print GMM info to file
             if filename is not None:
-                gmpe_str = self.get_gmpe_str(gmpe)
+                gmpe_str = get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
             for imtx in self.imts:
                 # Print IMT info to file
@@ -1136,7 +1137,7 @@ class SingleStationAnalysis(object):
         if filename is not None:
             print("\nTOTAL RESULTS PER GMPE", file=fid)
             for gmpe in self.gmpe_list:
-                gmpe_str = self.get_gmpe_str(gmpe)
+                gmpe_str = get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
                 
                 # If mixed effects GMPE append with intra-event res components
