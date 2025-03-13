@@ -64,28 +64,18 @@ class Configurations(object):
         self.volc_ba = config_file['site_properties']['volc_back_arc']
         
         # Get rupture params
-        self.trt = config_file['source_properties']['trt']
-        if self.trt == 'None':
-            self.trt = None
-        self.ztor = config_file['source_properties']['ztor']
-        if self.ztor == 'None':
-            self.ztor = None
         self.strike = config_file['source_properties']['strike']
         self.dip = config_file['source_properties']['dip']
         self.rake = config_file['source_properties']['rake']
+        self.mag_list = np.array(config_file['source_properties']['mags'])
+        self.depth_list = np.array(config_file['source_properties']['depths'])
+        self.ztor = config_file['source_properties']['ztor']
         self.aratio = config_file['source_properties']['aratio']
+        self.trt = config_file['source_properties']['trt']
         
         # Get custom colors
-        self.custom_color_flag = config_file['custom_colors'][
-            'custom_colors_flag']
-        self.custom_color_list = config_file['custom_colors'][
-            'custom_colors_list']
-
-        # One set of magnitudes for use in trellis plots
-        self.mag_list = np.array(config_file['source_properties']['mags'])
-        
-        # Depths per magnitude for trellis plots
-        self.depth_list = np.array(config_file['source_properties']['depths'])
+        self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
+        self.custom_color_list = config_file['custom_colors']['custom_colors_list']
         
         # Check same length mag and depth lists to avoid indexing error
         assert len(self.mag_list) == len(self.depth_list)

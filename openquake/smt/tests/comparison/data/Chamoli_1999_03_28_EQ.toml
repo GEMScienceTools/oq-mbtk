@@ -16,19 +16,19 @@ vs30 = 800
 Z1 = -999
 Z25 = -999
 up_or_down_dip = 0 # 1 = up-dip, 0 = down-dist_type
-z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
+z_basin_region = 'global' # Obtain z1pt0/z2pt5 from "global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
 volc_back_arc = false # true or false
 
 # Characterise earthquake for the region of interest (note in this case we are using information in the observed spectra csv, so this information is overwritten)
 [source_properties]
-trt = 'ASCR' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
-ztor = 'None' # Set to string of 'None' to NOT consider
 strike = 0
 dip = 5
 rake = 90 # Must be provided. Strike and dip can be approximated if set to -999
-aratio = -999 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
 mags = [6.6] # mags used only for trellis
 depths = [21] # depth per magnitude
+ztor = -999 # Set to -999 to NOT consider
+aratio = -999 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
+trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
 # Specify mags and depths for Sammons, Euclidean dist and Agglomerative clustering
 [source_properties_euclidean_analysis]

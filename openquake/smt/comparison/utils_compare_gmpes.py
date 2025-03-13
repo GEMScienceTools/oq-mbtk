@@ -71,7 +71,7 @@ def plot_trellis_util(config, output_directory):
                 len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
 
             # get ztor
-            if config.ztor is not None:
+            if config.ztor != -999:
                 ztor_m = config.ztor[l]
             else:
                 ztor_m = None
@@ -228,7 +228,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                 gmm = mgmpe_check(gmpe)
                 
                 for k, imt in enumerate(imt_list): 
-                    if config.ztor is not None:
+                    if config.ztor != -999:
                         ztor_m = config.ztor[l]
                     else:
                         ztor_m = None
@@ -351,7 +351,7 @@ def plot_ratios_util(config, output_directory):
                 len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
             
             # ztor value
-            if config.ztor is not None:
+            if config.ztor != -999:
                 ztor_m = config.ztor[l]
             else:
                 ztor_m = None
@@ -470,7 +470,7 @@ def compute_matrix_gmpes(config, mtxs_type):
                                                                   config.trt) 
                 
                 # ztor              
-                if config.ztor is not None:
+                if config.ztor != -999:
                     ztor_m = config.ztor[l]
                 else:
                     ztor_m = None
