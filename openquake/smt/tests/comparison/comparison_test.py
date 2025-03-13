@@ -36,7 +36,7 @@ base = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
 TARGET_VS30 = 800
-TARGET_Z_BASIN_REGION = 'Global'
+TARGET_Z_BASIN_REGION = 'global'
 TARGET_DEPTHS = [20, 25, 30]
 TARGET_RMIN = 0
 TARGET_RMAX = 300
@@ -50,8 +50,8 @@ TARGET_GMPES = ['[ChiouYoungs2014] \nlt_weight_gmc1 = 0.5',
                 '[BooreEtAl2014] \nlt_weight_gmc2_plot_lt_only = 0.5',
                 '[KothaEtAl2020] \nlt_weight_gmc2_plot_lt_only = 0.5']
 TARGET_BASELINE_GMPE = '[BooreEtAl2014]'
-TARGET_TRT = 'ASCR'
-TARGET_ZTOR = None
+TARGET_TRT = 'active_crustal'
+TARGET_ZTOR = -999
 
 
 class ComparisonTestCase(unittest.TestCase):
