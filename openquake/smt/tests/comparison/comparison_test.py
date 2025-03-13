@@ -37,13 +37,13 @@ base = os.path.join(os.path.dirname(__file__), "data")
 # Defines the target values for each run in the inputted .toml file
 TARGET_VS30 = 800
 TARGET_Z_BASIN_REGION = 'Global'
-TARGET_TRELLIS_DEPTHS = [20, 25, 30]
+TARGET_DEPTHS = [20, 25, 30]
 TARGET_RMIN = 0
 TARGET_RMAX = 300
 TARGET_NSTD = 0
-TARGET_TRELLIS_MAG = [5.0, 6.0, 7.0]
-TARGET_MAG = [5., 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9,
-              6., 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]
+TARGET_MAGS = [5.0, 6.0, 7.0]
+TARGET_MAG_EUC = [5., 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9,
+                  6., 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]
 TARGET_IMTS = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
 TARGET_GMPES = ['[ChiouYoungs2014] \nlt_weight_gmc1 = 0.5',
                 '[CampbellBozorgnia2014] \nlt_weight_gmc1 = 0.5',
@@ -96,8 +96,7 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Check for target depths (other functions use arrays from these
         # depths)
-        np.testing.assert_allclose(config.trellis_and_rs_depth_list,
-                                   TARGET_TRELLIS_DEPTHS)
+        np.testing.assert_allclose(config.depth_list, TARGET_DEPTHS)
 
         # Check for target Rmin
         self.assertEqual(config.minR, TARGET_RMIN)
@@ -109,11 +108,10 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.Nstd, TARGET_NSTD)
 
         # Check for target trellis mag
-        np.testing.assert_allclose(
-            config.trellis_and_rs_mag_list, TARGET_TRELLIS_MAG)
+        np.testing.assert_allclose(config.mag_list, TARGET_MAGS)
 
         # Check for target mag
-        np.testing.assert_allclose(config.mag_list, TARGET_MAG)
+        np.testing.assert_allclose(config.mags_euclidean, TARGET_MAG_EUC)
 
         # Check for target gmpes
         for gmpe in range(0, len(config.gmpes_list)):
