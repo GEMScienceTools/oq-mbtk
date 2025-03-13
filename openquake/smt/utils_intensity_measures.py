@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 General Functions for computing intensity measures and spectra including:
-    1) General utils e.g. peak measures, converting between units of ground-motion
+    1) General intensity measure utils e.g. computing peak measures
     1) Response spectra
     2) Fourier amplitude spectra (FAS)
     3) Horizontal-Vertical Spectral Ratio (HVSR)
@@ -30,17 +30,18 @@ from scipy.constants import g
 from scipy.integrate import cumtrapz
 import matplotlib.pyplot as plt
 
-from openquake.smt import utils_smoothing
-import openquake.smt.utils_response_spectrum as rsp
-from openquake.smt.utils import get_time_vector,  _save_image
+
+import openquake.smt.response_spectrum as rsp
+from openquake.smt import response_spectrum_smoothing as rsps
+from openquake.smt.utils import (
+    equalise_series, get_time_vector, nextpow2, _save_image,)
 
 RESP_METHOD = {
-    'Newmark-Beta': rsp.NewmarkBeta,
-    'Nigam-Jennings': rsp.NigamJennings}
+    'Newmark-Beta': rsp.NewmarkBeta, 'Nigam-Jennings': rsp.NigamJennings}
 
-SMOOTHING = {"KonnoOhmachi": utils_smoothing.KonnoOhmachi}
+SMOOTHING = {"KonnoOhmachi": rsps.KonnoOhmachi}
 
-# Mean utilities (geometric, arithmetic, ...):
+### General intensity measure utils
 SCALAR_XY = {
     "Geometric": lambda x, y: np.sqrt(x * y),
     "Arithmetic": lambda x, y: (x + y) / 2.,
@@ -48,7 +49,6 @@ SCALAR_XY = {
     "Vectorial": lambda x, y: np.sqrt(x ** 2. + y ** 2.)}
 
 
-### General utils
 def get_peak_measures(time_step, acceleration, get_vel=False, get_disp=False):
     """
     Returns the peak measures from acceleration, velocity and displacement
@@ -87,36 +87,6 @@ def get_peak_measures(time_step, acceleration, get_vel=False, get_disp=False):
     return pga, pgv, pgd, velocity, displacement
 
 
-def larger_pga(sax, say):
-    """
-    Returns the spectral acceleration from the component with the larger PGA
-    """
-    if sax["PGA"] >= say["PGA"]:
-        return sax
-    else:
-        return say
-
-def equalise_series(series_x, series_y):
-    """
-    For two time series from the same record but of different length
-    cuts both records down to the length of the shortest record
-    N.B. This assumes that the start times and the time-steps of the record
-    are the same - if not then this may introduce biases into the record
-    :param numpy.ndarray series_x:
-         X Time series
-    :param numpy.ndarray series_y:
-         Y Time series
-    """
-    n_x = len(series_x)
-    n_y = len(series_y)
-    if n_x > n_y:
-        return series_x[:n_y], series_y
-    elif n_y > n_x:
-        return series_x, series_y[:n_x]
-    else:
-        return series_x, series_y
-    
-
 def get_quadratic_intensity(acc_x, acc_y, time_step):
     """
     Returns the quadratic intensity of a pair of records, define as:
@@ -126,121 +96,6 @@ def get_quadratic_intensity(acc_x, acc_y, time_step):
     assert len(acc_x) == len(acc_y)
     dur = time_step * float(len(acc_x) - 1)
     return (1. / dur) * np.trapz(acc_x * acc_y, dx=time_step)
-
-
-def get_principal_axes(time_step, acc_x, acc_y, acc_z=None):
-    """
-    Returns the principal axes of a set of ground motion records
-    """
-    # If time-series are not of equal length then equalise
-    acc_x, acc_y = equalise_series(acc_x, acc_y)
-    if acc_z is not None:
-        nhist = 3
-        if len(acc_z) > len(acc_x):
-            acc_x, acc_z = equalise_series(acc_x, acc_z)
-        else:
-            acc_x, acc_z = equalise_series(acc_x, acc_z)
-            acc_x, acc_y = equalise_series(acc_x, acc_y)
-        acc = np.column_stack([acc_x, acc_y, acc_z])
-    else:
-        nhist = 2
-        acc = np.column_stack([acc_x, acc_y])
-    # Calculate quadratic intensity matrix
-    sigma = np.zeros([nhist, nhist])
-    rho = np.zeros([nhist, nhist])
-    for iloc in range(0, nhist):
-        for jloc in range(0, nhist):
-            sigma[iloc, jloc] = get_quadratic_intensity(acc[:, iloc],
-                                                        acc[:, jloc],
-                                                        time_step)
-    # Calculate correlation matrix
-    for iloc in range(0, nhist):
-        for jloc in range(0, nhist):
-            rho[iloc, jloc] = sigma[iloc, jloc] / np.sqrt(sigma[iloc, iloc] *
-                                                          sigma[jloc, jloc])
-    # Get transformation matrix
-    ppal_sigma, phi = np.linalg.eig(sigma)
-    # Transform the time-series
-    phi = np.matrix(phi)
-    acc_trans = phi.T * np.matrix(acc.T)
-    acc_1 = acc_trans[0, :].A.flatten()
-    acc_2 = acc_trans[1, :].A.flatten()
-    if nhist == 3:
-        acc_3 = acc_trans[2, :].A.flatten()
-    else:
-        acc_3 = None
-
-    alpha3z, theta1x = get_rotation_angles(phi, nhist)
-
-    return acc_1, acc_2, acc_3, {"alpha3z": alpha3z, "theta1x": theta1x,
-                                 "phi": phi, "sigma": sigma, "rho": rho,
-                                 "principal_sigma": np.matrix(ppal_sigma)}
-
-
-def rotate_horizontal(series_x, series_y, angle):
-    """
-    Rotates two time-series according to a specified angle
-    :param nunmpy.ndarray series_x:
-        Time series of x-component
-    :param nunmpy.ndarray series_y:
-        Time series of y-component
-    :param float angle:
-        Angle of rotation (decimal degrees)
-    """
-    angle = angle * (pi / 180.0)
-    rot_hist_x = (np.cos(angle) * series_x) + (np.sin(angle) * series_y)
-    rot_hist_y = (-np.sin(angle) * series_x) + (np.cos(angle) * series_y)
-    return rot_hist_x, rot_hist_y
-
-
-def get_rotation_angles(transf_matrix, nhist):
-    """
-    Function returns the angle between the third principal axis
-    (i.e. the quasi-vertical component and the veritcal axis z
-    Function contributed by Cecilia Nieves, UME School, Pavia
-    """
-    icf = 180.0 / pi
-    if nhist == 3:    
-        alpha3z = icf * np.arccos(transf_matrix[2, 2])
-    else:
-        alpha3z = 0    
-
-    # Angle between axis x and the projection of axis 1 in the xy plane: theta
-    if nhist==3:    
-        # v_x is a unitary vector in the direction of axis x.
-        # v_1 is a unitary vector in the direction of axis 1,
-        # then projected onto the xy plane by setting is z coordinate
-        # to zero. Theta1x is then the angle between axis x and the
-        # projection of axis 1 over the xy plane.
-                
-        v_x = np.array([1., 0., 0.])
-        inv_transf_matrix = np.linalg.inv(transf_matrix)
-        v_1 = inv_transf_matrix[:, 0]
-        v_1[2] = 0.0
-        theta1x = icf * np.arccos(np.dot(v_x,v_1) / np.linalg.norm(v_1))
-        theta1x = float(theta1x)
-
-        # v_y is a unitary vector in the direction of axis y.
-        # v_2 is a unitary vector in the direction of axis 2,
-        # then projected onto the xy plane by setting is z coordinate
-        # to zero.
-        v_y = np.array([0., 1., 0.])
-        v_2 = inv_transf_matrix[:, 1]
-        v_2[2] = 0.0
-        theta2y = icf * np.arccos(np.dot(v_y,v_2) / np.linalg.norm(v_2)) 
-        theta2y = float(theta2y)
-    else:
-        alpha1x = icf * np.arccos(transf_matrix[0, 0])
-        theta1x = float(alpha1x)
-        theta2y = theta1x
-     
-    return alpha3z, theta1x
-
-
-def nextpow2(nval):
-    m_f = np.log2(nval)
-    m_i = np.ceil(m_f)
-    return int(2.0 ** m_i)
 
 
 ### Response Spectra
@@ -399,6 +254,16 @@ def get_interpolated_period(target_period, periods, values):
     return 10.0 ** (
         np.log10(values[lval]) +
         (np.log10(target_period) - np.log10(periods[lval])) * d_y / d_x)
+
+
+def larger_pga(sax, say):
+    """
+    Returns the spectral acceleration from the component with the larger PGA
+    """
+    if sax["PGA"] >= say["PGA"]:
+        return sax
+    else:
+        return say
 
 
 ### FAS Functions
@@ -584,6 +449,7 @@ def get_significant_duration(acceleration, time_step, start_level=0.,
                                   husid <= (end_level * husid[-1])))[0]
     return time_vector[idx[-1]] - time_vector[idx[0]] + time_step
 
+
 def get_cav(acceleration, time_step, threshold=0.0):
     """
     Returns the cumulative absolute velocity above a given threshold of
@@ -596,6 +462,7 @@ def get_cav(acceleration, time_step, threshold=0.0):
     else:
         return 0.0
 
+
 def get_arms(acceleration, time_step):
     """
     Returns the root mean square acceleration, defined as
@@ -606,6 +473,22 @@ def get_arms(acceleration, time_step):
 
 
 ### Utils for computing rotation-based definitions of horizontal component
+def rotate_horizontal(series_x, series_y, angle):
+    """
+    Rotates two time-series according to a specified angle
+    :param nunmpy.ndarray series_x:
+        Time series of x-component
+    :param nunmpy.ndarray series_y:
+        Time series of y-component
+    :param float angle:
+        Angle of rotation (decimal degrees)
+    """
+    angle = angle * (pi / 180.0)
+    rot_hist_x = (np.cos(angle) * series_x) + (np.sin(angle) * series_y)
+    rot_hist_y = (-np.sin(angle) * series_x) + (np.cos(angle) * series_y)
+    return rot_hist_x, rot_hist_y
+
+
 def gmrotdpp(acceleration_x, time_step_x, acceleration_y, time_step_y, periods,
              percentile, damping=0.05, units="cm/s/s", method="Nigam-Jennings"):
     """

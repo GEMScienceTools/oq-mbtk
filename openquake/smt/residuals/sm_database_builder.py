@@ -24,8 +24,9 @@ import csv
 import numpy as np
 import h5py
 import pickle
-import openquake.smt.intensity_measures as ims
+
 import openquake.smt.sm_utils as utils
+import openquake.smt.intensity_measures as utils_imts
 from openquake.smt.parsers.base_database_parser import get_float
 
 
@@ -447,10 +448,10 @@ SPECTRAL_IMS = ["Geometric", "Arithmetic", "Envelope", "Larger PGA"]
 
 
 ORDINARY_SA_COMBINATION = {
-    "Geometric": ims.geometric_mean_spectrum,
-    "Arithmetic": ims.arithmetic_mean_spectrum,
-    "Envelope": ims.envelope_spectrum,
-    "Larger PGA": ims.larger_pga
+    "Geometric": utils_imts.geometric_mean_spectrum,
+    "Arithmetic": utils_imts.arithmetic_mean_spectrum,
+    "Envelope": utils_imts.envelope_spectrum,
+    "Larger PGA": utils_imts.larger_pga
     }
 
 
@@ -559,7 +560,7 @@ class AddPGV(HorizontalMotion):
         if "Velocity" not in self.fle[time_series_location]:
             accel_loc = time_series_location + "/Acceleration"
             # Add velocity to the record
-            velocity, _ = ims.get_velocity_displacement(
+            velocity, _ = utils_imts.get_velocity_displacement(
                 self.fle[accel_loc].attrs["Time-step"],
                 self.fle[accel_loc][()])
 
@@ -596,7 +597,7 @@ class AddResponseSpectrum(HorizontalMotion):
 
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
-        sax, say = ims.get_response_spectrum_pair(x_acc[:],
+        sax, say = utils_imts.get_response_spectrum_pair(x_acc[:],
                                                   x_acc.attrs["Time-step"],
                                                   y_acc[:],
                                                   y_acc.attrs["Time-step"],
@@ -664,7 +665,7 @@ class AddGMRotDppSpectrum(AddResponseSpectrum):
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
 
-        gmrotdpp = ims.gmrotdpp(x_acc[:], x_acc.attrs["Time-step"],
+        gmrotdpp = utils_imts.gmrotdpp(x_acc[:], x_acc.attrs["Time-step"],
                                 y_acc[:], y_acc.attrs["Time-step"],
                                 self.periods, percentile, self.damping)
         dstring = "damping_" + str(int(100.0 * self.damping)).zfill(2)
@@ -697,7 +698,7 @@ class AddRotDppSpectrum(AddResponseSpectrum):
 
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
-        rotdpp = ims.rotdpp(x_acc[:], x_acc.attrs["Time-step"],
+        rotdpp = utils_imts.rotdpp(x_acc[:], x_acc.attrs["Time-step"],
                             y_acc[:], y_acc.attrs["Time-step"],
                             self.periods, percentile, self.damping)[0]
         dstring = "damping_" + str(int(100.0 * self.damping)).zfill(2)
@@ -730,7 +731,7 @@ class AddGMRotIppSpectrum(AddResponseSpectrum):
 
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
-        sa_hor = ims.gmrotipp(x_acc[:], x_acc.attrs["Time-step"],
+        sa_hor = utils_imts.gmrotipp(x_acc[:], x_acc.attrs["Time-step"],
                               y_acc[:], y_acc.attrs["Time-step"],
                               self.periods, percentile, self.damping)
         nvals = len(sa_hor["Acceleration"])

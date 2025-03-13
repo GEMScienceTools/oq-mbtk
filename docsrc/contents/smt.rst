@@ -461,16 +461,15 @@ Comparing GMPEs
                   # set to -999
         aratio  = 2 # If set to -999 the user-provided trt string will be used 
                     # to assign a trt-dependent aratio
-        trellis_and_rs_mag_list = [5, 6, 7] # Mags used only for trellis and response spectra
-        trellis_and_rs_depths = [20, 20, 20] # Depth per magnitude for trellis and
-                                             # response spectra
+        mags = [5, 6, 7] # Mags used only for trellis and response spectra
+        depths = [20, 20, 20] # Depth per magnitude for trellis and response spectra
         
-        # Specify magnitude array for Sammons, Euclidean dist and clustering
-        [mag_values_non_trellis_or_spectra_functions]
+        # Specify mags and depths for Sammons, Euclidean dist and Agglomerative clustering
+        [source_properties_euclidean_analysis]
         mmin = 5
         mmax = 7
         spacing = 0.1
-        non_trellis_or_spectra_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+        depths_for_euclidean = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
         
         # Specify label for gmpes
         [gmpe_labels]

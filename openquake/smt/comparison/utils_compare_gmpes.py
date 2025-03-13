@@ -38,8 +38,8 @@ def plot_trellis_util(config, output_directory):
     Generate trellis plots for given run configuration
     """
     # Get mag and dep lists
-    mag_list = config.trellis_and_rs_mag_list
-    dep_list = config.trellis_and_rs_depth_list
+    mag_list = config.mag_list
+    dep_list = config.depth_list
     
     # Median, plus sigma, minus sigma per gmc for up to 4 gmc logic trees
     gmc_p= [[{}, {}, {}], [{}, {}, {}], [{}, {}, {}], [{}, {}, {}]]
@@ -179,8 +179,8 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     observed spectrum and the corresponding predictions by the specified GMPEs
     """
     # Get mag and depth lists
-    mag_list = config.trellis_and_rs_mag_list
-    dep_list = config.trellis_and_rs_depth_list
+    mag_list = config.mag_list
+    dep_list = config.depth_list
     
     # If obs spectra csv provided load the data
     if obs_spectra is not None:
@@ -333,8 +333,8 @@ def plot_ratios_util(config, output_directory):
     plots for given run configuration
     """
     # Get mag and dep lists
-    mag_list = config.trellis_and_rs_mag_list
-    dep_list = config.trellis_and_rs_depth_list
+    mag_list = config.mag_list
+    dep_list = config.depth_list
 
     # Get basin params
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.z_basin_region)
@@ -437,15 +437,15 @@ def plot_ratios_util(config, output_directory):
 def compute_matrix_gmpes(config, mtxs_type):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
-    given run configuration for use within Euclidean distance matrix plots,
-    Sammons Mapping and hierarchical clustering plots
+    given run configuration for use within the Sammon's maps and hierarchical
+    clustering dendrograms and Euclidean distance matrix plots
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median, 84th or 16th percentile)
     """
     # Get mag, imt and depth lists
-    mag_list = config.mag_list
-    dep_list = config.depth_for_non_trel_or_rs_fun
+    mag_list = config.mags_euclidean
+    dep_list = config.depths_euclidean
     
     # Set store and get z1pt0, z2pt5
     mtxs_median = {}
