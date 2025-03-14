@@ -49,30 +49,6 @@ class ContextDB:
                            'z2pt5',
                            'backarc')
 
-    def get_st_code_mapping(self):
-        """
-        Create a mapping of station id to lat, lon, elevation, vs30
-        so that we can reassign the station codes when exporting the
-        residual analysis results (see Residuals.get_residuals() in
-        gmpe_residuals.py)
-        """
-        mapping_all = {}
-        for rec in self.records:
-            mapping = {}
-            sid = rec.site.id
-            if sid in mapping_all:
-                continue
-            mapping["lon"] = rec.site.longitude
-            mapping["lat"] = rec.site.latitude
-            if pd.isnull(rec.site.altitude):
-                mapping["dep"] = 0.
-            else:
-                mapping["dep"] = rec.site.altitude
-            mapping["vs30"] = rec.site.vs30
-            mapping_all[sid] = mapping
-
-        return pd.DataFrame(mapping_all).transpose()
-
     def get_contexts(self, nodal_plane_index=1, imts=None, component="Geometric"):
         """
         Return an iterable of Contexts. Each Context is a `dict` with
@@ -127,3 +103,28 @@ class ContextDB:
             dic["Observations"] = {imt: [] for imt in imts}
             dic["Num. Sites"] = 0
         return dic
+    
+    def get_st_code_mapping(self):
+        """
+        Create a mapping of station id to lat, lon, elevation, vs30
+        so that we can reassign the station codes when exporting the
+        residual analysis results (see Residuals.get_residuals() in
+        gmpe_residuals.py)
+        """
+        mapping_all = {}
+        for rec in self.records:
+            mapping = {}
+            sid = rec.site.id
+            if sid in mapping_all:
+                continue
+            mapping["lon"] = rec.site.longitude
+            mapping["lat"] = rec.site.latitude
+            if pd.isnull(rec.site.altitude):
+                mapping["dep"] = 0.
+            else:
+                mapping["dep"] = rec.site.altitude
+            mapping["vs30"] = rec.site.vs30
+            mapping_all[sid] = mapping
+
+        return pd.DataFrame(mapping_all).transpose()
+    
