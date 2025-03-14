@@ -28,7 +28,7 @@ class ContextDB:
     """
     This abstract-like class represents a database (DB) of data capable of
     yielding Contexts and Observations suitable for residual analysis (see
-    argument `ctx_database` of :meth:`gmpe_residuals.Residuals.get_residuals`)
+    argument `ctx_database` of :meth:`gmpe_residuals.Residuals.compute_residuals`)
 
     Concrete subclasses of `ContextDB` must implement three abstract methods
     (e.g. :class:`openquake.smt.sm_database.GroundMotionDatabase`):
@@ -56,7 +56,7 @@ class ContextDB:
         See `create_context` for details.
 
         This is the only method required by
-        :meth:`gmpe_residuals.Residuals.get_residuals`
+        :meth:`gmpe_residuals.Residuals.compute_residuals`
         and should not be overwritten only in very specific circumstances.
         """
         compute_observations = imts is not None and len(imts)
