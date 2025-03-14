@@ -52,7 +52,9 @@ class ContextDB:
     def get_st_code_mapping(self):
         """
         Create a mapping of station id to lat, lon, elevation, vs30
-        so that we can reassign within the residual results exporting
+        so that we can reassign the station codes when exporting the
+        residual analysis results (see Residuals.get_residuals() in
+        gmpe_residuals.py)
         """
         mapping_all = {}
         for rec in self.records:

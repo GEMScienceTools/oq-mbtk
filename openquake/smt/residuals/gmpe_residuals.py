@@ -420,7 +420,7 @@ class Residuals(object):
         imts = self.imts
         store = {}
         for ctx in ctxs:
-    
+            
             store_per_ctx = {} # Need one DataFrame per event
 
             for gmpe in gmms:                
