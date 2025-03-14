@@ -114,7 +114,7 @@ class ContextDB:
         mapping_all = {}
         for rec in self.records:
             mapping = {}
-            sid = rec.site.id
+            sid = rec.site.code
             if sid in mapping_all:
                 continue
             mapping["lon"] = rec.site.longitude
