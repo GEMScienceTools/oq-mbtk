@@ -173,7 +173,7 @@ class Residuals(object):
         
         return cls(gmpe_list, imts)
 
-    def get_residuals(self, ctx_database, nodal_plane_index=1,
+    def compute_residuals(self, ctx_database, nodal_plane_index=1,
                       component="Geometric", normalise=True):
         """
         Calculate the residuals for a set of ground motion records
@@ -388,6 +388,14 @@ class Residuals(object):
                 magnitudes,
                 ctxt["Ctx"].mag * np.ones(len(ctxt["Ctx"].repi))])
         return magnitudes
+
+    def export_residuals(self):
+        """
+        Export the observed, predicted and residuals to CSV per GMM
+        and IMT, for each record.
+        """
+        breakpoint()
+
 
 
     ### Likelihood (Scherbaum et al. 2004) functions
@@ -868,9 +876,9 @@ class Residuals(object):
                     obs = np.hstack(
                         [obs, np.log(context["Observations"][imtx])])
                     exp = np.hstack(
-                        [exp,context["Expected"][gmpe][imtx]["Mean"]])
+                        [exp, context["Expected"][gmpe][imtx]["Mean"]])
                     stddev = np.hstack(
-                        [std,context["Expected"][gmpe][imtx]["Total"]])
+                        [std, context["Expected"][gmpe][imtx]["Total"]])
                 
                 # Get the ECDF for distribution from observations
                 x_ecdf, y_ecdf = self.get_cdf_data(list(obs), step_flag=True)
@@ -1001,7 +1009,7 @@ class SingleStationAnalysis(object):
             # Use a deep copied gmpe list to avoid recursive GMM instantiation
             # issues when using check_gsim_list within Residuals obj __init__
             resid = Residuals(self.frozen_gmpe_list, self.imts)
-            resid.get_residuals(site_db, normalise=False, component=component)
+            resid.compute_residuals(site_db, normalise=False, component=component)
             setattr(
                 resid,
                 "site_analysis",
@@ -1124,9 +1132,9 @@ class SingleStationAnalysis(object):
                     print("%s" % imtx, file=fid)
                 if not ("Intra event" in self.site_residuals[
                     0].site_analysis[gmpe][imtx]):
-                    msg = (f"GMPE {gmpe} and IMT {imtx} do not have "
-                           f"defined random effects residuals")
-                    warnings.warn(msg, stacklevel = 10)
+                    msg = (f"GMPE {gmpe} does not have random"
+                           f"effects residuals for {imtx}")
+                    warnings.warn(msg, stacklevel=10)
                     continue
                 n_events = []
                 numerator_sum = 0.0
