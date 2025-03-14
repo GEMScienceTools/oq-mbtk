@@ -36,3 +36,4 @@ reportlab
 igraph
 pyvista
 basemap
+openpyxl
