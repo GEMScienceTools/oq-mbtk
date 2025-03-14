@@ -160,18 +160,22 @@ We can specify the inputs to perform a residual analysis with as follows:
 
 5. Now we compute the residuals using the specified GMPEs and intensity measures for the metadata we have parsed from the flatfile:
 
-   Note that here ``resid1`` is the residuals object which stores (1) the observed ground-motions and associated metadata from the parsed flatfile, (2) the corresponding predicted ground-motion per GMPE and (3) the computed residual components per GMPE per intensity measure. The residuals object also stores the gmpe_list (e.g. resid1.gmpe_list) and the imt_list (resid1.imts) if these inputs are specified within a ``.toml`` file. 
+   Note that here ``resid`` is the residuals object which stores (1) the observed ground-motions and associated metadata from the parsed flatfile, (2) the corresponding predicted ground-motion per GMPE and (3) the computed residual components per GMPE per intensity measure. The residuals object also stores the gmpe_list (e.g. resid.gmpe_list) and the imt_list (resid.imts) if these inputs are specified within a ``.toml`` file. 
 
     .. code-block:: ini
        
        > # Compute residuals using GMPEs and intensity measures specified in command line
-       > resid1 = res.Residuals(gmpe_list, imt_list)
-       > resid1.compute_residuals(sm_database, component='Geometric') # component can also be set to 'rotD00', 'rotD50', 'rotD100' etc
+       > resid = res.Residuals(gmpe_list, imt_list)
+       > resid.compute_residuals(sm_database, component='Geometric') # component can also be set to 'rotD00', 'rotD50', 'rotD100' etc
        >
        > # OR compute residuals using GMPEs and intensity measures specified in .toml file
        > filename = os.path.join(DATA,'gmpes_and_imts_to_test.toml') # path to .toml file
-       > resid1 = res.Residuals.from_toml(filename)
-       > resid1.compute_residuals(sm_database)
+       > resid = res.Residuals.from_toml(filename)
+       > resid.compute_residuals(sm_database)
+       >
+       > # We can export the residuals to an excel (one sheet per event)
+       > out_loc = os.path.join(run_folder, "residuals.xlsx")
+       > resid.export_residuals(out_loc)
 
 Plotting of Residuals
 *********************
@@ -188,17 +192,17 @@ Plotting of Residuals
        
        > # If using .toml for inputs we first create equivalent gmpe_list and imt_list using residuals object attributes
        > gmpe_list = {}
-       > for idx, gmpe in enumerate(resid1.gmpe_list):
-       >    gmpe_list[idx] = resid1.gmpe_list[gmpe]
+       > for idx, gmpe in enumerate(resid.gmpe_list):
+       >    gmpe_list[idx] = resid.gmpe_list[gmpe]
        > gmpe_list = list[gmpe_list]
        >
        > imt_list = {}
-       > for idx, imt in enumerate(resid1.imts):
-       >    imt_list[idx] = resid1.imt_list[imt]
+       > for idx, imt in enumerate(resid.imts):
+       >    imt_list[idx] = resid.imt_list[imt]
        > imt_list = list(imt_list)
        >
        > # Plot residual probability density function for a specified GMPE from gmpe_list and intensity measure from imt_list
-       > rspl.ResidualPlot(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg') # Plot for gmpe in position 5 
+       > rspl.ResidualPlot(resid, gmpe_list[5], imt_list[0], filename, filetype = 'jpg') # Plot for gmpe in position 5 
                                                                                           # in gmpe_list and intensity
                                                                                           # measure in position 0 in imt_list
         
@@ -210,10 +214,10 @@ Residual distribution plot for Boore et al. 2020 and PGA:
     .. code-block:: ini
        
        > # Plot residual probability density functions over spectral periods:
-       > rspl.PlotResidualPDFWithSpectralPeriod(resid1, filename)
+       > rspl.PlotResidualPDFWithSpectralPeriod(resid, filename)
        >
        > # Generate .csv of residual probability density function per imt per GMPE 
-       > rspl.PDFTable(resid1, filename) 
+       > rspl.PDFTable(resid, filename) 
 
 Plot of residual distributions versus spectral acceleration: 
     .. image:: /contents/smt_images/all_gmpes_PDF_vs_imt_plot.jpg
@@ -223,7 +227,7 @@ Plot of residual distributions versus spectral acceleration:
     .. code-block:: ini
        
        > # Plot residuals w.r.t. magnitude from gmpe_list and imt_list
-       > rspl.ResidualWithMagnitude(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
+       > rspl.ResidualWithMagnitude(resid, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
        
     Residuals w.r.t. magnitude for Boore et al. 2020 and PGA:
         .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_wrt_mag.jpeg
@@ -233,9 +237,9 @@ Plot of residual distributions versus spectral acceleration:
     .. code-block:: ini
        
        > # From gmpe_list and imt_list:
-       > rspl.ResidualWithDistance(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
-       > rspl.ResidualWithDepth(resid1, gmpe_list[5], imt_list[0],  filename, filetype = 'jpg')
-       > rspl.ResidualWithVs30(resid1, gmpe_list[5], imt_list[0],  filename, filetype = 'jpg')
+       > rspl.ResidualWithDistance(resid, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
+       > rspl.ResidualWithDepth(resid, gmpe_list[5], imt_list[0],  filename, filetype = 'jpg')
+       > rspl.ResidualWithVs30(resid, gmpe_list[5], imt_list[0],  filename, filetype = 'jpg')
 
     Residuals w.r.t. distance for Boore et al. 2020 and PGA:
         .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_wrt_dist.jpeg
@@ -323,7 +327,7 @@ The Likelihood Method (Scherbaum et al. 2004)
     .. code-block:: ini
        
        > # From gmpe_list and imt_list:
-       > rspl.LikelihoodPlot(resid1, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
+       > rspl.LikelihoodPlot(resid, gmpe_list[5], imt_list[0], filename, filetype = 'jpg')
 
     Likelihood plot for Boore et al. 2020 and PGA:
         .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_likelihood.jpeg
@@ -338,19 +342,19 @@ The Loglikelihood Method (Scherbaum et al. 2009)
     .. code-block:: ini
     
        > # Get LLH values from gmpe_list and imt_list (both aggregated over IMTs and per IMT)
-       > llh, model_weights, model_weights_with_imt = res.get_loglikelihood_values(resid1, imt_list)
+       > llh, model_weights, model_weights_with_imt = res.get_loglikelihood_values(resid, imt_list)
        >
        > # OR from .toml:
-       > llh, model_weights, model_weights_with_imt = res.get_loglikelihood_values(resid1, resid1.imts)
+       > llh, model_weights, model_weights_with_imt = res.get_loglikelihood_values(resid, resid.imts)
        >
        > # Generate a .csv table of LLH values per GMPE and per IMT
-       > rspl.loglikelihood_table(resid1, filename)
+       > rspl.loglikelihood_table(resid, filename)
        >
        > # Generate a .csv table of LLH-based model weights for GMPE logic tree
-       > rspl.llh_weights_table(resid1, filename)   
+       > rspl.llh_weights_table(resid, filename)   
        >
        > # Plot LLH values per GMPE vs IMT
-       > rspl.plot_loglikelihood_with_spectral_period(resid1, filename)
+       > rspl.plot_loglikelihood_with_spectral_period(resid, filename)
 
     Loglikelihood versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_LLH_plot.jpg
@@ -365,19 +369,19 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
     .. code-block:: ini
     
        > # Get EDR, MDE Norm and MDE per GMPE aggregated over all IMTs
-       > res.get_edr_values(resid1)
+       > res.get_edr_values(resid)
        >
        > # Get EDR, MDE Norm and MDE per GMPE per IMT
-       > res.get_edr_values_wrt_spectral_period(resid1)
+       > res.get_edr_values_wrt_spectral_period(resid)
        >
        > # Generate a .csv table of EDR values per GMPE and per IMT
-       > rspl.edr_table(resid1, filename)
+       > rspl.edr_table(resid, filename)
        >
        > # Generate a .csv table of EDR-based model weights for GMPE logic tree
-       > rspl.edr_weights_table(resid1, filename)   
+       > rspl.edr_weights_table(resid, filename)   
        >
        > # Plot EDR score, MDE norm and sqrt(k) vs IMT
-       > rspl.plot_plot_edr_metrics_with_spectral_period(resid1, filename)
+       > rspl.plot_plot_edr_metrics_with_spectral_period(resid, filename)
 
     EDR rank versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_EDR_plot_EDR_value.jpg
@@ -396,16 +400,16 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
     .. code-block:: ini
     
        > # Get stochastic area metric per GMPE and per IMT
-       > res.get_stochastic_area_wrt_imt(resid1)
+       > res.get_stochastic_area_wrt_imt(resid)
        >
        > # Generate a .csv table of stochastic area values per GMPE and per IMT
-       > rspl.stochastic_area_table(resid1, filename)
+       > rspl.stochastic_area_table(resid, filename)
        >
        > # Generate a .csv table of stochastic area-based model weights for GMPE logic tree
-       > rspl.stochastic_area_weights_table(resid1, filename)   
+       > rspl.stochastic_area_weights_table(resid, filename)   
        >
        > # Plot stochastic area vs IMT
-       > rspl.plot_stochastic_area_with_spectral_period(resid1, filename)
+       > rspl.plot_stochastic_area_with_spectral_period(resid, filename)
 
     Stochastic area versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_stochastic_area_plot.jpg

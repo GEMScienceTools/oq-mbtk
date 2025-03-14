@@ -94,6 +94,13 @@ class ResidualsTestCase(unittest.TestCase):
         residuals.compute_residuals(self.database, component="Geometric")
         residuals.get_residual_statistics()
 
+    def test_export_execution(self):
+        """
+        Tests execution of the residuals exporting function
+        """
+        out_loc = os.path.join(self.out_location, "residuals.xlsx")
+        self.residuals.export_residuals(out_loc)
+
     def test_likelihood_execution(self):
         """
         Tests basic execution of likelihood score (Scherbaum et al.
