@@ -41,6 +41,29 @@ from openquake.smt.utils import convert_accel_units, check_gsim_list
 
 ALL_SIGMA = frozenset({'Inter event', 'Intra event', 'Total'})
 
+CTX_PAR = ["mag",
+           "strike",
+           "dip",
+           "rake",
+           "ztor",
+           "width",
+           "hypo_lon",
+           "hypo_lat",
+           "hypo_depth",
+           "vs30",
+           "lons",
+           "lats",
+           "depths",
+           "z1pt0",
+           "z2pt5",
+           "rrup",
+           "rx",
+           "rjb",
+           "rhypo",
+           "repi",
+           "ry0",
+           "sids"]
+
 
 ### Util functions
 def get_gmm_from_toml(key, config):
@@ -389,13 +412,57 @@ class Residuals(object):
                 ctxt["Ctx"].mag * np.ones(len(ctxt["Ctx"].repi))])
         return magnitudes
 
-    def export_residuals(self):
+    def export_residuals(self, out_fname):
         """
-        Export the observed, predicted and residuals to CSV per GMM
-        and IMT, for each record.
+        Export the observed, predicted and residuals to an excel file
+        (one sheet for each event)
         """
-        breakpoint()
+        ctxs = self.contexts # List of contexts
+        gmms = self.gmpe_list
+        imts = self.imts
+        store = {}
+        for ctx in ctxs:
+    
+            store_per_ctx = {} # Need one DataFrame per event
 
+            for gmpe in gmms:                
+                gmpe_str = get_gmpe_str(gmpe)
+                for imt in imts:
+
+                    # Get the expected values and the residuals
+                    res = ctx["Residual"][gmpe][imt]
+                    exp = ctx["Expected"][gmpe][imt]
+                    for comp in res:
+                        
+                        # Make a key
+                        key = f"GMM={gmpe_str}_IMT={imt}_{comp}"
+                        key = key.replace(" ", "_")
+                        key = key.replace(";", "")
+
+                        # Store each set of values
+                        store_per_ctx[key+"_Residuals"] = res[comp]
+                        store_per_ctx[key+"_Predicted"] = exp[comp]
+
+            # Now get the observations
+            key_obs = f"IMT={imt}_Observations"
+            store_per_ctx[key_obs] = ctx["Observations"][imt]
+
+            # Turn into a DataFrame
+            ctx_df = pd.DataFrame(store_per_ctx)
+
+            # Add the event and station info to each row
+            for par in CTX_PAR:
+                ctx_df[par] = getattr(ctx["Ctx"], par)
+
+            # Store the DataFrame for the event
+            store[ctx["EventID"]] = ctx_df
+
+        # Now write results for the event to a sheet
+        with pd.ExcelWriter(out_fname, engine='openpyxl') as writer:
+            for eq in store.keys():
+                eq_df = store[eq]
+                sheet = f"EventID_{eq}"
+                eq_df.to_excel(writer, sheet_name=sheet, index=False)
 
 
     ### Likelihood (Scherbaum et al. 2004) functions
