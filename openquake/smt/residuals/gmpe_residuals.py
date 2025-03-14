@@ -60,8 +60,7 @@ CTX_PAR = ["mag",
            "rjb",
            "rhypo",
            "repi",
-           "ry0",
-           "sids"]
+           "ry0"]
 
 
 ### Util functions
@@ -452,6 +451,25 @@ class Residuals(object):
             # Add the event and station info to each row
             for par in CTX_PAR:
                 ctx_df[par] = getattr(ctx["Ctx"], par)
+            ctx_df = ctx_df.rename(columns={"lons": "st_lon",
+                                            "lats": "st_lat",
+                                            "depths": "st_elevation"})
+
+            # Now can add each station code using a mapping
+            st_map = ctx["Ctx"].st_mapping
+            ctx_df["st_code"] = pd.Series()
+            for idx, st in ctx_df.iterrows():
+                lon_check = (
+                    np.abs(st_map.lon - st.st_lon) < 1e-09)
+                lat_check = (
+                    np.abs(st_map.lat - st.st_lat) < 1e-09)
+                alt_check = (np.abs(st_map.dep - st.st_elevation*-1000.) < 1e-09)
+                vs30_check = (
+                    np.abs(st_map.vs30 - st.vs30) < 1e-09)
+                st_code = st_map.loc[
+                    lon_check & lat_check & alt_check & vs30_check].index
+                assert len(st_code) == 1
+                ctx_df["st_code"][idx] = st_code[0]
 
             # Store the DataFrame for the event
             store[ctx["EventID"]] = ctx_df

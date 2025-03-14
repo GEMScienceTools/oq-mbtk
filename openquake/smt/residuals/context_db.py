@@ -20,6 +20,7 @@ Module defining the interface of a Context Database (ContextDB), a database of
 data capable of yielding Contexts and Observations suitable for Residual analysis
 """
 import numpy as np
+import pandas as pd
 
 from openquake.hazardlib.contexts import DistancesContext, RuptureContext
 
@@ -48,6 +49,28 @@ class ContextDB:
                            'z2pt5',
                            'backarc')
 
+    def get_st_code_mapping(self):
+        """
+        Create a mapping of station id to lat, lon, elevation, vs30
+        so that we can reassign within the residual results exporting
+        """
+        mapping_all = {}
+        for rec in self.records:
+            mapping = {}
+            sid = rec.site.id
+            if sid in mapping_all:
+                continue
+            mapping["lon"] = rec.site.longitude
+            mapping["lat"] = rec.site.latitude
+            if pd.isnull(rec.site.altitude):
+                mapping["dep"] = 0.
+            else:
+                mapping["dep"] = rec.site.altitude
+            mapping["vs30"] = rec.site.vs30
+            mapping_all[sid] = mapping
+
+        return pd.DataFrame(mapping_all).transpose()
+
     def get_contexts(self, nodal_plane_index=1, imts=None, component="Geometric"):
         """
         Return an iterable of Contexts. Each Context is a `dict` with
@@ -71,6 +94,7 @@ class ContextDB:
                     observations[imtx] = np.asarray(values, dtype=float)
                 dic["Num. Sites"] = len(records)
             dic['Ctx'].sids = np.arange(len(records), dtype=np.uint32)
+            dic["Ctx"].st_mapping = self.get_st_code_mapping()
             dic["Ctx"].region = 0 # TODO: Default ESHM20 attenuation region
             yield dic
 
