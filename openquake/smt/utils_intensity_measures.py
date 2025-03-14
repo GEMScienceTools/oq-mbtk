@@ -30,7 +30,6 @@ from scipy.constants import g
 from scipy.integrate import cumtrapz
 import matplotlib.pyplot as plt
 
-
 import openquake.smt.response_spectrum as rsp
 from openquake.smt import response_spectrum_smoothing as rsps
 from openquake.smt.utils import (
