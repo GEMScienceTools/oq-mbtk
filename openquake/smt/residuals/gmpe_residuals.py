@@ -105,6 +105,7 @@ class Residuals(object):
             A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
         """
         # Residuals object
+        gmpe_list = copy.deepcopy(gmpe_list)
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.types = {gmpe: {} for gmpe in self.gmpe_list}
         self.residuals = []
