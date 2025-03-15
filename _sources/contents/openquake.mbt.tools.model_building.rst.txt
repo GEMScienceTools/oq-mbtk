@@ -1,0 +1,61 @@
+openquake.mbt.tools.model\_building package
+===========================================
+
+Submodules
+----------
+
+openquake.mbt.tools.model\_building.dclustering module
+------------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.model_building.dclustering
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.model\_building.mpl\_plt\_tools module
+----------------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.model_building.mpl_plt_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.model\_building.myv\_plt\_tools module
+----------------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.model_building.myv_plt_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.model\_building.plt\_mfd module
+---------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.model_building.plt_mfd
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.model\_building.plt\_mtd module
+---------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.model_building.plt_mtd
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.model\_building.plt\_tools module
+-----------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.model_building.plt_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tools.model_building
+   :members:
+   :undoc-members:
+   :show-inheritance:
