@@ -33,12 +33,13 @@ base = os.path.dirname(__file__)
 comparison_in = os.path.join(
     base, '..', '..', 'demos', 'demo_input_files',
     'demo_comparison_analysis_inputs.toml')
-flatfile_in = os.path.join(
+residuals_flatfile_in = os.path.join(
     base, '..', '..', 'demos', 'demo_input_files',
     'demo_flatfile.csv')
-residuals_in = os.path.join(
+residuals_input_toml = os.path.join(
     base, '..', '..', 'demos', 'demo_input_files',
     'demo_residual_analysis_inputs.toml')
+residuals_hrz_comp = "Geometric"
 
 # Output paths
 comparison_out = os.path.join(base, 'outputs_demo_comparison')
@@ -55,8 +56,9 @@ class DemosTestCase(unittest.TestCase):
     def setUpClass(self):
         # Demo scripts
         self.comparison_in = comparison_in
-        self.flatfile_in = flatfile_in
-        self.residuals_in = residuals_in
+        self.residuals_flatfile_in = residuals_flatfile_in
+        self.residuals_input_toml = residuals_input_toml
+        self.residuals_hrz_comp = residuals_hrz_comp
 
         # Demo output locations
         self.comparison_out = comparison_out
@@ -74,16 +76,17 @@ class DemosTestCase(unittest.TestCase):
         """
         Execute the residual analysis demo
         """
-        res_demo(flatfile=self.flatfile_in,
-                 gmms_imts=self.residuals_in,
+        res_demo(flatfile=self.residuals_flatfile_in,
+                 gmms_imts=self.residuals_input_toml,
+                 comp=self.residuals_hrz_comp,
                  out_dir=self.residuals_out)
         
     def test_stations_demo(self):
         """
         Execute the single station residual analysis demo
         """
-        st_demo(flatfile=self.flatfile_in,
-                 gmms_imts=self.residuals_in,
+        st_demo(flatfile=self.residuals_flatfile_in,
+                 gmms_imts=self.residuals_input_toml,
                  out_dir=self.stations_out,
                  threshold=45)
         
