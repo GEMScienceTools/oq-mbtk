@@ -196,7 +196,7 @@ class Residuals(object):
         return cls(gmpe_list, imts)
 
     def compute_residuals(self, ctx_database, nodal_plane_index=1,
-                      component="Geometric", normalise=True):
+                          component="Geometric", normalise=True):
         """
         Calculate the residuals for a set of ground motion records
 
