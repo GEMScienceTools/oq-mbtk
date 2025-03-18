@@ -5,8 +5,6 @@ The :index:`Strong-Motion Tools` module contains code for the selection of groun
 
 The main components of the Strong-Motion Tools (smt) comprise of (1) parsing capabilities to generate metadata (2) capabilities for computation and plotting of ground-motion residual distributions (3) comparison of potentially viable GMPEs and (4) development of the GMC with the final selection(s) of GMPEs.
 
-Here, we will demonstrate how each of these components can be implemented, in the context of aiming to develop a GMPE logic-tree approach GMC for Albania.
-
 Please note that this documentation assumes an elementary knowledge of GMPEs, residual analysis and ground-motion characterisation. Therefore, this documentation's purpose is to facilitate the application of the smt by user who is already familiar with the underlying theory. References are provided throughout for useful overviews of such theory.
 
 Performing a Residual Analysis
@@ -15,17 +13,18 @@ The smt provides capabilities (parsers) for the parsing of an inputted dataset i
 
 The inputted dataset usually comprises of a ground-motion record flatfile. Many seismological institutions provide flatfiles of processed ground-motion records. These flatfiles often slightly differ in format, but generally follow a template of a .csv file in which each row represents a single ground-motion record, that is, a recording of the observed ground-motion at a single station. Each record contains information for (1) the associated earthquake (e.g. moment magnitude, hypocentral location, focal depth), (2) the associated site parameters (e.g. shear-wave velocity in the upper 30m of a site (Vs30)) and (3) ground-motion intensity values for various intensity measures (e.g. peak-ground acceleration (PGA), peak-ground velocity (PGV), spectral acceleration (SA) for various spectral ordinates). 
 
-Within a residual analysis, the information provided in each ground-motion record is used to evaluate how closely a selection of GMPEs predict the observed ground-motion. The ground-motion records within a flatfile will usually comprise of earthquakes from the same region and of the same tectonic region type. 
-Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). When computing the expected ground-motions by each GMPE, the SMT leverages the OpenQuake Engine's capabilities to construct a finite rupture for each event from the available information for each earthquake, from which the distance metrics for each GMPE (e.g. rjb, rrup) can be automatically computed relative to each site (i.e. station) in the flatfile (i.e., the distance metrics provided in a flatfile for a given record are not used in a residual analysis).
+Within a residual analysis, the information provided in each ground-motion record is used to evaluate how closely a selection of GMPEs predict the observed ground-motion. The ground-motion records within a flatfile considered in a residual analysis will usually consist of earthquakes from the same region and of the same tectonic region type. 
 
-In this example, we will consider the ESM 2018 format parser for the parsing of a ESM 2018 flatfile comprising of earthquakes from Albania and the surrounding regions. We will then evaluate appropriate GMPEs using the parsed metadata in the explanations of the subsequent smt components.
+When computing the expected ground-motions by each GMPE, the SMT leverages the OpenQuake Engine's capabilities to construct a finite rupture for each event from the available information for each earthquake, from which the distance metrics for each GMPE (e.g. rjb, rrup) can be automatically computed relative to each site (i.e. station) in the flatfile (i.e., the distance metrics provided in a flatfile for a given record are not used in a residual analysis).
+
+Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). The currently available parsers within the smt module can be found in ``oq-mbtk.openquake.smt.residuals.parsers``.
+
+In this example, we will consider the ESM (Engineering Strong-Motion database) 2018 format parser for the parsing of a subset of the ESM 2018 flatfile comprising of active shallow crustal earthquakes from Albania and the surrounding regions. The example residual analysis considered here consequently focuses on identifying the most appropriate GMPEs for predicting ground-motions generated from active shallow crustal earthquakes in Albania.
    
 Parsing a Ground-Motion Flatfile into Metadata
 **********************************************
 
-Herein we provide a brief description of the various steps for the parsing of an ESM 2018 flatfile. Note that we use the symbol ``>`` as the prompt in a terminal, hence every time you find some code starting with this symbol this indicate a command you must type in your terminal. 
-
-Following the geographical filtering of the ESM 2018 flatfile for only earthquakes from Albania and the surrounding regions in this example, we can parse the flatfile using the ``ESM_flatfile_parser``. The currently available parsers within the smt module can be found in ``oq-mbtk.openquake.smt.residuals.parsers``.
+Herein we provide a brief description of the various steps for the parsing of the ESM18 example flatfile. Note that we use the symbol ``>`` as the prompt in a terminal throughout the smt documentation, hence every time you find some code starting with this symbol this indicates a command you must type in your terminal. 
 
 1. First we must import the ``ESMFlatfileParser`` and the required python modules for managing the output directories:
     
@@ -165,8 +164,9 @@ We can specify the inputs to perform a residual analysis with as follows:
     .. code-block:: ini
        
        > # Compute residuals using GMPEs and intensity measures specified in command line
+       > comp='Geometric' # Use the geometric mean of H1 and H2 as the observed values to compare against the GMPE predictions
        > resid = res.Residuals(gmpe_list, imt_list)
-       > resid.compute_residuals(sm_database, component='Geometric') # component can also be set to 'rotD00', 'rotD50', 'rotD100' etc
+       > resid.compute_residuals(sm_database, component=comp) # component can also be set to 'rotD00', 'rotD50', 'rotD100' etc
        >
        > # OR compute residuals using GMPEs and intensity measures specified in .toml file
        > filename = os.path.join(DATA,'gmpes_and_imts_to_test.toml') # path to .toml file
@@ -174,7 +174,7 @@ We can specify the inputs to perform a residual analysis with as follows:
        > resid.compute_residuals(sm_database)
        >
        > # We can export the residuals to an excel (one sheet per event)
-       > out_loc = os.path.join(run_folder, "residuals.xlsx")
+       > out_loc = os.path.join(run_folder, f"residuals_hrz_comp_def_of_{comp}.xlsx")
        > resid.export_residuals(out_loc)
 
 Plotting of Residuals
@@ -417,19 +417,19 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
 Comparing GMPEs
 ***************
 
-1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals (within the residuals module as demonstrated above), we can also evaluate GMPEs with respect to the predicted ground-motion for a given earthquake scenario. The tools for comparing GMPEs are found within the Comparison module.
+1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals, we can also compare the behaviours of GMPEs for a given set of highly customisable earthquake scenarios using the tools within the Comparison module. The tools within the Comparison module includes plotting capabilities for response spectra and attenuation curves (trellis plots), as well as methods for considering the similarities of GMPE predictions in Euclidean space (i.e. distances) such as Sammon's Maps and hierarchical clustering dendrogram plots. These tools are highly useful for better understanding the behaviours of GMMs in ground-shaking scenarios of interest to a specific region and tectonic region type, These scenarios could potentially be identified from a disaggregation analysis for some sites of interest within a PSHA. Therefore, such tools can be used to help further inform the construction of a GMC logic tree using some GMPEs identified as being potentially suitable for application to a given region and tectonic region type from a residual analysis.
     
     .. code-block:: ini
     
        > # Import GMPE comparison tools
        > from openquake.smt.comparison import compare_gmpes as comp
 
-2. The tools within the Comparison module include Sammon's Maps, hierarchical clustering plots and matrix plots of Euclidean distance for the median (and 16th and 84th percentiles) of predicted ground-motion per GMPE per intensity measure. Plotting capabilities for response spectra and attenuation curves (trellis plots) are also provided in this module.
+2. The inputs for these comparitive tools must be specified within a single ``.toml`` file as provided below. GMPE parameters can be specified in the same way as within residual analysis input ``.toml`` file. To plot a GMPE logic tree we must assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each GMPE depending on which GMC logic tree we wish to include the GMPE within (up to 4 GMC logic trees can currently be plotted within one analysis). To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for - see the ``.toml`` file below for an example of these potential configurations).
+   
+   In the comparison module ``.toml`` file the user must specify the source parameters (here compressional thrust faulting, Mw 5 to Mw 7), site parameters (e.g. vs30), and some GMPEs to evaluate in the specified ground-shaking scenarios.
 
-   The inputs for these comparitive tools must be specified within a single ``.toml`` file as specified below. GMPE parameters can be specified as within the example ``.toml`` file provided above for us in residual analysis. In the ``.toml`` file we have specified the source parameters for earthquakes characteristic of Albania (compressional thrust faulting with magnitudes of interest w.r.t. seismic hazard in the range of Mw 5 to Mw 7), and we have specified some GMPEs which were found to perform well in the residual analysis against Albania ground-motion data. To plot a GMPE logic tree we must assign model weights using ``lt_weight_gmc1`` or '``lt_weight_gmc2`` in each GMPE depending on which GMC logic tree we wish to include the GMPE within (up to 4 GMC logic trees can currently be plotted within one analysis). To plot only the final logic tree and not the individual GMPEs comprising it, we use ``lt_weight_gmc1_plot_lt_only`` instead (depending on which GMC we wish to not plot the individual GMPEs for - see the ``.toml`` file below for an example of these potential configurations).
-
-   NOTE: To specify a GMM argument which is a bool (i.e. ``True`` or ``False``), the user must specify the bool as all lowercase within the ``.toml`` file (i.e. ``true`` or ``false``). An example is provided immediately below for the ``CampbellBozorgnia2014`` GMPE.
-
+   The Comparison module leverages the OpenQuake Engine to construct a finite rupture from the provided source information in the ``.toml`` file, which ensures the distance metrics required for a given GMPE (e.g. rrup, rjb) are always available when computing the ground-motions in the given ground-shaking scenario.
+   
     .. code-block:: ini
     
         ### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
@@ -517,7 +517,7 @@ Comparing GMPEs
         [models.AkkarEtAlRjb2014]
         lt_weight_gmc2_plot_lt_only = 0.50
             
-        # Also specify a GMM to compute ratios of the attenuation against (GMM/baseline)
+        # Also specify a GMPE to compute ratios of the attenuation against (GMPE/baseline)
         [ratios_baseline_gmm.BooreEtAl2020]
          
         [custom_colors]
@@ -525,8 +525,6 @@ Comparing GMPEs
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
             
 3. Trellis Plots 
-
-   Now that we have defined our inputs for GMPE comparison, we can use each tool within the Comparison module to evaluate how similar the GMPEs predict ground-motion for a given ground-shaking scenario.
 
    We can generate trellis plots (predicted ground-motion by each considered GMPE versus distance) for different magnitudes and intensity measures (specified in the ``.toml`` file).
    
@@ -554,13 +552,11 @@ Comparing GMPEs
 
 5. Plot of Spectra from a Record
 
-   The spectra of a processed record can also be plotted along with predictions by the selected GMMs for the same ground-shaking scenario. An example of the input for the record spectra is provided in the demo files:
+   The spectra of a processed record can also be plotted along with predictions by the selected GMPEs for the same ground-shaking scenario. An example of the input for the record spectra is provided in the demo files:
 
     .. code-block:: ini
     
-       > # Generate plot of observed spectra and predictions by GMMs
-       > # Note we use spectra from a record for the 1991 Chamoli EQ in this
-       > # example rather than from a record from an earthquake in/near Albania
+       > # Generate plot of observed spectra and predictions by GMPEs
        > comp.plot_spectra(filename, output_directory, obs_spectra='spectra_chamoli_1991_station_UKHI.csv') 
 
     Response spectra plots for input parameters specified in toml file:
@@ -568,14 +564,14 @@ Comparing GMPEs
 
 6. Plot of ratios of attenuation curves
 
-   The ratios of the median predictions from each GMM and a baseline GMM (specified in the ``.toml`` - see above) can also be plotted. An example is provided in the demo files:
+   The ratios of the median predictions from each GMPE and a baseline GMPE (specified in the ``.toml`` - see above) can also be plotted. An example is provided in the demo files:
 
     .. code-block:: ini
     
-       > # Plot ratios of median attenuation curves for each GMM/median attenuation curves for baseline GMM
+       > # Plot ratios of median attenuation curves for each GMPE/median attenuation curves for baseline GMPE
        > comp.plot_ratios(filename, output_directory) 
 
-    Ratio plots for input parameters specified in toml file (note that here the baseline GMM is ``BooreEtAl2014``):
+    Ratio plots for input parameters specified in toml file (note that here the baseline GMPE is ``BooreEtAl2014``):
         .. image:: /contents/smt_images/RatioPlots.png      
 
 7. Sammon's Maps
@@ -632,7 +628,7 @@ Comparing GMPEs
    
    Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per imt), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
 
-   Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml``):
+   Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml``, although such an application of ModifiableGMPE is not appropriate anyway given within a residual analysis we should evaluate the "base" GMPEs without such modifications):
    
     .. code-block:: ini
 
