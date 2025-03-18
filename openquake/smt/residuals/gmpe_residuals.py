@@ -719,8 +719,7 @@ class Residuals(object):
         return mde_norm, np.sqrt(kappa), edr            
     
     def _get_edr_wrt_imt(self, obs_wrt_imt, expected_wrt_imt,
-                                     stddev_wrt_imt, bandwidth=0.01,
-                                     multiplier=3.0):
+                         stddev_wrt_imt, bandwidth=0.01, multiplier=3.0):
         """
         Calculated the Euclidean Distanced-Based Rank for a set of
         observed and expected values from a particular GMPE over imts
@@ -733,7 +732,7 @@ class Residuals(object):
             nvals = len(obs_wrt_imt[imtx])
             min_d = bandwidth / 2.
             kappa_wrt_imt[imtx] = self._get_edr_kappa(obs_wrt_imt[imtx],
-                                                     expected_wrt_imt[imtx])
+                                                      expected_wrt_imt[imtx])
             mu_d = obs_wrt_imt[imtx] - expected_wrt_imt[imtx]
             d1c = np.fabs(obs_wrt_imt[imtx] - (expected_wrt_imt[imtx] - (
                 multiplier * stddev_wrt_imt[imtx])))
