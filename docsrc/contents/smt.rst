@@ -17,7 +17,7 @@ Within a residual analysis, the information provided in each ground-motion recor
 
 When computing the expected ground-motions by each GMPE, the SMT leverages the OpenQuake Engine's capabilities to construct a finite rupture for each event from the available information for each earthquake, from which the distance metrics for each GMPE (e.g. rjb, rrup) can be automatically computed relative to each site (i.e. station) in the flatfile (i.e., the distance metrics provided in a flatfile for a given record are not used in a residual analysis).
 
-Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). The currently available parsers within the smt module can be found in ``oq-mbtk.openquake.smt.residuals.parsers``.
+Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). The currently available parsers within the smt module can be found in ``oq-mbtk\openquake\smt\residuals\parsers``.
 
 In this example, we will consider the ESM (Engineering Strong-Motion database) 2018 format parser for the parsing of a subset of the ESM 2018 flatfile comprising of active shallow crustal earthquakes from Albania and the surrounding regions. The example residual analysis considered here consequently focuses on identifying the most appropriate GMPEs for predicting ground-motions generated from active shallow crustal earthquakes in Albania.
    
@@ -95,7 +95,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         
 3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for the use of GMPEs with user-specifiable input parameters.
 
-   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GMPE ``.py`` files (found in ``oq-engine.openquake.hazardlib.gsim``). or for ModifiableGMPE features in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``).
+   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GMPE ``.py`` files (found in ``oq-engine\openquake\hazardlib\gsim``). or for ModifiableGMPE features in ``oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe``).
    
    The ``.toml`` file for specifying GMPEs and intensity measures to consider within a residual analysis should be specified as follows:
    
@@ -428,7 +428,6 @@ Comparing GMPEs
    
     .. code-block:: ini
     
-        ### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
         [general]
         imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)'] # IMTs to compute attenuation curves for
         max_period = 2 # Max period for response spectra (can't exceed maximum period in a specified GMPE)
@@ -525,7 +524,7 @@ Comparing GMPEs
 
    We can generate trellis plots (predicted ground-motion by each considered GMPE versus distance) for different magnitudes and intensity measures (specified in the ``.toml`` file).
    
-   Note that ``filename`` (both for trellis plotting and in the subsequently demonstrated comparison module plotting functions) is the path to the input ``.toml`` file.    
+   Note that ``filename`` (both for trellis plotting and in the subsequently demonstrated comparison module plotting functions) is the path to the input ``.toml`` file. The attenuation curves can be exported into a CSV as demonstrated within the Comparison module demo (openquake\smt\demos\demo_comparison.py)
 
     .. code-block:: ini
        
@@ -621,7 +620,7 @@ Comparing GMPEs
     
 10. Using ModifiableGMPE to modify GMPEs within a ``.toml``. 
 
-   In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``).
+   In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe.py``).
    
    Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per IMT), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
 
