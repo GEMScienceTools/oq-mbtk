@@ -450,6 +450,7 @@ Comparing GMPEs
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
         z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
         volc_back_arc = false # true or false
+        eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
         
         # Characterise earthquake for the region of interest as finite rupture
         [source_properties]

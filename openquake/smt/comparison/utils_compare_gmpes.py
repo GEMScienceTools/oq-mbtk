@@ -111,7 +111,8 @@ def plot_trellis_util(config, output_directory):
                                                          config.dist_type,
                                                          config.trt,
                                                          config.up_or_down_dip,
-                                                         config.volc_ba)
+                                                         config.volc_ba,
+                                                         config.eshm20_region)
 
                 # Get mean, sigma components, mean plus/minus sigma
                 mean = mean[0][0]
@@ -257,7 +258,8 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                                                            dist_type,
                                                            config.trt,
                                                            config.up_or_down_dip,
-                                                           config.volc_ba) 
+                                                           config.volc_ba,
+                                                           config.eshm20_region) 
                     
                     # Interpolate for distances and store
                     mu = mu[0][0]
@@ -382,7 +384,8 @@ def plot_ratios_util(config, output_directory):
                                  config.dist_type,
                                  config.trt,
                                  config.up_or_down_dip,
-                                 config.volc_ba)
+                                 config.volc_ba,
+                                 config.eshm20_region)
             b_mean = results[0][0][0]
 
             # Now compute ratios for each GMM
@@ -410,7 +413,8 @@ def plot_ratios_util(config, output_directory):
                                      config.dist_type,
                                      config.trt,
                                      config.up_or_down_dip,
-                                     config.volc_ba)
+                                     config.volc_ba,
+                                     config.eshm20_region)
 
                 # Get mean and r_vals
                 mean = results[0][0][0]
@@ -492,7 +496,8 @@ def compute_matrix_gmpes(config, mtxs_type):
                                                          config.dist_type,
                                                          config.trt,
                                                          config.up_or_down_dip,
-                                                         config.volc_ba) 
+                                                         config.volc_ba,
+                                                         config.eshm20_region) 
                 
                 # Get means further than minR
                 idx = np.argwhere(r_vals>=config.minR).flatten()
