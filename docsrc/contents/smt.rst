@@ -127,10 +127,6 @@ We can specify the inputs to perform a residual analysis with as follows:
        
        [models.NGAEastGMPE]
        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table        
-        
-       [models.KothaEtAl2020ESHM20]
-       sigma_mu_epsilon = 2.85697 
-       c3_epsilon = 1.72    
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
