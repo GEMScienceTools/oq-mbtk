@@ -73,10 +73,6 @@ class ContextDB:
                 dic["Num. Sites"] = len(records)
             dic['Ctx'].sids = np.arange(len(records), dtype=np.uint32)
             dic["Ctx"].st_mapping = self.get_st_code_mapping()
-            dic["Ctx"].region = 0 # NOTE: Default ESHM20 attenuation region
-                                  # is currently used for residual analysis
-                                  # but can (hackishly) be modified here if
-                                  # required for now
 
             yield dic
 
