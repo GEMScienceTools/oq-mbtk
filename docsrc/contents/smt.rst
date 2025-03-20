@@ -11,7 +11,7 @@ Performing a Residual Analysis
 *********************************************
 The smt provides capabilities (parsers) for the parsing of an inputted dataset into metadata for the performing of a residual analysis, so as to evaluate GMPE performance against the inputted dataset.
 
-The inputted dataset usually comprises of a ground-motion record flatfile. Many seismological institutions provide flatfiles of processed ground-motion records. These flatfiles often slightly differ in format, but generally follow a template of a .csv file in which each row represents a single ground-motion record, that is, a recording of the observed ground-motion at a single station. Each record contains information for (1) the associated earthquake (e.g. moment magnitude, hypocentral location, focal depth), (2) the associated site parameters (e.g. shear-wave velocity in the upper 30m of a site (Vs30)) and (3) ground-motion intensity values for various intensity measures (e.g. peak-ground acceleration (PGA), peak-ground velocity (PGV), spectral acceleration (SA) for various spectral ordinates). 
+The inputted dataset usually comprises of a ground-motion record flatfile. Many seismological institutions provide flatfiles of processed ground-motion records. These flatfiles often slightly differ in format, but generally follow a template of a CSV file in which each row represents a single ground-motion record, that is, a recording of the observed ground-motion at a single station. Each record contains information for (1) the associated earthquake (e.g. moment magnitude, hypocentral location, focal depth), (2) the associated site parameters (e.g. shear-wave velocity in the upper 30m of a site (Vs30)) and (3) ground-motion intensity values for various intensity measures (e.g. peak-ground acceleration (PGA), peak-ground velocity (PGV), spectral acceleration (SA) for various spectral ordinates). 
 
 Within a residual analysis, the information provided in each ground-motion record is used to evaluate how closely a selection of GMPEs predict the observed ground-motion. The ground-motion records within a flatfile considered in a residual analysis will usually consist of earthquakes from the same region and of the same tectonic region type. 
 
@@ -212,7 +212,7 @@ Residual distribution plot for Boore et al. 2020 and PGA:
        > # Plot residual probability density functions over spectral periods:
        > rspl.PlotResidualPDFWithSpectralPeriod(resid, filename)
        >
-       > # Generate .csv of residual probability density function per IMT per GMPE 
+       > # Generate CSV of residual probability density function per IMT per GMPE 
        > rspl.PDFTable(resid, filename) 
 
 Plot of residual distributions versus spectral acceleration: 
@@ -288,7 +288,7 @@ Single Station Residual Analysis
        > Get the total, inter-event and intra-event residuals for each site
        > ssa1.get_site_residuals(sm_database)
        >
-       > Get single station residual statistics for each site and export to .csv
+       > Get single station residual statistics for each site and export to CSV
        > csv_output = os.path.join(DATA, 'SSA_statistics.csv')
        > ssa1.residual_statistics(True, csv_output)
       
@@ -343,10 +343,10 @@ The Loglikelihood Method (Scherbaum et al. 2009)
        > # OR from .toml:
        > llh, model_weights, model_weights_with_imt = res.get_loglikelihood_values(resid, resid.imts)
        >
-       > # Generate a .csv table of LLH values per GMPE and per IMT
+       > # Generate a CSV table of LLH values per GMPE and per IMT
        > rspl.loglikelihood_table(resid, filename)
        >
-       > # Generate a .csv table of LLH-based model weights for GMPE logic tree
+       > # Generate a CSV table of LLH-based model weights for GMPE logic tree
        > rspl.llh_weights_table(resid, filename)   
        >
        > # Plot LLH values per GMPE vs IMT
@@ -370,10 +370,10 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
        > # Get EDR, MDE Norm and MDE per GMPE per IMT
        > res.get_edr_values_wrt_spectral_period(resid)
        >
-       > # Generate a .csv table of EDR values per GMPE and per IMT
+       > # Generate a CSV table of EDR values per GMPE and per IMT
        > rspl.edr_table(resid, filename)
        >
-       > # Generate a .csv table of EDR-based model weights for GMPE logic tree
+       > # Generate a CSV table of EDR-based model weights for GMPE logic tree
        > rspl.edr_weights_table(resid, filename)   
        >
        > # Plot EDR score, MDE norm and sqrt(k) vs IMT
@@ -398,10 +398,10 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
        > # Get stochastic area metric per GMPE and per IMT
        > res.get_stochastic_area_wrt_imt(resid)
        >
-       > # Generate a .csv table of stochastic area values per GMPE and per IMT
+       > # Generate a CSV table of stochastic area values per GMPE and per IMT
        > rspl.stochastic_area_table(resid, filename)
        >
-       > # Generate a .csv table of stochastic area-based model weights for GMPE logic tree
+       > # Generate a CSV table of stochastic area-based model weights for GMPE logic tree
        > rspl.stochastic_area_weights_table(resid, filename)   
        >
        > # Plot stochastic area vs IMT
@@ -524,7 +524,7 @@ Comparing GMPEs
 
    We can generate trellis plots (predicted ground-motion by each considered GMPE versus distance) for different magnitudes and intensity measures (specified in the ``.toml`` file).
    
-   Note that ``filename`` (both for trellis plotting and in the subsequently demonstrated comparison module plotting functions) is the path to the input ``.toml`` file. The attenuation curves can be exported into a CSV as demonstrated within the Comparison module demo (openquake\smt\demos\demo_comparison.py)
+   Note that ``filename`` (both for trellis plotting and in the subsequently demonstrated comparison module plotting functions) is the path to the input ``.toml`` file. The attenuation curves for a given run configuration can be exported into a CSV as demonstrated within the Comparison module demo (openquake\smt\demos\demo_comparison.py)
 
     .. code-block:: ini
        
