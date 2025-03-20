@@ -166,7 +166,8 @@ def att_curves(gmpe,
                dist_type,
                trt,
                up_or_down_dip,
-               volc_ba):
+               volc_ba,
+               eshm20_region):
     """
     Compute the ground-motion intensities for the given context created here
     """
@@ -211,7 +212,8 @@ def att_curves(gmpe,
              'z1pt0': Z1,
              'z2pt5': Z25,
              'backarc': volc_ba,
-             'vs30measured': False}
+             'vs30measured': False,
+             'eshm20_region': eshm20_region}
 
     # Check if site up-dip or down-dip of site
     if up_or_down_dip == float(1):
