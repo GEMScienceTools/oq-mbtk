@@ -430,7 +430,7 @@ Comparing GMPEs
     
         [general]
         imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)'] # IMTs to compute attenuation curves for
-        max_period = 2 # Max period for response spectra (can't exceed maximum period in a specified GMPE)
+        max_period = 2 # Max period for response spectra (capped by max period in GMMs)
         minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
         maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
@@ -443,7 +443,7 @@ Comparing GMPEs
         Z1 = -999   # If -999 compute from Vs30 using Chiou and Youngs (2014) relationship
         Z25 = -999  # If -999 compute from Vs30 using Campbell and Bozorgnia (2014) relationship
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-        z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
+        z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical relationships
         volc_back_arc = false # true or false
         eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
         
