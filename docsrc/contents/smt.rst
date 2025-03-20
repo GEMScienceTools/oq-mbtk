@@ -95,7 +95,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         
 3. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for the use of GMPEs with user-specifiable input parameters.
 
-   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GMPE ``.py`` files (found in ``oq-engine\openquake\hazardlib\gsim``). or for ModifiableGMPE features in ``oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe``).
+   The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GMPE modules (the ``.py`` GMM files found in ``oq-engine\openquake\hazardlib\gsim``). The capabilties of ModifiableGMPE are primarily contained within ``oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe.py``.
    
    The ``.toml`` file for specifying GMPEs and intensity measures to consider within a residual analysis should be specified as follows:
    
