@@ -524,7 +524,7 @@ Comparing GMPEs
 
    We can generate trellis plots (predicted ground-motion by each considered GMPE versus distance) for different magnitudes and intensity measures (specified in the ``.toml`` file).
    
-   Note that ``filename`` (both for trellis plotting and in the subsequently demonstrated comparison module plotting functions) is the path to the input ``.toml`` file. The attenuation curves for a given run configuration can be exported into a CSV as demonstrated within the Comparison module demo (openquake\smt\demos\demo_comparison.py)
+   Note that ``filename`` (both for trellis plotting and in the subsequently demonstrated comparison module plotting functions) is the path to the input ``.toml`` file. The attenuation curves for a given run configuration can be exported into a CSV as demonstrated within the Comparison module demo (``openquake\smt\demos\demo_comparison.py``). The user can then compare attenuation curves and other derivative plots (e.g. response spectra) for varying site conditions by comparing values extracted from these CSVs (i.e. one CSV per run configuration - each with different site conditions but same event parameters). 
 
     .. code-block:: ini
        
