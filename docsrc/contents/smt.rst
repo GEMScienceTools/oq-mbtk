@@ -216,7 +216,7 @@ Residual distribution plot for Boore et al. 2020 and PGA:
        > # Plot residual probability density functions over spectral periods:
        > rspl.PlotResidualPDFWithSpectralPeriod(resid, filename)
        >
-       > # Generate .csv of residual probability density function per imt per GMPE 
+       > # Generate .csv of residual probability density function per IMT per GMPE 
        > rspl.PDFTable(resid, filename) 
 
 Plot of residual distributions versus spectral acceleration: 
@@ -434,13 +434,13 @@ Comparing GMPEs
     
         ### Input file for comparison of GMPEs using plotting functions in openquake.smt.comparison.compare_gmpes
         [general]
-        imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
-        max_period = 2 # max period for spectra plots
-        minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
-        maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
+        imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)'] # IMTs to compute attenuation curves for
+        max_period = 2 # Max period for response spectra (can't exceed maximum period in a specified GMPE)
+        minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
+        maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
-        Nstd = 1 # num. of standard deviations to sample from sigma distribution
+        Nstd = 1 # Number of standard deviations to sample from sigma distribution
         
         # Specify site properties
         [site_properties]
@@ -627,7 +627,7 @@ Comparing GMPEs
 
    In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine.openquake.hazardlib.gsim.mgmpe.modifiable_gmpe``).
    
-   Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per imt), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
+   Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per IMT), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
 
    Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml``, although such an application of ModifiableGMPE is not appropriate anyway given within a residual analysis we should evaluate the "base" GMPEs without such modifications):
    
