@@ -435,7 +435,7 @@ Comparing GMPEs
         maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
-        Nstd = 1 # Number of standard deviations to sample from sigma distribution
+        Nstd = 1 # Truncation for GMM sigma distribution
         
         # Specify site properties
         [site_properties]
