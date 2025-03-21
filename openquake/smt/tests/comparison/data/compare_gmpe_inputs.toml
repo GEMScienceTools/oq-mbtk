@@ -7,7 +7,7 @@ minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
 dist_type = 'rjb' # Specify distance metric used in trellis plots
 dist_list = [10, 50, 200] # Distances for use in response spectra
-Nstd = 0 # Number of standard deviations to sample from sigma distribution 
+Nstd = 0 # Truncation for GMM sigma distribution
 
 [site_properties]
 vs30 = 800
