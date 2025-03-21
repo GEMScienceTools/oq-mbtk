@@ -29,7 +29,6 @@ from openquake.hazardlib import imt
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo import geodetic
-
 from openquake.smt import utils
 from openquake.smt.residuals.context_db import ContextDB
 import openquake.smt.utils_intensity_measures as utils_imts

@@ -49,7 +49,7 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         if not os.path.exists(self.output_directory): os.makedirs(
                 self.output_directory)
     
-    def test_mgmpe_executions(self):
+    def test_mgmpe_from_toml(self):
         """
         Check GMPEs modified using mgmpe features specified within the toml
         are executed correctly and the expected values are returned
