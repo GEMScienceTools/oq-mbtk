@@ -1,0 +1,353 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAtalogue Toolkit (cat) module &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Global Hazard Map (ghm) module" href="ghm.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            OpenQuake Model Building Toolkit Suite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">CAtalogue Toolkit (cat) module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#setting-up-a-bash-script">Setting up a bash script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#merging">Merging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#homogenisation">Homogenisation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#checking-for-duplicate-events">Checking for duplicate events</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ghm.html">Global Hazard Map (ghm) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smt.html">Strong-Motion Tools (smt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sep.html">Secondary Perils Analysis using the OQ-MBTK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wkf.html">SSC workflow (wkf) module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">OpenQuake Model Building Toolkit Suite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">CAtalogue Toolkit (cat) module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contents/cat.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="catalogue-toolkit-cat-module">
+<h1>CAtalogue Toolkit (cat) module<a class="headerlink" href="#catalogue-toolkit-cat-module" title="Link to this heading"></a></h1>
+<p>The <span class="target" id="index-0"></span>Catalogue Toolkit module provides functionalities for the compilation of a homogenised catalogue starting from a collection of catalogues with different origins and magnitudes.</p>
+<p>The formats of the original catalogues supported are:</p>
+<ul class="simple">
+<li><p>ISF (see <a class="reference external" href="http://www.isc.ac.uk/standards/isf/">http://www.isc.ac.uk/standards/isf/</a>)</p></li>
+<li><p>GEM Hazard Modeller’s Tookit .csv format</p></li>
+<li><p>GCMT .ndk formats (see <a class="reference external" href="https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained">https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained</a>)</p></li>
+</ul>
+<p>The module contains tools to transform between these different catalogue types, retaining the most neccessary information. The easiest way to build a homogenised catalogue within this framework is to run a bash script which includes the required inputs for each stage of the model and to specify the parameters with a toml file. We demonstrate below how to set this up, but individual steps can also be called directly in python if preffered.</p>
+<section id="setting-up-a-bash-script">
+<h2>Setting up a bash script<a class="headerlink" href="#setting-up-a-bash-script" title="Link to this heading"></a></h2>
+<p>The bash script specifies all file locations and steps for generating a homogenised model. At each step, we provide a different .toml file specifying the necessary parameters. If you have all the neccessary files set out as below (and named run_all.sh) you should have no problems in running the script with ./run_all.sh</p>
+<p>Further details on each step follow.</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="c1">#!/usr/bin/env bash</span>
+
+<span class="na">CASE</span><span class="o">=</span><span class="s">&quot;homogenisedcat&quot;</span>
+
+<span class="c1"># Merging catalogues</span>
+<span class="na">ARG1</span><span class="o">=</span><span class="s">./settings/merge_$CASE.toml</span>
+<span class="na">oqm cat merge $ARG1</span>
+
+<span class="c1"># Creating the homogenised catalogue</span>
+<span class="na">ARG1</span><span class="o">=</span><span class="s">./settings/homogenise_$CASE.toml</span>
+<span class="na">ARG2</span><span class="o">=</span><span class="s">./h5/$CASE_otab.h5</span>
+<span class="na">ARG3</span><span class="o">=</span><span class="s">./h5/$CASE_mtab.h5</span>
+
+<span class="na">oqm cat homogenise $ARG1 $ARG2 $ARG3</span>
+
+<span class="c1"># Checking the homogenised catalogue</span>
+<span class="na">ARG1</span><span class="o">=</span><span class="s">./settings/check_$CASE.toml</span>
+<span class="na">ARG2</span><span class="o">=</span><span class="s">./h5/$CASE_homogenised.h5</span>
+
+<span class="na">oqm cat check_duplicates $ARG1 $ARG2</span>
+
+<span class="c1"># Create .csv</span>
+<span class="na">ARG3</span><span class="o">=</span><span class="s">./csv/catalogue_$CASE.csv</span>
+<span class="na">oqm cat create_csv $ARG2 $ARG3</span>
+</pre></div>
+</div>
+</section>
+<section id="merging">
+<h2>Merging<a class="headerlink" href="#merging" title="Link to this heading"></a></h2>
+<p>The first step in compiling a catalogue is merging information from different sources. This might include a global catalogue (e.g. ISC-GEM or GCMT), and various local catalogues that are more likely to have recorded smaller magnitude events, or contain more accurate locations. The merge tools are designed to allow multiple catalogues to be combined into one, regardless of original catalogue formats, and to retain only unique events across the catalogues.</p>
+<p>As we see in the bash script above, we run the merge with <code class="code docutils literal notranslate"><span class="pre">oqm</span> <span class="pre">cat</span> <span class="pre">merge</span> <span class="pre">merge.toml</span></code> where merge.toml contains all the necessary information for the merge. The <code class="code docutils literal notranslate"><span class="pre">merge</span></code> function takes the toml file as its single argument. An example of merge .toml file might look like this:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[general]</span>
+<span class="c1">## Set these or your output files will have bad names and be in very confusing places!</span>
+<span class="na">output_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;./../h5/&quot;</span>
+<span class="na">output_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;homogenisedcat_&quot;</span>
+
+<span class="k">[[catalogues]]</span>
+<span class="na">code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;ISCGEM&quot;</span>
+<span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;ISC GEM Version 10.0&quot;</span>
+<span class="na">filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;./iscgem10pt0.csv&quot;</span>
+<span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;csv&quot;</span>
+
+<span class="k">[[catalogues]]</span>
+<span class="na">code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;local&quot;</span>
+<span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;local version 0.0&quot;</span>
+<span class="na">filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;./local_00_cat.csv&quot;</span>
+<span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;csv&quot;</span>
+<span class="na">delta_ll</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">30</span>
+<span class="na">delta_t</span><span class="w"> </span><span class="o">=</span><span class="w">  </span><span class="s">10</span>
+<span class="na">buff_ll</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.0</span>
+<span class="na">buff_t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">5.0</span>
+<span class="na">use_kms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">true</span>
+<span class="c1">#use_ids = true</span>
+</pre></div>
+</div>
+<p>This contains some general settings for the output, namely the path where the output should be saved and a prefix that will be used to name the file. If you are running the merge function as part of a homogenisation bash script, it is strongly recommended to make this consistent with the CASE argument (as in the example)! The toml file should also be named merge_$CASE. A minimumn magnitude can also be specified here, which will filter the catalogue to events above the specified minimum, and a polygon describing a geographic area of interest can also be added to filter the catalogue to that region.
+The rest of the merge toml should contain the details of the catalogues to be merged. For each catalogue, it is necessary to specify a code, name, file location and catalogue type. The code and name are for the user to choose, but the code should be short as it will feature in the final catalogue to indicate which catalogue the event came from. The type argument will be used to process the catalogue, so should be one of “csv”, “isf” or “gcmt”.</p>
+<p>To ensure events are not duplicated, the user can specify space-time windows over which events are considered to be the same. These are specified using <code class="code docutils literal notranslate"><span class="pre">delta_t</span></code> for time and <code class="code docutils literal notranslate"><span class="pre">delta_ll</span></code> for distance, where <code class="code docutils literal notranslate"><span class="pre">delta_ll</span></code> can be specified in degrees or kms by specifying <code class="code docutils literal notranslate"><span class="pre">use_km</span> <span class="pre">=</span> <span class="pre">True</span></code>. For both parameters, these can be specified as a single value, as a year-value pair to allow for changes in location/temporal accuracy in different time periods, or as a function of magnitude m, which is particularly useful when using the GCMT catalogue, which has some significant differences in location/time compared to other catalogues due to the moment tensor inversion considering these as model parameters. This can result in significant differences for large events, some of which may be so large that they are better removed manually (for example, the 3.5 minute time difference between ISC_GEM and GCMT for the 2004 Sumatra-Andaman earthquake). For the window parameters, we can also specify a buffer (<code class="code docutils literal notranslate"><span class="pre">buff_ll</span></code> or <code class="code docutils literal notranslate"><span class="pre">buff_t</span></code>) which highlights events which fall within some space/time of the window parameter and flags these as potential duplicates. The units for <code class="code docutils literal notranslate"><span class="pre">buff_ll</span></code> should be consistent with those used in <code class="code docutils literal notranslate"><span class="pre">delta_ll</span></code> and specified using the <code class="code docutils literal notranslate"><span class="pre">use_kms</span></code> argument (i.e. set use_kms = True to use km units or use_kms = False to use lat/lon). In the case where catalogues to be merged might come from the same source or otherwise have matching event ids, the <code class="code docutils literal notranslate"><span class="pre">use_ids</span></code> argument will remove duplicated event ids directly.</p>
+<p>The output of the <code class="code docutils literal notranslate"><span class="pre">merge</span></code> function will be two h5 files specifying information on the origin <code class="code docutils literal notranslate"><span class="pre">_otab.h5</span></code> and the magnitudes <code class="code docutils literal notranslate"><span class="pre">_mtab.h5</span></code>. The origin file will contain the event locations, depths, agency information and focal mechanism parameters where available, while the magnitudes file will include information on the event magnitude and uncertainties.</p>
+</section>
+<section id="homogenisation">
+<h2>Homogenisation<a class="headerlink" href="#homogenisation" title="Link to this heading"></a></h2>
+<p>The next step in creating a catalogue is the homogenisation of magnitudes to moment magnitude M_w. The catalogue toolkit provides different tools to help with this. Homogenising magnitudes is normally done by using a regression to map from one magnitude to a desired magnitude. This requires that an event would need to be recorded in both magnitudes, and ideally a good number of matching events to ensure a significant result. In the toolkit, we use odr regression with scipy to find the best fit model, with options to fit a simple linear regression, an exponential regression, a polynomial regression, or a bilinear regression with a fixed point of change in slope. The function outputs parameters for the chosen fit, plus uncertainty that should be passed on to the next stage.</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">from openquake.cat.catalogue_query_tools import CatalogueRegressor</span>
+<span class="na">from openquake.cat.hmg.hmg import get_mag_selection_condition</span>
+<span class="na">import pandas as pd</span>
+<span class="na">import numpy as np</span>
+
+<span class="na">def build_magnitude_query(mag_agencies, logic_connector)</span><span class="o">:</span>
+<span class="na">&quot;&quot;&quot;</span>
+<span class="na">Creates a string for querying a DataFrame with magnitude data.</span>
+
+<span class="o">:</span><span class="s">param mag_agency:</span>
+<span class="w">        </span><span class="na">A dictionary with magnitude type as key and a list of magnitude agencies as values</span>
+<span class="o">:</span><span class="s">param logic_connector&quot;</span>
+<span class="w">        </span><span class="na">A string.  Can be either &quot;and&quot;  or &quot;or&quot;</span>
+<span class="o">:</span><span class="s">return:</span>
+<span class="w">        </span><span class="na">A string defining a query for an instance of</span><span class="w"> </span><span class="o">:</span><span class="s">class:`pandas.DataFrame`</span>
+<span class="na">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="na">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">    </span><span class="na">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span>
+<span class="w">    </span><span class="na">for mag_type in mag_agencies</span><span class="o">:</span>
+<span class="w">        </span><span class="na">logic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;\&quot;</span><span class="w"> </span><span class="na">if logic_connector =</span><span class="o">=</span><span class="w"> </span><span class="s">&#39;or&#39;</span><span class="w"> </span><span class="na">else &quot;&amp;&quot;</span>
+<span class="w">        </span><span class="na">for agency in mag_agencies[mag_type]</span><span class="o">:</span>
+<span class="w">            </span><span class="na">cnd = get_mag_selection_condition(agency, mag_type, df_name</span><span class="o">=</span><span class="s">&quot;mdf&quot;</span><span class="na">)</span>
+<span class="w">            </span><span class="na">query +</span><span class="o">=</span><span class="w"> </span><span class="s">&quot; {:s} ({:s})&quot;</span><span class="na">.format(logic, cnd) if i &gt; 0 else &quot;({</span><span class="o">:</span><span class="s">s})&quot;.format(cnd)</span>
+<span class="w">            </span><span class="na">i +</span><span class="o">=</span><span class="w"> </span><span class="s">1</span>
+<span class="w">    </span><span class="na">return query</span>
+
+
+<span class="na">def get_data(res)</span><span class="o">:</span>
+<span class="na">&quot;&quot;&quot;</span>
+<span class="na">From a DataFrame obtained by merging two magnitude DataFrames it creates the input needed</span>
+<span class="na">for performing orthogonal regression.</span>
+
+<span class="o">:</span><span class="s">param res:</span>
+<span class="o">:</span><span class="s">class:`pandas.DataFrame`</span>
+<span class="na">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="na">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">np.zeros((len(res), 4))</span>
+<span class="w">    </span><span class="na">data[</span><span class="o">:</span><span class="s">, 0] = res[&quot;value_x&quot;].values</span>
+<span class="w">    </span><span class="na">data[</span><span class="o">:</span><span class="s">, 1] = res[&quot;sigma_x&quot;].values</span>
+<span class="w">    </span><span class="na">data[</span><span class="o">:</span><span class="s">, 2] = res[&quot;value_y&quot;].values</span>
+<span class="w">    </span><span class="na">data[</span><span class="o">:</span><span class="s">, 3] = res[&quot;sigma_y&quot;].values</span>
+<span class="w">    </span><span class="na">return data</span>
+
+<span class="na">def getd(mdf, agenciesA, agenciesB)</span><span class="o">:</span>
+<span class="w">        </span><span class="na">queryA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">build_magnitude_query(agenciesA, &quot;or&quot;)</span>
+<span class="w">        </span><span class="na">queryB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">build_magnitude_query(agenciesB, &quot;or&quot;)</span>
+
+<span class="w">        </span><span class="na">selA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">mdf.loc[eval(queryA), :]</span>
+<span class="w">        </span><span class="na">selB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">mdf.loc[eval(queryB), :]</span>
+
+<span class="w">        </span><span class="na">res = selA.merge(selB, on=[&quot;eventID&quot;], how</span><span class="o">=</span><span class="s">&quot;inner&quot;</span><span class="na">)</span>
+<span class="w">        </span><span class="na">print(&quot;Number of values</span><span class="o">:</span><span class="w"> </span><span class="s">{:d}&quot;.format(len(res)))</span>
+
+<span class="w">        </span><span class="na">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">get_data(res)</span>
+<span class="w">        </span><span class="na">return data</span>
+
+<span class="na">def print_mbt_conversion(results, agency, magtype, **kwargs)</span><span class="o">:</span>
+<span class="w">        </span><span class="na">print(&quot;\n&quot;)</span>
+<span class="w">        </span><span class="na">print(&quot;[magnitude.{</span><span class="o">:</span><span class="s">s}.{:s}]&quot;.format(agency, magtype))</span>
+<span class="w">        </span><span class="na">print(&quot;# This is an ad-hoc conversion equation&quot;)</span>
+
+<span class="w">        </span><span class="na">if &quot;corner&quot; in kwargs</span><span class="o">:</span>
+<span class="w">                </span><span class="na">print(&quot;low_mags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[0.0, {:.1f}]&quot;.format(float(kwargs[&quot;corner&quot;])))</span>
+<span class="w">                </span><span class="na">fmt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;conv_eqs = [\&quot;</span><span class="na">{</span><span class="o">:</span><span class="s">.4f} + {:.4f} * m\&quot;]&quot;</span>
+<span class="w">                </span><span class="na">print(fmt.format(results.beta[0], results.beta[1]))</span>
+<span class="w">        </span><span class="na">else</span><span class="o">:</span>
+<span class="w">                </span><span class="na">print(&quot;low_mags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[0.0]&quot;)</span>
+<span class="w">                </span><span class="na">fmt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;conv_eqs = [\&quot;</span><span class="na">{</span><span class="o">:</span><span class="s">.4f} + {:.4f} * m\&quot;]&quot;</span>
+<span class="w">                </span><span class="na">print(fmt.format(results.beta[0], results.beta[1]))</span>
+
+<span class="w">        </span><span class="na">fmt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;std_devs = [{:.4f}, {:.4f}]&quot;</span>
+<span class="w">        </span><span class="na">print(fmt.format(results.sd_beta[0], results.sd_beta[1]))</span>
+<span class="w">        </span><span class="na">print(&quot;\n&quot;)</span>
+</pre></div>
+</div>
+<p>Using the above functions, we can query our catalogues to identify events that are present in both catalogues in both magnitude types. We can then use these to build a regression model and identify a relationship between different magnitude types. In the example below, we select mw magnitudes from our <cite>local</cite> catalogue and Mw magnitudes from <cite>ISCGEM</cite>. We specify a polynomial fit to the data, with starting parameter estimates for the regression of 1.2 and 0.7</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">agency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;local&quot;</span>
+<span class="na">magtype</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mw&quot;</span>
+<span class="na">amA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">{magtype: [agency]}</span>
+<span class="na">amB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">{&quot;Mw&quot;: [&quot;ISCGEM&quot;]}</span>
+<span class="na">datambi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">getd(gm, amA, amB)</span>
+
+<span class="na">regress = CatalogueRegressor.from_array(datambi, keys</span><span class="o">=</span><span class="s">&quot;({:s}, {:s}) | (Mw)&quot;</span><span class="na">.format(agency, magtype))</span>
+<span class="c1"># Regression type to fit and starting parameters</span>
+<span class="na">results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">regress.run_regression(&quot;polynomial&quot;, [1.2, 0.7])</span>
+<span class="c1"># Results</span>
+<span class="c1"># Print resulting best fit</span>
+<span class="na">print_mbt_conversion(results, agency, magtype)</span>
+<span class="c1"># plot the regression</span>
+<span class="na">regress.plot_model_density(overlay</span><span class="o">=</span><span class="s">False, sample=0)</span>
+</pre></div>
+</div>
+<p>Alternatively, if we wanted an example with a bilinear fit with a break in slope at M5.8, we could say</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">regress.run_regression(&quot;2segmentM5.8&quot;, [0.3, 1.0, 4.5])</span>
+</pre></div>
+</div>
+<p>This would give us a different fit to our data and a different equation to supply to the homogenisation toml.</p>
+<p>Where there are not enough events to allow for a direct regression or we are unhappy with the fit for our data, there are many conversions in the literature which may be useful. This process may take some revising and iterating - it is sometimes very difficult to identify a best fit, especially where we have few datapoints or highly uncertain data. Once we are happy with the fits to our data, we can add the regression equation to the homogenisation .toml file. This process should be repeated for every magnitude we wish to convert to Mw.</p>
+<p>The final homogenisation step itself is also controlled by a toml file, where each observed magnitude is specified individually and the regression coefficients and uncertainty are included. It is also necessary to specify a hierarchy of catalogues so that a preferred catalogue is used for the magnitude where the event has multiple entries. In the example below, we merge the ISCGEM and a local catalogue, preferring ISCGEM magnitudes where available as specified in the ranking. Because the ISCGEM already provides magnitudes in Mw, we simply retain all Mw magnitudes from ISCGEM. In this example, our local catalogue has two different magnitude types for which we have derived a regression. We specify how to convert to the standardised Mw from the local.mw and the standard deviations, which are outputs of the fitting we carried out above.</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="c1"># This file contains a set of rules for the selection of origins and</span>
+<span class="c1"># the homogenisation of magnitudes. Used for the construction of the global catalogue</span>
+<span class="c1"># This version uses ad-hoc conversion parameters for ms and mb magnitudes, and that all Mw magnitudes are consistent</span>
+<span class="c1">#</span>
+<span class="c1"># Origin selection</span>
+<span class="c1">#</span>
+
+<span class="k">[origin]</span>
+<span class="c1"># Specify preferred origin when multiple are available.</span>
+<span class="na">ranking</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&quot;ISCGEM&quot;,  &quot;local&quot;]</span>
+
+<span class="c1">#</span>
+<span class="c1"># Magnitude-conversion: Mw</span>
+<span class="c1">#</span>
+<span class="c1"># These are magnitudes we are happy with: don&#39;t convert</span>
+<span class="c1"># Homogenise all catalogues to iscgem Mw</span>
+<span class="k">[magnitude.ISCGEM.Mw]</span>
+<span class="na">low_mags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[0.0]</span>
+<span class="na">conv_eqs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&quot;m&quot;]</span>
+
+<span class="k">[magnitude.local.mw]</span>
+<span class="na">low_mags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[0.0]</span>
+<span class="na">conv_eqs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&quot;0.1079 + 0.9806 * m&quot;]</span>
+<span class="na">std_devs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[0.0063, 0.0011]</span>
+
+
+<span class="k">[magnitude.local.mww]</span>
+<span class="na">low_mags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[0.0]</span>
+<span class="na">conv_eqs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&quot;0.1928 + 0.9757 * m&quot;]</span>
+<span class="na">std_devs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[0.0091, 0.0016]</span>
+</pre></div>
+</div>
+<p>The actual homogenisation step is carried out by calling
+<code class="code docutils literal notranslate"><span class="pre">oqm</span> <span class="pre">cat</span> <span class="pre">homogenise</span> <span class="pre">$ARG1</span> <span class="pre">$ARG2</span> <span class="pre">$ARG3</span></code>
+as in the bash script example, where $ARG1 is the homogenisation toml file and and $ARG2 and $ARG3 are the hdf5 file outputs from the merge step, describing the origins and magnitude information for the merged catalogue respectively.</p>
+</section>
+<section id="checking-for-duplicate-events">
+<h2>Checking for duplicate events<a class="headerlink" href="#checking-for-duplicate-events" title="Link to this heading"></a></h2>
+<p>A common issue when merging catalogues is that there are differences in earthquake metadata in different catalogues. To avoid creating a catalogue with duplicate events, we specify the time and space criteria in the merge stage, so that events that are very close in time and space will not be added to the catalogue.
+We can check how well we have achieved this by looking at events that are retained in the final catalogue but fall within a certain time and space window. We can use the <code class="code docutils literal notranslate"><span class="pre">check_duplicates</span></code> function to do this, which takes in a check.toml file and the homogenised catalogue h5 file. A <code class="code docutils literal notranslate"><span class="pre">check.toml</span></code> file might look like this:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[general]</span>
+<span class="na">delta_ll</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.3</span>
+<span class="na">delta_t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10.0</span>
+<span class="na">output_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;./tmp/&quot;</span>
+</pre></div>
+</div>
+<p>where delta_ll and dela_t specify the time and space windows (in seconds and degrees respctively) to test for duplicate events. Again, we can specify different time limits and write the limits as functions of magnitudes i.e.:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[general]</span>
+<span class="na">delta_ll</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[[&#39;1899&#39;, &#39;100*m&#39;]]</span>
+<span class="na">delta_t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[[&#39;1899&#39;, &#39;30*m&#39;]]</span>
+<span class="na">output_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;./tmp/&quot;</span>
+</pre></div>
+</div>
+<p>The check_duplicates output is a geojson file that draws lines between events that meet the criteria in the check.toml file. Each line segment contains the details of the two events, including their original magnitudes, the agencies that the events are taken from and the time and spatial distance between the two events, so that a user can check if they are happy for these events to be retained or would prefer to iterate on the parameters.</p>
+<p>The process of building a reliable homogenised catalogue is iterative: at any step we may identify changes that should be made to merge criteria or regression parameters. It is also important to look at the resulting frequency-magnitude distribution to idenitfy any obvious changes in slope, which may indicate that our regressions are not performing as well as we would like.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ghm.html" class="btn btn-neutral float-right" title="Global Hazard Map (ghm) module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-2022, GEM Hazard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

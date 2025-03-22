@@ -1,0 +1,21 @@
+openquake.wkf.plot package
+==========================
+
+Submodules
+----------
+
+openquake.wkf.plot.completeness module
+--------------------------------------
+
+.. automodule:: openquake.wkf.plot.completeness
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.wkf.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:

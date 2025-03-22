@@ -1,0 +1,29 @@
+openquake.wkf.tests.seismicity package
+======================================
+
+Submodules
+----------
+
+openquake.wkf.tests.seismicity.baseline\_test module
+----------------------------------------------------
+
+.. automodule:: openquake.wkf.tests.seismicity.baseline_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.wkf.tests.seismicity.mmax\_epri\_test module
+------------------------------------------------------
+
+.. automodule:: openquake.wkf.tests.seismicity.mmax_epri_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.wkf.tests.seismicity
+   :members:
+   :undoc-members:
+   :show-inheritance:
