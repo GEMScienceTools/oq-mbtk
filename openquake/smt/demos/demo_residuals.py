@@ -28,6 +28,9 @@ demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inp
 # Specify dataset
 demo_flatfile = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
 
+# Specify horizontal component definition to use for observations
+demo_comp = 'Geometric'
+
 # Specify output folder
 demo_out = os.path.join(BASE, 'outputs_demo_residual_analysis')
 
@@ -46,7 +49,7 @@ def parse_into_metadata(flatfile, out_dir):
     return metadata_dir
 
 
-def get_residual_metadata(metadata_dir, gmms_imts, out_dir):
+def get_residual_metadata(metadata_dir, gmms_imts, comp, out_dir):
     """
     Get the residuals for the preselected GMMs and intensity measure types in
     the example_residual_analysis.toml
@@ -57,7 +60,11 @@ def get_residual_metadata(metadata_dir, gmms_imts, out_dir):
 
     # Get residuals
     residuals = res.Residuals.from_toml(gmms_imts)
-    residuals.get_residuals(database, component='Geometric')
+    residuals.compute_residuals(database, component=comp)
+
+    # Export the residuals to an excel (one sheet per EQ)
+    exp_dir = os.path.join(out_dir, f"residuals_hrz_comp_def_of_{comp}.xlsx")
+    residuals.export_residuals(exp_dir)
 
     # Export magnitude distance plot and geographical coverage of eqs/stations
     mag_dist = os.path.join(out_dir, 'mag_dist.png')
@@ -143,7 +150,10 @@ def calc_ranking_metrics(residuals, out_dir):
     rspl.stochastic_area_weights_table(residuals, fi_sto_weights)
 
 
-def main(flatfile=demo_flatfile, gmms_imts=demo_inputs, out_dir=demo_out):
+def main(flatfile=demo_flatfile,
+         gmms_imts=demo_inputs,
+         comp=demo_comp,
+         out_dir=demo_out):
     """
     Run the demo residual analysis workflow
     """
@@ -159,7 +169,7 @@ def main(flatfile=demo_flatfile, gmms_imts=demo_inputs, out_dir=demo_out):
     metadata_dir = parse_into_metadata(flatfile, out_dir)
      
     # Get the residuals
-    res = get_residual_metadata(metadata_dir, gmms_imts, out_dir)
+    res = get_residual_metadata(metadata_dir, gmms_imts, comp, out_dir)
 
     # Make the plots
     make_residual_plots(res, out_dir)

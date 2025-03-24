@@ -572,7 +572,7 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
     """
     # Check enough imts to plot w.r.t. spectral period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
+        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
                 
     # Manage imts
     residuals, preserve_imts, x_llh = manage_imts(residuals)
@@ -605,7 +605,7 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, filetype='jpg',
     """
     # Check enough imts to plot w.r.t. spectral period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
+        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
     
     # Manage imts
     residuals, preserve_imts, x_with_imt = manage_imts(residuals)
@@ -670,7 +670,7 @@ def plot_stochastic_area_with_spectral_period(residuals, filename,
     """
     # Check enough imts to plot w.r.t. spectral period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
+        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
     
     # Manage imts
     residuals, preserve_imts, x_with_imt = manage_imts(residuals)
@@ -976,7 +976,7 @@ def plot_residual_pdf_with_spectral_period(
     """
     # Check enough imts to plot w.r.t. spectral period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
+        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
         
     # Manage imts
     residuals, preserve_imts, imts_to_plot = manage_imts(residuals)
