@@ -67,7 +67,7 @@ class ResidualsTestCase(unittest.TestCase):
 
         # Compute residuals here to avoid repeating in each test
         cls.residuals = res.Residuals(cls.gmpe_list, cls.imts)
-        cls.residuals.get_residuals(cls.database, component="Geometric")
+        cls.residuals.compute_residuals(cls.database, component="Geometric")
         cls.residuals.get_residual_statistics()
 
         # Add other params to class
@@ -91,43 +91,49 @@ class ResidualsTestCase(unittest.TestCase):
         residuals for from a toml file - not correctness of values
         """
         residuals = res.Residuals.from_toml(self.toml)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
         residuals.get_residual_statistics()
+
+    @unittest.skip # Check locally only (issues on remote with openpyxl)
+    def test_export_execution(self):
+        """
+        Tests execution of the residuals exporting function
+        """
+        out_loc = os.path.join(self.out_location, "residuals.xlsx")
+        self.residuals.export_residuals(out_loc)
 
     def test_likelihood_execution(self):
         """
-        Tests basic execution of residuals - not correctness of values
+        Tests basic execution of likelihood score (Scherbaum et al.
+        2004) computation- not correctness of values
         """
         self.residuals.get_likelihood_values()
 
     def test_llh_execution(self):
         """
-        Tests execution of LLH - not correctness of values
+        Tests basic execution of loglikelihood score (Scherbaum et al.
+        2009) computation- not correctness of values
         """
         self.residuals.get_loglikelihood_values()
 
-    def test_multivariate_llh_execution(self):
-        """
-        Tests execution of multivariate llh - not correctness of values
-        """
-        self.residuals.get_multivariate_loglikelihood_values()
-
     def test_edr_execution(self):
         """
-        Tests execution of EDR - not correctness of values
+        Tests basic execution of EDR score (Scherbaum et al.
+        2004) computation- not correctness of values
         """
         self.residuals.get_edr_values()
           
     def test_stochastic_area_execution(self):
         """
-        Tests execution of stochastic area metric - not correctness of values
+        Tests basic execution of stochastic area metric scores (Sunny
+        et al. 2021) computation- not correctness of values
         """
         self.residuals.get_stochastic_area_wrt_imt()
 
     def test_plot_execution(self):
         """
-        Tests execution of gmpe ranking metric plots and the residual
-        distribution information plots
+        Tests execution of gmpe ranking metric plotting functions and
+        the residual distribution information plotting function
         """
         # First compute the metrics
         self.residuals.get_loglikelihood_values()

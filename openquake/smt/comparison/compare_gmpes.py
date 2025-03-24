@@ -62,6 +62,8 @@ class Configurations(object):
         self.up_or_down_dip = float(up_or_down_dip)
         self.z_basin_region = config_file['site_properties']['z_basin_region']
         self.volc_ba = config_file['site_properties']['volc_back_arc']
+        eshm20_region = int(config_file['site_properties']['eshm20_region'])
+        self.eshm20_region = eshm20_region
         
         # Get rupture params
         self.strike = config_file['source_properties']['strike']

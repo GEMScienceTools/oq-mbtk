@@ -75,7 +75,7 @@ class ResidualsTestCase(unittest.TestCase):
         mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
 
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
 
         for gsim in self.gsims:
             for imt in self.imts:
@@ -109,7 +109,7 @@ class ResidualsTestCase(unittest.TestCase):
         mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
 
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
 
         for gsim in self.gsims:
             for imt in self.imts:
@@ -144,7 +144,7 @@ class ResidualsTestCase(unittest.TestCase):
         mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
 
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
 
         for gsim in self.gsims:
             for imt in self.imts:
@@ -186,7 +186,7 @@ class ResidualsTestCase(unittest.TestCase):
         mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
 
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
 
         for gsim in self.gsims:
             for imt in self.imts:
