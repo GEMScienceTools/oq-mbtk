@@ -20,6 +20,7 @@ Module defining the interface of a Context Database (ContextDB), a database of
 data capable of yielding Contexts and Observations suitable for Residual analysis
 """
 import numpy as np
+import pandas as pd
 
 from openquake.hazardlib.contexts import DistancesContext, RuptureContext
 
@@ -28,7 +29,7 @@ class ContextDB:
     """
     This abstract-like class represents a database (DB) of data capable of
     yielding Contexts and Observations suitable for residual analysis (see
-    argument `ctx_database` of :meth:`gmpe_residuals.Residuals.get_residuals`)
+    argument `ctx_database` of :meth:`gmpe_residuals.Residuals.compute_residuals`)
 
     Concrete subclasses of `ContextDB` must implement three abstract methods
     (e.g. :class:`openquake.smt.sm_database.GroundMotionDatabase`):
@@ -56,7 +57,7 @@ class ContextDB:
         See `create_context` for details.
 
         This is the only method required by
-        :meth:`gmpe_residuals.Residuals.get_residuals`
+        :meth:`gmpe_residuals.Residuals.compute_residuals`
         and should not be overwritten only in very specific circumstances.
         """
         compute_observations = imts is not None and len(imts)
@@ -71,7 +72,8 @@ class ContextDB:
                     observations[imtx] = np.asarray(values, dtype=float)
                 dic["Num. Sites"] = len(records)
             dic['Ctx'].sids = np.arange(len(records), dtype=np.uint32)
-            dic["Ctx"].region = 0 # TODO: Default ESHM20 attenuation region
+            dic["Ctx"].st_mapping = self.get_st_code_mapping()
+
             yield dic
 
     def create_context(self, evt_id, imts=None):
@@ -101,3 +103,28 @@ class ContextDB:
             dic["Observations"] = {imt: [] for imt in imts}
             dic["Num. Sites"] = 0
         return dic
+    
+    def get_st_code_mapping(self):
+        """
+        Create a mapping of station id to lat, lon, elevation, vs30
+        so that we can reassign the station codes when exporting the
+        residual analysis results (see Residuals.get_residuals() in
+        gmpe_residuals.py)
+        """
+        mapping_all = {}
+        for rec in self.records:
+            mapping = {}
+            sid = rec.site.code
+            if sid in mapping_all:
+                continue
+            mapping["lon"] = rec.site.longitude
+            mapping["lat"] = rec.site.latitude
+            if pd.isnull(rec.site.altitude):
+                mapping["dep"] = 0.
+            else:
+                mapping["dep"] = rec.site.altitude
+            mapping["vs30"] = rec.site.vs30
+            mapping_all[sid] = mapping
+
+        return pd.DataFrame(mapping_all).transpose()
+    

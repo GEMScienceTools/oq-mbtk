@@ -97,7 +97,7 @@ class ResidualsTestCase(unittest.TestCase):
         Does not test correctness of values
         """
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
         additional_keys = ['mean', 'stddev']
 
         for gsim in self.gsims:
@@ -134,7 +134,7 @@ class ResidualsTestCase(unittest.TestCase):
         Does not test correctness of values
         """
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
         additional_keys = ['median']
 
         for gsim in self.gsims:
@@ -165,7 +165,7 @@ class ResidualsTestCase(unittest.TestCase):
         data. Does not test correctness of values
         """
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
         residuals.get_likelihood_values()
         additional_keys = ['slope', 'intercept', 'pvalue']
 
@@ -193,7 +193,7 @@ class ResidualsTestCase(unittest.TestCase):
         data. Does not test correctness of values
         """
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
         residuals.get_likelihood_values()
         additional_keys = ['slope', 'intercept', 'pvalue']
 

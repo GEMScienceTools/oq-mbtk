@@ -527,7 +527,7 @@ def prioritise_rotd50(df, proxy=None, removal=None):
         dropped
     """
     # TODO this approach is a bit hacky given we can use 'component' argument
-    # within residuals.get_residuals() to specify if we want RotD50 or geometric
+    # within residuals.compute_residuals() to specify if we want RotD50 or geometric
     # mean, but this function allows maximum number of records to be used in an
     # analysis by taking RotD50 if available, and then computing geometric mean
     # from the horizontal components if not. For spectral accelerations, RotD50
