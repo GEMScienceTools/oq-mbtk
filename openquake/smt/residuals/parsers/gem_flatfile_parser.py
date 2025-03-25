@@ -20,7 +20,6 @@ Parse the GEM globally homogenised flatfile into SMT metadata.
 """
 import pandas as pd
 import os
-import tempfile
 import csv
 import numpy as np
 import copy
@@ -40,18 +39,48 @@ from openquake.smt.utils import (
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
-HEADER_STR = "event_id;event_time;ISC_ev_id;ev_latitude;ev_longitude;"\
-             "ev_depth_km;fm_type_code;ML;Mw;Ms;event_source_id;"\
-             "es_strike;es_dip;es_rake;es_z_top;es_length;es_width;"\
-             "network_code;station_code;location_code;"\
-             "st_latitude;st_longitude;st_elevation;vs30_m_sec;vs30_meas_type;"\
-             "epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;Ry0_dist;"\
-             "U_channel_code;U_azimuth_deg;"\
-             "V_channel_code;V_azimuth_deg;"\
-             "W_channel_code;U_hp;"\
-             "V_hp;W_hp;U_lp;V_lp;W_lp"
-
-HEADERS = set(HEADER_STR.split(";"))
+HEADERS = ["event_id",
+           "event_time",
+           "ISC_ev_id",
+           "ev_latitude",
+           "ev_longitude",
+           "ev_depth_km",
+           "fm_type_code",
+           "ML",
+           "Mw",
+           "Ms",
+           "event_source_id",
+           "es_strike",
+           "es_dip",
+           "es_rake",
+           "es_z_top",
+           "es_length",
+           "es_width",
+           "network_code",
+           "station_code",
+           "location_code",
+           "st_latitude",
+           "st_longitude",
+           "st_elevation",
+           "vs30_m_sec",
+           "vs30_meas_type",
+           "epi_dist",
+           "epi_az",
+           "JB_dist",
+           "rup_dist",
+           "Rx_dist",
+           "Ry0_dist",
+           "U_channel_code",
+           "U_azimuth_deg",
+           "V_channel_code",
+           "V_azimuth_deg",
+           "W_channel_code",
+           "U_hp",
+           "V_hp",
+           "W_hp",
+           "U_lp",
+           "V_lp",
+           "W_lp"]
 
 
 class GEMFlatfileParser(SMDatabaseReader):
@@ -66,13 +95,12 @@ class GEMFlatfileParser(SMDatabaseReader):
         Parse the dataset
         """
         assert os.path.isfile(self.filename)
-        headers = getline(self.filename, 1).rstrip("\n").split(";")
+        headers = getline(self.filename, 1).rstrip("\n").split(",")
         for hdr in HEADERS:
             if hdr not in headers:
-                raise ValueError("Required header %s is missing in file"
-                                 % hdr)
+                raise ValueError("Required header %s is missing in file" % hdr)
         # Read in csv
-        reader = csv.DictReader(open(self.filename, "r"), delimiter=";")
+        reader = csv.DictReader(open(self.filename, "r"), delimiter=",")
         self.database = GroundMotionDatabase(self.id, self.name)
         counter = 0
         for row in reader:
@@ -95,17 +123,10 @@ class GEMFlatfileParser(SMDatabaseReader):
             counter += 1
 
     @classmethod
-    def autobuild(cls, dbid, dbname, output_location, flatfile_directory,
-                  proxy=None, removal=None):
+    def autobuild(cls, dbid, dbname, output_location, flatfile_directory):
         """
         Quick and dirty full database builder!
         """
-        # Import GEM strong-motion flatfile
-        GEM = pd.read_csv(flatfile_directory)
-    
-        # Get path to tmp csv once modified dataframe
-        conv_pth= prioritise_rotd50(GEM, proxy, removal)
-        
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
@@ -113,7 +134,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         # Add on the records folder
         os.mkdir(os.path.join(output_location, "records"))
         # Create an instance of the parser class
-        database = cls(dbid, dbname, conv_pth)
+        database = cls(dbid, dbname, flatfile_directory)
         # Parse the records
         print("Parsing Records ...")
         database.parse(location=output_location)
@@ -485,89 +506,3 @@ class GEMFlatfileParser(SMDatabaseReader):
                 scalars["Geometric"][key] = np.sqrt(
                     scalars["U"][key] * scalars["V"][key])
         return scalars, spectra
-
-
-def prioritise_rotd50(df, proxy=None, removal=None):
-    """
-    Assign RotD50 values to horizontal acceleration columns for computation of
-    residuals. If no RotD50 use the geometric mean if available (if specified
-    in parser arguments) as a proxy for RotD50.
-    
-    RotD50 is available for the vast majority of the records in the GEM
-    flatfile for PGA to 10 s.
-    
-    Records lacking acceleration values for any of the required spectral periods
-    can also be removed (this information can alternatively just be printed)
-    
-    :param  proxy:
-        If set to true, if a record is missing RotD50 try and use the geometric
-        mean of the horizontal components (geometric mean is computed when
-        calculating the residuals, here we just parse the two horizontals)
-    
-    :param  removal:
-        If set to true records without complete RotD50 for any of the required
-        spectral periods are removed. In instances that proxy is True, records
-        without complete RotD50 even with use of geometric mean as a proxy are
-        dropped
-    """
-    # TODO this approach is a bit hacky given we can use 'component' argument
-    # within residuals.compute_residuals() to specify if we want RotD50 or geometric
-    # mean, but this function allows maximum number of records to be used in an
-    # analysis by taking RotD50 if available, and then computing geometric mean
-    # from the horizontal components if not. For spectral accelerations, RotD50
-    # and geometric mean have been found to have a ratio close to 1 (e.g. Beyes
-    # and Bommer, 2006)
-    h_cols = ['U_T', 'V_T',
-              'U_pga', 'V_pga',
-              'U_pgv', 'V_pgv',
-              'U_pgd', 'V_pgd',
-              'U_CAV', 'V_CAV',
-              'U_ia', 'V_ia']
-    
-    # Manage RotD50 vs horizontal components
-    log, cols = [], []
-    for idx, rec in df.iterrows():
-        for col in rec.index:
-            if 'rotD' in col:
-                cols.append(col)
-            for h_col in h_cols:
-                if h_col in col:
-                    if 'U_' in col:    
-                        rotd50_col = col.replace('U_', 'rotD50_')
-                    if 'V_' in col:
-                        rotd50_col = col.replace('V_', 'rotD50_')
-                        
-                    # If RotD50...
-                    if not pd.isnull(rec[rotd50_col]): # Assign to h1, h2
-                        df[col].iloc[idx] = rec[rotd50_col]
-                        
-                    # Otherwise...
-                    else:
-                        if proxy is True: # Use geo. mean as proxy
-                            if not pd.isnull(rec[col]):
-                                pass # Use geo. mean from h1, h2 as proxy 
-                        else:
-                            log.append(idx) # Log as incomplete RotD50 vals
-                            
-    # Tidy dataframe
-    cols = pd.Series(cols).unique()
-    df = df.drop(columns=cols)
-
-    # Drop if req. or else just inform number of recs missing acc. values
-    no_vals = len(pd.Series(log).unique())
-    if removal is True and log!= []:
-        df = df.drop(log).reset_index()
-        msg = 'Records without RotD50 acc. values for all periods between 0.01'
-        msg += ' s and 10 s have been removed from database (%s records)' %no_vals
-        print(msg)
-        if len(df) == 0:
-            raise ValueError('All records have been removed from the flatfile')        
-    elif log != []:
-        print('%s records lack RotD50 for all periods between 0.01 s and 10 s'
-              % no_vals)
-    
-    # Output to temp folder where converted flatfile read into parser   
-    conv_pth = os.path.join(tempfile.mkdtemp(), 'conv_flatfile_tmp.csv')
-    df.to_csv(conv_pth, sep=';')
-    
-    return conv_pth
