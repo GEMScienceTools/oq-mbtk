@@ -189,10 +189,7 @@ class GEMFlatfileParser(SMDatabaseReader):
             mvalue = metadata[key].strip()
             if mvalue:
                 mtype = key
-                msource = metadata[key + "_ref"].strip()
-                mag = Magnitude(float(mvalue),
-                                mtype,
-                                source=msource)
+                mag = Magnitude(float(mvalue), mtype)
                 if not pref_mag:
                     pref_mag = copy.deepcopy(mag)
                 mag_list.append(mag)
@@ -328,15 +325,12 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         Parse the waveform data
         """
-        late_trigger = valid.vint(metadata["late_triggered_flag_01"],
-                                  "late_triggered_flag_01")
         # U channel - usually east
         xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
         xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
                    "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
         xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
                           units="cm/s/s")
-        xcomp.late_trigger = late_trigger
         
         # V channel - usually North
         vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
@@ -344,14 +338,12 @@ class GEMFlatfileParser(SMDatabaseReader):
                    "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
         vcomp = Component(wfid, vazimuth, waveform_filter=vfilter,
                           units="cm/s/s")
-        vcomp.late_trigger = late_trigger
         zorientation = metadata["W_channel_code"].strip()
         if zorientation:
             zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
                        "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
             zcomp = Component(wfid, None, waveform_filter=zfilter,
                               units="cm/s/s")
-            zcomp.late_trigger = late_trigger
         else:
             zcomp = None
         
