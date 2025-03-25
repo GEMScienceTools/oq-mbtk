@@ -23,6 +23,7 @@ import shutil
 import unittest
 import pickle
 
+from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals.parsers.gem_flatfile_parser import GEMFlatfileParser
 
 
@@ -47,6 +48,9 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
                                                   "GEM_flatfile_test.csv")
         cls.db_file = os.path.join(BASE_DATA_PATH,
                                    "GEM_conversion_test_metadata")       
+        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
+        cls.imts = ["PGA", "SA(1.0)"]
+        cls.metadata_pth = os.path.join(cls.db_file, "metadatafile.pkl")
 
     def test_gem_flatfile_parser(self):
         """
@@ -61,7 +65,7 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
                                              self.db_file,
                                              self.GEM_flatfile_directory,
                                              removal=True, proxy=True)
-        with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
+        with open(self.metadata_pth, "rb") as f:
             db = pickle.load(f)
         
         # Should contain 5 records
@@ -69,6 +73,11 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
         
         # Record IDs should be equal to the specified target IDs
         self.assertListEqual([rec.id for rec in db], TARGET_IDS)
+
+        # Also run an arbitrary residual analysis to check works
+        residuals = res.Residuals(self.gmpe_list, self.imts)
+        residuals.compute_residuals(db, component="Geometric")
+
         del parser
 
     @classmethod

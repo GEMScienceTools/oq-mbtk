@@ -162,7 +162,7 @@ We can specify the inputs to perform a residual analysis with as follows:
        > # Compute residuals using GMPEs and intensity measures specified in command line
        > comp='Geometric' # Use the geometric mean of H1 and H2 as the observed values to compare against the GMPE predictions
        > resid = res.Residuals(gmpe_list, imt_list)
-       > resid.compute_residuals(sm_database, component=comp) # component can also be set to 'rotD00', 'rotD50', 'rotD100' etc
+       > resid.compute_residuals(sm_database, component="Geometric") # horizontal component definition can also be set to 'rotD50', rotD00','rotD100' etc
        >
        > # OR compute residuals using GMPEs and intensity measures specified in .toml file
        > filename = os.path.join(DATA,'gmpes_and_imts_to_test.toml') # path to .toml file
