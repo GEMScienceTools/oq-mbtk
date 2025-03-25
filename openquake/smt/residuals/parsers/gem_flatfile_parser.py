@@ -40,18 +40,16 @@ from openquake.smt.utils import (
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
-SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
-
 HEADER_STR = "event_id;event_time;ISC_ev_id;ev_latitude;ev_longitude;"\
              "ev_depth_km;fm_type_code;ML;Mw;Ms;event_source_id;"\
              "es_strike;es_dip;es_rake;es_z_top;es_length;es_width;"\
              "network_code;station_code;location_code;"\
-             "sensor_depth_m;"\
-             "st_latitude;st_longitude;st_elevation;vs30_m_sec;slope_deg;"\
-             "vs30_meas_type;epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;"\
-             "Ry0_dist;late_triggered_flag_01;U_channel_code;U_azimuth_deg;"\
-             "V_channel_code;V_azimuth_deg;W_channel_code;U_hp;V_hp;W_hp;U_lp;"\
-             "V_lp;W_lp"
+             "st_latitude;st_longitude;st_elevation;vs30_m_sec;vs30_meas_type;"\
+             "epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;Ry0_dist;"\
+             "U_channel_code;U_azimuth_deg;"\
+             "V_channel_code;V_azimuth_deg;"\
+             "W_channel_code;U_hp;"\
+             "V_hp;W_hp;U_lp;V_lp;W_lp"
 
 HEADERS = set(HEADER_STR.split(";"))
 
@@ -321,9 +319,6 @@ class GEMFlatfileParser(SMDatabaseReader):
         site = RecordSite(site_id, station_code, station_code, site_lon,
                           site_lat, elevation, vs30, vs30_measured,
                           network_code=network_code, country=None)
-        site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
-        site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
-                                         "sensor_depth_m")
         if site.vs30:
             site.z1pt0 = vs30_to_z1pt0_cy14(vs30)
             site.z2pt5 = vs30_to_z2pt5_cb14(vs30)
@@ -378,11 +373,11 @@ class GEMFlatfileParser(SMDatabaseReader):
             # Add on the scalars
             scalar_grp = comp_grp.create_group("Scalar")
             for imt in scalars[key]:
-                if imt in ["ia", "housner"]:
-                    # In the smt convention it is "Ia" and "Housner"
+                if imt in ["ia"]:
+                    # In the smt convention it is "Ia" for Arias Intensity
                     ikey = imt[0].upper() + imt[1:]
                 else:
-                    # Everything else to upper case (PGA, PGV, PGD, T90, CAV)
+                    # Everything else to upper case (PGA, PGV, PGD, CAV)
                     ikey = imt.upper()
                 dset = scalar_grp.create_dataset(ikey, (1,), dtype="f")
                 dset[:] = scalars[key][imt]
@@ -410,11 +405,11 @@ class GEMFlatfileParser(SMDatabaseReader):
         # Scalars - just geometric mean for now
         hscalar = hcomp.create_group("Scalar")
         for imt in scalars["Geometric"]:
-            if imt in ["ia", "housner"]:
-                # In the smt convention it is "Ia" and "Housner"
+            if imt in ["ia"]:
+                # In the smt convention it is "Ia" for Arias Intensity
                 key = imt[0].upper() + imt[1:]
             else:
-                # Everything else to upper case (PGA, PGV, PGD, T90, CAV)
+                # Everything else to upper case (PGA, PGV, PGD, CAV)
                 key = imt.upper()
             dset = hscalar.create_dataset(key, (1,), dtype="f")
             dset[:] = scalars["Geometric"][imt]
@@ -452,7 +447,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
         spectra = []
-        scalar_imts = ["pga", "pgv", "pgd", "T90", "housner", "ia", "CAV"]
+        scalar_imts = ["pga", "pgv", "pgd", "ia", "CAV"]
         scalars = []
         for imt in imts:
             periods = []
@@ -472,9 +467,6 @@ class GEMFlatfileParser(SMDatabaseReader):
             scalars.append((imt, scalar_dict))
             for header in header_list:
                 if key in header:
-                    if header == "{:s}90".format(key):
-                        # Not a spectral period but T90
-                        continue
                     iky = header.replace(key, "").replace("_", ".")
                     periods.append(float(iky))
                     value = row[header].strip()
@@ -533,8 +525,12 @@ def prioritise_rotd50(df, proxy=None, removal=None):
     # from the horizontal components if not. For spectral accelerations, RotD50
     # and geometric mean have been found to have a ratio close to 1 (e.g. Beyes
     # and Bommer, 2006)
-    h_cols = ['U_T', 'V_T', 'U_pga', 'V_pga', 'U_pgv', 'V_pgv', 'U_pgd', 'V_pgd',
-              'U_housner', 'V_housner', 'U_CAV', 'V_CAV', 'U_ia', 'V_ia']
+    h_cols = ['U_T', 'V_T',
+              'U_pga', 'V_pga',
+              'U_pgv', 'V_pgv',
+              'U_pgd', 'V_pgd',
+              'U_CAV', 'V_CAV',
+              'U_ia', 'V_ia']
     
     # Manage RotD50 vs horizontal components
     log, cols = [], []
@@ -544,23 +540,22 @@ def prioritise_rotd50(df, proxy=None, removal=None):
                 cols.append(col)
             for h_col in h_cols:
                 if h_col in col:
-                    if 'T90' not in col:
-                        if 'U_' in col:    
-                            rotd50_col = col.replace('U_', 'rotD50_')
-                        if 'V_' in col:
-                            rotd50_col = col.replace('V_', 'rotD50_')
-                            
-                        # If RotD50...
-                        if not pd.isnull(rec[rotd50_col]): # Assign to h1, h2
-                            df[col].iloc[idx] = rec[rotd50_col]
-                            
-                        # Otherwise...
+                    if 'U_' in col:    
+                        rotd50_col = col.replace('U_', 'rotD50_')
+                    if 'V_' in col:
+                        rotd50_col = col.replace('V_', 'rotD50_')
+                        
+                    # If RotD50...
+                    if not pd.isnull(rec[rotd50_col]): # Assign to h1, h2
+                        df[col].iloc[idx] = rec[rotd50_col]
+                        
+                    # Otherwise...
+                    else:
+                        if proxy is True: # Use geo. mean as proxy
+                            if not pd.isnull(rec[col]):
+                                pass # Use geo. mean from h1, h2 as proxy 
                         else:
-                            if proxy is True: # Use geo. mean as proxy
-                                if not pd.isnull(rec[col]):
-                                    pass # Use geo. mean from h1, h2 as proxy 
-                            else:
-                                log.append(idx) # Log as incomplete RotD50 vals
+                            log.append(idx) # Log as incomplete RotD50 vals
                             
     # Tidy dataframe
     cols = pd.Series(cols).unique()
