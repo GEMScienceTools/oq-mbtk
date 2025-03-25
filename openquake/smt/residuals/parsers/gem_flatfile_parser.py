@@ -329,21 +329,21 @@ class GEMFlatfileParser(SMDatabaseReader):
         xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
         xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
                    "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
-        xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
-                          units="cm/s/s")
+        xcomp = Component(
+            wfid, xazimuth, waveform_filter=xfilter, units="cm/s/s")
         
         # V channel - usually North
         vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
         vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
                    "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
-        vcomp = Component(wfid, vazimuth, waveform_filter=vfilter,
-                          units="cm/s/s")
+        vcomp = Component(
+            wfid, vazimuth, waveform_filter=vfilter, units="cm/s/s")
         zorientation = metadata["W_channel_code"].strip()
         if zorientation:
             zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
                        "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
-            zcomp = Component(wfid, None, waveform_filter=zfilter,
-                              units="cm/s/s")
+            zcomp = Component(
+                wfid, None, waveform_filter=zfilter, units="cm/s/s")
         else:
             zcomp = None
         
