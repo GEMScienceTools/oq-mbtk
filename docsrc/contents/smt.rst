@@ -15,7 +15,7 @@ The inputted dataset usually comprises of a ground-motion record flatfile. Many 
 
 Within a residual analysis, the information provided in each ground-motion record is used to evaluate how closely a selection of GMPEs predict the observed ground-motion. The ground-motion records within a flatfile considered in a residual analysis will usually consist of earthquakes from the same region and of the same tectonic region type. 
 
-When computing the expected ground-motions by each GMPE, the SMT leverages the OpenQuake Engine's capabilities to construct a finite rupture for each event from the available information for each earthquake, from which the distance metrics for each GMPE (e.g. rjb, rrup) can be automatically computed relative to each site (i.e. station) in the flatfile (i.e., the distance metrics provided in a flatfile for a given record are not used in a residual analysis).
+When computing the expected ground-motions by each GMPE, the SMT leverages the OpenQuake Engine's capabilities to construct a finite rupture for each event from the available information for each earthquake, from which the distance types required for each GMPE (e.g. rjb, rrup) can be computed relative to each site (i.e. station) in the flatfile if missing for the given record.
 
 Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). The currently available parsers within the smt module can be found in ``oq-mbtk\openquake\smt\residuals\parsers``.
 
@@ -438,6 +438,7 @@ Comparing GMPEs
         Nstd = 1 # Truncation for GMM sigma distribution
         
         # Specify site properties
+
         [site_properties]
         vs30 = 800
         Z1 = -999   # If -999 compute from Vs30 using Chiou and Youngs (2014) relationship

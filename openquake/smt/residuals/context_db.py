@@ -31,6 +31,10 @@ class ContextDB:
     yielding Contexts and Observations suitable for residual analysis (see
     argument `ctx_database` of :meth:`gmpe_residuals.Residuals.compute_residuals`)
 
+    NOTE: The missing distance metrics from a record within the database object
+    are computed by OQ using the constructed finite rupture (i.e. the distances
+    in the admitted flatfile/ground-motion database are used by default).
+
     Concrete subclasses of `ContextDB` must implement three abstract methods
     (e.g. :class:`openquake.smt.sm_database.GroundMotionDatabase`):
      - get_event_and_records(self)
