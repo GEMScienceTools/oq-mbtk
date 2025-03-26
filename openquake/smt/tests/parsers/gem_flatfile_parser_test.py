@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation
+# Copyright (C) 2014-2025 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -53,9 +53,6 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
         cls.metadata_pth = os.path.join(cls.db_file, "metadatafile.pkl")
 
     def test_gem_flatfile_parser(self):
-        """
-        Tests the parsing of the GEM flatfile. 
-        """
         parser = GEMFlatfileParser.autobuild("000", "GEM_conversion_test",
                                              self.db_file,
                                              self.GEM_flatfile_directory)
@@ -77,7 +74,4 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """
-        Remove the database
-        """
         shutil.rmtree(cls.db_file)
