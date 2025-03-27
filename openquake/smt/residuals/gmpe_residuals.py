@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -206,7 +206,7 @@ class Residuals(object):
             See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase` for an
             example
         """
-        # Get contexts
+        # Build the contexts
         contexts = ctx_database.get_contexts(nodal_plane_index, self.imts, component)
 
         # Fetch now outside the loop for efficiency the IMTs which need
