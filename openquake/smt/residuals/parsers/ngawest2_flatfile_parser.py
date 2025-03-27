@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -43,19 +43,63 @@ from .esm_dictionaries import *
 
 SCALAR_LIST = ["PGA", "PGV", "PGD"]
 
-HEADER_STR = "event_id;event_time;ev_nation_code;ev_latitude;ev_longitude;"\
-             "ev_depth_km;fm_type_code;ML;ML_ref;Mw;Mw_ref;Ms;Ms_ref;EMEC_Mw;"\
-             "EMEC_Mw_type;EMEC_Mw_ref;event_source_id;es_strike;es_dip;"\
-             "es_rake;es_strike_dip_rake_ref;es_z_top;es_length;es_width;"\
-             "network_code;station_code;location_code;instrument_code;"\
-             "sensor_depth_m;proximity_code;housing_code;st_nation_code;"\
-             "st_latitude;st_longitude;st_elevation;vs30_m_sec;slope_deg;"\
-             "vs30_m_sec_WA;epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;Ry0_dist;"\
-             "instrument_type_code;late_triggered_flag_01;U_channel_code;"\
-             "U_azimuth_deg;V_channel_code;V_azimuth_deg;W_channel_code;"\
-             "U_hp;V_hp;W_hp;U_lp;V_lp;W_lp"
-
-HEADERS = set(HEADER_STR.split(";"))
+HEADERS = ['event_id',
+           'event_time',
+           'ev_nation_code',
+           'ev_latitude',
+           'ev_longitude',
+           'ev_depth_km',
+           'fm_type_code',
+           'ML',
+           'ML_ref',
+           'Mw',
+           'Mw_ref',
+           'Ms',
+           'Ms_ref',
+           'EMEC_Mw',
+           'EMEC_Mw_type',
+           'EMEC_Mw_ref',
+           'event_source_id',
+           'es_strike',
+           'es_dip',
+           'es_rake',
+           'es_strike_dip_rake_ref',
+           'es_z_top',
+           'es_length',
+           'es_width',
+           'network_code',
+           'station_code',
+           'location_code',
+           'instrument_code',
+           'sensor_depth_m',
+           'proximity_code',
+           'housing_code',
+           'st_nation_code',
+           'st_latitude',
+           'st_longitude',
+           'st_elevation',
+           'vs30_m_sec',
+           'slope_deg',
+           'vs30_m_sec_WA',
+           'epi_dist',
+           'epi_az',
+           'JB_dist',
+           'rup_dist',
+           'Rx_dist',
+           'Ry0_dist',
+           'instrument_type_code',
+           'late_triggered_flag_01',
+           'U_channel_code',
+           'U_azimuth_deg',
+           'V_channel_code',
+           'V_azimuth_deg',
+           'W_channel_code',
+           'U_hp',
+           'V_hp',
+           'W_hp',
+           'U_lp',
+           'V_lp',
+           'W_lp']
 
 
 class NGAWest2FlatfileParser(SMDatabaseReader):

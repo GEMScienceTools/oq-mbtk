@@ -15,9 +15,9 @@ The inputted dataset usually comprises of a ground-motion record flatfile. Many 
 
 Within a residual analysis, the information provided in each ground-motion record is used to evaluate how closely a selection of GMPEs predict the observed ground-motion. The ground-motion records within a flatfile considered in a residual analysis will usually consist of earthquakes from the same region and of the same tectonic region type. 
 
-When computing the expected ground-motions by each GMPE, the SMT leverages the OpenQuake Engine's capabilities to construct a finite rupture for each event from the available information for each earthquake, from which the distance metrics for each GMPE (e.g. rjb, rrup) can be automatically computed relative to each site (i.e. station) in the flatfile (i.e., the distance metrics provided in a flatfile for a given record are not used in a residual analysis).
+When computing the expected ground-motions by each GMPE, the SMT leverages the OpenQuake Engine's capabilities to construct a finite rupture for each event from the available information for each earthquake, from which the distance types required for each GMPE (e.g. rjb, rrup) can be computed relative to each site (i.e. station) in the flatfile if missing for the given record. NOTE: The distance metrics in the flatfile will inherently be the result of a different finite rupture from that modelled within OpenQuake Engine for distance metric computation - if the user requires complete consistency between the considered distance metrics, the user can just remove all distance metrics provided apriori within the inputted flatfile/ground-motion database to ensure all of the metrics are computed using OpenQuake Engine instead.
 
-Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). The currently available parsers within the smt module can be found in ``oq-mbtk\openquake\smt\residuals\parsers``.
+Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). The currently available parsers within the smt module can be found in ``oq-mbtk\openquake\smt\residuals\parsers``. Some of the parsers here can read in non-flatfile format ground-motion databases - e.g. the ``ASADatabaseMetadataReader`` (found in ``oq-mbtk\openquake\smt\residuals\parsers\asa_database_parser``) can be used to parse ASA format files to construct an equivalent ground-motion database.
 
 In this example, we will consider the ESM (Engineering Strong-Motion database) 2018 format parser for the parsing of a subset of the ESM 2018 flatfile comprising of active shallow crustal earthquakes from Albania and the surrounding regions. The example residual analysis considered here consequently focuses on identifying the most appropriate GMPEs for predicting ground-motions generated from active shallow crustal earthquakes in Albania.
    
@@ -63,12 +63,12 @@ Herein we provide a brief description of the various steps for the parsing of th
         > # Parse flatfile
         > parser = ESMFlatfileParser.autobuild(DB_ID, DB_NAME, output_database, flatfile_directory)
 
-4. The flatfile will now be parsed by the ``ESMFlatfileParser``, and a pickle (``.pkl``) file of the metadata will be outputted in the specified output location. We can now use this metadata to perform a GMPE residual analysis.
+4. The flatfile will now be parsed by the ``ESMFlatfileParser``, and a pickle (``.pkl``) file of the metadata (the parsed ground-motion database) will be outputted in the specified output location. We can now use this metadata to perform a GMPE residual analysis.
 
 Computing the Ground-Motion Residuals
 *************************************
 
-Following the parsing of a flatfile into useable metadata, we can now specify the inputs for the performing of a residual analysis. Residual analysis compares the predicted and expected (i.e. observed) ground-motion for a combination of source, site and path parameters to evaluate the performance of GMPEs. Residuals are computed using the mixed effects methodology of Abrahamson and Youngs (1992), in which the total residual is split into an inter-event component and an intra-event component. Abrahamson and Youngs (1992) should be consulted for a detailed overview of ground-motion residuals.
+Following the parsing of a flatfile into a pickled ground-motion database object, we can now specify the inputs for the performing of a residual analysis. Residual analysis compares the predicted and expected (i.e. observed) ground-motion for a combination of source, site and path parameters to evaluate the performance of GMPEs. Residuals are computed using the mixed effects methodology of Abrahamson and Youngs (1992), in which the total residual is split into an inter-event component and an intra-event component. Abrahamson and Youngs (1992) should be consulted for a detailed overview of ground-motion residuals.
 
 We can specify the inputs to perform a residual analysis with as follows:
     
@@ -162,7 +162,7 @@ We can specify the inputs to perform a residual analysis with as follows:
        > # Compute residuals using GMPEs and intensity measures specified in command line
        > comp='Geometric' # Use the geometric mean of H1 and H2 as the observed values to compare against the GMPE predictions
        > resid = res.Residuals(gmpe_list, imt_list)
-       > resid.compute_residuals(sm_database, component=comp) # component can also be set to 'rotD00', 'rotD50', 'rotD100' etc
+       > resid.compute_residuals(sm_database, component="Geometric") # horizontal component definition can also be set to 'rotD50', rotD00','rotD100' etc
        >
        > # OR compute residuals using GMPEs and intensity measures specified in .toml file
        > filename = os.path.join(DATA,'gmpes_and_imts_to_test.toml') # path to .toml file
@@ -438,6 +438,7 @@ Comparing GMPEs
         Nstd = 1 # Truncation for GMM sigma distribution
         
         # Specify site properties
+
         [site_properties]
         vs30 = 800
         Z1 = -999   # If -999 compute from Vs30 using Chiou and Youngs (2014) relationship
