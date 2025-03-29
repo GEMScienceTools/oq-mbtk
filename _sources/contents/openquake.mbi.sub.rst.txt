@@ -1,0 +1,141 @@
+openquake.mbi.sub package
+=========================
+
+Submodules
+----------
+
+openquake.mbi.sub.build\_complex\_surface module
+------------------------------------------------
+
+.. automodule:: openquake.mbi.sub.build_complex_surface
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.check\_xml module
+-----------------------------------
+
+.. automodule:: openquake.mbi.sub.check_xml
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.create\_2pt5\_model module
+--------------------------------------------
+
+.. automodule:: openquake.mbi.sub.create_2pt5_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.create\_ruptures module
+-----------------------------------------
+
+.. automodule:: openquake.mbi.sub.create_ruptures
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.create\_sections\_from\_slab module
+-----------------------------------------------------
+
+.. automodule:: openquake.mbi.sub.create_sections_from_slab
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.create\_xml\_inslab module
+--------------------------------------------
+
+.. automodule:: openquake.mbi.sub.create_xml_inslab
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.create\_xml\_interface module
+-----------------------------------------------
+
+.. automodule:: openquake.mbi.sub.create_xml_interface
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.geojson\_from\_profiles module
+------------------------------------------------
+
+.. automodule:: openquake.mbi.sub.geojson_from_profiles
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.get\_profiles\_from\_slab2pt0 module
+------------------------------------------------------
+
+.. automodule:: openquake.mbi.sub.get_profiles_from_slab2pt0
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.get\_profiles\_from\_slab2pt0\_geojson module
+---------------------------------------------------------------
+
+.. automodule:: openquake.mbi.sub.get_profiles_from_slab2pt0_geojson
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.make\_cs\_coords module
+-----------------------------------------
+
+.. automodule:: openquake.mbi.sub.make_cs_coords
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.mmax\_int\_from\_area module
+----------------------------------------------
+
+.. automodule:: openquake.mbi.sub.mmax_int_from_area
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.plot\_cross\_sections\_map module
+---------------------------------------------------
+
+.. automodule:: openquake.mbi.sub.plot_cross_sections_map
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.plot\_geometries module
+-----------------------------------------
+
+.. automodule:: openquake.mbi.sub.plot_geometries
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.plot\_multiple\_cross\_sections module
+--------------------------------------------------------
+
+.. automodule:: openquake.mbi.sub.plot_multiple_cross_sections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.sub.srcmod\_to\_json module
+-----------------------------------------
+
+.. automodule:: openquake.mbi.sub.srcmod_to_json
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbi.sub
+   :members:
+   :undoc-members:
+   :show-inheritance:

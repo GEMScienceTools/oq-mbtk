@@ -1,0 +1,21 @@
+openquake.mbt.tools.mfd\_sample package
+=======================================
+
+Submodules
+----------
+
+openquake.mbt.tools.mfd\_sample.make\_mfds module
+-------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.mfd_sample.make_mfds
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tools.mfd_sample
+   :members:
+   :undoc-members:
+   :show-inheritance:
