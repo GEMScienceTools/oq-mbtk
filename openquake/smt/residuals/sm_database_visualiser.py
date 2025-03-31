@@ -110,7 +110,7 @@ def get_magnitude_distances(db1, dist_type):
 
 
 def db_magnitude_distance(db1, dist_type, figure_size=(7, 5), figure_title=None,
-                          filename=None, filetype="png", sdpi=300):
+                          filename=None, filetype="png", dpi=300):
     """
     Creates a plot of magnitude verses distance for a strong motion database
     """
