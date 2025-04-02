@@ -28,29 +28,7 @@ import pandas as pd
 from scipy.stats import linregress
 
 
-def _tojson(*numpy_objs):
-    """
-    Utility function which returns a list where each element of numpy_objs
-    is converted to its python equivalent (float or list)
-    """
-    ret = []
-    
-    for obj in numpy_objs:
-        isscalar = np.isscalar(obj)
-        nan_indices = None if isscalar else \
-            np.argwhere(np.isnan(obj)).flatten()
-        
-        obj = None if isscalar and np.isnan(obj) else obj.tolist()
-        if nan_indices is not None:
-            for idx in nan_indices:
-                obj[idx] = None
-        ret.append(obj)
-
-    return ret 
-
-
-def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5,
-                                   as_json=False):
+def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
     """
     Returns the density distribution of the given gmpe and imt
 
@@ -58,8 +36,6 @@ def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5,
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -79,9 +55,6 @@ def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5,
         stddev = statistics[res_type]["Std Dev"]
         x = bins[:-1]
         y = vals
-
-        if as_json:
-            mean, stddev, x, y = _tojson(mean, stddev, x, y)
 
         plot_data[res_type] = \
             {'x': x, 'y': y, 'mean': mean, 'stddev': stddev,
@@ -103,7 +76,7 @@ def _get_histogram_data(data, bin_width=0.5):
     return vals.astype(float), bins
 
 
-def likelihood(residuals, gmpe, imt, bin_width=0.1, as_json=False):
+def likelihood(residuals, gmpe, imt, bin_width=0.1):
     """
     Returns the likelihood of the given gmpe and imt
 
@@ -111,8 +84,6 @@ def likelihood(residuals, gmpe, imt, bin_width=0.1, as_json=False):
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Likelihood
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -129,9 +100,6 @@ def likelihood(residuals, gmpe, imt, bin_width=0.1, as_json=False):
 
         x = bins[:-1]
         y = vals
-
-        if as_json:
-            median_lh, x, y = _tojson(median_lh, x, y)
 
         plot_data[res_type] = \
             {'x': x, 'y': y, 'median': median_lh,
@@ -151,7 +119,7 @@ def _get_lh_histogram_data(lh_values, bin_width=0.1):
     return vals.astype(float), bins
 
 
-def residuals_with_magnitude(residuals, gmpe, imt, as_json=False):
+def residuals_with_magnitude(residuals, gmpe, imt):
     """
     Returns the residuals of the given gmpe and imt vs. magnitude
 
@@ -159,8 +127,6 @@ def residuals_with_magnitude(residuals, gmpe, imt, as_json=False):
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -181,10 +147,6 @@ def residuals_with_magnitude(residuals, gmpe, imt, as_json=False):
         x = _get_magnitudes(residuals, gmpe, imt, res_type)
         slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
         y = data[res_type]
-
-        if as_json:
-            x, y, slope, intercept, pval = \
-                _tojson(x, y, slope, intercept, pval)
 
         plot_data[res_type] = \
             {'x': x, 'y': y,
@@ -217,7 +179,7 @@ def _get_magnitudes(residuals, gmpe, imt, res_type):
     return magnitudes
 
 
-def residuals_with_vs30(residuals, gmpe, imt, as_json=False):
+def residuals_with_vs30(residuals, gmpe, imt):
     """
     Returns the residuals of the given gmpe and imt vs. vs30
 
@@ -225,8 +187,6 @@ def residuals_with_vs30(residuals, gmpe, imt, as_json=False):
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -247,10 +207,6 @@ def residuals_with_vs30(residuals, gmpe, imt, as_json=False):
         slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
         y = data[res_type]
 
-        if as_json:
-            x, y, slope, intercept, pval = \
-                _tojson(x, y, slope, intercept, pval)
-            
         plot_data[res_type] = \
             {'x': x, 'y': y,
              'slope': slope, 'intercept': intercept, 'pvalue': pval,
@@ -276,7 +232,7 @@ def _get_vs30(residuals, gmpe, imt, res_type):
     return vs30
 
 
-def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb", as_json=False):
+def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb"):
     """
     Returns the residuals of the given gmpe and imt vs. distance
 
@@ -284,8 +240,6 @@ def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb", as_json=F
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -305,10 +259,6 @@ def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb", as_json=F
         x = _get_distances(residuals, gmpe, imt, res_type, distance_type)
         slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
         y = data[res_type]
-
-        if as_json:
-            x, y, slope, intercept, pval = \
-                _tojson(x, y, slope, intercept, pval)
 
         plot_data[res_type] = \
             {'x': x, 'y': y,
@@ -338,7 +288,7 @@ def _get_distances(residuals, gmpe, imt, res_type, distance_type):
     return distances
 
 
-def residuals_with_depth(residuals, gmpe, imt, as_json=False):
+def residuals_with_depth(residuals, gmpe, imt):
     """
     Returns the residuals of the given gmpe and imt vs. depth
 
@@ -346,8 +296,6 @@ def residuals_with_depth(residuals, gmpe, imt, as_json=False):
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -366,10 +314,6 @@ def residuals_with_depth(residuals, gmpe, imt, as_json=False):
         x = _get_depths(residuals, gmpe, imt, res_type)
         slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
         y = data[res_type]
-
-        if as_json:
-            x, y, slope, intercept, pval = \
-                _tojson(x, y, slope, intercept, pval)
             
         plot_data[res_type] = \
             {'x': x, 'y': y,
