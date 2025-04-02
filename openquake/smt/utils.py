@@ -22,7 +22,7 @@ import os
 import re
 import numpy as np
 from scipy.constants import g
-from scipy.integrate import cumtrapz
+from scipy.integrate import cumulative_trapezoid
 from math import sqrt, pi, sin, cos
 
 from openquake.hazardlib.geo import PlanarSurface
@@ -106,9 +106,9 @@ def get_velocity_displacement(time_step, acceleration, units="cm/s/s",
     """
     acceleration = convert_accel_units(acceleration, units)
     if velocity is None:
-        velocity = time_step * cumtrapz(acceleration, initial=0.)
+        velocity = time_step * cumulative_trapezoid(acceleration, initial=0.)
     if displacement is None:
-        displacement = time_step * cumtrapz(velocity, initial=0.)
+        displacement = time_step * cumulative_trapezoid(velocity, initial=0.)
     return velocity, displacement
 
 

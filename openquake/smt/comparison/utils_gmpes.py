@@ -188,7 +188,7 @@ def att_curves(gmpe,
         rup_trt = None
         rup_msr = scalerel.WC1994()
 
-    if rup_trt is -999 and aratio == -999:
+    if rup_trt == -999 and aratio == -999:
         msg = 'An aspect ratio must be provided by the user, or alternatively'
         msg += ' specify a TRT string within the toml file to assign a'
         msg += ' trt-dependent aratio proxy.'
