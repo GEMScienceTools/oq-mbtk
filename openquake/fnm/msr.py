@@ -33,14 +33,15 @@ import numpy as np
 
 from openquake.hazardlib.scalerel import get_available_magnitude_scalerel
 
-MSRS = get_available_magnitude_scalerel()
-
+#MSRS = get_available_magnitude_scalerel()
+MSRS = {msr.__class__.__name__ : msr 
+        for msr in get_available_magnitude_scalerel()}
 
 def area_to_mag(area, mstype='generic', rake: float = 0.0):
     if mstype == 'generic':
         return np.log10(area) + 4.0
     elif mstype in MSRS:
-        msr = MSRS[mstype]()
+        msr = MSRS[mstype]
         return msr.get_median_mag(area, rake)
     else:
         raise ValueError("MSR not supported")
