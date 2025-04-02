@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -19,45 +19,23 @@
 Core test suite for the database and residuals construction
 """
 import os
-import sys
 import shutil
+import tempfile
 import unittest
-from openquake.smt.parsers.esm_flatfile_parser import ESMFlatfileParser
+import pickle
+import numpy as np
+import pandas as pd
+
+from openquake.smt.residuals.parsers.esm_url_flatfile_parser import \
+    ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
-from openquake.smt.strong_motion_selector import rank_sites_by_record_count
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
-
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
-
-EXPECTED_IDS = [
-    "EMSC_20040918_0000026_RA_PYAS_0", "EMSC_20040918_0000026_RA_PYAT_0",
-    "EMSC_20040918_0000026_RA_PYLI_0", "EMSC_20040918_0000026_RA_PYLL_0",
-    "EMSC_20041205_0000033_CH_BNALP_0", "EMSC_20041205_0000033_CH_BOURR_0",
-    "EMSC_20041205_0000033_CH_DIX_0", "EMSC_20041205_0000033_CH_EMV_0",
-    "EMSC_20041205_0000033_CH_LIENZ_0", "EMSC_20041205_0000033_CH_LLS_0",
-    "EMSC_20041205_0000033_CH_MMK_0", "EMSC_20041205_0000033_CH_SENIN_0",
-    "EMSC_20041205_0000033_CH_SULZ_0", "EMSC_20041205_0000033_CH_VDL_0",
-    "EMSC_20041205_0000033_CH_ZUR_0", "EMSC_20041205_0000033_RA_STBO_0",
-    "EMSC_20130103_0000020_HL_SIVA_0", "EMSC_20130103_0000020_HL_ZKR_0",
-    "EMSC_20130108_0000044_HL_ALNA_0", "EMSC_20130108_0000044_HL_AMGA_0",
-    "EMSC_20130108_0000044_HL_DLFA_0", "EMSC_20130108_0000044_HL_EFSA_0",
-    "EMSC_20130108_0000044_HL_KVLA_0", "EMSC_20130108_0000044_HL_LIA_0",
-    "EMSC_20130108_0000044_HL_NOAC_0", "EMSC_20130108_0000044_HL_PLG_0",
-    "EMSC_20130108_0000044_HL_PRK_0", "EMSC_20130108_0000044_HL_PSRA_0",
-    "EMSC_20130108_0000044_HL_SMTH_0", "EMSC_20130108_0000044_HL_TNSA_0",
-    "EMSC_20130108_0000044_HL_YDRA_0", "EMSC_20130108_0000044_KO_ENZZ_0",
-    "EMSC_20130108_0000044_KO_FOCM_0", "EMSC_20130108_0000044_KO_GMLD_0",
-    "EMSC_20130108_0000044_KO_GOKC_0", "EMSC_20130108_0000044_KO_GOMA_0",
-    "EMSC_20130108_0000044_KO_GPNR_0", "EMSC_20130108_0000044_KO_KIYI_0",
-    "EMSC_20130108_0000044_KO_KRBN_0", "EMSC_20130108_0000044_KO_ORLT_0",
-    "EMSC_20130108_0000044_KO_SHAP_0"]
+# Temp files for ranking metric tables 
+tmp_tab = os.path.join(tempfile.mkdtemp(), 'temp_table.csv')
+tmp_fig = os.path.join(tempfile.mkdtemp(), 'temp_figure')
 
 
 class ResidualsTestCase(unittest.TestCase):
@@ -70,64 +48,42 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Setup constructs the database from the ESM test data
         """
-        ifile = os.path.join(BASE_DATA_PATH, "residual_tests_esm_data.csv")
+        # Make the database
+        ifile = os.path.join(BASE_DATA_PATH, "residual_tests_data.csv")
         cls.out_location = os.path.join(BASE_DATA_PATH, "residual_tests")
         if os.path.exists(cls.out_location):
             shutil.rmtree(cls.out_location)
-        parser = ESMFlatfileParser.autobuild("000", "ESM ALL",
-                                             cls.out_location, ifile)
+        parser = ESMFlatfileParserURL.autobuild(
+            "000", "ESM ALL", cls.out_location, ifile)
         del parser
         cls.database_file = os.path.join(cls.out_location,
                                          "metadatafile.pkl")
-        cls.database = None
         with open(cls.database_file, "rb") as f:
             cls.database = pickle.load(f)
-        cls.gmpe_list = ["AkkarEtAlRjb2014",  "ChiouYoungs2014"]
+
+        # Add the GMPE list and IMTs
+        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]
-        cls.toml = os.path.join(BASE_DATA_PATH,
-                                'residuals_from_toml_test.toml')
 
-    def test_correct_build_load(self):
-        """
-        Verifies that the database has been built and loaded correctly
-        """
-        self.assertEqual(len(self.database), 41)
-        self.assertListEqual([rec.id for rec in self.database],
-                             EXPECTED_IDS)
+        # Compute residuals here to avoid repeating in each test
+        cls.residuals = res.Residuals(cls.gmpe_list, cls.imts)
+        cls.residuals.compute_residuals(cls.database, component="Geometric")
+        cls.residuals.get_residual_statistics()
 
-    def _check_residual_dictionary_correctness(self, res_dict):
-        """
-        Basic check for correctness of the residual dictionary
-        """
-        for i, gsim in enumerate(res_dict):
-            self.assertEqual(gsim, self.gmpe_list[i])
-            for j, imt in enumerate(res_dict[gsim]):
-                self.assertEqual(imt, self.imts[j])
-                if gsim == "AkkarEtAlRjb2014":
-                    # For Akkar et al - inter-event residuals should have
-                    # 4 elements and the intra-event residuals 41
-                    self.assertEqual(
-                        len(res_dict[gsim][imt]["Inter event"]), 4)
-                elif gsim == "ChiouYoungs2014":
-                    # For Chiou & Youngs - inter-event residuals should have
-                    # 41 elements and the intra-event residuals 41 too
-                    self.assertEqual(
-                        len(res_dict[gsim][imt]["Inter event"]), 41)
-                else:
-                    pass
-                self.assertEqual(
-                        len(res_dict[gsim][imt]["Intra event"]), 41)
-                self.assertEqual(
-                        len(res_dict[gsim][imt]["Total"]), 41)
+        # Add other params to class
+        cls.toml = os.path.join(
+            BASE_DATA_PATH, 'residuals_from_toml_test.toml')
+        cls.exp = exp
+        cls.st_rec_min = 3
+        cls.exp_stations = exp_stations
 
-    def test_residuals_execution(self):
+    def test_residual_values(self):
         """
-        Tests basic execution of residuals - not correctness of values
+        Check correctness of values for computed residuals
         """
-        residuals = res.Residuals(self.gmpe_list, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(residuals.residuals)
-        residuals.get_residual_statistics()
+        obs = pd.DataFrame(self.residuals.residuals)
+        exp = pd.DataFrame(self.exp)
+        pd.testing.assert_frame_equal(obs, exp) 
 
     def test_residuals_execution_from_toml(self):
         """
@@ -135,112 +91,108 @@ class ResidualsTestCase(unittest.TestCase):
         residuals for from a toml file - not correctness of values
         """
         residuals = res.Residuals.from_toml(self.toml)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
         residuals.get_residual_statistics()
+
+    @unittest.skip # Check locally only (issues on remote with openpyxl)
+    def test_export_execution(self):
+        """
+        Tests execution of the residuals exporting function
+        """
+        out_loc = os.path.join(self.out_location, "residuals.xlsx")
+        self.residuals.export_residuals(out_loc)
 
     def test_likelihood_execution(self):
         """
-        Tests basic execution of residuals - not correctness of values
+        Tests basic execution of likelihood score (Scherbaum et al.
+        2004) computation- not correctness of values
         """
-        lkh = res.Residuals(self.gmpe_list, self.imts)
-        lkh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(lkh.residuals)
-        lkh.get_likelihood_values()
+        self.residuals.get_likelihood_values()
 
     def test_llh_execution(self):
         """
-        Tests execution of LLH - not correctness of values
+        Tests basic execution of loglikelihood score (Scherbaum et al.
+        2009) computation- not correctness of values
         """
-        llh = res.Residuals(self.gmpe_list, self.imts)
-        llh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(llh.residuals)
-        llh.get_loglikelihood_values(self.imts)
-
-    def test_multivariate_llh_execution(self):
-        """
-        Tests execution of multivariate llh - not correctness of values
-        """
-        multi_llh = res.Residuals(self.gmpe_list, self.imts)
-        multi_llh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(multi_llh.residuals)
-        multi_llh.get_multivariate_loglikelihood_values()
+        self.residuals.get_loglikelihood_values()
 
     def test_edr_execution(self):
         """
-        Tests execution of EDR - not correctness of values
+        Tests basic execution of EDR score (Scherbaum et al.
+        2004) computation- not correctness of values
         """
-        edr = res.Residuals(self.gmpe_list, self.imts)
-        edr.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(edr.residuals)
-        edr.get_edr_values()
+        self.residuals.get_edr_values()
+          
+    def test_stochastic_area_execution(self):
+        """
+        Tests basic execution of stochastic area metric scores (Sunny
+        et al. 2021) computation- not correctness of values
+        """
+        self.residuals.get_stochastic_area_wrt_imt()
 
-    def test_multiple_metrics(self):
+    def test_plot_execution(self):
         """
-        Tests the execution running multiple metrics in one call
+        Tests execution of gmpe ranking metric plotting functions and
+        the residual distribution information plotting function
         """
-        residuals = res.Residuals(self.gmpe_list, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
-        config = {}
-        for key in ["Residuals", "Likelihood", "LLH",
-                    "MultivariateLLH", "EDR"]:
-            _ = res.GSIM_MODEL_DATA_TESTS[key](residuals, config)
+        # First compute the metrics
+        self.residuals.get_loglikelihood_values()
+        self.residuals.get_edr_values_wrt_imt()
+        self.residuals.get_stochastic_area_wrt_imt()
 
-    def test_likelihood_execution_old(self):
-        """
-        Tests basic execution of residuals - not correctness of values
-        """
-        lkh = res.Likelihood(self.gmpe_list, self.imts)
-        lkh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(lkh.residuals)
-        lkh.get_likelihood_values()
+        # Make the plots
+        rspl.plot_residual_pdf_with_spectral_period(self.residuals, tmp_fig)
+        rspl.plot_edr_metrics_with_spectral_period(self.residuals, tmp_fig)
+        rspl.plot_loglikelihood_with_spectral_period(self.residuals, tmp_fig)
+        rspl.plot_stochastic_area_with_spectral_period(self.residuals, tmp_fig)
 
-    def test_llh_execution_old(self):
+    def test_table_execution(self):
         """
-        Tests execution of LLH - not correctness of values
+        Tests execution of table exporting functions
         """
-        llh = res.LLH(self.gmpe_list, self.imts)
-        llh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(llh.residuals)
-        llh.get_loglikelihood_values(self.imts)
-
-    def test_multivariate_llh_execution_old(self):
+        # First compute the metrics
+        self.residuals.get_loglikelihood_values()
+        self.residuals.get_edr_values_wrt_imt()
+        self.residuals.get_stochastic_area_wrt_imt()
+        
+        # Tables of values
+        rspl.pdf_table(self.residuals, tmp_tab)
+        rspl.llh_table(self.residuals, tmp_tab)
+        rspl.edr_table(self.residuals, tmp_tab)
+        rspl.stochastic_area_table(self.residuals, tmp_tab)
+        
+        # Tables of weights
+        rspl.llh_weights_table(self.residuals, tmp_tab)
+        rspl.edr_weights_table(self.residuals, tmp_tab)
+        rspl.stochastic_area_weights_table(self.residuals, tmp_tab)
+        
+    def test_single_station_execution_and_values(self):
         """
-        Tests execution of multivariate llh - not correctness of values
-        """
-        multi_llh = res.MultivariateLLH(self.gmpe_list, self.imts)
-        multi_llh.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(multi_llh.residuals)
-        multi_llh.get_multivariate_loglikelihood_values()
-
-    def test_edr_execution_old(self):
-        """
-        Tests execution of EDR - not correctness of values
-        """
-        edr = res.EDR(self.gmpe_list, self.imts)
-        edr.get_residuals(self.database, component="Geometric")
-        self._check_residual_dictionary_correctness(edr.residuals)
-        edr.get_edr_values()
-
-    def test_single_station_residual_analysis(self):
-        """
-        Test execution of single station residual analysis functions - not
+        Test execution of single station residual analysis functions and
         correctness of values. Execution of plots is also tested here.
         """
-        # Get sites with at least 1 record each (i.e. all sites in db)
-        threshold = 1
-        top_sites = rank_sites_by_record_count(self.database, threshold)
+        # Get sites with at least 3 record each
+        top_sites = self.database.rank_sites_by_record_count(self.st_rec_min)
             
         # Create SingleStationAnalysis object
-        ssa1 = res.SingleStationAnalysis(top_sites.keys(), self.gmpe_list,
-                                         self.imts)
+        ssa1 = res.SingleStationAnalysis(
+            top_sites.keys(), self.gmpe_list, self.imts)
         
         # Compute total, inter-event and intra-event residuals for each site
         ssa1.get_site_residuals(self.database)
+
+        # Get station residual statistics per GMPE and per imt
+        ssa_csv_output = os.path.join(self.out_location, 'ssa_test.csv')
+        ssa1.station_residual_statistics(ssa_csv_output)
         
-        # Get single station residual statistics per GMPE and per imt
-        ssa_csv_output = os.path.join(self.out_location, 'SSA_test.csv')
-        ssa1.residual_statistics(True, ssa_csv_output)
-        
+        # Check exp vs obs delta_s2ss, delta_woes, phi_ss per station
+        store = []
+        for stat in ssa1.site_residuals:
+            store.append(stat.site_analysis)
+        obs = pd.DataFrame(store)
+        exp = pd.DataFrame(self.exp_stations)
+        pd.testing.assert_frame_equal(obs, exp)
+
         # Check num. sites, GMPEs and intensity measures + csv outputted
         self.assertTrue(len(ssa1.site_ids) == len(top_sites))
         self.assertTrue(len(ssa1.gmpe_list) == len(self.gmpe_list))
@@ -263,14 +215,13 @@ class ResidualsTestCase(unittest.TestCase):
                 self.assertTrue(output_all_res_plt)
                 self.assertTrue(output_intra_res_comp_plt)
 
-    def test_single_station_residual_analysis_from_toml(self):
+    def test_single_station_execution_from_toml(self):
         """
         Test execution of single station residual analysis using GMPEs and
         imts specified within a toml file. Correctness of values is not tested.
         """
-        # Get sites with at least 1 record each (i.e. all sites in db)
-        threshold = 1
-        top_sites = rank_sites_by_record_count(self.database, threshold)
+        # Get sites with at least 3 record each
+        top_sites = self.database.rank_sites_by_record_count(self.st_rec_min)
         
         # Create SingleStationAnalysis object from toml
         ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), self.toml)
@@ -284,3 +235,498 @@ class ResidualsTestCase(unittest.TestCase):
         Deletes the database
         """
         shutil.rmtree(cls.out_location)
+
+
+# Expected residuals
+exp = {'AkkarEtAlRjb2014': {'PGA': {'Total': np.array([-2.80124818, -3.02616566, -3.58512564, -4.4356111 , -3.67564154,
+       -1.9972572 , -2.03910853, -1.81800898, -4.6416568 , -3.82918642,
+       -2.02557221, -2.59584834, -1.95331725, -2.13685277, -3.42714227,
+       -6.13876435, -4.17238749, -3.75389885, -3.01227257, -3.36205097,
+       -2.17123582, -2.29704468, -0.88836857, -1.97112169, -2.62439591,
+       -1.8595871 , -3.27036917, -2.42180711, -2.51877159, -3.00703004,
+       -2.90388048, -2.23509842, -2.62321352, -1.62061309, -3.18201601,
+       -3.52531538, -2.70475182, -3.96880664, -1.42164031, -3.10584811,
+       -3.23221482, -3.19105695, -3.27666002, -1.56270602, -3.34168849,
+       -1.97755759, -2.26539152, -1.33564669, -2.55074181, -1.83594417,
+       -1.94592344, -1.9240351 , -2.08691281, -1.17225148, -1.5795857 ,
+       -1.89708346, -3.23690768, -2.21048561, -3.05863516, -3.75063959,
+       -3.3135257 , -4.18744886, -1.89075627, -2.96893503, -3.13830106,
+       -2.1667475 , -2.29742514, -2.01692489, -3.54056653, -2.95021396,
+       -2.23321449, -1.92862578, -2.32831023, -3.38039843, -2.58861621,
+       -2.49863581, -2.22473108, -3.3115636 , -3.19262524, -2.59871778,
+       -2.14320494, -2.74083219, -3.5492381 , -4.11642507, -3.69939122,
+       -2.72040596, -0.63778961, -0.84648767, -0.56769107, -4.55330853,
+       -3.88592389, -3.82686915, -2.43842882, -4.45127125, -2.57212183,
+       -1.88384581, -5.48553618, -3.21687328, -3.08740971, -1.81528269]), 'Inter event': np.array([-3.11953731, -3.49091067, -2.2820276 , -3.55458046, -4.86682096,
+       -2.48471914, -0.96908373, -1.29025996, -0.91424878, -1.60784673,
+       -1.19065905, -1.23833074, -1.47837848, -1.42766596, -1.09886545,
+       -1.28967865, -0.79675942, -1.56440871, -1.73318867, -1.3297662 ,
+       -1.95122704, -0.6989363 , -2.50948161, -2.66147135, -1.64291021,
+       -1.84887806, -2.09877593, -1.71783437, -0.77658869, -0.93268352,
+       -1.5913957 , -2.08624651, -3.72904997, -0.92957282, -1.45964943,
+       -2.74140683, -3.24477157, -3.04719339, -3.49623901, -3.03512934,
+       -2.1176404 , -3.341415  , -2.48067118, -2.95206879, -3.87728181]), 'Intra event': np.array([-1.45562617, -1.71391505, -2.35580892, -3.12281009, -2.25008249,
+       -0.32267328, -0.37073416, -0.11682968, -4.04194605, -2.39046201,
+       -0.31924235, -0.97413136, -0.23626678, -0.44703379, -1.92876585,
+       -4.30184305, -2.04371135, -1.5631308 , -0.71146812, -2.45804594,
+       -1.09054742, -1.23502276,  0.38266113, -1.71644908, -2.28531905,
+       -1.61932496, -2.84783135, -2.1089051 , -2.19334159, -2.61851613,
+       -2.52869369, -1.94631952, -2.28428943, -1.41122684, -2.77089358,
+       -3.06983803, -2.35529282, -3.45602939, -1.23796172, -2.14984926,
+       -2.29496522, -2.16188935, -2.2601935 , -0.29193709, -2.90993608,
+       -1.22712001, -1.55766037, -0.48996765, -1.74425966, -0.92340622,
+       -1.04970331, -1.23964177, -1.42668593, -0.37631467, -1.37550027,
+       -1.65197673, -2.81869315, -1.36059299, -2.33458399, -2.20175793,
+       -1.69978868, -2.70337738, -1.64646702, -2.58534307, -2.05617549,
+       -0.9404708 , -1.09053731, -0.76841874, -2.23393295, -1.55598871,
+       -0.73260675, -0.38282567, -0.84181202, -2.16155036, -1.25229   ,
+       -1.14895905, -0.83441459, -1.82897736, -1.69239189, -1.01036533,
+       -0.48726723, -1.1735655 , -2.36225227, -3.01359378, -3.05268562,
+       -1.92844657,  0.46317129,  0.22350832,  0.54367048, -3.34237372,
+       -2.57596802, -2.99411545, -1.39966975, -3.44501655, -1.28705437,
+       -0.49665761, -4.11037456, -1.50510609, -1.35643378,  0.104441  ])}, 'SA(1.0)': {'Total': np.array([-2.16751053, -1.70877195, -2.60705627, -1.50521958, -1.29150353,
+       -0.12485576, -2.49047073,  0.40992085, -2.36567223, -2.06873772,
+       -0.88102336, -2.13695379,  0.10853216, -1.38200968, -1.90427093,
+       -3.5088966 , -2.76358644, -2.24580291, -2.79688267, -1.05521195,
+       -0.18301402, -1.09272224, -1.25084412, -2.09541645, -1.55177227,
+       -1.19842935, -2.48008908, -1.6826007 , -2.3407115 , -2.14820671,
+       -2.51366684, -1.62920516, -2.15546745, -0.97746762, -1.00573013,
+       -1.89185509, -0.95447286, -3.47257654, -0.65008732, -2.27386777,
+       -1.78927586, -1.89521997, -1.35531882, -0.07369542, -0.63848827,
+        0.0289888 , -0.56884875,  0.13496729, -0.32145927,  0.04559928,
+       -0.23897363, -0.22457249,  0.00561048,  0.01421759, -1.35939807,
+       -1.17879732, -2.08709153,  0.548432  , -1.84385691, -2.16033943,
+       -1.75170068, -3.1051795 , -0.77070686, -3.12043481, -2.51369194,
+       -0.09360807, -0.88235672, -0.44889986, -1.0115119 , -1.66117867,
+        0.08411191, -0.3055725 , -1.79987024, -2.2216332 , -0.20641897,
+       -0.6651277 , -0.41402818, -1.53747121, -2.49800078, -0.52760505,
+       -1.04774103, -2.49979453, -0.5363677 , -1.96436283, -1.15400132,
+       -1.17116719, -0.38969941, -0.31251433,  0.50152139, -3.00699571,
+       -1.31330038, -1.7319206 , -1.69396922, -1.43261936, -2.06976169,
+       -0.40663554, -2.60366192, -2.01854241, -2.71694323, -1.72664212]), 'Inter event': np.array([-2.16446004, -1.25051854, -1.18837516, -1.83557452, -3.23502914,
+       -1.02404153, -1.05261449, -0.7795195 , -0.60202071, -1.24585148,
+       -0.84524003, -1.17583635, -1.07913322, -1.26271898, -0.81841724,
+       -1.08278059, -0.49102248, -0.50521991, -0.95035719, -0.47947126,
+       -1.74441906, -0.32656579, -1.62980828, -1.10979425, -0.32073911,
+       -0.13517325, -0.171877  , -0.06835384, -0.68288197, -0.59215873,
+       -1.04843254, -0.51962088, -2.34269595, -0.38715798, -1.56752368,
+       -1.12604114, -1.17349254, -1.00271773, -2.02763102, -1.0030931 ,
+       -0.63145832, -1.73295729, -1.37419302, -1.30502362, -2.59192724]), 'Intra event': np.array([-1.24927821, -0.7187418 , -1.75761789, -1.0142979 , -0.76713285,
+        0.58210865, -2.15375213,  1.20058392, -2.04552427, -1.32611685,
+        0.0474884 , -1.40500951,  1.19192068, -0.53190801, -1.13590913,
+       -2.17864487, -1.31668514, -0.71786256, -1.35519261, -0.62543383,
+        0.38327306, -0.66881492, -0.85168468, -1.81184239, -1.34176993,
+       -1.03624513, -2.14445702, -1.45489326, -2.0239415 , -1.8574885 ,
+       -2.17349068, -1.40872377, -1.86376664, -0.8451863 , -0.86962402,
+       -1.63582912, -0.82530343, -3.00263052, -0.56211058, -1.68289479,
+       -1.1224587 , -1.5470935 , -0.92269165,  0.55952048, -0.55208124,
+        0.11205662, -0.57934935,  0.23462196, -0.27191705,  0.15259037,
+       -0.17652145, -0.22000956,  0.04619968,  0.0561539 , -1.17542985,
+       -1.01926992, -1.80464409,  0.9361487 , -1.83056079, -1.13743618,
+       -0.66484079, -2.23015453, -0.6664066 , -2.69814435, -2.25292457,
+        0.54593012, -0.36626672,  0.13503109, -0.48806862, -1.23941568,
+        0.77903285,  0.32835837, -1.39981406, -1.9868017 ,  0.34381661,
+       -0.18668529,  0.10371419, -0.60012321, -1.71098665,  0.56779856,
+       -0.03374466, -1.71306114, -0.0375548 , -1.6890475 , -0.96776142,
+       -0.98761395, -0.08383752,  0.00542791,  0.94686953, -2.47083982,
+       -0.5120618 , -1.20462986, -1.16073865, -0.89866945, -1.63553185,
+        0.28789257, -1.5053494 , -0.82865199, -1.63636054, -0.49106596])}}, 'ChiouYoungs2014': {'PGA': {'Total': np.array([-1.87730063, -2.67000845, -3.15514091, -3.32484347, -2.64452028,
+       -1.06441842, -1.34806618, -1.16044899, -5.1829552 , -4.59954093,
+       -2.35960954, -3.32851721, -2.54922128, -2.87441228, -4.12135281,
+       -6.68671089, -4.70854868, -4.46455793, -3.69982738, -3.93789364,
+       -2.89833927, -3.08390954, -1.24649063, -2.00270954, -2.19289184,
+       -2.59907321, -2.87338702, -2.39577899, -2.08605234, -3.91873975,
+       -2.52653073, -1.1121158 , -1.89345966, -0.55366456, -2.43523722,
+       -2.69737853, -1.76885392, -2.94984091, -0.98828621, -2.24126461,
+       -3.16807809, -2.36616867, -2.60855466, -1.21234304, -3.39048551,
+       -1.30149563, -1.70302784, -0.97946725, -1.60699408, -1.10997194,
+       -1.28600228, -1.19440601, -1.51337897, -0.72116451, -1.32419778,
+       -1.52773992, -3.62148199, -1.35761883, -2.46711293, -2.79643183,
+       -2.77553099, -3.98738111, -1.06145233, -3.0173753 , -3.21050538,
+       -2.10197542, -2.49354064, -2.07149915, -3.2224841 , -2.77795897,
+       -1.91145047, -1.88034423, -2.6871568 , -3.32720434, -2.38895491,
+       -2.5706112 , -2.16399504, -2.54922566, -2.51357383, -1.77643214,
+       -1.58756248, -2.61707732, -2.24707835, -3.6339068 , -1.98424634,
+       -2.03580452,  0.52982609,  0.26579522,  0.46223857, -5.180058  ,
+       -5.2407716 , -3.87378529, -3.61773105, -4.08543797, -1.94638291,
+       -1.73255282, -5.11219317, -3.00995483, -2.84521726, -1.65260943]), 'Inter event': np.array([-2.55746687, -2.62684904, -2.62678406, -2.38849322, -2.38851061,
+       -2.38906691, -2.34203281, -2.38892891, -2.74548634, -4.41706171,
+       -4.419603  , -4.34206328, -4.34247214, -4.41902468, -4.34063577,
+       -5.62422914, -5.62652512, -5.62468843, -5.62729337, -3.21898086,
+       -3.21916097, -3.2191477 , -3.14712799, -1.03899201, -1.13774193,
+       -1.34826366, -1.49069571, -1.24283215, -1.08230991, -2.03267118,
+       -1.31081367, -0.57701094, -0.9823654 , -0.28726353, -1.26351583,
+       -1.39948673, -0.91780113, -1.5305316 , -0.5127629 , -2.21105832,
+       -2.21138706, -2.08657832, -2.08682109, -2.08651462, -1.7592163 ,
+       -1.34357753, -1.3436546 , -1.3437633 , -1.3500146 , -1.35006373,
+       -1.35011985, -1.1564301 , -1.15647146, -1.15651503, -0.68701668,
+       -0.79264066, -1.87896041, -1.563494  , -1.56358889, -3.22379456,
+       -3.22356877, -3.22440361, -0.55074823, -1.56533871, -2.83524461,
+       -2.83479477, -2.83481326, -2.83595462, -3.11776294, -3.11753273,
+       -3.11738349, -3.11738957, -3.11831067, -2.99978903, -2.99935185,
+       -2.99936973, -3.00049395, -2.75911973, -2.75894048, -2.75883429,
+       -2.75883854, -2.75948441, -2.40349   , -2.40431006, -0.69339438,
+       -0.67994499, -0.67984827, -0.67989034, -0.67986159, -4.20588133,
+       -4.36059669, -3.09686531, -3.10006975, -2.64831523, -2.57838474,
+       -2.64832732, -3.63946263, -3.63947503, -3.63937736, -3.55857165]), 'Intra event': np.array([-0.64374987, -1.5073612 , -2.07936864, -2.42827863, -1.62615787,
+        0.23700234, -0.1554803 ,  0.12373545, -4.39605839, -2.66425949,
+       -0.0224159 , -1.25858983, -0.34689897, -0.62954632, -2.18657216,
+       -4.37111852, -2.03791688, -1.75101483, -0.84842787, -2.63238212,
+       -1.40665329, -1.62544748,  0.45192342, -1.71211598, -1.87465141,
+       -2.22201859, -2.45645665, -2.04820048, -1.78331703, -3.35033866,
+       -2.15989005, -0.95071549, -1.61868703, -0.47331186, -2.08180404,
+       -2.3059245 , -1.51211285, -2.5217126 , -0.84485729, -1.27980716,
+       -2.3638144 , -1.50144948, -1.78488082, -0.15174254, -2.89837023,
+       -0.70696962, -1.17664355, -0.33020523, -1.06043146, -0.47900319,
+       -0.68489939, -0.69528941, -1.06840194, -0.14167143, -1.13203703,
+       -1.30602835, -3.09590691, -0.63913983, -1.936967  , -1.31456014,
+       -1.29018961, -2.70743271, -0.90739045, -2.57958687, -2.03479524,
+       -0.73824248, -1.19628471, -0.70219116, -1.87731934, -1.35742028,
+       -0.34384608, -0.30745625, -1.25089842, -2.07143547, -0.97406753,
+       -1.18656063, -0.7105196 , -1.30742211, -1.26578939, -0.40353064,
+       -0.18259132, -1.38664432, -1.16977044, -2.79166911, -1.90639007,
+       -1.96873688,  1.03242583,  0.72357151,  0.95336381, -3.50695053,
+       -3.45843564, -2.63307035, -2.32976455, -3.1627604 , -0.71186543,
+       -0.38867442, -3.75429144, -1.27572205, -1.0815339 ,  0.22643239])}, 'SA(1.0)': {'Total': np.array([-1.97621550e+00, -1.53227627e+00, -2.12132658e+00, -1.19952501e+00,
+       -1.19139475e+00, -1.78660735e-01, -2.36762978e+00,  4.11411758e-01,
+       -1.94115021e+00, -1.55348414e+00, -5.88695465e-01, -1.71782641e+00,
+        3.99875884e-01, -1.03718914e+00, -1.24940997e+00, -3.01058945e+00,
+       -2.43483310e+00, -1.74070260e+00, -2.45379663e+00, -3.39308022e-01,
+        2.84809233e-01, -5.51862230e-01, -8.33852830e-01, -1.81403658e+00,
+       -1.38676165e+00, -8.69313784e-01, -2.43040437e+00, -1.64169835e+00,
+       -2.15436488e+00, -1.69483291e+00, -2.36243807e+00, -1.69452919e+00,
+       -2.17469038e+00, -1.04749882e+00, -8.57320134e-01, -1.90012803e+00,
+       -7.58242802e-01, -3.23238191e+00, -4.93137134e-01, -2.11167313e+00,
+       -1.64948594e+00, -1.75251601e+00, -1.28898736e+00,  3.29734242e-02,
+       -2.24872428e-01,  1.93821431e-01, -4.60721587e-01,  1.89767766e-01,
+       -1.15928548e-01,  1.62784768e-01, -1.37763606e-01,  4.86919672e-02,
+        1.95884037e-01,  1.80849163e-01, -1.09117098e+00, -9.94661279e-01,
+       -1.64006011e+00,  7.11511156e-01, -1.64438082e+00, -1.95603507e+00,
+       -1.49252259e+00, -2.76208458e+00, -5.70491808e-01, -2.86262476e+00,
+       -2.45641807e+00,  1.25438010e-01, -8.31425868e-01, -4.73463312e-01,
+       -6.95665787e-01, -1.29262791e+00,  6.31223840e-01,  8.25057430e-02,
+       -1.31342338e+00, -2.19021869e+00, -9.85032203e-04, -6.37717944e-01,
+       -4.57470764e-01, -1.35807639e+00, -2.25683232e+00, -1.15271584e-01,
+       -7.94307052e-01, -2.17952600e+00, -2.57545904e-01, -1.83109243e+00,
+       -9.55696867e-01, -1.12946012e+00, -2.90430744e-01, -2.71740536e-01,
+        5.37992777e-01, -2.47126422e+00, -6.35307484e-01, -1.15977221e+00,
+       -1.27934614e+00, -1.22571776e+00, -1.82205584e+00, -2.01449003e-01,
+       -2.35709659e+00, -1.76894569e+00, -2.20040163e+00, -1.56816848e+00]), 'Inter event': np.array([-1.91927234, -1.94337283, -1.94336738, -1.13046603, -1.13046764,
+       -1.1305995 , -1.1203313 , -1.13052201, -1.08454473, -1.25947222,
+       -1.25961383, -1.24955219, -1.2495841 , -1.25952427, -1.24952095,
+       -2.78123948, -2.78136133, -2.78124791, -2.78137896, -0.41796705,
+       -0.41796797, -0.41796773, -0.4136177 , -1.0033325 , -0.76701121,
+       -0.48080855, -1.34421691, -0.90798929, -1.19156869, -0.93739974,
+       -1.30664514, -0.93722787, -1.20279047, -0.5793623 , -0.474181  ,
+       -1.05093503, -0.41938558, -1.7878196 , -0.27275272, -1.59296023,
+       -1.59296814, -1.03234815, -1.0323975 , -1.03233719, -0.12437742,
+       -0.02646793, -0.02646834, -0.02646896, -0.03119418, -0.03119448,
+       -0.03119487,  0.14598249,  0.14598349,  0.14598478, -0.6035226 ,
+       -0.55014355, -0.9071177 , -0.39509263, -0.39509668, -2.13118098,
+       -2.13112496, -2.13118373, -0.31553958, -1.58328908, -1.04861214,
+       -1.0485735 , -1.04857429, -1.04871969, -0.64371765, -0.64370822,
+       -0.64370482, -0.64370489, -0.64371573, -0.94781932, -0.947784  ,
+       -0.94778472, -0.94791852, -1.66752573, -1.66748804, -1.66747494,
+       -1.66747521, -1.66751653, -0.88454378, -0.88460143, -0.52699458,
+       -0.52228172, -0.52226088, -0.52228034, -0.52226534, -1.31299434,
+       -1.33353601, -1.0385232 , -1.03859043, -1.12398519, -1.1100472 ,
+       -1.12398544, -2.28232215, -2.28232249, -2.2823169 , -2.25864079]), 'Intra event': np.array([-1.09788397e+00, -5.38353355e-01, -1.24860178e+00, -6.84766633e-01,
+       -6.74962746e-01,  5.46182895e-01, -2.09811854e+00,  1.25762938e+00,
+       -1.60991518e+00, -1.02464523e+00,  1.38704001e-01, -1.23236392e+00,
+        1.30954484e+00, -4.02099000e-01, -6.70134015e-01, -1.75638292e+00,
+       -1.06210877e+00, -2.25217183e-01, -1.08496543e+00, -1.27549172e-01,
+        6.24978886e-01, -3.83835532e-01, -7.26287339e-01, -1.51130825e+00,
+       -1.15533618e+00, -7.24244151e-01, -2.02483242e+00, -1.36774593e+00,
+       -1.79484041e+00, -1.41199870e+00, -1.96819514e+00, -1.41174824e+00,
+       -1.81178733e+00, -8.72693016e-01, -7.14247988e-01, -1.58304204e+00,
+       -6.31702367e-01, -2.69295263e+00, -4.10840831e-01, -1.47712028e+00,
+       -9.22349668e-01, -1.41820096e+00, -8.61795170e-01,  7.24944745e-01,
+       -1.87344242e-01,  2.50219090e-01, -5.35437901e-01,  2.45351778e-01,
+       -1.18441225e-01,  2.16102704e-01, -1.44649314e-01, -3.84716609e-02,
+        1.38204890e-01,  1.20157634e-01, -9.09073473e-01, -8.28669500e-01,
+       -1.36635817e+00,  1.11633981e+00, -1.71147120e+00, -9.32987855e-01,
+       -3.76650839e-01, -1.90049577e+00, -4.75284838e-01, -2.38491429e+00,
+       -2.25230372e+00,  8.46710943e-01, -3.01828432e-01,  1.27891450e-01,
+       -4.07658576e-01, -1.12420630e+00,  1.18502272e+00,  5.26387228e-01,
+       -1.14916207e+00, -1.99969695e+00,  6.28049328e-01, -1.36231543e-01,
+        8.01704729e-02, -5.23066045e-01, -1.60187328e+00,  9.68670475e-01,
+        1.53612946e-01, -1.50906549e+00,  2.78109981e-01, -1.61060159e+00,
+       -7.97310329e-01, -1.00896638e+00, -1.88186002e-03,  2.05598181e-02,
+        9.92487958e-01, -2.09460523e+00,  1.32280788e-01, -6.98773779e-01,
+       -8.42914687e-01, -7.20714771e-01, -1.45008625e+00,  5.14294518e-01,
+       -1.30453909e+00, -5.95377648e-01, -1.11560717e+00, -3.82819682e-01])}}}
+
+exp_stations = [{'AkkarEtAlRjb2014': {'PGA': {'events': 24, 'Total': np.array([-2.62439591, -1.8595871 , -3.27036917, -2.42180711, -2.51877159,
+       -3.00703004, -2.90388048, -2.23509842, -2.62321352, -1.62061309,
+       -3.18201601, -3.52531538, -3.96880664, -1.42164031, -3.10584811,
+       -1.33564669, -1.94592344, -1.17225148, -1.5795857 , -1.89708346,
+       -2.96893503, -2.72040596, -4.55330853, -1.81528269]), 'Expected Total': np.array([0.71210534, 0.71210534, 0.71210534, 0.71210534, 0.71210534,
+       0.71210534, 0.71210534, 0.71210534, 0.71210534, 0.71210534,
+       0.71210534, 0.71210534, 0.71210534, 0.71210534, 0.71210534,
+       0.71210534, 0.71210534, 0.71210534, 0.71210534, 0.71210534,
+       0.71210534, 0.71210534, 0.71210534, 0.71210534]), 'Intra event': np.array([-1.41712634, -1.00414341, -1.76594022, -1.30773205, -1.36009112,
+       -1.62374185, -1.56804295, -1.20691274, -1.41648787, -0.87510176,
+       -1.71823111, -1.90360656, -2.14308383, -0.76766006, -1.67710182,
+       -0.72122506, -1.05076347, -0.6329946 , -0.85294772, -1.02439077,
+       -1.60317124, -1.46897003, -2.45870428, -0.98021983]), 'Inter event': np.array([-0.45172001, -0.3200785 , -0.56290714, -0.41684973, -0.43353959,
+       -0.51758031, -0.49982585, -0.38471279, -0.45151649, -0.27894547,
+       -0.54769949, -0.60678935, -0.68312459, -0.2446976 , -0.53458921,
+       -0.22989608, -0.33493901, -0.20177194, -0.2718837 , -0.3265325 ,
+       -0.51102326, -0.46824559, -0.78373106, -0.31245267]), 'dS2ss': -1.3561829465059003, 'dWo,es': np.array([-0.0609434 ,  0.35203954, -0.40975728,  0.04845089, -0.00390817,
+       -0.2675589 , -0.21186001,  0.14927021, -0.06030493,  0.48108118,
+       -0.36204816, -0.54742362, -0.78690088,  0.58852288, -0.32091888,
+        0.63495788,  0.30541947,  0.72318834,  0.50323523,  0.33179218,
+       -0.24698829, -0.11278708, -1.10252133,  0.37596312]), 'phi_ss,s': 0.46552744852189937, 'Expected Inter': np.array([0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501,
+       0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501,
+       0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501]), 'Expected Intra': np.array([0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201,      
+       0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201,
+       0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201])}, 'SA(1.0)': {'events': 24, 'Total': np.array([-1.55177227, -1.19842935, -2.48008908, -1.6826007 , -2.3407115 ,
+       -2.14820671, -2.51366684, -1.62920516, -2.15546745, -0.97746762,
+       -1.00573013, -1.89185509, -3.47257654, -0.65008732, -2.27386777,
+        0.13496729, -0.23897363,  0.01421759, -1.35939807, -1.17879732,
+       -3.12043481, -1.17116719, -3.00699571, -1.72664212]), 'Expected Total': np.array([0.78492431, 0.78492431, 0.78492431, 0.78492431, 0.78492431,
+       0.78492431, 0.78492431, 0.78492431, 0.78492431, 0.78492431,
+       0.78492431, 0.78492431, 0.78492431, 0.78492431, 0.78492431,
+       0.78492431, 0.78492431, 0.78492431, 0.78492431, 0.78492431,
+       0.78492431, 0.78492431, 0.78492431, 0.78492431]), 'Intra event': np.array([-0.91065925, -0.70329957, -1.45544298, -0.98743605, -1.37364909,
+       -1.26067745, -1.47514812, -0.95610083, -1.26493842, -0.57362794,
+       -0.59021382, -1.11023723, -2.03788533, -0.38150445, -1.33442178,
+        0.0792057 , -0.14024193,  0.00834361, -0.79776424, -0.69177849,
+       -1.83123057, -0.68730074, -1.76465871, -1.01328181]), 'Inter event': np.array([-0.30736454, -0.23737677, -0.49123924, -0.33327815, -0.46363227,
+       -0.42550223, -0.4978901 , -0.32270192, -0.42694039, -0.19361016,
+       -0.19920821, -0.37472584, -0.68782443, -0.12876489, -0.45039232,
+        0.02673341, -0.04733428,  0.00281612, -0.26926036, -0.23348819,
+       -0.61807459, -0.23197686, -0.59560534, -0.34200157]), 'dS2ss': -0.9689145627501065, 'dWo,es': np.array([ 0.05825531,  0.26561499, -0.48652842, -0.01852149, -0.40473453,
+       -0.29176289, -0.50623356,  0.01281374, -0.29602386,  0.39528662,
+        0.37870074, -0.14132266, -1.06897077,  0.58741011, -0.36550722,
+        1.04812027,  0.82867263,  0.97725817,  0.17115032,  0.27713607,
+       -0.86231601,  0.28161382, -0.79574415, -0.04436725]), 'phi_ss,s': 0.5575349497431299, 'Expected Inter': np.array([0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943,
+       0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943,
+       0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943]), 'Expected Intra': np.array([0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787,      
+       0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787,
+       0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787])}}, 'ChiouYoungs2014': {'PGA': {'events': 24, 'Total': np.array([-2.19289184, -2.59907321, -2.87338702, -2.39577899, -2.08605234,
+       -3.91873975, -2.52653073, -1.1121158 , -1.89345966, -0.55366456,
+       -2.43523722, -2.69737853, -2.94984091, -0.98828621, -2.24126461,
+       -0.97946725, -1.28600228, -0.72116451, -1.32419778, -1.52773992,
+       -3.0173753 , -2.03580452, -5.180058  , -1.65260943]), 'Expected Total': np.array([0.77079455, 0.77053569, 0.77067776, 0.77057035, 0.77079411,
+       0.77040457, 0.77075702, 0.77082215, 0.77075932, 0.77082116,
+       0.770842  , 0.7707958 , 0.77085782, 0.77082151, 0.77083854,
+       0.77078247, 0.77083724, 0.77084134, 0.77074983, 0.7707959 ,
+       0.77061923, 0.77078957, 0.77065202, 0.77069529]), 'Intra event': np.array([-1.23527163, -1.46375915, -1.61844113, -1.34930606, -1.17508776,
+       -2.20673328, -1.42316808, -0.62647726, -1.06656789, -0.31189015,
+       -1.37184103, -1.51945418, -1.66175451, -0.55672125, -1.26256688,
+       -0.55173532, -0.72444017, -0.40625304, -0.74590214, -0.86058779,
+       -1.69945953, -1.14677845, -2.91761541, -0.93084932]), 'Inter event': np.array([-0.45499743, -0.53891951, -0.59601433, -0.4968102 , -0.43282911,
+       -0.81228173, -0.52417322, -0.23076624, -0.3928338 , -0.11488621,
+       -0.50534209, -0.55967385, -0.61215343, -0.20507101, -0.46508626,
+       -0.20322087, -0.26685828, -0.14965038, -0.27472308, -0.31698788,
+       -0.6257879 , -0.42239845, -1.07440675, -0.34280899]), 'dS2ss': -1.2013608919223966, 'dWo,es': np.array([-0.03391074, -0.26239826, -0.41708024, -0.14794516,  0.02627314,
+       -1.00537239, -0.22180719,  0.57488363,  0.134793  ,  0.88947074,
+       -0.17048014, -0.31809329, -0.46039361,  0.64463964, -0.06120599,
+        0.64962557,  0.47692072,  0.79510786,  0.45545875,  0.34077311,
+       -0.49809864,  0.05458244, -1.71625452,  0.27051157]), 'phi_ss,s': 0.593547285421401, 'Expected Inter': np.array([0.39991269, 0.39971374, 0.39982293, 0.39974038, 0.39991236,
+       0.39961295, 0.39988385, 0.3999339 , 0.39988562, 0.39993314,
+       0.39994916, 0.39991365, 0.39996132, 0.39993341, 0.3999465 ,
+       0.39990341, 0.3999455 , 0.39994865, 0.39987833, 0.39991373,
+       0.39977795, 0.39990887, 0.39980315, 0.39983641]), 'Expected Intra': np.array([0.65893404, 0.65875198, 0.6588519 , 0.65877636, 0.65893374,
+       0.65865977, 0.65890765, 0.65895346, 0.65890927, 0.65895276,
+       0.65896742, 0.65893492, 0.65897855, 0.658953  , 0.65896499,
+       0.65892555, 0.65896407, 0.65896695, 0.65890259, 0.658935  ,
+       0.65881074, 0.65893055, 0.6588338 , 0.65886423])}, 'SA(1.0)': {'events': 24, 'Total': np.array([-1.38676165, -0.86931378, -2.43040437, -1.64169835, -2.15436488,   
+       -1.69483291, -2.36243807, -1.69452919, -2.17469038, -1.04749882,
+       -0.85732013, -1.90012803, -3.23238191, -0.49313713, -2.11167313,
+        0.18976777, -0.13776361,  0.18084916, -1.09117098, -0.99466128,
+       -2.86262476, -1.12946012, -2.47126422, -1.56816848]), 'Expected Total': np.array([0.81067608, 0.81065729, 0.81063612, 0.81062091, 0.8106758 ,
+       0.8106675 , 0.81066437, 0.81065958, 0.81064374, 0.81066201,
+       0.81068156, 0.81064577, 0.81068111, 0.81068266, 0.81066981,
+       0.8106647 , 0.81068034, 0.81068592, 0.81067982, 0.81068016,
+       0.81065806, 0.81066464, 0.81067977, 0.81066076]), 'Intra event': np.array([-0.78030122, -0.48913723, -1.36749449, -0.92370928, -1.21221493,
+       -0.95364003, -1.3292815 , -0.95346329, -1.22362133, -0.58939885,
+       -0.4823978 , -1.06913648, -1.81879946, -0.27747916, -1.18818769,
+        0.10677734, -0.0775169 ,  0.10176074, -0.61398042, -0.55967646,
+       -1.61071548, -0.63551751, -1.39053166, -0.88236452]), 'Inter event': np.array([-0.34391329, -0.21557833, -0.60267909, -0.40708574, -0.53427655,
+       -0.42030594, -0.58586286, -0.42022303, -0.53927782, -0.25976866,
+       -0.21261582, -0.47119426, -0.8016315 , -0.12229856, -0.52368196,
+        0.04706069, -0.03416535,  0.04485113, -0.27060987, -0.2466757 ,
+       -0.70989434, -0.28009587, -0.61287225, -0.38888813]), 'dS2ss': -0.8425011503324346, 'dWo,es': np.array([ 0.06219993,  0.35336392, -0.52499334, -0.08120812, -0.36971378,
+       -0.11113887, -0.48678035, -0.11096214, -0.38112018,  0.2531023 ,
+        0.36010335, -0.22663533, -0.97629831,  0.56502199, -0.34568654,
+        0.94927849,  0.76498425,  0.94426189,  0.22852073,  0.28282469,
+       -0.76821433,  0.20698364, -0.5480305 , -0.03986337]), 'phi_ss,s': 0.5123097270589663, 'Expected Inter': np.array([0.44838105, 0.44836625, 0.44834958, 0.4483376 , 0.44838083,
+       0.44837429, 0.44837182, 0.44836805, 0.44835558, 0.44836997,
+       0.44838536, 0.44835717, 0.44838501, 0.44838623, 0.4483761 ,
+       0.44837209, 0.4483844 , 0.44838879, 0.44838398, 0.44838426,
+       0.44836685, 0.44837203, 0.44838395, 0.44836898]), 'Expected Intra': np.array([0.67538889, 0.67537615, 0.67536181, 0.67535151, 0.6753887 ,
+       0.67538308, 0.67538095, 0.67537771, 0.67536698, 0.67537935,
+       0.6753926 , 0.67536835, 0.6753923 , 0.67539335, 0.67538464,
+       0.67538118, 0.67539177, 0.67539555, 0.67539142, 0.67539165,
+       0.67537667, 0.67538113, 0.67539138, 0.67537851])}}}, {'AkkarEtAlRjb2014': {'PGA': {'events': 12, 'Total': np.array([-2.80124818, -1.56270602, -1.97755759, -2.55074181, -1.9240351 ,
+       -2.21048561, -3.3135257 , -2.29742514, -1.92862578, -2.49863581,
+       -2.14320494, -2.57212183]), 'Expected Total': np.array([0.71210534, 0.71210534, 0.71210534, 0.71210534, 0.71210534,
+       0.71210534, 0.71210534, 0.71210534, 0.71210534, 0.71210534,
+       0.71210534, 0.71210534]), 'Intra event': np.array([-1.51262337, -0.843833  , -1.06784534, -1.37735446, -1.03894417,
+       -1.19362226, -1.78924397, -1.24056804, -1.04142305, -1.34921816,
+       -1.15729192, -1.38889928]), 'Inter event': np.array([-0.48216043, -0.26897831, -0.34038398, -0.43904241, -0.33117151,
+       -0.38047635, -0.57033539, -0.39544068, -0.33196167, -0.43007375,
+       -0.36889577, -0.44272242]), 'dS2ss': -1.2500722508275874, 'dWo,es': np.array([-0.26255112,  0.40623926,  0.18222691, -0.12728221,  0.21112808,
+        0.05644999, -0.53917172,  0.00950421,  0.2086492 , -0.09914591,
+        0.09278033, -0.13882703]), 'phi_ss,s': 0.252833848467591, 'Expected Inter': np.array([0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501,
+       0.3501, 0.3501, 0.3501, 0.3501]), 'Expected Intra': np.array([0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201,
+       0.6201, 0.6201, 0.6201, 0.6201])}, 'SA(1.0)': {'events': 12, 'Total': np.array([-2.16751053, -0.07369542,  0.0289888 , -0.32145927, -0.22457249,
+        0.548432  , -1.75170068, -0.88235672, -0.3055725 , -0.6651277 ,
+       -1.04774103, -2.06976169]), 'Expected Total': np.array([0.78492431, 0.78492431, 0.78492431, 0.78492431, 0.78492431,
+       0.78492431, 0.78492431, 0.78492431, 0.78492431, 0.78492431,
+       0.78492431, 0.78492431]), 'Intra event': np.array([-1.27200592, -0.04324824,  0.01701211, -0.18864873, -0.13179061,
+        0.32184791, -1.02798745, -0.517812  , -0.17932555, -0.39033092,
+       -0.61486797, -1.21464191]), 'Inter event': np.array([-0.4293258 , -0.01459709,  0.0057419 , -0.06367247, -0.0444818 ,
+        0.10862969, -0.346965  , -0.17477124, -0.06052573, -0.13174399,
+       -0.20752944, -0.40996437]), 'dS2ss': -0.43681660551823126, 'dWo,es': np.array([-0.83518931,  0.39356837,  0.45382871,  0.24816788,  0.30502599,
+        0.75866452, -0.59117085, -0.0809954 ,  0.25749105,  0.04648569,
+       -0.17805136, -0.7778253 ]), 'phi_ss,s': 0.508993483395587, 'Expected Inter': np.array([0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943,
+       0.3943, 0.3943, 0.3943, 0.3943]), 'Expected Intra': np.array([0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787,
+       0.6787, 0.6787, 0.6787, 0.6787])}}, 'ChiouYoungs2014': {'PGA': {'events': 12, 'Total': np.array([-1.87730063, -1.21234304, -1.30149563, -1.60699408, -1.19440601,  
+       -1.35761883, -2.77553099, -2.49354064, -1.88034423, -2.5706112 ,
+       -1.58756248, -1.94638291]), 'Expected Total': np.array([0.77090719, 0.77090582, 0.77090702, 0.77090748, 0.7709075 ,
+       0.77090735, 0.77090657, 0.77090286, 0.77090668, 0.77090332,
+       0.77090699, 0.7709069 ]), 'Intra event': np.array([-1.05759661, -0.68298513, -0.73321084, -0.90531686, -0.67288108,
+       -0.76482863, -1.56362311, -1.40475667, -1.0593108 , -1.44817555,
+       -0.8943695 , -1.09651456]), 'Inter event': np.array([-0.38962794, -0.25161717, -0.27012128, -0.3335269 , -0.24789547,
+       -0.28176971, -0.57605196, -0.51752095, -0.39025913, -0.53351715,
+       -0.32949352, -0.40396545]), 'dS2ss': -1.02363077879826, 'dWo,es': np.array([-0.03396583,  0.34064565,  0.29041994,  0.11831392,  0.3507497 ,
+        0.25880215, -0.53999233, -0.38112589, -0.03568003, -0.42454478,
+        0.12926128, -0.07288378]), 'phi_ss,s': 0.3083562695937816, 'Expected Inter': np.array([0.39999925, 0.3999982 , 0.39999913, 0.39999947, 0.39999949,
+       0.39999938, 0.39999878, 0.39999593, 0.39999886, 0.39999628,
+       0.3999991 , 0.39999903]), 'Expected Intra': np.array([0.65901327, 0.65901231, 0.65901315, 0.65901347, 0.65901349,
+       0.65901339, 0.65901283, 0.65901023, 0.65901292, 0.65901055,
+       0.65901313, 0.65901307])}, 'SA(1.0)': {'events': 12, 'Total': np.array([-1.9762155 ,  0.03297342,  0.19382143, -0.11592855,  0.04869197,
+        0.71151116, -1.49252259, -0.83142587,  0.08250574, -0.63771794,
+       -0.79430705, -1.82205584]), 'Expected Total': np.array([0.81069999, 0.81069986, 0.81069998, 0.81070005, 0.81070008,
+       0.81070006, 0.8107    , 0.81069953, 0.81070007, 0.81069953,
+       0.81070003, 0.8107    ]), 'Intra event': np.array([-1.11199488,  0.01855378,  0.1090612 , -0.06523173,  0.02739844,
+        0.40035958, -0.83982617, -0.46783409,  0.04642508, -0.35883679,
+       -0.44694792, -1.02525093]), 'Inter event': np.array([-0.490123  ,  0.00817777,  0.04806983, -0.02875155,  0.01207614,
+        0.17646256, -0.37016189, -0.20620247,  0.02046233, -0.15816084,
+       -0.19699683, -0.45188974]), 'dS2ss': -0.3095103680795295, 'dWo,es': np.array([-0.80248451,  0.32806415,  0.41857157,  0.24427864,  0.33690881,
+        0.70986995, -0.5303158 , -0.15832372,  0.35593545, -0.04932643,
+       -0.13743755, -0.71574056]), 'phi_ss,s': 0.483406716170446, 'Expected Inter': np.array([0.44839987, 0.44839977, 0.44839986, 0.44839992, 0.44839994,
+       0.44839992, 0.44839988, 0.44839951, 0.44839993, 0.44839951,
+       0.4483999 , 0.44839988]), 'Expected Intra': np.array([0.67540508, 0.675405  , 0.67540508, 0.67540513, 0.67540515,
+       0.67540513, 0.67540509, 0.67540478, 0.67540514, 0.67540477,
+       0.67540512, 0.67540509])}}}, {'AkkarEtAlRjb2014': {'PGA': {'events': 8, 'Total': np.array([-3.23221482, -2.26539152, -1.83594417, -2.08691281, -3.05863516,        
+       -4.18744886, -2.32831023, -2.74083219]), 'Expected Total': np.array([0.71210534, 0.71210534, 0.71210534, 0.71210534, 0.71210534,
+       0.71210534, 0.71210534, 0.71210534]), 'Intra event': np.array([-1.74533756, -1.22327046, -0.99137665, -1.12689518, -1.65160768,
+       -2.26114667, -1.25724543, -1.47999982]), 'Inter event': np.array([-0.55633988, -0.38992694, -0.316009  , -0.35920658, -0.52646276,
+       -0.72075804, -0.40075673, -0.47176142]), 'dS2ss': -1.4671099335781812, 'dWo,es': np.array([-0.27822763,  0.24383947,  0.47573328,  0.34021475, -0.18449775,        
+       -0.79403674,  0.20986451, -0.01288989]), 'phi_ss,s': 0.4119083729190747, 'Expected Inter': np.array([0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501]), 'Expected Intra': np.array([0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201])}, 'SA(1.0)': {'events': 8, 'Total': np.array([-1.78927586, -0.56884875,  0.04559928,  0.00561048, -1.84385691,
+       -3.1051795 , -1.79987024, -2.49979453]), 'Expected Total': np.array([0.78492431, 0.78492431, 0.78492431, 0.78492431, 0.78492431,
+       0.78492431, 0.78492431, 0.78492431]), 'Intra event': np.array([-1.05003849, -0.33382951,  0.02675999,  0.00329251, -1.08206944,
+       -1.82227797, -1.05625581, -1.46700715]), 'Inter event': np.array([-0.35440764, -0.11267371,  0.009032  ,  0.00111129, -0.36521868,
+       -0.61505292, -0.3565061 , -0.49514236]), 'dS2ss': -0.8476782330101134, 'dWo,es': np.array([-0.20236025,  0.51384872,  0.87443822,  0.85097075, -0.2343912 ,        
+       -0.97459974, -0.20857758, -0.61932891]), 'phi_ss,s': 0.6788267607018081, 'Expected Inter': np.array([0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943]), 'Expected Intra': np.array([0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787])}}, 'ChiouYoungs2014': {'PGA': {'events': 8, 'Total': np.array([-3.16807809, -1.70302784, -1.10997194, -1.51337897, -2.46711293,
+       -3.98738111, -2.6871568 , -2.61707732]), 'Expected Total': np.array([0.77068002, 0.77085535, 0.77087469, 0.77087528, 0.77084265,
+       0.77067329, 0.77068295, 0.77072971]), 'Intra event': np.array([-1.78442986, -0.9593766 , -0.62529709, -0.85255482, -1.38979832,
+       -2.24589218, -1.51355316, -1.47413831]), 'Inter event': np.array([-0.65714462, -0.35341153, -0.23035219, -0.31407162, -0.51195755,
+       -0.82707592, -0.55739276, -0.54292094]), 'dS2ss': -1.3556300419582803, 'dWo,es': np.array([-0.42879982,  0.39625345,  0.73033295,  0.50307522, -0.03416828,        
+       -0.89026214, -0.15792312, -0.11850827]), 'phi_ss,s': 0.5291603934533823, 'Expected Inter': np.array([0.39982467, 0.39995942, 0.39997428, 0.39997473, 0.39994966,   
+       0.3998195 , 0.39982692, 0.39986286]), 'Expected Intra': np.array([0.65885349, 0.65897681, 0.65899041, 0.65899083, 0.65896788,
+       0.65884876, 0.65885555, 0.65888844])}, 'SA(1.0)': {'events': 8, 'Total': np.array([-1.64948594, -0.46072159,  0.16278477,  0.19588404, -1.64438082,
+       -2.76208458, -1.31342338, -2.179526  ]), 'Expected Total': np.array([0.81066461, 0.81068569, 0.81069159, 0.81069387, 0.81068931,
+       0.8106751 , 0.81068697, 0.81068077]), 'Intra event': np.array([-0.92812235, -0.25924014,  0.09159662,  0.11022129, -0.92526749,
+       -1.55416493, -0.73904155, -1.22637725]), 'Inter event': np.array([-0.40905754, -0.11426026,  0.04037163,  0.0485807 , -0.40781446,
+       -0.68498827, -0.32573366, -0.54052255]), 'dS2ss': -0.678799476036684, 'dWo,es': np.array([-0.24932287,  0.41955934,  0.77039609,  0.78902076, -0.24646801,
+       -0.87536546, -0.06024208, -0.54757778]), 'phi_ss,s': 0.6076579777468538, 'Expected Inter': np.array([0.44837201, 0.44838861, 0.44839325, 0.44839505, 0.44839146,   
+       0.44838027, 0.44838962, 0.44838473]), 'Expected Intra': np.array([0.67538112, 0.6753954 , 0.67539939, 0.67540094, 0.67539785,
+       0.67538822, 0.67539626, 0.67539206])}}}, {'AkkarEtAlRjb2014': {'PGA': {'events': 8, 'Total': np.array([-3.67564154, -4.6416568 , -3.82918642, -6.13876435, -3.69939122,
+       -3.82686915, -4.45127125, -5.48553618]), 'Expected Total': np.array([0.71210534, 0.71210534, 0.71210534, 0.71210534, 0.71210534,
+       0.71210534, 0.71210534, 0.71210534]), 'Intra event': np.array([-1.98477997, -2.50641075, -2.06769143, -3.31482176, -1.99760437,
+       -2.06644015, -2.40360599, -2.96209036]), 'Inter event': np.array([-0.63266401, -0.79893786, -0.65909268, -1.05662514, -0.63675188,
+       -0.65869382, -0.76616805, -0.94418927]), 'dS2ss': -2.4129305971738497, 'dWo,es': np.array([ 0.42815062, -0.09348015,  0.34523916, -0.90189116,  0.41532623,        
+        0.34649045,  0.0093246 , -0.54915976]), 'phi_ss,s': 0.4955320563117592, 'Expected Inter': np.array([0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501]), 'Expected Intra': np.array([0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201])}, 'SA(1.0)': {'events': 8, 'Total': np.array([-1.29150353, -2.36567223, -2.06873772, -3.5088966 , -1.15400132,
+       -1.7319206 , -1.43261936, -2.60366192]), 'Expected Total': np.array([0.78492431, 0.78492431, 0.78492431, 0.78492431, 0.78492431,
+       0.78492431, 0.78492431, 0.78492431]), 'Intra event': np.array([-0.75792026, -1.38829733, -1.21404099, -2.0591998 , -0.67722693,
+       -1.01637949, -0.84073423, -1.52796184]), 'Inter event': np.array([-0.25581227, -0.46857633, -0.40976155, -0.69501846, -0.22857676,
+       -0.3430471 , -0.28376354, -0.51571571]), 'dS2ss': -1.1852201085088299, 'dWo,es': np.array([ 0.42729985, -0.20307722, -0.02882088, -0.87397969,  0.50799317,        
+        0.16884062,  0.34448587, -0.34274173]), 'phi_ss,s': 0.46463553912198063, 'Expected Inter': np.array([0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943]), 'Expected Intra': np.array([0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787])}}, 'ChiouYoungs2014': {'PGA': {'events': 8, 'Total': np.array([-2.64452028, -5.1829552 , -4.59954093, -6.68671089, -1.98424634,
+       -3.87378529, -4.08543797, -5.11219317]), 'Expected Total': np.array([0.75509175, 0.75503371, 0.75503175, 0.75503066, 0.75509542,
+       0.75508914, 0.75508155, 0.75507853]), 'Intra event': np.array([-1.43650671, -2.81524238, -2.49834302, -3.63203233, -1.0778486 ,
+       -2.10424011, -2.21919486, -2.77691704]), 'Inter event': np.array([-0.56034873, -1.09806352, -0.9744564 , -1.41663942, -0.42044672,
+       -0.82081309, -0.86564397, -1.08319026]), 'dS2ss': -2.320040632090481, 'dWo,es': np.array([ 0.88353393, -0.49520175, -0.17830239, -1.3119917 ,  1.24219203,
+        0.21580052,  0.10084577, -0.45687641]), 'phi_ss,s': 0.8095402380226882, 'Expected Inter': np.array([0.39999596, 0.39995228, 0.3999508 , 0.39994998, 0.39999872,   
+       0.399994  , 0.39998829, 0.39998601]), 'Expected Intra': np.array([0.64044264, 0.6404015 , 0.64040011, 0.64039934, 0.64044524,
+       0.64044079, 0.64043541, 0.64043327])}, 'SA(1.0)': {'events': 8, 'Total': np.array([-1.19139475, -1.94115021, -1.55348414, -3.01058945, -0.95569687,
+       -1.15977221, -1.22571776, -2.35709659]), 'Expected Total': np.array([0.80255731, 0.80255543, 0.80255608, 0.80255569, 0.80255771,
+       0.80255771, 0.80255669, 0.80255652]), 'Intra event': np.array([-0.65768672, -1.07157329, -0.85757041, -1.66193627, -0.52757437,
+       -0.64023031, -0.67663375, -1.30118934]), 'Inter event': np.array([-0.29847584, -0.48630734, -0.38918773, -0.75422943, -0.23942751,
+       -0.29055382, -0.30707424, -0.59051389]), 'dS2ss': -0.9242993075667199, 'dWo,es': np.array([ 0.26661259, -0.14727398,  0.0667289 , -0.73763696,  0.39672493,        
+        0.284069  ,  0.24766556, -0.37689003]), 'phi_ss,s': 0.3933016160302569, 'Expected Inter': np.array([0.44839915, 0.44839768, 0.44839819, 0.44839789, 0.44839946,   
+       0.44839946, 0.44839867, 0.44839853]), 'Expected Intra': np.array([0.66560982, 0.66560854, 0.66560899, 0.66560872, 0.66561009,
+       0.6656101 , 0.6656094 , 0.66560928])}}}, {'AkkarEtAlRjb2014': {'PGA': {'events': 7, 'Total': np.array([-3.23690768, -1.89075627, -3.13830106, -2.95021396, -3.38039843,
+       -3.19262524, -4.11642507]), 'Expected Total': np.array([0.71210534, 0.71210534, 0.71210534, 0.71210534, 0.71210534,
+       0.71210534, 0.71210534]), 'Intra event': np.array([-1.74787162, -1.0209742 , -1.69462583, -1.5930622 , -1.82535403,
+       -1.7239599 , -2.22279511]), 'Inter event': np.array([-0.55714763, -0.32544344, -0.54017512, -0.50780093, -0.58184575,
+       -0.54952559, -0.70853318]), 'dS2ss': -1.6898061279477654, 'dWo,es': np.array([-0.05806549,  0.66883193, -0.0048197 ,  0.09674393, -0.13554791,
+       -0.03415378, -0.53298898]), 'phi_ss,s': 0.3567696114457586, 'Expected Inter': np.array([0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501]), 'Expected Intra': np.array([0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201])}, 'SA(1.0)': {'events': 7, 'Total': np.array([-2.08709153, -0.77070686, -2.51369194, -1.66117867, -2.2216332 ,
+       -2.49800078, -1.96436283]), 'Expected Total': np.array([0.78492431, 0.78492431, 0.78492431, 0.78492431, 0.78492431,
+       0.78492431, 0.78492431]), 'Intra event': np.array([-1.22481194, -0.45229016, -1.47516286, -0.97486451, -1.30376786,
+       -1.46595448, -1.15278847]), 'Inter event': np.array([-0.41339695, -0.15265639, -0.49789507, -0.32903502, -0.44004605,
+       -0.49478707, -0.38908768]), 'dS2ss': -1.1499486128411813, 'dWo,es': np.array([-0.07486333,  0.69765845, -0.32521424,  0.1750841 , -0.15381925,
+       -0.31600587, -0.00283986]), 'phi_ss,s': 0.35409008165113764, 'Expected Inter': np.array([0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943]), 'Expected Intra': np.array([0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787])}}, 'ChiouYoungs2014': {'PGA': {'events': 7, 'Total': np.array([-3.62148199, -1.06145233, -3.21050538, -2.77795897, -3.32720434,
+       -2.51357383, -3.6339068 ]), 'Expected Total': np.array([0.77081206, 0.77089071, 0.77077925, 0.7708719 , 0.77078975,
+       0.77087901, 0.77054441]), 'Intra event': np.array([-2.04003659, -0.59797183, -1.80847744, -1.5649455 , -1.87423043,
+       -1.41601424, -2.0465769 ]), 'Inter event': np.array([-0.7514454 , -0.22029191, -0.66611348, -0.57650501, -0.69034455,
+       -0.52164706, -0.75350967]), 'dS2ss': -1.6211789920658428, 'dWo,es': np.array([-0.4188576 ,  1.02320716, -0.18729845,  0.05623349, -0.25305144,
+        0.20516475, -0.42539791]), 'phi_ss,s': 0.507892456381258, 'Expected Inter': np.array([0.39992615, 0.39998659, 0.39990093, 0.39997214, 0.399909  ,
+       0.3999776 , 0.39972044]), 'Expected Intra': np.array([0.65894636, 0.65900168, 0.65892328, 0.65898845, 0.65893067,
+       0.65899345, 0.65875812])}, 'SA(1.0)': {'events': 7, 'Total': np.array([-1.64006011, -0.57049181, -2.45641807, -1.29262791, -2.19021869,
+       -2.25683232, -1.83109243]), 'Expected Total': np.array([0.81069367, 0.8106961 , 0.81066973, 0.81069605, 0.81066939,
+       0.81069405, 0.81063197]), 'Intra event': np.array([-0.92283941, -0.32100855, -1.38216729, -0.72734539, -1.23238299,
+       -1.26988907, -1.03028155]), 'Inter event': np.array([-0.40674695, -0.14148694, -0.60917648, -0.32058294, -0.54316026,
+       -0.55971146, -0.45406052]), 'dS2ss': -0.9837020338864126, 'dWo,es': np.array([ 0.06086263,  0.66269349, -0.39846526,  0.25635665, -0.24868096,
+       -0.28618703, -0.04657951]), 'phi_ss,s': 0.3681655196762079, 'Expected Inter': np.array([0.4483949 , 0.44839681, 0.44837604, 0.44839676, 0.44837577,
+       0.44839519, 0.44834631]), 'Expected Intra': np.array([0.67540081, 0.67540245, 0.67538458, 0.67540241, 0.67538435,
+       0.67540106, 0.675359  ])}}}, {'AkkarEtAlRjb2014': {'PGA': {'events': 6, 'Total': np.array([-3.34168849, -2.1667475 , -2.23321449, -2.58861621, -2.59871778,        
+       -3.5492381 ]), 'Expected Total': np.array([0.71210534, 0.71210534, 0.71210534, 0.71210534, 0.71210534,
+       0.71210534]), 'Intra event': np.array([-1.80445136, -1.17000448, -1.20589544, -1.39780595, -1.40326062,
+       -1.9165244 ]), 'Inter event': np.array([-0.57518286, -0.372948  , -0.38438852, -0.44556149, -0.4473002 ,
+       -0.61090701]), 'dS2ss': -1.4829903744497595, 'dWo,es': np.array([-0.32146099,  0.3129859 ,  0.27709493,  0.08518443,  0.07972976,
+       -0.43353403]), 'phi_ss,s': 0.30972371959778416, 'Expected Inter': np.array([0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501]), 'Expected Intra': np.array([0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201])}, 'SA(1.0)': {'events': 6, 'Total': np.array([-0.63848827, -0.09360807,  0.08411191, -0.20641897, -0.52760505,
+       -0.5363677 ]), 'Expected Total': np.array([0.78492431, 0.78492431, 0.78492431, 0.78492431, 0.78492431,
+       0.78492431]), 'Intra event': np.array([-0.37469754, -0.054934  ,  0.04936117, -0.1211372 , -0.3096256 ,
+       -0.31476797]), 'Inter event': np.array([-0.12646743, -0.01854125,  0.01666032, -0.04088607, -0.10450443,
+       -0.10624008]), 'dS2ss': -0.18763352264823308, 'dWo,es': np.array([-0.18706402,  0.13269952,  0.23699469,  0.06649633, -0.12199207,
+       -0.12713445]), 'phi_ss,s': 0.1698443920588467, 'Expected Inter': np.array([0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943]), 'Expected Intra': np.array([0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787])}}, 'ChiouYoungs2014': {'PGA': {'events': 6, 'Total': np.array([-3.39048551, -2.10197542, -1.91145047, -2.38895491, -1.77643214,       
+       -2.24707835]), 'Expected Total': np.array([0.77090816, 0.77090816, 0.77090816, 0.77090816, 0.77090816,
+       0.77090816]), 'Intra event': np.array([-1.91006643, -1.18417043, -1.07683615, -1.34584341, -1.00077213,
+       -1.26591572]), 'Inter event': np.array([-0.70368652, -0.43625958, -0.39671661, -0.49582143, -0.36869391,
+       -0.46637532]), 'dS2ss': -1.297267376887659, 'dWo,es': np.array([-0.61279905,  0.11309695,  0.22043123, -0.04857603,  0.29649525,
+        0.03135165]), 'phi_ss,s': 0.32500938802525214, 'Expected Inter': np.array([0.4, 0.4, 0.4, 0.4, 0.4, 0.4]), 'Expected Intra': np.array([0.65901395, 0.65901395, 0.65901395, 0.65901395, 0.65901395,
+       0.65901395])}, 'SA(1.0)': {'events': 6, 'Total': np.array([-0.22487243,  0.12543801,  0.63122384, -0.00098503, -0.11527158,
+       -0.2575459 ]), 'Expected Total': np.array([0.81070016, 0.81070016, 0.81070016, 0.81070016, 0.81070016,
+       0.81070016]), 'Intra event': np.array([-0.12653328,  0.07058261,  0.35518281, -0.00055427, -0.06486207,
+       -0.14491829]), 'Inter event': np.array([-0.05577084,  0.03111001,  0.15655046, -0.0002443 , -0.02858862,
+       -0.06387422]), 'dS2ss': 0.014816252728339308, 'dWo,es': np.array([-0.14134953,  0.05576635,  0.34036655, -0.01537052, -0.07967832,
+       -0.15973454]), 'phi_ss,s': 0.18495349521312185, 'Expected Inter': np.array([0.4484, 0.4484, 0.4484, 0.4484, 0.4484, 0.4484]), 'Expected Intra': np.array([0.6754052, 0.6754052, 0.6754052, 0.6754052, 0.6754052, 0.6754052])}}}, {'AkkarEtAlRjb2014': {'PGA': {'events': 6, 'Total': np.array([-3.27666002, -3.75063959, -2.01692489, -3.54056653, -2.22473108,
+       -3.3115636 ]), 'Expected Total': np.array([0.71210534, 0.71210534, 0.71210534, 0.71210534, 0.71210534,
+       0.71210534]), 'Intra event': np.array([-1.76933717, -2.02527756, -1.08910297, -1.91184191, -1.20131456,
+       -1.78818447]), 'Inter event': np.array([-0.56398994, -0.64557293, -0.34716002, -0.60941443, -0.38292833,
+       -0.56999767]), 'dS2ss': -1.630843107428512, 'dWo,es': np.array([-0.13849406, -0.39443445,  0.54174013, -0.2809988 ,  0.42952855,
+       -0.15734136]), 'phi_ss,s': 0.3889609036373306, 'Expected Inter': np.array([0.3501, 0.3501, 0.3501, 0.3501, 0.3501, 0.3501]), 'Expected Intra': np.array([0.6201, 0.6201, 0.6201, 0.6201, 0.6201, 0.6201])}, 'SA(1.0)': {'events': 6, 'Total': np.array([-1.35531882, -2.16033943, -0.44889986, -1.0115119 , -0.41402818,
+       -1.53747121]), 'Expected Total': np.array([0.78492431, 0.78492431, 0.78492431, 0.78492431, 0.78492431,
+       0.78492431]), 'Intra event': np.array([-0.79537033, -1.26779755, -0.26343737, -0.59360686, -0.24297289,
+       -0.90226665]), 'Inter event': np.array([-0.26845237, -0.4279054 , -0.08891504, -0.20035342, -0.0820079 ,
+       -0.30453188]), 'dS2ss': -0.6775752749738936, 'dWo,es': np.array([-0.11779505, -0.59022228,  0.4141379 ,  0.08396842,  0.43460239,
+       -0.22469138]), 'phi_ss,s': 0.39500996348952155, 'Expected Inter': np.array([0.3943, 0.3943, 0.3943, 0.3943, 0.3943, 0.3943]), 'Expected Intra': np.array([0.6787, 0.6787, 0.6787, 0.6787, 0.6787, 0.6787])}}, 'ChiouYoungs2014': {'PGA': {'events': 6, 'Total': np.array([-2.60855466, -2.79643183, -2.07149915, -3.2224841 , -2.16399504,      
+       -2.54922566]), 'Expected Total': np.array([0.77077351, 0.77084347, 0.77057584, 0.77081598, 0.77059887,
+       0.7708298 ]), 'Intra event': np.array([-1.46939158, -1.57531456, -1.16667657, -1.81528089, -1.21879413,
+       -1.43603942]), 'Inter event': np.array([-0.54121324, -0.58029665, -0.42957064, -0.66866134, -0.44877801,
+       -0.52897969]), 'dS2ss': -1.4469161914037403, 'dWo,es': np.array([-0.02247539, -0.12839837,  0.28023962, -0.3683647 ,  0.22812206,
+        0.01087677]), 'phi_ss,s': 0.2380655625430171, 'Expected Inter': np.array([0.39989652, 0.39995028, 0.3997446 , 0.39992916, 0.3997623 ,
+       0.39993978]), 'Expected Intra': np.array([0.65891925, 0.65896845, 0.65878022, 0.65894912, 0.65879642,
+       0.65895884])}, 'SA(1.0)': {'events': 6, 'Total': np.array([-1.28898736, -1.95603507, -0.47346331, -0.69566579, -0.45747076,
+       -1.35807639]), 'Expected Total': np.array([0.81064712, 0.81067627, 0.81058506, 0.81068465, 0.81058298,
+       0.81067647]), 'Intra event': np.array([-0.72526947, -1.10061939, -0.26638897, -0.3914389 , -0.25739052,
+       -0.76416086]), 'Inter event': np.array([-0.31964442, -0.48509182, -0.11739332, -0.17252667, -0.11342749,
+       -0.33679971]), 'dS2ss': -0.58421135289831, 'dWo,es': np.array([-0.14105812, -0.51640804,  0.31782238,  0.19277245,  0.32682083,
+       -0.17994951]), 'phi_ss,s': 0.33583943236609154, 'Expected Inter': np.array([0.44835824, 0.44838119, 0.44830937, 0.44838779, 0.44830773,
+       0.44838135]), 'Expected Intra': np.array([0.67536926, 0.67538901, 0.67532721, 0.67539469, 0.67532581,
+       0.67538915])}}}, {'AkkarEtAlRjb2014': {'PGA': {'events': 4, 'Total': np.array([-3.02616566, -2.29704468, -1.88384581, -3.21687328]), 'Expected Total': np.array([0.71210534, 0.71210534, 0.71210534, 0.71210534]), 'Intra event': np.array([-1.63407474, -1.24036259, -1.01724267, -1.73705341]), 'Inter event': np.array([-0.52087399, -0.39537519, -0.32425399, -0.55369924]), 'dS2ss': -1.407183353139713, 'dWo,es': np.array([-0.22689139,  0.16682076,  0.38994068, -0.32987005]), 'phi_ss,s': 0.3367377079824872, 'Expected Inter': np.array([0.3501, 0.3501, 0.3501, 0.3501]), 'Expected Intra': np.array([0.6201, 0.6201, 0.6201, 0.6201])}, 'SA(1.0)': {'events': 4, 'Total': np.array([-1.70877195, -1.09272224, -0.40663554, -2.01854241]), 'Expected Total': np.array([0.78492431, 0.78492431, 0.78492431, 0.78492431]), 'Intra event': np.array([-1.00279468, -0.64126524, -0.23863451, -1.18458381]), 'Inter event': np.array([-0.33846197, -0.21643902, -0.08054361, -0.3998192 ]), 'dS2ss': -0.7668195616178197, 'dWo,es': np.array([-0.23597512,  0.12555432,  0.52818505, -0.41776425]), 'phi_ss,s': 0.41831190959281705, 'Expected Inter': np.array([0.3943, 0.3943, 0.3943, 0.3943]), 'Expected Intra': np.array([0.6787, 0.6787, 0.6787, 0.6787])}}, 'ChiouYoungs2014': {'PGA': {'events': 4, 'Total': np.array([-2.67000845, -3.08390954, -1.73255282, -3.00995483]), 'Expected Total': np.array([0.75507563, 0.75505651, 0.75507764, 0.75507586]), 'Intra event': np.array([-1.45033112, -1.67513099, -0.94111304, -1.63498811]), 'Inter event': np.array([-0.56572719, -0.65339497, -0.36709886, -0.63775613]), 'dS2ss': -1.4253908138106206, 'dWo,es': np.array([-0.0249403 , -0.24974018,  0.48427777, -0.20959729]), 'phi_ss,s': 0.3373663491815425, 'Expected Inter': np.array([0.39998383, 0.39996944, 0.39998534, 0.399984  ]), 'Expected Intra': np.array([0.64043121, 0.64041766, 0.64043264, 0.64043138])}, 'SA(1.0)': {'events': 4, 'Total': np.array([-1.53227627, -0.55186223, -0.201449  , -1.76894569]), 'Expected Total': np.array([0.80255591, 0.80255709, 0.80255649, 0.8025564 ]), 'Intra event': np.array([-0.8458629 , -0.30464495, -0.111206  , -0.97651198]), 'Inter event': np.array([-0.38387446, -0.13825599, -0.0504682 , -0.4431667 ]), 'dS2ss': -0.5595564593252558, 'dWo,es': np.array([-0.28630644,  0.25491151,  0.44835046, -0.41695552]), 'phi_ss,s': 0.4170616632575812, 'Expected Inter': np.array([0.44839806, 0.44839898, 0.44839851, 0.44839844]), 'Expected Intra': np.array([0.66560887, 0.66560968, 0.66560927, 0.6656092 ])}}}]

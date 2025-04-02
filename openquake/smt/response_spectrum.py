@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -16,20 +16,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Simple Python Script to integrate a strong motion record using
-the Newmark-Beta method
+Simple Python Script to integrate a strong motion record using the
+Newmark-Beta method
 """
 import numpy as np
 from math import sqrt
-
 import matplotlib.pyplot as plt
-from openquake.smt.sm_utils import (_save_image, get_time_vector, convert_accel_units,
-                           get_velocity_displacement)
+
+from openquake.smt.utils import (
+    get_time_vector, convert_accel_units, get_velocity_displacement, _save_image,)
                      
 
 class ResponseSpectrum(object):
     """
-    Base Class to implement a response spectrum calculation
+    Base class to implement a response spectrum calculation
     """
     def __init__(self, acceleration, time_step, periods, damping=0.05,
             units="cm/s/s"):
@@ -90,7 +90,6 @@ class NewmarkBeta(ResponseSpectrum):
     """
     Evaluates the response spectrum using the Newmark-Beta methodology
     """
-
     def __call__(self):
         """
         Evaluates the response spectrum
@@ -163,20 +162,31 @@ class NewmarkBeta(ResponseSpectrum):
         vel = np.zeros([self.num_steps, self.num_per], dtype=float)
         disp = np.zeros([self.num_steps, self.num_per], dtype=float)
         a_t = np.zeros([self.num_steps, self.num_per], dtype=float)
+        
         # Initial line
-        accel[0, :] =(-self.acceleration[0] - (cval * vel[0, :])) - \
+        accel[0, :] = (-self.acceleration[0] - (cval * vel[0, :])) - \
                       (kval * disp[0, :])
         a_t[0, :] = accel[0, :] + accel[0, :]
+        
+        # Now compute
         for j in range(1, self.num_steps):
+            
+            # Displacement
             disp[j, :] = disp[j-1, :] + (self.d_t * vel[j-1, :]) + \
                 (((self.d_t ** 2.) / 2.) * accel[j-1, :])
-                         
+                
+            # Acceleration
             accel[j, :] = (1./ (1. + self.d_t * 0.5 * cval)) * \
                 (-self.acceleration[j] - kval * disp[j, :] - cval *
                 (vel[j-1, :] + (self.d_t * 0.5) * accel[j-1, :]));
+            
+            # Velocity
             vel[j, :] = vel[j - 1, :] + self.d_t * (0.5 * accel[j - 1, :] +
                 0.5 * accel[j, :])
+            
+            # Acceleration response
             a_t[j, :] = self.acceleration[j] + accel[j, :]
+            
         return accel, vel, disp, a_t
 
 
@@ -188,7 +198,6 @@ class NigamJennings(ResponseSpectrum):
     can provide estimates of the spectra at frequencies higher than that
     of the sampling frequency.
     """
-
     def __call__(self):
         """
         Define the response spectrum
@@ -366,3 +375,4 @@ def plot_time_series(acceleration, time_step, velocity=[], displacement=[],
     ax.grid()
     _save_image(filename, plt.gcf(), filetype, dpi)
     plt.show()
+    

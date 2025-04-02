@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -21,18 +21,15 @@ web service)
 --> https://esm-db.eu/#/waveform/search
 """
 import os
-import sys
 import shutil
 import unittest
-from openquake.smt.parsers.esm_ws_flatfile_parser import ESMFlatfileParserWS
+import pickle
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from openquake.smt.residuals.parsers.esm_ws_flatfile_parser import \
+    ESMFlatfileParserWS
+
 
 # Defines the record IDs for the target data set
-
 TARGET_IDS = [
 "EMSC_20161029_0000147_AC_DURR_0.0",
 "EMSC_20160831_0000112_AC_DURR_0.0",

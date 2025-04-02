@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -23,15 +23,13 @@ This parser assumes you have selected all available headers in your URL search
 when downloading the flatfile
 """
 import os
-import sys
 import shutil
 import unittest
-from openquake.smt.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
+import pickle
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from openquake.smt.residuals.parsers.esm_url_flatfile_parser import \
+    ESMFlatfileParserURL
+
 
 # Defines the record IDs for the target data set
 TARGET_IDS = [

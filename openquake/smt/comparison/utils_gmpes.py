@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation
+# Copyright (C) 2014-2025 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -23,13 +23,13 @@ import pandas as pd
 import ast
 
 from openquake.hazardlib import valid
+from openquake.hazardlib import scalerel 
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib.geo.surface import PlanarSurface
 from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.site import Site, SiteCollection
-from openquake.hazardlib.scalerel import WC1994
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
@@ -37,30 +37,41 @@ from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
 
 def _get_first_point(rup, from_point):
     """
-    Get the first point in the collection of sites from the rupture
+    Get the first point in the collection of sites from the rupture.
+    
+    Currently the SMT only computes ground-shaking for up or down-dip from the
+    up-dip edge centre point (rrup, rjb), or from midpoint of the rupture (repi,
+    rhypo). Will be expanded to include up-or-down dip from down-dip edge centre
+    point or from a vertex of the rupture.
     """
     sfc = rup.surface
-    if from_point == 'TC':  # Get the up-dip edge centre point
+
+    if from_point == 'MP':
+        return sfc.get_middle_point() # Get midpoint of rup surface
+
+    elif from_point == 'TC':  # Get the up-dip edge centre point
         return sfc.get_top_edge_centroid()
+
     elif from_point == 'BC':  # Get the down-dip edge centre point
-        lon, lat = geo_utils.get_middle_point(
-            sfc.corner_lons[2], sfc.corner_lats[2],
-            sfc.corner_lons[3], sfc.corner_lats[3]
-        )
+        lon, lat = geo_utils.get_middle_point(sfc.corner_lons[2],
+                                              sfc.corner_lats[2],
+                                              sfc.corner_lons[3],
+                                              sfc.corner_lats[3])
         return Point(lon, lat, sfc.corner_depths[2])
-    elif from_point == 'TL':
+        
+    elif from_point == 'TL': # Get top left point
         idx = 0
-    elif from_point == 'TR':
+    elif from_point == 'TR': # Get top right point
         idx = 1
-    elif from_point == 'BR':
+    elif from_point == 'BR': # Get bottom right
         idx = 2
-    elif from_point == 'BL':
+    elif from_point == 'BL': # Get bottom left
         idx = 3
     else:
         raise ValueError('Unsupported option from first point')
-    return Point(sfc.corner_lons[idx],
-                 sfc.corner_lats[idx],
-                 sfc.corner_depths[idx])
+
+    return Point(
+        sfc.corner_lons[idx], sfc.corner_lats[idx], sfc.corner_depths[idx])
 
 
 def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
@@ -89,7 +100,7 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
         azi = (strike + toward_azimuth) % 360
         pointsp = npoints_towards(r_lon, r_lat, r_dep,
                                   azi, hdist, vdist, npoints)
-
+        
     if direction == 'negative':
         azi = (strike + toward_azimuth + 180) % 360
         pointsn = npoints_towards(r_lon, r_lat, r_dep,
@@ -125,65 +136,101 @@ def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
     Creates a rupture given the hypocenter position
     """
     hypoc = Point(lon, lat, dep)
-    srf = PlanarSurface.from_hypocenter(hypoc, msr, mag, aratio, strike, dip,
-                                        rake, ztor)
+    srf = PlanarSurface.from_hypocenter(hypoc,
+                                        msr,
+                                        mag,
+                                        aratio,
+                                        strike,
+                                        dip,
+                                        rake,
+                                        ztor)
     rup = BaseRupture(mag, rake, trt, hypoc, srf)
     rup.hypocenter.depth = dep
     return rup
 
 
-def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
-               Z1, Z25, maxR, step, imt, ztor, eshm20_region, dist_type, trt,
-               up_or_down_dip):
+def att_curves(gmpe,
+               depth,
+               mag,
+               aratio,
+               strike,
+               dip,
+               rake,
+               Vs30,
+               Z1,
+               Z25,
+               maxR,
+               step,
+               imt,
+               ztor,
+               dist_type,
+               trt,
+               up_or_down_dip,
+               volc_ba,
+               eshm20_region):
     """
     Compute the ground-motion intensities for the given context created here
     """
-    rup_trt = None
-    if trt == 'ASCR':
+    # If TRT specified assign it and an MSR
+    if trt == 'active_crustal':
         rup_trt = TRT.ACTIVE_SHALLOW_CRUST
-    if trt == 'InSlab':
+        rup_msr = scalerel.WC1994()
+    elif trt == 'slab':
         rup_trt = TRT.SUBDUCTION_INTRASLAB
-    if trt == 'Interface':
+        rup_msr = scalerel.StrasserIntraslab
+    elif trt == 'interface':
         rup_trt = TRT.SUBDUCTION_INTERFACE
-    if trt == 'Stable':
+        rup_msr = scalerel.StrasserInterface
+    elif trt == 'stable':
         rup_trt = TRT.STABLE_CONTINENTAL
-    if trt == 'Upper_Mantle':
-        rup_trt = TRT.UPPER_MANTLE
-    if trt == 'Volcanic':
-        rup_trt = TRT.VOLCANIC
-    if trt == 'Induced':
-        rup_trt = TRT.INDUCED
-    if trt == 'Induced_Geothermal':
-        rup_trt = TRT.GEOTHERMAL
-    if rup_trt is None and aratio == -999:
+        rup_msr = scalerel.WC1994()
+    else:
+        rup_trt = None
+        rup_msr = scalerel.WC1994()
+
+    if rup_trt is -999 and aratio == -999:
         msg = 'An aspect ratio must be provided by the user, or alternatively'
         msg += ' specify a TRT string within the toml file to assign a'
         msg += ' trt-dependent aratio proxy.'
         raise ValueError(msg)
-
-    # Get rup
-    rup = get_rupture(0.0, 0.0, depth, WC1994(), mag=mag, aratio=aratio,
-                      strike=strike, dip=dip, rake=rake, trt=rup_trt,
+    
+    # Get rupture
+    rup = get_rupture(0.0, # Arbitrary lon
+                      0.0, # Arbitrary lat
+                      depth,
+                      msr=rup_msr,
+                      mag=mag,
+                      aratio=aratio,
+                      strike=strike,
+                      dip=dip,
+                      rake=rake,
+                      trt=rup_trt,
                       ztor=ztor)
 
     # Set site props
-    if 'KothaEtAl2020ESHM20' in str(gmpe):
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
-                 'vs30measured': True, 'region': eshm20_region}
-    else:
-        props = {'vs30': Vs30, 'z1pt0': Z1, 'z2pt5': Z25, 'backarc': False,
-                 'vs30measured': True}
+    props = {'vs30': Vs30,
+             'z1pt0': Z1,
+             'z2pt5': Z25,
+             'backarc': volc_ba,
+             'vs30measured': False,
+             'eshm20_region': eshm20_region}
 
     # Check if site up-dip or down-dip of site
     if up_or_down_dip == float(1):
         direction = 'positive'
     elif up_or_down_dip == float(0):
         direction = 'negative'
+    else:
+        raise ValueError('The site must be specified as up or down dip.')
 
     # Get sites
-    sites = get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
-                                   direction=direction, hdist=maxR,
-                                   step=step, site_props=props)
+    if dist_type in ['repi', 'rhypo']:
+        from_pnt = 'MP' # Sites from midpoint of rup surface
+    else:
+        from_pnt = 'TC' # Sites from center of top edge
+    sites = get_sites_from_rupture(rup, from_point=from_pnt, toward_azimuth=90,
+                                   direction=direction, hdist=maxR, step=step,
+                                   site_props=props)
 
     # Add main R types to gmpe so can plot against repi, rrup, rjb and rhypo
     core_r_types = ['repi', 'rrup', 'rjb', 'rhypo']
@@ -205,14 +252,14 @@ def att_curves(gmpe, depth, mag, aratio, strike, dip, rake, Vs30,
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
     if dist_type == 'repi':
         distances = ctxs.repi
-    if dist_type == 'rrup':
+    elif dist_type == 'rrup':
         distances = ctxs.rrup
-    if dist_type == 'rjb':
+    elif dist_type == 'rjb':
         distances = ctxs.rjb
-    if dist_type == 'rhypo':
+    elif dist_type == 'rhypo':
         distances = ctxs.rhypo
-
-    distances[len(distances) - 1] = maxR
+    else:
+        raise ValueError('No valid distance type specified.')
 
     return mean, std, distances, tau, phi
 
@@ -221,7 +268,7 @@ def _get_z1(Vs30, region):
     """
     Get z1pt0 using Chiou and Youngs (2014) relationship.
     """
-    if region == 'Global':  # California and non-Japan regions
+    if region == 'global':  # California and non-Japan regions
         Z1 = (np.exp(-7.15 / 4 * np.log((Vs30**4 + 570.94**4) /
                                         (1360**4 + 570.94**4))))
     else:  # Japan
@@ -234,7 +281,7 @@ def _get_z25(Vs30, region):
     """
     Get z2pt5 using Campbell and Bozorgnia (2014) relationship.
     """
-    if region == 'Global':  # California and non-Japan regions
+    if region == 'global':  # California and non-Japan regions
         Z25 = np.exp(7.089 - 1.144 * np.log(Vs30))
     else:  # Japan
         Z25 = np.exp(5.359 - 1.102 * np.log(Vs30))
@@ -264,9 +311,9 @@ def _param_gmpes(strike, dip, depth, aratio, rake, trt):
 
     # Depth
     if depth == -999:
-        if trt == 'Interface':
+        if trt == 'interface':
             depth_s = 40
-        if trt == 'InSlab':
+        if trt == 'slab':
             depth_s = 150
         else:
             depth_s = 15 # Crustal
@@ -277,7 +324,7 @@ def _param_gmpes(strike, dip, depth, aratio, rake, trt):
     if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
-        if trt in ['InSlab', 'Interface']:
+        if trt in ['slab', 'interface']:
             aratio_s = 5
         else:
             aratio_s = 2 # Crustal
@@ -289,7 +336,8 @@ def mgmpe_check(gmpe):
     """
     Check if the GMPE should be modified using ModifiableGMPE. This function in
     effect parses the toml parameters for a GMPE into the equivalent parameters
-    required for ModifiableGMPE
+    required for ModifiableGMPE. If a ModifiableGMPE is not required, a valid
+    GSIM object with all specified kwargs is returned instead
     :param gmpe:
         gmpe: GMPE to be modified if required
     """
@@ -302,7 +350,8 @@ def mgmpe_check(gmpe):
         for idx, par in enumerate(params):
             if idx > 1:
                 par = str(par)
-                if 'sigma_model' in par or 'site_term' in par:
+                if ('sigma_model' in par or 'site_term' in par or
+                    'basin_term' in par):
                     idx_params.append(idx)
                 if 'fix_total_sigma' in par:
                     idx_params.append(idx)
@@ -397,6 +446,9 @@ def mgmpe_check(gmpe):
         # CY14SiteTerm
         if 'CY14SiteTerm' in gmpe: kwargs['cy14_site_term'] = {}
 
+        # BA08SiteTerm
+        if 'BA08SiteTerm' in gmpe: kwargs['ba08_site_term'] = {}
+
         # NRCan15SiteTerm (Regular)
         if ('NRCan15SiteTerm' in gmpe and
                 'NRCan15SiteTermLinear' not in gmpe):
@@ -405,9 +457,17 @@ def mgmpe_check(gmpe):
         # NRCan15SiteTerm (linear)
         if 'NRCan15SiteTermLinear' in gmpe:
             kwargs['nrcan15_site_term'] = {'kind': 'linear'}
+
+        # CB14 basin term
+        if 'CB14BasinTerm' in gmpe:
+            kwargs['cb14_basin_term'] = {}
+
+        # M9 basin adjustment
+        if 'M9BasinTerm' in gmpe:
+            kwargs['m9_basin_term'] = {}
         
         gmm = mgmpe.ModifiableGMPE(**kwargs)
-    
+
     # Not using ModifiableGMPE
     else:
         # Clean to ensure arguments can be passed (logic tree weights are
@@ -419,9 +479,12 @@ def mgmpe_check(gmpe):
                 idx_to_drop.append(idx_p)
         params = params.drop(idx_to_drop)
         gmpe_clean = params.iloc[0].strip()
-        for idx_p, par in enumerate(params):
-            if idx_p > 0:
-                gmpe_clean = gmpe_clean + '\n' + par
+        if len(params) > 1:
+            for idx_p, par in enumerate(params):
+                if idx_p > 0:
+                    gmpe_clean = gmpe_clean + '\n' + par
+        else: # Ensures GSIM aliases work
+            gmpe_clean = gmpe_clean.replace('[','').replace(']','')
         gmm = valid.gsim(gmpe_clean)
-        
+
     return gmm

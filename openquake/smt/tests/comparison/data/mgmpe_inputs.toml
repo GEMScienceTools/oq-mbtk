@@ -1,42 +1,43 @@
 # Test input file for checking execution of GMPEs requiring mgmpe_check function found in openquake.smt.comparison.utils_gmpes.py
 
 [general]
-imt_list = ['PGA','SA(0.1)','SA(0.5)'] # imts to compute gm for
-max_period = 0.5 # max period for response spectra (can't exceed maximum period in a specified GMPE)
-minR = 0 # min dist. used in trellis, Sammon's, clusters and matrix plots
-maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
-dist_type = 'rrup' # specify distance metric used in trellis plots
-dist_list = [10, 50, 200] # distances for use in response spectra
-eshm20_region = 0 # region for ESHM20 GMM
-Nstd = 1 # number of standard deviations to sample from sigma distribution
+imt_list = ['PGA','SA(0.1)','SA(0.5)'] # IMTs to compute attenuation curves for
+max_period = 0.5 # Max period for response spectra (can't exceed maximum period in a specified GMPE)
+minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
+maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
+dist_type = 'rrup' # Specify distance metric used in trellis plots
+dist_list = [10, 50, 200] # Distances for use in response spectra
+Nstd = 1 # Truncation for GMM sigma distribution
 
 [site_properties]
 vs30 = 800
-Z1 = -999
-Z25 = -999
-up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-region = 'Global' # region specific basin effects
+Z1 = -999 # If -999 compute from Vs30 using Chiou and Youngs (2014) relationship
+Z25 = -999 # If -999 compute from Vs30 using Campbell and Bozorgnia (2014) relationship
+up_or_down_dip = 1 # 1 = up-dip, 0 = down-dist_type
+z_basin_region = 'global' # Obtain z1pt0/z2pt5 from "global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
+volc_back_arc = false # true or false
+eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
 
 [source_properties] # Characterise EQ as finite rupture
-trt = 'ASCR' # Either string of 'None' to use user-provided aratio OR specify a TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle, Volcanic, Induced, Induced_Geothermal to assign a trt-dependent proxy aratio
-ztor = 'None' # Set to string of 'None' to NOT consider
 strike = -999
 dip = -999
 rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
+mags = [5,6,7] # mags used only for trellis and response spectra
+depths = [20,25,30] # depth per magnitude for trellis and response spectra
+ztor = -999 # Set to -999 to NOT consider
 aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
-trellis_and_rs_mag_list = [5,6,7] # mags used only for trellis and response spectra
-trellis_and_rs_depths = [20,25,30] # depth per magnitude for trellis and response spectra
+trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
 # Specify mag values and depths for use in Sammons, Euclidean dist and clustering
-[mag_values_non_trellis_or_spectra_functions]
+[source_properties_euclidean_analysis]
 mmin = 5
 mmax = 7
 spacing = 0.1
-non_trellis_or_spectra_depths = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth],[mag,depth]] 
+depths_for_euclidean = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth],[mag,depth]] 
 
 # Specify label for gmpes
 [gmpe_labels]
-gmpes_label = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
+gmpes_label = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
 
 [models.0-ModifiableGMPE]
 gmpe = 'YenierAtkinson2015BSSA'
@@ -75,28 +76,45 @@ gmpe = 'BooreEtAl2014'
 site_term = 'CY14SiteTerm' # use CY14 site term
 
 [models.9-ModifiableGMPE]
-gmpe = 'BooreEtAl2014'
-site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
+gmpe = 'AtkinsonMacias2009'
+site_term = 'BA08SiteTerm' # use BA08 site term
 
 [models.10-ModifiableGMPE]
 gmpe = 'BooreEtAl2014'
-site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
+site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
 
 [models.11-ModifiableGMPE]
-gmpe = 'CampbellBozorgnia2014'
-add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
+gmpe = 'BooreEtAl2014'
+site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
 
 [models.12-ModifiableGMPE]
 gmpe = 'CampbellBozorgnia2014'
+add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
+
+[models.13-ModifiableGMPE]
+gmpe = 'CampbellBozorgnia2014'
 set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
-                               
-[models.NGAEastGMPE]
+
+[models.14-ModifiableGMPE]
+gmpe = 'AtkinsonMacias2009'
+basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
+
+[models.15-ModifiableGMPE]
+gmpe = 'KuehnEtAl2020SInter'
+basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
+
+[models.16-NGAEastGMPE]
 gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
     
-[models.HassaniAtkinson2018]
+[models.17-HassaniAtkinson2018]
 d_sigma = 100 # gmpe specific param
 kappa0 = 0.04
 
+[ratios_baseline_gmm.ModifiableGMPE] # Check mgmpe works for loading baseline model used in ratio plots
+gmpe = 'YenierAtkinson2015BSSA'
+sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
+with_betw_ratio = 1.5
+
 [custom_colors]
-custom_colors_flag = 'False' # By default set to "False" (set to "True" for custom colours)
+custom_colors_flag = false # Set to true for custom colours
 custom_colors_list = ['lime','dodgerblue','gold','0.8']
