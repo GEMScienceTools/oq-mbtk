@@ -71,7 +71,6 @@ class ResidualsTestCase(unittest.TestCase):
         for res_type in plot_data:
             res_data = plot_data[res_type]
             # assert we have the specified keys:
-            #self.assertTrue(sorted(res_data.keys()) == sorted(allkeys))
             self.assertTrue(len(res_data['x']) == len(res_data['y']))
             self.assertTrue(res_data['xlabel'] == expected_xlabel)
             self.assertTrue(res_data['ylabel'] == expected_ylabel)
@@ -132,8 +131,7 @@ class ResidualsTestCase(unittest.TestCase):
 
         for gsim in self.gsims:
             for imt in self.imts:
-                data1 = likelihood(residuals, gsim, imt,
-                                   bin_width=bin_w1)
+                data1 = likelihood(residuals, gsim, imt, bin_width=bin_w1)
                 self._plot_data_check(
                     data1, "LH (%s)" % imt, "Frequency", additional_keys)
                 data2 = likelihood(
@@ -189,15 +187,6 @@ class ResidualsTestCase(unittest.TestCase):
         for gsim in self.gsims:
             for imt in self.imts:
                 for dist in DISTANCES.keys():
-                    if dist == 'r_x':
-                        # FIXME: Given the attribute
-                        # error, I suspect it is a missing flat file field
-                        # so we simply do this for the moment (however,
-                        # a scientific expertise should be required):
-                        with self.assertRaises(AttributeError):
-                            residuals_with_distance(residuals, gsim, imt, dist)
-                        continue
-
                     data1 = residuals_with_distance(residuals, gsim, imt, dist)
                     self._plot_data_check(
                         data1, "%s Distance (km)" % dist, "Z (%s)" % imt, additional_keys)
@@ -215,8 +204,10 @@ class ResidualsTestCase(unittest.TestCase):
                             [4.5, 6], [11, 0.005])
 
     def _assert_linreg(self, nanx, nany, x, y):
-        '''nanx, nany: values for _nanlinreg. x, y: values for scipy linreg.
-        Asserts the results are the same'''
+        """
+        nanx, nany: values for _nanlinreg. x, y: values for scipy linreg.
+        Asserts the results are the same
+        """
         l_1 = linregress(np.asarray(x), np.asarray(y))
         l_2 = _nanlinregress(np.asarray(nanx), np.asarray(nany))
 
