@@ -31,7 +31,7 @@ DISTANCES = {
     "rhypo": lambda rec: rec.distance.rhypo,
     "rjb": lambda rec: rec.distance.rjb,
     "rrup": lambda rec: rec.distance.rrup,
-    "r_x": lambda rec: rec.distance.r_x,
+    "rx": lambda rec: rec.distance.r_x,
 }
 
 DISTANCE_LABEL = {
