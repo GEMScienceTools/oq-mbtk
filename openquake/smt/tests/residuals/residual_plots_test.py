@@ -204,10 +204,9 @@ class ResidualsTestCase(unittest.TestCase):
                             [4.5, 6], [11, 0.005])
 
     def _assert_linreg(self, nanx, nany, x, y):
-        """
-        nanx, nany: values for _nanlinreg. x, y: values for scipy linreg.
-        Asserts the results are the same
-        """
+        # nanx, nany: values for _nanlinreg.
+        # x, y: values for scipy linreg.
+        # Asserts the results are the same
         l_1 = linregress(np.asarray(x), np.asarray(y))
         l_2 = _nanlinregress(np.asarray(nanx), np.asarray(nany))
 
