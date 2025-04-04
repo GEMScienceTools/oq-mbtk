@@ -282,10 +282,6 @@ class Residuals(object):
         """
         Calculate the expected ground motions from the context
         """
-        # If no rake value for the event assume SS
-        if not context["Ctx"].rake:
-            context["Ctx"].rake = 0.0
-        
         # Get expected
         expected = {gmpe: {} for gmpe in self.gmpe_list}
         # Period range for GSIM
