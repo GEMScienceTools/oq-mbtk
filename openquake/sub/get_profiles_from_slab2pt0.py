@@ -373,7 +373,7 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
             fig.coast(land="gray", water="skyblue")
             
             fig.plot(x=depths[:, 0], y=depths[:, 1],
-                     fig=-depths[:, 2],
+                     fill=-depths[:, 2],
                      style='c0.025c',
                      cmap=True)
             # Profiles
@@ -382,7 +382,7 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
                 if pro.shape[0] > 0:
                     fig.plot(x=pro[:, 0],
                              y=pro[:, 1],
-                             fig=pro[:, 2],
+                             fill=pro[:, 2],
                              cmap=True,
                              style="h0.025c",
                              pen='black')
