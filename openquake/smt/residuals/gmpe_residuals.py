@@ -476,7 +476,7 @@ class Residuals(object):
                                                 "depths": "st_elevation"})
 
                 # Store the DataFrame for the event
-                store[f"{ctx["EventID"]}_IMT={imt}"] = ctx_df
+                store[f"{ctx['EventID']}_IMT={imt}"] = ctx_df
 
         # Now write results for the event to a text file
         with open(out_fname, 'w') as f:
