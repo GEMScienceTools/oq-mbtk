@@ -94,12 +94,11 @@ class ResidualsTestCase(unittest.TestCase):
         residuals.compute_residuals(self.database, component="Geometric")
         residuals.get_residual_statistics()
 
-    @unittest.skip # Check locally only (issues on remote with openpyxl)
     def test_export_execution(self):
         """
         Tests execution of the residuals exporting function
         """
-        out_loc = os.path.join(self.out_location, "residuals.xlsx")
+        out_loc = os.path.join(self.out_location, "residuals.txt")
         self.residuals.export_residuals(out_loc)
 
     def test_likelihood_execution(self):
