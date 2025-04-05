@@ -28,29 +28,7 @@ import pandas as pd
 from scipy.stats import linregress
 
 
-def _tojson(*numpy_objs):
-    """
-    Utility function which returns a list where each element of numpy_objs
-    is converted to its python equivalent (float or list)
-    """
-    ret = []
-    
-    for obj in numpy_objs:
-        isscalar = np.isscalar(obj)
-        nan_indices = None if isscalar else \
-            np.argwhere(np.isnan(obj)).flatten()
-        
-        obj = None if isscalar and np.isnan(obj) else obj.tolist()
-        if nan_indices is not None:
-            for idx in nan_indices:
-                obj[idx] = None
-        ret.append(obj)
-
-    return ret 
-
-
-def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5,
-                                   as_json=False):
+def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
     """
     Returns the density distribution of the given gmpe and imt
 
@@ -58,8 +36,6 @@ def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5,
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -79,9 +55,6 @@ def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5,
         stddev = statistics[res_type]["Std Dev"]
         x = bins[:-1]
         y = vals
-
-        if as_json:
-            mean, stddev, x, y = _tojson(mean, stddev, x, y)
 
         plot_data[res_type] = \
             {'x': x, 'y': y, 'mean': mean, 'stddev': stddev,
@@ -103,7 +76,7 @@ def _get_histogram_data(data, bin_width=0.5):
     return vals.astype(float), bins
 
 
-def likelihood(residuals, gmpe, imt, bin_width=0.1, as_json=False):
+def likelihood(residuals, gmpe, imt, bin_width=0.1):
     """
     Returns the likelihood of the given gmpe and imt
 
@@ -111,8 +84,6 @@ def likelihood(residuals, gmpe, imt, bin_width=0.1, as_json=False):
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Likelihood
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -130,9 +101,6 @@ def likelihood(residuals, gmpe, imt, bin_width=0.1, as_json=False):
         x = bins[:-1]
         y = vals
 
-        if as_json:
-            median_lh, x, y = _tojson(median_lh, x, y)
-
         plot_data[res_type] = \
             {'x': x, 'y': y, 'median': median_lh,
              'xlabel': "LH (%s)" % imt, 'ylabel': "Frequency"}
@@ -146,12 +114,12 @@ def _get_lh_histogram_data(lh_values, bin_width=0.1):
     """
     bins = np.arange(0.0, 1.0 + bin_width, bin_width)
     # work on finite numbers to prevent np.histogram raising:
-    vals = np.histogram(lh_values[np.isfinite(lh_values)],
-                        bins, density=True)[0]
+    vals = np.histogram(
+        lh_values[np.isfinite(lh_values)], bins, density=True)[0]
     return vals.astype(float), bins
 
 
-def residuals_with_magnitude(residuals, gmpe, imt, as_json=False):
+def residuals_with_magnitude(residuals, gmpe, imt):
     """
     Returns the residuals of the given gmpe and imt vs. magnitude
 
@@ -159,8 +127,6 @@ def residuals_with_magnitude(residuals, gmpe, imt, as_json=False):
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -173,18 +139,14 @@ def residuals_with_magnitude(residuals, gmpe, imt, as_json=False):
     
     var_type = 'magnitude'
     
-    mean_res_df, sigma_res_df = _get_mean_res_wrt_var(residuals, gmpe,
-                                                      imt, var_type)
+    mean_res_df, sigma_res_df = _get_mean_res_wrt_var(
+        residuals, gmpe, imt, var_type)
     
     for res_type in data.keys():
 
         x = _get_magnitudes(residuals, gmpe, imt, res_type)
         slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
         y = data[res_type]
-
-        if as_json:
-            x, y, slope, intercept, pval = \
-                _tojson(x, y, slope, intercept, pval)
 
         plot_data[res_type] = \
             {'x': x, 'y': y,
@@ -217,7 +179,7 @@ def _get_magnitudes(residuals, gmpe, imt, res_type):
     return magnitudes
 
 
-def residuals_with_vs30(residuals, gmpe, imt, as_json=False):
+def residuals_with_vs30(residuals, gmpe, imt):
     """
     Returns the residuals of the given gmpe and imt vs. vs30
 
@@ -225,8 +187,6 @@ def residuals_with_vs30(residuals, gmpe, imt, as_json=False):
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -247,10 +207,6 @@ def residuals_with_vs30(residuals, gmpe, imt, as_json=False):
         slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
         y = data[res_type]
 
-        if as_json:
-            x, y, slope, intercept, pval = \
-                _tojson(x, y, slope, intercept, pval)
-            
         plot_data[res_type] = \
             {'x': x, 'y': y,
              'slope': slope, 'intercept': intercept, 'pvalue': pval,
@@ -276,7 +232,7 @@ def _get_vs30(residuals, gmpe, imt, res_type):
     return vs30
 
 
-def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb", as_json=False):
+def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb"):
     """
     Returns the residuals of the given gmpe and imt vs. distance
 
@@ -284,8 +240,6 @@ def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb", as_json=F
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -305,10 +259,6 @@ def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb", as_json=F
         x = _get_distances(residuals, gmpe, imt, res_type, distance_type)
         slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
         y = data[res_type]
-
-        if as_json:
-            x, y, slope, intercept, pval = \
-                _tojson(x, y, slope, intercept, pval)
 
         plot_data[res_type] = \
             {'x': x, 'y': y,
@@ -338,7 +288,7 @@ def _get_distances(residuals, gmpe, imt, res_type, distance_type):
     return distances
 
 
-def residuals_with_depth(residuals, gmpe, imt, as_json=False):
+def residuals_with_depth(residuals, gmpe, imt):
     """
     Returns the residuals of the given gmpe and imt vs. depth
 
@@ -346,8 +296,6 @@ def residuals_with_depth(residuals, gmpe, imt, as_json=False):
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
-    :param as_json: when True, converts all numpy numeric values (scalar
-    and arrays) to their python equivalent. False by default
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
@@ -366,10 +314,6 @@ def residuals_with_depth(residuals, gmpe, imt, as_json=False):
         x = _get_depths(residuals, gmpe, imt, res_type)
         slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
         y = data[res_type]
-
-        if as_json:
-            x, y, slope, intercept, pval = \
-                _tojson(x, y, slope, intercept, pval)
             
         plot_data[res_type] = \
             {'x': x, 'y': y,
@@ -402,48 +346,46 @@ def _nanlinregress(x, y):
     Calls scipy linregress only on finite numbers of x and y
     """
     finite = np.isfinite(x) & np.isfinite(y)
+        
     if not finite.any():
         # empty arrays passed to linreg raise ValueError:
         # force returning an object with nans:
         return linregress([np.nan], [np.nan])
-    return linregress(x[finite], y[finite])
+    else:
+        return linregress(x[finite], y[finite])
 
 
 ### Utils for binning residuals w.r.t. a given GMM input variable ###
-def get_binning_params(var_type, residuals, res_per_gmc, imts, distance_type):
+def get_binning_params(var_type, vals):
     """
     Get the params for the binning of the given variable we are plotting
     the residuals with respect to
     """
     # Get values for given variable
     if var_type == 'magnitude':
-        vals = _get_magnitudes(
-            residuals, res_per_gmc, imts,'Total')
         val_bin = 0.25
     elif var_type == 'vs30':
-        vals = _get_vs30(
-            residuals, res_per_gmc, imts, 'Total')
         val_bin = 100
     elif var_type == 'distance':
-        vals = _get_distances(
-            residuals, res_per_gmc, imts, 'Total', distance_type)
         val_bin = 10     
-    elif var_type == 'depth':
-        vals = _get_depths(
-            residuals, res_per_gmc, imts, 'Total')        
+    elif var_type == 'depth': 
         val_bin = 5
 
     # Create bins and make last interval fill up to max var value
     val_bins = np.arange(np.min(vals), np.max(vals), val_bin)
     val_bins[len(val_bins) - 1] = np.max(vals)
-    bins_bounds = {}
+    bin_bounds = {}
     for idx, val_bin in enumerate(val_bins):
         if idx == len(val_bins) - 1:
             pass
         else:
-            bins_bounds[idx] = [val_bins[idx], val_bins[idx+1]]
+            bin_bounds[idx] = [val_bins[idx], val_bins[idx+1]]
+
+    # Get midpoint of each val bin for plotting
+    bin_mid_points = {val_bin: bounds[0] + 0.5 * (
+        bounds[1] - bounds[0]) for val_bin, bounds in bin_bounds.items()}
         
-    return bins_bounds, vals
+    return bin_bounds, bin_mid_points
 
 
 def get_ctx_vals(var_type, ctx, distance_type):
@@ -463,51 +405,44 @@ def get_ctx_vals(var_type, ctx, distance_type):
     return event_val
 
 
-def get_res_df(var_type, vals, res_per_imt, residuals, gmpe, imt, distance_type):
+def get_res_df(var_type, residuals, gmpe, imt, distance_type):
     """
     Return a dataframe with the total, inter-event and intra event
     residuals w.r.t. the variable of interest for plotting
     """
-    total_res = res_per_imt['Total'].tolist()
-    if 'Intra event' in res_per_imt:
-        intra_res = res_per_imt['Intra event'].tolist()
-        df = pd.DataFrame({
-            'vals': vals, 'total_res': total_res, 'intra_res': intra_res})
-    else:
-        df = pd.DataFrame({
-            'vals': vals, 'total_res': total_res}).sort_values(['vals'])
-    df = df.sort_values(by="vals")
+    store = []
+    for ctx in residuals.contexts:
 
-    if 'Inter event' in res_per_imt:
-        # Inter-event is mean residual per eq but need to allocate to each rec
-        store = []
-        for idx_eq, ctx in enumerate(residuals.contexts):
+        # Set a dict for this eq
+        eq = {}
+
+        # Get values of the explanatory variable for given ctx
+        eq["vals"] = get_ctx_vals(var_type, ctx["Ctx"], distance_type)
+
+        if "Inter event" in ctx['Residual'][gmpe][imt].keys():
+
+            # Inter event residual    
+            eq["inter_res"] = ctx['Residual'][gmpe][imt]['Inter event']
+
+            # Inter event residual
+            eq["intra_res"] = ctx['Residual'][gmpe][imt]['Intra event']
+
+        # Total residual
+        eq["total_res"] = ctx['Residual'][gmpe][imt]['Total']
+
+        # Into df for given ctx
+        eq_df = pd.DataFrame(eq)
         
-            # Get values of the var for given the given ctx
-            ctx_vals = get_ctx_vals(var_type, ctx["Ctx"], distance_type)
+        # Store the eq df
+        store.append(eq_df)
 
-            # Get the Inter event residual (mean res per event)    
-            inter_res = ctx['Residual'][gmpe][imt]['Inter event']
-
-            # Get value per rec for given var_type into an array
-            inter_res_val = np.full(len(inter_res), ctx_vals) 
-
-            # Make a df for the given event
-            eq_df = pd.DataFrame({"inter": inter_res, "vals": inter_res_val})
-
-            store.append(eq_df)
-
-        # Into a df for all eqs with inter res and required vals
-        df_inter = pd.concat(store).sort_values(by="vals")
-
-        # Into single df with total and intra res
-        assert all(df_inter.vals.values == df.vals.values)
-        df["inter_res"] = df_inter["inter"].values
+    # Into single df of all eqs
+    df = pd.concat(store).sort_values(by="vals")
 
     return df
 
 
-def mean_sigma_per_bin(df, idx_res_per_val_bin, res_per_imt):
+def mean_and_sigma_per_bin(df, idx_res_per_val_bin):
     """
     Computes the mean and standard deviation for residuals per value bin.
     """
@@ -520,11 +455,10 @@ def mean_sigma_per_bin(df, idx_res_per_val_bin, res_per_imt):
     for val_bin, indices in idx_res_per_val_bin.items():
         idx_vals = pd.Series(indices.keys())
         df_bin = df.iloc[idx_vals]
-
         total_mean[val_bin] = df_bin.total_res.mean()
         total_sigma[val_bin] = df_bin.total_res.std()
 
-        if 'Intra event' in res_per_imt and 'Inter event' in res_per_imt:
+        if 'inter_res' in df_bin.columns:
             intra_mean[val_bin] = df_bin.intra_res.mean()
             inter_mean[val_bin] = df_bin.inter_res.mean()
             intra_sigma[val_bin] = df_bin.intra_res.std()
@@ -538,45 +472,34 @@ def mean_sigma_per_bin(df, idx_res_per_val_bin, res_per_imt):
             "inter_sigma": inter_sigma}
 
 
-def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type, distance_type=None):
+def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type, distance_type='repi'):
     """
-    Compute mean total, inter-event and inter-event residual within bin for
-    given variable. This is plotted within the scatter plots of residuals
-    w.r.t. the given variable
+    Compute mean total, inter-event and inter-event residual within bins
+    for a given explanatory variable. These binned residuals are plotted
+    within the scatter plots of residuals (y-axis) w.r.t. the given
+    explanatory var (x-axis).
     :param var_type: Specifies variable which residuals are plotted against
     """
-    # If no distance type use repi
-    if distance_type is None: distance_type = 'repi'
-    res_per_gmc = residuals.residuals[gmpe]
-    res_per_imt = residuals.residuals[gmpe][imt]
-    imts = residuals.imts
-
-    # Get bin bounds and values to be binned
-    bins_bounds, vals = get_binning_params(
-        var_type, residuals, res_per_gmc, imts, distance_type)
-
     # Get residuals and the variable (per record) in a dataframe
-    df = get_res_df(
-        var_type, vals, res_per_imt, residuals, gmpe, imt, distance_type)
+    df = get_res_df(var_type, residuals, gmpe, imt, distance_type)
+    
+    # Get bin bounds
+    bin_bounds, bin_mid_points, = get_binning_params(var_type, df.vals)
 
     # Get indices for the residuals in each bin
-    idx_res_per_val_bin = {idx: {} for idx in bins_bounds}
-    for idx in bins_bounds:
-        for data_point in df.index:
-            if (df.vals.iloc[data_point] >= bins_bounds[idx][0]
+    idx_res_per_val_bin = {idx: {} for idx in bin_bounds}
+    for idx in bin_bounds:
+        for idx_dp, data_point in enumerate(df.vals):
+            if (data_point >= bin_bounds[idx][0]
                 and
-                df.vals.iloc[data_point] <= bins_bounds[idx][1]): 
-                idx_res_per_val_bin[idx][data_point] = data_point
+                data_point <= bin_bounds[idx][1]): 
+                idx_res_per_val_bin[idx][idx_dp] = data_point
 
     # Get the mean and std per res assoc with each bin of the given var
-    means_and_sigmas = mean_sigma_per_bin(df, idx_res_per_val_bin, res_per_imt)
-
-    # Get midpoint of each val bin for plotting
-    bin_mid_points = {val_bin: bounds[0] + 0.5 * (
-        bounds[1] - bounds[0]) for val_bin, bounds in bins_bounds.items()}
+    means_and_sigmas = mean_and_sigma_per_bin(df, idx_res_per_val_bin)
     
     # Get final data to plot
-    if 'Intra event' in res_per_imt and 'Inter event' in res_per_imt:
+    if 'inter_res' in df.columns:
         mean_res_wrt_val = pd.DataFrame({
             'x_data': bin_mid_points,
             'Total': means_and_sigmas['total_mean'],
