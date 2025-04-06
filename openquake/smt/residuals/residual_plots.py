@@ -125,16 +125,16 @@ def _get_magnitudes(residuals, gmpe, imt, res_type):
     residuals
     """
     magnitudes = np.array([])
-    for i, ctxt in enumerate(residuals.contexts):
+    for i, ctx in enumerate(residuals.contexts):
         if res_type == "Inter event":
 
             nval = np.ones(
                 len(residuals.unique_indices[gmpe][imt][i])
                 )
         else:
-            nval = np.ones(len(ctxt["Ctx"].repi))
+            nval = np.ones(len(ctx["Ctx"].repi))
 
-        magnitudes = np.hstack([magnitudes, ctxt["Ctx"].mag * nval])
+        magnitudes = np.hstack([magnitudes, ctx["Ctx"].mag * nval])
 
     return magnitudes
 
@@ -145,12 +145,12 @@ def _get_depths(residuals, gmpe, imt, res_type):
     residuals
     """
     depths = np.array([])
-    for i, ctxt in enumerate(residuals.contexts):
+    for i, ctx in enumerate(residuals.contexts):
         if res_type == "Inter event":
             nvals = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
         else:
-            nvals = np.ones(len(ctxt["Ctx"].repi))
-        depths = np.hstack([depths, ctxt["Ctx"].hypo_depth * nvals])
+            nvals = np.ones(len(ctx["Ctx"].repi))
+        depths = np.hstack([depths, ctx["Ctx"].hypo_depth * nvals])
     return depths
 
 
@@ -159,12 +159,12 @@ def _get_vs30(residuals, gmpe, imt, res_type):
     Return required vs30 values
     """
     vs30 = np.array([])
-    for i, ctxt in enumerate(residuals.contexts):
+    for i, ctx in enumerate(residuals.contexts):
         if res_type == "Inter event":
-            vs30 = np.hstack([vs30, ctxt["Ctx"].vs30[
+            vs30 = np.hstack([vs30, ctx["Ctx"].vs30[
                 residuals.unique_indices[gmpe][imt][i]]])
         else:
-            vs30 = np.hstack([vs30, ctxt["Ctx"].vs30])
+            vs30 = np.hstack([vs30, ctx["Ctx"].vs30])
     return vs30
 
 
@@ -173,15 +173,15 @@ def _get_distances(residuals, gmpe, imt, res_type, distance_type):
     Return required distances
     """
     distances = np.array([])
-    for i, ctxt in enumerate(residuals.contexts):
+    for i, ctx in enumerate(residuals.contexts):
         # Get the distances
         if res_type == "Inter event":
-            ctxt_dist = getattr(ctxt["Ctx"], distance_type)[
+            ctxt_dist = getattr(ctx["Ctx"], distance_type)[
                 residuals.unique_indices[gmpe][imt][i]]
             distances = np.hstack([distances, ctxt_dist])
         else:
             distances = np.hstack([
-                distances, getattr(ctxt["Ctx"], distance_type)])
+                distances, getattr(ctx["Ctx"], distance_type)])
     return distances
 
 
