@@ -72,9 +72,12 @@ class ContextDB:
             self.update_context(ctx, records, nodal_plane_index)
             if compute_observations:
                 observations = dic['Observations']
+                retained = dic["Retained"]
                 for imtx, values in observations.items():
                     values = self.get_observations(imtx, records, component)
+                    check = pd.notnull(values)
                     observations[imtx] = np.asarray(values, dtype=float)
+                    retained[imtx] = np.argwhere(check==True).flatten()
                 dic["Num. Sites"] = len(records)
             dic['Ctx'].sids = np.arange(len(records), dtype=np.uint32)
             dic['Ctx'].custom_site_id = [sid.site.id for sid in records]
@@ -106,5 +109,6 @@ class ContextDB:
         dic = {'EventID': evt_id, 'Ctx': RuptureContext()}
         if imts is not None and len(imts):
             dic["Observations"] = {imt: [] for imt in imts}
+            dic["Retained"] = {imt: None for imt in imts}
             dic["Num. Sites"] = 0
         return dic

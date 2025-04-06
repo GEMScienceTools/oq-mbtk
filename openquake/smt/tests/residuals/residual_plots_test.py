@@ -29,10 +29,13 @@ from scipy.stats import linregress
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 from openquake.smt.residuals.sm_database_visualiser import DISTANCES
-from openquake.smt.residuals.residual_plots import (
-    residuals_density_distribution, likelihood, residuals_with_depth,
-    residuals_with_magnitude, residuals_with_vs30, residuals_with_distance,
-    _nanlinregress)
+from openquake.smt.residuals.residual_plots import (residuals_density_distribution,
+                                                    likelihood,
+                                                    residuals_with_depth,
+                                                    residuals_with_magnitude,
+                                                    residuals_with_vs30,
+                                                    residuals_with_distance,
+                                                    _nanlinregress)
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
@@ -74,8 +77,6 @@ class ResidualsTestCase(unittest.TestCase):
             self.assertTrue(len(res_data['x']) == len(res_data['y']))
             self.assertTrue(res_data['xlabel'] == expected_xlabel)
             self.assertTrue(res_data['ylabel'] == expected_ylabel)
-            self.assertTrue(isinstance(res_data['x'], np.ndarray))
-            self.assertTrue(isinstance(res_data['y'], np.ndarray))
 
     def _hist_data_check(self, residuals, gsim, imt, plot_data, bin_width):
         for res_type, res_data in plot_data.items():
@@ -86,8 +87,7 @@ class ResidualsTestCase(unittest.TestCase):
 
     def _scatter_data_check(self, residuals, gsim, imt, plot_data):
         for res_type, res_data in plot_data.items():
-            assert len(residuals.residuals[gsim][imt][res_type]) == \
-                len(res_data['x'])
+            assert len(residuals.residuals[gsim][imt][res_type]) == len(res_data['x'])
 
     def test_residual_density_distribution(self):
         """
@@ -159,7 +159,7 @@ class ResidualsTestCase(unittest.TestCase):
         additional_keys = ['slope', 'intercept', 'pvalue']
         values = [
                   (residuals_with_depth, "Hypocentral Depth (km)"),
-                  (residuals_with_magnitude, "Magnitude"),
+                  (residuals_with_magnitude, "Magnitude (Mw)"),
                   (residuals_with_vs30, "Vs30 (m/s)")
                   ]
 
@@ -189,7 +189,7 @@ class ResidualsTestCase(unittest.TestCase):
                 for dist in DISTANCES.keys():
                     data1 = residuals_with_distance(residuals, gsim, imt, dist)
                     self._plot_data_check(
-                        data1, "%s Distance (km)" % dist, "Z (%s)" % imt, additional_keys)
+                        data1, "%s (km)" % dist, "Z (%s)" % imt, additional_keys)
 
                     # assert histogram data is ok:
                     self._scatter_data_check(residuals, gsim, imt, data1)

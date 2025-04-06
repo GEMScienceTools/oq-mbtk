@@ -25,13 +25,15 @@ import unittest
 import pickle
 from unittest.mock import patch, MagicMock
 
-from openquake.smt.residuals.parsers.esm_url_flatfile_parser import \
-    ESMFlatfileParserURL
+from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
-from openquake.smt.residuals.residual_plotter import (
-    ResidualPlot, LikelihoodPlot, ResidualWithMagnitude, ResidualWithDepth,
-    ResidualWithVs30, ResidualWithDistance)
 from openquake.smt.residuals.sm_database_visualiser import DISTANCES
+from openquake.smt.residuals.residual_plotter import (ResidualPlot,
+                                                      LikelihoodPlot,
+                                                      ResidualWithMagnitude,
+                                                      ResidualWithDepth,
+                                                      ResidualWithVs30,
+                                                      ResidualWithDistance)
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")

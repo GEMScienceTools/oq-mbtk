@@ -119,46 +119,6 @@ def _get_lh_histogram_data(lh_values, bin_width=0.1):
     return vals.astype(float), bins
 
 
-def residuals_with_magnitude(residuals, gmpe, imt):
-    """
-    Returns the residuals of the given gmpe and imt vs. magnitude
-
-    :param residuals:
-            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
-    :param gmpe: (string) the gmpe/gsim
-    :param imt: (string) the intensity measure type
-
-    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
-    a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
-    representing the plot data.
-    Additional keys: 'slope' (float), 'intercept' (float) and 'pvalue' (float)
-    representing the linear regression of the data
-    """
-    plot_data = {}
-    data = residuals.residuals[gmpe][imt]
-    
-    var_type = 'magnitude'
-    
-    mean_res_df, sigma_res_df = _get_mean_res_wrt_var(
-        residuals, gmpe, imt, var_type)
-    
-    for res_type in data.keys():
-
-        x = _get_magnitudes(residuals, gmpe, imt, res_type)
-        slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
-        y = data[res_type]
-
-        plot_data[res_type] = \
-            {'x': x, 'y': y,
-             'slope': slope, 'intercept': intercept, 'pvalue': pval,
-             'xlabel': "Magnitude", 'ylabel': "Z (%s)" % imt,
-             'bin_midpoints': mean_res_df.x_data,
-             'mean_res': mean_res_df[res_type],
-             'sigma_res': sigma_res_df[res_type] }
-            
-    return plot_data
-
-
 def _get_magnitudes(residuals, gmpe, imt, res_type):
     """
     Returns an array of magnitudes equal in length to the number of
@@ -179,43 +139,19 @@ def _get_magnitudes(residuals, gmpe, imt, res_type):
     return magnitudes
 
 
-def residuals_with_vs30(residuals, gmpe, imt):
+def _get_depths(residuals, gmpe, imt, res_type):
     """
-    Returns the residuals of the given gmpe and imt vs. vs30
-
-    :param residuals:
-            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
-    :param gmpe: (string) the gmpe/gsim
-    :param imt: (string) the intensity measure type
-
-    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
-    a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
-    representing the plot data.
-    Additional keys: 'slope' (float), 'intercept' (float) and 'pvalue' (float)
-    representing the linear regression of the data
+    Returns an array of magnitudes equal in length to the number of
+    residuals
     """
-    plot_data = {}
-    data = residuals.residuals[gmpe][imt]
-
-    var_type = 'vs30'    
-    
-    mean_res_df, sigma_res_df = _get_mean_res_wrt_var(residuals, gmpe, imt, var_type)
-    
-    for res_type in data.keys():
-
-        x = _get_vs30(residuals, gmpe, imt, res_type)
-        slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
-        y = data[res_type]
-
-        plot_data[res_type] = \
-            {'x': x, 'y': y,
-             'slope': slope, 'intercept': intercept, 'pvalue': pval,
-             'xlabel': "Vs30 (m/s)", 'ylabel': "Z (%s)" % imt,
-             'bin_midpoints': mean_res_df.x_data,
-             'mean_res': mean_res_df[res_type],
-             'sigma_res': sigma_res_df[res_type]  }
-
-    return plot_data
+    depths = np.array([])
+    for i, ctxt in enumerate(residuals.contexts):
+        if res_type == "Inter event":
+            nvals = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
+        else:
+            nvals = np.ones(len(ctxt["Ctx"].repi))
+        depths = np.hstack([depths, ctxt["Ctx"].hypo_depth * nvals])
+    return depths
 
 
 def _get_vs30(residuals, gmpe, imt, res_type):
@@ -230,45 +166,6 @@ def _get_vs30(residuals, gmpe, imt, res_type):
         else:
             vs30 = np.hstack([vs30, ctxt["Ctx"].vs30])
     return vs30
-
-
-def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb"):
-    """
-    Returns the residuals of the given gmpe and imt vs. distance
-
-    :param residuals:
-            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
-    :param gmpe: (string) the gmpe/gsim
-    :param imt: (string) the intensity measure type
-
-    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
-    a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
-    representing the plot data.
-    Additional keys: 'slope' (float), 'intercept' (float) and 'pvalue' (float)
-    representing the linear regression of the data
-    """
-    plot_data = {}
-    data = residuals.residuals[gmpe][imt]
-
-    var_type = 'distance'    
-    
-    mean_res_df, sigma_res_df = _get_mean_res_wrt_var(residuals, gmpe, imt, var_type)
-
-    for res_type in data.keys():
-
-        x = _get_distances(residuals, gmpe, imt, res_type, distance_type)
-        slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
-        y = data[res_type]
-
-        plot_data[res_type] = \
-            {'x': x, 'y': y,
-             'slope': slope, 'intercept': intercept, 'pvalue': pval,
-             'xlabel': "%s Distance (km)" % distance_type,
-             'ylabel': "Z (%s)" % imt, 'bin_midpoints': mean_res_df.x_data,
-             'mean_res': mean_res_df[res_type],
-             'sigma_res': sigma_res_df[res_type] }
-
-    return plot_data
 
 
 def _get_distances(residuals, gmpe, imt, res_type, distance_type):
@@ -288,9 +185,103 @@ def _get_distances(residuals, gmpe, imt, res_type, distance_type):
     return distances
 
 
+def get_vals(var, residuals, gmpe, imt, res_type, distance_type):
+    """
+    Return values for given explanatory variable matching the 
+    length of the given residuals
+    """
+    if var == "magnitude":
+        return _get_magnitudes(residuals, gmpe, imt, res_type)
+    if var == "depth":
+        return _get_depths(residuals, gmpe, imt, res_type)
+    if var == "vs30":
+        return _get_vs30(residuals, gmpe, imt, res_type)
+    if var == "distance":
+        return _get_distances(residuals, gmpe, imt, res_type, distance_type)
+
+
+def get_scatter_data(residuals, gmpe, imt, var, distance_type=None):
+    """
+    Get plot data for a scatter plot of residuals (y-axis)
+    and given explanatory variable (x-axis)
+    """
+    plot_data = {}
+    
+    mean_res_df, sigma_res_df = bin_res_wrt_var(residuals, gmpe, imt, var)
+    
+    data = residuals.residuals[gmpe][imt]
+    for res_type in data.keys():
+    
+        if res_type in ["vals"]:
+            continue
+
+        x = get_vals(var, residuals, gmpe, imt, res_type, distance_type)
+        y = data[res_type]
+
+        slope, intercept, _, pval, _ = _nanlinregress(x, y)
+
+        plot_data[res_type] = {
+                               'x': x,
+                               'y': y,
+                               'slope': slope,
+                               'intercept': intercept,
+                               'pvalue': pval,
+                               'ylabel': "Z (%s)" % imt,
+                               'bin_midpoints': mean_res_df.x_data,
+                               'mean_res': mean_res_df[res_type],
+                               'sigma_res': sigma_res_df[res_type]
+                               }
+            
+        if var == "magnitude":
+            plot_data[res_type]['xlabel'] = "Magnitude (Mw)"
+        elif var == "depth":
+            plot_data[res_type]["xlabel"] = "Hypocentral Depth (km)"
+        elif var == "vs30":
+            plot_data[res_type]["xlabel"] = "Vs30 (m/s)"
+        else:
+            assert var == "distance"
+            plot_data[res_type]["xlabel"] = f"{distance_type} (km)"
+
+    return plot_data
+
+
+def residuals_with_magnitude(residuals, gmpe, imt):
+    """
+    Returns the residuals of the given gmpe and imt vs. magnitude
+
+    :param residuals: instance of openquake.smt.gmpe_residuals.Residuals
+    :param gmpe: (string) the gmpe/gsim
+    :param imt: (string) the intensity measure type
+
+    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
+    a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
+    representing the plot data.
+    Additional keys: 'slope' (float), 'intercept' (float) and 'pvalue' (float)
+    representing the linear regression of the data
+    """
+    return get_scatter_data(residuals, gmpe, imt, "magnitude")
+
+
 def residuals_with_depth(residuals, gmpe, imt):
     """
     Returns the residuals of the given gmpe and imt vs. depth
+
+    :param residuals: instance of openquake.smt.gmpe_residuals.Residuals
+    :param gmpe: (string) the gmpe/gsim
+    :param imt: (string) the intensity measure type
+
+    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
+    a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
+    representing the plot data.
+    Additional keys: 'slope' (float), 'intercept' (float) and 'pvalue' (float)
+    representing the linear regression of the data
+    """
+    return get_scatter_data(residuals, gmpe, imt, "depth")
+
+
+def residuals_with_vs30(residuals, gmpe, imt):
+    """
+    Returns the residuals of the given gmpe and imt vs. vs30
 
     :param residuals:
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
@@ -303,42 +294,25 @@ def residuals_with_depth(residuals, gmpe, imt):
     Additional keys: 'slope' (float), 'intercept' (float) and 'pvalue' (float)
     representing the linear regression of the data
     """
-    plot_data = {}
-    data = residuals.residuals[gmpe][imt]
-
-    var_type = 'depth'    
-    mean_res_df, sigma_res_df = _get_mean_res_wrt_var(residuals, gmpe, imt, var_type)
-
-    for res_type in data.keys():
-
-        x = _get_depths(residuals, gmpe, imt, res_type)
-        slope, intercept, _, pval, _ = _nanlinregress(x, data[res_type])
-        y = data[res_type]
-            
-        plot_data[res_type] = \
-            {'x': x, 'y': y,
-             'slope': slope, 'intercept': intercept, 'pvalue': pval,
-             'xlabel': "Hypocentral Depth (km)", 'ylabel': "Z (%s)" % imt,
-             'bin_midpoints': mean_res_df.x_data,
-             'mean_res': mean_res_df[res_type],
-             'sigma_res': sigma_res_df[res_type] }
-
-    return plot_data
+    return get_scatter_data(residuals, gmpe, imt, "vs30")
 
 
-def _get_depths(residuals, gmpe, imt, res_type):
+def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb"):
     """
-    Returns an array of magnitudes equal in length to the number of
-    residuals
+    Returns the residuals of the given gmpe and imt vs. distance
+
+    :param residuals:
+            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
+    :param gmpe: (string) the gmpe/gsim
+    :param imt: (string) the intensity measure type
+
+    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
+    a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
+    representing the plot data.
+    Additional keys: 'slope' (float), 'intercept' (float) and 'pvalue' (float)
+    representing the linear regression of the data
     """
-    depths = np.array([])
-    for i, ctxt in enumerate(residuals.contexts):
-        if res_type == "Inter event":
-            nvals = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
-        else:
-            nvals = np.ones(len(ctxt["Ctx"].repi))
-        depths = np.hstack([depths, ctxt["Ctx"].hypo_depth * nvals])
-    return depths
+    return get_scatter_data(residuals, gmpe, imt, "distance", distance_type)
 
 
 def _nanlinregress(x, y):
@@ -416,23 +390,30 @@ def get_res_df(var_type, residuals, gmpe, imt, distance_type):
         # Set a dict for this eq
         eq = {}
 
+        # Get idx of recs that are not null for given IMT
+        retain = ctx["Retained"][imt]
+
         # Get values of the explanatory variable for given ctx
-        eq["vals"] = get_ctx_vals(var_type, ctx["Ctx"], distance_type)
+        vals = get_ctx_vals(var_type, ctx["Ctx"], distance_type)
+        if var_type in ["magnitude", "depth"]:
+            eq["vals"] = np.full(len(retain), vals)
+        else:
+            eq["vals"] = vals[retain]
 
         if "Inter event" in ctx['Residual'][gmpe][imt].keys():
 
             # Inter event residual    
-            eq["inter_res"] = ctx['Residual'][gmpe][imt]['Inter event']
+            eq["Inter event"] = ctx['Residual'][gmpe][imt]['Inter event']
 
             # Inter event residual
-            eq["intra_res"] = ctx['Residual'][gmpe][imt]['Intra event']
+            eq["Intra event"] = ctx['Residual'][gmpe][imt]['Intra event']
 
         # Total residual
-        eq["total_res"] = ctx['Residual'][gmpe][imt]['Total']
+        eq["Total"] = ctx['Residual'][gmpe][imt]['Total']
 
         # Into df for given ctx
         eq_df = pd.DataFrame(eq)
-        
+
         # Store the eq df
         store.append(eq_df)
 
@@ -455,14 +436,14 @@ def mean_and_sigma_per_bin(df, idx_res_per_val_bin):
     for val_bin, indices in idx_res_per_val_bin.items():
         idx_vals = pd.Series(indices.keys())
         df_bin = df.iloc[idx_vals]
-        total_mean[val_bin] = df_bin.total_res.mean()
-        total_sigma[val_bin] = df_bin.total_res.std()
+        total_mean[val_bin] = df_bin["Total"].mean()
+        total_sigma[val_bin] = df_bin["Total"].std()
 
-        if 'inter_res' in df_bin.columns:
-            intra_mean[val_bin] = df_bin.intra_res.mean()
-            inter_mean[val_bin] = df_bin.inter_res.mean()
-            intra_sigma[val_bin] = df_bin.intra_res.std()
-            inter_sigma[val_bin] = df_bin.inter_res.std()
+        if 'Inter event' in df_bin.columns:
+            intra_mean[val_bin] = df_bin["Intra event"].mean()
+            inter_mean[val_bin] = df_bin["Inter event"].mean()
+            intra_sigma[val_bin] = df_bin["Intra event"].std()
+            inter_sigma[val_bin] = df_bin["Inter event"].std()
 
     return {"total_mean": total_mean,
             "total_sigma": total_sigma,
@@ -472,7 +453,7 @@ def mean_and_sigma_per_bin(df, idx_res_per_val_bin):
             "inter_sigma": inter_sigma}
 
 
-def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type, distance_type='repi'):
+def bin_res_wrt_var(residuals, gmpe, imt, var_type, distance_type='repi'):
     """
     Compute mean total, inter-event and inter-event residual within bins
     for a given explanatory variable. These binned residuals are plotted
@@ -499,7 +480,7 @@ def _get_mean_res_wrt_var(residuals, gmpe, imt, var_type, distance_type='repi'):
     means_and_sigmas = mean_and_sigma_per_bin(df, idx_res_per_val_bin)
     
     # Get final data to plot
-    if 'inter_res' in df.columns:
+    if 'Inter event' in df.columns:
         mean_res_wrt_val = pd.DataFrame({
             'x_data': bin_mid_points,
             'Total': means_and_sigmas['total_mean'],
