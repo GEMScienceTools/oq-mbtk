@@ -172,7 +172,7 @@ class SimpleFlatfileParser(SMDatabaseReader):
             metadata["Country"])
         hypo_loc = (0.5, 0.7)   # Hypocentre Location
         msr=WC1994()
-        # Warning rake set to 0.0 in scaling relationship
+        # NOTE: rake set to 0.0 in scaling relationship
         area = msr.get_median_area(pref_mag.value,0.0)
         aspect_ratio = 1.5 # Assumed Fixed
         width_model = np.sqrt(area / aspect_ratio)
@@ -235,7 +235,7 @@ class SimpleFlatfileParser(SMDatabaseReader):
         target_site = Mesh(np.array([site.longitude]),
                            np.array([site.latitude]),
                            np.array([0.0]))
-        # Warning ratio fixed to 1.5
+        # NOTE: Ratio fixed to 1.5
         ratio=1.5
         surface_modeled = create_planar_surface(
             Point(event.longitude, event.latitude, event.depth),
