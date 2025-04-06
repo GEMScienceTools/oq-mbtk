@@ -30,11 +30,13 @@ from cycler import cycler
 
 from openquake.hazardlib.imt import imt2tup
 from openquake.smt.utils_intensity_measures import _save_image
-from openquake.smt.residuals.gmpe_residuals import (
-    Residuals, SingleStationAnalysis)
-from openquake.smt.residuals.residual_plots import (
-    residuals_density_distribution, likelihood, residuals_with_magnitude,
-    residuals_with_vs30, residuals_with_distance, residuals_with_depth)
+from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
+from openquake.smt.residuals.residual_plots import (residuals_density_distribution,
+                                                    likelihood,
+                                                    residuals_with_magnitude,
+                                                    residuals_with_vs30,
+                                                    residuals_with_distance,
+                                                    residuals_with_depth)
 
 
 colors = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
