@@ -332,9 +332,6 @@ class Residuals(object):
             for imtx in self.imts:
                 residual[gmpe][imtx] = {}
                 obs = np.log(context["Observations"][imtx])
-                # Strip the NaNs (empty observed values) - we
-                # don't need to retain any indexing per rec/site
-                # here so is ok. 
                 keep = context["Retained"][imtx]
                 obs = obs[keep]
                 if not context["Expected"][gmpe][imtx]:
