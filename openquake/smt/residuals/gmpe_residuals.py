@@ -237,10 +237,9 @@ class Residuals(object):
                     for res_type in self.residuals[gmpe][imtx].keys():
                         if res_type == "Inter event":
                             inter_ev = context["Residual"][gmpe][imtx][res_type]
-                            if len(inter_ev) < 1: # Skip if no observations 
-                                continue          # for ctx for given IMT
-                            if np.all(
-                                    np.fabs(inter_ev - inter_ev[0]) < 1.0E-12):
+                            if len(inter_ev) < 1:
+                                inter_ev = np.array([np.nan]) # Dummy to pass
+                            if np.all(np.fabs(inter_ev - inter_ev[0]) < 1.0E-12):
                                 # Single inter-event residual
                                 self.residuals[gmpe][imtx][res_type].append(
                                     inter_ev[0])
