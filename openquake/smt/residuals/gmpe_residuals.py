@@ -305,7 +305,7 @@ class Residuals(object):
                     self.types[gmpe][imtx])
                 # Check if missing values in the observed
                 obs = context["Observations"][imtx]
-                idx_keep = pd.notnull(obs)
+                idx_keep = context["Retained"][imtx]
                 # Drop the corresponding expected values
                 mean = mean[idx_keep]
                 # Iterate through components of sigma
@@ -337,7 +337,7 @@ class Residuals(object):
                 # Strip the NaNs (empty observed values) - we
                 # don't need to retain any indexing per rec/site
                 # here so is ok. 
-                idx_keep = pd.notnull(obs)
+                idx_keep = context["Retained"][imtx]
                 obs = obs[idx_keep]
                 if not context["Expected"][gmpe][imtx]:
                     residual[gmpe][imtx] = None
@@ -451,16 +451,15 @@ class Residuals(object):
                         ctx_and_imt[key+"_Residuals"] = res[comp]
                         ctx_and_imt[key+"_Predicted"] = exp[comp]
 
-                # Get the observed with the NaNs removed
+                # Get observed with the NaNs (empty recs for IMT) removed
                 obs = ctx["Observations"][imt]
-                idx_keep = pd.notnull(obs)         
+                idx_keep = ctx["Retained"][imt]
                 key_obs = f"IMT={imt}_Observations"
                 ctx_and_imt[key_obs] = obs[idx_keep]
 
                 # Get the event info
                 for par in RUP_PAR:
-                    keep = len(idx_keep[idx_keep==True])
-                    val = np.full(keep, getattr(ctx["Ctx"], par))
+                    val = np.full(len(idx_keep), getattr(ctx["Ctx"], par))
                     ctx_and_imt[par] = val
 
                 # Get the station info
@@ -679,14 +678,14 @@ class Residuals(object):
             expected = np.array([], dtype=float)
             stddev = np.array([], dtype=float)
             for context in self.contexts:
-                obs = np.hstack(
-                    [obs, np.log(context["Observations"][imtx])])
+                keep = context["Retained"][imtx]
+                obs_stack = np.log(context["Observations"][imtx][keep])
+                obs = np.hstack([obs, obs_stack])
                 expected = np.hstack(
                     [expected,context["Expected"][gmpe][imtx]["Mean"]])
                 stddev = np.hstack(
                     [stddev,context["Expected"][gmpe][imtx]["Total"]])
-            keep = pd.notnull(obs) # Drop the NaN observed (no st data)
-            obs_wrt_imt[imtx] = obs[keep]
+            obs_wrt_imt[imtx] = obs
             expected_wrt_imt[imtx] = expected
             stddev_wrt_imt[imtx] = stddev
 
