@@ -302,11 +302,8 @@ class Residuals(object):
                     context["Ctx"],
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
-                # Check if missing values in the observed
                 keep = context["Retained"][imtx]
-                # Drop the corresponding expected values
                 mean = mean[keep]
-                # Iterate through components of sigma
                 for idx_comp, comp in enumerate(stddev):
                     stddev[idx_comp] = comp[keep]
                 # If no sigma for the GMM residuals can't be computed
