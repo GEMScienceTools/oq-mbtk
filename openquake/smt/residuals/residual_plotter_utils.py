@@ -129,7 +129,6 @@ def _get_magnitudes(residuals, gmpe, imt, res_type):
         if res_type == "Inter event":
             nval = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
         else:
-            # Trunc vals in accordance with num empty obs for given IMT
             nval = np.ones(len(ctx["Ctx"].repi))
         magnitudes = np.hstack([magnitudes, ctx["Ctx"].mag * nval])
     return magnitudes
@@ -381,14 +380,13 @@ def get_binning_params(var_type, vals):
     the residuals with respect to
     """
     # Get values for given variable
-    if var_type == 'magnitude':
-        val_bin = 0.25
-    elif var_type == 'vs30':
-        val_bin = 100
-    elif var_type == 'distance':
-        val_bin = 10     
-    elif var_type == 'depth': 
-        val_bin = 5
+    var_bins = {
+                'magnitude': 0.25, # Mw
+                'depth': 5,        # km
+                'distance': 10,    # km
+                'vs30': 100        # m/s
+                }
+    val_bin = var_bins[var_type]
 
     # Create bins and make last interval fill up to max var value
     val_bins = np.arange(np.min(vals), np.max(vals), val_bin)
