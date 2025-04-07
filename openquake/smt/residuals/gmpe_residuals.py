@@ -225,8 +225,7 @@ class Residuals(object):
             # Convert all IMTS with acceleration units, which are supposed to
             # be in cm/s/s, to g:
             for a_imt in accel_imts:
-                context[
-                    'Observations'][a_imt] = convert_accel_units(
+                context['Observations'][a_imt] = convert_accel_units(
                         context['Observations'][a_imt], 'cm/s/s', 'g')
             # Get the expected ground motions
             context = self.get_expected_motions(context)
@@ -304,7 +303,6 @@ class Residuals(object):
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
                 # Check if missing values in the observed
-                obs = context["Observations"][imtx]
                 idx_keep = context["Retained"][imtx]
                 # Drop the corresponding expected values
                 mean = mean[idx_keep]
@@ -312,7 +310,7 @@ class Residuals(object):
                 for idx_comp, comp in enumerate(stddev):
                     stddev[idx_comp] = comp[idx_keep]
                 # If no sigma for the GMM residuals can't be computed
-                if np.all(stddev[0] == 0.) and not all(pd.isnull(obs)):
+                if np.all(stddev[0] == 0.) and len(idx_keep) > 0:
                     gs = str(gmpe).split('(')[0]
                     m = 'A sigma model is not provided for %s' %gs
                     raise ValueError(m)
