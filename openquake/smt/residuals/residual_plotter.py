@@ -31,7 +31,7 @@ from cycler import cycler
 from openquake.hazardlib.imt import imt2tup
 from openquake.smt.utils_intensity_measures import _save_image
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
-from openquake.smt.residuals.residual_plots import (residuals_density_distribution,
+from openquake.smt.residuals.residual_plotter_utils import (residuals_density_distribution,
                                                     likelihood,
                                                     residuals_with_magnitude,
                                                     residuals_with_vs30,
@@ -129,7 +129,7 @@ class BaseResidualPlot(object):
         of the given GMPE (`self.gmpe`) and IMT (`self.imt`).
         Each key (residual type) needs then to be mapped to a residual data
         dict with at least the mandatory keys 'x', 'y' ,'xlabel' and 'ylabel'
-        (See :module:`openquake.smt.residuals.residual_plots` for a list of available
+        (See :module:`openquake.smt.residuals.residual_plotter_utils` for a list of available
         functions that return these kind of dict's and should be in principle
         be called here)
         """

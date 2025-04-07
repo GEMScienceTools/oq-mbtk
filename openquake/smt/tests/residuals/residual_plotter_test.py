@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Test suite for the `residual_plotter` module responsible for plotting the
-plot data defined in `residual_plots`
+plot data defined in `residual_plotter_utils`
 """
 import os
 import shutil
@@ -195,7 +195,7 @@ class ResidualsTestCase(unittest.TestCase):
                 for dist in DISTANCES.keys():
 
                     if dist == 'r_x':
-                        # as for residual_plots_test, we should confirm
+                        # as for residual_plotter_utils_test, we should confirm
                         # with scientific expertise that this is the case:
                         with self.assertRaises(AttributeError):
                             ResidualWithDistance(residuals, gsim, imt,
