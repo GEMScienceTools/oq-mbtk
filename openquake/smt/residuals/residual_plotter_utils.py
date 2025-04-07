@@ -181,7 +181,7 @@ def _get_distances(residuals, gmpe, imt, res_type, distance_type):
     return distances
 
 
-def get_vals(var, residuals, gmpe, imt, res_type, distance_type):
+def get_scatter_vals(var, residuals, gmpe, imt, res_type, distance_type):
     """
     Return values for given explanatory variable matching the 
     length of the given residuals
@@ -212,7 +212,7 @@ def get_scatter_data(residuals, gmpe, imt, var, distance_type=None):
         if res_type in ["vals"]:
             continue
 
-        x = get_vals(var, residuals, gmpe, imt, res_type, distance_type)
+        x = get_scatter_vals(var, residuals, gmpe, imt, res_type, distance_type)
         y = data[res_type]
 
         slope, intercept, _, pval, _ = _nanlinregress(x, y)
