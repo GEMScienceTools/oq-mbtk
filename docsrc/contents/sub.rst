@@ -370,12 +370,13 @@ The construction of subduction inslab sources involves the creation of `virtual 
     # magnitude scaling relationship 
     mag_scaling_relation = StrasserIntraslab  
 
-    
+``profile_sd_topsl`` and ``edge_sd_topsl`` specify the profile and edge sampling distances for the mesh describing the slab. These parameters should be set by the modeller to balance the availability of data and the computational size of the problem.  
+
 The MFD parameters should be set by the modeller and determined from some combination of the seismicity and tectonics. The ``mmin`` parameter defines the lower magnitude limit at which to generate slab ruptures. A lower ``mmin`` will result in many more smaller ruptures which will increase the size of the rupture object, so this parameter should be chosen carefully considering the size of ruptures at slab locations that might be relevant for hazard.  
  
 The ``sampling`` parameter determines the spatial sampling to be used when simulating ruptures. The ``float_strike`` and ``float_dip`` parameters specify the strike and dip for floating ruptures, while the list of ``dips`` instead specifies dip angles used when creating virtual faults inside the rupture.
 
-The ``uniform_fraction`` determines the percentage of the ruptures to be uniformly distributed across the slab. A higher uniform fraction means that the distribution of ruptures will be randomly uniform, and a lower uniform fraction means that a larger percentage of ruptures will instead be distributed according to the smoothed distribution of seismicity in the slab.  
+The ``uniform_fraction`` determines the percentage of the ruptures to be uniformly distributed across the slab. A higher uniform fraction means that the distribution of ruptures will be randomly uniform, and a lower uniform fraction means that a larger percentage of ruptures will instead be distributed according to the smoothed distribution of seismicity in the slab. ``hspa`` and ``vspa`` refer to the horizontal and vertical spacing to be used in the smoothing. 
 
 Ruptures can be created using::
 
