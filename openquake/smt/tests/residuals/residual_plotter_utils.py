@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Test suite for the `residual_plots` module responsible for calculating the
+Test suite for the `residual_plotter_utils` module responsible for calculating the
 data used for plotting (see `residual_plotter`)
 """
 import os
@@ -29,7 +29,7 @@ from scipy.stats import linregress
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 from openquake.smt.residuals.sm_database_visualiser import DISTANCES
-from openquake.smt.residuals.residual_plots import (residuals_density_distribution,
+from openquake.smt.residuals.residual_plotter_utils import (residuals_density_distribution,
                                                     likelihood,
                                                     residuals_with_depth,
                                                     residuals_with_magnitude,
