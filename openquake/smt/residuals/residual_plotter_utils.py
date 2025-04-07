@@ -126,10 +126,12 @@ def _get_magnitudes(residuals, gmpe, imt, res_type):
     """
     magnitudes = np.array([])
     for i, ctx in enumerate(residuals.contexts):
+        keep = ctx["Retained"][imt]
         if res_type == "Inter event":
             nval = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
         else:
             nval = np.ones(len(ctx["Ctx"].repi))
+            nval = nval[keep]
         magnitudes = np.hstack([magnitudes, ctx["Ctx"].mag * nval])
     return magnitudes
 
@@ -141,10 +143,12 @@ def _get_depths(residuals, gmpe, imt, res_type):
     """
     depths = np.array([])
     for i, ctx in enumerate(residuals.contexts):
+        keep = ctx["Retained"][imt]
         if res_type == "Inter event":
             nvals = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
         else:
             nvals = np.ones(len(ctx["Ctx"].repi))
+            nvals = nvals[keep]
         depths = np.hstack([depths, ctx["Ctx"].hypo_depth * nvals])
     return depths
 
@@ -155,11 +159,13 @@ def _get_vs30(residuals, gmpe, imt, res_type):
     """
     vs30 = np.array([])
     for i, ctx in enumerate(residuals.contexts):
+        keep = ctx["Retained"][imt]
         if res_type == "Inter event":
             vs30 = np.hstack([vs30, ctx["Ctx"].vs30[
                 residuals.unique_indices[gmpe][imt][i]]])
         else:
-            vs30 = np.hstack([vs30, ctx["Ctx"].vs30])
+            vs30_vals = ctx["Ctx"].vs30[keep]
+            vs30 = np.hstack([vs30, vs30_vals])
         
     return vs30
 
@@ -170,14 +176,16 @@ def _get_distances(residuals, gmpe, imt, res_type, distance_type):
     """
     distances = np.array([])
     for i, ctx in enumerate(residuals.contexts):
+        keep = ctx["Retained"][imt]
         # Get the distances
         if res_type == "Inter event":
             dists = getattr(ctx["Ctx"], distance_type)[
                 residuals.unique_indices[gmpe][imt][i]]
             distances = np.hstack([distances, dists])
         else:
-            distances = np.hstack([
-                distances, getattr(ctx["Ctx"], distance_type)])
+            dist_vals = getattr(ctx["Ctx"], distance_type)
+            dist_vals = dist_vals[keep]
+            distances = np.hstack([distances, dist_vals])
     return distances
 
 
