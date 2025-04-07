@@ -127,15 +127,11 @@ def _get_magnitudes(residuals, gmpe, imt, res_type):
     magnitudes = np.array([])
     for i, ctx in enumerate(residuals.contexts):
         if res_type == "Inter event":
-
-            nval = np.ones(
-                len(residuals.unique_indices[gmpe][imt][i])
-                )
+            nval = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
         else:
+            # Trunc vals in accordance with num empty obs for given IMT
             nval = np.ones(len(ctx["Ctx"].repi))
-
         magnitudes = np.hstack([magnitudes, ctx["Ctx"].mag * nval])
-
     return magnitudes
 
 
@@ -165,6 +161,7 @@ def _get_vs30(residuals, gmpe, imt, res_type):
                 residuals.unique_indices[gmpe][imt][i]]])
         else:
             vs30 = np.hstack([vs30, ctx["Ctx"].vs30])
+        
     return vs30
 
 
@@ -176,9 +173,9 @@ def _get_distances(residuals, gmpe, imt, res_type, distance_type):
     for i, ctx in enumerate(residuals.contexts):
         # Get the distances
         if res_type == "Inter event":
-            ctxt_dist = getattr(ctx["Ctx"], distance_type)[
+            dists = getattr(ctx["Ctx"], distance_type)[
                 residuals.unique_indices[gmpe][imt][i]]
-            distances = np.hstack([distances, ctxt_dist])
+            distances = np.hstack([distances, dists])
         else:
             distances = np.hstack([
                 distances, getattr(ctx["Ctx"], distance_type)])
@@ -192,11 +189,12 @@ def get_vals(var, residuals, gmpe, imt, res_type, distance_type):
     """
     if var == "magnitude":
         return _get_magnitudes(residuals, gmpe, imt, res_type)
-    if var == "depth":
+    elif var == "depth":
         return _get_depths(residuals, gmpe, imt, res_type)
-    if var == "vs30":
+    elif var == "vs30":
         return _get_vs30(residuals, gmpe, imt, res_type)
-    if var == "distance":
+    else:
+        assert var == "distance"
         return _get_distances(residuals, gmpe, imt, res_type, distance_type)
 
 
@@ -329,7 +327,54 @@ def _nanlinregress(x, y):
         return linregress(x[finite], y[finite])
 
 
-### Utils for binning residuals w.r.t. a given GMM input variable ###
+### Utils for binning residuals w.r.t. a given GMM input variable
+def get_ctx_vals(var_type, ctx, distance_type):
+    """
+    Get value(s) of the given ctx corresponding to the variable we
+    are plotting the residuals against
+    """
+    if var_type == 'magnitude':
+        event_val = ctx.mag
+    elif var_type == 'vs30':
+        event_val = ctx.vs30
+    elif var_type == 'distance':
+        event_val = getattr(ctx, distance_type)
+    elif var_type == 'depth':
+        event_val = ctx.hypo_depth
+
+    return event_val
+
+
+def mean_and_sigma_per_bin(df, idx_res_per_val_bin):
+    """
+    Computes the mean and standard deviation for residuals per value bin.
+    """
+    # Set stores of mean and sigma per bin of the given variable
+    total_mean, total_sigma = {}, {}
+    intra_mean, intra_sigma = {}, {}
+    inter_mean, inter_sigma = {}, {}
+
+    # Get the mean and sigma for each component of the res assoc with each bin
+    for val_bin, indices in idx_res_per_val_bin.items():
+        idx_vals = pd.Series(indices.keys())
+        df_bin = df.iloc[idx_vals]
+        total_mean[val_bin] = df_bin["Total"].mean()
+        total_sigma[val_bin] = df_bin["Total"].std()
+
+        if 'Inter event' in df_bin.columns:
+            intra_mean[val_bin] = df_bin["Intra event"].mean()
+            inter_mean[val_bin] = df_bin["Inter event"].mean()
+            intra_sigma[val_bin] = df_bin["Intra event"].std()
+            inter_sigma[val_bin] = df_bin["Inter event"].std()
+
+    return {"total_mean": total_mean,
+            "total_sigma": total_sigma,
+            "intra_mean": intra_mean,
+            "intra_sigma": intra_sigma,
+            "inter_mean": inter_mean,
+            "inter_sigma": inter_sigma}
+
+
 def get_binning_params(var_type, vals):
     """
     Get the params for the binning of the given variable we are plotting
@@ -360,23 +405,6 @@ def get_binning_params(var_type, vals):
         bounds[1] - bounds[0]) for val_bin, bounds in bin_bounds.items()}
         
     return bin_bounds, bin_mid_points
-
-
-def get_ctx_vals(var_type, ctx, distance_type):
-    """
-    Get value(s) of the given ctx corresponding to the variable we
-    are plotting the residuals against
-    """
-    if var_type == 'magnitude':
-        event_val = ctx.mag
-    elif var_type == 'vs30':
-        event_val = ctx.vs30
-    elif var_type == 'distance':
-        event_val = getattr(ctx, distance_type)
-    elif var_type == 'depth':
-        event_val = ctx.hypo_depth
-
-    return event_val
 
 
 def get_res_df(var_type, residuals, gmpe, imt, distance_type):
@@ -421,36 +449,6 @@ def get_res_df(var_type, residuals, gmpe, imt, distance_type):
     df = pd.concat(store).sort_values(by="vals")
 
     return df
-
-
-def mean_and_sigma_per_bin(df, idx_res_per_val_bin):
-    """
-    Computes the mean and standard deviation for residuals per value bin.
-    """
-    # Set stores of mean and sigma per bin of the given variable
-    total_mean, total_sigma = {}, {}
-    intra_mean, intra_sigma = {}, {}
-    inter_mean, inter_sigma = {}, {}
-
-    # Get the mean and sigma for each component of the res assoc with each bin
-    for val_bin, indices in idx_res_per_val_bin.items():
-        idx_vals = pd.Series(indices.keys())
-        df_bin = df.iloc[idx_vals]
-        total_mean[val_bin] = df_bin["Total"].mean()
-        total_sigma[val_bin] = df_bin["Total"].std()
-
-        if 'Inter event' in df_bin.columns:
-            intra_mean[val_bin] = df_bin["Intra event"].mean()
-            inter_mean[val_bin] = df_bin["Inter event"].mean()
-            intra_sigma[val_bin] = df_bin["Intra event"].std()
-            inter_sigma[val_bin] = df_bin["Inter event"].std()
-
-    return {"total_mean": total_mean,
-            "total_sigma": total_sigma,
-            "intra_mean": intra_mean,
-            "intra_sigma": intra_sigma,
-            "inter_mean": inter_mean,
-            "inter_sigma": inter_sigma}
 
 
 def bin_res_wrt_var(residuals, gmpe, imt, var_type, distance_type='repi'):
