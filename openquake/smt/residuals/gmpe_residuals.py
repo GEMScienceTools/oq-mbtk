@@ -303,14 +303,14 @@ class Residuals(object):
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
                 # Check if missing values in the observed
-                idx_keep = context["Retained"][imtx]
+                keep = context["Retained"][imtx]
                 # Drop the corresponding expected values
-                mean = mean[idx_keep]
+                mean = mean[keep]
                 # Iterate through components of sigma
                 for idx_comp, comp in enumerate(stddev):
-                    stddev[idx_comp] = comp[idx_keep]
+                    stddev[idx_comp] = comp[keep]
                 # If no sigma for the GMM residuals can't be computed
-                if np.all(stddev[0] == 0.) and len(idx_keep) > 0:
+                if np.all(stddev[0] == 0.) and len(keep) > 0:
                     gs = str(gmpe).split('(')[0]
                     m = 'A sigma model is not provided for %s' %gs
                     raise ValueError(m)
@@ -335,8 +335,8 @@ class Residuals(object):
                 # Strip the NaNs (empty observed values) - we
                 # don't need to retain any indexing per rec/site
                 # here so is ok. 
-                idx_keep = context["Retained"][imtx]
-                obs = obs[idx_keep]
+                keep = context["Retained"][imtx]
+                obs = obs[keep]
                 if not context["Expected"][gmpe][imtx]:
                     residual[gmpe][imtx] = None
                     continue
@@ -451,18 +451,18 @@ class Residuals(object):
 
                 # Get observed with the NaNs (empty recs for IMT) removed
                 obs = ctx["Observations"][imt]
-                idx_keep = ctx["Retained"][imt]
+                keep = ctx["Retained"][imt]
                 key_obs = f"IMT={imt}_Observations"
-                ctx_and_imt[key_obs] = obs[idx_keep]
+                ctx_and_imt[key_obs] = obs[keep]
 
                 # Get the event info
                 for par in RUP_PAR:
-                    val = np.full(len(idx_keep), getattr(ctx["Ctx"], par))
+                    val = np.full(len(keep), getattr(ctx["Ctx"], par))
                     ctx_and_imt[par] = val
 
                 # Get the station info
                 for par in ST_PAR:
-                    val = np.array(getattr(ctx["Ctx"], par))[idx_keep]
+                    val = np.array(getattr(ctx["Ctx"], par))[keep]
                     ctx_and_imt[par] = val
 
                 # Into a dataframe and rename some columns
