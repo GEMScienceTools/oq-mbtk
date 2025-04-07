@@ -415,7 +415,7 @@ class ResidualScatterPlot(BaseResidualPlot):
 
     def get_axis_ylim(self, res_data, res_type):
         y = res_data['y']
-        max_lim = ceil(np.max(np.fabs(y)))
+        max_lim = ceil(np.nanmax(np.fabs(y)))
         return -max_lim, max_lim
     
     def get_axis_title(self, res_data, res_type):
