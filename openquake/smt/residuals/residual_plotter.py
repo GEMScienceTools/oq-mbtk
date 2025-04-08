@@ -31,7 +31,8 @@ from cycler import cycler
 from openquake.hazardlib.imt import imt2tup
 from openquake.smt.utils_intensity_measures import _save_image
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
-from openquake.smt.residuals.residual_plotter_utils import (residuals_density_distribution,
+from openquake.smt.residuals.residual_plotter_utils import (
+                                                    residuals_density_distribution,
                                                     likelihood,
                                                     residuals_with_magnitude,
                                                     residuals_with_vs30,
