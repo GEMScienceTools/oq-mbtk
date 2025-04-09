@@ -1145,15 +1145,14 @@ class ResidualWithSite(ResidualPlot):
             n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
             data[site_id]["Total"] = (
                 resid.site_analysis[self.gmpe][self.imt]["Total"] /
-                resid.site_analysis[self.gmpe][self.imt]["Expected Total"])
-            if "Intra event" in\
-                resid.site_analysis[self.gmpe][self.imt].keys():
+                resid.site_analysis[self.gmpe][self.imt]["Expected total"])
+            if "Intra event" in resid.site_analysis[self.gmpe][self.imt].keys():
                 data[site_id]["Inter event"] = (
                     resid.site_analysis[self.gmpe][self.imt]["Inter event"] /
-                    resid.site_analysis[self.gmpe][self.imt]["Expected Inter"])
+                    resid.site_analysis[self.gmpe][self.imt]["Expected inter"])
                 data[site_id]["Intra event"] = (
                     resid.site_analysis[self.gmpe][self.imt]["Intra event"] /
-                    resid.site_analysis[self.gmpe][self.imt]["Expected Intra"])
+                    resid.site_analysis[self.gmpe][self.imt]["Expected intra"])
             data[site_id]["ID"] = list(self.residuals.site_ids)[iloc]
             data[site_id]["N"] = n_events
             data[site_id]["x-val"] =(float(iloc) + 0.5) *\

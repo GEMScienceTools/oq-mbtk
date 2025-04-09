@@ -649,8 +649,9 @@ class Residuals(object):
         stddev = np.array([], dtype=float)
         for imtx in self.imts:
             for context in self.contexts:
+                keep = context["Retained"][imtx]
                 obs = np.hstack(
-                    [obs, np.log(context["Observations"][imtx])])
+                    [obs, np.log(context["Observations"][imtx][keep])])
                 expected = np.hstack(
                     [expected, context["Expected"][gmpe][imtx]["Mean"]])
                 stddev = np.hstack(
@@ -890,8 +891,7 @@ class SingleStationAnalysis(object):
                         self.types[gmpe][imtx].append(res_type)
                 else:
                     for res_type in (
-                        self.gmpe_list[
-                            gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES):
+                        self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES):
                         self.types[gmpe][imtx].append(res_type)
                         
     @classmethod
@@ -968,7 +968,7 @@ class SingleStationAnalysis(object):
                     # Store
                     resid.site_analysis[gmpe][imtx]["events"] = n_events
                     resid.site_analysis[gmpe][imtx]["Total"] = total_res
-                    resid.site_analysis[gmpe][imtx]["Expected Total"] = total_exp
+                    resid.site_analysis[gmpe][imtx]["Expected total"] = total_exp
                     
                     if not "Intra event" in t_resid.residuals[gmpe][imtx]:
                         # GMPE has no within-event term - skip
@@ -982,18 +982,15 @@ class SingleStationAnalysis(object):
 
                     # Get delta_s2ss
                     delta_s2ss = self._get_delta_s2ss(
-                        resid.residuals[
-                            gmpe][imtx]["Intra event"], n_events)
+                        resid.residuals[gmpe][imtx]["Intra event"], n_events)
                     
                     # Get delta_woes
                     delta_woes = (
-                        resid.site_analysis[
-                            gmpe][imtx]["Intra event"] - delta_s2ss)
+                        resid.site_analysis[gmpe][imtx]["Intra event"] - delta_s2ss)
                     
                     # Get phi_ss
                     phi_ss = self._get_single_station_phi(
-                        resid.residuals[
-                            gmpe][imtx]["Intra event"], delta_s2ss, n_events)
+                        resid.residuals[gmpe][imtx]["Intra event"], delta_s2ss, n_events)
 
                     # Store 
                     resid.site_analysis[gmpe][imtx]["dS2ss"] = delta_s2ss
@@ -1001,9 +998,9 @@ class SingleStationAnalysis(object):
                     resid.site_analysis[gmpe][imtx]["phi_ss,s"] = phi_ss
                     
                     # Get expected values too
-                    resid.site_analysis[gmpe][imtx]["Expected Inter"] =\
+                    resid.site_analysis[gmpe][imtx]["Expected inter"] =\
                         np.copy(t_resid.modelled[gmpe][imtx]["Inter event"])
-                    resid.site_analysis[gmpe][imtx]["Expected Intra"] =\
+                    resid.site_analysis[gmpe][imtx]["Expected intra"] =\
                         np.copy(t_resid.modelled[gmpe][imtx]["Intra event"])
             
             # Store
@@ -1080,8 +1077,7 @@ class SingleStationAnalysis(object):
                 phi_s2ss[gmpe][imtx] = {"Mean": np.mean(d2ss),
                                         "StdDev": np.std(d2ss)}
                 phi_ss[gmpe][imtx] = np.sqrt(
-                    numerator_sum /
-                    float(np.sum(np.array(n_events)) - 1))
+                    numerator_sum / float(np.sum(np.array(n_events)) - 1))
         
         # Print phi_ss and phi_s2ss info to file
         if filename is not None:
