@@ -1151,7 +1151,7 @@ class ResidualWithSite(ResidualPlot):
                 intra_res = resid.site_analysis[self.gmpe][self.imt]["Intra event"] 
                 inter_exp = resid.site_analysis[self.gmpe][self.imt]["Expected inter"]
                 intra_exp = resid.site_analysis[self.gmpe][self.imt]["Expected intra"]
-                keep = pd.notnull(inter_res) # Dropping all NaN idxs will realign with exp
+                keep = pd.notnull(inter_res) # Dropping NaN idxs will realign with exp
                 data[site_id]["Inter event"] = inter_res[keep]/inter_exp
                 data[site_id]["Intra event"] = intra_res/intra_exp
             data[site_id]["ID"] = list(self.residuals.site_ids)[iloc]
