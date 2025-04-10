@@ -30,7 +30,6 @@ import pandas as pd
 from math import sqrt, ceil
 from scipy.special import erf
 from scipy.stats import norm
-from scipy.linalg import solve
 
 from openquake.hazardlib import valid
 from openquake.hazardlib import imt
@@ -40,7 +39,7 @@ from openquake.smt.utils import convert_accel_units, check_gsim_list
 
 ALL_SIGMA = frozenset({'Inter event', 'Intra event', 'Total'})
 
-CTX_PAR = ["mag",
+RUP_PAR = ["mag",
            "strike",
            "dip",
            "rake",
@@ -48,19 +47,21 @@ CTX_PAR = ["mag",
            "width",
            "hypo_lon",
            "hypo_lat",
-           "hypo_depth",
-           "vs30",
-           "lons",
-           "lats",
-           "depths",
-           "z1pt0",
-           "z2pt5",
-           "rrup",
-           "rx",
-           "rjb",
-           "rhypo",
-           "repi",
-           "ry0"]
+           "hypo_depth"]
+
+ST_PAR = ["vs30",
+          "custom_site_id",
+          "lons",
+          "lats",
+          "depths",
+          "z1pt0",
+          "z2pt5",
+          "rrup",
+          "rx",
+          "rjb",
+          "rhypo",
+          "repi",
+          "ry0"]
 
 
 ### Util functions
@@ -221,11 +222,10 @@ class Residuals(object):
             # If no rvolc provide as zero (ensure rvolc gsims usable)
             if 'rvolc' not in context['Ctx']._slots_:
                 context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi)
-            # convert all IMTS with acceleration units, which are supposed to
+            # Convert all IMTS with acceleration units, which are supposed to
             # be in cm/s/s, to g:
             for a_imt in accel_imts:
-                context[
-                    'Observations'][a_imt] = convert_accel_units(
+                context['Observations'][a_imt] = convert_accel_units(
                         context['Observations'][a_imt], 'cm/s/s', 'g')
             # Get the expected ground motions
             context = self.get_expected_motions(context)
@@ -236,10 +236,12 @@ class Residuals(object):
                         continue
                     for res_type in self.residuals[gmpe][imtx].keys():
                         if res_type == "Inter event":
-                            inter_ev =  context["Residual"][gmpe][imtx][
-                                res_type]
-                            if np.all(
-                                    np.fabs(inter_ev - inter_ev[0]) < 1.0E-12):
+                            inter_ev = context["Residual"][gmpe][imtx][res_type]
+                            if len(inter_ev) < 1:
+                                # Dummy to pass first conditional with indexing
+                                # if no obs values for given IMT for the event
+                                inter_ev = np.array([np.nan]) 
+                            if np.all(np.fabs(inter_ev - inter_ev[0]) < 1.0E-12):
                                 # Single inter-event residual
                                 self.residuals[gmpe][imtx][res_type].append(
                                     inter_ev[0])
@@ -281,10 +283,6 @@ class Residuals(object):
         """
         Calculate the expected ground motions from the context
         """
-        # If no rake value for the event assume SS
-        if not context["Ctx"].rake:
-            context["Ctx"].rake = 0.0
-        
         # Get expected
         expected = {gmpe: {} for gmpe in self.gmpe_list}
         # Period range for GSIM
@@ -305,8 +303,12 @@ class Residuals(object):
                     context["Ctx"],
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
+                keep = context["Retained"][imtx]
+                mean = mean[keep]
+                for idx_comp, comp in enumerate(stddev):
+                    stddev[idx_comp] = comp[keep]
                 # If no sigma for the GMM residuals can't be computed
-                if np.all(stddev[0] == 0.):
+                if np.all(stddev[0] == 0.) and len(keep) > 0:
                     gs = str(gmpe).split('(')[0]
                     m = 'A sigma model is not provided for %s' %gs
                     raise ValueError(m)
@@ -328,6 +330,8 @@ class Residuals(object):
             for imtx in self.imts:
                 residual[gmpe][imtx] = {}
                 obs = np.log(context["Observations"][imtx])
+                keep = context["Retained"][imtx]
+                obs = obs[keep]
                 if not context["Expected"][gmpe][imtx]:
                     residual[gmpe][imtx] = None
                     continue
@@ -369,7 +373,8 @@ class Residuals(object):
         intra_res = obs - (mean + inter_res)
         if normalise:
             return inter_res / inter, intra_res / intra
-        return inter_res, intra_res
+        else:
+            return inter_res, intra_res
 
     def get_residual_statistics(self):
         """
@@ -413,20 +418,17 @@ class Residuals(object):
 
     def export_residuals(self, out_fname):
         """
-        Export the observed, predicted and residuals to an excel file
-        (one sheet for each event)
+        Export the observed, predicted and residuals to a text file
         """
         ctxs = self.contexts # List of contexts
         gmms = self.gmpe_list
         imts = self.imts
         store = {}
         for ctx in ctxs:
-
-            store_per_ctx = {} # Need one DataFrame per event
-
-            for gmpe in gmms:                
-                gmpe_str = get_gmpe_str(gmpe)
-                for imt in imts:
+            for imt in imts:
+                ctx_and_imt = {} # One df per imt and ctx
+                for gmpe in gmms:                
+                    gmpe_str = get_gmpe_str(gmpe)
 
                     # Get the expected values and the residuals
                     res = ctx["Residual"][gmpe][imt]
@@ -439,48 +441,43 @@ class Residuals(object):
                         key = key.replace(";", "")
 
                         # Store each set of values
-                        store_per_ctx[key+"_Residuals"] = res[comp]
-                        store_per_ctx[key+"_Predicted"] = exp[comp]
+                        ctx_and_imt[key+"_Residuals"] = res[comp]
+                        ctx_and_imt[key+"_Predicted"] = exp[comp]
 
-            # Now get the observations
-            key_obs = f"IMT={imt}_Observations"
-            store_per_ctx[key_obs] = ctx["Observations"][imt]
+                # Get observed with the NaNs (empty recs for IMT) removed
+                obs = ctx["Observations"][imt]
+                keep = ctx["Retained"][imt]
+                key_obs = f"IMT={imt}_Observations"
+                ctx_and_imt[key_obs] = obs[keep]
 
-            # Turn into a DataFrame
-            ctx_df = pd.DataFrame(store_per_ctx)
+                # Get the event info
+                for par in RUP_PAR:
+                    val = np.full(len(keep), getattr(ctx["Ctx"], par))
+                    ctx_and_imt[par] = val
 
-            # Add the event and station info to each row
-            for par in CTX_PAR:
-                ctx_df[par] = getattr(ctx["Ctx"], par)
-            ctx_df = ctx_df.rename(columns={"lons": "st_lon",
-                                            "lats": "st_lat",
-                                            "depths": "st_elevation"})
+                # Get the station info
+                for par in ST_PAR:
+                    val = np.array(getattr(ctx["Ctx"], par))[keep]
+                    ctx_and_imt[par] = val
 
-            # Now can add each station code using a mapping
-            st_map = ctx["Ctx"].st_mapping
-            ctx_df["st_code"] = pd.Series()
-            for idx, st in ctx_df.iterrows():
-                lon_check = (
-                    np.abs(st_map.lon - st.st_lon) < 1e-09)
-                lat_check = (
-                    np.abs(st_map.lat - st.st_lat) < 1e-09)
-                alt_check = (np.abs(st_map.dep - st.st_elevation*-1000.) < 1e-09)
-                vs30_check = (
-                    np.abs(st_map.vs30 - st.vs30) < 1e-09)
-                st_code = st_map.loc[
-                    lon_check & lat_check & alt_check & vs30_check].index
-                assert len(st_code) == 1
-                ctx_df["st_code"][idx] = st_code[0]
+                # Into a dataframe and rename some columns
+                ctx_df = pd.DataFrame(ctx_and_imt)
+                ctx_df = ctx_df.rename(columns={"custom_site_id": "st_code",
+                                                "lons": "st_lon",
+                                                "lats": "st_lat",
+                                                "depths": "st_elevation"})
 
-            # Store the DataFrame for the event
-            store[ctx["EventID"]] = ctx_df
+                # Store the DataFrame for the event
+                store[f"{ctx['EventID']}_IMT={imt}"] = ctx_df
 
-        # Now write results for the event to a sheet
-        with pd.ExcelWriter(out_fname, engine='openpyxl') as writer:
-            for eq in store.keys():
-                eq_df = store[eq]
-                sheet = f"EventID_{eq}"
-                eq_df.to_excel(writer, sheet_name=sheet, index=False)
+        # Now write results for the event to a text file
+        with open(out_fname, 'w') as f:
+            for ev_imt, ev_imt_df in store.items():
+                ev = ev_imt.split("IMT")[0][:-1]
+                imt = ev_imt.split("IMT=")[1]
+                f.write(f"Event:{ev} IMT: {imt}\n")
+                f.write(ev_imt_df.to_string(index=False))
+                f.write("\n\n")
 
 
     ### Likelihood (Scherbaum et al. 2004) functions
@@ -633,10 +630,10 @@ class Residuals(object):
             (obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt
              ) = self._get_edr_gmpe_information_wrt_imt(gmpe)
             results = self._get_edr_wrt_imt(obs_wrt_imt,
-                                    expected_wrt_imt,
-                                    stddev_wrt_imt,
-                                    bandwidth,
-                                    multiplier)
+                                            expected_wrt_imt,
+                                            stddev_wrt_imt,
+                                            bandwidth,
+                                            multiplier)
             self.edr_values_wrt_imt[gmpe]["MDE Norm"] = results[0]
             self.edr_values_wrt_imt[gmpe]["sqrt Kappa"] = results[1]
             self.edr_values_wrt_imt[gmpe]["EDR"] = results[2]
@@ -652,11 +649,13 @@ class Residuals(object):
         stddev = np.array([], dtype=float)
         for imtx in self.imts:
             for context in self.contexts:
-                obs = np.hstack([obs, np.log(context["Observations"][imtx])])
-                expected = np.hstack([expected,
-                                      context["Expected"][gmpe][imtx]["Mean"]])
-                stddev = np.hstack([stddev,
-                                    context["Expected"][gmpe][imtx]["Total"]])
+                keep = context["Retained"][imtx]
+                obs = np.hstack(
+                    [obs, np.log(context["Observations"][imtx][keep])])
+                expected = np.hstack(
+                    [expected, context["Expected"][gmpe][imtx]["Mean"]])
+                stddev = np.hstack(
+                    [stddev, context["Expected"][gmpe][imtx]["Total"]])
         return obs, expected, stddev
     
     def _get_edr_gmpe_information_wrt_imt(self, gmpe):
@@ -673,15 +672,17 @@ class Residuals(object):
             expected = np.array([], dtype=float)
             stddev = np.array([], dtype=float)
             for context in self.contexts:
-                obs = np.hstack([obs, np.log(context["Observations"][imtx])])
-                expected = np.hstack([expected,context["Expected"][gmpe]
-                                      [imtx]["Mean"]])
-                stddev = np.hstack([stddev,context["Expected"][gmpe]
-                                    [imtx]["Total"]])
-            obs_wrt_imt[imtx]=obs
-            expected_wrt_imt[imtx]=expected
-            stddev_wrt_imt[imtx]=stddev
-        
+                keep = context["Retained"][imtx]
+                obs_stack = np.log(context["Observations"][imtx][keep])
+                obs = np.hstack([obs, obs_stack])
+                expected = np.hstack(
+                    [expected,context["Expected"][gmpe][imtx]["Mean"]])
+                stddev = np.hstack(
+                    [stddev,context["Expected"][gmpe][imtx]["Total"]])
+            obs_wrt_imt[imtx] = obs
+            expected_wrt_imt[imtx] = expected
+            stddev_wrt_imt[imtx] = stddev
+
         return obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt
     
     def _get_edr(self, obs, expected, stddev, bandwidth=0.01, multiplier=3.0):
@@ -752,8 +753,8 @@ class Residuals(object):
                 mde_wrt_imt += (p_2 - p_1) * d_val
             inv_n = 1.0 / float(nvals)
             mde_norm_wrt_imt[imtx] = np.sqrt(inv_n * np.sum(mde_wrt_imt ** 2.))
-            edr_wrt_imt[imtx] = np.sqrt(kappa_wrt_imt[imtx] * inv_n * np.sum(
-                mde_wrt_imt ** 2.))
+            edr_wrt_imt[imtx] = np.sqrt(
+                kappa_wrt_imt[imtx] * inv_n * np.sum(mde_wrt_imt ** 2.))
 
         return mde_norm_wrt_imt, np.sqrt(pd.Series(kappa_wrt_imt)), edr_wrt_imt            
 
@@ -890,8 +891,7 @@ class SingleStationAnalysis(object):
                         self.types[gmpe][imtx].append(res_type)
                 else:
                     for res_type in (
-                        self.gmpe_list[
-                            gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES):
+                        self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES):
                         self.types[gmpe][imtx].append(res_type)
                         
     @classmethod
@@ -968,7 +968,7 @@ class SingleStationAnalysis(object):
                     # Store
                     resid.site_analysis[gmpe][imtx]["events"] = n_events
                     resid.site_analysis[gmpe][imtx]["Total"] = total_res
-                    resid.site_analysis[gmpe][imtx]["Expected Total"] = total_exp
+                    resid.site_analysis[gmpe][imtx]["Expected total"] = total_exp
                     
                     if not "Intra event" in t_resid.residuals[gmpe][imtx]:
                         # GMPE has no within-event term - skip
@@ -982,18 +982,15 @@ class SingleStationAnalysis(object):
 
                     # Get delta_s2ss
                     delta_s2ss = self._get_delta_s2ss(
-                        resid.residuals[
-                            gmpe][imtx]["Intra event"], n_events)
+                        resid.residuals[gmpe][imtx]["Intra event"], n_events)
                     
                     # Get delta_woes
                     delta_woes = (
-                        resid.site_analysis[
-                            gmpe][imtx]["Intra event"] - delta_s2ss)
+                        resid.site_analysis[gmpe][imtx]["Intra event"] - delta_s2ss)
                     
                     # Get phi_ss
                     phi_ss = self._get_single_station_phi(
-                        resid.residuals[
-                            gmpe][imtx]["Intra event"], delta_s2ss, n_events)
+                        resid.residuals[gmpe][imtx]["Intra event"], delta_s2ss, n_events)
 
                     # Store 
                     resid.site_analysis[gmpe][imtx]["dS2ss"] = delta_s2ss
@@ -1001,9 +998,9 @@ class SingleStationAnalysis(object):
                     resid.site_analysis[gmpe][imtx]["phi_ss,s"] = phi_ss
                     
                     # Get expected values too
-                    resid.site_analysis[gmpe][imtx]["Expected Inter"] =\
+                    resid.site_analysis[gmpe][imtx]["Expected inter"] =\
                         np.copy(t_resid.modelled[gmpe][imtx]["Inter event"])
-                    resid.site_analysis[gmpe][imtx]["Expected Intra"] =\
+                    resid.site_analysis[gmpe][imtx]["Expected intra"] =\
                         np.copy(t_resid.modelled[gmpe][imtx]["Intra event"])
             
             # Store
@@ -1080,8 +1077,7 @@ class SingleStationAnalysis(object):
                 phi_s2ss[gmpe][imtx] = {"Mean": np.mean(d2ss),
                                         "StdDev": np.std(d2ss)}
                 phi_ss[gmpe][imtx] = np.sqrt(
-                    numerator_sum /
-                    float(np.sum(np.array(n_events)) - 1))
+                    numerator_sum / float(np.sum(np.array(n_events)) - 1))
         
         # Print phi_ss and phi_s2ss info to file
         if filename is not None:
