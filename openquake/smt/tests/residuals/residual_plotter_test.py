@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Test suite for the `residual_plotter` module responsible for plotting the
-plot data defined in `residual_plots`
+plot data defined in `residual_plotter_utils`
 """
 import os
 import shutil
@@ -25,13 +25,15 @@ import unittest
 import pickle
 from unittest.mock import patch, MagicMock
 
-from openquake.smt.residuals.parsers.esm_url_flatfile_parser import \
-    ESMFlatfileParserURL
+from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
-from openquake.smt.residuals.residual_plotter import (
-    ResidualPlot, LikelihoodPlot, ResidualWithMagnitude, ResidualWithDepth,
-    ResidualWithVs30, ResidualWithDistance)
 from openquake.smt.residuals.sm_database_visualiser import DISTANCES
+from openquake.smt.residuals.residual_plotter import (ResidualPlot,
+                                                      LikelihoodPlot,
+                                                      ResidualWithMagnitude,
+                                                      ResidualWithDepth,
+                                                      ResidualWithVs30,
+                                                      ResidualWithDistance)
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
@@ -193,7 +195,7 @@ class ResidualsTestCase(unittest.TestCase):
                 for dist in DISTANCES.keys():
 
                     if dist == 'r_x':
-                        # as for residual_plots_test, we should confirm
+                        # as for residual_plotter_utils_test, we should confirm
                         # with scientific expertise that this is the case:
                         with self.assertRaises(AttributeError):
                             ResidualWithDistance(residuals, gsim, imt,

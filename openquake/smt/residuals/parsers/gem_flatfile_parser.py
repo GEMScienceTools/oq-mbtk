@@ -28,13 +28,22 @@ import pickle
 from math import sqrt
 from linecache import getline
 
-from openquake.smt.residuals.sm_database import (
-    GroundMotionDatabase, GroundMotionRecord, Earthquake, Magnitude, Rupture,
-    FocalMechanism, GCMTNodalPlanes, Component, RecordSite, RecordDistance)
+from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
+                                                 GroundMotionRecord,
+                                                 Earthquake,
+                                                 Magnitude,
+                                                 Rupture,
+                                                 FocalMechanism,
+                                                 GCMTNodalPlanes,
+                                                 Component,
+                                                 RecordSite,
+                                                 RecordDistance)
 from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.utils import (
-    MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14)
+from openquake.smt.utils import (MECHANISM_TYPE,
+                                 DIP_TYPE,
+                                 vs30_to_z1pt0_cy14,
+                                 vs30_to_z2pt5_cb14)
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
@@ -176,7 +185,6 @@ class GEMFlatfileParser(SMDatabaseReader):
         # ID and Name (name not in file so use ID again)
         eq_id = metadata["event_id"]
         eq_name = metadata["event_id"]
-        # Country
         # Date and time
         eq_datetime = pd.to_datetime(metadata["event_time"])
         # Latitude, longitude and depth
@@ -322,6 +330,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         Parses the site information
         """
+        # Basic site/station information
         network_code = metadata["network_code"].strip()
         station_code = metadata["station_code"].strip()
         site_id = "{:s}-{:s}".format(network_code, station_code)
@@ -329,17 +338,28 @@ class GEMFlatfileParser(SMDatabaseReader):
         site_lat = valid.latitude(metadata["st_latitude"])
         elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
 
+        # Vs30
         vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
-        vs30_measured = None # User should check selected records (many diff. 
-                             # flatfiles --> see vs30_meas_type column for if
-                             # vs30 if available was measured of inferred)
+        vs30_measured_flag = metadata["vs30_meas_type"]
+        if vs30_measured_flag == "measured":
+            vs30_measured = 1
+        else:
+            vs30_measured = 0 # Either inferred or unknown
         
+        # Make the site object
         site = RecordSite(site_id, station_code, station_code, site_lon,
                           site_lat, elevation, vs30, vs30_measured,
                           network_code=network_code, country=None)
-        if site.vs30:
+
+        # Take basin params from flatfile and calc from NGAWest2
+        # vs30 to basin param relationships if not available
+        site.z1pt0 = valid.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
+        site.z2pt5 = valid.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
+        if site.vs30 and not site.z1pt0:
             site.z1pt0 = vs30_to_z1pt0_cy14(vs30)
+        if site.vs30 and not site.z2pt5:
             site.z2pt5 = vs30_to_z2pt5_cb14(vs30)
+
         return site
 
     def _parse_waveform_data(self, metadata, wfid):
