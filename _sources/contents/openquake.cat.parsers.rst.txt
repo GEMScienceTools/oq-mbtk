@@ -1,0 +1,53 @@
+openquake.cat.parsers package
+=============================
+
+Submodules
+----------
+
+openquake.cat.parsers.base module
+---------------------------------
+
+.. automodule:: openquake.cat.parsers.base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.parsers.converters module
+---------------------------------------
+
+.. automodule:: openquake.cat.parsers.converters
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.parsers.gcmt\_ndk\_parser module
+----------------------------------------------
+
+.. automodule:: openquake.cat.parsers.gcmt_ndk_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.parsers.generic\_catalogue module
+-----------------------------------------------
+
+.. automodule:: openquake.cat.parsers.generic_catalogue
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.parsers.isf\_catalogue\_reader module
+---------------------------------------------------
+
+.. automodule:: openquake.cat.parsers.isf_catalogue_reader
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.cat.parsers
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,896 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial: Preparing site data for liquefaction analysis with the OQ-MBTK &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Tutorial: Calculating liquefaction probabilities from a single earthquake" href="liquefaction_analysis.html" />
+    <link rel="prev" title="Tutorials for using the OQ-MBTK for analysis of secondary perils" href="sep_tutorials.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            OpenQuake Model Building Toolkit Suite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ghm.html">Global Hazard Map (ghm) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../smt.html">Strong-Motion Tools (smt) module</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../sep.html">Secondary Perils Analysis using the OQ-MBTK</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sep_models.html">Liquefaction and Landslide models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../liquefaction_data_prep.html">Site characterization for probabilistic liquefaction analysis</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="sep_tutorials.html">Tutorials for using the OQ-MBTK for analysis of secondary perils</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Tutorial: Preparing site data for liquefaction analysis with the OQ-MBTK</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Joining-site-information-to-site-locations">Joining site information to site locations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="liquefaction_analysis.html">Tutorial: Calculating liquefaction probabilities from a single earthquake</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../wkf.html">SSC workflow (wkf) module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">OpenQuake Model Building Toolkit Suite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../sep.html">Secondary Perils Analysis using the OQ-MBTK</a></li>
+          <li class="breadcrumb-item"><a href="sep_tutorials.html">Tutorials for using the OQ-MBTK for analysis of secondary perils</a></li>
+      <li class="breadcrumb-item active">Tutorial: Preparing site data for liquefaction analysis with the OQ-MBTK</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/contents/sep_docs/tutorials/liq_site_prep.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Tutorial:-Preparing-site-data-for-liquefaction-analysis-with-the-OQ-MBTK">
+<h1>Tutorial: Preparing site data for liquefaction analysis with the OQ-MBTK<a class="headerlink" href="#Tutorial:-Preparing-site-data-for-liquefaction-analysis-with-the-OQ-MBTK" title="Link to this heading"></a></h1>
+<p>This tutorial for preparing site data for liquefaction analysis with the OQ-MBTK is a Jupyter notebook, which containts text as well as exectuable Python code. The notebook can be downloaded along with the sample data from <a class="reference external" href="https://github.com/GEMScienceTools/oq-mbtk/tree/master/tutorials/sep">here</a>.</p>
+<p>First, we need to import the Python modules that we’ll use.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+from openquake.sep.utils import(
+    sample_raster_at_points,
+    vs30_from_slope
+)
+</pre></div>
+</div>
+</div>
+<p>We will be working with two different liquefaction models in this analysis, the <a class="reference external" href="https://gemsciencetools.github.io/oq-mbtk/contents/sep_docs/sep_models.html#hazus">HAZUS model</a> by the US Federal Emergency Management Agency (FEMA), and a statistical model by Zhu et al (2015) that we’ll call the <a class="reference external" href="https://gemsciencetools.github.io/oq-mbtk/contents/sep_docs/sep_models.html#zhu-et-al-2015">Zhu model</a>.</p>
+<p>These models require different parameters to characterize the liquefaction susceptibility and probabilities at each site. The HAZUS model relies on a classification of each site into a liquefaction susceptibility category, based on geotechnical parameters at the site. The Zhu model relies on quantitative parameters that may, in principle, be estimated through processing of a digital elevation model.</p>
+<section id="Joining-site-information-to-site-locations">
+<h2>Joining site information to site locations<a class="headerlink" href="#Joining-site-information-to-site-locations" title="Link to this heading"></a></h2>
+<p>We’ll start with a basic CSV file with the longitude and latitude of the sites for our analysis as well as the geologic unit at that site. The geologic unit at each site has been added through a <a class="reference external" href="https://www.qgistutorials.com/en/docs/performing_spatial_joins.html">spatial join</a> of the site locations with a geologic map layer in QGIS.</p>
+<section id="HAZUS-site-parameters">
+<h3>HAZUS site parameters<a class="headerlink" href="#HAZUS-site-parameters" title="Link to this heading"></a></h3>
+<p>The HAZUS model requires that we have liquefaction susceptibility categories and groundwater depths for all sites. We’ll get these by mapping the geologic unit to these parameters, and the assigning the parameters to each site based on the geologic unit through a database join.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Read in the sites CSV with pandas
+sites = pd.read_csv(&#39;./tutorial_data/cali_sites_w_units.csv&#39;)
+
+sites.head()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>lon</th>
+      <th>lat</th>
+      <th>unit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-76.540896</td>
+      <td>3.350158</td>
+      <td>TQplp</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-76.544763</td>
+      <td>3.350644</td>
+      <td>TQplp</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-76.528079</td>
+      <td>3.346550</td>
+      <td>TQplp</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>-76.529860</td>
+      <td>3.356627</td>
+      <td>TQplp</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-76.527918</td>
+      <td>3.351601</td>
+      <td>TQplp</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10,10))
+
+plt.axis(&#39;equal&#39;)
+
+plt.scatter(sites.lon, sites.lat, s=5)
+
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_sep_docs_tutorials_liq_site_prep_8_0.png" src="../../../_images/contents_sep_docs_tutorials_liq_site_prep_8_0.png" />
+</div>
+</div>
+<p>Now, we’ll load another file that has the geologic descriptions for each unit as well as the HAZUS liquefaction susceptibility category for each unit. (The file also has the geotechnical parameters that are used for <a class="reference external" href="./landslide_site_prep.ipynb">landslide analysis</a> but are not used here.)</p>
+<p>The liquefaction susceptibility category has been estimated based on the geologic description for that unit, as well as the location of the unit with respect to water bodies (rivers and creeks) from inspection of the geologic map. The guidelines for this assignment can be found in the <a class="reference external" href="https://www.hsdl.org/?view&amp;did=1276">HAZUS Manual</a>, Section 4-21. If you are uncertain of how to proceed, please contact your local geologist or geotechnical engineer.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>unit_table = pd.read_csv(&#39;./tutorial_data/cali_units.csv&#39;)
+
+unit_table
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>unit</th>
+      <th>friction_mid</th>
+      <th>friction_unc</th>
+      <th>cohesion_mid</th>
+      <th>cohesion_unc</th>
+      <th>saturation</th>
+      <th>dry_density</th>
+      <th>uscs</th>
+      <th>type</th>
+      <th>description</th>
+      <th>susc_cat</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Q1</td>
+      <td>33.5</td>
+      <td>1.5</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.20</td>
+      <td>2091</td>
+      <td>SM</td>
+      <td>silty sands</td>
+      <td>old wetlands</td>
+      <td>m</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Q2</td>
+      <td>27.0</td>
+      <td>5.0</td>
+      <td>50000</td>
+      <td>0</td>
+      <td>0.40</td>
+      <td>1734</td>
+      <td>OL</td>
+      <td>organic silts</td>
+      <td>swamp deposits</td>
+      <td>h</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Q3</td>
+      <td>33.5</td>
+      <td>1.5</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.30</td>
+      <td>2091</td>
+      <td>SM</td>
+      <td>silty sands</td>
+      <td>river channel deposits</td>
+      <td>vh</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Q4</td>
+      <td>33.5</td>
+      <td>1.5</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.20</td>
+      <td>2091</td>
+      <td>SM</td>
+      <td>silty sands</td>
+      <td>levee deposits</td>
+      <td>h</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Q5</td>
+      <td>27.0</td>
+      <td>5.0</td>
+      <td>50000</td>
+      <td>0</td>
+      <td>0.25</td>
+      <td>1734</td>
+      <td>OL</td>
+      <td>organic silts</td>
+      <td>floodplain deposits</td>
+      <td>h</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Q6</td>
+      <td>38.0</td>
+      <td>6.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.30</td>
+      <td>2091</td>
+      <td>GP</td>
+      <td>poorly graded gravel w/ sand, no fines</td>
+      <td>active alluvial fill</td>
+      <td>vh</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Q7</td>
+      <td>32.5</td>
+      <td>1.5</td>
+      <td>62500</td>
+      <td>1250</td>
+      <td>0.25</td>
+      <td>1887</td>
+      <td>SM</td>
+      <td>loamy sand</td>
+      <td>point bar deposits</td>
+      <td>vh</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Cono</td>
+      <td>36.5</td>
+      <td>3.5</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.15</td>
+      <td>2142</td>
+      <td>GW</td>
+      <td>well graded gravel w/ sand, no fines</td>
+      <td>alluvial fan</td>
+      <td>l</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Qt</td>
+      <td>36.5</td>
+      <td>3.5</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.10</td>
+      <td>2142</td>
+      <td>GW</td>
+      <td>well graded gravel w/ sand, no fines</td>
+      <td>terrace deposits</td>
+      <td>m</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Qc</td>
+      <td>31.5</td>
+      <td>3.5</td>
+      <td>20000</td>
+      <td>0</td>
+      <td>0.15</td>
+      <td>1887</td>
+      <td>CG</td>
+      <td>clayey sandy gravels</td>
+      <td>colluvium</td>
+      <td>l</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Qd</td>
+      <td>36.5</td>
+      <td>3.5</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.10</td>
+      <td>2142</td>
+      <td>GW</td>
+      <td>well graded gravel w/ sand, no fines</td>
+      <td>old alluvium, terraces</td>
+      <td>l</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>QvT</td>
+      <td>36.5</td>
+      <td>3.5</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.10</td>
+      <td>2142</td>
+      <td>GW</td>
+      <td>well graded gravel w/ sand, no fines</td>
+      <td>T-derived Quaternary (terrace/coll./fan)</td>
+      <td>l</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>QvK</td>
+      <td>31.5</td>
+      <td>3.5</td>
+      <td>20000</td>
+      <td>0</td>
+      <td>0.10</td>
+      <td>1887</td>
+      <td>CG</td>
+      <td>clayey sandy gravels</td>
+      <td>K (diabase) derived Quaternary</td>
+      <td>m</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>Q/Kv</td>
+      <td>25.0</td>
+      <td>7.0</td>
+      <td>85000</td>
+      <td>15000</td>
+      <td>0.25</td>
+      <td>2091</td>
+      <td>CH</td>
+      <td>silty clay loam</td>
+      <td>K-derived saprolite</td>
+      <td>vl</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>TQplp</td>
+      <td>36.5</td>
+      <td>5.0</td>
+      <td>100000</td>
+      <td>0</td>
+      <td>0.10</td>
+      <td>2244</td>
+      <td>NaN</td>
+      <td>volcanic-sedimentary rocks</td>
+      <td>Popayán Fm.</td>
+      <td>n</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>Kv</td>
+      <td>33.5</td>
+      <td>5.0</td>
+      <td>1000000</td>
+      <td>0</td>
+      <td>0.10</td>
+      <td>3000</td>
+      <td>NaN</td>
+      <td>diabase</td>
+      <td>Cretaceous diabase</td>
+      <td>n</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>T</td>
+      <td>33.5</td>
+      <td>5.0</td>
+      <td>100000</td>
+      <td>0</td>
+      <td>0.10</td>
+      <td>2600</td>
+      <td>NaN</td>
+      <td>sedimentary rocks</td>
+      <td>coal-bearing sedimentary rocks</td>
+      <td>n</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>Let’s make a new table with just the information that we need, which is the liquefaction susceptibility category (called <code class="docutils literal notranslate"><span class="pre">susc_cat</span></code> in this table).</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>liq_susc_cat = unit_table[[&#39;unit&#39;, &#39;susc_cat&#39;]]
+
+# set the index to be the unit, for the join below.
+liq_susc_cat = liq_susc_cat.set_index(&#39;unit&#39;)
+</pre></div>
+</div>
+</div>
+<p>We’ll do a database join on the two tables using Pandas, which will let us take the attributes for each geologic unit and append them to each site based on the geologic unit for that site.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>sites = sites.join(liq_susc_cat, on=&#39;unit&#39;)
+
+sites.head()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>lon</th>
+      <th>lat</th>
+      <th>unit</th>
+      <th>susc_cat</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-76.540896</td>
+      <td>3.350158</td>
+      <td>TQplp</td>
+      <td>n</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-76.544763</td>
+      <td>3.350644</td>
+      <td>TQplp</td>
+      <td>n</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-76.528079</td>
+      <td>3.346550</td>
+      <td>TQplp</td>
+      <td>n</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>-76.529860</td>
+      <td>3.356627</td>
+      <td>TQplp</td>
+      <td>n</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-76.527918</td>
+      <td>3.351601</td>
+      <td>TQplp</td>
+      <td>n</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>We also need groundwater depths at each point. A high-quality analysis would use measured data or at least values interpolated from a map of the water table depth, but we don’t have that information available. Instead, we’ll just estimate values based on the geologic unit. These units are somewhat spatially arranged so that the groundwater depth probably correlates with the unit, but in the absence of any real data, it’s impossible to know how good of an approximation this is.</p>
+<p>We’ll use a simply Python dictionary with the unit as the key and estimates for groundwater depth in meters as the value.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>gwd_map = {&#39;Q1&#39;: 0.65,
+           &#39;Q2&#39;: 0.3,
+           &#39;Q3&#39;: 0.2,
+           &#39;Q4&#39;: 0.3,
+           &#39;Q5&#39;: 0.2,
+           &#39;Q6&#39;: 0.1,
+           &#39;Q7&#39;: 0.15,
+           &#39;Cono&#39;: 1.75,
+           &#39;Qt&#39;: 1.,
+           &#39;Qc&#39;: 2.,
+           &#39;Qd&#39;: 1.25,
+           &#39;QvT&#39;: 1.2,
+           &#39;QvK&#39;: 1.2,
+           &#39;Q/Kv&#39;: 2.5,
+           &#39;T&#39;: 3.,
+           &#39;TQplp&#39;: 3.,
+           &#39;Kv&#39;: 4.
+           }
+
+sites[&#39;gwd&#39;] = sites.apply(lambda x: gwd_map[x.unit], axis=1)
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>sites.head()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>lon</th>
+      <th>lat</th>
+      <th>unit</th>
+      <th>susc_cat</th>
+      <th>gwd</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-76.540896</td>
+      <td>3.350158</td>
+      <td>TQplp</td>
+      <td>n</td>
+      <td>3.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-76.544763</td>
+      <td>3.350644</td>
+      <td>TQplp</td>
+      <td>n</td>
+      <td>3.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-76.528079</td>
+      <td>3.346550</td>
+      <td>TQplp</td>
+      <td>n</td>
+      <td>3.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>-76.529860</td>
+      <td>3.356627</td>
+      <td>TQplp</td>
+      <td>n</td>
+      <td>3.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-76.527918</td>
+      <td>3.351601</td>
+      <td>TQplp</td>
+      <td>n</td>
+      <td>3.0</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10,10))
+
+plt.axis(&#39;equal&#39;)
+
+plt.scatter(sites.lon, sites.lat, s=5, c=sites.gwd)
+
+plt.colorbar(label=&#39;groundwater depth (m)&#39;)
+
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_sep_docs_tutorials_liq_site_prep_18_0.png" src="../../../_images/contents_sep_docs_tutorials_liq_site_prep_18_0.png" />
+</div>
+</div>
+</section>
+<section id="Zhu-site-parameters">
+<h3>Zhu site parameters<a class="headerlink" href="#Zhu-site-parameters" title="Link to this heading"></a></h3>
+<p>The Zhu model was developed to use parameters that can be derived from a digital elevation model.</p>
+<p>One of these, the Vs30 value, can be calculated from a DEM quite easily, as long as the DEM has a resolution around 1 km. First, the slope should be calculated (which is very easy to do in a GIS program), and then the Vs30 can be calculated from the slope using Wald and Allen’s methods <a class="reference external" href="https://pubs.geoscienceworld.org/ssa/bssa/article/97/5/1379/146527">(2007)</a>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">openquake.sep.utils</span></code> module has some functions to calculate Vs30 from slope, and to get the values of a raster at any point. We’ll use these functions to get the Vs30 values from a slope raster for each of our sites.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>slo = sample_raster_at_points(&#39;./tutorial_data/cali_slope_srtm_1km.tif&#39;, sites.lon, sites.lat)
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10,10))
+
+plt.axis(&#39;equal&#39;)
+
+plt.scatter(sites.lon, sites.lat, s=5, c=slo)
+
+plt.colorbar(label=&#39;slope (deg)&#39;)
+
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_sep_docs_tutorials_liq_site_prep_21_0.png" src="../../../_images/contents_sep_docs_tutorials_liq_site_prep_21_0.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>sites[&#39;vs30&#39;] = vs30_from_slope(slo, slope_unit=&#39;deg&#39;, tectonic_region_type=&#39;active&#39;)
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10,10))
+
+plt.axis(&#39;equal&#39;)
+
+plt.scatter(sites.lon, sites.lat, s=5, c=sites.vs30)
+
+plt.colorbar(label=&#39;Vs30&#39;)
+
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_sep_docs_tutorials_liq_site_prep_23_0.png" src="../../../_images/contents_sep_docs_tutorials_liq_site_prep_23_0.png" />
+</div>
+</div>
+<p>Next, we need to get values for the Compound Topographic Index (CTI). The process is the same, using a raster of CTI values. (Though it is possible to calculate the CTI from a DEM using algorithms implemented in many GIS packages, in practice the range of the resulting CTI values is incompatible with the CTI values that Zhu et al. used in their calibration. Therefore it is strongly advised to obtain CTI data from a dataset that has a global range of 0-20; we recommend <a class="reference external" href="https://www.hydrol-earth-syst-sci.net/19/91/2015/">Marthews et al.,
+2015</a>).</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>sites[&#39;cti&#39;] = sample_raster_at_points(&#39;./tutorial_data/ga2_cti_cali.tif&#39;, sites.lon, sites.lat)
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10,10))
+
+plt.axis(&#39;equal&#39;)
+
+plt.scatter(sites.lon, sites.lat, s=5, c=sites.cti)
+
+plt.colorbar(label=&#39;Vs30&#39;)
+
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_sep_docs_tutorials_liq_site_prep_26_0.png" src="../../../_images/contents_sep_docs_tutorials_liq_site_prep_26_0.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>## Saving and cleaning up
+
+That&#39;s basically it. We just need to save the file and then proceed to the [liquefaction analysis][liq_anal].
+
+[liq_anal]: ./liquefaction_analysis.ipynb
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>sites.to_csv(&#39;./tutorial_data/liquefaction_sites.csv&#39;, index=False)
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sep_tutorials.html" class="btn btn-neutral float-left" title="Tutorials for using the OQ-MBTK for analysis of secondary perils" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="liquefaction_analysis.html" class="btn btn-neutral float-right" title="Tutorial: Calculating liquefaction probabilities from a single earthquake" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-2022, GEM Hazard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
