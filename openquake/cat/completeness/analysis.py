@@ -328,7 +328,8 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
         # Compute occurrence
 
-        cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
+        cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw,
+                                                         return_empty=True)
         if len(cent_mag) == 0:
             continue
         wei_conf['reference_magnitude'] = min(ctab[:, 1])
