@@ -764,3 +764,31 @@ def get_earthquake_fault_distances(eqs, faults, dist: Optional[float] = None):
         eqs = eqs.loc[(eqs['fault_dist'] <= dist)]
 
     return eqs
+
+
+def get_on_fault_likelihood(
+    mag,
+    distance,
+    year,
+    ref_mag=6.0,
+    mag_decay_factor=1.5,
+    ref_year=2024.0,
+    time_decay_factor=0.02,
+    base_distance_decay=0.05,
+):
+
+    time_diff = ref_year - year
+
+    mag_diff = mag - ref_mag
+    if np.isscalar(mag):
+        if mag_diff < 0.0:
+            mag_diff = 0.0
+    else:
+        mag_diff[mag_diff < 0.0] = 0.0
+
+    decay_constant = base_distance_decay / (
+        1 + time_decay_factor * time_diff + mag_decay_factor * mag_diff
+    )
+    on_fault_likelihood = np.exp(-decay_constant * distance)
+
+    return on_fault_likelihood
