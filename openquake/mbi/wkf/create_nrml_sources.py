@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+import importlib
 import os
 import toml
 import pandas as pd
@@ -99,7 +99,7 @@ def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
 
             msr_str = model['msr'][trt]
             msrs = get_available_magnitude_scalerel()
-            msr = msrs[msr_str]()
+            msr = [msr.__class__.__name__ for msr in get_available_magnitude_scalerel()]
 
             key = 'rupture_aspect_ratio'
             rar = get_param(srcd, model['default'], key)
