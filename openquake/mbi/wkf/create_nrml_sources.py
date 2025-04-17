@@ -98,8 +98,11 @@ def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
             trt = srcd['tectonic_region_type']
 
             msr_str = model['msr'][trt]
-            msrs = get_available_magnitude_scalerel()
-            msr = [msr.__class__.__name__ for msr in get_available_magnitude_scalerel()]
+            msrs = [msr.__class__.__name__ for msr in get_available_magnitude_scalerel()]
+            if msr_str in msrs:
+                msr = msr_str
+            else:
+                print('unrecognised msr')
 
             key = 'rupture_aspect_ratio'
             rar = get_param(srcd, model['default'], key)
@@ -156,8 +159,11 @@ def write_as_set_point_sources(df, model, src_id, module, subzones,
         trt = srcd['tectonic_region_type']
 
         msr_str = model['msr'][trt]
-        msrs = get_available_magnitude_scalerel()
-        msr = msrs[msr_str]()
+        msrs = [msr.__class__.__name__ for msr in get_available_magnitude_scalerel()]
+        if msr_str in msrs:
+                msr = msr_str
+        else:
+            print('unrecognised msr')
 
         # Get mmax and set the MFD
         mmx = srcd['mmax']
@@ -219,7 +225,7 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
 
     # This is used to instantiate the MSR
     module = importlib.import_module('openquake.hazardlib.scalerel')
-    msr_dict = get_available_magnitude_scalerel
+    msr_dict = get_available_magnitude_scalerel()
 
     # Parsing config
     model = toml.load(fname_config)
