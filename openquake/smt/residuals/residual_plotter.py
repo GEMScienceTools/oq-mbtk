@@ -30,11 +30,14 @@ from cycler import cycler
 
 from openquake.hazardlib.imt import imt2tup
 from openquake.smt.utils_intensity_measures import _save_image
-from openquake.smt.residuals.gmpe_residuals import (
-    Residuals, SingleStationAnalysis)
-from openquake.smt.residuals.residual_plots import (
-    residuals_density_distribution, likelihood, residuals_with_magnitude,
-    residuals_with_vs30, residuals_with_distance, residuals_with_depth)
+from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
+from openquake.smt.residuals.residual_plotter_utils import (
+                                                    residuals_density_distribution,
+                                                    likelihood,
+                                                    residuals_with_magnitude,
+                                                    residuals_with_vs30,
+                                                    residuals_with_distance,
+                                                    residuals_with_depth)
 
 
 colors = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
@@ -127,7 +130,7 @@ class BaseResidualPlot(object):
         of the given GMPE (`self.gmpe`) and IMT (`self.imt`).
         Each key (residual type) needs then to be mapped to a residual data
         dict with at least the mandatory keys 'x', 'y' ,'xlabel' and 'ylabel'
-        (See :module:`openquake.smt.residuals.residual_plots` for a list of available
+        (See :module:`openquake.smt.residuals.residual_plotter_utils` for a list of available
         functions that return these kind of dict's and should be in principle
         be called here)
         """
@@ -413,7 +416,7 @@ class ResidualScatterPlot(BaseResidualPlot):
 
     def get_axis_ylim(self, res_data, res_type):
         y = res_data['y']
-        max_lim = ceil(np.max(np.fabs(y)))
+        max_lim = ceil(np.nanmax(np.fabs(y)))
         return -max_lim, max_lim
     
     def get_axis_title(self, res_data, res_type):
@@ -1140,21 +1143,21 @@ class ResidualWithSite(ResidualPlot):
             resid = deepcopy(site_resid)
             site_id = list(self.residuals.site_ids)[iloc]
             n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
-            data[site_id]["Total"] = (
-                resid.site_analysis[self.gmpe][self.imt]["Total"] /
-                resid.site_analysis[self.gmpe][self.imt]["Expected Total"])
-            if "Intra event" in\
-                resid.site_analysis[self.gmpe][self.imt].keys():
-                data[site_id]["Inter event"] = (
-                    resid.site_analysis[self.gmpe][self.imt]["Inter event"] /
-                    resid.site_analysis[self.gmpe][self.imt]["Expected Inter"])
-                data[site_id]["Intra event"] = (
-                    resid.site_analysis[self.gmpe][self.imt]["Intra event"] /
-                    resid.site_analysis[self.gmpe][self.imt]["Expected Intra"])
+            total_res = resid.site_analysis[self.gmpe][self.imt]["Total"]
+            total_exp = resid.site_analysis[self.gmpe][self.imt]["Expected total"]
+            data[site_id]["Total"] = total_res/total_exp
+            if "Intra event" in resid.site_analysis[self.gmpe][self.imt].keys():
+                inter_res = resid.site_analysis[self.gmpe][self.imt]["Inter event"] 
+                intra_res = resid.site_analysis[self.gmpe][self.imt]["Intra event"] 
+                inter_exp = resid.site_analysis[self.gmpe][self.imt]["Expected inter"]
+                intra_exp = resid.site_analysis[self.gmpe][self.imt]["Expected intra"]
+                keep = pd.notnull(inter_res) # Dropping NaN idxs will realign with exp
+                data[site_id]["Inter event"] = inter_res[keep]/inter_exp
+                data[site_id]["Intra event"] = intra_res/intra_exp
             data[site_id]["ID"] = list(self.residuals.site_ids)[iloc]
             data[site_id]["N"] = n_events
-            data[site_id]["x-val"] =(float(iloc) + 0.5) *\
-                np.ones_like(data[site_id]["Total"])
+            data[site_id]["x-val"] = (
+                float(iloc) + 0.5) * np.ones_like(data[site_id]["Total"])
         return data
 
 

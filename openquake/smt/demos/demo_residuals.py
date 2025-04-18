@@ -62,8 +62,8 @@ def get_residual_metadata(metadata_dir, gmms_imts, comp, out_dir):
     residuals = res.Residuals.from_toml(gmms_imts)
     residuals.compute_residuals(database, component=comp)
 
-    # Export the residuals to an excel (one sheet per EQ)
-    exp_dir = os.path.join(out_dir, f"residuals_hrz_comp_def_of_{comp}.xlsx")
+    # Export the residuals to a text file
+    exp_dir = os.path.join(out_dir, f"residuals_hrz_comp_def_of_{comp}.txt")
     residuals.export_residuals(exp_dir)
 
     # Export magnitude distance plot and geographical coverage of eqs/stations
