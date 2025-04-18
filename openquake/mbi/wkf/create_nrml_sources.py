@@ -40,7 +40,7 @@ def _get_hypocenter_distribution(data):
     return PMF(out)
 
 
-def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
+def write_as_multipoint_sources(df, model, src_id, subzones,
                                 model_subz, mmin, bwid, rms, tom, folder_out):
     """
     Write a set of point sources to NRML as a multi-point
@@ -51,9 +51,6 @@ def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
         A dictionary with the model representation
     :param src_id:
         A string with the ID of the source
-    :param msr_dict:
-        A dictionary created with  the `get_available_magnitude_scalerel`
-        function available in OQ Engine
     :param subzones:
         Must be false since we do not support this feature
     :param model_subz:
@@ -161,7 +158,7 @@ def write_as_set_point_sources(df, model, src_id, module, subzones,
         msr_str = model['msr'][trt]
         msrs = [msr.__class__.__name__ for msr in get_available_magnitude_scalerel()]
         if msr_str in msrs:
-                msr = msr_str
+            msr = msr_str
         else:
             print('unrecognised msr')
 
@@ -223,10 +220,6 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
         polygons_gdf = gpd.read_file(fname_subzone_shp)
         model_subz = toml.load(fname_subzone_config)
 
-    # This is used to instantiate the MSR
-    module = importlib.import_module('openquake.hazardlib.scalerel')
-    msr_dict = get_available_magnitude_scalerel()
-
     # Parsing config
     model = toml.load(fname_config)
 
@@ -255,11 +248,11 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
             df = gpd.sjoin(gdf, tdf, op='within')
 
         if as_multipoint:
-            write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
+            write_as_multipoint_sources(df, model, src_id, subzones,
                                         model_subz, mmin, bwid, rms, tom,
                                         folder_out)
         else:
-            write_as_set_point_sources(df, model, src_id, msr_dict, subzones,
+            write_as_set_point_sources(df, model, src_id, subzones,
                                        model_subz, mmin, bwid, rms, tom,
                                        folder_out)
 
