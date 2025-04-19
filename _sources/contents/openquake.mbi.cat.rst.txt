@@ -1,0 +1,85 @@
+openquake.mbi.cat package
+=========================
+
+Submodules
+----------
+
+openquake.mbi.cat.MFDs\_sample\_mag\_sigma module
+-------------------------------------------------
+
+.. automodule:: openquake.mbi.cat.MFDs_sample_mag_sigma
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.cat.check\_duplicates module
+------------------------------------------
+
+.. automodule:: openquake.mbi.cat.check_duplicates
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.cat.completeness\_analysis module
+-----------------------------------------------
+
+.. automodule:: openquake.mbi.cat.completeness_analysis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.cat.completeness\_generate module
+-----------------------------------------------
+
+.. automodule:: openquake.mbi.cat.completeness_generate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.cat.create\_csv module
+------------------------------------
+
+.. automodule:: openquake.mbi.cat.create_csv
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.cat.create\_figures module
+----------------------------------------
+
+.. automodule:: openquake.mbi.cat.create_figures
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.cat.homogenise module
+-----------------------------------
+
+.. automodule:: openquake.mbi.cat.homogenise
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.cat.merge module
+------------------------------
+
+.. automodule:: openquake.mbi.cat.merge
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.cat.purge\_earthquakes module
+-------------------------------------------
+
+.. automodule:: openquake.mbi.cat.purge_earthquakes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbi.cat
+   :members:
+   :undoc-members:
+   :show-inheritance:
