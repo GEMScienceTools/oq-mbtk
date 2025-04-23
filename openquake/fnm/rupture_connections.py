@@ -9,7 +9,7 @@ import igraph as ig
 import pandas as pd
 from numba import jit, njit, int16, int32
 from numba.typed import List
-from scipy.sparse import dok_array, issparse
+from scipy.sparse import dok_array, issparse, csr_matrix, isspmatrix_csr
 
 from openquake.hazardlib.geo import Point, Line
 from openquake.hazardlib.geo.geodetic import (
@@ -1107,7 +1107,7 @@ def sparse_to_adjlist(sparse_matrix):
     return adj_list
 
 
-def sparse_to_adj_dict(sparse_matrix):
+def sparse_to_adj_dict_old(sparse_matrix):
     """
     Converts a scipy.sparse adjacency matrix to an adjacency dictionary.
 
@@ -1130,6 +1130,37 @@ def sparse_to_adj_dict(sparse_matrix):
         adj_dict[i] = [int_type(neighbor) for neighbor in neighbors]
 
     return adj_dict
+
+
+def sparse_to_adj_dict(sparse_matrix: csr_matrix):
+    """
+    Converts a scipy.sparse adjacency matrix to an adjacency dictionary.
+
+    Parameters:
+    - sparse_matrix: The sparse adjacency matrix (csr_matrix).
+
+    Returns:
+    - adj_dict: A dictionary, where the keys are the vertices and the values are the neighbors.
+    """
+    logging.info("\tmaking adjacency dictionary")
+    if not isspmatrix_csr(sparse_matrix):
+        logging.info("\t\tconverting adj matrix to CSR")
+        mat = sparse_matrix.tocsr()
+    else:
+        mat = sparse_matrix
+
+    indptr = mat.indptr
+    indices = mat.indices
+    n = mat.shape[0]
+
+    # Choose an integer dtype for compactness (optional)
+    int_type = np.int16 if n < 32767 else np.int32
+
+    # Build the dict – still in Python, but with no expensive matrix ops
+    return {
+        i: indices[indptr[i] : indptr[i + 1]].astype(int_type).tolist()
+        for i in range(n)
+    }
 
 
 # def get_unique_vertex_sets(adj_list, max_vertices=10):
