@@ -94,8 +94,8 @@ class SetSubductionEarthquakes:
         self.log_fname = log_fname
         self.low_year = low_year
         self.upp_year = upp_year
-        self.low_mag = float(low_mag)
-        self.upp_mag = float(upp_mag)
+        self.low_mag = Decimal(low_mag)
+        self.upp_mag = Decimal(upp_mag)
 
     def classify(self, compute_distances, remove_from, surftype='ComplexFault'):
         """
