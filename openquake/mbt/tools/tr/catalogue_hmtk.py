@@ -3,6 +3,7 @@
 """
 
 import numpy as np
+from decimal import Decimal
 
 from rtree import index
 
@@ -60,7 +61,7 @@ def get_distances_from_surface(catalogue, surface):
             mesh = Mesh(catalogue.data['longitude'][i:upp],
                         catalogue.data['latitude'][i:upp],
                         catalogue.data['depth'][i:upp])
-            tmp = surface.get_min_distance(mesh)
+            tmp = Decimal(surface.get_min_distance(mesh))
             dsts[i:upp] = tmp
             i = upp 
     return dsts
