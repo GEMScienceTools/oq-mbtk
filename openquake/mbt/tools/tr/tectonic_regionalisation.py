@@ -3,6 +3,7 @@
 """
 import re
 import numpy as np
+from decimal import Decimal
 
 from rtree import index
 
@@ -47,7 +48,7 @@ def set_crustal(cat, crust, sidx, delta=0):
         iii = list(sidx.nearest((lon, lat, lon, lat), 1))
         #
         # Set the crustal earthquakes
-        if crust[iii[0], 2]+float(delta) > dep:
+        if Decimal(crust[iii[0], 2]+float(delta)) > Decimal(dep):
             treg[idx] = True
         data.append([dep, crust[iii[0], 2]])
     return treg, data
