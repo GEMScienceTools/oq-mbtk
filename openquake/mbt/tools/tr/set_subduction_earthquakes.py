@@ -30,6 +30,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import logging
+from decimal import Decimal
 
 from scipy.interpolate import RBFInterpolator
 from openquake.mbt.tools.tr.catalogue import get_catalogue
@@ -116,7 +117,7 @@ class SetSubductionEarthquakes:
         catalogue_filename = self.catalogue_filename
         lower_depth = self.lower_depth
         if lower_depth is None:
-            lower_depth = 400
+            lower_depth = 400.
 
         # Open log file and prepare the group
         print(f'Log filename: {self.log_fname}\n')
@@ -171,10 +172,12 @@ class SetSubductionEarthquakes:
         # Set variables used in griddata
         data = np.array([mesh.lons.flatten().T, mesh.lats.flatten().T]).T
         values = mesh.depths.flatten().T
-
+        depths_dec = [Decimal(x) for x in values] 
+        depths = np.array(depths_dec)
+        
         ddd = np.array([mesh.lons.flatten().T,
                         mesh.lats.flatten().T,
-                        mesh.depths.flatten()]).T
+                        depths]).T
         if self.label not in flog.keys():
             grp.create_dataset('mesh', data=ddd)
 
