@@ -87,8 +87,8 @@ class SetSubductionEarthquakes:
         self.treg_filename = treg_filename
         self.distance_folder = distance_folder
         self.edges_folder = edges_folder
-        self.distance_buffer_below = distance_buffer_below
-        self.distance_buffer_above = distance_buffer_above
+        self.distance_buffer_below = Decimal(distance_buffer_below)
+        self.distance_buffer_above = Decimal(distance_buffer_above)
         self.catalogue_filename = catalogue_filename
         self.lower_depth = lower_depth
         self.log_fname = log_fname
@@ -304,14 +304,14 @@ class SetSubductionEarthquakes:
         idxa = []
         for srfd, subd, dept in zip(surf_dist, sub_depths, cat.data['depth']):
             if np.isfinite(srfd) & np.isfinite(subd) & np.isfinite(dept):
-                if (float(srfd) < min(distance_buffer_below,
-                                      distance_buffer_above) * 0.90):
+                if (Decimal(srfd) < min(distance_buffer_below,
+                                      distance_buffer_above) * Decimal(0.90)):
                     idxa.append(True)
-                elif ((float(srfd) < distance_buffer_below) &
-                      (float(subd) < float(dept))):
+                elif ((Decimal(srfd) < distance_buffer_below) &
+                      (Decimal(subd) < Decimal(dept))):
                     idxa.append(True)
-                elif ((float(srfd) < distance_buffer_above) &
-                      (float(subd) >= float(dept))):
+                elif ((Decimal(srfd) < distance_buffer_above) &
+                      (Decimal(subd) >= Decimal(dept))):
                     idxa.append(True)
                 else:
                     idxa.append(False)
