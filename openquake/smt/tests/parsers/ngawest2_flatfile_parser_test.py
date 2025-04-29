@@ -23,8 +23,7 @@ import shutil
 import unittest
 import pickle
 
-from openquake.smt.residuals.parsers.ngawest2_flatfile_parser import \
-    NGAWest2FlatfileParser
+from openquake.smt.residuals.parsers.ngawest2_flatfile_parser import NGAWest2FlatfileParser
 
 
 # Defines the record IDs for the target data set

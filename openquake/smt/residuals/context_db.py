@@ -44,7 +44,8 @@ class ContextDB:
     """
     rupture_context_attrs = tuple(RuptureContext._slots_)  # noqa
     distances_context_attrs = tuple(DistancesContext._slots_)  # noqa
-    sites_context_attrs = ('vs30',
+    sites_context_attrs = ('custom_site_id',
+                           'vs30',
                            'lons',
                            'lats',
                            'depths',
@@ -71,12 +72,15 @@ class ContextDB:
             self.update_context(ctx, records, nodal_plane_index)
             if compute_observations:
                 observations = dic['Observations']
+                retained = dic["Retained"]
                 for imtx, values in observations.items():
                     values = self.get_observations(imtx, records, component)
+                    check = pd.notnull(values)
                     observations[imtx] = np.asarray(values, dtype=float)
+                    retained[imtx] = np.argwhere(check==True).flatten()
                 dic["Num. Sites"] = len(records)
             dic['Ctx'].sids = np.arange(len(records), dtype=np.uint32)
-            dic["Ctx"].st_mapping = self.get_st_code_mapping()
+            dic['Ctx'].custom_site_id = [sid.site.id for sid in records]
 
             yield dic
 
@@ -105,30 +109,6 @@ class ContextDB:
         dic = {'EventID': evt_id, 'Ctx': RuptureContext()}
         if imts is not None and len(imts):
             dic["Observations"] = {imt: [] for imt in imts}
+            dic["Retained"] = {imt: None for imt in imts}
             dic["Num. Sites"] = 0
         return dic
-    
-    def get_st_code_mapping(self):
-        """
-        Create a mapping of station id to lat, lon, elevation, vs30
-        so that we can reassign the station codes when exporting the
-        residual analysis results (see Residuals.get_residuals() in
-        gmpe_residuals.py)
-        """
-        mapping_all = {}
-        for rec in self.records:
-            mapping = {}
-            sid = rec.site.code
-            if sid in mapping_all:
-                continue
-            mapping["lon"] = rec.site.longitude
-            mapping["lat"] = rec.site.latitude
-            if pd.isnull(rec.site.altitude):
-                mapping["dep"] = 0.
-            else:
-                mapping["dep"] = rec.site.altitude
-            mapping["vs30"] = rec.site.vs30
-            mapping_all[sid] = mapping
-
-        return pd.DataFrame(mapping_all).transpose()
-    
