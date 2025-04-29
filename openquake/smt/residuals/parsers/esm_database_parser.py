@@ -30,8 +30,9 @@ from copy import copy
 
 from openquake.smt.utils import convert_accel_units, get_time_vector
 from openquake.smt.residuals.sm_database import *
-from openquake.smt.residuals.parsers.base_database_parser import (
-    SMDatabaseReader, SMTimeSeriesReader, SMSpectraReader)
+from openquake.smt.residuals.parsers.base_database_parser import (SMDatabaseReader,
+                                                                  SMTimeSeriesReader,
+                                                                  SMSpectraReader)
 
 FILE_INFO_KEY = ["Net", "Station", "Location", "Channel", "DM", "Date", "Time",
                  "Processing", "Waveform", "Format"]
