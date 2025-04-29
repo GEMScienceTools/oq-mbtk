@@ -31,7 +31,7 @@ import logging
 import configparser
 import h5py
 import pathlib
-from decimal import Decimal
+from decimal import Decimal, getcontext
 
 from openquake.baselib import sap
 from openquake.mbt.tools.tr.catalogue import get_catalogue
@@ -42,7 +42,7 @@ from openquake.mbt.tools.tr.set_subduction_earthquakes import \
     SetSubductionEarthquakes
 
 logging.basicConfig(filename='classify.log', level=logging.DEBUG)
-
+getcontext().prec = 6 
 
 def str_to_list(tmps):
     return re.split(',', re.sub('\\s*', '', re.sub('\\[|\\]', '', tmps)))

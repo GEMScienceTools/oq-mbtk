@@ -30,7 +30,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import logging
-from decimal import Decimal
+from decimal import Decimal, getcontext
 
 from scipy.interpolate import RBFInterpolator
 from openquake.mbt.tools.tr.catalogue import get_catalogue
@@ -43,7 +43,7 @@ from openquake.sub.utils import (_read_edges,
                                  plot_complex_surface)
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
-
+getcontext().prec = 6 
 # Buffer around the brounding box
 DELTA = 0.3
 
