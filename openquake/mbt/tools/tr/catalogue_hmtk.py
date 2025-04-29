@@ -3,7 +3,7 @@
 """
 
 import numpy as np
-from decimal import Decimal
+from decimal import Decimal, getcontext
 
 from rtree import index
 
@@ -11,7 +11,7 @@ from openquake.hazardlib.geo import Mesh
 
 import multiprocessing as mp
 
-
+getcontext().prec = 6 
 def aaa(data):
     return data[1].get_min_distance(data[0])
 

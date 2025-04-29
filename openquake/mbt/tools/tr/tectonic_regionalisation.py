@@ -3,10 +3,11 @@
 """
 import re
 import numpy as np
-from decimal import Decimal
+from decimal import Decimal, getcontext
 
 from rtree import index
 
+getcontext().prec = 6 
 
 def _generator_function(data):
     for i, dat in enumerate(data):
