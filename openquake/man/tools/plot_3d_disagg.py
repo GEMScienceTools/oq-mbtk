@@ -77,6 +77,156 @@ def get_info(calc_id, disagg_type, site_id):
     return ds, sites, ims, inv_t, poes, export_info, disagg_out
 
 
+def disagg_TLL(calc_id, disagg_type, site_id, azimuth):
+    """
+    Make 3D TRT-Lon-Lat disagg plots for each OQ PSHA calculation's
+    mean disaggregation results.
+    """
+    # Get the disagg info
+    ds, sites, ims, inv_t, poes, export_info, disagg_out =\
+         get_info(calc_id, disagg_type, site_id)
+    
+    # disagg bins for TRT-Lon-Lat
+    distance_bin_width = ds["coordinate_bin_width"].coordinate_bin_width
+    mag_bin_width = ds["oqparam"].mag_bin_width
+
+    for idx_site, site in enumerate(sites):
+
+        # Get the disagg csv (input)
+        disagg_file = f'TRT_Lon_Lat-mean-{idx_site}_{calc_id}.csv'
+        disagg_path = os.path.join(export_info['export_dir'], disagg_file)
+
+        # Set some params
+        Mbin = float(mag_bin_width)
+        Dbin = float(distance_bin_width)
+        cmap = cm.get_cmap('jet')
+
+        # Load the mean disagg results
+        df = pd.read_csv(disagg_path, header=1)
+        poes = np.unique(df['poe']).tolist()
+        poes.sort(reverse=True)
+
+        # Loop through IMTs and POEs
+        for imt_v in ims:
+            mode_vals, mean_vals = [], []
+            RP = []
+            apoe_norm = []
+            M, R, eps = [], [], []
+            for poe in poes:
+
+                # Get corresponding RP of the POE
+                RP.append(round(-inv_t / np.log(1 - poe)))
+
+                # Get data for this IMT and POE
+                data = {}
+                find = (df['poe'] == poe) & (df['imt'] == imt_v)
+                data['mag'] = df['mag'][find]
+                data['eps'] = df['eps'][find]
+                data['dist'] = df['dist'][find]
+                data['rate'] = (-np.log(1 - df['mean'][find]) / inv_t)
+
+                # Normalise the rates
+                apoe_norm.append(np.array(data['rate'] / data['rate'].sum()))
+                data['rate_norm'] = apoe_norm[-1]
+                data = pd.DataFrame(data)
+
+                # Compute the modal M-R-epsilon (highest contribution)
+                mode = data.sort_values(by='rate_norm', ascending=False)[0:1]
+                mode_vals.append([mode['mag'].values[0],
+                                mode['dist'].values[0],
+                                mode['eps'].values[0]])
+                
+                # Also compute the mean M-R-epsilon
+                mean_vals.append([np.sum(data['mag'] * data['rate_norm']),
+                                np.sum(data['dist'] * data['rate_norm']),
+                                np.sum(data['eps'] * data['rate_norm'])])
+
+                # Store the individual mags, dists and epsilons
+                M.append(np.array(data['mag']))
+                R.append(np.array(data['dist']))
+                eps.append(np.array(data['eps']))
+                
+            # Get number RPs, number of epsilons and min and max epsilon
+            n_RP = len(RP)
+            n_eps = len(np.unique(np.asarray(eps)))
+            min_eps = np.min(np.unique(np.asarray(eps)))  # Get range of colorbars 
+            max_eps = np.max(np.unique(np.asarray(eps)))  # so we can normalize
+
+            for i in range(n_RP):
+                
+                if mean_vals[i][0] == 0.0: # Skip if mean mag is 0 (no haz to disagg)
+                    continue
+
+                # Make plot
+                fig = pyplot.figure(figsize=(12, 12))
+                ax1 = fig.add_subplot(1, 1, 1, projection='3d')
+
+                # Scale each epsilon between 0 and 1 in the cmap
+                uni_eps = np.unique(np.asarray(eps))
+                rgba = [cmap((k - min_eps) / max_eps / 2) for k in (uni_eps)]
+                num_triads_M_R_eps = len(R[i])
+                Z = np.zeros(int(num_triads_M_R_eps / n_eps))
+
+                # Make the 3D histogram
+                for l in range(n_eps):
+                    idx = np.arange(l, num_triads_M_R_eps, step=n_eps)
+                    X = np.array(R[i][idx])
+                    Y = np.array(M[i][idx])
+                    X = X - Dbin/4 # Center on bin midpoints (works for Mbin = 0.5)
+                    Y = Y - Mbin/4 # Center on bin midpoints (works for Mbin = 0.5)
+                    dx = np.ones(int(num_triads_M_R_eps / n_eps)) * Dbin / 2
+                    dy = np.ones(int(num_triads_M_R_eps / n_eps)) * Mbin / 2
+                    dz = np.array(
+                        apoe_norm[i][np.arange(l, num_triads_M_R_eps, n_eps)]) * 100
+
+                    # Plot the bars
+                    mask = dz > 0
+                    if np.any(mask): # Only plot if M-R-e provides haz contribution
+                        ax1.bar3d(X[mask], Y[mask], Z[mask],
+                                dx[mask], dy[mask], dz[mask],
+                                color=rgba[l], alpha=1.0)
+                    Z += dz # Add height of each bar
+
+                # Axis
+                ax1.view_init(elev=23, azim=float(azimuth))
+                ax1.set_xlabel('R (km)')
+                ax1.set_ylabel('$M_{w}$')
+                ax1.set_zlabel('Hazard Contribution (%)')
+                ax1.zaxis.set_rotate_label(False)
+                ax1.set_zlabel('Hazard Contribution (%)', rotation=90)
+                ax1.zaxis._axinfo['juggled'] = (1, 2, 0)
+                xmin = np.array(R).min()-Dbin/2
+                xmax = np.array(R).max()+Dbin/2
+                ymin = np.array(M).min()-Mbin/2
+                ymax = np.array(M).max()+Mbin/2
+                xticks = np.round(np.arange(xmin, xmax, step=Dbin-1e-09),0)
+                yticks = np.arange(ymin, ymax, step=Mbin-1e-09)
+                ax1.set_xlim(xmin, xmax)
+                ax1.set_xticks(xticks)
+                ax1.set_ylim(ymin, ymax)
+                ax1.set_yticks(yticks)
+                pyplot.tight_layout()
+                            
+                # Legend for epsilon
+                leg_elem = []
+                for j in range(n_eps):
+                    label = f"\u03B5 = {np.unique(np.asarray(eps))[n_eps - j - 1]:.2f}"
+                    ptch = Patch(facecolor=rgba[n_eps - j - 1], label=label)      
+                    leg_elem.append(ptch)
+                fig.legend(handles=leg_elem, loc="lower center", borderaxespad=0.20,
+                        ncol=n_eps, fontsize=12)
+
+                # Title with RP + intensity type
+                rp_s = int(RP[i]+1)
+                fn = f'MRE_mean_site_{site.id}_{imt_v}_PSHA_{rp_s}_year_RP.png'
+
+                # Export
+                fname = os.path.join(disagg_out, fn)
+                pyplot.savefig(fname, format='png')
+                pyplot.close(fig)
+
+
+
 def disagg_MRE(calc_id, disagg_type, site_id, azimuth):
     """
     Make 3D M-R-e disagg plots for each OQ PSHA calculation's
@@ -259,11 +409,11 @@ def main(calc_id, disagg_type="Mag_Dist_Eps", site_id=None, azimuth=-45):
         disagg_MRE(calc_id, disagg_type, site_id, azimuth)
 
     elif disagg_type == "Mag_Lon_Lat":
-        raise NotImplementedError
+        raise NotImplementedError # Will need to add unit test
 
     else:
         assert disagg_type == "TRT_Lon_Lat"
-        raise NotImplementedError
+        raise NotImplementedError # Will need to add unit test
 
     print(f"Finished plotting {disagg_type} disagg. results for calc {calc_id}")
 
