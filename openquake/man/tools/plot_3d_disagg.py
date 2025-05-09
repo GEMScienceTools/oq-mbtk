@@ -38,13 +38,12 @@ warnings.filterwarnings("ignore")
 base = os.path.dirname(__file__)
 
 
-def disagg(calc_id, site_id, azimuth):
+def get_info(calc_id, disagg_type, site_id):
     """
-    Make 3D M-R-e disagg plots for each OQ PSHA calculation's
-    mean disaggregation results.
+    Return for given datastore the required disaggregation information
     """
     # Make an output folder
-    disagg_out = os.path.join(base, f'disagg_results_calc_{calc_id}')
+    disagg_out = os.path.join(base, f'disagg_{disagg_type}_calc_{calc_id}')
     if os.path.exists(disagg_out):
         shutil.rmtree(disagg_out)
     if not os.path.exists(disagg_out):
@@ -70,20 +69,32 @@ def disagg(calc_id, site_id, azimuth):
     
     # poes
     poes = ds["oqparam"].poes
-    
-    # disagg bins
-    distance_bin_width = ds["oqparam"].distance_bin_width
-    mag_bin_width = ds["oqparam"].mag_bin_width
 
     # Export the disagg into a tmp file
-    extras = {'exports': 'csv', 'export_dir': tempfile.mkdtemp()}
-    export('disagg-stats', dstore_name, **extras)
+    export_info = {'exports': 'csv', 'export_dir': tempfile.mkdtemp()}
+    export('disagg-stats', dstore_name, **export_info)
+
+    return ds, sites, ims, inv_t, poes, export_info, disagg_out
+
+
+def disagg_MRE(calc_id, disagg_type, site_id, azimuth):
+    """
+    Make 3D M-R-e disagg plots for each OQ PSHA calculation's
+    mean disaggregation results.
+    """
+    # Get the disagg info
+    ds, sites, ims, inv_t, poes, export_info, disagg_out =\
+         get_info(calc_id, disagg_type, site_id)
+    
+    # disagg bins for MRE
+    distance_bin_width = ds["oqparam"].distance_bin_width
+    mag_bin_width = ds["oqparam"].mag_bin_width
 
     for idx_site, site in enumerate(sites):
 
         # Get the disagg csv (input)
         disagg_file = f'Mag_Dist_Eps-mean-{idx_site}_{calc_id}.csv'
-        disagg_path = os.path.join(extras['export_dir'], disagg_file)
+        disagg_path = os.path.join(export_info['export_dir'], disagg_file)
 
         # Set some params
         Mbin = float(mag_bin_width)
@@ -215,31 +226,46 @@ def disagg(calc_id, site_id, azimuth):
                 pyplot.close(fig)
 
 
-def main(calc_id, site_id=None, azimuth=-45):
+def main(calc_id, disagg_type="Mag_Dist_Eps", site_id=None, azimuth=-45):
     """
-    Generate 3D plots for magnitude-distance-epsilon for all sites,
+    Generate 3D plots for given disaggregation type for all sites,
     all intensity measures and all return periods (from poes in
-    investigation time) in OQ job file.
+    investigation time) in OQ job file. By default plotting is done
+    for magnitude-distance-epsilon.
 
     The plots can be generated for a single site by specifying the
-    site_id (each site in the SiteCollection object has a site_ud).
+    site_id (each site in the SiteCollection object has a site_id).
 
     :param calc_id: Number of the calculation in your oqdata e.g. calc_451.hdf5
                     would be 451, so to run we would enter into the command line
                     "python mag_dist_eps_disagg_3d_plots.py 451".
+
+    :param disagg_type: Can be Mag_Dist_Eps, Mag_Lon_Lat or TRT_Lon_Lat
 
     :param site_id: ID of the site of interest. If None it generate the
                     plots for every site in SiteCollection.
 
     :param azimuth: Azimuth angle for the 3D plot
     """
-    if str(site_id).lower == "none":
+    assert disagg_type in ["Mag_Dist_Eps", "Mag_Lon_Lat", "TRT_Lon_Lat"]
+
+    if str(site_id).lower() == "none":
         site_id = None
+    
+    if str(azimuth).lower() == 'none':
+        azimuth = 45
 
-    disagg(calc_id, site_id, azimuth)
+    if disagg_type == "Mag_Dist_Eps":
+        disagg_MRE(calc_id, disagg_type, site_id, azimuth)
 
-    print(f"Finished plotting M-R-e disagg. results for calc {calc_id}")
+    elif disagg_type == "Mag_Lon_Lat":
+        raise NotImplementedError
 
+    else:
+        assert disagg_type == "TRT_Lon_Lat"
+        raise NotImplementedError
+
+    print(f"Finished plotting {disagg_type} disagg. results for calc {calc_id}")
 
 if __name__ == '__main__':
     sap.run(main)
