@@ -25,7 +25,7 @@ class TestPlotDisaggMRE(unittest.TestCase):
         """
         disagg_MRE(self.in_mre, "Mag_Dist_Eps", None, 45)
 
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.out_mre)
+    #@classmethod
+    #def tearDownClass(cls):
+     #   shutil.rmtree(cls.out_mre)
 
