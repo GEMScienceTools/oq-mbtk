@@ -8,7 +8,7 @@ from openquake.man.tools.plot_3d_disagg import disagg_MRE
 
 base = os.path.abspath("")
 
-in_mre = os.path.join(base, "data", "calc_763.hdf5")
+in_mre = "data/calc_763.hdf5"
 out_mre = os.path.join(base, "..", "..", "tools", "disagg_Mag_Dist_Eps_calc_763")
 
 
@@ -25,7 +25,6 @@ class TestPlotDisaggMRE(unittest.TestCase):
         """
         disagg_MRE(self.in_mre, "Mag_Dist_Eps", None, 45)
 
-    #@classmethod
-    #def tearDownClass(cls):
-     #   shutil.rmtree(cls.out_mre)
-
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.out_mre)
