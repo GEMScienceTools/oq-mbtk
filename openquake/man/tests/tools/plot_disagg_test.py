@@ -1,23 +1,19 @@
 import os
 import shutil
 import unittest
-import subprocess
 
 from openquake.man.tools.plot_3d_disagg import disagg_MRE
 
 
 base = os.path.dirname(__file__)
 
-in_mre = os.path.join(base, "data", "calc_763.hdf5")
-out_mre = os.path.join(base, "..", "..", "tools", "disagg_Mag_Dist_Eps_calc_763")
-
 
 class TestPlotDisaggMRE(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.in_mre = in_mre
-        cls.out_mre = out_mre
+        cls.in_mre = os.path.join(base, "data", "calc_763.hdf5")
+        cls.out_mre = os.path.join(base, "..", "..", "tools", "disagg_Mag_Dist_Eps_calc_763")
 
     def test_plot_disagg_MRE(self):
         """
