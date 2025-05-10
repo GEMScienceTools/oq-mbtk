@@ -184,8 +184,8 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                     mask = dz > 0
                     if np.any(mask): # Only plot if M-R-e provides haz contribution
                         ax1.bar3d(X[mask], Y[mask], Z[mask],
-                                dx[mask], dy[mask], dz[mask],
-                                color=rgba[l], alpha=1.0)
+                                  dx[mask], dy[mask], dz[mask],
+                                  color=rgba[l], alpha=1.0)
                     Z += dz # Add height of each bar
 
                 # Axis
@@ -230,9 +230,9 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
 def main(dstore_fname, disagg_type="Mag_Dist_Eps", site_id=None, azimuth=-45):
     """
     Generate 3D plots for given disaggregation type for all sites,
-    all intensity measures and all return periods (from poes in
-    investigation time) in OQ job file. By default plotting is done
-    for magnitude-distance-epsilon.
+    all intensity measures and all return periods (from poes in given
+    investigation time) in datastore's OQparam (i.e. job file inputs).
+    By default plotting is done for magnitude-distance-epsilon.
 
     The plots can be generated for a single site by specifying the
     site_id (each site in the SiteCollection object has a site_id).
@@ -242,7 +242,7 @@ def main(dstore_fname, disagg_type="Mag_Dist_Eps", site_id=None, azimuth=-45):
     :param disagg_type: Can be Mag_Dist_Eps, Mag_Lon_Lat or TRT_Lon_Lat
 
     :param site_id: ID of the site of interest. If None it generate the
-                    plots for every site in SiteCollection.
+                    plots for every site in SiteCollection of the calc.
 
     :param azimuth: Azimuth angle for the 3D plot
     """
@@ -258,11 +258,11 @@ def main(dstore_fname, disagg_type="Mag_Dist_Eps", site_id=None, azimuth=-45):
         disagg_MRE(dstore_fname, disagg_type, site_id, azimuth)
 
     elif disagg_type == "Mag_Lon_Lat":
-        raise NotImplementedError # Will need to add unit test
+        raise NotImplementedError # Will need to add unit test too
 
     else:
         assert disagg_type == "TRT_Lon_Lat"
-        raise NotImplementedError # Will need to add unit test
+        raise NotImplementedError # Will need to add unit test too
 
     print(f"Finished plotting {disagg_type} disagg. results for {dstore_fname}")
 
