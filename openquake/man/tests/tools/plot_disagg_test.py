@@ -6,9 +6,9 @@ import subprocess
 from openquake.man.tools.plot_3d_disagg import disagg_MRE
 
 
-base = os.path.abspath("")
+base = os.path.dirname(__file__)
 
-in_mre = "data/calc_763.hdf5"
+in_mre = os.path.join(base, "data", "calc_763.hdf5")
 out_mre = os.path.join(base, "..", "..", "tools", "disagg_Mag_Dist_Eps_calc_763")
 
 
