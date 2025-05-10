@@ -1,0 +1,85 @@
+openquake.fnm.inversion package
+===============================
+
+Submodules
+----------
+
+openquake.fnm.inversion.fastmath module
+---------------------------------------
+
+.. automodule:: openquake.fnm.inversion.fastmath
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.inversion.fermi\_importer module
+----------------------------------------------
+
+.. automodule:: openquake.fnm.inversion.fermi_importer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.inversion.osha\_importer module
+---------------------------------------------
+
+.. automodule:: openquake.fnm.inversion.osha_importer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.inversion.particle\_swarm\_optimization module
+------------------------------------------------------------
+
+.. automodule:: openquake.fnm.inversion.particle_swarm_optimization
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.inversion.plots module
+------------------------------------
+
+.. automodule:: openquake.fnm.inversion.plots
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.inversion.simulated\_annealing module
+---------------------------------------------------
+
+.. automodule:: openquake.fnm.inversion.simulated_annealing
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.inversion.soe\_builder module
+-------------------------------------------
+
+.. automodule:: openquake.fnm.inversion.soe_builder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.inversion.solver module
+-------------------------------------
+
+.. automodule:: openquake.fnm.inversion.solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.inversion.utils module
+------------------------------------
+
+.. automodule:: openquake.fnm.inversion.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.fnm.inversion
+   :members:
+   :undoc-members:
+   :show-inheritance:

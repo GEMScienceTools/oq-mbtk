@@ -1,0 +1,21 @@
+openquake.mbi.unc package
+=========================
+
+Submodules
+----------
+
+openquake.mbi.unc.apply\_mmax\_epri module
+------------------------------------------
+
+.. automodule:: openquake.mbi.unc.apply_mmax_epri
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbi.unc
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,21 @@
+openquake.ghm.rasters package
+=============================
+
+Submodules
+----------
+
+openquake.ghm.rasters.extract\_raster\_values module
+----------------------------------------------------
+
+.. automodule:: openquake.ghm.rasters.extract_raster_values
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.ghm.rasters
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,10 @@
+openquake.ghm.data.gis package
+==============================
+
+Module contents
+---------------
+
+.. automodule:: openquake.ghm.data.gis
+   :members:
+   :undoc-members:
+   :show-inheritance:
