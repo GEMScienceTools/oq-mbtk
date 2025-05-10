@@ -86,10 +86,6 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
     # Get the disagg info
     ds, sites, ims, inv_t, poes, export_info, disagg_out =\
          get_info(dstore_fname, calc_id, disagg_type, site_id)
-    
-    # disagg bins for MRE
-    distance_bin_width = ds["oqparam"].distance_bin_width
-    mag_bin_width = ds["oqparam"].mag_bin_width
 
     for idx_site, site in enumerate(sites):
 
@@ -98,8 +94,8 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
         disagg_path = os.path.join(export_info['export_dir'], disagg_file)
 
         # Set some params
-        Mbin = float(mag_bin_width)
-        Dbin = float(distance_bin_width)
+        Mbin = float(ds["oqparam"].mag_bin_width)
+        Dbin = float(ds["oqparam"].distance_bin_width)
         cmap = cm.get_cmap('jet')
 
         # Load the mean disagg results
@@ -134,13 +130,13 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                 # Compute the modal M-R-epsilon (highest contribution)
                 mode = data.sort_values(by='rate_norm', ascending=False)[0:1]
                 mode_vals.append([mode['mag'].values[0],
-                                mode['dist'].values[0],
-                                mode['eps'].values[0]])
+                                  mode['dist'].values[0],
+                                  mode['eps'].values[0]])
                 
                 # Also compute the mean M-R-epsilon
                 mean_vals.append([np.sum(data['mag'] * data['rate_norm']),
-                                np.sum(data['dist'] * data['rate_norm']),
-                                np.sum(data['eps'] * data['rate_norm'])])
+                                  np.sum(data['dist'] * data['rate_norm']),
+                                  np.sum(data['eps'] * data['rate_norm'])])
 
                 # Store the individual mags, dists and epsilons
                 M.append(np.array(data['mag']))
@@ -150,8 +146,8 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
             # Get number RPs, number of epsilons and min and max epsilon
             n_RP = len(RP)
             n_eps = len(np.unique(np.asarray(eps)))
-            min_eps = np.min(np.unique(np.asarray(eps)))  # Get range of colorbars 
-            max_eps = np.max(np.unique(np.asarray(eps)))  # so we can normalize
+            min_eps = np.min(np.unique(np.asarray(eps)))  # Needed for normalising 
+            max_eps = np.max(np.unique(np.asarray(eps)))  # by min and max epsilon
 
             for i in range(n_RP):
                 
@@ -258,11 +254,11 @@ def main(dstore_fname, disagg_type="Mag_Dist_Eps", site_id=None, azimuth=-45):
         disagg_MRE(dstore_fname, disagg_type, site_id, azimuth)
 
     elif disagg_type == "Mag_Lon_Lat":
-        raise NotImplementedError # Will need to add unit test too
+        raise NotImplementedError
 
     else:
         assert disagg_type == "TRT_Lon_Lat"
-        raise NotImplementedError # Will need to add unit test too
+        raise NotImplementedError
 
     print(f"Finished plotting {disagg_type} disagg. results for {dstore_fname}")
 
