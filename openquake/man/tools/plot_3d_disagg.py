@@ -79,7 +79,7 @@ def get_info(dstore_fname, calc_id, disagg_type, site_id):
 
 def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
     """
-    Make 3D M-R-e disagg plots for each OQ PSHA calculation's
+    Make 3D mag-dist-epsilon disagg plots for an OQ PSHA calculation's
     mean disaggregation results.
     """
     assert disagg_type == "Mag_Dist_Eps"
@@ -188,11 +188,10 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                 ax.set_yticks(np.arange(np.min(all_M), np.max(all_M) + Mbin, Mbin))
 
                 # Get a legend for the epsilon
-                lg_elements = [
+                lg_elm = [
                     Patch(facecolor=colors[n_eps - j - 1],
                           label=f"\u03B5 = {unique_eps[n_eps - j - 1]:.2f}") for j in range(n_eps)]
-                fig.legend(handles=lg_elements,
-                           loc="lower center", borderaxespad=0.20, ncol=n_eps, fontsize=12)
+                fig.legend(handles=lg_elm, loc="lower center", borderaxespad=0.20, ncol=n_eps, fontsize=12)
 
                 # Export
                 rp_str = int(RP[i] + 1)
@@ -204,7 +203,7 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
 
 def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
     """
-    Make 3D M-lon-lat disagg plots for each OQ PSHA calculation's
+    Make 3D mag-lon-lat disagg plots for an OQ PSHA calculation's
     mean disaggregation results.
     """
     assert disagg_type == "Mag_Lon_Lat"
@@ -311,11 +310,10 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                 ax.set_yticks(np.round(np.arange(np.min(all_lat), np.max(all_lat) + Cbin, Cbin), 1))
 
                 # Get a legend for the epsilon
-                lg_elements = [
+                lg_elm = [
                     Patch(facecolor=colors[n_mag - j - 1],
                           label='$M_{w}$' + f" = {unique_mag[n_mag - j - 1]:.2f}") for j in range(n_mag)]
-                fig.legend(handles=lg_elements,
-                           loc="lower center", borderaxespad=0.20, ncol=n_mag, fontsize=12)
+                fig.legend(handles=lg_elm,loc="lower center", borderaxespad=0.20, ncol=n_mag, fontsize=12)
 
                 # Export
                 rp_str = int(RP[i] + 1)
