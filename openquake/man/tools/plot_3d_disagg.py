@@ -134,7 +134,7 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                     np.sum(data['eps'] * data['rate_norm'])
                 ])
 
-                # Store
+                # Store per RP
                 all_M.append(data['mag'].values)
                 all_R.append(data['dist'].values)
                 all_eps.append(data['eps'].values)
@@ -170,8 +170,7 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                         ax.bar3d(
                             X[mask], Y[mask], Z[mask],
                             dx[mask], dy[mask], dz[mask],
-                            color=colors[eps_idx],
-                            alpha=1.0)
+                            color=colors[eps_idx], alpha=1.0)
                         
                     Z += dz
                 assert np.sum(Z) == 100.0
@@ -257,7 +256,7 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                     np.sum(data['mag'] * data['rate_norm'])
                 ])
 
-                # Store
+                # Store per RP
                 all_lon.append(data['lon'].values)
                 all_lat.append(data['lat'].values)
                 all_M.append(data['mag'].values)
@@ -293,8 +292,7 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                         ax.bar3d(
                             X[mask], Y[mask], Z[mask],
                             dx[mask], dy[mask], dz[mask],
-                            color=colors[mag_idx],
-                            alpha=1.0)
+                            color=colors[mag_idx], alpha=1.0)
                     Z += dz
                 assert np.sum(Z) == 100.0
 
