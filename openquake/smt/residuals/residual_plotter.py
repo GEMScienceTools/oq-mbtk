@@ -112,7 +112,7 @@ class BaseResidualPlot(object):
         """
         data = self.get_plot_data()
         fig = plt.figure(figsize=self.figure_size)
-        fig.set_tight_layout(True)
+        fig.set_layout_engine()
         nrow, ncol = self.get_subplots_rowcols()
         for tloc, res_type in enumerate(data.keys(), 1):
             self._residual_plot(plt.subplot(nrow, ncol, tloc), data[res_type],
@@ -558,17 +558,18 @@ def manage_imts(residuals):
     residuals.imts = pd.Series(residuals.imts).drop(idx_to_drop).values
 
     # Convert imt_list to array
-    x_with_imt = pd.DataFrame([imt2tup(imts) for imts in residuals.imts],
-                                columns=['imt_str', 'imt_float'])
-    for imt_idx in range(0, np.size(residuals.imts)):
-         if x_with_imt.imt_str[imt_idx] == 'PGA':
-            x_with_imt.imt_float.iloc[imt_idx] = 0
-    x_with_imt = x_with_imt.dropna() #Remove any non-acceleration imt
+    x_with_imt = pd.DataFrame(
+        [imt2tup(imts) for imts in residuals.imts], columns=['imt_str', 'imt_float']
+    )
+    for imt_idx in range(len(residuals.imts)):
+        if x_with_imt.loc[imt_idx, 'imt_str'] == 'PGA':
+            x_with_imt.loc[imt_idx, 'imt_float'] = 0
+
+    x_with_imt = x_with_imt.dropna()
 
     return residuals, preserve_imts, x_with_imt
 
-def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
-                                            dpi=200):
+def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Create a simple plot of loglikelihood values of Scherbaum et al. 2009
     (y-axis) versus spectral period (x-axis)
@@ -727,9 +728,9 @@ def llh_weights_table(residuals, filename):
     llh_weights = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
-            llh_weights[gmpe].loc[imt] = \
+            llh_weights.loc[imt, gmpe] = \
                 residuals.model_weights_with_imt[imt][gmpe]
-        llh_weights[gmpe].loc['Avg over imts'] = llh_weights[gmpe].mean()
+        llh_weights.loc['Avg over imts', gmpe] = llh_weights[gmpe].mean()
     llh_weights.columns = llh_weights.columns + ' LLH-based weights'
 
     # Export table
@@ -804,9 +805,9 @@ def stochastic_area_table(residuals, filename):
     sto_metrics = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
-            sto_metrics[gmpe].loc[imt] = \
+            sto_metrics.loc[imt, gmpe] = \
                 residuals.stoch_areas_wrt_imt[gmpe][imt]
-        sto_metrics[gmpe].loc['Avg over imts'] = sto_metrics[gmpe].mean()
+        sto_metrics.loc['Avg over imts', gmpe] = sto_metrics[gmpe].mean()
     sto_metrics.columns = sto_metrics.columns + ' stochastic area'
 
     # Export table
@@ -1076,7 +1077,7 @@ class ResidualWithSite(ResidualPlot):
         """
         data = self._get_site_data()
         fig = plt.figure(figsize=self.figure_size)
-        fig.set_tight_layout(True)
+        fig.set_layout_engine()
         if self.num_plots > 1:
             nrow = 3
             ncol = 1
@@ -1181,7 +1182,7 @@ class IntraEventResidualWithSite(ResidualPlot):
             phi_ss, phi_s2ss = self.residuals.station_residual_statistics()
             data = self._get_site_data()
             fig = plt.figure(figsize=self.figure_size)
-            fig.set_tight_layout(True)
+            fig.set_layout_engine()
             self._residual_plot(fig, data,phi_ss[self.gmpe][self.imt],
                                 phi_s2ss[self.gmpe][self.imt])
             _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)

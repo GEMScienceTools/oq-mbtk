@@ -505,8 +505,7 @@ class ESMFlatfileParser(SMDatabaseReader):
 
             # Add on the values
             values = spectra[key]["Values"]
-            spectra_dset = accel.create_dataset("damping_05", values.shape,
-                                                dtype="f")
+            spectra_dset = accel.create_dataset("damping_05", values.shape, dtype="f")
             spectra_dset[:] = np.copy(values)
             spectra_dset.attrs["Damping"] = 5.0
         # Add on the horizontal values
