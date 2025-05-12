@@ -107,7 +107,7 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
         for imt in ims:
             mode_vals, mean_vals = [], []
             RP, apoe_norm = [], []
-            all_M, all_R, all_eps = [], [], []
+            all_mag, all_R, all_eps = [], [], []
 
             for poe in poes:
                 RP.append(round(-inv_t / np.log(1 - poe)))
@@ -135,7 +135,7 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                 ])
 
                 # Store per RP
-                all_M.append(data['mag'].values)
+                all_mag.append(data['mag'].values)
                 all_R.append(data['dist'].values)
                 all_eps.append(data['eps'].values)
 
@@ -157,21 +157,19 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                 colors = [cmap((eps - min_eps) / (max_eps * 2)) for eps in unique_eps]
 
                 # Stack contributions over the unique epsilons
-                Z = np.zeros(len(all_R[i]) // n_eps)
+                unique_mre = df.drop_duplicates(subset=["mag", "dist", "eps"]).shape[0]
+                Z = np.zeros(unique_mre // n_eps)
                 for eps_idx, eps_val in enumerate(unique_eps):
-                    idx = np.arange(eps_idx, len(all_R[i]), n_eps)
+                    idx = np.arange(eps_idx, unique_mre, n_eps)
                     X = all_R[i][idx] - Dbin / 4
-                    Y = all_M[i][idx] - Mbin / 4
+                    Y = all_mag[i][idx] - Mbin / 4
                     dx = np.full_like(X, Dbin / 2)
                     dy = np.full_like(Y, Mbin / 2)
                     dz = apoe_norm[i][idx] * 100
                     mask = dz > 0
                     if np.any(mask):
-                        ax.bar3d(
-                            X[mask], Y[mask], Z[mask],
-                            dx[mask], dy[mask], dz[mask],
-                            color=colors[eps_idx], alpha=1.0)
-                        
+                        ax.bar3d(X[mask], Y[mask], Z[mask], dx[mask], dy[mask], dz[mask],
+                                 color=colors[eps_idx], alpha=1.0)
                     Z += dz
                 assert np.sum(Z) == 100.0
 
@@ -182,9 +180,9 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
 
                 # Axis params
                 ax.set_xlim(np.min(all_R) - Dbin / 2, np.max(all_R) + Dbin / 2)
-                ax.set_ylim(np.min(all_M) - Mbin / 2, np.max(all_M) + Mbin / 2)
+                ax.set_ylim(np.min(all_mag) - Mbin / 2, np.max(all_mag) + Mbin / 2)
                 ax.set_xticks(np.round(np.arange(np.min(all_R), np.max(all_R) + Dbin, Dbin), 0))
-                ax.set_yticks(np.arange(np.min(all_M), np.max(all_M) + Mbin, Mbin))
+                ax.set_yticks(np.arange(np.min(all_mag), np.max(all_mag) + Mbin, Mbin))
 
                 # Get a legend for the epsilon
                 lg_elm = [
@@ -216,7 +214,7 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
 
     for idx_site, site in enumerate(sites):
 
-        # Get a tmp file of the M-R-e disagg results
+        # Get a tmp file of the mag-lon-lat disagg results
         disagg_filename = f'Mag_Lon_Lat-mean-{idx_site}_{calc_id}.csv'
         disagg_path = os.path.join(export_info['export_dir'], disagg_filename)
 
@@ -229,7 +227,7 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
         for imt in ims:
             mode_vals, mean_vals = [], []
             RP, apoe_norm = [], []
-            all_M, all_lon, all_lat = [], [], []
+            all_mag, all_lon, all_lat = [], [], []
 
             for poe in poes:
                 RP.append(round(-inv_t / np.log(1 - poe)))
@@ -259,10 +257,10 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                 # Store per RP
                 all_lon.append(data['lon'].values)
                 all_lat.append(data['lat'].values)
-                all_M.append(data['mag'].values)
+                all_mag.append(data['mag'].values)
 
             # Magnitude range for normalization
-            mag_all = np.concatenate(all_M)
+            mag_all = np.concatenate(all_mag)
             unique_mag = np.unique(mag_all)
             n_RP, n_mag = len(RP), len(unique_mag)
             min_mag, max_mag = unique_mag.min(), unique_mag.max()
@@ -279,20 +277,19 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                 colors = [cmap((eq_mag - min_mag) / (max_mag * 2)) for eq_mag in unique_mag]
 
                 # Stack contributions over the unique mags
-                Z = np.zeros(len(all_lon[i]) // n_mag)
+                unique_mll = df.drop_duplicates(subset=["mag", "lon", "lat"]).shape[0]
+                Z = np.zeros(unique_mll // n_mag)
                 for mag_idx, mag_val in enumerate(unique_mag):
-                    idx = np.arange(mag_idx, len(all_lon[i]), n_mag)
-                    X = all_lon[i][idx] - Cbin / 4
-                    Y = all_lat[i][idx] - Cbin / 4
+                    idx = np.arange(mag_idx, unique_mll, n_mag)
+                    X = all_lon[i][idx] #- Cbin / 4
+                    Y = all_lat[i][idx] #- Cbin / 4
                     dx = np.full_like(X, Cbin / 2)
                     dy = np.full_like(Y, Cbin / 2)
                     dz = apoe_norm[i][idx] * 100
                     mask = dz > 0
                     if np.any(mask):
-                        ax.bar3d(
-                            X[mask], Y[mask], Z[mask],
-                            dx[mask], dy[mask], dz[mask],
-                            color=colors[mag_idx], alpha=1.0)
+                        ax.bar3d(X[mask], Y[mask], Z[mask], dx[mask], dy[mask], dz[mask],
+                                 color=colors[mag_idx], alpha=1.0)
                     Z += dz
                 assert np.sum(Z) == 100.0
 

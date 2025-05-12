@@ -350,8 +350,7 @@ def mgmpe_check(gmpe):
         for idx, par in enumerate(params):
             if idx > 1:
                 par = str(par)
-                if ('sigma_model' in par or 'site_term' in par or
-                    'basin_term' in par):
+                if ('sigma_model' in par or 'site_term' in par or 'basin_term' in par):
                     idx_params.append(idx)
                 if 'fix_total_sigma' in par:
                     idx_params.append(idx)

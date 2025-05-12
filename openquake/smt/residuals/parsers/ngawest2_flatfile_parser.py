@@ -161,11 +161,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         ngawest2_vert = pd.read_csv(ngaw2_vert)
         
         # Check RotD50 and vert records match
-        for rec in range(0,len(ngawest2)):
-            if ngawest2['Record Sequence Number'].iloc[rec]!=\
-                ngawest2_vert['Record Sequence Number'].iloc[rec]:
-                raise ValueError(
-                    "Records within horz. and vert. do not match.")
+        assert all(ngawest2['Record Sequence Number'] == ngawest2_vert['Record Sequence Number'])
         
         # Count initial size for printing number records removed during checks
         initial_ngaw2_size = len(ngawest2)
@@ -175,53 +171,43 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             subset = ['Earthquake Name','Station Name'], keep='last')
         ngawest2_vert = ngawest2_vert.drop_duplicates(
             subset = ['Earthquake Name', 'Station Name'], keep='last')
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.reset_index(drop=True)
 
         # Remove records if earthquake not identifiable using lat/lon metadata
         idx_m = ngawest2.loc[ngawest2['Hypocenter Latitude (deg)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
         idx_m = ngawest2.loc[ngawest2['Hypocenter Longitude (deg)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert=ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert=ngawest2_vert.drop(idx_m).reset_index(drop=True)
         idx_m = ngawest2.loc[ngawest2['Hypocenter Depth (km)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert=ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert=ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         # If year not provided assign '0000' to work with datetime
         idx_m = ngawest2.loc[ngawest2['YEAR']=='-999'].index
-        ngawest2['YEAR'].iloc[idx_m] = '0000'
+        ngawest2.loc[idx_m, 'YEAR'] = '0000'
                 
         # If month and day not provided assign '1010' to work with datetime
         idx_m = ngawest2.loc[ngawest2['MODY']=='-999'].index
-        ngawest2['MODY'].iloc[idx_m] = '000'
+        ngawest2.loc[idx_m,'MODY'] = '000'
         
         # If hours and minutes not provided assign '000' to work with datetime
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.reset_index(drop=True)
         for rec in range(0,len(ngawest2)):
-            if ngawest2['HRMN'][rec]==-999: ngawest2['HRMN'][rec]='000'
+            if ngawest2.loc[rec, 'HRMN']==-999: ngawest2.loc[rec, 'HRMN']='000'
         
         # Remove records with no acceleration values
         idx_m = ngawest2.loc[ngawest2['PGA (g)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
 
         # Remove records with no seismic moment to compute moment magnitude from
         idx_m = ngawest2.loc[ngawest2['Mo (dyne.cm)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert=ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert=ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         # Remove records with no valid station name
         idx_m = ngawest2.loc[ngawest2['Station Name']==-999].index
@@ -230,65 +216,54 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         
         # Remove records with no strike, dip or rake angle
         idx_m = ngawest2.loc[ngawest2['Strike (deg)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         idx_m = ngawest2.loc[ngawest2['Dip (deg)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         idx_m = ngawest2.loc[ngawest2['Rake Angle (deg)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         # Replace -999 ztor with empty
         ngawest2['Depth to Top Of Fault Rupture Model'].replace(-999, None)
         
         # Remove records with no epicentral distance
         idx_m = ngawest2.loc[ngawest2['EpiD (km)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         # If Joyner-Boore, rupture distance, Rx or Ry = -999 reassign as empty
         idx_m = ngawest2.loc[ngawest2['Joyner-Boore Dist. (km)']==-999].index
-        ngawest2['Joyner-Boore Dist. (km)'][idx_m] = None
+        ngawest2.loc[idx_m, 'Joyner-Boore Dist. (km)'] = None
     
         idx_m = ngawest2.loc[ngawest2['Campbell R Dist. (km)']==-999].index
-        ngawest2['Campbell R Dist. (km)'][idx_m] = None
+        ngawest2.loc[idx_m, 'Campbell R Dist. (km)'] = None
 
         idx_m = ngawest2.loc[ngawest2['Rx']==-999].index
-        ngawest2['Rx'][idx_m] = None
+        ngawest2.loc[idx_m, 'Rx'] = None
 
         idx_m = ngawest2.loc[ngawest2['Ry 2']==-999].index
-        ngawest2['Ry 2'][idx_m] = None
+        ngawest2.loc[idx_m, 'Ry 2'] = None
         
         # Remove records with no vs30)
         idx_m = ngawest2.loc[ngawest2['Vs30 (m/s) selected for analysis']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert=ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert=ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         # Compute Mw from seismic moment using Hanks and Kamori
         ngawest2['Earthquake Magnitude'] = (np.log10(ngawest2[
             'Mo (dyne.cm)']) - 16.05)/1.5 # From ngawest2 database rep. pp.122
         
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(
-            columns='index')
+        ngawest2 = ngawest2.reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.reset_index(drop=True)
       
         # Replace -999 in 'Owner' with unknown network code
         idx_m = ngawest2.loc[ngawest2['Owner']=='-999'].index
-        ngawest2['Owner'].iloc[idx_m]='NoNetworkCode'
-        ngawest2['Owner'] = 'NetworkCode-'+ngawest2['Owner'] 
+        ngawest2.loc[idx_m, 'Owner'] ='NoNetworkCode'
+        ngawest2['Owner'] = 'NetworkCode-' + ngawest2['Owner'] 
         
         # Interpolate between SA(T=4.4s) and SA(T=4.6s) for SA(T=4.5)
         ngawest2['T4.500S'] = (ngawest2['T4.400S']+ngawest2['T4.600S'])/2
