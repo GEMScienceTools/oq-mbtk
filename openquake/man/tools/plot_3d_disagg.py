@@ -91,24 +91,28 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
     ds, sites, ims, inv_t, poes, export_info, disagg_out =\
          get_info(dstore_fname, calc_id, disagg_type, site_id)
 
+    # Per site in the datastore
     for idx_site, site in enumerate(sites):
 
-        # Get a tmp file of the M-R-e disagg results
+        # Get a tmp file of the mag-lon-lat disagg results
         disagg_filename = f'Mag_Dist_Eps-mean-{idx_site}_{calc_id}.csv'
         disagg_path = os.path.join(export_info['export_dir'], disagg_filename)
 
-        # Load the tmp file
+        # Load the tmp
         df = pd.read_csv(disagg_path, header=1)
         poes = sorted(np.unique(df['poe']), reverse=True)
 
-        # Get binning params + color mapping
+        # Get binning params
         Mbin = float(ds["oqparam"].mag_bin_width)
         Dbin = float(ds["oqparam"].distance_bin_width)
+
+        # Per imt
         for imt in ims:
             mode_vals, mean_vals = [], []
             RP, apoe_norm = [], []
             all_mag, all_R, all_eps = [], [], []
 
+            # Per poe
             for poe in poes:
                 RP.append(round(-inv_t / np.log(1 - poe)))
                 mask_df = (df['poe'] == poe) & (df['imt'] == imt)
@@ -134,7 +138,6 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                     np.sum(data['eps'] * data['rate_norm'])
                 ])
 
-                # Store per RP
                 all_mag.append(data['mag'].values)
                 all_R.append(data['dist'].values)
                 all_eps.append(data['eps'].values)
@@ -145,34 +148,46 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
             n_RP, n_eps = len(RP), len(unique_eps)
             min_eps, max_eps = unique_eps.min(), unique_eps.max()
 
-            for i in range(n_RP):
-                if mean_vals[i][0] == 0.0: # Mag here is idx 0
-                    continue  # Skip if mag is zero (no contribution)
+            # Get colorbar for unique epsilons
+            colors = [cmap((eps - min_eps) / (max_eps - min_eps)) for eps in unique_eps]
 
-                # Make fig
+            for i in range(n_RP):
+                if mean_vals[i][0] == 0.0:
+                    continue  # Skip if mag is zero
+
                 fig = pyplot.figure(figsize=(12, 12))
                 ax = fig.add_subplot(1, 1, 1, projection='3d')
 
-                # Get colorbar for epsilon
-                colors = [cmap((eps - min_eps) / (max_eps * 2)) for eps in unique_eps]
-
-                # Stack contributions over the unique epsilons
-                unique_mre = df.drop_duplicates(subset=["mag", "dist", "eps"]).shape[0]
-                Z = np.zeros(unique_mre // n_eps)
+                # Loop over epsilons
+                stack_base = {}
                 for eps_idx, eps_val in enumerate(unique_eps):
-                    idx = np.arange(eps_idx, unique_mre, n_eps)
-                    X = all_R[i][idx] - Dbin / 4
-                    Y = all_mag[i][idx] - Mbin / 4
+
+                    # Filter by epsilon
+                    eps_mask = all_eps[i] == eps_val
+                    X = all_R[i][eps_mask] - Dbin / 4
+                    Y = all_mag[i][eps_mask] - Mbin / 4
+                    dz = apoe_norm[i][eps_mask] * 100
+
+                    if len(X) == 0:
+                        continue
+
                     dx = np.full_like(X, Dbin / 2)
                     dy = np.full_like(Y, Mbin / 2)
-                    dz = apoe_norm[i][idx] * 100
+
+                    Z = np.zeros_like(dz)
+                    for j in range(len(X)):
+                        key = (X[j], Y[j])
+                        Z[j] = stack_base.get(key, 0.0)
+                        stack_base[key] = Z[j] + dz[j]
+
                     mask = dz > 0
                     if np.any(mask):
                         ax.bar3d(X[mask], Y[mask], Z[mask], dx[mask], dy[mask], dz[mask],
-                                 color=colors[eps_idx], alpha=1.0)
-                    Z += dz
-                assert np.sum(Z) == 100.0
+                                color=colors[eps_idx], alpha=1.0)
 
+                assert abs(sum(stack_base.values()) - 100.0) < 1e-6
+
+                # Labels and azimuth
                 ax.view_init(elev=23, azim=float(azimuth))
                 ax.set_xlabel('R (km)', fontsize=12)
                 ax.set_ylabel('$M_{w}$', fontsize=12)
@@ -184,10 +199,10 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                 ax.set_xticks(np.round(np.arange(np.min(all_R), np.max(all_R) + Dbin, Dbin), 0))
                 ax.set_yticks(np.arange(np.min(all_mag), np.max(all_mag) + Mbin, Mbin))
 
-                # Get a legend for the epsilon
+                # Legend
                 lg_elm = [
                     Patch(facecolor=colors[n_eps - j - 1],
-                          label=f"\u03B5 = {unique_eps[n_eps - j - 1]:.2f}") for j in range(n_eps)]
+                        label=f"\u03B5 = {unique_eps[n_eps - j - 1]:.2f}") for j in range(n_eps)]
                 fig.legend(handles=lg_elm, loc="lower center", borderaxespad=0.20, ncol=n_eps, fontsize=12)
 
                 # Export
@@ -212,23 +227,27 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
     ds, sites, ims, inv_t, poes, export_info, disagg_out =\
          get_info(dstore_fname, calc_id, disagg_type, site_id)
 
+    # Per site in the datastore
     for idx_site, site in enumerate(sites):
 
         # Get a tmp file of the mag-lon-lat disagg results
         disagg_filename = f'Mag_Lon_Lat-mean-{idx_site}_{calc_id}.csv'
         disagg_path = os.path.join(export_info['export_dir'], disagg_filename)
 
-        # Load the tmp file
+        # Load the tmp
         df = pd.read_csv(disagg_path, header=1)
         poes = sorted(np.unique(df['poe']), reverse=True)
 
-        # Get binning params + color mapping
+        # Get binning params
         Cbin = float(ds["oqparam"].coordinate_bin_width)
+
+        # Per imt
         for imt in ims:
             mode_vals, mean_vals = [], []
             RP, apoe_norm = [], []
             all_mag, all_lon, all_lat = [], [], []
 
+            # Per poe
             for poe in poes:
                 RP.append(round(-inv_t / np.log(1 - poe)))
                 mask_df = (df['poe'] == poe) & (df['imt'] == imt)
@@ -254,7 +273,6 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                     np.sum(data['mag'] * data['rate_norm'])
                 ])
 
-                # Store per RP
                 all_lon.append(data['lon'].values)
                 all_lat.append(data['lat'].values)
                 all_mag.append(data['mag'].values)
@@ -265,34 +283,47 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
             n_RP, n_mag = len(RP), len(unique_mag)
             min_mag, max_mag = unique_mag.min(), unique_mag.max()
 
+            # Get colorbar for unique magnitudes
+            colors = [cmap((eq_mag - min_mag) / (max_mag - min_mag)) for eq_mag in unique_mag]
+
             for i in range(n_RP):
-                if mean_vals[i][2] == 0.0: # Mag here is idx 2
+                if mean_vals[i][2] == 0.0:
                     continue  # Skip if mag is zero (no contribution)
 
                 # Make figure
                 fig = pyplot.figure(figsize=(12, 12))
                 ax = fig.add_subplot(1, 1, 1, projection='3d')
 
-                # Get colorbar for magnitudes
-                colors = [cmap((eq_mag - min_mag) / (max_mag * 2)) for eq_mag in unique_mag]
-
-                # Stack contributions over the unique mags
-                unique_mll = df.drop_duplicates(subset=["mag", "lon", "lat"]).shape[0]
-                Z = np.zeros(unique_mll // n_mag)
+                # Loop over magnitudes
+                stack_base = {}
                 for mag_idx, mag_val in enumerate(unique_mag):
-                    idx = np.arange(mag_idx, unique_mll, n_mag)
-                    X = all_lon[i][idx] #- Cbin / 4
-                    Y = all_lat[i][idx] #- Cbin / 4
+
+                    # Filter by magnitude
+                    mag_mask = all_mag[i] == mag_val
+                    X = all_lon[i][mag_mask]
+                    Y = all_lat[i][mag_mask]
+                    dz = apoe_norm[i][mag_mask] * 100
+
+                    if len(X) == 0:
+                        continue
+
                     dx = np.full_like(X, Cbin / 2)
                     dy = np.full_like(Y, Cbin / 2)
-                    dz = apoe_norm[i][idx] * 100
+
+                    Z = np.zeros_like(dz)
+                    for j in range(len(X)):
+                        key = (X[j], Y[j])
+                        Z[j] = stack_base.get(key, 0.0)
+                        stack_base[key] = Z[j] + dz[j]
+
                     mask = dz > 0
                     if np.any(mask):
                         ax.bar3d(X[mask], Y[mask], Z[mask], dx[mask], dy[mask], dz[mask],
-                                 color=colors[mag_idx], alpha=1.0)
-                    Z += dz
-                assert np.sum(Z) == 100.0
+                                color=colors[mag_idx], alpha=1.0)
 
+                assert abs(sum(stack_base.values()) - 100.0) < 1e-6
+
+                # Labels and azimuth
                 ax.view_init(elev=23, azim=float(azimuth))
                 ax.set_xlabel('Longitude', fontsize=12)
                 ax.set_ylabel('Latitude', fontsize=12)
@@ -304,11 +335,11 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                 ax.set_xticks(np.round(np.arange(np.min(all_lon), np.max(all_lon) + Cbin, Cbin), 1))
                 ax.set_yticks(np.round(np.arange(np.min(all_lat), np.max(all_lat) + Cbin, Cbin), 1))
 
-                # Get a legend for the epsilon
+                # Legend
                 lg_elm = [
                     Patch(facecolor=colors[n_mag - j - 1],
-                          label='$M_{w}$' + f" = {unique_mag[n_mag - j - 1]:.2f}") for j in range(n_mag)]
-                fig.legend(handles=lg_elm,loc="lower center", borderaxespad=0.20, ncol=n_mag, fontsize=12)
+                        label='$M_{w}$' + f" = {unique_mag[n_mag - j - 1]:.2f}") for j in range(n_mag)]
+                fig.legend(handles=lg_elm, loc="lower center", borderaxespad=0.20, ncol=n_mag, fontsize=12)
 
                 # Export
                 rp_str = int(RP[i] + 1)
