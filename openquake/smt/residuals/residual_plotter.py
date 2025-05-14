@@ -112,7 +112,7 @@ class BaseResidualPlot(object):
         """
         data = self.get_plot_data()
         fig = plt.figure(figsize=self.figure_size)
-        fig.set_layout_engine()
+        fig.set_tight_layout(True)
         nrow, ncol = self.get_subplots_rowcols()
         for tloc, res_type in enumerate(data.keys(), 1):
             self._residual_plot(plt.subplot(nrow, ncol, tloc), data[res_type],
@@ -1077,7 +1077,7 @@ class ResidualWithSite(ResidualPlot):
         """
         data = self._get_site_data()
         fig = plt.figure(figsize=self.figure_size)
-        fig.set_layout_engine()
+        fig.set_tight_layout(True)
         if self.num_plots > 1:
             nrow = 3
             ncol = 1
@@ -1182,7 +1182,7 @@ class IntraEventResidualWithSite(ResidualPlot):
             phi_ss, phi_s2ss = self.residuals.station_residual_statistics()
             data = self._get_site_data()
             fig = plt.figure(figsize=self.figure_size)
-            fig.set_layout_engine()
+            fig.set_tight_layout(True)
             self._residual_plot(fig, data,phi_ss[self.gmpe][self.imt],
                                 phi_s2ss[self.gmpe][self.imt])
             _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)
