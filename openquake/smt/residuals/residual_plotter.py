@@ -728,8 +728,8 @@ def llh_weights_table(residuals, filename):
     llh_weights = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
-            llh_weights.loc[imt, gmpe] = \
-                residuals.model_weights_with_imt[imt][gmpe]
+            llh_weights.loc[
+                imt, gmpe] = residuals.model_weights_with_imt[imt][gmpe]
         llh_weights.loc['Avg over imts', gmpe] = llh_weights[gmpe].mean()
     llh_weights.columns = llh_weights.columns + ' LLH-based weights'
 
@@ -778,8 +778,8 @@ def edr_weights_table(residuals, filename):
     for imt in edr_per_gmpe_df.index:
         total_edr_per_imt = np.sum(edr_per_gmpe_df.loc[imt]**-1)
         for gmpe in edr_for_weights.keys():
-            gmpe_edr_weight[gmpe][imt] = \
-                edr_per_gmpe_df.loc[imt][gmpe]**-1/total_edr_per_imt
+            gmpe_edr_weight[gmpe][imt] = (
+                edr_per_gmpe_df.loc[imt][gmpe]**-1)/total_edr_per_imt
     gmpe_edr_weight_df = pd.DataFrame(gmpe_edr_weight)
     
     avg_edr_weight_per_gmpe = {}
@@ -805,8 +805,7 @@ def stochastic_area_table(residuals, filename):
     sto_metrics = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
-            sto_metrics.loc[imt, gmpe] = \
-                residuals.stoch_areas_wrt_imt[gmpe][imt]
+            sto_metrics.loc[imt, gmpe] = residuals.stoch_areas_wrt_imt[gmpe][imt]
         sto_metrics.loc['Avg over imts', gmpe] = sto_metrics[gmpe].mean()
     sto_metrics.columns = sto_metrics.columns + ' stochastic area'
 
@@ -827,7 +826,8 @@ def stochastic_area_weights_table(residuals, filename):
     for imt in sto_per_gmpe_df.index:
         total_sto_per_imt = np.sum(sto_per_gmpe_df.loc[imt]**-1)
         for gmpe in sto_for_weights.keys():
-            gmpe_sto_weight[gmpe][imt] = (sto_per_gmpe_df.loc[imt][gmpe]**-1)/total_sto_per_imt
+            gmpe_sto_weight[gmpe][imt] = (
+                sto_per_gmpe_df.loc[imt][gmpe]**-1)/total_sto_per_imt
     gmpe_sto_weight_df = pd.DataFrame(gmpe_sto_weight)
 
     # Get average per gmpe over the imts
@@ -836,8 +836,8 @@ def stochastic_area_weights_table(residuals, filename):
         avg_sto_weight_per_gmpe[gmpe] = np.mean(gmpe_sto_weight_df[gmpe])
 
     # Export table
-    avg_gmpe_sto_weights = \
-        pd.DataFrame(avg_sto_weight_per_gmpe, index=['Avg over imts'])
+    avg_gmpe_sto_weights = pd.DataFrame(
+        avg_sto_weight_per_gmpe, index=['Avg over imts'])
     final_sto_weights = pd.concat([gmpe_sto_weight_df, avg_gmpe_sto_weights])
     final_sto_weights.to_csv(filename, sep=',')
 
