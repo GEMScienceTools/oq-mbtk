@@ -46,7 +46,6 @@ class Configurations(object):
         config_file = toml.load(filename) 
         
         # Get general params
-        self.eshm20_region = config_file['general']['eshm20_region']
         self.minR = config_file['general']['minR']
         self.maxR = config_file['general']['maxR']
         self.dist_type = config_file['general']['dist_type']
@@ -61,6 +60,7 @@ class Configurations(object):
         up_or_down_dip = config_file['site_properties']['up_or_down_dip']
         self.up_or_down_dip = float(up_or_down_dip)
         self.z_basin_region = config_file['site_properties']['z_basin_region']
+        self.volc_ba = config_file['site_properties']['volc_back_arc']
         
         # Get rupture params
         self.trt = config_file['source_properties']['trt']
@@ -81,18 +81,15 @@ class Configurations(object):
             'custom_colors_list']
 
         # One set of magnitudes for use in trellis plots
-        self.trellis_and_rs_mag_list = config_file['source_properties'][
-            'trellis_and_rs_mag_list']
-        for idx, mag in enumerate(self.trellis_and_rs_mag_list):
-                self.trellis_and_rs_mag_list[idx] = float(
-                    self.trellis_and_rs_mag_list[idx])
+        self.trellis_and_rs_mag_list = np.array(config_file['source_properties'][
+            'trellis_and_rs_mag_list'])
         
         # Depths per magnitude for trellis plots
-        self.trellis_and_rs_depth_list = config_file['source_properties'][
-            'trellis_and_rs_depths']
-        for idx, depth in enumerate(self.trellis_and_rs_depth_list):
-            self.trellis_and_rs_depth_list[idx] = float(
-                self.trellis_and_rs_depth_list[idx])
+        self.trellis_and_rs_depth_list = np.array(config_file['source_properties'][
+            'trellis_and_rs_depths'])
+        
+        # Check same length mag and depth lists to avoid indexing error
+        assert len(self.trellis_and_rs_mag_list) == len(self.trellis_and_rs_depth_list)
         
         # Get mags for Sammons, Euclidean distance and clustering
         mag_params = config_file['mag_values_non_trellis_or_spectra_functions']
@@ -105,8 +102,8 @@ class Configurations(object):
         
         # Get imts
         self.imt_list = config_file['general']['imt_list']
-        for idx, imt in enumerate(self.imt_list):
-            self.imt_list[idx] = from_string(str(self.imt_list[idx]))  
+        for idx_imt, imt in enumerate(self.imt_list):
+            self.imt_list[idx_imt] = from_string(imt)  
         
         # Get models and model labels
         (self.gmpe_labels, self.gmpes_list, self.baseline_gmm) = get_gmpes(
@@ -129,22 +126,22 @@ def get_gmpes(config_file):
     gmpe_list = []
     config = copy.deepcopy(config_file)
     for key in config['models']:
-        value = get_model(key, config['models'])
-        gmpe_list.append(value.strip())
+        value = get_gmm(key, config['models'])
+        gmpe_list.append(value)
 
     # Get the baseline GMPE used to compute ratios of GMPEs with if required
     if 'ratios_baseline_gmm' in config_file.keys():
         if len(config_file['ratios_baseline_gmm']) > 1:
             raise ValueError('Only one baseline GMPE should be specified.')
         for key in config_file['ratios_baseline_gmm']:
-            baseline_gmm = get_model(key, config['ratios_baseline_gmm'])
+            baseline_gmm = get_gmm(key, config['ratios_baseline_gmm'])
     else:
         baseline_gmm = None
 
     return gmpe_labels, gmpe_list, baseline_gmm
 
 
-def get_model(key, models):
+def get_gmm(key, models):
     """
     Get the model from the toml in the string format required to create an
     OpenQuake gsim object from within mgmpe_check (in utils_gmpes.py)
@@ -158,6 +155,7 @@ def get_model(key, models):
     if len(models[key]):
         models[key].pop('style', None)
         value += '\n' + str(toml.dumps(models[key]))
+        
     return value.strip()
 
 

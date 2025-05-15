@@ -64,7 +64,7 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         observ_mtxs = pd.DataFrame(mtxs_medians[0])
         target_mtxs = pd.read_csv(
             os.path.join(base, 'target_medians_matrix.csv'))
-
+        
         # Check equal   
         np.testing.assert_allclose(
             np.array(observ_mtxs), np.array(target_mtxs), atol=ATOL)

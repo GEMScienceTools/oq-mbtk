@@ -132,12 +132,6 @@ We can specify the inputs to perform a residual analysis with as follows:
        [models.KothaEtAl2020ESHM20]
        sigma_mu_epsilon = 2.85697 
        c3_epsilon = 1.72    
-       eshm20_region = 4 # Note that only a single eshm20 region (eshm20 attenuation cluster) 
-                         # can be evaluated in a single residual analysis run in the SMT. If
-                         # multiple variants of the KothaEtAl2020ESHM20 GMPE are specified in
-                         # a single residuals toml the results of the last variant of the GMPE
-                         # will overwrite the others (and only the results of the last variant 
-                         # in the toml will be plotted too). This bug will be fixed.
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
@@ -255,7 +249,7 @@ Plot of residual distributions versus spectral acceleration:
 Single Station Residual Analysis
 ********************************
 
-1. The smt's residual module also offers capabilities for performing single station residual analysis (SSA).
+1. The smt's residuals module also offers capabilities for performing single station residual analysis (SSA).
 
    We can first specify a threshold for the minimum number of records each site must have to be considered in the SSA:
    
@@ -419,7 +413,7 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
 Comparing GMPEs
 ***************
 
-1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals (within the residual module as demonstrated above), we can also evaluate GMPEs with respect to the predicted ground-motion for a given earthquake scenario. The tools for comparing GMPEs are found within the Comparison module.
+1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals (within the residuals module as demonstrated above), we can also evaluate GMPEs with respect to the predicted ground-motion for a given earthquake scenario. The tools for comparing GMPEs are found within the Comparison module.
     
     .. code-block:: ini
     
@@ -442,16 +436,16 @@ Comparing GMPEs
         maxR = 300 # max dist. used in trellis, Sammon's, clusters and matrix plots
         dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
-        eshm20_region = 2 # for ESHM20 GMPE regionalisation
         Nstd = 1 # num. of standard deviations to sample from sigma distribution
         
         # Specify site properties
         [site_properties]
         vs30 = 800
-        Z1 = -999
-        Z25 = -999
+        Z1 = -999   # If -999 compute from Vs30 using Chiou and Youngs (2014) relationship
+        Z25 = -999  # If -999 compute from Vs30 using Campbell and Bozorgnia (2014) relationship
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
         z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
+        volc_back_arc = false # true or false
         
         # Characterise earthquake for the region of interest as finite rupture
         [source_properties]
@@ -681,22 +675,26 @@ Comparing GMPEs
         sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # Scale sigma by imt-dependent factor
         
         [models.10-ModifiableGMPE]
+        gmpe = 'AtkinsonMacias2009'
+        site_term = 'BA08SiteTerm' # use BA08 site term
+
+        [models.11-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'CY14SiteTerm' # Use CY14 site term
-        
-        [models.11-ModifiableGMPE]
+
+        [models.12-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'NRCan15SiteTerm' # Use NRCan15 non-linear site term
         
-        [models.12-ModifiableGMPE]
+        [models.13-ModifiableGMPE]
         gmpe = 'BooreEtAl2014'
         site_term = 'NRCan15SiteTermLinear' # Use NRCan15 linear site term
 
-        [models.13-ModifiableGMPE]
+        [models.14-ModifiableGMPE]
         gmpe = 'AtkinsonMacias2009'
         basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
 
-        [models.14-ModifiableGMPE]
+        [models.15-ModifiableGMPE]
         gmpe = 'KuehnEtAl2020SInter'
         basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
             

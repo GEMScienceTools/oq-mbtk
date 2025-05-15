@@ -30,7 +30,6 @@ from openquake.smt.residuals.parsers.esm_ws_flatfile_parser import \
 
 
 # Defines the record IDs for the target data set
-
 TARGET_IDS = [
 "EMSC_20161029_0000147_AC_DURR_0.0",
 "EMSC_20160831_0000112_AC_DURR_0.0",

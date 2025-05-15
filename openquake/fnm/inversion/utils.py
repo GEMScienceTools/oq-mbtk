@@ -42,6 +42,13 @@ import scipy.sparse as ssp
 from shapely.ops import transform
 from shapely.geometry import Point, LineString
 
+try:
+    from ipdb import set_trace
+
+    breakpoint = set_trace
+except ImportError:
+    breakpoint = breakpoint
+
 from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.mfd import (
     TruncatedGRMFD,
@@ -335,7 +342,7 @@ def make_fault_mfd(
     return mfd
 
 
-def get_mag_counts(rups, key="M"):
+def get_mag_counts(rups, key="M", cumulative=False):
     mag_counts = {}
     for rup in rups:
         if rup[key] in mag_counts:
@@ -343,10 +350,13 @@ def get_mag_counts(rups, key="M"):
         else:
             mag_counts[rup[key]] = 1
 
+    if cumulative is True:
+        mag_counts = make_cumulative(mag_counts)
+
     return mag_counts
 
 
-def get_mfd_occurrence_rates(mfd, mag_decimals=1):
+def get_mfd_occurrence_rates(mfd, mag_decimals=1, cumulative=False):
     if hasattr(mfd, "get_annual_occurrence_rates"):
         mfd_occ_rates = {
             np.round(r[0], mag_decimals): r[1]
@@ -359,7 +369,22 @@ def get_mfd_occurrence_rates(mfd, mag_decimals=1):
     else:
         raise ValueError("mfd must be a dictionary or an MFD object")
 
+    if cumulative is True:
+        mfd_occ_rates = make_cumulative(mfd_occ_rates)
+
     return mfd_occ_rates
+
+
+def make_cumulative(dic):
+    rev_keys = sorted(dic.keys(), reverse=True)
+    new_dic = {}
+    current = 0
+    for k in rev_keys:
+        current += dic[k]
+        new_dic[k] = current
+
+    new_dic = {k: new_dic[k] for k in dic.keys()}
+    return new_dic
 
 
 def set_single_fault_rupture_rates_by_mfd(

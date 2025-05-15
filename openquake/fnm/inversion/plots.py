@@ -42,7 +42,7 @@ def plot_mfd_accumdict(mfd, **kwargs):
 
     plt.semilogy(mags, vals, **kwargs)
     plt.xlabel("M")
-    plt.ylabel("Cumulative number of ruptures")
+    plt.ylabel("Annual Rate of Exceedance")
 
 
 def plot_mfd(mfd, errs=False, label=None, **kwargs):

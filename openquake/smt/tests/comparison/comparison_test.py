@@ -20,7 +20,9 @@ Tests for execution of comparison module
 """
 import os
 import shutil
+import pickle
 import unittest
+import numpy as np
 import pandas as pd
 
 from openquake.smt.comparison import compare_gmpes as comp
@@ -64,8 +66,8 @@ class ComparisonTestCase(unittest.TestCase):
             base,'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
             base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.expected_att_curves = os.path.join(base,'exp_att_curves.csv')
-        self.expected_spectra = os.path.join(base, 'exp_spectra.csv')
+        self.exp_curves = os.path.join(base,'exp_curves.pkl')
+        self.exp_spectra = os.path.join(base, 'exp_spectra.pkl')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -94,8 +96,8 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Check for target depths (other functions use arrays from these
         # depths)
-        self.assertEqual(config.trellis_and_rs_depth_list,
-                         TARGET_TRELLIS_DEPTHS)
+        np.testing.assert_allclose(config.trellis_and_rs_depth_list,
+                                   TARGET_TRELLIS_DEPTHS)
 
         # Check for target Rmin
         self.assertEqual(config.minR, TARGET_RMIN)
@@ -107,14 +109,12 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.Nstd, TARGET_NSTD)
 
         # Check for target trellis mag
-        for mag in range(0, len(config.trellis_and_rs_mag_list)):
-            self.assertEqual(config.trellis_and_rs_mag_list[mag],
-                             TARGET_TRELLIS_MAG[mag])
+        np.testing.assert_allclose(
+            config.trellis_and_rs_mag_list, TARGET_TRELLIS_MAG)
 
         # Check for target mag
-        for mag in range(0, len(config.mag_list)):
-            self.assertAlmostEqual(config.mag_list[mag],
-                                   TARGET_MAG[mag], delta=0.000001)
+        np.testing.assert_allclose(config.mag_list, TARGET_MAG)
+
         # Check for target gmpes
         for gmpe in range(0, len(config.gmpes_list)):
             self.assertEqual(config.gmpes_list[gmpe], TARGET_GMPES[gmpe])
@@ -248,18 +248,24 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Trellis plots
         att_curves = plot_trellis_util(config, self.output_directory)
+        if not os.path.exists(self.exp_curves):
+            with open(self.exp_curves, 'wb') as f: # Write if doesn't exist
+                pickle.dump(att_curves, f, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(self.exp_curves, 'rb') as f:
+                exp_curves = pd.DataFrame(pickle.load(f))
         obs_curves = pd.DataFrame(att_curves)
-        exp_curves = pd.read_csv(
-            self.expected_att_curves, index_col='Unnamed: 0')
-        assert str(obs_curves) == str(exp_curves)
+        pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
 
         # Spectra plots
         gmc_lts = plot_spectra_util(
             config, self.output_directory, obs_spectra=None)
+        if not os.path.exists(self.exp_spectra):
+            with open(self.exp_spectra, 'wb') as f: # Write if doesn't exist
+                pickle.dump(gmc_lts, f, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(self.exp_spectra, 'rb') as f:
+                exp_spectra = pd.DataFrame(pickle.load(f))
         obs_spectra = pd.DataFrame(gmc_lts)
-        exp_spectra = pd.read_csv(
-            self.expected_spectra, index_col='Unnamed: 0')
-        assert str(obs_spectra) == str(exp_spectra)
+        pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
         
         # Specify target files
         target_file_trellis = (os.path.join(

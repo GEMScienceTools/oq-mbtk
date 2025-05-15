@@ -24,7 +24,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
 from copy import deepcopy
-from collections import OrderedDict
 from math import floor, ceil
 from scipy.stats import norm
 from cycler import cycler
@@ -109,7 +108,6 @@ class BaseResidualPlot(object):
         Creates a residual plot
         """
         data = self.get_plot_data()
-        # statistics = self.residuals.get_residual_statistics()
         fig = plt.figure(figsize=self.figure_size)
         fig.set_tight_layout(True)
         nrow, ncol = self.get_subplots_rowcols()
@@ -351,8 +349,8 @@ class LikelihoodPlot(ResidualHistogramPlot):
 
     def _assertion_check(self, residuals):
         """
-            overrides the super-class method by asserting we are dealing
-            with a `Likelihood` class
+        Overrides the super-class method by asserting we are dealing
+        with a `Likelihood` class
         """
         assert isinstance(residuals, Residuals)
 
@@ -467,8 +465,8 @@ class ResidualScatterPlot(BaseResidualPlot):
 
 class ResidualWithDistance(ResidualScatterPlot):
     """
-        Class to create a simple scatter plot of strong ground motion
-        residuals (y-axis) versus distance (x-axis)
+    Class to create a simple scatter plot of strong ground motion
+    residuals (y-axis) versus distance (x-axis)
     """
 
     def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
@@ -508,8 +506,8 @@ class ResidualWithDistance(ResidualScatterPlot):
 
 class ResidualWithMagnitude(ResidualScatterPlot):
     """
-        Class to create a simple scatter plot of strong ground motion
-        residuals (y-axis) versus magnitude (x-axis)
+    Class to create a simple scatter plot of strong ground motion
+    residuals (y-axis) versus magnitude (x-axis)
     """
 
     def get_plot_data(self):
@@ -518,8 +516,8 @@ class ResidualWithMagnitude(ResidualScatterPlot):
 
 class ResidualWithDepth(ResidualScatterPlot):
     """
-        Class to create a simple scatter plot of strong ground motion
-        residuals (y-axis) versus depth (x-axis)
+    Class to create a simple scatter plot of strong ground motion
+    residuals (y-axis) versus depth (x-axis)
     """
 
     def get_plot_data(self):
@@ -788,7 +786,7 @@ def edr_weights_table(residuals, filename):
         edr_per_gmpe[gmpe] = edr_for_weights[gmpe]['EDR']
     edr_per_gmpe_df = pd.DataFrame(edr_per_gmpe)
 
-    gmpe_edr_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
+    gmpe_edr_weight = {gmpe: {} for gmpe in residuals.gmpe_list}
     for imt in edr_per_gmpe_df.index:
         total_edr_per_imt = np.sum(edr_per_gmpe_df.loc[imt]**-1)
         for gmpe in edr_for_weights.keys():
@@ -840,7 +838,7 @@ def stochastic_area_weights_table(residuals, filename):
     sto_per_gmpe_df = pd.DataFrame(sto_for_weights)
 
     # Get weights
-    gmpe_sto_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
+    gmpe_sto_weight = {gmpe: {} for gmpe in residuals.gmpe_list}
     for imt in sto_per_gmpe_df.index:
         total_sto_per_imt = np.sum(sto_per_gmpe_df.loc[imt]**-1)
         for gmpe in sto_for_weights.keys():
@@ -878,12 +876,13 @@ def get_res_dists(residuals):
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
             mean_sigma_total[gmpe, imt] = res_statistics[gmpe, imt]['Total']
-            if ('Inter event' in residuals.residuals[gmpe][imt] and
+            if ('Inter event' in residuals.residuals[gmpe][imt]
+                and
                 'Intra event' in residuals.residuals[gmpe][imt]):
-                mean_sigma_inter[gmpe, imt] = \
-                    res_statistics[gmpe, imt]['Inter event']
-                mean_sigma_intra[gmpe, imt] = \
-                    res_statistics[gmpe, imt]['Intra event']
+                mean_sigma_inter[
+                    gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
+                mean_sigma_intra[
+                    gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
             else:
                 mean_sigma_inter[gmpe, imt] = dummy_values
                 mean_sigma_intra[gmpe, imt] = dummy_values
@@ -988,8 +987,8 @@ def plot_res_pdf(ax, res_dists, dist_comp, gmpe, imts_to_plot, marker_input,
                      marker=marker_input)
     return ax
 
-def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
-                                      filetype='jpg', dpi=200):
+def plot_residual_pdf_with_spectral_period(
+        residuals, filename, filetype='jpg', dpi=200):
     """
     Create a simple plot of residual mean and residual sigma for each GMPE 
     (y-axis) versus spectral period (x-axis)
@@ -1091,7 +1090,6 @@ class ResidualWithSite(ResidualPlot):
         """
         Create residuals with site plot
         """
-        phi_ss, phi_s2ss = self.residuals.residual_statistics()
         data = self._get_site_data()
         fig = plt.figure(figsize=self.figure_size)
         fig.set_tight_layout(True)
@@ -1124,12 +1122,12 @@ class ResidualWithSite(ResidualPlot):
         for site_id in self.residuals.site_ids:
             xvals = np.hstack([xvals, data[site_id]["x-val"]])
             yvals = np.hstack([yvals, data[site_id][res_type]])
-        ax.plot(xvals,
-                yvals,
-                'o',
-                markeredgecolor='Gray',
-                markerfacecolor='LightSteelBlue',
-                zorder=-32)
+        ax.scatter(xvals,
+                   yvals,
+                   marker='o',
+                   edgecolor='Gray',
+                   facecolor='LightSteelBlue',
+                   zorder=-32)
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         xtick_label = self.residuals.site_ids
@@ -1156,8 +1154,7 @@ class ResidualWithSite(ResidualPlot):
         """
         Get single station analysis residual data
         """
-        data = OrderedDict([(site_id, {}) 
-                            for site_id in self.residuals.site_ids])
+        data = {site_id: {} for site_id in self.residuals.site_ids}
         for iloc, site_resid in enumerate(self.residuals.site_residuals):
             resid = deepcopy(site_resid)
             site_id = list(self.residuals.site_ids)[iloc]
@@ -1197,7 +1194,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         """
         if 'Intra event' in self.residuals.site_residuals[0].residuals[self.gmpe][
                 self.imt]:
-            phi_ss, phi_s2ss = self.residuals.residual_statistics()
+            phi_ss, phi_s2ss = self.residuals.station_residual_statistics()
             data = self._get_site_data()
             fig = plt.figure(figsize=self.figure_size)
             fig.set_tight_layout(True)
@@ -1314,8 +1311,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         Get site-specific intra-event residual components for each site for the
         GMPEs and intensity measures considered
         """
-        data = OrderedDict([(site_id, {}) 
-                            for site_id in self.residuals.site_ids])
+        data = {site_id: {} for site_id in self.residuals.site_ids}
         for iloc, site_resid in enumerate(self.residuals.site_residuals):
             resid = deepcopy(site_resid)
             site_id = list(self.residuals.site_ids)[iloc]

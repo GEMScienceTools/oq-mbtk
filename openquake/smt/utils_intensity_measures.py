@@ -16,25 +16,156 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-General Class for extracting Ground Motion Intensity Measures (IMs) from a set of acceleration time series
+General Class for extracting Ground Motion Intensity
+Measures (IMs) from a set of acceleration time series
 """
 import numpy as np
 from math import pi
 from scipy.integrate import cumtrapz
 from scipy import constants
 import matplotlib.pyplot as plt
+
 import openquake.smt.utils_response_spectrum as rsp
 from openquake.smt import utils_smoothing
-from openquake.smt.utils_strong_motion import (
-    get_time_vector, _save_image, nextpow2)
+from openquake.smt.utils_strong_motion import (get_time_vector,
+                                               _save_image, nextpow2)
 
 RESP_METHOD = {
     'Newmark-Beta': rsp.NewmarkBeta,
-    'Nigam-Jennings': rsp.NigamJennings
-}
-
+    'Nigam-Jennings': rsp.NigamJennings}
 
 SMOOTHING = {"KonnoOhmachi": utils_smoothing.KonnoOhmachi}
+
+
+def get_geometric_mean(fle):
+    """
+    Retreive geometric mean of the ground motions from the file - or calculate
+    if not in file
+    :param fle:
+        Instance of :class: h5py.File
+    """
+    if not ("H" in fle["IMS"].keys()):
+        # Horizontal spectra not in record
+        x_spc = fle["IMS/X/Spectra/Response/Acceleration/damping_05"].values
+        y_spc = fle["IMS/Y/Spectra/Response/Acceleration/damping_05"].values
+        periods = fle["IMS/X/Spectra/Response/Periods"].values
+        sa_geom = np.sqrt(x_spc * y_spc)
+    else:
+        if "Geometric" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
+            sa_geom = fle[
+                "IMS/H/Spectra/Response/Acceleration/Geometric/damping_05"
+                ].value
+            periods = fle["IMS/X/Spectra/Periods"].values
+            idx = periods > 0
+            periods = periods[idx]
+            sa_geom = sa_geom[idx]
+        else:
+            # Horizontal spectra not in record
+            x_spc = fle[
+                "IMS/X/Spectra/Response/Acceleration/damping_05"].values
+            y_spc = fle[
+                "IMS/Y/Spectra/Response/Acceleration/damping_05"].values
+            sa_geom = np.sqrt(x_spc * y_spc)
+    return sa_geom
+
+
+def get_gmrotd50(fle):
+    """
+    Retrieve GMRotD50 from file (or calculate if not present)
+    :param fle:
+        Instance of :class: h5py.File
+    """
+    periods = fle["IMS/X/Spectra/Response/Periods"].value
+    periods = periods[periods > 0.]
+    if not ("H" in fle["IMS"].keys()):
+        # Horizontal spectra not in record
+        x_acc = ["Time Series/X/Original Record/Acceleration"]
+        y_acc = ["Time Series/Y/Original Record/Acceleration"]
+        sa_gmrotd50 = gmrotdpp(x_acc.value, x_acc.attrs["Time-step"],
+                               y_acc.value, y_acc.attrs["Time-step"],
+                               periods, 50.0)[0]
+                               
+    else:
+        if "GMRotD50" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
+            sa_gmrotd50 = fle[
+                "IMS/H/Spectra/Response/Acceleration/GMRotD50/damping_05"
+                ].value
+        else:
+            # Horizontal spectra not in record - calculate from time series
+            x_acc = ["Time Series/X/Original Record/Acceleration"]
+            y_acc = ["Time Series/Y/Original Record/Acceleration"]
+            sa_gmrotd50 = gmrotdpp(x_acc.value, x_acc.attrs["Time-step"],
+                                   y_acc.value, y_acc.attrs["Time-step"],
+                                   periods, 50.0)[0]
+    return sa_gmrotd50
+
+
+def get_gmroti50(fle):
+    """
+    Retreive GMRotI50 from file (or calculate if not present)
+    :param fle:
+        Instance of :class: h5py.File
+    """
+    periods = fle["IMS/X/Spectra/Response/Periods"].value
+    periods = periods[periods > 0.]
+    if not ("H" in fle["IMS"].keys()):
+        # Horizontal spectra not in record
+        x_acc = ["Time Series/X/Original Record/Acceleration"]
+        y_acc = ["Time Series/Y/Original Record/Acceleration"]
+        sa_gmroti50 = gmrotipp(x_acc.value, x_acc.attrs["Time-step"],
+                               y_acc.value, y_acc.attrs["Time-step"],
+                               periods, 50.0)[0]
+    else:
+        if "GMRotI50" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
+            sa_gmroti50 = fle[
+                "IMS/H/Spectra/Response/Acceleration/GMRotI50/damping_05"
+                ].value
+        else:
+            # Horizontal spectra not in record - calculate from time series
+            x_acc = ["Time Series/X/Original Record/Acceleration"]
+            y_acc = ["Time Series/Y/Original Record/Acceleration"]
+            sa_gmroti50 = gmrotipp(x_acc.value, x_acc.attrs["Time-step"],
+                                   y_acc.value, y_acc.attrs["Time-step"],
+                                   periods, 50.0)
+            # Assumes Psuedo-spectral acceleration
+            sa_gmroti50 = sa_gmroti50["PSA"]
+    return sa_gmroti50
+
+
+def get_rotd50(fle):
+    """
+    Retrieve RotD50 from file (or calculate if not present)
+    :param fle:
+        Instance of :class: h5py.File
+    """
+    periods = fle["IMS/H/Spectra/Response/Periods"].value
+    periods = periods[periods > 0.]
+    if not ("H" in fle["IMS"].keys()):
+        # Horizontal spectra not in record
+        x_acc = ["Time Series/X/Original Record/Acceleration"]
+        y_acc = ["Time Series/Y/Original Record/Acceleration"]
+        sa_rotd50 = rotdpp(x_acc.value, x_acc.attrs["Time-step"],
+                           y_acc.value, y_acc.attrs["Time-step"],
+                           periods, 50.0)[0]
+    else:
+        if "RotD50" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
+            sa_rotd50 = fle[
+                "IMS/H/Spectra/Response/Acceleration/RotD50/damping_05"
+                ].value
+        else:
+            # Horizontal spectra not in record - calculate from time series
+            x_acc = ["Time Series/X/Original Record/Acceleration"]
+            y_acc = ["Time Series/Y/Original Record/Acceleration"]
+            sa_rotd50 = rotdpp(x_acc.value, x_acc.attrs["Time-step"],
+                               y_acc.value, y_acc.attrs["Time-step"],
+                               periods, 50.0)[0]
+    return sa_rotd50
+
+
+SPECTRA_FROM_FILE = {"Geometric": get_geometric_mean,
+                     "GMRotI50": get_gmroti50,
+                     "GMRotD50": get_gmrotd50,
+                     "RotD50": get_rotd50}
 
 
 def get_peak_measures(time_step, acceleration, get_vel=False, get_disp=False):

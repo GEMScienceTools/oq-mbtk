@@ -28,7 +28,6 @@ import h5py
 import pickle
 from math import sqrt
 from linecache import getline
-from collections import OrderedDict
 
 from openquake.smt.residuals.sm_database import (
     GroundMotionDatabase, GroundMotionRecord, Earthquake, Magnitude, Rupture,
@@ -160,8 +159,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         eq_name = metadata["event_id"]
         # Country
         # Date and time
-        eq_datetime = valid.date_time(metadata["event_time"],
-                                     "%Y-%m-%d %H:%M:%S")
+        eq_datetime = pd.to_datetime(metadata["event_time"])
         # Latitude, longitude and depth
         eq_lat = valid.latitude(metadata["ev_latitude"])
         eq_lon = valid.longitude(metadata["ev_longitude"])
@@ -490,8 +488,8 @@ class GEMFlatfileParser(SMDatabaseReader):
             spectra.append((imt, {"Periods": periods[idx],
                                    "Values": values[idx]}))
         # Add on the as-recorded geometric mean
-        spectra = OrderedDict(spectra)
-        scalars = OrderedDict(scalars)
+        spectra = dict(spectra)
+        scalars = dict(scalars)
         spectra["Geometric"] = {
             "Values": np.sqrt(spectra["U"]["Values"] *
                               spectra["V"]["Values"]),
