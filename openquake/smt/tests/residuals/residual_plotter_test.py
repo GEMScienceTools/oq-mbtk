@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Test suite for the `residual_plotter` module responsible for plotting the
-plot data defined in `residual_plots`
+plot data defined in `residual_plotter_utils`
 """
 import os
 import shutil
@@ -25,13 +25,15 @@ import unittest
 import pickle
 from unittest.mock import patch, MagicMock
 
-from openquake.smt.residuals.parsers.esm_url_flatfile_parser import \
-    ESMFlatfileParserURL
+from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
-from openquake.smt.residuals.residual_plotter import (
-    ResidualPlot, LikelihoodPlot, ResidualWithMagnitude, ResidualWithDepth,
-    ResidualWithVs30, ResidualWithDistance)
 from openquake.smt.residuals.sm_database_visualiser import DISTANCES
+from openquake.smt.residuals.residual_plotter import (ResidualPlot,
+                                                      LikelihoodPlot,
+                                                      ResidualWithMagnitude,
+                                                      ResidualWithDepth,
+                                                      ResidualWithVs30,
+                                                      ResidualWithDistance)
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
@@ -75,7 +77,7 @@ class ResidualsTestCase(unittest.TestCase):
         mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
 
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
 
         for gsim in self.gsims:
             for imt in self.imts:
@@ -109,7 +111,7 @@ class ResidualsTestCase(unittest.TestCase):
         mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
 
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
 
         for gsim in self.gsims:
             for imt in self.imts:
@@ -144,7 +146,7 @@ class ResidualsTestCase(unittest.TestCase):
         mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
 
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
 
         for gsim in self.gsims:
             for imt in self.imts:
@@ -186,14 +188,14 @@ class ResidualsTestCase(unittest.TestCase):
         mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
 
         residuals = res.Residuals(self.gsims, self.imts)
-        residuals.get_residuals(self.database, component="Geometric")
+        residuals.compute_residuals(self.database, component="Geometric")
 
         for gsim in self.gsims:
             for imt in self.imts:
                 for dist in DISTANCES.keys():
 
                     if dist == 'r_x':
-                        # as for residual_plots_test, we should confirm
+                        # as for residual_plotter_utils_test, we should confirm
                         # with scientific expertise that this is the case:
                         with self.assertRaises(AttributeError):
                             ResidualWithDistance(residuals, gsim, imt,

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -28,11 +28,11 @@ from linecache import getline
 from math import sqrt
 from copy import copy
 
-from openquake.smt.utils_strong_motion import (convert_accel_units,
-                                               get_time_vector)
+from openquake.smt.utils import convert_accel_units, get_time_vector
 from openquake.smt.residuals.sm_database import *
-from openquake.smt.residuals.parsers.base_database_parser import (
-    SMDatabaseReader, SMTimeSeriesReader, SMSpectraReader)
+from openquake.smt.residuals.parsers.base_database_parser import (SMDatabaseReader,
+                                                                  SMTimeSeriesReader,
+                                                                  SMSpectraReader)
 
 FILE_INFO_KEY = ["Net", "Station", "Location", "Channel", "DM", "Date", "Time",
                  "Processing", "Waveform", "Format"]

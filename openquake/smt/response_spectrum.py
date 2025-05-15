@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -23,14 +23,13 @@ import numpy as np
 from math import sqrt
 import matplotlib.pyplot as plt
 
-from openquake.smt.utils_strong_motion import (_save_image, get_time_vector,
-                                               convert_accel_units,
-                                               get_velocity_displacement)
+from openquake.smt.utils import (
+    get_time_vector, convert_accel_units, get_velocity_displacement, _save_image,)
                      
 
 class ResponseSpectrum(object):
     """
-    Base Class to implement a response spectrum calculation
+    Base class to implement a response spectrum calculation
     """
     def __init__(self, acceleration, time_step, periods, damping=0.05,
             units="cm/s/s"):
@@ -91,7 +90,6 @@ class NewmarkBeta(ResponseSpectrum):
     """
     Evaluates the response spectrum using the Newmark-Beta methodology
     """
-
     def __call__(self):
         """
         Evaluates the response spectrum
@@ -200,7 +198,6 @@ class NigamJennings(ResponseSpectrum):
     can provide estimates of the spectra at frequencies higher than that
     of the sampling frequency.
     """
-
     def __call__(self):
         """
         Define the response spectrum
@@ -378,3 +375,4 @@ def plot_time_series(acceleration, time_step, velocity=[], displacement=[],
     ax.grid()
     _save_image(filename, plt.gcf(), filetype, dpi)
     plt.show()
+    

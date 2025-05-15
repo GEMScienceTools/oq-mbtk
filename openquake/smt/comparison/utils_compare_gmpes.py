@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation
+# Copyright (C) 2014-2025 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -38,8 +38,8 @@ def plot_trellis_util(config, output_directory):
     Generate trellis plots for given run configuration
     """
     # Get mag and dep lists
-    mag_list = config.trellis_and_rs_mag_list
-    dep_list = config.trellis_and_rs_depth_list
+    mag_list = config.mag_list
+    dep_list = config.depth_list
     
     # Median, plus sigma, minus sigma per gmc for up to 4 gmc logic trees
     gmc_p= [[{}, {}, {}], [{}, {}, {}], [{}, {}, {}], [{}, {}, {}]]
@@ -71,7 +71,7 @@ def plot_trellis_util(config, output_directory):
                 len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
 
             # get ztor
-            if config.ztor is not None:
+            if config.ztor != -999:
                 ztor_m = config.ztor[l]
             else:
                 ztor_m = None
@@ -111,7 +111,8 @@ def plot_trellis_util(config, output_directory):
                                                          config.dist_type,
                                                          config.trt,
                                                          config.up_or_down_dip,
-                                                         config.volc_ba)
+                                                         config.volc_ba,
+                                                         config.eshm20_region)
 
                 # Get mean, sigma components, mean plus/minus sigma
                 mean = mean[0][0]
@@ -179,8 +180,8 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     observed spectrum and the corresponding predictions by the specified GMPEs
     """
     # Get mag and depth lists
-    mag_list = config.trellis_and_rs_mag_list
-    dep_list = config.trellis_and_rs_depth_list
+    mag_list = config.mag_list
+    dep_list = config.depth_list
     
     # If obs spectra csv provided load the data
     if obs_spectra is not None:
@@ -228,7 +229,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                 gmm = mgmpe_check(gmpe)
                 
                 for k, imt in enumerate(imt_list): 
-                    if config.ztor is not None:
+                    if config.ztor != -999:
                         ztor_m = config.ztor[l]
                     else:
                         ztor_m = None
@@ -257,7 +258,8 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                                                            dist_type,
                                                            config.trt,
                                                            config.up_or_down_dip,
-                                                           config.volc_ba) 
+                                                           config.volc_ba,
+                                                           config.eshm20_region) 
                     
                     # Interpolate for distances and store
                     mu = mu[0][0]
@@ -333,8 +335,8 @@ def plot_ratios_util(config, output_directory):
     plots for given run configuration
     """
     # Get mag and dep lists
-    mag_list = config.trellis_and_rs_mag_list
-    dep_list = config.trellis_and_rs_depth_list
+    mag_list = config.mag_list
+    dep_list = config.depth_list
 
     # Get basin params
     Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.z_basin_region)
@@ -351,7 +353,7 @@ def plot_ratios_util(config, output_directory):
                 len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
             
             # ztor value
-            if config.ztor is not None:
+            if config.ztor != -999:
                 ztor_m = config.ztor[l]
             else:
                 ztor_m = None
@@ -382,7 +384,8 @@ def plot_ratios_util(config, output_directory):
                                  config.dist_type,
                                  config.trt,
                                  config.up_or_down_dip,
-                                 config.volc_ba)
+                                 config.volc_ba,
+                                 config.eshm20_region)
             b_mean = results[0][0][0]
 
             # Now compute ratios for each GMM
@@ -410,7 +413,8 @@ def plot_ratios_util(config, output_directory):
                                      config.dist_type,
                                      config.trt,
                                      config.up_or_down_dip,
-                                     config.volc_ba)
+                                     config.volc_ba,
+                                     config.eshm20_region)
 
                 # Get mean and r_vals
                 mean = results[0][0][0]
@@ -437,15 +441,15 @@ def plot_ratios_util(config, output_directory):
 def compute_matrix_gmpes(config, mtxs_type):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
-    given run configuration for use within Euclidean distance matrix plots,
-    Sammons Mapping and hierarchical clustering plots
+    given run configuration for use within the Sammon's maps and hierarchical
+    clustering dendrograms and Euclidean distance matrix plots
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median, 84th or 16th percentile)
     """
     # Get mag, imt and depth lists
-    mag_list = config.mag_list
-    dep_list = config.depth_for_non_trel_or_rs_fun
+    mag_list = config.mags_euclidean
+    dep_list = config.depths_euclidean
     
     # Set store and get z1pt0, z2pt5
     mtxs_median = {}
@@ -470,7 +474,7 @@ def compute_matrix_gmpes(config, mtxs_type):
                                                                   config.trt) 
                 
                 # ztor              
-                if config.ztor is not None:
+                if config.ztor != -999:
                     ztor_m = config.ztor[l]
                 else:
                     ztor_m = None
@@ -492,7 +496,8 @@ def compute_matrix_gmpes(config, mtxs_type):
                                                          config.dist_type,
                                                          config.trt,
                                                          config.up_or_down_dip,
-                                                         config.volc_ba) 
+                                                         config.volc_ba,
+                                                         config.eshm20_region) 
                 
                 # Get means further than minR
                 idx = np.argwhere(r_vals>=config.minR).flatten()

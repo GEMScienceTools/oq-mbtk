@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -20,6 +20,7 @@ Module defining the interface of a Context Database (ContextDB), a database of
 data capable of yielding Contexts and Observations suitable for Residual analysis
 """
 import numpy as np
+import pandas as pd
 
 from openquake.hazardlib.contexts import DistancesContext, RuptureContext
 
@@ -28,7 +29,11 @@ class ContextDB:
     """
     This abstract-like class represents a database (DB) of data capable of
     yielding Contexts and Observations suitable for residual analysis (see
-    argument `ctx_database` of :meth:`gmpe_residuals.Residuals.get_residuals`)
+    argument `ctx_database` of :meth:`gmpe_residuals.Residuals.compute_residuals`)
+
+    NOTE: The missing distance metrics from a record within the database object
+    are computed by OQ using the constructed finite rupture (i.e. the distances
+    in the admitted flatfile/ground-motion database are used by default).
 
     Concrete subclasses of `ContextDB` must implement three abstract methods
     (e.g. :class:`openquake.smt.sm_database.GroundMotionDatabase`):
@@ -39,7 +44,8 @@ class ContextDB:
     """
     rupture_context_attrs = tuple(RuptureContext._slots_)  # noqa
     distances_context_attrs = tuple(DistancesContext._slots_)  # noqa
-    sites_context_attrs = ('vs30',
+    sites_context_attrs = ('custom_site_id',
+                           'vs30',
                            'lons',
                            'lats',
                            'depths',
@@ -56,7 +62,7 @@ class ContextDB:
         See `create_context` for details.
 
         This is the only method required by
-        :meth:`gmpe_residuals.Residuals.get_residuals`
+        :meth:`gmpe_residuals.Residuals.compute_residuals`
         and should not be overwritten only in very specific circumstances.
         """
         compute_observations = imts is not None and len(imts)
@@ -66,12 +72,16 @@ class ContextDB:
             self.update_context(ctx, records, nodal_plane_index)
             if compute_observations:
                 observations = dic['Observations']
+                retained = dic["Retained"]
                 for imtx, values in observations.items():
                     values = self.get_observations(imtx, records, component)
+                    check = pd.notnull(values)
                     observations[imtx] = np.asarray(values, dtype=float)
+                    retained[imtx] = np.argwhere(check==True).flatten()
                 dic["Num. Sites"] = len(records)
             dic['Ctx'].sids = np.arange(len(records), dtype=np.uint32)
-            dic["Ctx"].region = 0 # TODO: Default ESHM20 attenuation region
+            dic['Ctx'].custom_site_id = [sid.site.id for sid in records]
+
             yield dic
 
     def create_context(self, evt_id, imts=None):
@@ -99,5 +109,6 @@ class ContextDB:
         dic = {'EventID': evt_id, 'Ctx': RuptureContext()}
         if imts is not None and len(imts):
             dic["Observations"] = {imt: [] for imt in imts}
+            dic["Retained"] = {imt: None for imt in imts}
             dic["Num. Sites"] = 0
         return dic

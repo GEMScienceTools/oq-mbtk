@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation
+# Copyright (C) 2014-2025 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -28,8 +28,9 @@ import os
 
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_compare_gmpes import (
-    plot_trellis_util, plot_spectra_util, plot_ratios_util, plot_cluster_util,
-    plot_sammons_util, plot_euclidean_util, compute_matrix_gmpes)
+    plot_trellis_util, plot_spectra_util, plot_ratios_util,
+    plot_cluster_util, plot_sammons_util, plot_euclidean_util,
+    compute_matrix_gmpes)
 
 
 class Configurations(object):
@@ -61,44 +62,28 @@ class Configurations(object):
         self.up_or_down_dip = float(up_or_down_dip)
         self.z_basin_region = config_file['site_properties']['z_basin_region']
         self.volc_ba = config_file['site_properties']['volc_back_arc']
+        eshm20_region = int(config_file['site_properties']['eshm20_region'])
+        self.eshm20_region = eshm20_region
         
         # Get rupture params
-        self.trt = config_file['source_properties']['trt']
-        if self.trt == 'None':
-            self.trt = None
-        self.ztor = config_file['source_properties']['ztor']
-        if self.ztor == 'None':
-            self.ztor = None
         self.strike = config_file['source_properties']['strike']
         self.dip = config_file['source_properties']['dip']
         self.rake = config_file['source_properties']['rake']
+        self.mag_list = np.array(config_file['source_properties']['mags'])
+        self.depth_list = np.array(config_file['source_properties']['depths'])
+        self.ztor = config_file['source_properties']['ztor']
         self.aratio = config_file['source_properties']['aratio']
+        self.trt = config_file['source_properties']['trt']
         
         # Get custom colors
-        self.custom_color_flag = config_file['custom_colors'][
-            'custom_colors_flag']
-        self.custom_color_list = config_file['custom_colors'][
-            'custom_colors_list']
-
-        # One set of magnitudes for use in trellis plots
-        self.trellis_and_rs_mag_list = np.array(config_file['source_properties'][
-            'trellis_and_rs_mag_list'])
-        
-        # Depths per magnitude for trellis plots
-        self.trellis_and_rs_depth_list = np.array(config_file['source_properties'][
-            'trellis_and_rs_depths'])
+        self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
+        self.custom_color_list = config_file['custom_colors']['custom_colors_list']
         
         # Check same length mag and depth lists to avoid indexing error
-        assert len(self.trellis_and_rs_mag_list) == len(self.trellis_and_rs_depth_list)
+        assert len(self.mag_list) == len(self.depth_list)
         
-        # Get mags for Sammons, Euclidean distance and clustering
-        mag_params = config_file['mag_values_non_trellis_or_spectra_functions']
-        self.mag_list = np.arange(
-            mag_params['mmin'], mag_params['mmax'], mag_params['spacing'])
-        
-        # Get depths for Sammons, Euclidean distance and clustering
-        self.depth_for_non_trel_or_rs_fun = assign_depths_per_mag_bin(
-            config_file, self.mag_list)
+        # Get mags and depths for Sammons, Euclidean distance and clustering
+        self.mags_euclidean, self.depths_euclidean = get_eucl_mags_deps(config_file)
         
         # Get imts
         self.imt_list = config_file['general']['imt_list']
@@ -112,7 +97,6 @@ class Configurations(object):
         # Get lt weights
         (self.lt_weights_gmc1, self.lt_weights_gmc2, self.lt_weights_gmc3,
          self.lt_weights_gmc4) = get_lt_weights(self.gmpes_list)
-
 
 def get_gmpes(config_file):
     """
@@ -220,30 +204,36 @@ def get_lt_weights(gmpe_list):
     return lt_weights_gmc1, lt_weights_gmc2, lt_weights_gmc3, lt_weights_gmc4
 
 
-def assign_depths_per_mag_bin(config_file, mag_array):
+def get_eucl_mags_deps(config_file):
     """
     For each magnitude considered within the Sammons Maps, Euclidean distance
-    and clustering plots assign a depth
+    matrix plots and agglomerative clustering dendrograms get the magnitudes
+    and assign a depth for each.
     """
+    # Make array of the magnitudes
+    mag_params = config_file['source_properties_euclidean_analysis']
+    mags_euclidean = np.arange(
+        mag_params['mmin'], mag_params['mmax'], mag_params['spacing'])
+
     # Create dataframe of depth to assign per mag bin
-    non_trellis_or_spectra_depths = pd.DataFrame(config_file[
-        'mag_values_non_trellis_or_spectra_functions'][
-            'non_trellis_or_spectra_depths'], columns=['mag','depth'])
+    depths_for_euclidean = pd.DataFrame(config_file[
+        'source_properties_euclidean_analysis'][
+            'depths_for_euclidean'], columns=['mag','depth'])
             
     # Round each mag in mag_array to closest integer
     mag_to_nearest_int = pd.Series(dtype='float')
-    for mag in mag_array:
+    for mag in mags_euclidean:
         mag_to_nearest_int[mag] = np.round(mag+0.001)
 
     # Assign depth to each mag in mag_array using rounded mags
-    depth_array_initial = []
+    depths_euclidean = []
     for idx_mag, rounded_mag in enumerate(mag_to_nearest_int):
-        for idx, val in enumerate(non_trellis_or_spectra_depths['mag']):
-            if rounded_mag == non_trellis_or_spectra_depths['mag'][idx]:
-                depth_to_store = non_trellis_or_spectra_depths['depth'][idx]
-                depth_array_initial.append(depth_to_store)
+        for idx, val in enumerate(depths_for_euclidean['mag']):
+            if rounded_mag == depths_for_euclidean['mag'][idx]:
+                depth_to_store = depths_for_euclidean['depth'][idx]
+                depths_euclidean.append(depth_to_store)
     
-    return pd.Series(depth_array_initial) 
+    return  mags_euclidean, pd.Series(depths_euclidean)
 
 
 def plot_trellis(filename, output_directory):

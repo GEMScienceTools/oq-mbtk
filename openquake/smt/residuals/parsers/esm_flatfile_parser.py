@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parse ESM18 format flatfile into SMT metadata
+Parse the ESM18 flatfile into SMT metadata
 """
 import os
 import csv
@@ -29,36 +29,101 @@ import pickle
 from math import sqrt
 from linecache import getline
 
-from openquake.smt.residuals.sm_database import (
-    GroundMotionDatabase, GroundMotionRecord, Earthquake, Magnitude, Rupture,
-    FocalMechanism, GCMTNodalPlanes, Component, RecordSite, RecordDistance)
+from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
+                                                 GroundMotionRecord,
+                                                 Earthquake,
+                                                 Magnitude,
+                                                 Rupture,
+                                                 FocalMechanism, 
+                                                 GCMTNodalPlanes,
+                                                 Component,
+                                                 RecordSite,
+                                                 RecordDistance)
 from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.utils_strong_motion import (
-    MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14)
+from openquake.smt.utils import (MECHANISM_TYPE,
+                                 DIP_TYPE,
+                                 vs30_to_z1pt0_cy14,
+                                 vs30_to_z2pt5_cb14)
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
-HEADER_STR = "event_id;event_time;ISC_ev_id;USGS_ev_id;INGV_ev_id;"\
-             "EMSC_ev_id;ev_nation_code;ev_latitude;ev_longitude;"\
-             "ev_depth_km;ev_hyp_ref;fm_type_code;ML;ML_ref;Mw;Mw_ref;Ms;"\
-             "Ms_ref;EMEC_Mw;EMEC_Mw_type;EMEC_Mw_ref;event_source_id;"\
-             "es_strike;es_dip;es_rake;es_strike_dip_rake_ref;es_z_top;"\
-             "es_z_top_ref;es_length;es_width;es_geometry_ref;network_code;"\
-             "station_code;location_code;instrument_code;sensor_depth_m;"\
-             "proximity_code;housing_code;installation_code;st_nation_code;"\
-             "st_latitude;st_longitude;st_elevation;ec8_code;"\
-             "ec8_code_method;ec8_code_ref;vs30_m_sec;vs30_ref;"\
-             "vs30_calc_method;vs30_meas_type;slope_deg;vs30_m_sec_WA;"\
-             "epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;Ry0_dist;"\
-             "instrument_type_code;late_triggered_flag_01;U_channel_code;"\
-             "U_azimuth_deg;V_channel_code;V_azimuth_deg;W_channel_code;"\
-             "U_hp;V_hp;W_hp;U_lp;V_lp;W_lp"
+HEADERS = [
+           "event_id",
+           "event_time",
+           "ISC_ev_id",
+           "USGS_ev_id",
+           "INGV_ev_id",
+           "EMSC_ev_id",
+           "ev_nation_code",
+           "ev_latitude",
+           "ev_longitude",
+           "ev_depth_km",
+           "ev_hyp_ref",
+           "fm_type_code",
+           "ML",
+           "ML_ref",
+           "Mw",
+           "Mw_ref",
+           "Ms",
+           "Ms_ref",
+           "EMEC_Mw",
+           "EMEC_Mw_type",
+           "EMEC_Mw_ref",
+           "event_source_id",
+           "es_strike",
+           "es_dip",
+           "es_rake",
+           "es_strike_dip_rake_ref",
+           "es_z_top",
+           "es_z_top_ref",
+           "es_length",
+           "es_width",
+           "es_geometry_ref",
+           "network_code",
+           "station_code",
+           "location_code",
+           "instrument_code",
+           "sensor_depth_m",
+           "proximity_code",
+           "housing_code",
+           "installation_code",
+           "st_nation_code",
+           "st_latitude",
+           "st_longitude",
+           "st_elevation",
+           "ec8_code",
+           "ec8_code_method",
+           "ec8_code_ref",
+           "vs30_m_sec",
+           "vs30_ref",
+           "vs30_calc_method",
+           "vs30_meas_type",
+           "slope_deg",
+           "vs30_m_sec_WA",
+           "epi_dist",
+           "epi_az",
+           "JB_dist",
+           "rup_dist",
+           "Rx_dist",
+           "Ry0_dist",
+           "instrument_type_code",
+           "late_triggered_flag_01",
+           "U_channel_code",
+           "U_azimuth_deg",
+           "V_channel_code",
+           "V_azimuth_deg",
+           "W_channel_code",
+           "U_hp",
+           "V_hp",
+           "W_hp",
+           "U_lp",
+           "V_lp",
+           "W_lp"]
 
-HEADERS = set(HEADER_STR.split(";"))
 
 COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
                  "AZ": "Azerbaijan", "BA": "Bosnia and Herzegowina",
@@ -440,8 +505,7 @@ class ESMFlatfileParser(SMDatabaseReader):
 
             # Add on the values
             values = spectra[key]["Values"]
-            spectra_dset = accel.create_dataset("damping_05", values.shape,
-                                                dtype="f")
+            spectra_dset = accel.create_dataset("damping_05", values.shape, dtype="f")
             spectra_dset[:] = np.copy(values)
             spectra_dset.attrs["Damping"] = 5.0
         # Add on the horizontal values

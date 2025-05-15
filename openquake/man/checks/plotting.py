@@ -77,21 +77,18 @@ def plot_end():
 
 def get_ssm_files(model_dir):
     """
-    For a given source model get the xml ssm files
+    For a given source model get the xml ssm files.
     """
     # Get seismic source model XMLs
-    base_path = os.path.join(model_dir, 'in', 'ssm')
-    try:
-        assert os.path.exists(base_path)
-    except:
-        raise ValueError("Admitted model does not abide to required directory "
-                         "hierarchy: model_dir/in/ssm/")
-    files = []
+    base_path_pattern = os.path.join(model_dir, 'in', 'ssm*')  
+    directories = glob(base_path_pattern)
 
     # Loop through each subfolder and get all XML files
-    for depth in range(5):  # Search up to 5 levels deep
-        fipath = os.path.join(base_path, *['**']*depth)
-        files.extend(glob(fipath + "/*.xml", recursive=True))
+    files = []
+    for directory in directories:
+        for depth in range(5):  # Search up to 5 levels deep
+            fipath = os.path.join(directory, *['**']*depth)
+            files.extend(glob(fipath + "/*.xml", recursive=True))
 
     # Remove duplicates from recursive search
     files = pd.Series(files).drop_duplicates().values
