@@ -55,8 +55,14 @@ class BaseResidualPlot(object):
     ylabel_styling_kwargs = dict(fontsize=12)
     title_styling_kwargs = dict(fontsize=12)
 
-    def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
-                 dpi=300, **kwargs):
+    def __init__(self,
+                 residuals,
+                 gmpe,
+                 imt,
+                 filename=None,
+                 filetype="png",
+                 dpi=300,
+                 **kwargs):
         """
         Initializes a BaseResidualPlot
 
@@ -252,8 +258,15 @@ class ResidualHistogramPlot(BaseResidualPlot):
     Abstract-like class to create histograms of strong ground motion residuals
     """
 
-    def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
-                 dpi=300, bin_width=0.5, **kwargs):
+    def __init__(self,
+                 residuals,
+                 gmpe,
+                 imt,
+                 filename=None,
+                 filetype="png",
+                 dpi=300,
+                 bin_width=0.5,
+                 **kwargs):
         """
         Initializes a ResidualHistogramPlot object. Sub-classes need to
         implement (at least) the method `get_plot_data`.
@@ -336,8 +349,15 @@ class LikelihoodPlot(ResidualHistogramPlot):
     likelihood
     """
 
-    def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
-                 dpi=300, bin_width=0.1, **kwargs):
+    def __init__(self,
+                 residuals,
+                 gmpe,
+                 imt,
+                 filename=None,
+                 filetype="png",
+                 dpi=300,
+                 bin_width=0.1,
+                 **kwargs):
         """
         Initializes a LikelihoodPlot. Basically calls the superclass
         `__init__` method with a `bin_width` default value of 0.1 instead of
@@ -383,8 +403,15 @@ class ResidualScatterPlot(BaseResidualPlot):
     residuals
     """
 
-    def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
-                 dpi=300, plot_type='', **kwargs):
+    def __init__(self,
+                 residuals,
+                 gmpe,
+                 imt,
+                 filename=None,
+                 filetype="png",
+                 dpi=300,
+                 plot_type='',
+                 **kwargs):
         """
         Initializes a ResidualScatterPlot object. Sub-classes need to
         implement (at least) the method `get_plot_data`.
@@ -472,8 +499,16 @@ class ResidualWithDistance(ResidualScatterPlot):
     residuals (y-axis) versus distance (x-axis)
     """
 
-    def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
-                 dpi=300, plot_type='linear', distance_type="rjb", **kwargs):
+    def __init__(self,
+                 residuals,
+                 gmpe, 
+                 imt,
+                 filename=None,
+                 filetype="png",
+                 dpi=300,
+                 plot_type='linear',
+                 distance_type="rjb",
+                 **kwargs):
         """
         Initializes a ResidualWithDistance object
 
@@ -493,7 +528,9 @@ class ResidualWithDistance(ResidualScatterPlot):
                                                    **kwargs)
 
     def get_plot_data(self):
-        return residuals_with_distance(self.residuals, self.gmpe, self.imt,
+        return residuals_with_distance(self.residuals,
+                                       self.gmpe,
+                                       self.imt,
                                        self.distance_type)
 
     def get_axis_xlim(self, res_data, res_type):
@@ -601,7 +638,9 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
     
-def plot_edr_metrics_with_spectral_period(residuals, filename, filetype='jpg',
+def plot_edr_metrics_with_spectral_period(residuals,
+                                          filename,
+                                          filetype='jpg',
                                           dpi=200):
     """
     Create plots of EDR, the median pred. correction factor and normalised MDE
@@ -666,8 +705,10 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, filetype='jpg',
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
     
-def plot_stochastic_area_with_spectral_period(residuals, filename,
-                                              filetype='jpg', dpi=200):
+def plot_stochastic_area_with_spectral_period(residuals,
+                                              filename,
+                                              filetype='jpg',
+                                              dpi=200):
     """
     Definition to create plot of the stochastic area metric computed using Sunny
     et al. (2021) versus spectral period (x-axis)
@@ -925,7 +966,12 @@ def set_res_pdf_plots(residuals, res_dists, imts_to_plot):
 
     return fig, ax
 
-def plot_res_pdf(ax, res_dists, dist_comp, gmpe, imts_to_plot, marker_input,
+def plot_res_pdf(ax,
+                 res_dists,
+                 dist_comp,
+                 gmpe,
+                 imts_to_plot,
+                 marker_input,
                  color_input):
     """
     Plot mean for each residual distribution for a given GMPE
@@ -971,8 +1017,10 @@ def plot_res_pdf(ax, res_dists, dist_comp, gmpe, imts_to_plot, marker_input,
                      marker=marker_input)
     return ax
 
-def plot_residual_pdf_with_spectral_period(
-        residuals, filename, filetype='jpg', dpi=200):
+def plot_residual_pdf_with_spectral_period(residuals,
+                                           filename,
+                                           filetype='jpg',
+                                           dpi=200):
     """
     Create a simple plot of residual mean and residual sigma for each GMPE 
     (y-axis) versus spectral period (x-axis)

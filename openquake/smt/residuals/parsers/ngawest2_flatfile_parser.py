@@ -625,7 +625,6 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         record.datafile = filename
         return record
 
-
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
         Get the ground-motion data from a row (record) in the database
@@ -684,8 +683,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         return scalars, spectra
 
 
-def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):
-    
+def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):    
     """
     Convert from NGAWest2 format flatfile to ESM18 format flatfile 
     """
@@ -694,69 +692,66 @@ def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):
     final_event_id = {}
     fm_type_code_converted = {}
     final_station_id = {}
-    for rec in range(0,len(ngawest2)):
+    for idx, rec in ngawest2.iterrows():
         
         # Event time
-        event_time_year=ngawest2.YEAR.iloc[rec]
-        event_time_month_and_day=str(ngawest2.MODY.iloc[rec])
+        event_time_year = str(rec.YEAR)
+        event_time_month_and_day = str(rec.MODY)
         
-        if len(event_time_month_and_day)==3:
-            month=str('0')+str(event_time_month_and_day[0])
-            day=event_time_month_and_day[1:3]     
+        if len(event_time_month_and_day) == 3:
+            month = str('0') + str(event_time_month_and_day[0])
+            day = event_time_month_and_day[1:3]     
         
-        if len(event_time_month_and_day)==4:
-            month=str(event_time_month_and_day[:2])
-            day=event_time_month_and_day[2:4]
+        if len(event_time_month_and_day) == 4:
+            month = str(event_time_month_and_day[:2])
+            day = event_time_month_and_day[2:4]
         
         yyyy_mm_dd = str(event_time_year) + '-' + month + '-' + day
         
-        event_time_hr_and_min=str(ngawest2.HRMN.iloc[rec])
+        event_time_hr_and_min = str(rec.HRMN)
         
-        if len(event_time_hr_and_min)==3:
-            hour=str('0')+str(event_time_hr_and_min[0])
-            minute=event_time_hr_and_min[1:3]
+        if len(event_time_hr_and_min) == 3:
+            hour = str('0') + str(event_time_hr_and_min[0])
+            minute = event_time_hr_and_min[1:3]
         
-        if len(event_time_hr_and_min)==4:
-            hour=str(event_time_hr_and_min[:2])
-            minute=event_time_hr_and_min[2:4]
+        if len(event_time_hr_and_min) == 4:
+            hour = str(event_time_hr_and_min[:2])
+            minute = event_time_hr_and_min[2:4]
             
         hh_mm_ss = str(hour) + ':' + str(minute) + ':' + '00'
         
-        event_time[rec] = yyyy_mm_dd + ' ' + hh_mm_ss
+        event_time[idx] = yyyy_mm_dd + ' ' + hh_mm_ss
     
         # Reformat event id
-        delimited_event_id = str(ngawest2['Earthquake Name'][rec])
+        delimited_event_id = str(rec['Earthquake Name'])
         delimited_event_id = delimited_event_id.replace(',','')
         delimited_event_id = delimited_event_id.replace(' ','')
         delimited_event_id = delimited_event_id.replace('/','')
         delimited_event_id = delimited_event_id.replace('.','')
         delimited_event_id = delimited_event_id.replace(':','')
         delimited_event_id = delimited_event_id.replace(';','')
-        final_event_id[rec] = 'Earthquake-' + delimited_event_id 
+        final_event_id[idx] = 'Earthquake-' + delimited_event_id 
         
         # Assign ESM18 fault_code based on code in NGA-West2
-        if ngawest2['Mechanism Based on Rake Angle'][rec]==0 or ngawest2[
-                'Mechanism Based on Rake Angle'][rec]==-999:
-            ESM18_equivalent_fm_type_code='SS'
-        if ngawest2[
-                'Mechanism Based on Rake Angle'][
-                    rec]==1 or ngawest2['Mechanism Based on Rake Angle'][
-                        rec]==4:
-            ESM18_equivalent_fm_type_code='NF'
-        if ngawest2['Mechanism Based on Rake Angle'][
-                rec]==2 or ngawest2['Mechanism Based on Rake Angle'][rec]==3:
-            ESM18_equivalent_fm_type_code='TF'
-        fm_type_code_converted[rec] = ESM18_equivalent_fm_type_code
+        if rec['Mechanism Based on Rake Angle']==0 or\
+              rec['Mechanism Based on Rake Angle']==-999:
+            fm_type_code_converted[idx] ='SS'
+        if rec['Mechanism Based on Rake Angle']==1 or\
+              rec['Mechanism Based on Rake Angle']==4:
+            fm_type_code_converted[idx] ='NF'
+        if rec['Mechanism Based on Rake Angle']==2 or\
+              rec['Mechanism Based on Rake Angle']==3:
+            fm_type_code_converted[idx] ='TF'
         
         # Station id
-        delimited_station_id = str(ngawest2['Station Name'][rec])
+        delimited_station_id = str(rec['Station Name'])
         delimited_station_id = delimited_station_id.replace(',','')
         delimited_station_id = delimited_station_id.replace(' ','')
         delimited_station_id = delimited_station_id.replace('/','')
         delimited_station_id = delimited_station_id.replace('.','')
         delimited_station_id = delimited_station_id.replace(':','')
         delimited_station_id = delimited_station_id.replace(';','')
-        final_station_id[rec] = 'StationName-'+delimited_station_id
+        final_station_id[idx] = 'StationName-' + delimited_station_id
     
     # Into df
     ngawest2['fm_type'] = pd.Series(fm_type_code_converted)
