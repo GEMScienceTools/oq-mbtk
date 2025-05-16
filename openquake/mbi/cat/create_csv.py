@@ -62,6 +62,8 @@ def main(cat_fname, fname_out):
     # Save file
     # writing magnitudes more precisely
     df.magMw = df.magMw.apply(lambda x: round(x, 5))
+    df['dt'] = pd.to_datetime(df[['year', 'month', 'day', 'hour', 'minute', 'second']])
+    df.sort_values('dt')
     df.to_csv(fname_out, index=False)
 
     # Create hmtk file
