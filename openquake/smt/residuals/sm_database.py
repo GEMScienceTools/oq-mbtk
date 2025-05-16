@@ -766,7 +766,7 @@ class GroundMotionDatabase(ContextDB):
     def get_observations(self, imtx, records, component="Geometric"):
         """
         Return observed values for the given imt, as numpy array.
-        See superclass docstring for details
+        See superclass docstrsing for details
         """
         values = []
         selection_string = "IMS/H/Spectra/Response/Acceleration/"
@@ -918,7 +918,6 @@ class GroundMotionDatabase(ContextDB):
             if getattr(record.distance, "rvolc", None) is not None:
                 ctx.rvolc.append(record.distance.rvolc)
 
-        # finalize:
         for attname in self.distances_context_attrs:
             attval = getattr(ctx, attname)
             # remove attribute if its value is empty-like
@@ -926,14 +925,12 @@ class GroundMotionDatabase(ContextDB):
                 delattr(ctx, attname)
             else:
                 # FIXME: dtype=float forces Nones to be safely converted to nan
-                # but it assumes obviously all attval elements to be numeric
                 setattr(ctx, attname, np.asarray(attval, dtype=float))
 
     ###########################
     # END OF ABSTRACT METHODS #
     ###########################
 
-    # moved from openquake/smt/residuals/gmpe_residuals.py:
     def get_scalar(self, fle, i_m, component="Geometric"):
         """
         Retrieves the scalar IM from the database
@@ -953,7 +950,6 @@ class GroundMotionDatabase(ContextDB):
                 return fle["IMS/H/Scalar/" + i_m][0]
             else:
                 raise ValueError("Scalar IM %s not in record database" % i_m)
-
 
     def number_records(self):
         """
