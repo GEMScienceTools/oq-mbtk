@@ -55,12 +55,11 @@ class Configurations(object):
         self.max_period = config_file['general']['max_period']
         
         # Get site params
-        self.Vs30 = config_file['site_properties']['vs30']
-        self.Z1 = config_file['site_properties']['Z1']
-        self.Z25 = config_file['site_properties']['Z25']
+        self.vs30 = config_file['site_properties']['vs30']
+        self.z1pt0 = config_file['site_properties']['z1pt0']
+        self.z2pt5 = config_file['site_properties']['z2pt5']
         up_or_down_dip = config_file['site_properties']['up_or_down_dip']
         self.up_or_down_dip = float(up_or_down_dip)
-        self.z_basin_region = config_file['site_properties']['z_basin_region']
         self.volc_ba = config_file['site_properties']['volc_back_arc']
         eshm20_region = int(config_file['site_properties']['eshm20_region'])
         self.eshm20_region = eshm20_region

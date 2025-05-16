@@ -29,8 +29,7 @@ from scipy import interpolate
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib.imt import from_string
-from openquake.smt.comparison.utils_gmpes import (
-    att_curves, _get_z1, _get_z25, _param_gmpes, mgmpe_check)
+from openquake.smt.comparison.utils_gmpes import att_curves, _param_gmpes, mgmpe_check
 
 
 def plot_trellis_util(config, output_directory):
@@ -43,17 +42,13 @@ def plot_trellis_util(config, output_directory):
     
     # Median, plus sigma, minus sigma per gmc for up to 4 gmc logic trees
     gmc_p= [[{}, {}, {}], [{}, {}, {}], [{}, {}, {}], [{}, {}, {}]]
-    
-    # Get basin params
-    Z1, Z25 = get_z1_z25(config.Z1, config.Z25,
-                         config.Vs30, config.z_basin_region)
 
     # Get lt weights
     lt_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
                   config.lt_weights_gmc3, config.lt_weights_gmc4]
     
     # Get config key
-    cfg_key = f'vs30 = {config.Vs30} m/s, GMM sigma epsilon = {config.Nstd}'
+    cfg_key = f'vs30 = {config.vs30} m/s, GMM sigma epsilon = {config.Nstd}'
     
     # Get colours
     colors = get_colors(config.custom_color_flag, config.custom_color_list) 
@@ -101,9 +96,9 @@ def plot_trellis_util(config, output_directory):
                                                          strike_g,
                                                          dip_g,
                                                          config.rake,
-                                                         config.Vs30,
-                                                         Z1,
-                                                         Z25,
+                                                         config.vs30,
+                                                         config.z1pt0,
+                                                         config.z2pt5,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
                                                          i,
@@ -191,12 +186,10 @@ def plot_spectra_util(config, output_directory, obs_spectra):
         max_period = config.max_period
         obs_spectra, eq_id, st_id = None, None, None
         
-    # Get gmc lt weights, imts, periods and basin params
+    # Get gmc lt weights, imts, periods
     gmc_weights = [config.lt_weights_gmc1, config.lt_weights_gmc2,
                    config.lt_weights_gmc3, config.lt_weights_gmc4]
     imt_list, periods = _get_imts(max_period)
-    Z1, Z25 = get_z1_z25(config.Z1, config.Z25,
-                         config.Vs30, config.z_basin_region)
     
     # Get colours and make the figure
     colors = get_colors(config.custom_color_flag, config.custom_color_list)     
@@ -248,9 +241,9 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                                                            strike_g,
                                                            dip_g,
                                                            config.rake,
-                                                           config.Vs30,
-                                                           Z1,
-                                                           Z25,
+                                                           config.vs30,
+                                                           config.z1pt0,
+                                                           config.z2pt5,
                                                            500, # Assume record dist < 500 km
                                                            1, # Step of 1 km for site spacing
                                                            imt,
@@ -338,9 +331,6 @@ def plot_ratios_util(config, output_directory):
     mag_list = config.mag_list
     dep_list = config.depth_list
 
-    # Get basin params
-    Z1, Z25 = get_z1_z25(config.Z1, config.Z25, config.Vs30, config.z_basin_region)
-
     # Get colours
     colors = get_colors(config.custom_color_flag, config.custom_color_list) 
     
@@ -374,9 +364,9 @@ def plot_ratios_util(config, output_directory):
                                  strike_g,
                                  dip_g,
                                  config.rake,
-                                 config.Vs30,
-                                 Z1,
-                                 Z25,
+                                 config.vs30,
+                                 config.z1pt0,
+                                 config.z2pt5,
                                  config.maxR,
                                  1, # Step of 1 km for sites
                                  i,
@@ -403,9 +393,9 @@ def plot_ratios_util(config, output_directory):
                                      strike_g,
                                      dip_g,
                                      config.rake,
-                                     config.Vs30,
-                                     Z1,
-                                     Z25,
+                                     config.vs30,
+                                     config.z1pt0,
+                                     config.z2pt5,
                                      config.maxR,
                                      1, # Step of 1 km for sites
                                      i,
@@ -451,11 +441,7 @@ def compute_matrix_gmpes(config, mtxs_type):
     mag_list = config.mags_euclidean
     dep_list = config.depths_euclidean
     
-    # Set store and get z1pt0, z2pt5
     mtxs_median = {}
-    Z1, Z25 = get_z1_z25(config.Z1, config.Z25,
-                         config.Vs30, config.z_basin_region)
-    
     for n, i in enumerate(config.imt_list): # Iterate through imt_list
         matrix_medians=np.zeros((len(config.gmpes_list), (len(mag_list)*int((
             config.maxR-config.minR)/1))))
@@ -486,9 +472,9 @@ def compute_matrix_gmpes(config, mtxs_type):
                                                          strike_g,
                                                          dip_g,
                                                          config.rake,
-                                                         config.Vs30,
-                                                         Z1,
-                                                         Z25,
+                                                         config.vs30,
+                                                         config.z1pt0,
+                                                         config.z2pt5,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
                                                          i, 
@@ -752,19 +738,6 @@ def get_colors(custom_color_flag, custom_color_list):
         colors = custom_color_list
         
     return colors
-
-
-def get_z1_z25(Z1, Z25, Vs30, region):
-    """
-    Get z1pt0 and z2pt5
-    """
-    # Set Z1 and Z25
-    if  Z1 == -999:
-        Z1 = _get_z1(Vs30, region)
-    if  Z25 == -999:
-        Z25 = _get_z25(Vs30, region)
-        
-    return Z1, Z25
 
 
 ### Trellis utils
