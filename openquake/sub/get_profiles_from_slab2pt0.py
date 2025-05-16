@@ -515,7 +515,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
 
             # Grid
             fig.plot(x=depths[:, 0], y=depths[:, 1],
-                     color=-depths[:, 2],
+                     fill=-depths[:, 2],
                      style='c0.025c',
                      cmap=True)
 
@@ -525,7 +525,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
                 if pro.shape[0] > 0:
                     fig.plot(x=pro[:, 0],
                              y=pro[:, 1],
-                             color=pro[:, 2],
+                             fill=pro[:, 2],
                              cmap=True,
                              style="h0.025c",
                              pen='black')
