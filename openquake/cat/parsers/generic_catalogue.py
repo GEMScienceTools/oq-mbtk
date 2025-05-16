@@ -253,7 +253,7 @@ class GeneralCsvCatalogue(object):
                              scale=mtype,
                              sigma=sigma_mag)]
             # Create Moment
-            if 'moment' in self.data and len(self.data['moment']):
+            if 'moment' in self.data and len(self.data['moment']) and len(self.data['scaling']) > 0:
                 if not np.isnan(self.data['moment'][iloc]):
                     moment = self.data['moment'][iloc] *\
                         (10. ** self.data['scaling'][iloc])

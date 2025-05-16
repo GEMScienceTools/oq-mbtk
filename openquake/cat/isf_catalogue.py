@@ -772,7 +772,7 @@ class ISFCatalogue(object):
                             tmp[0].is_prime = False
 
                         # Check event ID
-                        if use_ids:
+                        if use_ids == True:
                             if event.id != self.events[i_eve].id:
                                 fmt = " Trying to add a secondary origin "
                                 fmt += " whose ID {:s} differs from the "
@@ -917,7 +917,7 @@ class ISFCatalogue(object):
                 # already
                 if event.id in set(self.ids):
 
-                    if use_ids:
+                    if use_ids == True:
                         fmt = "Adding a new event whose ID {:s}"
                         fmt += " is already in the DB. Making it secondary."
                         msg = fmt.format(event.id)
@@ -934,6 +934,7 @@ class ISFCatalogue(object):
                         common += 1
 
                     else:
+                    # BUT if we are not using eventIDs, these are meaningless
                         fmt = 'Event ID: {:s} already there. Length ids {:d}'
                         msg = fmt.format(event.id, len(self.ids))
                         raise ValueError(msg)
