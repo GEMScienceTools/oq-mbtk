@@ -196,8 +196,11 @@ class Residuals(object):
         
         return cls(gmpe_list, imts)
 
-    def compute_residuals(self, ctx_database, nodal_plane_index=1,
-                          component="Geometric", normalise=True):
+    def compute_residuals(self,
+                          ctx_database,
+                          nodal_plane_index=1,
+                          component="Geometric",
+                          normalise=True):
         """
         Calculate the residuals for a set of ground motion records
 
@@ -350,7 +353,11 @@ class Residuals(object):
         context["Residual"] = residual
         return context
 
-    def _get_random_effects_residuals(self, obs, mean, inter, intra,
+    def _get_random_effects_residuals(self,
+                                      obs,
+                                      mean,
+                                      inter,
+                                      intra,
                                       normalise=True):
         """
         Calculates the random effects residuals using the inter-event
@@ -719,8 +726,12 @@ class Residuals(object):
         edr = np.sqrt(kappa * inv_n * np.sum(mde ** 2.))
         return mde_norm, np.sqrt(kappa), edr            
     
-    def _get_edr_wrt_imt(self, obs_wrt_imt, expected_wrt_imt,
-                         stddev_wrt_imt, bandwidth=0.01, multiplier=3.0):
+    def _get_edr_wrt_imt(self,
+                         obs_wrt_imt,
+                         expected_wrt_imt,
+                         stddev_wrt_imt,
+                         bandwidth=0.01,
+                         multiplier=3.0):
         """
         Calculated the Euclidean Distanced-Based Rank for a set of
         observed and expected values from a particular GMPE over imts

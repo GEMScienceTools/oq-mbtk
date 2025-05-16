@@ -74,8 +74,12 @@ def _get_first_point(rup, from_point):
         sfc.corner_lons[idx], sfc.corner_lats[idx], sfc.corner_depths[idx])
 
 
-def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
-                           direction='positive', hdist=100, step=5.,
+def get_sites_from_rupture(rup,
+                           from_point='TC',
+                           toward_azimuth=90,
+                           direction='positive',
+                           hdist=100,
+                           step=5.,
                            site_props=''):
     """
     Get the sites from the rupture to create the context with
@@ -130,7 +134,16 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
     return SiteCollection(sites)
 
 
-def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
+def get_rupture(lon,
+                lat,
+                dep,
+                msr,
+                mag,
+                aratio,
+                strike,
+                dip,
+                rake,
+                trt,
                 ztor=None):
     """
     Creates a rupture given the hypocenter position

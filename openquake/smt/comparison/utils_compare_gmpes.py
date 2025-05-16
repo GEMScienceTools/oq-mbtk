@@ -590,8 +590,13 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     return matrix_Dist
 
     
-def plot_sammons_util(imt_list, gmpe_list, mtxs, namefig, custom_color_flag,
-                      custom_color_list, mtxs_type):
+def plot_sammons_util(imt_list,
+                      gmpe_list,
+                      mtxs,
+                      namefig,
+                      custom_color_flag,
+                      custom_color_list,
+                      mtxs_type):
     """
     Plot Sammons maps for given run configuration. The mean of the GMPE
     predictions is also considered.
@@ -763,8 +768,15 @@ def get_z1_z25(Z1, Z25, Vs30, region):
 
 
 ### Trellis utils
-def trellis_data(gmpe, r_vals, mean,plus_sigma, minus_sigma, col, Nstd,
-                 lt_vals_gmc, lt_weights):
+def trellis_data(gmpe,
+                 r_vals,
+                 mean,
+                 plus_sigma,
+                 minus_sigma,
+                 col,
+                 Nstd,
+                 lt_vals_gmc,
+                 lt_weights):
     """
     Plot predictions of a single GMPE (if required) and compute weighted
     predictions from logic tree(s) (again if required)
@@ -787,22 +799,30 @@ def trellis_data(gmpe, r_vals, mean,plus_sigma, minus_sigma, col, Nstd,
             if lt_weights[idx_gmc][gmpe] is not None:
                 if Nstd > 0:
                     lt_vals_gmc[idx_gmc][gmpe] = {
-                                'median': np.exp(mean)*lt_weights[
-                                    idx_gmc][gmpe],
-                                'plus_sigma': plus_sigma*lt_weights[
-                                    idx_gmc][gmpe],
-                                'minus_sigma': minus_sigma*lt_weights[
-                                    idx_gmc][gmpe]}
+                                'median': np.exp(mean)*lt_weights[idx_gmc][gmpe],
+                                'plus_sigma': plus_sigma*lt_weights[idx_gmc][gmpe],
+                                'minus_sigma': minus_sigma*lt_weights[idx_gmc][gmpe]}
                 else:
                     lt_vals_gmc[idx_gmc][
-                        gmpe] = {'median': np.exp(mean)*lt_weights[
-                            idx_gmc][gmpe]}
+                        gmpe] = {'median': np.exp(mean)*lt_weights[idx_gmc][gmpe]}
                         
     return lt_vals_gmc
 
 
-def trel_logic_trees(idx_gmc, gmc, lt_vals_gmc, gmc_p, store_gmm_curves,
-                     r_vals, Nstd, i, m, dep, dip, rake, cfg_key, unit):
+def trel_logic_trees(idx_gmc,
+                     gmc,
+                     lt_vals_gmc,
+                     gmc_p,
+                     store_gmm_curves,
+                     r_vals,
+                     Nstd,
+                     i,
+                     m,
+                     dep,
+                     dip,
+                     rake,
+                     cfg_key,
+                     unit):
     """
     Manages plotting of the logic tree attenuation curves and adds them to the
     store of exported attenuation curves 
@@ -824,53 +844,60 @@ def trel_logic_trees(idx_gmc, gmc, lt_vals_gmc, gmc_p, store_gmm_curves,
         if Nstd > 0:
             store_gmm_curves[
                 cfg_key]['gmc logic tree curves per imt-mag'][
-                    lt_key]['median plus sigma (%s)' % unit
-                            ] = plus_sig
+                    lt_key]['median plus sigma (%s)' % unit] = plus_sig
             store_gmm_curves[
                 cfg_key]['gmc logic tree curves per imt-mag'][
-                    lt_key]['median minus sigma (%s)' % unit
-                            ] = minus_sig
+                    lt_key]['median minus sigma (%s)' % unit] = minus_sig
     
     return store_gmm_curves
 
 
-def lt_trel(r_vals, Nstd, i, m, dep, dip, rake, idx_gmc, lt_vals_gmc,
-            median_gmc, plus_sig_gmc, minus_sig_gmc):
+def lt_trel(r_vals,
+            Nstd,
+            i,
+            m,
+            dep,
+            dip,
+            rake,
+            idx_gmc,
+            lt_vals_gmc,
+            median_gmc,
+            plus_sig_gmc,
+            minus_sig_gmc):
     """
     If required plot spectra from the GMPE logic tree(s)
     """
-    # Get colors and string for checks
-    colours = ['r', 'b', 'g', 'k']
-    col = colours[idx_gmc]
-    label = 'Logic Tree ' + str(idx_gmc+1)
-    
-    # Get key describing mag-imt combo and some other event info    
-    mk = 'IMT = %s, Mw = %s, depth = %s km, dip = %s deg, rake = %s deg' % (
-        i, m, dep, dip, rake)
-    
+    # Get colors and strings for checks
+    col = ['r', 'b', 'g', 'k'][idx_gmc]
+    label = f'Logic Tree {idx_gmc + 1}'
+
+    # Get key describing mag-imt combo and some other event info  
+    mk = (f'IMT = {i}, Mw = {m}, depth = {dep} km, '
+          f'dip = {dip} deg, rake = {rake} deg')
+
     # Get logic tree 
     lt_df_gmc = pd.DataFrame(
-        lt_vals_gmc, index=['median', 'plus_sigma', 'minus_sigma'])
+        lt_vals_gmc, index=[
+            'median', 'plus_sigma', 'minus_sigma'])
 
-    lt_median_gmc = np.sum(lt_df_gmc[:].loc['median'])
-    median_gmc[mk] = lt_median_gmc
-    
-    pyplot.plot(r_vals, lt_median_gmc, linewidth=2, color=col,
-                linestyle='--', label=label,
-                zorder=100)
-    
+    lt_median = lt_df_gmc.loc['median'].sum()
+    median_gmc[mk] = lt_median
+
+    pyplot.plot(r_vals, lt_median, linewidth=2, color=col,
+                linestyle='--', label=label, zorder=100)
+
     if Nstd > 0:
-        
-        lt_plus_sigma_gmc = np.sum(lt_df_gmc[:].loc['plus_sigma'])
-        lt_minus_sigma_gmc = np.sum(lt_df_gmc[:].loc['minus_sigma'])
-        
-        plus_sig_gmc[mk] = lt_plus_sigma_gmc
-        minus_sig_gmc[mk] = lt_minus_sigma_gmc
-        
-        pyplot.plot(r_vals, lt_plus_sigma_gmc, linewidth=0.75,
-                    color=col, linestyle='-.', zorder=100)
-        pyplot.plot(r_vals, lt_minus_sigma_gmc, linewidth=0.75,
-                    color=col, linestyle='-.', zorder=100)
+        lt_plus = lt_df_gmc.loc['plus_sigma'].sum()
+        lt_minus = lt_df_gmc.loc['minus_sigma'].sum()
+
+        plus_sig_gmc[mk] = lt_plus
+        minus_sig_gmc[mk] = lt_minus
+
+         # Plot both plus and minus sigma curves
+        for sigma_val in [lt_plus, lt_minus]:
+            pyplot.plot(r_vals, sigma_val,
+                        linewidth=0.75, color=col,
+                        linestyle='-.', zorder=100)
 
     return median_gmc, plus_sig_gmc, minus_sig_gmc
 
@@ -1014,8 +1041,15 @@ def _get_imts(max_period):
     return imt_list, periods
 
 
-def spectra_data(gmpe, Nstd, gmc_weights, rs_50p, rs_plus_sigma, rs_minus_sigma,
-                 lt_vals, lt_vals_plus, lt_vals_minus):
+def spectra_data(gmpe,
+                 Nstd,
+                 gmc_weights,
+                 rs_50p,
+                 rs_plus_sigma,
+                 rs_minus_sigma,
+                 lt_vals,
+                 lt_vals_plus,
+                 lt_vals_minus):
     """
     If required get the logic tree weighted predictions
     """
@@ -1052,8 +1086,15 @@ def spectra_data(gmpe, Nstd, gmc_weights, rs_50p, rs_plus_sigma, rs_minus_sigma,
     return gmc1_vals, gmc2_vals, gmc3_vals, gmc4_vals
 
 
-def lt_spectra(ax1, gmpe, gmpe_list, Nstd, period, idx_gmc,
-               lt_vals_gmc, ltv_plus_sig, ltv_minus_sig):
+def lt_spectra(ax1,
+               gmpe,
+               gmpe_list,
+               Nstd,
+               period,
+               idx_gmc,
+               lt_vals_gmc,
+               ltv_plus_sig,
+               ltv_minus_sig):
     """
     Plot spectra for the GMPE logic tree
     """    
@@ -1119,8 +1160,15 @@ def load_obs_spectra(obs_spectra):
     return max_period, eq_id, st_id
 
 
-def plot_obs_spectra(ax1, obs_spectra, g, gmpe_list, mag_list, dep_list,
-                     dist_list, eq_id, st_id):
+def plot_obs_spectra(ax1,
+                     obs_spectra,
+                     g,
+                     gmpe_list,
+                     mag_list,
+                     dep_list,
+                     dist_list,
+                     eq_id,
+                     st_id):
     """
     Check if an observed spectra must be plotted, and if so plot
     """

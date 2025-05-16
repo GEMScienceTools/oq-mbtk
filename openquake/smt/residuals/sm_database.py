@@ -84,8 +84,17 @@ class Rupture(object):
         Hypocentral location within rupture surface as a fraction of
         (along-strike length, down-dip width)
     """
-    def __init__(self, eq_id, eq_name, magnitude, length, width, depth,
-                 hypocentre=None, area=None, surface=None, hypo_loc=None):
+    def __init__(self,
+                 eq_id,
+                 eq_name,
+                 magnitude,
+                 length,
+                 width,
+                 depth,
+                 hypocentre=None,
+                 area=None,
+                 surface=None,
+                 hypo_loc=None):
         self.id = eq_id
         self.name = eq_name
         self.magnitude = magnitude
@@ -188,8 +197,13 @@ class FocalMechanism(object):
     :param str mechanism_type:
         Qualitative description of mechanism
     """
-    def __init__(self, eq_id, name, nodal_planes, eigenvalues,
-                 moment_tensor=None, mechanism_type=None):
+    def __init__(self,
+                 eq_id,
+                 name,
+                 nodal_planes,
+                 eigenvalues,
+                 moment_tensor=None,
+                 mechanism_type=None):
         self.id = eq_id
         self.name = name
         self.nodal_planes = nodal_planes
@@ -242,8 +256,16 @@ class Earthquake(object):
     :param rupture:
         Earthquake rupture as instance of the :class: Rupture
     """
-    def __init__(self, eq_id, name, date_time, longitude, latitude, depth,
-                 magnitude, focal_mechanism=None, eq_country=None,
+    def __init__(self,
+                 eq_id,
+                 name,
+                 date_time,
+                 longitude,
+                 latitude,
+                 depth,
+                 magnitude,
+                 focal_mechanism=None,
+                 eq_country=None,
                  tectonic_region=None):
         self.id = eq_id
         assert isinstance(date_time, datetime)
@@ -287,8 +309,17 @@ class RecordDistance(object):
         and earthquake-specific
         average DPP used
     """
-    def __init__(self, repi, rhypo, rjb=None, rrup=None, r_x=None, ry0=None,
-                 flag=None, azimuth=None, rcdpp=None, rvolc=None):
+    def __init__(self,
+                 repi,
+                 rhypo,
+                 rjb=None,
+                 rrup=None,
+                 r_x=None,
+                 ry0=None,
+                 flag=None,
+                 azimuth=None,
+                 rcdpp=None,
+                 rvolc=None):
         self.repi = repi
         self.rhypo = rhypo
         self.rjb = rjb
@@ -396,9 +427,19 @@ class RecordSite(object):
         True if site is in subduction backarc, False otherwise
 
     """
-    def __init__(self, site_id, site_code, site_name, longitude, latitude,
-                 altitude, vs30=None, vs30_measured=None, network_code=None,
-                 country=None, site_class=None, backarc=False):
+    def __init__(self,
+                 site_id,
+                 site_code,
+                 site_name,
+                 longitude,
+                 latitude,
+                 altitude,
+                 vs30=None,
+                 vs30_measured=None,
+                 network_code=None,
+                 country=None,
+                 site_class=None,
+                 backarc=False):
         self.id = site_id
         self.name = site_name
         self.code = site_code
@@ -579,8 +620,14 @@ class Component(object):
         Units of record
         
     """
-    def __init__(self, waveform_id, orientation, ims=None, longest_period=None,
-                 waveform_filter=None, baseline=None, units=None):
+    def __init__(self,
+                 waveform_id,
+                 orientation,
+                 ims=None,
+                 longest_period=None,
+                 waveform_filter=None,
+                 baseline=None,
+                 units=None):
         self.id = waveform_id
         self.orientation = orientation
         self.lup = longest_period
@@ -631,9 +678,19 @@ class GroundMotionRecord(object):
     :param str datafile:
         Data file for strong motion record
     """
-    def __init__(self, gm_id, time_series_file, event, distance, record_site,
-                 x_comp, y_comp, vertical=None, ims=None, longest_period=None,
-                 shortest_period=None, spectra_file=None):
+    def __init__(self,
+                 gm_id,
+                 time_series_file,
+                 event,
+                 distance,
+                 record_site,
+                 x_comp,
+                 y_comp,
+                 vertical=None,
+                 ims=None,
+                 longest_period=None,
+                 shortest_period=None,
+                 spectra_file=None):
         self.id = gm_id
         self.time_series_file = time_series_file
         self.spectra_file = spectra_file
@@ -686,7 +743,11 @@ class GroundMotionDatabase(ContextDB):
     :param list site_ids:
         List of site ids (defaults to None: empty list)
     """
-    def __init__(self, db_id, db_name, db_directory=None, records=None,
+    def __init__(self,
+                 db_id,
+                 db_name,
+                 db_directory=None,
+                 records=None,
                  site_ids=None):
         self.id = db_id
         self.name = db_name
