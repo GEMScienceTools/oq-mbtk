@@ -480,11 +480,20 @@ class RecordSite(object):
         else:
             vs30 = missing_vs30
             vs30_measured = False
+        
         if self.z1pt0:
             z1pt0 = self.z1pt0
+        else:
+            z1pt0 = utils.vs30_to_z1pt0_cy14(vs30)
+
         if self.z2pt5:
             z2pt5 = self.z2pt5
-        location = Point(self.longitude, self.latitude, -self.altitude/1000.)
+        else:
+            z2pt5 = utils.z1pt0_to_z2pt5(z1pt0)
+        
+        location = Point(self.longitude,
+                         self.latitude,
+                         -self.altitude / 1000.)  # Elevation from m to km
         oq_site = Site(location,
                        vs30,
                        z1pt0,
@@ -669,19 +678,9 @@ class GroundMotionRecord(object):
     :param str datafile:
         Data file for strong motion record
     """
-    def __init__(self,
-                 gm_id,
-                 time_series_file,
-                 event,
-                 distance,
-                 record_site,
-                 x_comp,
-                 y_comp,
-                 vertical=None,
-                 ims=None,
-                 longest_period=None,
-                 shortest_period=None,
-                 spectra_file=None):
+    def __init__(self, gm_id, time_series_file, event, distance, record_site,
+                 x_comp, y_comp, vertical=None, ims=None, longest_period=None,
+                 shortest_period=None, spectra_file=None):
         self.id = gm_id
         self.time_series_file = time_series_file
         self.spectra_file = spectra_file
@@ -734,11 +733,7 @@ class GroundMotionDatabase(ContextDB):
     :param list site_ids:
         List of site ids (defaults to None: empty list)
     """
-    def __init__(self,
-                 db_id,
-                 db_name,
-                 db_directory=None,
-                 records=None,
+    def __init__(self, db_id, db_name, db_directory=None, records=None,
                  site_ids=None):
         self.id = db_id
         self.name = db_name
@@ -854,6 +849,7 @@ class GroundMotionDatabase(ContextDB):
             setattr(ctx, attname, [])
 
         for record in records:
+            ctx.vs30.append(record.site.vs30)
             ctx.lons.append(record.site.longitude)
             ctx.lats.append(record.site.latitude)
             if record.site.altitude:
@@ -861,20 +857,28 @@ class GroundMotionDatabase(ContextDB):
             else:
                 depth = 0.0
             ctx.depths.append(depth)
-            ctx.vs30.append(record.site.vs30)
             if record.site.vs30_measured is not None:
                 vs30_measured = record.site.vs30_measured
             else:
                 vs30_measured = 0
             ctx.vs30measured.append(vs30_measured)
-            ctx.z1pt0.append(record.site.z1pt0)
-            ctx.z2pt5.append(record.site.z2pt5)
+            if record.site.z1pt0 is not None:
+                z1pt0 = record.site.z1pt0
+            else:
+                z1pt0 = utils.vs30_to_z1pt0_cy14(record.site.vs30)
+            ctx.z1pt0.append(z1pt0)
+            if record.site.z2pt5 is not None:
+                z2pt5 = record.site.z2pt5
+            else:
+                z2pt5 = utils.vs30_to_z2pt5_cb14(record.site.vs30)
+            ctx.z2pt5.append(z2pt5)
             if getattr(record.site, "backarc", None) is not None:
                 ctx.backarc.append(record.site.backarc)
-        # finalize:
+        
+        # Finalise
         for attname in self.sites_context_attrs:
             attval = getattr(ctx, attname)
-            # remove attribute if its value is empty-like
+            # Remove attribute if its value is empty-like
             if attval is None or not len(attval):
                 delattr(ctx, attname)
             elif attname in ('vs30measured', 'backarc'):
