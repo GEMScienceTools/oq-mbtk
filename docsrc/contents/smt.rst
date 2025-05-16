@@ -441,10 +441,9 @@ Comparing GMPEs
 
         [site_properties]
         vs30 = 800
-        Z1 = -999   # If -999 compute from Vs30 using Chiou and Youngs (2014) relationship
-        Z25 = -999  # If -999 compute from Vs30 using Campbell and Bozorgnia (2014) relationship
+        z1pt0 = -999  # If -999 compute from each GMM's own vs30 to z1pt0 relationship
+        z2pt5 = -999  # If -999 compute from each GMM's own vs30 to z2pt5 relationship
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-        z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical relationships
         volc_back_arc = false # true or false
         eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
         
