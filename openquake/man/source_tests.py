@@ -120,13 +120,13 @@ def plot_sources(folder_name, region, mmin, fig_folder,
 		fig_a.plot(x=data[:,0], 
 			y=data[:,1], 
 			style="h0.2", 
-			color=data[:, 2],
+			fill=data[:, 2],
 			cmap=cpt_rate)
  
 		fig_b.plot(x=data[:,0], 
 			y=data[:,1], 
 			style="h0.2", 
-			color=data[:, 4],
+			fill=data[:, 4],
 			cmap=cpt_mmax)
         
 		if plot_poly == True:
