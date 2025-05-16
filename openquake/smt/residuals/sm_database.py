@@ -493,7 +493,7 @@ class RecordSite(object):
         
         location = Point(self.longitude,
                          self.latitude,
-                         -self.altitude / 1000.)  # Elevation from m to km
+                        -self.altitude / 1000.)  # Elevation from m to km
         oq_site = Site(location,
                        vs30,
                        z1pt0,
