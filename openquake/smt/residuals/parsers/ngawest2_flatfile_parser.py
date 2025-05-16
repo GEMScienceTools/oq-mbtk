@@ -41,10 +41,8 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  RecordDistance)
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
 from openquake.smt.residuals.parsers import valid
-from openquake.smt.utils import (MECHANISM_TYPE,
-                                 DIP_TYPE,
-                                 vs30_to_z1pt0_cy14,
-                                 vs30_to_z2pt5_cb14)
+from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
+
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
@@ -492,16 +490,20 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             vs30_measured = False
         else:
             vs30_measured = False
-        site = RecordSite(site_id, station_code, station_code, site_lon,
-                          site_lat, elevation, vs30, vs30_measured,
-                          network_code=network_code, country=None)
+        site = RecordSite(site_id,
+                          station_code,
+                          station_code,
+                          site_lon,
+                          site_lat,
+                          elevation,
+                          vs30,
+                          vs30_measured,
+                          network_code=network_code,
+                          country=None)
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
         site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
                                          "sensor_depth_m")
         site.instrument_type = metadata["instrument_code"].strip()
-        if site.vs30:
-            site.z1pt0 = vs30_to_z1pt0_cy14(vs30)
-            site.z2pt5 = vs30_to_z2pt5_cb14(vs30)
         housing_code = metadata["housing_code"].strip()
         if housing_code and (housing_code in HOUSING):
             site.building_structure = HOUSING[housing_code]
