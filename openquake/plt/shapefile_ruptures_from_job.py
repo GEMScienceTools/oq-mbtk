@@ -37,7 +37,7 @@ def read_rups_job(id_calc: int):
     Returns:
         tuple: Combined GMF data and rupture IDs for shapefile creation.
     """
-    dstore = datastore.read(f'/Users/manuela/oqdata/calc_{id_calc}.hdf5')
+    dstore = datastore.read(id_calc)
     ruptures = dstore.read_df('ruptures')
     events = dstore.read_df('events')
     gmf_data = dstore.read_df('gmf_data')
