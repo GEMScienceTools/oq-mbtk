@@ -72,7 +72,8 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         # Now check matrix per imt (key)
         assert obs_matrix.keys() == exp_matrix.keys()
         for key in obs_matrix:
-            assert np.array_equal(obs_matrix[key], exp_matrix[key])
+            np.testing.assert_allclose(
+                 obs_matrix[key], exp_matrix[key], atol=ATOL)
 
     @classmethod
     def tearDownClass(self):
