@@ -28,7 +28,7 @@ ztor = -999 # Set to -999 to NOT consider
 aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
 trt = -999 # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
-# Specify mags and depths for Sammons, Euclidean dist and Agglomerative clustering
+# Specify mags and depths for Sammons maps, Euclidean dist and Agglomerative clustering
 [source_properties_euclidean_analysis]
 mmin = 5
 mmax = 7

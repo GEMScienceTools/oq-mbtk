@@ -464,7 +464,7 @@ Comparing GMPEs
         mags = [5, 6, 7] # Mags used only for trellis and response spectra
         depths = [20, 20, 20] # Depth per magnitude for trellis and response spectra
         
-        # Specify mags and depths for Sammons, Euclidean dist and Agglomerative clustering
+        # Specify mags and depths for Sammons maps, Euclidean dist and Agglomerative clustering
         [source_properties_euclidean_analysis]
         mmin = 5
         mmax = 7

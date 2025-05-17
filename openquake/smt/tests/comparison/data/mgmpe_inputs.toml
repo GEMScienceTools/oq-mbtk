@@ -27,7 +27,7 @@ ztor = -999 # Set to -999 to NOT consider
 aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
 trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
-# Specify mag values and depths for use in Sammons, Euclidean dist and clustering
+# Specify mag values and depths for use in Sammons maps, Euclidean dist and clustering
 [source_properties_euclidean_analysis]
 mmin = 5
 mmax = 7
