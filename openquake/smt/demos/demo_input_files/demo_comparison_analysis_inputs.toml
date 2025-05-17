@@ -28,18 +28,14 @@ ztor = -999 # Set to -999 to NOT consider
 aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
 trt = -999 # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
-# Specify mags and depths for Sammons maps, Euclidean dist and Agglomerative clustering
-[source_properties_euclidean_analysis]
+[euclidean_analysis] # Mags and depths for Sammons maps, Euclidean dist and clustering
 mmin = 5
 mmax = 7
 spacing = 0.1
 depths_for_euclidean = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+gmpe_labels = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CB14', 'AK14']
 
-# Specify label for gmpes
-[gmpe_labels]
-gmpes_label = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CB14', 'AK14']
-
-# Specify gmpes
+[models] # Specify GMMs
 
 # Plot logic tree and individual GMPEs for below GMC logic tree config (gmc1)
 [models.BooreEtAl2020]
