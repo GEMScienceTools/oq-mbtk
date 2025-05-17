@@ -27,16 +27,15 @@ ztor = -999 # Set to -999 to NOT consider
 aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
 trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
-# Specify mag values and depths for use in Sammons maps, Euclidean dist and clustering
-[source_properties_euclidean_analysis]
+[euclidean_analysis] # Mags and depths for Sammons maps, Euclidean dist and clustering
 mmin = 5
 mmax = 7
 spacing = 0.1
-depths_for_euclidean = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth],[mag,depth]] 
+depths_for_euclidean = [[5, 20], [6, 25], [7, 30]] # [[mag, depth], [mag, depth], [mag, depth]] 
+gmpe_labels = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
 
-# Specify label for gmpes
-[gmpe_labels]
-gmpes_label = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
+# Specify GMMs
+[models]
 
 [models.0-ModifiableGMPE]
 gmpe = 'YenierAtkinson2015BSSA'
