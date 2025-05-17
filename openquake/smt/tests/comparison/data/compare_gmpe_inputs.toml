@@ -11,8 +11,8 @@ Nstd = 0 # Truncation for GMM sigma distribution
 
 [site_properties]
 vs30 = 800
-z1pt0 = -999  # If -999 compute from each GMM's own vs30 to z1pt0 relationship
-z2pt5 = -999  # If -999 compute from each GMM's own vs30 to z2pt5 relationship
+z1pt0 = 30.0  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
+z2pt5 = 0.57  # (km) - if -999 compute from each GMM's own vs30 to z2pt5 relationship
 up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
 volc_back_arc = false # true or false
 eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
