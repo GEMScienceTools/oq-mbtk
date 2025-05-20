@@ -54,7 +54,7 @@ def _create_catalogue_versions(catfi, outdir, numcats=None, stype='random',
     else:
         os.makedirs(outdir)
 
-    csvout = os.path.join(outdir, 'v{}_catalogue.pkl')
+    csvout = os.path.join(outdir, 'v{}_catalogue.csv')
     fileout = os.path.join(outdir, 'v_mags.csv')
     factors = np.arange(-1,1,0.1)
 
