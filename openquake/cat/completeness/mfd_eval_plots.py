@@ -8,6 +8,54 @@ from openquake.cat.completeness.analysis import read_compl_data, _make_ctab
 from openquake.hazardlib.mfd import TruncatedGRMFD
 import matplotlib.colors as mcolors
 from matplotlib.patches import Ellipse
+from scipy.spatial import cKDTree
+
+
+def find_dominant_peaks(points, k=20, height_threshold=0.05, min_distance=0.2, max_peaks=5):
+    """
+    Find a small number of dominant peaks from a 3D point cloud.
+
+    Parameters:
+    - points: (N, 3) array of XYZ points
+    - k: number of neighbors for local z-comparison
+    - height_threshold: point must be this much higher than neighbors to be a local peak
+    - min_distance: minimum spatial distance between selected peaks
+    - max_peaks: maximum number of peaks to return
+
+    Returns:
+    - peaks: (M, 3) array of selected peak points (M <= max_peaks)
+    """
+    tree = cKDTree(points[:, :2])
+    candidate_peaks = [] 
+
+    for i, pt in enumerate(points):
+        _, idxs = tree.query(pt[:2], k=k+1)
+        neighbors = points[idxs[1:]]  # exclude self
+        # listing as a candidate peak if it's higher than the immediate neighbors
+        mean_z = np.mean(neighbors[:, 2])
+        if pt[2] > mean_z + height_threshold:
+            candidate_peaks.append((i, pt[2], sum(neighbors[:, 2])))  # (index, height)
+
+    # Sort candidate peaks by height descending
+    candidate_peaks.sort(key=lambda x: -x[1])
+    selected = []
+    used_indices = set()
+    selected_buff = [] 
+
+    for i, e, n in candidate_peaks:
+        p = points[i]
+        # Check if it's far enough from all already-selected peaks
+        # checking in 2d 
+        all_xy = points[:, :2] # (N, 2)
+        
+        if all(np.linalg.norm(p[:2] - all_xy[j]) >= min_distance for j in used_indices):
+            selected.append(p)
+            selected_buff.append(n)
+            used_indices.add(i)
+            
+            if len(selected) >= max_peaks:
+                break
+    return np.array(selected), candidate_peaks, selected_buff
 
 def _read_results(results_dir):
     fils = glob(os.path.join(results_dir, 'full*'))
@@ -213,7 +261,59 @@ def weighted_covariance(x, y, weights):
     return np.array([[cov_xx, cov_xy], [cov_xy, cov_yy]])
 
 
-def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0, 
+def plot_dominant_peaks(df, figdir, figname='a-b-peaks.png', 
+                        gs=15, peaks=3, dist=0.4):
+
+    # set up data
+    x = df.agr
+    y = df.bgr
+    wei = 1-df.norm
+    weights = (wei - min(wei)) / (max(wei) - min(wei)) 
+
+    # set up plot
+    fig, ax = plt.subplots(figsize=(10,10))
+    hb = ax.hexbin(x, y, gridsize=gs, cmap='Blues')
+
+    counts = hb.get_array()
+    xc = hb.get_offsets()[:, 0]
+    yc = hb.get_offsets()[:, 1]
+    # scale y by 10 so it scales more like x
+    points = np.stack((xc, 10*yc, counts), axis=1)
+
+    dominant, cand_peaks, sbuff = find_dominant_peaks(points, k=7, height_threshold=0.01, min_distance=dist, max_peaks=peaks)
+    plt.plot(dominant[:, 0], dominant[:, 1]/10, 'r^')
+
+    color = 'red'
+    tot = sum(np.array(dominant).T[2])
+    ypo = 0.98
+    agrs, bgrs, weights = [], [], []
+    for domi in dominant:
+        a1, b1, p1 = domi
+        agr = np.round(a1, 3)
+        bgr = np.round(b1/10, 3)
+        p1 /= tot
+        wei = np.round(p1, 3)
+        ax.text(0.02, ypo, f'a = {agr}, b = {bgr} [{wei}]',
+            transform=ax.transAxes, verticalalignment='top', horizontalalignment='left', 
+            fontsize=12, color=color)
+        ypo -= 0.04
+        agrs.append(agr); bgrs.append(bgr); weights.append(wei)
+   
+    ax.set_xlabel('a-value', fontsize=16)
+    ax.set_ylabel('b-value', fontsize=16)
+    ax.set_title(figname.replace('.png', ''), fontsize=16)
+    ax.xaxis.set_tick_params(labelsize=14)
+    ax.yaxis.set_tick_params(labelsize=14)
+
+    fout = os.path.join(figdir, figname)
+    plt.savefig(fout, dpi=300)
+    plt.close()
+
+    return agrs, bgrs, weights
+
+
+
+def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0, gs=15,
                                      figname='a-b-covariance.png'):
 
     # set up data
@@ -224,7 +324,7 @@ def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0,
 
     # set up plot
     fig, ax = plt.subplots(figsize=(10,10))
-    hb = ax.hexbin(x, y, gridsize=20, cmap='Blues')
+    hb = ax.hexbin(x, y, gridsize=gs, cmap='Blues')
     cb = fig.colorbar(hb, ax=ax)
     cb.set_label('counts')
 
@@ -361,8 +461,11 @@ def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, fign
     plt.close()
 
 
-def make_all_plots(resdir_base, compdir, figsdir_base, labels):
-    agrs, bgrs, labs = [], [], []
+def make_all_plots(resdir_base, compdir, figsdir_base, labels, 
+                   hist_params=[15, 3, 0.4]):
+    gs = int(hist_params[0]); peaks = int(hist_params[1]); dist = hist_params[2]
+    agrs1, bgrs1, labs1 = [], [], []
+    agrs2, bgrs2, labs2, weights2 = [], [], [], []
     for label in labels:
         print(f'Running for {label}')
         resdir = os.path.join(resdir_base, label)
@@ -401,8 +504,14 @@ def make_all_plots(resdir_base, compdir, figsdir_base, labels):
         cx, cy, mx1, my1, mx2, my2 = plot_weighted_covariance_ellipse(df_best, figsdir)
         plot_weighted_covariance_ellipse(df_thresh, figsdir, figname=f'{label}-20percent.png')
 
-        labs.extend([f'{label}-center', f'{label}-low', f'{label}-high'])
-        agrs.extend([cx, mx1, mx2])
-        bgrs.extend([cy, my1, my2])
+        a2, b2, weights = plot_dominant_peaks(df_best, figsdir, gs=gs, 
+                                              peaks=peaks, dist=dist)
 
-    return labs, np.round(agrs, 3), np.round(bgrs, 3)
+        labs1.extend([f'{label}-center', f'{label}-low', f'{label}-high'])
+        agrs1.extend([cx, mx1, mx2])
+        bgrs1.extend([cy, my1, my2])
+
+        labs2.extend([f'{label}-{i}' for i,w in enumerate(weights)])
+        agrs2.extend(a2); bgrs2.extend(b2); weights2.extend(weights)
+
+    return labs1, np.round(agrs1, 3), np.round(bgrs1, 3), labs2, agrs2, bgrs2, weights2
