@@ -123,7 +123,11 @@ def _decl_all_cats(outdir, dcl_toml_tmp, decdir):
 
     """
     """
-    catvs = glob.glob(os.path.join(outdir, '*pkl'))
+    catvs = glob.glob(os.path.join(outdir, 'v*cat**pkl'))
+    if len(catvs) == 0:
+        catvs = glob.glob(os.path.join(outdir, 'v*cat*csv'))
+    if len(catvs) == 0:
+        print('There are no catalogues to decluster! Check location and names.')
 
     config = toml.load(dcl_toml_tmp)
     config['main']['save_aftershocks'] = False
@@ -221,6 +225,9 @@ def make_many_mfds(configfile, basedir=None):
     # make subdirs based on outdir name
     catdir = os.path.join(outdir, 'catalogues')
     decdir = os.path.join(outdir, 'declustered')
+    if config['decluster']:
+        decdirroot = config['decluster'].get('decl_directory', 'declustered')
+        decdir = os.path.join(outdir, decdirroot)
     compdir = os.path.join(outdir, 'completeness')
     resdir = os.path.join(outdir, 'results')
     figdir = os.path.join(outdir, 'figures')
@@ -261,15 +268,22 @@ def make_many_mfds(configfile, basedir=None):
 
     plots = config['plot'].get('make_plots', True)
     if plots:
+        hist_params = config['plot'].get('hist_params', [15, 3, 0.4])
         if not labs:
             print('Must specify the TRTs')
             sys.exit()
-        labels, agrs, bgrs = make_all_plots(resdir, compdir, figdir, labs)
-        fin = pd.DataFrame({'label': labels, 'a-values': agrs, 'b-values': bgrs})
+        labels1, agrs1, bgrs1, labels2, agrs2, bgrs2, weights2 = make_all_plots(resdir, compdir, figdir, labs, hist_params=hist_params)
+        fin = pd.DataFrame({'label': labels1, 'a-values': agrs1, 'b-values': bgrs1})
         if basedir:
-            fin.to_csv(os.path.join(basedir, outdir, 'mfd-results.csv'))
+            fin.to_csv(os.path.join(basedir, outdir, 'mfd-results-cv.csv'))
         else:
-            fin.to_csv(os.path.join(outdir, 'mfd-results.csv'))
+            fin.to_csv(os.path.join(outdir, 'mfd-results-cv.csv'))
+
+        fin = pd.DataFrame({'label': labels2, 'a-values': agrs2, 'b-values': bgrs2, 'weights': weights2})
+        if basedir:
+            fin.to_csv(os.path.join(basedir, outdir, 'mfd-results-peaks.csv'))
+        else:
+            fin.to_csv(os.path.join(outdir, 'mfd-results-peaks.csv'))
 
 make_many_mfds.configfile = 'path to configuration file'
 
