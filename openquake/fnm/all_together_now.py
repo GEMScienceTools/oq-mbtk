@@ -20,12 +20,11 @@ from openquake.fnm.fault_modeler import (
 
 from openquake.fnm.rupture_connections import (
     get_rupture_adjacency_matrix,
-    get_multifault_ruptures,
     get_multifault_ruptures_fast,
-    get_multifault_ruptures_numba,
     make_binary_adjacency_matrix,
     make_binary_adjacency_matrix_sparse,
     filter_bin_adj_matrix_by_rupture_overlap,
+    get_rupture_grouping,
 )
 
 from openquake.fnm.rupture_filtering import (
@@ -73,7 +72,7 @@ default_settings = {
     'rupture_set_for_rates_from_slip_rates': 'all',
     'plot_fault_moment_rates': False,
     'sparse_distance_matrix': True,
-    'parallel_multifault_search': False,
+    'parallel_multifault_search': True,
     'full_fault_only_mf_ruptures': True,
     'calculate_rates_from_slip_rates': True,
     'surface_type': 'simple',
@@ -264,7 +263,7 @@ def build_fault_network(
         raise DeprecationWarning("Filtering by angle is deprecated.")
 
     if settings['filter_by_overlap']:
-        logging.info("  Filtering by rupture angle")
+        logging.info("  Filtering by rupture overlap")
         binary_adjacence_matrix, _ = filter_bin_adj_matrix_by_rupture_overlap(
             fault_network['single_rup_df'],
             fault_network['subfaults'],
@@ -286,12 +285,12 @@ def build_fault_network(
     logging.info(f"\tdone in {round(t4-t3, 1)} s")
 
     logging.info("Getting multifault ruptures")
-    # fault_network['multifault_inds'] = get_multifault_ruptures(
+    rup_groups = get_rupture_grouping(
+        fault_network['faults'], fault_network['single_rup_df']
+    )
     fault_network['multifault_inds'] = get_multifault_ruptures_fast(
-        # fault_network['multifault_inds'] = get_multifault_ruptures_numba(
-        # fault_network['dist_mat'],
         binary_adjacence_matrix,
-        # max_dist=settings['max_jump_distance'],
+        rup_groups=rup_groups,
         max_sf_rups_per_mf_rup=settings['max_sf_rups_per_mf_rup'],
         parallel=settings['parallel_multifault_search'],
     )

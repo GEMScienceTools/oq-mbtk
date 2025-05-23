@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, Dict, List, Mapping, Sequence, Set
 from functools import partial
 from collections import deque
 from multiprocessing import Pool, Array
@@ -35,6 +35,8 @@ from openquake.fnm.fault_modeler import (
 
 from openquake.fnm.mesh import get_mesh_bb
 from openquake.fnm.bbox import get_bb_distance
+
+from openquake.fnm.multifault_parallel import find_connected_subsets_parallel
 
 
 def get_bb_from_surface(surface):
@@ -1306,31 +1308,93 @@ def find_connected_subgraphs(adj_dict, filter=True):
     return subgraphs
 
 
+def find_connected_subsets_dfs_serial(
+    adj_dict: Dict[int, Sequence[int]],
+    group_of: Mapping[int, int],  #  vertex → group‑id  lookup
+    max_vertices: int = 10,
+) -> List[List[int]]:
+    """
+    Enumerate all connected vertex sets (size 2…max_vertices) such that
+    no two vertices belong to the same group.
+
+    Parameters
+    ----------
+    adj_dict
+        Undirected adjacency list (neighbours do not have to be sets,
+        just iterables).
+    group_of
+        `vertex  ->  group‑id` mapping.  Only O(1) read access is needed.
+    max_vertices
+        Largest set size to return.
+
+    Returns
+    -------
+    list[list[int]]
+        Each inner list is a connected, group‑unique vertex set.
+    """
+    all_subsets: Set[frozenset[int]] = set()
+
+    def explore(
+        vertex: int, current_set: Set[int], used_groups: Set[int]
+    ) -> None:
+
+        if 1 < len(current_set) <= max_vertices:
+            all_subsets.add(frozenset(current_set))
+
+        if len(current_set) == max_vertices:
+            return
+
+        for nbr in adj_dict[vertex]:
+            if nbr in current_set:  # already inside
+                continue
+            g = group_of[nbr]
+            if g in used_groups:  # would repeat a group
+                continue
+            explore(
+                nbr,
+                current_set | {nbr},
+                used_groups | {g},
+            )
+
+    for v in adj_dict:
+        explore(v, {v}, {group_of[v]})
+
+    # convert back to mutable containers if that is what the caller wants
+    return [list(s) for s in all_subsets]
+
+
 def get_multifault_ruptures_fast(
     dist_adj_binary,
     max_sf_rups_per_mf_rup: int = 10,
+    rup_groups=None,
     parallel=False,
-    min_parallel_subgraphs: int = 5,
+    min_parallel_subgraphs: int = 0,
 ) -> list[list[int]]:
-    all_subsets = set()
     n = dist_adj_binary.shape[0]  # Number of vertices
 
-    adj_list = sparse_to_adj_dict(dist_adj_binary)
+    adj_dict = sparse_to_adj_dict(dist_adj_binary)
 
     logging.info("\tfinding connected subgraphs")
-    subgraphs = find_connected_subgraphs(adj_list, filter=True)
+    subgraphs = find_connected_subgraphs(adj_dict, filter=True)
     logging.info("\t%d connected subgraphs found", len(subgraphs))
 
     logging.info("\tgetting all contiguous vertex sets")
     if parallel and len(subgraphs) > min_parallel_subgraphs:
-        vertex_sets = get_multifault_ruptures_parallel(
-            subgraphs, max_sf_rups_per_mf_rup
+        # vertex_sets = get_multifault_ruptures_parallel(
+        #    subgraphs, max_sf_rups_per_mf_rup
+        # )
+        vertex_sets = find_connected_subsets_parallel(
+            adj_dict,
+            rup_groups,
+            max_vertices=max_sf_rups_per_mf_rup,
         )
     else:
         vertex_sets = []
         for i, subgraph in enumerate(subgraphs):
             vertex_sets.extend(
-                find_connected_subsets_dfs(subgraph, max_sf_rups_per_mf_rup)
+                find_connected_subsets_dfs_serial(
+                    subgraph, rup_groups, max_sf_rups_per_mf_rup
+                )
             )
             logging.info("\t\tfinished subgraph %d", i + 1)
     return vertex_sets
