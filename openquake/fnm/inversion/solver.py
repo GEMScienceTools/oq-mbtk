@@ -312,3 +312,154 @@ def solve_llsq(G, d, weights=None, **kwargs):
 
     print("norm", norm)
     return x
+
+
+import numba as nb
+
+
+@nb.njit(fastmath=True, parallel=True)
+def spspmm_csr(A_data, A_indices, A_indptr, x, out):
+    # out = A @ x   (CSR • dense vector)
+    m = A_indptr.size - 1
+    for i in nb.prange(m):
+        row_sum = 0.0
+        for j in range(A_indptr[i], A_indptr[i + 1]):
+            row_sum += A_data[j] * x[A_indices[j]]
+        out[i] = row_sum
+
+
+@nb.njit(fastmath=True, parallel=True, cache=True)
+def project_nonneg(vec):
+    for i in nb.prange(vec.size):
+        if vec[i] < 0.0:
+            vec[i] = 0.0
+
+
+@nb.njit(fastmath=True)
+def nnls_pg(
+    A_data,
+    A_indices,
+    A_indptr,
+    AT_data,
+    AT_indices,
+    AT_indptr,
+    b,
+    x,
+    maxit,
+    tol,
+):
+    n = AT_indptr.size - 1
+    # x  = np.zeros(n, dtype=np.float64)
+    r = b.copy()  # residual = b - A x
+    g = np.empty(n)  # gradient = -A^T r
+    y = x.copy()  # Nesterov acceleration
+    t = 1.0
+    # crude Lipschitz estimate via power iteration (3 sweeps)
+    z = np.random.randn(n)
+    z /= np.linalg.norm(z)
+    Az = np.empty_like(b)
+    ATAz = np.empty(n)
+    for _ in range(3):
+        spspmm_csr(A_data, A_indices, A_indptr, z, Az)
+        spspmm_csr(AT_data, AT_indices, AT_indptr, Az, ATAz)
+        z = ATAz / np.linalg.norm(ATAz)
+    L = np.dot(z, ATAz)
+    alpha = 1.0 / L
+    for k in range(maxit):
+        # gradient g = A^T(A y - b)  (note r reused)
+        spspmm_csr(A_data, A_indices, A_indptr, y, r)
+        r -= b
+        spspmm_csr(AT_data, AT_indices, AT_indptr, r, g)
+        y -= alpha * g  # gradient step
+        # projection → ℝⁿ₊
+        # np.maximum(y, 0, out=y)
+        project_nonneg(y)
+        # Nesterov momentum
+        t_next = 0.5 * (1 + np.sqrt(1 + 4 * t * t))
+        x_next = y + ((t - 1) / t_next) * (y - x)
+        # stopping test on projected gradient
+        if np.linalg.norm(np.minimum(y, g)) / b.size < tol:
+            return y
+        x, y, t = y, x_next, t_next
+    return y
+
+
+def solve_nnls_pg(
+    A, b, *, x0=None, max_iters=1000, accept_norm=1e-6, copy=True
+):
+    """
+    Solve  min_x ½‖Ax – b‖²  subject to  x ≥ 0   with the projected‑gradient
+    NNLS kernel `nnls_pg`.
+
+    Parameters
+    ----------
+    A : (m, n) sparse matrix (CSR/CSC/COO/LinearOperator accepted)
+        The design matrix.  Internally coerced to CSR float64.
+    b : (m,) array_like
+        Right‑hand‑side vector.
+    x0 : (n,) array_like or None, optional
+        Warm‑start.  If None, the kernel will start from the all‑zeros vector.
+    max_iters : int, default 1000
+        Maximum projected‑gradient iterations.
+    accept_norm : float, default 1e‑6
+        KKT tolerance passed straight to the kernel.
+    copy : bool, default True
+        Whether to copy/convert `A` to CSR float64 even if already CSR.
+
+    Returns
+    -------
+    x : (n,) ndarray
+        Non‑negative least‑squares solution.
+    """
+
+    # -- matrix preparation -------------------------------------------------
+    if not ssp.isspmatrix_csr(A):
+        A_csr = A.tocsr(copy=copy)
+    elif copy:
+        A_csr = A.copy()
+    else:
+        A_csr = A
+    if A_csr.dtype != np.float64:
+        A_csr = A_csr.astype(np.float64)
+
+    AT_csr = A_csr.T.tocsr()
+
+    # -- RHS and optional warm‑start ---------------------------------------
+    b = np.asarray(b, dtype=np.float64)
+    n = A_csr.shape[1]
+    if b.ndim != 1:
+        raise ValueError("`b` must be a 1‑D array.")
+    if A_csr.shape[0] != b.size:
+        raise ValueError(
+            "Incompatible shapes: A is %s but b is length %d"
+            % (A_csr.shape, b.size)
+        )
+
+    if x0 is not None:
+        x0 = np.asarray(x0, dtype=np.float64).ravel()
+        if x0.size != n:
+            raise ValueError(
+                "x0 has length %d but should be %d" % (x0.size, n)
+            )
+    else:
+        x0 = np.zeros(A_csr.shape[1], dtype=np.float64)
+    # ----------------------------------------------------------------------
+
+    # Call your (possibly modified) Numba kernel.  Assumed signature:
+    #   nnls_pg(A_data, A_idx, A_ptr,
+    #           AT_data, AT_idx, AT_ptr,
+    #           b, x0=None, maxit=..., tol=...)
+    x = nnls_pg(
+        A_csr.data,
+        A_csr.indices,
+        A_csr.indptr,
+        AT_csr.data,
+        AT_csr.indices,
+        AT_csr.indptr,
+        b,
+        x0,
+        max_iters,
+        accept_norm,
+    )
+    # resids = A @ x - b
+    return x
