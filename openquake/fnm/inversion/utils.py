@@ -815,7 +815,7 @@ def get_soln_slip_rates(soln, lhs, n_slip_rates, units="mm/yr"):
 def point_to_triangle_distance(point, triangle_vertices):
     """
     Calculate the minimum distance between a point and a triangle in 3D space.
-    
+
     Parameters:
     -----------
     point : numpy.ndarray
@@ -823,7 +823,7 @@ def point_to_triangle_distance(point, triangle_vertices):
     triangle_vertices : numpy.ndarray
         3x3 array containing the coordinates of triangle vertices
         [[x1, y1, z1], [x2, y2, z2], [x3, y3, z3]]
-        
+
     Returns:
     --------
     float
@@ -833,41 +833,41 @@ def point_to_triangle_distance(point, triangle_vertices):
     """
     # Extract triangle vertices
     v1, v2, v3 = triangle_vertices
-    
+
     # Calculate triangle normal
     edge1 = v2 - v1
     edge2 = v3 - v1
     normal = np.cross(edge1, edge2)
     normal = normal / np.linalg.norm(normal)
-    
+
     # Calculate point's projection onto triangle's plane
     v1_to_point = point - v1
     dist_to_plane = np.dot(v1_to_point, normal)
     projection = point - dist_to_plane * normal
-    
+
     # Check if projection lies inside triangle using barycentric coordinates
     # Compute vectors for barycentric coordinate calculation
     v0 = v2 - v1
     v1_vec = v3 - v1
     v2_vec = projection - v1
-    
+
     # Compute dot products
     d00 = np.dot(v0, v0)
     d01 = np.dot(v0, v1_vec)
     d11 = np.dot(v1_vec, v1_vec)
     d20 = np.dot(v2_vec, v0)
     d21 = np.dot(v2_vec, v1_vec)
-    
+
     # Compute barycentric coordinates
     denom = d00 * d11 - d01 * d01
     v = (d11 * d20 - d01 * d21) / denom
     w = (d00 * d21 - d01 * d20) / denom
     u = 1.0 - v - w
-    
+
     # If projection is inside triangle, return distance to plane
     if (u >= 0) and (v >= 0) and (w >= 0) and (abs(u + v + w - 1.0) < 1e-10):
         return abs(dist_to_plane), projection
-    
+
     # If projection is outside triangle, find closest point on edges
     def point_to_line_segment(p, v1, v2):
         """Calculate minimum distance between point p and line segment v1-v2"""
@@ -875,16 +875,16 @@ def point_to_triangle_distance(point, triangle_vertices):
         length_sq = np.dot(segment, segment)
         if length_sq == 0:
             return np.linalg.norm(p - v1), v1
-        
+
         t = max(0, min(1, np.dot(p - v1, segment) / length_sq))
         projection = v1 + t * segment
         return np.linalg.norm(p - projection), projection
-    
+
     # Check each edge of the triangle
     d1, p1 = point_to_line_segment(point, v1, v2)
     d2, p2 = point_to_line_segment(point, v2, v3)
     d3, p3 = point_to_line_segment(point, v3, v1)
-    
+
     # Return minimum distance and closest point
     min_dist = min(d1, d2, d3)
     if d1 == min_dist:
@@ -894,18 +894,19 @@ def point_to_triangle_distance(point, triangle_vertices):
     else:
         return d3, p3
 
+
 def calculate_tri_mesh_distances(points, triangles, verbose=True):
     """
     Calculate minimum distances between multiple points and a triangular mesh.
-    
+
     Parameters:
     -----------
     points : numpy.ndarray
         Nx3 array of point coordinates [[x1,y1,z1], [x2,y2,z2], ...]
     triangles : numpy.ndarray
-        Mx3x3 array of triangle vertices 
+        Mx3x3 array of triangle vertices
         [[[x11,y11,z11], [x12,y12,z12], [x13,y13,z13]], ...]
-        
+
     Returns:
     --------
     numpy.ndarray
@@ -915,26 +916,30 @@ def calculate_tri_mesh_distances(points, triangles, verbose=True):
     """
     n_points = len(points)
     n_triangles = len(triangles)
-    
+
     distances = np.full(n_points, np.inf)
     closest_triangles = np.full(n_points, -1)
 
     n_digits = len(str(n_points))
-    
+
     for i, point in enumerate(points):
         if verbose:
-            print("working on ", str(i).zfill(n_digits), f"/ {n_points}",
-                  end="\r")
+            print(
+                "working on ",
+                str(i).zfill(n_digits),
+                f"/ {n_points}",
+                end="\r",
+            )
         min_dist = np.inf
         closest_triangle = -1
-        
+
         for j, triangle in enumerate(triangles):
             dist, _ = point_to_triangle_distance(point, triangle)
             if dist < min_dist:
                 min_dist = dist
                 closest_triangle = j
-        
+
         distances[i] = min_dist
         closest_triangles[i] = closest_triangle
-    
+
     return distances, closest_triangles
