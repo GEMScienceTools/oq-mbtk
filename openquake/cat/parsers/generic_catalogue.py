@@ -54,8 +54,8 @@ class GeneralCsvCatalogue(object):
     INT_ATTRIBUTE_LIST = ['year', 'month', 'day', 'hour', 'minute',
                           'flag', 'scaling']
 
-    STRING_ATTRIBUTE_LIST = ['eventID', 'Agency', 'magnitudeType', 'comment',
-                             'source']
+    STRING_ATTRIBUTE_LIST = ['eventID', 'magnitudeType', 'comment',
+                             'source', 'Agency']
 
     TOTAL_ATTRIBUTE_LIST = list(
         (set(FLOAT_ATTRIBUTE_LIST).union(
@@ -245,11 +245,18 @@ class GeneralCsvCatalogue(object):
                 mtype = 'Mw'
             else:
                 mtype = self.data['magnitudeType'][iloc]
+            
+            # Pass original agency data 
+            if ('Agency' not in self.data.keys() or
+                len(self.data['Agency']) < 1):
+                Agency = catalogue_id
+            else:
+                Agency = self.data['Agency'][iloc]                
 
             mag = [Magnitude(event_id,
                              origin_id,
                              self.data['magnitude'][iloc],
-                             catalogue_id,
+                             Agency,
                              scale=mtype,
                              sigma=sigma_mag)]
             # Create Moment
@@ -348,8 +355,12 @@ class GeneralCsvCatalogue(object):
 
             # Time
             secs = self.data['second'][iloc]
-
-            microsecs = int((secs - floor(secs)) * 1E6)
+	        # handle columns without seconds info (older catalogues)	
+            try: microsecs = int((secs - floor(secs)) * 1E6)
+            except: 
+            	microsecs = 0
+            	secs = 
+            
             eq_time = datetime.time(self.data['hour'][iloc],
                                     self.data['minute'][iloc],
                                     int(secs),
