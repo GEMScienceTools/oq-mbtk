@@ -355,12 +355,12 @@ class GeneralCsvCatalogue(object):
 
             # Time
             secs = self.data['second'][iloc]
-	        # handle columns without seconds info (older catalogues)	
+            # handle columns without seconds info (older catalogues)	
             try: microsecs = int((secs - floor(secs)) * 1E6)
             except: 
             	microsecs = 0
             	secs = 
-            
+
             eq_time = datetime.time(self.data['hour'][iloc],
                                     self.data['minute'][iloc],
                                     int(secs),

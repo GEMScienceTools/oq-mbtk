@@ -115,6 +115,7 @@ class Magnitude(object):
             self.scale = 'UK'
         self.sigma = sigma
         self.stations = stations
+
         # Createa ID string from attributes
         if self.value > 10.0:
             # Probably a moment magnitude
@@ -123,10 +124,13 @@ class Magnitude(object):
                                           "{:.6e}".format(self.value),
                                           self.scale])
         else:
-            self.magnitude_id = "|".join(["{:s}".format(self.origin_id),
+            try:
+                self.magnitude_id = "|".join(["{:s}".format(self.origin_id),
                                           self.author,
                                           "{:.2f}".format(self.value),
                                           self.scale])
+            except:
+                breakpoint()
 
     def compare_magnitude(self, magnitude, tol=1E-3):
         '''
@@ -934,7 +938,6 @@ class ISFCatalogue(object):
                         common += 1
 
                     else:
-                    # BUT if we are not using eventIDs, these are meaningless
                         fmt = 'Event ID: {:s} already there. Length ids {:d}'
                         msg = fmt.format(event.id, len(self.ids))
                         raise ValueError(msg)
