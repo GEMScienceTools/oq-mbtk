@@ -359,7 +359,7 @@ class GeneralCsvCatalogue(object):
             try: microsecs = int((secs - floor(secs)) * 1E6)
             except: 
             	microsecs = 0
-            	secs = 
+            	secs = 0
 
             eq_time = datetime.time(self.data['hour'][iloc],
                                     self.data['minute'][iloc],
