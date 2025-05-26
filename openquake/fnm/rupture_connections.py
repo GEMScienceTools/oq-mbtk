@@ -36,7 +36,10 @@ from openquake.fnm.fault_modeler import (
 from openquake.fnm.mesh import get_mesh_bb
 from openquake.fnm.bbox import get_bb_distance
 
-from openquake.fnm.multifault_parallel import find_connected_subsets_parallel
+from openquake.fnm.multifault_parallel import (
+        find_connected_subsets_parallel,
+        find_connected_subsets_parallel_py,
+        )
 
 
 def get_bb_from_surface(surface):
@@ -572,6 +575,16 @@ def get_rupture_adjacency_matrix(
     dist_adj_matrix += dist_adj_matrix.T
 
     return single_fault_rup_df, dist_adj_matrix
+
+
+def get_rupture_grouping(faults, single_rup_df):
+    fault_lookup = {fault['fid']: i for i, fault in enumerate(faults)}
+    rup_flt_lookup = {i: rup['fault'] for i, rup in single_rup_df.iterrows()}
+    rup_flt_index_lookup = {
+        k: fault_lookup[v] for k, v in rup_flt_lookup.items()
+    }
+
+    return rup_flt_index_lookup
 
 
 def make_binary_adjacency_matrix(
@@ -1146,7 +1159,7 @@ def sparse_to_adj_dict(sparse_matrix: csr_matrix):
     """
     logging.info("\tmaking adjacency dictionary")
     if not isspmatrix_csr(sparse_matrix):
-        logging.info("\t\tconverting adj matrix to CSR")
+        logging.debug("\t\tconverting adj matrix to CSR")
         mat = sparse_matrix.tocsr()
     else:
         mat = sparse_matrix
@@ -1370,13 +1383,20 @@ def get_multifault_ruptures_fast(
     parallel=False,
     min_parallel_subgraphs: int = 0,
 ) -> list[list[int]]:
+
     n = dist_adj_binary.shape[0]  # Number of vertices
 
     adj_dict = sparse_to_adj_dict(dist_adj_binary)
 
     logging.info("\tfinding connected subgraphs")
-    subgraphs = find_connected_subgraphs(adj_dict, filter=True)
-    logging.info("\t%d connected subgraphs found", len(subgraphs))
+    try:
+        subgraphs = find_connected_subgraphs(adj_dict, filter=True)
+        logging.info("\t%d connected subgraphs found", len(subgraphs))
+    except RecursionError:
+        logging.info(
+            "\tRecursion depth exceeded; working on whole model instead"
+        )
+        subgraphs = [adj_dict]
 
     logging.info("\tgetting all contiguous vertex sets")
     if parallel and len(subgraphs) > min_parallel_subgraphs:
@@ -1384,7 +1404,9 @@ def get_multifault_ruptures_fast(
         #    subgraphs, max_sf_rups_per_mf_rup
         # )
         vertex_sets = find_connected_subsets_parallel(
-            adj_dict,
+            dist_adj_binary, #adj_dict,
+        #vertex_sets = find_connected_subsets_parallel_py(
+        #    adj_dict,
             rup_groups,
             max_vertices=max_sf_rups_per_mf_rup,
         )
