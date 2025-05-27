@@ -1,15 +1,12 @@
-# Test input file for checking execution of get_residuals.from_toml function using some GMPEs with additional parameters specifiable within the toml file
+# Test input file for checking execution of compute_residuals.from_toml function using some GMPEs with additional parameters specifiable within the toml file
 
 [models.AbrahamsonEtAl2014]
-region = "JPN" # add_alias bug means must still specify 'JPN' region
+region = "JPN"
 
 [models.AbrahamsonGulerce2020SInter]
 region = "CAS"
 
-[models.KothaEtAl2020ESHM20]
-sigma_mu_epsilon = 2.85697 
-c3_epsilon = 1.72    
-eshm20_region = 4
+[models.KothaEtAl2020]
 
 [models.NGAEastGMPE]
 gmpe_table = 'NGAEast_FRANKEL_J15.hdf5'

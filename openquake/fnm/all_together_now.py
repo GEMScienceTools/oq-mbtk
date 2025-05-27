@@ -78,6 +78,7 @@ default_settings = {
     'surface_type': 'simple',
     'min_mag': None,
     'max_mag': None,
+    "filter_seed": 69,
 }
 
 
@@ -224,6 +225,7 @@ def build_fault_network(
         all_subfaults=fault_network['subfaults'],
         max_dist=settings['max_jump_distance'],
         sparse=settings['sparse_distance_matrix'],
+        full_fault_only_mf_ruptures=settings['full_fault_only_mf_ruptures'],
     )
     t3 = time.time()
     event_times.append(t3)
@@ -332,6 +334,7 @@ def build_fault_network(
             filter_proportionally_to_plausibility(
                 fault_network['rupture_df'],
                 fault_network['plausibility']['total'],
+                seed=settings['filter_seed'],
             )
         )
         t8 = time.time()

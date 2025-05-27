@@ -1,102 +1,97 @@
 """
-This demo script runs a single stationresidual analysis using a subset of the
-ESM flatfile filtered geographically to Albania + an approximately 100 km buffer.
+This demo script runs a single station residual analysis using
+a subset of the ESM flatfile.
 """
 import os
 import pickle
 import shutil
 
 from openquake.baselib import sap
-from openquake.smt.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
+from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
-from openquake.smt.strong_motion_selector import rank_sites_by_record_count
 
 import warnings
 warnings.filterwarnings("ignore")
 
+
+BASE = os.path.abspath('')
+
+
 """USER INPUTS"""
 
 # Flatfile to use 
-db = 'demo_flatfile.csv'
+demo_flatfile = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
 
 # Specify .toml file with GMPEs and imts to use
-gmms_imts = 'demo_residual_analysis_inputs.toml'
+demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inputs.toml')
 
 # Specify results folder name
-run_folder = 'single_station_analysis_demo'
+demo_out = os.path.join(BASE, 'outputs_demo_station_analysis')
 
-# Minimum number of records for a site to be considered in SSA
-threshold = 45
+# Minimum number of records for a site to be considered in the SSA
+demo_threshold = 45
 
 
-def get_residual_metadata():
+def get_residual_metadata(flatfile, gmms_imts, out_dir):
     """
     Compute the residuals from the example flatfile, GMMs and imts
     """
     # Create metadata directory
-    metadata_dir = run_folder + '_metadata'
-    if os.path.exists(metadata_dir):
-        shutil.rmtree(metadata_dir)
+    metadata_dir = os.path.join(out_dir, 'metadata')
             
     # Parse the metadata
-    ESMFlatfileParserURL.autobuild("000", 'db', metadata_dir, db)
+    ESMFlatfileParserURL.autobuild("000", 'db', metadata_dir, flatfile)
     
     # Get inputs
     metadata = os.path.join(metadata_dir, 'metadatafile.pkl')
     sm_database = pickle.load(open(metadata,"rb")) 
     
-    # If output directory for residuals exists remove and remake 
-    if os.path.exists(run_folder):
-        shutil.rmtree(run_folder)
-    
     # Get residuals
     residuals = res.Residuals.from_toml(gmms_imts)
-    residuals.get_residuals(sm_database)
-    
-    # Create results folder for single station analysis
-    if os.path.exists(run_folder):
-       shutil.rmtree(run_folder)
-    os.mkdir(run_folder)
+    residuals.compute_residuals(sm_database, component="Geometric")
 
     return sm_database
 
 
-def single_station_analysis(sm_database):
+def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
     """
     Perform the analysis using the demo files
     """
+    # Print that workflow has begund
+    print("Single station residual analysis workflow has begun...")
+
     # Find sites with threshold minimum for number of records
-    top_sites = rank_sites_by_record_count(sm_database, threshold)
+    top_sites = sm_database.rank_sites_by_record_count(threshold)
     
     # For each station print some info
-    msg = 'Sites with required threshold of at least %s records' %(threshold)
+    msg = 'Sites with required threshold of at least %s records:' %(threshold)
     print(msg)
-    for idx, site_id in enumerate(top_sites.keys()):
+    for _, site_id in enumerate(top_sites.keys()):
         print(" Site ID: %s Name: %s, Number of Records: %s" %(
             site_id, top_sites[site_id]["Name"], top_sites [site_id]["Count"]))
 
     # Create SingleStationAnalysis object
-    ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), gmms_imts)
+    ssa = res.SingleStationAnalysis.from_toml(top_sites.keys(), gmms_imts)
     
     # Compute the total, inter-event and intra-event residuals for each site
-    ssa1.get_site_residuals(sm_database)
-    
+    ssa.get_site_residuals(sm_database)
+
     # Output for summary csv
-    csv_output = os.path.join(run_folder, 'ssa_results.csv')
+    csv_output = os.path.join(out_dir, 'ssa_results.csv')
     
     # Get summary of statistics and output them
-    ssa1.residual_statistics(True, csv_output)
+    ssa.station_residual_statistics(filename=csv_output)
     
     # Output plots
-    for gmpe in ssa1.gmpe_list:
-        for imt in ssa1.imts:
+    for gmpe in ssa.gmpe_list:
+        for imt in ssa.imts:
             
             # Create folder for the GMM
-            gmpe_folder_name = str(ssa1.gmpe_list[gmpe]).split(
+            gmpe_folder_name = str(ssa.gmpe_list[gmpe]).split(
                 '(')[0].replace('\n','_').replace(' ','').replace('"','')
         
-            gmpe_folder = os.path.join(run_folder, gmpe_folder_name)
+            gmpe_folder = os.path.join(out_dir, gmpe_folder_name)
             
             if not os.path.exists(gmpe_folder):
                 os.mkdir(gmpe_folder)
@@ -110,22 +105,32 @@ def single_station_analysis(sm_database):
                 'IntraResCompPerSite.jpg') 
             
             # Create the plots and save
-            rspl.ResidualWithSite(ssa1, gmpe, imt,
-                                  output_all_res_with_site, filetype='jpg')
+            rspl.ResidualWithSite(
+                ssa, gmpe, imt, output_all_res_with_site, filetype='jpg')
             rspl.IntraEventResidualWithSite(
-                ssa1, gmpe, imt, output_intra_res_components_with_site, 
-                iletype='jpg')
+                ssa, gmpe, imt, output_intra_res_components_with_site, filetype='jpg')
+
+    # Print that workflow has finished
+    print("Single station residual analysis workflow successfully completed.")
 
 
-def main():
+def main(flatfile=demo_flatfile,
+         gmms_imts=demo_inputs,
+         out_dir=demo_out,
+         threshold=demo_threshold):
     """
-    Run the demo for single station residual analysis
+    Run the demo single station residual analysis
     """
+    # Make a new directory for outputs
+    if os.path.exists(out_dir):
+        shutil.rmtree(out_dir)
+    os.makedirs(out_dir)
+
     # Get residuals
-    sm_database = get_residual_metadata()
+    sm_database = get_residual_metadata(flatfile, gmms_imts, out_dir)
     
     # Run the single station analysis
-    single_station_analysis(sm_database)
+    single_station_analysis(sm_database, gmms_imts, out_dir, threshold)
     
     
 if __name__ == '__main__':
