@@ -23,6 +23,8 @@ h3 < 4.0.0
 jupyter-server==2.11.2
 pyproj==3.6.1
 numpy==1.26.2
+scipy >= 1.13.1
+#
 # Generic
 openpyxl
 xlrd

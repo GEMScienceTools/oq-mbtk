@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -24,18 +24,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
 from copy import deepcopy
-from collections import OrderedDict
 from math import floor, ceil
 from scipy.stats import norm
 from cycler import cycler
 
 from openquake.hazardlib.imt import imt2tup
-from openquake.smt.utils_strong_motion import _save_image
-from openquake.smt.residuals.gmpe_residuals import (
-    Residuals, SingleStationAnalysis)
-from openquake.smt.residuals.residual_plots import (
-    residuals_density_distribution, likelihood, residuals_with_magnitude,
-    residuals_with_vs30, residuals_with_distance, residuals_with_depth)
+from openquake.smt.utils_intensity_measures import _save_image
+from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
+from openquake.smt.residuals.residual_plotter_utils import (
+                                                    residuals_density_distribution,
+                                                    likelihood,
+                                                    residuals_with_magnitude,
+                                                    residuals_with_vs30,
+                                                    residuals_with_distance,
+                                                    residuals_with_depth)
 
 
 colors = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
@@ -53,8 +55,14 @@ class BaseResidualPlot(object):
     ylabel_styling_kwargs = dict(fontsize=12)
     title_styling_kwargs = dict(fontsize=12)
 
-    def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
-                 dpi=300, **kwargs):
+    def __init__(self,
+                 residuals,
+                 gmpe,
+                 imt,
+                 filename=None,
+                 filetype="png",
+                 dpi=300,
+                 **kwargs):
         """
         Initializes a BaseResidualPlot
 
@@ -109,7 +117,6 @@ class BaseResidualPlot(object):
         Creates a residual plot
         """
         data = self.get_plot_data()
-        # statistics = self.residuals.get_residual_statistics()
         fig = plt.figure(figsize=self.figure_size)
         fig.set_tight_layout(True)
         nrow, ncol = self.get_subplots_rowcols()
@@ -129,7 +136,7 @@ class BaseResidualPlot(object):
         of the given GMPE (`self.gmpe`) and IMT (`self.imt`).
         Each key (residual type) needs then to be mapped to a residual data
         dict with at least the mandatory keys 'x', 'y' ,'xlabel' and 'ylabel'
-        (See :module:`openquake.smt.residuals.residual_plots` for a list of available
+        (See :module:`openquake.smt.residuals.residual_plotter_utils` for a list of available
         functions that return these kind of dict's and should be in principle
         be called here)
         """
@@ -251,8 +258,15 @@ class ResidualHistogramPlot(BaseResidualPlot):
     Abstract-like class to create histograms of strong ground motion residuals
     """
 
-    def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
-                 dpi=300, bin_width=0.5, **kwargs):
+    def __init__(self,
+                 residuals,
+                 gmpe,
+                 imt,
+                 filename=None,
+                 filetype="png",
+                 dpi=300,
+                 bin_width=0.5,
+                 **kwargs):
         """
         Initializes a ResidualHistogramPlot object. Sub-classes need to
         implement (at least) the method `get_plot_data`.
@@ -335,8 +349,15 @@ class LikelihoodPlot(ResidualHistogramPlot):
     likelihood
     """
 
-    def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
-                 dpi=300, bin_width=0.1, **kwargs):
+    def __init__(self,
+                 residuals,
+                 gmpe,
+                 imt,
+                 filename=None,
+                 filetype="png",
+                 dpi=300,
+                 bin_width=0.1,
+                 **kwargs):
         """
         Initializes a LikelihoodPlot. Basically calls the superclass
         `__init__` method with a `bin_width` default value of 0.1 instead of
@@ -351,8 +372,8 @@ class LikelihoodPlot(ResidualHistogramPlot):
 
     def _assertion_check(self, residuals):
         """
-            overrides the super-class method by asserting we are dealing
-            with a `Likelihood` class
+        Overrides the super-class method by asserting we are dealing
+        with a `Likelihood` class
         """
         assert isinstance(residuals, Residuals)
 
@@ -382,8 +403,15 @@ class ResidualScatterPlot(BaseResidualPlot):
     residuals
     """
 
-    def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
-                 dpi=300, plot_type='', **kwargs):
+    def __init__(self,
+                 residuals,
+                 gmpe,
+                 imt,
+                 filename=None,
+                 filetype="png",
+                 dpi=300,
+                 plot_type='',
+                 **kwargs):
         """
         Initializes a ResidualScatterPlot object. Sub-classes need to
         implement (at least) the method `get_plot_data`.
@@ -415,7 +443,7 @@ class ResidualScatterPlot(BaseResidualPlot):
 
     def get_axis_ylim(self, res_data, res_type):
         y = res_data['y']
-        max_lim = ceil(np.max(np.fabs(y)))
+        max_lim = ceil(np.nanmax(np.fabs(y)))
         return -max_lim, max_lim
     
     def get_axis_title(self, res_data, res_type):
@@ -467,12 +495,20 @@ class ResidualScatterPlot(BaseResidualPlot):
 
 class ResidualWithDistance(ResidualScatterPlot):
     """
-        Class to create a simple scatter plot of strong ground motion
-        residuals (y-axis) versus distance (x-axis)
+    Class to create a simple scatter plot of strong ground motion
+    residuals (y-axis) versus distance (x-axis)
     """
 
-    def __init__(self, residuals, gmpe, imt, filename=None, filetype="png",
-                 dpi=300, plot_type='linear', distance_type="rjb", **kwargs):
+    def __init__(self,
+                 residuals,
+                 gmpe, 
+                 imt,
+                 filename=None,
+                 filetype="png",
+                 dpi=300,
+                 plot_type='linear',
+                 distance_type="rjb",
+                 **kwargs):
         """
         Initializes a ResidualWithDistance object
 
@@ -492,7 +528,9 @@ class ResidualWithDistance(ResidualScatterPlot):
                                                    **kwargs)
 
     def get_plot_data(self):
-        return residuals_with_distance(self.residuals, self.gmpe, self.imt,
+        return residuals_with_distance(self.residuals,
+                                       self.gmpe,
+                                       self.imt,
                                        self.distance_type)
 
     def get_axis_xlim(self, res_data, res_type):
@@ -508,8 +546,8 @@ class ResidualWithDistance(ResidualScatterPlot):
 
 class ResidualWithMagnitude(ResidualScatterPlot):
     """
-        Class to create a simple scatter plot of strong ground motion
-        residuals (y-axis) versus magnitude (x-axis)
+    Class to create a simple scatter plot of strong ground motion
+    residuals (y-axis) versus magnitude (x-axis)
     """
 
     def get_plot_data(self):
@@ -518,8 +556,8 @@ class ResidualWithMagnitude(ResidualScatterPlot):
 
 class ResidualWithDepth(ResidualScatterPlot):
     """
-        Class to create a simple scatter plot of strong ground motion
-        residuals (y-axis) versus depth (x-axis)
+    Class to create a simple scatter plot of strong ground motion
+    residuals (y-axis) versus depth (x-axis)
     """
 
     def get_plot_data(self):
@@ -557,30 +595,28 @@ def manage_imts(residuals):
     residuals.imts = pd.Series(residuals.imts).drop(idx_to_drop).values
 
     # Convert imt_list to array
-    x_with_imt = pd.DataFrame([imt2tup(imts) for imts in residuals.imts],
-                                columns=['imt_str', 'imt_float'])
-    for imt_idx in range(0, np.size(residuals.imts)):
-         if x_with_imt.imt_str[imt_idx] == 'PGA':
-            x_with_imt.imt_float.iloc[imt_idx] = 0
-    x_with_imt = x_with_imt.dropna() #Remove any non-acceleration imt
+    x_with_imt = pd.DataFrame(
+        [imt2tup(imts) for imts in residuals.imts], columns=['imt_str', 'imt_float']
+    )
+    for imt_idx in range(len(residuals.imts)):
+        if x_with_imt.loc[imt_idx, 'imt_str'] == 'PGA':
+            x_with_imt.loc[imt_idx, 'imt_float'] = 0
+
+    x_with_imt = x_with_imt.dropna()
 
     return residuals, preserve_imts, x_with_imt
 
-def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
-                                            dpi=200):
+def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Create a simple plot of loglikelihood values of Scherbaum et al. 2009
     (y-axis) versus spectral period (x-axis)
     """
     # Check enough imts to plot w.r.t. spectral period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
+        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
                 
     # Manage imts
     residuals, preserve_imts, x_llh = manage_imts(residuals)
-
-    # Get required values
-    residuals.get_loglikelihood_values(residuals.imts)
 
     # Define colours for GMMs
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
@@ -602,7 +638,9 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
     
-def plot_edr_metrics_with_spectral_period(residuals, filename, filetype='jpg',
+def plot_edr_metrics_with_spectral_period(residuals,
+                                          filename,
+                                          filetype='jpg',
                                           dpi=200):
     """
     Create plots of EDR, the median pred. correction factor and normalised MDE
@@ -610,13 +648,10 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, filetype='jpg',
     """
     # Check enough imts to plot w.r.t. spectral period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
+        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
     
     # Manage imts
     residuals, preserve_imts, x_with_imt = manage_imts(residuals)
-
-    # Get required values 
-    residuals.get_edr_values_wrt_imt()
 
     # Define colours for GMMs
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
@@ -670,21 +705,20 @@ def plot_edr_metrics_with_spectral_period(residuals, filename, filetype='jpg',
     # Reassign original imts to residuals.imts
     residuals.imts = preserve_imts
     
-def plot_stochastic_area_with_spectral_period(residuals, filename,
-                                              filetype='jpg', dpi=200):
+def plot_stochastic_area_with_spectral_period(residuals,
+                                              filename,
+                                              filetype='jpg',
+                                              dpi=200):
     """
     Definition to create plot of the stochastic area metric computed using Sunny
     et al. (2021) versus spectral period (x-axis)
     """
     # Check enough imts to plot w.r.t. spectral period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
+        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
     
     # Manage imts
     residuals, preserve_imts, x_with_imt = manage_imts(residuals)
-    
-    # Get required values
-    residuals.get_stochastic_area_wrt_imt()
     
     # Define colours for plots
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
@@ -714,9 +748,6 @@ def llh_table(residuals, filename):
     Create a table of loglikelihood values per gmpe per imt (Scherbaum et al.
     2009)
     """
-    # Get required values
-    residuals.get_loglikelihood_values(residuals.imts)
-
     # Get loglikelihood values per imt per gmpe
     llh_metrics = pd.DataFrame()
     for gmpe in residuals.gmpe_list:
@@ -730,10 +761,7 @@ def llh_weights_table(residuals, filename):
     Create a table of model weights per gmpe per imt based on sample
     loglikelihood (Scherbaum et al. 2009)
     """       
-    # Get required values
-    residuals.get_loglikelihood_values(residuals.imts)
-
-    # Now get weights based on them and export table
+    # Get weights based on llh and export table
     imt_idx = []
     for imt in residuals.imts:
         imt_idx.append(imt)
@@ -741,9 +769,9 @@ def llh_weights_table(residuals, filename):
     llh_weights = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
-            llh_weights[gmpe].loc[imt] = \
-                residuals.model_weights_with_imt[imt][gmpe]
-        llh_weights[gmpe].loc['Avg over imts'] = llh_weights[gmpe].mean()
+            llh_weights.loc[
+                imt, gmpe] = residuals.model_weights_with_imt[imt][gmpe]
+        llh_weights.loc['Avg over imts', gmpe] = llh_weights[gmpe].mean()
     llh_weights.columns = llh_weights.columns + ' LLH-based weights'
 
     # Export table
@@ -754,9 +782,6 @@ def edr_table(residuals, filename):
     Create a table of MDE Norm, sqrt(kappa) and EDR gmpe per imt (Kale and Akkar,
     2013)
     """
-    # Get required values
-    residuals.get_edr_values_wrt_imt()
-
     # Get Kale and Akkar (2013) ranking metrics
     edr_dfs = []
     for gmpe in residuals.gmpe_list:
@@ -781,19 +806,21 @@ def edr_weights_table(residuals, filename):
     Create a table of model weights per imt based on Euclidean distance based
     ranking (Kale and Akkar, 2013)
     """     
+    # Get the EDR values from the residuals object
+    edr_for_weights = residuals.edr_values_wrt_imt
+
     # Compute EDR based model weights
-    edr_for_weights = residuals.get_edr_values_wrt_imt()
     edr_per_gmpe = {}
     for gmpe in edr_for_weights.keys():
         edr_per_gmpe[gmpe] = edr_for_weights[gmpe]['EDR']
     edr_per_gmpe_df = pd.DataFrame(edr_per_gmpe)
 
-    gmpe_edr_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
+    gmpe_edr_weight = {gmpe: {} for gmpe in residuals.gmpe_list}
     for imt in edr_per_gmpe_df.index:
         total_edr_per_imt = np.sum(edr_per_gmpe_df.loc[imt]**-1)
         for gmpe in edr_for_weights.keys():
-            gmpe_edr_weight[gmpe][imt] = \
-                edr_per_gmpe_df.loc[imt][gmpe]**-1/total_edr_per_imt
+            gmpe_edr_weight[gmpe][imt] = (
+                edr_per_gmpe_df.loc[imt][gmpe]**-1)/total_edr_per_imt
     gmpe_edr_weight_df = pd.DataFrame(gmpe_edr_weight)
     
     avg_edr_weight_per_gmpe = {}
@@ -811,9 +838,6 @@ def stochastic_area_table(residuals, filename):
     Create a table of stochastic area ranking metric per GMPE per imt (Sunny et
     al. 2021)
     """
-    # Get required values
-    residuals.get_stochastic_area_wrt_imt()
-
     # Get stochastic area value per imt
     imt_idx = []
     for imt in residuals.imts:
@@ -822,9 +846,8 @@ def stochastic_area_table(residuals, filename):
     sto_metrics = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
-            sto_metrics[gmpe].loc[imt] = \
-                residuals.stoch_areas_wrt_imt[gmpe][imt]
-        sto_metrics[gmpe].loc['Avg over imts'] = sto_metrics[gmpe].mean()
+            sto_metrics.loc[imt, gmpe] = residuals.stoch_areas_wrt_imt[gmpe][imt]
+        sto_metrics.loc['Avg over imts', gmpe] = sto_metrics[gmpe].mean()
     sto_metrics.columns = sto_metrics.columns + ' stochastic area'
 
     # Export table
@@ -836,16 +859,16 @@ def stochastic_area_weights_table(residuals, filename):
     (Sunny et al. 2021))
     """       
     # Get required values
-    sto_for_weights = residuals.get_stochastic_area_wrt_imt()
+    sto_for_weights = residuals.stoch_areas_wrt_imt
     sto_per_gmpe_df = pd.DataFrame(sto_for_weights)
 
     # Get weights
-    gmpe_sto_weight = OrderedDict([(gmpe, {}) for gmpe in residuals.gmpe_list])
+    gmpe_sto_weight = {gmpe: {} for gmpe in residuals.gmpe_list}
     for imt in sto_per_gmpe_df.index:
         total_sto_per_imt = np.sum(sto_per_gmpe_df.loc[imt]**-1)
         for gmpe in sto_for_weights.keys():
-            gmpe_sto_weight[gmpe][imt] = \
-                sto_per_gmpe_df.loc[imt][gmpe]**-1/total_sto_per_imt
+            gmpe_sto_weight[gmpe][imt] = (
+                sto_per_gmpe_df.loc[imt][gmpe]**-1)/total_sto_per_imt
     gmpe_sto_weight_df = pd.DataFrame(gmpe_sto_weight)
 
     # Get average per gmpe over the imts
@@ -854,8 +877,8 @@ def stochastic_area_weights_table(residuals, filename):
         avg_sto_weight_per_gmpe[gmpe] = np.mean(gmpe_sto_weight_df[gmpe])
 
     # Export table
-    avg_gmpe_sto_weights = \
-        pd.DataFrame(avg_sto_weight_per_gmpe, index=['Avg over imts'])
+    avg_gmpe_sto_weights = pd.DataFrame(
+        avg_sto_weight_per_gmpe, index=['Avg over imts'])
     final_sto_weights = pd.concat([gmpe_sto_weight_df, avg_gmpe_sto_weights])
     final_sto_weights.to_csv(filename, sep=',')
 
@@ -878,12 +901,13 @@ def get_res_dists(residuals):
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
             mean_sigma_total[gmpe, imt] = res_statistics[gmpe, imt]['Total']
-            if ('Inter event' in residuals.residuals[gmpe][imt] and
+            if ('Inter event' in residuals.residuals[gmpe][imt]
+                and
                 'Intra event' in residuals.residuals[gmpe][imt]):
-                mean_sigma_inter[gmpe, imt] = \
-                    res_statistics[gmpe, imt]['Inter event']
-                mean_sigma_intra[gmpe, imt] = \
-                    res_statistics[gmpe, imt]['Intra event']
+                mean_sigma_inter[
+                    gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
+                mean_sigma_intra[
+                    gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
             else:
                 mean_sigma_inter[gmpe, imt] = dummy_values
                 mean_sigma_intra[gmpe, imt] = dummy_values
@@ -942,7 +966,12 @@ def set_res_pdf_plots(residuals, res_dists, imts_to_plot):
 
     return fig, ax
 
-def plot_res_pdf(ax, res_dists, dist_comp, gmpe, imts_to_plot, marker_input,
+def plot_res_pdf(ax,
+                 res_dists,
+                 dist_comp,
+                 gmpe,
+                 imts_to_plot,
+                 marker_input,
                  color_input):
     """
     Plot mean for each residual distribution for a given GMPE
@@ -988,15 +1017,17 @@ def plot_res_pdf(ax, res_dists, dist_comp, gmpe, imts_to_plot, marker_input,
                      marker=marker_input)
     return ax
 
-def plot_residual_pdf_with_spectral_period(residuals, filename, custom_cycler=0,
-                                      filetype='jpg', dpi=200):
+def plot_residual_pdf_with_spectral_period(residuals,
+                                           filename,
+                                           filetype='jpg',
+                                           dpi=200):
     """
     Create a simple plot of residual mean and residual sigma for each GMPE 
     (y-axis) versus spectral period (x-axis)
     """
     # Check enough imts to plot w.r.t. spectral period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 imt).')
+        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
         
     # Manage imts
     residuals, preserve_imts, imts_to_plot = manage_imts(residuals)
@@ -1091,7 +1122,6 @@ class ResidualWithSite(ResidualPlot):
         """
         Create residuals with site plot
         """
-        phi_ss, phi_s2ss = self.residuals.residual_statistics()
         data = self._get_site_data()
         fig = plt.figure(figsize=self.figure_size)
         fig.set_tight_layout(True)
@@ -1111,6 +1141,7 @@ class ResidualWithSite(ResidualPlot):
         _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)
         if self.show:
             plt.show()
+        plt.close()
 
     def _residual_plot(self, ax, data, res_type):
         """
@@ -1124,12 +1155,12 @@ class ResidualWithSite(ResidualPlot):
         for site_id in self.residuals.site_ids:
             xvals = np.hstack([xvals, data[site_id]["x-val"]])
             yvals = np.hstack([yvals, data[site_id][res_type]])
-        ax.plot(xvals,
-                yvals,
-                'o',
-                markeredgecolor='Gray',
-                markerfacecolor='LightSteelBlue',
-                zorder=-32)
+        ax.scatter(xvals,
+                   yvals,
+                   marker='o',
+                   edgecolor='Gray',
+                   facecolor='LightSteelBlue',
+                   zorder=-32)
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         xtick_label = self.residuals.site_ids
@@ -1156,27 +1187,26 @@ class ResidualWithSite(ResidualPlot):
         """
         Get single station analysis residual data
         """
-        data = OrderedDict([(site_id, {}) 
-                            for site_id in self.residuals.site_ids])
+        data = {site_id: {} for site_id in self.residuals.site_ids}
         for iloc, site_resid in enumerate(self.residuals.site_residuals):
             resid = deepcopy(site_resid)
             site_id = list(self.residuals.site_ids)[iloc]
             n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
-            data[site_id]["Total"] = (
-                resid.site_analysis[self.gmpe][self.imt]["Total"] /
-                resid.site_analysis[self.gmpe][self.imt]["Expected Total"])
-            if "Intra event" in\
-                resid.site_analysis[self.gmpe][self.imt].keys():
-                data[site_id]["Inter event"] = (
-                    resid.site_analysis[self.gmpe][self.imt]["Inter event"] /
-                    resid.site_analysis[self.gmpe][self.imt]["Expected Inter"])
-                data[site_id]["Intra event"] = (
-                    resid.site_analysis[self.gmpe][self.imt]["Intra event"] /
-                    resid.site_analysis[self.gmpe][self.imt]["Expected Intra"])
+            total_res = resid.site_analysis[self.gmpe][self.imt]["Total"]
+            total_exp = resid.site_analysis[self.gmpe][self.imt]["Expected total"]
+            data[site_id]["Total"] = total_res/total_exp
+            if "Intra event" in resid.site_analysis[self.gmpe][self.imt].keys():
+                inter_res = resid.site_analysis[self.gmpe][self.imt]["Inter event"] 
+                intra_res = resid.site_analysis[self.gmpe][self.imt]["Intra event"] 
+                inter_exp = resid.site_analysis[self.gmpe][self.imt]["Expected inter"]
+                intra_exp = resid.site_analysis[self.gmpe][self.imt]["Expected intra"]
+                keep = pd.notnull(inter_res) # Dropping NaN idxs will realign with exp
+                data[site_id]["Inter event"] = inter_res[keep]/inter_exp
+                data[site_id]["Intra event"] = intra_res/intra_exp
             data[site_id]["ID"] = list(self.residuals.site_ids)[iloc]
             data[site_id]["N"] = n_events
-            data[site_id]["x-val"] =(float(iloc) + 0.5) *\
-                np.ones_like(data[site_id]["Total"])
+            data[site_id]["x-val"] = (
+                float(iloc) + 0.5) * np.ones_like(data[site_id]["Total"])
         return data
 
 
@@ -1197,7 +1227,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         """
         if 'Intra event' in self.residuals.site_residuals[0].residuals[self.gmpe][
                 self.imt]:
-            phi_ss, phi_s2ss = self.residuals.residual_statistics()
+            phi_ss, phi_s2ss = self.residuals.station_residual_statistics()
             data = self._get_site_data()
             fig = plt.figure(figsize=self.figure_size)
             fig.set_tight_layout(True)
@@ -1314,8 +1344,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         Get site-specific intra-event residual components for each site for the
         GMPEs and intensity measures considered
         """
-        data = OrderedDict([(site_id, {}) 
-                            for site_id in self.residuals.site_ids])
+        data = {site_id: {} for site_id in self.residuals.site_ids}
         for iloc, site_resid in enumerate(self.residuals.site_residuals):
             resid = deepcopy(site_resid)
             site_id = list(self.residuals.site_ids)[iloc]

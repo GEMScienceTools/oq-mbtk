@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -26,15 +26,15 @@ and the corresponding metadata
 """
 import os
 import re
-from collections import OrderedDict
 from datetime import datetime
 from math import sqrt
+
 from openquake.hazardlib.geo import *
 from openquake.smt.residuals.sm_database import *
 from openquake.smt.residuals.parsers.base_database_parser import (
     get_float, get_int, SMDatabaseReader, SMTimeSeriesReader)
-from openquake.smt.utils_strong_motion import (convert_accel_units,
-                                               get_time_vector)
+from openquake.smt.utils import convert_accel_units, get_time_vector
+
 
 def _get_info_from_archive_name(aname):
     """
@@ -54,9 +54,7 @@ def _get_info_from_archive_name(aname):
         file_info = [aname[:4], aname[4:6], aname[6:8],
                      aname[9:11], aname[11:12]]
 
-    return OrderedDict([
-        (FILE_INFO_KEY[i], file_info[i]) for i in range(len(file_info))
-    ])
+    return {FILE_INFO_KEY[i]: file_info[i] for i in range(len(file_info))}
 
 
 def _get_metadata_from_file(file_str):
@@ -356,8 +354,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
             altitude = 0
 
         site = RecordSite(
-            "|".join([metadata["INSTITUCION RESPONSABLE"],
-                    metadata["CLAVE DE LA ESTACION"]]),
+            "|".join([metadata["INSTITUCION RESPONSABLE"], metadata["CLAVE DE LA ESTACION"]]),
             metadata["CLAVE DE LA ESTACION"],
             metadata["NOMBRE DE LA ESTACION"],
             -get_float(metadata["COORDENADAS DE LA ESTACION"].split(" ")[3]),
@@ -425,10 +422,10 @@ class ASATimeSeriesParser(SMTimeSeriesReader):
         """
         Parses the time series
         """
-        time_series = OrderedDict([
-            ("X", {"Original": {}, "SDOF": {}}),
-            ("Y", {"Original": {}, "SDOF": {}}),
-            ("V", {"Original": {}, "SDOF": {}})])
+        time_series = {
+            "X": {"Original": {}, "SDOF": {}},
+            "Y": {"Original": {}, "SDOF": {}},
+            "V": {"Original": {}, "SDOF": {}}}
 
         target_names = list(time_series.keys())
         for iloc, ifile in enumerate(self.input_files):

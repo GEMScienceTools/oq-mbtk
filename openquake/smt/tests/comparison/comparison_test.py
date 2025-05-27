@@ -20,7 +20,9 @@ Tests for execution of comparison module
 """
 import os
 import shutil
+import pickle
 import unittest
+import numpy as np
 import pandas as pd
 
 from openquake.smt.comparison import compare_gmpes as comp
@@ -33,23 +35,22 @@ from openquake.smt.comparison.utils_compare_gmpes import (
 base = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
-TARGET_VS30 = 800
-TARGET_Z_BASIN_REGION = 'Global'
-TARGET_TRELLIS_DEPTHS = [20, 25, 30]
+TARGET_vs30 = 800
+TARGET_DEPTHS = [20, 25, 30]
 TARGET_RMIN = 0
 TARGET_RMAX = 300
 TARGET_NSTD = 0
-TARGET_TRELLIS_MAG = [5.0, 6.0, 7.0]
-TARGET_MAG = [5., 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9,
-              6., 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]
+TARGET_MAGS = [5.0, 6.0, 7.0]
+TARGET_MAG_EUC = [5., 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9,
+                  6., 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]
 TARGET_IMTS = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)']
 TARGET_GMPES = ['[ChiouYoungs2014] \nlt_weight_gmc1 = 0.5',
                 '[CampbellBozorgnia2014] \nlt_weight_gmc1 = 0.5',
                 '[BooreEtAl2014] \nlt_weight_gmc2_plot_lt_only = 0.5',
                 '[KothaEtAl2020] \nlt_weight_gmc2_plot_lt_only = 0.5']
 TARGET_BASELINE_GMPE = '[BooreEtAl2014]'
-TARGET_TRT = 'ASCR'
-TARGET_ZTOR = None
+TARGET_TRT = 'active_crustal'
+TARGET_ZTOR = -999
 
 
 class ComparisonTestCase(unittest.TestCase):
@@ -64,8 +65,8 @@ class ComparisonTestCase(unittest.TestCase):
             base,'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
             base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.expected_att_curves = os.path.join(base,'exp_att_curves.csv')
-        self.expected_spectra = os.path.join(base, 'exp_spectra.csv')
+        self.exp_curves = os.path.join(base,'exp_curves.pkl')
+        self.exp_spectra = os.path.join(base, 'exp_spectra.pkl')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -86,16 +87,12 @@ class ComparisonTestCase(unittest.TestCase):
         # Check for target ztor
         self.assertEqual(config.ztor, TARGET_ZTOR)
 
-        # Check for target Vs30
-        self.assertEqual(config.Vs30, TARGET_VS30)
-
-        # Check for target region
-        self.assertEqual(config.z_basin_region, TARGET_Z_BASIN_REGION)
+        # Check for target vs30
+        self.assertEqual(config.vs30, TARGET_vs30)
 
         # Check for target depths (other functions use arrays from these
         # depths)
-        self.assertEqual(config.trellis_and_rs_depth_list,
-                         TARGET_TRELLIS_DEPTHS)
+        np.testing.assert_allclose(config.depth_list, TARGET_DEPTHS)
 
         # Check for target Rmin
         self.assertEqual(config.minR, TARGET_RMIN)
@@ -107,14 +104,11 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.Nstd, TARGET_NSTD)
 
         # Check for target trellis mag
-        for mag in range(0, len(config.trellis_and_rs_mag_list)):
-            self.assertEqual(config.trellis_and_rs_mag_list[mag],
-                             TARGET_TRELLIS_MAG[mag])
+        np.testing.assert_allclose(config.mag_list, TARGET_MAGS)
 
         # Check for target mag
-        for mag in range(0, len(config.mag_list)):
-            self.assertAlmostEqual(config.mag_list[mag],
-                                   TARGET_MAG[mag], delta=0.000001)
+        np.testing.assert_allclose(config.mags_euclidean, TARGET_MAG_EUC)
+
         # Check for target gmpes
         for gmpe in range(0, len(config.gmpes_list)):
             self.assertEqual(config.gmpes_list[gmpe], TARGET_GMPES[gmpe])
@@ -224,7 +218,7 @@ class ComparisonTestCase(unittest.TestCase):
         mtxs_medians = compute_matrix_gmpes(config, mtxs_type='84th_perc')
         
         # Get clustering matrix
-        lab = '84th_perc_Clustering_Vs30.png'
+        lab = '84th_perc_Clustering_vs30.png'
         Z_matrix = plot_cluster_util(
             config.imt_list, config.gmpe_labels, mtxs_medians,
             os.path.join(self.output_directory, lab), mtxs_type='84th_perc')
@@ -248,18 +242,24 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Trellis plots
         att_curves = plot_trellis_util(config, self.output_directory)
+        if not os.path.exists(self.exp_curves):
+            with open(self.exp_curves, 'wb') as f: # Write if doesn't exist
+                pickle.dump(att_curves, f, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(self.exp_curves, 'rb') as f:
+                exp_curves = pd.DataFrame(pickle.load(f))
         obs_curves = pd.DataFrame(att_curves)
-        exp_curves = pd.read_csv(
-            self.expected_att_curves, index_col='Unnamed: 0')
-        assert str(obs_curves) == str(exp_curves)
+        pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
 
         # Spectra plots
         gmc_lts = plot_spectra_util(
             config, self.output_directory, obs_spectra=None)
+        if not os.path.exists(self.exp_spectra):
+            with open(self.exp_spectra, 'wb') as f: # Write if doesn't exist
+                pickle.dump(gmc_lts, f, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(self.exp_spectra, 'rb') as f:
+                exp_spectra = pd.DataFrame(pickle.load(f))
         obs_spectra = pd.DataFrame(gmc_lts)
-        exp_spectra = pd.read_csv(
-            self.expected_spectra, index_col='Unnamed: 0')
-        assert str(obs_spectra) == str(exp_spectra)
+        pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
         
         # Specify target files
         target_file_trellis = (os.path.join(
