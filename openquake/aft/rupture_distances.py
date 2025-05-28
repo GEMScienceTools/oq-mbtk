@@ -379,7 +379,6 @@ def check_dists_by_mag(
     return dist <= dist_constant * 10.0 ** (-2.943 + 0.681 * mag)
 
 
-@jit(nopython=False)
 def filter_dists_by_mag(
     min_rup_dists: RupDistType,
     mags: Sequence[float],
@@ -424,7 +423,6 @@ def filter_dists_by_mag(
     ]
 
 
-@jit(nopython=False)
 def filter_dists_by_dist(
     min_rup_dists: RupDistType,
     dist_threshold=4.0,
