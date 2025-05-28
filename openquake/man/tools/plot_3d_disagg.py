@@ -40,6 +40,9 @@ base = os.path.dirname(__file__)
 # Colormap
 cmap = cm.get_cmap('jet')
 
+# Mw string
+mw_str = "$M_{w}$"
+
 
 def export_plot(RP, disagg_type, site_id, imt, disagg_out, fig):
     """
@@ -152,7 +155,7 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                 data['rate_norm'] = data['rate'] / data['rate'].sum()
                 apoe_norm.append(data['rate_norm'].values)
 
-                # Modal (highest contribution)
+                # Modal (highest contribution NOTE: not used here but useful)
                 mode_row = data.sort_values(by='rate_norm', ascending=False).iloc[0]
                 mode_vals.append([mode_row['mag'], mode_row['dist'], mode_row['eps']])
 
@@ -215,7 +218,7 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                 # Labels and azimuth
                 ax.view_init(elev=23, azim=azimuth)
                 ax.set_xlabel('R (km)', fontsize=14)
-                ax.set_ylabel('$M_{w}$', fontsize=14)
+                ax.set_ylabel(mw_str, fontsize=14)
                 ax.set_zlabel('Hazard Contribution (%)', fontsize=14, rotation=90)
 
                 # Axis params
@@ -234,6 +237,17 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                            borderaxespad=0.40,
                            ncol=1,
                            fontsize=14)
+
+                # Also provide info on modal and mean mag-dist-eps
+                modal_mw = np.round(mode_vals[i][0], 2)
+                modal_r = int(mode_vals[i][1])
+                modal_eps = np.round(mode_vals[i][2], 2)
+                mean_mw = np.round(mean_vals[i][0], 2)
+                mean_r = int(mean_vals[i][1])
+                mean_eps = np.round(mean_vals[i][2], 2)
+                pyplot.title((f"MODAL: {mw_str} = {modal_mw}, R = {modal_r} km, \u03B5 = {modal_eps}"
+                              f"\nMEAN: {mw_str} = {mean_mw}, R = {mean_r} km, \u03B5 = {mean_eps}"),
+                              fontsize=18, loc='center', va='top', x=0.65, y=1.2)
 
                 # Export
                 export_plot(RP[i], disagg_type, site.id, imt, disagg_out, fig)
@@ -364,9 +378,19 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                 fig.legend(handles=lg_elm,
                            loc="upper left",
                            borderaxespad=0.40,
-                           bbox_to_anchor=(0.025, 0.5),
                            ncol=1,
                            fontsize=14)
+
+                # Also provide info on modal and mean mag-lon-lat
+                modal_lon = np.round(mode_vals[i][0], 3)
+                modal_lat = np.round(mode_vals[i][1], 3)
+                modal_mw = np.round(mode_vals[i][2], 2)
+                mean_lon = np.round(mean_vals[i][0], 3)
+                mean_lat = np.round(mean_vals[i][1], 3)
+                mean_mw = np.round(mean_vals[i][0], 2)
+                pyplot.title((f"MODAL: {mw_str} = {modal_mw}, lon = {modal_lon}, lat = {modal_lat}"
+                              f"\nMEAN: {mw_str} = {mean_mw}, lon = {mean_lon}, lat = {mean_lat}"),
+                              fontsize=18, loc='center', va='top', x=0.65, y=1.2)
 
                 # Export
                 export_plot(RP[i], disagg_type, site.id, imt, disagg_out, fig)
@@ -502,9 +526,15 @@ def disagg_TLL(dstore_fname, disagg_type, site_id, azimuth):
                 fig.legend(handles=lg_elm,
                            loc="upper left",
                            borderaxespad=0.40,
-                           bbox_to_anchor=(0.025, 0.5),
                            ncol=1,
                            fontsize=14)
+
+                # Also provide info on modal and mean trt-lon-lat
+                modal_lon = np.round(mode_vals[i][0], 3)
+                modal_lat = np.round(mode_vals[i][1], 3)
+                modal_trt = trt_map_inv[mode_vals[i][2]] # Cannot provide a "mean" TRT!
+                pyplot.title(f"MODAL: TRT = {modal_trt}, lon = {modal_lon}, lat = {modal_lat}",
+                            fontsize=18, loc='center', va='top', x=0.65, y=1.2)                    
 
                 # Export
                 export_plot(RP[i], disagg_type, site.id, imt, disagg_out, fig)
