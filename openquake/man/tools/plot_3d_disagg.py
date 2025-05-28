@@ -214,9 +214,9 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
 
                 # Labels and azimuth
                 ax.view_init(elev=23, azim=azimuth)
-                ax.set_xlabel('R (km)', fontsize=12)
-                ax.set_ylabel('$M_{w}$', fontsize=12)
-                ax.set_zlabel('Hazard Contribution (%)', fontsize=12, rotation=90)
+                ax.set_xlabel('R (km)', fontsize=14)
+                ax.set_ylabel('$M_{w}$', fontsize=14)
+                ax.set_zlabel('Hazard Contribution (%)', fontsize=14, rotation=90)
 
                 # Axis params
                 ax.set_xlim(np.min(all_R) - Dbin / 2, np.max(all_R) + Dbin / 2)
@@ -228,7 +228,12 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                 lg_elm = [
                     Patch(facecolor=colors[n_eps - j - 1],
                         label=f"\u03B5 = {unique_eps[n_eps - j - 1]:.2f}") for j in range(n_eps)]
-                fig.legend(handles=lg_elm, loc="lower center", borderaxespad=0.20, ncol=n_eps, fontsize=12)
+
+                fig.legend(handles=lg_elm,
+                           loc="upper left",
+                           borderaxespad=0.40,
+                           ncol=1,
+                           fontsize=14)
 
                 # Export
                 export_plot(RP[i], disagg_type, site.id, imt, disagg_out, fig)
@@ -341,9 +346,9 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
 
                 # Labels and azimuth
                 ax.view_init(elev=23, azim=azimuth)
-                ax.set_xlabel('Longitude', fontsize=12)
-                ax.set_ylabel('Latitude', fontsize=12)
-                ax.set_zlabel('Hazard Contribution (%)', fontsize=12, rotation=90)
+                ax.set_xlabel('Longitude', fontsize=14)
+                ax.set_ylabel('Latitude', fontsize=14)
+                ax.set_zlabel('Hazard Contribution (%)', fontsize=14, rotation=90)
 
                 # Axis params
                 ax.set_xlim(np.min(all_lon) - Cbin / 2, np.max(all_lon) + Cbin / 2)
@@ -355,7 +360,13 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                 lg_elm = [
                     Patch(facecolor=colors[n_mag - j - 1],
                         label='$M_{w}$' + f" = {unique_mag[n_mag - j - 1]:.2f}") for j in range(n_mag)]
-                fig.legend(handles=lg_elm, loc="lower center", borderaxespad=0.20, ncol=n_mag, fontsize=12)
+
+                fig.legend(handles=lg_elm,
+                           loc="upper left",
+                           borderaxespad=0.40,
+                           bbox_to_anchor=(0.025, 0.5),
+                           ncol=1,
+                           fontsize=14)
 
                 # Export
                 export_plot(RP[i], disagg_type, site.id, imt, disagg_out, fig)
@@ -472,9 +483,9 @@ def disagg_TLL(dstore_fname, disagg_type, site_id, azimuth):
 
                 # Labels and azimuth
                 ax.view_init(elev=23, azim=azimuth)
-                ax.set_xlabel('Longitude', fontsize=12)
-                ax.set_ylabel('Latitude', fontsize=12)
-                ax.set_zlabel('Hazard Contribution (%)', fontsize=12, rotation=90)
+                ax.set_xlabel('Longitude', fontsize=14)
+                ax.set_ylabel('Latitude', fontsize=14)
+                ax.set_zlabel('Hazard Contribution (%)', fontsize=14, rotation=90)
 
                 # Axis params
                 ax.set_xlim(np.min(all_lon) - Cbin / 2, np.max(all_lon) + Cbin / 2)
@@ -487,7 +498,13 @@ def disagg_TLL(dstore_fname, disagg_type, site_id, azimuth):
                 lg_elm = [
                     Patch(facecolor=colors[n_trt - j - 1],
                         label=f"{trt_map_inv[unique_trt[n_trt - j - 1]]}") for j in range(n_trt)]
-                fig.legend(handles=lg_elm, loc="lower center", borderaxespad=0.20, ncol=n_trt, fontsize=12)
+
+                fig.legend(handles=lg_elm,
+                           loc="upper left",
+                           borderaxespad=0.40,
+                           bbox_to_anchor=(0.025, 0.5),
+                           ncol=1,
+                           fontsize=14)
 
                 # Export
                 export_plot(RP[i], disagg_type, site.id, imt, disagg_out, fig)
