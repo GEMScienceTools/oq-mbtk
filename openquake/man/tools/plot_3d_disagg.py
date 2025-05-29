@@ -60,7 +60,7 @@ def get_disagg(disagg_type, calc_id, idx_site, export_info):
     Return dataframe of disaggregation results for given disagg
     type and given site
     """
-    # Get a tmp file of the mag-lon-lat disagg results
+    # Get a tmp file of the disagg results for given disagg type
     disagg_filename = f'{disagg_type}-mean-{idx_site}_{calc_id}.csv'
     disagg_path = os.path.join(export_info['export_dir'], disagg_filename)
 
@@ -387,7 +387,7 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                 modal_mw = np.round(mode_vals[i][2], 2)
                 mean_lon = np.round(mean_vals[i][0], 3)
                 mean_lat = np.round(mean_vals[i][1], 3)
-                mean_mw = np.round(mean_vals[i][0], 2)
+                mean_mw = np.round(mean_vals[i][2], 2)
                 pyplot.title((f"MODAL: {mw_str} = {modal_mw}, lon = {modal_lon}, lat = {modal_lat}"
                               f"\nMEAN: {mw_str} = {mean_mw}, lon = {mean_lon}, lat = {mean_lat}"),
                               fontsize=18, loc='center', va='top', x=0.65, y=1.2)
