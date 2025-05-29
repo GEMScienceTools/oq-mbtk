@@ -150,7 +150,7 @@ def plot_soln_mfd(
 
 
 def plot_soln_slip_rates(
-    soln, slip_rates, lhs, errs=None, units="mm/yr", pred_alpha=1.0
+    soln, slip_rates, lhs, errs=None, units="mm/yr", pred_alpha=1.0, **kwargs,
 ):
     pred_slip_rates = get_soln_slip_rates(
         soln, lhs, len(slip_rates), units=units
@@ -174,7 +174,7 @@ def plot_soln_slip_rates(
             lw=0.2,
         )
 
-    plt.plot(slip_rates, pred_slip_rates, ".", alpha=pred_alpha)
+    plt.plot(slip_rates, pred_slip_rates, ".", alpha=pred_alpha, **kwargs)
 
     plt.axis("equal")
     plt.xlabel("Observed slip rate")
