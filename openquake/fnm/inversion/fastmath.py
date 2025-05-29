@@ -43,6 +43,18 @@ def cscmatvec(n_col, Ap, Ai, Ax, Xx, Yx):
             i = Ai[ii]
             Yx[i] += Ax[ii] * Xx[j]
 
+@njit
+def cscmatvec_p(n_col, Ap, Ai, Ax, Xx, Yx):
+    for i in prange(Yx.size):
+        Yx[i] = 0.0
+    for j in prange(n_col):
+        col_start = Ap[j]
+        col_end = Ap[j + 1]
+
+        for ii in range(col_start, col_end):
+            i = Ai[ii]
+            Yx[i] += Ax[ii] * Xx[j]
+
 
 def spmat_vec_mul(lhs, vec):
     M, N = lhs.shape

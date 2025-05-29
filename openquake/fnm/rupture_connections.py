@@ -36,10 +36,11 @@ from openquake.fnm.fault_modeler import (
 from openquake.fnm.mesh import get_mesh_bb
 from openquake.fnm.bbox import get_bb_distance
 
-from openquake.fnm.multifault_parallel import (
-        find_connected_subsets_parallel,
-        find_connected_subsets_parallel_py,
-        )
+# these don't work well
+#from openquake.fnm.multifault_parallel import (
+#        find_connected_subsets_parallel,
+#        find_connected_subsets_parallel_py,
+#        )
 
 
 def get_bb_from_surface(surface):
@@ -1383,6 +1384,8 @@ def get_multifault_ruptures_fast(
     parallel=False,
     min_parallel_subgraphs: int = 0,
 ) -> list[list[int]]:
+
+    parallel = False
 
     n = dist_adj_binary.shape[0]  # Number of vertices
 
