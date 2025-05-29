@@ -21,6 +21,7 @@ import shutil
 import numpy as np
 import pandas as pd
 import tempfile
+import copy
 
 from matplotlib import pyplot
 from matplotlib import cm
@@ -39,6 +40,9 @@ base = os.path.dirname(__file__)
 # Colormap
 cmap = cm.get_cmap('jet')
 
+# Mw string
+mw_str = "$M_{w}$"
+
 
 def export_plot(RP, disagg_type, site_id, imt, disagg_out, fig):
     """
@@ -56,7 +60,7 @@ def get_disagg(disagg_type, calc_id, idx_site, export_info):
     Return dataframe of disaggregation results for given disagg
     type and given site
     """
-    # Get a tmp file of the mag-lon-lat disagg results
+    # Get a tmp file of the disagg results for given disagg type
     disagg_filename = f'{disagg_type}-mean-{idx_site}_{calc_id}.csv'
     disagg_path = os.path.join(export_info['export_dir'], disagg_filename)
 
@@ -84,10 +88,10 @@ def get_info(dstore_fname, calc_id, disagg_type, site_id):
     ds = hdf5.File(dstore_fname)
 
     # Get the sites
-    sites = ds["sitecol"]
+    sites = copy.deepcopy(ds["sitecol"])
     if site_id is not None:
         # Get only the site of interest if specified.
-        assert len(site_id) == 1
+        assert len([site_id]) == 1
         sites = sites[sites.sids==site_id]
 
     # Get the imts
@@ -151,7 +155,7 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                 data['rate_norm'] = data['rate'] / data['rate'].sum()
                 apoe_norm.append(data['rate_norm'].values)
 
-                # Modal (highest contribution)
+                # Modal (highest contribution NOTE: not used here but useful)
                 mode_row = data.sort_values(by='rate_norm', ascending=False).iloc[0]
                 mode_vals.append([mode_row['mag'], mode_row['dist'], mode_row['eps']])
 
@@ -212,10 +216,10 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                 assert abs(sum(stack_base.values()) - 100.0) < 1e-6
 
                 # Labels and azimuth
-                ax.view_init(elev=23, azim=float(azimuth))
-                ax.set_xlabel('R (km)', fontsize=12)
-                ax.set_ylabel('$M_{w}$', fontsize=12)
-                ax.set_zlabel('Hazard Contribution (%)', fontsize=12, rotation=90)
+                ax.view_init(elev=23, azim=azimuth)
+                ax.set_xlabel('R (km)', fontsize=14)
+                ax.set_ylabel(mw_str, fontsize=14)
+                ax.set_zlabel('Hazard Contribution (%)', fontsize=14, rotation=90)
 
                 # Axis params
                 ax.set_xlim(np.min(all_R) - Dbin / 2, np.max(all_R) + Dbin / 2)
@@ -227,7 +231,23 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
                 lg_elm = [
                     Patch(facecolor=colors[n_eps - j - 1],
                         label=f"\u03B5 = {unique_eps[n_eps - j - 1]:.2f}") for j in range(n_eps)]
-                fig.legend(handles=lg_elm, loc="lower center", borderaxespad=0.20, ncol=n_eps, fontsize=12)
+
+                fig.legend(handles=lg_elm,
+                           loc="upper left",
+                           borderaxespad=0.40,
+                           ncol=1,
+                           fontsize=14)
+
+                # Also provide info on modal and mean mag-dist-eps
+                modal_mw = np.round(mode_vals[i][0], 2)
+                modal_r = int(mode_vals[i][1])
+                modal_eps = np.round(mode_vals[i][2], 2)
+                mean_mw = np.round(mean_vals[i][0], 2)
+                mean_r = int(mean_vals[i][1])
+                mean_eps = np.round(mean_vals[i][2], 2)
+                pyplot.title((f"MODAL: {mw_str} = {modal_mw}, R = {modal_r} km, \u03B5 = {modal_eps}"
+                              f"\nMEAN: {mw_str} = {mean_mw}, R = {mean_r} km, \u03B5 = {mean_eps}"),
+                              fontsize=18, loc='center', va='top', x=0.65, y=1.2)
 
                 # Export
                 export_plot(RP[i], disagg_type, site.id, imt, disagg_out, fig)
@@ -339,10 +359,10 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                 assert abs(sum(stack_base.values()) - 100.0) < 1e-6
 
                 # Labels and azimuth
-                ax.view_init(elev=23, azim=float(azimuth))
-                ax.set_xlabel('Longitude', fontsize=12)
-                ax.set_ylabel('Latitude', fontsize=12)
-                ax.set_zlabel('Hazard Contribution (%)', fontsize=12, rotation=90)
+                ax.view_init(elev=23, azim=azimuth)
+                ax.set_xlabel('Longitude', fontsize=14)
+                ax.set_ylabel('Latitude', fontsize=14)
+                ax.set_zlabel('Hazard Contribution (%)', fontsize=14, rotation=90)
 
                 # Axis params
                 ax.set_xlim(np.min(all_lon) - Cbin / 2, np.max(all_lon) + Cbin / 2)
@@ -354,7 +374,23 @@ def disagg_MLL(dstore_fname, disagg_type, site_id, azimuth):
                 lg_elm = [
                     Patch(facecolor=colors[n_mag - j - 1],
                         label='$M_{w}$' + f" = {unique_mag[n_mag - j - 1]:.2f}") for j in range(n_mag)]
-                fig.legend(handles=lg_elm, loc="lower center", borderaxespad=0.20, ncol=n_mag, fontsize=12)
+
+                fig.legend(handles=lg_elm,
+                           loc="upper left",
+                           borderaxespad=0.40,
+                           ncol=1,
+                           fontsize=14)
+
+                # Also provide info on modal and mean mag-lon-lat
+                modal_lon = np.round(mode_vals[i][0], 3)
+                modal_lat = np.round(mode_vals[i][1], 3)
+                modal_mw = np.round(mode_vals[i][2], 2)
+                mean_lon = np.round(mean_vals[i][0], 3)
+                mean_lat = np.round(mean_vals[i][1], 3)
+                mean_mw = np.round(mean_vals[i][2], 2)
+                pyplot.title((f"MODAL: {mw_str} = {modal_mw}, lon = {modal_lon}, lat = {modal_lat}"
+                              f"\nMEAN: {mw_str} = {mean_mw}, lon = {mean_lon}, lat = {mean_lat}"),
+                              fontsize=18, loc='center', va='top', x=0.65, y=1.2)
 
                 # Export
                 export_plot(RP[i], disagg_type, site.id, imt, disagg_out, fig)
@@ -470,10 +506,10 @@ def disagg_TLL(dstore_fname, disagg_type, site_id, azimuth):
                 assert abs(sum(stack_base.values()) - 100.0) < 1e-6
 
                 # Labels and azimuth
-                ax.view_init(elev=23, azim=float(azimuth))
-                ax.set_xlabel('Longitude', fontsize=12)
-                ax.set_ylabel('Latitude', fontsize=12)
-                ax.set_zlabel('Hazard Contribution (%)', fontsize=12, rotation=90)
+                ax.view_init(elev=23, azim=azimuth)
+                ax.set_xlabel('Longitude', fontsize=14)
+                ax.set_ylabel('Latitude', fontsize=14)
+                ax.set_zlabel('Hazard Contribution (%)', fontsize=14, rotation=90)
 
                 # Axis params
                 ax.set_xlim(np.min(all_lon) - Cbin / 2, np.max(all_lon) + Cbin / 2)
@@ -486,18 +522,29 @@ def disagg_TLL(dstore_fname, disagg_type, site_id, azimuth):
                 lg_elm = [
                     Patch(facecolor=colors[n_trt - j - 1],
                         label=f"{trt_map_inv[unique_trt[n_trt - j - 1]]}") for j in range(n_trt)]
-                fig.legend(handles=lg_elm, loc="lower center", borderaxespad=0.20, ncol=n_trt, fontsize=12)
+
+                fig.legend(handles=lg_elm,
+                           loc="upper left",
+                           borderaxespad=0.40,
+                           ncol=1,
+                           fontsize=14)
+
+                # Also provide info on modal and mean trt-lon-lat
+                modal_lon = np.round(mode_vals[i][0], 3)
+                modal_lat = np.round(mode_vals[i][1], 3)
+                modal_trt = trt_map_inv[mode_vals[i][2]] # Cannot provide a "mean" TRT!
+                pyplot.title(f"MODAL: TRT = {modal_trt}, lon = {modal_lon}, lat = {modal_lat}",
+                            fontsize=18, loc='center', va='top', x=0.65, y=1.2)                    
 
                 # Export
                 export_plot(RP[i], disagg_type, site.id, imt, disagg_out, fig)
 
 
-def main(dstore_fname, disagg_type="Mag_Dist_Eps", site_id=None, azimuth=-30):
+def main(dstore_fname, disagg_type, site_id=None, azimuth=-30):
     """
     Generate 3D plots for given disaggregation type for all sites,
     all intensity measures and all return periods (from poes in given
     investigation time) in datastore's OQparam (i.e. job file inputs).
-    By default plotting is done for magnitude-distance-epsilon.
 
     The plots can be generated for a single site by specifying the
     site_id (each site in the SiteCollection object has a site_id).
@@ -516,9 +563,13 @@ def main(dstore_fname, disagg_type="Mag_Dist_Eps", site_id=None, azimuth=-30):
 
     if str(site_id).lower() == "none":
         site_id = None
-    
+    else:
+        site_id = int(site_id)
+
     if str(azimuth).lower() == 'none':
-        azimuth = 45
+        azimuth = -30
+    else:
+        azimuth = float(azimuth)
 
     if disagg_type == "Mag_Dist_Eps":
         disagg_MRE(dstore_fname, disagg_type, site_id, azimuth)
