@@ -29,6 +29,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import logging
 
 import numpy as np
 from scipy import sparse as ssp
@@ -41,7 +42,7 @@ from scipy.optimize import (
     lsq_linear,
 )
 
-
+from openquake.fnm.inversion.fastmath import cscmatvec_p
 def weight_from_error(error, zero_error=1e-10):
     if error == 0:
         error = zero_error
@@ -327,6 +328,12 @@ def spspmm_csr(A_data, A_indices, A_indptr, x, out):
             row_sum += A_data[j] * x[A_indices[j]]
         out[i] = row_sum
 
+@nb.njit
+def spspmm_csc(A_data, A_indices, A_indptr, x, out):
+    n = len(x)
+    #for i in nb.prange(out.size):
+    #    out[i] = 0.0
+    cscmatvec_p(n, A_indptr, A_indices, A_data, x, out)
 
 @nb.njit(fastmath=True, parallel=True, cache=True)
 def project_nonneg(vec):
@@ -347,9 +354,9 @@ def nnls_pg(
     x,
     maxit,
     tol,
+    accept_norm,
 ):
-    n = AT_indptr.size - 1
-    # x  = np.zeros(n, dtype=np.float64)
+    n = x.size
     r = b.copy()  # residual = b - A x
     g = np.empty(n)  # gradient = -A^T r
     y = x.copy()  # Nesterov acceleration
@@ -359,17 +366,26 @@ def nnls_pg(
     z /= np.linalg.norm(z)
     Az = np.empty_like(b)
     ATAz = np.empty(n)
+
+    pred = np.zeros(len(b))
+    misfit_history = np.zeros(maxit)
+
+    #if False: #n < len(r): #overdetermined
+    if n < len(r): #overdetermined
+        mat_vec_mul = spspmm_csc
+    else:
+        mat_vec_mul = spspmm_csr
     for _ in range(3):
-        spspmm_csr(A_data, A_indices, A_indptr, z, Az)
-        spspmm_csr(AT_data, AT_indices, AT_indptr, Az, ATAz)
+        mat_vec_mul(A_data, A_indices, A_indptr, z, Az)
+        mat_vec_mul(AT_data, AT_indices, AT_indptr, Az, ATAz)
         z = ATAz / np.linalg.norm(ATAz)
     L = np.dot(z, ATAz)
     alpha = 1.0 / L
     for k in range(maxit):
         # gradient g = A^T(A y - b)  (note r reused)
-        spspmm_csr(A_data, A_indices, A_indptr, y, r)
+        mat_vec_mul(A_data, A_indices, A_indptr, y, r)
         r -= b
-        spspmm_csr(AT_data, AT_indices, AT_indptr, r, g)
+        mat_vec_mul(AT_data, AT_indices, AT_indptr, r, g)
         y -= alpha * g  # gradient step
         # projection → ℝⁿ₊
         # np.maximum(y, 0, out=y)
@@ -377,15 +393,24 @@ def nnls_pg(
         # Nesterov momentum
         t_next = 0.5 * (1 + np.sqrt(1 + 4 * t * t))
         x_next = y + ((t - 1) / t_next) * (y - x)
+        
+        mat_vec_mul(A_data, A_indices, A_indptr, y, pred)
+        misfit = np.linalg.norm(pred - b)
+        misfit_history[k] = misfit
+        # stop on misfit
+        if misfit < accept_norm:
+            print("misfit below threshold")
+            return y, misfit_history
         # stopping test on projected gradient
-        if np.linalg.norm(np.minimum(y, g)) / b.size < tol:
-            return y
+        if np.linalg.norm(np.minimum(y, g)) / b.size < tol: 
+            print("gradient below threshold")
+            return y, misfit_history
         x, y, t = y, x_next, t_next
-    return y
+    return y, misfit_history
 
 
 def solve_nnls_pg(
-    A, b, *, x0=None, max_iters=1000, accept_norm=1e-6, copy=True
+    A, b, *, x0=None, max_iters=1000, accept_grad=1e-6, accept_norm=1e-6, copy=True
 ):
     """
     Solve  min_x ½‖Ax – b‖²  subject to  x ≥ 0   with the projected‑gradient
@@ -413,26 +438,36 @@ def solve_nnls_pg(
     """
 
     # -- matrix preparation -------------------------------------------------
-    if not ssp.isspmatrix_csr(A):
-        A_csr = A.tocsr(copy=copy)
-    elif copy:
-        A_csr = A.copy()
-    else:
-        A_csr = A
-    if A_csr.dtype != np.float64:
-        A_csr = A_csr.astype(np.float64)
+    #if not ssp.isspmatrix_csr(A):
+    #    A_sparse = A.tocsr(copy=copy)
+    #elif copy:
+    #    A_sparse = A.copy()
+    #else:
+    #    A_sparse = A
 
-    AT_csr = A_csr.T.tocsr()
+    M, N = A.shape
+    #if True: #M <= N: # underdetermined
+    if M <= N: # underdetermined
+        A_sparse = A.tocsr(copy=copy)
+        AT_sparse = A_sparse.T.tocsr()
+    else:
+        A_sparse = A.tocsc(copy=copy)
+        AT_sparse = A_sparse.T.tocsc()
+
+
+    if A_sparse.dtype != np.float64:
+        A_sparse = A_sparse.astype(np.float64)
+        AT_sparse = AT_sparse.astype(np.float64)
 
     # -- RHS and optional warm‑start ---------------------------------------
     b = np.asarray(b, dtype=np.float64)
-    n = A_csr.shape[1]
+    n = A_sparse.shape[1]
     if b.ndim != 1:
         raise ValueError("`b` must be a 1‑D array.")
-    if A_csr.shape[0] != b.size:
+    if A_sparse.shape[0] != b.size:
         raise ValueError(
             "Incompatible shapes: A is %s but b is length %d"
-            % (A_csr.shape, b.size)
+            % (A_sparse.shape, b.size)
         )
 
     if x0 is not None:
@@ -442,24 +477,28 @@ def solve_nnls_pg(
                 "x0 has length %d but should be %d" % (x0.size, n)
             )
     else:
-        x0 = np.zeros(A_csr.shape[1], dtype=np.float64)
+        x0 = np.zeros(A_sparse.shape[1], dtype=np.float64)
     # ----------------------------------------------------------------------
 
     # Call your (possibly modified) Numba kernel.  Assumed signature:
     #   nnls_pg(A_data, A_idx, A_ptr,
     #           AT_data, AT_idx, AT_ptr,
     #           b, x0=None, maxit=..., tol=...)
-    x = nnls_pg(
-        A_csr.data,
-        A_csr.indices,
-        A_csr.indptr,
-        AT_csr.data,
-        AT_csr.indices,
-        AT_csr.indptr,
+    x, misfit_history = nnls_pg(
+        A_sparse.data,
+        A_sparse.indices,
+        A_sparse.indptr,
+        AT_sparse.data,
+        AT_sparse.indices,
+        AT_sparse.indptr,
         b,
         x0,
         max_iters,
+        accept_grad,
         accept_norm,
     )
     # resids = A @ x - b
-    return x
+
+    misfit_history = misfit_history[misfit_history >= 0.]
+
+    return x, misfit_history
