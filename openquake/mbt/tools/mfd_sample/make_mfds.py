@@ -21,6 +21,7 @@ from openquake.cat.completeness.analysis import (_completeness_analysis,
                                                  read_compl_params,
                                                  read_compl_data)
 from openquake.cat.completeness.mfd_eval_plots import make_all_plots
+from openquake.mbi.wkf.create_subcatalogues_per_zone import create_subcatalogues
 
 def _get_truncated_normal(mean=0, sd=1, low=0, upp=10):
     return truncnorm(
@@ -189,6 +190,7 @@ def _compl_analysis(decdir, compdir, compl_toml, labels, fout, fout_figs):
 
     ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(config)
     compl_tables, mags_chk, years_chk = read_compl_data(compdir)
+    breakpoint()
 
     # Fixing sorting of years
     if np.all(np.diff(yrs)) >= 0:
@@ -250,6 +252,16 @@ def make_many_mfds(configfile, basedir=None):
         dcl_toml_tmpl = config['decluster']['decluster_settings']
         _decl_all_cats(catdir, dcl_toml_tmpl, decdir)
 
+    if config.get('subcatalogues', False):
+        if config['subcatalogues'].get('make_subcats'):
+            polys = config['subcatalogues']['polygons']
+            base = 'v*catalogue*.csv'
+            all_cats = glob.glob(os.path.join(decdir, base))
+            for dcat in all_cats:
+                verA = dcat.split('/')[-1].split('_')[0] 
+                verB = dcat.split('/')[-1].split('_')[3] 
+                subcatalogues_folder = os.path.join(outdir, "subcatalogues", f"{verA}{verB}")
+                create_subcatalogues(polys, dcat, subcatalogues_folder)
 
     # generate the completeness tables 
     generate = config['completeness'].get('generate_completeness', True)
