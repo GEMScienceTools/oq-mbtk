@@ -5,6 +5,8 @@ The :index:`Strong-Motion Tools` module contains code for the selection of groun
 
 The main components of the Strong-Motion Tools (smt) comprise of (1) parsing capabilities to generate metadata (2) capabilities for computation and plotting of ground-motion residual distributions (3) comparison of potentially viable GMPEs and (4) development of the GMC with the final selection(s) of GMPEs.
 
+A set of demo analyses with complete inputs and scripts for utilising the capabilities documented here are available within ``oq-mbtk\openquake\smt\demos``.
+
 Please note that this documentation assumes an elementary knowledge of GMPEs, residual analysis and ground-motion characterisation. Therefore, this documentation's purpose is to facilitate the application of the smt by user who is already familiar with the underlying theory. References are provided throughout for useful overviews of such theory.
 
 Performing a Residual Analysis
@@ -127,6 +129,8 @@ We can specify the inputs to perform a residual analysis with as follows:
        
        [models.NGAEastGMPE]
        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table        
+
+       [models.NGAEastUSGSSeedFrankel] # the same NGAEast GMM as above but using a GSIM alias to specify it      
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
@@ -441,10 +445,9 @@ Comparing GMPEs
 
         [site_properties]
         vs30 = 800
-        Z1 = -999   # If -999 compute from Vs30 using Chiou and Youngs (2014) relationship
-        Z25 = -999  # If -999 compute from Vs30 using Campbell and Bozorgnia (2014) relationship
+        z1pt0 = 30.0  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
+        z2pt5 = 0.57  # (km) - if -999 compute from each GMM's own vs30 to z2pt5 relationship
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-        z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical relationships
         volc_back_arc = false # true or false
         eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
         
@@ -465,19 +468,15 @@ Comparing GMPEs
         mags = [5, 6, 7] # Mags used only for trellis and response spectra
         depths = [20, 20, 20] # Depth per magnitude for trellis and response spectra
         
-        # Specify mags and depths for Sammons, Euclidean dist and Agglomerative clustering
-        [source_properties_euclidean_analysis]
+        [euclidean_analysis] # Mags and depths for Sammons maps, Euclidean dist and clustering
         mmin = 5
         mmax = 7
         spacing = 0.1
         depths_for_euclidean = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+        gmpe_labels = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CA15', 'AK14']
         
-        # Specify label for gmpes
-        [gmpe_labels]
-        gmpes_label = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CA15', 'AK14']
-        
-        # Specify gmpes
-        
+        [models] # Specify GMMs
+
         # Plot logic tree and individual GMPEs within first GMC logic tree config (gmc1)
         [models.BooreEtAl2020]
         lt_weight_gmc1 = 0.30

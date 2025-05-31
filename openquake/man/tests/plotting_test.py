@@ -11,7 +11,7 @@ exp_polys_path = os.path.join(
     BASE_DATA_PATH, 'data', 'checks', 'expected', 'fault_sections.geojson')
 
 
-class TestReadModel(unittest.TestCase):
+class TestPlotFaults(unittest.TestCase):
 
     def test_get_fault_geoJSONs(self):
         """

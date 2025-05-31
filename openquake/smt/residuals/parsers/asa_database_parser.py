@@ -354,8 +354,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
             altitude = 0
 
         site = RecordSite(
-            "|".join([metadata["INSTITUCION RESPONSABLE"],
-                    metadata["CLAVE DE LA ESTACION"]]),
+            "|".join([metadata["INSTITUCION RESPONSABLE"], metadata["CLAVE DE LA ESTACION"]]),
             metadata["CLAVE DE LA ESTACION"],
             metadata["NOMBRE DE LA ESTACION"],
             -get_float(metadata["COORDENADAS DE LA ESTACION"].split(" ")[3]),

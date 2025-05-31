@@ -513,8 +513,11 @@ class SMRecordSelector(object):
         else:
             None
 
-    def select_within_interface_distances(self, surfaces, sp_distance,
-                                          sf_distance, crustal_thickness,
+    def select_within_interface_distances(self,
+                                          surfaces,
+                                          sp_distance,
+                                          sf_distance,
+                                          crustal_thickness,
                                           as_db=True):
         """
         Selects records whose events are within a distance of a set of

@@ -125,6 +125,8 @@ class Residuals(object):
             for c in dir(gmpe_i):
                 if 'COEFFS' in c:
                     pers = [sa.period for sa in getattr(gmpe_i, c).sa_coeffs]
+                elif "gmpe_table" in c: # tabular GMM specified using an alias
+                    pers = gmpe_i.imls["T"]
             min_per, max_per = (min(pers), max(pers))
             self.gmpe_sa_limits[gmpe] = (min_per, max_per)
             for c in dir(gmpe_i):
@@ -196,8 +198,11 @@ class Residuals(object):
         
         return cls(gmpe_list, imts)
 
-    def compute_residuals(self, ctx_database, nodal_plane_index=1,
-                          component="Geometric", normalise=True):
+    def compute_residuals(self,
+                          ctx_database,
+                          nodal_plane_index=1,
+                          component="Geometric",
+                          normalise=True):
         """
         Calculate the residuals for a set of ground motion records
 
@@ -350,7 +355,11 @@ class Residuals(object):
         context["Residual"] = residual
         return context
 
-    def _get_random_effects_residuals(self, obs, mean, inter, intra,
+    def _get_random_effects_residuals(self,
+                                      obs,
+                                      mean,
+                                      inter,
+                                      intra,
                                       normalise=True):
         """
         Calculates the random effects residuals using the inter-event
@@ -479,7 +488,6 @@ class Residuals(object):
                 f.write(ev_imt_df.to_string(index=False))
                 f.write("\n\n")
 
-
     ### Likelihood (Scherbaum et al. 2004) functions
     def get_likelihood_values(self):
         """
@@ -522,7 +530,6 @@ class Residuals(object):
             median_lh = np.nanpercentile(l_h, 50.0)
             ret[res_type] = l_h, median_lh
         return ret
-
 
     ### LLH (Scherbaum et al. 2009) functions
     def get_loglikelihood_values(self):
@@ -577,7 +584,6 @@ class Residuals(object):
                 idx] for idx, gmpe in enumerate(self.gmpe_list)}
             
         return self.llh, self.model_weights, self.model_weights_with_imt
-
 
     ### EDR (Kale and Akkar 2013) functions
     def get_edr_values(self, bandwidth=0.01, multiplier=3.0):
@@ -719,8 +725,12 @@ class Residuals(object):
         edr = np.sqrt(kappa * inv_n * np.sum(mde ** 2.))
         return mde_norm, np.sqrt(kappa), edr            
     
-    def _get_edr_wrt_imt(self, obs_wrt_imt, expected_wrt_imt,
-                         stddev_wrt_imt, bandwidth=0.01, multiplier=3.0):
+    def _get_edr_wrt_imt(self,
+                         obs_wrt_imt,
+                         expected_wrt_imt,
+                         stddev_wrt_imt,
+                         bandwidth=0.01,
+                         multiplier=3.0):
         """
         Calculated the Euclidean Distanced-Based Rank for a set of
         observed and expected values from a particular GMPE over imts
@@ -771,7 +781,6 @@ class Residuals(object):
         de_orig = np.sum((obs - expected) ** 2.)
         de_corr = np.sum((obs - y_c) ** 2.)
         return de_orig / de_corr
-    
 
     ### Stochastic Area (Sunny et al. 2021) functions
     def get_stochastic_area_wrt_imt(self):

@@ -109,8 +109,13 @@ def get_magnitude_distances(db1, dist_type):
     return mags, dists
 
 
-def db_magnitude_distance(db1, dist_type, figure_size=(7, 5), figure_title=None,
-                          filename=None, filetype="png", dpi=300):
+def db_magnitude_distance(db1,
+                          dist_type,
+                          figure_size=(7, 5),
+                          figure_title=None,
+                          filename=None,
+                          filetype="png",
+                          dpi=300):
     """
     Creates a plot of magnitude verses distance for a strong motion database
     """
@@ -125,8 +130,11 @@ def db_magnitude_distance(db1, dist_type, figure_size=(7, 5), figure_title=None,
     _save_image(filename, plt.gcf(), filetype, dpi)
 
 
-def db_geographical_coverage(db1, figure_size=(7, 5), filename=None,
-                             filetype='png', dpi=300):
+def db_geographical_coverage(db1,
+                             figure_size=(7, 5),
+                             filename=None,
+                             filetype='png',
+                             dpi=300):
     """
     Creates a plot of the locations of event hypocenters and station locations
     for a strong motion database
@@ -179,9 +187,13 @@ def _site_selection(db1, site_class, classifier):
     return idx
 
 
-def db_magnitude_distance_by_site(db1, dist_type, classification="NEHRP",
-                                  figure_size=(7, 5), filename=None,
-                                  filetype="png", dpi=300):
+def db_magnitude_distance_by_site(db1,
+                                  dist_type,
+                                  classification="NEHRP",
+                                  figure_size=(7, 5),
+                                  filename=None,
+                                  filetype="png",
+                                  dpi=300):
     """
     Plot magnitude-distance comparison by site NEHRP or Eurocode 8 Site class   
     """ 
@@ -215,8 +227,12 @@ def db_magnitude_distance_by_site(db1, dist_type, classification="NEHRP",
     plt.show()
 
 
-def db_magnitude_distance_by_trt(db1, dist_type, figure_size=(7, 5),
-                                 filename=None, filetype="png", dpi=300):
+def db_magnitude_distance_by_trt(db1,
+                                 dist_type,
+                                 figure_size=(7, 5),
+                                 filename=None,
+                                 filetype="png",
+                                 dpi=300):
     """
     Plot magnitude-distance comparison by tectonic region
     """

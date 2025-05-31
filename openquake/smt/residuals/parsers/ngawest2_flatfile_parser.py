@@ -41,10 +41,8 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  RecordDistance)
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
 from openquake.smt.residuals.parsers import valid
-from openquake.smt.utils import (MECHANISM_TYPE,
-                                 DIP_TYPE,
-                                 vs30_to_z1pt0_cy14,
-                                 vs30_to_z2pt5_cb14)
+from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
+
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
@@ -161,11 +159,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         ngawest2_vert = pd.read_csv(ngaw2_vert)
         
         # Check RotD50 and vert records match
-        for rec in range(0,len(ngawest2)):
-            if ngawest2['Record Sequence Number'].iloc[rec]!=\
-                ngawest2_vert['Record Sequence Number'].iloc[rec]:
-                raise ValueError(
-                    "Records within horz. and vert. do not match.")
+        assert all(ngawest2['Record Sequence Number'] == ngawest2_vert['Record Sequence Number'])
         
         # Count initial size for printing number records removed during checks
         initial_ngaw2_size = len(ngawest2)
@@ -175,53 +169,43 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             subset = ['Earthquake Name','Station Name'], keep='last')
         ngawest2_vert = ngawest2_vert.drop_duplicates(
             subset = ['Earthquake Name', 'Station Name'], keep='last')
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.reset_index(drop=True)
 
         # Remove records if earthquake not identifiable using lat/lon metadata
         idx_m = ngawest2.loc[ngawest2['Hypocenter Latitude (deg)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
         idx_m = ngawest2.loc[ngawest2['Hypocenter Longitude (deg)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert=ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert=ngawest2_vert.drop(idx_m).reset_index(drop=True)
         idx_m = ngawest2.loc[ngawest2['Hypocenter Depth (km)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert=ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert=ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         # If year not provided assign '0000' to work with datetime
         idx_m = ngawest2.loc[ngawest2['YEAR']=='-999'].index
-        ngawest2['YEAR'].iloc[idx_m] = '0000'
+        ngawest2.loc[idx_m, 'YEAR'] = '0000'
                 
         # If month and day not provided assign '1010' to work with datetime
         idx_m = ngawest2.loc[ngawest2['MODY']=='-999'].index
-        ngawest2['MODY'].iloc[idx_m] = '000'
+        ngawest2.loc[idx_m,'MODY'] = '000'
         
         # If hours and minutes not provided assign '000' to work with datetime
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.reset_index(drop=True)
         for rec in range(0,len(ngawest2)):
-            if ngawest2['HRMN'][rec]==-999: ngawest2['HRMN'][rec]='000'
+            if ngawest2.loc[rec, 'HRMN']==-999: ngawest2.loc[rec, 'HRMN']='000'
         
         # Remove records with no acceleration values
         idx_m = ngawest2.loc[ngawest2['PGA (g)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
 
         # Remove records with no seismic moment to compute moment magnitude from
         idx_m = ngawest2.loc[ngawest2['Mo (dyne.cm)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert=ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert=ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         # Remove records with no valid station name
         idx_m = ngawest2.loc[ngawest2['Station Name']==-999].index
@@ -230,65 +214,54 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         
         # Remove records with no strike, dip or rake angle
         idx_m = ngawest2.loc[ngawest2['Strike (deg)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         idx_m = ngawest2.loc[ngawest2['Dip (deg)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         idx_m = ngawest2.loc[ngawest2['Rake Angle (deg)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         # Replace -999 ztor with empty
         ngawest2['Depth to Top Of Fault Rupture Model'].replace(-999, None)
         
         # Remove records with no epicentral distance
         idx_m = ngawest2.loc[ngawest2['EpiD (km)']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert = ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         # If Joyner-Boore, rupture distance, Rx or Ry = -999 reassign as empty
         idx_m = ngawest2.loc[ngawest2['Joyner-Boore Dist. (km)']==-999].index
-        ngawest2['Joyner-Boore Dist. (km)'][idx_m] = None
+        ngawest2.loc[idx_m, 'Joyner-Boore Dist. (km)'] = None
     
         idx_m = ngawest2.loc[ngawest2['Campbell R Dist. (km)']==-999].index
-        ngawest2['Campbell R Dist. (km)'][idx_m] = None
+        ngawest2.loc[idx_m, 'Campbell R Dist. (km)'] = None
 
         idx_m = ngawest2.loc[ngawest2['Rx']==-999].index
-        ngawest2['Rx'][idx_m] = None
+        ngawest2.loc[idx_m, 'Rx'] = None
 
         idx_m = ngawest2.loc[ngawest2['Ry 2']==-999].index
-        ngawest2['Ry 2'][idx_m] = None
+        ngawest2.loc[idx_m, 'Ry 2'] = None
         
         # Remove records with no vs30)
         idx_m = ngawest2.loc[ngawest2['Vs30 (m/s) selected for analysis']==-999].index
-        ngawest2 = ngawest2.drop(idx_m)
-        ngawest2_vert=ngawest2_vert.drop(idx_m)
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(columns='index')
+        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+        ngawest2_vert=ngawest2_vert.drop(idx_m).reset_index(drop=True)
         
         # Compute Mw from seismic moment using Hanks and Kamori
         ngawest2['Earthquake Magnitude'] = (np.log10(ngawest2[
             'Mo (dyne.cm)']) - 16.05)/1.5 # From ngawest2 database rep. pp.122
         
-        ngawest2 = ngawest2.reset_index().drop(columns='index')
-        ngawest2_vert = ngawest2_vert.reset_index().drop(
-            columns='index')
+        ngawest2 = ngawest2.reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.reset_index(drop=True)
       
         # Replace -999 in 'Owner' with unknown network code
         idx_m = ngawest2.loc[ngawest2['Owner']=='-999'].index
-        ngawest2['Owner'].iloc[idx_m]='NoNetworkCode'
-        ngawest2['Owner'] = 'NetworkCode-'+ngawest2['Owner'] 
+        ngawest2.loc[idx_m, 'Owner'] ='NoNetworkCode'
+        ngawest2['Owner'] = 'NetworkCode-' + ngawest2['Owner'] 
         
         # Interpolate between SA(T=4.4s) and SA(T=4.6s) for SA(T=4.5)
         ngawest2['T4.500S'] = (ngawest2['T4.400S']+ngawest2['T4.600S'])/2
@@ -517,16 +490,20 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             vs30_measured = False
         else:
             vs30_measured = False
-        site = RecordSite(site_id, station_code, station_code, site_lon,
-                          site_lat, elevation, vs30, vs30_measured,
-                          network_code=network_code, country=None)
+        site = RecordSite(site_id,
+                          station_code,
+                          station_code,
+                          site_lon,
+                          site_lat,
+                          elevation,
+                          vs30,
+                          vs30_measured,
+                          network_code=network_code,
+                          country=None)
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
         site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
                                          "sensor_depth_m")
         site.instrument_type = metadata["instrument_code"].strip()
-        if site.vs30:
-            site.z1pt0 = vs30_to_z1pt0_cy14(vs30)
-            site.z2pt5 = vs30_to_z2pt5_cb14(vs30)
         housing_code = metadata["housing_code"].strip()
         if housing_code and (housing_code in HOUSING):
             site.building_structure = HOUSING[housing_code]
@@ -650,7 +627,6 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         record.datafile = filename
         return record
 
-
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
         Get the ground-motion data from a row (record) in the database
@@ -709,8 +685,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         return scalars, spectra
 
 
-def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):
-    
+def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):    
     """
     Convert from NGAWest2 format flatfile to ESM18 format flatfile 
     """
@@ -719,69 +694,66 @@ def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):
     final_event_id = {}
     fm_type_code_converted = {}
     final_station_id = {}
-    for rec in range(0,len(ngawest2)):
+    for idx, rec in ngawest2.iterrows():
         
         # Event time
-        event_time_year=ngawest2.YEAR.iloc[rec]
-        event_time_month_and_day=str(ngawest2.MODY.iloc[rec])
+        event_time_year = str(rec.YEAR)
+        event_time_month_and_day = str(rec.MODY)
         
-        if len(event_time_month_and_day)==3:
-            month=str('0')+str(event_time_month_and_day[0])
-            day=event_time_month_and_day[1:3]     
+        if len(event_time_month_and_day) == 3:
+            month = str('0') + str(event_time_month_and_day[0])
+            day = event_time_month_and_day[1:3]     
         
-        if len(event_time_month_and_day)==4:
-            month=str(event_time_month_and_day[:2])
-            day=event_time_month_and_day[2:4]
+        if len(event_time_month_and_day) == 4:
+            month = str(event_time_month_and_day[:2])
+            day = event_time_month_and_day[2:4]
         
         yyyy_mm_dd = str(event_time_year) + '-' + month + '-' + day
         
-        event_time_hr_and_min=str(ngawest2.HRMN.iloc[rec])
+        event_time_hr_and_min = str(rec.HRMN)
         
-        if len(event_time_hr_and_min)==3:
-            hour=str('0')+str(event_time_hr_and_min[0])
-            minute=event_time_hr_and_min[1:3]
+        if len(event_time_hr_and_min) == 3:
+            hour = str('0') + str(event_time_hr_and_min[0])
+            minute = event_time_hr_and_min[1:3]
         
-        if len(event_time_hr_and_min)==4:
-            hour=str(event_time_hr_and_min[:2])
-            minute=event_time_hr_and_min[2:4]
+        if len(event_time_hr_and_min) == 4:
+            hour = str(event_time_hr_and_min[:2])
+            minute = event_time_hr_and_min[2:4]
             
         hh_mm_ss = str(hour) + ':' + str(minute) + ':' + '00'
         
-        event_time[rec] = yyyy_mm_dd + ' ' + hh_mm_ss
+        event_time[idx] = yyyy_mm_dd + ' ' + hh_mm_ss
     
         # Reformat event id
-        delimited_event_id = str(ngawest2['Earthquake Name'][rec])
+        delimited_event_id = str(rec['Earthquake Name'])
         delimited_event_id = delimited_event_id.replace(',','')
         delimited_event_id = delimited_event_id.replace(' ','')
         delimited_event_id = delimited_event_id.replace('/','')
         delimited_event_id = delimited_event_id.replace('.','')
         delimited_event_id = delimited_event_id.replace(':','')
         delimited_event_id = delimited_event_id.replace(';','')
-        final_event_id[rec] = 'Earthquake-' + delimited_event_id 
+        final_event_id[idx] = 'Earthquake-' + delimited_event_id 
         
         # Assign ESM18 fault_code based on code in NGA-West2
-        if ngawest2['Mechanism Based on Rake Angle'][rec]==0 or ngawest2[
-                'Mechanism Based on Rake Angle'][rec]==-999:
-            ESM18_equivalent_fm_type_code='SS'
-        if ngawest2[
-                'Mechanism Based on Rake Angle'][
-                    rec]==1 or ngawest2['Mechanism Based on Rake Angle'][
-                        rec]==4:
-            ESM18_equivalent_fm_type_code='NF'
-        if ngawest2['Mechanism Based on Rake Angle'][
-                rec]==2 or ngawest2['Mechanism Based on Rake Angle'][rec]==3:
-            ESM18_equivalent_fm_type_code='TF'
-        fm_type_code_converted[rec] = ESM18_equivalent_fm_type_code
+        if rec['Mechanism Based on Rake Angle']==0 or\
+              rec['Mechanism Based on Rake Angle']==-999:
+            fm_type_code_converted[idx] ='SS'
+        if rec['Mechanism Based on Rake Angle']==1 or\
+              rec['Mechanism Based on Rake Angle']==4:
+            fm_type_code_converted[idx] ='NF'
+        if rec['Mechanism Based on Rake Angle']==2 or\
+              rec['Mechanism Based on Rake Angle']==3:
+            fm_type_code_converted[idx] ='TF'
         
         # Station id
-        delimited_station_id = str(ngawest2['Station Name'][rec])
+        delimited_station_id = str(rec['Station Name'])
         delimited_station_id = delimited_station_id.replace(',','')
         delimited_station_id = delimited_station_id.replace(' ','')
         delimited_station_id = delimited_station_id.replace('/','')
         delimited_station_id = delimited_station_id.replace('.','')
         delimited_station_id = delimited_station_id.replace(':','')
         delimited_station_id = delimited_station_id.replace(';','')
-        final_station_id[rec] = 'StationName-'+delimited_station_id
+        final_station_id[idx] = 'StationName-' + delimited_station_id
     
     # Into df
     ngawest2['fm_type'] = pd.Series(fm_type_code_converted)

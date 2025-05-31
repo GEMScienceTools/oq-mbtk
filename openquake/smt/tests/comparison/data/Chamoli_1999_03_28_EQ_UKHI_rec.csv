@@ -1,4 +1,4 @@
-Period (s),SA (g),Mw,Depth (km),Strike,Dip,Rake,Vs30,"Site up-dip of rupture (1 = True, 0 = False)",Rrup (km),ztor,trt,EQ ID,Station Code
+Period (s),SA (g),Mw,Depth (km),Strike,Dip,Rake,vs30,"Site up-dip of rupture (1 = True, 0 = False)",Rrup (km),ztor,trt,EQ ID,Station Code
 4.00E-02,9.16E-02,6.6,21,0,5,90,800,1,29,0,ASCR,Chamoli 1991-03-28 19:05:11,UKHI
 4.20E-02,9.59E-02,,,,,,,,,,,,
 4.40E-02,9.41E-02,,,,,,,,,,,,
