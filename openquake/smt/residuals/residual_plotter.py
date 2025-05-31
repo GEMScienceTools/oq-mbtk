@@ -257,7 +257,6 @@ class ResidualHistogramPlot(BaseResidualPlot):
     """
     Abstract-like class to create histograms of strong ground motion residuals
     """
-
     def __init__(self,
                  residuals,
                  gmpe,
@@ -303,7 +302,6 @@ class ResidualPlot(ResidualHistogramPlot):
     """
     Class to create a simple histrogram of strong ground motion residuals
     """
-
     def get_plot_data(self):
         return residuals_density_distribution(self.residuals, self.gmpe,
                                               self.imt, self.bin_width)
@@ -348,7 +346,6 @@ class LikelihoodPlot(ResidualHistogramPlot):
     Abstract-like class to create a simple histrogram of strong ground motion
     likelihood
     """
-
     def __init__(self,
                  residuals,
                  gmpe,
@@ -402,7 +399,6 @@ class ResidualScatterPlot(BaseResidualPlot):
     Abstract-like class to create scatter plots of strong ground motion
     residuals
     """
-
     def __init__(self,
                  residuals,
                  gmpe,
@@ -498,7 +494,6 @@ class ResidualWithDistance(ResidualScatterPlot):
     Class to create a simple scatter plot of strong ground motion
     residuals (y-axis) versus distance (x-axis)
     """
-
     def __init__(self,
                  residuals,
                  gmpe, 
@@ -549,7 +544,6 @@ class ResidualWithMagnitude(ResidualScatterPlot):
     Class to create a simple scatter plot of strong ground motion
     residuals (y-axis) versus magnitude (x-axis)
     """
-
     def get_plot_data(self):
         return residuals_with_magnitude(self.residuals, self.gmpe, self.imt)
 
@@ -559,7 +553,6 @@ class ResidualWithDepth(ResidualScatterPlot):
     Class to create a simple scatter plot of strong ground motion
     residuals (y-axis) versus depth (x-axis)
     """
-
     def get_plot_data(self):
         return residuals_with_depth(self.residuals, self.gmpe, self.imt)
 
