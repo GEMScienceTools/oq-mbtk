@@ -1,0 +1,77 @@
+openquake.mbt.tools.tr package
+==============================
+
+Submodules
+----------
+
+openquake.mbt.tools.tr.catalogue module
+---------------------------------------
+
+.. automodule:: openquake.mbt.tools.tr.catalogue
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.tr.catalogue\_hmtk module
+---------------------------------------------
+
+.. automodule:: openquake.mbt.tools.tr.catalogue_hmtk
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.tr.change\_class module
+-------------------------------------------
+
+.. automodule:: openquake.mbt.tools.tr.change_class
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.tr.check\_tr\_numbers module
+------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.tr.check_tr_numbers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.tr.classify module
+--------------------------------------
+
+.. automodule:: openquake.mbt.tools.tr.classify
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.tr.set\_crustal\_earthquakes module
+-------------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.tr.set_crustal_earthquakes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.tr.set\_subduction\_earthquakes module
+----------------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.tr.set_subduction_earthquakes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.tr.tectonic\_regionalisation module
+-------------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.tr.tectonic_regionalisation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tools.tr
+   :members:
+   :undoc-members:
+   :show-inheritance:

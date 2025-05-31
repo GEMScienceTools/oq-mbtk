@@ -1,0 +1,53 @@
+openquake.mbt.guis package
+==========================
+
+Submodules
+----------
+
+openquake.mbt.guis.automator module
+-----------------------------------
+
+.. automodule:: openquake.mbt.guis.automator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.guis.automator\_new module
+----------------------------------------
+
+.. automodule:: openquake.mbt.guis.automator_new
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.guis.project\_select module
+-----------------------------------------
+
+.. automodule:: openquake.mbt.guis.project_select
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.guis.source\_edit module
+--------------------------------------
+
+.. automodule:: openquake.mbt.guis.source_edit
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.guis.utils module
+-------------------------------
+
+.. automodule:: openquake.mbt.guis.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.guis
+   :members:
+   :undoc-members:
+   :show-inheritance:

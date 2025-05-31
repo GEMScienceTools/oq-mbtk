@@ -1,0 +1,29 @@
+openquake.mbt.tools.fault\_modeler package
+==========================================
+
+Submodules
+----------
+
+openquake.mbt.tools.fault\_modeler.fault\_modeling\_utils module
+----------------------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.fault_modeler.fault_modeling_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tools.fault\_modeler.fault\_source\_modeler module
+----------------------------------------------------------------
+
+.. automodule:: openquake.mbt.tools.fault_modeler.fault_source_modeler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tools.fault_modeler
+   :members:
+   :undoc-members:
+   :show-inheritance:

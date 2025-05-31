@@ -1,0 +1,21 @@
+openquake.wkf.h3 package
+========================
+
+Submodules
+----------
+
+openquake.wkf.h3.zones module
+-----------------------------
+
+.. automodule:: openquake.wkf.h3.zones
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.wkf.h3
+   :members:
+   :undoc-members:
+   :show-inheritance:
