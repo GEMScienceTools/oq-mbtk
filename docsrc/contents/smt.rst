@@ -129,6 +129,8 @@ We can specify the inputs to perform a residual analysis with as follows:
        
        [models.NGAEastGMPE]
        gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table        
+
+       [models.NGAEastUSGSSeedFrankel] # the same NGAEast GMM as above but using a GSIM alias to specify it      
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
