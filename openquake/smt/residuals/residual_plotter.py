@@ -766,6 +766,7 @@ def llh_weights_table(residuals, filename):
                 imt, gmpe] = residuals.model_weights_with_imt[imt][gmpe]
         llh_weights.loc['Avg over imts', gmpe] = llh_weights[gmpe].mean()
     llh_weights.columns = llh_weights.columns + ' LLH-based weights'
+    assert np.abs(llh_weights.loc['Avg over imts'].sum() - 1.0) < 1E-09
 
     # Export table
     llh_weights.to_csv(filename, sep=',')
@@ -823,8 +824,9 @@ def edr_weights_table(residuals, filename):
         pd.DataFrame(avg_edr_weight_per_gmpe, index=['Avg over imts'])
 
     # Export table
-    final_edr_weight_df = pd.concat([gmpe_edr_weight_df, avg_gmpe_edr_weight_df])
-    final_edr_weight_df.to_csv(filename, sep=',')
+    edr_weight_df = pd.concat([gmpe_edr_weight_df, avg_gmpe_edr_weight_df])
+    assert np.abs(edr_weight_df.loc['Avg over imts'].sum() - 1.0) < 1E-09
+    edr_weight_df.to_csv(filename, sep=',')
         
 def stochastic_area_table(residuals, filename):
     """
@@ -872,8 +874,9 @@ def stochastic_area_weights_table(residuals, filename):
     # Export table
     avg_gmpe_sto_weights = pd.DataFrame(
         avg_sto_weight_per_gmpe, index=['Avg over imts'])
-    final_sto_weights = pd.concat([gmpe_sto_weight_df, avg_gmpe_sto_weights])
-    final_sto_weights.to_csv(filename, sep=',')
+    sto_weights_df = pd.concat([gmpe_sto_weight_df, avg_gmpe_sto_weights])
+    assert np.abs(sto_weights_df.loc['Avg over imts'].sum() - 1.0) < 1E-09
+    sto_weights_df.to_csv(filename, sep=',')
 
 
 ### Functions for plotting mean and sigma of residual dists vs spectral period
