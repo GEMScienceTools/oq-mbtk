@@ -488,7 +488,6 @@ class Residuals(object):
                 f.write(ev_imt_df.to_string(index=False))
                 f.write("\n\n")
 
-
     ### Likelihood (Scherbaum et al. 2004) functions
     def get_likelihood_values(self):
         """
@@ -531,7 +530,6 @@ class Residuals(object):
             median_lh = np.nanpercentile(l_h, 50.0)
             ret[res_type] = l_h, median_lh
         return ret
-
 
     ### LLH (Scherbaum et al. 2009) functions
     def get_loglikelihood_values(self):
@@ -586,7 +584,6 @@ class Residuals(object):
                 idx] for idx, gmpe in enumerate(self.gmpe_list)}
             
         return self.llh, self.model_weights, self.model_weights_with_imt
-
 
     ### EDR (Kale and Akkar 2013) functions
     def get_edr_values(self, bandwidth=0.01, multiplier=3.0):
@@ -784,7 +781,6 @@ class Residuals(object):
         de_orig = np.sum((obs - expected) ** 2.)
         de_corr = np.sum((obs - y_c) ** 2.)
         return de_orig / de_corr
-    
 
     ### Stochastic Area (Sunny et al. 2021) functions
     def get_stochastic_area_wrt_imt(self):
