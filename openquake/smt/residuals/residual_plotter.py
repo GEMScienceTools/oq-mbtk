@@ -578,26 +578,26 @@ def manage_imts(residuals):
     used for plotting of GMM ranking metrics vs period.
     """
     # Preserve original residuals.imts
-    preserve_imts = residuals.imts
+    preserve_imts = deepcopy(residuals.imts)
 
     # Remove non-acceleration imts from residuals.imts for generation of metrics
     idx_to_drop = []
-    for imt_idx, imt in enumerate(residuals.imts):
+    for imt_idx, imt in enumerate(preserve_imts):
         if imt != 'PGA' and 'SA' not in imt:
             idx_to_drop.append(imt_idx)
-    residuals.imts = pd.Series(residuals.imts).drop(idx_to_drop).values
+    residuals.imts = pd.Series(preserve_imts).drop(idx_to_drop).values
 
     # Convert imt_list to array
     x_with_imt = pd.DataFrame(
-        [imt2tup(imts) for imts in residuals.imts], columns=['imt_str', 'imt_float']
+        [imt2tup(imts) for imts in preserve_imts], columns=['imt_str', 'imt_float']
     )
-    for imt_idx in range(len(residuals.imts)):
+    for imt_idx in range(len(preserve_imts)):
         if x_with_imt.loc[imt_idx, 'imt_str'] == 'PGA':
             x_with_imt.loc[imt_idx, 'imt_float'] = 0
 
     x_with_imt = x_with_imt.dropna()
 
-    return residuals, preserve_imts, x_with_imt
+    return residuals, x_with_imt
 
 def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg', dpi=200):
     """
@@ -609,7 +609,7 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
                 
     # Manage imts
-    residuals, preserve_imts, x_llh = manage_imts(residuals)
+    residuals, x_llh = manage_imts(residuals)
 
     # Define colours for GMMs
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
@@ -628,9 +628,6 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
     ax_llh.legend(loc='upper right', ncol=2, fontsize='medium')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
-    # Reassign original imts to residuals.imts
-    residuals.imts = preserve_imts
-    
 def plot_edr_metrics_with_spectral_period(residuals,
                                           filename,
                                           filetype='jpg',
@@ -644,7 +641,7 @@ def plot_edr_metrics_with_spectral_period(residuals,
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
     
     # Manage imts
-    residuals, preserve_imts, x_with_imt = manage_imts(residuals)
+    residuals, x_with_imt = manage_imts(residuals)
 
     # Define colours for GMMs
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
@@ -695,9 +692,6 @@ def plot_edr_metrics_with_spectral_period(residuals,
     ax_MDE.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename + '_MDE'), plt.gcf(), filetype, dpi)
     
-    # Reassign original imts to residuals.imts
-    residuals.imts = preserve_imts
-    
 def plot_stochastic_area_with_spectral_period(residuals,
                                               filename,
                                               filetype='jpg',
@@ -711,7 +705,7 @@ def plot_stochastic_area_with_spectral_period(residuals,
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
     
     # Manage imts
-    residuals, preserve_imts, x_with_imt = manage_imts(residuals)
+    residuals, x_with_imt = manage_imts(residuals)
     
     # Define colours for plots
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
@@ -730,10 +724,6 @@ def plot_stochastic_area_with_spectral_period(residuals,
     ax_sto.set_ylabel('Stochastic Area', fontsize='12')
     ax_sto.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename), plt.gcf(), filetype, dpi)
-        
-    # Reassign original imts to residuals.imts
-    residuals.imts = preserve_imts
-    
 
 ### Functions for exporting tables of ranking metrics
 def llh_table(residuals, filename):
@@ -1026,7 +1016,7 @@ def plot_residual_pdf_with_spectral_period(residuals,
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
         
     # Manage imts
-    residuals, preserve_imts, imts_to_plot = manage_imts(residuals)
+    residuals, imts_to_plot = manage_imts(residuals)
             
     # Get distributions of residuals per gmm and imt 
     res_dists = get_res_dists(residuals)
@@ -1060,9 +1050,6 @@ def plot_residual_pdf_with_spectral_period(residuals,
         
     ax[0, 0].legend(loc='upper right', ncol=2, fontsize=6)
     _save_image(filename, plt.gcf(), filetype, dpi)
-    
-    # Reassign original imts to residuals.imts
-    residuals.imts = preserve_imts
 
 def pdf_table(residuals, filename):
     """
