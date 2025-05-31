@@ -125,7 +125,7 @@ class Residuals(object):
             for c in dir(gmpe_i):
                 if 'COEFFS' in c:
                     pers = [sa.period for sa in getattr(gmpe_i, c).sa_coeffs]
-                elif "gmpe_table" in c:
+                elif "gmpe_table" in c: # tabular GMM specified using an alias
                     pers = gmpe_i.imls["T"]
             min_per, max_per = (min(pers), max(pers))
             self.gmpe_sa_limits[gmpe] = (min_per, max_per)
