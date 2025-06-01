@@ -69,6 +69,11 @@ def get_gmm_from_toml(key, config):
     """
     Get a GMM from a TOML file
     """
+    # ModifiableGMPE is not implemented for use in res module
+    if key == "ModifiableGMPE":
+        raise ValueError("The use of ModifiableGMPE is not"
+        "supported within the residuals module.")
+
     # If the key contains a number we take the second part
     if re.search("^\\d+\\-", key):
         tmp = re.sub("^\\d+\\-", "", key)
