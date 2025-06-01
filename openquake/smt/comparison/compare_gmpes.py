@@ -222,8 +222,8 @@ class Configurations(object):
         # Assign depth to each mag in mag_array using rounded mags
         depths_euclidean = []
         for idx_mag, rounded_mag in enumerate(mag_to_nearest_int):
-            for idx, val in enumerate(depths_for_euclidean['mag']):
-                if rounded_mag == depths_for_euclidean['mag'][idx]:
+            for idx, mag in enumerate(depths_for_euclidean['mag']):
+                if rounded_mag == mag:
                     depth_to_store = depths_for_euclidean['depth'][idx]
                     depths_euclidean.append(depth_to_store)
         
