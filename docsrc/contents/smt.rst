@@ -103,23 +103,23 @@ We can specify the inputs to perform a residual analysis with as follows:
    
     .. code-block:: ini
     
-        [models.AbrahamsonEtAl2014]
+       [models.AbrahamsonEtAl2014]
         
-        [models.AkkarEtAlRjb2014]
+       [models.AkkarEtAlRjb2014]
         
-        [models.BooreEtAl2014]
+       [models.BooreEtAl2014]
         
-        [models.BooreEtAl2020]
+       [models.BooreEtAl2020]
         
-        [models.CauzziEtAl2014]
+       [models.CauzziEtAl2014]
         
-        [models.CampbellBozorgnia2014]
+       [models.CampbellBozorgnia2014]
         
-        [models.ChiouYoungs2014]
+       [models.ChiouYoungs2014]
         
-        [models.KothaEtAl2020]
-        
-        [models.LanzanoEtAl2019_RJB_OMO]
+       [models.KothaEtAl2020]
+       
+       [models.LanzanoEtAl2019_RJB_OMO]
     
        # Examples below of some GMPEs not considered in this residual analysis with additional 
        # parameters than be specified within a toml file
@@ -127,10 +127,10 @@ We can specify the inputs to perform a residual analysis with as follows:
        [models.AbrahamsonGulerce2020SInter]
        region = "CAS" # GMPE specific parameters        
        
-       [models.NGAEastGMPE]
-       gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table        
+       [models.NGAEastUSGSGMPE]
+       gmpe_table = 'nga_east_Frankel.hdf5'
 
-       [models.NGAEastUSGSSeedFrankel] # the same NGAEast GMM as above but using a GSIM alias to specify it      
+       [models.NGAEastUSGSSeedFrankel] # the same NGAEast USGS GMM as above but using a GSIM alias to specify it      
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
