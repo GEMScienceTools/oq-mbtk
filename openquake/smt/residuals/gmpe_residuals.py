@@ -151,7 +151,7 @@ class Residuals(object):
                 gmpe_dict_2[imtx] = {}
                 self.unique_indices[gmpe][imtx] = []
                 self.types[gmpe][imtx] = []
-                
+
                 # If mixed effects GMPE fix res_type order
                 if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                     for res_type in ['Total','Inter event', 'Intra event']:
