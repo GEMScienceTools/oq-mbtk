@@ -624,7 +624,7 @@ Comparing GMPEs
    
    Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per IMT), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
 
-   Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml``, although such an application of ModifiableGMPE is not appropriate anyway given within a residual analysis we should evaluate the "base" GMPEs without such modifications):
+   Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml`` given only the "base" GMPEs should be considered within a residual analysis):
    
     .. code-block:: ini
 

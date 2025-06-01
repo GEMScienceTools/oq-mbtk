@@ -147,10 +147,8 @@ class Residuals(object):
                 self.unique_indices[gmpe][imtx] = []
                 self.types[gmpe][imtx] = []
                 
-                # If mixed effects GMPE or using Al-Atik 2015 fix res_type order
-                if self.gmpe_list[
-                    gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
-                        ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
+                # If mixed effects GMPE fix res_type order
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == (ALL_SIGMA):
                     for res_type in ['Total','Inter event', 'Intra event']:
                         gmpe_dict_1[imtx][res_type] = []
                         gmpe_dict_2[imtx][res_type] = []
@@ -158,9 +156,8 @@ class Residuals(object):
                     gmpe_dict_2[imtx]["Mean"] = []
            
                 # For handling of GMPEs with total sigma only
-                else: 
-                    for res_type in self.gmpe_list[
-                            gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES:
+                else:
+                    for res_type in gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES:
                         gmpe_dict_1[imtx][res_type] = []
                         gmpe_dict_2[imtx][res_type] = []
                         self.types[gmpe][imtx].append(res_type)
@@ -891,16 +888,15 @@ class SingleStationAnalysis(object):
         self.site_residuals = []
         self.types = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
+            gmpe_i = self.gmpe_list[gmpe]
             for imtx in self.imts:
                 self.types[gmpe][imtx] = []
-                if self.gmpe_list[
-                    gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
-                        ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                     for res_type in ['Total','Inter event', 'Intra event']:
                         self.types[gmpe][imtx].append(res_type)
                 else:
                     for res_type in (
-                        self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES):
+                        gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES):
                         self.types[gmpe][imtx].append(res_type)
                         
     @classmethod
@@ -1097,7 +1093,7 @@ class SingleStationAnalysis(object):
                 
                 # If mixed effects GMPE append with intra-event res components
                 if self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
-                    ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
+                    ALL_SIGMA):
                         for imtx in self.imts:
                             p_data = (imtx,
                                       phi_ss[gmpe][imtx],
