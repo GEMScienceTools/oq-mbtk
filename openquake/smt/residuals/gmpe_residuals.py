@@ -148,7 +148,7 @@ class Residuals(object):
                 self.types[gmpe][imtx] = []
                 
                 # If mixed effects GMPE fix res_type order
-                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == (ALL_SIGMA):
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                     for res_type in ['Total','Inter event', 'Intra event']:
                         gmpe_dict_1[imtx][res_type] = []
                         gmpe_dict_2[imtx][res_type] = []
@@ -1088,12 +1088,12 @@ class SingleStationAnalysis(object):
         if filename is not None:
             print("\nTOTAL RESULTS PER GMPE", file=fid)
             for gmpe in self.gmpe_list:
+                gmpe_i = self.gmpe_list[gmpe]
                 gmpe_str = get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
                 
                 # If mixed effects GMPE append with intra-event res components
-                if self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
-                    ALL_SIGMA):
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                         for imtx in self.imts:
                             p_data = (imtx,
                                       phi_ss[gmpe][imtx],
