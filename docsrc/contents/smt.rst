@@ -437,7 +437,7 @@ Comparing GMPEs
         max_period = 2 # Max period for response spectra (capped by max period in GMMs)
         minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
         maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
-        dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
+        dist_type = 'repi' # or rjb, rrup or rhypo used in trellis/spectra
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         Nstd = 1 # Truncation for GMM sigma distribution
         

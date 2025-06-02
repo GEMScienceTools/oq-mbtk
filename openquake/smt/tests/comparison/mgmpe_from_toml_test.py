@@ -22,7 +22,6 @@ an SMT format toml input file
 """
 import os
 import numpy as np
-import pandas as pd
 import shutil
 import pickle
 import unittest
@@ -68,7 +67,7 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
                 pickle.dump(obs_matrix, f, protocol=pickle.HIGHEST_PROTOCOL)
         with open(self.exp_mgmpe, 'rb') as f:
                 exp_matrix = pickle.load(f)
-
+                
         # Now check matrix per imt (key)
         assert obs_matrix.keys() == exp_matrix.keys()
         for key in obs_matrix:
