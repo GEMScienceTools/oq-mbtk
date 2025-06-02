@@ -262,7 +262,7 @@ def weighted_covariance(x, y, weights):
 
 
 def plot_dominant_peaks(df, figdir, figname='a-b-peaks.png', 
-                        gs=15, peaks=3, dist=0.4):
+                        gs=15, k=7, peaks=3, dist=0.4, label=None):
 
     # set up data
     x = df.agr
@@ -273,6 +273,9 @@ def plot_dominant_peaks(df, figdir, figname='a-b-peaks.png',
     # set up plot
     fig, ax = plt.subplots(figsize=(10,10))
     hb = ax.hexbin(x, y, gridsize=gs, cmap='Blues')
+    cb = fig.colorbar(hb, ax=ax)
+    cb.ax.tick_params( labelsize=16)  
+    cb.set_label('counts', fontsize=20)
 
     counts = hb.get_array()
     xc = hb.get_offsets()[:, 0]
@@ -280,8 +283,16 @@ def plot_dominant_peaks(df, figdir, figname='a-b-peaks.png',
     # scale y by 10 so it scales more like x
     points = np.stack((xc, 10*yc, counts), axis=1)
 
-    dominant, cand_peaks, sbuff = find_dominant_peaks(points, k=7, height_threshold=0.01, min_distance=dist, max_peaks=peaks)
-    plt.plot(dominant[:, 0], dominant[:, 1]/10, 'r^')
+    dominant, cand_peaks, sbuff = find_dominant_peaks(points, k=k, height_threshold=0.01, min_distance=dist, max_peaks=peaks)
+    plt.plot(dominant[:, 0], dominant[:, 1]/10, 'r^', ms=12, mec='w')
+
+    # will be removed
+    og_abs = {'0300': [5.38, 1.02], '0200': [4.83, 1.02], 
+              '0400': [4.18, 0.95], '0100': [4.48, 0.95],}
+
+    og = og_abs[label]
+    plt.plot(og[0], og[1], 'wo', mec='r', ms=12)
+
 
     color = 'red'
     tot = sum(np.array(dominant).T[2])
@@ -295,17 +306,17 @@ def plot_dominant_peaks(df, figdir, figname='a-b-peaks.png',
         wei = np.round(p1, 3)
         ax.text(0.02, ypo, f'a = {agr}, b = {bgr} [{wei}]',
             transform=ax.transAxes, verticalalignment='top', horizontalalignment='left', 
-            fontsize=12, color=color)
+            fontsize=18, color=color)
         ypo -= 0.04
         agrs.append(agr); bgrs.append(bgr); weights.append(wei)
    
-    ax.set_xlabel('a-value', fontsize=16)
-    ax.set_ylabel('b-value', fontsize=16)
-    ax.set_title(figname.replace('.png', ''), fontsize=16)
-    ax.xaxis.set_tick_params(labelsize=14)
-    ax.yaxis.set_tick_params(labelsize=14)
+    ax.set_xlabel('a-value', fontsize=22)
+    ax.set_ylabel('b-value', fontsize=22)
+    ax.set_title(figname.replace('.png', ''), fontsize=26)
+    ax.xaxis.set_tick_params(labelsize=18)
+    ax.yaxis.set_tick_params(labelsize=18)
 
-    fout = os.path.join(figdir, figname)
+    fout = os.path.join(figdir, 'peaks_' + figname)
     plt.savefig(fout, dpi=300)
     plt.close()
 
@@ -326,7 +337,7 @@ def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0, gs=15,
     fig, ax = plt.subplots(figsize=(10,10))
     hb = ax.hexbin(x, y, gridsize=gs, cmap='Blues')
     cb = fig.colorbar(hb, ax=ax)
-    cb.set_label('counts')
+    cb.set_label('counts', fontsize=20)
 
     # get covariance
     cov_matrix = weighted_covariance(x, y, weights)
@@ -462,8 +473,8 @@ def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, fign
 
 
 def make_all_plots(resdir_base, compdir, figsdir_base, labels, 
-                   hist_params=[15, 3, 0.4]):
-    gs = int(hist_params[0]); peaks = int(hist_params[1]); dist = hist_params[2]
+                   hist_params=[15, 7.0, 4.0, 0.4]):
+    gs = int(hist_params[0]); neighbors = int(hist_params[1]); peaks = int(hist_params[2]); dist = hist_params[3]
     agrs1, bgrs1, labs1 = [], [], []
     agrs2, bgrs2, labs2, weights2 = [], [], [], []
     for label in labels:
@@ -504,8 +515,8 @@ def make_all_plots(resdir_base, compdir, figsdir_base, labels,
         cx, cy, mx1, my1, mx2, my2 = plot_weighted_covariance_ellipse(df_best, figsdir)
         plot_weighted_covariance_ellipse(df_thresh, figsdir, figname=f'{label}-20percent.png')
 
-        a2, b2, weights = plot_dominant_peaks(df_best, figsdir, gs=gs, 
-                                              peaks=peaks, dist=dist)
+        a2, b2, weights = plot_dominant_peaks(df_best, figsdir, gs=gs, k=neighbors,
+                                              peaks=peaks, dist=dist, figname=label, label=label)
 
         labs1.extend([f'{label}-center', f'{label}-low', f'{label}-high'])
         agrs1.extend([cx, mx1, mx2])
