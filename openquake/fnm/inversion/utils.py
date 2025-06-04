@@ -648,7 +648,7 @@ def get_rup_rates_from_fault_slip_rates(
 
     rup_fault_lookup = make_rup_fault_lookup(fault_network[rup_df_key], _key_)
 
-    logging.info("GETTING MOMENT RATES")
+    logging.debug("getting moment rates")
     fault_moment_rates = {
         id: get_fault_moment_rate(
             fault,
@@ -657,7 +657,7 @@ def get_rup_rates_from_fault_slip_rates(
         for id, fault in fault_iterator.items()
     }
 
-    logging.info("MAKING MFDS")
+    logging.debug("making mfds")
     fault_mfds = {
         id: make_fault_mfd(
             fault,
@@ -672,7 +672,7 @@ def get_rup_rates_from_fault_slip_rates(
         for id, fault in fault_iterator.items()
     }
 
-    logging.info("SETTING SINGLE-FAULT RUP RATES")
+    logging.debug("setting single-fault rup rates")
     all_rup_rates = {
         id: set_single_fault_rup_rates(
             id,
@@ -689,7 +689,6 @@ def get_rup_rates_from_fault_slip_rates(
         for id, fault in fault_iterator.items()
     }
 
-    logging.info("APPENDING SOMETHING")
     sf_inds = []
     if faults_or_subfaults == 'faults':
         sf_inds = fault_network['single_rup_df'].index
@@ -698,7 +697,7 @@ def get_rup_rates_from_fault_slip_rates(
             if len(sfs) == 1:
                 sf_inds.append(ind)
 
-    logging.info("DOING FINAL RUP RATES 1")
+    logging.debug("doing final rup rates 1")
     final_rup_rates = {}
     mf_rates = {}
     for fault, rates in all_rup_rates.items():
@@ -714,7 +713,7 @@ def get_rup_rates_from_fault_slip_rates(
                 else:
                     mf_rates[idx][fault] = rate
 
-    logging.info("DOING FINAL RUP RATES 2")
+    logging.debug("doing final rup rates 2")
     mf_rup_rates = {}
     for rup, rates in mf_rates.items():
         if faults_or_subfaults == 'faults':
@@ -733,7 +732,7 @@ def get_rup_rates_from_fault_slip_rates(
         weighted_mean_rate = weighted_mean(fault_rates, fault_weights)
         mf_rup_rates[rup] = weighted_mean_rate
 
-    logging.info("CONCATTING RATES")
+    logging.debug("concatting rates")
     final_rup_rates = pd.concat(
         (pd.Series(final_rup_rates), pd.Series(mf_rup_rates))
     )

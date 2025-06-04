@@ -192,6 +192,76 @@ def make_similarity_block(
     return B
 
 
+def similarity_csr_from_arrays(
+        indices:  np.ndarray,
+        indptr:   np.ndarray,
+        data:     np.ndarray,
+        *,
+        N:        int | None = None,
+        symmetric: bool = True
+    ) -> sp.csr_matrix:
+    """
+    Assemble a CSR similarity/adjacency matrix.
+
+    Parameters
+    ----------
+    indices, indptr, data
+        The three 1‑D arrays that define a CSR matrix
+        (exactly what `build_similarity_topk` returns).
+    N : int, optional
+        Number of columns/rows.  If ``None`` it is inferred from
+        ``len(indptr) - 1``.
+    symmetric : bool, default True
+        Ensure `S` is perfectly symmetric by replacing it with
+        ``S.maximum(S.T)``.  Leave False if you *know* the input is
+        already symmetric and want to save a pass.
+
+    Returns
+    -------
+    S : scipy.sparse.csr_matrix, shape = (N, N)
+        Symmetric K‑nearest‑neighbour graph with cosine weights.
+        The dtype is inherited from `data`.
+    """
+    if N is None:
+        N = len(indptr) - 1
+
+    S = sp.csr_matrix((data, indices, indptr), shape=(N, N))
+
+    if symmetric:
+        S = S.maximum(S.T)          # keep the larger weight on each edge
+
+    return S
+
+
+# ----------------------------------------------------------------------
+# Convenience wrapper that does both steps in one call
+# ----------------------------------------------------------------------
+def build_similarity_sparse(A: sp.spmatrix, K: int, *, symmetric=True):
+    """
+    Complete helper:  calls `build_similarity_topk` (numba kernel) and
+    returns a CSR similarity matrix.
+
+        S = build_similarity_sparse(A, K)
+
+    Parameters
+    ----------
+    A : scipy.sparse matrix  (M × N)
+        Original data‑constraint matrix (columns = events).
+    K : int
+        Number of nearest neighbours per column to keep.
+    symmetric : bool, default True
+        Force symmetry with `S.maximum(S.T)`.
+
+    Returns
+    -------
+    S : scipy.sparse.csr_matrix, shape = (N, N)
+        Cosine‑similarity graph (weights in [0, 1]).
+    """
+    A = A.tocsr()
+    indices_S, indptr_S, data_S = build_similarity_topk(A, K)
+    return similarity_csr_from_arrays(indices_S, indptr_S, data_S,
+                                      N=A.shape[1], symmetric=symmetric)
+
 # -----------------------------------------------------------------------------
 # 4.  System augmentation factory
 # -----------------------------------------------------------------------------
@@ -203,8 +273,8 @@ def augment_system(
     pi: np.ndarray,
     *,
     K: int = 10,
-    λ_P: float = 1.0,
-    λ_S: float = 0.1,
+    lambda_P: float = 1.0,
+    lambda_S: float = 0.1,
     scale_mode: Literal["log", "linear"] = "log"
 ) -> Tuple[sp.csr_matrix, np.ndarray]:
     """Stack *P* and *B* blocks underneath the original system ``A x = d``.
@@ -231,12 +301,155 @@ def augment_system(
     # ------------------------------------------------------------------
     # 3. Stack rows
     # ------------------------------------------------------------------
-    A_aug = sp.vstack([A, λ_P * P, λ_S * B], format="csr")
+    A_aug = sp.vstack([A, lambda_P * P, lambda_S * B], format="csr")
     d_aug = np.concatenate(
         [
             d.astype(np.float32),
-            λ_P * b_P,
+            lambda_P * b_P,
             np.zeros(B.shape[0], dtype=np.float32),
         ]
     )
     return A_aug, d_aug
+
+
+def plausibility_residual(r, pi, *, scale_mode="log"):
+    if scale_mode == "log":
+        # P enforced   log(r_i) = log(pi_i)
+        return np.log(r) - np.log(pi)
+    else:              # linear mode
+        return r - pi
+
+
+def similarity_residual(r, indices_S, indptr_S):
+    # quickly walk the sparse upper‑triangle adjacency
+    i, j = [], []
+    for row in range(len(indptr_S) - 1):
+        for ptr in range(indptr_S[row], indptr_S[row+1]):
+            col = indices_S[ptr]
+            if row < col:          # keep strict upper triangle
+                i.append(row)
+                j.append(col)
+    i = np.asarray(i, dtype=np.int32)
+    j = np.asarray(j, dtype=np.int32)
+    return r[i] - r[j]             # shape (n_edges,)
+
+
+def neighbor_ratio_spread(r, pi, indices_S, indptr_S, scale_mode="log", eps=1e-30):
+    if scale_mode == "log":
+        # protect both vectors
+        safe_r  = np.maximum(r,  eps)
+        safe_pi = np.maximum(pi, eps)
+        q = np.log(safe_r) - np.log(safe_pi)
+    else:   # linear
+        safe_pi = np.maximum(pi, eps)
+        q = r / safe_pi
+
+    edges_qdiff = []
+    for row in range(len(indptr_S)-1):
+        for k in range(indptr_S[row], indptr_S[row+1]):
+            col = indices_S[k]
+            diff = q[row] - q[col]
+            if np.isfinite(diff):
+                edges_qdiff.append(diff)
+
+    edges_qdiff = np.asarray(edges_qdiff, dtype=np.float32)
+
+    if edges_qdiff.size == 0:
+        return {
+            "rms_q_diff": np.nan,
+            "p95_abs_q_diff": np.nan,
+            "histogram": (np.array([]), np.array([]))
+        }
+
+    return {
+        "rms_q_diff": np.sqrt(np.mean(edges_qdiff**2)),
+        "p95_abs_q_diff": np.percentile(np.abs(edges_qdiff), 95),
+        "histogram": np.histogram(edges_qdiff, bins=50)
+    }
+
+
+def plausibility_similarity_report(r, pi, S, *,
+                                   scale_mode="log", lambda_P=1.0, lambda_S=0.1):
+
+    e_P = plausibility_residual(r, pi, scale_mode=scale_mode)
+    e_S = similarity_residual(r, S.indices, S.indptr)
+    q_spread = neighbor_ratio_spread(r, pi, S.indices, S.indptr,
+                                     scale_mode=scale_mode)
+    print(f"P‑block:  RMS={np.sqrt(np.mean(e_P**2)):.3e}, ",
+          f"max|e_P|={np.max(np.abs(e_P)):.3e}")
+    print(f"S‑block:  RMS={np.sqrt(np.mean(e_S**2)):.3e},  ",
+          f"max|e_S|={np.max(np.abs(e_S)):.3e}")
+    print(f"Neighbor ratio RMS spread = {q_spread['rms_q_diff']:.3e}")
+
+
+def proportionality_block(S,                   # sparse (N×N)  adjacency
+                          pi,                  # (N,) plausibility, >0
+                          lambda_P=1.0,        # weight for the whole block
+                          use_weights=False    # step‑2 option
+                          ):
+    """
+    Build an N×N sparse matrix B such that
+
+        (B @ r)[i]  =  -r_i + Σ_j (p_i/p_j)·r_j                (unweighted)
+        (B @ r)[i]  =  -Σ_j w_ij·r_i + Σ_j w_ij(p_i/p_j)·r_j   (weighted)
+
+    equals zero when every rupture in each neighbourhood is proportional
+    to its plausibility.
+
+    Parameters
+    ----------
+    S : scipy.sparse matrix (N×N)
+        k‑nearest‑neighbour adjacency, usually the output of
+        `build_similarity_sparse`.  Only the *pattern* (and optionally the
+        data) are used.
+    pi : (N,) array_like
+        Plausibility values, strictly positive.
+    lambda_P : float, optional
+        Scalar weight.  The returned matrix is `lambda_P * B_raw`.
+    use_weights : bool, optional
+        *False* (default)  → ignore `S.data`, use plain ratios.  
+        *True*            → multiply every neighbour term by `w_ij`
+                            and the r_i term by `-Σ w_ij`.
+
+    Returns
+    -------
+    B : scipy.sparse.csr_matrix (N×N)
+        Constraint block with ~N·(k+1) non‑zeros.
+    """
+    pi = np.asarray(pi, dtype=np.float32)
+    if np.any(pi <= 0):
+        raise ValueError("plausibility values must be positive")
+
+    S_csr = S.tocsr()
+    indptr, indices, weights = S_csr.indptr, S_csr.indices, S_csr.data
+    N = S_csr.shape[0]
+
+    # -------- build COO triplets -------------------------------------
+    rows, cols, data = [], [], []
+
+    for i in range(N):
+        start, stop = indptr[i], indptr[i+1]
+        nbr_idx = indices[start:stop]
+        nbr_w   = weights[start:stop] if use_weights else None
+
+        # ---- coefficient on r_i  ------------------------------------
+        if use_weights:
+            coeff_self = -np.sum(nbr_w, dtype=np.float32)
+        else:
+            coeff_self = -1.0
+        rows.append(i)
+        cols.append(i)
+        data.append(lambda_P * coeff_self)
+
+        # ---- neighbour coefficients --------------------------------
+        p_i = pi[i]
+        for jj, j in enumerate(nbr_idx):
+            ratio = p_i / pi[j]
+            coeff = ratio * (nbr_w[jj] if use_weights else 1.0)
+            rows.append(i)
+            cols.append(j)
+            data.append(lambda_P * coeff)
+
+    B = sp.coo_matrix((data, (rows, cols)), shape=(N, N),
+                      dtype=np.float32).tocsr()
+    return B
