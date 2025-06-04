@@ -35,8 +35,7 @@ from openquake.smt.comparison.utils_compare_gmpes import (
 base = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
-TARGET_VS30 = 800
-TARGET_Z_BASIN_REGION = 'global'
+TARGET_vs30 = 800
 TARGET_DEPTHS = [20, 25, 30]
 TARGET_RMIN = 0
 TARGET_RMAX = 300
@@ -88,11 +87,8 @@ class ComparisonTestCase(unittest.TestCase):
         # Check for target ztor
         self.assertEqual(config.ztor, TARGET_ZTOR)
 
-        # Check for target Vs30
-        self.assertEqual(config.Vs30, TARGET_VS30)
-
-        # Check for target region
-        self.assertEqual(config.z_basin_region, TARGET_Z_BASIN_REGION)
+        # Check for target vs30
+        self.assertEqual(config.vs30, TARGET_vs30)
 
         # Check for target depths (other functions use arrays from these
         # depths)
@@ -222,7 +218,7 @@ class ComparisonTestCase(unittest.TestCase):
         mtxs_medians = compute_matrix_gmpes(config, mtxs_type='84th_perc')
         
         # Get clustering matrix
-        lab = '84th_perc_Clustering_Vs30.png'
+        lab = '84th_perc_Clustering_vs30.png'
         Z_matrix = plot_cluster_util(
             config.imt_list, config.gmpe_labels, mtxs_medians,
             os.path.join(self.output_directory, lab), mtxs_type='84th_perc')
