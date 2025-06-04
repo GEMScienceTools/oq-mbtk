@@ -171,7 +171,7 @@ def plot_soln_slip_rates(
             slip_rates,
             yerr=errs,
             fmt="k,",
-            lw=0.2,
+            lw=0.1,
         )
 
     plt.plot(slip_rates, pred_slip_rates, ".", alpha=pred_alpha, **kwargs)

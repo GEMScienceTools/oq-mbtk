@@ -355,6 +355,7 @@ def nnls_pg(
     maxit,
     tol,
     accept_norm,
+    stall_val
 ):
     n = x.size
     r = b.copy()  # residual = b - A x
@@ -405,12 +406,21 @@ def nnls_pg(
         if np.linalg.norm(np.minimum(y, g)) / b.size < tol: 
             print("gradient below threshold")
             return y, misfit_history
+        
+        if k > 10:
+            if (misfit_history[k-10] - misfit_history[k]) < stall_val:
+                print("inversion stalled (up against zero boundary?)")
+                return y, misfit_history
+
         x, y, t = y, x_next, t_next
+
+    project_nonneg(y)
     return y, misfit_history
 
 
 def solve_nnls_pg(
-    A, b, *, x0=None, max_iters=1000, accept_grad=1e-6, accept_norm=1e-6, copy=True
+    A, b, *, x0=None, max_iters=1000, accept_grad=1e-6, accept_norm=1e-6, 
+    copy=True, stall_val=1e-8
 ):
     """
     Solve  min_x ½‖Ax – b‖²  subject to  x ≥ 0   with the projected‑gradient
@@ -436,14 +446,6 @@ def solve_nnls_pg(
     x : (n,) ndarray
         Non‑negative least‑squares solution.
     """
-
-    # -- matrix preparation -------------------------------------------------
-    #if not ssp.isspmatrix_csr(A):
-    #    A_sparse = A.tocsr(copy=copy)
-    #elif copy:
-    #    A_sparse = A.copy()
-    #else:
-    #    A_sparse = A
 
     M, N = A.shape
     #if True: #M <= N: # underdetermined
@@ -496,6 +498,7 @@ def solve_nnls_pg(
         max_iters,
         accept_grad,
         accept_norm,
+        stall_val
     )
     # resids = A @ x - b
 
