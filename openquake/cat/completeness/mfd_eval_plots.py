@@ -147,19 +147,20 @@ def plt_compl_tables(compdir, figdir, df_best):
     compl_tables, mags_chk, years_chk = read_compl_data(compdir)
 
     yrs, mgs = [],[]
+    all_yrs = [] 
     for cid in ctabids:
         ctab = _make_ctab(compl_tables['perms'][int(cid)], 
                                  years_chk, mags_chk)
 
         # add first
-        plt.plot(ctab[0][0], ctab[0][1], 'ko', alpha=0.03)
-        plt.plot([ctab[0][0], ctab[0][0]+10], [ctab[0][1], ctab[0][1]], 'r--', alpha=0.03)
+        plt.plot(ctab[0][0], ctab[0][1], 'ko', alpha=0.003)
+        plt.plot([ctab[0][0], ctab[0][0]+10], [ctab[0][1], ctab[0][1]], 'r--', alpha=0.003)
         yrs.append(ctab[0][0])
         mgs.append(ctab[0][1])
     
         for ii in range(len(ctab)-1):
-            plt.plot([ctab[ii][0], ctab[ii+1][0]], [ctab[ii+1][1], ctab[ii+1][1]], 'r', alpha=0.03)
-            plt.plot([ctab[ii][0], ctab[ii][0]], [ctab[ii][1], ctab[ii+1][1]], 'r', alpha=0.03)
+            plt.plot([ctab[ii][0], ctab[ii+1][0]], [ctab[ii+1][1], ctab[ii+1][1]], 'r', alpha=0.003)
+            plt.plot([ctab[ii][0], ctab[ii][0]], [ctab[ii][1], ctab[ii+1][1]], 'r', alpha=0.003)
             plt.plot(ctab[ii+1][0], ctab[ii+1][1], 'ko', alpha=0.03)
     
             yrs.append(ctab[ii+1][0])
@@ -196,6 +197,14 @@ def get_top_percent(df_all, fraction):
 
 def plot_best_mfds(df_best, figsdir):
     num = len(df_best)
+    if num <= 10:
+        alpha1 = 0.1
+    else:
+        alpha1 = 10/num 
+
+    if alpha1 > 0.2:
+        breakpoint()
+
     for ii in range(len(df_best)):
         row = df_best.iloc[ii]
         mfd = TruncatedGRMFD(4, 8.5, 0.2, df_best.agr.iloc[ii], df_best.bgr.iloc[ii])
@@ -204,36 +213,33 @@ def plot_best_mfds(df_best, figsdir):
         mfd_r = [m[1] for m in mgrts]
         mfd_cr = [sum(mfd_r[ii:]) for ii in range(len(mfd_r))]
         if ii == 0:
-            plt.scatter(row.mags, row.rates, marker='_', color='r', 
+            plt.scatter(row.mags, row.rates, marker='_', color='r', alpha=0.5*alpha1,
                         label='Incremental occurrence')
-            plt.scatter(row.mags, row.cm_rates, marker='.', color='b', 
+            plt.scatter(row.mags, row.cm_rates, marker='.', color='b', alpha=0.5*alpha1,
                         label='Cumulative occurrence')
-            plt.semilogy(mfd_m, mfd_r, color='r', linewidth=0.1, 
+            plt.semilogy(mfd_m, mfd_r, color='r', linewidth=0.3, alpha=alpha1,
                          zorder=0, label='Incremental MFD')
             plt.semilogy(mfd_m, mfd_cr, color='b',
-                         linewidth=0.1, zorder=0, label='Cumulative MFD')
+                         linewidth=0.3, zorder=0, alpha=alpha1, label='Cumulative MFD')
 
         else: 
-            if num <= 10:
-                alpha1 = 0.1
-            else:
-                alpha1 = 2/num
-
-            if alpha1 > 0.2:
-                breakpoint()
+            
 
             plt.scatter(row.mags, row.rates, marker='_', color='r', 
-                        alpha=alpha1)
+                        alpha=0.5*alpha1)
             plt.scatter(row.mags, row.cm_rates, marker='.', color='b', 
-                        alpha=alpha1)
-            plt.semilogy(mfd_m, mfd_r, color='r', alpha=3*alpha1, linewidth=0.1, 
+                        alpha=0.5*alpha1)
+            plt.semilogy(mfd_m, mfd_r, color='r', alpha=alpha1, linewidth=0.3, 
                          zorder=0)
-            plt.semilogy(mfd_m, mfd_cr, color='b', alpha=5*alpha1, 
-                         linewidth=0.1, zorder=0)
+            plt.semilogy(mfd_m, mfd_cr, color='b', alpha=alpha1, 
+                         linewidth=0.3, zorder=0)
 
     plt.xlabel('Magnitude')
     plt.ylabel('Annual occurrence rates')
-    plt.legend()
+    leg = plt.legend()
+    for lh in leg.legendHandles: 
+        lh.set_alpha(1)
+    plt.grid(which='both', color='k', lw=0.08)
     fout = os.path.join(figsdir, 'mfds_best.png')
     plt.savefig(fout, dpi=300)
     plt.close()
