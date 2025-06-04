@@ -5,7 +5,7 @@ imt_list = ['PGA', 'SA(0.3)', 'SA(1.0)', 'SA(2.0)'] # IMTs to compute attenuatio
 max_period = 2 # Max period for response spectra (can't exceed maximum period in a specified GMPE)
 minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
-dist_type = 'rrup' # Specify distance metric used in trellis plots
+dist_type = 'rrup' # Specify distance metric for trellis/spectra
 dist_list = [26.7] # Distance intervals for use in spectra plots
 Nstd = 1 # Truncation for GMM sigma distribution
 

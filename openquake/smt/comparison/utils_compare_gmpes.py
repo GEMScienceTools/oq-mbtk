@@ -177,7 +177,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     # Get mag and depth lists
     mag_list = config.mag_list
     dep_list = config.depth_list
-    
+
     # If obs spectra csv provided load the data
     if obs_spectra is not None:
         obs_spectra = pd.read_csv(obs_spectra)
@@ -228,12 +228,6 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                         ztor_m = None
                         
                     # Get mean and sigma
-                    dist_type = 'repi' # Spectra are only computed for specified
-                                       # repi distances rather than rrup or rjb
-                                       # to avoid issues with interpolating for
-                                       # ground-motion values at very small rrup
-                                       # or rjb (specified rrup or rjb can be
-                                       # smaller than min rrup or rjb in a ctx)
                     mu, std, r_vals, tau, phi = att_curves(gmm,
                                                            dep_list[l],
                                                            m,
@@ -248,7 +242,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                                                            1, # Step of 1 km for site spacing
                                                            imt,
                                                            ztor_m,
-                                                           dist_type,
+                                                           config.dist_type,
                                                            config.trt,
                                                            config.up_or_down_dip,
                                                            config.volc_ba,
@@ -257,7 +251,16 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                     # Interpolate for distances and store
                     mu = mu[0][0]
                     f = interpolate.interp1d(r_vals, mu)
-                    rs_50p_dist = np.exp(f(dist))
+                    try:
+                        rs_50p_dist = np.exp(f(dist))
+                    except:
+                        rtype = config.dist_type
+                        assert rtype not in ["repi"] # Should not be interp issues for repi
+                        r_min = int(r_vals.min())
+                        r_max = int(r_vals.max())
+                        raise ValueError(f"Request spectra distance ({rtype} = {dist} km) is "
+                                         f"outside of {rtype} value range for this ground-"
+                                         f"shaking scenario (min = {r_min} km, max = {r_max} km)")
                     rs_50p.append(rs_50p_dist)
                     
                     f1 = interpolate.interp1d(r_vals, std[0])
@@ -293,7 +296,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                         mag_list, dep_list, config.dist_list, eq_id, st_id)
                 
                 # Update plots
-                update_spec_plots(ax1, m, dist, n, l, config.dist_list)
+                update_spec_plots(ax1, m, dist, n, l, config.dist_list, config.dist_type)
             
             # Set axis limits and add grid
             ax1.set_xlim(min(periods), max(periods))
@@ -731,14 +734,42 @@ def get_colors(custom_color_flag, custom_color_list):
     """
     Get list of colors for plots
     """
-    colors = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
-              'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', '0.5']
+    colors = [
+        'b',     
+        'g',
+        'r',    
+        'c',     
+        'm',     
+        'y',     
+        'k',     
+        'm',   
+        'gold',  
+        'tab:grey', 
+        'tab:brown',  
+        '#FF5733', 
+        '#33FF57', 
+        '#FF6347',
+        '#800080',
+        '#008080',
+        '#FFD700',
+        '#FF1493',
+        '#8A2BE2',
+        '#7FFF00',
+        '#D2691E',
+        '#ADFF2F',
+        '#2E8B57',
+        '#9932CC',
+        '#B22222',
+        '#4B0082',
+        '#FFFF00',
+        '#87CEFA',
+        '#00FA9A',
+        ]
     
     if custom_color_flag is True:
         colors = custom_color_list
-        
-    return colors
-
+    else:
+        return colors
 
 ### Trellis utils
 def trellis_data(gmpe,
@@ -1163,12 +1194,11 @@ def plot_obs_spectra(ax1,
                  label=obs_string)    
         
         
-def update_spec_plots(ax1, m, i, n, l, dist_list):
+def update_spec_plots(ax1, m, i, n, l, dist_list, dist_type):
     """
     Add titles and axis labels to spectra plots
     """
-    ax1.set_title('Mw = ' + str(m) + ', Repi = ' + str(i) + ' km',
-                  fontsize=16, y=1.0, pad=-16)
+    ax1.set_title(f'Mw = {m}, {dist_type} = {i} km', fontsize=16, y=1.0, pad=-16)
     if n == len(dist_list)-1: # Bottom row only
         ax1.set_xlabel('Period (s)', fontsize=16)
     if l == 0: # Left column only

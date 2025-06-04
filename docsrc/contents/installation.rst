@@ -15,19 +15,20 @@ python -m pip install --upgrade pip
 
 * Install the OpenQuake engine and activate its virtual environment:
 
-```bash
-$ git clone --depth=1 https://github.com/gem/oq-engine.git
-$ cd oq-engine
-$ python3 install.py devel
-$ source ~/openquake/bin/activate
-```
+.. code-block:: bash
+
+    $ git clone --depth=1 https://github.com/gem/oq-engine.git
+    $ cd oq-engine
+    $ python3 install.py devel
+    $ source ~/openquake/bin/activate
+
 
 * Go to the folder where you cloned the oq-mbtk repository and complete the
 installation running the following commands,
 making sure to replace `requirements-py311-linux.txt` with the name of
 the file corresponding to the correct python version and operating system:
 
-```bash
-$ pip install -e .
-$ pip install -r requirements-py311-linux.txt
-```
+.. code-block:: bash
+
+    $ pip install -e .
+    $ pip install -r requirements-py311-linux.txt

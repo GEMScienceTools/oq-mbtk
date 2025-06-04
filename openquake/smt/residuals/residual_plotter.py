@@ -257,7 +257,6 @@ class ResidualHistogramPlot(BaseResidualPlot):
     """
     Abstract-like class to create histograms of strong ground motion residuals
     """
-
     def __init__(self,
                  residuals,
                  gmpe,
@@ -303,7 +302,6 @@ class ResidualPlot(ResidualHistogramPlot):
     """
     Class to create a simple histrogram of strong ground motion residuals
     """
-
     def get_plot_data(self):
         return residuals_density_distribution(self.residuals, self.gmpe,
                                               self.imt, self.bin_width)
@@ -348,7 +346,6 @@ class LikelihoodPlot(ResidualHistogramPlot):
     Abstract-like class to create a simple histrogram of strong ground motion
     likelihood
     """
-
     def __init__(self,
                  residuals,
                  gmpe,
@@ -402,7 +399,6 @@ class ResidualScatterPlot(BaseResidualPlot):
     Abstract-like class to create scatter plots of strong ground motion
     residuals
     """
-
     def __init__(self,
                  residuals,
                  gmpe,
@@ -498,7 +494,6 @@ class ResidualWithDistance(ResidualScatterPlot):
     Class to create a simple scatter plot of strong ground motion
     residuals (y-axis) versus distance (x-axis)
     """
-
     def __init__(self,
                  residuals,
                  gmpe, 
@@ -549,7 +544,6 @@ class ResidualWithMagnitude(ResidualScatterPlot):
     Class to create a simple scatter plot of strong ground motion
     residuals (y-axis) versus magnitude (x-axis)
     """
-
     def get_plot_data(self):
         return residuals_with_magnitude(self.residuals, self.gmpe, self.imt)
 
@@ -559,7 +553,6 @@ class ResidualWithDepth(ResidualScatterPlot):
     Class to create a simple scatter plot of strong ground motion
     residuals (y-axis) versus depth (x-axis)
     """
-
     def get_plot_data(self):
         return residuals_with_depth(self.residuals, self.gmpe, self.imt)
 
@@ -585,26 +578,26 @@ def manage_imts(residuals):
     used for plotting of GMM ranking metrics vs period.
     """
     # Preserve original residuals.imts
-    preserve_imts = residuals.imts
+    preserve_imts = deepcopy(residuals.imts)
 
     # Remove non-acceleration imts from residuals.imts for generation of metrics
     idx_to_drop = []
-    for imt_idx, imt in enumerate(residuals.imts):
+    for imt_idx, imt in enumerate(preserve_imts):
         if imt != 'PGA' and 'SA' not in imt:
             idx_to_drop.append(imt_idx)
-    residuals.imts = pd.Series(residuals.imts).drop(idx_to_drop).values
+    residuals.imts = pd.Series(preserve_imts).drop(idx_to_drop).values
 
     # Convert imt_list to array
     x_with_imt = pd.DataFrame(
-        [imt2tup(imts) for imts in residuals.imts], columns=['imt_str', 'imt_float']
+        [imt2tup(imts) for imts in preserve_imts], columns=['imt_str', 'imt_float']
     )
-    for imt_idx in range(len(residuals.imts)):
+    for imt_idx in range(len(preserve_imts)):
         if x_with_imt.loc[imt_idx, 'imt_str'] == 'PGA':
             x_with_imt.loc[imt_idx, 'imt_float'] = 0
 
     x_with_imt = x_with_imt.dropna()
 
-    return residuals, preserve_imts, x_with_imt
+    return residuals, x_with_imt
 
 def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg', dpi=200):
     """
@@ -616,7 +609,7 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
                 
     # Manage imts
-    residuals, preserve_imts, x_llh = manage_imts(residuals)
+    residuals, x_llh = manage_imts(residuals)
 
     # Define colours for GMMs
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
@@ -635,9 +628,6 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
     ax_llh.legend(loc='upper right', ncol=2, fontsize='medium')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
-    # Reassign original imts to residuals.imts
-    residuals.imts = preserve_imts
-    
 def plot_edr_metrics_with_spectral_period(residuals,
                                           filename,
                                           filetype='jpg',
@@ -651,7 +641,7 @@ def plot_edr_metrics_with_spectral_period(residuals,
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
     
     # Manage imts
-    residuals, preserve_imts, x_with_imt = manage_imts(residuals)
+    residuals, x_with_imt = manage_imts(residuals)
 
     # Define colours for GMMs
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
@@ -702,9 +692,6 @@ def plot_edr_metrics_with_spectral_period(residuals,
     ax_MDE.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename + '_MDE'), plt.gcf(), filetype, dpi)
     
-    # Reassign original imts to residuals.imts
-    residuals.imts = preserve_imts
-    
 def plot_stochastic_area_with_spectral_period(residuals,
                                               filename,
                                               filetype='jpg',
@@ -718,7 +705,7 @@ def plot_stochastic_area_with_spectral_period(residuals,
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
     
     # Manage imts
-    residuals, preserve_imts, x_with_imt = manage_imts(residuals)
+    residuals, x_with_imt = manage_imts(residuals)
     
     # Define colours for plots
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
@@ -737,10 +724,6 @@ def plot_stochastic_area_with_spectral_period(residuals,
     ax_sto.set_ylabel('Stochastic Area', fontsize='12')
     ax_sto.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename), plt.gcf(), filetype, dpi)
-        
-    # Reassign original imts to residuals.imts
-    residuals.imts = preserve_imts
-    
 
 ### Functions for exporting tables of ranking metrics
 def llh_table(residuals, filename):
@@ -773,6 +756,7 @@ def llh_weights_table(residuals, filename):
                 imt, gmpe] = residuals.model_weights_with_imt[imt][gmpe]
         llh_weights.loc['Avg over imts', gmpe] = llh_weights[gmpe].mean()
     llh_weights.columns = llh_weights.columns + ' LLH-based weights'
+    assert np.abs(llh_weights.loc['Avg over imts'].sum() - 1.0) < 1E-09
 
     # Export table
     llh_weights.to_csv(filename, sep=',')
@@ -830,8 +814,9 @@ def edr_weights_table(residuals, filename):
         pd.DataFrame(avg_edr_weight_per_gmpe, index=['Avg over imts'])
 
     # Export table
-    final_edr_weight_df = pd.concat([gmpe_edr_weight_df, avg_gmpe_edr_weight_df])
-    final_edr_weight_df.to_csv(filename, sep=',')
+    edr_weight_df = pd.concat([gmpe_edr_weight_df, avg_gmpe_edr_weight_df])
+    assert np.abs(edr_weight_df.loc['Avg over imts'].sum() - 1.0) < 1E-09
+    edr_weight_df.to_csv(filename, sep=',')
         
 def stochastic_area_table(residuals, filename):
     """
@@ -879,8 +864,9 @@ def stochastic_area_weights_table(residuals, filename):
     # Export table
     avg_gmpe_sto_weights = pd.DataFrame(
         avg_sto_weight_per_gmpe, index=['Avg over imts'])
-    final_sto_weights = pd.concat([gmpe_sto_weight_df, avg_gmpe_sto_weights])
-    final_sto_weights.to_csv(filename, sep=',')
+    sto_weights_df = pd.concat([gmpe_sto_weight_df, avg_gmpe_sto_weights])
+    assert np.abs(sto_weights_df.loc['Avg over imts'].sum() - 1.0) < 1E-09
+    sto_weights_df.to_csv(filename, sep=',')
 
 
 ### Functions for plotting mean and sigma of residual dists vs spectral period
@@ -1030,7 +1016,7 @@ def plot_residual_pdf_with_spectral_period(residuals,
         raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
         
     # Manage imts
-    residuals, preserve_imts, imts_to_plot = manage_imts(residuals)
+    residuals, imts_to_plot = manage_imts(residuals)
             
     # Get distributions of residuals per gmm and imt 
     res_dists = get_res_dists(residuals)
@@ -1064,9 +1050,6 @@ def plot_residual_pdf_with_spectral_period(residuals,
         
     ax[0, 0].legend(loc='upper right', ncol=2, fontsize=6)
     _save_image(filename, plt.gcf(), filetype, dpi)
-    
-    # Reassign original imts to residuals.imts
-    residuals.imts = preserve_imts
 
 def pdf_table(residuals, filename):
     """
