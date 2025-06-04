@@ -74,8 +74,12 @@ def _get_first_point(rup, from_point):
         sfc.corner_lons[idx], sfc.corner_lats[idx], sfc.corner_depths[idx])
 
 
-def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
-                           direction='positive', hdist=100, step=5.,
+def get_sites_from_rupture(rup,
+                           from_point='TC',
+                           toward_azimuth=90,
+                           direction='positive',
+                           hdist=100,
+                           step=5.,
                            site_props=''):
     """
     Get the sites from the rupture to create the context with
@@ -98,13 +102,23 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
 
     if direction == 'positive':
         azi = (strike + toward_azimuth) % 360
-        pointsp = npoints_towards(r_lon, r_lat, r_dep,
-                                  azi, hdist, vdist, npoints)
+        pointsp = npoints_towards(r_lon,
+                                  r_lat,
+                                  r_dep,
+                                  azi,
+                                  hdist,
+                                  vdist,
+                                  npoints)
         
     if direction == 'negative':
         azi = (strike + toward_azimuth + 180) % 360
-        pointsn = npoints_towards(r_lon, r_lat, r_dep,
-                                  azi, hdist, vdist, npoints)
+        pointsn = npoints_towards(r_lon,
+                                  r_lat,
+                                  r_dep,
+                                  azi,
+                                  hdist,
+                                  vdist,
+                                  npoints)
 
     sites = []
     keys = set(site_props.keys()) - set(['vs30', 'z1pt0', 'z2pt5'])
@@ -113,16 +127,20 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
         lons = reversed(pointsn[0][0:])
         lats = reversed(pointsn[1][0:])
         for lon, lat in zip(lons, lats):
-            site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
-                        z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
+            site = Site(Point(lon, lat, 0.0),
+                        vs30=site_props['vs30'],
+                        z1pt0=site_props['z1pt0'],
+                        z2pt5=site_props['z2pt5'])
             for key in list(keys):
                 setattr(site, key, site_props[key])
             sites.append(site)
 
     if len(pointsp):
         for lon, lat in zip(pointsp[0], pointsp[1]):
-            site = Site(Point(lon, lat, 0.0), vs30=site_props['vs30'],
-                        z1pt0=site_props['z1pt0'], z2pt5=site_props['z2pt5'])
+            site = Site(Point(lon, lat, 0.0),
+                        vs30=site_props['vs30'],
+                        z1pt0=site_props['z1pt0'],
+                        z2pt5=site_props['z2pt5'])
             for key in list(keys):
                 setattr(site, key, site_props[key])
             sites.append(site)
@@ -130,7 +148,16 @@ def get_sites_from_rupture(rup, from_point='TC', toward_azimuth=90,
     return SiteCollection(sites)
 
 
-def get_rupture(lon, lat, dep, msr, mag, aratio, strike, dip, rake, trt,
+def get_rupture(lon,
+                lat,
+                dep,
+                msr,
+                mag,
+                aratio,
+                strike,
+                dip,
+                rake,
+                trt,
                 ztor=None):
     """
     Creates a rupture given the hypocenter position
@@ -156,7 +183,7 @@ def att_curves(gmpe,
                strike,
                dip,
                rake,
-               Vs30,
+               vs30,
                Z1,
                Z25,
                maxR,
@@ -208,7 +235,7 @@ def att_curves(gmpe,
                       ztor=ztor)
 
     # Set site props
-    props = {'vs30': Vs30,
+    props = {'vs30': vs30,
              'z1pt0': Z1,
              'z2pt5': Z25,
              'backarc': volc_ba,
@@ -228,8 +255,12 @@ def att_curves(gmpe,
         from_pnt = 'MP' # Sites from midpoint of rup surface
     else:
         from_pnt = 'TC' # Sites from center of top edge
-    sites = get_sites_from_rupture(rup, from_point=from_pnt, toward_azimuth=90,
-                                   direction=direction, hdist=maxR, step=step,
+    sites = get_sites_from_rupture(rup,
+                                   from_point=from_pnt,
+                                   toward_azimuth=90,
+                                   direction=direction,
+                                   hdist=maxR,
+                                   step=step,
                                    site_props=props)
 
     # Add main R types to gmpe so can plot against repi, rrup, rjb and rhypo
@@ -262,31 +293,6 @@ def att_curves(gmpe,
         raise ValueError('No valid distance type specified.')
 
     return mean, std, distances, tau, phi
-
-
-def _get_z1(Vs30, region):
-    """
-    Get z1pt0 using Chiou and Youngs (2014) relationship.
-    """
-    if region == 'global':  # California and non-Japan regions
-        Z1 = (np.exp(-7.15 / 4 * np.log((Vs30**4 + 570.94**4) /
-                                        (1360**4 + 570.94**4))))
-    else:  # Japan
-        Z1 = (np.exp(-5.23 / 2 * np.log((Vs30**2 + 412.39**2) /
-                                        (1360**2 + 412.39**2))))
-    return Z1
-
-
-def _get_z25(Vs30, region):
-    """
-    Get z2pt5 using Campbell and Bozorgnia (2014) relationship.
-    """
-    if region == 'global':  # California and non-Japan regions
-        Z25 = np.exp(7.089 - 1.144 * np.log(Vs30))
-    else:  # Japan
-        Z25 = np.exp(5.359 - 1.102 * np.log(Vs30))
-
-    return Z25
 
 
 def _param_gmpes(strike, dip, depth, aratio, rake, trt):
@@ -350,8 +356,7 @@ def mgmpe_check(gmpe):
         for idx, par in enumerate(params):
             if idx > 1:
                 par = str(par)
-                if ('sigma_model' in par or 'site_term' in par or
-                    'basin_term' in par):
+                if ('sigma_model' in par or 'site_term' in par or 'basin_term' in par):
                     idx_params.append(idx)
                 if 'fix_total_sigma' in par:
                     idx_params.append(idx)

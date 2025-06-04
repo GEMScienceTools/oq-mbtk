@@ -69,6 +69,11 @@ def get_gmm_from_toml(key, config):
     """
     Get a GMM from a TOML file
     """
+    # ModifiableGMPE is not implemented for use in res module
+    if key == "ModifiableGMPE":
+        raise ValueError("The use of ModifiableGMPE is not"
+        "supported within the residuals module.")
+
     # If the key contains a number we take the second part
     if re.search("^\\d+\\-", key):
         tmp = re.sub("^\\d+\\-", "", key)
@@ -125,6 +130,8 @@ class Residuals(object):
             for c in dir(gmpe_i):
                 if 'COEFFS' in c:
                     pers = [sa.period for sa in getattr(gmpe_i, c).sa_coeffs]
+                elif "gmpe_table" in c: # tabular GMM specified using an alias
+                    pers = gmpe_i.imls["T"]
             min_per, max_per = (min(pers), max(pers))
             self.gmpe_sa_limits[gmpe] = (min_per, max_per)
             for c in dir(gmpe_i):
@@ -144,11 +151,9 @@ class Residuals(object):
                 gmpe_dict_2[imtx] = {}
                 self.unique_indices[gmpe][imtx] = []
                 self.types[gmpe][imtx] = []
-                
-                # If mixed effects GMPE or using Al-Atik 2015 fix res_type order
-                if self.gmpe_list[
-                    gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
-                        ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
+
+                # If mixed effects GMPE fix res_type order
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                     for res_type in ['Total','Inter event', 'Intra event']:
                         gmpe_dict_1[imtx][res_type] = []
                         gmpe_dict_2[imtx][res_type] = []
@@ -156,9 +161,8 @@ class Residuals(object):
                     gmpe_dict_2[imtx]["Mean"] = []
            
                 # For handling of GMPEs with total sigma only
-                else: 
-                    for res_type in self.gmpe_list[
-                            gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES:
+                else:
+                    for res_type in gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES:
                         gmpe_dict_1[imtx][res_type] = []
                         gmpe_dict_2[imtx][res_type] = []
                         self.types[gmpe][imtx].append(res_type)
@@ -196,8 +200,11 @@ class Residuals(object):
         
         return cls(gmpe_list, imts)
 
-    def compute_residuals(self, ctx_database, nodal_plane_index=1,
-                          component="Geometric", normalise=True):
+    def compute_residuals(self,
+                          ctx_database,
+                          nodal_plane_index=1,
+                          component="Geometric",
+                          normalise=True):
         """
         Calculate the residuals for a set of ground motion records
 
@@ -350,7 +357,11 @@ class Residuals(object):
         context["Residual"] = residual
         return context
 
-    def _get_random_effects_residuals(self, obs, mean, inter, intra,
+    def _get_random_effects_residuals(self,
+                                      obs,
+                                      mean,
+                                      inter,
+                                      intra,
                                       normalise=True):
         """
         Calculates the random effects residuals using the inter-event
@@ -479,7 +490,6 @@ class Residuals(object):
                 f.write(ev_imt_df.to_string(index=False))
                 f.write("\n\n")
 
-
     ### Likelihood (Scherbaum et al. 2004) functions
     def get_likelihood_values(self):
         """
@@ -522,7 +532,6 @@ class Residuals(object):
             median_lh = np.nanpercentile(l_h, 50.0)
             ret[res_type] = l_h, median_lh
         return ret
-
 
     ### LLH (Scherbaum et al. 2009) functions
     def get_loglikelihood_values(self):
@@ -577,7 +586,6 @@ class Residuals(object):
                 idx] for idx, gmpe in enumerate(self.gmpe_list)}
             
         return self.llh, self.model_weights, self.model_weights_with_imt
-
 
     ### EDR (Kale and Akkar 2013) functions
     def get_edr_values(self, bandwidth=0.01, multiplier=3.0):
@@ -719,8 +727,12 @@ class Residuals(object):
         edr = np.sqrt(kappa * inv_n * np.sum(mde ** 2.))
         return mde_norm, np.sqrt(kappa), edr            
     
-    def _get_edr_wrt_imt(self, obs_wrt_imt, expected_wrt_imt,
-                         stddev_wrt_imt, bandwidth=0.01, multiplier=3.0):
+    def _get_edr_wrt_imt(self,
+                         obs_wrt_imt,
+                         expected_wrt_imt,
+                         stddev_wrt_imt,
+                         bandwidth=0.01,
+                         multiplier=3.0):
         """
         Calculated the Euclidean Distanced-Based Rank for a set of
         observed and expected values from a particular GMPE over imts
@@ -771,7 +783,6 @@ class Residuals(object):
         de_orig = np.sum((obs - expected) ** 2.)
         de_corr = np.sum((obs - y_c) ** 2.)
         return de_orig / de_corr
-    
 
     ### Stochastic Area (Sunny et al. 2021) functions
     def get_stochastic_area_wrt_imt(self):
@@ -882,16 +893,15 @@ class SingleStationAnalysis(object):
         self.site_residuals = []
         self.types = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
+            gmpe_i = self.gmpe_list[gmpe]
             for imtx in self.imts:
                 self.types[gmpe][imtx] = []
-                if self.gmpe_list[
-                    gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
-                        ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                     for res_type in ['Total','Inter event', 'Intra event']:
                         self.types[gmpe][imtx].append(res_type)
                 else:
                     for res_type in (
-                        self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES):
+                        gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES):
                         self.types[gmpe][imtx].append(res_type)
                         
     @classmethod
@@ -1083,12 +1093,12 @@ class SingleStationAnalysis(object):
         if filename is not None:
             print("\nTOTAL RESULTS PER GMPE", file=fid)
             for gmpe in self.gmpe_list:
+                gmpe_i = self.gmpe_list[gmpe]
                 gmpe_str = get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
                 
                 # If mixed effects GMPE append with intra-event res components
-                if self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
-                    ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                         for imtx in self.imts:
                             p_data = (imtx,
                                       phi_ss[gmpe][imtx],

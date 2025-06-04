@@ -84,8 +84,17 @@ class Rupture(object):
         Hypocentral location within rupture surface as a fraction of
         (along-strike length, down-dip width)
     """
-    def __init__(self, eq_id, eq_name, magnitude, length, width, depth,
-                 hypocentre=None, area=None, surface=None, hypo_loc=None):
+    def __init__(self,
+                 eq_id,
+                 eq_name,
+                 magnitude,
+                 length,
+                 width,
+                 depth,
+                 hypocentre=None,
+                 area=None,
+                 surface=None,
+                 hypo_loc=None):
         self.id = eq_id
         self.name = eq_name
         self.magnitude = magnitude
@@ -188,8 +197,13 @@ class FocalMechanism(object):
     :param str mechanism_type:
         Qualitative description of mechanism
     """
-    def __init__(self, eq_id, name, nodal_planes, eigenvalues,
-                 moment_tensor=None, mechanism_type=None):
+    def __init__(self,
+                 eq_id,
+                 name,
+                 nodal_planes,
+                 eigenvalues,
+                 moment_tensor=None,
+                 mechanism_type=None):
         self.id = eq_id
         self.name = name
         self.nodal_planes = nodal_planes
@@ -242,8 +256,16 @@ class Earthquake(object):
     :param rupture:
         Earthquake rupture as instance of the :class: Rupture
     """
-    def __init__(self, eq_id, name, date_time, longitude, latitude, depth,
-                 magnitude, focal_mechanism=None, eq_country=None,
+    def __init__(self,
+                 eq_id,
+                 name,
+                 date_time,
+                 longitude,
+                 latitude,
+                 depth,
+                 magnitude,
+                 focal_mechanism=None,
+                 eq_country=None,
                  tectonic_region=None):
         self.id = eq_id
         assert isinstance(date_time, datetime)
@@ -287,8 +309,17 @@ class RecordDistance(object):
         and earthquake-specific
         average DPP used
     """
-    def __init__(self, repi, rhypo, rjb=None, rrup=None, r_x=None, ry0=None,
-                 flag=None, azimuth=None, rcdpp=None, rvolc=None):
+    def __init__(self,
+                 repi,
+                 rhypo,
+                 rjb=None,
+                 rrup=None,
+                 r_x=None,
+                 ry0=None,
+                 flag=None,
+                 azimuth=None,
+                 rcdpp=None,
+                 rvolc=None):
         self.repi = repi
         self.rhypo = rhypo
         self.rjb = rjb
@@ -396,9 +427,19 @@ class RecordSite(object):
         True if site is in subduction backarc, False otherwise
 
     """
-    def __init__(self, site_id, site_code, site_name, longitude, latitude,
-                 altitude, vs30=None, vs30_measured=None, network_code=None,
-                 country=None, site_class=None, backarc=False):
+    def __init__(self,
+                 site_id,
+                 site_code,
+                 site_name,
+                 longitude,
+                 latitude,
+                 altitude,
+                 vs30=None,
+                 vs30_measured=None,
+                 network_code=None,
+                 country=None,
+                 site_class=None,
+                 backarc=False):
         self.id = site_id
         self.name = site_name
         self.code = site_code
@@ -442,17 +483,13 @@ class RecordSite(object):
         
         if self.z1pt0:
             z1pt0 = self.z1pt0
-        else:
-            z1pt0 = utils.vs30_to_z1pt0_cy14(vs30)
 
         if self.z2pt5:
             z2pt5 = self.z2pt5
-        else:
-            z2pt5 = utils.z1pt0_to_z2pt5(z1pt0)
         
         location = Point(self.longitude,
                          self.latitude,
-                         -self.altitude / 1000.)  # Elevation from m to km
+                        -self.altitude / 1000.)  # Elevation from m to km
         oq_site = Site(location,
                        vs30,
                        z1pt0,
@@ -579,8 +616,14 @@ class Component(object):
         Units of record
         
     """
-    def __init__(self, waveform_id, orientation, ims=None, longest_period=None,
-                 waveform_filter=None, baseline=None, units=None):
+    def __init__(self,
+                 waveform_id,
+                 orientation,
+                 ims=None,
+                 longest_period=None,
+                 waveform_filter=None,
+                 baseline=None,
+                 units=None):
         self.id = waveform_id
         self.orientation = orientation
         self.lup = longest_period
@@ -723,7 +766,7 @@ class GroundMotionDatabase(ContextDB):
     def get_observations(self, imtx, records, component="Geometric"):
         """
         Return observed values for the given imt, as numpy array.
-        See superclass docstring for details
+        See superclass docstrsing for details
         """
         values = []
         selection_string = "IMS/H/Spectra/Response/Acceleration/"
@@ -818,19 +861,20 @@ class GroundMotionDatabase(ContextDB):
             if record.site.z1pt0 is not None:
                 z1pt0 = record.site.z1pt0
             else:
-                z1pt0 = vs30_to_z1pt0_cy14(record.site.vs30)
+                z1pt0 = int(-999)
             ctx.z1pt0.append(z1pt0)
             if record.site.z2pt5 is not None:
                 z2pt5 = record.site.z2pt5
             else:
-                z2pt5 = vs30_to_z2pt5_cb14(record.site.vs30)
+                z2pt5 = int(-999)
             ctx.z2pt5.append(z2pt5)
             if getattr(record.site, "backarc", None) is not None:
                 ctx.backarc.append(record.site.backarc)
-        # finalize:
+        
+        # Finalise
         for attname in self.sites_context_attrs:
             attval = getattr(ctx, attname)
-            # remove attribute if its value is empty-like
+            # Remove attribute if its value is empty-like
             if attval is None or not len(attval):
                 delattr(ctx, attname)
             elif attname in ('vs30measured', 'backarc'):
@@ -874,7 +918,6 @@ class GroundMotionDatabase(ContextDB):
             if getattr(record.distance, "rvolc", None) is not None:
                 ctx.rvolc.append(record.distance.rvolc)
 
-        # finalize:
         for attname in self.distances_context_attrs:
             attval = getattr(ctx, attname)
             # remove attribute if its value is empty-like
@@ -882,14 +925,12 @@ class GroundMotionDatabase(ContextDB):
                 delattr(ctx, attname)
             else:
                 # FIXME: dtype=float forces Nones to be safely converted to nan
-                # but it assumes obviously all attval elements to be numeric
                 setattr(ctx, attname, np.asarray(attval, dtype=float))
 
     ###########################
     # END OF ABSTRACT METHODS #
     ###########################
 
-    # moved from openquake/smt/residuals/gmpe_residuals.py:
     def get_scalar(self, fle, i_m, component="Geometric"):
         """
         Retrieves the scalar IM from the database
@@ -909,7 +950,6 @@ class GroundMotionDatabase(ContextDB):
                 return fle["IMS/H/Scalar/" + i_m][0]
             else:
                 raise ValueError("Scalar IM %s not in record database" % i_m)
-
 
     def number_records(self):
         """

@@ -40,10 +40,7 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  RecordDistance)
 from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.utils import (MECHANISM_TYPE,
-                                 DIP_TYPE,
-                                 vs30_to_z1pt0_cy14,
-                                 vs30_to_z2pt5_cb14)
+from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
@@ -345,20 +342,21 @@ class GEMFlatfileParser(SMDatabaseReader):
             vs30_measured = 1
         else:
             vs30_measured = 0 # Either inferred or unknown
-        
+
         # Make the site object
-        site = RecordSite(site_id, station_code, station_code, site_lon,
-                          site_lat, elevation, vs30, vs30_measured,
+        site = RecordSite(site_id,
+                          station_code,
+                          station_code,
+                          site_lon,
+                          site_lat,
+                          elevation,
+                          vs30,
+                          vs30_measured,
                           network_code=network_code, country=None)
 
-        # Take basin params from flatfile and calc from NGAWest2
-        # vs30 to basin param relationships if not available
+        # Add basin params
         site.z1pt0 = valid.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
         site.z2pt5 = valid.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
-        if site.vs30 and not site.z1pt0:
-            site.z1pt0 = vs30_to_z1pt0_cy14(vs30)
-        if site.vs30 and not site.z2pt5:
-            site.z2pt5 = vs30_to_z2pt5_cb14(vs30)
 
         return site
 

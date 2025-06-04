@@ -5,6 +5,8 @@ The :index:`Strong-Motion Tools` module contains code for the selection of groun
 
 The main components of the Strong-Motion Tools (smt) comprise of (1) parsing capabilities to generate metadata (2) capabilities for computation and plotting of ground-motion residual distributions (3) comparison of potentially viable GMPEs and (4) development of the GMC with the final selection(s) of GMPEs.
 
+A set of demo analyses with complete inputs and scripts for utilising the capabilities documented here are available within ``oq-mbtk\openquake\smt\demos``.
+
 Please note that this documentation assumes an elementary knowledge of GMPEs, residual analysis and ground-motion characterisation. Therefore, this documentation's purpose is to facilitate the application of the smt by user who is already familiar with the underlying theory. References are provided throughout for useful overviews of such theory.
 
 Performing a Residual Analysis
@@ -101,23 +103,23 @@ We can specify the inputs to perform a residual analysis with as follows:
    
     .. code-block:: ini
     
-        [models.AbrahamsonEtAl2014]
+       [models.AbrahamsonEtAl2014]
         
-        [models.AkkarEtAlRjb2014]
+       [models.AkkarEtAlRjb2014]
         
-        [models.BooreEtAl2014]
+       [models.BooreEtAl2014]
         
-        [models.BooreEtAl2020]
+       [models.BooreEtAl2020]
         
-        [models.CauzziEtAl2014]
+       [models.CauzziEtAl2014]
         
-        [models.CampbellBozorgnia2014]
+       [models.CampbellBozorgnia2014]
         
-        [models.ChiouYoungs2014]
+       [models.ChiouYoungs2014]
         
-        [models.KothaEtAl2020]
-        
-        [models.LanzanoEtAl2019_RJB_OMO]
+       [models.KothaEtAl2020]
+       
+       [models.LanzanoEtAl2019_RJB_OMO]
     
        # Examples below of some GMPEs not considered in this residual analysis with additional 
        # parameters than be specified within a toml file
@@ -125,8 +127,8 @@ We can specify the inputs to perform a residual analysis with as follows:
        [models.AbrahamsonGulerce2020SInter]
        region = "CAS" # GMPE specific parameters        
        
-       [models.NGAEastGMPE]
-       gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table        
+       [models.NGAEastUSGSGMPE]
+       gmpe_table = 'nga_east_Frankel.hdf5'
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
@@ -433,7 +435,7 @@ Comparing GMPEs
         max_period = 2 # Max period for response spectra (capped by max period in GMMs)
         minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
         maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
-        dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
+        dist_type = 'repi' # or rjb, rrup or rhypo used in trellis/spectra
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         Nstd = 1 # Truncation for GMM sigma distribution
         
@@ -441,10 +443,9 @@ Comparing GMPEs
 
         [site_properties]
         vs30 = 800
-        Z1 = -999   # If -999 compute from Vs30 using Chiou and Youngs (2014) relationship
-        Z25 = -999  # If -999 compute from Vs30 using Campbell and Bozorgnia (2014) relationship
+        z1pt0 = 30.0  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
+        z2pt5 = 0.57  # (km) - if -999 compute from each GMM's own vs30 to z2pt5 relationship
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-        z_basin_region = 'Global' # Obtain z1pt0/z2pt5 from "Global" or "JPN" (Japan) empirical relationships
         volc_back_arc = false # true or false
         eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
         
@@ -465,19 +466,15 @@ Comparing GMPEs
         mags = [5, 6, 7] # Mags used only for trellis and response spectra
         depths = [20, 20, 20] # Depth per magnitude for trellis and response spectra
         
-        # Specify mags and depths for Sammons, Euclidean dist and Agglomerative clustering
-        [source_properties_euclidean_analysis]
+        [euclidean_analysis] # Mags and depths for Sammons maps, Euclidean dist and clustering
         mmin = 5
         mmax = 7
         spacing = 0.1
         depths_for_euclidean = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+        gmpe_labels = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CA15', 'AK14']
         
-        # Specify label for gmpes
-        [gmpe_labels]
-        gmpes_label = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CA15', 'AK14']
-        
-        # Specify gmpes
-        
+        [models] # Specify GMMs
+
         # Plot logic tree and individual GMPEs within first GMC logic tree config (gmc1)
         [models.BooreEtAl2020]
         lt_weight_gmc1 = 0.30
@@ -625,7 +622,7 @@ Comparing GMPEs
    
    Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per IMT), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
 
-   Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml``, although such an application of ModifiableGMPE is not appropriate anyway given within a residual analysis we should evaluate the "base" GMPEs without such modifications):
+   Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml`` (an error will be raised) given only the "base" GMPEs should be considered within a residual analysis):
    
     .. code-block:: ini
 
