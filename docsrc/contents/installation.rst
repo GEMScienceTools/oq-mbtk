@@ -9,9 +9,8 @@ Here we demonstrate the installation of the MBTK for a linux system and Python 3
 * Open a terminal and move to the folder where you intend to install the tools;
 * Upgrade pip:
 
-```bash
-python -m pip install --upgrade pip
-```
+.. code-block:: bash
+    $ python -m pip install --upgrade pip
 
 * Install the OpenQuake engine and activate its virtual environment:
 
