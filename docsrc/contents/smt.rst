@@ -103,23 +103,23 @@ We can specify the inputs to perform a residual analysis with as follows:
    
     .. code-block:: ini
     
-        [models.AbrahamsonEtAl2014]
+       [models.AbrahamsonEtAl2014]
         
-        [models.AkkarEtAlRjb2014]
+       [models.AkkarEtAlRjb2014]
         
-        [models.BooreEtAl2014]
+       [models.BooreEtAl2014]
         
-        [models.BooreEtAl2020]
+       [models.BooreEtAl2020]
         
-        [models.CauzziEtAl2014]
+       [models.CauzziEtAl2014]
         
-        [models.CampbellBozorgnia2014]
+       [models.CampbellBozorgnia2014]
         
-        [models.ChiouYoungs2014]
+       [models.ChiouYoungs2014]
         
-        [models.KothaEtAl2020]
-        
-        [models.LanzanoEtAl2019_RJB_OMO]
+       [models.KothaEtAl2020]
+       
+       [models.LanzanoEtAl2019_RJB_OMO]
     
        # Examples below of some GMPEs not considered in this residual analysis with additional 
        # parameters than be specified within a toml file
@@ -127,8 +127,8 @@ We can specify the inputs to perform a residual analysis with as follows:
        [models.AbrahamsonGulerce2020SInter]
        region = "CAS" # GMPE specific parameters        
        
-       [models.NGAEastGMPE]
-       gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table        
+       [models.NGAEastUSGSGMPE]
+       gmpe_table = 'nga_east_Frankel.hdf5'
             
        [imts]
        imt_list = ['PGA', 'SA(0.1)', 'SA(0.2)', 'SA(0.5)', 'SA(1.0)']    
@@ -435,7 +435,7 @@ Comparing GMPEs
         max_period = 2 # Max period for response spectra (capped by max period in GMMs)
         minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
         maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
-        dist_type = 'repi' # or rjb, rrup or rhypo (dist type used in trellis plots)
+        dist_type = 'repi' # or rjb, rrup or rhypo used in trellis/spectra
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         Nstd = 1 # Truncation for GMM sigma distribution
         
@@ -622,7 +622,7 @@ Comparing GMPEs
    
    Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per IMT), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
 
-   Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml``, although such an application of ModifiableGMPE is not appropriate anyway given within a residual analysis we should evaluate the "base" GMPEs without such modifications):
+   Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml`` (an error will be raised) given only the "base" GMPEs should be considered within a residual analysis):
    
     .. code-block:: ini
 
