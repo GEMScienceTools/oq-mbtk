@@ -293,12 +293,13 @@ def plot_dominant_peaks(df, figdir, figname='a-b-peaks.png',
     plt.plot(dominant[:, 0], dominant[:, 1]/10, 'r^', ms=12, mec='w')
 
     # will be removed
+    """
     og_abs = {'0300': [5.38, 1.02], '0200': [4.83, 1.02], 
               '0400': [4.18, 0.95], '0100': [4.48, 0.95],}
 
     og = og_abs[label]
     plt.plot(og[0], og[1], 'wo', mec='r', ms=12)
-
+    """
 
     color = 'red'
     tot = sum(np.array(dominant).T[2])
