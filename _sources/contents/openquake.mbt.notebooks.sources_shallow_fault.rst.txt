@@ -1,0 +1,37 @@
+openquake.mbt.notebooks.sources\_shallow\_fault package
+=======================================================
+
+Submodules
+----------
+
+openquake.mbt.notebooks.sources\_shallow\_fault.create\_fault\_sources\_from\_geojson module
+--------------------------------------------------------------------------------------------
+
+.. automodule:: openquake.mbt.notebooks.sources_shallow_fault.create_fault_sources_from_geojson
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.notebooks.sources\_shallow\_fault.shallow\_faults module
+----------------------------------------------------------------------
+
+.. automodule:: openquake.mbt.notebooks.sources_shallow_fault.shallow_faults
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.notebooks.sources\_shallow\_fault.slip\_utils module
+------------------------------------------------------------------
+
+.. automodule:: openquake.mbt.notebooks.sources_shallow_fault.slip_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.notebooks.sources_shallow_fault
+   :members:
+   :undoc-members:
+   :show-inheritance:

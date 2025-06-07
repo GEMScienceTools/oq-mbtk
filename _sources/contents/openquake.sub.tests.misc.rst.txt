@@ -1,0 +1,45 @@
+openquake.sub.tests.misc package
+================================
+
+Submodules
+----------
+
+openquake.sub.tests.misc.edge\_test module
+------------------------------------------
+
+.. automodule:: openquake.sub.tests.misc.edge_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.tests.misc.mesh\_test module
+------------------------------------------
+
+.. automodule:: openquake.sub.tests.misc.mesh_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.tests.misc.profile\_test module
+---------------------------------------------
+
+.. automodule:: openquake.sub.tests.misc.profile_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.tests.misc.utils\_test module
+-------------------------------------------
+
+.. automodule:: openquake.sub.tests.misc.utils_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.sub.tests.misc
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,10 @@
+openquake.bin package
+=====================
+
+Module contents
+---------------
+
+.. automodule:: openquake.bin
+   :members:
+   :undoc-members:
+   :show-inheritance:
