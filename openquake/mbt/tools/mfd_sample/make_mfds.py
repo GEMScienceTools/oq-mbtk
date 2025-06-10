@@ -55,7 +55,11 @@ def _create_catalogue_versions(catfi, outdir, numcats=None, stype='random',
     else:
         os.makedirs(outdir)
 
-    csvout = os.path.join(outdir, 'v{}_catalogue.csv')
+    if catfi.split('.')[-1] in ['csv', 'hmtk']:
+        csvout = os.path.join(outdir, 'v{}_catalogue.csv')
+    else:
+        csvout = os.path.join(outdir, 'v{}_catalogue.pkl')
+
     fileout = os.path.join(outdir, 'v_mags.csv')
     factors = np.arange(-1,1,0.1)
 
@@ -117,6 +121,8 @@ def _create_catalogue_versions(catfi, outdir, numcats=None, stype='random',
     else:
         print(sys.stderr, "Use a supported sampling type.")
         sys.exit(1)
+
+#    return format
 
 
 
@@ -280,7 +286,7 @@ def make_many_mfds(configfile, basedir=None):
 
     plots = config['plot'].get('make_plots', True)
     if plots:
-        hist_params = config['plot'].get('hist_params', [15, 3, 0.4])
+        hist_params = config['plot'].get('hist_params', [15, 7.0, 4.0, 0.4])
         if not labs:
             print('Must specify the TRTs')
             sys.exit()
