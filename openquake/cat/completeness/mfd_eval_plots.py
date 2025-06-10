@@ -147,7 +147,6 @@ def plt_compl_tables(compdir, figdir, df_best):
     compl_tables, mags_chk, years_chk = read_compl_data(compdir)
 
     yrs, mgs = [],[]
-    all_yrs = [] 
     for cid in ctabids:
         ctab = _make_ctab(compl_tables['perms'][int(cid)], 
                                  years_chk, mags_chk)
@@ -425,28 +424,7 @@ def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, fign
     grouped = fl_df.groupby('mags')
     hist_data = grouped.apply(lambda g: norm_histo(g, field=field, bins=bins))
     mags = hist_data._mgr.axes[0].values
-    #results = hist_data.values
-    
-    #all_alpha = []
-    #for mag, rat in zip(mags, results):
-    #    m = [mag] * len(rat[0])
-    #    nmc = rat[1]
-    #    all_alpha.extend(nmc)
-    #alph_min = min(all_alpha)
-    #alph_max = max(all_alpha)
-    
-    #norm = mcolors.Normalize(vmin=alph_min, vmax=alph_max)
-    
-    # Choose a colormap
-    #colormap = plt.cm.Purples
-    
-    #for mag, rat in zip(mags, results):
-    #    m = [mag] * len(rat[0])
-    #    alph = rat[1] 
-    #    alph[alph<0.1]=0.2
-    #    ax.semilogy([m[0], m[0]], [min(rat[0]), max(rat[0])], c='gray', linewidth=1, zorder=1)
-    #    ax.scatter(m, rat[0], 250, marker='_', c=alph, cmap=colormap, norm=norm, zorder=0)
-
+   
     for index, row in df_best.iterrows():
         ax.scatter(row['mags'], row[field], 2, 'k', marker='s')
         mfd = TruncatedGRMFD(min(mags)-bw, 8.5, bw, row.agr, row.bgr)
@@ -514,10 +492,6 @@ def make_all_plots(resdir_base, compdir, figsdir_base, labels,
                       figname='mfds_best_rates.png')
         plot_all_mfds(df_best, df_best, figsdir, field='cm_rates', bins=60, 
                       figname='mfds_best_cmrates.png')
-        #plot_all_mfds(df_all, df_thresh, figsdir, field='rates', bins=60, 
-        #              figname='mfds_thresh_rates.png')
-        # plot_all_mfds(df_all, df_thresh, figsdir, field='cm_rates', bins=60, 
-        #              figname='mfds_thresh_cmrates.png')
         print('plotting covariance')
         cx, cy, mx1, my1, mx2, my2 = plot_weighted_covariance_ellipse(df_best, figsdir)
         plot_weighted_covariance_ellipse(df_thresh, figsdir, figname=f'{label}-20percent.png')

@@ -538,8 +538,6 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
 
     # Processing subcatalogues
     for fname in glob.glob(fname_input_pattern):
-        print(fname)
-
         # Get source ID
         src_id = _get_src_id(fname)
 
