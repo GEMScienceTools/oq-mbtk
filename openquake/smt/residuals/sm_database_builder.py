@@ -97,7 +97,10 @@ class SMDatabaseBuilder(object):
         self.spectra_parser = None
         self.metafile = None
 
-    def build_database(self, db_id, db_name, metadata_location,
+    def build_database(self,
+                       db_id,
+                       db_name,
+                       metadata_location,
                        record_location=None):
         """
         Constructs the metadata database and exports to a .pkl file
@@ -110,7 +113,9 @@ class SMDatabaseBuilder(object):
         :param str record_directory:
             Path to directory containing records (if different from metadata)
         """
-        self.dbreader = self.dbtype(db_id, db_name, metadata_location,
+        self.dbreader = self.dbtype(db_id,
+                                    db_name,
+                                    metadata_location,
                                     record_location)
         # Build database
         print("Reading database ...")
@@ -120,7 +125,9 @@ class SMDatabaseBuilder(object):
         with open(self.metafile, "wb+") as f:
             pickle.dump(self.database, f)
 
-    def parse_records(self, time_series_parser, spectra_parser=None,
+    def parse_records(self,
+                      time_series_parser,
+                      spectra_parser=None,
                       units="cm/s/s"):
         """
         Parses the strong motion records to hdf5
@@ -180,7 +187,9 @@ class SMDatabaseBuilder(object):
             pickle.dump(self.database, f)
         print("Done!")
 
-    def build_spectra_from_flatfile(self, component, damping="05",
+    def build_spectra_from_flatfile(self,
+                                    component,
+                                    damping="05",
                                     units="cm/s/s"):
         """
         In the case in which the spectra data is defined in the
@@ -227,9 +236,15 @@ class SMDatabaseBuilder(object):
             pickle.dump(self.database, f)
         print("Done!")
 
-    def _build_spectra_hdf5_from_row(self, output_file, row, periods,
-                                     scalar_fields, spectra_fields, component,
-                                     damping, units):
+    def _build_spectra_hdf5_from_row(self,
+                                     output_file,
+                                     row,
+                                     periods,
+                                     scalar_fields,
+                                     spectra_fields,
+                                     component,
+                                     damping,
+                                     units):
         fle = h5py.File(output_file, "w-")
         fle.create_group("Time Series")
         ims_grp = fle.create_group("IMS")
@@ -619,7 +634,13 @@ class AddResponseSpectrum(HorizontalMotion):
                           "Pseudo-Velocity", sa_hor, nvals, "cm/s", dstring)
         self._add_periods()
 
-    def _build_group(self, base_string, key, im_key, sa_hor, nvals, units,
+    def _build_group(self,
+                     base_string,
+                     key,
+                     im_key,
+                     sa_hor,
+                     nvals,
+                     units,
                      dstring):
         """
         Builds the group corresponding to the full definition of the
@@ -761,8 +782,11 @@ SPECTRUM_COMBINATION = {"Geometric": AddResponseSpectrum,
                         "Larger PGA": AddResponseSpectrum} 
 
 
-def add_horizontal_im(database, intensity_measures, component="Geometric",
-        damping="05", periods=[]):
+def add_horizontal_im(database,
+                      intensity_measures,
+                      component="Geometric",
+                      damping="05",
+                      periods=[]):
     """
     For a database this adds the resultant horizontal components to the
     hdf databse for each record
