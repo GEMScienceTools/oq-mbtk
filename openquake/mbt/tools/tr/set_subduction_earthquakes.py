@@ -120,7 +120,7 @@ class SetSubductionEarthquakes:
             lower_depth = 400
         upper_depth = self.upper_depth
         if upper_depth is None:
-            upper_depth = 400
+            upper_depth = 0
 
         # Open log file and prepare the group
         print(f'Log filename: {self.log_fname}\n')
@@ -189,6 +189,7 @@ class SetSubductionEarthquakes:
         max_la_sub = np.nanmax(mesh.lats)
 
         # Select the earthquakes within the bounding box
+        breakpoint()
         idxs = sorted(list(sidx.intersection((min_lo_sub-DELTA,
                                               min_la_sub-DELTA,
                                               upper_depth,
