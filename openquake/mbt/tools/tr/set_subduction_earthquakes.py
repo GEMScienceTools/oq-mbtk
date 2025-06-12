@@ -80,7 +80,7 @@ class SetSubductionEarthquakes:
 
     def __init__(self, label, treg_filename, distance_folder, edges_folder,
                  distance_buffer_below, distance_buffer_above, lower_depth,
-                 upper_depth, catalogue_filename, log_fname=None,
+                 catalogue_filename, log_fname=None, upper_depth=None,
                  low_year=-10000, upp_year=+10000, low_mag=-5., upp_mag=15.):
         self.label = label
         self.treg_filename = treg_filename
