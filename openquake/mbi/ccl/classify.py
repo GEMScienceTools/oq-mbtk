@@ -140,6 +140,9 @@ def classify(ini_fname, compute_distances, rf=''):
             lower_depth = None
             if 'lower_depth' in config[key]:
                 lower_depth = float(config[key]['lower_depth'])
+            upper_depth = None
+            if 'upper_depth' in config[key]:
+                upper_depth = float(config[key]['upper_depth'])
 
             # Selecting earthquakes within a time period
             low_year = -10000
@@ -172,6 +175,7 @@ def classify(ini_fname, compute_distances, rf=''):
                                            lower_depth,
                                            catalogue_fname,
                                            log_fname,
+                                           upper_depth,
                                            low_year,
                                            upp_year,
                                            low_mag,
