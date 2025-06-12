@@ -205,9 +205,8 @@ def explode(srcs, check_moment_rates=True):
             if check_moment_rates:
                 src_moment = get_mfd_moment(src.mfd)
                 nsrc_moment = get_mfd_moment(nsrc.mfd)
-                np.testing.assert_allclose(
-                    src_moment * wei, nsrc_moment, rtol=1e-1
-                )
+                np.testing.assert_almost_equal(src_moment * wei / 10000,
+                                               nsrc_moment / 10000, decimal=1)
 
             exploded_srcs.append(nsrc)
 
@@ -414,6 +413,7 @@ def _get_fault_surfaces(fname: str, sourceconv: SourceConverter) -> list:
     if fname.exists():
         geom = to_python(fname, sourceconv)
         ssm_faults[0][0].sections = geom
+
 
     # Create surfaces
     surfaces = []

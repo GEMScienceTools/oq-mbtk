@@ -32,7 +32,8 @@ import pandas as pd
 import shutil
 import h5py
 
-from openquake.mbt.tools.tr.classify import classify
+from openquake.mbi.ccl.classify import classify
+#from openquake.mbt.tools.tr.classify import classify
 
 BASE_PATH = os.path.dirname(__file__)
 
@@ -85,7 +86,6 @@ class TrTestCase(unittest.TestCase):
 
         # Testing Crustal Seismicity
         msg = 'Indexes of different elements: \n'
-        expected = [1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0]
         expected = [1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0]
 
         computed = f['crustal'][:].astype(int)

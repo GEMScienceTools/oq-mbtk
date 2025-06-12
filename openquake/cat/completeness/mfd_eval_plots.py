@@ -23,6 +23,7 @@ def _read_results(results_dir):
         dfs.append(df)
     
     df_all = pd.concat(dfs, ignore_index=True)
+    df_all = df_all[df_all['agr'].notna()]
 
     mags, rates = [], []
     cm_rates = []
@@ -168,7 +169,10 @@ def plot_best_mfds(df_best, figsdir):
             if num <= 10:
                 alpha1 = 0.1
             else:
-                alpha1 = 10/num
+                alpha1 = 2/num
+
+            if alpha1 > 0.2:
+                breakpoint()
 
             plt.scatter(row.mags, row.rates, marker='_', color='r', 
                         alpha=alpha1)
@@ -219,7 +223,7 @@ def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0,
     weights = (wei - min(wei)) / (max(wei) - min(wei)) 
 
     # set up plot
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(10,10))
     hb = ax.hexbin(x, y, gridsize=20, cmap='Blues')
     cb = fig.colorbar(hb, ax=ax)
     cb.set_label('counts')
@@ -276,9 +280,11 @@ def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0,
             fontsize=12, color=color)
     
 
-    ax.set_xlabel('a-value', fontsize=12)
-    ax.set_ylabel('b-value', fontsize=12)
-    ax.set_title(figname.replace('.png', ''))
+    ax.set_xlabel('a-value', fontsize=16)
+    ax.set_ylabel('b-value', fontsize=16)
+    ax.set_title(figname.replace('.png', ''), fontsize=16)
+    ax.xaxis.set_tick_params(labelsize=14)
+    ax.yaxis.set_tick_params(labelsize=14)
 
     fout = os.path.join(figdir, figname)
     plt.savefig(fout, dpi=300)
@@ -290,39 +296,41 @@ def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0,
 
 def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, figname=None):
 # Group the DataFrame by the 'Category' column and apply the histogram calculation function
+    
+    fig, ax = plt.subplots(figsize=(10,6))
 
     fl_mags = [item for sublist in df_all.mags.values for item in sublist]
     fl_rates = [item for sublist in df_all.rates.values for item in sublist]
     fl_crates = [item for sublist in df_all.cm_rates.values for item in sublist]
     fl_df = pd.DataFrame({'mags': fl_mags, 'rates': fl_rates, 'cm_rates': fl_crates})
-
+     
     grouped = fl_df.groupby('mags')
     hist_data = grouped.apply(lambda g: norm_histo(g, field=field, bins=bins))
     mags = hist_data._mgr.axes[0].values
-    results = hist_data.values
+    #results = hist_data.values
     
-    all_alpha = []
-    for mag, rat in zip(mags, results):
-        m = [mag] * len(rat[0])
-        nmc = rat[1]
-        all_alpha.extend(nmc)
-    alph_min = min(all_alpha)
-    alph_max = max(all_alpha)
+    #all_alpha = []
+    #for mag, rat in zip(mags, results):
+    #    m = [mag] * len(rat[0])
+    #    nmc = rat[1]
+    #    all_alpha.extend(nmc)
+    #alph_min = min(all_alpha)
+    #alph_max = max(all_alpha)
     
-    norm = mcolors.Normalize(vmin=alph_min, vmax=alph_max)
+    #norm = mcolors.Normalize(vmin=alph_min, vmax=alph_max)
     
     # Choose a colormap
-    colormap = plt.cm.Purples
+    #colormap = plt.cm.Purples
     
-    for mag, rat in zip(mags, results):
-        m = [mag] * len(rat[0])
-        alph = rat[1] 
-        alph[alph<0.1]=0.2
-        plt.semilogy([m[0], m[0]], [min(rat[0]), max(rat[0])], c='gray', linewidth=1, zorder=1)
-        plt.scatter(m, rat[0], 250, marker='_', c=alph, cmap=colormap, norm=norm, zorder=0)
+    #for mag, rat in zip(mags, results):
+    #    m = [mag] * len(rat[0])
+    #    alph = rat[1] 
+    #    alph[alph<0.1]=0.2
+    #    ax.semilogy([m[0], m[0]], [min(rat[0]), max(rat[0])], c='gray', linewidth=1, zorder=1)
+    #    ax.scatter(m, rat[0], 250, marker='_', c=alph, cmap=colormap, norm=norm, zorder=0)
 
     for index, row in df_best.iterrows():
-        plt.scatter(row['mags'], row[field], 2, 'k', marker='s')
+        ax.scatter(row['mags'], row[field], 2, 'k', marker='s')
         mfd = TruncatedGRMFD(min(mags)-bw, 8.5, bw, row.agr, row.bgr)
         mgrts = mfd.get_annual_occurrence_rates()
         mfd_m = [m[0] for m in mgrts]
@@ -334,9 +342,9 @@ def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, fign
         
         if field == 'cm_rates':
             mfd_cr = [sum(mfd_r[ii:]) for ii in range(len(mfd_r))]
-            plt.semilogy(mfd_m, mfd_cr, color='maroon', linewidth=0.2, zorder=10, alpha=alpha)
+            ax.semilogy(mfd_m, mfd_cr, color='maroon', linewidth=0.2, zorder=10, alpha=alpha)
         else:
-            plt.semilogy(mfd_m, mfd_r, color='maroon', linewidth=0.2, zorder=10, alpha=alpha)
+            ax.semilogy(mfd_m, mfd_r, color='maroon', linewidth=0.2, zorder=10, alpha=alpha)
 
     if figname==None:
         figname = f'mfds_all_{field}.png'
@@ -344,10 +352,12 @@ def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, fign
     fout = os.path.join(figsdir, figname)
 
 
-    plt.xlabel('Magnitude')
-    plt.ylabel('annual occurrence rate')
-    plt.title(figname.replace('.png', ''))
-    plt.savefig(fout)
+    ax.set_xlabel('Magnitude', fontsize=16)
+    ax.set_ylabel('annual occurrence rate', fontsize=16)
+    ax.set_title(figname.replace('.png', ''), fontsize=16)
+    ax.xaxis.set_tick_params(labelsize=14)
+    ax.yaxis.set_tick_params(labelsize=14)
+    plt.savefig(fout, dpi=300)
     plt.close()
 
 
@@ -376,16 +386,17 @@ def make_all_plots(resdir_base, compdir, figsdir_base, labels):
                         weights = nm_weight)
         print('plotting mfds')
         plot_best_mfds(df_best, figsdir)
+
         plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=60)
         plot_all_mfds(df_all, df_best, figsdir, field='cm_rates', bins=60)
         plot_all_mfds(df_best, df_best, figsdir, field='rates', bins=60, 
                       figname='mfds_best_rates.png')
         plot_all_mfds(df_best, df_best, figsdir, field='cm_rates', bins=60, 
                       figname='mfds_best_cmrates.png')
-        plot_all_mfds(df_all, df_thresh, figsdir, field='rates', bins=60, 
-                      figname='mfds_thresh_rates.png')
-        plot_all_mfds(df_all, df_thresh, figsdir, field='cm_rates', bins=60, 
-                      figname='mfds_thresh_cmrates.png')
+        #plot_all_mfds(df_all, df_thresh, figsdir, field='rates', bins=60, 
+        #              figname='mfds_thresh_rates.png')
+        # plot_all_mfds(df_all, df_thresh, figsdir, field='cm_rates', bins=60, 
+        #              figname='mfds_thresh_cmrates.png')
         print('plotting covariance')
         cx, cy, mx1, my1, mx2, my2 = plot_weighted_covariance_ellipse(df_best, figsdir)
         plot_weighted_covariance_ellipse(df_thresh, figsdir, figname=f'{label}-20percent.png')
