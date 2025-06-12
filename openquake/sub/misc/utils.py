@@ -1,3 +1,29 @@
+# ------------------- The OpenQuake Model Building Toolkit --------------------
+# Copyright (C) 2024 GEM Foundation
+#           _______  _______        __   __  _______  _______  ___   _
+#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
+#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
+#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
+#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
+#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
+#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# coding: utf-8
+
 """
 :module:`openquake.sub.misc.utils`
 """
@@ -11,6 +37,8 @@ from openquake.sub.misc.edge import create_faults
 
 def get_centroids(lons, lats, deps):
     """
+    Computes the centroids of all the ruptures admitted by the fault described
+    by the coordinates in the three input arrays.
     """
     cen = np.zeros((lons.shape[0] - 1, lons.shape[1] - 1, 3))
     cen[:, :, :] = np.nan
@@ -31,7 +59,7 @@ def get_centroids(lons, lats, deps):
                     x = (lons[i + 1, j] + lons[i, j + 1]) / 2
                     y = (lats[i + 1, j] + lats[i, j + 1]) / 2
                     z = (deps[i + 1, j] + deps[i, j + 1]) / 2
-                #
+
                 # Save the centroid
                 cen[i, j, 0] = x
                 cen[i, j, 1] = y
