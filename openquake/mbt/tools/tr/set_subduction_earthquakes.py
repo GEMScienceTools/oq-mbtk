@@ -189,7 +189,6 @@ class SetSubductionEarthquakes:
         max_la_sub = np.nanmax(mesh.lats)
 
         # Select the earthquakes within the bounding box
-        breakpoint()
         idxs = sorted(list(sidx.intersection((min_lo_sub-DELTA,
                                               min_la_sub-DELTA,
                                               upper_depth,
