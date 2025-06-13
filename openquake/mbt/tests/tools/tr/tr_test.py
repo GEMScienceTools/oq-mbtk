@@ -5,7 +5,6 @@ import numpy
 import unittest
 
 from openquake.mbi.ccl.classify import classify
-#from openquake.mbt.tools.tr.classify import classify
 
 BASE_PATH = os.path.dirname(__file__)
 
