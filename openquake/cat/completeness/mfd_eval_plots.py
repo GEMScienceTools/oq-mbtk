@@ -8,6 +8,54 @@ from openquake.cat.completeness.analysis import read_compl_data, _make_ctab
 from openquake.hazardlib.mfd import TruncatedGRMFD
 import matplotlib.colors as mcolors
 from matplotlib.patches import Ellipse
+from scipy.spatial import cKDTree
+
+
+def find_dominant_peaks(points, k=20, height_threshold=0.05, min_distance=0.2, max_peaks=5):
+    """
+    Find a small number of dominant peaks from a 3D point cloud.
+
+    Parameters:
+    - points: (N, 3) array of XYZ points
+    - k: number of neighbors for local z-comparison
+    - height_threshold: point must be this much higher than neighbors to be a local peak
+    - min_distance: minimum spatial distance between selected peaks
+    - max_peaks: maximum number of peaks to return
+
+    Returns:
+    - peaks: (M, 3) array of selected peak points (M <= max_peaks)
+    """
+    tree = cKDTree(points[:, :2])
+    candidate_peaks = [] 
+
+    for i, pt in enumerate(points):
+        _, idxs = tree.query(pt[:2], k=k+1)
+        neighbors = points[idxs[1:]]  # exclude self
+        # listing as a candidate peak if it's higher than the immediate neighbors
+        mean_z = np.mean(neighbors[:, 2])
+        if pt[2] > mean_z + height_threshold:
+            candidate_peaks.append((i, pt[2], sum(neighbors[:, 2])))  # (index, height)
+
+    # Sort candidate peaks by height descending
+    candidate_peaks.sort(key=lambda x: -x[1])
+    selected = []
+    used_indices = set()
+    selected_buff = [] 
+
+    for i, e, n in candidate_peaks:
+        p = points[i]
+        # Check if it's far enough from all already-selected peaks
+        # checking in 2d 
+        all_xy = points[:, :2] # (N, 2)
+        
+        if all(np.linalg.norm(p[:2] - all_xy[j]) >= min_distance for j in used_indices):
+            selected.append(p)
+            selected_buff.append(n)
+            used_indices.add(i)
+            
+            if len(selected) >= max_peaks:
+                break
+    return np.array(selected), candidate_peaks, selected_buff
 
 def _read_results(results_dir):
     fils = glob(os.path.join(results_dir, 'full*'))
@@ -23,6 +71,7 @@ def _read_results(results_dir):
         dfs.append(df)
     
     df_all = pd.concat(dfs, ignore_index=True)
+    df_all = df_all[df_all['agr'].notna()]
 
     mags, rates = [], []
     cm_rates = []
@@ -103,14 +152,14 @@ def plt_compl_tables(compdir, figdir, df_best):
                                  years_chk, mags_chk)
 
         # add first
-        plt.plot(ctab[0][0], ctab[0][1], 'ko', alpha=0.03)
-        plt.plot([ctab[0][0], ctab[0][0]+10], [ctab[0][1], ctab[0][1]], 'r--', alpha=0.03)
+        plt.plot(ctab[0][0], ctab[0][1], 'ko', alpha=0.003)
+        plt.plot([ctab[0][0], ctab[0][0]+10], [ctab[0][1], ctab[0][1]], 'r--', alpha=0.003)
         yrs.append(ctab[0][0])
         mgs.append(ctab[0][1])
     
         for ii in range(len(ctab)-1):
-            plt.plot([ctab[ii][0], ctab[ii+1][0]], [ctab[ii+1][1], ctab[ii+1][1]], 'r', alpha=0.03)
-            plt.plot([ctab[ii][0], ctab[ii][0]], [ctab[ii][1], ctab[ii+1][1]], 'r', alpha=0.03)
+            plt.plot([ctab[ii][0], ctab[ii+1][0]], [ctab[ii+1][1], ctab[ii+1][1]], 'r', alpha=0.003)
+            plt.plot([ctab[ii][0], ctab[ii][0]], [ctab[ii][1], ctab[ii+1][1]], 'r', alpha=0.003)
             plt.plot(ctab[ii+1][0], ctab[ii+1][1], 'ko', alpha=0.03)
     
             yrs.append(ctab[ii+1][0])
@@ -147,6 +196,14 @@ def get_top_percent(df_all, fraction):
 
 def plot_best_mfds(df_best, figsdir):
     num = len(df_best)
+    if num <= 10:
+        alpha1 = 0.1
+    else:
+        alpha1 = 10/num 
+
+    if alpha1 > 0.2:
+        breakpoint()
+
     for ii in range(len(df_best)):
         row = df_best.iloc[ii]
         mfd = TruncatedGRMFD(4, 8.5, 0.2, df_best.agr.iloc[ii], df_best.bgr.iloc[ii])
@@ -155,33 +212,33 @@ def plot_best_mfds(df_best, figsdir):
         mfd_r = [m[1] for m in mgrts]
         mfd_cr = [sum(mfd_r[ii:]) for ii in range(len(mfd_r))]
         if ii == 0:
-            plt.scatter(row.mags, row.rates, marker='_', color='r', 
+            plt.scatter(row.mags, row.rates, marker='_', color='r', alpha=0.5*alpha1,
                         label='Incremental occurrence')
-            plt.scatter(row.mags, row.cm_rates, marker='.', color='b', 
+            plt.scatter(row.mags, row.cm_rates, marker='.', color='b', alpha=0.5*alpha1,
                         label='Cumulative occurrence')
-            plt.semilogy(mfd_m, mfd_r, color='r', linewidth=0.1, 
+            plt.semilogy(mfd_m, mfd_r, color='r', linewidth=0.3, alpha=alpha1,
                          zorder=0, label='Incremental MFD')
             plt.semilogy(mfd_m, mfd_cr, color='b',
-                         linewidth=0.1, zorder=0, label='Cumulative MFD')
+                         linewidth=0.3, zorder=0, alpha=alpha1, label='Cumulative MFD')
 
         else: 
-            if num <= 10:
-                alpha1 = 0.1
-            else:
-                alpha1 = 10/num
+            
 
             plt.scatter(row.mags, row.rates, marker='_', color='r', 
-                        alpha=alpha1)
+                        alpha=0.5*alpha1)
             plt.scatter(row.mags, row.cm_rates, marker='.', color='b', 
-                        alpha=alpha1)
-            plt.semilogy(mfd_m, mfd_r, color='r', alpha=3*alpha1, linewidth=0.1, 
+                        alpha=0.5*alpha1)
+            plt.semilogy(mfd_m, mfd_r, color='r', alpha=alpha1, linewidth=0.3, 
                          zorder=0)
-            plt.semilogy(mfd_m, mfd_cr, color='b', alpha=5*alpha1, 
-                         linewidth=0.1, zorder=0)
+            plt.semilogy(mfd_m, mfd_cr, color='b', alpha=alpha1, 
+                         linewidth=0.3, zorder=0)
 
     plt.xlabel('Magnitude')
     plt.ylabel('Annual occurrence rates')
-    plt.legend()
+    leg = plt.legend()
+    for lh in leg.legendHandles: 
+        lh.set_alpha(1)
+    plt.grid(which='both', color='k', lw=0.08)
     fout = os.path.join(figsdir, 'mfds_best.png')
     plt.savefig(fout, dpi=300)
     plt.close()
@@ -209,7 +266,62 @@ def weighted_covariance(x, y, weights):
     return np.array([[cov_xx, cov_xy], [cov_xy, cov_yy]])
 
 
-def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0, 
+def plot_dominant_peaks(df, figdir, figname='a-b-peaks.png', 
+                        gs=15, k=7, peaks=3, dist=0.4, label=None):
+
+    # set up data
+    x = df.agr
+    y = df.bgr
+    wei = 1-df.norm
+    weights = (wei - min(wei)) / (max(wei) - min(wei)) 
+
+    # set up plot
+    fig, ax = plt.subplots(figsize=(10,10))
+    hb = ax.hexbin(x, y, gridsize=gs, cmap='Blues')
+    cb = fig.colorbar(hb, ax=ax)
+    cb.ax.tick_params( labelsize=16)  
+    cb.set_label('counts', fontsize=20)
+
+    counts = hb.get_array()
+    xc = hb.get_offsets()[:, 0]
+    yc = hb.get_offsets()[:, 1]
+    # scale y by 10 so it scales more like x
+    points = np.stack((xc, 10*yc, counts), axis=1)
+
+    dominant, cand_peaks, sbuff = find_dominant_peaks(points, k=k, height_threshold=0.01, min_distance=dist, max_peaks=peaks)
+    plt.plot(dominant[:, 0], dominant[:, 1]/10, 'r^', ms=12, mec='w')
+
+    color = 'red'
+    tot = sum(np.array(dominant).T[2])
+    ypo = 0.98
+    agrs, bgrs, weights = [], [], []
+    for domi in dominant:
+        a1, b1, p1 = domi
+        agr = np.round(a1, 3)
+        bgr = np.round(b1/10, 3)
+        p1 /= tot
+        wei = np.round(p1, 3)
+        ax.text(0.02, ypo, f'a = {agr}, b = {bgr} [{wei}]',
+            transform=ax.transAxes, verticalalignment='top', horizontalalignment='left', 
+            fontsize=18, color=color)
+        ypo -= 0.04
+        agrs.append(agr); bgrs.append(bgr); weights.append(wei)
+   
+    ax.set_xlabel('a-value', fontsize=22)
+    ax.set_ylabel('b-value', fontsize=22)
+    ax.set_title(figname.replace('.png', ''), fontsize=26)
+    ax.xaxis.set_tick_params(labelsize=18)
+    ax.yaxis.set_tick_params(labelsize=18)
+
+    fout = os.path.join(figdir, 'peaks_' + figname)
+    plt.savefig(fout, dpi=300)
+    plt.close()
+
+    return agrs, bgrs, weights
+
+
+
+def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0, gs=15,
                                      figname='a-b-covariance.png'):
 
     # set up data
@@ -219,10 +331,10 @@ def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0,
     weights = (wei - min(wei)) / (max(wei) - min(wei)) 
 
     # set up plot
-    fig, ax = plt.subplots()
-    hb = ax.hexbin(x, y, gridsize=20, cmap='Blues')
+    fig, ax = plt.subplots(figsize=(10,10))
+    hb = ax.hexbin(x, y, gridsize=gs, cmap='Blues')
     cb = fig.colorbar(hb, ax=ax)
-    cb.set_label('counts')
+    cb.set_label('counts', fontsize=20)
 
     # get covariance
     cov_matrix = weighted_covariance(x, y, weights)
@@ -276,9 +388,11 @@ def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0,
             fontsize=12, color=color)
     
 
-    ax.set_xlabel('a-value', fontsize=12)
-    ax.set_ylabel('b-value', fontsize=12)
-    ax.set_title(figname.replace('.png', ''))
+    ax.set_xlabel('a-value', fontsize=16)
+    ax.set_ylabel('b-value', fontsize=16)
+    ax.set_title(figname.replace('.png', ''), fontsize=16)
+    ax.xaxis.set_tick_params(labelsize=14)
+    ax.yaxis.set_tick_params(labelsize=14)
 
     fout = os.path.join(figdir, figname)
     plt.savefig(fout, dpi=300)
@@ -291,6 +405,8 @@ def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0,
 def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, figname=None):
 # Group the DataFrame by the 'Category' column and apply the histogram calculation function
 
+    fig, ax = plt.subplots(figsize=(10,6))
+
     fl_mags = [item for sublist in df_all.mags.values for item in sublist]
     fl_rates = [item for sublist in df_all.rates.values for item in sublist]
     fl_crates = [item for sublist in df_all.cm_rates.values for item in sublist]
@@ -299,30 +415,9 @@ def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, fign
     grouped = fl_df.groupby('mags')
     hist_data = grouped.apply(lambda g: norm_histo(g, field=field, bins=bins))
     mags = hist_data._mgr.axes[0].values
-    results = hist_data.values
-    
-    all_alpha = []
-    for mag, rat in zip(mags, results):
-        m = [mag] * len(rat[0])
-        nmc = rat[1]
-        all_alpha.extend(nmc)
-    alph_min = min(all_alpha)
-    alph_max = max(all_alpha)
-    
-    norm = mcolors.Normalize(vmin=alph_min, vmax=alph_max)
-    
-    # Choose a colormap
-    colormap = plt.cm.Purples
-    
-    for mag, rat in zip(mags, results):
-        m = [mag] * len(rat[0])
-        alph = rat[1] 
-        alph[alph<0.1]=0.2
-        plt.semilogy([m[0], m[0]], [min(rat[0]), max(rat[0])], c='gray', linewidth=1, zorder=1)
-        plt.scatter(m, rat[0], 250, marker='_', c=alph, cmap=colormap, norm=norm, zorder=0)
 
     for index, row in df_best.iterrows():
-        plt.scatter(row['mags'], row[field], 2, 'k', marker='s')
+        ax.scatter(row['mags'], row[field], 2, 'k', marker='s')
         mfd = TruncatedGRMFD(min(mags)-bw, 8.5, bw, row.agr, row.bgr)
         mgrts = mfd.get_annual_occurrence_rates()
         mfd_m = [m[0] for m in mgrts]
@@ -334,9 +429,9 @@ def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, fign
         
         if field == 'cm_rates':
             mfd_cr = [sum(mfd_r[ii:]) for ii in range(len(mfd_r))]
-            plt.semilogy(mfd_m, mfd_cr, color='maroon', linewidth=0.2, zorder=10, alpha=alpha)
+            ax.semilogy(mfd_m, mfd_cr, color='maroon', linewidth=0.2, zorder=10, alpha=alpha)
         else:
-            plt.semilogy(mfd_m, mfd_r, color='maroon', linewidth=0.2, zorder=10, alpha=alpha)
+            ax.semilogy(mfd_m, mfd_r, color='maroon', linewidth=0.2, zorder=10, alpha=alpha)
 
     if figname==None:
         figname = f'mfds_all_{field}.png'
@@ -344,15 +439,20 @@ def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, fign
     fout = os.path.join(figsdir, figname)
 
 
-    plt.xlabel('Magnitude')
-    plt.ylabel('annual occurrence rate')
-    plt.title(figname.replace('.png', ''))
-    plt.savefig(fout)
+    ax.set_xlabel('Magnitude', fontsize=16)
+    ax.set_ylabel('annual occurrence rate', fontsize=16)
+    ax.set_title(figname.replace('.png', ''), fontsize=16)
+    ax.xaxis.set_tick_params(labelsize=14)
+    ax.yaxis.set_tick_params(labelsize=14)
+    plt.savefig(fout, dpi=300)
     plt.close()
 
 
-def make_all_plots(resdir_base, compdir, figsdir_base, labels):
-    agrs, bgrs, labs = [], [], []
+def make_all_plots(resdir_base, compdir, figsdir_base, labels, 
+                   hist_params=[15, 7.0, 4.0, 0.4]):
+    gs = int(hist_params[0]); neighbors = int(hist_params[1]); peaks = int(hist_params[2]); dist = hist_params[3]
+    agrs1, bgrs1, labs1 = [], [], []
+    agrs2, bgrs2, labs2, weights2 = [], [], [], []
     for label in labels:
         print(f'Running for {label}')
         resdir = os.path.join(resdir_base, label)
@@ -376,22 +476,25 @@ def make_all_plots(resdir_base, compdir, figsdir_base, labels):
                         weights = nm_weight)
         print('plotting mfds')
         plot_best_mfds(df_best, figsdir)
+
         plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=60)
         plot_all_mfds(df_all, df_best, figsdir, field='cm_rates', bins=60)
         plot_all_mfds(df_best, df_best, figsdir, field='rates', bins=60, 
                       figname='mfds_best_rates.png')
         plot_all_mfds(df_best, df_best, figsdir, field='cm_rates', bins=60, 
                       figname='mfds_best_cmrates.png')
-        plot_all_mfds(df_all, df_thresh, figsdir, field='rates', bins=60, 
-                      figname='mfds_thresh_rates.png')
-        plot_all_mfds(df_all, df_thresh, figsdir, field='cm_rates', bins=60, 
-                      figname='mfds_thresh_cmrates.png')
         print('plotting covariance')
         cx, cy, mx1, my1, mx2, my2 = plot_weighted_covariance_ellipse(df_best, figsdir)
         plot_weighted_covariance_ellipse(df_thresh, figsdir, figname=f'{label}-20percent.png')
 
-        labs.extend([f'{label}-center', f'{label}-low', f'{label}-high'])
-        agrs.extend([cx, mx1, mx2])
-        bgrs.extend([cy, my1, my2])
+        a2, b2, weights = plot_dominant_peaks(df_best, figsdir, gs=gs, k=neighbors,
+                                              peaks=peaks, dist=dist, figname=label, label=label)
 
-    return labs, np.round(agrs, 3), np.round(bgrs, 3)
+        labs1.extend([f'{label}-center', f'{label}-low', f'{label}-high'])
+        agrs1.extend([cx, mx1, mx2])
+        bgrs1.extend([cy, my1, my2])
+
+        labs2.extend([f'{label}-{i}' for i,w in enumerate(weights)])
+        agrs2.extend(a2); bgrs2.extend(b2); weights2.extend(weights)
+
+    return labs1, np.round(agrs1, 3), np.round(bgrs1, 3), labs2, agrs2, bgrs2, weights2
