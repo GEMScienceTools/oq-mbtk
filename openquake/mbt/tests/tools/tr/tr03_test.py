@@ -34,7 +34,6 @@ import configparser
 import pandas as pd
 
 from openquake.mbi.ccl.classify import classify
-#from openquake.mbt.tools.tr.classify import classify
 from openquake.mbt.tools.tr.catalogue import get_catalogue
 
 BASE_PATH = os.path.dirname(__file__)
