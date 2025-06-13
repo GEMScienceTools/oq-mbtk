@@ -7,6 +7,7 @@ import glob
 import toml
 import warnings
 import numpy as np
+import pandas as pd
 from openquake.baselib import sap
 from openquake.wkf.utils import create_folder, get_list
 from openquake.wkf.seismicity.hypocentral_depth import (
@@ -17,7 +18,7 @@ def analyze_hypocentral_depth(folder_subcat: str, depth_min: float = 0,
                               depth_max: float = 300.0, depth_binw: float = 10,
                               folder_out_figs: str = '', show: bool = False,
                               depth_bins: str = '', conf='', use: str = [],
-                              skip: str = []):
+                              skip: str = [], writecsv: bool = True):
     """
     Analyses the distribution of hypocentral depths within a depth interval.
     """
@@ -91,6 +92,13 @@ def analyze_hypocentral_depth(folder_subcat: str, depth_min: float = 0,
                     tlist.append([w, m])
             var['hypocenter_distribution'] = tlist
 
+    if writecsv:
+        hy_out = folder_out_figs.replace('figs','dat')
+        if not os.path.exists(hy_out):
+            os.makedirs(hy_out)
+        hy_out_fi = os.path.join(hy_out, f'hc_{src_id}.csv')
+        pd.DataFrame({'depth': midd, 'weight': wei}).to_csv(hy_out_fi, index=False)
+
     if len(conf) > 0:
         # Saving results into the config file
         with open(conf, 'w') as fou:
@@ -102,13 +110,13 @@ def main(folder_subcat: str, *, depth_min: float = 0,
          depth_max: float = 300.0, depth_binw: float = 10,
          folder_out_figs: str = '', show: bool = False,
          depth_bins: str = '', conf='', use: str = [],
-         skip: str = []):
+         skip: str = [], writecsv: bool = True):
     """
     Analyses the distribution of hypocentral depths within a depth interval.
     """
     analyze_hypocentral_depth(folder_subcat, depth_min, depth_max, depth_binw,
                               folder_out_figs, show, depth_bins, conf, use,
-                              skip)
+                              skip, writecsv)
 
 
 main.folder_subcat = 'The folder with the subcatalogues'
@@ -128,6 +136,8 @@ descr = "Source IDs to use"
 main.use = descr
 descr = "Source IDs to skip"
 main.skip = descr
+descr = 'Write outputs to csv files as well as config'
+main.writecsv = descr
 
 if __name__ == '__main__':
     sap.run(main)
