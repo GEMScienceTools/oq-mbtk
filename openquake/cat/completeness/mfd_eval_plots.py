@@ -291,15 +291,6 @@ def plot_dominant_peaks(df, figdir, figname='a-b-peaks.png',
     dominant, cand_peaks, sbuff = find_dominant_peaks(points, k=k, height_threshold=0.01, min_distance=dist, max_peaks=peaks)
     plt.plot(dominant[:, 0], dominant[:, 1]/10, 'r^', ms=12, mec='w')
 
-    # will be removed
-    """
-    og_abs = {'0300': [5.38, 1.02], '0200': [4.83, 1.02], 
-              '0400': [4.18, 0.95], '0100': [4.48, 0.95],}
-
-    og = og_abs[label]
-    plt.plot(og[0], og[1], 'wo', mec='r', ms=12)
-    """
-
     color = 'red'
     tot = sum(np.array(dominant).T[2])
     ypo = 0.98
@@ -413,18 +404,18 @@ def plot_weighted_covariance_ellipse(df, figdir, n_std=1.0, gs=15,
 
 def plot_all_mfds(df_all, df_best, figsdir, field='rates', bins=10, bw=0.2, figname=None):
 # Group the DataFrame by the 'Category' column and apply the histogram calculation function
-    
+
     fig, ax = plt.subplots(figsize=(10,6))
 
     fl_mags = [item for sublist in df_all.mags.values for item in sublist]
     fl_rates = [item for sublist in df_all.rates.values for item in sublist]
     fl_crates = [item for sublist in df_all.cm_rates.values for item in sublist]
     fl_df = pd.DataFrame({'mags': fl_mags, 'rates': fl_rates, 'cm_rates': fl_crates})
-     
+
     grouped = fl_df.groupby('mags')
     hist_data = grouped.apply(lambda g: norm_histo(g, field=field, bins=bins))
     mags = hist_data._mgr.axes[0].values
-   
+
     for index, row in df_best.iterrows():
         ax.scatter(row['mags'], row[field], 2, 'k', marker='s')
         mfd = TruncatedGRMFD(min(mags)-bw, 8.5, bw, row.agr, row.bgr)
