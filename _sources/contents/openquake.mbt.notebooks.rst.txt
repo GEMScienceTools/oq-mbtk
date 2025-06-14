@@ -1,0 +1,26 @@
+openquake.mbt.notebooks package
+===============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.mbt.notebooks.catalogue
+   openquake.mbt.notebooks.compare
+   openquake.mbt.notebooks.nrml
+   openquake.mbt.notebooks.project
+   openquake.mbt.notebooks.sources
+   openquake.mbt.notebooks.sources_area
+   openquake.mbt.notebooks.sources_distributed_s
+   openquake.mbt.notebooks.sources_shallow_fault
+   openquake.mbt.notebooks.tectonics
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.notebooks
+   :members:
+   :undoc-members:
+   :show-inheritance:
