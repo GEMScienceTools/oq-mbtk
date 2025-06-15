@@ -1,0 +1,77 @@
+openquake.cat.hmg package
+=========================
+
+Submodules
+----------
+
+openquake.cat.hmg.check module
+------------------------------
+
+.. automodule:: openquake.cat.hmg.check
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.hmg.hmg module
+----------------------------
+
+.. automodule:: openquake.cat.hmg.hmg
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.hmg.info module
+-----------------------------
+
+.. automodule:: openquake.cat.hmg.info
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.hmg.map module
+----------------------------
+
+.. automodule:: openquake.cat.hmg.map
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.hmg.merge module
+------------------------------
+
+.. automodule:: openquake.cat.hmg.merge
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.hmg.plot module
+-----------------------------
+
+.. automodule:: openquake.cat.hmg.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.hmg.purge module
+------------------------------
+
+.. automodule:: openquake.cat.hmg.purge
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.hmg.utils module
+------------------------------
+
+.. automodule:: openquake.cat.hmg.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.cat.hmg
+   :members:
+   :undoc-members:
+   :show-inheritance:

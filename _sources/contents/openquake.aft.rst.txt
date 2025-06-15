@@ -1,0 +1,37 @@
+openquake.aft package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.aft.tests
+
+Submodules
+----------
+
+openquake.aft.aftershock\_probabilities module
+----------------------------------------------
+
+.. automodule:: openquake.aft.aftershock_probabilities
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.aft.rupture\_distances module
+---------------------------------------
+
+.. automodule:: openquake.aft.rupture_distances
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.aft
+   :members:
+   :undoc-members:
+   :show-inheritance:

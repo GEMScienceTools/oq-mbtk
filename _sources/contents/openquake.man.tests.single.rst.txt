@@ -1,0 +1,37 @@
+openquake.man.tests.single package
+==================================
+
+Submodules
+----------
+
+openquake.man.tests.single.area\_test module
+--------------------------------------------
+
+.. automodule:: openquake.man.tests.single.area_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.man.tests.single.fault\_test module
+---------------------------------------------
+
+.. automodule:: openquake.man.tests.single.fault_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.man.tests.single.point\_test module
+---------------------------------------------
+
+.. automodule:: openquake.man.tests.single.point_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.man.tests.single
+   :members:
+   :undoc-members:
+   :show-inheritance:
