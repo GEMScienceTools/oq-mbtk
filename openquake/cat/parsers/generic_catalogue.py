@@ -55,7 +55,7 @@ class GeneralCsvCatalogue(object):
                           'flag', 'scaling']
 
     STRING_ATTRIBUTE_LIST = ['eventID', 'magnitudeType', 'comment',
-                             'source', 'Agency']
+                             'source', 'Agency', 'magAgency']
 
     TOTAL_ATTRIBUTE_LIST = list(
         (set(FLOAT_ATTRIBUTE_LIST).union(
@@ -231,7 +231,7 @@ class GeneralCsvCatalogue(object):
             if len(self.data['eventID']) > 0:
                 event_id = str(self.data['eventID'][iloc])
             else:
-                raise ValueError('Unknown key. Line: {:d}'.format(iloc))
+                raise ValueError('No eventID. Unknown index key. Line: {:d}'.format(iloc))
             origin_id = event_id
             # Create Magnitude
             sigma_mag = None
@@ -247,16 +247,16 @@ class GeneralCsvCatalogue(object):
                 mtype = self.data['magnitudeType'][iloc]
             
             # Pass original agency data 
-            if ('Agency' not in self.data.keys() or
-                len(self.data['Agency']) < 1):
-                Agency = catalogue_id
+            if ('magAgency' not in self.data.keys() or
+                len(self.data['magAgency']) < 1):
+                magAgency = catalogue_id
             else:
-                Agency = self.data['Agency'][iloc]                
+                magAgency = self.data['magAgency'][iloc]                
 
             mag = [Magnitude(event_id,
                              origin_id,
                              self.data['magnitude'][iloc],
-                             Agency,
+                             magAgency,
                              scale=mtype,
                              sigma=sigma_mag)]
             # Create Moment
