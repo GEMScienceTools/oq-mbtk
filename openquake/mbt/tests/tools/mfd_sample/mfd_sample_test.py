@@ -48,7 +48,6 @@ class TestWorkflow(unittest.TestCase):
         outdir_name = config['main']['output_directory']
         outdir_name_new = os.path.join(BASE_PATH, outdir_name)
         config['main']['catalogue_filename'] = cat_fi_name_new
-        #config['main']['output_directory'] = outdir_name_new
         config['main']['output_directory'] = self.tmpd
         dec_toml = config['decluster']['decluster_settings']
         dec_toml_new = os.path.join(BASE_PATH, dec_toml)
@@ -76,8 +75,8 @@ class TestWorkflow(unittest.TestCase):
 
         make_many_mfds(config_fi_new, BASE_PATH)
 
-        expected_fi = os.path.join(BASE_PATH, 'expected2', 'mfd-results.csv')
-        output_fi = os.path.join(self.tmpd, 'mfd-results.csv')
+        expected_fi = os.path.join(BASE_PATH, 'expected2', 'mfd-results-cv.csv')
+        output_fi = os.path.join(self.tmpd, 'mfd-results-cv.csv')
         expected = pd.read_csv(expected_fi)
         output = pd.read_csv(output_fi)
         assert expected.equals(output)

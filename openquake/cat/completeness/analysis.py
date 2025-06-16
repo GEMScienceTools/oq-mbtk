@@ -146,8 +146,8 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     binw = tvars['binw']
     bval = tvars['bval']
     aval = tvars['aval']
-    ref_mag = tvars['ref_mag']
-    ref_upp_mag = tvars['ref_upp_mag']
+    ref_mag = tvars.get('ref_mag', 3.0)
+    ref_upp_mag = tvars.get('ref_upp_mag', 10.0)
     bgrlim = tvars['bgrlim']
     ctab = tvars['ctab']
     tcat = tvars['tcat']
@@ -538,7 +538,6 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
 
     # Processing subcatalogues
     for fname in glob.glob(fname_input_pattern):
-
         # Get source ID
         src_id = _get_src_id(fname)
 
