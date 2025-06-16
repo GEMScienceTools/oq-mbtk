@@ -24,7 +24,7 @@ class TrTestCase02(unittest.TestCase):
         # Remove tmp folder
         shutil.rmtree(self.tmp)
 
-    @unittest.skipUnless('OQ_RUN_SLOW_TESTS' in os.environ, 'slow')
+#    @unittest.skipUnless('OQ_RUN_SLOW_TESTS' in os.environ, 'slow')
     def testcase01(self):
         """
         Testing TR - Case 02 - Crustal and Subduction

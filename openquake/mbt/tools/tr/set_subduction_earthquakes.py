@@ -342,7 +342,8 @@ class SetSubductionEarthquakes:
         tl['subd'] = sub_depths
         tl['srfd'] = surf_dist
         tl['idx'] = idxa
-        grp.create_dataset('data', data=np.array(tl))
+        if not 'data' in grp.keys():
+            grp.create_dataset('data', data=np.array(tl))
 
         # Update the selection array
         for uuu, iii in enumerate(list(idxa)):
