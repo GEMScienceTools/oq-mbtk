@@ -7,6 +7,7 @@ import logging
 
 from openquake.mbt.tools.tr.catalogue import get_catalogue
 from openquake.mbt.tools.geo import get_idx_points_inside_polygon
+from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.mbt.tools.tr.tectonic_regionalisation import (
     set_crustal, get_crust_model)
 
@@ -20,12 +21,14 @@ class SetCrustalEarthquakes():
     """
 
     def __init__(self, crust_filename, catalogue_fname, treg_filename,
-                 distance_delta, label, shapefile=None, log_fname=None):
+                 distance_delta, label, lower_depth=400, shapefile=None,
+                 log_fname=None):
         self.crust_filename = crust_filename
         self.catalogue_fname = catalogue_fname
         self.treg_filename = treg_filename
         self.delta = distance_delta
         self.label = label
+        self.lower_depth = lower_depth
         self.shapefile = shapefile
         self.log_fname = log_fname
 
@@ -53,7 +56,8 @@ class SetCrustalEarthquakes():
         crust, sidx = get_crust_model(self.crust_filename)
         #
         # classify earthquakes
-        treg, data = set_crustal(icat, crust, sidx, self.delta)
+        treg, data = set_crustal(icat, crust, sidx,
+                                 self.delta, self.lower_depth)
         #
         # select eartquakes within the polygon
         if self.shapefile is not None:
@@ -109,6 +113,8 @@ class SetCrustalEarthquakes():
         # storing results in the .hdf5 file
         f = h5py.File(self.treg_filename, "a")
         if len(remove_from):
+            fmt = '    treg: {:d}'
+            logging.info(fmt.format(len(treg)))
             iii = np.nonzero(treg)
             for tkey in remove_from:
                 logging.info('    Cleaning {:s}'.format(tkey))
