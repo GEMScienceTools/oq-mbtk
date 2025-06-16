@@ -52,6 +52,67 @@ warnings.filterwarnings("ignore")
 
 MAXIMISE = ['optimize_a', 'optimize_b', 'optimize_c', 'optimize_d', 'optimize_weichert', 'optimize_gft', 'poisson']
 
+def test_for_exponential_magnitudes_pandas(ctab, cat):
+    """
+    Given a set of completenesses, check if the completeness windows lead to a Poisson distribution of magnitudes
+    Returns true if ll_res p-value > 0.05 and therefore hypothesis of exponential magnitudes cannot be rejected
+
+    :param ctab:
+        completeness table
+    :param cat:
+        catalogue instance
+    :returns:
+        boolean value determined by Lillefors test of magnitudes
+    """
+
+    yrs = np.array([c[0] for c in ctab])
+    mags = np.array([c[1] for c in ctab])
+    
+    x = np.zeros(len(cat))
+
+    for i, eq in cat.iterrows():
+        comp_yr_idx = np.where(yrs <= eq.year)[0][0]
+        
+        mc = mags[comp_yr_idx]
+        x[i] = eq.magnitude - mc
+
+    import statsmodels.api as sm
+    ll_res = sm.stats.diagnostic.lilliefors(x, dist = 'exp', pvalmethod='table')
+
+    return(ll_res[1] > 0.05)
+
+
+def test_for_exponential_magnitudes(ctab, tcat):
+    """
+    Given a set of completenesses, check if the completeness windows lead to a Poisson distribution of magnitudes
+    Returns true if ll_res p-value > 0.05 and therefore hypothesis of exponential magnitudes cannot be rejected
+
+    :param ctab:
+        completeness table
+    :param cat:
+        catalogue instance
+    :returns:
+        boolean value determined by Lillefors test of magnitudes
+    """
+
+    yrs = np.array([c[0] for c in ctab])
+    mags = np.array([c[1] for c in ctab])
+    
+    
+
+    data = {'year': tcat.data['year'], 'magnitude':  tcat.data['magnitude']}
+    cat = pd.DataFrame.from_dict(data)
+    x = np.zeros(len(cat))
+    for i, eq in cat.iterrows():
+        comp_yr_idx = np.where(yrs <= eq.year)[0][0]
+        mc = mags[comp_yr_idx] 
+        x[i] = eq.magnitude - mc
+
+    import statsmodels.api as sm
+    ll_res = sm.stats.diagnostic.lilliefors(x[x>= 0], dist = 'exp', pvalmethod='table')
+
+    return(ll_res[1] > 0.05)
+
 def get_earliest_year_with_n_occurrences(ctab, cat, occ_threshold=2):
     """
     For each completeness interval, computes the year since when at least a
@@ -299,11 +360,12 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     rate = -1e10
     save = []
     wei = None
-    count = {'complete': 0, 'warning': 0, 'else': 0, 'early': 0}
+    count = {'complete': 0, 'warning': 0, 'else': 0, 'early': 0, 'non_exp':0}
 
     all_res, all_mags, all_rates = [], [], []
     # For each permuation of completeness windows, check compatability
     for iper, prm in enumerate(perms):
+
         tnorm = norm
 
         # Info
@@ -353,6 +415,12 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
         if bval >= bgrlim[1] or bval <= bgrlim[0]:
             count['else'] += 1
+            continue
+
+        if test_for_exponential_magnitudes(ctab, tcat) == True:
+            print("magnitudes are exponentially distributed", ctab, bval)
+        else:
+            count['non_exp'] += 1
             continue
 
         r_mag = np.floor((ref_mag + binw * 0.01) / binw) * binw - binw / 2
