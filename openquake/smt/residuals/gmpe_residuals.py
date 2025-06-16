@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -20,298 +20,109 @@ Module to get GMPE residuals - total, inter and intra
 {'GMPE': {'IMT1': {'Total': [], 'Inter event': [], 'Intra event': []},
           'IMT2': { ... }}}
 """
-from __future__ import print_function
 import sys
-from collections import OrderedDict
 import warnings
-from datetime import datetime
-from math import sqrt, ceil
 import copy
 import re
 import toml
 import numpy as np
 import pandas as pd
+from math import sqrt, ceil
 from scipy.special import erf
 from scipy.stats import norm
-from scipy.linalg import solve
 
 from openquake.hazardlib import valid
-from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib import imt
-import openquake.smt.utils_intensity_measures as ims
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector
-from openquake.smt.utils_strong_motion import convert_accel_units, check_gsim_list
-
-GSIM_LIST = get_available_gsims()
-GSIM_KEYS = set(GSIM_LIST)
+from openquake.smt.utils import convert_accel_units, check_gsim_list
 
 
-def get_geometric_mean(fle):
+ALL_SIGMA = frozenset({'Inter event', 'Intra event', 'Total'})
+
+RUP_PAR = ["mag",
+           "strike",
+           "dip",
+           "rake",
+           "ztor",
+           "width",
+           "hypo_lon",
+           "hypo_lat",
+           "hypo_depth"]
+
+ST_PAR = ["vs30",
+          "custom_site_id",
+          "lons",
+          "lats",
+          "depths",
+          "z1pt0",
+          "z2pt5",
+          "rrup",
+          "rx",
+          "rjb",
+          "rhypo",
+          "repi",
+          "ry0"]
+
+
+### Util functions
+def get_gmm_from_toml(key, config):
     """
-    Retreive geometric mean of the ground motions from the file - or calculate
-    if not in file
-    :param fle:
-        Instance of :class: h5py.File
+    Get a GMM from a TOML file
     """
-    if not ("H" in fle["IMS"].keys()):
-        # Horizontal spectra not in record
-        x_spc = fle["IMS/X/Spectra/Response/Acceleration/damping_05"].values
-        y_spc = fle["IMS/Y/Spectra/Response/Acceleration/damping_05"].values
-        periods = fle["IMS/X/Spectra/Response/Periods"].values
-        sa_geom = np.sqrt(x_spc * y_spc)
+    # ModifiableGMPE is not implemented for use in res module
+    if key == "ModifiableGMPE":
+        raise ValueError("The use of ModifiableGMPE is not"
+        "supported within the residuals module.")
+
+    # If the key contains a number we take the second part
+    if re.search("^\\d+\\-", key):
+        tmp = re.sub("^\\d+\\-", "", key)
+        value = f"[{tmp}] "
     else:
-        if "Geometric" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
-            sa_geom = fle[
-                "IMS/H/Spectra/Response/Acceleration/Geometric/damping_05"
-                ].value
-            periods = fle["IMS/X/Spectra/Periods"].values
-            idx = periods > 0
-            periods = periods[idx]
-            sa_geom = sa_geom[idx]
-        else:
-            # Horizontal spectra not in record
-            x_spc = fle[
-                "IMS/X/Spectra/Response/Acceleration/damping_05"].values
-            y_spc = fle[
-                "IMS/Y/Spectra/Response/Acceleration/damping_05"].values
-            sa_geom = np.sqrt(x_spc * y_spc)
-    return sa_geom
+        value = f"[{key}] "
+    if len(config['models'][key]):
+        config['models'][key].pop('style', None)
+        value += '\n' + str(toml.dumps(config['models'][key]))
+    return valid.gsim(value.strip())
 
-
-def get_gmrotd50(fle):
+def get_gmpe_str(gmpe):
     """
-    Retrieve GMRotD50 from file (or calculate if not present)
-    :param fle:
-        Instance of :class: h5py.File
+    Return a string of the GMPE to use for printing/exporting
     """
-    periods = fle["IMS/X/Spectra/Response/Periods"].value
-    periods = periods[periods > 0.]
-    if not ("H" in fle["IMS"].keys()):
-        # Horizontal spectra not in record
-        x_acc = ["Time Series/X/Original Record/Acceleration"]
-        y_acc = ["Time Series/Y/Original Record/Acceleration"]
-        sa_gmrotd50 = ims.gmrotdpp(x_acc.value, x_acc.attrs["Time-step"],
-                                   y_acc.value, y_acc.attrs["Time-step"],
-                                   periods, 50.0)[0]
+    if '_toml=' in str(gmpe):
+        gmpe_str = str(
+            gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
     else:
-        if "GMRotD50" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
-            sa_gmrotd50 = fle[
-                "IMS/H/Spectra/Response/Acceleration/GMRotD50/damping_05"
-                ].value
-        else:
-            # Horizontal spectra not in record - calculate from time series
-            x_acc = ["Time Series/X/Original Record/Acceleration"]
-            y_acc = ["Time Series/Y/Original Record/Acceleration"]
-            sa_gmrotd50 = ims.gmrotdpp(x_acc.value, x_acc.attrs["Time-step"],
-                                       y_acc.value, y_acc.attrs["Time-step"],
-                                       periods, 50.0)[0]
-    return sa_gmrotd50
+        gmpe_str = gmpe
 
-
-def get_gmroti50(fle):
-    """
-    Retreive GMRotI50 from file (or calculate if not present)
-    :param fle:
-        Instance of :class: h5py.File
-    """
-    periods = fle["IMS/X/Spectra/Response/Periods"].value
-    periods = periods[periods > 0.]
-    if not ("H" in fle["IMS"].keys()):
-        # Horizontal spectra not in record
-        x_acc = ["Time Series/X/Original Record/Acceleration"]
-        y_acc = ["Time Series/Y/Original Record/Acceleration"]
-        sa_gmroti50 = ims.gmrotipp(x_acc.value, x_acc.attrs["Time-step"],
-                                   y_acc.value, y_acc.attrs["Time-step"],
-                                   periods, 50.0)[0]
-    else:
-        if "GMRotI50" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
-            sa_gmroti50 = fle[
-                "IMS/H/Spectra/Response/Acceleration/GMRotI50/damping_05"
-                ].value
-        else:
-            # Horizontal spectra not in record - calculate from time series
-            x_acc = ["Time Series/X/Original Record/Acceleration"]
-            y_acc = ["Time Series/Y/Original Record/Acceleration"]
-            sa_gmroti50 = ims.gmrotipp(x_acc.value, x_acc.attrs["Time-step"],
-                                       y_acc.value, y_acc.attrs["Time-step"],
-                                       periods, 50.0)
-            # Assumes Psuedo-spectral acceleration
-            sa_gmroti50 = sa_gmroti50["PSA"]
-    return sa_gmroti50
-
-
-def get_rotd50(fle):
-    """
-    Retrieve RotD50 from file (or calculate if not present)
-    :param fle:
-        Instance of :class: h5py.File
-    """
-    periods = fle["IMS/H/Spectra/Response/Periods"].value
-    periods = periods[periods > 0.]
-    if not ("H" in fle["IMS"].keys()):
-        # Horizontal spectra not in record
-        x_acc = ["Time Series/X/Original Record/Acceleration"]
-        y_acc = ["Time Series/Y/Original Record/Acceleration"]
-        sa_rotd50 = ims.rotdpp(x_acc.value, x_acc.attrs["Time-step"],
-                               y_acc.value, y_acc.attrs["Time-step"],
-                               periods, 50.0)[0]
-    else:
-        if "RotD50" in fle["IMS/H/Spectra/Response/Acceleration"].keys():
-            sa_rotd50 = fle[
-                "IMS/H/Spectra/Response/Acceleration/RotD50/damping_05"
-                ].value
-        else:
-            # Horizontal spectra not in record - calculate from time series
-            x_acc = ["Time Series/X/Original Record/Acceleration"]
-            y_acc = ["Time Series/Y/Original Record/Acceleration"]
-            sa_rotd50 = ims.rotdpp(x_acc.value, x_acc.attrs["Time-step"],
-                                   y_acc.value, y_acc.attrs["Time-step"],
-                                   periods, 50.0)[0]
-    return sa_rotd50
-
-
-SPECTRA_FROM_FILE = {
-    "Geometric": get_geometric_mean,
-    "GMRotI50": get_gmroti50,
-    "GMRotD50": get_gmrotd50,
-    "RotD50": get_rotd50
-}
-
-
-# The following methods are used for the MultivariateLLH function
-def _build_matrices(contexts, gmpe, imtx):
-    """
-    Constructs the R and Z_G matrices (based on the implementation
-    in the supplement to Mak et al (2017)
-    """
-    neqs = len(contexts)
-    nrecs = sum(ctxt["Num. Sites"] for ctxt in contexts)
-
-    r_mat = np.zeros(nrecs, dtype=float)
-    z_g_mat = np.zeros([nrecs, neqs], dtype=float)
-    expected_mat = np.zeros(nrecs, dtype=float)
-    # Get observations
-    observations = np.zeros(nrecs)
-    i = 0
-    # Determine the total number of records and pass the log of the
-    # observations to the observations dictionary
-    for ctxt in contexts:
-        n_s = ctxt["Num. Sites"]
-        observations[i:(i + n_s)] = np.log(ctxt["Observations"][imtx])
-        i += n_s
-
-    i = 0
-    for j, ctxt in enumerate(contexts):
-        if not("Intra event" in ctxt["Expected"][gmpe][imtx]) and\
-                not("Inter event" in ctxt["Expected"][gmpe][imtx]):
-            # Only the total sigma exists
-            # Total sigma is used as intra-event sigma (from S. Mak)
-            n_r = len(ctxt["Expected"][gmpe][imtx]["Total"])
-            r_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Total"]
-            expected_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Mean"]
-            # Inter-event sigma is set to 0
-            i += n_r
-            continue
-        n_r = len(ctxt["Expected"][gmpe][imtx]["Intra event"])
-        r_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Intra event"]
-        # Get expected mean
-        expected_mat[i:(i + n_r)] = ctxt["Expected"][gmpe][imtx]["Mean"]
-        if len(ctxt["Expected"][gmpe][imtx]["Inter event"]) == 1:
-            # Single inter event residual
-            z_g_mat[i:(i + n_r), j] =\
-                ctxt["Expected"][gmpe][imtx]["Inter event"][0]
-        else:
-            # inter-event residual given at a vector
-            z_g_mat[i:(i + n_r), j] =\
-                ctxt["Expected"][gmpe][imtx]["Inter event"]
-        i += n_r
-
-    v_mat = np.diag(r_mat ** 2.) + z_g_mat.dot(z_g_mat.T)
-    return observations, v_mat, expected_mat, neqs, nrecs
-
-
-def get_multivariate_ll(contexts, gmpe, imt):
-    """
-    Returns the multivariate loglikelihood, as described om equation 7 of
-    Mak et al. (2017)
-    """
-    observations, v_mat, expected_mat, neqs, nrecs = _build_matrices(
-        contexts, gmpe, imt)
-    sign, logdetv = np.linalg.slogdet(v_mat)
-    b_mat = observations - expected_mat
-    # `solve` below needs only finite values (see doc), but unfortunately raises
-    # in case. In order to silently skip non-finite values:
-    # 1. Check v_mat (square matrix), by simply returning nan if any cell value
-    # is nan (FIXME: handle better?):
-    if not np.isfinite(v_mat).all():
-        return np.nan
-    # 2. Check b_mat (array) by removing finite values:
-    b_finite = np.isfinite(b_mat)
-    if not b_finite.all():
-        if not b_finite.any():
-            return np.nan
-        b_mat = b_mat[b_finite]
-        v_mat = v_mat[b_finite, :][:, b_finite]
-    # call `solve(...check_finite=False)` because the check is already done.
-    # The function shouldn't raise anymore:
-    return (float(nrecs) * np.log(2.0 * np.pi) + logdetv +
-            (b_mat.T.dot(solve(v_mat, b_mat, check_finite=False)))) / 2.
-
-
-def bootstrap_llh(ij, contexts, gmpes, imts):
-    """
-    Applyies the cluster bootstrap. A set of events, equal in length to that
-    of the original data, is sampled randomly from the list of contexts. All of
-    the sigmas for that specific event are transfered to the sample
-    """
-    # Sample contexts
-    timer_on = datetime.now()
-    neqs = len(contexts)
-    isamp = np.random.randint(0, neqs, neqs)
-    new_contexts = [contexts[i] for i in isamp]
-    outputs = np.zeros([len(gmpes), len(imts)])
-    for i, gmpe in enumerate(gmpes):
-        for j, imtx in enumerate(imts):
-            outputs[i, j] = get_multivariate_ll(new_contexts, gmpe, imtx)
-    print("Bootstrap completed in {:.2f} seconds".format(
-        (datetime.now() - timer_on).total_seconds()))
-    return outputs
+    return gmpe_str
 
 
 class Residuals(object):
     """
-    Class to derive sets of residuals for a list of ground motion residuals
-    according to the GMPEs
+    Residuals object for storing ground-motion residuals computed
+    for a given list of GMMs and IMTs.
     """
-    def __init__(self, gmpe_list, imts, eshm20_regions=None):
+    def __init__(self, gmpe_list, imts):
         """
         :param  gmpe_list:
             A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
         :param  imts:
             A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
-        :param eshm20_regions:
-            Dictionary where each key corresponds to the position of a GMPE in
-            the GMPE list and the value is an integer representing the atten.
-            cluster within ESHM20's backbone model for active shallow crustal
-            tectonic localities. This is used by the KothaEtAl2020ESHM20 gsim
-            class and must be specified to ensure the correct attenuation
-            cluster is applied when computing the ground-motion residuals
         """
         # Residuals object
+        gmpe_list = copy.deepcopy(gmpe_list)
         self.gmpe_list = check_gsim_list(gmpe_list)
-        self.number_gmpes = len(self.gmpe_list)
-        self.types = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
+        self.types = {gmpe: {} for gmpe in self.gmpe_list}
         self.residuals = []
         self.modelled = []
         self.imts = imts
         self.unique_indices = {}
         self.gmpe_sa_limits = {}
         self.gmpe_scalars = {}
-        self.eshm20_regions = eshm20_regions
-        
         for gmpe in self.gmpe_list:
-            gmpe_dict_1 = OrderedDict([])
-            gmpe_dict_2 = OrderedDict([])
+            gmpe_dict_1 = {}
+            gmpe_dict_2 = {}
             self.unique_indices[gmpe] = {}
             
             # Get the period range and the coefficient types
@@ -319,6 +130,8 @@ class Residuals(object):
             for c in dir(gmpe_i):
                 if 'COEFFS' in c:
                     pers = [sa.period for sa in getattr(gmpe_i, c).sa_coeffs]
+                elif "gmpe_table" in c: # tabular GMM specified using an alias
+                    pers = gmpe_i.imls["T"]
             min_per, max_per = (min(pers), max(pers))
             self.gmpe_sa_limits[gmpe] = (min_per, max_per)
             for c in dir(gmpe_i):
@@ -338,12 +151,9 @@ class Residuals(object):
                 gmpe_dict_2[imtx] = {}
                 self.unique_indices[gmpe][imtx] = []
                 self.types[gmpe][imtx] = []
-                
-                # If mixed effects GMPE or using Al-Atik 2015 fix res_type order
-                if self.gmpe_list[
-                        gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == frozenset(
-                            {'Inter event', 'Intra event', 'Total'}
-                            ) or 'al_atik_2015_sigma' in str(gmpe):
+
+                # If mixed effects GMPE fix res_type order
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                     for res_type in ['Total','Inter event', 'Intra event']:
                         gmpe_dict_1[imtx][res_type] = []
                         gmpe_dict_2[imtx][res_type] = []
@@ -351,9 +161,8 @@ class Residuals(object):
                     gmpe_dict_2[imtx]["Mean"] = []
            
                 # For handling of GMPEs with total sigma only
-                else: 
-                    for res_type in self.gmpe_list[
-                            gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES:
+                else:
+                    for res_type in gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES:
                         gmpe_dict_1[imtx][res_type] = []
                         gmpe_dict_2[imtx][res_type] = []
                         self.types[gmpe][imtx].append(res_type)
@@ -361,9 +170,9 @@ class Residuals(object):
             
             self.residuals.append([gmpe, gmpe_dict_1])
             self.modelled.append([gmpe, gmpe_dict_2])
-        
-        self.residuals = OrderedDict(self.residuals)
-        self.modelled = OrderedDict(self.modelled)
+
+        self.residuals = dict(self.residuals)
+        self.modelled = dict(self.modelled)
         self.number_records = None
         self.contexts = None
 
@@ -374,53 +183,28 @@ class Residuals(object):
         gmpes with additional parameters and input files within the SMT
         """
         # Read in toml file with dict of gmpes and subdict of imts
-        config_file = toml.load(filename)
-             
+        config = toml.load(filename)
+
         # Parsing file with models
         gmpe_list = []
-        eshm20_regions = {}
-        config = copy.deepcopy(config_file)
-        for idx_k, key in enumerate(config['models']):
+        for _, key in enumerate(config['models']):
             
-            # If the key contains a number we take the second part
-            if re.search("^\\d+\\-", key):
-                tmp = re.sub("^\\d+\\-", "", key)
-                value = f"[{tmp}] "
-            else:
-                value = f"[{key}] "
-            if len(config['models'][key]):
-               config['models'][key].pop('style', None)
-               value += '\n' + str(toml.dumps(config['models'][key]))
-            value = value.strip()
-            
-            # Get eshm20 region param and drop from gmpe to permit validation
-            # (re-added to context when computing residuals if required)
-            eshm20_region = None
-            if 'eshm20_region' in value:
-                vals = value.splitlines()
-                idx_to_drop = []
-                for idx_v, val in enumerate(vals):
-                    if 'eshm20_region' in val:
-                        idx_to_drop.append(idx_v)
-                        eshm20_region = int(val.split('=')[1])
-                vals = pd.Series(vals).drop(idx_to_drop)
-                clean = vals.iloc[0]
-                for idx_v, val in enumerate(vals):
-                    if idx_v > 0:
-                        clean = clean + '\n' + val
-                value = clean
-            eshm20_regions[idx_k] = eshm20_region
+            # Get toml representation of GMM
+            gmm = get_gmm_from_toml(key, config)
             
             # Create valid gsim object
-            gmpe_list.append(valid.gsim(value))
+            gmpe_list.append(gmm)
             
         # Get imts    
-        imts = config_file['imts']['imt_list']     
+        imts = config['imts']['imt_list']     
         
-        return cls(gmpe_list, imts, eshm20_regions)
+        return cls(gmpe_list, imts)
 
-    def get_residuals(self, ctx_database, nodal_plane_index=1,
-                      component="Geometric", normalise=True):
+    def compute_residuals(self,
+                          ctx_database,
+                          nodal_plane_index=1,
+                          component="Geometric",
+                          normalise=True):
         """
         Calculate the residuals for a set of ground motion records
 
@@ -430,30 +214,26 @@ class Residuals(object):
             See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase` for an
             example
         """
-        # Get contexts
-        contexts = ctx_database.get_contexts(nodal_plane_index, self.imts,
-                                             component)
+        # Build the contexts
+        contexts = ctx_database.get_contexts(nodal_plane_index, self.imts, component)
 
         # Fetch now outside the loop for efficiency the IMTs which need
         # acceleration units conversion from cm/s/s to g. Conversion will be
         # done inside the loop:
-        accel_imts = tuple([imtx for imtx in self.imts if
-                            (imtx == "PGA" or "SA(" in imtx)])
+        accel_imts = tuple(
+            [imtx for imtx in self.imts if (imtx == "PGA" or "SA(" in imtx)])
 
         # Contexts is in either case a list of dictionaries
         self.contexts = []
         for context in contexts:
             # If no rvolc provide as zero (ensure rvolc gsims usable)
             if 'rvolc' not in context['Ctx']._slots_:
-                context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi,
-                                                     dtype = float)
-            # convert all IMTS with acceleration units, which are supposed to
+                context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi)
+            # Convert all IMTS with acceleration units, which are supposed to
             # be in cm/s/s, to g:
             for a_imt in accel_imts:
-                context['Observations'][a_imt] = \
-                    convert_accel_units(context['Observations'][a_imt],
-                                        'cm/s/s', 'g')
-
+                context['Observations'][a_imt] = convert_accel_units(
+                        context['Observations'][a_imt], 'cm/s/s', 'g')
             # Get the expected ground motions
             context = self.get_expected_motions(context)
             context = self.calculate_residuals(context, normalise)
@@ -463,10 +243,12 @@ class Residuals(object):
                         continue
                     for res_type in self.residuals[gmpe][imtx].keys():
                         if res_type == "Inter event":
-                            inter_ev =  context["Residual"][gmpe][imtx][
-                                res_type]
-                            if np.all(
-                                    np.fabs(inter_ev - inter_ev[0]) < 1.0E-12):
+                            inter_ev = context["Residual"][gmpe][imtx][res_type]
+                            if len(inter_ev) < 1:
+                                # Dummy to pass first conditional with indexing
+                                # if no obs values for given IMT for the event
+                                inter_ev = np.array([np.nan]) 
+                            if np.all(np.fabs(inter_ev - inter_ev[0]) < 1.0E-12):
                                 # Single inter-event residual
                                 self.residuals[gmpe][imtx][res_type].append(
                                     inter_ev[0])
@@ -493,6 +275,7 @@ class Residuals(object):
 
         for gmpe in self.residuals.keys():
             for imtx in self.residuals[gmpe].keys():
+                # Check residuals exist for GMM and IMT
                 if not self.residuals[gmpe][imtx]:
                     continue
                 for res_type in self.residuals[gmpe][imtx].keys():
@@ -507,12 +290,11 @@ class Residuals(object):
         """
         Calculate the expected ground motions from the context
         """
-        if not context["Ctx"].rake:
-            context["Ctx"].rake = 0.0 # Assume strike-slip
-        expected = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
+        # Get expected
+        expected = {gmpe: {} for gmpe in self.gmpe_list}
         # Period range for GSIM
-        for idx_gmpe, gmpe in enumerate(self.gmpe_list):
-            expected[gmpe] = OrderedDict([(imtx, {}) for imtx in self.imts])
+        for _, gmpe in enumerate(self.gmpe_list):
+            expected[gmpe] = {imtx: {} for imtx in self.imts}
             for imtx in self.imts:
                 gsim = self.gmpe_list[gmpe]
                 if "SA(" in imtx:
@@ -521,12 +303,6 @@ class Residuals(object):
                         period > self.gmpe_sa_limits[gmpe][1]):
                         expected[gmpe][imtx] = None
                         continue
-                # Add region parameter to sites context if specified
-                if self.eshm20_regions:
-                    if self.eshm20_regions[idx_gmpe] is not None:
-                        context["Ctx"].region = self.eshm20_regions[idx_gmpe]
-                elif 'region' in gsim.kwargs:
-                    context["Ctx"].region = gsim.kwargs['region']
                 # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
                     context["Ctx"],
@@ -534,9 +310,12 @@ class Residuals(object):
                     context["Ctx"],
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
-                # If no sigma inform user that residuals can't be computed for
-                # this GMPE
-                if np.all(stddev[0] == 0.):
+                keep = context["Retained"][imtx]
+                mean = mean[keep]
+                for idx_comp, comp in enumerate(stddev):
+                    stddev[idx_comp] = comp[keep]
+                # If no sigma for the GMM residuals can't be computed
+                if np.all(stddev[0] == 0.) and len(keep) > 0:
                     gs = str(gmpe).split('(')[0]
                     m = 'A sigma model is not provided for %s' %gs
                     raise ValueError(m)
@@ -554,10 +333,12 @@ class Residuals(object):
         # Calculate residual
         residual = {}
         for gmpe in self.gmpe_list:
-            residual[gmpe] = OrderedDict([])
+            residual[gmpe] = {}
             for imtx in self.imts:
                 residual[gmpe][imtx] = {}
                 obs = np.log(context["Observations"][imtx])
+                keep = context["Retained"][imtx]
+                obs = obs[keep]
                 if not context["Expected"][gmpe][imtx]:
                     residual[gmpe][imtx] = None
                     continue
@@ -576,7 +357,11 @@ class Residuals(object):
         context["Residual"] = residual
         return context
 
-    def _get_random_effects_residuals(self, obs, mean, inter, intra,
+    def _get_random_effects_residuals(self,
+                                      obs,
+                                      mean,
+                                      inter,
+                                      intra,
                                       normalise=True):
         """
         Calculates the random effects residuals using the inter-event
@@ -599,14 +384,14 @@ class Residuals(object):
         intra_res = obs - (mean + inter_res)
         if normalise:
             return inter_res / inter, intra_res / intra
-        return inter_res, intra_res
+        else:
+            return inter_res, intra_res
 
     def get_residual_statistics(self):
         """
         Retreives the mean and standard deviation values of the residuals
         """
-        statistics = OrderedDict([(gmpe, OrderedDict([]))
-                                  for gmpe in self.gmpe_list])
+        statistics = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
             for imtx in self.imts:
                 if not self.residuals[gmpe][imtx]:
@@ -630,97 +415,6 @@ class Residuals(object):
                            "Std Dev": np.nanstd(residuals[res_type])}
                 for res_type in self.types[gmpe][imtx]}
 
-    def pretty_print(self, filename=None, sep=","):
-        """
-        Print the information to screen or to file
-        """
-        if filename:
-            fid = open(filename, "w")
-        else:
-            fid = sys.stdout
-        fid.write("Ground Motion Residuals\n")
-        # Print headers
-        event = self.contexts[0]
-        header_set = []
-        header_set.extend([key for key in event["Ctx"].__dict__])
-        header_set.extend(["{:s}-Obs.".format(imtx) for imtx in self.imts])
-        for imtx in self.imts:
-            for gmpe in self.gmpe_list:
-                if not event["Expected"][gmpe][imtx]:
-                    continue
-                for key in event["Expected"][gmpe][imtx].keys():
-                    header_set.append(
-                        "{:s}-{:s}-{:s}-Exp.".format(imtx, gmpe, key))
-        for imtx in self.imts:
-            for gmpe in self.gmpe_list:
-                if not event["Residual"][gmpe][imtx]:
-                    continue
-                for key in event["Residual"][gmpe][imtx].keys():
-                    header_set.append(
-                        "{:s}-{:s}-{:s}-Res.".format(imtx, gmpe, key))
-        header_set = self._extend_header_set(header_set)
-        fid.write("%s\n" % sep.join(header_set))
-        for event in self.contexts:
-            self._pprint_event(fid, event, sep)
-        if filename:
-            fid.close()
-
-    def _pprint_event(self, fid, event, sep):
-        """
-        Print the information for each event
-        """
-        # Print rupture info
-        rupture_str = sep.join([
-            "{:s}{:s}{:s}".format(key, sep, str(val))
-            for key, val in event["Rupture"].__dict__.items()])
-        fid.write("Rupture: %s %s %s\n" % (str(event["EventID"]), sep,
-                                           rupture_str))
-        # For each record
-        for i in range(event["Num. Sites"]):
-            data = []
-            # Distances
-            for key in event["Distances"].__dict__:
-                data.append("{:.4f}".format(
-                    getattr(event["Distances"], key)[i]))
-            # Sites
-            for key in event["Sites"].__dict__:
-                data.append("{:.4f}".format(getattr(event["Sites"], key)[i]))
-            # Observations
-            for imtx in self.imts:
-                data.append("{:.8e}".format(event["Observations"][imtx][i]))
-            # Expected
-            for imtx in self.imts:
-                for gmpe in self.gmpe_list:
-                    if not event["Expected"][gmpe][imtx]:
-                        continue
-                    for key in event["Expected"][gmpe][imtx].keys():
-                        data.append("{:.8e}".format(
-                            event["Expected"][gmpe][imtx][key][i]))
-            # Residuals
-            for imtx in self.imts:
-                for gmpe in self.gmpe_list:
-                    if not event["Expected"][gmpe][imtx]:
-                        continue
-                    for key in event["Residual"][gmpe][imtx].keys():
-                        data.append("{:.8e}".format(
-                            event["Residual"][gmpe][imtx][key][i]))
-            self._extend_data_print(data, event, i)
-            fid.write("%s\n" % sep.join(data))
-
-    def _extend_header_set(self, header_set):
-        """
-        Additional headers to add to the pretty print - does nothing here but
-        overwritten in subclasses
-        """
-        return header_set
-
-    def _extend_data_print(self, data, event, i):
-        """
-        Additional data to add to the pretty print - also does nothing here
-        but overwritten in subclasses
-        """
-        return data
-
     def _get_magnitudes(self):
         """
         Returns an array of magnitudes equal in length to the number of
@@ -733,16 +427,80 @@ class Residuals(object):
                 ctxt["Ctx"].mag * np.ones(len(ctxt["Ctx"].repi))])
         return magnitudes
 
+    def export_residuals(self, out_fname):
+        """
+        Export the observed, predicted and residuals to a text file
+        """
+        ctxs = self.contexts # List of contexts
+        gmms = self.gmpe_list
+        imts = self.imts
+        store = {}
+        for ctx in ctxs:
+            for imt in imts:
+                ctx_and_imt = {} # One df per imt and ctx
+                for gmpe in gmms:                
+                    gmpe_str = get_gmpe_str(gmpe)
+
+                    # Get the expected values and the residuals
+                    res = ctx["Residual"][gmpe][imt]
+                    exp = ctx["Expected"][gmpe][imt]
+                    for comp in res:
+                        
+                        # Make a key
+                        key = f"GMM={gmpe_str}_IMT={imt}_{comp}"
+                        key = key.replace(" ", "_")
+                        key = key.replace(";", "")
+
+                        # Store each set of values
+                        ctx_and_imt[key+"_Residuals"] = res[comp]
+                        ctx_and_imt[key+"_Predicted"] = exp[comp]
+
+                # Get observed with the NaNs (empty recs for IMT) removed
+                obs = ctx["Observations"][imt]
+                keep = ctx["Retained"][imt]
+                key_obs = f"IMT={imt}_Observations"
+                ctx_and_imt[key_obs] = obs[keep]
+
+                # Get the event info
+                for par in RUP_PAR:
+                    val = np.full(len(keep), getattr(ctx["Ctx"], par))
+                    ctx_and_imt[par] = val
+
+                # Get the station info
+                for par in ST_PAR:
+                    val = np.array(getattr(ctx["Ctx"], par))[keep]
+                    ctx_and_imt[par] = val
+
+                # Into a dataframe and rename some columns
+                ctx_df = pd.DataFrame(ctx_and_imt)
+                ctx_df = ctx_df.rename(columns={"custom_site_id": "st_code",
+                                                "lons": "st_lon",
+                                                "lats": "st_lat",
+                                                "depths": "st_elevation"})
+
+                # Store the DataFrame for the event
+                store[f"{ctx['EventID']}_IMT={imt}"] = ctx_df
+
+        # Now write results for the event to a text file
+        with open(out_fname, 'w') as f:
+            for ev_imt, ev_imt_df in store.items():
+                ev = ev_imt.split("IMT")[0][:-1]
+                imt = ev_imt.split("IMT=")[1]
+                f.write(f"Event:{ev} IMT: {imt}\n")
+                f.write(ev_imt_df.to_string(index=False))
+                f.write("\n\n")
+
+    ### Likelihood (Scherbaum et al. 2004) functions
     def get_likelihood_values(self):
         """
         Returns the likelihood values for Total, plus inter- and intra-event
         residuals according to Equation 9 of Scherbaum et al (2004)
         """
         statistics = self.get_residual_statistics()
-        lh_values = OrderedDict([(gmpe, OrderedDict([]))
-                                 for gmpe in self.gmpe_list])
+        lh_values = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
             for imtx in self.imts:
+                # Check residuals exist for GMM and IMT
                 if not self.residuals[gmpe][imtx]:
                     print("IMT %s not found in Residuals for %s"
                           % (imtx, gmpe))
@@ -767,7 +525,6 @@ class Residuals(object):
         lh, median_lh where the first is the array of likelihood values and
         the latter is the median of those values
         """
-
         ret = {}
         for res_type in self.types[gmpe][imt]:
             zvals = np.fabs(self.residuals[gmpe][imt][res_type])
@@ -776,7 +533,8 @@ class Residuals(object):
             ret[res_type] = l_h, median_lh
         return ret
 
-    def get_loglikelihood_values(self, imts):
+    ### LLH (Scherbaum et al. 2009) functions
+    def get_loglikelihood_values(self):
         """
         Returns the loglikelihood fit of the GMPEs to data using the
         loglikehood (LLH) function described in Scherbaum et al. (2009)
@@ -787,152 +545,49 @@ class Residuals(object):
         :param imts:
             List of intensity measures for LLH calculation
         """
-        log_residuals = OrderedDict([(gmpe, np.array([]))
-                                     for gmpe in self.gmpe_list])
-        imt_list = [(imtx, None) for imtx in imts]
-        imt_list.append(("All", None))
-        self.llh = OrderedDict([(gmpe, OrderedDict(imt_list))
-                           for gmpe in self.gmpe_list])
+        imt_list = {imt: None for imt in self.imts}
+        imt_list["All"] = None
+        self.llh = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
-            for imtx in imts:
+            log_residuals = np.array([])
+            for imtx in self.imts:
+            
+                # Check residuals exist for GMM and IMT
                 if not (imtx in self.imts) or not self.residuals[gmpe][imtx]:
-                    print("IMT %s not found in Residuals for %s"
-                          % (imtx, gmpe))
+                    print("IMT %s not found in Residuals for %s" % (imtx, gmpe))
                     continue
+            
                 # Get log-likelihood distance for IMT
-                asll = np.log2(norm.pdf(self.residuals[gmpe][imtx]["Total"],
-                               0.,
-                               1.0))
-                log_residuals[gmpe] = np.hstack([
-                    log_residuals[gmpe],
-                    asll])
+                asll = np.log2(
+                    norm.pdf(self.residuals[gmpe][imtx]["Total"], 0., 1.0))
                 self.llh[gmpe][imtx] = -(1.0 / float(len(asll))) * np.sum(asll)
+            
+                # Stack
+                log_residuals = np.hstack([log_residuals, asll])
 
-            self.llh[gmpe]["All"] = -(1. / float(len(
-                log_residuals[gmpe]))) * np.sum(log_residuals[gmpe])
+            # Get the average over the IMTs
+            self.llh[gmpe]["All"] = -(
+                1. / float(len(log_residuals))) * np.sum(log_residuals)
+
         # Get mean weights
-        weights = np.array([2.0 ** -self.llh[gmpe]["All"]
-                            for gmpe in self.gmpe_list])
+        weights = np.array(
+            [2.0 ** -self.llh[gmpe]["All"] for gmpe in self.gmpe_list])
         weights = weights / np.sum(weights)
-        self.model_weights = OrderedDict([
-            (gmpe, weights[iloc]) for iloc, gmpe in enumerate(self.gmpe_list)]
-            )
+        self.model_weights = {
+            gmpe: weights[idx] for idx, gmpe in enumerate(self.gmpe_list)}
+
         # Get weights with imt
         self.model_weights_with_imt = {}
         for im in self.imts:
-            
-            weights_with_imt = np.array([2.0 ** -self.llh[gmpe][im]
-                                         for gmpe in self.gmpe_list])
-            
+            weights_with_imt = np.array(
+                [2.0 ** -self.llh[gmpe][im] for gmpe in self.gmpe_list])
             weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
-            
-            self.model_weights_with_imt[im] = OrderedDict(
-                [(gmpe, weights_with_imt[iloc]) for iloc, gmpe in enumerate(
-                    self.gmpe_list)])
+            self.model_weights_with_imt[im] = {gmpe: weights_with_imt[
+                idx] for idx, gmpe in enumerate(self.gmpe_list)}
             
         return self.llh, self.model_weights, self.model_weights_with_imt
-        
-    # Mak et al multivariate LLH functions
-    def get_multivariate_loglikelihood_values(self, sum_imts=False):
-        """
-        Calculates the multivariate LLH for a set of GMPEs and IMTS according
-        to the approach described in Mak et al. (2017)
 
-        Mak, S., Clements, R. A. and Schorlemmer, D. (2017) "Empirical
-        Evaluation of Hierarchical Ground-Motion Models: Score Uncertainty
-        and Model Weighting", Bulletin of the Seismological Society of America,
-        107(2), 949-965
-
-        :param sum_imts:
-            If True then retuns a single multivariate LLH value summing the
-            values from all imts, otherwise returns sepearate multivariate
-            LLH for each imt.
-        """
-        multi_llh_values = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
-        # Get number of events and records
-        for gmpe in self.gmpe_list:
-            print("GMPE = {:s}".format(gmpe))
-            for j, imtx in enumerate(self.imts):
-                if self.residuals[gmpe][imtx] is None:
-                    # IMT missing for this GMPE
-                    multi_llh_values[gmpe][imtx] = 0.0
-                else:
-                    multi_llh_values[gmpe][imtx] = get_multivariate_ll(
-                        self.contexts, gmpe, imtx)
-            if sum_imts:
-                total_llh = 0.0
-                for imtx in self.imts:
-                    if np.isnan(multi_llh_values[gmpe][imtx]):
-                        continue
-                    total_llh += multi_llh_values[gmpe][imtx]
-                multi_llh_values[gmpe] = total_llh
-        return multi_llh_values
-
-    def bootstrap_multivariate_llhvalues(self, number_bootstraps,
-                                         sum_imts=False, parallelize=False,
-                                         concurrent_tasks=8):
-        """
-        Bootstrap the analysis using cluster sampling, as describe in Mak et
-        al. 2017. OpenQuake's :class: `openquake.baselib.parallel.Starmap`
-        utility is invoked to parallelise the calculations by bootstrap
-        """
-        # Setup multivariate log-likelihood dict
-        multi_llh_values = []
-        nmods = []
-        for i, gmpe in enumerate(self.gmpe_list):
-            for j, imtx in enumerate(self.imts):
-                nmods.append((i, j))
-                multi_llh_values.append((gmpe, imtx))
-        outputs = np.zeros([len(self.gmpe_list), len(self.imts),
-                            number_bootstraps])
-        if parallelize:
-            raise NotImplementedError("Parellelisation not turned on yet!")
-        else:
-            for j in range(number_bootstraps):        
-                print("Bootstrap {:g} of {:g}".format(j + 1,
-                      number_bootstraps))
-                outputs[:, :, j] = bootstrap_llh(
-                    j, self.contexts, self.gmpe_list, self.imts)
-                
-        distinctiveness = self.get_distinctiveness(
-            outputs, number_bootstraps, sum_imts)
-        
-        return distinctiveness, outputs
-
-    def get_distinctiveness(self, outputs, number_bootstraps, sum_imts):
-        """
-        Return the distinctiveness index as described in equation 9 of Mak
-        et al. (2017)
-        """
-        ngmpes = len(self.gmpe_list)
-        nbs = float(number_bootstraps)
-        nimts = float(len(self.imts))
-        if sum_imts:
-            distinctiveness = np.zeros([ngmpes, ngmpes])
-            # Get only one index for each GMPE
-            for i, gmpe in enumerate(self.gmpe_list):
-                for j, gmpe in enumerate(self.gmpe_list):
-                    if i == j:
-                        continue
-                    data_i = outputs[i, :, :]
-                    data_j = outputs[j, :, :]
-                    distinctiveness[i, j] = float(np.sum(data_i < data_j) -
-                        np.sum(data_j < data_i)) / (nbs * nimts)
-            return distinctiveness
-        else:
-            distinctiveness = np.zeros([ngmpes, ngmpes, len(self.imts)])
-            for i, gmpe in enumerate(self.gmpe_list):
-                for j, gmpe in enumerate(self.gmpe_list):
-                    if i == j:
-                        continue
-                    for k in range(len(self.imts)):
-                        data_i = outputs[i, k, :]
-                        data_j = outputs[j, k, :]
-                        distinctiveness[i, j, k] =\
-                            float(np.sum(data_i < data_j) -
-                                  np.sum(data_j < data_i)) / nbs
-        return distinctiveness
-
+    ### EDR (Kale and Akkar 2013) functions
     def get_edr_values(self, bandwidth=0.01, multiplier=3.0):
         """
         Calculates the EDR values for each GMPE according to the Euclidean
@@ -949,7 +604,7 @@ class Residuals(object):
         :param float multiplier:
             "Multiplier of standard deviation (equation 8 of Kale and Akkar)
         """
-        edr_values = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
+        edr_values = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
             obs, expected, stddev = self._get_edr_gmpe_information(gmpe)
             results = self._get_edr(obs,
@@ -962,8 +617,7 @@ class Residuals(object):
             edr_values[gmpe]["EDR"] = results[2]
         return edr_values
     
-    def get_edr_values_wrt_imt(self, bandwidth=0.01,
-                                           multiplier=3.0):
+    def get_edr_values_wrt_imt(self, bandwidth=0.01, multiplier=3.0):
         """
         Calculates the EDR values for each GMPE according to the Euclidean
         Distance Ranking method of Kale & Akkar (2013) for each imt
@@ -979,16 +633,15 @@ class Residuals(object):
         :param float multiplier:
             "Multiplier of standard deviation (equation 8 of Kale and Akkar)
         """
-        self.edr_values_wrt_imt = OrderedDict([(gmpe, {}) for 
-                                               gmpe in self.gmpe_list])
+        self.edr_values_wrt_imt = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
             (obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt
              ) = self._get_edr_gmpe_information_wrt_imt(gmpe)
             results = self._get_edr_wrt_imt(obs_wrt_imt,
-                                    expected_wrt_imt,
-                                    stddev_wrt_imt,
-                                    bandwidth,
-                                    multiplier)
+                                            expected_wrt_imt,
+                                            stddev_wrt_imt,
+                                            bandwidth,
+                                            multiplier)
             self.edr_values_wrt_imt[gmpe]["MDE Norm"] = results[0]
             self.edr_values_wrt_imt[gmpe]["sqrt Kappa"] = results[1]
             self.edr_values_wrt_imt[gmpe]["EDR"] = results[2]
@@ -1004,11 +657,13 @@ class Residuals(object):
         stddev = np.array([], dtype=float)
         for imtx in self.imts:
             for context in self.contexts:
-                obs = np.hstack([obs, np.log(context["Observations"][imtx])])
-                expected = np.hstack([expected,
-                                      context["Expected"][gmpe][imtx]["Mean"]])
-                stddev = np.hstack([stddev,
-                                    context["Expected"][gmpe][imtx]["Total"]])
+                keep = context["Retained"][imtx]
+                obs = np.hstack(
+                    [obs, np.log(context["Observations"][imtx][keep])])
+                expected = np.hstack(
+                    [expected, context["Expected"][gmpe][imtx]["Mean"]])
+                stddev = np.hstack(
+                    [stddev, context["Expected"][gmpe][imtx]["Total"]])
         return obs, expected, stddev
     
     def _get_edr_gmpe_information_wrt_imt(self, gmpe):
@@ -1025,15 +680,17 @@ class Residuals(object):
             expected = np.array([], dtype=float)
             stddev = np.array([], dtype=float)
             for context in self.contexts:
-                obs = np.hstack([obs, np.log(context["Observations"][imtx])])
-                expected = np.hstack([expected,context["Expected"][gmpe]
-                                      [imtx]["Mean"]])
-                stddev = np.hstack([stddev,context["Expected"][gmpe]
-                                    [imtx]["Total"]])
-            obs_wrt_imt[imtx]=obs
-            expected_wrt_imt[imtx]=expected
-            stddev_wrt_imt[imtx]=stddev
-        
+                keep = context["Retained"][imtx]
+                obs_stack = np.log(context["Observations"][imtx][keep])
+                obs = np.hstack([obs, obs_stack])
+                expected = np.hstack(
+                    [expected,context["Expected"][gmpe][imtx]["Mean"]])
+                stddev = np.hstack(
+                    [stddev,context["Expected"][gmpe][imtx]["Total"]])
+            obs_wrt_imt[imtx] = obs
+            expected_wrt_imt[imtx] = expected
+            stddev_wrt_imt[imtx] = stddev
+
         return obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt
     
     def _get_edr(self, obs, expected, stddev, bandwidth=0.01, multiplier=3.0):
@@ -1070,9 +727,12 @@ class Residuals(object):
         edr = np.sqrt(kappa * inv_n * np.sum(mde ** 2.))
         return mde_norm, np.sqrt(kappa), edr            
     
-    def _get_edr_wrt_imt(self, obs_wrt_imt, expected_wrt_imt,
-                                     stddev_wrt_imt, bandwidth=0.01,
-                                     multiplier=3.0):
+    def _get_edr_wrt_imt(self,
+                         obs_wrt_imt,
+                         expected_wrt_imt,
+                         stddev_wrt_imt,
+                         bandwidth=0.01,
+                         multiplier=3.0):
         """
         Calculated the Euclidean Distanced-Based Rank for a set of
         observed and expected values from a particular GMPE over imts
@@ -1085,7 +745,7 @@ class Residuals(object):
             nvals = len(obs_wrt_imt[imtx])
             min_d = bandwidth / 2.
             kappa_wrt_imt[imtx] = self._get_edr_kappa(obs_wrt_imt[imtx],
-                                                     expected_wrt_imt[imtx])
+                                                      expected_wrt_imt[imtx])
             mu_d = obs_wrt_imt[imtx] - expected_wrt_imt[imtx]
             d1c = np.fabs(obs_wrt_imt[imtx] - (expected_wrt_imt[imtx] - (
                 multiplier * stddev_wrt_imt[imtx])))
@@ -1105,8 +765,8 @@ class Residuals(object):
                 mde_wrt_imt += (p_2 - p_1) * d_val
             inv_n = 1.0 / float(nvals)
             mde_norm_wrt_imt[imtx] = np.sqrt(inv_n * np.sum(mde_wrt_imt ** 2.))
-            edr_wrt_imt[imtx] = np.sqrt(kappa_wrt_imt[imtx] * inv_n * np.sum(
-                mde_wrt_imt ** 2.))
+            edr_wrt_imt[imtx] = np.sqrt(
+                kappa_wrt_imt[imtx] * inv_n * np.sum(mde_wrt_imt ** 2.))
 
         return mde_norm_wrt_imt, np.sqrt(pd.Series(kappa_wrt_imt)), edr_wrt_imt            
 
@@ -1123,40 +783,8 @@ class Residuals(object):
         de_orig = np.sum((obs - expected) ** 2.)
         de_corr = np.sum((obs - y_c) ** 2.)
         return de_orig / de_corr
-    
-    def cdf(self, data):
-        """
-        Get the cumulative distribution function (cdf) of the ground-motion
-        values
-        """
-        x1 = np.sort(data)
-        x = x1.tolist()
-        n = len(x)
-        p = 1/n
-        pvalues = list(np.linspace(p,1,n))
-        return x, pvalues
-    
-    def step_data(self, x,y):
-        """
-        Step the cdf to obtain the ecdf
-        """
-        xx,yy = x*2, y*2
-        xx.sort()
-        yy.sort()
-        return xx, [0.]+yy[:-1]
-    
-    def get_cdf_data(self, data, step_flag=None):
-        """
-        Get the cdf (for the predicted ground-motions) or the ecdf (for the
-        observed ground-motions)
-        """
-        x, p = self.cdf(data)
-        if step_flag is True:
-            xx, yy = self.step_data(x, p)
-            return np.array(xx), np.array(yy)
-        else:
-            return np.array(x), np.array(p)
-    
+
+    ### Stochastic Area (Sunny et al. 2021) functions
     def get_stochastic_area_wrt_imt(self):
         """
         Calculates the stochastic area values per imt for each GMPE according
@@ -1167,7 +795,7 @@ class Residuals(object):
         Seismol. Res. Lett. 93, 787–797, doi: 10.1785/0220210216
         """
         # Create store of values per gmm
-        stoch_area_store = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
+        stoch_area_store = {gmpe: {} for gmpe in self.gmpe_list}
         
         # Get the observed and predicted per gmm per imt
         for gmpe in self.gmpe_list:
@@ -1180,9 +808,9 @@ class Residuals(object):
                     obs = np.hstack(
                         [obs, np.log(context["Observations"][imtx])])
                     exp = np.hstack(
-                        [exp,context["Expected"][gmpe][imtx]["Mean"]])
+                        [exp, context["Expected"][gmpe][imtx]["Mean"]])
                     stddev = np.hstack(
-                        [std,context["Expected"][gmpe][imtx]["Total"]])
+                        [std, context["Expected"][gmpe][imtx]["Total"]])
                 
                 # Get the ECDF for distribution from observations
                 x_ecdf, y_ecdf = self.get_cdf_data(list(obs), step_flag=True)
@@ -1214,48 +842,66 @@ class Residuals(object):
         self.stoch_areas_wrt_imt = stoch_area_store
         
         return self.stoch_areas_wrt_imt
-        
-    
-GSIM_MODEL_DATA_TESTS = {
-    "Residuals": lambda residuals, config:
-        residuals.get_residual_statistics(),
-    "Likelihood": lambda residuals, config: residuals.get_likelihood_values(),
-    "LLH": lambda residuals, config: residuals.get_loglikelihood_values(
-        config.get("LLH IMTs", [imt for imt in residuals.imts])),
-    "MultivariateLLH": lambda residuals, config:
-        residuals.get_multivariate_loglikelihood_values(),
-    "EDR": lambda residuals, config: residuals.get_edr_values(
-        config.get("bandwidth", 0.01), config.get("multiplier", 3.0))
-}
 
+    def cdf(self, data):
+        """
+        Get the cumulative distribution function (cdf) of the ground-motion
+        values
+        """
+        x1 = np.sort(data)
+        x = x1.tolist()
+        n = len(x)
+        p = 1/n
+        pvalues = list(np.linspace(p,1,n))
+        return x, pvalues
+    
+    def step_data(self, x,y):
+        """
+        Step the cdf to obtain the ecdf
+        """
+        xx, yy = x*2, y*2
+        xx.sort()
+        yy.sort()
+        return xx, [0.]+yy[:-1]
+    
+    def get_cdf_data(self, data, step_flag=None):
+        """
+        Get the cdf (for the predicted ground-motions) or the ecdf (for the
+        observed ground-motions)
+        """
+        x, p = self.cdf(data)
+        if step_flag is True:
+            xx, yy = self.step_data(x, p)
+            return np.array(xx), np.array(yy)
+        else:
+            return np.array(x), np.array(p)
+    
 
 class SingleStationAnalysis(object):
     """
-    Class to analyse residual sets recorded at specific stations
+    Residuals object for single station residual analysis.
     """
-    def __init__(self, site_id_list, gmpe_list, imts, eshm20_regions=None):
+    def __init__(self, site_id_list, gmpe_list, imts):
         # Initiate SSA object
         self.site_ids = site_id_list
         if len(self.site_ids) < 1:
             raise ValueError('No sites meet record threshold for analysis.')
-        self.input_gmpe_list = copy.deepcopy(gmpe_list)
+        # Copy the GMMs to avoid recursive issues with check_gsim_list 
+        self.frozen_gmpe_list = copy.deepcopy(gmpe_list) 
         self.gmpe_list = check_gsim_list(gmpe_list)
         self.imts = imts
         self.site_residuals = []
-        self.types = OrderedDict([(gmpe, {}) for gmpe in self.gmpe_list])
-        self.eshm20_regions = eshm20_regions
+        self.types = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
+            gmpe_i = self.gmpe_list[gmpe]
             for imtx in self.imts:
                 self.types[gmpe][imtx] = []
-                if self.gmpe_list[
-                        gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == frozenset(
-                            {'Inter event', 'Intra event', 'Total'}
-                            ) or 'al_atik_2015_sigma' in str(gmpe):
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                     for res_type in ['Total','Inter event', 'Intra event']:
                         self.types[gmpe][imtx].append(res_type)
                 else:
-                    for res_type in (self.gmpe_list[gmpe].
-                                 DEFINED_FOR_STANDARD_DEVIATION_TYPES):
+                    for res_type in (
+                        gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES):
                         self.types[gmpe][imtx].append(res_type)
                         
     @classmethod
@@ -1265,49 +911,22 @@ class SingleStationAnalysis(object):
         gmpes with additional parameters and input files within the SMT
         """
         # Read in toml file with dict of gmpes and subdict of imts
-        config_file = toml.load(filename)
+        config = toml.load(filename)
              
         # Parsing file with models
         gmpe_list = []
-        eshm20_regions = {}
-        config = copy.deepcopy(config_file)
-        for idx_k, key in enumerate(config['models']):
+        for _, key in enumerate(config['models']):
             
-            # If the key contains a number we take the second part
-            if re.search("^\\d+\\-", key):
-                tmp = re.sub("^\\d+\\-", "", key)
-                value = f"[{tmp}] "
-            else:
-                value = f"[{key}] "
-            if len(config['models'][key]):
-               config['models'][key].pop('style', None)
-               value += '\n' + str(toml.dumps(config['models'][key]))
-            value = value.strip()
-               
-            # Get eshm20 region param and drop from gmpe to permit validation
-            eshm20_region = None
-            if 'eshm20_region' in value:
-                vals = value.splitlines()
-                idx_to_drop = []
-                for idx_v, val in enumerate(vals):
-                    if 'eshm20_region' in val:
-                        idx_to_drop.append(idx_v)
-                        eshm20_region = int(val.split('=')[1])
-                vals = pd.Series(vals).drop(idx_to_drop)
-                clean = vals.iloc[0]
-                for idx_v, val in enumerate(vals):
-                    if idx_v > 0:
-                        clean = clean + '\n' + val
-                value = clean
-            eshm20_regions[idx_k] = eshm20_region
+            # Get toml representation of GMM
+            gmm = get_gmm_from_toml(key, config)
 
-            # Create valid gsim
-            gmpe_list.append(valid.gsim(value))
+            # Create valid gsim object
+            gmpe_list.append(gmm)
             
         # Get imts    
-        imts = config_file['imts']['imt_list']     
-        
-        return cls(site_id_list, gmpe_list, imts, eshm20_regions)
+        imts = config['imts']['imt_list']  
+
+        return cls(site_id_list, gmpe_list, imts)
 
     def get_site_residuals(self, database, component="Geometric"):
         """
@@ -1317,9 +936,10 @@ class SingleStationAnalysis(object):
         for site_id in self.site_ids:
             selector = SMRecordSelector(database)
             site_db = selector.select_from_site_id(site_id, as_db=True)
-            resid = Residuals(self.input_gmpe_list, self.imts,
-                              self.eshm20_regions)
-            resid.get_residuals(site_db, normalise=False, component=component)
+            # Use a deep copied gmpe list to avoid recursive GMM instantiation
+            # issues when using check_gsim_list within Residuals obj __init__
+            resid = Residuals(self.frozen_gmpe_list, self.imts)
+            resid.compute_residuals(site_db, normalise=False, component=component)
             setattr(
                 resid,
                 "site_analysis",
@@ -1334,11 +954,9 @@ class SingleStationAnalysis(object):
         """
         Sets an empty set of nested dictionaries for each GMPE and each IMT
         """
-        return OrderedDict([
-            (gmpe, dict([(imtx, {}) for imtx in self.imts]))
-            for gmpe in self.gmpe_list])
+        return {gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
 
-    def residual_statistics(self, pretty_print = False, filename = None):
+    def station_residual_statistics(self, filename=None):
         """
         Get single-station residual statistics for each site
         """
@@ -1347,49 +965,61 @@ class SingleStationAnalysis(object):
             resid = copy.deepcopy(t_resid)
             for gmpe in self.gmpe_list:
                 for imtx in self.imts:
-                    if not resid.residuals[gmpe][imtx]:
+
+                    # If residuals for given GMM-IMT combination
+                    if not t_resid.residuals[gmpe][imtx]:
                         continue
                     
-                    n_events = len(resid.residuals[gmpe][imtx]["Total"])
+                    # Get number events, total residuals, total (GMM) expected
+                    n_events = len(t_resid.residuals[gmpe][imtx]["Total"])
+                    total_res = np.copy(t_resid.residuals[gmpe][imtx]["Total"])
+                    total_exp = np.copy(t_resid.modelled[gmpe][imtx]["Total"])
+
+                    # Store
                     resid.site_analysis[gmpe][imtx]["events"] = n_events
-                    resid.site_analysis[gmpe][imtx]["Total"] = np.copy(
-                        t_resid.residuals[gmpe][imtx]["Total"])
-                    resid.site_analysis[gmpe][imtx]["Expected Total"] = \
-                        np.copy(t_resid.modelled[gmpe][imtx]["Total"])
+                    resid.site_analysis[gmpe][imtx]["Total"] = total_res
+                    resid.site_analysis[gmpe][imtx]["Expected total"] = total_exp
                     
-                    if not ("Intra event" in t_resid.residuals[gmpe][imtx]):
+                    if not "Intra event" in t_resid.residuals[gmpe][imtx]:
                         # GMPE has no within-event term - skip
                         continue
 
+                    # Get deep copy of phi (intra) and tau (inter)
                     resid.site_analysis[gmpe][imtx]["Intra event"] = np.copy(
                         t_resid.residuals[gmpe][imtx]["Intra event"])
                     resid.site_analysis[gmpe][imtx]["Inter event"] = np.copy(
                         t_resid.residuals[gmpe][imtx]["Inter event"])
 
+                    # Get delta_s2ss
                     delta_s2ss = self._get_delta_s2ss(
-                        resid.residuals[gmpe][imtx]["Intra event"],
-                        n_events)
-                    delta_woes = \
-                        resid.site_analysis[gmpe][imtx]["Intra event"] - \
-                        delta_s2ss
+                        resid.residuals[gmpe][imtx]["Intra event"], n_events)
+                    
+                    # Get delta_woes
+                    delta_woes = (
+                        resid.site_analysis[gmpe][imtx]["Intra event"] - delta_s2ss)
+                    
+                    # Get phi_ss
+                    phi_ss = self._get_single_station_phi(
+                        resid.residuals[gmpe][imtx]["Intra event"], delta_s2ss, n_events)
+
+                    # Store 
                     resid.site_analysis[gmpe][imtx]["dS2ss"] = delta_s2ss
                     resid.site_analysis[gmpe][imtx]["dWo,es"] = delta_woes
+                    resid.site_analysis[gmpe][imtx]["phi_ss,s"] = phi_ss
                     
-                    resid.site_analysis[gmpe][imtx]["phi_ss,s"] = \
-                        self._get_single_station_phi(
-                            resid.residuals[gmpe][imtx]["Intra event"],
-                            delta_s2ss,
-                            n_events)
-            
                     # Get expected values too
-                    resid.site_analysis[gmpe][imtx]["Expected Inter"] =\
+                    resid.site_analysis[gmpe][imtx]["Expected inter"] =\
                         np.copy(t_resid.modelled[gmpe][imtx]["Inter event"])
-                    resid.site_analysis[gmpe][imtx]["Expected Intra"] =\
+                    resid.site_analysis[gmpe][imtx]["Expected intra"] =\
                         np.copy(t_resid.modelled[gmpe][imtx]["Intra event"])
             
+            # Store
             output_resid.append(resid)
+        
+        # Update
         self.site_residuals = output_resid
-        return self.get_total_phi_ss(pretty_print, filename)
+
+        return self.get_total_phi_ss(filename)
 
     def _get_delta_s2ss(self, intra_event, n_events):
         """
@@ -1406,34 +1036,32 @@ class SingleStationAnalysis(object):
         phiss = np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1)
         return np.sqrt(phiss)
 
-    def get_total_phi_ss(self, pretty_print = False, filename = None):
+    def get_total_phi_ss(self, filename=None):
         """
         Returns the station averaged single-station phi from Rodriguez-Marek
         et al. (2011) Equation 10
         """
-        if pretty_print == True:
-            if filename:
-                fid = open(filename, "w")
-            else:
-                fid = sys.stdout
+        if filename is not None:
+            fid = open(filename, "w")
+        else:
+            fid = sys.stdout
         phi_ss = self._set_empty_dict()
         phi_s2ss = self._set_empty_dict()
         for gmpe in self.gmpe_list:
-            if pretty_print == True:
-                if '_toml=' in str(gmpe):
-                    gmpe_str = str(gmpe).split('_toml=')[1].replace(
-                        ')','').replace('\n','; ')
-                else:
-                    gmpe_str = gmpe
+            
+            # Print GMM info to file
+            if filename is not None:
+                gmpe_str = get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
             for imtx in self.imts:
-                if pretty_print == True:
+                # Print IMT info to file
+                if filename is not None:
                     print("%s" % imtx, file=fid)
-                if not ("Intra event" in self.site_residuals[0].site_analysis[
-                        gmpe][imtx]):
-                    warnings.warn("GMPE %s and IMT %s do not have defined "
-                          "random effects residuals" % (str(gmpe), str(imtx)),
-                          stacklevel = 10)
+                if not ("Intra event" in self.site_residuals[
+                    0].site_analysis[gmpe][imtx]):
+                    msg = (f"GMPE {gmpe} does not have random"
+                           f"effects residuals for {imtx}")
+                    warnings.warn(msg, stacklevel=10)
                     continue
                 n_events = []
                 numerator_sum = 0.0
@@ -1444,9 +1072,11 @@ class SingleStationAnalysis(object):
                     numerator_sum += np.sum((
                         resid.site_analysis[gmpe][imtx]["Intra event"] -
                         resid.site_analysis[gmpe][imtx]["dS2ss"]) ** 2.)
-                    if pretty_print == True:
-                        print("Site ID, %s, dS2Ss, %12.8f, "
-                              "phiss_s, %12.8f, Num Records, %s" % (
+                    
+                    # Print dS2Ss, phiss_s to file
+                    if filename is not None:
+                        print("Site ID, %s, dS2Ss, %s, "
+                              "phiss_s, %s, Num Records, %s" % (
                               list(self.site_ids)[iloc],
                               resid.site_analysis[gmpe][imtx]["dS2ss"],
                               resid.site_analysis[gmpe][imtx]["phi_ss,s"],
@@ -1457,33 +1087,33 @@ class SingleStationAnalysis(object):
                 phi_s2ss[gmpe][imtx] = {"Mean": np.mean(d2ss),
                                         "StdDev": np.std(d2ss)}
                 phi_ss[gmpe][imtx] = np.sqrt(
-                    numerator_sum /
-                    float(np.sum(np.array(n_events)) - 1))
-                
-        if pretty_print == True:
-            print("TOTAL RESULTS FOR GMPE", file=fid)
+                    numerator_sum / float(np.sum(np.array(n_events)) - 1))
+        
+        # Print phi_ss and phi_s2ss info to file
+        if filename is not None:
+            print("\nTOTAL RESULTS PER GMPE", file=fid)
             for gmpe in self.gmpe_list:
-                if '_toml' in str(gmpe):
-                    gmpe_str = str(gmpe).split('_toml=')[1].replace(
-                        ')','').replace('\n','; ')
-                else:
-                    gmpe_str = gmpe
+                gmpe_i = self.gmpe_list[gmpe]
+                gmpe_str = get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
+                
                 # If mixed effects GMPE append with intra-event res components
-                if self.gmpe_list[
-                        gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == frozenset(
-                            {'Inter event', 'Intra event', 'Total'}
-                            ) or 'al_atik_2015_sigma' in str(gmpe):
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                         for imtx in self.imts:
-                            print("%s, phi_ss, %12.8f, phi_s2ss(Mean),"
-                                  " %12.8f, phi_s2ss(Std. Dev), %12.8f" % (
-                                      imtx, phi_ss[gmpe][imtx], phi_s2ss[gmpe][
-                                          imtx]["Mean"], phi_s2ss[gmpe][imtx][
-                                              "StdDev"]), file=fid)
+                            p_data = (imtx,
+                                      phi_ss[gmpe][imtx],
+                                      phi_s2ss[gmpe][imtx]["Mean"],
+                                      phi_s2ss[gmpe][imtx]["StdDev"])
+                            print("%s, phi_ss, %s, phi_s2ss mean, %s, "
+                                  "phi_s2ss std. dev), %s" % p_data, file=fid)
+                
+                # Total sigma only for given GMM
                 else:
                     for imtx in self.imts:
-                        print("%s, phi_ss, , phi_s2ss(Mean), , phi_s2ss(Std. Dev),"
-                              % (imtx), file=fid)
-            if filename:
+                        print(f"{imtx}, phi_ss, , phi_s2ss mean, , "
+                              f"phi_s2ss (std. dev)", file=fid)
+                        
+            if filename is not None:
                 fid.close()
+
         return phi_ss, phi_s2ss

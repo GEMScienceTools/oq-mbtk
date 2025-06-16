@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -21,22 +21,17 @@ motion records
 """
 import os
 import pickle
-import json
-from datetime import datetime
-from collections import OrderedDict
 import numpy as np
 import h5py
+from datetime import datetime
 
 from openquake.hazardlib import imt
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo import geodetic
-from openquake.smt.residuals import sm_database_surface_utils
+from openquake.smt import utils
 from openquake.smt.residuals.context_db import ContextDB
-import openquake.smt.utils_strong_motion as utils
-from openquake.smt.utils_strong_motion import (vs30_to_z1pt0_cy14,
-                                               vs30_to_z2pt5_cb14,
-                                               z1pt0_to_z2pt5)
+import openquake.smt.utils_intensity_measures as utils_imts
 
 
 class Magnitude(object):
@@ -50,27 +45,12 @@ class Magnitude(object):
         The magnitude uncertainty (standard deviation)
     """
     def __init__(self, value, mtype, sigma=None, source=""):
-        """
-        Instantiate the class
-        """
         self.value = value
         self.mtype = mtype
         self.sigma = sigma
         self.source = source
 
-    @classmethod
-    def from_dict(cls, d):
-        """
-        Instantiates the object from a dictionary
-        """
-        return cls(d["value"], d["mtype"], d["sigma"], d["source"])
-
-    def to_dict(self):
-        return self.__dict__
-
     def __eq__(self, m):
-        """
-        """
         same_value = np.fabs(self.value - m.value) < 1.0E-3
         if self.sigma and m.sigma:
             same_sigma = np.fabs(self.sigma - m.sigma) < 1.0E-7
@@ -104,11 +84,17 @@ class Rupture(object):
         Hypocentral location within rupture surface as a fraction of
         (along-strike length, down-dip width)
     """
-    def __init__(self, eq_id, eq_name, magnitude, length, width, depth,
-                 hypocentre=None, area=None, surface=None, hypo_loc=None):
-        """
-        Instantiate
-        """
+    def __init__(self,
+                 eq_id,
+                 eq_name,
+                 magnitude,
+                 length,
+                 width,
+                 depth,
+                 hypocentre=None,
+                 area=None,
+                 surface=None,
+                 hypo_loc=None):
         self.id = eq_id
         self.name = eq_name
         self.magnitude = magnitude
@@ -164,73 +150,19 @@ class Rupture(object):
         # out of options - returning None
         return None
 
-    def to_dict(self):
-        """
-        """
-        output = OrderedDict([])
-        for key in self.__dict__:
-            if key == "magnitude" and self.magnitude is not None:
-                # Parse magnitude object to dictionary
-                output[key] = self.magnitude.__dict__
-            elif key == "hypocentre" and self.hypocentre is not None:
-                output[key] = [self.hypocentre.longitude,
-                               self.hypocentre.latitude,
-                               self.hypocentre.depth]
-            elif key == "surface" and self.surface is not None:
-                output[key] = sm_database_surface_utils.surfaces_to_dict[
-                    self.surface.__class__.__name__](self.surface)
-            else:
-                output[key] = getattr(self, key)
-        return output
-
-    @classmethod
-    def from_dict(cls, data, mesh_spacing=1.):
-        """
-        Creates an instance of the class from a json load
-        """
-        rup = cls(data["id"], data["name"],
-                  Magnitude.from_dict(data["magnitude"]),
-                  data["length"], data["width"], data["depth"])
-        for key in data:
-            if key in ["id", "name", "magnitude", "length", "width", "depth"]:
-                continue
-            elif key == "surface" and data["surface"] is not None:
-                rup.surface = sm_database_surface_utils.surfaces_from_dict(
-                    data[key]["type"], mesh_spacing)
-            else:
-                setattr(rup, key, data[key])
-        return rup
-
 
 class GCMTNodalPlanes(object):
     """
     Class to represent the nodal plane distribution of the tensor
     Each nodal plane is represented as a dictionary of the form:
     {'strike':, 'dip':, 'rake':}
+    
     :param Union[dict, None] nodal_plane_1: First nodal plane
     :param Union[dict, None] nodal_plane_2: Second nodal plane
     """
     def __init__(self):
-        """
-        Instantiate with empty nodal planes
-        """
         self.nodal_plane_1 = None
         self.nodal_plane_2 = None
-
-    def to_dict(self):
-        """
-        Returns a dictionary
-        """
-        return self.__dict__
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        """
-        nps = cls()
-        for key in data:
-            setattr(nps, key, data[key])
-        return nps
 
 
 class GCMTPrincipalAxes(object):
@@ -244,27 +176,9 @@ class GCMTPrincipalAxes(object):
     :param dict | None p_axis: The eigensystem of the P-axis
     """
     def __init__(self):
-        """
-        Instantiate
-        """
         self.t_axis = None
         self.b_axis = None
         self.p_axis = None
-
-    def to_dict(self):
-        """
-        Returns a dictionary
-        """
-        return self.__dict__
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        """
-        pas = cls()
-        for key in data:
-            setattr(pas, key, data[key])
-        return pas
 
 
 class FocalMechanism(object):
@@ -283,11 +197,13 @@ class FocalMechanism(object):
     :param str mechanism_type:
         Qualitative description of mechanism
     """
-    def __init__(self, eq_id, name, nodal_planes, eigenvalues,
-                 moment_tensor=None, mechanism_type=None):
-        """
-        Instantiate
-        """
+    def __init__(self,
+                 eq_id,
+                 name,
+                 nodal_planes,
+                 eigenvalues,
+                 moment_tensor=None,
+                 mechanism_type=None):
         self.id = eq_id
         self.name = name
         self.nodal_planes = nodal_planes
@@ -305,45 +221,9 @@ class FocalMechanism(object):
             return utils.MECHANISM_TYPE[self.mechanism_type]
         return 0.0
 
-    def to_dict(self):
-        """
-        """
-        output = OrderedDict([])
-        for key in self.__dict__:
-            if key in ("nodal_planes", "eigenvalues") and \
-                    getattr(self, key) is not None:
-                output[key] = getattr(self, key).__dict__
-            elif key == "tensor":
-                output[key] = self._moment_tensor_to_list()
-            else:
-                output[key] = getattr(self, key)
-        return output
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        """
-        keys = list(data)
-        if "nodal_planes" in keys and data["nodal_planes"]:
-            nps = GCMTNodalPlanes.from_dict(data["nodal_planes"])
-        else:
-            nps = None
-        if "eigenvalues" in keys and data["eigenvalues"]:
-            eigs =  GCMTPrincipalAxes.from_dict(data["eigenvalues"])
-        else:
-            eigs = None
-        if "tensor" in keys and data["tensor"]:
-            tensor = np.array(data["tensor"])
-        else:
-            tensor = None
-
-        foc_mech = cls(data["id"], data["name"], nps, eigs, tensor)
-        if "mechanism_type" in data:
-            setattr(foc_mech, "mechanism_type", data["mechanism_type"])
-        return foc_mech
-
     def _moment_tensor_to_list(self):
         """
+        Moment tensor to list
         """
         if self.tensor is None:
             return None
@@ -376,12 +256,17 @@ class Earthquake(object):
     :param rupture:
         Earthquake rupture as instance of the :class: Rupture
     """
-    def __init__(self, eq_id, name, date_time, longitude, latitude, depth,
-                 magnitude, focal_mechanism=None, eq_country=None,
+    def __init__(self,
+                 eq_id,
+                 name,
+                 date_time,
+                 longitude,
+                 latitude,
+                 depth,
+                 magnitude,
+                 focal_mechanism=None,
+                 eq_country=None,
                  tectonic_region=None):
-        """
-        Instantiate
-        """
         self.id = eq_id
         assert isinstance(date_time, datetime)
         self.datetime = date_time
@@ -395,53 +280,6 @@ class Earthquake(object):
         self.mechanism = focal_mechanism
         self.rupture = None
         self.tectonic_region = tectonic_region
-
-    def to_dict(self):
-        """
-        Parses the information to a json compatible dictionary
-        """
-        output = OrderedDict([])
-        for key in self.__dict__:
-            if key == "datetime":
-                output[key] = str(self.datetime)
-            elif key == "magnitude":
-                output[key] = self.magnitude.__dict__
-            elif key == "magnitude_list":
-                output[key] = [mag.__dict__ for mag in self.magnitude_list]
-            elif key in ("mechanism", "rupture") and\
-                getattr(self, key) is not None:
-                output[key] = getattr(self, key).to_dict()
-            else:
-                output[key] = getattr(self, key)
-        return output
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        Loads the class from a json compatible dictionary
-        """
-        reqs = ["id", "name", "datetime", "longitude", "latitude", "depth",
-                "magnitude"]
-        eqk = cls(data["id"], data["name"],
-                  datetime.strptime(data["datetime"], "%Y-%m-%d %H:%M:%S"),
-                  data["longitude"],
-                  data["latitude"],
-                  data["depth"],
-                  Magnitude.from_dict(data["magnitude"]))
-        
-        for key in data:
-            if key in reqs:
-                continue
-            elif key == "magnitude_list" and len(data[key]):
-                setattr(eqk, key, [Magnitude.from_dict(mag)
-                                   for mag in data[key]])
-            elif key == "mechanism" and data[key]:
-                setattr(eqk, key, FocalMechanism.from_dict(data[key]))
-            elif key == "rupture" and data[key]:
-                setattr(eqk, key, Rupture.from_dict(data[key]))
-            else:
-                setattr(eqk, key, data[key])
-        return eqk
 
 
 class RecordDistance(object):
@@ -471,11 +309,17 @@ class RecordDistance(object):
         and earthquake-specific
         average DPP used
     """
-    def __init__(self, repi, rhypo, rjb=None, rrup=None, r_x=None, ry0=None,
-                 flag=None, azimuth=None, rcdpp=None, rvolc=None):
-        """
-        Instantiates class
-        """
+    def __init__(self,
+                 repi,
+                 rhypo,
+                 rjb=None,
+                 rrup=None,
+                 r_x=None,
+                 ry0=None,
+                 flag=None,
+                 azimuth=None,
+                 rcdpp=None,
+                 rvolc=None):
         self.repi = repi
         self.rhypo = rhypo
         self.rjb = rjb
@@ -490,18 +334,6 @@ class RecordDistance(object):
         # QuakeML parameters
         self.pre_event_length = None
         self.post_event_length = None
-
-    def to_dict(self):
-        return self.__dict__
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        """
-        d = cls(data["repi"], data["rhypo"])
-        for key in data:
-            setattr(d, key, data[key])
-        return d
 
 
 # Eurocode 8 Site Class Vs30 boundaries
@@ -595,12 +427,19 @@ class RecordSite(object):
         True if site is in subduction backarc, False otherwise
 
     """
-    def __init__(self, site_id, site_code, site_name, longitude, latitude,
-                 altitude, vs30=None, vs30_measured=None, network_code=None,
-                 country=None, site_class=None, backarc=False):
-        """
-
-        """
+    def __init__(self,
+                 site_id,
+                 site_code,
+                 site_name,
+                 longitude,
+                 latitude,
+                 altitude,
+                 vs30=None,
+                 vs30_measured=None,
+                 network_code=None,
+                 country=None,
+                 site_class=None,
+                 backarc=False):
         self.id = site_id
         self.name = site_name
         self.code = site_code
@@ -629,20 +468,6 @@ class RecordSite(object):
         self.backarc = backarc
         self.morphology = None
         self.slope = None
-        
-    def to_dict(self):
-        return self.__dict__
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        """
-        reqs = ["id", "code", "name", "longitude", "latitude", "altitude"]
-        site = cls(*[data[req] for req in reqs])
-        for key in data:
-            if key not in reqs:
-                setattr(site, key, data[key])
-        return site
 
     def to_openquake_site(self, missing_vs30=None):
         """
@@ -658,17 +483,13 @@ class RecordSite(object):
         
         if self.z1pt0:
             z1pt0 = self.z1pt0
-        else:
-            z1pt0 = vs30_to_z1pt0_cy14(vs30)
 
         if self.z2pt5:
             z2pt5 = self.z2pt5
-        else:
-            z2pt5 = z1pt0_to_z2pt5(z1pt0)
         
         location = Point(self.longitude,
                          self.latitude,
-                         -self.altitude / 1000.)  # Elevation from m to km
+                        -self.altitude / 1000.)  # Elevation from m to km
         oq_site = Site(location,
                        vs30,
                        z1pt0,
@@ -795,11 +616,14 @@ class Component(object):
         Units of record
         
     """
-    def __init__(self, waveform_id, orientation, ims=None, longest_period=None,
-                 waveform_filter=None, baseline=None, units=None):
-        """
-        Instantiate
-        """
+    def __init__(self,
+                 waveform_id,
+                 orientation,
+                 ims=None,
+                 longest_period=None,
+                 waveform_filter=None,
+                 baseline=None,
+                 units=None):
         self.id = waveform_id
         self.orientation = orientation
         self.lup = longest_period
@@ -816,19 +640,6 @@ class Component(object):
         self.resample_rate_numerator = None
         self.owner = None
         self.creation_info = None
-
-    def to_dict(self):
-        return self.__dict__
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        """
-        comp = cls(data["id"], data["orientation"])
-        for key in data:
-            if not key in ["id", "orientation"]:
-                setattr(comp, key, data[key])
-        return comp
 
 
 class GroundMotionRecord(object):
@@ -866,8 +677,6 @@ class GroundMotionRecord(object):
     def __init__(self, gm_id, time_series_file, event, distance, record_site,
                  x_comp, y_comp, vertical=None, ims=None, longest_period=None,
                  shortest_period=None, spectra_file=None):
-        """
-        """
         self.id = gm_id
         self.time_series_file = time_series_file
         self.spectra_file = spectra_file
@@ -889,45 +698,6 @@ class GroundMotionRecord(object):
         self.directivity = None
         self.datafile = None
         self.misc = None
-
-    def to_dict(self):
-        """
-        """
-        output = OrderedDict([])
-        for key in self.__dict__:
-            if key in ("event", "distance", "site", "xrecord", "yrecord"):
-                output[key] = getattr(self, key).to_dict()
-            elif key == "vertical" and self.vertical:
-                output[key] = self.vertical.to_dict()
-            else:
-                output[key] = getattr(self, key)
-        return output
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        """
-        reqs = ["id", "time_series_file", "event", "distance", "site",
-                "xrecord", "yrecord", "vertical"]
-        evnt = cls(data["id"],
-                   data["time_series_file"],
-                   Earthquake.from_dict(data["event"]),
-                   RecordDistance.from_dict(data["distance"]),
-                   RecordSite.from_dict(data["site"]),
-                   Component.from_dict(data["xrecord"]),
-                   Component.from_dict(data["yrecord"]))
-
-        if "vertical" in data and data["vertical"]:
-            evnt.vertical = Component.from_dict(data["vertical"])
-
-        for key in data:
-            if key in reqs:
-                continue
-            elif not data[key]:
-                setattr(evnt, key, None)
-            else:
-                setattr(evnt, key, data[key])
-        return evnt
 
     def get_azimuth(self):
         """
@@ -961,8 +731,6 @@ class GroundMotionDatabase(ContextDB):
     """
     def __init__(self, db_id, db_name, db_directory=None, records=None,
                  site_ids=None):
-        """
-        """
         self.id = db_id
         self.name = db_name
         self.directory = db_directory
@@ -998,9 +766,8 @@ class GroundMotionDatabase(ContextDB):
     def get_observations(self, imtx, records, component="Geometric"):
         """
         Return observed values for the given imt, as numpy array.
-        See superclass docstring for details
+        See superclass docstrsing for details
         """
-
         values = []
         selection_string = "IMS/H/Spectra/Response/Acceleration/"
         for record in records:
@@ -1009,10 +776,9 @@ class GroundMotionDatabase(ContextDB):
                 values.append(self.get_scalar(fle, imtx, component))
             elif "SA(" in imtx:
                 target_period = imt.from_string(imtx).period
-                spectrum = fle[selection_string + component +
-                               "/damping_05"][:]
+                spectrum = fle[selection_string + component + "/damping_05"][:]
                 periods = fle["IMS/H/Spectra/Response/Periods"][:]
-                values.append(utils.get_interpolated_period(
+                values.append(utils_imts.get_interpolated_period(
                     target_period, periods, spectrum))
             else:
                 raise ValueError("IMT %s is unsupported!" % imtx)
@@ -1020,7 +786,9 @@ class GroundMotionDatabase(ContextDB):
         return values
 
     def update_context(self, ctx, records, nodal_plane_index=1):
-        """Updates the given RuptureContext with data from `records`.
+        """
+        Updates the given RuptureContext with data from `records`.
+
         See superclass docstring for details
         """
         self._update_rupture_context(ctx, records, nodal_plane_index)
@@ -1028,8 +796,9 @@ class GroundMotionDatabase(ContextDB):
         self._update_distances_context(ctx, records)
 
     def _update_rupture_context(self, ctx, records, nodal_plane_index=1):
-        """Called by self.update_context"""
-
+        """
+        Called by self.update_context
+        """
         record = records[0]
         ctx.mag = record.event.magnitude.value
         if nodal_plane_index == 2:
@@ -1069,8 +838,9 @@ class GroundMotionDatabase(ContextDB):
         ctx.hypo_lon = record.event.longitude
 
     def _update_sites_context(self, ctx, records):
-        """Called by self.update_context"""
-
+        """
+        Called by self.update_context
+        """
         for attname in self.sites_context_attrs:
             setattr(ctx, attname, [])
 
@@ -1091,19 +861,20 @@ class GroundMotionDatabase(ContextDB):
             if record.site.z1pt0 is not None:
                 z1pt0 = record.site.z1pt0
             else:
-                z1pt0 = vs30_to_z1pt0_cy14(record.site.vs30)
+                z1pt0 = int(-999)
             ctx.z1pt0.append(z1pt0)
             if record.site.z2pt5 is not None:
                 z2pt5 = record.site.z2pt5
             else:
-                z2pt5 = vs30_to_z2pt5_cb14(record.site.vs30)
+                z2pt5 = int(-999)
             ctx.z2pt5.append(z2pt5)
             if getattr(record.site, "backarc", None) is not None:
                 ctx.backarc.append(record.site.backarc)
-        # finalize:
+        
+        # Finalise
         for attname in self.sites_context_attrs:
             attval = getattr(ctx, attname)
-            # remove attribute if its value is empty-like
+            # Remove attribute if its value is empty-like
             if attval is None or not len(attval):
                 delattr(ctx, attname)
             elif attname in ('vs30measured', 'backarc'):
@@ -1113,8 +884,9 @@ class GroundMotionDatabase(ContextDB):
                 setattr(ctx, attname, np.asarray(attval, dtype=float))
 
     def _update_distances_context(self, ctx, records):
-        """Called by self.update_context"""
-
+        """
+        Called by self.update_context
+        """
         for attname in self.distances_context_attrs:
             setattr(ctx, attname, [])
 
@@ -1146,7 +918,6 @@ class GroundMotionDatabase(ContextDB):
             if getattr(record.distance, "rvolc", None) is not None:
                 ctx.rvolc.append(record.distance.rvolc)
 
-        # finalize:
         for attname in self.distances_context_attrs:
             attval = getattr(ctx, attname)
             # remove attribute if its value is empty-like
@@ -1154,14 +925,12 @@ class GroundMotionDatabase(ContextDB):
                 delattr(ctx, attname)
             else:
                 # FIXME: dtype=float forces Nones to be safely converted to nan
-                # but it assumes obviously all attval elements to be numeric
                 setattr(ctx, attname, np.asarray(attval, dtype=float))
 
     ###########################
     # END OF ABSTRACT METHODS #
     ###########################
 
-    # moved from openquake/smt/residuals/gmpe_residuals.py:
     def get_scalar(self, fle, i_m, component="Geometric"):
         """
         Retrieves the scalar IM from the database
@@ -1175,36 +944,12 @@ class GroundMotionDatabase(ContextDB):
         if not ("H" in fle["IMS"].keys()):
             x_im = fle["IMS/X/Scalar/" + i_m][0]
             y_im = fle["IMS/Y/Scalar/" + i_m][0]
-            return utils.SCALAR_XY[component](x_im, y_im)
+            return utils_imts.SCALAR_XY[component](x_im, y_im)
         else:
             if i_m in fle["IMS/H/Scalar"].keys():
                 return fle["IMS/H/Scalar/" + i_m][0]
             else:
                 raise ValueError("Scalar IM %s not in record database" % i_m)
-
-    def to_json(self):
-        """
-        Exports the database to json
-        """
-        json_dict = {"id": self.id,
-                     "name": self.name,
-                     "directory": self.directory,
-                     "records": []}
-        for rec in self.records:
-            json_dict["records"].append(rec.to_dict())
-        return json.dumps(json_dict)
-
-    @classmethod
-    def from_json(cls, filename):
-        """
-        """
-        with open(filename, "r") as f:
-            raw = json.load(f)
-        gmdb = cls(raw["id"], raw["name"], raw["directory"])
-        for record in raw["records"]:
-            gmdb.records.append(GroundMotionRecord.from_dict(record))
-        gmdb.site_ids = [rec.site.id for rec in gmdb.records]
-        return gmdb
 
     def number_records(self):
         """
@@ -1222,9 +967,8 @@ class GroundMotionDatabase(ContextDB):
         """
         String with database ID and name
         """
-        return "{:s} - ID({:s}) - Name ({:s})".format(self.__class__.__name__,
-                                                      self.id,
-                                                      self.name)
+        return "{:s} - ID({:s}) - Name ({:s})".format(
+            self.__class__.__name__, self.id, self.name)
 
     def _get_event_id_list(self):
         """
@@ -1253,6 +997,29 @@ class GroundMotionDatabase(ContextDB):
         return SiteCollection([rec.site.to_openquake_site(missing_vs30)
                                for rec in self.records])
 
+    def rank_sites_by_record_count(self, threshold=0):
+        """
+        Function to determine count the number of records per site and return
+        the list ranked in descending order
+        """
+        name_id_list = [(rec.site.id, rec.site.name) for rec in self.records]
+        name_id = dict([])
+        for name_id_pair in name_id_list:
+            if name_id_pair[0] in name_id:
+                name_id[name_id_pair[0]]["Count"] += 1
+            else:
+                name_id[name_id_pair[0]] = {"Count": 1, "Name": name_id_pair[1]}
+        counts = np.array([name_id[key]["Count"] for key in name_id])
+        sort_id = np.flipud(np.argsort(counts))
+
+        key_vals = list(name_id)
+        output_list = []
+        for idx in sort_id:
+            if name_id[key_vals[idx]]["Count"] >= threshold:
+                output_list.append((key_vals[idx], name_id[key_vals[idx]]))
+
+        return dict(output_list)
+
 
 def load_database(directory):
     """
@@ -1262,7 +1029,7 @@ def load_database(directory):
     metadata_file = None
     filetype = None
     fileset = os.listdir(directory)
-    for ftype in ["pkl", "json"]:
+    for ftype in ["pkl"]:
         if ("metadatafile.%s" % ftype) in fileset:
             metadata_file = "metadatafile.%s" % ftype
             filetype = ftype
@@ -1272,10 +1039,7 @@ def load_database(directory):
             "Expected metadata file of supported type not found in %s"
             % directory)
     metadata_path = os.path.join(directory, metadata_file)
-    if filetype == "json":
-        # json metadata filetype
-        return GroundMotionDatabase.from_json(metadata_path)
-    elif filetype == "pkl":
+    if filetype == "pkl":
         # pkl file type
         with open(metadata_path, "rb") as f:
             return pickle.load(f)
