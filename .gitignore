@@ -116,3 +116,8 @@ setup.sh
 
 # vim
 *.swp
+
+# SMT demo outputs
+openquake/smt/demos/outputs_demo_comparison
+openquake/smt/demos/outputs_demo_residual_analysis
+openquake/smt/demos/outputs_demo_station_analysis

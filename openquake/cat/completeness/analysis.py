@@ -146,8 +146,8 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     binw = tvars['binw']
     bval = tvars['bval']
     aval = tvars['aval']
-    ref_mag = tvars['ref_mag']
-    ref_upp_mag = tvars['ref_upp_mag']
+    ref_mag = tvars.get('ref_mag', 3.0)
+    ref_upp_mag = tvars.get('ref_upp_mag', 10.0)
     bgrlim = tvars['bgrlim']
     ctab = tvars['ctab']
     tcat = tvars['tcat']
@@ -176,8 +176,8 @@ def check_criterion(criterion, rate, previous_norm, tvars):
         norm = abs(tmp_rate - rate_ma)
 
     elif criterion == 'optimize':
-        tmp_rate = -1 
-        norm = get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, 
+        tmp_rate = -1
+        norm = get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per,
                                  last_year, info=False)
 
     elif criterion == 'optimize_a':
@@ -207,12 +207,12 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     if norm is None or np.isnan(norm):
         return False, -1, previous_norm
 
-    # for maximise criteria, assume norm wants to be larger than prev norm 
+    # for maximise criteria, assume norm wants to be larger than prev norm
     if criterion in MAXIMISE:
         if previous_norm < norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
             check = True
 
-    # for any other criteria, assume norm wants to be smaller than prev norm 
+    # for any other criteria, assume norm wants to be smaller than prev norm
     elif previous_norm > norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
         check = True
 
@@ -324,7 +324,11 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         assert np.all(np.diff(ctab[:, 1]) >= 0)
 
         # Compute occurrence
-        cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
+
+        if not np.any(tcat.data['magnitude'] > ctab[0][1]):
+            continue
+        cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw,
+                                                         return_empty=True)
         if len(cent_mag) == 0:
             continue
         wei_conf['reference_magnitude'] = min(ctab[:, 1])
@@ -493,7 +497,7 @@ def read_compl_data(folder_in):
 
 
 def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
-                          folder_in, folder_out, skip=''):
+                          folder_in, folder_out, skip='', use_only=None):
     """
     :param fname_input_pattern:
         Pattern to the files with the subcatalogues
@@ -511,9 +515,7 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
 
     # Loading configuration
     config = toml.load(f_config)
-
     ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(config)
-
     compl_tables, mags_chk, years_chk = read_compl_data(folder_in)
 
     # Fixing sorting of years
@@ -523,18 +525,26 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
     np.testing.assert_array_almost_equal(ms, mags_chk)
     np.testing.assert_array_almost_equal(yrs, years_chk)
 
-    # Info
+    # Process input
     if len(skip) > 0:
         if isinstance(skip, str):
             skip = get_list(skip)
         print('Skipping: ', skip)
+    if use_only is not None:
+        if isinstance(use_only, str):
+            use_only = get_list(use_only)
+        print('Using: ', use_only)
 
     # Processing subcatalogues
     for fname in glob.glob(fname_input_pattern):
         # Get source ID
         src_id = _get_src_id(fname)
-        # If necessary skip the source
+
+        # If necessary, skip the source
         if src_id in skip:
+            continue
+
+        if use_only is not None and src_id not in use_only:
             continue
 
         # Read configuration parameters for the current source

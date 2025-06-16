@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -23,17 +23,16 @@ http://esm.mi.ingv.it/static_stage/doc/manual_ESM.pdf
 """
 import os
 import numpy as np
-from collections import OrderedDict
 from datetime import datetime
 from linecache import getline
 from math import sqrt
 from copy import copy
 
-from openquake.smt.utils_strong_motion import (convert_accel_units,
-                                               get_time_vector)
+from openquake.smt.utils import convert_accel_units, get_time_vector
 from openquake.smt.residuals.sm_database import *
-from openquake.smt.residuals.parsers.base_database_parser import (
-    SMDatabaseReader, SMTimeSeriesReader, SMSpectraReader)
+from openquake.smt.residuals.parsers.base_database_parser import (SMDatabaseReader,
+                                                                  SMTimeSeriesReader,
+                                                                  SMSpectraReader)
 
 FILE_INFO_KEY = ["Net", "Station", "Location", "Channel", "DM", "Date", "Time",
                  "Processing", "Waveform", "Format"]
@@ -65,16 +64,7 @@ def _get_filename_info(filename):
     """
     file_info = filename.split(".")
     # Sometimes there are consecutive dots in the delimiter
-    return OrderedDict([
-        (FILE_INFO_KEY[i], file_info[i]) for i in range(len(file_info))
-        ])
-
-
-def _get_filename_from_info(self, file_info):
-    """
-    Given a file info dictionary return the corresponding filename
-    """
-    return ".".join([file_info[key] for key in file_info])
+    return {FILE_INFO_KEY[i]: file_info[i] for i in range(len(file_info))}
 
 
 def _get_metadata_from_file(file_str):
@@ -91,7 +81,8 @@ def _get_metadata_from_file(file_str):
         else:
             # Parse as normal
             metadata.append((row[0].strip(), row[1].strip()))
-    return OrderedDict(metadata)
+    return dict(metadata)
+
 
 def _get_xyz_metadata(file_dict):
     """
@@ -436,11 +427,10 @@ class ESMTimeSeriesParser(SMTimeSeriesReader):
         """
         Parses the time series
         """
-        time_series = OrderedDict([
-            ("X", {"Original": {}, "SDOF": {}}),
-            ("Y", {"Original": {}, "SDOF": {}}),
-            ("V", {"Original": {}, "SDOF": {}})])
-             
+        time_series = {
+            "X": {"Original": {}, "SDOF": {}},
+            "Y": {"Original": {}, "SDOF": {}},
+            "V": {"Original": {}, "SDOF": {}}}    
         target_names = list(time_series)
         for iloc, ifile in enumerate(self.input_files):
             if not os.path.exists(ifile):
@@ -493,10 +483,10 @@ class ESMSpectraParser(SMSpectraReader):
         """
         Parses the response spectra - 5 % damping is assumed
         """
-        sm_record = OrderedDict([
-            ("X", {"Scalar": {}, "Spectra": {"Response": {}}}), 
-            ("Y", {"Scalar": {}, "Spectra": {"Response": {}}}), 
-            ("V", {"Scalar": {}, "Spectra": {"Response": {}}})])
+        sm_record = {
+            "X": {"Scalar": {}, "Spectra": {"Response": {}}},
+            "Y": {"Scalar": {}, "Spectra": {"Response": {}}},
+            "V": {"Scalar": {}, "Spectra": {"Response": {}}}}
         target_names = list(sm_record)
         for iloc, ifile in enumerate(self.input_files):
             if not os.path.exists(ifile):

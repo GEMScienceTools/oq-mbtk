@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation
+# Copyright (C) 2014-2025 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -23,8 +23,7 @@ import shutil
 import unittest
 import pickle
 
-from openquake.smt.residuals.parsers.ngawest2_flatfile_parser import \
-    NGAWest2FlatfileParser
+from openquake.smt.residuals.parsers.ngawest2_flatfile_parser import NGAWest2FlatfileParser
 
 
 # Defines the record IDs for the target data set
@@ -44,9 +43,7 @@ TARGET_IDS = [
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 class NGAWest2FlatfileParserTestCase(unittest.TestCase):
-    """
-    Tests the parsing of the NGAWest2 flatfile
-    """
+    
     @classmethod
     def setUpClass(cls):
         cls.NGAWest2_flatfile_directory = os.path.join(BASE_DATA_PATH,
@@ -56,9 +53,6 @@ class NGAWest2FlatfileParserTestCase(unittest.TestCase):
         cls.db_file = os.path.join(BASE_DATA_PATH, "NGAWest2_test_metadata")       
 
     def test_NGAWest2_flatfile_parser(self):
-        """
-        Tests the parsing of the NGAWest2 flatfile
-        """
         parser = NGAWest2FlatfileParser.autobuild("000", "NGAWest2_test",
                                              self.db_file,
                                              self.NGAWest2_flatfile_directory,
@@ -75,7 +69,4 @@ class NGAWest2FlatfileParserTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """
-        Remove the database
-        """
         shutil.rmtree(cls.db_file)

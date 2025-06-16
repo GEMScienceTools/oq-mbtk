@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation
+# Copyright (C) 2014-2025 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -20,7 +20,6 @@ Parse the GEM globally homogenised flatfile into SMT metadata.
 """
 import pandas as pd
 import os
-import tempfile
 import csv
 import numpy as np
 import copy
@@ -28,33 +27,66 @@ import h5py
 import pickle
 from math import sqrt
 from linecache import getline
-from collections import OrderedDict
 
-from openquake.smt.residuals.sm_database import (
-    GroundMotionDatabase, GroundMotionRecord, Earthquake, Magnitude, Rupture,
-    FocalMechanism, GCMTNodalPlanes, Component, RecordSite, RecordDistance)
+from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
+                                                 GroundMotionRecord,
+                                                 Earthquake,
+                                                 Magnitude,
+                                                 Rupture,
+                                                 FocalMechanism,
+                                                 GCMTNodalPlanes,
+                                                 Component,
+                                                 RecordSite,
+                                                 RecordDistance)
 from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.utils_strong_motion import (
-    MECHANISM_TYPE, DIP_TYPE, vs30_to_z1pt0_cy14, vs30_to_z2pt5_cb14)
+from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
-SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
-
-HEADER_STR = "event_id;event_time;ISC_ev_id;ev_latitude;ev_longitude;"\
-             "ev_depth_km;fm_type_code;ML;Mw;Ms;event_source_id;"\
-             "es_strike;es_dip;es_rake;es_z_top;es_length;es_width;"\
-             "network_code;station_code;location_code;"\
-             "sensor_depth_m;"\
-             "st_latitude;st_longitude;st_elevation;vs30_m_sec;slope_deg;"\
-             "vs30_meas_type;epi_dist;epi_az;JB_dist;rup_dist;Rx_dist;"\
-             "Ry0_dist;late_triggered_flag_01;U_channel_code;U_azimuth_deg;"\
-             "V_channel_code;V_azimuth_deg;W_channel_code;U_hp;V_hp;W_hp;U_lp;"\
-             "V_lp;W_lp"
-
-HEADERS = set(HEADER_STR.split(";"))
+HEADERS = ["event_id",
+           "event_time",
+           "ISC_ev_id",
+           "ev_latitude",
+           "ev_longitude",
+           "ev_depth_km",
+           "fm_type_code",
+           "ML",
+           "Mw",
+           "Ms",
+           "event_source_id",
+           "es_strike",
+           "es_dip",
+           "es_rake",
+           "es_z_top",
+           "es_length",
+           "es_width",
+           "network_code",
+           "station_code",
+           "location_code",
+           "st_latitude",
+           "st_longitude",
+           "st_elevation",
+           "vs30_m_sec",
+           "vs30_meas_type",
+           "epi_dist",
+           "epi_az",
+           "JB_dist",
+           "rup_dist",
+           "Rx_dist",
+           "Ry0_dist",
+           "U_channel_code",
+           "U_azimuth_deg",
+           "V_channel_code",
+           "V_azimuth_deg",
+           "W_channel_code",
+           "U_hp",
+           "V_hp",
+           "W_hp",
+           "U_lp",
+           "V_lp",
+           "W_lp"]
 
 
 class GEMFlatfileParser(SMDatabaseReader):
@@ -69,13 +101,12 @@ class GEMFlatfileParser(SMDatabaseReader):
         Parse the dataset
         """
         assert os.path.isfile(self.filename)
-        headers = getline(self.filename, 1).rstrip("\n").split(";")
+        headers = getline(self.filename, 1).rstrip("\n").split(",")
         for hdr in HEADERS:
             if hdr not in headers:
-                raise ValueError("Required header %s is missing in file"
-                                 % hdr)
+                raise ValueError("Required header %s is missing in file" % hdr)
         # Read in csv
-        reader = csv.DictReader(open(self.filename, "r"), delimiter=";")
+        reader = csv.DictReader(open(self.filename, "r"), delimiter=",")
         self.database = GroundMotionDatabase(self.id, self.name)
         counter = 0
         for row in reader:
@@ -98,17 +129,10 @@ class GEMFlatfileParser(SMDatabaseReader):
             counter += 1
 
     @classmethod
-    def autobuild(cls, dbid, dbname, output_location, flatfile_directory,
-                  proxy=None, removal=None):
+    def autobuild(cls, dbid, dbname, output_location, flatfile_directory):
         """
         Quick and dirty full database builder!
         """
-        # Import GEM strong-motion flatfile
-        GEM = pd.read_csv(flatfile_directory)
-    
-        # Get path to tmp csv once modified dataframe
-        conv_pth= prioritise_rotd50(GEM, proxy, removal)
-        
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
@@ -116,7 +140,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         # Add on the records folder
         os.mkdir(os.path.join(output_location, "records"))
         # Create an instance of the parser class
-        database = cls(dbid, dbname, conv_pth)
+        database = cls(dbid, dbname, flatfile_directory)
         # Parse the records
         print("Parsing Records ...")
         database.parse(location=output_location)
@@ -158,10 +182,8 @@ class GEMFlatfileParser(SMDatabaseReader):
         # ID and Name (name not in file so use ID again)
         eq_id = metadata["event_id"]
         eq_name = metadata["event_id"]
-        # Country
         # Date and time
-        eq_datetime = valid.date_time(metadata["event_time"],
-                                     "%Y-%m-%d %H:%M:%S")
+        eq_datetime = pd.to_datetime(metadata["event_time"])
         # Latitude, longitude and depth
         eq_lat = valid.latitude(metadata["ev_latitude"])
         eq_lon = valid.longitude(metadata["ev_longitude"])
@@ -193,10 +215,7 @@ class GEMFlatfileParser(SMDatabaseReader):
             mvalue = metadata[key].strip()
             if mvalue:
                 mtype = key
-                msource = metadata[key + "_ref"].strip()
-                mag = Magnitude(float(mvalue),
-                                mtype,
-                                source=msource)
+                mag = Magnitude(float(mvalue), mtype)
                 if not pref_mag:
                     pref_mag = copy.deepcopy(mag)
                 mag_list.append(mag)
@@ -308,6 +327,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         Parses the site information
         """
+        # Basic site/station information
         network_code = metadata["network_code"].strip()
         station_code = metadata["station_code"].strip()
         site_id = "{:s}-{:s}".format(network_code, station_code)
@@ -315,50 +335,54 @@ class GEMFlatfileParser(SMDatabaseReader):
         site_lat = valid.latitude(metadata["st_latitude"])
         elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
 
+        # Vs30
         vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
-        vs30_measured = None # User should check selected records (many diff. 
-                             # flatfiles --> see vs30_meas_type column for if
-                             # vs30 if available was measured of inferred)
-        
-        site = RecordSite(site_id, station_code, station_code, site_lon,
-                          site_lat, elevation, vs30, vs30_measured,
+        vs30_measured_flag = metadata["vs30_meas_type"]
+        if vs30_measured_flag == "measured":
+            vs30_measured = 1
+        else:
+            vs30_measured = 0 # Either inferred or unknown
+
+        # Make the site object
+        site = RecordSite(site_id,
+                          station_code,
+                          station_code,
+                          site_lon,
+                          site_lat,
+                          elevation,
+                          vs30,
+                          vs30_measured,
                           network_code=network_code, country=None)
-        site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
-        site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
-                                         "sensor_depth_m")
-        if site.vs30:
-            site.z1pt0 = vs30_to_z1pt0_cy14(vs30)
-            site.z2pt5 = vs30_to_z2pt5_cb14(vs30)
+
+        # Add basin params
+        site.z1pt0 = valid.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
+        site.z2pt5 = valid.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
+
         return site
 
     def _parse_waveform_data(self, metadata, wfid):
         """
         Parse the waveform data
         """
-        late_trigger = valid.vint(metadata["late_triggered_flag_01"],
-                                  "late_triggered_flag_01")
         # U channel - usually east
         xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
         xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
                    "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
-        xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
-                          units="cm/s/s")
-        xcomp.late_trigger = late_trigger
+        xcomp = Component(
+            wfid, xazimuth, waveform_filter=xfilter, units="cm/s/s")
         
         # V channel - usually North
         vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
         vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
                    "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
-        vcomp = Component(wfid, vazimuth, waveform_filter=vfilter,
-                          units="cm/s/s")
-        vcomp.late_trigger = late_trigger
+        vcomp = Component(
+            wfid, vazimuth, waveform_filter=vfilter, units="cm/s/s")
         zorientation = metadata["W_channel_code"].strip()
         if zorientation:
             zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
                        "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
-            zcomp = Component(wfid, None, waveform_filter=zfilter,
-                              units="cm/s/s")
-            zcomp.late_trigger = late_trigger
+            zcomp = Component(
+                wfid, None, waveform_filter=zfilter, units="cm/s/s")
         else:
             zcomp = None
         
@@ -380,11 +404,11 @@ class GEMFlatfileParser(SMDatabaseReader):
             # Add on the scalars
             scalar_grp = comp_grp.create_group("Scalar")
             for imt in scalars[key]:
-                if imt in ["ia", "housner"]:
-                    # In the smt convention it is "Ia" and "Housner"
+                if imt in ["ia"]:
+                    # In the smt convention it is "Ia" for Arias Intensity
                     ikey = imt[0].upper() + imt[1:]
                 else:
-                    # Everything else to upper case (PGA, PGV, PGD, T90, CAV)
+                    # Everything else to upper case (PGA, PGV, PGD, CAV)
                     ikey = imt.upper()
                 dset = scalar_grp.create_dataset(ikey, (1,), dtype="f")
                 dset[:] = scalars[key][imt]
@@ -412,11 +436,11 @@ class GEMFlatfileParser(SMDatabaseReader):
         # Scalars - just geometric mean for now
         hscalar = hcomp.create_group("Scalar")
         for imt in scalars["Geometric"]:
-            if imt in ["ia", "housner"]:
-                # In the smt convention it is "Ia" and "Housner"
+            if imt in ["ia"]:
+                # In the smt convention it is "Ia" for Arias Intensity
                 key = imt[0].upper() + imt[1:]
             else:
-                # Everything else to upper case (PGA, PGV, PGD, T90, CAV)
+                # Everything else to upper case (PGA, PGV, PGD, CAV)
                 key = imt.upper()
             dset = hscalar.create_dataset(key, (1,), dtype="f")
             dset[:] = scalars["Geometric"][imt]
@@ -454,7 +478,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
         spectra = []
-        scalar_imts = ["pga", "pgv", "pgd", "T90", "housner", "ia", "CAV"]
+        scalar_imts = ["pga", "pgv", "pgd", "ia", "CAV"]
         scalars = []
         for imt in imts:
             periods = []
@@ -474,9 +498,6 @@ class GEMFlatfileParser(SMDatabaseReader):
             scalars.append((imt, scalar_dict))
             for header in header_list:
                 if key in header:
-                    if header == "{:s}90".format(key):
-                        # Not a spectral period but T90
-                        continue
                     iky = header.replace(key, "").replace("_", ".")
                     periods.append(float(iky))
                     value = row[header].strip()
@@ -490,8 +511,8 @@ class GEMFlatfileParser(SMDatabaseReader):
             spectra.append((imt, {"Periods": periods[idx],
                                    "Values": values[idx]}))
         # Add on the as-recorded geometric mean
-        spectra = OrderedDict(spectra)
-        scalars = OrderedDict(scalars)
+        spectra = dict(spectra)
+        scalars = dict(scalars)
         spectra["Geometric"] = {
             "Values": np.sqrt(spectra["U"]["Values"] *
                               spectra["V"]["Values"]),
@@ -503,86 +524,3 @@ class GEMFlatfileParser(SMDatabaseReader):
                 scalars["Geometric"][key] = np.sqrt(
                     scalars["U"][key] * scalars["V"][key])
         return scalars, spectra
-
-
-def prioritise_rotd50(df, proxy=None, removal=None):
-    """
-    Assign RotD50 values to horizontal acceleration columns for computation of
-    residuals. If no RotD50 use the geometric mean if available (if specified
-    in parser arguments) as a proxy for RotD50.
-    
-    RotD50 is available for the vast majority of the records in the GEM
-    flatfile for PGA to 10 s.
-    
-    Records lacking acceleration values for any of the required spectral periods
-    can also be removed (this information can alternatively just be printed)
-    
-    :param  proxy:
-        If set to true, if a record is missing RotD50 try and use the geometric
-        mean of the horizontal components (geometric mean is computed when
-        calculating the residuals, here we just parse the two horizontals)
-    
-    :param  removal:
-        If set to true records without complete RotD50 for any of the required
-        spectral periods are removed. In instances that proxy is True, records
-        without complete RotD50 even with use of geometric mean as a proxy are
-        dropped
-    """
-    # TODO this approach is a bit hacky given we can use 'component' argument
-    # within residuals.get_residuals() to specify if we want RotD50 or geometric
-    # mean, but this function allows maximum number of records to be used in an
-    # analysis by taking RotD50 if available, and then computing geometric mean
-    # from the horizontal components if not. For spectral accelerations, RotD50
-    # and geometric mean have been found to have a ratio close to 1 (e.g. Beyes
-    # and Bommer, 2006)
-    h_cols = ['U_T', 'V_T', 'U_pga', 'V_pga', 'U_pgv', 'V_pgv', 'U_pgd', 'V_pgd',
-              'U_housner', 'V_housner', 'U_CAV', 'V_CAV', 'U_ia', 'V_ia']
-    
-    # Manage RotD50 vs horizontal components
-    log, cols = [], []
-    for idx, rec in df.iterrows():
-        for col in rec.index:
-            if 'rotD' in col:
-                cols.append(col)
-            for h_col in h_cols:
-                if h_col in col:
-                    if 'T90' not in col:
-                        if 'U_' in col:    
-                            rotd50_col = col.replace('U_', 'rotD50_')
-                        if 'V_' in col:
-                            rotd50_col = col.replace('V_', 'rotD50_')
-                            
-                        # If RotD50...
-                        if not pd.isnull(rec[rotd50_col]): # Assign to h1, h2
-                            df[col].iloc[idx] = rec[rotd50_col]
-                            
-                        # Otherwise...
-                        else:
-                            if proxy is True: # Use geo. mean as proxy
-                                if not pd.isnull(rec[col]):
-                                    pass # Use geo. mean from h1, h2 as proxy 
-                            else:
-                                log.append(idx) # Log as incomplete RotD50 vals
-                            
-    # Tidy dataframe
-    cols = pd.Series(cols).unique()
-    df = df.drop(columns=cols)
-
-    # Drop if req. or else just inform number of recs missing acc. values
-    no_vals = len(pd.Series(log).unique())
-    if removal is True and log!= []:
-        df = df.drop(log).reset_index()
-        msg = 'Records without RotD50 acc. values for all periods between 0.01'
-        msg += ' s and 10 s have been removed from database (%s records)' %no_vals
-        print(msg)
-        if len(df) == 0:
-            raise ValueError('All records have been removed from the flatfile')        
-    elif log != []:
-        print('%s records lack RotD50 for all periods between 0.01 s and 10 s'
-              % no_vals)
-    
-    # Output to temp folder where converted flatfile read into parser   
-    conv_pth = os.path.join(tempfile.mkdtemp(), 'conv_flatfile_tmp.csv')
-    df.to_csv(conv_pth, sep=';')
-    
-    return conv_pth

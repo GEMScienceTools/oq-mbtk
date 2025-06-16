@@ -2,12 +2,32 @@ Installation
 ============
 The *oq-mbt* is installed with the procedure described in the following. 
 Note that this procedure implies the installation of the OpenQuake engine. 
-It was tested on Mac OS and Linux systems.
+It was tested on Windows, Mac OS and Linux systems.
 
-* Open a terminal and move to the folder where to intend to install the tools;
-* Create a virtual environment with ``python3 -m venv venv``
-* Activate the virtual environment ``source venv/bin/activate``
-* Update pip ``pip install -U pip``
-* Enter the virtual environment ``cd venv`` and create a directory for storing source code ``mkdir src; cd src``
-* Clone the OpenQuake engine ``git clone git@github.com:gem/oq-engine.git``
-* Complete a development installation with ``cd ..`` then ``pip install -r ./src/oq-engine/requirements-py36-macos.txt`` and finally ``pip install -e ./src/oq-engine/``
+Here we demonstrate the installation of the MBTK for a linux system and Python 3.11.
+
+* Open a terminal and move to the folder where you intend to install the tools;
+* Upgrade pip:
+
+.. code-block:: bash
+    $ python -m pip install --upgrade pip
+
+* Install the OpenQuake engine and activate its virtual environment:
+
+.. code-block:: bash
+
+    $ git clone --depth=1 https://github.com/gem/oq-engine.git
+    $ cd oq-engine
+    $ python3 install.py devel
+    $ source ~/openquake/bin/activate
+
+
+* Go to the folder where you cloned the oq-mbtk repository and complete the
+installation running the following commands,
+making sure to replace `requirements-py311-linux.txt` with the name of
+the file corresponding to the correct python version and operating system:
+
+.. code-block:: bash
+
+    $ pip install -e .
+    $ pip install -r requirements-py311-linux.txt

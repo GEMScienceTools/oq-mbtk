@@ -30,14 +30,14 @@ from openquake.cat.completeness.analysis import completeness_analysis
 
 
 def main(fname_input_pattern, fname_config, folder_out_figs, folder_in,
-         folder_out, *, skip: str = ''):
+         folder_out, *, skip: str = '', use_only: str = None):
     """
     Analyses the completeness of a catalogue and saves the information about
     the best fitting GR in the configuration file.
     """
 
     completeness_analysis(fname_input_pattern, fname_config, folder_out_figs,
-                          folder_in, folder_out, skip)
+                          folder_in, folder_out, skip, use_only)
 
 
 descr = 'Pattern to select input files with subcatalogues'
@@ -52,6 +52,8 @@ msg = 'Name of the folder where to store data'
 main.folder_out = msg
 msg = 'IDs of the sources to skip'
 main.skip = msg
+msg = 'IDs of the sources to use'
+main.use_only = msg
 
 
 if __name__ == '__main__':
