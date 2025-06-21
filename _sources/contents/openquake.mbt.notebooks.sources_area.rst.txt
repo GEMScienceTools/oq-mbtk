@@ -1,0 +1,10 @@
+openquake.mbt.notebooks.sources\_area package
+=============================================
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.notebooks.sources_area
+   :members:
+   :undoc-members:
+   :show-inheritance:
