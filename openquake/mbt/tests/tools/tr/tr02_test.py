@@ -3,7 +3,7 @@ import h5py
 import shutil
 import numpy
 import unittest
-from openquake.mbt.tools.tr.classify import classify
+from openquake.mbi.ccl.classify import classify
 
 BASE_PATH = os.path.dirname(__file__)
 
@@ -24,7 +24,7 @@ class TrTestCase02(unittest.TestCase):
         # Remove tmp folder
         shutil.rmtree(self.tmp)
 
-    @unittest.skipUnless('OQ_RUN_SLOW_TESTS' in os.environ, 'slow')
+#    @unittest.skipUnless('OQ_RUN_SLOW_TESTS' in os.environ, 'slow')
     def testcase01(self):
         """
         Testing TR - Case 02 - Crustal and Subduction
