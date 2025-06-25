@@ -127,17 +127,18 @@ class Residuals(object):
             
             # Get the period range and the coefficient types
             gmpe_i = self.gmpe_list[gmpe]
-            for c in dir(gmpe_i):
-                if 'COEFFS' in c:
-                    pers = [sa.period for sa in getattr(gmpe_i, c).sa_coeffs]
-                elif "gmpe_table" in c: # tabular GMM specified using an alias
+            for param in dir(gmpe_i):
+                if 'COEFFS' in param:
+                    pers = [sa.period for sa in getattr(gmpe_i, param).sa_coeffs]
+                elif "gmpe_table" in param: # tabular GMM specified using an alias
                     pers = gmpe_i.imls["T"]
+                    
             min_per, max_per = (min(pers), max(pers))
             self.gmpe_sa_limits[gmpe] = (min_per, max_per)
-            for c in dir(gmpe_i):
-                if 'COEFFS' in c:
+            for param in dir(gmpe_i):
+                if 'COEFFS' in param:
                     self.gmpe_scalars[gmpe] = list(
-                        getattr(gmpe_i, c).non_sa_coeffs.keys())
+                        getattr(gmpe_i, param).non_sa_coeffs.keys())
             for imtx in self.imts:
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
