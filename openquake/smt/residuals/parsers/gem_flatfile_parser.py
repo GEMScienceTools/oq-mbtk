@@ -374,7 +374,7 @@ class GEMFlatfileParser(SMDatabaseReader):
             wfid, vazimuth, waveform_filter=vfilter, units="cm/s/s")
         
         # W channel (vertical)
-        zorientation = "Z"
+        zorientation = "V"
         if zorientation:
             zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
                        "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
