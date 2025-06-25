@@ -132,7 +132,7 @@ class Residuals(object):
                     pers = [sa.period for sa in getattr(gmpe_i, param).sa_coeffs]
                 elif "gmpe_table" in param: # tabular GMM specified using an alias
                     pers = gmpe_i.imls["T"]
-                    
+
             min_per, max_per = (min(pers), max(pers))
             self.gmpe_sa_limits[gmpe] = (min_per, max_per)
             for param in dir(gmpe_i):
@@ -143,8 +143,8 @@ class Residuals(object):
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < min_per or period > max_per:
-                        print("IMT %s outside period range for GMPE %s"
-                              % (imtx, gmpe))
+                        print(f"IMT {imtx} outside period range for GMPE {gmpe}"
+                              f"(min GMM period = {min_per} s, max GMM period = {max_per} s)")
                         gmpe_dict_1[imtx] = None
                         gmpe_dict_2[imtx] = None
                         continue
@@ -313,6 +313,11 @@ class Residuals(object):
                     self.types[gmpe][imtx])
                 keep = context["Retained"][imtx]
                 mean = mean[keep]
+                if len(mean) < 1:
+                    raise ValueError(f"All observed intensity measure "
+                                     f"levels for {imtx} are empty - "
+                                     f"no residuals can be computed "
+                                     f"for {imtx}")
                 for idx_comp, comp in enumerate(stddev):
                     stddev[idx_comp] = comp[keep]
                 # If no sigma for the GMM residuals can't be computed
