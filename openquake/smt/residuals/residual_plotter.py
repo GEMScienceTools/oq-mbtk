@@ -1254,7 +1254,7 @@ class IntraEventResidualWithSite(ResidualPlot):
                           for site_id in self.residuals.site_ids])
 
         ax.plot(xvals, dwess, 'x', markeredgecolor='k', markerfacecolor='k',
-                markersize=8, zorder=-32, label = '$\delta W_{es}$')
+                markersize=8, zorder=-32, label = r'$\delta W_{es}$')
         ax.errorbar(xmean, mean, yerr=stddevs, ecolor="r", elinewidth=3.0,
                     barsabove=True, fmt="s", mfc="r", mec="k", ms=6,
                     label='Error bar')
@@ -1281,13 +1281,13 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax = fig.add_subplot(312)
         ax.plot(xmean, ds2ss, 's', markeredgecolor='k',
                 markerfacecolor='LightSteelBlue', markersize=8, zorder=-32,
-                label='$\delta S2S_S$')
+                label=r'$\delta S2S_S$')
         ax.plot(xmean,(phi_s2ss["Mean"]-phi_s2ss["StdDev"])*np.ones(len(xmean)),
                 "k--", linewidth=1.5)
         ax.plot(xmean,(phi_s2ss["Mean"]+phi_s2ss["StdDev"])*np.ones(len(xmean)),
-                "k--", linewidth=1.5, label='+/- 1 $\phi_{S2S}$')
+                "k--", linewidth=1.5, label=r'+/- 1 $\phi_{S2S}$')
         ax.plot(xmean, (phi_s2ss["Mean"])*np.ones(len(xmean)), "k-",
-                linewidth=2, label='Mean $\phi_{S2S}$')
+                linewidth=2, label=r'Mean $\phi_{S2S}$')
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")
@@ -1305,10 +1305,10 @@ class IntraEventResidualWithSite(ResidualPlot):
         # Show dwoes (remainder residual)
         ax = fig.add_subplot(313)
         ax.plot(xvals, dwoess, 'x', markeredgecolor='k', markerfacecolor='k',
-                markersize=8, zorder=-32, label = '$\delta W_{o,es}$')
+                markersize=8, zorder=-32, label = r'$\delta W_{o,es}$')
         ax.plot(xmean, -phi_ss * np.ones(len(xmean)), "k--", linewidth=1.5)
         ax.plot(xmean, phi_ss * np.ones(len(xmean)), "k--", linewidth=1.5,
-                label = '$\phi_{SS}$')
+                label = r'$\phi_{SS}$')
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")

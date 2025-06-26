@@ -298,7 +298,7 @@ def plot_response_spectra(spectra, axis_type="loglog", figure_size=(8, 6),
     from a particular ground motion record
     """
     fig = plt.figure(figsize=figure_size)
-    fig.set_tight_layout(True)
+    #fig.set_tight_layout(True)
     ax = plt.subplot(2, 2, 1)
     # Acceleration
     PLOT_TYPE[axis_type](ax, spectra["Period"], spectra["Acceleration"])
