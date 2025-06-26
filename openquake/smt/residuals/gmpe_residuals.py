@@ -838,8 +838,8 @@ class Residuals(object):
                 x_cdf, y_cdf = x_cdf[idx_cdf], y_cdf[idx_cdf]
 
                 # Get area under each curve's overlapping portions
-                area_obs = np.trapezoid(y_ecdf, x_ecdf)
-                area_gmm = np.trapezoid(y_cdf, x_cdf)
+                area_obs = np.trapz(y_ecdf, x_ecdf)
+                area_gmm = np.trapz(y_cdf, x_cdf)
 
                 # Get absolute of difference in areas - eq 3 of paper
                 stoch_area_wrt_imt[imtx] = np.abs(area_gmm-area_obs) 
