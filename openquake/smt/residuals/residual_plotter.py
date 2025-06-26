@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Class to hold GMPE residual plotting functions
+Module to manage GMPE residual plotting functions
 """
 import os
 import numpy as np
