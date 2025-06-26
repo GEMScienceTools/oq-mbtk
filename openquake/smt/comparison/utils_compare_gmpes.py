@@ -169,7 +169,7 @@ def plot_trellis_util(config, output_directory):
     return store_gmm_curves
     
 
-def plot_spectra_util(config, output_directory, obs_spectra):
+def plot_spectra_util(config, output_directory, obs_spectra_fname):
     """
     Plot response spectra for given run configuration. Can also plot an
     observed spectrum and the corresponding predictions by the specified GMPEs
@@ -179,9 +179,8 @@ def plot_spectra_util(config, output_directory, obs_spectra):
     dep_list = config.depth_list
 
     # If obs spectra csv provided load the data
-    if obs_spectra is not None:
-        obs_spectra = pd.read_csv(obs_spectra)
-        max_period, eq_id, st_id = load_obs_spectra(obs_spectra)
+    if obs_spectra_fname is not None:
+        obs_spectra, max_period, eq_id, st_id = load_obs_spectra(obs_spectra_fname)
     else:
         max_period = config.max_period
         obs_spectra, eq_id, st_id = None, None, None
@@ -239,7 +238,7 @@ def plot_spectra_util(config, output_directory, obs_spectra):
                                                            config.z1pt0,
                                                            config.z2pt5,
                                                            500, # Assume record dist < 500 km
-                                                           1, # Step of 1 km for site spacing
+                                                           1,   # Step of 1 km for site spacing
                                                            imt,
                                                            ztor_m,
                                                            config.dist_type,
@@ -1148,20 +1147,25 @@ def lt_spectra(ax1,
     return [lt_per_imt_gmc, lt_plus_sig_per_imt, lt_minus_sig_per_imt]
         
    
-def load_obs_spectra(obs_spectra):
+def load_obs_spectra(obs_spectra_fname):
     """
-    If an obs spectra has been specified get values from csvs for comparison
-    of observed spectra and spectra computed using GMPE predictions.
+    If an obs spectra file has been specified get values from the csv
+    for comparison of observed spectra and spectra computed using GMPE
+    predictions.
     
-    Returns the max period of the spectra, eq_id and st_id
+    Returns the spectra as a dataframe, the max period of the spectra,
+    the earthquake ID and the station ID.
     """
+    # Load the obs spectra
+    obs_spectra = pd.read_csv(obs_spectra_fname)
+
     # Get values from obs_spectra dataframe...
     eq_id = str(obs_spectra['EQ ID'].iloc[0])
     st_id = str(obs_spectra['Station Code'].iloc[0])
     
     max_period = obs_spectra['Period (s)'].max()
     
-    return max_period, eq_id, st_id
+    return obs_spectra, max_period, eq_id, st_id
 
 
 def plot_obs_spectra(ax1,
@@ -1180,14 +1184,15 @@ def plot_obs_spectra(ax1,
     if obs_spectra is not None and g == len(gmpe_list)-1:
         
         # Get rup params
-        mw = mag_list[0]
-        rrup = dist_list[0]
-        depth = dep_list[0]
+        mw = np.asarray(mag_list, float)
+        rrup = np.asarray(dist_list, float)
+        depth = np.asarray(dep_list, float)
         
         # Get label for spectra plot
         obs_string = (eq_id + '\nrecorded at ' + st_id + ' (Rrup = '
                       + str(rrup) + ' km, ' + '\nMw = ' + str(mw) +
                       ', depth = ' + str(depth) + ' km)')
+                      
         # Plot the observed spectra
         ax1.plot(obs_spectra['Period (s)'], obs_spectra['SA (g)'],
                  color='r', linewidth=3, linestyle='-',

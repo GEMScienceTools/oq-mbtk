@@ -244,7 +244,7 @@ def plot_trellis(filename, output_directory):
     return store_gmm_curves
 
                 
-def plot_spectra(filename, output_directory, obs_spectra=None):
+def plot_spectra(filename, output_directory, obs_spectra_fname=None):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
     configuration
@@ -256,8 +256,16 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
         An example file can be found in openquake.smt.tests.file_samples.
     """
     config = Configurations(filename)
-    
-    store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra)
+
+    if obs_spectra_fname is not None:
+        try:
+            assert len(config.mag_list) == 1 and len(config.depth_list) == 1
+        except:
+            raise ValueError("If plotting an observed spectra you must only " \
+                             "specify 1 magnitude and depth combination for " \
+                             "response spectra plotting in the toml file.")
+
+    store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra_fname)
 
     return store_gmc_lts
 

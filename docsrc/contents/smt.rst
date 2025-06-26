@@ -551,7 +551,7 @@ Comparing GMPEs
     .. code-block:: ini
     
        > # Generate plot of observed spectra and predictions by GMPEs
-       > comp.plot_spectra(filename, output_directory, obs_spectra='spectra_chamoli_1991_station_UKHI.csv') 
+       > comp.plot_spectra(filename, output_directory, obs_spectra_fname='spectra_chamoli_1991_station_UKHI.csv') 
 
     Response spectra plots for input parameters specified in toml file:
         .. image:: /contents/smt_images/ObsSpectra.png      
