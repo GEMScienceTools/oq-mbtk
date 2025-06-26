@@ -1082,10 +1082,10 @@ class SingleStationAnalysis(object):
                         resid.site_analysis[gmpe][imtx]["Intra event"] -
                         resid.site_analysis[gmpe][imtx]["dS2ss"]) ** 2.)
                     
-                    # Print dS2Ss, phiss_s to file
+                    # Print dS2S, phi_ss per station to file
                     if filename is not None:
-                        print("Site ID, %s, dS2Ss, %s, "
-                              "phiss_s, %s, Num Records, %s" % (
+                        print("Site ID, %s, dS2S, %s, "
+                              "phi_ss, %s, Num Records, %s" % (
                               list(self.site_ids)[iloc],
                               resid.site_analysis[gmpe][imtx]["dS2ss"],
                               resid.site_analysis[gmpe][imtx]["phi_ss,s"],
@@ -1098,7 +1098,7 @@ class SingleStationAnalysis(object):
                 phi_ss[gmpe][imtx] = np.sqrt(
                     numerator_sum / float(np.sum(np.array(n_events)) - 1))
         
-        # Print phi_ss and phi_s2ss info to file
+        # Print phi_ss and phi_s2s info to file
         if filename is not None:
             print("\nTOTAL RESULTS PER GMPE", file=fid)
             for gmpe in self.gmpe_list:
@@ -1107,20 +1107,20 @@ class SingleStationAnalysis(object):
                 print("%s" % gmpe_str, file=fid)
                 
                 # If mixed effects GMPE append with intra-event res components
-                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
-                        for imtx in self.imts:
-                            p_data = (imtx,
-                                      phi_ss[gmpe][imtx],
-                                      phi_s2ss[gmpe][imtx]["Mean"],
-                                      phi_s2ss[gmpe][imtx]["StdDev"])
-                            print("%s, phi_ss, %s, phi_s2ss mean, %s, "
-                                  "phi_s2ss std. dev), %s" % p_data, file=fid)
+                #if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
+                 #       for imtx in self.imts:
+                  #          p_data = (imtx,
+                   #                   phi_ss[gmpe][imtx],
+                    #                  phi_s2ss[gmpe][imtx]["Mean"],
+                     #                 phi_s2ss[gmpe][imtx]["StdDev"])
+                      #      print("%s, phi_ss, %s, phi_s2s mean, %s, "
+                       #           "phi_s2s std. dev, %s" % p_data, file=fid)
                 
                 # Total sigma only for given GMM
-                else:
-                    for imtx in self.imts:
-                        print(f"{imtx}, phi_ss, , phi_s2ss mean, , "
-                              f"phi_s2ss (std. dev)", file=fid)
+                #else:
+                 #   for imtx in self.imts:
+                  #      print(f"{imtx}, phi_ss, , phi_s2ss mean, , "
+                   #           f"phi_s2ss std. dev", file=fid)
                         
             if filename is not None:
                 fid.close()
