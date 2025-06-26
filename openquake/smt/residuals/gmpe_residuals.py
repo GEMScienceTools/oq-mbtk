@@ -215,19 +215,30 @@ class Residuals(object):
             See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase` for an
             example
         """
-        # Build the contexts
+        # Build initial contexts with the observed values
         contexts = ctx_database.get_contexts(nodal_plane_index, self.imts, component)
 
-        # Fetch now outside the loop for efficiency the IMTs which need
-        # acceleration units conversion from cm/s/s to g. Conversion will be
-        # done inside the loop:
+        # Check at least one observed value per IMT (else raise an error)
+        for imt in self.imts:
+            obs_check = []
+            for ctx in contexts:
+                obs_check.append(ctx["Observations"][imt])
+            obs_check = np.concatenate(obs_check)
+            check = pd.notnull(obs_check)
+            if len(check[check]) < 1:
+                raise ValueError(f"All observed intensity measure "
+                                 f"levels for {imt} are empty - "
+                                 f"no residuals can be computed "
+                                 f"for {imt}")
+
+        # Get IMTs which need acc. units conv. from cm/s/s to g
         accel_imts = tuple(
             [imtx for imtx in self.imts if (imtx == "PGA" or "SA(" in imtx)])
 
         # Contexts is in either case a list of dictionaries
         self.contexts = []
         for context in contexts:
-            # If no rvolc provide as zero (ensure rvolc gsims usable)
+            # If no rvolc fix to zero (ensure rvolc gsims usable)
             if 'rvolc' not in context['Ctx']._slots_:
                 context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi)
             # Convert all IMTS with acceleration units, which are supposed to
@@ -235,7 +246,7 @@ class Residuals(object):
             for a_imt in accel_imts:
                 context['Observations'][a_imt] = convert_accel_units(
                         context['Observations'][a_imt], 'cm/s/s', 'g')
-            # Get the expected ground motions
+            # Get the expected ground motions from GMMs
             context = self.get_expected_motions(context)
             context = self.calculate_residuals(context, normalise)
             for gmpe in self.residuals.keys():
@@ -313,11 +324,6 @@ class Residuals(object):
                     self.types[gmpe][imtx])
                 keep = context["Retained"][imtx]
                 mean = mean[keep]
-                if len(mean) < 1:
-                    raise ValueError(f"All observed intensity measure "
-                                     f"levels for {imtx} are empty - "
-                                     f"no residuals can be computed "
-                                     f"for {imtx}")
                 for idx_comp, comp in enumerate(stddev):
                     stddev[idx_comp] = comp[keep]
                 # If no sigma for the GMM residuals can't be computed
