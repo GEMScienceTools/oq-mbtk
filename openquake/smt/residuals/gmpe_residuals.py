@@ -828,8 +828,8 @@ class Residuals(object):
                 x_cdf, y_cdf = self.get_cdf_data(list(exp))
 
                 # Get approximately overlapping subsets of ECDF and CDF
-                ecdf_xvals = [np.min(x_ecdf), np.max(x_ecdf)]
-                cdf_xvals = [np.min(x_cdf), np.max(x_cdf)]
+                ecdf_xvals = [np.nanmin(x_ecdf), np.nanmax(x_ecdf)]
+                cdf_xvals = [np.nanmin(x_cdf), np.nanmax(x_cdf)]
                 xval_min = np.max([ecdf_xvals[0], cdf_xvals[0]])
                 xval_max = np.min([ecdf_xvals[1], cdf_xvals[1]])
                 idx_ecdf = np.logical_and(x_ecdf<=xval_max, x_ecdf>=xval_min)
@@ -849,7 +849,7 @@ class Residuals(object):
     
         # Add to residuals object
         self.stoch_areas_wrt_imt = stoch_area_store
-        
+
         return self.stoch_areas_wrt_imt
 
     def cdf(self, data):
@@ -862,6 +862,7 @@ class Residuals(object):
         n = len(x)
         p = 1/n
         pvalues = list(np.linspace(p,1,n))
+        
         return x, pvalues
     
     def step_data(self, x,y):
@@ -873,7 +874,7 @@ class Residuals(object):
         yy.sort()
         return xx, [0.]+yy[:-1]
     
-    def get_cdf_data(self, data, step_flag=None):
+    def get_cdf_data(self, data, step_flag=False):
         """
         Get the cdf (for the predicted ground-motions) or the ecdf (for the
         observed ground-motions)
