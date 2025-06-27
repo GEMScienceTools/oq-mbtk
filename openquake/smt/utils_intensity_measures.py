@@ -89,7 +89,7 @@ def get_peak_measures(time_step, acceleration, get_vel=False, get_disp=False):
 def get_quadratic_intensity(acc_x, acc_y, time_step):
     """
     Returns the quadratic intensity of a pair of records, define as:
-    (1. / duration) * \int_0^{duration} a_1(t) a_2(t) dt
+    (1. / duration) * \\int_0^{duration} a_1(t) a_2(t) dt
     This assumes the time-step of the two records is the same!
     """
     assert len(acc_x) == len(acc_y)
@@ -353,7 +353,7 @@ def get_hvsr(x_component, x_time_step, y_component, y_time_step, vertical,
 ### Utils for duration-based IMT functions
 def get_husid(acceleration, time_step):
     """
-    Returns the Husid vector, defined as \int{acceleration ** 2.}
+    Returns the Husid vector, defined as \\int{acceleration ** 2.}
     :param numpy.ndarray acceleration:
         Vector of acceleration values
     :param float time_step:
@@ -465,7 +465,7 @@ def get_cav(acceleration, time_step, threshold=0.0):
 def get_arms(acceleration, time_step):
     """
     Returns the root mean square acceleration, defined as
-    sqrt{(1 / duration) * \int{acc ^ 2} dt}
+    sqrt{(1 / duration) * \\int{acc ^ 2} dt}
     """
     dur = time_step * float(len(acceleration) - 1)
     return np.sqrt((1. / dur) * np.trapz(acceleration  ** 2., dx=time_step))
