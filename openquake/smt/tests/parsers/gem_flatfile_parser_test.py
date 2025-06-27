@@ -31,11 +31,11 @@ BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the record IDs for the target data set
 TARGET_IDS = [
-"EQ_EMSC_20161026_0000077_3A_MZ01_ESM_",
-"EQ_HelenaMontana_01_USGS_CarrollCollege_NGAWest2_",
-"EQ_32_MARN_0_NGASUB_",
-"EQ_198000000000_TK_2001_Turkiye_SMD_",
-"EQ_2017_12_31_071100_kiknet_OITH11_kiknet_"]
+"EQ_EMSC_20161026_0000077_3A_MZ01_ESM",
+"EQ_HelenaMontana_01_USGS_CarrollCollege_NGAWest2",
+"EQ_32_MARN_0_NGASUB",
+"EQ_198000000000_TK_2001_Turkiye_SMD",
+"EQ_2017_12_31_071100_kiknet_OITH11_kiknet"]
 
 
 class GEMFlatfileParserTestCase(unittest.TestCase):

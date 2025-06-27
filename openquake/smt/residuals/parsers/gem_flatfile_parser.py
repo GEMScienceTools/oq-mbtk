@@ -64,7 +64,6 @@ HEADERS = ["event_id",
            "es_width",
            "network_code",
            "station_code",
-           "location_code",
            "st_latitude",
            "st_longitude",
            "st_elevation",
@@ -153,7 +152,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         # Waveform ID not provided in file so concatenate Event and Station ID
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
-                         metadata["station_code"], metadata["location_code"]])
+                         metadata["station_code"]])
         wfid = wfid.replace("-", "_")
         # Parse the event metadata
         event = self._parse_event_data(metadata)
