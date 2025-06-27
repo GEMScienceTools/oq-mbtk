@@ -1098,30 +1098,29 @@ class SingleStationAnalysis(object):
                 phi_ss[gmpe][imtx] = np.sqrt(
                     numerator_sum / float(np.sum(np.array(n_events)) - 1))
         
-        # Print phi_ss and phi_s2s info to file
+        # Print phi_ss (single-station phi), phi_s2s (station-to-station) to file
         if filename is not None:
-            print("\nTOTAL RESULTS PER GMPE", file=fid)
+            print("\nSSA RESULTS PER GMPE", file=fid)
             for gmpe in self.gmpe_list:
                 gmpe_i = self.gmpe_list[gmpe]
                 gmpe_str = get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
                 
-                # If mixed effects GMPE append with intra-event res components
-                #if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
-                 #       for imtx in self.imts:
-                  #          p_data = (imtx,
-                   #                   phi_ss[gmpe][imtx],
-                    #                  phi_s2ss[gmpe][imtx]["Mean"],
-                     #                 phi_s2ss[gmpe][imtx]["StdDev"])
-                      #      print("%s, phi_ss, %s, phi_s2s mean, %s, "
-                       #           "phi_s2s std. dev, %s" % p_data, file=fid)
                 
-                # Total sigma only for given GMM
-                #else:
-                 #   for imtx in self.imts:
-                  #      print(f"{imtx}, phi_ss, , phi_s2ss mean, , "
-                   #           f"phi_s2ss std. dev", file=fid)
-                        
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
+                    p_data = (imtx,
+                              phi_ss[gmpe][imtx],
+                              phi_s2ss[gmpe][imtx]["Mean"],
+                              phi_s2ss[gmpe][imtx]["StdDev"])
+                else:
+                    p_data = (imtx, None, None, None) # No intra-event for GMM
+                for imtx in self.imts:                # so write blank values
+                    print("%s, "\
+                          "phi_ss (phi single-station), %s" \
+                          "phi_s2s mean, %s, " \
+                          "phi_s2s std. dev, %s" \
+                          % p_data, file=fid)
+                            
             if filename is not None:
                 fid.close()
 
