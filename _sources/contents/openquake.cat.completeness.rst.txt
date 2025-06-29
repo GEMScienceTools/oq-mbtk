@@ -1,0 +1,53 @@
+openquake.cat.completeness package
+==================================
+
+Submodules
+----------
+
+openquake.cat.completeness.analysis module
+------------------------------------------
+
+.. automodule:: openquake.cat.completeness.analysis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.completeness.generate module
+------------------------------------------
+
+.. automodule:: openquake.cat.completeness.generate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.completeness.mfd\_eval\_plots module
+--------------------------------------------------
+
+.. automodule:: openquake.cat.completeness.mfd_eval_plots
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.completeness.norms module
+---------------------------------------
+
+.. automodule:: openquake.cat.completeness.norms
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.cat.completeness.plot module
+--------------------------------------
+
+.. automodule:: openquake.cat.completeness.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.cat.completeness
+   :members:
+   :undoc-members:
+   :show-inheritance:

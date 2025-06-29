@@ -1,0 +1,10 @@
+openquake.mbt.notebooks.sources package
+=======================================
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.notebooks.sources
+   :members:
+   :undoc-members:
+   :show-inheritance:
