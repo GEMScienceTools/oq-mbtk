@@ -20,8 +20,11 @@ Tool for creating visualisation of database information
 """
 import numpy as np
 import matplotlib.pyplot as plt
+from shapely.geometry import MultiPolygon
 
-from openquake.calculators.postproc.plots import add_borders
+from openquake.commonlib import readinput
+from openquake.hmtk.plotting.patch import PolygonPatch
+
 from openquake.smt.utils_intensity_measures import _save_image
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector 
 
@@ -56,6 +59,24 @@ EC8_BOUNDS = {
     "C": (180.0, 360.),
     "D": (0., 360)
 }
+
+
+def add_borders(ax, read_df=readinput.read_countries_df, buffer=0, alpha=0.1):
+    """
+    Plot country borders.
+    """
+    polys = read_df(buffer)['geom']
+    cm = plt.get_cmap('RdBu')
+    num_colours = len(polys)
+    for idx, poly in enumerate(polys):
+        colour = cm(1. * idx / num_colours)
+        if isinstance(poly, MultiPolygon):
+            for onepoly in poly.geoms:
+                ax.add_patch(PolygonPatch(onepoly, fc=colour, alpha=alpha))
+        else:
+            ax.add_patch(PolygonPatch(poly, fc=colour, alpha=alpha))
+
+    return ax
 
 
 def get_eq_and_st_coordinates(db1):
