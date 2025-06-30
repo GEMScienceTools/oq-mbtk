@@ -358,14 +358,14 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         Parse the waveform data
         """
-        # U channel (assume EW direction)
+        # U channel (assume NS direction)
         xazimuth = 90.
         xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
                    "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
         xcomp = Component(
             wfid, xazimuth, waveform_filter=xfilter, units="cm/s/s")
         
-        # V channel (assume NS direction)
+        # V channel (assume EW direction)
         vazimuth = 0.
         vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
                    "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
