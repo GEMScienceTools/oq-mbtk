@@ -54,7 +54,7 @@ def hypocentral_depth_analysis(
     # remove_fixed removes fixed depths from the analysis
     # This redistributes the pdf omitting the fixed depth events
     if len(remove_fixed) > 0:
-        df = df[~df.depth.isin(remove_fixed)]    
+        df = df[~df.depth.isin([remove_fixed])]    
 
     # Build the histogram
     hist, _ = np.histogram(df['depth'], bins=bins)
