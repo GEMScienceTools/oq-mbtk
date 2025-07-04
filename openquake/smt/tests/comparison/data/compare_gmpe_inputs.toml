@@ -9,6 +9,7 @@ dist_type = 'rjb' # Specify distance metric for trellis/spectra
 dist_list = [10, 50, 200] # Distances for use in response spectra
 Nstd = 0 # Truncation for GMM sigma distribution
 
+# Specify site properties (vs30 must be specified - the others are proxied if key is missing)
 [site_properties]
 vs30 = 800
 z1pt0 = 30.0  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship

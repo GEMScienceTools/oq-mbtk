@@ -33,6 +33,15 @@ from openquake.smt.comparison.utils_compare_gmpes import (
     compute_matrix_gmpes)
 
 
+# If a param is not in toml, use this value instead for the sites
+SITE_OPTIONAL = {
+    "z1pt0": -999, # Let param be computed using each GMM's vs30 to z1pt0
+    "z2pt5": -999, # Let param be computed using each GMM's vs30 to z2pt5
+    "up_or_down_dip": 1, # Assume site is up-dip
+    "volc_back_arc": False, # Asssume site is not in back-arc
+    "eshm20_region": 0}  # Assume default region for ESHM version of Kotha et al. (2020)
+
+
 class Configurations(object):
     """
     Class to derive configuration for input into GMPE comparison plots
@@ -55,16 +64,14 @@ class Configurations(object):
         self.max_period = config_file['general']['max_period']
         
         # Get site params
-        self.vs30 = config_file['site_properties']['vs30']
-        self.z1pt0 = config_file['site_properties']['z1pt0']
-        self.z2pt5 = config_file['site_properties']['z2pt5']
-        up_or_down_dip = config_file['site_properties']['up_or_down_dip']
-        self.up_or_down_dip = float(up_or_down_dip)
-        self.volc_ba = config_file['site_properties']['volc_back_arc']
-        eshm20_region = int(config_file['site_properties']['eshm20_region'])
-        self.eshm20_region = eshm20_region
-        
-        # Get rupture params
+        self.vs30 = config_file['site_properties']['vs30'] # Must be provided
+        for par in SITE_OPTIONAL:
+            if par not in config_file['site_properties']:
+                setattr(self, par, SITE_OPTIONAL[par]) # Assign default if not provided
+            else:
+                setattr(self, par, config_file['site_properties'][par])
+
+        # Get source params
         self.strike = config_file['source_properties']['strike']
         self.dip = config_file['source_properties']['dip']
         self.rake = config_file['source_properties']['rake']
@@ -86,10 +93,8 @@ class Configurations(object):
         self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
 
         # Get imts
-        self.imt_list = config_file['general']['imt_list']
-        for idx_imt, imt in enumerate(self.imt_list):
-            self.imt_list[idx_imt] = from_string(imt)  
-        
+        self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
+
         # Get GMMs
         self.gmpes_list, self.baseline_gmm = self.get_gmpes(config_file)
 
