@@ -465,7 +465,7 @@ Comparing GMPEs
         mags = [5, 6, 7] # Mags used only for trellis and response spectra
         depths = [20, 20, 20] # Depth per magnitude for trellis and response spectra
         
-        [euclidean_analysis] # Mags and depths for Sammons maps, Euclidean dist and clustering
+        [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (only need specifying if using these functions)
         mmin = 5
         mmax = 7
         spacing = 0.1
