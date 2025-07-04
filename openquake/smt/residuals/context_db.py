@@ -42,8 +42,8 @@ class ContextDB:
      - get_observations(self, imtx, records, component="Geometric")
        (which is called only if `imts` is given in :meth:`self.get_contexts`)
     """
-    rupture_context_attrs = tuple(RuptureContext._slots_)  # noqa
-    distances_context_attrs = tuple(DistancesContext._slots_)  # noqa
+    rupture_context_attrs = tuple(RuptureContext._slots_)
+    distances_context_attrs = tuple(DistancesContext._slots_)
     sites_context_attrs = ('custom_site_id',
                            'vs30',
                            'lons',
@@ -53,7 +53,7 @@ class ContextDB:
                            'z1pt0',
                            'z2pt5',
                            'backarc')
-
+    
     def get_contexts(self, nodal_plane_index=1, imts=None, component="Geometric"):
         """
         Return an iterable of Contexts. Each Context is a `dict` with
