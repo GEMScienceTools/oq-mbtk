@@ -53,7 +53,7 @@ class ContextDB:
                            'z1pt0',
                            'z2pt5',
                            'backarc')
-    
+
     def get_contexts(self, nodal_plane_index=1, imts=None, component="Geometric"):
         """
         Return an iterable of Contexts. Each Context is a `dict` with
@@ -81,7 +81,6 @@ class ContextDB:
             dic['Ctx'].sids = np.arange(len(records), dtype=np.uint32)
             dic['Ctx'].custom_site_id = [sid.site.id for sid in records]
             ctxs.append(dic)
-
         return ctxs
 
     def create_context(self, evt_id, imts=None):
