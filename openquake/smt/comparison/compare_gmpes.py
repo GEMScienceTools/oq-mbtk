@@ -33,15 +33,6 @@ from openquake.smt.comparison.utils_compare_gmpes import (
     compute_matrix_gmpes)
 
 
-# If a param is not in toml, use this value instead for the sites
-SITE_OPTIONAL = {
-    "z1pt0": -999, # Let param be computed using each GMM's vs30 to z1pt0
-    "z2pt5": -999, # Let param be computed using each GMM's vs30 to z2pt5
-    "up_or_down_dip": 1, # Assume site is up-dip
-    "volc_back_arc": False, # Asssume site is not in back-arc
-    "eshm20_region": 0}  # Assume default region for ESHM version of Kotha et al. (2020)
-
-
 class Configurations(object):
     """
     Class to derive configuration for input into GMPE comparison plots
@@ -63,6 +54,14 @@ class Configurations(object):
         self.Nstd = config_file['general']['Nstd']
         self.max_period = config_file['general']['max_period']
         
+        # If the following site params are missing, the following proxies are used
+        SITE_OPTIONAL = {
+        "z1pt0": -999, # Let param be computed using each GMM's vs30 to z1pt0
+        "z2pt5": -999, # Let param be computed using each GMM's vs30 to z2pt5
+        "up_or_down_dip": 1, # Assume site is up-dip
+        "volc_back_arc": False, # Asssume site is not in back-arc
+        "eshm20_region": 0} # Assume default region for ESHM version of K20 GMM
+
         # Get site params
         self.vs30 = config_file['site_properties']['vs30'] # Must be provided
         for par in SITE_OPTIONAL:
@@ -89,8 +88,9 @@ class Configurations(object):
         assert len(self.mag_list) == len(self.depth_list)
         
         # Get mags and depths for Sammons, Euclidean distance and clustering
-        self.mags_euclidean, self.depths_euclidean = self.get_eucl_mags_deps(config_file)
-        self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
+        if "euclidean_analysis" in config_file:
+            self.mags_eucl, self.depths_eucl = self.get_eucl_mags_deps(config_file)
+            self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
 
         # Get imts
         self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
@@ -301,6 +301,10 @@ def plot_cluster(filename, output_directory):
         plotting methods.
     """ 
     config = Configurations(filename)
+
+    if not hasattr(config, "mags_eucl") or not hasattr(config, "depths_eucl"):
+        raise ValueError(
+            "Euclidean analysis params must be specified for cluster plots.")
     
     if len(config.gmpes_list) != len(config.gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
@@ -338,6 +342,10 @@ def plot_sammons(filename, output_directory):
         plotting methods.
     """ 
     config = Configurations(filename)
+
+    if not hasattr(config, "mags_eucl") or not hasattr(config, "depths_eucl"):
+        raise ValueError(
+            "Euclidean analysis params must be specified for Sammons maps.")
 
     if len(config.gmpes_list) != len(config.gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
@@ -377,6 +385,10 @@ def plot_euclidean(filename, output_directory):
     """ 
     config = Configurations(filename)
     
+    if not hasattr(config, "mags_eucl") or not hasattr(config, "depths_eucl"):
+        raise ValueError(
+            "Euclidean analysis params must be specified for Euclidean dist. matrix plots.")
+
     if len(config.gmpes_list) != len(config.gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
     

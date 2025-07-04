@@ -107,7 +107,7 @@ class ComparisonTestCase(unittest.TestCase):
         np.testing.assert_allclose(config.mag_list, TARGET_MAGS)
 
         # Check for target mag
-        np.testing.assert_allclose(config.mags_euclidean, TARGET_MAG_EUC)
+        np.testing.assert_allclose(config.mags_eucl, TARGET_MAG_EUC)
 
         # Check for target gmpes
         for gmpe in range(0, len(config.gmpes_list)):

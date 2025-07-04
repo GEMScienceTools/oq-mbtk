@@ -440,11 +440,12 @@ def compute_matrix_gmpes(config, mtxs_type):
         compute_matrix_gmpes (either median, 84th or 16th percentile)
     """
     # Get mag, imt and depth lists
-    mag_list = config.mags_euclidean
-    dep_list = config.depths_euclidean
+    mag_list = config.mags_eucl
+    dep_list = config.depths_eucl
+    imt_list = config.imt_list
     
     mtxs_median = {}
-    for n, i in enumerate(config.imt_list): # Iterate through imt_list
+    for n, i in enumerate(imt_list): # Iterate through imt_list
         matrix_medians=np.zeros((len(config.gmpes_list), (len(mag_list)*int((
             config.maxR-config.minR)/1))))
 
