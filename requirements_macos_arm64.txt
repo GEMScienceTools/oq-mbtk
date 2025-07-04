@@ -9,17 +9,19 @@ https://wheelhouse.openquake.org/macos/arm64/py311/pyproj-3.6.1-cp311-cp311-maco
 #
 # Version specific
 pandas == 2.0.3
-geopandas >= 0.10.2
+geopandas == 1.0.1
 ipykernel >= 4.8.0
 ipython >= 6.2.0
 jupyter_client >= 5.0.0
-matplotlib >= 3.4.2
+matplotlib == 3.8.2
 nbstripout >= 0.3.0
 notebook >= 5.0.0
 pylint >= 2.1.1
 rtree >= 0.9.4
 netCDF4 < 1.7.0
 scipy >= 1.13.1
+pygmt == 0.12.0
+h3 == 3.7.7
 #
 # Generic
 openpyxl
@@ -31,8 +33,6 @@ obspy
 prettytable
 tqdm
 tables
-h3
-pygmt
 reportlab
 igraph
 pyvista
