@@ -193,7 +193,7 @@ def att_curves(gmpe,
                dist_type,
                trt,
                up_or_down_dip,
-               volc_ba,
+               volc_back_arc,
                eshm20_region):
     """
     Compute the ground-motion intensities for the given context created here
@@ -238,7 +238,7 @@ def att_curves(gmpe,
     props = {'vs30': vs30,
              'z1pt0': Z1,
              'z2pt5': Z25,
-             'backarc': volc_ba,
+             'backarc': volc_back_arc,
              'vs30measured': False,
              'eshm20_region': eshm20_region}
 

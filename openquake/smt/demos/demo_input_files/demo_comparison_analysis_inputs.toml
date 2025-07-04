@@ -9,7 +9,7 @@ dist_type = 'repi' # Specify distance metric for trellis and response spectra
 dist_list = [10, 100, 250] # Distance intervals for use in spectra plots
 Nstd = 0 # Truncation for GMM sigma distribution
 
-# Specify site properties
+# Specify site properties (vs30 must be specified - the others are proxied if key is missing)
 [site_properties]
 vs30 = 800
 z1pt0 = -999  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
