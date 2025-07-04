@@ -1,0 +1,19 @@
+# Test input file for checking execution of compute_residuals.from_toml function using some GMPEs with additional parameters specifiable within the toml file
+
+[models.AbrahamsonEtAl2014]
+region = "JPN"
+
+[models.AbrahamsonGulerce2020SInter]
+region = "CAS"
+
+[models.KothaEtAl2020]
+
+[models.NGAEastGMPE]
+gmpe_table = 'NGAEast_FRANKEL_J15.hdf5'
+
+[models.0-NGAEastUSGSGMPE]
+gmpe_table = 'nga_east_1CCSP.hdf5'
+sigma_model = 'PANEL'
+
+[imts]
+imt_list = ['PGA', 'SA(0.2)', 'SA(0.5)']    
