@@ -148,61 +148,30 @@ class Configurations(object):
         """
         Manage the logic tree weight assigned for each GMPE in the toml (if any)
         """
-        # If weight is assigned to a GMPE get it + check sum of weights for 
-        # GMPEs with weights allocated is about 1
-        weights = [{}, {}, {}, {}]
+        weight_keys = ['lt_weight_gmc1', 'lt_weight_gmc2', 'lt_weight_gmc3', 'lt_weight_gmc4']
+        weights = [{} for _ in weight_keys]
+        msg = "Sum of GMC logic tree weights must be 1.0"
+
+        # Get weight for each GMM if provided
         for gmpe in gmpe_list:
             if 'lt_weight' in gmpe:
-                split_gmpe_str = str(gmpe).splitlines()
-                for idx, component in enumerate(split_gmpe_str):
-                    if 'lt_weight_gmc1' in component:
-                        weights[0][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])
-                    if 'lt_weight_gmc2' in component:
-                        weights[1][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])                       
-                    if 'lt_weight_gmc3' in component:
-                        weights[2][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])
-                    if 'lt_weight_gmc4' in component:
-                        weights[3][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])
-            
-        # Check weights for each logic tree (if present) equal 1.0
-        msg = "Sum of GMC logic tree weights must be 1.0"
-        if weights[0] != {}:
-            check_weights_gmc1 = np.array(pd.Series(weights[0]))
-            lt_total_wt_gmc1 = np.sum(check_weights_gmc1, axis=0)
-            assert abs(lt_total_wt_gmc1-1.0) < 1e-10, msg
-            lt_weights_gmc1 = weights[0]
-        else:
-            lt_weights_gmc1 = None
-        
-        if weights[1] != {}:
-            check_weights_gmc2 = np.array(pd.Series(weights[1]))
-            lt_total_wt_gmc2 = np.sum(check_weights_gmc2, axis=0)
-            assert abs(lt_total_wt_gmc2-1.0) < 1e-10, msg
-            lt_weights_gmc2 = weights[1]
-        else:
-            lt_weights_gmc2 = None
+                lines = str(gmpe).splitlines()
+                for line in lines:
+                    for idx, key in enumerate(weight_keys):
+                        if key in line:
+                            weights[idx][gmpe] = float(line.split('=')[1])
 
-        if weights[2] != {}:
-            check_weights_gmc3 = np.array(pd.Series(weights[2]))
-            lt_total_wt_gmc3 = np.sum(check_weights_gmc3, axis=0)
-            assert abs(lt_total_wt_gmc3-1.0) < 1e-10, msg
-            lt_weights_gmc3 = weights[2]
-        else:
-            lt_weights_gmc3 = None
-            
-        if weights[3] != {}:
-            check_weights_gmc4 = np.array(pd.Series(weights[3]))
-            lt_total_wt_gmc4 = np.sum(check_weights_gmc4, axis=0)
-            assert abs(lt_total_wt_gmc4-1.0) < 1e-10, msg
-            lt_weights_gmc4 = weights[3]
-        else:
-            lt_weights_gmc4 = None
+        # Check weights in each logic tree sum to 1
+        lt_weights = []
+        for wt in weights:
+            if wt:
+                total_weight = np.sum(pd.Series(wt))
+                assert abs(total_weight - 1.0) < 1e-10, msg
+                lt_weights.append(wt)
+            else:
+                lt_weights.append(None)
 
-        return lt_weights_gmc1, lt_weights_gmc2, lt_weights_gmc3, lt_weights_gmc4
+        return tuple(lt_weights)
 
     def get_eucl_mags_deps(self, config_file):
         """
