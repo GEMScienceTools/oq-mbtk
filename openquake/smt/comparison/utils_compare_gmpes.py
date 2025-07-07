@@ -51,7 +51,7 @@ def plot_trellis_util(config, output_directory):
     cfg_key = f'vs30 = {config.vs30} m/s, GMM sigma epsilon = {config.Nstd}'
     
     # Get colours
-    colors = get_colors(config.custom_color_flag, config.custom_color_list)
+    colors = get_colors(config.custom_color_flag, config.custom_color_list) 
     
     # Compute attenuation curves
     store_gmm_curves, store_per_imt = {}, {} # For exporting gmm att curves
@@ -163,7 +163,6 @@ def plot_trellis_util(config, output_directory):
     
     # Finalise plots
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
-    breakpoint()
     pyplot.savefig(os.path.join(output_directory, 'TrellisPlots.png'),
                    bbox_inches='tight', dpi=200, pad_inches=0.2)
     
@@ -766,6 +765,7 @@ def get_colors(custom_color_flag, custom_color_list):
         '#87CEFA',
         '#00FA9A',
         ]
+    
     if custom_color_flag is True:
         return custom_color_list
     else:
