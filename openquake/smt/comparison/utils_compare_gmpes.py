@@ -729,7 +729,6 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 
 
 ### Utils for plots
-
 def get_colors(custom_color_flag, custom_color_list):
     """
     Get list of colors for plots
