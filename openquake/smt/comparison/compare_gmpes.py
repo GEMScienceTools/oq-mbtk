@@ -163,11 +163,18 @@ class Configurations(object):
 
         # Check weights in each logic tree sum to 1
         lt_weights = []
-        for wt in weights:
+        for idx, wt in enumerate(weights):
             if wt:
                 total_weight = np.sum(pd.Series(wt))
                 assert abs(total_weight - 1.0) < 1e-10, msg
                 lt_weights.append(wt)
+                # Also check that "plot_lt_only" if specified is uniformly applied
+                if (not all("plot_lt_only" in gmm for gmm in list(wt.keys()))
+                    and
+                    any("plot_lt_only" in gmm for gmm in list(wt.keys()))):
+                    raise ValueError(f"Plotting of only the logic tree must be "
+                                     f"consistently specified across all GMMs in the "
+                                     f"given logic tree (check logic tree {idx+1})")
             else:
                 lt_weights.append(None)
 
