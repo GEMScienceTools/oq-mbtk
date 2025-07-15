@@ -9,6 +9,7 @@ dist_type = 'rrup' # Specify distance metric for trellis/spectra
 dist_list = [100, 200] # Distances for use in response spectra
 Nstd = 1 # Truncation for GMM sigma distribution
 
+# Specify site properties (vs30 must be specified - the others are proxied if key is missing)
 [site_properties]
 vs30 = 800
 z1pt0 = 30.0  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
@@ -27,7 +28,7 @@ ztor = -999 # Set to -999 to NOT consider
 aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
 trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
-[euclidean_analysis] # Mags and depths for Sammons maps, Euclidean dist and clustering
+[euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
 mmin = 5
 mmax = 7
 spacing = 0.1

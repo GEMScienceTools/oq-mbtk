@@ -29,7 +29,6 @@ import openquake.smt.response_spectrum_smoothing as smo
 import openquake.smt.utils_intensity_measures as ims
 
 
-
 BASE_DATA_PATH = os.path.dirname(__file__)
 
 
@@ -37,7 +36,6 @@ class BaseIMSTestCase(unittest.TestCase):
     """
     Base test case for Response Spectra and Intensity Measure functions
     """
-
     @staticmethod
     def arr_diff(x, y, percent):
         """
@@ -83,7 +81,6 @@ class ResponseSpectrumTestCase(BaseIMSTestCase):
     """
     Tests the response spectrum methods
     """
-
     def test_response_spectrum(self):
         # Tests the Nigam & Jennings Response Spectrum
         x_record = self.fle["INPUTS/RECORD1/XRECORD"][:]
@@ -232,7 +229,9 @@ class ScalarIntensityMeasureTestCase(BaseIMSTestCase):
 
 
 class FourierSpectrumBuildSmooth(BaseIMSTestCase):
-
+    """
+    Test smoothing of FAS.
+    """
     def test_create_fas(self):
         x_record = self.fle["INPUTS/RECORD1/XRECORD"][:]
         x_timestep = self.fle["INPUTS/RECORD1/XRECORD"].attrs["timestep"]
