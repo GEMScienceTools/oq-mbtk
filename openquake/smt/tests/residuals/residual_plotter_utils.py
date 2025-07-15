@@ -191,7 +191,7 @@ class ResidualsTestCase(unittest.TestCase):
                     self._plot_data_check(
                         data1, "%s (km)" % dist, "Z (%s)" % imt, additional_keys)
 
-                    # assert histogram data is ok:
+                    # Assert histogram data is ok
                     self._scatter_data_check(residuals, gsim, imt, data1)
 
     def test_nanlinregress(self):

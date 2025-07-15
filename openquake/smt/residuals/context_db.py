@@ -42,8 +42,8 @@ class ContextDB:
      - get_observations(self, imtx, records, component="Geometric")
        (which is called only if `imts` is given in :meth:`self.get_contexts`)
     """
-    rupture_context_attrs = tuple(RuptureContext._slots_)  # noqa
-    distances_context_attrs = tuple(DistancesContext._slots_)  # noqa
+    rupture_context_attrs = tuple(RuptureContext._slots_)
+    distances_context_attrs = tuple(DistancesContext._slots_)
     sites_context_attrs = ('custom_site_id',
                            'vs30',
                            'lons',
@@ -66,23 +66,22 @@ class ContextDB:
         and should not be overwritten only in very specific circumstances.
         """
         compute_observations = imts is not None and len(imts)
+        ctxs = []
         for evt_id, records in self.get_event_and_records():
             dic = self.create_context(evt_id, imts)
             ctx = dic['Ctx']
             self.update_context(ctx, records, nodal_plane_index)
             if compute_observations:
-                observations = dic['Observations']
-                retained = dic["Retained"]
-                for imtx, values in observations.items():
+                for imtx, values in dic["Observations"].items():
                     values = self.get_observations(imtx, records, component)
                     check = pd.notnull(values)
-                    observations[imtx] = np.asarray(values, dtype=float)
-                    retained[imtx] = np.argwhere(check==True).flatten()
+                    dic["Observations"][imtx] = np.asarray(values, dtype=float)
+                    dic["Retained"][imtx] = np.argwhere(check==True).flatten()
                 dic["Num. Sites"] = len(records)
             dic['Ctx'].sids = np.arange(len(records), dtype=np.uint32)
             dic['Ctx'].custom_site_id = [sid.site.id for sid in records]
-
-            yield dic
+            ctxs.append(dic)
+        return ctxs
 
     def create_context(self, evt_id, imts=None):
         """

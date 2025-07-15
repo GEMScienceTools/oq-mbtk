@@ -4,5 +4,7 @@
 
 [models.LanzanoEtAl2019_RJB_OMO]
 
+[models.BooreEtAl2020]
+
 [imts]
 imt_list = ["PGA", "SA(0.2)", "SA(0.6)", "SA(1.0)"]

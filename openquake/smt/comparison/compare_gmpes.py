@@ -54,17 +54,23 @@ class Configurations(object):
         self.Nstd = config_file['general']['Nstd']
         self.max_period = config_file['general']['max_period']
         
+        # If the following site params are missing, the following proxies are used
+        SITE_OPTIONAL = {
+        "z1pt0": -999, # Let param be computed using each GMM's vs30 to z1pt0
+        "z2pt5": -999, # Let param be computed using each GMM's vs30 to z2pt5
+        "up_or_down_dip": 1, # Assume site is up-dip
+        "volc_back_arc": False, # Asssume site is not in back-arc
+        "eshm20_region": 0} # Assume default region for ESHM version of K20 GMM
+
         # Get site params
-        self.vs30 = config_file['site_properties']['vs30']
-        self.z1pt0 = config_file['site_properties']['z1pt0']
-        self.z2pt5 = config_file['site_properties']['z2pt5']
-        up_or_down_dip = config_file['site_properties']['up_or_down_dip']
-        self.up_or_down_dip = float(up_or_down_dip)
-        self.volc_ba = config_file['site_properties']['volc_back_arc']
-        eshm20_region = int(config_file['site_properties']['eshm20_region'])
-        self.eshm20_region = eshm20_region
-        
-        # Get rupture params
+        self.vs30 = config_file['site_properties']['vs30'] # Must be provided
+        for par in SITE_OPTIONAL:
+            if par not in config_file['site_properties']:
+                setattr(self, par, SITE_OPTIONAL[par]) # Assign default if not provided
+            else:
+                setattr(self, par, config_file['site_properties'][par])
+
+        # Get source params
         self.strike = config_file['source_properties']['strike']
         self.dip = config_file['source_properties']['dip']
         self.rake = config_file['source_properties']['rake']
@@ -82,14 +88,13 @@ class Configurations(object):
         assert len(self.mag_list) == len(self.depth_list)
         
         # Get mags and depths for Sammons, Euclidean distance and clustering
-        self.mags_euclidean, self.depths_euclidean = self.get_eucl_mags_deps(config_file)
-        self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
+        if "euclidean_analysis" in config_file:
+            self.mags_eucl, self.depths_eucl = self.get_eucl_mags_deps(config_file)
+            self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
 
         # Get imts
-        self.imt_list = config_file['general']['imt_list']
-        for idx_imt, imt in enumerate(self.imt_list):
-            self.imt_list[idx_imt] = from_string(imt)  
-        
+        self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
+
         # Get GMMs
         self.gmpes_list, self.baseline_gmm = self.get_gmpes(config_file)
 
@@ -143,61 +148,37 @@ class Configurations(object):
         """
         Manage the logic tree weight assigned for each GMPE in the toml (if any)
         """
-        # If weight is assigned to a GMPE get it + check sum of weights for 
-        # GMPEs with weights allocated is about 1
-        weights = [{}, {}, {}, {}]
+        weight_keys = ['lt_weight_gmc1', 'lt_weight_gmc2', 'lt_weight_gmc3', 'lt_weight_gmc4']
+        weights = [{} for _ in weight_keys]
+        msg = "Sum of GMC logic tree weights must be 1.0"
+
+        # Get weight for each GMM if provided
         for gmpe in gmpe_list:
             if 'lt_weight' in gmpe:
-                split_gmpe_str = str(gmpe).splitlines()
-                for idx, component in enumerate(split_gmpe_str):
-                    if 'lt_weight_gmc1' in component:
-                        weights[0][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])
-                    if 'lt_weight_gmc2' in component:
-                        weights[1][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])                       
-                    if 'lt_weight_gmc3' in component:
-                        weights[2][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])
-                    if 'lt_weight_gmc4' in component:
-                        weights[3][gmpe] = float(split_gmpe_str[
-                            idx].split('=')[1])
-            
-        # Check weights for each logic tree (if present) equal 1.0
-        msg = "Sum of GMC logic tree weights must be 1.0"
-        if weights[0] != {}:
-            check_weights_gmc1 = np.array(pd.Series(weights[0]))
-            lt_total_wt_gmc1 = np.sum(check_weights_gmc1, axis=0)
-            assert abs(lt_total_wt_gmc1-1.0) < 1e-10, msg
-            lt_weights_gmc1 = weights[0]
-        else:
-            lt_weights_gmc1 = None
-        
-        if weights[1] != {}:
-            check_weights_gmc2 = np.array(pd.Series(weights[1]))
-            lt_total_wt_gmc2 = np.sum(check_weights_gmc2, axis=0)
-            assert abs(lt_total_wt_gmc2-1.0) < 1e-10, msg
-            lt_weights_gmc2 = weights[1]
-        else:
-            lt_weights_gmc2 = None
+                lines = str(gmpe).splitlines()
+                for line in lines:
+                    for idx, key in enumerate(weight_keys):
+                        if key in line:
+                            weights[idx][gmpe] = float(line.split('=')[1])
 
-        if weights[2] != {}:
-            check_weights_gmc3 = np.array(pd.Series(weights[2]))
-            lt_total_wt_gmc3 = np.sum(check_weights_gmc3, axis=0)
-            assert abs(lt_total_wt_gmc3-1.0) < 1e-10, msg
-            lt_weights_gmc3 = weights[2]
-        else:
-            lt_weights_gmc3 = None
-            
-        if weights[3] != {}:
-            check_weights_gmc4 = np.array(pd.Series(weights[3]))
-            lt_total_wt_gmc4 = np.sum(check_weights_gmc4, axis=0)
-            assert abs(lt_total_wt_gmc4-1.0) < 1e-10, msg
-            lt_weights_gmc4 = weights[3]
-        else:
-            lt_weights_gmc4 = None
+        # Check weights in each logic tree sum to 1
+        lt_weights = []
+        for idx, wt in enumerate(weights):
+            if wt:
+                total_weight = np.sum(pd.Series(wt))
+                assert abs(total_weight - 1.0) < 1e-10, msg
+                lt_weights.append(wt)
+                # Also check that "plot_lt_only" if specified is uniformly applied
+                if (not all("plot_lt_only" in gmm for gmm in list(wt.keys()))
+                    and
+                    any("plot_lt_only" in gmm for gmm in list(wt.keys()))):
+                    raise ValueError(f"Plotting of only the logic tree must be "
+                                     f"consistently specified across all GMMs in the "
+                                     f"given logic tree (check logic tree {idx+1})")
+            else:
+                lt_weights.append(None)
 
-        return lt_weights_gmc1, lt_weights_gmc2, lt_weights_gmc3, lt_weights_gmc4
+        return tuple(lt_weights)
 
     def get_eucl_mags_deps(self, config_file):
         """
@@ -244,7 +225,7 @@ def plot_trellis(filename, output_directory):
     return store_gmm_curves
 
                 
-def plot_spectra(filename, output_directory, obs_spectra=None):
+def plot_spectra(filename, output_directory, obs_spectra_fname=None):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
     configuration
@@ -256,8 +237,16 @@ def plot_spectra(filename, output_directory, obs_spectra=None):
         An example file can be found in openquake.smt.tests.file_samples.
     """
     config = Configurations(filename)
-    
-    store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra)
+
+    if obs_spectra_fname is not None:
+        try:
+            assert len(config.mag_list) == 1 and len(config.depth_list) == 1
+        except:
+            raise ValueError("If plotting an observed spectra you must only " \
+                             "specify 1 magnitude and depth combination for " \
+                             "response spectra plotting in the toml file.")
+
+    store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra_fname)
 
     return store_gmc_lts
 
@@ -288,6 +277,10 @@ def plot_cluster(filename, output_directory):
         plotting methods.
     """ 
     config = Configurations(filename)
+
+    if not hasattr(config, "mags_eucl") or not hasattr(config, "depths_eucl"):
+        raise ValueError(
+            "Euclidean analysis params must be specified for cluster plots.")
     
     if len(config.gmpes_list) != len(config.gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
@@ -325,6 +318,10 @@ def plot_sammons(filename, output_directory):
         plotting methods.
     """ 
     config = Configurations(filename)
+
+    if not hasattr(config, "mags_eucl") or not hasattr(config, "depths_eucl"):
+        raise ValueError(
+            "Euclidean analysis params must be specified for Sammons maps.")
 
     if len(config.gmpes_list) != len(config.gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
@@ -364,6 +361,10 @@ def plot_euclidean(filename, output_directory):
     """ 
     config = Configurations(filename)
     
+    if not hasattr(config, "mags_eucl") or not hasattr(config, "depths_eucl"):
+        raise ValueError(
+            "Euclidean analysis params must be specified for Euclidean dist. matrix plots.")
+
     if len(config.gmpes_list) != len(config.gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
     
