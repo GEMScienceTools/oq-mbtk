@@ -845,7 +845,6 @@ class GroundMotionDatabase(ContextDB):
             setattr(ctx, attname, [])
 
         for record in records:
-            ctx.vs30.append(record.site.vs30)
             ctx.lons.append(record.site.longitude)
             ctx.lats.append(record.site.latitude)
             if record.site.altitude:
@@ -853,6 +852,7 @@ class GroundMotionDatabase(ContextDB):
             else:
                 depth = 0.0
             ctx.depths.append(depth)
+            ctx.vs30.append(record.site.vs30)
             if record.site.vs30_measured is not None:
                 vs30_measured = record.site.vs30_measured
             else:

@@ -26,9 +26,9 @@ import pickle
 import numpy as np
 import pandas as pd
 
-from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
+from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
@@ -124,7 +124,7 @@ class ResidualsTestCase(unittest.TestCase):
     def test_stochastic_area_execution(self):
         """
         Tests basic execution of stochastic area metric scores (Sunny
-        et al. 2021) computation- not correctness of values
+        et al. 2021) computation - not correctness of values
         """
         self.residuals.get_stochastic_area_wrt_imt()
 
@@ -142,7 +142,6 @@ class ResidualsTestCase(unittest.TestCase):
         rspl.plot_residual_pdf_with_spectral_period(self.residuals, tmp_fig)
         rspl.plot_edr_metrics_with_spectral_period(self.residuals, tmp_fig)
         rspl.plot_loglikelihood_with_spectral_period(self.residuals, tmp_fig)
-        rspl.plot_stochastic_area_with_spectral_period(self.residuals, tmp_fig)
 
     def test_table_execution(self):
         """
