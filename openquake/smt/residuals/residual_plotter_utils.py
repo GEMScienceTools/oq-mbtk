@@ -18,10 +18,6 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Module managing residual plotting data.
-This module avoids the use of classes and inhertances as simple functions
-accomplish the task without unnecessary overhead.
-All non-private functions should return the same dicts (see docstrings
-for details)
 """
 import numpy as np
 import pandas as pd
