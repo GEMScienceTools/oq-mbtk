@@ -11,13 +11,13 @@ from shapely.geometry import Point
 from shapely import wkt
 
 
-def main(fname_points: str, fname_polygons: str, folder_out: str='/tmp',
-        skip=[]):
-    create_smoothing_per_zone(fname_points, fname_polygons, folder_out, skip)
+def main(fname_points: str, fname_polygons: str, folder_out: str='/tmp', *,
+        skip: str=[], use: str=[]):    
+    create_smoothing_per_zone(fname_points, fname_polygons, folder_out, skip, use)
 
 
 def create_smoothing_per_zone(fname_points: str, fname_polygons: str,
-                              folder_out: str='/tmp', *, skip=[], use = []):
+                              folder_out: str='/tmp',  skip:str=[], use:str = []):
     """
     Creates subsets of points, one for each of the polygons included in the
     `fname_polygons` shapefile. The attibute table must have an 'id' attribute.
@@ -76,6 +76,7 @@ main.fname_points = ".csv file created by the smoothing code"
 main.fname_polygons = "Shapefile with the polygons"
 main.folder_out = "The name of the output folder where to save .csv files"
 main.skip = "A string containing a list of source IDs"
+main.use = "A string containg a list of source IDs to use"
 
 if __name__ == '__main__':
     sap.run(main)

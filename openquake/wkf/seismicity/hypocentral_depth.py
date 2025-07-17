@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 def hypocentral_depth_analysis(
         fname: str, depth_min: float, depth_max: float, depth_binw: float,
-        figure_name_out: str = '', show: bool = False, depth_bins=[], label='',
+        figure_name_out: str = '', show: bool = False, depth_bins=[], remove_fixed=[], label='',
         figure_format='png') -> Tuple[np.ndarray, np.ndarray]:
     """
     :param fname:
@@ -26,6 +26,8 @@ def hypocentral_depth_analysis(
     :param depth_bins:
         The bins used to build the statistics. Overrides the `depth_min`,
         `depth_max`, `depth_binw` combination.
+    :param remove_fixed:
+    	list of fixed depth values to be removed from the analysis
     :param label:
         A label used in the title of the figure
     :param figure_format:
@@ -48,6 +50,11 @@ def hypocentral_depth_analysis(
 
     # Filter the catalogue
     df = df[(df.depth > depth_min) & (df.depth <= depth_max)]
+    
+    # remove_fixed removes fixed depths from the analysis
+    # This redistributes the pdf omitting the fixed depth events
+    if len(remove_fixed) > 0:
+        df = df[~df.depth.isin([remove_fixed])]    
 
     # Build the histogram
     hist, _ = np.histogram(df['depth'], bins=bins)
