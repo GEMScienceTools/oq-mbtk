@@ -1,0 +1,16 @@
+[completeness]
+num_steps = 0
+step = 8
+flexible = true
+mags = [ 4.0, 5.0, 5.5, 6.0, 7.0,]
+years = [ 1900, 1930, 1960, 1975, 1990,]
+ref_mag = 5.0
+ref_upp_mag = 10.0
+bmin = 0.5
+bmax = 1.5
+last_year = 2000
+optimization_criterion = "poisson"
+binw = 0.1
+
+[sources.examp2]
+

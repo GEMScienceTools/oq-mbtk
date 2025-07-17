@@ -122,10 +122,6 @@ def _create_catalogue_versions(catfi, outdir, numcats=None, stype='random',
         print(sys.stderr, "Use a supported sampling type.")
         sys.exit(1)
 
-#    return format
-
-
-
 def _decl_all_cats(outdir, dcl_toml_tmp, decdir):
 
     """

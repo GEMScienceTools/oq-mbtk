@@ -190,6 +190,7 @@ def classify(ini_fname, compute_distances, rf=''):
             if not re.search('^\\/', tmps):
                 tmps = os.path.join(rf, tmps)
             distance_delta = config[key]['distance_delta']
+            lower_depth = config[key].get('lower_depth', 400.)
 
             # Info
             logger.info(f'Classifying {key:s} events')
@@ -208,6 +209,7 @@ def classify(ini_fname, compute_distances, rf=''):
                                         treg_filename,
                                         distance_delta,
                                         label=trlab,
+                                        lower_depth=lower_depth, 
                                         shapefile=shapefile,
                                         log_fname=log_fname)
             sce.classify(remove_from)
