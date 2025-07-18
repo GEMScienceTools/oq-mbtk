@@ -40,10 +40,7 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  RecordDistance)
 from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.utils import (MECHANISM_TYPE,
-                                 DIP_TYPE,
-                                 vs30_to_z1pt0_cy14,
-                                 vs30_to_z2pt5_cb14)
+from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
@@ -67,7 +64,6 @@ HEADERS = ["event_id",
            "es_width",
            "network_code",
            "station_code",
-           "location_code",
            "st_latitude",
            "st_longitude",
            "st_elevation",
@@ -79,11 +75,6 @@ HEADERS = ["event_id",
            "rup_dist",
            "Rx_dist",
            "Ry0_dist",
-           "U_channel_code",
-           "U_azimuth_deg",
-           "V_channel_code",
-           "V_azimuth_deg",
-           "W_channel_code",
            "U_hp",
            "V_hp",
            "W_hp",
@@ -161,7 +152,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         # Waveform ID not provided in file so concatenate Event and Station ID
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
-                         metadata["station_code"], metadata["location_code"]])
+                         metadata["station_code"]])
         wfid = wfid.replace("-", "_")
         # Parse the event metadata
         event = self._parse_event_data(metadata)
@@ -345,20 +336,21 @@ class GEMFlatfileParser(SMDatabaseReader):
             vs30_measured = 1
         else:
             vs30_measured = 0 # Either inferred or unknown
-        
+
         # Make the site object
-        site = RecordSite(site_id, station_code, station_code, site_lon,
-                          site_lat, elevation, vs30, vs30_measured,
+        site = RecordSite(site_id,
+                          station_code,
+                          station_code,
+                          site_lon,
+                          site_lat,
+                          elevation,
+                          vs30,
+                          vs30_measured,
                           network_code=network_code, country=None)
 
-        # Take basin params from flatfile and calc from NGAWest2
-        # vs30 to basin param relationships if not available
+        # Add basin params
         site.z1pt0 = valid.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
         site.z2pt5 = valid.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
-        if site.vs30 and not site.z1pt0:
-            site.z1pt0 = vs30_to_z1pt0_cy14(vs30)
-        if site.vs30 and not site.z2pt5:
-            site.z2pt5 = vs30_to_z2pt5_cb14(vs30)
 
         return site
 
@@ -366,20 +358,22 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         Parse the waveform data
         """
-        # U channel - usually east
-        xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
+        # U channel (assume NS direction)
+        xazimuth = 90.
         xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
                    "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
         xcomp = Component(
             wfid, xazimuth, waveform_filter=xfilter, units="cm/s/s")
         
-        # V channel - usually North
-        vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
+        # V channel (assume EW direction)
+        vazimuth = 0.
         vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
                    "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
         vcomp = Component(
             wfid, vazimuth, waveform_filter=vfilter, units="cm/s/s")
-        zorientation = metadata["W_channel_code"].strip()
+        
+        # W channel (vertical)
+        zorientation = "V"
         if zorientation:
             zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
                        "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}

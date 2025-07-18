@@ -26,17 +26,17 @@ import numpy as np
 import pandas as pd
 
 from openquake.smt.comparison import compare_gmpes as comp
-from openquake.smt.comparison.utils_compare_gmpes import (
-    compute_matrix_gmpes, plot_trellis_util, plot_spectra_util,
-    plot_ratios_util, plot_cluster_util, plot_sammons_util, plot_euclidean_util)
+from openquake.smt.comparison.utils_compare_gmpes import (compute_matrix_gmpes,
+                                                          plot_cluster_util,
+                                                          plot_sammons_util,
+                                                          plot_euclidean_util)
 
 
 # Base path
 base = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
-TARGET_VS30 = 800
-TARGET_Z_BASIN_REGION = 'global'
+TARGET_vs30 = 800
 TARGET_DEPTHS = [20, 25, 30]
 TARGET_RMIN = 0
 TARGET_RMAX = 300
@@ -88,14 +88,10 @@ class ComparisonTestCase(unittest.TestCase):
         # Check for target ztor
         self.assertEqual(config.ztor, TARGET_ZTOR)
 
-        # Check for target Vs30
-        self.assertEqual(config.Vs30, TARGET_VS30)
+        # Check for target vs30
+        self.assertEqual(config.vs30, TARGET_vs30)
 
-        # Check for target region
-        self.assertEqual(config.z_basin_region, TARGET_Z_BASIN_REGION)
-
-        # Check for target depths (other functions use arrays from these
-        # depths)
+        # Check for target depths
         np.testing.assert_allclose(config.depth_list, TARGET_DEPTHS)
 
         # Check for target Rmin
@@ -111,7 +107,7 @@ class ComparisonTestCase(unittest.TestCase):
         np.testing.assert_allclose(config.mag_list, TARGET_MAGS)
 
         # Check for target mag
-        np.testing.assert_allclose(config.mags_euclidean, TARGET_MAG_EUC)
+        np.testing.assert_allclose(config.mags_eucl, TARGET_MAG_EUC)
 
         # Check for target gmpes
         for gmpe in range(0, len(config.gmpes_list)):
@@ -121,7 +117,7 @@ class ComparisonTestCase(unittest.TestCase):
         for imt in range(0, len(config.imt_list)):
             self.assertEqual(str(config.imt_list[imt]), TARGET_IMTS[imt])
 
-        # Check baseline GMM used to compute ratios
+        # Check baseline GMPE used to compute ratios
         self.assertEqual(config.baseline_gmm, TARGET_BASELINE_GMPE)
 
     def test_mtxs_median_calculation(self):
@@ -179,7 +175,7 @@ class ComparisonTestCase(unittest.TestCase):
         for imt in range(0, len(matrix_Dist)):
             self.assertEqual(len(matrix_Dist[imt]), len(TARGET_GMPES))
 
-        # Check for each gmpe that dist to all other GMPEs is calculated
+        # Check per GMPE that euclidean dist to all other GMPEs is calculated
         for imt in range(0, len(matrix_Dist)):
             for gmpe in range(0, len(matrix_Dist[imt])):
                 self.assertEqual(len(matrix_Dist[imt][gmpe]),
@@ -222,7 +218,7 @@ class ComparisonTestCase(unittest.TestCase):
         mtxs_medians = compute_matrix_gmpes(config, mtxs_type='84th_perc')
         
         # Get clustering matrix
-        lab = '84th_perc_Clustering_Vs30.png'
+        lab = '84th_perc_Clustering_vs30.png'
         Z_matrix = plot_cluster_util(
             config.imt_list, config.gmpe_labels, mtxs_medians,
             os.path.join(self.output_directory, lab), mtxs_type='84th_perc')
@@ -230,7 +226,7 @@ class ComparisonTestCase(unittest.TestCase):
         # Check number of cluster arrays matches number of imts per config
         self.assertEqual(len(Z_matrix), len(TARGET_IMTS))
 
-        # Check number of gmpes matches number of values in each array
+        # Check number of GMPEs matches number of values in each array
         for imt in range(0, len(Z_matrix)):
             for gmpe in range(0, len(Z_matrix[imt])):
                 self.assertEqual(len(Z_matrix[imt][gmpe]), len(TARGET_GMPES))
@@ -238,14 +234,11 @@ class ComparisonTestCase(unittest.TestCase):
     def test_trellis_and_spectra_functions(self):
         """
         Check trellis and response spectra plotting functions are correctly
-        executed. Also checks correct values are returned for the gmm
+        executed. Also checks correct values are returned for the GMPE
         attenuation curves and spectra.
         """
-        # Load config
-        config = comp.Configurations(self.input_file)
-
         # Trellis plots
-        att_curves = plot_trellis_util(config, self.output_directory)
+        att_curves = comp.plot_trellis(self.input_file, self.output_directory)
         if not os.path.exists(self.exp_curves):
             with open(self.exp_curves, 'wb') as f: # Write if doesn't exist
                 pickle.dump(att_curves, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -255,8 +248,8 @@ class ComparisonTestCase(unittest.TestCase):
         pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
 
         # Spectra plots
-        gmc_lts = plot_spectra_util(
-            config, self.output_directory, obs_spectra=None)
+        gmc_lts = comp.plot_spectra(
+            self.input_file, self.output_directory, obs_spectra_fname=None)
         if not os.path.exists(self.exp_spectra):
             with open(self.exp_spectra, 'wb') as f: # Write if doesn't exist
                 pickle.dump(gmc_lts, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -278,14 +271,12 @@ class ComparisonTestCase(unittest.TestCase):
     def test_plot_observed_spectra(self):
         """
         Test execution of plotting an observed spectra from a csv against
-        predictions from gmpes
+        predictions from GMPEs
         """
-        # Get config and obs spectra
-        config = comp.Configurations(self.input_file_plot_obs_spectra)
-        obs_sp = self.input_file_obs_spectra_csv
-        
         # Spectra plots including obs spectra
-        plot_spectra_util(config, self.output_directory, obs_sp)
+        comp.plot_spectra(self.input_file_plot_obs_spectra,
+                          self.output_directory,
+                          self.input_file_obs_spectra_csv)
         
         # Specify target files
         target_file_spectra = (os.path.join(
@@ -296,14 +287,11 @@ class ComparisonTestCase(unittest.TestCase):
 
     def test_plot_ratios(self):
         """
-        Test execution of plotting ratios (median GMM attenuation/median
-        baseline GMM attenuation). Correctness of values is not examined.
+        Test execution of plotting ratios (median GMPE attenuation/median
+        baseline GMPE attenuation). Correctness of values is not examined.
         """
-        # Load config
-        config = comp.Configurations(self.input_file)
-
         # Plot the ratios
-        plot_ratios_util(config, self.output_directory)
+        comp.plot_ratios(self.input_file, self.output_directory)
 
     @classmethod
     def tearDownClass(self):

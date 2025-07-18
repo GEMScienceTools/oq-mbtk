@@ -81,8 +81,8 @@ class SetSubductionEarthquakes:
 
     def __init__(self, label, treg_filename, distance_folder, edges_folder,
                  distance_buffer_below, distance_buffer_above, lower_depth,
-                 catalogue_filename, log_fname=None, low_year=-10000,
-                 upp_year=+10000, low_mag=-5., upp_mag=15.):
+                 catalogue_filename, log_fname=None, upper_depth=None,
+                 low_year=-10000, upp_year=+10000, low_mag=-5., upp_mag=15.):
         self.label = label
         self.treg_filename = treg_filename
         self.distance_folder = distance_folder
@@ -91,6 +91,7 @@ class SetSubductionEarthquakes:
         self.distance_buffer_above = Decimal(distance_buffer_above)
         self.catalogue_filename = catalogue_filename
         self.lower_depth = lower_depth
+        self.upper_depth = upper_depth
         self.log_fname = log_fname
         self.low_year = low_year
         self.upp_year = upp_year
@@ -118,6 +119,9 @@ class SetSubductionEarthquakes:
         lower_depth = self.lower_depth
         if lower_depth is None:
             lower_depth = 400.
+        upper_depth = self.upper_depth
+        if upper_depth is None:
+            upper_depth = 0
 
         # Open log file and prepare the group
         print(f'Log filename: {self.log_fname}\n')
@@ -190,7 +194,7 @@ class SetSubductionEarthquakes:
         # Select the earthquakes within the bounding box
         idxs = sorted(list(sidx.intersection((min_lo_sub-DELTA,
                                               min_la_sub-DELTA,
-                                              0,
+                                              upper_depth,
                                               max_lo_sub+DELTA,
                                               max_la_sub+DELTA,
                                               lower_depth))))
@@ -341,7 +345,8 @@ class SetSubductionEarthquakes:
         tl['subd'] = sub_depths
         tl['srfd'] = surf_dist
         tl['idx'] = idxa
-        grp.create_dataset('data', data=np.array(tl))
+        if not 'data' in grp.keys():
+            grp.create_dataset('data', data=np.array(tl))
 
         # Update the selection array
         for uuu, iii in enumerate(list(idxa)):

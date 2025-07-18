@@ -170,7 +170,7 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
             
         df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
         gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
-        within = gpd.sjoin(gdf, gdf_poly, op='within')
+        within = gpd.sjoin(gdf, gdf_poly, predicate='within')
         
         # check if there are other polygons for this source
         # Create output file
@@ -229,7 +229,7 @@ def create_gcmt_files(fname_polygons: str, gcmt_filename: str, folder_out: str,
 
         df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
         gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
-        within = gpd.sjoin(gdf, gdf_poly, op='within')
+        within = gpd.sjoin(gdf, gdf_poly, predicate='within')
 
         if len(df) < 1:
             continue

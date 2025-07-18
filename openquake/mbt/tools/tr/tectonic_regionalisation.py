@@ -31,7 +31,7 @@ def get_crust_model(filename):
     return out, sidx
 
 
-def set_crustal(cat, crust, sidx, delta=0):
+def set_crustal(cat, crust, sidx, delta=0, lower_depth=400):
     """
     :parameter catalogue:
         An instance of :class:`openquake.hmtk.seismicity.catalogue.Catalogue`
@@ -49,7 +49,7 @@ def set_crustal(cat, crust, sidx, delta=0):
         iii = list(sidx.nearest((lon, lat, lon, lat), 1))
         #
         # Set the crustal earthquakes
-        if Decimal(crust[iii[0], 2]+float(delta)) > Decimal(dep):
+        if Decimal(crust[iii[0], 2]+float(delta)) > Decimal(dep) and (Decimal(dep) <= Decimal(lower_depth))::
             treg[idx] = True
         data.append([dep, crust[iii[0], 2]])
     return treg, data

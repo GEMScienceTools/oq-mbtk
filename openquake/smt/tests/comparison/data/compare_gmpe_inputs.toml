@@ -5,16 +5,16 @@ imt_list = ['PGA','SA(0.1)','SA(0.5)','SA(1.0)'] # IMTs to compute attenuation c
 max_period = 2 # Max period for response spectra (can't exceed maximum period in a specified GMPE)
 minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
-dist_type = 'rjb' # Specify distance metric used in trellis plots
+dist_type = 'rjb' # Specify distance metric for trellis/spectra
 dist_list = [10, 50, 200] # Distances for use in response spectra
 Nstd = 0 # Truncation for GMM sigma distribution
 
+# Specify site properties (vs30 must be specified - the others are proxied if key is missing)
 [site_properties]
 vs30 = 800
-Z1 = -999 # If -999 compute from Vs30 using Chiou and Youngs (2014) relationship
-Z25 = -999 # If -999 compute from Vs30 using Campbell and Bozorgnia (2014) relationship
+z1pt0 = 30.0  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
+z2pt5 = 0.57  # (km) - if -999 compute from each GMM's own vs30 to z2pt5 relationship
 up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
-z_basin_region = 'global' # Obtain z1pt0/z2pt5 from "global" or "JPN" (Japan) empirical Vs30-based relationships if z1pt0 or z2pt5 not specified above
 volc_back_arc = false # true or false
 eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
 
@@ -22,25 +22,21 @@ eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
 strike = -999
 dip = -999
 rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
-mags = [5,6,7] # mags used only for trellis and response spectra
-depths = [20,25,30] # depth per magnitude for trellis and response spectra
+mags = [5, 6, 7] # mags used only for trellis and response spectra
+depths = [20, 25, 30] # depth per magnitude for trellis and response spectra
 ztor = -999 # Set to -999 to NOT consider
 aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
 trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
-# Specify mag values and depths for use in Sammons, Euclidean dist and clustering
-[source_properties_euclidean_analysis]
+[euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
 mmin = 5
 mmax = 7
 spacing = 0.1
-depths_for_euclidean = [[5,20],[6,25],[7,30]] # [[mag,depth],[mag,depth],[mag,depth]] 
+depths_for_euclidean = [[5, 20], [6, 25], [7, 30]] # [[mag, depth], [mag, depth], [mag, depth]] 
+gmpe_labels = ['CY14','CB14','BSSA14','KO2020']
 
-# Specify label for gmpes
-[gmpe_labels]
-gmpes_label = ['CY14','CB14','BSSA14','KO2020']
+[models] # Specify GMMs 
 
-# Specify gmpes
-[models] 
 [models.ChiouYoungs2014]
 lt_weight_gmc1 = 0.5
 
