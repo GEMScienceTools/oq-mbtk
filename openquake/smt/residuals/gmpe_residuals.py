@@ -69,6 +69,11 @@ def get_gmm_from_toml(key, config):
     """
     Get a GMM from a TOML file
     """
+    # ModifiableGMPE is not implemented for use in res module
+    if key == "ModifiableGMPE":
+        raise ValueError("The use of ModifiableGMPE is not"
+        "supported within the residuals module.")
+
     # If the key contains a number we take the second part
     if re.search("^\\d+\\-", key):
         tmp = re.sub("^\\d+\\-", "", key)
@@ -122,21 +127,21 @@ class Residuals(object):
             
             # Get the period range and the coefficient types
             gmpe_i = self.gmpe_list[gmpe]
-            for c in dir(gmpe_i):
-                if 'COEFFS' in c:
-                    pers = [sa.period for sa in getattr(gmpe_i, c).sa_coeffs]
+            if hasattr(gmpe_i, "COEFFS"):
+                pers = [sa.period for sa in getattr(gmpe_i, "COEFFS").sa_coeffs]
+                self.gmpe_scalars[gmpe] = list(getattr(gmpe_i, "COEFFS").non_sa_coeffs.keys())
+            else:
+                assert hasattr(gmpe_i, "gmpe_table") # tabular GMM specified using an alias
+                pers = gmpe_i.imls["T"]
+
             min_per, max_per = (min(pers), max(pers))
             self.gmpe_sa_limits[gmpe] = (min_per, max_per)
-            for c in dir(gmpe_i):
-                if 'COEFFS' in c:
-                    self.gmpe_scalars[gmpe] = list(
-                        getattr(gmpe_i, c).non_sa_coeffs.keys())
             for imtx in self.imts:
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < min_per or period > max_per:
-                        print("IMT %s outside period range for GMPE %s"
-                              % (imtx, gmpe))
+                        print(f"IMT {imtx} outside period range for GMPE {gmpe}"
+                              f"(min GMM period = {min_per} s, max GMM period = {max_per} s)")
                         gmpe_dict_1[imtx] = None
                         gmpe_dict_2[imtx] = None
                         continue
@@ -144,11 +149,9 @@ class Residuals(object):
                 gmpe_dict_2[imtx] = {}
                 self.unique_indices[gmpe][imtx] = []
                 self.types[gmpe][imtx] = []
-                
-                # If mixed effects GMPE or using Al-Atik 2015 fix res_type order
-                if self.gmpe_list[
-                    gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
-                        ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
+
+                # If mixed effects GMPE fix res_type order
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                     for res_type in ['Total','Inter event', 'Intra event']:
                         gmpe_dict_1[imtx][res_type] = []
                         gmpe_dict_2[imtx][res_type] = []
@@ -156,9 +159,8 @@ class Residuals(object):
                     gmpe_dict_2[imtx]["Mean"] = []
            
                 # For handling of GMPEs with total sigma only
-                else: 
-                    for res_type in self.gmpe_list[
-                            gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES:
+                else:
+                    for res_type in gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES:
                         gmpe_dict_1[imtx][res_type] = []
                         gmpe_dict_2[imtx][res_type] = []
                         self.types[gmpe][imtx].append(res_type)
@@ -196,8 +198,11 @@ class Residuals(object):
         
         return cls(gmpe_list, imts)
 
-    def compute_residuals(self, ctx_database, nodal_plane_index=1,
-                          component="Geometric", normalise=True):
+    def compute_residuals(self,
+                          ctx_database,
+                          nodal_plane_index=1,
+                          component="Geometric",
+                          normalise=True):
         """
         Calculate the residuals for a set of ground motion records
 
@@ -207,19 +212,30 @@ class Residuals(object):
             See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase` for an
             example
         """
-        # Build the contexts
+        # Build initial contexts with the observed values
         contexts = ctx_database.get_contexts(nodal_plane_index, self.imts, component)
 
-        # Fetch now outside the loop for efficiency the IMTs which need
-        # acceleration units conversion from cm/s/s to g. Conversion will be
-        # done inside the loop:
+        # Check at least one observed value per IMT (else raise an error)
+        for imt in self.imts:
+            obs_check = []
+            for ctx in contexts:
+                obs_check.append(ctx["Observations"][imt])
+            obs_check = np.concatenate(obs_check)
+            check = pd.notnull(obs_check)
+            if len(check[check]) < 1:
+                raise ValueError(f"All observed intensity measure "
+                                 f"levels for {imt} are empty - "
+                                 f"no residuals can be computed "
+                                 f"for {imt}")
+
+        # Get IMTs which need acc. units conv. from cm/s/s to g
         accel_imts = tuple(
             [imtx for imtx in self.imts if (imtx == "PGA" or "SA(" in imtx)])
 
         # Contexts is in either case a list of dictionaries
         self.contexts = []
         for context in contexts:
-            # If no rvolc provide as zero (ensure rvolc gsims usable)
+            # If no rvolc fix to zero (ensure rvolc gsims usable)
             if 'rvolc' not in context['Ctx']._slots_:
                 context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi)
             # Convert all IMTS with acceleration units, which are supposed to
@@ -227,7 +243,7 @@ class Residuals(object):
             for a_imt in accel_imts:
                 context['Observations'][a_imt] = convert_accel_units(
                         context['Observations'][a_imt], 'cm/s/s', 'g')
-            # Get the expected ground motions
+            # Get the expected ground motions from GMMs
             context = self.get_expected_motions(context)
             context = self.calculate_residuals(context, normalise)
             for gmpe in self.residuals.keys():
@@ -350,7 +366,11 @@ class Residuals(object):
         context["Residual"] = residual
         return context
 
-    def _get_random_effects_residuals(self, obs, mean, inter, intra,
+    def _get_random_effects_residuals(self,
+                                      obs,
+                                      mean,
+                                      inter,
+                                      intra,
                                       normalise=True):
         """
         Calculates the random effects residuals using the inter-event
@@ -479,7 +499,6 @@ class Residuals(object):
                 f.write(ev_imt_df.to_string(index=False))
                 f.write("\n\n")
 
-
     ### Likelihood (Scherbaum et al. 2004) functions
     def get_likelihood_values(self):
         """
@@ -522,7 +541,6 @@ class Residuals(object):
             median_lh = np.nanpercentile(l_h, 50.0)
             ret[res_type] = l_h, median_lh
         return ret
-
 
     ### LLH (Scherbaum et al. 2009) functions
     def get_loglikelihood_values(self):
@@ -577,7 +595,6 @@ class Residuals(object):
                 idx] for idx, gmpe in enumerate(self.gmpe_list)}
             
         return self.llh, self.model_weights, self.model_weights_with_imt
-
 
     ### EDR (Kale and Akkar 2013) functions
     def get_edr_values(self, bandwidth=0.01, multiplier=3.0):
@@ -719,8 +736,12 @@ class Residuals(object):
         edr = np.sqrt(kappa * inv_n * np.sum(mde ** 2.))
         return mde_norm, np.sqrt(kappa), edr            
     
-    def _get_edr_wrt_imt(self, obs_wrt_imt, expected_wrt_imt,
-                         stddev_wrt_imt, bandwidth=0.01, multiplier=3.0):
+    def _get_edr_wrt_imt(self,
+                         obs_wrt_imt,
+                         expected_wrt_imt,
+                         stddev_wrt_imt,
+                         bandwidth=0.01,
+                         multiplier=3.0):
         """
         Calculated the Euclidean Distanced-Based Rank for a set of
         observed and expected values from a particular GMPE over imts
@@ -771,7 +792,6 @@ class Residuals(object):
         de_orig = np.sum((obs - expected) ** 2.)
         de_corr = np.sum((obs - y_c) ** 2.)
         return de_orig / de_corr
-    
 
     ### Stochastic Area (Sunny et al. 2021) functions
     def get_stochastic_area_wrt_imt(self):
@@ -808,8 +828,8 @@ class Residuals(object):
                 x_cdf, y_cdf = self.get_cdf_data(list(exp))
 
                 # Get approximately overlapping subsets of ECDF and CDF
-                ecdf_xvals = [np.min(x_ecdf), np.max(x_ecdf)]
-                cdf_xvals = [np.min(x_cdf), np.max(x_cdf)]
+                ecdf_xvals = [np.nanmin(x_ecdf), np.nanmax(x_ecdf)]
+                cdf_xvals = [np.nanmin(x_cdf), np.nanmax(x_cdf)]
                 xval_min = np.max([ecdf_xvals[0], cdf_xvals[0]])
                 xval_max = np.min([ecdf_xvals[1], cdf_xvals[1]])
                 idx_ecdf = np.logical_and(x_ecdf<=xval_max, x_ecdf>=xval_min)
@@ -829,7 +849,7 @@ class Residuals(object):
     
         # Add to residuals object
         self.stoch_areas_wrt_imt = stoch_area_store
-        
+
         return self.stoch_areas_wrt_imt
 
     def cdf(self, data):
@@ -842,6 +862,7 @@ class Residuals(object):
         n = len(x)
         p = 1/n
         pvalues = list(np.linspace(p,1,n))
+        
         return x, pvalues
     
     def step_data(self, x,y):
@@ -853,7 +874,7 @@ class Residuals(object):
         yy.sort()
         return xx, [0.]+yy[:-1]
     
-    def get_cdf_data(self, data, step_flag=None):
+    def get_cdf_data(self, data, step_flag=False):
         """
         Get the cdf (for the predicted ground-motions) or the ecdf (for the
         observed ground-motions)
@@ -882,16 +903,15 @@ class SingleStationAnalysis(object):
         self.site_residuals = []
         self.types = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
+            gmpe_i = self.gmpe_list[gmpe]
             for imtx in self.imts:
                 self.types[gmpe][imtx] = []
-                if self.gmpe_list[
-                    gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
-                        ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                     for res_type in ['Total','Inter event', 'Intra event']:
                         self.types[gmpe][imtx].append(res_type)
                 else:
                     for res_type in (
-                        self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES):
+                        gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES):
                         self.types[gmpe][imtx].append(res_type)
                         
     @classmethod
@@ -1063,10 +1083,10 @@ class SingleStationAnalysis(object):
                         resid.site_analysis[gmpe][imtx]["Intra event"] -
                         resid.site_analysis[gmpe][imtx]["dS2ss"]) ** 2.)
                     
-                    # Print dS2Ss, phiss_s to file
+                    # Print dS2S, phi_ss per station to file
                     if filename is not None:
-                        print("Site ID, %s, dS2Ss, %s, "
-                              "phiss_s, %s, Num Records, %s" % (
+                        print("Site ID, %s, dS2S, %s, "
+                              "phi_ss, %s, Num Records, %s" % (
                               list(self.site_ids)[iloc],
                               resid.site_analysis[gmpe][imtx]["dS2ss"],
                               resid.site_analysis[gmpe][imtx]["phi_ss,s"],
@@ -1079,30 +1099,29 @@ class SingleStationAnalysis(object):
                 phi_ss[gmpe][imtx] = np.sqrt(
                     numerator_sum / float(np.sum(np.array(n_events)) - 1))
         
-        # Print phi_ss and phi_s2ss info to file
+        # Print phi_ss (single-station phi), phi_s2s (station-to-station) to file
         if filename is not None:
-            print("\nTOTAL RESULTS PER GMPE", file=fid)
+            print("\nSSA RESULTS PER GMPE", file=fid)
             for gmpe in self.gmpe_list:
+                gmpe_i = self.gmpe_list[gmpe]
                 gmpe_str = get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
                 
-                # If mixed effects GMPE append with intra-event res components
-                if self.gmpe_list[gmpe].DEFINED_FOR_STANDARD_DEVIATION_TYPES == (
-                    ALL_SIGMA or 'al_atik_2015_sigma' in str(gmpe)):
-                        for imtx in self.imts:
-                            p_data = (imtx,
-                                      phi_ss[gmpe][imtx],
-                                      phi_s2ss[gmpe][imtx]["Mean"],
-                                      phi_s2ss[gmpe][imtx]["StdDev"])
-                            print("%s, phi_ss, %s, phi_s2ss mean, %s, "
-                                  "phi_s2ss std. dev), %s" % p_data, file=fid)
                 
-                # Total sigma only for given GMM
+                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
+                    p_data = (imtx,
+                              phi_ss[gmpe][imtx],
+                              phi_s2ss[gmpe][imtx]["Mean"],
+                              phi_s2ss[gmpe][imtx]["StdDev"])
                 else:
-                    for imtx in self.imts:
-                        print(f"{imtx}, phi_ss, , phi_s2ss mean, , "
-                              f"phi_s2ss (std. dev)", file=fid)
-                        
+                    p_data = (imtx, None, None, None) # No intra-event for GMM
+                for imtx in self.imts:                # so write blank values
+                    print("%s, "\
+                          "phi_ss (phi single-station), %s" \
+                          "phi_s2s mean, %s, " \
+                          "phi_s2s std. dev, %s" \
+                          % p_data, file=fid)
+                            
             if filename is not None:
                 fid.close()
 

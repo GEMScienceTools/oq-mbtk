@@ -31,7 +31,7 @@ from openquake.hmtk.seismicity.catalogue import Catalogue
 from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
 from openquake.mbt.tools.model_building.dclustering import _add_defaults
 from openquake.cat.completeness.norms import (
-    get_norm_optimize_b, get_norm_optimize_c, get_norm_optimize_poisson)
+    get_norm_optimize_b, get_norm_optimize_c, get_norm_optimize, get_norm_optimize_poisson)
 
 DATA = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -60,8 +60,10 @@ class NormBTest(unittest.TestCase):
         bval = 1.0
         cmag, t_per, n_obs = get_completeness_counts(self.cat, self.compl,
                                                      mbinw)
-        _ = get_norm_optimize_b(aval, bval, self.compl, self.cat, mbinw, ybinw)
-
+        norm = get_norm_optimize_b(aval, bval, self.compl, self.cat, mbinw, ybinw)
+        print(f'{norm:.5e}')
+        self.assertAlmostEqual(norm,8.60607e-01, msg='rmag_rate', places=4)
+        
     def test_case02(self):
 
         mbinw = 0.1
@@ -79,7 +81,23 @@ class NormBTest(unittest.TestCase):
 
         cmag, t_per, n_obs = get_completeness_counts(cat, compl, mbinw)
         norm = get_norm_optimize_c(cat, aval, bval, compl, 2022, ref_mag=4.4)
+        
         print(f'{norm:.5e}')
+        self.assertAlmostEqual(norm,5.60922e-01, msg='rmag_rate', places=4)
+        
+    def test_optimize(self):
+        mbinw = 0.5
+        ybinw = 10.0
+        aval = 2.0
+        bval = 1.0
+        binw = 0.1
+        last_year = 2020
+        cmag, t_per, n_obs = get_completeness_counts(self.cat, self.compl,
+                                                     mbinw)
+                                                     
+        norm = get_norm_optimize(self.cat, aval, bval, self.compl, cmag, n_obs, t_per, last_year)
+        print(f'{norm:.5e}')
+        self.assertAlmostEqual(norm, 5.53957e-02, msg='rmag_rate', places=4)
 
 
     def test_poisson(self):
@@ -101,3 +119,5 @@ class NormBTest(unittest.TestCase):
         cmag, t_per, n_obs = get_completeness_counts(cat, compl, mbinw)
         norm = get_norm_optimize_poisson(cat, aval, bval, compl, 2022)
         print(f'{norm:.5e}')
+        
+        self.assertAlmostEqual(norm,-16.1132, msg='rmag_rate', places=4)

@@ -37,8 +37,7 @@ demo_out = os.path.join(BASE, 'outputs_demo_residual_analysis')
 
 def parse_into_metadata(flatfile, out_dir):
     """
-    Parse the flatfile into metadata which can be used by the SMT's residuals
-    module
+    Parse the flatfile into SMT ground-motion database
     """
     # Create new metadata directory
     metadata_dir = os.path.join(out_dir, 'metadata')
@@ -51,8 +50,8 @@ def parse_into_metadata(flatfile, out_dir):
 
 def get_residual_metadata(metadata_dir, gmms_imts, comp, out_dir):
     """
-    Get the residuals for the preselected GMMs and intensity measure types in
-    the example_residual_analysis.toml
+    Get the residuals for the requested GMMs and intensity
+    measure types
     """
     # Get inputs
     metadata = os.path.join(metadata_dir, 'metadatafile.pkl')
@@ -77,8 +76,8 @@ def get_residual_metadata(metadata_dir, gmms_imts, comp, out_dir):
 
 def make_residual_plots(residuals, out_dir):
     """
-    Generate plots of the residual distributions and also plot them
-    with respect to magnitude and distance
+    Generate various plots of the residual distributions and
+    also plot them with respect to magnitude and distance
     """
     # Per GMM
     for gmm in residuals.gmpe_list:

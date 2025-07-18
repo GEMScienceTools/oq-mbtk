@@ -7,7 +7,7 @@ import math
 import numpy as np
 import shapely.geometry as geometry
 
-from shapely.ops import cascaded_union, polygonize
+from shapely.ops import unary_union, polygonize
 from scipy.spatial import Delaunay
 
 
@@ -83,4 +83,4 @@ def alpha_shape(xco, yco, alpha):
     triangles = list(polygonize(m))
     #
     #
-    return cascaded_union(triangles), edge_points
+    return unary_union(triangles), edge_points

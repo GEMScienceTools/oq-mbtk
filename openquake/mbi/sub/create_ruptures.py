@@ -9,6 +9,9 @@ from openquake.sub.slab.rupture import calculate_ruptures
 
 
 def main(config_fname: str, only_plt: bool = False):
+    """
+    Creates inslab ruptures
+    """
 
     # Parsing config
     model = toml.load(config_fname)
@@ -24,7 +27,7 @@ def main(config_fname: str, only_plt: bool = False):
         calculate_ruptures(ini_fname, ref_fdr=ref_fdr, agr=agr, bgr=bgr,
                            mmin=mmin, mmax=mmax)
 
-descr = 'The path to the .ini file containing info to build the ruptures'
+descr = 'The path to the .toml file containing info to build the ruptures'
 main.config_fname = descr
 
 if __name__ == '__main__':

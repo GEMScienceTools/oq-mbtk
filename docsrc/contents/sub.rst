@@ -247,6 +247,7 @@ The configuration file specifies the geometry of surfaces, along with buffer reg
     ...
 
 
+
 2. Run the classification 
 
 The classification algorithm is run using the following command::
@@ -318,7 +319,7 @@ The construction of subduction inslab sources involves the creation of `virtual 
     
 1. Create a configuration file
 
-.. code-block:: ini
+.. code-block:: slab.ini
 
     [main]
 
@@ -434,4 +435,5 @@ This process will create xml files for each magnitude bin, which is a little imp
 Which creates a single ``slab.xml`` file containing all the ruptures across all magnitude bins. This file can then be used directly in OQ as a non-parametric rupture source. You will need to include both the final xml and hdf5 files in the source folder of your model. 
 
 As with other functions in the mbtk, these commands can also be run directly from the command line.
+
 
