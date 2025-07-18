@@ -8,7 +8,7 @@ https://wheelhouse.openquake.org/v3/windows/py311/fiona-1.9.5-cp311-cp311-win_am
 #
 # Version specific
 pandas == 2.0.3
-geopandas >= 0.10.2
+geopandas == 1.0.1
 ipykernel >= 4.8.0
 ipython >= 6.2.0
 jupyter_client >= 5.0.0
@@ -19,11 +19,13 @@ pylint >= 2.1.1
 rtree >= 0.9.4
 netCDF4 < 1.7.0
 xarray==2022.09
-h3 < 4.0.0
+h3 == 3.7.7
 jupyter-server==2.11.2
 pyproj==3.6.1
 numpy==1.26.2
 scipy >= 1.13.1
+pygmt==0.12.0
+h3 == 3.7.7
 #
 # Generic
 openpyxl
@@ -35,7 +37,6 @@ obspy
 prettytable
 tqdm
 tables
-pygmt
 reportlab
 igraph
 pyvista
