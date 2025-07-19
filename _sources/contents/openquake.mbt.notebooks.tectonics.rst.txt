@@ -1,0 +1,10 @@
+openquake.mbt.notebooks.tectonics package
+=========================================
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.notebooks.tectonics
+   :members:
+   :undoc-members:
+   :show-inheritance:
