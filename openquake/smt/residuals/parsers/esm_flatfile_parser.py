@@ -156,28 +156,29 @@ class ESMFlatfileParser(SMDatabaseReader):
                 raise ValueError("Required header %s is missing in file"
                                  % hdr)
         # Read in csv
-        reader = csv.DictReader(open(self.filename, "r"), delimiter=";")
-        self.database = GroundMotionDatabase(self.id, self.name)
-        counter = 0
-        for row in reader:
-            # Build the metadata
-            record = self._parse_record(row)
-            if record:
-                # Parse the strong motion
-                record = self._parse_ground_motion(
-                    os.path.join(location, "records"),
-                    row, record, headers)
-                self.database.records.append(record)
+        with open(self.filename, "r", encoding="utf-8", newline='') as f:
+            reader = csv.DictReader(open(self.filename, "r"), delimiter=";")
+            self.database = GroundMotionDatabase(self.id, self.name)
+            counter = 0
+            for row in reader:
+                # Build the metadata
+                record = self._parse_record(row)
+                if record:
+                    # Parse the strong motion
+                    record = self._parse_ground_motion(
+                        os.path.join(
+                            location, "records"), row, record, headers)
+                    self.database.records.append(record)
 
-            else:
-                print("Record with sequence number %s is null/invalid"
-                      % "{:s}-{:s}".format(row["event_id"],
-                                           row["station_code"]))
-            if (counter % 100) == 0:
-                print("Processed record %s - %s" % (str(counter),
-                                                    record.id))
+                else:
+                    print("Record with sequence number %s is null/invalid"
+                        % "{:s}-{:s}".format(
+                            row["event_id"], row["station_code"]))
+                    
+                if (counter % 100) == 0:
+                    print(f"Processed record {counter} - {record.id}")
 
-            counter += 1
+                counter += 1
 
     @classmethod
     def autobuild(cls, dbid, dbname, output_location, flatfile_location):
