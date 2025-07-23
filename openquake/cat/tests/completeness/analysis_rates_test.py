@@ -169,3 +169,124 @@ class ComputeGRParametersTest(unittest.TestCase):
         assert min(set(magsA)) >= cref[0][1] - 1.0
         assert max(set(magsB)) <= cref[1][1] + 1.0
         assert min(set(magsB)) >= cref[1][1] - 1.0
+
+class ComputeGRParametersTest_sim2(unittest.TestCase):
+    """ 
+    Tests for completeness and FMD parameters for a synthetic catalogue
+    using the optimize criteria
+    Simulated with completeness [[1900, 7.0], [1960, 5.0]]
+    with b = 1 and a = 7
+    """
+
+    def setUp(self):
+
+        # Temp folder
+        tmp_folder = tempfile.mkdtemp()
+
+        # Folder with the catalogue
+        self.fname_input_pattern = os.path.join(DATA_PATH, 'examp_1960M5.csv')
+        ref_config = os.path.join(DATA_PATH, 'examp_config.toml')
+
+        # Load the config template
+        conf_txt = toml.load(ref_config)
+
+        # Create the config file for the test
+        self.fname_config = os.path.join(tmp_folder, 'config.toml')
+        with open(self.fname_config, 'w', encoding='utf-8') as tmpf:
+            toml.dump(conf_txt, tmpf)
+
+        # Output folder
+        self.folder_out = tmp_folder
+
+        # Create completeness files
+        get_completenesses(self.fname_config, self.folder_out)
+
+    def test_compute_gr_param(self):
+        """ Testing the calculation """
+
+        conf = toml.load(self.fname_config)
+        print(conf)
+        completeness_analysis(self.fname_input_pattern,
+                              self.fname_config,
+                              self.folder_out,
+                              self.folder_out,
+                              self.folder_out)
+
+        # Load updated configuration file
+        conf = toml.load(self.fname_config)
+        print(conf)
+
+        # Tests
+        
+        expected = 7.051
+        computed = conf['sources']['1960M5']['agr_weichert']
+        self.assertAlmostEqual(computed, expected, msg='aGR', delta = 0.2)
+
+        expected = 1.0118
+        computed = conf['sources']['1960M5']['bgr_weichert']
+        self.assertAlmostEqual(computed, expected, msg='bGR', delta = 0.1)
+
+        expected = 5.0
+        computed = conf['sources']['1960M5']['rmag']
+        self.assertAlmostEqual(computed, expected, msg='rmag', places=5)
+
+
+class ComputeGRParametersTest_Poisson_v1(unittest.TestCase):
+    """ 
+    Tests for completeness and FMD parameters for a synthetic catalogue
+    using the poisson criteria
+    Simulated with completeness [[1900, 7.0], [1960, 5.0]]
+    with b = 1 and a = 7
+    """
+
+    def setUp(self):
+
+        # Temp folder
+        tmp_folder = tempfile.mkdtemp()
+
+        # Folder with the catalogue
+        self.fname_input_pattern = os.path.join(DATA_PATH, 'examp_1960M5.csv')
+        ref_config = os.path.join(DATA_PATH, 'examp_config_poisson.toml')
+
+        # Load the config template
+        conf_txt = toml.load(ref_config)
+
+        # Create the config file for the test
+        self.fname_config = os.path.join(tmp_folder, 'config.toml')
+        with open(self.fname_config, 'w', encoding='utf-8') as tmpf:
+            toml.dump(conf_txt, tmpf)
+
+        # Output folder
+        self.folder_out = tmp_folder
+
+        # Create completeness files
+        get_completenesses(self.fname_config, self.folder_out)
+
+    def test_compute_gr_param(self):
+        """ Testing the calculation """
+
+        conf = toml.load(self.fname_config)
+
+        completeness_analysis(self.fname_input_pattern,
+                              self.fname_config,
+                              self.folder_out,
+                              self.folder_out,
+                              self.folder_out)
+
+        # Load updated configuration file
+        conf = toml.load(self.fname_config)
+        print(conf)
+
+        # Tests
+        
+        expected = 7.0
+        computed = conf['sources']['1960M5']['agr_weichert']
+        self.assertAlmostEqual(computed, expected, msg='aGR', delta = 0.2)
+
+        expected = 1.0000
+        computed = conf['sources']['1960M5']['bgr_weichert']
+        self.assertAlmostEqual(computed, expected, msg='bGR', delta = 0.1)
+
+        expected = 5.0
+        computed = conf['sources']['1960M5']['rmag']
+        self.assertAlmostEqual(computed, expected, msg='rmag', places=5)

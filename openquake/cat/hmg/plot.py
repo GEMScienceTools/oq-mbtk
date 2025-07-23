@@ -136,7 +136,11 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     _ = plt.figure(figsize=(10, height))
     ax = plt.subplot(1, 1, 1)
     ax.tick_params(labelsize=14)
+<<<<<<< HEAD
     plt.style.use('seaborn-v0_8-ticks')
+=======
+    plt.style.use('seaborn-v0_8')
+>>>>>>> 3a286769a1ece8dd1ad3c5b0e6531b69573e19ef
     mpl.rcParams['lines.linewidth'] = 2
     mpl.rcParams['axes.labelsize'] = 16
 
@@ -207,7 +211,7 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
         print('List of agencies plotted: ', agencies)
 
     # Settings plottings
-    plt.style.use('seaborn-v0_8-ticks')
+    plt.style.use('seaborn-v0_8')
     mpl.rcParams['lines.linewidth'] = 2
     mpl.rcParams['axes.labelsize'] = 16
 

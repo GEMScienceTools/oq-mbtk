@@ -64,7 +64,6 @@ HEADERS = ["event_id",
            "es_width",
            "network_code",
            "station_code",
-           "location_code",
            "st_latitude",
            "st_longitude",
            "st_elevation",
@@ -76,11 +75,6 @@ HEADERS = ["event_id",
            "rup_dist",
            "Rx_dist",
            "Ry0_dist",
-           "U_channel_code",
-           "U_azimuth_deg",
-           "V_channel_code",
-           "V_azimuth_deg",
-           "W_channel_code",
            "U_hp",
            "V_hp",
            "W_hp",
@@ -158,7 +152,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         # Waveform ID not provided in file so concatenate Event and Station ID
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
-                         metadata["station_code"], metadata["location_code"]])
+                         metadata["station_code"]])
         wfid = wfid.replace("-", "_")
         # Parse the event metadata
         event = self._parse_event_data(metadata)
@@ -364,20 +358,22 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         Parse the waveform data
         """
-        # U channel - usually east
-        xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
+        # U channel (assume NS direction)
+        xazimuth = 90.
         xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
                    "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
         xcomp = Component(
             wfid, xazimuth, waveform_filter=xfilter, units="cm/s/s")
         
-        # V channel - usually North
-        vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
+        # V channel (assume EW direction)
+        vazimuth = 0.
         vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
                    "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
         vcomp = Component(
             wfid, vazimuth, waveform_filter=vfilter, units="cm/s/s")
-        zorientation = metadata["W_channel_code"].strip()
+        
+        # W channel (vertical)
+        zorientation = "V"
         if zorientation:
             zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
                        "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}

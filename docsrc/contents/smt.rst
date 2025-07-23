@@ -439,8 +439,7 @@ Comparing GMPEs
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         Nstd = 1 # Truncation for GMM sigma distribution
         
-        # Specify site properties
-
+        # Specify site properties (vs30 must be specified - the others are proxied if key is missing)
         [site_properties]
         vs30 = 800
         z1pt0 = 30.0  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
@@ -466,7 +465,7 @@ Comparing GMPEs
         mags = [5, 6, 7] # Mags used only for trellis and response spectra
         depths = [20, 20, 20] # Depth per magnitude for trellis and response spectra
         
-        [euclidean_analysis] # Mags and depths for Sammons maps, Euclidean dist and clustering
+        [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (only need specifying if using these functions)
         mmin = 5
         mmax = 7
         spacing = 0.1
@@ -551,7 +550,7 @@ Comparing GMPEs
     .. code-block:: ini
     
        > # Generate plot of observed spectra and predictions by GMPEs
-       > comp.plot_spectra(filename, output_directory, obs_spectra='spectra_chamoli_1991_station_UKHI.csv') 
+       > comp.plot_spectra(filename, output_directory, obs_spectra_fname='spectra_chamoli_1991_station_UKHI.csv') 
 
     Response spectra plots for input parameters specified in toml file:
         .. image:: /contents/smt_images/ObsSpectra.png      

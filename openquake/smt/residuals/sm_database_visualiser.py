@@ -146,7 +146,7 @@ def db_geographical_coverage(db1,
                label='Station locations')
     ax.scatter(eq_lons, eq_lats, marker='*', color='r',
                label='Event hypocenters')
-    ax = add_borders(ax)
+    add_borders(ax)
     lons = np.concatenate([eq_lons, st_lons])
     lats = np.concatenate([eq_lats, st_lats])
     ax.set_xlim(np.floor(np.min(lons)-0.25), np.ceil(np.max(lons))+0.25)
