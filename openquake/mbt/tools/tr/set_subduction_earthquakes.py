@@ -43,10 +43,10 @@ from openquake.sub.utils import (_read_edges,
                                  plot_complex_surface)
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
-getcontext().prec = 6 
+getcontext().prec = 4 
 # Buffer around the brounding box
-DELTA = 0.3
-
+#DELTA = 0.3
+DELTA = 1
 
 class SetSubductionEarthquakes:
     """
@@ -322,6 +322,7 @@ class SetSubductionEarthquakes:
             else:
                 idxa.append(False)
         idxa = np.array(idxa)
+        print(idxa)
 
         # Check the size of lists
         assert len(idxa) == len(cat.data['longitude']) == len(idxs)
