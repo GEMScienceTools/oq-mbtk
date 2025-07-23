@@ -115,7 +115,6 @@ class Magnitude(object):
             self.scale = 'UK'
         self.sigma = sigma
         self.stations = stations
-
         # Createa ID string from attributes
         if self.value > 10.0:
             # Probably a moment magnitude
@@ -124,13 +123,10 @@ class Magnitude(object):
                                           "{:.6e}".format(self.value),
                                           self.scale])
         else:
-            try:
-                self.magnitude_id = "|".join(["{:s}".format(self.origin_id),
+            self.magnitude_id = "|".join(["{:s}".format(self.origin_id),
                                           self.author,
                                           "{:.2f}".format(self.value),
                                           self.scale])
-            except:
-                breakpoint()
 
     def compare_magnitude(self, magnitude, tol=1E-3):
         '''
@@ -679,10 +675,12 @@ class ISFCatalogue(object):
             # Take the index from delta_ll - this is needed
             # when delta_ll varies with time.
             magnitude = event.magnitudes[0].value
-            idx_mag = max(np.argwhere(magnitude > mag_low_edges))[0]
-            tmp_val = float(dtime_a.year)
-            idx_t = max(np.argwhere(tmp_val > time_low_edges))[0]
-
+            try: 
+                idx_mag = max(np.argwhere(magnitude > mag_low_edges))[0]
+                tmp_val = float(dtime_a.year)
+                idx_t = max(np.argwhere(tmp_val > time_low_edges))[0]
+            except:
+                breakpoint()
             ll_thrs = ll_d[idx_t][idx_mag]
             sel_thrs = time_d[idx_t][idx_mag]
             sel_thrs = sel_thrs.total_seconds()
@@ -943,9 +941,16 @@ class ISFCatalogue(object):
                         raise ValueError(msg)
 
                 else:
-                    assert len(event.origins) == 1
-                    event.origins[0].is_prime = True
-                    self.events.append(event)
+                    try:
+                        assert len(event.origins) == 1
+                        event.origins[0].is_prime = True
+                        self.events.append(event)
+                    except:
+                        prime = [origin for origin in event.origins if origin.is_prime == True] 
+                        # This will find the prime, but I think we need to modify the origins object
+                        # replace origins with prime origin
+                        event.origins = prime
+                        self.events.append(event)
 
                     if logfle:
                         msg = "Adding new event\n"
@@ -1394,7 +1399,7 @@ def get_threshold_matrices(delta_t, delta_ll):
         np.testing.assert_array_equal(yea1, yea2)
 
     # Set delta time matrix
-    mag_low_edges = np.arange(1.0, 9.0, 0.2)
+    mag_low_edges = np.arange(0.0, 9.0, 0.2)
     var_eval = {'m': mag_low_edges}
 
     # Set the time lower edges
