@@ -675,12 +675,9 @@ class ISFCatalogue(object):
             # Take the index from delta_ll - this is needed
             # when delta_ll varies with time.
             magnitude = event.magnitudes[0].value
-            try: 
-                idx_mag = max(np.argwhere(magnitude > mag_low_edges))[0]
-                tmp_val = float(dtime_a.year)
-                idx_t = max(np.argwhere(tmp_val > time_low_edges))[0]
-            except:
-                breakpoint()
+            idx_mag = max(np.argwhere(magnitude > mag_low_edges))[0]
+            tmp_val = float(dtime_a.year)
+            idx_t = max(np.argwhere(tmp_val > time_low_edges))[0]
             ll_thrs = ll_d[idx_t][idx_mag]
             sel_thrs = time_d[idx_t][idx_mag]
             sel_thrs = sel_thrs.total_seconds()
@@ -947,9 +944,10 @@ class ISFCatalogue(object):
                         self.events.append(event)
                     except:
                         prime = [origin for origin in event.origins if origin.is_prime == True] 
-                        # This will find the prime, but I think we need to modify the origins object
+                        # This will find the prime, but we need to 
                         # replace origins with prime origin
                         event.origins = prime
+                        event.origins[0].is_prime = True
                         self.events.append(event)
 
                     if logfle:
@@ -1399,7 +1397,7 @@ def get_threshold_matrices(delta_t, delta_ll):
         np.testing.assert_array_equal(yea1, yea2)
 
     # Set delta time matrix
-    mag_low_edges = np.arange(0.0, 9.0, 0.2)
+    mag_low_edges = np.arange(1.0, 9.0, 0.2)
     var_eval = {'m': mag_low_edges}
 
     # Set the time lower edges

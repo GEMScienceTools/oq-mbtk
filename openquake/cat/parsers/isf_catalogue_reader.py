@@ -224,6 +224,9 @@ class ISFReader(BaseCatalogueDatabaseReader):
             elif "DATA_TYPE EVENT IMS1.0" in row:
                 # Ignore header row
                 continue
+            elif "DATA_TYPE EVENT ISF2.1" in row:
+                # Ignore header row
+                continue
             elif "ISC Bulletin" in row:
                 # Yet anothet header row
                 continue
@@ -277,7 +280,7 @@ class ISFReader(BaseCatalogueDatabaseReader):
 
             rsplt = re.split('\\s+', row)
 
-            if is_magnitude and len(rsplt) == 4:
+            if is_magnitude and len(rsplt) >= 4:
                 # Is a magnitude row
                 mag = get_event_magnitude(row,
                                           event.id,
@@ -306,7 +309,6 @@ class ISFReader(BaseCatalogueDatabaseReader):
                 name + " - Rejected",
                 events=self.rejected_catalogue)
         f.close()
-
         self.catalogue.ids = [e.id for e in self.catalogue.events]
 
         return self.catalogue
