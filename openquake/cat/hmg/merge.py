@@ -165,8 +165,8 @@ def load_catalogue(fname: str, cat_type: str, cat_code: str, cat_name: str):
         cat = parser.parse(cat_code, cat_name)
     else:
         raise ValueError("Unsupported catalogue type")
-    fmt = '    The original catalogue contains {:d} events'
-    print(fmt.format(len(cat.events)))
+    print(f'    The original catalogue contains {len(cat.events):d} events')
+
     return cat
 
 
@@ -199,7 +199,7 @@ def process_catalogues(settings_fname: str) -> None:
     # Process the catalogue. `tdict` is dictionary with the info
     # required to merge one specific catalogue.
     for icat, tdict in enumerate(settings["catalogues"]):
-        
+
         # Get settings
         fname = os.path.join(path, tdict["filename"])
         cat_type = tdict["type"]
@@ -214,6 +214,9 @@ def process_catalogues(settings_fname: str) -> None:
             catroot = load_catalogue(fname, cat_type, cat_code, cat_name)
             nev = catroot.get_number_events()
             print(f"   Catalogue contains: {nev:d} events")
+
+            if nev == 0:
+                raise ValueError(f'Empty catalogue in {fname}')
 
             select_flag = tdict.get("select_region", False)
             if select_flag:
@@ -292,11 +295,11 @@ def process_catalogues(settings_fname: str) -> None:
                 else:
                     fle = tempfile.NamedTemporaryFile(mode = 'w', delete=False)
                     logfle=fle.name
-                    
+
 
             else:
                 logfle = tdict["log_file"]
-            
+
             print(f"   Log file: {logfle:s}".format())
             # Perform the merge
             meth = catroot.add_external_idf_formatted_catalogue
@@ -306,7 +309,7 @@ def process_catalogues(settings_fname: str) -> None:
             # Update the spatial index
             print("      Updating index")
             catroot._create_spatial_index()
-        
+
         nev = catroot.get_number_events()
         print(f"   Whole catalogue contains: {nev:d} events")
 
