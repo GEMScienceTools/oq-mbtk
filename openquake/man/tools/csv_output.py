@@ -464,10 +464,11 @@ def read_hazard_curve_csv(filename):
             - Longitudes
             - Latitudes
             - PoEs
-            - String with the header
+            - Dictionary of metadata
             - IMLs
     """
     aw = hdf5.read_csv(filename)
+    # the columns after lon, lat have names like poe-0.002345, ...
     imls = [float(col[:4]) for col in aw.dtype.names[3:]]
     poes = numpy.hstack([aw[col] for col in aw.dtype.names[3:]])
     return aw['lon'], aw['lat'], poes, vars(aw), imls
