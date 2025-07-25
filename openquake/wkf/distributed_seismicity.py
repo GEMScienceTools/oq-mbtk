@@ -85,7 +85,6 @@ def get_bounding_box(sfc):
         upper right corners of the bounding box.
     """
 
-    # breakpoint()
     # This provides the convex hull of the surface projection
     coo = np.array(src.polygon.coords)
     return [min(coo[:, 0]), min(coo[:, 1]), max(coo[:, 0]), max(coo[:, 1])]
@@ -226,7 +225,7 @@ def remove_buffer_around_faults(
     complex_fault_mesh_spacing=5.0,
     area_source_discretization=5.0,
     PLOTTING=False,
-):
+    ):
     """
     Remove the seismicity above magnitude thresholds for all the point
     sources within corresponding buffer distances around faults.
@@ -275,7 +274,7 @@ def remove_buffer_around_faults(
         width_of_mfd_bin=binw,
         area_source_discretization=area_source_discretization,
     )
-
+    
     # Get the surfaces representing the faults
     faults = _get_fault_surfaces(fname, sourceconv)
 
@@ -419,7 +418,7 @@ def _get_fault_surfaces(fname: str, sourceconv: SourceConverter) -> list:
 
     # Read file the fault sources
     ssm_faults = to_python(fname, sourceconv)
-
+    
     # Check content of the seismic source model. We want only one group.
     msg = 'The seismic source model for fault contains more than one group'
     assert len(ssm_faults) == 1

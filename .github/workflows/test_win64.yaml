@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, windows-2019]
+        os: [windows-2022, windows-2025]
         python-version: ["3.11"]
     steps:
       - uses: actions/checkout@v4
@@ -76,5 +76,5 @@ jobs:
           #Set-Location -Path $MBTK
           $curDir = Get-Location
           Write-Host "Current Working Directory: $curDir"
-          cd oq-mbtk\openquake
+          cd openquake
           pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt

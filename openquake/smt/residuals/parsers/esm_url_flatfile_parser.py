@@ -45,10 +45,7 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  RecordDistance)
 from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.utils import (MECHANISM_TYPE,
-                                 DIP_TYPE,
-                                 vs30_to_z1pt0_cy14,
-                                 vs30_to_z2pt5_cb14)
+from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
 # Import the ESM dictionaries
 from .esm_dictionaries import *
@@ -142,31 +139,32 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         headers = getline(self.filename, 1).rstrip("\n").split(";")
         for hdr in HEADERS:
             if hdr not in headers:
-                raise ValueError("Required header %s is missing in file"
-                                 % hdr)
+                raise ValueError(
+                    "Required header %s is missing in file" % hdr)
         # Read in csv
-        reader = csv.DictReader(open(self.filename, "r"), delimiter=";")
-        self.database = GroundMotionDatabase(self.id, self.name)
-        counter = 0
-        for row in reader:
-            # Build the metadata
-            record = self._parse_record(row)
-            if record:
-                # Parse the strong motion
-                record = self._parse_ground_motion(
-                    os.path.join(location, "records"),
-                    row, record, headers)
-                self.database.records.append(record)
+        with open(self.filename, "r", encoding="utf-8", newline='') as f:
+            reader = csv.DictReader(f, delimiter=";")
+            self.database = GroundMotionDatabase(self.id, self.name)
+            counter = 0
+            for row in reader:
+                # Build the metadata
+                record = self._parse_record(row)
+                if record:
+                    # Parse the strong motion
+                    record = self._parse_ground_motion(
+                        os.path.join(
+                            location, "records"), row, record, headers)
+                    self.database.records.append(record)
 
-            else:
-                print("Record with sequence number %s is null/invalid"
-                      % "{:s}-{:s}".format(row["event_id"],
-                                           row["station_code"]))
-            if (counter % 100) == 0:
-                print("Processed record %s - %s" % (str(counter),
-                                                    record.id))
-                
-            counter += 1
+                else:
+                    print("Record with sequence number %s is null/invalid"
+                          % "{:s}-{:s}".format(
+                              row["event_id"], row["station_code"]))
+                    
+                if (counter % 100) == 0:
+                    print(f"Processed record {counter} - {record.id}")
+                    
+                counter += 1
 
     @classmethod
     def autobuild(cls, dbid, dbname, output_location, flatfile_location):
@@ -401,16 +399,20 @@ class ESMFlatfileParserURL(SMDatabaseReader):
             vs30_measured = False
         else:
             vs30_measured = False
-        site = RecordSite(site_id, station_code, station_code, site_lon,
-                          site_lat, elevation, vs30, vs30_measured,
-                          network_code=network_code, country=None)
+        site = RecordSite(site_id,
+                          station_code,
+                          station_code,
+                          site_lon,
+                          site_lat,
+                          elevation,
+                          vs30,
+                          vs30_measured,
+                          network_code=network_code,
+                          country=None)
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
         site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
                                          "sensor_depth_m")
         site.instrument_type = metadata["instrument_code"].strip()
-        if site.vs30:
-            site.z1pt0 = vs30_to_z1pt0_cy14(vs30)
-            site.z2pt5 = vs30_to_z2pt5_cb14(vs30)
         housing_code = metadata["housing_code"].strip()
         if housing_code and (housing_code in HOUSING):
             site.building_structure = HOUSING[housing_code]
