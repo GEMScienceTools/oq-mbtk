@@ -164,6 +164,7 @@ def plot_soln_slip_rates(
         ],
         "k-",
         lw=0.2,
+        label='Fault slip rate',
     )
     if errs is not None:
         plt.errorbar(
@@ -171,10 +172,11 @@ def plot_soln_slip_rates(
             slip_rates,
             yerr=errs,
             fmt="k,",
-            lw=0.1,
+            lw=0.05,
         )
 
-    plt.plot(slip_rates, pred_slip_rates, ".", alpha=pred_alpha, **kwargs)
+    plt.plot(slip_rates, pred_slip_rates, ".", alpha=pred_alpha, **kwargs,
+             label='Slip rate from modeled ruptures')
 
     plt.axis("equal")
     plt.xlabel("Observed slip rate")
