@@ -107,9 +107,9 @@ We can specify the inputs to perform a residual analysis with as follows:
         
        [models.AkkarEtAlRjb2014]
         
-       [models.BooreEtAl2014]
+        [models.AkkarEtAlRjb2014]
         
-       [models.BooreEtAl2020]
+        [models.BooreEtAl2014]
         
        [models.CauzziEtAl2014]
         

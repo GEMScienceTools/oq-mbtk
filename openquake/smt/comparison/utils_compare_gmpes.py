@@ -256,6 +256,12 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                         ztor_m = None
                         
                     # Get mean and sigma
+                    dist_type = 'repi' # Spectra are only computed for specified
+                                       # repi distances rather than rrup or rjb
+                                       # to avoid issues with interpolating for
+                                       # ground-motion values at very small rrup
+                                       # or rjb (specified rrup or rjb can be
+                                       # smaller than min rrup or rjb in a ctx)
                     mu, std, r_vals, tau, phi = att_curves(gmm,
                                                            dep_list[l],
                                                            m,
@@ -1305,6 +1311,7 @@ def save_spectra_plot(f1, obs_spectra, output_dir, eq_id, st_id):
         rec_str = rec_str.replace(' ', '_').replace('-', '_').replace(':', '_')
         out = os.path.join(output_dir, 'ResponseSpectra_' + rec_str + '.png')
         f1.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
+
 
 
 ### Utils for other plots

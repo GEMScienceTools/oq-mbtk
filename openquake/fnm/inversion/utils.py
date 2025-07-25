@@ -168,7 +168,8 @@ def check_fault_in_poly(fault, polies, id_key='id'):
 def faults_in_polies(
     faults,
     polies,
-    id_key='id',
+    fault_id_key='id',
+    poly_id_key='id',
     slip_rate_col='net_slip_rate',
     slip_rate_err_col='net_slip_rate_err',
 ):
@@ -182,8 +183,8 @@ def faults_in_polies(
         faults_ = faults
     traces_proj, polies_proj = project_faults_and_polies(faults_, polies)
     fault_poly_membership = {
-        faults_[i]["id"]: check_fault_in_poly(
-            trace, polies_proj, id_key=id_key
+        faults_[i][fault_id_key]: check_fault_in_poly(
+            trace, polies_proj, id_key=poly_id_key
         )
         for i, trace in enumerate(traces_proj)
     }
@@ -375,6 +376,13 @@ def get_mfd_occurrence_rates(mfd, mag_decimals=1, cumulative=False):
     return mfd_occ_rates
 
 
+def get_mfd_uncertainties(mfd, unc_type='pctile'):
+    rates = get_mfd_occurrence_rates(mfd)
+
+    if unc_type == 'std':
+        pass
+
+
 def make_cumulative(dic):
     rev_keys = sorted(dic.keys(), reverse=True)
     new_dic = {}
@@ -451,6 +459,7 @@ def set_single_fault_rupture_rates_by_mfd(
 def set_single_fault_rup_rates(
     fault_id,
     fault_network,
+    rup_fault_lookup,
     mfd=None,
     b_val=1.0,
     seismic_fraction=1.0,
@@ -466,7 +475,7 @@ def set_single_fault_rup_rates(
         fault = fault_network['subfault_df'].loc[fault_id]
 
     fault_rup_df = get_ruptures_on_fault(
-        fault_id, fault_network[rup_df], key=faults_or_subfaults
+        fault_id, fault_network[rup_df], rup_fault_lookup
     )
     rups = rup_df_to_rupture_dicts(
         fault_rup_df, mag_col='mag', displacement_col='displacement'
@@ -542,13 +551,31 @@ def _get_fault_by_id(fault_id, faults):
     return fault
 
 
-def get_ruptures_on_fault(fault_id, rupture_df, key='faults'):
+def get_ruptures_on_fault_df(fault_id, rupture_df, key='faults'):
     """
     Gets all ruptures on a given fault or subfault, indicated by the fault_id.
     Pass `key='subfaults'` to get subfaults.
     """
     return rupture_df[rupture_df[key].apply(lambda x: fault_id in x)]
 
+
+def get_ruptures_on_fault(fault_id, rupture_df, rup_fault_lookup):
+    rups = rup_fault_lookup[fault_id]
+    rup_df = rupture_df.loc[rups]
+    return rup_df
+
+
+def make_rup_fault_lookup(rupture_df, key='faults'):
+    rup_fault_dict = rupture_df[key].to_dict()
+
+    fault_rup_dict = {}
+    for rup, faults in rup_fault_dict.items():
+        for fault in faults:
+            if fault not in fault_rup_dict:
+                fault_rup_dict[fault] = []
+            fault_rup_dict[fault].append(rup)
+
+    return fault_rup_dict
 
 def get_rup_rates_from_fault_slip_rates(
     fault_network,
@@ -619,6 +646,9 @@ def get_rup_rates_from_fault_slip_rates(
             + f"{faults_or_subfaults}"
         )
 
+    rup_fault_lookup = make_rup_fault_lookup(fault_network[rup_df_key], _key_)
+
+    logging.debug("getting moment rates")
     fault_moment_rates = {
         id: get_fault_moment_rate(
             fault,
@@ -627,12 +657,12 @@ def get_rup_rates_from_fault_slip_rates(
         for id, fault in fault_iterator.items()
     }
 
+    logging.debug("making mfds")
     fault_mfds = {
         id: make_fault_mfd(
             fault,
             max_mag=get_ruptures_on_fault(
-                id, fault_network[rup_df_key], key=_key_
-            ).mag.max(),
+                id, fault_network[rup_df_key], rup_fault_lookup).mag.max(),
             mfd_type=mfd_type,
             b_val=b_val,
             seismic_fraction=fault.get("seismic_fraction", seismic_fraction),
@@ -642,10 +672,12 @@ def get_rup_rates_from_fault_slip_rates(
         for id, fault in fault_iterator.items()
     }
 
+    logging.debug("setting single-fault rup rates")
     all_rup_rates = {
         id: set_single_fault_rup_rates(
             id,
             fault_network,
+            rup_fault_lookup,
             mfd=fault_mfds[id],
             rup_df=rup_df_key,
             b_val=b_val,
@@ -665,6 +697,7 @@ def get_rup_rates_from_fault_slip_rates(
             if len(sfs) == 1:
                 sf_inds.append(ind)
 
+    logging.debug("doing final rup rates 1")
     final_rup_rates = {}
     mf_rates = {}
     for fault, rates in all_rup_rates.items():
@@ -680,6 +713,7 @@ def get_rup_rates_from_fault_slip_rates(
                 else:
                     mf_rates[idx][fault] = rate
 
+    logging.debug("doing final rup rates 2")
     mf_rup_rates = {}
     for rup, rates in mf_rates.items():
         if faults_or_subfaults == 'faults':
@@ -698,6 +732,7 @@ def get_rup_rates_from_fault_slip_rates(
         weighted_mean_rate = weighted_mean(fault_rates, fault_weights)
         mf_rup_rates[rup] = weighted_mean_rate
 
+    logging.debug("concatting rates")
     final_rup_rates = pd.concat(
         (pd.Series(final_rup_rates), pd.Series(mf_rup_rates))
     )

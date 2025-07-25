@@ -32,8 +32,11 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 
 import openquake as oq
+
+from openquake.fnm.inversion.utils import get_soln_slip_rates
 
 
 def plot_mfd_accumdict(mfd, **kwargs):
@@ -46,23 +49,36 @@ def plot_mfd_accumdict(mfd, **kwargs):
 
 
 def plot_mfd(mfd, errs=False, label=None, **kwargs):
+    if isinstance(mfd, dict):
+        return plot_mfd_accumdict(mfd, label=label, **kwargs)
     mags = [ar[0] for ar in mfd.get_annual_occurrence_rates()]
     rates = [ar[1] for ar in mfd.get_annual_occurrence_rates()]
     stds = np.sqrt(rates)
 
     cum_rates = np.cumsum(rates[::-1])[::-1]
-    cum_stds = np.cumsum(stds[::-1])[::-1]
+    rates_high = rates + stds
+    rates_low = rates - stds
+    rates_low[rates_low < 0] = 0
+
+    cum_std_high = np.cumsum(rates_high[::-1])[::-1]
+    cum_std_low = np.cumsum(rates_low[::-1])[::-1]
+
+    # cum_stds = np.cumsum(stds[::-1])[::-1]
+
+    # cum_std_high = cum_rates + cum_stds
+    # cum_std_low = cum_rates - cum_stds
+    # cum_std_low[cum_std_low < 0] = 0
+
+    plt.plot(mags, cum_rates, label=label, **kwargs)
 
     if errs:
-        plt.errorbar(
+        plt.fill_between(
             mags,
-            cum_rates,
-            yerr=cum_stds,
-            label=label,
+            cum_std_low,
+            cum_std_high,
+            alpha=0.5,
+            **kwargs,
         )
-
-    else:
-        plt.plot(mags, cum_rates, label=label, **kwargs)
 
     plt.yscale("log")
 
@@ -133,13 +149,12 @@ def plot_soln_mfd(
     plot_mfd_accumdict(mfd, label=label)
 
 
-def plot_soln_slip_rates(soln, slip_rates, lhs, errs=None, units="mm/yr"):
-    if units == "mm/yr":
-        coeff = 1e3
-    elif units == "m/yr":
-        coeff = 1.0
-
-    pred_slip_rates = lhs.dot(soln)[: len(slip_rates)] * coeff
+def plot_soln_slip_rates(
+    soln, slip_rates, lhs, errs=None, units="mm/yr", pred_alpha=1.0, **kwargs,
+):
+    pred_slip_rates = get_soln_slip_rates(
+        soln, lhs, len(slip_rates), units=units
+    )
 
     plt.plot(
         [0.0, slip_rates.max() * 1.1],
@@ -149,6 +164,7 @@ def plot_soln_slip_rates(soln, slip_rates, lhs, errs=None, units="mm/yr"):
         ],
         "k-",
         lw=0.2,
+        label='Fault slip rate',
     )
     if errs is not None:
         plt.errorbar(
@@ -156,10 +172,11 @@ def plot_soln_slip_rates(soln, slip_rates, lhs, errs=None, units="mm/yr"):
             slip_rates,
             yerr=errs,
             fmt="k,",
-            lw=0.2,
+            lw=0.05,
         )
 
-    plt.plot(slip_rates, pred_slip_rates, ".")
+    plt.plot(slip_rates, pred_slip_rates, ".", alpha=pred_alpha, **kwargs,
+             label='Slip rate from modeled ruptures')
 
     plt.axis("equal")
     plt.xlabel("Observed slip rate")
@@ -188,3 +205,55 @@ def plot_rupture_rates_w_mags(
 
     if logy:
         plt.gca().set_yscale("log")
+
+
+def plot_df_traces(
+    df,
+    values,
+    cmap='viridis',
+    figsize=(10, 8),
+    vmin=None,
+    vmax=None,
+    trace_col='trace',
+):
+    """
+    Plot polylines from a dataframe with colors based on provided values.
+
+    Args:
+        df: pandas DataFrame with 'trace' column containing [lon, lat] coordinates
+        values: array-like of float values for coloring (one per polyline)
+        cmap: matplotlib colormap name or colormap object
+        figsize: tuple of figure dimensions
+        vmin, vmax: optional color scale limits
+    """
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # Convert traces to format needed by LineCollection
+    segments = [np.array(trace)[:, :2] for trace in df[trace_col]]
+
+    # Create line collection
+    lc = LineCollection(
+        segments,
+        cmap=plt.get_cmap(cmap),
+        norm=plt.Normalize(vmin=vmin, vmax=vmax),
+    )
+    lc.set_array(np.array(values))
+
+    # Add lines to plot
+    ax.add_collection(lc)
+
+    # Add colorbar
+    plt.colorbar(lc)
+
+    # Set plot limits based on all coordinates
+    all_coords = np.concatenate(segments)
+    ax.set_xlim(all_coords[:, 0].min(), all_coords[:, 0].max())
+    ax.set_ylim(all_coords[:, 1].min(), all_coords[:, 1].max())
+
+    # Set labels and title
+    ax.set_xlabel('Longitude')
+    ax.set_ylabel('Latitude')
+    ax.set_aspect('equal')
+
+    return fig, ax
