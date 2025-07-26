@@ -1,0 +1,29 @@
+openquake.smt.tests.comparison package
+======================================
+
+Submodules
+----------
+
+openquake.smt.tests.comparison.comparison\_test module
+------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.comparison.comparison_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.tests.comparison.mgmpe\_from\_toml\_test module
+-------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.comparison.mgmpe_from_toml_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.tests.comparison
+   :members:
+   :undoc-members:
+   :show-inheritance:
