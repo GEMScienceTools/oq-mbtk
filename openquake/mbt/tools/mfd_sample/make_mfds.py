@@ -192,6 +192,7 @@ def _compl_analysis(decdir, compdir, compl_toml, labels, fout, fout_figs):
 
     ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(config)
     compl_tables, mags_chk, years_chk = read_compl_data(compdir)
+    
 
     # Fixing sorting of years
     if np.all(np.diff(yrs)) >= 0:
@@ -258,12 +259,14 @@ def make_many_mfds(configfile, basedir=None):
             polys = config['subcatalogues']['polygons']
             base = 'v*catalogue*.csv'
             all_cats = glob.glob(os.path.join(decdir, base))
-            for dcat in all_cats:
+            all_cats_cr = [c for c in all_cats if 'crustal' in c]
+            for dcat in all_cats_cr:
                 verA = dcat.split('/')[-1].split('_')[0] 
                 verB = dcat.split('/')[-1].split('_')[3] 
                 subcatalogues_folder = os.path.join(outdir, "subcatalogues", f"{verA}{verB}")
                 create_subcatalogues(polys, dcat, subcatalogues_folder)
-        decdir = decdir.replace('declustered', 'subcatalogues/v*')
+        if config.get('change_decdir', False):
+            decdir = decdir.replace('declustered', 'subcatalogues/v*')
 
     # generate the completeness tables 
     generate = config['completeness'].get('generate_completeness', True)
