@@ -92,12 +92,12 @@ def analyze_hypocentral_depth(folder_subcat: str, depth_min: float = 0,
                     tlist.append([w, m])
             var['hypocenter_distribution'] = tlist
 
-    if writecsv:
-        hy_out = folder_out_figs.replace('figs','dat')
-        if not os.path.exists(hy_out):
-            os.makedirs(hy_out)
-        hy_out_fi = os.path.join(hy_out, f'hc_{src_id}.csv')
-        pd.DataFrame({'depth': midd, 'weight': wei}).to_csv(hy_out_fi, index=False)
+        if writecsv:
+            hy_out = folder_out_figs.replace('figs','dat')
+            if not os.path.exists(hy_out):
+                os.makedirs(hy_out)
+            hy_out_fi = os.path.join(hy_out, f'hc_{src_id}.csv')
+            pd.DataFrame({'depth': midd, 'weight': wei}).to_csv(hy_out_fi, index=False)
 
     if len(conf) > 0:
         # Saving results into the config file
