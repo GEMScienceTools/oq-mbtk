@@ -20,9 +20,9 @@ Simple Python Script to integrate a strong motion record using the
 Newmark-Beta method
 """
 import numpy as np
+import matplotlib.pyplot as plt
 from math import sqrt
 from numba import njit
-import matplotlib.pyplot as plt
 
 from openquake.smt.utils import (
     get_time_vector, convert_accel_units, get_velocity_displacement, _save_image,)
@@ -265,7 +265,7 @@ class NigamJennings(ResponseSpectrum):
             x_v = Velocity time series
             x_d = Displacement time series
         """       
-        return _njit_get_time_series(
+        return _time_series(
             self.acceleration.astype(np.float64),
             self.d_t,
             self.num_steps,
@@ -284,11 +284,12 @@ class NigamJennings(ResponseSpectrum):
 
 
 @njit(fastmath=True)
-def _njit_get_time_series(acceleration, d_t, num_steps, num_per,
+def _time_series(acceleration, d_t, num_steps, num_per,
                           f1, f2, f4, f5, f6,
                           g1, g2, h1, h2, omega2):
     """
-    Use numba to speed up this function.
+    Use numba to calculate the acceleration, velocity and
+    displacement time series for the SDOF oscillator.
     """
     x_d = np.zeros((num_steps - 1, num_per), dtype=np.float64)
     x_v = np.zeros_like(x_d)
