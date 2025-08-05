@@ -149,6 +149,7 @@ def plot_trellis_util(config, output_directory):
                                      i,
                                      n,
                                      l,
+                                     dep_list[l],
                                      config.minR,
                                      config.maxR,
                                      r_vals,
@@ -981,7 +982,7 @@ def lt_trel(r_vals,
     return median_gmc, plus_sig_gmc, minus_sig_gmc
 
 
-def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
+def update_trellis_plots(m, i, n, l, dep, minR, maxR, r_vals, imt_list, dist_type):
     """
     Add titles, axis labels and axis limits to trellis plots
     """
@@ -995,7 +996,7 @@ def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
     if dist_type == 'rhypo':
         label = 'Rhypo (km)'
     if n == 0: # Top row only
-        pyplot.title('Mw = ' + str(m), fontsize='16')
+        pyplot.title(f'Mw={m}, depth={dep}km', fontsize='16')
     if n == len(imt_list)-1: # Bottom row only
         pyplot.xlabel(label, fontsize='16')
     if l == 0: # Left row only
