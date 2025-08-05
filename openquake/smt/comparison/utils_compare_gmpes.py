@@ -66,7 +66,8 @@ def plot_trellis_util(config, output_directory):
             ax = fig.add_subplot(len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
             axs.append(ax)
 
-            # get ztor
+            # get depth params
+            depth = dep_list[l]
             if config.ztor != -999:
                 ztor_m = config.ztor[l]
             else:
@@ -75,7 +76,7 @@ def plot_trellis_util(config, output_directory):
             # Get gmpe params
             strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
                                                               config.dip,
-                                                              dep_list[l],
+                                                              depth,
                                                               config.aratio,
                                                               config.rake,
                                                               config.trt) 
@@ -94,7 +95,7 @@ def plot_trellis_util(config, output_directory):
                 
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(gmm,
-                                                         dep_list[l],
+                                                         depth,
                                                          m,
                                                          aratio_g,
                                                          strike_g,
@@ -149,6 +150,7 @@ def plot_trellis_util(config, output_directory):
                                      i,
                                      n,
                                      l,
+                                     depth,
                                      config.minR,
                                      config.maxR,
                                      r_vals,
@@ -166,7 +168,7 @@ def plot_trellis_util(config, output_directory):
                                                     config.Nstd,
                                                     i,
                                                     m,
-                                                    dep_list[l],
+                                                    depth,
                                                     dip_g,
                                                     config.rake,
                                                     cfg_key,
@@ -174,7 +176,7 @@ def plot_trellis_util(config, output_directory):
                     
             # Store per gmpe
             mag_key = 'Mw = %s, depth = %s km, dip = %s deg, rake = %s deg' % (
-                m, dep_list[l], dip_g, config.rake)
+                m, depth, dip_g, config.rake)
             store_per_mag[mag_key] = store_per_gmpe
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
@@ -182,10 +184,8 @@ def plot_trellis_util(config, output_directory):
         store_per_imt[str(i)] = store_per_mag
     
     # Final store to add vs30 and Nstd into key
-    store_gmm_curves[cfg_key][
-        'gmm att curves per imt-mag'] = store_per_imt
-    store_gmm_curves[cfg_key][
-        'gmm att curves per imt-mag']['%s (km)' % config.dist_type] = r_vals
+    store_gmm_curves[cfg_key]['gmm att curves per imt-mag'] = store_per_imt
+    store_gmm_curves[cfg_key]['gmm att curves per imt-mag']['%s (km)' % config.dist_type] = r_vals
     
     # Finalise plots
     maxy = np.max(max_pred)
@@ -237,9 +237,10 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             ax1 = figure.add_subplot(
                 len(config.dist_list), len(mag_list), l+1+n*len(mag_list))
         
+            depth = dep_list[l]
             strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
                                                               config.dip,
-                                                              dep_list[l],
+                                                              depth,
                                                               config.aratio,
                                                               config.rake,
                                                               config.trt)
@@ -257,7 +258,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                         
                     # Get mean and sigma
                     mu, std, r_vals, tau, phi = att_curves(gmm,
-                                                           dep_list[l],
+                                                           depth,
                                                            m,
                                                            aratio_g,
                                                            strike_g,
@@ -390,7 +391,8 @@ def plot_ratios_util(config, output_directory):
             fig.add_subplot(
                 len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
             
-            # ztor value
+            # Get depth params
+            depth = dep_list[l]
             if config.ztor != -999:
                 ztor_m = config.ztor[l]
             else:
@@ -399,7 +401,7 @@ def plot_ratios_util(config, output_directory):
             # Get gmpe params
             strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
                                                               config.dip,
-                                                              dep_list[l],
+                                                              depth,
                                                               config.aratio,
                                                               config.rake,
                                                               config.trt) 
@@ -409,7 +411,7 @@ def plot_ratios_util(config, output_directory):
 
             # Get baseline GMM attenuation curves
             results = att_curves(baseline,
-                                 dep_list[l],
+                                 depth,
                                  m,
                                  aratio_g,
                                  strike_g,
@@ -438,7 +440,7 @@ def plot_ratios_util(config, output_directory):
                 
                 # Get attenuation curves for the GMM
                 results = att_curves(gmm,
-                                     dep_list[l],
+                                     depth,
                                      m,
                                      aratio_g,
                                      strike_g,
@@ -515,9 +517,10 @@ def compute_matrix_gmpes(config, mtxs_type):
             
                 gmm = mgmpe_check(gmpe)
 
+                depth = dep_list[l]
                 strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
                                                                   config.dip,
-                                                                  dep_list[l],
+                                                                  depth,
                                                                   config.aratio,
                                                                   config.rake,
                                                                   config.trt) 
@@ -529,7 +532,7 @@ def compute_matrix_gmpes(config, mtxs_type):
                     ztor_m = None
 
                 mean, std, r_vals, tau, phi = att_curves(gmm,
-                                                         dep_list[l],
+                                                         depth,
                                                          m,
                                                          aratio_g,
                                                          strike_g,
@@ -864,7 +867,8 @@ def trellis_data(gmpe,
                     lt_vals_gmc[idx_gmc][gmpe] = {
                                 'median': np.exp(mean)*lt_weights[idx_gmc][gmpe],
                                 'plus_sigma': plus_sigma*lt_weights[idx_gmc][gmpe],
-                                'minus_sigma': minus_sigma*lt_weights[idx_gmc][gmpe]}
+                                'minus_sigma': minus_sigma*lt_weights[idx_gmc][gmpe]
+                                }
                 else:
                     lt_vals_gmc[idx_gmc][
                         gmpe] = {'median': np.exp(mean)*lt_weights[idx_gmc][gmpe]}
@@ -943,8 +947,7 @@ def lt_trel(r_vals,
     label = f'Logic Tree {idx_gmc + 1}'
 
     # Get key describing mag-imt combo and some other event info  
-    mk = (f'IMT = {i}, Mw = {m}, depth = {dep} km, '
-          f'dip = {dip} deg, rake = {rake} deg')
+    mk = (f'IMT = {i}, Mw = {m}, depth = {dep} km, dip = {dip} deg, rake = {rake} deg')
 
     # Get logic tree 
     lt_df_gmc = pd.DataFrame(
@@ -981,7 +984,7 @@ def lt_trel(r_vals,
     return median_gmc, plus_sig_gmc, minus_sig_gmc
 
 
-def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
+def update_trellis_plots(m, i, n, l, dep, minR, maxR, r_vals, imt_list, dist_type):
     """
     Add titles, axis labels and axis limits to trellis plots
     """
@@ -995,7 +998,7 @@ def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
     if dist_type == 'rhypo':
         label = 'Rhypo (km)'
     if n == 0: # Top row only
-        pyplot.title('Mw = ' + str(m), fontsize='16')
+        pyplot.title(f'Mw={m}, depth={dep}km', fontsize='16')
     if n == len(imt_list)-1: # Bottom row only
         pyplot.xlabel(label, fontsize='16')
     if l == 0: # Left row only
@@ -1071,6 +1074,7 @@ def _update_period_spacing(period, threshold, spacing, max_period):
 def _get_period_values_for_spectra_plots(max_period):
     """
     Get list of periods based on maximum period specified in comparison .toml
+    
     :param max_period:
         Maximum period to compute plots for (note an error will be returned if
         this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
@@ -1286,7 +1290,7 @@ def update_spec_plots(ax1, m, i, n, l, dist_list, dist_type):
     """
     Add titles and axis labels to spectra plots
     """
-    ax1.set_title(f'Mw = {m}, {dist_type} = {i} km', fontsize=16, y=1.0, pad=-16)
+    ax1.set_title(f'Mw={m}, {dist_type}={i}km', fontsize=16, y=1.0, pad=-16)
     if n == len(dist_list)-1: # Bottom row only
         ax1.set_xlabel('Period (s)', fontsize=16)
     if l == 0: # Left column only
