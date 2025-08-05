@@ -867,7 +867,8 @@ def trellis_data(gmpe,
                     lt_vals_gmc[idx_gmc][gmpe] = {
                                 'median': np.exp(mean)*lt_weights[idx_gmc][gmpe],
                                 'plus_sigma': plus_sigma*lt_weights[idx_gmc][gmpe],
-                                'minus_sigma': minus_sigma*lt_weights[idx_gmc][gmpe]}
+                                'minus_sigma': minus_sigma*lt_weights[idx_gmc][gmpe]
+                                }
                 else:
                     lt_vals_gmc[idx_gmc][
                         gmpe] = {'median': np.exp(mean)*lt_weights[idx_gmc][gmpe]}
@@ -1073,6 +1074,7 @@ def _update_period_spacing(period, threshold, spacing, max_period):
 def _get_period_values_for_spectra_plots(max_period):
     """
     Get list of periods based on maximum period specified in comparison .toml
+    
     :param max_period:
         Maximum period to compute plots for (note an error will be returned if
         this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
