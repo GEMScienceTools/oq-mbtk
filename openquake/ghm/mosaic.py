@@ -198,7 +198,8 @@ DATA = {'GID_0': {
        'oan': ['ATF', 'HMD'],
        'oat': ['CPV', 'STP', 'SHN', 'SYC','MUS',
                'REU', 'GNQ', 'MYT', 'COM','BMU',
-               'FLK', 'SGS', 'BVT', 'ATA', 'BRA'],
+               'FLK', 'SGS', 'BVT', 'ATA', 'BRA',
+               'OAT'],
        'oin': ['MDV', 'CCK', 'CXR', 'MUS', 
                'IOT', 'IND', 'ATF'], 
         # KIR - Kiribati
@@ -206,7 +207,7 @@ DATA = {'GID_0': {
        'opa': ['KIR', 'PLW', 'FSM', 'PCN', 'COK', 
                'PYF', 'XCL','UMI', 'CRI', 'MNP', 
                'GUM', 'MHL', 'NRU', 'CHL', 'ECU', 
-               'JPN', 'MEX', 'NZL', 'AUS'],
+               'JPN', 'MEX', 'NZL', 'AUS', 'OPA'],
         # ASM - American Samoa
         # FJI - Fiji
         # KIR - Kiribati
@@ -230,14 +231,14 @@ DATA = {'GID_0': {
        'sam': ['ABW', 'ARG', 'BOL', 'BRA', 'CHL',
                'COL', 'CUW', 'ECU', 'FLK', 'GUF',
                'GUY', 'PER', 'PRY', 'SUR', 'URY',
-               'VEN', 'BES'],
+               'VEN', 'BES', 'OPA'],
        'sea': ['KHM', 'LAO', 'MMR', 'MYS', 'SGP',
                'THA', 'VNM'],
        'ssa': ['AGO', 'BDI', 'BWA', 'CAF', 'COD',
                'COG', 'COM', 'DJI', 'ERI', 'ETH',
                'KEN', 'MDG', 'MOZ', 'MWI', 'NAM',
                'RWA', 'SDN', 'SOM', 'SSD', 'TZA',
-               'UGA', 'ZMB', 'ZWE'],
+               'UGA', 'ZMB', 'ZWE', 'OAT'],
        'twn': ['TWN'],
        'usa': ['USA', 'CAL'],
        'waf': ['AGO', 'BEN', 'BFA', 'BWA', 'CAF',
