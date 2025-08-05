@@ -54,6 +54,7 @@ from openquake.hazardlib.geo.surface.multi import (
 )
 
 from openquake.fnm.section import get_subsection
+from openquake.fnm.fault_modeler import get_boundary_3d
 
 
 def _get_profiles(kite_surf):
@@ -70,6 +71,39 @@ def _get_profiles(kite_surf):
     profiles = [Line([Point(*p) for p in profile]) for profile in profiles]
 
     return profiles
+
+
+def make_fault_geojson_feature(fault, skip_props=('trace'), z_unit='m'):
+    skip_props = ['surface', *skip_props]
+    poly = get_boundary_3d(fault['surface'])[1]
+
+    feature = {'type': 'Feature',
+               'geometry': {
+                   'type': 'Polygon',
+                   'coordinates': [[list(pt) for pt in poly.exterior.coords]],
+                    },
+               'properties': {
+                   k: v for k, v in fault.items() if k not in skip_props
+                    },
+               }
+    if z_unit == 'm':
+        for c in feature['geometry']['coordinates'][0]:
+            c[2] *= 1000.0
+
+    return feature
+
+
+def make_geojson_from_faults(faults, skip_props=('trace')):
+
+    features = [make_fault_geojson_feature(fault, skip_props=skip_props)
+                for fault in faults]
+
+    gj = {"type": "FeatureCollection",
+          "features": features,
+          }
+
+    return gj
+
 
 
 def make_multifault_source(
