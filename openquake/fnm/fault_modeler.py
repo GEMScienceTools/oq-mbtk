@@ -40,13 +40,14 @@ from shapely.geometry import LineString, Polygon, MultiPolygon
 from openquake.baselib.general import AccumDict
 from openquake.hazardlib.geo import Point, Line
 from openquake.hazardlib.geo.mesh import RectangularMesh
-from openquake.hazardlib.geo.surface import SimpleFaultSurface
+from openquake.hazardlib.geo.surface import SimpleFaultSurface, KiteSurface
 
 from openquake.fnm.importer import (
     simple_fault_surface_from_feature,
 )
 
 from openquake.fnm.msr import area_to_mag
+
 
 from openquake.fnm.inversion.utils import (
     get_rupture_displacement,
@@ -355,6 +356,34 @@ def subdivide_rupture_mesh(
         i_start += n_subsec_pts_dip - 1
 
     return subsec_meshes
+
+
+def subdivide_kite_surface(fault: KiteSurface,
+                           nc_strike=3, nc_dip=3):
+    """
+    Divides a KiteSurface into meshes
+    """
+
+    #TODO: add max length and width
+
+    fault_mesh = fault.mesh
+    n_cells_dip = fault_mesh.lons.shape[0] - 1 # dip=rows
+    n_cells_strike = fault_mesh.lons.shape[1] - 1 # strike=cols
+
+    num_segs_down_dip = n_cells_dip // nc_dip
+    num_segs_along_strike = n_cells_strike // nc_strike
+
+    meshes = subdivide_rupture_mesh(
+        fault_mesh.lons,
+        fault_mesh.lats,
+        fault_mesh.depths,
+        num_segs_down_dip,
+        num_segs_along_strike,
+        nc_dip+1,
+        nc_strike+1
+    )
+
+    return meshes
 
 
 def get_subsections_from_fault(
