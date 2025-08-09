@@ -1,0 +1,61 @@
+openquake.mbt.tests.tools.tr package
+====================================
+
+Submodules
+----------
+
+openquake.mbt.tests.tools.tr.catalogue\_test module
+---------------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.tr.catalogue_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.tr.change\_tr\_test module
+----------------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.tr.change_tr_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.tr.tr01\_test module
+----------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.tr.tr01_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.tr.tr02\_test module
+----------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.tr.tr02_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.tr.tr03\_test module
+----------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.tr.tr03_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.tr.tr\_test module
+--------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.tr.tr_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tests.tools.tr
+   :members:
+   :undoc-members:
+   :show-inheritance:
