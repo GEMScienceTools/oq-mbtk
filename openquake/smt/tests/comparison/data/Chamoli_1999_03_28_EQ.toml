@@ -17,7 +17,7 @@ up_or_down_dip = 0 # 1 = up-dip, 0 = down-dip
 volc_back_arc = false # true or false
 eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
 
-[source_properties] # Characterise earthquake for the region of interest (note in this case we are using information in the observed spectra csv, so this information is overwritten)
+[source_properties] # Characterise earthquake for the region of interest (note in this case we are using information in the observed spectra csv, so the information provided here for posterity is actually overwritten)
 strike = 0
 dip = 5
 rake = 90 # Must be provided. Strike and dip can be approximated if set to -999
