@@ -67,19 +67,18 @@ def plot_trellis_util(config, output_directory):
             axs.append(ax)
 
             # get depth params
-            depth = dep_list[l]
+            depth_g = dep_list[l]
             if config.ztor != -999:
-                ztor_m = config.ztor[l]
+                ztor_g = config.ztor[l]
             else:
-                ztor_m = None
+                ztor_g = None
             
             # Get gmpe params
-            strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
-                                                              config.dip,
-                                                              depth,
-                                                              config.aratio,
-                                                              config.rake,
-                                                              config.trt) 
+            strike_g, dip_g, aratio_g = _param_gmpes(config.strike,
+                                                     config.dip,
+                                                     config.aratio,
+                                                     config.rake,
+                                                     config.trt) 
 
             # Per GMPE get attenuation curves
             lt_vals_gmc = [{}, {}, {}, {}]
@@ -95,21 +94,21 @@ def plot_trellis_util(config, output_directory):
                 
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(gmm,
-                                                         depth,
                                                          m,
+                                                         depth_g,
+                                                         ztor_g,
                                                          aratio_g,
                                                          strike_g,
                                                          dip_g,
                                                          config.rake,
+                                                         config.trt,
                                                          config.vs30,
                                                          config.z1pt0,
                                                          config.z2pt5,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
                                                          i,
-                                                         ztor_m,
                                                          config.dist_type,
-                                                         config.trt,
                                                          config.up_or_down_dip,
                                                          config.volc_back_arc,
                                                          config.eshm20_region)
@@ -150,7 +149,7 @@ def plot_trellis_util(config, output_directory):
                                      i,
                                      n,
                                      l,
-                                     depth,
+                                     depth_g,
                                      config.minR,
                                      config.maxR,
                                      r_vals,
@@ -168,7 +167,7 @@ def plot_trellis_util(config, output_directory):
                                                     config.Nstd,
                                                     i,
                                                     m,
-                                                    depth,
+                                                    depth_g,
                                                     dip_g,
                                                     config.rake,
                                                     cfg_key,
@@ -176,7 +175,7 @@ def plot_trellis_util(config, output_directory):
                     
             # Store per gmpe
             mag_key = 'Mw = %s, depth = %s km, dip = %s deg, rake = %s deg' % (
-                m, depth, dip_g, config.rake)
+                m, depth_g, dip_g, config.rake)
             store_per_mag[mag_key] = store_per_gmpe
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
@@ -237,13 +236,12 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             ax1 = figure.add_subplot(
                 len(config.dist_list), len(mag_list), l+1+n*len(mag_list))
         
-            depth = dep_list[l]
-            strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
-                                                              config.dip,
-                                                              depth,
-                                                              config.aratio,
-                                                              config.rake,
-                                                              config.trt)
+            depth_g = dep_list[l] 
+            strike_g, dip_g, aratio_g = _param_gmpes(config.strike,
+                                                     config.dip,
+                                                     config.aratio,
+                                                     config.rake,
+                                                     config.trt)
 
             for g, gmpe in enumerate(config.gmpes_list):     
                 rs_50p, sig, rs_ps, rs_ms = [], [], [], []
@@ -252,27 +250,27 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 
                 for k, imt in enumerate(imt_list): 
                     if config.ztor != -999:
-                        ztor_m = config.ztor[l]
+                        ztor_g = config.ztor[l]
                     else:
-                        ztor_m = None
+                        ztor_g = None
                         
                     # Get mean and sigma
                     mu, std, r_vals, tau, phi = att_curves(gmm,
-                                                           depth,
                                                            m,
+                                                           depth_g,
+                                                           ztor_g,
                                                            aratio_g,
                                                            strike_g,
                                                            dip_g,
                                                            config.rake,
+                                                           config.trt,
                                                            config.vs30,
                                                            config.z1pt0,
                                                            config.z2pt5,
                                                            500, # Assume record dist < 500 km
                                                            1,   # Step of 1 km for site spacing
                                                            imt,
-                                                           ztor_m,
                                                            config.dist_type,
-                                                           config.trt,
                                                            config.up_or_down_dip,
                                                            config.volc_back_arc,
                                                            config.eshm20_region) 
@@ -392,40 +390,39 @@ def plot_ratios_util(config, output_directory):
                 len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
             
             # Get depth params
-            depth = dep_list[l]
+            depth_g = dep_list[l] 
             if config.ztor != -999:
-                ztor_m = config.ztor[l]
+                ztor_g = config.ztor[l]
             else:
-                ztor_m = None
+                ztor_g = None
             
             # Get gmpe params
-            strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
-                                                              config.dip,
-                                                              depth,
-                                                              config.aratio,
-                                                              config.rake,
-                                                              config.trt) 
+            strike_g, dip_g, aratio_g = _param_gmpes(config.strike,
+                                                     config.dip,
+                                                     config.aratio,
+                                                     config.rake,
+                                                     config.trt) 
 
             # Load the baseline GMM and compute baseline
             baseline = mgmpe_check(config.baseline_gmm)
 
             # Get baseline GMM attenuation curves
             results = att_curves(baseline,
-                                 depth,
                                  m,
+                                 depth_g,
+                                 ztor_g,
                                  aratio_g,
                                  strike_g,
                                  dip_g,
                                  config.rake,
+                                 config.trt,
                                  config.vs30,
                                  config.z1pt0,
                                  config.z2pt5,
                                  config.maxR,
                                  1, # Step of 1 km for sites
                                  i,
-                                 ztor_m,
                                  config.dist_type,
-                                 config.trt,
                                  config.up_or_down_dip,
                                  config.volc_back_arc,
                                  config.eshm20_region)
@@ -440,21 +437,21 @@ def plot_ratios_util(config, output_directory):
                 
                 # Get attenuation curves for the GMM
                 results = att_curves(gmm,
-                                     depth,
                                      m,
+                                     depth_g,
+                                     ztor_g,
                                      aratio_g,
                                      strike_g,
                                      dip_g,
                                      config.rake,
+                                     config.trt,
                                      config.vs30,
                                      config.z1pt0,
                                      config.z2pt5,
                                      config.maxR,
                                      1, # Step of 1 km for sites
                                      i,
-                                     ztor_m,
                                      config.dist_type,
-                                     config.trt,
                                      config.up_or_down_dip,
                                      config.volc_back_arc,
                                      config.eshm20_region)
@@ -517,36 +514,35 @@ def compute_matrix_gmpes(config, mtxs_type):
             
                 gmm = mgmpe_check(gmpe)
 
-                depth = dep_list[l]
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
-                                                                  config.dip,
-                                                                  depth,
-                                                                  config.aratio,
-                                                                  config.rake,
-                                                                  config.trt) 
+                depth_g = dep_list[l] 
+                strike_g, dip_g, aratio_g = _param_gmpes(config.strike,
+                                                         config.dip,
+                                                         config.aratio,
+                                                         config.rake,
+                                                         config.trt) 
                 
                 # ztor              
                 if config.ztor != -999:
-                    ztor_m = config.ztor[l]
+                    ztor_g = config.ztor[l]
                 else:
-                    ztor_m = None
+                    ztor_g = None
 
                 mean, std, r_vals, tau, phi = att_curves(gmm,
-                                                         depth,
                                                          m,
+                                                         depth_g,
+                                                         ztor_g,
                                                          aratio_g,
                                                          strike_g,
                                                          dip_g,
                                                          config.rake,
+                                                         config.trt,
                                                          config.vs30,
                                                          config.z1pt0,
                                                          config.z2pt5,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
-                                                         i, 
-                                                         ztor_m, 
+                                                         i,
                                                          config.dist_type,
-                                                         config.trt,
                                                          config.up_or_down_dip,
                                                          config.volc_back_arc,
                                                          config.eshm20_region) 
