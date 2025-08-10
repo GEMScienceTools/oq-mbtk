@@ -201,8 +201,8 @@ Plotting of Residuals
        >
        > # Plot residual probability density function for a specified GMPE from gmpe_list and intensity measure from imt_list
        > rspl.ResidualPlot(resid, gmpe_list[5], imt_list[0], filename, filetype = 'jpg') # Plot for gmpe in position 5 
-                                                                                          # in gmpe_list and intensity
-                                                                                          # measure in position 0 in imt_list
+                                                                                         # in gmpe_list and intensity
+                                                                                         # measure in position 0 in imt_list
         
 Residual distribution plot for Boore et al. 2020 and PGA:
     .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_bias+sigma.jpeg
@@ -456,16 +456,15 @@ Comparing GMPEs
                      # proxy aratio
         ztor = 'None' # Set to string of 'None' to NOT consider otherwise specify as
                       # array matching number of mag and depth values
-        strike = -999
+        strike = 0
         dip =  60
-        rake = 90 # Must be provided. Strike and dip can be approximated if either
-                  # set to -999
-        aratio  = 2 # If set to -999 the user-provided trt string will be used 
-                    # to assign a trt-dependent aratio
+        rake = 90 # Must be provided. Strike and dip can be approximated if either set to -999
+        aratio  = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
         mags = [5, 6, 7] # Mags used only for trellis and response spectra
         depths = [20, 20, 20] # Depth per magnitude for trellis and response spectra
         
-        [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (only need specifying if using these functions)
+        [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and
+                             # clustering (only need specifying if using these functions)
         mmin = 5
         mmax = 7
         spacing = 0.1
