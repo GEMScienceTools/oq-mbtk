@@ -29,7 +29,7 @@ from scipy import interpolate
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib.imt import from_string
-from openquake.smt.comparison.utils_gmpes import att_curves, _param_gmpes, mgmpe_check
+from openquake.smt.comparison.utils_gmpes import att_curves, get_rup_pars, mgmpe_check
 
 
 def plot_trellis_util(config, output_directory):
@@ -66,18 +66,18 @@ def plot_trellis_util(config, output_directory):
             ax = fig.add_subplot(len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
             axs.append(ax)
 
-            # get depth params
+            # Get depth params
             depth_g = dep_list[l]
             if config.ztor != -999:
                 ztor_g = config.ztor[l]
             else:
                 ztor_g = None
             
-            # Get gmpe params
-            strike_g, dip_g, aratio_g = _param_gmpes(config.strike,
+            # Get rupture params
+            strike_g, dip_g, aratio_g = get_rup_pars(config.strike,
                                                      config.dip,
-                                                     config.aratio,
                                                      config.rake,
+                                                     config.aratio,
                                                      config.trt) 
 
             # Per GMPE get attenuation curves
@@ -235,12 +235,19 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             
             ax1 = figure.add_subplot(
                 len(config.dist_list), len(mag_list), l+1+n*len(mag_list))
-        
-            depth_g = dep_list[l] 
-            strike_g, dip_g, aratio_g = _param_gmpes(config.strike,
+
+            # Get depth params
+            depth_g = dep_list[l]         
+            if config.ztor != -999:
+                ztor_g = config.ztor[l]
+            else:
+                ztor_g = None
+
+            # Get rupture params
+            strike_g, dip_g, aratio_g = get_rup_pars(config.strike,
                                                      config.dip,
-                                                     config.aratio,
                                                      config.rake,
+                                                     config.aratio,
                                                      config.trt)
 
             for g, gmpe in enumerate(config.gmpes_list):     
@@ -249,10 +256,6 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 gmm = mgmpe_check(gmpe)
                 
                 for k, imt in enumerate(imt_list): 
-                    if config.ztor != -999:
-                        ztor_g = config.ztor[l]
-                    else:
-                        ztor_g = None
                         
                     # Get mean and sigma
                     mu, std, r_vals, tau, phi = att_curves(gmm,
@@ -396,11 +399,11 @@ def plot_ratios_util(config, output_directory):
             else:
                 ztor_g = None
             
-            # Get gmpe params
-            strike_g, dip_g, aratio_g = _param_gmpes(config.strike,
+            # Get rupture params
+            strike_g, dip_g, aratio_g = get_rup_pars(config.strike,
                                                      config.dip,
-                                                     config.aratio,
                                                      config.rake,
+                                                     config.aratio,
                                                      config.trt) 
 
             # Load the baseline GMM and compute baseline
@@ -514,18 +517,19 @@ def compute_matrix_gmpes(config, mtxs_type):
             
                 gmm = mgmpe_check(gmpe)
 
+                # Get depth params
                 depth_g = dep_list[l] 
-                strike_g, dip_g, aratio_g = _param_gmpes(config.strike,
-                                                         config.dip,
-                                                         config.aratio,
-                                                         config.rake,
-                                                         config.trt) 
-                
-                # ztor              
                 if config.ztor != -999:
                     ztor_g = config.ztor[l]
                 else:
                     ztor_g = None
+
+                # Get rupture params
+                strike_g, dip_g, aratio_g = get_rup_pars(config.strike,
+                                                         config.dip,
+                                                         config.rake,
+                                                         config.aratio,
+                                                         config.trt) 
 
                 mean, std, r_vals, tau, phi = att_curves(gmm,
                                                          m,
