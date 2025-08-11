@@ -43,7 +43,7 @@ def _get_hypocenter_distribution(data):
     return PMF(out)
 
 
-def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
+def write_as_multipoint_sources(df, model, src_id, subzones,
                                 model_subz, mmin, bwid, rms, tom, folder_out):
     """
     Write a set of point sources to NRML as a multi-point

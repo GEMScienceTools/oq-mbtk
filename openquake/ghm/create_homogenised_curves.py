@@ -326,14 +326,14 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
 
         # Fixing an issue at the border between waf and ssa
         # TODO can we remove this now?
-        if key in ['waf', 'ssa']:
-            from shapely.geometry import Polygon
-            coo = get_poly_from_str(mosaic.SUBSETS['GID_0'][key]['AGO'][0])
-            df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
-            dft = gpd.GeoDataFrame(df, geometry='geo')
-            idx = map_gdf.geometry.intersects(dft.geometry[0])
-            xdf = copy.deepcopy(map_gdf[idx])
-            map_gdf = xdf
+        #if key in ['waf', 'ssa']:
+        #    from shapely.geometry import Polygon
+        #    coo = get_poly_from_str(mosaic.SUBSETS['GID_0'][key]['AGO'][0])
+        #    df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
+        #    dft = gpd.GeoDataFrame(df, geometry='geo')
+        #    idx = map_gdf.geometry.intersects(dft.geometry[0])
+        #    xdf = copy.deepcopy(map_gdf[idx])
+        #    map_gdf = xdf
 
         # Read the shapefile with the polygons of countries. The explode
         # function converts multipolygons into a single multipolygon.
@@ -368,9 +368,9 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             c = 0
             for la, lb, geo in zip(contacts_df.modelA, contacts_df.modelB,
                                    contacts_df.geometry):
-                if la not in ['SAM', 'OPA']:
+                if la not in ['SSA', 'OAT']:
                     continue
-                if lb not in ['SAM', 'OPA']:
+                if lb not in ['SSA', 'OAT']:
                     continue
 
                 if key.upper() in [la, lb]:
