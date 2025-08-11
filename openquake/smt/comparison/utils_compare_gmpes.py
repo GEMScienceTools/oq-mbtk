@@ -29,7 +29,7 @@ from scipy import interpolate
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib.imt import from_string
-from openquake.smt.comparison.utils_gmpes import att_curves, _param_gmpes, mgmpe_check
+from openquake.smt.comparison.utils_gmpes import att_curves, get_rup_pars, mgmpe_check
 
 
 def plot_trellis_util(config, output_directory):
@@ -66,19 +66,19 @@ def plot_trellis_util(config, output_directory):
             ax = fig.add_subplot(len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
             axs.append(ax)
 
-            # get ztor
+            # Get depth params
+            depth_g = dep_list[l]
             if config.ztor != -999:
-                ztor_m = config.ztor[l]
+                ztor_g = config.ztor[l]
             else:
-                ztor_m = None
+                ztor_g = None
             
-            # Get gmpe params
-            strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
-                                                              config.dip,
-                                                              dep_list[l],
-                                                              config.aratio,
-                                                              config.rake,
-                                                              config.trt) 
+            # Get rupture params
+            strike_g, dip_g, aratio_g = get_rup_pars(config.strike,
+                                                     config.dip,
+                                                     config.rake,
+                                                     config.aratio,
+                                                     config.trt) 
 
             # Per GMPE get attenuation curves
             lt_vals_gmc = [{}, {}, {}, {}]
@@ -94,21 +94,21 @@ def plot_trellis_util(config, output_directory):
                 
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(gmm,
-                                                         dep_list[l],
                                                          m,
+                                                         depth_g,
+                                                         ztor_g,
                                                          aratio_g,
                                                          strike_g,
                                                          dip_g,
                                                          config.rake,
+                                                         config.trt,
                                                          config.vs30,
                                                          config.z1pt0,
                                                          config.z2pt5,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
                                                          i,
-                                                         ztor_m,
                                                          config.dist_type,
-                                                         config.trt,
                                                          config.up_or_down_dip,
                                                          config.volc_back_arc,
                                                          config.eshm20_region)
@@ -149,6 +149,7 @@ def plot_trellis_util(config, output_directory):
                                      i,
                                      n,
                                      l,
+                                     depth_g,
                                      config.minR,
                                      config.maxR,
                                      r_vals,
@@ -166,7 +167,7 @@ def plot_trellis_util(config, output_directory):
                                                     config.Nstd,
                                                     i,
                                                     m,
-                                                    dep_list[l],
+                                                    depth_g,
                                                     dip_g,
                                                     config.rake,
                                                     cfg_key,
@@ -174,7 +175,7 @@ def plot_trellis_util(config, output_directory):
                     
             # Store per gmpe
             mag_key = 'Mw = %s, depth = %s km, dip = %s deg, rake = %s deg' % (
-                m, dep_list[l], dip_g, config.rake)
+                m, depth_g, dip_g, config.rake)
             store_per_mag[mag_key] = store_per_gmpe
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
@@ -182,10 +183,8 @@ def plot_trellis_util(config, output_directory):
         store_per_imt[str(i)] = store_per_mag
     
     # Final store to add vs30 and Nstd into key
-    store_gmm_curves[cfg_key][
-        'gmm att curves per imt-mag'] = store_per_imt
-    store_gmm_curves[cfg_key][
-        'gmm att curves per imt-mag']['%s (km)' % config.dist_type] = r_vals
+    store_gmm_curves[cfg_key]['gmm att curves per imt-mag'] = store_per_imt
+    store_gmm_curves[cfg_key]['gmm att curves per imt-mag']['%s (km)' % config.dist_type] = r_vals
     
     # Finalise plots
     maxy = np.max(max_pred)
@@ -236,13 +235,20 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             
             ax1 = figure.add_subplot(
                 len(config.dist_list), len(mag_list), l+1+n*len(mag_list))
-        
-            strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
-                                                              config.dip,
-                                                              dep_list[l],
-                                                              config.aratio,
-                                                              config.rake,
-                                                              config.trt)
+
+            # Get depth params
+            depth_g = dep_list[l]         
+            if config.ztor != -999:
+                ztor_g = config.ztor[l]
+            else:
+                ztor_g = None
+
+            # Get rupture params
+            strike_g, dip_g, aratio_g = get_rup_pars(config.strike,
+                                                     config.dip,
+                                                     config.rake,
+                                                     config.aratio,
+                                                     config.trt)
 
             for g, gmpe in enumerate(config.gmpes_list):     
                 rs_50p, sig, rs_ps, rs_ms = [], [], [], []
@@ -250,28 +256,24 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 gmm = mgmpe_check(gmpe)
                 
                 for k, imt in enumerate(imt_list): 
-                    if config.ztor != -999:
-                        ztor_m = config.ztor[l]
-                    else:
-                        ztor_m = None
                         
                     # Get mean and sigma
                     mu, std, r_vals, tau, phi = att_curves(gmm,
-                                                           dep_list[l],
                                                            m,
+                                                           depth_g,
+                                                           ztor_g,
                                                            aratio_g,
                                                            strike_g,
                                                            dip_g,
                                                            config.rake,
+                                                           config.trt,
                                                            config.vs30,
                                                            config.z1pt0,
                                                            config.z2pt5,
                                                            500, # Assume record dist < 500 km
                                                            1,   # Step of 1 km for site spacing
                                                            imt,
-                                                           ztor_m,
                                                            config.dist_type,
-                                                           config.trt,
                                                            config.up_or_down_dip,
                                                            config.volc_back_arc,
                                                            config.eshm20_region) 
@@ -390,40 +392,40 @@ def plot_ratios_util(config, output_directory):
             fig.add_subplot(
                 len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
             
-            # ztor value
+            # Get depth params
+            depth_g = dep_list[l] 
             if config.ztor != -999:
-                ztor_m = config.ztor[l]
+                ztor_g = config.ztor[l]
             else:
-                ztor_m = None
+                ztor_g = None
             
-            # Get gmpe params
-            strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
-                                                              config.dip,
-                                                              dep_list[l],
-                                                              config.aratio,
-                                                              config.rake,
-                                                              config.trt) 
+            # Get rupture params
+            strike_g, dip_g, aratio_g = get_rup_pars(config.strike,
+                                                     config.dip,
+                                                     config.rake,
+                                                     config.aratio,
+                                                     config.trt) 
 
             # Load the baseline GMM and compute baseline
             baseline = mgmpe_check(config.baseline_gmm)
 
             # Get baseline GMM attenuation curves
             results = att_curves(baseline,
-                                 dep_list[l],
                                  m,
+                                 depth_g,
+                                 ztor_g,
                                  aratio_g,
                                  strike_g,
                                  dip_g,
                                  config.rake,
+                                 config.trt,
                                  config.vs30,
                                  config.z1pt0,
                                  config.z2pt5,
                                  config.maxR,
                                  1, # Step of 1 km for sites
                                  i,
-                                 ztor_m,
                                  config.dist_type,
-                                 config.trt,
                                  config.up_or_down_dip,
                                  config.volc_back_arc,
                                  config.eshm20_region)
@@ -438,21 +440,21 @@ def plot_ratios_util(config, output_directory):
                 
                 # Get attenuation curves for the GMM
                 results = att_curves(gmm,
-                                     dep_list[l],
                                      m,
+                                     depth_g,
+                                     ztor_g,
                                      aratio_g,
                                      strike_g,
                                      dip_g,
                                      config.rake,
+                                     config.trt,
                                      config.vs30,
                                      config.z1pt0,
                                      config.z2pt5,
                                      config.maxR,
                                      1, # Step of 1 km for sites
                                      i,
-                                     ztor_m,
                                      config.dist_type,
-                                     config.trt,
                                      config.up_or_down_dip,
                                      config.volc_back_arc,
                                      config.eshm20_region)
@@ -515,35 +517,36 @@ def compute_matrix_gmpes(config, mtxs_type):
             
                 gmm = mgmpe_check(gmpe)
 
-                strike_g, dip_g, depth_g, aratio_g = _param_gmpes(config.strike,
-                                                                  config.dip,
-                                                                  dep_list[l],
-                                                                  config.aratio,
-                                                                  config.rake,
-                                                                  config.trt) 
-                
-                # ztor              
+                # Get depth params
+                depth_g = dep_list[l] 
                 if config.ztor != -999:
-                    ztor_m = config.ztor[l]
+                    ztor_g = config.ztor[l]
                 else:
-                    ztor_m = None
+                    ztor_g = None
+
+                # Get rupture params
+                strike_g, dip_g, aratio_g = get_rup_pars(config.strike,
+                                                         config.dip,
+                                                         config.rake,
+                                                         config.aratio,
+                                                         config.trt) 
 
                 mean, std, r_vals, tau, phi = att_curves(gmm,
-                                                         dep_list[l],
                                                          m,
+                                                         depth_g,
+                                                         ztor_g,
                                                          aratio_g,
                                                          strike_g,
                                                          dip_g,
                                                          config.rake,
+                                                         config.trt,
                                                          config.vs30,
                                                          config.z1pt0,
                                                          config.z2pt5,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
-                                                         i, 
-                                                         ztor_m, 
+                                                         i,
                                                          config.dist_type,
-                                                         config.trt,
                                                          config.up_or_down_dip,
                                                          config.volc_back_arc,
                                                          config.eshm20_region) 
@@ -864,7 +867,8 @@ def trellis_data(gmpe,
                     lt_vals_gmc[idx_gmc][gmpe] = {
                                 'median': np.exp(mean)*lt_weights[idx_gmc][gmpe],
                                 'plus_sigma': plus_sigma*lt_weights[idx_gmc][gmpe],
-                                'minus_sigma': minus_sigma*lt_weights[idx_gmc][gmpe]}
+                                'minus_sigma': minus_sigma*lt_weights[idx_gmc][gmpe]
+                                }
                 else:
                     lt_vals_gmc[idx_gmc][
                         gmpe] = {'median': np.exp(mean)*lt_weights[idx_gmc][gmpe]}
@@ -943,8 +947,7 @@ def lt_trel(r_vals,
     label = f'Logic Tree {idx_gmc + 1}'
 
     # Get key describing mag-imt combo and some other event info  
-    mk = (f'IMT = {i}, Mw = {m}, depth = {dep} km, '
-          f'dip = {dip} deg, rake = {rake} deg')
+    mk = (f'IMT = {i}, Mw = {m}, depth = {dep} km, dip = {dip} deg, rake = {rake} deg')
 
     # Get logic tree 
     lt_df_gmc = pd.DataFrame(
@@ -981,24 +984,24 @@ def lt_trel(r_vals,
     return median_gmc, plus_sig_gmc, minus_sig_gmc
 
 
-def update_trellis_plots(m, i, n, l, minR, maxR, r_vals, imt_list, dist_type):
+
+def update_trellis_plots(m, i, n, l, dep, minR, maxR, r_vals, imt_list, dist_type):
     """
     Add titles, axis labels and axis limits to trellis plots
     """
-    # Labels
-    if dist_type == 'repi':
-        label = 'Repi (km)'
-    if dist_type == 'rrup':
-        label = 'Rrup (km)'
-    if dist_type == 'rjb':
-        label = 'Rjb (km)'
-    if dist_type == 'rhypo':
-        label = 'Rhypo (km)'
-    if n == 0: # Top row only
-        pyplot.title('Mw = ' + str(m), fontsize='16')
-    if n == len(imt_list)-1: # Bottom row only
-        pyplot.xlabel(label, fontsize='16')
-    if l == 0: # Left row only
+    # Get distance type label
+    dt_label = get_dist_label(dist_type)
+    
+    # Bottom row only
+    if n == len(imt_list)-1: 
+        pyplot.xlabel(dt_label, fontsize='16')
+
+    # Top row only
+    if n == 0:
+        pyplot.title(f'Mw={m}, depth={dep}km', fontsize='16')
+    
+    # Left row only
+    if l == 0:
         if str(i) in ['PGD', 'SDi']:
             pyplot.ylabel(str(i) + ' (cm)', fontsize='16')
         elif str(i) in ['PGV']:
@@ -1071,6 +1074,7 @@ def _update_period_spacing(period, threshold, spacing, max_period):
 def _get_period_values_for_spectra_plots(max_period):
     """
     Get list of periods based on maximum period specified in comparison .toml
+    
     :param max_period:
         Maximum period to compute plots for (note an error will be returned if
         this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
@@ -1286,10 +1290,15 @@ def update_spec_plots(ax1, m, i, n, l, dist_list, dist_type):
     """
     Add titles and axis labels to spectra plots
     """
-    ax1.set_title(f'Mw = {m}, {dist_type} = {i} km', fontsize=16, y=1.0, pad=-16)
-    if n == len(dist_list)-1: # Bottom row only
+    # Title
+    ax1.set_title(f'Mw={m}, {dist_type}={i}km', fontsize=16, y=1.0, pad=-16)
+
+     # Bottom row only
+    if n == len(dist_list)-1:
         ax1.set_xlabel('Period (s)', fontsize=16)
-    if l == 0: # Left column only
+    
+    # Left column only
+    if l == 0:
         ax1.set_ylabel('SA (g)', fontsize=16) 
 
 
@@ -1308,24 +1317,41 @@ def save_spectra_plot(f1, obs_spectra, output_dir, eq_id, st_id):
 
 
 ### Utils for other plots
+def get_dist_label(dist_type):
+    """
+    Return string representing required distance type.
+    """
+    if dist_type == 'repi':
+        return 'Repi (km)'
+    elif dist_type == 'rrup':
+        return 'Rrup (km)'
+    elif dist_type == 'rjb':
+        return 'Rjb (km)'
+    else:
+        assert dist_type == 'rhypo'
+        return 'Rhypo (km)'
+
+
 def update_ratio_plots(dist_type, m, i, n, l, imt_list, r_vals, minR, maxR):
     """
     Add titles and axis labels to ratio plots
     """
-    if dist_type == 'repi':
-        label = 'Repi (km)'
-    if dist_type == 'rrup':
-        label = 'Rrup (km)'
-    if dist_type == 'rjb':
-        label = 'Rjb (km)'
-    if dist_type == 'rhypo':
-        label = 'Rhypo (km)'
-    if n == 0: # Top row only
+    # Get distance type label
+    dt_label = get_dist_label(dist_type)    
+
+    # Bottom row only
+    if n == len(imt_list)-1:
+        pyplot.xlabel(dt_label, fontsize='12')
+
+    # Top row only
+    if n == 0:
         pyplot.title('Mw = ' + str(m), fontsize='16')
-    if n == len(imt_list)-1: # Bottom row only
-        pyplot.xlabel(label, fontsize='12')
-    if l == 0: # Left row only
+
+    # Left row only
+    if l == 0:
         pyplot.ylabel('GMM/baseline for %s' %str(i), fontsize='14')
+
+    # Set xlims
     min_r_val = min(r_vals[r_vals>=1])
     pyplot.xlim(np.max([min_r_val, minR]), maxR)
 
