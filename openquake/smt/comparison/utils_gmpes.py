@@ -177,21 +177,21 @@ def get_rupture(lon,
 
 
 def att_curves(gmpe,
-               depth,
                mag,
+               depth,
+               ztor,
                aratio,
                strike,
                dip,
                rake,
+               trt,
                vs30,
                z1pt0,
                z2pt5,
                maxR,
                step,
                imt,
-               ztor,
                dist_type,
-               trt,
                up_or_down_dip,
                volc_back_arc,
                eshm20_region):
@@ -295,9 +295,9 @@ def att_curves(gmpe,
     return mean, std, distances, tau, phi
 
 
-def _param_gmpes(strike, dip, depth, aratio, rake, trt):
+def get_rup_pars(strike, dip, rake, aratio, trt):
     """
-    Get (crude) proxies for strike, dip, rake, depth and aspect ratio if not
+    Get (crude) proxies for strike, dip and aspect ratio if not
     provided by the user.
     """
     # Strike
@@ -315,17 +315,6 @@ def _param_gmpes(strike, dip, depth, aratio, rake, trt):
     else:
         dip_s = dip
 
-    # Depth
-    if depth == -999:
-        if trt == 'interface':
-            depth_s = 40
-        if trt == 'slab':
-            depth_s = 150
-        else:
-            depth_s = 15 # Crustal
-    else:
-        depth_s = depth
-
     # Aspect ratio
     if aratio > -999.0 and np.isfinite(aratio):
         aratio_s = aratio
@@ -335,7 +324,7 @@ def _param_gmpes(strike, dip, depth, aratio, rake, trt):
         else:
             aratio_s = 2 # Crustal
 
-    return strike_s, dip_s, depth_s, aratio_s
+    return strike_s, dip_s, aratio_s
 
 
 def mgmpe_check(gmpe):
