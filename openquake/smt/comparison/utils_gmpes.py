@@ -295,7 +295,7 @@ def att_curves(gmpe,
     return mean, std, distances, tau, phi
 
 
-def _param_gmpes(strike, dip, aratio, rake, trt):
+def get_rup_pars(strike, dip, rake, aratio, trt):
     """
     Get (crude) proxies for strike, dip and aspect ratio if not
     provided by the user.
