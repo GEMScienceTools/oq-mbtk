@@ -984,24 +984,24 @@ def lt_trel(r_vals,
     return median_gmc, plus_sig_gmc, minus_sig_gmc
 
 
+
 def update_trellis_plots(m, i, n, l, dep, minR, maxR, r_vals, imt_list, dist_type):
     """
     Add titles, axis labels and axis limits to trellis plots
     """
-    # Labels
-    if dist_type == 'repi':
-        label = 'Repi (km)'
-    if dist_type == 'rrup':
-        label = 'Rrup (km)'
-    if dist_type == 'rjb':
-        label = 'Rjb (km)'
-    if dist_type == 'rhypo':
-        label = 'Rhypo (km)'
-    if n == 0: # Top row only
+    # Get distance type label
+    dt_label = get_dist_label(dist_type)
+    
+    # Bottom row only
+    if n == len(imt_list)-1: 
+        pyplot.xlabel(dt_label, fontsize='16')
+
+    # Top row only
+    if n == 0:
         pyplot.title(f'Mw={m}, depth={dep}km', fontsize='16')
-    if n == len(imt_list)-1: # Bottom row only
-        pyplot.xlabel(label, fontsize='16')
-    if l == 0: # Left row only
+    
+    # Left row only
+    if l == 0:
         if str(i) in ['PGD', 'SDi']:
             pyplot.ylabel(str(i) + ' (cm)', fontsize='16')
         elif str(i) in ['PGV']:
@@ -1290,10 +1290,15 @@ def update_spec_plots(ax1, m, i, n, l, dist_list, dist_type):
     """
     Add titles and axis labels to spectra plots
     """
+    # Title
     ax1.set_title(f'Mw={m}, {dist_type}={i}km', fontsize=16, y=1.0, pad=-16)
-    if n == len(dist_list)-1: # Bottom row only
+
+     # Bottom row only
+    if n == len(dist_list)-1:
         ax1.set_xlabel('Period (s)', fontsize=16)
-    if l == 0: # Left column only
+    
+    # Left column only
+    if l == 0:
         ax1.set_ylabel('SA (g)', fontsize=16) 
 
 
@@ -1312,24 +1317,41 @@ def save_spectra_plot(f1, obs_spectra, output_dir, eq_id, st_id):
 
 
 ### Utils for other plots
+def get_dist_label(dist_type):
+    """
+    Return string representing required distance type.
+    """
+    if dist_type == 'repi':
+        return 'Repi (km)'
+    elif dist_type == 'rrup':
+        return 'Rrup (km)'
+    elif dist_type == 'rjb':
+        return 'Rjb (km)'
+    else:
+        assert dist_type == 'rhypo'
+        return 'Rhypo (km)'
+
+
 def update_ratio_plots(dist_type, m, i, n, l, imt_list, r_vals, minR, maxR):
     """
     Add titles and axis labels to ratio plots
     """
-    if dist_type == 'repi':
-        label = 'Repi (km)'
-    if dist_type == 'rrup':
-        label = 'Rrup (km)'
-    if dist_type == 'rjb':
-        label = 'Rjb (km)'
-    if dist_type == 'rhypo':
-        label = 'Rhypo (km)'
-    if n == 0: # Top row only
+    # Get distance type label
+    dt_label = get_dist_label(dist_type)    
+
+    # Bottom row only
+    if n == len(imt_list)-1:
+        pyplot.xlabel(dt_label, fontsize='12')
+
+    # Top row only
+    if n == 0:
         pyplot.title('Mw = ' + str(m), fontsize='16')
-    if n == len(imt_list)-1: # Bottom row only
-        pyplot.xlabel(label, fontsize='12')
-    if l == 0: # Left row only
+
+    # Left row only
+    if l == 0:
         pyplot.ylabel('GMM/baseline for %s' %str(i), fontsize='14')
+
+    # Set xlims
     min_r_val = min(r_vals[r_vals>=1])
     pyplot.xlim(np.max([min_r_val, minR]), maxR)
 
