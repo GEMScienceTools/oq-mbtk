@@ -65,7 +65,6 @@ HEADERS = ['event_id',
            'EMEC_Mw',
            'EMEC_Mw_type',
            'EMEC_Mw_ref',
-           'event_source_id',
            'es_strike',
            'es_dip',
            'es_rake',
@@ -372,71 +371,40 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         """
         If rupture data is available - parse it, otherwise return None
         """
+        # Get the SoF
         sof = metadata["fm_type_code"]
-        if not metadata["event_source_id"].strip():
-            # No rupture model available. Mechanism is limited to a style
-            # of faulting only
-            rupture = Rupture(eq_id, eq_name, mag, None, None, depth)
-            mechanism = FocalMechanism(
-                eq_id, eq_name, GCMTNodalPlanes(), None,
-                mechanism_type=sof)
-            # See if focal mechanism exists
-            fm_set = []
-            for key in ["strike_1", "dip_1", "rake_1"]:
-                if key in metadata:
-                    fm_param = valid.vfloat(metadata[key], key)
-                    if fm_param is not None:
-                        fm_set.append(fm_param)
-            if len(fm_set) == 3:
-                # Have one valid focal mechanism
-                mechanism.nodal_planes.nodal_plane_1 = {"strike": fm_set[0],
-                                                        "dip": fm_set[1],
-                                                        "rake": fm_set[2]}
-            fm_set = []
-            for key in ["strike_2", "dip_2", "rake_2"]:
-                if key in metadata:
-                    fm_param = valid.vfloat(metadata[key], key)
-                    if fm_param is not None:
-                        fm_set.append(fm_param)
-            if len(fm_set) == 3:
-                # Have one valid focal mechanism
-                mechanism.nodal_planes.nodal_plane_2 = {"strike": fm_set[0],
-                                                        "dip": fm_set[1],
-                                                        "rake": fm_set[2]}
 
-            if not mechanism.nodal_planes.nodal_plane_1 and not\
-                mechanism.nodal_planes.nodal_plane_2:
-                # Absolutely no information - base on stye-of-faulting
-                mechanism.nodal_planes.nodal_plane_1 = {
-                    "strike": 0.0,  # Basically unused
-                    "dip": DIP_TYPE[sof],
-                    "rake": MECHANISM_TYPE[sof]
-                    }
-            return rupture, mechanism
+        # Initial rupture
+        rupture = Rupture(eq_id, eq_name, mag, None, None, depth)
 
-        strike = valid.strike(metadata["es_strike"])
-        dip = valid.dip(metadata["es_dip"])
-        rake = valid.rake(metadata["es_rake"])
-        ztor = valid.positive_float(metadata["es_z_top"], "es_z_top")
-        length = valid.positive_float(metadata["es_length"], "es_length")
-        width = valid.positive_float(metadata["es_width"], "es_width")
-        rupture = Rupture(eq_id, eq_name, mag, length, width, ztor)
-
-        # Get mechanism type and focal mechanism
-        # No nodal planes, eigenvalues moment tensor initially
+        # Mechanism
         mechanism = FocalMechanism(
-            eq_id, eq_name, GCMTNodalPlanes(), None,
-            mechanism_type=metadata["fm_type_code"])
-        if strike is None:
-            strike = 0.0
-        if dip is None:
-            dip = DIP_TYPE[sof]
-        if rake is None:
-            rake = MECHANISM_TYPE[sof]
-        # if strike is not None and dip is not None and rake is not None:
-        mechanism.nodal_planes.nodal_plane_1 = {"strike": strike,
-                                                "dip": dip,
-                                                "rake": rake}
+            eq_id,
+            eq_name,
+            GCMTNodalPlanes(),
+            None,
+            mechanism_type=sof)
+        
+        # See if focal mechanism exists and get it if so
+        fm_set = []
+        for key in ["es_strike", "es_dip", "es_rake"]:
+            if key in metadata:
+                fm_param = valid.vfloat(metadata[key], key)
+                if fm_param is not None:
+                    fm_set.append(fm_param)
+
+        if len(fm_set) == 3:
+            # Has a valid focal mechanism (NGAWest2 flatfile only provides
+            # one nodal plane)
+            mechanism.nodal_planes.nodal_plane_1 = {
+                "strike": fm_set[0], "dip": fm_set[1], "rake": fm_set[2]}
+
+        if not mechanism.nodal_planes.nodal_plane_1:
+            # Absolutely no information - base on stye-of-faulting
+            mechanism.nodal_planes.nodal_plane_1 = {
+                "strike": 0.0, "dip": DIP_TYPE[sof], "rake": MECHANISM_TYPE[sof]
+                }
+            
         return rupture, mechanism
 
     def _parse_distances(self, metadata, hypo_depth):
@@ -802,7 +770,6 @@ def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):
     "EMEC_Mw":default_string,
     "EMEC_Mw_type":default_string,
     "EMEC_Mw_ref":default_string,
-    "event_source_id":default_string,
  
     "es_strike":ngawest2['Strike (deg)'],
     "es_dip":ngawest2['Dip (deg)'],
