@@ -291,14 +291,18 @@ class ESMFlatfileParser(SMDatabaseReader):
         """
         If rupture data is available - parse it, otherwise return None
         """
+        # Get SoF
         sof = metadata["fm_type_code"]
+        
         if not metadata["event_source_id"].strip():
+    
             # No rupture model available. Mechanism is limited to a style
             # of faulting only
             rupture = Rupture(eq_id, eq_name, mag, None, None, depth)
             mechanism = FocalMechanism(
                 eq_id, eq_name, GCMTNodalPlanes(), None,
                 mechanism_type=sof)
+    
             # See if focal mechanism exists
             fm_set = []
             for key in ["strike_1", "dip_1", "rake_1"]:
@@ -306,6 +310,7 @@ class ESMFlatfileParser(SMDatabaseReader):
                     fm_param = valid.vfloat(metadata[key], key)
                     if fm_param is not None:
                         fm_set.append(fm_param)
+    
             if len(fm_set) == 3:
                 # Have one valid focal mechanism
                 mechanism.nodal_planes.nodal_plane_1 = {"strike": fm_set[0],
@@ -317,6 +322,7 @@ class ESMFlatfileParser(SMDatabaseReader):
                     fm_param = valid.vfloat(metadata[key], key)
                     if fm_param is not None:
                         fm_set.append(fm_param)
+            
             if len(fm_set) == 3:
                 # Have one valid focal mechanism
                 mechanism.nodal_planes.nodal_plane_2 = {"strike": fm_set[0],
@@ -333,6 +339,8 @@ class ESMFlatfileParser(SMDatabaseReader):
                     }
             return rupture, mechanism
 
+        # If there is an "event_source_id" in ESM flatfile, there is also
+        # finite rupture info. In this case build a detailed finite rup... 
         strike = valid.strike(metadata["es_strike"])
         dip = valid.dip(metadata["es_dip"])
         rake = valid.rake(metadata["es_rake"])
