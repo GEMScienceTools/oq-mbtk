@@ -360,6 +360,7 @@ class ESMFlatfileParser(SMDatabaseReader):
             dip = DIP_TYPE[sof]
         if rake is None:
             rake = MECHANISM_TYPE[sof]
+            
         # if strike is not None and dip is not None and rake is not None:
         mechanism.nodal_planes.nodal_plane_1 = {"strike": strike,
                                                 "dip": dip,
