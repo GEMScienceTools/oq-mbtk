@@ -469,8 +469,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_ground_motion(self, location, row, record, headers):
         """
-        In this case we parse the information from the flatfile directly
-        to hdf5 at the metadata stage
+        Parse the ground-motion data
         """
         # Get the data
         scalars, spectra = self._retreive_ground_motion_from_row(row, headers)
@@ -485,7 +484,13 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             # Add on the scalars
             scalar_grp = comp_grp.create_group("Scalar")
             for imt in scalars[key]:
-                dset = scalar_grp.create_dataset(imt.upper(), (1,), dtype="f")
+                if imt in ["ia"]:
+                    # In the smt convention it is "Ia" for Arias Intensity
+                    ikey = imt[0].upper() + imt[1:]
+                else:
+                    # Everything else to upper case (PGA, PGV, PGD, CAV)
+                    ikey = imt.upper()
+                dset = scalar_grp.create_dataset(ikey, (1,), dtype="f")
                 dset[:] = scalars[key][imt]
             
             # Add on the spectra
@@ -508,14 +513,20 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                                                 dtype="f")
             spectra_dset[:] = np.copy(values)
             spectra_dset.attrs["Damping"] = 5.0
-        
+
         # Add on the horizontal values
         hcomp = ims_grp.create_group("H")
         
-        # Scalars - just geometric mean for now
+        # Scalars
         hscalar = hcomp.create_group("Scalar")
-        for imt in scalars["Geometric"]:
-            dset = hscalar.create_dataset(imt.upper(), (1,), dtype="f")
+        for imt in scalars["Geometric", "rotD50"]:
+            if imt in ["ia"]:
+                # In the smt convention it is "Ia" for Arias Intensity
+                key = imt[0].upper() + imt[1:]
+            else:
+                # Everything else to upper case (PGA, PGV, PGD, CAV)
+                key = imt.upper()
+            dset = hscalar.create_dataset(key, (1,), dtype="f")
             dset[:] = scalars["Geometric"][imt]
         
         # For Spectra - can support multiple components
@@ -532,7 +543,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             if np.all(np.isnan(spectra[htype]["Values"])):
                 # Component not determined
                 continue
-            if not (htype == "Geometric"):
+            if htype != "Geometric":
                 key = htype[0].upper() + htype[1:]
             else:
                 key = copy.deepcopy(htype)
@@ -543,7 +554,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             hspec_dset[:] = hvals
             hspec_dset.attrs["Units"] = "cm/s/s"
         record.datafile = filename
-        breakpoint()
+        
         return record
 
     def _retreive_ground_motion_from_row(self, row, header_list):
