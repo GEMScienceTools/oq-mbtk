@@ -51,6 +51,8 @@ BASE = os.path.abspath("")
 
 CONV_TO_CMS2 = 981
 
+HCOMPS = ["rotD50"]
+
 HEADERS = ["event_id",
            "event_time",
            "ev_latitude",
@@ -518,9 +520,17 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         
         # Scalars
         hscalar = hcomp.create_group("Scalar")
-        for imt in scalars["rotD50"]:
-            dset = hscalar.create_dataset(imt.upper(), (1,), dtype="f")
-            dset[:] = scalars["rotD50"][imt]
+        for htype in HCOMPS:
+            hcomp_scalars = hscalar.create_group(htype)
+            for imt in scalars[htype]:
+                if imt in ["ia"]:
+                    # In the smt convention it is "Ia" for Arias Intensity
+                    key = imt[0].upper() + imt[1:]
+                else:
+                    # Everything else to upper case (PGA, PGV, PGD, CAV)
+                    key = imt.upper()          
+                dset = hcomp_scalars.create_dataset(key, (1,), dtype="f")
+                dset[:] = scalars[htype][imt]
         
         # Spectra
         hspectra = hcomp.create_group("Spectra")
