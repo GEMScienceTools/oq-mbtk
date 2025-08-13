@@ -576,8 +576,7 @@ class ESMFlatfileParser(SMDatabaseReader):
                 key = copy.deepcopy(htype)
             htype_grp = haccel.create_group(htype)
             hvals = spectra[htype]["Values"]
-            hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape,
-                                                  dtype="f")
+            hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape, dtype="f")
             hspec_dset[:] = hvals
             hspec_dset.attrs["Units"] = "cm/s/s"
         record.datafile = filename
@@ -623,8 +622,7 @@ class ESMFlatfileParser(SMDatabaseReader):
             periods = np.array(periods)
             values = np.array(values)
             idx = np.argsort(periods)
-            spectra.append((imt, {"Periods": periods[idx],
-                                   "Values": values[idx]}))
+            spectra.append((imt, {"Periods": periods[idx], "Values": values[idx]}))
         
         # Add on the as-recorded geometric mean
         spectra = dict(spectra)
