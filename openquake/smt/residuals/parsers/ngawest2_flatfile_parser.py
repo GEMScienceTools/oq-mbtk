@@ -509,8 +509,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
             # Add on the values
             values = spectra[key]["Values"]
-            spectra_dset = accel.create_dataset("damping_05", values.shape,
-                                                dtype="f")
+            spectra_dset = accel.create_dataset("damping_05", values.shape, dtype="f")
             spectra_dset[:] = np.copy(values)
             spectra_dset.attrs["Damping"] = 5.0
 
@@ -546,8 +545,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             key = htype[0].upper() + htype[1:]
             htype_grp = haccel.create_group(htype)
             hvals = spectra[htype]["Values"]
-            hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape,
-                                                  dtype="f")
+            hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape, dtype="f")
             hspec_dset[:] = hvals
             hspec_dset.attrs["Units"] = "cm/s/s"
         record.datafile = filename
@@ -590,8 +588,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             periods = np.array(periods)
             values = np.array(values)
             idx = np.argsort(periods)
-            spectra.append((imt, {"Periods": periods[idx],
-                                   "Values": values[idx]}))
+            spectra.append((imt, {"Periods": periods[idx], "Values": values[idx]}))
          
         return dict(scalars), dict(spectra)
 
