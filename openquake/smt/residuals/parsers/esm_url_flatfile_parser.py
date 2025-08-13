@@ -50,6 +50,8 @@ from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
+BASE = os.path.abspath("")
+
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
 HEADERS = ["event_id",
@@ -73,7 +75,6 @@ HEADERS = ["event_id",
            "EMEC_Mw",
            "EMEC_Mw_type",
            "EMEC_Mw_ref",
-           "event_source_id",
            "es_strike",
            "es_dip",
            "es_rake",
@@ -174,20 +175,24 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         # Import ESM URL format strong-motion flatfile
         ESM = pd.read_csv(flatfile_location)
 
-        # Get path to tmp csv once modified dataframe
-        converted_base_data_path=_get_ESM18_headers(ESM)
+        # Get path to tmp csv containing reformatted dataframe
+        tmp = _parse_esm_url(ESM)
         
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
         os.mkdir(output_location)
+        
         # Add on the records folder
         os.mkdir(os.path.join(output_location, "records"))
+        
         # Create an instance of the parser class
-        database = cls(dbid, dbname, converted_base_data_path)
+        database = cls(dbid, dbname, tmp)
+        
         # Parse the records
         print("Parsing Records ...")
         database.parse(location=output_location)
+        
         # Save itself to file
         metadata_file = os.path.join(output_location, "metadatafile.pkl")
         print("Storing metadata to file %s" % metadata_file)
@@ -204,12 +209,16 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
                          metadata["station_code"], metadata["location_code"]])
         wfid = wfid.replace("-", "_")
+        
         # Parse the event metadata
         event = self._parse_event_data(metadata)
+        
         # Parse the distance metadata
         distances = self._parse_distances(metadata, event.depth)
+        
         # Parse the station metadata
         site = self._parse_site_data(metadata)
+        
         # Parse waveform data
         xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
         return GroundMotionRecord(wfid,
@@ -234,10 +243,12 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         eq_lon = valid.longitude(metadata["ev_longitude"])
         eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
-            eq_depth = 0.0
+            raise ValueError('Depth missing an events in admitted flatfile')
+        
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet
                          eq_country=None)
+        
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
         eqk.magnitude = pref_mag
@@ -274,86 +285,53 @@ class ESMFlatfileParserURL(SMDatabaseReader):
                 if not pref_mag:
                     pref_mag = copy.deepcopy(mag)
                 mag_list.append(mag)
+                
         return pref_mag, mag_list
 
     def _parse_rupture_mechanism(self, metadata, eq_id, eq_name, mag, depth):
         """
-        If rupture data is available - parse it, otherwise return None
+        Parse rupture mechanism. 
+
+        NOTE: The ESM URL format flatfile does not contain necessarily provide
+        an ``event_source_id`` value for each record providing finite rupture
+        information, and therefore this function differs from the same one 
+        within the ESM18 parser (within which if there is an ``event_source_id``
+        there is also complete finite rupture information e.g. length, width).
         """
-        # Get SoF
+        # Get the SoF
         sof = metadata["fm_type_code"]
-        
-        if not metadata["event_source_id"].strip():
-    
-            # No rupture model available. Mechanism is limited to a style
-            # of faulting only
-            rupture = Rupture(eq_id, eq_name, mag, None, None, depth)
-            mechanism = FocalMechanism(
-                eq_id, eq_name, GCMTNodalPlanes(), None,
-                mechanism_type=sof)
-    
-            # See if focal mechanism exists
-            fm_set = []
-            for key in ["strike_1", "dip_1", "rake_1"]:
-                if key in metadata:
-                    fm_param = valid.vfloat(metadata[key], key)
-                    if fm_param is not None:
-                        fm_set.append(fm_param)
-    
-            if len(fm_set) == 3:
-                # Have one valid focal mechanism
-                mechanism.nodal_planes.nodal_plane_1 = {"strike": fm_set[0],
-                                                        "dip": fm_set[1],
-                                                        "rake": fm_set[2]}
-            fm_set = []
-            for key in ["strike_2", "dip_2", "rake_2"]:
-                if key in metadata:
-                    fm_param = valid.vfloat(metadata[key], key)
-                    if fm_param is not None:
-                        fm_set.append(fm_param)
-            
-            if len(fm_set) == 3:
-                # Have one valid focal mechanism
-                mechanism.nodal_planes.nodal_plane_2 = {"strike": fm_set[0],
-                                                        "dip": fm_set[1],
-                                                        "rake": fm_set[2]}
 
-            if not mechanism.nodal_planes.nodal_plane_1 and not\
-                mechanism.nodal_planes.nodal_plane_2:
-                # Absolutely no information - base on stye-of-faulting
-                mechanism.nodal_planes.nodal_plane_1 = {
-                    "strike": 0.0,  # Basically unused
-                    "dip": DIP_TYPE[sof],
-                    "rake": MECHANISM_TYPE[sof]
-                    }
-            return rupture, mechanism
+        # Initial rupture
+        rupture = Rupture(eq_id, eq_name, mag, None, None, depth)
 
-        # If there is an "event_source_id" in ESM flatfile, there is also
-        # finite rupture info. In this case build a detailed finite rup... 
-        strike = valid.strike(metadata["es_strike"])
-        dip = valid.dip(metadata["es_dip"])
-        rake = valid.rake(metadata["es_rake"])
-        ztor = valid.positive_float(metadata["es_z_top"], "es_z_top")
-        length = valid.positive_float(metadata["es_length"], "es_length")
-        width = valid.positive_float(metadata["es_width"], "es_width")
-        rupture = Rupture(eq_id, eq_name, mag, length, width, ztor)
-
-        # Get mechanism type and focal mechanism
-        # No nodal planes, eigenvalues moment tensor initially
+        # Mechanism
         mechanism = FocalMechanism(
-            eq_id, eq_name, GCMTNodalPlanes(), None,
-            mechanism_type=metadata["fm_type_code"])
-        if strike is None:
-            strike = 0.0
-        if dip is None:
-            dip = DIP_TYPE[sof]
-        if rake is None:
-            rake = MECHANISM_TYPE[sof]
+            eq_id,
+            eq_name,
+            GCMTNodalPlanes(),
+            None,
+            mechanism_type=sof)
+        
+        # See if focal mechanism exists and get it if so
+        fm_set = []
+        for key in ["es_strike", "es_dip", "es_rake"]:
+            if key in metadata:
+                fm_param = valid.vfloat(metadata[key], key)
+                if fm_param is not None:
+                    fm_set.append(fm_param)
+
+        if len(fm_set) == 3:
+            # Has a valid focal mechanism (ESM URL format flatfile only
+            # provides one nodal plane
+            mechanism.nodal_planes.nodal_plane_1 = {
+                "strike": fm_set[0], "dip": fm_set[1], "rake": fm_set[2]}
+
+        if not mechanism.nodal_planes.nodal_plane_1:
+            # Absolutely no information - base on style-of-faulting
+            mechanism.nodal_planes.nodal_plane_1 = {
+                "strike": 0.0, "dip": DIP_TYPE[sof], "rake": MECHANISM_TYPE[sof]
+                }
             
-        # if strike is not None and dip is not None and rake is not None:
-        mechanism.nodal_planes.nodal_plane_1 = {"strike": strike,
-                                                "dip": dip,
-                                                "rake": rake}
         return rupture, mechanism
 
     def _parse_distances(self, metadata, hypo_depth):
@@ -367,6 +345,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
         ry0 = valid.positive_float(metadata["Ry0_dist"], "Ry0_dist")
         rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
+
         if not isinstance(rjb, float):
             # In the first case Rjb == Repi
             rjb = copy.copy(repi)
@@ -383,8 +362,10 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         if not isinstance(ry0, float):
             # In the first case Ry0 == Repi
             ry0 = copy.copy(repi)
+        
         distances = RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
         distances.azimuth = razim
+        
         return distances
 
     def _parse_site_data(self, metadata):
@@ -407,6 +388,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
             vs30_measured = False
         else:
             vs30_measured = False
+        
         site = RecordSite(site_id,
                           station_code,
                           station_code,
@@ -417,21 +399,25 @@ class ESMFlatfileParserURL(SMDatabaseReader):
                           vs30_measured,
                           network_code=network_code,
                           country=None)
+        
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
         site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
                                          "sensor_depth_m")
+        
         site.instrument_type = metadata["instrument_code"].strip()
         housing_code = metadata["housing_code"].strip()
         if housing_code and (housing_code in HOUSING):
             site.building_structure = HOUSING[housing_code]
+        
         return site
 
     def _parse_waveform_data(self, metadata, wfid):
         """
         Parse the waveform data
         """
-        late_trigger = valid.vint(metadata["late_triggered_flag_01"],
-                                  "late_triggered_flag_01")
+        late_trigger = valid.vint(
+            metadata["late_triggered_flag_01"], "late_triggered_flag_01")
+        
         # U channel - usually east
         xorientation = metadata["U_channel_code"].strip()
         xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
@@ -440,6 +426,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
                           units="cm/s/s")
         xcomp.late_trigger = late_trigger
+        
         # V channel - usually North
         vorientation = metadata["V_channel_code"].strip()
         vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
@@ -467,12 +454,14 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         """
         # Get the data
         scalars, spectra = self._retreive_ground_motion_from_row(row, headers)
+        
         # Build the hdf5 files
         filename = os.path.join(location, "{:s}.hdf5".format(record.id))
         fle = h5py.File(filename, "w-")
         ims_grp = fle.create_group("IMS")
         for comp, key in [("X", "U"), ("Y", "V"), ("V", "W")]:
             comp_grp = ims_grp.create_group(comp)
+        
             # Add on the scalars
             scalar_grp = comp_grp.create_group("Scalar")
             for imt in scalars[key]:
@@ -484,11 +473,13 @@ class ESMFlatfileParserURL(SMDatabaseReader):
                     ikey = imt.upper()
                 dset = scalar_grp.create_dataset(ikey, (1,), dtype="f")
                 dset[:] = scalars[key][imt]
+        
             # Add on the spectra
             spectra_grp = comp_grp.create_group("Spectra")
             response = spectra_grp.create_group("Response")
             accel = response.create_group("Acceleration")
             accel.attrs["Units"] = "cm/s/s"
+        
             # Add on the periods
             pers = spectra[key]["Periods"]
             periods = response.create_dataset("Periods", pers.shape, dtype="f")
@@ -503,8 +494,10 @@ class ESMFlatfileParserURL(SMDatabaseReader):
                                                 dtype="f")
             spectra_dset[:] = np.copy(values)
             spectra_dset.attrs["Damping"] = 5.0
+        
         # Add on the horizontal values
         hcomp = ims_grp.create_group("H")
+        
         # Scalars - just geometric mean for now
         hscalar = hcomp.create_group("Scalar")
         for imt in scalars["Geometric"]:
@@ -516,6 +509,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
                 key = imt.upper()
             dset = hscalar.create_dataset(key, (1,), dtype="f")
             dset[:] = scalars["Geometric"][imt]
+        
         # For Spectra - can support multiple components
         hspectra = hcomp.create_group("Spectra")
         hresponse = hspectra.create_group("Response")
@@ -541,6 +535,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
             hspec_dset[:] = hvals
             hspec_dset.attrs["Units"] = "cm/s/s"
         record.datafile = filename
+        
         return record
 
     def _retreive_ground_motion_from_row(self, row, header_list):
@@ -584,6 +579,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
             idx = np.argsort(periods)
             spectra.append((imt, {"Periods": periods[idx],
                                    "Values": values[idx]}))
+        
         # Add on the as-recorded geometric mean
         spectra = dict(spectra)
         scalars = dict(scalars)
@@ -597,29 +593,20 @@ class ESMFlatfileParserURL(SMDatabaseReader):
             if scalars["U"][key] and scalars["V"][key]:
                 scalars["Geometric"][key] = np.sqrt(
                     scalars["U"][key] * scalars["V"][key])
+        
         return scalars, spectra
 
 
-def _get_ESM18_headers(ESM):
-    
+def _parse_esm_url(ESM):
     """
     Convert from ESM URL format flatfile to ESM18 format flatfile
     """
-    # Create default values
-    default_string = pd.Series(np.full(np.size(ESM.esm_event_id), ""))
-
-    # Reformat datetime
-    r_datetime = ESM.event_time.str.replace('T',' ')
-    
-    # Assign unknown to NaN values for faulting mechanism
-    ESM['fm_type_code'] = ESM.fm_type_code.fillna('U') 
-    
     # Construct dataframe with original ESM format 
     ESM_original_headers = pd.DataFrame(
     {
     # Non-GMIM headers   
     "event_id":ESM.esm_event_id,                                       
-    "event_time":r_datetime,
+    "event_time":ESM.event_time.str.replace('T',' '),
     "ISC_ev_id":ESM.isc_event_id,
     "USGS_ev_id":ESM.usgs_event_id,
     "INGV_ev_id":ESM.ingv_event_id,
@@ -628,8 +615,8 @@ def _get_ESM18_headers(ESM):
     "ev_latitude":ESM.ev_latitude,    
     "ev_longitude":ESM.ev_longitude,   
     "ev_depth_km":ESM.ev_depth_km,
-    "ev_hyp_ref":default_string,
-    "fm_type_code":ESM.fm_type_code,
+    "ev_hyp_ref":None,
+    "fm_type_code":"U",
     "ML":ESM.ml,
     "ML_ref":ESM.ml_ref,
     "Mw":ESM.mw,
@@ -639,12 +626,11 @@ def _get_ESM18_headers(ESM):
     "EMEC_Mw":ESM.emec_mw,
     "EMEC_Mw_type":ESM.emec_mw_type,
     "EMEC_Mw_ref":ESM.emec_mw_ref,
-    "event_source_id":ESM.event_source_id,
 
     "es_strike":ESM.es_strike,
     "es_dip":ESM.es_dip,
     "es_rake":ESM.es_rake,
-    "es_strike_dip_rake_ref":default_string, 
+    "es_strike_dip_rake_ref":None, 
     "es_z_top":ESM.z_top,
     "es_z_top_ref":ESM.es_z_top_ref,
     "es_length":ESM.es_length,   
@@ -665,11 +651,11 @@ def _get_ESM18_headers(ESM):
     "st_elevation":ESM.st_elevation,
     
     "ec8_code":ESM.ec8_code,
-    "ec8_code_method":default_string,
-    "ec8_code_ref":default_string,
+    "ec8_code_method":None,
+    "ec8_code_ref":None,
     "vs30_m_sec":ESM.vs30_m_s,
-    "vs30_ref":default_string,
-    "vs30_calc_method":default_string, 
+    "vs30_ref":None,
+    "vs30_calc_method":None, 
     "vs30_meas_type":ESM.vs30_meas_type,
     "slope_deg":ESM.slope_deg,
     "vs30_m_sec_WA":ESM.vs30_m_s_wa,
@@ -962,9 +948,8 @@ def _get_ESM18_headers(ESM):
     "rotD00_T9_000":ESM.rotd00_t9_000,
     "rotD00_T10_000":ESM.rotd00_t10_000})
     
-    # Output to folder where converted flatfile read into parser
-    tmp = tempfile.mkdtemp()
-    converted_base_data_path = os.path.join(tmp, 'converted_flatfile.csv')
-    ESM_original_headers.to_csv(converted_base_data_path, sep=';')
+    # Export to tmp
+    tmp = os.path.join(BASE, tempfile.mkdtemp(), 'tmp.csv')
+    ESM_original_headers.to_csv(tmp, sep=';')
 
-    return converted_base_data_path
+    return tmp
