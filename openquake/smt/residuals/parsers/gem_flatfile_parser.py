@@ -432,7 +432,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         
         # Scalars
         hscalar = hcomp.create_group("Scalar")
-        for imt in scalars["Geometric"]:
+        for imt in scalars["rotD50"]:
             if imt in ["ia"]:
                 # In the smt convention it is "Ia" for Arias Intensity
                 key = imt[0].upper() + imt[1:]
@@ -513,8 +513,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         spectra = dict(spectra)
         scalars = dict(scalars)
         spectra["Geometric"] = {
-            "Values": np.sqrt(spectra["U"]["Values"] *
-                              spectra["V"]["Values"]),
+            "Values": np.sqrt(spectra["U"]["Values"] * spectra["V"]["Values"]),
             "Periods": np.copy(spectra["U"]["Periods"])
             }
         scalars["Geometric"] = dict([(key, None) for key in scalars["U"]])

@@ -630,8 +630,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         spectra = dict(spectra)
         scalars = dict(scalars)
         spectra["Geometric"] = {
-            "Values": np.sqrt(spectra["U"]["Values"] *
-                              spectra["V"]["Values"]),
+            "Values": np.sqrt(spectra["U"]["Values"] * spectra["V"]["Values"]),
             "Periods": np.copy(spectra["U"]["Periods"])
             }
         scalars["Geometric"] = dict([(key, None) for key in scalars["U"]])

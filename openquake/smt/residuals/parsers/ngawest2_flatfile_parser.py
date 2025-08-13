@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parser for the NGAWest2 flatfile format
+Parser for the NGAWest2 flatfile
 """
 import pandas as pd
 import os
@@ -517,9 +517,9 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Add on the horizontal values
         hcomp = ims_grp.create_group("H")
         
-        # Scalars
+        # Scalars - Only rotD50 is supported
         hscalar = hcomp.create_group("Scalar")
-        for imt in scalars["Geometric", "rotD50"]:
+        for imt in scalars["rotD50"]:
             if imt in ["ia"]:
                 # In the smt convention it is "Ia" for Arias Intensity
                 key = imt[0].upper() + imt[1:]
@@ -527,26 +527,23 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                 # Everything else to upper case (PGA, PGV, PGD, CAV)
                 key = imt.upper()
             dset = hscalar.create_dataset(key, (1,), dtype="f")
-            dset[:] = scalars["Geometric"][imt]
+            dset[:] = scalars["rotD50"][imt]
         
         # For Spectra - can support multiple components
         hspectra = hcomp.create_group("Spectra")
         hresponse = hspectra.create_group("Response")
-        pers = spectra["Geometric"]["Periods"]
+        pers = spectra["rotD50"]["Periods"]
         hpers_dset = hresponse.create_dataset("Periods", pers.shape, dtype="f")
         hpers_dset[:] = np.copy(pers)
         hpers_dset.attrs["Low Period"] = np.min(pers)
         hpers_dset.attrs["High Period"] = np.max(pers)
         hpers_dset.attrs["Number Periods"] = len(pers)
         haccel = hresponse.create_group("Acceleration")
-        for htype in ["Geometric", "rotD50"]:
+        for htype in ["rotD50"]:
             if np.all(np.isnan(spectra[htype]["Values"])):
                 # Component not determined
                 continue
-            if htype != "Geometric":
-                key = htype[0].upper() + htype[1:]
-            else:
-                key = copy.deepcopy(htype)
+            key = htype[0].upper() + htype[1:]
             htype_grp = haccel.create_group(htype)
             hvals = spectra[htype]["Values"]
             hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape,
@@ -596,21 +593,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             spectra.append((imt, {"Periods": periods[idx],
                                    "Values": values[idx]}))
          
-        # Add on the as-recorded geometric mean
-        spectra = dict(spectra)
-        scalars = dict(scalars)
-        spectra["Geometric"] = {
-            "Values": np.sqrt(spectra["U"]["Values"] *
-                              spectra["V"]["Values"]),
-            "Periods": np.copy(spectra["U"]["Periods"])
-            }
-        scalars["Geometric"] = dict([(key, None) for key in scalars["U"]])
-        for key in scalars["U"]:
-            if scalars["U"][key] and scalars["V"][key]:
-                scalars["Geometric"][key] = np.sqrt(
-                    scalars["U"][key] * scalars["V"][key]) 
-                
-        return scalars, spectra
+        return dict(scalars), dict(spectra)
 
 
 def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):    
