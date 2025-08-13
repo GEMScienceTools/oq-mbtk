@@ -761,7 +761,7 @@ class GroundMotionDatabase(ContextDB):
         for evt_id, records in data.items():
             yield evt_id, records
 
-    SCALAR_IMTS = ["PGA", "PGV"]
+    SCALAR_IMTS = ["PGA", "PGV", "PGD", "Ia", "CAV"]
 
     def get_observations(self, imtx, records, component="Geometric"):
         """

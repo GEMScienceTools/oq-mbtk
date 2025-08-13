@@ -497,8 +497,7 @@ class ESMFlatfileParser(SMDatabaseReader):
 
     def _parse_ground_motion(self, location, row, record, headers):
         """
-        In this case we parse the information from the flatfile directly
-        to hdf5 at the metadata stage
+        Parse the ground-motion data
         """
         # Get the data
         scalars, spectra = self._retreive_ground_motion_from_row(row, headers)
@@ -545,7 +544,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         # Add on the horizontal values
         hcomp = ims_grp.create_group("H")
         
-        # Scalars - just geometric mean for now
+        # Scalars
         hscalar = hcomp.create_group("Scalar")
         for imt in scalars["Geometric"]:
             if imt in ["ia", "housner"]:
@@ -571,7 +570,7 @@ class ESMFlatfileParser(SMDatabaseReader):
             if np.all(np.isnan(spectra[htype]["Values"])):
                 # Component not determined
                 continue
-            if not (htype == "Geometric"):
+            if htype != "Geometric":
                 key = htype[0].upper() + htype[1:]
             else:
                 key = copy.deepcopy(htype)
