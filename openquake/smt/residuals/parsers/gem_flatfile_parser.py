@@ -98,6 +98,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         for hdr in HEADERS:
             if hdr not in headers:
                 raise ValueError("Required header %s is missing in file" % hdr)
+
         # Read in csv
         reader = csv.DictReader(open(self.filename, "r"), delimiter=",")
         self.database = GroundMotionDatabase(self.id, self.name)
@@ -108,14 +109,11 @@ class GEMFlatfileParser(SMDatabaseReader):
             if record:
                 # Parse the strong motion
                 record = self._parse_ground_motion(
-                    os.path.join(location, "records"),
-                    row, record, headers)
+                    os.path.join(location, "records"), row, record, headers)
                 self.database.records.append(record)
-
             else:
                 print("Record with sequence number %s is null/invalid"
-                      % "{:s}-{:s}".format(row["event_id"],
-                                           row["station_code"]))
+                      % "{:s}-{:s}".format(row["event_id"], row["station_code"]))
             if (counter % 100) == 0:
                 print("Processed record %s - %s" % (str(counter), record.id))
                 
@@ -130,13 +128,17 @@ class GEMFlatfileParser(SMDatabaseReader):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
         os.mkdir(output_location)
+
         # Add on the records folder
         os.mkdir(os.path.join(output_location, "records"))
+
         # Create an instance of the parser class
         database = cls(dbid, dbname, flatfile_directory)
+
         # Parse the records
         print("Parsing Records ...")
         database.parse(location=output_location)
+
         # Save itself to file
         metadata_file = os.path.join(output_location, "metadatafile.pkl")
         print("Storing metadata to file %s" % metadata_file)
@@ -153,12 +155,16 @@ class GEMFlatfileParser(SMDatabaseReader):
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
                          metadata["station_code"]])
         wfid = wfid.replace("-", "_")
+
         # Parse the event metadata
         event = self._parse_event_data(metadata)
+
         # Parse the distance metadata
         distances = self._parse_distances(metadata, event.depth)
+
         # Parse the station metadata
         site = self._parse_site_data(metadata)
+
         # Parse waveform data
         xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
         return GroundMotionRecord(wfid,
@@ -175,17 +181,21 @@ class GEMFlatfileParser(SMDatabaseReader):
         # ID and Name (name not in file so use ID again)
         eq_id = metadata["event_id"]
         eq_name = metadata["event_id"]
+
         # Date and time
         eq_datetime = pd.to_datetime(metadata["event_time"])
+        
         # Latitude, longitude and depth
         eq_lat = valid.latitude(metadata["ev_latitude"])
         eq_lon = valid.longitude(metadata["ev_longitude"])
         eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
-            eq_depth = 0.0
+            raise ValueError('Depth missing an events in admitted flatfile')
+
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet
                          eq_country=None)
+        
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
         eqk.magnitude = pref_mag
@@ -212,11 +222,12 @@ class GEMFlatfileParser(SMDatabaseReader):
                 if not pref_mag:
                     pref_mag = copy.deepcopy(mag)
                 mag_list.append(mag)
+                
         return pref_mag, mag_list
 
     def _parse_rupture_mechanism(self, metadata, eq_id, eq_name, mag, depth):
         """
-        If rupture data is available - parse it, otherwise return None
+        Parse rupture mechanism
         """
         # Get the SoF
         sof = metadata["fm_type_code"]
@@ -241,13 +252,13 @@ class GEMFlatfileParser(SMDatabaseReader):
                     fm_set.append(fm_param)
 
         if len(fm_set) == 3:
-            # Has a valid focal mechanism (ESM format flatfile only provides
-            # one nodal plane, we follow suit for the GEM global flatfile)
+            # Has a valid focal mechanism (only the preferred nodal plane
+            # solution is provided in the GEM flatfile like in ESM URL format)
             mechanism.nodal_planes.nodal_plane_1 = {
                 "strike": fm_set[0], "dip": fm_set[1], "rake": fm_set[2]}
 
         if not mechanism.nodal_planes.nodal_plane_1:
-            # Absolutely no information - base on stye-of-faulting
+            # Absolutely no information - base on style-of-faulting
             mechanism.nodal_planes.nodal_plane_1 = {
                 "strike": 0.0, "dip": DIP_TYPE[sof], "rake": MECHANISM_TYPE[sof]
                 }
@@ -265,6 +276,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
         ry0 = valid.positive_float(metadata["Ry0_dist"], "Ry0_dist")
         rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
+        
         if not isinstance(rjb, float):
             # In the first case Rjb == Repi
             rjb = copy.copy(repi)
@@ -281,8 +293,10 @@ class GEMFlatfileParser(SMDatabaseReader):
         if not isinstance(ry0, float):
             # In the first case Ry0 == Repi
             ry0 = copy.copy(repi)
+        
         distances = RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
         distances.azimuth = razim
+        
         return distances
 
     def _parse_site_data(self, metadata):
@@ -359,12 +373,14 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         # Get the data
         scalars, spectra = self._retreive_ground_motion_from_row(row, headers)
+
         # Build the hdf5 files
         filename = os.path.join(location, "{:s}.hdf5".format(record.id))
         fle = h5py.File(filename, "w-")
         ims_grp = fle.create_group("IMS")
         for comp, key in [("X", "U"), ("Y", "V"), ("V", "W")]:
             comp_grp = ims_grp.create_group(comp)
+
             # Add on the scalars
             scalar_grp = comp_grp.create_group("Scalar")
             for imt in scalars[key]:
@@ -376,11 +392,13 @@ class GEMFlatfileParser(SMDatabaseReader):
                     ikey = imt.upper()
                 dset = scalar_grp.create_dataset(ikey, (1,), dtype="f")
                 dset[:] = scalars[key][imt]
+            
             # Add on the spectra
             spectra_grp = comp_grp.create_group("Spectra")
             response = spectra_grp.create_group("Response")
             accel = response.create_group("Acceleration")
             accel.attrs["Units"] = "cm/s/s"
+            
             # Add on the periods
             pers = spectra[key]["Periods"]
             periods = response.create_dataset("Periods", pers.shape, dtype="f")
@@ -395,8 +413,10 @@ class GEMFlatfileParser(SMDatabaseReader):
                                                 dtype="f")
             spectra_dset[:] = np.copy(values)
             spectra_dset.attrs["Damping"] = 5.0
+
         # Add on the horizontal values
         hcomp = ims_grp.create_group("H")
+        
         # Scalars - just geometric mean for now
         hscalar = hcomp.create_group("Scalar")
         for imt in scalars["Geometric"]:
@@ -408,6 +428,7 @@ class GEMFlatfileParser(SMDatabaseReader):
                 key = imt.upper()
             dset = hscalar.create_dataset(key, (1,), dtype="f")
             dset[:] = scalars["Geometric"][imt]
+        
         # For Spectra - can support multiple components
         hspectra = hcomp.create_group("Spectra")
         hresponse = hspectra.create_group("Response")
@@ -433,8 +454,8 @@ class GEMFlatfileParser(SMDatabaseReader):
             hspec_dset[:] = hvals
             hspec_dset.attrs["Units"] = "cm/s/s"
         record.datafile = filename
+        
         return record
-
 
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
@@ -474,6 +495,7 @@ class GEMFlatfileParser(SMDatabaseReader):
             idx = np.argsort(periods)
             spectra.append((imt, {"Periods": periods[idx],
                                    "Values": values[idx]}))
+            
         # Add on the as-recorded geometric mean
         spectra = dict(spectra)
         scalars = dict(scalars)
@@ -487,4 +509,5 @@ class GEMFlatfileParser(SMDatabaseReader):
             if scalars["U"][key] and scalars["V"][key]:
                 scalars["Geometric"][key] = np.sqrt(
                     scalars["U"][key] * scalars["V"][key])
+        
         return scalars, spectra
