@@ -51,8 +51,6 @@ BASE = os.path.abspath("")
 
 CONV_TO_CMS2 = 981
 
-SCALAR_LIST = ["PGA", "PGV", "PGD"]
-
 HEADERS = ["event_id",
            "event_time",
            "ev_latitude",
@@ -226,13 +224,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         idx_m = ngawest2.loc[ngawest2['Vs30 (m/s) selected for analysis']==-999].index
         ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
         ngawest2_vert=ngawest2_vert.drop(idx_m).reset_index(drop=True)
-        
-        # Compute Mw from seismic moment using Hanks and Kamori
-        ngawest2['Earthquake Magnitude'] = (np.log10(ngawest2[
-            'Mo (dyne.cm)']) - 16.05)/1.5 # From ngawest2 database rep. pp.122
-        ngawest2 = ngawest2.reset_index(drop=True)
-        ngawest2_vert = ngawest2_vert.reset_index(drop=True)
-      
+    
         # Replace -999 in 'Owner' with unknown network code
         idx_m = ngawest2.loc[ngawest2['Owner']=='-999'].index
         ngawest2.loc[idx_m, 'Owner'] ='NoNetworkCode'
@@ -309,6 +301,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
             raise ValueError('Depth missing an events in admitted flatfile')
+        
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          magnitude=None, eq_country=None)
         
@@ -550,7 +543,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             hspec_dset[:] = hvals
             hspec_dset.attrs["Units"] = "cm/s/s"
         record.datafile = filename
-        
+        breakpoint()
         return record
 
     def _retreive_ground_motion_from_row(self, row, header_list):
@@ -604,8 +597,8 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         for key in scalars["U"]:
             if scalars["U"][key] and scalars["V"][key]:
                 scalars["Geometric"][key] = np.sqrt(
-                    scalars["U"][key] * scalars["V"][key])
-
+                    scalars["U"][key] * scalars["V"][key]) 
+                
         return scalars, spectra
 
 
@@ -688,7 +681,7 @@ def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):
         delimited_station_id = delimited_station_id.replace(';','')
         ngawest2.loc[idx, 'station_id'] = 'StationName-' + delimited_station_id
     
-    # Construct dataframe with original ESM 2018 format 
+    # Construct dataframe with ESM18 format columns
     rfmt = pd.DataFrame(
     {
     # Non-GMIM headers   
