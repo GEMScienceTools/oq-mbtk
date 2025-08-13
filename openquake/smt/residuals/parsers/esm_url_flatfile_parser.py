@@ -616,7 +616,7 @@ def _parse_esm_url(ESM):
     "ev_longitude":ESM.ev_longitude,   
     "ev_depth_km":ESM.ev_depth_km,
     "ev_hyp_ref":None,
-    "fm_type_code":"U",
+    "fm_type_code":ESM.fm_type_code,
     "ML":ESM.ml,
     "ML_ref":ESM.ml_ref,
     "Mw":ESM.mw,
