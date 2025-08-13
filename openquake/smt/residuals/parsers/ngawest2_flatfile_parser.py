@@ -522,7 +522,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             dset = hscalar.create_dataset(imt.upper(), (1,), dtype="f")
             dset[:] = scalars["rotD50"][imt]
         
-        # For Spectra - can support multiple components
+        # Spectra
         hspectra = hcomp.create_group("Spectra")
         hresponse = hspectra.create_group("Response")
         pers = spectra["rotD50"]["Periods"]
@@ -532,16 +532,11 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         hpers_dset.attrs["High Period"] = np.max(pers)
         hpers_dset.attrs["Number Periods"] = len(pers)
         haccel = hresponse.create_group("Acceleration")
-        for htype in ["rotD50"]:
-            if np.all(np.isnan(spectra[htype]["Values"])):
-                # Component not determined
-                continue
-            key = htype[0].upper() + htype[1:]
-            htype_grp = haccel.create_group(htype)
-            hvals = spectra[htype]["Values"]
-            hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape, dtype="f")
-            hspec_dset[:] = hvals
-            hspec_dset.attrs["Units"] = "cm/s/s"
+        htype_grp = haccel.create_group("rotD50")
+        hvals = spectra["rotD50"]["Values"]
+        hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape, dtype="f")
+        hspec_dset[:] = hvals
+        hspec_dset.attrs["Units"] = "cm/s/s"
         record.datafile = filename
         
         return record
