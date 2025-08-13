@@ -45,6 +45,7 @@ from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
 from .esm_dictionaries import *
 
+HCOMPS = ["Geometric", "rotD00", "rotD50", "rotD100"]
 
 HEADERS = [
            "event_id",
@@ -546,15 +547,17 @@ class ESMFlatfileParser(SMDatabaseReader):
         
         # Scalars
         hscalar = hcomp.create_group("Scalar")
-        for imt in scalars["Geometric"]:
-            if imt in ["ia", "housner"]:
-                # In the smt convention it is "Ia" and "Housner"
-                key = imt[0].upper() + imt[1:]
-            else:
-                # Everything else to upper case (PGA, PGV, PGD, T90, CAV)
-                key = imt.upper()
-            dset = hscalar.create_dataset(key, (1,), dtype="f")
-            dset[:] = scalars["Geometric"][imt]
+        for htype in HCOMPS:
+            hcomp_scalars = hscalar.create_group(htype)
+            for imt in scalars[htype]:
+                if imt in ["ia"]:
+                    # In the smt convention it is "Ia" for Arias Intensity
+                    key = imt[0].upper() + imt[1:]
+                else:
+                    # Everything else to upper case (PGA, PGV, PGD, CAV)
+                    key = imt.upper()          
+                dset = hcomp_scalars.create_dataset(key, (1,), dtype="f")
+                dset[:] = scalars[htype][imt]
         
         # Spectra
         hspectra = hcomp.create_group("Spectra")

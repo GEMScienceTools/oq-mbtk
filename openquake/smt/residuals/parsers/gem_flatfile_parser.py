@@ -45,6 +45,8 @@ from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
+HCOMPS = ["Geometric", "rotD00", "rotD50", "rotD100"]
+
 HEADERS = ["event_id",
            "event_time",
            "ISC_ev_id",
@@ -431,16 +433,18 @@ class GEMFlatfileParser(SMDatabaseReader):
         
         # Scalars
         hscalar = hcomp.create_group("Scalar")
-        for imt in scalars["rotD50"]:
-            if imt in ["ia"]:
-                # In the smt convention it is "Ia" for Arias Intensity
-                key = imt[0].upper() + imt[1:]
-            else:
-                # Everything else to upper case (PGA, PGV, PGD, CAV)
-                key = imt.upper()
-            dset = hscalar.create_dataset(key, (1,), dtype="f")
-            dset[:] = scalars["Geometric"][imt]
-        
+        for htype in HCOMPS:
+            hcomp_scalars = hscalar.create_group(htype)
+            for imt in scalars[htype]:
+                if imt in ["ia"]:
+                    # In the smt convention it is "Ia" for Arias Intensity
+                    key = imt[0].upper() + imt[1:]
+                else:
+                    # Everything else to upper case (PGA, PGV, PGD, CAV)
+                    key = imt.upper()          
+                dset = hcomp_scalars.create_dataset(key, (1,), dtype="f")
+                dset[:] = scalars[htype][imt]
+
         # Spectra
         hspectra = hcomp.create_group("Spectra")
         hresponse = hspectra.create_group("Response")
@@ -451,7 +455,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         hpers_dset.attrs["High Period"] = np.max(pers)
         hpers_dset.attrs["Number Periods"] = len(pers)
         haccel = hresponse.create_group("Acceleration")
-        for htype in ["Geometric", "rotD00", "rotD50", "rotD100"]:
+        for htype in HCOMPS:
             if np.all(np.isnan(spectra[htype]["Values"])):
                 # Component not determined
                 continue
