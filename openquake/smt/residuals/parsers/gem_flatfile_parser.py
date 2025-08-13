@@ -79,7 +79,14 @@ HEADERS = ["event_id",
            "W_hp",
            "U_lp",
            "V_lp",
-           "W_lp"]
+           "W_lp",
+           "Shortest_Usable_Period_for_PSA_Ave_Over_Components",
+           "Longest_Usable_Period_for_PSA_Ave_Over_Components"
+           ]
+
+# Manage long cols
+SP = "Shortest_Usable_Period_for_PSA_Ave_Over_Components"
+LP = "Longest_Usable_Period_for_PSA_Ave_Over_Components"
 
 
 class GEMFlatfileParser(SMDatabaseReader):
@@ -167,11 +174,18 @@ class GEMFlatfileParser(SMDatabaseReader):
 
         # Parse waveform data
         xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
+
+        # Parse longest and shortest usable periods
+        lp = valid.vfloat(metadata[LP], LP)
+        sp = valid.vfloat(metadata[SP], SP)
+        
         return GroundMotionRecord(wfid,
                                   [None, None, None],
                                   event, distances, site,
                                   xcomp, ycomp,
-                                  vertical=vertical)
+                                  vertical=vertical,
+                                  longest_period=lp,
+                                  shortest_period=sp)
 
 
     def _parse_event_data(self, metadata):
