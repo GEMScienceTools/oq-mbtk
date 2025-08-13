@@ -70,8 +70,7 @@ class ResidualsTestCase(unittest.TestCase):
         cls.residuals.get_residual_statistics()
 
         # Add other params to class
-        cls.toml = os.path.join(
-            BASE_DATA_PATH, 'residuals_from_toml_test.toml')
+        cls.toml = os.path.join(BASE_DATA_PATH, 'residuals_from_toml_test.toml')
         cls.exp = exp
         cls.st_rec_min = 3
         cls.exp_stations = exp_stations

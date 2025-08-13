@@ -516,16 +516,10 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Add on the horizontal values
         hcomp = ims_grp.create_group("H")
         
-        # Scalars - Only rotD50 is supported
+        # Scalars
         hscalar = hcomp.create_group("Scalar")
         for imt in scalars["rotD50"]:
-            if imt in ["ia"]:
-                # In the smt convention it is "Ia" for Arias Intensity
-                key = imt[0].upper() + imt[1:]
-            else:
-                # Everything else to upper case (PGA, PGV, PGD, CAV)
-                key = imt.upper()
-            dset = hscalar.create_dataset(key, (1,), dtype="f")
+            dset = hscalar.create_dataset(imt.upper(), (1,), dtype="f")
             dset[:] = scalars["rotD50"][imt]
         
         # For Spectra - can support multiple components
