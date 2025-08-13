@@ -43,11 +43,8 @@ from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
 from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
-
-# Import the ESM dictionaries
 from .esm_dictionaries import *
 
-SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
 HEADERS = [
            "event_id",
