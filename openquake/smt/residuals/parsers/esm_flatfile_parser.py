@@ -556,7 +556,7 @@ class ESMFlatfileParser(SMDatabaseReader):
             dset = hscalar.create_dataset(key, (1,), dtype="f")
             dset[:] = scalars["Geometric"][imt]
         
-        # For Spectra - can support multiple components
+        # Spectra
         hspectra = hcomp.create_group("Spectra")
         hresponse = hspectra.create_group("Response")
         pers = spectra["Geometric"]["Periods"]
