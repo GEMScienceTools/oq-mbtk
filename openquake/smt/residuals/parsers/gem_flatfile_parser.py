@@ -247,6 +247,8 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         # Get the SoF
         sof = metadata["fm_type_code"]
+        if pd.null(sof):
+            sof = "U"
 
         # Initial rupture
         rupture = Rupture(eq_id, eq_name, mag, None, None, depth)
