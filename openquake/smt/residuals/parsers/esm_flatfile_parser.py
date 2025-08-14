@@ -45,7 +45,7 @@ from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
 from .esm_dictionaries import *
 
-HCOMPS = ["Geometric", "rotD00", "rotD50", "rotD100"]
+HDEFS = ["Geometric", "rotD00", "rotD50", "rotD100"]
 
 HEADERS = [
            "event_id",
@@ -547,7 +547,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         
         # Scalars
         hscalar = hcomp.create_group("Scalar")
-        for htype in HCOMPS:
+        for htype in HDEFS:
             hcomp_scalars = hscalar.create_group(htype)
             for imt in scalars[htype]:
                 if imt in ["ia"]:

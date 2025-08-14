@@ -45,7 +45,7 @@ from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
-HCOMPS = ["Geometric", "rotD00", "rotD50", "rotD100"]
+HDEFS = ["Geometric", "rotD00", "rotD50", "rotD100"]
 
 HEADERS = ["event_id",
            "event_time",
@@ -433,7 +433,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         
         # Scalars
         hscalar = hcomp.create_group("Scalar")
-        for htype in HCOMPS:
+        for htype in HDEFS:
             hcomp_scalars = hscalar.create_group(htype)
             for imt in scalars[htype]:
                 if imt in ["ia"]:
@@ -455,7 +455,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         hpers_dset.attrs["High Period"] = np.max(pers)
         hpers_dset.attrs["Number Periods"] = len(pers)
         haccel = hresponse.create_group("Acceleration")
-        for htype in HCOMPS:
+        for htype in HDEFS:
             if np.all(np.isnan(spectra[htype]["Values"])):
                 # Component not determined
                 continue

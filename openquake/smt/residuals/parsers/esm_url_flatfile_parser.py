@@ -52,7 +52,7 @@ from .esm_dictionaries import *
 
 BASE = os.path.abspath("")
 
-HCOMPS = ["Geometric", "rotD00", "rotD50", "rotD100"]
+HDEFS = ["Geometric", "rotD00", "rotD50", "rotD100"]
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
 
@@ -500,7 +500,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         
         # Scalars
         hscalar = hcomp.create_group("Scalar")
-        for htype in HCOMPS:
+        for htype in HDEFS:
             hcomp_scalars = hscalar.create_group(htype)
             for imt in scalars[htype]:
                 if imt in ["ia"]:
