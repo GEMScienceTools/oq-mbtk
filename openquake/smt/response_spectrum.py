@@ -215,7 +215,7 @@ class NigamJennings(ResponseSpectrum):
         omega2 = omega ** 2.
         omega3 = omega ** 3.
         omega_d = omega * sqrt(1.0 - (self.damping ** 2.))
-        const = {  # noqa
+        const = { 
             'f1': (2.0 * self.damping) / (omega3 * self.d_t),
             'f2': 1.0 / omega2,
             'f3': self.damping * omega,
