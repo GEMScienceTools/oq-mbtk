@@ -51,7 +51,7 @@ BASE = os.path.abspath("")
 
 CONV_TO_CMS2 = 981
 
-HCOMPS = ["rotD50"]
+HDEFS = ["rotD50"]
 
 HEADERS = ["event_id",
            "event_time",
@@ -520,7 +520,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         
         # Scalars
         hscalar = hcomp.create_group("Scalar")
-        for htype in HCOMPS:
+        for htype in HDEFS:
             hcomp_scalars = hscalar.create_group(htype)
             for imt in scalars[htype]:
                 if imt in ["ia"]:
