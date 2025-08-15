@@ -1106,7 +1106,7 @@ def _get_imts(max_period):
     period = np.round(periods,1)
     base_SA_string = 'SA(_)'
     imt_list = []
-    for imt in range(0,len(period)):
+    for imt in range(0, len(period)):
         if imt == 0:
             SA_string = 'PGA'
         else:
