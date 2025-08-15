@@ -44,10 +44,10 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        cls.GEM_flatfile_directory = os.path.join(BASE_DATA_PATH,
-                                                  "GEM_flatfile_test.csv")
-        cls.db_file = os.path.join(BASE_DATA_PATH,
-                                   "GEM_conversion_test_metadata")       
+        cls.GEM_flatfile_directory = os.path.join(
+            BASE_DATA_PATH, "GEM_flatfile_test.csv")
+        cls.db_file = os.path.join(
+            BASE_DATA_PATH, "GEM_conversion_test_metadata")       
         cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]
         cls.metadata_pth = os.path.join(cls.db_file, "metadatafile.pkl")

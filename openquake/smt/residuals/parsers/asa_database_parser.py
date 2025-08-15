@@ -103,7 +103,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         self._sort_files()
         assert (len(self.ORGANIZER) > 0)
         for file_dict in self.ORGANIZER:
-            # metadata for all componenets comes from the same file
+            # metadata for all components comes from the same file
             metadata = _get_metadata_from_file(file_dict["Time-Series"]["X"])
             self.database.records.append(self.parse_metadata(metadata,
                                                              file_dict))
@@ -114,7 +114,6 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         Searches through the directory and organise the files associated
         with a particular recording into a dictionary
         """
-
         for file_str in sorted(os.listdir(self.filename)):
 
             file_dict = {"Time-Series": {"X": None, "Y": None, "Z": None},
@@ -144,12 +143,16 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
                                                   "Month",
                                                   "Day",
                                                   "Identifier"]])
+        
         # Get event information
         event = self._parse_event(metadata, file_str)
+        
         # Get Distance information
         distance = self._parse_distance_data(metadata, file_str, event)
+        
         # Get site data
         site = self._parse_site_data(metadata)
+        
         # Get component and processing data
         xcomp, ycomp, zcomp = self._parse_component_data(wfid, metadata)
 
@@ -191,6 +194,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
                 get_int('20'+metadata["FECHA DEL SISMO (GMT)"][-2:]),
                 months_abrev[metadata["FECHA DEL SISMO (GMT)"].split('/')[1]],
                 get_int(metadata["FECHA DEL SISMO (GMT)"][:2]))
+        
         # UNAM data, which is not always indicated in "INSTITUCION RESPONSABLE"
         else:
             year, month, day = (
@@ -265,7 +269,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
                 m_mag = Magnitude(m, "M")
                 mag_list.append(m_mag)
 
-        # magnitude hierarchy for defining pref_mag
+        # Magnitude hierarchy for defining pref_mag
         if moment_mag is not None:
             pref_mag = moment_mag
         elif surface_mag is not None:
@@ -341,6 +345,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
 
         dists = RecordDistance(repi, rhypo)
         dists.azimuth = azimuth
+        
         return dists
 
     def _parse_site_data(self, metadata):
@@ -382,7 +387,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         Returns the information specific to a component
         """
         units_provided = metadata["UNIDADES DE LOS DATOS"]
-        # consider only units within parenthesis
+        # Consider only units within parenthesis
         units = units_provided[units_provided.find("(") + 1:
                                units_provided.find(")")]
 
@@ -461,6 +466,7 @@ class ASATimeSeriesParser(SMTimeSeriesReader):
             raise ValueError(
                 "Some components %s in record %s have the same name"
                 % (components, ifile))
+        
         # Check if more than 3 components are given
         if len(components) > 3:
             raise ValueError(
