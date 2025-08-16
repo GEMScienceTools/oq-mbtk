@@ -1,0 +1,37 @@
+openquake.smt.tests.residuals package
+=====================================
+
+Submodules
+----------
+
+openquake.smt.tests.residuals.residual\_plotter\_test module
+------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.residual_plotter_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.tests.residuals.residual\_plotter\_utils module
+-------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.residual_plotter_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.tests.residuals.residuals\_test module
+----------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.residuals_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.tests.residuals
+   :members:
+   :undoc-members:
+   :show-inheritance:

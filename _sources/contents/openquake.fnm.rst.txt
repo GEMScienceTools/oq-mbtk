@@ -1,0 +1,150 @@
+openquake.fnm package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.fnm.inversion
+   openquake.fnm.tests
+
+Submodules
+----------
+
+openquake.fnm.all\_together\_now module
+---------------------------------------
+
+.. automodule:: openquake.fnm.all_together_now
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.bbox module
+-------------------------
+
+.. automodule:: openquake.fnm.bbox
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.connections module
+--------------------------------
+
+.. automodule:: openquake.fnm.connections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.constants module
+------------------------------
+
+.. automodule:: openquake.fnm.constants
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.datastore module
+------------------------------
+
+.. automodule:: openquake.fnm.datastore
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.exporter module
+-----------------------------
+
+.. automodule:: openquake.fnm.exporter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.fault\_modeler module
+-----------------------------------
+
+.. automodule:: openquake.fnm.fault_modeler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.fault\_system module
+----------------------------------
+
+.. automodule:: openquake.fnm.fault_system
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.importer module
+-----------------------------
+
+.. automodule:: openquake.fnm.importer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.mesh module
+-------------------------
+
+.. automodule:: openquake.fnm.mesh
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.msr module
+------------------------
+
+.. automodule:: openquake.fnm.msr
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.plot module
+-------------------------
+
+.. automodule:: openquake.fnm.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.rupture module
+----------------------------
+
+.. automodule:: openquake.fnm.rupture
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.rupture\_connections module
+-----------------------------------------
+
+.. automodule:: openquake.fnm.rupture_connections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.rupture\_filtering module
+---------------------------------------
+
+.. automodule:: openquake.fnm.rupture_filtering
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.fnm.section module
+----------------------------
+
+.. automodule:: openquake.fnm.section
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.fnm
+   :members:
+   :undoc-members:
+   :show-inheritance:
