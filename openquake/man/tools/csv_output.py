@@ -28,6 +28,7 @@ import re
 import numpy
 import pandas as pd
 from scipy import interpolate
+from openquake.baselib import hdf5
 from openquake.hmtk.seismicity.catalogue import Catalogue
 
 
@@ -43,7 +44,7 @@ def make_llt_df(df, each_rlz, threshold=1e-08):
         tmp_array = each_rlz[r] * df[r]
         new_poe.append(list(tmp_array.values))
         
-    final_poe = np.sum(np.array(new_poe), axis=0) 
+    final_poe = numpy.array(new_poe).sum(axis=0)
     
     df_mean['lon'] = df['lon']
     df_mean['lat'] = df['lat']
@@ -415,22 +416,6 @@ def get_map_from_curves(imls, poes, pex):
     return numpy.asarray(dat)
 
 
-def _get_header_curve2(line):
-    imls = []
-    aa = re.split('\\,', line)
-    if aa[0] == 'custom_site_id':
-        for bb in aa[4:]:
-            tmp = re.sub('^[a-zA-Z]*\\(*[0-9]*\\.*[0-9]*\\)*-', '',
-                          re.sub(':float32', '', bb))
-            imls.append(float(tmp))
-    else:
-        for bb in aa[3:]:
-            tmp = re.sub('^[a-zA-Z]*\\(*[0-9]*\\.*[0-9]*\\)*-', '',
-                         re.sub(':float32', '', bb))
-            imls.append(float(tmp))
-    return imls
-
-
 def _get_header_uhs2(line):
     rps = []
     per = []
@@ -479,27 +464,14 @@ def read_hazard_curve_csv(filename):
             - Longitudes
             - Latitudes
             - PoEs
-            - String with the header
+            - Dictionary of metadata
             - IMLs
     """
-    lats = []
-    lons = []
-    imls = []
-    curs = []
-    for idx, line in enumerate(open(filename, 'r')):
-        if idx == 0:
-            header1 = _get_header1(line)
-        elif idx == 1:
-            imls = _get_header_curve2(line)
-        else:
-            aa = re.split('\\,', re.sub('^\\s*', '', line))
-            lons.append(float(aa[0]))
-            lats.append(float(aa[1]))
-            poes.append(float(aa[2]))
-            curs.append([float(bb) for bb in aa[3:]])
-    assert len(lons) == len(lats) == len(curs)
-    return numpy.array(lons), numpy.array(lats), numpy.array(curs), header1, \
-        numpy.array(imls)
+    aw = hdf5.read_csv(filename)
+    # the columns after lon, lat have names like poe-0.002345, ...
+    imls = [float(col[:4]) for col in aw.dtype.names[3:]]
+    poes = numpy.hstack([aw[col] for col in aw.dtype.names[3:]])
+    return aw['lon'], aw['lat'], poes, vars(aw), imls
 
 
 def read_hazard_curve_csv_pd(filename):
