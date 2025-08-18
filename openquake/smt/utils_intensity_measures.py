@@ -16,13 +16,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Utils for handling intensity measures and spectra:
-    1) General intensity measure utils e.g. computing peak measures
+Utils for intensity measures:
+    1) Peak measures
     1) Response spectra
     2) Fourier amplitude spectra (FAS)
     3) Horizontal-Vertical Spectral Ratio (HVSR)
     5) Duration-based ground-motion intensity measures (e.g. Arias intensity, CAV)
-    6) Obtaining rotation-based (and rotation-independent) defintions of the horizontal component
+    6) Obtaining rotation-based (and rotation-independent) definitions of the horizontal component of ground-motion
 """
 import numpy as np
 from math import pi
@@ -35,12 +35,12 @@ from openquake.smt import response_spectrum_smoothing as rsps
 from openquake.smt.utils import (
     equalise_series, get_time_vector, nextpow2, _save_image,)
 
+
 RESP_METHOD = {
     'Newmark-Beta': rsp.NewmarkBeta, 'Nigam-Jennings': rsp.NigamJennings}
 
 SMOOTHING = {"KonnoOhmachi": rsps.KonnoOhmachi}
 
-### General intensity measure utils
 SCALAR_XY = {
     "Geometric": lambda x, y: np.sqrt(x * y),
     "Arithmetic": lambda x, y: (x + y) / 2.,

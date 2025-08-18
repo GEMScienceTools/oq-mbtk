@@ -43,10 +43,9 @@ from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
 from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
-# Import the ESM dictionaries
 from .esm_dictionaries import *
 
-SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
+HDEFS = ["Geometric", "rotD00", "rotD50", "rotD100"]
 
 HEADERS = [
            "event_id",
@@ -153,8 +152,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         headers = getline(self.filename, 1).rstrip("\n").split(";")
         for hdr in HEADERS:
             if hdr not in headers:
-                raise ValueError("Required header %s is missing in file"
-                                 % hdr)
+                raise ValueError("Required header %s is missing in file"  % hdr)
         # Read in csv
         with open(self.filename, "r", encoding="utf-8", newline='') as f:
             reader = csv.DictReader(open(self.filename, "r"), delimiter=";")
@@ -169,7 +167,6 @@ class ESMFlatfileParser(SMDatabaseReader):
                         os.path.join(
                             location, "records"), row, record, headers)
                     self.database.records.append(record)
-
                 else:
                     print("Record with sequence number %s is null/invalid"
                         % "{:s}-{:s}".format(
@@ -189,18 +186,23 @@ class ESMFlatfileParser(SMDatabaseReader):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
         os.mkdir(output_location)
+
         # Add on the records folder
         os.mkdir(os.path.join(output_location, "records"))
+
         # Create an instance of the parser class
         database = cls(dbid, dbname, flatfile_location)
+
         # Parse the records
         print("Parsing Records ...")
         database.parse(location=output_location)
+
         # Save itself to file
         metadata_file = os.path.join(output_location, "metadatafile.pkl")
         print("Storing metadata to file %s" % metadata_file)
         with open(metadata_file, "wb+") as f:
             pickle.dump(database.database, f)
+
         return database
 
     def _parse_record(self, metadata):
@@ -211,12 +213,16 @@ class ESMFlatfileParser(SMDatabaseReader):
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
                          metadata["station_code"], metadata["location_code"]])
         wfid = wfid.replace("-", "_")
+        
         # Parse the event metadata
         event = self._parse_event_data(metadata)
+        
         # Parse the distance metadata
         distances = self._parse_distances(metadata, event.depth)
+        
         # Parse the station metadata
         site = self._parse_site_data(metadata)
+        
         # Parse waveform data
         xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
         return GroundMotionRecord(wfid,
@@ -232,23 +238,28 @@ class ESMFlatfileParser(SMDatabaseReader):
         # ID and Name (name not in file so use ID again)
         eq_id = metadata["event_id"]
         eq_name = metadata["event_id"]
+        
         # Country
         cntry_code = metadata["ev_nation_code"].strip()
         if cntry_code and cntry_code in COUNTRY_CODES:
             eq_country = COUNTRY_CODES[cntry_code]
         else:
             eq_country = None
+        
         # Date and time
         eq_datetime = pd.to_datetime(metadata["event_time"])
+        
         # Latitude, longitude and depth
         eq_lat = valid.latitude(metadata["ev_latitude"])
         eq_lon = valid.longitude(metadata["ev_longitude"])
         eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
-            eq_depth = 0.0
+            raise ValueError('Depth missing an events in admitted flatfile')
+        
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet
                          eq_country=eq_country)
+        
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
         eqk.magnitude = pref_mag
@@ -285,20 +296,25 @@ class ESMFlatfileParser(SMDatabaseReader):
                 if not pref_mag:
                     pref_mag = copy.deepcopy(mag)
                 mag_list.append(mag)
+        
         return pref_mag, mag_list
 
     def _parse_rupture_mechanism(self, metadata, eq_id, eq_name, mag, depth):
         """
         If rupture data is available - parse it, otherwise return None
         """
+        # Get SoF
         sof = metadata["fm_type_code"]
+        
         if not metadata["event_source_id"].strip():
+    
             # No rupture model available. Mechanism is limited to a style
             # of faulting only
             rupture = Rupture(eq_id, eq_name, mag, None, None, depth)
             mechanism = FocalMechanism(
                 eq_id, eq_name, GCMTNodalPlanes(), None,
                 mechanism_type=sof)
+    
             # See if focal mechanism exists
             fm_set = []
             for key in ["strike_1", "dip_1", "rake_1"]:
@@ -306,6 +322,7 @@ class ESMFlatfileParser(SMDatabaseReader):
                     fm_param = valid.vfloat(metadata[key], key)
                     if fm_param is not None:
                         fm_set.append(fm_param)
+    
             if len(fm_set) == 3:
                 # Have one valid focal mechanism
                 mechanism.nodal_planes.nodal_plane_1 = {"strike": fm_set[0],
@@ -317,6 +334,7 @@ class ESMFlatfileParser(SMDatabaseReader):
                     fm_param = valid.vfloat(metadata[key], key)
                     if fm_param is not None:
                         fm_set.append(fm_param)
+            
             if len(fm_set) == 3:
                 # Have one valid focal mechanism
                 mechanism.nodal_planes.nodal_plane_2 = {"strike": fm_set[0],
@@ -325,7 +343,7 @@ class ESMFlatfileParser(SMDatabaseReader):
 
             if not mechanism.nodal_planes.nodal_plane_1 and not\
                 mechanism.nodal_planes.nodal_plane_2:
-                # Absolutely no information - base on stye-of-faulting
+                # Absolutely no information - base on style-of-faulting
                 mechanism.nodal_planes.nodal_plane_1 = {
                     "strike": 0.0,  # Basically unused
                     "dip": DIP_TYPE[sof],
@@ -333,6 +351,8 @@ class ESMFlatfileParser(SMDatabaseReader):
                     }
             return rupture, mechanism
 
+        # If there is an "event_source_id" in ESM18 flatfile, there is also
+        # full finite rupture info. In this case build a detailed finite rup
         strike = valid.strike(metadata["es_strike"])
         dip = valid.dip(metadata["es_dip"])
         rake = valid.rake(metadata["es_rake"])
@@ -342,9 +362,8 @@ class ESMFlatfileParser(SMDatabaseReader):
         rupture = Rupture(eq_id, eq_name, mag, length, width, ztor)
 
         # Get mechanism type and focal mechanism
-        # No nodal planes, eigenvalues moment tensor initially
-        mechanism = FocalMechanism(
-            eq_id, eq_name, GCMTNodalPlanes(), None,
+        mechanism = FocalMechanism(                  # No nodal planes, so initially is
+            eq_id, eq_name, GCMTNodalPlanes(), None, # set as an eigenvalue moment tensor 
             mechanism_type=metadata["fm_type_code"])
         if strike is None:
             strike = 0.0
@@ -352,6 +371,7 @@ class ESMFlatfileParser(SMDatabaseReader):
             dip = DIP_TYPE[sof]
         if rake is None:
             rake = MECHANISM_TYPE[sof]
+            
         # if strike is not None and dip is not None and rake is not None:
         mechanism.nodal_planes.nodal_plane_1 = {"strike": strike,
                                                 "dip": dip,
@@ -369,6 +389,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
         ry0 = valid.positive_float(metadata["Ry0_dist"], "Ry0_dist")
         rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
+
         if not isinstance(rjb, float):
             # In the first case Rjb == Repi
             rjb = copy.copy(repi)
@@ -385,8 +406,10 @@ class ESMFlatfileParser(SMDatabaseReader):
         if not isinstance(ry0, float):
             # In the first case Ry0 == Repi
             ry0 = copy.copy(repi)
+        
         distances = RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
         distances.azimuth = razim
+        
         return distances
 
     def _parse_site_data(self, metadata):
@@ -414,6 +437,7 @@ class ESMFlatfileParser(SMDatabaseReader):
             st_country = COUNTRY_CODES[st_nation_code]
         else:
             st_country = None
+        
         site = RecordSite(site_id,
                           station_code,
                           station_code,
@@ -424,21 +448,25 @@ class ESMFlatfileParser(SMDatabaseReader):
                           vs30_measured,
                           network_code=network_code,
                           country=st_country)
+        
         site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
-        site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
-                                         "sensor_depth_m")
+        site.sensor_depth = valid.vfloat(
+            metadata["sensor_depth_m"], "sensor_depth_m")
+        
         site.instrument_type = metadata["instrument_code"].strip()
         housing_code = metadata["housing_code"].strip()
         if housing_code and (housing_code in HOUSING):
             site.building_structure = HOUSING[housing_code]
+
         return site
 
     def _parse_waveform_data(self, metadata, wfid):
         """
         Parse the waveform data
         """
-        late_trigger = valid.vint(metadata["late_triggered_flag_01"],
-                                  "late_triggered_flag_01")
+        late_trigger = valid.vint(
+            metadata["late_triggered_flag_01"], "late_triggered_flag_01")
+        
         # U channel - usually east
         xorientation = metadata["U_channel_code"].strip()
         xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
@@ -447,6 +475,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
                           units="cm/s/s")
         xcomp.late_trigger = late_trigger
+
         # V channel - usually North
         vorientation = metadata["V_channel_code"].strip()
         vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
@@ -469,17 +498,18 @@ class ESMFlatfileParser(SMDatabaseReader):
 
     def _parse_ground_motion(self, location, row, record, headers):
         """
-        In this case we parse the information from the flatfile directly
-        to hdf5 at the metadata stage
+        Parse the ground-motion data
         """
         # Get the data
         scalars, spectra = self._retreive_ground_motion_from_row(row, headers)
+        
         # Build the hdf5 files
         filename = os.path.join(location, "{:s}.hdf5".format(record.id))
         fle = h5py.File(filename, "w-")
         ims_grp = fle.create_group("IMS")
         for comp, key in [("X", "U"), ("Y", "V"), ("V", "W")]:
             comp_grp = ims_grp.create_group(comp)
+        
             # Add on the scalars
             scalar_grp = comp_grp.create_group("Scalar")
             for imt in scalars[key]:
@@ -491,11 +521,13 @@ class ESMFlatfileParser(SMDatabaseReader):
                     ikey = imt.upper()
                 dset = scalar_grp.create_dataset(ikey, (1,), dtype="f")
                 dset[:] = scalars[key][imt]
+        
             # Add on the spectra
             spectra_grp = comp_grp.create_group("Spectra")
             response = spectra_grp.create_group("Response")
             accel = response.create_group("Acceleration")
             accel.attrs["Units"] = "cm/s/s"
+        
             # Add on the periods
             pers = spectra[key]["Periods"]
             periods = response.create_dataset("Periods", pers.shape, dtype="f")
@@ -509,20 +541,25 @@ class ESMFlatfileParser(SMDatabaseReader):
             spectra_dset = accel.create_dataset("damping_05", values.shape, dtype="f")
             spectra_dset[:] = np.copy(values)
             spectra_dset.attrs["Damping"] = 5.0
+
         # Add on the horizontal values
         hcomp = ims_grp.create_group("H")
-        # Scalars - just geometric mean for now
+        
+        # Scalars
         hscalar = hcomp.create_group("Scalar")
-        for imt in scalars["Geometric"]:
-            if imt in ["ia", "housner"]:
-                # In the smt convention it is "Ia" and "Housner"
-                key = imt[0].upper() + imt[1:]
-            else:
-                # Everything else to upper case (PGA, PGV, PGD, T90, CAV)
-                key = imt.upper()
-            dset = hscalar.create_dataset(key, (1,), dtype="f")
-            dset[:] = scalars["Geometric"][imt]
-        # For Spectra - can support multiple components
+        for htype in HDEFS:
+            hcomp_scalars = hscalar.create_group(htype)
+            for imt in scalars[htype]:
+                if imt in ["ia"]:
+                    # In the smt convention it is "Ia" for Arias Intensity
+                    key = imt[0].upper() + imt[1:]
+                else:
+                    # Everything else to upper case (PGA, PGV, PGD, CAV)
+                    key = imt.upper()          
+                dset = hcomp_scalars.create_dataset(key, (1,), dtype="f")
+                dset[:] = scalars[htype][imt]
+        
+        # Spectra
         hspectra = hcomp.create_group("Spectra")
         hresponse = hspectra.create_group("Response")
         pers = spectra["Geometric"]["Periods"]
@@ -536,17 +573,17 @@ class ESMFlatfileParser(SMDatabaseReader):
             if np.all(np.isnan(spectra[htype]["Values"])):
                 # Component not determined
                 continue
-            if not (htype == "Geometric"):
+            if htype != "Geometric":
                 key = htype[0].upper() + htype[1:]
             else:
                 key = copy.deepcopy(htype)
             htype_grp = haccel.create_group(htype)
             hvals = spectra[htype]["Values"]
-            hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape,
-                                                  dtype="f")
+            hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape, dtype="f")
             hspec_dset[:] = hvals
             hspec_dset.attrs["Units"] = "cm/s/s"
         record.datafile = filename
+        
         return record
 
     def _retreive_ground_motion_from_row(self, row, header_list):
@@ -585,18 +622,16 @@ class ESMFlatfileParser(SMDatabaseReader):
                         values.append(np.fabs(float(value)))
                     else:
                         values.append(np.nan)
-                    #values.append(np.fabs(float(row[header].strip())))
             periods = np.array(periods)
             values = np.array(values)
             idx = np.argsort(periods)
-            spectra.append((imt, {"Periods": periods[idx],
-                                   "Values": values[idx]}))
+            spectra.append((imt, {"Periods": periods[idx], "Values": values[idx]}))
+        
         # Add on the as-recorded geometric mean
         spectra = dict(spectra)
         scalars = dict(scalars)
         spectra["Geometric"] = {
-            "Values": np.sqrt(spectra["U"]["Values"] *
-                              spectra["V"]["Values"]),
+            "Values": np.sqrt(spectra["U"]["Values"] * spectra["V"]["Values"]),
             "Periods": np.copy(spectra["U"]["Periods"])
             }
         scalars["Geometric"] = dict([(key, None) for key in scalars["U"]])
@@ -604,4 +639,5 @@ class ESMFlatfileParser(SMDatabaseReader):
             if scalars["U"][key] and scalars["V"][key]:
                 scalars["Geometric"][key] = np.sqrt(
                     scalars["U"][key] * scalars["V"][key])
+        
         return scalars, spectra
