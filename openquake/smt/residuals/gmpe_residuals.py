@@ -214,7 +214,7 @@ class Residuals(object):
         """
         # Build initial contexts with the observed values
         contexts = ctx_database.get_contexts(nodal_plane_index, self.imts, component)
-
+        
         # Check at least one observed value per IMT (else raise an error)
         for imt in self.imts:
             obs_check = []
@@ -228,7 +228,7 @@ class Residuals(object):
                                  f"no residuals can be computed "
                                  f"for {imt}")
 
-        # Get IMTs which need acc. units conv. from cm/s/s to g
+        # Get IMTs which need acc. units conv. from cm/s^2 to g
         accel_imts = tuple(
             [imtx for imtx in self.imts if (imtx == "PGA" or "SA(" in imtx)])
 

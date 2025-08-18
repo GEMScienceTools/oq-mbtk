@@ -24,6 +24,7 @@ import shutil
 import unittest
 import pickle
 
+from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals.parsers.esm_flatfile_parser import \
     ESMFlatfileParser
 
@@ -82,9 +83,11 @@ class ESMFlatfileParserTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        cls.datafile = os.path.join(BASE_DATA_PATH,
-                                    "esm_flatfile_sample_file.csv")
+        cls.datafile = os.path.join(
+            BASE_DATA_PATH, "esm_flatfile_sample_file.csv")
         cls.db_file = os.path.join(BASE_DATA_PATH, "esm_flatfile_test")
+        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
+        cls.imts = ["PGA", "SA(1.0)"]   
 
     def test_esm_flatfile_parser(self):
         """
@@ -94,12 +97,18 @@ class ESMFlatfileParserTestCase(unittest.TestCase):
                                              self.db_file, self.datafile)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
+        
         # Should contain 100 records
         self.assertEqual(len(db), 100)
+
         # Record IDs should be equal to the specified target IDs
-        for rec in db:
-            print(rec.id)
         self.assertListEqual([rec.id for rec in db], TARGET_IDS)
+
+        # Also run an arbitrary residual analysis to check
+        # the constructed db is functioning correctly
+        residuals = res.Residuals(self.gmpe_list, self.imts)
+        residuals.compute_residuals(db, component="Geometric")
+
         del parser
 
     @classmethod
