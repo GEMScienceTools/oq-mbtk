@@ -1,0 +1,45 @@
+openquake.smt.comparison package
+================================
+
+Submodules
+----------
+
+openquake.smt.comparison.compare\_gmpes module
+----------------------------------------------
+
+.. automodule:: openquake.smt.comparison.compare_gmpes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.comparison.sammons module
+---------------------------------------
+
+.. automodule:: openquake.smt.comparison.sammons
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.comparison.utils\_compare\_gmpes module
+-----------------------------------------------------
+
+.. automodule:: openquake.smt.comparison.utils_compare_gmpes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.smt.comparison.utils\_gmpes module
+--------------------------------------------
+
+.. automodule:: openquake.smt.comparison.utils_gmpes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.comparison
+   :members:
+   :undoc-members:
+   :show-inheritance:
