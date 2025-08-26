@@ -550,7 +550,7 @@ def main(dstore_fname, disagg_type, site_id=None, azimuth=-30):
     The plots can be generated for a single site by specifying the
     site_id (each site in the SiteCollection object has a site_id).
 
-    :param disagg_fname: Name of the datastore containing the calculation results.
+    :param dstore_fname: Name of the datastore containing the calculation results.
 
     :param disagg_type: Can be Mag_Dist_Eps, Mag_Lon_Lat or TRT_Lon_Lat.
 
