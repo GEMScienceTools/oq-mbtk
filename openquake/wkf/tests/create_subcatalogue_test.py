@@ -34,7 +34,7 @@ class test_createSubcatalogue(unittest.TestCase):
     """ test the assignment of events to subcatalogues """
     
     def setUp(self):
-        self.out_folder = tempfile.mkdtemp()
+        self.out_folder = os.path.join(HERE, tempfile.mkdtemp())
         
     def testCreateSubcatalogueSimple(self):
         """ simple case of one polygon loaded from geojson"""
