@@ -16,6 +16,7 @@
 # -----------------------------------------------------------------------------
 
 import os
+import sys
 import numpy as np
 import unittest
 import tempfile
@@ -26,27 +27,29 @@ import pandas as pd
 import pathlib
 
 HERE = os.path.dirname(__file__)
-CODE = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+CODE = os.path.join(HERE, "..", "..")
+DATA_PATH = os.path.join(HERE, 'data', 'subcatalogues')
 
-DATA_PATH = os.path.join(os.path.dirname(__file__), 'data', 'subcatalogues')
 
 class test_createSubcatalogue(unittest.TestCase):
     """ test the assignment of events to subcatalogues """
     
     def setUp(self):
-        self.out_folder = os.path.join(HERE, tempfile.mkdtemp())
-        
+        self.out_folder = tempfile.mkdtemp()
+
     def testCreateSubcatalogueSimple(self):
         """ simple case of one polygon loaded from geojson"""
        
         polygons =  os.path.join(DATA_PATH, 'test_poly.geojson')
         cat = os.path.join(DATA_PATH, 'simple_poly_test_cat.csv')
-
         code = os.path.join(CODE, 'mbi', 'wkf', 'create_subcatalogues_per_zone.py')
-        fmt = '{:s} {:s} {:s} {:s}'
-        cmd = fmt.format(code, polygons, cat, self.out_folder)
-        out = subprocess.call(cmd, shell=True)
- 
+        
+        out = subprocess.run([sys.executable,
+                              code,
+                              polygons,
+                              cat,
+                              self.out_folder])
+
         res = pd.read_csv(os.path.join(self.out_folder, 'subcatalogue_zone_1.csv'))
         assert(len(res) == 10)
         
@@ -55,12 +58,14 @@ class test_createSubcatalogue(unittest.TestCase):
         
         polygons =  os.path.join(DATA_PATH, 'smooth_poly.geojson')
         cat = os.path.join(DATA_PATH, 'smooth_test.csv')
-
         code = os.path.join(CODE, 'mbi', 'wkf', 'create_subcatalogues_per_zone.py')
-        fmt = '{:s} {:s} {:s} {:s}'
-        cmd = fmt.format(code, polygons, cat, self.out_folder)
-        out = subprocess.call(cmd, shell=True)
         
+        out = subprocess.run([sys.executable,
+                              code,
+                              polygons,
+                              cat,
+                              self.out_folder])
+
         ## This should contain 3 events
         res = pd.read_csv(os.path.join(self.out_folder, 'subcatalogue_zone_1.csv'))
         assert(len(res) == 3)
@@ -71,11 +76,13 @@ class test_createSubcatalogue(unittest.TestCase):
         
         polygons =  os.path.join(DATA_PATH,  'smooth_poly.geojson')
         cat = os.path.join(DATA_PATH, 'smooth_test.csv')
-
         code = os.path.join(CODE, 'mbi', 'wkf', 'create_subcatalogues_per_zone.py')
-        fmt = '{:s} {:s} {:s} {:s}'
-        cmd = fmt.format(code, polygons, cat, self.out_folder)
-        out = subprocess.call(cmd, shell=True)
+        
+        out = subprocess.run([sys.executable,
+                              code,
+                              polygons,
+                              cat,
+                              self.out_folder])
         
         ## This should contain 3 events
         res = pd.read_csv(os.path.join(self.out_folder, 'subcatalogue_zone_1.csv'))
@@ -93,11 +100,13 @@ class test_createSubcatalogue(unittest.TestCase):
         print("IDL test")
         polygons =  os.path.join(DATA_PATH, 'idl_poly.geojson')
         cat = os.path.join(DATA_PATH, 'idl_testcat.csv')
-        
         code = os.path.join(CODE, 'mbi', 'wkf', 'create_subcatalogues_per_zone.py')
-        fmt = '{:s} {:s} {:s} {:s}'
-        cmd = fmt.format(code, polygons, cat, self.out_folder)
-        out = subprocess.call(cmd, shell=True)
+
+        out = subprocess.run([sys.executable,
+                              code,
+                              polygons,
+                              cat,
+                              self.out_folder])
         
         res = pd.read_csv(os.path.join(self.out_folder, 'subcatalogue_zone_0.csv'))
         print("international date line test contains ", len(res), "events")
