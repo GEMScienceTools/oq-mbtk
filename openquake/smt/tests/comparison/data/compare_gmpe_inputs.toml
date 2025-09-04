@@ -9,8 +9,7 @@ dist_type = 'rjb' # Specify distance metric for trellis/spectra
 dist_list = [10, 50, 200] # Distances for use in response spectra
 Nstd = 0 # Truncation for GMM sigma distribution
 
-# Specify site properties (vs30 must be specified - the others are proxied if key is missing)
-[site_properties]
+[site_properties] # Specify site properties (vs30 must be specified - the others are proxied if key is missing)
 vs30 = 800
 z1pt0 = 30.0  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
 z2pt5 = 0.57  # (km) - if -999 compute from each GMM's own vs30 to z2pt5 relationship
@@ -19,8 +18,8 @@ volc_back_arc = false # true or false
 eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
 
 [source_properties] # Characterise EQ as finite rupture
-strike = -999
-dip = -999
+strike = 0
+dip = 45
 rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
 mags = [5, 6, 7] # mags used only for trellis and response spectra
 depths = [20, 25, 30] # depth per magnitude for trellis and response spectra

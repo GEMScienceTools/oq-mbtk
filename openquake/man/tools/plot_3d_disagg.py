@@ -124,7 +124,7 @@ def disagg_MRE(dstore_fname, disagg_type, site_id, azimuth):
     # Get the disagg info
     ds, sites, ims, inv_t, poes, export_info, disagg_out =\
          get_info(dstore_fname, calc_id, disagg_type, site_id)
-
+    
     # Per site in the datastore
     for idx_site, site in enumerate(sites):
 
@@ -550,7 +550,7 @@ def main(dstore_fname, disagg_type, site_id=None, azimuth=-30):
     The plots can be generated for a single site by specifying the
     site_id (each site in the SiteCollection object has a site_id).
 
-    :param calc_id: Name of the datastore containing the calculation results.
+    :param dstore_fname: Name of the datastore containing the calculation results.
 
     :param disagg_type: Can be Mag_Dist_Eps, Mag_Lon_Lat or TRT_Lon_Lat.
 

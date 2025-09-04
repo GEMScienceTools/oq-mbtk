@@ -18,8 +18,6 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Parser set for the European Strong Motion database format.
-Detailed documentation on the format is here: 
-http://esm.mi.ingv.it/static_stage/doc/manual_ESM.pdf
 """
 import os
 import numpy as np
@@ -34,8 +32,18 @@ from openquake.smt.residuals.parsers.base_database_parser import (SMDatabaseRead
                                                                   SMTimeSeriesReader,
                                                                   SMSpectraReader)
 
+
 FILE_INFO_KEY = ["Net", "Station", "Location", "Channel", "DM", "Date", "Time",
                  "Processing", "Waveform", "Format"]
+
+DATA_TYPE_KEYS = {
+    "ACCELERATION": "PGA_",
+    "VELOCITY": "PGV_",
+    "DISPLACEMENT": "PGD_",
+    "ACCELERATION RESPONSE SPECTRUM": "PGA_" ,
+    "PSEUDO-VELOCITY RESPONSE SPECTRUM": "PGV_" ,
+    "DISPLACEMENT RESPONSE SPECTRUM": "PGD_"}
+
 
 def _to_float(string):
     """
@@ -62,8 +70,7 @@ def _get_filename_info(filename):
     ESMD follows a specific naming convention. Return this information in
     a dictionary
     """
-    file_info = filename.split(".")
-    # Sometimes there are consecutive dots in the delimiter
+    file_info = filename.split(".") # Sometimes are consecutive dots in delimiter
     return {FILE_INFO_KEY[i]: file_info[i] for i in range(len(file_info))}
 
 
@@ -81,6 +88,7 @@ def _get_metadata_from_file(file_str):
         else:
             # Parse as normal
             metadata.append((row[0].strip(), row[1].strip()))
+
     return dict(metadata)
 
 
@@ -101,16 +109,8 @@ def _get_xyz_metadata(file_dict):
     if file_dict["Time-Series"]["Z"]:
         metadata["Z"] = _get_metadata_from_file(
             file_dict["Time-Series"]["Z"])
+        
     return metadata
-
-
-DATA_TYPE_KEYS = {
-    "ACCELERATION": "PGA_",
-    "VELOCITY": "PGV_",
-    "DISPLACEMENT": "PGD_",
-    "ACCELERATION RESPONSE SPECTRUM": "PGA_" ,
-    "PSEUDO-VELOCITY RESPONSE SPECTRUM": "PGV_" ,
-    "DISPLACEMENT RESPONSE SPECTRUM": "PGD_"}
 
 
 class ESMDatabaseMetadataReader(SMDatabaseReader):
@@ -164,19 +164,23 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
                 test_filename = os.path.join(self.filename, test_filestring)
 
                 if os.path.exists(test_filename):
+                    
+                    # Get SA, SD and PSV
                     file_dict["Time-Series"]["X"] = test_filename
                     skip_files.append(os.path.split(test_filename)[-1])
-                    # Get SA, SD and PSV
+
                     # SA - x-component
                     sa_filename = 'SA'.join(test_filename.rsplit('ACC', 1))
                     if os.path.exists(sa_filename):
                         file_dict["SA"]["X"] = sa_filename
                         skip_files.append(os.path.split(sa_filename)[-1])
+                    
                     # SD - x-component
                     sd_filename = 'SD'.join(test_filename.rsplit('ACC', 1))
                     if os.path.exists(sd_filename):
                         file_dict["SD"]["X"] = sd_filename
                         skip_files.append(os.path.split(sd_filename)[-1])
+                    
                     # PSV - x-component
                     psv_filename = 'PSV'.join(test_filename.rsplit('ACC', 1))
                     if os.path.exists(psv_filename):
@@ -186,27 +190,32 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
                         y_filename = test_filename.replace(
                             x_term, "{:s}{:s}".format(x_term[:2], y_term))
                         if os.path.exists(y_filename):
+        
                             # Get y-time series
                             file_dict["Time-Series"]["Y"] = y_filename
                             skip_files.append(os.path.split(y_filename)[-1])
+        
                             # SA
                             sa_filename = 'SA'.join(y_filename.rsplit('ACC', 1))
                             if os.path.exists(sa_filename):
                                 file_dict["SA"]["Y"] = sa_filename
                                 skip_files.append(
                                     os.path.split(sa_filename)[-1])
+        
                             # SD
                             sd_filename = 'SD'.join(y_filename.rsplit('ACC', 1))
                             if os.path.exists(sd_filename):
                                 file_dict["SD"]["Y"] = sd_filename
                                 skip_files.append(
                                     os.path.split(sd_filename)[-1])
+        
                             # PSV
                             psv_filename = 'PSV'.join(y_filename.rsplit('ACC', 1))
                             if os.path.exists(psv_filename):
                                 file_dict["PSV"]["Y"] = psv_filename
                                 skip_files.append(
                                     os.path.split(psv_filename)[-1])
+                    
                     # Get vertical files
                     v_filename = test_filename.replace(x_term,
                         "{:s}Z".format(x_term[:2]))
@@ -238,20 +247,24 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
         # Get the file info dictionary for the X-record
         file_str = file_dict["Time-Series"]["X"]
         file_info = _get_filename_info(file_str)
+        
         # Waveform ID - in this case we use the file info string
         wfid = "_".join([
             file_info[key]
             for key in ["Net", "Station", "Location", "Date", "Time"]])
         wfid = wfid.replace(os.sep, "_")
+        
         # Get event information
         event = self._parse_event(metadata["X"], file_str)
+        
         # Get Distance information
         distance = self._parse_distance_data(metadata["X"], file_str, event)
+        
         # Get site data
         site = self._parse_site_data(metadata["X"])
+        
         # Get component and processing data
-        xcomp, ycomp, zcomp = self._parse_processing_data(wfid, metadata)
-        # 
+        xcomp, ycomp, zcomp = self._parse_processing_data(wfid, metadata) 
 
         return GroundMotionRecord(wfid,
             [os.path.split(file_dict["Time-Series"]["X"])[1],
@@ -281,9 +294,11 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
                                 _to_int(metadata["EVENT_TIME_HHMMSS"][2:4]),
                                 _to_int(metadata["EVENT_TIME_HHMMSS"][4:]))
         eq_datetime = datetime(year, month, day, hour, minute, second)
+        
         # Event ID and Name
         eq_id = metadata["EVENT_ID"]
         eq_name = metadata["EVENT_NAME"]
+        
         # Get magnitudes
         m_w = _to_float(metadata["MAGNITUDE_W"])
         mag_list = []
@@ -306,6 +321,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
             pref_mag = local_mag
         else:
             raise ValueError("Record %s has no magnitude!" % file_str)
+        
         # Get focal mechanism data - here only the general type is reported
         if metadata["FOCAL_MECHANISM"]:
             foc_mech = FocalMechanism(eq_id, eq_name, None, None,
@@ -313,6 +329,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
         else:
             foc_mech = FocalMechanism(eq_id, eq_name, None, None,
                 mechanism_type=None)
+        
         # Build event
         eqk = Earthquake(eq_id, eq_name, eq_datetime,
             _to_float(metadata["EVENT_LONGITUDE_DEGREE"]),
@@ -321,6 +338,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
             pref_mag,
             foc_mech)
         eqk.magnitude_list = mag_list
+        
         return eqk
 
     def _parse_distance_data(self, metadata, file_str, eqk):
@@ -329,6 +347,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
         openquake.smt.sm_database.RecordDistance
         """
         repi = _to_float(metadata["EPICENTRAL_DISTANCE_KM"])
+        
         # No hypocentral distance in file - calculate from event
         if eqk.depth:
             rhypo = sqrt(repi ** 2. + eqk.depth ** 2.)
@@ -339,6 +358,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
             _to_float(metadata["STATION_LATITUDE_DEGREE"])))
         dists = RecordDistance(repi, rhypo)
         dists.azimuth = azimuth
+        
         return dists
  
     def _parse_site_data(self, metadata):
@@ -353,12 +373,14 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
             _to_float(metadata["STATION_LATITUDE_DEGREE"]),
             _to_float(metadata["STATION_ELEVATION_M"]))
         site.morphology = metadata["MORPHOLOGIC_CLASSIFICATION"]
+        
         # Vs30 was measured
         if metadata["VS30_M/S"]:
             site.vs30=_to_float(metadata["VS30_M/S"])
             site.ec8 = site.get_ec8_class()
             site.nehrp = site.get_nehrp_class()
             site.vs30_measured = True
+        
         # Only an estimate of site class is provided
         elif metadata["SITE_CLASSIFICATION_EC8"]:
             site.ec8 = metadata["SITE_CLASSIFICATION_EC8"][:-1]
@@ -367,6 +389,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
         else:
             print('Station %s has no information about site class or Vs30' %
                   metadata["STATION_CODE"])
+        
         return site   
             
     def _parse_processing_data(self, wfid, metadata):
@@ -379,6 +402,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
             zcomp = self._parse_component_data(wfid, metadata["Z"])
         else:
             zcomp = None
+        
         return xcomp, ycomp, zcomp
 
     def _parse_component_data(self, wfid, metadata):
@@ -389,6 +413,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
             metadata["UNITS"]
         sampling_interval = _to_float(metadata["SAMPLING_INTERVAL_S"])
         nsamp = _to_int(metadata["NDATA"])
+        
         # Baseline correction
         baseline = {"Type": metadata["BASELINE_CORRECTION"]}
         filter_info = {"Type": metadata["FILTER_TYPE"],
@@ -416,6 +441,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
                               units=units)
         if metadata["LATE/NORMAL_TRIGGERED"] == "LT":
             component.late_trigger = True
+        
         return component
                          
 
@@ -438,6 +464,7 @@ class ESMTimeSeriesParser(SMTimeSeriesReader):
             else:
                 time_series[target_names[iloc]]["Original"] = \
                     self._parse_time_history(ifile)
+        
         return time_series
 
     def _parse_time_history(self, ifile):
@@ -449,6 +476,7 @@ class ESMTimeSeriesParser(SMTimeSeriesReader):
         self.number_steps = _to_int(metadata["NDATA"])
         self.time_step = _to_float(metadata["SAMPLING_INTERVAL_S"])
         self.units = metadata["UNITS"]
+        
         # Get acceleration data
         accel = np.genfromtxt(ifile, skip_header=64)
         if "DIS" in ifile:
