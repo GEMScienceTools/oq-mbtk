@@ -35,11 +35,13 @@ from openquake.hazardlib.geo.geodetic import (
 from openquake.sub.cross_sections import CrossSection, Slab2pt0
 
 pygmt_available = False
+
 try:
     import pygmt
     pygmt_available = True
-except ImportError:
-    pass
+except:
+    print("pygmt is not available")
+
 
 
 @njit
@@ -366,7 +368,7 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
         clo = np.mean([bb[0], bb[1]])
         cla = np.mean([bb[2], bb[3]])
         
-        if pygmt_available:
+        if pygmt_available == True:
             fig = pygmt.Figure()
             pygmt.makecpt(cmap="jet", series=[0.0, 800])
             fig.basemap(region=reg, projection=f"T{clo}/{cla}/12c", frame=True)
@@ -500,7 +502,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
         clo = np.mean([bb[0], bb[1]])
         cla = np.mean([bb[2], bb[3]])
 
-        if pygmt_available:
+        if pygmt_available == True:
 
             fig = pygmt.Figure()
             pygmt.makecpt(cmap="jet", series=[0.0, 800])
@@ -551,8 +553,6 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
             plt.xlim([xmin, xmax])
             plt.colorbar(label='depth to slab (km)')
             plt.savefig(fname_fig)
-
-
 
     return slb
 
