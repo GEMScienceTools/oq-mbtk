@@ -27,9 +27,12 @@ import shutil
 import unittest
 import pickle
 
+from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import \
     ESMFlatfileParserURL
 
+
+BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the record IDs for the target data set
 TARGET_IDS = [
@@ -43,8 +46,6 @@ TARGET_IDS = [
 "EMSC_20111105_0000125_HI_RDI1_",
 "EMSC_20111221_0000032_HI_RGE1_"]
 
-#Specify base directory
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 class ESMFlatfileParserURLTestCase(unittest.TestCase):
     """
@@ -52,10 +53,12 @@ class ESMFlatfileParserURLTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        cls.ESM_flatfile_directory = os.path.join(BASE_DATA_PATH,
-                                                  "ESM_URL_Greece_test.csv")
-        cls.db_file = os.path.join(BASE_DATA_PATH,
-                                   "ESM_URL_conversion_test_metadata")       
+        cls.ESM_flatfile_directory = os.path.join(
+            BASE_DATA_PATH, "ESM_URL_Greece_test.csv")
+        cls.db_file = os.path.join(
+            BASE_DATA_PATH, "ESM_URL_conversion_test_metadata")    
+        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
+        cls.imts = ["PGA", "SA(1.0)"]   
 
     def test_esm_url_flatfile_parser(self):
         """
@@ -65,12 +68,20 @@ class ESMFlatfileParserURLTestCase(unittest.TestCase):
                                              self.db_file, self.ESM_flatfile_directory)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
+
         # Should contain 9 records
         self.assertEqual(len(db), 9)
+        
         # Record IDs should be equal to the specified target IDs
         for rec in db:
             print(rec.id)
         self.assertListEqual([rec.id for rec in db], TARGET_IDS)
+
+        # Also run an arbitrary residual analysis to check
+        # the constructed db is functioning correctly
+        residuals = res.Residuals(self.gmpe_list, self.imts)
+        residuals.compute_residuals(db, component="Geometric")
+        
         del parser
 
     @classmethod

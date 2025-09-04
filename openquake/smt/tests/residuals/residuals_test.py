@@ -33,8 +33,8 @@ from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileP
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 # Temp files for ranking metric tables 
-tmp_tab = os.path.join(tempfile.mkdtemp(), 'temp_table.csv')
-tmp_fig = os.path.join(tempfile.mkdtemp(), 'temp_figure')
+TMP_TAB = os.path.join(tempfile.mkdtemp(), 'temp_table.csv')
+TMP_FIG = os.path.join(tempfile.mkdtemp(), 'temp_figure')
 
 
 class ResidualsTestCase(unittest.TestCase):
@@ -70,8 +70,7 @@ class ResidualsTestCase(unittest.TestCase):
         cls.residuals.get_residual_statistics()
 
         # Add other params to class
-        cls.toml = os.path.join(
-            BASE_DATA_PATH, 'residuals_from_toml_test.toml')
+        cls.toml = os.path.join(BASE_DATA_PATH, 'residuals_from_toml_test.toml')
         cls.exp = exp
         cls.st_rec_min = 3
         cls.exp_stations = exp_stations
@@ -139,9 +138,9 @@ class ResidualsTestCase(unittest.TestCase):
         self.residuals.get_stochastic_area_wrt_imt()
 
         # Make the plots
-        rspl.plot_residual_pdf_with_spectral_period(self.residuals, tmp_fig)
-        rspl.plot_edr_metrics_with_spectral_period(self.residuals, tmp_fig)
-        rspl.plot_loglikelihood_with_spectral_period(self.residuals, tmp_fig)
+        rspl.plot_residual_pdf_with_spectral_period(self.residuals, TMP_FIG)
+        rspl.plot_edr_metrics_with_spectral_period(self.residuals, TMP_FIG)
+        rspl.plot_loglikelihood_with_spectral_period(self.residuals, TMP_FIG)
 
     def test_table_execution(self):
         """
@@ -153,15 +152,15 @@ class ResidualsTestCase(unittest.TestCase):
         self.residuals.get_stochastic_area_wrt_imt()
         
         # Tables of values
-        rspl.pdf_table(self.residuals, tmp_tab)
-        rspl.llh_table(self.residuals, tmp_tab)
-        rspl.edr_table(self.residuals, tmp_tab)
-        rspl.stochastic_area_table(self.residuals, tmp_tab)
+        rspl.pdf_table(self.residuals, TMP_TAB)
+        rspl.llh_table(self.residuals, TMP_TAB)
+        rspl.edr_table(self.residuals, TMP_TAB)
+        rspl.stochastic_area_table(self.residuals, TMP_TAB)
         
         # Tables of weights
-        rspl.llh_weights_table(self.residuals, tmp_tab)
-        rspl.edr_weights_table(self.residuals, tmp_tab)
-        rspl.stochastic_area_weights_table(self.residuals, tmp_tab)
+        rspl.llh_weights_table(self.residuals, TMP_TAB)
+        rspl.edr_weights_table(self.residuals, TMP_TAB)
+        rspl.stochastic_area_weights_table(self.residuals, TMP_TAB)
         
     def test_single_station_execution_and_values(self):
         """

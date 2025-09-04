@@ -5,13 +5,15 @@ from openquake.smt.residuals.parsers.asa_database_parser import ASADatabaseMetad
 from openquake.hazardlib import valid
 
 
-#  Test that metadata is parsed correctly (case when it metadata is given)
-#  Consider two ASA files, one from UNAM and the other from CICESE
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 
 class ASA_MetadataParsertest(unittest.TestCase):
-
+    """
+    Test that metadata is parsed correctly (case when it metadata is
+    given). Consider two ASA files, one from UNAM and the other from
+    CICESE.
+    """
     @classmethod
     def setUpClass(cls):
         filepath = os.path.join(BASE_DATA_PATH,

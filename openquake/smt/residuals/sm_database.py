@@ -761,7 +761,7 @@ class GroundMotionDatabase(ContextDB):
         for evt_id, records in data.items():
             yield evt_id, records
 
-    SCALAR_IMTS = ["PGA", "PGV"]
+    SCALAR_IMTS = ["PGA", "PGV", "PGD", "Ia", "CAV"]
 
     def get_observations(self, imtx, records, component="Geometric"):
         """
@@ -920,16 +920,10 @@ class GroundMotionDatabase(ContextDB):
 
         for attname in self.distances_context_attrs:
             attval = getattr(ctx, attname)
-            # remove attribute if its value is empty-like
-            if attval is None or not len(attval):
+            if attval is None or not len(attval): # remove attr if value is empty-like
                 delattr(ctx, attname)
             else:
-                # FIXME: dtype=float forces Nones to be safely converted to nan
                 setattr(ctx, attname, np.asarray(attval, dtype=float))
-
-    ###########################
-    # END OF ABSTRACT METHODS #
-    ###########################
 
     def get_scalar(self, fle, i_m, component="Geometric"):
         """
@@ -942,12 +936,12 @@ class GroundMotionDatabase(ContextDB):
             Horizontal component of IM
         """
         if not ("H" in fle["IMS"].keys()):
-            x_im = fle["IMS/X/Scalar/" + i_m][0]
-            y_im = fle["IMS/Y/Scalar/" + i_m][0]
+            x_im = fle[f"IMS/X/Scalar/{component}/{i_m}"][0]
+            y_im = fle[f"IMS/Y/Scalar/{component}/{i_m}"][0]
             return utils_imts.SCALAR_XY[component](x_im, y_im)
         else:
-            if i_m in fle["IMS/H/Scalar"].keys():
-                return fle["IMS/H/Scalar/" + i_m][0]
+            if i_m in fle[f"IMS/H/Scalar/{component}"].keys():
+                return fle[f"IMS/H/Scalar/{component}/{i_m}"][0]
             else:
                 raise ValueError("Scalar IM %s not in record database" % i_m)
 
