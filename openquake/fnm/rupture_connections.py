@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, Dict, List, Mapping, Sequence, Set
 from functools import partial
 from collections import deque
 from multiprocessing import Pool, Array
@@ -9,7 +9,7 @@ import igraph as ig
 import pandas as pd
 from numba import jit, njit, int16, int32
 from numba.typed import List
-from scipy.sparse import dok_array, issparse
+from scipy.sparse import dok_array, issparse, csr_matrix, isspmatrix_csr
 
 from openquake.hazardlib.geo import Point, Line
 from openquake.hazardlib.geo.geodetic import (
@@ -35,6 +35,12 @@ from openquake.fnm.fault_modeler import (
 
 from openquake.fnm.mesh import get_mesh_bb
 from openquake.fnm.bbox import get_bb_distance
+
+# these don't work well
+#from openquake.fnm.multifault_parallel import (
+#        find_connected_subsets_parallel,
+#        find_connected_subsets_parallel_py,
+#        )
 
 
 def get_bb_from_surface(surface):
@@ -572,6 +578,16 @@ def get_rupture_adjacency_matrix(
     return single_fault_rup_df, dist_adj_matrix
 
 
+def get_rupture_grouping(faults, single_rup_df):
+    fault_lookup = {fault['fid']: i for i, fault in enumerate(faults)}
+    rup_flt_lookup = {i: rup['fault'] for i, rup in single_rup_df.iterrows()}
+    rup_flt_index_lookup = {
+        k: fault_lookup[v] for k, v in rup_flt_lookup.items()
+    }
+
+    return rup_flt_index_lookup
+
+
 def make_binary_adjacency_matrix(
     dist_matrix, max_dist: float = 10.0
 ) -> np.ndarray:
@@ -687,7 +703,7 @@ def intersection_pt(
         return pt_1, pt_2
 
 
-def find_intersection_angle(trace_1, trace_2):
+def find_intersection_angle(trace_1, trace_2, az_1=None, az_2=None):
     if not isinstance(trace_1, Line):
         tr1 = Line([Point(*coords) for coords in trace_1])
         tr2 = Line([Point(*coords) for coords in trace_2])
@@ -695,8 +711,10 @@ def find_intersection_angle(trace_1, trace_2):
         tr1 = trace_1
         tr2 = trace_2
 
-    az_1 = tr1.average_azimuth()
-    az_2 = tr2.average_azimuth()
+    if az_1 is None:
+        az_1 = tr1.average_azimuth()
+    if az_2 is None:
+        az_2 = tr2.average_azimuth()
 
     pt_1_x, pt_1_y = tr1[0].x, tr1[0].y
     pt_2_x, pt_2_y = tr2[0].x, tr2[0].y
@@ -740,7 +758,7 @@ def find_intersection_angle(trace_1, trace_2):
 
 
 def get_proximal_rup_angles(
-    sf_traces, binary_distance_matrix
+    sf_traces, binary_distance_matrix, verbose=False
 ) -> dict[tuple[int, int], tuple[float, float]]:
     """
     Get the rupture angles between proximal ruptures (i.e., those considered
@@ -754,8 +772,10 @@ def get_proximal_rup_angles(
     ----------
     sf_meshes : list of lists of Surfaces
         List of lists of fault surfaces.
-    binary_distance_matrix : np.ndarray
-        Binary adjacency matrix.
+    binary_distance_matrix : scipy.sparse.dok_matrix
+        Binary adjacency matrix in DOK format.
+    verbose : bool, optional
+        Whether to print progress information.
 
     Returns
     -------
@@ -764,15 +784,37 @@ def get_proximal_rup_angles(
         and the values are tuples of rupture angles in degrees.
     """
     if not isinstance(sf_traces[0], Line):
+        if verbose:
+            print(" getting traces from faults")
         sf_traces = [
             Line([Point(*coords) for coords in trace]) for trace in sf_traces
         ]
 
     rup_angles = {}
-    for i, trace_0 in enumerate(sf_traces):
-        for j, trace_1 in enumerate(sf_traces):
-            if binary_distance_matrix[i, j] == 1:
-                rup_angles[(i, j)] = find_intersection_angle(trace_0, trace_1)
+    n_faults = len(sf_traces)
+    pad_width = len(str(n_faults))
+
+    # Get the non-zero entries directly from the DOK matrix
+    nonzero_pairs = list(binary_distance_matrix.keys())
+    total_pairs = len(nonzero_pairs)
+
+    if verbose:
+        print(f" Processing {total_pairs} proximal fault pairs")
+
+    for idx, (i, j) in enumerate(nonzero_pairs, 1):
+        if verbose:
+            if idx < total_pairs:
+                print(
+                    f"  doing pair {str(idx).zfill(pad_width)} out of {total_pairs}",
+                    end="\r",
+                )
+            else:
+                print(f"  doing pair {idx} out of {total_pairs}")
+
+        trace_0 = sf_traces[i]
+        trace_1 = sf_traces[j]
+        rup_angles[(i, j)] = find_intersection_angle(trace_0, trace_1)
+
     return rup_angles
 
 
@@ -1081,7 +1123,7 @@ def sparse_to_adjlist(sparse_matrix):
     return adj_list
 
 
-def sparse_to_adj_dict(sparse_matrix):
+def sparse_to_adj_dict_old(sparse_matrix):
     """
     Converts a scipy.sparse adjacency matrix to an adjacency dictionary.
 
@@ -1104,6 +1146,37 @@ def sparse_to_adj_dict(sparse_matrix):
         adj_dict[i] = [int_type(neighbor) for neighbor in neighbors]
 
     return adj_dict
+
+
+def sparse_to_adj_dict(sparse_matrix: csr_matrix):
+    """
+    Converts a scipy.sparse adjacency matrix to an adjacency dictionary.
+
+    Parameters:
+    - sparse_matrix: The sparse adjacency matrix (csr_matrix).
+
+    Returns:
+    - adj_dict: A dictionary, where the keys are the vertices and the values are the neighbors.
+    """
+    logging.info("\tmaking adjacency dictionary")
+    if not isspmatrix_csr(sparse_matrix):
+        logging.debug("\t\tconverting adj matrix to CSR")
+        mat = sparse_matrix.tocsr()
+    else:
+        mat = sparse_matrix
+
+    indptr = mat.indptr
+    indices = mat.indices
+    n = mat.shape[0]
+
+    # Choose an integer dtype for compactness (optional)
+    int_type = np.int16 if n < 32767 else np.int32
+
+    # Build the dict – still in Python, but with no expensive matrix ops
+    return {
+        i: indices[indptr[i] : indptr[i + 1]].astype(int_type).tolist()
+        for i in range(n)
+    }
 
 
 # def get_unique_vertex_sets(adj_list, max_vertices=10):
@@ -1249,31 +1322,104 @@ def find_connected_subgraphs(adj_dict, filter=True):
     return subgraphs
 
 
+def find_connected_subsets_dfs_serial(
+    adj_dict: Dict[int, Sequence[int]],
+    group_of: Mapping[int, int],  #  vertex → group‑id  lookup
+    max_vertices: int = 10,
+) -> List[List[int]]:
+    """
+    Enumerate all connected vertex sets (size 2…max_vertices) such that
+    no two vertices belong to the same group.
+
+    Parameters
+    ----------
+    adj_dict
+        Undirected adjacency list (neighbours do not have to be sets,
+        just iterables).
+    group_of
+        `vertex  ->  group‑id` mapping.  Only O(1) read access is needed.
+    max_vertices
+        Largest set size to return.
+
+    Returns
+    -------
+    list[list[int]]
+        Each inner list is a connected, group‑unique vertex set.
+    """
+    all_subsets: Set[frozenset[int]] = set()
+
+    def explore(
+        vertex: int, current_set: Set[int], used_groups: Set[int]
+    ) -> None:
+
+        if 1 < len(current_set) <= max_vertices:
+            all_subsets.add(frozenset(current_set))
+
+        if len(current_set) == max_vertices:
+            return
+
+        for nbr in adj_dict[vertex]:
+            if nbr in current_set:  # already inside
+                continue
+            g = group_of[nbr]
+            if g in used_groups:  # would repeat a group
+                continue
+            explore(
+                nbr,
+                current_set | {nbr},
+                used_groups | {g},
+            )
+
+    for v in adj_dict:
+        explore(v, {v}, {group_of[v]})
+
+    # convert back to mutable containers if that is what the caller wants
+    return [list(s) for s in all_subsets]
+
+
 def get_multifault_ruptures_fast(
     dist_adj_binary,
     max_sf_rups_per_mf_rup: int = 10,
+    rup_groups=None,
     parallel=False,
-    min_parallel_subgraphs: int = 5,
+    min_parallel_subgraphs: int = 0,
 ) -> list[list[int]]:
-    all_subsets = set()
+
+    parallel = False
+
     n = dist_adj_binary.shape[0]  # Number of vertices
 
-    adj_list = sparse_to_adj_dict(dist_adj_binary)
+    adj_dict = sparse_to_adj_dict(dist_adj_binary)
 
     logging.info("\tfinding connected subgraphs")
-    subgraphs = find_connected_subgraphs(adj_list, filter=True)
-    logging.info("\t%d connected subgraphs found", len(subgraphs))
+    try:
+        subgraphs = find_connected_subgraphs(adj_dict, filter=True)
+        logging.info("\t%d connected subgraphs found", len(subgraphs))
+    except RecursionError:
+        logging.info(
+            "\tRecursion depth exceeded; working on whole model instead"
+        )
+        subgraphs = [adj_dict]
 
     logging.info("\tgetting all contiguous vertex sets")
     if parallel and len(subgraphs) > min_parallel_subgraphs:
-        vertex_sets = get_multifault_ruptures_parallel(
-            subgraphs, max_sf_rups_per_mf_rup
+        # vertex_sets = get_multifault_ruptures_parallel(
+        #    subgraphs, max_sf_rups_per_mf_rup
+        # )
+        vertex_sets = find_connected_subsets_parallel(
+            dist_adj_binary, #adj_dict,
+        #vertex_sets = find_connected_subsets_parallel_py(
+        #    adj_dict,
+            rup_groups,
+            max_vertices=max_sf_rups_per_mf_rup,
         )
     else:
         vertex_sets = []
         for i, subgraph in enumerate(subgraphs):
             vertex_sets.extend(
-                find_connected_subsets_dfs(subgraph, max_sf_rups_per_mf_rup)
+                find_connected_subsets_dfs_serial(
+                    subgraph, rup_groups, max_sf_rups_per_mf_rup
+                )
             )
             logging.info("\t\tfinished subgraph %d", i + 1)
     return vertex_sets
