@@ -157,8 +157,8 @@ class GEMFlatfileParser(SMDatabaseReader):
         Parse a record
         """
         # Waveform ID not provided in file so concatenate Event and Station ID
-        wfid = "_".join([metadata["event_id"], metadata["network_code"],
-                         metadata["station_code"]])
+        wfid = "_".join(
+            [metadata["event_id"], metadata["network_code"], metadata["station_code"]])
         wfid = wfid.replace("-", "_")
 
         # Parse the event metadata
