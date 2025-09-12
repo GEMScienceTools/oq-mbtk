@@ -20,12 +20,11 @@ from openquake.fnm.fault_modeler import (
 
 from openquake.fnm.rupture_connections import (
     get_rupture_adjacency_matrix,
-    get_multifault_ruptures,
     get_multifault_ruptures_fast,
-    get_multifault_ruptures_numba,
     make_binary_adjacency_matrix,
     make_binary_adjacency_matrix_sparse,
-    filter_bin_adj_matrix_by_rupture_angle,
+    filter_bin_adj_matrix_by_rupture_overlap,
+    get_rupture_grouping,
 )
 
 from openquake.fnm.rupture_filtering import (
@@ -55,6 +54,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 default_settings = {
+    'fault_skip_ids': [],
     'subsection_size': [15.0, 15.0],
     'edge_sd': 5.0,
     'dip_sd': 5.0,
@@ -62,7 +62,7 @@ default_settings = {
     'max_sf_rups_per_mf_rup': 10,
     'rupture_angle_threshold': 60.0,
     'filter_by_plausibility': True,
-    'filter_by_angle': True,
+    'filter_by_overlap': True,
     'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
     'skip_bad_faults': False,
     'shear_modulus': SHEAR_MODULUS,
@@ -72,7 +72,7 @@ default_settings = {
     'rupture_set_for_rates_from_slip_rates': 'all',
     'plot_fault_moment_rates': False,
     'sparse_distance_matrix': True,
-    'parallel_multifault_search': False,
+    'parallel_multifault_search': True,
     'full_fault_only_mf_ruptures': True,
     'calculate_rates_from_slip_rates': True,
     'surface_type': 'simple',
@@ -156,6 +156,11 @@ def build_fault_network(
             faults = []
             fault_fids = []
             for feature in fault_gj['features']:
+                if feature['properties']['fid'] in settings['fault_skip_ids']:
+                    logging.info(
+                        f"skipping fault {feature['properties']['fid']}"
+                    )
+                    continue
                 try:
                     surf = build_surface(
                         feature,
@@ -254,9 +259,12 @@ def build_fault_network(
         + f" ({round(n_connections/n_possible_connections*100, 1)}%)"
     )
 
-    if settings['filter_by_angle']:
-        logging.info("  Filtering by rupture angle")
-        binary_adjacence_matrix = filter_bin_adj_matrix_by_rupture_angle(
+    if settings.get('filter_by_angle'):
+        raise DeprecationWarning("Filtering by angle is deprecated.")
+
+    if settings['filter_by_overlap']:
+        logging.info("  Filtering by rupture overlap")
+        binary_adjacence_matrix, _ = filter_bin_adj_matrix_by_rupture_overlap(
             fault_network['single_rup_df'],
             fault_network['subfaults'],
             binary_adjacence_matrix,
@@ -277,12 +285,12 @@ def build_fault_network(
     logging.info(f"\tdone in {round(t4-t3, 1)} s")
 
     logging.info("Getting multifault ruptures")
-    # fault_network['multifault_inds'] = get_multifault_ruptures(
+    rup_groups = get_rupture_grouping(
+        fault_network['faults'], fault_network['single_rup_df']
+    )
     fault_network['multifault_inds'] = get_multifault_ruptures_fast(
-        # fault_network['multifault_inds'] = get_multifault_ruptures_numba(
-        # fault_network['dist_mat'],
         binary_adjacence_matrix,
-        # max_dist=settings['max_jump_distance'],
+        rup_groups=rup_groups,
         max_sf_rups_per_mf_rup=settings['max_sf_rups_per_mf_rup'],
         parallel=settings['parallel_multifault_search'],
     )
@@ -387,6 +395,7 @@ def build_system_of_equations(
     displacement_col='displacement',
     slip_rate_col='net_slip_rate',
     slip_rate_err_col='net_slip_rate_err',
+    return_metadata=False,
     **soe_kwargs,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -444,6 +453,6 @@ def build_system_of_equations(
         slip_rate_err_col=slip_rate_err_col,
     )
 
-    lhs, rhs, errs = make_eqns(ruptures, faults, **soe_kwargs)
-
-    return lhs, rhs, errs
+    return make_eqns(
+        ruptures, faults, return_metadata=return_metadata, **soe_kwargs
+    )
