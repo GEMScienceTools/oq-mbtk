@@ -173,13 +173,17 @@ class GEMFlatfileParser(SMDatabaseReader):
         # Parse waveform data
         xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
         
+        # Shortest and longest usable periods
+        sp = valid.vfloat(metadata['shortest_usable_period'], 'shortest_usable_period')
+        lp = valid.vfloat(metadata['longest_usable_period'], 'longest_usable_period')
+
         return GroundMotionRecord(wfid,
                                   [None, None, None],
                                   event, distances, site,
                                   xcomp, ycomp,
                                   vertical=vertical,
-                                  longest_period=metadata['longest_usable_period'],
-                                  shortest_period=metadata['shortest_usable_period'])
+                                  longest_period=lp,
+                                  shortest_period=sp)
 
 
     def _parse_event_data(self, metadata):

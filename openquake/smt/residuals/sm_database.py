@@ -750,7 +750,9 @@ class GroundMotionDatabase(ContextDB):
     ############################################
 
     def get_event_and_records(self):
-        """yield (event, records) tuples. See superclass docstring for details"""
+        """
+        Yield (event, records) tuples. See superclass docstring for details.
+        """
         data = {}
         for record in self.records:
             evt_id = record.event.id
@@ -778,11 +780,11 @@ class GroundMotionDatabase(ContextDB):
                 target_period = imt.from_string(imtx).period
                 spectrum = fle[selection_string + component + "/damping_05"][:]
                 periods = fle["IMS/H/Spectra/Response/Periods"][:]
-                values.append(utils_imts.get_interpolated_period(
-                    target_period, periods, spectrum))
+                values.append(utils_imts.get_interpolated_period(target_period, periods, spectrum))
             else:
                 raise ValueError("IMT %s is unsupported!" % imtx)
             fle.close()
+            
         return values
 
     def update_context(self, ctx, records, nodal_plane_index=1):
