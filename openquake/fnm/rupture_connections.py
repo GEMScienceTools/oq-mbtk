@@ -37,7 +37,7 @@ from openquake.fnm.mesh import get_mesh_bb
 from openquake.fnm.bbox import get_bb_distance
 
 # these don't work well
-#from openquake.fnm.multifault_parallel import (
+# from openquake.fnm.multifault_parallel import (
 #        find_connected_subsets_parallel,
 #        find_connected_subsets_parallel_py,
 #        )
@@ -1407,9 +1407,9 @@ def get_multifault_ruptures_fast(
         #    subgraphs, max_sf_rups_per_mf_rup
         # )
         vertex_sets = find_connected_subsets_parallel(
-            dist_adj_binary, #adj_dict,
-        #vertex_sets = find_connected_subsets_parallel_py(
-        #    adj_dict,
+            dist_adj_binary,  # adj_dict,
+            # vertex_sets = find_connected_subsets_parallel_py(
+            #    adj_dict,
             rup_groups,
             max_vertices=max_sf_rups_per_mf_rup,
         )
@@ -1616,3 +1616,13 @@ def get_multifault_rupture_distances(rupture_df, distance_matrix) -> pd.Series:
     )
 
     return distances
+
+
+def get_subfaults_on_each_fault(subfault_df: pd.DataFrame) -> Dict:
+    faults = {fid: [] for fid in subfault_df['fid'].unique()}
+    for sf_id, subfault in subfault_df.iterrows():
+        faults[subfault['fid']].append(str(sf_id))
+
+    faults = {fid: tuple(vals) for fid, vals in faults.items()}
+
+    return faults
