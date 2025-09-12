@@ -55,6 +55,7 @@ from openquake.hazardlib.geo.surface.multi import (
 
 from openquake.fnm.section import get_subsection
 from openquake.fnm.fault_modeler import get_boundary_3d
+from openquake.fnm.rupture_connections import get_subfaults_on_each_fault
 
 
 def _get_profiles(kite_surf):
@@ -77,15 +78,14 @@ def make_fault_geojson_feature(fault, skip_props=('trace'), z_unit='m'):
     skip_props = ['surface', *skip_props]
     poly = get_boundary_3d(fault['surface'])[1]
 
-    feature = {'type': 'Feature',
-               'geometry': {
-                   'type': 'Polygon',
-                   'coordinates': [[list(pt) for pt in poly.exterior.coords]],
-                    },
-               'properties': {
-                   k: v for k, v in fault.items() if k not in skip_props
-                    },
-               }
+    feature = {
+        'type': 'Feature',
+        'geometry': {
+            'type': 'Polygon',
+            'coordinates': [[list(pt) for pt in poly.exterior.coords]],
+        },
+        'properties': {k: v for k, v in fault.items() if k not in skip_props},
+    }
     if z_unit == 'm':
         for c in feature['geometry']['coordinates'][0]:
             c[2] *= 1000.0
@@ -95,15 +95,17 @@ def make_fault_geojson_feature(fault, skip_props=('trace'), z_unit='m'):
 
 def make_geojson_from_faults(faults, skip_props=('trace')):
 
-    features = [make_fault_geojson_feature(fault, skip_props=skip_props)
-                for fault in faults]
+    features = [
+        make_fault_geojson_feature(fault, skip_props=skip_props)
+        for fault in faults
+    ]
 
-    gj = {"type": "FeatureCollection",
-          "features": features,
-          }
+    gj = {
+        "type": "FeatureCollection",
+        "features": features,
+    }
 
     return gj
-
 
 
 def make_multifault_source(
@@ -171,6 +173,7 @@ def make_multifault_source(
     )
 
     mfs.sections = surfaces
+    mfs.faults = get_subfaults_on_each_fault(fault_network['subfault_df'])
 
     # secparams = build_secparams(mfs.sections)
     # mfs.set_msparams(secparams)
