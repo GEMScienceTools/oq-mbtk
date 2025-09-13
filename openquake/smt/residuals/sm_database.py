@@ -780,7 +780,8 @@ class GroundMotionDatabase(ContextDB):
                 spectrum = fle[selection_string + component + "/damping_05"][:]
                 periods = fle["IMS/H/Spectra/Response/Periods"][:]
                 target_period = imt.from_string(imtx).period
-                values.append(utils_imts.get_interpolated_period(target_period, periods, spectrum))
+                values.append(
+                    utils_imts.get_interpolated_period(target_period, periods, spectrum))
             else:
                 raise ValueError("IMT %s is unsupported!" % imtx)
             fle.close()
