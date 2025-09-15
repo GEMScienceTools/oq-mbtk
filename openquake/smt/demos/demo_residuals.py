@@ -95,14 +95,11 @@ def make_residual_plots(residuals, out_dir):
             fi_dist = os.path.join(out, 'residual_wrt_dist_%s.jpeg' %str(imt))
             
             # Get residual plots
-            rspl.ResidualPlot(
-                residuals, gmm, imt, fi_hist, filetype='jpeg')
+            rspl.ResidualPlot(residuals, gmm, imt, fi_hist, filetype='jpeg')
             
-            rspl.ResidualWithMagnitude(
-                residuals, gmm, imt, fi_mags, filetype='jpeg')
+            rspl.ResidualWithMagnitude(residuals, gmm, imt, fi_mags, filetype='jpeg')
             
-            rspl.ResidualWithDistance(
-                residuals, gmm, imt, fi_dist, filetype='jpeg')
+            rspl.ResidualWithDistance(residuals, gmm, imt, fi_dist, filetype='jpeg')
             
 
 def calc_ranking_metrics(residuals, out_dir):

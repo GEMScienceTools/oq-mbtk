@@ -82,13 +82,9 @@ HEADERS = ["event_id",
            "U_lp",
            "V_lp",
            "W_lp",
-           "Shortest_Usable_Period_for_PSA_Ave_Over_Components",
-           "Longest_Usable_Period_for_PSA_Ave_Over_Components"
+           "shortest_usable_period",
+           "longest_usable_period"
            ]
-
-# Manage long cols
-SP = "Shortest_Usable_Period_for_PSA_Ave_Over_Components"
-LP = "Longest_Usable_Period_for_PSA_Ave_Over_Components"
 
 
 class GEMFlatfileParser(SMDatabaseReader):
@@ -161,8 +157,8 @@ class GEMFlatfileParser(SMDatabaseReader):
         Parse a record
         """
         # Waveform ID not provided in file so concatenate Event and Station ID
-        wfid = "_".join([metadata["event_id"], metadata["network_code"],
-                         metadata["station_code"]])
+        wfid = "_".join(
+            [metadata["event_id"], metadata["network_code"], metadata["station_code"]])
         wfid = wfid.replace("-", "_")
 
         # Parse the event metadata
@@ -176,11 +172,11 @@ class GEMFlatfileParser(SMDatabaseReader):
 
         # Parse waveform data
         xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
-
-        # Parse longest and shortest usable periods
-        lp = valid.vfloat(metadata[LP], LP)
-        sp = valid.vfloat(metadata[SP], SP)
         
+        # Shortest and longest usable periods
+        sp = valid.vfloat(metadata['shortest_usable_period'], 'shortest_usable_period')
+        lp = valid.vfloat(metadata['longest_usable_period'], 'longest_usable_period')
+
         return GroundMotionRecord(wfid,
                                   [None, None, None],
                                   event, distances, site,
