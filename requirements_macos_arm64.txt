@@ -2,6 +2,7 @@
 # OQ mbtk requirements
 #
 # From OQ wheels
+https://wheelhouse.openquake.org/macos/arm64/py310/h3-3.7.7-cp310-cp310-macosx_11_0_arm64.whl
 https://wheelhouse.openquake.org/macos/arm64/py311/numpy-1.26.2-cp311-cp311-macosx_11_0_arm64.whl
 https://wheelhouse.openquake.org/macos/arm64/py311/fiona-1.9.5-cp311-cp311-macosx_11_0_arm64.whl
 https://wheelhouse.openquake.org/macos/arm64/py311/GDAL-3.7.3-cp311-cp311-macosx_11_0_arm64.whl

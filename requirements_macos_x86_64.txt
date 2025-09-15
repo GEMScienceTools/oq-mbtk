@@ -6,6 +6,7 @@ https://wheelhouse.openquake.org/v3/macos/py311/numpy-1.26.2-cp311-cp311-macosx_
 https://wheelhouse.openquake.org/v3/macos/py311/fiona-1.9.5-cp311-cp311-macosx_10_15_x86_64.whl
 https://wheelhouse.openquake.org/v3/macos/py311/GDAL-3.7.3-cp311-cp311-macosx_10_15_x86_64.whl
 https://wheelhouse.openquake.org/v3/macos/py311/pyproj-3.6.1-cp311-cp311-macosx_10_15_x86_64.whl
+https://wheelhouse.openquake.org/v3/macos/py311/h3-3.7.7-cp311-cp311-macosx_10_9_x86_64.whl
 #
 # Version specific
 pandas == 2.0.3
