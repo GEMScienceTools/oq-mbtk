@@ -34,7 +34,6 @@ import openquake.mbt.tools.mfd as mfdt
 SHEAR_MODULUS = 32e9  # Pascals
 
 
-# MFDs
 def plot_mfd_cumulative(mfd, fig=None, label='', color=None, linewidth=1, title=''):
     aa = np.array(mfd.get_annual_occurrence_rates())
     cml = np.cumsum(aa[::-1, 1])
@@ -119,7 +118,6 @@ def slip_from_mo(mo, area):
     return mo / (SHEAR_MODULUS * area*1e6)
 
 
-# Rates
 def get_mags_rates(source_model_fname: str, time_span: float):
     """
     This computes the total rate for a non-parameteric source modelling the
