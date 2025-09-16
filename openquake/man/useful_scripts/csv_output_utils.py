@@ -25,6 +25,11 @@ from openquake.baselib import hdf5
 from openquake.hmtk.seismicity.catalogue import Catalogue
 
 
+"""
+Utility functions for OpenQuake CSV format outputs
+"""
+
+
 def make_llt_df(df, each_rlz, threshold=1e-08):
     # Get the keys for all the realizations
     rlzkeys = [*each_rlz]
