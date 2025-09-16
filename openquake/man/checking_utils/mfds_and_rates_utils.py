@@ -24,7 +24,7 @@ from openquake.hazardlib.mfd.truncated_gr import TruncatedGRMFD
 from openquake.hazardlib.source.non_parametric import NonParametricSeismicSource
 
 from openquake.man.model import read
-from openquake.man.checking_utils.rates_and_mfds import plot_mfd_cumulative, get_total_mfd
+from openquake.man.checking_utils.mfds_and_rates_utils import plot_mfd_cumulative, get_total_mfd
 from openquake.mbt.oqt_project import OQtProject
 from openquake.mbt.tools.mfd import get_evenlyDiscretizedMFD_from_truncatedGRMFD
 import openquake.mbt.tools.mfd as mfdt
@@ -57,7 +57,7 @@ def get_total_mfd(sources, trt=None):
     :param list sources:
         A list of :class:`openquake.hazardlib.source.Source` instances
     :returns:
-        A :class:`openquake.man.checking_utils.rates_and_mfds.EvenlyDiscretizedMFD` instance
+        A :class:`openquake.man.checking_utils.mfds_and_rates_utils.EvenlyDiscretizedMFD` instance
     """
     cnt = 0
     for src in sources:
