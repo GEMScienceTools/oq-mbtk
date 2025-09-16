@@ -20,9 +20,11 @@ import logging
 import numpy as np
 from rtree import index
 
-from openquake.man.mfd import get_rates_within_m_range
 from openquake.hazardlib.geo.geodetic import azimuth
 from openquake.hazardlib.geo.geodetic import geodetic_distance
+
+from openquake.man.checking_utils.mfds_and_rates_utils import get_rates_within_m_range
+
 
 """
 :mod:`openquake.man.single.point` module. This module contains functions

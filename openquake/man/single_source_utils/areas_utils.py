@@ -24,7 +24,7 @@ from functools import partial
 
 from openquake.hazardlib.source.area import AreaSource
 
-from openquake.man.mfd import get_rates_within_m_range
+from openquake.man.checking_utils.mfds_and_rates_utils import get_rates_within_m_range
 
 
 def _get_area(geom):
