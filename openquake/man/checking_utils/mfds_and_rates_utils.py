@@ -22,11 +22,16 @@ import matplotlib.pyplot as plt
 
 from openquake.hazardlib.mfd.truncated_gr import TruncatedGRMFD
 from openquake.hazardlib.source.non_parametric import NonParametricSeismicSource
+from openquake.hazardlib.mfd import EvenlyDiscretizedMFD
 
 from openquake.man.model import read
+from openquake.mbt.tools.mfd import mag_to_mo
 from openquake.mbt.oqt_project import OQtProject
 from openquake.mbt.tools.mfd import get_evenlyDiscretizedMFD_from_truncatedGRMFD
 import openquake.mbt.tools.mfd as mfdt
+
+
+SHEAR_MODULUS = 32e9  # Pascals
 
 
 # MFDs
@@ -71,6 +76,47 @@ def get_total_mfd(sources, trt=None):
                 mfdall.stack(mfd)
             cnt += 1
     return mfdall
+
+
+def get_rates_within_m_range(mfd, mmint=0.0, mmaxt=11.0):
+    """
+    :parameter mfd:
+    :parameter mmint:
+    :parameter mmaxt:
+    """
+    rtes = np.array(mfd.get_annual_occurrence_rates())
+    idx = np.nonzero((rtes[:, 0] > mmint) & (rtes[:, 0] < mmaxt))
+    return sum(rtes[idx[0], 1])
+
+
+def get_moment_from_mfd(mfd):
+    """
+    This computed the total scalar seismic moment released per year by a
+    source
+
+    :parameter mfd:
+        An instance of openquake.hazardlib.mfd
+    :returns:
+        A float corresponding to the rate of scalar moment released
+    """
+    if isinstance(mfd, TruncatedGRMFD):
+        return mfd._get_total_moment_rate()
+    elif isinstance(mfd, EvenlyDiscretizedMFD):
+        occ_list = mfd.get_annual_occurrence_rates()
+        mo_tot = 0.0
+        for occ in occ_list:
+            mo_tot += occ[1] * mag_to_mo(occ[0])
+    return mo_tot
+
+
+def slip_from_mo(mo, area):
+    """
+    :parameter mo:
+        Scalar seismic moment [Nm]
+    :parameter area:
+        Area of the fault [km2]
+    """
+    return mo / (SHEAR_MODULUS * area*1e6)
 
 
 # Rates

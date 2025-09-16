@@ -1,28 +1,20 @@
-# ------------------- The OpenQuake Model Building Toolkit --------------------
-# Copyright (C) 2022 GEM Foundation
-#           _______  _______        __   __  _______  _______  ___   _
-#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
-#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
-#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
-#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
-#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
-#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# This program is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Affero General Public License as published by the Free
-# Software Foundation, either version 3 of the License, or (at your option) any
-# later version.
+# Copyright (C) 2014-2025 GEM Foundation
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
-# details.
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# -----------------------------------------------------------------------------
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-# coding: utf-8
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 import os
@@ -32,6 +24,7 @@ import numpy
 import pickle
 import logging
 from rtree import index
+from pyproj import Proj, transform
 
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.mfd import TruncatedGRMFD, EvenlyDiscretizedMFD
@@ -39,11 +32,10 @@ from openquake.hazardlib.sourceconverter import SourceConverter
 from openquake.hazardlib.nrml import to_python
 from openquake.hazardlib.geo.geodetic import distance, azimuth
 from openquake.hazardlib.source import (AreaSource,
-                                        SimpleFaultSource, ComplexFaultSource,
+                                        SimpleFaultSource,
+                                        ComplexFaultSource,
                                         CharacteristicFaultSource,
                                         NonParametricSeismicSource)
-
-from pyproj import Proj, transform
 
 
 def getcoo(lon, lat):
@@ -53,7 +45,8 @@ def getcoo(lon, lat):
     return xp, yp
 
 
-def _get_source_model(source_file, investigation_time=1.,
+def _get_source_model(source_file,
+                      investigation_time=1.,
                       rupture_mesh_spacing=10.0,
                       complex_fault_mesh_spacing=10.0,
                       width_of_mfd_bin=0.1,
