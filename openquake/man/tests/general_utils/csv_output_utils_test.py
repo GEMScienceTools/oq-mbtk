@@ -27,7 +27,7 @@ from openquake.calculators.tests import open8
 from openquake.calculators.export import export
 from openquake.calculators.base import run_calc
 
-import openquake.man.utilities.csv_output_utils as csv
+import openquake.man.general_utils.csv_output_utils as csv
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data_csv_output_test')
