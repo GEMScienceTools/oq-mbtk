@@ -2,9 +2,6 @@ import os
 import numpy
 import unittest
 
-import openquake.man.model as model
-# import openquake.man.model import _split_point_source, read
-
 from openquake.hazardlib.source import PointSource
 from openquake.hazardlib.mfd import TruncatedGRMFD, EvenlyDiscretizedMFD
 from openquake.hazardlib.scalerel.wc1994 import WC1994
@@ -12,6 +9,8 @@ from openquake.hazardlib.tom import PoissonTOM
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib.geo.nodalplane import NodalPlane
 from openquake.hazardlib.pmf import PMF
+
+import openquake.man.model as model
 
 
 BASE_DATA_PATH = os.path.dirname(__file__)
