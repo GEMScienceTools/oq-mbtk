@@ -11,7 +11,7 @@ import tempfile
 import configparser
 import numpy as np
 
-from openquake.man.checks.rates import get_mags_rates
+from openquake.man.checking_utils.rates_and_mfds import get_mags_rates
 from openquake.sub.slab.rupture import calculate_ruptures, get_catalogue
 from openquake.sub.create_inslab_nrml import create
 from openquake.sub.build_complex_surface import build_complex_surface
