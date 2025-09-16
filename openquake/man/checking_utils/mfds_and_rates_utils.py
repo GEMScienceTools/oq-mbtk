@@ -24,7 +24,7 @@ from openquake.hazardlib.mfd.truncated_gr import TruncatedGRMFD
 from openquake.hazardlib.source.non_parametric import NonParametricSeismicSource
 from openquake.hazardlib.mfd import EvenlyDiscretizedMFD
 
-from openquake.man.model import read
+from openquake.man.checking_utils.source_model_utils import read
 from openquake.mbt.tools.mfd import mag_to_mo
 from openquake.mbt.oqt_project import OQtProject
 from openquake.mbt.tools.mfd import get_evenlyDiscretizedMFD_from_truncatedGRMFD
