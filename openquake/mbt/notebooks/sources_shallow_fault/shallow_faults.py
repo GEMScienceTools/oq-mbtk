@@ -6,7 +6,7 @@ from osgeo import ogr
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.hazardlib.geo.line import Line
 
-from openquake.man.model import read
+openquake.man.checking_utils.source_model_utils import read
 from openquake.mbt.oqt_project import OQtProject, OQtSource
 from openquake.mbt.tools.utils import _get_point_list
 
