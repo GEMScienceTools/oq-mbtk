@@ -9,7 +9,7 @@ import shutil
 import unittest
 import numpy
 import openquake.man.model as model
-import openquake.man.tools.csv_output as csv
+import openquake.man.useful_scripts.csv_output_utils as csv
 from openquake.mbt.tools.mfd import EEvenlyDiscretizedMFD
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'test01')
