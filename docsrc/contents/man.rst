@@ -13,5 +13,3 @@ The second set of tools is found within `single_source_utils`, which provides ut
 
 The third set of tools is found within `utilities`, which contains general utility functions, such as for the plotting of disaggregation
 results, or the extracting of hazard curves.
-
-The fourth set of tools is found within 
