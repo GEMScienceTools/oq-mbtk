@@ -22,6 +22,7 @@ from openquake.hmtk.seismicity.selector import CatalogueSelector
 from openquake.hmtk.parsers.catalogue import CsvCatalogueParser
 from openquake.hazardlib.geo.surface.gridded import GriddedSurface
 
+from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 from openquake.mbt.tools.smooth3d import Smoothing3D
 from openquake.wkf.utils import create_folder
 from openquake.sub.misc.edge import create_from_profiles
@@ -35,20 +36,6 @@ from openquake.sub.slab.rupture_utils import (get_discrete_dimensions,
 
 
 PLOTTING = True
-
-
-def load_catalogue(catalogue_fname):
-    ext = pathlib.Path(catalogue_fname).suffix
-    if ext == '.pkl' or ext == '.p':    
-        # Load pickle file
-        cat = pickle.load(open(catalogue_fname, 'rb'))
-    elif ext == '.csv' or ext == '.hmtk':
-        # Load hmtk file
-        parser = CsvCatalogueParser(catalogue_fname)
-        cat = parser.read_file()
-        cat.sort_catalogue_chronologically()
-    
-    return cat
 
 
 def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
@@ -65,7 +52,7 @@ def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
         f.close()
     
     # Loading the catalogue
-    catalogue = load_catalogue(cat_pickle_fname)
+    catalogue = _load_catalogue(cat_pickle_fname)
     if sort_cat is True:
         catalogue.sort_catalogue_chronologically()
     
