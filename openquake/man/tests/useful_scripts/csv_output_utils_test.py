@@ -27,8 +27,7 @@ from openquake.calculators.tests import open8
 from openquake.calculators.export import export
 from openquake.calculators.base import run_calc
 
-import openquake.man.useful_scripts.csv_output as csv
-from openquake.man.useful_scripts.csv_output import mean_mde_for_gmt, mean_llt_for_gmt
+import openquake.man.useful_scripts.csv_output_utils as csv
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data_csv_output_test')
@@ -46,7 +45,7 @@ class TestMeanMDE(unittest.TestCase):
         """
         fname = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-1.csv')
         fout = 'test-1.csv'
-        mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        csv.mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
         expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_mde-1.csv')
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fout)]
@@ -59,7 +58,7 @@ class TestMeanMDE(unittest.TestCase):
         """
         fname = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-2.csv')
         fout = 'test-2.csv'
-        mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        csv.mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
         expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_mde-2.csv')
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fout)]
@@ -88,8 +87,8 @@ class TestMeanMDE(unittest.TestCase):
             shutil.copy(path1, fname1)
             shutil.copy(path2, fname2)
 
-        mean_mde_for_gmt(fname1, path1, 0.002105, 'SA(0.1)', 1e-10)
-        mean_mde_for_gmt(fname2, path2, 0.002105, 'SA(0.1)', 1e-10)
+        csv.mean_mde_for_gmt(fname1, path1, 0.002105, 'SA(0.1)', 1e-10)
+        csv.mean_mde_for_gmt(fname2, path2, 0.002105, 'SA(0.1)', 1e-10)
         expect_lines1 = [[float(j) for j in i.split()] for i in open8(path1)]
         expect_lines2 = [[float(j) for j in i.split()] for i in open8(path2)]
         expect_lines1 = np.array(expect_lines1)
@@ -103,7 +102,7 @@ class TestMeanMDE(unittest.TestCase):
         """
         fname = os.path.join(BASE_DATA_PATH, 'TRT_Lon_Lat-mean-0.csv')
         fout = 'test-1.csv'
-        mean_llt_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        csv.mean_llt_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
         expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_llt.csv')
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fout)]
