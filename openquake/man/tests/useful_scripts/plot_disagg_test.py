@@ -31,9 +31,9 @@ class TestPlotDisaggMRE(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.fname = os.path.join(base, "data_plot_disagg_test", "calc_767.hdf5")
-        cls.out_mre = os.path.join(base, "..", "..", "useful_scripts", "disagg_Mag_Dist_Eps_calc_767")
-        cls.out_mll = os.path.join(base, "..", "..", "useful_scripts", "disagg_Mag_Lon_Lat_calc_767")
-        cls.out_tll = os.path.join(base, "..", "..", "useful_scripts", "disagg_TRT_Lon_Lat_calc_767")
+        cls.out_mre = os.path.join(base, "..", "..", "utilities", "disagg_Mag_Dist_Eps_calc_767")
+        cls.out_mll = os.path.join(base, "..", "..", "utilities", "disagg_Mag_Lon_Lat_calc_767")
+        cls.out_tll = os.path.join(base, "..", "..", "utilities", "disagg_TRT_Lon_Lat_calc_767")
 
     def test_plot_disagg_MRE(self):
         """
