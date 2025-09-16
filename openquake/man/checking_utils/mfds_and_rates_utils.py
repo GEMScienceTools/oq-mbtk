@@ -24,13 +24,12 @@ from openquake.hazardlib.mfd.truncated_gr import TruncatedGRMFD
 from openquake.hazardlib.source.non_parametric import NonParametricSeismicSource
 
 from openquake.man.model import read
-from openquake.man.checking_utils.mfds_and_rates_utils import plot_mfd_cumulative, get_total_mfd
 from openquake.mbt.oqt_project import OQtProject
 from openquake.mbt.tools.mfd import get_evenlyDiscretizedMFD_from_truncatedGRMFD
 import openquake.mbt.tools.mfd as mfdt
 
 
-# MFD functions
+# MFDs
 def plot_mfd_cumulative(mfd, fig=None, label='', color=None, linewidth=1, title=''):
     aa = np.array(mfd.get_annual_occurrence_rates())
     cml = np.cumsum(aa[::-1, 1])
@@ -74,10 +73,10 @@ def get_total_mfd(sources, trt=None):
     return mfdall
 
 
-# Rates functions
+# Rates
 def get_mags_rates(source_model_fname: str, time_span: float):
     """
-    This computes the total rate for a non-paramteric source modelling the
+    This computes the total rate for a non-parameteric source modelling the
     occurrence of a single magnitude value.
 
     :param str source_model_fname:
