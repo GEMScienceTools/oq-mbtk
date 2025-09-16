@@ -45,7 +45,7 @@ from shapely.geometry import Point
 from openquake.ghm import mosaic
 from openquake.baselib import sap
 from openquake.ghm.utils import create_query
-from openquake.man.useful_scripts.csv_output_utils import _get_header1
+from openquake.man.utilities.csv_output_utils import _get_header1
 
 
 def get_poly_from_str(tstr):

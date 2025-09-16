@@ -23,7 +23,7 @@ import subprocess
 
 from openquake.baselib import sap
 
-from openquake.man.useful_scripts.csv_output_utils import (get_disagg_header_info, 
+from openquake.man.utilities.csv_output_utils import (get_disagg_header_info, 
                                                            mean_mde_for_gmt)
 
 

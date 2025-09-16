@@ -20,7 +20,7 @@ import os
 import shutil
 import unittest
 
-from openquake.man.useful_scripts.plot_3d_disagg import disagg_MRE, disagg_MLL, disagg_TLL
+from openquake.man.utilities.plot_3d_disagg import disagg_MRE, disagg_MLL, disagg_TLL
 
 
 base = os.path.dirname(__file__)
