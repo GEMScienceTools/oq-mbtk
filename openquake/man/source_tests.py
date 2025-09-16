@@ -1,15 +1,13 @@
 import os
+import pathlib
 import re
-import glob
 import numpy as np
 import pandas as pd
 import geopandas as gpd
 import pygmt
-from pathlib import Path
-import pathlib
 from scipy.stats import poisson
 from tabulate import tabulate
-import matplotlib.pyplot as plt
+
 from openquake.hazardlib.nrml import to_python
 from openquake.hazardlib.sourceconverter import SourceConverter
 
@@ -18,6 +16,7 @@ DEFAULT = SourceConverter(
 	investigation_time=1.0,
 	rupture_mesh_spacing=10.,
 	area_source_discretization=10.)
+
 
 def get_params(ssm, mmin = 0, total_for_zone = False):
 	'''
@@ -46,10 +45,11 @@ def get_params(ssm, mmin = 0, total_for_zone = False):
 		data.append([lo, la, log_rate_above, bgr, mmax])
 
 	if total_for_zone == True:  
-		#total_rate_above += 10**(agr - bgr * m_min)
+		# total_rate_above += 10**(agr - bgr * m_min)
 		return np.log10(total_rate_above_zero), bgr, mmax
 	else: 
 		return np.array(data)
+
 
 def get_params_points(ssm, mmin = 0, total_for_zone = False):
 	'''
@@ -79,14 +79,22 @@ def get_params_points(ssm, mmin = 0, total_for_zone = False):
 		data.append([lo, la, log_rate_above, bgr, mmax])
 
 	if total_for_zone == True:  
-		#total_rate_above += 10**(agr - bgr * m_min)
+		# total_rate_above += 10**(agr - bgr * m_min)
 		return np.log10(total_rate_above_zero), bgr, mmax
 	else: 
 		return np.array(data)
 
-def plot_sources(folder_name, region, mmin, fig_folder,
-				 rate_range = [-9, 3, 0.2], mmax_range = [6.0, 9.0, 0.2], 
-				 sconv = DEFAULT, poly_name = '', plot_poly = False, pointsource = False):
+
+def plot_sources(folder_name,
+				 region,
+				 mmin,
+				 fig_folder,
+				 rate_range=[-9, 3, 0.2],
+				 mmax_range=[6.0, 9.0, 0.2], 
+				 sconv=DEFAULT,
+				 poly_name='',
+				 plot_poly=False,
+				 pointsource=False):
 	'''
 	Create plots of source rates and mmax for each source in folder_name
 
@@ -113,21 +121,21 @@ def plot_sources(folder_name, region, mmin, fig_folder,
 	'''
 	path = pathlib.Path(folder_name)
 
-	# make rate and mmax folders if they do not exist
+	# Make rate and mmax folders if they do not exist
 	if os.path.exists(os.path.join(os.path.join(fig_folder, 'rate'))):
 		print("found folders at ", os.path.join(os.path.join(fig_folder, 'rate')))
 	else:
 		os.mkdir(os.path.join(fig_folder, 'rate'))
 		os.mkdir(os.path.join(fig_folder, 'mmax'))
 
-	# set up colour scales
+	# Set up colour scales
 	cpt_rate = os.path.join(fig_folder, 'rate.cpt')
 	pygmt.makecpt(cmap="turbo", series=rate_range, output=cpt_rate)
 	cpt_mmax = os.path.join(fig_folder, 'mmax.cpt')
 	pygmt.makecpt(cmap="rainbow", series=mmax_range, output=cpt_mmax)
     
 	if poly_name:
-    	# set plotting polygon
+    	# Set plotting polygon
 		poly = gpd.read_file(poly_name)
 		poly["x"] = poly.representative_point().x
 		poly["y"] = poly.representative_point().y
@@ -184,9 +192,18 @@ def plot_sources(folder_name, region, mmin, fig_folder,
 		out = os.path.join(fig_folder, 'mmax', name+'_mmax.png')
 		fig_b.savefig(out)
 
-def plot_all_sources(folder_name, region, mmin, fig_folder,
-				 rate_range = [-9, 3, 0.2], mmax_range = [6.0, 9.0, 0.2], 
-				 sconv = DEFAULT, poly_name = '', plot_poly = False, pointsource = False, plot_fname = ""):
+
+def plot_all_sources(folder_name,
+					 region,
+					 mmin,
+					 fig_folder,
+				 	 rate_range=[-9, 3, 0.2],
+					 mmax_range=[6.0, 9.0, 0.2], 
+				 	 sconv=DEFAULT,
+					 poly_name='',
+					 plot_poly=False,
+					 pointsource=False,
+					 plot_fname=""):
 	'''
 	Plots a single plot of source rates and mmax using each source in folder_name
 
@@ -213,21 +230,21 @@ def plot_all_sources(folder_name, region, mmin, fig_folder,
 	'''
 	path = pathlib.Path(folder_name)
 
-	# make rate and mmax folders if they do not exist
+	# Make rate and mmax folders if they do not exist
 	if os.path.exists(os.path.join(os.path.join(fig_folder, 'rate'))):
 		print("found folders at ", os.path.join(os.path.join(fig_folder, 'rate')))
 	else:
 		os.mkdir(os.path.join(fig_folder, 'rate'))
 		os.mkdir(os.path.join(fig_folder, 'mmax'))
 
-	# set up colour scales
+	# Set up colour scales
 	cpt_rate = os.path.join(fig_folder, 'rate.cpt')
 	pygmt.makecpt(cmap="turbo", series=rate_range, output=cpt_rate)
 	cpt_mmax = os.path.join(fig_folder, 'mmax.cpt')
 	pygmt.makecpt(cmap="rainbow", series=mmax_range, output=cpt_mmax)
     
 	if poly_name:
-    	# set plotting polygon
+    	# Set plotting polygon
 		poly = gpd.read_file(poly_name)
 		poly["x"] = poly.representative_point().x
 		poly["y"] = poly.representative_point().y
@@ -304,7 +321,16 @@ def simulate_occurrence(agr, bgr, rate, minmag, mmax, time_span, N=2000):
 	num_occ = np.random.poisson(rate*time_span, N)
 	return(num_occ)
 
-def occurence_table(path_oq_input, path_to_subcatalogues, minmag, minyear, maxyear, N, src_ids = [], sconv = DEFAULT, pointsource = False):
+
+def occurence_table(path_oq_input,
+					path_to_subcatalogues,
+					minmag,
+					minyear,
+					maxyear,
+					N,
+					src_ids=[],
+					sconv=DEFAULT,
+					pointsource=False):
 	'''
 	Check number of events expected from the source model against the number of observations.
 	Uses N samples from a Poisson distribution with rate from source a and b value.
@@ -333,8 +359,8 @@ def occurence_table(path_oq_input, path_to_subcatalogues, minmag, minyear, maxye
 	time_span = maxyear - minyear
 
 	if len(src_ids) == 0:
-    	# if source ids are not specified, take them from names of files in the specified folder
-		dir_URL = Path(path_oq_input)
+    	# If source ids are not specified, take them from names of files in the specified folder
+		dir_URL = pathlib.Path(path_oq_input)
 		filename_list = [file.name for file in dir_URL.glob("*.xml")]
 		for f in filename_list:
 			m = re.search(r'(?<=_)\w+', f)
@@ -385,6 +411,7 @@ def occurence_table(path_oq_input, path_to_subcatalogues, minmag, minyear, maxye
 	heads = ["Zone", "agr_cat", "agr", "bgr", "min", "max", "%16", "%84", "observed", "obs Vs. pred"]
 	print(tabulate(table, headers=heads))
 
+
 def source_info_table(folder_name, sconv = DEFAULT):
 	'''
 	Print a table describing the sources in this model, inclduing their ID, upper and lower depth limits,
@@ -420,9 +447,18 @@ def source_info_table(folder_name, sconv = DEFAULT):
 	print(tabulate(sdata, headers="keys", tablefmt="psql"))
 
 
-def compare_sources_plot(src1_fname, src2_fname, region, mmin, fig_folder,
-		rate_range = [-9, 3, 0.2], mmax_range = [6.0, 9.0, 0.2], 
-		sconv = DEFAULT, poly_name = '', plot_poly = False, pointsource = False, plot_fname = ""):
+def compare_sources_plot(src1_fname,
+						 src2_fname,
+						 region,
+						 mmin,
+						 fig_folder,
+						 rate_range=[-9, 3, 0.2],
+						 mmax_range=[6.0, 9.0, 0.2], 
+						 sconv=DEFAULT,
+						 poly_name='',
+						 plot_poly=False,
+						 pointsource=False,
+						 plot_fname=""):
 	'''
 	Creates a plot showing the differences between two source models. 
 	
@@ -449,13 +485,12 @@ def compare_sources_plot(src1_fname, src2_fname, region, mmin, fig_folder,
 	:param pointsource:
 		alternative where point sources are used instead of multipoint
 	'''
-
-	# set up colour scales
+	# Set up colour scales
 	cpt_rate = os.path.join(fig_folder, 'rate.cpt')
 	pygmt.makecpt(cmap="turbo", series=rate_range, output=cpt_rate)
     
 	if poly_name:
-    	# set plotting polygon
+    	# Set plotting polygon
 		poly = gpd.read_file(poly_name)
 		poly["x"] = poly.representative_point().x
 		poly["y"] = poly.representative_point().y
@@ -471,7 +506,6 @@ def compare_sources_plot(src1_fname, src2_fname, region, mmin, fig_folder,
 		data1 = get_params_points(ssm1, mmin=mmin, total_for_zone = False)
 		data2 = get_params_points(ssm2, mmin=mmin, total_for_zone = False)
 
-	#assert data1[:,0] == data2[:,0]
 	rate_diff = data1[:,2] - data2[:,2]
 	fig = pygmt.Figure()
 	fig.basemap(region=region, projection="M15c", frame=True)

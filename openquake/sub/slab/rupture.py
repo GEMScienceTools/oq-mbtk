@@ -1,27 +1,29 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 """
 Module :module:`openquake.sub.slab.rupture`
 """
 
 import os
+import pathlib
 import re
+import pickle
 import h5py
 import numpy as np
-# import pandas as pd
 import rtree
 import logging
 import configparser
-
 import matplotlib.pyplot as plt
-# from mpl_toolkits.mplot3d import Axes3D
-
-# from mayavi import mlab
 from pyproj import Proj
-# from openquake.sub.plotting.tools import plot_mesh
-# from openquake.sub.plotting.tools import plot_mesh_mayavi
 
+from openquake.baselib import sap
+from openquake.hazardlib.mfd import TruncatedGRMFD
+from openquake.hazardlib.geo.mesh import Mesh
+from openquake.hazardlib.scalerel import get_available_scalerel
+from openquake.hmtk.seismicity.selector import CatalogueSelector
+from openquake.hmtk.parsers.catalogue import CsvCatalogueParser
+from openquake.hazardlib.geo.surface.gridded import GriddedSurface
+
+from openquake.mbt.tools.smooth3d import Smoothing3D
+from openquake.wkf.utils import create_folder
 from openquake.sub.misc.edge import create_from_profiles
 from openquake.sub.quad.msh import create_lower_surface_mesh
 from openquake.sub.grid3d import Grid3d
@@ -31,19 +33,22 @@ from openquake.sub.misc.utils import (get_min_max, create_inslab_meshes,
 from openquake.sub.slab.rupture_utils import (get_discrete_dimensions,
                                               get_ruptures, get_weights)
 
-from openquake.baselib import sap
-from openquake.hazardlib.mfd import TruncatedGRMFD
-from openquake.hazardlib.geo.mesh import Mesh
-from openquake.hazardlib.scalerel import get_available_scalerel
-from openquake.hmtk.seismicity.selector import CatalogueSelector
-from openquake.hazardlib.geo.surface.gridded import GriddedSurface
-
-from openquake.mbt.tools.smooth3d import Smoothing3D
-from openquake.man.checks.catalogue import load_catalogue
-from openquake.wkf.utils import create_folder
 
 PLOTTING = True
-# PLOTTING = False
+
+
+def load_catalogue(catalogue_fname):
+    ext = pathlib.Path(catalogue_fname).suffix
+    if ext == '.pkl' or ext == '.p':    
+        # Load pickle file
+        cat = pickle.load(open(catalogue_fname, 'rb'))
+    elif ext == '.csv' or ext == '.hmtk':
+        # Load hmtk file
+        parser = CsvCatalogueParser(catalogue_fname)
+        cat = parser.read_file()
+        cat.sort_catalogue_chronologically()
+    
+    return cat
 
 
 def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
@@ -53,19 +58,18 @@ def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
     :param treg_filename:
     :param label:
     """
-    #
-    # loading TR
+    # Loading TR
     if treg_filename is not None:
         f = h5py.File(treg_filename, 'r')
         tr = f[label][:]
         f.close()
-    #
-    # loading the catalogue
+    
+    # Loading the catalogue
     catalogue = load_catalogue(cat_pickle_fname)
     if sort_cat is True:
         catalogue.sort_catalogue_chronologically()
-    #
-    # if a label and a TR are provided we filter the catalogue
+    
+    # If a label and a TR are provided we filter the catalogue
     if treg_filename is not None:
         selector = CatalogueSelector(catalogue, create_copy=False)
         catalogue = selector.select_catalogue(tr)
@@ -92,7 +96,6 @@ def smoothing(mlo, mla, mde, catalogue, hspa, vspa, fname):
         A tuple including the values on the grid provided and the smoothing
         object
     """
-
     # Create mesh with the 3D grid of points and complete the smoothing
     mesh = Mesh(mlo, mla, mde)
 
@@ -150,8 +153,7 @@ def spatial_index(smooth):
     # Create the spatial index for the grid mesh
     r = rtree.index.Index(_generator(smooth.mesh, p), properties=prop)
 
-    # Return the 3D spatial index - note that the index is in projected
-    # coordinates
+    # Return the 3D spatial index - note that the index is in projected coo
     return r, p
 
 
@@ -197,7 +199,6 @@ def create_ruptures(mfd, dips, sampling, msr, asprs, float_strike, float_dip,
     :param align:
         Profile alignment flag
     """
-
     # Create the output hdf5 file
     fh5 = h5py.File(hdf5_filename, 'a')
     grp_inslab = fh5.create_group('inslab')
