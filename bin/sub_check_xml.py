@@ -5,7 +5,7 @@ import toml
 import glob
 import numpy as np
 from openquake.baselib import sap
-from openquake.man.checks.rates import get_mags_rates
+from openquake.man.checking_utils.rates_and_mfds import get_mags_rates
 
 
 def main(xml_pattern: str, label: str, config_fname: str):

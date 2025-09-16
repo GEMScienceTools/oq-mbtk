@@ -23,8 +23,8 @@ import subprocess
 
 from openquake.baselib import sap
 
-from openquake.man.tools.csv_output import (get_disagg_header_info,
-                                            mean_llt_for_gmt)
+from openquake.man.useful_scripts.csv_output_utils import (get_disagg_header_info,
+                                                           mean_llt_for_gmt)
 
 """
 used to plot mean disaggregation by MDE results using GMT

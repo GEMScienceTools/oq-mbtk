@@ -21,7 +21,7 @@ import os
 import numpy as np
 import pandas as pd
 from glob import glob
-from openquake.man.tools.csv_output import read_hazard_curve_csv
+from openquake.man.useful_scripts.csv_output_utils import read_hazard_curve_csv
 
 
 def get_rlzs(folder):
