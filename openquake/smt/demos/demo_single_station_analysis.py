@@ -30,7 +30,7 @@ demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inp
 demo_out = os.path.join(BASE, 'outputs_demo_station_analysis')
 
 # Minimum number of records for a site to be considered in the SSA
-demo_threshold = 45
+demo_threshold = 10
 
 
 def make_database(flatfile, out_dir):
