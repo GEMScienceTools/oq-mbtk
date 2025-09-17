@@ -37,7 +37,7 @@ demo_out = os.path.join(BASE, 'outputs_demo_residual_analysis')
 
 def parse_into_metadata(flatfile, out_dir):
     """
-    Parse the flatfile into SMT ground-motion database
+    Parse the flatfile into an SMT ground-motion database
     """
     # Create new metadata directory
     metadata_dir = os.path.join(out_dir, 'metadata')
