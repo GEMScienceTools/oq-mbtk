@@ -31,6 +31,7 @@ import logging
 import configparser
 import h5py
 import pathlib
+from decimal import Decimal, getcontext
 
 from openquake.baselib import sap
 from openquake.mbt.tools.tr.catalogue import get_catalogue
@@ -41,7 +42,7 @@ from openquake.mbt.tools.tr.set_subduction_earthquakes import \
     SetSubductionEarthquakes
 
 logging.basicConfig(filename='classify.log', level=logging.DEBUG)
-
+getcontext().prec = 6 
 
 def str_to_list(tmps):
     return re.split(',', re.sub('\\s*', '', re.sub('\\[|\\]', '', tmps)))
@@ -132,11 +133,11 @@ def classify(ini_fname, compute_distances, rf=''):
             distance_buffer_below = None
             if 'distance_buffer_below' in config[key]:
                 tmps = config[key]['distance_buffer_below']
-                distance_buffer_below = float(tmps)
+                distance_buffer_below = Decimal(tmps)
             distance_buffer_above = None
             if 'distance_buffer_above' in config[key]:
                 tmps = config[key]['distance_buffer_above']
-                distance_buffer_above = float(tmps)
+                distance_buffer_above = Decimal(tmps)
             lower_depth = None
             if 'lower_depth' in config[key]:
                 lower_depth = float(config[key]['lower_depth'])
@@ -144,21 +145,22 @@ def classify(ini_fname, compute_distances, rf=''):
             if 'upper_depth' in config[key]:
                 upper_depth = float(config[key]['upper_depth'])
 
+
             # Selecting earthquakes within a time period
             low_year = -10000
             if 'low_year' in config[key]:
-                low_year = float(config[key]['low_year'])
+                low_year = Decimal(config[key]['low_year'])
             upp_year = 10000
             if 'upp_year' in config[key]:
-                upp_year = float(config[key]['upp_year'])
+                upp_year = Decimal(config[key]['upp_year'])
 
             # Selecting earthquakes within a magnitude range
             low_mag = -5
             if 'low_mag' in config[key]:
-                low_mag = float(config[key]['low_mag'])
+                low_mag = Decimal(config[key]['low_mag'])
             upp_mag = 15
             if 'upp_mag' in config[key]:
-                upp_mag = float(config[key]['upp_mag'])
+                upp_mag = Decimal(config[key]['upp_mag'])
 
             # specifying surface type
             surftype = 'ComplexFault'

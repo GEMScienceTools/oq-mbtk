@@ -98,42 +98,43 @@ Second approach
 
 The second approach proposed is simpler than the first one, but it uses directly subduction contours from Slab2.0 (Hayes et al). 
 
-1. Set-up configuration files. This approach requires an input toml file describing the locations of the Slab2.0 data files and some other input parameters as below
+  1. Set-up configuration files. This approach requires an input toml file describing the locations of the Slab2.0 data files and some other input parameters as below
 
-.. code-block:: toml
-	# Locations for strike and depth information from Slab2pt0
-	fname_str ='./slab2pt0/Slab2Distribute_Mar2018/str_grd/kur_slab2_str_02.24.18.grd'
-	fname_dep ='./slab2pt0/Slab2Distribute_Mar2018/dep_grd/kur_slab2_dep_02.24.18.grd'
-	# Spacing to use for the profiles (in km)
-	spacing = 100.0
-	# Folder to save profiles to
-	folder_out = './cs'
-	# Optional: filename to save a figure of the profiles
-	fname_fig = 'kur.png'
+    .. code-block:: toml
+
+	    # Locations for strike and depth information from Slab2pt0
+	    fname_str ='./slab2pt0/Slab2Distribute_Mar2018/str_grd/kur_slab2_str_02.24.18.grd'
+	    fname_dep ='./slab2pt0/Slab2Distribute_Mar2018/dep_grd/kur_slab2_dep_02.24.18.grd'
+	    # Spacing to use for the profiles (in km)
+	    spacing = 100.0
+	    # Folder to save profiles to
+	    folder_out = './cs'
+	    # Optional: filename to save a figure of the profiles
+	    fname_fig = 'kur.png'
 
 	
-2. Create a pickled version of your hmtk formatted catalog and make sure this is located as in your toml file::
+  2. Create a pickled version of your hmtk formatted catalog and make sure this is located as in your toml file::
 
-    > pickle_catalogue.py ./catalogues/cac.cat`
+        > pickle_catalogue.py ./catalogues/cac.cat`
 
-3. Make subduction profiles. In this approach we have two choices for creating profiles across the subduction zone. The first is an automatic procedure that defines cross-sections perpendicular to the average strike of the subduction zone with the spacing specified in the toml::
+  3. Make subduction profiles. In this approach we have two choices for creating profiles across the subduction zone. The first is an automatic procedure that defines cross-sections perpendicular to the average strike of the subduction zone with the spacing specified in the toml::
 
-    > sub_get_profiles_from_slab2pt0 <toml_fname>
+        > sub_get_profiles_from_slab2pt0 <toml_fname>
 
-Alternatively, we can manually define a set of profiles from a geojson file. This method is necessary in areas where a subduction zone is curved, because parallel profiles defined by the first approach will cross the slab at strange angles and the resulting 3D geometry will be misshapen. In this case, the geojson file should be specified in the toml with `fname_geojson` and the function to create the profiles is::
+    Alternatively, we can manually define a set of profiles from a geojson file. This method is necessary in areas where a subduction zone is curved, because parallel profiles defined by the first approach will cross the slab at strange angles and the resulting 3D geometry will be misshapen. In this case, the geojson file should be specified in the toml with `fname_geojson` and the function to create the profiles is::
 
-	>sub get_profiles_from_slab2pt0 <toml_fname>
+	     > sub get_profiles_from_slab2pt0_geojson <toml_fname>
 
-As with the first approach, you can plot maps and cross_sections with the same commands.
-4. Check the new set of traces in a map with the command::
+  4. As with the first approach, you can plot maps and cross_sections with the same commands.
+    Check the new set of traces in a map with the command::
 
-    > plot_multiple_cross_sections_map.py ./ini/central_america.ini cs_traces.cs
+        > plot_multiple_cross_sections_map.py ./ini/central_america.ini cs_traces.cs
 
-5. Create one .pdf file for each cross-section with the available information: e.g., earthquake hypocentres, focal mechanism, slab 1.0 geometry, CRUST 1.0 Moho::
+  5. Create one .pdf file for each cross-section with the available information: e.g., earthquake hypocentres, focal mechanism, slab 1.0 geometry, CRUST 1.0 Moho::
 
-    > plot_multiple_cross_sections.py cs_traces.cs
+        > plot_multiple_cross_sections.py cs_traces.cs
 
-This command will produce as many ``.pdf`` files as the number of cross-sections specified in the ``.cs`` file
+  This command will produce as many ``.pdf`` files as the number of cross-sections specified in the ``.cs`` file (which might take some time)
 
 Building the top of the slab geometry
 *************************************
@@ -144,7 +145,7 @@ This part of the procedure can be completed by running the
 
 1. Build the surface of the subduction interface using ``create_2pt5_model.py``. The input information in this case is:
 
-    - The name of the folder ``<cs_folder>`` containing the ``cs_`` files created using either the procedure described in the `first approach`_ or `first approach`_ section;
+    - The name of the folder ``<cs_folder>`` containing the ``cs_`` files created using either the procedure described in the `first approach`_ or `second approach`_ section;
     - The output profile folder ``<profile_folder>``;
     - The maximum sampling distance along a trace [km];
 
@@ -179,19 +180,35 @@ The ``create_2pt5_model.py`` code produces a set of profiles and edges (i.e. .cs
 
 1. Create a configuration file that describes the tectonic environments
 
-The configuration file specifies the geometry of surfaces, along with buffer regions, that are used as references for each tectonic environment, and the catalogue to be classified. Additionally, the configuration includes a ``priority list`` that indicates how hypocenters that can occur in overlapping buffer regions should be labeled. An example configuration file is shown below. The format of the configuration is as follows.
-  
-The ``[general]`` section, which includes:
-    - the directory ``distance_folder`` where the Euclidean distance between each hypocenter and surface will be stored (NB: with the first method this folder must be manually created by the user, but using the second approach it will be automatically created when making the profiles)
-    - an .hdf5 file ``treg_filename`` that will store the results of the classfication
-    - the .pkl file ``catalogue_filename``, which is the pickeled catalogue in HMTK format to be classified. 
-    - an array ``priority`` lists the tectonic regions, sorting the labels in the order of increasing priority, and a later label overrides classification of a hypocenter to a previous label. For example, in the configuration file shown below, an earthquake that could be classified as both ``crustal`` and ``int_prt`` will be labeled as ``int_prt``.
+The configuration file specifies the geometry of surfaces, along with buffer regions, that are used as references for each tectonic environment, and the catalogue to be classified. Additionally, the configuration includes a ``priority list`` that indicates how hypocenters that can occur in overlapping buffer regions should be labeled. An example configuration file is shown below. The format of the configuration is as follows.  
 
-A geometry section for each labelled tectonic environment in the ``priority`` list in ``[general]``. The labels should each contain one of the following four strings, which indicate the way that the surface will be used for classification. 
+* The ``[general]`` section, which includes the following sections:
 
+  * the directory ``distance_folder`` where the Euclidean distance between each hypocenter and surface will be stored (NB: with the first method this folder must be manually created by the user, but using the second approach it will be automatically created when making the profiles)
 
-    - ``int`` or ``slab``: These strings indicate a surface related to subduction or similar. They require at least four configurations: (1) ``label``, which will be used by ``treg_filename`` to indicate which earthquakes correspond to the given tectonic environment; (2) ``folder``, which gives the relative path to the directory (see Step 2) with the geometry .csv files created by ``create_2pt5_model`` for the given surface; and (3) ``distance_buffer_above`` and (4) ``distance_buffer_below``, which are the upper limits of Euclidean distances used to classify hypocenters above or below the surface to the respective tectonic environment. A user can additionally specify ``lower depth`` to bound the surface and buffer region, and ``low_year``, ``upp_year``,  ``low_mag``, and ``upp_mag`` to to select only from a given time period or magnitude range. These latter options are useful when hypocenters from a given bracket are known to include major assumptions, such as when historical earthquake are assigned a depth of 0 km. 
-    - ``crustal`` or ``volcanic``: These strings indicate a surface against which the classification compares the relative position of a hypocenter laterally and vertically, for example to isolate crustal or volcanic earthquakes. They require two configurations: (1) ``crust_filename``, which is a tab-delimited .xyz file listing longitude, latitude, and depth (as a negative value), which indicates the lateral extent of the tectonic environment and the depths above which all earthquakes should be classified to the respective tectonic environment; and (2) ``distance_delta``, which specifies the vertical depth below a surface to be used as a buffer region.
+  * an .hdf5 file ``treg_filename`` that will store the results of the classfication
+
+  * the .pkl file ``catalogue_filename``, which is the pickeled catalogue in HMTK format to be classified. 
+
+  * an array ``priority`` lists the tectonic regions, sorting the labels in the order of increasing priority, and a later label overrides classification of a hypocenter to a previous label. For example, in the configuration file shown below, an earthquake that could be classified as both ``crustal`` and ``int_prt`` will be labeled as ``int_prt``.
+
+* A geometry section for each labelled tectonic environment in the ``priority`` list in ``[general]``. The labels should each contain one of the following four strings, which indicate the way that the surface will be used for classification. 
+
+  * ``int`` or ``slab``: These strings indicate a surface related to subduction or similar. They require at least four configurations:
+
+    #. ``label``, which will be used by ``treg_filename`` to indicate which earthquakes correspond to the given tectonic environment; 
+
+    #. ``folder``, which gives the relative path to the directory (see Step 2) with the geometry .csv files created by ``create_2pt5_model`` for the given surface; and 
+
+    #. ``distance_buffer_above`` and 
+
+    #. ``distance_buffer_below``, which are the upper limits of Euclidean distances used to classify hypocenters above or below the surface to the respective tectonic environment. A user can additionally specify ``lower depth`` to bound the surface and buffer region, and ``low_year``, ``upp_year``,  ``low_mag``, and ``upp_mag`` to to select only from a given time period or magnitude range. These latter options are useful when hypocenters from a given bracket are known to include major assumptions, such as when historical earthquake are assigned a depth of 0 km. 
+        
+  * ``crustal`` or ``volcanic``: These strings indicate a surface against which the classification compares the relative position of a hypocenter laterally and vertically, for example to isolate crustal or volcanic earthquakes. They require two configurations.
+
+    #. ``crust_filename``, which is a tab-delimited .xyz file listing longitude, latitude, and depth (as a negative value), which indicates the lateral extent of the tectonic environment and the depths above which all earthquakes should be classified to the respective tectonic environment; and 
+
+    #. ``distance_delta``, which specifies the vertical depth below a surface to be used as a buffer region.
 
  
 .. code-block:: ini
@@ -227,7 +244,8 @@ A geometry section for each labelled tectonic environment in the ``priority`` li
     folder = ./sfc_sl
     distance_buffer_above = 30.
     distance_buffer_below = 30.
-    
+    ...
+
 
 
 2. Run the classification 
@@ -236,9 +254,7 @@ The classification algorithm is run using the following command::
 
     > cat_classify.py <configuration_file> <distance_flag> 
 
-Where:
-    - ``configuration_file`` is the name of the .ini configuration file 
-    - ``distance_flag`` is a flag indicating whether or not the distances to surfaces must be computed (i.e. *True* is used the first time a classification is run for a set of surfaces and tectonic environments, but *False* when only the buffer and delta distances are changed)
+Where ``configuration_file`` is the name of the .ini configuration file and ``distance_flag`` is a flag indicating whether or not the distances to surfaces must be computed (i.e. *True* is used the first time a classification is run for a set of surfaces and tectonic environments, but *False* when only the buffer and delta distances are changed)
 
 3. Check event classifications with::
 
@@ -248,19 +264,20 @@ Which will plot the 3D geometry with the events coloured by their classification
 It may be necessary to manually classify some events (e.g. where the literature supports an event being in the slab despite it being very shallow etc.). Events can be manually re-classified using::
 
 	> ccl change_class cat.pkl classified.hdf5 eqlist.csv
-	
-where eqlist is a csv with eventIDs to be reassigned and the required classifications. 
+
+where ``eqlist`` is a csv with eventIDs to be reassigned and the required classifications. 
 
 4. Separate the classified events into subcatalogues
 
-The user must decide the exact way in which they would like to separate the classified events into subcatalogues for each tectonic environment. For example, one may want to decluster the entire catalogue before separating the events, or to decluster each tectonic environment separately. To create subcatalogues based on the classifications, the function `create_sub_catalogues` can be used::
+The user must decide the exact way in which they would like to separate the classified events into subcatalogues for each tectonic environment. For example, one may want to decluster the entire catalogue before separating the events, or to decluster each tectonic environment separately. To create subcatalogues based on the classifications, the function ``create_sub_catalogues`` can be used::
     
     > ccl create_sub_catalogues cat.pkl classified.hdf5 -p subcats_folder
- 
- which will create subcatalogues with each label found in `classified.hdf5` which are in turn those supplied in the classification ini. These catalogues will be stored in the specified subcats_folder. 
-Further, these catalogues can be declustered using the `decluster_multiple_TR` function. This function takes its own toml file (decluster.toml) that specifies the different subcatalogues that should be declustered together and the declustering algorithms from within the OQ engine to use, along with the necessary parameters. For example:
 
-.. code-block:: toml
+which will create subcatalogues with each label found in ``classified.hdf5`` which are in turn those supplied in the classification ini. These catalogues will be stored in the specified subcats_folder. 
+
+Further, these catalogues can be declustered using the ``decluster_multiple_TR`` function. This function takes its own toml file (``decluster.toml``) that specifies the different subcatalogues that should be declustered together and the declustering algorithms from within the OQ engine to use, along with the necessary parameters. 
+
+.. code-block:: ini
 	
 	[main]
 
@@ -352,64 +369,71 @@ The construction of subduction inslab sources involves the creation of `virtual 
     uniform_fraction = 1.0
 
     # magnitude scaling relationship 
-    mag_scaling_relation = StrasserIntraslab
+    mag_scaling_relation = StrasserIntraslab  
 
- The MFD parameters should be set by the modeller and determined from some combination of the seismicity and tectonics. The `mmin` parameter defines the lower magnitude limit at which to generate slab ruptures. A lower `mmin` will result in many more smaller ruptures which will increase the size of the rupture object, so this parameter should be chosen carefully considering the size of ruptures at slab locations that might be relevant for hazard.  
+``profile_sd_topsl`` and ``edge_sd_topsl`` specify the profile and edge sampling distances for the mesh describing the slab. These parameters should be set by the modeller to balance the availability of data and the computational size of the problem.  
+
+The MFD parameters should be set by the modeller and determined from some combination of the seismicity and tectonics. The ``mmin`` parameter defines the lower magnitude limit at which to generate slab ruptures. A lower ``mmin`` will result in many more smaller ruptures which will increase the size of the rupture object, so this parameter should be chosen carefully considering the size of ruptures at slab locations that might be relevant for hazard.  
  
-The `sampling` parameter determines the spatial sampling to be used when simulating ruptures. The `float_strike` and `float_dip` parameters specify the strike and dip for floating ruptures, while the list of `dips` instead specifies dip angles used when creating virtual faults inside the rupture.
+The ``sampling`` parameter determines the spatial sampling to be used when simulating ruptures. The ``float_strike`` and ``float_dip`` parameters specify the strike and dip for floating ruptures, while the list of ``dips`` instead specifies dip angles used when creating virtual faults inside the rupture.
 
-The `uniform_fraction` determines the percentage of the ruptures to be uniformly distributed across the slab. A higher uniform fraction means that the distribution of ruptures will be randomly uniform, and a lower uniform fraction means that a larger percentage of ruptures will instead be distributed according to the smoothed distribution of seismicity in the slab.  
+The ``uniform_fraction`` determines the percentage of the ruptures to be uniformly distributed across the slab. A higher uniform fraction means that the distribution of ruptures will be randomly uniform, and a lower uniform fraction means that a larger percentage of ruptures will instead be distributed according to the smoothed distribution of seismicity in the slab. ``hspa`` and ``vspa`` refer to the horizontal and vertical spacing to be used in the smoothing. 
 
 Ruptures can be created using::
 
 	> calculate_ruptures ini_fname out_hdf5_fname out_hdf5_smoothing_fname
 
-which will create two hdf5 files with the different ruptures. We then need to process these into xml files, which we can do using::
+where ``ini_fname`` is the name of our slab ini (example above). This will create two hdf5 files with the different ruptures. We then need to process these into xml files, which we can do using::
 
 	> create_inslab_nrml(model, out_hdf5_fname, out_path, investigation_t = 1)
 
-You can plot the 3D model of the subduction zone with ruptures as below:
+You can plot the 3D model of the subduction zone with ruptures as below.
 
-.. code-block:plot_ruptures
-xml_fname = "/home/kbayliss/projects/force/code/Pacific_Jan24/mariana_April24/xml/mar_newrup_unif/6.55.xml"
-ssm = to_python(xml_fname)
+.. code-block:: python3
 
-hy_lo, hy_la, hy_d = [],[],[]
-mags = []
-rates = []
-for sg in ssm:
-    for src in sg:
-        for rup in src.data:
-            h = rup[0].hypocenter
-            hy_lo.append(h.longitude); hy_la.append(h.latitude); hy_d.append(-h.depth)
-            mags.append(rup[0].mag)
-            prob1 = rup[1].data[1][0]
-            rate = -1*np.log(1-prob1)
-            rates.append(rate)
+	xml_fname = "./xml/mar_newrup_unif/6.55.xml"
+	ssm = to_python(xml_fname)
 
-df = pd.DataFrame({'lons': hy_lo, 'lats': hy_la, 'depth': hy_d, 'mag': mags, 'rate': rates})
+	hy_lo, hy_la, hy_d = [],[],[]
+	mags = []
+	rates = []
+	for sg in ssm:
+    	for src in sg:
+            for rup in src.data:
+                h = rup[0].hypocenter
+                hy_lo.append(h.longitude); hy_la.append(h.latitude); hy_d.append(-h.depth)
+                mags.append(rup[0].mag)
+                prob1 = rup[1].data[1][0]
+                rate = -1*np.log(1-prob1)
+                rates.append(rate)
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(df.lons, df.lats, df.depth, c=df.rate)
-plt.show()
+    df = pd.DataFrame({'lons': hy_lo, 'lats': hy_la, 'depth': hy_d, 'mag': mags, 'rate': rates})
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(df.lons, df.lats, df.depth, c=df.rate)
+    plt.show()  
 	
-This process will create xml files for each magnitude bin, which is a little impractical. To combine these, we can do the following::
+This process will create xml files for each magnitude bin, which is a little impractical. To combine these, we can do the following.
 
-path1 = glob.glob('./xml/mar_newrup/*.xml')
-data_all = []
-for p in path1: 
-    ssm = to_python(p)
-    for sg in ssm:
-        for src in sg:
-            print(len(src.data))
-            data_all.extend(src.data)
-src.data = data_all 
-src.name = 'ruptures for src_slab'
-src.source_id = 'src_slab'
+.. code-block:: python3
 
-write_source_model('./xml/mar_newrup/slab.xml', [src], investigation_time=1.0) 
+    path1 = glob.glob('./xml/mar_newrup/*.xml')
+    data_all = []
+    for p in path1: 
+        ssm = to_python(p)
+        for sg in ssm:
+            for src in sg:
+                print(len(src.data))
+                data_all.extend(src.data)
+    src.data = data_all 
+    src.name = 'ruptures for src_slab'
+    src.source_id = 'src_slab'
 
-Which creates a single `slab.xml` file containing all the ruptures across all magnitude bins. This file can then be used directly in OQ as a non-parametric rupture source. 
-See the process in more detail in this notebook
+    write_source_model('./xml/mar_newrup/slab.xml', [src], investigation_time=1.0) 
+
+Which creates a single ``slab.xml`` file containing all the ruptures across all magnitude bins. This file can then be used directly in OQ as a non-parametric rupture source. You will need to include both the final xml and hdf5 files in the source folder of your model. 
+
+As with other functions in the mbtk, these commands can also be run directly from the command line.
+
 
