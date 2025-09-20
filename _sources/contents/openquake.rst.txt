@@ -1,0 +1,40 @@
+openquake package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.aft
+   openquake.bin
+   openquake.cat
+   openquake.fnm
+   openquake.ghm
+   openquake.man
+   openquake.mbi
+   openquake.mbt
+   openquake.plt
+   openquake.smt
+   openquake.sub
+   openquake.wkf
+
+Submodules
+----------
+
+openquake.utils module
+----------------------
+
+.. automodule:: openquake.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake
+   :members:
+   :undoc-members:
+   :show-inheritance:

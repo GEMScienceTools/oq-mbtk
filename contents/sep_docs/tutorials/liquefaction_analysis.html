@@ -1,0 +1,512 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial: Calculating liquefaction probabilities from a single earthquake &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="SSC workflow (wkf) module" href="../../wkf.html" />
+    <link rel="prev" title="Tutorial: Preparing site data for liquefaction analysis with the OQ-MBTK" href="liq_site_prep.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            OpenQuake Model Building Toolkit Suite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ghm.html">Global Hazard Map (ghm) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../smt.html">Strong-Motion Tools (smt) module</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../sep.html">Secondary Perils Analysis using the OQ-MBTK</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../sep_models.html">Liquefaction and Landslide models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../liquefaction_data_prep.html">Site characterization for probabilistic liquefaction analysis</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="sep_tutorials.html">Tutorials for using the OQ-MBTK for analysis of secondary perils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="liq_site_prep.html">Tutorial: Preparing site data for liquefaction analysis with the OQ-MBTK</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Tutorial: Calculating liquefaction probabilities from a single earthquake</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Liquefaction-probabilities-using-the-HAZUS-model">Liquefaction probabilities using the HAZUS model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Liquefaction-probabilities-using-the-model-from-Zhu-et-al.-(2015)">Liquefaction probabilities using the model from Zhu et al. (2015)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Comparison">Comparison</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Lateral-spreading-displacements">Lateral spreading displacements</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../wkf.html">SSC workflow (wkf) module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">OpenQuake Model Building Toolkit Suite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../sep.html">Secondary Perils Analysis using the OQ-MBTK</a></li>
+          <li class="breadcrumb-item"><a href="sep_tutorials.html">Tutorials for using the OQ-MBTK for analysis of secondary perils</a></li>
+      <li class="breadcrumb-item active">Tutorial: Calculating liquefaction probabilities from a single earthquake</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/contents/sep_docs/tutorials/liquefaction_analysis.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Tutorial:-Calculating-liquefaction-probabilities-from-a-single-earthquake">
+<h1>Tutorial: Calculating liquefaction probabilities from a single earthquake<a class="headerlink" href="#Tutorial:-Calculating-liquefaction-probabilities-from-a-single-earthquake" title="Link to this heading"></a></h1>
+<p>The OQ-MBTK has several models for calculating the probabilities of liquefaction and the displacements from liquefaction-induced lateral spreading given the magnitude of an earthquake, the Peak Ground Acceleration (PGA) at each site, and the susceptibility of each site to liquefaction (which is based on local geotechnical characteristics and a soil wetness variable or proxy).</p>
+<p>These functions are quite easy to use and the calculations are very rapid.</p>
+<p>Functionality for calculating these probabilities and displacements given a large number of earthquakes is being implemented in the OQ-Engine, but is not yet available. However, the functions below are easily incorporated into a script that can iterate over the results of an event-based PSHA, though this will not be demonstrated here.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import pandas as pd
+import matplotlib.pyplot as plt
+
+from openquake.sep.liquefaction import (
+    zhu_liquefaction_probability_general,
+    hazus_liquefaction_probability
+)
+
+from openquake.sep.liquefaction.lateral_spreading import (
+    hazus_lateral_spreading_displacement
+)
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>sites = pd.read_csv(&quot;./tutorial_data/liquefaction_sites.csv&quot;)
+
+sites.head()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>lon</th>
+      <th>lat</th>
+      <th>unit</th>
+      <th>susc_cat</th>
+      <th>gwd</th>
+      <th>vs30</th>
+      <th>cti</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-76.540896</td>
+      <td>3.350158</td>
+      <td>TQplp</td>
+      <td>n</td>
+      <td>3.0</td>
+      <td>425.0</td>
+      <td>4.287466</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-76.544763</td>
+      <td>3.350644</td>
+      <td>TQplp</td>
+      <td>n</td>
+      <td>3.0</td>
+      <td>425.0</td>
+      <td>3.614118</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-76.528079</td>
+      <td>3.346550</td>
+      <td>TQplp</td>
+      <td>n</td>
+      <td>3.0</td>
+      <td>425.0</td>
+      <td>5.328922</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>-76.529860</td>
+      <td>3.356627</td>
+      <td>TQplp</td>
+      <td>n</td>
+      <td>3.0</td>
+      <td>425.0</td>
+      <td>6.514543</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-76.527918</td>
+      <td>3.351601</td>
+      <td>TQplp</td>
+      <td>n</td>
+      <td>3.0</td>
+      <td>425.0</td>
+      <td>6.139852</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>event_mag = 7.2
+
+event_pga = pd.read_csv(&quot;./tutorial_data/example_pga.csv&quot;)
+
+event_pga.head()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>lon</th>
+      <th>lat</th>
+      <th>pga</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-76.540896</td>
+      <td>3.350158</td>
+      <td>0.321998</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-76.544763</td>
+      <td>3.350644</td>
+      <td>0.390889</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-76.528079</td>
+      <td>3.346550</td>
+      <td>0.378206</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>-76.529860</td>
+      <td>3.356627</td>
+      <td>0.410492</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-76.527918</td>
+      <td>3.351601</td>
+      <td>0.287797</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<section id="Liquefaction-probabilities-using-the-HAZUS-model">
+<h2>Liquefaction probabilities using the HAZUS model<a class="headerlink" href="#Liquefaction-probabilities-using-the-HAZUS-model" title="Link to this heading"></a></h2>
+<p>The HAZUS model calculates the probabilities of liquefaction given the magnitude and PGA of an earthquake, the liquefaction category of the site, and the depth to groundwater at that site.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>hazus_liq_prob = hazus_liquefaction_probability(pga=event_pga[&quot;pga&quot;], mag=event_mag,
+                                                liq_susc_cat=sites[&quot;susc_cat&quot;],
+                                                groundwater_depth=sites[&quot;gwd&quot;])
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10,10))
+
+
+plt.axis(&#39;equal&#39;)
+
+plt.scatter(sites.lon, sites.lat, s=5, c=hazus_liq_prob)
+
+plt.colorbar(label=&#39;Probability of liquefaction (HAZUS model)&#39;)
+
+plt.title(&#39;Example liquefaction probabilities for Cali, Colombia&#39;)
+plt.xlabel(&#39;Longitude&#39;)
+plt.ylabel(&#39;Latitude&#39;)
+
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_sep_docs_tutorials_liquefaction_analysis_8_0.png" src="../../../_images/contents_sep_docs_tutorials_liquefaction_analysis_8_0.png" />
+</div>
+</div>
+</section>
+<section id="Liquefaction-probabilities-using-the-model-from-Zhu-et-al.-(2015)">
+<h2>Liquefaction probabilities using the model from Zhu et al. (2015)<a class="headerlink" href="#Liquefaction-probabilities-using-the-model-from-Zhu-et-al.-(2015)" title="Link to this heading"></a></h2>
+<p>The liquefaction probability model by Zhu et al (2015) is based on a multivariate logistic regression. The dependent variables are the magnitude and PGA from an earthquake, and the Vs30 and Compound topographic Index (CTI) at each site.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>zhu_liq_prob = zhu_liquefaction_probability_general(pga=event_pga[&quot;pga&quot;], mag=event_mag,
+                                                    cti=sites[&quot;cti&quot;], vs30=sites[&quot;vs30&quot;])
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10,10))
+
+plt.axis(&#39;equal&#39;)
+
+plt.scatter(sites.lon, sites.lat, s=5, c=zhu_liq_prob)
+
+plt.colorbar(label=&#39;Probability of liquefaction (Zhu model)&#39;)
+
+plt.title(&#39;Example liquefaction probabilities for Cali, Colombia&#39;)
+plt.xlabel(&#39;Longitude&#39;)
+plt.ylabel(&#39;Latitude&#39;)
+
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_sep_docs_tutorials_liquefaction_analysis_12_0.png" src="../../../_images/contents_sep_docs_tutorials_liquefaction_analysis_12_0.png" />
+</div>
+</div>
+</section>
+<section id="Comparison">
+<h2>Comparison<a class="headerlink" href="#Comparison" title="Link to this heading"></a></h2>
+<p>The liquefaction models here are based on different types of data and were developed quite intependently. It is instructive to compare them.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10,10))
+
+plt.axis(&#39;equal&#39;)
+
+plt.scatter(sites.lon, sites.lat, s=5,
+            c=zhu_liq_prob-hazus_liq_prob,
+            vmin=-1., vmax=1.,
+            cmap=&#39;RdBu_r&#39;)
+
+plt.colorbar(label=&#39;Liquefaction prob. difference (Zhu - Hazus)&#39;)
+
+plt.title(&#39;Comparison of liquefaction probabilities for Cali, Colombia&#39;)
+plt.xlabel(&#39;Longitude&#39;)
+plt.ylabel(&#39;Latitude&#39;)
+
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_sep_docs_tutorials_liquefaction_analysis_15_0.png" src="../../../_images/contents_sep_docs_tutorials_liquefaction_analysis_15_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10,10))
+
+plt.axis(&#39;equal&#39;)
+plt.scatter(hazus_liq_prob, zhu_liq_prob, c=event_pga[&quot;pga&quot;])
+
+plt.plot([0,1],[0,1], &#39;k--&#39;, lw=0.5)
+
+plt.title(&#39;Example liquefaction probabilities for Cali, Colombia&#39;)
+plt.xlabel(&#39;Hazus liquefaction probability&#39;)
+plt.ylabel(&#39;Zhu liquefaction probability&#39;)
+
+
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_sep_docs_tutorials_liquefaction_analysis_16_0.png" src="../../../_images/contents_sep_docs_tutorials_liquefaction_analysis_16_0.png" />
+</div>
+</div>
+<p>It is clear from these plots that the two liquefaction models produce highly discrepant results. This is a warning that they should be implemented with caution, and calibrated on a local to regional level if at all possible. Both models may be calibrated by adjusting the coefficents for each variable relating soil strength and wetness to liquefaction.</p>
+<p>Unfortunately, the tools for these calibrations are not implemented in the MBTK, although the functions used internally in the MBTK may accept modified coefficients.</p>
+</section>
+<section id="Lateral-spreading-displacements">
+<h2>Lateral spreading displacements<a class="headerlink" href="#Lateral-spreading-displacements" title="Link to this heading"></a></h2>
+<p>Displacements due to lateral spreading associated with liquefaction can be calculated given the earthquake’s PGA, magnitude, and the liquefaction susceptibility of each site. The model currently implemented is from HAZUS.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>hazus_displacements = hazus_lateral_spreading_displacement(event_mag, event_pga[&quot;pga&quot;], sites[&quot;susc_cat&quot;])
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10,10))
+plt.axis(&#39;equal&#39;)
+
+plt.scatter(sites.lon, sites.lat, s=5,
+            c=hazus_displacements,
+            )
+
+plt.colorbar(label=&#39;Displacements from Lateral Spreading (m)&#39;)
+
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_sep_docs_tutorials_liquefaction_analysis_21_0.png" src="../../../_images/contents_sep_docs_tutorials_liquefaction_analysis_21_0.png" />
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="liq_site_prep.html" class="btn btn-neutral float-left" title="Tutorial: Preparing site data for liquefaction analysis with the OQ-MBTK" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../wkf.html" class="btn btn-neutral float-right" title="SSC workflow (wkf) module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-2022, GEM Hazard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
