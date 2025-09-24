@@ -93,9 +93,9 @@ class Configurations(object):
             self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
             if self.ztor != -999 and len(self.mags_eucl) != len(self.ztor):
                 raise ValueError(
-                    "If specifying ZTOR values (i.e. ZTOR != -999), the number of" \
-                    "ZTOR values must equal the number of magnitude values specified"
-                    "in the euclidean_analysis key of the input toml.")
+                    f"If specifying ZTOR values (i.e. ZTOR != -999), the number of " \
+                    f"ZTOR values must equal the number of magnitude values specified "
+                    f"in the euclidean_analysis key ({len(self.mags_eucl)} mag values).")
             
         # Get imts
         self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
@@ -207,7 +207,7 @@ class Configurations(object):
 
         # Assign depth to each mag in mag_array using rounded mags
         depths_euclidean = []
-        for idx_mag, rounded_mag in enumerate(mag_to_nearest_int):
+        for rounded_mag in mag_to_nearest_int:
             for idx, mag in enumerate(depths_for_euclidean['mag']):
                 if rounded_mag == mag:
                     depth_to_store = depths_for_euclidean['depth'][idx]
