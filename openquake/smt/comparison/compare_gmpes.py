@@ -200,7 +200,7 @@ class Configurations(object):
         depth_per_mag = pd.DataFrame(
             config_file['euclidean_analysis']['depths_for_euclidean'], columns=['mag','depth'])
         
-        # Assign the depth to each mag in mags_eucl based on closest mag
+        # Assign the depth to each mag in mags_eucl based on closest mag in depth_per_mag
         depths_eucl = np.zeros(len(mags_eucl)) 
         for idx_mag, mag in enumerate(mags_eucl):
             closest = (np.abs(depth_per_mag['mag'] - mag)).idxmin()
