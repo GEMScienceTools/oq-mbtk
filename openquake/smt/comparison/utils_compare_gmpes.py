@@ -517,12 +517,9 @@ def compute_matrix_gmpes(config, mtxs_type):
             
                 gmm = mgmpe_check(gmpe)
 
-                # Get depth params
+                # Get depth param
                 depth_g = dep_list[l] 
-                if config.ztor != -999:
-                    ztor_g = config.ztor[l]
-                else:
-                    ztor_g = None
+                ztor_g = None # No hypo depth constraint for euclidean analyses
 
                 # Get rupture params
                 strike_g, dip_g, aratio_g = get_rup_pars(config.strike,
