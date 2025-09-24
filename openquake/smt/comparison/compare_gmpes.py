@@ -193,27 +193,20 @@ class Configurations(object):
         """
         # Make array of the magnitudes
         mag_params = config_file['euclidean_analysis']
-        mags_euclidean = np.arange(
+        mags_eucl = np.arange(
             mag_params['mmin'], mag_params['mmax'], mag_params['spacing'])
 
-        # Create dataframe of depth to assign per mag bin
-        depths_for_euclidean = pd.DataFrame(config_file[
-            'euclidean_analysis']['depths_for_euclidean'], columns=['mag','depth'])
-                
-        # Round each mag in mag_array to closest integer
-        mag_to_nearest_int = pd.Series(dtype='float')
-        for mag in mags_euclidean:
-            mag_to_nearest_int[mag] = np.round(mag+0.001)
-
-        # Assign depth to each mag in mag_array using rounded mags
-        depths_euclidean = []
-        for rounded_mag in mag_to_nearest_int:
-            for idx, mag in enumerate(depths_for_euclidean['mag']):
-                if rounded_mag == mag:
-                    depth_to_store = depths_for_euclidean['depth'][idx]
-                    depths_euclidean.append(depth_to_store)
+        # Get depths per mag value
+        depth_per_mag = pd.DataFrame(
+            config_file['euclidean_analysis']['depths_for_euclidean'], columns=['mag','depth'])
         
-        return  mags_euclidean, pd.Series(depths_euclidean)
+        # Assign the depth to each mag in mags_eucl based on closest mag
+        depths_eucl = np.zeros(len(mags_eucl)) 
+        for idx_mag, mag in enumerate(mags_eucl):
+            closest = (np.abs(depth_per_mag['mag'] - mag)).idxmin()
+            depths_eucl[idx_mag] = depth_per_mag.loc[closest, 'depth']
+       
+        return  mags_eucl, pd.Series(depths_eucl)
 
 
 def plot_trellis(filename, output_directory):
