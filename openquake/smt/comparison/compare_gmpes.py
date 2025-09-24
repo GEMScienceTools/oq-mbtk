@@ -91,7 +91,12 @@ class Configurations(object):
         if "euclidean_analysis" in config_file:
             self.mags_eucl, self.depths_eucl = self.get_eucl_mags_deps(config_file)
             self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
-
+            if self.ztor != -999 and len(self.mags_eucl) != len(self.ztor):
+                raise ValueError(
+                    "If specifying ZTOR values (i.e. ZTOR != -999), the number of" \
+                    "ZTOR values must equal the number of magnitude values specified"
+                    "in the euclidean_analysis key of the input toml.")
+            
         # Get imts
         self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
 
