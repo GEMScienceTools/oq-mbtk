@@ -5,6 +5,9 @@ import os
 import re
 import toml
 import copy
+import h5py
+import pandas as pd
+import numpy as np
 from openquake.baselib import sap
 from openquake.mbt.tools.model_building.dclustering import decluster
 
@@ -55,7 +58,6 @@ def main(config_fname, *, root=None):
         default is the current working directory
 
 
-    
     """
 
     if root is None:
@@ -65,7 +67,7 @@ def main(config_fname, *, root=None):
     config = toml.load(config_fname)
 
     fname_cat = os.path.join(root, config['main']['catalogue'])
-    fname_reg = os.path.join(root, config['main']['tr_file'])
+    trname = config['main']['tr_file']
     fname_out = os.path.join(root, config['main']['output'])
 
     create_sc = config['main']['create_subcatalogues']
@@ -73,7 +75,21 @@ def main(config_fname, *, root=None):
     add_deflt = config['main']['catalogue_add_defaults']
 
     assert os.path.exists(fname_cat)
+
+    if trname  == 'None':
+        fname_reg = 'tmp_cls.hdf5'
+        df = pd.read_csv(fname_cat); numev = len(df)
+        cr = np.full((numev), True, dtype=bool)
+        treg = {}
+        treg['crustal'] = cr
+        f = h5py.File(fname_reg, "w")
+        f.create_dataset('crustal', data=treg['crustal'])
+        f.close()
+    else:
+        fname_reg = os.path.join(root, trname)
+
     assert os.path.exists(fname_reg)
+
     if not os.path.exists(fname_out):
         os.makedirs(fname_out)
 

@@ -23,8 +23,11 @@ from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.geo.nodalplane import NodalPlane
 from openquake.hazardlib.tom import PoissonTOM
-from openquake.hazardlib.scalerel import get_available_magnitude_scalerel
 
+
+MSRS = {
+    msr.__class__.__name__: msr for msr in get_available_magnitude_scalerel()
+}
 
 def _get_nodal_plane_distribution(data):
     out = []
@@ -96,10 +99,9 @@ def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
         if not settings:
 
             trt = srcd['tectonic_region_type']
-
             msr_str = model['msr'][trt]
-            msrs = get_available_magnitude_scalerel()
-            msr = msrs[msr_str]()
+            
+            msr = MSRS[msr_str]
 
             key = 'rupture_aspect_ratio'
             rar = get_param(srcd, model['default'], key)
@@ -133,10 +135,10 @@ def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
 
     # Write output file
     fname_out = os.path.join(folder_out, 'src_{:s}.xml'.format(src_id))
-    write_source_model(fname_out, [srcmp], 'Zone {:s}'.format(src_id))
+    write_source_model(fname_out, [srcmp], 'zone_{:s}'.format(src_id))
 
 
-def write_as_set_point_sources(df, model, src_id, module, subzones,
+def write_as_set_point_sources(df, model, src_id, subzones,
                                model_subz, mmin, bwid, rms, tom, folder_out):
 
     srcd = model['sources'][src_id]
@@ -156,8 +158,8 @@ def write_as_set_point_sources(df, model, src_id, module, subzones,
         trt = srcd['tectonic_region_type']
 
         msr_str = model['msr'][trt]
-        msrs = get_available_magnitude_scalerel()
-        msr = msrs[msr_str]()
+        msr = MSRS[msr_str]
+        
 
         # Get mmax and set the MFD
         mmx = srcd['mmax']
@@ -191,7 +193,7 @@ def write_as_set_point_sources(df, model, src_id, module, subzones,
 
     # Write output file
     fname_out = os.path.join(folder_out, 'src_{:s}.xml'.format(src_id))
-    write_source_model(fname_out, srcs, 'Zone {:s}'.format(src_id))
+    write_source_model(fname_out, srcs, 'zone_{:s}'.format(src_id))
 
 
 def create_nrml_sources(fname_input_pattern: str, fname_config: str,
@@ -218,7 +220,6 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
         model_subz = toml.load(fname_subzone_config)
 
     # This is used to instantiate the MSR
-    module = importlib.import_module('openquake.hazardlib.scalerel')
     msr_dict = get_available_magnitude_scalerel
 
     # Parsing config
@@ -249,11 +250,11 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
             df = gpd.sjoin(gdf, tdf, op='within')
 
         if as_multipoint:
-            write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
+            write_as_multipoint_sources(df, model, src_id, subzones,
                                         model_subz, mmin, bwid, rms, tom,
                                         folder_out)
         else:
-            write_as_set_point_sources(df, model, src_id, msr_dict, subzones,
+            write_as_set_point_sources(df, model, src_id, subzones,
                                        model_subz, mmin, bwid, rms, tom,
                                        folder_out)
 

@@ -77,21 +77,18 @@ def plot_end():
 
 def get_ssm_files(model_dir):
     """
-    For a given source model get the xml ssm files
+    For a given source model get the xml ssm files.
     """
     # Get seismic source model XMLs
-    base_path = os.path.join(model_dir, 'in', 'ssm')
-    try:
-        assert os.path.exists(base_path)
-    except:
-        raise ValueError("Admitted model does not abide to required directory "
-                         "hierarchy: model_dir/in/ssm/")
-    files = []
+    base_path_pattern = os.path.join(model_dir, 'in', 'ssm*')  
+    directories = glob(base_path_pattern)
 
     # Loop through each subfolder and get all XML files
-    for depth in range(5):  # Search up to 5 levels deep
-        fipath = os.path.join(base_path, *['**']*depth)
-        files.extend(glob(fipath + "/*.xml", recursive=True))
+    files = []
+    for directory in directories:
+        for depth in range(5):  # Search up to 5 levels deep
+            fipath = os.path.join(directory, *['**']*depth)
+            files.extend(glob(fipath + "/*.xml", recursive=True))
 
     # Remove duplicates from recursive search
     files = pd.Series(files).drop_duplicates().values
@@ -99,7 +96,7 @@ def get_ssm_files(model_dir):
     return files
 
 
-def get_sources(model_dir):
+def get_sources(model_dir, inv_time, rms):
     """
     Load the sources in the given model and return them as a list.
     """            
@@ -114,29 +111,29 @@ def get_sources(model_dir):
               KiteFaultSource]
 
     # Read the XMLs for all srcs in the given model
-    ssm = readinput.read_source_models(files, 'tmp.hdf5', investigation_time=1,
-                                       rupture_mesh_spacing=5,
+    ssm = readinput.read_source_models(files, 'tmp.hdf5', 
+                                       investigation_time=inv_time,
+                                       rupture_mesh_spacing=rms,
                                        area_source_discretization=5,
                                        width_of_mfd_bin=0.1)
+    
     # Get a list of the source objects
     srcs = []
-    geom_model = []
-    for idx, ssm_obj in enumerate(ssm):
+    geom_models = []
+    for ssm_obj in ssm:
         if isinstance(ssm_obj, GeometryModel):
-            geom_model.append(ssm_obj)
-            ssm = pd.Series(ssm).drop(idx).values
+            geom_models.append(ssm_obj)
         else:
-            for idx_sg, sg in enumerate(ssm_obj.src_groups):
+            for idx_sg, _ in enumerate(ssm_obj.src_groups):
                 for src in ssm_obj[idx_sg]:
                     if type(src) in faults: # Only retain the fault sources
                         srcs.append(src)
-    assert len(geom_model) < 2 # Should be one or none
-    if len(geom_model) == 1:
-        geom_model = geom_model[0]
-    else:
-        geom_model = None
 
-    return srcs, geom_model
+    # If no MultiFaultSources set to None
+    if len(geom_models) < 1:
+        geom_models = None
+
+    return srcs, geom_models
 
 
 def get_boundary_2d(smsh):
@@ -174,7 +171,8 @@ def get_complex_mesh(src):
     Get the mesh of a ComplexFaultSource
     """
     # Get the surface
-    sfc = ComplexFaultSurface.from_fault_data(src.edges, mesh_spacing=5)
+    sfc = ComplexFaultSurface.from_fault_data(
+        src.edges, mesh_spacing=src.rupture_mesh_spacing)
     
     # Get mesh
     mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
@@ -186,13 +184,11 @@ def get_characteristic_mesh(src):
     """
     Get the mesh of a CharacteristicFaultSource
     """
-    # Get the surface
-    sfc = src.surface.mesh
-    
-    # Get mesh
-    mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
+    lons = src.surface.mesh.lons
+    lats = src.surface.mesh.lats
+    deps = src.surface.mesh.depths
 
-    return mesh
+    return RectangularMesh(lons, lats, deps)
     
 
 def get_simple_mesh(src):
@@ -202,7 +198,8 @@ def get_simple_mesh(src):
     # Get the surface
     sfc = SimpleFaultSurface.from_fault_data(
        src.fault_trace, src.upper_seismogenic_depth,
-       src.lower_seismogenic_depth, src.dip, mesh_spacing=5)
+       src.lower_seismogenic_depth, src.dip,
+       mesh_spacing=src.rupture_mesh_spacing)
     
     # Get mesh
     mesh = RectangularMesh(sfc.mesh.lons, sfc.mesh.lats, sfc.mesh.depths)
@@ -225,7 +222,7 @@ def get_kite_mesh(src):
     return mesh
 
 
-def get_geoms(srcs, geom_model):
+def get_geoms(srcs, geom_models):
     """
     Extract the geometry of each fault source and write to a geoJSON
     """
@@ -240,26 +237,29 @@ def get_geoms(srcs, geom_model):
         if isinstance(src, ComplexFaultSource):
             surf = get_complex_mesh(src)
         elif isinstance(src, CharacteristicFaultSource):
-            surf = get_characteristic_mesh(src)
+            surf = get_characteristic_mesh(src) # Some 
         elif isinstance(src, SimpleFaultSource):
             surf = get_simple_mesh(src)
         elif isinstance(src, KiteFaultSource):
             surf = get_kite_mesh(src)
         else:
             raise ValueError(f"Unknown source typology admitted: ({type(src)})")
+        # Get the trace and pgn from the surface of the source
         trace, poly = get_boundary_2d(surf)        
+        # And then store them
         traces.append(trace)
         polys.append(poly)
         suids.append(i)
     
     # Get geometries of the MFS sources too
-    if geom_model:
-        for i, key in enumerate(geom_model.sections):
-            surf = geom_model.sections[key]
-            trace, poly = get_boundary_2d(surf.mesh)
-            traces.append(trace)
-            polys.append(poly)
-            suids.append(i)
+    if geom_models:
+        for gm in geom_models:
+            for i, key in enumerate(gm.sections):
+                surf = gm.sections[key]
+                trace, poly = get_boundary_2d(surf.mesh)
+                traces.append(trace)
+                polys.append(poly)
+                suids.append(i)
 
     daf = pd.DataFrame({'suid': suids, 'geometry': polys})
     gdaf_polys = gpd.GeoDataFrame(daf, geometry='geometry') 
@@ -299,12 +299,18 @@ def plot_faults(gdaf_polys, gdaf_traces, region, model_dir):
     fig.show()
 
 
-def get_fault_geojsons(model_dir, plotting=False, plotting_region=None):
+def get_fault_geojsons(model_dir, inv_time, rms, plotting=False,
+                       plotting_region=None):
     """
     Write the fault sections and fault traces within the given hazard model
     model to geojsons.
 
     :param model_dir: directory containing the required hazard model
+
+    :param inv_time: Investigation time to use when parsing the SSC (for
+                     non-parametric sources)
+
+    :param rms: Rupture mesh spacing to use when parsing the SSC
 
     :param plotting: Boolean which if True creates a plot using the geoJSONs
                      of the faults in the given hazard model
@@ -313,10 +319,10 @@ def get_fault_geojsons(model_dir, plotting=False, plotting_region=None):
                             to define axis limits of the plotted geoJSONs
     """
     # Get the sources in the given model
-    srcs, geom_model = get_sources(model_dir)
+    srcs, geom_models = get_sources(model_dir, inv_time, rms)
 
     # Now get the geometries
-    gdaf_polys, gdaf_traces = get_geoms(srcs, geom_model)
+    gdaf_polys, gdaf_traces = get_geoms(srcs, geom_models)
 
     # Export into geoJSONs
     out_polys, out_traces = export_faults(gdaf_polys, gdaf_traces, model_dir)

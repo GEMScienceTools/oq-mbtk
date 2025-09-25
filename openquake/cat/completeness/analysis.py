@@ -146,8 +146,8 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     binw = tvars['binw']
     bval = tvars['bval']
     aval = tvars['aval']
-    ref_mag = tvars['ref_mag']
-    ref_upp_mag = tvars['ref_upp_mag']
+    ref_mag = tvars.get('ref_mag', 3.0)
+    ref_upp_mag = tvars.get('ref_upp_mag', 10.0)
     bgrlim = tvars['bgrlim']
     ctab = tvars['ctab']
     tcat = tvars['tcat']
@@ -177,7 +177,7 @@ def check_criterion(criterion, rate, previous_norm, tvars):
 
     elif criterion == 'optimize':
         tmp_rate = -1
-        norm = get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per, 
+        norm = get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per,
                                  last_year, info=False)
 
     elif criterion == 'optimize_a':
@@ -190,30 +190,29 @@ def check_criterion(criterion, rate, previous_norm, tvars):
                                    mmin=ref_mag, mmax=ref_upp_mag)
     elif criterion == 'optimize_c':
         tmp_rate = -1
-        norm = get_norm_optimize_c(tcat, aval, bval, ctab, last_year)
+        norm = get_norm_optimize_c(tcat, aval, bval, ctab, last_year, ref_mag, ref_upp_mag, binw)
 
     elif criterion == 'gft':
         tmp_rate = -1
         norm = get_norm_optimize_gft(tcat, aval, bval, ctab, cmag, n_obs,
                                      t_per, last_year)
-
     elif criterion == 'weichert':
         tmp_rate = -1
         norm = get_norm_optimize_weichert(tcat, aval, bval, ctab, last_year)
 
     elif criterion == 'poisson':
-        tmp_rate = -1
-        norm = get_norm_optimize_c(tcat, aval, bval, ctab, last_year, ref_mag)
+        tmp_rate = -1        
+        norm = get_norm_optimize_c(tcat, aval, bval, ctab, last_year, ref_mag, ref_upp_mag, binw)
 
     if norm is None or np.isnan(norm):
         return False, -1, previous_norm
 
-    # for maximise criteria, assume norm wants to be larger than prev norm 
+    # for maximise criteria, assume norm wants to be larger than prev norm
     if criterion in MAXIMISE:
         if previous_norm < norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
             check = True
 
-    # for any other criteria, assume norm wants to be smaller than prev norm 
+    # for any other criteria, assume norm wants to be smaller than prev norm
     elif previous_norm > norm and bval <= bgrlim[1] and bval >= bgrlim[0]:
         check = True
 
@@ -264,7 +263,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
     # Checking input
     if criterion not in ['match_rate', 'largest_rate', 'optimize', 'weichert',
-                         'poisson', 'optimize_a', 'optimize_b', 'optimize_d']:
+                         'poisson', 'optimize_a', 'optimize_b', 'optimize_c','optimize_d', 'gft']:
         raise ValueError('Unknown optimization criterion')
 
     tcat = _load_catalogue(fname)
@@ -272,12 +271,10 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     tcat.data["dtime"] = tcat.get_decimal_time()
 
     # Info
-    # Should have option to specify a mag_low != ref_mag
-    mag_low = ref_mag
-    idx = tcat.data["magnitude"] >= mag_low
+    idx = tcat.data["magnitude"] >= ref_mag
     fmt = 'Catalogue contains {:d} events equal or above {:.1f}'
     print('\nSOURCE:', src_id)
-    print(fmt.format(sum(idx), mag_low))
+    print(fmt.format(sum(idx), ref_mag))
 
     # Loading all the completeness tables to be considered in the analysis
     # See http://shorturl.at/adsvA
@@ -310,7 +307,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         print(f'Iteration: {iper:05d} norm: {norm:12.6e}', end="\r")
 
         ctab = _make_ctab(prm, years, mags)
-        #print(ctab)
+
         if isinstance(ctab, str):
             continue
 
@@ -328,7 +325,10 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
         # Compute occurrence
 
-        cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw)
+        if not np.any(tcat.data['magnitude'] > ctab[0][1]):
+            continue
+        cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw,
+                                                         return_empty=True)
         if len(cent_mag) == 0:
             continue
         wei_conf['reference_magnitude'] = min(ctab[:, 1])
@@ -466,7 +466,10 @@ def read_compl_params(config):
     key = 'completeness'
     ms = np.array(config[key]['mags'], dtype=float)
     yrs = np.array(config[key]['years'])
-    bw = config.get('bin_width', 0.1)
+    try: 
+        bw = np.array(config[key]['bin_width'], dtype =float)
+    except: 
+    	bw = config.get('bin_width', 0.1)
     r_m = config[key].get('ref_mag', 5.0)
     r_up_m = config[key].get('ref_upp_mag', None)
     bmin = config[key].get('bmin', 0.8)
@@ -494,7 +497,7 @@ def read_compl_data(folder_in):
 
 
 def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
-                          folder_in, folder_out, skip=''):
+                          folder_in, folder_out, skip='', use_only=None):
     """
     :param fname_input_pattern:
         Pattern to the files with the subcatalogues
@@ -512,9 +515,7 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
 
     # Loading configuration
     config = toml.load(f_config)
-
     ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(config)
-
     compl_tables, mags_chk, years_chk = read_compl_data(folder_in)
 
     # Fixing sorting of years
@@ -524,18 +525,26 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
     np.testing.assert_array_almost_equal(ms, mags_chk)
     np.testing.assert_array_almost_equal(yrs, years_chk)
 
-    # Info
+    # Process input
     if len(skip) > 0:
         if isinstance(skip, str):
             skip = get_list(skip)
         print('Skipping: ', skip)
+    if use_only is not None:
+        if isinstance(use_only, str):
+            use_only = get_list(use_only)
+        print('Using: ', use_only)
 
     # Processing subcatalogues
     for fname in glob.glob(fname_input_pattern):
         # Get source ID
         src_id = _get_src_id(fname)
-        # If necessary skip the source
+
+        # If necessary, skip the source
         if src_id in skip:
+            continue
+
+        if use_only is not None and src_id not in use_only:
             continue
 
         # Read configuration parameters for the current source
@@ -550,7 +559,7 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
                                      folder_out_figs=folder_out_figs,
                                      folder_out=folder_out,
                                      rewrite=False)
-        #print(len(res))
+
         if len(res) == 0:
             continue
 

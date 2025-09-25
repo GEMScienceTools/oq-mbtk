@@ -21,6 +21,7 @@ from openquake.cat.completeness.analysis import (_completeness_analysis,
                                                  read_compl_params,
                                                  read_compl_data)
 from openquake.cat.completeness.mfd_eval_plots import make_all_plots
+from openquake.mbi.wkf.create_subcatalogues_per_zone import create_subcatalogues
 
 def _get_truncated_normal(mean=0, sd=1, low=0, upp=10):
     return truncnorm(
@@ -54,7 +55,11 @@ def _create_catalogue_versions(catfi, outdir, numcats=None, stype='random',
     else:
         os.makedirs(outdir)
 
-    csvout = os.path.join(outdir, 'v{}_catalogue.pkl')
+    if catfi.split('.')[-1] in ['csv', 'hmtk']:
+        csvout = os.path.join(outdir, 'v{}_catalogue.csv')
+    else:
+        csvout = os.path.join(outdir, 'v{}_catalogue.pkl')
+
     fileout = os.path.join(outdir, 'v_mags.csv')
     factors = np.arange(-1,1,0.1)
 
@@ -117,13 +122,15 @@ def _create_catalogue_versions(catfi, outdir, numcats=None, stype='random',
         print(sys.stderr, "Use a supported sampling type.")
         sys.exit(1)
 
-
-
 def _decl_all_cats(outdir, dcl_toml_tmp, decdir):
 
     """
     """
-    catvs = glob.glob(os.path.join(outdir, '*pkl'))
+    catvs = glob.glob(os.path.join(outdir, 'v*cat**pkl'))
+    if len(catvs) == 0:
+        catvs = glob.glob(os.path.join(outdir, 'v*cat*csv'))
+    if len(catvs) == 0:
+        print('There are no catalogues to decluster! Check location and names.')
 
     config = toml.load(dcl_toml_tmp)
     config['main']['save_aftershocks'] = False
@@ -185,6 +192,7 @@ def _compl_analysis(decdir, compdir, compl_toml, labels, fout, fout_figs):
 
     ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(config)
     compl_tables, mags_chk, years_chk = read_compl_data(compdir)
+    
 
     # Fixing sorting of years
     if np.all(np.diff(yrs)) >= 0:
@@ -221,6 +229,9 @@ def make_many_mfds(configfile, basedir=None):
     # make subdirs based on outdir name
     catdir = os.path.join(outdir, 'catalogues')
     decdir = os.path.join(outdir, 'declustered')
+    if config['decluster']:
+        decdirroot = config['decluster'].get('decl_directory', 'declustered')
+        decdir = os.path.join(outdir, decdirroot)
     compdir = os.path.join(outdir, 'completeness')
     resdir = os.path.join(outdir, 'results')
     figdir = os.path.join(outdir, 'figures')
@@ -243,6 +254,19 @@ def make_many_mfds(configfile, basedir=None):
         dcl_toml_tmpl = config['decluster']['decluster_settings']
         _decl_all_cats(catdir, dcl_toml_tmpl, decdir)
 
+    if config.get('subcatalogues', False):
+        if config['subcatalogues'].get('make_subcats'):
+            polys = config['subcatalogues']['polygons']
+            base = 'v*catalogue*.csv'
+            all_cats = glob.glob(os.path.join(decdir, base))
+            all_cats_cr = [c for c in all_cats if 'crustal' in c]
+            for dcat in all_cats_cr:
+                verA = dcat.split('/')[-1].split('_')[0] 
+                verB = dcat.split('/')[-1].split('_')[3] 
+                subcatalogues_folder = os.path.join(outdir, "subcatalogues", f"{verA}{verB}")
+                create_subcatalogues(polys, dcat, subcatalogues_folder)
+        if config.get('change_decdir', False):
+            decdir = decdir.replace('declustered', 'subcatalogues/v*')
 
     # generate the completeness tables 
     generate = config['completeness'].get('generate_completeness', True)
@@ -261,15 +285,22 @@ def make_many_mfds(configfile, basedir=None):
 
     plots = config['plot'].get('make_plots', True)
     if plots:
+        hist_params = config['plot'].get('hist_params', [15, 7.0, 4.0, 0.4])
         if not labs:
             print('Must specify the TRTs')
             sys.exit()
-        labels, agrs, bgrs = make_all_plots(resdir, compdir, figdir, labs)
-        fin = pd.DataFrame({'label': labels, 'a-values': agrs, 'b-values': bgrs})
+        labels1, agrs1, bgrs1, labels2, agrs2, bgrs2, weights2 = make_all_plots(resdir, compdir, figdir, labs, hist_params=hist_params)
+        fin = pd.DataFrame({'label': labels1, 'a-values': agrs1, 'b-values': bgrs1})
         if basedir:
-            fin.to_csv(os.path.join(basedir, outdir, 'mfd-results.csv'))
+            fin.to_csv(os.path.join(basedir, outdir, 'mfd-results-cv.csv'))
         else:
-            fin.to_csv(os.path.join(outdir, 'mfd-results.csv'))
+            fin.to_csv(os.path.join(outdir, 'mfd-results-cv.csv'))
+
+        fin = pd.DataFrame({'label': labels2, 'a-values': agrs2, 'b-values': bgrs2, 'weights': weights2})
+        if basedir:
+            fin.to_csv(os.path.join(basedir, outdir, 'mfd-results-peaks.csv'))
+        else:
+            fin.to_csv(os.path.join(outdir, 'mfd-results-peaks.csv'))
 
 make_many_mfds.configfile = 'path to configuration file'
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -19,29 +19,21 @@
 Constructs the HDF5 database
 """
 import os
-import sys
 import re
 import csv
 import numpy as np
 import h5py
-import openquake.smt.intensity_measures as ims
-import openquake.smt.sm_utils as utils
-from openquake.smt.parsers.base_database_parser import get_float
+import pickle
 
-if sys.version_info[0] >= 3:
-    # In Python 3 pickle uses cPickle by default
-    import pickle
-else:
-    # In Python 2 use cPickle
-    import cPickle as pickle
+import openquake.smt.sm_utils as utils
+import openquake.smt.intensity_measures as utils_imts
+from openquake.smt.parsers.base_database_parser import get_float
 
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95", "Housner"]
 
 
 def _get_fieldnames_from_csv(reader):
-    """
-    """
     scalar_fieldnames = []
     spectra_fieldnames = []
     periods = []
@@ -105,7 +97,10 @@ class SMDatabaseBuilder(object):
         self.spectra_parser = None
         self.metafile = None
 
-    def build_database(self, db_id, db_name, metadata_location,
+    def build_database(self,
+                       db_id,
+                       db_name,
+                       metadata_location,
                        record_location=None):
         """
         Constructs the metadata database and exports to a .pkl file
@@ -118,7 +113,9 @@ class SMDatabaseBuilder(object):
         :param str record_directory:
             Path to directory containing records (if different from metadata)
         """
-        self.dbreader = self.dbtype(db_id, db_name, metadata_location,
+        self.dbreader = self.dbtype(db_id,
+                                    db_name,
+                                    metadata_location,
                                     record_location)
         # Build database
         print("Reading database ...")
@@ -128,7 +125,9 @@ class SMDatabaseBuilder(object):
         with open(self.metafile, "wb+") as f:
             pickle.dump(self.database, f)
 
-    def parse_records(self, time_series_parser, spectra_parser=None,
+    def parse_records(self,
+                      time_series_parser,
+                      spectra_parser=None,
                       units="cm/s/s"):
         """
         Parses the strong motion records to hdf5
@@ -188,7 +187,9 @@ class SMDatabaseBuilder(object):
             pickle.dump(self.database, f)
         print("Done!")
 
-    def build_spectra_from_flatfile(self, component, damping="05",
+    def build_spectra_from_flatfile(self,
+                                    component,
+                                    damping="05",
                                     units="cm/s/s"):
         """
         In the case in which the spectra data is defined in the
@@ -235,9 +236,15 @@ class SMDatabaseBuilder(object):
             pickle.dump(self.database, f)
         print("Done!")
 
-    def _build_spectra_hdf5_from_row(self, output_file, row, periods,
-                                     scalar_fields, spectra_fields, component,
-                                     damping, units):
+    def _build_spectra_hdf5_from_row(self,
+                                     output_file,
+                                     row,
+                                     periods,
+                                     scalar_fields,
+                                     spectra_fields,
+                                     component,
+                                     damping,
+                                     units):
         fle = h5py.File(output_file, "w-")
         fle.create_group("Time Series")
         ims_grp = fle.create_group("IMS")
@@ -456,10 +463,10 @@ SPECTRAL_IMS = ["Geometric", "Arithmetic", "Envelope", "Larger PGA"]
 
 
 ORDINARY_SA_COMBINATION = {
-    "Geometric": ims.geometric_mean_spectrum,
-    "Arithmetic": ims.arithmetic_mean_spectrum,
-    "Envelope": ims.envelope_spectrum,
-    "Larger PGA": ims.larger_pga
+    "Geometric": utils_imts.geometric_mean_spectrum,
+    "Arithmetic": utils_imts.arithmetic_mean_spectrum,
+    "Envelope": utils_imts.envelope_spectrum,
+    "Larger PGA": utils_imts.larger_pga
     }
 
 
@@ -568,21 +575,18 @@ class AddPGV(HorizontalMotion):
         if "Velocity" not in self.fle[time_series_location]:
             accel_loc = time_series_location + "/Acceleration"
             # Add velocity to the record
-            velocity, _ = ims.get_velocity_displacement(
+            velocity, _ = utils_imts.get_velocity_displacement(
                 self.fle[accel_loc].attrs["Time-step"],
                 self.fle[accel_loc][()])
-
             vel_dset = self.fle[time_series_location].create_dataset(
                 "Velocity",
                 (len(velocity),),
                 dtype=float)
-
         else:
             velocity = self.fle[time_series_location + "/Velocity"][()]
 
         pgv = np.max(np.fabs(velocity))
-        pgv_dset = self.fle[target_location].create_dataset("PGV", (1,),
-                                                            dtype=float)
+        pgv_dset = self.fle[target_location].create_dataset("PGV", (1,), dtype=float)
         pgv_dset.attrs["Units"] = "cm/s/s"
         pgv_dset[:] = pgv
         return pgv
@@ -605,12 +609,12 @@ class AddResponseSpectrum(HorizontalMotion):
 
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
-        sax, say = ims.get_response_spectrum_pair(x_acc[:],
-                                                  x_acc.attrs["Time-step"],
-                                                  y_acc[:],
-                                                  y_acc.attrs["Time-step"],
-                                                  self.periods,
-                                                  self.damping)
+        sax, say = utils_imts.get_response_spectrum_pair(x_acc[:],
+                                                         x_acc.attrs["Time-step"],
+                                                         y_acc[:],
+                                                         y_acc.attrs["Time-step"],
+                                                         self.periods,
+                                                         self.damping)
         sa_hor = ORDINARY_SA_COMBINATION[self.component](sax, say)
         dstring = "damping_" + str(int(100.0 * self.damping)).zfill(2)
         nvals = len(sa_hor["Acceleration"])
@@ -627,7 +631,13 @@ class AddResponseSpectrum(HorizontalMotion):
                           "Pseudo-Velocity", sa_hor, nvals, "cm/s", dstring)
         self._add_periods()
 
-    def _build_group(self, base_string, key, im_key, sa_hor, nvals, units,
+    def _build_group(self,
+                     base_string,
+                     key,
+                     im_key,
+                     sa_hor,
+                     nvals,
+                     units,
                      dstring):
         """
         Builds the group corresponding to the full definition of the
@@ -673,9 +683,9 @@ class AddGMRotDppSpectrum(AddResponseSpectrum):
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
 
-        gmrotdpp = ims.gmrotdpp(x_acc[:], x_acc.attrs["Time-step"],
-                                y_acc[:], y_acc.attrs["Time-step"],
-                                self.periods, percentile, self.damping)
+        gmrotdpp = utils_imts.gmrotdpp(x_acc[:], x_acc.attrs["Time-step"], 
+                                       y_acc[:], y_acc.attrs["Time-step"],
+                                       self.periods, percentile, self.damping)
         dstring = "damping_" + str(int(100.0 * self.damping)).zfill(2)
         nvals = len(gmrotdpp)
         # Acceleration
@@ -706,9 +716,9 @@ class AddRotDppSpectrum(AddResponseSpectrum):
 
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
-        rotdpp = ims.rotdpp(x_acc[:], x_acc.attrs["Time-step"],
-                            y_acc[:], y_acc.attrs["Time-step"],
-                            self.periods, percentile, self.damping)[0]
+        rotdpp = utils_imts.rotdpp(x_acc[:], x_acc.attrs["Time-step"],
+                                   y_acc[:], y_acc.attrs["Time-step"],
+                                   self.periods, percentile, self.damping)[0]
         dstring = "damping_" + str(int(100.0 * self.damping)).zfill(2)
         nvals = len(rotdpp["Pseudo-Acceleration"])
         # Acceleration
@@ -717,8 +727,7 @@ class AddRotDppSpectrum(AddResponseSpectrum):
                 "Acceleration")
         else:
             acc_grp = self.fle["IMS/H/Spectra/Response/Acceleration"]
-        acc_cmp_grp = acc_grp.create_group("RotD" + 
-                                           str(int(percentile)).zfill(2))
+        acc_cmp_grp = acc_grp.create_group("RotD" + str(int(percentile)).zfill(2))
         acc_dset = acc_cmp_grp.create_dataset(dstring, (nvals,), dtype=float)
         acc_dset.attrs["Units"] = "cm/s/s"
         acc_dset[:] = rotdpp["Pseudo-Acceleration"]
@@ -739,9 +748,9 @@ class AddGMRotIppSpectrum(AddResponseSpectrum):
 
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
-        sa_hor = ims.gmrotipp(x_acc[:], x_acc.attrs["Time-step"],
-                              y_acc[:], y_acc.attrs["Time-step"],
-                              self.periods, percentile, self.damping)
+        sa_hor = utils_imts.gmrotipp(x_acc[:], x_acc.attrs["Time-step"],
+                                     y_acc[:], y_acc.attrs["Time-step"],
+                                     self.periods, percentile, self.damping)
         nvals = len(sa_hor["Acceleration"])
         dstring = "damping_" + str(int(100.0 * self.damping)).zfill(2)
         # Acceleration
@@ -769,8 +778,11 @@ SPECTRUM_COMBINATION = {"Geometric": AddResponseSpectrum,
                         "Larger PGA": AddResponseSpectrum} 
 
 
-def add_horizontal_im(database, intensity_measures, component="Geometric",
-        damping="05", periods=[]):
+def add_horizontal_im(database,
+                      intensity_measures,
+                      component="Geometric",
+                      damping="05",
+                      periods=[]):
     """
     For a database this adds the resultant horizontal components to the
     hdf databse for each record
@@ -788,9 +800,7 @@ def add_horizontal_im(database, intensity_measures, component="Geometric",
     """
     nrecs = len(database.records)
     for iloc, record in enumerate(database.records):
-        print("Processing %s (Record %s of %s)" % (record.datafile, 
-                                                   iloc + 1,
-                                                   nrecs))
+        print("Processing %s (Record %s of %s)" % (record.datafile, iloc + 1, nrecs))
         fle = h5py.File(record.datafile, "r+")
         add_recursive_nameset(fle, "IMS/H/Spectra/Response")
         fle["IMS/H/"].create_group("Scalar")
@@ -804,28 +814,24 @@ def add_horizontal_im(database, intensity_measures, component="Geometric",
             elif len(intensity_measure.split("GMRotD")) > 1:
                 # GMRotDpp
                 percentile = float(intensity_measure.split("GMRotD")[1])
-                i_m = AddGMRotDppSpectrum(fle, intensity_measure, periods, 
-                                          float(damping) / 100.)
+                i_m = AddGMRotDppSpectrum(
+                    fle, intensity_measure, periods, float(damping) / 100.)
                 i_m.add_data(percentile)
             elif len(intensity_measure.split("RotD")) > 1:
                 # RotDpp
                 percentile = float(intensity_measure.split("RotD")[1])
-                i_m = AddRotDppSpectrum(fle, intensity_measure, periods, 
-                                          float(damping) / 100.)
+                i_m = AddRotDppSpectrum(
+                    fle, intensity_measure, periods, float(damping) / 100.)
                 i_m.add_data(percentile)
             elif intensity_measure in SCALAR_IMS:
                 # Is a scalar value
-                i_m = SCALAR_IM_COMBINATION[intensity_measure](fle,
-                    component,
-                    periods,
-                    float(damping) / 100.)
+                i_m = SCALAR_IM_COMBINATION[intensity_measure](
+                    fle, component, periods, float(damping) / 100.)
                 i_m.add_data()
             elif intensity_measure in SPECTRAL_IMS:
                 # Is a normal spectrum combination
-                i_m = SPECTRUM_COMBINATION[intensity_measure](fle,
-                    component,
-                    periods,
-                    float(damping) / 100.)
+                i_m = SPECTRUM_COMBINATION[intensity_measure](
+                    fle, component, periods, float(damping) / 100.)
                 i_m.add_data()
             else:
                 raise ValueError("Unrecognised Intensity Measure!")

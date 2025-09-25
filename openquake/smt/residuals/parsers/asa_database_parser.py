@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -26,15 +26,15 @@ and the corresponding metadata
 """
 import os
 import re
-from collections import OrderedDict
 from datetime import datetime
 from math import sqrt
+
 from openquake.hazardlib.geo import *
 from openquake.smt.residuals.sm_database import *
 from openquake.smt.residuals.parsers.base_database_parser import (
     get_float, get_int, SMDatabaseReader, SMTimeSeriesReader)
-from openquake.smt.utils_strong_motion import (convert_accel_units,
-                                               get_time_vector)
+from openquake.smt.utils import convert_accel_units, get_time_vector
+
 
 def _get_info_from_archive_name(aname):
     """
@@ -54,9 +54,7 @@ def _get_info_from_archive_name(aname):
         file_info = [aname[:4], aname[4:6], aname[6:8],
                      aname[9:11], aname[11:12]]
 
-    return OrderedDict([
-        (FILE_INFO_KEY[i], file_info[i]) for i in range(len(file_info))
-    ])
+    return {FILE_INFO_KEY[i]: file_info[i] for i in range(len(file_info))}
 
 
 def _get_metadata_from_file(file_str):
@@ -105,7 +103,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         self._sort_files()
         assert (len(self.ORGANIZER) > 0)
         for file_dict in self.ORGANIZER:
-            # metadata for all componenets comes from the same file
+            # metadata for all components comes from the same file
             metadata = _get_metadata_from_file(file_dict["Time-Series"]["X"])
             self.database.records.append(self.parse_metadata(metadata,
                                                              file_dict))
@@ -116,7 +114,6 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         Searches through the directory and organise the files associated
         with a particular recording into a dictionary
         """
-
         for file_str in sorted(os.listdir(self.filename)):
 
             file_dict = {"Time-Series": {"X": None, "Y": None, "Z": None},
@@ -146,12 +143,16 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
                                                   "Month",
                                                   "Day",
                                                   "Identifier"]])
+        
         # Get event information
         event = self._parse_event(metadata, file_str)
+        
         # Get Distance information
         distance = self._parse_distance_data(metadata, file_str, event)
+        
         # Get site data
         site = self._parse_site_data(metadata)
+        
         # Get component and processing data
         xcomp, ycomp, zcomp = self._parse_component_data(wfid, metadata)
 
@@ -193,6 +194,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
                 get_int('20'+metadata["FECHA DEL SISMO (GMT)"][-2:]),
                 months_abrev[metadata["FECHA DEL SISMO (GMT)"].split('/')[1]],
                 get_int(metadata["FECHA DEL SISMO (GMT)"][:2]))
+        
         # UNAM data, which is not always indicated in "INSTITUCION RESPONSABLE"
         else:
             year, month, day = (
@@ -267,7 +269,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
                 m_mag = Magnitude(m, "M")
                 mag_list.append(m_mag)
 
-        # magnitude hierarchy for defining pref_mag
+        # Magnitude hierarchy for defining pref_mag
         if moment_mag is not None:
             pref_mag = moment_mag
         elif surface_mag is not None:
@@ -343,6 +345,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
 
         dists = RecordDistance(repi, rhypo)
         dists.azimuth = azimuth
+        
         return dists
 
     def _parse_site_data(self, metadata):
@@ -356,8 +359,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
             altitude = 0
 
         site = RecordSite(
-            "|".join([metadata["INSTITUCION RESPONSABLE"],
-                    metadata["CLAVE DE LA ESTACION"]]),
+            "|".join([metadata["INSTITUCION RESPONSABLE"], metadata["CLAVE DE LA ESTACION"]]),
             metadata["CLAVE DE LA ESTACION"],
             metadata["NOMBRE DE LA ESTACION"],
             -get_float(metadata["COORDENADAS DE LA ESTACION"].split(" ")[3]),
@@ -385,7 +387,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         Returns the information specific to a component
         """
         units_provided = metadata["UNIDADES DE LOS DATOS"]
-        # consider only units within parenthesis
+        # Consider only units within parenthesis
         units = units_provided[units_provided.find("(") + 1:
                                units_provided.find(")")]
 
@@ -425,10 +427,10 @@ class ASATimeSeriesParser(SMTimeSeriesReader):
         """
         Parses the time series
         """
-        time_series = OrderedDict([
-            ("X", {"Original": {}, "SDOF": {}}),
-            ("Y", {"Original": {}, "SDOF": {}}),
-            ("V", {"Original": {}, "SDOF": {}})])
+        time_series = {
+            "X": {"Original": {}, "SDOF": {}},
+            "Y": {"Original": {}, "SDOF": {}},
+            "V": {"Original": {}, "SDOF": {}}}
 
         target_names = list(time_series.keys())
         for iloc, ifile in enumerate(self.input_files):
@@ -464,6 +466,7 @@ class ASATimeSeriesParser(SMTimeSeriesReader):
             raise ValueError(
                 "Some components %s in record %s have the same name"
                 % (components, ifile))
+        
         # Check if more than 3 components are given
         if len(components) > 3:
             raise ValueError(

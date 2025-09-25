@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
 
 def positive_float(value, key, verbose=False):
     """
@@ -31,6 +30,7 @@ def positive_float(value, key, verbose=False):
               % (key, str(value)))
     return None
 
+
 def vfloat(value, key):
     """
     Returns value or None if not possible to calculate
@@ -42,6 +42,7 @@ def vfloat(value, key):
         except:
             print("Invalid float value %s for %s" % (value, key))
     return None
+
 
 def vint(value, key):
     """
@@ -69,6 +70,7 @@ def positive_int(value, key):
           % (key, str(value)))
     return False
 
+
 def longitude(value):
     """
     Returns True if the longitude is valid, False otherwise
@@ -80,6 +82,7 @@ def longitude(value):
         return lon
     print("Longitude %s is outside of range -180 <= lon <= 180" % str(lon))
     return False
+
 
 def latitude(value):
     """
@@ -94,27 +97,6 @@ def latitude(value):
     print("Latitude %s is outside of range -90 <= lat <= 90" % str(lat))
     return False
 
-def date(year, month, day):
-    """
-    Checks that the year is given and greater than 0, that month is in the
-    range 1 - 12, and day is in the range 1 - 31
-    """
-    if all([year > 0, month > 0, month <= 12, day > 0, day <= 31]):
-        return True
-    print("Date %s/%s/%s is not valid" % (str(year), str(month), str(day)))
-    return False
-
-def date_time(value, dt_format="%Y-%m-%d %H:%M:%S"):
-    """
-    Returns a valid date time
-    """
-    dt = value.strip()
-    try:
-        output = datetime.strptime(dt, dt_format)
-        return output
-    except ValueError:
-        print("Date-time %s not valid under format %s" % (dt, dt_format))
-        return False
 
 def strike(value):
     """
@@ -129,6 +111,7 @@ def strike(value):
     print("Strike %s is not in range 0 - 360" % value)
     return None
 
+
 def dip(value):
     """
     Returns a float value in range 0 - 90.
@@ -141,6 +124,7 @@ def dip(value):
         return dip
     print("Dip %s is not in range 0 - 90" % value)
     return None
+
 
 def rake(value):
     """

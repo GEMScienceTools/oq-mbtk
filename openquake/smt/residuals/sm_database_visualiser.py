@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2024 GEM Foundation and G. Weatherill
+# Copyright (C) 2014-2025 GEM Foundation and G. Weatherill
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -22,7 +22,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from openquake.calculators.postproc.plots import add_borders
-from openquake.smt.utils_strong_motion import _save_image
+from openquake.smt.utils_intensity_measures import _save_image
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector 
 
 
@@ -31,9 +31,8 @@ DISTANCES = {
     "rhypo": lambda rec: rec.distance.rhypo,
     "rjb": lambda rec: rec.distance.rjb,
     "rrup": lambda rec: rec.distance.rrup,
-    "r_x": lambda rec: rec.distance.r_x,
+    "rx": lambda rec: rec.distance.r_x,
 }
-
 
 DISTANCE_LABEL = {
     "repi": "Epicentral Distance (km)",
@@ -41,6 +40,21 @@ DISTANCE_LABEL = {
     "rjb": "Joyner-Boore Distance (km)",
     "rrup": "Rupture Distance (km)",
     "r_x": "R-x Distance (km)"
+}
+
+NEHRP_BOUNDS = {
+    "A": (1500.0, np.inf),
+    "B": (760.0, 1500.0),
+    "C": (360.0, 760.),
+    "D": (180., 360.),
+    "E": (0., 180.)
+}
+
+EC8_BOUNDS = {
+    "A": (800., np.inf),
+    "B": (360.0, 800.),
+    "C": (180.0, 360.),
+    "D": (0., 360)
 }
 
 
@@ -95,8 +109,12 @@ def get_magnitude_distances(db1, dist_type):
     return mags, dists
 
 
-def db_magnitude_distance(db1, dist_type, figure_size=(7, 5),
-                          figure_title=None,filename=None, filetype="png",
+def db_magnitude_distance(db1,
+                          dist_type,
+                          figure_size=(7, 5),
+                          figure_title=None,
+                          filename=None,
+                          filetype="png",
                           dpi=300):
     """
     Creates a plot of magnitude verses distance for a strong motion database
@@ -112,8 +130,11 @@ def db_magnitude_distance(db1, dist_type, figure_size=(7, 5),
     _save_image(filename, plt.gcf(), filetype, dpi)
 
 
-def db_geographical_coverage(db1, figure_size=(7, 5), figure_title=None,
-                             filename=None, filetype='png', dpi=300):
+def db_geographical_coverage(db1,
+                             figure_size=(7, 5),
+                             filename=None,
+                             filetype='png',
+                             dpi=300):
     """
     Creates a plot of the locations of event hypocenters and station locations
     for a strong motion database
@@ -125,7 +146,7 @@ def db_geographical_coverage(db1, figure_size=(7, 5), figure_title=None,
                label='Station locations')
     ax.scatter(eq_lons, eq_lats, marker='*', color='r',
                label='Event hypocenters')
-    ax = add_borders(ax)
+    add_borders(ax)
     lons = np.concatenate([eq_lons, st_lons])
     lats = np.concatenate([eq_lats, st_lats])
     ax.set_xlim(np.floor(np.min(lons)-0.25), np.ceil(np.max(lons))+0.25)
@@ -134,23 +155,6 @@ def db_geographical_coverage(db1, figure_size=(7, 5), figure_title=None,
     ax.set_ylabel('Latitude')
     ax.legend()
     _save_image(filename, plt.gcf(), filetype, dpi)
-
-
-NEHRP_BOUNDS = {
-    "A": (1500.0, np.inf),
-    "B": (760.0, 1500.0),
-    "C": (360.0, 760.),
-    "D": (180., 360.),
-    "E": (0., 180.)
-}
-
-
-EC8_BOUNDS = {
-    "A": (800., np.inf),
-    "B": (360.0, 800.),
-    "C": (180.0, 360.),
-    "D": (0., 360)
-}
 
 
 def _site_selection(db1, site_class, classifier):
@@ -183,9 +187,13 @@ def _site_selection(db1, site_class, classifier):
     return idx
 
 
-def db_magnitude_distance_by_site(db1, dist_type, classification="NEHRP",
-                                  figure_size=(7, 5), filename=None,
-                                  filetype="png", dpi=300):
+def db_magnitude_distance_by_site(db1,
+                                  dist_type,
+                                  classification="NEHRP",
+                                  figure_size=(7, 5),
+                                  filename=None,
+                                  filetype="png",
+                                  dpi=300):
     """
     Plot magnitude-distance comparison by site NEHRP or Eurocode 8 Site class   
     """ 
@@ -206,8 +214,6 @@ def db_magnitude_distance_by_site(db1, dist_type, classification="NEHRP",
             plt.plot(np.array(dists), np.array(mags), "o", mec='k',
                      mew=0.5, label="Site Class %s" % site_class)
             total_idx.extend(site_idx)
-    unc_idx = set(range(db1.number_records())).difference(set(total_idx))
-    unc_db = selector.select_records(unc_idx, as_db=True)
     mag, dists = get_magnitude_distances(site_db, dist_type)
     plt.semilogx(np.array(dists), np.array(mags), "o", mfc="None", mec='k',
                  mew=0.5, label="Unclassified", zorder=0)
@@ -221,8 +227,12 @@ def db_magnitude_distance_by_site(db1, dist_type, classification="NEHRP",
     plt.show()
 
 
-def db_magnitude_distance_by_trt(db1, dist_type, figure_size=(7, 5),
-                                 filename=None, filetype="png", dpi=300):
+def db_magnitude_distance_by_trt(db1,
+                                 dist_type,
+                                 figure_size=(7, 5),
+                                 filename=None,
+                                 filetype="png",
+                                 dpi=300):
     """
     Plot magnitude-distance comparison by tectonic region
     """

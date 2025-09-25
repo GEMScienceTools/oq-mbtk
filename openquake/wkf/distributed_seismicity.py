@@ -28,8 +28,9 @@ import os
 import glob
 import copy
 import pathlib
-
 import logging
+from typing import Union
+
 import numpy as np
 import matplotlib.pyplot as plt
 from openquake.hazardlib.tom import PoissonTOM
@@ -84,7 +85,6 @@ def get_bounding_box(sfc):
         upper right corners of the bounding box.
     """
 
-    # breakpoint()
     # This provides the convex hull of the surface projection
     coo = np.array(src.polygon.coords)
     return [min(coo[:, 0]), min(coo[:, 1]), max(coo[:, 0]), max(coo[:, 1])]
@@ -218,17 +218,17 @@ def remove_buffer_around_faults(
     fname: str,
     path_point_sources: str,
     out_path: str,
-    dst: float,
-    threshold_mag: float = 6.5,
+    dst: Union[float, np.ndarray],
+    threshold_mag: Union[float, np.ndarray] = 6.5,
     use: str = '',
     rupture_mesh_spacing=5.0,
     complex_fault_mesh_spacing=5.0,
     area_source_discretization=5.0,
     PLOTTING=False,
-):
+    ):
     """
-    Remove the seismicity above a magnitude threshold for all the point
-    sources within a buffer around faults.
+    Remove the seismicity above magnitude thresholds for all the point
+    sources within corresponding buffer distances around faults.
 
     :param fname:
         The name of the file with the fault sources in .xml format
@@ -238,14 +238,29 @@ def remove_buffer_around_faults(
     :param out_path:
         The path where to write the output .xml file
     :param dst:
-        The distance in km of the buffer
-    :param dst:
-        The threshold distance used to separate seismicity on the fault and
-        in the distributed seismicity sources
+        Either a single float specifying a constant buffer distance in km,
+        or an array of distances corresponding to threshold_mag values
+    :param threshold_mag:
+        Either a single float specifying a constant magnitude threshold,
+        or an array of magnitude thresholds corresponding to dst values
     :returns:
-        A .xml file with the ajusted point sources
+        A .xml file with the adjusted point sources
     """
     out_path = pathlib.Path(out_path)
+
+    # Convert inputs to numpy arrays and validate
+    dst_array = np.atleast_1d(dst)
+    threshold_mag_array = np.atleast_1d(threshold_mag)
+
+    if len(dst_array) != len(threshold_mag_array):
+        raise ValueError(
+            "dst and threshold_mag must have the same length when provided as arrays"
+        )
+
+    # Sort arrays by magnitude for consistent processing
+    sort_idx = np.argsort(threshold_mag_array)
+    threshold_mag_array = threshold_mag_array[sort_idx]
+    dst_array = dst_array[sort_idx]
 
     if len(use) > 0:
         use = get_list(use)
@@ -259,13 +274,12 @@ def remove_buffer_around_faults(
         width_of_mfd_bin=binw,
         area_source_discretization=area_source_discretization,
     )
-
+    
     # Get the surfaces representing the faults
     faults = _get_fault_surfaces(fname, sourceconv)
 
     # Process the point sources in the distributed seismicity model
     for point_fname in glob.glob(path_point_sources):
-
         coo_pnt_src = []
         pnt_srcs = []
 
@@ -300,24 +314,22 @@ def remove_buffer_around_faults(
         buffer_pts = []
         bco = []
         for src in faults:
+            # Use maximum distance for initial buffer selection
+            max_dst = np.max(dst_array)
 
             # Getting the subset of point sources in the surrounding of the
-            # fault `src`. `coo_pnt_src` is a numpy.array with two columns
-            # (i.e. lon and lat). `pnt_srcs` is a list containing the point
-            # sources that collectively describe the distributed seismicity
-            # sources provided as input.
+            # fault `src`.
             pnt_ii, sel_pnt_srcs, sel_pnt_coo, rjb = get_data(
                 src,
                 coo_pnt_src,
                 pnt_srcs,
-                buffer=dst * 2,
+                buffer=max_dst * 2,
             )
 
             # If we find some point sources around the fault
             if pnt_ii is not None:
-
-                # Find the index of points within the buffer zone
-                within_idx = np.nonzero(rjb < dst)[0]
+                # Find the index of points within the maximum buffer zone
+                within_idx = np.nonzero(rjb < max_dst)[0]
                 idxs = sorted([pnt_ii[i] for i in within_idx], reverse=True)
 
                 if PLOTTING:
@@ -330,29 +342,35 @@ def remove_buffer_around_faults(
 
                 # Loop over the indexes of the point sources within the buffer
                 for isrc in idxs:
-
-                    # Explode sources. i.e. create individual point sources at
-                    # each individual hypocentral depth
+                    # Explode sources
                     pnt_srcs_exp = explode(pnt_srcs[isrc])
 
-                    # Check which of the individual point sources are within
-                    # the buffer
-                    cnt = 0
+                    # Process each individual point source
                     for pnt_src_exp in pnt_srcs_exp:
                         _, _, _, rrup = get_data(
                             src, [], pnt_src_exp, dist_type='rrup'
                         )
 
-                        # Updating mmax for the point source
-                        if rrup < dst:
-                            pnt_src_exp.mfd.max_mag = threshold_mag
+                        # Find applicable magnitude threshold based on distance
+                        applicable_mag = threshold_mag_array[
+                            0
+                        ]  # Default to lowest threshold
+                        for d, m in zip(dst_array, threshold_mag_array):
+                            if rrup < d:
+                                applicable_mag = m
+                                break
+
+                        # Update maximum magnitude for the point source
+                        pnt_src_exp.mfd.max_mag = min(
+                            pnt_src_exp.mfd.max_mag, applicable_mag
+                        )
 
                     # Adding point sources to the buffer
                     buffer_pts.extend(pnt_srcs_exp)
                     bco.append([coo_pnt_src[isrc, 0], coo_pnt_src[isrc, 1]])
 
-                    # Removing the point source from the list of sources
-                    # outside of buffers
+                    # Remove the point source from the list of sources outside
+                    # of buffers
                     pnt_srcs.remove(pnt_srcs[isrc])
 
                 # Update the array containing the coordinates of the point
@@ -380,13 +398,9 @@ def remove_buffer_around_faults(
         write_source_model(fname_out, [tmpsrc], 'Distributed seismicity')
         logging.info(f'Created: {fname_out}')
 
-        # Currently must print the buffer points as single point sources, then
-        # upgrade nrml because the function below won't handle correctly the
-        # hypocentral distribution
+        # Save the point sources within the buffers to a nrml file
         tmp_name = f"src_buffers_{tmp.stem.split('_')[-1]}.xml"
         fname_out = out_path / tmp_name
-
-        # Save the point sources within the buffers to a nrml file
         if buffer_pts:
             write_source_model(fname_out, buffer_pts, 'Distributed seismicity')
             logging.info(f'Created: {fname_out}')
@@ -404,7 +418,7 @@ def _get_fault_surfaces(fname: str, sourceconv: SourceConverter) -> list:
 
     # Read file the fault sources
     ssm_faults = to_python(fname, sourceconv)
-
+    
     # Check content of the seismic source model. We want only one group.
     msg = 'The seismic source model for fault contains more than one group'
     assert len(ssm_faults) == 1
