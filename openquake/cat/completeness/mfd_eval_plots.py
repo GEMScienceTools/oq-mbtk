@@ -236,7 +236,7 @@ def plot_best_mfds(df_best, figsdir):
     plt.xlabel('Magnitude')
     plt.ylabel('Annual occurrence rates')
     leg = plt.legend()
-    for lh in leg.legendHandles: 
+    for lh in leg.legend_handles: 
         lh.set_alpha(1)
     plt.grid(which='both', color='k', lw=0.08)
     fout = os.path.join(figsdir, 'mfds_best.png')

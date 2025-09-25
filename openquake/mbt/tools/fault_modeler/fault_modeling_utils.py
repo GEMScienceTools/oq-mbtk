@@ -29,7 +29,7 @@ import numpy as np
 
 import openquake.hazardlib as hz
 from openquake.hazardlib.source import SimpleFaultSource
-from openquake.mbt.oqt_project import OQtSource
+# from openquake.mbt.oqt_project import OQtSource
 from openquake.mbt.tools.faults import rates_for_double_truncated_mfd
 from openquake.mbt.tools.faults import get_rate_above_m_cli
 
@@ -321,7 +321,7 @@ def construct_sfs_dict(fault_dict,
     return sfs
 
 
-def make_fault_source(sfs_dict, oqt_source=False):
+def make_fault_source(sfs_dict):
     """
     Takes a dictionary with the parameters for SimpleFaultSource creation,
     and creates a SimpleFaultSource.
@@ -333,40 +333,14 @@ def make_fault_source(sfs_dict, oqt_source=False):
     :type sfs_dict:
         dict
 
-    :param oqt_source:
-        Flag to return a SimpleFaultSource and OQtSource output
-
-    :type oqt_source:
-        Boolean
-
     :returns:
-        SimpleFaultSource or OqtSource
+        SimpleFaultSource
     """
 
-    if oqt_source:
-        src = OQtSource(str(sfs_dict['source_id']),
-                        source_type='SimpleFaultSource')
+    arg = [sfs_dict[p] for p in sfs_params if p != 'seismic_slip_rate']
+    arg = [sfs_dict[p] for p in sfs_params if p != 'm_max']
 
-        src.name = sfs_dict['name']
-        src.tectonic_region_type = sfs_dict['tectonic_region_type']
-        src.mfd = sfs_dict['mfd']
-        src.rupture_mesh_spacing = sfs_dict['rupture_mesh_spacing']
-        src.msr = sfs_dict['magnitude_scaling_relation']
-        src.slip_rate = sfs_dict['seismic_slip_rate']
-        src.rupture_aspect_ratio = sfs_dict['rupture_aspect_ratio']
-        src.temporal_occurrence_model = sfs_dict['temporal_occurrence_model']
-        src.upper_seismogenic_depth = sfs_dict['upper_seismogenic_depth']
-        src.lower_seismogenic_depth = sfs_dict['lower_seismogenic_depth']
-        src.trace = sfs_dict['fault_trace']
-        src.dip = sfs_dict['average_dip']
-        src.rake = sfs_dict['average_rake']
-        src.m_max = sfs_dict['m_max']
-
-    else:
-        arg = [sfs_dict[p] for p in sfs_params if p != 'seismic_slip_rate']
-        arg = [sfs_dict[p] for p in sfs_params if p != 'm_max']
-
-        src = SimpleFaultSource(*arg)
+    src = SimpleFaultSource(*arg)
 
     return src
 

@@ -87,7 +87,6 @@ def read_config_file(cfg_file):
 def build_model_from_db(fault_db,
                         xml_output=None,
                         width_method='length_scaling',
-                        oqt_source=False,
                         project_name=None,
                         param_map=None,
                         defaults=None,
@@ -113,7 +112,7 @@ def build_model_from_db(fault_db,
                                               param_map=param_map_local,
                                               defaults=defaults_local)
             print("sfs_dict = ", sfs_dict)
-            sfs = fmu.make_fault_source(sfs_dict, oqt_source=oqt_source)
+            sfs = fmu.make_fault_source(sfs_dict)
             print("sfs en build_model_from_db = ", sfs)
             srcl.append(sfs)
 
@@ -243,7 +242,6 @@ def build_fault_model(*, cfg_file=None,
                       select_list=None,
                       project_name=None,
                       width_method='seismo_depth',
-                      oqt_source=False,
                       param_map=None,
                       defaults=None,
                       **kwargs):
@@ -304,7 +302,6 @@ def build_fault_model(*, cfg_file=None,
     srcl = build_model_from_db(fault_db,
                                xml_output,
                                width_method=width_method,
-                               oqt_source=oqt_source,
                                project_name=project_name,
                                param_map=param_map_local,
                                defaults=defaults_local)
@@ -326,8 +323,7 @@ def build_fault_model(*, cfg_file=None,
     build_fault_model.project_name = msg
     msg = 'Method to compute the fault width'
     build_fault_model.width_method = msg
-    msg = 'Switch between hazardlib and oq-mbt source formats'
-    build_fault_model.oqt_source = msg
+    
 
 
 if __name__ == "__main__":
