@@ -1063,9 +1063,8 @@ class SingleStationAnalysis(object):
             if filename is not None:
                 gmpe_str = get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
-            
-            # Print IMT info to file
             for imtx in self.imts:
+                # Print IMT info to file
                 if filename is not None:
                     print("%s" % imtx, file=fid)
                 if not ("Intra event" in self.site_residuals[
@@ -1095,8 +1094,8 @@ class SingleStationAnalysis(object):
                               file=fid)
                         
                 d2ss = np.array(d2ss)
-                phi_s2ss[gmpe][imtx] = {
-                    "Mean": np.mean(d2ss), "StdDev": np.std(d2ss)}
+                phi_s2ss[gmpe][imtx] = {"Mean": np.mean(d2ss),
+                                        "StdDev": np.std(d2ss)}
                 phi_ss[gmpe][imtx] = np.sqrt(
                     numerator_sum / float(np.sum(np.array(n_events)) - 1))
         
@@ -1107,6 +1106,8 @@ class SingleStationAnalysis(object):
                 gmpe_i = self.gmpe_list[gmpe]
                 gmpe_str = get_gmpe_str(gmpe)
                 print("%s" % gmpe_str, file=fid)
+                
+                
                 if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
                     p_data = (imtx,
                               phi_ss[gmpe][imtx],

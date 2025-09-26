@@ -91,7 +91,7 @@ class Configurations(object):
         if "euclidean_analysis" in config_file:
             self.mags_eucl, self.depths_eucl = self.get_eucl_mags_deps(config_file)
             self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
-            
+
         # Get imts
         self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
 
@@ -188,20 +188,27 @@ class Configurations(object):
         """
         # Make array of the magnitudes
         mag_params = config_file['euclidean_analysis']
-        mags_eucl = np.arange(
+        mags_euclidean = np.arange(
             mag_params['mmin'], mag_params['mmax'], mag_params['spacing'])
 
-        # Get depths per mag value
-        depth_per_mag = pd.DataFrame(
-            config_file['euclidean_analysis']['depths'], columns=['mag','depth'])
+        # Create dataframe of depth to assign per mag bin
+        depths_for_euclidean = pd.DataFrame(config_file[
+            'euclidean_analysis']['depths_for_euclidean'], columns=['mag','depth'])
+                
+        # Round each mag in mag_array to closest integer
+        mag_to_nearest_int = pd.Series(dtype='float')
+        for mag in mags_euclidean:
+            mag_to_nearest_int[mag] = np.round(mag+0.001)
+
+        # Assign depth to each mag in mag_array using rounded mags
+        depths_euclidean = []
+        for idx_mag, rounded_mag in enumerate(mag_to_nearest_int):
+            for idx, mag in enumerate(depths_for_euclidean['mag']):
+                if rounded_mag == mag:
+                    depth_to_store = depths_for_euclidean['depth'][idx]
+                    depths_euclidean.append(depth_to_store)
         
-        # Assign the depth to each mag in mags_eucl based on closest mag in depth_per_mag
-        depths_eucl = np.zeros(len(mags_eucl)) 
-        for idx_mag, mag in enumerate(mags_eucl):
-            closest = (np.abs(depth_per_mag['mag'] - mag)).idxmin()
-            depths_eucl[idx_mag] = depth_per_mag.loc[closest, 'depth']
-       
-        return  mags_eucl, pd.Series(depths_eucl)
+        return  mags_euclidean, pd.Series(depths_euclidean)
 
 
 def plot_trellis(filename, output_directory):

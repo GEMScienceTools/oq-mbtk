@@ -30,10 +30,10 @@ demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inp
 demo_out = os.path.join(BASE, 'outputs_demo_station_analysis')
 
 # Minimum number of records for a site to be considered in the SSA
-demo_threshold = 10
+demo_threshold = 45
 
 
-def make_database(flatfile, out_dir):
+def get_residual_metadata(flatfile, gmms_imts, out_dir):
     """
     Compute the residuals from the example flatfile, GMMs and imts
     """
@@ -46,6 +46,10 @@ def make_database(flatfile, out_dir):
     # Get inputs
     metadata = os.path.join(metadata_dir, 'metadatafile.pkl')
     sm_database = pickle.load(open(metadata,"rb")) 
+    
+    # Get residuals
+    residuals = res.Residuals.from_toml(gmms_imts)
+    residuals.compute_residuals(sm_database, component="Geometric")
 
     return sm_database
 
@@ -123,7 +127,7 @@ def main(flatfile=demo_flatfile,
     os.makedirs(out_dir)
 
     # Get residuals
-    sm_database = make_database(flatfile, out_dir)
+    sm_database = get_residual_metadata(flatfile, gmms_imts, out_dir)
     
     # Run the single station analysis
     single_station_analysis(sm_database, gmms_imts, out_dir, threshold)

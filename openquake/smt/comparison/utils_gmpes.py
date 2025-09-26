@@ -390,19 +390,23 @@ def mgmpe_check(gmpe):
                 
         # Al Atik 2015 sigma model
         if 'al_atik_2015_sigma' in gmpe:
-            kwargs['sigma_model_alatik2015'] = {"tau_model": "global", "ergodic": False}
+            kwargs['sigma_model_alatik2015'] = {
+                "tau_model": "global", "ergodic": False}
             
         # Fix total sigma per imt
         if 'fix_total_sigma' in gmpe:
-            kwargs['set_fixed_total_sigma'] = {'total_sigma': fixed_sigma_vector}
+            kwargs['set_fixed_total_sigma'] = {
+                'total_sigma': fixed_sigma_vector}
 
         # Partition total sigma using a specified ratio of within:between
         if 'with_betw_ratio' in gmpe:
-            kwargs['add_between_within_stds'] = {'with_betw_ratio': with_betw_ratio}
+            kwargs['add_between_within_stds'] = {
+                'with_betw_ratio': with_betw_ratio}
 
         # Set epsilon for tau and use instead of total sigma
         if 'set_between_epsilon' in gmpe:
-            kwargs['set_between_epsilon'] = {'epsilon_tau': between_epsilon}
+            kwargs['set_between_epsilon'] = {'epsilon_tau':
+                                             between_epsilon}
             
         # Add delta to total sigma
         if 'add_delta_sigma_to_total_sigma' in gmpe:
@@ -410,23 +414,28 @@ def mgmpe_check(gmpe):
                 
         # Set total sigma to sqrt(tau**2 + delta**2)
         if 'set_total_sigma_as_tau_plus_delta' in gmpe:
-            kwargs['set_total_std_as_tau_plus_delta'] = {'delta': total_set_to_tau_and_delta}
+            kwargs['set_total_std_as_tau_plus_delta'
+                   ] = {'delta': total_set_to_tau_and_delta}
         
         # Scale median by constant factor over all imts
         if 'median_scaling_scalar' in gmpe:
-            kwargs['set_scale_median_scalar'] = {'scaling_factor': median_scalar}
+            kwargs['set_scale_median_scalar'] = {'scaling_factor':
+                                                 median_scalar}
 
         # Scale median by imt-dependent factor
         if 'median_scaling_vector' in gmpe:
-            kwargs['set_scale_median_vector'] = {'scaling_factor': median_vector}
+            kwargs['set_scale_median_vector'] = {'scaling_factor':
+                                                 median_vector}
 
         # Scale sigma by constant factor over all imts
         if 'sigma_scaling_scalar' in gmpe:
-            kwargs['set_scale_total_sigma_scalar'] = {'scaling_factor': sigma_scalar}
+            kwargs['set_scale_total_sigma_scalar'] = {
+                'scaling_factor': sigma_scalar}
 
         # Scale sigma by imt-dependent factor
         if 'sigma_scaling_vector' in gmpe:
-            kwargs['set_scale_total_sigma_vector'] = {'scaling_factor': sigma_vector}
+            kwargs['set_scale_total_sigma_vector'] = {
+                'scaling_factor': sigma_vector}
 
         # CY14SiteTerm
         if 'CY14SiteTerm' in gmpe: kwargs['cy14_site_term'] = {}
@@ -434,11 +443,9 @@ def mgmpe_check(gmpe):
         # BA08SiteTerm
         if 'BA08SiteTerm' in gmpe: kwargs['ba08_site_term'] = {}
 
-        # BSSA14SiteTerm
-        if "BSSA14SiteTerm" in gmpe: kwargs['bssa14_site_term'] = {}
-
         # NRCan15SiteTerm (Regular)
-        if ('NRCan15SiteTerm' in gmpe and 'NRCan15SiteTermLinear' not in gmpe):
+        if ('NRCan15SiteTerm' in gmpe and
+                'NRCan15SiteTermLinear' not in gmpe):
             kwargs['nrcan15_site_term'] = {'kind': 'base'}
 
         # NRCan15SiteTerm (linear)
@@ -446,10 +453,12 @@ def mgmpe_check(gmpe):
             kwargs['nrcan15_site_term'] = {'kind': 'linear'}
 
         # CB14 basin term
-        if 'CB14BasinTerm' in gmpe: kwargs['cb14_basin_term'] = {}
+        if 'CB14BasinTerm' in gmpe:
+            kwargs['cb14_basin_term'] = {}
 
         # M9 basin adjustment
-        if 'M9BasinTerm' in gmpe: kwargs['m9_basin_term'] = {}
+        if 'M9BasinTerm' in gmpe:
+            kwargs['m9_basin_term'] = {}
         
         gmm = mgmpe.ModifiableGMPE(**kwargs)
 
