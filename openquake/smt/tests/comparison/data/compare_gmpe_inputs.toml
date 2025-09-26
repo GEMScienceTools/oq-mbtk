@@ -31,7 +31,7 @@ trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt str
 mmin = 5
 mmax = 7
 spacing = 0.1
-depths_for_euclidean = [[5, 20], [6, 25], [7, 30]] # [[mag, depth], [mag, depth], [mag, depth]] 
+depths = [[5, 20], [6, 25], [7, 30]] # [[mag, depth], [mag, depth], [mag, depth]] 
 gmpe_labels = ['CY14','CB14','BSSA14','KO2020']
 
 [models] # Specify GMMs 
