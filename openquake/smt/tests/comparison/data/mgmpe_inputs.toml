@@ -31,8 +31,8 @@ trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt str
 mmin = 5
 mmax = 7
 spacing = 0.1
-depths = [[5, 20], [6, 25], [7, 30]] # [[mag, depth], [mag, depth], [mag, depth]] 
-gmpe_labels = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
+depths_for_euclidean = [[5, 20], [6, 25], [7, 30]] # [[mag, depth], [mag, depth], [mag, depth]] 
+gmpe_labels = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
 
 # Specify GMMs
 [models]
@@ -78,37 +78,33 @@ gmpe = 'AtkinsonMacias2009'
 site_term = 'BA08SiteTerm' # use BA08 site term
 
 [models.10-ModifiableGMPE]
-gmpe = "EMME24BB_GMM1SGM1"
-site_term = "BSSA14SiteTerm"
-
-[models.11-ModifiableGMPE]
 gmpe = 'BooreEtAl2014'
 site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
 
-[models.12-ModifiableGMPE]
+[models.11-ModifiableGMPE]
 gmpe = 'BooreEtAl2014'
 site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
 
-[models.13-ModifiableGMPE]
+[models.12-ModifiableGMPE]
 gmpe = 'CampbellBozorgnia2014'
 add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
 
-[models.14-ModifiableGMPE]
+[models.13-ModifiableGMPE]
 gmpe = 'CampbellBozorgnia2014'
 set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
 
-[models.15-ModifiableGMPE]
+[models.14-ModifiableGMPE]
 gmpe = 'AtkinsonMacias2009'
 basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
 
-[models.16-ModifiableGMPE]
+[models.15-ModifiableGMPE]
 gmpe = 'KuehnEtAl2020SInter'
 basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
 
-[models.17-NGAEastGMPE]
+[models.16-NGAEastGMPE]
 gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
     
-[models.18-HassaniAtkinson2018]
+[models.17-HassaniAtkinson2018]
 d_sigma = 100 # gmpe specific param
 kappa0 = 0.04
 
