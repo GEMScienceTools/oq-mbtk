@@ -79,9 +79,9 @@ class TestMeanMDE(unittest.TestCase):
         creating the file that will be plotted by GMT
         """
         fname1 = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-mean-0.csv')
-        fout1, path1 = tempfile.mkstemp()
+        path1 = os.path.join(BASE_DATA_PATH, tempfile.mkdtemp(), 'path1')
         fname2 = os.path.join(BASE_CASE8, 'expected', 'Mag_Dist_Eps-mean-0.csv')
-        fout2, path2 = tempfile.mkstemp()
+        path2 = os.path.join(BASE_DATA_PATH, tempfile.mkdtemp(), 'path2')
 
         if OVERWRITE:
             shutil.copy(path1, fname1)
