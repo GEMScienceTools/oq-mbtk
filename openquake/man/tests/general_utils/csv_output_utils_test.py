@@ -80,7 +80,7 @@ class TestMeanMDE(unittest.TestCase):
         """
         fname1 = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-mean-0.csv')
         fout1, path1 = tempfile.mkstemp()
-        fname2 = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
+        fname2 = os.path.join(BASE_CASE8, 'expected', 'Mag_Dist_Eps-mean-0.csv')
         fout2, path2 = tempfile.mkstemp()
 
         if OVERWRITE:
@@ -122,9 +122,9 @@ class OutputTestCase(unittest.TestCase):
 
         # Test mre results output format
         [fname_mde] = export(('disagg-stats', 'csv'), calc1.datastore)
-        exp_mde = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
+        exp_mde = os.path.join(BASE_CASE8, 'expected', 'Mag_Dist_Eps-mean-0.csv')
         [fname_llt] = export(('disagg-stats', 'csv'), calc2.datastore)
-        exp_llt = os.path.join(BASE_CASE8, 'expected/TRT_Lon_Lat-mean-0.csv')
+        exp_llt = os.path.join(BASE_CASE8, 'expected', 'TRT_Lon_Lat-mean-0.csv')
 
         if OVERWRITE:
             shutil.copyfile(fname_llt, exp_mde)
