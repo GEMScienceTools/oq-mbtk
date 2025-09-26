@@ -517,12 +517,9 @@ def compute_matrix_gmpes(config, mtxs_type):
             
                 gmm = mgmpe_check(gmpe)
 
-                # Get depth params
+                # Get depth param
                 depth_g = dep_list[l] 
-                if config.ztor != -999:
-                    ztor_g = config.ztor[l]
-                else:
-                    ztor_g = None
+                ztor_g = None # NOTE: No hypo depth constraint used here
 
                 # Get rupture params
                 strike_g, dip_g, aratio_g = get_rup_pars(config.strike,
@@ -798,35 +795,50 @@ def get_colors(custom_color_flag, custom_color_list):
     Get list of colors for plots
     """
     colors = [
-        'b',     
-        'g',
-        'r',    
-        'c',     
-        'm',     
-        'y',     
-        'k',     
-        'm',   
-        'gold',  
-        'tab:grey', 
-        'tab:brown',  
-        '#FF5733', 
-        '#33FF57', 
-        '#FF6347',
-        '#800080',
-        '#008080',
-        '#FFD700',
-        '#FF1493',
-        '#8A2BE2',
-        '#7FFF00',
-        '#D2691E',
-        '#ADFF2F',
-        '#2E8B57',
-        '#9932CC',
-        '#B22222',
-        '#4B0082',
-        '#FFFF00',
-        '#87CEFA',
-        '#00FA9A',
+        '#0000FF',  # blue
+        '#008000',  # green
+        '#FF0000',  # red
+        '#00FFFF',  # cyan
+        '#FF00FF',  # magenta
+        '#FFFF00',  # yellow
+        '#000000',  # black
+        '#DAA520',  # goldenrod
+        '#708090',  # slategray
+        '#A0522D',  # sienna
+        '#FF4500',  # orange red
+        '#32CD32',  # lime green
+        '#FF8C00',  # dark orange
+        '#9400D3',  # dark violet
+        '#20B2AA',  # light sea green
+        '#F0E68C',  # khaki
+        '#FF69B4',  # hot pink
+        '#BA55D3',  # medium orchid
+        '#7CFC00',  # lawn green
+        '#CD853F',  # peru
+        '#9ACD32',  # yellow green
+        '#3CB371',  # medium sea green
+        '#8B008B',  # dark magenta
+        '#DC143C',  # crimson
+        '#4B0082',  # indigo
+        '#FFFF00',  # yellow
+        '#1E90FF',  # dodger blue
+        '#00FF7F',  # spring green
+        '#FFB6C1',  # light pink
+        '#4682B4',  # steel blue
+        '#8FBC8F',  # dark sea green
+        '#B22222',  # firebrick
+        '#00CED1',  # dark turquoise
+        '#FFD700',  # gold
+        '#6A5ACD',  # slate blue
+        '#D2691E',  # chocolate
+        '#00BFFF',  # deep sky blue
+        '#ADFF2F',  # green yellow
+        '#FF6347',  # tomato
+        '#40E0D0',  # turquoise
+        '#C71585',  # medium violet red
+        '#E9967A',  # dark salmon
+        '#A9A9A9',  # dark gray
+        '#F08080',  # light coral
         ]
     
     if custom_color_flag is True:
