@@ -962,9 +962,7 @@ def lt_trel(r_vals,
     mk = (f'IMT = {i}, Mw = {m}, depth = {dep} km, dip = {dip} deg, rake = {rake} deg')
 
     # Get logic tree 
-    lt_df_gmc = pd.DataFrame(
-        lt_vals_gmc, index=[
-            'median', 'plus_sigma', 'minus_sigma'])
+    lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['median', 'plus_sigma', 'minus_sigma'])
 
     lt_median = lt_df_gmc.loc['median'].sum()
     median_gmc[mk] = lt_median
