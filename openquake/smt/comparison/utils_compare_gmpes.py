@@ -173,10 +173,16 @@ def plot_trellis_util(config, output_directory):
                                                     cfg_key,
                                                     unit)
                     
-            # Store per gmpe
-            mag_key = 'Mw = %s, depth = %s km, dip = %s deg, rake = %s deg' % (
-                m, depth_g, dip_g, config.rake)
+            # Create key of magnitude and other scenario info
+            mag_key = f'Mw = {m}, depth = {depth_g} km, dip = {dip_g} deg, rake = {config.rake} deg'
+            
+            # Add the distance values to each GMM (avoid's overwrite)
+            store_per_gmpe['%s (km)' % config.dist_type] = r_vals
+
+            # Store the GMM's info
             store_per_mag[mag_key] = store_per_gmpe
+
+            # Add grid
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
         # Store per imt
@@ -184,7 +190,6 @@ def plot_trellis_util(config, output_directory):
     
     # Final store to add vs30 and Nstd into key
     store_gmm_curves[cfg_key]['gmm att curves per imt-mag'] = store_per_imt
-    store_gmm_curves[cfg_key]['gmm att curves per imt-mag']['%s (km)' % config.dist_type] = r_vals
     
     # Finalise plots
     maxy = np.max(max_pred)
