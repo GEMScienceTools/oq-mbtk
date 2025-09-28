@@ -47,47 +47,41 @@ def run_comparison(file, out_dir):
     return att_curves
 
 
-def reformat_curves(att_curves, file, out_dir):
+def reformat_att_curves(att_curves, out_dir):
     """
-    Export the (median) hazard curves into a CSV for the given
+    Export the (median) attenuation curves into a CSV for the given
     config (i.e. run parameters).
     """
-    # Load the config object
-    config = toml.load(file)
-
-    # Get the distance type used
-    R = config['general']['dist_type']+' (km)'
-
     # Get the key describing the vs30 + truncation level
     params_key = pd.Series(att_curves.keys()).values[0]
 
     # Then get the values per gmm (per imt-mag combination)
     vals = att_curves[params_key]['gmm att curves per imt-mag']
 
-    # Set a store which we will turn into the dataframe
-    store = {}
-
-    # Get the distance values (same across the GMMs per run)
-    store[R] = att_curves[params_key]['gmm att curves per imt-mag'][R]
-
     # Now get the curves into a dictionary format
+    store = {}
     for imt in vals.keys():
-        if imt == R:
-            continue
         for scenario in vals[imt]:
             medians = vals[imt][scenario]
-            for gmpe in medians:
-                key = imt + ', ' +  scenario + ', ' + gmpe
-                key = key.replace('\n', ' ')
-                gmpe_medians = medians[gmpe]['median (g)']
-                store[key] = gmpe_medians
-
+            for gmpe in medians: 
+                # First per GMM
+                if "(km)" not in gmpe:
+                    key = imt + ', ' +  scenario + ', ' + gmpe
+                    key = key.replace('\n', ' ')
+                    gmpe_medians = medians[gmpe]['median (g)']
+                    store[key] = gmpe_medians
+                # Then get the distance for given scenario
+                else:
+                    dkey = f"values of {gmpe} for {scenario}"
+                    if dkey not in store: # Skip if already in dict
+                        store[dkey] = medians[gmpe]
+                    
     # Now into dataframe
     df = pd.DataFrame(store)
 
     # And export
-    out_hc = os.path.join(out_dir, 'attenuation_curves.csv')
-    df.to_csv(out_hc)
+    fname = os.path.join(out_dir, 'attenuation_curves.csv')
+    df.to_csv(fname)
 
     return df # Might want to build on this so return the df...
 
@@ -108,7 +102,7 @@ def main(input_toml=demo_input, out_dir=demo_out):
     att_curves = run_comparison(input_toml, out_dir)
 
     # Reformat the att_curves dictionary into a csv
-    df = reformat_curves(att_curves, input_toml, out_dir)
+    df = reformat_att_curves(att_curves, out_dir)
 
     # Print that the analysis has finished
     print("GMM comparison analysis has successfully finished")
