@@ -502,7 +502,13 @@ def compute_matrix_gmpes(config, mtxs_type):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
     given run configuration for use within the Sammon's maps and hierarchical
-    clustering dendrograms and Euclidean distance matrix plots
+    clustering dendrograms and Euclidean distance matrix plots.
+
+    If any gmpe logic trees are specified in the .toml, then these weights are
+    used to compute the associated gmpe logic tree (i.e. we can compare not
+    only gmpes, but which gmpes are most similar to the weighted logic tree
+    of them too).
+
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median, 84th or 16th percentile)
