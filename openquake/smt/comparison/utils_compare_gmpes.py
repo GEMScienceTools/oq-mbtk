@@ -507,6 +507,10 @@ def compute_matrix_gmpes(config, mtxs_type):
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median, 84th or 16th percentile)
     """
+    # Get lt weights
+    lts = [config.lt_weights_gmc1, config.lt_weights_gmc2,
+           config.lt_weights_gmc3, config.lt_weights_gmc4]
+
     # Get mag, imt and depth lists
     mag_list = config.mags_eucl
     dep_list = config.depths_eucl
@@ -514,12 +518,32 @@ def compute_matrix_gmpes(config, mtxs_type):
     
     mtxs_median = {}
     for n, i in enumerate(imt_list): # Iterate through imt_list
+
+        # Dict for storing medians
         matrix_medians = np.zeros(
             (len(config.gmpes_list),
             (len(mag_list)*int((config.maxR-config.minR)/1))))
 
+        # Need to also store GMM LT weighted medians
+        lt_meds = {f"gmcLT{ig+1}": {gm: [] for gm in getattr(
+            config, f"lt_weights_gmc{ig+1}")} for ig, lt in enumerate(lts) if lt is not None}
+        
         for g, gmpe in enumerate(config.gmpes_list): 
-            medians, sigmas = [], []
+
+            # If the GMM is in a logic tree then get weight and LT
+            if 'lt_weight_gmc' in gmpe:
+                lt_ini = gmpe.split("lt_weight_gmc")[1]
+                if 'plot_lt_only' in gmpe:
+                    lt = int(lt_ini.split("_plot_lt_only")[0])
+                else:
+                    lt = int(lt_ini.split("=")[0])
+                lt_key = f"gmcLT{lt}"
+                assert lt_key in lt_meds.keys() # Sanity check
+                wt = getattr(config, f"lt_weights_gmc{lt}")[gmpe]
+            else:
+                wt = None
+
+            medians, meds_wt = [], []
             for l, m in enumerate(mag_list): # Iterate though mag_list
             
                 gmm = mgmpe_check(gmpe)
@@ -561,19 +585,31 @@ def compute_matrix_gmpes(config, mtxs_type):
                 std = [std[0][0][idx]]
                 tau = [tau[0][0][idx]]
                 phi = [phi[0][0][idx]]
-                
+
+                # Store required percentile of ground-shaking
                 if mtxs_type == 'median':
-                    medians = np.append(medians, (np.exp(mean)))
+                    preds = (np.exp(mean))
                 if mtxs_type == '84th_perc':
                     Nstd = 1 # Median + 1std = ~84th percentile
-                    medians = np.append(medians, (np.exp(mean+Nstd*std[0])))
+                    preds = (np.exp(mean+Nstd*std[0]))
                 if mtxs_type == '16th_perc':
                     Nstd = 1 # Median - 1std = ~16th percentile
-                    medians = np.append(medians, (np.exp(mean-Nstd*std[0])))   
-                sigmas = np.append(sigmas, std[0])
-                
-            matrix_medians[:][g]= medians
-        mtxs_median[n] = matrix_medians
+                    preds = (np.exp(mean-Nstd*std[0])) 
+                medians = np.append(medians, preds)
+
+                # Store weighted median if gmm in an lt
+                if wt is not None:
+                    lt_meds[lt_key][gmpe] = np.append(lt_meds[lt_key][gmpe], preds*wt)
+
+            # Store medians for gmm for given mag
+            matrix_medians[:][g] = medians
+    
+        # Store medians for given imt
+        mtxs_median[i] = matrix_medians
+
+        # Get any req wt means now we have medians for all mags for each GMM
+        for gmm_lt in lt_meds.keys():
+            mtxs_median[f"{i}_{gmm_lt}"] = pd.DataFrame(lt_meds[gmm_lt].values()).mean(axis=0)
 
     return mtxs_median
 
@@ -600,7 +636,17 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     for n, i in enumerate(imt_list):
 
         # Get the data matrix
-        data = mtxs[n]   
+        data = mtxs[i]   
+
+        # GMPE labels
+        labels = gmpe_list.copy()
+
+        # Add the weighted LTs if any too
+        for key in mtxs.keys():
+            if f"{i}_gmcLT" in key:
+                data = np.vstack((data, mtxs[key]))
+                labels.append(key.split("_")[1]) # Add label
+
         # Agglomerative clustering
         dist = squareform(pdist(data, 'euclidean'))
         matrix_dist[n] = dist
@@ -621,8 +667,9 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax = axs2[n]
         else:
             ax = axs2[np.unravel_index(n, (nrows, ncols))]           
-        ax.imshow(matrix_dist[n],cmap='gray') 
+        ax.imshow(matrix_dist[n], cmap='gray') 
         
+        # Add title
         if mtxs_type == 'median':
             ax.set_title(str(i) + ' (median)', fontsize='14')
         if mtxs_type == '84th_perc':
@@ -630,16 +677,18 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         if mtxs_type == '16th_perc':
             ax.set_title(str(i) + ' (16th percentile)', fontsize='14')
 
-        ax.xaxis.set_ticks([n for n in range(len(gmpe_list))])
-        ax.xaxis.set_ticklabels(gmpe_list,rotation=40)
-        ax.yaxis.set_ticks([n for n in range(len(gmpe_list))])
-        ax.yaxis.set_ticklabels(gmpe_list)
+        # Add axis ticks
+        ax.xaxis.set_ticks([n for n in range(len(labels))])
+        ax.xaxis.set_ticklabels(labels, rotation=40)
+        ax.yaxis.set_ticks([n for n in range(len(labels))])
+        ax.yaxis.set_ticklabels(labels)
 
     # Remove final plot if not required
     if len(imt_list) >= 3 and len(imt_list)/2 != int(len(imt_list)/2):
         ax = axs2[np.unravel_index(n+1, (nrows, ncols))]
         ax.set_visible(False)
 
+    # Save
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.tight_layout()        
     
@@ -680,28 +729,40 @@ def plot_sammons_util(imt_list,
     fig.set_size_inches(12, 6*nrows)
     
     for n, i in enumerate(imt_list):
-        
-        data = mtxs[n] # Get the data matrix
-        coo, cost = sammon(data, display = 1)
-        fig.add_subplot(nrows, 2, n+1)
 
-        for g, gmpe in enumerate(gmpe_list):
+        # Get the data matrix
+        data = mtxs[i]
+
+        # GMPE labels
+        labels = gmpe_list.copy()
+
+        # Add the weighted LTs if any too
+        for key in mtxs.keys():
+            if f"{i}_gmcLT" in key:
+                data = np.vstack((data, mtxs[key]))
+                labels.append(key.split("_")[1]) # Add label
+
+        # Sammons mapping
+        coo, cost = sammon(data, display=1)
+        fig.add_subplot(nrows, 2, n+1)
+        for g, gmpe in enumerate(labels):
+
             # Get colors and marker
-            if g == len(gmpe_list)-1:
-                col = 'k'
+            if 'gmcLT' in gmpe:
                 marker = 'x'
             else:
                 marker = 'o'
-                col = colors[g]
+            col = colors[g]
             
             # Plot data
             pyplot.plot(coo[g, 0], coo[g, 1], marker, markersize=9, color=col, label=gmpe)
             texts.append(pyplot.text(coo[g, 0]+np.abs(coo[g, 0])*0.02,
-                                     coo[g, 1]+np.abs(coo[g, 1])*0.,
-                                     gmpe_list[g],
+                                     coo[g, 1]+np.abs(coo[g, 1])*0.02,
+                                     labels[g],
                                      ha='left',
                                      color=col))
-
+            
+        # Format plot
         pyplot.title(str(i), fontsize='16')
         if mtxs_type == 'median':
             pyplot.title(str(i) + ' (median)', fontsize='14')
@@ -711,6 +772,7 @@ def plot_sammons_util(imt_list,
             pyplot.title(str(i) + ' (16th percentile)', fontsize='14')
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
+    # Tidy and save
     pyplot.legend(loc="center left", bbox_to_anchor=(1.25, 0.50), fontsize='16')
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.tight_layout()
@@ -748,7 +810,16 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     for n, i in enumerate(imt_list):
 
         # Get the data matrix
-        data = mtxs[n]
+        data = mtxs[i]
+
+        # GMPE labels
+        labels = gmpe_list.copy()
+
+        # Add the weighted LTs if any too
+        for key in mtxs.keys():
+            if f"{i}_gmcLT" in key:
+                data = np.vstack((data, mtxs[key]))
+                labels.append(key.split("_")[1]) # Add label
 
         # Agglomerative clustering
         Z = hierarchy.linkage(
@@ -760,8 +831,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     fig, axs = pyplot.subplots(nrows, ncols)
     fig.set_size_inches(12, 6*nrows)
 
-    for n, i in enumerate(imt_list):                
-    # Set the axis and title
+    for n, i in enumerate(imt_list):
         if len(imt_list) < 3:
             ax = axs[n]
         else:
@@ -769,7 +839,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         
         # Plot dendrogram
         dn1 = hierarchy.dendrogram(
-            matrix_Z[n], ax=ax, orientation='right', labels=gmpe_list)
+            matrix_Z[n], ax=ax, orientation='right', labels=labels)
         ax.set_xlabel('Euclidean Distance', fontsize='12')
         if mtxs_type == 'median':
             ax.set_title(str(i) + ' (median)', fontsize='12')
@@ -784,7 +854,8 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         ax.set_visible(False)
     if len(imt_list) == 1:
         axs[1].set_visible(False)
-        
+    
+    # Save
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.4)
     pyplot.tight_layout() 
     
@@ -1366,25 +1437,4 @@ def update_ratio_plots(dist_type, m, i, n, l, imt_list, r_vals, minR, maxR):
     # Set xlims
     min_r_val = min(r_vals[r_vals>=1])
     pyplot.xlim(np.max([min_r_val, minR]), maxR)
-
-
-def weighted_matrix_means(mtxs, gmpe_list):
-    """
-    For a matrix of predicted ground-motions compute the weighted mean
-    per prediction per IMT.
-    """
-    for _, imt in enumerate(mtxs):
-        store_vals = []
-        for idx_gmpe, _ in enumerate(mtxs[imt]):
-            store_vals.append(
-                pd.Series(mtxs[imt][idx_gmpe])) # Store per gmpe per imt 
-        
-        # Get mean val per column (one column per prediction)
-        val_df = pd.DataFrame(store_vals)
-        mean = (val_df.mean(axis=0)) 
-        mtxs[imt] = np.concatenate((mtxs[imt], [mean]))
-
-    if not any(x == 'mean' for x in gmpe_list):
-        gmpe_list.append('mean')
-
-    return mtxs, gmpe_list
+    
