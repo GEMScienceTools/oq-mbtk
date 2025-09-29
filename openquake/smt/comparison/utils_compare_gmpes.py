@@ -594,7 +594,7 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
     # Euclidean
-    matrix_Dist = {}
+    matrix_dist = {}
 
     # Loop over IMTs
     for n, i in enumerate(imt_list):
@@ -603,7 +603,7 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         data = mtxs[n]   
         # Agglomerative clustering
         dist = squareform(pdist(data, 'euclidean'))
-        matrix_Dist[n] = dist
+        matrix_dist[n] = dist
 
     # Create the figure
     ncols = 2
@@ -621,7 +621,7 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
             ax = axs2[n]
         else:
             ax = axs2[np.unravel_index(n, (nrows, ncols))]           
-        ax.imshow(matrix_Dist[n],cmap='gray') 
+        ax.imshow(matrix_dist[n],cmap='gray') 
         
         if mtxs_type == 'median':
             ax.set_title(str(i) + ' (median)', fontsize='14')
@@ -643,7 +643,7 @@ def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.tight_layout()        
     
-    return matrix_Dist
+    return matrix_dist
 
     
 def plot_sammons_util(imt_list,
@@ -669,9 +669,6 @@ def plot_sammons_util(imt_list,
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
-    # Get weighted mean per imt over the gmpes
-    mtxs, gmpe_list = matrix_mean(mtxs, gmpe_list)
-    
     # Setup
     colors = get_colors(custom_color_flag, custom_color_list)
     texts = []
@@ -738,9 +735,6 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
-    # Get weighted mean per imt over the gmpes
-    mtxs, gmpe_list = matrix_mean(mtxs, gmpe_list)
-    
     # Setup
     ncols = 2    
     if len(imt_list) < 3:
@@ -1374,7 +1368,7 @@ def update_ratio_plots(dist_type, m, i, n, l, imt_list, r_vals, minR, maxR):
     pyplot.xlim(np.max([min_r_val, minR]), maxR)
 
 
-def matrix_mean(mtxs, gmpe_list):
+def weighted_matrix_means(mtxs, gmpe_list):
     """
     For a matrix of predicted ground-motions compute the weighted mean
     per prediction per IMT.
