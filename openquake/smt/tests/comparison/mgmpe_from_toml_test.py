@@ -25,6 +25,7 @@ import numpy as np
 import shutil
 import pickle
 import unittest
+
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes
 
