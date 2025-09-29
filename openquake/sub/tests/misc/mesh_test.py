@@ -124,6 +124,14 @@ class IdealisedSimpleDisalignedMeshTest(unittest.TestCase):
             computed.append(tmp)
         computed = numpy.array(computed)
         tmp = abs(computed-self.h_sampl)/self.h_sampl
+        print(computed)
+
+        print(self.h_sample)
+
+        print(tmp)
+
+        print(tmp.max())
+
         self.assertTrue(numpy.all(tmp < 0.05))
 
     def test_v_spacing(self):
