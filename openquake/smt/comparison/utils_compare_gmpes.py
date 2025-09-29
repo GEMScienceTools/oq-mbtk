@@ -620,7 +620,7 @@ def compute_matrix_gmpes(config, mtxs_type):
     return mtxs_median
 
 
-def plot_euclidean_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
+def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     """
     Plot Euclidean distance matrices for given run configuration
     :param imt_list:

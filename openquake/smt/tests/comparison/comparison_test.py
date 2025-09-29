@@ -30,7 +30,7 @@ from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import (compute_matrix_gmpes,
                                                           plot_cluster_util,
                                                           plot_sammons_util,
-                                                          plot_euclidean_util)
+                                                          plot_matrix_util)
 
 
 # Base path
@@ -172,7 +172,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(len(coo), len(TARGET_GMPES)+lts)
 
         # Euclidean checks
-        matrix_dist = plot_euclidean_util(
+        matrix_dist = plot_matrix_util(
             config.imt_list, config.gmpe_labels, mtxs_medians,
             os.path.join(self.output_directory, 'Euclidean.png'),
             mtxs_type='median')

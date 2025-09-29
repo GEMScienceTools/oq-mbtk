@@ -42,7 +42,7 @@ def run_comparison(file, out_dir):
     comp.plot_ratios(file, out_dir)
     comp.plot_cluster(file, out_dir)
     comp.plot_sammons(file, out_dir)
-    comp.plot_euclidean(file, out_dir)
+    comp.plot_matrix(file, out_dir)
 
     return att_curves
 
