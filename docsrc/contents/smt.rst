@@ -608,7 +608,7 @@ Comparing GMPEs
     .. code-block:: ini
     
        > # Generate matrix plots of Euclidean distance
-       > comp.plot_euclidean(filename, output_directory)
+       > comp.plot_matrix(filename, output_directory)
 
     Matrix plots of Euclidean distance between GMPEs (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Euclidean.png

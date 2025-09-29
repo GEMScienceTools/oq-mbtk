@@ -29,7 +29,7 @@ import os
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_compare_gmpes import (
     plot_trellis_util, plot_spectra_util, plot_ratios_util,
-    plot_cluster_util, plot_sammons_util, plot_euclidean_util,
+    plot_cluster_util, plot_sammons_util, plot_matrix_util,
     compute_matrix_gmpes)
 
 
@@ -344,7 +344,7 @@ def plot_sammons(filename, output_directory):
                       mtxs_type='16th_perc')
    
     
-def plot_euclidean(filename, output_directory):
+def plot_matrix(filename, output_directory):
     """
     Plot Euclidean distance matrix of median and 84th percentile predicted
     ground-motion by each GMPE for given configurations
@@ -371,14 +371,14 @@ def plot_euclidean(filename, output_directory):
     
     mtxs_16th_perc = compute_matrix_gmpes(config, mtxs_type='16th_perc')
     
-    plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_50th_perc,
+    plot_matrix_util(config.imt_list, config.gmpe_labels, mtxs_50th_perc,
                         os.path.join(output_directory,'Median_Euclidean.png'),
                         mtxs_type='median')
     
-    plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
+    plot_matrix_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
                         os.path.join(output_directory,'84th_perc_Euclidean.png'),
                         mtxs_type='84th_perc')
     
-    plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
+    plot_matrix_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
                         os.path.join(output_directory,'16th_perc_Euclidean.png'),
                         mtxs_type='16th_perc')
