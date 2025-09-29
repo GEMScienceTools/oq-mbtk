@@ -205,7 +205,8 @@ def plot_trellis_util(config, output_directory):
 def plot_spectra_util(config, output_directory, obs_spectra_fname):
     """
     Plot response spectra for given run configuration. Can also plot an
-    observed spectrum and the corresponding predictions by the specified GMPEs
+    observed spectrum and the corresponding predictions by the specified
+    GMPEs.
     """
     # Get mag and depth lists
     mag_list = config.mag_list
@@ -513,8 +514,9 @@ def compute_matrix_gmpes(config, mtxs_type):
     
     mtxs_median = {}
     for n, i in enumerate(imt_list): # Iterate through imt_list
-        matrix_medians=np.zeros((len(config.gmpes_list), (len(mag_list)*int((
-            config.maxR-config.minR)/1))))
+        matrix_medians = np.zeros(
+            (len(config.gmpes_list),
+            (len(mag_list)*int((config.maxR-config.minR)/1))))
 
         for g, gmpe in enumerate(config.gmpes_list): 
             medians, sigmas = [], []
@@ -572,7 +574,7 @@ def compute_matrix_gmpes(config, mtxs_type):
                 
             matrix_medians[:][g]= medians
         mtxs_median[n] = matrix_medians
-        
+
     return mtxs_median
 
 
@@ -652,8 +654,9 @@ def plot_sammons_util(imt_list,
                       custom_color_list,
                       mtxs_type):
     """
-    Plot Sammons maps for given run configuration. The mean of the GMPE
-    predictions is also considered.
+    Plot Sammons maps for given run configuration. The weighted
+    mean of the GMPE predictions is plotted if GMM logic tree
+    weights are specified.
     :param imt_list:
         A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
     :param gmpe_list:
@@ -666,7 +669,7 @@ def plot_sammons_util(imt_list,
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
-    # Get mean per imt over the gmpes
+    # Get weighted mean per imt over the gmpes
     mtxs, gmpe_list = matrix_mean(mtxs, gmpe_list)
     
     # Setup
@@ -695,8 +698,7 @@ def plot_sammons_util(imt_list,
                 col = colors[g]
             
             # Plot data
-            pyplot.plot(coo[g, 0], coo[g, 1], marker, markersize=9, color=col,
-                        label=gmpe)
+            pyplot.plot(coo[g, 0], coo[g, 1], marker, markersize=9, color=col, label=gmpe)
             texts.append(pyplot.text(coo[g, 0]+np.abs(coo[g, 0])*0.02,
                                      coo[g, 1]+np.abs(coo[g, 1])*0.,
                                      gmpe_list[g],
@@ -721,8 +723,9 @@ def plot_sammons_util(imt_list,
 
 def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     """
-    Plot hierarchical clusters for given run configuration. The mean of the
-    GMPE predictions is also considered.
+    Plot hierarchical clusters for given run configuration. The weighted
+    mean of the GMPE predictions is plotted if GMM logic tree weights
+    are specified.
     :param imt_list:
         A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
     :param gmpe_list:
@@ -735,7 +738,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median or 84th or 16th percentile)
     """
-    # Get mean per imt over the gmpes
+    # Get weighted mean per imt over the gmpes
     mtxs, gmpe_list = matrix_mean(mtxs, gmpe_list)
     
     # Setup
@@ -1373,20 +1376,20 @@ def update_ratio_plots(dist_type, m, i, n, l, imt_list, r_vals, minR, maxR):
 
 def matrix_mean(mtxs, gmpe_list):
     """
-    For a matrix of predicted ground-motions compute the arithmetic mean
-    per prediction per IMT w.r.t. the number of GMPEs within the gmpe_list
+    For a matrix of predicted ground-motions compute the weighted mean
+    per prediction per IMT.
     """
     for _, imt in enumerate(mtxs):
         store_vals = []
         for idx_gmpe, _ in enumerate(mtxs[imt]):
             store_vals.append(
-                pd.Series(mtxs[imt][idx_gmpe])) # store per gmpe per imt 
+                pd.Series(mtxs[imt][idx_gmpe])) # Store per gmpe per imt 
         
-        # Into df and get mean val per column (one column per prediction)
+        # Get mean val per column (one column per prediction)
         val_df = pd.DataFrame(store_vals)
         mean = (val_df.mean(axis=0)) 
         mtxs[imt] = np.concatenate((mtxs[imt], [mean]))
-    
+
     if not any(x == 'mean' for x in gmpe_list):
         gmpe_list.append('mean')
 
