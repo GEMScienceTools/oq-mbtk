@@ -769,10 +769,10 @@ def plot_sammons_util(imt_list,
         labels = [gmm for k, gmm in zip(keep, labels) if k]
 
         # Sammons mapping
-        coo, cost = sammon(data, display=1)
-        coo_per_imt[i] = coo
-        fig.add_subplot(nrows, 2, n+1)
-        for g, gmpe in enumerate(labels):
+        coo, cost = sammon(data, display=1) # NOTE: each gmm's array in coo has a structure of
+        coo_per_imt[i] = coo                # of [idx1, idx2, dist, npoints] where idx1 and idx2
+        fig.add_subplot(nrows, 2, n+1)      # are merged at distance of dist into a cluster which
+        for g, gmpe in enumerate(labels):   # containing npoints points
 
             # Get colors and marker
             if 'gmcLT' in gmpe:
