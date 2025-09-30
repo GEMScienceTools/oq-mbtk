@@ -617,6 +617,9 @@ def compute_matrix_gmpes(config, mtxs_type):
         for gmm_lt in lt_meds.keys():
             mtxs_median[f"{i}_{gmm_lt}"] = pd.DataFrame(lt_meds[gmm_lt].values()).mean(axis=0)
 
+    # Store gmpes_list to
+    mtxs_median['gmpe_list'] = config.gmpes_list.copy()
+
     return mtxs_median
 
 
@@ -644,15 +647,23 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         # Get the data matrix
         data = mtxs[i]   
 
-        # GMPE labels
+        # gmm labels and configs
         labels = gmpe_list.copy()
+        gmm_configs = mtxs['gmpe_list'].copy()
 
         # Add the weighted LTs if any too
         for key in mtxs.keys():
-            if f"{i}_gmcLT" in key:
+            check = f"{i}_gmcLT"
+            if check in key:
                 data = np.vstack((data, mtxs[key]))
                 labels.append(key.split("_")[1]) # Add label
+                gmm_configs.append(check)
 
+        # If only need gmm LT drop the gmms used included in it
+        keep = np.array(['plot_lt_only' not in gmm for gmm in gmm_configs])
+        data = data[keep] 
+        labels = [gmm for k, gmm in zip(keep, labels) if k]
+        
         # Agglomerative clustering
         dist = squareform(pdist(data, 'euclidean'))
         matrix_dist[n] = dist
@@ -739,14 +750,22 @@ def plot_sammons_util(imt_list,
         # Get the data matrix
         data = mtxs[i]
 
-        # GMPE labels
+        # gmm labels and configs
         labels = gmpe_list.copy()
+        gmm_configs = mtxs['gmpe_list'].copy()
 
         # Add the weighted LTs if any too
         for key in mtxs.keys():
-            if f"{i}_gmcLT" in key:
+            check = f"{i}_gmcLT"
+            if check in key:
                 data = np.vstack((data, mtxs[key]))
                 labels.append(key.split("_")[1]) # Add label
+                gmm_configs.append(check)
+
+        # If only need gmm LT drop the gmms used included in it
+        keep = np.array(['plot_lt_only' not in gmm for gmm in gmm_configs])
+        data = data[keep] 
+        labels = [gmm for k, gmm in zip(keep, labels) if k]
 
         # Sammons mapping
         coo, cost = sammon(data, display=1)
@@ -818,14 +837,22 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         # Get the data matrix
         data = mtxs[i]
 
-        # GMPE labels
+        # gmm labels and configs 
         labels = gmpe_list.copy()
+        gmm_configs = mtxs['gmpe_list'].copy()
 
         # Add the weighted LTs if any too
         for key in mtxs.keys():
-            if f"{i}_gmcLT" in key:
+            check = f"{i}_gmcLT"
+            if check in key:
                 data = np.vstack((data, mtxs[key]))
                 labels.append(key.split("_")[1]) # Add label
+                gmm_configs.append(check)
+
+        # If only need gmm LT drop the gmms used included in it
+        keep = np.array(['plot_lt_only' not in gmm for gmm in gmm_configs])
+        data = data[keep] 
+        labels = [gmm for k, gmm in zip(keep, labels) if k]
 
         # Agglomerative clustering
         Z = hierarchy.linkage(

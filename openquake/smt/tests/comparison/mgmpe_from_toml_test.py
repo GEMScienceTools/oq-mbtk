@@ -61,6 +61,9 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         
         # Get matrices of predicted ground-motions per GMM
         obs_matrix = compute_matrix_gmpes(config, mtxs_type='median')
+        
+        # Remove the gmpe_list key
+        del obs_matrix['gmpe_list']
 
         # Load the matrices of expected ground-motions per GMM         
         if not os.path.exists(self.exp_mgmpe):
