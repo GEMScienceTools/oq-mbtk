@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Module with utility functions for generating trellis plots, response spectra,
-hierarchical clustering plots, Sammons maps and Euclidean distance matrix plots
+hierarchical clustering plots, Sammon maps and Euclidean distance matrix plots
 """
 import os
 import numpy as np
@@ -501,7 +501,7 @@ def plot_ratios_util(config, output_directory):
 def compute_matrix_gmpes(config, mtxs_type):
     """
     Compute matrix of median ground-motion predictions for each gmpe for the
-    given run configuration for use within the Sammon's maps and hierarchical
+    given run configuration for use within the Sammon maps and hierarchical
     clustering dendrograms and Euclidean distance matrix plots.
 
     If any gmpe logic trees are specified in the .toml, then these weights are
@@ -720,7 +720,7 @@ def plot_sammons_util(imt_list,
                       custom_color_list,
                       mtxs_type):
     """
-    Plot Sammons maps for given run configuration. The weighted
+    Plot Sammon maps for given run configuration. The weighted
     mean of the GMPE predictions is plotted if GMM logic tree
     weights are specified.
     :param imt_list:
@@ -768,7 +768,7 @@ def plot_sammons_util(imt_list,
         data = data[keep] 
         labels = [gmm for k, gmm in zip(keep, labels) if k]
 
-        # Sammons mapping
+        # Sammon mapping
         coo, cost = sammon(data, display=1) # NOTE: each gmm's array in coo has a structure of
         coo_per_imt[i] = coo                # of [idx1, idx2, dist, npoints] where idx1 and idx2
         fig.add_subplot(nrows, 2, n+1)      # are merged at distance of dist into a cluster which
