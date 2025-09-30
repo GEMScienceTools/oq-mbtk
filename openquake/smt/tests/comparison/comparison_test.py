@@ -164,7 +164,7 @@ class ComparisonTestCase(unittest.TestCase):
         mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
 
         # Sammons checks
-        coo = plot_sammons_util(
+        coo_per_imt = plot_sammons_util(
             config.imt_list,
             config.gmpe_labels,
             mtxs_medians,
@@ -173,8 +173,12 @@ class ComparisonTestCase(unittest.TestCase):
             config.custom_color_list,
             mtxs_type='median')
 
-        # Check Sammons computing outputs for num. GMPEs in .toml per run
-        self.assertEqual(len(coo), TARGET_EUCL)
+        # Check Sammons computing correct number of GMPEs and IMTs
+        self.assertEqual(list(coo_per_imt.keys()),
+                         [from_string(imt) for imt in TARGET_IMTS])
+        for imt in TARGET_IMTS:
+            imt_sammons = coo_per_imt[from_string(imt)]
+            self.assertEqual(len(imt_sammons), TARGET_EUCL)
 
         # Euclidean checks
         matrix_dist = plot_matrix_util(

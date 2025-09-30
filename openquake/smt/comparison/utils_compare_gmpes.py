@@ -745,6 +745,7 @@ def plot_sammons_util(imt_list,
     fig = pyplot.figure()
     fig.set_size_inches(12, 6*nrows)
     
+    coo_per_imt = {}
     for n, i in enumerate(imt_list):
 
         # Get the data matrix
@@ -769,6 +770,7 @@ def plot_sammons_util(imt_list,
 
         # Sammons mapping
         coo, cost = sammon(data, display=1)
+        coo_per_imt[i] = coo
         fig.add_subplot(nrows, 2, n+1)
         for g, gmpe in enumerate(labels):
 
@@ -802,7 +804,7 @@ def plot_sammons_util(imt_list,
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.tight_layout()
     
-    return coo
+    return coo_per_imt
 
 
 def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
