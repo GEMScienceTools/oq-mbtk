@@ -659,11 +659,11 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
                 labels.append(key.split("_")[1]) # Add label
                 gmm_configs.append(check)
 
-        # If only need gmm LT drop the gmms used included in it
+        # If only need gmm LT drop the gmms included in it
         keep = np.array(['plot_lt_only' not in gmm for gmm in gmm_configs])
         data = data[keep] 
         labels = [gmm for k, gmm in zip(keep, labels) if k]
-        
+
         # Agglomerative clustering
         dist = squareform(pdist(data, 'euclidean'))
         matrix_dist[n] = dist
@@ -762,7 +762,7 @@ def plot_sammons_util(imt_list,
                 labels.append(key.split("_")[1]) # Add label
                 gmm_configs.append(check)
 
-        # If only need gmm LT drop the gmms used included in it
+        # If only need gmm LT drop the gmms included in it
         keep = np.array(['plot_lt_only' not in gmm for gmm in gmm_configs])
         data = data[keep] 
         labels = [gmm for k, gmm in zip(keep, labels) if k]
@@ -849,7 +849,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
                 labels.append(key.split("_")[1]) # Add label
                 gmm_configs.append(check)
 
-        # If only need gmm LT drop the gmms used included in it
+        # If only need gmm LT drop the gmms included in it
         keep = np.array(['plot_lt_only' not in gmm for gmm in gmm_configs])
         data = data[keep] 
         labels = [gmm for k, gmm in zip(keep, labels) if k]
