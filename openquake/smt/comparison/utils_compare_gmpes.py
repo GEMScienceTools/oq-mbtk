@@ -828,7 +828,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         nrows = 1
     else:
         nrows = int(np.ceil(len(imt_list) / 2)) 
-    matrix_Z = {}
+    matrix_z = {}
     ymax = [0] * len(imt_list)
 
     # Loop over IMTs
@@ -840,7 +840,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         # gmm labels and configs 
         labels = gmpe_list.copy()
         gmm_configs = mtxs['gmpe_list'].copy()
-
+        
         # Add the weighted LTs if any too
         for key in mtxs.keys():
             check = f"{i}_gmcLT"
@@ -857,7 +857,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         # Agglomerative clustering
         Z = hierarchy.linkage(
             data, method='ward', metric='euclidean', optimal_ordering=True)
-        matrix_Z[n] = Z
+        matrix_z[n] = Z
         ymax[n] = Z.max(axis=0)[2]
 
     # Create the figure
@@ -872,7 +872,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         
         # Plot dendrogram
         dn1 = hierarchy.dendrogram(
-            matrix_Z[n], ax=ax, orientation='right', labels=labels)
+            matrix_z[n], ax=ax, orientation='right', labels=labels)
         ax.set_xlabel('Euclidean Distance', fontsize='12')
         if mtxs_type == 'median':
             ax.set_title(str(i) + ' (median)', fontsize='12')
@@ -892,7 +892,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.4)
     pyplot.tight_layout() 
     
-    return matrix_Z
+    return matrix_z
 
 
 ### Utils for plots
