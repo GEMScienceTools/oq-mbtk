@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Module to compare GMPEs using trellis plots, hierarchical clustering, Sammons
-Maps and Euclidean distance matrix plots
+Module to compare GMPEs using trellis plots, hierarchical clustering, Sammon
+maps and Euclidean distance matrix plots
 """
 import numpy as np
 import re
@@ -304,7 +304,7 @@ def plot_cluster(filename, output_directory):
 
 def plot_sammons(filename, output_directory):
     """
-    Plot Sammons Maps of median and 84th percentile predicted ground-motion
+    Plot Sammon Maps of median and 84th percentile predicted ground-motion
     by each GMPE for given configurations
     :param  filename:
         toml file providing configuration for use within comparative
@@ -314,13 +314,13 @@ def plot_sammons(filename, output_directory):
 
     if not hasattr(config, "mags_eucl") or not hasattr(config, "depths_eucl"):
         raise ValueError(
-            "Euclidean analysis params must be specified for Sammons maps.")
+            "Euclidean analysis params must be specified for Sammon Maps.")
 
     if len(config.gmpes_list) != len(config.gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
     
     if len(config.gmpes_list) < 2:
-        raise ValueError("Cannot perform Sammons Mapping for a single GMPE.")
+        raise ValueError("Cannot perform Sammon Mapping for a single GMPE.")
 
     mtxs_50th_perc = compute_matrix_gmpes(config, mtxs_type='median')
     
