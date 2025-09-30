@@ -577,6 +577,7 @@ def make_rup_fault_lookup(rupture_df, key='faults'):
 
     return fault_rup_dict
 
+
 def get_rup_rates_from_fault_slip_rates(
     fault_network,
     b_val=1.0,
@@ -584,8 +585,8 @@ def get_rup_rates_from_fault_slip_rates(
     plot_fault_moment_rates=False,
     seismic_fraction=1.0,
     rupture_set_for_rates_from_slip_rates='all',
-    fix_moment_rates=True,
     faults_or_subfaults='subfaults',
+    export_fault_mfds=False,
     **kwargs,
 ):
     """
@@ -662,7 +663,8 @@ def get_rup_rates_from_fault_slip_rates(
         id: make_fault_mfd(
             fault,
             max_mag=get_ruptures_on_fault(
-                id, fault_network[rup_df_key], rup_fault_lookup).mag.max(),
+                id, fault_network[rup_df_key], rup_fault_lookup
+            ).mag.max(),
             mfd_type=mfd_type,
             b_val=b_val,
             seismic_fraction=fault.get("seismic_fraction", seismic_fraction),
@@ -671,6 +673,8 @@ def get_rup_rates_from_fault_slip_rates(
         )
         for id, fault in fault_iterator.items()
     }
+    if export_fault_mfds:
+        fault_network['fault_mfds'] = fault_mfds
 
     logging.debug("setting single-fault rup rates")
     all_rup_rates = {
@@ -970,5 +974,3 @@ def calculate_tri_mesh_distances(points, triangles, verbose=True):
         closest_triangles[i] = closest_triangle
 
     return distances, closest_triangles
-
-

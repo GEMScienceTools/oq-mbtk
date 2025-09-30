@@ -300,7 +300,7 @@ def make_abs_mfd_eqns(
     region_name=None,
 ):
     """
-    Makes absolute MFD equations and returns metadata about equation indices
+    wtf happened originally here
     """
     mag_counts = get_mag_counts(rups)
     unique_mags = sorted(mag_counts.keys())
@@ -454,7 +454,6 @@ def make_eqns(
     mfd=None,
     slip_rate_eqns=True,
     seismic_slip_rate_frac=1.0,
-    regional_slip_rate_fracs=None,
     incremental_abs_mfds=True,
     cumulative_abs_mfds=False,
     mfd_rel_eqns=False,
@@ -463,6 +462,7 @@ def make_eqns(
     mfd_rel_weight=1.0,
     mfd_abs_weight=1.0,
     regional_abs_mfds=None,
+    fault_abs_mfds=None,
     mfd_abs_normalize=False,
     slip_rate_smoothing=False,
     fault_adjacence=None,
@@ -480,6 +480,19 @@ def make_eqns(
     err_set = []
     metadata_set = []
     current_eq_idx = 0
+
+    if fault_abs_mfds is not None:
+        if regional_abs_mfds is None:
+            regional_abs_mfds = fault_abs_mfds
+        else:
+            if set(regional_abs_mfds.keys()).isdisjoint(
+                set(fault_abs_mfds.keys())
+            ):
+                regional_abs_mfds.update(fault_abs_mfds)
+            else:
+                raise ValueError(
+                    "regional_abs_mfds and fault_abs_mfds may not share keys"
+                )
 
     if seismic_slip_rate_frac is None and mfd is not None:
         fault_moment = get_fault_moment(faults, shear_modulus=shear_modulus)
