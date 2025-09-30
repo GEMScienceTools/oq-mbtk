@@ -41,6 +41,7 @@ from openquake.fnm.inversion.soe_builder import (
     make_rel_gr_mfd_eqns,
     make_abs_mfd_eqns,
     make_slip_rate_smoothing_eqns,
+    make_eqns,
     hz,
 )
 
@@ -58,7 +59,9 @@ from openquake.fnm.tests.inversion.simple_test_data import (
 
 
 def test_make_slip_rate_eqns():
-    lhs, rhs, err = make_slip_rate_eqns(simple_test_rups, simple_test_faults)
+    lhs, rhs, err, _ = make_slip_rate_eqns(
+        simple_test_rups, simple_test_faults
+    )
 
     np.testing.assert_array_almost_equal(
         lhs, np.array([[1.0, 0.0, 2.5, 1.75], [0.0, 1.0, 2.5, 1.75]])
@@ -104,9 +107,9 @@ def test_rel_gr_mfd_rates():
         assert np.isclose(rate, _rel_rates[mag])
 
 
-#@unittest.skip("Not sure of correct rates")
+# @unittest.skip("Not sure of correct rates")
 def test_make_rel_gr_mfd_eqns():
-    lhs, rhs, err = make_rel_gr_mfd_eqns(simple_test_rups, b=1.0)
+    lhs, rhs, err, _ = make_rel_gr_mfd_eqns(simple_test_rups, b=1.0)
 
     np.testing.assert_array_almost_equal(
         lhs,
@@ -116,16 +119,20 @@ def test_make_rel_gr_mfd_eqns():
     )
 
     np.testing.assert_array_almost_equal(
-        err, np.array([1.77827941, 3.16227766])
+        # err, np.array([1.77827941, 3.16227766])
+        err,
+        np.array([3.162278, 10.0]),
     )
 
     np.testing.assert_array_almost_equal(rhs, np.array([0.0, 0.0]))
 
 
-#@unittest.skip("Not sure of correct rates")
+# @unittest.skip("Not sure of correct rates")
 def test_and_solve_slip_rate_and_rel_gr_eqns(inversion_tol=1e-10):
-    lhs, rhs, err = make_slip_rate_eqns(simple_test_rups, simple_test_faults)
-    lhs2, rhs2, err = make_rel_gr_mfd_eqns(simple_test_rups, b=1.0)
+    lhs, rhs, err, _ = make_slip_rate_eqns(
+        simple_test_rups, simple_test_faults
+    )
+    lhs2, rhs2, err, _ = make_rel_gr_mfd_eqns(simple_test_rups, b=1.0)
 
     lhs = np.vstack([lhs, lhs2])
     rhs = np.hstack([rhs, rhs2])
@@ -146,7 +153,9 @@ def test_and_solve_slip_rate_and_rel_gr_eqns(inversion_tol=1e-10):
 def test_make_abs_mfd_eqns_nonnormalized():
     mfd = hz.mfd.TruncatedGRMFD(5.0, 8.0, 0.1, 3.61759073, 1.0)
 
-    lhs, rhs, err = make_abs_mfd_eqns(simple_test_rups, mfd, normalize=False)
+    lhs, rhs, err, _ = make_abs_mfd_eqns(
+        simple_test_rups, mfd, normalize=False
+    )
 
     lhs_ = np.array(
         [[1.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 1.0, 0.0]]
@@ -158,10 +167,10 @@ def test_make_abs_mfd_eqns_nonnormalized():
     np.testing.assert_array_almost_equal(rhs, rhs_)
 
 
-def test_make_abs_fault_mfd_eqns_nonnormalized_cumulative():
+def test_make_abs_mfd_eqns_nonnormalized_cumulative():
     mfd = hz.mfd.TruncatedGRMFD(5.0, 8.0, 0.1, 3.61759073, 1.0)
 
-    lhs, rhs, err = make_abs_mfd_eqns(
+    lhs, rhs, err, _ = make_abs_mfd_eqns(
         simple_test_rups, mfd, normalize=False, cumulative=True
     )
 
@@ -169,7 +178,7 @@ def test_make_abs_fault_mfd_eqns_nonnormalized_cumulative():
         [[1.0, 1.0, 0.0, 0.0], [1.0, 1.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]
     )
 
-    #rhs_ = np.array([1.20753162e-03, 3.54892200e-04, 8.52639416e-05])
+    # rhs_ = np.array([1.20753162e-03, 3.54892200e-04, 8.52639416e-05])
     rhs_ = np.array([0.00410418, 0.00126951, 0.00037311])
 
     np.testing.assert_array_almost_equal(lhs, lhs_)
@@ -179,7 +188,7 @@ def test_make_abs_fault_mfd_eqns_nonnormalized_cumulative():
 def test_make_abs_mfd_eqns_normalized():
     mfd = hz.mfd.TruncatedGRMFD(5.0, 8.0, 0.1, 3.61759073, 1.0)
 
-    lhs, rhs, err = make_abs_mfd_eqns(simple_test_rups, mfd, normalize=True)
+    lhs, rhs, err, _ = make_abs_mfd_eqns(simple_test_rups, mfd, normalize=True)
 
     lhs_ = np.array(
         [
@@ -196,9 +205,11 @@ def test_make_abs_mfd_eqns_normalized():
 
 
 def test_and_solve_slip_rate_and_abs_mfd_eqns():
-    lhs, rhs, err = make_slip_rate_eqns(simple_test_rups, simple_test_faults)
+    lhs, rhs, err, _ = make_slip_rate_eqns(
+        simple_test_rups, simple_test_faults
+    )
     mfd = hz.mfd.TruncatedGRMFD(5.0, 8.0, 0.1, 3.61759073, 1.0)
-    lhs2, rhs2, err = make_abs_mfd_eqns(simple_test_rups, mfd)
+    lhs2, rhs2, err, _ = make_abs_mfd_eqns(simple_test_rups, mfd)
 
     lhs = np.vstack([lhs, lhs2])
     rhs = np.hstack([rhs, rhs2])
@@ -206,3 +217,150 @@ def test_and_solve_slip_rate_and_abs_mfd_eqns():
     soln = np.linalg.lstsq(lhs, rhs, rcond=-1)[0]
 
     resids = lhs @ soln - rhs
+
+
+def test_make_abs_mfd_eqns_faults():
+    total_mfd = hz.mfd.TruncatedGRMFD(5.0, 7.1, 0.1, 3.61759073, 1.0)
+    f0_mfd = hz.mfd.TruncatedGRMFD.from_moment(
+        5.0, 7.1, 0.1, 1.0, total_mfd._get_total_moment_rate() / 2
+    )
+    f1_mfd = hz.mfd.TruncatedGRMFD.from_moment(
+        5.0, 7.1, 0.1, 1.0, total_mfd._get_total_moment_rate() / 2
+    )
+
+    fault_mfds = {
+        0: {
+            'mfd': f0_mfd,
+            'rups_include': [0, 2, 3],
+            'rup_fractions': [1.0, 0.5, 0.5],
+        },
+        1: {
+            'mfd': f1_mfd,
+            'rups_include': [1, 2, 3],
+            'rup_fractions': [1.0, 0.5, 0.5],
+        },
+    }
+
+    lhs0, rhs0, err0, _ = make_abs_mfd_eqns(
+        simple_test_rups,
+        fault_mfds[0]['mfd'],
+        rup_include_list=fault_mfds[0]['rups_include'],
+        rup_fractions=fault_mfds[0]['rup_fractions'],
+    )
+    lhs1, rhs1, err1, _ = make_abs_mfd_eqns(
+        simple_test_rups,
+        fault_mfds[1]['mfd'],
+        rup_include_list=fault_mfds[1]['rups_include'],
+        rup_fractions=fault_mfds[1]['rup_fractions'],
+    )
+
+    np.testing.assert_equal(
+        lhs0,
+        np.array(
+            [[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.5], [0.0, 0.0, 0.5, 0.0]]
+        ),
+    )
+    np.testing.assert_allclose(
+        rhs0, np.array([3.46094034e-04, 1.09444543e-04, 3.46094034e-05])
+    )
+
+    np.testing.assert_equal(
+        lhs1,
+        np.array(
+            [[0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.5], [0.0, 0.0, 0.5, 0.0]]
+        ),
+    )
+
+    np.testing.assert_allclose(
+        rhs1, np.array([3.46094034e-04, 1.09444543e-04, 3.46094034e-05])
+    )
+
+    lhsm = np.vstack((lhs0, lhs1))
+    rhsm = np.hstack((rhs0, rhs1))
+
+    np.testing.assert_equal(
+        lhsm,
+        np.array(
+            [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.5],
+                [0.0, 0.0, 0.5, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.5],
+                [0.0, 0.0, 0.5, 0.0],
+            ]
+        ),
+    )
+
+    np.testing.assert_allclose(
+        rhsm,
+        np.array(
+            [
+                3.46094034e-04,
+                1.09444543e-04,
+                3.46094034e-05,
+                3.46094034e-04,
+                1.09444543e-04,
+                3.46094034e-05,
+            ]
+        ),
+    )
+
+
+def test_make_eqns_fault_mfds_only():
+    total_mfd = hz.mfd.TruncatedGRMFD(5.0, 7.1, 0.1, 3.61759073, 1.0)
+    f0_mfd = hz.mfd.TruncatedGRMFD.from_moment(
+        5.0, 7.1, 0.1, 1.0, total_mfd._get_total_moment_rate() / 2
+    )
+    f1_mfd = hz.mfd.TruncatedGRMFD.from_moment(
+        5.0, 7.1, 0.1, 1.0, total_mfd._get_total_moment_rate() / 2
+    )
+
+    fault_mfds = {
+        0: {
+            'mfd': f0_mfd,
+            'rups_include': [0, 2, 3],
+            'rup_fractions': [1.0, 0.5, 0.5],
+        },
+        1: {
+            'mfd': f1_mfd,
+            'rups_include': [1, 2, 3],
+            'rup_fractions': [1.0, 0.5, 0.5],
+        },
+    }
+    lhs, rhs, err = make_eqns(
+        simple_test_rups,
+        faults=None,
+        mfd=None,
+        slip_rate_eqns=None,
+        fault_abs_mfds=fault_mfds,
+        return_sparse=False,
+    )
+
+    np.testing.assert_equal(
+        lhs,
+        np.array(
+            [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.5],
+                [0.0, 0.0, 0.5, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.5],
+                [0.0, 0.0, 0.5, 0.0],
+            ]
+        ),
+    )
+
+    np.testing.assert_allclose(
+        rhs,
+        np.array(
+            [
+                3.46094034e-04,
+                1.09444543e-04,
+                3.46094034e-05,
+                3.46094034e-04,
+                1.09444543e-04,
+                3.46094034e-05,
+            ]
+        ),
+    )

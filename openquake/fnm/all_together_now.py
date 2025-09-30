@@ -68,6 +68,7 @@ default_settings = {
     'shear_modulus': SHEAR_MODULUS,
     'fault_mfd_b_value': 1.0,
     'fault_mfd_type': 'TruncatedGRMFD',
+    'export_fault_mfds': False,
     'seismic_fraction': 0.7,
     'rupture_set_for_rates_from_slip_rates': 'all',
     'plot_fault_moment_rates': False,
@@ -374,6 +375,7 @@ def build_fault_network(
                 'rupture_set_for_rates_from_slip_rates'
             ],
             plot_fault_moment_rates=settings['plot_fault_moment_rates'],
+            export_fault_mfds=settings['export_fault_mfds'],
         )
         fault_network[rup_df_key]['annual_occurrence_rate'] = rupture_rates
         t_slip_rate_end = time.time()
