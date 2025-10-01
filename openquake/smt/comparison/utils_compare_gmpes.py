@@ -194,7 +194,7 @@ def plot_trellis_util(config, output_directory):
     # Finalise plots
     maxy = np.max(max_pred)
     miny = np.min(min_pred)
-    for ax in axs: ax.set_ylim(miny, maxy)
+    for ax in axs: ax.set_ylim(miny, 2*maxy) # Small buffer in log-space
     output = os.path.join(output_directory, 'TrellisPlots.png')
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(output, bbox_inches='tight', dpi=200, pad_inches=0.2)
