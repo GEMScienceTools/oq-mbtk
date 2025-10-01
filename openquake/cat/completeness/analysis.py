@@ -81,7 +81,7 @@ def get_earliest_year_with_n_occurrences(ctab, cat, occ_threshold=2):
         if len(years) >= occ_threshold:
             low_yea.append(np.sort(years)[occ_threshold - 1])
         else:
-            low_yea.append(np.NaN)
+            low_yea.append(np.nan)
 
     """
     # Find the index of the completeness bin foreach magnitude
@@ -93,7 +93,7 @@ def get_earliest_year_with_n_occurrences(ctab, cat, occ_threshold=2):
         if len(years) >= occ_threshold:
             low_yea.append(np.sort(years)[occ_threshold-1])
         else:
-            low_yea.append(np.NaN)
+            low_yea.append(np.nan)
     """
 
     return np.array(low_yea)
