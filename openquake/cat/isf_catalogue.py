@@ -1199,7 +1199,7 @@ class ISFCatalogue(object):
                 if (orig.location.depthSolution == 'None' or
                         orig.location.depthSolution == '' or
                         orig.location.depthSolution is None):
-                    depthSolution = np.NaN
+                    depthSolution = np.nan
                 elif orig.location.depthSolution:
                     depthSolution = orig.location.depthSolution
                 else:
@@ -1209,7 +1209,7 @@ class ISFCatalogue(object):
                 if (orig.location.depth == 'None' or
                         orig.location.depth == '' or
                         orig.location.depth is None):
-                    depth = np.NaN
+                    depth = np.nan
                 elif orig.location.depth <= 0.0:
                     depth = orig.location.depth
                     print('Depth:', orig.location.depth)
