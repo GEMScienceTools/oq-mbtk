@@ -229,12 +229,12 @@ def test_make_abs_mfd_eqns_faults():
     )
 
     fault_mfds = {
-        0: {
+        'f1': {
             'mfd': f0_mfd,
             'rups_include': [0, 2, 3],
             'rup_fractions': [1.0, 0.5, 0.5],
         },
-        1: {
+        'f2': {
             'mfd': f1_mfd,
             'rups_include': [1, 2, 3],
             'rup_fractions': [1.0, 0.5, 0.5],
@@ -317,12 +317,12 @@ def test_make_eqns_fault_mfds_only():
     )
 
     fault_mfds = {
-        0: {
+        'f0': {
             'mfd': f0_mfd,
             'rups_include': [0, 2, 3],
             'rup_fractions': [1.0, 0.5, 0.5],
         },
-        1: {
+        'f1': {
             'mfd': f1_mfd,
             'rups_include': [1, 2, 3],
             'rup_fractions': [1.0, 0.5, 0.5],
