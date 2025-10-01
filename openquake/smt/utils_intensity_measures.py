@@ -94,7 +94,7 @@ def get_quadratic_intensity(acc_x, acc_y, time_step):
     """
     assert len(acc_x) == len(acc_y)
     dur = time_step * float(len(acc_x) - 1)
-    return (1. / dur) * np.trapz(acc_x * acc_y, dx=time_step)
+    return (1. / dur) * np.trapezoid(acc_x * acc_y, dx=time_step)
 
 
 ### Response Spectra
@@ -216,7 +216,7 @@ def get_response_spectrum_intensity(spec):
     """
     idx = np.where(np.logical_and(spec["Period"] >= 0.1,
                                   spec["Period"] <= 2.5))[0]
-    return np.trapz(spec["Pseudo-Velocity"][idx],
+    return np.trapezoid(spec["Pseudo-Velocity"][idx],
                     spec["Period"][idx])
 
 
@@ -227,7 +227,7 @@ def get_acceleration_spectrum_intensity(spec):
     """
     idx = np.where(np.logical_and(spec["Period"] >= 0.1,
                                   spec["Period"] <= 0.5))[0]
-    return np.trapz(spec["Pseudo-Acceleration"][idx],
+    return np.trapezoid(spec["Pseudo-Acceleration"][idx],
                     spec["Period"][idx])
 
 
@@ -457,7 +457,7 @@ def get_cav(acceleration, time_step, threshold=0.0):
     acceleration = np.fabs(acceleration)
     idx = np.where(acceleration >= threshold)
     if len(idx) > 0:
-        return np.trapz(acceleration[idx], dx=time_step)
+        return np.trapezoid(acceleration[idx], dx=time_step)
     else:
         return 0.0
 
@@ -468,7 +468,7 @@ def get_arms(acceleration, time_step):
     sqrt{(1 / duration) * \\int{acc ^ 2} dt}
     """
     dur = time_step * float(len(acceleration) - 1)
-    return np.sqrt((1. / dur) * np.trapz(acceleration  ** 2., dx=time_step))
+    return np.sqrt((1. / dur) * np.trapezoid(acceleration  ** 2., dx=time_step))
 
 
 ### Utils for computing rotation-based definitions of horizontal component
