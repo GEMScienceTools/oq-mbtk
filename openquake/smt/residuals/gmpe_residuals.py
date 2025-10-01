@@ -420,9 +420,11 @@ class Residuals(object):
             the given `gmpe`
         """
         residuals = self.residuals[gmpe][imtx]
-        return {res_type: {"Mean": np.nanmean(residuals[res_type]),
-                           "Std Dev": np.nanstd(residuals[res_type])}
-                for res_type in self.types[gmpe][imtx]}
+        return {
+            res_type: {
+                "Mean": np.nanmean(residuals[res_type]),
+                "Std Dev": np.nanstd(residuals[res_type])
+                } for res_type in self.types[gmpe][imtx]}
 
     def _get_magnitudes(self):
         """
@@ -1043,8 +1045,8 @@ class SingleStationAnalysis(object):
         Returns the single-station phi for the specific station from
         Rodriguez-Marek et al. (2011) Equation 11
         """
-        phiss = np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1)
-        return np.sqrt(phiss)
+        return np.sqrt(
+            np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1))
 
     def get_total_phi_ss(self, filename=None):
         """
