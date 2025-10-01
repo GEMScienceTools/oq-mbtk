@@ -178,6 +178,8 @@ def get_rupture(lon,
 
 def att_curves(gmpe,
                mag,
+               lon,
+               lat,
                depth,
                ztor,
                aratio,
@@ -222,8 +224,8 @@ def att_curves(gmpe,
         raise ValueError(msg)
     
     # Get rupture
-    rup = get_rupture(0.0, # Arbitrary lon
-                      0.0, # Arbitrary lat
+    rup = get_rupture(lon,
+                      lat,
                       depth,
                       msr=rup_msr,
                       mag=mag,
