@@ -58,7 +58,7 @@ class Result:
             os.mkdir(self.dname)
         for i, dddic in enumerate(dddics):
             for gsim, ddic in dddic.items():
-                with open(self.dname + f'/{gsim}-{i}.json', 'w') as f:
+                with open(self.dname + f'/{gsim}-{i}.py', 'w') as f:
                     for k1, dic in ddic.items():
                         for k2, vals in dic.items():
                             if isinstance(vals, np.ndarray):
@@ -67,7 +67,7 @@ class Result:
 
     def read(self, gsim, idx=0):
         for fname in os.listdir(self.dname):
-            if fname.startswith(gsim) and fname.endswith(f'-{idx}.json'):
+            if fname.startswith(gsim) and fname.endswith(f'-{idx}.py'):
                 with open(os.path.join(self.dname, fname)) as f:
                     js = f.read()
                     return ast.literal_eval(js)
