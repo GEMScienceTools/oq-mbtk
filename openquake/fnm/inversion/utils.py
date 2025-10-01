@@ -974,3 +974,47 @@ def calculate_tri_mesh_distances(points, triangles, verbose=True):
         closest_triangles[i] = closest_triangle
 
     return distances, closest_triangles
+
+
+def rescale_mfd(mfd, frac):
+    return {
+        mag: rate * frac for mag, rate in mfd.get_annual_occurrence_rates()
+    }
+
+
+def make_fault_mfd_equation_components(
+    fault_mfds,
+    rups,
+    fault_network,
+    fault_key='subfaults',
+    rup_key='rupture_df_keep',
+    seismic_slip_rate_frac=None,
+):
+    if seismic_slip_rate_frac not in (None, 1.0):
+        fault_mfd_data = {
+            k: {'mfd': v, 'rups_include': [], 'rup_fractions': []}
+            for k, v in fault_mfds.items()
+        }
+    else:
+        fault_mfd_data = {
+            k: {
+                'mfd': rescale_mfd(v, seismic_slip_rate_frac),
+                'rups_include': [],
+                'rup_fractions': [],
+            }
+            for k, v in fault_mfds.items()
+        }
+
+    rup_fault_lookup = make_rup_fault_lookup(fault_network[rup_key], fault_key)
+    rup_id_count_lookup = {r['idx']: i for i, r in enumerate(rups)}
+
+    for fault, on_fault_rups in rup_fault_lookup.items():
+        for rup_idx in on_fault_rups:
+            fault_mfd_data[fault]['rups_include'].append(
+                rup_id_count_lookup[rup_idx]
+            )
+            fault_mfd_data[fault]['rup_fracs'].append(
+                rups[rup_id_count_lookup[rup_idx]][f'{fault_key}_fracs'][fault]
+            )
+
+    return fault_mfd_data
