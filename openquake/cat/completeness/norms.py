@@ -27,7 +27,7 @@
 import copy
 import scipy
 from scipy.stats import poisson
-from math import log, pi
+from math import log, exp, sqrt, pi
 from numpy import matlib
 import numpy as np
 from openquake.wkf.compute_gr_params import (get_weichert_confidence_intervals)
@@ -232,7 +232,7 @@ def get_norm_optimize_a(aval, bval, ctab, binw,  cmag, n_obs, t_per, info=False)
     n_obs = n_obs.astype(int)
     log_prob = np.ones_like(n_obs) * 0.999999
     for i, obs in enumerate(n_obs):
-        log_prob[i] = (-rates[i]) + (n_obs[i]*np.log(rates[i])) - logfactorial(n_obs[i])
+        log_prob[i] = (-rates[i]) + (n_obs[i]*np.math.log(rates[i])) - np.math.log(np.math.factorial(n_obs[i]))
 
     norm = 1 - np.prod(np.exp(log_prob))
     return norm
@@ -359,7 +359,7 @@ def poiss_prob_int_time(rate, n, t, log_out = False):
         Poisson probability of observing n events in time t given poisson rate
     """
     # Should use log probabilities so this doesn't break at large n
-    log_prob = -(rate*t) + n*(np.log(rate) + np.log(t)) - logfactorial([n])
+    log_prob = -(rate*t) + n*(np.log(rate) + np.log(t)) - np.math.log(np.math.factorial(n))
     if log_out == False:
         prob = np.exp(log_prob)
     else:
@@ -695,7 +695,7 @@ def get_norm_optimize_weichert(cat, agr, bgr, compl, last_year, mmax=None, binw=
                 prob_inc = 0
             log_sum_p_i = log_sum_p_i + prob_inc
             # weichert likelihood for magnitude bin
-            weichert_llhood = logfactorial([N]) - np.sum(log_fact_n) + log_sum_p_i
+            weichert_llhood = np.math.log(np.math.factorial(N)) - np.sum(log_fact_n) + log_sum_p_i
             weichert_ll_allM[j] = weichert_ll_allM[j] + weichert_llhood
 
     # Sum to get total likleihood
