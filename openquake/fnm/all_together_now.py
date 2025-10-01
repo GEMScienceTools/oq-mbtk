@@ -58,6 +58,8 @@ default_settings = {
     'subsection_size': [15.0, 15.0],
     'edge_sd': 5.0,
     'dip_sd': 5.0,
+    'upper_seis_depth': 0.0,
+    'lower_seis_depth': 20.0,
     'max_jump_distance': 10.0,
     'max_sf_rups_per_mf_rup': 10,
     'rupture_angle_threshold': 60.0,
@@ -166,6 +168,8 @@ def build_fault_network(
                     surf = build_surface(
                         feature,
                         edge_sd=settings['edge_sd'],
+                        lsd_default=settings['lower_seis_depth'],
+                        usd_default=settings['upper_seis_depth'],
                     )
                     faults.append(surf)
                     fault_fids.append(feature['properties']['fid'])
