@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Module to compare GMPEs using trellis plots, hierarchical clustering, Sammons
-Maps and Euclidean distance matrix plots
+Module to compare GMPEs using trellis plots, hierarchical clustering, Sammon
+maps and Euclidean distance matrix plots
 """
 import numpy as np
 import re
@@ -29,7 +29,7 @@ import os
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_compare_gmpes import (
     plot_trellis_util, plot_spectra_util, plot_ratios_util,
-    plot_cluster_util, plot_sammons_util, plot_euclidean_util,
+    plot_cluster_util, plot_sammons_util, plot_matrix_util,
     compute_matrix_gmpes)
 
 
@@ -91,7 +91,7 @@ class Configurations(object):
         if "euclidean_analysis" in config_file:
             self.mags_eucl, self.depths_eucl = self.get_eucl_mags_deps(config_file)
             self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
-
+            
         # Get imts
         self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
 
@@ -188,27 +188,20 @@ class Configurations(object):
         """
         # Make array of the magnitudes
         mag_params = config_file['euclidean_analysis']
-        mags_euclidean = np.arange(
+        mags_eucl = np.arange(
             mag_params['mmin'], mag_params['mmax'], mag_params['spacing'])
 
-        # Create dataframe of depth to assign per mag bin
-        depths_for_euclidean = pd.DataFrame(config_file[
-            'euclidean_analysis']['depths_for_euclidean'], columns=['mag','depth'])
-                
-        # Round each mag in mag_array to closest integer
-        mag_to_nearest_int = pd.Series(dtype='float')
-        for mag in mags_euclidean:
-            mag_to_nearest_int[mag] = np.round(mag+0.001)
-
-        # Assign depth to each mag in mag_array using rounded mags
-        depths_euclidean = []
-        for idx_mag, rounded_mag in enumerate(mag_to_nearest_int):
-            for idx, mag in enumerate(depths_for_euclidean['mag']):
-                if rounded_mag == mag:
-                    depth_to_store = depths_for_euclidean['depth'][idx]
-                    depths_euclidean.append(depth_to_store)
+        # Get depths per mag value
+        depth_per_mag = pd.DataFrame(
+            config_file['euclidean_analysis']['depths'], columns=['mag','depth'])
         
-        return  mags_euclidean, pd.Series(depths_euclidean)
+        # Assign the depth to each mag in mags_eucl based on closest mag in depth_per_mag
+        depths_eucl = np.zeros(len(mags_eucl)) 
+        for idx_mag, mag in enumerate(mags_eucl):
+            closest = (np.abs(depth_per_mag['mag'] - mag)).idxmin()
+            depths_eucl[idx_mag] = depth_per_mag.loc[closest, 'depth']
+       
+        return  mags_eucl, pd.Series(depths_eucl)
 
 
 def plot_trellis(filename, output_directory):
@@ -311,7 +304,7 @@ def plot_cluster(filename, output_directory):
 
 def plot_sammons(filename, output_directory):
     """
-    Plot Sammons Maps of median and 84th percentile predicted ground-motion
+    Plot Sammon Maps of median and 84th percentile predicted ground-motion
     by each GMPE for given configurations
     :param  filename:
         toml file providing configuration for use within comparative
@@ -321,13 +314,13 @@ def plot_sammons(filename, output_directory):
 
     if not hasattr(config, "mags_eucl") or not hasattr(config, "depths_eucl"):
         raise ValueError(
-            "Euclidean analysis params must be specified for Sammons maps.")
+            "Euclidean analysis params must be specified for Sammon Maps.")
 
     if len(config.gmpes_list) != len(config.gmpe_labels):
         raise ValueError("Number of labels must match number of GMPEs.")
     
     if len(config.gmpes_list) < 2:
-        raise ValueError("Cannot perform Sammons Mapping for a single GMPE.")
+        raise ValueError("Cannot perform Sammon Mapping for a single GMPE.")
 
     mtxs_50th_perc = compute_matrix_gmpes(config, mtxs_type='median')
     
@@ -351,7 +344,7 @@ def plot_sammons(filename, output_directory):
                       mtxs_type='16th_perc')
    
     
-def plot_euclidean(filename, output_directory):
+def plot_matrix(filename, output_directory):
     """
     Plot Euclidean distance matrix of median and 84th percentile predicted
     ground-motion by each GMPE for given configurations
@@ -378,14 +371,14 @@ def plot_euclidean(filename, output_directory):
     
     mtxs_16th_perc = compute_matrix_gmpes(config, mtxs_type='16th_perc')
     
-    plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_50th_perc,
+    plot_matrix_util(config.imt_list, config.gmpe_labels, mtxs_50th_perc,
                         os.path.join(output_directory,'Median_Euclidean.png'),
                         mtxs_type='median')
     
-    plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
+    plot_matrix_util(config.imt_list, config.gmpe_labels, mtxs_84th_perc,
                         os.path.join(output_directory,'84th_perc_Euclidean.png'),
                         mtxs_type='84th_perc')
     
-    plot_euclidean_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
+    plot_matrix_util(config.imt_list, config.gmpe_labels, mtxs_16th_perc,
                         os.path.join(output_directory,'16th_perc_Euclidean.png'),
                         mtxs_type='16th_perc')
