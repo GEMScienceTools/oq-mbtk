@@ -452,7 +452,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         columns = ['id', 'agr', 'bgr', 'norm']
         df = pd.DataFrame(data=np.array(all_res), columns=columns)
         df['mags'] = all_mags
-        df['rates'] = all_rates
+        df['rates'] = [[float(x) for x in y] for y in all_rates]
         fname = os.path.join(folder_out, f'full.results_{src_id:s}.csv')
         df.to_csv(fname, index=False)
 
