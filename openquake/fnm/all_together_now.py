@@ -77,7 +77,7 @@ default_settings = {
     'sparse_distance_matrix': True,
     'parallel_multifault_search': True,
     'full_fault_only_mf_ruptures': True,
-    'calculate_rates_from_slip_rates': True,
+    'calculate_rates_from_slip_rates': False,
     'surface_type': 'simple',
     'min_mag': None,
     'max_mag': None,
