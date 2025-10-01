@@ -415,7 +415,7 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
 Comparing GMPEs
 ***************
 
-1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals, we can also compare the behaviours of GMPEs for a given set of highly customisable earthquake scenarios using the tools within the Comparison module. The tools within the Comparison module includes plotting capabilities for response spectra and attenuation curves (trellis plots), as well as methods for considering the similarities of GMPE predictions in Euclidean space (i.e. distances) such as Sammon's Maps and hierarchical clustering dendrogram plots. These tools are highly useful for better understanding the behaviours of GMMs in ground-shaking scenarios of interest to a specific region and tectonic region type, These scenarios could potentially be identified from a disaggregation analysis for some sites of interest within a PSHA. Therefore, such tools can be used to help further inform the construction of a GMC logic tree using some GMPEs identified as being potentially suitable for application to a given region and tectonic region type from a residual analysis.
+1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals, we can also compare the behaviours of GMPEs for a given set of highly customisable earthquake scenarios using the tools within the Comparison module. The tools within the Comparison module includes plotting capabilities for response spectra and attenuation curves (trellis plots), as well as methods for considering the similarities of GMPE predictions in Euclidean space (i.e. distances) such as Sammon Maps and hierarchical clustering dendrogram plots. These tools are highly useful for better understanding the behaviours of GMMs in ground-shaking scenarios of interest to a specific region and tectonic region type, These scenarios could potentially be identified from a disaggregation analysis for some sites of interest within a PSHA. Therefore, such tools can be used to help further inform the construction of a GMC logic tree using some GMPEs identified as being potentially suitable for application to a given region and tectonic region type from a residual analysis.
     
     .. code-block:: ini
     
@@ -433,8 +433,8 @@ Comparing GMPEs
         [general]
         imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)'] # IMTs to compute attenuation curves for
         max_period = 2 # Max period for response spectra (capped by max period in GMMs)
-        minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
-        maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
+        minR = 0 # Min dist. used in trellis, Sammon, clusters and matrix plots
+        maxR = 300 # Max dist. used in trellis, Sammon, clusters and matrix plots
         dist_type = 'repi' # or rjb, rrup or rhypo used in trellis/spectra
         dist_list = [10, 100, 250] # distance intervals for use in spectra plots
         Nstd = 1 # Truncation for GMM sigma distribution
@@ -463,11 +463,11 @@ Comparing GMPEs
         mags = [5, 6, 7] # Mags used only for trellis and response spectra
         depths = [20, 20, 20] # Depth per magnitude for trellis and response spectra
         
-        [euclidean_analysis] # Mags/depths used for the Sammons maps, matrix plots and
+        [euclidean_analysis] # Mags/depths used for the Sammon maps, matrix plots and
         mmin = 5             # clustering (only need specifying if using these functions)
         mmax = 7
         spacing = 0.1
-        depths_for_euclidean = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+        depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
         gmpe_labels = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CA15', 'AK14']
         
         [models] # Specify GMMs
@@ -565,20 +565,20 @@ Comparing GMPEs
     Ratio plots for input parameters specified in toml file (note that here the baseline GMPE is ``BooreEtAl2014``):
         .. image:: /contents/smt_images/RatioPlots.png      
 
-7. Sammon's Maps
+7. Sammon Maps
 
-   We can plot Sammon's Maps to examine how similar the medians (and 16th and 84th percentiles) of predicted ground-motion of each GMPE are (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon's mapping procedure).
+   We can plot Sammon Maps to examine how similar the medians (and 16th and 84th percentiles) of predicted ground-motion of each GMPE are (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon Mapping procedure).
    
    A larger distance between two plotted GMPEs represents a greater difference in the predicted ground-motion. It should be noted that: (1) more than one 2D configuration can exist for a given set of GMPEs and (2) that the absolute numbers on the axes do not have a physical meaning.
   
-   Sammon's Maps can be generated as follows:
+   Sammon Maps can be generated as follows:
    
     .. code-block:: ini
     
-       > # Generate Sammon's Maps
+       > # Generate Sammon Maps
        > comp.plot_sammons(filename, output_directory)   
 
-    Sammon's Maps (median predicted ground-motion) for input parameters specified in toml file:
+    Sammon Maps (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_SammonMaps.png
     
 8. Hierarchical Clustering
@@ -599,7 +599,7 @@ Comparing GMPEs
          
 9. Matrix Plots of Euclidean Distance
 
-   In addition to Sammon's Maps and hierarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
+   In addition to Sammon Maps and hierarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
    
    Within the matrix plots the darker cells represent a smaller Euclidean distance (and therefore greater similarity) between each GMPE for the given intensity measure.
    
@@ -608,7 +608,7 @@ Comparing GMPEs
     .. code-block:: ini
     
        > # Generate matrix plots of Euclidean distance
-       > comp.plot_euclidean(filename, output_directory)
+       > comp.plot_matrix(filename, output_directory)
 
     Matrix plots of Euclidean distance between GMPEs (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Euclidean.png

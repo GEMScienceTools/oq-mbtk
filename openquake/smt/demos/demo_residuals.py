@@ -37,7 +37,7 @@ demo_out = os.path.join(BASE, 'outputs_demo_residual_analysis')
 
 def parse_into_metadata(flatfile, out_dir):
     """
-    Parse the flatfile into SMT ground-motion database
+    Parse the flatfile into an SMT ground-motion database
     """
     # Create new metadata directory
     metadata_dir = os.path.join(out_dir, 'metadata')
@@ -90,15 +90,14 @@ def make_residual_plots(residuals, out_dir):
         # Per IMT
         for imt in residuals.imts:
             
+            # Get fnames
             fi_hist = os.path.join(out, 'residual_histogram_%s.jpeg' %str(imt))
             fi_mags = os.path.join(out, 'residual_wrt_mag_%s.jpeg' %str(imt))
             fi_dist = os.path.join(out, 'residual_wrt_dist_%s.jpeg' %str(imt))
             
             # Get residual plots
             rspl.ResidualPlot(residuals, gmm, imt, fi_hist, filetype='jpeg')
-            
             rspl.ResidualWithMagnitude(residuals, gmm, imt, fi_mags, filetype='jpeg')
-            
             rspl.ResidualWithDistance(residuals, gmm, imt, fi_dist, filetype='jpeg')
             
 
