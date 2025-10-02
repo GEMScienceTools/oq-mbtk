@@ -5,8 +5,6 @@ Sammons Maps plotting functions available within the SMT's comparison module.
 """
 import os
 import shutil
-import toml
-import pandas as pd
 
 from openquake.baselib import sap
 from openquake.smt.comparison import compare_gmpes as comp
