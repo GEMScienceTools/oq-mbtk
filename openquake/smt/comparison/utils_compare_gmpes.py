@@ -233,8 +233,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
     # Set dicts to store values
     dic = {gmm: {} for gmm in config.gmpes_list}  
     lt_vals = [{}, {}, {}, {}]
-    lt_vals_plus = [dic, dic, dic, dic]
-    lt_vals_minus = [dic, dic, dic, dic]
+    lt_vals_add = [dic, dic, dic, dic]
+    lt_vals_min = [dic, dic, dic, dic]
     store_gmc_lts = []
     
     # Plot the data
@@ -308,10 +308,10 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                     sig.append(sigma_dist)
                     
                     if config.Nstd != 0:
-                        rs_plus_sigma_dist = np.exp(f(dist)+(config.Nstd*sigma_dist))
-                        rs_minus_sigma_dist = np.exp(f(dist)-(config.Nstd*sigma_dist))
-                        rs_ps.append(rs_plus_sigma_dist)
-                        rs_ms.append(rs_minus_sigma_dist)
+                        rs_add_sigma_dist = np.exp(f(dist)+(config.Nstd*sigma_dist))
+                        rs_min_sigma_dist = np.exp(f(dist)-(config.Nstd*sigma_dist))
+                        rs_ps.append(rs_add_sigma_dist)
+                        rs_ms.append(rs_min_sigma_dist)
                         
                 # Plot individual GMPEs
                 if 'plot_lt_only' not in str(gmpe):
@@ -333,8 +333,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                         rs_ps,
                                         rs_ms,
                                         lt_vals,
-                                        lt_vals_plus,
-                                        lt_vals_minus)
+                                        lt_vals_add,
+                                        lt_vals_min)
 
                 # Plot obs spectra if required
                 if obs_spectra is not None:
@@ -358,16 +358,14 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             # Plot logic trees if required
             for idx_gmc, gmc in enumerate(gmc_weights):
                 if gmc_vals[idx_gmc][0] != {}:
-                    checks = lt_spectra(ax1,
-                                        gmpe,
-                                        config.gmpes_list,
-                                        config.Nstd,
-                                        periods,
-                                        idx_gmc,
-                                        gmc_vals[idx_gmc][0],
-                                        gmc_vals[idx_gmc][1],
-                                        gmc_vals[idx_gmc][2])
-                    store_gmc_lts.append(checks)    
+                    ltvs = lt_spectra(ax1,
+                                      gmpe,
+                                      config.gmpes_list,
+                                      config.Nstd,
+                                      periods,
+                                      idx_gmc,
+                                      gmc_vals[idx_gmc])
+                    store_gmc_lts.append(ltvs)    
                 
     # Finalise the plots and save fig
     if len(mag_list) * len(config.dist_list) == 1:
@@ -1094,14 +1092,14 @@ def lt_trel(r_vals,
                 zorder=100)
 
     if Nstd > 0:
-        lt_plus = lt_df_gmc.loc['plus_sigma'].sum()
-        lt_minus = lt_df_gmc.loc['minus_sigma'].sum()
+        lt_add = lt_df_gmc.loc['plus_sigma'].sum()
+        lt_min = lt_df_gmc.loc['minus_sigma'].sum()
 
-        plus_sig_gmc[mk] = lt_plus
-        minus_sig_gmc[mk] = lt_minus
+        plus_sig_gmc[mk] = lt_add
+        minus_sig_gmc[mk] = lt_min
 
          # Plot both plus and minus sigma curves
-        for sigma_val in [lt_plus, lt_minus]:
+        for sigma_val in [lt_add, lt_min]:
             pyplot.plot(r_vals,
                         sigma_val,
                         linewidth=0.75,
@@ -1250,11 +1248,11 @@ def spectra_data(gmpe,
                  Nstd,
                  gmc_weights,
                  rs_50p,
-                 rs_plus_sigma,
-                 rs_minus_sigma,
+                 rs_add_sigma,
+                 rs_min_sigma,
                  lt_vals,
-                 lt_vals_plus,
-                 lt_vals_minus):
+                 lt_vals_add,
+                 lt_vals_min):
     """
     If required get the logic tree weighted predictions
     """
@@ -1263,25 +1261,25 @@ def spectra_data(gmpe,
             pass
         elif gmpe in gmc_weights[idx_gmc]:
             if gmc_weights[idx_gmc][gmpe] is not None:
-                rs_50p_w, rs_plus_sigma_w, rs_minus_sigma_w = {}, {}, {}
+                rs_50p_w, rs_add_sigma_w, rs_min_sigma_w = {}, {}, {}
                 for idx, rs in enumerate(rs_50p):
                     rs_50p_w[idx] = rs_50p[idx]*gmc_weights[idx_gmc][gmpe]
                     if Nstd > 0:
-                        rs_plus_sigma_w[idx] = rs_plus_sigma[idx]*gmc_weights[idx_gmc][gmpe]
-                        rs_minus_sigma_w[idx] = rs_minus_sigma[idx]*gmc_weights[idx_gmc][gmpe]
+                        rs_add_sigma_w[idx] = rs_add_sigma[idx]*gmc_weights[idx_gmc][gmpe]
+                        rs_min_sigma_w[idx] = rs_min_sigma[idx]*gmc_weights[idx_gmc][gmpe]
     
                 # Store the weighted median for the GMPE
                 lt_vals[idx_gmc][gmpe] = {'median': rs_50p_w}
                 
                 # And if Nstd > 0 store these weighted branches too
                 if Nstd > 0:
-                    lt_vals_plus[idx_gmc][gmpe,'p_sig'] = {'plus_sigma': rs_plus_sigma_w}
-                    lt_vals_minus[idx_gmc][gmpe,'m_sig'] = {'minus_sigma': rs_minus_sigma_w}
+                    lt_vals_add[idx_gmc][gmpe,'p_sig'] = {'plus_sigma': rs_add_sigma_w}
+                    lt_vals_min[idx_gmc][gmpe,'m_sig'] = {'minus_sigma': rs_min_sigma_w}
 
-    gmc1_vals = [lt_vals[0], lt_vals_plus[0], lt_vals_minus[0]]
-    gmc2_vals = [lt_vals[1], lt_vals_plus[1], lt_vals_minus[1]]
-    gmc3_vals = [lt_vals[2], lt_vals_plus[2], lt_vals_minus[2]]
-    gmc4_vals = [lt_vals[3], lt_vals_plus[3], lt_vals_minus[3]]
+    gmc1_vals = [lt_vals[0], lt_vals_add[0], lt_vals_min[0]]
+    gmc2_vals = [lt_vals[1], lt_vals_add[1], lt_vals_min[1]]
+    gmc3_vals = [lt_vals[2], lt_vals_add[2], lt_vals_min[2]]
+    gmc4_vals = [lt_vals[3], lt_vals_add[3], lt_vals_min[3]]
     
     return gmc1_vals, gmc2_vals, gmc3_vals, gmc4_vals
 
@@ -1292,9 +1290,7 @@ def lt_spectra(ax1,
                Nstd,
                period,
                idx_gmc,
-               lt_vals_gmc,
-               ltv_plus_sig,
-               ltv_minus_sig):
+               ltv):
     """
     Plot spectra for the GMPE logic tree
     """    
@@ -1305,30 +1301,30 @@ def lt_spectra(ax1,
     label = 'Logic Tree ' + str(idx_gmc+1)
     
     # Plot   
-    lt_per_imt_gmc, lt_plus_sig_per_imt, lt_minus_sig_per_imt = {}, {}, {}
-    lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['median'])
+    lt_per_imt_gmc, lt_add_sig_per_imt, lt_min_sig_per_imt = {}, {}, {}
+    lt_df_gmc = pd.DataFrame(ltv[0], index=['median'])
     if Nstd > 0:
-        lt_plus_sig = pd.DataFrame(ltv_plus_sig, index=['plus_sigma'])
-        lt_minus_sig = pd.DataFrame(ltv_minus_sig, index=['minus_sigma'])    
-    wt_per_gmpe_gmc, wt_plus_sig, wt_minus_sig = {}, {}, {}
+        lt_add_sig = pd.DataFrame(ltv[1], index=['plus_sigma'])
+        lt_min_sig = pd.DataFrame(ltv[2], index=['minus_sigma'])    
+    wt_per_gmpe_gmc, wt_add_sig, wt_min_sig = {}, {}, {}
     for gmpe in gmpe_list:
         if check in str(gmpe):
             wt_per_gmpe_gmc[gmpe] = np.array(pd.Series(
                 lt_df_gmc[gmpe].loc['median']))
             if Nstd > 0:
-                wt_plus_sig[gmpe] = np.array(
-                    pd.Series(lt_plus_sig[gmpe,'p_sig'].loc['plus_sigma']))
-                wt_minus_sig[gmpe] = np.array(
-                    pd.Series(lt_minus_sig[gmpe,'m_sig'].loc['minus_sigma']))
+                wt_add_sig[gmpe] = np.array(
+                    pd.Series(lt_add_sig[gmpe,'p_sig'].loc['plus_sigma']))
+                wt_min_sig[gmpe] = np.array(
+                    pd.Series(lt_min_sig[gmpe,'m_sig'].loc['minus_sigma']))
         
     lt_df_gmc = pd.DataFrame(wt_per_gmpe_gmc, index=period)
-    lt_plus_sig = pd.DataFrame(wt_plus_sig, index=period)
-    lt_minus_sig = pd.DataFrame(wt_minus_sig, index=period)
+    lt_add_sig = pd.DataFrame(wt_add_sig, index=period)
+    lt_min_sig = pd.DataFrame(wt_min_sig, index=period)
     for idx, imt in enumerate(period):
         lt_per_imt_gmc[imt] = np.sum(lt_df_gmc.loc[imt])
         if Nstd > 0:
-            lt_plus_sig_per_imt[imt] = np.sum(lt_plus_sig.loc[imt])
-            lt_minus_sig_per_imt[imt] = np.sum(lt_minus_sig.loc[imt])
+            lt_add_sig_per_imt[imt] = np.sum(lt_add_sig.loc[imt])
+            lt_min_sig_per_imt[imt] = np.sum(lt_min_sig.loc[imt])
     
     # Plot logic tree
     ax1.plot(period,
@@ -1343,20 +1339,20 @@ def lt_spectra(ax1,
     if Nstd > 0:
         
         ax1.plot(period,
-                 pd.Series(lt_plus_sig_per_imt).values,
+                 pd.Series(lt_add_sig_per_imt).values,
                  linewidth=0.75,
                  color=col,
                  linestyle='-.',
                  zorder=100)   
           
         ax1.plot(period,
-                 pd.Series(lt_minus_sig_per_imt).values,
+                 pd.Series(lt_min_sig_per_imt).values,
                  linewidth=0.75,
                  color=col,
                  linestyle='-.',
                  zorder=100)
         
-    return [lt_per_imt_gmc, lt_plus_sig_per_imt, lt_minus_sig_per_imt]
+    return [lt_per_imt_gmc, lt_add_sig_per_imt, lt_min_sig_per_imt]
         
    
 def load_obs_spectra(obs_spectra_fname):
@@ -1401,9 +1397,8 @@ def plot_obs_spectra(ax1,
         depth = np.asarray(dep_list, float)
         
         # Get label for spectra plot
-        obs_string = (eq_id + '\nrecorded at ' + st_id + ' (Rrup = '
-                      + str(rrup) + ' km, ' + '\nMw = ' + str(mw) +
-                      ', depth = ' + str(depth) + ' km)')
+        obs_string = (f"{eq_id}\nrecorded at {st_id} (Rrup = {rrup} km, "
+                      f"\nMw = {mw}, depth = {depth} km)")
                       
         # Plot the observed spectra
         ax1.plot(obs_spectra['Period (s)'],
