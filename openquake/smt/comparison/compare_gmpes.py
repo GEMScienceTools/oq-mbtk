@@ -51,7 +51,7 @@ class Configurations(object):
         self.maxR = config_file['general']['maxR']
         self.dist_type = config_file['general']['dist_type']
         self.dist_list = config_file['general']['dist_list']
-        self.Nstd = config_file['general']['Nstd']
+        self.nstd = config_file['general']['Nstd']
         self.max_period = config_file['general']['max_period']
         
         # If the following site params are missing, the following proxies are used
