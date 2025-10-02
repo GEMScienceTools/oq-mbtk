@@ -59,14 +59,13 @@ def compare_residuals(kind, observed, expected):
                 for imt, dic in ddic.items():
                     for key, exp in dic.items():
                         got = obs[gsim][imt][key]
-                        if hasattr(exp, '__len__'):
-                            # replace None with NaN
-                            for i, x in enumerate(exp):
-                                if x is None:
-                                    exp[i] = np.nan
-                                    got[i] = np.nan
-                        aac(got, exp, atol=1e-8,
-                            err_msg=f'in {gsim}-{idx}-{imt}-{key}')
+                        if not hasattr(exp, '__len__'):
+                            exp = [exp]
+                            got = [got]
+                        for i, x in enumerate(exp):
+                            if x is not None:
+                                aac(got[i], exp[i], atol=1e-8,
+                                    err_msg=f'in {gsim}-{idx}-{imt}-{key}-{i}')
     except Exception:
         print(f'Hint: meld {kind} {tmpdir}', file=sys.stderr)
         raise
