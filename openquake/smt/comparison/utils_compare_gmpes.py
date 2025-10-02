@@ -386,7 +386,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
         fs = '16'
     ax1.legend(loc="center left", bbox_to_anchor=bbox_coo, fontsize=fs)
     save_spectra_plot(figure, obs_spectra, output_directory, eq_id, st_id)
-    
+
     return lt_vals
 
 
@@ -1250,8 +1250,8 @@ def spectra_data(gmpe,
                 for idx, rs in enumerate(rs_50p):
                     rs_50p_w[idx] = rs*gmc_weights[idx_gmc][gmpe]
                     if nstd > 0:
-                        rs_add_sigma_w[idx] = rs_add_sigma*gmc_weights[idx_gmc][gmpe]
-                        rs_min_sigma_w[idx] = rs_min_sigma*gmc_weights[idx_gmc][gmpe]
+                        rs_add_sigma_w[idx] = rs_add_sigma[idx]*gmc_weights[idx_gmc][gmpe]
+                        rs_min_sigma_w[idx] = rs_min_sigma[idx]*gmc_weights[idx_gmc][gmpe]
     
                 # Store the weighted median for the GMPE
                 lt_vals['median'][idx_gmc][gmpe][sk] = rs_50p_w

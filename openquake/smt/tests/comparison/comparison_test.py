@@ -105,7 +105,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.maxR, TARGET_RMAX)
 
         # Check for target Nstd
-        self.assertEqual(config.Nstd, TARGET_NSTD)
+        self.assertEqual(config.nstd, TARGET_NSTD)
 
         # Check for target trellis mag
         np.testing.assert_allclose(config.mag_list, TARGET_MAGS)
