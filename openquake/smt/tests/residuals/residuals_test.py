@@ -19,6 +19,7 @@
 Core test suite for the database and residuals construction
 """
 import os
+import sys
 import ast
 import pprint
 import shutil
@@ -46,22 +47,31 @@ def fix(number):
         return float(number)
 
 
-def compare_residuals(observed, expected):
+def compare_residuals(kind, observed, expected):
     """
     Compare lists of triple dictionaries gsim -> imt -> key -> values
     """
-    for idx, (obs, exps) in enumerate(zip(observed, expected)):
-        for gsim, ddic in exps.items():
-            for imt, dic in ddic.items():
-                for key, exp in dic.items():
-                    got = obs[gsim][imt][key]
-                    if hasattr(exp, '__len__'):
-                        # replace None with NaN
-                        for i, x in enumerate(exp):
-                            if x is None:
-                                exp[i] = np.nan
-                    aac(got, exp, atol=1e-8,
-                        err_msg=f'in {gsim}-{idx}-{imt}-{key}')
+    tmpdir = tempfile.mkdtemp()
+    Result(tmpdir).save(observed)
+    try:
+        for idx, (obs, exps) in enumerate(zip(observed, expected)):
+            for gsim, ddic in exps.items():
+                for imt, dic in ddic.items():
+                    for key, exp in dic.items():
+                        got = obs[gsim][imt][key]
+                        if hasattr(exp, '__len__'):
+                            # replace None with NaN
+                            for i, x in enumerate(exp):
+                                if x is None:
+                                    exp[i] = np.nan
+                                    got[i] = np.nan
+                        aac(got, exp, atol=1e-8,
+                            err_msg=f'in {gsim}-{idx}-{imt}-{key}')
+    except Exception:
+        print(f'Hint: meld {kind} {tmpdir}', file=sys.stderr)
+        raise
+    else:
+        shutil.rmtree(tmpdir)
 
 
 class Result:
@@ -82,6 +92,7 @@ class Result:
                             if isinstance(vals, np.ndarray):
                                 dic[k2] = [fix(x) for x in vals]
                     pprint.pprint(ddic, f)
+                    print(f'Saved {f.name}', file=sys.stderr)
 
     def read(self, gsim, idx=0):
         for fname in os.listdir(self.dname):
@@ -141,7 +152,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Check correctness of values for computed residuals
         """
-        compare_residuals([self.residuals.residuals], [self.exp])
+        compare_residuals('exp', [self.residuals.residuals], [self.exp])
 
     def test_residuals_execution_from_toml(self):
         """
@@ -241,8 +252,10 @@ class ResidualsTestCase(unittest.TestCase):
         ssa1.station_residual_statistics(ssa_csv_output)
         
         # Check exp vs obs delta_s2ss, delta_woes, phi_ss per station
-        compare_residuals([stat.site_analysis for stat in ssa1.site_residuals],
-                          exp_stations)
+        compare_residuals(
+            'stations',
+            [stat.site_analysis for stat in ssa1.site_residuals],
+            exp_stations)
 
         # Check num. sites, GMPEs and intensity measures + csv outputted
         self.assertTrue(len(ssa1.site_ids) == len(top_sites))
