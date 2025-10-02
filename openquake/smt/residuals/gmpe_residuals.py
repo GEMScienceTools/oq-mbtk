@@ -129,9 +129,11 @@ class Residuals(object):
             gmpe_i = self.gmpe_list[gmpe]
             if hasattr(gmpe_i, "COEFFS"):
                 pers = [sa.period for sa in getattr(gmpe_i, "COEFFS").sa_coeffs]
-                self.gmpe_scalars[gmpe] = list(getattr(gmpe_i, "COEFFS").non_sa_coeffs.keys())
+                self.gmpe_scalars[gmpe] = list(
+                    getattr(gmpe_i, "COEFFS").non_sa_coeffs)
             else:
-                assert hasattr(gmpe_i, "gmpe_table") # tabular GMM specified using an alias
+                assert hasattr(gmpe_i, "gmpe_table")
+                # tabular GMM specified using an alias
                 pers = gmpe_i.imls["T"]
 
             min_per, max_per = (min(pers), max(pers))
@@ -141,7 +143,8 @@ class Residuals(object):
                     period = imt.from_string(imtx).period
                     if period < min_per or period > max_per:
                         print(f"IMT {imtx} outside period range for GMPE {gmpe}"
-                              f"(min GMM period = {min_per} s, max GMM period = {max_per} s)")
+                              f"(min GMM period = {min_per} s, "
+                              f"max GMM period = {max_per} s)")
                         gmpe_dict_1[imtx] = None
                         gmpe_dict_2[imtx] = None
                         continue
@@ -209,24 +212,25 @@ class Residuals(object):
         :param ctx_database: a :class:`context_db.ContextDB`, i.e. a database of
             records capable of returning dicts of earthquake-based Contexts and
             observed IMTs.
-            See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase` for an
-            example
+            See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase`
+            for an example
         """
         # Build initial contexts with the observed values
-        contexts = ctx_database.get_contexts(nodal_plane_index, self.imts, component)
+        contexts = ctx_database.get_contexts(
+            nodal_plane_index, self.imts, component)
         
         # Check at least one observed value per IMT (else raise an error)
-        for imt in self.imts:
+        for im in self.imts:
             obs_check = []
             for ctx in contexts:
-                obs_check.append(ctx["Observations"][imt])
+                obs_check.append(ctx["Observations"][im])
             obs_check = np.concatenate(obs_check)
             check = pd.notnull(obs_check)
             if len(check[check]) < 1:
                 raise ValueError(f"All observed intensity measure "
-                                 f"levels for {imt} are empty - "
+                                 f"levels for {im} are empty - "
                                  f"no residuals can be computed "
-                                 f"for {imt}")
+                                 f"for {im}")
 
         # Get IMTs which need acc. units conv. from cm/s^2 to g
         accel_imts = tuple(
@@ -257,7 +261,8 @@ class Residuals(object):
                                 # Dummy to pass first conditional with indexing
                                 # if no obs values for given IMT for the event
                                 inter_ev = np.array([np.nan]) 
-                            if np.all(np.fabs(inter_ev - inter_ev[0]) < 1.0E-12):
+                            if np.all(np.fabs(inter_ev - inter_ev[0])
+                                      < 1.0E-12):
                                 # Single inter-event residual
                                 self.residuals[gmpe][imtx][res_type].append(
                                     inter_ev[0])

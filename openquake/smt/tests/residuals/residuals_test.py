@@ -46,6 +46,21 @@ def fix(number):
         return float(number)
 
 
+def compare_residuals(observed, expected):
+    for idx, (obs, exps) in enumerate(zip(observed, expected)):
+        for gsim, ddic in exps.items():
+            for imt, dic in ddic.items():
+                for key, exp in dic.items():
+                    got = obs[gsim][imt][key]
+                    if hasattr(exp, '__len__'):
+                        # replace None with NaN
+                        for i, x in enumerate(exp):
+                            if x is None:
+                                exp[i] = np.nan
+                    aac(got, exp, atol=1e-8,
+                        err_msg=f'in {gsim}-{idx}-{imt}-{key}')
+
+
 class Result:
     """
     Logic to read and save the expected files
@@ -123,11 +138,7 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Check correctness of values for computed residuals
         """
-        for gsim, ddic in self.exp.items():
-            obs = self.residuals.residuals[gsim]
-            for imt, dic in self.exp[gsim].items():
-                for std, values in dic.items():
-                    aac(obs[imt][std], values, atol=1e-8)
+        compare_residuals([self.residuals.residuals], [self.exp])
 
     def test_residuals_execution_from_toml(self):
         """
@@ -227,19 +238,8 @@ class ResidualsTestCase(unittest.TestCase):
         ssa1.station_residual_statistics(ssa_csv_output)
         
         # Check exp vs obs delta_s2ss, delta_woes, phi_ss per station
-        for idx, (stat, exps) in enumerate(
-                zip(ssa1.site_residuals, exp_stations)):
-            for gsim, ddic in exps.items():
-                obs = stat.site_analysis[gsim]
-                for imt, dic in ddic.items():
-                    for key, val in dic.items():
-                        if hasattr(val, '__len__'):
-                            # replace None with NaN
-                            for i, x in enumerate(val):
-                                if x is None:
-                                    val[i] = np.nan
-                        aac(obs[imt][key], val, atol=1e-8,
-                            err_msg=f'in {gsim}-{idx}-{imt}-{key}')
+        compare_residuals([stat.site_analysis for stat in ssa1.site_residuals],
+                          exp_stations)
 
         # Check num. sites, GMPEs and intensity measures + csv outputted
         self.assertTrue(len(ssa1.site_ids) == len(top_sites))
