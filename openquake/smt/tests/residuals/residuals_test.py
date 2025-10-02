@@ -47,6 +47,9 @@ def fix(number):
 
 
 def compare_residuals(observed, expected):
+    """
+    Compare lists of triple dictionaries gsim -> imt -> key -> values
+    """
     for idx, (obs, exps) in enumerate(zip(observed, expected)):
         for gsim, ddic in exps.items():
             for imt, dic in ddic.items():
@@ -63,7 +66,7 @@ def compare_residuals(observed, expected):
 
 class Result:
     """
-    Logic to read and save the expected files
+    Logic to read and save the residuals as .py data files
     """
     def __init__(self, dname):
         self.dname = dname
