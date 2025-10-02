@@ -41,6 +41,8 @@ from .utils import (
     SHEAR_MODULUS,
     get_mag_counts,
     get_mfd_occurrence_rates,
+    rescale_mfd,
+    make_rup_fault_lookup,
     breakpoint,
 )
 from .solver import weights_from_errors
@@ -446,6 +448,57 @@ def get_slip_rate_fraction(faults, mfd):
 
     seismic_slip_rate_frac = mfd_moment / fault_moment
     return seismic_slip_rate_frac
+
+
+def make_fault_mfd_equation_components(
+    fault_mfds,
+    rups,
+    fault_network,
+    fault_key='subfaults',
+    rup_key='rupture_df_keep',
+    seismic_slip_rate_frac=1.0,
+    skip_missing_rup_idxs=False,
+):
+    # TODO: streamline this and make_rup_fault_lookup to not have to pass
+    # the whole fault_network and the fault_key
+    if seismic_slip_rate_frac not in (None, 1.0):
+        fault_mfd_data = {
+            k: {'mfd': v, 'rups_include': [], 'rup_fractions': []}
+            for k, v in fault_mfds.items()
+        }
+    else:
+        fault_mfd_data = {
+            k: {
+                'mfd': rescale_mfd(v, seismic_slip_rate_frac),
+                'rups_include': [],
+                'rup_fractions': [],
+            }
+            for k, v in fault_mfds.items()
+        }
+
+    rup_fault_lookup = make_rup_fault_lookup(fault_network[rup_key], fault_key)
+    rup_id_count_lookup = {r['idx']: i for i, r in enumerate(rups)}
+
+    for fault, on_fault_rups in rup_fault_lookup.items():
+        for rup_idx in on_fault_rups:
+            try:
+                fault_mfd_data[fault]['rups_include'].append(
+                    rup_id_count_lookup[rup_idx]
+                )
+                fault_mfd_data[fault]['rup_fractions'].append(
+                    rups[rup_id_count_lookup[rup_idx]][
+                        f'{fault_key[:-1]}_fracs'
+                    ][fault]
+                )
+            except KeyError as e:
+                if skip_missing_rup_idxs == True:
+                    pass
+                elif skip_missing_rup_idxs == 'warn':
+                    print(f"can't find {rup_idx}, skipping...")
+                elif skip_missing_rup_idxs == False:
+                    raise e
+
+    return fault_mfd_data
 
 
 def make_eqns(

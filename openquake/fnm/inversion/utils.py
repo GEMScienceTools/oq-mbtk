@@ -565,8 +565,18 @@ def get_ruptures_on_fault(fault_id, rupture_df, rup_fault_lookup):
     return rup_df
 
 
-def make_rup_fault_lookup(rupture_df, key='faults'):
-    rup_fault_dict = rupture_df[key].to_dict()
+def make_rup_fault_lookup(ruptures, key='subfaults'):
+    """
+    Makes a dictionary with fault_ids as keys and values the lists
+    of the rupture idxs (not rupture count ids) of ruptures on that fault.
+
+    Pass `key='subfaults'` to get subfaults (defauklty).
+    """
+    if isinstance(ruptures, pd.DataFrame):
+        rup_fault_dict = ruptures[key].to_dict()
+    else:
+        # always 'faults'
+        rup_fault_dict = {rup['idx']: rup['faults'] for rup in ruptures}
 
     fault_rup_dict = {}
     for rup, faults in rup_fault_dict.items():
@@ -587,6 +597,7 @@ def get_rup_rates_from_fault_slip_rates(
     rupture_set_for_rates_from_slip_rates='all',
     faults_or_subfaults='subfaults',
     export_fault_mfds=False,
+    exit_after_mfd_export=False,
     **kwargs,
 ):
     """
@@ -675,6 +686,8 @@ def get_rup_rates_from_fault_slip_rates(
     }
     if export_fault_mfds:
         fault_network['fault_mfds'] = fault_mfds
+        if exit_after_mfd_export:
+            return
 
     logging.debug("setting single-fault rup rates")
     all_rup_rates = {
@@ -980,41 +993,3 @@ def rescale_mfd(mfd, frac):
     return {
         mag: rate * frac for mag, rate in mfd.get_annual_occurrence_rates()
     }
-
-
-def make_fault_mfd_equation_components(
-    fault_mfds,
-    rups,
-    fault_network,
-    fault_key='subfaults',
-    rup_key='rupture_df_keep',
-    seismic_slip_rate_frac=None,
-):
-    if seismic_slip_rate_frac not in (None, 1.0):
-        fault_mfd_data = {
-            k: {'mfd': v, 'rups_include': [], 'rup_fractions': []}
-            for k, v in fault_mfds.items()
-        }
-    else:
-        fault_mfd_data = {
-            k: {
-                'mfd': rescale_mfd(v, seismic_slip_rate_frac),
-                'rups_include': [],
-                'rup_fractions': [],
-            }
-            for k, v in fault_mfds.items()
-        }
-
-    rup_fault_lookup = make_rup_fault_lookup(fault_network[rup_key], fault_key)
-    rup_id_count_lookup = {r['idx']: i for i, r in enumerate(rups)}
-
-    for fault, on_fault_rups in rup_fault_lookup.items():
-        for rup_idx in on_fault_rups:
-            fault_mfd_data[fault]['rups_include'].append(
-                rup_id_count_lookup[rup_idx]
-            )
-            fault_mfd_data[fault]['rup_fracs'].append(
-                rups[rup_id_count_lookup[rup_idx]][f'{fault_key}_fracs'][fault]
-            )
-
-    return fault_mfd_data
