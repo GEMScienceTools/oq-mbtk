@@ -357,7 +357,6 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             for idx_gmc, gmc in enumerate(gmc_weights):
                 if gmc_vals[idx_gmc][0] != {}: # If none empty LT
                     ltvs = lt_spectra(ax1,
-                                      gmpe,
                                       config.gmpes_list,
                                       config.nstd,
                                       periods,
@@ -1257,7 +1256,8 @@ def spectra_data(gmpe,
             pass
         elif gmpe in gmc_weights[idx_gmc]:
             if gmc_weights[idx_gmc][gmpe] is not None:
-                rs_50p_w, rs_add_sigma_w, rs_min_sigma_w = {}, {}, {}
+                ey = np.zeros(len(rs_50p))
+                rs_50p_w, rs_add_sigma_w, rs_min_sigma_w = ey, ey, ey
                 for idx, rs in enumerate(rs_50p):
                     rs_50p_w[idx] = rs_50p[idx]*gmc_weights[idx_gmc][gmpe]
                     if nstd > 0:
@@ -1265,12 +1265,12 @@ def spectra_data(gmpe,
                         rs_min_sigma_w[idx] = rs_min_sigma[idx]*gmc_weights[idx_gmc][gmpe]
     
                 # Store the weighted median for the GMPE
-                lt_vals['median'][idx_gmc][gmpe] = {'median': rs_50p_w}
+                lt_vals['median'][idx_gmc][gmpe] = rs_50p_w
                 
                 # And if nstd > 0 store these weighted branches too
                 if nstd > 0:
-                    lt_vals['add'][idx_gmc][gmpe,'p_sig'] = {'plus_sigma': rs_add_sigma_w}
-                    lt_vals['min'][idx_gmc][gmpe,'m_sig'] = {'minus_sigma': rs_min_sigma_w}
+                    lt_vals['add'][idx_gmc][gmpe] = rs_add_sigma_w
+                    lt_vals['min'][idx_gmc][gmpe] = rs_min_sigma_w
 
     gmc1_vals = [lt_vals['median'][0], lt_vals['add'][0], lt_vals['min'][0]]
     gmc2_vals = [lt_vals['median'][1], lt_vals['add'][1], lt_vals['min'][1]]
@@ -1281,7 +1281,6 @@ def spectra_data(gmpe,
 
 
 def lt_spectra(ax1,
-               gmpe,
                gmpe_list,
                nstd,
                period,
@@ -1295,22 +1294,19 @@ def lt_spectra(ax1,
     check = f'lt_weight_gmc{idx_gmc+1}'
     label = f'Logic Tree {idx_gmc+1}'
 
-    # Build DataFrames for each GMPE in the logic tree
+    # Store medians
     wt_per_gmpe_gmc = {
-        gmpe: np.array(pd.Series(pd.DataFrame(ltv[0], index=['median'])[gmpe].loc['median']))
-        for gmpe in gmpe_list if check in str(gmpe)
-    }
-    lt_df_gmc = pd.DataFrame(wt_per_gmpe_gmc, index=period)
-    lt_per_imt_gmc = lt_df_gmc.sum(axis=1).to_dict()
-    
+        gmpe: ltv[0][gmpe] for gmpe in gmpe_list if check in str(gmpe)
+        }
+    lt_per_imt_gmc = pd.DataFrame(wt_per_gmpe_gmc, index=period).sum(axis=1).to_dict()
+
+    # And plus/minus sigmas too if required
     if nstd > 0:
         wt_add_sig = {
-            gmpe: np.array(pd.Series(pd.DataFrame(ltv[1], index=['plus_sigma'])[(gmpe, 'p_sig')].loc['plus_sigma']))
-            for gmpe in gmpe_list if check in str(gmpe)
+            gmpe: ltv[1][gmpe] for gmpe in gmpe_list if check in str(gmpe)
         }
         wt_min_sig = {
-            gmpe: np.array(pd.Series(pd.DataFrame(ltv[2], index=['minus_sigma'])[(gmpe, 'm_sig')].loc['minus_sigma']))
-            for gmpe in gmpe_list if check in str(gmpe)
+            gmpe: ltv[2][gmpe] for gmpe in gmpe_list if check in str(gmpe)
         }
         lt_add_sig = pd.DataFrame(wt_add_sig, index=period)
         lt_min_sig = pd.DataFrame(wt_min_sig, index=period)
