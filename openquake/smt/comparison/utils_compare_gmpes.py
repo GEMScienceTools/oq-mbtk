@@ -1298,7 +1298,7 @@ def lt_spectra(ax1,
     wt_per_gmpe_gmc = {
         gmpe: ltv[0][gmpe] for gmpe in gmpe_list if check in str(gmpe)
         }
-    lt_per_imt_gmc = pd.DataFrame(wt_per_gmpe_gmc, index=period).sum(axis=1).to_dict()
+    lt_median = pd.DataFrame(wt_per_gmpe_gmc, index=period).sum(axis=1).to_dict()
 
     # And plus/minus sigmas too if required
     if nstd > 0:
@@ -1308,39 +1308,41 @@ def lt_spectra(ax1,
         wt_min_sig = {
             gmpe: ltv[2][gmpe] for gmpe in gmpe_list if check in str(gmpe)
         }
-        lt_add_sig = pd.DataFrame(wt_add_sig, index=period)
-        lt_min_sig = pd.DataFrame(wt_min_sig, index=period)
-        lt_add_sig_per_imt = lt_add_sig.sum(axis=1).to_dict()
-        lt_min_sig_per_imt = lt_min_sig.sum(axis=1).to_dict()
+        lt_add_sig = pd.DataFrame.from_dict(wt_add_sig, orient='index').sum(axis=0).to_dict()
+        lt_min_sig = pd.DataFrame.from_dict(wt_min_sig, orient='index').sum(axis=0).to_dict()
     else:
-        lt_add_sig_per_imt = {}
-        lt_min_sig_per_imt = {}
+        lt_add_sig = {}
+        lt_min_sig = {}
 
-    # Plot logic tree
+    # Plot median logic tree 
     ax1.plot(period,
-             list(lt_per_imt_gmc.values()),
+             list(lt_median.values()),
              linewidth=2,
              color=col,
              linestyle='--',
              label=label,
              zorder=100)
 
-    # Plot mean plus sigma and mean minus sigma if required
+    # Plot plus sigma and minus sigma if required
     if nstd > 0:
+
+        # Plus sigma
         ax1.plot(period,
-                 list(lt_add_sig_per_imt.values()),
+                 list(lt_add_sig.values()),
                  linewidth=0.75,
                  color=col,
                  linestyle='-.',
                  zorder=100)
+    
+        # Minus sigma
         ax1.plot(period,
-                 list(lt_min_sig_per_imt.values()),
+                 list(lt_min_sig.values()),
                  linewidth=0.75,
                  color=col,
                  linestyle='-.',
                  zorder=100)
 
-    return [lt_per_imt_gmc, lt_add_sig_per_imt, lt_min_sig_per_imt]
+    return [lt_median, lt_add_sig, lt_min_sig]
 
         
    
