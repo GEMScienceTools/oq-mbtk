@@ -90,6 +90,8 @@ class Result:
                         for k2, vals in dic.items():
                             if isinstance(vals, np.ndarray):
                                 dic[k2] = [fix(x) for x in vals]
+                            else:
+                                dic[k2] = fix(vals)
                     pprint.pprint(ddic, f)
                     print(f'Saved {f.name}', file=sys.stderr)
 
@@ -238,10 +240,11 @@ class ResidualsTestCase(unittest.TestCase):
         correctness of values. Execution of plots is also tested here.
         """
         # Get sites with at least 3 record each
-        top_sites = self.database.rank_sites_by_record_count(self.st_rec_min)
+        top_sites = sorted(
+            self.database.rank_sites_by_record_count(self.st_rec_min))
             
         # Create SingleStationAnalysis object
-        ssa1 = res.SingleStationAnalysis(list(top_sites), GSIMS, self.imts)
+        ssa1 = res.SingleStationAnalysis(top_sites, GSIMS, self.imts)
         
         # Compute total, inter-event and intra-event residuals for each site
         ssa1.get_site_residuals(self.database)
