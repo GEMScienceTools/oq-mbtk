@@ -20,13 +20,13 @@ Tests for execution of comparison module
 """
 import os
 import shutil
-import pickle
 import unittest
 import numpy as np
 import pandas as pd
 
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison import compare_gmpes as comp
+from openquake.smt.comparison.utils_gmpes import reformat_att_curves
 from openquake.smt.comparison.utils_compare_gmpes import (compute_matrix_gmpes,
                                                           plot_cluster_util,
                                                           plot_sammons_util,
@@ -70,7 +70,7 @@ class ComparisonTestCase(unittest.TestCase):
             base,'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
             base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.exp_curves = os.path.join(base,'exp_curves.pkl')
+        self.exp_curves = os.path.join(base,'exp_curves.csv')
         self.exp_spectra = os.path.join(base, 'exp_spectra.pkl')
 
         # Set the output
@@ -262,10 +262,11 @@ class ComparisonTestCase(unittest.TestCase):
         # Trellis plots
         att_curves = comp.plot_trellis(self.input_file, self.output_directory)
         if not os.path.exists(self.exp_curves):
-            # Write if doesn't exist
-            pd.DataFrame(att_curves).to_pickle(self.exp_curves)
-        exp_curves = pd.read_pickle(self.exp_curves)
-        obs_curves = pd.DataFrame(att_curves)
+            # Write to CSV the expected results if missing
+            reformat_att_curves(att_curves, self.exp_curves)
+        exp_curves = pd.read_csv(self.exp_curves)
+        # Same function writing expected can reformat the observed
+        obs_curves = reformat_att_curves(att_curves)
         pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
 
         # Spectra plots

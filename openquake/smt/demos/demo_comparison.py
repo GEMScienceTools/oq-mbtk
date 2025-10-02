@@ -10,6 +10,7 @@ import pandas as pd
 
 from openquake.baselib import sap
 from openquake.smt.comparison import compare_gmpes as comp
+from openquake.smt.comparison.utils_gmpes import reformat_att_curves
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -47,45 +48,6 @@ def run_comparison(file, out_dir):
     return att_curves
 
 
-def reformat_att_curves(att_curves, out_dir):
-    """
-    Export the (median) attenuation curves into a CSV for the given
-    config (i.e. run parameters).
-    """
-    # Get the key describing the vs30 + truncation level
-    params_key = pd.Series(att_curves.keys()).values[0]
-
-    # Then get the values per gmm (per imt-mag combination)
-    vals = att_curves[params_key]['gmm att curves per imt-mag']
-
-    # Now get the curves into a dictionary format
-    store = {}
-    for imt in vals.keys():
-        for scenario in vals[imt]:
-            medians = vals[imt][scenario]
-            for gmpe in medians: 
-                # First per GMM
-                if "(km)" not in gmpe:
-                    key = imt + ', ' +  scenario + ', ' + gmpe
-                    key = key.replace('\n', ' ')
-                    gmpe_medians = medians[gmpe]['median (g)']
-                    store[key] = gmpe_medians
-                # Then get the distance for given scenario
-                else:
-                    dkey = f"values of {gmpe} for {scenario}"
-                    if dkey not in store: # Skip if already in dict
-                        store[dkey] = medians[gmpe]
-                    
-    # Now into dataframe
-    df = pd.DataFrame(store)
-
-    # And export
-    fname = os.path.join(out_dir, 'attenuation_curves.csv')
-    df.to_csv(fname)
-
-    return df # Might want to build on this so return the df...
-
-
 def main(input_toml=demo_input, out_dir=demo_out):
     """
     Run the demo GMM comparison workflow
@@ -102,7 +64,8 @@ def main(input_toml=demo_input, out_dir=demo_out):
     att_curves = run_comparison(input_toml, out_dir)
 
     # Reformat the att_curves dictionary into a csv
-    df = reformat_att_curves(att_curves, out_dir)
+    df = reformat_att_curves(
+        att_curves, os.path.join(out_dir, 'attenuation_curves'))
 
     # Print that the analysis has finished
     print("GMM comparison analysis has successfully finished")
