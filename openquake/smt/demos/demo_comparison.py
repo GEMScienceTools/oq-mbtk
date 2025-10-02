@@ -8,7 +8,8 @@ import shutil
 
 from openquake.baselib import sap
 from openquake.smt.comparison import compare_gmpes as comp
-from openquake.smt.comparison.utils_gmpes import reformat_att_curves
+from openquake.smt.comparison.utils_gmpes import (reformat_att_curves,
+                                                  reformat_spectra)
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -37,13 +38,13 @@ def run_comparison(file, out_dir):
     """
     # Generate plots and retrieve attenuation curve data from config object
     att_curves = comp.plot_trellis(file, out_dir)
-    comp.plot_spectra(file, out_dir)
+    spectra = comp.plot_spectra(file, out_dir)
     comp.plot_ratios(file, out_dir)
     comp.plot_cluster(file, out_dir)
     comp.plot_sammons(file, out_dir)
     comp.plot_matrix(file, out_dir)
 
-    return att_curves
+    return att_curves, spectra
 
 
 def main(input_toml=demo_input, out_dir=demo_out):
@@ -59,11 +60,15 @@ def main(input_toml=demo_input, out_dir=demo_out):
     os.makedirs(out_dir)
 
     # Parse flatfile into metadata
-    att_curves = run_comparison(input_toml, out_dir)
+    att_curves, spectra = run_comparison(input_toml, out_dir)
 
     # Reformat the att_curves dictionary into a csv
-    df = reformat_att_curves(
+    ac_df = reformat_att_curves(
         att_curves, os.path.join(out_dir, 'attenuation_curves.csv'))
+
+    # Reformat the spectra dictionary into a csv too
+    rs_df = reformat_spectra(
+        spectra, os.path.join(out_dir, 'spectra.csv'))
 
     # Print that the analysis has finished
     print("GMM comparison analysis has successfully finished")

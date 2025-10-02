@@ -29,7 +29,10 @@ from scipy import interpolate
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib.imt import from_string
-from openquake.smt.comparison.utils_gmpes import att_curves, get_rup_pars, mgmpe_check
+from openquake.smt.comparison.utils_gmpes import (get_imtl_unit, 
+                                                  att_curves,
+                                                  get_rup_pars,
+                                                  mgmpe_check)
 
 
 def plot_trellis_util(config, output_directory):
@@ -137,7 +140,7 @@ def plot_trellis_util(config, output_directory):
                                            lt_weights)
                 
                 # Get unit of imt for the store
-                unit = get_imtl_unit_for_trellis_store(i)
+                unit = get_imtl_unit(i)
 
                 # Store per gmpe
                 store_per_gmpe[gmpe]['median (%s)' % unit] = np.exp(mean)
@@ -229,13 +232,18 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
     # Get colours and make the figure
     colors = get_colors(config.custom_color_flag, config.custom_color_list)     
     figure = pyplot.figure(figsize=(len(mag_list)*5, len(config.dist_list)*4))
-    
+
     # Set dicts to store values
     dic = {gmm: {} for gmm in config.gmpes_list}  
-    lt_vals = {"median": [{}, {}, {}, {}],
+    lt_vals = {"median": [{gmm: {} for gmm in ltw.keys()} if ltw
+                          is not None else {} for ltw in gmc_weights],
                "add": [dic, dic, dic, dic],
-               "min": [dic, dic, dic, dic]}
-    store_gmc_lts = []
+               "min": [dic, dic, dic, dic],
+               'gmc1': {},
+               'gmc2': {},
+               'gmc3': {},
+               'gmc4': {},
+               'periods': periods}
     
     # Plot the data
     for n, dist in enumerate(config.dist_list):
@@ -257,6 +265,9 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                                      config.rake,
                                                      config.aratio,
                                                      config.trt)
+
+            # Scenario key
+            sk = f"{config.dist_type}={dist}km, Mw={m}, depth={depth_g}km, vs30={config.vs30}m/s"
 
             for g, gmpe in enumerate(config.gmpes_list):     
                 rs_50p, sig, rs_ps, rs_ms = [], [], [], []
@@ -332,7 +343,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                         rs_50p,
                                         rs_ps,
                                         rs_ms,
-                                        lt_vals)
+                                        lt_vals,
+                                        sk)
 
                 # Plot obs spectra if required
                 if obs_spectra is not None:
@@ -356,13 +368,14 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             # Plot logic trees if required
             for idx_gmc, gmc in enumerate(gmc_weights):
                 if gmc_vals[idx_gmc][0] != {}: # If none empty LT
-                    ltvs = lt_spectra(ax1,
-                                      config.gmpes_list,
-                                      config.nstd,
-                                      periods,
-                                      idx_gmc,
-                                      gmc_vals[idx_gmc])
-                    store_gmc_lts.append(ltvs)    
+                    lt_vals[f"gmc{idx_gmc+1}"][sk] = lt_spectra(
+                        ax1,
+                        config.gmpes_list,
+                        config.nstd,
+                        periods,
+                        idx_gmc,
+                        gmc_vals[idx_gmc],
+                        sk)
                 
     # Finalise the plots and save fig
     if len(mag_list) * len(config.dist_list) == 1:
@@ -373,8 +386,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
         fs = '16'
     ax1.legend(loc="center left", bbox_to_anchor=bbox_coo, fontsize=fs)
     save_spectra_plot(figure, obs_spectra, output_directory, eq_id, st_id)
-
-    return store_gmc_lts # Returned for unit tests of gmc lt values
+    
+    return lt_vals
 
 
 def plot_ratios_util(config, output_directory):
@@ -1150,31 +1163,6 @@ def update_trellis_plots(m, i, n, l, dep, minR, maxR, r_vals, imt_list, dist_typ
     pyplot.loglog()
     
 
-def get_imtl_unit_for_trellis_store(i):
-    """
-    Return a string of the intensity measure type's physical units of
-    measurement
-    """
-    if str(i) in ['PGD', 'SDi']:
-        unit = 'cm' # PGD, inelastic spectral displacement
-    elif str(i) in ['PGV']:
-        unit = 'cm/s' # PGV
-    elif str(i) in ['IA']:
-        unit = 'm/s' # Arias intensity
-    elif str(i) in ['RSD', 'RSD595', 'RSD575', 'RSD2080', 'DRVT']:
-        unit = 's' # Relative significant duration, DRVT
-    elif str(i) in ['CAV']:
-        unit = 'g-sec' # Cumulative absolute velocity
-    elif str(i) in ['MMI']:
-        unit = 'MMI' # Modified Mercalli Intensity
-    elif str(i) in ['FAS', 'EAS']:
-        pyplot.ylabel(str(i) + ' (Hz)') # Fourier/Eff. Amp. Spectrum
-    else:
-        unit = 'g' # PGA, SA, AvgSA
-
-    return unit
-
-
 ### Spectra utils
 def _update_period_spacing(period, threshold, spacing, max_period):
     """
@@ -1247,36 +1235,37 @@ def spectra_data(gmpe,
                  rs_50p,
                  rs_add_sigma,
                  rs_min_sigma,
-                 lt_vals):
+                 lt_vals,
+                 sk):
     """
     If required get the logic tree weighted predictions
     """
     for idx_gmc, gmc in enumerate(gmc_weights):
         if gmc_weights[idx_gmc] is None:
-            pass
+            continue
         elif gmpe in gmc_weights[idx_gmc]:
             if gmc_weights[idx_gmc][gmpe] is not None:
                 ey = np.zeros(len(rs_50p))
                 rs_50p_w, rs_add_sigma_w, rs_min_sigma_w = ey, ey, ey
                 for idx, rs in enumerate(rs_50p):
-                    rs_50p_w[idx] = rs_50p[idx]*gmc_weights[idx_gmc][gmpe]
+                    rs_50p_w[idx] = rs*gmc_weights[idx_gmc][gmpe]
                     if nstd > 0:
-                        rs_add_sigma_w[idx] = rs_add_sigma[idx]*gmc_weights[idx_gmc][gmpe]
-                        rs_min_sigma_w[idx] = rs_min_sigma[idx]*gmc_weights[idx_gmc][gmpe]
+                        rs_add_sigma_w[idx] = rs_add_sigma*gmc_weights[idx_gmc][gmpe]
+                        rs_min_sigma_w[idx] = rs_min_sigma*gmc_weights[idx_gmc][gmpe]
     
                 # Store the weighted median for the GMPE
-                lt_vals['median'][idx_gmc][gmpe] = rs_50p_w
-                
+                lt_vals['median'][idx_gmc][gmpe][sk] = rs_50p_w
+
                 # And if nstd > 0 store these weighted branches too
                 if nstd > 0:
-                    lt_vals['add'][idx_gmc][gmpe] = rs_add_sigma_w
-                    lt_vals['min'][idx_gmc][gmpe] = rs_min_sigma_w
+                    lt_vals['add'][idx_gmc][gmpe][sk] = rs_add_sigma_w
+                    lt_vals['min'][idx_gmc][gmpe][sk] = rs_min_sigma_w
 
     gmc1_vals = [lt_vals['median'][0], lt_vals['add'][0], lt_vals['min'][0]]
     gmc2_vals = [lt_vals['median'][1], lt_vals['add'][1], lt_vals['min'][1]]
     gmc3_vals = [lt_vals['median'][2], lt_vals['add'][2], lt_vals['min'][2]]
     gmc4_vals = [lt_vals['median'][3], lt_vals['add'][3], lt_vals['min'][3]]
-    
+
     return gmc1_vals, gmc2_vals, gmc3_vals, gmc4_vals
 
 
@@ -1285,7 +1274,8 @@ def lt_spectra(ax1,
                nstd,
                period,
                idx_gmc,
-               ltv):
+               ltv,
+               sk):
     """
     Plot spectra for the GMPE logic tree
     """
@@ -1296,17 +1286,17 @@ def lt_spectra(ax1,
 
     # Store medians
     wt_per_gmpe_gmc = {
-        gmpe: ltv[0][gmpe] for gmpe in gmpe_list if check in str(gmpe)
+        gmpe: ltv[0][gmpe][sk] for gmpe in gmpe_list if check in str(gmpe)
         }
     lt_median = pd.DataFrame(wt_per_gmpe_gmc, index=period).sum(axis=1).to_dict()
 
     # And plus/minus sigmas too if required
     if nstd > 0:
         wt_add_sig = {
-            gmpe: ltv[1][gmpe] for gmpe in gmpe_list if check in str(gmpe)
+            gmpe: ltv[1][gmpe][sk] for gmpe in gmpe_list if check in str(gmpe)
         }
         wt_min_sig = {
-            gmpe: ltv[2][gmpe] for gmpe in gmpe_list if check in str(gmpe)
+            gmpe: ltv[2][gmpe][sk] for gmpe in gmpe_list if check in str(gmpe)
         }
         lt_add_sig = pd.DataFrame.from_dict(wt_add_sig, orient='index').sum(axis=0).to_dict()
         lt_min_sig = pd.DataFrame.from_dict(wt_min_sig, orient='index').sum(axis=0).to_dict()
