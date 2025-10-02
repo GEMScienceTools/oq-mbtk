@@ -232,9 +232,9 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
     
     # Set dicts to store values
     dic = {gmm: {} for gmm in config.gmpes_list}  
-    lt_vals = [{}, {}, {}, {}]
-    lt_vals_add = [dic, dic, dic, dic]
-    lt_vals_min = [dic, dic, dic, dic]
+    lt_vals = {"median": [{}, {}, {}, {}],
+               "add": [dic, dic, dic, dic],
+               "min": [dic, dic, dic, dic]}
     store_gmc_lts = []
     
     # Plot the data
@@ -332,9 +332,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                         rs_50p,
                                         rs_ps,
                                         rs_ms,
-                                        lt_vals,
-                                        lt_vals_add,
-                                        lt_vals_min)
+                                        lt_vals)
 
                 # Plot obs spectra if required
                 if obs_spectra is not None:
@@ -1250,9 +1248,7 @@ def spectra_data(gmpe,
                  rs_50p,
                  rs_add_sigma,
                  rs_min_sigma,
-                 lt_vals,
-                 lt_vals_add,
-                 lt_vals_min):
+                 lt_vals):
     """
     If required get the logic tree weighted predictions
     """
@@ -1269,17 +1265,17 @@ def spectra_data(gmpe,
                         rs_min_sigma_w[idx] = rs_min_sigma[idx]*gmc_weights[idx_gmc][gmpe]
     
                 # Store the weighted median for the GMPE
-                lt_vals[idx_gmc][gmpe] = {'median': rs_50p_w}
+                lt_vals['median'][idx_gmc][gmpe] = {'median': rs_50p_w}
                 
                 # And if Nstd > 0 store these weighted branches too
                 if Nstd > 0:
-                    lt_vals_add[idx_gmc][gmpe,'p_sig'] = {'plus_sigma': rs_add_sigma_w}
-                    lt_vals_min[idx_gmc][gmpe,'m_sig'] = {'minus_sigma': rs_min_sigma_w}
+                    lt_vals['add'][idx_gmc][gmpe,'p_sig'] = {'plus_sigma': rs_add_sigma_w}
+                    lt_vals['min'][idx_gmc][gmpe,'m_sig'] = {'minus_sigma': rs_min_sigma_w}
 
-    gmc1_vals = [lt_vals[0], lt_vals_add[0], lt_vals_min[0]]
-    gmc2_vals = [lt_vals[1], lt_vals_add[1], lt_vals_min[1]]
-    gmc3_vals = [lt_vals[2], lt_vals_add[2], lt_vals_min[2]]
-    gmc4_vals = [lt_vals[3], lt_vals_add[3], lt_vals_min[3]]
+    gmc1_vals = [lt_vals['median'][0], lt_vals['add'][0], lt_vals['min'][0]]
+    gmc2_vals = [lt_vals['median'][1], lt_vals['add'][1], lt_vals['min'][1]]
+    gmc3_vals = [lt_vals['median'][2], lt_vals['add'][2], lt_vals['min'][2]]
+    gmc4_vals = [lt_vals['median'][3], lt_vals['add'][3], lt_vals['min'][3]]
     
     return gmc1_vals, gmc2_vals, gmc3_vals, gmc4_vals
 
