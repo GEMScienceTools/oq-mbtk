@@ -18,6 +18,7 @@
 """
 Module with utility functions for gmpes
 """
+import os
 import numpy as np
 import pandas as pd
 import ast
@@ -475,3 +476,42 @@ def mgmpe_check(gmpe):
         gmm = valid.gsim(gmpe_clean)
 
     return gmm
+
+
+def reformat_att_curves(att_curves, out=None):
+    """
+    Export the (median) attenuation curves into a CSV for the given
+    config (i.e. run parameters).
+    """
+    # Get the key describing the vs30 + truncation level
+    params_key = pd.Series(att_curves.keys()).values[0]
+
+    # Then get the values per gmm (per imt-mag combination)
+    vals = att_curves[params_key]['gmm att curves per imt-mag']
+
+    # Now get the curves into a dictionary format
+    store = {}
+    for imt in vals.keys():
+        for scenario in vals[imt]:
+            medians = vals[imt][scenario]
+            for gmpe in medians: 
+                # First per GMM
+                if "(km)" not in gmpe:
+                    key = imt + ', ' +  scenario + ', ' + gmpe
+                    key = key.replace('\n', ' ')
+                    gmpe_medians = medians[gmpe]['median (g)']
+                    store[key] = gmpe_medians
+                # Then get the distance for given scenario
+                else:
+                    dkey = f"values of {gmpe} for {scenario}"
+                    if dkey not in store: # Skip if already in dict
+                        store[dkey] = medians[gmpe]
+                    
+    # Now into dataframe
+    df = pd.DataFrame(store)
+
+    # And export if required
+    if out is not None:
+        df.to_csv(out, index=False)
+
+    return df
