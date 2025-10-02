@@ -355,7 +355,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             
             # Plot logic trees if required
             for idx_gmc, gmc in enumerate(gmc_weights):
-                if gmc_vals[idx_gmc][0] != {}:
+                if gmc_vals[idx_gmc][0] != {}: # If none empty LT
                     ltvs = lt_spectra(ax1,
                                       gmpe,
                                       config.gmpes_list,
@@ -1289,66 +1289,63 @@ def lt_spectra(ax1,
                ltv):
     """
     Plot spectra for the GMPE logic tree
-    """    
-    # Get colors and string for checks
+    """
     colours = ['r', 'b', 'g', 'k']
     col = colours[idx_gmc]
-    check = 'lt_weight_gmc' + str(idx_gmc+1)
-    label = 'Logic Tree ' + str(idx_gmc+1)
-    
-    # Plot   
-    lt_per_imt_gmc, lt_add_sig_per_imt, lt_min_sig_per_imt = {}, {}, {}
-    lt_df_gmc = pd.DataFrame(ltv[0], index=['median'])
-    if Nstd > 0:
-        lt_add_sig = pd.DataFrame(ltv[1], index=['plus_sigma'])
-        lt_min_sig = pd.DataFrame(ltv[2], index=['minus_sigma'])    
-    wt_per_gmpe_gmc, wt_add_sig, wt_min_sig = {}, {}, {}
-    for gmpe in gmpe_list:
-        if check in str(gmpe):
-            wt_per_gmpe_gmc[gmpe] = np.array(pd.Series(
-                lt_df_gmc[gmpe].loc['median']))
-            if Nstd > 0:
-                wt_add_sig[gmpe] = np.array(
-                    pd.Series(lt_add_sig[gmpe,'p_sig'].loc['plus_sigma']))
-                wt_min_sig[gmpe] = np.array(
-                    pd.Series(lt_min_sig[gmpe,'m_sig'].loc['minus_sigma']))
-        
+    check = f'lt_weight_gmc{idx_gmc+1}'
+    label = f'Logic Tree {idx_gmc+1}'
+
+    # Build DataFrames for each GMPE in the logic tree
+    wt_per_gmpe_gmc = {
+        gmpe: np.array(pd.Series(pd.DataFrame(ltv[0], index=['median'])[gmpe].loc['median']))
+        for gmpe in gmpe_list if check in str(gmpe)
+    }
     lt_df_gmc = pd.DataFrame(wt_per_gmpe_gmc, index=period)
-    lt_add_sig = pd.DataFrame(wt_add_sig, index=period)
-    lt_min_sig = pd.DataFrame(wt_min_sig, index=period)
-    for idx, imt in enumerate(period):
-        lt_per_imt_gmc[imt] = np.sum(lt_df_gmc.loc[imt])
-        if Nstd > 0:
-            lt_add_sig_per_imt[imt] = np.sum(lt_add_sig.loc[imt])
-            lt_min_sig_per_imt[imt] = np.sum(lt_min_sig.loc[imt])
-    
+    lt_per_imt_gmc = lt_df_gmc.sum(axis=1).to_dict()
+
+    if Nstd > 0:
+        wt_add_sig = {
+            gmpe: np.array(pd.Series(pd.DataFrame(ltv[1], index=['plus_sigma'])[(gmpe, 'p_sig')].loc['plus_sigma']))
+            for gmpe in gmpe_list if check in str(gmpe)
+        }
+        wt_min_sig = {
+            gmpe: np.array(pd.Series(pd.DataFrame(ltv[2], index=['minus_sigma'])[(gmpe, 'm_sig')].loc['minus_sigma']))
+            for gmpe in gmpe_list if check in str(gmpe)
+        }
+        lt_add_sig = pd.DataFrame(wt_add_sig, index=period)
+        lt_min_sig = pd.DataFrame(wt_min_sig, index=period)
+        lt_add_sig_per_imt = lt_add_sig.sum(axis=1).to_dict()
+        lt_min_sig_per_imt = lt_min_sig.sum(axis=1).to_dict()
+    else:
+        lt_add_sig_per_imt = {}
+        lt_min_sig_per_imt = {}
+
     # Plot logic tree
     ax1.plot(period,
-             pd.Series(lt_per_imt_gmc).values,
+             list(lt_per_imt_gmc.values()),
              linewidth=2,
              color=col,
              linestyle='--',
              label=label,
              zorder=100)
-    
+
     # Plot mean plus sigma and mean minus sigma if required
     if Nstd > 0:
-        
         ax1.plot(period,
-                 pd.Series(lt_add_sig_per_imt).values,
-                 linewidth=0.75,
-                 color=col,
-                 linestyle='-.',
-                 zorder=100)   
-          
-        ax1.plot(period,
-                 pd.Series(lt_min_sig_per_imt).values,
+                 list(lt_add_sig_per_imt.values()),
                  linewidth=0.75,
                  color=col,
                  linestyle='-.',
                  zorder=100)
-        
+        ax1.plot(period,
+                 list(lt_min_sig_per_imt.values()),
+                 linewidth=0.75,
+                 color=col,
+                 linestyle='-.',
+                 zorder=100)
+
     return [lt_per_imt_gmc, lt_add_sig_per_imt, lt_min_sig_per_imt]
+
         
    
 def load_obs_spectra(obs_spectra_fname):
