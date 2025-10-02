@@ -63,7 +63,7 @@ def main(input_toml=demo_input, out_dir=demo_out):
 
     # Reformat the att_curves dictionary into a csv
     df = reformat_att_curves(
-        att_curves, os.path.join(out_dir, 'attenuation_curves'))
+        att_curves, os.path.join(out_dir, 'attenuation_curves.csv'))
 
     # Print that the analysis has finished
     print("GMM comparison analysis has successfully finished")
