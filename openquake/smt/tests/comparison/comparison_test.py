@@ -262,10 +262,9 @@ class ComparisonTestCase(unittest.TestCase):
         # Trellis plots
         att_curves = comp.plot_trellis(self.input_file, self.output_directory)
         if not os.path.exists(self.exp_curves):
-            with open(self.exp_curves, 'wb') as f: # Write if doesn't exist
-                pickle.dump(att_curves, f, protocol=pickle.HIGHEST_PROTOCOL)
-        with open(self.exp_curves, 'rb') as f:
-                exp_curves = pd.DataFrame(pickle.load(f))
+            # Write if doesn't exist
+            pd.DataFrame(att_curves).to_pickle(self.exp_curves)
+        exp_curves = pd.read_pickle(self.exp_curves)
         obs_curves = pd.DataFrame(att_curves)
         pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
 
@@ -273,10 +272,9 @@ class ComparisonTestCase(unittest.TestCase):
         gmc_lts = comp.plot_spectra(
             self.input_file, self.output_directory, obs_spectra_fname=None)
         if not os.path.exists(self.exp_spectra):
-            with open(self.exp_spectra, 'wb') as f: # Write if doesn't exist
-                pickle.dump(gmc_lts, f, protocol=pickle.HIGHEST_PROTOCOL)
-        with open(self.exp_spectra, 'rb') as f:
-                exp_spectra = pd.DataFrame(pickle.load(f))
+            # Write if doesn't exist
+            pd.DataFrame(gmc_lts).to_pickle(self.exp_spectra)
+        exp_spectra = pd.read_pickle(self.exp_spectra)
         obs_spectra = pd.DataFrame(gmc_lts)
         pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
         
