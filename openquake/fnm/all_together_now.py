@@ -70,6 +70,7 @@ default_settings = {
     'shear_modulus': SHEAR_MODULUS,
     'fault_mfd_b_value': 1.0,
     'fault_mfd_type': 'TruncatedGRMFD',
+    'fault_mfd_min_mag': 5.0,
     'export_fault_mfds': False,
     'seismic_fraction': 0.7,
     'rupture_set_for_rates_from_slip_rates': 'all',
