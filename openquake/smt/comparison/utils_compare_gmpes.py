@@ -118,19 +118,19 @@ def plot_trellis_util(config, output_directory):
                 # Get mean, sigma components, mean plus/minus sigma
                 mean = mean[0][0]
                 std = std[0][0]
-                plus_sigma = np.exp(mean+config.nstd*std[0])
-                minus_sigma = np.exp(mean-config.nstd*std[0])
+                add_sigma = np.exp(mean+config.nstd*std[0])
+                min_sigma = np.exp(mean-config.nstd*std[0])
 
                 # For managing ylim
-                max_pred.append(np.max([np.exp(mean), plus_sigma]))
-                min_pred.append(np.min([np.exp(mean), minus_sigma]))
+                max_pred.append(np.max([np.exp(mean), add_sigma]))
+                min_pred.append(np.min([np.exp(mean), min_sigma]))
 
                 # Plot predictions and get lt weighted predictions
                 lt_vals_gmc = trellis_data(gmpe,
                                            r_vals,
                                            mean,
-                                           plus_sigma,
-                                           minus_sigma,
+                                           add_sigma,
+                                           min_sigma,
                                            col,
                                            config.nstd,
                                            lt_vals_gmc,
@@ -143,8 +143,8 @@ def plot_trellis_util(config, output_directory):
                 store_per_gmpe[gmpe]['median (%s)' % unit] = np.exp(mean)
                 store_per_gmpe[gmpe]['sigma (ln)'] = std
                 if config.nstd != 0:
-                    store_per_gmpe[gmpe]['median plus sigma (%s)' % unit] = plus_sigma
-                    store_per_gmpe[gmpe]['median minus sigma (%s)' % unit] = minus_sigma
+                    store_per_gmpe[gmpe]['median plus sigma (%s)' % unit] = add_sigma
+                    store_per_gmpe[gmpe]['median minus sigma (%s)' % unit] = min_sigma
                    
                 # Update plots
                 update_trellis_plots(m,
@@ -963,8 +963,8 @@ def get_colors(custom_color_flag, custom_color_list):
 def trellis_data(gmpe,
                  r_vals,
                  mean,
-                 plus_sigma,
-                 minus_sigma,
+                 add_sigma,
+                 min_sigma,
                  col,
                  nstd,
                  lt_vals_gmc,
@@ -979,8 +979,8 @@ def trellis_data(gmpe,
         
         # Plot mean with plus/minus sigma too if required
         if nstd > 0:
-            pyplot.plot(r_vals, plus_sigma, linewidth=0.75, color=col, linestyle='-.')
-            pyplot.plot(r_vals, minus_sigma, linewidth=0.75, color=col, linestyle='-.')
+            pyplot.plot(r_vals, add_sigma, linewidth=0.75, color=col, linestyle='-.')
+            pyplot.plot(r_vals, min_sigma, linewidth=0.75, color=col, linestyle='-.')
     
     # Now compute the weighted logic trees
     for idx_gmc, gmc in enumerate(lt_vals_gmc):
@@ -991,8 +991,8 @@ def trellis_data(gmpe,
                 if nstd > 0:
                     lt_vals_gmc[idx_gmc][gmpe] = {
                                 'median': np.exp(mean)*lt_weights[idx_gmc][gmpe],
-                                'plus_sigma': plus_sigma*lt_weights[idx_gmc][gmpe],
-                                'minus_sigma': minus_sigma*lt_weights[idx_gmc][gmpe]
+                                'add_sigma': add_sigma*lt_weights[idx_gmc][gmpe],
+                                'min_sigma': min_sigma*lt_weights[idx_gmc][gmpe]
                                 }
                 else:
                     lt_vals_gmc[idx_gmc][
@@ -1075,7 +1075,7 @@ def lt_trel(r_vals,
     mk = (f'IMT = {i}, Mw = {m}, depth = {dep} km, dip = {dip} deg, rake = {rake} deg')
 
     # Get logic tree 
-    lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['median', 'plus_sigma', 'minus_sigma'])
+    lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['median', 'add_sigma', 'min_sigma'])
 
     lt_median = lt_df_gmc.loc['median'].sum()
     median_gmc[mk] = lt_median
@@ -1089,8 +1089,8 @@ def lt_trel(r_vals,
                 zorder=100)
 
     if nstd > 0:
-        lt_add = lt_df_gmc.loc['plus_sigma'].sum()
-        lt_min = lt_df_gmc.loc['minus_sigma'].sum()
+        lt_add = lt_df_gmc.loc['add_sigma'].sum()
+        lt_min = lt_df_gmc.loc['min_sigma'].sum()
 
         plus_sig_gmc[mk] = lt_add
         minus_sig_gmc[mk] = lt_min
