@@ -71,6 +71,8 @@ class Configurations(object):
                 setattr(self, par, config_file['site_properties'][par])
 
         # Get source params
+        self.lon = config_file['source_properties']['lon']
+        self.lat = config_file['source_properties']['lat']
         self.strike = config_file['source_properties']['strike']
         self.dip = config_file['source_properties']['dip']
         self.rake = config_file['source_properties']['rake']
