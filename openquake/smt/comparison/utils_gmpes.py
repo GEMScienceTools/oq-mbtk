@@ -18,7 +18,6 @@
 """
 Module with utility functions for gmpes
 """
-import os
 import numpy as np
 import pandas as pd
 import ast
@@ -478,9 +477,34 @@ def mgmpe_check(gmpe):
     return gmm
 
 
+def get_imtl_unit(i):
+    """
+    Return a string of the intensity measure type's physical units of
+    measurement
+    """
+    if str(i) in ['PGD', 'SDi']:
+        unit = 'cm' # PGD, inelastic spectral displacement
+    elif str(i) in ['PGV']:
+        unit = 'cm/s' # PGV
+    elif str(i) in ['IA']:
+        unit = 'm/s' # Arias intensity
+    elif str(i) in ['RSD', 'RSD595', 'RSD575', 'RSD2080', 'DRVT']:
+        unit = 's' # Relative significant duration, DRVT
+    elif str(i) in ['CAV']:
+        unit = 'g-sec' # Cumulative absolute velocity
+    elif str(i) in ['MMI']:
+        unit = 'MMI' # Modified Mercalli Intensity
+    elif str(i) in ['FAS', 'EAS']:
+        unit = str(i) + ' (Hz)' # Fourier/Eff. Amp. Spectrum
+    else:
+        unit = 'g' # PGA, SA, AvgSA
+
+    return unit
+
+
 def reformat_att_curves(att_curves, out=None):
     """
-    Export the (median) attenuation curves into a CSV for the given
+    Export the attenuation curves into a CSV for the given
     config (i.e. run parameters).
     """
     # Get the key describing the vs30 + truncation level
@@ -492,20 +516,20 @@ def reformat_att_curves(att_curves, out=None):
     # Now get the curves into a dictionary format
     store = {}
     for imt in vals.keys():
+        unit = get_imtl_unit(imt)
         for scenario in vals[imt]:
-            medians = vals[imt][scenario]
-            for gmpe in medians: 
-                # First per GMM
+            curves = vals[imt][scenario]
+            for gmpe in curves: 
+                # First per GMM get medians and sigmas
                 if "(km)" not in gmpe:
-                    key = imt + ', ' +  scenario + ', ' + gmpe
+                    key = f"{imt} ({unit}), {scenario}, {gmpe}"
                     key = key.replace('\n', ' ')
-                    gmpe_medians = medians[gmpe]['median (g)']
-                    store[key] = gmpe_medians
+                    store[f"{key} median"] = curves[gmpe][f'median ({unit})']
+                    store[f"{key} sigmas"] = curves[gmpe]['sigma (ln)']
                 # Then get the distance for given scenario
                 else:
                     dkey = f"values of {gmpe} for {scenario}"
-                    if dkey not in store: # Skip if already in dict
-                        store[dkey] = medians[gmpe]
+                    store.setdefault(dkey, curves[gmpe])
                     
     # Now into dataframe
     df = pd.DataFrame(store)
@@ -513,5 +537,49 @@ def reformat_att_curves(att_curves, out=None):
     # And export if required
     if out is not None:
         df.to_csv(out, index=False)
+
+    return df
+
+
+def reformat_spectra(gmc_lts, out=None):
+    """
+    Export the response spectra into a CSV for the given
+    config (i.e. run parameters).
+    """
+    store = {}
+    branches = ['median', 'median plus sigma', 'median minus sigma']
+    for key in gmc_lts.keys():
+        if key == "periods":
+            continue
+        # Weighted gmm LTs
+        if 'gmc' in key:
+            for sc in gmc_lts[key]:
+                for idx_br, br in enumerate(gmc_lts[key][sc]):
+                    if br == {}:
+                        continue # Empty dict if no epsilon applied
+                    s_key = f"{branches[idx_br]} (g), {key}, {sc}"
+                    store[s_key] = np.array(list(br.values()))
+        else:
+            # Inidividual gmms
+            for idx_lt, lt in enumerate(gmc_lts[key]):
+                for gmm in gmc_lts[key][idx_lt]:
+                    for sc in gmc_lts[key][idx_lt][gmm]:
+                        if key == "add":
+                            branch = "median plus sigma"
+                        elif key == "median":
+                            branch = key
+                        else:
+                            assert key == "min"
+                            branch = "median minus sigma"
+                        s_key = f"{branch} (g), {gmm}, {sc}"
+                        store[s_key] = gmc_lts[key][idx_lt][gmm][sc]
+    
+    # Make df
+    df = pd.DataFrame(store, index=gmc_lts['periods'])
+    df.index.name = "Period (s)"
+
+    # Export if required
+    if out is not None:
+        df.to_csv(out, index=True)
 
     return df
