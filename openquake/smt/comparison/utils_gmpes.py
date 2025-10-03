@@ -562,7 +562,7 @@ def reformat_spectra(spectra, out=None):
                     s_key = f"{key}, {branches[idx_br]} (+/- {eps} epsilon) (g), {sc}"
                     store[s_key] = np.array(list(br.values()))
         else:
-            # Individual gmms:
+            # Individual gmms
             for gmm in spectra[key]:
                 for sc in spectra[key][gmm]:
                     if key == "add":
@@ -575,7 +575,7 @@ def reformat_spectra(spectra, out=None):
                     assert 'lt_weight_gmc' in gmm
                     s_key = f"{gmm}, {branch} (+/- {eps} epsilon) (g), {sc}"
                     store[s_key] = spectra[key][gmm][sc]
-                    
+
     # Make df
     df = pd.DataFrame(store, index=spectra['periods'])
     df.index.name = "Period (s)"
