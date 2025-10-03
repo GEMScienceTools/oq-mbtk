@@ -26,7 +26,7 @@ import pandas as pd
 
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison import compare_gmpes as comp
-from openquake.smt.comparison.utils_gmpes import reformat_att_curves
+from openquake.smt.comparison.utils_gmpes import reformat_att_curves, reformat_spectra
 from openquake.smt.comparison.utils_compare_gmpes import (compute_matrix_gmpes,
                                                           plot_cluster_util,
                                                           plot_sammons_util,
@@ -71,7 +71,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.input_file_obs_spectra_csv = os.path.join(
             base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
         self.exp_curves = os.path.join(base,'exp_curves.csv')
-        self.exp_spectra = os.path.join(base, 'exp_spectra.pkl')
+        self.exp_spectra = os.path.join(base, 'exp_spectra.csv')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -105,7 +105,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.maxR, TARGET_RMAX)
 
         # Check for target Nstd
-        self.assertEqual(config.Nstd, TARGET_NSTD)
+        self.assertEqual(config.nstd, TARGET_NSTD)
 
         # Check for target trellis mag
         np.testing.assert_allclose(config.mag_list, TARGET_MAGS)
@@ -270,13 +270,14 @@ class ComparisonTestCase(unittest.TestCase):
         pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
 
         # Spectra plots
-        gmc_lts = comp.plot_spectra(
+        spectra = comp.plot_spectra(
             self.input_file, self.output_directory, obs_spectra_fname=None)
         if not os.path.exists(self.exp_spectra):
             # Write if doesn't exist
-            pd.DataFrame(gmc_lts).to_pickle(self.exp_spectra)
-        exp_spectra = pd.read_pickle(self.exp_spectra)
-        obs_spectra = pd.DataFrame(gmc_lts)
+            reformat_spectra(spectra, self.exp_spectra)
+        exp_spectra = pd.read_csv(self.exp_spectra, index_col=0)
+        # Same function writing expected can reformat the observed
+        obs_spectra = reformat_spectra(spectra)
         pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
         
         # Specify target files
