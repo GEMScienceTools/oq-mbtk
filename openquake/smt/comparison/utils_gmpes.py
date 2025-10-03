@@ -497,6 +497,8 @@ def get_imtl_unit(i):
     elif str(i) in ['FAS', 'EAS']:
         unit = str(i) + ' (Hz)' # Fourier/Eff. Amp. Spectrum
     else:
+        if str(i) not in ["PGA", "AvgSA"]:
+            assert "SA" in str(i)
         unit = 'g' # PGA, SA, AvgSA
 
     return unit
