@@ -541,41 +541,43 @@ def reformat_att_curves(att_curves, out=None):
     return df
 
 
-def reformat_spectra(gmc_lts, out=None):
+def reformat_spectra(spectra, out=None):
     """
     Export the response spectra into a CSV for the given
     config (i.e. run parameters).
     """
     store = {}
+    eps = spectra['nstd']
     branches = ['median', 'median plus sigma', 'median minus sigma']
-    for key in gmc_lts.keys():
-        if key == "periods":
+    for key in spectra.keys():
+        # Don't need weighted GMMs (only used for computing aggregated LTs)
+        if key in ["periods", "nstd"] or "_wei" in key:
             continue
         # Weighted gmm LTs
         if 'gmc' in key:
-            for sc in gmc_lts[key]:
-                for idx_br, br in enumerate(gmc_lts[key][sc]):
+            for sc in spectra[key]:
+                for idx_br, br in enumerate(spectra[key][sc]):
                     if br == {}:
                         continue # Empty dict if no epsilon applied
-                    s_key = f"{branches[idx_br]} (g), {key}, {sc}"
+                    s_key = f"{key}, {branches[idx_br]} (+/- {eps} epsilon) (g), {sc}"
                     store[s_key] = np.array(list(br.values()))
         else:
-            # Inidividual gmms
-            for idx_lt, lt in enumerate(gmc_lts[key]):
-                for gmm in gmc_lts[key][idx_lt]:
-                    for sc in gmc_lts[key][idx_lt][gmm]:
-                        if key == "add":
-                            branch = "median plus sigma"
-                        elif key == "median":
-                            branch = key
-                        else:
-                            assert key == "min"
-                            branch = "median minus sigma"
-                        s_key = f"{branch} (g), {gmm}, {sc}"
-                        store[s_key] = gmc_lts[key][idx_lt][gmm][sc]
-    
+            # Individual gmms:
+            for gmm in spectra[key]:
+                for sc in spectra[key][gmm]:
+                    if key == "add":
+                        branch = "median plus sigma"
+                    elif key == "med":
+                        branch = "median"
+                    else:
+                        assert key == "min"
+                        branch = "median minus sigma"
+                    assert 'lt_weight_gmc' in gmm
+                    s_key = f"{gmm}, {branch} (+/- {eps} epsilon) (g), {sc}"
+                    store[s_key] = spectra[key][gmm][sc]
+                    
     # Make df
-    df = pd.DataFrame(store, index=gmc_lts['periods'])
+    df = pd.DataFrame(store, index=spectra['periods'])
     df.index.name = "Period (s)"
 
     # Export if required

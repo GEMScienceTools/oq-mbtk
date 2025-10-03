@@ -235,15 +235,25 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
 
     # Set dicts to store values
     dic = {gmm: {} for gmm in config.gmpes_list}  
-    lt_vals = {"median": [{gmm: {} for gmm in ltw.keys()} if ltw
-                          is not None else {} for ltw in gmc_weights],
-               "add": [dic, dic, dic, dic],
-               "min": [dic, dic, dic, dic],
-               'gmc1': {},
-               'gmc2': {},
-               'gmc3': {},
-               'gmc4': {},
-               'periods': periods}
+    lt_vals = {
+        # Keys for weighted GMM branches to compute LTs with
+        'med_wei': [{gmm: {} for gmm in ltw.keys()} if ltw
+                    is not None else {} for ltw in gmc_weights],
+        'add_wei': [dic, dic, dic, dic],
+        'min_wei': [dic, dic, dic, dic],
+        # Keys for aggregated gmm LTs
+        'gmc1': {},
+        'gmc2': {},
+        'gmc3': {},
+        'gmc4': {},
+        # Keys for non-weighted individual gmms
+        "med": dic,
+        'add': dic,
+        'min': dic,
+        # Useful info when exporting
+        'periods': periods,
+        'nstd': config.nstd
+        }
     
     # Plot the data
     for n, dist in enumerate(config.dist_list):
@@ -1238,8 +1248,16 @@ def spectra_data(gmpe,
                  lt_vals,
                  sk):
     """
-    If required get the logic tree weighted predictions
+    Store the spectra for given GMM and if required handle the gmpe
+    logic trees.
     """
+    # Store the non-weighted spectra values for given gmm
+    lt_vals['med'][gmpe][sk] = rs_50p
+    if nstd > 0:
+        lt_vals['add'][gmpe][sk] = rs_add_sigma
+        lt_vals['min'][gmpe][sk] = rs_min_sigma
+
+    # Handle the LTs
     for idx_gmc, gmc in enumerate(gmc_weights):
         if gmc_weights[idx_gmc] is None:
             continue
@@ -1253,18 +1271,18 @@ def spectra_data(gmpe,
                         rs_add_sigma_w[idx] = rs_add_sigma[idx]*gmc_weights[idx_gmc][gmpe]
                         rs_min_sigma_w[idx] = rs_min_sigma[idx]*gmc_weights[idx_gmc][gmpe]
     
-                # Store the weighted median for the GMPE
-                lt_vals['median'][idx_gmc][gmpe][sk] = rs_50p_w
+                # Store the weighted median for the gmm
+                lt_vals['med_wei'][idx_gmc][gmpe][sk] = rs_50p_w
 
                 # And if nstd > 0 store these weighted branches too
                 if nstd > 0:
-                    lt_vals['add'][idx_gmc][gmpe][sk] = rs_add_sigma_w
-                    lt_vals['min'][idx_gmc][gmpe][sk] = rs_min_sigma_w
+                    lt_vals['add_wei'][idx_gmc][gmpe][sk] = rs_add_sigma_w
+                    lt_vals['min_wei'][idx_gmc][gmpe][sk] = rs_min_sigma_w
 
-    gmc1_vals = [lt_vals['median'][0], lt_vals['add'][0], lt_vals['min'][0]]
-    gmc2_vals = [lt_vals['median'][1], lt_vals['add'][1], lt_vals['min'][1]]
-    gmc3_vals = [lt_vals['median'][2], lt_vals['add'][2], lt_vals['min'][2]]
-    gmc4_vals = [lt_vals['median'][3], lt_vals['add'][3], lt_vals['min'][3]]
+    gmc1_vals = [lt_vals['med_wei'][0], lt_vals['add_wei'][0], lt_vals['min_wei'][0]]
+    gmc2_vals = [lt_vals['med_wei'][1], lt_vals['add_wei'][1], lt_vals['min_wei'][1]]
+    gmc3_vals = [lt_vals['med_wei'][2], lt_vals['add_wei'][2], lt_vals['min_wei'][2]]
+    gmc4_vals = [lt_vals['med_wei'][3], lt_vals['add_wei'][3], lt_vals['min_wei'][3]]
 
     return gmc1_vals, gmc2_vals, gmc3_vals, gmc4_vals
 
