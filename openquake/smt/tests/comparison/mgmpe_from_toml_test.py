@@ -21,9 +21,9 @@ Tests for execution and expected values from mgmpe features when specified in
 an SMT format toml input file
 """
 import os
+import pandas as pd
 import numpy as np
 import shutil
-import pickle
 import unittest
 
 from openquake.smt.comparison import compare_gmpes as comp
@@ -33,8 +33,16 @@ from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes
 # Base path
 base = os.path.join(os.path.dirname(__file__), "data")
 
-# Absolute tolerance
-ATOL = 1E-6
+
+def matrix_to_df(matrix):
+    """
+    Convert matrix of ground-motions to dataframe.
+    """
+    store = {}
+    for imt in matrix.keys():
+        store[str(imt)] = np.array(matrix[imt]).flatten()
+
+    return pd.DataFrame(store)
 
 
 class ModifyGroundMotionsTestCase(unittest.TestCase):
@@ -46,10 +54,10 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
     def setUpClass(self):
         self.input_file = os.path.join(base, "mgmpe_inputs.toml")
         self.output_directory = os.path.join(base, 'mgmpe_test')
-        self.exp_mgmpe = os.path.join(base, "exp_mgmpe.pkl")
+        self.exp_mgmpe = os.path.join(base, "exp_mgmpe.csv")
         # Set the output
-        if not os.path.exists(self.output_directory): os.makedirs(
-                self.output_directory)
+        if not os.path.exists(self.output_directory):
+            os.makedirs(self.output_directory)
     
     def test_mgmpe_from_toml(self):
         """
@@ -61,22 +69,20 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         
         # Get matrices of predicted ground-motions per GMM
         obs_matrix = compute_matrix_gmpes(config, mtxs_type='median')
-        
-        # Remove the gmpe_list key
         del obs_matrix['gmpe_list']
 
         # Load the matrices of expected ground-motions per GMM         
         if not os.path.exists(self.exp_mgmpe):
-            with open(self.exp_mgmpe, 'wb') as f: # Write if doesn't exist
-                pickle.dump(obs_matrix, f, protocol=pickle.HIGHEST_PROTOCOL)
-        with open(self.exp_mgmpe, 'rb') as f:
-                exp_matrix = pickle.load(f)
-                
-        # Now check matrix per imt (key)
-        assert obs_matrix.keys() == exp_matrix.keys()
-        for key in obs_matrix:
-            np.testing.assert_allclose(
-                 obs_matrix[key], exp_matrix[key], atol=ATOL)
+            # Write if doesn't exist
+            df = matrix_to_df(obs_matrix)
+            df.to_csv(self.exp_mgmpe)
+        exp_df = pd.read_csv(self.exp_mgmpe, index_col=0)
+
+        # Load obs into dataframe
+        obs_df = matrix_to_df(obs_matrix)
+
+        # Now check matrix dfs
+        pd.testing.assert_frame_equal(obs_df, exp_df, atol=1e-06)
 
     @classmethod
     def tearDownClass(self):

@@ -28,6 +28,7 @@ import toml
 import numpy as np
 import pandas as pd
 from math import sqrt, ceil
+from scipy.integrate import trapezoid
 from scipy.special import erf
 from scipy.stats import norm
 
@@ -425,9 +426,11 @@ class Residuals(object):
             the given `gmpe`
         """
         residuals = self.residuals[gmpe][imtx]
-        return {res_type: {"Mean": np.nanmean(residuals[res_type]),
-                           "Std Dev": np.nanstd(residuals[res_type])}
-                for res_type in self.types[gmpe][imtx]}
+        return {
+            res_type: {
+                "Mean": np.nanmean(residuals[res_type]),
+                "Std Dev": np.nanstd(residuals[res_type])
+                } for res_type in self.types[gmpe][imtx]}
 
     def _get_magnitudes(self):
         """
@@ -843,8 +846,8 @@ class Residuals(object):
                 x_cdf, y_cdf = x_cdf[idx_cdf], y_cdf[idx_cdf]
 
                 # Get area under each curve's overlapping portions
-                area_obs = np.trapz(y_ecdf, x_ecdf)
-                area_gmm = np.trapz(y_cdf, x_cdf)
+                area_obs = trapezoid(y_ecdf, x_ecdf)
+                area_gmm = trapezoid(y_cdf, x_cdf)
 
                 # Get absolute of difference in areas - eq 3 of paper
                 stoch_area_wrt_imt[imtx] = np.abs(area_gmm-area_obs) 
@@ -1050,8 +1053,8 @@ class SingleStationAnalysis(object):
         Returns the single-station phi for the specific station from
         Rodriguez-Marek et al. (2011) Equation 11
         """
-        phiss = np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1)
-        return np.sqrt(phiss)
+        return np.sqrt(
+            np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1))
 
     def get_total_phi_ss(self, filename=None):
         """

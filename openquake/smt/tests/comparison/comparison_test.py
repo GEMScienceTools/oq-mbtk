@@ -20,13 +20,13 @@ Tests for execution of comparison module
 """
 import os
 import shutil
-import pickle
 import unittest
 import numpy as np
 import pandas as pd
 
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison import compare_gmpes as comp
+from openquake.smt.comparison.utils_gmpes import reformat_att_curves, reformat_spectra
 from openquake.smt.comparison.utils_compare_gmpes import (compute_matrix_gmpes,
                                                           plot_cluster_util,
                                                           plot_sammons_util,
@@ -70,8 +70,8 @@ class ComparisonTestCase(unittest.TestCase):
             base,'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
             base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.exp_curves = os.path.join(base,'exp_curves.pkl')
-        self.exp_spectra = os.path.join(base, 'exp_spectra.pkl')
+        self.exp_curves = os.path.join(base,'exp_curves.csv')
+        self.exp_spectra = os.path.join(base, 'exp_spectra.csv')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -105,7 +105,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.maxR, TARGET_RMAX)
 
         # Check for target Nstd
-        self.assertEqual(config.Nstd, TARGET_NSTD)
+        self.assertEqual(config.nstd, TARGET_NSTD)
 
         # Check for target trellis mag
         np.testing.assert_allclose(config.mag_list, TARGET_MAGS)
@@ -262,22 +262,22 @@ class ComparisonTestCase(unittest.TestCase):
         # Trellis plots
         att_curves = comp.plot_trellis(self.input_file, self.output_directory)
         if not os.path.exists(self.exp_curves):
-            with open(self.exp_curves, 'wb') as f: # Write if doesn't exist
-                pickle.dump(att_curves, f, protocol=pickle.HIGHEST_PROTOCOL)
-        with open(self.exp_curves, 'rb') as f:
-                exp_curves = pd.DataFrame(pickle.load(f))
-        obs_curves = pd.DataFrame(att_curves)
+            # Write to CSV the expected results if missing
+            reformat_att_curves(att_curves, self.exp_curves)
+        exp_curves = pd.read_csv(self.exp_curves)
+        # Same function writing expected can reformat the observed
+        obs_curves = reformat_att_curves(att_curves)
         pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
 
         # Spectra plots
-        gmc_lts = comp.plot_spectra(
+        spectra = comp.plot_spectra(
             self.input_file, self.output_directory, obs_spectra_fname=None)
         if not os.path.exists(self.exp_spectra):
-            with open(self.exp_spectra, 'wb') as f: # Write if doesn't exist
-                pickle.dump(gmc_lts, f, protocol=pickle.HIGHEST_PROTOCOL)
-        with open(self.exp_spectra, 'rb') as f:
-                exp_spectra = pd.DataFrame(pickle.load(f))
-        obs_spectra = pd.DataFrame(gmc_lts)
+            # Write if doesn't exist
+            reformat_spectra(spectra, self.exp_spectra)
+        exp_spectra = pd.read_csv(self.exp_spectra, index_col=0)
+        # Same function writing expected can reformat the observed
+        obs_spectra = reformat_spectra(spectra)
         pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
         
         # Specify target files
