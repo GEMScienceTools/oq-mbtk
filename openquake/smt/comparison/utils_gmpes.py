@@ -576,8 +576,9 @@ def reformat_spectra(spectra, out=None):
                         branch = "median minus sigma"
                     assert 'lt_weight_gmc' in gmm
                     s_key = f"{gmm}, {branch} (+/- {eps} epsilon) (g), {sc}"
+                    s_key = s_key.replace("\n", "")
                     store[s_key] = spectra[key][gmm][sc]
-
+                    
     # Make df
     df = pd.DataFrame(store, index=spectra['periods'])
     df.index.name = "Period (s)"
