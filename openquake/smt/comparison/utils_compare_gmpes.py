@@ -95,6 +95,8 @@ def plot_trellis_util(config, output_directory):
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(gmm,
                                                          m,
+                                                         config.lon,
+                                                         config.lat,
                                                          depth_g,
                                                          ztor_g,
                                                          aratio_g,
@@ -266,6 +268,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                     # Get mean and sigma
                     mu, std, r_vals, tau, phi = att_curves(gmm,
                                                            m,
+                                                           config.lon,
+                                                           config.lat,
                                                            depth_g,
                                                            ztor_g,
                                                            aratio_g,
@@ -418,6 +422,8 @@ def plot_ratios_util(config, output_directory):
             # Get baseline GMM attenuation curves
             results = att_curves(baseline,
                                  m,
+                                 config.lon,
+                                 config.lat,
                                  depth_g,
                                  ztor_g,
                                  aratio_g,
@@ -447,6 +453,8 @@ def plot_ratios_util(config, output_directory):
                 # Get attenuation curves for the GMM
                 results = att_curves(gmm,
                                      m,
+                                     config.lon,
+                                     config.lat,
                                      depth_g,
                                      ztor_g,
                                      aratio_g,
@@ -567,6 +575,8 @@ def compute_matrix_gmpes(config, mtxs_type):
 
                 mean, std, r_vals, tau, phi = att_curves(gmm,
                                                          m,
+                                                         config.lon,
+                                                         config.lat,
                                                          depth_g,
                                                          ztor_g,
                                                          aratio_g,

@@ -250,7 +250,7 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
             df = gpd.sjoin(gdf, tdf, op='within')
 
         if as_multipoint:
-            write_as_multipoint_sources(df, model, src_id, subzones,
+            write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
                                         model_subz, mmin, bwid, rms, tom,
                                         folder_out)
         else:
