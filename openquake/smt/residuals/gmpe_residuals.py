@@ -626,7 +626,7 @@ class Residuals(object):
         """
         edr_values = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
-            obs, expected, stddev = self._get_edr_gmpe_information(gmpe)
+            obs, expected, stddev = self._get_edr_info(gmpe)
             results = self._get_edr(obs,
                                     expected,
                                     stddev,
@@ -656,7 +656,7 @@ class Residuals(object):
         self.edr_values_wrt_imt = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
             (obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt
-             ) = self._get_edr_gmpe_information_wrt_imt(gmpe)
+             ) = self._get_edr_info_wrt_imt(gmpe)
             results = self._get_edr_wrt_imt(obs_wrt_imt,
                                             expected_wrt_imt,
                                             stddev_wrt_imt,
@@ -667,7 +667,7 @@ class Residuals(object):
             self.edr_values_wrt_imt[gmpe]["EDR"] = results[2]
         return self.edr_values_wrt_imt
 
-    def _get_edr_gmpe_information(self, gmpe):
+    def _get_edr_info(self, gmpe):
         """
         Extract the observed ground motions, expected and total standard
         deviation for the GMPE (aggregating over all IMTs)
@@ -686,7 +686,7 @@ class Residuals(object):
                     [stddev, context["Expected"][gmpe][imtx]["Total"]])
         return obs, expected, stddev
     
-    def _get_edr_gmpe_information_wrt_imt(self, gmpe):
+    def _get_edr_info_wrt_imt(self, gmpe):
         """
         Extract the observed ground motions, expected and total standard
         deviation for the GMPE (per imt)
