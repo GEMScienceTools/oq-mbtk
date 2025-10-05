@@ -121,34 +121,15 @@ class Residuals(object):
         self.unique_indices = {}
         self.gmpe_sa_limits = {}
         self.gmpe_scalars = {}
+
+        # Set store per GMM per IMT
         for gmpe in self.gmpe_list:
             gmpe_dict_1 = {}
             gmpe_dict_2 = {}
             self.unique_indices[gmpe] = {}
             
-            # Get the period range and the coefficient types
             gmpe_i = self.gmpe_list[gmpe]
-            if hasattr(gmpe_i, "COEFFS"):
-                pers = [sa.period for sa in getattr(gmpe_i, "COEFFS").sa_coeffs]
-                self.gmpe_scalars[gmpe] = list(
-                    getattr(gmpe_i, "COEFFS").non_sa_coeffs)
-            else:
-                assert hasattr(gmpe_i, "gmpe_table")
-                # tabular GMM specified using an alias
-                pers = gmpe_i.imls["T"]
-
-            min_per, max_per = (min(pers), max(pers))
-            self.gmpe_sa_limits[gmpe] = (min_per, max_per)
             for imtx in self.imts:
-                if "SA(" in imtx:
-                    period = imt.from_string(imtx).period
-                    if period < min_per or period > max_per:
-                        print(f"IMT {imtx} outside period range for GMPE {gmpe}"
-                              f"(min GMM period = {min_per} s, "
-                              f"max GMM period = {max_per} s)")
-                        gmpe_dict_1[imtx] = None
-                        gmpe_dict_2[imtx] = None
-                        continue
                 gmpe_dict_1[imtx] = {}
                 gmpe_dict_2[imtx] = {}
                 self.unique_indices[gmpe][imtx] = []
