@@ -655,8 +655,8 @@ class Residuals(object):
         """
         self.edr_values_wrt_imt = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
-            (obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt
-             ) = self._get_edr_info_wrt_imt(gmpe)
+            obs_wrt_imt, expected_wrt_imt, stddev_wrt_imt =\
+                  self._get_edr_info_wrt_imt(gmpe)
             results = self._get_edr_wrt_imt(obs_wrt_imt,
                                             expected_wrt_imt,
                                             stddev_wrt_imt,
@@ -704,9 +704,9 @@ class Residuals(object):
                 obs_stack = np.log(context["Observations"][imtx][keep])
                 obs = np.hstack([obs, obs_stack])
                 expected = np.hstack(
-                    [expected,context["Expected"][gmpe][imtx]["Mean"]])
+                    [expected, context["Expected"][gmpe][imtx]["Mean"]])
                 stddev = np.hstack(
-                    [stddev,context["Expected"][gmpe][imtx]["Total"]])
+                    [stddev, context["Expected"][gmpe][imtx]["Total"]])
             obs_wrt_imt[imtx] = obs
             expected_wrt_imt[imtx] = expected
             stddev_wrt_imt[imtx] = stddev
