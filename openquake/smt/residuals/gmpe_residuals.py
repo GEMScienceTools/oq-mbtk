@@ -755,7 +755,7 @@ class Residuals(object):
                          multiplier=3.0):
         """
         Calculated the Euclidean Distanced-Based Rank for a set of
-        observed and expected values from a particular GMPE over imts
+        observed and expected values from a particular GMPE over IMTs
         """
         mde_norm_wrt_imt = {}
         edr_wrt_imt = {}
@@ -930,10 +930,10 @@ class SingleStationAnalysis(object):
     @classmethod
     def from_toml(cls, site_id_list, filename):
         """
-        Read in gmpe_list and imts from .toml file. This method allows use of
+        Read in GMPEs and IMTs from .toml file. This method allows use of
         gmpes with additional parameters and input files within the SMT
         """
-        # Read in toml file with dict of gmpes and subdict of imts
+        # Read in toml file with dict of GMPEs and subdict of IMTs
         config = toml.load(filename)
              
         # Parsing file with models
