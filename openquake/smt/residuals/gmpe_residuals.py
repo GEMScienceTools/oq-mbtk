@@ -374,6 +374,7 @@ class Residuals(object):
                     residual[gmpe][imtx]["Inter event"] = inter
                     residual[gmpe][imtx]["Intra event"] = intra
         context["Residual"] = residual
+        
         return context
 
     def _get_random_effects_residuals(self,
@@ -417,6 +418,7 @@ class Residuals(object):
                     continue
                 statistics[
                     gmpe][imtx] = self.get_residual_statistics_for(gmpe, imtx)
+                
         return statistics
 
     def get_residual_statistics_for(self, gmpe, imtx):
@@ -446,6 +448,7 @@ class Residuals(object):
             magnitudes = np.hstack([
                 magnitudes,
                 ctxt["Ctx"].mag * np.ones(len(ctxt["Ctx"].repi))])
+            
         return magnitudes
 
     def export_residuals(self, out_fname):
@@ -527,14 +530,15 @@ class Residuals(object):
                           % (imtx, gmpe))
                     continue
                 lh_values[gmpe][imtx] = {}
-                values = self._get_likelihood_values_for(gmpe, imtx)
+                values = self._compute_likelihood_values_for(gmpe, imtx)
                 for res_type, data in values.items():
                     l_h, median_lh = data
                     lh_values[gmpe][imtx][res_type] = l_h
                     statistics[gmpe][imtx][res_type]["Median LH"] = median_lh
+
         return lh_values, statistics
 
-    def _get_likelihood_values_for(self, gmpe, imt):
+    def _compute_likelihood_values_for(self, gmpe, imt):
         """
         Returns the likelihood values for Total, plus inter- and intra-event
         residuals according to Equation 9 of Scherbaum et al (2004) for the
@@ -552,6 +556,7 @@ class Residuals(object):
             l_h = 1.0 - erf(zvals / sqrt(2.))
             median_lh = np.nanpercentile(l_h, 50.0)
             ret[res_type] = l_h, median_lh
+
         return ret
 
     ### LLH (Scherbaum et al. 2009) functions
@@ -629,14 +634,15 @@ class Residuals(object):
         edr_values = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
             obs, exp, std = self._get_edr_inputs(gmpe)
-            results = self._get_edr(obs,
-                                    exp,
-                                    std,
-                                    bandwidth,
-                                    multiplier)
+            results = self._compute_edr(obs,
+                                        exp,
+                                        std,
+                                        bandwidth,
+                                        multiplier)
             edr_values[gmpe]["MDE Norm"] = results[0]
             edr_values[gmpe]["sqrt Kappa"] = results[1]
             edr_values[gmpe]["EDR"] = results[2]
+
         return edr_values
     
     def get_edr_values_wrt_imt(self, bandwidth=0.01, multiplier=3.0):
@@ -657,16 +663,16 @@ class Residuals(object):
         """
         self.edr_values_wrt_imt = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
-            obs_wrt_imt, exp_wrt_imt, std_wrt_imt =\
-                  self._get_edr_inputs_wrt_imt(gmpe)
-            results = self._get_edr_wrt_imt(obs_wrt_imt,
-                                            exp_wrt_imt,
-                                            std_wrt_imt,
-                                            bandwidth,
-                                            multiplier)
+            obs_wrt_imt, exp_wrt_imt, std_wrt_imt = self._get_edr_inputs_wrt_imt(gmpe)
+            results = self._compute_edr_wrt_imt(obs_wrt_imt,
+                                                exp_wrt_imt,
+                                                std_wrt_imt,
+                                                bandwidth,
+                                                multiplier)
             self.edr_values_wrt_imt[gmpe]["MDE Norm"] = results[0]
             self.edr_values_wrt_imt[gmpe]["sqrt Kappa"] = results[1]
             self.edr_values_wrt_imt[gmpe]["EDR"] = results[2]
+
         return self.edr_values_wrt_imt
 
     def _get_edr_inputs(self, gmpe):
@@ -710,9 +716,9 @@ class Residuals(object):
 
         return obs_wrt_imt, exp_wrt_imt, std_wrt_imt
     
-    def _get_edr(self, obs, exp, std, bandwidth=0.01, multiplier=3.0):
+    def _compute_edr(self, obs, exp, std, bandwidth=0.01, multiplier=3.0):
         """
-        Calculated the Euclidean Distanced-Based Rank for a set of
+        Calculate the Euclidean Distanced-Based Rank for a set of
         observed and expected values from a particular GMPE
         """
         finite = np.isfinite(obs) & np.isfinite(exp) & np.isfinite(std)
@@ -741,16 +747,17 @@ class Residuals(object):
         inv_n = 1.0 / float(nvals)
         mde_norm = np.sqrt(inv_n * np.sum(mde ** 2.))
         edr = np.sqrt(kappa * inv_n * np.sum(mde ** 2.))
+
         return mde_norm, np.sqrt(kappa), edr            
     
-    def _get_edr_wrt_imt(self,
-                         obs_wrt_imt,
-                         exp_wrt_imt,
-                         std_wrt_imt,
-                         bandwidth=0.01,
-                         multiplier=3.0):
+    def _compute_edr_wrt_imt(self,
+                             obs_wrt_imt,
+                             exp_wrt_imt,
+                             std_wrt_imt,
+                             bandwidth=0.01,
+                             multiplier=3.0):
         """
-        Calculated the Euclidean Distanced-Based Rank for a set of
+        Calculate the Euclidean Distanced-Based Rank for a set of
         observed and expected values from a particular GMPE over IMTs
         """
         mde_norm_wrt_imt = {}
@@ -798,6 +805,7 @@ class Residuals(object):
         y_c = exp - ((b_0 + b_1 * obs) - obs)
         de_orig = np.sum((obs - exp) ** 2.)
         de_corr = np.sum((obs - y_c) ** 2.)
+
         return de_orig / de_corr
 
     ### Stochastic Area (Sunny et al. 2021) functions
