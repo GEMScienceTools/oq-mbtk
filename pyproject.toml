@@ -49,7 +49,7 @@ dependencies = [
     "nbconvert",
     "nbformat",
     "nbstripout >= 0.3.0",
-    "netCDF4 < 1.7.0",
+    "netCDF4 >= 1.7",
     "notebook >= 5.0.0",
     "obspy",
     "prettytable",
