@@ -6,10 +6,11 @@ https://wheelhouse.openquake.org/v3/macos/py311/numpy-1.26.2-cp311-cp311-macosx_
 https://wheelhouse.openquake.org/v3/macos/py311/fiona-1.9.5-cp311-cp311-macosx_10_15_x86_64.whl
 https://wheelhouse.openquake.org/v3/macos/py311/GDAL-3.7.3-cp311-cp311-macosx_10_15_x86_64.whl
 https://wheelhouse.openquake.org/v3/macos/py311/pyproj-3.6.1-cp311-cp311-macosx_10_15_x86_64.whl
+https://wheelhouse.openquake.org/v3/macos/py311/h3-3.7.7-cp311-cp311-macosx_10_9_x86_64.whl
 #
 # Version specific
 pandas == 2.0.3
-geopandas >= 0.10.2
+geopandas == 1.0.1
 ipykernel >= 4.8.0
 ipython >= 6.2.0
 jupyter_client >= 5.0.0
@@ -19,6 +20,8 @@ notebook >= 5.0.0
 pylint >= 2.1.1
 rtree >= 0.9.4
 scipy >= 1.13.1
+pygmt==0.12.0
+h3 == 3.7.7
 #
 # Generic
 openpyxl
