@@ -77,3 +77,19 @@ def crop_mps_to_poly (src_xml_fname, fname_poly, src_conv, out_folder, poly_id =
         print('saving source to ', fname_out)
 
         write_source_model(fname_out, [tmpsrc], 'Distributed seismicity {}'.format(poly_id))
+        
+def crop_mps (src_xml_fname, fname_poly, src_conv, out_folder, poly_id = []):
+    """
+    crop multipoint source to given polygon
+    source will retain original mmax, nodal plane distribution etc
+    """
+    crop_mps_to_poly (src_xml_fname, fname_poly, src_conv, out_folder, poly_id)
+
+crop_mps.src_xml = 'Source xml file to be cropped'
+crop_mps.fname_poly = 'file name of source polygon'
+crop_mps.src_conv = 'source converter object'
+crop_mps.out_folder = 'output folder to store new (cropped) mps'
+crop_mps.poly_id = 'optional list of polygon ids to crop'
+
+if __name__="__main__":
+    sap.run(crop_mps)
