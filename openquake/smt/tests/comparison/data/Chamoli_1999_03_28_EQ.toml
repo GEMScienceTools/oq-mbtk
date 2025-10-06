@@ -18,6 +18,8 @@ volc_back_arc = false # true or false
 eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
 
 [source_properties] # Characterise earthquake for the region of interest (note in this case we are using information in the observed spectra csv, so the information provided here for posterity is actually overwritten)
+lon = 79.421
+lat = 30.511
 strike = 0
 dip = 5
 rake = 90 # Must be provided. Strike and dip can be approximated if set to -999
@@ -31,7 +33,7 @@ trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt str
 mmin = 5
 mmax = 7
 spacing = 0.1
-depths_for_euclidean = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
 gmpe_labels = ['ASK14', 'C14', 'CY14']
 
 [models] # Specify GMMs
