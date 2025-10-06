@@ -28,7 +28,7 @@ from math import floor, ceil
 from scipy.stats import norm
 from cycler import cycler
 
-from openquake.hazardlib.imt import imt2tup
+from openquake.hazardlib.imt import from_string
 from openquake.smt.utils_intensity_measures import _save_image
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from openquake.smt.residuals.residual_plotter_utils import (
@@ -570,7 +570,7 @@ class ResidualWithVs30(ResidualScatterPlot):
         return np.min(x)-20, np.max(x)+20
 
 
-### Plotting of ranking metrics vs spectral period
+### Plotting of ranking metrics vs period
 def manage_imts(residuals):
     """
     Removes the non-acceleration IMTs from the imts attribute of the residuals
@@ -580,41 +580,36 @@ def manage_imts(residuals):
     # Preserve original residuals.imts
     preserve_imts = deepcopy(residuals.imts)
 
-    # Remove non-acceleration imts from residuals.imts for generation of metrics
+    # Remove IMTs if they are not PGA or (non-average) SA
     idx_to_drop = []
     for imt_idx, imt in enumerate(preserve_imts):
-        if imt != 'PGA' and 'SA' not in imt:
+        if imt != 'PGA' and 'SA' not in imt or imt == "AvgSA":
             idx_to_drop.append(imt_idx)
     residuals.imts = pd.Series(preserve_imts).drop(idx_to_drop).values
 
-    # Convert imt_list to array
+    # Get ordinals for original IMTs
     x_with_imt = pd.DataFrame(
-        [imt2tup(imts) for imts in preserve_imts], columns=['imt_str', 'imt_float']
+    [(from_string(imt).period, imt) for imt in preserve_imts], columns=['imt_str', 'imt_float']
     )
-    for imt_idx in range(len(preserve_imts)):
-        if x_with_imt.loc[imt_idx, 'imt_str'] == 'PGA':
-            x_with_imt.loc[imt_idx, 'imt_float'] = 0
-
-    x_with_imt = x_with_imt.dropna()
 
     return residuals, x_with_imt
 
 def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Create a simple plot of loglikelihood values of Scherbaum et al. 2009
-    (y-axis) versus spectral period (x-axis)
+    (y-axis) versus period (x-axis)
     """
-    # Check enough imts to plot w.r.t. spectral period
+    # Check enough IMTs to plot w.r.t. period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
+        raise ValueError('Cannot plot w.r.t. period (only 1 IMT).')
                 
-    # Manage imts
+    # Manage IMTs
     residuals, x_llh = manage_imts(residuals)
 
     # Define colours for GMMs
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
         
-    # Plot LLH values w.r.t. spectral period
+    # Plot LLH values w.r.t. period
     llh_with_imt = pd.DataFrame(residuals.llh).drop('All')
     fig_llh, ax_llh = plt.subplots(figsize=(10, 8))
     ax_llh.set_prop_cycle(colour_cycler)
@@ -623,7 +618,7 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
         ax_llh.scatter(x_llh.imt_float, y_llh)
         tmp = str(residuals.gmpe_list[gmpe])
         ax_llh.plot(x_llh.imt_float, y_llh,label = tmp.split('(')[0])
-    ax_llh.set_xlabel('Spectral Period (s)', fontsize='12')
+    ax_llh.set_xlabel('Period (s)', fontsize='12')
     ax_llh.set_ylabel('Loglikelihood Value', fontsize='12')
     ax_llh.legend(loc='upper right', ncol=2, fontsize='medium')
     _save_image(filename, plt.gcf(), filetype, dpi)
@@ -634,19 +629,19 @@ def plot_edr_metrics_with_spectral_period(residuals,
                                           dpi=200):
     """
     Create plots of EDR, the median pred. correction factor and normalised MDE
-    computed using Kale and Akkar (2013) (y-axis) versus spectral period (x-axis)
+    computed using Kale and Akkar (2013) (y-axis) versus period (x-axis)
     """
-    # Check enough imts to plot w.r.t. spectral period
+    # Check enough IMTs to plot w.r.t. period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
+        raise ValueError('Cannot plot w.r.t. period (only 1 IMT).')
     
-    # Manage imts
+    # Manage IMTs
     residuals, x_with_imt = manage_imts(residuals)
 
     # Define colours for GMMs
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
     
-    # Plot EDR w.r.t. spectral period
+    # Plot EDR w.r.t. period
     EDR_with_imt = {}
     fig_EDR, ax_EDR = plt.subplots(figsize=(10, 8))
     ax_EDR.set_prop_cycle(colour_cycler)
@@ -656,12 +651,12 @@ def plot_edr_metrics_with_spectral_period(residuals,
         tmp = str(residuals.gmpe_list[gmpe])
         ax_EDR.scatter(x_with_imt.imt_float, y_EDR)
         ax_EDR.plot(x_with_imt.imt_float, y_EDR, label=tmp.split('(')[0])
-    ax_EDR.set_xlabel('Spectral Period (s)', fontsize='12')
+    ax_EDR.set_xlabel('Period (s)', fontsize='12')
     ax_EDR.set_ylabel('EDR', fontsize='12')
     ax_EDR.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename + '_EDR_value'), plt.gcf(), filetype, dpi)
 
-    # Plot median pred. correction factor w.r.t. spectral period
+    # Plot median pred. correction factor w.r.t. period
     kappa_with_imt = {}
     fig_kappa, ax_kappa = plt.subplots(figsize=(10, 8))
     ax_kappa.set_prop_cycle(colour_cycler)
@@ -671,13 +666,13 @@ def plot_edr_metrics_with_spectral_period(residuals,
         tmp = str(residuals.gmpe_list[gmpe])
         ax_kappa.scatter(x_with_imt.imt_float, y_kappa)
         ax_kappa.plot(x_with_imt.imt_float, y_kappa, label=tmp.split('(')[0])
-    ax_kappa.set_xlabel('Spectral Period (s)', fontsize='12')
+    ax_kappa.set_xlabel('Period (s)', fontsize='12')
     ax_kappa.set_ylabel('sqrt(k)', fontsize='12')
     ax_kappa.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename + '_EDR_correction_factor'), plt.gcf(),
                 filetype, dpi)
     
-    # Plot MDE w.r.t. spectral period
+    # Plot MDE w.r.t. period
     MDE_with_imt = {}
     fig_MDE, ax_MDE = plt.subplots(figsize=(10, 8))
     ax_MDE.set_prop_cycle(colour_cycler)
@@ -687,7 +682,7 @@ def plot_edr_metrics_with_spectral_period(residuals,
         tmp = str(residuals.gmpe_list[gmpe])
         ax_MDE.scatter(x_with_imt.imt_float, y_MDE)
         ax_MDE.plot(x_with_imt.imt_float, y_MDE, label=tmp.split('(')[0])
-    ax_MDE.set_xlabel('Spectral Period (s)', fontsize='12')
+    ax_MDE.set_xlabel('Period (s)', fontsize='12')
     ax_MDE.set_ylabel('MDE Norm', fontsize='12')
     ax_MDE.legend(loc = 'upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename + '_MDE'), plt.gcf(), filetype, dpi)
@@ -697,20 +692,20 @@ def plot_stochastic_area_with_spectral_period(residuals,
                                               filetype='jpg',
                                               dpi=200):
     """
-    Definition to create plot of the stochastic area metric computed using Sunny
-    et al. (2021) versus spectral period (x-axis)
+    Definition to create plot of the stochastic area metric
+    computed using Sunny et al. (2021) versus period (x-axis)
     """
-    # Check enough imts to plot w.r.t. spectral period
+    # Check enough IMTs to plot w.r.t. period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
+        raise ValueError('Cannot plot w.r.t. period (only 1 IMT).')
     
-    # Manage imts
+    # Manage IMTs
     residuals, x_with_imt = manage_imts(residuals)
     
     # Define colours for plots
     colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
     
-    # Plot stochastic area w.r.t. spectral period
+    # Plot stochastic area w.r.t. period
     sto_with_imt = {}
     fig_sto, ax_sto = plt.subplots(figsize=(10, 8))
     ax_sto.set_prop_cycle(colour_cycler)
@@ -720,7 +715,7 @@ def plot_stochastic_area_with_spectral_period(residuals,
         tmp = str(residuals.gmpe_list[gmpe])
         ax_sto.scatter(x_with_imt.imt_float, y_sto)
         ax_sto.plot(x_with_imt.imt_float, y_sto, label=tmp.split('(')[0])
-    ax_sto.set_xlabel('Spectral Period (s)', fontsize='12')
+    ax_sto.set_xlabel('Period (s)', fontsize='12')
     ax_sto.set_ylabel('Stochastic Area', fontsize='12')
     ax_sto.legend(loc='upper right', ncol=2, fontsize='medium')
     _save_image(os.path.join(filename), plt.gcf(), filetype, dpi)
@@ -745,11 +740,9 @@ def llh_weights_table(residuals, filename):
     loglikelihood (Scherbaum et al. 2009)
     """       
     # Get weights based on llh and export table
-    imt_idx = []
-    for imt in residuals.imts:
-        imt_idx.append(imt)
-    imt_idx.append('Avg over imts') # Avg over all imts
-    llh_weights = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
+    imt_idx = list(residuals.imts) + ['Avg over imts']
+    llh_weights = pd.DataFrame(
+        {}, columns=residuals.gmpe_list, index=imt_idx)
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
             llh_weights.loc[
@@ -774,7 +767,7 @@ def edr_table(residuals, filename):
                'EDR': str(gmpe) + ' EDR'}
         edr = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe]).rename(col)
         means = []
-        for metric in edr.columns: # Get average values over imts
+        for metric in edr.columns: # Get average values over IMTs
             mean = edr[metric].mean()
             means.append(mean)
         edr.loc['Avg over imts'] = means
@@ -794,11 +787,10 @@ def edr_weights_table(residuals, filename):
     edr_for_weights = residuals.edr_values_wrt_imt
 
     # Compute EDR based model weights
-    edr_per_gmpe = {}
-    for gmpe in edr_for_weights.keys():
-        edr_per_gmpe[gmpe] = edr_for_weights[gmpe]['EDR']
-    edr_per_gmpe_df = pd.DataFrame(edr_per_gmpe)
+    edr_per_gmpe_df = pd.DataFrame({
+        gmpe: edr_for_weights[gmpe]['EDR'] for gmpe in edr_for_weights})
 
+    # First weight per gmpe per imt
     gmpe_edr_weight = {gmpe: {} for gmpe in residuals.gmpe_list}
     for imt in edr_per_gmpe_df.index:
         total_edr_per_imt = np.sum(edr_per_gmpe_df.loc[imt]**-1)
@@ -807,11 +799,12 @@ def edr_weights_table(residuals, filename):
                 edr_per_gmpe_df.loc[imt][gmpe]**-1)/total_edr_per_imt
     gmpe_edr_weight_df = pd.DataFrame(gmpe_edr_weight)
     
+    # Then average weight per gmm for each imt
     avg_edr_weight_per_gmpe = {}
     for gmpe in residuals.gmpe_list:
         avg_edr_weight_per_gmpe[gmpe] = np.mean(gmpe_edr_weight_df[gmpe])
-    avg_gmpe_edr_weight_df = \
-        pd.DataFrame(avg_edr_weight_per_gmpe, index=['Avg over imts'])
+    avg_gmpe_edr_weight_df = pd.DataFrame(avg_edr_weight_per_gmpe,
+                                          index=['Avg over imts'])
 
     # Export table
     edr_weight_df = pd.concat([gmpe_edr_weight_df, avg_gmpe_edr_weight_df])
@@ -824,10 +817,7 @@ def stochastic_area_table(residuals, filename):
     al. 2021)
     """
     # Get stochastic area value per imt
-    imt_idx = []
-    for imt in residuals.imts:
-        imt_idx.append(imt)
-    imt_idx.append('Avg over imts')
+    imt_idx = list(residuals.imts) + ['Avg over imts']
     sto_metrics = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
@@ -857,7 +847,7 @@ def stochastic_area_weights_table(residuals, filename):
 
     gmpe_sto_weight_df = pd.DataFrame(gmpe_sto_weight)
 
-    # Get average per gmpe over the imts
+    # Get average weight per gmpe for each imt
     avg_sto_weight_per_gmpe = {}
     for gmpe in residuals.gmpe_list:
         avg_sto_weight_per_gmpe[gmpe] = np.mean(gmpe_sto_weight_df[gmpe])
@@ -870,12 +860,12 @@ def stochastic_area_weights_table(residuals, filename):
     sto_weights_df.to_csv(filename, sep=',')
 
 
-### Functions for plotting mean and sigma of residual dists vs spectral period
+### Functions for plotting mean and sigma of residual dists vs period
 def get_res_dists(residuals):
     """
     Get the mean and sigma of the distributions of residuals per gmpe and imt
     """
-    # Get all residuals for all GMPEs at all imts
+    # Get all residuals for all GMPEs at all IMTs
     res_statistics = {}
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
@@ -907,8 +897,8 @@ def get_res_dists(residuals):
 
 def set_res_pdf_plots(residuals, res_dists, imts_to_plot):
     """
-    Set the plots for the means and std devs of each residual component per
-    gmpe vs spectral period
+    Set the plots for the means and std devs of
+    each residual component per gmpe vs period.
     """
     # Create figure
     fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(14, 14)) 
@@ -940,8 +930,8 @@ def set_res_pdf_plots(residuals, res_dists, imts_to_plot):
     for ax_index in range(0, 3):
         ax[ax_index, 0].set_ylim(-mean_y_bound-0.5, mean_y_bound+0.5)
         ax[ax_index, 1].set_ylim(0.9-sigma_y_bound, 1.1+sigma_y_bound)
-        ax[ax_index, 0].set_xlabel('Spectral Period (s)')
-        ax[ax_index, 1].set_xlabel('Spectral Period (s)')
+        ax[ax_index, 0].set_xlabel('Period (s)')
+        ax[ax_index, 1].set_xlabel('Period (s)')
         ax[ax_index, 0].set_prop_cycle(colour_cycler)
         ax[ax_index, 1].set_prop_cycle(colour_cycler)
     for ax_index in range(0, 2):
@@ -1009,14 +999,14 @@ def plot_residual_pdf_with_spectral_period(residuals,
                                            filetype='jpg',
                                            dpi=200):
     """
-    Create a simple plot of residual mean and residual sigma for each GMPE 
-    (y-axis) versus spectral period (x-axis)
+    Create a simple plot of residual mean and residual sigma
+    for each GMPE  (y-axis) versus period (x-axis)
     """
-    # Check enough imts to plot w.r.t. spectral period
+    # Check enough IMTs to plot w.r.t. period
     if len(residuals.imts) == 1:
-        raise ValueError('Cannot plot w.r.t. spectral period (only 1 IMT).')
+        raise ValueError('Cannot plot w.r.t. period (only 1 IMT).')
         
-    # Manage imts
+    # Manage IMTs
     residuals, imts_to_plot = manage_imts(residuals)
             
     # Get distributions of residuals per gmm and imt 
@@ -1057,7 +1047,7 @@ def pdf_table(residuals, filename):
     Create a table of mean and standard deviation for total, inter-event and 
     intra-event residual distributions
     """
-    # Get all residuals for all GMPEs at all imts
+    # Get all residuals for all GMPEs at all IMTs
     stats = {}
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
@@ -1178,15 +1168,15 @@ class ResidualWithSite(ResidualPlot):
             n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
             total_res = resid.site_analysis[self.gmpe][self.imt]["Total"]
             total_exp = resid.site_analysis[self.gmpe][self.imt]["Expected total"]
-            data[site_id]["Total"] = total_res/total_exp
+            data[site_id]["Total"] = np.array(total_res) / np.array(total_exp)
             if "Intra event" in resid.site_analysis[self.gmpe][self.imt].keys():
                 inter_res = resid.site_analysis[self.gmpe][self.imt]["Inter event"] 
                 intra_res = resid.site_analysis[self.gmpe][self.imt]["Intra event"] 
                 inter_exp = resid.site_analysis[self.gmpe][self.imt]["Expected inter"]
                 intra_exp = resid.site_analysis[self.gmpe][self.imt]["Expected intra"]
                 keep = pd.notnull(inter_res) # Dropping NaN idxs will realign with exp
-                data[site_id]["Inter event"] = inter_res[keep]/inter_exp
-                data[site_id]["Intra event"] = intra_res/intra_exp
+                data[site_id]["Inter event"] = np.array(inter_res)[keep] / np.array(inter_exp)
+                data[site_id]["Intra event"] = np.array(intra_res) / np.array(intra_exp)
             data[site_id]["ID"] = list(self.residuals.site_ids)[iloc]
             data[site_id]["N"] = n_events
             data[site_id]["x-val"] = (

@@ -69,7 +69,17 @@ def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
 
     slip_rate_rhs *= seismic_slip_rate_frac
 
-    return slip_rate_lhs, slip_rate_rhs, slip_rate_err
+    # Create metadata about these equations
+    eq_metadata = {
+        'type': 'slip_rate',
+        'n_eqs': len(faults),
+        'details': {
+            'fault_indices': list(range(len(faults))),
+            'fault_ids': [f["id"] for f in faults],
+        },
+    }
+
+    return slip_rate_lhs, slip_rate_rhs, slip_rate_err, eq_metadata
 
 
 def rel_gr_mfd_rates(mags, b=1.0, a=4.0, corner_mag=None, rel=True, mfd=False):
@@ -180,7 +190,7 @@ def make_rel_gr_mfd_eqns(
             ]
 
     if len(unique_mags) == 1:
-        return
+        return None, None, None, None
 
     elif len(unique_mags) > 2:
         rel_mag_eqns = np.vstack(
@@ -202,7 +212,20 @@ def make_rel_gr_mfd_eqns(
     # rel_mag_eqns_errs = rel_mag_eqns_errs**-2
     rel_mag_eqns_errs *= weight
 
-    return rel_mag_eqns_lhs, rel_mag_eqns_rhs, rel_mag_eqns_errs
+    # Store metadata about magnitude pairs being compared
+    mag_pairs = [(ref_mag, M) for M in unique_mags[1:]]
+    eq_metadata = {
+        'type': 'mfd_rel',
+        'n_eqs': len(mag_pairs),
+        'details': {
+            'magnitude_pairs': mag_pairs,
+            'reference_magnitude': ref_mag,
+            'b_value': b,
+            'corner_mag': corner_mag,
+        },
+    }
+
+    return rel_mag_eqns, rel_mag_eqns_rhs, rel_mag_eqns_errs, eq_metadata
 
 
 def mean_slip_rate(fault_sections: list, faults: list):
@@ -274,7 +297,11 @@ def make_abs_mfd_eqns(
     weight=1.0,
     normalize=False,
     cumulative=False,
+    region_name=None,
 ):
+    """
+    Makes absolute MFD equations and returns metadata about equation indices
+    """
     mag_counts = get_mag_counts(rups)
     unique_mags = sorted(mag_counts.keys())
 
@@ -326,20 +353,27 @@ def make_abs_mfd_eqns(
                 for j, mm in enumerate(mag_rup_idxs[M]):
                     abs_mag_eqns[i, mm] = mag_rup_fracs[M][j]
                 mfd_abs_rhs[i] = mfd_occ_rates.get(M, 0.0)
-    else:
-        pass
 
-    if normalize:  # normalizes by the geometric mean of the rates
+    if normalize:  # normalize by the geometric mean of the rates
         norm_constant = np.exp(np.mean(np.log(mfd_abs_rhs)))
-
         mfd_abs_rhs /= norm_constant
         abs_mag_eqns /= norm_constant
 
-    mfd_abs_errs = np.sqrt(mfd_abs_rhs)  # * weight
+    mfd_abs_errs = np.sqrt(mfd_abs_rhs)
     mfd_abs_errs_weighted = weights_from_errors(mfd_abs_errs) * weight
-    # mfd_abs_errs[mfd_abs_errs == 0.0] = 1.0
 
-    return abs_mag_eqns, mfd_abs_rhs, mfd_abs_errs_weighted
+    eq_metadata = {
+        'type': 'mfd_abs',
+        'n_eqs': len(unique_mags),
+        'details': {
+            'magnitudes': unique_mags,
+            'region': region_name if region_name else 'global',
+            'cumulative': cumulative,
+            'normalized': normalize,
+        },
+    }
+
+    return abs_mag_eqns, mfd_abs_rhs, mfd_abs_errs_weighted, eq_metadata
 
 
 def make_slip_rate_smoothing_eqns(
@@ -436,16 +470,20 @@ def make_eqns(
     return_sparse=True,
     verbose=False,
     shear_modulus=SHEAR_MODULUS,
+    return_metadata=False,
 ):
-
+    """
+    Modified to track and return equation metadata
+    """
     lhs_set = []
     rhs_set = []
     err_set = []
+    metadata_set = []
+    current_eq_idx = 0
 
     if seismic_slip_rate_frac is None and mfd is not None:
         fault_moment = get_fault_moment(faults, shear_modulus=shear_modulus)
         mfd_moment = get_mfd_moment(mfd)
-
         seismic_slip_rate_frac = mfd_moment / fault_moment
         if verbose:
             print("fault_moment", fault_moment)
@@ -459,54 +497,80 @@ def make_eqns(
 
     if slip_rate_eqns is True:
         print("Making slip rate eqns")
-        slip_rate_lhs, slip_rate_rhs, slip_rate_errs = make_slip_rate_eqns(
+        slip_rate_result = make_slip_rate_eqns(
             rups,
             faults,
             seismic_slip_rate_frac=seismic_slip_rate_frac,
         )
-        lhs_set.append(slip_rate_lhs)
-        rhs_set.append(slip_rate_rhs)
-        err_set.append(slip_rate_errs)
+        if slip_rate_result[-1] is not None:  # if metadata exists
+            lhs, rhs, errs, metadata = slip_rate_result
+            metadata['start_idx'] = current_eq_idx
+            metadata['end_idx'] = current_eq_idx + metadata['n_eqs']
+            current_eq_idx += metadata['n_eqs']
+
+            lhs_set.append(lhs)
+            rhs_set.append(rhs)
+            err_set.append(errs)
+            metadata_set.append(metadata)
 
     if mfd_rel_eqns is True:
         print("Making MFD relative eqns")
-        (mfd_rel_lhs, mfd_rel_rhs, mfd_rel_errs) = make_rel_gr_mfd_eqns(
+        rel_result = make_rel_gr_mfd_eqns(
             rups,
             mfd_rel_b_val,
             corner_mag=mfd_rel_corner_mag,
             weight=mfd_rel_weight,
         )
-        lhs_set.append(mfd_rel_lhs)
-        rhs_set.append(mfd_rel_rhs)
-        err_set.append(mfd_rel_errs)
+        if rel_result is not None and rel_result[-1] is not None:
+            lhs, rhs, errs, metadata = rel_result
+            metadata['start_idx'] = current_eq_idx
+            metadata['end_idx'] = current_eq_idx + metadata['n_eqs']
+            current_eq_idx += metadata['n_eqs']
+
+            lhs_set.append(lhs)
+            rhs_set.append(rhs)
+            err_set.append(errs)
+            metadata_set.append(metadata)
 
     if mfd is not None:
         if incremental_abs_mfds:
             print("Making MFD absolute eqns")
-            mfd_abs_lhs, mfd_abs_rhs, mfd_abs_errs = make_abs_mfd_eqns(
+            abs_result = make_abs_mfd_eqns(
                 rups,
                 mfd,
-                weight=mfd_abs_weight,  # ^ mfd_abs_weight reduces relevance
+                weight=mfd_abs_weight,
                 normalize=mfd_abs_normalize,
             )
-            lhs_set.append(mfd_abs_lhs)
-            rhs_set.append(mfd_abs_rhs)
-            err_set.append(mfd_abs_errs)
+            if abs_result[-1] is not None:
+                lhs, rhs, errs, metadata = abs_result
+                metadata['start_idx'] = current_eq_idx
+                metadata['end_idx'] = current_eq_idx + metadata['n_eqs']
+                current_eq_idx += metadata['n_eqs']
+
+                lhs_set.append(lhs)
+                rhs_set.append(rhs)
+                err_set.append(errs)
+                metadata_set.append(metadata)
 
         if cumulative_abs_mfds:
             print("Making cumulative MFD absolute eqns")
-            mfd_abs_cum_lhs, mfd_abs_cum_rhs, mfd_abs_cum_errs = (
-                make_abs_mfd_eqns(
-                    rups,
-                    mfd,
-                    weight=mfd_abs_weight,
-                    normalize=mfd_abs_normalize,
-                    cumulative=True,
-                )
+            cum_result = make_abs_mfd_eqns(
+                rups,
+                mfd,
+                weight=mfd_abs_weight,
+                normalize=mfd_abs_normalize,
+                cumulative=True,
             )
-            lhs_set.append(mfd_abs_cum_lhs)
-            rhs_set.append(mfd_abs_cum_rhs)
-            err_set.append(mfd_abs_cum_errs)
+            if cum_result[-1] is not None:
+                lhs, rhs, errs, metadata = cum_result
+                metadata['start_idx'] = current_eq_idx
+                metadata['end_idx'] = current_eq_idx + metadata['n_eqs']
+                current_eq_idx += metadata['n_eqs']
+
+                lhs_set.append(lhs)
+                rhs_set.append(rhs)
+                err_set.append(errs)
+                metadata_set.append(metadata)
 
     if regional_abs_mfds is not None:
         if incremental_abs_mfds:
@@ -515,35 +579,54 @@ def make_eqns(
                 if ('rups_include' in reg_mfd_data.keys()) and (
                     len(reg_mfd_data['rups_include']) > 0
                 ):
-                    reg_abs_lhs, reg_abs_rhs, reg_abs_errs = make_abs_mfd_eqns(
+                    reg_result = make_abs_mfd_eqns(
                         rups,
                         reg_mfd_data["mfd"],
                         rup_include_list=reg_mfd_data["rups_include"],
                         rup_fractions=reg_mfd_data["rup_fractions"],
                         weight=mfd_abs_weight,
+                        region_name=reg,
                     )
-                    lhs_set.append(reg_abs_lhs)
-                    rhs_set.append(reg_abs_rhs)
-                    err_set.append(reg_abs_errs)
+                    if reg_result[-1] is not None:
+                        lhs, rhs, errs, metadata = reg_result
+                        metadata['start_idx'] = current_eq_idx
+                        metadata['end_idx'] = (
+                            current_eq_idx + metadata['n_eqs']
+                        )
+                        current_eq_idx += metadata['n_eqs']
+
+                        lhs_set.append(lhs)
+                        rhs_set.append(rhs)
+                        err_set.append(errs)
+                        metadata_set.append(metadata)
+
         if cumulative_abs_mfds:
             print("Making regional cumulative MFD absolute eqns")
             for reg, reg_mfd_data in regional_abs_mfds.items():
                 if ('rups_include' in reg_mfd_data.keys()) and (
                     len(reg_mfd_data['rups_include']) > 0
                 ):
-                    reg_abs_cum_lhs, reg_abs_cum_rhs, reg_abs_cum_errs = (
-                        make_abs_mfd_eqns(
-                            rups,
-                            reg_mfd_data["mfd"],
-                            rup_include_list=reg_mfd_data["rups_include"],
-                            rup_fractions=reg_mfd_data["rup_fractions"],
-                            weight=mfd_abs_weight,
-                            cumulative=True,
-                        )
+                    reg_result = make_abs_mfd_eqns(
+                        rups,
+                        reg_mfd_data["mfd"],
+                        rup_include_list=reg_mfd_data["rups_include"],
+                        rup_fractions=reg_mfd_data["rup_fractions"],
+                        weight=mfd_abs_weight,
+                        cumulative=True,
+                        region_name=reg,
                     )
-                    lhs_set.append(reg_abs_cum_lhs)
-                    rhs_set.append(reg_abs_cum_rhs)
-                    err_set.append(reg_abs_cum_errs)
+                    if reg_result[-1] is not None:
+                        lhs, rhs, errs, metadata = reg_result
+                        metadata['start_idx'] = current_eq_idx
+                        metadata['end_idx'] = (
+                            current_eq_idx + metadata['n_eqs']
+                        )
+                        current_eq_idx += metadata['n_eqs']
+
+                        lhs_set.append(lhs)
+                        rhs_set.append(rhs)
+                        err_set.append(errs)
+                        metadata_set.append(metadata)
 
     if slip_rate_smoothing is True:
         raise NotImplementedError("Smoothing not implemented")
@@ -583,8 +666,7 @@ def make_eqns(
     if verbose:
         print("lhs total:", lhs.shape)
 
-    return (
-        lhs,
-        rhs,
-        errs,
-    )
+    if return_metadata:
+        return lhs, rhs, errs, metadata_set
+    else:
+        return lhs, rhs, errs

@@ -20,16 +20,17 @@ Tests for execution of comparison module
 """
 import os
 import shutil
-import pickle
 import unittest
 import numpy as np
 import pandas as pd
 
+from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison import compare_gmpes as comp
+from openquake.smt.comparison.utils_gmpes import reformat_att_curves, reformat_spectra
 from openquake.smt.comparison.utils_compare_gmpes import (compute_matrix_gmpes,
                                                           plot_cluster_util,
                                                           plot_sammons_util,
-                                                          plot_euclidean_util)
+                                                          plot_matrix_util)
 
 
 # Base path
@@ -53,6 +54,9 @@ TARGET_BASELINE_GMPE = '[BooreEtAl2014]'
 TARGET_TRT = 'active_crustal'
 TARGET_ZTOR = -999
 
+# Target for Euclidean distance analysis related matrices
+TARGET_EUCL = 4 # 2 GMMs (CY14, CB14), the lt made of them (gmc1) and
+                # the second lt (gmc2 - no individual GMMs considered)
 
 class ComparisonTestCase(unittest.TestCase):
     """
@@ -66,8 +70,8 @@ class ComparisonTestCase(unittest.TestCase):
             base,'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
             base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.exp_curves = os.path.join(base,'exp_curves.pkl')
-        self.exp_spectra = os.path.join(base, 'exp_spectra.pkl')
+        self.exp_curves = os.path.join(base,'exp_curves.csv')
+        self.exp_spectra = os.path.join(base, 'exp_spectra.csv')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -101,7 +105,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.maxR, TARGET_RMAX)
 
         # Check for target Nstd
-        self.assertEqual(config.Nstd, TARGET_NSTD)
+        self.assertEqual(config.nstd, TARGET_NSTD)
 
         # Check for target trellis mag
         np.testing.assert_allclose(config.mag_list, TARGET_MAGS)
@@ -132,54 +136,69 @@ class ComparisonTestCase(unittest.TestCase):
         mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
 
         # Check correct number of imts
-        self.assertEqual(len(mtxs_medians), len(TARGET_IMTS))
+        check_imts = []
+        for imt in TARGET_IMTS:
+            check_imts.append(mtxs_medians[from_string(imt)])
+        self.assertEqual(len(check_imts), len(TARGET_IMTS))
 
         # Check correct number of gmpes
-        for imt in mtxs_medians:
-            self.assertEqual(len(mtxs_medians[imt]), len(TARGET_GMPES))
+        for imt in TARGET_IMTS:
+            self.assertEqual(len(mtxs_medians[from_string(imt)]), len(TARGET_GMPES))
 
-    def test_sammons_and_euclidean_distance_matrix_functions(self):
+    def test_sammons_and_distance_matrix_functions(self):
         """
         Check expected outputs based on given input parameters for median
         Sammons and Euclidean distance matrix plotting functions
         """
-        TARGET_GMPES.append('mean')  # Add mean here to gmpe_list
-
         # Load config
         config = comp.Configurations(self.input_file)
+
+        # Get lts
+        lts = 0
+        for lt in [config.lt_weights_gmc1, config.lt_weights_gmc2,
+                   config.lt_weights_gmc3, config.lt_weights_gmc4]:
+            if lt is not None:
+                lts += 1
 
         # Get medians
         mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
 
         # Sammons checks
-        coo = plot_sammons_util(
-            config.imt_list, config.gmpe_labels,
-            mtxs_medians, os.path.join(self.output_directory,
-                                       'SammonMaps.png'),
-            config.custom_color_flag, config.custom_color_list,
+        coo_per_imt = plot_sammons_util(
+            config.imt_list,
+            config.gmpe_labels,
+            mtxs_medians,
+            os.path.join(self.output_directory, 'SammonMaps.png'),
+            config.custom_color_flag,
+            config.custom_color_list,
             mtxs_type='median')
 
-        # Check Sammons computing outputs for num. GMPEs in .toml per run
-        self.assertEqual(len(coo), len(TARGET_GMPES))
+        # Check Sammons computing correct number of GMPEs and IMTs
+        self.assertEqual(list(coo_per_imt.keys()),
+                         [from_string(imt) for imt in TARGET_IMTS])
+        for imt in TARGET_IMTS:
+            imt_sammons = coo_per_imt[from_string(imt)]
+            self.assertEqual(len(imt_sammons), TARGET_EUCL)
 
         # Euclidean checks
-        matrix_Dist = plot_euclidean_util(
-            config.imt_list, config.gmpe_labels, mtxs_medians,
+        matrix_dist = plot_matrix_util(
+            config.imt_list,
+            config.gmpe_labels,
+            mtxs_medians,
             os.path.join(self.output_directory, 'Euclidean.png'),
             mtxs_type='median')
 
-        # Check correct number of IMTS within matrix_Dist
-        self.assertEqual(len(matrix_Dist), len(TARGET_IMTS))
+        # Check correct number of IMTS within matrix_dist
+        self.assertEqual(len(matrix_dist), len(TARGET_IMTS))
 
-        # Check correct number of GMPEs within matrix_Dist for each IMT
-        for imt in range(0, len(matrix_Dist)):
-            self.assertEqual(len(matrix_Dist[imt]), len(TARGET_GMPES))
+        # Check correct number of GMPEs within matrix_dist for each IMT
+        for imt in range(0, len(matrix_dist)):
+            self.assertEqual(len(matrix_dist[imt]), TARGET_EUCL)
 
         # Check per GMPE that euclidean dist to all other GMPEs is calculated
-        for imt in range(0, len(matrix_Dist)):
-            for gmpe in range(0, len(matrix_Dist[imt])):
-                self.assertEqual(len(matrix_Dist[imt][gmpe]),
-                                 len(TARGET_GMPES))
+        for imt in range(0, len(matrix_dist)):
+            for gmpe in range(0, len(matrix_dist[imt])):
+                self.assertEqual(len(matrix_dist[imt][gmpe]), TARGET_EUCL)
 
     def test_clustering_median(self):
         """
@@ -220,8 +239,11 @@ class ComparisonTestCase(unittest.TestCase):
         # Get clustering matrix
         lab = '84th_perc_Clustering_vs30.png'
         Z_matrix = plot_cluster_util(
-            config.imt_list, config.gmpe_labels, mtxs_medians,
-            os.path.join(self.output_directory, lab), mtxs_type='84th_perc')
+            config.imt_list,
+            config.gmpe_labels,
+            mtxs_medians,
+            os.path.join(self.output_directory, lab),
+            mtxs_type='84th_perc')
 
         # Check number of cluster arrays matches number of imts per config
         self.assertEqual(len(Z_matrix), len(TARGET_IMTS))
@@ -240,22 +262,22 @@ class ComparisonTestCase(unittest.TestCase):
         # Trellis plots
         att_curves = comp.plot_trellis(self.input_file, self.output_directory)
         if not os.path.exists(self.exp_curves):
-            with open(self.exp_curves, 'wb') as f: # Write if doesn't exist
-                pickle.dump(att_curves, f, protocol=pickle.HIGHEST_PROTOCOL)
-        with open(self.exp_curves, 'rb') as f:
-                exp_curves = pd.DataFrame(pickle.load(f))
-        obs_curves = pd.DataFrame(att_curves)
+            # Write to CSV the expected results if missing
+            reformat_att_curves(att_curves, self.exp_curves)
+        exp_curves = pd.read_csv(self.exp_curves)
+        # Same function writing expected can reformat the observed
+        obs_curves = reformat_att_curves(att_curves)
         pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
 
         # Spectra plots
-        gmc_lts = comp.plot_spectra(
+        spectra = comp.plot_spectra(
             self.input_file, self.output_directory, obs_spectra_fname=None)
         if not os.path.exists(self.exp_spectra):
-            with open(self.exp_spectra, 'wb') as f: # Write if doesn't exist
-                pickle.dump(gmc_lts, f, protocol=pickle.HIGHEST_PROTOCOL)
-        with open(self.exp_spectra, 'rb') as f:
-                exp_spectra = pd.DataFrame(pickle.load(f))
-        obs_spectra = pd.DataFrame(gmc_lts)
+            # Write if doesn't exist
+            reformat_spectra(spectra, self.exp_spectra)
+        exp_spectra = pd.read_csv(self.exp_spectra, index_col=0)
+        # Same function writing expected can reformat the observed
+        obs_spectra = reformat_spectra(spectra)
         pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
         
         # Specify target files
