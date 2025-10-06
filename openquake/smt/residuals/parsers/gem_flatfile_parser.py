@@ -202,7 +202,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         eq_lon = valid.longitude(metadata["ev_longitude"])
         eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
-            raise ValueError('Depth missing an events in admitted flatfile')
+            raise ValueError(f'Depth missing for {eq_id} in admitted flatfile')
 
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet

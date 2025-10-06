@@ -105,9 +105,9 @@ class Result:
 
 GSIMS = ['KothaEtAl2020', 'LanzanoEtAl2019_RJB_OMO']
 CWD = os.path.dirname(__file__)
-res1 = Result(os.path.join(CWD, 'exp'))
+res1 = Result(os.path.join(CWD, 'exp_regular'))
 exp = {gsim: res1.read(gsim) for gsim in GSIMS}
-res2 = Result(os.path.join(CWD, 'stations'))
+res2 = Result(os.path.join(CWD, 'exp_stations'))
 exp_stations = [{gsim: res2.read(gsim, idx) for gsim in GSIMS}
                 for idx in range(8)]
 
