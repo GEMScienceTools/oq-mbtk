@@ -285,7 +285,7 @@ class Residuals(object):
                                 context["Residual"][gmpe][imtx][res_type])
                         self.modelled[gmpe][imtx][res_type].extend(
                             context["Expected"][gmpe][imtx][res_type])
-
+                        
                     self.modelled[gmpe][imtx]["Mean"].extend(
                         context["Expected"][gmpe][imtx]["Mean"])
 
@@ -686,8 +686,7 @@ class Residuals(object):
         for imtx in self.imts:
             for context in self.contexts:
                 keep = context["Retained"][imtx]
-                obs = np.hstack(
-                    [obs, np.log(context["Observations"][imtx][keep])])
+                obs = np.hstack([obs, np.log(context["Observations"][imtx][keep])])
                 exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
                 std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
 
