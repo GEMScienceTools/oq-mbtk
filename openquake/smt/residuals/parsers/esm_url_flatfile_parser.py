@@ -383,12 +383,17 @@ class ESMFlatfileParserURL(SMDatabaseReader):
 
         vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
         vs30_topo = valid.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
-        if vs30:
+        if pd.isnull(vs30) and pd.isnull(vs30_topo):
+            # Need at least one vs30 value for residuals (not really, given
+            # some GMMs lack site terms, but good way to prevent confusing
+            # nans in the expected values which appear when computing stats)
+            raise ValueError(
+                f"A vs30 value (either measured or WA-based) must be provided for {site_id}")
+        if pd.notnull(vs30):
             vs30_measured = True
-        elif vs30_topo:
-            vs30 = vs30_topo
-            vs30_measured = False
         else:
+            assert pd.notnull(vs30_topo)
+            vs30 = vs30_topo
             vs30_measured = False
         
         site = RecordSite(site_id,
