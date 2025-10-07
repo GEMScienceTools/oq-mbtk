@@ -234,22 +234,27 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
     figure = pyplot.figure(figsize=(len(mag_list)*5, len(config.dist_list)*4))
 
     # Set dicts to store values
-    dic = {gmm: {} for gmm in config.gmpes_list}  
     lt_vals = {
         # Keys for weighted GMM branches to compute LTs with
         'med_wei': [{gmm: {} for gmm in ltw.keys()} if ltw
                     is not None else {} for ltw in gmc_weights],
-        'add_wei': [dic, dic, dic, dic],
-        'min_wei': [dic, dic, dic, dic],
+        'add_wei': [{gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list}],
+        'min_wei': [{gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list}],
         # Keys for aggregated gmm LTs
         'gmc1': {},
         'gmc2': {},
         'gmc3': {},
         'gmc4': {},
         # Keys for non-weighted individual gmms
-        "med": dic,
-        'add': dic,
-        'min': dic,
+        "med": {gmm: {} for gmm in config.gmpes_list},
+        'add': {gmm: {} for gmm in config.gmpes_list},
+        'min': {gmm: {} for gmm in config.gmpes_list},
         # Useful info when exporting
         'periods': periods,
         'nstd': config.nstd
@@ -342,7 +347,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                              linewidth=2,
                              linestyle='-',
                              label=gmpe)
-                    if config.nstd != 0:
+                    if config.nstd > 0:
                         ax1.plot(periods, rs_ps, color=col, linewidth=0.75, linestyle='-.')
                         ax1.plot(periods, rs_ms, color=col, linewidth=0.75, linestyle='-.')
                 
@@ -369,7 +374,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                      st_id)
                 
                 # Update plots
-                update_spec_plots(ax1, m, dist, n, l, config.dist_list, config.dist_type)
+                update_spectra_plots(ax1, m, dist, n, l, config.dist_list, config.dist_type)
             
             # Set axis limits and add grid
             ax1.set_xlim(min(periods), max(periods))
@@ -1263,14 +1268,15 @@ def spectra_data(gmpe,
             continue
         elif gmpe in gmc_weights[idx_gmc]:
             if gmc_weights[idx_gmc][gmpe] is not None:
-                ey = np.zeros(len(rs_50p))
-                rs_50p_w, rs_add_sigma_w, rs_min_sigma_w = ey, ey, ey
+                rs_50p_w = np.zeros(len(rs_50p))
+                rs_add_sigma_w = np.zeros(len(rs_add_sigma))
+                rs_min_sigma_w = np.zeros(len(rs_min_sigma))
                 for idx, rs in enumerate(rs_50p):
                     rs_50p_w[idx] = rs*gmc_weights[idx_gmc][gmpe]
                     if nstd > 0:
                         rs_add_sigma_w[idx] = rs_add_sigma[idx]*gmc_weights[idx_gmc][gmpe]
                         rs_min_sigma_w[idx] = rs_min_sigma[idx]*gmc_weights[idx_gmc][gmpe]
-    
+
                 # Store the weighted median for the gmm
                 lt_vals['med_wei'][idx_gmc][gmpe][sk] = rs_50p_w
 
@@ -1408,7 +1414,7 @@ def plot_obs_spectra(ax1,
                  label=obs_string)    
         
         
-def update_spec_plots(ax1, m, i, n, l, dist_list, dist_type):
+def update_spectra_plots(ax1, m, i, n, l, dist_list, dist_type):
     """
     Add titles and axis labels to spectra plots
     """
