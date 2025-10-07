@@ -97,9 +97,6 @@ def main(config_fname):
     # Get cross-sections
     cs_dict = get_cs(trench, argv[0], cs_length, cs_depth, interdistance, qual)
 
-    # Plotting
-    if False:
-        plot(trench, cat, cs_dict, interdistance)
 
 main.config = 'config file for creating cross sections from trench axis'
 
