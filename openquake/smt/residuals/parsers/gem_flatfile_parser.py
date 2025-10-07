@@ -327,11 +327,15 @@ class GEMFlatfileParser(SMDatabaseReader):
 
         # Vs30
         vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
-        vs30_measured_flag = metadata["vs30_meas_type"]
-        if vs30_measured_flag == "measured":
+        if pd.isnull(vs30):
+            # Need a station vs30 value for residuals (not really, given
+            # some GMMs lack site terms, but good way to prevent confusing
+            # nans in the expected values which appear when computing stats)
+            raise ValueError(f"A vs30 value is missing for {site_id}")
+        if  metadata["vs30_meas_type"] == "measured":
             vs30_measured = 1
         else:
-            vs30_measured = 0 # Either inferred or unknown
+            vs30_measured = 0 # Inferred
 
         # Make the site object
         site = RecordSite(site_id,
