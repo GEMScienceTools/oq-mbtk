@@ -227,18 +227,6 @@ def create_mmax_table(model):
     return p
 
 
-def plot_area_source_polygons(model, bmap):
-    """
-    :parameter bmap:
-            A :class:Basemap instance
-    """
-    for key in sorted(model.sources):
-        src = model.sources[key]
-        if src.source_type == 'AreaSource':
-            x, y = bmap(src.polygon.lons, src.polygon.lats)
-            bmap.plot(x, y, '-b')
-
-
 def _set_trt(tstr):
     if re.match('ACT', tstr):
         return TRT.ACTIVE_SHALLOW_CRUST

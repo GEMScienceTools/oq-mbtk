@@ -15,8 +15,6 @@ mpl.use('tkagg')
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-# MN: 'Basemap' imported but used just for an orhpan var
-#from mpl_toolkits.basemap import Basemap
 
 
 def plot_sub_profile(sid, dat, axes):
@@ -44,26 +42,24 @@ def plot_catalogue(filename, axes, lims, qual):
 def plot_sub_profiles(foldername):
     """
     """
-    #
     minlo = +1e10
     minla = +1e10
     maxlo = -1e10
     maxla = -1e10
     minde = +1e10
     maxde = -1e10
-    #
-    # MN: 'mpp' assigned but never used
-#    mpp = Basemap()
+
     # Create figure
     fig = plt.figure()
     ax = Axes3D(fig)
+
     # checking whether straddles dateline
     qual = 0
     for filename in glob.glob(os.path.join(foldername, 'cs_*.csv')):
         dat = numpy.loadtxt(filename)
         sid = re.sub('^cs_', '', re.split('\\.',
                                           os.path.basename(filename))[0])
-        if ((min(dat[:, 0])/max(dat[:, 0]) < 0) & (max(dat[:, 0] > 150))):
+        if ((min(dat[:, 0]) / max(dat[:, 0]) < 0) & (max(dat[:, 0] > 150))):
             qual = 1
 
     # Plotting subduction profiles
