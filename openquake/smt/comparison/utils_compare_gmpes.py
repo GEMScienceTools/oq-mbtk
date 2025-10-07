@@ -234,22 +234,27 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
     figure = pyplot.figure(figsize=(len(mag_list)*5, len(config.dist_list)*4))
 
     # Set dicts to store values
-    dic = {gmm: {} for gmm in config.gmpes_list}  
     lt_vals = {
         # Keys for weighted GMM branches to compute LTs with
         'med_wei': [{gmm: {} for gmm in ltw.keys()} if ltw
                     is not None else {} for ltw in gmc_weights],
-        'add_wei': [dic, dic, dic, dic],
-        'min_wei': [dic, dic, dic, dic],
+        'add_wei': [{gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list}],
+        'min_wei': [{gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list},
+                    {gmm: {} for gmm in config.gmpes_list}],
         # Keys for aggregated gmm LTs
         'gmc1': {},
         'gmc2': {},
         'gmc3': {},
         'gmc4': {},
         # Keys for non-weighted individual gmms
-        "med": dic,
-        'add': dic,
-        'min': dic,
+        "med": {gmm: {} for gmm in config.gmpes_list},
+        'add': {gmm: {} for gmm in config.gmpes_list},
+        'min': {gmm: {} for gmm in config.gmpes_list},
         # Useful info when exporting
         'periods': periods,
         'nstd': config.nstd
@@ -315,13 +320,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                     try:
                         rs_50p_dist = np.exp(f(dist))
                     except:
-                        rtype = config.dist_type
-                        assert rtype not in ["repi"] # Should not be interp issues for repi
-                        r_min = int(r_vals.min())
-                        r_max = int(r_vals.max())
-                        raise ValueError(f"Request spectra distance ({rtype} = {dist} km) is "
-                                         f"outside of {rtype} value range for this ground-"
-                                         f"shaking scenario (min = {r_min} km, max = {r_max} km)")
+                        raise_spectra_dist_error(dist, config.dist_type, r_vals)
                     rs_50p.append(rs_50p_dist)
                     
                     f1 = interpolate.interp1d(r_vals, std[0])
@@ -329,11 +328,12 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                     sig.append(sigma_dist)
                     
                     if config.nstd != 0:
-                        rs_add_sigma_dist = np.exp(f(dist)+(config.nstd*sigma_dist))
-                        rs_min_sigma_dist = np.exp(f(dist)-(config.nstd*sigma_dist))
+                        rs_add_sigma_dist = np.exp(f(dist)+(config.nstd*sigma_dist))[0]
+                        rs_min_sigma_dist = np.exp(f(dist)-(config.nstd*sigma_dist))[0]
                         rs_ps.append(rs_add_sigma_dist)
                         rs_ms.append(rs_min_sigma_dist)
-                        
+                    
+
                 # Plot individual GMPEs
                 if 'plot_lt_only' not in str(gmpe):
                     ax1.plot(periods,
@@ -342,7 +342,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                              linewidth=2,
                              linestyle='-',
                              label=gmpe)
-                    if config.nstd != 0:
+                    if config.nstd > 0:
                         ax1.plot(periods, rs_ps, color=col, linewidth=0.75, linestyle='-.')
                         ax1.plot(periods, rs_ms, color=col, linewidth=0.75, linestyle='-.')
                 
@@ -369,11 +369,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                      st_id)
                 
                 # Update plots
-                update_spec_plots(ax1, m, dist, n, l, config.dist_list, config.dist_type)
-            
-            # Set axis limits and add grid
-            ax1.set_xlim(min(periods), max(periods))
-            ax1.grid(True)
+                update_spectra_plots(ax1, m, dist, n, l, config.dist_list, config.dist_type)
             
             # Plot logic trees if required
             for idx_gmc, gmc in enumerate(gmc_weights):
@@ -387,6 +383,10 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                         gmc_vals[idx_gmc],
                         sk)
                 
+            # Add grid and set xlims
+            ax1.set_xlim(min(periods), max(periods))
+            ax1.grid(True)
+
     # Finalise the plots and save fig
     if len(mag_list) * len(config.dist_list) == 1:
         bbox_coo = (1.1, 0.5)
@@ -1263,14 +1263,15 @@ def spectra_data(gmpe,
             continue
         elif gmpe in gmc_weights[idx_gmc]:
             if gmc_weights[idx_gmc][gmpe] is not None:
-                ey = np.zeros(len(rs_50p))
-                rs_50p_w, rs_add_sigma_w, rs_min_sigma_w = ey, ey, ey
+                rs_50p_w = np.zeros(len(rs_50p))
+                rs_add_sigma_w = np.zeros(len(rs_add_sigma))
+                rs_min_sigma_w = np.zeros(len(rs_min_sigma))
                 for idx, rs in enumerate(rs_50p):
                     rs_50p_w[idx] = rs*gmc_weights[idx_gmc][gmpe]
                     if nstd > 0:
                         rs_add_sigma_w[idx] = rs_add_sigma[idx]*gmc_weights[idx_gmc][gmpe]
                         rs_min_sigma_w[idx] = rs_min_sigma[idx]*gmc_weights[idx_gmc][gmpe]
-    
+
                 # Store the weighted median for the gmm
                 lt_vals['med_wei'][idx_gmc][gmpe][sk] = rs_50p_w
 
@@ -1408,7 +1409,7 @@ def plot_obs_spectra(ax1,
                  label=obs_string)    
         
         
-def update_spec_plots(ax1, m, i, n, l, dist_list, dist_type):
+def update_spectra_plots(ax1, m, i, n, l, dist_list, dist_type):
     """
     Add titles and axis labels to spectra plots
     """
@@ -1436,6 +1437,21 @@ def save_spectra_plot(f1, obs_spectra, output_dir, eq_id, st_id):
         rec_str = rec_str.replace(' ', '_').replace('-', '_').replace(':', '_')
         out = os.path.join(output_dir, 'ResponseSpectra_' + rec_str + '.png')
         f1.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
+
+
+def raise_spectra_dist_error(dist, dist_type, r_vals):
+    """
+    If there is an interpolation issue when computing the spectra
+    from the attenuation curves (mean for given distance value, for
+    given distance metric), then notify the user by raising an error.
+    """
+    rtype = dist_type
+    assert rtype not in ["repi"] # Should not be interp issues for repi
+    r_min = int(r_vals.min())
+    r_max = int(r_vals.max())
+    raise ValueError(f"Requested spectra distance ({rtype} = {dist} km) is "
+                     f"outside of {rtype} value range for this ground-"
+                     f"shaking scenario (min = {r_min} km, max = {r_max} km)")
 
 
 ### Utils for other plots

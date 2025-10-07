@@ -620,7 +620,7 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
         ax_llh.plot(x_llh.imt_float, y_llh,label = tmp.split('(')[0])
     ax_llh.set_xlabel('Period (s)', fontsize='12')
     ax_llh.set_ylabel('Loglikelihood Value', fontsize='12')
-    ax_llh.legend(loc='upper right', ncol=2, fontsize='medium')
+    ax_llh.legend(loc='upper right', ncol=2, fontsize='12')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
 def plot_edr_metrics_with_spectral_period(residuals,
@@ -653,7 +653,7 @@ def plot_edr_metrics_with_spectral_period(residuals,
         ax_EDR.plot(x_with_imt.imt_float, y_EDR, label=tmp.split('(')[0])
     ax_EDR.set_xlabel('Period (s)', fontsize='12')
     ax_EDR.set_ylabel('EDR', fontsize='12')
-    ax_EDR.legend(loc = 'upper right', ncol=2, fontsize='medium')
+    ax_EDR.legend(loc = 'upper right', ncol=2, fontsize=12)
     _save_image(os.path.join(filename + '_EDR_value'), plt.gcf(), filetype, dpi)
 
     # Plot median pred. correction factor w.r.t. period
@@ -668,7 +668,7 @@ def plot_edr_metrics_with_spectral_period(residuals,
         ax_kappa.plot(x_with_imt.imt_float, y_kappa, label=tmp.split('(')[0])
     ax_kappa.set_xlabel('Period (s)', fontsize='12')
     ax_kappa.set_ylabel('sqrt(k)', fontsize='12')
-    ax_kappa.legend(loc = 'upper right', ncol=2, fontsize='medium')
+    ax_kappa.legend(loc = 'upper right', ncol=2, fontsize=12)
     _save_image(os.path.join(filename + '_EDR_correction_factor'), plt.gcf(),
                 filetype, dpi)
     
@@ -684,7 +684,7 @@ def plot_edr_metrics_with_spectral_period(residuals,
         ax_MDE.plot(x_with_imt.imt_float, y_MDE, label=tmp.split('(')[0])
     ax_MDE.set_xlabel('Period (s)', fontsize='12')
     ax_MDE.set_ylabel('MDE Norm', fontsize='12')
-    ax_MDE.legend(loc = 'upper right', ncol=2, fontsize='medium')
+    ax_MDE.legend(loc = 'upper right', ncol=2, fontsize=12)
     _save_image(os.path.join(filename + '_MDE'), plt.gcf(), filetype, dpi)
     
 def plot_stochastic_area_with_spectral_period(residuals,
@@ -717,7 +717,7 @@ def plot_stochastic_area_with_spectral_period(residuals,
         ax_sto.plot(x_with_imt.imt_float, y_sto, label=tmp.split('(')[0])
     ax_sto.set_xlabel('Period (s)', fontsize='12')
     ax_sto.set_ylabel('Stochastic Area', fontsize='12')
-    ax_sto.legend(loc='upper right', ncol=2, fontsize='medium')
+    ax_sto.legend(loc='upper right', ncol=2, fontsize=12)
     _save_image(os.path.join(filename), plt.gcf(), filetype, dpi)
 
 ### Functions for exporting tables of ranking metrics
@@ -1265,7 +1265,7 @@ class IntraEventResidualWithSite(ResidualPlot):
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi)
         ax.set_title(title_string, fontsize=11)
-        ax.legend(loc='upper right', fontsize='medium')
+        ax.legend(loc='upper right', fontsize=12)
         
         # Plot delta s2ss (avg non-normalised intra-event per site)
         ax = fig.add_subplot(312)
@@ -1290,7 +1290,7 @@ class IntraEventResidualWithSite(ResidualPlot):
                 ']\n', '] - ').replace('sigma_model','Sigma'),
             self.imt, phi_s2ss["StdDev"])
         ax.set_title(title_string, fontsize=11)
-        ax.legend(loc='upper right', fontsize='medium')
+        ax.legend(loc='upper right', fontsize=12)
         
         # Plot dwoes (remainder residual)
         ax = fig.add_subplot(313)
@@ -1311,7 +1311,7 @@ class IntraEventResidualWithSite(ResidualPlot):
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma'),self.imt,phi_ss)
         ax.set_title(title_string, fontsize=11)
-        ax.legend(loc='upper right', fontsize='medium')
+        ax.legend(loc='upper right', fontsize=12)
         
     def _get_site_data(self):
         """
