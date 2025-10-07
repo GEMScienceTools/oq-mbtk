@@ -164,7 +164,7 @@ def test_and_solve_slip_rate_and_rel_gr_eqns(inversion_tol=1e-10):
         assert np.isclose(resid, 0.0, atol=inversion_tol)
 
 
-def test_make_abs_mfd_eqns_nonnormalized():
+def test_make_abs_mfd_eqns_nonnormalized_incremental():
     mfd = hz.mfd.TruncatedGRMFD(5.0, 8.0, 0.1, 3.61759073, 1.0)
 
     lhs, rhs, err, _ = make_abs_mfd_eqns(
@@ -189,10 +189,9 @@ def test_make_abs_mfd_eqns_nonnormalized_cumulative():
     )
 
     lhs_ = np.array(
-        [[1.0, 1.0, 0.0, 0.0], [1.0, 1.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]
+        [[1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 1.0, 0.0]]
     )
 
-    # rhs_ = np.array([1.20753162e-03, 3.54892200e-04, 8.52639416e-05])
     rhs_ = np.array([0.00410418, 0.00126951, 0.00037311])
 
     np.testing.assert_array_almost_equal(lhs, lhs_)

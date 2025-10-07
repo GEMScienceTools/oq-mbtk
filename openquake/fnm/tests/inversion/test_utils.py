@@ -112,7 +112,6 @@ def test_get_mfd_moment_from_mfd_object():
     mfd = hz.mfd.TaperedGRMFD.from_moment(
         min_mag, max_mag, corner_mag, bin_width, b_val, moment
     )
-    # mfd = hz.mfd.TruncatedGRMFD.from_moment(5.0, 7.1, 0.1, 1.0, moment)
 
     calc_moment = get_mfd_moment(mfd)
 
@@ -124,11 +123,11 @@ def test_get_mag_counts():
     mag_counts_default = get_mag_counts(rups)
     assert mag_counts_default == {6.0: 2, 6.5: 1, 7.0: 1}
 
-    mag_counts_incremental = get_mag_counts(rups, incremental=True)
+    mag_counts_incremental = get_mag_counts(rups, cumulative=False)
     assert mag_counts_incremental == {6.0: 2, 6.5: 1, 7.0: 1}
 
     mag_counts_cumulative = get_mag_counts(rups, cumulative=True)
-    assert mag_counts_cumulative == {6.0: 2, 6.5: 3, 7.0: 4}
+    assert mag_counts_cumulative == {6.0: 4, 6.5: 2, 7.0: 1}
 
 
 class Test3Faults(unittest.TestCase):

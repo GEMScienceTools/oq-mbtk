@@ -312,7 +312,7 @@ def make_abs_mfd_eqns(
 
     # --- broadcast selection matrix (n_rups x n_mags) ---
     if cumulative:
-        sel = M[:, None] <= unique_mags[None, :]
+        sel = M[:, None] >= unique_mags[None, :]
     else:
         sel = M[:, None] == unique_mags[None, :]
 
@@ -365,7 +365,7 @@ def _make_abs_mfd_eqns_old(
     region_name=None,
 ):
     """
-    wtf happened originally here
+    This function is useful as a reference
     """
     mag_counts = get_mag_counts(rups)
     unique_mags = sorted(mag_counts.keys())
@@ -390,7 +390,7 @@ def _make_abs_mfd_eqns_old(
             if i in rup_include_list:
                 if cumulative:
                     for mag in unique_mags:
-                        if rup["M"] <= mag:
+                        if rup["M"] >= mag:
                             mag_rup_idxs[mag].append(i)
                             if rup_fractions is not None:
                                 mag_rup_fracs[mag].append(
