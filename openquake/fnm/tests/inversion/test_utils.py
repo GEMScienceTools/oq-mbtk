@@ -33,7 +33,10 @@ import os
 import pathlib
 import unittest
 
+import numpy as np
 import geopandas as gpd
+
+import openquake.hazardlib as hz
 
 from openquake.fnm.inversion.utils import (
     geom_from_fault_trace,
@@ -41,6 +44,8 @@ from openquake.fnm.inversion.utils import (
     lines_in_polygon,
     get_rupture_displacement,
     weighted_mean,
+    b_mle,
+    get_a_b,
     slip_vector_azimuth,
     check_fault_in_poly,
     faults_in_polies,
@@ -52,13 +57,24 @@ from openquake.fnm.inversion.utils import (
     make_fault_mfd,
     get_mag_counts,
     get_mfd_occurrence_rates,
+    get_mfd_moment,
+    get_mfd_uncertainties,
+    make_cumulative,
     set_single_fault_rupture_rates_by_mfd,
     set_single_fault_rup_rates,
     _get_surface_moment_rate,
     get_fault_moment_rate,
     _get_fault_by_id,
+    get_ruptures_on_fault_df,
     get_ruptures_on_fault,
+    make_rup_fault_lookup,
     get_rup_rates_from_fault_slip_rates,
+    get_earthquake_fault_distances,
+    get_on_fault_likelihood,
+    get_soln_slip_rates,
+    point_to_triangle_distance,
+    calculate_tri_mesh_distances,
+    rescale_mfd,
 )
 
 from openquake.fnm.all_together_now import build_fault_network
@@ -84,6 +100,23 @@ guatemala_fault_network = build_fault_network(
     fault_geojson=guatemala_fault_file,
     settings={'calculate_rates_from_slip_rates': False},
 )
+
+
+def test_get_mfd_moment_from_mfd_object():
+    min_mag = 0.0
+    max_mag = 7.0
+    corner_mag = 6.5
+    bin_width = 0.01
+    b_val = 1.0
+    moment = 1.0e16
+    mfd = hz.mfd.TaperedGRMFD.from_moment(
+        min_mag, max_mag, corner_mag, bin_width, b_val, moment
+    )
+    # mfd = hz.mfd.TruncatedGRMFD.from_moment(5.0, 7.1, 0.1, 1.0, moment)
+
+    calc_moment = get_mfd_moment(mfd)
+
+    np.testing.assert_approx_equal(moment, calc_moment, significant=3)
 
 
 def test_get_mag_counts():
@@ -145,4 +178,4 @@ def test_get_rupture_regions():
         fault_key='subfaults',
     )
 
-    return rup_regions
+    # return rup_regions
