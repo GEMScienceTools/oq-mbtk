@@ -320,13 +320,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                     try:
                         rs_50p_dist = np.exp(f(dist))
                     except:
-                        rtype = config.dist_type
-                        assert rtype not in ["repi"] # Should not be interp issues for repi
-                        r_min = int(r_vals.min())
-                        r_max = int(r_vals.max())
-                        raise ValueError(f"Request spectra distance ({rtype} = {dist} km) is "
-                                         f"outside of {rtype} value range for this ground-"
-                                         f"shaking scenario (min = {r_min} km, max = {r_max} km)")
+                        raise_spectra_dist_error(dist, config.dist_type, r_vals)
                     rs_50p.append(rs_50p_dist)
                     
                     f1 = interpolate.interp1d(r_vals, std[0])
@@ -376,10 +370,6 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 # Update plots
                 update_spectra_plots(ax1, m, dist, n, l, config.dist_list, config.dist_type)
             
-            # Set axis limits and add grid
-            ax1.set_xlim(min(periods), max(periods))
-            ax1.grid(True)
-            
             # Plot logic trees if required
             for idx_gmc, gmc in enumerate(gmc_weights):
                 if gmc_vals[idx_gmc][0] != {}: # If none empty LT
@@ -393,6 +383,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                         sk)
                 
     # Finalise the plots and save fig
+    ax1.set_xlim(min(periods), max(periods))
+    ax1.grid(True)
     if len(mag_list) * len(config.dist_list) == 1:
         bbox_coo = (1.1, 0.5)
         fs = '10'
@@ -1442,6 +1434,21 @@ def save_spectra_plot(f1, obs_spectra, output_dir, eq_id, st_id):
         rec_str = rec_str.replace(' ', '_').replace('-', '_').replace(':', '_')
         out = os.path.join(output_dir, 'ResponseSpectra_' + rec_str + '.png')
         f1.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
+
+
+def raise_spectra_dist_error(dist, dist_type, r_vals):
+    """
+    If there is an interpolation issue when computing the spectra
+    from the attenuation curves (mean for given distance value, for
+    given distance metric), then notify the user by raising an error.
+    """
+    rtype = dist_type
+    assert rtype not in ["repi"] # Should not be interp issues for repi
+    r_min = int(r_vals.min())
+    r_max = int(r_vals.max())
+    raise ValueError(f"Requested spectra distance ({rtype} = {dist} km) is "
+                     f"outside of {rtype} value range for this ground-"
+                     f"shaking scenario (min = {r_min} km, max = {r_max} km)")
 
 
 ### Utils for other plots
