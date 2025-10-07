@@ -328,11 +328,12 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                     sig.append(sigma_dist)
                     
                     if config.nstd != 0:
-                        rs_add_sigma_dist = np.exp(f(dist)+(config.nstd*sigma_dist))
-                        rs_min_sigma_dist = np.exp(f(dist)-(config.nstd*sigma_dist))
+                        rs_add_sigma_dist = np.exp(f(dist)+(config.nstd*sigma_dist))[0]
+                        rs_min_sigma_dist = np.exp(f(dist)-(config.nstd*sigma_dist))[0]
                         rs_ps.append(rs_add_sigma_dist)
                         rs_ms.append(rs_min_sigma_dist)
-                        
+                    
+
                 # Plot individual GMPEs
                 if 'plot_lt_only' not in str(gmpe):
                     ax1.plot(periods,
