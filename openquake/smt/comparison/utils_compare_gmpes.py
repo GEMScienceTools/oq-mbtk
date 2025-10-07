@@ -383,9 +383,11 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                         gmc_vals[idx_gmc],
                         sk)
                 
+            # Add grid and set xlims
+            ax1.set_xlim(min(periods), max(periods))
+            ax1.grid(True)
+
     # Finalise the plots and save fig
-    ax1.set_xlim(min(periods), max(periods))
-    ax1.grid(True)
     if len(mag_list) * len(config.dist_list) == 1:
         bbox_coo = (1.1, 0.5)
         fs = '10'
