@@ -36,14 +36,17 @@ import numpy as np
 
 from openquake.fnm.inversion.soe_builder import (
     make_slip_rate_eqns,
-    get_mag_counts,
     rel_gr_mfd_rates,
     make_rel_gr_mfd_eqns,
+    mean_slip_rate,
+    get_mag_counts,
     make_abs_mfd_eqns,
     make_slip_rate_smoothing_eqns,
+    get_fault_moment,
+    get_slip_rate_fraction,
+    make_fault_mfd_equation_components,
     make_eqns,
     hz,
-    make_fault_mfd_equation_components,
 )
 
 from openquake.fnm.inversion.utils import (
@@ -632,7 +635,6 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             lhs,
             np.array(
                 [
-                    # I'm not sure this is right. why is the top row all zeros?
                     [0.0, 0.0, 0.0, 0.0, 0.0],
                     [1.0, 0.0, 0.0, 0.0, 0.0],
                     [0.0, 0.4997, 0.0, 0.0, 0.0],
@@ -716,6 +718,108 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             mfd=total_abs_mfd,
             fault_abs_mfds=fault_abs_mfds,
             return_sparse=False,
+        )
+
+        np.testing.assert_almost_equal(
+            lhs,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, 1.0, 0.0],
+                    [1.0, 0.0, 1.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 1.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.4997, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.3569],
+                    [0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.5003, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.3573],
+                    [0.0, 0.0, 0.0, 1.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.2858],
+                ]
+            ),
+        )
+
+        np.testing.assert_almost_equal(
+            rhs,
+            np.array(
+                [
+                    4.57959562e-04,
+                    3.63770211e-04,
+                    1.82316986e-04,
+                    1.44819529e-04,
+                    1.28358815e-04,
+                    1.01959031e-04,
+                    5.11005647e-05,
+                    0.00000000e00,
+                    1.28516142e-04,
+                    1.02084001e-04,
+                    5.11631978e-05,
+                    0.00000000e00,
+                    1.02812375e-04,
+                    8.16667726e-05,
+                    4.09303439e-05,
+                    0.00000000e00,
+                ]
+            ),
+            decimal=3,
+        )
+
+        np.testing.assert_almost_equal(
+            err,
+            np.array(
+                [
+                    4.67289943e01,
+                    5.24307939e01,
+                    7.40604649e01,
+                    8.30972084e01,
+                    8.82647205e01,
+                    9.90346453e01,
+                    1.39890155e02,
+                    1.00000000e10,
+                    8.82106779e01,
+                    9.89740084e01,
+                    1.39804503e02,
+                    1.00000000e10,
+                    9.86227943e01,
+                    1.10656595e02,
+                    1.56306595e02,
+                    1.00000000e10,
+                ]
+            ),
+            decimal=3,
+        )
+
+    def test_mean_slip_rate(self):
+        msr = mean_slip_rate(self.rups[4]['faults'], self.faults)
+        np.testing.assert_approx_equal(msr, 1.0)
+
+    def test_get_fault_moment(self):
+        fault_moment = get_fault_moment(self.faults)
+        np.testing.assert_approx_equal(
+            fault_moment, 1.1186199511831996e16, significant=4
+        )
+
+    def test_get_slip_rate_fraction(self):
+        fault_moment = get_fault_moment(self.faults)
+        print(fault_moment)
+        total_abs_mfd = hz.mfd.TaperedGRMFD.from_moment(
+            min_mag=5.9,
+            max_mag=6.6,
+            corner_mag=6.3,
+            bin_width=0.1,
+            b_val=1.0,
+            moment_rate=fault_moment,
+        )
+
+        np.testing.assert_approx_equal(
+            get_slip_rate_fraction(self.faults, total_abs_mfd),
+            1.0,
+            significant=3,
         )
 
 

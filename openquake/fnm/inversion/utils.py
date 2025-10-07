@@ -295,6 +295,7 @@ def make_fault_mfd(
     min_mag=5.0,
     max_mag=8.0,
     bin_width=0.1,
+    corner_mag=7.5,
     moment_rate=None,
 ):
     if moment_rate is None:
@@ -317,12 +318,29 @@ def make_fault_mfd(
             )
         except ValueError:
             mfd = TruncatedGRMFD.from_moment(
-                min_mag=min_mag - 0.5,
+                min_mag=min_mag - bin_width,
                 max_mag=max_mag,
                 bin_width=bin_width,
                 b_val=b_val,
                 moment_rate=moment_rate,
             )
+    elif mfd_type == 'TaperedGRMFD':
+        if (max_mag - corner_mag) < 0.5:
+            corner_mag = max_mag - 0.5
+        if corner_mag < (min_mag + bin_width):
+            corner_mag = min_mag + bin_width + 0.01
+        if (max_mag - min_mag) < bin_width:
+            min_mag = max_mag - bin_width
+
+        mfd = TaperedGRMFD.from_moment(
+            min_mag=min_mag,
+            max_mag=max_mag,
+            corner_mag=corner_mag,
+            bin_width=bin_width,
+            b_val=b_val,
+            moment_rate=moment_rate,
+        )
+
     elif mfd_type == 'YoungsCoppersmith1985MFD':
         if min_mag >= (max_mag - 0.5):
             raise ValueError(
@@ -337,7 +355,7 @@ def make_fault_mfd(
         )
     else:
         raise NotImplementedError(
-            "only truncated and youngscoppersmith for now"
+            "only truncated, tapered, and youngscoppersmith for now"
         )
 
     return mfd
@@ -357,23 +375,35 @@ def get_mag_counts(rups, key="M", cumulative=False):
     return mag_counts
 
 
-def get_mfd_occurrence_rates(mfd, mag_decimals=1, cumulative=False):
+def get_mfd_occurrence_rates(mfd, mag_decimals=None, cumulative=False):
     if hasattr(mfd, "get_annual_occurrence_rates"):
-        mfd_occ_rates = {
-            np.round(r[0], mag_decimals): r[1]
-            for r in mfd.get_annual_occurrence_rates()
-        }
+        mfd_occ_rates = {r[0]: r[1] for r in mfd.get_annual_occurrence_rates()}
     elif isinstance(mfd, dict):
-        mfd_occ_rates = {
-            np.round(M, mag_decimals): rate for M, rate in mfd.items()
-        }
+        mfd_occ_rates = {M: rate for M, rate in mfd.items()}
     else:
         raise ValueError("mfd must be a dictionary or an MFD object")
+
+    if mag_decimals is not None:
+        mfd_occ_rates = {
+            round(m, mag_decimals): r for m, r in mfd_occ_rates.items()
+        }
 
     if cumulative is True:
         mfd_occ_rates = make_cumulative(mfd_occ_rates)
 
     return mfd_occ_rates
+
+
+def get_mfd_moment(mfd, mag_decimals=None):
+    mfd_moment = sum(
+        [
+            mag_to_mo(k) * v
+            for k, v in get_mfd_occurrence_rates(
+                mfd, mag_decimals=mag_decimals
+            ).items()
+        ]
+    )
+    return mfd_moment
 
 
 def get_mfd_uncertainties(mfd, unc_type='pctile'):
@@ -507,12 +537,6 @@ def set_single_fault_rup_rates(
         moment_rate=moment_rate,
         faults_or_subfaults=faults_or_subfaults,
     )
-
-    ## check moment rate
-    # mag_moment = sum(
-    #    mag_to_mo(rup['M']) * rup_rates[rup['idx']] for rup in rups
-    # )
-    # np.testing.assert_almost_equal(mag_moment, moment_rate)
 
     return rup_rates
 

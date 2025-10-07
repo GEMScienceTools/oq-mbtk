@@ -43,6 +43,7 @@ from .utils import (
     get_mfd_occurrence_rates,
     rescale_mfd,
     make_rup_fault_lookup,
+    get_mfd_moment,
     breakpoint,
 )
 from .solver import weights_from_errors
@@ -257,39 +258,6 @@ def mean_slip_rate(fault_sections: list, faults: list):
     return np.sum(slip_rates) / total_area
 
 
-def make_frac_mfd_eqns(rups, faults, mfd, mag_decimals=1, weight=1.0):
-    mag_counts = get_mag_counts(rups)
-    unique_mags = sorted(mag_counts.keys())  # TODO this is not used
-
-    mfd_occ_rates = get_mfd_occurrence_rates(mfd, mag_decimals=mag_decimals)
-
-    weighted_slip_rates = {
-        rup["idx"]: mean_slip_rate(rup["faults"], faults) for rup in rups
-    }
-
-    mfd_slip_rate_fracs = {}
-    for M in mfd_occ_rates.keys():
-        M_rups = [rup for rup in rups if rup["M"] == M]
-        slip_rates = {
-            i: weighted_slip_rates[i]
-            for i in [rup["rup_id"] for rup in M_rups]
-        }
-        slip_rate_fracs = {
-            i: wsr / sum(slip_rates.values()) for i, wsr in slip_rates.items()
-        }
-        mfd_slip_rate_fracs[M] = slip_rate_fracs
-
-    lhs = ssp.eye(len(rups))
-    rhs = np.ones(len(rups))
-
-    for i, rup in enumerate(rups):
-        rhs[i] = (
-            mfd_occ_rates[rup["M"]] * mfd_slip_rate_fracs[rup["M"]][rup["idx"]]
-        )
-
-    return lhs, rhs
-
-
 def make_abs_mfd_eqns(
     rups,
     mfd,
@@ -305,6 +273,9 @@ def make_abs_mfd_eqns(
     Vectorized build of absolute MFD equations.
     Rows = magnitudes, Cols = ruptures.
     """
+
+    # TODO: Cumulative fits don't work well. Need to investigate.
+
     # --- magnitudes present in rups and target MFD rates ---
     # (If you prefer your helper, keep it; np.unique is a drop-in speedup)
     # mag_counts = get_mag_counts(rups)  # current way
@@ -382,7 +353,7 @@ def make_abs_mfd_eqns(
     return abs_mag_eqns, mfd_abs_rhs, mfd_abs_errs_weighted, eq_metadata
 
 
-def _make_abs_mfd_eqns(
+def _make_abs_mfd_eqns_old(
     rups,
     mfd,
     mag_decimals=1,
@@ -522,16 +493,6 @@ def get_fault_moment(faults, shear_modulus=SHEAR_MODULUS):
     fault_moment = np.sum(fault_moments)
 
     return fault_moment
-
-
-def get_mfd_moment(mfd):
-    mfd_moment = sum(
-        [
-            hz.mfd.tapered_gr_mfd.mag_to_mo(k) * v
-            for k, v in get_mfd_occurrence_rates(mfd).items()
-        ]
-    )
-    return mfd_moment
 
 
 def get_slip_rate_fraction(faults, mfd):
