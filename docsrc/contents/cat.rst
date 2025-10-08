@@ -45,6 +45,12 @@ The ISC_GEM catalogue can be parsed to the csv format using the :code:`openquake
 
 .. autofunction:: openquake.cat.parsers.iscgem_parser.parse_iscgem
 
+The :code:`openquake.wkf.catalogue` module contains further useful conversion functions that are used within the SSC workflow, e.g.:
+
+.. autofunction:: openquake.wkf.catalogue.to_df
+
+
+
 Catalogue homogenisation
 ************************
 
@@ -131,7 +137,7 @@ The output of the :code:`merge` function will be two h5 files specifying informa
 Homogenisation
 ==============
 
-The next step is the homogenisation of magnitudes to moment magnitude M_w. The catalogue toolkit provides different tools to help with this. Homogenising magnitudes is normally done using a regression to map from one magnitude type to a desired magnitude type (normally Mw). This requires that an event has been recorded in both magnitudes, and ideally a good number of matching events to ensure a significant result. In the toolkit, we use odr regression with scipy to find the best fit model, with options to fit a simple linear regression, an exponential regression, a polynomial regression, or a bilinear regression with a fixed point of change in slope. The function outputs parameters for the chosen fit, plus uncertainty. If you already have suitable conversion equations, skip to the `Applying homogenisations` subsection. 
+The next step is the homogenisation of magnitudes to moment magnitude M_w. The catalogue toolkit provides different tools to help with this. Homogenising magnitudes is normally done using a regression to map from one magnitude type to a desired magnitude type (normally Mw). This requires that an event has been recorded in both magnitudes, and ideally a good number of matching events to ensure a significant result. In the toolkit, we use odr regression with scipy to find the best fit model, with options to fit a simple linear regression, an exponential regression, a polynomial regression, or a bilinear regression with a fixed point of change in slope. The function outputs parameters for the chosen fit, plus uncertainty. This process can require several iterations of checking the homogenisations and it is not practical or advisable to include it directly within the homogenisation workflow used with the bash script. We recommend instead to keep the regression component seperate from the larger workflow and include the final parameters in the settings file to be passed into the workflow. If you already have suitable conversion equations, skip to the `Applying homogenisations`_ subsection. 
 
 Magnitude regressions
 ---------------------
@@ -252,6 +258,8 @@ This would give us a different fit to our data and a different equation to suppl
 
 Where there are not enough events to allow for a direct regression or we are unhappy with the fit for our data, there are many conversions in the literature which may be useful. This process may take some revising and iterating - it is sometimes very difficult to identify a best fit, especially where we have few datapoints or highly uncertain data. Once we are happy with the fits to our data, we can add the regression equation to the homogenisation .toml file. This process should be repeated for every magnitude we wish to convert to Mw. 
 
+.. _Applying homogenisations:
+
 Applying homogenisations
 ------------------------
 
@@ -301,7 +309,8 @@ Checking for duplicate events
 A common issue when merging catalogues is that there are differences in earthquake metadata in different catalogues. To avoid creating a catalogue with duplicate events, we specify the time and space criteria in the merge stage, so that events that are very close in time and space will not be added to the catalogue.  
 We can check how well we have achieved this by looking at events that are retained in the final catalogue but fall within a certain time and space window. We can use the :code:`check_duplicates` function to do this, which takes in a check.toml file and the homogenised catalogue h5 file.
 
-.. autofunction:: openquake.cat.hmg.check_catalogue
+.. autofunction:: openquake.cat.hmg.check
+	:members:check_catalogue, process
 
 
  A settings file might look like this:
@@ -315,7 +324,8 @@ We can check how well we have achieved this by looking at events that are retain
 
 where delta_ll and dela_t specify the time and space windows (in seconds and degrees respctively) to test for duplicate events. Again, we can specify different time limits and write the limits as functions of magnitudes i.e.:
 
-.. code-block:: ini
+.. code-block:: ini  
+
 	[general]
 	delta_ll = [['1899', '100*m']]
 	delta_t = [['1899', '30*m']]

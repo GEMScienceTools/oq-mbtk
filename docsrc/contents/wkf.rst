@@ -1,7 +1,7 @@
 SSC workflow (wkf) module
 ##########################
 
-The :index:`workflow` utilises the tools in the model builder's toolkit to construct a seismic source model step-by-step. This allows us to create a source model in xml format from a seismic catalogue, a set of source polygons and a file specifying required model parameters. Using the workflow tools, we can easily prepare different versions of the source models, which makes sensitivity analysis easier and allows us to easily build logic tree branches. Here we show the steps required to build a distributed seismicity model with smoothed sources. In practice, the order of the steps is not strictly important so long as e.g. the completeness is performed before the frequency-magnitude distributions (FMDs) are calculated.
+The :index:`workflow` utilises the tools in the model builder's toolkit to construct a seismic source model step-by-step. This allows us to create a source model in xml format from a seismic catalogue, a set of source polygons and a file specifying required model parameters. Using the workflow tools, we can easily prepare different versions of the source models, which makes sensitivity analysis easier and allows us to easily build logic tree branches. Here we show the steps required to build a distributed seismicity model with smoothed sources. In practice, the order of the steps is not strictly important so long as e.g. the completeness is performed before the frequency-magnitude distributions (FMDs) are calculated. You can find more information on the individual functions `here <https://gemsciencetools.github.io/oq-mbtk/contents/mbt.html>`_ 
 
 Some notes on setup
 ********************
@@ -20,12 +20,11 @@ If you are running in a jupyter notebook, we suggest setting up as below, using 
     os.environ['NUMEXPR_MAX_THREADS'] = '8'
 
     # remember to change the path in these lines so they correspond to your computer!
-    BIND = os.path.join('/Users', 'kjohnson', 'GEM','oq-mbtk', 'bin')
-    BIND1 = os.path.join('/Users', 'kjohnson', 'GEM', 'oq-mbtk', 'openquake', 'bin')
-    print(BIND)
+    BIND1 = os.path.join(os.sep, 'Users', 'kjohnson', 'GEM', 'oq-mbtk', 'openquake', 'bin')
     print(BIND1)
 
     # on windows, also add these lines
+    # change for your version/location of Julia!
     #PATH = os.path.join('..', '..', 'AppData', 'Local', 'Programs', 'Julia-1.9.3', 'bin')
     #os.environ["PATH"] = os.environ["PATH"] + PATH
 
@@ -86,7 +85,17 @@ The workflow starts from three inputs as outlined below:
 
 	[sources.38]
 
-The .toml file will be read by different functions at different stages of the workflow. In this example, a source model will consist of sources 26, 34 and 38 from the source polygons, and these are all active shallow crustal sources. If using the ``completeness_analysis`` function, sources will be added to the model after this step, but at least one named source will be required to start the analysis and if there are too few events in a source to establish magnitude of completeness (mc) and GR parameters these sources will be omitted, so best practice remains to specify the sources clearly in the toml. Source names or abbreviations can also be used here - it is not necessary to use only numeric source identifiers. Still, we recommend using a numbering scheme based on a standard format e.g. ASC001 (for source number 1 in active shallow crust), ASC002 and so on.
+The .toml file will be read by different functions at different stages of the workflow. It contains several sections relating to different steps of the process:
+
+	* general settings to apply to all sources (name, bin_width, mmin and rupture_mesh spacing)
+	* settings to use in the smoothing stage
+	* settings to use for calculating completeness (mostly for using the :code:`completeness_analysis` function, see below for details)
+	* default settings
+	* magnitude scaling relationships to use for different tectonic region types.
+
+Underneath these settings, we have headers for the sources we are creating. By running the workflow, we will add information to each of these sources that is necessary for constructing the source xml files. If, for some reason, any necessary data is missing from the sources, the default values in the default section will be used or the model will fail (in the case that the missing parameter is something very crucial, i.e. bgr). For the case of the upper and lower seismogenic depth, all hypocentre depths should fall within this range or the model will not run. Thus the choice of the defaults is important. 
+
+In this example, a source model will consist of sources 26, 34 and 38 from the source polygons, and these are all active shallow crustal sources. If using the ``completeness_analysis`` function, sources will be added to the model after this step, but at least one named source will be required to start the analysis and if there are too few events in a source to establish magnitude of completeness (mc) and GR parameters these sources will be omitted, so best practice remains to specify the sources clearly in the toml. Source names or abbreviations can also be used here - it is not necessary to use only numeric source identifiers. Still, we recommend using a numbering scheme based on a standard format e.g. ASC001 (for source number 1 in active shallow crust), ASC002 and so on.
 
 At various stages of the workflow, values will be added to the .toml file or modified as the model is constructed. 
 
@@ -299,7 +308,7 @@ Finally, we supply two extra paramters to the function directly. Firstly the end
 .. code-block:: python  
     
     fld_box_counting = os.path.join(".", "model", "boxcounting")
-    tmp = os.path.join(BIND, "wkf_boxcounting_h3.jl")
+    tmp = os.path.join(BIND1, "wkf_boxcounting_h3.jl")
     zones_h3_repr = os.path.join(zones_h3_repr, "mapping_h5.csv")
     cmd = f"julia {tmp} {cat} {zones_h3_repr} {config}"
     cmd = f"{cmd} {h3_level} {fld_box_counting} -y 2018 -w \"one\""
@@ -318,7 +327,7 @@ This approach applies Gaussian spatial kernels of fixed distance around each eve
 
     fname_bcounting = os.path.join(".", "model", "boxcounting", f"box_counting_h3_{cat}")
     fname_smoothing = os.path.join(".", "model", "smoothing", "smooth")
-    tmp = os.path.join(BIND1, "wkf_smoothing.jl")
+    tmp = os.path.join(BIND, "wkf_smoothing.jl")
     cmd = f"julia {tmp} {fname_bcounting} {config} {fname_smoothing}"
     p = subprocess.run(cmd, shell=True)
 
@@ -363,11 +372,23 @@ This will output point_src_input for each polygon.
 
 Write to xml
 *************
-Finally, we wish to write our crustal source models to .xml files that can be used in the OpenQuake engine. For this we use the ``create_nrml_sources`` function which takes the point sources we created for each zone in step 11 and other information from the config file to create source models in the specified folder. At this step, it is necessary to have specified several as-yet unused parameters in the config, such as the msr and the mmin, bin_width and rupture_mesh_spacing. 
+Finally, we wish to write our crustal source models to .xml files that can be used in the OpenQuake engine. For this we use the ``create_nrml_sources`` function which takes the point sources we created for each zone in the previous step and other information from the config file to create source models in the specified folder.
+
+First, we must ensure that each source has a tectonic region type. This should correspond to an option in the ``[msr]`` section of the input toml, as the tectonic region will determine the magnitude-scaling relationship to be applied. This should also match branches in the ground motion logic tree. We can set the trt with the ``set_trt`` function:
+
+.. code-block:: python
+	
+	cmd = f"oqm wkf set_trt {config} \"*\" \"Active Shallow Crust\""
+	p = subprocess.run(cmd, shell=True)
+
+In this example, we assign all the sources as Active Shallow Crust. Now we are ready to create the final xml sources to go into our model:
 
 .. code-block:: python  
 
     pattern = os.path.join(folder_point_srcs, "*.csv")
-    folder_oq = os.path.join("./ssm")
+    folder_oq = os.path.join(".", "ssm")
     cmd = f"oqm wkf create_nrml_sources \"{pattern}\" {config} {folder_oq} -a"
     p = subprocess.run(cmd, shell=True)
+
+The ``create_nrml_sources`` function will set the remaining necesary parameters (the mmin, bin-width and rupture mesh spacing) from the general section of the configuration file. 
+
