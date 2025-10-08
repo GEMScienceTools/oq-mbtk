@@ -30,11 +30,13 @@
 # coding: utf-8
 
 import os
+import json
 import pathlib
 import unittest
 
 import numpy as np
 import geopandas as gpd
+from shapely.geometry import Point, LineString
 
 import openquake.hazardlib as hz
 
@@ -94,12 +96,84 @@ from openquake.fnm.tests.inversion.simple_test_data import (
 HERE = pathlib.Path(__file__).parent.absolute()
 test_data_dir = HERE / ".." / 'data'
 
+lil_fault_file = os.path.join(test_data_dir, "lil_test_faults.geojson")
 
 guatemala_fault_file = os.path.join(test_data_dir, "guatemala_faults.geojson")
 guatemala_fault_network = build_fault_network(
     fault_geojson=guatemala_fault_file,
     settings={'calculate_rates_from_slip_rates': False},
 )
+
+
+def test_geom_from_fault_trace():
+    with open(lil_fault_file) as f:
+        gj = json.load(f)
+
+    geom = geom_from_fault_trace(gj['features'][0]['geometry']['coordinates'])
+    ggeom = LineString(
+        [
+            Point(*xy)
+            for xy in zip(
+                [-122.6737, -122.6966, -122.76783, -122.81553, -122.86513],
+                [45.48704, 45.52225, 45.58416, 45.62554, 45.66822],
+            )
+        ]
+    )
+
+    assert geom == geom
+
+
+def test_project_faults_and_polies():
+    pass
+
+
+def test_lines_in_polygon():
+    pass
+
+
+def test_get_rupture_displacement():
+    D = get_rupture_displacement(6.0, 100.0)
+    np.testing.assert_approx_equal(D, 0.35063, significant=3)
+
+
+def test_weighted_mean():
+    w_mean = weighted_mean([80.0, 90.0], [20, 30])
+    assert w_mean == 86.0
+
+
+def test_b_mle():
+    mags = np.array([6.0, 6.0, 6.2, 6.8, 7.0])
+    b = b_mle(mags)
+    np.testing.assert_approx_equal(b, 0.18095603412635491, significant=3)
+
+
+def test_get_a_b():
+    mags = np.array([6.0, 6.0, 6.2, 6.8, 7.0])
+    a, b = get_a_b(mags)
+    np.testing.assert_approx_equal(a, -0.1792658504865239, significant=3)
+    np.testing.assert_approx_equal(b, 0.18095603412635491, significant=3)
+
+
+def test_slip_vector_azimuth():
+    np.testing.assert_approx_equal(
+        slip_vector_azimuth(90.0, 45, 90.0), 0.0, significant=3
+    )
+
+    np.testing.assert_approx_equal(
+        slip_vector_azimuth(45.0, 45, 90.0), 315.0, significant=3
+    )
+
+    np.testing.assert_approx_equal(
+        slip_vector_azimuth(45.0, 45, -90.0), 135.0, significant=3
+    )
+
+    np.testing.assert_approx_equal(
+        slip_vector_azimuth(45.0, 45, 0.0), 225.0, significant=3
+    )
+
+
+def check_fault_in_poly():
+    pass
 
 
 def test_get_mfd_moment_from_mfd_object():
