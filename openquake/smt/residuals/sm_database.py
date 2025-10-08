@@ -469,7 +469,7 @@ class RecordSite(object):
         self.morphology = None
         self.slope = None
 
-    def to_openquake_site(self, missing_vs30=None):
+    def to_openquake_site(self):
         """
         Returns the site as an instance of the :class:
         openquake.hazardlib.site.Site
@@ -477,10 +477,7 @@ class RecordSite(object):
         if self.vs30:
             vs30 = self.vs30
             vs30_measured = self.vs30_measured
-        else:
-            vs30 = missing_vs30
-            vs30_measured = False
-        
+
         if self.z1pt0:
             z1pt0 = self.z1pt0
 
@@ -986,13 +983,13 @@ class GroundMotionDatabase(ContextDB):
         _id = np.argwhere(str_id == np.array(self.site_ids))[0]
         return _id[0]
 
-    def get_site_collection(self, missing_vs30=None):
+    def get_site_collection(self):
         """
         Returns the sites in the database as an instance of the :class:
         openquake.hazardlib.site.SiteCollection
         """
-        return SiteCollection([rec.site.to_openquake_site(missing_vs30)
-                               for rec in self.records])
+        return SiteCollection([
+            rec.site.to_openquake_site() for rec in self.records])
 
     def rank_sites_by_record_count(self, threshold=0):
         """
