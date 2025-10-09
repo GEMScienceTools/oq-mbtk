@@ -3,9 +3,7 @@ Module :module:`openquake.sub.slab.rupture`
 """
 
 import os
-import pathlib
 import re
-import pickle
 import h5py
 import numpy as np
 import rtree
@@ -19,10 +17,9 @@ from openquake.hazardlib.mfd import TruncatedGRMFD
 from openquake.hazardlib.geo.mesh import Mesh
 from openquake.hazardlib.scalerel import get_available_scalerel
 from openquake.hmtk.seismicity.selector import CatalogueSelector
-from openquake.hmtk.parsers.catalogue import CsvCatalogueParser
 from openquake.hazardlib.geo.surface.gridded import GriddedSurface
 
-from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
+from openquake.man.checking_utils.catalogue_utils import load_catalogue
 from openquake.mbt.tools.smooth3d import Smoothing3D
 from openquake.wkf.utils import create_folder
 from openquake.sub.misc.edge import create_from_profiles
@@ -52,7 +49,7 @@ def get_catalogue(cat_pickle_fname, treg_filename=None, label='',
         f.close()
     
     # Loading the catalogue
-    catalogue = _load_catalogue(cat_pickle_fname)
+    catalogue = load_catalogue(cat_pickle_fname)
     if sort_cat is True:
         catalogue.sort_catalogue_chronologically()
     
