@@ -82,13 +82,9 @@ HEADERS = ["event_id",
            "U_lp",
            "V_lp",
            "W_lp",
-           "Shortest_Usable_Period_for_PSA_Ave_Over_Components",
-           "Longest_Usable_Period_for_PSA_Ave_Over_Components"
+           "shortest_usable_period",
+           "longest_usable_period"
            ]
-
-# Manage long cols
-SP = "Shortest_Usable_Period_for_PSA_Ave_Over_Components"
-LP = "Longest_Usable_Period_for_PSA_Ave_Over_Components"
 
 
 class GEMFlatfileParser(SMDatabaseReader):
@@ -161,8 +157,8 @@ class GEMFlatfileParser(SMDatabaseReader):
         Parse a record
         """
         # Waveform ID not provided in file so concatenate Event and Station ID
-        wfid = "_".join([metadata["event_id"], metadata["network_code"],
-                         metadata["station_code"]])
+        wfid = "_".join(
+            [metadata["event_id"], metadata["network_code"], metadata["station_code"]])
         wfid = wfid.replace("-", "_")
 
         # Parse the event metadata
@@ -176,11 +172,11 @@ class GEMFlatfileParser(SMDatabaseReader):
 
         # Parse waveform data
         xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
-
-        # Parse longest and shortest usable periods
-        lp = valid.vfloat(metadata[LP], LP)
-        sp = valid.vfloat(metadata[SP], SP)
         
+        # Shortest and longest usable periods
+        sp = valid.vfloat(metadata['shortest_usable_period'], 'shortest_usable_period')
+        lp = valid.vfloat(metadata['longest_usable_period'], 'longest_usable_period')
+
         return GroundMotionRecord(wfid,
                                   [None, None, None],
                                   event, distances, site,
@@ -206,7 +202,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         eq_lon = valid.longitude(metadata["ev_longitude"])
         eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
-            raise ValueError('Depth missing an events in admitted flatfile')
+            raise ValueError(f'Depth missing for {eq_id} in admitted flatfile')
 
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet
@@ -331,11 +327,15 @@ class GEMFlatfileParser(SMDatabaseReader):
 
         # Vs30
         vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
-        vs30_measured_flag = metadata["vs30_meas_type"]
-        if vs30_measured_flag == "measured":
+        if pd.isnull(vs30):
+            # Need a station vs30 value for residuals (not really, given
+            # some GMMs lack site terms, but good way to prevent confusing
+            # nans in the expected values which appear when computing stats)
+            raise ValueError(f"A vs30 value is missing for {site_id}")
+        if  metadata["vs30_meas_type"] == "measured":
             vs30_measured = 1
         else:
-            vs30_measured = 0 # Either inferred or unknown
+            vs30_measured = 0 # Inferred
 
         # Make the site object
         site = RecordSite(site_id,

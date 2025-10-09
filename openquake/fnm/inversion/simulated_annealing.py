@@ -104,12 +104,29 @@ def rup_rate_likelihood(preds, rhs_vec, rhs_std, like_min=1e-100):
 
 
 @njit
+def weighted_lls_misfit(mult_result, d, w):
+    misfit = np.sum(w * (mult_result - d) ** 2)
+    return misfit
+
+
+@njit
+def weighted_log_lls_misfit(
+    mult_result: float64[:], d: float64[:], w: float64[:], eps: float64 = 1e-30
+):
+    sq_diff = (mult_result - d) ** 2
+    sq_diff[sq_diff < eps] += eps
+    misfit = np.sum(w * np.log(sq_diff))
+    return misfit
+
+
+@njit
 def _eval_x(
     A: spmatrix,
     x: float64[:],
     d: float64[:],
     mult_result: float64[:],
     w: float64[:],
+    misfit_type: str = "linear",
 ):
     # zero out mult_result just in case there are values in the wrong place
     mult_result *= 0.0
@@ -127,8 +144,10 @@ def _eval_x(
 
     cscmatvec(N_col, A.indptr, A.indices, A.data, x, mult_result)
 
-    # likelihood = rup_rate_likelihood(mult_result, d, np.mean(d))
-    misfit = np.sum(w * (mult_result - d) ** 2)
+    if misfit_type == 'linear':
+        misfit = weighted_lls_misfit(mult_result, d, w)
+    elif misfit_type == 'log':
+        misfit = weighted_log_lls_misfit(mult_result, d, w)
 
     return misfit
 
@@ -226,6 +245,7 @@ def _single_thread_anneal(
     replace_frac: float64 = 0.001,
     replace_num: int64 = 0,
     sample_with_T: bool = False,
+    misfit_type: str = 'linear',
 ):
     np.random.seed(seed)
 
@@ -255,7 +275,9 @@ def _single_thread_anneal(
             replace_num=replace_num,
         )
 
-        candidate_misfit = _eval_x(A, candidate_x, d, mult_result, w)
+        candidate_misfit = _eval_x(
+            A, candidate_x, d, mult_result, w, misfit_type=misfit_type
+        )
 
         misfits[i] = candidate_misfit
         misfit_diff = candidate_misfit - current_misfit
@@ -303,6 +325,7 @@ def _parallel_anneal(
     replace_frac: float64 = 0.001,
     replace_num: int64 = 0,
     sample_with_T: bool = False,
+    misfit_type: str = 'linear',
 ):
     best_misfit = current_misfit
 
@@ -329,6 +352,7 @@ def _parallel_anneal(
             replace_frac=replace_frac,
             replace_num=replace_num,
             sample_with_T=sample_with_T,
+            misfit_type=misfit_type,
         )
         thread_final_misfits[i] = thread_misfits[i, -1]
 
@@ -371,6 +395,7 @@ def simulated_annealing(
     replace_frac: float = 0.01,
     replace_num: int = 0,
     sample_with_T: bool = False,
+    misfit_type: str = 'linear',
 ):
     t0 = time.time()
 

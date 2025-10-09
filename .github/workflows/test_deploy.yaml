@@ -40,7 +40,7 @@ jobs:
         sleep 3
         cd openquake
         export MPLBACKEND=Agg
-        pytest -vsx --color=yes cat ghm man mbt sub wkf smt
+        pytest -vsx --color=yes cat ghm man mbi mbt sub wkf smt
   pages:
     name: pages
     runs-on: ubuntu-latest

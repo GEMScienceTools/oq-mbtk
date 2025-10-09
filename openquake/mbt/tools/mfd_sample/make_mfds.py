@@ -175,7 +175,7 @@ def _gen_comple(compl_toml, dec_outdir, compdir, tmpfi):
         years = [c[0] for c in cref]
         years.sort()
 
-    config['completeness']['mags'] = mags
+    config['completeness']['mags'] = [float(x) for x in mags]
     config['completeness']['years'] = years
 
     with open(tmpfi, 'w') as f:

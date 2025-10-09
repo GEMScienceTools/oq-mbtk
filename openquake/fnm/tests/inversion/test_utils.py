@@ -33,6 +33,7 @@ import os
 import pathlib
 import unittest
 
+import geopandas as gpd
 
 from openquake.fnm.inversion.utils import (
     geom_from_fault_trace,
@@ -75,6 +76,14 @@ from openquake.fnm.tests.inversion.simple_test_data import (
 )
 
 HERE = pathlib.Path(__file__).parent.absolute()
+test_data_dir = HERE / ".." / 'data'
+
+
+guatemala_fault_file = os.path.join(test_data_dir, "guatemala_faults.geojson")
+guatemala_fault_network = build_fault_network(
+    fault_geojson=guatemala_fault_file,
+    settings={'calculate_rates_from_slip_rates': False},
+)
 
 
 def test_get_mag_counts():
@@ -93,3 +102,47 @@ class Test3Faults(unittest.TestCase):
     def setUp(self):
         test_data_dir = HERE / ".." / 'data'
         fgj_name = os.path.join(test_data_dir, "motagua_3_faults.geojson")
+
+
+def test_check_faults_in_polies():
+    poly_file = os.path.join(test_data_dir, "guatemala_regions.geojson")
+    poly_gdf = gpd.read_file(poly_file)
+
+    fault_poly_membership = faults_in_polies(
+        guatemala_fault_network['faults'], poly_gdf, fault_id_key="fid"
+    )
+    assert fault_poly_membership == {
+        'ccaf015': ['1'],
+        'ccaf016': ['1'],
+        'ccaf017': ['1'],
+        'ccaf018': ['1'],
+        'ccaf019': ['1'],
+        'ccaf020': ['1'],
+        'ccaf021': ['3'],
+        'ccaf027': ['2', '3'],
+        'ccaf022': ['2'],
+        'ccaf023': ['2'],
+        'ccaf121': ['2'],
+        'ccaf127': ['3'],
+        'ccaf128': ['3'],
+        'ccaf129': ['3'],
+        'ccaf130': ['3'],
+        'ccaf131': ['3'],
+        'ccaf135': ['1'],
+        'ccaf134': ['1'],
+        'ccaf148': ['1'],
+        'ccaf149': ['1'],
+    }
+
+
+def test_get_rupture_regions():
+    poly_file = os.path.join(test_data_dir, "guatemala_regions.geojson")
+    poly_gdf = gpd.read_file(poly_file)
+    rup_regions = get_rupture_regions(
+        guatemala_fault_network['rupture_df_keep'],
+        guatemala_fault_network['subfault_df'],
+        poly_gdf,
+        fault_key='subfaults',
+    )
+
+    return rup_regions
