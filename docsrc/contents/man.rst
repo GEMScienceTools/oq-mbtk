@@ -11,5 +11,5 @@ PSHA input model, like checking the faults within a model, or examining the MFDs
 
 The second set of tools is found within `single_source_utils`, which provides utility functions for specific OpenQuake source typologies.
 
-The third set of tools is found within `general_utils`, which contains general utility functions, such as for the plotting of disaggregation
+The third set of tools is found within `tools`, which contains general utility functions, such as for the plotting of disaggregation
 results, or the extracting of hazard curves from an OQ datastore.
