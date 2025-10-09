@@ -50,12 +50,6 @@ from openquake.cat.regression_models import function_map
 from openquake.cat.isf_catalogue import (Magnitude, Location, Origin,
                                          Event, ISFCatalogue)
 
-try:
-    from mpl_toolkits.basemap import Basemap
-except:
-    print("Basemap not installed or unavailable!")
-    print("Catalogue Plotting Functions will not work")
-
 # RESET Axes tick labels
 matplotlib.rc("xtick", labelsize=14)
 matplotlib.rc("ytick", labelsize=14)
@@ -1472,69 +1466,6 @@ class CatalogueRegressor(object):
             plt.savefig(filename, format=filetype, dpi=dpi,
                         bbox_inches="tight")
 
-
-def plot_catalogue_map(config, catalogue, magnitude_scale=False,
-        color_norm=None, overlay=False, figure_size=(7,8), filename=None,
-        filetype="png", dpi=300):
-    """
-    Creates a map of the catalogue
-    """
-    plt.figure(figsize=figure_size)
-    lat0 = config["llat"] + ((config["ulat"] - config["llat"]) / 2)
-    lon0 = config["llon"] + ((config["ulon"] - config["llon"]) / 2)
-    map1 = Basemap(llcrnrlon=config["llon"], llcrnrlat=config["llat"],
-                   urcrnrlon=config["ulon"], urcrnrlat=config["ulat"],
-                   projection='stere', resolution=config['resolution'],
-                   area_thresh=1000.0, lat_0=lat0, lon_0=lon0)
-    map1.drawcountries()
-    map1.drawmapboundary()
-    map1.drawcoastlines()
-    map1.drawstates()
-    parallels = np.arange(config["llat"],
-                          config["ulat"] + config["parallel"],
-                          config["parallel"])
-    meridians = np.arange(config["llon"],
-                          config["ulon"] + config["meridian"],
-                          config["meridian"])
-    map1.drawparallels(parallels, color=[0.5, 0.5, 0.5],
-                       labels=[1, 0, 0, 0], fontsize=12)
-    map1.drawmeridians(meridians, color=[0.5, 0.5, 0.5],
-                       labels=[0, 0, 0, 1], fontsize=12)
-    map1.drawmapboundary(fill_color='#C2DFFF')
-    map1.fillcontinents(color='wheat', lake_color="#C2DFFF")
-    lon, lat = map1(catalogue.origins["longitude"].values,
-                    catalogue.origins["latitude"].values)
-    if magnitude_scale:
-        magnitudes = []
-        mag_grps = catalogue.magnitudes.groupby("originID")
-        for key in catalogue.origins.originID.values:
-            if key in catalogue.magnitudes.originID.values:
-                grp = mag_grps.get_group(key)
-                if magnitude_scale in grp.magType.values:
-                    magnitudes.append(
-                        grp[grp.magType==magnitude_scale].value.values[0])
-                else:
-                    magnitudes.append(1.0)
-        #print magnitudes
-        magnitudes = np.array(magnitudes) ** 2.0
-    else:
-        magnitudes = 10.0
-
-    map1.scatter(lon, lat,
-                 marker="o",
-                 s=magnitudes,
-                 c=catalogue.origins["depth"].values,
-                 norm=color_norm,
-                 alpha=1.0,
-                 linewidths=0.1,
-                 edgecolor="w",
-                 zorder=5)
-    cbar = map1.colorbar()
-    cbar.set_label("Depth", fontsize=14)
-    if filename:
-        plt.savefig(filename, format=filetype, dpi=dpi)
-    if not overlay:
-        plt.show()
 
 def plot_catalogue_map_gmt(config, catalogue, projection='-JM15',
         lat_lon_spacing=2., filename='catalogue.pdf', magnitude_scale=False):
