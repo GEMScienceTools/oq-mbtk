@@ -1,16 +1,31 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+# Copyright (C) 2014-2025 GEM Foundation
+#
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import re
 import toml
-import pandas as pd
-import numpy as np
 import subprocess
 
-from openquake.man.tools.csv_output import (get_disagg_header_info, 
-                                            get_rlzs_mde, get_mean_mde, 
-                                            mean_mde_for_gmt)
 from openquake.baselib import sap
+
+from openquake.man.utilities.csv_output import (get_disagg_header_info, 
+                                                           mean_mde_for_gmt)
+
 
 """
 used to plot mean disaggregation by MDE results using GMT
@@ -64,10 +79,9 @@ def plot_gmt(fname, fout, settings_fname=None):
         name of file with gmt settings; optional, 
         not currently very useful
     """ 
-    
     cmds = []
     
-    # set plot defaults    
+    # Set plot defaults    
     stt_default = {'MAP_GRID_CROSS_SIZE_PRIMARY':'0.2i',
                  'MAP_FRAME_TYPE': 'PLAIN',
                  'PS_MEDIA': 'a4',
@@ -85,19 +99,19 @@ def plot_gmt(fname, fout, settings_fname=None):
     
     VIEW = stt_plot['VIEW'] 
     
-    # get header from disagg output
+    # Get header from disagg output
     with open(fname) as f:
         header = f.readline()
         
-    # create color palette
+    # Create color palette
     lim = get_disagg_header_info(header, 'eps_bin_edges=[')[-1]
     LIM="-{}/{}/1".format(lim, lim)
     CPTT1="./tmp/rel.cpt"
     if not os.path.exists('tmp'):
         os.makedirs('tmp')   
     cmds.append('gmt makecpt -Cpolar -T{} > {}'.format(LIM,CPTT1))
-                
-    # get other limits           
+             
+    # Get other limits           
     cmd = 'gmt info {}.csv -I0.1'.format(fout)
     extinfo = subprocess.check_output(cmd, shell=True).decode("utf-8").strip()
     maxmag = float(extinfo.split('/')[1])
@@ -123,7 +137,7 @@ def plot_gmt(fname, fout, settings_fname=None):
     ZLIM = float(ZRA.split('/')[1])*1.2
     EXT = '-R{}/{}/{}/{}/0.0/{}'.format(mags[0], mags[-1], dists[0], dists[-1], ZLIM)
                 
-    # create gmt script
+    # Create gmt script
     cmds.append('gmt begin {} png'.format(fout))
     
     cmd = 'gmt psxyz {}.csv {} {} -JZ5 {} -C{} -t5 '.format(fout, PRO, EXT, VIEW, CPTT1)
@@ -160,18 +174,16 @@ def plot_disagg_MDE(fname, poe, imt, location, settings_fname, threshold):
     :param float threshold:  
         contribution included in output if above this value
     """
-    
-    # format outputs to be plotted by GMT
+    # Format outputs to be plotted by GMT
     imt_short = re.sub('[\W_]+', '', imt)
     fout = '{}-{}-{}-mde'.format(location, poe, imt_short)
     mean_mde_for_gmt(fname, fout+'.csv', poe, imt, threshold)    
     
-    # make plot
+    # Make plot
     plot_gmt(fname, fout, settings_fname)
 
 
-def main(fname, poe, imt, *, location='site', 
-         settings_fname=None, threshold=1e-10):
+def main(fname, poe, imt, *, location='site', settings_fname=None, threshold=1e-10):
     """
     plots mean disaggregation by magnitude-distance-epsilon
     
@@ -180,9 +192,12 @@ def main(fname, poe, imt, *, location='site',
     python plot_disagg_MDE.py ../tests/tools/case_8/expected/Mag_Dist_Eps-mean-0.csv 0.002105 SA\(0.1\)
 
     """ 
-    
-    plot_disagg_MDE(fname, poe, imt, location=location,
-              settings_fname=settings_fname, threshold=float(threshold))
+    plot_disagg_MDE(fname,
+                    poe,
+                    imt,
+                    location=location,
+                    settings_fname=settings_fname,
+                    threshold=float(threshold))
 
 
 main.fname = 'Name of the file with disaggregation results'
