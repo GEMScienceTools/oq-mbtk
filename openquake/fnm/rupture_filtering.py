@@ -208,13 +208,13 @@ def get_rupture_plausibilities(
         #    no_connection_val=connection_angle_threshold,
         # )
 
-        plausibilities.loc[i][
-            "connection_distance"
-        ] = connection_distance_plausibility(
-            distances.loc[i],
-            function_type=connection_distance_function,
-            dist_threshold=connection_distance_threshold,
-            prob_threshold=connection_distance_plausibility_threshold,
+        plausibilities.loc[i]["connection_distance"] = (
+            connection_distance_plausibility(
+                distances.loc[i],
+                function_type=connection_distance_function,
+                dist_threshold=connection_distance_threshold,
+                prob_threshold=connection_distance_plausibility_threshold,
+            )
         )
 
         plausibilities.loc[i]["slip_azimuth"] = slip_azimith_plausibility(
@@ -335,8 +335,8 @@ def filter_proportionally_to_plausibility(rup_df, plausibility, seed=None):
     if seed is not None:
         np.random.seed(seed)
     rnds = np.random.rand(rup_df.shape[0])
+    rup_df["plausibility"] = plausibility
 
     keep_df = rup_df[plausibility >= rnds]
-    keep_df["plausibility"] = plausibility[plausibility >= rnds]
 
     return keep_df
