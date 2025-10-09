@@ -221,11 +221,6 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
         idx_m = ngawest2.loc[ngawest2['Ry 2']==-999].index
         ngawest2.loc[idx_m, 'Ry 2'] = None
-        
-        # Remove records with no vs30)
-        idx_m = ngawest2.loc[ngawest2['Vs30 (m/s) selected for analysis']==-999].index
-        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
-        ngawest2_vert=ngawest2_vert.drop(idx_m).reset_index(drop=True)
     
         # Replace -999 in 'Owner' with unknown network code
         idx_m = ngawest2.loc[ngawest2['Owner']=='-999'].index
@@ -416,6 +411,11 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
         # Vs30
         vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
+        if pd.isnull(vs30):
+            # Need a station vs30 value for residuals (not really, given
+            # some GMMs lack site terms, but good way to prevent confusing
+            # nans in the expected values which appear when computing stats)
+            raise ValueError(f"A vs30 value is missing for {site_id}")
         vs30_measured_flag = metadata["vs30_meas_type"]
         if vs30_measured_flag == "measured":
             vs30_measured = 1

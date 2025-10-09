@@ -178,6 +178,8 @@ def get_rupture(lon,
 
 def att_curves(gmpe,
                mag,
+               lon,
+               lat,
                depth,
                ztor,
                aratio,
@@ -222,8 +224,8 @@ def att_curves(gmpe,
         raise ValueError(msg)
     
     # Get rupture
-    rup = get_rupture(0.0, # Arbitrary lon
-                      0.0, # Arbitrary lat
+    rup = get_rupture(lon,
+                      lat,
                       depth,
                       msr=rup_msr,
                       mag=mag,
@@ -390,23 +392,19 @@ def mgmpe_check(gmpe):
                 
         # Al Atik 2015 sigma model
         if 'al_atik_2015_sigma' in gmpe:
-            kwargs['sigma_model_alatik2015'] = {
-                "tau_model": "global", "ergodic": False}
+            kwargs['sigma_model_alatik2015'] = {"tau_model": "global", "ergodic": False}
             
         # Fix total sigma per imt
         if 'fix_total_sigma' in gmpe:
-            kwargs['set_fixed_total_sigma'] = {
-                'total_sigma': fixed_sigma_vector}
+            kwargs['set_fixed_total_sigma'] = {'total_sigma': fixed_sigma_vector}
 
         # Partition total sigma using a specified ratio of within:between
         if 'with_betw_ratio' in gmpe:
-            kwargs['add_between_within_stds'] = {
-                'with_betw_ratio': with_betw_ratio}
+            kwargs['add_between_within_stds'] = {'with_betw_ratio': with_betw_ratio}
 
         # Set epsilon for tau and use instead of total sigma
         if 'set_between_epsilon' in gmpe:
-            kwargs['set_between_epsilon'] = {'epsilon_tau':
-                                             between_epsilon}
+            kwargs['set_between_epsilon'] = {'epsilon_tau': between_epsilon}
             
         # Add delta to total sigma
         if 'add_delta_sigma_to_total_sigma' in gmpe:
@@ -414,28 +412,23 @@ def mgmpe_check(gmpe):
                 
         # Set total sigma to sqrt(tau**2 + delta**2)
         if 'set_total_sigma_as_tau_plus_delta' in gmpe:
-            kwargs['set_total_std_as_tau_plus_delta'
-                   ] = {'delta': total_set_to_tau_and_delta}
+            kwargs['set_total_std_as_tau_plus_delta'] = {'delta': total_set_to_tau_and_delta}
         
         # Scale median by constant factor over all imts
         if 'median_scaling_scalar' in gmpe:
-            kwargs['set_scale_median_scalar'] = {'scaling_factor':
-                                                 median_scalar}
+            kwargs['set_scale_median_scalar'] = {'scaling_factor': median_scalar}
 
         # Scale median by imt-dependent factor
         if 'median_scaling_vector' in gmpe:
-            kwargs['set_scale_median_vector'] = {'scaling_factor':
-                                                 median_vector}
+            kwargs['set_scale_median_vector'] = {'scaling_factor': median_vector}
 
         # Scale sigma by constant factor over all imts
         if 'sigma_scaling_scalar' in gmpe:
-            kwargs['set_scale_total_sigma_scalar'] = {
-                'scaling_factor': sigma_scalar}
+            kwargs['set_scale_total_sigma_scalar'] = {'scaling_factor': sigma_scalar}
 
         # Scale sigma by imt-dependent factor
         if 'sigma_scaling_vector' in gmpe:
-            kwargs['set_scale_total_sigma_vector'] = {
-                'scaling_factor': sigma_vector}
+            kwargs['set_scale_total_sigma_vector'] = {'scaling_factor': sigma_vector}
 
         # CY14SiteTerm
         if 'CY14SiteTerm' in gmpe: kwargs['cy14_site_term'] = {}
@@ -443,9 +436,11 @@ def mgmpe_check(gmpe):
         # BA08SiteTerm
         if 'BA08SiteTerm' in gmpe: kwargs['ba08_site_term'] = {}
 
+        # BSSA14SiteTerm
+        if "BSSA14SiteTerm" in gmpe: kwargs['bssa14_site_term'] = {}
+
         # NRCan15SiteTerm (Regular)
-        if ('NRCan15SiteTerm' in gmpe and
-                'NRCan15SiteTermLinear' not in gmpe):
+        if ('NRCan15SiteTerm' in gmpe and 'NRCan15SiteTermLinear' not in gmpe):
             kwargs['nrcan15_site_term'] = {'kind': 'base'}
 
         # NRCan15SiteTerm (linear)
@@ -453,12 +448,10 @@ def mgmpe_check(gmpe):
             kwargs['nrcan15_site_term'] = {'kind': 'linear'}
 
         # CB14 basin term
-        if 'CB14BasinTerm' in gmpe:
-            kwargs['cb14_basin_term'] = {}
+        if 'CB14BasinTerm' in gmpe: kwargs['cb14_basin_term'] = {}
 
         # M9 basin adjustment
-        if 'M9BasinTerm' in gmpe:
-            kwargs['m9_basin_term'] = {}
+        if 'M9BasinTerm' in gmpe: kwargs['m9_basin_term'] = {}
         
         gmm = mgmpe.ModifiableGMPE(**kwargs)
 
@@ -482,3 +475,116 @@ def mgmpe_check(gmpe):
         gmm = valid.gsim(gmpe_clean)
 
     return gmm
+
+
+def get_imtl_unit(i):
+    """
+    Return a string of the intensity measure type's physical units of
+    measurement
+    """
+    if str(i) in ['PGD', 'SDi']:
+        unit = 'cm' # PGD, inelastic spectral displacement
+    elif str(i) in ['PGV']:
+        unit = 'cm/s' # PGV
+    elif str(i) in ['IA']:
+        unit = 'm/s' # Arias intensity
+    elif str(i) in ['RSD', 'RSD595', 'RSD575', 'RSD2080', 'DRVT']:
+        unit = 's' # Relative significant duration, DRVT
+    elif str(i) in ['CAV']:
+        unit = 'g-sec' # Cumulative absolute velocity
+    elif str(i) in ['MMI']:
+        unit = 'MMI' # Modified Mercalli Intensity
+    elif str(i) in ['FAS', 'EAS']:
+        unit = str(i) + ' (Hz)' # Fourier/Eff. Amp. Spectrum
+    else:
+        if str(i) not in ["PGA", "AvgSA"]:
+            assert "SA" in str(i)
+        unit = 'g' # PGA, SA, AvgSA
+
+    return unit
+
+
+def reformat_att_curves(att_curves, out=None):
+    """
+    Export the attenuation curves into a CSV for the given
+    config (i.e. run parameters).
+    """
+    # Get the key describing the vs30 + truncation level
+    params_key = pd.Series(att_curves.keys()).values[0]
+
+    # Then get the values per gmm (per imt-mag combination)
+    vals = att_curves[params_key]['gmm att curves per imt-mag']
+
+    # Now get the curves into a dictionary format
+    store = {}
+    for imt in vals.keys():
+        unit = get_imtl_unit(imt)
+        for scenario in vals[imt]:
+            curves = vals[imt][scenario]
+            for gmpe in curves: 
+                # First per GMM get medians and sigmas
+                if "(km)" not in gmpe:
+                    key = f"{imt} ({unit}), {scenario}, {gmpe}"
+                    key = key.replace('\n', ' ')
+                    store[f"{key} median"] = curves[gmpe][f'median ({unit})']
+                    store[f"{key} sigmas"] = curves[gmpe]['sigma (ln)']
+                # Then get the distance for given scenario
+                else:
+                    dkey = f"values of {gmpe} for {scenario}"
+                    store.setdefault(dkey, curves[gmpe])
+                    
+    # Now into dataframe
+    df = pd.DataFrame(store)
+
+    # And export if required
+    if out is not None:
+        df.to_csv(out, index=False)
+
+    return df
+
+
+def reformat_spectra(spectra, out=None):
+    """
+    Export the response spectra into a CSV for the given
+    config (i.e. run parameters).
+    """
+    store = {}
+    eps = spectra['nstd']
+    branches = ['median', 'median plus sigma', 'median minus sigma']
+    for key in spectra.keys():
+        # Don't need weighted GMMs (only used for computing aggregated LTs)
+        if key in ["periods", "nstd"] or "_wei" in key:
+            continue
+        # Weighted gmm LTs
+        if 'gmc' in key:
+            for sc in spectra[key]:
+                for idx_br, br in enumerate(spectra[key][sc]):
+                    if br == {}:
+                        continue # Empty dict if no epsilon applied
+                    s_key = f"{key}, {branches[idx_br]} (+/- {eps} epsilon) (g), {sc}"
+                    store[s_key] = np.array(list(br.values()))
+        else:
+            # Individual gmms
+            for gmm in spectra[key]:
+                for sc in spectra[key][gmm]:
+                    if key == "add":
+                        branch = "median plus sigma"
+                    elif key == "med":
+                        branch = "median"
+                    else:
+                        assert key == "min"
+                        branch = "median minus sigma"
+                    assert 'lt_weight_gmc' in gmm
+                    s_key = f"{gmm}, {branch} (+/- {eps} epsilon) (g), {sc}"
+                    s_key = s_key.replace("\n", "")
+                    store[s_key] = spectra[key][gmm][sc]
+                    
+    # Make df
+    df = pd.DataFrame(store, index=spectra['periods'])
+    df.index.name = "Period (s)"
+
+    # Export if required
+    if out is not None:
+        df.to_csv(out, index=True)
+
+    return df

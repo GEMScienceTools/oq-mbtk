@@ -578,18 +578,15 @@ class AddPGV(HorizontalMotion):
             velocity, _ = utils_imts.get_velocity_displacement(
                 self.fle[accel_loc].attrs["Time-step"],
                 self.fle[accel_loc][()])
-
             vel_dset = self.fle[time_series_location].create_dataset(
                 "Velocity",
                 (len(velocity),),
                 dtype=float)
-
         else:
             velocity = self.fle[time_series_location + "/Velocity"][()]
 
         pgv = np.max(np.fabs(velocity))
-        pgv_dset = self.fle[target_location].create_dataset("PGV", (1,),
-                                                            dtype=float)
+        pgv_dset = self.fle[target_location].create_dataset("PGV", (1,), dtype=float)
         pgv_dset.attrs["Units"] = "cm/s/s"
         pgv_dset[:] = pgv
         return pgv
@@ -613,11 +610,11 @@ class AddResponseSpectrum(HorizontalMotion):
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
         sax, say = utils_imts.get_response_spectrum_pair(x_acc[:],
-                                                  x_acc.attrs["Time-step"],
-                                                  y_acc[:],
-                                                  y_acc.attrs["Time-step"],
-                                                  self.periods,
-                                                  self.damping)
+                                                         x_acc.attrs["Time-step"],
+                                                         y_acc[:],
+                                                         y_acc.attrs["Time-step"],
+                                                         self.periods,
+                                                         self.damping)
         sa_hor = ORDINARY_SA_COMBINATION[self.component](sax, say)
         dstring = "damping_" + str(int(100.0 * self.damping)).zfill(2)
         nvals = len(sa_hor["Acceleration"])
@@ -686,9 +683,9 @@ class AddGMRotDppSpectrum(AddResponseSpectrum):
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
 
-        gmrotdpp = utils_imts.gmrotdpp(x_acc[:], x_acc.attrs["Time-step"],
-                                y_acc[:], y_acc.attrs["Time-step"],
-                                self.periods, percentile, self.damping)
+        gmrotdpp = utils_imts.gmrotdpp(x_acc[:], x_acc.attrs["Time-step"], 
+                                       y_acc[:], y_acc.attrs["Time-step"],
+                                       self.periods, percentile, self.damping)
         dstring = "damping_" + str(int(100.0 * self.damping)).zfill(2)
         nvals = len(gmrotdpp)
         # Acceleration
@@ -720,8 +717,8 @@ class AddRotDppSpectrum(AddResponseSpectrum):
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
         rotdpp = utils_imts.rotdpp(x_acc[:], x_acc.attrs["Time-step"],
-                            y_acc[:], y_acc.attrs["Time-step"],
-                            self.periods, percentile, self.damping)[0]
+                                   y_acc[:], y_acc.attrs["Time-step"],
+                                   self.periods, percentile, self.damping)[0]
         dstring = "damping_" + str(int(100.0 * self.damping)).zfill(2)
         nvals = len(rotdpp["Pseudo-Acceleration"])
         # Acceleration
@@ -730,8 +727,7 @@ class AddRotDppSpectrum(AddResponseSpectrum):
                 "Acceleration")
         else:
             acc_grp = self.fle["IMS/H/Spectra/Response/Acceleration"]
-        acc_cmp_grp = acc_grp.create_group("RotD" + 
-                                           str(int(percentile)).zfill(2))
+        acc_cmp_grp = acc_grp.create_group("RotD" + str(int(percentile)).zfill(2))
         acc_dset = acc_cmp_grp.create_dataset(dstring, (nvals,), dtype=float)
         acc_dset.attrs["Units"] = "cm/s/s"
         acc_dset[:] = rotdpp["Pseudo-Acceleration"]
@@ -753,8 +749,8 @@ class AddGMRotIppSpectrum(AddResponseSpectrum):
         x_acc = self.fle["Time Series/X/Original Record/Acceleration"]
         y_acc = self.fle["Time Series/Y/Original Record/Acceleration"]
         sa_hor = utils_imts.gmrotipp(x_acc[:], x_acc.attrs["Time-step"],
-                              y_acc[:], y_acc.attrs["Time-step"],
-                              self.periods, percentile, self.damping)
+                                     y_acc[:], y_acc.attrs["Time-step"],
+                                     self.periods, percentile, self.damping)
         nvals = len(sa_hor["Acceleration"])
         dstring = "damping_" + str(int(100.0 * self.damping)).zfill(2)
         # Acceleration
@@ -804,9 +800,7 @@ def add_horizontal_im(database,
     """
     nrecs = len(database.records)
     for iloc, record in enumerate(database.records):
-        print("Processing %s (Record %s of %s)" % (record.datafile, 
-                                                   iloc + 1,
-                                                   nrecs))
+        print("Processing %s (Record %s of %s)" % (record.datafile, iloc + 1, nrecs))
         fle = h5py.File(record.datafile, "r+")
         add_recursive_nameset(fle, "IMS/H/Spectra/Response")
         fle["IMS/H/"].create_group("Scalar")
@@ -820,28 +814,24 @@ def add_horizontal_im(database,
             elif len(intensity_measure.split("GMRotD")) > 1:
                 # GMRotDpp
                 percentile = float(intensity_measure.split("GMRotD")[1])
-                i_m = AddGMRotDppSpectrum(fle, intensity_measure, periods, 
-                                          float(damping) / 100.)
+                i_m = AddGMRotDppSpectrum(
+                    fle, intensity_measure, periods, float(damping) / 100.)
                 i_m.add_data(percentile)
             elif len(intensity_measure.split("RotD")) > 1:
                 # RotDpp
                 percentile = float(intensity_measure.split("RotD")[1])
-                i_m = AddRotDppSpectrum(fle, intensity_measure, periods, 
-                                          float(damping) / 100.)
+                i_m = AddRotDppSpectrum(
+                    fle, intensity_measure, periods, float(damping) / 100.)
                 i_m.add_data(percentile)
             elif intensity_measure in SCALAR_IMS:
                 # Is a scalar value
-                i_m = SCALAR_IM_COMBINATION[intensity_measure](fle,
-                    component,
-                    periods,
-                    float(damping) / 100.)
+                i_m = SCALAR_IM_COMBINATION[intensity_measure](
+                    fle, component, periods, float(damping) / 100.)
                 i_m.add_data()
             elif intensity_measure in SPECTRAL_IMS:
                 # Is a normal spectrum combination
-                i_m = SPECTRUM_COMBINATION[intensity_measure](fle,
-                    component,
-                    periods,
-                    float(damping) / 100.)
+                i_m = SPECTRUM_COMBINATION[intensity_measure](
+                    fle, component, periods, float(damping) / 100.)
                 i_m.add_data()
             else:
                 raise ValueError("Unrecognised Intensity Measure!")

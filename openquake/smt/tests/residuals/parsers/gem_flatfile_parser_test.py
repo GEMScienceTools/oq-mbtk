@@ -69,7 +69,7 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
         # the constructed db is functioning correctly
         residuals = res.Residuals(self.gmpe_list, self.imts)
         residuals.compute_residuals(db, component="rotD50")
-
+        
         del parser
 
     @classmethod
