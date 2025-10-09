@@ -20,7 +20,7 @@ import os
 import shutil
 import unittest
 
-from openquake.man.general_utils.plot_3d_disagg import disagg_MRE, disagg_MLL, disagg_TLL
+from openquake.man.tools.plot_3d_disagg import disagg_MRE, disagg_MLL, disagg_TLL
 
 
 base = os.path.dirname(__file__)
@@ -31,9 +31,9 @@ class TestPlotDisaggMRE(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.fname = os.path.join(base, "data_plot_disagg_test", "calc_767.hdf5")
-        cls.out_mre = os.path.join(base, "..", "..", "general_utils", "disagg_Mag_Dist_Eps_calc_767")
-        cls.out_mll = os.path.join(base, "..", "..", "general_utils", "disagg_Mag_Lon_Lat_calc_767")
-        cls.out_tll = os.path.join(base, "..", "..", "general_utils", "disagg_TRT_Lon_Lat_calc_767")
+        cls.out_mre = os.path.join(base, "..", "..", "tools", "disagg_Mag_Dist_Eps_calc_767")
+        cls.out_mll = os.path.join(base, "..", "..", "tools", "disagg_Mag_Lon_Lat_calc_767")
+        cls.out_tll = os.path.join(base, "..", "..", "tools", "disagg_TRT_Lon_Lat_calc_767")
 
     def test_plot_disagg_MRE(self):
         """
