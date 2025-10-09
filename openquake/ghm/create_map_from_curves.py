@@ -30,8 +30,9 @@ import os
 import glob
 import numpy as np
 import geopandas as gpd
+
 from openquake.baselib import sap
-from openquake.man.utilities import csv_output_utils as csvt
+from openquake.man.general_utils import csv_output_utils as csvt
 
 
 def read_hazard_curve_files(path_in, prefix=''):
