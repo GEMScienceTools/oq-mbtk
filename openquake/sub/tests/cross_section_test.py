@@ -16,7 +16,7 @@ from openquake.utils import are_equal_ignoring_line_endings
 
 BASE_PATH = os.path.dirname(__file__)
 CRUST_DATA_PATH = os.path.join(BASE_PATH, 'data', 'crust', 'crust_except.xyz')
-CRUST_DATA_PATH_IDL = os.path.join(BASE_PATH, 'data', 'crust'
+CRUST_DATA_PATH_IDL = os.path.join(BASE_PATH, 'data', 'crust',
                                    'crust_except_idl.xyz')
 
 
