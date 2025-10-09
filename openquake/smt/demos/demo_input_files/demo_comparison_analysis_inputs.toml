@@ -9,8 +9,7 @@ dist_type = 'repi' # Specify distance metric for trellis and response spectra
 dist_list = [10, 100, 250] # Distance intervals for use in spectra plots
 Nstd = 0 # Truncation for GMM sigma distribution
 
-# Specify site properties (vs30 must be specified - the others are proxied if key is missing)
-[site_properties]
+[site_properties] # Specify site properties (vs30 must be specified - the others are proxied if key is missing)
 vs30 = 800
 z1pt0 = -999  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
 z2pt5 = -999  # (km) - if -999 compute from each GMM's own vs30 to z2pt5 relationship
@@ -19,8 +18,10 @@ volc_back_arc = false # true or false
 eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
 
 [source_properties] # Characterise EQ as finite rupture
-strike = -999
-dip = -999
+lon = 0
+lat = 0
+strike = 0
+dip = 45
 rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
 mags = [5,6,7] # mags used only for trellis and response spectra
 depths = [20,25,30] # depth per magnitude for trellis and response spectra
@@ -32,7 +33,7 @@ trt = -999 # Either -999 to use provided aratio OR specify a trt string to assig
 mmin = 5
 mmax = 7
 spacing = 0.1
-depths_for_euclidean = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
 gmpe_labels = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CB14', 'AK14']
 
 [models] # Specify GMMs
