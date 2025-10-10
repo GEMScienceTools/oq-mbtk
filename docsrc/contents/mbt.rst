@@ -26,6 +26,14 @@ Catalogue tools
    :members: extract, to_df, from_df, create_subcatalogues, get_dataframe, create_gcmt_files
 
 
+Tectonic regionalisation tools
+==============================
+These are used in conjunction with the `subduction tools <https://gemsciencetools.github.io/oq-mbtk/contents/sub.html>`_ for classifying events in subduction regions. 
+
+.. autoclass:: openquake.mbt.tools.tr.SetSubductionEarthquakes
+   :members: classify
+
+
 MFD functions
 =============
 
