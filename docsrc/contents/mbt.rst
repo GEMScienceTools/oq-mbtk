@@ -26,11 +26,12 @@ Catalogue tools
    :members: extract, to_df, from_df, create_subcatalogues, get_dataframe, create_gcmt_files
 
 
-Tectonic regionalisation tools
+Tectonic regionalisation tools  
 ==============================
+
 These are used in conjunction with the `subduction tools <https://gemsciencetools.github.io/oq-mbtk/contents/sub.html>`_ for classifying events in subduction regions. 
 
-.. autoclass:: openquake.mbt.tools.tr.SetSubductionEarthquakes
+.. autoclass:: openquake.mbt.tools.tr.set_subduction_earthquakes.SetSubductionEarthquakes
    :members: classify
 
 
@@ -75,30 +76,30 @@ Fault modeling tools
 
 The fault modelling tools require a dictionary of inputs describing the fault. The functions use the following default if this is not provided: 
 
-.. codeblock:: python
+.. code-block:: python  
 
-defaults = {'name': 'unnamed',
-            'b_value': 1.,
-            'bin_width': 0.1,
-            'm_min': 4.0,
-            'm_max': None,
-            'm_char': None,
-            'm_cli': 6.0,
-            'm_upper': 10.,
-            'slip_class': 'mle',
-            'aseismic_coefficient': 0.,
-            'upper_seismogenic_depth': 0.,
-            'lower_seismogenic_depth': 35.,
-            'rupture_mesh_spacing': 2.,
-            'rupture_aspect_ratio': 2.,
-            'minimum_fault_length': 5.,
-            'tectonic_region_type': 'Active Shallow Crust',
-            'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
-            'magnitude_scaling_relation': 'Leonard2014_Interplate',
-            'width_scaling_relation': 'Leonard2014_Interplate',
-            'subsurface_length': False,
-            'rigidity': 32e9,
-            'mfd_type': 'DoubleTruncatedGR'
+   defaults = {'name': 'unnamed',
+               'b_value': 1.,
+               'bin_width': 0.1,
+               'm_min': 4.0,
+               'm_max': None,
+               'm_char': None,
+               'm_cli': 6.0,
+               'm_upper': 10.,
+               'slip_class': 'mle',
+               'aseismic_coefficient': 0.,
+               'upper_seismogenic_depth': 0.,
+               'lower_seismogenic_depth': 35.,
+               'rupture_mesh_spacing': 2.,
+               'rupture_aspect_ratio': 2.,
+               'minimum_fault_length': 5.,
+               'tectonic_region_type': 'Active Shallow Crust',
+               'temporal_occurrence_model': hz.tom.PoissonTOM(1.0),
+               'magnitude_scaling_relation': 'Leonard2014_Interplate',
+               'width_scaling_relation': 'Leonard2014_Interplate',
+               'subsurface_length': False,
+               'rigidity': 32e9,
+               'mfd_type': 'DoubleTruncatedGR'
             }
 
 
