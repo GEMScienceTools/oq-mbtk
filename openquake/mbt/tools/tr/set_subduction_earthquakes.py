@@ -30,7 +30,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import logging
-from decimal import Decimal, getcontext
 
 from scipy.interpolate import RBFInterpolator
 from openquake.mbt.tools.tr.catalogue import get_catalogue
@@ -43,10 +42,10 @@ from openquake.sub.utils import (_read_edges,
                                  plot_complex_surface)
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
-getcontext().prec = 4 
+
 # Buffer around the brounding box
-#DELTA = 0.3
-DELTA = 1
+DELTA = 0.3
+
 
 class SetSubductionEarthquakes:
     """
@@ -87,16 +86,16 @@ class SetSubductionEarthquakes:
         self.treg_filename = treg_filename
         self.distance_folder = distance_folder
         self.edges_folder = edges_folder
-        self.distance_buffer_below = Decimal(distance_buffer_below)
-        self.distance_buffer_above = Decimal(distance_buffer_above)
+        self.distance_buffer_below = distance_buffer_below
+        self.distance_buffer_above = distance_buffer_above
         self.catalogue_filename = catalogue_filename
         self.lower_depth = lower_depth
         self.upper_depth = upper_depth
         self.log_fname = log_fname
         self.low_year = low_year
         self.upp_year = upp_year
-        self.low_mag = Decimal(low_mag)
-        self.upp_mag = Decimal(upp_mag)
+        self.low_mag = float(low_mag)
+        self.upp_mag = float(upp_mag)
 
     def classify(self, compute_distances, remove_from, surftype='ComplexFault'):
         """
@@ -118,7 +117,7 @@ class SetSubductionEarthquakes:
         catalogue_filename = self.catalogue_filename
         lower_depth = self.lower_depth
         if lower_depth is None:
-            lower_depth = 400.
+            lower_depth = 400
         upper_depth = self.upper_depth
         if upper_depth is None:
             upper_depth = 0
@@ -176,12 +175,10 @@ class SetSubductionEarthquakes:
         # Set variables used in griddata
         data = np.array([mesh.lons.flatten().T, mesh.lats.flatten().T]).T
         values = mesh.depths.flatten().T
-        depths_dec = [Decimal(x) for x in values] 
-        depths = np.array(depths_dec)
-        
+
         ddd = np.array([mesh.lons.flatten().T,
                         mesh.lats.flatten().T,
-                        depths]).T
+                        mesh.depths.flatten()]).T
         if self.label not in flog.keys():
             grp.create_dataset('mesh', data=ddd)
 
@@ -308,21 +305,20 @@ class SetSubductionEarthquakes:
         idxa = []
         for srfd, subd, dept in zip(surf_dist, sub_depths, cat.data['depth']):
             if np.isfinite(srfd) & np.isfinite(subd) & np.isfinite(dept):
-                if (Decimal(srfd) < min(distance_buffer_below,
-                                      distance_buffer_above) * Decimal(0.90)):
+                if (float(srfd) < min(distance_buffer_below,
+                                      distance_buffer_above) * 0.90):
                     idxa.append(True)
-                elif ((Decimal(srfd) < distance_buffer_below) &
-                      (Decimal(subd) < Decimal(dept))):
+                elif ((float(srfd) < distance_buffer_below) &
+                      (float(subd) < float(dept))):
                     idxa.append(True)
-                elif ((Decimal(srfd) < distance_buffer_above) &
-                      (Decimal(subd) >= Decimal(dept))):
+                elif ((float(srfd) < distance_buffer_above) &
+                      (float(subd) >= float(dept))):
                     idxa.append(True)
                 else:
                     idxa.append(False)
             else:
                 idxa.append(False)
         idxa = np.array(idxa)
-        print(idxa)
 
         # Check the size of lists
         assert len(idxa) == len(cat.data['longitude']) == len(idxs)
