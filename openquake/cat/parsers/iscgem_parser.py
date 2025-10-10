@@ -49,12 +49,10 @@ def parse_iscgem(fname_in, fname_out):
             if line.startswith("#"):
                 lineNumber = lineNumber + 1
     
-    df = pd.read_csv(fname_in, low_memory=False, skiprows = lineNumber - 1, delimiter=',')
-    print(lineNumber)
+    df = pd.read_csv(fname_in, low_memory=False, skiprows = lineNumber, delimiter=',')
     # First strip whitespace 
     df.columns = df.columns.str.replace(' ', '')
-    print(df.columns)
-    df.columns[0].removeprefix('#')
+    df.columns = df.columns.str.replace('#', '')
     df['date'] = pd.to_datetime(df['date'])
     
     # Creating time-date columns
