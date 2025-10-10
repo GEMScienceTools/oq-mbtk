@@ -1,7 +1,7 @@
 CAtalogue Toolkit (cat) module
 ##############################
 
-Catalogue formats and parsers
+Catalogue formats and parsers  
 *****************************
 
 The :index:`Catalogue Toolkit` module provides functionalities for the compilation of a homogenised catalogue starting from a collection of catalogues with different origins and magnitudes.
@@ -51,12 +51,12 @@ The :code:`openquake.wkf.catalogue` module contains further useful conversion fu
 
 
 
-Catalogue homogenisation
+Catalogue homogenisation  
 ************************
 
  The easiest way to build a homogenised catalogue within this framework is to run a bash script which includes the required inputs for each stage of the model and to specify the parameters for the merge, homogenise and check steps with a toml file each. Using the bash script and the toml files makes this process reproducible and makes it easier to review the steps taken to create a homogenised catalogue. We demonstrate below how to set this up, but individual steps can also be called directly in python if preffered. 
 
-Setting up a bash script (optional but recommended)
+Setting up a bash script (optional but recommended)  
 ===================================================
 
 The bash script specifies all file locations and steps for generating a homogenised model. At each step, we provide a different .toml file specifying the necessary parameters. If you have all the neccessary files set out as below (and named run_all.sh) you should have no problems in running the script with :code:`./run_all.sh`. 
@@ -303,14 +303,16 @@ The actual homogenisation step is carried out by calling
 :code:`oqm cat homogenise $ARG1 $ARG2 $ARG3`
 as in the bash script example, where `$ARG1` is the homogenisation toml file and and `$ARG2` and `$ARG3` are the hdf5 file outputs from the merge step, describing the origins and magnitude information for the merged catalogue respectively.
 
-Checking for duplicate events
+Checking for duplicate events  
 =============================
 
 A common issue when merging catalogues is that there are differences in earthquake metadata in different catalogues. To avoid creating a catalogue with duplicate events, we specify the time and space criteria in the merge stage, so that events that are very close in time and space will not be added to the catalogue.  
 We can check how well we have achieved this by looking at events that are retained in the final catalogue but fall within a certain time and space window. We can use the :code:`check_duplicates` function to do this, which takes in a check.toml file and the homogenised catalogue h5 file.
 
-.. autofunction:: openquake.cat.hmg.check
-	:members:check_catalogue, process
+.. autofunction:: openquake.cat.hmg.check.check_catalogue
+
+.. autofunction:: openquake.cat.hmg.check.process
+
 
 
  A settings file might look like this:
