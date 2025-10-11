@@ -1,0 +1,61 @@
+openquake.sub.plotting package
+==============================
+
+Submodules
+----------
+
+openquake.sub.plotting.plot\_2pt5\_model module
+-----------------------------------------------
+
+.. automodule:: openquake.sub.plotting.plot_2pt5_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.plotting.plot\_2pt5\_model\_mayavi module
+-------------------------------------------------------
+
+.. automodule:: openquake.sub.plotting.plot_2pt5_model_mayavi
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.plotting.plot\_cross\_section module
+--------------------------------------------------
+
+.. automodule:: openquake.sub.plotting.plot_cross_section
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.plotting.plot\_multiple\_cross\_sections module
+-------------------------------------------------------------
+
+.. automodule:: openquake.sub.plotting.plot_multiple_cross_sections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.plotting.plot\_multiple\_cross\_sections\_map module
+------------------------------------------------------------------
+
+.. automodule:: openquake.sub.plotting.plot_multiple_cross_sections_map
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.sub.plotting.tools module
+-----------------------------------
+
+.. automodule:: openquake.sub.plotting.tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.sub.plotting
+   :members:
+   :undoc-members:
+   :show-inheritance:
