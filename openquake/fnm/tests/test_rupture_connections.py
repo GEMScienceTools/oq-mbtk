@@ -73,8 +73,8 @@ from openquake.fnm.rupture_connections import (
     rdist_to_dist_matrix,
     get_mf_distances_from_adj_matrix,
     make_binary_adjacency_matrix_sparse,
-    _latlon_to_xyz,
-    _xyz_to_latlon,
+    _lonlat_to_xyz,
+    _xyz_to_lonlat,
     _geog_vec_to_xyz,
     intersection_pt,
     find_intersection_angle,
@@ -1071,6 +1071,22 @@ class Test3Faults(unittest.TestCase):
 
         np.testing.assert_array_equal(bin_adj_mat, bin_adj_mat_)
 
+    def test_make_binary_adjacency_matrix_sparse(self):
+        dist_mat = dok_array(
+            np.array([[0.0, 0.0, 23.5, 0.0], [1.0, 2.0, 3.0, 4.0]])
+        )
+
+        bin_adj_mat = make_binary_adjacency_matrix_sparse(dist_mat, 10.0)
+
+        bin_adj_mat_ = {
+            (1, 0): 1,
+            (1, 1): 1,
+            (1, 2): 1,
+            (1, 3): 1,
+        }
+
+        assert dict(bin_adj_mat) == bin_adj_mat_
+
     @unittest.skip("Deprecated function")
     def test_get_proximal_rup_angles(self):
         all_subs = [
@@ -1424,7 +1440,7 @@ class TestRuptureAngle(unittest.TestCase):
         assert ov5[0] == 'equality'
         np.testing.assert_almost_equal(ov5[1], 21.302702515507917, decimal=3)
 
-    def test_filter_bin_adj_matrix_by_rupture_overlap(self):
+    def test_filter_bin_adj_matrix_by_rupture_overlap_strike_slip(self):
         filtered_bin_adj_mat, rup_angles = (
             filter_bin_adj_matrix_by_rupture_overlap(
                 self.fnn['single_rup_df'],
@@ -1437,6 +1453,10 @@ class TestRuptureAngle(unittest.TestCase):
         )
 
         _rup_angles = {
+            (3, 111): (
+                (-94.09127222911088, 36.15837942558471),
+                23.72541541759415,
+            ),
             (3, 123): (
                 (-94.23744951464562, 35.96268215874638),
                 172.46575156350337,
@@ -1449,17 +1469,37 @@ class TestRuptureAngle(unittest.TestCase):
                 (-93.3857279349451, 36.40540484288613),
                 172.39265427405473,
             ),
-            (40, 27): (
-                (-93.3857279349451, 36.40540484288613),
-                172.39265427405473,
+            (111, 123): (  # not ss
+                (-93.98590224542299, 36.2177880383831),
+                16.229116005034143,
+            ),
+            (111, 136): (  # not ss
+                (-95.47421682875286, 35.361624710523586),
+                10.688976730137199,
+            ),
+            (111, 3): (  # not both ss
+                (-94.09127222911088, 36.15837942558471),
+                23.72541541759415,
+            ),
+            (123, 3): (
+                (-94.23744951464562, 35.96268215874638),
+                172.46575156350337,
             ),
             (86, 16): (
                 (-92.9550071372123, 35.43749999300131),
                 170.06010702131718,
             ),
-            (123, 3): (
-                (-94.23744951464562, 35.96268215874638),
-                172.46575156350337,
+            (40, 27): (
+                (-93.3857279349451, 36.40540484288613),
+                172.39265427405473,
+            ),
+            (123, 111): (
+                (-93.98590224542299, 36.2177880383831),
+                16.229116005034143,
+            ),
+            (136, 111): (
+                (-95.47421682875286, 35.361624710523586),
+                10.688976730137199,
             ),
         }
         for rup, angles in rup_angles.items():
@@ -1471,12 +1511,113 @@ class TestRuptureAngle(unittest.TestCase):
 
         filt_bin_mat_adj_dict = {k: v for k, v in filtered_bin_adj_mat.items()}
         _filt_bin_mat_adj_dict = {
+            (3, 111): 1,
             (3, 123): 1,
             (16, 86): 1,
             (27, 40): 1,
+            (111, 123): 1,
+            (111, 136): 1,
+            (111, 3): 1,
             (123, 3): 1,
             (86, 16): 1,
             (40, 27): 1,
+            (123, 111): 1,
+            (136, 111): 1,
         }
 
         assert filt_bin_mat_adj_dict == _filt_bin_mat_adj_dict
+
+    def test_filter_bin_adj_matrix_by_rupture_overlap_all(self):
+        filtered_bin_adj_mat, rup_angles = (
+            filter_bin_adj_matrix_by_rupture_overlap(
+                self.fnn['single_rup_df'],
+                self.fnn['subfaults'],
+                self.fnn['bin_dist_mat'],
+                strike_slip_only=False,
+                threshold_overlap=20.0,
+                threshold_angle=45.0,
+            )
+        )
+
+        _rup_angles = {
+            (3, 111): (
+                (-94.09127222911088, 36.15837942558471),
+                23.72541541759415,
+            ),
+            (3, 123): (
+                (-94.23744951464562, 35.96268215874638),
+                172.46575156350337,
+            ),
+            (16, 86): (
+                (-92.9550071372123, 35.43749999300131),
+                170.06010702131718,
+            ),
+            (27, 40): (
+                (-93.3857279349451, 36.40540484288613),
+                172.39265427405473,
+            ),
+            (111, 123): (
+                (-93.98590224542299, 36.2177880383831),
+                16.229116005034143,
+            ),
+            (111, 136): (
+                (-95.47421682875286, 35.361624710523586),
+                10.688976730137199,
+            ),
+            (111, 3): (
+                (-94.09127222911088, 36.15837942558471),
+                23.72541541759415,
+            ),
+            (123, 3): (
+                (-94.23744951464562, 35.96268215874638),
+                172.46575156350337,
+            ),
+            (86, 16): (
+                (-92.9550071372123, 35.43749999300131),
+                170.06010702131718,
+            ),
+            (40, 27): (
+                (-93.3857279349451, 36.40540484288613),
+                172.39265427405473,
+            ),
+            (123, 111): (
+                (-93.98590224542299, 36.2177880383831),
+                16.229116005034143,
+            ),
+            (136, 111): (
+                (-95.47421682875286, 35.361624710523586),
+                10.688976730137199,
+            ),
+        }
+
+        for rup, angles in rup_angles.items():
+            for i in [0, 1]:
+                np.testing.assert_almost_equal(
+                    _rup_angles[rup][i], angles[i], decimal=3
+                )
+        assert set(rup_angles.keys()) == set(_rup_angles.keys())
+
+        _filt_bin_mat_adj_dict = {
+            (3, 123): 1,
+            (16, 86): 1,
+            (27, 40): 1,
+            (111, 123): 1,
+            (123, 3): 1,
+            (86, 16): 1,
+            (40, 27): 1,
+            (123, 111): 1,
+        }
+
+        assert dict(filtered_bin_adj_mat) == _filt_bin_mat_adj_dict
+
+
+def test__lat_lon_to_xyz():
+    xyz = _latlon_to_xyz(-122.606, 45.49)
+
+    breakpoint()
+
+
+def test__lat_lon_to_xyz_roundtrip():
+    lon = -122.606
+    lat = 45.49
+    xyz = _latlon_to_xyz(lon, lat)
