@@ -460,10 +460,8 @@ Comparing GMPEs
         trt = -999 # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
         [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
-        mmin = 5
-        mmax = 7
-        spacing = 0.1
-        depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+        mag_spacing = 0.1
+        mags_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
         gmpe_labels = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CB14', 'AK14']
 
         [models] # Specify GMMs

@@ -188,14 +188,14 @@ class Configurations(object):
         matrix plots and agglomerative clustering dendrograms get the magnitudes
         and assign a depth for each.
         """
-        # Make array of the magnitudes
-        mag_params = config_file['euclidean_analysis']
-        mags_eucl = np.arange(
-            mag_params['mmin'], mag_params['mmax'], mag_params['spacing'])
+        # Euclidean params
+        eucl_params = config_file['euclidean_analysis']
+        mags = np.array([m[0] for m in eucl_params['mags_depths']])
+        mags_eucl = np.arange(mags.min(), mags.max(), eucl_params['mag_spacing'])
 
         # Get depths per mag value
         depth_per_mag = pd.DataFrame(
-            config_file['euclidean_analysis']['depths'], columns=['mag','depth'])
+            config_file['euclidean_analysis']['mags_depths'], columns=['mag','depth'])
         
         # Assign the depth to each mag in mags_eucl based on closest mag in depth_per_mag
         depths_eucl = np.zeros(len(mags_eucl)) 
@@ -203,7 +203,7 @@ class Configurations(object):
             closest = (np.abs(depth_per_mag['mag'] - mag)).idxmin()
             depths_eucl[idx_mag] = depth_per_mag.loc[closest, 'depth']
        
-        return  mags_eucl, pd.Series(depths_eucl)
+        return mags_eucl, pd.Series(depths_eucl)
 
 
 def plot_trellis(filename, output_directory):
