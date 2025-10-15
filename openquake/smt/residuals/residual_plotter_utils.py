@@ -63,11 +63,13 @@ def _get_histogram_data(data, bin_width=0.5):
     """
     Retreives the histogram of the residuals
     """
-    # ignore nans otherwise max and min raise:
-    bins = np.arange(np.floor(np.nanmin(data)),
-                     np.ceil(np.nanmax(data)) + bin_width,
-                     bin_width)
-    # work on finite numbers to prevent np.histogram raising:
+    # Ignore nans otherwise max and min raise
+    bins = np.arange(
+        np.floor(np.nanmin(data)),
+        np.ceil(np.nanmax(data)) + bin_width,
+        bin_width
+        )
+    # Work on finite numbers to prevent np.histogram raising
     vals = np.histogram(data[np.isfinite(data)], bins, density=True)[0]
     return vals.astype(float), bins
 
@@ -109,7 +111,7 @@ def _get_lh_histogram_data(lh_values, bin_width=0.1):
     Retreives the histogram of the likelihoods
     """
     bins = np.arange(0.0, 1.0 + bin_width, bin_width)
-    # work on finite numbers to prevent np.histogram raising:
+    # Work on finite numbers to prevent np.histogram raising:
     vals = np.histogram(
         lh_values[np.isfinite(lh_values)], bins, density=True)[0]
     return vals.astype(float), bins
