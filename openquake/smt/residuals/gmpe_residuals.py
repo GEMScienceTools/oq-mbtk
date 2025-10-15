@@ -662,13 +662,7 @@ class Residuals(object):
     
     def get_edr_values_wrt_imt(self, bandwidth=0.01, multiplier=3.0):
         """
-        Calculates the EDR values for each GMPE according to the Euclidean
-        Distance Ranking method of Kale & Akkar (2013) for each imt
-
-        Kale, O., and Akkar, S. (2013) "A New Procedure for Selecting and
-        Ranking Ground Motion Predicion Equations (GMPEs): The Euclidean
-        Distance-Based Ranking Method", Bulletin of the Seismological Society
-        of America, 103(2A), 1069 - 1084.
+        Calculates the EDR values for each GMPE but per IMT instead.
 
         :param float bandwidth:
             Discretisation width
