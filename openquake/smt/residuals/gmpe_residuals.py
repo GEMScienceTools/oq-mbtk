@@ -86,6 +86,7 @@ def get_gmm_from_toml(key, config):
         value += '\n' + str(toml.dumps(config['models'][key]))
     return valid.gsim(value.strip())
 
+
 def get_gmpe_str(gmpe):
     """
     Return a string of the GMPE to use for printing/exporting
@@ -750,8 +751,9 @@ class Residuals(object):
     ### Stochastic Area (Sunny et al. 2021) functions
     def get_stochastic_area_wrt_imt(self):
         """
-        Calculates the stochastic area values per imt for each GMPE according
-        to the Stochastic Area Ranking method of Sunny et al. (2021).
+        Calculates the stochastic area values per GMPE for each IMT
+        according to the Stochastic Area Ranking method of Sunny et
+        al. (2021).
         
         Sunny, J., M. DeAngelis, and B. Edwards (2021). Ranking and Selection
         of Earthquake Ground Motion Models Using the Stochastic Area Metric,
@@ -760,10 +762,14 @@ class Residuals(object):
         # Create store of values per gmm
         stoch_area_store = {gmpe: {} for gmpe in self.gmpe_list}
         
-        # Get the observed and predicted per gmm per imt
+        # Iterate over the GMMs
         for gmpe in self.gmpe_list:
             stoch_area_wrt_imt = {}
+
+            # Iterate over the IMTs
             for imtx in self.imts:
+
+                # Stack values
                 obs = np.array([], dtype=float)
                 exp = np.array([], dtype=float)
                 std = np.array([], dtype=float)
@@ -805,8 +811,7 @@ class Residuals(object):
 
     def cdf(self, data):
         """
-        Get the cumulative distribution function (cdf) of the ground-motion
-        values
+        Get the cumulative distribution function (cdf).
         """
         x1 = np.sort(data)
         x = x1.tolist()
@@ -818,7 +823,7 @@ class Residuals(object):
     
     def step_data(self, x,y):
         """
-        Step the cdf to obtain the ecdf
+        Step the cdf to obtain the ecdf.
         """
         xx, yy = x*2, y*2
         xx.sort()
@@ -828,7 +833,7 @@ class Residuals(object):
     def get_cdf_data(self, data, step_flag=False):
         """
         Get the cdf (for the predicted ground-motions) or the ecdf (for the
-        observed ground-motions)
+        observed ground-motions).
         """
         x, p = self.cdf(data)
         if step_flag is True:
