@@ -449,10 +449,7 @@ def get_res_df(var_type, residuals, gmpe, imt, distance_type):
         # Store the eq df
         store.append(eq_df)
 
-    # Into single df of all eqs
-    df = pd.concat(store).sort_values(by="vals")
-
-    return df
+    return pd.concat(store).sort_values(by="vals")
 
 
 def bin_res_wrt_var(residuals, gmpe, imt, var_type, distance_type='repi'):
