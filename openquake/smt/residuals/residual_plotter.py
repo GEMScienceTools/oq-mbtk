@@ -127,33 +127,6 @@ class BaseResidualPlot(object):
         if self.show:
             plt.show()
 
-    def get_plot_data(self):
-        """
-        Builds the data to be plotted.
-        This is an abstract-like method which subclasses need to implement.
-
-        :return: a dictionary with keys denoting the residual types
-        of the given GMPE (`self.gmpe`) and IMT (`self.imt`).
-        Each key (residual type) needs then to be mapped to a residual data
-        dict with at least the mandatory keys 'x', 'y' ,'xlabel' and 'ylabel'
-        (See :module:`openquake.smt.residuals.residual_plotter_utils` for a list of available
-        functions that return these kind of dict's and should be in principle
-        be called here)
-        """
-        raise NotImplementedError()
-
-    def get_subplots_rowcols(self):
-        """
-        Configures the plot layout (subplots grid).
-        This is an abstract-like method which subclasses need to implement.
-
-        :return: the tuple (row, col) denoting the layout of the
-        figure to be displayed. The returned tuple should be consistent with
-        the residual types available for the given GMPE (`self.gmpe`) and
-        IMT (`self.imt`)
-        """
-        raise NotImplementedError()
-
     def _residual_plot(self, ax, res_data, res_type):
         """
         Plots the residual data on the given axis. This method should in
@@ -167,26 +140,6 @@ class BaseResidualPlot(object):
         title_string = self.get_axis_title(res_data, res_type)
         if title_string:
             ax.set_title(title_string, **self.title_styling_kwargs)
-
-    def draw(self, ax, res_data, res_type):
-        """
-        Draws the given residual data into the matplotlib `Axes` object `ax`.
-        This is an abstract-like method which subclasses need to implement.
-
-        :param ax: the matplotlib `Axes` object. this method should call
-            the Axes plot method such as, e.g. `ax.plot(...)`,
-            `ax.semilogx(...)` and so on
-        :param res_data: the residual data to be plotted. It's one of
-            the values of the dict returned by `self.get_plot_data`
-            (`res_type` is the corresponding key): it is a dict with
-            at least the mandatory keys 'x', 'y' (both numeric arrays),
-            'xlabel' and 'ylabel' (both strings). Other keys, if present,
-            should be handled by sub-classes implementation, if needed
-        :param res_type: string denoting the residual type such as, e.g.
-            "Inter event". It's one of the keys of the dict returned by
-            `self.get_plot_data` (`res_data` is the corresponding value)
-        """
-        raise NotImplementedError()
 
     def get_axis_xlim(self, res_data, res_type):
         """
