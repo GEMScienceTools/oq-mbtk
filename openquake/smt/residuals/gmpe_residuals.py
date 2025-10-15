@@ -631,14 +631,29 @@ class Residuals(object):
         :param float multiplier:
             "Multiplier of standard deviation (equation 8 of Kale and Akkar)
         """
+        # Set store
         edr_values = {gmpe: {} for gmpe in self.gmpe_list}
+
+        # Iterate over the GMMs
         for gmpe in self.gmpe_list:
-            obs, exp, std = self._get_edr_inputs(gmpe)
-            results = self._compute_edr(obs,
-                                        exp,
-                                        std,
-                                        bandwidth,
-                                        multiplier)
+            
+            # Set empty arrays
+            obs = np.array([], dtype=float)
+            exp = np.array([], dtype=float)
+            std = np.array([], dtype=float)
+
+            # Stack over the IMTs
+            for imtx in self.imts:
+                for context in self.contexts:
+                    keep = context["Retained"][imtx]
+                    obs = np.hstack([obs, np.log(context["Observations"][imtx][keep])])
+                    exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
+                    std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
+
+            # Now compute EDR
+            results = self._compute_edr(obs, exp, std, bandwidth, multiplier)
+
+            # Store
             edr_values[gmpe]["MDE Norm"] = results[0]
             edr_values[gmpe]["sqrt Kappa"] = results[1]
             edr_values[gmpe]["EDR"] = results[2]
@@ -661,59 +676,35 @@ class Residuals(object):
         :param float multiplier:
             "Multiplier of standard deviation (equation 8 of Kale and Akkar)
         """
-        self.edr_values_wrt_imt = {gmpe: {} for gmpe in self.gmpe_list}
+        # Set store
+        self.edr_values_wrt_imt = {gmpe: {key: {
+            imtx: None for imtx in self.imts} for key in [
+                "MDE Norm", "sqrt Kappa", "EDR"]} for gmpe in self.gmpe_list}
+
+        # Iterate over the GMMs
         for gmpe in self.gmpe_list:
-            obs_wrt_imt, exp_wrt_imt, std_wrt_imt = self._get_edr_inputs_wrt_imt(gmpe)
-            results = self._compute_edr_wrt_imt(obs_wrt_imt,
-                                                exp_wrt_imt,
-                                                std_wrt_imt,
-                                                bandwidth,
-                                                multiplier)
-            self.edr_values_wrt_imt[gmpe]["MDE Norm"] = results[0]
-            self.edr_values_wrt_imt[gmpe]["sqrt Kappa"] = results[1]
-            self.edr_values_wrt_imt[gmpe]["EDR"] = results[2]
+
+            # Iterate over IMTs
+            for imtx in self.imts:
+                obs = np.array([], dtype=float)
+                exp = np.array([], dtype=float)
+                std = np.array([], dtype=float)
+                for context in self.contexts:
+                    keep = context["Retained"][imtx]
+                    obs_stack = np.log(context["Observations"][imtx][keep])
+                    obs = np.hstack([obs, obs_stack])
+                    exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
+                    std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
+               
+                # Compute EDR for given IMT
+                results = self._compute_edr(obs, exp, std, bandwidth, multiplier)
+                
+                # Store
+                self.edr_values_wrt_imt[gmpe]["MDE Norm"][imtx] = results[0]
+                self.edr_values_wrt_imt[gmpe]["sqrt Kappa"][imtx]= results[1]
+                self.edr_values_wrt_imt[gmpe]["EDR"][imtx] = results[2]
 
         return self.edr_values_wrt_imt
-
-    def _get_edr_inputs(self, gmpe):
-        """
-        Extract the observed ground motions, expected and total standard
-        deviation for the GMPE
-        """
-        obs = np.array([], dtype=float)
-        exp = np.array([], dtype=float)
-        std = np.array([], dtype=float)
-        for imtx in self.imts:
-            for context in self.contexts:
-                keep = context["Retained"][imtx]
-                obs = np.hstack([obs, np.log(context["Observations"][imtx][keep])])
-                exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
-                std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
-
-        return obs, exp, std
-    
-    def _get_edr_inputs_wrt_imt(self, gmpe):
-        """
-        Extract the observed ground motions, expected and total standard
-        deviation for the GMPE (per imt)
-        """  
-        # Get EDR values per imt
-        obs_wrt_imt, exp_wrt_imt, std_wrt_imt = {}, {}, {}
-        for imtx in self.imts:
-            obs = np.array([], dtype=float)
-            exp = np.array([], dtype=float)
-            std = np.array([], dtype=float)
-            for context in self.contexts:
-                keep = context["Retained"][imtx]
-                obs_stack = np.log(context["Observations"][imtx][keep])
-                obs = np.hstack([obs, obs_stack])
-                exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
-                std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
-            obs_wrt_imt[imtx] = obs
-            exp_wrt_imt[imtx] = exp
-            std_wrt_imt[imtx] = std
-
-        return obs_wrt_imt, exp_wrt_imt, std_wrt_imt
     
     def _compute_edr(self, obs, exp, std, bandwidth=0.01, multiplier=3.0):
         """
@@ -746,55 +737,7 @@ class Residuals(object):
         mde_norm = np.sqrt(inv_n * np.sum(mde ** 2.))
         edr = np.sqrt(kappa * inv_n * np.sum(mde ** 2.))
 
-        return mde_norm, np.sqrt(kappa), edr            
-    
-    def _compute_edr_wrt_imt(self,
-                             obs_wrt_imt,
-                             exp_wrt_imt,
-                             std_wrt_imt,
-                             bandwidth=0.01,
-                             multiplier=3.0):
-        """
-        Calculate the Euclidean Distanced-Based Rank for a set of
-        observed and expected values from a particular GMPE over IMTs
-        """
-        mde_wrt_imt = {}
-        edr_wrt_imt = {}
-        kap_wrt_imt = {}
-        for imtx in self.imts:
-            obs = obs_wrt_imt[imtx]
-            exp = exp_wrt_imt[imtx]
-            std = std_wrt_imt[imtx]
-            finite = np.isfinite(obs) & np.isfinite(exp) & np.isfinite(std)
-            if not finite.any():
-                kappa, mde_norm, edr = np.nan, np.nan, np.nan
-            else:
-                obs, exp, std = obs[finite], exp[finite], std[finite]
-                nvals = len(obs)
-                min_d = bandwidth / 2.
-                mu_d = obs - exp
-                band = multiplier * std
-                d1c = np.fabs(obs - (exp - band))
-                d2c = np.fabs(obs - (exp + band))
-                dc_max = ceil(np.max(np.array([np.max(d1c), np.max(d2c)])))
-                num_d = len(np.arange(min_d, dc_max, bandwidth))
-                mde = np.zeros(nvals)
-                for iloc in range(0, num_d):
-                    d_val = (min_d + (float(iloc) * bandwidth)) * np.ones(nvals)
-                    d_1 = d_val - min_d
-                    d_2 = d_val + min_d
-                    p_1 = norm.cdf((d_1 - mu_d) / std) - norm.cdf((-d_1 - mu_d) / std)
-                    p_2 = norm.cdf((d_2 - mu_d) / std) - norm.cdf((-d_2 - mu_d) / std)
-                    mde += (p_2 - p_1) * d_val
-                inv_n = 1.0 / float(nvals)
-                kappa = self._get_edr_kappa(obs, exp)
-                mde_norm = np.sqrt(inv_n * np.sum(mde ** 2.))
-                edr = np.sqrt(kappa * inv_n * np.sum(mde ** 2.))
-            kap_wrt_imt[imtx] = kappa
-            mde_wrt_imt[imtx] = mde_norm
-            edr_wrt_imt[imtx] = edr
-
-        return mde_wrt_imt, np.sqrt(pd.Series(kap_wrt_imt)), edr_wrt_imt            
+        return mde_norm, np.sqrt(kappa), edr                
 
     def _get_edr_kappa(self, obs, exp):
         """
