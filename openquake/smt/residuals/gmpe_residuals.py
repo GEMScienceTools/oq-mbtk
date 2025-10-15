@@ -692,6 +692,29 @@ class Residuals(object):
 
         return obs, exp, std
     
+    def _get_edr_inputs_wrt_imt(self, gmpe):
+        """
+        Extract the observed ground motions, expected and total standard
+        deviation for the GMPE (per imt)
+        """  
+        # Get EDR values per imt
+        obs_wrt_imt, exp_wrt_imt, std_wrt_imt = {}, {}, {}
+        for imtx in self.imts:
+            obs = np.array([], dtype=float)
+            exp = np.array([], dtype=float)
+            std = np.array([], dtype=float)
+            for context in self.contexts:
+                keep = context["Retained"][imtx]
+                obs_stack = np.log(context["Observations"][imtx][keep])
+                obs = np.hstack([obs, obs_stack])
+                exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
+                std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
+            obs_wrt_imt[imtx] = obs
+            exp_wrt_imt[imtx] = exp
+            std_wrt_imt[imtx] = std
+
+        return obs_wrt_imt, exp_wrt_imt, std_wrt_imt
+    
     def _compute_edr(self, obs, exp, std, bandwidth=0.01, multiplier=3.0):
         """
         Calculate the Euclidean Distanced-Based Rank for a set of
