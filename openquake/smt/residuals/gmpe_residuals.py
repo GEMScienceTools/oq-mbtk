@@ -766,13 +766,11 @@ class Residuals(object):
         for imtx in self.imts:
             nvals = len(obs_wrt_imt[imtx])
             min_d = bandwidth / 2.
-            kappa_wrt_imt[imtx] = self._get_edr_kappa(obs_wrt_imt[imtx],
-                                                      exp_wrt_imt[imtx])
+            kappa_wrt_imt[imtx] = self._get_edr_kappa(obs_wrt_imt[imtx], exp_wrt_imt[imtx])
             mu_d = obs_wrt_imt[imtx] - exp_wrt_imt[imtx]
-            d1c = np.fabs(obs_wrt_imt[imtx] - (exp_wrt_imt[imtx] - (
-                multiplier * std_wrt_imt[imtx])))
-            d2c = np.fabs(obs_wrt_imt[imtx] - (exp_wrt_imt[imtx] + (
-                multiplier * std_wrt_imt[imtx])))
+            band = multiplier * std_wrt_imt[imtx]
+            d1c = np.fabs(obs_wrt_imt[imtx] - (exp_wrt_imt[imtx] - band))
+            d2c = np.fabs(obs_wrt_imt[imtx] - (exp_wrt_imt[imtx] + band))
             dc_max = ceil(np.max(np.array([np.max(d1c), np.max(d2c)])))
             num_d = len(np.arange(min_d, dc_max, bandwidth))
             mde_wrt_imt = np.zeros(nvals)
@@ -780,10 +778,10 @@ class Residuals(object):
                 d_val = (min_d + (float(iloc) * bandwidth)) * np.ones(nvals)
                 d_1 = d_val - min_d
                 d_2 = d_val + min_d
-                p_1 = norm.cdf((d_1 - mu_d) / std_wrt_imt[imtx]) -\
-                norm.cdf((-d_1 - mu_d) / std_wrt_imt[imtx])
-                p_2 = norm.cdf((d_2 - mu_d) / std_wrt_imt[imtx]) -\
-                norm.cdf((-d_2 - mu_d) / std_wrt_imt[imtx])
+                p_1 = norm.cdf(
+                    (d_1 - mu_d) / std_wrt_imt[imtx]) - norm.cdf((-d_1 - mu_d) / std_wrt_imt[imtx])
+                p_2 = norm.cdf(
+                    (d_2 - mu_d) / std_wrt_imt[imtx]) - norm.cdf((-d_2 - mu_d) / std_wrt_imt[imtx])
                 mde_wrt_imt += (p_2 - p_1) * d_val
             inv_n = 1.0 / float(nvals)
             mde_norm_wrt_imt[imtx] = np.sqrt(inv_n * np.sum(mde_wrt_imt ** 2.))
