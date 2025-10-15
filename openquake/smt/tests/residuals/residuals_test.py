@@ -210,9 +210,9 @@ class ResidualsTestCase(unittest.TestCase):
         self.residuals.get_stochastic_area_wrt_imt()
 
         # Make the plots
-        rspl.plot_residual_pdf_with_spectral_period(self.residuals, TMP_FIG)
-        rspl.plot_edr_metrics_with_spectral_period(self.residuals, TMP_FIG)
-        rspl.plot_loglikelihood_with_spectral_period(self.residuals, TMP_FIG)
+        rspl.plot_residual_pdf_with_period(self.residuals, TMP_FIG)
+        rspl.plot_edr_metrics_with_period(self.residuals, TMP_FIG)
+        rspl.plot_loglikelihood_with_period(self.residuals, TMP_FIG)
 
     def test_table_execution(self):
         """

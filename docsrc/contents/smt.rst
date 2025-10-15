@@ -352,7 +352,7 @@ The Loglikelihood Method (Scherbaum et al. 2009)
        > rspl.llh_weights_table(resid, filename)   
        >
        > # Plot LLH values per GMPE vs IMT
-       > rspl.plot_loglikelihood_with_spectral_period(resid, filename)
+       > rspl.plot_loglikelihood_with_period(resid, filename)
 
     Loglikelihood versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_LLH_plot.jpg
@@ -379,7 +379,7 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
        > rspl.edr_weights_table(resid, filename)   
        >
        > # Plot EDR score, MDE norm and sqrt(k) vs IMT
-       > rspl.plot_plot_edr_metrics_with_spectral_period(resid, filename)
+       > rspl.plot_plot_edr_metrics_with_period(resid, filename)
 
     EDR rank versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_EDR_plot_EDR_value.jpg
@@ -407,7 +407,7 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
        > rspl.stochastic_area_weights_table(resid, filename)   
        >
        > # Plot stochastic area vs IMT
-       > rspl.plot_stochastic_area_with_spectral_period(resid, filename)
+       > rspl.plot_stochastic_area_with_period(resid, filename)
 
     Stochastic area versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_stochastic_area_plot.jpg
