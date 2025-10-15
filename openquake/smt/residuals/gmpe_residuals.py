@@ -692,29 +692,6 @@ class Residuals(object):
 
         return obs, exp, std
     
-    def _get_edr_inputs_wrt_imt(self, gmpe):
-        """
-        Extract the observed ground motions, expected and total standard
-        deviation for the GMPE (per imt)
-        """  
-        # Get EDR values per imt
-        obs_wrt_imt, exp_wrt_imt, std_wrt_imt = {}, {}, {}
-        for imtx in self.imts:
-            obs = np.array([], dtype=float)
-            exp = np.array([], dtype=float)
-            std = np.array([], dtype=float)
-            for context in self.contexts:
-                keep = context["Retained"][imtx]
-                obs_stack = np.log(context["Observations"][imtx][keep])
-                obs = np.hstack([obs, obs_stack])
-                exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
-                std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
-            obs_wrt_imt[imtx] = obs
-            exp_wrt_imt[imtx] = exp
-            std_wrt_imt[imtx] = std
-
-        return obs_wrt_imt, exp_wrt_imt, std_wrt_imt
-    
     def _compute_edr(self, obs, exp, std, bandwidth=0.01, multiplier=3.0):
         """
         Calculate the Euclidean Distanced-Based Rank for a set of
@@ -723,8 +700,7 @@ class Residuals(object):
         finite = np.isfinite(obs) & np.isfinite(exp) & np.isfinite(std)
         if not finite.any():
             return np.nan, np.nan, np.nan
-        elif not finite.all():
-            obs, exp, std = obs[finite], exp[finite], std[finite]
+        obs, exp, std = obs[finite], exp[finite], std[finite]
         nvals = len(obs)
         min_d = bandwidth / 2.
         kappa = self._get_edr_kappa(obs, exp)
@@ -759,36 +735,43 @@ class Residuals(object):
         Calculate the Euclidean Distanced-Based Rank for a set of
         observed and expected values from a particular GMPE over IMTs
         """
-        mde_norm_wrt_imt = {}
+        mde_wrt_imt = {}
         edr_wrt_imt = {}
-        kappa_wrt_imt = {}
-
+        kap_wrt_imt = {}
         for imtx in self.imts:
-            nvals = len(obs_wrt_imt[imtx])
-            min_d = bandwidth / 2.
-            kappa_wrt_imt[imtx] = self._get_edr_kappa(obs_wrt_imt[imtx], exp_wrt_imt[imtx])
-            mu_d = obs_wrt_imt[imtx] - exp_wrt_imt[imtx]
-            band = multiplier * std_wrt_imt[imtx]
-            d1c = np.fabs(obs_wrt_imt[imtx] - (exp_wrt_imt[imtx] - band))
-            d2c = np.fabs(obs_wrt_imt[imtx] - (exp_wrt_imt[imtx] + band))
-            dc_max = ceil(np.max(np.array([np.max(d1c), np.max(d2c)])))
-            num_d = len(np.arange(min_d, dc_max, bandwidth))
-            mde_wrt_imt = np.zeros(nvals)
-            for iloc in range(0, num_d):
-                d_val = (min_d + (float(iloc) * bandwidth)) * np.ones(nvals)
-                d_1 = d_val - min_d
-                d_2 = d_val + min_d
-                p_1 = norm.cdf(
-                    (d_1 - mu_d) / std_wrt_imt[imtx]) - norm.cdf((-d_1 - mu_d) / std_wrt_imt[imtx])
-                p_2 = norm.cdf(
-                    (d_2 - mu_d) / std_wrt_imt[imtx]) - norm.cdf((-d_2 - mu_d) / std_wrt_imt[imtx])
-                mde_wrt_imt += (p_2 - p_1) * d_val
-            inv_n = 1.0 / float(nvals)
-            mde_norm_wrt_imt[imtx] = np.sqrt(inv_n * np.sum(mde_wrt_imt ** 2.))
-            edr_wrt_imt[imtx] = np.sqrt(
-                kappa_wrt_imt[imtx] * inv_n * np.sum(mde_wrt_imt ** 2.))
+            obs = obs_wrt_imt[imtx]
+            exp = exp_wrt_imt[imtx]
+            std = std_wrt_imt[imtx]
+            finite = np.isfinite(obs) & np.isfinite(exp) & np.isfinite(std)
+            if not finite.any():
+                kappa, mde_norm, edr = np.nan, np.nan, np.nan
+            else:
+                obs, exp, std = obs[finite], exp[finite], std[finite]
+                nvals = len(obs)
+                min_d = bandwidth / 2.
+                mu_d = obs - exp
+                band = multiplier * std
+                d1c = np.fabs(obs - (exp - band))
+                d2c = np.fabs(obs - (exp + band))
+                dc_max = ceil(np.max(np.array([np.max(d1c), np.max(d2c)])))
+                num_d = len(np.arange(min_d, dc_max, bandwidth))
+                mde = np.zeros(nvals)
+                for iloc in range(0, num_d):
+                    d_val = (min_d + (float(iloc) * bandwidth)) * np.ones(nvals)
+                    d_1 = d_val - min_d
+                    d_2 = d_val + min_d
+                    p_1 = norm.cdf((d_1 - mu_d) / std) - norm.cdf((-d_1 - mu_d) / std)
+                    p_2 = norm.cdf((d_2 - mu_d) / std) - norm.cdf((-d_2 - mu_d) / std)
+                    mde += (p_2 - p_1) * d_val
+                inv_n = 1.0 / float(nvals)
+                kappa = self._get_edr_kappa(obs, exp)
+                mde_norm = np.sqrt(inv_n * np.sum(mde ** 2.))
+                edr = np.sqrt(kappa * inv_n * np.sum(mde ** 2.))
+            kap_wrt_imt[imtx] = kappa
+            mde_wrt_imt[imtx] = mde_norm
+            edr_wrt_imt[imtx] = edr
 
-        return mde_norm_wrt_imt, np.sqrt(pd.Series(kappa_wrt_imt)), edr_wrt_imt            
+        return mde_wrt_imt, np.sqrt(pd.Series(kap_wrt_imt)), edr_wrt_imt            
 
     def _get_edr_kappa(self, obs, exp):
         """
@@ -796,13 +779,12 @@ class Residuals(object):
         """
         mu_a = np.mean(obs)
         mu_y = np.mean(exp)
-        b_1 = np.sum(
-            (obs - mu_a) * (exp - mu_y)) / np.sum((obs - mu_a) ** 2.)
+        b_1 = np.sum((obs - mu_a) * (exp - mu_y)) / np.sum((obs - mu_a) ** 2.)
         b_0 = mu_y - b_1 * mu_a
         y_c = exp - ((b_0 + b_1 * obs) - obs)
         de_orig = np.sum((obs - exp) ** 2.)
         de_corr = np.sum((obs - y_c) ** 2.)
-
+        
         return de_orig / de_corr
 
     ### Stochastic Area (Sunny et al. 2021) functions
