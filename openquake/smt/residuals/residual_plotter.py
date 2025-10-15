@@ -550,7 +550,7 @@ def manage_imts(residuals):
     return residuals, x_with_imt
 
 
-def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg', dpi=200):
+def plot_loglikelihood_with_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Create a simple plot of loglikelihood values of Scherbaum et al. 2009
     (y-axis) versus period (x-axis)
@@ -566,7 +566,7 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
     colour_cycler = (cycler(color=COLORS)*cycler(linestyle=['-']))
         
     # Plot LLH values w.r.t. period
-    llh_with_imt = pd.DataFrame(residuals.llh).drop('All')
+    llh_with_imt = pd.DataFrame(residuals.llh).drop('all')
     fig_llh, ax_llh = plt.subplots(figsize=(10, 8))
     ax_llh.set_prop_cycle(colour_cycler)
     for gmpe in residuals.gmpe_list:
@@ -580,10 +580,7 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
     _save_image(filename, plt.gcf(), filetype, dpi)
     
 
-def plot_edr_metrics_with_spectral_period(residuals,
-                                          filename,
-                                          filetype='jpg',
-                                          dpi=200):
+def plot_edr_metrics_with_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Create plots of EDR, the median pred. correction factor and normalised MDE
     computed using Kale and Akkar (2013) (y-axis) versus period (x-axis)
@@ -644,10 +641,7 @@ def plot_edr_metrics_with_spectral_period(residuals,
     _save_image(os.path.join(filename + '_EDR_MDE'), plt.gcf(), filetype, dpi)
     
 
-def plot_stochastic_area_with_spectral_period(residuals,
-                                              filename,
-                                              filetype='jpg',
-                                              dpi=200):
+def plot_stochastic_area_with_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Definition to create plot of the stochastic area metric
     computed using Sunny et al. (2021) versus period (x-axis)
@@ -960,10 +954,7 @@ def plot_res_pdf(ax,
     return ax
 
 
-def plot_residual_pdf_with_spectral_period(residuals,
-                                           filename,
-                                           filetype='jpg',
-                                           dpi=200):
+def plot_residual_pdf_with_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Create a simple plot of residual mean and residual sigma
     for each GMPE  (y-axis) versus period (x-axis)
