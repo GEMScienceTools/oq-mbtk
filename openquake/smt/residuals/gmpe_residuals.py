@@ -568,12 +568,8 @@ class Residuals(object):
         Seismic Hazard Analysis: An Information-Theoretic Perspective",
         Bulletin of the Seismological Society of America, 99(6), 3234-3247
         """
-        # Set stores
-        imt_list = {imt: None for imt in self.imts}
-        imt_list["All"] = None
-        self.llh = {gmpe: {} for gmpe in self.gmpe_list}
-
         # Iterate over the GMMs
+        self.llh = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
             log_residuals = np.array([])
             for imtx in self.imts:
