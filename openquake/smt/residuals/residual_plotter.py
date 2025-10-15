@@ -626,8 +626,7 @@ def plot_edr_metrics_with_spectral_period(residuals,
     ax_kappa.set_xlabel('Period (s)', fontsize='12')
     ax_kappa.set_ylabel('sqrt(k)', fontsize='12')
     ax_kappa.legend(loc = 'upper right', ncol=2, fontsize=12)
-    _save_image(os.path.join(filename + '_EDR_correction_factor'), plt.gcf(),
-                filetype, dpi)
+    _save_image(os.path.join(filename + '_EDR_kappa'), plt.gcf(), filetype, dpi)
     
     # Plot MDE w.r.t. period
     MDE_with_imt = {}
@@ -642,7 +641,7 @@ def plot_edr_metrics_with_spectral_period(residuals,
     ax_MDE.set_xlabel('Period (s)', fontsize='12')
     ax_MDE.set_ylabel('MDE Norm', fontsize='12')
     ax_MDE.legend(loc = 'upper right', ncol=2, fontsize=12)
-    _save_image(os.path.join(filename + '_MDE'), plt.gcf(), filetype, dpi)
+    _save_image(os.path.join(filename + '_EDR_MDE'), plt.gcf(), filetype, dpi)
     
 
 def plot_stochastic_area_with_spectral_period(residuals,
@@ -706,7 +705,7 @@ def llh_weights_table(residuals, filename):
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
             llh_weights.loc[
-                imt, gmpe] = residuals.model_weights_with_imt[imt][gmpe]
+                imt, gmpe] = residuals.llh_weights[imt][gmpe]
         llh_weights.loc['Avg over imts', gmpe] = llh_weights[gmpe].mean()
     llh_weights.columns = llh_weights.columns + ' LLH-based weights'
     assert np.abs(llh_weights.loc['Avg over imts'].sum() - 1.0) < 1E-09

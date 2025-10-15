@@ -598,23 +598,16 @@ class Residuals(object):
             self.llh[gmpe]["All"] = -(
                 1. / float(len(log_residuals))) * np.sum(log_residuals)
 
-        # Get mean weights
-        weights = np.array(
-            [2.0 ** -self.llh[gmpe]["All"] for gmpe in self.gmpe_list])
-        weights = weights / np.sum(weights)
-        self.model_weights = {
-            gmpe: weights[idx] for idx, gmpe in enumerate(self.gmpe_list)}
-
         # Get weights with imt
-        self.model_weights_with_imt = {}
+        self.llh_weights = {}
         for im in self.imts:
-            weights_with_imt = np.array(
-                [2.0 ** -self.llh[gmpe][im] for gmpe in self.gmpe_list])
+            weights_with_imt = np.array([
+                2.0 ** -self.llh[gmpe][im] for gmpe in self.gmpe_list])
             weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
-            self.model_weights_with_imt[im] = {gmpe: weights_with_imt[
-                idx] for idx, gmpe in enumerate(self.gmpe_list)}
+            self.llh_weights[im] = {
+                gmpe: weights_with_imt[idx] for idx, gmpe in enumerate(self.gmpe_list)}
             
-        return self.llh, self.model_weights, self.model_weights_with_imt
+        return self.llh, self.llh_weights
 
     ### EDR (Kale and Akkar 2013) functions
     def get_edr_values(self, bandwidth=0.01, multiplier=3.0):
