@@ -33,12 +33,14 @@ import openquake.smt.residuals.residual_plotter as rspl
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import (
     ESMFlatfileParserURL)
 
+
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
-# Temp files for ranking metric tables 
 TMP_TAB = os.path.join(tempfile.mkdtemp(), 'temp_table.csv')
 TMP_FIG = os.path.join(tempfile.mkdtemp(), 'temp_figure')
+
 aac = np.testing.assert_allclose
+
 
 def fix(number):
     if np.isnan(number):
