@@ -40,7 +40,7 @@ from openquake.smt.residuals.residual_plotter_utils import (
                                                     residuals_with_depth)
 
 
-colors = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
+COLORS = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
           'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', '0.5']
 
 
@@ -230,7 +230,9 @@ class ResidualHistogramPlot(BaseResidualPlot):
             defaults to 0.5
         """
         self.bin_width = bin_width
-        super(ResidualHistogramPlot, self).__init__(residuals, gmpe, imt,
+        super(ResidualHistogramPlot, self).__init__(residuals,
+                                                    gmpe,
+                                                    imt,
                                                     filename=filename,
                                                     filetype=filetype,
                                                     dpi=dpi, **kwargs)
@@ -561,7 +563,7 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
     residuals, x_llh = manage_imts(residuals)
 
     # Define colours for GMMs
-    colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
+    colour_cycler = (cycler(color=COLORS)*cycler(linestyle=['-']))
         
     # Plot LLH values w.r.t. period
     llh_with_imt = pd.DataFrame(residuals.llh).drop('All')
@@ -594,7 +596,7 @@ def plot_edr_metrics_with_spectral_period(residuals,
     residuals, x_with_imt = manage_imts(residuals)
 
     # Define colours for GMMs
-    colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
+    colour_cycler = (cycler(color=COLORS)*cycler(linestyle=['-']))
     
     # Plot EDR w.r.t. period
     EDR_with_imt = {}
@@ -659,7 +661,7 @@ def plot_stochastic_area_with_spectral_period(residuals,
     residuals, x_with_imt = manage_imts(residuals)
     
     # Define colours for plots
-    colour_cycler = (cycler(color=colors)*cycler(linestyle=['-']))
+    colour_cycler = (cycler(color=COLORS)*cycler(linestyle=['-']))
     
     # Plot stochastic area w.r.t. period
     sto_with_imt = {}
@@ -874,7 +876,7 @@ def set_res_pdf_plots(residuals, res_dists, imts_to_plot):
                           color = 'k', linestyle = '--')
     
     # Define colour per GMM
-    colour_cycler = (cycler(color=colors)*cycler(marker=['x']))
+    colour_cycler = (cycler(color=COLORS)*cycler(marker=['x']))
     colour_cycler_df = pd.DataFrame(colour_cycler)[:len(residuals.gmpe_list)]
     colour_cycler_df['gmpe'] = residuals.gmpe_list.keys()
 
@@ -981,7 +983,7 @@ def plot_residual_pdf_with_spectral_period(residuals,
     fig, ax = set_res_pdf_plots(residuals, res_dists, imts_to_plot)
 
     # Define colours for GMPEs
-    colour_cycler = (cycler(color=colors)*cycler(marker=['x']))
+    colour_cycler = (cycler(color=COLORS)*cycler(marker=['x']))
     colour_cycler_df = pd.DataFrame(colour_cycler)[:len(residuals.gmpe_list)]
     colour_cycler_df['gmpe'] = residuals.gmpe_list.keys()
 
