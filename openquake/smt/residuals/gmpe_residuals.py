@@ -543,9 +543,7 @@ class Residuals(object):
         """
         Returns the likelihood values for Total, plus inter- and intra-event
         residuals according to Equation 9 of Scherbaum et al (2004) for the
-        given gmpe and the given intensity measure type.
-        `gmpe` must be in this object gmpe(s) list and imt must be defined
-        for the given gmpe: this two conditions are not checked for here.
+        given gmpe and the given intensity measure type
 
         :return: a dict mapping the residual type(s) (string) to the tuple
         lh, median_lh where the first is the array of likelihood values and
@@ -564,7 +562,7 @@ class Residuals(object):
     def get_loglikelihood_values(self):
         """
         Returns the loglikelihood fit of the GMPEs to data using the
-        loglikehood (LLH) function described in Scherbaum et al. (2009).
+        loglikehood (LLH) function described in Scherbaum et al. (2009)
         
         Scherbaum, F., Delavaud, E., Riggelsen, C. (2009) "Model Selection in
         Seismic Hazard Analysis: An Information-Theoretic Perspective",
@@ -666,7 +664,7 @@ class Residuals(object):
     
     def get_edr_values_wrt_imt(self, bandwidth=0.01, multiplier=3.0):
         """
-        Calculates the EDR values for each GMPE but per IMT instead.
+        Calculates the EDR values for each GMPE but per IMT instead
 
         :param float bandwidth:
             Discretisation width
