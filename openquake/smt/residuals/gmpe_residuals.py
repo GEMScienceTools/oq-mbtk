@@ -573,9 +573,12 @@ class Residuals(object):
         :param imts:
             List of intensity measures for LLH calculation
         """
+        # Set stores
         imt_list = {imt: None for imt in self.imts}
         imt_list["All"] = None
         self.llh = {gmpe: {} for gmpe in self.gmpe_list}
+
+        # Iterate over the GMMs
         for gmpe in self.gmpe_list:
             log_residuals = np.array([])
             for imtx in self.imts:

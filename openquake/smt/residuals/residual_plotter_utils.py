@@ -28,8 +28,7 @@ def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
     """
     Returns the density distribution of the given gmpe and imt
 
-    :param residuals:
-            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
+    :param residuals: instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
 
@@ -78,16 +77,14 @@ def likelihood(residuals, gmpe, imt, bin_width=0.1):
     """
     Returns the likelihood of the given gmpe and imt
 
-    :param residuals:
-            Residuals as instance of :class: openquake.smt.gmpe_residuals.Likelihood
+    :param residuals: instance of :class: openquake.smt.gmpe_residuals.Likelihood
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
     representing the plot data.
-    Additional keys: 'median' (float) representing
-    the median of the data
+    Additional keys: 'median' (float) representing the median of the data
     """
     plot_data = {}
     data = residuals._compute_likelihood_values_for(gmpe, imt)
@@ -286,8 +283,7 @@ def residuals_with_vs30(residuals, gmpe, imt):
     """
     Returns the residuals of the given gmpe and imt vs. vs30
 
-    :param residuals:
-            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
+    :param residuals: instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
 
@@ -304,8 +300,7 @@ def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb"):
     """
     Returns the residuals of the given gmpe and imt vs. distance
 
-    :param residuals:
-            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
+    :param residuals: instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
 
