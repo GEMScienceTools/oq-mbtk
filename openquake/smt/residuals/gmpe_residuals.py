@@ -567,9 +567,6 @@ class Residuals(object):
         Scherbaum, F., Delavaud, E., Riggelsen, C. (2009) "Model Selection in
         Seismic Hazard Analysis: An Information-Theoretic Perspective",
         Bulletin of the Seismological Society of America, 99(6), 3234-3247
-
-        :param imts:
-            List of intensity measures for LLH calculation
         """
         # Set stores
         imt_list = {imt: None for imt in self.imts}
@@ -595,16 +592,16 @@ class Residuals(object):
                 log_residuals = np.hstack([log_residuals, asll])
 
             # Get the average over the IMTs
-            self.llh[gmpe]["All"] = -(
+            self.llh[gmpe]["All"] = -1 * (
                 1. / float(len(log_residuals))) * np.sum(log_residuals)
 
         # Get weights with imt
         self.llh_weights = {}
-        for im in self.imts:
+        for imtx in self.imts:
             weights_with_imt = np.array([
-                2.0 ** -self.llh[gmpe][im] for gmpe in self.gmpe_list])
+                2.0 ** -self.llh[gmpe][imtx] for gmpe in self.gmpe_list])
             weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
-            self.llh_weights[im] = {
+            self.llh_weights[imtx] = {
                 gmpe: weights_with_imt[idx] for idx, gmpe in enumerate(self.gmpe_list)}
             
         return self.llh, self.llh_weights
