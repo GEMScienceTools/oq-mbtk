@@ -594,6 +594,7 @@ def manage_imts(residuals):
 
     return residuals, x_with_imt
 
+
 def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Create a simple plot of loglikelihood values of Scherbaum et al. 2009
@@ -623,6 +624,7 @@ def plot_loglikelihood_with_spectral_period(residuals, filename, filetype='jpg',
     ax_llh.legend(loc='upper right', ncol=2, fontsize='12')
     _save_image(filename, plt.gcf(), filetype, dpi)
     
+
 def plot_edr_metrics_with_spectral_period(residuals,
                                           filename,
                                           filetype='jpg',
@@ -687,6 +689,7 @@ def plot_edr_metrics_with_spectral_period(residuals,
     ax_MDE.legend(loc = 'upper right', ncol=2, fontsize=12)
     _save_image(os.path.join(filename + '_MDE'), plt.gcf(), filetype, dpi)
     
+
 def plot_stochastic_area_with_spectral_period(residuals,
                                               filename,
                                               filetype='jpg',
@@ -720,6 +723,7 @@ def plot_stochastic_area_with_spectral_period(residuals,
     ax_sto.legend(loc='upper right', ncol=2, fontsize=12)
     _save_image(os.path.join(filename), plt.gcf(), filetype, dpi)
 
+
 ### Functions for exporting tables of ranking metrics
 def llh_table(residuals, filename):
     """
@@ -733,6 +737,7 @@ def llh_table(residuals, filename):
 
     # Export table
     llh_metrics.to_csv(filename, sep=',')
+
 
 def llh_weights_table(residuals, filename):
     """
@@ -753,6 +758,7 @@ def llh_weights_table(residuals, filename):
 
     # Export table
     llh_weights.to_csv(filename, sep=',')
+
 
 def edr_table(residuals, filename):
     """
@@ -777,6 +783,7 @@ def edr_table(residuals, filename):
     # Combine and export
     edr_df = pd.concat(edr_dfs, axis=1)
     edr_df.to_csv(filename, sep=',')
+
 
 def edr_weights_table(residuals, filename):
     """
@@ -810,7 +817,8 @@ def edr_weights_table(residuals, filename):
     edr_weight_df = pd.concat([gmpe_edr_weight_df, avg_gmpe_edr_weight_df])
     assert np.abs(edr_weight_df.loc['Avg over imts'].sum() - 1.0) < 1E-09
     edr_weight_df.to_csv(filename, sep=',')
-        
+
+
 def stochastic_area_table(residuals, filename):
     """
     Create a table of stochastic area ranking metric per GMPE per imt (Sunny et
@@ -827,6 +835,7 @@ def stochastic_area_table(residuals, filename):
 
     # Export table
     sto_metrics.to_csv(filename, sep=',')
+
 
 def stochastic_area_weights_table(residuals, filename):
     """
@@ -895,6 +904,7 @@ def get_res_dists(residuals):
 
     return intra, inter, total
 
+
 def set_res_pdf_plots(residuals, res_dists, imts_to_plot):
     """
     Set the plots for the means and std devs of
@@ -942,6 +952,7 @@ def set_res_pdf_plots(residuals, res_dists, imts_to_plot):
     ax[0, 1].set_title('Sigma of GMPE Residuals')
 
     return fig, ax
+
 
 def plot_res_pdf(ax,
                  res_dists,
@@ -994,6 +1005,7 @@ def plot_res_pdf(ax,
                      marker=marker_input)
     return ax
 
+
 def plot_residual_pdf_with_spectral_period(residuals,
                                            filename,
                                            filetype='jpg',
@@ -1041,6 +1053,7 @@ def plot_residual_pdf_with_spectral_period(residuals,
         
     ax[0, 0].legend(loc='upper right', ncol=2, fontsize=6)
     _save_image(filename, plt.gcf(), filetype, dpi)
+
 
 def pdf_table(residuals, filename):
     """
