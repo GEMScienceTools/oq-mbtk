@@ -147,9 +147,9 @@ class Residuals(object):
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < min_per or period > max_per:
-                        print(f"IMT {imtx} outside period range for GMPE {gmpe}"
-                              f"(min GMM period = {min_per} s, "
-                              f"max GMM period = {max_per} s)")
+                        print(
+                            f"IMT {imtx} outside period range for GMPE {gmpe}"
+                            f"(min GMM period = {min_per} s, max GMM period = {max_per} s)")
                         gmpe_dict_1[imtx] = None
                         gmpe_dict_2[imtx] = None
                         continue
@@ -558,6 +558,7 @@ class Residuals(object):
 
         return ret
 
+
     ### LLH (Scherbaum et al. 2009) functions
     def get_llh_values(self):
         """
@@ -601,6 +602,7 @@ class Residuals(object):
                 gmpe: weights_with_imt[idx] for idx, gmpe in enumerate(self.gmpe_list)}
             
         return self.llh, self.llh_weights
+
 
     ### EDR (Kale and Akkar 2013) functions
     def get_edr_values(self, bandwidth=0.01, multiplier=3.0):
@@ -734,6 +736,7 @@ class Residuals(object):
         de_corr = np.sum((obs - y_c) ** 2.)
         
         return de_orig / de_corr
+
 
     ### Stochastic Area (Sunny et al. 2021) functions
     def get_stochastic_area_wrt_imt(self):
