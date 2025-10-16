@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Module to get GMPE residuals - total, inter and intra
-{'GMPE': {'IMT1': {'Total': [], 'Inter event': [], 'Intra event': []},
+{'GMPE': {'IMT1': {'total': [], 'inter_event': [], 'intra_event': []},
           'IMT2': { ... }}}
 """
 import sys
@@ -157,19 +157,18 @@ class Residuals(object):
 
                 # If mixed effects GMPE fix res_type order
                 if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
-                    for res_type in ['Total','Inter event', 'Intra event']:
+                    for idx_rt, res_type in enumerate(['total','inter_event', 'intra_event']):
                         gmpe_dict_1[imtx][res_type] = []
                         gmpe_dict_2[imtx][res_type] = []
-                        self.types[gmpe][imtx].append(res_type)
-                    gmpe_dict_2[imtx]["Mean"] = []
+                        self.types[gmpe][imtx].append(list(ALL_SIGMA)[idx_rt])
+                    gmpe_dict_2[imtx]["mean"] = []
            
                 # For handling of GMPEs with total sigma only
                 else:
-                    for res_type in gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES:
-                        gmpe_dict_1[imtx][res_type] = []
-                        gmpe_dict_2[imtx][res_type] = []
-                        self.types[gmpe][imtx].append(res_type)
-                    gmpe_dict_2[imtx]["Mean"] = []
+                    gmpe_dict_1[imtx]['total'] = []
+                    gmpe_dict_2[imtx][res_type] = []
+                    self.types[gmpe][imtx].append(res_type)
+                    gmpe_dict_2[imtx]["mean"] = []
             
             self.residuals.append([gmpe, gmpe_dict_1])
             self.modelled.append([gmpe, gmpe_dict_2])
@@ -225,7 +224,7 @@ class Residuals(object):
         for im in self.imts:
             obs_check = []
             for ctx in contexts:
-                obs_check.append(ctx["Observations"][im])
+                obs_check.append(ctx["obs"][im])
             obs_check = np.concatenate(obs_check)
             check = pd.notnull(obs_check)
             if len(check[check]) < 1:
@@ -242,23 +241,23 @@ class Residuals(object):
         self.contexts = []
         for context in contexts:
             # If no rvolc fix to zero (ensure rvolc gsims usable)
-            if 'rvolc' not in context['Ctx']._slots_:
-                context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi)
+            if 'rvolc' not in context["ctx"]._slots_:
+                context["ctx"].rvolc = np.zeros_like(context["ctx"].repi)
             # Convert all IMTS with acceleration units, which are supposed to
             # be in cm/s/s, to g:
             for a_imt in accel_imts:
-                context['Observations'][a_imt] = convert_accel_units(
-                        context['Observations'][a_imt], 'cm/s/s', 'g')
+                context['obs'][a_imt] = convert_accel_units(
+                        context['obs'][a_imt], 'cm/s/s', 'g')
             # Get the expected ground motions from GMMs
             context = self.get_exp_motions(context)
             context = self.calculate_residuals(context, normalise)
             for gmpe in self.residuals.keys():
                 for imtx in self.residuals[gmpe].keys():
-                    if not context["Residual"][gmpe][imtx]:
+                    if not context["residual"][gmpe][imtx]:
                         continue
                     for res_type in self.residuals[gmpe][imtx].keys():
-                        if res_type == "Inter event":
-                            inter_ev = context["Residual"][gmpe][imtx][res_type]
+                        if res_type == "inter_event":
+                            inter_ev = context["residual"][gmpe][imtx][res_type]
                             if len(inter_ev) < 1:
                                 # Dummy to pass first conditional with indexing
                                 # if no obs values for given IMT for the event
@@ -280,12 +279,12 @@ class Residuals(object):
                                     np.arange(len(inter_ev)))
                         else:
                             self.residuals[gmpe][imtx][res_type].extend(
-                                context["Residual"][gmpe][imtx][res_type])
+                                context["residual"][gmpe][imtx][res_type])
                         self.modelled[gmpe][imtx][res_type].extend(
-                            context["Expected"][gmpe][imtx][res_type])
+                            context["exp"][gmpe][imtx][res_type])
                         
-                    self.modelled[gmpe][imtx]["Mean"].extend(
-                        context["Expected"][gmpe][imtx]["Mean"])
+                    self.modelled[gmpe][imtx]["mean"].extend(
+                        context["exp"][gmpe][imtx]["mean"])
 
             self.contexts.append(context)
 
@@ -299,8 +298,8 @@ class Residuals(object):
                         self.residuals[gmpe][imtx][res_type])
                     self.modelled[gmpe][imtx][res_type] = np.array(
                         self.modelled[gmpe][imtx][res_type])
-                self.modelled[gmpe][imtx]["Mean"] = np.array(
-                    self.modelled[gmpe][imtx]["Mean"])
+                self.modelled[gmpe][imtx]["mean"] = np.array(
+                    self.modelled[gmpe][imtx]["mean"])
 
     def get_exp_motions(self, context):
         """
@@ -321,12 +320,12 @@ class Residuals(object):
                         continue
                 # Get expected motions
                 mean, stddev = gsim.get_mean_and_stddevs(
-                    context["Ctx"],
-                    context["Ctx"],
-                    context["Ctx"],
+                    context["ctx"],
+                    context["ctx"],
+                    context["ctx"],
                     imt.from_string(imtx),
                     self.types[gmpe][imtx])
-                keep = context["Retained"][imtx]
+                keep = context["retained"][imtx]
                 mean = mean[keep]
                 for idx_comp, comp in enumerate(stddev):
                     stddev[idx_comp] = comp[keep]
@@ -335,11 +334,11 @@ class Residuals(object):
                     gs = str(gmpe).split('(')[0]
                     m = 'A sigma model is not provided for %s' %gs
                     raise ValueError(m)
-                exp[gmpe][imtx]["Mean"] = mean
+                exp[gmpe][imtx]["mean"] = mean
                 for i, res_type in enumerate(self.types[gmpe][imtx]):
                     exp[gmpe][imtx][res_type] = stddev[i]
 
-        context["Expected"] = exp
+        context["exp"] = exp
 
         return context
 
@@ -353,25 +352,25 @@ class Residuals(object):
             residual[gmpe] = {}
             for imtx in self.imts:
                 residual[gmpe][imtx] = {}
-                obs = np.log(context["Observations"][imtx])
-                keep = context["Retained"][imtx]
+                obs = np.log(context["obs"][imtx])
+                keep = context["retained"][imtx]
                 obs = obs[keep]
-                if not context["Expected"][gmpe][imtx]:
+                if not context["exp"][gmpe][imtx]:
                     residual[gmpe][imtx] = None
                     continue
-                mean = context["Expected"][gmpe][imtx]["Mean"]
-                total_stddev = context["Expected"][gmpe][imtx]["Total"]
-                residual[gmpe][imtx]["Total"] = (obs - mean) / total_stddev
-                if "Inter event" in self.residuals[gmpe][imtx].keys():
+                mean = context["exp"][gmpe][imtx]["mean"]
+                total_stddev = context["exp"][gmpe][imtx]["total"]
+                residual[gmpe][imtx]["total"] = (obs - mean) / total_stddev
+                if "inter_event" in self.residuals[gmpe][imtx].keys():
                     inter, intra = self._get_random_effects_residuals(
                         obs,
                         mean,
-                        context["Expected"][gmpe][imtx]["Inter event"],
-                        context["Expected"][gmpe][imtx]["Intra event"],
+                        context["exp"][gmpe][imtx]["inter_event"],
+                        context["exp"][gmpe][imtx]["intra_event"],
                         normalise)
-                    residual[gmpe][imtx]["Inter event"] = inter
-                    residual[gmpe][imtx]["Intra event"] = intra
-        context["Residual"] = residual
+                    residual[gmpe][imtx]["inter_event"] = inter
+                    residual[gmpe][imtx]["intra_event"] = intra
+        context["residual"] = residual
         
         return context
 
@@ -432,7 +431,7 @@ class Residuals(object):
         residuals = self.residuals[gmpe][imtx]
         return {
             res_type: {
-                "Mean": np.nanmean(residuals[res_type]),
+                "mean": np.nanmean(residuals[res_type]),
                 "Std Dev": np.nanstd(residuals[res_type])
                 } for res_type in self.types[gmpe][imtx]}
 
@@ -445,7 +444,7 @@ class Residuals(object):
         for ctxt in self.contexts:
             magnitudes = np.hstack([
                 magnitudes,
-                ctxt["Ctx"].mag * np.ones(len(ctxt["Ctx"].repi))])
+                ctxt["ctx"].mag * np.ones(len(ctxt["ctx"].repi))])
             
         return magnitudes
 
@@ -464,8 +463,8 @@ class Residuals(object):
                     gmpe_str = get_gmpe_str(gmpe)
 
                     # Get the expected values and the residuals
-                    res = ctx["Residual"][gmpe][imt]
-                    exp = ctx["Expected"][gmpe][imt]
+                    res = ctx["residual"][gmpe][imt]
+                    exp = ctx["exp"][gmpe][imt]
                     for comp in res:
                         
                         # Make a key
@@ -474,23 +473,23 @@ class Residuals(object):
                         key = key.replace(";", "")
 
                         # Store each set of values
-                        ctx_and_imt[key+"_Residuals"] = res[comp]
-                        ctx_and_imt[key+"_Predicted"] = exp[comp]
+                        ctx_and_imt[key+"_residuals"] = res[comp]
+                        ctx_and_imt[key+"_predicted"] = exp[comp]
 
                 # Get observed with the NaNs (empty recs for IMT) removed
-                obs = ctx["Observations"][imt]
-                keep = ctx["Retained"][imt]
+                obs = ctx["obs"][imt]
+                keep = ctx["retained"][imt]
                 key_obs = f"IMT={imt}_Observations"
                 ctx_and_imt[key_obs] = obs[keep]
 
                 # Get the event info
                 for par in RUP_PAR:
-                    val = np.full(len(keep), getattr(ctx["Ctx"], par))
+                    val = np.full(len(keep), getattr(ctx["ctx"], par))
                     ctx_and_imt[par] = val
 
                 # Get the station info
                 for par in ST_PAR:
-                    val = np.array(getattr(ctx["Ctx"], par))[keep]
+                    val = np.array(getattr(ctx["ctx"], par))[keep]
                     ctx_and_imt[par] = val
 
                 # Into a dataframe and rename some columns
@@ -501,7 +500,7 @@ class Residuals(object):
                                                 "depths": "st_elevation"})
 
                 # Store the DataFrame for the event
-                store[f"{ctx['EventID']}_IMT={imt}"] = ctx_df
+                store[f"{ctx['event_id']}_IMT={imt}"] = ctx_df
 
         # Now write results for the event to a text file
         with open(out_fname, 'w') as f:
@@ -516,7 +515,7 @@ class Residuals(object):
     ### Likelihood (Scherbaum et al. 2004) functions
     def get_likelihood_values(self):
         """
-        Returns the likelihood values for Total, plus inter- and intra-event
+        Returns the likelihood values for total, plus inter- and intra-event
         residuals according to Equation 9 of Scherbaum et al (2004)
         """
         statistics = self.get_residual_statistics()
@@ -533,13 +532,13 @@ class Residuals(object):
                 for res_type, data in values.items():
                     l_h, median_lh = data
                     lh_values[gmpe][imtx][res_type] = l_h
-                    statistics[gmpe][imtx][res_type]["Median LH"] = median_lh
+                    statistics[gmpe][imtx][res_type]["median_lh"] = median_lh
 
         return lh_values, statistics
 
     def _compute_likelihood_values_for(self, gmpe, imt):
         """
-        Returns the likelihood values for Total, plus inter- and intra-event
+        Returns the likelihood values for total, plus inter- and intra-event
         residuals according to Equation 9 of Scherbaum et al (2004) for the
         given gmpe and the given intensity measure type
 
@@ -580,7 +579,7 @@ class Residuals(object):
 
                 # Get log-likelihood distance for IMT
                 asll = np.log2(
-                    norm.pdf(self.residuals[gmpe][imtx]["Total"], 0., 1.0))
+                    norm.pdf(self.residuals[gmpe][imtx]["total"], 0., 1.0))
                 self.llh[gmpe][imtx] = -1 * (1.0 / float(len(asll))) * np.sum(asll)
             
                 # Stack
@@ -633,18 +632,18 @@ class Residuals(object):
             # Stack over the IMTs
             for imtx in self.imts:
                 for context in self.contexts:
-                    keep = context["Retained"][imtx]
-                    obs = np.hstack([obs, np.log(context["Observations"][imtx][keep])])
-                    exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
-                    std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
+                    keep = context["retained"][imtx]
+                    obs = np.hstack([obs, np.log(context["obs"][imtx][keep])])
+                    exp = np.hstack([exp, context["exp"][gmpe][imtx]["mean"]])
+                    std = np.hstack([std, context["exp"][gmpe][imtx]["total"]])
 
             # Now compute EDR
             results = self._compute_edr(obs, exp, std, bandwidth, multiplier)
 
             # Store
-            edr_values[gmpe]["MDE Norm"] = results[0]
-            edr_values[gmpe]["sqrt Kappa"] = results[1]
-            edr_values[gmpe]["EDR"] = results[2]
+            edr_values[gmpe]["mde_norm"] = results[0]
+            edr_values[gmpe]["sqrt_kappa"] = results[1]
+            edr_values[gmpe]["edr"] = results[2]
 
         return edr_values
     
@@ -661,7 +660,7 @@ class Residuals(object):
         # Set store
         self.edr_values_wrt_imt = {gmpe: {key: {
             imtx: None for imtx in self.imts} for key in [
-                "MDE Norm", "sqrt Kappa", "EDR"]} for gmpe in self.gmpe_list}
+                "mde_norm", "sqrt_kappa", "edr"]} for gmpe in self.gmpe_list}
 
         # Iterate over the GMMs
         for gmpe in self.gmpe_list:
@@ -672,19 +671,19 @@ class Residuals(object):
                 exp = np.array([], dtype=float)
                 std = np.array([], dtype=float)
                 for context in self.contexts:
-                    keep = context["Retained"][imtx]
-                    obs_stack = np.log(context["Observations"][imtx][keep])
+                    keep = context["retained"][imtx]
+                    obs_stack = np.log(context["obs"][imtx][keep])
                     obs = np.hstack([obs, obs_stack])
-                    exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
-                    std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
+                    exp = np.hstack([exp, context["exp"][gmpe][imtx]["mean"]])
+                    std = np.hstack([std, context["exp"][gmpe][imtx]["total"]])
                
                 # Compute EDR for given IMT
                 results = self._compute_edr(obs, exp, std, bandwidth, multiplier)
                 
                 # Store
-                self.edr_values_wrt_imt[gmpe]["MDE Norm"][imtx] = results[0]
-                self.edr_values_wrt_imt[gmpe]["sqrt Kappa"][imtx]= results[1]
-                self.edr_values_wrt_imt[gmpe]["EDR"][imtx] = results[2]
+                self.edr_values_wrt_imt[gmpe]["mde_norm"][imtx] = results[0]
+                self.edr_values_wrt_imt[gmpe]["sqrt_kappa"][imtx]= results[1]
+                self.edr_values_wrt_imt[gmpe]["edr"][imtx] = results[2]
 
         return self.edr_values_wrt_imt
     
@@ -762,9 +761,9 @@ class Residuals(object):
                 exp = np.array([], dtype=float)
                 std = np.array([], dtype=float)
                 for context in self.contexts:
-                    obs = np.hstack([obs, np.log(context["Observations"][imtx])])
-                    exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
-                    std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
+                    obs = np.hstack([obs, np.log(context["obs"][imtx])])
+                    exp = np.hstack([exp, context["exp"][gmpe][imtx]["mean"]])
+                    std = np.hstack([std, context["exp"][gmpe][imtx]["total"]])
                 
                 # Get the ECDF for distribution from observations
                 x_ecdf, y_ecdf = self.get_cdf_data(list(obs), step_flag=True)
@@ -853,7 +852,7 @@ class SingleStationAnalysis(object):
             for imtx in self.imts:
                 self.types[gmpe][imtx] = []
                 if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
-                    for res_type in ['Total','Inter event', 'Intra event']:
+                    for res_type in ['total','inter_event', 'intra_event']:
                         self.types[gmpe][imtx].append(res_type)
                 else:
                     for res_type in (
@@ -908,7 +907,7 @@ class SingleStationAnalysis(object):
 
     def _set_empty_dict(self):
         """
-        Sets an empty set of nested dictionaries for each GMPE and each IMT
+        Sets nested dictionaries for each GMPE and each IMT
         """
         return {gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
 
@@ -927,36 +926,36 @@ class SingleStationAnalysis(object):
                         continue
                     
                     # Get number events, total residuals, total (GMM) expected
-                    n_events = len(t_resid.residuals[gmpe][imtx]["Total"])
-                    total_res = np.copy(t_resid.residuals[gmpe][imtx]["Total"])
-                    total_exp = np.copy(t_resid.modelled[gmpe][imtx]["Total"])
+                    n_events = len(t_resid.residuals[gmpe][imtx]["total"])
+                    total_res = np.copy(t_resid.residuals[gmpe][imtx]["total"])
+                    total_exp = np.copy(t_resid.modelled[gmpe][imtx]["total"])
 
                     # Store
                     resid.site_analysis[gmpe][imtx]["events"] = n_events
-                    resid.site_analysis[gmpe][imtx]["Total"] = total_res
-                    resid.site_analysis[gmpe][imtx]["Expected total"] = total_exp
+                    resid.site_analysis[gmpe][imtx]["total"] = total_res
+                    resid.site_analysis[gmpe][imtx]["exp_total"] = total_exp
                     
-                    if not "Intra event" in t_resid.residuals[gmpe][imtx]:
+                    if not "intra_event" in t_resid.residuals[gmpe][imtx]:
                         # GMPE has no within-event term - skip
                         continue
 
                     # Get deep copy of phi (intra) and tau (inter)
-                    resid.site_analysis[gmpe][imtx]["Intra event"] = np.copy(
-                        t_resid.residuals[gmpe][imtx]["Intra event"])
-                    resid.site_analysis[gmpe][imtx]["Inter event"] = np.copy(
-                        t_resid.residuals[gmpe][imtx]["Inter event"])
+                    resid.site_analysis[gmpe][imtx]["intra_event"] = np.copy(
+                        t_resid.residuals[gmpe][imtx]["intra_event"])
+                    resid.site_analysis[gmpe][imtx]["inter_event"] = np.copy(
+                        t_resid.residuals[gmpe][imtx]["inter_event"])
 
                     # Get delta_s2ss
                     delta_s2ss = self._get_delta_s2ss(
-                        resid.residuals[gmpe][imtx]["Intra event"], n_events)
+                        resid.residuals[gmpe][imtx]["intra_event"], n_events)
                     
                     # Get delta_woes
                     delta_woes = (
-                        resid.site_analysis[gmpe][imtx]["Intra event"] - delta_s2ss)
+                        resid.site_analysis[gmpe][imtx]["intra_event"] - delta_s2ss)
                     
                     # Get phi_ss
                     phi_ss = self._get_single_station_phi(
-                        resid.residuals[gmpe][imtx]["Intra event"], delta_s2ss, n_events)
+                        resid.residuals[gmpe][imtx]["intra_event"], delta_s2ss, n_events)
 
                     # Store 
                     resid.site_analysis[gmpe][imtx]["dS2ss"] = delta_s2ss
@@ -964,10 +963,10 @@ class SingleStationAnalysis(object):
                     resid.site_analysis[gmpe][imtx]["phi_ss,s"] = phi_ss
                     
                     # Get expected values too
-                    resid.site_analysis[gmpe][imtx]["Expected inter"] =\
-                        np.copy(t_resid.modelled[gmpe][imtx]["Inter event"])
-                    resid.site_analysis[gmpe][imtx]["Expected intra"] =\
-                        np.copy(t_resid.modelled[gmpe][imtx]["Intra event"])
+                    resid.site_analysis[gmpe][imtx]["exp_inter"] =\
+                        np.copy(t_resid.modelled[gmpe][imtx]["inter_event"])
+                    resid.site_analysis[gmpe][imtx]["exp_intra"] =\
+                        np.copy(t_resid.modelled[gmpe][imtx]["intra_event"])
             
             # Store
             output_resid.append(resid)
@@ -975,7 +974,7 @@ class SingleStationAnalysis(object):
         # Update
         self.site_residuals = output_resid
 
-        return self.get_total_phi_ss(filename)
+        return self._get_total_phi_ss(filename)
 
     def _get_delta_s2ss(self, intra_event, n_events):
         """
@@ -992,7 +991,7 @@ class SingleStationAnalysis(object):
         return np.sqrt(
             np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1))
 
-    def get_total_phi_ss(self, filename=None):
+    def _get_total_phi_ss(self, filename=None):
         """
         Returns the station-averaged single-station phi from Rodriguez-Marek
         et al. (2011) Equation 10.
@@ -1009,15 +1008,18 @@ class SingleStationAnalysis(object):
                 if filename:
                     print(imtx, file=fid)
 
-                if "Intra event" not in self.site_residuals[0].site_analysis[gmpe][imtx]:
+                if "intra_event" not in self.site_residuals[0].site_analysis[gmpe][imtx]:
                     warnings.warn(
                         f"GMPE {gmpe} does not have random effects residuals for {imtx}",
-                        stacklevel=10,
-                    )
+                        stacklevel=10
+                        )
                     continue
-
-                d2ss, n_events, numerator_sum = self._compute_station_stats(gmpe, imtx, fid)
-                phi_s2ss[gmpe][imtx] = {"Mean": np.mean(d2ss), "StdDev": np.std(d2ss)}
+                
+                d2ss, n_events, numerator_sum = self._compute_ssa_stats(gmpe,
+                                                                        imtx,
+                                                                        fid,
+                                                                        filename)
+                phi_s2ss[gmpe][imtx] = {"mean": np.mean(d2ss), "stddev": np.std(d2ss)}
                 phi_ss[gmpe][imtx] = np.sqrt(numerator_sum / (np.sum(n_events) - 1))
 
         if filename:
@@ -1026,23 +1028,23 @@ class SingleStationAnalysis(object):
 
         return phi_ss, phi_s2ss
 
-    def _compute_station_stats(self, gmpe, imtx, fid):
+    def _compute_ssa_stats(self, gmpe, imtx, fid, filename):
         """
-        Compute station statistics for a given GMPE and IMT.
+        Compute some station statistics for a given GMPE and IMT.
         """
         d2ss, n_events = [], []
         numerator_sum = 0.0
-        for iloc, resid in enumerate(self.site_residuals):
-            site_data = resid.site_analysis[gmpe][imtx]
+        for idx_st, st in enumerate(self.site_residuals):
+            site_data = st.site_analysis[gmpe][imtx]
             d2ss.append(site_data["dS2ss"])
             n_events.append(site_data["events"])
-            numerator_sum += np.sum((site_data["Intra event"] - site_data["dS2ss"]) ** 2)
-            if fid:
+            numerator_sum += np.sum((site_data["intra_event"] - site_data["dS2ss"]) ** 2)
+            if filename:
                 print(
-                    f"Site ID, {list(self.site_ids)[iloc]}, dS2S, {site_data['dS2ss']}, "
+                    f"Site ID, {list(self.site_ids)[idx_st]}, dS2S, {site_data['dS2ss']}, "
                     f"phi_ss, {site_data['phi_ss,s']}, Num Records, {site_data['events']}",
-                    file=fid,
-                )
+                    file=fid
+                    )
 
         return np.array(d2ss), np.array(n_events), numerator_sum
 
@@ -1059,11 +1061,11 @@ class SingleStationAnalysis(object):
                 p_data = (
                     imtx,
                     phi_ss[gmpe][imtx],
-                    phi_s2ss[gmpe][imtx]["Mean"],
-                    phi_s2ss[gmpe][imtx]["StdDev"],
+                    phi_s2ss[gmpe][imtx]["mean"],
+                    phi_s2ss[gmpe][imtx]["stddev"],
                 ) if gmm_sigmas == ALL_SIGMA else (imtx, None, None, None)
                 print(
                     f"{p_data[0]}, phi_ss (phi single-station), {p_data[1]}, "
                     f"phi_s2s mean, {p_data[2]}, phi_s2s std. dev, {p_data[3]}",
-                    file=fid,
-                )
+                    file=fid
+                    )
