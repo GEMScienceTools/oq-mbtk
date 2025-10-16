@@ -89,15 +89,12 @@ def get_gmm_from_toml(key, config):
 
 def get_gmpe_str(gmpe):
     """
-    Return a string of the GMPE to use for printing/exporting
+    Return a string representative of the gsim class
     """
     if '_toml=' in str(gmpe):
-        gmpe_str = str(
-            gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
+        return str(gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
     else:
-        gmpe_str = gmpe
-
-    return gmpe_str
+        return gmpe
 
 
 class Residuals(object):
@@ -580,7 +577,7 @@ class Residuals(object):
                 if not (imtx in self.imts) or not self.residuals[gmpe][imtx]:
                     print("IMT %s not found in Residuals for %s" % (imtx, gmpe))
                     continue
-            
+
                 # Get log-likelihood distance for IMT
                 asll = np.log2(
                     norm.pdf(self.residuals[gmpe][imtx]["Total"], 0., 1.0))
@@ -1035,13 +1032,11 @@ class SingleStationAnalysis(object):
         """
         d2ss, n_events = [], []
         numerator_sum = 0.0
-
         for iloc, resid in enumerate(self.site_residuals):
             site_data = resid.site_analysis[gmpe][imtx]
             d2ss.append(site_data["dS2ss"])
             n_events.append(site_data["events"])
             numerator_sum += np.sum((site_data["Intra event"] - site_data["dS2ss"]) ** 2)
-
             if fid:
                 print(
                     f"Site ID, {list(self.site_ids)[iloc]}, dS2S, {site_data['dS2ss']}, "
