@@ -515,6 +515,7 @@ class Residuals(object):
                 f.write(ev_imt_df.to_string(index=False))
                 f.write("\n\n")
 
+
     ### Likelihood (Scherbaum et al. 2004) functions
     def get_likelihood_values(self):
         """
@@ -591,7 +592,7 @@ class Residuals(object):
             # Get the average over the IMTs
             self.llh[gmpe]["all"] = -1 * (
                 1. / float(len(log_residuals))) * np.sum(log_residuals)
-
+            
         # Get weights with imt
         self.llh_weights = {}
         for imtx in self.imts:
