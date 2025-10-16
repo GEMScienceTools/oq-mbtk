@@ -401,7 +401,7 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
        > res.get_stochastic_area_wrt_imt(resid)
        >
        > # Generate a CSV table of stochastic area values per GMPE and per IMT
-       > rspl.stochastic_area_table(resid, filename)
+       > rspl.sto_table(resid, filename)
        >
        > # Generate a CSV table of stochastic area-based model weights for GMPE logic tree
        > rspl.sto_weights_table(resid, filename)   

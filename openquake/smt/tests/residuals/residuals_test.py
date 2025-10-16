@@ -229,7 +229,7 @@ class ResidualsTestCase(unittest.TestCase):
         rspl.residual_means_and_stds_table(self.residuals, TMP_TAB)
         rspl.llh_table(self.residuals, TMP_TAB)
         rspl.edr_table(self.residuals, TMP_TAB)
-        rspl.stochastic_area_table(self.residuals, TMP_TAB)
+        rspl.sto_table(self.residuals, TMP_TAB)
         
         # Tables of weights
         rspl.llh_weights_table(self.residuals, TMP_TAB)
