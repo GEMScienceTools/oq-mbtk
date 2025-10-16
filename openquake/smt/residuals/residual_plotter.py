@@ -32,7 +32,7 @@ from openquake.hazardlib.imt import from_string
 from openquake.smt.utils_intensity_measures import _save_image
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from openquake.smt.residuals.residual_plotter_utils import (
-                                                    residuals_density_distribution,
+                                                    _get_residuals_density_distribution,
                                                     _get_likelihood_data,
                                                     residuals_with_magnitude,
                                                     residuals_with_vs30,
@@ -258,8 +258,8 @@ class ResidualPlot(ResidualHistogramPlot):
     Class to create a simple histrogram of strong ground motion residuals
     """
     def get_plot_data(self):
-        return residuals_density_distribution(self.residuals, self.gmpe,
-                                              self.imt, self.bin_width)
+        return _get_residuals_density_distribution(
+            self.residuals, self.gmpe, self.imt, self.bin_width)
 
     def draw(self, ax, res_data, res_type):
         # draw histogram:
