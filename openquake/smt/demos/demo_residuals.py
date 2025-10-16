@@ -142,7 +142,7 @@ def calc_ranking_metrics(residuals, out_dir):
     # Compute GMM logic tree weights based on ranking scores and export as CSVs
     rspl.llh_weights_table(residuals, fi_llh_weights)
     rspl.edr_weights_table(residuals, fi_edr_weights)
-    rspl.stochastic_area_weights_table(residuals, fi_sto_weights)
+    rspl.sto_weights_table(residuals, fi_sto_weights)
 
 
 def main(flatfile=demo_flatfile,

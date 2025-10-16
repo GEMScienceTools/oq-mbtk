@@ -234,7 +234,7 @@ class ResidualsTestCase(unittest.TestCase):
         # Tables of weights
         rspl.llh_weights_table(self.residuals, TMP_TAB)
         rspl.edr_weights_table(self.residuals, TMP_TAB)
-        rspl.stochastic_area_weights_table(self.residuals, TMP_TAB)
+        rspl.sto_weights_table(self.residuals, TMP_TAB)
         
     def test_single_station_execution_and_values(self):
         """
