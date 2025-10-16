@@ -786,7 +786,7 @@ def stochastic_area_table(residuals, filename):
     sto_metrics.to_csv(filename, sep=',')
 
 
-def stochastic_area_weights_table(residuals, filename):
+def sto_weights_table(residuals, filename):
     """
     Create a table of model weights per imt based on sample stochastic area
     (Sunny et al. 2021))
