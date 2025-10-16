@@ -340,10 +340,10 @@ The Loglikelihood Method (Scherbaum et al. 2009)
     .. code-block:: ini
     
        > # Get LLH values from gmpe_list and imt_list (both aggregated over IMTs and per IMT)
-       > llh, model_weights, model_weights_with_imt = res.get_loglikelihood_values(resid, imt_list)
+       > llh, model_weights, model_weights_with_imt = res.get_llh_values(resid, imt_list)
        >
        > # OR from .toml:
-       > llh, model_weights, model_weights_with_imt = res.get_loglikelihood_values(resid, resid.imts)
+       > llh, model_weights, model_weights_with_imt = res.get_llh_values(resid, resid.imts)
        >
        > # Generate a CSV table of LLH values per GMPE and per IMT
        > rspl.loglikelihood_table(resid, filename)
@@ -352,7 +352,7 @@ The Loglikelihood Method (Scherbaum et al. 2009)
        > rspl.llh_weights_table(resid, filename)   
        >
        > # Plot LLH values per GMPE vs IMT
-       > rspl.plot_loglikelihood_with_period(resid, filename)
+       > rspl.plot_llh_with_period(resid, filename)
 
     Loglikelihood versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_LLH_plot.jpg
@@ -379,7 +379,7 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
        > rspl.edr_weights_table(resid, filename)   
        >
        > # Plot EDR score, MDE norm and sqrt(k) vs IMT
-       > rspl.plot_plot_edr_metrics_with_period(resid, filename)
+       > rspl.plot_plot_edr_with_period(resid, filename)
 
     EDR rank versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_EDR_plot_EDR_value.jpg
@@ -407,7 +407,7 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
        > rspl.sto_weights_table(resid, filename)   
        >
        > # Plot stochastic area vs IMT
-       > rspl.plot_stochastic_area_with_period(resid, filename)
+       > rspl.plot_sto_with_period(resid, filename)
 
     Stochastic area versus spectral period plot for considered GMPEs:
        .. image:: /contents/smt_images/all_gmpes_stochastic_area_plot.jpg

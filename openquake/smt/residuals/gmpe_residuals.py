@@ -559,7 +559,7 @@ class Residuals(object):
         return ret
 
     ### LLH (Scherbaum et al. 2009) functions
-    def get_loglikelihood_values(self):
+    def get_llh_values(self):
         """
         Returns the loglikelihood fit of the GMPEs to data using the
         loglikehood (LLH) function described in Scherbaum et al. (2009)
