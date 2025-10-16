@@ -37,11 +37,36 @@ from openquake.smt.residuals.residual_plotter_utils import (
                                                     residuals_with_magnitude,
                                                     residuals_with_vs30,
                                                     residuals_with_distance,
-                                                    residuals_with_depth)
+                                                    residuals_with_depth,
+                                                    _get_residual_means_and_stds)
 
 
 COLORS = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
           'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', '0.5']
+
+
+### General Utils
+def manage_imts(residuals):
+    """
+    Removes the non-acceleration IMTs from the imts attribute of the residuals
+    object and create an array of the remaining IMTs. This is a utility function
+    used for plotting of GMM ranking metrics vs period.
+    """
+    # Preserve original residuals.imts
+    preserve_imts = deepcopy(residuals.imts)
+
+    # Remove IMTs if they are not PGA or (non-average) SA
+    idx_to_drop = []
+    for imt_idx, imt in enumerate(preserve_imts):
+        if imt != 'PGA' and 'SA' not in imt or imt == "AvgSA":
+            idx_to_drop.append(imt_idx)
+    residuals.imts = pd.Series(preserve_imts).drop(idx_to_drop).values
+
+    # Get ordinals for original IMTs
+    x_with_imt = pd.DataFrame(
+    [(from_string(imt).period, imt) for imt in preserve_imts], columns=['imt_str', 'imt_float']
+    )
+    return residuals, x_with_imt
 
 
 class BaseResidualPlot(object):
@@ -526,30 +551,6 @@ class ResidualWithVs30(ResidualScatterPlot):
 
 
 ### Plotting of ranking metrics vs period
-def manage_imts(residuals):
-    """
-    Removes the non-acceleration IMTs from the imts attribute of the residuals
-    object and create an array of the remaining IMTs. This is a utility function
-    used for plotting of GMM ranking metrics vs period.
-    """
-    # Preserve original residuals.imts
-    preserve_imts = deepcopy(residuals.imts)
-
-    # Remove IMTs if they are not PGA or (non-average) SA
-    idx_to_drop = []
-    for imt_idx, imt in enumerate(preserve_imts):
-        if imt != 'PGA' and 'SA' not in imt or imt == "AvgSA":
-            idx_to_drop.append(imt_idx)
-    residuals.imts = pd.Series(preserve_imts).drop(idx_to_drop).values
-
-    # Get ordinals for original IMTs
-    x_with_imt = pd.DataFrame(
-    [(from_string(imt).period, imt) for imt in preserve_imts], columns=['imt_str', 'imt_float']
-    )
-
-    return residuals, x_with_imt
-
-
 def plot_loglikelihood_with_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Create a simple plot of loglikelihood values of Scherbaum et al. 2009
@@ -818,45 +819,10 @@ def stochastic_area_weights_table(residuals, filename):
 
 
 ### Functions for plotting mean and sigma of residual dists vs period
-def get_res_dists(residuals):
+def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
     """
-    Get the mean and sigma of the distributions of residuals per gmpe and imt
-    """
-    # Get all residuals for all GMPEs at all IMTs
-    res_statistics = {}
-    for gmpe in residuals.gmpe_list:
-        for imt in residuals.imts:
-            res_statistics[gmpe, imt] = residuals.get_residual_statistics_for(
-                gmpe, imt)
-    
-    # Now get into dataframes
-    mean_sigma_intra, mean_sigma_inter, mean_sigma_total = {}, {}, {}
-    dummy_values = {'Mean': float(0), 'Std Dev': float(0)} # Assign if only total
-    for gmpe in residuals.gmpe_list:
-        for imt in residuals.imts:
-            mean_sigma_total[gmpe, imt] = res_statistics[gmpe, imt]['Total']
-            if ('Inter event' in residuals.residuals[gmpe][imt]
-                and
-                'Intra event' in residuals.residuals[gmpe][imt]):
-                mean_sigma_inter[
-                    gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
-                mean_sigma_intra[
-                    gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
-            else:
-                mean_sigma_inter[gmpe, imt] = dummy_values
-                mean_sigma_intra[gmpe, imt] = dummy_values
-
-    intra = pd.DataFrame(mean_sigma_intra)
-    inter = pd.DataFrame(mean_sigma_inter)
-    total = pd.DataFrame(mean_sigma_total)
-
-    return intra, inter, total
-
-
-def set_res_pdf_plots(residuals, res_dists, imts_to_plot):
-    """
-    Set the plots for the means and std devs of
-    each residual component per gmpe vs period.
+    Set the plots for the means and std devs of each residual component
+    per gmpe vs period
     """
     # Create figure
     fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(14, 14)) 
@@ -902,20 +868,20 @@ def set_res_pdf_plots(residuals, res_dists, imts_to_plot):
     return fig, ax
 
 
-def plot_res_pdf(ax,
+def plot_residual_means_and_stds(ax,
                  res_dists,
-                 dist_comp,
+                 mean_or_std,
                  gmpe,
                  imts_to_plot,
                  marker_input,
                  color_input):
     """
-    Plot mean for each residual distribution for a given GMPE
+    Plot means or sigmas for given GMPE.
     """
     # Get axes index and gmpe label
-    if dist_comp == 'Mean':
+    if mean_or_std == 'Mean':
         i = 0
-    elif dist_comp == 'Std Dev':
+    elif mean_or_std == 'Std Dev':
         i = 1
     try:
         gmpe_label = gmpe.split('_toml=')[1].replace(')','')
@@ -923,38 +889,38 @@ def plot_res_pdf(ax,
         gmpe_label = gmpe # If not from toml file can't split
 
     # Plot mean
-    if (res_dists[2][gmpe].loc[dist_comp].all()==0 and
-        res_dists[1][gmpe].loc[dist_comp].all()==0):
+    if (res_dists[2][gmpe].loc[mean_or_std].all()==0 and
+        res_dists[1][gmpe].loc[mean_or_std].all()==0):
         
         ax[2, i].scatter(imts_to_plot.imt_float,
-                         res_dists[0][gmpe].loc[dist_comp],
+                         res_dists[0][gmpe].loc[mean_or_std],
                          color='w',
                          marker=marker_input,
                          zorder=0)
         ax[1, i].scatter(imts_to_plot.imt_float,
-                         res_dists[1][gmpe].loc[dist_comp],
+                         res_dists[1][gmpe].loc[mean_or_std],
                          color='w',
                          marker=marker_input,
                          zorder=0)
     else:
         ax[2, i].scatter(imts_to_plot.imt_float,
-                         res_dists[0][gmpe].loc[dist_comp],
+                         res_dists[0][gmpe].loc[mean_or_std],
                          color=color_input,
                          marker=marker_input)
         ax[1, i].scatter(imts_to_plot.imt_float,
-                         res_dists[1][gmpe].loc[dist_comp],
+                         res_dists[1][gmpe].loc[mean_or_std],
                          color=color_input,
                          marker=marker_input)
         
     ax[0, i].scatter(imts_to_plot.imt_float,
-                     res_dists[2][gmpe].loc[dist_comp],
+                     res_dists[2][gmpe].loc[mean_or_std],
                      label=gmpe_label,
                      color=color_input,
                      marker=marker_input)
     return ax
 
 
-def plot_residual_pdf_with_period(residuals, filename, filetype='jpg', dpi=200):
+def plot_residual_means_and_stds_with_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Create a simple plot of residual mean and residual sigma
     for each GMPE  (y-axis) versus period (x-axis)
@@ -967,10 +933,10 @@ def plot_residual_pdf_with_period(residuals, filename, filetype='jpg', dpi=200):
     residuals, imts_to_plot = manage_imts(residuals)
             
     # Get distributions of residuals per gmm and imt 
-    res_dists = get_res_dists(residuals)
+    res_dists = _get_residual_means_and_stds(residuals)
 
     # Set plots
-    fig, ax = set_res_pdf_plots(residuals, res_dists, imts_to_plot)
+    fig, ax = _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot)
 
     # Define colours for GMPEs
     colour_cycler = (cycler(color=COLORS)*cycler(marker=['x']))
@@ -987,14 +953,12 @@ def plot_residual_pdf_with_period(residuals, filename, filetype='jpg', dpi=200):
         marker_input = input_df['marker'].iloc[0]
         
         # Plot means
-        dist_comp = 'Mean'
-        ax = plot_res_pdf(ax, res_dists, dist_comp, gmpe, imts_to_plot,
-                          marker_input, color_input)
+        ax = plot_residual_means_and_stds(
+            ax, res_dists, "Mean", gmpe, imts_to_plot, marker_input, color_input)
        
         # Plot sigma
-        dist_comp = 'Std Dev'
-        ax = plot_res_pdf(ax, res_dists, dist_comp, gmpe, imts_to_plot,
-                          marker_input, color_input)
+        ax = plot_residual_means_and_stds(
+            ax, res_dists, "Std Dev", gmpe, imts_to_plot, marker_input, color_input)
         
     ax[0, 0].legend(loc='upper right', ncol=2, fontsize=6)
     _save_image(filename, plt.gcf(), filetype, dpi)

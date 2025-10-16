@@ -132,7 +132,7 @@ def calc_ranking_metrics(residuals, out_dir):
     rspl.plot_loglikelihood_with_period(residuals, fi_llh_plot)
     rspl.plot_edr_metrics_with_period(residuals, fi_edr_plot)
     rspl.plot_stochastic_area_with_period(residuals, fi_sto_plot)
-    rspl.plot_residual_pdf_with_period(residuals, fi_pdf_plot)
+    rspl.plot_residual_means_and_stds_with_period(residuals, fi_pdf_plot)
 
     # Set fnames for CSVs of GMM logic tree weights based on ranking scores
     fi_llh_weights = os.path.join(out_dir, 'weights_llh.csv')
