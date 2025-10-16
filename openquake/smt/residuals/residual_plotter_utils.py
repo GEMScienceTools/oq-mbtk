@@ -24,7 +24,7 @@ import pandas as pd
 from scipy.stats import linregress
 
 
-def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
+def _get_residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
     """
     Returns the density distribution of the given gmpe and imt
 
