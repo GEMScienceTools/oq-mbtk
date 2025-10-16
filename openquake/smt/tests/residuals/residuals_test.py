@@ -226,7 +226,7 @@ class ResidualsTestCase(unittest.TestCase):
         self.residuals.get_stochastic_area_wrt_imt()
         
         # Tables of values
-        rspl.pdf_table(self.residuals, TMP_TAB)
+        rspl.residual_means_and_stds_table(self.residuals, TMP_TAB)
         rspl.llh_table(self.residuals, TMP_TAB)
         rspl.edr_table(self.residuals, TMP_TAB)
         rspl.stochastic_area_table(self.residuals, TMP_TAB)

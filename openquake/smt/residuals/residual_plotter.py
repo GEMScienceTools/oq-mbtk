@@ -964,7 +964,7 @@ def plot_residual_means_and_stds_with_period(residuals, filename, filetype='jpg'
     _save_image(filename, plt.gcf(), filetype, dpi)
 
 
-def pdf_table(residuals, filename):
+def residual_means_and_stds_table(residuals, filename):
     """
     Create a table of mean and standard deviation for total, inter-event and 
     intra-event residual distributions
