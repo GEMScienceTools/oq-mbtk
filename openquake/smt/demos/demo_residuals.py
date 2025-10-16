@@ -114,13 +114,13 @@ def calc_ranking_metrics(residuals, out_dir):
     fi_llh_table = os.path.join(out_dir, 'values_llh.csv')
     fi_edr_table = os.path.join(out_dir, 'values_edr.csv')
     fi_sto_table = os.path.join(out_dir, 'values_stochastic_area.csv')
-    fi_pdf_table = os.path.join(out_dir, 'values_pdf_table.csv')
+    fi_residual_means_and_stds_table = os.path.join(out_dir, 'values_residual_means_and_stds_table.csv')
 
     # Make tables for llh, edr, stochastic area and residuals table
     rspl.llh_table(residuals, fi_llh_table)
     rspl.edr_table(residuals, fi_edr_table)
     rspl.stochastic_area_table(residuals, fi_sto_table)
-    rspl.pdf_table(residuals, fi_pdf_table)
+    rspl.residual_means_and_stds_table(residuals, fi_residual_means_and_stds_table)
 
     # Set fnames for llh, edr, stochastic area and residuals plots w.r.t. period
     fi_llh_plot = os.path.join(out_dir, 'LLH_vs_period_plot')
