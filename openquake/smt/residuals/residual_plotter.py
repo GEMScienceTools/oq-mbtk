@@ -33,7 +33,7 @@ from openquake.smt.utils_intensity_measures import _save_image
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from openquake.smt.residuals.residual_plotter_utils import (
                                                     residuals_density_distribution,
-                                                    likelihood,
+                                                    _get_likelihood_data,
                                                     residuals_with_magnitude,
                                                     residuals_with_vs30,
                                                     residuals_with_distance,
@@ -330,7 +330,8 @@ class LikelihoodPlot(ResidualHistogramPlot):
         assert isinstance(residuals, Residuals)
 
     def get_plot_data(self):
-        return likelihood(self.residuals, self.gmpe, self.imt, self.bin_width)
+        return _get_likelihood_data(
+            self.residuals, self.gmpe, self.imt, self.bin_width)
 
     def get_axis_xlim(self, res_data, res_type):
         return 0., 1.0
