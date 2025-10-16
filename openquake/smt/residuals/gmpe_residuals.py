@@ -839,7 +839,7 @@ class SingleStationAnalysis(object):
     Residuals object for single station residual analysis.
     """
     def __init__(self, site_id_list, gmpe_list, imts):
-        # station sites are strings like 'MN-PDG', 'HL-KASA', ...
+        # Station sites are strings like 'MN-PDG', 'HL-KASA', ...
         # we sort them lexicographically since the order they are
         # stored in the database is unspecified
         self.site_ids = site_id_list
