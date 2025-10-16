@@ -551,7 +551,7 @@ class ResidualWithVs30(ResidualScatterPlot):
 
 
 ### Plotting of ranking metrics vs period
-def plot_loglikelihood_with_period(residuals, filename, filetype='jpg', dpi=200):
+def plot_llh_with_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Create a simple plot of loglikelihood values of Scherbaum et al. 2009
     (y-axis) versus period (x-axis)
@@ -581,7 +581,7 @@ def plot_loglikelihood_with_period(residuals, filename, filetype='jpg', dpi=200)
     _save_image(filename, plt.gcf(), filetype, dpi)
     
 
-def plot_edr_metrics_with_period(residuals, filename, filetype='jpg', dpi=200):
+def plot_edr_with_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Create plots of EDR, the median pred. correction factor and normalised MDE
     computed using Kale and Akkar (2013) (y-axis) versus period (x-axis)
@@ -642,7 +642,7 @@ def plot_edr_metrics_with_period(residuals, filename, filetype='jpg', dpi=200):
     _save_image(os.path.join(filename + '_EDR_MDE'), plt.gcf(), filetype, dpi)
     
 
-def plot_stochastic_area_with_period(residuals, filename, filetype='jpg', dpi=200):
+def plot_sto_with_period(residuals, filename, filetype='jpg', dpi=200):
     """
     Definition to create plot of the stochastic area metric
     computed using Sunny et al. (2021) versus period (x-axis)

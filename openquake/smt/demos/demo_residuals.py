@@ -106,7 +106,7 @@ def calc_ranking_metrics(residuals, out_dir):
     Compute LLH, EDR and Stochastic Area scores
     """
     # Compute llh, edr, stochastic area and residuals w.r.t. period
-    residuals.get_loglikelihood_values()
+    residuals.get_llh_values()
     residuals.get_edr_values_wrt_imt()
     residuals.get_stochastic_area_wrt_imt()
     
@@ -129,9 +129,9 @@ def calc_ranking_metrics(residuals, out_dir):
     fi_pdf_plot = os.path.join(out_dir, 'PDF_vs_period_plot')
     
     # Make plots for llh, edr, stochastic area and residuals plots w.r.t. period
-    rspl.plot_loglikelihood_with_period(residuals, fi_llh_plot)
-    rspl.plot_edr_metrics_with_period(residuals, fi_edr_plot)
-    rspl.plot_stochastic_area_with_period(residuals, fi_sto_plot)
+    rspl.plot_llh_with_period(residuals, fi_llh_plot)
+    rspl.plot_edr_with_period(residuals, fi_edr_plot)
+    rspl.plot_sto_with_period(residuals, fi_sto_plot)
     rspl.plot_residual_means_and_stds_with_period(residuals, fi_pdf_plot)
 
     # Set fnames for CSVs of GMM logic tree weights based on ranking scores

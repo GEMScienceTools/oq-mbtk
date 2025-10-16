@@ -185,7 +185,7 @@ class ResidualsTestCase(unittest.TestCase):
         Tests basic execution of loglikelihood score (Scherbaum et al.
         2009) computation- not correctness of values
         """
-        self.residuals.get_loglikelihood_values()
+        self.residuals.get_llh_values()
 
     def test_edr_execution(self):
         """
@@ -207,21 +207,21 @@ class ResidualsTestCase(unittest.TestCase):
         the residual distribution information plotting function
         """
         # First compute the metrics
-        self.residuals.get_loglikelihood_values()
+        self.residuals.get_llh_values()
         self.residuals.get_edr_values_wrt_imt()
         self.residuals.get_stochastic_area_wrt_imt()
 
         # Make the plots
         rspl.plot_residual_means_and_stds_with_period(self.residuals, TMP_FIG)
-        rspl.plot_edr_metrics_with_period(self.residuals, TMP_FIG)
-        rspl.plot_loglikelihood_with_period(self.residuals, TMP_FIG)
+        rspl.plot_edr_with_period(self.residuals, TMP_FIG)
+        rspl.plot_llh_with_period(self.residuals, TMP_FIG)
 
     def test_table_execution(self):
         """
         Tests execution of table exporting functions
         """
         # First compute the metrics
-        self.residuals.get_loglikelihood_values()
+        self.residuals.get_llh_values()
         self.residuals.get_edr_values_wrt_imt()
         self.residuals.get_stochastic_area_wrt_imt()
         
