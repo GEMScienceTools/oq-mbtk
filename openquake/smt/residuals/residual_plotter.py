@@ -262,9 +262,9 @@ class ResidualPlot(ResidualHistogramPlot):
             self.residuals, self.gmpe, self.imt, self.bin_width)
 
     def draw(self, ax, res_data, res_type):
-        # draw histogram:
+        # Draw histogram
         super(ResidualPlot, self).draw(ax, res_data, res_type)
-        # draw normal distributions:
+        # Draw normal distributions
         mean = res_data["mean"]
         stddev = res_data["stddev"]
         x = res_data['x']
