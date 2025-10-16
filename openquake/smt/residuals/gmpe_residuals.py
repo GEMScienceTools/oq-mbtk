@@ -1041,7 +1041,7 @@ class SingleStationAnalysis(object):
                 print(
                     f"Site ID, {list(self.site_ids)[iloc]}, dS2S, {site_data['dS2ss']}, "
                     f"phi_ss, {site_data['phi_ss,s']}, Num Records, {site_data['events']}",
-                    file=fid,
+                    file=fid
                 )
 
         return np.array(d2ss), np.array(n_events), numerator_sum
@@ -1065,5 +1065,5 @@ class SingleStationAnalysis(object):
                 print(
                     f"{p_data[0]}, phi_ss (phi single-station), {p_data[1]}, "
                     f"phi_s2s mean, {p_data[2]}, phi_s2s std. dev, {p_data[3]}",
-                    file=fid,
+                    file=fid
                 )
