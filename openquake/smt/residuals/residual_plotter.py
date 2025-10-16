@@ -49,8 +49,7 @@ class BaseResidualPlot(object):
     Abstract-like class to create a Residual plot of strong ground motion
     residuals
     """
-    # Class attributes to be passed to matplotlib xlabel, ylabel and title
-    # methods. Allows DRY (don't repeat yourself) plots customization:
+    # Class attributes passed to matplotlib xlabel, ylabel and title methods
     xlabel_styling_kwargs = dict(fontsize=12)
     ylabel_styling_kwargs = dict(fontsize=12)
     title_styling_kwargs = dict(fontsize=12)
