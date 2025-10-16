@@ -997,80 +997,78 @@ class SingleStationAnalysis(object):
 
     def get_total_phi_ss(self, filename=None):
         """
-        Returns the station averaged single-station phi from Rodriguez-Marek
-        et al. (2011) Equation 10
+        Returns the station-averaged single-station phi from Rodriguez-Marek
+        et al. (2011) Equation 10.
         """
-        if filename is not None:
-            fid = open(filename, "w")
-        else:
-            fid = sys.stdout
+        fid = open(filename, "w") if filename else sys.stdout
         phi_ss = self._set_empty_dict()
         phi_s2ss = self._set_empty_dict()
+
         for gmpe in self.gmpe_list:
-            
-            # Print GMM info to file
-            if filename is not None:
-                gmpe_str = get_gmpe_str(gmpe)
-                print("%s" % gmpe_str, file=fid)
-            
-            # Print IMT info to file
+            if filename:
+                print(get_gmpe_str(gmpe), file=fid)
+
             for imtx in self.imts:
-                if filename is not None:
-                    print("%s" % imtx, file=fid)
-                if not ("Intra event" in self.site_residuals[
-                    0].site_analysis[gmpe][imtx]):
-                    msg = (f"GMPE {gmpe} does not have random"
-                           f"effects residuals for {imtx}")
-                    warnings.warn(msg, stacklevel=10)
+                if filename:
+                    print(imtx, file=fid)
+
+                if "Intra event" not in self.site_residuals[0].site_analysis[gmpe][imtx]:
+                    warnings.warn(
+                        f"GMPE {gmpe} does not have random effects residuals for {imtx}",
+                        stacklevel=10,
+                    )
                     continue
-                n_events = []
-                numerator_sum = 0.0
-                d2ss = []
-                for iloc, resid in enumerate(self.site_residuals):
-                    d2ss.append(resid.site_analysis[gmpe][imtx]["dS2ss"])
-                    n_events.append(resid.site_analysis[gmpe][imtx]["events"])
-                    numerator_sum += np.sum((
-                        resid.site_analysis[gmpe][imtx]["Intra event"] -
-                        resid.site_analysis[gmpe][imtx]["dS2ss"]) ** 2.)
-                    
-                    # Print dS2S, phi_ss per station to file
-                    if filename is not None:
-                        print("Site ID, %s, dS2S, %s, "
-                              "phi_ss, %s, Num Records, %s" % (
-                              list(self.site_ids)[iloc],
-                              resid.site_analysis[gmpe][imtx]["dS2ss"],
-                              resid.site_analysis[gmpe][imtx]["phi_ss,s"],
-                              resid.site_analysis[gmpe][imtx]["events"]),
-                              file=fid)
-                        
-                d2ss = np.array(d2ss)
-                phi_s2ss[gmpe][imtx] = {
-                    "Mean": np.mean(d2ss), "StdDev": np.std(d2ss)}
-                phi_ss[gmpe][imtx] = np.sqrt(
-                    numerator_sum / float(np.sum(np.array(n_events)) - 1))
-        
-        # Print phi_ss (single-station phi), phi_s2s (station-to-station) to file
-        if filename is not None:
-            print("\nSSA RESULTS PER GMPE", file=fid)
-            for gmpe in self.gmpe_list:
-                gmpe_i = self.gmpe_list[gmpe]
-                gmpe_str = get_gmpe_str(gmpe)
-                print("%s" % gmpe_str, file=fid)
-                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
-                    p_data = (imtx,
-                              phi_ss[gmpe][imtx],
-                              phi_s2ss[gmpe][imtx]["Mean"],
-                              phi_s2ss[gmpe][imtx]["StdDev"])
-                else:
-                    p_data = (imtx, None, None, None) # No intra-event for GMM
-                for imtx in self.imts:                # so write blank values
-                    print("%s, "\
-                          "phi_ss (phi single-station), %s" \
-                          "phi_s2s mean, %s, " \
-                          "phi_s2s std. dev, %s" \
-                          % p_data, file=fid)
-                            
-            if filename is not None:
-                fid.close()
+
+                d2ss, n_events, numerator_sum = self._compute_station_stats(gmpe, imtx, fid)
+                phi_s2ss[gmpe][imtx] = {"Mean": np.mean(d2ss), "StdDev": np.std(d2ss)}
+                phi_ss[gmpe][imtx] = np.sqrt(numerator_sum / (np.sum(n_events) - 1))
+
+        if filename:
+            self._print_ssa_results(fid, phi_ss, phi_s2ss)
+            fid.close()
 
         return phi_ss, phi_s2ss
+
+    def _compute_station_stats(self, gmpe, imtx, fid):
+        """
+        Compute station statistics for a given GMPE and IMT.
+        """
+        d2ss, n_events = [], []
+        numerator_sum = 0.0
+
+        for iloc, resid in enumerate(self.site_residuals):
+            site_data = resid.site_analysis[gmpe][imtx]
+            d2ss.append(site_data["dS2ss"])
+            n_events.append(site_data["events"])
+            numerator_sum += np.sum((site_data["Intra event"] - site_data["dS2ss"]) ** 2)
+
+            if fid:
+                print(
+                    f"Site ID, {list(self.site_ids)[iloc]}, dS2S, {site_data['dS2ss']}, "
+                    f"phi_ss, {site_data['phi_ss,s']}, Num Records, {site_data['events']}",
+                    file=fid,
+                )
+
+        return np.array(d2ss), np.array(n_events), numerator_sum
+
+    def _print_ssa_results(self, fid, phi_ss, phi_s2ss):
+        """
+        Print SSA results to the file.
+        """
+        print("\nSSA RESULTS PER GMPE", file=fid)
+        for gmpe in self.gmpe_list:
+            gmm_str = get_gmpe_str(gmpe)
+            gmm_sigmas = valid.gsim(gmm_str).DEFINED_FOR_STANDARD_DEVIATION_TYPES
+            print(gmm_str, file=fid)
+            for imtx in self.imts:
+                p_data = (
+                    imtx,
+                    phi_ss[gmpe][imtx],
+                    phi_s2ss[gmpe][imtx]["Mean"],
+                    phi_s2ss[gmpe][imtx]["StdDev"],
+                ) if gmm_sigmas == ALL_SIGMA else (imtx, None, None, None)
+                print(
+                    f"{p_data[0]}, phi_ss (phi single-station), {p_data[1]}, "
+                    f"phi_s2s mean, {p_data[2]}, phi_s2s std. dev, {p_data[3]}",
+                    file=fid,
+                )
