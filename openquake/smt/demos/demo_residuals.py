@@ -119,7 +119,7 @@ def calc_ranking_metrics(residuals, out_dir):
     # Make tables for llh, edr, stochastic area and residuals table
     rspl.llh_table(residuals, fi_llh_table)
     rspl.edr_table(residuals, fi_edr_table)
-    rspl.stochastic_area_table(residuals, fi_sto_table)
+    rspl.sto_table(residuals, fi_sto_table)
     rspl.residual_means_and_stds_table(residuals, fi_residual_means_and_stds_table)
 
     # Set fnames for llh, edr, stochastic area and residuals plots w.r.t. period

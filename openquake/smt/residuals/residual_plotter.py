@@ -768,7 +768,7 @@ def edr_weights_table(residuals, filename):
     edr_weight_df.to_csv(filename, sep=',')
 
 
-def stochastic_area_table(residuals, filename):
+def sto_table(residuals, filename):
     """
     Create a table of stochastic area ranking metric per GMPE per imt (Sunny et
     al. 2021)
