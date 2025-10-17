@@ -313,10 +313,9 @@ Single Station Residual Analysis
        > # Get the sites meeting threshold (for same parsed database as above!)
        > top_sites = rank_sites_by_record_count(sm_database, threshold)
        
-2. Following selection of sites using a threshold value, we can perform the SSA.
+2. Following selection of sites using a threshold value, we can perform the SSA. For more details on the components of intra-event residuals please consult Rodriguez-Marek et al. (2011), which is referenced repeatedly throughout the following section.
 
-   We can compute the non-normalised intra-event residual per record associated with the selected sites :math:`\delta W_{es}`, the mean average (again non-normalised) intra-event residual per site :math:`\delta S2S_S` and a residual variability :math:`\delta W_{o,es}` (which is computed per record by subtracting the site-average intra-event residual from the intra-event residual of each recording at the station). For more details on these intra-event residual components please consult Rodriguez-Marek et al. (2011), which is referenced repeatedly throughout the following section.
-
+   We can compute the non-normalised intra-event residual per record associated with the selected sites :math:`\delta W_{es}`, the mean average (again non-normalised) intra-event residual per site :math:`\delta S2S_S` and a residual variability :math:`\delta W_{o,es}` (which is computed per record by subtracting the site-average intra-event residual from the intra-event residual of each recording at the station).
    The :math:`\delta S2S_S` term is characteristic of each site, and should equal 0 with a standard deviation of :math:`\phi_{S2S}`. A non-zero value for :math:`\delta S2S_S` is indicative of a bias in the prediction of the observed ground-motions at the considered site.
    
    Finally, the standard deviation of the :math:`\delta W_{o,es}` term (:math:`\phi_{SS}`) is representative of the single-station standard deviation of the GMPE, and is an estimate of the non-ergodic standard deviation of the model.
