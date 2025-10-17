@@ -512,7 +512,6 @@ class Residuals(object):
                 f.write(ev_imt_df.to_string(index=False))
                 f.write("\n\n")
 
-
     ### Likelihood (Scherbaum et al. 2004) functions
     def get_likelihood_values(self):
         """
@@ -556,7 +555,6 @@ class Residuals(object):
 
         return ret
 
-
     ### LLH (Scherbaum et al. 2009) functions
     def get_llh_values(self):
         """
@@ -598,9 +596,6 @@ class Residuals(object):
             weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
             self.llh_weights[imtx] = {
                 gmpe: weights_with_imt[idx] for idx, gmpe in enumerate(self.gmpe_list)}
-            
-        return self.llh, self.llh_weights
-
 
     ### EDR (Kale and Akkar 2013) functions
     def get_edr_values(self, bandwidth=0.01, multiplier=3.0):
@@ -620,7 +615,7 @@ class Residuals(object):
             "Multiplier of standard deviation (equation 8 of Kale and Akkar)
         """
         # Set store
-        edr_values = {gmpe: {} for gmpe in self.gmpe_list}
+        self.edr_values = {gmpe: {} for gmpe in self.gmpe_list}
 
         # Iterate over the GMMs
         for gmpe in self.gmpe_list:
@@ -642,13 +637,11 @@ class Residuals(object):
             results = self._compute_edr(obs, exp, std, bandwidth, multiplier)
 
             # Store
-            edr_values[gmpe]["MDE Norm"] = results[0]
-            edr_values[gmpe]["sqrt Kappa"] = results[1]
-            edr_values[gmpe]["EDR"] = results[2]
+            self.edr_values[gmpe]["MDE Norm"] = results[0]
+            self.edr_values[gmpe]["sqrt Kappa"] = results[1]
+            self.edr_values[gmpe]["EDR"] = results[2]
 
-        return edr_values
-    
-    def get_edr_values_wrt_imt(self, bandwidth=0.01, multiplier=3.0):
+    def get_edr_wrt_imt(self, bandwidth=0.01, multiplier=3.0):
         """
         Calculates the EDR values for each GMPE but per IMT instead
 
@@ -685,8 +678,6 @@ class Residuals(object):
                 self.edr_values_wrt_imt[gmpe]["MDE Norm"][imtx] = results[0]
                 self.edr_values_wrt_imt[gmpe]["sqrt Kappa"][imtx]= results[1]
                 self.edr_values_wrt_imt[gmpe]["EDR"][imtx] = results[2]
-
-        return self.edr_values_wrt_imt
     
     def _compute_edr(self, obs, exp, std, bandwidth=0.01, multiplier=3.0):
         """
@@ -735,9 +726,8 @@ class Residuals(object):
         
         return de_orig / de_corr
 
-
     ### Stochastic Area (Sunny et al. 2021) functions
-    def get_stochastic_area_wrt_imt(self):
+    def get_sto_wrt_imt(self):
         """
         Calculates the stochastic area values per GMPE for each IMT
         according to the Stochastic Area Ranking method of Sunny et
@@ -794,8 +784,6 @@ class Residuals(object):
     
         # Add to residuals object
         self.stoch_areas_wrt_imt = stoch_area_store
-
-        return self.stoch_areas_wrt_imt
 
     def cdf(self, data):
         """

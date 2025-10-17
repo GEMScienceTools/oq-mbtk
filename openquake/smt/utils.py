@@ -405,33 +405,4 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
         return np.exp(5.359 - 1.102 * np.log(vs30))
     else:
         return np.exp(7.089 - 1.144 * np.log(vs30))
-
-
-# Other
-def _save_image(filename, fig, format='png', dpi=300, **kwargs):  # noqa
-    """
-    Saves the matplotlib figure `fig` to `filename`. Wrapper around `fig.savefig`
-    with `dpi=300` by default and `format` inferred from `filename` extension
-    or, if no extension is found, set as "png".
-    If filename is empty this function does nothing and return
-
-    :param str filename: str, the file path
-    :param figure: a :class:`matplotlib.figure.Figure` (e.g. via
-        `matplotlib.pyplot.figure()`)
-    :param format: string, the image format. Default: 'png'. This argument is
-        ignored if `filename` has a file extension, as `format` will be set
-        equal to the extension without leading dot.
-    :param str kwargs: additional keyword arguments to pass to `fig.savefig`.
-        For details, see:
-        https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
-    """
-    if not filename:
-        return
-
-    name, ext = os.path.splitext(filename)
-    if ext:
-        format = ext[1:]  # noqa
-    else:
-        filename = name + '.' + format
-
-    fig.savefig(filename, dpi=dpi, format=format, **kwargs)
+    

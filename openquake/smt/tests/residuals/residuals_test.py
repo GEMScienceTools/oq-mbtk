@@ -37,7 +37,7 @@ from openquake.smt.residuals.parsers.esm_url_flatfile_parser import (
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 TMP_TAB = os.path.join(tempfile.mkdtemp(), 'temp_table.csv')
-TMP_FIG = os.path.join(tempfile.mkdtemp(), 'temp_figure')
+TMP_FIG = os.path.join(tempfile.mkdtemp(), 'temp_figure.png')
 
 aac = np.testing.assert_allclose
 
@@ -199,17 +199,17 @@ class ResidualsTestCase(unittest.TestCase):
         Tests basic execution of stochastic area metric scores (Sunny
         et al. 2021) computation - not correctness of values
         """
-        self.residuals.get_stochastic_area_wrt_imt()
+        self.residuals.get_sto_wrt_imt()
 
     def test_plot_execution(self):
         """
         Tests execution of gmpe ranking metric plotting functions and
-        the residual distribution information plotting function
+        the means and stddevs plotting function
         """
         # First compute the metrics
         self.residuals.get_llh_values()
-        self.residuals.get_edr_values_wrt_imt()
-        self.residuals.get_stochastic_area_wrt_imt()
+        self.residuals.get_edr_wrt_imt()
+        self.residuals.get_sto_wrt_imt()
 
         # Make the plots
         rspl.plot_residual_means_and_stds_with_period(self.residuals, TMP_FIG)
@@ -222,8 +222,8 @@ class ResidualsTestCase(unittest.TestCase):
         """
         # First compute the metrics
         self.residuals.get_llh_values()
-        self.residuals.get_edr_values_wrt_imt()
-        self.residuals.get_stochastic_area_wrt_imt()
+        self.residuals.get_edr_wrt_imt()
+        self.residuals.get_sto_wrt_imt()
         
         # Tables of values
         rspl.residual_means_and_stds_table(self.residuals, TMP_TAB)

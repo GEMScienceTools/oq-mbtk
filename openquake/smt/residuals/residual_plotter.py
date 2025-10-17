@@ -29,7 +29,6 @@ from scipy.stats import norm
 from cycler import cycler
 
 from openquake.hazardlib.imt import from_string
-from openquake.smt.utils_intensity_measures import _save_image
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from openquake.smt.residuals.residual_plotter_utils import (
                                                     _get_residuals_density_distribution,
@@ -83,9 +82,7 @@ class BaseResidualPlot(object):
                  residuals,
                  gmpe,
                  imt,
-                 filename=None,
-                 filetype="png",
-                 dpi=300,
+                 filename,
                  **kwargs):
         """
         Initializes a BaseResidualPlot
@@ -94,8 +91,7 @@ class BaseResidualPlot(object):
             Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
         :param str gmpe: Choice of GMPE
         :param str imt: Choice of IMT
-        :param kwargs: optional keyword arguments. Supported are:
-            'figure_size' (default: (8,8) or (7,5)), 'show' (default: True)
+        :param kwargs: optional keyword arguments.
         """
         self._assertion_check(residuals)
         self.residuals = residuals
@@ -109,8 +105,6 @@ class BaseResidualPlot(object):
         self.gmpe = gmpe
         self.imt = imt
         self.filename = filename
-        self.filetype = filetype
-        self.dpi = dpi
         self.num_plots = len(residuals.types[gmpe][imt])
         
         # Adjust plot aspect ratio if only total residual for GMPE
@@ -127,7 +121,6 @@ class BaseResidualPlot(object):
             else:
                 self.figure_size = kwargs.get("figure_size",(9,9))
             
-        self.show = kwargs.get("show", False)
         self.create_plot()
 
     def _assertion_check(self, residuals):
@@ -147,9 +140,8 @@ class BaseResidualPlot(object):
         for tloc, res_type in enumerate(data.keys(), 1):
             self._residual_plot(plt.subplot(nrow, ncol, tloc), data[res_type],
                                 res_type)
-        _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)
-        if self.show:
-            plt.show()
+        plt.savefig(self.filename)
+        plt.close()
 
     def _residual_plot(self, ax, res_data, res_type):
         """
@@ -238,9 +230,7 @@ class ResidualHistogramPlot(BaseResidualPlot):
                  residuals,
                  gmpe,
                  imt,
-                 filename=None,
-                 filetype="png",
-                 dpi=300,
+                 filename,
                  bin_width=0.5,
                  **kwargs):
         """
@@ -258,8 +248,7 @@ class ResidualHistogramPlot(BaseResidualPlot):
                                                     gmpe,
                                                     imt,
                                                     filename=filename,
-                                                    filetype=filetype,
-                                                    dpi=dpi, **kwargs)
+                                                    **kwargs)
 
     def get_subplots_rowcols(self):
         if self.num_plots > 1:
@@ -329,9 +318,7 @@ class LikelihoodPlot(ResidualHistogramPlot):
                  residuals,
                  gmpe,
                  imt,
-                 filename=None,
-                 filetype="png",
-                 dpi=300,
+                 filename,
                  bin_width=0.1,
                  **kwargs):
         """
@@ -341,8 +328,6 @@ class LikelihoodPlot(ResidualHistogramPlot):
         """
         super(LikelihoodPlot, self).__init__(residuals, gmpe, imt,
                                              filename=filename,
-                                             filetype=filetype,
-                                             dpi=dpi,
                                              bin_width=bin_width,
                                              **kwargs)
 
@@ -383,9 +368,7 @@ class ResidualScatterPlot(BaseResidualPlot):
                  residuals,
                  gmpe,
                  imt,
-                 filename=None,
-                 filetype="png",
-                 dpi=300,
+                 filename,
                  plot_type='',
                  **kwargs):
         """
@@ -401,8 +384,7 @@ class ResidualScatterPlot(BaseResidualPlot):
         self.plot_type = plot_type
         super(ResidualScatterPlot, self).__init__(residuals, gmpe, imt,
                                                   filename=filename,
-                                                  filetype=filetype,
-                                                  dpi=dpi, **kwargs)
+                                                  **kwargs)
         
     def get_subplots_rowcols(self):
         if self.num_plots > 1:
@@ -478,9 +460,7 @@ class ResidualWithDistance(ResidualScatterPlot):
                  residuals,
                  gmpe, 
                  imt,
-                 filename=None,
-                 filetype="png",
-                 dpi=300,
+                 filename,
                  plot_type='linear',
                  distance_type="rjb",
                  **kwargs):
@@ -497,8 +477,6 @@ class ResidualWithDistance(ResidualScatterPlot):
         self.distance_type = distance_type
         super(ResidualWithDistance, self).__init__(residuals, gmpe, imt,
                                                    filename=filename,
-                                                   filetype=filetype,
-                                                   dpi=dpi,
                                                    plot_type=plot_type,
                                                    **kwargs)
 
@@ -551,7 +529,7 @@ class ResidualWithVs30(ResidualScatterPlot):
 
 
 ### Plotting of ranking metrics vs period
-def plot_llh_with_period(residuals, filename, filetype='jpg', dpi=200):
+def plot_llh_with_period(residuals, filename):
     """
     Create a simple plot of loglikelihood values of Scherbaum et al. 2009
     (y-axis) versus period (x-axis)
@@ -578,10 +556,11 @@ def plot_llh_with_period(residuals, filename, filetype='jpg', dpi=200):
     ax_llh.set_xlabel('Period (s)', fontsize='12')
     ax_llh.set_ylabel('Loglikelihood Value', fontsize='12')
     ax_llh.legend(loc='upper right', ncol=2, fontsize='12')
-    _save_image(filename, plt.gcf(), filetype, dpi)
+    plt.savefig(filename)
+    plt.close()
     
 
-def plot_edr_with_period(residuals, filename, filetype='jpg', dpi=200):
+def plot_edr_with_period(residuals, filename):
     """
     Create plots of EDR, the median pred. correction factor and normalised MDE
     computed using Kale and Akkar (2013) (y-axis) versus period (x-axis)
@@ -609,7 +588,9 @@ def plot_edr_with_period(residuals, filename, filetype='jpg', dpi=200):
     ax_EDR.set_xlabel('Period (s)', fontsize='12')
     ax_EDR.set_ylabel('EDR', fontsize='12')
     ax_EDR.legend(loc = 'upper right', ncol=2, fontsize=12)
-    _save_image(os.path.join(filename + '_EDR_value'), plt.gcf(), filetype, dpi)
+    parts = filename.split(".")
+    plt.savefig(parts[0] + "_EDR_value." + parts[1])
+    plt.close()
 
     # Plot median pred. correction factor w.r.t. period
     kappa_with_imt = {}
@@ -624,8 +605,9 @@ def plot_edr_with_period(residuals, filename, filetype='jpg', dpi=200):
     ax_kappa.set_xlabel('Period (s)', fontsize='12')
     ax_kappa.set_ylabel('sqrt(k)', fontsize='12')
     ax_kappa.legend(loc = 'upper right', ncol=2, fontsize=12)
-    _save_image(os.path.join(filename + '_EDR_kappa'), plt.gcf(), filetype, dpi)
-    
+    plt.savefig(parts[0] + "_EDR_kappa." + parts[1])
+    plt.close()
+
     # Plot MDE w.r.t. period
     MDE_with_imt = {}
     fig_MDE, ax_MDE = plt.subplots(figsize=(10, 8))
@@ -639,10 +621,10 @@ def plot_edr_with_period(residuals, filename, filetype='jpg', dpi=200):
     ax_MDE.set_xlabel('Period (s)', fontsize='12')
     ax_MDE.set_ylabel('MDE Norm', fontsize='12')
     ax_MDE.legend(loc = 'upper right', ncol=2, fontsize=12)
-    _save_image(os.path.join(filename + '_EDR_MDE'), plt.gcf(), filetype, dpi)
-    
+    plt.savefig(parts[0] + "_EDR_MDE." + parts[1])
+    plt.close()
 
-def plot_sto_with_period(residuals, filename, filetype='jpg', dpi=200):
+def plot_sto_with_period(residuals, filename):
     """
     Definition to create plot of the stochastic area metric
     computed using Sunny et al. (2021) versus period (x-axis)
@@ -670,7 +652,8 @@ def plot_sto_with_period(residuals, filename, filetype='jpg', dpi=200):
     ax_sto.set_xlabel('Period (s)', fontsize='12')
     ax_sto.set_ylabel('Stochastic Area', fontsize='12')
     ax_sto.legend(loc='upper right', ncol=2, fontsize=12)
-    _save_image(os.path.join(filename), plt.gcf(), filetype, dpi)
+    plt.savefig(os.path.join(filename))
+    plt.close()
 
 
 ### Functions for exporting tables of ranking metrics
@@ -759,8 +742,8 @@ def edr_weights_table(residuals, filename):
     avg_edr_weight_per_gmpe = {}
     for gmpe in residuals.gmpe_list:
         avg_edr_weight_per_gmpe[gmpe] = np.mean(gmpe_edr_weight_df[gmpe])
-    avg_gmpe_edr_weight_df = pd.DataFrame(avg_edr_weight_per_gmpe,
-                                          index=['Avg over imts'])
+    avg_gmpe_edr_weight_df = pd.DataFrame(
+        avg_edr_weight_per_gmpe, index=['Avg over imts'])
 
     # Export table
     edr_weight_df = pd.concat([gmpe_edr_weight_df, avg_gmpe_edr_weight_df])
@@ -873,8 +856,8 @@ def plot_residual_means_and_stds(ax,
                  mean_or_std,
                  gmpe,
                  imts_to_plot,
-                 marker_input,
-                 color_input):
+                 marker_inp,
+                 color_inp):
     """
     Plot means or sigmas for given GMPE.
     """
@@ -895,32 +878,32 @@ def plot_residual_means_and_stds(ax,
         ax[2, i].scatter(imts_to_plot.imt_float,
                          res_dists[0][gmpe].loc[mean_or_std],
                          color='w',
-                         marker=marker_input,
+                         marker=marker_inp,
                          zorder=0)
         ax[1, i].scatter(imts_to_plot.imt_float,
                          res_dists[1][gmpe].loc[mean_or_std],
                          color='w',
-                         marker=marker_input,
+                         marker=marker_inp,
                          zorder=0)
     else:
         ax[2, i].scatter(imts_to_plot.imt_float,
                          res_dists[0][gmpe].loc[mean_or_std],
-                         color=color_input,
-                         marker=marker_input)
+                         color=color_inp,
+                         marker=marker_inp)
         ax[1, i].scatter(imts_to_plot.imt_float,
-                         res_dists[1][gmpe].loc[mean_or_std],
-                         color=color_input,
-                         marker=marker_input)
+                         res_dists[1][gmpe].loc[mean_or_std],                           
+                         color=color_inp,
+                         marker=marker_inp)
         
     ax[0, i].scatter(imts_to_plot.imt_float,
                      res_dists[2][gmpe].loc[mean_or_std],
                      label=gmpe_label,
-                     color=color_input,
-                     marker=marker_input)
+                     color=color_inp,
+                     marker=marker_inp)
     return ax
 
 
-def plot_residual_means_and_stds_with_period(residuals, filename, filetype='jpg', dpi=200):
+def plot_residual_means_and_stds_with_period(residuals, filename):
     """
     Create a simple plot of residual mean and residual sigma
     for each GMPE  (y-axis) versus period (x-axis)
@@ -949,19 +932,20 @@ def plot_residual_means_and_stds_with_period(residuals, filename, filetype='jpg'
         # Assign colour and marker to each gmpe
         input_df = pd.DataFrame(
             colour_cycler_df.loc[colour_cycler_df['gmpe']==gmpe]).reset_index()
-        color_input = input_df['color'].iloc[0]
-        marker_input = input_df['marker'].iloc[0]
+        color_inp = input_df['color'].iloc[0]
+        marker_inp = input_df['marker'].iloc[0]
         
         # Plot means
         ax = plot_residual_means_and_stds(
-            ax, res_dists, "Mean", gmpe, imts_to_plot, marker_input, color_input)
+            ax, res_dists, "Mean", gmpe, imts_to_plot, marker_inp, color_inp)
        
         # Plot sigma
         ax = plot_residual_means_and_stds(
-            ax, res_dists, "Std Dev", gmpe, imts_to_plot, marker_input, color_input)
+            ax, res_dists, "Std Dev", gmpe, imts_to_plot, marker_inp, color_inp)
         
     ax[0, 0].legend(loc='upper right', ncol=2, fontsize=6)
-    _save_image(filename, plt.gcf(), filetype, dpi)
+    plt.savefig(filename)
+    plt.close()
 
 
 def residual_means_and_stds_table(residuals, filename):
@@ -1034,9 +1018,7 @@ class ResidualWithSite(ResidualPlot):
                 data,
                 res_type)
             tloc += 1
-        _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)
-        if self.show:
-            plt.show()
+        plt.savefig(self.filename)
         plt.close()
 
     def _residual_plot(self, ax, data, res_type):
@@ -1129,9 +1111,8 @@ class IntraEventResidualWithSite(ResidualPlot):
             fig.set_layout_engine('tight')
             self._residual_plot(fig, data,phi_ss[self.gmpe][self.imt],
                                 phi_s2ss[self.gmpe][self.imt])
-            _save_image(self.filename, plt.gcf(), self.filetype, self.dpi)
-            if self.show:
-                plt.show()
+            plt.savefig(self.filename)
+            plt.close()
         else:
             warnings.warn('This implementation of %s GMPE does not have a mixed'
                          ' effects sigma model - plotting skipped' %self.gmpe,
