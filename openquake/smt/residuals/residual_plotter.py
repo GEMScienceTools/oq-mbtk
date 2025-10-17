@@ -1090,12 +1090,12 @@ class IntraEventResidualWithSite(ResidualPlot):
         2) Plot of the site term (average non-normalised intra-event per site)
         3) Plot of the remainder-residual (intra per rec - avg intra per site)
         """
-        deltaW_es, deltaWo_es, deltaS2S_s = np.array([]), np.array([]), np.array([])
+        deltaW_es, deltaW_oes, deltaS2S_s = np.array([]), np.array([]), np.array([])
         xvals = np.array([])
         for site_id in self.residuals.site_ids:
             xvals = np.hstack([xvals, data[site_id]["x-val"]])
             deltaW_es = np.hstack([deltaW_es, data[site_id]["Intra event"]])
-            deltaWo_es = np.hstack([deltaWo_es, data[site_id]["deltaWo_es"]])
+            deltaW_oes = np.hstack([deltaW_oes, data[site_id]["deltaW_oes"]])
             deltaS2S_s = np.hstack([deltaS2S_s, data[site_id]["deltaS2S_s"]])
         ax = fig.add_subplot(311)
         
@@ -1167,16 +1167,16 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.set_title(title_string, fontsize=11)
         ax.legend(loc='upper right', fontsize=12)
         
-        # Plot deltaWo_es (remainder residual)
+        # Plot deltaW_oes (remainder residual)
         ax = fig.add_subplot(313)
-        ax.plot(xvals, deltaWo_es, 'x', markeredgecolor='k', markerfacecolor='k',
+        ax.plot(xvals, deltaW_oes, 'x', markeredgecolor='k', markerfacecolor='k',
                 markersize=8, zorder=-32, label=r'$\delta W_{o,es}$')
         ax.plot(xmean, -phi_ss * nxm, "k--", linewidth=1.5)
         ax.plot(xmean, phi_ss * nxm, "k--", linewidth=1.5, label=r'+/- $\phi_{SS}$')
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")
-        max_lim = ceil(np.max(np.fabs(deltaWo_es)))
+        max_lim = ceil(np.max(np.fabs(deltaW_oes)))
         ax.set_ylim(-max_lim, max_lim)
         ax.grid()
         ax.set_ylabel(r'$\delta W_{o,es} = \delta W_{es} - \delta S2S_S$', fontsize=12)
@@ -1203,8 +1203,8 @@ class IntraEventResidualWithSite(ResidualPlot):
                 resid.site_analysis[self.gmpe][self.imt]["Intra event"]
             data[site_id]["deltaS2S_s"] =\
                 resid.site_analysis[self.gmpe][self.imt]["deltaS2S_s"]
-            data[site_id]["deltaWo_es"] =\
-                resid.site_analysis[self.gmpe][self.imt]["deltaWo_es"]
+            data[site_id]["deltaW_oes"] =\
+                resid.site_analysis[self.gmpe][self.imt]["deltaW_oes"]
             data[site_id]["x-val"] =(float(iloc) + 0.5) *\
                 np.ones_like(data[site_id]["Intra event"])
                 
