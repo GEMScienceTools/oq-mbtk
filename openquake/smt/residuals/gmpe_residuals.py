@@ -16,9 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Module to get GMPE residuals - total, inter and intra
-{'GMPE': {'IMT1': {'Total': [], 'Inter event': [], 'Intra event': []},
-          'IMT2': { ... }}}
+Module to get GMPE residuals
 """
 import sys
 import warnings
@@ -27,9 +25,7 @@ import re
 import toml
 import numpy as np
 import pandas as pd
-from math import sqrt, ceil
 from scipy.integrate import trapezoid
-from scipy.special import erf
 from scipy.stats import norm
 
 from openquake.hazardlib import valid
@@ -414,8 +410,7 @@ class Residuals(object):
             for imtx in self.imts:
                 if not self.residuals[gmpe][imtx]:
                     continue
-                statistics[
-                    gmpe][imtx] = self.get_residual_statistics_for(gmpe, imtx)
+                statistics[gmpe][imtx] = self.get_residual_statistics_for(gmpe, imtx)
                 
         return statistics
 
@@ -651,17 +646,15 @@ class Residuals(object):
         mu_d = obs - exp
         d1c = np.fabs(obs - (exp - (multiplier * std)))
         d2c = np.fabs(obs - (exp + (multiplier * std)))
-        dc_max = ceil(np.max(np.array([np.max(d1c), np.max(d2c)])))
+        dc_max = np.ceil(np.max(np.array([np.max(d1c), np.max(d2c)])))
         num_d = len(np.arange(min_d, dc_max, bandwidth))
         mde = np.zeros(nvals)
         for iloc in range(0, num_d):
             d_val = (min_d + (float(iloc) * bandwidth)) * np.ones(nvals)
             d_1 = d_val - min_d
             d_2 = d_val + min_d
-            p_1 = norm.cdf((d_1 - mu_d) / std) - norm.cdf(
-                (-d_1 - mu_d) / std)
-            p_2 = norm.cdf((d_2 - mu_d) / std) - norm.cdf(
-                (-d_2 - mu_d) / std)
+            p_1 = norm.cdf((d_1 - mu_d) / std) - norm.cdf((-d_1 - mu_d) / std)
+            p_2 = norm.cdf((d_2 - mu_d) / std) - norm.cdf((-d_2 - mu_d) / std)
             mde += (p_2 - p_1) * d_val
         inv_n = 1.0 / float(nvals)
         mde_norm = np.sqrt(inv_n * np.sum(mde ** 2.))
