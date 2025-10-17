@@ -878,27 +878,29 @@ class SingleStationAnalysis(object):
                         # GMPE has no within-event term - skip
                         continue
 
-                    # Get deep copy of phi (intra) and tau (inter)
+                    # Get deep copy of intra and inter residuals
                     resid.site_analysis[gmpe][imtx]["Intra event"] = np.copy(
                         t_resid.residuals[gmpe][imtx]["Intra event"])
                     resid.site_analysis[gmpe][imtx]["Inter event"] = np.copy(
                         t_resid.residuals[gmpe][imtx]["Inter event"])
 
-                    # Get delta_s2ss (avg within-event for the station)
-                    delta_s2ss = self._get_delta_s2ss(
-                        resid.residuals[gmpe][imtx]["Intra event"], n_events)
-                    
-                    # Use delta_s2ss to compute delta_woes (single station phi)
-                    delta_woes = (
-                        resid.site_analysis[gmpe][imtx]["Intra event"] - delta_s2ss)
-                    
-                    # Get phi_ss
-                    phi_ss = self._get_single_station_phi(
-                        resid.residuals[gmpe][imtx]["Intra event"], delta_s2ss, n_events)
+                    # Get intra-event residuals
+                    intra = resid.residuals[gmpe][imtx]["Intra event"]
 
+                    # Get dS2Ss (avg within-event for the station)
+                    dS2Ss = np.sum(intra)/n_events
+                    
+                    # dWoes is each rec's intra comp minus dS2Ss
+                    dWoes = intra - dS2Ss
+                    
+                    # Single station phi
+                    phi_ss = np.sqrt(
+                        np.sum((dWoes) ** 2.) / float(n_events - 1)
+                        )
+                    
                     # Store 
-                    resid.site_analysis[gmpe][imtx]["dS2ss"] = delta_s2ss
-                    resid.site_analysis[gmpe][imtx]["dWo,es"] = delta_woes
+                    resid.site_analysis[gmpe][imtx]["dS2Ss"] = dS2Ss
+                    resid.site_analysis[gmpe][imtx]["dWoes"] = dWoes
                     resid.site_analysis[gmpe][imtx]["phi_ss,s"] = phi_ss
                     
                     # Get expected values too
@@ -915,21 +917,6 @@ class SingleStationAnalysis(object):
 
         return self.get_total_phi_ss(filename)
 
-    def _get_delta_s2ss(self, intra_event, n_events):
-        """
-        Returns the average within-event residual for the site from
-        Rodriguez-Marek et al. (2011) Equation 8
-        """
-        return np.sum(intra_event)/n_events
-
-    def _get_single_station_phi(self, intra_event, delta_s2ss, n_events):
-        """
-        Returns the single-station phi for the specific station from
-        Rodriguez-Marek et al. (2011) Equation 11
-        """
-        return np.sqrt(
-            np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1))
-
     def get_total_phi_ss(self, filename=None):
         """
         Returns the station-averaged single-station phi from Rodriguez-Marek
@@ -940,12 +927,10 @@ class SingleStationAnalysis(object):
         phi_s2ss = self._set_empty_dict()
 
         for gmpe in self.gmpe_list:
-            if filename:
-                print(get_gmpe_str(gmpe), file=fid)
+            if filename: print(get_gmpe_str(gmpe), file=fid)
 
             for imtx in self.imts:
-                if filename:
-                    print(imtx, file=fid)
+                if filename: print(imtx, file=fid)
 
                 if "Intra event" not in self.site_residuals[0].site_analysis[gmpe][imtx]:
                     warnings.warn(
@@ -972,12 +957,12 @@ class SingleStationAnalysis(object):
         numerator_sum = 0.0
         for iloc, resid in enumerate(self.site_residuals):
             site_data = resid.site_analysis[gmpe][imtx]
-            d2ss.append(site_data["dS2ss"])
+            d2ss.append(site_data["dS2Ss"])
             n_events.append(site_data["events"])
-            numerator_sum += np.sum((site_data["Intra event"] - site_data["dS2ss"]) ** 2)
+            numerator_sum += np.sum((site_data["Intra event"] - site_data["dS2Ss"]) ** 2)
             if fid:
                 print(
-                    f"Site ID, {list(self.site_ids)[iloc]}, dS2S, {site_data['dS2ss']}, "
+                    f"Site ID, {list(self.site_ids)[iloc]}, dS2Ss, {site_data['dS2Ss']}, "
                     f"phi_ss, {site_data['phi_ss,s']}, Num Records, {site_data['events']}",
                     file=fid
                 )

@@ -315,9 +315,7 @@ Single Station Residual Analysis
        
 2. Following selection of sites using a threshold value, we can perform the SSA.
 
-   We can compute the non-normalised intra-event residual per record associated with the selected sites :math:`\delta W_{es}`, the mean average (again non-normalised) intra-event residual per site :math:`\delta S2S_S` and a residual variability :math:`\delta W_{o,es}` (which is computed per record by subtracting the site-average intra-event residual from the corresponding inter-event residual). For more details on these intra-event residual components please consult Rodriguez-Marek et al. (2011), which is referenced repeatedly throughout the following section.
-
-   The standard deviation of all :math:`\delta W_{es}` values should in theory exactly equal the standard deviation of the GMPE's intra-event standard deviation.
+   We can compute the non-normalised intra-event residual per record associated with the selected sites :math:`\delta W_{es}`, the mean average (again non-normalised) intra-event residual per site :math:`\delta S2S_S` and a residual variability :math:`\delta W_{o,es}` (which is computed per record by subtracting the site-average intra-event residual from the intra-event residual of each recording at the station). For more details on these intra-event residual components please consult Rodriguez-Marek et al. (2011), which is referenced repeatedly throughout the following section.
 
    The :math:`\delta S2S_S` term is characteristic of each site, and should equal 0 with a standard deviation of :math:`\phi_{S2S}`. A non-zero value for :math:`\delta S2S_S` is indicative of a bias in the prediction of the observed ground-motions at the considered site.
    
