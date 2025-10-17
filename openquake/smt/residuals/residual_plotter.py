@@ -63,7 +63,7 @@ def manage_imts(residuals):
 
     # Get ordinals for original IMTs
     x_with_imt = pd.DataFrame(
-    [(from_string(imt).period, imt) for imt in preserve_imts], columns=['imt_str', 'imt_float']
+    [(from_string(imt).period, imt) for imt in preserve_imts], columns=['imt_float', 'imt_str']
     )
     return residuals, x_with_imt
 
@@ -283,12 +283,18 @@ class ResidualPlot(ResidualHistogramPlot):
         x = res_data['x']
         xdata = np.arange(x[0], x[-1] + self.bin_width + 0.01, 0.01)
         xdata_norm_pdf = np.arange(-3,3,0.01)
-        ax.plot(xdata, norm.pdf(xdata, mean, stddev), '-',
-                color="LightSlateGrey", linewidth=2.0, 
-                label = 'Empirical')
-        ax.plot(xdata_norm_pdf, norm.pdf(xdata_norm_pdf, 0.0, 1.0), '-',
-                color='k', linewidth=2.0, 
-                label = 'Standard. Norm. Dist.')
+        ax.plot(xdata,
+                norm.pdf(xdata, mean, stddev),
+                linestyle='-',
+                color="LightSlateGrey",
+                linewidth=2.0,
+                label='Empirical')
+        ax.plot(xdata_norm_pdf,
+                norm.pdf(xdata_norm_pdf, 0.0, 1.0),
+                linestyle='-',
+                color='k',
+                linewidth=2.0, 
+                label='Standard. Norm. Dist.')
         ax.legend(loc='best', fontsize='xx-small')
         x_limit = max(abs(x))
         ax.set_xlim(x_limit*-1,x_limit)
@@ -502,7 +508,7 @@ def plot_llh_with_period(residuals, filename):
         y_llh = np.array(llh_with_imt[gmpe])
         ax_llh.scatter(x_llh.imt_float, y_llh)
         tmp = str(residuals.gmpe_list[gmpe])
-        ax_llh.plot(x_llh.imt_float, y_llh,label = tmp.split('(')[0])
+        ax_llh.plot(x_llh.imt_float, y_llh, label=tmp.split('(')[0])
     ax_llh.set_xlabel('Period (s)', fontsize='12')
     ax_llh.set_ylabel('Loglikelihood Value', fontsize='12')
     ax_llh.legend(loc='upper right', ncol=2, fontsize='12')
@@ -903,7 +909,7 @@ def residual_means_and_stds_table(residuals, filename):
     Create a table of mean and standard deviation for total, inter-event and 
     intra-event residual distributions
     """
-    # Get all residuals for all GMPEs at all IMTs
+    # Retrieve mean and stddev for each 
     stats = {}
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
@@ -932,7 +938,6 @@ def residual_means_and_stds_table(residuals, filename):
                          'Inter-Event Mean', 'Inter-Event Std Dev',
                          'Intra-Event Mean', 'Intra-Event Std Dev']
     
-    # Export table
     combined_df.to_csv(filename, sep=',')
 
 
@@ -1033,8 +1038,8 @@ class ResidualWithSite(ResidualPlot):
                 data[site_id]["Intra event"] = np.array(intra_res) / np.array(intra_exp)
             data[site_id]["ID"] = list(self.residuals.site_ids)[iloc]
             data[site_id]["N"] = n_events
-            data[site_id]["x-val"] = (
-                float(iloc) + 0.5) * np.ones_like(data[site_id]["Total"])
+            data[site_id]["x-val"] = (float(iloc) + 0.5) * np.ones_like(data[site_id]["Total"])
+
         return data
 
 
@@ -1076,10 +1081,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         2) Plot of the site term (average non-normalised intra-event per site)
         3) Plot of the remainder-residual (intra per rec - avg intra per site)
         """
-        dwess = np.array([])
-        dwoess = np.array([])
+        dwess, dwoess, xvals = np.array([]), np.array([]), np.array([])
         ds2ss = []
-        xvals = np.array([])
         for site_id in self.residuals.site_ids:
             xvals = np.hstack([xvals, data[site_id]["x-val"]])
             dwess = np.hstack([dwess, data[site_id]["Intra event"]])
@@ -1089,17 +1092,22 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax = fig.add_subplot(311)
         
         # Plot non-normalised intra-event residuals for given site
-        mean = np.array([np.mean(data[site_id]["Intra event"])
-                         for site_id in self.residuals.site_ids])
-        stddevs = np.array([np.std(data[site_id]["Intra event"])
-                            for site_id in self.residuals.site_ids])
-        xmean = np.array([data[site_id]["x-val"][0]
-                          for site_id in self.residuals.site_ids])
+        mean = np.array(
+            [np.mean(data[site_id]["Intra event"]) for site_id in self.residuals.site_ids])
+        stddevs = np.array(
+            [np.std(data[site_id]["Intra event"]) for site_id in self.residuals.site_ids])
+        xmean = np.array(
+            [data[site_id]["x-val"][0] for site_id in self.residuals.site_ids])
 
-        ax.plot(xvals, dwess, 'x', markeredgecolor='k', markerfacecolor='k',
-                markersize=8, zorder=-32, label = r'$\delta W_{es}$')
-        ax.errorbar(xmean, mean, yerr=stddevs, ecolor="r", elinewidth=3.0,
-                    barsabove=True, fmt="s", mfc="r", mec="k", ms=6,
+        ax.plot(xvals, dwess,
+                'x', markeredgecolor='k', markerfacecolor='k', markersize=8,
+                zorder=-32, label=r'$\delta W_{es}$')
+        ax.errorbar(xmean,
+                    mean,
+                    yerr=stddevs,
+                    ecolor="r", elinewidth=3.0,
+                    barsabove=True, fmt="s",
+                    mfc="r", mec="k", ms=6,
                     label='Error bar')
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
@@ -1111,9 +1119,9 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.grid()
         ax.set_ylabel(r'$\delta W_{es}$ (%s)' % self.imt, fontsize=12)
         phi = np.std(dwess)
-        ax.plot(xvals, phi * np.ones(len(xvals)), 'k--', linewidth=2.)
-        ax.plot(xvals, -phi * np.ones(len(xvals)), 'k--', linewidth=2,
-                label='Std dev')
+        nxv = np.ones(len(xvals))
+        ax.plot(xvals, phi * nxv, 'k--', linewidth=2.)
+        ax.plot(xvals, -phi * nxv, 'k--', linewidth=2, label='Std dev')
         title_string = "%s - %s (Std Dev = %8.5f)" % (str(
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi)
@@ -1122,15 +1130,21 @@ class IntraEventResidualWithSite(ResidualPlot):
         
         # Plot delta s2ss (avg non-normalised intra-event per site)
         ax = fig.add_subplot(312)
-        ax.plot(xmean, ds2ss, 's', markeredgecolor='k',
-                markerfacecolor='LightSteelBlue', markersize=8, zorder=-32,
-                label=r'$\delta S2S_S$')
-        ax.plot(xmean,(phi_s2ss["Mean"]-phi_s2ss["StdDev"])*np.ones(len(xmean)),
-                "k--", linewidth=1.5)
-        ax.plot(xmean,(phi_s2ss["Mean"]+phi_s2ss["StdDev"])*np.ones(len(xmean)),
-                "k--", linewidth=1.5, label=r'+/- $\phi_{S2S}$')
-        ax.plot(xmean, (phi_s2ss["Mean"])*np.ones(len(xmean)), "k-",
-                linewidth=2, label=r'Mean $\phi_{S2S}$')
+        nxm = np.ones(len(xmean))
+        ax.plot(xmean, ds2ss,
+                's', markeredgecolor='k', markerfacecolor='LightSteelBlue', markersize=8,
+                zorder=-32, label=r'$\delta S2S_S$')
+        ax.plot(
+            xmean, (phi_s2ss["Mean"] - phi_s2ss["StdDev"]) * nxm, "k--", linewidth=1.5
+            )
+        ax.plot(
+            xmean, (phi_s2ss["Mean"] + phi_s2ss["StdDev"]) * nxm,
+            "k--", linewidth=1.5, label=r'+/- $\phi_{S2S}$'
+            )
+        ax.plot(
+            xmean, (phi_s2ss["Mean"]) * nxm,
+            "k-", linewidth=2, label=r'Mean $\phi_{S2S}$'
+            )
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")
@@ -1149,20 +1163,18 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax = fig.add_subplot(313)
         ax.plot(xvals, dwoess, 'x', markeredgecolor='k', markerfacecolor='k',
                 markersize=8, zorder=-32, label=r'$\delta W_{o,es}$')
-        ax.plot(xmean, -phi_ss * np.ones(len(xmean)), "k--", linewidth=1.5)
-        ax.plot(xmean, phi_ss * np.ones(len(xmean)), "k--", linewidth=1.5,
-                label=r'+/- $\phi_{SS}$')
+        ax.plot(xmean, -phi_ss * nxm, "k--", linewidth=1.5)
+        ax.plot(xmean, phi_ss * nxm, "k--", linewidth=1.5, label=r'+/- $\phi_{SS}$')
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")
         max_lim = ceil(np.max(np.fabs(dwoess)))
         ax.set_ylim(-max_lim, max_lim)
         ax.grid()
-        ax.set_ylabel(r'$\delta W_{o,es} = \delta W_{es} - \delta S2S_S$',
-                      fontsize=12)
+        ax.set_ylabel(r'$\delta W_{o,es} = \delta W_{es} - \delta S2S_S$', fontsize=12)
         title_string = r'%s - %s ($\phi_{SS}$ = %8.5f)' % (str(
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
-                ']\n', '] - ').replace('sigma_model','Sigma'),self.imt,phi_ss)
+                ']\n', '] - ').replace('sigma_model','Sigma'), self.imt,phi_ss)
         ax.set_title(title_string, fontsize=11)
         ax.legend(loc='upper right', fontsize=12)
         
