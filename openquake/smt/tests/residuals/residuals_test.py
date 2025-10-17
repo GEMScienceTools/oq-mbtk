@@ -248,7 +248,7 @@ class ResidualsTestCase(unittest.TestCase):
         ssa_csv_output = os.path.join(self.out_location, 'ssa_test.csv')
         ssa1.station_residual_statistics(ssa_csv_output)
         
-        # Check exp vs obs delta_s2ss, delta_woes, phi_ss_s per station
+        # Check exp vs obs delta_s2ss, delta_woes, phi_ss,s per station
         compare_residuals(
             'stations',
             [stat.site_analysis for stat in ssa1.site_residuals],

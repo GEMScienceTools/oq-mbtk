@@ -894,7 +894,7 @@ class SingleStationAnalysis(object):
                     # Get deltaW_oes (residual variability in deltaS2S_s - eq 9)
                     deltaW_oes = deltaW_es - deltaS2S_s
                     
-                    # Get phi_ss_s for given station (i.e. std of deltaW_oes- eq 11)
+                    # Get phi_ss,s for given station (i.e. std of deltaW_oes- eq 11)
                     phi_ss_s = np.sqrt(
                         np.sum((deltaW_oes) ** 2.) / float(n_events - 1)
                         )
@@ -902,7 +902,7 @@ class SingleStationAnalysis(object):
                     # Store 
                     resid.site_analysis[gmpe][imtx]["deltaS2S_s"] = deltaS2S_s
                     resid.site_analysis[gmpe][imtx]["deltaW_oes"] = deltaW_oes
-                    resid.site_analysis[gmpe][imtx]["phi_ss_s"] = phi_ss_s
+                    resid.site_analysis[gmpe][imtx]["phi_ss,s"] = phi_ss_s
                     
                     # Get expected values too
                     resid.site_analysis[gmpe][imtx]["Expected inter"] =\
@@ -922,7 +922,7 @@ class SingleStationAnalysis(object):
     def _get_station_averaged_values(self, filename=None):
         """
         Compute station-averaged standard deviation of deltaS2S_s
-        (i.e. phi_ss, rather than phi_ss_s which is per station)
+        (i.e. phi_ss, rather than phi_ss,s which is per station)
         AND station-averaged phiS2S_s (i.e. phiS2S). 
         """
         fid = open(filename, "w") if filename else sys.stdout
@@ -969,7 +969,7 @@ class SingleStationAnalysis(object):
                (phi_ss) using equation 10 of Rodriguez-Marek et al. (2011)
                
         NOTE: This function returns phi_ss (station-averaged) which is
-        NOT phi_ss_s (per station) - the prior is computed assuming a
+        NOT phi_ss,s (per station) - the prior is computed assuming a
         homoskedastic model (see equation 10). The user is referred to
         pp. 1248 of Rodriguez-Marek et al. (2011) for more info.
         """
@@ -988,8 +988,8 @@ class SingleStationAnalysis(object):
                 print(
                     f"Site ID, {
                         list(self.site_ids)[iloc]}, deltaS2S_s, {site_data['deltaS2S_s']}, "
-                    f"phi_ss_s, {
-                        site_data['phi_ss_s']}, Num Records, {site_data['events']}",
+                    f"phi_ss,s, {
+                        site_data['phi_ss,s']}, Num Records, {site_data['events']}",
                     file=fid
                 )
 
@@ -999,7 +999,7 @@ class SingleStationAnalysis(object):
         # Compute phi_S2S (stddev of deltaS2S_s)
         phi_S2S = np.std(deltaS2S_s)
 
-        # Compute station averaged phi_ss_s (eq 10) for given gmpe and imt
+        # Compute station averaged phi_ss,s (eq 10) for given gmpe and imt
         phi_ss = np.sqrt(numerator_sum / (np.sum(n_events) - 1))
 
         return mean_deltaS2S, phi_S2S, phi_ss
