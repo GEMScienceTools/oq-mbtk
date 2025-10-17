@@ -71,7 +71,6 @@ HEADERS = ["event_id",
            "vs30_m_sec",
            "vs30_meas_type",
            "epi_dist",
-           "epi_az",
            "JB_dist",
            "rup_dist",
            "Rx_dist",
@@ -284,7 +283,6 @@ class GEMFlatfileParser(SMDatabaseReader):
         Parse the distances
         """
         repi = valid.positive_float(metadata["epi_dist"], "epi_dist")
-        razim = valid.positive_float(metadata["epi_az"], "epi_az")
         rjb = valid.positive_float(metadata["JB_dist"], "JB_dist")
         rrup = valid.positive_float(metadata["rup_dist"], "rup_dist")
         r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
@@ -309,7 +307,6 @@ class GEMFlatfileParser(SMDatabaseReader):
             ry0 = copy.copy(repi)
         
         distances = RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
-        distances.azimuth = razim
         
         return distances
 
