@@ -951,8 +951,9 @@ class SingleStationAnalysis(object):
                 self.mean_deltaS2S[gmpe][imtx] = st_averaged[0]
                 self.phi_S2S[gmpe][imtx] = st_averaged[1]
                 self.phi_ss[gmpe][imtx] = st_averaged[2]
-                
+
         if filename:
+            # Print the rest of the results to file
             self._print_ssa_results(fid, self.mean_deltaS2S, self.phi_ss, self.phi_S2S)
             fid.close()
 
