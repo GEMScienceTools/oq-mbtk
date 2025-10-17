@@ -1082,13 +1082,13 @@ class IntraEventResidualWithSite(ResidualPlot):
         3) Plot of the remainder-residual (intra per rec - avg intra per site)
         """
         dwess, dwoess, xvals = np.array([]), np.array([]), np.array([])
-        ds2ss = []
+        dS2Ss = []
         for site_id in self.residuals.site_ids:
             xvals = np.hstack([xvals, data[site_id]["x-val"]])
             dwess = np.hstack([dwess, data[site_id]["Intra event"]])
-            dwoess = np.hstack([dwoess, data[site_id]["dWo,es"]])
-            ds2ss.append(data[site_id]["dS2ss"])
-        ds2ss = np.array(ds2ss)
+            dwoess = np.hstack([dwoess, data[site_id]["dWoes"]])
+            dS2Ss.append(data[site_id]["dS2Ss"])
+        dS2Ss = np.array(dS2Ss)
         ax = fig.add_subplot(311)
         
         # Plot non-normalised intra-event residuals for given site
@@ -1131,7 +1131,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         # Plot delta s2ss (avg non-normalised intra-event per site)
         ax = fig.add_subplot(312)
         nxm = np.ones(len(xmean))
-        ax.plot(xmean, ds2ss,
+        ax.plot(xmean, dS2Ss,
                 's', markeredgecolor='k', markerfacecolor='LightSteelBlue', markersize=8,
                 zorder=-32, label=r'$\delta S2S_S$')
         ax.plot(
@@ -1148,7 +1148,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")
-        max_lim = ceil(np.max(np.fabs(ds2ss)))
+        max_lim = ceil(np.max(np.fabs(dS2Ss)))
         ax.set_ylim(-max_lim, max_lim)
         ax.grid()
         ax.set_ylabel(r'$\delta S2S_S$ (%s)' % self.imt, fontsize=12)
@@ -1193,10 +1193,10 @@ class IntraEventResidualWithSite(ResidualPlot):
             data[site_id]["N"] = n_events
             data[site_id]["Intra event"] =\
                 resid.site_analysis[self.gmpe][self.imt]["Intra event"]
-            data[site_id]["dS2ss"] =\
-                resid.site_analysis[self.gmpe][self.imt]["dS2ss"]
-            data[site_id]["dWo,es"] =\
-                resid.site_analysis[self.gmpe][self.imt]["dWo,es"]
+            data[site_id]["dS2Ss"] =\
+                resid.site_analysis[self.gmpe][self.imt]["dS2Ss"]
+            data[site_id]["dWoes"] =\
+                resid.site_analysis[self.gmpe][self.imt]["dWoes"]
             data[site_id]["x-val"] =(float(iloc) + 0.5) *\
                 np.ones_like(data[site_id]["Intra event"])
                 
