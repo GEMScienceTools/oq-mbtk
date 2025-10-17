@@ -25,7 +25,7 @@ from math import sqrt
 from numba import njit
 
 from openquake.smt.utils import (
-    get_time_vector, convert_accel_units, get_velocity_displacement, _save_image,)
+    get_time_vector, convert_accel_units, get_velocity_displacement)
                      
 
 PLOT_TYPE = {
@@ -40,8 +40,12 @@ class ResponseSpectrum(object):
     """
     Base class to implement a response spectrum calculation
     """
-    def __init__(self, acceleration, time_step, periods, damping=0.05,
-            units="cm/s/s"):
+    def __init__(self,
+                 acceleration,
+                 time_step,
+                 periods,
+                 damping=0.05,
+                 units="cm/s/s"):
         """
         Setup the response spectrum calculator
         :param numpy.ndarray time_hist:
@@ -150,7 +154,7 @@ class NewmarkBeta(ResponseSpectrum):
             'PGD': np.max(np.fabs(self.displacement))}
         return self.response_spectrum, time_series, accel, vel, disp
 
-    def _newmark_beta(self, omega, cval, kval):
+    def _newmark_beta(self, cval, kval):
         """
         Newmark-beta integral
         :param numpy.ndarray omega:
@@ -284,9 +288,12 @@ class NigamJennings(ResponseSpectrum):
 
 
 @njit(fastmath=True)
-def _time_series(acceleration, d_t, num_steps, num_per,
-                          f1, f2, f4, f5, f6,
-                          g1, g2, h1, h2, omega2):
+def _time_series(acceleration,
+                 d_t,
+                 num_steps,
+                 num_per,
+                 f1, f2, f4, f5, f6,
+                 g1, g2, h1, h2, omega2):
     """
     Use numba to calculate the acceleration, velocity and
     displacement time series for the SDOF oscillator.
@@ -316,14 +323,13 @@ def _time_series(acceleration, d_t, num_steps, num_per,
     return x_a, x_v, x_d
 
 
-def plot_response_spectra(spectra, axis_type="loglog", figure_size=(8, 6),
-                          filename=None, filetype="png", dpi=300):
+def plot_response_spectra(spectra, filename, axis_type="loglog"):
     """
     Creates a plot of the suite of response spectra (Acceleration,
     Velocity, Displacement, Pseudo-Acceleration, Pseudo-Velocity) derived
     from a particular ground motion record
     """
-    fig = plt.figure(figsize=figure_size)
+    fig = plt.figure()
     fig.set_tight_layout(True)
     ax = plt.subplot(2, 2, 1)
     # Acceleration
@@ -350,13 +356,16 @@ def plot_response_spectra(spectra, axis_type="loglog", figure_size=(8, 6),
     ax.set_ylabel("Displacement (cm)", fontsize=12)
     ax.set_xlim(np.min(spectra["Period"]), np.max(spectra["Period"]))
     ax.grid()
-    _save_image(filename, plt.gcf(), filetype, dpi)
-    plt.show()
+    plt.savefig(filename)
+    plt.close()
 
 
-def plot_time_series(acceleration, time_step, velocity=[], displacement=[],
-                     units="cm/s/s", figure_size=(8, 6), filename=None,
-                     filetype="png", dpi=300, linewidth=1.5):
+def plot_time_series(acceleration,
+                     time_step,
+                     filename,
+                     velocity=[],
+                     displacement=[],
+                     units="cm/s/s"):
     """
     Creates a plot of acceleration, velocity and displacement for a specific
     ground motion record
@@ -369,11 +378,11 @@ def plot_time_series(acceleration, time_step, velocity=[], displacement=[],
     if not len(displacement):
         displacement = dspl
     disp_time = get_time_vector(time_step, len(displacement))
-    fig = plt.figure(figsize=figure_size)
+    fig = plt.figure()
     fig.set_tight_layout(True)
     ax = plt.subplot(3, 1, 1)
     # Accleration
-    ax.plot(accel_time, acceleration, 'k-', linewidth=linewidth)
+    ax.plot(accel_time, acceleration, 'k-')
     ax.set_xlabel("Time (s)", fontsize=12)
     ax.set_ylabel("Acceleration (cm/s/s)", fontsize=12)
     end_time = np.max(np.array([accel_time[-1], vel_time[-1], disp_time[-1]]))
@@ -383,7 +392,7 @@ def plot_time_series(acceleration, time_step, velocity=[], displacement=[],
     ax.grid()
     # Velocity
     ax = plt.subplot(3, 1, 2)
-    ax.plot(vel_time, velocity, 'b-', linewidth=linewidth)
+    ax.plot(vel_time, velocity, 'b-')
     ax.set_xlabel("Time (s)", fontsize=12)
     ax.set_ylabel("Velocity (cm/s)", fontsize=12)
     pgv = np.max(np.fabs(velocity))
@@ -392,13 +401,13 @@ def plot_time_series(acceleration, time_step, velocity=[], displacement=[],
     ax.grid()
     # Displacement
     ax = plt.subplot(3, 1, 3)
-    ax.plot(disp_time, displacement, 'r-', linewidth=linewidth)
+    ax.plot(disp_time, displacement, 'r-')
     ax.set_xlabel("Time (s)", fontsize=12)
-    ax.set_ylabel("Displacement (cm)", fontsize=12)
+    ax.set_ylabel("Displacement (cm)")
     pgd = np.max(np.fabs(displacement))
     ax.set_xlim(0, end_time)
     ax.set_ylim(-1.1 * pgd, 1.1 * pgd)
     ax.grid()
-    _save_image(filename, plt.gcf(), filetype, dpi)
-    plt.show()
+    plt.savefig(filename)
+    plt.close()
     
