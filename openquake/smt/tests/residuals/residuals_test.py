@@ -173,13 +173,6 @@ class ResidualsTestCase(unittest.TestCase):
         out_loc = os.path.join(self.out_location, "residuals.txt")
         self.residuals.export_residuals(out_loc)
 
-    def test_likelihood_execution(self):
-        """
-        Tests basic execution of likelihood score (Scherbaum et al.
-        2004) computation- not correctness of values
-        """
-        self.residuals.get_likelihood_values()
-
     def test_llh_execution(self):
         """
         Tests basic execution of loglikelihood score (Scherbaum et al.

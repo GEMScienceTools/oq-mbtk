@@ -29,7 +29,6 @@ from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileP
 import openquake.smt.residuals.gmpe_residuals as res
 from openquake.smt.residuals.sm_database_visualiser import DISTANCES
 from openquake.smt.residuals.residual_plotter import (ResidualPlot,
-                                                      LikelihoodPlot,
                                                       ResidualWithMagnitude,
                                                       ResidualWithDepth,
                                                       ResidualWithVs30,
@@ -71,14 +70,6 @@ class ResidualsTestCase(unittest.TestCase):
         for gsim in self.gsims:
             for imt in self.imts:
                 ResidualPlot(self.residuals, gsim, imt, self.fname, bin_width=0.1)
-
-    def tests_likelihood_plotter(self):
-        """
-        Tests basic execution of Likelihood plot
-        """
-        for gsim in self.gsims:
-            for imt in self.imts:
-                LikelihoodPlot(self.residuals, gsim, imt, self.fname, bin_width=0.1)
 
     def tests_with_mag_vs30_depth_plotter(self):
         """
