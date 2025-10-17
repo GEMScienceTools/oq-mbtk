@@ -1023,7 +1023,7 @@ class SingleStationAnalysis(object):
                 ) if gmm_sigmas == ALL_SIGMA else (imtx, ni, ni, ni)
                 print(
                     f"{p_data[0]}, phi_ss, {p_data[1]}, "
-                    f"station-averaged deltaS2S_s, {p_data[2]}, "
+                    f"deltaS2S, {p_data[2]}, "
                     f"phi_S2S, {p_data[3]}",
                     file=fid
                 )
