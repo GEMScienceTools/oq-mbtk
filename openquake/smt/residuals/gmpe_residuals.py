@@ -512,49 +512,6 @@ class Residuals(object):
                 f.write(ev_imt_df.to_string(index=False))
                 f.write("\n\n")
 
-    ### Likelihood (Scherbaum et al. 2004) functions
-    def get_likelihood_values(self):
-        """
-        Returns the likelihood values for Total, plus inter- and intra-event
-        residuals according to Equation 9 of Scherbaum et al (2004)
-        """
-        statistics = self.get_residual_statistics()
-        lh_values = {gmpe: {} for gmpe in self.gmpe_list}
-        for gmpe in self.gmpe_list:
-            for imtx in self.imts:
-                # Check residuals exist for GMM and IMT
-                if not self.residuals[gmpe][imtx]:
-                    print("IMT %s not found in Residuals for %s"
-                          % (imtx, gmpe))
-                    continue
-                lh_values[gmpe][imtx] = {}
-                values = self._compute_likelihood_values_for(gmpe, imtx)
-                for res_type, data in values.items():
-                    l_h, median_lh = data
-                    lh_values[gmpe][imtx][res_type] = l_h
-                    statistics[gmpe][imtx][res_type]["Median LH"] = median_lh
-
-        return lh_values, statistics
-
-    def _compute_likelihood_values_for(self, gmpe, imt):
-        """
-        Returns the likelihood values for Total, plus inter- and intra-event
-        residuals according to Equation 9 of Scherbaum et al (2004) for the
-        given gmpe and the given intensity measure type
-
-        :return: a dict mapping the residual type(s) (string) to the tuple
-        lh, median_lh where the first is the array of likelihood values and
-        the latter is the median of those values
-        """
-        ret = {}
-        for res_type in self.types[gmpe][imt]:
-            zvals = np.fabs(self.residuals[gmpe][imt][res_type])
-            l_h = 1.0 - erf(zvals / sqrt(2.))
-            median_lh = np.nanpercentile(l_h, 50.0)
-            ret[res_type] = l_h, median_lh
-
-        return ret
-
     ### LLH (Scherbaum et al. 2009) functions
     def get_llh_values(self):
         """

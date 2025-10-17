@@ -214,21 +214,7 @@ GMPE Performance Ranking Metrics
 ********************************
 
     The smt contains implementations of several published GMPE ranking methodologies, which allow additional inferences to be drawn from the computed residual distributions. Brief summaries of each ranking metric are provided here, but the corresponding publications should be consulted for more information.
-
-The Likelihood Method (Scherbaum et al. 2004)
-=============================================
-
-   The Likelihood method is used to assess the overall goodness of fit for a model (GMPE) to the dataset (observed) ground-motions. This method considers the probability that the absolute value of a random sample from a normalised residual distribution falls into the interval between the modulus of a particular observation and infinity. The likelihood value should equal 1 for an observation of 0 (i.e. the mean of the normalised residual distribution) and should approach zero for observations further away from the mean. Consequently, if the GMPE exactly matches the observed ground-motions, then the likelihood of a particular observation should be distributed evenly between 0 and 1, with a median value of 0.5
-   
-   Histograms of the likelihood values per GMPE per intensity measure can be plotted as follows:
- 
-    .. code-block:: ini
-       
-       > # From gmpe_list and imt_list:
-       > rspl.LikelihoodPlot(resid, gmpe, imt, fname)
-
-    Likelihood plot for Boore et al. 2020 and PGA:
-        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_likelihood.jpeg
+    
     
 The Loglikelihood Method (Scherbaum et al. 2009)
 ================================================
@@ -252,7 +238,7 @@ The Loglikelihood Method (Scherbaum et al. 2009)
        > rspl.plot_llh_with_period(resid, fname)
 
     Loglikelihood versus period plot for considered GMPEs:
-       .. image:: /contents/smt_images/all_gmpes_LLH_plot.jpg
+       .. image:: /contents/smt_images/llh_vs_period.jpg
 
 Euclidean Distance Based Ranking (Kale and Akkar, 2013)
 =======================================================
@@ -279,13 +265,13 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
        > rspl.plot_edr_with_period(resid, fname)
 
     EDR rank versus period plot for considered GMPEs:
-       .. image:: /contents/smt_images/all_gmpes_EDR_plot_EDR_value.jpg
+       .. image:: /contents/smt_images/edr_vs_period_value.png
        
     EDR median correction factor versus period for considered GMPEs:
-       .. image:: /contents/smt_images/all_gmpes_EDR_plot_EDR_correction_factor.jpg   
+       .. image:: /contents/smt_images/edr_vs_period_kappa.png 
        
     MDE versus period for considered GMPEs:
-       .. image:: /contents/smt_images/all_gmpes_EDR_plot_MDE.jpg      
+       .. image:: /contents/smt_images/edr_vs_period_MDE.png     
 
 Stochastic Area Based Ranking (Sunny et al. 2021)
 =======================================================
@@ -307,7 +293,7 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
        > rspl.plot_sto_with_period(resid, fname)
 
     Stochastic area versus period plot for considered GMPEs:
-       .. image:: /contents/smt_images/all_gmpes_stochastic_area_plot.jpg
+       .. image:: /contents/smt_images/sto_vs_period.jpg
 
 Single Station Residual Analysis
 ********************************

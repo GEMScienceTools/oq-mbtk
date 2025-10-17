@@ -308,56 +308,6 @@ class ResidualPlot(ResidualHistogramPlot):
                 ']\n', '] - ').replace('sigma_model','Sigma').replace(
                     'sigma_model','Sigma'),sigma_type,mean, stddev)
 
-                    
-class LikelihoodPlot(ResidualHistogramPlot):
-    """
-    Abstract-like class to create a simple histrogram of strong ground motion
-    likelihood
-    """
-    def __init__(self,
-                 residuals,
-                 gmpe,
-                 imt,
-                 filename,
-                 bin_width=0.1,
-                 **kwargs):
-        """
-        Initializes a LikelihoodPlot. Basically calls the superclass
-        `__init__` method with a `bin_width` default value of 0.1 instead of
-        0.5
-        """
-        super(LikelihoodPlot, self).__init__(residuals, gmpe, imt,
-                                             filename=filename,
-                                             bin_width=bin_width,
-                                             **kwargs)
-
-    def _assertion_check(self, residuals):
-        """
-        Overrides the super-class method by asserting we are dealing
-        with a `Likelihood` class
-        """
-        assert isinstance(residuals, Residuals)
-
-    def get_plot_data(self):
-        return _get_likelihood_data(
-            self.residuals, self.gmpe, self.imt, self.bin_width)
-
-    def get_axis_xlim(self, res_data, res_type):
-        return 0., 1.0
-
-    def get_axis_title(self, res_data, res_type):
-        median_lh = res_data["median"]
-        sigma_type = res_type
-        if res_type == 'Total':
-            sigma_type = 'Total Res.'
-        elif res_type == 'Inter event':
-            sigma_type = 'Between-Event Res.'
-        elif res_type == 'Intra event':
-            sigma_type = 'Within-Event Res.'
-        return "%s \n%s - Median LH = %7.3f" % (str(self.residuals.gmpe_list[
-            self.gmpe]).split('(')[0].replace('\n',' - ').replace(
-                'sigma_model','Sigma'),sigma_type,median_lh)
-
 
 class ResidualScatterPlot(BaseResidualPlot):
     """
@@ -589,7 +539,7 @@ def plot_edr_with_period(residuals, filename):
     ax_EDR.set_ylabel('EDR', fontsize='12')
     ax_EDR.legend(loc = 'upper right', ncol=2, fontsize=12)
     parts = filename.split(".")
-    plt.savefig(parts[0] + "_EDR_value." + parts[1])
+    plt.savefig(parts[0] + "_value." + parts[1])
     plt.close()
 
     # Plot median pred. correction factor w.r.t. period
@@ -605,7 +555,7 @@ def plot_edr_with_period(residuals, filename):
     ax_kappa.set_xlabel('Period (s)', fontsize='12')
     ax_kappa.set_ylabel('sqrt(k)', fontsize='12')
     ax_kappa.legend(loc = 'upper right', ncol=2, fontsize=12)
-    plt.savefig(parts[0] + "_EDR_kappa." + parts[1])
+    plt.savefig(parts[0] + "_kappa." + parts[1])
     plt.close()
 
     # Plot MDE w.r.t. period
@@ -621,7 +571,7 @@ def plot_edr_with_period(residuals, filename):
     ax_MDE.set_xlabel('Period (s)', fontsize='12')
     ax_MDE.set_ylabel('MDE Norm', fontsize='12')
     ax_MDE.legend(loc = 'upper right', ncol=2, fontsize=12)
-    plt.savefig(parts[0] + "_EDR_MDE." + parts[1])
+    plt.savefig(parts[0] + "_MDE." + parts[1])
     plt.close()
 
 def plot_sto_with_period(residuals, filename):
