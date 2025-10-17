@@ -884,11 +884,11 @@ class SingleStationAnalysis(object):
                     resid.site_analysis[gmpe][imtx]["Inter event"] = np.copy(
                         t_resid.residuals[gmpe][imtx]["Inter event"])
 
-                    # Get delta_s2ss
+                    # Get delta_s2ss (avg within-event for the station)
                     delta_s2ss = self._get_delta_s2ss(
                         resid.residuals[gmpe][imtx]["Intra event"], n_events)
                     
-                    # Get delta_woes
+                    # Use delta_s2ss to compute delta_woes (single station phi)
                     delta_woes = (
                         resid.site_analysis[gmpe][imtx]["Intra event"] - delta_s2ss)
                     
@@ -920,7 +920,7 @@ class SingleStationAnalysis(object):
         Returns the average within-event residual for the site from
         Rodriguez-Marek et al. (2011) Equation 8
         """
-        return (1. / float(n_events)) * np.sum(intra_event)
+        return np.sum(intra_event)/n_events
 
     def _get_single_station_phi(self, intra_event, delta_s2ss, n_events):
         """
