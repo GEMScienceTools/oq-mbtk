@@ -95,16 +95,16 @@ def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
             # Filenames
             output_all_res_with_site = os.path.join(
                 gmpe_folder, gmpe_folder_name + '_' + imt + '_' +
-                'AllResPerSite.jpg') 
-            output_intra_res_components_with_site = os.path.join(
+                'AllResPerSite.png') 
+            output_intra_res_comps_with_site = os.path.join(
                 gmpe_folder, gmpe_folder_name + '_' + imt + '_' +
-                'IntraResCompPerSite.jpg') 
+                'IntraResCompPerSite.png') 
             
             # Create the plots and save
             rspl.ResidualWithSite(
-                ssa, gmpe, imt, output_all_res_with_site, filetype='jpg')
+                ssa, gmpe, imt, output_all_res_with_site)
             rspl.IntraEventResidualWithSite(
-                ssa, gmpe, imt, output_intra_res_components_with_site, filetype='jpg')
+                ssa, gmpe, imt, output_intra_res_comps_with_site)
 
     # Print that workflow has finished
     print("Single station residual analysis workflow successfully completed.")
