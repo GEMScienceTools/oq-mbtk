@@ -303,7 +303,7 @@ class ComparisonTestCase(unittest.TestCase):
         # Specify target files
         target_file_spectra = (os.path.join(
             self.output_directory, 'ResponseSpectraPlotObserved.png'))
-
+        
         # Check target file created and outputted in expected location
         self.assertTrue(target_file_spectra)
 

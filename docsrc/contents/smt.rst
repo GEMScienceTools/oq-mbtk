@@ -495,7 +495,7 @@ Comparing GMPEs
        > comp.plot_spectra(comp_toml, output_directory, obs_spectra_fname='spectra_chamoli_1991_station_UKHI.csv') 
 
     Response spectra plots for input parameters specified in toml file:
-        .. image:: /contents/smt_images/ObsSpectra.png      
+        .. image:: /contents/smt_images/ResponseSpectra_Chamoli_1991_03_28_19_05_11_recorded_at_UKHI.png      
 
 6. Plot of ratios of attenuation curves
 

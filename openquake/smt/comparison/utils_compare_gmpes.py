@@ -1392,9 +1392,9 @@ def plot_obs_spectra(ax1,
     if obs_spectra is not None and g == len(gmpe_list)-1:
         
         # Get rup params
-        mw = np.asarray(mag_list, float)
-        rrup = np.asarray(dist_list, float)
-        depth = np.asarray(dep_list, float)
+        mw = np.asarray(mag_list, float)[0]
+        rrup = np.asarray(dist_list, float)[0]
+        depth = np.asarray(dep_list, float)[0]
         
         # Get label for spectra plot
         obs_string = (f"{eq_id}\nrecorded at {st_id} (Rrup = {rrup} km, "
