@@ -1611,13 +1611,22 @@ class TestRuptureAngle(unittest.TestCase):
         assert dict(filtered_bin_adj_mat) == _filt_bin_mat_adj_dict
 
 
-def test__lat_lon_to_xyz():
-    xyz = _latlon_to_xyz(-122.606, 45.49)
+def test__lonlat_to_xyz():
+    xyz = _lonlat_to_xyz(-122.606, 45.49)
 
-    breakpoint()
+    np.testing.assert_array_almost_equal(
+        xyz, np.array([-0.37775834, -0.590548, 0.71312811])
+    )
 
 
-def test__lat_lon_to_xyz_roundtrip():
+def test__lonlat_to_xyz_roundtrip():
     lon = -122.606
     lat = 45.49
-    xyz = _latlon_to_xyz(lon, lat)
+    xyz = _lonlat_to_xyz(lon, lat)
+    lon_, lat_ = _xyz_to_lonlat(xyz)
+    np.testing.assert_approx_equal(lon, lon_)
+    np.testing.assert_approx_equal(lat, lat_)
+
+
+def test__geog_vec_to_xyz():
+    pass
