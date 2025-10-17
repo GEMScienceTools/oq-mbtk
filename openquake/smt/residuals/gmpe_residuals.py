@@ -891,17 +891,17 @@ class SingleStationAnalysis(object):
                     # NOTE: the std of deltaS2S_s over the stations is phi_S2S
                     deltaS2S_s = np.sum(deltaW_es)/n_events
                     
-                    # Get deltaWo_es (residual variability in deltaS2S_s - eq 9)
-                    deltaWo_es = deltaW_es - deltaS2S_s
+                    # Get deltaW_oes (residual variability in deltaS2S_s - eq 9)
+                    deltaW_oes = deltaW_es - deltaS2S_s
                     
-                    # Get phi_ss_s for given station (i.e. std of deltaWo_es- eq 11)
+                    # Get phi_ss_s for given station (i.e. std of deltaW_oes- eq 11)
                     phi_ss_s = np.sqrt(
-                        np.sum((deltaWo_es) ** 2.) / float(n_events - 1)
+                        np.sum((deltaW_oes) ** 2.) / float(n_events - 1)
                         )
                     
                     # Store 
                     resid.site_analysis[gmpe][imtx]["deltaS2S_s"] = deltaS2S_s
-                    resid.site_analysis[gmpe][imtx]["deltaWo_es"] = deltaWo_es
+                    resid.site_analysis[gmpe][imtx]["deltaW_oes"] = deltaW_oes
                     resid.site_analysis[gmpe][imtx]["phi_ss_s"] = phi_ss_s
                     
                     # Get expected values too
