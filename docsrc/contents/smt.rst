@@ -181,7 +181,7 @@ Plotting of Residuals
     .. code-block:: ini
        
        > # Make residual pdf plot for givne gmpe and imt
-       > rspl.ResidualPlot(resid, gmpe, imt, fname, filetype='jpg')
+       > rspl.ResidualPlot(resid, gmpe, imt, fname)
 
 Residual distribution plot for Boore et al. 2020 and PGA:
     .. image:: /contents/smt_images/residual_histogram_PGA.png
@@ -238,7 +238,7 @@ The Loglikelihood Method (Scherbaum et al. 2009)
        > rspl.plot_llh_with_period(resid, fname)
 
     Loglikelihood versus period plot for considered GMPEs:
-       .. image:: /contents/smt_images/llh_vs_period.jpg
+       .. image:: /contents/smt_images/llh_vs_period.png
 
 Euclidean Distance Based Ranking (Kale and Akkar, 2013)
 =======================================================
@@ -293,7 +293,7 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
        > rspl.plot_sto_with_period(resid, fname)
 
     Stochastic area versus period plot for considered GMPEs:
-       .. image:: /contents/smt_images/sto_vs_period.jpg
+       .. image:: /contents/smt_images/sto_vs_period.png
 
 Single Station Residual Analysis
 ********************************
@@ -346,16 +346,16 @@ Single Station Residual Analysis
     .. code-block:: ini
     
        > # First plot (normalised) total, inter-event and intra-event residuals for each site
-       > rspl.ResidualWithSite(ssa1, gmpe_list[0], imt_list[2], fname, filetype='jpg')
+       > rspl.ResidualWithSite(ssa1, gmpe, imt, fname)
        >
        > # Then plot non-normalised intra-event per site, average intra-event per site and residual variability per site
-       > rspl.IntraEventResidualWithSite(ssa1, gmpe_list[0], imt_list[2], fname, filetype='jpg')
+       > rspl.IntraEventResidualWithSite(ssa1, gmpe, imt, fname)
 
     Normalised residuals per considered site for Boore et al. 2020 and PGA:
-        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_AllResPerSite.jpg
+        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_AllResPerSite.png
         
     Intra-event residuals components per considered site for Boore et al. 2020 and PGA:
-        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_IntraResCompPerSite.jpg
+        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_IntraResCompPerSite.png
 
 Comparing GMPEs
 ***************

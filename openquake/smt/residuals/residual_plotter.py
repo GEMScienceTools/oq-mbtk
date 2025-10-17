@@ -507,10 +507,10 @@ def plot_llh_with_period(residuals, filename):
     for gmpe in residuals.gmpe_list:
         y_llh = np.array(llh_with_imt[gmpe])
         ax_llh.scatter(x_llh.imt_float, y_llh)
-        tmp = str(residuals.gmpe_list[gmpe])
-        ax_llh.plot(x_llh.imt_float, y_llh, label=tmp.split('(')[0])
+        tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
+        ax_llh.plot(x_llh.imt_float, y_llh, label=tmp)
     ax_llh.set_xlabel('Period (s)', fontsize='12')
-    ax_llh.set_ylabel('Loglikelihood Value', fontsize='12')
+    ax_llh.set_ylabel('LLH', fontsize='12')
     ax_llh.legend(loc='upper right', ncol=2, fontsize='12')
     plt.savefig(filename)
     plt.close()
@@ -538,9 +538,9 @@ def plot_edr_with_period(residuals, filename):
     for gmpe in residuals.gmpe_list:
         EDR_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_EDR = EDR_with_imt.EDR
-        tmp = str(residuals.gmpe_list[gmpe])
+        tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
         ax_EDR.scatter(x_with_imt.imt_float, y_EDR)
-        ax_EDR.plot(x_with_imt.imt_float, y_EDR, label=tmp.split('(')[0])
+        ax_EDR.plot(x_with_imt.imt_float, y_EDR, label=tmp)
     ax_EDR.set_xlabel('Period (s)', fontsize='12')
     ax_EDR.set_ylabel('EDR', fontsize='12')
     ax_EDR.legend(loc = 'upper right', ncol=2, fontsize=12)
@@ -555,9 +555,9 @@ def plot_edr_with_period(residuals, filename):
     for gmpe in residuals.gmpe_list:
         kappa_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_kappa = kappa_with_imt["sqrt Kappa"]
-        tmp = str(residuals.gmpe_list[gmpe])
+        tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
         ax_kappa.scatter(x_with_imt.imt_float, y_kappa)
-        ax_kappa.plot(x_with_imt.imt_float, y_kappa, label=tmp.split('(')[0])
+        ax_kappa.plot(x_with_imt.imt_float, y_kappa, label=tmp)
     ax_kappa.set_xlabel('Period (s)', fontsize='12')
     ax_kappa.set_ylabel('sqrt(k)', fontsize='12')
     ax_kappa.legend(loc = 'upper right', ncol=2, fontsize=12)
@@ -571,9 +571,9 @@ def plot_edr_with_period(residuals, filename):
     for gmpe in residuals.gmpe_list:
         MDE_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_MDE = MDE_with_imt["MDE Norm"]
-        tmp = str(residuals.gmpe_list[gmpe])
+        tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
         ax_MDE.scatter(x_with_imt.imt_float, y_MDE)
-        ax_MDE.plot(x_with_imt.imt_float, y_MDE, label=tmp.split('(')[0])
+        ax_MDE.plot(x_with_imt.imt_float, y_MDE, label=tmp)
     ax_MDE.set_xlabel('Period (s)', fontsize='12')
     ax_MDE.set_ylabel('MDE Norm', fontsize='12')
     ax_MDE.legend(loc = 'upper right', ncol=2, fontsize=12)
@@ -602,9 +602,9 @@ def plot_sto_with_period(residuals, filename):
     for gmpe in residuals.gmpe_list:
         sto_with_imt = pd.Series(residuals.stoch_areas_wrt_imt[gmpe])
         y_sto = sto_with_imt.values
-        tmp = str(residuals.gmpe_list[gmpe])
+        tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
         ax_sto.scatter(x_with_imt.imt_float, y_sto)
-        ax_sto.plot(x_with_imt.imt_float, y_sto, label=tmp.split('(')[0])
+        ax_sto.plot(x_with_imt.imt_float, y_sto, label=tmp)
     ax_sto.set_xlabel('Period (s)', fontsize='12')
     ax_sto.set_ylabel('Stochastic Area', fontsize='12')
     ax_sto.legend(loc='upper right', ncol=2, fontsize=12)
