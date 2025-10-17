@@ -352,10 +352,10 @@ Single Station Residual Analysis
        > rspl.IntraEventResidualWithSite(ssa1, gmpe, imt, fname)
 
     Normalised residuals per considered site for Boore et al. 2020 and PGA:
-        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_AllResPerSite.png
+       .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_AllResPerSite.png
         
     Intra-event residuals components per considered site for Boore et al. 2020 and PGA:
-        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_IntraResCompPerSite.png
+       .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_IntraResCompPerSite.png
 
 Comparing GMPEs
 ***************
