@@ -852,9 +852,7 @@ class SingleStationAnalysis(object):
 
         Equation numbers throughout this function and those called within refer to
         equations provided within Rodriguez-Marek et al. (2011) for the computation
-        of the site-specific components of the intra-event residual. Note that for
-        computation of phi_ss_s we use equation 11 rather than equation 10 because
-        equation 10 assumes a homoscedastic model - see pp. 1248 for more info.
+        of the site-specific components of the intra-event residual.
         """
         output_resid = []
         for t_resid in self.site_residuals:
@@ -918,14 +916,18 @@ class SingleStationAnalysis(object):
         # Update
         self.site_residuals = output_resid
 
-        return self.get_station_averaged_stats(filename)
+        # Now can get station averaged values of (phi_ss and deltaS2S)
+        self._get_station_averaged_values(filename)
 
-    def get_station_averaged_stats(self, filename=None):
+    def _get_station_averaged_values(self, filename=None):
         """
-        Compute station-averaged standard deviation of deltaS2S_s (i.e.
-        phi_ss, rather than phi_ss_s which is per station).
+        Compute station-averaged standard deviation of deltaS2S_s
+        (i.e. phi_ss, rather than phi_ss_s which is per station)
+        AND station-averaged phiS2S_s (i.e. phiS2S). 
         """
         fid = open(filename, "w") if filename else sys.stdout
+        self.mean_deltaS2S = {
+            gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
         self.phi_S2S = {
             gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
         self.phi_ss = {
@@ -943,22 +945,32 @@ class SingleStationAnalysis(object):
                         stacklevel=10,
                     )
                     continue
-
-                phi_S2S_avg, phi_ss_avg = self._get_avg_phi_ss(gmpe, imtx, fid)
-                self.phi_S2S[gmpe][imtx] = phi_S2S_avg
-                self.phi_ss[gmpe][imtx] = phi_ss_avg
+                
+                # Return mean deltaS2S, stddev of deltaS2S (phi_S2S) and phi_ss
+                st_averaged = self._compute_station_averaged_values(gmpe, imtx, fid)
+                self.mean_deltaS2S[gmpe][imtx] = st_averaged[0]
+                self.phi_S2S[gmpe][imtx] = st_averaged[1]
+                self.phi_ss[gmpe][imtx] = st_averaged[2]
                 
         if filename:
-            self._print_ssa_results(fid, self.phi_ss, self.phi_S2S)
+            self._print_ssa_results(fid, self.mean_deltaS2S, self.phi_ss, self.phi_S2S)
             fid.close()
 
-    def _get_avg_phi_ss(self, gmpe, imtx, fid):
+    def _compute_station_averaged_values(self, gmpe, imtx, fid):
         """
-        Compute station-averaged single-station standard deviation using
-        equation 10 of Rodriguez-Marek et al. (2011).
+        Computes the following: 
+
+            1) Mean deltaS2S_s w.r.t. all the stations
         
-        NOTE: This is phi_ss NOT phi_ss_s - the prior is computed assuming
-        a homoskedastic model. The latter is compute using equation 11.
+            2) Stddev of deltaS2S_s w.r.t. all the stations (phi_S2S)
+            
+            3) Compute station-averaged single-station standard deviation
+               (phi_ss) using equation 10 of Rodriguez-Marek et al. (2011)
+               
+        NOTE: This function returns phi_ss (station-averaged) which is
+        NOT phi_ss_s (per station) - the prior is computed assuming a
+        homoskedastic model (see equation 10). The user is referred to
+        pp. 1248 of Rodriguez-Marek et al. (2011) for more info.
         """
         # Set some stores
         deltaS2S_s, n_events = [], []
@@ -980,15 +992,18 @@ class SingleStationAnalysis(object):
                     file=fid
                 )
 
-        # Compute station averaged deltaS2S_s
-        phi_S2S = {"Mean": np.mean(deltaS2S_s), "StdDev": np.std(deltaS2S_s)}
+        # Compute mean deltaS2S_s
+        mean_deltaS2S = np.mean(deltaS2S_s)
+
+        # Compute phi_S2S (stddev of deltaS2S_s)
+        phi_S2S = np.std(deltaS2S_s)
 
         # Compute station averaged phi_ss_s (eq 10) for given gmpe and imt
-        phi_ss_s = np.sqrt(numerator_sum / (np.sum(n_events) - 1))
+        phi_ss = np.sqrt(numerator_sum / (np.sum(n_events) - 1))
 
-        return phi_S2S, phi_ss_s
+        return mean_deltaS2S, phi_S2S, phi_ss
 
-    def _print_ssa_results(self, fid, phi_ss, phi_S2S):
+    def _print_ssa_results(self, fid, mean_deltaS2S, phi_ss, phi_S2S):
         """
         Print SSA results to the file.
         """
@@ -1002,12 +1017,12 @@ class SingleStationAnalysis(object):
                 p_data = (
                     imtx,
                     phi_ss[gmpe][imtx],
-                    phi_S2S[gmpe][imtx]["Mean"],
-                    phi_S2S[gmpe][imtx]["StdDev"],
+                    mean_deltaS2S[gmpe][imtx],
+                    phi_S2S[gmpe][imtx],
                 ) if gmm_sigmas == ALL_SIGMA else (imtx, ni, ni, ni)
                 print(
                     f"{p_data[0]}, phi_ss, {p_data[1]}, "
-                    f"station-averaged phi_s2s mean, {p_data[2]}, "
-                    f"station-averaged phi_s2s std. dev, {p_data[3]}",
+                    f"station-averaged deltaS2S_s, {p_data[2]}, "
+                    f"phi_S2S, {p_data[3]}",
                     file=fid
                 )
