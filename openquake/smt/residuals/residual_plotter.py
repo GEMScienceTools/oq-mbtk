@@ -1060,20 +1060,25 @@ class IntraEventResidualWithSite(ResidualPlot):
         """
         if 'Intra event' in self.residuals.site_residuals[0].residuals[self.gmpe][
                 self.imt]:
-            phi_ss, phi_s2ss = self.residuals.station_residual_statistics()
+            self.residuals.station_residual_statistics()
+            phi_ss = self.residuals.phi_ss
+            phi_S2S = self.residuals.phi_S2S
             data = self._get_site_data()
             fig = plt.figure(figsize=self.figure_size)
             fig.set_layout_engine('tight')
-            self._residual_plot(fig, data,phi_ss[self.gmpe][self.imt],
-                                phi_s2ss[self.gmpe][self.imt])
+            self._residual_plot(fig,
+                                data,
+                                phi_ss[self.gmpe][self.imt],
+                                phi_S2S[self.gmpe][self.imt]
+                                )
             plt.savefig(self.filename)
             plt.close()
         else:
             warnings.warn('This implementation of %s GMPE does not have a mixed'
-                         ' effects sigma model - plotting skipped' %self.gmpe,
-                         stacklevel=10)
+                          ' effects sigma model - plotting skipped' % self.gmpe,
+                          stacklevel=10)
 
-    def _residual_plot(self, fig, data, phi_ss, phi_s2ss):
+    def _residual_plot(self, fig, data, phi_ss, phi_S2S):
         """
         Creates three plots:
         1) Plot of the intra-event residual (not normalised by GMPE intra-event)
@@ -1135,14 +1140,14 @@ class IntraEventResidualWithSite(ResidualPlot):
                 's', markeredgecolor='k', markerfacecolor='LightSteelBlue', markersize=8,
                 zorder=-32, label=r'$\delta S2S_S$')
         ax.plot(
-            xmean, (phi_s2ss["Mean"] - phi_s2ss["StdDev"]) * nxm, "k--", linewidth=1.5
+            xmean, (phi_S2S["Mean"] - phi_S2S["StdDev"]) * nxm, "k--", linewidth=1.5
             )
         ax.plot(
-            xmean, (phi_s2ss["Mean"] + phi_s2ss["StdDev"]) * nxm,
+            xmean, (phi_S2S["Mean"] + phi_S2S["StdDev"]) * nxm,
             "k--", linewidth=1.5, label=r'+/- $\phi_{S2S}$'
             )
         ax.plot(
-            xmean, (phi_s2ss["Mean"]) * nxm,
+            xmean, (phi_S2S["Mean"]) * nxm,
             "k-", linewidth=2, label=r'Mean $\phi_{S2S}$'
             )
         ax.set_xlim(0, len(self.residuals.site_ids))
@@ -1155,7 +1160,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         title_string = r'%s - %s ($\phi_{S2S}$ = %8.5f)' % (str(
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma'),
-            self.imt, phi_s2ss["StdDev"])
+            self.imt, phi_S2S["StdDev"])
         ax.set_title(title_string, fontsize=11)
         ax.legend(loc='upper right', fontsize=12)
         
@@ -1174,7 +1179,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.set_ylabel(r'$\delta W_{o,es} = \delta W_{es} - \delta S2S_S$', fontsize=12)
         title_string = r'%s - %s ($\phi_{SS}$ = %8.5f)' % (str(
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
-                ']\n', '] - ').replace('sigma_model','Sigma'), self.imt,phi_ss)
+                ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi_ss)
         ax.set_title(title_string, fontsize=11)
         ax.legend(loc='upper right', fontsize=12)
         
