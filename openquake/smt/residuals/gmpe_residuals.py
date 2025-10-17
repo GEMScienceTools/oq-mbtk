@@ -852,7 +852,13 @@ class SingleStationAnalysis(object):
 
     def station_residual_statistics(self, filename=None):
         """
-        Get single-station residual statistics for each site
+        Get single-station residual statistics for each site.
+
+        Equation numbers throughout this function and those called within refer to
+        equations provided within Rodriguez-Marek et al. (2011) for the computation
+        of the site-specific components of the intra-event residual. Note that for
+        computation of phi_ss we use equation 11 rather than equation 10 because
+        equation 10 assumes a homoscedastic model - see pp. 1248 for more info.
         """
         output_resid = []
         for t_resid in self.site_residuals:
@@ -887,21 +893,22 @@ class SingleStationAnalysis(object):
                     # Get intra-event residuals
                     intra = resid.residuals[gmpe][imtx]["Intra event"]
 
-                    # Get dS2Ss (avg within-event for the station)
-                    dS2Ss = np.sum(intra)/n_events
+                    # Get deltaS2S_s (avg within-event for the station - eq 8)
+                    # NOTE: the std of deltaS2S_s over the stations is phi_S2S
+                    deltaS2S_s = np.sum(intra)/n_events
                     
-                    # dWoes is each rec's intra comp minus dS2Ss
-                    dWoes = intra - dS2Ss
+                    # Get deltaWo_es (residual variability in deltaS2S_s - eq 9)
+                    deltaWo_es = intra - deltaS2S_s
                     
-                    # Single station phi
+                    # Get phi_ss for given station (i.e. std of deltaWo_es- eq 11)
                     phi_ss = np.sqrt(
-                        np.sum((dWoes) ** 2.) / float(n_events - 1)
+                        np.sum((deltaWo_es) ** 2.) / float(n_events - 1)
                         )
                     
                     # Store 
-                    resid.site_analysis[gmpe][imtx]["dS2Ss"] = dS2Ss
-                    resid.site_analysis[gmpe][imtx]["dWoes"] = dWoes
-                    resid.site_analysis[gmpe][imtx]["phi_ss,s"] = phi_ss
+                    resid.site_analysis[gmpe][imtx]["deltaS2S_s"] = deltaS2S_s
+                    resid.site_analysis[gmpe][imtx]["deltaWo_es"] = deltaWo_es
+                    resid.site_analysis[gmpe][imtx]["phi_ss"] = phi_ss
                     
                     # Get expected values too
                     resid.site_analysis[gmpe][imtx]["Expected inter"] =\
@@ -915,16 +922,15 @@ class SingleStationAnalysis(object):
         # Update
         self.site_residuals = output_resid
 
-        return self.get_total_phi_ss(filename)
+        return self.get_phi_ss_stats(filename)
 
-    def get_total_phi_ss(self, filename=None):
+    def get_phi_ss_stats(self, filename=None):
         """
-        Returns the station-averaged single-station phi from Rodriguez-Marek
-        et al. (2011) Equation 10.
+        TODO
         """
         fid = open(filename, "w") if filename else sys.stdout
+        phi_S2Ss = self._set_empty_dict()
         phi_ss = self._set_empty_dict()
-        phi_s2ss = self._set_empty_dict()
 
         for gmpe in self.gmpe_list:
             if filename: print(get_gmpe_str(gmpe), file=fid)
@@ -939,37 +945,48 @@ class SingleStationAnalysis(object):
                     )
                     continue
 
-                d2ss, n_events, numerator_sum = self._compute_station_stats(gmpe, imtx, fid)
-                phi_s2ss[gmpe][imtx] = {"Mean": np.mean(d2ss), "StdDev": np.std(d2ss)}
-                phi_ss[gmpe][imtx] = np.sqrt(numerator_sum / (np.sum(n_events) - 1))
-
+                # For given GMPE and IMT compute station-averaged phi_ss
+                phi_S2Ss_avg, phi_ss_avg = self._get_avg_phi_ss(gmpe, imtx, fid)
+                phi_S2Ss[gmpe][imtx] = phi_S2Ss_avg
+                phi_ss[gmpe][imtx] = phi_ss_avg
+                
         if filename:
-            self._print_ssa_results(fid, phi_ss, phi_s2ss)
+            self._print_ssa_results(fid, phi_ss, phi_S2Ss)
             fid.close()
 
-        return phi_ss, phi_s2ss
+        return phi_ss, phi_S2Ss
 
-    def _compute_station_stats(self, gmpe, imtx, fid):
+    def _get_avg_phi_ss(self, gmpe, imtx, fid):
         """
-        Compute station statistics for a given GMPE and IMT.
+        Compute station-averaged single-station standard deviation using
+        equation 10 of Rodriguez-Marek et al. (2011).
         """
-        d2ss, n_events = [], []
+        # Set some stores
+        deltaS2S_s, n_events = [], []
+
+        # For each station collect deltaS2S_s and the num. events associated
         numerator_sum = 0.0
         for iloc, resid in enumerate(self.site_residuals):
             site_data = resid.site_analysis[gmpe][imtx]
-            d2ss.append(site_data["dS2Ss"])
+            deltaS2S_s.append(site_data["deltaS2S_s"])
             n_events.append(site_data["events"])
-            numerator_sum += np.sum((site_data["Intra event"] - site_data["dS2Ss"]) ** 2)
+            numerator_sum += np.sum((site_data["Intra event"] - site_data["deltaS2S_s"]) ** 2)
             if fid:
                 print(
-                    f"Site ID, {list(self.site_ids)[iloc]}, dS2Ss, {site_data['dS2Ss']}, "
-                    f"phi_ss, {site_data['phi_ss,s']}, Num Records, {site_data['events']}",
+                    f"Site ID, {list(self.site_ids)[iloc]}, deltaS2S_s, {site_data['deltaS2S_s']}, "
+                    f"phi_ss, {site_data['phi_ss']}, Num Records, {site_data['events']}",
                     file=fid
                 )
 
-        return np.array(d2ss), np.array(n_events), numerator_sum
+        # Compute distribution of deltaS2S_s w.r.t. all stations for given gmpe and imt
+        phi_S2Ss = {"Mean": np.mean(deltaS2S_s), "StdDev": np.std(deltaS2S_s)}
 
-    def _print_ssa_results(self, fid, phi_ss, phi_s2ss):
+        # Compute station averaged phi_ss (eq 10) for given gmpe and imt
+        phi_ss = np.sqrt(numerator_sum / (np.sum(n_events) - 1))
+
+        return phi_S2Ss, phi_ss
+
+    def _print_ssa_results(self, fid, phi_ss, phi_S2Ss):
         """
         Print SSA results to the file.
         """
@@ -982,8 +999,8 @@ class SingleStationAnalysis(object):
                 p_data = (
                     imtx,
                     phi_ss[gmpe][imtx],
-                    phi_s2ss[gmpe][imtx]["Mean"],
-                    phi_s2ss[gmpe][imtx]["StdDev"],
+                    phi_S2Ss[gmpe][imtx]["Mean"],
+                    phi_S2Ss[gmpe][imtx]["StdDev"],
                 ) if gmm_sigmas == ALL_SIGMA else (imtx, None, None, None)
                 print(
                     f"{p_data[0]}, phi_ss (phi single-station), {p_data[1]}, "
