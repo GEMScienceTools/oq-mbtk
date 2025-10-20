@@ -149,13 +149,13 @@ class ESMFlatfileParser(SMDatabaseReader):
         Parse the flatfile
         """
         assert os.path.isfile(self.filename)
-        headers = getline(self.filename, 1).rstrip("\n").split(";")
+        headers = getline(self.filename, 1).rstrip("\n").split(",")
         for hdr in HEADERS:
             if hdr not in headers:
                 raise ValueError("Required header %s is missing in file"  % hdr)
         # Read in csv
-        with open(self.filename, "r", encoding="utf-8", newline='') as f:
-            reader = csv.DictReader(open(self.filename, "r"), delimiter=";")
+        with open(self.filename, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(open(self.filename, "r"), delimiter=",")
             self.database = GroundMotionDatabase(self.id, self.name)
             counter = 0
             for row in reader:
@@ -425,12 +425,17 @@ class ESMFlatfileParser(SMDatabaseReader):
 
         vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
         vs30_topo = valid.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
-        if vs30:
+        if pd.isnull(vs30) and pd.isnull(vs30_topo):
+            # Need at least one vs30 value for residuals (not really, given
+            # some GMMs lack site terms, but good way to prevent confusing
+            # nans in the expected values which appear when computing stats)
+            raise ValueError(
+                f"A vs30 value (either measured or WA-based) must be provided for {site_id}")
+        elif pd.notnull(vs30): # Measured
             vs30_measured = True
-        elif vs30_topo:
-            vs30 = vs30_topo
-            vs30_measured = False
         else:
+            assert pd.notnull(vs30_topo) # Topographic slope-based
+            vs30 = vs30_topo
             vs30_measured = False
         st_nation_code = metadata["st_nation_code"].strip()
         if st_nation_code:

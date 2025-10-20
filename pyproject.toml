@@ -54,7 +54,7 @@ dependencies = [
     "obspy",
     "prettytable",
     "pylint >= 2.1.1",
-    "pyproj >= 3.6.1",
+    "pyproj >= 3.7.1",
     "reportlab",
     "rtree",
     "tables >= 3.7.0",
