@@ -765,7 +765,7 @@ class GroundMotionDatabase(ContextDB):
     def get_observations(self, imtx, records, component="Geometric"):
         """
         Return observed values for the given imt, as numpy array.
-        See superclass docstrsing for details
+        See superclass docstring for details
         """
         values = []
         selection_string = "IMS/H/Spectra/Response/Acceleration/"
