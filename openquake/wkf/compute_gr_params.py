@@ -536,8 +536,8 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
         tmp_bgr = bval_wei + eps_bgr * bval_sigma
         tmp_agr = _get_agr(tmp_bgr, tmp_rate, ref_mag, mmax=None)
         xmag, exra = fun(tmp_agr, tmp_bgr, cent_mag, binw, mmax)
-        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\sigma$'
-        lab += f' bgr{eps_bgr:+.1f}$\sigma$'
+        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\\sigma$'
+        lab += f' bgr{eps_bgr:+.1f}$\\sigma$'
         plt.plot(xmag, exra, ls='-.', color='orange', label=lab,
                  alpha=alpha)
 
@@ -548,8 +548,8 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
         tmp_bgr = bval_wei + eps_bgr * bval_sigma
         tmp_agr = _get_agr(tmp_bgr, tmp_rate, ref_mag, mmax=None)
         xmag, exra = fun(tmp_agr, tmp_bgr, cent_mag, binw, mmax)
-        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\sigma$'
-        lab += f' bgr{eps_bgr:+.1f}$\sigma$'
+        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\\sigma$'
+        lab += f' bgr{eps_bgr:+.1f}$\\sigma$'
         plt.plot(xmag, exra, ls='-.', color='purple', label=lab,
                  alpha=alpha)
 
@@ -560,8 +560,8 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
         tmp_bgr = bval_wei + eps_bgr * bval_sigma
         tmp_agr = _get_agr(tmp_bgr, tmp_rate, ref_mag, mmax=None)
         xmag, exra = fun(tmp_agr, tmp_bgr, cent_mag, binw, mmax)
-        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\sigma$'
-        lab += f' bgr{eps_bgr:+.1f}$\sigma$'
+        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\\sigma$'
+        lab += f' bgr{eps_bgr:+.1f}$\\sigma$'
         plt.plot(xmag, exra, ls=':', color='orange', label=lab,
                  alpha=alpha)
 
@@ -572,8 +572,8 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
         tmp_bgr = bval_wei + eps_bgr * bval_sigma
         tmp_agr = _get_agr(tmp_bgr, tmp_rate, ref_mag, mmax=None)
         xmag, exra = fun(tmp_agr, tmp_bgr, cent_mag, binw, mmax)
-        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\sigma$'
-        lab += f' bgr{eps_bgr:+.1f}$\sigma$'
+        lab = f'rate m$_{{{ref_mag:.1f}}}${eps_rate:+.1f}$\\sigma$'
+        lab += f' bgr{eps_bgr:+.1f}$\\sigma$'
         plt.plot(xmag, exra, ls=':', color='purple', label=lab,
                  alpha=alpha)
 
