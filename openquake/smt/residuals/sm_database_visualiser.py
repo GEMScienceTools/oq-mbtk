@@ -164,14 +164,15 @@ def _site_selection(db1, site_class, classifier):
     idx = []
     for iloc, rec in enumerate(db1.records):
         if classifier == "NEHRP":
+        
             if rec.site.nehrp and (rec.site.nerhp == site_class):
                 idx.append(iloc)
                 continue
-              
-            if rec.site.vs30:
-                if (rec.site.vs30 >= NEHRP_BOUNDS[site_class][0]) and\
-                   (rec.site.vs30 < NEHRP_BOUNDS[site_class][1]):
-                    idx.append(iloc)
+
+            if (rec.site.vs30 >= NEHRP_BOUNDS[site_class][0]) and\
+                (rec.site.vs30 < NEHRP_BOUNDS[site_class][1]):
+                idx.append(iloc)
+        
         elif classifier == "EC8":
             if rec.site.ec8 and (rec.site.ec8 == site_class):
                 idx.append(iloc)

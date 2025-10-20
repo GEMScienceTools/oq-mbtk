@@ -15,8 +15,6 @@ mpl.use('tkagg')
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-# MN: 'Basemap' imported but used just for an orhpan var
-#from mpl_toolkits.basemap import Basemap
 
 
 def plot_sub_profile(sid, dat, axes):
@@ -34,12 +32,6 @@ def plot_catalogue(filename, axes, lims, qual):
         lo = numpy.array([x+360 if x < 0 else x for x in lo])
     la = cat.data['latitude']
     de = cat.data['depth']
-    # MN: 'idx' assigned but never used
-    idx = numpy.nonzero((lo > lims[0]) & (lo < lims[1]) &
-                        (la > lims[2]) & (la < lims[3]) &
-                        (de > lims[4]) & (de < lims[5]))
-    # axes.plot(lo[idx], la[idx], de[idx], '.', alpha=0.5)
-
 
 def plot_sub_profiles(foldername):
     """
@@ -52,8 +44,6 @@ def plot_sub_profiles(foldername):
     minde = +1e10
     maxde = -1e10
     #
-    # MN: 'mpp' assigned but never used
-#    mpp = Basemap()
     # Create figure
     fig = plt.figure()
     ax = Axes3D(fig)

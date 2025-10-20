@@ -16,7 +16,6 @@ nbstripout >= 0.3.0
 notebook >= 5.0.0
 pylint >= 2.1.1
 rtree >= 0.9.4
-netCDF4 < 1.7.0
 scipy >= 1.13.1
 #
 # Generic
@@ -34,4 +33,3 @@ pygmt
 reportlab
 igraph
 pyvista
-basemap

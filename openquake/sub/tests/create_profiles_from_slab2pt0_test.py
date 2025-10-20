@@ -25,7 +25,6 @@
 # coding: utf-8
 
 import pathlib
-import tempfile
 import unittest
 import numpy as np
 from openquake.sub.get_profiles_from_slab2pt0 import (get_profiles,
