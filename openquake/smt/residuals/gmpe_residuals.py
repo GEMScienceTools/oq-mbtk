@@ -986,12 +986,12 @@ class SingleStationAnalysis(object):
                 (site_data["Intra event"] - site_data["deltaS2S_s"]) ** 2)
             if fid:
                 print(
-                    f"Site ID, {
-                        list(self.site_ids)[iloc]}, deltaS2S_s, {site_data['deltaS2S_s']}, "
-                    f"phi_ss,s, {
-                        site_data['phi_ss,s']}, Num Records, {site_data['events']}",
+                    f"Site ID, {list(self.site_ids)[iloc]}, "
+                    f"deltaS2S_s, {site_data['deltaS2S_s']}, "
+                    f"phi_ss,s, {site_data['phi_ss,s']}, "
+                    f"Num Records, {site_data['events']}",
                     file=fid
-                )
+                    )
 
         # Compute mean deltaS2S_s
         mean_deltaS2S = np.mean(deltaS2S_s)
