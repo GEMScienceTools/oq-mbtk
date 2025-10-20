@@ -612,6 +612,50 @@ def make_rup_fault_lookup(ruptures, key='subfaults'):
     return fault_rup_dict
 
 
+def get_fault_mfd_from_rup_rates(
+    fault_idx, rup_df, rup_rates, rup_fault_lookup=None, fault_key='faults'
+):
+    """
+    Calculates the MFD of a fault or subfault given all the ruptures that occur
+    on it and their rupture rates from the inversion solution (or other
+    solution).
+
+    Parameters
+    ----------
+    fault_idx: str or int
+        Index of fault or subfault
+    rup_df: pd.DataFrame
+        Dataframe of ruptures
+    rup_rates: pd.Series
+        Annual occurrence rates of ruptures with index shared with rup_df
+    rup_fault_lookup: dict, optional
+        Lookup table with keys of fault indices and values of lists of
+        ruptures on each.
+    fault_key: str
+        `faults` or `subfaults` depending on interest
+
+    Returns
+    -------
+    mfd_sort: dict
+        Incremental MFD in dictionary form, with magnitudes as keys and
+        rates as values
+    """
+    rup_df_use = rup_df.loc[rup_rates.index]
+    if rup_fault_lookup is None:
+        rup_fault_lookup = make_rup_fault_lookup(rup_df_use, key=fault_key)
+
+    rups_on_fault = rup_fault_lookup[fault_idx]
+
+    mfd = AccumDict()
+    for rup_idx in rups_on_fault:
+        rup = rup_df.loc[rup_idx]
+        mfd += {rup['mag']: rup_rates[rup_idx]}
+
+    mfd_sort = {k: mfd[k] for k in sorted(mfd.keys())}
+
+    return mfd_sort
+
+
 def get_rup_rates_from_fault_slip_rates(
     fault_network,
     b_val=1.0,
