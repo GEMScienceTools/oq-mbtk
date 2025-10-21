@@ -214,8 +214,7 @@ class Residuals(object):
             for an example
         """
         # Build initial contexts with the observed values
-        contexts = ctx_database.get_contexts(
-            nodal_plane_index, self.imts, component)
+        contexts = ctx_database.get_contexts(nodal_plane_index, self.imts, component)
         
         # Check at least one observed value per IMT (else raise an error)
         for im in self.imts:
