@@ -2,7 +2,7 @@ name: test and make pages
 
 on:
   push:
-    branches: [ test ]
+    branches: [ numpy2_test ]
   pull_request:
     branches: [ master ]
   schedule:
@@ -26,7 +26,7 @@ jobs:
         python -m pip install --upgrade pip
         git clone --depth=1 https://github.com/gem/oq-engine.git
         cd oq-engine
-        python3 install.py devel
+        python3 install.py devel --version=ae_numpy2
         cd ..
         source ~/openquake/bin/activate
         pip list
@@ -41,42 +41,3 @@ jobs:
         cd openquake
         export MPLBACKEND=Agg
         pytest -vsx --color=yes cat ghm man mbi mbt sub wkf smt
-  pages:
-    name: pages
-    runs-on: ubuntu-latest
-    env:
-      MPLBACKEND: 'Agg'
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.11"
-    - name: Install OpenQuake dependencies
-      run: |
-        sudo apt-get install pandoc
-        python -m pip install --upgrade pip
-        git clone --depth=1 https://github.com/gem/oq-engine.git
-        cd oq-engine
-        python3 install.py devel
-        sleep 3
-        source ~/openquake/bin/activate
-        pip install sphinx
-        pip install recommonmark
-        pip install sphinx_rtd_theme
-        pip install nbsphinx
-    - name: Make html pages
-      run: |
-        source ~/openquake/bin/activate
-        cd docsrc ; sphinx-apidoc -o contents/ ../openquake ; make html
-        touch _build/html/.nojekyll
-
-    - name: Deploy to GitHub Pages
-      if: success()
-      uses: crazy-max/ghaction-github-pages@v2
-      with:
-        target_branch: gh-pages
-        build_dir: docsrc/_build/html/
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

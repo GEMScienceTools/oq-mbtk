@@ -3,7 +3,7 @@ name: Windows Test
 on:
   push:
     branches:
-      - test
+      - numpy2_test
   pull_request:
   schedule:
     - cron: "0 4 * * *"
@@ -43,26 +43,13 @@ jobs:
           python -V
           Write-Host "Install OQ form master and mbtk from branch ${{ github.ref_name }}"
           python -m pip install -U pip
-          git clone --depth 1 -b master https://github.com/gem/oq-engine.git
+          git clone --depth 1 -b ae_numpy2 https://github.com/gem/oq-engine.git
           python -m pip install -r oq-engine/requirements-py311-win64.txt
           cd oq-engine
           python -m pip install -e .
           cd ..
           python -m pip install -r requirements_win64.txt
           python -m pip install -e .
-          #.\windows\install_oqmbtk.ps1 -mbtk_branch ${{ github.ref_name }}
-          # do not use powershell scripts but install with devel installation
-          #$MYPATH = $HOME + "\mbtk"
-          #Write-Host "Print USERPROFILE folder: $env:USERPROFILE"
-          #Write-Host "Print MYPATH folder: $MYPATH"
-          #$Env:PATH += ";$MYPATH"
-          #$Env:PATH += ";$MYPATH\python3\Scripts"
-          #Added to disable TCL
-          #$Env:PY_PIP=$MYPATH += '\Scripts'
-          #$Env:PY_PIP=$MYPATH += '\python3\Scripts'
-          #$Env:PY_HOME=$MYPATH
-          #$Env:PY_LIBS="$MYPATH\python3\Lib;$MYPATH\python3\Lib\site-package"
-          #Write-Host "MYPATH Directory: $MYPATH"
           $Env:MPLBACKEND="AGG"
           $Env:PYTHONUTF8=1
           Start-Job -ScriptBlock{& 'oq.exe' engine --upgrade-db}
