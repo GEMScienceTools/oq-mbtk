@@ -88,7 +88,7 @@ We can specify the inputs to perform a residual analysis with as follows:
         >              'LanzanoEtAl2019_RJB_OMO']
         > imt_list = ['PGA', 'SA(0.2)', 'SA(0.6)', 'SA(1.0)']
         
-2. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method is required for the use of GMPEs with user-specifiable input parameters.
+2. We can also specify the GMPEs and intensity measures within a ``.toml`` file. The ``.toml`` file method permits easier specification of additional parameters accepted by some GMMs compared to when specifying them in lists of strings as demonstrated above.
 
    The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GMPE modules (the ``.py`` GMM files found in ``oq-engine\openquake\hazardlib\gsim``). The capabilties of ModifiableGMPE are primarily contained within ``oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe.py``.
    
@@ -118,7 +118,7 @@ We can specify the inputs to perform a residual analysis with as follows:
        # with additional  parameters than be specified within a toml file
     
        [models.AbrahamsonGulerce2020SInter]
-       region = "CAS" # GMPE specific parameters        
+       region = "CAS" # String representation in a list of GMMs would be "[AbrahamsonGulerce2020SInter]\nregion='CAS'"     
        
        [models.NGAEastUSGSGMPE]
        gmpe_table='nga_east_Frankel.hdf5'

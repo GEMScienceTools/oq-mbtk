@@ -883,7 +883,15 @@ class GroundMotionDatabase(ContextDB):
             ctx.rrup.append(record.distance.rrup)
             ctx.rx.append(record.distance.r_x)
             ctx.ry0.append(record.distance.ry0)
-            ctx.rvolc.append(record.distance.rvolc)
+            if record.distance.rvolc is None:
+                # Set to zero if not provided because
+                # permitting setting to None here will
+                # generate nan expected vals in GMMs
+                # using rvolc like ZhaoEtAl2016)
+                ctx.rvolc.append(0.) 
+            else:
+                ctx.rvolc.append(record.distance.rvolc)
+                                     
             ctx.rcdpp.append(record.distance.rcdpp)
 
         for attname in self.distances_context_attrs:
