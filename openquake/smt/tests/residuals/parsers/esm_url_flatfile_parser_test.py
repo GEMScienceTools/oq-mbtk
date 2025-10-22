@@ -54,10 +54,10 @@ class ESMFlatfileParserURLTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ESM_flatfile_directory = os.path.join(
-            BASE_DATA_PATH, "ESM_URL_Greece_test.csv")
+            BASE_DATA_PATH, "esm_url_test_file.csv")
         cls.db_file = os.path.join(
             BASE_DATA_PATH, "ESM_URL_conversion_test_metadata")    
-        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
+        cls.gmpe_list = ["BooreEtAl2014", "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]   
 
     def test_esm_url_flatfile_parser(self):

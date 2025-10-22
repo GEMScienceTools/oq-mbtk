@@ -45,17 +45,20 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.GEM_flatfile_directory = os.path.join(
-            BASE_DATA_PATH, "GEM_flatfile_test.csv")
+            BASE_DATA_PATH, "gem_flatfile_test_file.csv")
         cls.db_file = os.path.join(
-            BASE_DATA_PATH, "GEM_conversion_test_metadata")       
-        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
+            BASE_DATA_PATH, "gem_conversion_test_metadata")       
+        cls.gmpe_list = ["AbrahamsonEtAl2014", "KothaEtAl2020"]
         cls.imts = ["PGA", "SA(1.0)"]
         cls.metadata_pth = os.path.join(cls.db_file, "metadatafile.pkl")
 
     def test_gem_flatfile_parser(self):
-        parser = GEMFlatfileParser.autobuild("000", "GEM_conversion_test",
+        parser = GEMFlatfileParser.autobuild(
+                                             "000",
+                                             "gem_conversion_test",
                                              self.db_file,
-                                             self.GEM_flatfile_directory)
+                                             self.GEM_flatfile_directory
+                                             )
         with open(self.metadata_pth, "rb") as f:
             db = pickle.load(f)
         
