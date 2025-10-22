@@ -172,6 +172,60 @@ def parse_distances(metadata, hypo_depth):
         return distances
 
 
+def parse_site_data(metadata):
+    """
+    Parses the site information
+    """
+    network_code = metadata["network_code"].strip()
+    station_code = metadata["station_code"].strip()
+    site_id = "{:s}-{:s}".format(network_code, station_code)
+    site_lon = valid.longitude(metadata["st_longitude"])
+    site_lat = valid.latitude(metadata["st_latitude"])
+    elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
+
+    vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
+    vs30_topo = valid.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
+    if pd.isnull(vs30) and pd.isnull(vs30_topo):
+        # Need at least one vs30 value for residuals (not really, given
+        # some GMMs lack site terms, but good way to prevent confusing
+        # nans in the expected values which appear when computing stats)
+        raise ValueError(
+            f"A vs30 value (either measured or WA-based) must be provided for {site_id}")
+    elif pd.notnull(vs30): # Measured
+        vs30_measured = True
+    else:
+        assert pd.notnull(vs30_topo) # Topographic slope-based
+        vs30 = vs30_topo
+        vs30_measured = False
+    st_nation_code = metadata["st_nation_code"].strip()
+    if st_nation_code:
+        st_country = COUNTRY_CODES[st_nation_code]
+    else:
+        st_country = None
+    
+    site = RecordSite(site_id,
+                        station_code,
+                        station_code,
+                        site_lon,
+                        site_lat,
+                        elevation,
+                        vs30,
+                        vs30_measured,
+                        network_code=network_code,
+                        country=st_country)
+    
+    site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
+    site.sensor_depth = valid.vfloat(
+        metadata["sensor_depth_m"], "sensor_depth_m")
+    
+    site.instrument_type = metadata["instrument_code"].strip()
+    housing_code = metadata["housing_code"].strip()
+    if housing_code and (housing_code in HOUSING):
+        site.building_structure = HOUSING[housing_code]
+
+    return site
+
+
 class ESMFlatfileParser(SMDatabaseReader):
     """
     Parses the data from the flatfile to a set of metadata objects
@@ -256,7 +310,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         distances = parse_distances(metadata, event.depth)
         
         # Parse the station metadata
-        site = self._parse_site_data(metadata)
+        site = parse_site_data(metadata)
         
         # Parse waveform data
         xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
@@ -412,59 +466,6 @@ class ESMFlatfileParser(SMDatabaseReader):
                                                 "dip": dip,
                                                 "rake": rake}
         return rupture, mechanism
-
-    def _parse_site_data(self, metadata):
-        """
-        Parses the site information
-        """
-        network_code = metadata["network_code"].strip()
-        station_code = metadata["station_code"].strip()
-        site_id = "{:s}-{:s}".format(network_code, station_code)
-        site_lon = valid.longitude(metadata["st_longitude"])
-        site_lat = valid.latitude(metadata["st_latitude"])
-        elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
-
-        vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
-        vs30_topo = valid.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
-        if pd.isnull(vs30) and pd.isnull(vs30_topo):
-            # Need at least one vs30 value for residuals (not really, given
-            # some GMMs lack site terms, but good way to prevent confusing
-            # nans in the expected values which appear when computing stats)
-            raise ValueError(
-                f"A vs30 value (either measured or WA-based) must be provided for {site_id}")
-        elif pd.notnull(vs30): # Measured
-            vs30_measured = True
-        else:
-            assert pd.notnull(vs30_topo) # Topographic slope-based
-            vs30 = vs30_topo
-            vs30_measured = False
-        st_nation_code = metadata["st_nation_code"].strip()
-        if st_nation_code:
-            st_country = COUNTRY_CODES[st_nation_code]
-        else:
-            st_country = None
-        
-        site = RecordSite(site_id,
-                          station_code,
-                          station_code,
-                          site_lon,
-                          site_lat,
-                          elevation,
-                          vs30,
-                          vs30_measured,
-                          network_code=network_code,
-                          country=st_country)
-        
-        site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
-        site.sensor_depth = valid.vfloat(
-            metadata["sensor_depth_m"], "sensor_depth_m")
-        
-        site.instrument_type = metadata["instrument_code"].strip()
-        housing_code = metadata["housing_code"].strip()
-        if housing_code and (housing_code in HOUSING):
-            site.building_structure = HOUSING[housing_code]
-
-        return site
 
     def _parse_waveform_data(self, metadata, wfid):
         """

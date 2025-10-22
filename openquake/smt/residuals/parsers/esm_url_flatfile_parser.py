@@ -23,13 +23,13 @@ This parser assumes you have selected all available headers in your URL search
 when downloading the flatfile
 """
 import os
-import pandas as pd
 import tempfile
 import csv
+import pickle
 import numpy as np
+import pandas as pd
 import copy
 import h5py
-import pickle
 from linecache import getline
 
 from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
@@ -41,7 +41,7 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  GCMTNodalPlanes,
                                                  Component,
                                                  RecordSite)
-from openquake.smt.residuals.parsers.esm_flatfile_parser import parse_distances
+from openquake.smt.residuals.parsers.esm_flatfile_parser import parse_distances, parse_site_data
 from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
 from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
@@ -218,7 +218,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         distances = parse_distances(metadata, event.depth)
         
         # Parse the station metadata
-        site = self._parse_site_data(metadata)
+        site = parse_site_data(metadata)
         
         # Parse waveform data
         xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
