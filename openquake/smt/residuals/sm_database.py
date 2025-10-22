@@ -298,16 +298,9 @@ class RecordDistance(object):
         to surface
     :param float ry0:
         Along-track distance from site to surface projection of fault plane
-    :param float azimuth:
-        Source to site azimuth (degrees)
-    :param bool hanging_wall:
-        True if site on hanging wall, False otherwise
-    :param bool flag:
-        Distance flagged according to SigmaDatabase definition
     :param float rcdpp:
         Direct point parameter for directivity effect centered on the site-
-        and earthquake-specific
-        average DPP used
+        and earthquake-specific average DPP used
     """
     def __init__(self,
                  repi,
@@ -316,24 +309,14 @@ class RecordDistance(object):
                  rrup=None,
                  r_x=None,
                  ry0=None,
-                 flag=None,
-                 azimuth=None,
-                 rcdpp=None,
-                 rvolc=None):
+                 rcdpp=None):
         self.repi = repi
         self.rhypo = rhypo
         self.rjb = rjb
         self.rrup = rrup
         self.r_x = r_x
         self.ry0 = ry0
-        self.azimuth = None
-        self.hanging_wall = None
-        self.flag = flag
         self.rcdpp = rcdpp
-        self.rvolc = rvolc
-        # QuakeML parameters
-        self.pre_event_length = None
-        self.post_event_length = None
 
 
 # Eurocode 8 Site Class Vs30 boundaries
@@ -827,8 +810,7 @@ class GroundMotionDatabase(ContextDB):
             if record.event.rupture.width is not None:
                 ctx.width = record.event.rupture.width
             else:
-                # Use the PeerMSR to define the area and assuming an aspect ratio
-                # of 1 get the width
+                # Use PeerMSR to define area and assume an aratio of 1 get the width
                 ctx.width = np.sqrt(utils.DEFAULT_MSR.get_median_area(ctx.mag, 0))
 
             # Default hypocentre location to the middle of the rupture
@@ -891,36 +873,24 @@ class GroundMotionDatabase(ContextDB):
             setattr(ctx, attname, [])
 
         for record in records:
-            ctx.repi.append(record.distance.repi)
-            ctx.rhypo.append(record.distance.rhypo)
-            # TODO Setting Rjb == Repi and Rrup == Rhypo when missing value
-            # is a hack! Need feedback on how to fix
+            if record.distance.repi is not None:
+                ctx.repi.append(record.distance.repi)
+            if record.distance.rhypo is not None:
+                ctx.rhypo.append(record.distance.rhypo)
             if record.distance.rjb is not None:
                 ctx.rjb.append(record.distance.rjb)
-            else:
-                ctx.rjb.append(record.distance.repi)
             if record.distance.rrup is not None:
                 ctx.rrup.append(record.distance.rrup)
-            else:
-                ctx.rrup.append(record.distance.rhypo)
             if record.distance.r_x is not None:
                 ctx.rx.append(record.distance.r_x)
-            else:
-                ctx.rx.append(record.distance.repi)
-            if getattr(record.distance, "ry0", None) is not None:
+            if record.distance.ry0 is not None:
                 ctx.ry0.append(record.distance.ry0)
-            if getattr(record.distance, "rcdpp", None) is not None:
+            if record.distance.rcdpp is not None:
                 ctx.rcdpp.append(record.distance.rcdpp)
-            if record.distance.azimuth is not None:
-                ctx.azimuth.append(record.distance.azimuth)
-            if record.distance.hanging_wall is not None:
-                ctx.hanging_wall.append(record.distance.hanging_wall)
-            if getattr(record.distance, "rvolc", None) is not None:
-                ctx.rvolc.append(record.distance.rvolc)
 
         for attname in self.distances_context_attrs:
             attval = getattr(ctx, attname)
-            if attval is None or not len(attval): # remove attr if value is empty-like
+            if len(attval) < 1: # Remove attribute if value is empty list
                 delattr(ctx, attname)
             else:
                 setattr(ctx, attname, np.asarray(attval, dtype=float))

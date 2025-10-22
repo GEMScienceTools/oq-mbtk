@@ -131,7 +131,7 @@ class Residuals(object):
                     getattr(gmpe_i, coeff_att).non_sa_coeffs)
             else:
                 assert hasattr(gmpe_i, "gmpe_table")
-                # tabular GMM specified using an alias
+                # Tabular GMM specified using an alias
                 pers = gmpe_i.imls["T"]
 
             min_per, max_per = (min(pers), max(pers))
@@ -363,7 +363,8 @@ class Residuals(object):
                         mean,
                         context["Expected"][gmpe][imtx]["Inter event"],
                         context["Expected"][gmpe][imtx]["Intra event"],
-                        normalise)
+                        normalise
+                        )
                     residual[gmpe][imtx]["Inter event"] = inter
                     residual[gmpe][imtx]["Intra event"] = intra
         context["Residual"] = residual
