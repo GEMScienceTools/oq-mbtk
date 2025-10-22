@@ -30,7 +30,6 @@ import numpy as np
 import copy
 import h5py
 import pickle
-from math import sqrt
 from linecache import getline
 
 from openquake.smt.residuals.sm_database import (GroundMotionDatabase,

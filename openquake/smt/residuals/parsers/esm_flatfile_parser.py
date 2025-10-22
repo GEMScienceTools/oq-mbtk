@@ -138,30 +138,38 @@ COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
 
 
 def parse_distances(metadata, hypo_depth):
-    """
-    Parse the distances provided in the flatfile
-    """
-    repi = valid.positive_float(metadata["epi_dist"], "epi_dist")
-    if pd.isnull(repi):
-        repi, rhypo = None, None
-    else:
+        """
+        Parse the distances
+        """
+        repi = valid.positive_float(metadata["epi_dist"], "epi_dist")
+        razim = valid.positive_float(metadata["epi_az"], "epi_az")
+        rjb = valid.positive_float(metadata["JB_dist"], "JB_dist")
+        rrup = valid.positive_float(metadata["rup_dist"], "rup_dist")
+        r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
+        ry0 = valid.positive_float(metadata["Ry0_dist"], "Ry0_dist")
         rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
-    rjb = valid.positive_float(metadata["JB_dist"], "JB_dist")
-    if pd.isnull(rjb):
-        rjb = None
-    rrup = valid.positive_float(metadata["rup_dist"], "rup_dist")
-    if pd.isnull(rrup):
-        rrup = None
-    r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
-    if pd.isnull(r_x):
-        r_x = None
-    ry0 = valid.positive_float(metadata["Ry0_dist"], "Ry0_dist")
-    if pd.isnull(ry0):
-        ry0 = None
-    distances = RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
-    distances.azimuth = valid.positive_float(metadata["epi_az"], "epi_az")
 
-    return distances
+        if not isinstance(rjb, float):
+            # In the first case Rjb == Repi
+            rjb = copy.copy(repi)
+
+        if not isinstance(rrup, float):
+            # In the first case Rrup == Rhypo
+            rrup = copy.copy(rhypo)
+
+        if not isinstance(r_x, float):
+            # In the first case Rx == -Repi (collapse to point and turn off
+            # any hanging wall effect)
+            r_x = copy.copy(-repi)
+
+        if not isinstance(ry0, float):
+            # In the first case Ry0 == Repi
+            ry0 = copy.copy(repi)
+        
+        distances = RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
+        distances.azimuth = razim
+        
+        return distances
 
 
 class ESMFlatfileParser(SMDatabaseReader):
