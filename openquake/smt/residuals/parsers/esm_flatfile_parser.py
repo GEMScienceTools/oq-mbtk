@@ -546,7 +546,7 @@ def parse_waveform_data(metadata, wfid):
     vorientation = metadata["V_channel_code"].strip()
     vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
     vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
-                "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
+               "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
     vcomp = Component(wfid, vazimuth, waveform_filter=vfilter,
                         units="cm/s/s")
     vcomp.late_trigger = late_trigger

@@ -173,105 +173,6 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
         
     return rupture, mechanism
 
-
-class ESMFlatfileParserURL(SMDatabaseReader):
-    """
-    Parses the data from the flatfile to a set of metadata objects
-    """
-    def parse(self, location='./'):
-        """
-        Parse the flatfile
-        """
-        assert os.path.isfile(self.filename)
-        headers = getline(self.filename, 1).rstrip("\n").split(";")
-        for hdr in HEADERS:
-            if hdr not in headers:
-                raise ValueError(
-                    "Required header %s is missing in file" % hdr)
-        # Read in csv
-        with open(self.filename, "r", encoding="utf-8", newline='') as f:
-            reader = csv.DictReader(f, delimiter=";")
-            self.database = GroundMotionDatabase(self.id, self.name)
-            counter = 0
-            for row in reader:
-                # Build the metadata
-                record = self._parse_record(row)
-                if record:
-                    # Parse the strong motion
-                    record = parse_ground_motion(os.path.join(
-                        location, "records"), row, record, headers)
-                    self.database.records.append(record)
-
-                else:
-                    print("Record with sequence number %s is null/invalid"
-                          % "{:s}-{:s}".format(
-                              row["event_id"], row["station_code"]))
-                    
-                if (counter % 100) == 0:
-                    print(f"Processed record {counter} - {record.id}")
-                    
-                counter += 1
-
-    @classmethod
-    def autobuild(cls, dbid, dbname, output_location, flatfile_location):
-        """
-        Quick and dirty full database builder!
-        """
-        # Import esm URL format strong-motion flatfile
-        esm = pd.read_csv(flatfile_location)
-
-        # Get path to tmp csv containing reformatted dataframe
-        tmp = _parse_esm_url(esm)
-        
-        if os.path.exists(output_location):
-            raise IOError("Target database directory %s already exists!"
-                          % output_location)
-        os.mkdir(output_location)
-        
-        # Add on the records folder
-        os.mkdir(os.path.join(output_location, "records"))
-        
-        # Create an instance of the parser class
-        database = cls(dbid, dbname, tmp)
-        
-        # Parse the records
-        print("Parsing Records ...")
-        database.parse(location=output_location)
-        
-        # Save itself to file
-        metadata_file = os.path.join(output_location, "metadatafile.pkl")
-        print("Storing metadata to file %s" % metadata_file)
-        with open(metadata_file, "wb+") as f:
-            pickle.dump(database.database, f)
-            
-        return database
-
-    def _parse_record(self, metadata):
-        """
-        Parse a record
-        """
-        # Waveform ID not provided in file so concatenate Event and Station ID
-        wfid = "_".join([metadata["event_id"], metadata["network_code"],
-                         metadata["station_code"], metadata["location_code"]])
-        wfid = wfid.replace("-", "_")
-        
-        # Parse the event metadata
-        event = parse_event_data(metadata, parse_rupture_mechanism)
-        
-        # Parse the distance metadata
-        distances = parse_distances(metadata, event.depth)
-        
-        # Parse the station metadata
-        site = parse_site_data(metadata)
-        
-        # Parse waveform data
-        xcomp, ycomp, vertical = parse_waveform_data(metadata, wfid)
-        return GroundMotionRecord(wfid,
-                                  [None, None, None],
-                                  event, distances, site,
-                                  xcomp, ycomp,
-                                  vertical=vertical)
-
 def _parse_esm_url(esm):
     """
     Convert from esm URL format flatfile to esm18 format flatfile
@@ -631,3 +532,102 @@ def _parse_esm_url(esm):
     esm_original_headers.to_csv(tmp, sep=';')
 
     return tmp
+
+
+class ESMFlatfileParserURL(SMDatabaseReader):
+    """
+    Parses the data from the flatfile to a set of metadata objects
+    """
+    def parse(self, location='./'):
+        """
+        Parse the flatfile
+        """
+        assert os.path.isfile(self.filename)
+        headers = getline(self.filename, 1).rstrip("\n").split(";")
+        for hdr in HEADERS:
+            if hdr not in headers:
+                raise ValueError(
+                    "Required header %s is missing in file" % hdr)
+        # Read in csv
+        with open(self.filename, "r", encoding="utf-8", newline='') as f:
+            reader = csv.DictReader(f, delimiter=";")
+            self.database = GroundMotionDatabase(self.id, self.name)
+            counter = 0
+            for row in reader:
+                # Build the metadata
+                record = self._parse_record(row)
+                if record:
+                    # Parse the strong motion
+                    record = parse_ground_motion(os.path.join(
+                        location, "records"), row, record, headers)
+                    self.database.records.append(record)
+
+                else:
+                    print("Record with sequence number %s is null/invalid"
+                          % "{:s}-{:s}".format(
+                              row["event_id"], row["station_code"]))
+                    
+                if (counter % 100) == 0:
+                    print(f"Processed record {counter} - {record.id}")
+                    
+                counter += 1
+
+    @classmethod
+    def autobuild(cls, dbid, dbname, output_location, flatfile_location):
+        """
+        Quick and dirty full database builder!
+        """
+        # Import esm URL format strong-motion flatfile
+        esm = pd.read_csv(flatfile_location)
+
+        # Get path to tmp csv containing reformatted dataframe
+        tmp = _parse_esm_url(esm)
+        
+        if os.path.exists(output_location):
+            raise IOError("Target database directory %s already exists!"
+                          % output_location)
+        os.mkdir(output_location)
+        
+        # Add on the records folder
+        os.mkdir(os.path.join(output_location, "records"))
+        
+        # Create an instance of the parser class
+        database = cls(dbid, dbname, tmp)
+        
+        # Parse the records
+        print("Parsing Records ...")
+        database.parse(location=output_location)
+        
+        # Save itself to file
+        metadata_file = os.path.join(output_location, "metadatafile.pkl")
+        print("Storing metadata to file %s" % metadata_file)
+        with open(metadata_file, "wb+") as f:
+            pickle.dump(database.database, f)
+            
+        return database
+
+    def _parse_record(self, metadata):
+        """
+        Parse a record
+        """
+        # Waveform ID not provided in file so concatenate Event and Station ID
+        wfid = "_".join([metadata["event_id"], metadata["network_code"],
+                         metadata["station_code"], metadata["location_code"]])
+        wfid = wfid.replace("-", "_")
+        
+        # Parse the event metadata
+        event = parse_event_data(metadata, parse_rupture_mechanism)
+        
+        # Parse the distance metadata
+        distances = parse_distances(metadata, event.depth)
+        
+        # Parse the station metadata
+        site = parse_site_data(metadata)
+        
+        # Parse waveform data
+        xcomp, ycomp, vertical = parse_waveform_data(metadata, wfid)
+        return GroundMotionRecord(wfid,
+                                  [None, None, None],
+                                  event, distances, site,
+                                  xcomp, ycomp,
+                                  vertical=vertical)

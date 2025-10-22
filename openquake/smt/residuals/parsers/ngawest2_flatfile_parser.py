@@ -87,6 +87,306 @@ HEADERS = ["event_id",
            "W_lp"]
 
 
+def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):    
+    """
+    Convert NGAWest2 flatfile into an ESM format flatfile which can be
+    readily parsed into SMT metadata.
+    """
+    # Reformat/map some of the metadata
+    ngawest2['event_time'] = pd.Series()
+    ngawest2['event_id'] = pd.Series()
+    ngawest2['fm_type'] = pd.Series()
+    ngawest2['station_id'] = pd.Series()
+    ngawest2['vs30_meas'] = pd.Series()
+
+    for idx, rec in ngawest2.iterrows():
+        
+        # Event time
+        event_time_year = str(rec.YEAR)
+        event_time_month_and_day = str(rec.MODY)
+        
+        if len(event_time_month_and_day) == 3:
+            month = str('0') + str(event_time_month_and_day[0])
+            day = event_time_month_and_day[1:3]     
+        
+        if len(event_time_month_and_day) == 4:
+            month = str(event_time_month_and_day[:2])
+            day = event_time_month_and_day[2:4]
+        
+        yyyy_mm_dd = str(event_time_year) + '-' + month + '-' + day
+        
+        event_time_hr_and_min = str(rec.HRMN)
+        
+        if len(event_time_hr_and_min) == 3:
+            hour = str('0') + str(event_time_hr_and_min[0])
+            minute = event_time_hr_and_min[1:3]
+        
+        if len(event_time_hr_and_min) == 4:
+            hour = str(event_time_hr_and_min[:2])
+            minute = event_time_hr_and_min[2:4]
+            
+        hh_mm_ss = str(hour) + ':' + str(minute) + ':' + '00'
+        
+        ngawest2.loc[idx, 'event_time'] = yyyy_mm_dd + ' ' + hh_mm_ss
+    
+        # Reformat event id
+        delimited_event_id = str(rec['Earthquake Name'])
+        delimited_event_id = delimited_event_id.replace(',','')
+        delimited_event_id = delimited_event_id.replace(' ','')
+        delimited_event_id = delimited_event_id.replace('/','')
+        delimited_event_id = delimited_event_id.replace('.','')
+        delimited_event_id = delimited_event_id.replace(':','')
+        delimited_event_id = delimited_event_id.replace(';','')
+        ngawest2.loc[idx, 'event_id'] = 'Earthquake-' + delimited_event_id 
+        
+        # Assign ESM18 fault_code based on code in NGA-West2
+        if (rec['Mechanism Based on Rake Angle']==0
+            or
+            rec['Mechanism Based on Rake Angle']==-999):
+            ngawest2.loc[idx, 'fm_type'] = 'SS'
+        if (rec['Mechanism Based on Rake Angle']==1
+            or
+            rec['Mechanism Based on Rake Angle']==4):
+            ngawest2.loc[idx, 'fm_type'] = 'NF'
+        if (rec['Mechanism Based on Rake Angle']==2
+            or
+            rec['Mechanism Based on Rake Angle']==3):
+            ngawest2.loc[idx, 'fm_type'] = 'TF'
+        
+        # Vs30 meas flag (Appendix C, pp. 116 of NGAWest2 report)
+        ngawest2.loc[idx, 'vs30_meas'] = 'measured' if rec['Measured/Inferred Class'] == 0 else 'inferred'
+
+        # Station id
+        delimited_station_id = str(rec['Station Name'])
+        delimited_station_id = delimited_station_id.replace(',','')
+        delimited_station_id = delimited_station_id.replace(' ','')
+        delimited_station_id = delimited_station_id.replace('/','')
+        delimited_station_id = delimited_station_id.replace('.','')
+        delimited_station_id = delimited_station_id.replace(':','')
+        delimited_station_id = delimited_station_id.replace(';','')
+        ngawest2.loc[idx, 'station_id'] = 'StationName-' + delimited_station_id
+    
+    # Construct dataframe with ESM18 format columns
+    rfmt = pd.DataFrame(
+    {
+    # Non-GMIM headers   
+    "event_id":ngawest2['event_id'],                                       
+    "event_time":ngawest2['event_time'],
+    "ev_latitude":ngawest2['Hypocenter Latitude (deg)'],    
+    "ev_longitude":ngawest2['Hypocenter Longitude (deg)'],   
+    "ev_depth_km":ngawest2['Hypocenter Depth (km)'],
+    "fm_type_code":ngawest2['fm_type'],
+    "Mw":ngawest2['Earthquake Magnitude'],
+
+    "es_strike":ngawest2['Strike (deg)'],
+    "es_dip":ngawest2['Dip (deg)'],
+    "es_rake":ngawest2['Rake Angle (deg)'],
+    "es_z_top":ngawest2['Depth to Top Of Fault Rupture Model'],
+    "es_length":ngawest2['Fault Rupture Length for Calculation of Ry (km)'],   
+    "es_width":ngawest2['Fault Rupture Width (km)'],
+ 
+    "network_code": ngawest2['Owner'],
+    "station_code":ngawest2['station_id'],
+    "st_latitude":ngawest2['Station Latitude'],
+    "st_longitude":ngawest2['Station Longitude'],   
+    "vs30_m_sec":ngawest2['Vs30 (m/s) selected for analysis'],
+    "vs30_meas_type":ngawest2['vs30_meas'],
+    "z1pt0 (m)":ngawest2["Northern CA/Southern CA - H11 Z1 (m)"], # No preference is given between the H11 and S4 CVM models but the H11 model has covers more of the Southern California stations
+    "z2pt5 (km)":ngawest2["Northern CA/Southern CA - H11 Z2.5 (m)"]/1000, # Provided in metres
+ 
+    "epi_dist":ngawest2['EpiD (km)'],
+    'epi_az':ngawest2['Source to Site Azimuth (deg)'],
+    "JB_dist":ngawest2['Joyner-Boore Dist. (km)'],
+    "rup_dist":ngawest2['Campbell R Dist. (km)'],
+    "Rx_dist":ngawest2['Rx'],
+ 
+    "U_channel_code":"H1",
+    "U_azimuth_deg":ngawest2['H1 azimth (degrees)'],
+    "V_channel_code":"H2",
+    "V_azimuth_deg":ngawest2['H2 azimith (degrees)'],
+    "W_channel_code":"V",
+
+    "U_hp":ngawest2['HP-H1 (Hz)'],
+    "V_hp":ngawest2['HP-H2 (Hz)'],
+    "W_hp":ngawest2_vert['HP-V (Hz)'],  
+    "U_lp":ngawest2['LP-H1 (Hz)'],
+    "V_lp":ngawest2['LP-H2 (Hz)'],
+    "W_lp":ngawest2_vert['LP-V (Hz)'], 
+
+    "U_pga":None,
+    "V_pga":None,
+    "W_pga":ngawest2_vert['PGA (g)'] * CONV_TO_CMS2,
+    "rotD50_pga":ngawest2['PGA (g)'] * CONV_TO_CMS2,
+    "U_pgv":None,
+    "V_pgv":None,
+    "W_pgv":ngawest2_vert['PGV (cm/sec)'],
+    "rotD50_pgv":ngawest2['PGV (cm/sec)'],
+    "U_pgd":None,
+    "V_pgd":None,
+    "W_pgd":ngawest2_vert['PGD (cm)'],
+    "rotD50_pgd":ngawest2['PGD (cm)'],
+        
+    "U_T0_010":None,
+    "U_T0_025":None,
+    "U_T0_040":None,
+    "U_T0_050":None,
+    "U_T0_070":None,
+    "U_T0_100":None,
+    "U_T0_150":None,
+    "U_T0_200":None,
+    "U_T0_250":None,
+    "U_T0_300":None,
+    "U_T0_350":None,
+    "U_T0_400":None,
+    "U_T0_450":None,
+    "U_T0_500":None,
+    "U_T0_600":None,
+    "U_T0_700":None,
+    "U_T0_750":None,
+    "U_T0_800":None,
+    "U_T0_900":None,
+    "U_T1_000":None,
+    "U_T1_200":None,
+    "U_T1_400":None,
+    "U_T1_600":None,
+    "U_T1_800":None,
+    "U_T2_000":None,
+    "U_T2_500":None,
+    "U_T3_000":None,
+    "U_T3_500":None,
+    "U_T4_000":None,
+    "U_T4_500":None,
+    "U_T5_000":None,
+    "U_T6_000":None,
+    "U_T7_000":None,
+    "U_T8_000":None,
+    "U_T9_000":None,
+    "U_T10_000":None,
+    
+    "V_T0_010":None,
+    "V_T0_025":None,
+    "V_T0_040":None,
+    "V_T0_050":None,
+    "V_T0_070":None,
+    "V_T0_100":None,
+    "V_T0_150":None,
+    "V_T0_200":None,
+    "V_T0_250":None,
+    "V_T0_300":None,
+    "V_T0_350":None,
+    "V_T0_400":None,
+    "V_T0_450":None,
+    "V_T0_500":None,
+    "V_T0_600":None,
+    "V_T0_700":None,
+    "V_T0_750":None,
+    "V_T0_800":None,
+    "V_T0_900":None,
+    "V_T1_000":None,
+    "V_T1_200":None,
+    "V_T1_400":None,
+    "V_T1_600":None,
+    "V_T1_800":None,
+    "V_T2_000":None,
+    "V_T2_500":None,
+    "V_T3_000":None,
+    "V_T3_500":None,
+    "V_T4_000":None,
+    "V_T4_500":None,
+    "V_T5_000":None,
+    "V_T6_000":None,
+    "V_T7_000":None,
+    "V_T8_000":None,
+    "V_T9_000":None,
+    "V_T10_000":None,
+
+    "rotD50_T0_010":ngawest2['T0.010S'] * CONV_TO_CMS2,
+    "rotD50_T0_025":ngawest2['T0.025S'] * CONV_TO_CMS2,
+    "rotD50_T0_040":ngawest2['T0.040S'] * CONV_TO_CMS2,
+    "rotD50_T0_050":ngawest2['T0.050S'] * CONV_TO_CMS2,
+    "rotD50_T0_070":ngawest2['T0.070S'] * CONV_TO_CMS2,
+    "rotD50_T0_100":ngawest2['T0.100S'] * CONV_TO_CMS2,
+    "rotD50_T0_150":ngawest2['T0.150S'] * CONV_TO_CMS2,
+    "rotD50_T0_200":ngawest2['T0.200S'] * CONV_TO_CMS2,
+    "rotD50_T0_250":ngawest2['T0.250S'] * CONV_TO_CMS2,
+    "rotD50_T0_300":ngawest2['T0.300S'] * CONV_TO_CMS2,
+    "rotD50_T0_350":ngawest2['T0.350S'] * CONV_TO_CMS2,
+    "rotD50_T0_400":ngawest2['T0.400S'] * CONV_TO_CMS2,
+    "rotD50_T0_450":ngawest2['T0.450S'] * CONV_TO_CMS2,
+    "rotD50_T0_500":ngawest2['T0.500S'] * CONV_TO_CMS2,
+    "rotD50_T0_600":ngawest2['T0.600S'] * CONV_TO_CMS2,
+    "rotD50_T0_700":ngawest2['T0.700S'] * CONV_TO_CMS2,
+    "rotD50_T0_750":ngawest2['T0.750S'] * CONV_TO_CMS2,
+    "rotD50_T0_800":ngawest2['T0.800S'] * CONV_TO_CMS2,
+    "rotD50_T0_900":ngawest2['T0.900S'] * CONV_TO_CMS2,
+    "rotD50_T1_000":ngawest2['T1.000S'] * CONV_TO_CMS2,
+    "rotD50_T1_200":ngawest2['T1.200S'] * CONV_TO_CMS2,
+    "rotD50_T1_400":ngawest2['T1.400S'] * CONV_TO_CMS2,
+    "rotD50_T1_600":ngawest2['T1.600S'] * CONV_TO_CMS2,
+    "rotD50_T1_800":ngawest2['T1.800S'] * CONV_TO_CMS2,
+    "rotD50_T2_000":ngawest2['T2.000S'] * CONV_TO_CMS2,
+    "rotD50_T2_500":ngawest2['T2.500S'] * CONV_TO_CMS2,
+    "rotD50_T3_000":ngawest2['T3.000S'] * CONV_TO_CMS2,
+    "rotD50_T3_500":ngawest2['T3.500S'] * CONV_TO_CMS2,
+    "rotD50_T4_000":ngawest2['T4.000S'] * CONV_TO_CMS2,
+    "rotD50_T4_500":ngawest2['T4.500S'] * CONV_TO_CMS2,
+    "rotD50_T5_000":ngawest2['T5.000S'] * CONV_TO_CMS2,
+    "rotD50_T6_000":ngawest2['T6.000S'] * CONV_TO_CMS2,
+    "rotD50_T7_000":ngawest2['T7.000S'] * CONV_TO_CMS2,
+    "rotD50_T8_000":ngawest2['T8.000S'] * CONV_TO_CMS2,
+    "rotD50_T9_000":ngawest2['T9.000S'] * CONV_TO_CMS2,
+    "rotD50_T10_000":ngawest2['T10.000S'] * CONV_TO_CMS2,
+        
+    "W_T0_010":ngawest2_vert['T0.010S'] * CONV_TO_CMS2,
+    "W_T0_025":ngawest2_vert['T0.025S'] * CONV_TO_CMS2,
+    "W_T0_040":ngawest2_vert['T0.040S'] * CONV_TO_CMS2,
+    "W_T0_050":ngawest2_vert['T0.050S'] * CONV_TO_CMS2,
+    "W_T0_070":ngawest2_vert['T0.070S'] * CONV_TO_CMS2,
+    "W_T0_100":ngawest2_vert['T0.100S'] * CONV_TO_CMS2,
+    "W_T0_150":ngawest2_vert['T0.150S'] * CONV_TO_CMS2,
+    "W_T0_200":ngawest2_vert['T0.200S'] * CONV_TO_CMS2,
+    "W_T0_250":ngawest2_vert['T0.250S'] * CONV_TO_CMS2,
+    "W_T0_300":ngawest2_vert['T0.300S'] * CONV_TO_CMS2,
+    "W_T0_350":ngawest2_vert['T0.350S'] * CONV_TO_CMS2,
+    "W_T0_400":ngawest2_vert['T0.400S'] * CONV_TO_CMS2,
+    "W_T0_450":ngawest2_vert['T0.450S'] * CONV_TO_CMS2,
+    "W_T0_500":ngawest2_vert['T0.500S'] * CONV_TO_CMS2,
+    "W_T0_600":ngawest2_vert['T0.600S'] * CONV_TO_CMS2,
+    "W_T0_700":ngawest2_vert['T0.700S'] * CONV_TO_CMS2,
+    "W_T0_750":ngawest2_vert['T0.750S'] * CONV_TO_CMS2,
+    "W_T0_800":ngawest2_vert['T0.800S'] * CONV_TO_CMS2,
+    "W_T0_900":ngawest2_vert['T0.900S'] * CONV_TO_CMS2,
+    "W_T1_000":ngawest2_vert['T1.000S'] * CONV_TO_CMS2,
+    "W_T1_200":ngawest2_vert['T1.200S'] * CONV_TO_CMS2,
+    "W_T1_400":ngawest2_vert['T1.400S'] * CONV_TO_CMS2,
+    "W_T1_600":ngawest2_vert['T1.600S'] * CONV_TO_CMS2,
+    "W_T1_800":ngawest2_vert['T1.800S'] * CONV_TO_CMS2,
+    "W_T2_000":ngawest2_vert['T2.000S'] * CONV_TO_CMS2,
+    "W_T2_500":ngawest2_vert['T2.500S'] * CONV_TO_CMS2,
+    "W_T3_000":ngawest2_vert['T3.000S'] * CONV_TO_CMS2,
+    "W_T3_500":ngawest2_vert['T3.500S'] * CONV_TO_CMS2,
+    "W_T4_000":ngawest2_vert['T4.000S'] * CONV_TO_CMS2,
+    "W_T4_500":ngawest2_vert['T4.500S'] * CONV_TO_CMS2,
+    "W_T5_000":ngawest2_vert['T5.000S'] * CONV_TO_CMS2,
+    "W_T6_000":ngawest2_vert['T6.000S'] * CONV_TO_CMS2,
+    "W_T7_000":ngawest2_vert['T7.000S'] * CONV_TO_CMS2,
+    "W_T8_000":ngawest2_vert['T8.000S'] * CONV_TO_CMS2,
+    "W_T9_000":ngawest2_vert['T9.000S'] * CONV_TO_CMS2,
+    "W_T10_000":ngawest2_vert['T10.000S'] * CONV_TO_CMS2})
+    
+    # Make tmp file 
+    tmp = os.path.join(BASE, tempfile.mkdtemp(), 'tmp.csv')
+    
+    # Export to tmp
+    rfmt.to_csv(tmp, sep=';')
+
+    # Inform user of number of discarded records (insufficient for SMT residual analysis)
+    print(Initial_ngawest2_size - len(ngawest2),
+          'records removed from imported NGA-West-2 flatfile during data quality checks.')
+
+    return tmp
+
+
 class NGAWest2FlatfileParser(SMDatabaseReader):
     """
     Parses the data from flatfile to a set of metadata objects
@@ -581,303 +881,3 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             spectra.append((imt, {"Periods": periods[idx], "Values": values[idx]}))
          
         return dict(scalars), dict(spectra)
-
-
-def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):    
-    """
-    Convert NGAWest2 flatfile into an ESM format flatfile which can be
-    readily parsed into SMT metadata.
-    """
-    # Reformat/map some of the metadata
-    ngawest2['event_time'] = pd.Series()
-    ngawest2['event_id'] = pd.Series()
-    ngawest2['fm_type'] = pd.Series()
-    ngawest2['station_id'] = pd.Series()
-    ngawest2['vs30_meas'] = pd.Series()
-
-    for idx, rec in ngawest2.iterrows():
-        
-        # Event time
-        event_time_year = str(rec.YEAR)
-        event_time_month_and_day = str(rec.MODY)
-        
-        if len(event_time_month_and_day) == 3:
-            month = str('0') + str(event_time_month_and_day[0])
-            day = event_time_month_and_day[1:3]     
-        
-        if len(event_time_month_and_day) == 4:
-            month = str(event_time_month_and_day[:2])
-            day = event_time_month_and_day[2:4]
-        
-        yyyy_mm_dd = str(event_time_year) + '-' + month + '-' + day
-        
-        event_time_hr_and_min = str(rec.HRMN)
-        
-        if len(event_time_hr_and_min) == 3:
-            hour = str('0') + str(event_time_hr_and_min[0])
-            minute = event_time_hr_and_min[1:3]
-        
-        if len(event_time_hr_and_min) == 4:
-            hour = str(event_time_hr_and_min[:2])
-            minute = event_time_hr_and_min[2:4]
-            
-        hh_mm_ss = str(hour) + ':' + str(minute) + ':' + '00'
-        
-        ngawest2.loc[idx, 'event_time'] = yyyy_mm_dd + ' ' + hh_mm_ss
-    
-        # Reformat event id
-        delimited_event_id = str(rec['Earthquake Name'])
-        delimited_event_id = delimited_event_id.replace(',','')
-        delimited_event_id = delimited_event_id.replace(' ','')
-        delimited_event_id = delimited_event_id.replace('/','')
-        delimited_event_id = delimited_event_id.replace('.','')
-        delimited_event_id = delimited_event_id.replace(':','')
-        delimited_event_id = delimited_event_id.replace(';','')
-        ngawest2.loc[idx, 'event_id'] = 'Earthquake-' + delimited_event_id 
-        
-        # Assign ESM18 fault_code based on code in NGA-West2
-        if (rec['Mechanism Based on Rake Angle']==0
-            or
-            rec['Mechanism Based on Rake Angle']==-999):
-            ngawest2.loc[idx, 'fm_type'] = 'SS'
-        if (rec['Mechanism Based on Rake Angle']==1
-            or
-            rec['Mechanism Based on Rake Angle']==4):
-            ngawest2.loc[idx, 'fm_type'] = 'NF'
-        if (rec['Mechanism Based on Rake Angle']==2
-            or
-            rec['Mechanism Based on Rake Angle']==3):
-            ngawest2.loc[idx, 'fm_type'] = 'TF'
-        
-        # Vs30 meas flag (Appendix C, pp. 116 of NGAWest2 report)
-        ngawest2.loc[idx, 'vs30_meas'] = 'measured' if rec['Measured/Inferred Class'] == 0 else 'inferred'
-
-        # Station id
-        delimited_station_id = str(rec['Station Name'])
-        delimited_station_id = delimited_station_id.replace(',','')
-        delimited_station_id = delimited_station_id.replace(' ','')
-        delimited_station_id = delimited_station_id.replace('/','')
-        delimited_station_id = delimited_station_id.replace('.','')
-        delimited_station_id = delimited_station_id.replace(':','')
-        delimited_station_id = delimited_station_id.replace(';','')
-        ngawest2.loc[idx, 'station_id'] = 'StationName-' + delimited_station_id
-    
-    # Construct dataframe with ESM18 format columns
-    rfmt = pd.DataFrame(
-    {
-    # Non-GMIM headers   
-    "event_id":ngawest2['event_id'],                                       
-    "event_time":ngawest2['event_time'],
-    "ev_latitude":ngawest2['Hypocenter Latitude (deg)'],    
-    "ev_longitude":ngawest2['Hypocenter Longitude (deg)'],   
-    "ev_depth_km":ngawest2['Hypocenter Depth (km)'],
-    "fm_type_code":ngawest2['fm_type'],
-    "Mw":ngawest2['Earthquake Magnitude'],
-
-    "es_strike":ngawest2['Strike (deg)'],
-    "es_dip":ngawest2['Dip (deg)'],
-    "es_rake":ngawest2['Rake Angle (deg)'],
-    "es_z_top":ngawest2['Depth to Top Of Fault Rupture Model'],
-    "es_length":ngawest2['Fault Rupture Length for Calculation of Ry (km)'],   
-    "es_width":ngawest2['Fault Rupture Width (km)'],
- 
-    "network_code": ngawest2['Owner'],
-    "station_code":ngawest2['station_id'],
-    "st_latitude":ngawest2['Station Latitude'],
-    "st_longitude":ngawest2['Station Longitude'],   
-    "vs30_m_sec":ngawest2['Vs30 (m/s) selected for analysis'],
-    "vs30_meas_type":ngawest2['vs30_meas'],
-    "z1pt0 (m)":ngawest2["Northern CA/Southern CA - H11 Z1 (m)"], # No preference is given between the H11 and S4 CVM models but the H11 model has covers more of the Southern California stations
-    "z2pt5 (km)":ngawest2["Northern CA/Southern CA - H11 Z2.5 (m)"]/1000, # Provided in metres
- 
-    "epi_dist":ngawest2['EpiD (km)'],
-    'epi_az':ngawest2['Source to Site Azimuth (deg)'],
-    "JB_dist":ngawest2['Joyner-Boore Dist. (km)'],
-    "rup_dist":ngawest2['Campbell R Dist. (km)'],
-    "Rx_dist":ngawest2['Rx'],
- 
-    "U_channel_code":"H1",
-    "U_azimuth_deg":ngawest2['H1 azimth (degrees)'],
-    "V_channel_code":"H2",
-    "V_azimuth_deg":ngawest2['H2 azimith (degrees)'],
-    "W_channel_code":"V",
-
-    "U_hp":ngawest2['HP-H1 (Hz)'],
-    "V_hp":ngawest2['HP-H2 (Hz)'],
-    "W_hp":ngawest2_vert['HP-V (Hz)'],  
-    "U_lp":ngawest2['LP-H1 (Hz)'],
-    "V_lp":ngawest2['LP-H2 (Hz)'],
-    "W_lp":ngawest2_vert['LP-V (Hz)'], 
-
-    "U_pga":None,
-    "V_pga":None,
-    "W_pga":ngawest2_vert['PGA (g)'] * CONV_TO_CMS2,
-    "rotD50_pga":ngawest2['PGA (g)'] * CONV_TO_CMS2,
-    "U_pgv":None,
-    "V_pgv":None,
-    "W_pgv":ngawest2_vert['PGV (cm/sec)'],
-    "rotD50_pgv":ngawest2['PGV (cm/sec)'],
-    "U_pgd":None,
-    "V_pgd":None,
-    "W_pgd":ngawest2_vert['PGD (cm)'],
-    "rotD50_pgd":ngawest2['PGD (cm)'],
-        
-    "U_T0_010":None,
-    "U_T0_025":None,
-    "U_T0_040":None,
-    "U_T0_050":None,
-    "U_T0_070":None,
-    "U_T0_100":None,
-    "U_T0_150":None,
-    "U_T0_200":None,
-    "U_T0_250":None,
-    "U_T0_300":None,
-    "U_T0_350":None,
-    "U_T0_400":None,
-    "U_T0_450":None,
-    "U_T0_500":None,
-    "U_T0_600":None,
-    "U_T0_700":None,
-    "U_T0_750":None,
-    "U_T0_800":None,
-    "U_T0_900":None,
-    "U_T1_000":None,
-    "U_T1_200":None,
-    "U_T1_400":None,
-    "U_T1_600":None,
-    "U_T1_800":None,
-    "U_T2_000":None,
-    "U_T2_500":None,
-    "U_T3_000":None,
-    "U_T3_500":None,
-    "U_T4_000":None,
-    "U_T4_500":None,
-    "U_T5_000":None,
-    "U_T6_000":None,
-    "U_T7_000":None,
-    "U_T8_000":None,
-    "U_T9_000":None,
-    "U_T10_000":None,
-    
-    "V_T0_010":None,
-    "V_T0_025":None,
-    "V_T0_040":None,
-    "V_T0_050":None,
-    "V_T0_070":None,
-    "V_T0_100":None,
-    "V_T0_150":None,
-    "V_T0_200":None,
-    "V_T0_250":None,
-    "V_T0_300":None,
-    "V_T0_350":None,
-    "V_T0_400":None,
-    "V_T0_450":None,
-    "V_T0_500":None,
-    "V_T0_600":None,
-    "V_T0_700":None,
-    "V_T0_750":None,
-    "V_T0_800":None,
-    "V_T0_900":None,
-    "V_T1_000":None,
-    "V_T1_200":None,
-    "V_T1_400":None,
-    "V_T1_600":None,
-    "V_T1_800":None,
-    "V_T2_000":None,
-    "V_T2_500":None,
-    "V_T3_000":None,
-    "V_T3_500":None,
-    "V_T4_000":None,
-    "V_T4_500":None,
-    "V_T5_000":None,
-    "V_T6_000":None,
-    "V_T7_000":None,
-    "V_T8_000":None,
-    "V_T9_000":None,
-    "V_T10_000":None,
-
-    "rotD50_T0_010":ngawest2['T0.010S'] * CONV_TO_CMS2,
-    "rotD50_T0_025":ngawest2['T0.025S'] * CONV_TO_CMS2,
-    "rotD50_T0_040":ngawest2['T0.040S'] * CONV_TO_CMS2,
-    "rotD50_T0_050":ngawest2['T0.050S'] * CONV_TO_CMS2,
-    "rotD50_T0_070":ngawest2['T0.070S'] * CONV_TO_CMS2,
-    "rotD50_T0_100":ngawest2['T0.100S'] * CONV_TO_CMS2,
-    "rotD50_T0_150":ngawest2['T0.150S'] * CONV_TO_CMS2,
-    "rotD50_T0_200":ngawest2['T0.200S'] * CONV_TO_CMS2,
-    "rotD50_T0_250":ngawest2['T0.250S'] * CONV_TO_CMS2,
-    "rotD50_T0_300":ngawest2['T0.300S'] * CONV_TO_CMS2,
-    "rotD50_T0_350":ngawest2['T0.350S'] * CONV_TO_CMS2,
-    "rotD50_T0_400":ngawest2['T0.400S'] * CONV_TO_CMS2,
-    "rotD50_T0_450":ngawest2['T0.450S'] * CONV_TO_CMS2,
-    "rotD50_T0_500":ngawest2['T0.500S'] * CONV_TO_CMS2,
-    "rotD50_T0_600":ngawest2['T0.600S'] * CONV_TO_CMS2,
-    "rotD50_T0_700":ngawest2['T0.700S'] * CONV_TO_CMS2,
-    "rotD50_T0_750":ngawest2['T0.750S'] * CONV_TO_CMS2,
-    "rotD50_T0_800":ngawest2['T0.800S'] * CONV_TO_CMS2,
-    "rotD50_T0_900":ngawest2['T0.900S'] * CONV_TO_CMS2,
-    "rotD50_T1_000":ngawest2['T1.000S'] * CONV_TO_CMS2,
-    "rotD50_T1_200":ngawest2['T1.200S'] * CONV_TO_CMS2,
-    "rotD50_T1_400":ngawest2['T1.400S'] * CONV_TO_CMS2,
-    "rotD50_T1_600":ngawest2['T1.600S'] * CONV_TO_CMS2,
-    "rotD50_T1_800":ngawest2['T1.800S'] * CONV_TO_CMS2,
-    "rotD50_T2_000":ngawest2['T2.000S'] * CONV_TO_CMS2,
-    "rotD50_T2_500":ngawest2['T2.500S'] * CONV_TO_CMS2,
-    "rotD50_T3_000":ngawest2['T3.000S'] * CONV_TO_CMS2,
-    "rotD50_T3_500":ngawest2['T3.500S'] * CONV_TO_CMS2,
-    "rotD50_T4_000":ngawest2['T4.000S'] * CONV_TO_CMS2,
-    "rotD50_T4_500":ngawest2['T4.500S'] * CONV_TO_CMS2,
-    "rotD50_T5_000":ngawest2['T5.000S'] * CONV_TO_CMS2,
-    "rotD50_T6_000":ngawest2['T6.000S'] * CONV_TO_CMS2,
-    "rotD50_T7_000":ngawest2['T7.000S'] * CONV_TO_CMS2,
-    "rotD50_T8_000":ngawest2['T8.000S'] * CONV_TO_CMS2,
-    "rotD50_T9_000":ngawest2['T9.000S'] * CONV_TO_CMS2,
-    "rotD50_T10_000":ngawest2['T10.000S'] * CONV_TO_CMS2,
-        
-    "W_T0_010":ngawest2_vert['T0.010S'] * CONV_TO_CMS2,
-    "W_T0_025":ngawest2_vert['T0.025S'] * CONV_TO_CMS2,
-    "W_T0_040":ngawest2_vert['T0.040S'] * CONV_TO_CMS2,
-    "W_T0_050":ngawest2_vert['T0.050S'] * CONV_TO_CMS2,
-    "W_T0_070":ngawest2_vert['T0.070S'] * CONV_TO_CMS2,
-    "W_T0_100":ngawest2_vert['T0.100S'] * CONV_TO_CMS2,
-    "W_T0_150":ngawest2_vert['T0.150S'] * CONV_TO_CMS2,
-    "W_T0_200":ngawest2_vert['T0.200S'] * CONV_TO_CMS2,
-    "W_T0_250":ngawest2_vert['T0.250S'] * CONV_TO_CMS2,
-    "W_T0_300":ngawest2_vert['T0.300S'] * CONV_TO_CMS2,
-    "W_T0_350":ngawest2_vert['T0.350S'] * CONV_TO_CMS2,
-    "W_T0_400":ngawest2_vert['T0.400S'] * CONV_TO_CMS2,
-    "W_T0_450":ngawest2_vert['T0.450S'] * CONV_TO_CMS2,
-    "W_T0_500":ngawest2_vert['T0.500S'] * CONV_TO_CMS2,
-    "W_T0_600":ngawest2_vert['T0.600S'] * CONV_TO_CMS2,
-    "W_T0_700":ngawest2_vert['T0.700S'] * CONV_TO_CMS2,
-    "W_T0_750":ngawest2_vert['T0.750S'] * CONV_TO_CMS2,
-    "W_T0_800":ngawest2_vert['T0.800S'] * CONV_TO_CMS2,
-    "W_T0_900":ngawest2_vert['T0.900S'] * CONV_TO_CMS2,
-    "W_T1_000":ngawest2_vert['T1.000S'] * CONV_TO_CMS2,
-    "W_T1_200":ngawest2_vert['T1.200S'] * CONV_TO_CMS2,
-    "W_T1_400":ngawest2_vert['T1.400S'] * CONV_TO_CMS2,
-    "W_T1_600":ngawest2_vert['T1.600S'] * CONV_TO_CMS2,
-    "W_T1_800":ngawest2_vert['T1.800S'] * CONV_TO_CMS2,
-    "W_T2_000":ngawest2_vert['T2.000S'] * CONV_TO_CMS2,
-    "W_T2_500":ngawest2_vert['T2.500S'] * CONV_TO_CMS2,
-    "W_T3_000":ngawest2_vert['T3.000S'] * CONV_TO_CMS2,
-    "W_T3_500":ngawest2_vert['T3.500S'] * CONV_TO_CMS2,
-    "W_T4_000":ngawest2_vert['T4.000S'] * CONV_TO_CMS2,
-    "W_T4_500":ngawest2_vert['T4.500S'] * CONV_TO_CMS2,
-    "W_T5_000":ngawest2_vert['T5.000S'] * CONV_TO_CMS2,
-    "W_T6_000":ngawest2_vert['T6.000S'] * CONV_TO_CMS2,
-    "W_T7_000":ngawest2_vert['T7.000S'] * CONV_TO_CMS2,
-    "W_T8_000":ngawest2_vert['T8.000S'] * CONV_TO_CMS2,
-    "W_T9_000":ngawest2_vert['T9.000S'] * CONV_TO_CMS2,
-    "W_T10_000":ngawest2_vert['T10.000S'] * CONV_TO_CMS2})
-    
-    # Make tmp file 
-    tmp = os.path.join(BASE, tempfile.mkdtemp(), 'tmp.csv')
-    
-    # Export to tmp
-    rfmt.to_csv(tmp, sep=';')
-
-    # Inform user of number of discarded records (insufficient for SMT residual analysis)
-    print(Initial_ngawest2_size - len(ngawest2),
-          'records removed from imported NGA-West-2 flatfile during data quality checks.')
-
-    return tmp
