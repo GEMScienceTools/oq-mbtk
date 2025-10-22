@@ -367,33 +367,24 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_distances(self, metadata, hypo_depth):
         """
-        Parse the distances
+        Parse the distances provided in the flatfile
         """
         repi = valid.positive_float(metadata["epi_dist"], "epi_dist")
-        razim = valid.positive_float(metadata["epi_az"], "epi_az")
+        if pd.isnull(repi):
+            repi, rhypo = None, None
+        else:
+            rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
         rjb = valid.positive_float(metadata["JB_dist"], "JB_dist")
+        if pd.isnull(rjb):
+            rjb = None
         rrup = valid.positive_float(metadata["rup_dist"], "rup_dist")
+        if pd.isnull(rrup):
+            rrup = None
         r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
-        rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
-        
-        if not isinstance(rjb, float):
-            # In the first case Rjb == Repi
-            rjb = copy.copy(repi)
-
-        if not isinstance(rrup, float):
-            # In the first case Rrup == Rhypo
-            rrup = copy.copy(rhypo)
-
-        if not isinstance(r_x, float):
-            # In the first case Rx == -Repi (collapse to point and turn off
-            # any hanging wall effect)
-            r_x = copy.copy(-repi)
-
-        # ngawest2 lacks Ry0 (only Ry) so proxy the first case of Ry0 == Repi
-        ry0 = copy.copy(repi)
-        
-        distances = RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
-        distances.azimuth = razim
+        if pd.isnull(r_x):
+            r_x = None
+        distances = RecordDistance(repi, rhypo, rjb, rrup, r_x)
+        distances.azimuth = valid.positive_float(metadata["epi_az"], "epi_az")
 
         return distances
 

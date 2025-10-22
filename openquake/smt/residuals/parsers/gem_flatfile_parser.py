@@ -280,35 +280,26 @@ class GEMFlatfileParser(SMDatabaseReader):
         
     def _parse_distances(self, metadata, hypo_depth):
         """
-        Parse the distances
+        Parse the distances provided in the flatfile
         """
         repi = valid.positive_float(metadata["epi_dist"], "epi_dist")
+        if pd.isnull(repi):
+            repi, rhypo = None, None
+        else:
+            rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
         rjb = valid.positive_float(metadata["JB_dist"], "JB_dist")
+        if pd.isnull(rjb):
+            rjb = None
         rrup = valid.positive_float(metadata["rup_dist"], "rup_dist")
+        if pd.isnull(rrup):
+            rrup = None
         r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
+        if pd.isnull(r_x):
+            r_x = None
         ry0 = valid.positive_float(metadata["Ry0_dist"], "Ry0_dist")
-        rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
-        
-        if not isinstance(rjb, float):
-            # In the first case Rjb == Repi
-            rjb = copy.copy(repi)
-
-        if not isinstance(rrup, float):
-            # In the first case Rrup == Rhypo
-            rrup = copy.copy(rhypo)
-
-        if not isinstance(r_x, float):
-            # In the first case Rx == -Repi (collapse to point and turn off
-            # any hanging wall effect)
-            r_x = copy.copy(-repi)
-
-        if not isinstance(ry0, float):
-            # In the first case Ry0 == Repi
-            ry0 = copy.copy(repi)
-        
-        distances = RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
-        
-        return distances
+        if pd.isnull(ry0):
+            ry0 = None
+        return RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
 
     def _parse_site_data(self, metadata):
         """
