@@ -9,6 +9,7 @@ import numpy
 import pickle
 import configparser
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 try:
@@ -40,10 +41,14 @@ def plt_catalogue(filename, plotter, projection, max_hypo_depth=350,
     """
     scaling = -1e2
     # Load catalogue
-    cat = pickle.load(open(filename, 'rb'))
+    if filename.split(".")[-1] == "pkl":
+        cat = pickle.load(open(filename, 'rb'))
+        cat_data = cat.data
+    elif filename.split(".")[-1] == "csv":
+        cat_data = pd.read_csv(filename)
     # Create an array
-    points = np.array([cat.data['longitude'], cat.data['latitude'],
-                       cat.data['depth']]).T
+    points = np.array([cat_data['longitude'], cat_data['latitude'],
+                       cat_data['depth']]).T
     # Select
     if mask is not None:
         points = points[mask, :]
