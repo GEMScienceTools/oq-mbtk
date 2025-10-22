@@ -44,7 +44,8 @@ def _get_residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
 
     for res_type in data.keys():
 
-        vals, bins = _get_histogram_data(data[res_type], bin_width=bin_width)
+        vals, bins = _get_histogram_data(
+            data[res_type], bin_width=bin_width)
 
         mean = statistics[res_type]["Mean"]
         stddev = statistics[res_type]["Std Dev"]
@@ -62,7 +63,7 @@ def _get_histogram_data(data, bin_width=0.5):
     """
     Retreives the histogram of the residuals
     """
-    # Ignore nans otherwise max and min raise
+    # Ignore nans otherwise max and min can raise
     bins = np.arange(
         np.floor(np.nanmin(data)),
         np.ceil(np.nanmax(data)) + bin_width,
