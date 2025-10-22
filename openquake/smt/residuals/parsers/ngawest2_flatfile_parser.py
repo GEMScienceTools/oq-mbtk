@@ -457,10 +457,13 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             ngawest2.reset_index(drop=True, inplace=True)
             ngawest2_vert.reset_index(drop=True, inplace=True)
 
-        # Replace missing year/month/day/hour/minute
+        # Replace missing year/month/day/hour/minute, cast to string first
+        ngawest2['YEAR'] = ngawest2['YEAR'].astype(str)
         ngawest2.loc[ngawest2['YEAR'] == '-999', 'YEAR'] = '0000'
+        ngawest2['MODY'] = ngawest2['MODY'].astype(str)
         ngawest2.loc[ngawest2['MODY'] == '-999', 'MODY'] = '000'
-        ngawest2.loc[ngawest2['HRMN'] == -999, 'HRMN'] = '000'
+        ngawest2['HRMN'] = ngawest2['HRMN'].astype(str)
+        ngawest2.loc[ngawest2['HRMN'] == '-999', 'HRMN'] = '000'
 
         # Replace -999 with None for certain columns
         none_cols = ['Depth to Top Of Fault Rupture Model',
