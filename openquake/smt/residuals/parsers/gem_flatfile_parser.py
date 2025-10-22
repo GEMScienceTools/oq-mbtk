@@ -35,10 +35,10 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  Rupture,
                                                  FocalMechanism,
                                                  GCMTNodalPlanes,
-                                                 Component,
                                                  RecordSite,
                                                  RecordDistance)
 from openquake.smt.residuals.parsers import valid
+from openquake.smt.residuals.parsers.esm_flatfile_parser import parse_ground_motion, parse_waveform_data
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
 from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
@@ -111,7 +111,7 @@ class GEMFlatfileParser(SMDatabaseReader):
             record = self._parse_record(row)
             if record:
                 # Parse the strong motion
-                record = self._parse_ground_motion(
+                record = parse_ground_motion(
                     os.path.join(location, "records"), row, record, headers)
                 self.database.records.append(record)
             else:
@@ -169,7 +169,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         site = self._parse_site_data(metadata)
 
         # Parse waveform data
-        xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
+        xcomp, ycomp, vertical = parse_waveform_data(metadata, wfid)
         
         # Shortest and longest usable periods
         sp = valid.vfloat(metadata['shortest_usable_period'], 'shortest_usable_period')
@@ -342,173 +342,4 @@ class GEMFlatfileParser(SMDatabaseReader):
         site.z2pt5 = valid.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
 
         return site
-
-    def _parse_waveform_data(self, metadata, wfid):
-        """
-        Parse the waveform data
-        """
-        # U channel (assume NS direction)
-        xazimuth = 90.
-        xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
-                   "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
-        xcomp = Component(
-            wfid, xazimuth, waveform_filter=xfilter, units="cm/s/s")
-        
-        # V channel (assume EW direction)
-        vazimuth = 0.
-        vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
-                   "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
-        vcomp = Component(
-            wfid, vazimuth, waveform_filter=vfilter, units="cm/s/s")
-        
-        # W channel (vertical)
-        zorientation = "V"
-        if zorientation:
-            zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
-                       "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
-            zcomp = Component(
-                wfid, None, waveform_filter=zfilter, units="cm/s/s")
-        else:
-            zcomp = None
-        
-        return xcomp, vcomp, zcomp
-
-    def _parse_ground_motion(self, location, row, record, headers):
-        """
-        Parse the ground-motion data
-        """
-        # Get the data
-        scalars, spectra = self._retreive_ground_motion_from_row(row, headers)
-
-        # Build the hdf5 files
-        filename = os.path.join(location, "{:s}.hdf5".format(record.id))
-        fle = h5py.File(filename, "w-")
-        ims_grp = fle.create_group("IMS")
-        for comp, key in [("X", "U"), ("Y", "V"), ("V", "W")]:
-            comp_grp = ims_grp.create_group(comp)
-
-            # Add on the scalars
-            scalar_grp = comp_grp.create_group("Scalar")
-            for imt in scalars[key]:
-                if imt in ["ia"]:
-                    # In the smt convention it is "Ia" for Arias Intensity
-                    ikey = imt[0].upper() + imt[1:]
-                else:
-                    # Everything else to upper case (PGA, PGV, PGD, CAV)
-                    ikey = imt.upper()
-                dset = scalar_grp.create_dataset(ikey, (1,), dtype="f")
-                dset[:] = scalars[key][imt]
-            
-            # Add on the spectra
-            spectra_grp = comp_grp.create_group("Spectra")
-            response = spectra_grp.create_group("Response")
-            accel = response.create_group("Acceleration")
-            accel.attrs["Units"] = "cm/s/s"
-            
-            # Add on the periods
-            pers = spectra[key]["Periods"]
-            periods = response.create_dataset("Periods", pers.shape, dtype="f")
-            periods[:] = pers
-            periods.attrs["Low Period"] = np.min(pers)
-            periods.attrs["High Period"] = np.max(pers)
-            periods.attrs["Number Periods"] = len(pers)
-
-            # Add on the values
-            values = spectra[key]["Values"]
-            spectra_dset = accel.create_dataset("damping_05", values.shape, dtype="f")
-            spectra_dset[:] = np.copy(values)
-            spectra_dset.attrs["Damping"] = 5.0
-
-        # Add on the horizontal values
-        hcomp = ims_grp.create_group("H")
-        
-        # Scalars
-        hscalar = hcomp.create_group("Scalar")
-        for htype in HDEFS:
-            hcomp_scalars = hscalar.create_group(htype)
-            for imt in scalars[htype]:
-                if imt in ["ia"]:
-                    # In the smt convention it is "Ia" for Arias Intensity
-                    key = imt[0].upper() + imt[1:]
-                else:
-                    # Everything else to upper case (PGA, PGV, PGD, CAV)
-                    key = imt.upper()          
-                dset = hcomp_scalars.create_dataset(key, (1,), dtype="f")
-                dset[:] = scalars[htype][imt]
-
-        # Spectra
-        hspectra = hcomp.create_group("Spectra")
-        hresponse = hspectra.create_group("Response")
-        pers = spectra["Geometric"]["Periods"]
-        hpers_dset = hresponse.create_dataset("Periods", pers.shape, dtype="f")
-        hpers_dset[:] = np.copy(pers)
-        hpers_dset.attrs["Low Period"] = np.min(pers)
-        hpers_dset.attrs["High Period"] = np.max(pers)
-        hpers_dset.attrs["Number Periods"] = len(pers)
-        haccel = hresponse.create_group("Acceleration")
-        for htype in HDEFS:
-            if htype != "Geometric":
-                key = htype[0].upper() + htype[1:]
-            else:
-                key = copy.deepcopy(htype)
-            htype_grp = haccel.create_group(htype)
-            hvals = spectra[htype]["Values"]
-            hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape, dtype="f")
-            hspec_dset[:] = hvals
-            hspec_dset.attrs["Units"] = "cm/s/s"
-        record.datafile = filename
-        
-        return record
-
-    def _retreive_ground_motion_from_row(self, row, header_list):
-        """
-        Get the ground-motion data from a row (record) in the database
-        """
-        imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
-        spectra = []
-        scalar_imts = ["pga", "pgv", "pgd", "ia", "CAV"]
-        scalars = []
-        for imt in imts:
-            periods = []
-            values = []
-            key = "{:s}_T".format(imt)
-            scalar_dict = {}
-            for header in header_list:
-                # Deal with the scalar case
-                for scalar in scalar_imts:
-                    if header == "{:s}_{:s}".format(imt, scalar):
-                        # The value is a scalar
-                        value = row[header].strip()
-                        if value:
-                            scalar_dict[scalar] = np.fabs(float(value))
-                        else:
-                            scalar_dict[scalar] = None
-            scalars.append((imt, scalar_dict))
-            for header in header_list:
-                if key in header:
-                    iky = header.replace(key, "").replace("_", ".")
-                    periods.append(float(iky))
-                    value = row[header].strip()
-                    if value:
-                        values.append(np.fabs(float(value)))
-                    else:
-                        values.append(np.nan)
-            periods = np.array(periods)
-            values = np.array(values)
-            idx = np.argsort(periods)
-            spectra.append((imt, {"Periods": periods[idx], "Values": values[idx]}))
-            
-        # Add on the as-recorded geometric mean
-        spectra = dict(spectra)
-        scalars = dict(scalars)
-        spectra["Geometric"] = {
-            "Values": np.sqrt(spectra["U"]["Values"] * spectra["V"]["Values"]),
-            "Periods": np.copy(spectra["U"]["Periods"])
-            }
-        scalars["Geometric"] = dict([(key, None) for key in scalars["U"]])
-        for key in scalars["U"]:
-            if scalars["U"][key] and scalars["V"][key]:
-                scalars["Geometric"][key] = np.sqrt(
-                    scalars["U"][key] * scalars["V"][key])
-        
-        return scalars, spectra
+    

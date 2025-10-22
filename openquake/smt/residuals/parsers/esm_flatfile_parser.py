@@ -527,32 +527,38 @@ def parse_waveform_data(metadata, wfid):
     """
     Parse the waveform data
     """
-    late_trigger = valid.vint(
-        metadata["late_triggered_flag_01"], "late_triggered_flag_01")
-    
+    if 'late_triggered_flag' in metadata:
+        late_trigger = valid.vint(
+            metadata["late_triggered_flag_01"], "late_triggered_flag_01")
+    else:
+        late_trigger = None
+
     # U channel - usually east
-    xorientation = metadata["U_channel_code"].strip()
-    xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
+    if "U_azimuth_deg" in metadata:
+        xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
+    else:
+        xazimuth = None
     xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
-                "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
-    xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
-                        units="cm/s/s")
+               "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
+    xcomp = Component(
+        wfid, xazimuth, waveform_filter=xfilter, units="cm/s/s")
     xcomp.late_trigger = late_trigger
 
     # V channel - usually North
-    vorientation = metadata["V_channel_code"].strip()
-    vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
+    if "V_azimuth_deg" in metadata:
+        vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
+    else:
+        vazimuth = None
     vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
                "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
-    vcomp = Component(wfid, vazimuth, waveform_filter=vfilter,
-                        units="cm/s/s")
+    vcomp = Component(
+        wfid, vazimuth, waveform_filter=vfilter, units="cm/s/s")
     vcomp.late_trigger = late_trigger
-    zorientation = metadata["W_channel_code"].strip()
-    if zorientation:
+    if "W_channel_code" in metadata:
         zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
-                    "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
-        zcomp = Component(wfid, None, waveform_filter=zfilter,
-                            units="cm/s/s")
+                   "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
+        zcomp = Component(
+            wfid, None, waveform_filter=zfilter, units="cm/s/s")
         zcomp.late_trigger = late_trigger
     else:
         zcomp = None
