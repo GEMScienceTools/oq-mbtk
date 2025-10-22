@@ -41,7 +41,7 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  GCMTNodalPlanes,
                                                  Component,
                                                  RecordSite)
-from openquake.smt.residuals.parsers.esm_flatfile_parser import parse_distances, parse_site_data
+from openquake.smt.residuals.parsers.esm_flatfile_parser import parse_distances, parse_site_data, parse_waveform_data
 from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
 from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
@@ -221,7 +221,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         site = parse_site_data(metadata)
         
         # Parse waveform data
-        xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
+        xcomp, ycomp, vertical = parse_waveform_data(metadata, wfid)
         return GroundMotionRecord(wfid,
                                   [None, None, None],
                                   event, distances, site,

@@ -226,6 +226,43 @@ def parse_site_data(metadata):
     return site
 
 
+def parse_waveform_data(metadata, wfid):
+    """
+    Parse the waveform data
+    """
+    late_trigger = valid.vint(
+        metadata["late_triggered_flag_01"], "late_triggered_flag_01")
+    
+    # U channel - usually east
+    xorientation = metadata["U_channel_code"].strip()
+    xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
+    xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
+                "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
+    xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
+                        units="cm/s/s")
+    xcomp.late_trigger = late_trigger
+
+    # V channel - usually North
+    vorientation = metadata["V_channel_code"].strip()
+    vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
+    vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
+                "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
+    vcomp = Component(wfid, vazimuth, waveform_filter=vfilter,
+                        units="cm/s/s")
+    vcomp.late_trigger = late_trigger
+    zorientation = metadata["W_channel_code"].strip()
+    if zorientation:
+        zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
+                    "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
+        zcomp = Component(wfid, None, waveform_filter=zfilter,
+                            units="cm/s/s")
+        zcomp.late_trigger = late_trigger
+    else:
+        zcomp = None
+    
+    return xcomp, vcomp, zcomp
+    
+
 class ESMFlatfileParser(SMDatabaseReader):
     """
     Parses the data from the flatfile to a set of metadata objects
@@ -313,7 +350,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         site = parse_site_data(metadata)
         
         # Parse waveform data
-        xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
+        xcomp, ycomp, vertical = parse_waveform_data(metadata, wfid)
         return GroundMotionRecord(wfid,
                                   [None, None, None],
                                   event, distances, site,
@@ -466,42 +503,6 @@ class ESMFlatfileParser(SMDatabaseReader):
                                                 "dip": dip,
                                                 "rake": rake}
         return rupture, mechanism
-
-    def _parse_waveform_data(self, metadata, wfid):
-        """
-        Parse the waveform data
-        """
-        late_trigger = valid.vint(
-            metadata["late_triggered_flag_01"], "late_triggered_flag_01")
-        
-        # U channel - usually east
-        xorientation = metadata["U_channel_code"].strip()
-        xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
-        xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
-                   "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
-        xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
-                          units="cm/s/s")
-        xcomp.late_trigger = late_trigger
-
-        # V channel - usually North
-        vorientation = metadata["V_channel_code"].strip()
-        vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
-        vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
-                   "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
-        vcomp = Component(wfid, vazimuth, waveform_filter=vfilter,
-                          units="cm/s/s")
-        vcomp.late_trigger = late_trigger
-        zorientation = metadata["W_channel_code"].strip()
-        if zorientation:
-            zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
-                       "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
-            zcomp = Component(wfid, None, waveform_filter=zfilter,
-                              units="cm/s/s")
-            zcomp.late_trigger = late_trigger
-        else:
-            zcomp = None
-        
-        return xcomp, vcomp, zcomp
 
     def _parse_ground_motion(self, location, row, record, headers):
         """
