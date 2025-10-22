@@ -70,9 +70,9 @@ def get_completenesses(fname_config, folder_out):
                         years, 
                         folder_out=folder_out, 
                         num_steps=num_steps,
-                        min_mag_compl=mini_mag_compl,
+                        min_mag_compl=min_mag_compl,
                         apriori_conditions=apriori_conditions,
-                        cref=cref,
+                        completeness_ref=cref,
                         _n_vals_per_iter=_n_vals_per_iter,
                         mrange=mrange)
 
