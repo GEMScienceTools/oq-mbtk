@@ -58,7 +58,9 @@ ST_PAR = ["vs30",
           "rjb",
           "rhypo",
           "repi",
-          "ry0"]
+          "ry0",
+          "rvolc",
+          "rcdpp"]
 
 
 ### Util functions
@@ -249,13 +251,10 @@ class Residuals(object):
         # Contexts is in either case a list of dictionaries
         self.contexts = []
         for context in contexts:
-            # If no rvolc fix to zero (ensure rvolc gsims usable)
-            if 'rvolc' not in context['Ctx']._slots_:
-                context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi)
-            # Convert all IMTS with acceleration units, which are supposed to
-            # be in cm/s/s, to g:
+            # If units are acceleration (admitted in cm/s/s) to g
             for a_imt in accel_imts:
-                context['Observations'][a_imt] = convert_accel_units(
+                context['Observations'][
+                    a_imt] = convert_accel_units(
                         context['Observations'][a_imt], 'cm/s/s', 'g')
             # Get the expected ground motions from GMMs
             context = self.get_exp_motions(context)
@@ -844,7 +843,7 @@ class SingleStationAnalysis(object):
             selector = SMRecordSelector(database)
             site_db = selector.select_from_site_id(site_id, as_db=True)
             # Use a deep copied gmpe list to avoid recursive GMM instantiation
-            # issues when using check_gsim_list within Residuals obj __init__
+            # issues when using check_gsim_list within Residuals obj's init
             resid = Residuals(self.frozen_gmpe_list, self.imts)
             resid.compute_residuals(site_db,
                                     normalise=False,
@@ -970,7 +969,7 @@ class SingleStationAnalysis(object):
                 self.phi_S2S[gmpe][imtx] = st_averaged[1]
                 self.phi_ss[gmpe][imtx] = st_averaged[2]
 
-        if filename:
+        if filename is not None:
             # Print the rest of the results to file
             self._print_ssa_results(fid, self.mean_deltaS2S, self.phi_ss, self.phi_S2S)
             fid.close()

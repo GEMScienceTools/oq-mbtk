@@ -38,7 +38,8 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  RecordSite,
                                                  RecordDistance)
 from openquake.smt.residuals.parsers import valid
-from openquake.smt.residuals.parsers.esm_flatfile_parser import parse_ground_motion, parse_waveform_data
+from openquake.smt.residuals.parsers.esm_flatfile_parser import (parse_ground_motion,
+                                                                 parse_waveform_data)
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
 from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
