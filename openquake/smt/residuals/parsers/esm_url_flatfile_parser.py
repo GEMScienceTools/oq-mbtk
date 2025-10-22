@@ -51,10 +51,6 @@ from .esm_dictionaries import *
 
 BASE = os.path.abspath("")
 
-HDEFS = ["Geometric", "rotD00", "rotD50", "rotD100"]
-
-SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95"]
-
 HEADERS = ["event_id",
            "event_time",
            "ISC_ev_id",
