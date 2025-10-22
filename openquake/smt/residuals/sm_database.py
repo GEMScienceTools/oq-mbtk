@@ -284,7 +284,7 @@ class Earthquake(object):
 
 class RecordDistance(object):
     """
-    Class to hold source to site distance information
+    Class to hold source to site distance information.
     :param float repi:
         Epicentral distance (km)
     :param float rhypo:
@@ -298,17 +298,20 @@ class RecordDistance(object):
         to surface
     :param float ry0:
         Along-track distance from site to surface projection of fault plane
+    :param rvolc:
+        Horizontal distance traversed through zone of volcanic activity.
     :param float rcdpp:
         Direct point parameter for directivity effect centered on the site-
         and earthquake-specific average DPP used
     """
     def __init__(self,
-                 repi,
-                 rhypo,
+                 repi=None,
+                 rhypo=None,
                  rjb=None,
                  rrup=None,
                  r_x=None,
                  ry0=None,
+                 rvolc=None,
                  rcdpp=None):
         self.repi = repi
         self.rhypo = rhypo
@@ -316,6 +319,7 @@ class RecordDistance(object):
         self.rrup = rrup
         self.r_x = r_x
         self.ry0 = ry0
+        self.rvolc = rvolc
         self.rcdpp = rcdpp
 
 
@@ -879,6 +883,7 @@ class GroundMotionDatabase(ContextDB):
             ctx.rrup.append(record.distance.rrup)
             ctx.rx.append(record.distance.r_x)
             ctx.ry0.append(record.distance.ry0)
+            ctx.rvolc.append(record.distance.rvolc)
             ctx.rcdpp.append(record.distance.rcdpp)
 
         for attname in self.distances_context_attrs:
