@@ -33,16 +33,20 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from openquake.cat.completeness.norms import (get_norm_optimize,
-                                              get_norm_optimize_b,
-                                              get_norm_optimize_a,
-                                              get_norm_optimize_c,
-                                              get_norm_optimize_d,
-                                              get_norm_optimize_weichert,
-                                              get_norm_optimize_gft)
+from openquake.cat.completeness.norms import (
+    get_norm_optimize,
+    get_norm_optimize_b,
+    get_norm_optimize_a,
+    get_norm_optimize_c,
+    get_norm_optimize_d,
+    get_norm_optimize_weichert,
+    get_norm_optimize_gft,
+)
 from openquake.wkf.utils import _get_src_id, create_folder, get_list
-from openquake.wkf.compute_gr_params import (get_weichert_confidence_intervals,
-                                             _weichert_plot)
+from openquake.wkf.compute_gr_params import (
+    get_weichert_confidence_intervals,
+    _weichert_plot,
+)
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 from openquake.mbt.tools.model_building.dclustering import _add_defaults
 from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
@@ -50,7 +54,16 @@ from openquake.hmtk.seismicity.occurrence.weichert import Weichert
 
 warnings.filterwarnings("ignore")
 
-MAXIMISE = ['optimize_a', 'optimize_b', 'optimize_c', 'optimize_d', 'optimize_weichert', 'optimize_gft', 'poisson']
+MAXIMISE = [
+    'optimize_a',
+    'optimize_b',
+    'optimize_c',
+    'optimize_d',
+    'optimize_weichert',
+    'optimize_gft',
+    'poisson',
+]
+
 
 def get_earliest_year_with_n_occurrences(ctab, cat, occ_threshold=2):
     """
@@ -160,25 +173,26 @@ def check_criterion(criterion, rate, previous_norm, tvars):
     if criterion == 'largest_rate':
 
         # Computes the rate to be maximised
-        tmp_rate = 10**(-bval * ref_mag + aval)
+        tmp_rate = 10 ** (-bval * ref_mag + aval)
         if ref_upp_mag is not None:
-            tmp_rate -= 10**(-bval * ref_upp_mag + aval)
-        norm = 1. / abs(tmp_rate)
+            tmp_rate -= 10 ** (-bval * ref_upp_mag + aval)
+        norm = 1.0 / abs(tmp_rate)
 
     elif criterion == 'match_rate':
 
         # Computes the rate to match
         rate_ma = tvars['rate_to_match']
-        tmp_rate = 10**(-bval * ref_mag + aval)
+        tmp_rate = 10 ** (-bval * ref_mag + aval)
         if ref_upp_mag is not None:
             mmax_tmp = tvars['mmax_within_range']
-            tmp_rate -= 10**(-bval * mmax_tmp + aval)
+            tmp_rate -= 10 ** (-bval * mmax_tmp + aval)
         norm = abs(tmp_rate - rate_ma)
 
     elif criterion == 'optimize':
         tmp_rate = -1
-        norm = get_norm_optimize(tcat, aval, bval, ctab, cmag, n_obs, t_per,
-                                 last_year, info=False)
+        norm = get_norm_optimize(
+            tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year, info=False
+        )
 
     elif criterion == 'optimize_a':
         tmp_rate = -1
@@ -186,23 +200,36 @@ def check_criterion(criterion, rate, previous_norm, tvars):
 
     elif criterion == 'optimize_b':
         tmp_rate = -1
-        norm = get_norm_optimize_b(aval, bval, ctab, tcat, binw, ybinw=10.,
-                                   mmin=ref_mag, mmax=ref_upp_mag)
+        norm = get_norm_optimize_b(
+            aval,
+            bval,
+            ctab,
+            tcat,
+            binw,
+            ybinw=10.0,
+            mmin=ref_mag,
+            mmax=ref_upp_mag,
+        )
     elif criterion == 'optimize_c':
         tmp_rate = -1
-        norm = get_norm_optimize_c(tcat, aval, bval, ctab, last_year, ref_mag, ref_upp_mag, binw)
+        norm = get_norm_optimize_c(
+            tcat, aval, bval, ctab, last_year, ref_mag, ref_upp_mag, binw
+        )
 
     elif criterion == 'gft':
         tmp_rate = -1
-        norm = get_norm_optimize_gft(tcat, aval, bval, ctab, cmag, n_obs,
-                                     t_per, last_year)
+        norm = get_norm_optimize_gft(
+            tcat, aval, bval, ctab, cmag, n_obs, t_per, last_year
+        )
     elif criterion == 'weichert':
         tmp_rate = -1
         norm = get_norm_optimize_weichert(tcat, aval, bval, ctab, last_year)
 
     elif criterion == 'poisson':
-        tmp_rate = -1        
-        norm = get_norm_optimize_c(tcat, aval, bval, ctab, last_year, ref_mag, ref_upp_mag, binw)
+        tmp_rate = -1
+        norm = get_norm_optimize_c(
+            tcat, aval, bval, ctab, last_year, ref_mag, ref_upp_mag, binw
+        )
 
     if norm is None or np.isnan(norm):
         return False, -1, previous_norm
@@ -232,10 +259,21 @@ def _make_ctab(prm, years, mags):
         return 'skip'
 
 
-def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
-                           bgrlim, criterion, compl_tables, src_id=None,
-                           folder_out_figs=None, rewrite=False,
-                           folder_out=None):
+def _completeness_analysis(
+    fname,
+    years,
+    mags,
+    binw,
+    ref_mag,
+    ref_upp_mag,
+    bgrlim,
+    criterion,
+    compl_tables,
+    src_id=None,
+    folder_out_figs=None,
+    rewrite=False,
+    folder_out=None,
+):
     """
     :param fname:
         Name of the file with the catalogue
@@ -262,8 +300,18 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     """
 
     # Checking input
-    if criterion not in ['match_rate', 'largest_rate', 'optimize', 'weichert',
-                         'poisson', 'optimize_a', 'optimize_b', 'optimize_c','optimize_d', 'gft']:
+    if criterion not in [
+        'match_rate',
+        'largest_rate',
+        'optimize',
+        'weichert',
+        'poisson',
+        'optimize_a',
+        'optimize_b',
+        'optimize_c',
+        'optimize_d',
+        'gft',
+    ]:
         raise ValueError('Unknown optimization criterion')
 
     tcat = _load_catalogue(fname)
@@ -281,9 +329,11 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
     perms = compl_tables['perms']
 
     # Configuration parameters for the Weichert method
-    wei_conf = {'magnitude_interval': binw,
-                'reference_magnitude': 0.0,
-                'bvalue': 1.0}
+    wei_conf = {
+        'magnitude_interval': binw,
+        'reference_magnitude': 0.0,
+        'bvalue': 1.0,
+    }
     weichert = Weichert()
 
     # Initial settings
@@ -327,8 +377,9 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
         if not np.any(tcat.data['magnitude'] > ctab[0][1]):
             continue
-        cent_mag, t_per, n_obs = get_completeness_counts(tcat, ctab, binw,
-                                                         return_empty=True)
+        cent_mag, t_per, n_obs = get_completeness_counts(
+            tcat, ctab, binw, return_empty=True
+        )
         if len(cent_mag) == 0:
             continue
         wei_conf['reference_magnitude'] = min(ctab[:, 1])
@@ -336,8 +387,9 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         try:
             # Calculate weichert a and b parameters given the current
             # completeness
-            bval, sigb, rmag_rate, rmag_sigma_rate, aval, siga = \
-                    weichert._calculate(tcat, wei_conf, ctab)
+            bval, sigb, rmag_rate, rmag_sigma_rate, aval, siga = (
+                weichert._calculate(tcat, wei_conf, ctab)
+            )
         except:
             n_obs = [0]
             count['else'] += 1
@@ -353,7 +405,8 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
         r_mag = np.floor((ref_mag + binw * 0.01) / binw) * binw - binw / 2
         r_upp_mag = (
-            np.ceil((ref_upp_mag + binw * 0.01) / binw) * binw + binw / 2)
+            np.ceil((ref_upp_mag + binw * 0.01) / binw) * binw + binw / 2
+        )
 
         # Create a dictionary of parameters for the function that computes
         # the norm
@@ -383,7 +436,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         # Compute the measure expressing the performance of the current
         # completeness. If the norm is smaller than the previous one
         # `check` is True
-        rates = [n/t for n,t in zip(n_obs, t_per)]
+        rates = [n / t for n, t in zip(n_obs, t_per)]
         stmags = [float(m) for m in cent_mag]
         check, trate, tnorm = check_criterion(criterion, rate, tnorm, tvars)
         all_res.append([iper, aval, bval, tnorm])
@@ -395,21 +448,44 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
             iper_save = iper
             rate = trate
             norm = tnorm
-            save = [aval, bval, rate, ctab, norm, siga, sigb,
-                    min(ctab[:, 1]), rmag_rate, rmag_sigma_rate]
+            save = [
+                aval,
+                bval,
+                rate,
+                ctab,
+                norm,
+                siga,
+                sigb,
+                min(ctab[:, 1]),
+                rmag_rate,
+                rmag_sigma_rate,
+            ]
             gwci = get_weichert_confidence_intervals
             lcl, ucl, ex_rates, ex_rates_scaled = gwci(
-                cent_mag, n_obs, t_per, bval)
+                cent_mag, n_obs, t_per, bval
+            )
             mmax = max(tcat.data['magnitude'])
             # Scheme:
             # 0, 1, 2, 3, 4
             # 5, 6, 7, 8, 9
             # 10, 11
             # 12, 13
-            wei = [cent_mag, n_obs, binw, t_per, ex_rates_scaled,
-                   lcl, ucl, mmax, aval, bval,
-                   wei_conf['reference_magnitude'], rmag_rate,
-                   rmag_sigma_rate, sigb]
+            wei = [
+                cent_mag,
+                n_obs,
+                binw,
+                t_per,
+                ex_rates_scaled,
+                lcl,
+                ucl,
+                mmax,
+                aval,
+                bval,
+                wei_conf['reference_magnitude'],
+                rmag_rate,
+                rmag_sigma_rate,
+                sigb,
+            ]
             count['complete'] += 1
 
     # Print info
@@ -429,10 +505,24 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
         return save
 
     # Plotting
-    _weichert_plot(wei[0], wei[1], wei[2], wei[3], wei[4], wei[5], wei[6],
-                   wei[7], wei[8], wei[9], src_id=src_id, plt_show=False,
-                   ref_mag=wei[10], ref_mag_rate=wei[11],
-                   ref_mag_rate_sig=wei[12], bval_sigma=wei[13])
+    _weichert_plot(
+        wei[0],
+        wei[1],
+        wei[2],
+        wei[3],
+        wei[4],
+        wei[5],
+        wei[6],
+        wei[7],
+        wei[8],
+        wei[9],
+        src_id=src_id,
+        plt_show=False,
+        ref_mag=wei[10],
+        ref_mag_rate=wei[11],
+        ref_mag_rate_sig=wei[12],
+        bval_sigma=wei[13],
+    )
 
     # Saving figure
     if folder_out_figs is not None:
@@ -441,8 +531,7 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
             create_folder(folder_out_figs)
         ext = 'png'
         fmt = 'fig_mfd_{:s}.{:s}'
-        figure_fname = os.path.join(folder_out_figs,
-                                    fmt.format(src_id, ext))
+        figure_fname = os.path.join(folder_out_figs, fmt.format(src_id, ext))
         plt.savefig(figure_fname, format=ext)
         plt.close()
 
@@ -458,18 +547,18 @@ def _completeness_analysis(fname, years, mags, binw, ref_mag, ref_upp_mag,
 
     return save
 
+
 def read_compl_params(config):
-    """
-    """
+    """ """
 
     # Read parameters for completeness analysis
     key = 'completeness'
     ms = np.array(config[key]['mags'], dtype=float)
     yrs = np.array(config[key]['years'])
-    try: 
-        bw = np.array(config[key]['bin_width'], dtype =float)
-    except: 
-    	bw = config.get('bin_width', 0.1)
+    try:
+        bw = np.array(config[key]['bin_width'], dtype=float)
+    except:
+        bw = config.get('bin_width', 0.1)
     r_m = config[key].get('ref_mag', 5.0)
     r_up_m = config[key].get('ref_upp_mag', None)
     bmin = config[key].get('bmin', 0.8)
@@ -481,23 +570,31 @@ def read_compl_params(config):
 
 
 def read_compl_data(folder_in):
-    """
-    """
+    """ """
     # Reading completeness data
     print(f'Reading completeness data from: {folder_in:s}')
     fname_disp = os.path.join(folder_in, 'dispositions.npy')
     perms = np.load(fname_disp)
     mags_chk = np.load(os.path.join(folder_in, 'mags.npy'))
     years_chk = np.load(os.path.join(folder_in, 'years.npy'))
-    compl_tables = {'perms': perms, 'mags_chk': mags_chk,
-                    'years_chk': years_chk}
+    compl_tables = {
+        'perms': perms,
+        'mags_chk': mags_chk,
+        'years_chk': years_chk,
+    }
 
-    return compl_tables, mags_chk, years_chk
+    return compl_tables
 
 
-
-def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
-                          folder_in, folder_out, skip='', use_only=None):
+def completeness_analysis(
+    fname_input_pattern,
+    f_config,
+    folder_out_figs,
+    folder_in,
+    folder_out,
+    skip='',
+    use_only=None,
+):
     """
     :param fname_input_pattern:
         Pattern to the files with the subcatalogues
@@ -516,14 +613,14 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
     # Loading configuration
     config = toml.load(f_config)
     ms, yrs, bw, r_m, r_up_m, bmin, bmax, crit = read_compl_params(config)
-    compl_tables, mags_chk, years_chk = read_compl_data(folder_in)
+    compl_tables = read_compl_data(folder_in)
 
     # Fixing sorting of years
     if np.all(np.diff(yrs)) >= 0:
         yrs = np.flipud(yrs)
 
-    np.testing.assert_array_almost_equal(ms, mags_chk)
-    np.testing.assert_array_almost_equal(yrs, years_chk)
+    np.testing.assert_array_almost_equal(ms, compl_tables['mags_chk'])
+    np.testing.assert_array_almost_equal(yrs, compl_tables['years_chk'])
 
     # Process input
     if len(skip) > 0:
@@ -553,12 +650,21 @@ def completeness_analysis(fname_input_pattern, f_config, folder_out_figs,
         else:
             var = {}
 
-        res = _completeness_analysis(fname, yrs, ms, bw, r_m,
-                                     r_up_m, [bmin, bmax], crit,
-                                     compl_tables, src_id,
-                                     folder_out_figs=folder_out_figs,
-                                     folder_out=folder_out,
-                                     rewrite=False)
+        res = _completeness_analysis(
+            fname,
+            yrs,
+            ms,
+            bw,
+            r_m,
+            r_up_m,
+            [bmin, bmax],
+            crit,
+            compl_tables,
+            src_id,
+            folder_out_figs=folder_out_figs,
+            folder_out=folder_out,
+            rewrite=False,
+        )
 
         if len(res) == 0:
             continue
