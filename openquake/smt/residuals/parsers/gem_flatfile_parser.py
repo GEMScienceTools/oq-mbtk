@@ -85,14 +85,13 @@ HEADERS = ["event_id",
            "longest_usable_period"
            ]
 
+M_PRECEDENCE = ["Mw", "Ms", "ML"]
+
 
 class GEMFlatfileParser(SMDatabaseReader):
     """
     Parses the data from the flatfile to a set of metadata objects
     """
-    M_PRECEDENCE = ["Mw", "Ms", "ML"]
-    BUILD_FINITE_DISTANCES = False
-
     def parse(self, location='./'):
         """
         Parse the dataset
