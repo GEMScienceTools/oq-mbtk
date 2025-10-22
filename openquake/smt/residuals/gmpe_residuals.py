@@ -203,7 +203,8 @@ class Residuals(object):
                           ctx_database,
                           nodal_plane_index=1,
                           component="Geometric",
-                          normalise=True):
+                          normalise=True,
+                          stations=False):
         """
         Calculate the residuals for a set of ground motion records
 
@@ -212,18 +213,30 @@ class Residuals(object):
             observed IMTs.
             See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase`
             for an example
+        :param stations: Bool which if set to True prevents an error being raised
+                         if all obs values for given IMT are nans at the station,
+                         which is forbidden for a single ground-motion record in
+                         a regular residual analysis, but permitted when computing
+                         single-station residuals
         """
         # Build initial contexts with the observed values
-        contexts = ctx_database.get_contexts(nodal_plane_index, self.imts, component)
+        contexts = ctx_database.get_contexts(nodal_plane_index,
+                                             self.imts,
+                                             component)
         
         # Check at least one observed value per IMT (else raise an error)
         for im in self.imts:
             obs_check = []
             for ctx in contexts:
-                obs_check.append(ctx["Observations"][im])
+                obs = ctx["Observations"][im]
+                if stations is True:
+                    # In SSA should be one rec per ev
+                    # given computing res per station
+                    assert len(obs) == 1
+                obs_check.append(obs)
             obs_check = np.concatenate(obs_check)
             check = pd.notnull(obs_check)
-            if len(check[check]) < 1:
+            if len(check[check]) < 1 and stations is False:
                 raise ValueError(f"All observed intensity measure "
                                  f"levels for {im} are empty - "
                                  f"no residuals can be computed "
@@ -833,7 +846,10 @@ class SingleStationAnalysis(object):
             # Use a deep copied gmpe list to avoid recursive GMM instantiation
             # issues when using check_gsim_list within Residuals obj __init__
             resid = Residuals(self.frozen_gmpe_list, self.imts)
-            resid.compute_residuals(site_db, normalise=False, component=component)
+            resid.compute_residuals(site_db,
+                                    normalise=False,
+                                    component=component,
+                                    stations=True)
             setattr(
                 resid,
                 "site_analysis",
@@ -934,10 +950,12 @@ class SingleStationAnalysis(object):
             gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
 
         for gmpe in self.gmpe_list:
-            if filename: print(get_gmpe_str(gmpe), file=fid)
+            if fid is not None and fid is not sys.stdout:
+                print(get_gmpe_str(gmpe), file=fid)
 
             for imtx in self.imts:
-                if filename: print(imtx, file=fid)
+                if fid is not None and fid is not sys.stdout:
+                    print(imtx, file=fid)
 
                 if "Intra event" not in self.site_residuals[0].site_analysis[gmpe][imtx]:
                     warnings.warn(
@@ -984,14 +1002,14 @@ class SingleStationAnalysis(object):
             n_events.append(site_data["events"])
             numerator_sum += np.sum(
                 (site_data["Intra event"] - site_data["deltaS2S_s"]) ** 2)
-            if fid:
+            if fid is not None and fid is not sys.stdout:
                 print(
                     f"Site ID, {list(self.site_ids)[iloc]}, "
                     f"deltaS2S_s, {site_data['deltaS2S_s']}, "
                     f"phi_ss,s, {site_data['phi_ss,s']}, "
                     f"Num Records, {site_data['events']}",
                     file=fid
-                    )
+                )
 
         # Compute mean deltaS2S_s
         mean_deltaS2S = np.mean(deltaS2S_s)
@@ -1009,11 +1027,13 @@ class SingleStationAnalysis(object):
         Print SSA results to the file.
         """
         ni = 'Sigma model of GMPE has no intra-event component'
-        print("\nSSA RESULTS PER GMPE", file=fid)
+        if fid is not None and fid is not sys.stdout:
+            print("\nSSA RESULTS PER GMPE", file=fid)
         for gmpe in self.gmpe_list:
             gmm_str = get_gmpe_str(gmpe)
             gmm_sigmas = valid.gsim(gmm_str).DEFINED_FOR_STANDARD_DEVIATION_TYPES
-            print(gmm_str, file=fid)
+            if fid is not None and fid is not sys.stdout:
+                print(gmm_str, file=fid)
             for imtx in self.imts:
                 p_data = (
                     imtx,
@@ -1021,10 +1041,11 @@ class SingleStationAnalysis(object):
                     mean_deltaS2S[gmpe][imtx],
                     phi_S2S[gmpe][imtx],
                 ) if gmm_sigmas == ALL_SIGMA else (imtx, ni, ni, ni)
-                print(
-                    f"{p_data[0]}, "
-                    f"phi_ss, {p_data[1]}, "
-                    f"deltaS2S, {p_data[2]}, "
-                    f"phi_S2S, {p_data[3]}",
-                    file=fid
-                )
+                if fid is not None and fid is not sys.stdout:
+                    print(
+                        f"{p_data[0]}, "
+                        f"phi_ss, {p_data[1]}, "
+                        f"deltaS2S, {p_data[2]}, "
+                        f"phi_S2S, {p_data[3]}",
+                        file=fid
+                        )
