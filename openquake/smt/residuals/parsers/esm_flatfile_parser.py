@@ -452,9 +452,6 @@ def parse_ground_motion(location, row, record, headers):
     hpers_dset.attrs["Number Periods"] = len(pers)
     haccel = hresponse.create_group("Acceleration")
     for htype in ["Geometric", "rotD00", "rotD50", "rotD100"]:
-        if np.all(np.isnan(spectra[htype]["Values"])):
-            # Component not determined
-            continue
         if htype != "Geometric":
             key = htype[0].upper() + htype[1:]
         else:

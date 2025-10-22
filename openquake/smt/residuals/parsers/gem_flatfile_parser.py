@@ -18,10 +18,10 @@
 """
 Parse the GEM globally homogenised flatfile into SMT metadata.
 """
-import pandas as pd
 import os
 import csv
 import numpy as np
+import pandas as pd
 import copy
 import h5py
 import pickle
@@ -224,7 +224,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         pref_mag = None
         mag_list = []
-        for key in self.M_PRECEDENCE:
+        for key in M_PRECEDENCE:
             mvalue = metadata[key].strip()
             if mvalue:
                 mtype = key
@@ -445,9 +445,6 @@ class GEMFlatfileParser(SMDatabaseReader):
         hpers_dset.attrs["Number Periods"] = len(pers)
         haccel = hresponse.create_group("Acceleration")
         for htype in HDEFS:
-            if np.all(np.isnan(spectra[htype]["Values"])):
-                # Component not determined
-                continue
             if htype != "Geometric":
                 key = htype[0].upper() + htype[1:]
             else:
