@@ -873,27 +873,17 @@ class GroundMotionDatabase(ContextDB):
             setattr(ctx, attname, [])
 
         for record in records:
-            if record.distance.repi is not None:
-                ctx.repi.append(record.distance.repi)
-            if record.distance.rhypo is not None:
-                ctx.rhypo.append(record.distance.rhypo)
-            if record.distance.rjb is not None:
-                ctx.rjb.append(record.distance.rjb)
-            if record.distance.rrup is not None:
-                ctx.rrup.append(record.distance.rrup)
-            if record.distance.r_x is not None:
-                ctx.rx.append(record.distance.r_x)
-            if record.distance.ry0 is not None:
-                ctx.ry0.append(record.distance.ry0)
-            if record.distance.rcdpp is not None:
-                ctx.rcdpp.append(record.distance.rcdpp)
+            ctx.repi.append(record.distance.repi)
+            ctx.rhypo.append(record.distance.rhypo)
+            ctx.rjb.append(record.distance.rjb)
+            ctx.rrup.append(record.distance.rrup)
+            ctx.rx.append(record.distance.r_x)
+            ctx.ry0.append(record.distance.ry0)
+            ctx.rcdpp.append(record.distance.rcdpp)
 
         for attname in self.distances_context_attrs:
             attval = getattr(ctx, attname)
-            if len(attval) < 1: # Remove attribute if value is empty list
-                delattr(ctx, attname)
-            else:
-                setattr(ctx, attname, np.asarray(attval, dtype=float))
+            setattr(ctx, attname, np.asarray(attval, dtype=float))
 
     def get_scalar(self, fle, i_m, component="Geometric"):
         """

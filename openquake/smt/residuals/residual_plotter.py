@@ -337,9 +337,8 @@ class ResidualScatterPlot(BaseResidualPlot):
             logarithmic (provide 'log' in case). Default: '' (no log x axis)
         """
         self.plot_type = plot_type
-        super(ResidualScatterPlot, self).__init__(residuals, gmpe, imt,
-                                                  filename=filename,
-                                                  **kwargs)
+        super(ResidualScatterPlot, self).__init__(
+            residuals, gmpe, imt, filename=filename, **kwargs)
         
     def get_subplots_rowcols(self):
         if self.num_plots > 1:
@@ -372,18 +371,20 @@ class ResidualScatterPlot(BaseResidualPlot):
 
     def draw(self, ax, res_data, res_type):
         x, y = res_data['x'], res_data['y']
-        x_zero = np.arange(np.floor(np.min(x))-20, np.ceil(np.max(x))+20, 0.001)
+        x_zero = np.arange(np.floor(np.nanmin(x))-20, np.ceil(np.nanmax(x))+20, 0.001)
         zero_line = np.zeros(len(x_zero))
-        pts_styling_kwargs = dict(markeredgecolor='Gray',
-                                  markerfacecolor='LightSteelBlue',
-                                  label='residual')
+        pts_styling_kwargs = dict(
+            markeredgecolor='Gray', markerfacecolor='LightSteelBlue', label='residual')
+        
         if self.plot_type == "log":
             ax.semilogx(x, y, 'o', **pts_styling_kwargs)
+            
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker='s', color='b', label='mean', zorder=4)
             
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
                 -1*res_data['sigma_res']), marker='x', color='b', zorder=4)
+            
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
                 res_data['sigma_res']), marker='x', color='b',
                 label='+/- 1 Std.', zorder=4)
@@ -392,11 +393,13 @@ class ResidualScatterPlot(BaseResidualPlot):
                     linewidth=1.25)
         else:
             ax.plot(x, y, 'o', **pts_styling_kwargs)
+            
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker='s', color='b', label='mean', zorder=4)
-            
+        
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
                 -1*res_data['sigma_res']), marker='x', color='b', zorder=4)
+        
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
                 res_data['sigma_res']), marker='x', color='b',
                 label='+/- 1 Std.', zorder=4)
@@ -444,12 +447,12 @@ class ResidualWithDistance(ResidualScatterPlot):
     def get_axis_xlim(self, res_data, res_type):
         x = res_data['x']
         if self.plot_type == "log":
-            return 0.1, 10.0 ** (ceil(np.log10(np.max(x))))
+            return 0.1, 10.0 ** (ceil(np.log10(np.nanmax(x))))
         else:
             if self.distance_type == "rcdpp":
-                return np.min(x), np.max(x)
+                return np.nanmin(x), np.nanmax(x)
             else:
-                return 0, np.max(x)
+                return 0, np.nanmax(x)
 
 
 class ResidualWithMagnitude(ResidualScatterPlot):
@@ -821,9 +824,9 @@ def plot_residual_means_and_stds(ax,
         i = 0
     elif mean_or_std == 'Std Dev':
         i = 1
-    try:
+    if '_toml=' in gmpe:
         gmpe_label = gmpe.split('_toml=')[1].replace(')','')
-    except:
+    else:
         gmpe_label = gmpe # If not from toml file can't split
 
     # Plot mean

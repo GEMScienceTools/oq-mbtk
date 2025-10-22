@@ -279,7 +279,9 @@ class GEMFlatfileParser(SMDatabaseReader):
         
     def _parse_distances(self, metadata, hypo_depth):
         """
-        Parse the distances provided in the flatfile
+        Parse the distances provided in the flatfile. If not provided
+        then we can calculate by constructing a finite rupture within
+        the engine (this occurs within )
         """
         repi = valid.positive_float(metadata["epi_dist"], "epi_dist")
         if pd.isnull(repi):

@@ -180,6 +180,7 @@ def _get_distances(residuals, gmpe, imt, res_type, distance_type):
             dist_vals = getattr(ctx["Ctx"], distance_type)
             dist_vals = dist_vals[keep]
             distances = np.hstack([distances, dist_vals])
+            
     return distances
 
 
