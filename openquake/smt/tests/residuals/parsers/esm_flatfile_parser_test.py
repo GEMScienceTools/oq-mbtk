@@ -88,9 +88,9 @@ class ESMFlatfileParserTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.datafile = os.path.join(
-            BASE_DATA_PATH, "esm_flatfile_sample_file.csv")
+            BASE_DATA_PATH, "esm18_test_file.csv")
         cls.db_file = os.path.join(BASE_DATA_PATH, "esm_flatfile_test")
-        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
+        cls.gmpe_list = ["AkkarEtAlRjb2014", "ZhaoEtAl2016Asc"] # Z16 needs rvolc
         cls.imts = ["PGA", "SA(1.0)"]   
 
     def test_esm_flatfile_parser(self):
