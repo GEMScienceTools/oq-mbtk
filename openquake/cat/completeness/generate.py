@@ -27,6 +27,7 @@
 import os
 import copy
 import time
+import logging
 from itertools import product
 import toml
 import numpy as np
@@ -56,16 +57,29 @@ def get_completenesses(fname_config, folder_out):
     min_mag_compl = config[key].get('min_mag_compl', None)
     apriori_conditions = config[key].get('apriori_conditions', {})
     cref = config[key].get('completeness_ref', None)
-    step = config[key].get('step', 8)
     mrange = config['completeness'].get('deviation', 1.0) 
+    try:
+        _n_vals_per_iter = config[key]['step']
+        logging.warning(
+            "`step` parameter deprecated. Use `_n_vals_per_iter` instead."
+        )
+    except KeyError:
+        _n_vals_per_iter = 8
 
-    _get_completenesses(mags, years, folder_out, num_steps, min_mag_compl,
-                        apriori_conditions, cref, step, mrange)
+    _get_completenesses(mags, 
+                        years, 
+                        folder_out=folder_out, 
+                        num_steps=num_steps,
+                        min_mag_compl=min_mag_compl,
+                        apriori_conditions=apriori_conditions,
+                        completeness_ref=cref,
+                        _n_vals_per_iter=_n_vals_per_iter,
+                        mrange=mrange)
 
 
 def _get_completenesses(mags, years, folder_out=None, num_steps=0,
                         min_mag_compl=None, apriori_conditions={},
-                        completeness_ref=None, step=6, mrange=1.0):
+                        completeness_ref=None, _n_vals_per_iter=6, mrange=1.0):
     """
     :param mags:
         A list or numpy array in increasing order
@@ -88,8 +102,10 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
         A dictionary with key a value of magnitude and value a year. This
         combination of values must be included in the generated completeness
         windows
-    :param step:
-        The minimum number of steps in the completeness windows
+    :param _n_vals_per_iter:
+        The number of values (years) to consider for each point in the
+        iterations when making the possible completenesses. This is a
+        parameter that controls performance, but does not change the results.
     """
     start = time.perf_counter()
 
@@ -98,6 +114,9 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
     msg = 'Mags must be in ascending order'
     assert np.all(np.diff(mags) > 0), msg
     years = np.flipud(years)
+
+
+    mags = np.asarray(mags)
 
     dlt = 0
     idxs = np.arange(len(mags) + dlt)
@@ -117,12 +136,12 @@ def _get_completenesses(mags, years, folder_out=None, num_steps=0,
     # Info
     print('Total number of combinations : {:,d}'.format(len(mags)**len(years)))
     print(f'Index of first magnitude     : {max_first_idx:,d}')
-    print(f'Step                         : {step}')
+    print(f'Number of vals per iteration : {_n_vals_per_iter}')
 
     # Creating the possible completenesses
     perms = []
-    for y in [years[i:min(i + step, len(years))] for i in range(0, len(years),
-                                                              step)]:
+    for y in [years[i:min(i + _n_vals_per_iter, len(years))] 
+              for i in range(0, len(years), _n_vals_per_iter)]:
         print(y)
         with multiprocessing.Pool(processes=8) as pool:
             p = pool.map(mm, product(idxs, repeat=len(y)))
