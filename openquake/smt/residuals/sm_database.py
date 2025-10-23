@@ -813,6 +813,12 @@ class GroundMotionDatabase(ContextDB):
             aratio = 3.0
             trt = None
 
+        # Avoid nodal plane issues
+        if ctx.strike == 360.0:
+            ctx.strike = 359.0
+        if ctx.rake in {-180.0, 180.0}:
+            ctx.rake = -179 if ctx.rake == -180.0 else 179
+
         # Make rupture from admitted event info
         rup = utils.make_rup(ctx.hypo_lon,
                              ctx.hypo_lat,
@@ -993,37 +999,37 @@ class GroundMotionDatabase(ContextDB):
             if rec.distance.repi is not None:
                 ctx.repi.append(rec.distance.repi)
             else:
-                ctx.repi.append(getattr(site_ctx, 'repi'))
+                ctx.repi.append(getattr(site_ctx, 'repi')[0])
 
             # Can take rhypo from regular ctx if missing
             if rec.distance.rhypo is not None:
                 ctx.rhypo.append(rec.distance.rhypo)
             else:
-                ctx.rhypo.append(getattr(site_ctx, 'rhypo'))
+                ctx.rhypo.append(getattr(site_ctx, 'rhypo')[0])
 
             # Can take rjb from regular ctx if missing
             if rec.distance.rjb is not None:
                 ctx.rjb.append(rec.distance.rjb)
             else:
-                ctx.rjb.append(getattr(site_ctx, 'rjb'))
+                ctx.rjb.append(getattr(site_ctx, 'rjb')[0])
 
             # Can take rrup from regular ctx if missing
             if rec.distance.rrup is not None:
                 ctx.rrup.append(rec.distance.rrup)
             else:
-                ctx.rrup.append(getattr(site_ctx, 'rrup'))
-
+                ctx.rrup.append(getattr(site_ctx, 'rrup')[0])
+                
             # Can take rx from regular ctx if missing
             if rec.distance.r_x is not None:
                 ctx.rx.append(rec.distance.r_x) # r_x vs rx
             else:
-                ctx.rx.append(getattr(site_ctx, 'rx'))
+                ctx.rx.append(getattr(site_ctx, 'rx')[0])
 
             # Can take ry0 from regular ctx if missing
             if rec.distance.ry0 is not None:
                 ctx.ry0.append(rec.distance.ry0)
             else:
-                ctx.ry0.append(getattr(site_ctx, 'ry0'))
+                ctx.ry0.append(getattr(site_ctx, 'ry0')[0])
             
             # Cannot compute rvolc from regular ctx
             if rec.distance.rvolc is None:
