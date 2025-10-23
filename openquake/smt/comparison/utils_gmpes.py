@@ -25,14 +25,14 @@ import ast
 from openquake.hazardlib import valid
 from openquake.hazardlib import scalerel 
 from openquake.hazardlib.geo import Point
-from openquake.hazardlib.geo.surface import PlanarSurface
-from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
+
+from openquake.smt.utils import make_rup
 
 
 def _get_first_point(rup, from_point):
@@ -148,34 +148,6 @@ def get_sites_from_rupture(rup,
     return SiteCollection(sites)
 
 
-def get_rupture(lon,
-                lat,
-                dep,
-                msr,
-                mag,
-                aratio,
-                strike,
-                dip,
-                rake,
-                trt,
-                ztor=None):
-    """
-    Creates a rupture given the hypocenter position
-    """
-    hypoc = Point(lon, lat, dep)
-    srf = PlanarSurface.from_hypocenter(hypoc,
-                                        msr,
-                                        mag,
-                                        aratio,
-                                        strike,
-                                        dip,
-                                        rake,
-                                        ztor)
-    rup = BaseRupture(mag, rake, trt, hypoc, srf)
-    rup.hypocenter.depth = dep
-    return rup
-
-
 def att_curves(gmpe,
                mag,
                lon,
@@ -224,17 +196,17 @@ def att_curves(gmpe,
         raise ValueError(msg)
     
     # Get rupture
-    rup = get_rupture(lon,
-                      lat,
-                      depth,
-                      msr=rup_msr,
-                      mag=mag,
-                      aratio=aratio,
-                      strike=strike,
-                      dip=dip,
-                      rake=rake,
-                      trt=rup_trt,
-                      ztor=ztor)
+    rup = make_rup(lon,
+                   lat,
+                   depth,
+                   msr=rup_msr,
+                   mag=mag,
+                   aratio=aratio,
+                   strike=strike,
+                   dip=dip,
+                   rake=rake,
+                   trt=rup_trt,
+                   ztor=ztor)
 
     # Set site props
     props = {'vs30': vs30,
@@ -279,7 +251,6 @@ def att_curves(gmpe,
     ctxm = ContextMaker(rup_trt, [gmpe], oqp)
     ctxs = list(ctxm.get_ctx_iter([rup], sites))
     ctxs = ctxs[0]
-    ctxs.occurrence_rate = 0.0
 
     # Compute ground-motions
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
