@@ -100,20 +100,12 @@ class Residuals(object):
     Residuals object for storing ground-motion residuals computed
     for a given list of GMMs and IMTs.
     """
-    def __init__(self, gmpe_list, imts, period_limit=True):
+    def __init__(self, gmpe_list, imts):
         """
         :param  gmpe_list:
             A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
         :param  imts:
             A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
-        :param period_limit:
-            Bool which if True prevents a GMM that is defined for SA
-            from being used outside of its period range. This is by
-            default set to True to prevent unpredictable GMM behaviour
-            (e.g. nans potentially being computed for mean/stddev when
-            a GMM is extrapolated beyond its period ranges) which could
-            break subsequent parts of the residual analysis code rather
-            confusingly for an inexperienced user of the SMT.
         """
         # Residuals object
         gmpe_list = copy.deepcopy(gmpe_list)
@@ -160,13 +152,10 @@ class Residuals(object):
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < min_per or period > max_per:
-                        msg = (
-                            f"IMT {imtx} outside period range for GMPE {gmpe} "
-                            f"(min GMM period = {min_per} s, max GMM period = {max_per} s)")
-                        if period_limit is True:
-                            raise ValueError(msg)
-                        else:
-                            print(msg)
+                        raise ValueError(
+                            f"IMT {imtx} outside period range for {gmpe} "
+                            f"(min GMM period = {min_per} s, "
+                            f"max GMM period = {max_per} s)")
                 gmpe_dict_1[imtx] = {}
                 gmpe_dict_2[imtx] = {}
                 self.unique_indices[gmpe][imtx] = []
@@ -359,8 +348,8 @@ class Residuals(object):
                 # If no sigma for the GMM residuals can't be computed
                 if np.all(stddev[0] == 0.) and len(keep) > 0:
                     gs = str(gmpe).split('(')[0]
-                    m = 'A sigma model is not provided for %s' %gs
-                    raise ValueError(m)
+                    mg = 'A sigma model is not provided for %s' %gs
+                    raise ValueError(mg)
                 exp[gmpe][imtx]["Mean"] = mean
                 for i, res_type in enumerate(self.types[gmpe][imtx]):
                     exp[gmpe][imtx][res_type] = stddev[i]
