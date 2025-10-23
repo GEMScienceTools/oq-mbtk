@@ -779,9 +779,13 @@ class GroundMotionDatabase(ContextDB):
         """
         Make regular OQ context maker for computing missing distance metrics.
 
-        NOTE: The distances computed here using a reconstructed finite rupture
-              are very similar to those provided in the GEM flatfile test sample
-              (which are provided from the original datasets it takes records from).
+        NOTE: The user should be mindful that there will be inconsistencies
+              between the distances obtained from reconstructing the ruptures
+              and the distances provided in the flatfile. Therefore, it is
+              advisable that the user either removes all provided distances
+              and computes all of them from the reconstructed finite rupture,
+              or they ensure the dataset they input already contains the
+              distance metrics required for the GMMs they wish to consider.
          
         NOTE: This is tested within:
               `openquake.smt.tests.residuals.parsers.gem_flatfile_parser_test`
@@ -823,7 +827,11 @@ class GroundMotionDatabase(ContextDB):
         Called by self.update_context
         """
         record = records[0]
+
+        # Assign magnitude
         ctx.mag = record.event.magnitude.value
+
+        # Assign nodal plane
         if nodal_plane_index == 2:
             ctx.strike = record.event.mechanism.nodal_planes.nodal_plane_2['strike']
             ctx.dip = record.event.mechanism.nodal_planes.nodal_plane_2['dip']
@@ -837,31 +845,28 @@ class GroundMotionDatabase(ContextDB):
             ctx.dip = 90.0
             ctx.rake = record.event.mechanism.get_rake_from_mechanism_type()
 
-        if record.event.rupture.surface:
-            ctx.ztor = record.event.rupture.surface.get_top_edge_depth()
-            ctx.width = record.event.rupture.surface.width
-            ctx.hypo_loc = record.event.rupture.surface.get_hypo_location(1000)
+        # ASsign a ztor if available
+        if record.event.rupture.depth is not None:
+            ctx.ztor = record.event.rupture.depth
         else:
-            if record.event.rupture.depth is not None:
-                ctx.ztor = record.event.rupture.depth
-            else:
-                ctx.ztor = record.event.depth
+            ctx.ztor = record.event.depth
 
-            if record.event.rupture.width is not None:
-                ctx.width = record.event.rupture.width
-            else:
-                # Use PeerMSR to define area and assume an aratio of 1 get the width
-                ctx.width = np.sqrt(utils.DEFAULT_MSR.get_median_area(ctx.mag, 0))
+        # Assign a rupture width if available
+        if record.event.rupture.width is not None:
+            ctx.width = record.event.rupture.width
+        else:
+            # Use PeerMSR to define area and assume aratio of 1 to get width
+            ctx.width = np.sqrt(utils.DEFAULT_MSR.get_median_area(ctx.mag, 0))
 
-            # Default hypocentre location to the middle of the rupture
-            ctx.hypo_loc = (0.5, 0.5)
+        # Default hypocentre location to the middle of the rupture
+        ctx.hypo_loc = (0.5, 0.5)
         ctx.hypo_depth = record.event.depth
         ctx.hypo_lat = record.event.latitude
         ctx.hypo_lon = record.event.longitude
 
     def _update_sites_context(self, ctx, records):
         """
-        Called by self.update_context
+        Called by self.update_context.
         """
         for attname in self.sites_context_attrs:
             setattr(ctx, attname, [])
