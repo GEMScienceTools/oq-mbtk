@@ -914,21 +914,24 @@ class GroundMotionDatabase(ContextDB):
         within the engine.
 
         NOTE: We consistently use the PEER magnitude scaling relationship
-              and assume an aspect ratio of 2.5 (this is a compromise, it
-              should be larger for subduction events than non-subduction
-              events.)
+              and assume an aspect ratio of 3.0 if no TRT information is
+              provided (these are big compromises).
         """
         # Set distance types in the "SMT" ctx
         for attname in self.distances_context_attrs:
             setattr(ctx, attname, [])
+    
+        # Get msr and aratio
+        msr = utils.DEFAULT_MSR
+        aratio = 3.0
 
         # Make rupture
         rup = utils.make_rup(ctx.hypo_lon,
                              ctx.hypo_lat,
                              ctx.hypo_depth,
-                             utils.DEFAULT_MSR,
+                             msr,
                              ctx.mag,
-                             2.5, # Aspect ratio
+                             aratio,
                              ctx.strike,
                              ctx.dip,
                              ctx.rake,
