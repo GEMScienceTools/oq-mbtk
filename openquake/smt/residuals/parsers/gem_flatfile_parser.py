@@ -71,6 +71,8 @@ HEADERS = ["event_id",
            "st_elevation",
            "vs30_m_sec",
            "vs30_meas_type",
+           "z1pt0 (m)",
+           "z2pt5 (km)",
            "epi_dist",
            "JB_dist",
            "rup_dist",
@@ -84,6 +86,7 @@ HEADERS = ["event_id",
            "W_lp",
            "shortest_usable_period",
            "longest_usable_period"
+           ""
            ]
 
 M_PRECEDENCE = ["Mw", "Ms", "ML"]
@@ -203,9 +206,11 @@ class GEMFlatfileParser(SMDatabaseReader):
         if not eq_depth:
             raise ValueError(f'Depth missing for {eq_id} in admitted flatfile')
 
+        # Make SMT EQ object
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
-                         None, # Magnitude not defined yet
-                         eq_country=None)
+                         None, # Magnitude not defined yet)
+                         tectonic_region=metadata['event_trt_from_classifier']
+                         )
         
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
@@ -216,6 +221,7 @@ class GEMFlatfileParser(SMDatabaseReader):
                                                                    eq_name,
                                                                    pref_mag,
                                                                    eq_depth)
+
         return eqk
 
     def _parse_magnitudes(self, metadata):
