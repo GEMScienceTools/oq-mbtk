@@ -857,16 +857,15 @@ class GroundMotionDatabase(ContextDB):
             if getattr(record.site, "backarc", None) is not None:
                 ctx.backarc.append(record.site.backarc)
         
-        # Finalise
         for attname in self.sites_context_attrs:
             attval = getattr(ctx, attname)
+            if attval is None or not len(attval):  
             # Remove attribute if its value is empty-like
-            if attval is None or not len(attval):
                 delattr(ctx, attname)
             elif attname in ('vs30measured', 'backarc'):
                 setattr(ctx, attname, np.asarray(attval, dtype=bool))
             else:
-                # dtype=float forces Nones to be safely converted to nan
+                # dtype=float safely converts Nones to nans
                 setattr(ctx, attname, np.asarray(attval, dtype=float))
 
     def _update_distances_context(self, ctx, records):
