@@ -912,18 +912,23 @@ class GroundMotionDatabase(ContextDB):
         NOTE: If a distance metric is missing from the record,
         then the SMT takes it from a finite rupture reconstructed
         within the engine.
+
+        NOTE: We consistently use the PEER magnitude scaling relationship
+              and assume an aspect ratio of 2.5 (this is a compromise, it
+              should be larger for subduction events than non-subduction
+              events.)
         """
+        # Set distance types in the "SMT" ctx
         for attname in self.distances_context_attrs:
             setattr(ctx, attname, [])
 
         # Make rupture
-        aratio = 2.5
         rup = utils.make_rup(ctx.hypo_lon,
                              ctx.hypo_lat,
                              ctx.hypo_depth,
                              utils.DEFAULT_MSR,
                              ctx.mag,
-                             aratio,
+                             2.5, # Aspect ratio
                              ctx.strike,
                              ctx.dip,
                              ctx.rake,
