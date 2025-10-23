@@ -859,9 +859,10 @@ class GroundMotionDatabase(ContextDB):
         
         for attname in self.sites_context_attrs:
             attval = getattr(ctx, attname)
-            if attval is None or not len(attval):  
             # Remove attribute if its value is empty-like
+            if attval is None or not len(attval):  
                 delattr(ctx, attname)
+            # Ensure some params are stored as bools
             elif attname in ('vs30measured', 'backarc'):
                 setattr(ctx, attname, np.asarray(attval, dtype=bool))
             else:
