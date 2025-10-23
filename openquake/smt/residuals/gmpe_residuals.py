@@ -551,15 +551,6 @@ class Residuals(object):
             # Get the average over the IMTs
             self.llh[gmpe]["all"] = -1 * (
                 1. / float(len(log_residuals))) * np.sum(log_residuals)
-            
-        # Get weights with imt
-        self.llh_weights = {}
-        for imtx in self.imts:
-            weights_with_imt = np.array([
-                2.0 ** -self.llh[gmpe][imtx] for gmpe in self.gmpe_list])
-            weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
-            self.llh_weights[imtx] = {
-                gmpe: weights_with_imt[idx] for idx, gmpe in enumerate(self.gmpe_list)}
 
     ### EDR (Kale and Akkar 2013) functions
     def get_edr_values(self, bandwidth=0.01, multiplier=3.0):
@@ -813,8 +804,7 @@ class SingleStationAnalysis(object):
     @classmethod
     def from_toml(cls, site_id_list, filename):
         """
-        Read in GMPEs and IMTs from .toml file. This method allows use of
-        gmpes with additional parameters and input files within the SMT
+        Read in GMPEs and IMTs from .toml file.
         """
         # Read in toml file with dict of GMPEs and subdict of IMTs
         config = toml.load(filename)
