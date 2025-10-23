@@ -26,10 +26,12 @@ import h5py
 from datetime import datetime
 
 from openquake.hazardlib import imt
+from openquake.hazardlib import scalerel 
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo import geodetic
 from openquake.hazardlib.contexts import ContextMaker
+from openquake.hazardlib.const import TRT
 
 from openquake.smt import utils
 from openquake.smt.residuals.context_db import ContextDB
@@ -775,6 +777,58 @@ class GroundMotionDatabase(ContextDB):
             
         return values
 
+    def get_rup(self, ctx):
+        """
+        Make a finite rupture for the given event inforamation.
+        """ 
+        # Get msr and aratio based on TRT if possible
+        if hasattr(ctx, 'tectonic_region_type'):
+            # NOTE: Admitted TRTs must be mapped to MBTK classifier TRTs
+            eq_trt = ctx.tectonic_region_type
+            if eq_trt in ['active_crustal', 'crustal']:    
+                msr = scalerel.WC1994()
+                aratio = 2
+                trt = TRT.ACTIVE_SHALLOW_CRUST
+            elif eq_trt == "stable":
+                msr = scalerel.WC1994()
+                aratio = 2
+                trt = TRT.STABLE_CONTINENTAL
+            elif eq_trt == 'slab':
+                msr = scalerel.strasser2010.StrasserIntraslab()
+                aratio = 5
+                trt = TRT.SUBDUCTION_INTRASLAB
+            elif eq_trt == 'int':
+                msr = scalerel.strasser2010.StrasserInterface()
+                aratio = 5
+                trt = TRT.SUBDUCTION_INTERFACE
+            else:
+                # Has another TRT e.g. deep, induced, "unknown"
+                # so make assumptions as for if no TRT provided
+                msr = scalerel.WC1994()
+                aratio = 3.0
+                trt = None
+        else:
+            # No TRT so make some assumptions
+            msr = scalerel.WC1994()
+            aratio = 3.0
+            trt = None
+
+        # Make rupture from admitted event info
+        rup = utils.make_rup(ctx.hypo_lon,
+                             ctx.hypo_lat,
+                             ctx.hypo_depth,
+                             msr,
+                             ctx.mag,
+                             aratio,
+                             ctx.strike,
+                             ctx.dip,
+                             ctx.rake,
+                             trt,
+                             ctx.ztor
+                             )
+        
+        return rup
+
     def make_oq_ctx(self, ctx, rup, idx_site):
         """
         Make regular OQ context maker for computing missing distance metrics.
@@ -845,7 +899,7 @@ class GroundMotionDatabase(ContextDB):
             ctx.dip = 90.0
             ctx.rake = record.event.mechanism.get_rake_from_mechanism_type()
 
-        # ASsign a ztor if available
+        # Assign a ztor if available
         if record.event.rupture.depth is not None:
             ctx.ztor = record.event.rupture.depth
         else:
@@ -855,14 +909,18 @@ class GroundMotionDatabase(ContextDB):
         if record.event.rupture.width is not None:
             ctx.width = record.event.rupture.width
         else:
-            # Use PeerMSR to define area and assume aratio of 1 to get width
-            ctx.width = np.sqrt(utils.DEFAULT_MSR.get_median_area(ctx.mag, 0))
+            # Use WC1994 to define area and assume aratio of 1 to get width
+            ctx.width = np.sqrt(scalerel.WC1994().get_median_area(ctx.mag, ctx.rake))
 
         # Default hypocentre location to the middle of the rupture
         ctx.hypo_loc = (0.5, 0.5)
         ctx.hypo_depth = record.event.depth
         ctx.hypo_lat = record.event.latitude
         ctx.hypo_lon = record.event.longitude
+
+        # Add TRT if available
+        if record.event.tectonic_region is not None:
+            ctx.tectonic_region_type = record.event.tectonic_region
 
     def _update_sites_context(self, ctx, records):
         """
@@ -917,32 +975,13 @@ class GroundMotionDatabase(ContextDB):
         NOTE: If a distance metric is missing from the record,
         then the SMT takes it from a finite rupture reconstructed
         within the engine.
-
-        NOTE: We consistently use the PEER magnitude scaling relationship
-              and assume an aspect ratio of 3.0 if no TRT information is
-              provided (these are big compromises).
         """
         # Set distance types in the "SMT" ctx
         for attname in self.distances_context_attrs:
             setattr(ctx, attname, [])
     
-        # Get msr and aratio
-        msr = utils.DEFAULT_MSR
-        aratio = 3.0
-
-        # Make rupture
-        rup = utils.make_rup(ctx.hypo_lon,
-                             ctx.hypo_lat,
-                             ctx.hypo_depth,
-                             msr,
-                             ctx.mag,
-                             aratio,
-                             ctx.strike,
-                             ctx.dip,
-                             ctx.rake,
-                             None, # TRT
-                             ctx.ztor
-                             )
+        # Get rupture for event
+        rup = self.get_rup(ctx)
 
         # For each record manage the distances
         for idx_site, rec in enumerate(records):

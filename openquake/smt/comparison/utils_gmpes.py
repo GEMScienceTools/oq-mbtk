@@ -176,15 +176,15 @@ def att_curves(gmpe,
     if trt == 'active_crustal':
         rup_trt = TRT.ACTIVE_SHALLOW_CRUST
         rup_msr = scalerel.WC1994()
-    elif trt == 'slab':
-        rup_trt = TRT.SUBDUCTION_INTRASLAB
-        rup_msr = scalerel.StrasserIntraslab
-    elif trt == 'interface':
-        rup_trt = TRT.SUBDUCTION_INTERFACE
-        rup_msr = scalerel.StrasserInterface
     elif trt == 'stable':
         rup_trt = TRT.STABLE_CONTINENTAL
         rup_msr = scalerel.WC1994()
+    elif trt == 'slab':
+        rup_trt = TRT.SUBDUCTION_INTRASLAB
+        rup_msr = scalerel.strasser2010.StrasserIntraslab()
+    elif trt == 'interface':
+        rup_trt = TRT.SUBDUCTION_INTERFACE
+        rup_msr = scalerel.strasser2010.StrasserInterface()
     else:
         rup_trt = None
         rup_msr = scalerel.WC1994()
@@ -289,7 +289,7 @@ def get_rup_pars(strike, dip, rake, aratio, trt):
         dip_s = dip
 
     # Aspect ratio
-    if aratio > -999.0 and np.isfinite(aratio):
+    if aratio != -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
         if trt in ['slab', 'interface']:

@@ -24,7 +24,6 @@ from scipy.constants import g
 from scipy.integrate import cumulative_trapezoid
 
 from openquake.hazardlib.geo import PlanarSurface, Point
-from openquake.hazardlib.scalerel.peer import PeerMSR
 from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib.gsim.gmpe_table import GMPETable
@@ -37,9 +36,6 @@ AVAILABLE_GSIMS = get_available_gsims()
 
 # Regular expression to get a GMPETable from string:
 _gmpetable_regex = re.compile(r'^GMPETable\(([^)]+?)\)$')
-
-# Default mag-scaling for rupture reconstruction
-DEFAULT_MSR = PeerMSR()
 
 
 ### General utils for time series
