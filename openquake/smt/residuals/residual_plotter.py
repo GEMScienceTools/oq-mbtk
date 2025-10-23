@@ -492,6 +492,10 @@ def plot_llh_with_period(residuals, filename):
     Create a simple plot of loglikelihood values of Scherbaum et al. 2009
     (y-axis) versus period (x-axis)
     """
+    # Check have computed LLH
+    if not hasattr(residuals, "llh"):
+        raise ValueError("The user must first compute LLH.")
+
     # Check enough IMTs to plot w.r.t. period
     if len(residuals.imts) == 1:
         raise ValueError('Cannot plot w.r.t. period (only 1 IMT).')
@@ -523,6 +527,10 @@ def plot_edr_with_period(residuals, filename):
     Create plots of EDR, the median pred. correction factor and normalised MDE
     computed using Kale and Akkar (2013) (y-axis) versus period (x-axis)
     """
+    # Check have computed EDR
+    if not hasattr(residuals, "edr_values_wrt_imt"):
+        raise ValueError("The user must first compute EDR.")
+
     # Check enough IMTs to plot w.r.t. period
     if len(residuals.imts) == 1:
         raise ValueError('Cannot plot w.r.t. period (only 1 IMT).')
@@ -582,11 +590,16 @@ def plot_edr_with_period(residuals, filename):
     plt.savefig(parts[0] + "_MDE." + parts[1])
     plt.close()
 
+
 def plot_sto_with_period(residuals, filename):
     """
     Definition to create plot of the stochastic area metric
     computed using Sunny et al. (2021) versus period (x-axis)
     """
+    # Check have computed Stochastic Area
+    if not hasattr(residuals, "stoch_areas_wrt_imt"):
+        raise ValueError("The user must first compute Stochastic Area.")
+
     # Check enough IMTs to plot w.r.t. period
     if len(residuals.imts) == 1:
         raise ValueError('Cannot plot w.r.t. period (only 1 IMT).')
@@ -617,9 +630,13 @@ def plot_sto_with_period(residuals, filename):
 ### Functions for exporting tables of ranking metrics
 def llh_table(residuals, filename):
     """
-    Create a table of loglikelihood values per gmpe per imt (Scherbaum et al.
-    2009)
+    Create a table of loglikelihood values per gmpe per
+    imt (Scherbaum et al. 2009)
     """
+    # Check have computed LLH
+    if not hasattr(residuals, "llh"):
+        raise ValueError("The user must first compute LLH.")
+    
     # Get loglikelihood values per imt per gmpe
     llh_metrics = pd.DataFrame()
     for gmpe in residuals.gmpe_list:
@@ -634,15 +651,20 @@ def llh_weights_table(residuals, filename):
     Create a table of model weights per gmpe per imt based on sample
     loglikelihood (Scherbaum et al. 2009)
     """       
-    # Get weights based on llh and export table
-    imt_idx = list(residuals.imts) + ['Avg over imts']
-    llh_weights = pd.DataFrame(
-        {}, columns=residuals.gmpe_list, index=imt_idx)
-    for gmpe in residuals.gmpe_list:
-        for imt in residuals.imts:
-            llh_weights.loc[
-                imt, gmpe] = residuals.llh_weights[imt][gmpe]
-        llh_weights.loc['Avg over imts', gmpe] = llh_weights[gmpe].mean()
+    # Check have computed LLH
+    if not hasattr(residuals, "llh"):
+        raise ValueError("The user must first compute LLH.")
+
+    # Get LLH weight per GMM per IMT
+    llh_df = pd.DataFrame(residuals.llh)[list(residuals.gmpe_list)]
+    weights = 2.0 ** -llh_df
+    weights = weights.div(weights.sum(axis=1), axis=0)
+    residuals.llh_weights = weights.to_dict(orient='index')
+
+    # Into table of the LLH weights
+    llh_weights = pd.DataFrame(residuals.llh_weights)
+    llh_weights = llh_weights.T  # GMMs as cols, IMTs as index
+    llh_weights.loc['Avg over imts'] = llh_weights.mean(axis=0)
     llh_weights.columns = llh_weights.columns + ' LLH-based weights'
     assert np.abs(llh_weights.loc['Avg over imts'].sum() - 1.0) < 1E-09
 
@@ -655,6 +677,10 @@ def edr_table(residuals, filename):
     Create a table of MDE Norm, sqrt(kappa) and EDR gmpe per imt (Kale and Akkar,
     2013)
     """
+    # Check have computed EDR
+    if not hasattr(residuals, "edr_values_wrt_imt"):
+        raise ValueError("The user must first compute EDR.")
+
     # Get Kale and Akkar (2013) ranking metrics
     edr_dfs = []
     for gmpe in residuals.gmpe_list:
@@ -679,7 +705,11 @@ def edr_weights_table(residuals, filename):
     """
     Create a table of model weights per imt based on Euclidean distance based
     ranking (Kale and Akkar, 2013)
-    """     
+    """ 
+    # Check have computed EDR
+    if not hasattr(residuals, "edr_values_wrt_imt"):
+        raise ValueError("The user must first compute EDR.")
+
     # Get the EDR values from the residuals object
     edr_for_weights = residuals.edr_values_wrt_imt
 
@@ -714,6 +744,10 @@ def sto_table(residuals, filename):
     Create a table of stochastic area ranking metric per GMPE per imt (Sunny et
     al. 2021)
     """
+    # Check have computed Stochastic Area
+    if not hasattr(residuals, "stoch_areas_wrt_imt"):
+        raise ValueError("The user must first compute Stochastic Area.")
+
     # Get stochastic area value per imt
     imt_idx = list(residuals.imts) + ['Avg over imts']
     sto_metrics = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
@@ -732,6 +766,10 @@ def sto_weights_table(residuals, filename):
     Create a table of model weights per imt based on sample stochastic area
     (Sunny et al. 2021))
     """       
+    # Check have computed Stochastic Area
+    if not hasattr(residuals, "stoch_areas_wrt_imt"):
+        raise ValueError("The user must first compute Stochastic Area.")
+
     # Get required values
     sto_for_weights = residuals.stoch_areas_wrt_imt
     sto_per_gmpe_df = pd.DataFrame(sto_for_weights)
