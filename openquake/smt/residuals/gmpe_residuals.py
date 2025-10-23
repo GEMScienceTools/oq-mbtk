@@ -127,11 +127,11 @@ class Residuals(object):
             # If evaluting GMMs for SA then get the min/max periods
             gmpe_i = self.gmpe_list[gmpe]
             coeff_atts = [att for att in dir(gmpe_i) if "COEFFS" in att]
-            if len(coeff_atts) > 0 and sa is True:
+            if len(coeff_atts) > 0:
                 coeff_att = coeff_atts[0] # Some GSIMS have irreg. COEFF attribute 
                                           # names e.g. Z06 (but const. period range)
                 pers = [sa.period for sa in getattr(gmpe_i, coeff_att).sa_coeffs]
-                if len(pers) == 0:
+                if len(pers) == 0 and sa is True:
                     raise ValueError(f"No period-dependent coefficients could be "
                                      f"retrieved for {get_gmpe_str(gmpe)} - check "
                                      f"that this GMM supports SA.")
