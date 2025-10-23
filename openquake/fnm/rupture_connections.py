@@ -953,7 +953,6 @@ def filter_bin_adj_matrix_by_rupture_overlap(
     rakes = {
         i: fault_rake_lookup[ff] for i, ff in enumerate(single_rup_df['fault'])
     }
-    print(rakes)
 
     if strike_slip_only:
         strike_slip_filter = {}
