@@ -470,7 +470,9 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                      'Joyner-Boore Dist. (km)',
                      'Campbell R Dist. (km)',
                      'Rx',
-                     'Ry 2']
+                     'Ry 2',
+                     "Northern CA/Southern CA - H11 Z1 (m)",
+                     'Northern CA/Southern CA - H11 Z2.5 (m)',]
         for col in none_cols:
             ngawest2.loc[ngawest2[col] == -999, col] = None
 
@@ -546,7 +548,8 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             raise ValueError('Depth missing an events in admitted flatfile')
         
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
-                         magnitude=None, eq_country=None)
+                         magnitude=None, # Magnitude not assigned yet)
+                         tectonic_region="active_crustal")
         
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
@@ -673,6 +676,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Add basin params
         site.z1pt0 = valid.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
         site.z2pt5 = valid.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
+        print(site.z2pt5)
 
         return site
 
