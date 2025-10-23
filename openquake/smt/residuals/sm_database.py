@@ -29,6 +29,8 @@ from openquake.hazardlib import imt
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo import geodetic
+from openquake.hazardlib.contexts import ContextMaker
+
 from openquake.smt import utils
 from openquake.smt.residuals.context_db import ContextDB
 import openquake.smt.utils_intensity_measures as utils_imts
@@ -313,6 +315,7 @@ class RecordDistance(object):
                  ry0=None,
                  rvolc=None,
                  rcdpp=None):
+        
         self.repi = repi
         self.rhypo = rhypo
         self.rjb = rjb
@@ -772,6 +775,39 @@ class GroundMotionDatabase(ContextDB):
             
         return values
 
+    def make_oq_ctx(self, ctx, rup, idx_site):
+        """
+        Make regular OQ context maker for computing missing distance metrics.
+
+        NOTE: The distances computed here using a reconstructed finite rupture
+              are very similar to those provided in the GEM flatfile test sample
+              (which are provided from the original datasets it takes records from).
+         
+        NOTE: This is tested within:
+              `openquake.smt.tests.residuals.parsers.gem_flatfile_parser_test`
+              which contains a row with completely empty distance metric cols.
+        """  
+        # Make site collection for given station
+        pnt = Point(
+            ctx.lons[idx_site], ctx.lats[idx_site], ctx.depths[idx_site])
+        site = SiteCollection([
+                    Site(
+                        pnt,
+                        ctx.vs30[idx_site],
+                        ctx.z1pt0[idx_site],
+                        ctx.z2pt5[idx_site]
+                        )
+                        ])
+        
+        # Make the ctx for given station which contains all distances
+        mag_str = [f'{rup.mag:.2f}']
+        oqp = {'imtls': {"PGA": []}, 'mags': mag_str}
+        ctxm = ContextMaker(
+            rup.tectonic_region_type, [utils.full_dtype_gmm()], oqp)
+        ctxs = list(ctxm.get_ctx_iter([rup], site))
+
+        return ctxs[0]
+
     def update_context(self, ctx, records, nodal_plane_index=1):
         """
         Updates the given RuptureContext with data from `records`.
@@ -871,28 +907,88 @@ class GroundMotionDatabase(ContextDB):
 
     def _update_distances_context(self, ctx, records):
         """
-        Called by self.update_context
+        Called by self.update_context.
+
+        NOTE: If a distance metric is missing from the record,
+        then the SMT takes it from a finite rupture reconstructed
+        within the engine.
         """
         for attname in self.distances_context_attrs:
             setattr(ctx, attname, [])
 
-        for record in records:
-            ctx.repi.append(record.distance.repi)
-            ctx.rhypo.append(record.distance.rhypo)
-            ctx.rjb.append(record.distance.rjb)
-            ctx.rrup.append(record.distance.rrup)
-            ctx.rx.append(record.distance.r_x)
-            ctx.ry0.append(record.distance.ry0)
-            if record.distance.rvolc is None:
-                # Set to zero if not provided because
-                # permitting setting to None here will
-                # generate nan expected vals in GMMs
-                # using rvolc like ZhaoEtAl2016)
-                ctx.rvolc.append(0.) 
+        # Make rupture
+        aratio = 2.5
+        rup = utils.make_rup(ctx.hypo_lon,
+                             ctx.hypo_lat,
+                             ctx.hypo_depth,
+                             utils.DEFAULT_MSR,
+                             ctx.mag,
+                             aratio,
+                             ctx.strike,
+                             ctx.dip,
+                             ctx.rake,
+                             None, # TRT
+                             ctx.ztor
+                             )
+
+        # For each record manage the distances
+        for idx_site, rec in enumerate(records):
+
+            # Make ctx for given site
+            site_ctx = self.make_oq_ctx(ctx, rup, idx_site)
+
+            # Can take repi from regular ctx if missing
+            if rec.distance.repi is not None:
+                ctx.repi.append(rec.distance.repi)
             else:
-                ctx.rvolc.append(record.distance.rvolc)
+                ctx.repi.append(getattr(site_ctx, 'repi'))
+
+            # Can take rhypo from regular ctx if missing
+            if rec.distance.rhypo is not None:
+                ctx.rhypo.append(rec.distance.rhypo)
+            else:
+                ctx.rhypo.append(getattr(site_ctx, 'rhypo'))
+
+            # Can take rjb from regular ctx if missing
+            if rec.distance.rjb is not None:
+                ctx.rjb.append(rec.distance.rjb)
+            else:
+                ctx.rjb.append(getattr(site_ctx, 'rjb'))
+
+            # Can take rrup from regular ctx if missing
+            if rec.distance.rrup is not None:
+                ctx.rrup.append(rec.distance.rrup)
+            else:
+                ctx.rrup.append(getattr(site_ctx, 'rrup'))
+
+            # Can take rx from regular ctx if missing
+            if rec.distance.r_x is not None:
+                ctx.rx.append(rec.distance.r_x) # r_x vs rx
+            else:
+                ctx.rx.append(getattr(site_ctx, 'rx'))
+
+            # Can take ry0 from regular ctx if missing
+            if rec.distance.ry0 is not None:
+                ctx.ry0.append(rec.distance.ry0)
+            else:
+                ctx.ry0.append(getattr(site_ctx, 'ry0'))
+            
+            # Cannot compute rvolc from regular ctx
+            if rec.distance.rvolc is None:
+                # The regular ctx currently returns rvolc = 0
+                # km by default (i.e. it cannot compute it),
+                # but better to make this explicit here)
+                ctx.rvolc.append(0.)
+            else:
+                ctx.rvolc.append(rec.distance.rvolc)
                                      
-            ctx.rcdpp.append(record.distance.rcdpp)
+            # Cannot compute rcdpp from regular ctx
+            if rec.distance.rcdpp is not None:
+                ctx.rcdpp.append(rec.distance.rcdpp)
+            else:
+                # i.e. no directivity term (see CY14's
+                # get_directivity function for example)
+                ctx.rcdpp.append(0.) 
 
         for attname in self.distances_context_attrs:
             attval = getattr(ctx, attname)
