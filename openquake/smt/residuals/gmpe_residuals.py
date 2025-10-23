@@ -117,18 +117,24 @@ class Residuals(object):
         self.unique_indices = {}
         self.gmpe_sa_limits = {}
         self.gmpe_scalars = {}
+
+        sa = any("SA(" in imtx for imtx in self.imts)
         for gmpe in self.gmpe_list:
             gmpe_dict_1 = {}
             gmpe_dict_2 = {}
             self.unique_indices[gmpe] = {}
             
-            # Get the period range and the coefficient types
+            # If evaluting GMMs for SA then get the min/max periods
             gmpe_i = self.gmpe_list[gmpe]
             coeff_atts = [att for att in dir(gmpe_i) if "COEFFS" in att]
-            if len(coeff_atts) > 0:
+            if len(coeff_atts) > 0 and sa is True:
                 coeff_att = coeff_atts[0] # Some GSIMS have irreg. COEFF attribute 
                                           # names e.g. Z06 (but const. period range)
                 pers = [sa.period for sa in getattr(gmpe_i, coeff_att).sa_coeffs]
+                if len(pers) == 0:
+                    raise ValueError(f"No period-dependent coefficients could be "
+                                     f"retrieved for {get_gmpe_str(gmpe)} - check "
+                                     f"that this GMM supports SA.")
                 self.gmpe_scalars[gmpe] = list(
                     getattr(gmpe_i, coeff_att).non_sa_coeffs)
             else:
@@ -136,8 +142,12 @@ class Residuals(object):
                 # Tabular GMM specified using an alias
                 pers = gmpe_i.imls["T"]
 
-            min_per, max_per = (min(pers), max(pers))
-            self.gmpe_sa_limits[gmpe] = (min_per, max_per)
+            # Store min/max periods for given GMM
+            if sa is True:
+                min_per, max_per = (min(pers), max(pers))
+                self.gmpe_sa_limits[gmpe] = (min_per, max_per)
+
+            # Add stores for each IMT
             for imtx in self.imts:
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
