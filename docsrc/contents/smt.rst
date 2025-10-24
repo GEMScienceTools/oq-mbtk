@@ -236,6 +236,9 @@ The Loglikelihood Method (Scherbaum et al. 2009)
        >
        > # Plot LLH values per GMPE vs IMT
        > rspl.plot_llh_with_period(resid, fname)
+       >
+       > # Write GMC XML which uses weights based on LLH
+       > res.export_gmc_xml("LLH", fname)
 
     Loglikelihood versus period plot for considered GMPEs:
        .. image:: /contents/smt_images/llh_vs_period.png
@@ -263,6 +266,10 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
        >
        > # Plot EDR score, MDE norm and sqrt(k) vs IMT
        > rspl.plot_edr_with_period(resid, fname)
+       >
+       > # Write GMC XML which uses weights based on EDR
+       > res.export_gmc_xml("EDR", fname)
+
 
     EDR rank versus period plot for considered GMPEs:
        .. image:: /contents/smt_images/edr_vs_period_value.png
@@ -291,6 +298,9 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
        >
        > # Plot stochastic area vs IMT
        > rspl.plot_sto_with_period(resid, fname)
+       >
+       > # Write GMC XML which uses weights based on stochastic area
+       > res.export_gmc_xml("STO", fname)
 
     Stochastic area versus period plot for considered GMPEs:
        .. image:: /contents/smt_images/sto_vs_period.png
