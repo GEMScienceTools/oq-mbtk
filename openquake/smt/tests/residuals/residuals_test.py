@@ -147,7 +147,8 @@ class ResidualsTestCase(unittest.TestCase):
         cls.residuals.get_residual_statistics()
 
         # Add other params to class
-        cls.toml = os.path.join(BASE_DATA_PATH, 'residuals_from_toml_test.toml')
+        cls.toml = os.path.join(BASE_DATA_PATH, 'residuals_test.toml')
+        cls.xml = os.path.join(BASE_DATA_PATH, 'residuals_test.xml')
         cls.exp = exp
         cls.st_rec_min = 3
         cls.exp_stations = exp_stations
@@ -160,10 +161,19 @@ class ResidualsTestCase(unittest.TestCase):
 
     def test_residuals_execution_from_toml(self):
         """
-        Tests basic execution of residuals when specifying gmpe and imts to get
-        residuals for from a toml file - not correctness of values
+        Tests basic execution of residuals when specifying gmpes and imts
+        from a toml file - not correctness of values
         """
         residuals = res.Residuals.from_toml(self.toml)
+        residuals.compute_residuals(self.database, component="Geometric")
+        residuals.get_residual_statistics()
+
+    def test_residuals_execution_from_xml(self):
+        """
+        Tests basic execution of residuals when specifying gmpes from an
+        OQ GMC XML and the IMTs from a list.
+        """
+        residuals = res.Residuals.from_xml(self.xml, self.imts)
         residuals.compute_residuals(self.database, component="Geometric")
         residuals.get_residual_statistics()
 
