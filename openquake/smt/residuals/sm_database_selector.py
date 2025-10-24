@@ -424,3 +424,110 @@ class SMRecordSelector(object):
             if region.intersects(epi_loc)[0]:
                 idx.append(iloc)
         return self.select_records(idx, as_db)
+    
+    def select_backarc_forearc(self, forearc=True, as_db=False):
+        """
+        Select sites depending on whether they are backarc or forearc
+        """
+        idx = []
+        for iloc, record in enumerate(self.database.records):
+            if forearc:
+                if not record.site.backarc:
+                    idx.append(iloc)
+            else:
+                if record.site.backarc:
+                    idx.append(iloc)
+        if len(idx):
+            return self.select_records(idx, as_db)
+        else:
+            if forearc:
+                print("No forearc sites found in database")
+            else:
+                print("No backarc sites found in database")
+            return None
+
+    def select_event_within_fault_distance(self, faults, distance, as_db=True):
+        """
+        Selects records whose hypocentes lie within a given distance of a
+        fault or set of faults
+
+        :param list faults:
+            Faults as a list of instances of 
+            :class:`openquake.hazardlib.geo.SimpleFaultSurface`
+
+        :param float distance:
+            Distance (nearest distance to fault) (km) for selection
+        """
+        # Render record event locations to openquake.hazardlib.geo.Mesh
+        lons, lats, depths = [], [], []
+        for rec in self.database.records:
+            lons.append(rec.event.longitude)
+            lats.append(rec.event.latitude)
+            depths.append(rec.event.depth)
+        db_mesh = Mesh(np.array(lons), np.array(lats), np.array(depths))
+        # Initially no event is allocated to any faults
+        idx = np.zeros(len(self.database), dtype=int)
+        for fault in faults:
+            rrup = fault.get_min_distance(db_mesh)
+            within_dist = rrup < distance
+            # If within fault distance add 1 - no record of which fault is
+            # kept
+            idx[within_dist] += 1
+        # Find the events within the selected distance of any fault
+        idx = idx > 0
+        if np.any(idx):
+            idx = np.where(idx)[0]
+            return self.select_records(idx, as_db)
+        else:
+            None
+
+    def select_within_interface_distances(self,
+                                          surfaces,
+                                          sp_distance,
+                                          sf_distance,
+                                          crustal_thickness,
+                                          as_db=True):
+        """
+        Selects records whose events are within a distance of a set of
+        interfaces. A two-stage selection process is applied here. First
+        the records within a distance of the surface projection of the
+        interface are selected. From those then events within the proposed
+        crustal thickness are discarded. In the second step those within
+        the specified distance of the interface of are selected providing they
+        are within the crust.
+
+        :param list surfaces:
+            Subduction interfaces as list of instances of SimpleFaultSurface
+            or ComplexFautSurface
+        :param float sp_distance:
+            Distance from surface projection (km) for selection
+        :param float sf_distance:
+            Distance from interface (km) for selection
+        :param float crustal_thickness:
+            Thickness of crust
+        """
+        lons, lats, depths = [], [], []
+        for rec in self.database.records:
+            lons.append(rec.event.longitude)
+            lats.append(rec.event.latitude)
+            depths.append(rec.event.depth)
+        db_mesh = Mesh(np.array(lons), np.array(lats), np.array(depths))
+        idx = np.zeros(len(self.database), dtype=int)
+        for surface in surfaces:
+            # Get events falling within a distance of the surface projection
+            # But below the crust
+            rjb = surface.get_joyner_boore_distance(db_mesh)
+            surf_idx = np.logical_and(rjb <= sp_distance,
+                                      db_mesh.depths >= crustal_thickness)
+            idx[surf_idx] += 1
+            # Now find those events in the crust within a sf_distance of the fault
+            rrup = surface.get_min_distance(db_mesh)
+            sub_idx = np.logical_and(db_mesh.depths <= crustal_thickness,
+                                     rrup <= sf_distance)
+            idx[sub_idx] += 1
+        idx = idx > 0
+        if np.any(idx):
+            idx = np.where(idx)[0]
+            return self.select_records(idx, as_db)
+        else:
+            None

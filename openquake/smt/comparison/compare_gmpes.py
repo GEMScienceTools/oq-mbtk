@@ -19,12 +19,12 @@
 Module to compare GMPEs using trellis plots, hierarchical clustering, Sammon
 maps and Euclidean distance matrix plots
 """
-import numpy as np
-import re
-import pandas as pd
+import os
 import copy
 import toml
-import os
+import numpy as np
+import pandas as pd
+import re
 
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison.utils_compare_gmpes import (
