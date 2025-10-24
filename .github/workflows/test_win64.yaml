@@ -43,7 +43,7 @@ jobs:
           python -V
           Write-Host "Install OQ form master and mbtk from branch ${{ github.ref_name }}"
           python -m pip install -U pip
-          git clone --depth 1 -b test_pyproj https://github.com/gem/oq-engine.git
+          git clone --depth 1 -b ae_numpy2 https://github.com/gem/oq-engine.git
           python -m pip install -r oq-engine/requirements-py311-win64.txt
           cd oq-engine
           python -m pip install -e .
