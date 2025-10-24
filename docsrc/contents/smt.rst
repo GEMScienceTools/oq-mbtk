@@ -72,7 +72,7 @@ Following the parsing of a flatfile into a pickled ground-motion database object
 
 We can specify the inputs to perform a residual analysis with as follows:
 
-1. We can specify the GMPEs we want to evaluate, and the intensity measures we want to evaluate each GMPE for as a ``gmpe_list`` and an ``imt_list`` within python lists:
+1. We can specify the GMPEs we want to evaluate, and the intensity measures we want to evaluate each GMPE for as a ``gmpe_list`` and an ``imt_list`` within lists:
 
     .. code-block:: ini
     
@@ -155,18 +155,20 @@ We can specify the inputs to perform a residual analysis with as follows:
 
     .. code-block:: ini
        
-       > # Compute residuals using GMPEs and intensity measures specified in the python lists
+       > # Compute residuals using GMPEs and intensity measures specified in lists
        > comp='Geometric' # Use the geometric mean of H1 and H2 as the observed values to compare against the GMPE predictions
        > resid = res.Residuals(gmpe_list, imt_list)
        > resid.compute_residuals(sm_database, component="Geometric") # horizontal component definition can also be set to 'rotD50', rotD00','rotD100' etc
        >
        > # OR compute residuals using GMPEs and intensity measures specified in .toml file
-       > res_toml = os.path.join(DATA,'gmpes_and_imts_to_test.toml') # path to .toml file
-       > resid = res.Residuals.from_toml(res_toml)
+       > resid = res.Residuals.from_toml(toml_fname)
        > resid.compute_residuals(sm_database)
        >
-       > # We can export the residuals to an excel (one sheet per event)
-       > out_loc = os.path.join(out_folder, f"residuals_hrz_comp_def_of_{comp}.xlsx")
+       > # OR compute residuals using GMPEs specified in a GMC XML and intensity measures specified in a list
+       > resid = res.Residuals.from_xml(xml_fname, imt_list)
+       >
+       > # We can export the residuals to a text file
+       > out_loc = os.path.join(out_folder, f"residuals_hrz_comp_def_of_{comp}.txt")
        > resid.export_residuals(out_loc)
 
 Plotting of Residuals
