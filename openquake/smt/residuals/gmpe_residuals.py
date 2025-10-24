@@ -744,7 +744,7 @@ class Residuals(object):
 
                 # Get absolute of difference in areas - eq 3 of paper
                 stoch_area_wrt_imt[imtx] = np.abs(area_gmm-area_obs) 
-                
+
             # Store the stoch area per imt per gmm
             stoch_area_store[gmpe] = stoch_area_wrt_imt
     
