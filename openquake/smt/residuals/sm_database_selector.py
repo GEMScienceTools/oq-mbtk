@@ -470,8 +470,7 @@ class SMRecordSelector(object):
         for fault in faults:
             rrup = fault.get_min_distance(db_mesh)
             within_dist = rrup < distance
-            # If within fault distance add 1 - no record of which fault is
-            # kept
+            # If within fault distance add 1 - no record of which fault is kept
             idx[within_dist] += 1
         # Find the events within the selected distance of any fault
         idx = idx > 0
@@ -514,8 +513,7 @@ class SMRecordSelector(object):
         db_mesh = Mesh(np.array(lons), np.array(lats), np.array(depths))
         idx = np.zeros(len(self.database), dtype=int)
         for surface in surfaces:
-            # Get events falling within a distance of the surface projection
-            # But below the crust
+            # Get events within a distance of the surf proj but below crust
             rjb = surface.get_joyner_boore_distance(db_mesh)
             surf_idx = np.logical_and(rjb <= sp_distance,
                                       db_mesh.depths >= crustal_thickness)
