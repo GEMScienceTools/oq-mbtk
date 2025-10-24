@@ -339,15 +339,13 @@ Single Station Residual Analysis
        > ssa1 = res.SingleStationAnalysis(top_sites.keys(), gmpe_list, imt_list)
        >
        > # OR create SingleStationAnalysis object from .toml
-       > ssa_toml = os.path.join(DATA, 'SSA_inputs.toml') # path to input .toml
-       > ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), ssa_toml)
+       > ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), ssa_toml_fname)
        >
        > Get the total, inter-event and intra-event residuals for each site
        > ssa1.get_site_residuals(sm_database)
        >
        > Get single station residual statistics for each site and export to CSV
-       > csv_output = os.path.join(DATA, 'SSA_statistics.csv')
-       > ssa1.residual_statistics(True, csv_output)
+       > ssa1.residual_statistics(True, csv_output_fname)
       
 3. We can plot the computed residual statistics as follows:
 
