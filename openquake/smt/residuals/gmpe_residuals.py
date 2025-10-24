@@ -716,7 +716,12 @@ class Residuals(object):
                     obs = np.hstack([obs, np.log(context["Observations"][imtx])])
                     exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
                     std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
-                
+
+                # Take only the finite obs
+                idx_f = np.isfinite(obs)
+                obs = obs[idx_f]
+                assert len(obs) == len(exp) == len(std)
+
                 # Get the ECDF for distribution from observations
                 x_ecdf, y_ecdf = self.get_cdf_data(list(obs), step_flag=True)
                 
@@ -739,7 +744,10 @@ class Residuals(object):
 
                 # Get absolute of difference in areas - eq 3 of paper
                 stoch_area_wrt_imt[imtx] = np.abs(area_gmm-area_obs) 
-             
+
+                if np.abs(area_gmm-area_obs)  == 0:
+                    breakpoint()
+
             # Store the stoch area per imt per gmm
             stoch_area_store[gmpe] = stoch_area_wrt_imt
     
