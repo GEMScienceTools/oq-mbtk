@@ -190,8 +190,7 @@ class Residuals(object):
     @classmethod
     def from_toml(cls, filename):
         """
-        Read in gmpe_list and imts from .toml file. This method allows use of
-        gmpes with additional parameters and input files within the SMT
+        Read in gmpe_list and imts from .toml file.
         """
         # Read in toml file with dict of gmpes and subdict of imts
         config = toml.load(filename)
@@ -210,6 +209,15 @@ class Residuals(object):
         imts = config['imts']['imt_list']     
         
         return cls(gmpe_list, imts)
+
+    @classmethod
+    def from_xml(cls, filename, imts):
+        """
+        Read in the GMMs from an XML and the IMTs as list of IMTs.
+        """
+        # Read the XML
+        gsim_lt = GsimLogicTree(filename)
+        breakpoint()
 
     def compute_residuals(self,
                           ctx_database,
