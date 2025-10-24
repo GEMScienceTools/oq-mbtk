@@ -166,6 +166,15 @@ class ResidualsTestCase(unittest.TestCase):
         residuals.compute_residuals(self.database, component="Geometric")
         residuals.get_residual_statistics()
 
+    def test_extrapolation_check(self):
+        """
+        Check that a GMM defined for outside it's period range raises
+        an error.
+        """
+        # K20 only has coefficients for up to 8 seconds
+        with self.assertRaises(ValueError):
+            res.Residuals(["KothaEtAl2020"], ["SA(1.0)", "SA(10.0)" ])
+
     def test_export_execution(self):
         """
         Tests execution of the residuals exporting function
