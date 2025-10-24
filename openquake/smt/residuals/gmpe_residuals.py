@@ -28,8 +28,10 @@ import pandas as pd
 from scipy.integrate import trapezoid
 from scipy.stats import norm
 
-from openquake.hazardlib import valid
-from openquake.hazardlib import imt
+from openquake.hazardlib import imt, valid, nrml
+from openquake.baselib.node import Node as N
+from openquake.hazardlib.gsim_lt import GsimLogicTree
+
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector
 from openquake.smt.utils import convert_accel_units, check_gsim_list
 
@@ -526,6 +528,74 @@ class Residuals(object):
                 f.write(f"Event:{ev} IMT: {imt}\n")
                 f.write(ev_imt_df.to_string(index=False))
                 f.write("\n\n")
+
+    def export_gmc_xml(self, weight_metric, out_fname):
+        """
+        Export the GMMs evaluated in the residual analysis to an OQ GMC XML.
+        The weights of each GMM can be based on the normalisation of the LLH,
+        EDR or Stochastic Area scores (averaged over all considered IMTs).
+
+        NOTE: This function sets a default TRT of "*". The user of course has
+        to modify this as appropriate to match the TRT they wish to apply the
+        exported logic tree to within their source model.
+
+        :param weight_metric: Can be "LLH", "EDR", "STO" or "equal".
+        """
+        # Map the scores to attributes in residuals object
+        score_map = {"LLH": "llh_weights",
+                     "EDR": "edr_weights",
+                     "STO": "sto_weights",
+                     "equal": None}
+
+        # Check weight metric is valid
+        if weight_metric not in score_map.keys():
+            raise ValueError(f"An invalid weight metric has been"
+                             f"specified for GMC XML exporting - "
+                             f"must be in {list(score_map.keys())}")
+        
+        # Check required weights are in residuals obj
+        if weight_metric != "equal":
+            if not hasattr(self, score_map[weight_metric]):
+                raise ValueError(
+                    f"Cannot use {weight_metric} weights because "
+                    f"{score_map[weight_metric]} attribute is missing "
+                    f"from residuals obj (you must first compute the "
+                    f"{weight_metric}-based weights).")
+
+        # Get the weights
+        if weight_metric != "equal":
+            weights = getattr(self, score_map[weight_metric])
+        else:
+            weights = {gmm: 1/len(self.gmpe_list) for gmm in self.gmpe_list}
+        
+        # Make a branch for each GMM
+        branches = []
+        for idx_gmm, gmm in enumerate(self.gmpe_list):
+            if weight_metric != "equal":
+                wei = weights[f"{gmm} {weight_metric}-based weight"]['Avg over imts']
+            else:
+                wei = weights[gmm]
+        
+            # Make the branch
+            branch = N('logicTreeBranch', {'branchID': f'b{idx_gmm}'}, 
+                        nodes=[N('uncertaintyModel', text=str(gmm)),
+                               N('uncertaintyWeight', text=str(wei))])
+            
+            # Store
+            branches.append(branch)
+
+        # Make an LT
+        lt = N('logicTree', {'logicTreeID': 'lt1'},
+               nodes=[N('logicTreeBranchSet',
+                        {'applyToTectonicRegionType': '*',
+                         'branchSetID': 'bs1',
+                         'uncertaintyType': 'gmpeModel'},
+                         nodes=branches)])
+        gsim_lt = GsimLogicTree('<in-memory>', ['*'], ltnode=lt)
+
+        # Write to XML
+        with open(out_fname, 'wb') as f:
+            nrml.write([gsim_lt.to_node()], f)
 
     ### LLH (Scherbaum et al. 2009) functions
     def get_llh_values(self):

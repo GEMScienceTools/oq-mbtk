@@ -640,16 +640,16 @@ def llh_table(residuals, filename):
     # Get loglikelihood values per imt per gmpe
     llh_metrics = pd.DataFrame()
     for gmpe in residuals.gmpe_list:
-        llh_metrics[gmpe + ' LLH'] = residuals.llh[gmpe]
+        llh_metrics["LLH " + gmpe] = residuals.llh[gmpe]
 
     # Export table
     llh_metrics.to_csv(filename, sep=',')
 
 
-def llh_weights_table(residuals, filename):
+def llh_weights(residuals, filename=None):
     """
     Create a table of model weights per gmpe per imt based on sample
-    loglikelihood (Scherbaum et al. 2009)
+    loglikelihood (Scherbaum et al. 2009).
     """       
     # Check have computed LLH
     if not hasattr(residuals, "llh"):
@@ -665,12 +665,16 @@ def llh_weights_table(residuals, filename):
     llh_weights = pd.DataFrame(residuals.llh_weights)
     llh_weights = llh_weights.T  # GMMs as cols, IMTs as index
     llh_weights.loc['Avg over imts'] = llh_weights.mean(axis=0)
-    llh_weights.columns = llh_weights.columns + ' LLH-based weights'
+    llh_weights.columns = llh_weights.columns + ' LLH-based weight'
     assert np.abs(llh_weights.loc['Avg over imts'].sum() - 1.0) < 1E-09
 
-    # Export table
-    llh_weights.to_csv(filename, sep=',')
+    # Export table if required (might just want the weights)
+    if filename is not None:
+        llh_weights.to_csv(filename, sep=',')
 
+    # Add llh weights to residuals obj
+    setattr(residuals, "llh_weights", llh_weights)
+    
 
 def edr_table(residuals, filename):
     """
@@ -696,12 +700,12 @@ def edr_table(residuals, filename):
         edr.columns = edr.columns + ' ' + gmpe
         edr_dfs.append(edr)
 
-    # Combine and export
+    # Into final df
     edr_df = pd.concat(edr_dfs, axis=1)
     edr_df.to_csv(filename, sep=',')
 
 
-def edr_weights_table(residuals, filename):
+def edr_weights(residuals, filename=None):
     """
     Create a table of model weights per imt based on Euclidean distance based
     ranking (Kale and Akkar, 2013)
@@ -733,10 +737,17 @@ def edr_weights_table(residuals, filename):
     avg_gmpe_edr_weight_df = pd.DataFrame(
         avg_edr_weight_per_gmpe, index=['Avg over imts'])
 
-    # Export table
-    edr_weight_df = pd.concat([gmpe_edr_weight_df, avg_gmpe_edr_weight_df])
-    assert np.abs(edr_weight_df.loc['Avg over imts'].sum() - 1.0) < 1E-09
-    edr_weight_df.to_csv(filename, sep=',')
+    # Into final df    
+    edr_weights = pd.concat([gmpe_edr_weight_df, avg_gmpe_edr_weight_df])
+    edr_weights.columns = edr_weights.columns + ' EDR-based weight'
+    assert np.abs(edr_weights.loc['Avg over imts'].sum() - 1.0) < 1E-09
+
+    # Export table if required (might just want the weights)
+    if filename is not None:
+        edr_weights.to_csv(filename, sep=',')
+
+    # Add edr weights to residuals obj
+    setattr(residuals, "edr_weights", edr_weights)
 
 
 def sto_table(residuals, filename):
@@ -755,13 +766,13 @@ def sto_table(residuals, filename):
         for imt in residuals.imts:
             sto_metrics.loc[imt, gmpe] = residuals.stoch_areas_wrt_imt[gmpe][imt]
         sto_metrics.loc['Avg over imts', gmpe] = sto_metrics[gmpe].mean()
-    sto_metrics.columns = sto_metrics.columns + ' stochastic area'
+    sto_metrics.columns = "STO " + sto_metrics.columns
 
     # Export table
     sto_metrics.to_csv(filename, sep=',')
 
 
-def sto_weights_table(residuals, filename):
+def sto_weights(residuals, filename=None):
     """
     Create a table of model weights per imt based on sample stochastic area
     (Sunny et al. 2021))
@@ -789,12 +800,19 @@ def sto_weights_table(residuals, filename):
     for gmpe in residuals.gmpe_list:
         avg_sto_weight_per_gmpe[gmpe] = np.mean(gmpe_sto_weight_df[gmpe])
 
-    # Export table
+    # Into final df
     avg_gmpe_sto_weights = pd.DataFrame(
         avg_sto_weight_per_gmpe, index=['Avg over imts'])
-    sto_weights_df = pd.concat([gmpe_sto_weight_df, avg_gmpe_sto_weights])
-    assert np.abs(sto_weights_df.loc['Avg over imts'].sum() - 1.0) < 1E-09
-    sto_weights_df.to_csv(filename, sep=',')
+    sto_weights = pd.concat([gmpe_sto_weight_df, avg_gmpe_sto_weights])
+    sto_weights.columns = sto_weights.columns + " STO-based weight"
+    assert np.abs(sto_weights.loc['Avg over imts'].sum() - 1.0) < 1E-09
+
+    # Export if required (might just want the weights)
+    if filename is not None:
+        sto_weights.to_csv(filename, sep=',')
+
+    # Add stochastic area weights to residuals obj
+    setattr(residuals, "sto_weights", sto_weights)
 
 
 ### Functions for plotting mean and sigma of residual dists vs period
