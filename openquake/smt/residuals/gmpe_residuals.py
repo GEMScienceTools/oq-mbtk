@@ -535,9 +535,9 @@ class Residuals(object):
         The weights of each GMM can be based on the normalisation of the LLH,
         EDR or Stochastic Area scores (averaged over all considered IMTs).
 
-        NOTE: This function sets a default TRT of "*". The user of course has
-        to modify this as appropriate to match the TRT they wish to apply the
-        exported logic tree to within their source model.
+        NOTE: This function sets a default TRT of "*". Once written to XML
+        the user must modify this to match the TRT they wish to apply the
+        exported logic tree to within their seismic source model.
 
         :param weight_metric: Can be "LLH", "EDR", "STO" or "equal".
         """
