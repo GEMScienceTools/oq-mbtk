@@ -91,18 +91,17 @@ class Configurations(object):
         
         # Get mags and depths for Sammons, Euclidean distance and clustering
         if "euclidean_analysis" in config_file:
-            self.mags_eucl, self.depths_eucl = self.get_eucl_mags_deps(config_file)
+            self.get_eucl_mags_deps(config_file)
             self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
             
         # Get imts
         self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
 
         # Get GMMs
-        self.gmpes_list, self.baseline_gmm = self.get_gmpes(config_file)
+        self.get_gmpes(config_file)
 
         # Get lt weights
-        (self.lt_weights_gmc1, self.lt_weights_gmc2, self.lt_weights_gmc3,
-         self.lt_weights_gmc4) = self.get_lt_weights(self.gmpes_list)
+        self.get_lt_weights(self.gmpes_list)
 
     def get_gmpes(self, config_file):
         """
@@ -127,7 +126,9 @@ class Configurations(object):
         else:
             baseline_gmm = None
 
-        return gmpe_list, baseline_gmm
+        # Add to config object
+        setattr(self, 'gmpes_list', gmpe_list)
+        setattr(self, 'baseline_gmm', baseline_gmm)
 
     def get_gmm(self, key, models):
         """
@@ -180,7 +181,9 @@ class Configurations(object):
             else:
                 lt_weights.append(None)
 
-        return tuple(lt_weights)
+        # Add to config object
+        for idx_lt, lt in enumerate(lt_weights):
+            setattr(self, f'lt_weights_gmc{idx_lt+1}', lt)
 
     def get_eucl_mags_deps(self, config_file):
         """
@@ -204,8 +207,9 @@ class Configurations(object):
             closest = (np.abs(depth_per_mag['mag'] - mag)).idxmin()
             depths_eucl[idx_mag] = depth_per_mag.loc[closest, 'depth']
        
-        return mags_eucl, pd.Series(depths_eucl)
-
+        # Add to config object
+        setattr(self, 'mags_eucl', mags_eucl)
+        setattr(self, 'depths_eucl', pd.Series(depths_eucl))
 
 def plot_trellis(filename, output_directory):
     """
