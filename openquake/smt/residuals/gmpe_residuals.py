@@ -215,9 +215,10 @@ class Residuals(object):
         """
         Read in the GMMs from an XML and the IMTs as list of IMTs.
         """
-        # Read the XML
-        gsim_lt = GsimLogicTree(filename)
-        breakpoint()
+        # Get the GMMs from the xml
+        gmpe_list = [gmm.value[0] for gmm in GsimLogicTree(filename)]
+
+        return cls(gmpe_list, imts)
 
     def compute_residuals(self,
                           ctx_database,
