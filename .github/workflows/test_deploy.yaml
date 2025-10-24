@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        git clone --depth=1 https://github.com/gem/oq-engine.git
+        git clone --depth=1 -b ae_numpy2 https://github.com/gem/oq-engine.git
         cd oq-engine
         python3 install.py devel
         cd ..
