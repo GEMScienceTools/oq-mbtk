@@ -57,7 +57,7 @@ python .\get-pip.py
 cd $workDir
 # TODO: make it possible to checkout a different branch instead of master
 Write-Host "clone oq-engine and install it in developer mode"
-git clone https://github.com/gem/oq-engine.git
+git clone --depth=1 https://github.com/gem/oq-engine.git
 cd .\oq-engine\
 pip install -r .\requirements-py311-win64.txt
 pip install -e .
