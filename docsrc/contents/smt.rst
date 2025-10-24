@@ -168,8 +168,7 @@ We can specify the inputs to perform a residual analysis with as follows:
        > resid = res.Residuals.from_xml(xml_fname, imt_list)
        >
        > # We can export the residuals to a text file
-       > out_loc = os.path.join(out_folder, f"residuals_hrz_comp_def_of_{comp}.txt")
-       > resid.export_residuals(out_loc)
+       > resid.export_residuals(txt_fname)
 
 Plotting of Residuals
 *********************
