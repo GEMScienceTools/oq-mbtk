@@ -140,9 +140,9 @@ def calc_ranking_metrics(residuals, out_dir):
     fi_sto_weights = os.path.join(out_dir, 'weights_sto.csv')
 
     # Compute GMM logic tree weights based on ranking scores and export as CSVs
-    rspl.llh_weights_table(residuals, fi_llh_weights)
-    rspl.edr_weights_table(residuals, fi_edr_weights)
-    rspl.sto_weights_table(residuals, fi_sto_weights)
+    rspl.llh_weights(residuals, fi_llh_weights)
+    rspl.edr_weights(residuals, fi_edr_weights)
+    rspl.sto_weights(residuals, fi_sto_weights)
 
 
 def main(flatfile=demo_flatfile,

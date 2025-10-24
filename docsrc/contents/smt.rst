@@ -232,7 +232,7 @@ The Loglikelihood Method (Scherbaum et al. 2009)
        > rspl.llh_table(resid, fname)
        >
        > # Generate a CSV table of LLH-based model weights for a GMPE logic tree
-       > rspl.llh_weights_table(resid, fname)   
+       > rspl.llh_weights(resid, fname)   
        >
        > # Plot LLH values per GMPE vs IMT
        > rspl.plot_llh_with_period(resid, fname)
@@ -259,7 +259,7 @@ Euclidean Distance Based Ranking (Kale and Akkar, 2013)
        > rspl.edr_table(resid, fname)
        >
        > # Generate a CSV table of EDR-based model weights for a GMPE logic tree
-       > rspl.edr_weights_table(resid, fname)   
+       > rspl.edr_weights(resid, fname)   
        >
        > # Plot EDR score, MDE norm and sqrt(k) vs IMT
        > rspl.plot_edr_with_period(resid, fname)
@@ -287,7 +287,7 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
        > rspl.sto_table(resid, fname)
        >
        > # Generate a CSV table of stochastic area-based model weights for a GMPE logic tree
-       > rspl.sto_weights_table(resid, fname)   
+       > rspl.sto_weights(resid, fname)   
        >
        > # Plot stochastic area vs IMT
        > rspl.plot_sto_with_period(resid, fname)

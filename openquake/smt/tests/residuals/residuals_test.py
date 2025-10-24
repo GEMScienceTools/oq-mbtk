@@ -36,8 +36,9 @@ from openquake.smt.residuals.parsers.esm_url_flatfile_parser import (
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
-TMP_TAB = os.path.join(tempfile.mkdtemp(), 'temp_table.csv')
-TMP_FIG = os.path.join(tempfile.mkdtemp(), 'temp_figure.png')
+TMP_FIG = os.path.join(tempfile.mkdtemp(), 'figure.png')
+TMP_TAB = os.path.join(tempfile.mkdtemp(), 'table.csv')
+TMP_XML = os.path.join(tempfile.mkdtemp(), 'gmc.xml')
 
 aac = np.testing.assert_allclose
 
@@ -218,9 +219,11 @@ class ResidualsTestCase(unittest.TestCase):
         rspl.plot_edr_with_period(self.residuals, TMP_FIG)
         rspl.plot_llh_with_period(self.residuals, TMP_FIG)
 
-    def test_table_execution(self):
+    def test_tables_and_xml_exporting_execution(self):
         """
-        Tests execution of table exporting functions
+        Tests execution of table exporting functions + exporting of
+        a GMC XML which uses each ranking metric's normalised scores
+        for the weights assigned to each GMM.
         """
         # First compute the metrics
         self.residuals.get_llh_values()
@@ -234,9 +237,13 @@ class ResidualsTestCase(unittest.TestCase):
         rspl.sto_table(self.residuals, TMP_TAB)
         
         # Tables of weights
-        rspl.llh_weights_table(self.residuals, TMP_TAB)
-        rspl.edr_weights_table(self.residuals, TMP_TAB)
-        rspl.sto_weights_table(self.residuals, TMP_TAB)
+        rspl.llh_weights(self.residuals, TMP_TAB)
+        rspl.edr_weights(self.residuals, TMP_TAB)
+        rspl.sto_weights(self.residuals, TMP_TAB)
+
+        # Write GMC XML using each set of score-based weights
+        for metric in ["LLH", "EDR", "STO", "equal"]:
+            self.residuals.export_gmc_xml(metric, TMP_XML)
         
     def test_single_station_execution_and_values(self):
         """
