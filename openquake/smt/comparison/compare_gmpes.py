@@ -27,6 +27,8 @@ import pandas as pd
 import re
 
 from openquake.hazardlib.imt import from_string
+from openquake.hazardlib.gsim_lt import GsimLogicTree
+
 from openquake.smt.comparison.utils_compare_gmpes import (
     plot_trellis_util, plot_spectra_util, plot_ratios_util,
     plot_cluster_util, plot_sammons_util, plot_matrix_util,
@@ -97,17 +99,24 @@ class Configurations(object):
         # Get imts
         self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
 
-        # Get GMMs
-        self.get_gmpes(config_file)
-
-        # Get lt weights
-        self.get_lt_weights(self.gmpes_list)
+        # Get GMMs and LT weights from either TOML or XML
+        if 'xml' in config_file:
+            # Overrides any GMMs specified in "models" key
+            self.get_gmms_xml(config_file['xml'])
+        
+        else:
+            # Get GMMs
+            self.get_gmpes(config_file)
+            
+            # Get lt weights
+            self.get_lt_weights(self.gmpes_list)
 
     def get_gmpes(self, config_file):
         """
-        Extract strings of the GMPEs from the configuration file. Also get the 
-        labels used in Sammons maps, Clustering (dendrograms) and Euclidean distance
-        matrix plots. The baseline GMM for computing ratios with is also extracted
+        Get TOML-string representations of the GMMs specified in the
+        toml and store them in the config object.
+        
+        The baseline GMM for computing ratios with is als instantiated
         if specified within the toml file.
         """
         # Get the GMPEs
@@ -185,6 +194,70 @@ class Configurations(object):
         for idx_lt, lt in enumerate(lt_weights):
             setattr(self, f'lt_weights_gmc{idx_lt+1}', lt)
 
+    def get_gmms_xml(self, xml_dic):
+        """
+        Load a ground-motion characterisation defined within an XML
+        file. The individual GMMs and the combined logic tree are
+        constructed just as when specified within the "models" key
+        instead.
+
+        NOTE: If the "gmc_xml" key is in the TOML, then it overrides
+        the GMMs and/or LTs defined within the "models" key.
+
+        NOTE: LT weights are checked when instantiating the GMC logic
+        tree, so there is no need to perform this check here too.
+
+        :param gmc_xml: path to GMC XML
+        """
+        # Load the LT
+        gsim_lt = GsimLogicTree(xml_dic['gmc_xml'])
+
+        # Get the TRT
+        if xml_dic['trt'] == "all":
+            trts = gsim_lt.values.keys()
+        else:
+            trts = [xml_dic['trt']]
+            if trts[0] not in gsim_lt.values.keys():
+                raise ValueError(f"No branchset in the provided GMC XML "
+                                 f"has an applyToTectonicRegionType for "
+                                 f"a TRT of {trts[0]}")
+
+        # Check if plotting only LT (default is to plot branches too)
+        add = ""
+        if "plot_lt_only" in xml_dic:
+            plot_lt_only = xml_dic['plot_lt_only']
+            if plot_lt_only not in [True, False]:
+                raise ValueError(f"Plotting of individual GMMs from GMC"
+                                 f"XML can only be set to true or false")
+            if plot_lt_only is True:
+                add = "_plot_lt_only"
+
+        # Construct LTs
+        gmpe_list = []
+        lt_weight = [None, None, None, None]
+        for idx_trt, trt in enumerate(trts):
+            lt_gmc = {}
+            for gmm in gsim_lt.branches:
+                if gmm.trt == trt:
+                    continue
+                wei = gmm.weight['weight']
+                gmpe_toml = f"{gmm.gsim._toml} \nlt_weight_gmc{idx_trt+1}{add} = {wei}"
+                gmpe_list.append(gmpe_toml)
+                lt_gmc[gmpe_toml] = wei
+            
+            # Store GMC's weights
+            lt_weight[idx_trt] = lt_gmc
+
+        # Add GMMs
+        setattr(self, 'gmpes_list', gmpe_list)
+        
+        # Add GMC LT weights
+        for idx_lt, lt in enumerate(lt_weight):
+            setattr(self, f'lt_weights_gmc{idx_lt+1}', lt)
+
+        # Cannot set baseline gmm if using GMC XML
+        setattr(self, 'baseline_gmm', None) 
+
     def get_eucl_mags_deps(self, config_file):
         """
         For each magnitude considered within the Sammons Maps, Euclidean distance
@@ -223,7 +296,6 @@ def plot_trellis(filename, output_directory):
     store_gmm_curves = plot_trellis_util(config, output_directory) 
     
     return store_gmm_curves
-
                 
 def plot_spectra(filename, output_directory, obs_spectra_fname=None):
     """

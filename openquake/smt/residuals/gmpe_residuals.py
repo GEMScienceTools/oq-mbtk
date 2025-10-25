@@ -214,9 +214,14 @@ class Residuals(object):
     def from_xml(cls, filename, imts):
         """
         Read in the GMMs from an XML and the IMTs as list of IMTs.
+
+        NOTE: We read all of the GMMs over the potentially multiple
+        branchsets. If the user wishes to evaluate only one branchset
+        (i.e. for one TRT, which is more likely), then they should just
+        remove the not-required branchsets from the XML.
         """
         # Get the GMMs from the xml
-        gmpe_list = [gmm.value[0] for gmm in GsimLogicTree(filename)]
+        gmpe_list = [gmm.gsim for gmm in GsimLogicTree(filename).branches]
 
         return cls(gmpe_list, imts)
 

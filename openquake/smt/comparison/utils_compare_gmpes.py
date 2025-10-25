@@ -160,9 +160,10 @@ def plot_trellis_util(config, output_directory):
                                      r_vals,
                                      config.imt_list,
                                      config.dist_type)
-         
+                
             # Plot logic trees if specified and also store
             for idx_gmc, gmc in enumerate(lt_weights):
+
                 store_gmm_curves = trel_logic_trees(idx_gmc,
                                                     gmc,
                                                     lt_vals_gmc[idx_gmc],
@@ -1008,7 +1009,7 @@ def trellis_data(gmpe,
     # Now compute the weighted logic trees
     for idx_gmc, gmc in enumerate(lt_vals_gmc):
         if lt_weights[idx_gmc] is None:
-            pass
+            break
         elif gmpe in lt_weights[idx_gmc]:
             if lt_weights[idx_gmc][gmpe] is not None:
                 if nstd > 0:
@@ -1020,7 +1021,7 @@ def trellis_data(gmpe,
                 else:
                     lt_vals_gmc[idx_gmc][
                         gmpe] = {'median': np.exp(mean)*lt_weights[idx_gmc][gmpe]}
-                        
+                    
     return lt_vals_gmc
 
 
@@ -1039,12 +1040,11 @@ def trel_logic_trees(idx_gmc,
                      cfg_key,
                      unit):
     """
-    Manages plotting of the logic tree attenuation curves and adds them to the
-    store of exported attenuation curves 
+    Manages plotting of the logic tree attenuation curves and
+    adds them to the store of exported attenuation curves 
     """
     # If logic tree provided plot and add to attenuation curve store
     if gmc is not None:
-        lt_key = 'gmc logic tree %s' % str(idx_gmc+1)
         
         median, plus_sig, minus_sig = lt_trel(r_vals,
                                               nstd,
@@ -1059,6 +1059,8 @@ def trel_logic_trees(idx_gmc,
                                               gmc_p[1],
                                               gmc_p[2])
         
+        lt_key = 'gmc logic tree %s' % str(idx_gmc+1)
+
         store_gmm_curves[cfg_key][
             'gmc logic tree curves per imt-mag'][lt_key] = {}
         store_gmm_curves[cfg_key][
@@ -1088,7 +1090,7 @@ def lt_trel(r_vals,
             plus_sig_gmc,
             minus_sig_gmc):
     """
-    If required plot spectra from the GMPE logic tree(s)
+    If required plot trellis from the GMPE logic tree(s)
     """
     # Get colors and strings for checks
     col = ['r', 'b', 'g', 'k'][idx_gmc]
@@ -1099,10 +1101,9 @@ def lt_trel(r_vals,
 
     # Get logic tree 
     lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['median', 'add_sigma', 'min_sigma'])
-
+    
     lt_median = lt_df_gmc.loc['median'].sum()
     median_gmc[mk] = lt_median
-
     pyplot.plot(r_vals,
                 lt_median,
                 linewidth=2,
@@ -1128,7 +1129,6 @@ def lt_trel(r_vals,
                         zorder=100)
 
     return median_gmc, plus_sig_gmc, minus_sig_gmc
-
 
 
 def update_trellis_plots(m, i, n, l, dep, minR, maxR, r_vals, imt_list, dist_type):

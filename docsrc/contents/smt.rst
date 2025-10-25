@@ -457,9 +457,14 @@ Comparing GMPEs
 
         [models.AkkarEtAlRjb2014]
         lt_weight_gmc2_plot_lt_only = 0.50
-         
+
         # Also specify a GMM to compute ratios of the attenuation against (GMM/baseline)
         [ratios_baseline_gmm.BooreEtAl2020]
+
+        [xml] # NOTE: Adding this key means the GMMs in an XML are used instead of those in the "models" key
+        [xml.gmc_xml] = "gmc.xml" # Regular OQ GMC XML with weight per GMM
+        [xml.trt] = "Active Shallow Crust" # GMC LT to use from the provided XML (or set to "all" to use all LTs)
+        [xml.plot_lt_only] = false # If false plot the individual GMMs, if true then plot only the weighted mean LTs
 
         [custom_colors]
         custom_colors_flag = false # Set to true for custom colours in plots)
