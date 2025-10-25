@@ -49,40 +49,14 @@ class Configurations(object):
         config_file = toml.load(filename) 
         
         # Get general params
-        self.minR = config_file['general']['minR']
-        self.maxR = config_file['general']['maxR']
-        self.dist_type = config_file['general']['dist_type']
-        self.dist_list = config_file['general']['dist_list']
-        self.nstd = config_file['general']['Nstd']
-        self.max_period = config_file['general']['max_period']
+        self.get_general_params(config_file)
         
-        # If the following site params are missing, the following proxies are used
-        SITE_OPTIONAL = {
-        "z1pt0": -999, # Let param be computed using each GMM's vs30 to z1pt0
-        "z2pt5": -999, # Let param be computed using each GMM's vs30 to z2pt5
-        "up_or_down_dip": 1, # Assume site is up-dip
-        "volc_back_arc": False, # Asssume site is not in back-arc
-        "eshm20_region": 0} # Assume default region for ESHM version of K20 GMM
-
         # Get site params
-        self.vs30 = config_file['site_properties']['vs30'] # Must be provided
-        for par in SITE_OPTIONAL:
-            if par not in config_file['site_properties']:
-                setattr(self, par, SITE_OPTIONAL[par]) # Assign default if not provided
-            else:
-                setattr(self, par, config_file['site_properties'][par])
+        self.get_site_params(config_file)
 
         # Get source params
-        self.lon = config_file['source_properties']['lon']
-        self.lat = config_file['source_properties']['lat']
-        self.strike = config_file['source_properties']['strike']
-        self.dip = config_file['source_properties']['dip']
-        self.rake = config_file['source_properties']['rake']
-        self.mag_list = np.array(config_file['source_properties']['mags'])
-        self.depth_list = np.array(config_file['source_properties']['depths'])
-        self.ztor = config_file['source_properties']['ztor']
-        self.aratio = config_file['source_properties']['aratio']
-        self.trt = config_file['source_properties']['trt']
+        if 'rup_file' not in config_file:
+            self.rup_params_from_source_key(config_file)
         
         # Get custom colors
         self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
@@ -110,6 +84,55 @@ class Configurations(object):
             
             # Get lt weights
             self.get_lt_weights(self.gmpes_list)
+
+    def get_general_params(self, config_file):
+        """
+        Get the general-use configuration parameters from the toml.
+        """
+        self.minR = config_file['general']['minR']
+        self.maxR = config_file['general']['maxR']
+        self.dist_type = config_file['general']['dist_type']
+        self.dist_list = config_file['general']['dist_list']
+        self.nstd = config_file['general']['Nstd']
+        self.max_period = config_file['general']['max_period']
+
+    def get_site_params(self, config_file):
+        """
+        Get the site parameters from the site_properties key
+        of the toml.
+        """
+        # If the following site params are missing, the following proxies are used
+        SITE_OPTIONAL = {
+        "z1pt0": -999, # Compute param using each GMM's vs30 to z1pt0
+        "z2pt5": -999, # Compute param using each GMM's vs30 to z2pt5
+        "up_or_down_dip": 1, # Assume site is up-dip
+        "volc_back_arc": False, # Asssume site is not in back-arc
+        "eshm20_region": 0} # Assume default region for ESHM version of K20 GMM
+
+        # Get site params
+        self.vs30 = config_file['site_properties']['vs30'] # Must be provided
+        for par in SITE_OPTIONAL:
+            if par not in config_file['site_properties']:
+                setattr(
+                    self, par, SITE_OPTIONAL[par]) # Assign default if not provided
+            else:
+                setattr(self, par, config_file['site_properties'][par])
+
+    def rup_params_from_source_key(self, config_file):
+        """
+        Get the parameters used to describe the rupture from
+        the source_properties key of the toml.
+        """
+        self.lon = config_file['source_properties']['lon']
+        self.lat = config_file['source_properties']['lat']
+        self.strike = config_file['source_properties']['strike']
+        self.dip = config_file['source_properties']['dip']
+        self.rake = config_file['source_properties']['rake']
+        self.mag_list = np.array(config_file['source_properties']['mags'])
+        self.depth_list = np.array(config_file['source_properties']['depths'])
+        self.ztor = config_file['source_properties']['ztor']
+        self.aratio = config_file['source_properties']['aratio']
+        self.trt = config_file['source_properties']['trt']
 
     def get_gmpes(self, config_file):
         """
