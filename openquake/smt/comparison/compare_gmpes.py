@@ -206,8 +206,6 @@ class Configurations(object):
 
         NOTE: LT weights are checked when instantiating the GMC logic
         tree, so there is no need to perform this check here too.
-
-        :param gmc_xml: path to GMC XML
         """
         # Load the LT
         gsim_lt = GsimLogicTree(xml_dic['gmc_xml'])
