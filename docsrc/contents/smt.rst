@@ -398,7 +398,7 @@ Comparing GMPEs
         volc_back_arc = false # true or false
         eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
 
-        [source_properties] # Characterise EQ as finite rupture
+        [source_properties] # Characterise EQ as finite rupture (can omit if providing rupture in "rup_file" key)
         lon = 0
         lat = 0
         strike = 0
@@ -410,7 +410,7 @@ Comparing GMPEs
         aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
         trt = -999 # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
-        [rup_xml] # NOTE: Adding this key means an OQ rup is used instead of the info in "source_properties"
+        [rup_file] # NOTE: Adding this key means an OQ rup is used instead of the info in "source_properties"
         fname = "rup.xml" # Can be an XML or CSV format OQ rupture.
 
         [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
@@ -418,7 +418,7 @@ Comparing GMPEs
         mags_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
         gmpe_labels = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CB14', 'AK14']
 
-        [models] # Specify GMMs
+        [models] # Specify GMMs (not required if providing a GMC XML file in the "gmc_xml" key)
   
         # Plot logic tree and individual GMPEs for below GMC logic tree config (gmc1)
         [models.BooreEtAl2020]
