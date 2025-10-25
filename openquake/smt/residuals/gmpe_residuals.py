@@ -827,11 +827,14 @@ class Residuals(object):
                 area_gmm = trapezoid(y_cdf, x_cdf)
 
                 # Get absolute of difference in areas - eq 3 of paper
-                stoch_area_wrt_imt[imtx] = np.abs(area_gmm-area_obs) 
+                stoch_area = np.abs(area_gmm - area_obs)
 
-            # Store the stoch area per imt per gmm
+                # Store the stoch area per imt for given gmm
+                stoch_area_wrt_imt[imtx] = max(1E-09, stoch_area)
+
+            # Store for given gmm
             stoch_area_store[gmpe] = stoch_area_wrt_imt
-    
+        
         # Add to residuals object
         self.stoch_areas_wrt_imt = stoch_area_store
 

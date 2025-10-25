@@ -707,8 +707,8 @@ def edr_table(residuals, filename):
 
 def edr_weights(residuals, filename=None):
     """
-    Create a table of model weights per imt based on Euclidean distance based
-    ranking (Kale and Akkar, 2013)
+    Create a table of model weights per imt based on Euclidean
+    distance based ranking (Kale and Akkar, 2013)
     """ 
     # Check have computed EDR
     if not hasattr(residuals, "edr_values_wrt_imt"):
@@ -737,7 +737,7 @@ def edr_weights(residuals, filename=None):
     # Export table if required (might just want the weights)
     if filename is not None:
         edr_weights.to_csv(filename, sep=',')
-        
+
     # Add edr weights to residuals obj
     setattr(residuals, "edr_weights", edr_weights)
 
@@ -770,11 +770,10 @@ def sto_weights(residuals, filename=None):
         raise ValueError("The user must first compute Stochastic Area.")
 
     # Get required values
-    sto_for_weights = residuals.stoch_areas_wrt_imt
-    sto_per_gmpe_df = pd.DataFrame(sto_for_weights)
-
+    sto_per_gmpe = pd.DataFrame(residuals.stoch_areas_wrt_imt)
+    
     # Get weight per GMM per IMT
-    sto_inv = sto_per_gmpe_df ** -1
+    sto_inv = sto_per_gmpe ** -1
     sto_weight = sto_inv.div(sto_inv.sum(axis=1), axis=0)
 
     # Get weight per GMM averaged over the IMTs
