@@ -36,7 +36,7 @@ from openquake.smt.comparison.utils_compare_gmpes import (compute_matrix_gmpes,
 
 
 # Base path
-base = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
 TARGET_vs30 = 800
@@ -66,15 +66,17 @@ class ComparisonTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(self):
-        self.input_file = os.path.join(base,"compare_gmpe_inputs.toml")
-        self.output_directory = os.path.join(base,'compare_gmpes_test')
+        self.input_file = os.path.join(BASE, "compare_gmpe_inputs.toml")
+        self.output_directory = os.path.join(BASE, 'compare_gmpes_test')
         self.input_file_plot_obs_spectra = os.path.join(
-            base,'Chamoli_1999_03_28_EQ.toml')
+            BASE, 'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
-            base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.exp_curves = os.path.join(base,'exp_curves.csv')
-        self.exp_spectra = os.path.join(base, 'exp_spectra.csv')
-        self.gmc_xml = os.path.join(base, 'comparison_test.xml')
+            BASE, 'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
+        self.exp_curves = os.path.join(BASE, 'exp_curves.csv')
+        self.exp_spectra = os.path.join(BASE, 'exp_spectra.csv')
+        self.rup_xml = os.path.join(BASE, 'rup.xml')
+        self.rup_csv = os.path.join(BASE, 'rup.csv')
+        self.gmc_xml = os.path.join(BASE, 'comparison_test.xml')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -317,6 +319,14 @@ class ComparisonTestCase(unittest.TestCase):
         """
         # Plot the ratios
         comp.plot_ratios(self.input_file, self.output_directory)
+
+    def test_rup_file(self):
+        """
+        Check that the provision of an OQ rupture in XML or CSV format
+        (CSV format most likely from GEESE) is usable within the Comparison
+        module. Correctness of values is not examined.
+        """
+        print("test")
 
     def test_xml_gmc(self):
         """
