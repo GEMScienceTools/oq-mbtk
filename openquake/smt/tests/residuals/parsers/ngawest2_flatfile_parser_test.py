@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests parsing of the NGAWest2 flatfile format in SMT
+Tests parsing of the ngawest2 flatfile format in SMT
 """
 import os
 import shutil
@@ -47,19 +47,21 @@ class NGAWest2FlatfileParserTestCase(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        cls.NGAWest2_flatfile_directory = os.path.join(
-            BASE_DATA_PATH, "NGAWest2_test.csv")
-        cls.NGAWest2_vertical_flatfile_directory = os.path.join(
-            BASE_DATA_PATH,"NGAWest2_vertical_test.csv")
-        cls.db_file = os.path.join(BASE_DATA_PATH, "NGAWest2_test_metadata")       
-        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
+        cls.ngawest2_flatfile_directory = os.path.join(
+            BASE_DATA_PATH, "ngawest2_horz_test_file.csv")
+        cls.ngawest2_vertical_flatfile_directory = os.path.join(
+            BASE_DATA_PATH,"ngawest2_vert_test_file.csv")
+        cls.db_file = os.path.join(BASE_DATA_PATH, "ngawest2_test_metadata")       
+        cls.gmpe_list = ["ZhaoEtAl2006Asc", "CampbellBozorgnia2014"]
         cls.imts = ["PGA", "SA(1.0)"]
 
-    def test_NGAWest2_flatfile_parser(self):
-        parser = NGAWest2FlatfileParser.autobuild("000", "NGAWest2_test",
+    def test_ngawest2_flatfile_parser(self):
+        parser = NGAWest2FlatfileParser.autobuild(
+                                            "000", "ngawest2_test",
                                              self.db_file,
-                                             self.NGAWest2_flatfile_directory,
-                                             self.NGAWest2_vertical_flatfile_directory)
+                                             self.ngawest2_flatfile_directory,
+                                             self.ngawest2_vertical_flatfile_directory
+                                             )
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
 

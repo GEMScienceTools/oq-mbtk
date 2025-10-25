@@ -33,12 +33,15 @@ import openquake.smt.residuals.residual_plotter as rspl
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import (
     ESMFlatfileParserURL)
 
+
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
-# Temp files for ranking metric tables 
-TMP_TAB = os.path.join(tempfile.mkdtemp(), 'temp_table.csv')
-TMP_FIG = os.path.join(tempfile.mkdtemp(), 'temp_figure')
+TMP_FIG = os.path.join(tempfile.mkdtemp(), 'figure.png')
+TMP_TAB = os.path.join(tempfile.mkdtemp(), 'table.csv')
+TMP_XML = os.path.join(tempfile.mkdtemp(), 'gmc.xml')
+
 aac = np.testing.assert_allclose
+
 
 def fix(number):
     if np.isnan(number):
@@ -144,7 +147,8 @@ class ResidualsTestCase(unittest.TestCase):
         cls.residuals.get_residual_statistics()
 
         # Add other params to class
-        cls.toml = os.path.join(BASE_DATA_PATH, 'residuals_from_toml_test.toml')
+        cls.toml = os.path.join(BASE_DATA_PATH, 'residuals_test.toml')
+        cls.xml = os.path.join(BASE_DATA_PATH, 'residuals_test.xml')
         cls.exp = exp
         cls.st_rec_min = 3
         cls.exp_stations = exp_stations
@@ -157,12 +161,30 @@ class ResidualsTestCase(unittest.TestCase):
 
     def test_residuals_execution_from_toml(self):
         """
-        Tests basic execution of residuals when specifying gmpe and imts to get
-        residuals for from a toml file - not correctness of values
+        Tests basic execution of residuals when specifying gmpes and imts
+        from a toml file - not correctness of values
         """
         residuals = res.Residuals.from_toml(self.toml)
         residuals.compute_residuals(self.database, component="Geometric")
         residuals.get_residual_statistics()
+
+    def test_residuals_execution_from_xml(self):
+        """
+        Tests basic execution of residuals when specifying gmpes from an
+        OQ GMC XML and the IMTs from a list.
+        """
+        residuals = res.Residuals.from_xml(self.xml, self.imts)
+        residuals.compute_residuals(self.database, component="Geometric")
+        residuals.get_residual_statistics()
+
+    def test_extrapolation_check(self):
+        """
+        Check that a GMM defined for outside it's period range raises
+        an error.
+        """
+        # K20 only has coefficients for up to 8 seconds
+        with self.assertRaises(ValueError):
+            res.Residuals(["KothaEtAl2020"], ["SA(1.0)", "SA(10.0)" ])
 
     def test_export_execution(self):
         """
@@ -171,19 +193,12 @@ class ResidualsTestCase(unittest.TestCase):
         out_loc = os.path.join(self.out_location, "residuals.txt")
         self.residuals.export_residuals(out_loc)
 
-    def test_likelihood_execution(self):
-        """
-        Tests basic execution of likelihood score (Scherbaum et al.
-        2004) computation- not correctness of values
-        """
-        self.residuals.get_likelihood_values()
-
     def test_llh_execution(self):
         """
         Tests basic execution of loglikelihood score (Scherbaum et al.
         2009) computation- not correctness of values
         """
-        self.residuals.get_loglikelihood_values()
+        self.residuals.get_llh_values()
 
     def test_edr_execution(self):
         """
@@ -197,42 +212,48 @@ class ResidualsTestCase(unittest.TestCase):
         Tests basic execution of stochastic area metric scores (Sunny
         et al. 2021) computation - not correctness of values
         """
-        self.residuals.get_stochastic_area_wrt_imt()
+        self.residuals.get_sto_wrt_imt()
 
     def test_plot_execution(self):
         """
         Tests execution of gmpe ranking metric plotting functions and
-        the residual distribution information plotting function
+        the means and stddevs plotting function
         """
         # First compute the metrics
-        self.residuals.get_loglikelihood_values()
-        self.residuals.get_edr_values_wrt_imt()
-        self.residuals.get_stochastic_area_wrt_imt()
+        self.residuals.get_llh_values()
+        self.residuals.get_edr_wrt_imt()
+        self.residuals.get_sto_wrt_imt()
 
         # Make the plots
-        rspl.plot_residual_pdf_with_spectral_period(self.residuals, TMP_FIG)
-        rspl.plot_edr_metrics_with_spectral_period(self.residuals, TMP_FIG)
-        rspl.plot_loglikelihood_with_spectral_period(self.residuals, TMP_FIG)
+        rspl.plot_residual_means_and_stds_with_period(self.residuals, TMP_FIG)
+        rspl.plot_edr_with_period(self.residuals, TMP_FIG)
+        rspl.plot_llh_with_period(self.residuals, TMP_FIG)
 
-    def test_table_execution(self):
+    def test_tables_and_xml_exporting_execution(self):
         """
-        Tests execution of table exporting functions
+        Tests execution of table exporting functions + exporting of
+        a GMC XML which uses each ranking metric's normalised scores
+        for the weights assigned to each GMM.
         """
         # First compute the metrics
-        self.residuals.get_loglikelihood_values()
-        self.residuals.get_edr_values_wrt_imt()
-        self.residuals.get_stochastic_area_wrt_imt()
+        self.residuals.get_llh_values()
+        self.residuals.get_edr_wrt_imt()
+        self.residuals.get_sto_wrt_imt()
         
         # Tables of values
-        rspl.pdf_table(self.residuals, TMP_TAB)
+        rspl.residual_means_and_stds_table(self.residuals, TMP_TAB)
         rspl.llh_table(self.residuals, TMP_TAB)
         rspl.edr_table(self.residuals, TMP_TAB)
-        rspl.stochastic_area_table(self.residuals, TMP_TAB)
+        rspl.sto_table(self.residuals, TMP_TAB)
         
         # Tables of weights
-        rspl.llh_weights_table(self.residuals, TMP_TAB)
-        rspl.edr_weights_table(self.residuals, TMP_TAB)
-        rspl.stochastic_area_weights_table(self.residuals, TMP_TAB)
+        rspl.llh_weights(self.residuals, TMP_TAB)
+        rspl.edr_weights(self.residuals, TMP_TAB)
+        rspl.sto_weights(self.residuals, TMP_TAB)
+
+        # Write GMC XML using each set of score-based weights
+        for metric in ["LLH", "EDR", "STO", "equal"]:
+            self.residuals.export_gmc_xml(metric, TMP_XML)
         
     def test_single_station_execution_and_values(self):
         """
@@ -253,7 +274,7 @@ class ResidualsTestCase(unittest.TestCase):
         ssa_csv_output = os.path.join(self.out_location, 'ssa_test.csv')
         ssa1.station_residual_statistics(ssa_csv_output)
         
-        # Check exp vs obs delta_s2ss, delta_woes, phi_ss per station
+        # Check exp vs obs delta_s2ss, delta_woes, phi_ss,s per station
         compare_residuals(
             'stations',
             [stat.site_analysis for stat in ssa1.site_residuals],

@@ -199,10 +199,7 @@ class SMDatabaseBuilder(object):
         :param str damping"
             Percent damping
         """
-
-        # Flatfile name should be stored in database parser
         # Get header
-
         reader = csv.DictReader(open(self.dbreader.filename, "r"))
         # Fieldnames
         scalar_fieldnames, spectra_fieldnames, periods =\
@@ -213,8 +210,8 @@ class SMDatabaseBuilder(object):
         print("Creating repository for strong motion hdf5 records ... %s"
               % record_dir)
         valid_idset = [rec.id for rec in self.database.records]
-        for i, row in enumerate(reader):
-            # Build database file
+        # Build database file for each
+        for i, row in enumerate(reader): 
             # Waveform ID
             if not row["Record Sequence Number"] in valid_idset:
                 # The record being passed has already been flagged as bad

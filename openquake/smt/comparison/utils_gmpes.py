@@ -25,14 +25,14 @@ import ast
 from openquake.hazardlib import valid
 from openquake.hazardlib import scalerel 
 from openquake.hazardlib.geo import Point
-from openquake.hazardlib.geo.surface import PlanarSurface
-from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
+
+from openquake.smt.utils import make_rup
 
 
 def _get_first_point(rup, from_point):
@@ -148,31 +148,46 @@ def get_sites_from_rupture(rup,
     return SiteCollection(sites)
 
 
-def get_rupture(lon,
-                lat,
-                dep,
-                msr,
-                mag,
-                aratio,
-                strike,
-                dip,
-                rake,
-                trt,
-                ztor=None):
+def get_rup(mag, lon, lat, depth, ztor, aratio, strike, dip, rake, trt):
     """
-    Creates a rupture given the hypocenter position
+    Create an OQ rupture from the provided information.
     """
-    hypoc = Point(lon, lat, dep)
-    srf = PlanarSurface.from_hypocenter(hypoc,
-                                        msr,
-                                        mag,
-                                        aratio,
-                                        strike,
-                                        dip,
-                                        rake,
-                                        ztor)
-    rup = BaseRupture(mag, rake, trt, hypoc, srf)
-    rup.hypocenter.depth = dep
+    # If TRT specified assign it and an MSR
+    if trt == 'active_crustal':
+        rup_trt = TRT.ACTIVE_SHALLOW_CRUST
+        rup_msr = scalerel.WC1994()
+    elif trt == 'stable':
+        rup_trt = TRT.STABLE_CONTINENTAL
+        rup_msr = scalerel.WC1994()
+    elif trt == 'slab':
+        rup_trt = TRT.SUBDUCTION_INTRASLAB
+        rup_msr = scalerel.strasser2010.StrasserIntraslab()
+    elif trt == 'interface':
+        rup_trt = TRT.SUBDUCTION_INTERFACE
+        rup_msr = scalerel.strasser2010.StrasserInterface()
+    else:
+        rup_trt = None
+        rup_msr = scalerel.WC1994()
+
+    if rup_trt == -999 and aratio == -999:
+        msg = 'An aspect ratio must be provided by the user, or alternatively'
+        msg += ' specify a TRT string within the toml file to assign a'
+        msg += ' trt-dependent aratio proxy.'
+        raise ValueError(msg)
+    
+    # Get rupture
+    rup = make_rup(lon,
+                   lat,
+                   depth,
+                   msr=rup_msr,
+                   mag=mag,
+                   aratio=aratio,
+                   strike=strike,
+                   dip=dip,
+                   rake=rake,
+                   trt=rup_trt,
+                   ztor=ztor)
+    
     return rup
 
 
@@ -187,6 +202,7 @@ def att_curves(gmpe,
                dip,
                rake,
                trt,
+               oq_rup,
                vs30,
                z1pt0,
                z2pt5,
@@ -200,41 +216,11 @@ def att_curves(gmpe,
     """
     Compute the ground-motion intensities for the given context created here
     """
-    # If TRT specified assign it and an MSR
-    if trt == 'active_crustal':
-        rup_trt = TRT.ACTIVE_SHALLOW_CRUST
-        rup_msr = scalerel.WC1994()
-    elif trt == 'slab':
-        rup_trt = TRT.SUBDUCTION_INTRASLAB
-        rup_msr = scalerel.StrasserIntraslab
-    elif trt == 'interface':
-        rup_trt = TRT.SUBDUCTION_INTERFACE
-        rup_msr = scalerel.StrasserInterface
-    elif trt == 'stable':
-        rup_trt = TRT.STABLE_CONTINENTAL
-        rup_msr = scalerel.WC1994()
+    # Make rupture if not provided from XML or CSV
+    if oq_rup is None:
+        rup = get_rup(mag, lon, lat, depth, ztor, aratio, strike, dip, rake, trt)
     else:
-        rup_trt = None
-        rup_msr = scalerel.WC1994()
-
-    if rup_trt == -999 and aratio == -999:
-        msg = 'An aspect ratio must be provided by the user, or alternatively'
-        msg += ' specify a TRT string within the toml file to assign a'
-        msg += ' trt-dependent aratio proxy.'
-        raise ValueError(msg)
-    
-    # Get rupture
-    rup = get_rupture(lon,
-                      lat,
-                      depth,
-                      msr=rup_msr,
-                      mag=mag,
-                      aratio=aratio,
-                      strike=strike,
-                      dip=dip,
-                      rake=rake,
-                      trt=rup_trt,
-                      ztor=ztor)
+        rup = oq_rup
 
     # Set site props
     props = {'vs30': vs30,
@@ -276,10 +262,9 @@ def att_curves(gmpe,
     # Create context
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
-    ctxm = ContextMaker(rup_trt, [gmpe], oqp)
+    ctxm = ContextMaker(rup.tectonic_region_type, [gmpe], oqp)
     ctxs = list(ctxm.get_ctx_iter([rup], sites))
     ctxs = ctxs[0]
-    ctxs.occurrence_rate = 0.0
 
     # Compute ground-motions
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
@@ -318,7 +303,7 @@ def get_rup_pars(strike, dip, rake, aratio, trt):
         dip_s = dip
 
     # Aspect ratio
-    if aratio > -999.0 and np.isfinite(aratio):
+    if aratio != -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
         if trt in ['slab', 'interface']:
