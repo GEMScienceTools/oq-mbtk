@@ -89,7 +89,6 @@ class Configurations(object):
         if "euclidean_analysis" in config_file:
             self.get_eucl_params(config_file)
             
-
     def get_general_params(self, config_file):
         """
         Get the general-use configuration parameters from the toml.
