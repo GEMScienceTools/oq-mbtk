@@ -100,9 +100,9 @@ class Configurations(object):
         self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
 
         # Get GMMs and LT weights from either TOML or XML
-        if 'xml' in config_file:
+        if 'gmc_xml' in config_file:
             # Overrides any GMMs specified in "models" key
-            self.get_gmms_xml(config_file['xml'])
+            self.get_gmms_xml(config_file['gmc_xml'])
         
         else:
             # Get GMMs
@@ -208,7 +208,7 @@ class Configurations(object):
         tree, so there is no need to perform this check here too.
         """
         # Load the LT
-        gsim_lt = GsimLogicTree(xml_dic['gmc_xml'])
+        gsim_lt = GsimLogicTree(xml_dic['fname'])
 
         # Get the TRT
         if xml_dic['trt'] == "all":
