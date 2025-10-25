@@ -310,7 +310,7 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
     else:
         return np.exp(7.089 - 1.144 * np.log(vs30))
     
-# Make a finite rupture
+
 def make_rup(lon,
              lat,
              dep,
@@ -323,7 +323,7 @@ def make_rup(lon,
              trt,
              ztor=None):
     """
-    Creates a rupture given the hypocenter position
+    Creates an OQ planar rupture given the hypocenter position
     """
     hypoc = Point(lon, lat, dep)
     srf = PlanarSurface.from_hypocenter(hypoc,
@@ -337,6 +337,7 @@ def make_rup(lon,
     rup = BaseRupture(mag, rake, trt, hypoc, srf)
     rup.hypocenter.depth = dep
     return rup
+
 
 def full_dtype_gmm():
     """

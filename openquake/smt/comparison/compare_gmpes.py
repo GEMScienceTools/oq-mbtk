@@ -26,6 +26,9 @@ import numpy as np
 import pandas as pd
 import re
 
+from openquake.commonlib.readinput import get_rupture
+from openquake.commonlib.oqvalidation import OqParam
+from openquake.hazardlib.source.rupture import get_ruptures
 from openquake.hazardlib.imt import from_string
 from openquake.hazardlib.gsim_lt import GsimLogicTree
 
@@ -57,6 +60,8 @@ class Configurations(object):
         # Get source params
         if 'rup_file' not in config_file:
             self.rup_params_from_source_key(config_file)
+        else:
+            self.rup_params_from_file(config_file['rup_file'])
         
         # Get custom colors
         self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
@@ -133,6 +138,41 @@ class Configurations(object):
         self.ztor = config_file['source_properties']['ztor']
         self.aratio = config_file['source_properties']['aratio']
         self.trt = config_file['source_properties']['trt']
+        self.rup = None
+
+    def rup_params_from_file(self, rup):
+        """
+        Load a rupture from either an XML or a CSV file instead
+        of constructing one using the information provided in the
+        toml.
+        """
+        # Load into an OQ rupture object
+        ftype = rup['fname'].split('.')[-1]
+        if ftype == "xml":
+            # Load XML
+            oqp = OqParam(calculation_mode='scenario')
+            oqp.inputs['rupture_model'] = rup['fname']
+            rup = get_rupture(oqp)
+        else:
+            # Otherwise must be CSV
+            if ftype != "csv":
+                raise ValueError("Only ruptures in XML or CSV (OQ) format "
+                                 "can be used in the Comparison module.")
+            # Load CSV
+            rup = get_ruptures(rup['fname'])[0]
+
+        # Set other params (not used for rup reconstruction but still req)
+        self.lon = rup.hypocenter.longitude
+        self.lat = rup.hypocenter.latitude
+        self.strike = rup.surface.get_strike()
+        self.dip = rup.surface.get_dip()
+        self.rake = rup.rake
+        self.mag_list = [rup.mag]
+        self.depth_list = [rup.hypocenter.depth]
+        self.ztor = [rup.surface.mesh.depths.min()]
+        self.aratio = -999 # Not needed as already have rup surface
+        self.trt = rup.tectonic_region_type
+        self.rup = rup
 
     def get_gmpes(self, config_file):
         """
