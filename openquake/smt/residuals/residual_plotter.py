@@ -637,7 +637,7 @@ def llh_table(residuals, filename):
     if not hasattr(residuals, "llh"):
         raise ValueError("The user must first compute LLH.")
     
-    # Get loglikelihood values per imt per gmpe
+    # Get LLH per GMM per IMT
     llh_metrics = pd.DataFrame()
     for gmpe in residuals.gmpe_list:
         llh_metrics["LLH " + gmpe] = residuals.llh[gmpe]
@@ -660,10 +660,10 @@ def llh_weights(residuals, filename=None):
     weights = 2.0 ** -llh_df
     weights = weights.div(weights.sum(axis=1), axis=0)
     residuals.llh_weights = weights.to_dict(orient='index')
-
-    # Into table of the LLH weights
     llh_weights = pd.DataFrame(residuals.llh_weights)
     llh_weights = llh_weights.T  # GMMs as cols, IMTs as index
+
+    # Get weight per GMM averaged over the IMTs
     llh_weights.loc['Avg over imts'] = llh_weights.mean(axis=0)
     llh_weights.columns = llh_weights.columns + ' LLH-based weight'
     assert np.abs(llh_weights.loc['Avg over imts'].sum() - 1.0) < 1E-09
@@ -718,34 +718,26 @@ def edr_weights(residuals, filename=None):
     edr_for_weights = residuals.edr_values_wrt_imt
 
     # Compute EDR based model weights
-    edr_per_gmpe_df = pd.DataFrame({
+    edr_per_gmpe = pd.DataFrame({
         gmpe: edr_for_weights[gmpe]['EDR'] for gmpe in edr_for_weights})
 
-    # First weight per gmpe per imt
-    gmpe_edr_weight = {gmpe: {} for gmpe in residuals.gmpe_list}
-    for imt in edr_per_gmpe_df.index:
-        total_edr_per_imt = np.sum(edr_per_gmpe_df.loc[imt]**-1)
-        for gmpe in edr_for_weights.keys():
-            gmpe_edr_weight[gmpe][imt] = (
-                edr_per_gmpe_df.loc[imt][gmpe]**-1)/total_edr_per_imt
-    gmpe_edr_weight_df = pd.DataFrame(gmpe_edr_weight)
+    # Get weight per GMM per IMT
+    edr_inv = edr_per_gmpe ** -1
+    edr_weight = edr_inv.div(edr_inv.sum(axis=1), axis=0)
     
-    # Then average weight per gmm for each imt
-    avg_edr_weight_per_gmpe = {}
-    for gmpe in residuals.gmpe_list:
-        avg_edr_weight_per_gmpe[gmpe] = np.mean(gmpe_edr_weight_df[gmpe])
-    avg_gmpe_edr_weight_df = pd.DataFrame(
-        avg_edr_weight_per_gmpe, index=['Avg over imts'])
-
+    # Get weight per GMM averaged over the IMTs
+    avg_edr_weight = edr_weight.mean().to_frame().T
+    avg_edr_weight.index = ['Avg over imts']
+    
     # Into final df    
-    edr_weights = pd.concat([gmpe_edr_weight_df, avg_gmpe_edr_weight_df])
+    edr_weights = pd.concat([edr_weight, avg_edr_weight])
     edr_weights.columns = edr_weights.columns + ' EDR-based weight'
     assert np.abs(edr_weights.loc['Avg over imts'].sum() - 1.0) < 1E-09
 
     # Export table if required (might just want the weights)
     if filename is not None:
         edr_weights.to_csv(filename, sep=',')
-
+        
     # Add edr weights to residuals obj
     setattr(residuals, "edr_weights", edr_weights)
 
@@ -759,13 +751,9 @@ def sto_table(residuals, filename):
     if not hasattr(residuals, "stoch_areas_wrt_imt"):
         raise ValueError("The user must first compute Stochastic Area.")
 
-    # Get stochastic area value per imt
-    imt_idx = list(residuals.imts) + ['Avg over imts']
-    sto_metrics = pd.DataFrame({}, columns=residuals.gmpe_list, index=imt_idx)
-    for gmpe in residuals.gmpe_list:
-        for imt in residuals.imts:
-            sto_metrics.loc[imt, gmpe] = residuals.stoch_areas_wrt_imt[gmpe][imt]
-        sto_metrics.loc['Avg over imts', gmpe] = sto_metrics[gmpe].mean()
+    # Get stochastic area value per GMM per IMT
+    sto_metrics = pd.DataFrame(residuals.stoch_areas_wrt_imt)
+    sto_metrics.loc['Avg over imts'] = sto_metrics.mean()
     sto_metrics.columns = "STO " + sto_metrics.columns
 
     # Export table
@@ -785,25 +773,19 @@ def sto_weights(residuals, filename=None):
     sto_for_weights = residuals.stoch_areas_wrt_imt
     sto_per_gmpe_df = pd.DataFrame(sto_for_weights)
 
-    # Get weights
-    gmpe_sto_weight = {gmpe: {} for gmpe in residuals.gmpe_list}
-    for imt in sto_per_gmpe_df.index:
-        total_sto_per_imt = np.sum(sto_per_gmpe_df.loc[imt]**-1)
-        for gmpe in sto_for_weights.keys(): 
-            gmpe_sto_weight[gmpe][imt] = (
-                sto_per_gmpe_df.loc[imt][gmpe]**-1)/total_sto_per_imt
+    # Get weight per GMM per IMT
+    sto_inv = sto_per_gmpe_df ** -1
+    sto_weight = sto_inv.div(sto_inv.sum(axis=1), axis=0)
 
-    gmpe_sto_weight_df = pd.DataFrame(gmpe_sto_weight)
-
-    # Get average weight per gmpe for each imt
-    avg_sto_weight_per_gmpe = {}
-    for gmpe in residuals.gmpe_list:
-        avg_sto_weight_per_gmpe[gmpe] = np.mean(gmpe_sto_weight_df[gmpe])
+    # Get weight per GMM averaged over the IMTs
+    avg_sto_weight_per_gmpe = {gmpe: np.mean(
+        sto_weight[gmpe]) for gmpe in residuals.gmpe_list}
 
     # Into final df
-    avg_gmpe_sto_weights = pd.DataFrame(
-        avg_sto_weight_per_gmpe, index=['Avg over imts'])
-    sto_weights = pd.concat([gmpe_sto_weight_df, avg_gmpe_sto_weights])
+    avg_sto_weights = pd.DataFrame(
+        avg_sto_weight_per_gmpe, index=['Avg over imts']
+        )
+    sto_weights = pd.concat([sto_weight, avg_sto_weights])
     sto_weights.columns = sto_weights.columns + " STO-based weight"
     assert np.abs(sto_weights.loc['Avg over imts'].sum() - 1.0) < 1E-09
 
