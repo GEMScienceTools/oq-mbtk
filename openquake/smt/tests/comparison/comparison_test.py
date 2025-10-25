@@ -342,7 +342,7 @@ class ComparisonTestCase(unittest.TestCase):
             with open(tmp_pth, 'w', encoding='utf-8') as f:
                 toml.dump(tmp, f)
 
-            # Check the GMCs read from XML work correctly
+            # Check the rup file read from XML work correctly
             comp.plot_trellis(tmp_pth, self.output_directory)
 
     def test_xml_gmc(self):
