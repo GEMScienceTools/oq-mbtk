@@ -18,9 +18,9 @@
 """
 Utils for intensity measures:
     1) Peak measures
-    1) Response spectra
-    2) Fourier amplitude spectra (FAS)
-    3) Horizontal-Vertical Spectral Ratio (HVSR)
+    2) Response spectra
+    3) Fourier amplitude spectra (FAS)
+    4) Horizontal-Vertical Spectral Ratio (HVSR)
     5) Duration-based ground-motion intensity measures (e.g. Arias intensity, CAV)
     6) Obtaining rotation-based (and rotation-independent) definitions of the horizontal component of ground-motion
 """
