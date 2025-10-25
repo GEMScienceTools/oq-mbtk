@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Module to compare GMPEs using trellis plots, hierarchical clustering, Sammon
-maps and Euclidean distance matrix plots
+Module to compare GMPEs using trellis plots, hierarchical
+clustering, Sammon maps and Euclidean distance matrix plots
 """
 import os
 import copy
