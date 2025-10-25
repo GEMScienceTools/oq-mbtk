@@ -112,15 +112,6 @@ class Rupture(object):
         self.hypo_loc = hypo_loc
         self.aspect = None
         self.aspect = self.get_aspect()
-        # QuakeML parameters
-        self.max_displacement = None  # in m
-        self.mean_displacement = None  # in m
-        self.moment_release_top_5km = None
-        self.rise_time = None
-        self.velocity = None
-        self.shallow_asperity = False
-        self.stress_drop = None
-        self.vr_to_vs = None
 
     def get_area(self):
         """
@@ -171,8 +162,8 @@ class GCMTNodalPlanes(object):
 
 class GCMTPrincipalAxes(object):
     """
-    Class to represent the eigensystem of the tensor in terms of  T-, B- and P-
-    plunge and azimuth
+    Class to represent the eigensystem of the tensor in terms of
+    T-, B- and P-plunge and azimuth
     #_axis = {'eigenvalue':, 'azimuth':, 'plunge':}
 
     :param dict | None t_axis: The eigensystem of the T-axis

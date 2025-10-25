@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2014 GEM Foundation
+# Copyright (C) 2014-2025 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -326,7 +326,7 @@ class ComparisonTestCase(unittest.TestCase):
         format most likely due to rupture outputted from GEESE) is usable
         within the Comparison module. Correctness of values is not examined.
         """
-        # Add the "rup_file" key to the config to override the source params key
+        # Add the "rup_file" key to the config to override source params key
         tmp = toml.load(self.input_file)
         tmp['rup_file'] = {}
 
