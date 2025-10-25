@@ -32,8 +32,7 @@ import matplotlib.pyplot as plt
 
 import openquake.smt.response_spectrum as rsp
 from openquake.smt import response_spectrum_smoothing as rsps
-from openquake.smt.utils import (
-    equalise_series, get_time_vector, nextpow2)
+from openquake.smt.utils import equalise_series, get_time_vector, nextpow2
 
 
 RESP_METHOD = {
