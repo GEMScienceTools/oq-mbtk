@@ -410,6 +410,9 @@ Comparing GMPEs
         aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
         trt = -999 # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
+        [rup_xml] # NOTE: Adding this key means an OQ rup is used instead of the info in "source_properties"
+        fname = "rup.xml" # Can be an XML or CSV format OQ rupture.
+
         [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
         mag_spacing = 0.1
         mags_depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 

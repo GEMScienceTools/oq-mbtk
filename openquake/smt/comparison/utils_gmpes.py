@@ -148,29 +148,9 @@ def get_sites_from_rupture(rup,
     return SiteCollection(sites)
 
 
-def att_curves(gmpe,
-               mag,
-               lon,
-               lat,
-               depth,
-               ztor,
-               aratio,
-               strike,
-               dip,
-               rake,
-               trt,
-               vs30,
-               z1pt0,
-               z2pt5,
-               maxR,
-               step,
-               imt,
-               dist_type,
-               up_or_down_dip,
-               volc_back_arc,
-               eshm20_region):
+def get_rup(mag, lon, lat, depth, ztor, aratio, strike, dip, rake, trt):
     """
-    Compute the ground-motion intensities for the given context created here
+    Create an OQ rupture from the provided information.
     """
     # If TRT specified assign it and an MSR
     if trt == 'active_crustal':
@@ -207,6 +187,40 @@ def att_curves(gmpe,
                    rake=rake,
                    trt=rup_trt,
                    ztor=ztor)
+    
+    return rup
+
+
+def att_curves(gmpe,
+               mag,
+               lon,
+               lat,
+               depth,
+               ztor,
+               aratio,
+               strike,
+               dip,
+               rake,
+               trt,
+               oq_rup,
+               vs30,
+               z1pt0,
+               z2pt5,
+               maxR,
+               step,
+               imt,
+               dist_type,
+               up_or_down_dip,
+               volc_back_arc,
+               eshm20_region):
+    """
+    Compute the ground-motion intensities for the given context created here
+    """
+    # Make rupture if not provided from XML or CSV
+    if oq_rup is None:
+        rup = get_rup(mag, lon, lat, depth, ztor, aratio, strike, dip, rake, trt)
+    else:
+        rup = oq_rup
 
     # Set site props
     props = {'vs30': vs30,
@@ -248,7 +262,7 @@ def att_curves(gmpe,
     # Create context
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
-    ctxm = ContextMaker(rup_trt, [gmpe], oqp)
+    ctxm = ContextMaker(rup.tectonic_region_type, [gmpe], oqp)
     ctxs = list(ctxm.get_ctx_iter([rup], sites))
     ctxs = ctxs[0]
 

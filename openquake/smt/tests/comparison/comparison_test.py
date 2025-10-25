@@ -322,19 +322,19 @@ class ComparisonTestCase(unittest.TestCase):
 
     def test_rup_file(self):
         """
-        Check that the provision of an OQ rupture in XML or CSV format
-        (CSV format most likely from GEESE) is usable within the Comparison
-        module. Correctness of values is not examined.
+        Check that the provision of an OQ rupture in XML or CSV format (CSV
+        format most likely due to rupture outputted from GEESE) is usable
+        within the Comparison module. Correctness of values is not examined.
         """
         # Add the "rup_file" key to the config to override the source params key
         tmp = toml.load(self.input_file)
         tmp['rup_file'] = {}
 
         # For XML and CSV formats
-        for file in [self.rup_xml, self.rup_csv]:
+        for file in [self.rup_xml]:
 
             # Set the file
-            tmp['rup_file']['fname'] = self.gmc_xml
+            tmp['rup_file']['fname'] = file
 
             # Write back to temp
             tmp_pth = os.path.join(
@@ -343,7 +343,7 @@ class ComparisonTestCase(unittest.TestCase):
                 toml.dump(tmp, f)
 
             # Check the GMCs read from XML work correctly
-            #comp.plot_trellis(tmp_pth, self.output_directory)
+            comp.plot_trellis(tmp_pth, self.output_directory)
 
     def test_xml_gmc(self):
         """
