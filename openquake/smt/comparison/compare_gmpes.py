@@ -140,18 +140,18 @@ class Configurations(object):
         self.trt = config_file['source_properties']['trt']
         self.rup = None
 
-    def rup_params_from_file(self, rup):
+    def rup_params_from_file(self, rup_data):
         """
         Load a rupture from either an XML or a CSV file instead
         of constructing one using the information provided in the
         toml.
         """
         # Load into an OQ rupture object
-        ftype = rup['fname'].split('.')[-1]
+        ftype = rup_data['fname'].split('.')[-1]
         if ftype == "xml":
             # Load XML
             oqp = OqParam(calculation_mode='scenario')
-            oqp.inputs['rupture_model'] = rup['fname']
+            oqp.inputs['rupture_model'] = rup_data['fname']
             rup = get_rupture(oqp)
         else:
             # Otherwise must be CSV
@@ -159,7 +159,7 @@ class Configurations(object):
                 raise ValueError("Only ruptures in XML or CSV (OQ) format "
                                  "can be used in the Comparison module.")
             # Load CSV
-            rup = get_ruptures(rup['fname'])[0]
+            rup = get_ruptures(rup_data['fname'])[0]
 
         # Set other params (not used for rup reconstruction but still req)
         self.lon = rup.hypocenter.longitude

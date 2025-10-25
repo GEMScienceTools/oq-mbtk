@@ -331,7 +331,7 @@ class ComparisonTestCase(unittest.TestCase):
         tmp['rup_file'] = {}
 
         # For XML and CSV formats
-        for file in [self.rup_xml]:
+        for file in [self.rup_xml, self.rup_csv]:
 
             # Set the file
             tmp['rup_file']['fname'] = file
