@@ -65,11 +65,6 @@ class Configurations(object):
         # Check same length mag and depth lists to avoid indexing error
         assert len(self.mag_list) == len(self.depth_list)
         
-        # Get mags and depths for Sammons, Euclidean distance and clustering
-        if "euclidean_analysis" in config_file:
-            self.get_eucl_mags_deps(config_file)
-            self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
-            
         # Get imts
         self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
 
@@ -84,6 +79,11 @@ class Configurations(object):
             
             # Get lt weights
             self.get_lt_weights(self.gmpes_list)
+
+        # Get params for Euclidean analysis if required
+        if "euclidean_analysis" in config_file:
+            self.get_eucl_params(config_file)
+            
 
     def get_general_params(self, config_file):
         """
@@ -279,11 +279,13 @@ class Configurations(object):
         # Cannot set baseline gmm if using GMC XML
         setattr(self, 'baseline_gmm', None) 
 
-    def get_eucl_mags_deps(self, config_file):
+    def get_eucl_params(self, config_file):
         """
         For each magnitude considered within the Sammons Maps, Euclidean distance
         matrix plots and agglomerative clustering dendrograms get the magnitudes
         and assign a depth for each.
+
+        Also get the label to use for each GMM.
         """
         # Get eucl params
         eucl_params = config_file['euclidean_analysis']
@@ -304,6 +306,9 @@ class Configurations(object):
         # Add to config object
         setattr(self, 'mags_eucl', mags_eucl)
         setattr(self, 'depths_eucl', pd.Series(depths_eucl))
+
+        # Add GMM labels
+        self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
 
 def plot_trellis(filename, output_directory):
     """
