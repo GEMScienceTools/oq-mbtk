@@ -326,20 +326,20 @@ class ComparisonTestCase(unittest.TestCase):
         """
         # Add the "gmc_xml" key to the config to override the "models" key
         tmp = toml.load(self.input_file)
-        tmp['xml'] = {}
-        tmp['xml']['gmc_xml'] = self.gmc_xml
+        tmp['gmc_xml'] = {}
+        tmp['gmc_xml']['fname'] = self.gmc_xml
         
         # Test for only ASCR and then all LTs
         for trt in ["Active Shallow Crust", "all"]:
 
             # Set the TRT
-            tmp['xml']['trt'] = trt
+            tmp['gmc_xml']['trt'] = trt
             
             # Test for plotting of both individual GMMs and only LTs
             for val in [True, False]:
                 
                 # Set the plotting option
-                tmp['xml']['plot_lt_only'] = val
+                tmp['gmc_xml']['plot_lt_only'] = val
 
                 # Write back to temp
                 tmp_pth = os.path.join(
