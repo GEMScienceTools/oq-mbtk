@@ -20,9 +20,11 @@ Tests for execution of comparison module
 """
 import os
 import shutil
+import tempfile
 import unittest
 import numpy as np
 import pandas as pd
+import toml
 
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison import compare_gmpes as comp
@@ -72,6 +74,7 @@ class ComparisonTestCase(unittest.TestCase):
             base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
         self.exp_curves = os.path.join(base,'exp_curves.csv')
         self.exp_spectra = os.path.join(base, 'exp_spectra.csv')
+        self.gmc_xml = os.path.join(base, 'comparison_test.xml')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -314,6 +317,39 @@ class ComparisonTestCase(unittest.TestCase):
         """
         # Plot the ratios
         comp.plot_ratios(self.input_file, self.output_directory)
+
+    def test_xml_gmc(self):
+        """
+        Check that a set of GMCs can be reconstructed correctly from an
+        XML for use within the Comparison module. Correctness of values
+        is not examined.
+        """
+        # Add the "gmc_xml" key to the config to override the "models" key
+        tmp = toml.load(self.input_file)
+        tmp['xml'] = {}
+        tmp['xml']['gmc_xml'] = self.gmc_xml
+        
+        # Test for only ASCR and then all LTs
+        for trt in ["Active Shallow Crust", "all"]:
+
+            # Set the TRT
+            tmp['xml']['trt'] = trt
+            
+            # Test for plotting of both individual GMMs and only LTs
+            for val in [True, False]:
+                
+                # Set the plotting option
+                tmp['xml']['plot_lt_only'] = val
+
+                # Write back to temp
+                tmp_pth = os.path.join(
+                    tempfile.mkdtemp(), 'input_with_gmc_xml.toml')
+                with open(tmp_pth, 'w', encoding='utf-8') as f:
+                    toml.dump(tmp, f)
+
+                # Check the GMCs read from XML work correctly
+                comp.plot_trellis(tmp_pth, self.output_directory)
+        
 
     @classmethod
     def tearDownClass(self):
