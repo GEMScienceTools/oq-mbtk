@@ -1,0 +1,21 @@
+openquake.man.notebooks.old\_stuff package
+==========================================
+
+Submodules
+----------
+
+openquake.man.notebooks.old\_stuff.utils\_model module
+------------------------------------------------------
+
+.. automodule:: openquake.man.notebooks.old_stuff.utils_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.man.notebooks.old_stuff
+   :members:
+   :undoc-members:
+   :show-inheritance:

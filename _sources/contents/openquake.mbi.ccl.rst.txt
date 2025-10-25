@@ -1,0 +1,45 @@
+openquake.mbi.ccl package
+=========================
+
+Submodules
+----------
+
+openquake.mbi.ccl.change\_class module
+--------------------------------------
+
+.. automodule:: openquake.mbi.ccl.change_class
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.ccl.classify module
+---------------------------------
+
+.. automodule:: openquake.mbi.ccl.classify
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.ccl.create\_sub\_catalogues module
+------------------------------------------------
+
+.. automodule:: openquake.mbi.ccl.create_sub_catalogues
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbi.ccl.decluster\_multiple\_TR module
+------------------------------------------------
+
+.. automodule:: openquake.mbi.ccl.decluster_multiple_TR
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbi.ccl
+   :members:
+   :undoc-members:
+   :show-inheritance:
