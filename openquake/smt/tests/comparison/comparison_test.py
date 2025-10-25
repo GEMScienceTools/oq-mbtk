@@ -322,9 +322,9 @@ class ComparisonTestCase(unittest.TestCase):
 
     def test_rup_file(self):
         """
-        Check that the provision of an OQ rupture in XML or CSV format (CSV
-        format most likely due to rupture outputted from GEESE) is usable
-        within the Comparison module. Correctness of values is not examined.
+        Check that the provision of an OQ rupture in XML or CSV format is
+        usable within the Comparison module. Correctness of values is not
+        examined.
         """
         # Add the "rup_file" key to the config to override source params key
         tmp = toml.load(self.input_file)
