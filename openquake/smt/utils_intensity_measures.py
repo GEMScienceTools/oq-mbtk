@@ -296,6 +296,7 @@ def plot_fourier_spectrum(time_series, time_step, filename):
     plt.xlabel("Frequency (Hz)", fontsize=14)
     plt.ylabel("Fourier Amplitude", fontsize=14)
     plt.savefig(filename)
+    breakpoint()
     plt.close()
 
 
@@ -391,7 +392,7 @@ def plot_husid(acceleration,
                start_level=0.,
                end_level=1.0):
     """
-    Creates a Husid plot for the record
+    Creates a Husid plot of Arias intensity for the record
     :param float start_level:
         Fraction of the total Arias intensity used as the start time
     :param float end_level:
@@ -550,7 +551,7 @@ def gmrotdpp(acceleration_x,
         "GeoMeanPerAngle": max_a_theta}
 
 
-def gmrotdpp_slow(acceleration_x,
+def gmrotdpp_slow(acceleration_x, # No QA
                   time_step_x,
                   acceleration_y,
                   time_step_y,

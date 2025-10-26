@@ -20,8 +20,9 @@
 Tests for intensity-measure computation including response spectra
 and unit conversion.
 """
-import unittest
 import os
+import unittest
+import tempfile
 import h5py
 import numpy as np
 from scipy.constants import g
@@ -33,6 +34,7 @@ from openquake.smt.utils import convert_accel_units
 
 
 BASE_DATA_PATH = os.path.dirname(__file__)
+TMP = os.path.join(tempfile.mkdtemp(), "tmp.png")
 
 
 class BaseIMSTestCase(unittest.TestCase):
@@ -215,6 +217,8 @@ class ScalarIntensityMeasureTestCase(BaseIMSTestCase):
         self.assertAlmostEqual(
             ims.get_arms(x_record, x_timestep),
             56.8495087, 3)
+        # Husid plot execution
+        ims.plot_husid(x_record, x_timestep, TMP, 0.05, 0.95)
 
     def test_spectrum_intensities(self):
         # Tests Housner Intensity and Acceleration Spectrum Intensity
@@ -233,7 +237,7 @@ class ScalarIntensityMeasureTestCase(BaseIMSTestCase):
 
 class FourierSpectrumBuildSmooth(BaseIMSTestCase):
     """
-    Test smoothing of FAS.
+    Test creation and smoothing of FAS.
     """
     def test_create_fas(self):
         x_record = self.fle["INPUTS/RECORD1/XRECORD"][:]
@@ -255,6 +259,10 @@ class FourierSpectrumBuildSmooth(BaseIMSTestCase):
         np.testing.assert_array_almost_equal(
             smoothed_fas, self.fle["TEST2/FAS_SMOOTHED"][:], 5)
 
+    def test_plot_fourier(self):
+        x_record = self.fle["INPUTS/RECORD1/XRECORD"][:]
+        x_timestep = self.fle["INPUTS/RECORD1/XRECORD"].attrs["timestep"]
+        ims.plot_fourier_spectrum(x_record, x_timestep, TMP)
 
 class UtilsTestCase(unittest.TestCase):
     """
