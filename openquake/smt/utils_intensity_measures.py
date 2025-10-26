@@ -296,7 +296,6 @@ def plot_fourier_spectrum(time_series, time_step, filename):
     plt.xlabel("Frequency (Hz)", fontsize=14)
     plt.ylabel("Fourier Amplitude", fontsize=14)
     plt.savefig(filename)
-    breakpoint()
     plt.close()
 
 
