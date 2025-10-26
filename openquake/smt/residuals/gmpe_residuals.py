@@ -31,6 +31,7 @@ from scipy.stats import norm
 from openquake.hazardlib import imt, valid, nrml
 from openquake.baselib.node import Node as N
 from openquake.hazardlib.gsim_lt import GsimLogicTree
+from openquake.hazardlib.gsim.base import GMPE
 
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector
 from openquake.smt.utils import convert_accel_units, check_gsim_list
@@ -84,7 +85,29 @@ def get_gmm_from_toml(key, config):
     if len(config['models'][key]):
         config['models'][key].pop('style', None)
         value += '\n' + str(toml.dumps(config['models'][key]))
-    return valid.gsim(value.strip())
+
+    # Get GMM
+    gmm = valid.gsim(value.strip())
+
+    # HACK: Also make sure still retrieving any rup, dist and site
+    # params only specified in the parent class (sometimes the use
+    # of gsim aliases means they are not added as expected in SMT)
+    parent = gmm.__class__.__bases__[0]
+    if not issubclass(parent, GMPE):
+        # Rup params
+        for par in parent.REQUIRES_RUPTURE_PARAMETERS:
+            if par not in gmm.REQUIRES_RUPTURE_PARAMETERS:
+                gmm.REQUIRES_RUPTURE_PARAMETERS |= {par}
+        # Site params
+        for par in parent.REQUIRES_SITES_PARAMETERS:
+            if par not in gmm.REQUIRES_SITES_PARAMETERS:
+                gmm.REQUIRES_SITES_PARAMETERS |= {par}
+        # Dist params
+        for par in parent.REQUIRES_DISTANCES:
+            if par not in gmm.REQUIRES_DISTANCES:
+                gmm.REQUIRES_DISTANCES |= {par}
+
+    return gmm
 
 
 def get_gmpe_str(gmpe):
