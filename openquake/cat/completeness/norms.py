@@ -29,7 +29,6 @@ import math
 import scipy
 from scipy.stats import poisson
 from math import log, pi
-from numpy import matlib
 import numpy as np
 from openquake.wkf.compute_gr_params import (get_weichert_confidence_intervals)
 
@@ -290,8 +289,7 @@ def get_norm_optimize_b(aval, bval, ctab, tcat, mbinw, ybinw, back=5, mmin=-1,
     # Preparing matrices with the rates in each magnitude bins and their
     # standard deviation. The standard deviation is not used in the rest of the
     # function
-    rates = matlib.repmat(np.expand_dims(rates, 1), 1, len(cyeas))
-    # stds_poi = matlib.repmat(np.expand_dims(stds_poi, 1), 1, len(cyeas))
+    rates = np.matlib.repmat(np.expand_dims(rates, 1), 1, len(cyeas))
 
     # Compute the year from when to count the occurrences
     mag_bins = cmags-mbinw/2
