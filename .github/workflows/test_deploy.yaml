@@ -23,6 +23,8 @@ jobs:
         python-version: "3.11"
     - name: Install dependencies
       run: |
+        sudo apt update
+        sudo apt-get install -y gmt gmt-dcw gmt-gshhg
         python -m pip install --upgrade pip
         git clone --depth=1 -b master https://github.com/gem/oq-engine.git
         cd oq-engine
