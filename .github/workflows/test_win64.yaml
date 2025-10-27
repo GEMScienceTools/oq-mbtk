@@ -33,7 +33,7 @@ jobs:
           curl -L -O "https://github.com/GenericMappingTools/gmt/releases/download/6.5.0/gmt-6.5.0-win64.exe"
           Get-ChildItem -Filter gmt*.exe
           $Install = Get-ChildItem -Filter gmt*.exe
-          Start-Process -FilePath $Install.Fullname -ArgumentList "/S" -Wait -Verb RunAs
+          Start-Process -FilePath $Install.Fullname -ArgumentList "/S" -Verb RunAs
           $Env:PATH += ";C:\programs\gmt6\bin"
           Write-Host ${env:PATH}
       - name: Run scripts to install on windows
