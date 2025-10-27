@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       git-ref:
-        description: Git Ref
+        description: OQ engine branch
         default: master
         required: true
 jobs:
@@ -60,12 +60,12 @@ jobs:
           python -V
           Write-Host $Env:GITHUB_REF
           set PIP_DEFAULT_TIMEOUT=100
-          Write-Host "Install OQ from $Env:BRANCH and mbtk from branch ${{ github.ref_name }}"
           python -m pip install -U pip
           #
           if ($Env:BRANCH)
           {
             Write-Host "Install with workflow_dispatch"
+            Write-Host "Install OQ from ${env:BRANCH} and mbtk from branch ${{ github.ref_name }}"
             git clone --depth 1 -b master https://github.com/gem/oq-engine.git
             Write-Host "python install.py devel --version ${env:BRANCH}"
             cd oq-engine
@@ -74,7 +74,8 @@ jobs:
           }
           else
           {
-            Write-Host "Install on user mode on scheduled task"
+            Write-Host "Install on on scheduled task"
+            Write-Host "Install OQ from master and mbtk from branch ${{ github.ref_name }}"
             git clone --depth 1 -b master https://github.com/gem/oq-engine.git
             Write-Host "python install.py devel --version master"
             cd oq-engine
