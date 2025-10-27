@@ -36,6 +36,10 @@ jobs:
           Start-Process -FilePath $Install.Fullname -ArgumentList "/S" -Verb RunAs
           $Env:PATH += ";C:\programs\gmt6\bin"
           Write-Host ${env:PATH}
+      - name: Test installation of GMT
+        run: |
+          Start-Sleep -Seconds 60
+          gmt.exe --version
       - name: Run scripts to install on windows
         env:
           BRANCH: ${{ github.event.inputs.git-ref }}
