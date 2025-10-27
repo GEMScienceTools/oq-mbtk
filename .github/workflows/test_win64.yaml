@@ -41,11 +41,15 @@ jobs:
       - name: Test installation of GMT
         run: |
           Start-Sleep -Seconds 60
+          Write-Host ${env:PATH}
+          $Env:PATH += ";C:\programs\gmt6\bin"
           gmt.exe --version
       - name: Run scripts to install on windows
         env:
           BRANCH: ${{ github.event.inputs.git-ref }}
         run: |
+          Write-Host ${env:PATH}
+          $Env:PATH += ";C:\programs\gmt6\bin"
           Write-Host "Set LIBRARY PATH for GMT"
           $Env:GMT_LIBRARY_PATH="C:\programs\gmt6\bin"
           Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
