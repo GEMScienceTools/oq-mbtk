@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MPLBACKEND: 'Agg'
-      GMT_LIBRARY_PATH: '/pygmt/lib'
+      #GMT_LIBRARY_PATH: '/pygmt/lib'
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -26,16 +26,13 @@ jobs:
       run: |
         sudo apt update
         sudo apt-get install -y gmt gmt-dcw gmt-gshhg libgmt-dev
-        sudo find / -name libgmt.so -ls
-        echo "export $GMT_LIBRARY_PATH"
-        exit 1
         python -m pip install --upgrade pip
         git clone --depth=1 -b master https://github.com/gem/oq-engine.git
         cd oq-engine
         python3 install.py devel --version=master
         cd ..
         source ~/openquake/bin/activate
-        pip list
+        pip install -r requirements-py311-linux.txt
         pip install -e .
         pip install pytest
     - name: Run test with pytest
