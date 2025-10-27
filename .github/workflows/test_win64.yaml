@@ -25,8 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Installation of GMT from standalone
         run: |
-          Invoke-WebRequest -Uri "https://github.com/GenericMappingTools/gmt/releases/download/6.5.0/gmt-6.5.0-win64.exe" -OutFile $HOME\gmt.exe
-          cd $HOME
+          curl -L -O "https://github.com/GenericMappingTools/gmt/releases/download/6.5.0/gmt-6.5.0-win64.exe"
           $Install = Get-ChildItem -Filter gmt*.exe
           Start-Process -FilePath $Install.Fullname -ArgumentList "/S" -Wait
           $Env:PATH += ";C:\programs\gmt6\bin"
