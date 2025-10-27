@@ -27,6 +27,7 @@ https://wheelhouse.openquake.org/v3/macos/py312/pyzmq-26.2.0-cp312-cp312-macosx_
 https://wheelhouse.openquake.org/v3/macos/py312/setproctitle-1.3.3-cp312-cp312-macosx_10_9_x86_64.whl
 #pp
 https://wheelhouse.openquake.org/v3/py/geopandas-1.1.1-py3-none-any.whl
+https://wheelhouse.openquake.org/v3/py/pygmt-0.17.0-py3-none-any.whl
 #
 # Version specific
 ipykernel >= 4.8.0
@@ -47,7 +48,6 @@ obspy
 prettytable
 tqdm
 tables
-pygmt
 reportlab
 igraph
 pyvista
