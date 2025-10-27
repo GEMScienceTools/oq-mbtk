@@ -84,7 +84,7 @@ jobs:
           C:\Users\runneradmin\openquake\Scripts\activate.ps1
           python -m pip install -r requirements-py311-win64.txt
           python -m pip install -e .
-          #$Env:MPLBACKEND="AGG"
+          $Env:MPLBACKEND="AGG"
           $Env:PYTHONUTF8=1
           Start-Job -ScriptBlock{& 'oq.exe' engine --upgrade-db}
           oq.exe --version
