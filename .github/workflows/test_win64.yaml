@@ -30,7 +30,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Installation of GMT from standalone
         run: |
-          curl -L -O "https://github.com/GenericMappingTools/gmt/releases/download/6.5.0/gmt-6.5.0-win64.exe"
+          curl -L -O "https://github.com/GenericMappingTools/gmt/releases/download/6.6.0/gmt-6.6.0-win64.exe"
           Get-ChildItem -Filter gmt*.exe
           $Install = Get-ChildItem -Filter gmt*.exe
           Start-Process -FilePath $Install.Fullname -ArgumentList "/S" -Verb RunAs
@@ -40,7 +40,7 @@ jobs:
           Write-Host ${env:PATH}
       - name: Test installation of GMT
         run: |
-          Start-Sleep -Seconds 180
+          Start-Sleep -Seconds 60
           gmt.exe --version
       - name: Run scripts to install on windows
         env:
