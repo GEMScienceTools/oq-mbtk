@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MPLBACKEND: 'Agg'
-      #GMT_LIBRARY_PATH: '/pygmt/lib'
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -42,7 +41,6 @@ jobs:
         oq --version
         sleep 3
         cd openquake
-        export MPLBACKEND=Agg
         pytest -vsx --color=yes cat ghm man mbi mbt sub wkf smt
   pages:
     name: pages
