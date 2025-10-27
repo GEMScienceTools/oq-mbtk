@@ -30,6 +30,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Installation of GMT from standalone
         run: |
+          Set-ItemProperty -Path REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name ConsentPromptBehaviorAdmin -Value 0
           curl -L -O "https://github.com/GenericMappingTools/gmt/releases/download/6.5.0/gmt-6.5.0-win64.exe"
           Get-ChildItem -Filter gmt*.exe
           $Install = Get-ChildItem -Filter gmt*.exe
