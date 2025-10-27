@@ -8,11 +8,6 @@ on:
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
-    inputs:
-      git-ref:
-        description: Git Ref
-        default: master
-        required: true
 jobs:
   test:
     name: Windows Installation
@@ -37,8 +32,6 @@ jobs:
           $Env:PATH += ";C:\programs\gmt6\bin"
           Write-Host ${env:PATH}
       - name: Run scripts to install on windows
-        env:
-          BRANCH: ${{ github.event.inputs.git-ref }}
         run: |
           Write-Host "Set LIBRARY PATH for GMT"
           $Env:GMT_LIBRARY_PATH="C:\programs\gmt6\bin"
@@ -48,33 +41,16 @@ jobs:
           Write-Host "Current Working Directory: $curDir"
           Write-Host "Test python version"
           python -V
-          Write-Host $Env:GITHUB_REF
-          set PIP_DEFAULT_TIMEOUT=100
-          Write-Host "Install OQ from $Env:BRANCH and mbtk from branch ${{ github.ref_name }}"
+          Write-Host "Install OQ form master and mbtk from branch ${{ github.ref_name }}"
           python -m pip install -U pip
-          #
-          if ($Env:BRANCH)
-          {
-            Write-Host "Install with workflow_dispatch"
-            git clone --depth 1 -b master https://github.com/gem/oq-engine.git
-            Write-Host "python install.py devel --version ${env:BRANCH}"
-            cd oq-engine
-            python install.py devel --version ${env:BRANCH}
-            cd ..
-          }
-          else
-          {
-            Write-Host "Install on user mode on scheduled task"
-            git clone --depth 1 -b master https://github.com/gem/oq-engine.git
-            Write-Host "python install.py devel --version master"
-            cd oq-engine
-            python install.py devel --version master
-            cd ..
-          }
-          C:\Users\runneradmin\openquake\Scripts\activate.ps1
+          git clone --depth 1 -b master https://github.com/gem/oq-engine.git
+          python -m pip install -r oq-engine/requirements-py311-win64.txt
+          cd oq-engine
+          python -m pip install -e .
+          cd ..
           python -m pip install -r requirements-py311-win64.txt
           python -m pip install -e .
-          #$Env:MPLBACKEND="AGG"
+          $Env:MPLBACKEND="AGG"
           $Env:PYTHONUTF8=1
           Start-Job -ScriptBlock{& 'oq.exe' engine --upgrade-db}
           oq.exe --version
@@ -82,6 +58,9 @@ jobs:
           dir env:
           Write-Host "Print all pypip packages"
           pip list
+          #$MBTK = $HOME + "\mbtk"
+          #Write-Host "MBTK Directory: $MBTK"
+          #Set-Location -Path $MBTK
           $curDir = Get-Location
           Write-Host "Current Working Directory: $curDir"
           cd openquake
