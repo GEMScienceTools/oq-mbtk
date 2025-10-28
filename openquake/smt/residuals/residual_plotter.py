@@ -1150,13 +1150,19 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.plot(xvals, deltaW_es,
                 'x', markeredgecolor='k', markerfacecolor='k', markersize=8,
                 zorder=-32, label=r'$\delta W_{es}$')
+        
         ax.errorbar(xmean,
                     mean,
                     yerr=stddevs,
-                    ecolor="r", elinewidth=3.0,
-                    barsabove=True, fmt="s",
-                    mfc="r", mec="k", ms=6,
+                    ecolor="r",
+                    elinewidth=3.0,
+                    barsabove=True,
+                    fmt="s",
+                    mfc="r",
+                    mec="k",
+                    ms=6,
                     label='Error bar')
+        
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         xtick_label = self.residuals.site_ids
@@ -1166,64 +1172,82 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.set_ylim(-max_lim, max_lim)
         ax.grid()
         ax.set_ylabel(r'$\delta W_{es}$ (%s)' % self.imt, fontsize=12)
+
         phi = np.std(deltaW_es)
         nxv = np.ones(len(xvals))
         ax.plot(xvals, phi * nxv, 'k--', linewidth=2.)
         ax.plot(xvals, -phi * nxv, 'k--', linewidth=2, label='Std dev')
+
         title_string = "%s - %s (Std Dev = %8.5f)" % (str(
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi)
         ax.set_title(title_string, fontsize=11)
+        
         ax.legend(loc='upper right', fontsize=12)
         
         # Plot delta s2ss (avg non-normalised intra-event per site)
         ax = fig.add_subplot(312)
         nxm = np.ones(len(xmean))
+        
         ax.plot(xmean, deltaS2S_s,
-                's', markeredgecolor='k', markerfacecolor='LightSteelBlue', markersize=8,
+                's', markeredgecolor='k', markerfacecolor='LightSteelBlue', markersize=8,        
                 zorder=-32, label=r'$\delta S2S_S$')
+        
         ax.plot(
             xmean, (mean_deltaS2S - phi_S2S) * nxm, "k--", linewidth=1.5
             )
+        
         ax.plot(
             xmean, (mean_deltaS2S + phi_S2S) * nxm,
             "k--", linewidth=1.5, label=r'+/- $\phi_{S2S}$'
             )
+        
         ax.plot(
             xmean, mean_deltaS2S * nxm,
             "k-", linewidth=2, label=r'Mean $\phi_{S2S}$'
             )
+        
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")
+        
         max_lim = ceil(np.max(np.fabs(deltaS2S_s)))
         ax.set_ylim(-max_lim, max_lim)
         ax.grid()
         ax.set_ylabel(r'$\delta S2S_S$ (%s)' % self.imt, fontsize=12)
+        
         title_string = r'%s - %s ($\phi_{S2S}$ = %8.5f)' % (str(
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma'),
             self.imt, phi_S2S)
         ax.set_title(title_string, fontsize=11)
+        
         ax.legend(loc='upper right', fontsize=12)
         
         # Plot deltaW_oes (remainder residual)
         ax = fig.add_subplot(313)
+        
         ax.plot(xvals, deltaW_oes, 'x', markeredgecolor='k', markerfacecolor='k',
                 markersize=8, zorder=-32, label=r'$\delta W_{o,es}$')
+        
         ax.plot(xmean, -phi_ss * nxm, "k--", linewidth=1.5)
+        
         ax.plot(xmean, phi_ss * nxm, "k--", linewidth=1.5, label=r'+/- $\phi_{SS}$')
+        
         ax.set_xlim(0, len(self.residuals.site_ids))
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")
+        
         max_lim = ceil(np.max(np.fabs(deltaW_oes)))
         ax.set_ylim(-max_lim, max_lim)
         ax.grid()
         ax.set_ylabel(r'$\delta W_{o,es} = \delta W_{es} - \delta S2S_S$', fontsize=12)
+        
         title_string = r'%s - %s ($\phi_{SS}$ = %8.5f)' % (str(
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi_ss)
         ax.set_title(title_string, fontsize=11)
+        
         ax.legend(loc='upper right', fontsize=12)
         
     def _get_site_data(self):
