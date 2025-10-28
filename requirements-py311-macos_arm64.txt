@@ -26,6 +26,7 @@ https://wheelhouse.openquake.org/macos/arm64/py311/Pillow-10.1.0-cp311-cp311-mac
 https://wheelhouse.openquake.org/macos/arm64/py311/setproctitle-1.3.3-cp311-cp311-macosx_10_9_universal2.whl
 #pp
 https://wheelhouse.openquake.org/v3/py/geopandas-1.1.1-py3-none-any.whl
+https://wheelhouse.openquake.org/v3/py/pygmt-0.17.0-py3-none-any.whl
 #
 # Version specific
 ipykernel >= 4.8.0
@@ -36,7 +37,6 @@ nbstripout >= 0.3.0
 notebook >= 5.0.0
 pylint >= 2.1.1
 rtree >= 0.9.4
-xarray==2022.09
 jupyter-server==2.11.2
 #
 # Generic
@@ -49,7 +49,6 @@ obspy
 prettytable
 tqdm
 tables
-pygmt
 reportlab
 igraph
 pyvista
