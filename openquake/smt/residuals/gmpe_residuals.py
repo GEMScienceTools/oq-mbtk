@@ -31,7 +31,6 @@ from scipy.stats import norm
 from openquake.hazardlib import imt, valid, nrml
 from openquake.baselib.node import Node as N
 from openquake.hazardlib.gsim_lt import GsimLogicTree
-from openquake.hazardlib.gsim.base import GMPE
 
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector
 from openquake.smt.utils import convert_accel_units, check_gsim_list
@@ -91,9 +90,9 @@ def get_gmm_from_toml(key, config):
 
     # HACK: Also make sure still retrieving any rup, dist and site
     # params only specified in the parent class (sometimes the use
-    # of gsim aliases means they are not added as expected in SMT)
+    # of gsim aliases means they are not added as expected)
     parent = gmm.__class__.__bases__[0]
-    if not issubclass(parent, GMPE):
+    if parent.__name__ != "GMPE": # Must be a subclass
         # Rup params
         for par in parent.REQUIRES_RUPTURE_PARAMETERS:
             if par not in gmm.REQUIRES_RUPTURE_PARAMETERS:
