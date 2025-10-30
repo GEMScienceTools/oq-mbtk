@@ -19,6 +19,7 @@
 Module to manage GMPE residual plotting functions
 """
 import os
+import re
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -32,7 +33,6 @@ from openquake.hazardlib.imt import from_string
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from openquake.smt.residuals.residual_plotter_utils import (
                                                     _get_residuals_density_distribution,
-                                                    _get_likelihood_data,
                                                     residuals_with_magnitude,
                                                     residuals_with_vs30,
                                                     residuals_with_distance,
@@ -846,13 +846,14 @@ def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
     return fig, ax
 
 
-def plot_residual_means_and_stds(ax,
-                 res_dists,
-                 mean_or_std,
-                 gmpe,
-                 imts_to_plot,
-                 marker_inp,
-                 color_inp):
+def plot_residual_means_and_stds(
+        ax,
+        res_dists,
+        mean_or_std,
+        gmpe,
+        imts_to_plot,
+        marker_inp,
+        color_inp):
     """
     Plot means or sigmas for given GMPE.
     """
@@ -862,7 +863,7 @@ def plot_residual_means_and_stds(ax,
     elif mean_or_std == 'Std Dev':
         i = 1
     if '_toml=' in gmpe:
-        gmpe_label = gmpe.split('_toml=')[1].replace(')','')
+        gmpe_label = re.search(r'(\[[^\]]+\])', gmpe).group(1)
     else:
         gmpe_label = gmpe # If not from toml file can't split
 
