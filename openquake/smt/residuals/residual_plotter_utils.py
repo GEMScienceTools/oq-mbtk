@@ -74,35 +74,6 @@ def _get_histogram_data(data, bin_width=0.5):
     return vals.astype(float), bins
 
 
-def _get_likelihood_data(residuals, gmpe, imt, bin_width=0.1):
-    """
-    Returns the likelihood of the given gmpe and imt
-
-    :param residuals: instance of :class: openquake.smt.gmpe_residuals.Likelihood
-    :param gmpe: (string) the gmpe/gsim
-    :param imt: (string) the intensity measure type
-
-    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
-    a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
-    representing the plot data.
-    Additional keys: 'median' (float) representing the median of the data
-    """
-    plot_data = {}
-    data = residuals._compute_likelihood_values_for(gmpe, imt)
-    for res_type in data.keys():
-        lh_vals, median_lh = data[res_type]
-        vals, bins = _get_lh_histogram_data(lh_vals, bin_width=bin_width)
-        plot_data[res_type] = {
-            'x': bins[:-1],
-            'y': vals,
-            'median': median_lh,
-            'xlabel': "LH (%s)" % imt,
-            'ylabel': "Frequency"
-            }
-
-    return plot_data
-
-
 def _get_lh_histogram_data(lh_values, bin_width=0.1):
     """
     Retreives the histogram of the likelihoods
