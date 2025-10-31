@@ -332,7 +332,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         else:
             vs30_measured = 0 # Inferred
 
-        # Get station backarc
+        # Get station backarc flag
         ba = metadata["st_backarc"]
         if ba == "no info provided":
             st_backarc = False
