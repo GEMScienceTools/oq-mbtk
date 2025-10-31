@@ -163,7 +163,7 @@ class Configurations(object):
                                  "can be used in the Comparison module.")
             # Load CSV
             rup = get_ruptures(rup_data['fname'])[0]
-            # Force dtype of surf mesh to F32 to permit strike and dip
+            # Force dtype of surf mesh to F32 to permit strike and dip retrieval
             rup.surface.mesh = RectangularMesh(rup.surface.mesh.lons.astype(F32),
                                                rup.surface.mesh.lats.astype(F32),
                                                rup.surface.mesh.depths.astype(F32)
