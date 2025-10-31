@@ -334,10 +334,17 @@ class GEMFlatfileParser(SMDatabaseReader):
 
         # Get backarc
         ba = metadata["st_backarc"]
-        if ba in [0, "info not provided"]:
-            backarc = False
+        if ba == "no info provided":
+            st_backarc = False
+        elif int(ba) == 0:
+            st_backarc = False
         else:
-            backarc = True
+            try:
+                assert int(ba) == 1
+            except:
+                ValueError("Invalid option for station backarc in GEM Flatfile "
+                           "(choose from 0, 1 or 'no data provided').")
+            st_backarc = True
 
         # Make the site object
         site = RecordSite(site_id,
@@ -349,7 +356,7 @@ class GEMFlatfileParser(SMDatabaseReader):
                           vs30,
                           vs30_measured,
                           network_code=network_code,
-                          backarc=backarc)
+                          backarc=st_backarc)
 
         # Add basin params
         site.z1pt0 = valid.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
