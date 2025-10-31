@@ -337,7 +337,6 @@ class GEMFlatfileParser(SMDatabaseReader):
         if ba in [0, "info not provided"]:
             backarc = False
         else:
-            assert ba == 1
             backarc = True
 
         # Make the site object
