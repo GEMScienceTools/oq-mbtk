@@ -20,10 +20,8 @@ Parse the GEM globally homogenised flatfile into SMT metadata.
 """
 import os
 import csv
-import numpy as np
 import pandas as pd
 import copy
-import h5py
 import pickle
 from math import sqrt
 from linecache import getline
@@ -69,6 +67,7 @@ HEADERS = ["event_id",
            "st_latitude",
            "st_longitude",
            "st_elevation",
+           "st_backarc",
            "vs30_m_sec",
            "vs30_meas_type",
            "z1pt0 (m)",
@@ -333,6 +332,14 @@ class GEMFlatfileParser(SMDatabaseReader):
         else:
             vs30_measured = 0 # Inferred
 
+        # Get backarc
+        ba = metadata["st_backarc"]
+        if ba in [0, "info not provided"]:
+            backarc = False
+        else:
+            assert ba == 1
+            backarc = True
+
         # Make the site object
         site = RecordSite(site_id,
                           station_code,
@@ -342,7 +349,8 @@ class GEMFlatfileParser(SMDatabaseReader):
                           elevation,
                           vs30,
                           vs30_measured,
-                          network_code=network_code, country=None)
+                          network_code=network_code,
+                          backarc=backarc)
 
         # Add basin params
         site.z1pt0 = valid.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
