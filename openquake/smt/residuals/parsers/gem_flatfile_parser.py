@@ -341,10 +341,12 @@ class GEMFlatfileParser(SMDatabaseReader):
         else:
             try:
                 assert int(ba) == 1
+                st_backarc = True
             except:
-                ValueError("Invalid option for station backarc in GEM Flatfile "
-                           "(choose from 0, 1 or 'no data provided').")
-            st_backarc = True
+                raise ValueError(
+                    "Invalid option for station backarc in GEM Flatfile "
+                    "(can be a value of 0, 1 or 'no info provided').")
+            
 
         # Make the site object
         site = RecordSite(site_id,
