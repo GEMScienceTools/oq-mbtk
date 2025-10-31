@@ -841,7 +841,7 @@ def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
         ax[1, ax_index].set_ylabel('Between-Event')
         ax[0, ax_index].set_ylabel('Total')
     ax[0, 0].set_title('Mean of GMPE Residuals')    
-    ax[0, 1].set_title('Sigma of GMPE Residuals')
+    ax[0, 1].set_title('Std Dev of GMPE Residuals')
 
     return fig, ax
 
@@ -896,6 +896,7 @@ def plot_residual_means_and_stds(
                      label=gmpe_label,
                      color=color_inp,
                      marker=marker_inp)
+    
     return ax
 
 
@@ -939,7 +940,14 @@ def plot_residual_means_and_stds_with_period(residuals, filename):
         ax = plot_residual_means_and_stds(
             ax, res_dists, "Std Dev", gmpe, imts_to_plot, marker_inp, color_inp)
         
+    # Add grid to each axis
+    for i in range(ax.shape[0]):
+        for j in range(ax.shape[1]):
+            ax[i, j].grid()
+
+    # Add legend
     ax[0, 0].legend(loc='upper right', ncol=2, fontsize=6)
+
     plt.savefig(filename)
     plt.close()
 
