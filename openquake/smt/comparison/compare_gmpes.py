@@ -31,11 +31,15 @@ from openquake.commonlib.oqvalidation import OqParam
 from openquake.hazardlib.source.rupture import get_ruptures
 from openquake.hazardlib.imt import from_string
 from openquake.hazardlib.gsim_lt import GsimLogicTree
+from openquake.hazardlib.geo.mesh import RectangularMesh
 
 from openquake.smt.comparison.utils_compare_gmpes import (
     plot_trellis_util, plot_spectra_util, plot_ratios_util,
     plot_cluster_util, plot_sammons_util, plot_matrix_util,
     compute_matrix_gmpes)
+
+
+F32 = np.float32
 
 
 class Configurations(object):
@@ -159,7 +163,12 @@ class Configurations(object):
                                  "can be used in the Comparison module.")
             # Load CSV
             rup = get_ruptures(rup_data['fname'])[0]
-
+            # Force dtype of surf mesh to F32 to permit strike and dip
+            rup.surface.mesh = RectangularMesh(rup.surface.mesh.lons.astype(F32),
+                                               rup.surface.mesh.lats.astype(F32),
+                                               rup.surface.mesh.depths.astype(F32)
+                                               )
+            
         # Set other params (not used for rup reconstruction but still req)
         self.lon = rup.hypocenter.longitude
         self.lat = rup.hypocenter.latitude
