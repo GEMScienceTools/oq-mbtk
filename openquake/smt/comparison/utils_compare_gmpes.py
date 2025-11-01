@@ -844,7 +844,6 @@ def plot_sammons_util(imt_list,
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
     # Tidy and save
-    pyplot.legend(loc="center left", bbox_to_anchor=(1.25, 0.50), fontsize='16')
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.tight_layout()
     
