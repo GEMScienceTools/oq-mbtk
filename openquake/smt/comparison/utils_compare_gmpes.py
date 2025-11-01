@@ -205,6 +205,7 @@ def plot_trellis_util(config, output_directory):
     output = os.path.join(output_directory, 'TrellisPlots.png')
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(output, bbox_inches='tight', dpi=200, pad_inches=0.2)
+    pyplot.close()
     
     return store_gmm_curves
     
@@ -531,6 +532,7 @@ def plot_ratios_util(config, output_directory):
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     out = os.path.join(output_directory, 'RatioPlots.png')
     pyplot.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
+    pyplot.close()
 
 
 def compute_matrix_gmpes(config, mtxs_type):
@@ -720,14 +722,14 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     else:
         nrows = int(np.ceil(len(imt_list) / 2)) 
     
-    fig2, axs2 = pyplot.subplots(nrows, ncols)
-    fig2.set_size_inches(12, 6*nrows)
+    fig, axs = pyplot.subplots(nrows, ncols)
+    fig.set_size_inches(12, 6*nrows)
 
     for n, i in enumerate(imt_list):                
         if len(imt_list) < 3:
-            ax = axs2[n]
+            ax = axs[n]
         else:
-            ax = axs2[np.unravel_index(n, (nrows, ncols))]           
+            ax = axs[np.unravel_index(n, (nrows, ncols))]           
         ax.imshow(matrix_dist[n], cmap='gray') 
         
         # Add title
@@ -752,6 +754,7 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     # Save
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.tight_layout()        
+    pyplot.close()
     
     return matrix_dist
 
@@ -846,6 +849,7 @@ def plot_sammons_util(imt_list,
     # Tidy and save
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.tight_layout()
+    pyplot.close()
     
     return coo_per_imt
 
@@ -936,6 +940,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     # Save
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.4)
     pyplot.tight_layout() 
+    pyplot.close()
     
     return matrix_z
 
@@ -1446,11 +1451,13 @@ def save_spectra_plot(f1, obs_spectra, output_dir, eq_id, st_id):
     if obs_spectra is None:
         out = os.path.join(output_dir, 'ResponseSpectra.png')
         f1.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
+        pyplot.close()
     else:
         rec_str = str(eq_id) + '_recorded_at_' + str(st_id)
         rec_str = rec_str.replace(' ', '_').replace('-', '_').replace(':', '_')
         out = os.path.join(output_dir, 'ResponseSpectra_' + rec_str + '.png')
         f1.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
+        pyplot.close()
 
 
 def raise_spectra_dist_error(dist, dist_type, r_vals):
