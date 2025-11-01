@@ -287,8 +287,12 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             sk = f"{config.dist_type}={dist}km, Mw={m}, depth={depth_g}km, vs30={config.vs30}m/s"
 
             for g, gmpe in enumerate(config.gmpes_list):     
+
+                # Set stores
                 rs_50p, sig, rs_ps, rs_ms = [], [], [], []
                 col = colors[g]
+
+                # Perform mgmpe check
                 gmm = mgmpe_check(gmpe)
                 
                 for k, imt in enumerate(imt_list): 
@@ -580,9 +584,10 @@ def compute_matrix_gmpes(config, mtxs_type):
             else:
                 wt = None
 
-            medians, meds_wt = [], []
+            medians = []
             for l, m in enumerate(mag_list): # Iterate though mag_list
             
+                # Perform mgmpe check
                 gmm = mgmpe_check(gmpe)
 
                 # Get depth param
@@ -625,6 +630,11 @@ def compute_matrix_gmpes(config, mtxs_type):
                 std = [std[0][0][idx]]
                 tau = [tau[0][0][idx]]
                 phi = [phi[0][0][idx]]
+
+                # If plotting percentiles check GMM has sigma model
+                if mtxs_type in ["16th_perc", "18th_perc"] and np.all(std[0]==0):
+                    raise ValueError(f"Cannot perform Euclidean analysis for a "
+                                     f"GMPE which lacks a sigma model (GMPE {g+1})")
 
                 # Store required percentile of ground-shaking
                 if mtxs_type == 'median':
