@@ -394,6 +394,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             # Add grid and set xlims
             ax1.set_xlim(min(periods), max(periods))
             ax1.grid(True)
+            if config.nstd > 0:
+                ax1.semilogy()
 
     # Finalise the plots and save fig
     if len(mag_list) * len(config.dist_list) == 1:
