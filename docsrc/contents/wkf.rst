@@ -166,7 +166,7 @@ The ``completeness_analysis`` tool takes in a set of possible years and magnitud
     folder_figs = os.path.join (".", "model", "figs", "zone_completeness_figs")
     foler_compl_results = os.path.join(".", "model", "zone_completeness")
 
-    cmd = f"oqm cat completeness_analysis \"{pattern}\" {config} {_figs} {completeness_param_folder} {folder_compl_results}"
+    cmd = f"oqm cat completeness_analysis \"{pattern}\" {config} {folder_figs} {completeness_param_folder} {folder_compl_results}"
     p = subprocess.run(cmd, shell=True)
     
 Running the above will generate the completeness windows to test from the years and magnitudes in the config and write them to files in the specified completeness_param_folder. Then, for each csv file in the subcatalogues folder, it will test the completeness windows for the catalogue, calculate the FMD parameters for the best fitting window and write these to the config along with the completeness windows, and plot the best-fitting model in a png stored in folder_figs. In some cases, the completeness_analysis may fail to return completeness windows for a zone. This may be because there are too few events in the catalogue once the completeness windows are applied or because the calculated b-value for all of the possible complete catalogues is outwith the range specified by bmin and bmax in the [completeness] section of the .toml file. In this case, completeness can be manually added to the source or, if nothing is specified for the source, the source will be assigned the [default] completeness_table in the config. 
