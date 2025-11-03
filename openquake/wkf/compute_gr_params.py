@@ -106,7 +106,10 @@ def compute_a_value_from_density(fname_input_pattern: str,
 
 
 def get_mmax_ctab(model, src_id):
-
+    """
+    Return the maxmimum magnitude and completeness table 
+    
+    """
     if 'sources' in model:
         if (src_id in model['sources'] and
                 'mmax' in model['sources'][src_id]):
@@ -134,7 +137,7 @@ def get_exrs(df: pd.DataFrame, bgr: str):
     :param df:
         An instance of :class:`pandas.DataFrame` with the following columns:
         - `mag`: magnitude
-        - `nobs`
+        - `nobs`: number of observations
         - `deltaT`: duration [yr]
     :param bgr:
         The b-value of the Gutenberg-Richer relatioship
@@ -508,6 +511,26 @@ def _weichert_plot(cent_mag, n_obs, binw, t_per, ex_rates_scaled,
                    lcl, ucl, mmax, aval_wei, bval_wei, src_id=None,
                    plt_show=False, ref_mag=None, ref_mag_rate=None,
                    ref_mag_rate_sig=None, bval_sigma=None):
+    """
+    Plot the Weichert parameter fit against the catalogue
+    
+    :param cent_mag: centre magnitudes of plotting bins
+    :param n_obs: number of observations in plotting bins
+    :param binw: binwidth
+    :param t_per: time length for observation windows (used for incremental)
+    :param ex_rates_scaled: scaled exceedance rates (output from `get_weichert_confidence_intervals`)
+    :param lcl: lower confidence interval (output from `get_weichert_confidence_intervals`)
+    :param ucl: upper confidence interval (output from `get_weichert_confidence_intervals`)
+    :param mmax: maximum magnitude
+    :param aval_wei: Weichert a-value
+    :param bval_wei: Weichert b-value
+    :param src_id: source id (used for plot title)
+    :param plt_show: flag to show plot
+    :param ref_mag: reference magnitude 
+    :param ref_mag_rate: rate at reference magnitude
+    :param ref_mag_rate_sigma: uncertainty in rate at reference magnitude
+    :param bval_sigma: uncertainty in b-value
+    """
 
     fig, ax = plt.subplots()
 

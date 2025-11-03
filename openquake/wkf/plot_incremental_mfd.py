@@ -66,7 +66,7 @@ def plot_GR_inc_fixedparams_completeness_imp(cat,mbin, a, b, comptab, plt_show =
         e.g. comptab = [[1975,   5.5], [1960, 5.0], [1900, 7.0]]
     :param plt_show:
         boolean specifying if plot should be displayed. Defaults to True if unspecified
-    :param plt_title:,
+    :param plt_title:
         title for plot
 
     '''
