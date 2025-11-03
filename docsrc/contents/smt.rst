@@ -201,8 +201,8 @@ Plotting of Residuals
        >
        > # Plot residual probability density function for a specified GMPE from gmpe_list and intensity measure from imt_list
        > rspl.ResidualPlot(resid, gmpe_list[5], imt_list[0], filename, filetype = 'jpg') # Plot for gmpe in position 5 
-                                                                                          # in gmpe_list and intensity
-                                                                                          # measure in position 0 in imt_list
+                                                                                         # in gmpe_list and intensity
+                                                                                         # measure in position 0 in imt_list
         
 Residual distribution plot for Boore et al. 2020 and PGA:
     .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_bias+sigma.jpeg
@@ -415,7 +415,7 @@ Stochastic Area Based Ranking (Sunny et al. 2021)
 Comparing GMPEs
 ***************
 
-1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals, we can also compare the behaviours of GMPEs for a given set of highly customisable earthquake scenarios using the tools within the Comparison module. The tools within the Comparison module includes plotting capabilities for response spectra and attenuation curves (trellis plots), as well as methods for considering the similarities of GMPE predictions in Euclidean space (i.e. distances) such as Sammon's Maps and hierarchical clustering dendrogram plots. These tools are highly useful for better understanding the behaviours of GMMs in ground-shaking scenarios of interest to a specific region and tectonic region type, These scenarios could potentially be identified from a disaggregation analysis for some sites of interest within a PSHA. Therefore, such tools can be used to help further inform the construction of a GMC logic tree using some GMPEs identified as being potentially suitable for application to a given region and tectonic region type from a residual analysis.
+1. Alongside the smt's capabilities for evaluating GMPEs in terms of residuals, we can also compare the behaviours of GMPEs for a given set of highly customisable earthquake scenarios using the tools within the Comparison module. The tools within the Comparison module includes plotting capabilities for response spectra and attenuation curves (trellis plots), as well as methods for considering the similarities of GMPE predictions in Euclidean space (i.e. distances) such as Sammon Maps and hierarchical clustering dendrogram plots. These tools are highly useful for better understanding the behaviours of GMMs in ground-shaking scenarios of interest to a specific region and tectonic region type, These scenarios could potentially be identified from a disaggregation analysis for some sites of interest within a PSHA. Therefore, such tools can be used to help further inform the construction of a GMC logic tree using some GMPEs identified as being potentially suitable for application to a given region and tectonic region type from a residual analysis.
     
     .. code-block:: ini
     
@@ -431,90 +431,89 @@ Comparing GMPEs
     .. code-block:: ini
     
         [general]
-        imt_list = ['PGA', 'SA(0.1)', 'SA(0.5)', 'SA(1.0)'] # IMTs to compute attenuation curves for
-        max_period = 2 # Max period for response spectra (capped by max period in GMMs)
+        imt_list = ['PGA', 'SA(0.2)', 'SA(1.0)'] # IMTs to compute attenuation curves for
+        max_period = 2 # Max period for response spectra (can't exceed maximum period in a specified GMPE)
         minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
         maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
-        dist_type = 'repi' # or rjb, rrup or rhypo used in trellis/spectra
-        dist_list = [10, 100, 250] # distance intervals for use in spectra plots
-        Nstd = 1 # Truncation for GMM sigma distribution
-        
-        # Specify site properties (vs30 must be specified - the others are proxied if key is missing)
-        [site_properties]
+        dist_type = 'repi' # Specify distance metric for trellis and response spectra
+        dist_list = [10, 100, 250] # Distance intervals for use in spectra plots
+        Nstd = 0 # Truncation for GMM sigma distribution
+
+        [site_properties] # Specify site properties (vs30 must be specified - the others are proxied if key is missing)
         vs30 = 800
-        z1pt0 = 30.0  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
-        z2pt5 = 0.57  # (km) - if -999 compute from each GMM's own vs30 to z2pt5 relationship
+        z1pt0 = -999  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
+        z2pt5 = -999  # (km) - if -999 compute from each GMM's own vs30 to z2pt5 relationship
         up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
         volc_back_arc = false # true or false
         eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
-        
-        # Characterise earthquake for the region of interest as finite rupture
-        [source_properties]
-        trt = 'None' # Either string of 'None' to use user-provided aratio OR specify a 
-                     # TRT string from ASCR, InSlab, Interface, Stable, Upper_Mantle,
-                     # Volcanic, Induced, Induced_Geothermal to assign a trt-dependent
-                     # proxy aratio
-        ztor = 'None' # Set to string of 'None' to NOT consider otherwise specify as
-                      # array matching number of mag and depth values
-        strike = -999
-        dip =  60
-        rake = 90 # Must be provided. Strike and dip can be approximated if either
-                  # set to -999
-        aratio  = 2 # If set to -999 the user-provided trt string will be used 
-                    # to assign a trt-dependent aratio
-        mags = [5, 6, 7] # Mags used only for trellis and response spectra
-        depths = [20, 20, 20] # Depth per magnitude for trellis and response spectra
-        
-        [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (only need specifying if using these functions)
+
+        [source_properties] # Characterise EQ as finite rupture
+        lon = 0
+        lat = 0
+        strike = 0
+        dip = 45
+        rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
+        mags = [5,6,7] # mags used only for trellis and response spectra
+        depths = [20,25,30] # depth per magnitude for trellis and response spectra
+        ztor = -999 # Set to -999 to NOT consider
+        aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
+        trt = -999 # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
+
+        [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
         mmin = 5
         mmax = 7
         spacing = 0.1
-        depths_for_euclidean = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
-        gmpe_labels = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CA15', 'AK14']
-        
-        [models] # Specify GMMs
+        depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
+        gmpe_labels = ['B20', 'L19', 'K1', 'K2', 'K3', 'K4', 'K5', 'CB14', 'AK14']
 
-        # Plot logic tree and individual GMPEs within first GMC logic tree config (gmc1)
+        [models] # Specify GMMs
+  
+        # Plot logic tree and individual GMPEs for below GMC logic tree config (gmc1)
         [models.BooreEtAl2020]
-        lt_weight_gmc1 = 0.30
-            
+        lt_weight_gmc1 = 0.3
+         
         [models.LanzanoEtAl2019_RJB_OMO]
         lt_weight_gmc1 = 0.40
-        
-        # Default ESHM20 logic tree branches considered in gmc1
+
+        # Default K20_ESHM20 logic tree branches considered in gmc1
         [models.1-KothaEtAl2020ESHM20]
         lt_weight_gmc1 = 0.000862
         sigma_mu_epsilon = 2.85697 
         c3_epsilon = 1.72    
+
         [models.2-KothaEtAl2020ESHM20]   
         lt_weight_gmc1 = 0.067767
         sigma_mu_epsilon = 1.35563
         c3_epsilon = 0
-        [models.3-KothaEtAl2020ESHM20]   
+
+        [models.3-KothaEtAl2020ESHM20]
         lt_weight_gmc1 = 0.162742
         sigma_mu_epsilon = 0
         c3_epsilon = 0        
+
         [models.4-KothaEtAl2020ESHM20]
         lt_weight_gmc1 = 0.067767
         sigma_mu_epsilon = -1.35563
         c3_epsilon = 0 
+
         [models.5-KothaEtAl2020ESHM20]
         lt_weight_gmc1 = 0.000862
         sigma_mu_epsilon = -2.85697 
         c3_epsilon = -1.72    
             
-        # Plot logic tree only for a second GMC logic tree config (gmc2)
-        [models.CauzziEtAl2014]
+        # Plot logic tree only for the second GMC logic tree config (gmc2)
+        [models.CampbellBozorgnia2014]
         lt_weight_gmc2_plot_lt_only = 0.50
-            
+        estimate_ztor=true
+
         [models.AkkarEtAlRjb2014]
         lt_weight_gmc2_plot_lt_only = 0.50
-            
-        # Also specify a GMPE to compute ratios of the attenuation against (GMPE/baseline)
-        [ratios_baseline_gmm.BooreEtAl2020]
          
+        # Also specify a GMM to compute ratios of the attenuation against (GMM/baseline)
+        [ratios_baseline_gmm.BooreEtAl2020]
+
         [custom_colors]
-        custom_colors_flag = 'False' # Set to "True" for custom colours in plots
+        custom_colors_flag = false # Set to true for custom colours in plots)
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
             
 3. Trellis Plots 
@@ -567,20 +566,20 @@ Comparing GMPEs
     Ratio plots for input parameters specified in toml file (note that here the baseline GMPE is ``BooreEtAl2014``):
         .. image:: /contents/smt_images/RatioPlots.png      
 
-7. Sammon's Maps
+7. Sammon Maps
 
-   We can plot Sammon's Maps to examine how similar the medians (and 16th and 84th percentiles) of predicted ground-motion of each GMPE are (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon's mapping procedure).
+   We can plot Sammon Maps to examine how similar the medians (and 16th and 84th percentiles) of predicted ground-motion of each GMPE are (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon Mapping procedure).
    
    A larger distance between two plotted GMPEs represents a greater difference in the predicted ground-motion. It should be noted that: (1) more than one 2D configuration can exist for a given set of GMPEs and (2) that the absolute numbers on the axes do not have a physical meaning.
   
-   Sammon's Maps can be generated as follows:
+   Sammon Maps can be generated as follows:
    
     .. code-block:: ini
     
-       > # Generate Sammon's Maps
+       > # Generate Sammon Maps
        > comp.plot_sammons(filename, output_directory)   
 
-    Sammon's Maps (median predicted ground-motion) for input parameters specified in toml file:
+    Sammon Maps (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_SammonMaps.png
     
 8. Hierarchical Clustering
@@ -601,7 +600,7 @@ Comparing GMPEs
          
 9. Matrix Plots of Euclidean Distance
 
-   In addition to Sammon's Maps and hierarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
+   In addition to Sammon Maps and hierarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.
    
    Within the matrix plots the darker cells represent a smaller Euclidean distance (and therefore greater similarity) between each GMPE for the given intensity measure.
    
@@ -610,7 +609,7 @@ Comparing GMPEs
     .. code-block:: ini
     
        > # Generate matrix plots of Euclidean distance
-       > comp.plot_euclidean(filename, output_directory)
+       > comp.plot_matrix(filename, output_directory)
 
     Matrix plots of Euclidean distance between GMPEs (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Euclidean.png

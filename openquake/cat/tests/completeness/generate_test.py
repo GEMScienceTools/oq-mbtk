@@ -31,16 +31,13 @@ from openquake.hmtk.seismicity.catalogue import Catalogue
 from openquake.hmtk.seismicity.occurrence.utils import get_completeness_counts
 from openquake.mbt.tools.model_building.dclustering import _add_defaults
 from openquake.cat.completeness.norms import get_completeness_matrix
+from openquake.cat.completeness.generate import _get_completenesses
 
 
 class CompletenessMatrixTest(unittest.TestCase):
 
     def setUp(self):
-        dat = [[1900, 6.0],
-               [1980, 6.0],
-               [1970, 5.0],
-               [1980, 5.0],
-               [1990, 5.0]]
+        dat = [[1900, 6.0], [1980, 6.0], [1970, 5.0], [1980, 5.0], [1990, 5.0]]
         dat = np.array(dat)
         cat = Catalogue()
         cat.load_from_array(['year', 'magnitude'], dat)
@@ -51,20 +48,133 @@ class CompletenessMatrixTest(unittest.TestCase):
 
     def test_case01(self):
         binw = 0.5
-        oin, out, cmags, cyeas = get_completeness_matrix(self.cat, self.compl,
-                                                         0.5, 10.0)
-        oin_expected = np.array([[-1., -1., -1., -1., -1., -1., -1., -1.,  1.,  1.],
-                                 [-1., -1., -1., -1., -1.,  0.,  0.,  0.,  0.,  0.],
-                                 [-1., -1., -1., -1., -1.,  0.,  0.,  0.,  1.,  0.]])
-        out_expected = np.array([[ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  1., -1., -1.],
-                                 [ 0.,  0.,  0.,  0.,  0., -1., -1., -1., -1., -1.],
-                                 [ 1.,  0.,  0.,  0.,  0., -1., -1., -1., -1., -1.]])
+        oin, out, cmags, cyeas = get_completeness_matrix(
+            self.cat, self.compl, 0.5, 10.0
+        )
+        oin_expected = np.array(
+            [
+                [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0],
+                [-1.0, -1.0, -1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [-1.0, -1.0, -1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+            ]
+        )
+        out_expected = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, -1.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0, -1.0, -1.0, -1.0],
+                [1.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0, -1.0, -1.0, -1.0],
+            ]
+        )
         np.testing.assert_array_equal(oin, oin_expected)
         np.testing.assert_array_equal(out, out_expected)
 
         # Check the consistency of results with the ones provided by the
         # completeness count
-        cmag, t_per, n_obs = get_completeness_counts(self.cat, self.compl,
-                                                     binw)
+        cmag, t_per, n_obs = get_completeness_counts(
+            self.cat, self.compl, binw
+        )
         oin[oin < 0] = 0.0
         np.testing.assert_array_equal(np.sum(oin, axis=1), n_obs)
+
+
+def test_get_completenesses():
+    mags = [
+        5.0,
+        6.0,
+        6.5,
+        7.0,
+    ]
+    years = [1904, 1940, 1970, 1985, 1995, 2005]
+
+    completeness_perms = _get_completenesses(mags, years)[0]
+
+    perms = np.array(
+        [
+            [3, 3, 3, 3, 3, 3],
+            [2, 3, 3, 3, 3, 3],
+            [2, 2, 3, 3, 3, 3],
+            [2, 2, 2, 3, 3, 3],
+            [2, 2, 2, 2, 3, 3],
+            [2, 2, 2, 2, 2, 3],
+            [2, 2, 2, 2, 2, 2],
+            [1, 3, 3, 3, 3, 3],
+            [1, 2, 3, 3, 3, 3],
+            [1, 2, 2, 3, 3, 3],
+            [1, 2, 2, 2, 3, 3],
+            [1, 2, 2, 2, 2, 3],
+            [1, 2, 2, 2, 2, 2],
+            [1, 1, 3, 3, 3, 3],
+            [1, 1, 2, 3, 3, 3],
+            [1, 1, 2, 2, 3, 3],
+            [1, 1, 2, 2, 2, 3],
+            [1, 1, 2, 2, 2, 2],
+            [1, 1, 1, 3, 3, 3],
+            [1, 1, 1, 2, 3, 3],
+            [1, 1, 1, 2, 2, 3],
+            [1, 1, 1, 2, 2, 2],
+            [1, 1, 1, 1, 3, 3],
+            [1, 1, 1, 1, 2, 3],
+            [1, 1, 1, 1, 2, 2],
+            [1, 1, 1, 1, 1, 3],
+            [1, 1, 1, 1, 1, 2],
+            [1, 1, 1, 1, 1, 1],
+            [0, 3, 3, 3, 3, 3],
+            [0, 2, 3, 3, 3, 3],
+            [0, 2, 2, 3, 3, 3],
+            [0, 2, 2, 2, 3, 3],
+            [0, 2, 2, 2, 2, 3],
+            [0, 2, 2, 2, 2, 2],
+            [0, 1, 3, 3, 3, 3],
+            [0, 1, 2, 3, 3, 3],
+            [0, 1, 2, 2, 3, 3],
+            [0, 1, 2, 2, 2, 3],
+            [0, 1, 2, 2, 2, 2],
+            [0, 1, 1, 3, 3, 3],
+            [0, 1, 1, 2, 3, 3],
+            [0, 1, 1, 2, 2, 3],
+            [0, 1, 1, 2, 2, 2],
+            [0, 1, 1, 1, 3, 3],
+            [0, 1, 1, 1, 2, 3],
+            [0, 1, 1, 1, 2, 2],
+            [0, 1, 1, 1, 1, 3],
+            [0, 1, 1, 1, 1, 2],
+            [0, 1, 1, 1, 1, 1],
+            [0, 0, 3, 3, 3, 3],
+            [0, 0, 2, 3, 3, 3],
+            [0, 0, 2, 2, 3, 3],
+            [0, 0, 2, 2, 2, 3],
+            [0, 0, 2, 2, 2, 2],
+            [0, 0, 1, 3, 3, 3],
+            [0, 0, 1, 2, 3, 3],
+            [0, 0, 1, 2, 2, 3],
+            [0, 0, 1, 2, 2, 2],
+            [0, 0, 1, 1, 3, 3],
+            [0, 0, 1, 1, 2, 3],
+            [0, 0, 1, 1, 2, 2],
+            [0, 0, 1, 1, 1, 3],
+            [0, 0, 1, 1, 1, 2],
+            [0, 0, 1, 1, 1, 1],
+            [0, 0, 0, 3, 3, 3],
+            [0, 0, 0, 2, 3, 3],
+            [0, 0, 0, 2, 2, 3],
+            [0, 0, 0, 2, 2, 2],
+            [0, 0, 0, 1, 3, 3],
+            [0, 0, 0, 1, 2, 3],
+            [0, 0, 0, 1, 2, 2],
+            [0, 0, 0, 1, 1, 3],
+            [0, 0, 0, 1, 1, 2],
+            [0, 0, 0, 1, 1, 1],
+            [0, 0, 0, 0, 3, 3],
+            [0, 0, 0, 0, 2, 3],
+            [0, 0, 0, 0, 2, 2],
+            [0, 0, 0, 0, 1, 3],
+            [0, 0, 0, 0, 1, 2],
+            [0, 0, 0, 0, 1, 1],
+            [0, 0, 0, 0, 0, 3],
+            [0, 0, 0, 0, 0, 2],
+            [0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0],
+        ]
+    )
+
+    np.testing.assert_array_equal(completeness_perms, perms)

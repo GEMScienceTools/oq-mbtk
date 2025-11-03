@@ -8,13 +8,23 @@ on:
   schedule:
     - cron: "0 2 * * *"
   workflow_dispatch:
-
+    inputs:
+      git-ref:
+        description: OQ engine branch
+        default: master
+        required: true
 jobs:
   test:
     name: hazard test
     runs-on: ubuntu-latest
     env:
       MPLBACKEND: 'Agg'
+      GITHUB_PULL_REQUEST: ${{ github.event.number }}
+      GITHUB_DEF_BR:  ${{ github.event.repository.default_branch }}
+      GITHUB_REF:  ${{ github.ref }}
+      GITHUB_HD_REF:  ${{ github.head_ref }}
+      GITHUB_BS_REF:  ${{ github.base_ref }}
+      GITHUB_INPUT_REF: ${{ github.event.inputs.git-ref }}
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -23,13 +33,22 @@ jobs:
         python-version: "3.11"
     - name: Install dependencies
       run: |
+        sudo apt update
+        sudo apt-get install -y gmt gmt-dcw gmt-gshhg libgmt-dev
         python -m pip install --upgrade pip
-        git clone --depth=1 https://github.com/gem/oq-engine.git
+        git clone --depth=1 -b master https://github.com/gem/oq-engine.git
         cd oq-engine
-        python3 install.py devel
-        cd ..
+        if [ -z "$GITHUB_INPUT_REF" ]
+         then
+           echo "This is not a workflow_dispatch RUN, use master for OQ engine"
+           python install.py devel --version master
+         else
+           echo "This is a workflow_dispatch RUN, use: $GITHUB_INPUT_REF for OQ engine"
+           python install.py devel --version ${GITHUB_INPUT_REF}
+        fi
         source ~/openquake/bin/activate
-        pip list
+        cd ..
+        pip install -r requirements-py311-linux.txt
         pip install -e .
         pip install pytest
     - name: Run test with pytest
@@ -39,11 +58,11 @@ jobs:
         oq --version
         sleep 3
         cd openquake
-        export MPLBACKEND=Agg
-        pytest -vsx --color=yes cat ghm man mbt sub wkf smt
+        pytest -vsx --color=yes cat ghm man mbi mbt sub wkf smt
   pages:
     name: pages
     runs-on: ubuntu-latest
+    needs: test
     env:
       MPLBACKEND: 'Agg'
 

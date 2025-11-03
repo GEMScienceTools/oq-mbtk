@@ -20,12 +20,21 @@ Simple Python Script to integrate a strong motion record using the
 Newmark-Beta method
 """
 import numpy as np
-from math import sqrt
 import matplotlib.pyplot as plt
+from math import sqrt
+from numba import njit
 
 from openquake.smt.utils import (
     get_time_vector, convert_accel_units, get_velocity_displacement, _save_image,)
                      
+
+PLOT_TYPE = {
+    "loglog": lambda ax, x, y : ax.loglog(x, y),
+    "semilogx": lambda ax, x, y : ax.semilogx(x, y),
+    "semilogy": lambda ax, x, y : ax.semilogy(x, y),
+    "linear": lambda ax, x, y : ax.plot(x, y)
+}
+
 
 class ResponseSpectrum(object):
     """
@@ -206,7 +215,7 @@ class NigamJennings(ResponseSpectrum):
         omega2 = omega ** 2.
         omega3 = omega ** 3.
         omega_d = omega * sqrt(1.0 - (self.damping ** 2.))
-        const = {  # noqa
+        const = { 
             'f1': (2.0 * self.damping) / (omega3 * self.d_t),
             'f2': 1.0 / omega2,
             'f3': self.damping * omega,
@@ -242,11 +251,11 @@ class NigamJennings(ResponseSpectrum):
             'PGD': np.max(np.fabs(self.displacement))}
 
         return self.response_spectrum, time_series, x_a, x_v, x_d
-        
+
     def _get_time_series(self, const, omega2):
         """
-        Calculates the acceleration, velocity and displacement time series for
-        the SDOF oscillator
+        Calculates the acceleration, velocity and displacement time
+        series for the SDOF oscillator
         :param dict const:
             Constants of the algorithm
         :param np.ndarray omega2:
@@ -255,39 +264,56 @@ class NigamJennings(ResponseSpectrum):
             x_a = Acceleration time series
             x_v = Velocity time series
             x_d = Displacement time series
-        """
-        x_d = np.zeros([self.num_steps - 1, self.num_per], dtype=float)
-        x_v = np.zeros_like(x_d)
-        x_a = np.zeros_like(x_d)
-        
-        for k in range(0, self.num_steps - 1):
-            yval = k - 1
-            dug = self.acceleration[k + 1] - self.acceleration[k]
-            z_1 = const['f2'] * dug
-            z_2 = const['f2'] * self.acceleration[k]
-            z_3 = const['f1'] * dug
-            z_4 = z_1 / self.d_t
-            if k == 0:
-                b_val = z_2 - z_3
-                a_val = (const['f5'] * b_val) + (const['f4'] * z_4)
-            else:    
-                b_val = x_d[k - 1, :] + z_2 - z_3
-                a_val = (const['f4'] * x_v[k - 1, :]) +\
-                    (const['f5'] * b_val) + (const['f4'] * z_4)
-
-            x_d[k, :] = (a_val * const['g1']) + (b_val * const['g2']) +\
-                z_3 - z_2 - z_1
-            x_v[k, :] = (a_val * const['h1']) - (b_val * const['h2']) - z_4
-            x_a[k, :] = (-const['f6'] * x_v[k, :]) - (omega2 * x_d[k, :])
-        return x_a, x_v, x_d
+        """       
+        return _time_series(
+            self.acceleration.astype(np.float64),
+            self.d_t,
+            self.num_steps,
+            self.num_per,
+            const['f1'],
+            const['f2'],
+            const['f4'],
+            const['f5'],
+            const['f6'],
+            const['g1'],
+            const['g2'],
+            const['h1'],
+            const['h2'],
+            omega2
+        )
 
 
-PLOT_TYPE = {
-    "loglog": lambda ax, x, y : ax.loglog(x, y),
-    "semilogx": lambda ax, x, y : ax.semilogx(x, y),
-    "semilogy": lambda ax, x, y : ax.semilogy(x, y),
-    "linear": lambda ax, x, y : ax.plot(x, y)
-}
+@njit(fastmath=True)
+def _time_series(acceleration, d_t, num_steps, num_per,
+                          f1, f2, f4, f5, f6,
+                          g1, g2, h1, h2, omega2):
+    """
+    Use numba to calculate the acceleration, velocity and
+    displacement time series for the SDOF oscillator.
+    """
+    x_d = np.zeros((num_steps - 1, num_per), dtype=np.float64)
+    x_v = np.zeros_like(x_d)
+    x_a = np.zeros_like(x_d)
+
+    for k in range(num_steps - 1):
+        dug = acceleration[k + 1] - acceleration[k]
+        z_1 = f2 * dug
+        z_2 = f2 * acceleration[k]
+        z_3 = f1 * dug
+        z_4 = z_1 / d_t
+
+        if k == 0:
+            b_val = z_2 - z_3
+            a_val = (f5 * b_val) + (f4 * z_4)
+        else:
+            b_val = x_d[k - 1, :] + z_2 - z_3
+            a_val = (f4 * x_v[k - 1, :]) + (f5 * b_val) + (f4 * z_4)
+
+        x_d[k, :] = (a_val * g1) + (b_val * g2) + z_3 - z_2 - z_1
+        x_v[k, :] = (a_val * h1) - (b_val * h2) - z_4
+        x_a[k, :] = (-f6 * x_v[k, :]) - (omega2 * x_d[k, :])
+
+    return x_a, x_v, x_d
 
 
 def plot_response_spectra(spectra, axis_type="loglog", figure_size=(8, 6),

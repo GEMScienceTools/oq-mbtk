@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parser for the NGAWest2 flatfile format
+Parser for the NGAWest2 flatfile
 """
 import pandas as pd
 import os
@@ -47,72 +47,51 @@ from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 # Import the ESM dictionaries
 from .esm_dictionaries import *
 
-SCALAR_LIST = ["PGA", "PGV", "PGD"]
+BASE = os.path.abspath("")
 
-HEADERS = ['event_id',
-           'event_time',
-           'ev_nation_code',
-           'ev_latitude',
-           'ev_longitude',
-           'ev_depth_km',
-           'fm_type_code',
-           'ML',
-           'ML_ref',
-           'Mw',
-           'Mw_ref',
-           'Ms',
-           'Ms_ref',
-           'EMEC_Mw',
-           'EMEC_Mw_type',
-           'EMEC_Mw_ref',
-           'event_source_id',
-           'es_strike',
-           'es_dip',
-           'es_rake',
-           'es_strike_dip_rake_ref',
-           'es_z_top',
-           'es_length',
-           'es_width',
-           'network_code',
-           'station_code',
-           'location_code',
-           'instrument_code',
-           'sensor_depth_m',
-           'proximity_code',
-           'housing_code',
-           'st_nation_code',
-           'st_latitude',
-           'st_longitude',
-           'st_elevation',
-           'vs30_m_sec',
-           'slope_deg',
-           'vs30_m_sec_WA',
-           'epi_dist',
-           'epi_az',
-           'JB_dist',
-           'rup_dist',
-           'Rx_dist',
-           'Ry0_dist',
-           'instrument_type_code',
-           'late_triggered_flag_01',
-           'U_channel_code',
-           'U_azimuth_deg',
-           'V_channel_code',
-           'V_azimuth_deg',
-           'W_channel_code',
-           'U_hp',
-           'V_hp',
-           'W_hp',
-           'U_lp',
-           'V_lp',
-           'W_lp']
+CONV_TO_CMS2 = 981
+
+HDEFS = ["rotD50"]
+
+HEADERS = ["event_id",
+           "event_time",
+           "ev_latitude",
+           "ev_longitude",
+           "ev_depth_km",
+           "fm_type_code",
+           "Mw",
+           "es_strike",
+           "es_dip",
+           "es_rake",
+           "es_z_top",
+           "es_length",
+           "es_width",
+           "network_code",
+           "station_code",
+           "st_latitude",
+           "st_longitude",
+           "vs30_m_sec",
+           "vs30_meas_type",
+           "z1pt0 (m)",
+           "z2pt5 (km)",
+           "epi_dist",
+           "epi_az",
+           "JB_dist",
+           "rup_dist",
+           "Rx_dist",
+           "U_hp",
+           "V_hp",
+           "W_hp",
+           "U_lp",
+           "V_lp",
+           "W_lp"]
 
 
 class NGAWest2FlatfileParser(SMDatabaseReader):
     """
     Parses the data from flatfile to a set of metadata objects
     """
-    M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
+    M_PRECEDENCE = ["Mw"]
     BUILD_FINITE_DISTANCES = False
 
     def parse(self, location='./'):
@@ -123,8 +102,8 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         headers = getline(self.filename, 1).rstrip("\n").split(";")
         for hdr in HEADERS:
             if hdr not in headers:
-                raise ValueError("Required header %s is missing in file"
-                                 % hdr)
+                raise ValueError("Required header %s is missing in file" % hdr)
+            
         # Read in csv
         reader = csv.DictReader(open(self.filename, "r"), delimiter=";")
         self.database = GroundMotionDatabase(self.id, self.name)
@@ -135,17 +114,14 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             if record:
                 # Parse the strong motion
                 record = self._parse_ground_motion(
-                    os.path.join(location, "records"),
-                    row, record, headers)
+                    os.path.join(location, "records"), row, record, headers)
                 self.database.records.append(record)
-
             else:
                 print("Record with sequence number %s is null/invalid"
-                      % "{:s}-{:s}".format(row["event_id"],
-                                           row["station_code"]))
+                      % "{:s}-{:s}".format(
+                          row["event_id"], row["station_code"]))
             if (counter % 100) == 0:
-                print("Processed record %s - %s" % (str(counter),
-                                                    record.id))
+                print("Processed record %s - %s" % (str(counter), record.id))
 
             counter += 1
 
@@ -245,19 +221,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
         idx_m = ngawest2.loc[ngawest2['Ry 2']==-999].index
         ngawest2.loc[idx_m, 'Ry 2'] = None
-        
-        # Remove records with no vs30)
-        idx_m = ngawest2.loc[ngawest2['Vs30 (m/s) selected for analysis']==-999].index
-        ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
-        ngawest2_vert=ngawest2_vert.drop(idx_m).reset_index(drop=True)
-        
-        # Compute Mw from seismic moment using Hanks and Kamori
-        ngawest2['Earthquake Magnitude'] = (np.log10(ngawest2[
-            'Mo (dyne.cm)']) - 16.05)/1.5 # From ngawest2 database rep. pp.122
-        
-        ngawest2 = ngawest2.reset_index(drop=True)
-        ngawest2_vert = ngawest2_vert.reset_index(drop=True)
-      
+    
         # Replace -999 in 'Owner' with unknown network code
         idx_m = ngawest2.loc[ngawest2['Owner']=='-999'].index
         ngawest2.loc[idx_m, 'Owner'] ='NoNetworkCode'
@@ -267,21 +231,23 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         ngawest2['T4.500S'] = (ngawest2['T4.400S']+ngawest2['T4.600S'])/2
         ngawest2_vert['T4.500S'] = (ngawest2_vert['T4.400S'] + ngawest2_vert['T4.600S'])/2        
         
-        # Get path to tmp csv once modified dataframe
-        converted_base_data_path=_get_ESM18_headers(
-            ngawest2, ngawest2_vert, initial_ngaw2_size)
-                
+        # Get path to tmp csv containing reformatted dataframe
+        tmp = _parse_ngawest2(ngawest2, ngawest2_vert, initial_ngaw2_size)        
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"
                           % output_location)
         os.mkdir(output_location)
+        
         # Add on the records folder
         os.mkdir(os.path.join(output_location, "records"))
+        
         # Create an instance of the parser class
-        database = cls(dbid, dbname, converted_base_data_path)
+        database = cls(dbid, dbname, tmp)
+        
         # Parse the records
         print("Parsing Records ...")
         database.parse(location=output_location)
+
         # Save itself to file
         metadata_file = os.path.join(output_location, "metadatafile.pkl")
         print("Storing metadata to file %s" % metadata_file)
@@ -295,14 +261,18 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         Parse a record
         """
         wfid = "_".join([metadata["event_id"], metadata["network_code"],
-                         metadata["station_code"], metadata["location_code"]])
+                         metadata["station_code"]])
         wfid = wfid.replace("-", "_")
+
         # Parse the event metadata
         event = self._parse_event_data(metadata)
+        
         # Parse the distance metadata
         distances = self._parse_distances(metadata, event.depth)
+        
         # Parse the station metadata
         site = self._parse_site_data(metadata)
+        
         # Parse waveform data
         xcomp, ycomp, vert = self._parse_waveform_data(metadata, wfid)
         return GroundMotionRecord(wfid,
@@ -319,14 +289,16 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         eq_id = metadata["event_id"]
         eq_name = metadata["event_id"]
             
-        # Date and s
+        # Date
         eq_datetime = pd.to_datetime(metadata["event_time"])
+
         # Latitude, longitude and depth
         eq_lat = valid.latitude(metadata["ev_latitude"])
         eq_lon = valid.longitude(metadata["ev_longitude"])
         eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
-            raise ValueError('Depth missing for one or more events in flatfile')
+            raise ValueError('Depth missing an events in admitted flatfile')
+        
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          magnitude=None, eq_country=None)
         
@@ -343,100 +315,54 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_magnitudes(self, metadata):
         """
-        So, here things get tricky. Up to four magnitudes are defined in the
-        flatfile (EMEC Mw, MW, Ms and ML). An order of precedence is required
-        and the preferred magnitude will be the highest found
+        NGAWest2 only provides Mw so no mag type precedence required
         """
-        pref_mag = None
-        mag_list = []
-        for key in self.M_PRECEDENCE:
-            mvalue = metadata[key].strip()
-            if mvalue:
-                if key == "EMEC_Mw":
-                    mtype = "Mw"
-                    msource = "EMEC({:s}|{:s})".format(
-                        metadata["EMEC_Mw_type"],
-                        metadata["EMEC_Mw_ref"])
-                else:
-                    mtype = key
-                    msource = metadata[key + "_ref"].strip()
-                mag = Magnitude(float(mvalue),
-                                mtype,
-                                source=msource)
-                if not pref_mag:
-                    pref_mag = copy.deepcopy(mag)
-                mag_list.append(mag)
-        return pref_mag, mag_list
+        # Make Magnitude object just for Mw
+        mag = Magnitude(float(metadata["Mw"].strip()), "Mw", source=None)
+
+        # Preferred magnitude inherently must be the Mw value
+        pref_mag = copy.deepcopy(mag)
+
+        return pref_mag, [mag]
 
     def _parse_rupture_mechanism(self, metadata, eq_id, eq_name, mag, depth):
         """
         If rupture data is available - parse it, otherwise return None
         """
+        # Get the SoF
         sof = metadata["fm_type_code"]
-        if not metadata["event_source_id"].strip():
-            # No rupture model available. Mechanism is limited to a style
-            # of faulting only
-            rupture = Rupture(eq_id, eq_name, mag, None, None, depth)
-            mechanism = FocalMechanism(
-                eq_id, eq_name, GCMTNodalPlanes(), None,
-                mechanism_type=sof)
-            # See if focal mechanism exists
-            fm_set = []
-            for key in ["strike_1", "dip_1", "rake_1"]:
-                if key in metadata:
-                    fm_param = valid.vfloat(metadata[key], key)
-                    if fm_param is not None:
-                        fm_set.append(fm_param)
-            if len(fm_set) == 3:
-                # Have one valid focal mechanism
-                mechanism.nodal_planes.nodal_plane_1 = {"strike": fm_set[0],
-                                                        "dip": fm_set[1],
-                                                        "rake": fm_set[2]}
-            fm_set = []
-            for key in ["strike_2", "dip_2", "rake_2"]:
-                if key in metadata:
-                    fm_param = valid.vfloat(metadata[key], key)
-                    if fm_param is not None:
-                        fm_set.append(fm_param)
-            if len(fm_set) == 3:
-                # Have one valid focal mechanism
-                mechanism.nodal_planes.nodal_plane_2 = {"strike": fm_set[0],
-                                                        "dip": fm_set[1],
-                                                        "rake": fm_set[2]}
 
-            if not mechanism.nodal_planes.nodal_plane_1 and not\
-                mechanism.nodal_planes.nodal_plane_2:
-                # Absolutely no information - base on stye-of-faulting
-                mechanism.nodal_planes.nodal_plane_1 = {
-                    "strike": 0.0,  # Basically unused
-                    "dip": DIP_TYPE[sof],
-                    "rake": MECHANISM_TYPE[sof]
-                    }
-            return rupture, mechanism
+        # Initial rupture
+        rupture = Rupture(eq_id, eq_name, mag, None, None, depth)
 
-        strike = valid.strike(metadata["es_strike"])
-        dip = valid.dip(metadata["es_dip"])
-        rake = valid.rake(metadata["es_rake"])
-        ztor = valid.positive_float(metadata["es_z_top"], "es_z_top")
-        length = valid.positive_float(metadata["es_length"], "es_length")
-        width = valid.positive_float(metadata["es_width"], "es_width")
-        rupture = Rupture(eq_id, eq_name, mag, length, width, ztor)
-
-        # Get mechanism type and focal mechanism
-        # No nodal planes, eigenvalues moment tensor initially
+        # Mechanism
         mechanism = FocalMechanism(
-            eq_id, eq_name, GCMTNodalPlanes(), None,
-            mechanism_type=metadata["fm_type_code"])
-        if strike is None:
-            strike = 0.0
-        if dip is None:
-            dip = DIP_TYPE[sof]
-        if rake is None:
-            rake = MECHANISM_TYPE[sof]
-        # if strike is not None and dip is not None and rake is not None:
-        mechanism.nodal_planes.nodal_plane_1 = {"strike": strike,
-                                                "dip": dip,
-                                                "rake": rake}
+            eq_id,
+            eq_name,
+            GCMTNodalPlanes(),
+            None,
+            mechanism_type=sof)
+        
+        # See if focal mechanism exists and get it if so
+        fm_set = []
+        for key in ["es_strike", "es_dip", "es_rake"]:
+            if key in metadata:
+                fm_param = valid.vfloat(metadata[key], key)
+                if fm_param is not None:
+                    fm_set.append(fm_param)
+
+        if len(fm_set) == 3:
+            # Has a valid focal mechanism (NGAWest2 flatfile only provides
+            # one nodal plane)
+            mechanism.nodal_planes.nodal_plane_1 = {
+                "strike": fm_set[0], "dip": fm_set[1], "rake": fm_set[2]}
+
+        if not mechanism.nodal_planes.nodal_plane_1:
+            # Absolutely no information - base on stye-of-faulting
+            mechanism.nodal_planes.nodal_plane_1 = {
+                "strike": 0.0, "dip": DIP_TYPE[sof], "rake": MECHANISM_TYPE[sof]
+                }
+            
         return rupture, mechanism
 
     def _parse_distances(self, metadata, hypo_depth):
@@ -448,8 +374,8 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         rjb = valid.positive_float(metadata["JB_dist"], "JB_dist")
         rrup = valid.positive_float(metadata["rup_dist"], "rup_dist")
         r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
-        ry0 = valid.positive_float(metadata["Ry0_dist"], "Ry0_dist")
         rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
+        
         if not isinstance(rjb, float):
             # In the first case Rjb == Repi
             rjb = copy.copy(repi)
@@ -463,33 +389,40 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             # any hanging wall effect)
             r_x = copy.copy(-repi)
 
-        if not isinstance(ry0, float):
-            # In the first case Ry0 == Repi
-            ry0 = copy.copy(repi)
+        # ngawest2 lacks Ry0 (only Ry) so proxy the first case of Ry0 == Repi
+        ry0 = copy.copy(repi)
+        
         distances = RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
         distances.azimuth = razim
+
         return distances
 
     def _parse_site_data(self, metadata):
         """
         Parses the site information
         """
+        # Basic site/station information
         network_code = metadata["network_code"].strip()
         station_code = metadata["station_code"].strip()
         site_id = "{:s}-{:s}".format(network_code, station_code)
         site_lon = valid.longitude(metadata["st_longitude"])
         site_lat = valid.latitude(metadata["st_latitude"])
-        elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
+        elevation = None
 
+        # Vs30
         vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
-        vs30_topo = valid.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
-        if vs30:
-            vs30_measured = True
-        elif vs30_topo:
-            vs30 = vs30_topo
-            vs30_measured = False
+        if pd.isnull(vs30):
+            # Need a station vs30 value for residuals (not really, given
+            # some GMMs lack site terms, but good way to prevent confusing
+            # nans in the expected values which appear when computing stats)
+            raise ValueError(f"A vs30 value is missing for {site_id}")
+        vs30_measured_flag = metadata["vs30_meas_type"]
+        if vs30_measured_flag == "measured":
+            vs30_measured = 1
         else:
-            vs30_measured = False
+            vs30_measured = 0 # Either inferred or unknown
+
+        # Make the site object
         site = RecordSite(site_id,
                           station_code,
                           station_code,
@@ -498,23 +431,18 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                           elevation,
                           vs30,
                           vs30_measured,
-                          network_code=network_code,
-                          country=None)
-        site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
-        site.sensor_depth = valid.vfloat(metadata["sensor_depth_m"],
-                                         "sensor_depth_m")
-        site.instrument_type = metadata["instrument_code"].strip()
-        housing_code = metadata["housing_code"].strip()
-        if housing_code and (housing_code in HOUSING):
-            site.building_structure = HOUSING[housing_code]
+                          network_code=network_code, country=None)
+
+        # Add basin params
+        site.z1pt0 = valid.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
+        site.z2pt5 = valid.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
+
         return site
 
     def _parse_waveform_data(self, metadata, wfid):
         """
         Parse the waveform data
         """
-        late_trigger = valid.vint(metadata["late_triggered_flag_01"],
-                                  "late_triggered_flag_01")
         # U channel - usually east
         xorientation = metadata["U_channel_code"].strip()
         xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
@@ -522,7 +450,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                    "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
         xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
                           units="cm/s/s")
-        xcomp.late_trigger = late_trigger
+        
         # V channel - usually North
         vorientation = metadata["V_channel_code"].strip()
         vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
@@ -530,14 +458,12 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                    "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
         vcomp = Component(wfid, vazimuth, waveform_filter=vfilter,
                           units="cm/s/s")
-        vcomp.late_trigger = late_trigger
         zorientation = metadata["W_channel_code"].strip()
         if zorientation:
             zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
                        "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
             zcomp = Component(wfid, None, waveform_filter=zfilter,
                               units="cm/s/s")
-            zcomp.late_trigger = late_trigger
         else:
             zcomp = None
         
@@ -545,28 +471,30 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_ground_motion(self, location, row, record, headers):
         """
-        In this case we parse the information from the flatfile directly
-        to hdf5 at the metadata stage
+        Parse the ground-motion data
         """
         # Get the data
         scalars, spectra = self._retreive_ground_motion_from_row(row, headers)
+
         # Build the hdf5 files
         filename = os.path.join(location, "{:s}.hdf5".format(record.id))
         fle = h5py.File(filename, "w-")
         ims_grp = fle.create_group("IMS")
         for comp, key in [("X", "U"), ("Y", "V"), ("V", "W")]:
             comp_grp = ims_grp.create_group(comp)
+
             # Add on the scalars
             scalar_grp = comp_grp.create_group("Scalar")
             for imt in scalars[key]:
-                if imt in ["ia", "housner"]:
-                    # In the smt convention it is "Ia" and "Housner"
+                if imt in ["ia"]:
+                    # In the smt convention it is "Ia" for Arias Intensity
                     ikey = imt[0].upper() + imt[1:]
                 else:
-                    # Everything else to upper case (PGA, PGV, PGD, T90, CAV)
+                    # Everything else to upper case (PGA, PGV, PGD, CAV)
                     ikey = imt.upper()
                 dset = scalar_grp.create_dataset(ikey, (1,), dtype="f")
                 dset[:] = scalars[key][imt]
+            
             # Add on the spectra
             spectra_grp = comp_grp.create_group("Spectra")
             response = spectra_grp.create_group("Response")
@@ -583,57 +511,53 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
             # Add on the values
             values = spectra[key]["Values"]
-            spectra_dset = accel.create_dataset("damping_05", values.shape,
-                                                dtype="f")
+            spectra_dset = accel.create_dataset("damping_05", values.shape, dtype="f")
             spectra_dset[:] = np.copy(values)
             spectra_dset.attrs["Damping"] = 5.0
-        # Add on the horz values
+
+        # Add on the horizontal values
         hcomp = ims_grp.create_group("H")
-        # Scalars - just geometric mean for now
+        
+        # Scalars
         hscalar = hcomp.create_group("Scalar")
-        for imt in scalars["Geometric"]:
-            if imt in ["ia", "housner"]:
-                # In the smt convention it is "Ia" and "Housner"
-                key = imt[0].upper() + imt[1:]
-            else:
-                # Everything else to upper case (PGA, PGV, PGD, T90, CAV)
-                key = imt.upper()
-            dset = hscalar.create_dataset(key, (1,), dtype="f")
-            dset[:] = scalars["Geometric"][imt]
-        # For Spectra - can support multiple components
+        for htype in HDEFS:
+            hcomp_scalars = hscalar.create_group(htype)
+            for imt in scalars[htype]:
+                if imt in ["ia"]:
+                    # In the smt convention it is "Ia" for Arias Intensity
+                    key = imt[0].upper() + imt[1:]
+                else:
+                    # Everything else to upper case (PGA, PGV, PGD, CAV)
+                    key = imt.upper()          
+                dset = hcomp_scalars.create_dataset(key, (1,), dtype="f")
+                dset[:] = scalars[htype][imt]
+        
+        # Spectra
         hspectra = hcomp.create_group("Spectra")
         hresponse = hspectra.create_group("Response")
-        pers = spectra["Geometric"]["Periods"]
+        pers = spectra["rotD50"]["Periods"]
         hpers_dset = hresponse.create_dataset("Periods", pers.shape, dtype="f")
         hpers_dset[:] = np.copy(pers)
         hpers_dset.attrs["Low Period"] = np.min(pers)
         hpers_dset.attrs["High Period"] = np.max(pers)
         hpers_dset.attrs["Number Periods"] = len(pers)
         haccel = hresponse.create_group("Acceleration")
-        for htype in ["Geometric", "rotD00", "rotD50", "rotD100"]:
-            if np.all(np.isnan(spectra[htype]["Values"])):
-                # Component not determined
-                continue
-            if not (htype == "Geometric"):
-                key = htype[0].upper() + htype[1:]
-            else:
-                key = copy.deepcopy(htype)
-            htype_grp = haccel.create_group(htype)
-            hvals = spectra[htype]["Values"]
-            hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape,
-                                                  dtype="f")
-            hspec_dset[:] = hvals
-            hspec_dset.attrs["Units"] = "cm/s/s"
+        htype_grp = haccel.create_group("rotD50")
+        hvals = spectra["rotD50"]["Values"]
+        hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape, dtype="f")
+        hspec_dset[:] = hvals
+        hspec_dset.attrs["Units"] = "cm/s/s"
         record.datafile = filename
+        
         return record
 
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
         Get the ground-motion data from a row (record) in the database
         """
-        imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
+        imts = ["U", "V", "W", "rotD50"] # NOTE: H1 and H2 not used (RotD50 in ngawest2)
         spectra = []
-        scalar_imts = ["pga", "pgv", "pgd", "T90", "housner", "ia", "CAV"]
+        scalar_imts = ["pga", "pgv", "pgd"]
         scalars = []
         for imt in imts:
             periods = []
@@ -653,11 +577,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             scalars.append((imt, scalar_dict))
             for header in header_list:
                 if key in header:
-                    if header == "{:s}90".format(key):
-                        # Not a spectral period but T90
-                        continue
                     iky = header.replace(key, "").replace("_", ".")
-                    #print imt, key, header, iky
                     periods.append(float(iky))
                     value = row[header].strip()
                     if value:
@@ -667,33 +587,23 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
             periods = np.array(periods)
             values = np.array(values)
             idx = np.argsort(periods)
-            spectra.append((imt, {"Periods": periods[idx],
-                                   "Values": values[idx]}))
-        # Add on the as-recorded geometric mean
-        spectra = dict(spectra)
-        scalars = dict(scalars)
-        spectra["Geometric"] = {
-            "Values": np.sqrt(spectra["U"]["Values"] *
-                              spectra["V"]["Values"]),
-            "Periods": np.copy(spectra["U"]["Periods"])
-            }
-        scalars["Geometric"] = dict([(key, None) for key in scalars["U"]])
-        for key in scalars["U"]:
-            if scalars["U"][key] and scalars["V"][key]:
-                scalars["Geometric"][key] = np.sqrt(
-                    scalars["U"][key] * scalars["V"][key])
-        return scalars, spectra
+            spectra.append((imt, {"Periods": periods[idx], "Values": values[idx]}))
+         
+        return dict(scalars), dict(spectra)
 
 
-def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):    
+def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):    
     """
-    Convert from NGAWest2 format flatfile to ESM18 format flatfile 
+    Convert NGAWest2 flatfile into an ESM format flatfile which can be
+    readily parsed into SMT metadata.
     """
-    # Reformat to ESM18 format
-    event_time = {}
-    final_event_id = {}
-    fm_type_code_converted = {}
-    final_station_id = {}
+    # Reformat/map some of the metadata
+    ngawest2['event_time'] = pd.Series()
+    ngawest2['event_id'] = pd.Series()
+    ngawest2['fm_type'] = pd.Series()
+    ngawest2['station_id'] = pd.Series()
+    ngawest2['vs30_meas'] = pd.Series()
+
     for idx, rec in ngawest2.iterrows():
         
         # Event time
@@ -722,7 +632,7 @@ def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):
             
         hh_mm_ss = str(hour) + ':' + str(minute) + ':' + '00'
         
-        event_time[idx] = yyyy_mm_dd + ' ' + hh_mm_ss
+        ngawest2.loc[idx, 'event_time'] = yyyy_mm_dd + ' ' + hh_mm_ss
     
         # Reformat event id
         delimited_event_id = str(rec['Earthquake Name'])
@@ -732,19 +642,25 @@ def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):
         delimited_event_id = delimited_event_id.replace('.','')
         delimited_event_id = delimited_event_id.replace(':','')
         delimited_event_id = delimited_event_id.replace(';','')
-        final_event_id[idx] = 'Earthquake-' + delimited_event_id 
+        ngawest2.loc[idx, 'event_id'] = 'Earthquake-' + delimited_event_id 
         
         # Assign ESM18 fault_code based on code in NGA-West2
-        if rec['Mechanism Based on Rake Angle']==0 or\
-              rec['Mechanism Based on Rake Angle']==-999:
-            fm_type_code_converted[idx] ='SS'
-        if rec['Mechanism Based on Rake Angle']==1 or\
-              rec['Mechanism Based on Rake Angle']==4:
-            fm_type_code_converted[idx] ='NF'
-        if rec['Mechanism Based on Rake Angle']==2 or\
-              rec['Mechanism Based on Rake Angle']==3:
-            fm_type_code_converted[idx] ='TF'
+        if (rec['Mechanism Based on Rake Angle']==0
+            or
+            rec['Mechanism Based on Rake Angle']==-999):
+            ngawest2.loc[idx, 'fm_type'] = 'SS'
+        if (rec['Mechanism Based on Rake Angle']==1
+            or
+            rec['Mechanism Based on Rake Angle']==4):
+            ngawest2.loc[idx, 'fm_type'] = 'NF'
+        if (rec['Mechanism Based on Rake Angle']==2
+            or
+            rec['Mechanism Based on Rake Angle']==3):
+            ngawest2.loc[idx, 'fm_type'] = 'TF'
         
+        # Vs30 meas flag (Appendix C, pp. 116 of NGAWest2 report)
+        ngawest2.loc[idx, 'vs30_meas'] = 'measured' if rec['Measured/Inferred Class'] == 0 else 'inferred'
+
         # Station id
         delimited_station_id = str(rec['Station Name'])
         delimited_station_id = delimited_station_id.replace(',','')
@@ -753,232 +669,224 @@ def _get_ESM18_headers(ngawest2, ngawest2_vert, Initial_ngawest2_size):
         delimited_station_id = delimited_station_id.replace('.','')
         delimited_station_id = delimited_station_id.replace(':','')
         delimited_station_id = delimited_station_id.replace(';','')
-        final_station_id[idx] = 'StationName-' + delimited_station_id
+        ngawest2.loc[idx, 'station_id'] = 'StationName-' + delimited_station_id
     
-    # Into df
-    ngawest2['fm_type'] = pd.Series(fm_type_code_converted)
-    ngawest2['station_id'] = pd.Series(final_station_id)
-    ngawest2['event_time_reformatted'] = pd.Series(event_time)
-    ngawest2['event_id_reformatted'] = pd.Series(final_event_id)
-
-    # Create nation code (not provided in NGA-West-2 so assign flag)
-    nation_code_default_string = np.full(len(ngawest2['Station Name']),
-        "ngawest2_does_not_provide_nation_codes") 
-    default_nation_code = pd.Series(nation_code_default_string)
-    
-    # Create channel codes for horz components as within ngawest2 format
-    H1_string = np.full(len(ngawest2['Station Name']), "H1")
-    default_H1_string = pd.Series(H1_string)
-    H2_string = np.full(len(ngawest2['Station Name']), "H2")
-    default_H2_string = pd.Series(H2_string)
-    V_string = np.full(len(ngawest2['Station Name']), "V")
-    default_V_string = pd.Series(V_string)
-    
-    # Create default value of 0 for location code string (arbitrary)
-    location_string = np.full(len(ngawest2['Station Name']), "0.0")
-    location_code_string = pd.Series(location_string)  
-    
-    # Create default values for headers not readily available or required
-    r_string = np.full(len(ngawest2['Station Name']), "")
-    default_string = pd.Series(r_string)    
-    
-    # Construct dataframe with original ESM 2018 format 
-    ESM_original_headers = pd.DataFrame(
+    # Construct dataframe with ESM18 format columns
+    rfmt = pd.DataFrame(
     {
     # Non-GMIM headers   
-    "event_id":ngawest2['event_id_reformatted'],                                       
-    "event_time":ngawest2['event_time_reformatted'],
-    "ev_nation_code":default_nation_code,
+    "event_id":ngawest2['event_id'],                                       
+    "event_time":ngawest2['event_time'],
     "ev_latitude":ngawest2['Hypocenter Latitude (deg)'],    
     "ev_longitude":ngawest2['Hypocenter Longitude (deg)'],   
     "ev_depth_km":ngawest2['Hypocenter Depth (km)'],
     "fm_type_code":ngawest2['fm_type'],
-    "ML":default_string,
-    "ML_ref":default_string,
     "Mw":ngawest2['Earthquake Magnitude'],
-    "Mw_ref":default_string,
-    "Ms":default_string,
-    "Ms_ref":default_string,
-    "EMEC_Mw":default_string,
-    "EMEC_Mw_type":default_string,
-    "EMEC_Mw_ref":default_string,
-    "event_source_id":default_string,
- 
+
     "es_strike":ngawest2['Strike (deg)'],
     "es_dip":ngawest2['Dip (deg)'],
     "es_rake":ngawest2['Rake Angle (deg)'],
-    "es_strike_dip_rake_ref":default_string, 
     "es_z_top":ngawest2['Depth to Top Of Fault Rupture Model'],
     "es_length":ngawest2['Fault Rupture Length for Calculation of Ry (km)'],   
     "es_width":ngawest2['Fault Rupture Width (km)'],
  
     "network_code": ngawest2['Owner'],
     "station_code":ngawest2['station_id'],
-    "location_code":location_code_string,
-    "instrument_code":default_string,     
-    "sensor_depth_m":default_string,
-    "proximity_code":default_string,
-    "housing_code":default_string,
-    "st_nation_code":default_string,
     "st_latitude":ngawest2['Station Latitude'],
-    "st_longitude":ngawest2['Station Longitude'],
-    "st_elevation":default_string,
-    
+    "st_longitude":ngawest2['Station Longitude'],   
     "vs30_m_sec":ngawest2['Vs30 (m/s) selected for analysis'],
-    "slope_deg":default_string,
-    "vs30_m_sec_WA":default_string,
+    "vs30_meas_type":ngawest2['vs30_meas'],
+    "z1pt0 (m)":ngawest2["Northern CA/Southern CA - H11 Z1 (m)"], # No preference is given between the H11 and S4 CVM models but the H11 model has covers more of the Southern California stations
+    "z2pt5 (km)":ngawest2["Northern CA/Southern CA - H11 Z2.5 (m)"]/1000, # Provided in metres
  
     "epi_dist":ngawest2['EpiD (km)'],
-    "epi_az":default_string,
+    'epi_az':ngawest2['Source to Site Azimuth (deg)'],
     "JB_dist":ngawest2['Joyner-Boore Dist. (km)'],
     "rup_dist":ngawest2['Campbell R Dist. (km)'],
     "Rx_dist":ngawest2['Rx'],
-    "Ry0_dist":default_string,
  
-    "instrument_type_code":default_string,      
-    "late_triggered_flag_01":default_string,
-    "U_channel_code":default_H1_string,
+    "U_channel_code":"H1",
     "U_azimuth_deg":ngawest2['H1 azimth (degrees)'],
-    "V_channel_code":default_H2_string,
+    "V_channel_code":"H2",
     "V_azimuth_deg":ngawest2['H2 azimith (degrees)'],
-    "W_channel_code":default_V_string, 
-        
+    "W_channel_code":"V",
+
     "U_hp":ngawest2['HP-H1 (Hz)'],
     "V_hp":ngawest2['HP-H2 (Hz)'],
     "W_hp":ngawest2_vert['HP-V (Hz)'],  
     "U_lp":ngawest2['LP-H1 (Hz)'],
     "V_lp":ngawest2['LP-H2 (Hz)'],
     "W_lp":ngawest2_vert['LP-V (Hz)'], 
-     
-    # SMT uses GM of two horz components so place RotD50 here
-    "U_pga":ngawest2['PGA (g)']*981,
-    "V_pga":ngawest2['PGA (g)']*981,
-    "W_pga":ngawest2_vert['PGA (g)']*981,
-    "U_pgv":ngawest2['PGV (cm/sec)'],
-    "V_pgv":ngawest2['PGV (cm/sec)'],
-    "W_pgv":ngawest2_vert['PGV (cm/sec)'],
-    "U_pgd":ngawest2['PGD (cm)'],
-    "V_pgd":ngawest2['PGD (cm)'],
-    "W_pgd":ngawest2_vert['PGD (cm)'],
-        
-    "U_T0_010":ngawest2['T0.010S']*981,
-    "U_T0_025":ngawest2['T0.025S']*981,
-    "U_T0_040":ngawest2['T0.040S']*981,
-    "U_T0_050":ngawest2['T0.050S']*981,
-    "U_T0_070":ngawest2['T0.070S']*981,
-    "U_T0_100":ngawest2['T0.100S']*981,
-    "U_T0_150":ngawest2['T0.150S']*981,
-    "U_T0_200":ngawest2['T0.200S']*981,
-    "U_T0_250":ngawest2['T0.250S']*981,
-    "U_T0_300":ngawest2['T0.300S']*981,
-    "U_T0_350":ngawest2['T0.350S']*981,
-    "U_T0_400":ngawest2['T0.400S']*981,
-    "U_T0_450":ngawest2['T0.450S']*981,
-    "U_T0_500":ngawest2['T0.500S']*981,
-    "U_T0_600":ngawest2['T0.600S']*981,
-    "U_T0_700":ngawest2['T0.700S']*981,
-    "U_T0_750":ngawest2['T0.750S']*981,
-    "U_T0_800":ngawest2['T0.800S']*981,
-    "U_T0_900":ngawest2['T0.900S']*981,
-    "U_T1_000":ngawest2['T1.000S']*981,
-    "U_T1_200":ngawest2['T1.200S']*981,
-    "U_T1_400":ngawest2['T1.400S']*981,
-    "U_T1_600":ngawest2['T1.600S']*981,
-    "U_T1_800":ngawest2['T1.800S']*981,
-    "U_T2_000":ngawest2['T2.000S']*981,
-    "U_T2_500":ngawest2['T2.500S']*981,
-    "U_T3_000":ngawest2['T3.000S']*981,
-    "U_T3_500":ngawest2['T3.500S']*981,
-    "U_T4_000":ngawest2['T4.000S']*981,
-    "U_T4_500":ngawest2['T4.500S']*981,
-    "U_T5_000":ngawest2['T5.000S']*981,
-    "U_T6_000":ngawest2['T6.000S']*981,
-    "U_T7_000":ngawest2['T7.000S']*981,
-    "U_T8_000":ngawest2['T8.000S']*981,
-    "U_T9_000":ngawest2['T9.000S']*981,
-    "U_T10_000":ngawest2['T10.000S']*981,
-    
-    "V_T0_010":ngawest2['T0.010S']*981,
-    "V_T0_025":ngawest2['T0.025S']*981,
-    "V_T0_040":ngawest2['T0.040S']*981,
-    "V_T0_050":ngawest2['T0.050S']*981,
-    "V_T0_070":ngawest2['T0.070S']*981,
-    "V_T0_100":ngawest2['T0.100S']*981,
-    "V_T0_150":ngawest2['T0.150S']*981,
-    "V_T0_200":ngawest2['T0.200S']*981,
-    "V_T0_250":ngawest2['T0.250S']*981,
-    "V_T0_300":ngawest2['T0.300S']*981,
-    "V_T0_350":ngawest2['T0.350S']*981,
-    "V_T0_400":ngawest2['T0.400S']*981,
-    "V_T0_450":ngawest2['T0.450S']*981,
-    "V_T0_500":ngawest2['T0.500S']*981,
-    "V_T0_600":ngawest2['T0.600S']*981,
-    "V_T0_700":ngawest2['T0.700S']*981,
-    "V_T0_750":ngawest2['T0.750S']*981,
-    "V_T0_800":ngawest2['T0.800S']*981,
-    "V_T0_900":ngawest2['T0.900S']*981,
-    "V_T1_000":ngawest2['T1.000S']*981,
-    "V_T1_200":ngawest2['T1.200S']*981,
-    "V_T1_400":ngawest2['T1.400S']*981,
-    "V_T1_600":ngawest2['T1.600S']*981,
-    "V_T1_800":ngawest2['T1.800S']*981,
-    "V_T2_000":ngawest2['T2.000S']*981,
-    "V_T2_500":ngawest2['T2.500S']*981,
-    "V_T3_000":ngawest2['T3.000S']*981,
-    "V_T3_500":ngawest2['T3.500S']*981,
-    "V_T4_000":ngawest2['T4.000S']*981,
-    "V_T4_500":ngawest2['T4.500S']*981,
-    "V_T5_000":ngawest2['T5.000S']*981,
-    "V_T6_000":ngawest2['T6.000S']*981,
-    "V_T7_000":ngawest2['T7.000S']*981,
-    "V_T8_000":ngawest2['T8.000S']*981,
-    "V_T9_000":ngawest2['T9.000S']*981,
-    "V_T10_000":ngawest2['T10.000S']*981,
-        
-    "W_T0_010":ngawest2_vert['T0.010S']*981,
-    "W_T0_025":ngawest2_vert['T0.025S']*981,
-    "W_T0_040":ngawest2_vert['T0.040S']*981,
-    "W_T0_050":ngawest2_vert['T0.050S']*981,
-    "W_T0_070":ngawest2_vert['T0.070S']*981,
-    "W_T0_100":ngawest2_vert['T0.100S']*981,
-    "W_T0_150":ngawest2_vert['T0.150S']*981,
-    "W_T0_200":ngawest2_vert['T0.200S']*981,
-    "W_T0_250":ngawest2_vert['T0.250S']*981,
-    "W_T0_300":ngawest2_vert['T0.300S']*981,
-    "W_T0_350":ngawest2_vert['T0.350S']*981,
-    "W_T0_400":ngawest2_vert['T0.400S']*981,
-    "W_T0_450":ngawest2_vert['T0.450S']*981,
-    "W_T0_500":ngawest2_vert['T0.500S']*981,
-    "W_T0_600":ngawest2_vert['T0.600S']*981,
-    "W_T0_700":ngawest2_vert['T0.700S']*981,
-    "W_T0_750":ngawest2_vert['T0.750S']*981,
-    "W_T0_800":ngawest2_vert['T0.800S']*981,
-    "W_T0_900":ngawest2_vert['T0.900S']*981,
-    "W_T1_000":ngawest2_vert['T1.000S']*981,
-    "W_T1_200":ngawest2_vert['T1.200S']*981,
-    "W_T1_400":ngawest2_vert['T1.400S']*981,
-    "W_T1_600":ngawest2_vert['T1.600S']*981,
-    "W_T1_800":ngawest2_vert['T1.800S']*981,
-    "W_T2_000":ngawest2_vert['T2.000S']*981,
-    "W_T2_500":ngawest2_vert['T2.500S']*981,
-    "W_T3_000":ngawest2_vert['T3.000S']*981,
-    "W_T3_500":ngawest2_vert['T3.500S']*981,
-    "W_T4_000":ngawest2_vert['T4.000S']*981,
-    "W_T4_500":ngawest2_vert['T4.500S']*981,
-    "W_T5_000":ngawest2_vert['T5.000S']*981,
-    "W_T6_000":ngawest2_vert['T6.000S']*981,
-    "W_T7_000":ngawest2_vert['T7.000S']*981,
-    "W_T8_000":ngawest2_vert['T8.000S']*981,
-    "W_T9_000":ngawest2_vert['T9.000S']*981,
-    "W_T10_000":ngawest2_vert['T10.000S']*981})
-    
-    # Output to folder where converted flatfile read into parser   
-    DATA = os.path.abspath('')
-    tmp=tempfile.mkdtemp()
-    converted_base_data_path = os.path.join(DATA, tmp, 'converted_flatfile.csv')
-    ESM_original_headers.to_csv(converted_base_data_path,sep=';')
 
+    "U_pga":None,
+    "V_pga":None,
+    "W_pga":ngawest2_vert['PGA (g)'] * CONV_TO_CMS2,
+    "rotD50_pga":ngawest2['PGA (g)'] * CONV_TO_CMS2,
+    "U_pgv":None,
+    "V_pgv":None,
+    "W_pgv":ngawest2_vert['PGV (cm/sec)'],
+    "rotD50_pgv":ngawest2['PGV (cm/sec)'],
+    "U_pgd":None,
+    "V_pgd":None,
+    "W_pgd":ngawest2_vert['PGD (cm)'],
+    "rotD50_pgd":ngawest2['PGD (cm)'],
+        
+    "U_T0_010":None,
+    "U_T0_025":None,
+    "U_T0_040":None,
+    "U_T0_050":None,
+    "U_T0_070":None,
+    "U_T0_100":None,
+    "U_T0_150":None,
+    "U_T0_200":None,
+    "U_T0_250":None,
+    "U_T0_300":None,
+    "U_T0_350":None,
+    "U_T0_400":None,
+    "U_T0_450":None,
+    "U_T0_500":None,
+    "U_T0_600":None,
+    "U_T0_700":None,
+    "U_T0_750":None,
+    "U_T0_800":None,
+    "U_T0_900":None,
+    "U_T1_000":None,
+    "U_T1_200":None,
+    "U_T1_400":None,
+    "U_T1_600":None,
+    "U_T1_800":None,
+    "U_T2_000":None,
+    "U_T2_500":None,
+    "U_T3_000":None,
+    "U_T3_500":None,
+    "U_T4_000":None,
+    "U_T4_500":None,
+    "U_T5_000":None,
+    "U_T6_000":None,
+    "U_T7_000":None,
+    "U_T8_000":None,
+    "U_T9_000":None,
+    "U_T10_000":None,
+    
+    "V_T0_010":None,
+    "V_T0_025":None,
+    "V_T0_040":None,
+    "V_T0_050":None,
+    "V_T0_070":None,
+    "V_T0_100":None,
+    "V_T0_150":None,
+    "V_T0_200":None,
+    "V_T0_250":None,
+    "V_T0_300":None,
+    "V_T0_350":None,
+    "V_T0_400":None,
+    "V_T0_450":None,
+    "V_T0_500":None,
+    "V_T0_600":None,
+    "V_T0_700":None,
+    "V_T0_750":None,
+    "V_T0_800":None,
+    "V_T0_900":None,
+    "V_T1_000":None,
+    "V_T1_200":None,
+    "V_T1_400":None,
+    "V_T1_600":None,
+    "V_T1_800":None,
+    "V_T2_000":None,
+    "V_T2_500":None,
+    "V_T3_000":None,
+    "V_T3_500":None,
+    "V_T4_000":None,
+    "V_T4_500":None,
+    "V_T5_000":None,
+    "V_T6_000":None,
+    "V_T7_000":None,
+    "V_T8_000":None,
+    "V_T9_000":None,
+    "V_T10_000":None,
+
+    "rotD50_T0_010":ngawest2['T0.010S'] * CONV_TO_CMS2,
+    "rotD50_T0_025":ngawest2['T0.025S'] * CONV_TO_CMS2,
+    "rotD50_T0_040":ngawest2['T0.040S'] * CONV_TO_CMS2,
+    "rotD50_T0_050":ngawest2['T0.050S'] * CONV_TO_CMS2,
+    "rotD50_T0_070":ngawest2['T0.070S'] * CONV_TO_CMS2,
+    "rotD50_T0_100":ngawest2['T0.100S'] * CONV_TO_CMS2,
+    "rotD50_T0_150":ngawest2['T0.150S'] * CONV_TO_CMS2,
+    "rotD50_T0_200":ngawest2['T0.200S'] * CONV_TO_CMS2,
+    "rotD50_T0_250":ngawest2['T0.250S'] * CONV_TO_CMS2,
+    "rotD50_T0_300":ngawest2['T0.300S'] * CONV_TO_CMS2,
+    "rotD50_T0_350":ngawest2['T0.350S'] * CONV_TO_CMS2,
+    "rotD50_T0_400":ngawest2['T0.400S'] * CONV_TO_CMS2,
+    "rotD50_T0_450":ngawest2['T0.450S'] * CONV_TO_CMS2,
+    "rotD50_T0_500":ngawest2['T0.500S'] * CONV_TO_CMS2,
+    "rotD50_T0_600":ngawest2['T0.600S'] * CONV_TO_CMS2,
+    "rotD50_T0_700":ngawest2['T0.700S'] * CONV_TO_CMS2,
+    "rotD50_T0_750":ngawest2['T0.750S'] * CONV_TO_CMS2,
+    "rotD50_T0_800":ngawest2['T0.800S'] * CONV_TO_CMS2,
+    "rotD50_T0_900":ngawest2['T0.900S'] * CONV_TO_CMS2,
+    "rotD50_T1_000":ngawest2['T1.000S'] * CONV_TO_CMS2,
+    "rotD50_T1_200":ngawest2['T1.200S'] * CONV_TO_CMS2,
+    "rotD50_T1_400":ngawest2['T1.400S'] * CONV_TO_CMS2,
+    "rotD50_T1_600":ngawest2['T1.600S'] * CONV_TO_CMS2,
+    "rotD50_T1_800":ngawest2['T1.800S'] * CONV_TO_CMS2,
+    "rotD50_T2_000":ngawest2['T2.000S'] * CONV_TO_CMS2,
+    "rotD50_T2_500":ngawest2['T2.500S'] * CONV_TO_CMS2,
+    "rotD50_T3_000":ngawest2['T3.000S'] * CONV_TO_CMS2,
+    "rotD50_T3_500":ngawest2['T3.500S'] * CONV_TO_CMS2,
+    "rotD50_T4_000":ngawest2['T4.000S'] * CONV_TO_CMS2,
+    "rotD50_T4_500":ngawest2['T4.500S'] * CONV_TO_CMS2,
+    "rotD50_T5_000":ngawest2['T5.000S'] * CONV_TO_CMS2,
+    "rotD50_T6_000":ngawest2['T6.000S'] * CONV_TO_CMS2,
+    "rotD50_T7_000":ngawest2['T7.000S'] * CONV_TO_CMS2,
+    "rotD50_T8_000":ngawest2['T8.000S'] * CONV_TO_CMS2,
+    "rotD50_T9_000":ngawest2['T9.000S'] * CONV_TO_CMS2,
+    "rotD50_T10_000":ngawest2['T10.000S'] * CONV_TO_CMS2,
+        
+    "W_T0_010":ngawest2_vert['T0.010S'] * CONV_TO_CMS2,
+    "W_T0_025":ngawest2_vert['T0.025S'] * CONV_TO_CMS2,
+    "W_T0_040":ngawest2_vert['T0.040S'] * CONV_TO_CMS2,
+    "W_T0_050":ngawest2_vert['T0.050S'] * CONV_TO_CMS2,
+    "W_T0_070":ngawest2_vert['T0.070S'] * CONV_TO_CMS2,
+    "W_T0_100":ngawest2_vert['T0.100S'] * CONV_TO_CMS2,
+    "W_T0_150":ngawest2_vert['T0.150S'] * CONV_TO_CMS2,
+    "W_T0_200":ngawest2_vert['T0.200S'] * CONV_TO_CMS2,
+    "W_T0_250":ngawest2_vert['T0.250S'] * CONV_TO_CMS2,
+    "W_T0_300":ngawest2_vert['T0.300S'] * CONV_TO_CMS2,
+    "W_T0_350":ngawest2_vert['T0.350S'] * CONV_TO_CMS2,
+    "W_T0_400":ngawest2_vert['T0.400S'] * CONV_TO_CMS2,
+    "W_T0_450":ngawest2_vert['T0.450S'] * CONV_TO_CMS2,
+    "W_T0_500":ngawest2_vert['T0.500S'] * CONV_TO_CMS2,
+    "W_T0_600":ngawest2_vert['T0.600S'] * CONV_TO_CMS2,
+    "W_T0_700":ngawest2_vert['T0.700S'] * CONV_TO_CMS2,
+    "W_T0_750":ngawest2_vert['T0.750S'] * CONV_TO_CMS2,
+    "W_T0_800":ngawest2_vert['T0.800S'] * CONV_TO_CMS2,
+    "W_T0_900":ngawest2_vert['T0.900S'] * CONV_TO_CMS2,
+    "W_T1_000":ngawest2_vert['T1.000S'] * CONV_TO_CMS2,
+    "W_T1_200":ngawest2_vert['T1.200S'] * CONV_TO_CMS2,
+    "W_T1_400":ngawest2_vert['T1.400S'] * CONV_TO_CMS2,
+    "W_T1_600":ngawest2_vert['T1.600S'] * CONV_TO_CMS2,
+    "W_T1_800":ngawest2_vert['T1.800S'] * CONV_TO_CMS2,
+    "W_T2_000":ngawest2_vert['T2.000S'] * CONV_TO_CMS2,
+    "W_T2_500":ngawest2_vert['T2.500S'] * CONV_TO_CMS2,
+    "W_T3_000":ngawest2_vert['T3.000S'] * CONV_TO_CMS2,
+    "W_T3_500":ngawest2_vert['T3.500S'] * CONV_TO_CMS2,
+    "W_T4_000":ngawest2_vert['T4.000S'] * CONV_TO_CMS2,
+    "W_T4_500":ngawest2_vert['T4.500S'] * CONV_TO_CMS2,
+    "W_T5_000":ngawest2_vert['T5.000S'] * CONV_TO_CMS2,
+    "W_T6_000":ngawest2_vert['T6.000S'] * CONV_TO_CMS2,
+    "W_T7_000":ngawest2_vert['T7.000S'] * CONV_TO_CMS2,
+    "W_T8_000":ngawest2_vert['T8.000S'] * CONV_TO_CMS2,
+    "W_T9_000":ngawest2_vert['T9.000S'] * CONV_TO_CMS2,
+    "W_T10_000":ngawest2_vert['T10.000S'] * CONV_TO_CMS2})
+    
+    # Make tmp file 
+    tmp = os.path.join(BASE, tempfile.mkdtemp(), 'tmp.csv')
+    
+    # Export to tmp
+    rfmt.to_csv(tmp, sep=';')
+
+    # Inform user of number of discarded records (insufficient for SMT residual analysis)
     print(Initial_ngawest2_size - len(ngawest2),
           'records removed from imported NGA-West-2 flatfile during data quality checks.')
-    
-    return converted_base_data_path
+
+    return tmp
