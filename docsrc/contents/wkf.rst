@@ -49,8 +49,8 @@ The workflow starts from three inputs as outlined below:
 	kernel_maximum_distance = 120.0
 	kernel_smoothing = [ [ 0.8, 20.0,], [ 0.15, 40.0,], [ 0.05, 80.0,],]
 
-        [completeness]
-        num_steps = 0
+    [completeness]
+    num_steps = 0
 	step = 8
 	flexible = true
 	years = [ 1920, 1940, 1960, 1970, 1990, 2000, 2010,]
@@ -142,8 +142,8 @@ In order to create models for individual zones, we need to partition the events 
 
 .. code-block:: python  
 
-    polygons = "./data/asrc/src22.geojson"
-    subcatalogues_folder = "./model/asc/subcatalogues/"
+    polygons = os.path.join(".", "data", "asrc", "src22.geojson")
+    subcatalogues_folder = os.path.join(".", "model", "asc", "subcatalogues")
 
     cmd = f"oqm wkf create_subcatalogues_per_zone {polygons} {cat} {subcatalogues_folder}"
     p = subprocess.run(cmd, shell=True)
@@ -158,15 +158,15 @@ The ``completeness_analysis`` tool takes in a set of possible years and magnitud
 
 .. code-block:: python   
  
-    completeness_param_folder = './completeness_windows/'
+    completeness_param_folder = os.path.join(".", "model", "completeness_windows")
     cmd = f"oqm cat completeness_generate {config} {completeness_param_folder}"
     p = subprocess.run(cmd, shell=True)
 
     pattern = os.path.join(".", "model", "asc", "subcatalogues", "*.csv")
-    folder_figs = "./zone_completeness_figs"
-    folder_compl_results = "./zone_completeness"
+    folder_figs = os.path.join (".", "model", "figs", "zone_completeness_figs")
+    foler_compl_results = os.path.join(".", "model", "zone_completeness")
 
-    cmd = f"oqm cat completeness_analysis \"{pattern}\" {config} {folder_figs} {completeness_param_folder} {folder_compl_results}"
+    cmd = f"oqm cat completeness_analysis \"{pattern}\" {config} {_figs} {completeness_param_folder} {folder_compl_results}"
     p = subprocess.run(cmd, shell=True)
     
 Running the above will generate the completeness windows to test from the years and magnitudes in the config and write them to files in the specified completeness_param_folder. Then, for each csv file in the subcatalogues folder, it will test the completeness windows for the catalogue, calculate the FMD parameters for the best fitting window and write these to the config along with the completeness windows, and plot the best-fitting model in a png stored in folder_figs. In some cases, the completeness_analysis may fail to return completeness windows for a zone. This may be because there are too few events in the catalogue once the completeness windows are applied or because the calculated b-value for all of the possible complete catalogues is outwith the range specified by bmin and bmax in the [completeness] section of the .toml file. In this case, completeness can be manually added to the source or, if nothing is specified for the source, the source will be assigned the [default] completeness_table in the config. 
@@ -175,7 +175,7 @@ Whether you have used the ``completeness_analysis`` or have manually specified c
 
 .. code-block:: python  
   
-    folder_figs = "./completeness_density"
+    folder_figs = os.path.join(".", "model", "figs", "completeness_density")
     cmd = f"oqm wkf plot_completeness_data \"{pattern}\" {config} {folder_figs}"
     p = subprocess.run(cmd, shell = True)
 
@@ -216,7 +216,7 @@ In some cases, we may wish to change the b-value and find the appropriate a-valu
 
     from openquake.wkf.compute_gr_params import compute_a_value
 
-    compute_a_value("./subcatalogues/subcatalogue_zone_6.csv", bval = 1.0, fname_config= config,
+    compute_a_value(os.path.join(".", "model", "asc", "subcatalogues", "subcatalogue_zone_6.csv"), bval = 1.0, fname_config= config,
                     folder_out = folder_out, folder_out_figs = folder_figs)
  
 This will add the new b-value and the calculated a-value from the catalogue to the config as bgr_counting and agr_counting. Again, these can be set with ``set_gr_params``, which will update the bgr value for zone 6:
@@ -251,7 +251,7 @@ We have split the command into two lines for easier readability.
 .. code-block:: python  
 
     depth_bins = "0.0,10.0,20.0,35.0"
-    folder_figs = './model/figs/hypo_depth/'
+    folder_figs = os.path.join(".", "model", "figs", "hypo_depth")
     cmd = f"oqm wkf analysis_hypocentral_depth {subcatalogues_folder} --f {folder_figs}"
     cmd = f"{cmd} --depth-bins \"{depth_bins}\" -c {config}"
 
@@ -263,7 +263,7 @@ Similarly our focal mechanism distribution is determined from the available cata
 .. code-block:: python  
 
     pattern = os.path.join(gcmt_subcat_folder, "*.csv")
-    folder_figs_gcmt = "./model/figs/focal_mech"
+    folder_figs_gcmt = os.path.join(".", "model", "figs", "focal_mech")
     cmd = f"oqm wkf analysis_nodal_plane \"{pattern}\" {folder_figs_gcmt}"
 
 Running this code block will run the nodal plane analysis function for all files that match the specified pattern in the specified location and output figures of the nodal plane distribution to the folder_figs_gcmt folder. Rupture types are categorised according to the method of Kaverina et al. (1996).
@@ -290,7 +290,7 @@ Building a smoothed seismicity model can be particularly computationally intensi
 
 .. code-block:: python  
 
-    zones_h3_repr = './model/zones/h3/'
+    zones_h3_repr = os.path.join(".", "model", "zones", "h3")
     cmd = f"oqm wkf set_h3_to_zones {h3_level} {polygons} {zones_h3_repr}"
 
 If for some reason we don't want to generate h3 cells for all zones in a polygon set, we can specify the polygons we do want to use by supplying a list of polygon ids
@@ -349,7 +349,7 @@ In both cases, the output will be one large file containing the smoothing at all
 
 .. code-block:: python  
 
-    fname_smoothing_source = './smoothing/adapn5_smooth'
+    fname_smoothing_source = os.path.join(".", "model", "smoothing", "adapn5_smooth")
     cmd = f"oqm wkf create_smoothing_per_zone {fname_smoothing} {polygons} {fname_smoothing_source} --use \"{use}\""
     p = subprocess.run(cmd, shell=True)
 
