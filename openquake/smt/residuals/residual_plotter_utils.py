@@ -88,7 +88,7 @@ def likelihood(residuals, gmpe, imt, bin_width=0.1):
     the median of the data
     """
     plot_data = {}
-    data = residuals._get_likelihood_values_for(gmpe, imt)
+    data = residuals._compute_likelihood_values_for(gmpe, imt)
 
     for res_type in data.keys():
         lh_vals, median_lh = data[res_type]
