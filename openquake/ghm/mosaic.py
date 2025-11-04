@@ -246,8 +246,7 @@ DATA = {'GID_0': {
                'GAB', 'GHA', 'GIN', 'GMB', 'GNB',
                'GNQ', 'LBR', 'LBY', 'MLI', 'MRT',
                'NAM', 'NER', 'NGA', 'SDN', 'SEN',
-               'SHN', 'SLE', 'SSD', 'STP', 'TCD',
-               'TGO'],
+               'SLE', 'SSD', 'STP', 'TCD', 'TGO'],
        'zaf': ['LSO', 'SWZ', 'ZAF'],
        },
        'FIPS_CNTRY': {
