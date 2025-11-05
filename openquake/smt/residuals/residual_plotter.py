@@ -832,16 +832,16 @@ def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
     for ax_index in range(0, 3):
         ax[ax_index, 0].set_ylim(-mean_y_bound-0.5, mean_y_bound+0.5)
         ax[ax_index, 1].set_ylim(0.9-sigma_y_bound, 1.1+sigma_y_bound)
-        ax[ax_index, 0].set_xlabel('Period (s)')
-        ax[ax_index, 1].set_xlabel('Period (s)')
+        ax[ax_index, 0].set_xlabel('Period (s)', fontsize=12)
+        ax[ax_index, 1].set_xlabel('Period (s)', fontsize=12)
         ax[ax_index, 0].set_prop_cycle(colour_cycler)
         ax[ax_index, 1].set_prop_cycle(colour_cycler)
     for ax_index in range(0, 2):
-        ax[2, ax_index].set_ylabel('Within-Event')
-        ax[1, ax_index].set_ylabel('Between-Event')
-        ax[0, ax_index].set_ylabel('Total')
-    ax[0, 0].set_title('Mean of GMPE Residuals')    
-    ax[0, 1].set_title('Std Dev of GMPE Residuals')
+        ax[2, ax_index].set_ylabel('Within-Event', fontsize=12)
+        ax[1, ax_index].set_ylabel('Between-Event', fontsize=12)
+        ax[0, ax_index].set_ylabel('Total', fontsize=12)
+    ax[0, 0].set_title('Mean of GMPE Residuals', fontsize=12)
+    ax[0, 1].set_title('Std Dev of GMPE Residuals', fontsize=12)
 
     return fig, ax
 
@@ -946,7 +946,7 @@ def plot_residual_means_and_stds_with_period(residuals, filename):
             ax[i, j].grid()
 
     # Add legend
-    ax[0, 0].legend(loc='upper right', ncol=2, fontsize=6)
+    ax[0, 0].legend(loc='upper right', ncol=2, fontsize=8)
 
     plt.savefig(filename)
     plt.close()
