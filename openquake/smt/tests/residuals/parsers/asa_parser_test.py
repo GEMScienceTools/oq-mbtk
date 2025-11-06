@@ -17,8 +17,7 @@ class ASADatabaseParserTest(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        filepath = os.path.join(
-            BASE_DATA_PATH, os.path.join("correct_ASA_files"))
+        filepath = os.path.join(BASE_DATA_PATH, os.path.join("asa_records"))
     
         instance = ASADatabaseParser(
             db_id='1', db_name='db', filename=filepath, record_folder=filepath
