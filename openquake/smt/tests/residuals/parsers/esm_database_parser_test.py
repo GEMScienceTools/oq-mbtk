@@ -1,8 +1,9 @@
 import os
 import unittest
 
-from openquake.smt.residuals.parsers.esm_database_parser import ESMDatabaseParser, ESMTimeSeriesParser, ESMSpectraParser
-from openquake.hazardlib import valid
+from openquake.smt.residuals.parsers.esm_database_parser import (ESMDatabaseParser,
+                                                                 ESMTimeSeriesParser,
+                                                                 ESMSpectraParser)
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
