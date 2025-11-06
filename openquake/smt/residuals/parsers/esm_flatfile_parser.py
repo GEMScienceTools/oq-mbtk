@@ -39,9 +39,8 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  Component,
                                                  RecordSite,
                                                  RecordDistance)
-from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
+from openquake.smt import utils
 
 
 HDEFS = ["Geometric", "rotD00", "rotD50", "rotD100"]
@@ -353,9 +352,9 @@ def parse_event_data(metadata, rupture_parser):
     eq_datetime = pd.to_datetime(metadata["event_time"])
     
     # Latitude, longitude and depth
-    eq_lat = valid.latitude(metadata["ev_latitude"])
-    eq_lon = valid.longitude(metadata["ev_longitude"])
-    eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
+    eq_lat = utils.latitude(metadata["ev_latitude"])
+    eq_lon = utils.longitude(metadata["ev_longitude"])
+    eq_depth = utils.positive_float(metadata["ev_depth_km"], "ev_depth_km")
     if not eq_depth:
         raise ValueError('Depth missing an events in admitted flatfile')
     
@@ -423,7 +422,7 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
         fm_set = []
         for key in ["strike_1", "dip_1", "rake_1"]:
             if key in metadata:
-                fm_param = valid.vfloat(metadata[key], key)
+                fm_param = utils.vfloat(metadata[key], key)
                 if fm_param is not None:
                     fm_set.append(fm_param)
 
@@ -435,7 +434,7 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
         fm_set = []
         for key in ["strike_2", "dip_2", "rake_2"]:
             if key in metadata:
-                fm_param = valid.vfloat(metadata[key], key)
+                fm_param = utils.vfloat(metadata[key], key)
                 if fm_param is not None:
                     fm_set.append(fm_param)
         
@@ -450,19 +449,19 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
             # Absolutely no information - base on style-of-faulting
             mechanism.nodal_planes.nodal_plane_1 = {
                 "strike": 0.0,  # Basically unused
-                "dip": DIP_TYPE[sof],
-                "rake": MECHANISM_TYPE[sof]
+                "dip": utils.DIP_TYPE[sof],
+                "rake": utils.MECHANISM_TYPE[sof]
                 }
         return rupture, mechanism
 
     # If there is an "event_source_id" in ESM18 flatfile, there is also
     # full finite rupture info. In this case build a detailed finite rup
-    strike = valid.strike(metadata["es_strike"])
-    dip = valid.dip(metadata["es_dip"])
-    rake = valid.rake(metadata["es_rake"])
-    ztor = valid.positive_float(metadata["es_z_top"], "es_z_top")
-    length = valid.positive_float(metadata["es_length"], "es_length")
-    width = valid.positive_float(metadata["es_width"], "es_width")
+    strike = utils.strike(metadata["es_strike"])
+    dip = utils.dip(metadata["es_dip"])
+    rake = utils.rake(metadata["es_rake"])
+    ztor = utils.positive_float(metadata["es_z_top"], "es_z_top")
+    length = utils.positive_float(metadata["es_length"], "es_length")
+    width = utils.positive_float(metadata["es_width"], "es_width")
     rupture = Rupture(eq_id, eq_name, mag, length, width, ztor)
 
     # Get mechanism type and focal mechanism
@@ -472,9 +471,9 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
     if strike is None:
         strike = 0.0
     if dip is None:
-        dip = DIP_TYPE[sof]
+        dip = utils.DIP_TYPE[sof]
     if rake is None:
-        rake = MECHANISM_TYPE[sof]
+        rake = utils.MECHANISM_TYPE[sof]
         
     # if strike is not None and dip is not None and rake is not None:
     mechanism.nodal_planes.nodal_plane_1 = {"strike": strike,
@@ -487,12 +486,12 @@ def parse_distances(metadata, hypo_depth):
         """
         Parse the distances
         """
-        repi = valid.positive_float(metadata["epi_dist"], "epi_dist")
-        razim = valid.positive_float(metadata["epi_az"], "epi_az")
-        rjb = valid.positive_float(metadata["JB_dist"], "JB_dist")
-        rrup = valid.positive_float(metadata["rup_dist"], "rup_dist")
-        r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
-        ry0 = valid.positive_float(metadata["Ry0_dist"], "Ry0_dist")
+        repi = utils.positive_float(metadata["epi_dist"], "epi_dist")
+        razim = utils.positive_float(metadata["epi_az"], "epi_az")
+        rjb = utils.positive_float(metadata["JB_dist"], "JB_dist")
+        rrup = utils.positive_float(metadata["rup_dist"], "rup_dist")
+        r_x = utils.vfloat(metadata["Rx_dist"], "Rx_dist")
+        ry0 = utils.positive_float(metadata["Ry0_dist"], "Ry0_dist")
         rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
 
         if not isinstance(rjb, float):
@@ -525,12 +524,12 @@ def parse_site_data(metadata):
     network_code = metadata["network_code"].strip()
     station_code = metadata["station_code"].strip()
     site_id = "{:s}-{:s}".format(network_code, station_code)
-    site_lon = valid.longitude(metadata["st_longitude"])
-    site_lat = valid.latitude(metadata["st_latitude"])
-    elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
+    site_lon = utils.longitude(metadata["st_longitude"])
+    site_lat = utils.latitude(metadata["st_latitude"])
+    elevation = utils.vfloat(metadata["st_elevation"], "st_elevation")
 
-    vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
-    vs30_topo = valid.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
+    vs30 = utils.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
+    vs30_topo = utils.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
     if pd.isnull(vs30) and pd.isnull(vs30_topo):
         # Need at least one vs30 value for residuals (not really, given
         # some GMMs lack site terms, but good way to prevent confusing
@@ -560,8 +559,8 @@ def parse_site_data(metadata):
                         network_code=network_code,
                         country=st_country)
     
-    site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
-    site.sensor_depth = valid.vfloat(
+    site.slope = utils.vfloat(metadata["slope_deg"], "slope_deg")
+    site.sensor_depth = utils.vfloat(
         metadata["sensor_depth_m"], "sensor_depth_m")
     
     site.instrument_type = metadata["instrument_code"].strip()
@@ -722,35 +721,35 @@ def parse_waveform_data(metadata, wfid):
     Parse the waveform data
     """
     if 'late_triggered_flag' in metadata:
-        late_trigger = valid.vint(
+        late_trigger = utils.vint(
             metadata["late_triggered_flag_01"], "late_triggered_flag_01")
     else:
         late_trigger = None
 
     # U channel - usually east
     if "U_azimuth_deg" in metadata:
-        xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
+        xazimuth = utils.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
     else:
         xazimuth = None
-    xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
-               "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
+    xfilter = {"Low-Cut": utils.vfloat(metadata["U_hp"], "U_hp"),
+               "High-Cut": utils.vfloat(metadata["U_lp"], "U_lp")}
     xcomp = Component(
         wfid, xazimuth, waveform_filter=xfilter, units="cm/s/s")
     xcomp.late_trigger = late_trigger
 
     # V channel - usually North
     if "V_azimuth_deg" in metadata:
-        vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
+        vazimuth = utils.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
     else:
         vazimuth = None
-    vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
-               "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
+    vfilter = {"Low-Cut": utils.vfloat(metadata["V_hp"], "V_hp"),
+               "High-Cut": utils.vfloat(metadata["V_lp"], "V_lp")}
     vcomp = Component(
         wfid, vazimuth, waveform_filter=vfilter, units="cm/s/s")
     vcomp.late_trigger = late_trigger
     if "W_channel_code" in metadata:
-        zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
-                   "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
+        zfilter = {"Low-Cut": utils.vfloat(metadata["W_hp"], "W_hp"),
+                   "High-Cut": utils.vfloat(metadata["W_lp"], "W_lp")}
         zcomp = Component(
             wfid, None, waveform_filter=zfilter, units="cm/s/s")
         zcomp.late_trigger = late_trigger
