@@ -26,8 +26,16 @@ from linecache import getline
 from math import sqrt
 from copy import copy
 
-from openquake.smt.utils import convert_accel_units, get_time_vector
-from openquake.smt.residuals.sm_database import *
+from openquake.hazardlib.geo import Point
+from openquake.smt.utils import convert_accel_units, get_time_vector, get_float, get_int
+from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
+                                                 GroundMotionRecord,
+                                                 Component,
+                                                 Earthquake,
+                                                 FocalMechanism,
+                                                 Magnitude,
+                                                 RecordDistance,
+                                                 RecordSite)
 from openquake.smt.residuals.parsers.base_database_parser import (SMDatabaseReader,
                                                                   SMTimeSeriesReader,
                                                                   SMSpectraReader)
@@ -43,26 +51,6 @@ DATA_TYPE_KEYS = {
     "ACCELERATION RESPONSE SPECTRUM": "PGA_" ,
     "PSEUDO-VELOCITY RESPONSE SPECTRUM": "PGV_" ,
     "DISPLACEMENT RESPONSE SPECTRUM": "PGD_"}
-
-
-def _to_float(string):
-    """
-    Returns float or None
-    """
-    if string:
-        return float(string)
-    else:
-        return None
-
-
-def _to_int(string):
-    """
-    Returns integer or None
-    """
-    if string:
-        return int(string)
-    else:
-        return None
 
 
 def _get_filename_info(filename):
@@ -287,12 +275,12 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
         openquake.smt.sm_database.Earthquake
         """
         # Date and time
-        year, month, day = (_to_int(metadata["EVENT_DATE_YYYYMMDD"][:4]),
-                            _to_int(metadata["EVENT_DATE_YYYYMMDD"][4:6]),
-                            _to_int(metadata["EVENT_DATE_YYYYMMDD"][6:]))
-        hour, minute, second = (_to_int(metadata["EVENT_TIME_HHMMSS"][:2]),
-                                _to_int(metadata["EVENT_TIME_HHMMSS"][2:4]),
-                                _to_int(metadata["EVENT_TIME_HHMMSS"][4:]))
+        year, month, day = (get_int(metadata["EVENT_DATE_YYYYMMDD"][:4]),
+                            get_int(metadata["EVENT_DATE_YYYYMMDD"][4:6]),
+                            get_int(metadata["EVENT_DATE_YYYYMMDD"][6:]))
+        hour, minute, second = (get_int(metadata["EVENT_TIME_HHMMSS"][:2]),
+                                get_int(metadata["EVENT_TIME_HHMMSS"][2:4]),
+                                get_int(metadata["EVENT_TIME_HHMMSS"][4:]))
         eq_datetime = datetime(year, month, day, hour, minute, second)
         
         # Event ID and Name
@@ -300,7 +288,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
         eq_name = metadata["EVENT_NAME"]
         
         # Get magnitudes
-        m_w = _to_float(metadata["MAGNITUDE_W"])
+        m_w = get_float(metadata["MAGNITUDE_W"])
         mag_list = []
         if m_w:
             moment_mag = Magnitude(m_w, "Mw",
@@ -308,7 +296,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
             mag_list.append(moment_mag)
         else:
             moment_mag = None
-        m_l = _to_float(metadata["MAGNITUDE_L"])
+        m_l = get_float(metadata["MAGNITUDE_L"])
         if m_l:
             local_mag = Magnitude(m_l, "ML",
                                    source=metadata["MAGNITUDE_L_REFERENCE"])
@@ -332,9 +320,9 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
         
         # Build event
         eqk = Earthquake(eq_id, eq_name, eq_datetime,
-            _to_float(metadata["EVENT_LONGITUDE_DEGREE"]),
-            _to_float(metadata["EVENT_LATITUDE_DEGREE"]),
-            _to_float(metadata["EVENT_DEPTH_KM"]),
+            get_float(metadata["EVENT_LONGITUDE_DEGREE"]),
+            get_float(metadata["EVENT_LATITUDE_DEGREE"]),
+            get_float(metadata["EVENT_DEPTH_KM"]),
             pref_mag,
             foc_mech)
         eqk.magnitude_list = mag_list
@@ -346,7 +334,7 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
         Parses the event metadata to return an instance of the :class:
         openquake.smt.sm_database.RecordDistance
         """
-        repi = _to_float(metadata["EPICENTRAL_DISTANCE_KM"])
+        repi = get_float(metadata["EPICENTRAL_DISTANCE_KM"])
         
         # No hypocentral distance in file - calculate from event
         if eqk.depth:
@@ -354,8 +342,8 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
         else:
             rhypo = copy(repi)
         azimuth = Point(eqk.longitude, eqk.latitude, eqk.depth).azimuth(Point(
-            _to_float(metadata["STATION_LONGITUDE_DEGREE"]),
-            _to_float(metadata["STATION_LATITUDE_DEGREE"])))
+            get_float(metadata["STATION_LONGITUDE_DEGREE"]),
+            get_float(metadata["STATION_LATITUDE_DEGREE"])))
         dists = RecordDistance(repi, rhypo)
         dists.azimuth = azimuth
         
@@ -369,14 +357,14 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
             "|".join([metadata["NETWORK"], metadata["STATION_CODE"]]),
             metadata["STATION_CODE"],
             metadata["STATION_NAME"],
-            _to_float(metadata["STATION_LONGITUDE_DEGREE"]),
-            _to_float(metadata["STATION_LATITUDE_DEGREE"]),
-            _to_float(metadata["STATION_ELEVATION_M"]))
+            get_float(metadata["STATION_LONGITUDE_DEGREE"]),
+            get_float(metadata["STATION_LATITUDE_DEGREE"]),
+            get_float(metadata["STATION_ELEVATION_M"]))
         site.morphology = metadata["MORPHOLOGIC_CLASSIFICATION"]
         
         # Vs30 was measured
         if metadata["VS30_M/S"]:
-            site.vs30=_to_float(metadata["VS30_M/S"])
+            site.vs30=get_float(metadata["VS30_M/S"])
             site.ec8 = site.get_ec8_class()
             site.nehrp = site.get_nehrp_class()
             site.vs30_measured = True
@@ -411,25 +399,25 @@ class ESMDatabaseMetadataReader(SMDatabaseReader):
         """
         units = "cm/s/s" if metadata["UNITS"] == "cm/s^2" else\
             metadata["UNITS"]
-        sampling_interval = _to_float(metadata["SAMPLING_INTERVAL_S"])
-        nsamp = _to_int(metadata["NDATA"])
+        sampling_interval = get_float(metadata["SAMPLING_INTERVAL_S"])
+        nsamp = get_int(metadata["NDATA"])
         
         # Baseline correction
         baseline = {"Type": metadata["BASELINE_CORRECTION"]}
         filter_info = {"Type": metadata["FILTER_TYPE"],
-                       "Order": _to_int(metadata["FILTER_ORDER"]),
-                       "Low-Cut": _to_float(metadata["LOW_CUT_FREQUENCY_HZ"]),
-                       "High-Cut": _to_float(metadata["HIGH_CUT_FREQUENCY_HZ"])
+                       "Order": get_int(metadata["FILTER_ORDER"]),
+                       "Low-Cut": get_float(metadata["LOW_CUT_FREQUENCY_HZ"]),
+                       "High-Cut": get_float(metadata["HIGH_CUT_FREQUENCY_HZ"])
                        }
         data_type = metadata["DATA_TYPE"]
         if data_type == "ACCELERATION":
-            intensity_measures = {"PGA": _to_float(metadata[
+            intensity_measures = {"PGA": get_float(metadata[
                 DATA_TYPE_KEYS[data_type] + metadata["UNITS"].upper()])}
         elif data_type == "VELOCITY":
-            intensity_measures = {"PGV": _to_float(metadata[
+            intensity_measures = {"PGV": get_float(metadata[
                 DATA_TYPE_KEYS[data_type] + metadata["UNITS"].upper()])}
         elif data_type == "DISPLACEMENT":
-            intensity_measures = {"PGD": _to_float(metadata[
+            intensity_measures = {"PGD": get_float(metadata[
                 DATA_TYPE_KEYS[data_type] + metadata["UNITS"].upper()])}
         else:
             # Unknown
@@ -473,18 +461,18 @@ class ESMTimeSeriesParser(SMTimeSeriesReader):
         """
         # Build the metadata dictionary again
         metadata = _get_metadata_from_file(ifile)
-        self.number_steps = _to_int(metadata["NDATA"])
-        self.time_step = _to_float(metadata["SAMPLING_INTERVAL_S"])
+        self.number_steps = get_int(metadata["NDATA"])
+        self.time_step = get_float(metadata["SAMPLING_INTERVAL_S"])
         self.units = metadata["UNITS"]
         
         # Get acceleration data
         accel = np.genfromtxt(ifile, skip_header=64)
         if "DIS" in ifile:
             pga = None
-            pgd = np.fabs(_to_float(metadata["PGD_" +
+            pgd = np.fabs(get_float(metadata["PGD_" +
                           metadata["UNITS"].upper()]))
         else:
-            pga = np.fabs(_to_float(
+            pga = np.fabs(get_float(
                           metadata["PGA_" + metadata["UNITS"].upper()]))
             pgd = None
             if "s^2" in self.units:
@@ -526,11 +514,10 @@ class ESMSpectraParser(SMSpectraReader):
             if "s^2" in units:
                 units = units.replace("s^2", "s/s")
             pga = convert_accel_units(
-                _to_float(metadata["PGA_" + metadata["UNITS"].upper()]),
+                get_float(metadata["PGA_" + metadata["UNITS"].upper()]),
                 units)
             periods = data[:, 0]
-            s_a = convert_accel_units(data[:, 1], units)
-                                      
+            s_a = convert_accel_units(data[:, 1], units)                                      
             sm_record[target_names[iloc]]["Spectra"]["Response"] = { 
                 "Periods": periods,
                 "Number Periods" : len(periods),
@@ -539,8 +526,8 @@ class ESMSpectraParser(SMSpectraReader):
                 "Displacement" : None,
                 "PSA" : None,
                 "PSV" : None}
-            sm_record[target_names[iloc]]["Spectra"]["Response"]\
-                     ["Acceleration"]["damping_05"] = s_a
+            sm_record[target_names[iloc]][
+                "Spectra"]["Response"]["Acceleration"]["damping_05"] = s_a
             # If the displacement file exists - get the data from that directly
             sd_file = ifile.replace("SA.ASC", "SD.ASC")
             if os.path.exists(sd_file):
