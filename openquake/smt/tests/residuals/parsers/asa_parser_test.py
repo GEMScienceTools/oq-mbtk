@@ -18,13 +18,10 @@ class ASADatabaseParserTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         filepath = os.path.join(BASE_DATA_PATH, os.path.join("asa_records"))
-    
         instance = ASADatabaseParser(
             db_id='1', db_name='db', filename=filepath, record_folder=filepath
             )
-        
         cls.database = instance.parse() # Parse the metadata of each record
-
         del instance
 
     def test_pref_mags(self):
