@@ -8,6 +8,7 @@ from openquake.hazardlib import valid
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 EXP_ACCELERATION_NSAMPLES = [2456, 17880] # Nsamples of x-component per record
+EXP_NRECS = 2 # Number of 3-component time histories
 
 
 class ASADatabaseParserTest(unittest.TestCase):
@@ -23,6 +24,9 @@ class ASADatabaseParserTest(unittest.TestCase):
             )
         cls.database = instance.parse() # Parse the metadata of each record
         del instance
+
+    def test_nrecords(self):
+        self.assertEqual(len(self.database.records), EXP_NRECS)
 
     def test_pref_mags(self):
         parsed_mags = []
@@ -77,7 +81,7 @@ class ASADatabaseParserTest(unittest.TestCase):
         
     def test_time_series_parsing(self):
         for idx_rec, rec in enumerate(self.database.records):
-            ts_dict = ASATimeSeriesParser(rec.time_series_file).parse_records()
+            ts = ASATimeSeriesParser(rec.time_series_file).parse_records()
             self.assertEqual(EXP_ACCELERATION_NSAMPLES[idx_rec],
-                             ts_dict["X"]["Original"]["Acceleration"].shape[0])
+                             ts["X"]["Original"]["Acceleration"].shape[0])
             

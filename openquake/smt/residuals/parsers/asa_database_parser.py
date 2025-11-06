@@ -100,7 +100,8 @@ def _get_metadata_from_file(file_str):
 
 class ASADatabaseParser(SMDatabaseReader):
     """
-    Reader for the metadata within UNAM and CICESE records
+    Parser for extracting metadata from UNAM and CICESE
+    (ASA format) records
     """
     ORGANIZER = []
 
@@ -454,7 +455,7 @@ class ASADatabaseParser(SMDatabaseReader):
 
 class ASATimeSeriesParser(SMTimeSeriesReader):
     """
-    Parses the 3 components for a given ASA format record.
+    Parser for ASA format time histories
     """
 
     def parse_records(self):
