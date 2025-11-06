@@ -44,9 +44,6 @@ from openquake.smt.residuals.parsers import valid
 from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
 
-# Import the ESM dictionaries
-from .esm_dictionaries import *
-
 BASE = os.path.abspath("")
 
 CONV_TO_CMS2 = 981

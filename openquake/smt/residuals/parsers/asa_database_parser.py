@@ -26,13 +26,22 @@ and the corresponding metadata
 """
 import os
 import re
+import numpy as np
 from datetime import datetime
 from math import sqrt
 
-from openquake.hazardlib.geo import *
-from openquake.smt.residuals.sm_database import *
-from openquake.smt.residuals.parsers.base_database_parser import (
-    get_float, get_int, SMDatabaseReader, SMTimeSeriesReader)
+from openquake.hazardlib.geo import Point
+from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
+                                                 GroundMotionRecord,
+                                                 Component,
+                                                 Earthquake,
+                                                 FocalMechanism,
+                                                 Magnitude,
+                                                 RecordDistance,
+                                                 RecordSite)
+from openquake.smt.residuals.parsers.base_database_parser import (SMDatabaseReader,
+                                                                  SMTimeSeriesReader)
+from openquake.smt.residuals.parsers.valid import get_float, get_int
 from openquake.smt.utils import convert_accel_units, get_time_vector
 
 
@@ -105,8 +114,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         for file_dict in self.ORGANIZER:
             # metadata for all components comes from the same file
             metadata = _get_metadata_from_file(file_dict["Time-Series"]["X"])
-            self.database.records.append(self.parse_metadata(metadata,
-                                                             file_dict))
+            self.database.records.append(self.parse_metadata(metadata, file_dict))
         return self.database
 
     def _sort_files(self):
@@ -416,7 +424,7 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
             units=units)
 
         return xcomp, ycomp, zcomp
-
+    
 
 class ASATimeSeriesParser(SMTimeSeriesReader):
     """

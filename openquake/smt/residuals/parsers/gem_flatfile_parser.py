@@ -41,8 +41,6 @@ from openquake.smt.residuals.parsers.esm_flatfile_parser import (parse_ground_mo
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
 from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
-# Import the ESM dictionaries
-from .esm_dictionaries import *
 
 HDEFS = ["Geometric", "rotD00", "rotD50", "rotD100"]
 
