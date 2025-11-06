@@ -41,9 +41,8 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  Rupture,
                                                  FocalMechanism, 
                                                  GCMTNodalPlanes)
-from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
+from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE, vfloat
 
 
 BASE = os.path.abspath("")
@@ -148,7 +147,7 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
     fm_set = []
     for key in ["es_strike", "es_dip", "es_rake"]:
         if key in metadata:
-            fm_param = valid.vfloat(metadata[key], key)
+            fm_param = vfloat(metadata[key], key)
             if fm_param is not None:
                 fm_set.append(fm_param)
 

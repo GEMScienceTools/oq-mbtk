@@ -40,8 +40,7 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  RecordSite,
                                                  RecordDistance)
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.residuals.parsers import valid
-from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
+from openquake.smt import utils
 
 
 BASE = os.path.abspath("")
@@ -538,9 +537,9 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         eq_datetime = pd.to_datetime(metadata["event_time"])
 
         # Latitude, longitude and depth
-        eq_lat = valid.latitude(metadata["ev_latitude"])
-        eq_lon = valid.longitude(metadata["ev_longitude"])
-        eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
+        eq_lat = utils.latitude(metadata["ev_latitude"])
+        eq_lon = utils.longitude(metadata["ev_longitude"])
+        eq_depth = utils.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
             raise ValueError('Depth missing an events in admitted flatfile')
         
@@ -593,7 +592,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         fm_set = []
         for key in ["es_strike", "es_dip", "es_rake"]:
             if key in metadata:
-                fm_param = valid.vfloat(metadata[key], key)
+                fm_param = utils.vfloat(metadata[key], key)
                 if fm_param is not None:
                     fm_set.append(fm_param)
 
@@ -606,7 +605,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         if not mechanism.nodal_planes.nodal_plane_1:
             # Absolutely no information - base on stye-of-faulting
             mechanism.nodal_planes.nodal_plane_1 = {
-                "strike": 0.0, "dip": DIP_TYPE[sof], "rake": MECHANISM_TYPE[sof]
+                "strike": 0.0, "dip": utils.DIP_TYPE[sof], "rake": utils.MECHANISM_TYPE[sof]
                 }
             
         return rupture, mechanism
@@ -615,22 +614,22 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         """
         Parse the distances provided in the flatfile
         """
-        repi = valid.positive_float(metadata["epi_dist"], "epi_dist")
+        repi = utils.positive_float(metadata["epi_dist"], "epi_dist")
         if pd.isnull(repi):
             repi, rhypo = None, None
         else:
             rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
-        rjb = valid.positive_float(metadata["JB_dist"], "JB_dist")
+        rjb = utils.positive_float(metadata["JB_dist"], "JB_dist")
         if pd.isnull(rjb):
             rjb = None
-        rrup = valid.positive_float(metadata["rup_dist"], "rup_dist")
+        rrup = utils.positive_float(metadata["rup_dist"], "rup_dist")
         if pd.isnull(rrup):
             rrup = None
-        r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
+        r_x = utils.vfloat(metadata["Rx_dist"], "Rx_dist")
         if pd.isnull(r_x):
             r_x = None
         distances = RecordDistance(repi, rhypo, rjb, rrup, r_x)
-        distances.azimuth = valid.positive_float(metadata["epi_az"], "epi_az")
+        distances.azimuth = utils.positive_float(metadata["epi_az"], "epi_az")
 
         return distances
 
@@ -642,12 +641,12 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         network_code = metadata["network_code"].strip()
         station_code = metadata["station_code"].strip()
         site_id = "{:s}-{:s}".format(network_code, station_code)
-        site_lon = valid.longitude(metadata["st_longitude"])
-        site_lat = valid.latitude(metadata["st_latitude"])
+        site_lon = utils.longitude(metadata["st_longitude"])
+        site_lat = utils.latitude(metadata["st_latitude"])
         elevation = None
 
         # Vs30
-        vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
+        vs30 = utils.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
         if pd.isnull(vs30):
             # Need a station vs30 value for residuals (not really, given
             # some GMMs lack site terms, but good way to prevent confusing
@@ -671,8 +670,8 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                           network_code=network_code, country=None)
 
         # Add basin params
-        site.z1pt0 = valid.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
-        site.z2pt5 = valid.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
+        site.z1pt0 = utils.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
+        site.z2pt5 = utils.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
         print(site.z2pt5)
 
         return site
@@ -683,23 +682,23 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         """
         # U channel - usually east
         xorientation = metadata["U_channel_code"].strip()
-        xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
-        xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
-                   "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
+        xazimuth = utils.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
+        xfilter = {"Low-Cut": utils.vfloat(metadata["U_hp"], "U_hp"),
+                   "High-Cut": utils.vfloat(metadata["U_lp"], "U_lp")}
         xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
                           units="cm/s/s")
         
         # V channel - usually North
         vorientation = metadata["V_channel_code"].strip()
-        vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
-        vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
-                   "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
+        vazimuth = utils.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
+        vfilter = {"Low-Cut": utils.vfloat(metadata["V_hp"], "V_hp"),
+                   "High-Cut": utils.vfloat(metadata["V_lp"], "V_lp")}
         vcomp = Component(wfid, vazimuth, waveform_filter=vfilter,
                           units="cm/s/s")
         zorientation = metadata["W_channel_code"].strip()
         if zorientation:
-            zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
-                       "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
+            zfilter = {"Low-Cut": utils.vfloat(metadata["W_hp"], "W_hp"),
+                       "High-Cut": utils.vfloat(metadata["W_lp"], "W_lp")}
             zcomp = Component(wfid, None, waveform_filter=zfilter,
                               units="cm/s/s")
         else:

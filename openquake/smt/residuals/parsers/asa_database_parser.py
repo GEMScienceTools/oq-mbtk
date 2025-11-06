@@ -41,8 +41,7 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  RecordSite)
 from openquake.smt.residuals.parsers.base_database_parser import (SMDatabaseReader,
                                                                   SMTimeSeriesReader)
-from openquake.smt.residuals.parsers.valid import get_float, get_int
-from openquake.smt.utils import convert_accel_units, get_time_vector
+from openquake.smt.utils import convert_accel_units, get_time_vector, get_float, get_int
 
 
 def _get_info_from_archive_name(aname):
