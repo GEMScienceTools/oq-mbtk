@@ -46,9 +46,6 @@ from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReade
 from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
 
 
-# Import the esm dictionaries
-from .esm_dictionaries import *
-
 BASE = os.path.abspath("")
 
 HEADERS = ["event_id",

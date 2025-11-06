@@ -8,11 +8,10 @@ from openquake.hazardlib import valid
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 
-class ASA_MetadataParsertest(unittest.TestCase):
+class ASA_MetadataParserTest(unittest.TestCase):
     """
-    Test that metadata is parsed correctly (case when it metadata is
-    given). Consider two ASA files, one from UNAM and the other from
-    CICESE.
+    Test that metadata is parsed correctly when using one UNAM
+    record and one CICESE record.
     """
     @classmethod
     def setUpClass(cls):

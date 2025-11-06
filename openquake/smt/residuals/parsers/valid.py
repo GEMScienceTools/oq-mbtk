@@ -18,6 +18,32 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
 
+def get_float(xval):
+    """
+    Returns a float value, or none
+    """
+    if xval.strip():
+        try:
+            return float(xval)
+        except:
+            return None
+    else:
+        return None
+
+
+def get_int(xval):
+    """
+    Returns an int value or none
+    """
+    if xval.strip():
+        try:
+            return int(xval)
+        except:
+            return None
+    else:
+        return None
+
+
 def positive_float(value, key, verbose=False):
     """
     Returns True if the value is positive or zero, false otherwise
