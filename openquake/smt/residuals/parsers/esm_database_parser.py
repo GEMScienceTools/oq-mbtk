@@ -139,25 +139,30 @@ class ESMDatabaseReader(SMDatabaseReader):
             if (file_str in skip_files) or ("ds_store" in file_str.lower()) or\
                 ("DIS.ASC" in file_str[-7:]) or ("VEL.ASC" in file_str[-7:]):
                 continue
-            file_dict = {"Time-Series": {"X": None, "Y": None, "Z": None},
-                         "PSV": {"X": None, "Y": None, "Z": None},
-                         "SA": {"X": None, "Y": None, "Z": None},
-                         "SD": {"X": None, "Y": None, "Z": None}}
+            
+            file_dict = {
+                "Time-Series": {"X": None, "Y": None, "Z": None},
+                "PSV": {"X": None, "Y": None, "Z": None},
+                "SA": {"X": None, "Y": None, "Z": None},
+                "SD": {"X": None, "Y": None, "Z": None}
+                }
 
             file_info = _get_filename_info(file_str)
-            code1 = ".".join([file_info[key] for key in ["Net", "Station", "Location"]])
+            code1 = ".".join(
+                [file_info[key] for key in ["Net", "Station", "Location"]])
             code2 = ".".join(
-                [file_info[key] for key in ["DM", "Date", "Time", "Processing", "Waveform"]]
-                )
+                [file_info[key] for key in ["DM", "Date", "Time", "Processing", "Waveform"]])
+            
             for x_term in ["HNE", "HN2", "HLE", "HL2", "HGE", "HG2"]:
                 if file_dict["Time-Series"]["X"]:
                     continue
-                test_filestring = "{:s}.{:s}.{:s}.ASC".format(code1, x_term, code2)
-                test_filename = os.path.join(self.filename, test_filestring)
+            
+                test_filename = os.path.join(
+                    self.filename, "{:s}.{:s}.{:s}.ASC".format(code1, x_term, code2))
 
                 if os.path.exists(test_filename):
                     
-                    # Get SA, SD and PSV
+                    # Get x-component time series
                     file_dict["Time-Series"]["X"] = test_filename
                     skip_files.append(os.path.split(test_filename)[-1])
 
@@ -178,12 +183,13 @@ class ESMDatabaseReader(SMDatabaseReader):
                     if os.path.exists(psv_filename):
                         file_dict["PSV"]["X"] = psv_filename
                         skip_files.append(os.path.split(psv_filename)[-1])
+                        
                     for y_term in ["N", "1", "3"]:
                         y_filename = test_filename.replace(
                             x_term, "{:s}{:s}".format(x_term[:2], y_term))
                         if os.path.exists(y_filename):
         
-                            # Get y-time series
+                            # Get y-component time series
                             file_dict["Time-Series"]["Y"] = y_filename
                             skip_files.append(os.path.split(y_filename)[-1])
         
@@ -209,10 +215,10 @@ class ESMDatabaseReader(SMDatabaseReader):
                                     os.path.split(psv_filename)[-1])
                     
                     # Get vertical files
-                    v_filename = test_filename.replace(x_term,
-                        "{:s}Z".format(x_term[:2]))
+                    v_filename = test_filename.replace(x_term, "{:s}Z".format(x_term[:2]))
+
                     if os.path.exists(v_filename):
-                        # Get z-time series
+                        # Get z-component time series
                         file_dict["Time-Series"]["Z"] = v_filename
                         skip_files.append(os.path.split(v_filename)[-1])
                         # Get SA 
@@ -355,7 +361,8 @@ class ESMDatabaseReader(SMDatabaseReader):
             ).azimuth(
                 Point(
                 get_float(metadata["STATION_LONGITUDE_DEGREE"]),
-                get_float(metadata["STATION_LATITUDE_DEGREE"])))
+                get_float(metadata["STATION_LATITUDE_DEGREE"]))
+                )
         dists = RecordDistance(repi, rhypo)
         dists.azimuth = azimuth
         
