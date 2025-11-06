@@ -569,7 +569,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         """
         Quick and dirty full database builder!
         """
-        # Import esm URL format strong-motion flatfile
+        # Import esm url format strong-motion flatfile
         esm = pd.read_csv(flatfile_location)
 
         # Get path to tmp csv containing reformatted dataframe

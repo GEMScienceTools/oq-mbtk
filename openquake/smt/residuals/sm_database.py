@@ -613,13 +613,7 @@ class Component(object):
         self.ims = ims
         self.units = units  # Equivalent to gain unit
         self.late_trigger = None
-        # QuakeML compatible parameters (mostly unused)
-        self.start_time = None
-        self.duration = None
-        self.resample_rate_denominator = None
-        self.resample_rate_numerator = None
-        self.owner = None
-        self.creation_info = None
+
 
 
 class GroundMotionRecord(object):

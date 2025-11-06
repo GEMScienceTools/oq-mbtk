@@ -53,7 +53,8 @@ class SMDatabaseReader(with_metaclass(abc.ABCMeta)):
 
 class SMTimeSeriesReader(with_metaclass(abc.ABCMeta)):
     """
-    Abstract base class for a reader of a ground motion time series
+    Abstract base class for a reader of a ground motion time series. Returns
+    a dictionary containing basic time-history information for each component.
     """
     def __init__(self, input_files, folder_name=None, units="cm/s/s"):
         """
@@ -79,30 +80,6 @@ class SMTimeSeriesReader(with_metaclass(abc.ABCMeta)):
         Parse the strong motion record
         """
 
-
-class SMSpectraReader(with_metaclass(abc.ABCMeta)):
-    """
-    Abstract Base Class for a reader of a ground motion spectra record
-    """
-    def __init__(self, input_files, folder_name=None):
-        """
-        Intantiate with basic file checks
-        """
-        self.input_files = []
-        for fname in input_files:
-            if folder_name:
-                filename = os.path.join(folder_name, fname)
-                if os.path.exists(filename):
-                    self.input_files.append(filename)
-            else:
-                if os.path.exists(fname):
-                    self.input_files.append(fname)
-
-    @abc.abstractmethod
-    def parse_spectra(self):
-        """
-        Parses the spectra
-        """
 
 class SMSpectraReader(with_metaclass(abc.ABCMeta)):
     """
