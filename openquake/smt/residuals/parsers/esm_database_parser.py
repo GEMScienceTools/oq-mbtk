@@ -109,9 +109,9 @@ def _get_xyz_metadata(file_dict):
     return metadata
 
 
-class ESMDatabaseReader(SMDatabaseReader):
+class ESMDatabaseParser(SMDatabaseReader):
     """
-    Reader for the metadata database of the European Strong Motion Database
+    Parser for extracting metadata from ESM format records
     """
     ORGANIZER = []
     def parse(self):
@@ -125,8 +125,7 @@ class ESMDatabaseReader(SMDatabaseReader):
         assert (len(self.ORGANIZER) > 0)
         for file_dict in self.ORGANIZER:
             metadata = _get_xyz_metadata(file_dict)
-            self.database.records.append(self.parse_metadata(metadata,
-                                                             file_dict))
+            self.database.records.append(self.parse_metadata(metadata, file_dict))
         return self.database
 
     def _sort_files(self):
@@ -455,8 +454,8 @@ class ESMDatabaseReader(SMDatabaseReader):
 
 class ESMTimeSeriesParser(SMTimeSeriesReader):
     """
-    Parses time series in the European Strong Motion Database Format
-    """  
+    Parser for ESM (ASCII format) time histories
+    """
     def parse_records(self):
         """
         Parses the time series
@@ -478,7 +477,7 @@ class ESMTimeSeriesParser(SMTimeSeriesReader):
 
     def _parse_time_history(self, ifile):
         """
-        Parses the time history
+        Parse the time history
         """
         # Build the metadata dictionary again
         metadata = _get_metadata_from_file(ifile)
@@ -508,13 +507,14 @@ class ESMTimeSeriesParser(SMTimeSeriesReader):
         }
         return output
 
+
 class ESMSpectraParser(SMSpectraReader):
     """
-    Parses response spectra in the European Strong Motion Database Format
+    Parse ESM format response spectra
     """
     def parse_spectra(self):
         """
-        Parses the response spectra - 5 % damping is assumed
+        Parses the response spectra - 5% damping is assumed
         """
         sm_record = {
             "X": {"Scalar": {}, "Spectra": {"Response": {}}},
