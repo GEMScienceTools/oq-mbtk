@@ -7,6 +7,8 @@ from openquake.hazardlib import valid
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
+EXP_ACCELERATION_NSAMPLES = [2456, 17880] # Nsamples of x-component per record
+
 
 class ASADatabaseParserTest(unittest.TestCase):
     """
@@ -78,8 +80,11 @@ class ASADatabaseParserTest(unittest.TestCase):
                                 'Rocas graniticas no diferenciadas'])
         
     def test_time_series_parsing(self):
-        for rec in self.database.records:
+        for idx_rec, rec in enumerate(self.database.records):
             ts_dict = ASATimeSeriesParser(rec.time_series_file).parse_records()
+            self.assertEqual(EXP_ACCELERATION_NSAMPLES[idx_rec],
+                             ts_dict["X"]["Original"]["Acceleration"].shape[0])
+            
     
     @classmethod
     def tearDownClass(cls):
