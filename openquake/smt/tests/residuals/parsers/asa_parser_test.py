@@ -85,7 +85,6 @@ class ASADatabaseParserTest(unittest.TestCase):
             self.assertEqual(EXP_ACCELERATION_NSAMPLES[idx_rec],
                              ts_dict["X"]["Original"]["Acceleration"].shape[0])
             
-    
     @classmethod
     def tearDownClass(cls):
         cls.database = None
