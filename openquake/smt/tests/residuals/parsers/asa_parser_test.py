@@ -17,8 +17,8 @@ class ASADatabaseParserTest(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        filepath = os.path.join(BASE_DATA_PATH,
-                                os.path.join("correct_ASA_files"))
+        filepath = os.path.join(
+            BASE_DATA_PATH, os.path.join("correct_ASA_files"))
     
         instance = ASADatabaseParser(
             db_id='1', db_name='db', filename=filepath, record_folder=filepath
@@ -85,6 +85,3 @@ class ASADatabaseParserTest(unittest.TestCase):
             self.assertEqual(EXP_ACCELERATION_NSAMPLES[idx_rec],
                              ts_dict["X"]["Original"]["Acceleration"].shape[0])
             
-    @classmethod
-    def tearDownClass(cls):
-        cls.database = None
