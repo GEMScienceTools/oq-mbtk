@@ -1,14 +1,14 @@
 import os
 import unittest
 
-from openquake.smt.residuals.parsers.asa_database_parser import ASADatabaseMetadataReader
+from openquake.smt.residuals.parsers.asa_database_parser import ASADatabaseParser, ASATimeSeriesParser
 from openquake.hazardlib import valid
 
 
 BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
 
 
-class ASA_MetadataParserTest(unittest.TestCase):
+class ASADatabaseParserTest(unittest.TestCase):
     """
     Test that metadata is parsed correctly when using one UNAM
     record and one CICESE record.
@@ -17,11 +17,13 @@ class ASA_MetadataParserTest(unittest.TestCase):
     def setUpClass(cls):
         filepath = os.path.join(BASE_DATA_PATH,
                                 os.path.join("correct_ASA_files"))
-        instance = ASADatabaseMetadataReader(db_id='1',
-                                             db_name='db',
-                                             filename=filepath,
-                                             record_folder=filepath)
-        cls.database = instance.parse()
+    
+        instance = ASADatabaseParser(
+            db_id='1', db_name='db', filename=filepath, record_folder=filepath
+            )
+        
+        cls.database = instance.parse() # Parse the metadata of each record
+
         del instance
 
     def test_pref_mags(self):
@@ -74,7 +76,11 @@ class ASA_MetadataParserTest(unittest.TestCase):
         self.assertEqual(
             parsed_morphology, ['ARENA - LIMO - ARCILLA  ',
                                 'Rocas graniticas no diferenciadas'])
-
+        
+    def test_time_series_parsing(self):
+        for rec in self.database.records:
+            ts_dict = ASATimeSeriesParser(rec.time_series_file).parse_records()
+    
     @classmethod
     def tearDownClass(cls):
         cls.database = None

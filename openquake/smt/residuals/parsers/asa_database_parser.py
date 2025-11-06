@@ -94,26 +94,28 @@ def _get_metadata_from_file(file_str):
                         # When values continue on a new line
                         metadata[recentkey] = (
                             metadata[recentkey] + ' ' + row[1].strip())
+                        
     return metadata
 
 
-class ASADatabaseMetadataReader(SMDatabaseReader):
+class ASADatabaseParser(SMDatabaseReader):
     """
-    Reader for the metadata database of the UNAM and CICESE files (ASA format)
+    Reader for the metadata within UNAM and CICESE records
     """
     ORGANIZER = []
 
     def parse(self):
         """
-        Parse the record
+        Parse the time series
         """
         self.database = GroundMotionDatabase(self.id, self.name)
         self._sort_files()
         assert (len(self.ORGANIZER) > 0)
         for file_dict in self.ORGANIZER:
-            # metadata for all components comes from the same file
+            # Metadata for all components comes from the same file
             metadata = _get_metadata_from_file(file_dict["Time-Series"]["X"])
             self.database.records.append(self.parse_metadata(metadata, file_dict))
+
         return self.database
 
     def _sort_files(self):
@@ -163,10 +165,13 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         # Get component and processing data
         xcomp, ycomp, zcomp = self._parse_component_data(wfid, metadata)
 
-        return GroundMotionRecord(wfid,
-            [os.path.split(file_dict["Time-Series"]["X"])[1],
-             os.path.split(file_dict["Time-Series"]["Y"])[1],
-             os.path.split(file_dict["Time-Series"]["Z"])[1]],
+        return GroundMotionRecord(
+            wfid,
+            (
+            file_dict["Time-Series"]["X"],
+            file_dict["Time-Series"]["Y"],
+            file_dict["Time-Series"]["Z"]
+            ),
             event,
             distance,
             site,
@@ -182,32 +187,54 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
         openquake.smt.sm_database.Earthquake. Coordinates in western hemisphere
         are returned as negative values.
         """
-        months = {'ENERO': 1, 'FEBRERO': 2, 'MARZO': 3, 'ABRIL': 4, 'MAYO': 5,
-                 'JUNIO': 6, 'JULIO': 7, 'AGOSTO': 8, 'SEPTIEMBRE': 9,
-                 'OCTUBURE': 10, 'NOVIEMBRE': 11, 'DICIEMBRE': 12}
+        months = {'ENERO': 1,
+                  'FEBRERO': 2,
+                  'MARZO': 3,
+                  'ABRIL': 4,
+                  'MAYO': 5,
+                  'JUNIO': 6,
+                  'JULIO': 7,
+                  'AGOSTO': 8,
+                  'SEPTIEMBRE': 9,
+                  'OCTUBURE': 10,
+                  'NOVIEMBRE': 11,
+                  'DICIEMBRE': 12}
 
-        months_abrev = {'ENE': 1, 'FEB': 2, 'MAR': 3, 'ABR': 4, 'MAY': 5,
-                 'JUN': 6, 'JUL': 7, 'AGO': 8, 'SEP': 9,
-                 'OCT': 10, 'NOV': 11, 'DIC': 12}
+        months_abrev = {'ENE': 1,
+                        'FEB': 2,
+                        'MAR': 3,
+                        'ABR': 4,
+                        'MAY': 5,
+                        'JUN': 6,
+                        'JUL': 7,
+                        'AGO': 8,
+                        'SEP': 9,
+                        'OCT': 10,
+                        'NOV': 11,
+                        'DIC': 12}
 
         # Date and time
         if 'CICESE' in metadata["INSTITUCION RESPONSABLE"]:
             year, month, day = (
                 get_int(metadata["FECHA DEL SISMO (GMT)"][-4:]),
                 months[metadata["FECHA DEL SISMO (GMT)"].split()[2]],
-                get_int(metadata["FECHA DEL SISMO (GMT)"][:2]))
+                get_int(metadata["FECHA DEL SISMO (GMT)"][:2])
+                )
+            
         elif 'CIRES' in metadata["INSTITUCION RESPONSABLE"]:
             year, month, day = (
                 get_int('20'+metadata["FECHA DEL SISMO (GMT)"][-2:]),
                 months_abrev[metadata["FECHA DEL SISMO (GMT)"].split('/')[1]],
-                get_int(metadata["FECHA DEL SISMO (GMT)"][:2]))
+                get_int(metadata["FECHA DEL SISMO (GMT)"][:2])
+                )
         
         # UNAM data, which is not always indicated in "INSTITUCION RESPONSABLE"
         else:
             year, month, day = (
                 get_int(metadata["FECHA DEL SISMO [GMT]"].split("/")[0]),
                 get_int(metadata["FECHA DEL SISMO [GMT]"].split("/")[1]),
-                get_int(metadata["FECHA DEL SISMO [GMT]"].split("/")[2]))
+                get_int(metadata["FECHA DEL SISMO [GMT]"].split("/")[2])
+                )
 
         # Get event time, naming is not consistent (e.g. 07.1, 00, 17,1)
         for i in metadata:
@@ -427,33 +454,40 @@ class ASADatabaseMetadataReader(SMDatabaseReader):
 
 class ASATimeSeriesParser(SMTimeSeriesReader):
     """
-    Parses time series. Each file contains 3 components
+    Parses the 3 components for a given ASA format record.
     """
 
-    def parse_records(self, record=None):
+    def parse_records(self):
         """
-        Parses the time series
+        Parses each component (X, Y, Z) of an ASA format record. Example
+        usage can be found in the `test_time_series_parsing` unit test
+        inside `openquake.smt.tests.residuals.parsers.asa_parser_test`.
+
+        A dictionary containing basic time-history information is
+        returned, which can then be used in additional SMT functions
+        e.g. to compute response spectra for RotD50.
         """
         time_series = {
             "X": {"Original": {}, "SDOF": {}},
             "Y": {"Original": {}, "SDOF": {}},
-            "V": {"Original": {}, "SDOF": {}}}
+            "V": {"Original": {}, "SDOF": {}}
+            }
 
         target_names = list(time_series.keys())
         for iloc, ifile in enumerate(self.input_files):
             if not os.path.exists(ifile):
                 continue
             else:
-                component2parse = target_names[iloc]
-                time_series[target_names[iloc]]["Original"] = \
-                    self._parse_time_history(ifile, component2parse)
-        return time_series
+                time_series[target_names[iloc]][
+                    "Original"] = self._parse_time_history(ifile, target_names[iloc])
+                
+        return time_series 
 
     def _parse_time_history(self, ifile, component2parse):
         """
         Parses the time history and returns the time history of the specified
-        component. All 3 components are provided in every ASA file. Note that
-        components are defined with various names, and are not always
+        component(s). All 3 components are provided in every ASA format file. Note
+        that components are defined with various names, and are not always
         given in the same order
         """
         # The components are definied using the following names
@@ -522,20 +556,15 @@ class ASATimeSeriesParser(SMTimeSeriesReader):
         # Build the metadata dictionary again
         metadata = _get_metadata_from_file(ifile)
 
-        # Get units
-        units_provided = metadata["UNIDADES DE LOS DATOS"]
-        units = units_provided[units_provided.find("(") + 1:
-                               units_provided.find(")")]
-
         # Get time step, naming is not consistent so allow for variation
         for i in metadata:
             if 'INTERVALO DE MUESTREO, C1' in i:
                 self.time_step = get_float(metadata[i].split("/")[1])
 
-        # Get number of time steps, use len(accel) because
-        # sometimes "NUM. TOTAL DE MUESTRAS, C1-C6" is wrong
+        # For nsteps use len(accel) because "NUM. TOTAL DE MUESTRAS, C1-C6" can be wrong
         self.number_steps = len(accel)
 
+        # Into dict of timeseries info
         output = {
             "Acceleration": convert_accel_units(accel, self.units),
             "Time": get_time_vector(self.time_step, self.number_steps),
@@ -543,7 +572,6 @@ class ASATimeSeriesParser(SMTimeSeriesReader):
             "Number Steps": self.number_steps,
             "Units": self.units,
             "PGA": max(abs(accel)),
-            "PGD": None
         }
 
         return output
