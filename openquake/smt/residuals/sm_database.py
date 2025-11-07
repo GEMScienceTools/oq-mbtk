@@ -621,10 +621,10 @@ class GroundMotionRecord(object):
     Class containing the full representation of the strong motion record
     :param str id:
         Ground motion record unique identifier
-    :param str time_series_file:
-        Path to time series file
-    :param str spectra_file:
-        Path to spectra file
+    :param str time_series_files:
+        Path to time series files
+    :param str spectra_files:
+        Path to spectra files
     :param event:
         Earthquake event representation as :class: Earthquake
     :param distance:
@@ -650,7 +650,7 @@ class GroundMotionRecord(object):
     """
     def __init__(self,
                  gm_id,
-                 time_series_file,
+                 time_series_files,
                  event,
                  distance,
                  record_site,
@@ -660,10 +660,10 @@ class GroundMotionRecord(object):
                  ims=None,
                  longest_period=None,
                  shortest_period=None,
-                 spectra_file=None):
+                 spectra_files=None):
         self.id = gm_id
-        self.time_series_file = time_series_file
-        self.spectra_file = spectra_file
+        self.time_series_files = time_series_files
+        self.spectra_files = spectra_files
         assert isinstance(event, Earthquake)
         self.event = event
         assert isinstance(distance, RecordDistance)
