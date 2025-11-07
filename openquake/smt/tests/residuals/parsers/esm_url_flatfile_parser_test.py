@@ -64,8 +64,9 @@ class ESMFlatfileParserURLTestCase(unittest.TestCase):
         """
         Tests the parsing of the reformatted ESM flatfile
         """
-        parser = ESMFlatfileParserURL.autobuild("000", "ESM_conversion_test",
-                                             self.db_file, self.ESM_flatfile_directory)
+        # Parse
+        parser = ESMFlatfileParserURL.autobuild(
+            "000", "ESM_conversion_test", self.db_file, self.ESM_flatfile_directory)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
 

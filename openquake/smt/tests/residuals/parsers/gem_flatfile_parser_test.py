@@ -53,6 +53,7 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
         cls.metadata_pth = os.path.join(cls.db_file, "metadatafile.pkl")
 
     def test_gem_flatfile_parser(self):
+        # Parse
         parser = GEMFlatfileParser.autobuild(
                                              "000",
                                              "gem_conversion_test",
