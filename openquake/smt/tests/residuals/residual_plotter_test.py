@@ -35,7 +35,7 @@ from openquake.smt.residuals.residual_plotter import (ResidualPlot,
                                                       ResidualWithDistance)
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 
 class ResidualsTestCase(unittest.TestCase):
@@ -48,8 +48,8 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Setup constructs the database from the ESM test data
         """
-        ifile = os.path.join(BASE_DATA_PATH, "residual_tests_data.csv")
-        cls.metadata = os.path.join(BASE_DATA_PATH, "residual_tests")
+        ifile = os.path.join(BASE, "residual_tests_data.csv")
+        cls.metadata = os.path.join(BASE, "residual_tests")
         if os.path.exists(cls.metadata):
             shutil.rmtree(cls.metadata)
         parser = ESMFlatfileParserURL.autobuild("000", "ESM ALL", cls.metadata, ifile)

@@ -34,7 +34,7 @@ from openquake.smt.residuals.parsers.esm_url_flatfile_parser import (
     ESMFlatfileParserURL)
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 TMP_FIG = os.path.join(tempfile.mkdtemp(), 'figure.png')
 TMP_TAB = os.path.join(tempfile.mkdtemp(), 'table.csv')
@@ -126,8 +126,8 @@ class ResidualsTestCase(unittest.TestCase):
         Setup constructs the database from the ESM test data
         """
         # Make the database
-        ifile = os.path.join(BASE_DATA_PATH, "residual_tests_data.csv")
-        cls.out_location = os.path.join(BASE_DATA_PATH, "residual_tests")
+        ifile = os.path.join(BASE, "residual_tests_data.csv")
+        cls.out_location = os.path.join(BASE, "residual_tests")
         if os.path.exists(cls.out_location):
             shutil.rmtree(cls.out_location)
         parser = ESMFlatfileParserURL.autobuild(
@@ -147,8 +147,8 @@ class ResidualsTestCase(unittest.TestCase):
         cls.residuals.get_residual_statistics()
 
         # Add other params to class
-        cls.toml = os.path.join(BASE_DATA_PATH, 'residuals_test.toml')
-        cls.xml = os.path.join(BASE_DATA_PATH, 'residuals_test.xml')
+        cls.toml = os.path.join(BASE, 'residuals_test.toml')
+        cls.xml = os.path.join(BASE, 'residuals_test.xml')
         cls.exp = exp
         cls.st_rec_min = 3
         cls.exp_stations = exp_stations
