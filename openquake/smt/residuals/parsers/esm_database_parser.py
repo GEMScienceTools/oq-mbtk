@@ -118,8 +118,6 @@ class ESMDatabaseParser(SMDatabaseReader):
         """
         Parses the record
         """
-        file_list = os.listdir(self.filename)
-        num_files = len(file_list)
         self.database = GroundMotionDatabase(self.id, self.name)
         self._sort_files()
         assert (len(self.ORGANIZER) > 0)
@@ -134,7 +132,7 @@ class ESMDatabaseParser(SMDatabaseReader):
         with a particular recording into a dictionary
         """
         skip_files = []
-        for file_str in sorted(os.listdir(self.filename)):
+        for file_str in sorted(os.listdir(self.input_files)):
             if (file_str in skip_files) or ("ds_store" in file_str.lower()) or\
                 ("DIS.ASC" in file_str[-7:]) or ("VEL.ASC" in file_str[-7:]):
                 continue
@@ -157,7 +155,7 @@ class ESMDatabaseParser(SMDatabaseReader):
                     continue
             
                 test_filename = os.path.join(
-                    self.filename, "{:s}.{:s}.{:s}.ASC".format(code1, x_term, code2))
+                    self.input_files, "{:s}.{:s}.{:s}.ASC".format(code1, x_term, code2))
 
                 if os.path.exists(test_filename):
                     
@@ -286,14 +284,16 @@ class ESMDatabaseParser(SMDatabaseReader):
         openquake.smt.sm_database.Earthquake
         """
         # Date and time
-        year, month, day = (get_int(metadata["EVENT_DATE_YYYYMMDD"][:4]),
-                            get_int(metadata["EVENT_DATE_YYYYMMDD"][4:6]),
-                            get_int(metadata["EVENT_DATE_YYYYMMDD"][6:])
-                            )
-        hour, minute, second = (get_int(metadata["EVENT_TIME_HHMMSS"][:2]),
-                                get_int(metadata["EVENT_TIME_HHMMSS"][2:4]),
-                                get_int(metadata["EVENT_TIME_HHMMSS"][4:])
-                                )
+        year, month, day = (
+            get_int(metadata["EVENT_DATE_YYYYMMDD"][:4]),
+            get_int(metadata["EVENT_DATE_YYYYMMDD"][4:6]),
+            get_int(metadata["EVENT_DATE_YYYYMMDD"][6:])
+            )
+        hour, minute, second = (
+            get_int(metadata["EVENT_TIME_HHMMSS"][:2]),
+            get_int(metadata["EVENT_TIME_HHMMSS"][2:4]),
+            get_int(metadata["EVENT_TIME_HHMMSS"][4:])
+            )
         eq_datetime = datetime(year, month, day, hour, minute, second)
         
         # Event ID and Name
@@ -456,7 +456,7 @@ class ESMTimeSeriesParser(SMTimeSeriesReader):
     """
     Parser for ESM (ASCII format) time histories
     """
-    def parse_records(self):
+    def parse_record(self):
         """
         Parses the time series
         """
@@ -522,7 +522,7 @@ class ESMSpectraParser(SMSpectraReader):
             "V": {"Scalar": {}, "Spectra": {"Response": {}}}
             }
         target_names = list(sm_record)
-        for iloc, ifile in enumerate(self.input_files):
+        for iloc, ifile in enumerate(self.input_files_files):
             if not os.path.exists(ifile):
                 continue
             metadata = _get_metadata_from_file(ifile)
