@@ -23,7 +23,6 @@ class ESMDatabaseParserTest(unittest.TestCase):
         instance = ESMDatabaseParser(db_id='1', db_name='db', input_files=records)
         cls.database = instance.parse() # Parse the metadata of each record
         del instance
-        cls.spectra_files = os.path.join(BASE, "esm_spectra")
 
     def test_nrecords(self):
         self.assertEqual(len(self.database.records), EXP_NRECS)
