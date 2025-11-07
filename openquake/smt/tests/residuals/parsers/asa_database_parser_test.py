@@ -5,7 +5,7 @@ from openquake.smt.residuals.parsers.asa_database_parser import ASADatabaseParse
 from openquake.hazardlib import valid
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 EXP_ACCELERATION_NSAMPLES = [2456, 17880] # Nsamples of x-component per record
 EXP_NRECS = 2 # Number of 3-component time histories
@@ -18,7 +18,7 @@ class ASADatabaseParserTest(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        filepath = os.path.join(BASE_DATA_PATH, os.path.join("asa_records"))
+        filepath = os.path.join(BASE, os.path.join("asa_records"))
         instance = ASADatabaseParser(
             db_id='1', db_name='db', filename=filepath, record_folder=filepath
             )

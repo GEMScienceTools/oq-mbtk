@@ -33,7 +33,7 @@ import openquake.smt.utils_intensity_measures as ims
 from openquake.smt.utils import convert_accel_units
 
 
-BASE_DATA_PATH = os.path.dirname(__file__)
+BASE = os.path.dirname(__file__)
 TMP = os.path.join(tempfile.mkdtemp(), "tmp.png")
 
 
@@ -72,7 +72,7 @@ class BaseIMSTestCase(unittest.TestCase):
         Connect to hdf5 data store
         """
         self.fle = h5py.File(os.path.join(
-            BASE_DATA_PATH, "utils_intensity_measures_test_data.hdf5"), "r")
+            BASE, "utils_intensity_measures_test_data.hdf5"), "r")
         self.periods = self.fle["INPUTS/periods"][:]
 
     def tearDown(self):

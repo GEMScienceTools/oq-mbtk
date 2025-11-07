@@ -27,7 +27,7 @@ from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals.parsers.ngawest2_flatfile_parser import NGAWest2FlatfileParser
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the record IDs for the target data set
 TARGET_IDS = [
@@ -48,10 +48,10 @@ class NGAWest2FlatfileParserTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ngawest2_flatfile_directory = os.path.join(
-            BASE_DATA_PATH, "ngawest2_horz_test_file.csv")
+            BASE, "ngawest2_horz_test_file.csv")
         cls.ngawest2_vertical_flatfile_directory = os.path.join(
-            BASE_DATA_PATH,"ngawest2_vert_test_file.csv")
-        cls.db_file = os.path.join(BASE_DATA_PATH, "ngawest2_test_metadata")       
+            BASE,"ngawest2_vert_test_file.csv")
+        cls.db_file = os.path.join(BASE, "ngawest2_test_metadata")       
         cls.gmpe_list = ["ZhaoEtAl2006Asc", "CampbellBozorgnia2014"]
         cls.imts = ["PGA", "SA(1.0)"]
 

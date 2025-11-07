@@ -78,7 +78,7 @@ TARGET_IDS = ['AM_1988_0001_A_GUK_0', 'AM_1988_0002_A_GUK_0',
               'EMSC_20010718_0000012_RA_STET_0', 'EMSC_20030124_0000011_IU_PAB_10',
               'EMSC_20030222_0000013_CH_MMK_0', 'EMSC_20030222_0000013_CH_SENIN_0']
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 
 class ESMFlatfileParserTestCase(unittest.TestCase):
@@ -88,8 +88,8 @@ class ESMFlatfileParserTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.datafile = os.path.join(
-            BASE_DATA_PATH, "esm18_test_file.csv")
-        cls.db_file = os.path.join(BASE_DATA_PATH, "esm_flatfile_test")
+            BASE, "esm18_test_file.csv")
+        cls.db_file = os.path.join(BASE, "esm_flatfile_test")
         cls.gmpe_list = ["AkkarEtAlRjb2014", "ZhaoEtAl2016Asc"] # Z16 needs rvolc
         cls.imts = ["PGA", "SA(1.0)"]   
 

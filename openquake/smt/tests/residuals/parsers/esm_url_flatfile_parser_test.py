@@ -32,7 +32,7 @@ from openquake.smt.residuals.parsers.esm_url_flatfile_parser import \
     ESMFlatfileParserURL
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the record IDs for the target data set
 TARGET_IDS = [
@@ -54,9 +54,9 @@ class ESMFlatfileParserURLTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ESM_flatfile_directory = os.path.join(
-            BASE_DATA_PATH, "esm_url_test_file.csv")
+            BASE, "esm_url_test_file.csv")
         cls.db_file = os.path.join(
-            BASE_DATA_PATH, "ESM_URL_conversion_test_metadata")    
+            BASE, "ESM_URL_conversion_test_metadata")    
         cls.gmpe_list = ["BooreEtAl2014", "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]   
 
