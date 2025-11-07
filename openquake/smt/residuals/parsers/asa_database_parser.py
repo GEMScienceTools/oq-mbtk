@@ -180,7 +180,7 @@ class ASADatabaseParser(SMDatabaseReader):
             ycomp,
             vertical=zcomp,
             ims=None,
-            spectra_file=None)
+            spectra_files=None)
 
     def _parse_event(self, metadata, file_str):
         """

@@ -273,9 +273,9 @@ class ESMDatabaseParser(SMDatabaseReader):
             ycomp,
             vertical=zcomp,
             ims=None,
-            spectra_file=[file_dict["SA"]["X"],
-                          file_dict["SA"]["Y"],
-                          file_dict["SA"]["Z"]]
+            spectra_files=[file_dict["SA"]["X"],
+                           file_dict["SA"]["Y"],
+                           file_dict["SA"]["Z"]]
                           )
 
     def _parse_event(self, metadata, file_str):

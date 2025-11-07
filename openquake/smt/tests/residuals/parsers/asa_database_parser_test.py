@@ -79,7 +79,7 @@ class ASADatabaseParserTest(unittest.TestCase):
         
     def test_time_series_parsing(self):
         for idx_rec, rec in enumerate(self.database.records):
-            ts = ASATimeSeriesParser(rec.time_series_file).parse_record()
+            ts = ASATimeSeriesParser(rec.time_series_files).parse_record()
             self.assertEqual(EXP_ACCELERATION_NSAMPLES[idx_rec],
                              ts["X"]["Original"]["Acceleration"].shape[0])
             
