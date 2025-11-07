@@ -97,6 +97,7 @@ class ESMFlatfileParserTestCase(unittest.TestCase):
         """
         Tests the parsing of the ESM flatfile
         """
+        # Parse
         parser = ESMFlatfileParser.autobuild("000", "ESM Test",
                                              self.db_file, self.datafile)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:

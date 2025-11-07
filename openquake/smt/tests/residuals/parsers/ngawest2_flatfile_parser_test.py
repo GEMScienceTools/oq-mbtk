@@ -56,6 +56,7 @@ class NGAWest2FlatfileParserTestCase(unittest.TestCase):
         cls.imts = ["PGA", "SA(1.0)"]
 
     def test_ngawest2_flatfile_parser(self):
+        # Parse
         parser = NGAWest2FlatfileParser.autobuild(
                                             "000", "ngawest2_test",
                                              self.db_file,

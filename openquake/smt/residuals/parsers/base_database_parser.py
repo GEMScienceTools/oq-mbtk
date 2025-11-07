@@ -22,6 +22,7 @@ Abstract base class for a strong motion database reader
 """
 import os
 import abc
+import pandas as pd
 
 from openquake.baselib.python3compat import with_metaclass
 
@@ -31,18 +32,22 @@ class SMDatabaseReader(with_metaclass(abc.ABCMeta)):
     Abstract base class for strong motion database parser
     """
 
-    def __init__(self, db_id, db_name, filename, record_folder=None):
+    def __init__(self, db_id, db_name, filename=None, record_folder=None):
         """
         Instantiate and conduct folder checks
         """
         self.id = db_id
         self.name = db_name
-        self.filename = filename
         self.database = None
         if record_folder:
-            self.record_folder = record_folder
+            self.filename = record_folder
         else:
-            self.record_folder = self.filename
+            if pd.isnull(filename):
+                raise ValueError("If not providing a record folder, a filename "
+                                 "(e.g. to a flatfile) must be provided instead "
+                                 "depending on the SMDatabaseReader being used.")
+            else:
+                self.filename = filename
 
     @abc.abstractmethod
     def parse(self):

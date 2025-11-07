@@ -19,12 +19,11 @@ class ESMDatabaseParserTest(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        filepath = os.path.join(BASE, os.path.join("esm_records"))
-        instance = ESMDatabaseParser(
-            db_id='1', db_name='db', filename=filepath, record_folder=filepath
-            )
+        records = os.path.join(BASE, "esm_records")
+        instance = ESMDatabaseParser(db_id='1', db_name='db', record_folder=records)
         cls.database = instance.parse() # Parse the metadata of each record
         del instance
+        cls.spectra_files = os.path.join(BASE, "esm_spectra")
 
     def test_nrecords(self):
         self.assertEqual(len(self.database.records), EXP_NRECS)
@@ -35,3 +34,6 @@ class ESMDatabaseParserTest(unittest.TestCase):
             self.assertEqual(EXP_ACCELERATION_NSAMPLES[idx_rec],
                              ts["X"]["Original"]["Acceleration"].shape[0])
             
+    #def test_spectra_parsing(self):
+     #   for idx_rec, rec in enumerate(self.database.records):
+      #      sp = ESMSpectraParser(rec.spectra_file).parse_spectra()
