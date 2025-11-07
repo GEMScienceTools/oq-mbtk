@@ -10,8 +10,8 @@ from openquake.smt.residuals.parsers.esm_database_parser import (ESMDatabasePars
 BASE = os.path.join(os.path.dirname(__file__), "data")
 
 EXP_ACCELERATION_NSAMPLES = [21000, 21000, 17000, 21000, 21000] # Nsamples of x-component per record
-EXP_NRECS = 5 # Number of 3-component time histories
-EXP_SPECTRA = [  # Spectra for x-component of each record's spectra
+EXP_NRECS = 5 # Number of 3-component records
+EXP_SPECTRA = [ # Spectra for x-component of each record's spectra
     np.array([
         202.628708, 230.446594, 240.905212, 266.374207, 462.467346, 506.369049, 555.699463, 571.831543, 514.927185, 547.056519,
         606.130615, 645.109375, 614.291748, 565.715881, 485.112152, 527.021423, 728.931885, 725.576721, 513.012939, 424.850403,
