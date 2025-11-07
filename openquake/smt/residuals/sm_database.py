@@ -713,7 +713,11 @@ class GroundMotionDatabase(ContextDB):
     :param list site_ids:
         List of site ids (defaults to None: empty list)
     """
-    def __init__(self, db_id, db_name, db_directory=None, records=None,
+    def __init__(self,
+                 db_id,
+                 db_name,
+                 db_directory=None,
+                 records=None,
                  site_ids=None):
         self.id = db_id
         self.name = db_name
