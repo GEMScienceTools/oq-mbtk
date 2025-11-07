@@ -534,14 +534,14 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         """
         Parse the flatfile
         """
-        assert os.path.isfile(self.filename)
-        headers = getline(self.filename, 1).rstrip("\n").split(";")
+        assert os.path.isfile(self.input_files)
+        headers = getline(self.input_files, 1).rstrip("\n").split(";")
         for hdr in HEADERS:
             if hdr not in headers:
                 raise ValueError(
                     "Required header %s is missing in file" % hdr)
         # Read in csv
-        with open(self.filename, "r", encoding="utf-8", newline='') as f:
+        with open(self.input_files, "r", encoding="utf-8", newline='') as f:
             reader = csv.DictReader(f, delimiter=";")
             self.database = GroundMotionDatabase(self.id, self.name)
             counter = 0

@@ -96,14 +96,14 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         Parse the dataset
         """
-        assert os.path.isfile(self.filename)
-        headers = getline(self.filename, 1).rstrip("\n").split(",")
+        assert os.path.isfile(self.input_files)
+        headers = getline(self.input_files, 1).rstrip("\n").split(",")
         for hdr in HEADERS:
             if hdr not in headers:
                 raise ValueError("Required header %s is missing in file" % hdr)
 
         # Read in csv
-        reader = csv.DictReader(open(self.filename, "r"), delimiter=",")
+        reader = csv.DictReader(open(self.input_files, "r"), delimiter=",")
         self.database = GroundMotionDatabase(self.id, self.name)
         counter = 0
         for row in reader:

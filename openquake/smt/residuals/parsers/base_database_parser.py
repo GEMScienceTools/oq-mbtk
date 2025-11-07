@@ -32,22 +32,17 @@ class SMDatabaseReader(with_metaclass(abc.ABCMeta)):
     Abstract base class for strong motion database parser
     """
 
-    def __init__(self, db_id, db_name, filename=None, record_folder=None):
+    def __init__(self, db_id, db_name, input_files):
         """
         Instantiate and conduct folder checks
         """
         self.id = db_id
         self.name = db_name
         self.database = None
-        if record_folder:
-            self.filename = record_folder
-        else:
-            if pd.isnull(filename):
-                raise ValueError("If not providing a record folder, a filename "
-                                 "(e.g. to a flatfile) must be provided instead "
-                                 "depending on the SMDatabaseReader being used.")
-            else:
-                self.filename = filename
+        self.input_files = input_files # Can be a single file, or a directory
+                                       # depending on the parser (examine the
+                                       # one you wish to use to contextually
+                                       # understand this input argument more)
 
     @abc.abstractmethod
     def parse(self):
@@ -61,26 +56,21 @@ class SMTimeSeriesReader(with_metaclass(abc.ABCMeta)):
     Abstract base class for a reader of a ground motion time series. Returns
     a dictionary containing basic time-history information for each component.
     """
-    def __init__(self, input_files, folder_name=None, units="cm/s/s"):
+    def __init__(self, input_files, units="cm/s/s"):
         """
         Instantiate and conduct folder checks
         """
         self.input_files = []
         for fname in input_files:
-            if folder_name:
-                filename = os.path.join(folder_name, fname)
-                if os.path.exists(filename):
-                    self.input_files.append(filename)
-            else:
-                if os.path.exists(fname):
-                    self.input_files.append(fname)
+            if os.path.exists(fname):
+                self.input_files.append(fname)
         self.time_step = None
         self.number_steps = None
         self.units = units
         self.metadata = None
 
     @abc.abstractmethod
-    def parse_records(self, record=None):
+    def parse_record(self):
         """
         Parse the strong motion record
         """

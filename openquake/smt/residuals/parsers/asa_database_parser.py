@@ -124,14 +124,14 @@ class ASADatabaseParser(SMDatabaseReader):
         Searches through the directory and organise the files associated
         with a particular recording into a dictionary
         """
-        for file_str in sorted(os.listdir(self.filename)):
+        for file_str in sorted(os.listdir(self.input_files)):
 
             file_dict = {"Time-Series": {"X": None, "Y": None, "Z": None},
                          "PSV": {"X": None, "Y": None, "Z": None},
                          "SA": {"X": None, "Y": None, "Z": None},
                          "SD": {"X": None, "Y": None, "Z": None}}
 
-            file_loc = os.path.join(self.filename, file_str)
+            file_loc = os.path.join(self.input_files, file_str)
 
             # Filepath to each of the time series (same path for each component)
             file_dict["Time-Series"]["X"] = file_loc
@@ -458,7 +458,7 @@ class ASATimeSeriesParser(SMTimeSeriesReader):
     Parser for ASA format time histories
     """
 
-    def parse_records(self):
+    def parse_record(self):
         """
         Parses each component (X, Y, Z) of an ASA format record. Example
         usage can be found in the `test_time_series_parsing` unit test

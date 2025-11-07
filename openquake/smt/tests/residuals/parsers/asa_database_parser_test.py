@@ -19,7 +19,7 @@ class ASADatabaseParserTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         records = os.path.join(BASE, os.path.join("asa_records"))
-        instance = ASADatabaseParser(db_id='1', db_name='db', record_folder=records)
+        instance = ASADatabaseParser(db_id='1', db_name='db', input_files=records)
         cls.database = instance.parse() # Parse the metadata of each record
         del instance
 
@@ -79,7 +79,7 @@ class ASADatabaseParserTest(unittest.TestCase):
         
     def test_time_series_parsing(self):
         for idx_rec, rec in enumerate(self.database.records):
-            ts = ASATimeSeriesParser(rec.time_series_file).parse_records()
+            ts = ASATimeSeriesParser(rec.time_series_file).parse_record()
             self.assertEqual(EXP_ACCELERATION_NSAMPLES[idx_rec],
                              ts["X"]["Original"]["Acceleration"].shape[0])
             

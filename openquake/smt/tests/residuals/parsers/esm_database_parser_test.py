@@ -20,7 +20,7 @@ class ESMDatabaseParserTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         records = os.path.join(BASE, "esm_records")
-        instance = ESMDatabaseParser(db_id='1', db_name='db', record_folder=records)
+        instance = ESMDatabaseParser(db_id='1', db_name='db', input_files=records)
         cls.database = instance.parse() # Parse the metadata of each record
         del instance
         cls.spectra_files = os.path.join(BASE, "esm_spectra")
@@ -30,7 +30,7 @@ class ESMDatabaseParserTest(unittest.TestCase):
         
     def test_time_series_parsing(self):
         for idx_rec, rec in enumerate(self.database.records):
-            ts = ESMTimeSeriesParser(rec.time_series_file).parse_records()
+            ts = ESMTimeSeriesParser(rec.time_series_file).parse_record()
             self.assertEqual(EXP_ACCELERATION_NSAMPLES[idx_rec],
                              ts["X"]["Original"]["Acceleration"].shape[0])
             
