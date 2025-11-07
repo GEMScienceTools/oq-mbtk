@@ -82,7 +82,6 @@ HEADERS = ["event_id",
            "W_lp",
            "shortest_usable_period",
            "longest_usable_period"
-           ""
            ]
 
 M_PRECEDENCE = ["Mw", "Ms", "ML"]
