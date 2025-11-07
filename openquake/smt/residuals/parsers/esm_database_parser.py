@@ -522,7 +522,7 @@ class ESMSpectraParser(SMSpectraReader):
             "V": {"Scalar": {}, "Spectra": {"Response": {}}}
             }
         target_names = list(sm_record)
-        for iloc, ifile in enumerate(self.input_files_files):
+        for iloc, ifile in enumerate(self.input_files):
             if not os.path.exists(ifile):
                 continue
             metadata = _get_metadata_from_file(ifile)

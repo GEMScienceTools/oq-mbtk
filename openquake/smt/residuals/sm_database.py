@@ -648,9 +648,19 @@ class GroundMotionRecord(object):
     :param str datafile:
         Data file for strong motion record
     """
-    def __init__(self, gm_id, time_series_file, event, distance, record_site,
-                 x_comp, y_comp, vertical=None, ims=None, longest_period=None,
-                 shortest_period=None, spectra_file=None):
+    def __init__(self,
+                 gm_id,
+                 time_series_file,
+                 event,
+                 distance,
+                 record_site,
+                 x_comp,
+                 y_comp,
+                 vertical=None,
+                 ims=None,
+                 longest_period=None,
+                 shortest_period=None,
+                 spectra_file=None):
         self.id = gm_id
         self.time_series_file = time_series_file
         self.spectra_file = spectra_file
