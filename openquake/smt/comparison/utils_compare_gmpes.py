@@ -377,7 +377,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                      st_id)
                 
                 # Update plots
-                update_spectra_plots(ax1, m, dist, n, l, config.dist_list, config.dist_type)
+                update_spectra_plots(ax1, m, depth_g, dist, n, l, config.dist_list, config.dist_type)
             
             # Plot logic trees if required
             for idx_gmc, gmc in enumerate(gmc_weights):
@@ -750,7 +750,7 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 
     # Remove final plot if not required
     if len(imt_list) >= 3 and len(imt_list)/2 != int(len(imt_list)/2):
-        ax = axs2[np.unravel_index(n+1, (nrows, ncols))]
+        ax = axs[np.unravel_index(n+1, (nrows, ncols))]
         ax.set_visible(False)
 
     # Save
@@ -1430,12 +1430,13 @@ def plot_obs_spectra(ax1,
                  label=obs_string)    
         
         
-def update_spectra_plots(ax1, m, i, n, l, dist_list, dist_type):
+def update_spectra_plots(ax1, m, depth_g, i, n, l, dist_list, dist_type):
     """
     Add titles and axis labels to spectra plots
     """
     # Title
-    ax1.set_title(f'Mw={m}, {dist_type}={i}km', fontsize=16, y=1.0, pad=-16)
+    ax1.set_title(f'Mw={m}, depth={depth_g}km, {dist_type}={i}km',
+                  fontsize=12, y=1.0, pad=-16)
 
      # Bottom row only
     if n == len(dist_list)-1:
