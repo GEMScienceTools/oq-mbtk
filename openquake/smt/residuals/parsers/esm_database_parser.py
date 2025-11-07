@@ -154,35 +154,35 @@ class ESMDatabaseParser(SMDatabaseReader):
                 if file_dict["Time-Series"]["X"]:
                     continue
             
-                test_filename = os.path.join(
+                fname = os.path.join(
                     self.input_files, "{:s}.{:s}.{:s}.ASC".format(code1, x_term, code2))
 
-                if os.path.exists(test_filename):
+                if os.path.exists(fname):
                     
                     # Get x-component time series
-                    file_dict["Time-Series"]["X"] = test_filename
-                    skip_files.append(os.path.split(test_filename)[-1])
+                    file_dict["Time-Series"]["X"] = fname
+                    skip_files.append(os.path.split(fname)[-1])
 
                     # SA - x-component
-                    sa_filename = 'SA'.join(test_filename.rsplit('ACC', 1))
+                    sa_filename = 'SA'.join(fname.rsplit('ACC', 1))
                     if os.path.exists(sa_filename):
                         file_dict["SA"]["X"] = sa_filename
                         skip_files.append(os.path.split(sa_filename)[-1])
                     
                     # SD - x-component
-                    sd_filename = 'SD'.join(test_filename.rsplit('ACC', 1))
+                    sd_filename = 'SD'.join(fname.rsplit('ACC', 1))
                     if os.path.exists(sd_filename):
                         file_dict["SD"]["X"] = sd_filename
                         skip_files.append(os.path.split(sd_filename)[-1])
                     
                     # PSV - x-component
-                    psv_filename = 'PSV'.join(test_filename.rsplit('ACC', 1))
+                    psv_filename = 'PSV'.join(fname.rsplit('ACC', 1))
                     if os.path.exists(psv_filename):
                         file_dict["PSV"]["X"] = psv_filename
                         skip_files.append(os.path.split(psv_filename)[-1])
                         
                     for y_term in ["N", "1", "3"]:
-                        y_filename = test_filename.replace(
+                        y_filename = fname.replace(
                             x_term, "{:s}{:s}".format(x_term[:2], y_term))
                         if os.path.exists(y_filename):
         
@@ -212,7 +212,7 @@ class ESMDatabaseParser(SMDatabaseReader):
                                     os.path.split(psv_filename)[-1])
                     
                     # Get vertical files
-                    v_filename = test_filename.replace(x_term, "{:s}Z".format(x_term[:2]))
+                    v_filename = fname.replace(x_term, "{:s}Z".format(x_term[:2]))
 
                     if os.path.exists(v_filename):
                         # Get z-component time series
