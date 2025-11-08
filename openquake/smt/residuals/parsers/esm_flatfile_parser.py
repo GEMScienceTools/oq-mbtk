@@ -829,9 +829,12 @@ class ESMFlatfileParser(SMDatabaseReader):
         Parse a record
         """
         # Waveform ID not provided in file so concatenate Event and Station ID
-        wfid = "_".join([metadata["event_id"], metadata["network_code"],
-                         metadata["station_code"], metadata["location_code"]])
-        wfid = wfid.replace("-", "_")
+        wfid = "_".join([metadata["event_id"],
+                         metadata["network_code"],
+                         metadata["station_code"],
+                         metadata["location_code"]]
+                         )
+        wfid = wfid.replace("-", "_").replace("__", "_")
         
         # Parse the event metadata
         event = parse_event_data(metadata, parse_rupture_mechanism) # Differs here to ESM URL

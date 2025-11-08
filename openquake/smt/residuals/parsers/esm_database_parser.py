@@ -244,9 +244,8 @@ class ESMDatabaseParser(SMDatabaseReader):
         file_info = _get_filename_info(file_str)
         
         # Waveform ID - in this case we use the file info string
-        wfid = "_".join([
-            file_info[key]
-            for key in ["Net", "Station", "Location", "Date", "Time"]])
+        wfid = "_".join([file_info[key] for key in [
+            "Net", "Station", "Location", "Date", "Time"]])
         wfid = wfid.replace(os.sep, "_")
         
         # Get event information
