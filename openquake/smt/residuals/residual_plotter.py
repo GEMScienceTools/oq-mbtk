@@ -876,7 +876,7 @@ def plot_residual_means_and_stds(
             except Exception:
                 continue
     else:
-        gmpe_label = gmpe # If not from toml file can't split
+        gmpe_label = gmpe # If not from toml file
 
     # Plot mean
     if (res_dists[2][gmpe].loc[mean_or_std].all()==0 and
