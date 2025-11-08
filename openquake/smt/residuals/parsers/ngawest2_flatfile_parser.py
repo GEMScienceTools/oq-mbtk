@@ -504,9 +504,9 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         """
         Parse a record
         """
-        wfid = "_".join([metadata["event_id"], metadata["network_code"],
-                         metadata["station_code"]])
-        wfid = wfid.replace("-", "_")
+        wfid = "_".join(
+            [metadata["event_id"], metadata["network_code"], metadata["station_code"]])
+        wfid = wfid.replace("-", "_").replace("__", "_")
 
         # Parse the event metadata
         event = self._parse_event_data(metadata)
