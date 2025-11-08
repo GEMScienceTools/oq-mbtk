@@ -30,6 +30,7 @@ from scipy.stats import norm
 from cycler import cycler
 
 from openquake.hazardlib.imt import from_string
+from openquake.hazardlib import valid
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from openquake.smt.residuals.residual_plotter_utils import (
                                                     _get_residuals_density_distribution,
@@ -857,13 +858,23 @@ def plot_residual_means_and_stds(
     """
     Plot means or sigmas for given GMPE.
     """
-    # Get axes index and gmpe label
+    # Get axes index
     if mean_or_std == 'Mean':
         i = 0
     elif mean_or_std == 'Std Dev':
         i = 1
+
+    # Get gmpe label
     if '_toml=' in gmpe:
-        gmpe_label = re.search(r'(\[[^\]]+\])', gmpe).group(1)
+        sqs  = re.findall(r'\[[^\]]+\]', gmpe)
+        for sq in sqs:
+            try:
+                # Get gmm from the toml string safely
+                valid.gsim(sq)
+                gmpe_label = sq
+                break
+            except Exception:
+                continue
     else:
         gmpe_label = gmpe # If not from toml file can't split
 
