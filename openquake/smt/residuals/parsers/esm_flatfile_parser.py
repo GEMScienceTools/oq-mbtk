@@ -834,7 +834,7 @@ class ESMFlatfileParser(SMDatabaseReader):
                          metadata["station_code"],
                          metadata["location_code"]]
                          )
-        wfid = wfid.replace("-", "_").replace("__", "_")
+        wfid = wfid.replace("-", "_").replace("__", "_").strip()
         
         # Parse the event metadata
         event = parse_event_data(metadata, parse_rupture_mechanism) # Differs here to ESM URL
