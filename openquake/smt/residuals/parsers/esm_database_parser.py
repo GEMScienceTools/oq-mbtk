@@ -246,7 +246,6 @@ class ESMDatabaseParser(SMDatabaseReader):
         # Waveform ID - in this case we use the file info string
         wfid = "_".join([file_info[key] for key in [
             "Net", "Station", "Location", "Date", "Time"]])
-        wfid = wfid.replace(os.sep, "_")
         
         # Get event information
         event = self._parse_event(metadata["X"], file_str)
