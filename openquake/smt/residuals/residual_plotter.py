@@ -869,8 +869,7 @@ def plot_residual_means_and_stds(
         sqs  = re.findall(r'\[[^\]]+\]', gmpe)
         for sq in sqs:
             try:
-                # Get gmm from the toml string safely
-                valid.gsim(sq)
+                valid.gsim(sq) # Must be the gmm 
                 gmpe_label = sq
                 break
             except Exception:
