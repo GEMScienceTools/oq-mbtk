@@ -284,6 +284,7 @@ def get_rupture_regions(
 
 
 def _nearest(val, vals):
+    vals = np.asarray(vals)
     return vals[np.argmin(np.abs(vals - val))]
 
 
