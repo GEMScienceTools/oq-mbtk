@@ -534,7 +534,7 @@ def reformat_att_curves(att_curves, out=None):
                 
                 # Next per GMM get medians and sigmas
                 if "(km)" not in gmpe:
-                    key = f"{gmm_str} | {imt} ({unit}) | {scenario}"
+                    key = f"{imt} ({unit}) | {gmm_str} | {scenario}"
                     
                     # Add median
                     store[f"Median | {key}"] = curves[gmpe][f'median ({unit})']
@@ -553,6 +553,11 @@ def reformat_att_curves(att_curves, out=None):
                     
     # Now into dataframe
     df = pd.DataFrame(store)
+
+    # Reorder columns to get dist cols on left
+    df = df[[
+        col for col in df.columns if "(km)" in col] + [
+            col for col in df.columns if "(km)" not in col]]
 
     # And export if required
     if out is not None:
