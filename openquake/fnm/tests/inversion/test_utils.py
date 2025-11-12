@@ -252,3 +252,111 @@ def test_get_rupture_regions():
     )
 
     # return rup_regions
+
+
+def test_nearest():
+    vals = [0.0, 1.0, 2.0, 3.0]
+
+    assert _nearest(-1.0, vals) == 0.0
+    assert _nearest(1.1, vals) == 1.0
+    assert _nearest(10, vals) == 3.0
+
+
+def test_make_fault_mfd():
+    fault = guatemala_fault_network['faults'][0]
+    trunc_mfd = make_fault_mfd(
+        fault,
+        mfd_type='TruncatedGRMFD',
+        b_val=1.0,
+        seismic_fraction=1.0,
+        min_mag=5.0,
+        max_mag=8.0,
+        bin_width=0.1,
+        moment_rate=None,
+    )
+
+    trunc_mfd_ = hz.mfd.TruncatedGRMFD.from_moment(
+        5.0, 8.0, 0.1, 1.0, get_fault_moment_rate(fault)
+    )
+
+    assert trunc_mfd.__dict__ == trunc_mfd_.__dict__
+
+
+def test_get_mag_counts():
+    pass
+
+
+def test_get_mfd_occurrence_rates():
+    pass
+
+
+def test_get_mfd_moment():
+    pass
+
+
+def test_get_mfd_uncertainties():
+    pass
+
+
+def test_make_cumulative():
+    pass
+
+
+def test_set_single_fault_rupture_rates_by_mfd():
+    pass
+
+
+def test_set_single_fault_rup_rates():
+    pass
+
+
+def test_get_surface_moment_rate():
+    pass
+
+
+def test_get_fault_moment_rate():
+    pass
+
+
+def test__get_fault_by_id():
+    pass
+
+
+def test_get_ruptures_on_fault_df():
+    pass
+
+
+def test_get_ruptures_on_fault():
+    pass
+
+
+def test_make_rup_fault_lookup():
+    pass
+
+
+def test_get_rup_rates_from_fault_slip_rates():
+    pass
+
+
+def test_get_earthquake_fault_distances():
+    pass
+
+
+def test_get_on_fault_likelihood():
+    pass
+
+
+def test_get_soln_slip_rates():
+    pass
+
+
+def test_point_to_triangle_distance():
+    pass
+
+
+def test_calculate_tri_mesh_distances():
+    pass
+
+
+def test_rescale_mfd():
+    pass
