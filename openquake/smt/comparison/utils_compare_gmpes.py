@@ -184,6 +184,8 @@ def plot_trellis_util(config, output_directory):
             mag_key = f'Mw = {m}, depth = {depth_g} km, dip = {dip_g} deg, rake = {config.rake} deg'
             
             # Add the distance values to each GMM (avoid's overwrite)
+            if config.dist_type in ["repi", "rhypo"]:
+                if r_vals[0] < 1E-09: r_vals[0] = 0 # Precision issue
             store_per_gmpe['%s (km)' % config.dist_type] = r_vals
 
             # Store the GMM's info
