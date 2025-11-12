@@ -195,7 +195,7 @@ def plot_trellis_util(config, output_directory):
         # Store per imt
         store_per_imt[str(i)] = store_per_mag
     
-    # Final store to add vs30 and nstd into key
+    # Store all the curves
     store_gmm_curves[cfg_key]['gmm att curves per imt-mag'] = store_per_imt
     
     # Finalise plots

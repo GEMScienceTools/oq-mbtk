@@ -513,6 +513,11 @@ def reformat_att_curves(att_curves, out=None):
     # Get the key describing the vs30 + truncation level
     params_key = pd.Series(att_curves.keys()).values[0]
 
+    # Get Nstd and make an integer if appropriate
+    nstd = float(params_key.split("GMM sigma epsilon = ")[1])
+    if nstd.is_integer():
+        nstd = int(nstd)
+
     # Then get the values per gmm (per imt-mag combination)
     vals = att_curves[params_key]['gmm att curves per imt-mag']
 
@@ -523,13 +528,24 @@ def reformat_att_curves(att_curves, out=None):
         for scenario in vals[imt]:
             curves = vals[imt][scenario]
             for gmpe in curves: 
+                
                 # Get cleaned string of gmm
                 gmm_str = get_gmm_str(gmpe)
+                
                 # Next per GMM get medians and sigmas
                 if "(km)" not in gmpe:
-                    key = f"{gmm_str}, {imt} ({unit}), {scenario}"
-                    store[f"Median - {key}"] = curves[gmpe][f'median ({unit})']
-                    store[f"Sigma - {key}"] = curves[gmpe]['sigma (ln)']
+                    key = f"{gmm_str} | {imt} ({unit}) | {scenario}"
+                    
+                    # Add median
+                    store[f"Median | {key}"] = curves[gmpe][f'median ({unit})']
+                    
+                    # Will only be median plus/minus sigma if Nstd > 0
+                    if f"median plus sigma ({unit})" in curves[gmpe]:
+                        store[f"Median Plus Sigma (+ {nstd} epsilon) | {key}"
+                              ] = curves[gmpe][f"median plus sigma ({unit})"]
+                        store[f"Median Minus Sigma (- {nstd} epsilon) | {key}"
+                              ] = curves[gmpe][f"median plus sigma ({unit})"]
+                        
                 # Then get the distance for given scenario
                 else:
                     dkey = f"values of {gmpe} for {scenario}"
@@ -554,31 +570,45 @@ def reformat_spectra(spectra, out=None):
     eps = spectra['nstd']
     branches = ['median', 'median plus sigma', 'median minus sigma']
     for key in spectra.keys():
+        
         # Don't need weighted GMMs (only used for computing aggregated LTs)
         if key in ["periods", "nstd"] or "_wei" in key:
             continue
+        
         # Weighted gmm LTs
         if 'gmc' in key:
             for sc in spectra[key]:
                 for idx_br, br in enumerate(spectra[key][sc]):
+
                     if br == {}:
                         continue # Empty dict if no epsilon applied
-                    s_key = f"{key} logic tree, {branches[idx_br]} (+/- {eps} epsilon) (g), {sc}"
+                    
+                    if branches[idx_br] == "median plus sigma":
+                        s_key = f"{branches[
+                            idx_br].title()} (+ {eps} epsilon) (g) | {key} logic tree | {sc}"
+                    elif branches[idx_br] == "median":
+                        s_key = f"{branches[idx_br].title()} (g) | {key} logic tree | {sc}"       
+                    else:
+                        assert branches[idx_br] == "median minus sigma"
+                        s_key = f"{branches[
+                            idx_br].title()} (- {eps} epsilon) (g) | {key} logic tree | {sc}"
+                    
                     store[s_key] = np.array(list(br.values()))
         else:
+
             # Individual gmms
             for gmm in spectra[key]:
                 gmm_str = get_gmm_str(gmm)
                 for sc in spectra[key][gmm]:
+                    assert 'lt_weight_gmc' in gmm
                     if key == "add":
-                        branch = "median plus sigma"
+                        s_key = f"{gmm_str}, Median Plus Sigma (+ {eps} epsilon) (g), {sc}"
                     elif key == "med":
-                        branch = "median"
+                        s_key = f"{gmm_str}, Median (g), {sc}"
                     else:
                         assert key == "min"
-                        branch = "median minus sigma"
-                    assert 'lt_weight_gmc' in gmm
-                    s_key = f"{gmm_str}, {branch} (+/- {eps} epsilon) (g), {sc}"
+                        s_key = f"{gmm_str}, Median Minus Sigma (- {eps} epsilon) (g), {sc}"
+            
                     store[s_key] = spectra[key][gmm][sc]
                     
     # Make df
