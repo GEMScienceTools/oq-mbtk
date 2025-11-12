@@ -462,6 +462,22 @@ def mgmpe_check(gmpe):
     return gmm
 
 
+def get_gmm_str(gmm):
+    """
+    Return a clean GMM string (i.e. one without the GMM
+    logic tree weight assigned to it, if present).
+    """
+    gmm_str = ''
+    for idx_part, part in enumerate(gmm.split('\n')):
+        if "lt_weight_gmc" not in part:
+            if idx_part > 0:
+                gmm_str += f", {part}"
+            else:
+                gmm_str += part.strip()
+
+    return gmm_str
+
+
 def get_imtl_unit(i):
     """
     Return a string of the intensity measure type's physical units of
@@ -507,12 +523,13 @@ def reformat_att_curves(att_curves, out=None):
         for scenario in vals[imt]:
             curves = vals[imt][scenario]
             for gmpe in curves: 
-                # First per GMM get medians and sigmas
+                # Get cleaned string of gmm
+                gmm_str = get_gmm_str(gmpe)
+                # Next per GMM get medians and sigmas
                 if "(km)" not in gmpe:
-                    key = f"{imt} ({unit}), {scenario}, {gmpe}"
-                    key = key.replace('\n', ' ')
-                    store[f"{key} median"] = curves[gmpe][f'median ({unit})']
-                    store[f"{key} sigmas"] = curves[gmpe]['sigma (ln)']
+                    key = f"{gmm_str}, {imt} ({unit}), {scenario}"
+                    store[f"Median - {key}"] = curves[gmpe][f'median ({unit})']
+                    store[f"Sigma - {key}"] = curves[gmpe]['sigma (ln)']
                 # Then get the distance for given scenario
                 else:
                     dkey = f"values of {gmpe} for {scenario}"
@@ -546,11 +563,12 @@ def reformat_spectra(spectra, out=None):
                 for idx_br, br in enumerate(spectra[key][sc]):
                     if br == {}:
                         continue # Empty dict if no epsilon applied
-                    s_key = f"{key}, {branches[idx_br]} (+/- {eps} epsilon) (g), {sc}"
+                    s_key = f"{key} logic tree, {branches[idx_br]} (+/- {eps} epsilon) (g), {sc}"
                     store[s_key] = np.array(list(br.values()))
         else:
             # Individual gmms
             for gmm in spectra[key]:
+                gmm_str = get_gmm_str(gmm)
                 for sc in spectra[key][gmm]:
                     if key == "add":
                         branch = "median plus sigma"
@@ -560,8 +578,7 @@ def reformat_spectra(spectra, out=None):
                         assert key == "min"
                         branch = "median minus sigma"
                     assert 'lt_weight_gmc' in gmm
-                    s_key = f"{gmm}, {branch} (+/- {eps} epsilon) (g), {sc}"
-                    s_key = s_key.replace("\n", "")
+                    s_key = f"{gmm_str}, {branch} (+/- {eps} epsilon) (g), {sc}"
                     store[s_key] = spectra[key][gmm][sc]
                     
     # Make df
