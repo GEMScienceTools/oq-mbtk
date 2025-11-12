@@ -583,15 +583,15 @@ def reformat_spectra(spectra, out=None):
                     if br == {}:
                         continue # Empty dict if no epsilon applied
                     
-                    if branches[idx_br] == "median plus sigma":
-                        s_key = f"{branches[
-                            idx_br].title()} (+ {eps} epsilon) (g) | {key} logic tree | {sc}"
-                    elif branches[idx_br] == "median":
-                        s_key = f"{branches[idx_br].title()} (g) | {key} logic tree | {sc}"       
+                    bl = branches[idx_br]
+
+                    if bl == "median plus sigma":
+                        s_key = f"{bl.title()} (+ {eps} epsilon) (g) | {key} logic tree | {sc}"
+                    elif bl == "median":
+                        s_key = f"{bl.title()} (g) | {key} logic tree | {sc}"       
                     else:
-                        assert branches[idx_br] == "median minus sigma"
-                        s_key = f"{branches[
-                            idx_br].title()} (- {eps} epsilon) (g) | {key} logic tree | {sc}"
+                        assert bl == "median minus sigma"
+                        s_key = f"{bl.title()} (- {eps} epsilon) (g) | {key} logic tree | {sc}"
                     
                     store[s_key] = np.array(list(br.values()))
         else:
