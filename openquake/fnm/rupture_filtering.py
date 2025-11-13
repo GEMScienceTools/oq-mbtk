@@ -208,16 +208,15 @@ def get_rupture_plausibilities(
         #    no_connection_val=connection_angle_threshold,
         # )
 
-        plausibilities.loc[i]["connection_distance"] = (
+        plausibilities.loc[i, "connection_distance"] = \
             connection_distance_plausibility(
-                distances.loc[i],
-                function_type=connection_distance_function,
-                dist_threshold=connection_distance_threshold,
-                prob_threshold=connection_distance_plausibility_threshold,
-            )
+            distances.loc[i],
+            function_type=connection_distance_function,
+            dist_threshold=connection_distance_threshold,
+            prob_threshold=connection_distance_plausibility_threshold,
         )
 
-        plausibilities.loc[i]["slip_azimuth"] = slip_azimith_plausibility(
+        plausibilities.loc[i, "slip_azimuth"] = slip_azimith_plausibility(
             rupture["slip_azimuth"], function_type=slip_azimuth_function
         )
 
