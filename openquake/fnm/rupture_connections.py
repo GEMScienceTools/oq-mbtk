@@ -644,7 +644,7 @@ def make_binary_adjacency_matrix_sparse(
     return binary_dist_matrix
 
 
-def _latlon_to_xyz(lon, lat):
+def _lonlat_to_xyz(lon, lat):
     phi = np.radians(lat)
     lamb = np.radians(lon)
 
@@ -653,7 +653,7 @@ def _latlon_to_xyz(lon, lat):
     )
 
 
-def _xyz_to_latlon(sp):
+def _xyz_to_lonlat(sp):
     x, y, z = sp
     phi = np.arctan2(z, np.sqrt(x**2 + y**2))
     lamb = np.arctan2(y, x)
@@ -680,8 +680,8 @@ def _geog_vec_to_xyz(lon, lat, bearing):
 def intersection_pt(
     lon_a, lat_a, strike_a, lon_b, lat_b, strike_b, return_closest=True
 ):
-    p_a = _latlon_to_xyz(lon_a, lat_a)
-    p_b = _latlon_to_xyz(lon_b, lat_b)
+    p_a = _lonlat_to_xyz(lon_a, lat_a)
+    p_b = _lonlat_to_xyz(lon_b, lat_b)
 
     c_a = _geog_vec_to_xyz(lon_a, lat_a, strike_a)
     c_b = _geog_vec_to_xyz(lon_b, lat_b, strike_b)
@@ -689,8 +689,8 @@ def intersection_pt(
     n1 = np.cross(c_a, c_b)
     n2 = np.cross(c_b, c_a)
 
-    pt_1 = _xyz_to_latlon(n1)
-    pt_2 = _xyz_to_latlon(n2)
+    pt_1 = _xyz_to_lonlat(n1)
+    pt_2 = _xyz_to_lonlat(n2)
 
     if return_closest:
         d1 = np.arccos(p_a.dot(n1))
@@ -929,7 +929,9 @@ def calc_rupture_overlap(trace_1, trace_2, intersection_pt=None):
 
 def _is_strike_slip(rake):
     return (
-        -45.0 < rake < 45.0 or 135.0 < rake < 180.0 or -180.0 < rake < -135.0
+        (-45.0 < rake < 45.0)
+        or (135.0 < rake < 180.0)
+        or (-180.0 < rake < -135.0)
     )
 
 
@@ -952,7 +954,6 @@ def filter_bin_adj_matrix_by_rupture_overlap(
         i: fault_rake_lookup[ff] for i, ff in enumerate(single_rup_df['fault'])
     }
 
-    # for (i, j), (int_pt, angle) in rup_angles.items():
     if strike_slip_only:
         strike_slip_filter = {}
         for (i, j), _ in rup_angles.items():
