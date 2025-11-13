@@ -91,5 +91,5 @@ crop_mps.src_conv = 'source converter object'
 crop_mps.out_folder = 'output folder to store new (cropped) mps'
 crop_mps.poly_id = 'optional list of polygon ids to crop'
 
-if __name__="__main__":
+if __name__=="__main__":
     sap.run(crop_mps)

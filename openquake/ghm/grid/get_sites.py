@@ -127,10 +127,15 @@ def main(model, folder_out, fname_conf, example=False):
     np.savetxt(out_file, sites, delimiter=",")
 
 
-def _get_sites(model, folder_out, conf, root_path=''):
+def _get_sites(model, conf, crs= 'epsg:3857', root_path=''):
     """
     Tool for creating an equally spaced set of points covering a model in the
     global hazard mosaic.
+
+    param crs: 
+        optional crs, useful at high/low latitude where 3857 breaks down
+        select an alternative from epsg.io
+
 
     :param root_path:
         The path to the file with the confifuration i.e. the file used as a
@@ -190,7 +195,7 @@ def _get_sites(model, folder_out, conf, root_path=''):
             # Create geodataframe and add a buffer
             gds = gpd.GeoSeries([poly])
             gds = gds.set_crs('epsg:4326')
-            projected = gds.to_crs('epsg:3857')
+            projected = gds.to_crs(crs)
             projected = projected.buffer(buffer_dist)
             # This returns a geodataseries that we convert to geodataframe
             gds = projected.to_crs('epsg:4326')
