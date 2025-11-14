@@ -38,7 +38,7 @@ from openquake.smt.residuals.residual_plotter_utils import (residuals_density_di
                                                     _nanlinregress)
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 
 class ResidualsTestCase(unittest.TestCase):
@@ -50,8 +50,8 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Setup constructs the database from the ESM test data
         """
-        ifile = os.path.join(BASE_DATA_PATH, "residual_tests_data.csv")
-        cls.out_location = os.path.join(BASE_DATA_PATH, "residual_tests")
+        ifile = os.path.join(BASE, "residual_tests_data.csv")
+        cls.out_location = os.path.join(BASE, "residual_tests")
         if os.path.exists(cls.out_location):
             shutil.rmtree(cls.out_location)
         parser = ESMFlatfileParserURL.autobuild(

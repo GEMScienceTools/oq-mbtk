@@ -1,29 +1,30 @@
 import os
 import unittest
 
-from openquake.smt.residuals.parsers.asa_database_parser import ASADatabaseMetadataReader
+from openquake.smt.residuals.parsers.asa_database_parser import ASADatabaseParser, ASATimeSeriesParser
 from openquake.hazardlib import valid
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
+
+EXP_ACCELERATION_NSAMPLES = [2456, 17880] # Nsamples of x-component per record
+EXP_NRECS = 2 # Number of 3-component time histories
 
 
-class ASA_MetadataParsertest(unittest.TestCase):
+class ASADatabaseParserTest(unittest.TestCase):
     """
-    Test that metadata is parsed correctly (case when it metadata is
-    given). Consider two ASA files, one from UNAM and the other from
-    CICESE.
+    Test that metadata is parsed correctly when using one UNAM
+    record and one CICESE record.
     """
     @classmethod
     def setUpClass(cls):
-        filepath = os.path.join(BASE_DATA_PATH,
-                                os.path.join("correct_ASA_files"))
-        instance = ASADatabaseMetadataReader(db_id='1',
-                                             db_name='db',
-                                             filename=filepath,
-                                             record_folder=filepath)
-        cls.database = instance.parse()
+        records = os.path.join(BASE, os.path.join("asa_records"))
+        instance = ASADatabaseParser(db_id='1', db_name='db', input_files=records)
+        cls.database = instance.parse() # Parse the metadata of each record
         del instance
+
+    def test_nrecords(self):
+        self.assertEqual(len(self.database.records), EXP_NRECS)
 
     def test_pref_mags(self):
         parsed_mags = []
@@ -75,7 +76,10 @@ class ASA_MetadataParsertest(unittest.TestCase):
         self.assertEqual(
             parsed_morphology, ['ARENA - LIMO - ARCILLA  ',
                                 'Rocas graniticas no diferenciadas'])
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.database = None
+        
+    def test_time_series_parsing(self):
+        for idx_rec, rec in enumerate(self.database.records):
+            ts = ASATimeSeriesParser(rec.time_series_files).parse_record()
+            self.assertEqual(EXP_ACCELERATION_NSAMPLES[idx_rec],
+                             ts["X"]["Original"]["Acceleration"].shape[0])
+            

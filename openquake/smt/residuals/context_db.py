@@ -103,7 +103,7 @@ class ContextDB:
             }
             ```
             NOTE: Remember 'Observations' and 'Num. Sites' are missing if `imts`
-            is missing, None or an emtpy sequence.
+            is missing, None or an empty sequence.
         """
         dic = {'EventID': evt_id, 'Ctx': RuptureContext()}
         if imts is not None and len(imts):

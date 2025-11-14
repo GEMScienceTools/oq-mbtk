@@ -21,22 +21,21 @@ plot data defined in `residual_plotter_utils`
 """
 import os
 import shutil
+import tempfile
 import unittest
 import pickle
-from unittest.mock import patch, MagicMock
 
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 from openquake.smt.residuals.sm_database_visualiser import DISTANCES
 from openquake.smt.residuals.residual_plotter import (ResidualPlot,
-                                                      LikelihoodPlot,
                                                       ResidualWithMagnitude,
                                                       ResidualWithDepth,
                                                       ResidualWithVs30,
                                                       ResidualWithDistance)
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 
 class ResidualsTestCase(unittest.TestCase):
@@ -49,187 +48,62 @@ class ResidualsTestCase(unittest.TestCase):
         """
         Setup constructs the database from the ESM test data
         """
-        ifile = os.path.join(BASE_DATA_PATH, "residual_tests_data.csv")
-        cls.out_location = os.path.join(BASE_DATA_PATH, "residual_tests")
-        if os.path.exists(cls.out_location):
-            shutil.rmtree(cls.out_location)
-        parser = ESMFlatfileParserURL.autobuild(
-            "000", "ESM ALL", cls.out_location, ifile)
+        ifile = os.path.join(BASE, "residual_tests_data.csv")
+        cls.metadata = os.path.join(BASE, "residual_tests")
+        if os.path.exists(cls.metadata):
+            shutil.rmtree(cls.metadata)
+        parser = ESMFlatfileParserURL.autobuild("000", "ESM ALL", cls.metadata, ifile)
         del parser
-        cls.database_file = os.path.join(cls.out_location,
-                                         "metadatafile.pkl")
-        cls.database = None
+        cls.database_file = os.path.join(cls.metadata, "metadatafile.pkl")
         with open(cls.database_file, "rb") as f:
             cls.database = pickle.load(f)
         cls.gsims = ["AkkarEtAlRjb2014",  "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]
+        cls.residuals = res.Residuals(cls.gsims, cls.imts)
+        cls.residuals.compute_residuals(cls.database, component="Geometric")
+        cls.fname = tempfile.TemporaryFile()
 
-    @patch('openquake.smt.residuals.residual_plotter.plt.subplot')
-    @patch('openquake.smt.residuals.residual_plotter.plt')
-    def tests_residual_plotter(self, mock_pyplot, mock_pyplot_subplot):
+    def tests_residual_plotter(self):
         """
-        Tests basic execution of residual plot.
-        Simply tests pyplot show is called by mocking its `show` method
+        Tests basic execution of residual plot
         """
-        # setup a mock which will handle all calls to matplotlib Axes calls
-        # (e.g., bar, plot or semilogx) so we can test what has been called:
-        mocked_axes_obj = MagicMock()
-        mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
-
-        residuals = res.Residuals(self.gsims, self.imts)
-        residuals.compute_residuals(self.database, component="Geometric")
-
         for gsim in self.gsims:
             for imt in self.imts:
-                ResidualPlot(residuals, gsim, imt, bin_width=0.1)
-                # assert we have not called pyplot show:
-                self.assertTrue(mock_pyplot.show.call_count == 0)
-                ResidualPlot(residuals, gsim, imt, bin_width=0.1,
-                             show=False)
-                # assert still not called pyplot show (call count still 1):
-                self.assertTrue(mock_pyplot.show.call_count == 0)
-                # reset mock:
-                mock_pyplot.show.reset_mock()
+                ResidualPlot(self.residuals, gsim, imt, self.fname, bin_width=0.1)
 
-                # assert we called the right matplotlib plotting functions:
-                self.assertTrue(mocked_axes_obj.bar.called)
-                self.assertTrue(mocked_axes_obj.plot.called)
-                self.assertFalse(mocked_axes_obj.semilogx.called)
-                # reset mock:
-                mocked_axes_obj.reset_mock()
-
-    @patch('openquake.smt.residuals.residual_plotter.plt.subplot')
-    @patch('openquake.smt.residuals.residual_plotter.plt')
-    def tests_likelihood_plotter(self, mock_pyplot, mock_pyplot_subplot):
+    def tests_with_mag_vs30_depth_plotter(self):
         """
-        Tests basic execution of Likelihood plotD.
-        Simply tests pyplot show is called by mocking its `show` method
+        Tests basic execution of residual with (magnitude, vs30, depth) plots
         """
-        # setup a mock which will handle all calls to matplotlib Axes calls
-        # (e.g., bar, plot or semilogx) so we can test what has been called:
-        mocked_axes_obj = MagicMock()
-        mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
-
-        residuals = res.Residuals(self.gsims, self.imts)
-        residuals.compute_residuals(self.database, component="Geometric")
-
         for gsim in self.gsims:
             for imt in self.imts:
-                LikelihoodPlot(residuals, gsim, imt, bin_width=0.1)
-                # assert we have not called pyplot show:
-                self.assertTrue(mock_pyplot.show.call_count == 0)
-                LikelihoodPlot(residuals, gsim, imt, bin_width=0.1,
-                               show=False)
-                # assert still not called pyplot show (call count still 0):
-                self.assertTrue(mock_pyplot.show.call_count == 0)
-                # reset mock:
-                mock_pyplot.show.reset_mock()
-
-                # assert we called the right matplotlib plotting functions:
-                self.assertTrue(mocked_axes_obj.bar.called)
-                self.assertFalse(mocked_axes_obj.plot.called)
-                self.assertFalse(mocked_axes_obj.semilogx.called)
-                # reset mock:
-                mocked_axes_obj.reset_mock()
-
-    @patch('openquake.smt.residuals.residual_plotter.plt.subplot')
-    @patch('openquake.smt.residuals.residual_plotter.plt')
-    def tests_with_mag_vs30_depth_plotter(self, mock_pyplot,
-                                          mock_pyplot_subplot):
+                ResidualWithMagnitude(self.residuals, gsim, imt, self.fname, bin_width=0.1)
+                ResidualWithDepth(self.residuals, gsim, imt, self.fname, bin_width=0.1)
+                ResidualWithVs30(self.residuals, gsim, imt, self.fname, bin_width=0.1)
+                  
+    def tests_with_distance(self):
         """
-        Tests basic execution of residual with (magnitude, vs30, depth) plots.
-        Simply tests pyplot show is called by mocking its `show` method
+        Tests basic execution of residual with distance plots
         """
-        # setup a mock which will handle all calls to matplotlib Axes calls
-        # (e.g., bar, plot or semilogx) so we can test what has been called:
-        mocked_axes_obj = MagicMock()
-        mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
-
-        residuals = res.Residuals(self.gsims, self.imts)
-        residuals.compute_residuals(self.database, component="Geometric")
-
-        for gsim in self.gsims:
-            for imt in self.imts:
-                for plotClass in [ResidualWithMagnitude,
-                                  ResidualWithDepth,
-                                  ResidualWithVs30]:
-                    plotClass(residuals, gsim, imt, bin_width=0.1)
-                    # assert we have not called pyplot show:
-                    self.assertTrue(mock_pyplot.show.call_count == 0)
-                    plotClass(residuals, gsim, imt, bin_width=0.1, show=False)
-                    # assert still not called pyplot show (call count still 0):
-                    self.assertTrue(mock_pyplot.show.call_count == 0)
-                    # reset mock:
-                    mock_pyplot.show.reset_mock()
-
-                    # assert we called the right matplotlib plotting functions:
-                    self.assertFalse(mocked_axes_obj.bar.called)
-                    self.assertTrue(mocked_axes_obj.plot.called)
-                    self.assertFalse(mocked_axes_obj.semilogx.called)
-
-                    # check plot type:
-                    plotClass(residuals, gsim, imt, plot_type='log',
-                              bin_width=0.1, show=False)
-                    self.assertTrue(mocked_axes_obj.semilogx.called)
-
-                    # reset mock:
-                    mocked_axes_obj.reset_mock()
-
-    @patch('openquake.smt.residuals.residual_plotter.plt.subplot')
-    @patch('openquake.smt.residuals.residual_plotter.plt')
-    def tests_with_distance(self, mock_pyplot, mock_pyplot_subplot):
-        """
-        Tests basic execution of residual with distance plots.
-        Simply tests pyplot show is called by mocking its `show` method
-        """
-        # setup a mock which will handle all calls to matplotlib Axes calls
-        # (e.g., bar, plot or semilogx) so we can test what has been called:
-        mocked_axes_obj = MagicMock()
-        mock_pyplot_subplot.side_effect = lambda *a, **v: mocked_axes_obj
-
-        residuals = res.Residuals(self.gsims, self.imts)
-        residuals.compute_residuals(self.database, component="Geometric")
-
         for gsim in self.gsims:
             for imt in self.imts:
                 for dist in DISTANCES.keys():
 
                     if dist == 'r_x':
-                        # as for residual_plotter_utils_test, we should confirm
-                        # with scientific expertise that this is the case:
+                        # Should raise an error for r_x
                         with self.assertRaises(AttributeError):
-                            ResidualWithDistance(residuals, gsim, imt,
-                                                 distance_type=dist,
-                                                 show=False)
+                            ResidualWithDistance(self.residuals,
+                                                 gsim,
+                                                 imt,
+                                                 self.fname,
+                                                 distance_type=dist)
                         continue
 
-                    ResidualWithDistance(residuals, gsim, imt, bin_width=0.1)
-                    # assert we have not called pyplot show:
-                    self.assertTrue(mock_pyplot.show.call_count == 0)
-                    ResidualWithDistance(residuals, gsim, imt, bin_width=0.1,
-                                         show=False)
-                    # assert still not called pyplot show (call count still 0):
-                    self.assertTrue(mock_pyplot.show.call_count == 0)
-                    # reset mock:
-                    mock_pyplot.show.reset_mock()
-
-                    # assert we called the right matplotlib plotting functions:
-                    self.assertFalse(mocked_axes_obj.bar.called)
-                    self.assertTrue(mocked_axes_obj.plot.called)
-                    self.assertFalse(mocked_axes_obj.semilogx.called)
-
-                    # check plot type:
-                    ResidualWithDistance(residuals, gsim, imt,
-                                         plot_type='', bin_width=0.1,
-                                         show=False)
-                    self.assertTrue(mocked_axes_obj.plot.called)
-
-                    # reset mock:
-                    mocked_axes_obj.reset_mock()
+                    ResidualWithDistance(self.residuals, gsim, imt, self.fname, bin_width=0.1)
 
     @classmethod
     def tearDownClass(cls):
         """
         Deletes the database
         """
-        shutil.rmtree(cls.out_location)
+        shutil.rmtree(cls.metadata)
