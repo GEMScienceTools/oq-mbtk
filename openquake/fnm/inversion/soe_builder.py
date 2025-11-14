@@ -41,6 +41,9 @@ from .utils import (
     SHEAR_MODULUS,
     get_mag_counts,
     get_mfd_occurrence_rates,
+    rescale_mfd,
+    make_rup_fault_lookup,
+    get_mfd_moment,
     breakpoint,
 )
 from .solver import weights_from_errors
@@ -255,39 +258,6 @@ def mean_slip_rate(fault_sections: list, faults: list):
     return np.sum(slip_rates) / total_area
 
 
-def make_frac_mfd_eqns(rups, faults, mfd, mag_decimals=1, weight=1.0):
-    mag_counts = get_mag_counts(rups)
-    unique_mags = sorted(mag_counts.keys())  # TODO this is not used
-
-    mfd_occ_rates = get_mfd_occurrence_rates(mfd, mag_decimals=mag_decimals)
-
-    weighted_slip_rates = {
-        rup["idx"]: mean_slip_rate(rup["faults"], faults) for rup in rups
-    }
-
-    mfd_slip_rate_fracs = {}
-    for M in mfd_occ_rates.keys():
-        M_rups = [rup for rup in rups if rup["M"] == M]
-        slip_rates = {
-            i: weighted_slip_rates[i]
-            for i in [rup["rup_id"] for rup in M_rups]
-        }
-        slip_rate_fracs = {
-            i: wsr / sum(slip_rates.values()) for i, wsr in slip_rates.items()
-        }
-        mfd_slip_rate_fracs[M] = slip_rate_fracs
-
-    lhs = ssp.eye(len(rups))
-    rhs = np.ones(len(rups))
-
-    for i, rup in enumerate(rups):
-        rhs[i] = (
-            mfd_occ_rates[rup["M"]] * mfd_slip_rate_fracs[rup["M"]][rup["idx"]]
-        )
-
-    return lhs, rhs
-
-
 def make_abs_mfd_eqns(
     rups,
     mfd,
@@ -300,7 +270,102 @@ def make_abs_mfd_eqns(
     region_name=None,
 ):
     """
-    Makes absolute MFD equations and returns metadata about equation indices
+    Vectorized build of absolute MFD equations.
+    Rows = magnitudes, Cols = ruptures.
+    """
+
+    # TODO: Cumulative fits don't work well. Need to investigate.
+
+    # --- magnitudes present in rups and target MFD rates ---
+    # (If you prefer your helper, keep it; np.unique is a drop-in speedup)
+    # mag_counts = get_mag_counts(rups)  # current way
+    # unique_mags = sorted(mag_counts.keys())
+    M = np.array([rup["M"] for rup in rups], dtype=np.float64)
+    unique_mags = np.unique(M)  # sorted ascending
+
+    mfd_occ_rates = get_mfd_occurrence_rates(
+        mfd, mag_decimals=mag_decimals, cumulative=cumulative
+    )
+
+    n_rups = M.size
+    n_mags = unique_mags.size
+
+    # --- per-rup weights: inclusion mask + optional fractions ---
+    w = (
+        np.zeros(n_rups, dtype=np.float64)
+        if rup_include_list is not None
+        else np.ones(n_rups, dtype=np.float64)
+    )
+    if rup_include_list is not None:
+        # map selected rup index -> fraction (default 1.0)
+        if rup_fractions is None:
+            frac_map = {idx: 1.0 for idx in rup_include_list}
+        else:
+            # assume parallel arrays: rup_include_list[k] matches rup_fractions[k]
+            frac_map = {
+                idx: frac for idx, frac in zip(rup_include_list, rup_fractions)
+            }
+        # set weights for included rups
+        for idx, frac in frac_map.items():
+            if 0 <= idx < n_rups:
+                w[idx] = frac  # 0 elsewhere (excluded)
+
+    # --- broadcast selection matrix (n_rups x n_mags) ---
+    if cumulative:
+        sel = M[:, None] >= unique_mags[None, :]
+    else:
+        sel = M[:, None] == unique_mags[None, :]
+
+    # coefficients: apply rup weights in one shot and transpose to (n_mags x n_rups)
+    abs_mag_eqns = (sel * w[:, None]).T  # shape: (n_mags, n_rups)
+
+    # --- RHS aligned to unique_mags ---
+    mfd_abs_rhs = np.array(
+        [mfd_occ_rates.get(Mi, 0.0) for Mi in unique_mags], dtype=np.float64
+    )
+
+    # --- optional normalization (geometric mean), guard zeros ---
+    if normalize:
+        # only positive entries contribute to geometric mean
+        pos = mfd_abs_rhs > 0
+        if np.any(pos):
+            norm_constant = np.exp(np.mean(np.log(mfd_abs_rhs[pos])))
+            if norm_constant > 0:
+                mfd_abs_rhs /= norm_constant
+                abs_mag_eqns /= norm_constant
+
+    # --- errors and weights ---
+    # Note: sqrt(0) -> 0; if you want to avoid zero-variance, add small epsilon.
+    mfd_abs_errs = np.sqrt(mfd_abs_rhs)
+    mfd_abs_errs_weighted = weights_from_errors(mfd_abs_errs) * weight
+
+    eq_metadata = {
+        "type": "mfd_abs",
+        "n_eqs": int(n_mags),
+        "details": {
+            "magnitudes": unique_mags.tolist(),
+            "region": region_name if region_name else "global",
+            "cumulative": cumulative,
+            "normalized": normalize,
+        },
+    }
+
+    return abs_mag_eqns, mfd_abs_rhs, mfd_abs_errs_weighted, eq_metadata
+
+
+def _make_abs_mfd_eqns_old(
+    rups,
+    mfd,
+    mag_decimals=1,
+    rup_include_list=None,
+    rup_fractions=None,
+    weight=1.0,
+    normalize=False,
+    cumulative=False,
+    region_name=None,
+):
+    """
+    This function is useful as a reference
     """
     mag_counts = get_mag_counts(rups)
     unique_mags = sorted(mag_counts.keys())
@@ -325,7 +390,7 @@ def make_abs_mfd_eqns(
             if i in rup_include_list:
                 if cumulative:
                     for mag in unique_mags:
-                        if rup["M"] <= mag:
+                        if rup["M"] >= mag:
                             mag_rup_idxs[mag].append(i)
                             if rup_fractions is not None:
                                 mag_rup_fracs[mag].append(
@@ -430,16 +495,6 @@ def get_fault_moment(faults, shear_modulus=SHEAR_MODULUS):
     return fault_moment
 
 
-def get_mfd_moment(mfd):
-    mfd_moment = sum(
-        [
-            hz.mfd.tapered_gr_mfd.mag_to_mo(k) * v
-            for k, v in get_mfd_occurrence_rates(mfd).items()
-        ]
-    )
-    return mfd_moment
-
-
 def get_slip_rate_fraction(faults, mfd):
     fault_moment = get_fault_moment(faults)
     mfd_moment = get_mfd_moment(mfd)
@@ -448,13 +503,63 @@ def get_slip_rate_fraction(faults, mfd):
     return seismic_slip_rate_frac
 
 
+def make_fault_mfd_equation_components(
+    fault_mfds,
+    rups,
+    fault_network,
+    fault_key='subfaults',
+    rup_key='rupture_df_keep',
+    seismic_slip_rate_frac=1.0,
+    skip_missing_rup_idxs=False,
+):
+    # TODO: streamline this and make_rup_fault_lookup to not have to pass
+    # the whole fault_network and the fault_key
+    if seismic_slip_rate_frac not in (None, 1.0):
+        fault_mfd_data = {
+            k: {'mfd': v, 'rups_include': [], 'rup_fractions': []}
+            for k, v in fault_mfds.items()
+        }
+    else:
+        fault_mfd_data = {
+            k: {
+                'mfd': rescale_mfd(v, seismic_slip_rate_frac),
+                'rups_include': [],
+                'rup_fractions': [],
+            }
+            for k, v in fault_mfds.items()
+        }
+
+    rup_fault_lookup = make_rup_fault_lookup(fault_network[rup_key], fault_key)
+    rup_id_count_lookup = {r['idx']: i for i, r in enumerate(rups)}
+
+    for fault, on_fault_rups in rup_fault_lookup.items():
+        for rup_idx in on_fault_rups:
+            try:
+                fault_mfd_data[fault]['rups_include'].append(
+                    rup_id_count_lookup[rup_idx]
+                )
+                fault_mfd_data[fault]['rup_fractions'].append(
+                    rups[rup_id_count_lookup[rup_idx]][
+                        f'{fault_key[:-1]}_fracs'
+                    ][fault]
+                )
+            except KeyError as e:
+                if skip_missing_rup_idxs == True:
+                    pass
+                elif skip_missing_rup_idxs == 'warn':
+                    print(f"can't find {rup_idx}, skipping...")
+                elif skip_missing_rup_idxs == False:
+                    raise e
+
+    return fault_mfd_data
+
+
 def make_eqns(
     rups,
     faults,
     mfd=None,
     slip_rate_eqns=True,
     seismic_slip_rate_frac=1.0,
-    regional_slip_rate_fracs=None,
     incremental_abs_mfds=True,
     cumulative_abs_mfds=False,
     mfd_rel_eqns=False,
@@ -463,6 +568,7 @@ def make_eqns(
     mfd_rel_weight=1.0,
     mfd_abs_weight=1.0,
     regional_abs_mfds=None,
+    fault_abs_mfds=None,
     mfd_abs_normalize=False,
     slip_rate_smoothing=False,
     fault_adjacence=None,
@@ -480,6 +586,19 @@ def make_eqns(
     err_set = []
     metadata_set = []
     current_eq_idx = 0
+
+    if fault_abs_mfds is not None:
+        if regional_abs_mfds is None:
+            regional_abs_mfds = fault_abs_mfds
+        else:
+            if set(regional_abs_mfds.keys()).isdisjoint(
+                set(fault_abs_mfds.keys())
+            ):
+                regional_abs_mfds.update(fault_abs_mfds)
+            else:
+                raise ValueError(
+                    "regional_abs_mfds and fault_abs_mfds may not share keys"
+                )
 
     if seismic_slip_rate_frac is None and mfd is not None:
         fault_moment = get_fault_moment(faults, shear_modulus=shear_modulus)

@@ -58,6 +58,8 @@ default_settings = {
     'subsection_size': [15.0, 15.0],
     'edge_sd': 5.0,
     'dip_sd': 5.0,
+    'upper_seis_depth': 0.0,
+    'lower_seis_depth': 20.0,
     'max_jump_distance': 10.0,
     'max_sf_rups_per_mf_rup': 10,
     'rupture_angle_threshold': 60.0,
@@ -68,13 +70,15 @@ default_settings = {
     'shear_modulus': SHEAR_MODULUS,
     'fault_mfd_b_value': 1.0,
     'fault_mfd_type': 'TruncatedGRMFD',
+    'fault_mfd_min_mag': 5.0,
+    'export_fault_mfds': False,
     'seismic_fraction': 0.7,
     'rupture_set_for_rates_from_slip_rates': 'all',
     'plot_fault_moment_rates': False,
     'sparse_distance_matrix': True,
     'parallel_multifault_search': True,
     'full_fault_only_mf_ruptures': True,
-    'calculate_rates_from_slip_rates': True,
+    'calculate_rates_from_slip_rates': False,
     'surface_type': 'simple',
     'min_mag': None,
     'max_mag': None,
@@ -165,6 +169,8 @@ def build_fault_network(
                     surf = build_surface(
                         feature,
                         edge_sd=settings['edge_sd'],
+                        lsd_default=settings['lower_seis_depth'],
+                        usd_default=settings['upper_seis_depth'],
                     )
                     faults.append(surf)
                     fault_fids.append(feature['properties']['fid'])
@@ -374,6 +380,7 @@ def build_fault_network(
                 'rupture_set_for_rates_from_slip_rates'
             ],
             plot_fault_moment_rates=settings['plot_fault_moment_rates'],
+            export_fault_mfds=settings['export_fault_mfds'],
         )
         fault_network[rup_df_key]['annual_occurrence_rate'] = rupture_rates
         t_slip_rate_end = time.time()
