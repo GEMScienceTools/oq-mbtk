@@ -334,8 +334,8 @@ def filter_proportionally_to_plausibility(rup_df, plausibility, seed=None):
     if seed is not None:
         np.random.seed(seed)
     rnds = np.random.rand(rup_df.shape[0])
+    rup_df["plausibility"] = plausibility
 
     keep_df = rup_df[plausibility >= rnds]
-    keep_df["plausibility"] = plausibility[plausibility >= rnds]
 
     return keep_df

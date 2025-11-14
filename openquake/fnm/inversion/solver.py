@@ -42,7 +42,14 @@ from scipy.optimize import (
     lsq_linear,
 )
 
-from openquake.fnm.inversion.fastmath import cscmatvec_p
+from openquake.fnm.inversion.fastmath import (
+    spspmm_csr,
+    norm2,
+    project_to_min,
+    projected_grad_ratio,
+)
+
+
 def weight_from_error(error, zero_error=1e-10):
     if error == 0:
         error = zero_error
@@ -318,30 +325,6 @@ def solve_llsq(G, d, weights=None, **kwargs):
 import numba as nb
 
 
-@nb.njit(fastmath=True, parallel=True)
-def spspmm_csr(A_data, A_indices, A_indptr, x, out):
-    # out = A @ x   (CSR • dense vector)
-    m = A_indptr.size - 1
-    for i in nb.prange(m):
-        row_sum = 0.0
-        for j in range(A_indptr[i], A_indptr[i + 1]):
-            row_sum += A_data[j] * x[A_indices[j]]
-        out[i] = row_sum
-
-@nb.njit
-def spspmm_csc(A_data, A_indices, A_indptr, x, out):
-    n = len(x)
-    #for i in nb.prange(out.size):
-    #    out[i] = 0.0
-    cscmatvec_p(n, A_indptr, A_indices, A_data, x, out)
-
-@nb.njit(fastmath=True, parallel=True, cache=True)
-def project_nonneg(vec):
-    for i in nb.prange(vec.size):
-        if vec[i] < 0.0:
-            vec[i] = 0.0
-
-
 @nb.njit(fastmath=True)
 def nnls_pg(
     A_data,
@@ -355,8 +338,10 @@ def nnls_pg(
     maxit,
     tol,
     accept_norm,
-    stall_val
+    stall_val,
+    min: np.float64 = 0.0,
 ):
+    m = b.size
     n = x.size
     r = b.copy()  # residual = b - A x
     g = np.empty(n)  # gradient = -A^T r
@@ -371,15 +356,11 @@ def nnls_pg(
     pred = np.zeros(len(b))
     misfit_history = np.zeros(maxit)
 
-    #if False: #n < len(r): #overdetermined
-    if n < len(r): #overdetermined
-        mat_vec_mul = spspmm_csc
-    else:
-        mat_vec_mul = spspmm_csr
+    mat_vec_mul = spspmm_csr
     for _ in range(3):
         mat_vec_mul(A_data, A_indices, A_indptr, z, Az)
         mat_vec_mul(AT_data, AT_indices, AT_indptr, Az, ATAz)
-        z = ATAz / np.linalg.norm(ATAz)
+        z = ATAz / norm2(ATAz)
     L = np.dot(z, ATAz)
     alpha = 1.0 / L
     for k in range(maxit):
@@ -390,37 +371,53 @@ def nnls_pg(
         y -= alpha * g  # gradient step
         # projection → ℝⁿ₊
         # np.maximum(y, 0, out=y)
-        project_nonneg(y)
+        project_to_min(y, min=min)
         # Nesterov momentum
         t_next = 0.5 * (1 + np.sqrt(1 + 4 * t * t))
         x_next = y + ((t - 1) / t_next) * (y - x)
-        
+
         mat_vec_mul(A_data, A_indices, A_indptr, y, pred)
-        misfit = np.linalg.norm(pred - b)
+        misfit = norm2(pred - b)
         misfit_history[k] = misfit
         # stop on misfit
         if misfit < accept_norm:
             print("misfit below threshold")
             return y, misfit_history
         # stopping test on projected gradient
-        if np.linalg.norm(np.minimum(y, g)) / b.size < tol: 
+        # if np.linalg.norm(np.minimum(y, g)) / b.size < tol:
+        if projected_grad_ratio(y, g, m) < tol:
             print("gradient below threshold")
             return y, misfit_history
-        
+
         if k > 10:
-            if (misfit_history[k-10] - misfit_history[k]) < stall_val:
+            if (misfit_history[k - 10] - misfit_history[k]) < stall_val:
                 print("inversion stalled (up against zero boundary?)")
                 return y, misfit_history
 
         x, y, t = y, x_next, t_next
 
-    project_nonneg(y)
+    project_to_min(y)
     return y, misfit_history
 
 
+def get_obs_equalization_weights(rhs, eps=None):
+    if eps is None:
+        eps = np.min(np.abs(rhs))
+    w = np.maximum(np.abs(rhs), eps)
+    return w
+
+
 def solve_nnls_pg(
-    A, b, *, x0=None, max_iters=1000, accept_grad=1e-6, accept_norm=1e-6, 
-    copy=True, stall_val=1e-8
+    A,
+    b,
+    min=0.0,
+    x0=None,
+    weights=None,
+    max_iters=1000,
+    accept_grad=1e-6,
+    accept_norm=1e-6,
+    copy=True,
+    stall_val=1e-8,
 ):
     """
     Solve  min_x ½‖Ax – b‖²  subject to  x ≥ 0   with the projected‑gradient
@@ -447,21 +444,20 @@ def solve_nnls_pg(
         Non‑negative least‑squares solution.
     """
 
-    M, N = A.shape
-    #if True: #M <= N: # underdetermined
-    if M <= N: # underdetermined
-        A_sparse = A.tocsr(copy=copy)
-        AT_sparse = A_sparse.T.tocsr()
-    else:
-        A_sparse = A.tocsc(copy=copy)
-        AT_sparse = A_sparse.T.tocsc()
+    if weights is not None:
+        if weights == 'equalize':
+            weights = get_obs_equalization_weights(b)
+        assert len(weights) == len(b)
+        A = ssp.diags(weights).dot(A)
+        b = b * weights
 
+    A_sparse = A.tocsr(copy=copy)
+    AT_sparse = A_sparse.T.tocsr()
 
     if A_sparse.dtype != np.float64:
         A_sparse = A_sparse.astype(np.float64)
         AT_sparse = AT_sparse.astype(np.float64)
 
-    # -- RHS and optional warm‑start ---------------------------------------
     b = np.asarray(b, dtype=np.float64)
     n = A_sparse.shape[1]
     if b.ndim != 1:
@@ -480,12 +476,8 @@ def solve_nnls_pg(
             )
     else:
         x0 = np.zeros(A_sparse.shape[1], dtype=np.float64)
-    # ----------------------------------------------------------------------
 
-    # Call your (possibly modified) Numba kernel.  Assumed signature:
-    #   nnls_pg(A_data, A_idx, A_ptr,
-    #           AT_data, AT_idx, AT_ptr,
-    #           b, x0=None, maxit=..., tol=...)
+    # call the solver
     x, misfit_history = nnls_pg(
         A_sparse.data,
         A_sparse.indices,
@@ -498,10 +490,11 @@ def solve_nnls_pg(
         max_iters,
         accept_grad,
         accept_norm,
-        stall_val
+        stall_val,
+        min=min,
     )
     # resids = A @ x - b
 
-    misfit_history = misfit_history[misfit_history >= 0.]
+    misfit_history = misfit_history[misfit_history >= 0.0]
 
     return x, misfit_history
