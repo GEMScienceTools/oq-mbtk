@@ -1,0 +1,31 @@
+openquake.smt.tests package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.smt.tests.comparison
+   openquake.smt.tests.demos
+   openquake.smt.tests.residuals
+
+Submodules
+----------
+
+openquake.smt.tests.utils\_intensity\_measures\_test module
+-----------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.utils_intensity_measures_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:

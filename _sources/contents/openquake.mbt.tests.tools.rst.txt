@@ -1,0 +1,86 @@
+openquake.mbt.tests.tools package
+=================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.mbt.tests.tools.fault_modeler
+   openquake.mbt.tests.tools.tr
+
+Submodules
+----------
+
+openquake.mbt.tests.tools.area\_test module
+-------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.area_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.faults\_test module
+---------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.faults_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.mfd\_test module
+------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.mfd_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.model\_test module
+--------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.model_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.smooth3d\_test module
+-----------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.smooth3d_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.smooth\_test module
+---------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.smooth_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.strain\_test module
+---------------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.strain_test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openquake.mbt.tests.tools.tools module
+--------------------------------------
+
+.. automodule:: openquake.mbt.tests.tools.tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tests.tools
+   :members:
+   :undoc-members:
+   :show-inheritance:

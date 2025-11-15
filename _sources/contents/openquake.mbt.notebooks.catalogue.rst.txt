@@ -1,0 +1,10 @@
+openquake.mbt.notebooks.catalogue package
+=========================================
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.notebooks.catalogue
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,10 @@
+openquake.fnm.tests.data package
+================================
+
+Module contents
+---------------
+
+.. automodule:: openquake.fnm.tests.data
+   :members:
+   :undoc-members:
+   :show-inheritance:

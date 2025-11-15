@@ -1,0 +1,20 @@
+openquake.mbt.tests.notebooks package
+=====================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.mbt.tests.notebooks.project
+   openquake.mbt.tests.notebooks.sources_area
+   openquake.mbt.tests.notebooks.sources_shallow_fault
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tests.notebooks
+   :members:
+   :undoc-members:
+   :show-inheritance:
