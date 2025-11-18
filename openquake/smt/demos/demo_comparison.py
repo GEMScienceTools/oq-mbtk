@@ -18,8 +18,7 @@ warnings.filterwarnings("ignore")
 BASE = os.path.abspath('')
 
 # Inputs
-demo_input = os.path.join(
-    BASE, 'demo_input_files', 'demo_comparison_analysis_inputs.toml')
+demo_input = os.path.join(BASE, 'demo_input_files', 'demo_comparison.toml')
 
 # Out dir
 demo_out = os.path.join(BASE, 'outputs_demo_comparison')

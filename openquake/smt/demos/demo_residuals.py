@@ -23,7 +23,7 @@ BASE = os.path.abspath('')
 """USER INPUTS"""
 
 # Specify toml providing GMMs and intensity measure types to get residuals for
-demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inputs.toml')
+demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residuals.toml')
 
 # Specify dataset
 demo_flatfile = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
