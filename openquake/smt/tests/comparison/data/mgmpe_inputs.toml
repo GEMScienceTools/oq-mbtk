@@ -105,17 +105,20 @@ basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
 gmpe = 'KuehnEtAl2020SInter'
 basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
 
-[models.17-NGAEastGMPE]
-gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' # use a gmpe table
+[models.17-ModifiableGMPE] # Check that ModifiableGMPE works with an underlying GSIM containing additional input arguments
+gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true'
+fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}"
+
+[models.18-NGAEastGMPE] # Use a gmpe table
+gmpe_table = 'NGAEast_FRANKEL_J15.hdf5' 
     
-[models.18-HassaniAtkinson2018]
-d_sigma = 100 # gmpe specific param
+[models.19-HassaniAtkinson2018] # GMPE Table GSIM
+d_sigma = 100 
 kappa0 = 0.04
 
-[ratios_baseline_gmm.ModifiableGMPE] # Check mgmpe works for loading baseline model used in ratio plots
-gmpe = 'YenierAtkinson2015BSSA'
-sigma_model = 'al_atik_2015_sigma' # use Al Atik (2015) sigma model
-with_betw_ratio = 1.5
+[ratios_baseline_gmm.1-ModifiableGMPE] # Check ModifiableGMPE with an underlying GSIM with additional inputs also works in ratio plots
+gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true'
+site_term = 'BA08SiteTerm' # Arbitrary for testing execution of this capability
 
 [custom_colors]
 custom_colors_flag = false # Set to true for custom colours
