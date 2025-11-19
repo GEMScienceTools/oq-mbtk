@@ -336,10 +336,10 @@ Single Station Residual Analysis
     .. code-block:: ini
     
        > # Create SingleStationAnalysis object from gmpe_list and imt_list
-       > ssa1 = res.SingleStationAnalysis(top_sites.keys(), gmpe_list, imt_list)
+       > ssa1 = res.SingleStationAnalysis(list(top_sites.keys()), gmpe_list, imt_list)
        >
        > # OR create SingleStationAnalysis object from .toml
-       > ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), ssa_toml_fname)
+       > ssa1 = res.SingleStationAnalysis.from_toml(list(top_sites.keys()), ssa_toml_fname)
        >
        > Get the total, inter-event and intra-event residuals for each site
        > ssa1.get_site_residuals(sm_database)

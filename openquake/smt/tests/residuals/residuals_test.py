@@ -311,7 +311,7 @@ class ResidualsTestCase(unittest.TestCase):
         top_sites = self.database.rank_sites_by_record_count(self.st_rec_min)
         
         # Create SingleStationAnalysis object from toml
-        ssa1 = res.SingleStationAnalysis.from_toml(top_sites.keys(), self.toml)
+        ssa1 = res.SingleStationAnalysis.from_toml(list(top_sites.keys()), self.toml)
         
         # Compute total, inter-event and intra-event residuals for each site
         ssa1.get_site_residuals(self.database)
