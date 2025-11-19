@@ -24,7 +24,7 @@ BASE = os.path.abspath('')
 demo_flatfile = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
 
 # Specify .toml file with GMPEs and imts to use
-demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inputs.toml')
+demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residuals.toml')
 
 # Specify results folder name
 demo_out = os.path.join(BASE, 'outputs_demo_station_analysis')
@@ -63,12 +63,12 @@ def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
     # For each station print some info
     msg = 'Sites with required threshold of at least %s records:' %(threshold)
     print(msg)
-    for _, site_id in enumerate(top_sites.keys()):
+    for _, site_id in enumerate(list(top_sites.keys())):
         print(" Site ID: %s Name: %s, Number of Records: %s" %(
-            site_id, top_sites[site_id]["Name"], top_sites [site_id]["Count"]))
+            site_id, top_sites[site_id]["Name"], top_sites[site_id]["Count"]))
 
     # Create SingleStationAnalysis object
-    ssa = res.SingleStationAnalysis.from_toml(top_sites.keys(), gmms_imts)
+    ssa = res.SingleStationAnalysis.from_toml(list(top_sites.keys()), gmms_imts)
     
     # Compute the total, inter-event and intra-event residuals for each site
     ssa.get_site_residuals(sm_database)
