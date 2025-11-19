@@ -66,7 +66,7 @@ class ComparisonTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(self):
-        self.input_file = os.path.join(BASE, "compare_gmpe_inputs.toml")
+        self.input_file = os.path.join(BASE, "comparison_test.toml")
         self.output_directory = os.path.join(BASE, 'compare_gmpes_test')
         self.input_file_plot_obs_spectra = os.path.join(
             BASE, 'Chamoli_1999_03_28_EQ.toml')
