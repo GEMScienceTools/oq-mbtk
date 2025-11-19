@@ -21,6 +21,7 @@ Module with utility functions for gmpes
 import numpy as np
 import pandas as pd
 import ast
+import re
 
 from openquake.hazardlib import valid
 from openquake.hazardlib import scalerel 
@@ -324,8 +325,12 @@ def mgmpe_check(gmpe):
         gmpe: GMPE to be modified if required
     """
     if '[ModifiableGMPE]' in gmpe:
+
+        # All of the inputs for this model
         params = pd.Series(gmpe.splitlines(), dtype=object)
-        base_gsim = params.iloc[1].split('=')[1].strip().replace('"','')
+        
+        # Underlying GMM to modify
+        base_gsim = re.search(r'gmpe\s*=\s*(.*)', params.iloc[1]).group(1).replace('"','')
         
         # Get the mgmpe params
         idx_params = []
