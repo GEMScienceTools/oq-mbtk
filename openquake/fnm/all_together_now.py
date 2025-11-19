@@ -14,8 +14,10 @@ logging.basicConfig(
 from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
+    build_subfaults_parallel,
     make_subfault_df,
     make_rupture_df,
+    _n_procs,
 )
 
 from openquake.fnm.rupture_connections import (
@@ -77,6 +79,7 @@ default_settings = {
     'plot_fault_moment_rates': False,
     'sparse_distance_matrix': True,
     'parallel_multifault_search': True,
+    'parallel_subfault_build': True,
     'full_fault_only_mf_ruptures': True,
     'calculate_rates_from_slip_rates': False,
     'surface_type': 'simple',
@@ -202,24 +205,30 @@ def build_fault_network(
     if return_faults_only:
         return fault_network
 
-    logging.info("Making subfaults")
-    fault_network['subfaults'] = []
-    for i, fault in enumerate(faults):
-        try:
-            fault_network['subfaults'].append(
-                get_subsections_from_fault(
-                    fault,
-                    subsection_size=build_settings['subsection_size'],
-                    edge_sd=build_settings['edge_sd'],
-                    dip_sd=build_settings['dip_sd'],
-                    surface=fault['surface'],
+    if settings['parallel_subfault_build'] is False:
+        logging.info("Making subfaults")
+        fault_network['subfaults'] = []
+        for i, fault in enumerate(faults):
+            try:
+                fault_network['subfaults'].append(
+                    get_subsections_from_fault(
+                        fault,
+                        subsection_size=build_settings['subsection_size'],
+                        edge_sd=build_settings['edge_sd'],
+                        dip_sd=build_settings['dip_sd'],
+                        surface=fault['surface'],
+                    )
                 )
-            )
-        except Exception as e:
-            logging.error(f"Error with fault {i}: {e}")
-            # yield fault_network
-            raise e
-            # return faults
+            except Exception as e:
+                logging.error(f"Error with fault {i}: {e}")
+                # yield fault_network
+                raise e
+                # return faults
+    else:
+        logging.info("Making subfaults in parallel")
+        build_subfaults_parallel(
+            fault_network, build_settings, max_workers=_n_procs
+        )
 
     n_subfaults = sum([len(sf) for sf in fault_network['subfaults']])
     t2 = time.time()
