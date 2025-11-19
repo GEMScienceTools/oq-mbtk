@@ -428,11 +428,11 @@ def plot_ratios_util(config, output_directory):
     
     # Compute ratio curves
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
-    ratio_store = []
+    ratio_store, axs = [], []
     for n, i in enumerate(config.imt_list):
         for l, m in enumerate(mag_list):
-            fig.add_subplot(
-                len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
+            ax = fig.add_subplot(len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
+            axs.append(ax)
             
             # Get depth params
             depth_g = dep_list[l] 
@@ -535,8 +535,9 @@ def plot_ratios_util(config, output_directory):
                                    config.maxR)
     
     # Finalise plots
-    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
+    for ax in axs: ax.set_ylim(1/2*np.min(ratio_store), 2*np.max(ratio_store)) # Small buffer in log-space
     out = os.path.join(output_directory, 'RatioPlots.png')
+    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.close()
 
