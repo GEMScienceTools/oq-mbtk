@@ -418,6 +418,9 @@ def plot_ratios_util(config, output_directory):
     """
     Generate ratio (GMPE median attenuation/baseline GMPE median attenuation) 
     plots for given run configuration
+
+    NOTE: The ratios of any specified GMC logic trees against the baseline GMM
+    are not computed/plotted.
     """
     # Get mag and dep lists
     mag_list = config.mag_list

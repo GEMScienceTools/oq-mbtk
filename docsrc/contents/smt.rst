@@ -513,11 +513,11 @@ Comparing GMPEs
 
 6. Plot of ratios of attenuation curves
 
-   The ratios of the median predictions from each GMPE and a baseline GMPE (specified in the ``.toml`` - see above) can also be plotted. An example is provided in the demo files:
+   The ratios of the median predictions from each GMPE and a baseline GMPE (specified in the ``.toml`` - see above) can also be plotted. It should be noted that ratios are not computed/plotted for any specified GMC logic trees. An example is provided in the demo files:
 
     .. code-block:: ini
     
-       > # Plot ratios of median attenuation curves for each GMPE/median attenuation curves for baseline GMPE
+       > # Plot ratios of median attenuation curves for each individual GMPE/median attenuation curves for baseline GMPE
        > comp.plot_ratios(comp_toml, output_directory) 
 
     Ratio plots for input parameters specified in toml file (note that here the baseline GMPE is ``BooreEtAl2014``):
