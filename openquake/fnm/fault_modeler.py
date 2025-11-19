@@ -29,11 +29,14 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import os
 import json
 import logging
+import traceback
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from shapely.geometry import LineString, Polygon, MultiPolygon
 
@@ -61,6 +64,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
+_n_procs = max(1, os.cpu_count() - 1)
 
 def simple_fault_from_feature(
     feature: dict,
@@ -478,6 +483,61 @@ def get_subsections_from_fault(
         subsections.append(subfault)
 
     return subsections
+
+
+def _build_subfaults_for_one_fault(args):
+    """
+    Worker function run in a separate process.
+
+    Returns (i, subfaults, err) where:
+      - i: fault index (for logging / ordering)
+      - subfaults: list returned by get_subsections_from_fault, or None on error
+      - err: exception instance (or string) on error, else None
+    """
+    i, fault, build_settings = args
+    try:
+        subfaults = get_subsections_from_fault(
+            fault,
+            subsection_size=build_settings['subsection_size'],
+            edge_sd=build_settings['edge_sd'],
+            dip_sd=build_settings['dip_sd'],
+            surface=fault['surface'],
+        )
+        return (i, subfaults, None)
+    except Exception as e:
+        # Optionally keep traceback as text for better diagnostics
+        tb = traceback.format_exc()
+        return (i, None, (e, tb))
+
+
+def build_subfaults_parallel(fault_network, build_settings, max_workers=None):
+    faults = fault_network['faults']
+    n_faults = len(faults)
+    fault_network['subfaults'] = [None] * n_faults
+
+    tasks = [
+        (i, faults[i], build_settings)
+        for i in range(n_faults)
+    ]
+
+    with ProcessPoolExecutor(max_workers=max_workers) as ex:
+        futures = [ex.submit(_build_subfaults_for_one_fault, t) for t in tasks]
+
+        for fut in as_completed(futures):
+            i, subfaults, err = fut.result()
+
+            if err is not None:
+                e, tb = err
+                logging.error(f"Error with fault {i}: {e}")
+                logging.error(tb)
+                # Optionally: cancel remaining tasks
+                for f in futures:
+                    f.cancel()
+                raise e
+
+            # Keep ordering identical to the original sequence
+            fault_network['subfaults'][i] = subfaults
+
 
 
 def make_subfault_df(all_subfaults):

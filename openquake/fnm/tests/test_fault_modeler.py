@@ -47,6 +47,8 @@ from openquake.fnm.fault_modeler import (
     subdivide_simple_fault_surface,
     subdivide_rupture_mesh,
     get_subsections_from_fault,
+    _build_subfaults_for_one_fault,
+    build_subfault_parallel,
     make_subfault_df,
     group_subfaults_by_fault,
     angular_mean_degrees,
