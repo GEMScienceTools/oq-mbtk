@@ -106,7 +106,7 @@ gmpe = 'KuehnEtAl2020SInter'
 basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
 
 [models.17-ModifiableGMPE] # Check that ModifiableGMPE works with an underlying GSIM containing additional input arguments
-gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true'
+gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true' # OQ syntax for instantiating gsim from string in openquake.hazardlib.valid.gsim
 fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}"
 
 [models.18-NGAEastGMPE] # Use a gmpe table
