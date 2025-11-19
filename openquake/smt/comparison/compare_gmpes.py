@@ -224,7 +224,6 @@ class Configurations(object):
         if len(models[key]):
             models[key].pop('style', None)
             value += '\n' + str(toml.dumps(models[key]))
-            
         return value.strip()
 
     def get_lt_weights(self, gmpe_list):
