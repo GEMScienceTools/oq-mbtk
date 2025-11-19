@@ -519,14 +519,12 @@ def reformat_att_curves(att_curves, out=None):
         nstd = int(nstd)
 
     # Then get the values per gmm (per imt-mag combination)
-    vals = att_curves[params_key]['gmm att curves per imt-mag']
-
-    # Now get the curves into a dictionary format
+    gmm_vals = att_curves[params_key]['gmm att curves per imt-mag']
     store = {}
-    for imt in vals.keys():
+    for imt in gmm_vals.keys():
         unit = get_imtl_unit(imt)
-        for scenario in vals[imt]:
-            curves = vals[imt][scenario]
+        for scenario in gmm_vals[imt]:
+            curves = gmm_vals[imt][scenario]
             for gmpe in curves: 
                 gmm_str = clean_gmm_label(gmpe, drop_weight_info=True)
                 
@@ -548,7 +546,29 @@ def reformat_att_curves(att_curves, out=None):
                 else:
                     dkey = f"values of {gmpe} for {scenario}"
                     store.setdefault(dkey, curves[gmpe])
-                    
+
+    # Also get the GMC LT values
+    gmc_vals = att_curves[params_key]['gmc logic tree curves per imt-mag']
+    for lt in gmc_vals.keys():
+        for br in gmc_vals[lt].keys():
+            for scenario in gmc_vals[lt][br].keys():
+
+                # Get components for the key
+                imtx = scenario.split(",")[0].split("=")[1].split()[0]
+                rest = ','.join(scenario.split(",")[1:]).strip()
+                unit = get_imtl_unit(imtx)
+                branch = br.split("(")[0].strip().title()
+                if branch == "Median":
+                    key = f"{branch} | {imtx} ({unit}) | {lt} | {rest}"
+                elif branch == "Median Plus Sigma":
+                    key = f"{branch} (+ {nstd} epsilon) | {imtx} ({unit}) | {lt} | {rest}"
+                else:
+                    assert branch == "Median Minus Sigma"
+                    key = f"{branch} (- {nstd} epsilon) | {imtx} ({unit}) | {lt} | {rest}"
+                
+                # Store the LT curve
+                store[key] = gmc_vals[lt][br][scenario]
+
     # Now into dataframe
     df = pd.DataFrame(store)
 
@@ -610,7 +630,7 @@ def reformat_spectra(spectra, out=None):
                     else:
                         assert key == "min"
                         s_key = f"{gmm_str} | Median Minus Sigma (- {eps} epsilon) (g) | {sc}"
-            
+                        
                     store[s_key] = spectra[key][gmm][sc]
                     
     # Make df
