@@ -196,7 +196,7 @@ class Configurations(object):
         for key in config['models']:
             value = self.get_gmm(key, config['models'])
             gmpe_list.append(value)
-
+            
         # Get the baseline GMPE used to compute ratios of GMPEs with if required
         if 'ratios_baseline_gmm' in config_file.keys():
             if len(config_file['ratios_baseline_gmm']) > 1:

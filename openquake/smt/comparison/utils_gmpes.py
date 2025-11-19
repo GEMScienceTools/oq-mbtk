@@ -442,8 +442,8 @@ def mgmpe_check(gmpe):
 
     # Not using ModifiableGMPE
     else:
-        # Clean to ensure arguments can be passed (logic tree weights are
-        # retained in original GMM strings in utils_compare_gmpes)
+        # Clean to ensure arguments can be passed (the logic tree weights
+        # are retained in original GMM strings in utils_compare_gmpes.py)
         params = pd.Series(gmpe.splitlines())
         idx_to_drop = []
         for idx_p, par in enumerate(params):
@@ -457,6 +457,7 @@ def mgmpe_check(gmpe):
                     gmpe_clean = gmpe_clean + '\n' + par
         else: # Ensures GSIM aliases work
             gmpe_clean = gmpe_clean.replace('[','').replace(']','')
+        
         gmm = valid.gsim(gmpe_clean)
 
     return gmm

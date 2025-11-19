@@ -86,6 +86,7 @@ def plot_trellis_util(config, output_directory):
             # Per GMPE get attenuation curves
             lt_vals_gmc = [{}, {}, {}, {}]
             store_per_gmpe = {}
+            
             for g, gmpe in enumerate(config.gmpes_list): 
                 
                 # Sub dicts for median, gmm sigma, median +/- nstd * gmm sigma
@@ -94,7 +95,7 @@ def plot_trellis_util(config, output_directory):
                 
                 # Perform mgmpe check
                 gmm = mgmpe_check(gmpe)
-                
+
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(gmm,
                                                          m,
