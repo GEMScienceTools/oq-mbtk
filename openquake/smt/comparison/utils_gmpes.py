@@ -621,7 +621,6 @@ def reformat_spectra(spectra, out=None):
             for gmm in spectra[key]:
                 gmm_str = get_gmm_str(gmm)
                 for sc in spectra[key][gmm]:
-                    assert 'lt_weight_gmc' in gmm
                     if key == "add":
                         s_key = f"{gmm_str}, Median Plus Sigma (+ {eps} epsilon) (g), {sc}"
                     elif key == "med":
