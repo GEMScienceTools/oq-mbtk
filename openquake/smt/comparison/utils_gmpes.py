@@ -326,12 +326,26 @@ def mgmpe_check(gmpe):
     """
     if '[ModifiableGMPE]' in gmpe:
 
+        # Kwargs dict
+        kwargs = {}
+        
         # All of the inputs for this model
         params = pd.Series(gmpe.splitlines(), dtype=object)
         
         # Underlying GMM to modify
         base_gsim = re.search(r'gmpe\s*=\s*(.*)', params.iloc[1]).group(1).replace('"','')
-        
+
+        # Construct dict of underlying GMM
+        parts = re.search(r'\[([^\]]+)\]', base_gsim) # Square brackets = extra inputs
+        if parts:
+            start = parts.group(1) # GMM without square brackets
+            other = base_gsim.split(parts.group(0))[1]
+            other = re.sub(r'\\+n', '\n', other)
+            other = re.sub(r'[\\\'"]', '', other)
+            kwargs['gmpe'] = {start: dict(re.findall(r'(\w+)\s*=\s*([^\s]+)', other))}
+        else:
+            kwargs['gmpe'] = {base_gsim: {}} # GMM without any additional arguments     
+
         # Get the mgmpe params
         idx_params = []
         for idx, par in enumerate(params):
@@ -368,10 +382,6 @@ def mgmpe_check(gmpe):
                         base_vector = par.split('=')[1].replace('"', '')
                         sigma_vector = ast.literal_eval(base_vector)
                         
-        # Now create kwargs
-        kwargs = {}
-        kwargs['gmpe'] = {base_gsim: {}}
-        
         # Add the non-gmpe kwargs
         for idx_p, param in enumerate(params):
             if idx_p > 1 and idx_p not in idx_params:
@@ -442,7 +452,7 @@ def mgmpe_check(gmpe):
 
         # M9 basin adjustment
         if 'M9BasinTerm' in gmpe: kwargs['m9_basin_term'] = {}
-        
+
         gmm = mgmpe.ModifiableGMPE(**kwargs)
 
     # Not using ModifiableGMPE
