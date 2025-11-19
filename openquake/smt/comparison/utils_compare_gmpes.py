@@ -29,6 +29,7 @@ from scipy import interpolate
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib.imt import from_string
+from openquake.smt.utils import clean_gmm_label
 from openquake.smt.comparison.utils_gmpes import (get_imtl_unit, 
                                                   att_curves,
                                                   get_rup_pars,
@@ -352,7 +353,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                              color=col,
                              linewidth=2,
                              linestyle='-',
-                             label=gmpe)
+                             label=clean_gmm_label(gmpe))
                     if config.nstd > 0:
                         ax1.plot(periods, rs_ps, color=col, linewidth=0.75, linestyle='-.')
                         ax1.plot(periods, rs_ms, color=col, linewidth=0.75, linestyle='-.')
@@ -520,7 +521,7 @@ def plot_ratios_util(config, output_directory):
                                 color=col,
                                 linewidth=2, 
                                 linestyle='-',
-                                label=gmpe)
+                                label=clean_gmm_label(gmpe))
                 
                 # Update plots
                 update_ratio_plots(config.dist_type,
@@ -1023,7 +1024,8 @@ def trellis_data(gmpe,
     """
     # If plotting not only the logic trees, plot each GMPE
     if 'plot_lt_only' not in str(gmpe): 
-        pyplot.plot(r_vals, np.exp(mean), color = col, linewidth=2, linestyle='-', label=gmpe)
+        pyplot.plot(
+            r_vals, np.exp(mean), color = col, linewidth=2, linestyle='-', label=clean_gmm_label(gmpe))
         
         # Plot mean with plus/minus sigma too if required
         if nstd > 0:

@@ -339,7 +339,38 @@ def _get_gmpe_name(gsim):
             return gsim_name + gsim_name_str
         else:
             return gsim_name
-        
+
+
+def clean_gmm_label(gmpe, drop_weight_info=False):
+    """
+    Return a string of GMM which contains no slashes or new line
+    syntax for use in plot legends (generally this occurs from
+    the use of ModifiableGMPE with a GMM containing additional
+    input arguments).
+
+    Also can remove LT weight information if required.
+    """
+    # Clean the gmpe
+    gmm_label = re.sub(r'\\+n', ' ', gmpe)
+    gmm_label = re.sub(r'\\', '', gmm_label)
+
+    lines = gmm_label.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip().startswith('gmpe = '):
+            prefix, value = line.split('=', 1)
+            parts = value.strip().split()
+            value_clean = ', '.join(parts)
+            lines[i] = f"{prefix.strip()} = {value_clean}"
+    gmm_label = '\n'.join(lines)
+
+    # Might not want to retain the GMC LT weight info
+    if drop_weight_info is True:
+        parts = [part.strip() for part in gmm_label.split(
+            '\n') if "lt_weight_gmc" not in part]
+        gmm_label = ', '.join(parts)
+
+    return gmm_label
+
 
 # Mechanism type to Rake conversion:
 MECHANISM_TYPE = {

@@ -47,7 +47,7 @@ residuals_out = os.path.join(BASE, 'outputs_demo_residual_analysis')
 stations_out = os.path.join(BASE, 'outputs_demo_station_analysis')
 
 
-#@unittest.skip # Check locally only (running on remote takes a while)
+@unittest.skip # Check locally only (running on remote takes a while)
 class DemosTestCase(unittest.TestCase):
     """
     Core test case for the SMT demos
