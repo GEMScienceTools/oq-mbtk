@@ -33,7 +33,7 @@ from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
 
-from openquake.smt.utils import make_rup
+from openquake.smt.utils import make_rup, clean_gmm_label
 
 
 def _get_first_point(rup, from_point):
@@ -478,22 +478,6 @@ def mgmpe_check(gmpe):
     return gmm
 
 
-def get_gmm_str(gmm):
-    """
-    Return a clean GMM string (i.e. one without the GMM
-    logic tree weight assigned to it, if present).
-    """
-    gmm_str = ''
-    for idx_part, part in enumerate(gmm.split('\n')):
-        if "lt_weight_gmc" not in part:
-            if idx_part > 0:
-                gmm_str += f", {part}"
-            else:
-                gmm_str += part.strip()
-
-    return gmm_str
-
-
 def get_imtl_unit(i):
     """
     Return a string of the intensity measure type's physical units of
@@ -544,9 +528,7 @@ def reformat_att_curves(att_curves, out=None):
         for scenario in vals[imt]:
             curves = vals[imt][scenario]
             for gmpe in curves: 
-                
-                # Get cleaned string of gmm
-                gmm_str = get_gmm_str(gmpe)
+                gmm_str = clean_gmm_label(gmpe, drop_weight_info=True)
                 
                 # Next per GMM get medians and sigmas
                 if "(km)" not in gmpe:
@@ -619,15 +601,15 @@ def reformat_spectra(spectra, out=None):
 
             # Individual gmms
             for gmm in spectra[key]:
-                gmm_str = get_gmm_str(gmm)
+                gmm_str = clean_gmm_label(gmm, drop_weight_info=True)
                 for sc in spectra[key][gmm]:
                     if key == "add":
-                        s_key = f"{gmm_str}, Median Plus Sigma (+ {eps} epsilon) (g), {sc}"
+                        s_key = f"{gmm_str} | Median Plus Sigma (+ {eps} epsilon) (g) | {sc}"
                     elif key == "med":
-                        s_key = f"{gmm_str}, Median (g), {sc}"
+                        s_key = f"{gmm_str} | Median (g), {sc}"
                     else:
                         assert key == "min"
-                        s_key = f"{gmm_str}, Median Minus Sigma (- {eps} epsilon) (g), {sc}"
+                        s_key = f"{gmm_str} | Median Minus Sigma (- {eps} epsilon) (g) | {sc}"
             
                     store[s_key] = spectra[key][gmm][sc]
                     
