@@ -133,7 +133,12 @@ def get_close_faults(
             d: distance between the bounding boxes (float)
     """
     surfaces = [fault['surface'] for fault in faults]
-    # fault_bb_dists = get_bounding_box_distances(surfaces, max_dist=max_dist)
+    #fault_bb_dists_ = get_bounding_box_distances(surfaces, max_dist=max_dist)
+
+    #fault_bb_dists = {(int(f0), int(f1)): float(d) 
+    #                  for f0, f1, d in fault_bb_dists_
+    #                  if f0 != f1}
+
     fault_bb_dists = get_bounding_box_distances_marco(
         surfaces, max_dist=max_dist
     )
@@ -444,22 +449,19 @@ def get_rupture_adjacency_matrix(
         the ruptures in km.
     """
 
-    if sparse:
-
-        def sparsify_maybe(dist_matrix):
-            return dok_array(dist_matrix)
-
-    else:
-
-        def sparsify_maybe(dist_matrix):
-            return dist_matrix
-
+    def sparsify_maybe(mat, sparse: bool):
+        if sparse:
+            return dok_array(mat, dtype=mat.dtype)
+        return mat
+    
     if all_subfaults is None:
+        logging.info("  getting subsections from faults")
         all_subfaults = [
             get_subsections_from_fault(fault, surface=fault['surface'])
             for fault in faults
         ]
 
+    logging.info("  making single-fault ruptures")
     single_fault_rups, single_fault_rup_df = get_all_single_fault_rups(
         all_subfaults
     )
@@ -468,17 +470,21 @@ def get_rupture_adjacency_matrix(
 
     # increasing distance to make up for discrepancy between bb dist and
     # actual rupture distances; this is a filtering step.
+    logging.info("  calculating fault distances")
     fault_dists = get_close_faults(faults, max_dist=max_dist * 1.5)
 
     # fault_dists = {(i, j): d for i, j, d in fault_dists}
 
-    dist_adj_matrix = sparsify_maybe(
-        np.zeros((nrups, nrups), dtype=np.float32)
-    )
+    logging.info(f"  making dist_adj_matrix {(nrups, nrups)}")
+    if sparse:
+        dist_adj_matrix = dok_array((nrups, nrups), dtype=np.float32)
+    else:
+        dist_adj_matrix = np.zeros((nrups, nrups), dtype=np.float32)
 
     if max_dist is None:
         max_dist = np.inf
 
+    logging.info("  filtering and calculating pairwise rupture distances")
     if full_fault_only_mf_ruptures:
         fault_lookup = {fault['fid']: i for i, fault in enumerate(faults)}
 
@@ -565,7 +571,7 @@ def get_rupture_adjacency_matrix(
                     dist_adj_matrix[
                         row_count : row_count + nrows,
                         col_count : col_count + ncols,
-                    ] = sparsify_maybe(local_dist_matrix)
+                    ] = sparsify_maybe(local_dist_matrix, sparse)
 
                 col_count += ncols
             row_count += nrows
