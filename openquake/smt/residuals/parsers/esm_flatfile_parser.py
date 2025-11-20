@@ -506,7 +506,7 @@ def parse_site_data(metadata):
     """
     network_code = metadata["network_code"].strip()
     station_code = metadata["station_code"].strip()
-    site_id = "{:s}-{:s}".format(network_code, station_code)
+    site_id = "{:s}_{:s}".format(network_code, station_code)
     site_lon = utils.longitude(metadata["st_longitude"])
     site_lat = utils.latitude(metadata["st_latitude"])
     elevation = utils.vfloat(metadata["st_elevation"], "st_elevation")
