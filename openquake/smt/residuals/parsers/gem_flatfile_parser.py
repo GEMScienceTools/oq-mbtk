@@ -311,10 +311,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         # Basic site/station information
         network_code = metadata["network_code"].strip()
         station_code = metadata["station_code"].strip()
-        if pd.isnull(network_code): # Don't use if empty
-            site_id = "{:s}".format(station_code)
-        else:
-            site_id = "{:s}-{:s}".format(network_code, station_code)
+        site_id = "{:s}-{:s}".format(network_code, station_code)
         site_lon = utils.longitude(metadata["st_longitude"])
         site_lat = utils.latitude(metadata["st_latitude"])
         elevation = utils.vfloat(metadata["st_elevation"], "st_elevation")
