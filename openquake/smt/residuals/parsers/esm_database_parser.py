@@ -370,7 +370,7 @@ class ESMDatabaseParser(SMDatabaseReader):
         Parses the site metadata
         """
         site = RecordSite(
-            "|".join([metadata["NETWORK"], metadata["STATION_CODE"]]),
+            "_".join([metadata["NETWORK"], metadata["STATION_CODE"]]),
             metadata["STATION_CODE"],
             metadata["STATION_NAME"],
             get_float(metadata["STATION_LONGITUDE_DEGREE"]),
