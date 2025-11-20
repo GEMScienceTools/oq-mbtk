@@ -32,6 +32,8 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  Magnitude,
                                                  Rupture,
                                                  FocalMechanism,
+                                                 MECHANISM_TYPE,
+                                                 DIP_TYPE,
                                                  GCMTNodalPlanes,
                                                  RecordSite,
                                                  RecordDistance)
@@ -274,7 +276,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         if not mechanism.nodal_planes.nodal_plane_1:
             # Absolutely no information - base on style-of-faulting
             mechanism.nodal_planes.nodal_plane_1 = {
-                "strike": 0.0, "dip": utils.DIP_TYPE[sof], "rake": utils.MECHANISM_TYPE[sof]
+                "strike": 0.0, "dip": DIP_TYPE[sof], "rake": MECHANISM_TYPE[sof]
                 }
             
         return rupture, mechanism
@@ -311,6 +313,8 @@ class GEMFlatfileParser(SMDatabaseReader):
         # Basic site/station information
         network_code = metadata["network_code"].strip()
         station_code = metadata["station_code"].strip()
+        if station_code == 'ST_UPTAC':
+            breakpoint()
         site_id = "{:s}-{:s}".format(network_code, station_code)
         site_lon = utils.longitude(metadata["st_longitude"])
         site_lat = utils.latitude(metadata["st_latitude"])
