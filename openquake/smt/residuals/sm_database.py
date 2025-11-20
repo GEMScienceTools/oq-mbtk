@@ -116,6 +116,8 @@ class Rupture(object):
         Depth to the top of rupture (km)
     :param float area:
         Rupture area in km^2
+    :param float aspect:
+        Rupture aspect ratio
     """
     def __init__(self,
                  eq_id,
@@ -124,7 +126,8 @@ class Rupture(object):
                  length,
                  width,
                  depth,
-                 area=None):
+                 area=None,
+                 aspect=None):
         self.id = eq_id
         self.name = eq_name
         self.magnitude = magnitude
@@ -133,7 +136,7 @@ class Rupture(object):
         self.depth = depth
         self.area = area
         self.area = self.get_area()
-        self.aspect = None
+        self.aspect = aspect
         self.aspect = self.get_aspect()
 
     def get_area(self):
