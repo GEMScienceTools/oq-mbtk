@@ -44,7 +44,7 @@ MECHANISM_TYPE = {
     "Reverse": 90.0,
     "Oblique": 0.0,
     "Unknown": 0.0,
-    "N": -90.0, # Flatfile conventions
+    "N": -90.0, # General flatfile conventions
     "S": 0.0,
     "R": 90.0,
     "U": 0.0,
@@ -214,7 +214,7 @@ class FocalMechanism(object):
     :param eigenvalues:
         Eigenvalue decomposition as instance of :class: GCMTPrincipalAxes
     :param float scalar_moment:
-        Scalar moment value
+        Scalar seismic moment
     :param numpy.ndarray moment_tensor:
         (3, 3) Moment Tensor
     :param str mechanism_type:
@@ -243,7 +243,8 @@ class FocalMechanism(object):
         """
         if self.mechanism_type in MECHANISM_TYPE:
             return MECHANISM_TYPE[self.mechanism_type]
-        return 0.0
+        else:
+            return 0.0
 
     def _moment_tensor_to_list(self):
         """
