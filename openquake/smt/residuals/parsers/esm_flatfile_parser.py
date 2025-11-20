@@ -34,7 +34,9 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  Earthquake,
                                                  Magnitude,
                                                  Rupture,
-                                                 FocalMechanism, 
+                                                 FocalMechanism,
+                                                 MECHANISM_TYPE,
+                                                 DIP_TYPE, 
                                                  GCMTNodalPlanes,
                                                  Component,
                                                  RecordSite,
@@ -430,8 +432,8 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
             # Absolutely no information - base on style-of-faulting
             mechanism.nodal_planes.nodal_plane_1 = {
                 "strike": 0.0,  # Basically unused
-                "dip": utils.DIP_TYPE[sof],
-                "rake": utils.MECHANISM_TYPE[sof]
+                "dip": DIP_TYPE[sof],
+                "rake": MECHANISM_TYPE[sof]
                 }
         return rupture, mechanism
 

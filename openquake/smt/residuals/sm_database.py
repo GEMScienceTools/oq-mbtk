@@ -38,6 +38,41 @@ from openquake.smt.residuals.context_db import ContextDB
 import openquake.smt.utils_intensity_measures as utils_imts
 
 
+MECHANISM_TYPE = {
+    "Normal": -90.0,
+    "Strike-Slip": 0.0,
+    "Reverse": 90.0,
+    "Oblique": 0.0,
+    "Unknown": 0.0,
+    "N": -90.0, # Flatfile conventions
+    "S": 0.0,
+    "R": 90.0,
+    "U": 0.0,
+    "NF": -90., # ESM flatfile conventions
+    "SS": 0.,
+    "TF": 90.,
+    "NS": -45., # Normal with strike-slip component
+    "TS": 45.,  # Reverse with strike-slip component
+    "O": 0.0}
+
+DIP_TYPE = {
+    "Normal": 60.0,
+    "Strike-Slip": 90.0,
+    "Reverse": 35.0,
+    "Oblique": 60.0,
+    "Unknown": 90.0,
+    "N": 60.0,  # Flatfile conventions
+    "S": 90.0,
+    "R": 35.0,
+    "U": 90.0,
+    "NF": 60.,  # ESM flatfile conventions
+    "SS": 90.,
+    "TF": 35.,
+    "NS": 70.,  # Normal with strike-slip component
+    "TS": 45.,  # Reverse with strike-slip component
+    "O": 90.0}
+
+
 class Magnitude(object):
     """
     Class to hold magnitude attributes
@@ -68,9 +103,9 @@ class Rupture(object):
     """
     Class to hold rupture attributes
     :param str eq_id:
-        Rupture (earthquake) ID
+        Earthquake ID
     :param str eq_name:
-        Event Name
+        Earthquake name
     :param magnitude:
         Earthquake magnitude as instance of Magnitude class
     :param float length:
@@ -79,16 +114,8 @@ class Rupture(object):
         Total rupture width (km)
     :param float depth:
         Depth to the top of rupture (km)
-    :param hypocentre:
-        Earthquake hypocentre
     :param float area:
         Rupture area in km^2
-    :param surface:
-        Rupture surface as instance of :class:
-        openquake.hazardlib.geo.surface.base.BaseRuptureSurface
-    :param tuple hypo_loc:
-        Hypocentral location within rupture surface as a fraction of
-        (along-strike length, down-dip width)
     """
     def __init__(self,
                  eq_id,
@@ -97,21 +124,15 @@ class Rupture(object):
                  length,
                  width,
                  depth,
-                 hypocentre=None,
-                 area=None,
-                 surface=None,
-                 hypo_loc=None):
+                 area=None):
         self.id = eq_id
         self.name = eq_name
         self.magnitude = magnitude
         self.length = length
         self.width = width
+        self.depth = depth
         self.area = area
         self.area = self.get_area()
-        self.depth = depth
-        self.surface = surface
-        self.hypocentre = hypocentre
-        self.hypo_loc = hypo_loc
         self.aspect = None
         self.aspect = self.get_aspect()
 
@@ -182,13 +203,15 @@ class FocalMechanism(object):
     """
     Class to hold the full focal mechanism attribute set
     :param str eq_id:
-        Identifier of the earthquake
-    :param str name:
-        Focal mechanism name
+        Earthquake ID
+    :param str eq_name:
+        Earthquake name
     :param nodal_planes:
         Nodal planes as instance of :class: GCMTNodalPlane
     :param eigenvalues:
         Eigenvalue decomposition as instance of :class: GCMTPrincipalAxes
+    :param float scalar_moment:
+        Scalar moment value
     :param numpy.ndarray moment_tensor:
         (3, 3) Moment Tensor
     :param str mechanism_type:
@@ -196,26 +219,27 @@ class FocalMechanism(object):
     """
     def __init__(self,
                  eq_id,
-                 name,
+                 eq_name,
                  nodal_planes,
                  eigenvalues,
+                 scalar_moment=None,
                  moment_tensor=None,
                  mechanism_type=None):
         self.id = eq_id
-        self.name = name
+        self.name = eq_name
         self.nodal_planes = nodal_planes
         self.eigenvalues = eigenvalues
-        self.scalar_moment = None
+        self.scalar_moment = scalar_moment
         self.tensor = moment_tensor
         self.mechanism_type = mechanism_type
 
     def get_rake_from_mechanism_type(self):
         """
-        Returns an idealised "rake" based on a qualitative description of the
-        style of faulting
+        Returns an idealised "rake" based on a qualitative
+        description of the style of faulting
         """
-        if self.mechanism_type in utils.MECHANISM_TYPE:
-            return utils.MECHANISM_TYPE[self.mechanism_type]
+        if self.mechanism_type in MECHANISM_TYPE:
+            return MECHANISM_TYPE[self.mechanism_type]
         return 0.0
 
     def _moment_tensor_to_list(self):
@@ -230,7 +254,7 @@ class FocalMechanism(object):
 
 class Earthquake(object):
     """
-    Class to hold earthquake event related information
+    Class to hold earthquake event information
     :param str eq_id:
         Earthquake ID
     :param str eq_name:
@@ -245,6 +269,8 @@ class Earthquake(object):
         Earthquake hypocentre depth (km)
     :param magnitude:
         Primary magnitude as instance of :class: Magnitude
+    :param rupture:
+        Earthquake rupture as instance of the :class: Rupture
     :param focal_mechanism:
         Focal mechanism as instance of the :class: FocalMechanism
     :param tectonic_region:
@@ -258,6 +284,7 @@ class Earthquake(object):
                  latitude,
                  depth,
                  magnitude,
+                 rupture=None,
                  focal_mechanism=None,
                  tectonic_region=None):
         self.id = eq_id
@@ -268,6 +295,7 @@ class Earthquake(object):
         self.latitude = latitude
         self.depth = depth
         self.magnitude = magnitude
+        self.rupture = rupture
         self.mechanism = focal_mechanism
         self.tectonic_region = tectonic_region
 
@@ -401,7 +429,6 @@ class RecordSite(object):
         Depth (km) to 2.5 km/s shear-wave velocity interface
     :param book backarc:
         True if site is in subduction backarc, False otherwise
-
     """
     def __init__(self,
                  site_id,
