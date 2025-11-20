@@ -313,7 +313,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         # Basic site/station information
         network_code = metadata["network_code"].strip()
         station_code = metadata["station_code"].strip()
-        if len(network_code):
+        if not len(network_code):
             site_id = "{:s}".format(station_code)
         else:
             site_id = "{:s}-{:s}".format(network_code, station_code)
