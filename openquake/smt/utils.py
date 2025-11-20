@@ -187,6 +187,52 @@ def rake(value):
     return None
 
 
+### General utils for ctx management ###
+def make_rup(lon,
+             lat,
+             dep,
+             msr,
+             mag,
+             aratio,
+             strike,
+             dip,
+             rake,
+             trt,
+             ztor=None):
+    """
+    Creates an OQ planar rupture given the hypocenter position
+    """
+    hypoc = Point(lon, lat, dep)
+    srf = PlanarSurface.from_hypocenter(hypoc,
+                                        msr,
+                                        mag,
+                                        aratio,
+                                        strike,
+                                        dip,
+                                        rake,
+                                        ztor)
+    rup = BaseRupture(mag, rake, trt, hypoc, srf)
+    rup.hypocenter.depth = dep
+    return rup
+
+
+def full_dtype_gmm():
+    """
+    Instantiate a DummyGMPE with all distance types. This is useful
+    for returning all distance metrics from a ctx (otherwise only
+    the distance types used by the given GMM are returned).
+    """
+    core_r_types = [
+        'repi', 'rrup', 'rjb', 'rhypo', 'rx', "ry0", "rvolc"]
+    gmpe = valid.gsim("DummyGMPE")
+    orig_r_types = list(gmpe.REQUIRES_DISTANCES)
+    for core in core_r_types:
+        if core not in orig_r_types:
+            orig_r_types.append(core)
+    gmpe.REQUIRES_DISTANCES = frozenset(orig_r_types)
+    return gmpe
+
+
 ### General utils for time series
 def convert_accel_units(acceleration, from_, to_='cm/s/s'):  # noqa
     """
@@ -372,44 +418,6 @@ def clean_gmm_label(gmpe, drop_weight_info=False):
     return gmm_label
 
 
-# Mechanism type to Rake conversion:
-MECHANISM_TYPE = {
-    "Normal": -90.0,
-    "Strike-Slip": 0.0,
-    "Reverse": 90.0,
-    "Oblique": 0.0,
-    "Unknown": 0.0,
-    "N": -90.0,  # Flatfile conventions
-    "S": 0.0,
-    "R": 90.0,
-    "U": 0.0,
-    "NF": -90.,  # ESM flatfile conventions
-    "SS": 0.,
-    "TF": 90.,
-    "NS": -45.,  # Normal with strike-slip component
-    "TS": 45.,  # Reverse with strike-slip component
-    "O": 0.0}
-
-
-# Mechanism type to dip conversion
-DIP_TYPE = {
-    "Normal": 60.0,
-    "Strike-Slip": 90.0,
-    "Reverse": 35.0,
-    "Oblique": 60.0,
-    "Unknown": 90.0,
-    "N": 60.0,  # Flatfile conventions
-    "S": 90.0,
-    "R": 35.0,
-    "U": 90.0,
-    "NF": 60.,  # ESM flatfile conventions
-    "SS": 90.,
-    "TF": 35.,
-    "NS": 70.,  # Normal with strike-slip component
-    "TS": 45.,  # Reverse with strike-slip component
-    "O": 90.0}
-
-
 ### Vs30 to z1pt0 and z2pt5 relationships from GMMs
 def vs30_to_z1pt0_as08(vs30):
     """
@@ -489,49 +497,3 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
         return np.exp(5.359 - 1.102 * np.log(vs30))
     else:
         return np.exp(7.089 - 1.144 * np.log(vs30))
-    
-
-def make_rup(lon,
-             lat,
-             dep,
-             msr,
-             mag,
-             aratio,
-             strike,
-             dip,
-             rake,
-             trt,
-             ztor=None):
-    """
-    Creates an OQ planar rupture given the hypocenter position
-    """
-    hypoc = Point(lon, lat, dep)
-    srf = PlanarSurface.from_hypocenter(hypoc,
-                                        msr,
-                                        mag,
-                                        aratio,
-                                        strike,
-                                        dip,
-                                        rake,
-                                        ztor)
-    rup = BaseRupture(mag, rake, trt, hypoc, srf)
-    rup.hypocenter.depth = dep
-    return rup
-
-
-def full_dtype_gmm():
-    """
-    Instantiate a DummyGMPE with all distance types. This is useful
-    for returning all distance metrics from a ctx (otherwise only
-    the distance types used by the given GMM are returned).
-    """
-    core_r_types = [
-        'repi', 'rrup', 'rjb', 'rhypo', 'rx', "ry0", "rvolc"]
-    gmpe = valid.gsim("DummyGMPE")
-    orig_r_types = list(gmpe.REQUIRES_DISTANCES)
-    for core in core_r_types:
-        if core not in orig_r_types:
-            orig_r_types.append(core)
-    gmpe.REQUIRES_DISTANCES = frozenset(orig_r_types)
-
-    return gmpe

@@ -39,10 +39,12 @@ from openquake.smt.residuals.parsers.esm_flatfile_parser import (parse_event_dat
 from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  GroundMotionRecord,
                                                  Rupture,
-                                                 FocalMechanism, 
+                                                 FocalMechanism,
+                                                 MECHANISM_TYPE,
+                                                 DIP_TYPE,
                                                  GCMTNodalPlanes)
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE, vfloat
+from openquake.smt.utils import vfloat
 
 
 BASE = os.path.abspath("")
