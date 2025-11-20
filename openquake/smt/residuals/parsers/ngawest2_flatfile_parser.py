@@ -520,7 +520,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Parse waveform data
         xcomp, ycomp, vert = self._parse_waveform_data(metadata, wfid)
         return GroundMotionRecord(wfid,
-                                  [None, None, None],
+                                  [None, None, None], # No time-history files
                                   event, distances, site,
                                   xcomp, ycomp,
                                   vertical=vert)
@@ -667,7 +667,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                           elevation,
                           vs30,
                           vs30_measured,
-                          network_code=network_code, country=None)
+                          network_code=network_code)
 
         # Add basin params
         site.z1pt0 = utils.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")

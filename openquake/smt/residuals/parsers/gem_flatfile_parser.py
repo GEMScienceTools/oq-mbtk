@@ -175,7 +175,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         lp = utils.vfloat(metadata['longest_usable_period'], 'longest_usable_period')
 
         return GroundMotionRecord(wfid,
-                                  [None, None, None],
+                                  [None, None, None], # No time-history files
                                   event, distances, site,
                                   xcomp, ycomp,
                                   vertical=vertical,
