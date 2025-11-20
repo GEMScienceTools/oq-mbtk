@@ -67,9 +67,9 @@ class Magnitude(object):
 class Rupture(object):
     """
     Class to hold rupture attributes
-    :param str id:
+    :param str eq_id:
         Rupture (earthquake) ID
-    :param str name:
+    :param str eq_name:
         Event Name
     :param magnitude:
         Earthquake magnitude as instance of Magnitude class
@@ -79,6 +79,8 @@ class Rupture(object):
         Total rupture width (km)
     :param float depth:
         Depth to the top of rupture (km)
+    :param hypocentre:
+        Earthquake hypocentre
     :param float area:
         Rupture area in km^2
     :param surface:
@@ -187,7 +189,7 @@ class FocalMechanism(object):
         Nodal planes as instance of :class: GCMTNodalPlane
     :param eigenvalues:
         Eigenvalue decomposition as instance of :class: GCMTPrincipalAxes
-    :param numpy.ndarray tensor:
+    :param numpy.ndarray moment_tensor:
         (3, 3) Moment Tensor
     :param str mechanism_type:
         Qualitative description of mechanism
@@ -229,11 +231,11 @@ class FocalMechanism(object):
 class Earthquake(object):
     """
     Class to hold earthquake event related information
-    :param str id:
+    :param str eq_id:
         Earthquake ID
-    :param str name:
+    :param str eq_name:
         Earthquake name
-    :param datetime:
+    :param date_time:
         Earthquake date and time as instance of :class: datetime.datetime
     :param float longitude:
         Earthquake hypocentre longitude
@@ -243,37 +245,30 @@ class Earthquake(object):
         Earthquake hypocentre depth (km)
     :param magnitude:
         Primary magnitude as instance of :class: Magnitude
-    :param magnitude_list:
-        Magnitude solutions for the earthquake as list of instances of the
-        :class: Magntiude
-    :param mechanism:
+    :param focal_mechanism:
         Focal mechanism as instance of the :class: FocalMechanism
-    :param rupture:
-        Earthquake rupture as instance of the :class: Rupture
+    :param tectonic_region:
+        Tectonic region of the earthquake
     """
     def __init__(self,
                  eq_id,
-                 name,
+                 eq_name,
                  date_time,
                  longitude,
                  latitude,
                  depth,
                  magnitude,
                  focal_mechanism=None,
-                 eq_country=None,
                  tectonic_region=None):
         self.id = eq_id
         assert isinstance(date_time, datetime)
         self.datetime = date_time
-        self.name = name
-        self.country = eq_country
+        self.name = eq_name
         self.longitude = longitude
         self.latitude = latitude
         self.depth = depth
         self.magnitude = magnitude
-        self.magnitude_list = []
         self.mechanism = focal_mechanism
-        self.rupture = None
         self.tectonic_region = tectonic_region
 
 
@@ -398,8 +393,6 @@ class RecordSite(object):
         Description of digitiser
     :param str network_code:
         Code of strong motion recording network
-    :param str country:
-        Country of site
     :param float z1pt0:
         Depth (m) to 1.0 km/s shear-wave velocity interface
     :param float z1pt5:
@@ -420,7 +413,6 @@ class RecordSite(object):
                  vs30=None,
                  vs30_measured=None,
                  network_code=None,
-                 country=None,
                  site_class=None,
                  backarc=False):
         self.id = site_id
@@ -444,7 +436,6 @@ class RecordSite(object):
         self.digitiser = None
         self.network_code = network_code
         self.sensor_depth = None
-        self.country = country
         self.z1pt0 = None
         self.z1pt5 = None
         self.z2pt5 = None
@@ -580,12 +571,12 @@ ims_dict = {
 class Component(object):
     """
     Contains the metadata relating to waveform of the record
-    :param str id:
+    :param str waveform_id:
         Waveform unique identifier
     :param orientation:
         Orientation of record as either azimuth (degrees, float) or string
     :param dict ims:
-        Intensity Measures of component
+        Intensity measures computed from component
     :param float longest_period:
         Longest usable period (s)
     :param dict waveform_filter:
@@ -623,8 +614,6 @@ class GroundMotionRecord(object):
         Ground motion record unique identifier
     :param str time_series_files:
         Path to time series files
-    :param str spectra_files:
-        Path to spectra files
     :param event:
         Earthquake event representation as :class: Earthquake
     :param distance:
@@ -637,16 +626,16 @@ class GroundMotionRecord(object):
         y-component of record as instance of :class: Component
     :param vertical:
          vertical component of record as instance of :class: Component
-    :param float average_lup:
-        Longest usable period of record-pair
-    :param float average_sup:
-        Shortest usable period of record-pair
     :param dict ims:
-        Intensity measure of record
-    :param directivity:
-        ?
+        Intensity measures computed from record (general utility)
+    :param float longest_period:
+        Longest usable period of record-pair
+    :param float shortest_period:
+        Shortest usable period of record-pair
+    :param str spectra_files:
+        Path to spectra files
     :param str datafile:
-        Data file for strong motion record
+        Data file for strong motion record (general utility)
     """
     def __init__(self,
                  gm_id,
@@ -660,10 +649,10 @@ class GroundMotionRecord(object):
                  ims=None,
                  longest_period=None,
                  shortest_period=None,
-                 spectra_files=None):
+                 spectra_files=None,
+                 datafile=None):
         self.id = gm_id
         self.time_series_files = time_series_files
-        self.spectra_files = spectra_files
         assert isinstance(event, Earthquake)
         self.event = event
         assert isinstance(distance, RecordDistance)
@@ -676,12 +665,11 @@ class GroundMotionRecord(object):
         if vertical:
             assert isinstance(vertical, Component)
         self.vertical = vertical
+        self.ims = ims
         self.average_lup = longest_period
         self.average_sup = shortest_period
-        self.ims = ims
-        self.directivity = None
-        self.datafile = None
-        self.misc = None
+        self.spectra_files = spectra_files
+        self.datafile = datafile
 
     def get_azimuth(self):
         """

@@ -119,22 +119,6 @@ HEADERS = [
            "W_lp"]
 
 
-COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AZ": "Azerbaijan", "BA": "Bosnia and Herzegowina",
-                 "BG": "Bulgaria", "CH": "Switzerland", "CY": "Cyprus",
-                 "CZ": "Czech Republic", "DE": "Germany",  "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia",
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary",
-                 "IL": "Israel", "IR": "Iran", "IS": "Iceland", "IT": "Italy",
-                 "JO": "Jordan",  "LI": "Lichtenstein", "MA": "Morocco",
-                 "MC": "Monaco", "MD": "Moldova", "ME": "Montenegro",
-                 "MK": "Macedonia", "MT": "Malta", "PL": "Poland",
-                 "PT": "Portugal", "RO": "Romania", "RS": "Serbia",
-                 "RU": "Russia", "SI": "Slovenia", "SM": "San Marino",
-                 "SY": "Syria", "TM": "Turkmenistan", "TR": "Turkey",
-                 "UA": "Ukraine", "UZ": "Uzbekistan", "XK": "Kosovo"}
-
-
 M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
 
 
@@ -340,14 +324,7 @@ def parse_event_data(metadata, rupture_parser):
     # ID and Name (name not in file so use ID again)
     eq_id = metadata["event_id"]
     eq_name = metadata["event_id"]
-    
-    # Country
-    cntry_code = metadata["ev_nation_code"].strip()
-    if cntry_code and cntry_code in COUNTRY_CODES:
-        eq_country = COUNTRY_CODES[cntry_code]
-    else:
-        eq_country = None
-    
+
     # Date and time
     eq_datetime = pd.to_datetime(metadata["event_time"])
     
@@ -358,10 +335,14 @@ def parse_event_data(metadata, rupture_parser):
     if not eq_depth:
         raise ValueError('Depth missing an events in admitted flatfile')
     
-    eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
-                        None, # Magnitude not defined yet
-                        eq_country=eq_country)
-    
+    eqk = Earthquake(eq_id,
+                     eq_name,
+                     eq_datetime,
+                     eq_lon,
+                     eq_lat,
+                     eq_depth,
+                     None) # Mag not defined yet
+
     # Get preferred magnitude and list
     pref_mag, magnitude_list = parse_magnitudes(metadata) # Consistent over ESM formats
     eqk.magnitude = pref_mag
@@ -542,22 +523,16 @@ def parse_site_data(metadata):
         assert pd.notnull(vs30_topo) # Topographic slope-based
         vs30 = vs30_topo
         vs30_measured = False
-    st_nation_code = metadata["st_nation_code"].strip()
-    if st_nation_code:
-        st_country = COUNTRY_CODES[st_nation_code]
-    else:
-        st_country = None
     
     site = RecordSite(site_id,
-                        station_code,
-                        station_code,
-                        site_lon,
-                        site_lat,
-                        elevation,
-                        vs30,
-                        vs30_measured,
-                        network_code=network_code,
-                        country=st_country)
+                      station_code,
+                      station_code,
+                      site_lon,
+                      site_lat,
+                      elevation,
+                      vs30,
+                      vs30_measured,
+                      network_code=network_code)
     
     site.slope = utils.vfloat(metadata["slope_deg"], "slope_deg")
     site.sensor_depth = utils.vfloat(
@@ -848,7 +823,7 @@ class ESMFlatfileParser(SMDatabaseReader):
         # Parse waveform data
         xcomp, ycomp, vertical = parse_waveform_data(metadata, wfid)
         return GroundMotionRecord(wfid,
-                                  [None, None, None],
+                                  [None, None, None], # No time-history files
                                   event, distances, site,
                                   xcomp, ycomp,
                                   vertical=vertical)

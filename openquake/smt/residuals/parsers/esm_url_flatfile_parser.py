@@ -622,7 +622,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         # Parse waveform data
         xcomp, ycomp, vertical = parse_waveform_data(metadata, wfid)
         return GroundMotionRecord(wfid,
-                                  [None, None, None],
+                                  [None, None, None], # No time-history files
                                   event, distances, site,
                                   xcomp, ycomp,
                                   vertical=vertical)
