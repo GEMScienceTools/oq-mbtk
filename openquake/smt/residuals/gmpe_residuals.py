@@ -1124,7 +1124,7 @@ class SingleStationAnalysis(object):
         # Compute mean deltaS2S_s
         mean_deltaS2S = np.mean(deltaS2S_s)
 
-        # Compute phi_S2S (stddev of deltaS2S_s)
+        # Compute phi_S2S (stddev of deltaS2S_s amongst the stations)
         phi_S2S = np.std(deltaS2S_s)
 
         # Compute station averaged phi_ss,s (eq 10) for given gmpe and imt
