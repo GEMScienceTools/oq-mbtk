@@ -1196,7 +1196,7 @@ class IntraEventResidualWithSite(ResidualPlot):
         nxv = np.ones(len(xvals))
         ax.plot(xvals, phi * nxv, 'k--', linewidth=2.)
         ax.plot(xvals, -phi * nxv, 'k--', linewidth=2, label=r'+/- $\phi$') # Not strictly phi because here
-                                                                            # computing on per-event basis
+                                                                            # not computing on per-eq basis
 
         title_string = "%s - %s (Std Dev = %8.5f)" % (str(
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
