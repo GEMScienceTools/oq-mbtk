@@ -40,7 +40,7 @@ TMP_FIG = os.path.join(tempfile.mkdtemp(), 'figure.png')
 TMP_TAB = os.path.join(tempfile.mkdtemp(), 'table.csv')
 TMP_XML = os.path.join(tempfile.mkdtemp(), 'gmc.xml')
 
-aac = np.testing.assert_allclose
+AAC = np.testing.assert_allclose
 
 
 def fix(number):
@@ -50,28 +50,24 @@ def fix(number):
         return float(number)
 
 
-def compare_residuals(kind, observed, expected):
+def compare_residuals(observed, expected):
     """
     Compare lists of triple dictionaries gsim -> imt -> key -> values
     """
     tmpdir = tempfile.mkdtemp()
     Result(tmpdir).save(observed)
-    try:
-        for idx, (obs, exps) in enumerate(zip(observed, expected)):
-            for gsim, ddic in exps.items():
-                for imt, dic in ddic.items():
-                    for key, exp in dic.items():
-                        got = obs[gsim][imt][key]
-                        if not hasattr(exp, '__len__'):
-                            exp = [exp]
-                            got = [got]
-                        for i, x in enumerate(exp):
-                            if x is not None:
-                                aac(got[i], exp[i], atol=1e-8,
-                                    err_msg=f'in {gsim}-{idx}-{imt}-{key}-{i}')
-    except Exception:
-        print(f'Hint: meld {kind} {tmpdir}', file=sys.stderr)
-        raise
+    for idx, (obs, exps) in enumerate(zip(observed, expected)):
+        for gsim, ddic in exps.items():
+            for imt, dic in ddic.items():
+                for key, exp in dic.items():
+                    got = obs[gsim][imt][key]
+                    if not hasattr(exp, '__len__'):
+                        exp = [exp]
+                        got = [got]
+                    for i, x in enumerate(exp):
+                        if x is not None:
+                            AAC(got[i], exp[i], atol=1e-8,
+                                err_msg=f'in {gsim}-{idx}-{imt}-{key}-{i}')
     else:
         shutil.rmtree(tmpdir)
 
@@ -104,15 +100,15 @@ class Result:
                 with open(os.path.join(self.dname, fname)) as f:
                     js = f.read()
                     return ast.literal_eval(js)
-
+                
 
 GSIMS = ['KothaEtAl2020', 'LanzanoEtAl2019_RJB_OMO']
 CWD = os.path.dirname(__file__)
-res1 = Result(os.path.join(CWD, 'exp_regular'))
-exp = {gsim: res1.read(gsim) for gsim in GSIMS}
-res2 = Result(os.path.join(CWD, 'exp_stations'))
-exp_stations = [{gsim: res2.read(gsim, idx) for gsim in GSIMS}
-                for idx in range(8)]
+RES = Result(os.path.join(CWD, 'exp_regular'))
+EXP = {gsim: RES.read(gsim) for gsim in GSIMS}
+RES_STATIONS = Result(os.path.join(CWD, 'exp_stations'))
+EXP_STATIONS = [{gsim: RES_STATIONS.read(
+    gsim, idx) for gsim in GSIMS} for idx in range(8)]
 
 
 class ResidualsTestCase(unittest.TestCase):
@@ -149,15 +145,15 @@ class ResidualsTestCase(unittest.TestCase):
         # Add other params to class
         cls.toml = os.path.join(BASE, 'residuals_test.toml')
         cls.xml = os.path.join(BASE, 'residuals_test.xml')
-        cls.exp = exp
+        cls.exp = EXP
         cls.st_rec_min = 3
-        cls.exp_stations = exp_stations
+        cls.exp_stations = EXP_STATIONS
 
     def test_residual_values(self):
         """
         Check correctness of values for computed residuals
         """
-        compare_residuals('exp', [self.residuals.residuals], [self.exp])
+        compare_residuals([self.residuals.residuals], [self.exp])
 
     def test_residuals_execution_from_toml(self):
         """
@@ -274,11 +270,11 @@ class ResidualsTestCase(unittest.TestCase):
         ssa_csv_output = os.path.join(self.out_location, 'ssa_test.csv')
         ssa1.station_residual_statistics(ssa_csv_output)
         
+        #RES_STATIONS.regenerate_station_exp(ssa1.site_residuals)
+
         # Check exp vs obs delta_s2ss, delta_woes, phi_ss,s per station
         compare_residuals(
-            'stations',
-            [stat.site_analysis for stat in ssa1.site_residuals],
-            exp_stations)
+            [stat.site_analysis for stat in ssa1.site_residuals], EXP_STATIONS)
 
         # Check num. sites, GMPEs and intensity measures + csv outputted
         self.assertTrue(len(ssa1.site_ids) == len(top_sites))
