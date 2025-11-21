@@ -329,7 +329,7 @@ Single Station Residual Analysis
    We can compute the intra-event residual per record associated with the selected sites :math:`\delta W_{es}`, the average intra-event residual per site :math:`\delta S2S_S` and a residual variability :math:`\delta W_{o, es}` (which is computed per record by subtracting the site-average intra-event residual from the intra-event residual of each recording at the station).
    The :math:`\delta S2S_S` term is characteristic of each site, and should (assuming the GMM perfectly predicts) equal 0 with a standard deviation of :math:`\phi_{S2S}`. A non-zero value for :math:`\delta S2S_S` is indicative of a bias in the prediction of the observed ground-motions at the considered site.
    
-   Finally, the standard deviation of the :math:`\delta W_{o, es}` term (:math:`\phi_{SS}`) is representative of the single-station standard deviation of the GMPE, and is an estimate of the non-ergodic standard deviation of the model.
+   NB: The standard deviation of the :math:`\delta W_{o, es}` term (:math:`\phi_{SS}`) is representative of the single-station standard deviation of the GMPE, and is an estimate of the non-ergodic standard deviation of the model.
 
    As previously, we can specify the GMPEs and intensity measures to compute the residuals per site for using either a GMPE list and intensity measure list, or from a ``.toml`` file.
     
