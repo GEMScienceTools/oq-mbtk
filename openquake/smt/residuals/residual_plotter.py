@@ -407,6 +407,7 @@ class ResidualScatterPlot(BaseResidualPlot):
             
             ax.plot(x_zero, zero_line, color='k', linestyle='--',
                     linewidth=1.25)
+            
         ax.legend(loc='upper right', fontsize='xx-small')
 
 
@@ -1144,21 +1145,20 @@ class IntraEventResidualWithSite(ResidualPlot):
     def _residual_plot(self, fig, data, mean_deltaS2S, phi_ss, phi_S2S):
         """
         Creates three plots:
-        1) Plot of the intra-event residual (not normalised by GMPE intra-event)
-           for each station (i.e. per EQ and site combination = 1 per record)
-        2) Plot of the site term (average non-normalised intra-event per site)
-        3) Plot of the remainder-residual (intra per rec - avg intra per site)
+        1) Plot of the intra-event residual per record at each station
+        2) Plot of the site term (average intra-event per site)
+        3) Plot of the remainder-residual (intra per rec minus avg intra per site)
         """
-        deltaW_es, deltaWS_es, deltaS2S_s = np.array([]), np.array([]), np.array([])
+        deltaW_es, deltaS2S_s, deltaWS_es = np.array([]), np.array([]), np.array([])
         xvals = np.array([])
         for site_id in self.residuals.site_ids:
             xvals = np.hstack([xvals, data[site_id]["x-val"]])
             deltaW_es = np.hstack([deltaW_es, data[site_id]["Intra event"]])
-            deltaWS_es = np.hstack([deltaWS_es, data[site_id]["deltaWS_es"]])
             deltaS2S_s = np.hstack([deltaS2S_s, data[site_id]["deltaS2S_s"]])
+            deltaWS_es = np.hstack([deltaWS_es, data[site_id]["deltaWS_es"]])
         ax = fig.add_subplot(311)
         
-        # Plot non-normalised intra-event residuals for given site
+        # Plot intra-event residuals for given site
         mean = np.array(
             [np.mean(data[site_id]["Intra event"]) for site_id in self.residuals.site_ids])
         stddevs = np.array( # i.e. phi
@@ -1195,16 +1195,16 @@ class IntraEventResidualWithSite(ResidualPlot):
         phi = np.std(deltaW_es)
         nxv = np.ones(len(xvals))
         ax.plot(xvals, phi * nxv, 'k--', linewidth=2.)
-        ax.plot(xvals, -phi * nxv, 'k--', linewidth=2, label='Std dev')
+        ax.plot(xvals, -phi * nxv, 'k--', linewidth=2, label=r'+/- $\phi$') # Not strictly phi because here
+                                                                            # computing on per-event basis
 
         title_string = "%s - %s (Std Dev = %8.5f)" % (str(
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi)
         ax.set_title(title_string, fontsize=11)
-        
         ax.legend(loc='upper right', fontsize=12)
         
-        # Plot delta s2ss (avg non-normalised intra-event per site)
+        # Plot delta s2ss (avg intra-event per site)
         ax = fig.add_subplot(312)
         nxm = np.ones(len(xmean))
         
@@ -1240,7 +1240,6 @@ class IntraEventResidualWithSite(ResidualPlot):
                 ']\n', '] - ').replace('sigma_model','Sigma'),
             self.imt, phi_S2S)
         ax.set_title(title_string, fontsize=11)
-        
         ax.legend(loc='upper right', fontsize=12)
         
         # Plot deltaWS_es (remainder residual)
@@ -1266,7 +1265,6 @@ class IntraEventResidualWithSite(ResidualPlot):
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
                 ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi_ss)
         ax.set_title(title_string, fontsize=11)
-        
         ax.legend(loc='upper right', fontsize=12)
         
     def _get_site_data(self):
