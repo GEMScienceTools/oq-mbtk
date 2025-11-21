@@ -149,7 +149,7 @@ We can specify the inputs to perform a residual analysis with as follows:
        >    shutil.rmtree(out_folder)
        > os.mkdir(out_folder)
 
-4. Now we compute the residuals using the specified GMPEs and intensity measures for the metadata we have parsed from the flatfile:
+4. Now we compute the residuals using the specified GMPEs (normalising by each GMPE's sigma) and intensity measures for the metadata we have parsed from the flatfile:
 
    Note that here ``resid`` is the residuals object which stores (1) the observed ground-motions and associated metadata from the parsed flatfile, (2) the corresponding predicted ground-motion per GMPE and (3) the computed residual components per GMPE per intensity measure. The residuals object also stores the gmpe_list (e.g. resid.gmpe_list) and the imt_list (resid.imts) if these inputs are specified within a ``.toml`` file. 
 
@@ -326,8 +326,8 @@ Single Station Residual Analysis
        
 2. Following selection of sites using a threshold value, we can perform the SSA. For more details on the components of intra-event residuals please consult Rodriguez-Marek et al. (2011), which is referenced repeatedly throughout the following section.
 
-   We can compute the non-normalised intra-event residual per record associated with the selected sites :math:`\delta W_{es}`, the average (again non-normalised) intra-event residual per site :math:`\delta S2S_S` and a residual variability :math:`\delta W_{o,es}` (which is computed per record by subtracting the site-average intra-event residual from the intra-event residual of each recording at the station).
-   The :math:`\delta S2S_S` term is characteristic of each site, and should equal 0 with a standard deviation of :math:`\phi_{S2S}`. A non-zero value for :math:`\delta S2S_S` is indicative of a bias in the prediction of the observed ground-motions at the considered site.
+   We can compute the intra-event residual per record associated with the selected sites :math:`\delta W_{es}`, the average intra-event residual per site :math:`\delta S2S_S` and a residual variability :math:`\delta W_{o,es}` (which is computed per record by subtracting the site-average intra-event residual from the intra-event residual of each recording at the station).
+   The :math:`\delta S2S_S` term is characteristic of each site, and should (assuming the GMM perfectly predicts) equal 0 with a standard deviation of :math:`\phi_{S2S}`. A non-zero value for :math:`\delta S2S_S` is indicative of a bias in the prediction of the observed ground-motions at the considered site.
    
    Finally, the standard deviation of the :math:`\delta W_{o,es}` term (:math:`\phi_{SS}`) is representative of the single-station standard deviation of the GMPE, and is an estimate of the non-ergodic standard deviation of the model.
 
@@ -351,13 +351,13 @@ Single Station Residual Analysis
 
     .. code-block:: ini
     
-       > # First plot (normalised) total, inter-event and intra-event residuals for each site
+       > # First plot total, inter-event and intra-event residuals for each site
        > rspl.ResidualWithSite(ssa1, gmpe, imt, fname)
        >
-       > # Then plot non-normalised intra-event per site, average intra-event per site and residual variability per site
+       > # Then plot intra-event per site, average intra-event per site and residual variability per site
        > rspl.IntraEventResidualWithSite(ssa1, gmpe, imt, fname)
 
-    Normalised residuals per considered site for Boore et al. 2020 and PGA:
+    Residuals per considered site for Boore et al. 2020 and PGA:
        .. image:: /contents/smt_images/[BooreEtAl2020]_PGA_AllResPerSite.png
         
     Intra-event residuals components per considered site for Boore et al. 2020 and PGA:

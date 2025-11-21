@@ -958,7 +958,6 @@ class SingleStationAnalysis(object):
             # issues when using check_gsim_list within Residuals obj's init
             resid = Residuals(self.frozen_gmpe_list, self.imts)
             resid.compute_residuals(site_db,
-                                    normalise=False,
                                     component=component,
                                     stations=True)
             setattr(
