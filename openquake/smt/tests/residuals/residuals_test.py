@@ -35,19 +35,9 @@ from openquake.smt.residuals.parsers.esm_url_flatfile_parser import (
 
 
 BASE = os.path.join(os.path.dirname(__file__), "data")
-
 TMP_FIG = os.path.join(tempfile.mkdtemp(), 'figure.png')
 TMP_TAB = os.path.join(tempfile.mkdtemp(), 'table.csv')
 TMP_XML = os.path.join(tempfile.mkdtemp(), 'gmc.xml')
-
-AAC = np.testing.assert_allclose
-
-
-def fix(number):
-    if np.isnan(number):
-        return None
-    else:
-        return float(number)
 
 
 def compare_residuals(observed, expected):
@@ -88,9 +78,9 @@ class Result:
                     for k1, dic in ddic.items():
                         for k2, vals in dic.items():
                             if isinstance(vals, np.ndarray):
-                                dic[k2] = [fix(x) for x in vals]
+                                dic[k2] = [self.fix(x) for x in vals]
                             else:
-                                dic[k2] = fix(vals)
+                                dic[k2] = self.fix(vals)
                     pprint.pprint(ddic, f)
                     print(f'Saved {f.name}', file=sys.stderr)
 
@@ -101,7 +91,14 @@ class Result:
                     js = f.read()
                     return ast.literal_eval(js)
                 
+    def fix(self, number):
+        if np.isnan(number):
+            return None
+        else:
+            return float(number)
 
+
+AAC = np.testing.assert_allclose
 GSIMS = ['KothaEtAl2020', 'LanzanoEtAl2019_RJB_OMO']
 CWD = os.path.dirname(__file__)
 RES = Result(os.path.join(CWD, 'exp_regular'))
@@ -269,8 +266,6 @@ class ResidualsTestCase(unittest.TestCase):
         # Get station residual statistics per GMPE and per imt
         ssa_csv_output = os.path.join(self.out_location, 'ssa_test.csv')
         ssa1.station_residual_statistics(ssa_csv_output)
-        
-        #RES_STATIONS.regenerate_station_exp(ssa1.site_residuals)
 
         # Check exp vs obs delta_s2ss, delta_woes, phi_ss,s per station
         compare_residuals(
