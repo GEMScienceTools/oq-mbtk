@@ -69,6 +69,20 @@ def manage_imts(residuals):
     return residuals, x_with_imt
 
 
+def get_sigma_label(res_type):
+    """
+    Return the label for the plots required for the
+    given component of the residual.
+    """
+    if res_type == 'Total':
+        return 'Total Res.'
+    elif res_type == 'Inter event':
+        return 'Between-Event Res.'
+    else:
+        assert res_type == 'Intra event'
+        return 'Within-Event Res.'    
+
+
 class BaseResidualPlot(object):
     """
     Abstract-like class to create a Residual plot of strong ground motion
@@ -300,19 +314,10 @@ class ResidualPlot(ResidualHistogramPlot):
         ax.set_xlim(x_limit*-1,x_limit)
 
     def get_axis_title(self, res_data, res_type):
-        sigma_type = res_type
-        if res_type == 'Total':
-            sigma_type = 'Total Res.'
-        elif res_type == 'Inter event':
-            sigma_type = 'Between-Event Res.'
-        elif res_type == 'Intra event':
-            sigma_type = 'Within-Event Res.'
-        
-        mean, stddev = res_data["mean"], res_data["stddev"]
-        return "%s - %s\n Mean = %7.3f, Std Dev = %7.3f" % (str(
-            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
-                ']\n', '] - ').replace('sigma_model','Sigma').replace(
-                    'sigma_model','Sigma'),sigma_type,mean, stddev)
+        sigma_label = get_sigma_label(res_type)
+        gmm_label = f"[{self.residuals.gmpe_list[self.gmpe].__class__.__name__}]"
+        return "%s - %s\n Mean = %7.3f, Std Dev = %7.3f" % (
+            gmm_label, sigma_label, res_data["mean"], res_data["stddev"])
 
 
 class ResidualScatterPlot(BaseResidualPlot):
@@ -360,15 +365,9 @@ class ResidualScatterPlot(BaseResidualPlot):
         return -max_lim, max_lim
     
     def get_axis_title(self, res_data, res_type):
-        sigma_type = res_type
-        if res_type == 'Total':
-            sigma_type = 'Total Res.'
-        elif res_type == 'Inter event':
-            sigma_type = 'Between-Event Res.'
-        elif res_type == 'Intra event':
-            sigma_type = 'Within-Event Res.'
-        return "%s - %s" %(str(self.residuals.gmpe_list[self.gmpe]).split('(')[
-            0].replace(']\n', '] - ').replace('sigma_model','Sigma'),sigma_type)
+        sigma_label = get_sigma_label(res_type)
+        gmm_label = f"[{self.residuals.gmpe_list[self.gmpe].__class__.__name__}]"
+        return "%s - %s" %(gmm_label, sigma_label)
 
     def draw(self, ax, res_data, res_type):
         x, y = res_data['x'], res_data['y']
@@ -1058,22 +1057,15 @@ class ResidualWithSite(ResidualPlot):
         xtick_label = self.residuals.site_ids
         ax.set_xticklabels(xtick_label, rotation="vertical")
         
-        sigma_type = res_type
-        if res_type == 'Total':
-            sigma_type = 'Total Res.'
-        elif res_type == 'Inter event':
-            sigma_type = 'Within-Event Res.'
-        elif res_type == 'Intra event':
-            sigma_type = 'Between-Event Res.'
-        
+        sigma_label = get_sigma_label(res_type)
+        gmm_label = f"[{self.residuals.gmpe_list[self.gmpe].__class__.__name__}]"
+        title_string = "%s - %s - %s" % (gmm_label, self.imt, sigma_label)
+        ax.set_title(title_string, fontsize=11)
+
         max_lim = ceil(np.max(np.fabs(yvals)))
         ax.set_ylim(-max_lim, max_lim)
-        ax.set_ylabel("%s" % sigma_type, fontsize=12)
+        ax.set_ylabel("%s" % sigma_label, fontsize=12)
         ax.grid()
-        title_string = "%s - %s - %s" % (str(self.residuals.gmpe_list[
-            self.gmpe]).split('(')[0].replace(']\n', '] - ').replace(
-                'sigma_model','Sigma'),self.imt,sigma_type)
-        ax.set_title(title_string, fontsize=11)
 
     def _get_site_data(self):
         """
@@ -1198,9 +1190,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.plot(xvals, -phi * nxv, 'k--', linewidth=2, label=r'+/- $\phi$') # Not strictly phi because here
                                                                             # not computing on per-eq basis
 
-        title_string = "%s - %s (Std Dev = %8.5f)" % (str(
-            self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
-                ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi)
+        gmm_label = f"[{self.residuals.gmpe_list[self.gmpe].__class__.__name__}]"
+        title_string = "%s - %s (Std Dev = %8.5f)" % (gmm_label, self.imt, phi)
         ax.set_title(title_string, fontsize=11)
         ax.legend(loc='upper right', fontsize=12)
         
@@ -1237,19 +1228,16 @@ class IntraEventResidualWithSite(ResidualPlot):
         
         title_string = r'%s - %s ($\phi_{S2S}$ = %8.5f)' % (str(
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
-                ']\n', '] - ').replace('sigma_model','Sigma'),
-            self.imt, phi_S2S)
+                ']\n', '] - '), self.imt, phi_S2S)
         ax.set_title(title_string, fontsize=11)
         ax.legend(loc='upper right', fontsize=12)
         
-        # Plot deltaWS_es (remainder residual)
+        # Plot deltaWS_es (within-site residual)
         ax = fig.add_subplot(313)
         
         ax.plot(xvals, deltaWS_es, 'x', markeredgecolor='k', markerfacecolor='k',
-                markersize=8, zorder=-32, label=r'$\delta W_{o,es}$')
-        
+                markersize=8, zorder=-32, label=r'$\delta WS_{es}$')
         ax.plot(xmean, -phi_ss * nxm, "k--", linewidth=1.5)
-        
         ax.plot(xmean, phi_ss * nxm, "k--", linewidth=1.5, label=r'+/- $\phi_{SS}$')
         
         ax.set_xlim(0, len(self.residuals.site_ids))
@@ -1259,11 +1247,11 @@ class IntraEventResidualWithSite(ResidualPlot):
         max_lim = ceil(np.max(np.fabs(deltaWS_es)))
         ax.set_ylim(-max_lim, max_lim)
         ax.grid()
-        ax.set_ylabel(r'$\delta W_{o,es} = \delta W_{es} - \delta S2S_S$', fontsize=12)
+        ax.set_ylabel(r'$\delta WS_{es} = \delta W_{es} - \delta S2S_S$', fontsize=12)
         
         title_string = r'%s - %s ($\phi_{SS}$ = %8.5f)' % (str(
             self.residuals.gmpe_list[self.gmpe]).split('(')[0].replace(
-                ']\n', '] - ').replace('sigma_model','Sigma'), self.imt, phi_ss)
+                ']\n', '] - '), self.imt, phi_ss)
         ax.set_title(title_string, fontsize=11)
         ax.legend(loc='upper right', fontsize=12)
         

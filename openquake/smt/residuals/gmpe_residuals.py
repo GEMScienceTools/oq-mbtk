@@ -111,7 +111,7 @@ def get_gmm_from_toml(key, config):
 
 def get_gmpe_str(gmpe):
     """
-    Return a string representative of the gsim class
+    Return a simplified string representative of the given gmpe
     """
     if '_toml=' in str(gmpe):
         return str(gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
@@ -507,13 +507,11 @@ class Residuals(object):
         Export the observed, predicted and residuals to a text file
         """
         ctxs = self.contexts # List of contexts
-        gmms = self.gmpe_list
-        imts = self.imts
         store = {}
         for ctx in ctxs:
-            for imt in imts:
+            for imt in self.imts:
                 ctx_and_imt = {} # One df per imt and ctx
-                for gmpe in gmms:                
+                for gmpe in self.gmpe_list:                
                     gmpe_str = get_gmpe_str(gmpe)
 
                     # Get the expected values and the residuals

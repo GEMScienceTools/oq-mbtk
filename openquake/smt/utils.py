@@ -390,9 +390,8 @@ def _get_gmpe_name(gsim):
 def clean_gmm_label(gmpe, drop_weight_info=False):
     """
     Return a string of GMM which contains no slashes or new line
-    syntax for use in plot legends (generally this occurs from
-    the use of ModifiableGMPE with a GMM containing additional
-    input arguments).
+    syntax for use in plots (generally this occurs from the use of
+    ModifiableGMPE with a GMM containing additional input arguments).
 
     Also can remove LT weight information if required.
     """
