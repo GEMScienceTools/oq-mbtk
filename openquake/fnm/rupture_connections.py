@@ -133,9 +133,9 @@ def get_close_faults(
             d: distance between the bounding boxes (float)
     """
     surfaces = [fault['surface'] for fault in faults]
-    #fault_bb_dists_ = get_bounding_box_distances(surfaces, max_dist=max_dist)
+    # fault_bb_dists_ = get_bounding_box_distances(surfaces, max_dist=max_dist)
 
-    #fault_bb_dists = {(int(f0), int(f1)): float(d) 
+    # fault_bb_dists = {(int(f0), int(f1)): float(d)
     #                  for f0, f1, d in fault_bb_dists_
     #                  if f0 != f1}
 
@@ -453,7 +453,7 @@ def get_rupture_adjacency_matrix(
         if sparse:
             return dok_array(mat, dtype=mat.dtype)
         return mat
-    
+
     if all_subfaults is None:
         logging.info("  getting subsections from faults")
         all_subfaults = [
@@ -950,10 +950,12 @@ def filter_bin_adj_matrix_by_rupture_overlap(
     threshold_angle: float = 45.0,
 ):
 
+    logging.info("   Making single-fault rupture meshes")
     sf_meshes = make_sf_rupture_meshes(
         single_rup_df['patches'], single_rup_df['fault'], subfaults
     )
     sf_traces = [get_trace_from_mesh(mesh) for mesh in sf_meshes]
+    logging.info("   Getting proximal rup angles")
     rup_angles = get_proximal_rup_angles(sf_traces, binary_adjacence_matrix)
     fault_rake_lookup = {ff[0]['fid']: ff[0]['rake'] for ff in subfaults}
     rakes = {
@@ -970,6 +972,7 @@ def filter_bin_adj_matrix_by_rupture_overlap(
     else:
         strike_slip_filter = {k: True for k in rup_angles.keys()}
 
+    logging.info(" Calculating overlap")
     for (i, j), (int_pt, angle) in rup_angles.items():
         if angle < threshold_angle:
             if strike_slip_filter[(i, j)]:
