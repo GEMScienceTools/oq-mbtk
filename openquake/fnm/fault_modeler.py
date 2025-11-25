@@ -36,7 +36,11 @@ import traceback
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import (
+    ProcessPoolExecutor,
+    ThreadPoolExecutor,
+    as_completed,
+)
 
 from shapely.geometry import LineString, Polygon, MultiPolygon
 
@@ -66,6 +70,7 @@ logger.addHandler(logging.NullHandler())
 
 
 _n_procs = max(1, os.cpu_count() - 1)
+
 
 def simple_fault_from_feature(
     feature: dict,
@@ -115,7 +120,7 @@ def simple_fault_from_feature(
     for prop in optional_props_to_keep:
         if prop in feature['properties']:
             fault[prop] = feature['properties'][prop]
-                    
+
     if fault['rake'] == -180.0:
         fault['rake'] = 180.0
 
@@ -363,17 +368,16 @@ def subdivide_rupture_mesh(
     return subsec_meshes
 
 
-def subdivide_kite_surface(fault: KiteSurface,
-                           nc_strike=3, nc_dip=3):
+def subdivide_kite_surface(fault: KiteSurface, nc_strike=3, nc_dip=3):
     """
     Divides a KiteSurface into meshes
     """
 
-    #TODO: add max length and width
+    # TODO: add max length and width
 
     fault_mesh = fault.mesh
-    n_cells_dip = fault_mesh.lons.shape[0] - 1 # dip=rows
-    n_cells_strike = fault_mesh.lons.shape[1] - 1 # strike=cols
+    n_cells_dip = fault_mesh.lons.shape[0] - 1  # dip=rows
+    n_cells_strike = fault_mesh.lons.shape[1] - 1  # strike=cols
 
     num_segs_down_dip = n_cells_dip // nc_dip
     num_segs_along_strike = n_cells_strike // nc_strike
@@ -384,8 +388,8 @@ def subdivide_kite_surface(fault: KiteSurface,
         fault_mesh.depths,
         num_segs_down_dip,
         num_segs_along_strike,
-        nc_dip+1,
-        nc_strike+1
+        nc_dip + 1,
+        nc_strike + 1,
     )
 
     return meshes
@@ -515,10 +519,7 @@ def build_subfaults_parallel(fault_network, build_settings, max_workers=None):
     n_faults = len(faults)
     fault_network['subfaults'] = [None] * n_faults
 
-    tasks = [
-        (i, faults[i], build_settings)
-        for i in range(n_faults)
-    ]
+    tasks = [(i, faults[i], build_settings) for i in range(n_faults)]
 
     with ProcessPoolExecutor(max_workers=max_workers) as ex:
         futures = [ex.submit(_build_subfaults_for_one_fault, t) for t in tasks]
@@ -537,7 +538,6 @@ def build_subfaults_parallel(fault_network, build_settings, max_workers=None):
 
             # Keep ordering identical to the original sequence
             fault_network['subfaults'][i] = subfaults
-
 
 
 def make_subfault_df(all_subfaults):
@@ -932,54 +932,64 @@ def merge_meshes_no_overlap(
     final_array : np.ndarray
         Merged array.
     """
-    # Check that all arrays have the same shape
-    # Optional, but should be used for simple faults
-    # Kite faults can have different shapes
+    arrays = list(arrays)
+    positions = list(positions)
+
+    if not arrays:
+        raise ValueError("arrays must be non-empty")
+    if len(arrays) != len(positions):
+        raise ValueError("arrays and positions must have the same length")
+
+    # Optional shape checks
     if same_size_arrays:
         first_shape = arrays[0].shape
         for arr in arrays:
             assert (
                 arr.shape == first_shape
             ), "All arrays must have the same shape"
-
     else:
-        # check to see that all arrays share the same rows or same columns
         row_lengths = [arr.shape[0] for arr in arrays]
         col_lengths = [arr.shape[1] for arr in arrays]
         assert (
             len(set(row_lengths)) == 1 or len(set(col_lengths)) == 1
         ), "All arrays must have the same number of rows or columns"
-        # `first_shape` is, in this case, the largest array
         first_shape = (max(row_lengths), max(col_lengths))
 
-    # check that all positions are unique and accounted for
-    all_rows = sorted(list(set(pos[0] for pos in positions)))
-    all_cols = sorted(list(set(pos[1] for pos in positions)))
-    for row in all_rows:
-        for col in all_cols:
-            assert (row, col) in positions, f"Missing position: {(row, col)}"
-            assert (
-                len([pos for pos in positions if pos == (row, col)]) == 1
-            ), f"Duplicate position: {(row, col)}"
+    # Efficient uniqueness and coverage check for positions
+    pos_set = set(positions)
+    assert len(pos_set) == len(
+        positions
+    ), "Duplicate position found in positions"
+
+    all_rows = sorted({r for r, _ in pos_set})
+    all_cols = sorted({c for _, c in pos_set})
+
+    expected_count = len(all_rows) * len(all_cols)
+    assert expected_count == len(
+        pos_set
+    ), "Missing position(s): positions do not form a complete grid"
 
     # Adjust the positions so that the minimum starts at 0
-    min_row = min(pos[0] for pos in positions)
-    min_col = min(pos[1] for pos in positions)
+    min_row = min(all_rows)
+    min_col = min(all_cols)
     adjusted_positions = [(r - min_row, c - min_col) for r, c in positions]
 
     # Determine the size of the final array (assuming no overlaps)
     n_rows = len(all_rows) * first_shape[0]
     n_cols = len(all_cols) * first_shape[1]
 
-    final_array = np.zeros((n_rows, n_cols))
+    # Preserve dtype, avoid unnecessary upcasting
+    dtype = arrays[0].dtype
+    final_array = np.zeros((n_rows, n_cols), dtype=dtype)
 
+    # Place each tile; since we assert "no overlap", plain assignment is enough
     for arr, pos in zip(arrays, adjusted_positions):
         start_row = pos[0] * first_shape[0]
         end_row = start_row + arr.shape[0]
         start_col = pos[1] * first_shape[1]
         end_col = start_col + arr.shape[1]
 
-        final_array[start_row:end_row, start_col:end_col] += arr
+        final_array[start_row:end_row, start_col:end_col] = arr
 
     return final_array
 
