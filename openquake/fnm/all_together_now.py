@@ -71,6 +71,7 @@ default_settings = {
     'skip_bad_faults': False,
     'shear_modulus': SHEAR_MODULUS,
     'fault_mfd_b_value': 1.0,
+    'fault_mfd_corner_mag': 7.2,
     'fault_mfd_type': 'TruncatedGRMFD',
     'fault_mfd_min_mag': 5.0,
     'export_fault_mfds': False,

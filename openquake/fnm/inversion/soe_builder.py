@@ -598,12 +598,11 @@ def make_eqns(
         fault_moment = get_fault_moment(faults, shear_modulus=shear_modulus)
         mfd_moment = get_mfd_moment(mfd)
         seismic_slip_rate_frac = mfd_moment / fault_moment
-        if verbose:
-            print("fault_moment", fault_moment)
-            print("mfd_moment", mfd_moment)
-            print(
-                "Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
-            )
+        print("fault_moment", fault_moment)
+        print("mfd_moment", mfd_moment)
+        print(
+            "Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
+        )
     elif seismic_slip_rate_frac is None and mfd is None:
         print("Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac)
         seismic_slip_rate_frac = 1.0
