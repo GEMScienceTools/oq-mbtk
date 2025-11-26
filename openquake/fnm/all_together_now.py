@@ -279,6 +279,7 @@ def build_fault_network(
         raise DeprecationWarning("Filtering by angle is deprecated.")
 
     if settings['filter_by_overlap']:
+        t3__ = time.time()
         logging.info("  Filtering by rupture overlap")
         binary_adjacence_matrix, _ = filter_bin_adj_matrix_by_rupture_overlap(
             fault_network['single_rup_df'],
@@ -288,17 +289,18 @@ def build_fault_network(
         )
         t3_ = time.time()
         event_times.append(t3_)
-        logging.info(f"\tdone in {round(t3_-t3, 1)} s")
+        logging.info(f"\tdone in {round(t3_-t3__, 1)} s")
         n_connections = binary_adjacence_matrix.sum()
         logging.info(f"\t{'{:,}'.format(n_connections)} connections remaining")
         # filter continuous distance matrix
         fault_network['dist_mat'] *= binary_adjacence_matrix
 
     logging.info("Building subfault dataframe")
+    t4_ = time.time()
     fault_network['subfault_df'] = make_subfault_df(fault_network['subfaults'])
     t4 = time.time()
     event_times.append(t4)
-    logging.info(f"\tdone in {round(t4-t3, 1)} s")
+    logging.info(f"\tdone in {round(t4-t4_, 1)} s")
 
     logging.info("Getting multifault ruptures")
     rup_groups = get_rupture_grouping(
