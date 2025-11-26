@@ -1012,6 +1012,7 @@ def get_colors(custom_color_flag, custom_color_list):
     else:
         return colors
 
+
 ### Trellis utils
 def trellis_data(gmpe,
                  r_vals,
