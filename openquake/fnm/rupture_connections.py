@@ -29,6 +29,7 @@ from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
     make_sf_rupture_meshes,
+    get_trace_from_sf_rupture,
     get_trace_from_mesh,
 )
 
@@ -789,14 +790,6 @@ def get_proximal_rup_angles(
         Dictionary of rupture angles. The keys are tuples of rupture indices,
         and the values are tuples of rupture angles in degrees.
     """
-    if not isinstance(sf_traces[0], Line):
-        if verbose:
-            print(" getting traces from faults")
-        sf_traces = [
-            Line([Point(*coords) for coords in trace]) for trace in sf_traces
-        ]
-
-    rup_angles = {}
     n_faults = len(sf_traces)
     pad_width = len(str(n_faults))
 
@@ -804,8 +797,23 @@ def get_proximal_rup_angles(
     nonzero_pairs = list(binary_distance_matrix.keys())
     total_pairs = len(nonzero_pairs)
 
-    if verbose:
-        print(f" Processing {total_pairs} proximal fault pairs")
+    convert_from_coords = not isinstance(sf_traces[0], Line)
+    if convert_from_coords and verbose:
+        print(" getting traces from faults")
+
+    proximal_traces: dict[int, Line] = {}
+    for i, j in nonzero_pairs:
+        for k in (i, j):
+            if k not in proximal_traces:
+                trace = sf_traces[k]
+                if convert_from_coords:
+                    proximal_traces[k] = Line(
+                        [Point(*coords) for coords in trace]
+                    )
+                else:
+                    proximal_traces[k] = trace
+
+    rup_angles = {}
 
     for idx, (i, j) in enumerate(nonzero_pairs, 1):
         if verbose:
@@ -817,8 +825,8 @@ def get_proximal_rup_angles(
             else:
                 print(f"  doing pair {idx} out of {total_pairs}")
 
-        trace_0 = sf_traces[i]
-        trace_1 = sf_traces[j]
+        trace_0 = proximal_traces[i]
+        trace_1 = proximal_traces[j]
         rup_angles[(i, j)] = find_intersection_angle(trace_0, trace_1)
 
     return rup_angles
@@ -950,11 +958,7 @@ def filter_bin_adj_matrix_by_rupture_overlap(
     threshold_angle: float = 45.0,
 ):
 
-    logging.info("   Making single-fault rupture meshes")
-    sf_meshes = make_sf_rupture_meshes(
-        single_rup_df['patches'], single_rup_df['fault'], subfaults
-    )
-    sf_traces = [get_trace_from_mesh(mesh) for mesh in sf_meshes]
+    sf_traces = get_trace_from_sf_rupture(single_rup_df, subfaults)
     logging.info("   Getting proximal rup angles")
     rup_angles = get_proximal_rup_angles(sf_traces, binary_adjacence_matrix)
     fault_rake_lookup = {ff[0]['fid']: ff[0]['rake'] for ff in subfaults}
@@ -972,7 +976,7 @@ def filter_bin_adj_matrix_by_rupture_overlap(
     else:
         strike_slip_filter = {k: True for k in rup_angles.keys()}
 
-    logging.info(" Calculating overlap")
+    logging.info("   Calculating overlap")
     for (i, j), (int_pt, angle) in rup_angles.items():
         if angle < threshold_angle:
             if strike_slip_filter[(i, j)]:

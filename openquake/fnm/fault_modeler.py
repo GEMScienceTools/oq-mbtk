@@ -556,7 +556,9 @@ def make_subfault_df(all_subfaults):
     subfault_df : pd.DataFrame
         DataFrame containing information about each subfault.
     """
-    subfault_df = pd.concat(pd.DataFrame(sf) for sf in all_subfaults)
+    subfault_df = pd.DataFrame(
+        [sf for sublist in all_subfaults for sf in sublist]
+    )
     subfault_df = subfault_df.reset_index(drop=True)
     subfault_df.index.name = "subfault_id"
     subfault_df['slip_azimuth'] = [
@@ -1094,6 +1096,79 @@ def make_sf_rupture_meshes(
             logging.error(f"Problems with rupture {i}: " + str(e))
 
     return rup_meshes
+
+
+def get_trace_from_sf_rupture(single_rup_df, subfaults):
+    """
+    Build rupture traces directly from subfault 'trace' fields, without
+    constructing meshes.
+
+    Assumptions:
+      - subfaults is a list of lists, one inner list per fault
+      - group_subfaults_by_fault(subfaults) returns {fid: [subfault_dicts]}
+      - fault_position = (row, col)
+          row increases down-dip → surface = min row
+          col increases along-strike → ordering key
+      - single_rup_df has columns:
+          'fault'   : fid
+          'patches' : indices into that fault's subfault list
+    """
+    import numpy as np
+    from .fault_modeler import group_subfaults_by_fault
+
+    grouped = group_subfaults_by_fault(subfaults)
+    traces = []
+
+    # Iterate row-wise
+    for row in single_rup_df.itertuples(index=False):
+        patches = getattr(row, "patches")
+        fid = getattr(row, "fault")
+
+        if not isinstance(patches, (list, tuple, np.ndarray)):
+            patches = [patches]
+
+        subs_for_fault = grouped[fid]
+
+        # Select subfaults for this rupture
+        rup_subs = [subs_for_fault[idx] for idx in patches]
+
+        if not rup_subs:
+            traces.append(np.zeros((0, 3), dtype=float))
+            continue
+
+        # fault_position = (row, col)
+        # Surface = minimum row index
+        min_row = min(sf["fault_position"][0] for sf in rup_subs)
+
+        surface_subs = [
+            sf for sf in rup_subs if sf["fault_position"][0] == min_row
+        ]
+        if not surface_subs:
+            surface_subs = rup_subs
+
+        # Order along strike by column index
+        surface_subs.sort(key=lambda sf: sf["fault_position"][1])
+
+        # Build the continuous trace, avoiding duplicated vertices
+        combined_trace = []
+        for sf in surface_subs:
+            tr = sf.get("trace", [])
+            if not tr:
+                continue
+
+            if not combined_trace:
+                combined_trace.extend(tr)
+            else:
+                last = np.asarray(combined_trace[-1], dtype=float)
+                first = np.asarray(tr[0], dtype=float)
+                if np.allclose(last, first):
+                    combined_trace.extend(tr[1:])
+                else:
+                    combined_trace.extend(tr)
+
+        traces.append(np.asarray(combined_trace, dtype=float))
+
+    return traces
 
 
 def shapely_multipoly_to_geojson(multipoly, return_type='coords'):
