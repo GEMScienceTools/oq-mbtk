@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright (C) 2014-2014 GEM Foundation
+# Copyright (C) 2014-2025 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -20,9 +20,11 @@ Tests for execution of comparison module
 """
 import os
 import shutil
+import tempfile
 import unittest
 import numpy as np
 import pandas as pd
+import toml
 
 from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison import compare_gmpes as comp
@@ -34,7 +36,7 @@ from openquake.smt.comparison.utils_compare_gmpes import (compute_matrix_gmpes,
 
 
 # Base path
-base = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
 TARGET_vs30 = 800
@@ -64,14 +66,17 @@ class ComparisonTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(self):
-        self.input_file = os.path.join(base,"compare_gmpe_inputs.toml")
-        self.output_directory = os.path.join(base,'compare_gmpes_test')
+        self.input_file = os.path.join(BASE, "comparison_test.toml")
+        self.output_directory = os.path.join(BASE, 'compare_gmpes_test')
         self.input_file_plot_obs_spectra = os.path.join(
-            base,'Chamoli_1999_03_28_EQ.toml')
+            BASE, 'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
-            base,'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.exp_curves = os.path.join(base,'exp_curves.csv')
-        self.exp_spectra = os.path.join(base, 'exp_spectra.csv')
+            BASE, 'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
+        self.exp_curves = os.path.join(BASE, 'exp_curves.csv')
+        self.exp_spectra = os.path.join(BASE, 'exp_spectra.csv')
+        self.rup_xml = os.path.join(BASE, 'rup.xml')
+        self.rup_csv = os.path.join(BASE, 'rup.csv')
+        self.gmc_xml = os.path.join(BASE, 'comparison_test.xml')
 
         # Set the output
         if not os.path.exists(self.output_directory):
@@ -303,7 +308,7 @@ class ComparisonTestCase(unittest.TestCase):
         # Specify target files
         target_file_spectra = (os.path.join(
             self.output_directory, 'ResponseSpectraPlotObserved.png'))
-
+        
         # Check target file created and outputted in expected location
         self.assertTrue(target_file_spectra)
 
@@ -314,6 +319,64 @@ class ComparisonTestCase(unittest.TestCase):
         """
         # Plot the ratios
         comp.plot_ratios(self.input_file, self.output_directory)
+
+    def test_rup_file(self):
+        """
+        Check that the provision of an OQ rupture in XML or CSV format is
+        usable within the Comparison module. Correctness of values is not
+        examined.
+        """
+        # Add the "rup_file" key to the config to override source params key
+        tmp = toml.load(self.input_file)
+        tmp['rup_file'] = {}
+
+        # For XML and CSV formats
+        for file in [self.rup_xml, self.rup_csv]:
+
+            # Set the file
+            tmp['rup_file']['fname'] = file
+
+            # Write back to temp
+            tmp_pth = os.path.join(
+                tempfile.mkdtemp(), 'input_with_gmc_xml.toml')
+            with open(tmp_pth, 'w', encoding='utf-8') as f:
+                toml.dump(tmp, f)
+
+            # Check the rup read from file works correctly
+            comp.plot_trellis(tmp_pth, self.output_directory)
+
+    def test_xml_gmc(self):
+        """
+        Check that a set of GMCs can be reconstructed correctly from an
+        XML for use within the Comparison module. Correctness of values
+        is not examined.
+        """
+        # Add the "gmc_xml" key to the config to override the "models" key
+        tmp = toml.load(self.input_file)
+        tmp['gmc_xml'] = {}
+        tmp['gmc_xml']['fname'] = self.gmc_xml
+        
+        # Test for only ASCR and then all LTs
+        for trt in ["Active Shallow Crust", "all"]:
+
+            # Set the TRT
+            tmp['gmc_xml']['trt'] = trt
+            
+            # Test for plotting of both individual GMMs and only LTs
+            for val in [True, False]:
+                
+                # Set the plotting option
+                tmp['gmc_xml']['plot_lt_only'] = val
+
+                # Write back to temp
+                tmp_pth = os.path.join(
+                    tempfile.mkdtemp(), 'input_with_gmc_xml.toml')
+                with open(tmp_pth, 'w', encoding='utf-8') as f:
+                    toml.dump(tmp, f)
+
+                # Check the GMCs read from XML work correctly
+                comp.plot_trellis(tmp_pth, self.output_directory)
+        
 
     @classmethod
     def tearDownClass(self):

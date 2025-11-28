@@ -16,21 +16,30 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Module to compare GMPEs using trellis plots, hierarchical clustering, Sammon
-maps and Euclidean distance matrix plots
+Module to compare GMPEs using trellis plots, hierarchical
+clustering, Sammon maps and Euclidean distance matrix plots
 """
-import numpy as np
-import re
-import pandas as pd
+import os
 import copy
 import toml
-import os
+import numpy as np
+import pandas as pd
+import re
 
+from openquake.commonlib.readinput import get_rupture
+from openquake.commonlib.oqvalidation import OqParam
+from openquake.hazardlib.source.rupture import get_ruptures
 from openquake.hazardlib.imt import from_string
+from openquake.hazardlib.gsim_lt import GsimLogicTree
+from openquake.hazardlib.geo.mesh import RectangularMesh
+
 from openquake.smt.comparison.utils_compare_gmpes import (
     plot_trellis_util, plot_spectra_util, plot_ratios_util,
     plot_cluster_util, plot_sammons_util, plot_matrix_util,
     compute_matrix_gmpes)
+
+
+F32 = np.float32
 
 
 class Configurations(object):
@@ -47,17 +56,63 @@ class Configurations(object):
         config_file = toml.load(filename) 
         
         # Get general params
+        self.get_general_params(config_file)
+        
+        # Get site params
+        self.get_site_params(config_file)
+
+        # Get source params
+        if 'rup_file' not in config_file:
+            self.rup_params_from_source_key(config_file)
+        else:
+            self.rup_params_from_file(config_file['rup_file'])
+        
+        # Get custom colors
+        self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
+        self.custom_color_list = config_file['custom_colors']['custom_colors_list']
+        
+        # Check same length mag and depth lists to avoid indexing error
+        assert len(self.mag_list) == len(self.depth_list)
+        
+        # Get imts
+        self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
+
+        # Get GMMs and LT weights from either TOML or XML
+        if 'gmc_xml' in config_file:
+            # Overrides any GMMs specified in "models" key
+            self.get_gmms_xml(config_file['gmc_xml'])
+        
+        else:
+            # Get GMMs
+            self.get_gmpes(config_file)
+            
+            # Get lt weights
+            self.get_lt_weights(self.gmpes_list)
+
+        # Get params for Euclidean analysis if required
+        if "euclidean_analysis" in config_file:
+            self.get_eucl_params(config_file)
+            
+    def get_general_params(self, config_file):
+        """
+        Get the general-use configuration parameters from the toml.
+        """
         self.minR = config_file['general']['minR']
         self.maxR = config_file['general']['maxR']
         self.dist_type = config_file['general']['dist_type']
         self.dist_list = config_file['general']['dist_list']
         self.nstd = config_file['general']['Nstd']
         self.max_period = config_file['general']['max_period']
-        
+
+    def get_site_params(self, config_file):
+        """
+        Get the site parameters from the site_properties key
+        of the toml.
+        """
         # If the following site params are missing, the following proxies are used
         SITE_OPTIONAL = {
-        "z1pt0": -999, # Let param be computed using each GMM's vs30 to z1pt0
-        "z2pt5": -999, # Let param be computed using each GMM's vs30 to z2pt5
+        "z1pt0": -999, # Compute param using each GMM's vs30 to z1pt0
+        "z2pt5": -999, # Compute param using each GMM's vs30 to z2pt5
         "up_or_down_dip": 1, # Assume site is up-dip
         "volc_back_arc": False, # Asssume site is not in back-arc
         "eshm20_region": 0} # Assume default region for ESHM version of K20 GMM
@@ -66,11 +121,16 @@ class Configurations(object):
         self.vs30 = config_file['site_properties']['vs30'] # Must be provided
         for par in SITE_OPTIONAL:
             if par not in config_file['site_properties']:
-                setattr(self, par, SITE_OPTIONAL[par]) # Assign default if not provided
+                setattr(
+                    self, par, SITE_OPTIONAL[par]) # Assign default if not provided
             else:
                 setattr(self, par, config_file['site_properties'][par])
 
-        # Get source params
+    def rup_params_from_source_key(self, config_file):
+        """
+        Get the parameters used to describe the rupture from
+        the source_properties key of the toml.
+        """
         self.lon = config_file['source_properties']['lon']
         self.lat = config_file['source_properties']['lat']
         self.strike = config_file['source_properties']['strike']
@@ -81,34 +141,53 @@ class Configurations(object):
         self.ztor = config_file['source_properties']['ztor']
         self.aratio = config_file['source_properties']['aratio']
         self.trt = config_file['source_properties']['trt']
-        
-        # Get custom colors
-        self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
-        self.custom_color_list = config_file['custom_colors']['custom_colors_list']
-        
-        # Check same length mag and depth lists to avoid indexing error
-        assert len(self.mag_list) == len(self.depth_list)
-        
-        # Get mags and depths for Sammons, Euclidean distance and clustering
-        if "euclidean_analysis" in config_file:
-            self.mags_eucl, self.depths_eucl = self.get_eucl_mags_deps(config_file)
-            self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
+        self.rup = None
+
+    def rup_params_from_file(self, rup_data):
+        """
+        Load a rupture from either an XML or a CSV file instead
+        of constructing one using the information provided in the
+        toml.
+        """
+        # Load into an OQ rupture object
+        ftype = rup_data['fname'].split('.')[-1]
+        if ftype == "xml":
+            # Load XML
+            oqp = OqParam(calculation_mode='scenario')
+            oqp.inputs['rupture_model'] = rup_data['fname']
+            rup = get_rupture(oqp)
+        else:
+            # Otherwise must be CSV
+            if ftype != "csv":
+                raise ValueError("Only ruptures in XML or CSV (OQ) format "
+                                 "can be used in the Comparison module.")
+            # Load CSV
+            rup = get_ruptures(rup_data['fname'])[0]
+            # Force dtype of surf mesh to F32 to permit strike and dip retrieval
+            rup.surface.mesh = RectangularMesh(rup.surface.mesh.lons.astype(F32),
+                                               rup.surface.mesh.lats.astype(F32),
+                                               rup.surface.mesh.depths.astype(F32)
+                                               )
             
-        # Get imts
-        self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
-
-        # Get GMMs
-        self.gmpes_list, self.baseline_gmm = self.get_gmpes(config_file)
-
-        # Get lt weights
-        (self.lt_weights_gmc1, self.lt_weights_gmc2, self.lt_weights_gmc3,
-         self.lt_weights_gmc4) = self.get_lt_weights(self.gmpes_list)
+        # Set other params (not used for rup reconstruction but still req)
+        self.lon = rup.hypocenter.longitude
+        self.lat = rup.hypocenter.latitude
+        self.strike = rup.surface.get_strike()
+        self.dip = rup.surface.get_dip()
+        self.rake = rup.rake
+        self.mag_list = [rup.mag]
+        self.depth_list = [rup.hypocenter.depth]
+        self.ztor = [rup.surface.mesh.depths.min()]
+        self.aratio = -999 # Not needed as already have rup surface
+        self.trt = rup.tectonic_region_type
+        self.rup = rup
 
     def get_gmpes(self, config_file):
         """
-        Extract strings of the GMPEs from the configuration file. Also get the 
-        labels used in Sammons maps, Clustering (dendrograms) and Euclidean distance
-        matrix plots. The baseline GMM for computing ratios with is also extracted
+        Get TOML-string representations of the GMMs specified in the
+        toml and store them in the config object.
+        
+        The baseline GMM for computing ratios with is als instantiated
         if specified within the toml file.
         """
         # Get the GMPEs
@@ -117,7 +196,7 @@ class Configurations(object):
         for key in config['models']:
             value = self.get_gmm(key, config['models'])
             gmpe_list.append(value)
-
+            
         # Get the baseline GMPE used to compute ratios of GMPEs with if required
         if 'ratios_baseline_gmm' in config_file.keys():
             if len(config_file['ratios_baseline_gmm']) > 1:
@@ -127,7 +206,9 @@ class Configurations(object):
         else:
             baseline_gmm = None
 
-        return gmpe_list, baseline_gmm
+        # Add to config object
+        setattr(self, 'gmpes_list', gmpe_list)
+        setattr(self, 'baseline_gmm', baseline_gmm)
 
     def get_gmm(self, key, models):
         """
@@ -143,7 +224,6 @@ class Configurations(object):
         if len(models[key]):
             models[key].pop('style', None)
             value += '\n' + str(toml.dumps(models[key]))
-            
         return value.strip()
 
     def get_lt_weights(self, gmpe_list):
@@ -180,31 +260,102 @@ class Configurations(object):
             else:
                 lt_weights.append(None)
 
-        return tuple(lt_weights)
+        # Add to config object
+        for idx_lt, lt in enumerate(lt_weights):
+            setattr(self, f'lt_weights_gmc{idx_lt+1}', lt)
 
-    def get_eucl_mags_deps(self, config_file):
+    def get_gmms_xml(self, xml_dic):
+        """
+        Load a ground-motion characterisation defined within an XML
+        file. The individual GMMs and the combined logic tree are
+        constructed just as when specified within the "models" key
+        instead.
+
+        NOTE: If the "gmc_xml" key is in the TOML, then it overrides
+        the GMMs and/or LTs defined within the "models" key.
+
+        NOTE: LT weights are checked when instantiating the GMC logic
+        tree, so there is no need to perform this check here too.
+        """
+        # Load the LT
+        gsim_lt = GsimLogicTree(xml_dic['fname'])
+
+        # Get the TRT
+        if xml_dic['trt'] == "all":
+            trts = gsim_lt.values.keys()
+        else:
+            trts = [xml_dic['trt']]
+            if trts[0] not in gsim_lt.values.keys():
+                raise ValueError(f"No branchset in the provided GMC XML "
+                                 f"has an applyToTectonicRegionType for "
+                                 f"a TRT of {trts[0]}")
+
+        # Check if plotting only LT (default is to plot branches too)
+        add = ""
+        if "plot_lt_only" in xml_dic:
+            plot_lt_only = xml_dic['plot_lt_only']
+            if plot_lt_only not in [True, False]:
+                raise ValueError(f"Plotting of individual GMMs from GMC"
+                                 f"XML can only be set to true or false")
+            if plot_lt_only is True:
+                add = "_plot_lt_only"
+
+        # Construct LTs
+        gmpe_list = []
+        lt_weight = [None, None, None, None]
+        for idx_trt, trt in enumerate(trts):
+            lt_gmc = {}
+            for gmm in gsim_lt.branches:
+                if gmm.trt == trt:
+                    continue
+                wei = gmm.weight['weight']
+                gmpe_toml = f"{gmm.gsim._toml} \nlt_weight_gmc{idx_trt+1}{add} = {wei}"
+                gmpe_list.append(gmpe_toml)
+                lt_gmc[gmpe_toml] = wei
+            
+            # Store GMC's weights
+            lt_weight[idx_trt] = lt_gmc
+
+        # Add GMMs
+        setattr(self, 'gmpes_list', gmpe_list)
+        
+        # Add GMC LT weights
+        for idx_lt, lt in enumerate(lt_weight):
+            setattr(self, f'lt_weights_gmc{idx_lt+1}', lt)
+
+        # Cannot set baseline gmm if using GMC XML
+        setattr(self, 'baseline_gmm', None) 
+
+    def get_eucl_params(self, config_file):
         """
         For each magnitude considered within the Sammons Maps, Euclidean distance
         matrix plots and agglomerative clustering dendrograms get the magnitudes
         and assign a depth for each.
+
+        Also get the label to use for each GMM.
         """
-        # Make array of the magnitudes
-        mag_params = config_file['euclidean_analysis']
-        mags_eucl = np.arange(
-            mag_params['mmin'], mag_params['mmax'], mag_params['spacing'])
+        # Get eucl params
+        eucl_params = config_file['euclidean_analysis']
+
+        # Make array of magnitudes
+        mags = np.array([m[0] for m in eucl_params['mags_depths']])
+        mags_eucl = np.arange(mags.min(), mags.max(), eucl_params['mag_spacing'])
 
         # Get depths per mag value
-        depth_per_mag = pd.DataFrame(
-            config_file['euclidean_analysis']['depths'], columns=['mag','depth'])
+        depth_per_mag = pd.DataFrame(eucl_params['mags_depths'], columns=['mag','depth'])
         
-        # Assign the depth to each mag in mags_eucl based on closest mag in depth_per_mag
+        # Assign a depth to each mag in mags_eucl based on closest mag in depth_per_mag
         depths_eucl = np.zeros(len(mags_eucl)) 
         for idx_mag, mag in enumerate(mags_eucl):
             closest = (np.abs(depth_per_mag['mag'] - mag)).idxmin()
             depths_eucl[idx_mag] = depth_per_mag.loc[closest, 'depth']
        
-        return  mags_eucl, pd.Series(depths_eucl)
+        # Add to config object
+        setattr(self, 'mags_eucl', mags_eucl)
+        setattr(self, 'depths_eucl', pd.Series(depths_eucl))
 
+        # Add GMM labels
+        self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
 
 def plot_trellis(filename, output_directory):
     """
@@ -218,7 +369,6 @@ def plot_trellis(filename, output_directory):
     store_gmm_curves = plot_trellis_util(config, output_directory) 
     
     return store_gmm_curves
-
                 
 def plot_spectra(filename, output_directory, obs_spectra_fname=None):
     """
