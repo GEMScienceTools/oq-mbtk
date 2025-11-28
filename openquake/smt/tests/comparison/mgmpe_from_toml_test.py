@@ -52,10 +52,9 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
     """
     @classmethod 
     def setUpClass(self):
-        self.input_file = os.path.join(base, "mgmpe_inputs.toml")
+        self.input_file = os.path.join(base, "mgmpe_test.toml")
         self.output_directory = os.path.join(base, 'mgmpe_test')
         self.exp_mgmpe = os.path.join(base, "exp_mgmpe.csv")
-        # Set the output
         if not os.path.exists(self.output_directory):
             os.makedirs(self.output_directory)
     
