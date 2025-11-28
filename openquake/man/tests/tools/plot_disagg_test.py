@@ -1,3 +1,21 @@
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+# Copyright (C) 2014-2025 GEM Foundation
+#
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import shutil
 import unittest
@@ -12,8 +30,10 @@ class TestPlotDisaggMRE(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.fname = os.path.join(base, "data", "calc_767.hdf5")
-        cls.out = os.path.join(base, "..", "..", "tools", "disagg_Mag_Dist_Eps_calc_767")
+        cls.fname = os.path.join(base, "data_plot_disagg_test", "calc_767.hdf5")
+        cls.out_mre = os.path.join(base, "..", "..", "tools", "disagg_Mag_Dist_Eps_calc_767")
+        cls.out_mll = os.path.join(base, "..", "..", "tools", "disagg_Mag_Lon_Lat_calc_767")
+        cls.out_tll = os.path.join(base, "..", "..", "tools", "disagg_TRT_Lon_Lat_calc_767")
 
     def test_plot_disagg_MRE(self):
         """
@@ -35,4 +55,7 @@ class TestPlotDisaggMRE(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(cls.out)
+        shutil.rmtree(cls.out_mre)
+        shutil.rmtree(cls.out_mll)
+        shutil.rmtree(cls.out_tll)
+
