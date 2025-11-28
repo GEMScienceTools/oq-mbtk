@@ -29,6 +29,7 @@ from scipy import interpolate
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib.imt import from_string
+from openquake.smt.utils import clean_gmm_label
 from openquake.smt.comparison.utils_gmpes import (get_imtl_unit, 
                                                   att_curves,
                                                   get_rup_pars,
@@ -86,6 +87,7 @@ def plot_trellis_util(config, output_directory):
             # Per GMPE get attenuation curves
             lt_vals_gmc = [{}, {}, {}, {}]
             store_per_gmpe = {}
+            
             for g, gmpe in enumerate(config.gmpes_list): 
                 
                 # Sub dicts for median, gmm sigma, median +/- nstd * gmm sigma
@@ -94,7 +96,7 @@ def plot_trellis_util(config, output_directory):
                 
                 # Perform mgmpe check
                 gmm = mgmpe_check(gmpe)
-                
+
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(gmm,
                                                          m,
@@ -107,6 +109,7 @@ def plot_trellis_util(config, output_directory):
                                                          dip_g,
                                                          config.rake,
                                                          config.trt,
+                                                         config.rup,
                                                          config.vs30,
                                                          config.z1pt0,
                                                          config.z2pt5,
@@ -160,9 +163,10 @@ def plot_trellis_util(config, output_directory):
                                      r_vals,
                                      config.imt_list,
                                      config.dist_type)
-         
+                
             # Plot logic trees if specified and also store
             for idx_gmc, gmc in enumerate(lt_weights):
+
                 store_gmm_curves = trel_logic_trees(idx_gmc,
                                                     gmc,
                                                     lt_vals_gmc[idx_gmc],
@@ -182,6 +186,8 @@ def plot_trellis_util(config, output_directory):
             mag_key = f'Mw = {m}, depth = {depth_g} km, dip = {dip_g} deg, rake = {config.rake} deg'
             
             # Add the distance values to each GMM (avoid's overwrite)
+            if config.dist_type in ["repi", "rhypo"]:
+                if r_vals[0] < 1E-09: r_vals[0] = 0 # Precision issue
             store_per_gmpe['%s (km)' % config.dist_type] = r_vals
 
             # Store the GMM's info
@@ -193,7 +199,7 @@ def plot_trellis_util(config, output_directory):
         # Store per imt
         store_per_imt[str(i)] = store_per_mag
     
-    # Final store to add vs30 and nstd into key
+    # Store all the curves
     store_gmm_curves[cfg_key]['gmm att curves per imt-mag'] = store_per_imt
     
     # Finalise plots
@@ -203,6 +209,7 @@ def plot_trellis_util(config, output_directory):
     output = os.path.join(output_directory, 'TrellisPlots.png')
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(output, bbox_inches='tight', dpi=200, pad_inches=0.2)
+    pyplot.close()
     
     return store_gmm_curves
     
@@ -285,8 +292,12 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             sk = f"{config.dist_type}={dist}km, Mw={m}, depth={depth_g}km, vs30={config.vs30}m/s"
 
             for g, gmpe in enumerate(config.gmpes_list):     
+
+                # Set stores
                 rs_50p, sig, rs_ps, rs_ms = [], [], [], []
                 col = colors[g]
+
+                # Perform mgmpe check
                 gmm = mgmpe_check(gmpe)
                 
                 for k, imt in enumerate(imt_list): 
@@ -303,6 +314,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                                            dip_g,
                                                            config.rake,
                                                            config.trt,
+                                                           config.rup,
                                                            config.vs30,
                                                            config.z1pt0,
                                                            config.z2pt5,
@@ -341,7 +353,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                              color=col,
                              linewidth=2,
                              linestyle='-',
-                             label=gmpe)
+                             label=clean_gmm_label(gmpe))
                     if config.nstd > 0:
                         ax1.plot(periods, rs_ps, color=col, linewidth=0.75, linestyle='-.')
                         ax1.plot(periods, rs_ms, color=col, linewidth=0.75, linestyle='-.')
@@ -369,7 +381,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                      st_id)
                 
                 # Update plots
-                update_spectra_plots(ax1, m, dist, n, l, config.dist_list, config.dist_type)
+                update_spectra_plots(ax1, m, depth_g, dist, n, l, config.dist_list, config.dist_type)
             
             # Plot logic trees if required
             for idx_gmc, gmc in enumerate(gmc_weights):
@@ -386,6 +398,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             # Add grid and set xlims
             ax1.set_xlim(min(periods), max(periods))
             ax1.grid(True)
+            if config.nstd > 0:
+                ax1.semilogy()
 
     # Finalise the plots and save fig
     if len(mag_list) * len(config.dist_list) == 1:
@@ -404,6 +418,9 @@ def plot_ratios_util(config, output_directory):
     """
     Generate ratio (GMPE median attenuation/baseline GMPE median attenuation) 
     plots for given run configuration
+
+    NOTE: The ratios of any specified GMC logic trees against the baseline GMM
+    are not computed/plotted.
     """
     # Get mag and dep lists
     mag_list = config.mag_list
@@ -414,11 +431,11 @@ def plot_ratios_util(config, output_directory):
     
     # Compute ratio curves
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
-    ratio_store = []
+    ratio_store, axs = [], []
     for n, i in enumerate(config.imt_list):
         for l, m in enumerate(mag_list):
-            fig.add_subplot(
-                len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
+            ax = fig.add_subplot(len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
+            axs.append(ax)
             
             # Get depth params
             depth_g = dep_list[l] 
@@ -449,6 +466,7 @@ def plot_ratios_util(config, output_directory):
                                  dip_g,
                                  config.rake,
                                  config.trt,
+                                 config.rup,
                                  config.vs30,
                                  config.z1pt0,
                                  config.z2pt5,
@@ -480,6 +498,7 @@ def plot_ratios_util(config, output_directory):
                                      dip_g,
                                      config.rake,
                                      config.trt,
+                                     config.rup,
                                      config.vs30,
                                      config.z1pt0,
                                      config.z2pt5,
@@ -505,7 +524,7 @@ def plot_ratios_util(config, output_directory):
                                 color=col,
                                 linewidth=2, 
                                 linestyle='-',
-                                label=gmpe)
+                                label=clean_gmm_label(gmpe))
                 
                 # Update plots
                 update_ratio_plots(config.dist_type,
@@ -519,9 +538,11 @@ def plot_ratios_util(config, output_directory):
                                    config.maxR)
     
     # Finalise plots
-    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
+    for ax in axs: ax.set_ylim(1/2*np.min(ratio_store), 2*np.max(ratio_store)) # Small buffer in log-space
     out = os.path.join(output_directory, 'RatioPlots.png')
+    pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
+    pyplot.close()
 
 
 def compute_matrix_gmpes(config, mtxs_type):
@@ -575,9 +596,10 @@ def compute_matrix_gmpes(config, mtxs_type):
             else:
                 wt = None
 
-            medians, meds_wt = [], []
+            medians = []
             for l, m in enumerate(mag_list): # Iterate though mag_list
             
+                # Perform mgmpe check
                 gmm = mgmpe_check(gmpe)
 
                 # Get depth param
@@ -602,6 +624,7 @@ def compute_matrix_gmpes(config, mtxs_type):
                                                          dip_g,
                                                          config.rake,
                                                          config.trt,
+                                                         config.rup,
                                                          config.vs30,
                                                          config.z1pt0,
                                                          config.z2pt5,
@@ -619,6 +642,11 @@ def compute_matrix_gmpes(config, mtxs_type):
                 std = [std[0][0][idx]]
                 tau = [tau[0][0][idx]]
                 phi = [phi[0][0][idx]]
+
+                # If plotting percentiles check GMM has sigma model
+                if mtxs_type in ["16th_perc", "18th_perc"] and np.all(std[0]==0):
+                    raise ValueError(f"Cannot perform Euclidean analysis for a "
+                                     f"GMPE which lacks a sigma model (GMPE {g+1})")
 
                 # Store required percentile of ground-shaking
                 if mtxs_type == 'median':
@@ -704,14 +732,14 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     else:
         nrows = int(np.ceil(len(imt_list) / 2)) 
     
-    fig2, axs2 = pyplot.subplots(nrows, ncols)
-    fig2.set_size_inches(12, 6*nrows)
+    fig, axs = pyplot.subplots(nrows, ncols)
+    fig.set_size_inches(12, 6*nrows)
 
     for n, i in enumerate(imt_list):                
         if len(imt_list) < 3:
-            ax = axs2[n]
+            ax = axs[n]
         else:
-            ax = axs2[np.unravel_index(n, (nrows, ncols))]           
+            ax = axs[np.unravel_index(n, (nrows, ncols))]           
         ax.imshow(matrix_dist[n], cmap='gray') 
         
         # Add title
@@ -730,12 +758,13 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 
     # Remove final plot if not required
     if len(imt_list) >= 3 and len(imt_list)/2 != int(len(imt_list)/2):
-        ax = axs2[np.unravel_index(n+1, (nrows, ncols))]
+        ax = axs[np.unravel_index(n+1, (nrows, ncols))]
         ax.set_visible(False)
 
     # Save
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.tight_layout()        
+    pyplot.close()
     
     return matrix_dist
 
@@ -828,9 +857,9 @@ def plot_sammons_util(imt_list,
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
     # Tidy and save
-    pyplot.legend(loc="center left", bbox_to_anchor=(1.25, 0.50), fontsize='16')
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.tight_layout()
+    pyplot.close()
     
     return coo_per_imt
 
@@ -921,6 +950,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     # Save
     pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.4)
     pyplot.tight_layout() 
+    pyplot.close()
     
     return matrix_z
 
@@ -982,6 +1012,7 @@ def get_colors(custom_color_flag, custom_color_list):
     else:
         return colors
 
+
 ### Trellis utils
 def trellis_data(gmpe,
                  r_vals,
@@ -998,7 +1029,8 @@ def trellis_data(gmpe,
     """
     # If plotting not only the logic trees, plot each GMPE
     if 'plot_lt_only' not in str(gmpe): 
-        pyplot.plot(r_vals, np.exp(mean), color = col, linewidth=2, linestyle='-', label=gmpe)
+        pyplot.plot(
+            r_vals, np.exp(mean), color = col, linewidth=2, linestyle='-', label=clean_gmm_label(gmpe))
         
         # Plot mean with plus/minus sigma too if required
         if nstd > 0:
@@ -1008,7 +1040,7 @@ def trellis_data(gmpe,
     # Now compute the weighted logic trees
     for idx_gmc, gmc in enumerate(lt_vals_gmc):
         if lt_weights[idx_gmc] is None:
-            pass
+            break
         elif gmpe in lt_weights[idx_gmc]:
             if lt_weights[idx_gmc][gmpe] is not None:
                 if nstd > 0:
@@ -1020,7 +1052,7 @@ def trellis_data(gmpe,
                 else:
                     lt_vals_gmc[idx_gmc][
                         gmpe] = {'median': np.exp(mean)*lt_weights[idx_gmc][gmpe]}
-                        
+                    
     return lt_vals_gmc
 
 
@@ -1039,12 +1071,11 @@ def trel_logic_trees(idx_gmc,
                      cfg_key,
                      unit):
     """
-    Manages plotting of the logic tree attenuation curves and adds them to the
-    store of exported attenuation curves 
+    Manages plotting of the logic tree attenuation curves and
+    adds them to the store of exported attenuation curves 
     """
     # If logic tree provided plot and add to attenuation curve store
     if gmc is not None:
-        lt_key = 'gmc logic tree %s' % str(idx_gmc+1)
         
         median, plus_sig, minus_sig = lt_trel(r_vals,
                                               nstd,
@@ -1059,6 +1090,8 @@ def trel_logic_trees(idx_gmc,
                                               gmc_p[1],
                                               gmc_p[2])
         
+        lt_key = 'gmc logic tree %s' % str(idx_gmc+1)
+
         store_gmm_curves[cfg_key][
             'gmc logic tree curves per imt-mag'][lt_key] = {}
         store_gmm_curves[cfg_key][
@@ -1088,7 +1121,7 @@ def lt_trel(r_vals,
             plus_sig_gmc,
             minus_sig_gmc):
     """
-    If required plot spectra from the GMPE logic tree(s)
+    If required plot trellis from the GMPE logic tree(s)
     """
     # Get colors and strings for checks
     col = ['r', 'b', 'g', 'k'][idx_gmc]
@@ -1099,10 +1132,9 @@ def lt_trel(r_vals,
 
     # Get logic tree 
     lt_df_gmc = pd.DataFrame(lt_vals_gmc, index=['median', 'add_sigma', 'min_sigma'])
-
+    
     lt_median = lt_df_gmc.loc['median'].sum()
     median_gmc[mk] = lt_median
-
     pyplot.plot(r_vals,
                 lt_median,
                 linewidth=2,
@@ -1128,7 +1160,6 @@ def lt_trel(r_vals,
                         zorder=100)
 
     return median_gmc, plus_sig_gmc, minus_sig_gmc
-
 
 
 def update_trellis_plots(m, i, n, l, dep, minR, maxR, r_vals, imt_list, dist_type):
@@ -1392,9 +1423,9 @@ def plot_obs_spectra(ax1,
     if obs_spectra is not None and g == len(gmpe_list)-1:
         
         # Get rup params
-        mw = np.asarray(mag_list, float)
-        rrup = np.asarray(dist_list, float)
-        depth = np.asarray(dep_list, float)
+        mw = np.asarray(mag_list, float)[0]
+        rrup = np.asarray(dist_list, float)[0]
+        depth = np.asarray(dep_list, float)[0]
         
         # Get label for spectra plot
         obs_string = (f"{eq_id}\nrecorded at {st_id} (Rrup = {rrup} km, "
@@ -1409,12 +1440,13 @@ def plot_obs_spectra(ax1,
                  label=obs_string)    
         
         
-def update_spectra_plots(ax1, m, i, n, l, dist_list, dist_type):
+def update_spectra_plots(ax1, m, depth_g, i, n, l, dist_list, dist_type):
     """
     Add titles and axis labels to spectra plots
     """
     # Title
-    ax1.set_title(f'Mw={m}, {dist_type}={i}km', fontsize=16, y=1.0, pad=-16)
+    ax1.set_title(f'Mw={m}, depth={depth_g}km, {dist_type}={i}km',
+                  fontsize=12, y=1.0, pad=-16)
 
      # Bottom row only
     if n == len(dist_list)-1:
@@ -1432,11 +1464,13 @@ def save_spectra_plot(f1, obs_spectra, output_dir, eq_id, st_id):
     if obs_spectra is None:
         out = os.path.join(output_dir, 'ResponseSpectra.png')
         f1.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
+        pyplot.close()
     else:
         rec_str = str(eq_id) + '_recorded_at_' + str(st_id)
         rec_str = rec_str.replace(' ', '_').replace('-', '_').replace(':', '_')
         out = os.path.join(output_dir, 'ResponseSpectra_' + rec_str + '.png')
         f1.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
+        pyplot.close()
 
 
 def raise_spectra_dist_error(dist, dist_type, r_vals):

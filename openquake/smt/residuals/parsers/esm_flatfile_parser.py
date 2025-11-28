@@ -34,16 +34,16 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  Earthquake,
                                                  Magnitude,
                                                  Rupture,
-                                                 FocalMechanism, 
+                                                 FocalMechanism,
+                                                 MECHANISM_TYPE,
+                                                 DIP_TYPE, 
                                                  GCMTNodalPlanes,
                                                  Component,
                                                  RecordSite,
                                                  RecordDistance)
-from openquake.smt.residuals.parsers import valid
 from openquake.smt.residuals.parsers.base_database_parser import SMDatabaseReader
-from openquake.smt.utils import MECHANISM_TYPE, DIP_TYPE
+from openquake.smt import utils
 
-from .esm_dictionaries import *
 
 HDEFS = ["Geometric", "rotD00", "rotD50", "rotD100"]
 
@@ -121,41 +121,638 @@ HEADERS = [
            "W_lp"]
 
 
-COUNTRY_CODES = {"AL": "Albania", "AM": "Armenia", "AT": "Austria",
-                 "AZ": "Azerbaijan", "BA": "Bosnia and Herzegowina",
-                 "BG": "Bulgaria", "CH": "Switzerland", "CY": "Cyprus",
-                 "CZ": "Czech Republic", "DE": "Germany",  "DZ": "Algeria",
-                 "ES": "Spain", "FR": "France", "GE": "Georgia",
-                 "GR": "Greece", "HR": "Croatia", "HU": "Hungary",
-                 "IL": "Israel", "IR": "Iran", "IS": "Iceland", "IT": "Italy",
-                 "JO": "Jordan",  "LI": "Lichtenstein", "MA": "Morocco",
-                 "MC": "Monaco", "MD": "Moldova", "ME": "Montenegro",
-                 "MK": "Macedonia", "MT": "Malta", "PL": "Poland",
-                 "PT": "Portugal", "RO": "Romania", "RS": "Serbia",
-                 "RU": "Russia", "SI": "Slovenia", "SM": "San Marino",
-                 "SY": "Syria", "TM": "Turkmenistan", "TR": "Turkey",
-                 "UA": "Ukraine", "UZ": "Uzbekistan", "XK": "Kosovo"}
+M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
+
+
+HOUSING = {
+"ACQ": "Acqueducti",
+"BOX": "Box",
+"BRI": "Bridge",
+"BUB": "Building basement",
+"BUI": "Building",
+"CAB": "ENEL Box",
+"CAV": "Cave",
+"DAM": "Dam",
+"EMB": "Embankment",
+"ERR": "Unknown",
+"FIB": "Fiberglass box",
+"GAL": "Tunnel",
+"HIS": "Historical building",
+"HOU": "Small mansory building",
+"POW": "Power plant",
+"QUA": "Quarry",
+"VAU": "Vault",
+"WEL": "Borehole"
+}
+
+
+INSTALLATION = {
+"BF": "Building floor",
+"P": "Pillar",
+"PS": "Building basement",
+"T": "Directly on the ground",
+}
+
+
+INSTRUMENT_TYPE = {
+"A": "Analog",
+"D": "Digital",
+"U": "Unknown"}
+
+PROXIMITY = {
+"0": "Free-field",
+"1": "Close to structure",
+"2": "No information",
+"3": "Inside structure",
+"4": "Structure related free-field"
+}
+
+PROCESSED_CODE = {
+"0": "unprocessed",
+"1": "manually processed",
+"2": "automatically processed",
+"9": "bad quality record",
+}
+
+NETWORK = {
+"3H": "None",
+"4A": "Emersito Seismic Network for Site Effect Studies in L'Aquila town (Central Italy)",
+"4C": "NERA-JRA1-A",
+"4F": "North Texas Earthquake Study: Venus (Johnson County), TX",
+"9A": "East Texas Earthquake Monitoring",
+"A": "Generic Asian Strong Motion Network",
+"AC": "Seismological Network of Albania",
+"AG": "Arkansas Seismic Network",
+"AK": "Alaska Regional Network",
+"AO": "Arkansas Seismic Observatory",
+"AV": "Alaska Volcano Observatory",
+"AY": "Haitian Seismic Network",
+"AZ": "ANZA Regional Network",
+"BA": "University of Basilicata (UNIBAS) Network",
+"BC": "Red Sismica del Noroeste de Mexico",
+"BK": "Berkeley Digital Seismograph Network",
+"BO": "Bosai-Ken Network",
+"BS": "National Seismic Network of Bulgaria",
+"BW": "BayernNetz",
+"C": "Chilean National Seismic Network",
+"C1": "Red Sismologica Nacional",
+"CE": "California Strong Motion Instrumentation Program",
+"CH": "CH Seismic Network",
+"CI": "Southern California Seismic Network",
+"CL": "Corinth Riff Laboratory",
+"CN": "Canadian National Seismic Network",
+"CO": "South Carolina Seismic Network",
+"CQ": "Cyprus Broadband Seismological Network",
+"CR": "Croatian Seismograph Network",
+"CU": "Caribbean Network",
+"CX": "Plate Boundary Observatory Network Northern Chile",
+"CY": "Cayman Islands",
+"CZ": "Czech Regional Seismic Network",
+"DR": "Dominican Republic Seismic Network",
+"E": "ENEA network",
+"EC": "Ecuador Seismic Network",
+"EP": "UTEP Seismic Network",
+"ES": "Spanish Digital Seismic Network",
+"ET": "CERI Southern Appalachian Seismic Network",
+"EU": "Generic European Strong Motion Network",
+"FA": "UCLA Seismic Network",
+"FC": "Generic African Strong Motion Network",
+"FR": "French Broadband Seismological Network, ReNaSS Strasbourg",
+"G": "GEOSCOPE, Institut de Physique du Globe de Paris (IPGP)",
+"GE": "GEOFON",
+"GI": "Red Sismologica Nacional- Guatemala",
+"GM": "None",
+"GR": "German Regional Seismic Network",
+"GS": "US Geological Survey Networks",
+"GU": "Regional Seismic Network of North-western Italy (RSNI)",
+"HI": "ITSAK Strong Motion Network",
+"HK": "Hong Kong Seismograph Network",
+"HL": "National Observatory of Athens Digital Broadband Network",
+"HP": "University of Patras, Seismological Laboratory",
+"HT": "Aristotle University of Thessaloniki Seismological Network",
+"HV": "Hawaiian Volcano Observatory Network",
+"I1": "Iranian Strong Motion Network",
+"IC": "New China Digital Seismograph Network",
+"IP": "Instituto Superior Tecnico Broadband Seismic Network",
+"IS": "Israel National Seismic Network",
+"IT": "Italian Strong Motion Network",
+"IU": "Global Seismograph Network (GSN - IRIS/USGS)",
+"IV": "Italian National Seismic Network",
+"IW": "Intermountain West Seismic Network",
+"IX": "ISNet - Irpinia Seismic Network",
+"JM": "Jamaica Seismograph Network",
+"KO": "Bogazici University Kandilli Observatory And Earthquake Research Institute",
+"KY": "Kentucky Seismic and Strong Motion Network",
+"LC": "LSC (Laboratorio Subterraneo Canfranc)",
+"LE": "Landeserdbebendienst Baden-Wuerttemberg",
+"M": "Generic American Strong Motion Network",
+"MA": "Macedonia Seismological Network (SORM)",
+"MB": "Montana Regional Seismic Network",
+"MD": "Moldova Digital Seismic Network",
+"ME": "Montenegrian Seismic Network",
+"MG": "Seismic Network of the NorthEastern Mexico",
+"MM": "Myanmar National Seismic Network",
+"MN": "Mediterranean Very Broadband Seismographic Network (MNDC)",
+"MS": "Singapore Seismological Network",
+"MT": "Observatory for Multidisciplinary monitoring of Instability of Versant",
+"MX": "Mexican National Seismic Network",
+"N4": "Central and Eastern US Network",
+"NC": "USGS Northern California Regional Network",
+"ND": "New CaleDonia Broadband Seismic Network",
+"NE": "New England Seismic Network",
+"NI": "North-East Italy Broadband Network",
+"NM": "Cooperative New Madrid Seismic Network",
+"NN": "Western Great Basin/Eastern Sierra Nevada",
+"NP": "United States National Strong-Motion Network",
+"NQ": "NetQuakes",
+"NS": "Norwegian National Seismic Network",
+"NU": "Nicaraguan Seismic Network",
+"NV": "Neptune Canada",
+"NZ": "New Zealand National Seismograph Network",
+"OE": "Austrian Seismic Network",
+"OO": "Ocean Observatories Initiative",
+"OV": "Observatorio Vulcanologico y Sismologico de Costa Rica",
+"OX": "North-East Italy Seismic Network",
+"PA": "ChiriNet",
+"PB": "Plate Boundary Observatory Borehole Seismic Network",
+"PG": "Central Coast Seismic Network, PG&E",
+"PR": "Puerto Rico Seismic Network (PRSN) & Puerto Rico Strong Motion Program (PRSMP)",
+"PT": "Pacific Tsunami Warning Seismic System",
+"PY": "Pinyon Flats Observatory (PFO) Array",
+"RA": "Reseau Accelerometrique Permanent (French Accelerometrique Network)",
+"RF": "Friuli Venezia Giulia Accelerommetric Network (RAF)",
+"RM": "Regional Integrated Multi-hazard Early Warning System (RIMES)",
+"RO": "Romanian Seismic Network",
+"S": "Seismographs in Schools Network",
+"SB": "UC Santa Barbara Engineering Seismology Network",
+"SI": "Province Sudtirol",
+"SL": "Slovenia Seismic Network",
+"SN": "Southern Great Basin Network",
+"SS": "Single Station: generic network code for any network in US",
+"ST": "Trentino Seismic Network",
+"SV": "Servicio Nacional de Estudios Territoriales (SNET), El Salvador",
+"TA": "USArray Transportable Array",
+"TH": "Thuringer Seismisches Netz (TSN)",
+"TK": "National Strong-Motion Network of Turkey (TR-NSMN)",
+"TS": "TERRAscope (Southern California Seismic Network)",
+"TV": "INGV Experiments Network",
+"TX": "Texas Seismological Network",
+"US": "United States National Seismic Network",
+"UW": "Pacific Northwest Regional Seismic Network",
+"UZ": "Uzbekistan Digital Seismic Network",
+"WI": "West Indies IPGP Network",
+"WM": "Western Mediterranean Seismic Network",
+"WR": "California Division of Water Resources",
+"XO": "Seismic Network for Site Effect Studies in Amatrice Area (Central Italy)",
+"XS": "Maule Earthquake (Chile) Aftershock Experiment",
+"XY": "Chile RAMP",
+"Y3": "Mogul Aftershocks",
+"YB": "Haiti Earthquake Aftershock Experiment",
+"YD": "Calabria-Appennine-Tyrrhenian/Subduction-Collision-Accretion Network",
+"YI": "Retreating-Trench, Extension, and Accretion LTectonics: A Multidisciplinary Study of the Northern Apennines",
+"YN": "San Jacinto Fault Zone",
+"YP": "Argostoli earthquake aftershock experiment",
+"YX": "2008 SoSAF Ramp Test",
+"Z3": "AlpArray",
+"ZN": "project SISMOVALP temporary network",
+"ZW": "North Texas Earthquake Study: Azle and Irving/Dallas",
+}
+
+
+def parse_event_data(metadata, rupture_parser):
+    """
+    Parses the event metadata
+    """
+    # ID and Name (name not in file so use ID again)
+    eq_id = metadata["event_id"]
+    eq_name = metadata["event_id"]
+
+    # Date and time
+    eq_datetime = pd.to_datetime(metadata["event_time"])
+    
+    # Latitude, longitude and depth
+    eq_lat = utils.latitude(metadata["ev_latitude"])
+    eq_lon = utils.longitude(metadata["ev_longitude"])
+    eq_depth = utils.positive_float(metadata["ev_depth_km"], "ev_depth_km")
+    if not eq_depth:
+        raise ValueError('Depth missing an events in admitted flatfile')
+    
+    eqk = Earthquake(eq_id,
+                     eq_name,
+                     eq_datetime,
+                     eq_lon,
+                     eq_lat,
+                     eq_depth,
+                     None) # Mag not defined yet
+
+    # Get preferred magnitude and list
+    pref_mag, magnitude_list = parse_magnitudes(metadata) # Consistent over ESM formats
+    eqk.magnitude = pref_mag
+    eqk.magnitude_list = magnitude_list
+    eqk.rupture, eqk.mechanism = rupture_parser(metadata,
+                                                eq_id,
+                                                eq_name,
+                                                pref_mag,
+                                                eq_depth)
+    return eqk
+
+
+def parse_magnitudes(metadata):
+    """
+    An order of precedence is required and the preferred magnitude
+    will be the highest found
+    """
+    pref_mag = None
+    mag_list = []
+    for key in M_PRECEDENCE:
+        mvalue = metadata[key].strip()
+        if mvalue:
+            if key == "EMEC_Mw":
+                mtype = "Mw"
+                msource = "EMEC({:s}|{:s})".format(
+                    metadata["EMEC_Mw_type"],
+                    metadata["EMEC_Mw_ref"])
+            else:
+                mtype = key
+                msource = metadata[key + "_ref"].strip()
+            mag = Magnitude(float(mvalue),
+                            mtype,
+                            source=msource)
+            if not pref_mag:
+                pref_mag = copy.deepcopy(mag)
+            mag_list.append(mag)
+    
+    return pref_mag, mag_list
+
+
+def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
+    """
+    If rupture data is available - parse it, otherwise return None
+    """
+    # Get SoF
+    sof = metadata["fm_type_code"]
+    
+    if not metadata["event_source_id"].strip():
+
+        # No rupture model available. Mechanism is limited to a style
+        # of faulting only
+        rupture = Rupture(eq_id, eq_name, mag, None, None, depth)
+        mechanism = FocalMechanism(
+            eq_id, eq_name, GCMTNodalPlanes(), None,
+            mechanism_type=sof)
+
+        # See if focal mechanism exists
+        fm_set = []
+        for key in ["strike_1", "dip_1", "rake_1"]:
+            if key in metadata:
+                fm_param = utils.vfloat(metadata[key], key)
+                if fm_param is not None:
+                    fm_set.append(fm_param)
+
+        if len(fm_set) == 3:
+            # Have one valid focal mechanism
+            mechanism.nodal_planes.nodal_plane_1 = {"strike": fm_set[0],
+                                                    "dip": fm_set[1],
+                                                    "rake": fm_set[2]}
+        fm_set = []
+        for key in ["strike_2", "dip_2", "rake_2"]:
+            if key in metadata:
+                fm_param = utils.vfloat(metadata[key], key)
+                if fm_param is not None:
+                    fm_set.append(fm_param)
+        
+        if len(fm_set) == 3:
+            # Have one valid focal mechanism
+            mechanism.nodal_planes.nodal_plane_2 = {"strike": fm_set[0],
+                                                    "dip": fm_set[1],
+                                                    "rake": fm_set[2]}
+
+        if not mechanism.nodal_planes.nodal_plane_1 and not\
+            mechanism.nodal_planes.nodal_plane_2:
+            # Absolutely no information - base on style-of-faulting
+            mechanism.nodal_planes.nodal_plane_1 = {
+                "strike": 0.0,  # Basically unused
+                "dip": DIP_TYPE[sof],
+                "rake": MECHANISM_TYPE[sof]
+                }
+        return rupture, mechanism
+
+    # If there is an "event_source_id" in ESM18 flatfile, there is also
+    # full finite rupture info. In this case build a detailed finite rup
+    strike = utils.strike(metadata["es_strike"])
+    dip = utils.dip(metadata["es_dip"])
+    rake = utils.rake(metadata["es_rake"])
+    ztor = utils.positive_float(metadata["es_z_top"], "es_z_top")
+    length = utils.positive_float(metadata["es_length"], "es_length")
+    width = utils.positive_float(metadata["es_width"], "es_width")
+    rupture = Rupture(eq_id, eq_name, mag, length, width, ztor)
+
+    # Get mechanism type and focal mechanism
+    mechanism = FocalMechanism(                  # No nodal planes, so initially is
+        eq_id, eq_name, GCMTNodalPlanes(), None, # set as an eigenvalue moment tensor 
+        mechanism_type=metadata["fm_type_code"])
+    if strike is None:
+        strike = 0.0
+    if dip is None:
+        dip = utils.DIP_TYPE[sof]
+    if rake is None:
+        rake = utils.MECHANISM_TYPE[sof]
+        
+    # if strike is not None and dip is not None and rake is not None:
+    mechanism.nodal_planes.nodal_plane_1 = {"strike": strike,
+                                            "dip": dip,
+                                            "rake": rake}
+    return rupture, mechanism
+
+
+def parse_distances(metadata, hypo_depth):
+        """
+        Parse the distances
+        """
+        repi = utils.positive_float(metadata["epi_dist"], "epi_dist")
+        razim = utils.positive_float(metadata["epi_az"], "epi_az")
+        rjb = utils.positive_float(metadata["JB_dist"], "JB_dist")
+        rrup = utils.positive_float(metadata["rup_dist"], "rup_dist")
+        r_x = utils.vfloat(metadata["Rx_dist"], "Rx_dist")
+        ry0 = utils.positive_float(metadata["Ry0_dist"], "Ry0_dist")
+        rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
+
+        if not isinstance(rjb, float):
+            # In the first case Rjb == Repi
+            rjb = copy.copy(repi)
+
+        if not isinstance(rrup, float):
+            # In the first case Rrup == Rhypo
+            rrup = copy.copy(rhypo)
+
+        if not isinstance(r_x, float):
+            # In the first case Rx == -Repi (collapse to point and turn off
+            # any hanging wall effect)
+            r_x = copy.copy(-repi)
+
+        if not isinstance(ry0, float):
+            # In the first case Ry0 == Repi
+            ry0 = copy.copy(repi)
+        
+        distances = RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
+        distances.azimuth = razim
+        
+        return distances
+
+
+def parse_site_data(metadata):
+    """
+    Parses the site information
+    """
+    network_code = metadata["network_code"].strip()
+    station_code = metadata["station_code"].strip()
+    site_id = "{:s}_{:s}".format(network_code, station_code)
+    site_lon = utils.longitude(metadata["st_longitude"])
+    site_lat = utils.latitude(metadata["st_latitude"])
+    elevation = utils.vfloat(metadata["st_elevation"], "st_elevation")
+
+    vs30 = utils.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
+    vs30_topo = utils.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
+    if pd.isnull(vs30) and pd.isnull(vs30_topo):
+        # Need at least one vs30 value for residuals (not really, given
+        # some GMMs lack site terms, but good way to prevent confusing
+        # nans in the expected values which appear when computing stats)
+        raise ValueError(
+            f"A vs30 value (either measured or WA-based) must be provided for {site_id}")
+    elif pd.notnull(vs30): # Measured
+        vs30_measured = True
+    else:
+        assert pd.notnull(vs30_topo) # Topographic slope-based
+        vs30 = vs30_topo
+        vs30_measured = False
+    
+    site = RecordSite(site_id,
+                      station_code,
+                      station_code,
+                      site_lon,
+                      site_lat,
+                      elevation,
+                      vs30,
+                      vs30_measured,
+                      network_code=network_code)
+    
+    site.slope = utils.vfloat(metadata["slope_deg"], "slope_deg")
+    site.sensor_depth = utils.vfloat(
+        metadata["sensor_depth_m"], "sensor_depth_m")
+    
+    site.instrument_type = metadata["instrument_code"].strip()
+    housing_code = metadata["housing_code"].strip()
+    if housing_code and (housing_code in HOUSING):
+        site.building_structure = HOUSING[housing_code]
+
+    return site
+    
+
+def parse_ground_motion(location, row, record, headers):
+    """
+    Parse the ground-motion data
+    """
+    # Get the data
+    scalars, spectra = retreive_ground_motion_from_row(row, headers)
+    
+    # Build the hdf5 files
+    filename = os.path.join(location, "{:s}.hdf5".format(record.id))
+    fle = h5py.File(filename, "w-")
+    ims_grp = fle.create_group("IMS")
+    for comp, key in [("X", "U"), ("Y", "V"), ("V", "W")]:
+        comp_grp = ims_grp.create_group(comp)
+    
+        # Add on the scalars
+        scalar_grp = comp_grp.create_group("Scalar")
+        for imt in scalars[key]:
+            if imt in ["ia", "housner"]:
+                # In the smt convention it is "Ia" and "Housner"
+                ikey = imt[0].upper() + imt[1:]
+            else:
+                # Everything else to upper case (PGA, PGV, PGD, T90, CAV)
+                ikey = imt.upper()
+            dset = scalar_grp.create_dataset(ikey, (1,), dtype="f")
+            dset[:] = scalars[key][imt]
+    
+        # Add on the spectra
+        spectra_grp = comp_grp.create_group("Spectra")
+        response = spectra_grp.create_group("Response")
+        accel = response.create_group("Acceleration")
+        accel.attrs["Units"] = "cm/s/s"
+    
+        # Add on the periods
+        pers = spectra[key]["Periods"]
+        periods = response.create_dataset("Periods", pers.shape, dtype="f")
+        periods[:] = pers
+        periods.attrs["Low Period"] = np.min(pers)
+        periods.attrs["High Period"] = np.max(pers)
+        periods.attrs["Number Periods"] = len(pers)
+
+        # Add on the values
+        values = spectra[key]["Values"]
+        spectra_dset = accel.create_dataset("damping_05", values.shape, dtype="f")
+        spectra_dset[:] = np.copy(values)
+        spectra_dset.attrs["Damping"] = 5.0
+
+    # Add on the horizontal values
+    hcomp = ims_grp.create_group("H")
+    
+    # Scalars
+    hscalar = hcomp.create_group("Scalar")
+    for htype in HDEFS:
+        hcomp_scalars = hscalar.create_group(htype)
+        for imt in scalars[htype]:
+            if imt in ["ia"]:
+                # In the smt convention it is "Ia" for Arias Intensity
+                key = imt[0].upper() + imt[1:]
+            else:
+                # Everything else to upper case (PGA, PGV, PGD, CAV)
+                key = imt.upper()          
+            dset = hcomp_scalars.create_dataset(key, (1,), dtype="f")
+            dset[:] = scalars[htype][imt]
+    
+    # Spectra
+    hspectra = hcomp.create_group("Spectra")
+    hresponse = hspectra.create_group("Response")
+    pers = spectra["Geometric"]["Periods"]
+    hpers_dset = hresponse.create_dataset("Periods", pers.shape, dtype="f")
+    hpers_dset[:] = np.copy(pers)
+    hpers_dset.attrs["Low Period"] = np.min(pers)
+    hpers_dset.attrs["High Period"] = np.max(pers)
+    hpers_dset.attrs["Number Periods"] = len(pers)
+    haccel = hresponse.create_group("Acceleration")
+    for htype in ["Geometric", "rotD00", "rotD50", "rotD100"]:
+        if htype != "Geometric":
+            key = htype[0].upper() + htype[1:]
+        else:
+            key = copy.deepcopy(htype)
+        htype_grp = haccel.create_group(htype)
+        hvals = spectra[htype]["Values"]
+        hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape, dtype="f")
+        hspec_dset[:] = hvals
+        hspec_dset.attrs["Units"] = "cm/s/s"
+    record.datafile = filename
+    
+    return record
+
+
+def retreive_ground_motion_from_row(row, header_list):
+    """
+    Get the ground motion data from a row (record) in the database
+    """
+    imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
+    spectra = []
+    scalar_imts = ["pga", "pgv", "pgd", "T90", "housner", "ia", "CAV"]
+    scalars = []
+    for imt in imts:
+        periods = []
+        values = []
+        key = "{:s}_T".format(imt)
+        scalar_dict = {}
+        for header in header_list:
+            # Deal with the scalar case
+            for scalar in scalar_imts:
+                if header == "{:s}_{:s}".format(imt, scalar):
+                    # The value is a scalar
+                    value = row[header].strip()
+                    if value:
+                        scalar_dict[scalar] = np.fabs(float(value))
+                    else:
+                        scalar_dict[scalar] = None
+        scalars.append((imt, scalar_dict))
+        for header in header_list:
+            if key in header:
+                if header == "{:s}90".format(key):
+                    # Not a spectral period but T90
+                    continue
+                iky = header.replace(key, "").replace("_", ".")
+                periods.append(float(iky))
+                value = row[header].strip()
+                if value:
+                    values.append(np.fabs(float(value)))
+                else:
+                    values.append(np.nan)
+        periods = np.array(periods)
+        values = np.array(values)
+        idx = np.argsort(periods)
+        spectra.append((imt, {"Periods": periods[idx], "Values": values[idx]}))
+    
+    # Add on the as-recorded geometric mean
+    spectra = dict(spectra)
+    scalars = dict(scalars)
+    spectra["Geometric"] = {
+        "Values": np.sqrt(spectra["U"]["Values"] * spectra["V"]["Values"]),
+        "Periods": np.copy(spectra["U"]["Periods"])
+        }
+    scalars["Geometric"] = dict([(key, None) for key in scalars["U"]])
+    for key in scalars["U"]:
+        if scalars["U"][key] and scalars["V"][key]:
+            scalars["Geometric"][key] = np.sqrt(
+                scalars["U"][key] * scalars["V"][key])
+    
+    return scalars, spectra
+
+
+def parse_waveform_data(metadata, wfid):
+    """
+    Parse the waveform data
+    """
+    if 'late_triggered_flag' in metadata:
+        late_trigger = utils.vint(
+            metadata["late_triggered_flag_01"], "late_triggered_flag_01")
+    else:
+        late_trigger = None
+
+    # U channel - usually east
+    if "U_azimuth_deg" in metadata:
+        xazimuth = utils.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
+    else:
+        xazimuth = None
+    xfilter = {"Low-Cut": utils.vfloat(metadata["U_hp"], "U_hp"),
+               "High-Cut": utils.vfloat(metadata["U_lp"], "U_lp")}
+    xcomp = Component(
+        wfid, xazimuth, waveform_filter=xfilter, units="cm/s/s")
+    xcomp.late_trigger = late_trigger
+
+    # V channel - usually North
+    if "V_azimuth_deg" in metadata:
+        vazimuth = utils.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
+    else:
+        vazimuth = None
+    vfilter = {"Low-Cut": utils.vfloat(metadata["V_hp"], "V_hp"),
+               "High-Cut": utils.vfloat(metadata["V_lp"], "V_lp")}
+    vcomp = Component(
+        wfid, vazimuth, waveform_filter=vfilter, units="cm/s/s")
+    vcomp.late_trigger = late_trigger
+    if "W_channel_code" in metadata:
+        zfilter = {"Low-Cut": utils.vfloat(metadata["W_hp"], "W_hp"),
+                   "High-Cut": utils.vfloat(metadata["W_lp"], "W_lp")}
+        zcomp = Component(
+            wfid, None, waveform_filter=zfilter, units="cm/s/s")
+        zcomp.late_trigger = late_trigger
+    else:
+        zcomp = None
+    
+    return xcomp, vcomp, zcomp
 
 
 class ESMFlatfileParser(SMDatabaseReader):
     """
     Parses the data from the flatfile to a set of metadata objects
     """
-    M_PRECEDENCE = ["EMEC_Mw", "Mw", "Ms", "ML"]
-    BUILD_FINITE_DISTANCES = False
 
     def parse(self, location="./"):
         """
         Parse the flatfile
         """
-        assert os.path.isfile(self.filename)
-        headers = getline(self.filename, 1).rstrip("\n").split(",")
+        assert os.path.isfile(self.input_files)
+        headers = getline(self.input_files, 1).rstrip("\n").split(",")
         for hdr in HEADERS:
             if hdr not in headers:
                 raise ValueError("Required header %s is missing in file"  % hdr)
         # Read in csv
-        with open(self.filename, "r", encoding="utf-8") as f:
-            reader = csv.DictReader(open(self.filename, "r"), delimiter=",")
+        with open(self.input_files, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(open(self.input_files, "r"), delimiter=",")
             self.database = GroundMotionDatabase(self.id, self.name)
             counter = 0
             for row in reader:
@@ -163,9 +760,8 @@ class ESMFlatfileParser(SMDatabaseReader):
                 record = self._parse_record(row)
                 if record:
                     # Parse the strong motion
-                    record = self._parse_ground_motion(
-                        os.path.join(
-                            location, "records"), row, record, headers)
+                    record = parse_ground_motion(
+                        os.path.join(location, "records"), row, record, headers)
                     self.database.records.append(record)
                 else:
                     print("Record with sequence number %s is null/invalid"
@@ -210,439 +806,26 @@ class ESMFlatfileParser(SMDatabaseReader):
         Parse a record
         """
         # Waveform ID not provided in file so concatenate Event and Station ID
-        wfid = "_".join([metadata["event_id"], metadata["network_code"],
-                         metadata["station_code"], metadata["location_code"]])
-        wfid = wfid.replace("-", "_")
+        wfid = "_".join([metadata["event_id"],
+                         metadata["network_code"],
+                         metadata["station_code"],
+                         metadata["location_code"]]
+                         )
+        wfid = wfid.replace("-", "_").replace("__", "_").strip()
         
         # Parse the event metadata
-        event = self._parse_event_data(metadata)
+        event = parse_event_data(metadata, parse_rupture_mechanism) # Differs here to ESM URL
         
         # Parse the distance metadata
-        distances = self._parse_distances(metadata, event.depth)
+        distances = parse_distances(metadata, event.depth)
         
         # Parse the station metadata
-        site = self._parse_site_data(metadata)
+        site = parse_site_data(metadata)
         
         # Parse waveform data
-        xcomp, ycomp, vertical = self._parse_waveform_data(metadata, wfid)
+        xcomp, ycomp, vertical = parse_waveform_data(metadata, wfid)
         return GroundMotionRecord(wfid,
-                                  [None, None, None],
+                                  [None, None, None], # No time-history files
                                   event, distances, site,
                                   xcomp, ycomp,
                                   vertical=vertical)
-
-    def _parse_event_data(self, metadata):
-        """
-        Parses the event metadata
-        """
-        # ID and Name (name not in file so use ID again)
-        eq_id = metadata["event_id"]
-        eq_name = metadata["event_id"]
-        
-        # Country
-        cntry_code = metadata["ev_nation_code"].strip()
-        if cntry_code and cntry_code in COUNTRY_CODES:
-            eq_country = COUNTRY_CODES[cntry_code]
-        else:
-            eq_country = None
-        
-        # Date and time
-        eq_datetime = pd.to_datetime(metadata["event_time"])
-        
-        # Latitude, longitude and depth
-        eq_lat = valid.latitude(metadata["ev_latitude"])
-        eq_lon = valid.longitude(metadata["ev_longitude"])
-        eq_depth = valid.positive_float(metadata["ev_depth_km"], "ev_depth_km")
-        if not eq_depth:
-            raise ValueError('Depth missing an events in admitted flatfile')
-        
-        eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
-                         None, # Magnitude not defined yet
-                         eq_country=eq_country)
-        
-        # Get preferred magnitude and list
-        pref_mag, magnitude_list = self._parse_magnitudes(metadata)
-        eqk.magnitude = pref_mag
-        eqk.magnitude_list = magnitude_list
-        eqk.rupture, eqk.mechanism = self._parse_rupture_mechanism(metadata,
-                                                                   eq_id,
-                                                                   eq_name,
-                                                                   pref_mag,
-                                                                   eq_depth)
-        return eqk
-
-    def _parse_magnitudes(self, metadata):
-        """
-        So, here things get tricky. Up to four magnitudes are defined in the
-        flatfile (EMEC Mw, MW, Ms and ML). An order of precedence is required
-        and the preferred magnitude will be the highest found
-        """
-        pref_mag = None
-        mag_list = []
-        for key in self.M_PRECEDENCE:
-            mvalue = metadata[key].strip()
-            if mvalue:
-                if key == "EMEC_Mw":
-                    mtype = "Mw"
-                    msource = "EMEC({:s}|{:s})".format(
-                        metadata["EMEC_Mw_type"],
-                        metadata["EMEC_Mw_ref"])
-                else:
-                    mtype = key
-                    msource = metadata[key + "_ref"].strip()
-                mag = Magnitude(float(mvalue),
-                                mtype,
-                                source=msource)
-                if not pref_mag:
-                    pref_mag = copy.deepcopy(mag)
-                mag_list.append(mag)
-        
-        return pref_mag, mag_list
-
-    def _parse_rupture_mechanism(self, metadata, eq_id, eq_name, mag, depth):
-        """
-        If rupture data is available - parse it, otherwise return None
-        """
-        # Get SoF
-        sof = metadata["fm_type_code"]
-        
-        if not metadata["event_source_id"].strip():
-    
-            # No rupture model available. Mechanism is limited to a style
-            # of faulting only
-            rupture = Rupture(eq_id, eq_name, mag, None, None, depth)
-            mechanism = FocalMechanism(
-                eq_id, eq_name, GCMTNodalPlanes(), None,
-                mechanism_type=sof)
-    
-            # See if focal mechanism exists
-            fm_set = []
-            for key in ["strike_1", "dip_1", "rake_1"]:
-                if key in metadata:
-                    fm_param = valid.vfloat(metadata[key], key)
-                    if fm_param is not None:
-                        fm_set.append(fm_param)
-    
-            if len(fm_set) == 3:
-                # Have one valid focal mechanism
-                mechanism.nodal_planes.nodal_plane_1 = {"strike": fm_set[0],
-                                                        "dip": fm_set[1],
-                                                        "rake": fm_set[2]}
-            fm_set = []
-            for key in ["strike_2", "dip_2", "rake_2"]:
-                if key in metadata:
-                    fm_param = valid.vfloat(metadata[key], key)
-                    if fm_param is not None:
-                        fm_set.append(fm_param)
-            
-            if len(fm_set) == 3:
-                # Have one valid focal mechanism
-                mechanism.nodal_planes.nodal_plane_2 = {"strike": fm_set[0],
-                                                        "dip": fm_set[1],
-                                                        "rake": fm_set[2]}
-
-            if not mechanism.nodal_planes.nodal_plane_1 and not\
-                mechanism.nodal_planes.nodal_plane_2:
-                # Absolutely no information - base on style-of-faulting
-                mechanism.nodal_planes.nodal_plane_1 = {
-                    "strike": 0.0,  # Basically unused
-                    "dip": DIP_TYPE[sof],
-                    "rake": MECHANISM_TYPE[sof]
-                    }
-            return rupture, mechanism
-
-        # If there is an "event_source_id" in ESM18 flatfile, there is also
-        # full finite rupture info. In this case build a detailed finite rup
-        strike = valid.strike(metadata["es_strike"])
-        dip = valid.dip(metadata["es_dip"])
-        rake = valid.rake(metadata["es_rake"])
-        ztor = valid.positive_float(metadata["es_z_top"], "es_z_top")
-        length = valid.positive_float(metadata["es_length"], "es_length")
-        width = valid.positive_float(metadata["es_width"], "es_width")
-        rupture = Rupture(eq_id, eq_name, mag, length, width, ztor)
-
-        # Get mechanism type and focal mechanism
-        mechanism = FocalMechanism(                  # No nodal planes, so initially is
-            eq_id, eq_name, GCMTNodalPlanes(), None, # set as an eigenvalue moment tensor 
-            mechanism_type=metadata["fm_type_code"])
-        if strike is None:
-            strike = 0.0
-        if dip is None:
-            dip = DIP_TYPE[sof]
-        if rake is None:
-            rake = MECHANISM_TYPE[sof]
-            
-        # if strike is not None and dip is not None and rake is not None:
-        mechanism.nodal_planes.nodal_plane_1 = {"strike": strike,
-                                                "dip": dip,
-                                                "rake": rake}
-        return rupture, mechanism
-
-    def _parse_distances(self, metadata, hypo_depth):
-        """
-        Parse the distances
-        """
-        repi = valid.positive_float(metadata["epi_dist"], "epi_dist")
-        razim = valid.positive_float(metadata["epi_az"], "epi_az")
-        rjb = valid.positive_float(metadata["JB_dist"], "JB_dist")
-        rrup = valid.positive_float(metadata["rup_dist"], "rup_dist")
-        r_x = valid.vfloat(metadata["Rx_dist"], "Rx_dist")
-        ry0 = valid.positive_float(metadata["Ry0_dist"], "Ry0_dist")
-        rhypo = sqrt(repi ** 2. + hypo_depth ** 2.)
-
-        if not isinstance(rjb, float):
-            # In the first case Rjb == Repi
-            rjb = copy.copy(repi)
-
-        if not isinstance(rrup, float):
-            # In the first case Rrup == Rhypo
-            rrup = copy.copy(rhypo)
-
-        if not isinstance(r_x, float):
-            # In the first case Rx == -Repi (collapse to point and turn off
-            # any hanging wall effect)
-            r_x = copy.copy(-repi)
-
-        if not isinstance(ry0, float):
-            # In the first case Ry0 == Repi
-            ry0 = copy.copy(repi)
-        
-        distances = RecordDistance(repi, rhypo, rjb, rrup, r_x, ry0)
-        distances.azimuth = razim
-        
-        return distances
-
-    def _parse_site_data(self, metadata):
-        """
-        Parses the site information
-        """
-        network_code = metadata["network_code"].strip()
-        station_code = metadata["station_code"].strip()
-        site_id = "{:s}-{:s}".format(network_code, station_code)
-        site_lon = valid.longitude(metadata["st_longitude"])
-        site_lat = valid.latitude(metadata["st_latitude"])
-        elevation = valid.vfloat(metadata["st_elevation"], "st_elevation")
-
-        vs30 = valid.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
-        vs30_topo = valid.vfloat(metadata["vs30_m_sec_WA"], "vs30_m_sec_WA")
-        if pd.isnull(vs30) and pd.isnull(vs30_topo):
-            # Need at least one vs30 value for residuals (not really, given
-            # some GMMs lack site terms, but good way to prevent confusing
-            # nans in the expected values which appear when computing stats)
-            raise ValueError(
-                f"A vs30 value (either measured or WA-based) must be provided for {site_id}")
-        elif pd.notnull(vs30): # Measured
-            vs30_measured = True
-        else:
-            assert pd.notnull(vs30_topo) # Topographic slope-based
-            vs30 = vs30_topo
-            vs30_measured = False
-        st_nation_code = metadata["st_nation_code"].strip()
-        if st_nation_code:
-            st_country = COUNTRY_CODES[st_nation_code]
-        else:
-            st_country = None
-        
-        site = RecordSite(site_id,
-                          station_code,
-                          station_code,
-                          site_lon,
-                          site_lat,
-                          elevation,
-                          vs30,
-                          vs30_measured,
-                          network_code=network_code,
-                          country=st_country)
-        
-        site.slope = valid.vfloat(metadata["slope_deg"], "slope_deg")
-        site.sensor_depth = valid.vfloat(
-            metadata["sensor_depth_m"], "sensor_depth_m")
-        
-        site.instrument_type = metadata["instrument_code"].strip()
-        housing_code = metadata["housing_code"].strip()
-        if housing_code and (housing_code in HOUSING):
-            site.building_structure = HOUSING[housing_code]
-
-        return site
-
-    def _parse_waveform_data(self, metadata, wfid):
-        """
-        Parse the waveform data
-        """
-        late_trigger = valid.vint(
-            metadata["late_triggered_flag_01"], "late_triggered_flag_01")
-        
-        # U channel - usually east
-        xorientation = metadata["U_channel_code"].strip()
-        xazimuth = valid.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
-        xfilter = {"Low-Cut": valid.vfloat(metadata["U_hp"], "U_hp"),
-                   "High-Cut": valid.vfloat(metadata["U_lp"], "U_lp")}
-        xcomp = Component(wfid, xazimuth, waveform_filter=xfilter,
-                          units="cm/s/s")
-        xcomp.late_trigger = late_trigger
-
-        # V channel - usually North
-        vorientation = metadata["V_channel_code"].strip()
-        vazimuth = valid.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
-        vfilter = {"Low-Cut": valid.vfloat(metadata["V_hp"], "V_hp"),
-                   "High-Cut": valid.vfloat(metadata["V_lp"], "V_lp")}
-        vcomp = Component(wfid, vazimuth, waveform_filter=vfilter,
-                          units="cm/s/s")
-        vcomp.late_trigger = late_trigger
-        zorientation = metadata["W_channel_code"].strip()
-        if zorientation:
-            zfilter = {"Low-Cut": valid.vfloat(metadata["W_hp"], "W_hp"),
-                       "High-Cut": valid.vfloat(metadata["W_lp"], "W_lp")}
-            zcomp = Component(wfid, None, waveform_filter=zfilter,
-                              units="cm/s/s")
-            zcomp.late_trigger = late_trigger
-        else:
-            zcomp = None
-        
-        return xcomp, vcomp, zcomp
-
-    def _parse_ground_motion(self, location, row, record, headers):
-        """
-        Parse the ground-motion data
-        """
-        # Get the data
-        scalars, spectra = self._retreive_ground_motion_from_row(row, headers)
-        
-        # Build the hdf5 files
-        filename = os.path.join(location, "{:s}.hdf5".format(record.id))
-        fle = h5py.File(filename, "w-")
-        ims_grp = fle.create_group("IMS")
-        for comp, key in [("X", "U"), ("Y", "V"), ("V", "W")]:
-            comp_grp = ims_grp.create_group(comp)
-        
-            # Add on the scalars
-            scalar_grp = comp_grp.create_group("Scalar")
-            for imt in scalars[key]:
-                if imt in ["ia", "housner"]:
-                    # In the smt convention it is "Ia" and "Housner"
-                    ikey = imt[0].upper() + imt[1:]
-                else:
-                    # Everything else to upper case (PGA, PGV, PGD, T90, CAV)
-                    ikey = imt.upper()
-                dset = scalar_grp.create_dataset(ikey, (1,), dtype="f")
-                dset[:] = scalars[key][imt]
-        
-            # Add on the spectra
-            spectra_grp = comp_grp.create_group("Spectra")
-            response = spectra_grp.create_group("Response")
-            accel = response.create_group("Acceleration")
-            accel.attrs["Units"] = "cm/s/s"
-        
-            # Add on the periods
-            pers = spectra[key]["Periods"]
-            periods = response.create_dataset("Periods", pers.shape, dtype="f")
-            periods[:] = pers
-            periods.attrs["Low Period"] = np.min(pers)
-            periods.attrs["High Period"] = np.max(pers)
-            periods.attrs["Number Periods"] = len(pers)
-
-            # Add on the values
-            values = spectra[key]["Values"]
-            spectra_dset = accel.create_dataset("damping_05", values.shape, dtype="f")
-            spectra_dset[:] = np.copy(values)
-            spectra_dset.attrs["Damping"] = 5.0
-
-        # Add on the horizontal values
-        hcomp = ims_grp.create_group("H")
-        
-        # Scalars
-        hscalar = hcomp.create_group("Scalar")
-        for htype in HDEFS:
-            hcomp_scalars = hscalar.create_group(htype)
-            for imt in scalars[htype]:
-                if imt in ["ia"]:
-                    # In the smt convention it is "Ia" for Arias Intensity
-                    key = imt[0].upper() + imt[1:]
-                else:
-                    # Everything else to upper case (PGA, PGV, PGD, CAV)
-                    key = imt.upper()          
-                dset = hcomp_scalars.create_dataset(key, (1,), dtype="f")
-                dset[:] = scalars[htype][imt]
-        
-        # Spectra
-        hspectra = hcomp.create_group("Spectra")
-        hresponse = hspectra.create_group("Response")
-        pers = spectra["Geometric"]["Periods"]
-        hpers_dset = hresponse.create_dataset("Periods", pers.shape, dtype="f")
-        hpers_dset[:] = np.copy(pers)
-        hpers_dset.attrs["Low Period"] = np.min(pers)
-        hpers_dset.attrs["High Period"] = np.max(pers)
-        hpers_dset.attrs["Number Periods"] = len(pers)
-        haccel = hresponse.create_group("Acceleration")
-        for htype in ["Geometric", "rotD00", "rotD50", "rotD100"]:
-            if np.all(np.isnan(spectra[htype]["Values"])):
-                # Component not determined
-                continue
-            if htype != "Geometric":
-                key = htype[0].upper() + htype[1:]
-            else:
-                key = copy.deepcopy(htype)
-            htype_grp = haccel.create_group(htype)
-            hvals = spectra[htype]["Values"]
-            hspec_dset = htype_grp.create_dataset("damping_05", hvals.shape, dtype="f")
-            hspec_dset[:] = hvals
-            hspec_dset.attrs["Units"] = "cm/s/s"
-        record.datafile = filename
-        
-        return record
-
-    def _retreive_ground_motion_from_row(self, row, header_list):
-        """
-        Get the ground motion data from a row (record) in the database
-        """
-        imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
-        spectra = []
-        scalar_imts = ["pga", "pgv", "pgd", "T90", "housner", "ia", "CAV"]
-        scalars = []
-        for imt in imts:
-            periods = []
-            values = []
-            key = "{:s}_T".format(imt)
-            scalar_dict = {}
-            for header in header_list:
-                # Deal with the scalar case
-                for scalar in scalar_imts:
-                    if header == "{:s}_{:s}".format(imt, scalar):
-                        # The value is a scalar
-                        value = row[header].strip()
-                        if value:
-                            scalar_dict[scalar] = np.fabs(float(value))
-                        else:
-                            scalar_dict[scalar] = None
-            scalars.append((imt, scalar_dict))
-            for header in header_list:
-                if key in header:
-                    if header == "{:s}90".format(key):
-                        # Not a spectral period but T90
-                        continue
-                    iky = header.replace(key, "").replace("_", ".")
-                    periods.append(float(iky))
-                    value = row[header].strip()
-                    if value:
-                        values.append(np.fabs(float(value)))
-                    else:
-                        values.append(np.nan)
-            periods = np.array(periods)
-            values = np.array(values)
-            idx = np.argsort(periods)
-            spectra.append((imt, {"Periods": periods[idx], "Values": values[idx]}))
-        
-        # Add on the as-recorded geometric mean
-        spectra = dict(spectra)
-        scalars = dict(scalars)
-        spectra["Geometric"] = {
-            "Values": np.sqrt(spectra["U"]["Values"] * spectra["V"]["Values"]),
-            "Periods": np.copy(spectra["U"]["Periods"])
-            }
-        scalars["Geometric"] = dict([(key, None) for key in scalars["U"]])
-        for key in scalars["U"]:
-            if scalars["U"][key] and scalars["V"][key]:
-                scalars["Geometric"][key] = np.sqrt(
-                    scalars["U"][key] * scalars["V"][key])
-        
-        return scalars, spectra
