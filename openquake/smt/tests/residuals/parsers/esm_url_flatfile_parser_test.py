@@ -32,7 +32,7 @@ from openquake.smt.residuals.parsers.esm_url_flatfile_parser import \
     ESMFlatfileParserURL
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the record IDs for the target data set
 TARGET_IDS = [
@@ -54,18 +54,19 @@ class ESMFlatfileParserURLTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ESM_flatfile_directory = os.path.join(
-            BASE_DATA_PATH, "ESM_URL_Greece_test.csv")
+            BASE, "esm_url_test_file.csv")
         cls.db_file = os.path.join(
-            BASE_DATA_PATH, "ESM_URL_conversion_test_metadata")    
-        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
+            BASE, "ESM_URL_conversion_test_metadata")    
+        cls.gmpe_list = ["BooreEtAl2014", "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]   
 
     def test_esm_url_flatfile_parser(self):
         """
         Tests the parsing of the reformatted ESM flatfile
         """
-        parser = ESMFlatfileParserURL.autobuild("000", "ESM_conversion_test",
-                                             self.db_file, self.ESM_flatfile_directory)
+        # Parse
+        parser = ESMFlatfileParserURL.autobuild(
+            "000", "ESM_conversion_test", self.db_file, self.ESM_flatfile_directory)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
 

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Constructs the HDF5 database
+Constructs a HDF5 database.
 """
 import os
 import re
@@ -25,12 +25,28 @@ import numpy as np
 import h5py
 import pickle
 
-import openquake.smt.sm_utils as utils
-import openquake.smt.intensity_measures as utils_imts
-from openquake.smt.parsers.base_database_parser import get_float
+import openquake.smt.utils as utils
+import openquake.smt.utils_intensity_measures as utils_imts
 
 
 SCALAR_LIST = ["PGA", "PGV", "PGD", "CAV", "CAV5", "Ia", "D5-95", "Housner"]
+
+SPECTRA_LIST = ["Acceleration", "Velocity", "Displacement", "PSA", "PSV"]
+
+TS_ATTRIBUTE_LIST = [
+    "Year",
+    "Month",
+    "Day",
+    "Hour",
+    "Minute",
+    "Second",
+    "Station Code",
+    "Station Name",
+    "Orientation",
+    "Processing",
+    "Low Frequency Cutoff",
+    "High Frequency Cutoff"
+    ]
 
 
 def _get_fieldnames_from_csv(reader):
@@ -53,39 +69,23 @@ class SMDatabaseBuilder(object):
     """
     Constructor of an hdf5-pkl pseudo-database.
 
-    :param dbtype:
+    :param db_type:
         Metadata reader as instance of class :class: SMDatabaseReader
     :param str location:
         Path to location of metadata (either directory name or file name)
-    :param database:
-        Strong motion database as instance of :class: SMDatabase
-    :param time_series_parser:
-        Parser for time series files, as instance of :class: SMTimeSeriesReader
-    :param spectra_parser:
-        Parser for spectra files, as instance of :class: SMSpectraReader
-    :param str metafile:
-        Path to output metadata file
     """
-    TS_ATTRIBUTE_LIST = ["Year", "Month", "Day", "Hour", "Minute", "Second",
-                         "Station Code", "Station Name", "Orientation",
-                         "Processing", "Low Frequency Cutoff",
-                         "High Frequency Cutoff"]
 
-    IMS_SCALAR_LIST = SCALAR_LIST
-
-    SPECTRA_LIST = ["Acceleration", "Velocity", "Displacement", "PSA", "PSV"]
-
-    def __init__(self, dbtype, db_location):
+    def __init__(self, db_type, db_location):
         """
         Instantiation will create target database directory
 
-        :param dbtype:
+        :param db_type:
             Instance of :class:
                 openquake.smt.parsers.base_database_parser.SMDatabaseReader
         :param str db_location:
             Path to database to be written
         """
-        self.dbtype = dbtype
+        self.db_type = db_type
         self.dbreader = None
         if os.path.exists(db_location):
             raise IOError("Target database directory %s already exists!"
@@ -113,7 +113,7 @@ class SMDatabaseBuilder(object):
         :param str record_directory:
             Path to directory containing records (if different from metadata)
         """
-        self.dbreader = self.dbtype(db_id,
+        self.dbreader = self.db_type(db_id,
                                     db_name,
                                     metadata_location,
                                     record_location)
@@ -199,10 +199,7 @@ class SMDatabaseBuilder(object):
         :param str damping"
             Percent damping
         """
-
-        # Flatfile name should be stored in database parser
         # Get header
-
         reader = csv.DictReader(open(self.dbreader.filename, "r"))
         # Fieldnames
         scalar_fieldnames, spectra_fieldnames, periods =\
@@ -258,13 +255,13 @@ class SMDatabaseBuilder(object):
             if imt == "PGA":
                 # Convert acceleration from reported units to cm/s/s
                 dset.attrs["Units"] = "cm/s/s"
-                dset[:] = utils.convert_accel_units(get_float(row[f_attr]),
-                                                    input_units)
+                dset[:] = utils.convert_accel_units(
+                    utils.get_float(row[f_attr]), input_units)
             else:
                 # For other values take direct from spreadsheet
                 # Units should be given in parenthesis from fieldname
                 dset.attrs["Units"] = input_units
-                dset[:] = get_float(row[f_attr])
+                dset[:] = utils.get_float(row[f_attr])
 
         spectra_grp = h_grp.create_group("Spectra")
         rsp_grp = spectra_grp.create_group("Response")
@@ -277,13 +274,13 @@ class SMDatabaseBuilder(object):
         per_dset.attrs["Number Periods"] = len(periods)
         per_dset[:] = periods
         # Get response spectra
-        spectra = np.array([get_float(row[f_attr])
+        spectra = np.array([utils.get_float(row[f_attr])
                             for f_attr in spectra_fields])
         acc_grp = rsp_grp.create_group("Acceleration")
         comp_grp = acc_grp.create_group(component)
         spectra_dset = comp_grp.create_dataset("damping_{:s}".format(damping),
                                                (len(spectra),),
-                                               dtype="f")
+                                                dtype="f")
         spectra_dset.attrs["Units"] = "cm/s/s"
         spectra_dset[:] = utils.convert_accel_units(spectra, units)
         fle.close()
@@ -306,7 +303,7 @@ class SMDatabaseBuilder(object):
                 continue
             grp_comp = grp.create_group(key)
             grp_orig = grp_comp.create_group("Original Record")
-            for attribute in self.TS_ATTRIBUTE_LIST:
+            for attribute in TS_ATTRIBUTE_LIST:
                 if attribute in sm_data[key]["Original"]:
                     grp_orig.attrs[attribute] =\
                         sm_data[key]["Original"][attribute]
@@ -387,7 +384,7 @@ class SMDatabaseBuilder(object):
                 continue
             grp_comp0 = grp0.create_group(key)
             grp_scalar = grp_comp0.create_group("Scalar")
-            for scalar_im in self.IMS_SCALAR_LIST:
+            for scalar_im in SCALAR_LIST:
                 if scalar_im in data[key]["Scalar"]:
                     #print scalar_im, data[key]["Scalar"][scalar_im]
                     dset_scalar = grp_scalar.create_dataset(scalar_im, (1,),
