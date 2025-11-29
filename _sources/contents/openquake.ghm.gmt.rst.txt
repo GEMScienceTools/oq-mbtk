@@ -1,0 +1,29 @@
+openquake.ghm.gmt package
+=========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.ghm.gmt.cpt
+
+Submodules
+----------
+
+openquake.ghm.gmt.cat\_json module
+----------------------------------
+
+.. automodule:: openquake.ghm.gmt.cat_json
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.ghm.gmt
+   :members:
+   :show-inheritance:
+   :undoc-members:

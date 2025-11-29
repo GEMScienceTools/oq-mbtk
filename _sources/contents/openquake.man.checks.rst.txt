@@ -1,0 +1,45 @@
+openquake.man.checks package
+============================
+
+Submodules
+----------
+
+openquake.man.checks.catalogue module
+-------------------------------------
+
+.. automodule:: openquake.man.checks.catalogue
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.checks.mfd module
+-------------------------------
+
+.. automodule:: openquake.man.checks.mfd
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.checks.plotting module
+------------------------------------
+
+.. automodule:: openquake.man.checks.plotting
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.checks.rates module
+---------------------------------
+
+.. automodule:: openquake.man.checks.rates
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.man.checks
+   :members:
+   :show-inheritance:
+   :undoc-members:

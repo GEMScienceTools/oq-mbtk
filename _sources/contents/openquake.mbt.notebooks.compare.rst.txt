@@ -1,0 +1,29 @@
+openquake.mbt.notebooks.compare package
+=======================================
+
+Submodules
+----------
+
+openquake.mbt.notebooks.compare.tools module
+--------------------------------------------
+
+.. automodule:: openquake.mbt.notebooks.compare.tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.mbt.notebooks.compare.tools\_test module
+--------------------------------------------------
+
+.. automodule:: openquake.mbt.notebooks.compare.tools_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.notebooks.compare
+   :members:
+   :show-inheritance:
+   :undoc-members:
