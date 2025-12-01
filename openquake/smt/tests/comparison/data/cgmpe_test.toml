@@ -57,9 +57,11 @@ base_gmpe = "KuehnEtAl2020SInter"
 cond_gmpe = "MacedoEtAl2019SSlab"
 base_gmpe = "KuehnEtAl2020SSlab"
 
-[ratios_baseline_gmm.ConditionalGMPE] # ConditionalGMPE as a Baseline GMM
-cond_gmpe = "[MacedoEtAl2019SInter]\nkind='pga-based'"
-base_gmpe = "[ParkerEtAl2020SInter]\nbasin='out'"
+[ratios_baseline_gmm.ConditionalGMPE] # ConditionalGMPE as a Baseline GMM (not used here so ok to specify
+                                      # despite not supporting IA (for the baseline we are just checking 
+                                      # instantiation works)
+cond_gmpe = "AbrahamsonBhasin2020PGA"
+base_gmpe = "[ChiouYoungs2014]\nregion='JPN'\nuse_hw='false'"
 
 [custom_colors]
 custom_colors_flag = false # Set to true for custom colours
