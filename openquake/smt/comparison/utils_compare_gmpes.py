@@ -581,7 +581,7 @@ def compute_matrix_gmpes(config, mtxs_type):
     mag_list = config.mags_eucl
     dep_list = config.depths_eucl
     imt_list = config.imt_list
-    
+
     mtxs_median = {}
     for i, imt in enumerate(imt_list): # Iterate through imt_list
 
