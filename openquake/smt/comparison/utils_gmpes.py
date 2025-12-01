@@ -535,15 +535,14 @@ def imt_check(gmm, gmpe, imt):
     """
     This function raises an error if an IMT is not supported (this failsafe
     is for preventing conditional GMPE issues - if they do not support an IMT,
-    the current implementations return the prediction of the underlying GMM -
-    this is necessary because the current implementations are a mess).
+    the current implementations of these GMMs return the predictions of the
+    underlying GMMs, which is horrible).
     """
     if "[ConditionalGMPE]" in gmm:
         imts = [imtx.__name__ for imtx in list(
             gmpe.DEFINED_FOR_INTENSITY_MEASURE_TYPES)]
-        if imt not in imts and not isinstance(gmpe, mgmpe.ModifiableGMPE):
-            raise ValueError(
-                f"{gmpe.__class__.__name__} does not provide predictions {imt}")
+        if imt not in imts:
+            raise ValueError(f"{gmpe.__class__.__name__} does not support {imt}")
 
 
 def get_imtl_unit(i):
