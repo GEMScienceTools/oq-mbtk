@@ -330,6 +330,16 @@ def construct_gsim_dict(inputs):
     else:
         kwargs['gmpe'] = {inputs: {}} # GMM without any additional arguments
 
+    # Force float for appropriate params
+    for gmpe in kwargs["gmpe"]:
+        params = kwargs["gmpe"][gmpe]
+        for param in params:
+            value = kwargs["gmpe"][gmpe][param]
+            try:
+                kwargs["gmpe"][gmpe][param] = float(value)
+            except:
+                pass
+
     return kwargs
 
 
@@ -479,7 +489,7 @@ def build_cgmpe(gmpe):
     base_gmm = next(iter(kw_base['gmpe']))
     base_par = kw_base["gmpe"][base_gmm]
 
-    # Build the TOML string representing fully the conditional GMM and the underlying GMM
+    # Build the TOML string representing the conditional GMM and the underlying GMM
     base_arg = ", ".join(f"{k} = {repr(v)}" for k, v in base_par.items())
     cond_arg = [f"{k} = {repr(v)}" for k, v in cond_par.items()]
     gmpe_str = f"[{cond_gmm}]\n" + "\n".join(cond_arg) + f"\ngmpe.{base_gmm} = {{{base_arg}}}"
@@ -541,7 +551,7 @@ def imt_check(gmm, gmpe, imt):
     if "[ConditionalGMPE]" in gmm:
         imts = [imtx.__name__ for imtx in list(
             gmpe.DEFINED_FOR_INTENSITY_MEASURE_TYPES)]
-        if imt not in imts:
+        if str(imt) not in imts:
             raise ValueError(f"{gmpe.__class__.__name__} does not support {imt}")
 
 
