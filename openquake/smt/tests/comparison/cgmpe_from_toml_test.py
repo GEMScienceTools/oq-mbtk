@@ -82,7 +82,7 @@ class ConditionGroundMotionsTestCase(unittest.TestCase):
 
         # Now check matrix dfs
         pd.testing.assert_frame_equal(obs_df, exp_df, atol=1e-06)
-
+        
     @classmethod
     def tearDownClass(self):
         """
