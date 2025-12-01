@@ -273,7 +273,7 @@ def att_curves(gmpe,
         distances = ctxs.rhypo
     else:
         raise ValueError('No valid distance type specified.')
-
+    
     return mean, std, distances, tau, phi
 
 
@@ -311,7 +311,7 @@ def get_rup_pars(strike, dip, rake, aratio, trt):
             aratio_s = 5
         else:
             aratio_s = 2 # Crustal 
-            
+
     return strike_s, dip_s, aratio_s
 
 
@@ -529,6 +529,21 @@ def gmpe_check(gmpe):
         gmm = valid.gsim(gmpe_clean)
 
     return gmm
+
+
+def imt_check(gmm, gmpe, imt):
+    """
+    This function raises an error if an IMT is not supported (this failsafe
+    is for preventing conditional GMPE issues - if they do not support an IMT,
+    the current implementations return the prediction of the underlying GMM -
+    this is necessary because the current implementations are a mess).
+    """
+    if "[ConditionalGMPE]" in gmm:
+        imts = [imtx.__name__ for imtx in list(
+            gmpe.DEFINED_FOR_INTENSITY_MEASURE_TYPES)]
+        if imt not in imts and not isinstance(gmpe, mgmpe.ModifiableGMPE):
+            raise ValueError(
+                f"{gmpe.__class__.__name__} does not provide predictions {imt}")
 
 
 def get_imtl_unit(i):
