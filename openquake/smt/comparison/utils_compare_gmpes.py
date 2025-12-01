@@ -33,7 +33,7 @@ from openquake.smt.utils import clean_gmm_label
 from openquake.smt.comparison.utils_gmpes import (get_imtl_unit, 
                                                   att_curves,
                                                   get_rup_pars,
-                                                  mgmpe_check)
+                                                  gmpe_check)
 
 
 def plot_trellis_util(config, output_directory):
@@ -95,7 +95,7 @@ def plot_trellis_util(config, output_directory):
                 col = colors[g]                
                 
                 # Perform mgmpe check
-                gmm = mgmpe_check(gmpe)
+                gmm = gmpe_check(gmpe)
 
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(gmm,
@@ -298,7 +298,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 col = colors[g]
 
                 # Perform mgmpe check
-                gmm = mgmpe_check(gmpe)
+                gmm = gmpe_check(gmpe)
                 
                 for k, imt in enumerate(imt_list): 
                         
@@ -452,7 +452,7 @@ def plot_ratios_util(config, output_directory):
                                                      config.trt) 
 
             # Load the baseline GMM and compute baseline
-            baseline = mgmpe_check(config.baseline_gmm)
+            baseline = gmpe_check(config.baseline_gmm)
 
             # Get baseline GMM attenuation curves
             results = att_curves(baseline,
@@ -484,7 +484,7 @@ def plot_ratios_util(config, output_directory):
                 
                 # Perform mgmpe check
                 col = colors[g]         
-                gmm = mgmpe_check(gmpe)
+                gmm = gmpe_check(gmpe)
                 
                 # Get attenuation curves for the GMM
                 results = att_curves(gmm,
@@ -600,7 +600,7 @@ def compute_matrix_gmpes(config, mtxs_type):
             for l, m in enumerate(mag_list): # Iterate though mag_list
             
                 # Perform mgmpe check
-                gmm = mgmpe_check(gmpe)
+                gmm = gmpe_check(gmpe)
 
                 # Get depth param
                 depth_g = dep_list[l] 
