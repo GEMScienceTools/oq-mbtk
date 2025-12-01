@@ -31,6 +31,7 @@
 
 import os
 import json
+import math
 import logging
 import traceback
 import numpy as np
@@ -68,6 +69,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+import time
 
 _n_procs = max(1, os.cpu_count() - 1)
 
@@ -665,9 +667,28 @@ def make_rupture_df(
     rupture_df : pd.DataFrame
         DataFrame containing information about each rupture.
     """
+    t = time.perf_counter
+
+    timing = {
+        "sf_rup_azimuths_setup": 0.0,
+        "mf_info": 0.0,
+        "loop_areas": 0.0,
+        "loop_rakes": 0.0,
+        "loop_azimuths": 0.0,
+        "loop_mean_rake": 0.0,
+        "loop_mag": 0.0,
+        "loop_fault_frac_areas": 0.0,
+        "displacement": 0.0,
+    }
+    counts = {
+        "loop": 0,
+    }
+
+    logging.info("\tgetting rups involved")
     rups_involved = [[int(r)] for r in single_fault_rup_df.index.values]
     rupture_df = single_fault_rup_df[['subfaults']]
 
+    logging.info("\tmaking initial dataframe")
     rupture_df = pd.DataFrame(
         index=rupture_df.index,
         data={
@@ -677,20 +698,26 @@ def make_rupture_df(
         },
     )
 
-    srup_lookup = {i: row.subfaults for i, row in rupture_df.iterrows()}
-    area_lookup = {i: row.area for i, row in subfault_df.iterrows()}
-    rake_lookup = {i: row.rake for i, row in subfault_df.iterrows()}
-    slip_az_lookup = {i: row.slip_azimuth for i, row in subfault_df.iterrows()}
-    fault_lookup = {i: row.faults[0] for i, row in rupture_df.iterrows()}
-    sub_fid_lookup = {i: row.fid for i, row in subfault_df.iterrows()}
+    logging.info("\tmaking lookup tables")
+    srup_lookup = rupture_df['subfaults'].to_dict()
+    fault_lookup = rupture_df['faults'].apply(lambda f: f[0]).to_dict()
+    area_lookup = subfault_df['area'].to_dict()
+    rake_lookup = subfault_df['rake'].to_dict()
+    slip_az_lookup = subfault_df['slip_azimuth'].to_dict()
+    sub_fid_lookup = subfault_df['fid'].to_dict()
 
+    logging.info("\tmaking azimuth lookup table")
+    t0 = t()
     sf_rup_azimuths = {}
     for row in single_fault_rup_df.itertuples():
         row_slip_azimuths = [slip_az_lookup[sf] for sf in row.subfaults]
         sf_rup_azimuths[row.Index] = round(
             angular_mean_degrees(row_slip_azimuths), 1
         )
+    timing["sf_rup_azimuths_setup"] += t() - t0
 
+    logging.info("\tmaking multifault rup fault info")
+    t0 = t()
     mf_subs = []
     mf_faults_unique = []
     for mf in multi_fault_rups:
@@ -702,7 +729,9 @@ def make_rupture_df(
 
         mf_subs.append(subs)
         mf_faults_unique.append(faults)
+    timing["mf_info"] += t() - t0
 
+    logging.info("\tmaking multifault rup dataframe")
     mf_df = pd.DataFrame(
         index=np.arange(len(mf_subs)) + len(rupture_df),
         data={
@@ -712,8 +741,10 @@ def make_rupture_df(
         },
     )
 
+    logging.info("\tconcatenating single and multi dfs")
     rupture_df = pd.concat([rupture_df, mf_df], axis=0)
 
+    logging.info("\tadding additional cols")
     frac_areas = []
     mean_rakes = []
     slip_azimuths = []
@@ -722,34 +753,60 @@ def make_rupture_df(
     fault_frac_areas = []
 
     for row in rupture_df.itertuples():
+        counts["loop"] += 1
+
+        # areas + frac_area
+        t0 = t()
         areas = np.array([area_lookup[sf] for sf in row.subfaults])
         sum_area = areas.sum()
         area_fracs = areas / sum_area
         frac_areas.append(np.round(area_fracs, 4).tolist())
+        all_areas.append(sum_area)
+        timing["loop_areas"] += t() - t0
 
+        # rakes
+        t0 = t()
         rakes = np.array([rake_lookup[sf] for sf in row.subfaults])
+        timing["loop_rakes"] += t() - t0
+
+        # slip azimuths (per rupture)
+        t0 = t()
         azimuths = [sf_rup_azimuths[sf] for sf in row.ruptures]
         slip_azimuths.append(azimuths)
+        timing["loop_azimuths"] += t() - t0
+
+        # mean rake (weighted angular mean)
+        t0 = t()
         mean_rake = weighted_angular_mean_degrees(rakes, area_fracs)
         mean_rakes.append(mean_rake)
+        timing["loop_mean_rake"] += t() - t0
 
-        mags.append(
-            area_to_mag(areas.sum(), mstype=area_mag_msr, rake=mean_rake)
-        )
-        all_areas.append(sum_area)
+        # magnitude from area
+        t0 = t()
+        mag = area_to_mag(sum_area, mstype=area_mag_msr, rake=mean_rake)
+        mags.append(mag)
+        timing["loop_mag"] += t() - t0
 
+        # fault fraction areas
+        t0 = t()
         if len(row.faults) == 1:
             f_areas = [1.0]
         else:
-            f_areas = []
-            f_area_d = AccumDict()
+            f_area_d = {}
+            total_area = 0.0
             for sf in row.subfaults:
-                f_area_d += {sub_fid_lookup[sf]: area_lookup[sf]}
-            f_area_d /= sum(f_area_d.values())
-            for fault in row.faults:
-                f_areas.append(round(f_area_d[fault], 1))
+                fid = sub_fid_lookup[sf]
+                a = area_lookup[sf]
+                total_area += a
+                f_area_d[fid] = f_area_d.get(fid, 0.0) + a
 
+            inv_total = 1.0 / total_area
+            f_areas = [
+                round(f_area_d.get(fault, 0.0) * inv_total, 1)
+                for fault in row.faults
+            ]
         fault_frac_areas.append(f_areas)
+        timing["loop_fault_frac_areas"] += t() - t0
 
     rupture_df['frac_area'] = frac_areas
     rupture_df['fault_frac_area'] = fault_frac_areas
@@ -757,12 +814,23 @@ def make_rupture_df(
     rupture_df['slip_azimuth'] = slip_azimuths
     rupture_df['mag'] = np.round(mags, mag_decimals)
     rupture_df['area'] = np.round(all_areas, 1)
+
+    t0 = t()
     rupture_df['displacement'] = np.round(
         get_rupture_displacement(
             rupture_df['mag'], rupture_df['area'], shear_modulus=SHEAR_MODULUS
         ),
         3,
     )
+    timing["displacement"] += t() - t0
+
+    logging.info("\tddonee")
+
+    # report timings
+    logging.info("\tTiming breakdown (make_rupture_df):")
+    logging.info("\t  number of ruptures in loop: %d", counts["loop"])
+    for key, val in timing.items():
+        logging.info("\t  %-24s %.6f s", key + ":", val)
 
     return rupture_df
 
