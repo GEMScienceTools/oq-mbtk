@@ -31,7 +31,7 @@ from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes
 
 
 # Base path
-base = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 
 def matrix_to_df(matrix):
@@ -52,9 +52,9 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
     """
     @classmethod 
     def setUpClass(self):
-        self.input_file = os.path.join(base, "mgmpe_test.toml")
-        self.output_directory = os.path.join(base, 'mgmpe_test')
-        self.exp_mgmpe = os.path.join(base, "exp_mgmpe.csv")
+        self.input_file = os.path.join(BASE, "mgmpe_test.toml")
+        self.output_directory = os.path.join(BASE, 'mgmpe_test')
+        self.exp_mgmpe = os.path.join(BASE, "exp_mgmpe.csv")
         if not os.path.exists(self.output_directory):
             os.makedirs(self.output_directory)
     

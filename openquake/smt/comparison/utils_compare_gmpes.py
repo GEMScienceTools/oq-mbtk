@@ -33,7 +33,8 @@ from openquake.smt.utils import clean_gmm_label
 from openquake.smt.comparison.utils_gmpes import (get_imtl_unit, 
                                                   att_curves,
                                                   get_rup_pars,
-                                                  gmpe_check)
+                                                  gmpe_check,
+                                                  imt_check)
 
 
 def plot_trellis_util(config, output_directory):
@@ -64,16 +65,16 @@ def plot_trellis_util(config, output_directory):
     store_gmm_curves[cfg_key]['gmc logic tree curves per imt-mag'] = {}
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
     max_pred, min_pred, axs = [], [], []
-    for n, i in enumerate(config.imt_list):
+    for i, imt in enumerate(config.imt_list):
         store_per_mag = {}
-        for l, m in enumerate(mag_list):
-            ax = fig.add_subplot(len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
+        for m, mag in enumerate(mag_list):
+            ax = fig.add_subplot(len(config.imt_list), len(mag_list), m+1+i*len(mag_list))
             axs.append(ax)
 
             # Get depth params
-            depth_g = dep_list[l]
+            depth_g = dep_list[m]
             if config.ztor != -999:
-                ztor_g = config.ztor[l]
+                ztor_g = config.ztor[m]
             else:
                 ztor_g = None
             
@@ -97,9 +98,12 @@ def plot_trellis_util(config, output_directory):
                 # Perform mgmpe check
                 gmm = gmpe_check(gmpe)
 
+                # Check IMT is supported
+                imt_check(gmpe, gmm, imt)
+
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(gmm,
-                                                         m,
+                                                         mag,
                                                          config.lon,
                                                          config.lat,
                                                          depth_g,
@@ -115,7 +119,7 @@ def plot_trellis_util(config, output_directory):
                                                          config.z2pt5,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
-                                                         i,
+                                                         imt,
                                                          config.dist_type,
                                                          config.up_or_down_dip,
                                                          config.volc_back_arc,
@@ -143,7 +147,7 @@ def plot_trellis_util(config, output_directory):
                                            lt_weights)
                 
                 # Get unit of imt for the store
-                unit = get_imtl_unit(i)
+                unit = get_imtl_unit(imt)
 
                 # Store per gmpe
                 store_per_gmpe[gmpe]['median (%s)' % unit] = np.exp(mean)
@@ -153,10 +157,10 @@ def plot_trellis_util(config, output_directory):
                     store_per_gmpe[gmpe]['median minus sigma (%s)' % unit] = min_sigma
                    
                 # Update plots
-                update_trellis_plots(m,
+                update_trellis_plots(mag,
+                                     imt,
                                      i,
-                                     n,
-                                     l,
+                                     m,
                                      depth_g,
                                      config.minR,
                                      config.maxR,
@@ -174,8 +178,8 @@ def plot_trellis_util(config, output_directory):
                                                     store_gmm_curves,
                                                     r_vals,
                                                     config.nstd,
-                                                    i,
-                                                    m,
+                                                    imt,
+                                                    mag,
                                                     depth_g,
                                                     dip_g,
                                                     config.rake,
@@ -183,7 +187,7 @@ def plot_trellis_util(config, output_directory):
                                                     unit)
                     
             # Create key of magnitude and other scenario info
-            mag_key = f'Mw = {m}, depth = {depth_g} km, dip = {dip_g} deg, rake = {config.rake} deg'
+            mag_key = f'Mw = {mag}, depth = {depth_g} km, dip = {dip_g} deg, rake = {config.rake} deg'
             
             # Add the distance values to each GMM (avoid's overwrite)
             if config.dist_type in ["repi", "rhypo"]:
@@ -197,7 +201,7 @@ def plot_trellis_util(config, output_directory):
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
         # Store per imt
-        store_per_imt[str(i)] = store_per_mag
+        store_per_imt[str(imt)] = store_per_mag
     
     # Store all the curves
     store_gmm_curves[cfg_key]['gmm att curves per imt-mag'] = store_per_imt
@@ -301,6 +305,9 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 gmm = gmpe_check(gmpe)
                 
                 for k, imt in enumerate(imt_list): 
+
+                    # Check IMT is supported
+                    imt_check(gmpe, gmm, imt)
                         
                     # Get mean and sigma
                     mu, std, r_vals, tau, phi = att_curves(gmm,
@@ -432,15 +439,15 @@ def plot_ratios_util(config, output_directory):
     # Compute ratio curves
     fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
     ratio_store, axs = [], []
-    for n, i in enumerate(config.imt_list):
-        for l, m in enumerate(mag_list):
-            ax = fig.add_subplot(len(config.imt_list), len(mag_list), l+1+n*len(mag_list))
+    for i, imt in enumerate(config.imt_list):
+        for m, mag in enumerate(mag_list):
+            ax = fig.add_subplot(len(config.imt_list), len(mag_list), m+1+i*len(mag_list))
             axs.append(ax)
             
             # Get depth params
-            depth_g = dep_list[l] 
+            depth_g = dep_list[m] 
             if config.ztor != -999:
-                ztor_g = config.ztor[l]
+                ztor_g = config.ztor[m]
             else:
                 ztor_g = None
             
@@ -454,9 +461,12 @@ def plot_ratios_util(config, output_directory):
             # Load the baseline GMM and compute baseline
             baseline = gmpe_check(config.baseline_gmm)
 
+            # Check IMT is supported for baseline GMM
+            imt_check(config.baseline_gmm, baseline, imt)
+
             # Get baseline GMM attenuation curves
             results = att_curves(baseline,
-                                 m,
+                                 mag,
                                  config.lon,
                                  config.lat,
                                  depth_g,
@@ -472,7 +482,7 @@ def plot_ratios_util(config, output_directory):
                                  config.z2pt5,
                                  config.maxR,
                                  1, # Step of 1 km for sites
-                                 i,
+                                 imt,
                                  config.dist_type,
                                  config.up_or_down_dip,
                                  config.volc_back_arc,
@@ -485,10 +495,13 @@ def plot_ratios_util(config, output_directory):
                 # Perform mgmpe check
                 col = colors[g]         
                 gmm = gmpe_check(gmpe)
+
+                # Check IMT is supported
+                imt_check(gmpe, gmm, imt)
                 
                 # Get attenuation curves for the GMM
                 results = att_curves(gmm,
-                                     m,
+                                     mag,
                                      config.lon,
                                      config.lat,
                                      depth_g,
@@ -504,7 +517,7 @@ def plot_ratios_util(config, output_directory):
                                      config.z2pt5,
                                      config.maxR,
                                      1, # Step of 1 km for sites
-                                     i,
+                                     imt,
                                      config.dist_type,
                                      config.up_or_down_dip,
                                      config.volc_back_arc,
@@ -528,10 +541,10 @@ def plot_ratios_util(config, output_directory):
                 
                 # Update plots
                 update_ratio_plots(config.dist_type,
-                                   m,
+                                   mag,
+                                   imt,
                                    i,
-                                   n,
-                                   l,
+                                   m,
                                    config.imt_list,
                                    r_vals,
                                    config.minR,
@@ -570,7 +583,7 @@ def compute_matrix_gmpes(config, mtxs_type):
     imt_list = config.imt_list
     
     mtxs_median = {}
-    for n, i in enumerate(imt_list): # Iterate through imt_list
+    for i, imt in enumerate(imt_list): # Iterate through imt_list
 
         # Dict for storing medians
         matrix_medians = np.zeros(
@@ -597,13 +610,16 @@ def compute_matrix_gmpes(config, mtxs_type):
                 wt = None
 
             medians = []
-            for l, m in enumerate(mag_list): # Iterate though mag_list
+            for m, mag in enumerate(mag_list): # Iterate though mag_list
             
                 # Perform mgmpe check
                 gmm = gmpe_check(gmpe)
 
+                # Check IMT is supported
+                imt_check(gmpe, gmm, imt)
+
                 # Get depth param
-                depth_g = dep_list[l] 
+                depth_g = dep_list[m] 
                 ztor_g = None # NOTE: No hypo depth constraint used here
 
                 # Get rupture params
@@ -614,7 +630,7 @@ def compute_matrix_gmpes(config, mtxs_type):
                                                          config.trt) 
 
                 mean, std, r_vals, tau, phi = att_curves(gmm,
-                                                         m,
+                                                         mag,
                                                          config.lon,
                                                          config.lat,
                                                          depth_g,
@@ -630,7 +646,7 @@ def compute_matrix_gmpes(config, mtxs_type):
                                                          config.z2pt5,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
-                                                         i,
+                                                         imt,
                                                          config.dist_type,
                                                          config.up_or_down_dip,
                                                          config.volc_back_arc,
@@ -667,11 +683,11 @@ def compute_matrix_gmpes(config, mtxs_type):
             matrix_medians[:][g] = medians
     
         # Store medians for given imt
-        mtxs_median[i] = matrix_medians
+        mtxs_median[imt] = matrix_medians
 
         # Get any req wt means now we have medians for all mags for each GMM
         for gmm_lt in lt_meds.keys():
-            mtxs_median[f"{i}_{gmm_lt}"] = pd.DataFrame(lt_meds[gmm_lt].values()).mean(axis=0)
+            mtxs_median[f"{imt}_{gmm_lt}"] = pd.DataFrame(lt_meds[gmm_lt].values()).mean(axis=0)
 
     # Store gmpes_list to
     mtxs_median['gmpe_list'] = config.gmpes_list.copy()
@@ -698,10 +714,10 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     matrix_dist = {}
 
     # Loop over IMTs
-    for n, i in enumerate(imt_list):
+    for i, imt in enumerate(imt_list):
 
         # Get the data matrix
-        data = mtxs[i]   
+        data = mtxs[imt]   
 
         # gmm labels and configs
         labels = gmpe_list.copy()
@@ -709,7 +725,7 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 
         # Add the weighted LTs if any too
         for key in mtxs.keys():
-            check = f"{i}_gmcLT"
+            check = f"{imt}_gmcLT"
             if check in key:
                 data = np.vstack((data, mtxs[key]))
                 labels.append(key.split("_")[1]) # Add label
@@ -722,7 +738,7 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 
         # Agglomerative clustering
         dist = squareform(pdist(data, 'euclidean'))
-        matrix_dist[n] = dist
+        matrix_dist[i] = dist
 
     # Create the figure
     ncols = 2
@@ -735,20 +751,20 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     fig, axs = pyplot.subplots(nrows, ncols)
     fig.set_size_inches(12, 6*nrows)
 
-    for n, i in enumerate(imt_list):                
+    for i, imt in enumerate(imt_list):                
         if len(imt_list) < 3:
-            ax = axs[n]
+            ax = axs[i]
         else:
-            ax = axs[np.unravel_index(n, (nrows, ncols))]           
-        ax.imshow(matrix_dist[n], cmap='gray') 
+            ax = axs[np.unravel_index(i, (nrows, ncols))]           
+        ax.imshow(matrix_dist[i], cmap='gray') 
         
         # Add title
         if mtxs_type == 'median':
-            ax.set_title(str(i) + ' (median)', fontsize='14')
+            ax.set_title(str(imt) + ' (median)', fontsize='14')
         if mtxs_type == '84th_perc':
-            ax.set_title(str(i) + ' (84th percentile)', fontsize='14')
+            ax.set_title(str(imt) + ' (84th percentile)', fontsize='14')
         if mtxs_type == '16th_perc':
-            ax.set_title(str(i) + ' (16th percentile)', fontsize='14')
+            ax.set_title(str(imt) + ' (16th percentile)', fontsize='14')
 
         # Add axis ticks
         ax.xaxis.set_ticks([n for n in range(len(labels))])

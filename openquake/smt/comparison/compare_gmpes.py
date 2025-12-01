@@ -213,7 +213,7 @@ class Configurations(object):
     def get_gmm(self, key, models):
         """
         Get the model from the toml in the string format required to create an
-        OpenQuake gsim object from within mgmpe_check (in utils_gmpes.py)
+        OpenQuake gsim object from within gmpe_check (in utils_gmpes.py)
         """
         # If the key contains a number we take the second part
         if re.search("^\\d+\\-", key):
