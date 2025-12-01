@@ -573,11 +573,11 @@ Comparing GMPEs
     
 10. Using ModifiableGMPE to modify GMPEs within a ``.toml``. 
 
-   In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe.py``).
+    In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe.py``).
    
-   Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per IMT), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
+    Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per IMT), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
 
-   Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml`` (an error will be raised):
+    Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below. Note that ModifiableGMPE is not currently supported to be usable within the residuals input ``.toml`` (an error will be raised):
    
     .. code-block:: ini
 
@@ -650,6 +650,27 @@ Comparing GMPEs
         gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true' # Follows OQ syntax for specifying GMM with additional inputs from string within openquake.hazardlib.valid.gsim
         fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}"
             
+11. Specifying Conditional GMPEs within a ``.toml``. 
+
+    Conditional GMPEs available within the OpenQuake Engine are also supported. 
+
+    Some examples of how the conditional GMPEs can be specified within the comparison module input ``.toml`` is provided below. Note that as per ModifiableGMPE, conditional GMPEs are not currently supported within the residuals input ``.toml`` (an error will be raised):
+   
+    .. code-block:: ini
+
+        [models.0-ConditionalGMPE] # Conditional GMPE and base GMPE with extra params
+        cond_gmpe = "[MacedoEtAl2019SInter]\nrho_pga_sa1=0.50\nregion='Japan'" 
+        base_gmpe = "[AbrahamsonGulerce2020SInter]\nregion='JPN'"
+
+        [models.1-ConditionalGMPE] # No extra params for conditional GMPE or base GMPE
+        cond_gmpe = "MacedoEtAl2019SInter"
+        base_gmpe = "KuehnEtAl2020SInter"
+
+        [models.2-ConditionalGMPE]
+        cond_gmpe = "[AbrahamsonBhasin2020S]\nkind='pga-based'"
+        base_gmpe = "[ChiouYoungs2014]\nregion='JPN'\nuse_hw='false'"
+
+
 References
 ==========
 

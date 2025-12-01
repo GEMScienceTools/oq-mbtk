@@ -32,14 +32,14 @@ trt = -999 # Either -999 to use provided aratio OR specify a trt string to assig
 [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
 mag_spacing = 0.1
 mags_depths = [[5, 20], [6, 25], [7, 30]] # [[mag, depth], [mag, depth], [mag, depth]] 
-gmpe_labels = ['NA', 'NA', 'NA', 'NA']
+gmpe_labels = ['NA', 'NA', 'NA', 'NA', 'NA']
 
 # Specify GMMs
 [models]
 
 [models.0-ConditionalGMPE] # Conditional GMPE and base GMPE with extra params
 cond_gmpe = "[MacedoEtAl2019SInter]\nrho_pga_sa1=0.50\nregion='Japan'" 
-base_gmpe = "[ChiouYoungs2014]\nregion='JPN'\nuse_hw='false'"
+base_gmpe = "[AbrahamsonGulerce2020SInter]\nregion='JPN'"
 
 [models.1-ConditionalGMPE] # Extra params only for conditional GMPE
 cond_gmpe = "[MacedoEtAl2019SInter]\nregion='South America'"
@@ -47,11 +47,15 @@ base_gmpe = "KuehnEtAl2020SInter"
 
 [models.2-ConditionalGMPE] # Extra params only for base GMPE
 cond_gmpe = "MacedoEtAl2019SInter"
-base_gmpe = "[KuehnEtAl2020SInter]\nregion='JPN'"
+base_gmpe = "[AbrahamsonGulerce2020SInter]\napply_usa_adjustment='true'"
 
 [models.3-ConditionalGMPE] # No extra params for conditional GMPE or base GMPE
 cond_gmpe = "MacedoEtAl2019SInter"
 base_gmpe = "KuehnEtAl2020SInter"
+
+[models.4-ConditionalGMPE] # Check works on a subclass (SSlab is subclass of SInter here)
+cond_gmpe = "MacedoEtAl2019SSlab"
+base_gmpe = "KuehnEtAl2020SSlab"
 
 [ratios_baseline_gmm.ConditionalGMPE] # ConditionalGMPE as a Baseline GMM
 cond_gmpe = "[MacedoEtAl2019SInter]\nkind='pga-based'"
