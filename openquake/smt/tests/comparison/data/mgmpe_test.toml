@@ -25,9 +25,9 @@ dip = 45
 rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
 mags = [5, 6, 7] # mags used only for trellis and response spectra
 depths = [20, 25, 30] # depth per magnitude for trellis and response spectra
-ztor = -999 # Set to -999 to NOT consider
+ztor = 2.5 # Set to -999 to NOT consider
 aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
-trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
+trt = -999 # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
 [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
 mag_spacing = 0.1
