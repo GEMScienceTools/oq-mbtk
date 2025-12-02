@@ -25,7 +25,7 @@ dip = 45
 rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
 mags = [5, 6, 7] # mags used only for trellis and response spectra
 depths = [20, 25, 30] # depth per magnitude for trellis and response spectra
-ztor = 2.5 # Set to -999 to NOT consider
+ztor = [1.0, 2.5, 3.0] # Set to -999 to NOT consider
 aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
 trt = -999 # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
@@ -57,11 +57,9 @@ base_gmpe = "KuehnEtAl2020SInter"
 cond_gmpe = "MacedoEtAl2019SSlab"
 base_gmpe = "KuehnEtAl2020SSlab"
 
-[ratios_baseline_gmm.ConditionalGMPE] # ConditionalGMPE as a Baseline GMM (not used here so ok to specify
-                                      # despite not supporting IA (for the baseline we are just checking 
-                                      # instantiation works)
-cond_gmpe = "AbrahamsonBhasin2020PGA"
-base_gmpe = "[ChiouYoungs2014]\nregion='JPN'\nuse_hw='false'"
+[ratios_baseline_gmm.ConditionalGMPE] # ConditionalGMPE as a Baseline GMM
+cond_gmpe = "[MacedoEtAl2019SInter]\nrho_pga_sa1=0.50\nregion='Japan'" 
+base_gmpe = "[AbrahamsonGulerce2020SInter]\nregion='JPN'"
 
 [custom_colors]
 custom_colors_flag = false # Set to true for custom colours
