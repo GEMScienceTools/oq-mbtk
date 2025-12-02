@@ -116,7 +116,7 @@ gmpe_table = 'NGAEast_FRANKEL_J15.hdf5'
 d_sigma = 100 
 kappa0 = 0.04
 
-[ratios_baseline_gmm.1-ModifiableGMPE] # Check ModifiableGMPE with an underlying GSIM with additional inputs also works in ratio plots
+[ratios_baseline_gmm.ModifiableGMPE] # Check ModifiableGMPE with an underlying GSIM with additional inputs also works in ratio plots
 gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true'
 site_term = 'BA08SiteTerm' # Arbitrary for testing execution of this capability
 
