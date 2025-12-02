@@ -649,6 +649,10 @@ Comparing GMPEs
         [models.16-ModifiableGMPE] # Additional inputs in underlying GMM
         gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true' # Follows OQ syntax for specifying GMM with additional inputs from string within openquake.hazardlib.valid.gsim
         fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}"
+
+        [ratios_baseline_gmm.ModifiableGMPE] # ModifiableGMPE as a Baseline GMM for attenuation curve ratio plots
+        gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true'
+        site_term = 'BA08SiteTerm' # Arbitrary for testing execution of this capability
             
 11. Specifying Conditional GMPEs within a ``.toml``. 
 
@@ -669,6 +673,10 @@ Comparing GMPEs
         [models.2-ConditionalGMPE]
         cond_gmpe = "[AbrahamsonBhasin2020S]\nkind='pga-based'"
         base_gmpe = "[ChiouYoungs2014]\nregion='JPN'\nuse_hw='false'"
+
+        [ratios_baseline_gmm.ConditionalGMPE] # Conditional GMPE as a Baseline GMM for attenuation curve ratio plots
+        cond_gmpe = "[MacedoEtAl2019SInter]\nrho_pga_sa1=0.50\nregion='Japan'" 
+        base_gmpe = "[AbrahamsonGulerce2020SInter]\nregion='JPN'"
 
 
 References
