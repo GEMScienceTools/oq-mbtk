@@ -58,7 +58,7 @@ jobs:
         oq --version
         sleep 3
         cd openquake
-        pytest -vsx --color=yes cat ghm man mbi mbt sub wkf smt
+        pytest -vsx --color=yes cat ghm man mbi mbt sub wkf smt fnm
   pages:
     name: pages
     runs-on: ubuntu-latest
