@@ -500,9 +500,9 @@ def build_cgmpe(gmpe):
 def gmpe_check(gmpe):
     """
     This function in effect parses the toml parameters for a GMPE into the
-    equivalent parameters required for constructing a GMM.
+    equivalent parameters required for constructing an OQ GSIM object.
     :param gmpe:
-        gmpe: GMPE to be modified if required
+        gmpe: GMM and params as parsed from the SMT Comparison module format toml.
     """
     # Assert not using ModifiableGMPE + conditional GMPE together (not supported - gets messy)
     if "[ModifiableGMPE]" in gmpe and "[ConditionalGMPE]" in gmpe:
