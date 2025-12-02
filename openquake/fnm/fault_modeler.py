@@ -671,7 +671,7 @@ def make_rupture_df(
 
     timing = {
         "sf_rup_azimuths_setup": 0.0,
-        "mf_info": 0.0,
+        "mf_debug": 0.0,
         "loop_areas": 0.0,
         "loop_rakes": 0.0,
         "loop_azimuths": 0.0,
@@ -684,11 +684,11 @@ def make_rupture_df(
         "loop": 0,
     }
 
-    logging.info("\tgetting rups involved")
+    logging.debug("\tgetting rups involved")
     rups_involved = [[int(r)] for r in single_fault_rup_df.index.values]
     rupture_df = single_fault_rup_df[['subfaults']]
 
-    logging.info("\tmaking initial dataframe")
+    logging.debug("\tmaking initial dataframe")
     rupture_df = pd.DataFrame(
         index=rupture_df.index,
         data={
@@ -698,7 +698,7 @@ def make_rupture_df(
         },
     )
 
-    logging.info("\tmaking lookup tables")
+    logging.debug("\tmaking lookup tables")
     srup_lookup = rupture_df['subfaults'].to_dict()
     fault_lookup = rupture_df['faults'].apply(lambda f: f[0]).to_dict()
     area_lookup = subfault_df['area'].to_dict()
@@ -706,7 +706,7 @@ def make_rupture_df(
     slip_az_lookup = subfault_df['slip_azimuth'].to_dict()
     sub_fid_lookup = subfault_df['fid'].to_dict()
 
-    logging.info("\tmaking azimuth lookup table")
+    logging.debug("\tmaking azimuth lookup table")
     t0 = t()
     sf_rup_azimuths = {}
     for row in single_fault_rup_df.itertuples():
@@ -716,7 +716,7 @@ def make_rupture_df(
         )
     timing["sf_rup_azimuths_setup"] += t() - t0
 
-    logging.info("\tmaking multifault rup fault info")
+    logging.debug("\tmaking multifault rup fault debug")
     t0 = t()
     mf_subs = []
     mf_faults_unique = []
@@ -729,9 +729,9 @@ def make_rupture_df(
 
         mf_subs.append(subs)
         mf_faults_unique.append(faults)
-    timing["mf_info"] += t() - t0
+    timing["mf_debug"] += t() - t0
 
-    logging.info("\tmaking multifault rup dataframe")
+    logging.debug("\tmaking multifault rup dataframe")
     mf_df = pd.DataFrame(
         index=np.arange(len(mf_subs)) + len(rupture_df),
         data={
@@ -741,10 +741,10 @@ def make_rupture_df(
         },
     )
 
-    logging.info("\tconcatenating single and multi dfs")
+    logging.debug("\tconcatenating single and multi dfs")
     rupture_df = pd.concat([rupture_df, mf_df], axis=0)
 
-    logging.info("\tadding additional cols")
+    logging.debug("\tadding additional cols")
     frac_areas = []
     mean_rakes = []
     slip_azimuths = []
@@ -824,13 +824,13 @@ def make_rupture_df(
     )
     timing["displacement"] += t() - t0
 
-    logging.info("\tddonee")
+    logging.debug("\tdone")
 
     # report timings
-    logging.info("\tTiming breakdown (make_rupture_df):")
-    logging.info("\t  number of ruptures in loop: %d", counts["loop"])
+    logging.debug("\tTiming breakdown (make_rupture_df):")
+    logging.debug("\t  number of ruptures in loop: %d", counts["loop"])
     for key, val in timing.items():
-        logging.info("\t  %-24s %.6f s", key + ":", val)
+        logging.debug("\t  %-24s %.6f s", key + ":", val)
 
     return rupture_df
 
