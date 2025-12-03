@@ -319,6 +319,7 @@ def construct_gsim_dict(inputs):
     """
     Build a dictionary of the arguments for a GMM.
     """
+    # Build dict
     kwargs = {}
     parts = re.search(r'\[([^\]]+)\]', inputs) # Square brackets = extra inputs
     if parts:
@@ -504,19 +505,9 @@ def gmpe_check(gmpe):
     :param gmpe:
         gmpe: GMM and params as parsed from the SMT Comparison module format toml.
     """
-    # Assert not using ModifiableGMPE + conditional GMPE together (not supported - gets messy)
-    if "[ModifiableGMPE]" in gmpe and "[ConditionalGMPE]" in gmpe:
-        raise ValueError(
-            "The use of both ModifiableGMPE and a conditional GMPE within a single GMPE"
-            "instance is not currently supported within the SMT's comparison module")
-
     # Modifiable GMPE
     if '[ModifiableGMPE]' in gmpe:
         return build_mgmpe(gmpe)
-
-    # Conditional GMPE
-    elif "[ConditionalGMPE]" in gmpe:
-        return build_cgmpe(gmpe)
 
     # Regular GMPE
     else:
@@ -539,20 +530,6 @@ def gmpe_check(gmpe):
         gmm = valid.gsim(gmpe_clean)
 
     return gmm
-
-
-def imt_check(gmm, gmpe, imt):
-    """
-    This function raises an error if an IMT is not supported (this failsafe
-    is for preventing conditional GMPE issues - if they do not support an IMT,
-    the current implementations of these GMMs return the predictions of the
-    underlying GMMs, which is horrible).
-    """
-    if "[ConditionalGMPE]" in gmm:
-        imts = [imtx.__name__ for imtx in list(
-            gmpe.DEFINED_FOR_INTENSITY_MEASURE_TYPES)]
-        if str(imt) not in imts:
-            raise ValueError(f"{gmpe.__class__.__name__} does not support {imt}")
 
 
 def get_imtl_unit(i):
