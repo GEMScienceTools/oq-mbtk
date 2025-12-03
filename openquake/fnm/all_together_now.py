@@ -353,10 +353,7 @@ def build_fault_network(
             binary_distance_matrix=binary_adjacence_matrix,
             single_rup_df=fault_network['single_rup_df'],
             subfaults=fault_network['subfaults'],
-            connection_distance_threshold=settings['max_jump_distance'],
-            connection_distance_plausibility_threshold=settings[
-                'rupture_filtering_connection_distance_plausibility_threshold'
-            ],
+            connection_distance_midpoint=settings['max_jump_distance'],
         )
 
         fault_network['rupture_df_keep'] = (

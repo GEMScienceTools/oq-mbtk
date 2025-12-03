@@ -38,8 +38,8 @@ from openquake.hazardlib.geo import Line, Point
 
 from openquake.fnm.rupture_connections import get_proximal_rup_angles
 from openquake.fnm.rupture_filtering import (
-    find_decay_exponent,
     get_rupture_plausibilities,
+    compact_cosine_sigmoid,
 )
 
 
@@ -76,9 +76,11 @@ class TestRupturePlausibilities(unittest.TestCase):
             angle_matrix=angle_matrix,
         )
 
-        expected_angle_plaus = np.cos(np.radians(angle_val / 2.0))
-        decay = find_decay_exponent(0.1, 15.0)
-        expected_distance_plaus = float(np.exp(-decay * distance_matrix[0, 1]))
+        expected_angle_plaus = compact_cosine_sigmoid(angle_val, 90.0)
+        decay = np.log(2.0) / 15.0
+        expected_distance_plaus = float(
+            np.exp(-decay * distance_matrix[0, 1])
+        )
 
         self.assertIn("connection_angle", plausibilities.columns)
         np.testing.assert_allclose(
