@@ -653,31 +653,7 @@ Comparing GMPEs
         [ratios_baseline_gmm.ModifiableGMPE] # ModifiableGMPE as a Baseline GMM for attenuation curve ratio plots
         gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true'
         site_term = 'BA08SiteTerm' # Arbitrary for testing execution of this capability
-            
-11. Specifying Conditional GMPEs within a ``.toml``. 
-
-    Conditional GMPEs available within the OpenQuake Engine are also supported. 
-
-    Some examples of how the conditional GMPEs can be specified within the comparison module input ``.toml`` is provided below. Note that as per ModifiableGMPE, conditional GMPEs are not currently supported within the residuals input ``.toml`` (an error will be raised):
-   
-    .. code-block:: ini
-
-        [models.0-ConditionalGMPE] # Conditional GMPE and base GMPE with extra params
-        cond_gmpe = "[MacedoEtAl2019SInter]\nrho_pga_sa1=0.50\nregion='Japan'" 
-        base_gmpe = "[AbrahamsonGulerce2020SInter]\nregion='JPN'"
-
-        [models.1-ConditionalGMPE] # No extra params for conditional GMPE or base GMPE
-        cond_gmpe = "MacedoEtAl2019SInter"
-        base_gmpe = "KuehnEtAl2020SInter"
-
-        [models.2-ConditionalGMPE]
-        cond_gmpe = "[AbrahamsonBhasin2020S]\nkind='pga-based'"
-        base_gmpe = "[ChiouYoungs2014]\nregion='JPN'\nuse_hw='false'"
-
-        [ratios_baseline_gmm.ConditionalGMPE] # Conditional GMPE as a Baseline GMM for attenuation curve ratio plots
-        cond_gmpe = "[MacedoEtAl2019SInter]\nrho_pga_sa1=0.50\nregion='Japan'" 
-        base_gmpe = "[AbrahamsonGulerce2020SInter]\nregion='JPN'"
-
+        
 
 References
 ==========
