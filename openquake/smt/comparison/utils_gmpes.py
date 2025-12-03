@@ -465,37 +465,6 @@ def build_mgmpe(gmpe):
     if 'M9BasinTerm' in gmpe: kw_mgmpe['m9_basin_term'] = {}
 
     return mgmpe.ModifiableGMPE(**kw_mgmpe)
-    
-
-def build_cgmpe(gmpe):
-    """
-    Build a conditional GMPE.
-    """
-    # All of the inputs for this model
-    params = pd.Series(gmpe.splitlines(), dtype=object)
-    
-    # Conditional GMM
-    cond_gsim = re.search(r'cond_gmpe\s*=\s*(.*)', params.iloc[1]).group(1).replace('"','')
-    kw_cond = construct_gsim_dict(cond_gsim)
-
-    # Underlying GMM to use for conditioning
-    base_gsim = re.search(r'base_gmpe\s*=\s*(.*)', params.iloc[2]).group(1).replace('"','')
-    kw_base = construct_gsim_dict(base_gsim)
-
-    # Get the cond GMM params
-    cond_gmm = next(iter(kw_cond['gmpe']))
-    cond_par = kw_cond["gmpe"][cond_gmm]
-
-    # Get the base GMM params
-    base_gmm = next(iter(kw_base['gmpe']))
-    base_par = kw_base["gmpe"][base_gmm]
-
-    # Build the TOML string representing the conditional GMM and the underlying GMM
-    base_arg = ", ".join(f"{k} = {repr(v)}" for k, v in base_par.items())
-    cond_arg = [f"{k} = {repr(v)}" for k, v in cond_par.items()]
-    gmpe_str = f"[{cond_gmm}]\n" + "\n".join(cond_arg) + f"\ngmpe.{base_gmm} = {{{base_arg}}}"
-
-    return valid.gsim(gmpe_str)
 
 
 def gmpe_check(gmpe):
