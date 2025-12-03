@@ -33,8 +33,7 @@ from openquake.smt.utils import clean_gmm_label
 from openquake.smt.comparison.utils_gmpes import (get_imtl_unit, 
                                                   att_curves,
                                                   get_rup_pars,
-                                                  gmpe_check,
-                                                  imt_check)
+                                                  gmpe_check)
 
 
 def plot_trellis_util(config, output_directory):
@@ -95,11 +94,8 @@ def plot_trellis_util(config, output_directory):
                 store_per_gmpe[gmpe] = {}
                 col = colors[g]                
                 
-                # Perform mgmpe check
+                # Perform gmpe check
                 gmm = gmpe_check(gmpe)
-
-                # Check IMT is supported
-                imt_check(gmpe, gmm, imt)
 
                 # Get attenuation curves
                 mean, std, r_vals, tau, phi = att_curves(gmm,
@@ -301,13 +297,10 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 rs_50p, sig, rs_ps, rs_ms = [], [], [], []
                 col = colors[g]
 
-                # Perform mgmpe check
+                # Perform gmpe check
                 gmm = gmpe_check(gmpe)
                 
                 for k, imt in enumerate(imt_list): 
-
-                    # Check IMT is supported
-                    imt_check(gmpe, gmm, imt)
                         
                     # Get mean and sigma
                     mu, std, r_vals, tau, phi = att_curves(gmm,
@@ -461,9 +454,6 @@ def plot_ratios_util(config, output_directory):
             # Load the baseline GMM and compute baseline
             baseline = gmpe_check(config.baseline_gmm)
 
-            # Check IMT is supported for baseline GMM
-            imt_check(config.baseline_gmm, baseline, imt)
-
             # Get baseline GMM attenuation curves
             results = att_curves(baseline,
                                  mag,
@@ -492,12 +482,9 @@ def plot_ratios_util(config, output_directory):
             # Now compute ratios for each GMM
             for g, gmpe in enumerate(config.gmpes_list):        
                 
-                # Perform mgmpe check
+                # Perform gmpe check
                 col = colors[g]         
                 gmm = gmpe_check(gmpe)
-
-                # Check IMT is supported
-                imt_check(gmpe, gmm, imt)
                 
                 # Get attenuation curves for the GMM
                 results = att_curves(gmm,
@@ -612,11 +599,8 @@ def compute_matrix_gmpes(config, mtxs_type):
             medians = []
             for m, mag in enumerate(mag_list): # Iterate though mag_list
             
-                # Perform mgmpe check
+                # Perform gmpe check
                 gmm = gmpe_check(gmpe)
-
-                # Check IMT is supported
-                imt_check(gmpe, gmm, imt)
 
                 # Get depth param
                 depth_g = dep_list[m] 
