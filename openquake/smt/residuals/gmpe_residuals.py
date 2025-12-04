@@ -436,8 +436,9 @@ class Residuals(object):
                                       intra,
                                       normalise=True):
         """
-        Calculates the random effects residuals using the inter-event
-        residual formula described in Abrahamson & Youngs (1992) Eq. 10
+        Calculates the random effects residuals (i.e. decomposition of the
+        total residuals into inter-event and intra-event) using equation 10
+        of Abrahamson & Youngs (1992).
         
         :param obs: array of observed ground-shaking values for a single ctx
                     (i.e. event) for a given imt, in natural log.
@@ -450,10 +451,19 @@ class Residuals(object):
         :param normalise: bool which if True normalises the residuals using
                           the corresponding GMPE sigma components
         """
+        # Get number of values
         nvals = float(len(mean))
+
+        # Total variance for all observations combining GMPE tau and phi
         v = nvals * (inter ** 2.) + (intra ** 2.)
+                                                  
+        # Compute the inter-event
         inter_res = ((inter ** 2.) * sum(obs - mean)) / v
+
+        # Compute the intra-event
         intra_res = obs - (mean + inter_res)
+
+        # Whether to normalise or not
         if normalise:
             return inter_res / inter, intra_res / intra
         else:
