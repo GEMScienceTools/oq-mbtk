@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Utility functions for OpenQuake CSV format outputs
+"""
+
 import re
 import numpy
 import pandas as pd
@@ -23,11 +27,6 @@ from scipy import interpolate
 
 from openquake.baselib import hdf5
 from openquake.hmtk.seismicity.catalogue import Catalogue
-
-
-"""
-Utility functions for OpenQuake CSV format outputs
-"""
 
 
 def make_llt_df(df, each_rlz, threshold=1e-08):
