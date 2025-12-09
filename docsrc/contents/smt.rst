@@ -399,7 +399,7 @@ Comparing GMPEs
         eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
 
         [source_properties] # Characterise EQ as finite rupture (can omit if providing rupture in "rup_file" key)
-        lon = 0
+        lon = 0 # Lon and lat values can be omitted (are set to zero if missing from the toml)
         lat = 0
         strike = 0
         dip = 45
