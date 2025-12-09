@@ -1,19 +1,38 @@
 
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+# Copyright (C) 2014-2025 GEM Foundation
+#
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
+ 
 import os
 import shutil
 import unittest
 import tempfile
 import numpy as np
 
-import openquake.man.tools.csv_output as csv
-from openquake.man.tools.csv_output import mean_mde_for_gmt, mean_llt_for_gmt
 from openquake.calculators.tests import open8
 from openquake.calculators.export import export
 from openquake.calculators.base import run_calc
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
-BASE_EXP_PATH = os.path.join(os.path.dirname(__file__), 'expected')
-BASE_CASE8 = os.path.join(os.path.dirname(__file__), 'case_8')
+import openquake.man.tools.csv_output as csv
+
+
+BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data_csv_output_test')
+BASE_EXP_PATH = os.path.join(BASE_DATA_PATH, 'expected')
+BASE_CASE8 = os.path.join(BASE_DATA_PATH, 'case_8')
 
 OVERWRITE = False
 
@@ -26,7 +45,7 @@ class TestMeanMDE(unittest.TestCase):
         """
         fname = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-1.csv')
         fout = 'test-1.csv'
-        mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        csv.mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
         expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_mde-1.csv')
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fout)]
@@ -39,7 +58,7 @@ class TestMeanMDE(unittest.TestCase):
         """
         fname = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-2.csv')
         fout = 'test-2.csv'
-        mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        csv.mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
         expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_mde-2.csv')
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fout)]
@@ -60,16 +79,16 @@ class TestMeanMDE(unittest.TestCase):
         creating the file that will be plotted by GMT
         """
         fname1 = os.path.join(BASE_DATA_PATH, 'Mag_Dist_Eps-mean-0.csv')
-        fout1, path1 = tempfile.mkstemp()
-        fname2 = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
-        fout2, path2 = tempfile.mkstemp()
+        path1 = os.path.join(BASE_DATA_PATH, tempfile.mkdtemp(), 'path1')
+        fname2 = os.path.join(BASE_CASE8, 'expected', 'Mag_Dist_Eps-mean-0.csv')
+        path2 = os.path.join(BASE_DATA_PATH, tempfile.mkdtemp(), 'path2')
 
         if OVERWRITE:
             shutil.copy(path1, fname1)
             shutil.copy(path2, fname2)
 
-        mean_mde_for_gmt(fname1, path1, 0.002105, 'SA(0.1)', 1e-10)
-        mean_mde_for_gmt(fname2, path2, 0.002105, 'SA(0.1)', 1e-10)
+        csv.mean_mde_for_gmt(fname1, path1, 0.002105, 'SA(0.1)', 1e-10)
+        csv.mean_mde_for_gmt(fname2, path2, 0.002105, 'SA(0.1)', 1e-10)
         expect_lines1 = [[float(j) for j in i.split()] for i in open8(path1)]
         expect_lines2 = [[float(j) for j in i.split()] for i in open8(path2)]
         expect_lines1 = np.array(expect_lines1)
@@ -83,7 +102,7 @@ class TestMeanMDE(unittest.TestCase):
         """
         fname = os.path.join(BASE_DATA_PATH, 'TRT_Lon_Lat-mean-0.csv')
         fout = 'test-1.csv'
-        mean_llt_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
+        csv.mean_llt_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
         expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_llt.csv')
         expected_lines = [line for line in open8(expected)]
         actual_lines = [line for line in open8(fout)]
@@ -97,23 +116,21 @@ class OutputTestCase(unittest.TestCase):
         """
         will fail if the output format changes
         """
-        # run test job
+        # Run test job
         calc1 = run_calc(os.path.join(BASE_CASE8, 'job_mde.ini'))
         calc2 = run_calc(os.path.join(BASE_CASE8, 'job_llt.ini'))
 
-        # test mre results output format
+        # Test mre results output format
         [fname_mde] = export(('disagg-stats', 'csv'), calc1.datastore)
-        exp_mde = os.path.join(BASE_CASE8, 'expected/Mag_Dist_Eps-mean-0.csv')
+        exp_mde = os.path.join(BASE_CASE8, 'expected', 'Mag_Dist_Eps-mean-0.csv')
         [fname_llt] = export(('disagg-stats', 'csv'), calc2.datastore)
-        exp_llt = os.path.join(BASE_CASE8, 'expected/TRT_Lon_Lat-mean-0.csv')
+        exp_llt = os.path.join(BASE_CASE8, 'expected', 'TRT_Lon_Lat-mean-0.csv')
 
         if OVERWRITE:
             shutil.copyfile(fname_llt, exp_mde)
             shutil.copyfile(fname_mde, exp_llt)
 
-
-        # test MDE format
-
+        # Test MDE format
         actual_lines = []
         for i, line in enumerate(open8(fname_mde)):
             if i == 0:
@@ -142,8 +159,7 @@ class OutputTestCase(unittest.TestCase):
 
         os.remove(fname_mde)
 
-        # test LLT format
-
+        # Test LLT format
         actual_lines_floats = []
         actual_lines_strings = []
 

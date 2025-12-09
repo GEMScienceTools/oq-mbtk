@@ -1,42 +1,39 @@
-# ------------------- The OpenQuake Model Building Toolkit --------------------
-# Copyright (C) 2022 GEM Foundation
-#           _______  _______        __   __  _______  _______  ___   _
-#          |       ||       |      |  |_|  ||  _    ||       ||   | | |
-#          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
-#          |  | |  ||  | |  ||____||       ||       |  |   |  |      _|
-#          |  |_|  ||  |_|  |      |       ||  _   |   |   |  |     |_
-#          |       ||      |       | ||_|| || |_|   |  |   |  |    _  |
-#          |_______||____||_|      |_|   |_||_______|  |___|  |___| |_|
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# This program is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Affero General Public License as published by the Free
-# Software Foundation, either version 3 of the License, or (at your option) any
-# later version.
+# Copyright (C) 2014-2025 GEM Foundation
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
-# details.
+# OpenQuake is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OpenQuake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# -----------------------------------------------------------------------------
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-# coding: utf-8
+# along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
+
+"""
+Utility functions for OpenQuake CSV format outputs
+"""
 
 import re
 import numpy
 import pandas as pd
 from scipy import interpolate
+
 from openquake.baselib import hdf5
 from openquake.hmtk.seismicity.catalogue import Catalogue
 
 
 def make_llt_df(df, each_rlz, threshold=1e-08):
-    # get the keys for all the realizations
+    # Get the keys for all the realizations
     rlzkeys = [*each_rlz]
     
-    # instantiate new dataframe
+    # Instantiate new dataframe
     df_mean = pd.DataFrame(columns=['lon','lat','trt','poe_c'])
     
     new_poe = []
@@ -51,7 +48,7 @@ def make_llt_df(df, each_rlz, threshold=1e-08):
     df_mean['trt'] = df['trt']
     df_mean['poe_c'] = final_poe
     
-    # take only rows >0
+    # Take only rows > 0
     df_final = df_mean[df_mean['poe_c']>threshold]
     
     return df_final
@@ -61,14 +58,14 @@ def get_rlz_llt(filein):
     with open(filein) as f:
         header = f.readline()
         
-    # get rlzs
+    # Get rlzs
     first_break = header.index('rlz_ids=[')
     rlzs_strt = header[first_break+9:]
     end_first = rlzs_strt.index(']')
     rlzs = rlzs_strt[:end_first]
     realizations = rlzs.split(', ')
     
-    # get weights
+    # Get weights
     first_break = header.index('weights=[')
     wei_strt = header[first_break+9:]
     end_first = wei_strt.index(']')
@@ -84,8 +81,7 @@ def get_rlz_llt(filein):
 
 
 def write_gmt_llt(df_final, fout, threshold):
-    
-    # find set of TRTs and give each an index starting with 1
+    # Find set of TRTs and give each an index starting with 1
     trts = set(df_final['trt'])
     trt_id = {}
     strts = sorted(trts)
@@ -101,7 +97,7 @@ def write_gmt_llt(df_final, fout, threshold):
         line = df_final.loc[ind]
         if cnt > 2:
             key = '{0:s}_{1:s}'.format(str(line.lon), str(line.lat))
-            #
+            
             # Updating the base level of the bin
             if key in base_dic:
                 base = base_dic[key]
@@ -109,8 +105,8 @@ def write_gmt_llt(df_final, fout, threshold):
                 base = 0.
                 base_dic[key] = 0.
             base_dic[key] += line.poe_c
-            #
             maxim = base_dic[key] if base_dic[key] > maxim else maxim
+            
             # Formatting the output
             fmt = '{0:7.5e} {1:7.5e} {2:7.5e} {3:7.5e} {4:7.5e}'
             outs = fmt.format(line.lon, line.lat, base+line.poe_c,
@@ -122,22 +118,24 @@ def write_gmt_llt(df_final, fout, threshold):
 
 
 def mean_llt_for_gmt(filein, fout, poe, imt, threshold):
-    # read in the rest of the data
+    # Read in the rest of the data
     df = pd.read_csv(filein, skiprows = 1)
-    # take for only the poe of interest
+    
+    # Take for only the poe of interest
     df_poe = df[(df.poe == float(poe)) & (df.imt == imt)]
-    # get unique eps, dist, get unique mag
+    
+    # Get unique eps, dist, get unique mag
     df_adjusted_weights = pd.DataFrame()
     df_adjusted_weights['lon'] = df_poe['lon']
     df_adjusted_weights['lat'] = df_poe['lat']
     df_adjusted_weights['trt'] = df_poe['trt']
     df_adjusted_weights['poe_c'] = df_poe['mean']
     
-    # create final dataframe and write to txt file for gmt
+    # Create final dataframe and write to txt file for gmt
     df_final = df_adjusted_weights[df_adjusted_weights['poe_c'] >= 0.0]
     write_gmt_llt(df_final, fout, threshold)
 
-    # make trt dict
+    # Make trt dict
     trts = set(df_poe['trt'])
     trt_id = {}
     strts = sorted(trts)
@@ -160,8 +158,7 @@ def get_disagg_header_info(header, var, fl=False):
     : param boolean fl:
         if true, first converts the list values to floats
     """
-    # get term from header
-
+    # Get term from header
     first_break = header.index(var)
     strt = header[first_break + len(var):]
     end_first = strt.index(']')
@@ -180,7 +177,6 @@ def get_rlzs_mde(header):
     :param str header:
         header of file with results for disagg by Mag_Dist_Eps- ...
     """
-
     rlz = get_disagg_header_info(header, 'rlz_ids=[')
     wei = get_disagg_header_info(header, 'weights=[')
 
@@ -205,19 +201,19 @@ def get_mean_mde(fname, poe, imt):
         imt to be isolated/plotted
     """
 
-    # read in the rest of the outputs
+    # Read in the rest of the outputs
     df = pd.read_csv(fname, skiprows=1)
 
-    # take only the rows of interest based on poe, imt
+    # Take only the rows of interest based on poe, imt
     df_sub = (df.loc[(df['poe'] == float(poe)) &
                      (df['imt'] == imt)].reset_index())
 
-    # create dataframe for mean results
+    # Create dataframe for mean results
     df_mean = pd.DataFrame(columns=['mag', 'dist', 'eps', 'poe_c'])
 
     if 'mean' not in df:
 
-        # get header from disagg output
+        # Get header from disagg output
         with open(fname) as f:
             header = f.readline()
 
@@ -258,7 +254,6 @@ def mean_mde_for_gmt(fname, fout, poe, imt, threshold):
     :param float threshold:
         contribution included in output if above this value
     """
-
     df_mean = get_mean_mde(fname, poe, imt)
 
     fou = open(fout, 'w')
@@ -268,7 +263,7 @@ def mean_mde_for_gmt(fname, fout, poe, imt, threshold):
         line = df_mean.loc[ind]
 
         key = '{0:s}_{1:s}'.format(str(line.mag), str(line.dist))
-        #
+        
         # Updating the base level of the bin
         if key in base_dic:
             base = base_dic[key]
@@ -276,7 +271,7 @@ def mean_mde_for_gmt(fname, fout, poe, imt, threshold):
             base = 0.
             base_dic[key] = 0.
         base_dic[key] += line.poe_c
-        #
+        
         # Formatting the output
         fmt = '{0:7.5e} {1:7.5e} {2:7.5e} {3:7.5e} {4:7.5e}'
         outs = fmt.format(line.mag, line.dist, base + line.poe_c,
@@ -335,8 +330,7 @@ def mde_for_gmt(filename, froot):
                     base_dic[key] = 0.
                 base_dic[key] += row[rlz]
 
-                # Formatting the output:
-                # magnitude, distance, z, height, upp,
+                # Formatting the output: magnitude, distance, z, height, upp,
                 fmt = '{:7.5e} {:7.5e} {:7.5e} {:7.5e} {:7.5e}'
                 outs = fmt.format(row.mag, row.dist, base + row[rlz], row.eps,
                                   base)
@@ -468,7 +462,8 @@ def read_hazard_curve_csv(filename):
             - IMLs
     """
     aw = hdf5.read_csv(filename)
-    # the columns after lon, lat have names like poe-0.002345, ...
+    
+    # The columns after lon, lat have names like poe-0.002345, ...
     imls = [float(col[:4]) for col in aw.dtype.names[3:]]
     poes = numpy.hstack([aw[col] for col in aw.dtype.names[3:]])
     return aw['lon'], aw['lat'], poes, vars(aw), imls
@@ -503,32 +498,33 @@ def read_hazard_curve_csv_pd(filename):
         numpy.array(imls)
 
 
-
 def _get_header1(line):
-
     header = {}
-
     tmpstr = "imt"
     if re.search('generated_by', line):
-        # version 3.6
+        
+        # Version 3.6
         imt_pattern = r'{:s}=\'([^\']*)\''.format(tmpstr)
-        # engine
+        
+        # Engine
         tmpstr = "generated_by"
         pattern = r'{:s}=\'([^\']*)\''.format(tmpstr)
         mtc = re.search(pattern, line)
         header["engine"] = mtc.group(1)
     else:
-        # version 3.5 and before
+        # Version 3.5 and before
         imt_pattern = r'{:s}=\"([^\']*)\"'.format(tmpstr)
 
-    # result type
+    # Result type
     aa = re.split('\\,', re.sub('#', '', line))
     header['result_type'] = re.sub('^\\s*', '', re.sub('\\s*$', '', aa[0]))
-    # investigation time
+    
+    # Investigation time
     tmpstr = "investigation_time"
     pattern = "{:s}=(\\d*\\d.\\d*)".format(tmpstr)
     mtc = re.search(pattern, line)
     header[tmpstr] = float(mtc.group(1))
+    
     # IMT
     mtc = re.search(imt_pattern, line)
     header["imt"] = mtc.group(1)
@@ -581,8 +577,10 @@ def get_catalogue_from_ses(fname, duration):
     ses = pd.read_csv(fname, sep='\t', skiprows=1)
     if len(ses.columns) < 2:
         ses = pd.read_csv(fname, sep=',', skiprows=1)
+    
     # Create an empty catalogue
     cat = Catalogue()
+    
     # Set catalogue data
     cnt = 0
     year = []
