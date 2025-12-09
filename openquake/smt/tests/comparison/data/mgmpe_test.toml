@@ -25,14 +25,14 @@ dip = 45
 rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
 mags = [5, 6, 7] # mags used only for trellis and response spectra
 depths = [20, 25, 30] # depth per magnitude for trellis and response spectra
-ztor = -999 # Set to -999 to NOT consider
-aratio = 2 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
-trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
+ztor = [1.0, 2.5, 3.0] # Set to -999 to NOT consider
+aratio = 3 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
+trt = -999 # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
 [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
 mag_spacing = 0.1
 mags_depths = [[5, 20], [6, 25], [7, 30]] # [[mag, depth], [mag, depth], [mag, depth]] 
-gmpe_labels = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
+gmpe_labels = ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
 
 # Specify GMMs
 [models]
@@ -116,7 +116,7 @@ gmpe_table = 'NGAEast_FRANKEL_J15.hdf5'
 d_sigma = 100 
 kappa0 = 0.04
 
-[ratios_baseline_gmm.1-ModifiableGMPE] # Check ModifiableGMPE with an underlying GSIM with additional inputs also works in ratio plots
+[ratios_baseline_gmm.ModifiableGMPE] # Check ModifiableGMPE with an underlying GSIM with additional inputs also works in ratio plots
 gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true'
 site_term = 'BA08SiteTerm' # Arbitrary for testing execution of this capability
 

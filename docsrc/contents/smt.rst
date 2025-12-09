@@ -399,7 +399,7 @@ Comparing GMPEs
         eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
 
         [source_properties] # Characterise EQ as finite rupture (can omit if providing rupture in "rup_file" key)
-        lon = 0
+        lon = 0 # Lon and lat values can be omitted (are set to zero if missing from the toml)
         lat = 0
         strike = 0
         dip = 45
@@ -573,11 +573,11 @@ Comparing GMPEs
     
 10. Using ModifiableGMPE to modify GMPEs within a ``.toml``. 
 
-   In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe.py``).
+    In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe.py``).
    
-   Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per IMT), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
+    Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per IMT), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default. 
 
-   Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below (please note that ModifiableGMPE is not currently implemented to be usable within the residuals input ``.toml`` (an error will be raised):
+    Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below. Note that ModifiableGMPE is not currently supported to be usable within the residuals input ``.toml`` (an error will be raised):
    
     .. code-block:: ini
 
@@ -649,7 +649,12 @@ Comparing GMPEs
         [models.16-ModifiableGMPE] # Additional inputs in underlying GMM
         gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true' # Follows OQ syntax for specifying GMM with additional inputs from string within openquake.hazardlib.valid.gsim
         fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}"
-            
+
+        [ratios_baseline_gmm.ModifiableGMPE] # ModifiableGMPE as a Baseline GMM for attenuation curve ratio plots
+        gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true'
+        site_term = 'BA08SiteTerm' # Arbitrary for testing execution of this capability
+        
+
 References
 ==========
 
