@@ -131,8 +131,12 @@ class Configurations(object):
         Get the parameters used to describe the rupture from
         the source_properties key of the toml.
         """
-        self.lon = config_file['source_properties']['lon']
-        self.lat = config_file['source_properties']['lat']
+        for coo in ["lon", "lat"]: # Lon/lat are optional
+            if coo not in config_file['source_properties']:
+                setattr(self, coo, 0)
+            else:
+                setattr(self, coo,config_file['source_properties'][coo])
+                
         self.strike = config_file['source_properties']['strike']
         self.dip = config_file['source_properties']['dip']
         self.rake = config_file['source_properties']['rake']
@@ -213,7 +217,7 @@ class Configurations(object):
     def get_gmm(self, key, models):
         """
         Get the model from the toml in the string format required to create an
-        OpenQuake gsim object from within gmpe_check (in utils_gmpes.py)
+        OpenQuake gsim object from within mgmpe_check (in utils_gmpes.py)
         """
         # If the key contains a number we take the second part
         if re.search("^\\d+\\-", key):
