@@ -6,7 +6,6 @@ Sammons Maps plotting functions available within the SMT's comparison module.
 import os
 import shutil
 
-from openquake.baselib import sap
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_gmpes import (reformat_att_curves,
                                                   reformat_spectra)
@@ -74,4 +73,4 @@ def main(input_toml=demo_input, out_dir=demo_out):
 
 
 if __name__ == '__main__':
-    sap.run(main)    
+    main()

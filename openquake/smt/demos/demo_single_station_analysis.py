@@ -6,7 +6,6 @@ import os
 import pickle
 import shutil
 
-from openquake.baselib import sap
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
@@ -130,4 +129,4 @@ def main(flatfile=demo_flatfile,
     
     
 if __name__ == '__main__':
-    sap.run(main)
+    main()
