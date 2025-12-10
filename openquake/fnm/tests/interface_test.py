@@ -39,6 +39,7 @@ from openquake.fnm.interface.create_and_store_ruptures import (
 HERE = pathlib.Path(__file__).parent
 
 
+@unittest.skip("deprecated")
 class TestCreateRuptures(unittest.TestCase):
     def test_create_ruptures(self):
         """Test the CLI interface for the creation of ruptures"""

@@ -29,6 +29,7 @@ from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
     make_sf_rupture_meshes,
+    get_trace_from_sf_rupture,
     get_trace_from_mesh,
 )
 
@@ -133,7 +134,12 @@ def get_close_faults(
             d: distance between the bounding boxes (float)
     """
     surfaces = [fault['surface'] for fault in faults]
-    # fault_bb_dists = get_bounding_box_distances(surfaces, max_dist=max_dist)
+    # fault_bb_dists_ = get_bounding_box_distances(surfaces, max_dist=max_dist)
+
+    # fault_bb_dists = {(int(f0), int(f1)): float(d)
+    #                  for f0, f1, d in fault_bb_dists_
+    #                  if f0 != f1}
+
     fault_bb_dists = get_bounding_box_distances_marco(
         surfaces, max_dist=max_dist
     )
@@ -444,22 +450,19 @@ def get_rupture_adjacency_matrix(
         the ruptures in km.
     """
 
-    if sparse:
-
-        def sparsify_maybe(dist_matrix):
-            return dok_array(dist_matrix)
-
-    else:
-
-        def sparsify_maybe(dist_matrix):
-            return dist_matrix
+    def sparsify_maybe(mat, sparse: bool):
+        if sparse:
+            return dok_array(mat, dtype=mat.dtype)
+        return mat
 
     if all_subfaults is None:
+        logging.info("  getting subsections from faults")
         all_subfaults = [
             get_subsections_from_fault(fault, surface=fault['surface'])
             for fault in faults
         ]
 
+    logging.info("  making single-fault ruptures")
     single_fault_rups, single_fault_rup_df = get_all_single_fault_rups(
         all_subfaults
     )
@@ -468,17 +471,21 @@ def get_rupture_adjacency_matrix(
 
     # increasing distance to make up for discrepancy between bb dist and
     # actual rupture distances; this is a filtering step.
+    logging.info("  calculating fault distances")
     fault_dists = get_close_faults(faults, max_dist=max_dist * 1.5)
 
     # fault_dists = {(i, j): d for i, j, d in fault_dists}
 
-    dist_adj_matrix = sparsify_maybe(
-        np.zeros((nrups, nrups), dtype=np.float32)
-    )
+    logging.info(f"  making dist_adj_matrix {(nrups, nrups)}")
+    if sparse:
+        dist_adj_matrix = dok_array((nrups, nrups), dtype=np.float32)
+    else:
+        dist_adj_matrix = np.zeros((nrups, nrups), dtype=np.float32)
 
     if max_dist is None:
         max_dist = np.inf
 
+    logging.info("  filtering and calculating pairwise rupture distances")
     if full_fault_only_mf_ruptures:
         fault_lookup = {fault['fid']: i for i, fault in enumerate(faults)}
 
@@ -565,7 +572,7 @@ def get_rupture_adjacency_matrix(
                     dist_adj_matrix[
                         row_count : row_count + nrows,
                         col_count : col_count + ncols,
-                    ] = sparsify_maybe(local_dist_matrix)
+                    ] = sparsify_maybe(local_dist_matrix, sparse)
 
                 col_count += ncols
             row_count += nrows
@@ -783,14 +790,6 @@ def get_proximal_rup_angles(
         Dictionary of rupture angles. The keys are tuples of rupture indices,
         and the values are tuples of rupture angles in degrees.
     """
-    if not isinstance(sf_traces[0], Line):
-        if verbose:
-            print(" getting traces from faults")
-        sf_traces = [
-            Line([Point(*coords) for coords in trace]) for trace in sf_traces
-        ]
-
-    rup_angles = {}
     n_faults = len(sf_traces)
     pad_width = len(str(n_faults))
 
@@ -798,8 +797,23 @@ def get_proximal_rup_angles(
     nonzero_pairs = list(binary_distance_matrix.keys())
     total_pairs = len(nonzero_pairs)
 
-    if verbose:
-        print(f" Processing {total_pairs} proximal fault pairs")
+    convert_from_coords = not isinstance(sf_traces[0], Line)
+    if convert_from_coords and verbose:
+        print(" getting traces from faults")
+
+    proximal_traces: dict[int, Line] = {}
+    for i, j in nonzero_pairs:
+        for k in (i, j):
+            if k not in proximal_traces:
+                trace = sf_traces[k]
+                if convert_from_coords:
+                    proximal_traces[k] = Line(
+                        [Point(*coords) for coords in trace]
+                    )
+                else:
+                    proximal_traces[k] = trace
+
+    rup_angles = {}
 
     for idx, (i, j) in enumerate(nonzero_pairs, 1):
         if verbose:
@@ -811,8 +825,8 @@ def get_proximal_rup_angles(
             else:
                 print(f"  doing pair {idx} out of {total_pairs}")
 
-        trace_0 = sf_traces[i]
-        trace_1 = sf_traces[j]
+        trace_0 = proximal_traces[i]
+        trace_1 = proximal_traces[j]
         rup_angles[(i, j)] = find_intersection_angle(trace_0, trace_1)
 
     return rup_angles
@@ -944,10 +958,8 @@ def filter_bin_adj_matrix_by_rupture_overlap(
     threshold_angle: float = 45.0,
 ):
 
-    sf_meshes = make_sf_rupture_meshes(
-        single_rup_df['patches'], single_rup_df['fault'], subfaults
-    )
-    sf_traces = [get_trace_from_mesh(mesh) for mesh in sf_meshes]
+    sf_traces = get_trace_from_sf_rupture(single_rup_df, subfaults)
+    logging.info("   Getting proximal rup angles")
     rup_angles = get_proximal_rup_angles(sf_traces, binary_adjacence_matrix)
     fault_rake_lookup = {ff[0]['fid']: ff[0]['rake'] for ff in subfaults}
     rakes = {
@@ -964,6 +976,7 @@ def filter_bin_adj_matrix_by_rupture_overlap(
     else:
         strike_slip_filter = {k: True for k in rup_angles.keys()}
 
+    logging.info("   Calculating overlap")
     for (i, j), (int_pt, angle) in rup_angles.items():
         if angle < threshold_angle:
             if strike_slip_filter[(i, j)]:

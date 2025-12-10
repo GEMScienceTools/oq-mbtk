@@ -69,7 +69,7 @@ from openquake.fnm.rupture_connections import (
     make_binary_adjacency_matrix,
     get_proximal_rup_angles,
     filter_bin_adj_matrix_by_rupture_angle,
-    get_multifault_ruptures,
+    get_multifault_ruptures_fast,
     rdist_to_dist_matrix,
     get_mf_distances_from_adj_matrix,
     make_binary_adjacency_matrix_sparse,
@@ -92,6 +92,7 @@ from openquake.fnm.rupture_connections import (
     find_connected_subgraphs,
     get_multifault_rupture_distances,
     subgraphs_from_connected_components,
+    get_rupture_grouping,
 )
 
 HERE = pathlib.Path(__file__).parent.absolute()
@@ -1243,88 +1244,40 @@ class Test3Faults(unittest.TestCase):
         np.testing.assert_array_equal(dist_mat, dist_mat_)
 
     def test_get_multifault_ruptures_1(self):
-        # simple test with out long rups, because this was the dist matrix
-        # that I had on hand
-        dist_adj_matrix = np.array(
-            [
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 19.357016, 3.1237752],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 19.357016, 3.1237752],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 19.357016, 3.1237752],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.93904],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.93904],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [
-                    19.357016,
-                    19.357016,
-                    19.357016,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.4397656,
-                ],
-                [
-                    3.1237752,
-                    3.1237752,
-                    3.1237752,
-                    15.93904,
-                    15.93904,
-                    0.0,
-                    0.4397656,
-                    0.0,
-                ],
-            ],
-            dtype=np.float32,
-        )
-
-        multifault_ruptures = get_multifault_ruptures(
-            dist_adj_matrix, max_dist=10.0
-        )
-
-        multifault_ruptures_ = [
-            [0, 2, 6, 7],
-            [0, 1, 7],
-            [0, 2, 3, 6, 7],
-            [2, 6],
-            [1, 3, 6, 7],
-            [1, 2, 6, 7],
-            [0, 2, 4, 6, 7],
-            [0, 4, 7],
-            [1, 4, 7],
-            [0, 6],
-            [1, 7],
-            [0, 2, 6],
-            [1, 2, 7],
-            [1, 3, 7],
-            [1, 6, 7],
-            [0, 1, 6, 7],
-            [0, 7],
-            [1, 6],
-            [1, 2, 6],
-            [0, 2, 7],
-            [4, 7],
-            [1, 2, 4, 6, 7],
-            [3, 4, 7],
-            [3, 7],
-            [2, 6, 7],
-            [2, 3, 7],
-            [0, 3, 6, 7],
-            [0, 1, 6],
-            [2, 7],
-            [2, 4, 7],
-            [0, 1, 2, 6, 7],
-            [0, 3, 7],
-            [0, 1, 4, 6, 7],
-            [0, 6, 7],
-            [0, 1, 3, 6, 7],
-            [1, 2, 3, 6, 7],
-            [2, 3, 6, 7],
-            [1, 4, 6, 7],
-            [2, 4, 6, 7],
-            [0, 4, 6, 7],
+        all_subs = [
+            get_subsections_from_fault(
+                fault, subsection_size=[15, 15], surface=fault['surface']
+            )
+            for fault in self.faults
         ]
 
-        assert multifault_ruptures == multifault_ruptures_
+        single_rup_df, dist_mat = get_rupture_adjacency_matrix(
+            self.faults,
+            all_subfaults=all_subs,
+            max_dist=10.0,
+            full_fault_only_mf_ruptures=False,
+        )
+
+        bm = make_binary_adjacency_matrix_sparse(dist_mat, max_dist=10.0)
+        rup_groups = get_rupture_grouping(self.faults, single_rup_df)
+
+        mf_rups = get_multifault_ruptures_fast(
+            bm,
+            rup_groups=rup_groups,
+            max_sf_rups_per_mf_rup=7,
+        )
+
+        multifault_ruptures = [
+            [1, 7],
+            [2, 6, 7],
+            [0, 6, 7],
+            [6, 7],
+            [1, 6, 7],
+            [0, 7],
+            [2, 7],
+        ]
+
+        assert mf_rups == multifault_ruptures
 
     def test_get_mf_distances_from_adj_matrix_1(self):
         dist_adj_matrix = np.array(
