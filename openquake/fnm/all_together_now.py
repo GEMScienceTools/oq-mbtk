@@ -67,7 +67,12 @@ default_settings = {
     'rupture_angle_threshold': 60.0,
     'filter_by_plausibility': True,
     'filter_by_overlap': True,
-    'rupture_filtering_connection_distance_plausibility_threshold': 0.1,
+    'rupture_filtering_connection_distance_function': 'exponent',
+    'rupture_filtering_connection_angle_function': 'cosine',
+    'rupture_filtering_slip_azimuth_function': 'cosine',
+    'rupture_filtering_connection_distance_midpoint': None,
+    'rupture_filtering_connection_angle_midpoint': 90.0,
+    'rupture_filtering_slip_azimuth_midpoint': 90.0,
     'skip_bad_faults': False,
     'shear_modulus': SHEAR_MODULUS,
     'fault_mfd_b_value': 1.0,
@@ -142,6 +147,12 @@ def build_fault_network(
     build_settings.update(kwargs)
 
     settings = build_settings
+    if (
+        settings["rupture_filtering_connection_distance_midpoint"] is None
+    ):
+        settings["rupture_filtering_connection_distance_midpoint"] = settings[
+            "max_jump_distance"
+        ] / 2.0
 
     fault_network = {}
 
@@ -353,7 +364,24 @@ def build_fault_network(
             bin_adj_mat=binary_adjacence_matrix,
             single_rup_df=fault_network['single_rup_df'],
             subfaults=fault_network['subfaults'],
-            connection_distance_midpoint=settings['max_jump_distance'],
+            connection_distance_function=settings[
+                'rupture_filtering_connection_distance_function'
+            ],
+            connection_angle_function=settings[
+                'rupture_filtering_connection_angle_function'
+            ],
+            slip_azimuth_function=settings[
+                'rupture_filtering_slip_azimuth_function'
+            ],
+            connection_distance_midpoint=settings[
+                'rupture_filtering_connection_distance_midpoint'
+            ],
+            connection_angle_midpoint=settings[
+                'rupture_filtering_connection_angle_midpoint'
+            ],
+            slip_azimuth_midpoint=settings[
+                'rupture_filtering_slip_azimuth_midpoint'
+            ],
         )
 
         fault_network['rupture_df_keep'] = (
