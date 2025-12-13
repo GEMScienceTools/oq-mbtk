@@ -1,0 +1,61 @@
+openquake.man.tools package
+===========================
+
+Submodules
+----------
+
+openquake.man.tools.csv\_output module
+--------------------------------------
+
+.. automodule:: openquake.man.tools.csv_output
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tools.csv\_site module
+------------------------------------
+
+.. automodule:: openquake.man.tools.csv_site
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tools.plot\_3d\_disagg module
+-------------------------------------------
+
+.. automodule:: openquake.man.tools.plot_3d_disagg
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tools.plot\_disagg\_LLT module
+--------------------------------------------
+
+.. automodule:: openquake.man.tools.plot_disagg_LLT
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tools.plot\_disagg\_MDE module
+--------------------------------------------
+
+.. automodule:: openquake.man.tools.plot_disagg_MDE
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tools.read\_results module
+----------------------------------------
+
+.. automodule:: openquake.man.tools.read_results
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.man.tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
