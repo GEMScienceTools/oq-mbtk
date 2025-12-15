@@ -632,11 +632,11 @@ Comparing GMPEs
 
         [models.12-ModifiableGMPE]
         gmpe='BooreEtAl2014'
-        site_term='NRCan15SiteTerm' # Use NRCan15 non-linear site term
+        site_term='NRCan15SiteTerm' # Use NRCan15 site term
         
         [models.13-ModifiableGMPE]
         gmpe='BooreEtAl2014'
-        site_term='NRCan15SiteTermLinear' # Use NRCan15 linear site term
+        site_term='NRCan15SiteTermLinear' # Use NRCan15 linear-only site term
 
         [models.14-ModifiableGMPE]
         gmpe='AtkinsonMacias2009'

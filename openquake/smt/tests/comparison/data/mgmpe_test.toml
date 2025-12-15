@@ -83,11 +83,11 @@ site_term = "BSSA14SiteTerm"
 
 [models.11-ModifiableGMPE]
 gmpe = 'BooreEtAl2014'
-site_term = 'NRCan15SiteTerm' # use NRCan15 non-linear site term
+site_term = 'NRCan15SiteTerm' # use NRCan15 site term ("base" kind)
 
 [models.12-ModifiableGMPE]
 gmpe = 'BooreEtAl2014'
-site_term = 'NRCan15SiteTermLinear' # use NRCan15 linear site term
+site_term = 'NRCan15SiteTermLinear' # use NRCan15 site term ("linear" kind)
 
 [models.13-ModifiableGMPE]
 gmpe = 'CampbellBozorgnia2014'
