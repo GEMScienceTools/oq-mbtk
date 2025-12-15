@@ -450,11 +450,11 @@ def build_mgmpe(gmpe):
     # BSSA14SiteTerm
     if "BSSA14SiteTerm" in gmpe: kw_mgmpe['bssa14_site_term'] = {}
 
-    # NRCan15SiteTerm (Regular)
+    # NRCan15SiteTerm ("base" kind)
     if ('NRCan15SiteTerm' in gmpe and 'NRCan15SiteTermLinear' not in gmpe):
         kw_mgmpe['nrcan15_site_term'] = {'kind': 'base'}
 
-    # NRCan15SiteTerm (linear)
+    # NRCan15SiteTerm ("linear" kind)
     if 'NRCan15SiteTermLinear' in gmpe:
         kw_mgmpe['nrcan15_site_term'] = {'kind': 'linear'}
 
