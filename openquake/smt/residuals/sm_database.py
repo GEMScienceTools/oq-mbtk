@@ -484,10 +484,13 @@ class RecordSite(object):
             vs30_measured = self.vs30_measured
 
         if self.z1pt0:
-            z1pt0 = self.z1pt0
-
+            z1pt0 = np.max(1E-09, self.z1pt0) # HACK to avoid error when making
+                                              # Site object with z1pt0 = 0 m, as
+                                              # is case for some NGASUB stations
         if self.z2pt5:
-            z2pt5 = self.z2pt5
+            z2pt5 = np.max(1E-09, self.z2pt5) # HACK to avoid error when making
+                                              # Site object with z2pt5 = 0 km as
+                                              # is case for some NGASUB stations
         
         location = Point(self.longitude,
                          self.latitude,
@@ -872,12 +875,21 @@ class GroundMotionDatabase(ContextDB):
         # Make site collection for given station
         pnt = Point(
             ctx.lons[idx_site], ctx.lats[idx_site], ctx.depths[idx_site])
+        if ctx.z1pt0[idx_site] == 0:
+            z1pt0 = 1E-09
+        else:
+            z1pt0 = ctx.z1pt0[idx_site]
+
+        if ctx.z2pt5[idx_site] == 0:
+            z2pt5 = 1E-09
+        else:
+            z2pt5 = ctx.z2pt5[idx_site]
+
         site = SiteCollection([
                     Site(
                         pnt,
                         ctx.vs30[idx_site],
-                        ctx.z1pt0[idx_site],
-                        ctx.z2pt5[idx_site]
+                        z1pt0, z2pt5,
                         )
                         ])
         
