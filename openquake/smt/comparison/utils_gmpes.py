@@ -36,17 +36,10 @@ from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
 from openquake.smt.utils import make_rup, clean_gmm_label
 
 
-def _get_first_point(rup, from_point):
+def _get_first_point(sfc, from_point):
     """
     Get the first point in the collection of sites from the rupture.
-    
-    Currently the SMT only computes ground-shaking for up or down-dip from the
-    up-dip edge centre point (rrup, rjb), or from midpoint of the rupture (repi,
-    rhypo). Will be expanded to include up-or-down dip from down-dip edge centre
-    point or from a vertex of the rupture.
     """
-    sfc = rup.surface
-
     if from_point == 'MP':
         return sfc.get_middle_point() # Get midpoint of rup surface
 
@@ -87,11 +80,11 @@ def get_sites_from_rupture(rup,
     :param rup:
         Rupture object
     :param from_point:
-        A string. Options: 'TC', 'TL', 'TR'
+        A string. Options: 'TC', 'TL', 'TR', 'BR', 'BL'
     :return:
         A :class:`openquake.hazardlib.site.SiteCollection` instance
     """
-    from_pnt = _get_first_point(rup, from_point)
+    from_pnt = _get_first_point(rup.surface, from_point)
     r_lon = from_pnt.longitude
     r_lat = from_pnt.latitude
     r_dep = 0
@@ -151,7 +144,7 @@ def get_sites_from_rupture(rup,
 
 def get_rup(mag, lon, lat, depth, ztor, aratio, strike, dip, rake, trt):
     """
-    Create an OQ rupture from the provided information.
+    Create an OQ rupture.
     """
     # If TRT specified assign it and an MSR
     if trt == 'active_crustal':
