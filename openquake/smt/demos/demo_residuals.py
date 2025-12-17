@@ -170,6 +170,9 @@ def main(flatfile=demo_flatfile,
     # Compute ranking metrics
     calc_ranking_metrics(res, out_dir)
 
+    # Remove the metadata to save disk space
+    shutil.rmtree(metadata_dir)
+
     # Print that workflow has finished
     print("Residual analysis workflow successfully completed.")
 
