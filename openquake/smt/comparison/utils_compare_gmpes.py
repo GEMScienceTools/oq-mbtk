@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Module with utility functions for generating trellis plots, response spectra,
-hierarchical clustering plots, Sammon maps and Euclidean distance matrix plots
+hierarchical clustering plots, Sammon maps and Euclidean distance matrix plots.
 """
 import os
 import numpy as np
@@ -38,7 +38,7 @@ from openquake.smt.comparison.utils_gmpes import (get_imtl_unit,
 
 def plot_trellis_util(config, output_directory):
     """
-    Generate trellis plots for given run configuration
+    Generate trellis plots for given run configuration.
     """    
     # Get mag and dep lists
     mag_list = config.mag_list
@@ -416,11 +416,11 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
 
 def plot_ratios_util(config, output_directory):
     """
-    Generate ratio (GMPE median attenuation/baseline GMPE median attenuation) 
-    plots for given run configuration
+    Generate ratio (GMPE median attenuation/baseline GMPE
+    median attenuation)  plots for given run configuration.
 
-    NOTE: The ratios of any specified GMC logic trees against the baseline GMM
-    are not computed/plotted.
+    NOTE: The ratios of any specified GMC logic trees against
+    the baseline GMM are not computed/plotted.
     """
     # Get mag and dep lists
     mag_list = config.mag_list
@@ -561,7 +561,8 @@ def compute_matrix_gmpes(config, mtxs_type):
         compute_matrix_gmpes (either median, 84th or 16th percentile)
     """
     # Get lt weights
-    lts = {gmc: getattr(config, config.lt_mapping[gmc]['wei']) for gmc in config.lt_mapping.keys()}
+    lts = {gmc: getattr(config, config.lt_mapping[gmc]['wei'])
+           for gmc in config.lt_mapping.keys()}
 
     # Get mag, imt and depth lists
     mag_list = config.mags_eucl
@@ -698,7 +699,7 @@ def plot_sammons_util(imt_list,
     :param gmpe_list:
         A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
     :param mtxs:
-        Matrix of predicted ground-motion for each gmpe per imt 
+        Matrix of predicted ground-motion for each gmpe per imt
     :param namefig:
         filename for outputted figure 
     :param mtxs_type:
@@ -781,8 +782,8 @@ def plot_sammons_util(imt_list,
 def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     """
     Plot hierarchical clusters for given run configuration. The weighted
-    mean of the GMPE predictions is plotted if GMM logic tree weights
-    are specified.
+    mean of the GMPE predictions is plotted if GMM logic tree weights are
+    specified.
     :param imt_list:
         A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
     :param gmpe_list:
@@ -872,7 +873,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 
 def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     """
-    Plot Euclidean distance matrices for given run configuration
+    Plot Euclidean distance matrices for given run configuration.
     :param imt_list:
         A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
     :param gmpe_list:
@@ -880,7 +881,7 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     :param mtxs:
         Matrix of predicted ground-motion for each gmpe per imt 
     :param namefig:
-        filename for outputted figure 
+        filename for outputted figure.
     :param mtxs_type:
         type of predicted ground-motion matrix being computed in
         compute_matrix_gmpes (either median or 84th or 16th percentile)
@@ -964,7 +965,7 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 ### Utils for plots
 def get_colors(custom_color_flag, custom_color_list):
     """
-    Get list of colors for plots
+    Get list of colors for plots.
     """
     colors = [
         '#0000FF',  # blue
@@ -1031,7 +1032,7 @@ def trellis_data(gmpe,
                  lt_weights):
     """
     Plot predictions of a single GMPE (if required) and compute weighted
-    predictions from logic tree(s) (again if required)
+    predictions from logic tree(s) (again if required).
     """
     # If plotting not only the logic trees, plot each GMPE
     if 'plot_lt_only' not in str(gmpe): 
@@ -1079,7 +1080,7 @@ def trel_logic_trees(config,
                      unit):
     """
     Manages plotting of the logic tree attenuation curves and
-    adds them to the store of exported attenuation curves 
+    adds them to the store of exported attenuation curves.
     """
     # If logic tree provided plot and add to attenuation curve store
     if gmc is not None:
@@ -1127,7 +1128,7 @@ def lt_trel(config,
             plus_sig_gmc,
             minus_sig_gmc):
     """
-    If required plot trellis from the GMPE logic tree(s)
+    If required plot trellis from the given GMPE logic tree.
     """
     # Get key describing mag-imt combo and some other event info  
     mk = (f'IMT = {i}, Mw = {m}, depth = {dep} km, dip = {dip} deg, rake = {rake} deg')
@@ -1166,7 +1167,7 @@ def lt_trel(config,
 
 def update_trellis_plots(m, i, n, l, dep, minR, maxR, r_vals, imt_list, dist_type):
     """
-    Add titles, axis labels and axis limits to trellis plots
+    Add titles, axis labels and axis limits to trellis plots.
     """
     # Get distance type label
     dt_label = get_dist_label(dist_type)
@@ -1251,7 +1252,7 @@ def _get_period_values_for_spectra_plots(max_period):
 
 def _get_imts(max_period):
     """
-    Convert period floats to imt classes
+    Convert period floats to imt classes.
     """
     # Get periods
     periods = _get_period_values_for_spectra_plots(max_period)
@@ -1338,7 +1339,7 @@ def lt_spectra(config,
                ltv,
                sk):
     """
-    Plot spectra for the GMPE logic tree
+    Plot spectra for the GMPE logic tree.
     """
     # Get identifier for given GMC in the toml GMMs
     check = f'lt_weight_gmc{key_gmc.split("lt_gmc_")[1]}'
@@ -1426,7 +1427,7 @@ def plot_obs_spectra(ax1,
                      eq_id,
                      st_id):
     """
-    Check if an observed spectra must be plotted, and if so plot
+    Check if an observed spectra must be plotted, and if so plot.
     """
     # Plot an observed spectra if inputted...
     if obs_spectra is not None and g == len(gmpe_list)-1:
@@ -1451,7 +1452,7 @@ def plot_obs_spectra(ax1,
         
 def update_spectra_plots(ax1, m, depth_g, i, n, l, dist_list, dist_type):
     """
-    Add titles and axis labels to spectra plots
+    Add titles and axis labels to spectra.
     """
     # Title
     ax1.set_title(f'Mw={m}, depth={depth_g}km, {dist_type}={i}km',
@@ -1468,7 +1469,7 @@ def update_spectra_plots(ax1, m, depth_g, i, n, l, dist_list, dist_type):
 
 def save_spectra_plot(f1, obs_spectra, output_dir, eq_id, st_id):
     """
-    Save the plotted response spectra
+    Save the plotted response spectra.
     """
     if obs_spectra is None:
         out = os.path.join(output_dir, 'ResponseSpectra.png')
@@ -1515,7 +1516,7 @@ def get_dist_label(dist_type):
 
 def update_ratio_plots(dist_type, m, i, n, l, imt_list, r_vals, minR, maxR):
     """
-    Add titles and axis labels to ratio plots
+    Add titles and axis labels to ratio plots.
     """
     # Get distance type label
     dt_label = get_dist_label(dist_type)    

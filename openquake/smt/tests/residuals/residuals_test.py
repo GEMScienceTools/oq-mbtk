@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Core test suite for the database and residuals construction
+Core test suite for the database and residuals construction.
 """
 import os
 import sys
@@ -42,7 +42,7 @@ TMP_XML = os.path.join(tempfile.mkdtemp(), 'gmc.xml')
 
 def compare_residuals(observed, expected):
     """
-    Compare lists of triple dictionaries gsim -> imt -> key -> values
+    Compare lists of triple dictionaries gsim -> imt -> key -> values.
     """
     tmpdir = tempfile.mkdtemp()
     Result(tmpdir).save(observed)
@@ -64,7 +64,7 @@ def compare_residuals(observed, expected):
 
 class Result:
     """
-    Logic to read and save the residuals as .py data files
+    Logic to read and save the residuals as .py data files.
     """
     def __init__(self, dname):
         self.dname = dname
@@ -110,13 +110,12 @@ EXP_STATIONS = [{gsim: RES_STATIONS.read(
 
 class ResidualsTestCase(unittest.TestCase):
     """
-    Core test case for the residuals objects
+    Core test case for the residuals objects.
     """
-
     @classmethod
     def setUpClass(cls):
         """
-        Setup constructs the database from the ESM test data
+        Setup constructs the database from the ESM test data.
         """
         # Make the database
         ifile = os.path.join(BASE, "residual_tests_data.csv")
@@ -148,14 +147,14 @@ class ResidualsTestCase(unittest.TestCase):
 
     def test_residual_values(self):
         """
-        Check correctness of values for computed residuals
+        Check correctness of values for computed residuals.
         """
         compare_residuals([self.residuals.residuals], [self.exp])
 
     def test_residuals_execution_from_toml(self):
         """
-        Tests basic execution of residuals when specifying gmpes and imts
-        from a toml file - not correctness of values
+        Tests basic execution of residuals when specifying gmpes
+        and imts from a toml file - not correctness of values.
         """
         residuals = res.Residuals.from_toml(self.toml)
         residuals.compute_residuals(self.database, component="Geometric")
@@ -163,8 +162,8 @@ class ResidualsTestCase(unittest.TestCase):
 
     def test_residuals_execution_from_xml(self):
         """
-        Tests basic execution of residuals when specifying gmpes from an
-        OQ GMC XML and the IMTs from a list.
+        Tests basic execution of residuals when specifying
+        gmpes from an OQ GMC XML and the IMTs from a list.
         """
         residuals = res.Residuals.from_xml(self.xml, self.imts)
         residuals.compute_residuals(self.database, component="Geometric")
@@ -181,7 +180,7 @@ class ResidualsTestCase(unittest.TestCase):
 
     def test_export_execution(self):
         """
-        Tests execution of the residuals exporting function
+        Tests execution of the residuals exporting function.
         """
         out_loc = os.path.join(self.out_location, "residuals.txt")
         self.residuals.export_residuals(out_loc)
@@ -189,28 +188,28 @@ class ResidualsTestCase(unittest.TestCase):
     def test_llh_execution(self):
         """
         Tests basic execution of loglikelihood score (Scherbaum et al.
-        2009) computation- not correctness of values
+        2009) computation- not correctness of values.
         """
         self.residuals.get_llh_values()
 
     def test_edr_execution(self):
         """
         Tests basic execution of EDR score (Scherbaum et al.
-        2004) computation- not correctness of values
+        2004) computation- not correctness of values.
         """
         self.residuals.get_edr_values()
           
     def test_stochastic_area_execution(self):
         """
         Tests basic execution of stochastic area metric scores (Sunny
-        et al. 2021) computation - not correctness of values
+        et al. 2021) computation - not correctness of values.
         """
         self.residuals.get_sto_wrt_imt()
 
     def test_plot_execution(self):
         """
         Tests execution of gmpe ranking metric plotting functions and
-        the means and stddevs plotting function
+        the means and stddevs plotting function.
         """
         # First compute the metrics
         self.residuals.get_llh_values()
@@ -310,6 +309,6 @@ class ResidualsTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """
-        Deletes the database
+        Deletes the database.
         """
         shutil.rmtree(cls.out_location)

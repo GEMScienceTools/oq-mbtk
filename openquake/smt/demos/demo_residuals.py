@@ -35,7 +35,7 @@ demo_out = os.path.join(BASE, 'outputs_demo_residual_analysis')
 
 def parse_into_metadata(flatfile, out_dir):
     """
-    Parse the flatfile into an SMT ground-motion database
+    Parse the flatfile into an SMT ground-motion database.
     """
     # Create new metadata directory
     metadata_dir = os.path.join(out_dir, 'metadata')
@@ -49,7 +49,7 @@ def parse_into_metadata(flatfile, out_dir):
 def get_residual_metadata(metadata_dir, gmms_imts, comp, out_dir):
     """
     Get the residuals for the requested GMMs and intensity
-    measure types
+    measure types.
     """
     # Get inputs
     metadata = os.path.join(metadata_dir, 'metadatafile.pkl')
@@ -75,7 +75,7 @@ def get_residual_metadata(metadata_dir, gmms_imts, comp, out_dir):
 def make_residual_plots(residuals, out_dir):
     """
     Generate various plots of the residual distributions and
-    also plot them with respect to magnitude and distance
+    also plot them with respect to magnitude and distance.
     """
     # Per GMM
     for gmm in residuals.gmpe_list:
@@ -101,7 +101,7 @@ def make_residual_plots(residuals, out_dir):
 
 def calc_ranking_metrics(residuals, out_dir):
     """
-    Compute LLH, EDR and Stochastic Area scores
+    Compute LLH, EDR and Stochastic Area scores.
     """
     # Compute llh, edr, stochastic area and residuals w.r.t. period
     residuals.get_llh_values()
@@ -148,7 +148,7 @@ def main(flatfile=demo_flatfile,
          comp=demo_comp,
          out_dir=demo_out):
     """
-    Run the demo residual analysis workflow
+    Run the demo residual analysis workflow.
     """
     # Print that workflow has begun
     print("Residual analysis workflow has started...")
@@ -178,4 +178,4 @@ def main(flatfile=demo_flatfile,
 
 
 if __name__ == '__main__':
-    main()   
+    main()

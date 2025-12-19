@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests for execution and expected values from mgmpe features when specified in
-an SMT format toml input file
+Tests for execution and expected values from mgmpe features when
+specified in an SMT format toml input file.
 """
 import os
 import pandas as pd
@@ -47,8 +47,8 @@ def matrix_to_df(matrix):
 
 class ModifyGroundMotionsTestCase(unittest.TestCase):
     """
-    Test case for the execution and expected values from mgmpe features when
-    specified within an SMT format TOML input file
+    Test case for the execution and expected values from mgmpe
+    features when specified within an SMT format TOML input file.
     """
     @classmethod 
     def setUpClass(self):
@@ -60,8 +60,8 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
     
     def test_mgmpe_from_toml(self):
         """
-        Check GMPEs modified using mgmpe features specified within the toml
-        are executed correctly and the expected values are returned
+        Check GMPEs modified using mgmpe features specified within the
+        toml are executed correctly and the expected values are returned.
         """
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
@@ -89,6 +89,6 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         """
-        Remove the test outputs
+        Remove the test outputs.
         """
         shutil.rmtree(self.output_directory)
