@@ -235,7 +235,7 @@ class Configurations(object):
         Manage the logic tree weight assigned for each GMPE in the toml (if any)
         """
         weight_keys = ['lt_weight_gmc1', 'lt_weight_gmc2', 'lt_weight_gmc3', 'lt_weight_gmc4']
-        weights = [{} for _ in weight_keys]
+        weights = {key: {} for key in weight_keys}
         msg = "Sum of GMC logic tree weights must be 1.0"
 
         # Get weight for each GMM if provided
@@ -245,28 +245,29 @@ class Configurations(object):
                 for line in lines:
                     for idx, key in enumerate(weight_keys):
                         if key in line:
-                            weights[idx][gmpe] = float(line.split('=')[1])
+                            weights[key][gmpe] = float(line.split('=')[1])
 
         # Check weights in each logic tree sum to 1
-        lt_weights = []
-        for idx, wt in enumerate(weights):
-            if wt:
-                total_weight = np.sum(pd.Series(wt))
-                assert abs(total_weight - 1.0) < 1e-10, msg
-                lt_weights.append(wt)
+        lt_weights = {}
+        for wt in weights:
+            wei = weights[wt]
+            if wei:
+                assert abs(np.sum(pd.Series(wei)) - 1.0) < 1e-10, msg
+                lt_weights[wt] = wei
                 # Also check that "plot_lt_only" if specified is uniformly applied
-                if (not all("plot_lt_only" in gmm for gmm in list(wt.keys()))
+                if (not all("plot_lt_only" in gmm for gmm in list(wei.keys()))
                     and
-                    any("plot_lt_only" in gmm for gmm in list(wt.keys()))):
+                    any("plot_lt_only" in gmm for gmm in list(wei.keys()))):
+                    gmc_label = wt.replace("_weight", "")
                     raise ValueError(f"Plotting of only the logic tree must be "
                                      f"consistently specified across all GMMs in the "
-                                     f"given logic tree (check logic tree {idx+1})")
+                                     f"given logic tree (check logic tree {gmc_label})")
             else:
-                lt_weights.append(None)
+                lt_weights[wt] = None
 
         # Add to config object
-        for idx_lt, lt in enumerate(lt_weights):
-            setattr(self, f'lt_weights_gmc{idx_lt+1}', lt)
+        for lt in lt_weights:
+            setattr(self, lt, lt_weights[lt])
 
     def get_gmms_xml(self, xml_dic):
         """
@@ -325,8 +326,8 @@ class Configurations(object):
         
         # Add GMC LT weights
         for idx_lt, lt in enumerate(lt_weight):
-            setattr(self, f'lt_weights_gmc{idx_lt+1}', lt)
-
+            setattr(self, f'lt_weight_gmc{idx_lt+1}', lt)
+            
         # Cannot set baseline gmm if using GMC XML
         setattr(self, 'baseline_gmm', None) 
 
