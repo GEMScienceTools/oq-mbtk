@@ -681,97 +681,6 @@ def compute_matrix_gmpes(config, mtxs_type):
 
     return mtxs_median
 
-
-def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
-    """
-    Plot Euclidean distance matrices for given run configuration
-    :param imt_list:
-        A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
-    :param gmpe_list:
-        A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
-    :param mtxs:
-        Matrix of predicted ground-motion for each gmpe per imt 
-    :param namefig:
-        filename for outputted figure 
-    :param mtxs_type:
-        type of predicted ground-motion matrix being computed in
-        compute_matrix_gmpes (either median or 84th or 16th percentile)
-    """
-    # Euclidean
-    matrix_dist = {}
-
-    # Loop over IMTs
-    for i, imt in enumerate(imt_list):
-
-        # Get the data matrix
-        data = mtxs[imt]   
-
-        # gmm labels and configs
-        labels = gmpe_list.copy()
-        gmm_configs = mtxs['gmpe_list'].copy()
-
-        # Add the weighted LTs if any too
-        for key in mtxs.keys():
-            check = f"{imt}_lt_gmc"
-            if check in key:
-                data = np.vstack((data, mtxs[key]))
-                labels.append(key.split("_")[1]) # Add label
-                gmm_configs.append(check)
-
-        # If only need gmm LT drop the gmms included in it
-        keep = np.array(['plot_lt_only' not in gmm for gmm in gmm_configs])
-        data = data[keep] 
-        labels = [gmm for k, gmm in zip(keep, labels) if k]
-
-        # Agglomerative clustering
-        dist = squareform(pdist(data, 'euclidean'))
-        matrix_dist[i] = dist
-
-    # Create the figure
-    ncols = 2
-    
-    if len(imt_list) < 3:
-        nrows = 1
-    else:
-        nrows = int(np.ceil(len(imt_list) / 2)) 
-    
-    fig, axs = pyplot.subplots(nrows, ncols)
-    fig.set_size_inches(12, 6*nrows)
-
-    for i, imt in enumerate(imt_list):                
-        if len(imt_list) < 3:
-            ax = axs[i]
-        else:
-            ax = axs[np.unravel_index(i, (nrows, ncols))]           
-        ax.imshow(matrix_dist[i], cmap='gray') 
-        
-        # Add title
-        if mtxs_type == 'median':
-            ax.set_title(str(imt) + ' (median)', fontsize='14')
-        elif mtxs_type == '84th_perc':
-            ax.set_title(str(imt) + ' (84th percentile)', fontsize='14')
-        else:
-            assert mtxs_type == '16th_perc'
-            ax.set_title(str(imt) + ' (16th percentile)', fontsize='14')
-
-        # Add axis ticks
-        ax.xaxis.set_ticks([n for n in range(len(labels))])
-        ax.xaxis.set_ticklabels(labels, rotation=40)
-        ax.yaxis.set_ticks([n for n in range(len(labels))])
-        ax.yaxis.set_ticklabels(labels)
-
-    # Remove final plot if not required
-    if len(imt_list) >= 3 and len(imt_list)/2 != int(len(imt_list)/2):
-        ax = axs[np.unravel_index(i+1, (nrows, ncols))]
-        ax.set_visible(False)
-
-    # Save
-    pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
-    pyplot.tight_layout()        
-    pyplot.close()
-    
-    return matrix_dist
-
     
 def plot_sammons_util(imt_list,
                       gmpe_list,
@@ -807,10 +716,10 @@ def plot_sammons_util(imt_list,
     fig.set_size_inches(12, 6*nrows)
     
     coo_per_imt = {}
-    for n, i in enumerate(imt_list):
+    for i, imt in enumerate(imt_list):
 
         # Get the data matrix
-        data = mtxs[i]
+        data = mtxs[imt]
 
         # gmm labels and configs
         labels = gmpe_list.copy()
@@ -818,10 +727,10 @@ def plot_sammons_util(imt_list,
 
         # Add the weighted LTs if any too
         for key in mtxs.keys():
-            check = f"{i}_lt_gmc"
+            check = f"{imt}_lt_gmc"
             if check in key:
                 data = np.vstack((data, mtxs[key]))
-                labels.append(key.split("_")[1]) # Add label
+                labels.append(key.split(f"{imt}_")[1]) # Add label for the gmc
                 gmm_configs.append(check)
 
         # If only need gmm LT drop the gmms included in it
@@ -831,8 +740,8 @@ def plot_sammons_util(imt_list,
 
         # Sammon mapping
         coo, cost = sammon(data, display=1) # NOTE: each gmm's array in coo has a structure of
-        coo_per_imt[i] = coo                # of [idx1, idx2, dist, npoints] where idx1 and idx2
-        fig.add_subplot(nrows, 2, n+1)      # are merged at distance of dist into a cluster which
+        coo_per_imt[imt] = coo                # of [idx1, idx2, dist, npoints] where idx1 and idx2
+        fig.add_subplot(nrows, 2, i+1)      # are merged at distance of dist into a cluster which
         for g, gmpe in enumerate(labels):   # containing npoints points
 
             # Get colors and marker
@@ -851,14 +760,14 @@ def plot_sammons_util(imt_list,
                                      color=col))
             
         # Format plot
-        pyplot.title(str(i), fontsize='16')
+        pyplot.title(str(imt), fontsize='16')
         if mtxs_type == 'median':
-            pyplot.title(str(i) + ' (median)', fontsize='14')
+            pyplot.title(str(imt) + ' (median)', fontsize='14')
         elif mtxs_type == '84th_perc':
-            pyplot.title(str(i) + ' (84th percentile)', fontsize='14')
+            pyplot.title(str(imt) + ' (84th percentile)', fontsize='14')
         else:
             assert mtxs_type == '16th_perc'
-            pyplot.title(str(i) + ' (16th percentile)', fontsize='14')
+            pyplot.title(str(imt) + ' (16th percentile)', fontsize='14')
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
     # Tidy and save
@@ -896,10 +805,10 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     ymax = [0] * len(imt_list)
 
     # Loop over IMTs
-    for n, i in enumerate(imt_list):
+    for i, imt in enumerate(imt_list):
 
         # Get the data matrix
-        data = mtxs[i]
+        data = mtxs[imt]
 
         # gmm labels and configs 
         labels = gmpe_list.copy()
@@ -907,10 +816,10 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         
         # Add the weighted LTs if any too
         for key in mtxs.keys():
-            check = f"{i}_lt_gmc"
+            check = f"{imt}_lt_gmc"
             if check in key:
                 data = np.vstack((data, mtxs[key]))
-                labels.append(key.split("_")[1]) # Add label
+                labels.append(key.split(f"{imt}_")[1]) # Add label for LT
                 gmm_configs.append(check)
 
         # If only need gmm LT drop the gmms included in it
@@ -921,34 +830,34 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         # Agglomerative clustering
         Z = hierarchy.linkage(
             data, method='ward', metric='euclidean', optimal_ordering=True)
-        matrix_z[n] = Z
-        ymax[n] = Z.max(axis=0)[2]
+        matrix_z[imt] = Z
+        ymax[i] = Z.max(axis=0)[2]
 
     # Create the figure
     fig, axs = pyplot.subplots(nrows, ncols)
     fig.set_size_inches(12, 6*nrows)
 
-    for n, i in enumerate(imt_list):
+    for i, imt in enumerate(imt_list):
         if len(imt_list) < 3:
-            ax = axs[n]
+            ax = axs[i]
         else:
-            ax = axs[np.unravel_index(n, (nrows, ncols))]       
+            ax = axs[np.unravel_index(i, (nrows, ncols))]       
         
         # Plot dendrogram
         dn1 = hierarchy.dendrogram(
-            matrix_z[n], ax=ax, orientation='right', labels=labels)
+            matrix_z[imt], ax=ax, orientation='right', labels=labels)
         ax.set_xlabel('Euclidean Distance', fontsize='12')
         if mtxs_type == 'median':
-            ax.set_title(str(i) + ' (median)', fontsize='12')
+            ax.set_title(str(imt) + ' (median)', fontsize='12')
         elif mtxs_type == '84th_perc':
-            ax.set_title(str(i) + ' (84th percentile)', fontsize='12')
+            ax.set_title(str(imt) + ' (84th percentile)', fontsize='12')
         else:
             assert mtxs_type == '16th_perc'
-            ax.set_title(str(i) + ' (16th percentile)', fontsize='12')
+            ax.set_title(str(imt) + ' (16th percentile)', fontsize='12')
             
     # Remove final plot if not required
     if len(imt_list) >= 3 and len(imt_list)/2 != int(len(imt_list)/2):
-        ax = axs[np.unravel_index(n+1, (nrows, ncols))]
+        ax = axs[np.unravel_index(i+1, (nrows, ncols))]
         ax.set_visible(False)
     if len(imt_list) == 1:
         axs[1].set_visible(False)
@@ -959,6 +868,97 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
     pyplot.close()
     
     return matrix_z
+
+
+def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
+    """
+    Plot Euclidean distance matrices for given run configuration
+    :param imt_list:
+        A list e.g. ['PGA', 'SA(0.1)', 'SA(1.0)']
+    :param gmpe_list:
+        A list e.g. ['BooreEtAl2014', 'CauzziEtAl2014']
+    :param mtxs:
+        Matrix of predicted ground-motion for each gmpe per imt 
+    :param namefig:
+        filename for outputted figure 
+    :param mtxs_type:
+        type of predicted ground-motion matrix being computed in
+        compute_matrix_gmpes (either median or 84th or 16th percentile)
+    """
+    # Euclidean
+    matrix_dist = {}
+
+    # Loop over IMTs
+    for i, imt in enumerate(imt_list):
+
+        # Get the data matrix
+        data = mtxs[imt]   
+
+        # gmm labels and configs
+        labels = gmpe_list.copy()
+        gmm_configs = mtxs['gmpe_list'].copy()
+
+        # Add the weighted LTs if any too
+        for key in mtxs.keys():
+            check = f"{imt}_lt_gmc"
+            if check in key:
+                data = np.vstack((data, mtxs[key]))
+                labels.append(key.split(f"{imt}_")[1]) # Add label
+                gmm_configs.append(check)
+
+        # If only need gmm LT drop the gmms included in it
+        keep = np.array(['plot_lt_only' not in gmm for gmm in gmm_configs])
+        data = data[keep] 
+        labels = [gmm for k, gmm in zip(keep, labels) if k]
+
+        # Agglomerative clustering
+        dist = squareform(pdist(data, 'euclidean'))
+        matrix_dist[imt] = dist
+
+    # Create the figure
+    ncols = 2
+    
+    if len(imt_list) < 3:
+        nrows = 1
+    else:
+        nrows = int(np.ceil(len(imt_list) / 2)) 
+    
+    fig, axs = pyplot.subplots(nrows, ncols)
+    fig.set_size_inches(12, 6*nrows)
+
+    for i, imt in enumerate(imt_list):                
+        if len(imt_list) < 3:
+            ax = axs[i]
+        else:
+            ax = axs[np.unravel_index(i, (nrows, ncols))]           
+        ax.imshow(matrix_dist[imt], cmap='gray') 
+        
+        # Add title
+        if mtxs_type == 'median':
+            ax.set_title(str(imt) + ' (median)', fontsize='14')
+        elif mtxs_type == '84th_perc':
+            ax.set_title(str(imt) + ' (84th percentile)', fontsize='14')
+        else:
+            assert mtxs_type == '16th_perc'
+            ax.set_title(str(imt) + ' (16th percentile)', fontsize='14')
+
+        # Add axis ticks
+        ax.xaxis.set_ticks([n for n in range(len(labels))])
+        ax.xaxis.set_ticklabels(labels, rotation=40)
+        ax.yaxis.set_ticks([n for n in range(len(labels))])
+        ax.yaxis.set_ticklabels(labels)
+
+    # Remove final plot if not required
+    if len(imt_list) >= 3 and len(imt_list)/2 != int(len(imt_list)/2):
+        ax = axs[np.unravel_index(i+1, (nrows, ncols))]
+        ax.set_visible(False)
+
+    # Save
+    pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.2)
+    pyplot.tight_layout()        
+    pyplot.close()
+    
+    return matrix_dist
 
 
 ### Utils for plots

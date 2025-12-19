@@ -156,7 +156,7 @@ class ComparisonTestCase(unittest.TestCase):
             self.assertEqual(list(coo_per_imt.keys()), [imt for imt in TARGET_IMTS])
             
             # Check for each IMT we have correct number of values
-            for imt in TARGET_IMTS:
+            for imt in config.imt_list:
                 self.assertEqual(len(coo_per_imt[imt]), TARGET_EUCL)
 
     def test_clustering(self):
@@ -185,7 +185,7 @@ class ComparisonTestCase(unittest.TestCase):
             self.assertEqual(len(z_matrix), len(TARGET_IMTS))
 
             # Check number of gmpes matches number of values in each IMT's array
-            for imt in range(0, len(z_matrix)):
+            for imt in config.imt_list:
                 for gmpe in range(0, len(z_matrix[imt])):
                     self.assertEqual(len(z_matrix[imt][gmpe]), len(TARGET_GMPES))
 
@@ -217,7 +217,7 @@ class ComparisonTestCase(unittest.TestCase):
             self.assertEqual(len(matrix_dist), len(TARGET_IMTS))
 
             # Check correct number of GMPEs within matrix_dist for each IMT
-            for imt in range(0, len(matrix_dist)):
+            for imt in config.imt_list:
                 self.assertEqual(len(matrix_dist[imt]), TARGET_EUCL)
 
     def test_trellis_and_spectra_functions(self):
