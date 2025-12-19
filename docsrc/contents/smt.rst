@@ -469,7 +469,7 @@ Comparing GMPEs
         trt = "Active Shallow Crust" # GMC LT to use from the provided XML (or set to "all" to use all LTs)
         plot_lt_only = false # If false plot the individual GMMs, if true then plot only the weighted mean LTs
 
-        [custom_colors]
+        [custom_plotting]
         custom_colors_flag = false # Set to true for custom colours in plots)
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
             

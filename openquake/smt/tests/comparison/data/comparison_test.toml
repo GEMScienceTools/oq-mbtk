@@ -51,7 +51,6 @@ lt_weight_gmc2_plot_lt_only = 0.5
 # Baseline GMM to compute ratios of the attenuation against (GMM/baseline)
 [ratios_baseline_gmm.BooreEtAl2014]
 
-
-[custom_colors]
+[custom_plotting]
 custom_colors_flag = false # Set to true for custom colours
 custom_colors_list = ['lime','dodgerblue','gold','0.8']

@@ -72,8 +72,8 @@ class Configurations(object):
             self.rup_params_from_file(config_file['rup_file'])
         
         # Get custom colors options
-        self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
-        self.custom_color_list = config_file['custom_colors']['custom_colors_list']
+        self.custom_color_flag = config_file['custom_plotting']['custom_colors_flag']
+        self.custom_color_list = config_file['custom_plotting']['custom_colors_list']
         
         # Check same length mag and depth lists to avoid indexing error
         assert len(self.mag_list) == len(self.depth_list)

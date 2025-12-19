@@ -120,6 +120,6 @@ kappa0 = 0.04
 gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true'
 site_term = 'BA08SiteTerm' # Arbitrary for testing execution of this capability
 
-[custom_colors]
+[custom_plotting]
 custom_colors_flag = false # Set to true for custom colours
 custom_colors_list = ['lime','dodgerblue','gold','0.8']
