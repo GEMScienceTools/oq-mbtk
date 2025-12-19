@@ -596,7 +596,7 @@ def reformat_att_curves(att_curves, out=None):
     # And export if required
     if out is not None:
         df.to_csv(out, index=False)
-
+        
     return df
 
 

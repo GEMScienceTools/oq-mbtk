@@ -39,7 +39,7 @@ from openquake.smt.comparison.utils_compare_gmpes import (compute_matrix_gmpes,
 BASE = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the target values for each run in the inputted .toml file
-TARGET_vs30 = 800
+TARGET_VS30 = 800
 TARGET_DEPTHS = [20, 25, 30]
 TARGET_RMIN = 0
 TARGET_RMAX = 300
@@ -59,6 +59,7 @@ TARGET_ZTOR = -999
 # Target for Euclidean distance analysis related matrices
 TARGET_EUCL = 4 # 2 GMMs (CY14, CB14), the lt made of them (gmc1) and
                 # the second lt (gmc2 - no individual GMMs considered)
+
 
 class ComparisonTestCase(unittest.TestCase):
     """
@@ -98,7 +99,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.assertEqual(config.ztor, TARGET_ZTOR)
 
         # Check for target vs30
-        self.assertEqual(config.vs30, TARGET_vs30)
+        self.assertEqual(config.vs30, TARGET_VS30)
 
         # Check for target depths
         np.testing.assert_allclose(config.depth_list, TARGET_DEPTHS)
@@ -160,8 +161,8 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Get lts
         lts = 0
-        for lt in [config.lt_weights_gmc1, config.lt_weights_gmc2,
-                   config.lt_weights_gmc3, config.lt_weights_gmc4]:
+        for lt in [config.lt_weight_gmc1, config.lt_weight_gmc2,
+                   config.lt_weight_gmc3, config.lt_weight_gmc4]:
             if lt is not None:
                 lts += 1
 
@@ -205,7 +206,7 @@ class ComparisonTestCase(unittest.TestCase):
             for gmpe in range(0, len(matrix_dist[imt])):
                 self.assertEqual(len(matrix_dist[imt][gmpe]), TARGET_EUCL)
 
-    def test_clustering_median(self):
+    def test_clustering(self):
         """
         Check clustering functions for median predicted ground-motion of
         considered GMPEs in the configuration
@@ -213,50 +214,23 @@ class ComparisonTestCase(unittest.TestCase):
         # Load config
         config = comp.Configurations(self.input_file)
 
-        # Get medians
-        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
+        # Get each percentile test the clustering
+        for perc in ["16th_perc", "median", "84th_perc"]:
+            mtxs = compute_matrix_gmpes(config, mtxs_type=perc)
         
-        # Get clustering matrix
-        Z_matrix = plot_cluster_util(
-            config.imt_list, config.gmpe_labels, mtxs_medians,
-            os.path.join(self.output_directory, 'Median_Clustering.png'),
-            mtxs_type='median')
+            # Get clustering matrix
+            Z_matrix = plot_cluster_util(
+                config.imt_list, config.gmpe_labels, mtxs,
+                os.path.join(self.output_directory, 'Median_Clustering.png'),
+                mtxs_type=mtxs)
 
-        # Check number of cluster arrays matches number of imts per config
-        self.assertEqual(len(Z_matrix), len(TARGET_IMTS))
+            # Check number of cluster arrays matches number of imts per config
+            self.assertEqual(len(Z_matrix), len(TARGET_IMTS))
 
-        # Check number of gmpes matches number of values in each array
-        for imt in range(0, len(Z_matrix)):
-            for gmpe in range(0, len(Z_matrix[imt])):
-                self.assertEqual(len(Z_matrix[imt][gmpe]), len(TARGET_GMPES))
-
-    def test_clustering_84th_perc(self):
-        """
-        Check clustering of 84th percentile of predicted ground-motion of
-        considered GMPEs in the configuration
-        """
-        # Load config
-        config = comp.Configurations(self.input_file)
-
-        # Get medians
-        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='84th_perc')
-        
-        # Get clustering matrix
-        lab = '84th_perc_Clustering_vs30.png'
-        Z_matrix = plot_cluster_util(
-            config.imt_list,
-            config.gmpe_labels,
-            mtxs_medians,
-            os.path.join(self.output_directory, lab),
-            mtxs_type='84th_perc')
-
-        # Check number of cluster arrays matches number of imts per config
-        self.assertEqual(len(Z_matrix), len(TARGET_IMTS))
-
-        # Check number of GMPEs matches number of values in each array
-        for imt in range(0, len(Z_matrix)):
-            for gmpe in range(0, len(Z_matrix[imt])):
-                self.assertEqual(len(Z_matrix[imt][gmpe]), len(TARGET_GMPES))
+            # Check number of gmpes matches number of values in each array
+            for imt in range(0, len(Z_matrix)):
+                for gmpe in range(0, len(Z_matrix[imt])):
+                    self.assertEqual(len(Z_matrix[imt][gmpe]), len(TARGET_GMPES))
 
     def test_trellis_and_spectra_functions(self):
         """

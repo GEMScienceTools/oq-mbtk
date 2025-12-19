@@ -71,11 +71,11 @@ c3_epsilon = -1.72
         
 # Plot logic tree only for the second GMC logic tree config (gmc2)
 [models.CampbellBozorgnia2014]
-lt_weight_gmc2_plot_lt_only = 0.50
+lt_weight_gmc3_plot_lt_only = 0.50
 estimate_ztor=true
 
 [models.AkkarEtAlRjb2014]
-lt_weight_gmc2_plot_lt_only = 0.50
+lt_weight_gmc3_plot_lt_only = 0.50
     
 # Also specify a GMM to compute ratios of the attenuation against (GMM/baseline)
 [ratios_baseline_gmm.BooreEtAl2020]
