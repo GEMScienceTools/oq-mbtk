@@ -71,7 +71,7 @@ class Configurations(object):
         else:
             self.rup_params_from_file(config_file['rup_file'])
         
-        # Get custom colors
+        # Get custom colors options
         self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
         self.custom_color_list = config_file['custom_colors']['custom_colors_list']
         
@@ -96,7 +96,14 @@ class Configurations(object):
         # Get params for Euclidean analysis if required
         if "euclidean_analysis" in config_file:
             self.get_eucl_params(config_file)
-            
+
+        # Mapping of LT info
+        self.lt_mapping = {
+            "lt_gmc_1": {"col": 'r', "wei": "lt_weight_gmc1", "label": "Logic Tree 1"},
+            "lt_gmc_2": {"col": 'b', "wei": "lt_weight_gmc2", "label": "Logic Tree 2"},
+            "lt_gmc_3": {"col": 'g', "wei": "lt_weight_gmc3", "label": "Logic Tree 3"},
+            "lt_gmc_4": {"col": 'k', "wei": "lt_weight_gmc4", "label": "Logic Tree 4"}}
+
     def get_general_params(self, config_file):
         """
         Get the general-use configuration parameters from the toml.

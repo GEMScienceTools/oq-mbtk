@@ -36,12 +36,6 @@ from openquake.smt.comparison.utils_gmpes import (get_imtl_unit,
                                                   gmpe_check)
 
 
-LT_MAPPING = {"lt_gmc_1": {"col": 'r', "wei": "lt_weight_gmc1", "label": "Logic Tree 1"},
-              "lt_gmc_2": {"col": 'b', "wei": "lt_weight_gmc2", "label": "Logic Tree 2"},
-              "lt_gmc_3": {"col": 'g', "wei": "lt_weight_gmc3", "label": "Logic Tree 3"},
-              "lt_gmc_4": {"col": 'k', "wei": "lt_weight_gmc4", "label": "Logic Tree 4"}}
-
-
 def plot_trellis_util(config, output_directory):
     """
     Generate trellis plots for given run configuration
@@ -51,10 +45,10 @@ def plot_trellis_util(config, output_directory):
     dep_list = config.depth_list
     
     # Median, plus sigma, minus sigma per gmc for up to 4 gmc logic trees
-    gmc_p= {lt: [{}, {}, {}] for lt in LT_MAPPING.keys()}
+    gmc_p= {lt: [{}, {}, {}] for lt in config.lt_mapping.keys()}
 
     # Get lt weights
-    lt_weights = {gmc: getattr(config, LT_MAPPING[gmc]['wei']) for gmc in gmc_p}
+    lt_weights = {gmc: getattr(config, config.lt_mapping[gmc]['wei']) for gmc in gmc_p}
     
     # Get config key
     cfg_key = f'vs30 = {config.vs30} m/s, GMM sigma epsilon = {config.nstd}'
@@ -171,7 +165,8 @@ def plot_trellis_util(config, output_directory):
                 
             # Plot logic trees if specified and also store
             for key_gmc in lt_weights:
-                store_gmm_curves = trel_logic_trees(key_gmc,
+                store_gmm_curves = trel_logic_trees(config,
+                                                    key_gmc,
                                                     lt_weights[key_gmc],
                                                     lt_vals_gmc[key_gmc],
                                                     gmc_p[key_gmc],
@@ -236,7 +231,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
         obs_spectra, eq_id, st_id = None, None, None
         
     # Get gmc lt weights
-    gmc_weights = {gmc: getattr(config, LT_MAPPING[gmc]['wei']) for gmc in LT_MAPPING.keys()}
+    gmc_weights = {gmc: getattr(config, config.lt_mapping[gmc]['wei']) for gmc in config.lt_mapping.keys()}
 
     # Get imts and max period
     imt_list, periods = _get_imts(max_period)
@@ -391,7 +386,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             # Plot logic trees if required
             for key_gmc in gmc_weights:
                 if gmc_vals[key_gmc][0] != {}: # If none empty LT
-                    lt_vals[key_gmc][sk] = lt_spectra(ax1,
+                    lt_vals[key_gmc][sk] = lt_spectra(config,
+                                                      ax1,
                                                       config.gmpes_list,
                                                       config.nstd,
                                                       periods,
@@ -565,7 +561,7 @@ def compute_matrix_gmpes(config, mtxs_type):
         compute_matrix_gmpes (either median, 84th or 16th percentile)
     """
     # Get lt weights
-    lts = {gmc: getattr(config, LT_MAPPING[gmc]['wei']) for gmc in LT_MAPPING.keys()}
+    lts = {gmc: getattr(config, config.lt_mapping[gmc]['wei']) for gmc in config.lt_mapping.keys()}
 
     # Get mag, imt and depth lists
     mag_list = config.mags_eucl
@@ -582,7 +578,7 @@ def compute_matrix_gmpes(config, mtxs_type):
 
         # Need to also store GMM LT weighted medians
         lt_preds = {
-            lt: {gm: [] for gm in getattr(config, LT_MAPPING[lt]['wei'])}
+            lt: {gm: [] for gm in getattr(config, config.lt_mapping[lt]['wei'])}
             for lt in lts if lts[lt] is not None
             }
         
@@ -1066,7 +1062,8 @@ def trellis_data(gmpe,
     return lt_vals_gmc
 
 
-def trel_logic_trees(key_gmc,
+def trel_logic_trees(config,
+                     key_gmc,
                      gmc,
                      lt_vals_gmc,
                      gmc_p,
@@ -1086,7 +1083,8 @@ def trel_logic_trees(key_gmc,
     """
     # If logic tree provided plot and add to attenuation curve store
     if gmc is not None:
-        median, plus_sig, minus_sig = lt_trel(r_vals,
+        median, plus_sig, minus_sig = lt_trel(config,
+                                              r_vals,
                                               nstd,
                                               i,
                                               m,
@@ -1115,7 +1113,8 @@ def trel_logic_trees(key_gmc,
     return store_gmm_curves
 
 
-def lt_trel(r_vals,
+def lt_trel(config,
+            r_vals,
             nstd,
             i,
             m,
@@ -1141,9 +1140,9 @@ def lt_trel(r_vals,
     pyplot.plot(r_vals,
                 lt_median,
                 linewidth=2,
-                color=LT_MAPPING[key_gmc]["col"],
+                color=config.lt_mapping[key_gmc]["col"],
                 linestyle='--',
-                label=LT_MAPPING[key_gmc]['label'],
+                label=config.lt_mapping[key_gmc]['label'],
                 zorder=100)
 
     if nstd > 0:
@@ -1158,7 +1157,7 @@ def lt_trel(r_vals,
             pyplot.plot(r_vals,
                         sigma_val,
                         linewidth=0.75,
-                        color=LT_MAPPING[key_gmc]["col"],
+                        color=config.lt_mapping[key_gmc]["col"],
                         linestyle='-.',
                         zorder=100)
 
@@ -1330,7 +1329,8 @@ def spectra_data(gmpe,
                      }
 
 
-def lt_spectra(ax1,
+def lt_spectra(config,
+               ax1,
                gmpe_list,
                nstd,
                period,
@@ -1367,9 +1367,9 @@ def lt_spectra(ax1,
     ax1.plot(period,
              list(lt_median.values()),
              linewidth=2,
-             color=LT_MAPPING[key_gmc]["col"],
+             color=config.lt_mapping[key_gmc]["col"],
              linestyle='--',
-             label=LT_MAPPING[key_gmc]['label'],
+             label=config.lt_mapping[key_gmc]['label'],
              zorder=100)
 
     # Plot plus sigma and minus sigma if required
@@ -1379,7 +1379,7 @@ def lt_spectra(ax1,
         ax1.plot(period,
                  list(lt_add_sig.values()),
                  linewidth=0.75,
-                 color=LT_MAPPING[key_gmc]["col"],
+                 color=config.lt_mapping[key_gmc]["col"],
                  linestyle='-.',
                  zorder=100)
     
@@ -1387,7 +1387,7 @@ def lt_spectra(ax1,
         ax1.plot(period,
                  list(lt_min_sig.values()),
                  linewidth=0.75,
-                 color=LT_MAPPING[key_gmc]["col"],
+                 color=config.lt_mapping[key_gmc]["col"],
                  linestyle='-.',
                  zorder=100)
 
