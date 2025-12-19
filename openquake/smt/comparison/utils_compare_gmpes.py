@@ -581,7 +581,7 @@ def compute_matrix_gmpes(config, mtxs_type):
             (len(mag_list)*int((config.maxR-config.minR)/1))))
 
         # Need to also store GMM LT weighted medians
-        lt_meds = {
+        lt_preds = {
             lt: {gm: [] for gm in getattr(config, LT_MAPPING[lt]['wei'])}
             for lt in lts if lts[lt] is not None
             }
@@ -597,7 +597,7 @@ def compute_matrix_gmpes(config, mtxs_type):
                 else:
                     lt = int(lt_ini.split("=")[0])
                 lt_key = f"lt_gmc_{lt}"
-                assert lt_key in lt_meds.keys() # Sanity check
+                assert lt_key in lt_preds.keys() # Sanity check
                 wt = getattr(config, f"lt_weight_gmc{lt}")[gmpe]
             else:
                 wt = None
@@ -657,27 +657,28 @@ def compute_matrix_gmpes(config, mtxs_type):
                 # Store required percentile of ground-shaking
                 if mtxs_type == 'median':
                     preds = (np.exp(mean))
-                if mtxs_type == '84th_perc':
+                elif mtxs_type == '84th_perc':
                     nstd = 1 # Median + 1std = ~84th percentile
                     preds = (np.exp(mean+nstd*std[0]))
-                if mtxs_type == '16th_perc':
+                else:
+                    assert mtxs_type == '16th_perc'
                     nstd = 1 # Median - 1std = ~16th percentile
                     preds = (np.exp(mean-nstd*std[0])) 
                 medians = np.append(medians, preds)
 
                 # Store weighted median if gmm in an lt
                 if wt is not None:
-                    lt_meds[lt_key][gmpe] = np.append(lt_meds[lt_key][gmpe], preds*wt)
+                    lt_preds[lt_key][gmpe] = np.append(lt_preds[lt_key][gmpe], preds*wt)
 
             # Store medians for gmm for given mag
             matrix_medians[:][g] = medians
     
         # Store medians for given imt
-        mtxs_median[imt] = matrix_medians
+        mtxs_median[str(imt)] = matrix_medians
 
-        # Get any req wt means now we have medians for all mags for each GMM
-        for gmm_lt in lt_meds.keys():
-            mtxs_median[f"{imt}_{gmm_lt}"] = pd.DataFrame(lt_meds[gmm_lt].values()).mean(axis=0)
+        # Get any required weighted means now we have medians, for all mags, for each GMM
+        for gmm_lt in lt_preds.keys():
+            mtxs_median[f"{imt}_{gmm_lt}"] = pd.DataFrame(lt_preds[gmm_lt].values()).mean(axis=0)
 
     # Store gmpes_list to
     mtxs_median['gmpe_list'] = config.gmpes_list.copy()
@@ -715,7 +716,7 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
 
         # Add the weighted LTs if any too
         for key in mtxs.keys():
-            check = f"{imt}_gmcLT"
+            check = f"{imt}_lt_gmc"
             if check in key:
                 data = np.vstack((data, mtxs[key]))
                 labels.append(key.split("_")[1]) # Add label
@@ -751,9 +752,10 @@ def plot_matrix_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         # Add title
         if mtxs_type == 'median':
             ax.set_title(str(imt) + ' (median)', fontsize='14')
-        if mtxs_type == '84th_perc':
+        elif mtxs_type == '84th_perc':
             ax.set_title(str(imt) + ' (84th percentile)', fontsize='14')
-        if mtxs_type == '16th_perc':
+        else:
+            assert mtxs_type == '16th_perc'
             ax.set_title(str(imt) + ' (16th percentile)', fontsize='14')
 
         # Add axis ticks
@@ -820,7 +822,7 @@ def plot_sammons_util(imt_list,
 
         # Add the weighted LTs if any too
         for key in mtxs.keys():
-            check = f"{i}_gmcLT"
+            check = f"{i}_lt_gmc"
             if check in key:
                 data = np.vstack((data, mtxs[key]))
                 labels.append(key.split("_")[1]) # Add label
@@ -856,9 +858,10 @@ def plot_sammons_util(imt_list,
         pyplot.title(str(i), fontsize='16')
         if mtxs_type == 'median':
             pyplot.title(str(i) + ' (median)', fontsize='14')
-        if mtxs_type == '84th_perc':
+        elif mtxs_type == '84th_perc':
             pyplot.title(str(i) + ' (84th percentile)', fontsize='14')
-        if mtxs_type == '16th_perc':
+        else:
+            assert mtxs_type == '16th_perc'
             pyplot.title(str(i) + ' (16th percentile)', fontsize='14')
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
@@ -908,7 +911,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         
         # Add the weighted LTs if any too
         for key in mtxs.keys():
-            check = f"{i}_gmcLT"
+            check = f"{i}_lt_gmc"
             if check in key:
                 data = np.vstack((data, mtxs[key]))
                 labels.append(key.split("_")[1]) # Add label
@@ -941,9 +944,10 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         ax.set_xlabel('Euclidean Distance', fontsize='12')
         if mtxs_type == 'median':
             ax.set_title(str(i) + ' (median)', fontsize='12')
-        if mtxs_type == '84th_perc':
+        elif mtxs_type == '84th_perc':
             ax.set_title(str(i) + ' (84th percentile)', fontsize='12')
-        if mtxs_type == '16th_perc':
+        else:
+            assert mtxs_type == '16th_perc'
             ax.set_title(str(i) + ' (16th percentile)', fontsize='12')
             
     # Remove final plot if not required
