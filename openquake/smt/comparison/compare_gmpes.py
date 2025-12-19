@@ -29,14 +29,18 @@ import re
 from openquake.commonlib.readinput import get_rupture
 from openquake.commonlib.oqvalidation import OqParam
 from openquake.hazardlib.source.rupture import get_ruptures
-from openquake.hazardlib.imt import from_string
 from openquake.hazardlib.gsim_lt import GsimLogicTree
 from openquake.hazardlib.geo.mesh import RectangularMesh
 
 from openquake.smt.comparison.utils_compare_gmpes import (
-    plot_trellis_util, plot_spectra_util, plot_ratios_util,
-    plot_cluster_util, plot_sammons_util, plot_matrix_util,
-    compute_matrix_gmpes)
+    plot_trellis_util,
+    plot_spectra_util,
+    plot_ratios_util,
+    plot_cluster_util,
+    plot_sammons_util,
+    plot_matrix_util,
+    compute_matrix_gmpes
+    )
 
 
 F32 = np.float32
@@ -75,7 +79,7 @@ class Configurations(object):
         assert len(self.mag_list) == len(self.depth_list)
         
         # Get imts
-        self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
+        self.imt_list = config_file['general']['imt_list']
 
         # Get GMMs and LT weights from either TOML or XML
         if 'gmc_xml' in config_file:

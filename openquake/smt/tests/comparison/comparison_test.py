@@ -26,7 +26,6 @@ import numpy as np
 import pandas as pd
 import toml
 
-from openquake.hazardlib.imt import from_string
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_gmpes import reformat_att_curves, reformat_spectra
 from openquake.smt.comparison.utils_compare_gmpes import (compute_matrix_gmpes,
@@ -55,8 +54,6 @@ TARGET_GMPES = ['[ChiouYoungs2014] \nlt_weight_gmc1 = 0.5',
 TARGET_BASELINE_GMPE = '[BooreEtAl2014]'
 TARGET_TRT = 'active_crustal'
 TARGET_ZTOR = -999
-
-# Target for Euclidean distance analysis related matrices
 TARGET_EUCL = 4 # 2 GMMs (CY14, CB14), the lt made of them (gmc1) and
                 # the second lt (gmc2 - no individual GMMs considered)
 
@@ -68,7 +65,7 @@ class ComparisonTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.input_file = os.path.join(BASE, "comparison_test.toml")
-        self.output_directory = os.path.join(BASE, 'compare_gmpes_test')
+        self.outdir = os.path.join(BASE, 'compare_gmpes_test')
         self.input_file_plot_obs_spectra = os.path.join(
             BASE, 'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
@@ -80,8 +77,8 @@ class ComparisonTestCase(unittest.TestCase):
         self.gmc_xml = os.path.join(BASE, 'comparison_test.xml')
 
         # Set the output
-        if not os.path.exists(self.output_directory):
-            os.makedirs(self.output_directory)
+        if not os.path.exists(self.outdir):
+            os.makedirs(self.outdir)
 
     def test_configuration_object_check(self):
         """
@@ -130,107 +127,98 @@ class ComparisonTestCase(unittest.TestCase):
         # Check baseline GMPE used to compute ratios
         self.assertEqual(config.baseline_gmm, TARGET_BASELINE_GMPE)
 
-    def test_mtxs_median_calculation(self):
+    def test_sammons(self):
         """
-        Check for matches bewteen the matrix of medians computed using
-        compute_matrix_gmpes and those expected given the input parameters
-        """
-        # Load config
-        config = comp.Configurations(self.input_file)
-
-        # Get medians
-        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
-
-        # Check correct number of imts
-        check_imts = []
-        for imt in TARGET_IMTS:
-            check_imts.append(mtxs_medians[from_string(imt)])
-        self.assertEqual(len(check_imts), len(TARGET_IMTS))
-
-        # Check correct number of gmpes
-        for imt in TARGET_IMTS:
-            self.assertEqual(len(mtxs_medians[from_string(imt)]), len(TARGET_GMPES))
-
-    def test_sammons_and_distance_matrix_functions(self):
-        """
-        Check expected outputs based on given input parameters for median
-        Sammons and Euclidean distance matrix plotting functions
+        Check execution of Sammon maps plotting functions when considering
+        the median, 16th percentile and 84th percentiles of the distributions
+        of predicted ground-motion from the considered GMPEs.
         """
         # Load config
         config = comp.Configurations(self.input_file)
 
-        # Get lts
-        lts = 0
-        for lt in [config.lt_weight_gmc1, config.lt_weight_gmc2,
-                   config.lt_weight_gmc3, config.lt_weight_gmc4]:
-            if lt is not None:
-                lts += 1
+        # For each percentile test the clustering plots
+        for perc in ["16th_perc", "median", "84th_perc"]:
+        
+            # Get the matrix of predictions for the GMPEs
+            mtxs = compute_matrix_gmpes(config, mtxs_type=perc)
 
-        # Get medians
-        mtxs_medians = compute_matrix_gmpes(config, mtxs_type='median')
-
-        # Sammons checks
-        coo_per_imt = plot_sammons_util(
+            # Sammons checks
+            coo_per_imt = plot_sammons_util(
             config.imt_list,
             config.gmpe_labels,
-            mtxs_medians,
-            os.path.join(self.output_directory, 'SammonMaps.png'),
+            mtxs,
+            os.path.join(self.outdir, 'SammonMaps.png'),
             config.custom_color_flag,
             config.custom_color_list,
             mtxs_type='median')
 
-        # Check Sammons computing correct number of GMPEs and IMTs
-        self.assertEqual(list(coo_per_imt.keys()),
-                         [from_string(imt) for imt in TARGET_IMTS])
-        for imt in TARGET_IMTS:
-            imt_sammons = coo_per_imt[from_string(imt)]
-            self.assertEqual(len(imt_sammons), TARGET_EUCL)
-
-        # Euclidean checks
-        matrix_dist = plot_matrix_util(
-            config.imt_list,
-            config.gmpe_labels,
-            mtxs_medians,
-            os.path.join(self.output_directory, 'Euclidean.png'),
-            mtxs_type='median')
-
-        # Check correct number of IMTS within matrix_dist
-        self.assertEqual(len(matrix_dist), len(TARGET_IMTS))
-
-        # Check correct number of GMPEs within matrix_dist for each IMT
-        for imt in range(0, len(matrix_dist)):
-            self.assertEqual(len(matrix_dist[imt]), TARGET_EUCL)
-
-        # Check per GMPE that euclidean dist to all other GMPEs is calculated
-        for imt in range(0, len(matrix_dist)):
-            for gmpe in range(0, len(matrix_dist[imt])):
-                self.assertEqual(len(matrix_dist[imt][gmpe]), TARGET_EUCL)
+            # Check Sammons computing correct number of IMTs
+            self.assertEqual(list(coo_per_imt.keys()), [imt for imt in TARGET_IMTS])
+            
+            # Check for each IMT we have correct number of values
+            for imt in TARGET_IMTS:
+                self.assertEqual(len(coo_per_imt[imt]), TARGET_EUCL)
 
     def test_clustering(self):
         """
-        Check clustering functions for median predicted ground-motion of
-        considered GMPEs in the configuration
+        Check execution of dendrogram plotting functions when considering the
+        median, 16th percentile and 84th percentiles of the distributions of
+        predicted ground-motion from the considered GMPEs.
         """
         # Load config
         config = comp.Configurations(self.input_file)
 
-        # Get each percentile test the clustering
+        # For each percentile test the clustering plots
         for perc in ["16th_perc", "median", "84th_perc"]:
+
+            # Get the matrix of predictions for the GMPEs
             mtxs = compute_matrix_gmpes(config, mtxs_type=perc)
         
             # Get clustering matrix
-            Z_matrix = plot_cluster_util(
-                config.imt_list, config.gmpe_labels, mtxs,
-                os.path.join(self.output_directory, 'Median_Clustering.png'),
-                mtxs_type=mtxs)
+            z_matrix = plot_cluster_util(config.imt_list,
+                                         config.gmpe_labels,
+                                         mtxs,
+                                         os.path.join(self.outdir, f'{[perc]}_Clustering.png'),
+                                         mtxs_type=perc)
 
-            # Check number of cluster arrays matches number of imts per config
-            self.assertEqual(len(Z_matrix), len(TARGET_IMTS))
+            # Check number of cluster arrays matches number of imts
+            self.assertEqual(len(z_matrix), len(TARGET_IMTS))
 
-            # Check number of gmpes matches number of values in each array
-            for imt in range(0, len(Z_matrix)):
-                for gmpe in range(0, len(Z_matrix[imt])):
-                    self.assertEqual(len(Z_matrix[imt][gmpe]), len(TARGET_GMPES))
+            # Check number of gmpes matches number of values in each IMT's array
+            for imt in range(0, len(z_matrix)):
+                for gmpe in range(0, len(z_matrix[imt])):
+                    self.assertEqual(len(z_matrix[imt][gmpe]), len(TARGET_GMPES))
+
+    def test_distance_matrix(self):
+        """
+        Check execution of Euclidean distance matrix plotting functions when
+        considering the median, 16th percentile and 84th percentiles of the
+        distributions of predicted ground-motion from the considered GMPEs.
+        """
+        # Load config
+        config = comp.Configurations(self.input_file)
+
+        # For each percentile test the matrix plots
+        for perc in ["16th_perc", "median", "84th_perc"]:
+
+            # Get the matrix of predictions for the GMPEs
+            mtxs = compute_matrix_gmpes(config, mtxs_type=perc)
+            
+            # Euclidean checks
+            matrix_dist = plot_matrix_util(
+                config.imt_list,
+                config.gmpe_labels,
+                mtxs,
+                os.path.join(self.outdir, 'Euclidean.png'),
+                mtxs_type=perc
+                )
+
+            # Check correct number of IMTS within matrix_dist
+            self.assertEqual(len(matrix_dist), len(TARGET_IMTS))
+
+            # Check correct number of GMPEs within matrix_dist for each IMT
+            for imt in range(0, len(matrix_dist)):
+                self.assertEqual(len(matrix_dist[imt]), TARGET_EUCL)
 
     def test_trellis_and_spectra_functions(self):
         """
@@ -239,7 +227,7 @@ class ComparisonTestCase(unittest.TestCase):
         attenuation curves and spectra.
         """
         # Trellis plots
-        att_curves = comp.plot_trellis(self.input_file, self.output_directory)
+        att_curves = comp.plot_trellis(self.input_file, self.outdir)
         if not os.path.exists(self.exp_curves):
             # Write to CSV the expected results if missing
             reformat_att_curves(att_curves, self.exp_curves)
@@ -250,20 +238,20 @@ class ComparisonTestCase(unittest.TestCase):
 
         # Spectra plots
         spectra = comp.plot_spectra(
-            self.input_file, self.output_directory, obs_spectra_fname=None)
+            self.input_file, self.outdir, obs_spectra_fname=None)
         if not os.path.exists(self.exp_spectra):
             # Write if doesn't exist
             reformat_spectra(spectra, self.exp_spectra)
         exp_spectra = pd.read_csv(self.exp_spectra, index_col=0)
+        obs_spectra = reformat_spectra(spectra) 
         # Same function writing expected can reformat the observed
-        obs_spectra = reformat_spectra(spectra)
         pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
         
         # Specify target files
         target_file_trellis = (os.path.join(
-            self.output_directory, 'TrellisPlots.png'))
+            self.outdir, 'TrellisPlots.png'))
         target_file_spectra = (os.path.join(
-            self.output_directory, 'ResponseSpectra.png'))
+            self.outdir, 'ResponseSpectra.png'))
 
         # Check target file created and outputted in expected location
         self.assertTrue(target_file_trellis)
@@ -276,12 +264,12 @@ class ComparisonTestCase(unittest.TestCase):
         """
         # Spectra plots including obs spectra
         comp.plot_spectra(self.input_file_plot_obs_spectra,
-                          self.output_directory,
+                          self.outdir,
                           self.input_file_obs_spectra_csv)
         
         # Specify target files
         target_file_spectra = (os.path.join(
-            self.output_directory, 'ResponseSpectraPlotObserved.png'))
+            self.outdir, 'ResponseSpectraPlotObserved.png'))
         
         # Check target file created and outputted in expected location
         self.assertTrue(target_file_spectra)
@@ -292,7 +280,7 @@ class ComparisonTestCase(unittest.TestCase):
         baseline GMPE attenuation). Correctness of values is not examined.
         """
         # Plot the ratios
-        comp.plot_ratios(self.input_file, self.output_directory)
+        comp.plot_ratios(self.input_file, self.outdir)
 
     def test_rup_file(self):
         """
@@ -317,7 +305,7 @@ class ComparisonTestCase(unittest.TestCase):
                 toml.dump(tmp, f)
 
             # Check the rup read from file works correctly
-            comp.plot_trellis(tmp_pth, self.output_directory)
+            comp.plot_trellis(tmp_pth, self.outdir)
 
     def test_xml_gmc(self):
         """
@@ -349,11 +337,11 @@ class ComparisonTestCase(unittest.TestCase):
                     toml.dump(tmp, f)
 
                 # Check the GMCs read from XML work correctly
-                comp.plot_trellis(tmp_pth, self.output_directory)
+                comp.plot_trellis(tmp_pth, self.outdir)
 
     @classmethod
     def tearDownClass(self):
         """
         Remove the test outputs
         """
-        shutil.rmtree(self.output_directory)
+        shutil.rmtree(self.outdir)
