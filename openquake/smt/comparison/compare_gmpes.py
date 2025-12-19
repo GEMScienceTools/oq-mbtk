@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Module to compare GMPEs using trellis plots, hierarchical
-clustering, Sammon maps and Euclidean distance matrix plots
+clustering, Sammon maps and Euclidean distance matrix plots.
 """
 import os
 import copy
@@ -48,13 +48,13 @@ F32 = np.float32
 
 class Configurations(object):
     """
-    Class to derive configuration for input into GMPE comparison plots
+    Class to derive configuration for input into GMPE comparison plots.
     """
     def __init__(self, filename):
         """
         :param  filename:
             toml file providing configuration for use within comparative
-            plotting methods.
+            plotting methods
         """
         # Import parameters for comparative plots from .toml file
         config_file = toml.load(filename) 
@@ -160,9 +160,8 @@ class Configurations(object):
 
     def rup_params_from_file(self, rup_data):
         """
-        Load a rupture from either an XML or a CSV file instead
-        of constructing one using the information provided in the
-        toml.
+        Load a rupture from either an XML or a CSV file instead of
+        constructing one using the information provided in the toml.
         """
         # Load into an OQ rupture object
         ftype = rup_data['fname'].split('.')[-1]
@@ -243,7 +242,7 @@ class Configurations(object):
 
     def get_lt_weights(self, gmpe_list):
         """
-        Manage the logic tree weight assigned for each GMPE in the toml (if any)
+        Manage the logic tree weight assigned for each GMPE in the toml (if any).
         """
         weight_keys = ['lt_weight_gmc1', 'lt_weight_gmc2', 'lt_weight_gmc3', 'lt_weight_gmc4']
         weights = {key: {} for key in weight_keys}
@@ -346,9 +345,9 @@ class Configurations(object):
 
     def get_eucl_params(self, config_file):
         """
-        For each magnitude considered within the Sammons Maps, Euclidean distance
-        matrix plots and agglomerative clustering dendrograms get the magnitudes
-        and assign a depth for each.
+        For each magnitude considered within the Sammons Maps, Euclidean
+        distance matrix plots and agglomerative clustering dendrograms get
+        the magnitudes and assign a depth for each.
 
         Also get the label to use for each GMM.
         """
@@ -377,10 +376,10 @@ class Configurations(object):
 
 def plot_trellis(filename, output_directory):
     """
-    Plot trellis for given run configuration
+    Plot trellis for given run configuration.
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.
+        plotting methods
     """ 
     config = Configurations(filename)
     
@@ -391,13 +390,13 @@ def plot_trellis(filename, output_directory):
 def plot_spectra(filename, output_directory, obs_spectra_fname=None):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
-    configuration
+    configuration.
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.
+        plotting methods
     :param obs_spectra:
         csv of an observed spectra to plot and associated event information.
-        An example file can be found in openquake.smt.tests.file_samples.
+        An example file can be found in openquake.smt.tests.file_samples
     """
     config = Configurations(filename)
 
@@ -417,10 +416,10 @@ def plot_spectra(filename, output_directory, obs_spectra_fname=None):
 def plot_ratios(filename, output_directory):
     """
     Plot ratio (GMPE median attenuation/baseline GMPE median attenuation) for
-    given run configuration
+    given run configuration.
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.
+        plotting methods
     """ 
     config = Configurations(filename)
 
@@ -437,7 +436,7 @@ def plot_cluster(filename, output_directory):
     percentile of predicted ground-motion by each GMPE for given configurations
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.
+        plotting methods
     """ 
     config = Configurations(filename)
 
@@ -475,10 +474,10 @@ def plot_cluster(filename, output_directory):
 def plot_sammons(filename, output_directory):
     """
     Plot Sammon Maps of median and 84th percentile predicted ground-motion
-    by each GMPE for given configurations
+    by each GMPE for given configurations.
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.
+        plotting methods
     """ 
     config = Configurations(filename)
 
@@ -517,10 +516,10 @@ def plot_sammons(filename, output_directory):
 def plot_matrix(filename, output_directory):
     """
     Plot Euclidean distance matrix of median and 84th percentile predicted
-    ground-motion by each GMPE for given configurations
+    ground-motion by each GMPE for given configurations.
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.    
+        plotting methods
     """ 
     config = Configurations(filename)
     

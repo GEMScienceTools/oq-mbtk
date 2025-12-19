@@ -18,7 +18,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 
 """
-Abstract base class for a strong motion database reader
+Abstract base class for a strong motion database reader.
 """
 import os
 import abc
@@ -29,7 +29,7 @@ from openquake.baselib.python3compat import with_metaclass
 
 class SMDatabaseReader(with_metaclass(abc.ABCMeta)):
     """
-    Abstract base class for strong motion database parser
+    Abstract base class for strong motion database parser.
     """
 
     def __init__(self, db_id, db_name, input_files):
@@ -58,7 +58,7 @@ class SMTimeSeriesReader(with_metaclass(abc.ABCMeta)):
     """
     def __init__(self, input_files, units="cm/s/s"):
         """
-        Instantiate and conduct folder checks
+        Instantiate and conduct folder checks.
         """
         self.input_files = []
         for fname in input_files:
@@ -82,7 +82,7 @@ class SMSpectraReader(with_metaclass(abc.ABCMeta)):
     """
     def __init__(self, input_files):
         """
-        Intantiate with basic file checks
+        Intantiate with basic file checks.
         """
         self.input_files = []
         for fname in input_files:
@@ -92,5 +92,5 @@ class SMSpectraReader(with_metaclass(abc.ABCMeta)):
     @abc.abstractmethod
     def parse_spectra(self):
         """
-        Parses the spectra
+        Parses the spectra.
         """

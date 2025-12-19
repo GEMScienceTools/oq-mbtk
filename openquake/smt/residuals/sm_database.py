@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Basic Pseudo-database built on top of hdf5 files for a set of processed
-ground-motion records
+ground-motion records.
 """
 import numpy as np
 import h5py

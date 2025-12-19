@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests for execution of comparison module
+Tests for execution of comparison module.
 """
 import os
 import shutil
@@ -60,7 +60,7 @@ TARGET_EUCL = 4 # 2 GMMs (CY14, CB14), the lt made of them (gmc1) and
 
 class ComparisonTestCase(unittest.TestCase):
     """
-    Core test case for the comparison module
+    Core test case for the comparison module.
     """
     @classmethod
     def setUpClass(self):
@@ -342,6 +342,6 @@ class ComparisonTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         """
-        Remove the test outputs
+        Remove the test outputs.
         """
         shutil.rmtree(self.outdir)

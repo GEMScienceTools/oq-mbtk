@@ -16,11 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests parsing of a flatfile downloaded from ESM custom URL database
+Tests parsing of a flatfile downloaded from ESM custom URL database.
 --> (https://esm-db.eu/esmws/flatfile/1/)
-
-This parser assumes you have selected all available headers in your URL search
-when downloading the flatfile
 """
 import os
 import shutil
@@ -49,7 +46,7 @@ TARGET_IDS = [
 
 class ESMFlatfileParserURLTestCase(unittest.TestCase):
     """
-    Tests the parsing of an ESM URL format flatfile
+    Tests the parsing of an ESM URL format flatfile.
     """
     @classmethod
     def setUpClass(cls):
@@ -62,7 +59,7 @@ class ESMFlatfileParserURLTestCase(unittest.TestCase):
 
     def test_esm_url_flatfile_parser(self):
         """
-        Tests the parsing of the reformatted ESM flatfile
+        Tests the parsing of the reformatted ESM flatfile.
         """
         # Parse
         parser = ESMFlatfileParserURL.autobuild(
@@ -88,6 +85,6 @@ class ESMFlatfileParserURLTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """
-        Remove the database
+        Remove the database.
         """
         shutil.rmtree(cls.db_file)

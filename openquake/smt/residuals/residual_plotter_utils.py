@@ -26,7 +26,7 @@ from scipy.stats import linregress
 
 def _get_residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
     """
-    Returns the density distribution of the given gmpe and imt
+    Returns the density distribution of the given gmpe and imt.
 
     :param residuals: instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
@@ -34,9 +34,8 @@ def _get_residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
 
     :return: a dict mapping each residual type (string, e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
-    representing the plot data.
-    Additional keys: 'mean' (float) and 'Std Dev' (float) representing
-    the mean and standard deviation of the data
+    representing the plot data. Additional keys: 'mean' and 'Std Dev' representing
+    the mean and standard deviation of the data.
     """
     statistics = residuals.get_residual_statistics_for(gmpe, imt)
     plot_data = {}
@@ -61,7 +60,7 @@ def _get_residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
 
 def _get_histogram_data(data, bin_width=0.5):
     """
-    Retreives the histogram of the residuals
+    Retreives the histogram of the residuals.
     """
     # Ignore nans otherwise max and min can raise
     bins = np.arange(
@@ -76,7 +75,7 @@ def _get_histogram_data(data, bin_width=0.5):
 
 def _get_lh_histogram_data(lh_values, bin_width=0.1):
     """
-    Retreives the histogram of the likelihoods
+    Retreives the histogram of the likelihoods.
     """
     bins = np.arange(0.0, 1.0 + bin_width, bin_width)
     # Work on finite numbers to prevent np.histogram raising:
@@ -88,7 +87,7 @@ def _get_lh_histogram_data(lh_values, bin_width=0.1):
 def _get_magnitudes(residuals, gmpe, imt, res_type):
     """
     Returns an array of magnitudes equal in length to the number of
-    residuals
+    residuals.
     """
     magnitudes = np.array([])
     for i, ctx in enumerate(residuals.contexts):
@@ -105,7 +104,7 @@ def _get_magnitudes(residuals, gmpe, imt, res_type):
 def _get_depths(residuals, gmpe, imt, res_type):
     """
     Returns an array of magnitudes equal in length to the number of
-    residuals
+    residuals.
     """
     depths = np.array([])
     for i, ctx in enumerate(residuals.contexts):
@@ -121,7 +120,7 @@ def _get_depths(residuals, gmpe, imt, res_type):
 
 def _get_vs30(residuals, gmpe, imt, res_type):
     """
-    Return required vs30 values
+    Return required vs30 values.
     """
     vs30 = np.array([])
     for i, ctx in enumerate(residuals.contexts):
@@ -138,7 +137,7 @@ def _get_vs30(residuals, gmpe, imt, res_type):
 
 def _get_distances(residuals, gmpe, imt, res_type, distance_type):
     """
-    Return required distances
+    Return required distances.
     """
     distances = np.array([])
     for i, ctx in enumerate(residuals.contexts):
@@ -159,7 +158,7 @@ def _get_distances(residuals, gmpe, imt, res_type, distance_type):
 def get_scatter_vals(var, residuals, gmpe, imt, res_type, distance_type):
     """
     Return values for given explanatory variable matching the 
-    length of the given residuals
+    length of the given residuals.
     """
     if var == "magnitude":
         return _get_magnitudes(residuals, gmpe, imt, res_type)
@@ -175,7 +174,7 @@ def get_scatter_vals(var, residuals, gmpe, imt, res_type, distance_type):
 def get_scatter_data(residuals, gmpe, imt, var, distance_type=None):
     """
     Get plot data for a scatter plot of residuals (y-axis)
-    and given explanatory variable (x-axis)
+    and given explanatory variable (x-axis).
     """
     plot_data = {}
     
@@ -219,17 +218,16 @@ def get_scatter_data(residuals, gmpe, imt, var, distance_type=None):
 
 def residuals_with_magnitude(residuals, gmpe, imt):
     """
-    Returns the residuals of the given gmpe and imt vs. magnitude
+    Returns the residuals of the given gmpe and imt vs. magnitude.
 
     :param residuals: instance of openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
 
-    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
+    :return: a dict mapping each residual type (e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
-    representing the plot data.
-    Additional keys: 'slope' (float), 'intercept' (float) and 'pvalue' (float)
-    representing the linear regression of the data
+    representing the plot data. Additional keys include 'slope', 'intercept'
+    and 'pvalue' representing the linear regression of the data
     """
     return get_scatter_data(residuals, gmpe, imt, "magnitude")
 
@@ -242,52 +240,49 @@ def residuals_with_depth(residuals, gmpe, imt):
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
 
-    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
+    :return: a dict mapping each residual type (e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
-    representing the plot data.
-    Additional keys: 'slope' (float), 'intercept' (float) and 'pvalue' (float)
-    representing the linear regression of the data
+    representing the plot data. Additional keys include 'slope', 'intercept'
+    and 'pvalue' representing the linear regression of the data
     """
     return get_scatter_data(residuals, gmpe, imt, "depth")
 
 
 def residuals_with_vs30(residuals, gmpe, imt):
     """
-    Returns the residuals of the given gmpe and imt vs. vs30
+    Returns the residuals of the given gmpe and imt vs. vs30.
 
     :param residuals: instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
 
-    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
+    :return: a dict mapping each residual type (e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
-    representing the plot data.
-    Additional keys: 'slope' (float), 'intercept' (float) and 'pvalue' (float)
-    representing the linear regression of the data
+    representing the plot data. Additional keys include 'slope', 'intercept'
+    and 'pvalue' representing the linear regression of the data
     """
     return get_scatter_data(residuals, gmpe, imt, "vs30")
 
 
 def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb"):
     """
-    Returns the residuals of the given gmpe and imt vs. distance
+    Returns the residuals of the given gmpe and imt vs. distance.
 
     :param residuals: instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
 
-    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
+    :return: a dict mapping each residual type (e.g. 'Intra event') to
     a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
-    representing the plot data.
-    Additional keys: 'slope' (float), 'intercept' (float) and 'pvalue' (float)
-    representing the linear regression of the data
+    representing the plot data. Additional keys include 'slope', 'intercept'
+    and 'pvalue' representing the linear regression of the data
     """
     return get_scatter_data(residuals, gmpe, imt, "distance", distance_type)
 
 
 def _nanlinregress(x, y):
     """
-    Calls scipy linregress only on finite numbers of x and y
+    Calls scipy linregress only on finite numbers of x and y.
     """
     finite = np.isfinite(x) & np.isfinite(y)
         
@@ -303,7 +298,7 @@ def _nanlinregress(x, y):
 def get_ctx_vals(var_type, ctx, distance_type):
     """
     Get value(s) of the given ctx corresponding to the variable we
-    are plotting the residuals against
+    are plotting the residuals against.
     """
     if var_type == 'magnitude':
         event_val = ctx.mag
@@ -320,7 +315,7 @@ def get_ctx_vals(var_type, ctx, distance_type):
 def _get_residual_means_and_stds(residuals):
     """
     Get the mean and sigma of the distributions of residuals
-    for each gmpe and imt
+    for each gmpe and imt.
     """
     # Get all residuals for all GMPEs at all IMTs
     res_statistics = {}
@@ -386,7 +381,7 @@ def mean_and_sigma_per_bin(df, idx_res_per_val_bin):
 def get_binning_params(var_type, vals):
     """
     Get the params for the binning of the given variable we are plotting
-    the residuals with respect to
+    the residuals with respect to.
     """
     # Get values for given variable
     var_bins = {
@@ -417,7 +412,7 @@ def get_binning_params(var_type, vals):
 def get_res_df(var_type, residuals, gmpe, imt, distance_type):
     """
     Return a dataframe with the total, inter-event and intra event
-    residuals w.r.t. the variable of interest for plotting
+    residuals w.r.t. the variable of interest for plotting.
     """
     store = []
     for ctx in residuals.contexts:

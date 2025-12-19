@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests parsing of the GEM globally homogenised flatfile using the parser
+Tests parsing of the GEM globally homogenised flatfile.
 """
 import os
 import shutil
@@ -40,7 +40,7 @@ TARGET_IDS = [
 
 class GEMFlatfileParserTestCase(unittest.TestCase):
     """
-    Tests the parsing of the GEM global flatfile
+    Tests the parsing of the GEM global flatfile.
     """
     @classmethod
     def setUpClass(cls):
@@ -78,4 +78,7 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        """
+        Remove the database.
+        """
         shutil.rmtree(cls.db_file)

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests for execution of demos
+Tests for execution of SMT demos.
 """
 import os
 import shutil
@@ -50,7 +50,7 @@ stations_out = os.path.join(BASE, 'outputs_demo_station_analysis')
 @unittest.skip # Check locally only (running on remote takes a while)
 class DemosTestCase(unittest.TestCase):
     """
-    Core test case for the SMT demos
+    Core test case for the SMT demos.
     """
     @classmethod
     def setUpClass(self):
@@ -67,14 +67,14 @@ class DemosTestCase(unittest.TestCase):
 
     def test_comparison_demo(self):
         """
-        Execute the comparison demo
+        Execute the comparison demo.
         """
         comp_demo(
             input_toml=self.comparison_in, out_dir=self.comparison_out)
 
     def test_residuals_demo(self):
         """
-        Execute the residual analysis demo
+        Execute the residual analysis demo.
         """
         res_demo(flatfile=self.residuals_flatfile_in,
                  gmms_imts=self.residuals_input_toml,
@@ -83,7 +83,7 @@ class DemosTestCase(unittest.TestCase):
         
     def test_stations_demo(self):
         """
-        Execute the single station residual analysis demo
+        Execute the single station residual analysis demo.
         """
         st_demo(flatfile=self.residuals_flatfile_in,
                  gmms_imts=self.residuals_input_toml,
@@ -93,7 +93,7 @@ class DemosTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         """
-        Remove the test outputs
+        Remove the test outputs.
         """
         shutil.rmtree(self.comparison_out)
         shutil.rmtree(self.residuals_out)
