@@ -81,6 +81,13 @@ class Configurations(object):
         # Get imts
         self.imt_list = config_file['general']['imt_list']
 
+        # Set the default mapping of LT info
+        self.lt_mapping = {
+            "lt_gmc_1": {"col": 'r', "wei": "lt_weight_gmc1", "label": "Logic Tree 1"},
+            "lt_gmc_2": {"col": 'b', "wei": "lt_weight_gmc2", "label": "Logic Tree 2"},
+            "lt_gmc_3": {"col": 'g', "wei": "lt_weight_gmc3", "label": "Logic Tree 3"},
+            "lt_gmc_4": {"col": 'k', "wei": "lt_weight_gmc4", "label": "Logic Tree 4"}}
+
         # Get GMMs and LT weights from either TOML or XML
         if 'gmc_xml' in config_file:
             # Overrides any GMMs specified in "models" key
@@ -96,14 +103,7 @@ class Configurations(object):
         # Get params for Euclidean analysis if required
         if "euclidean_analysis" in config_file:
             self.get_eucl_params(config_file)
-
-        # Mapping of LT info
-        self.lt_mapping = {
-            "lt_gmc_1": {"col": 'r', "wei": "lt_weight_gmc1", "label": "Logic Tree 1"},
-            "lt_gmc_2": {"col": 'b', "wei": "lt_weight_gmc2", "label": "Logic Tree 2"},
-            "lt_gmc_3": {"col": 'g', "wei": "lt_weight_gmc3", "label": "Logic Tree 3"},
-            "lt_gmc_4": {"col": 'k', "wei": "lt_weight_gmc4", "label": "Logic Tree 4"}}
-
+            
     def get_general_params(self, config_file):
         """
         Get the general-use configuration parameters from the toml.
@@ -328,7 +328,9 @@ class Configurations(object):
                 gmpe_toml = f"{gmm.gsim._toml} \nlt_weight_gmc{idx_trt+1}{add} = {wei}"
                 gmpe_list.append(gmpe_toml)
                 lt_gmc[gmpe_toml] = wei
-            
+                # Override the default labels to match the TRTs
+                self.lt_mapping[f'lt_gmc_{idx_trt+1}']['label'] = f"Logic Tree {idx_trt+1} ({trt})"
+
             # Store GMC's weights
             lt_weight[idx_trt] = lt_gmc
 
