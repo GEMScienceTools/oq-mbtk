@@ -40,6 +40,6 @@ lt_weight_gmc1 = 0.33
 [models.ChiouYoungs2014]
 lt_weight_gmc1 = 0.33
 
-[custom_colors]
+[custom_plotting]
 custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
 custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
