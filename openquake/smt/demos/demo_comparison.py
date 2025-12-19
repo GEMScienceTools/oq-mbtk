@@ -47,7 +47,7 @@ def run_comparison(file, out_dir):
 
 def main(input_toml=demo_input, out_dir=demo_out):
     """
-    Run the demo GMM comparison workflow
+    Run the demo GMM comparison workflow.
     """
     # Print that the analysis has started
     print("Starting GMM comparison analysis...")
