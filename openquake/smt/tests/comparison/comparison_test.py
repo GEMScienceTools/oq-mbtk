@@ -74,7 +74,7 @@ class ComparisonTestCase(unittest.TestCase):
         self.exp_spectra = os.path.join(BASE, 'exp_spectra.csv')
         self.rup_xml = os.path.join(BASE, 'rup.xml')
         self.rup_csv = os.path.join(BASE, 'rup.csv')
-        self.gmc_xml = os.path.join(BASE, 'comparison_test.xml')
+        self.gmc_xml = os.path.join(BASE, 'gmm_lt.xml')
 
         # Set the output
         if not os.path.exists(self.outdir):
@@ -338,6 +338,8 @@ class ComparisonTestCase(unittest.TestCase):
 
                 # Check the GMCs read from XML work correctly
                 comp.plot_trellis(tmp_pth, self.outdir)
+
+                breakpoint()
 
     @classmethod
     def tearDownClass(self):

@@ -321,7 +321,7 @@ class Configurations(object):
         for idx_trt, trt in enumerate(trts):
             lt_gmc = {}
             for gmm in gsim_lt.branches:
-                if gmm.trt == trt:
+                if gmm.trt != trt:
                     continue
                 wei = gmm.weight['weight']
                 gmpe_toml = f"{gmm.gsim._toml} \nlt_weight_gmc{idx_trt+1}{add} = {wei}"
