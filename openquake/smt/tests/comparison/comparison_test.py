@@ -339,8 +339,6 @@ class ComparisonTestCase(unittest.TestCase):
                 # Check the GMCs read from XML work correctly
                 comp.plot_trellis(tmp_pth, self.outdir)
 
-                breakpoint()
-
     @classmethod
     def tearDownClass(self):
         """
