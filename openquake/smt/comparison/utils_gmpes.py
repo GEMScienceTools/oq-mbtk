@@ -435,13 +435,16 @@ def build_mgmpe(gmpe):
         kw_mgmpe['set_scale_total_sigma_vector'] = {'scaling_factor': sigma_vector}
 
     # CY14SiteTerm
-    if 'CY14SiteTerm' in gmpe: kw_mgmpe['cy14_site_term'] = {}
+    if 'CY14SiteTerm' in gmpe:
+        kw_mgmpe['cy14_site_term'] = {}
 
     # BA08SiteTerm
-    if 'BA08SiteTerm' in gmpe: kw_mgmpe['ba08_site_term'] = {}
+    if 'BA08SiteTerm' in gmpe:
+        kw_mgmpe['ba08_site_term'] = {}
 
     # BSSA14SiteTerm
-    if "BSSA14SiteTerm" in gmpe: kw_mgmpe['bssa14_site_term'] = {}
+    if "BSSA14SiteTerm" in gmpe:
+        kw_mgmpe['bssa14_site_term'] = {}
 
     # NRCan15SiteTerm ("base" kind)
     if ('NRCan15SiteTerm' in gmpe and 'NRCan15SiteTermLinear' not in gmpe):
@@ -451,11 +454,23 @@ def build_mgmpe(gmpe):
     if 'NRCan15SiteTermLinear' in gmpe:
         kw_mgmpe['nrcan15_site_term'] = {'kind': 'linear'}
 
+    # CEUS2020SiteTerm (Stewart et al. 2020)
+    if 'CEUS2020SiteTerm' in gmpe:
+        try:
+            assert "_refVs30=" in gmpe
+            ref_vs30 = float(gmpe.split("refVs30=")[-1].replace("'",'').replace('"',''))
+        except:
+            raise ValueError("If using the CEUS2020SiteTerm the user must also specify a "
+                             "ref vs30 to be used for the non-linear scaling component.")
+        kw_mgmpe['ceus2020_site_term'] = {"ref_vs30": ref_vs30, 'wimp': None}
+
     # CB14 basin term
-    if 'CB14BasinTerm' in gmpe: kw_mgmpe['cb14_basin_term'] = {}
+    if 'CB14BasinTerm' in gmpe:
+        kw_mgmpe['cb14_basin_term'] = {}
 
     # M9 basin adjustment
-    if 'M9BasinTerm' in gmpe: kw_mgmpe['m9_basin_term'] = {}
+    if 'M9BasinTerm' in gmpe:
+        kw_mgmpe['m9_basin_term'] = {}
 
     return mgmpe.ModifiableGMPE(**kw_mgmpe)
 
