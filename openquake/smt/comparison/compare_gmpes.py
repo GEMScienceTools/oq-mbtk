@@ -71,13 +71,9 @@ class Configurations(object):
         else:
             self.rup_params_from_file(config_file['rup_file'])
         
-        # Get custom colors options
-        self.custom_color_flag = config_file['custom_plotting']['custom_colors_flag']
-        self.custom_color_list = config_file['custom_plotting']['custom_colors_list']
-        
         # Check same length mag and depth lists to avoid indexing error
         assert len(self.mag_list) == len(self.depth_list)
-        
+
         # Get imts
         self.imt_list = config_file['general']['imt_list']
 
@@ -86,7 +82,8 @@ class Configurations(object):
             "lt_gmc_1": {"col": 'r', "wei": "lt_weight_gmc1", "label": "Logic Tree 1"},
             "lt_gmc_2": {"col": 'b', "wei": "lt_weight_gmc2", "label": "Logic Tree 2"},
             "lt_gmc_3": {"col": 'g', "wei": "lt_weight_gmc3", "label": "Logic Tree 3"},
-            "lt_gmc_4": {"col": 'k', "wei": "lt_weight_gmc4", "label": "Logic Tree 4"}}
+            "lt_gmc_4": {"col": 'k', "wei": "lt_weight_gmc4", "label": "Logic Tree 4"}
+            }
 
         # Get GMMs and LT weights from either TOML or XML
         if 'gmc_xml' in config_file:
@@ -103,7 +100,11 @@ class Configurations(object):
         # Get params for Euclidean analysis if required
         if "euclidean_analysis" in config_file:
             self.get_eucl_params(config_file)
-            
+
+        # Get plotting options
+        self.custom_color_flag = config_file['custom_plotting']['custom_colors_flag']
+        self.custom_color_list = config_file['custom_plotting']['custom_colors_list']    
+        
     def get_general_params(self, config_file):
         """
         Get the general-use configuration parameters from the toml.
