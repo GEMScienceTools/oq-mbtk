@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Test suite for the `residual_plotter` module responsible for plotting the
-plot data defined in `residual_plotter_utils`
+Test suite for the `residual_plotter` module responsible for
+plotting the plot data defined in `residual_plotter_utils`.
 """
 import os
 import shutil
@@ -40,13 +40,12 @@ BASE = os.path.join(os.path.dirname(__file__), "data")
 
 class ResidualsTestCase(unittest.TestCase):
     """
-    Core test case for the residuals objects
+    Core test case for the residuals objects.
     """
-
     @classmethod
     def setUpClass(cls):
         """
-        Setup constructs the database from the ESM test data
+        Setup constructs the database from the ESM test data.
         """
         ifile = os.path.join(BASE, "residual_tests_data.csv")
         cls.metadata = os.path.join(BASE, "residual_tests")
@@ -65,7 +64,7 @@ class ResidualsTestCase(unittest.TestCase):
 
     def tests_residual_plotter(self):
         """
-        Tests basic execution of residual plot
+        Tests basic execution of residual plot.
         """
         for gsim in self.gsims:
             for imt in self.imts:
@@ -73,7 +72,7 @@ class ResidualsTestCase(unittest.TestCase):
 
     def tests_with_mag_vs30_depth_plotter(self):
         """
-        Tests basic execution of residual with (magnitude, vs30, depth) plots
+        Tests basic execution of residual with (magnitude, vs30, depth) plots.
         """
         for gsim in self.gsims:
             for imt in self.imts:
@@ -83,7 +82,7 @@ class ResidualsTestCase(unittest.TestCase):
                   
     def tests_with_distance(self):
         """
-        Tests basic execution of residual with distance plots
+        Tests basic execution of residual with distance plots.
         """
         for gsim in self.gsims:
             for imt in self.imts:
@@ -104,6 +103,6 @@ class ResidualsTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """
-        Deletes the database
+        Deletes the database.
         """
         shutil.rmtree(cls.metadata)

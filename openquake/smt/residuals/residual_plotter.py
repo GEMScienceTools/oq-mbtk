@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Module to manage GMPE residual plotting functions
+Module to manage GMPE residual plotting functions.
 """
 import os
 import re
@@ -140,13 +140,13 @@ class BaseResidualPlot(object):
 
     def _assertion_check(self, residuals):
         """
-        Checks that residuals is an instance of the residuals class
+        Checks that residuals is an instance of the residuals class.
         """
         assert isinstance(residuals, Residuals)
 
     def create_plot(self):
         """
-        Creates a residual plot
+        Creates a residual plot.
         """
         data = self.get_plot_data()
         fig = plt.figure(figsize=self.figure_size)
@@ -160,7 +160,7 @@ class BaseResidualPlot(object):
     def _residual_plot(self, ax, res_data, res_type):
         """
         Plots the residual data on the given axis. This method should in
-        principle not be overridden by sub-classes
+        principle not be overridden by sub-classes.
         """
         self.draw(ax, res_data, res_type)
         ax.set_xlim(*self.get_axis_xlim(res_data, res_type))
@@ -282,7 +282,7 @@ class ResidualHistogramPlot(BaseResidualPlot):
 
 class ResidualPlot(ResidualHistogramPlot):
     """
-    Class to create a simple histrogram of strong ground motion residuals
+    Class to create a simple histrogram of strong ground motion residuals.
     """
     def get_plot_data(self):
         return _get_residuals_density_distribution(
@@ -323,7 +323,7 @@ class ResidualPlot(ResidualHistogramPlot):
 class ResidualScatterPlot(BaseResidualPlot):
     """
     Abstract-like class to create scatter plots of strong ground motion
-    residuals
+    residuals.
     """
     def __init__(self,
                  residuals,
@@ -413,7 +413,7 @@ class ResidualScatterPlot(BaseResidualPlot):
 class ResidualWithDistance(ResidualScatterPlot):
     """
     Class to create a simple scatter plot of strong ground motion
-    residuals (y-axis) versus distance (x-axis)
+    residuals (y-axis) versus distance (x-axis).
     """
     def __init__(self,
                  residuals,
@@ -424,14 +424,14 @@ class ResidualWithDistance(ResidualScatterPlot):
                  distance_type="rjb",
                  **kwargs):
         """
-        Initializes a ResidualWithDistance object
+        Initializes a ResidualWithDistance object.
 
         All arguments not listed below are described in
         `ResidualScatterPlot.__init__`. Note that `plot_type` is 'log' by
         default.
 
         :param distance_type: string denoting the distance type to be
-            used. Defaults to 'rjb'
+            used - it defaults to 'rjb'
         """
         self.distance_type = distance_type
         super(ResidualWithDistance, self).__init__(residuals, gmpe, imt,
@@ -459,7 +459,7 @@ class ResidualWithDistance(ResidualScatterPlot):
 class ResidualWithMagnitude(ResidualScatterPlot):
     """
     Class to create a simple scatter plot of strong ground motion
-    residuals (y-axis) versus magnitude (x-axis)
+    residuals (y-axis) versus magnitude (x-axis).
     """
     def get_plot_data(self):
         return residuals_with_magnitude(self.residuals, self.gmpe, self.imt)
@@ -468,7 +468,7 @@ class ResidualWithMagnitude(ResidualScatterPlot):
 class ResidualWithDepth(ResidualScatterPlot):
     """
     Class to create a simple scatter plot of strong ground motion
-    residuals (y-axis) versus depth (x-axis)
+    residuals (y-axis) versus depth (x-axis).
     """
     def get_plot_data(self):
         return residuals_with_depth(self.residuals, self.gmpe, self.imt)
@@ -477,7 +477,7 @@ class ResidualWithDepth(ResidualScatterPlot):
 class ResidualWithVs30(ResidualScatterPlot):
     """
         Class to create a simple scatter plot of strong ground motion
-        residuals (y-axis) versus Vs30 (x-axis)
+        residuals (y-axis) versus Vs30 (x-axis).
     """
     def get_plot_data(self):
         return residuals_with_vs30(self.residuals, self.gmpe, self.imt)
@@ -491,7 +491,7 @@ class ResidualWithVs30(ResidualScatterPlot):
 def plot_llh_with_period(residuals, filename):
     """
     Create a simple plot of loglikelihood values of Scherbaum et al. 2009
-    (y-axis) versus period (x-axis)
+    (y-axis) versus period (x-axis).
     """
     # Check have computed LLH
     if not hasattr(residuals, "llh"):
@@ -526,7 +526,7 @@ def plot_llh_with_period(residuals, filename):
 def plot_edr_with_period(residuals, filename):
     """
     Create plots of EDR, the median pred. correction factor and normalised MDE
-    computed using Kale and Akkar (2013) (y-axis) versus period (x-axis)
+    computed using Kale and Akkar (2013) (y-axis) versus period (x-axis).
     """
     # Check have computed EDR
     if not hasattr(residuals, "edr_values_wrt_imt"):
@@ -595,7 +595,7 @@ def plot_edr_with_period(residuals, filename):
 def plot_sto_with_period(residuals, filename):
     """
     Definition to create plot of the stochastic area metric
-    computed using Sunny et al. (2021) versus period (x-axis)
+    computed using Sunny et al. (2021) versus period (x-axis).
     """
     # Check have computed Stochastic Area
     if not hasattr(residuals, "stoch_areas_wrt_imt"):
@@ -632,7 +632,7 @@ def plot_sto_with_period(residuals, filename):
 def llh_table(residuals, filename):
     """
     Create a table of loglikelihood values per gmpe per
-    imt (Scherbaum et al. 2009)
+    imt (Scherbaum et al. 2009).
     """
     # Check have computed LLH
     if not hasattr(residuals, "llh"):
@@ -679,8 +679,8 @@ def llh_weights(residuals, filename=None):
 
 def edr_table(residuals, filename):
     """
-    Create a table of MDE Norm, sqrt(kappa) and EDR gmpe per imt (Kale and Akkar,
-    2013)
+    Create a table of MDE Norm, sqrt(kappa) and EDR gmpe per
+    imt (Kale and Akkar, 2013).
     """
     # Check have computed EDR
     if not hasattr(residuals, "edr_values_wrt_imt"):
@@ -709,7 +709,7 @@ def edr_table(residuals, filename):
 def edr_weights(residuals, filename=None):
     """
     Create a table of model weights per imt based on Euclidean
-    distance based ranking (Kale and Akkar, 2013)
+    distance based ranking (Kale and Akkar, 2013).
     """ 
     # Check have computed EDR
     if not hasattr(residuals, "edr_values_wrt_imt"):
@@ -745,8 +745,8 @@ def edr_weights(residuals, filename=None):
 
 def sto_table(residuals, filename):
     """
-    Create a table of stochastic area ranking metric per GMPE per imt (Sunny et
-    al. 2021)
+    Create a table of stochastic area ranking metric per GMPE
+    per imt (Sunny et al. 2021).
     """
     # Check have computed Stochastic Area
     if not hasattr(residuals, "stoch_areas_wrt_imt"):
@@ -763,8 +763,8 @@ def sto_table(residuals, filename):
 
 def sto_weights(residuals, filename=None):
     """
-    Create a table of model weights per imt based on sample stochastic area
-    (Sunny et al. 2021))
+    Create a table of model weights per imt based on sample
+    stochastic area (Sunny et al. 2021).
     """       
     # Check have computed Stochastic Area
     if not hasattr(residuals, "stoch_areas_wrt_imt"):
@@ -801,7 +801,7 @@ def sto_weights(residuals, filename=None):
 def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
     """
     Set the plots for the means and std devs of each residual component
-    per gmpe vs period
+    per gmpe vs period.
     """
     # Create figure
     fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(14, 14)) 
@@ -913,7 +913,7 @@ def plot_residual_means_and_stds(
 def plot_residual_means_and_stds_with_period(residuals, filename):
     """
     Create a simple plot of residual mean and residual sigma
-    for each GMPE  (y-axis) versus period (x-axis)
+    for each GMPE  (y-axis) versus period (x-axis).
     """
     # Check enough IMTs to plot w.r.t. period
     if len(residuals.imts) == 1:
@@ -964,8 +964,8 @@ def plot_residual_means_and_stds_with_period(residuals, filename):
 
 def residual_means_and_stds_table(residuals, filename):
     """
-    Create a table of mean and standard deviation for total, inter-event and 
-    intra-event residual distributions
+    Create a table of mean and standard deviation for total,
+    inter-event and intra-event residual distributions.
     """
     # Retrieve mean and stddev for each 
     stats = {}
@@ -1002,18 +1002,18 @@ def residual_means_and_stds_table(residuals, filename):
 ### Plotting of single station residual analysis results
 class ResidualWithSite(ResidualPlot):
     """
-    Plot (normalised) total, inter-event and intra-event single-station
-    residuals for the site selection, GMPE and intensity measure considered
+    Plot total, inter-event and intra-event single-station the residuals
+    for the site selection, GMPE and intensity measure considered.
     """
     def _assertion_check(self, residuals):
         """
-        Checks that residuals is an instance of the residuals class
+        Checks that residuals is an instance of the residuals class.
         """
         assert isinstance(residuals, SingleStationAnalysis)
     
     def create_plot(self):
         """
-        Create residuals with site plot
+        Create residuals with site plot.
         """
         data = self._get_site_data()
         fig = plt.figure(figsize=self.figure_size)
@@ -1036,7 +1036,7 @@ class ResidualWithSite(ResidualPlot):
 
     def _residual_plot(self, ax, data, res_type):
         """
-        Plot residuals per site
+        Plot residuals per site.
         """
         xmean = np.array([data[site_id]["x-val"][0]
                           for site_id in self.residuals.site_ids])
@@ -1069,7 +1069,7 @@ class ResidualWithSite(ResidualPlot):
 
     def _get_site_data(self):
         """
-        Get single station analysis residual data
+        Get single station analysis residual data.
         """
         data = {site_id: {} for site_id in self.residuals.site_ids}
         for iloc, site_resid in enumerate(self.residuals.site_residuals):
@@ -1096,18 +1096,18 @@ class ResidualWithSite(ResidualPlot):
 
 class IntraEventResidualWithSite(ResidualPlot):
     """
-    Create plots of intra-event residual components for the site selection,
-    GMPEs and intensity measures considered
+    Create plots of intra-event residual components for the
+    site selection, GMPEs and intensity measures considered.
     """     
     def _assertion_check(self, residuals):
         """
-        Checks that residuals is an instance of the residuals class
+        Checks that residuals is an instance of the residuals class.
         """
         assert isinstance(residuals, SingleStationAnalysis)
     
     def create_plot(self):
         """
-        Creates the plot
+        Creates the plot.
         """
         if 'Intra event' in self.residuals.site_residuals[0].residuals[self.gmpe][
                 self.imt]:
@@ -1137,9 +1137,9 @@ class IntraEventResidualWithSite(ResidualPlot):
     def _residual_plot(self, fig, data, mean_deltaS2S, phi_ss, phi_S2S):
         """
         Creates three plots:
-        1) Plot of the intra-event residual per record at each station
-        2) Plot of the site term (average intra-event per site)
-        3) Plot of the remainder-residual (intra per rec minus avg intra per site)
+        1) Plot of the intra-event residual per record at each station.
+        2) Plot of the site term (average intra-event per site).
+        3) Plot of the remainder-residual (intra per rec minus avg intra per site).
         """
         deltaW_es, deltaS2S_s, deltaWS_es = np.array([]), np.array([]), np.array([])
         xvals = np.array([])
@@ -1257,8 +1257,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         
     def _get_site_data(self):
         """
-        Get site-specific intra-event residual components for each site for the
-        GMPEs and intensity measures considered
+        Get site-specific intra-event residual components for each
+        site for the GMPEs and intensity measures considered.
         """
         data = {site_id: {} for site_id in self.residuals.site_ids}
         for iloc, site_resid in enumerate(self.residuals.site_residuals):

@@ -16,11 +16,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Basic Pseudo-database built on top of hdf5 for a set of processed strong
-motion records
+Basic Pseudo-database built on top of hdf5 files for a set of processed
+ground-motion records.
 """
-import os
-import pickle
 import numpy as np
 import h5py
 from datetime import datetime
@@ -355,14 +353,12 @@ EC8_VS30_BOUNDARIES = {
     "S1": (-np.inf, 100)
 }
 
-
 # Eurocode 8 Site Class NSPT boundaries
 EC8_NSPT_BOUNDARIES = {
     "B": (50.0, np.inf),
     "C": (15.0, 50.0),
     "D": (-np.inf, 15.0)
 }
-
 
 # NEHRP Site Class Vs30 boundaries
 NEHRP_VS30_BOUNDARIES = {
@@ -372,7 +368,6 @@ NEHRP_VS30_BOUNDARIES = {
     "D": (180.0, 360.0),
     "E": (-np.inf, 180.0)
 }
-
 
 # NEHRP Site Class NSPT boundaries
 NEHRP_NSPT_BOUNDARIES = {
@@ -484,21 +479,34 @@ class RecordSite(object):
             vs30_measured = self.vs30_measured
 
         if self.z1pt0:
-            z1pt0 = self.z1pt0
+            if self.z1pt0 != -999:
+                # Error will be raised when making
+                # Site object if z1pt0 = 0 m
+                z1pt0 = np.max(1E-09, self.z1pt0)
+            else:
+                z1pt0 = self.z1pt0
 
         if self.z2pt5:
-            z2pt5 = self.z2pt5
-        
+            if self.z2pt5 != -999:
+                # Error will be raised when making
+                # Site object if z2pt5 = 0 km
+                z2pt5 = np.max(1E-09, self.z2pt5)
+            else:
+                z2pt5 = self.z2pt5
+
         location = Point(self.longitude,
                          self.latitude,
                         -self.altitude / 1000.)  # Elevation from m to km
+        
         oq_site = Site(location,
                        vs30,
                        z1pt0,
                        z2pt5,
                        vs30measured=vs30_measured,
                        backarc=self.backarc)
+        
         setattr(oq_site, "id", self.id)
+        
         return oq_site
 
     def get_ec8_class(self):
@@ -568,35 +576,6 @@ class RecordSite(object):
             return 100
         else:
             print("Cannot determine Vs30 from EC8 site class")
-
-
-Filter = {
-    'Type': None,
-    'Order': None,
-    'Passes': None,
-    'Low-Cut': None,
-    'High-Cut': None
-}
-
-
-Baseline = {
-    'Type': None,
-    'Start': None,
-    'End': None
-}
-
-
-ims_dict = {
-    'PGA': None,
-    'PGV': None,
-    'PGD': None,
-    'CAV': None,
-    'Ia': None,
-    'CAV5': None,
-    'arms': None,
-    'd5_95': None,
-    'd5_75': None
-}
 
 
 class Component(object):
@@ -743,6 +722,7 @@ class GroundMotionDatabase(ContextDB):
         self.directory = db_directory
         self.records = list(records) if records is not None else []
         self.site_ids = list(site_ids) if site_ids is not None else []
+        self.scalar_imts = ["PGA", "PGV", "PGD", "Ia", "CAV"]
 
     def __iter__(self):
         """
@@ -763,14 +743,12 @@ class GroundMotionDatabase(ContextDB):
         data = {}
         for record in self.records:
             evt_id = record.event.id
-            if evt_id not in data:  # defaultdict might be an option
+            if evt_id not in data:
                 data[evt_id] = []
             data[evt_id].append(record)
 
         for evt_id, records in data.items():
             yield evt_id, records
-
-    SCALAR_IMTS = ["PGA", "PGV", "PGD", "Ia", "CAV"]
 
     def get_observations(self, imtx, records, component="Geometric"):
         """
@@ -781,7 +759,7 @@ class GroundMotionDatabase(ContextDB):
         selection_string = "IMS/H/Spectra/Response/Acceleration/"
         for record in records:
             fle = h5py.File(record.datafile, "r")
-            if imtx in self.SCALAR_IMTS:
+            if imtx in self.scalar_imts:
                 values.append(self.get_scalar(fle, imtx, component))
             elif "SA(" in imtx:
                 spectrum = fle[selection_string + component + "/damping_05"][:]
@@ -872,12 +850,27 @@ class GroundMotionDatabase(ContextDB):
         # Make site collection for given station
         pnt = Point(
             ctx.lons[idx_site], ctx.lats[idx_site], ctx.depths[idx_site])
+        
+        if ctx.z1pt0[idx_site] != -999:
+            # Error will be raised when making
+            # Site object if z1pt0 = 0 m
+            z1pt0 = np.max([1E-09, ctx.z1pt0[idx_site]])
+        else:
+            z1pt0 = ctx.z1pt0[idx_site]
+
+        if ctx.z2pt5[idx_site] != -999:
+            # Error will be raised when making
+            # Site object if z2pt5 = 0 km
+            z2pt5 = np.max([1E-09, ctx.z2pt5[idx_site]])
+        else:
+            z2pt5 = ctx.z2pt5[idx_site]
+
         site = SiteCollection([
                     Site(
                         pnt,
                         ctx.vs30[idx_site],
-                        ctx.z1pt0[idx_site],
-                        ctx.z2pt5[idx_site]
+                        z1pt0,
+                        z2pt5
                         )
                         ])
         
@@ -1158,17 +1151,3 @@ class GroundMotionDatabase(ContextDB):
                 output_list.append((key_vals[idx], name_id[key_vals[idx]]))
 
         return dict(output_list)
-
-
-def load_database(directory):
-    """
-    Wrapper function to load the metadata of a :class:`GroundMotionDatabase`
-    """
-    metadata_file = "metadatafile.pkl"
-    metadata_path = os.path.join(directory, metadata_file)
-    if not os.path.exists(metadata_path):
-        raise FileNotFoundError(
-            f"Metadata file 'metadatafile.pkl' not found in {directory}."
-        )
-    with open(metadata_path, "rb") as f:
-        return pickle.load(f)
