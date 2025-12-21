@@ -25,6 +25,7 @@ import toml
 import numpy as np
 import pandas as pd
 import re
+import ast
 
 from openquake.commonlib.readinput import get_rupture
 from openquake.commonlib.oqvalidation import OqParam
@@ -84,6 +85,17 @@ class Configurations(object):
             "lt_gmc_3": {"col": 'g', "wei": "lt_weight_gmc3", "label": "Logic Tree 3"},
             "lt_gmc_4": {"col": 'k', "wei": "lt_weight_gmc4", "label": "Logic Tree 4"}
             }
+        
+        # Add custom LT labels if required
+        if "custom_lt_labels" in config_file["custom_plotting"]:
+            lt_labels = ast.literal_eval(config_file["custom_plotting"]["custom_lt_labels"])
+            for lt in lt_labels:
+                if lt not in self.lt_mapping:
+                    raise ValueError("custom_lt_labels must be a dict with keys such as 'lt_gmc_1'"
+                                     "(going up to 'lt_gmc_4' if desired) with the value for each " \
+                                     "key being a string representing the corresponding logic tree in "
+                                     "the outputted plots.")
+                self.lt_mapping[lt]["label"] = lt_labels[lt]
 
         # Get GMMs and LT weights from either TOML or XML
         if 'gmc_xml' in config_file:
