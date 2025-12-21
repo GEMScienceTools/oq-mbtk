@@ -470,8 +470,9 @@ Comparing GMPEs
         plot_lt_only = false # If false plot the individual GMMs, if true then plot only the weighted mean LTs
 
         [custom_plotting]
-        custom_colors_flag = false # Set to true for custom colours in plots)
+        custom_colors_flag = false # Set to true for custom colours in plots
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
+        custom_lt_labels = "{'lt_gmc_1': 'updated LT', 'original LT': 'test_lt2'}" # Dict (as a string) specifying custom label for each LT (optional)
             
 3. Trellis Plots 
 
