@@ -223,7 +223,7 @@ class TestFaultNetworkPlausibility(unittest.TestCase):
         fgj_name = os.path.join(test_data_dir, "motagua_3_faults.geojson")
         settings = {
             "subsection_size": [10.0, 10.0],
-            "max_jump_distance": 15.0,
+            "max_jump_distance": 30.0,
             "rupture_filtering_connection_distance_midpoint": 15.0,
             "rupture_filtering_connection_angle_midpoint": 90.0,
             "rupture_filtering_slip_azimuth_midpoint": 90.0,
@@ -249,6 +249,10 @@ class TestFaultNetworkPlausibility(unittest.TestCase):
         )
         self.assertIsInstance(ang_mat, dok_array)
         self.assertGreater(len(ang_mat.keys()), 0)
+        _ang_mat = {(4, 20): 63.44241277654345, (20, 4): 63.44241277654345}
+        assert ang_mat.keys() == _ang_mat.keys()
+        for k, v in ang_mat.items():
+            np.testing.assert_almost_equal(v, _ang_mat[k])
 
     def test_plausibility_dataframe(self):
         fn = self.fault_network
@@ -272,3 +276,132 @@ class TestFaultNetworkPlausibility(unittest.TestCase):
         for col in ["connection_angle", "connection_distance", "slip_azimuth"]:
             self.assertTrue(np.all(plaus_df[col] > 0))
         self.assertTrue(np.all(plaus_df["total"] > 0))
+
+        _plaus_df = pd.DataFrame(
+            {
+                'connection_angle': {
+                    0: 1.0,
+                    1: 1.0,
+                    2: 1.0,
+                    3: 1.0,
+                    4: 1.0,
+                    5: 1.0,
+                    6: 1.0,
+                    7: 1.0,
+                    8: 1.0,
+                    9: 1.0,
+                    10: 1.0,
+                    11: 1.0,
+                    12: 1.0,
+                    13: 1.0,
+                    14: 1.0,
+                    15: 1.0,
+                    16: 1.0,
+                    17: 1.0,
+                    18: 1.0,
+                    19: 1.0,
+                    20: 1.0,
+                    21: 1.0,
+                    22: 1.0,
+                    23: 1.0,
+                    24: 1.0,
+                    25: 1.0,
+                    26: 1.0,
+                    27: 0.7235485370846245,
+                },
+                'connection_distance': {
+                    0: 1.0,
+                    1: 1.0,
+                    2: 1.0,
+                    3: 1.0,
+                    4: 1.0,
+                    5: 1.0,
+                    6: 1.0,
+                    7: 1.0,
+                    8: 1.0,
+                    9: 1.0,
+                    10: 1.0,
+                    11: 1.0,
+                    12: 1.0,
+                    13: 1.0,
+                    14: 1.0,
+                    15: 1.0,
+                    16: 1.0,
+                    17: 1.0,
+                    18: 1.0,
+                    19: 1.0,
+                    20: 1.0,
+                    21: 1.0,
+                    22: 1.0,
+                    23: 1.0,
+                    24: 1.0,
+                    25: 1.0,
+                    26: 1.0,
+                    27: 0.40738886535354024,
+                },
+                'slip_azimuth': {
+                    0: 1.0,
+                    1: 1.0,
+                    2: 1.0,
+                    3: 1.0,
+                    4: 1.0,
+                    5: 1.0,
+                    6: 1.0,
+                    7: 1.0,
+                    8: 1.0,
+                    9: 1.0,
+                    10: 1.0,
+                    11: 1.0,
+                    12: 1.0,
+                    13: 1.0,
+                    14: 1.0,
+                    15: 1.0,
+                    16: 1.0,
+                    17: 1.0,
+                    18: 1.0,
+                    19: 1.0,
+                    20: 1.0,
+                    21: 1.0,
+                    22: 1.0,
+                    23: 1.0,
+                    24: 1.0,
+                    25: 1.0,
+                    26: 1.0,
+                    27: 0.6961685583017807,
+                },
+                'total': {
+                    0: 1.0,
+                    1: 1.0,
+                    2: 1.0,
+                    3: 1.0,
+                    4: 1.0,
+                    5: 1.0,
+                    6: 1.0,
+                    7: 1.0,
+                    8: 1.0,
+                    9: 1.0,
+                    10: 1.0,
+                    11: 1.0,
+                    12: 1.0,
+                    13: 1.0,
+                    14: 1.0,
+                    15: 1.0,
+                    16: 1.0,
+                    17: 1.0,
+                    18: 1.0,
+                    19: 1.0,
+                    20: 1.0,
+                    21: 1.0,
+                    22: 1.0,
+                    23: 1.0,
+                    24: 1.0,
+                    25: 1.0,
+                    26: 1.0,
+                    27: 0.20520655500749668,
+                },
+            }
+        )
+
+        pd.testing.assert_frame_equal(
+            plaus_df, _plaus_df, rtol=1e-6, atol=1e-8, check_dtype=True
+        )
