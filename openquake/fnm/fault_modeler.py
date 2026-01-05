@@ -39,13 +39,11 @@ import pandas as pd
 import geopandas as gpd
 from concurrent.futures import (
     ProcessPoolExecutor,
-    ThreadPoolExecutor,
     as_completed,
 )
 
 from shapely.geometry import LineString, Polygon, MultiPolygon
 
-from openquake.baselib.general import AccumDict
 from openquake.hazardlib.geo import Point, Line
 from openquake.hazardlib.geo.mesh import RectangularMesh
 from openquake.hazardlib.geo.surface import SimpleFaultSurface, KiteSurface
@@ -53,6 +51,7 @@ from openquake.hazardlib.geo.surface import SimpleFaultSurface, KiteSurface
 from openquake.fnm.importer import (
     simple_fault_surface_from_feature,
 )
+from openquake.fnm.fault_modeler import group_subfaults_by_fault
 
 from openquake.fnm.msr import area_to_mag
 
@@ -493,7 +492,10 @@ def get_subsections_from_fault(
 
 def _build_subfaults_for_one_fault(args):
     """
-    Worker function run in a separate process.
+    Worker function run in a separate process, spawned from the
+    `build_subfaults_parallel` function.
+
+    `args` is a tuple: (i, fault, build_settings).
 
     Returns (i, subfaults, err) where:
       - i: fault index (for logging / ordering)
@@ -1181,9 +1183,6 @@ def get_trace_from_sf_rupture(single_rup_df, subfaults):
           'fault'   : fid
           'patches' : indices into that fault's subfault list
     """
-    import numpy as np
-    from .fault_modeler import group_subfaults_by_fault
-
     grouped = group_subfaults_by_fault(subfaults)
     traces = []
 
