@@ -147,12 +147,10 @@ def build_fault_network(
     build_settings.update(kwargs)
 
     settings = build_settings
-    if (
-        settings["rupture_filtering_connection_distance_midpoint"] is None
-    ):
-        settings["rupture_filtering_connection_distance_midpoint"] = settings[
-            "max_jump_distance"
-        ] / 2.0
+    if settings["rupture_filtering_connection_distance_midpoint"] is None:
+        settings["rupture_filtering_connection_distance_midpoint"] = (
+            settings["max_jump_distance"] / 2.0
+        )
 
     fault_network = {}
 
