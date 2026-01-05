@@ -51,7 +51,6 @@ from openquake.hazardlib.geo.surface import SimpleFaultSurface, KiteSurface
 from openquake.fnm.importer import (
     simple_fault_surface_from_feature,
 )
-from openquake.fnm.fault_modeler import group_subfaults_by_fault
 
 from openquake.fnm.msr import area_to_mag
 
