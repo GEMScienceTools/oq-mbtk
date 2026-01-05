@@ -50,7 +50,7 @@ from .solver import weights_from_errors
 
 
 def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
-    slip_rate_lhs = np.zeros((len(faults), len(rups)))
+    slip_rate_lhs = ssp.dok_array((len(faults), len(rups)), dtype=float)
 
     fault_ids = {fault["id"]: i for i, fault in enumerate(faults)}
 
@@ -170,10 +170,12 @@ def make_rel_gr_mfd_eqns(
         Weight to apply to the equation set
 
     """
-
     mag_counts = get_mag_counts(rups)
 
     unique_mags = sorted(mag_counts.keys())
+    if len(unique_mags) == 1:
+        return None, None, None, None
+
     ref_mag = unique_mags[0]
 
     rel_rates = rel_gr_mfd_rates(unique_mags, b, corner_mag=corner_mag)
@@ -192,34 +194,23 @@ def make_rel_gr_mfd_eqns(
                 if rup["M"] == M and rup["idx"] in rup_include_list
             ]
 
-    if len(unique_mags) == 1:
-        return None, None, None, None
-
-    elif len(unique_mags) > 2:
-        rel_mag_eqns = np.vstack(
-            [[np.zeros(len(rups))] for i in range(len(unique_mags) - 1)]
-        )
-        for i, M in enumerate(unique_mags[1:]):
-            rel_mag_eqns[i, mag_rup_idxs[ref_mag]] = -rel_rates_adj[ref_mag]
-            rel_mag_eqns[i, mag_rup_idxs[M]] = rel_rates_adj[M]
-    else:
-        rel_mag_eqns = np.zeros(len(rups))
-        M = unique_mags[1]
-        rel_mag_eqns[mag_rup_idxs[ref_mag]] = -rel_rates_adj[ref_mag]
-        rel_mag_eqns[mag_rup_idxs[M]] = rel_rates_adj[M]
+    n_eqs = len(unique_mags) - 1
+    rel_mag_eqns = ssp.dok_array((n_eqs, len(rups)), dtype=float)
+    for i, M in enumerate(unique_mags[1:]):
+        for idx in mag_rup_idxs[ref_mag]:
+            rel_mag_eqns[i, idx] = -rel_rates_adj[ref_mag]
+        for idx in mag_rup_idxs[M]:
+            rel_mag_eqns[i, idx] = rel_rates_adj[M]
 
     rel_mag_eqns_lhs = rel_mag_eqns
-    rel_mag_eqns_rhs = np.zeros(rel_mag_eqns_lhs.shape[0])  # flat, not column
-    # rel_mag_eqns_errs = np.sqrt([(rel_rates_adj[M]) for M in unique_mags[1:]])
+    rel_mag_eqns_rhs = np.zeros(n_eqs)
     rel_mag_eqns_errs = np.array([(rel_rates_adj[M]) for M in unique_mags[1:]])
-    # rel_mag_eqns_errs = rel_mag_eqns_errs**-2
     rel_mag_eqns_errs *= weight
 
-    # Store metadata about magnitude pairs being compared
     mag_pairs = [(ref_mag, M) for M in unique_mags[1:]]
     eq_metadata = {
         'type': 'mfd_rel',
-        'n_eqs': len(mag_pairs),
+        'n_eqs': n_eqs,
         'details': {
             'magnitude_pairs': mag_pairs,
             'reference_magnitude': ref_mag,
@@ -228,7 +219,7 @@ def make_rel_gr_mfd_eqns(
         },
     }
 
-    return rel_mag_eqns, rel_mag_eqns_rhs, rel_mag_eqns_errs, eq_metadata
+    return rel_mag_eqns_lhs, rel_mag_eqns_rhs, rel_mag_eqns_errs, eq_metadata
 
 
 def mean_slip_rate(fault_sections: list, faults: list):
@@ -338,6 +329,8 @@ def make_abs_mfd_eqns(
     # Note: sqrt(0) -> 0; if you want to avoid zero-variance, add small epsilon.
     mfd_abs_errs = np.sqrt(mfd_abs_rhs)
     mfd_abs_errs_weighted = weights_from_errors(mfd_abs_errs) * weight
+
+    abs_mag_eqns = ssp.csr_array(abs_mag_eqns)
 
     eq_metadata = {
         "type": "mfd_abs",
@@ -458,6 +451,11 @@ def make_slip_rate_smoothing_eqns(
             rups, faults, seismic_slip_rate_frac=seismic_slip_rate_frac
         )[0]
 
+    if ssp.issparse(slip_rate_lhs):
+        slip_rate_lhs = slip_rate_lhs.tocsr()
+    else:
+        slip_rate_lhs = ssp.csr_array(slip_rate_lhs)
+
     for i, fault in enumerate(faults):
         if i not in fault_adjacence.keys():
             continue
@@ -466,16 +464,12 @@ def make_slip_rate_smoothing_eqns(
             if (i, adj_fault) in adj_pairs_done:
                 continue
             sm_eqn = slip_rate_lhs[i, :] - slip_rate_lhs[adj_fault, :]
-            # sm_eqn *= smoothing_coeff
             slip_rate_smoothing_eqns.append(sm_eqn)
 
             adj_pairs_done.append((i, adj_fault))
             adj_pairs_done.append((adj_fault, i))
 
-    # if len(slip_rate_smoothing_eqns) > 1:
-    smooth_lhs = np.vstack(slip_rate_smoothing_eqns)
-    # else:
-    #     smooth_lhs = slip_rate_smoothing_eqns[0]
+    smooth_lhs = ssp.vstack(slip_rate_smoothing_eqns)
     smooth_rhs = np.zeros(smooth_lhs.shape[0])
     smooth_errs = np.ones(smooth_lhs.shape[0]) * smoothing_weight
 
@@ -604,12 +598,11 @@ def make_eqns(
         fault_moment = get_fault_moment(faults, shear_modulus=shear_modulus)
         mfd_moment = get_mfd_moment(mfd)
         seismic_slip_rate_frac = mfd_moment / fault_moment
-        if verbose:
-            print("fault_moment", fault_moment)
-            print("mfd_moment", mfd_moment)
-            print(
-                "Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
-            )
+        print("fault_moment", fault_moment)
+        print("mfd_moment", mfd_moment)
+        print(
+            "Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
+        )
     elif seismic_slip_rate_frac is None and mfd is None:
         print("Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac)
         seismic_slip_rate_frac = 1.0
@@ -776,8 +769,9 @@ def make_eqns(
         lhs_set = [ssp.csc_array(lhs) for lhs in lhs_set]
         lhs = ssp.vstack(lhs_set)
     else:
-        lhs = [lhs.todense() for lhs in lhs_set if ssp.issparse(lhs)]
-        lhs = np.vstack(lhs_set)
+        lhs_set = [ssp.csc_array(lhs) for lhs in lhs_set]
+        lhs_sparse = ssp.vstack(lhs_set)
+        lhs = lhs_sparse.toarray()
 
     rhs = np.hstack(rhs_set)
     errs = np.hstack(err_set)
@@ -789,3 +783,4 @@ def make_eqns(
         return lhs, rhs, errs, metadata_set
     else:
         return lhs, rhs, errs
+
