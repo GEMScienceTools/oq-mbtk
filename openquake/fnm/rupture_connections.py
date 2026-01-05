@@ -320,6 +320,8 @@ def get_single_fault_rupture_coordinates(
 def get_single_fault_rups(
     subfaults,
     subfault_index_start: int = 0,
+    min_aspect_ratio: float = 0.8,
+    max_aspect_ratio: float = 3.0,
     fault_group: int | None = None,
 ) -> pd.DataFrame:
     """
@@ -332,6 +334,10 @@ def get_single_fault_rups(
     subfault_index_start : int, optional
         Index of the first subfault. The default is 0.
     fault_group: index of fault_group, optional.
+    min_aspect_ratio : float, optional
+        Minimum aspect ratio of the rupture. The default is 0.8.
+    max_aspect_ratio : float, optional
+        Maximum aspect ratio of the rupture. The default is 3.0.
 
     Returns
     -------
@@ -343,7 +349,11 @@ def get_single_fault_rups(
             fault: fault identifier
     """
     num_subfaults = len(subfaults)
-    fault_rups = get_rupture_patches_from_single_fault(subfaults)
+    fault_rups = get_rupture_patches_from_single_fault(
+        subfaults,
+        min_aspect_ratio=min_aspect_ratio,
+        max_aspect_ratio=max_aspect_ratio,
+    )
     rup_patches = list(fault_rups.values())[0]
     rup_subfaults = [
         [rp + subfault_index_start for rp in rup] for rup in rup_patches
@@ -370,6 +380,8 @@ def get_single_fault_rups(
 
 def get_all_single_fault_rups(
     all_subfaults,
+    min_aspect_ratio: float = 0.8,
+    max_aspect_ratio: float = 3.0,
 ) -> tuple[list[list[int]], pd.DataFrame]:
     """
     Get all possible single-fault ruptures from a set of subfaults.
@@ -379,6 +391,10 @@ def get_all_single_fault_rups(
     all_subfaults : list of lists of dictionaries
         List of lists of subfault dictionaries. Each list of subfaults
         is derived from a single, contiguous fault.
+    min_aspect_ratio : float, optional
+        Minimum aspect ratio of the rupture. The default is 0.8.
+    max_aspect_ratio : float, optional
+        Maximum aspect ratio of the rupture. The default is 3.0.
 
     Returns
     -------
@@ -401,6 +417,8 @@ def get_all_single_fault_rups(
             subfaults,
             subfault_index_start=subfault_count,
             fault_group=fault_count,
+            min_aspect_ratio=min_aspect_ratio,
+            max_aspect_ratio=max_aspect_ratio,
         )
 
         num_rups = rupture_df.shape[0]
@@ -420,6 +438,8 @@ def get_rupture_adjacency_matrix(
     all_subfaults=None,
     multifaults_on_same_fault: bool = False,
     max_dist: Optional[float] = 20.0,
+    min_aspect_ratio: float = 0.8,
+    max_aspect_ratio: float = 3.0,
     sparse: bool = True,
     full_fault_only_mf_ruptures: bool = True,
 ) -> tuple[pd.DataFrame, np.ndarray]:
@@ -444,6 +464,16 @@ def get_rupture_adjacency_matrix(
         If this value is not None, then the rupture adjacency matrix will
         be filtered by distance, so that ruptures farther apart than this
         distance will be given the null (0.0) distance value.
+    min_aspect_ratio : float, optional
+        Minimum aspect ratio of the rupture. The default is 0.8.
+    max_aspect_ratio : float, optional
+        Maximum aspect ratio of the rupture. The default is 3.0.
+    sparse: bool.
+        Whether to return a sparse adjacency matrix.
+    full_fault_only_mf_ruptures: bool
+        Only use full-fault ruptures to assemble multifault ruptures. Must
+        be `True` for regional-scale or larger PSHA models, otherwise
+        billions or trillions of multifault ruptures will be returned.
 
     Returns
     -------
@@ -473,7 +503,9 @@ def get_rupture_adjacency_matrix(
 
     logging.info("  making single-fault ruptures")
     single_fault_rups, single_fault_rup_df = get_all_single_fault_rups(
-        all_subfaults
+        all_subfaults,
+        min_aspect_ratio=min_aspect_ratio,
+        max_aspect_ratio=max_aspect_ratio,
     )
 
     nrups = single_fault_rup_df.shape[0]

@@ -62,6 +62,8 @@ default_settings = {
     'dip_sd': 5.0,
     'upper_seis_depth': 0.0,
     'lower_seis_depth': 20.0,
+    'min_aspect_ratio': 0.8,
+    'max_aspect_ratio': 3.0,
     'max_jump_distance': 10.0,
     'max_sf_rups_per_mf_rup': 10,
     'rupture_angle_threshold': 60.0,
@@ -254,6 +256,8 @@ def build_fault_network(
         faults,
         all_subfaults=fault_network['subfaults'],
         max_dist=settings['max_jump_distance'],
+        min_aspect_ratio=settings['min_aspect_ratio'],
+        max_aspect_ratio=settings['max_aspect_ratio'],
         sparse=settings['sparse_distance_matrix'],
         full_fault_only_mf_ruptures=settings['full_fault_only_mf_ruptures'],
     )
