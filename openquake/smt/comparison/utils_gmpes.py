@@ -390,10 +390,10 @@ def build_mgmpe(gmpe):
     for idx_p, param in enumerate(params):
         if idx_p > 1 and idx_p not in idx_params:
             if 'lt_weight' not in param: # Skip if weight for logic tree
-                dic_key =  param.split('=')[0].strip().replace('"','')
-                dic_val =  param.split('=')[1].strip().replace('"','')
+                dic_key = param.split('=')[0].strip().replace('"','')
+                dic_val = param.split('=')[1].strip().replace('"','')
                 kw_mgmpe['gmpe'][base_gsim][dic_key] = dic_val
-            
+
     # Al Atik 2015 sigma model
     if 'al_atik_2015_sigma' in gmpe:
         kw_mgmpe['sigma_model_alatik2015'] = {"tau_model": "global", "ergodic": False}
