@@ -14,8 +14,10 @@ logging.basicConfig(
 from openquake.fnm.fault_modeler import (
     get_subsections_from_fault,
     simple_fault_from_feature,
+    build_subfaults_parallel,
     make_subfault_df,
     make_rupture_df,
+    _n_procs,
 )
 
 from openquake.fnm.rupture_connections import (
@@ -69,6 +71,7 @@ default_settings = {
     'skip_bad_faults': False,
     'shear_modulus': SHEAR_MODULUS,
     'fault_mfd_b_value': 1.0,
+    'fault_mfd_corner_mag': 7.2,
     'fault_mfd_type': 'TruncatedGRMFD',
     'fault_mfd_min_mag': 5.0,
     'export_fault_mfds': False,
@@ -77,6 +80,7 @@ default_settings = {
     'plot_fault_moment_rates': False,
     'sparse_distance_matrix': True,
     'parallel_multifault_search': True,
+    'parallel_subfault_build': True,
     'full_fault_only_mf_ruptures': True,
     'calculate_rates_from_slip_rates': False,
     'surface_type': 'simple',
@@ -202,24 +206,30 @@ def build_fault_network(
     if return_faults_only:
         return fault_network
 
-    logging.info("Making subfaults")
-    fault_network['subfaults'] = []
-    for i, fault in enumerate(faults):
-        try:
-            fault_network['subfaults'].append(
-                get_subsections_from_fault(
-                    fault,
-                    subsection_size=build_settings['subsection_size'],
-                    edge_sd=build_settings['edge_sd'],
-                    dip_sd=build_settings['dip_sd'],
-                    surface=fault['surface'],
+    if settings['parallel_subfault_build'] is False:
+        logging.info("Making subfaults")
+        fault_network['subfaults'] = []
+        for i, fault in enumerate(faults):
+            try:
+                fault_network['subfaults'].append(
+                    get_subsections_from_fault(
+                        fault,
+                        subsection_size=build_settings['subsection_size'],
+                        edge_sd=build_settings['edge_sd'],
+                        dip_sd=build_settings['dip_sd'],
+                        surface=fault['surface'],
+                    )
                 )
-            )
-        except Exception as e:
-            logging.error(f"Error with fault {i}: {e}")
-            # yield fault_network
-            raise e
-            # return faults
+            except Exception as e:
+                logging.error(f"Error with fault {i}: {e}")
+                # yield fault_network
+                raise e
+                # return faults
+    else:
+        logging.info("Making subfaults in parallel")
+        build_subfaults_parallel(
+            fault_network, build_settings, max_workers=_n_procs
+        )
 
     n_subfaults = sum([len(sf) for sf in fault_network['subfaults']])
     t2 = time.time()
@@ -269,6 +279,7 @@ def build_fault_network(
         raise DeprecationWarning("Filtering by angle is deprecated.")
 
     if settings['filter_by_overlap']:
+        t3__ = time.time()
         logging.info("  Filtering by rupture overlap")
         binary_adjacence_matrix, _ = filter_bin_adj_matrix_by_rupture_overlap(
             fault_network['single_rup_df'],
@@ -278,17 +289,18 @@ def build_fault_network(
         )
         t3_ = time.time()
         event_times.append(t3_)
-        logging.info(f"\tdone in {round(t3_-t3, 1)} s")
+        logging.info(f"\tdone in {round(t3_-t3__, 1)} s")
         n_connections = binary_adjacence_matrix.sum()
         logging.info(f"\t{'{:,}'.format(n_connections)} connections remaining")
         # filter continuous distance matrix
         fault_network['dist_mat'] *= binary_adjacence_matrix
 
     logging.info("Building subfault dataframe")
+    t4_ = time.time()
     fault_network['subfault_df'] = make_subfault_df(fault_network['subfaults'])
     t4 = time.time()
     event_times.append(t4)
-    logging.info(f"\tdone in {round(t4-t3, 1)} s")
+    logging.info(f"\tdone in {round(t4-t4_, 1)} s")
 
     logging.info("Getting multifault ruptures")
     rup_groups = get_rupture_grouping(
