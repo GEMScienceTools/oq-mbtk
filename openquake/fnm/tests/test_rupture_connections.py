@@ -838,6 +838,37 @@ class Test3Faults(unittest.TestCase):
                     False,
                     False,
                 ],
+                'fault_group': [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                ],
             },
             index=[
                 0,
@@ -1033,7 +1064,9 @@ class Test3Faults(unittest.TestCase):
                     False, False, False, False, False, False, False, False, 
                     False, False, False, False, False, False, False, False,  
                     True, False, False, False, False
-                ]
+                ],
+                'fault_group': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+                                2, 2, 2, 2, 2, 2, 2]
                 # fmt: on
             },
             # fmt: off
