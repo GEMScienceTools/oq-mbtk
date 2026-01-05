@@ -318,7 +318,9 @@ def get_single_fault_rupture_coordinates(
 
 
 def get_single_fault_rups(
-    subfaults, subfault_index_start: int = 0
+    subfaults,
+    subfault_index_start: int = 0,
+    fault_group: int | None = None,
 ) -> pd.DataFrame:
     """
     Get all possible ruptures from a single fault.
@@ -329,6 +331,7 @@ def get_single_fault_rups(
         List of subfault dictionaries.
     subfault_index_start : int, optional
         Index of the first subfault. The default is 0.
+    fault_group: index of fault_group, optional.
 
     Returns
     -------
@@ -359,6 +362,8 @@ def get_single_fault_rups(
     rupture_df['full_fault_rupture'] = [
         len(rup) == num_subfaults for rup in rup_patches
     ]
+    if fault_group is not None:
+        rupture_df['fault_group'] = fault_group
 
     return rupture_df
 
@@ -389,10 +394,13 @@ def get_all_single_fault_rups(
     rup_dfs = []
     all_rup_count = 0
     subfault_count = 0
+    fault_count = 0
 
     for subfaults in all_subfaults:
         rupture_df = get_single_fault_rups(
-            subfaults, subfault_index_start=subfault_count
+            subfaults,
+            subfault_index_start=subfault_count,
+            fault_group=fault_count,
         )
 
         num_rups = rupture_df.shape[0]
@@ -400,6 +408,7 @@ def get_all_single_fault_rups(
         rup_dfs.append(rupture_df)
         all_rup_count += num_rups
         subfault_count += len(subfaults)
+        fault_count += 1
 
     rup_df = pd.concat(rup_dfs, axis=0).reset_index(drop=True)
 
