@@ -29,15 +29,21 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import os
 import json
+import math
 import logging
+import traceback
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+from concurrent.futures import (
+    ProcessPoolExecutor,
+    as_completed,
+)
 
 from shapely.geometry import LineString, Polygon, MultiPolygon
 
-from openquake.baselib.general import AccumDict
 from openquake.hazardlib.geo import Point, Line
 from openquake.hazardlib.geo.mesh import RectangularMesh
 from openquake.hazardlib.geo.surface import SimpleFaultSurface, KiteSurface
@@ -60,6 +66,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+import time
+
+_n_procs = max(1, os.cpu_count() - 1)
 
 
 def simple_fault_from_feature(
@@ -110,7 +120,7 @@ def simple_fault_from_feature(
     for prop in optional_props_to_keep:
         if prop in feature['properties']:
             fault[prop] = feature['properties'][prop]
-                    
+
     if fault['rake'] == -180.0:
         fault['rake'] = 180.0
 
@@ -358,17 +368,16 @@ def subdivide_rupture_mesh(
     return subsec_meshes
 
 
-def subdivide_kite_surface(fault: KiteSurface,
-                           nc_strike=3, nc_dip=3):
+def subdivide_kite_surface(fault: KiteSurface, nc_strike=3, nc_dip=3):
     """
     Divides a KiteSurface into meshes
     """
 
-    #TODO: add max length and width
+    # TODO: add max length and width
 
     fault_mesh = fault.mesh
-    n_cells_dip = fault_mesh.lons.shape[0] - 1 # dip=rows
-    n_cells_strike = fault_mesh.lons.shape[1] - 1 # strike=cols
+    n_cells_dip = fault_mesh.lons.shape[0] - 1  # dip=rows
+    n_cells_strike = fault_mesh.lons.shape[1] - 1  # strike=cols
 
     num_segs_down_dip = n_cells_dip // nc_dip
     num_segs_along_strike = n_cells_strike // nc_strike
@@ -379,8 +388,8 @@ def subdivide_kite_surface(fault: KiteSurface,
         fault_mesh.depths,
         num_segs_down_dip,
         num_segs_along_strike,
-        nc_dip+1,
-        nc_strike+1
+        nc_dip + 1,
+        nc_strike + 1,
     )
 
     return meshes
@@ -480,6 +489,60 @@ def get_subsections_from_fault(
     return subsections
 
 
+def _build_subfaults_for_one_fault(args):
+    """
+    Worker function run in a separate process, spawned from the
+    `build_subfaults_parallel` function.
+
+    `args` is a tuple: (i, fault, build_settings).
+
+    Returns (i, subfaults, err) where:
+      - i: fault index (for logging / ordering)
+      - subfaults: list returned by get_subsections_from_fault, or None on error
+      - err: exception instance (or string) on error, else None
+    """
+    i, fault, build_settings = args
+    try:
+        subfaults = get_subsections_from_fault(
+            fault,
+            subsection_size=build_settings['subsection_size'],
+            edge_sd=build_settings['edge_sd'],
+            dip_sd=build_settings['dip_sd'],
+            surface=fault['surface'],
+        )
+        return (i, subfaults, None)
+    except Exception as e:
+        # Optionally keep traceback as text for better diagnostics
+        tb = traceback.format_exc()
+        return (i, None, (e, tb))
+
+
+def build_subfaults_parallel(fault_network, build_settings, max_workers=None):
+    faults = fault_network['faults']
+    n_faults = len(faults)
+    fault_network['subfaults'] = [None] * n_faults
+
+    tasks = [(i, faults[i], build_settings) for i in range(n_faults)]
+
+    with ProcessPoolExecutor(max_workers=max_workers) as ex:
+        futures = [ex.submit(_build_subfaults_for_one_fault, t) for t in tasks]
+
+        for fut in as_completed(futures):
+            i, subfaults, err = fut.result()
+
+            if err is not None:
+                e, tb = err
+                logging.error(f"Error with fault {i}: {e}")
+                logging.error(tb)
+                # Optionally: cancel remaining tasks
+                for f in futures:
+                    f.cancel()
+                raise e
+
+            # Keep ordering identical to the original sequence
+            fault_network['subfaults'][i] = subfaults
+
+
 def make_subfault_df(all_subfaults):
     """
     Makes a Pandas DataFrame for each subfault (subsection) in
@@ -496,7 +559,9 @@ def make_subfault_df(all_subfaults):
     subfault_df : pd.DataFrame
         DataFrame containing information about each subfault.
     """
-    subfault_df = pd.concat(pd.DataFrame(sf) for sf in all_subfaults)
+    subfault_df = pd.DataFrame(
+        [sf for sublist in all_subfaults for sf in sublist]
+    )
     subfault_df = subfault_df.reset_index(drop=True)
     subfault_df.index.name = "subfault_id"
     subfault_df['slip_azimuth'] = [
@@ -603,9 +668,28 @@ def make_rupture_df(
     rupture_df : pd.DataFrame
         DataFrame containing information about each rupture.
     """
+    t = time.perf_counter
+
+    timing = {
+        "sf_rup_azimuths_setup": 0.0,
+        "mf_debug": 0.0,
+        "loop_areas": 0.0,
+        "loop_rakes": 0.0,
+        "loop_azimuths": 0.0,
+        "loop_mean_rake": 0.0,
+        "loop_mag": 0.0,
+        "loop_fault_frac_areas": 0.0,
+        "displacement": 0.0,
+    }
+    counts = {
+        "loop": 0,
+    }
+
+    logging.debug("\tgetting rups involved")
     rups_involved = [[int(r)] for r in single_fault_rup_df.index.values]
     rupture_df = single_fault_rup_df[['subfaults']]
 
+    logging.debug("\tmaking initial dataframe")
     rupture_df = pd.DataFrame(
         index=rupture_df.index,
         data={
@@ -615,20 +699,26 @@ def make_rupture_df(
         },
     )
 
-    srup_lookup = {i: row.subfaults for i, row in rupture_df.iterrows()}
-    area_lookup = {i: row.area for i, row in subfault_df.iterrows()}
-    rake_lookup = {i: row.rake for i, row in subfault_df.iterrows()}
-    slip_az_lookup = {i: row.slip_azimuth for i, row in subfault_df.iterrows()}
-    fault_lookup = {i: row.faults[0] for i, row in rupture_df.iterrows()}
-    sub_fid_lookup = {i: row.fid for i, row in subfault_df.iterrows()}
+    logging.debug("\tmaking lookup tables")
+    srup_lookup = rupture_df['subfaults'].to_dict()
+    fault_lookup = rupture_df['faults'].apply(lambda f: f[0]).to_dict()
+    area_lookup = subfault_df['area'].to_dict()
+    rake_lookup = subfault_df['rake'].to_dict()
+    slip_az_lookup = subfault_df['slip_azimuth'].to_dict()
+    sub_fid_lookup = subfault_df['fid'].to_dict()
 
+    logging.debug("\tmaking azimuth lookup table")
+    t0 = t()
     sf_rup_azimuths = {}
     for row in single_fault_rup_df.itertuples():
         row_slip_azimuths = [slip_az_lookup[sf] for sf in row.subfaults]
         sf_rup_azimuths[row.Index] = round(
             angular_mean_degrees(row_slip_azimuths), 1
         )
+    timing["sf_rup_azimuths_setup"] += t() - t0
 
+    logging.debug("\tmaking multifault rup fault debug")
+    t0 = t()
     mf_subs = []
     mf_faults_unique = []
     for mf in multi_fault_rups:
@@ -640,7 +730,9 @@ def make_rupture_df(
 
         mf_subs.append(subs)
         mf_faults_unique.append(faults)
+    timing["mf_debug"] += t() - t0
 
+    logging.debug("\tmaking multifault rup dataframe")
     mf_df = pd.DataFrame(
         index=np.arange(len(mf_subs)) + len(rupture_df),
         data={
@@ -650,8 +742,10 @@ def make_rupture_df(
         },
     )
 
+    logging.debug("\tconcatenating single and multi dfs")
     rupture_df = pd.concat([rupture_df, mf_df], axis=0)
 
+    logging.debug("\tadding additional cols")
     frac_areas = []
     mean_rakes = []
     slip_azimuths = []
@@ -660,34 +754,60 @@ def make_rupture_df(
     fault_frac_areas = []
 
     for row in rupture_df.itertuples():
+        counts["loop"] += 1
+
+        # areas + frac_area
+        t0 = t()
         areas = np.array([area_lookup[sf] for sf in row.subfaults])
         sum_area = areas.sum()
         area_fracs = areas / sum_area
         frac_areas.append(np.round(area_fracs, 4).tolist())
+        all_areas.append(sum_area)
+        timing["loop_areas"] += t() - t0
 
+        # rakes
+        t0 = t()
         rakes = np.array([rake_lookup[sf] for sf in row.subfaults])
+        timing["loop_rakes"] += t() - t0
+
+        # slip azimuths (per rupture)
+        t0 = t()
         azimuths = [sf_rup_azimuths[sf] for sf in row.ruptures]
         slip_azimuths.append(azimuths)
+        timing["loop_azimuths"] += t() - t0
+
+        # mean rake (weighted angular mean)
+        t0 = t()
         mean_rake = weighted_angular_mean_degrees(rakes, area_fracs)
         mean_rakes.append(mean_rake)
+        timing["loop_mean_rake"] += t() - t0
 
-        mags.append(
-            area_to_mag(areas.sum(), mstype=area_mag_msr, rake=mean_rake)
-        )
-        all_areas.append(sum_area)
+        # magnitude from area
+        t0 = t()
+        mag = area_to_mag(sum_area, mstype=area_mag_msr, rake=mean_rake)
+        mags.append(mag)
+        timing["loop_mag"] += t() - t0
 
+        # fault fraction areas
+        t0 = t()
         if len(row.faults) == 1:
             f_areas = [1.0]
         else:
-            f_areas = []
-            f_area_d = AccumDict()
+            f_area_d = {}
+            total_area = 0.0
             for sf in row.subfaults:
-                f_area_d += {sub_fid_lookup[sf]: area_lookup[sf]}
-            f_area_d /= sum(f_area_d.values())
-            for fault in row.faults:
-                f_areas.append(round(f_area_d[fault], 1))
+                fid = sub_fid_lookup[sf]
+                a = area_lookup[sf]
+                total_area += a
+                f_area_d[fid] = f_area_d.get(fid, 0.0) + a
 
+            inv_total = 1.0 / total_area
+            f_areas = [
+                round(f_area_d.get(fault, 0.0) * inv_total, 1)
+                for fault in row.faults
+            ]
         fault_frac_areas.append(f_areas)
+        timing["loop_fault_frac_areas"] += t() - t0
 
     rupture_df['frac_area'] = frac_areas
     rupture_df['fault_frac_area'] = fault_frac_areas
@@ -695,12 +815,23 @@ def make_rupture_df(
     rupture_df['slip_azimuth'] = slip_azimuths
     rupture_df['mag'] = np.round(mags, mag_decimals)
     rupture_df['area'] = np.round(all_areas, 1)
+
+    t0 = t()
     rupture_df['displacement'] = np.round(
         get_rupture_displacement(
             rupture_df['mag'], rupture_df['area'], shear_modulus=SHEAR_MODULUS
         ),
         3,
     )
+    timing["displacement"] += t() - t0
+
+    logging.debug("\tdone")
+
+    # report timings
+    logging.debug("\tTiming breakdown (make_rupture_df):")
+    logging.debug("\t  number of ruptures in loop: %d", counts["loop"])
+    for key, val in timing.items():
+        logging.debug("\t  %-24s %.6f s", key + ":", val)
 
     return rupture_df
 
@@ -872,54 +1003,64 @@ def merge_meshes_no_overlap(
     final_array : np.ndarray
         Merged array.
     """
-    # Check that all arrays have the same shape
-    # Optional, but should be used for simple faults
-    # Kite faults can have different shapes
+    arrays = list(arrays)
+    positions = list(positions)
+
+    if not arrays:
+        raise ValueError("arrays must be non-empty")
+    if len(arrays) != len(positions):
+        raise ValueError("arrays and positions must have the same length")
+
+    # Optional shape checks
     if same_size_arrays:
         first_shape = arrays[0].shape
         for arr in arrays:
             assert (
                 arr.shape == first_shape
             ), "All arrays must have the same shape"
-
     else:
-        # check to see that all arrays share the same rows or same columns
         row_lengths = [arr.shape[0] for arr in arrays]
         col_lengths = [arr.shape[1] for arr in arrays]
         assert (
             len(set(row_lengths)) == 1 or len(set(col_lengths)) == 1
         ), "All arrays must have the same number of rows or columns"
-        # `first_shape` is, in this case, the largest array
         first_shape = (max(row_lengths), max(col_lengths))
 
-    # check that all positions are unique and accounted for
-    all_rows = sorted(list(set(pos[0] for pos in positions)))
-    all_cols = sorted(list(set(pos[1] for pos in positions)))
-    for row in all_rows:
-        for col in all_cols:
-            assert (row, col) in positions, f"Missing position: {(row, col)}"
-            assert (
-                len([pos for pos in positions if pos == (row, col)]) == 1
-            ), f"Duplicate position: {(row, col)}"
+    # Efficient uniqueness and coverage check for positions
+    pos_set = set(positions)
+    assert len(pos_set) == len(
+        positions
+    ), "Duplicate position found in positions"
+
+    all_rows = sorted({r for r, _ in pos_set})
+    all_cols = sorted({c for _, c in pos_set})
+
+    expected_count = len(all_rows) * len(all_cols)
+    assert expected_count == len(
+        pos_set
+    ), "Missing position(s): positions do not form a complete grid"
 
     # Adjust the positions so that the minimum starts at 0
-    min_row = min(pos[0] for pos in positions)
-    min_col = min(pos[1] for pos in positions)
+    min_row = min(all_rows)
+    min_col = min(all_cols)
     adjusted_positions = [(r - min_row, c - min_col) for r, c in positions]
 
     # Determine the size of the final array (assuming no overlaps)
     n_rows = len(all_rows) * first_shape[0]
     n_cols = len(all_cols) * first_shape[1]
 
-    final_array = np.zeros((n_rows, n_cols))
+    # Preserve dtype, avoid unnecessary upcasting
+    dtype = arrays[0].dtype
+    final_array = np.zeros((n_rows, n_cols), dtype=dtype)
 
+    # Place each tile; since we assert "no overlap", plain assignment is enough
     for arr, pos in zip(arrays, adjusted_positions):
         start_row = pos[0] * first_shape[0]
         end_row = start_row + arr.shape[0]
         start_col = pos[1] * first_shape[1]
         end_col = start_col + arr.shape[1]
 
-        final_array[start_row:end_row, start_col:end_col] += arr
+        final_array[start_row:end_row, start_col:end_col] = arr
 
     return final_array
 
@@ -1024,6 +1165,76 @@ def make_sf_rupture_meshes(
             logging.error(f"Problems with rupture {i}: " + str(e))
 
     return rup_meshes
+
+
+def get_trace_from_sf_rupture(single_rup_df, subfaults):
+    """
+    Build rupture traces directly from subfault 'trace' fields, without
+    constructing meshes.
+
+    Assumptions:
+      - subfaults is a list of lists, one inner list per fault
+      - group_subfaults_by_fault(subfaults) returns {fid: [subfault_dicts]}
+      - fault_position = (row, col)
+          row increases down-dip → surface = min row
+          col increases along-strike → ordering key
+      - single_rup_df has columns:
+          'fault'   : fid
+          'patches' : indices into that fault's subfault list
+    """
+    grouped = group_subfaults_by_fault(subfaults)
+    traces = []
+
+    # Iterate row-wise
+    for row in single_rup_df.itertuples(index=False):
+        patches = getattr(row, "patches")
+        fid = getattr(row, "fault")
+
+        if not isinstance(patches, (list, tuple, np.ndarray)):
+            patches = [patches]
+
+        subs_for_fault = grouped[fid]
+
+        # Select subfaults for this rupture
+        rup_subs = [subs_for_fault[idx] for idx in patches]
+
+        if not rup_subs:
+            traces.append(np.zeros((0, 3), dtype=float))
+            continue
+
+        # fault_position = (row, col)
+        # Surface = minimum row index
+        min_row = min(sf["fault_position"][0] for sf in rup_subs)
+
+        surface_subs = [
+            sf for sf in rup_subs if sf["fault_position"][0] == min_row
+        ]
+        if not surface_subs:
+            surface_subs = rup_subs
+
+        # Order along strike by column index
+        surface_subs.sort(key=lambda sf: sf["fault_position"][1])
+
+        # Build the continuous trace, avoiding duplicated vertices
+        combined_trace = []
+        for sf in surface_subs:
+            tr = sf.get("trace", [])
+            if not tr:
+                continue
+
+            if not combined_trace:
+                combined_trace.extend(tr)
+            else:
+                last = np.asarray(combined_trace[-1], dtype=float)
+                first = np.asarray(tr[0], dtype=float)
+                if np.allclose(last, first):
+                    combined_trace.extend(tr[1:])
+                else:
+                    combined_trace.extend(tr)
+
+        traces.append(np.asarray(combined_trace, dtype=float))
+
+    return traces
 
 
 def shapely_multipoly_to_geojson(multipoly, return_type='coords'):
