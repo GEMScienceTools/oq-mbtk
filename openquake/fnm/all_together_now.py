@@ -27,6 +27,7 @@ from openquake.fnm.rupture_connections import (
     make_binary_adjacency_matrix_sparse,
     filter_bin_adj_matrix_by_rupture_overlap,
     get_rupture_grouping,
+    get_fault_groups,
 )
 
 from openquake.fnm.rupture_filtering import (
@@ -270,15 +271,15 @@ def build_fault_network(
     )
 
     if settings['sparse_distance_matrix'] is True:
-        binary_adjacence_matrix = make_binary_adjacency_matrix_sparse(
+        fault_network['bin_dist_mat'] = make_binary_adjacency_matrix_sparse(
             fault_network['dist_mat'], max_dist=settings['max_jump_distance']
         )
     else:
-        binary_adjacence_matrix = make_binary_adjacency_matrix(
+        fault_network['bin_dist_mat'] = make_binary_adjacency_matrix(
             fault_network['dist_mat'], max_dist=settings['max_jump_distance']
         )
 
-    n_connections = binary_adjacence_matrix.sum()
+    n_connections = fault_network['bin_dist_mat'].sum()
     n_possible_connections = len(fault_network['dist_mat']) ** 2
 
     logging.info(
@@ -294,19 +295,21 @@ def build_fault_network(
     if settings['filter_by_overlap']:
         t3__ = time.time()
         logging.info("  Filtering by rupture overlap")
-        binary_adjacence_matrix, _ = filter_bin_adj_matrix_by_rupture_overlap(
-            fault_network['single_rup_df'],
-            fault_network['subfaults'],
-            binary_adjacence_matrix,
-            threshold_angle=settings['rupture_angle_threshold'],
+        fault_network['bin_dist_mat'], _ = (
+            filter_bin_adj_matrix_by_rupture_overlap(
+                fault_network['single_rup_df'],
+                fault_network['subfaults'],
+                fault_network['bin_dist_mat'],
+                threshold_angle=settings['rupture_angle_threshold'],
+            )
         )
         t3_ = time.time()
         event_times.append(t3_)
         logging.info(f"\tdone in {round(t3_-t3__, 1)} s")
-        n_connections = binary_adjacence_matrix.sum()
+        n_connections = fault_network['bin_dist_mat'].sum()
         logging.info(f"\t{'{:,}'.format(n_connections)} connections remaining")
         # filter continuous distance matrix
-        fault_network['dist_mat'] *= binary_adjacence_matrix
+        fault_network['dist_mat'] *= fault_network['bin_dist_mat']
 
     logging.info("Building subfault dataframe")
     t4_ = time.time()
@@ -320,7 +323,7 @@ def build_fault_network(
         fault_network['faults'], fault_network['single_rup_df']
     )
     fault_network['multifault_inds'] = get_multifault_ruptures_fast(
-        binary_adjacence_matrix,
+        fault_network['bin_dist_mat'],
         rup_groups=rup_groups,
         max_sf_rups_per_mf_rup=settings['max_sf_rups_per_mf_rup'],
         parallel=settings['parallel_multifault_search'],
@@ -338,6 +341,12 @@ def build_fault_network(
         fault_network['single_rup_df'],
         fault_network['multifault_inds'],
         fault_network['subfault_df'],
+    )
+
+    logging.info("Getting fault groups")
+    get_fault_groups(fault_network)
+    logging.info(
+        f"\t{len(fault_network['rupture_df']['fault_group'].unique())} groups"
     )
 
     if settings['min_mag'] is not None:
@@ -363,7 +372,7 @@ def build_fault_network(
         fault_network['plausibility'] = get_rupture_plausibilities(
             fault_network['rupture_df'],
             distance_matrix=fault_network['dist_mat'],
-            bin_adj_mat=binary_adjacence_matrix,
+            bin_adj_mat=fault_network['bin_dist_mat'],
             single_rup_df=fault_network['single_rup_df'],
             subfaults=fault_network['subfaults'],
             connection_distance_function=settings[
@@ -431,7 +440,6 @@ def build_fault_network(
             f"\tdone in {round(t_slip_rate_end-t_slip_rate_start, 1)} s"
         )
 
-    fault_network['bin_dist_mat'] = binary_adjacence_matrix
     logging.info(f"total time: {round(event_times[-1]-event_times[0], 1)} s")
     return fault_network
 

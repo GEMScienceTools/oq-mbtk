@@ -375,7 +375,12 @@ class Test3Faults(unittest.TestCase):
 
     def test_get_all_contiguous_subfaults_1_col(self):
         subs = get_all_contiguous_subfaults(1, 3, s_length=10.0, d_length=10.0)
-        assert subs == [[(0, 0)], [(1, 0)], [(2, 0)]]
+        assert subs == [[(0, 0)], [(1, 0)], [(2, 0)], [(0, 0), (1, 0), (2, 0)]]
+
+    def test_get_all_contiguous_subfaults_always_has_full_grid(self):
+        subs = get_all_contiguous_subfaults(2, 5, min_aspect_ratio=1.5)
+        full_grid = [(r, c) for r in range(5) for c in range(2)]
+        assert full_grid in subs
 
     def test_get_all_contiguous_subfaults_rectangle_aspect_filter(self):
         subs = get_all_contiguous_subfaults(3, 3, min_aspect_ratio=1.0)
