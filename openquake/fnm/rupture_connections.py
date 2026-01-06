@@ -151,6 +151,7 @@ def get_rupture_patches_from_single_fault(
     subfaults,
     min_aspect_ratio: float = 0.8,
     max_aspect_ratio: float = 3.0,
+    always_return_full_rup: bool = True,
 ) -> dict:
     """
     Get all possible contiguous subfaults from a single fault, within
@@ -164,6 +165,10 @@ def get_rupture_patches_from_single_fault(
         Minimum aspect ratio of the rupture. The default is 0.8.
     max_aspect_ratio : float, optional
         Maximum aspect ratio of the rupture. The default is 3.0.
+    always_return_full_rup: bool
+        Ensures that a full-fault rupture is always returned, regardless of
+        the aspect ratio. This is important for ensuring fault participation
+        in full-fault-only multifault ruptures.
 
     Returns
     -------
@@ -189,6 +194,7 @@ def get_rupture_patches_from_single_fault(
         d_length=sub_width,
         min_aspect_ratio=min_aspect_ratio,
         max_aspect_ratio=max_aspect_ratio,
+        always_return_full_rup=always_return_full_rup,
     )
 
     single_fault_rups = [
@@ -206,6 +212,7 @@ def get_all_contiguous_subfaults(
     d_length: float = 10.0,
     min_aspect_ratio: float = 0.8,
     max_aspect_ratio: float = 3.0,
+    always_return_full_rup: bool = True,
 ) -> list[list[tuple[int, int]]]:
     """
     Get all possible contiguous subfaults from a single fault, within
@@ -225,6 +232,10 @@ def get_all_contiguous_subfaults(
         Minimum aspect ratio of the rupture. The default is 0.8.
     max_aspect_ratio : float, optional
         Maximum aspect ratio of the rupture. The default is 3.0.
+    always_return_full_rup: bool
+        Ensures that a full-fault rupture is always returned, regardless of
+        the aspect ratio. This is important for ensuring fault participation
+        in full-fault-only multifault ruptures.
 
     Returns
     -------
@@ -235,7 +246,7 @@ def get_all_contiguous_subfaults(
     subarrays = []
     if NS == 1:  # single column
         subarrays = [[(d, 0)] for d in range(ND)]
-        if ND > 1:
+        if ND > 1 and always_return_full_rup:
             subarrays = subarrays + [[(d, 0) for d in range(ND)]]
         return subarrays
     for row_start in range(ND):
@@ -254,7 +265,11 @@ def get_all_contiguous_subfaults(
                         (min_aspect_ratio <= aspect_ratio <= max_aspect_ratio)
                         or (min_aspect_ratio <= aspect_ratio and n_rows == ND)
                         or (n_rows == 1 and n_cols == 1)
-                        or (n_rows == ND and n_cols == NS)
+                        or (
+                            n_rows == ND
+                            and n_cols == NS
+                            and always_return_full_rup
+                        )
                     ):
                         subarray = [
                             (r, c)
@@ -327,6 +342,7 @@ def get_single_fault_rups(
     min_aspect_ratio: float = 0.8,
     max_aspect_ratio: float = 3.0,
     fault_group: int | None = None,
+    always_return_full_rup: bool = True,
 ) -> pd.DataFrame:
     """
     Get all possible ruptures from a single fault.
@@ -342,6 +358,10 @@ def get_single_fault_rups(
         Minimum aspect ratio of the rupture. The default is 0.8.
     max_aspect_ratio : float, optional
         Maximum aspect ratio of the rupture. The default is 3.0.
+    always_return_full_rup: bool
+        Ensures that a full-fault rupture is always returned, regardless of
+        the aspect ratio. This is important for ensuring fault participation
+        in full-fault-only multifault ruptures.
 
     Returns
     -------
@@ -357,6 +377,7 @@ def get_single_fault_rups(
         subfaults,
         min_aspect_ratio=min_aspect_ratio,
         max_aspect_ratio=max_aspect_ratio,
+        always_return_full_rup=always_return_full_rup,
     )
     rup_patches = list(fault_rups.values())[0]
     rup_subfaults = [
@@ -386,6 +407,7 @@ def get_all_single_fault_rups(
     all_subfaults,
     min_aspect_ratio: float = 0.8,
     max_aspect_ratio: float = 3.0,
+    always_return_full_rup: bool = True,
 ) -> tuple[list[list[int]], pd.DataFrame]:
     """
     Get all possible single-fault ruptures from a set of subfaults.
@@ -399,6 +421,10 @@ def get_all_single_fault_rups(
         Minimum aspect ratio of the rupture. The default is 0.8.
     max_aspect_ratio : float, optional
         Maximum aspect ratio of the rupture. The default is 3.0.
+    always_return_full_rup: bool
+        Ensures that a full-fault rupture is always returned, regardless of
+        the aspect ratio. This is important for ensuring fault participation
+        in full-fault-only multifault ruptures.
 
     Returns
     -------
@@ -423,6 +449,7 @@ def get_all_single_fault_rups(
             # fault_group=fault_count,
             min_aspect_ratio=min_aspect_ratio,
             max_aspect_ratio=max_aspect_ratio,
+            always_return_full_rup=always_return_full_rup,
         )
 
         num_rups = rupture_df.shape[0]
