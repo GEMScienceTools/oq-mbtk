@@ -473,6 +473,7 @@ def get_rupture_adjacency_matrix(
     max_aspect_ratio: float = 3.0,
     sparse: bool = True,
     full_fault_only_mf_ruptures: bool = True,
+    always_return_full_rup: bool = True,
 ) -> tuple[pd.DataFrame, np.ndarray]:
     """
     Get the rupture adjacency matrix for a set of faults. Adjacency values
@@ -505,6 +506,10 @@ def get_rupture_adjacency_matrix(
         Only use full-fault ruptures to assemble multifault ruptures. Must
         be `True` for regional-scale or larger PSHA models, otherwise
         billions or trillions of multifault ruptures will be returned.
+    always_return_full_rup: bool
+        Ensures that a full-fault rupture is always returned, regardless of
+        the aspect ratio. This is important for ensuring fault participation
+        in full-fault-only multifault ruptures. The default is True.
 
     Returns
     -------
@@ -537,6 +542,7 @@ def get_rupture_adjacency_matrix(
         all_subfaults,
         min_aspect_ratio=min_aspect_ratio,
         max_aspect_ratio=max_aspect_ratio,
+        always_return_full_rup=always_return_full_rup,
     )
 
     nrups = single_fault_rup_df.shape[0]

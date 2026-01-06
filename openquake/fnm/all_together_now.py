@@ -90,6 +90,7 @@ default_settings = {
     'parallel_multifault_search': True,
     'parallel_subfault_build': True,
     'full_fault_only_mf_ruptures': True,
+    'always_return_full_rup': True,
     'calculate_rates_from_slip_rates': False,
     'surface_type': 'simple',
     'min_mag': None,
@@ -261,6 +262,7 @@ def build_fault_network(
         max_aspect_ratio=settings['max_aspect_ratio'],
         sparse=settings['sparse_distance_matrix'],
         full_fault_only_mf_ruptures=settings['full_fault_only_mf_ruptures'],
+        always_return_full_rup=settings['always_return_full_rup'],
     )
     t3 = time.time()
     event_times.append(t3)
