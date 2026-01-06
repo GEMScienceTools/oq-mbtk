@@ -234,7 +234,10 @@ def get_all_contiguous_subfaults(
     """
     subarrays = []
     if NS == 1:  # single column
-        return [[(d, 0)] for d in range(ND)]
+        subarrays = [[(d, 0)] for d in range(ND)]
+        if ND > 1:
+            subarrays = subarrays + [[(d, 0) for d in range(ND)]]
+        return subarrays
     for row_start in range(ND):
         for col_start in range(NS):
             for row_end in range(row_start, ND):
@@ -251,6 +254,7 @@ def get_all_contiguous_subfaults(
                         (min_aspect_ratio <= aspect_ratio <= max_aspect_ratio)
                         or (min_aspect_ratio <= aspect_ratio and n_rows == ND)
                         or (n_rows == 1 and n_cols == 1)
+                        or (n_rows == ND and n_cols == NS)
                     ):
                         subarray = [
                             (r, c)
@@ -416,7 +420,7 @@ def get_all_single_fault_rups(
         rupture_df = get_single_fault_rups(
             subfaults,
             subfault_index_start=subfault_count,
-            fault_group=fault_count,
+            # fault_group=fault_count,
             min_aspect_ratio=min_aspect_ratio,
             max_aspect_ratio=max_aspect_ratio,
         )
@@ -1681,3 +1685,85 @@ def get_subfaults_on_each_fault(subfault_df: pd.DataFrame) -> Dict:
     faults = {fid: tuple(vals) for fid, vals in faults.items()}
 
     return faults
+
+
+def get_full_fault_indices(df: pd.DataFrame) -> pd.Series:
+    """
+    For each rupture, return:
+      - the index of its full-fault rupture (same 'fault'), OR
+      - a unique negative ID (-1, -2, ...) for faults that have no full-fault
+        rupture.
+    """
+
+    # 1. Collect full-fault rupture indices
+    full_idx_by_fault = {}
+    for row in df[df["full_fault_rupture"]].itertuples():
+        idx = row.Index
+        f = row.fault
+        if f not in full_idx_by_fault:
+            full_idx_by_fault[f] = idx
+
+    # 2. Identify faults missing a full-fault rupture
+    all_faults = df["fault"].unique()
+    no_full_faults = [f for f in all_faults if f not in full_idx_by_fault]
+
+    # 3. Assign negative IDs to faults lacking a full rupture
+    neg_id_by_fault = {f: -(i + 1) for i, f in enumerate(no_full_faults)}
+
+    # 4. Build output
+    out = []
+    for row in df.itertuples():
+        idx = row.Index
+        f = row.fault
+        if f in full_idx_by_fault:
+            out.append(full_idx_by_fault[f])  # full-fault rupture index
+        else:
+            logging.warning(
+                f"rup {idx} from fault {f} has no associated full-fault"
+                + " rupture"
+            )
+            out.append(neg_id_by_fault[f])  # negative group ID
+
+    return pd.Series(out, index=df.index, name="full_fault_index")
+
+
+def get_fault_groups(fault_network):
+    fn = fault_network
+    partial_rup_to_full_map = get_full_fault_indices(fn['single_rup_df'])
+
+    # these are connected full-fault ruptures (unless partial rups are allowed
+    # in the multifault ruptures)
+    conn_subs = find_connected_subgraphs(
+        sparse_to_adj_dict(fn['bin_dist_mat']), filter=True
+    )
+
+    rup_groups = {k: set(v.keys()) for k, v in enumerate(conn_subs)}
+
+    fullfault_to_group = {
+        ff: group for group, ff_set in rup_groups.items() for ff in ff_set
+    }
+
+    next_group_id = max(fullfault_to_group.values(), default=-1) + 1
+    full_fault_group_map = {}
+
+    for rup, full_fault_rup in partial_rup_to_full_map.items():
+        if rup in fullfault_to_group:
+            pass
+        else:
+            if full_fault_rup in fullfault_to_group:
+                fullfault_to_group[rup] = fullfault_to_group[full_fault_rup]
+            else:
+                if full_fault_rup in full_fault_group_map:
+                    fullfault_to_group[rup] = full_fault_group_map[
+                        full_fault_rup
+                    ]
+                else:
+                    fullfault_to_group[rup] = next_group_id
+                    full_fault_group_map[full_fault_rup] = next_group_id
+                    next_group_id += 1
+
+    fault_groups = fn['rupture_df'].ruptures.apply(
+        lambda r: fullfault_to_group[r[0]]
+    )
+
+    fn['rupture_df']['fault_group'] = fault_groups
