@@ -657,7 +657,9 @@ class Test3Faults(unittest.TestCase):
             for fault in self.faults
         ]
 
-        single_fault_rups, rup_df = get_all_single_fault_rups(all_subs)
+        single_fault_rups, rup_df = get_all_single_fault_rups(
+            all_subs, always_return_full_rup=False
+        )
 
         single_fault_rups_ = [
             [
@@ -843,72 +845,203 @@ class Test3Faults(unittest.TestCase):
                     False,
                     False,
                 ],
-                'fault_group': [
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    1,
-                    1,
-                    2,
-                    2,
-                    2,
-                    2,
-                    2,
-                    2,
-                    2,
-                ],
             },
-            index=[
-                0,
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
-                11,
-                12,
-                13,
-                14,
-                15,
-                16,
-                17,
-                18,
-                19,
-                20,
-                21,
-                22,
-                23,
-                24,
-                25,
-                26,
-                27,
-                28,
-            ],
+            index=list(range(29)),
         )
 
         assert single_fault_rups == single_fault_rups_
+        pd.testing.assert_frame_equal(rup_df, rup_df_)
+
+    def test_get_all_single_fault_rups_full_rup(self):
+        all_subs = [
+            get_subsections_from_fault(
+                fault, subsection_size=[10.0, 10.0], surface=fault['surface']
+            )
+            for fault in self.faults
+        ]
+
+        single_fault_rups, rup_df = get_all_single_fault_rups(
+            all_subs, always_return_full_rup=True
+        )
+
+        # With always_return_full_rup=True, we expect 30 ruptures total
+        # (29 from the False case + 1 additional full-fault rupture for ccaf134
+        # that wouldn't have been included due to aspect ratio constraints)
+        assert rup_df.shape[0] == 30
+        assert len(single_fault_rups) == 3  # 3 faults
+
+        # Check that each fault has at least one full-fault rupture
+        for fault_id in rup_df['fault'].unique():
+            fault_rups = rup_df[rup_df['fault'] == fault_id]
+            assert any(
+                fault_rups['full_fault_rupture']
+            ), f"Fault {fault_id} has no full-fault rupture"
+
+        rup_df_ = pd.DataFrame(
+            {
+                'fault_rup': [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    0,
+                    1,
+                    2,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                ],
+                'patches': [
+                    [0],
+                    [0, 1],
+                    [0, 1, 4, 5],
+                    [0, 1, 2, 4, 5, 6],
+                    [0, 1, 2, 3, 4, 5, 6, 7],
+                    [1],
+                    [1, 2],
+                    [1, 2, 5, 6],
+                    [1, 2, 3, 5, 6, 7],
+                    [2],
+                    [2, 3],
+                    [2, 3, 6, 7],
+                    [3],
+                    [4],
+                    [4, 5],
+                    [5],
+                    [5, 6],
+                    [6],
+                    [6, 7],
+                    [7],
+                    [0],
+                    [1],
+                    [0, 1],
+                    [0],
+                    [0, 1],
+                    [0, 1, 2, 3],
+                    [1],
+                    [2],
+                    [2, 3],
+                    [3],
+                ],
+                'subfaults': [
+                    [0],
+                    [0, 1],
+                    [0, 1, 4, 5],
+                    [0, 1, 2, 4, 5, 6],
+                    [0, 1, 2, 3, 4, 5, 6, 7],
+                    [1],
+                    [1, 2],
+                    [1, 2, 5, 6],
+                    [1, 2, 3, 5, 6, 7],
+                    [2],
+                    [2, 3],
+                    [2, 3, 6, 7],
+                    [3],
+                    [4],
+                    [4, 5],
+                    [5],
+                    [5, 6],
+                    [6],
+                    [6, 7],
+                    [7],
+                    [8],
+                    [9],
+                    [8, 9],
+                    [10],
+                    [10, 11],
+                    [10, 11, 12, 13],
+                    [11],
+                    [12],
+                    [12, 13],
+                    [13],
+                ],
+                'fault': [
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf134',
+                    'ccaf134',
+                    'ccaf134',
+                    'ccaf148',
+                    'ccaf148',
+                    'ccaf148',
+                    'ccaf148',
+                    'ccaf148',
+                    'ccaf148',
+                    'ccaf148',
+                ],
+                'full_fault_rupture': [
+                    False,
+                    False,
+                    False,
+                    False,
+                    True,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    True,
+                    False,
+                    False,
+                    True,
+                    False,
+                    False,
+                    False,
+                    False,
+                ],
+            }
+        )
+
         pd.testing.assert_frame_equal(rup_df, rup_df_)
 
     def test_get_rupture_adjacency_matrix_specific_values(self):
@@ -983,6 +1116,7 @@ class Test3Faults(unittest.TestCase):
             all_subfaults=all_subs,
             multifaults_on_same_fault=False,
             max_dist=20.0,
+            always_return_full_rup=False,
         )
 
         rup_df_ = pd.DataFrame(
@@ -1065,21 +1199,14 @@ class Test3Faults(unittest.TestCase):
                     'ccaf148','ccaf148','ccaf148','ccaf148',
                 ],
                 'full_fault_rupture': [
-                    False, False, False, False,  True, False, False, False, 
-                    False, False, False, False, False, False, False, False, 
-                    False, False, False, False, False, False, False, False,  
+                    False, False, False, False,  True, False, False, False,
+                    False, False, False, False, False, False, False, False,
+                    False, False, False, False, False, False, False, False,
                     True, False, False, False, False
                 ],
-                'fault_group': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
-                                2, 2, 2, 2, 2, 2, 2]
                 # fmt: on
             },
-            # fmt: off
-            index=[
-                0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,
-                15,16,17,18,19,20,21,22,23,24,25,26,27,28,
-            ],
-            # fmt: on
+            index=list(range(29)),
         )
         # fmt: off
         dist_adj_matrix_ = dok_array(np.zeros((29, 29), dtype=np.float32))
@@ -1088,6 +1215,217 @@ class Test3Faults(unittest.TestCase):
 
         # fmt: on
         pd.testing.assert_frame_equal(rup_df, rup_df_)
+        np.testing.assert_allclose(
+            dist_adj_matrix.todense(),
+            dist_adj_matrix_.todense(),
+            atol=1e-3,
+            rtol=1e-3,
+        )
+
+    def test_get_rupture_adjacency_matrix_full_rup(self):
+        all_subs = [
+            get_subsections_from_fault(
+                fault, subsection_size=[10.0, 10.0], surface=fault['surface']
+            )
+            for fault in self.faults
+        ]
+
+        rup_df, dist_adj_matrix = get_rupture_adjacency_matrix(
+            self.faults,
+            all_subfaults=all_subs,
+            multifaults_on_same_fault=False,
+            max_dist=20.0,
+            always_return_full_rup=True,
+        )
+
+        # With always_return_full_rup=True, we expect 30 ruptures
+        assert rup_df.shape[0] == 30
+        assert dist_adj_matrix.shape == (30, 30)
+
+        # Check that each fault has at least one full-fault rupture
+        for fault_id in rup_df['fault'].unique():
+            fault_rups = rup_df[rup_df['fault'] == fault_id]
+            assert any(
+                fault_rups['full_fault_rupture']
+            ), f"Fault {fault_id} has no full-fault rupture"
+
+        rup_df_ = pd.DataFrame(
+            {
+                'fault_rup': [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    0,
+                    1,
+                    2,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                ],
+                'patches': [
+                    [0],
+                    [0, 1],
+                    [0, 1, 4, 5],
+                    [0, 1, 2, 4, 5, 6],
+                    [0, 1, 2, 3, 4, 5, 6, 7],
+                    [1],
+                    [1, 2],
+                    [1, 2, 5, 6],
+                    [1, 2, 3, 5, 6, 7],
+                    [2],
+                    [2, 3],
+                    [2, 3, 6, 7],
+                    [3],
+                    [4],
+                    [4, 5],
+                    [5],
+                    [5, 6],
+                    [6],
+                    [6, 7],
+                    [7],
+                    [0],
+                    [1],
+                    [0, 1],
+                    [0],
+                    [0, 1],
+                    [0, 1, 2, 3],
+                    [1],
+                    [2],
+                    [2, 3],
+                    [3],
+                ],
+                'subfaults': [
+                    [0],
+                    [0, 1],
+                    [0, 1, 4, 5],
+                    [0, 1, 2, 4, 5, 6],
+                    [0, 1, 2, 3, 4, 5, 6, 7],
+                    [1],
+                    [1, 2],
+                    [1, 2, 5, 6],
+                    [1, 2, 3, 5, 6, 7],
+                    [2],
+                    [2, 3],
+                    [2, 3, 6, 7],
+                    [3],
+                    [4],
+                    [4, 5],
+                    [5],
+                    [5, 6],
+                    [6],
+                    [6, 7],
+                    [7],
+                    [8],
+                    [9],
+                    [8, 9],
+                    [10],
+                    [10, 11],
+                    [10, 11, 12, 13],
+                    [11],
+                    [12],
+                    [12, 13],
+                    [13],
+                ],
+                'fault': [
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf121',
+                    'ccaf134',
+                    'ccaf134',
+                    'ccaf134',
+                    'ccaf148',
+                    'ccaf148',
+                    'ccaf148',
+                    'ccaf148',
+                    'ccaf148',
+                    'ccaf148',
+                    'ccaf148',
+                ],
+                'full_fault_rupture': [
+                    False,
+                    False,
+                    False,
+                    False,
+                    True,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    True,
+                    False,
+                    False,
+                    True,
+                    False,
+                    False,
+                    False,
+                    False,
+                ],
+            }
+        )
+        pd.testing.assert_frame_equal(rup_df, rup_df_)
+        dist_adj_dict = {
+            (4, 22): 19.35705,
+            (4, 25): 3.1237957,
+            (22, 25): 0.43987724,
+            (22, 4): 19.35705,
+            (25, 4): 3.1237957,
+            (25, 22): 0.43987724,
+        }
+        dist_adj_matrix_ = dok_array(np.zeros((30, 30), dtype=np.float32))
+        for idx, dist in dist_adj_dict.items():
+            dist_adj_matrix_[idx] = dist
+
         np.testing.assert_allclose(
             dist_adj_matrix.todense(),
             dist_adj_matrix_.todense(),

@@ -233,6 +233,7 @@ class TestFaultNetworkPlausibility(unittest.TestCase):
             "filter_by_overlap": False,
             "filter_by_angle": False,
             "sparse_distance_matrix": True,
+            "always_return_full_rup": False,
         }
         cls.settings = settings
         cls.fault_network = build_fault_network(
@@ -405,3 +406,71 @@ class TestFaultNetworkPlausibility(unittest.TestCase):
         pd.testing.assert_frame_equal(
             plaus_df, _plaus_df, rtol=1e-6, atol=1e-8, check_dtype=True
         )
+
+
+class TestFaultNetworkPlausibilityFullRup(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        test_data_dir = HERE / "data"
+        fgj_name = os.path.join(test_data_dir, "motagua_3_faults.geojson")
+        settings = {
+            "subsection_size": [10.0, 10.0],
+            "max_jump_distance": 30.0,
+            "rupture_filtering_connection_distance_midpoint": 15.0,
+            "rupture_filtering_connection_angle_midpoint": 90.0,
+            "rupture_filtering_slip_azimuth_midpoint": 90.0,
+            "parallel_subfault_build": False,
+            "parallel_multifault_search": False,
+            "filter_by_plausibility": False,
+            "filter_by_overlap": False,
+            "filter_by_angle": False,
+            "sparse_distance_matrix": True,
+            "always_return_full_rup": True,
+        }
+        cls.settings = settings
+        cls.fault_network = build_fault_network(
+            fault_geojson=fgj_name, settings=settings
+        )
+
+    def test_angle_matrix_build(self):
+        fn = self.fault_network
+        bin_adj = fn["bin_dist_mat"]
+        self.assertTrue(issparse(bin_adj))
+
+        ang_mat = _build_angle_matrix_from_pairs(
+            fn["single_rup_df"], fn["subfaults"], bin_adj
+        )
+        self.assertIsInstance(ang_mat, dok_array)
+        self.assertGreater(len(ang_mat.keys()), 0)
+        # With always_return_full_rup=True, we have 32 ruptures instead of 24
+        # So the angle matrix will have different keys
+        # Just check that it's properly constructed
+        for (i, j), angle in ang_mat.items():
+            self.assertIsInstance(angle, (float, np.floating))
+            self.assertGreaterEqual(angle, 0.0)
+            self.assertLessEqual(angle, 180.0)
+
+    def test_plausibility_dataframe(self):
+        fn = self.fault_network
+        plaus_df = get_rupture_plausibilities(
+            fn["rupture_df"],
+            distance_matrix=fn["dist_mat"],
+            bin_adj_mat=fn["bin_dist_mat"],
+            single_rup_df=fn["single_rup_df"],
+            subfaults=fn["subfaults"],
+            connection_distance_midpoint=self.settings[
+                "rupture_filtering_connection_distance_midpoint"
+            ],
+            connection_angle_midpoint=self.settings[
+                "rupture_filtering_connection_angle_midpoint"
+            ],
+            slip_azimuth_midpoint=self.settings[
+                "rupture_filtering_slip_azimuth_midpoint"
+            ],
+        )
+        # With always_return_full_rup=True, we expect 32 ruptures
+        # (28 single-fault + 4 multifault)
+        self.assertEqual(len(plaus_df), 32)
+        for col in ["connection_angle", "connection_distance", "slip_azimuth"]:
+            self.assertTrue(np.all(plaus_df[col] > 0))
+        self.assertTrue(np.all(plaus_df["total"] > 0))
