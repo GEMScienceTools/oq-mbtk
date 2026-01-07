@@ -471,7 +471,7 @@ def build_mgmpe(gmpe):
     # M9 basin adjustment
     if 'M9BasinTerm' in gmpe:
         kw_mgmpe['m9_basin_term'] = {}
-
+        
     return mgmpe.ModifiableGMPE(**kw_mgmpe)
 
 
