@@ -222,6 +222,10 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
     # Get mag and depth lists
     mag_list = config.mag_list
     dep_list = config.depth_list
+    dist_list = config.dist_list
+    if len(dist_list) < 1:
+        raise ValueError("Response spectra have been requested but no distance "
+                         "intervals have been specified in the input toml.")
 
     # If obs spectra csv provided load the data
     if obs_spectra_fname is not None:
@@ -266,9 +270,9 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
         'periods': periods,
         'nstd': config.nstd
         }
-    
+
     # Plot the data
-    for n, dist in enumerate(config.dist_list):
+    for n, dist in enumerate(dist_list):
         for l, m in enumerate(mag_list):
             
             ax1 = fig.add_subplot(
@@ -402,7 +406,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 ax1.semilogy()
 
     # Finalise the plots and save fig
-    if len(mag_list) * len(config.dist_list) == 1:
+    if len(mag_list) * len(dist_list) == 1:
         bbox_coo = (1.1, 0.5)
         fs = '10'
     else:
