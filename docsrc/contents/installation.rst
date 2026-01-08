@@ -54,6 +54,3 @@ GMT and pyGMT for plotting
 
 Some of the functions in the mbtk will create maps with `the Generic Mapping Tools <https://www.generic-mapping-tools.org/>`_,
 either directly or through the pyGMT package. You can find guidance on downloading `GMT <https://docs.generic-mapping-tools.org/latest/install.html>`_ or `pyGMT <https://www.pygmt.org/latest/install.html>`_ at the provided links. **Note** that although pyGMT is a requirement of the mbtk, you will need to install GMT in your virtual environment seperately following the above link if you wish to use the pyGMT plotting features. This site also contains helpful information on the most common installation issues (i.e. if you see an 'Error loading GMT shared library' error).
-
-Some of the functions in the mbtk will create maps with [the Generic Mapping Tools](https://www.generic-mapping-tools.org/),
-either directly or through the pyGMT package. You can find guidance on downloading [GMT](https://docs.generic-mapping-tools.org/latest/install.html) or [pyGMT](https://www.pygmt.org/latest/install.html) at the provided links.
