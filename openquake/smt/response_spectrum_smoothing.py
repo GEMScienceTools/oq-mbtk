@@ -274,7 +274,7 @@ def konnoOhmachiSmoothing(spectra, frequencies, bandwidth=40, count=1,
 
 class KonnoOhmachi(BaseSpectralSmoother):
     """
-
+    Class which applies the Konno & Ohmachi (1998) smoothing method
     """
     def _check_params(self, params):
         """

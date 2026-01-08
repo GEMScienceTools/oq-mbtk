@@ -29,7 +29,9 @@ import os
 import unittest
 import numpy as np
 from openquake.cat.completeness.analysis import (
-    clean_completeness, get_earliest_year_with_n_occurrences)
+    clean_completeness,
+    get_earliest_year_with_n_occurrences,
+)
 from openquake.cat.completeness.generate import _get_completenesses
 from openquake.mbt.tools.model_building.plt_tools import _load_catalogue
 
@@ -46,14 +48,14 @@ class TestGetYear(unittest.TestCase):
 
     def test_min_year_01(self):
         nocc = 3
-        ctab = np.array([[1960., 4.6], [1900., 5.]])
+        ctab = np.array([[1960.0, 4.6], [1900.0, 5.0]])
         fun = get_earliest_year_with_n_occurrences
         eyea = fun(ctab, self.cat02, nocc)
         self.assertEqual(2, len(eyea))
 
     def test_min_year_02(self):
         nocc = 2
-        ctab = np.array([[2000., 4.6]])
+        ctab = np.array([[2000.0, 4.6]])
         fun = get_earliest_year_with_n_occurrences
         eyea = fun(ctab, self.cat05, nocc)
         np.testing.assert_equal([1966], eyea)
@@ -62,15 +64,15 @@ class TestGetYear(unittest.TestCase):
 class TestCleanCompleteness(unittest.TestCase):
 
     def test01(self):
-        compl = np.array([[1930., 4.], [1900., 4.]])
+        compl = np.array([[1930.0, 4.0], [1900.0, 4.0]])
         computed = clean_completeness(compl)
-        expected = np.array([[1900., 4.]])
+        expected = np.array([[1900.0, 4.0]])
         np.testing.assert_array_equal(computed, expected)
 
     def test02(self):
-        compl = np.array([[1990, 5.], [1960, 7.], [1900, 7.]])
+        compl = np.array([[1990, 5.0], [1960, 7.0], [1900, 7.0]])
         computed = clean_completeness(compl)
-        expected = np.array([[1990., 5.], [1900., 7.]])
+        expected = np.array([[1990.0, 5.0], [1900.0, 7.0]])
         np.testing.assert_array_equal(computed, expected)
 
 
@@ -78,137 +80,165 @@ class TestCompletenessGeneration(unittest.TestCase):
 
     def setUp(self):
 
-        self.expect01 = np.array([[2, 2, 2, 2, 2, 2],
-                                  [1, 2, 2, 2, 2, 2],
-                                  [1, 1, 2, 2, 2, 2],
-                                  [1, 1, 1, 2, 2, 2],
-                                  [1, 1, 1, 1, 2, 2],
-                                  [1, 1, 1, 1, 1, 2],
-                                  [1, 1, 1, 1, 1, 1],
-                                  [0, 2, 2, 2, 2, 2],
-                                  [0, 1, 2, 2, 2, 2],
-                                  [0, 1, 1, 2, 2, 2],
-                                  [0, 1, 1, 1, 2, 2],
-                                  [0, 1, 1, 1, 1, 2],
-                                  [0, 1, 1, 1, 1, 1],
-                                  [0, 0, 2, 2, 2, 2],
-                                  [0, 0, 1, 2, 2, 2],
-                                  [0, 0, 1, 1, 2, 2],
-                                  [0, 0, 1, 1, 1, 2],
-                                  [0, 0, 1, 1, 1, 1],
-                                  [0, 0, 0, 2, 2, 2],
-                                  [0, 0, 0, 1, 2, 2],
-                                  [0, 0, 0, 1, 1, 2],
-                                  [0, 0, 0, 1, 1, 1],
-                                  [0, 0, 0, 0, 2, 2],
-                                  [0, 0, 0, 0, 1, 2],
-                                  [0, 0, 0, 0, 1, 1],
-                                  [0, 0, 0, 0, 0, 2],
-                                  [0, 0, 0, 0, 0, 1],
-                                  [0, 0, 0, 0, 0, 0]])
+        self.expect01 = np.array(
+            [
+                [2, 2, 2, 2, 2, 2],
+                [1, 2, 2, 2, 2, 2],
+                [1, 1, 2, 2, 2, 2],
+                [1, 1, 1, 2, 2, 2],
+                [1, 1, 1, 1, 2, 2],
+                [1, 1, 1, 1, 1, 2],
+                [1, 1, 1, 1, 1, 1],
+                [0, 2, 2, 2, 2, 2],
+                [0, 1, 2, 2, 2, 2],
+                [0, 1, 1, 2, 2, 2],
+                [0, 1, 1, 1, 2, 2],
+                [0, 1, 1, 1, 1, 2],
+                [0, 1, 1, 1, 1, 1],
+                [0, 0, 2, 2, 2, 2],
+                [0, 0, 1, 2, 2, 2],
+                [0, 0, 1, 1, 2, 2],
+                [0, 0, 1, 1, 1, 2],
+                [0, 0, 1, 1, 1, 1],
+                [0, 0, 0, 2, 2, 2],
+                [0, 0, 0, 1, 2, 2],
+                [0, 0, 0, 1, 1, 2],
+                [0, 0, 0, 1, 1, 1],
+                [0, 0, 0, 0, 2, 2],
+                [0, 0, 0, 0, 1, 2],
+                [0, 0, 0, 0, 1, 1],
+                [0, 0, 0, 0, 0, 2],
+                [0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0],
+            ]
+        )
 
-        self.expect03 = np.array([[2, 2, 2, 2, 2, 2],
-                                  [1, 2, 2, 2, 2, 2],
-                                  [1, 1, 2, 2, 2, 2],
-                                  [1, 1, 1, 2, 2, 2],
-                                  [1, 1, 1, 1, 2, 2],
-                                  [1, 1, 1, 1, 1, 2],
-                                  [1, 1, 1, 1, 1, 1],
-                                  [0, 2, 2, 2, 2, 2],
-                                  [0, 1, 2, 2, 2, 2],
-                                  [0, 1, 1, 2, 2, 2],
-                                  [0, 1, 1, 1, 2, 2],
-                                  [0, 1, 1, 1, 1, 2],
-                                  [0, 1, 1, 1, 1, 1],
-                                  [0, 0, 2, 2, 2, 2],
-                                  [0, 0, 1, 2, 2, 2],
-                                  [0, 0, 1, 1, 2, 2],
-                                  [0, 0, 1, 1, 1, 2],
-                                  [0, 0, 1, 1, 1, 1],
-                                  [0, 0, 0, 2, 2, 2],
-                                  [0, 0, 0, 1, 2, 2],
-                                  [0, 0, 0, 1, 1, 2],
-                                  [0, 0, 0, 1, 1, 1]])
+        self.expect03 = np.array(
+            [
+                [2, 2, 2, 2, 2, 2],
+                [1, 2, 2, 2, 2, 2],
+                [1, 1, 2, 2, 2, 2],
+                [1, 1, 1, 2, 2, 2],
+                [1, 1, 1, 1, 2, 2],
+                [1, 1, 1, 1, 1, 2],
+                [1, 1, 1, 1, 1, 1],
+                [0, 2, 2, 2, 2, 2],
+                [0, 1, 2, 2, 2, 2],
+                [0, 1, 1, 2, 2, 2],
+                [0, 1, 1, 1, 2, 2],
+                [0, 1, 1, 1, 1, 2],
+                [0, 1, 1, 1, 1, 1],
+                [0, 0, 2, 2, 2, 2],
+                [0, 0, 1, 2, 2, 2],
+                [0, 0, 1, 1, 2, 2],
+                [0, 0, 1, 1, 1, 2],
+                [0, 0, 1, 1, 1, 1],
+                [0, 0, 0, 2, 2, 2],
+                [0, 0, 0, 1, 2, 2],
+                [0, 0, 0, 1, 1, 2],
+                [0, 0, 0, 1, 1, 1],
+            ]
+        )
 
-        self.expect04 = np.array([[2, 2, 2, 2, 2, 2],
-                                  [1, 2, 2, 2, 2, 2],
-                                  [1, 1, 2, 2, 2, 2],
-                                  [1, 1, 1, 2, 2, 2],
-                                  [0, 2, 2, 2, 2, 2],
-                                  [0, 1, 2, 2, 2, 2],
-                                  [0, 1, 1, 2, 2, 2],
-                                  [0, 0, 2, 2, 2, 2],
-                                  [0, 0, 1, 2, 2, 2],
-                                  [0, 0, 0, 2, 2, 2]])
+        self.expect04 = np.array(
+            [
+                [2, 2, 2, 2, 2, 2],
+                [1, 2, 2, 2, 2, 2],
+                [1, 1, 2, 2, 2, 2],
+                [1, 1, 1, 2, 2, 2],
+                [0, 2, 2, 2, 2, 2],
+                [0, 1, 2, 2, 2, 2],
+                [0, 1, 1, 2, 2, 2],
+                [0, 0, 2, 2, 2, 2],
+                [0, 0, 1, 2, 2, 2],
+                [0, 0, 0, 2, 2, 2],
+            ]
+        )
 
-
-        self.expect05 = np.array([[2, 2, 2, 2, 2, 2],
-                                  [1, 2, 2, 2, 2, 2],
-                                  [1, 1, 2, 2, 2, 2],
-                                  [1, 1, 1, 2, 2, 2],
-                                  [1, 1, 1, 1, 2, 2],
-                                  [1, 1, 1, 1, 1, 2],
-                                  [1, 1, 1, 1, 1, 1],
-                                  [0, 2, 2, 2, 2, 2],
-                                  [0, 1, 2, 2, 2, 2],
-                                  [0, 1, 1, 2, 2, 2],
-                                  [0, 1, 1, 1, 2, 2],
-                                  [0, 1, 1, 1, 1, 2],
-                                  [0, 1, 1, 1, 1, 1],
-                                  [0, 0, 2, 2, 2, 2],
-                                  [0, 0, 1, 2, 2, 2],
-                                  [0, 0, 1, 1, 2, 2],
-                                  [0, 0, 1, 1, 1, 2],
-                                  [0, 0, 1, 1, 1, 1],
-                                  [0, 0, 0, 2, 2, 2],
-                                  [0, 0, 0, 1, 2, 2],
-                                  [0, 0, 0, 1, 1, 2],
-                                  [0, 0, 0, 1, 1, 1],
-                                  [0, 0, 0, 0, 2, 2],
-                                  [0, 0, 0, 0, 1, 2],
-                                  [0, 0, 0, 0, 1, 1],
-                                  [0, 0, 0, 0, 0, 2],
-                                  [0, 0, 0, 0, 0, 1]])
+        self.expect05 = np.array(
+            [
+                [2, 2, 2, 2, 2, 2],
+                [1, 2, 2, 2, 2, 2],
+                [1, 1, 2, 2, 2, 2],
+                [1, 1, 1, 2, 2, 2],
+                [1, 1, 1, 1, 2, 2],
+                [1, 1, 1, 1, 1, 2],
+                [1, 1, 1, 1, 1, 1],
+                [0, 2, 2, 2, 2, 2],
+                [0, 1, 2, 2, 2, 2],
+                [0, 1, 1, 2, 2, 2],
+                [0, 1, 1, 1, 2, 2],
+                [0, 1, 1, 1, 1, 2],
+                [0, 1, 1, 1, 1, 1],
+                [0, 0, 2, 2, 2, 2],
+                [0, 0, 1, 2, 2, 2],
+                [0, 0, 1, 1, 2, 2],
+                [0, 0, 1, 1, 1, 2],
+                [0, 0, 1, 1, 1, 1],
+                [0, 0, 0, 2, 2, 2],
+                [0, 0, 0, 1, 2, 2],
+                [0, 0, 0, 1, 1, 2],
+                [0, 0, 0, 1, 1, 1],
+                [0, 0, 0, 0, 2, 2],
+                [0, 0, 0, 0, 1, 2],
+                [0, 0, 0, 0, 1, 1],
+                [0, 0, 0, 0, 0, 2],
+                [0, 0, 0, 0, 0, 1],
+            ]
+        )
 
     def test_gen_compl_01(self):
         years = np.array([1900, 1930, 1960, 1970, 1980, 1990])
         mags = np.array([5.0, 6.0, 7.0])
-        disps, mags, years = _get_completenesses(mags=mags, years=years,
-                                                 step=3, min_mag_compl=5.0)
+        disps, mags, years = _get_completenesses(
+            mags=mags, years=years, _n_vals_per_iter=3, min_mag_compl=5.0
+        )
         np.testing.assert_array_almost_equal(self.expect01, disps)
 
     def test_gen_compl_03(self):
-        """ Testing a-priori conditions """
+        """Testing a-priori conditions"""
         years = np.array([1900, 1930, 1960, 1970, 1980, 1990])
         mags = np.array([5.0, 6.0, 7.0])
         # This implies that the column for the year just after 1965 (column 3)
         # has an index for magnitude lower or equal to 6.2 (i.e. 0 or 1)
         conds = {1965: 6.2}
-        disps, mags, years = _get_completenesses(mags=mags, years=years,
-                                                 min_mag_compl=4.5, step=3,
-                                                 apriori_conditions=conds)
+        disps, mags, years = _get_completenesses(
+            mags=mags,
+            years=years,
+            min_mag_compl=4.5,
+            _n_vals_per_iter=3,
+            apriori_conditions=conds,
+        )
         np.testing.assert_array_almost_equal(self.expect03, disps)
 
     def test_gen_compl_04(self):
-        """ Testing a-priori conditions """
+        """Testing a-priori conditions"""
         years = np.array([1900, 1930, 1960, 1970, 1980, 1990])
         mags = np.array([5.0, 6.0, 7.0])
         # This implies that the third column (i.e. then one covering year 1965
         # has only the index 2 that is the index for the largest magnitude)
         conds = {1965: 7.0}
-        disps, mags, years = _get_completenesses(mags=mags, years=years,
-                                                 min_mag_compl=5.0, step=3,
-                                                 apriori_conditions=conds)
+        disps, mags, years = _get_completenesses(
+            mags=mags,
+            years=years,
+            min_mag_compl=5.0,
+            _n_vals_per_iter=3,
+            apriori_conditions=conds,
+        )
         np.testing.assert_array_almost_equal(self.expect04, disps)
 
     def test_gen_compl_05(self):
-        """ As 03 but now with more selective condition """
+        """As 03 but now with more selective condition"""
         years = np.array([1900, 1930, 1960, 1970, 1980, 1990])
         mags = np.array([5.0, 6.0, 7.0])
         # In this case the column for 1930 (the second one) must contain only
         # 1 and 2
         conds = {1920: 6.2}
-        disps, mags, years = _get_completenesses(mags=mags, years=years,
-                                                 min_mag_compl=5.0, step=3,
-                                                 apriori_conditions=conds)
+        disps, mags, years = _get_completenesses(
+            mags=mags,
+            years=years,
+            min_mag_compl=5.0,
+            _n_vals_per_iter=3,
+            apriori_conditions=conds,
+        )
         np.testing.assert_array_almost_equal(self.expect05, disps)

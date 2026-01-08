@@ -26,12 +26,51 @@ import h5py
 from datetime import datetime
 
 from openquake.hazardlib import imt
+from openquake.hazardlib import scalerel 
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo import geodetic
+from openquake.hazardlib.contexts import ContextMaker
+from openquake.hazardlib.const import TRT
+
 from openquake.smt import utils
 from openquake.smt.residuals.context_db import ContextDB
 import openquake.smt.utils_intensity_measures as utils_imts
+
+
+MECHANISM_TYPE = {
+    "Normal": -90.0,
+    "Strike-Slip": 0.0,
+    "Reverse": 90.0,
+    "Oblique": 0.0,
+    "Unknown": 0.0,
+    "N": -90.0, # General flatfile conventions
+    "S": 0.0,
+    "R": 90.0,
+    "U": 0.0,
+    "NF": -90., # ESM flatfile conventions
+    "SS": 0.,
+    "TF": 90.,
+    "NS": -45., # Normal with strike-slip component
+    "TS": 45.,  # Reverse with strike-slip component
+    "O": 0.0}
+
+DIP_TYPE = {
+    "Normal": 60.0,
+    "Strike-Slip": 90.0,
+    "Reverse": 35.0,
+    "Oblique": 60.0,
+    "Unknown": 90.0,
+    "N": 60.0,  # Flatfile conventions
+    "S": 90.0,
+    "R": 35.0,
+    "U": 90.0,
+    "NF": 60.,  # ESM flatfile conventions
+    "SS": 90.,
+    "TF": 35.,
+    "NS": 70.,  # Normal with strike-slip component
+    "TS": 45.,  # Reverse with strike-slip component
+    "O": 90.0}
 
 
 class Magnitude(object):
@@ -63,10 +102,10 @@ class Magnitude(object):
 class Rupture(object):
     """
     Class to hold rupture attributes
-    :param str id:
-        Rupture (earthquake) ID
-    :param str name:
-        Event Name
+    :param str eq_id:
+        Earthquake ID
+    :param str eq_name:
+        Earthquake name
     :param magnitude:
         Earthquake magnitude as instance of Magnitude class
     :param float length:
@@ -77,12 +116,8 @@ class Rupture(object):
         Depth to the top of rupture (km)
     :param float area:
         Rupture area in km^2
-    :param surface:
-        Rupture surface as instance of :class:
-        openquake.hazardlib.geo.surface.base.BaseRuptureSurface
-    :param tuple hypo_loc:
-        Hypocentral location within rupture surface as a fraction of
-        (along-strike length, down-dip width)
+    :param float aspect:
+        Rupture aspect ratio
     """
     def __init__(self,
                  eq_id,
@@ -91,32 +126,18 @@ class Rupture(object):
                  length,
                  width,
                  depth,
-                 hypocentre=None,
                  area=None,
-                 surface=None,
-                 hypo_loc=None):
+                 aspect=None):
         self.id = eq_id
         self.name = eq_name
         self.magnitude = magnitude
         self.length = length
         self.width = width
+        self.depth = depth
         self.area = area
         self.area = self.get_area()
-        self.depth = depth
-        self.surface = surface
-        self.hypocentre = hypocentre
-        self.hypo_loc = hypo_loc
-        self.aspect = None
+        self.aspect = aspect
         self.aspect = self.get_aspect()
-        # QuakeML parameters
-        self.max_displacement = None  # in m
-        self.mean_displacement = None  # in m
-        self.moment_release_top_5km = None
-        self.rise_time = None
-        self.velocity = None
-        self.shallow_asperity = False
-        self.stress_drop = None
-        self.vr_to_vs = None
 
     def get_area(self):
         """
@@ -167,8 +188,8 @@ class GCMTNodalPlanes(object):
 
 class GCMTPrincipalAxes(object):
     """
-    Class to represent the eigensystem of the tensor in terms of  T-, B- and P-
-    plunge and azimuth
+    Class to represent the eigensystem of the tensor in terms of
+    T-, B- and P-plunge and azimuth
     #_axis = {'eigenvalue':, 'azimuth':, 'plunge':}
 
     :param dict | None t_axis: The eigensystem of the T-axis
@@ -185,41 +206,45 @@ class FocalMechanism(object):
     """
     Class to hold the full focal mechanism attribute set
     :param str eq_id:
-        Identifier of the earthquake
-    :param str name:
-        Focal mechanism name
+        Earthquake ID
+    :param str eq_name:
+        Earthquake name
     :param nodal_planes:
         Nodal planes as instance of :class: GCMTNodalPlane
     :param eigenvalues:
         Eigenvalue decomposition as instance of :class: GCMTPrincipalAxes
-    :param numpy.ndarray tensor:
+    :param float scalar_moment:
+        Scalar seismic moment
+    :param numpy.ndarray moment_tensor:
         (3, 3) Moment Tensor
     :param str mechanism_type:
         Qualitative description of mechanism
     """
     def __init__(self,
                  eq_id,
-                 name,
+                 eq_name,
                  nodal_planes,
                  eigenvalues,
+                 scalar_moment=None,
                  moment_tensor=None,
                  mechanism_type=None):
         self.id = eq_id
-        self.name = name
+        self.name = eq_name
         self.nodal_planes = nodal_planes
         self.eigenvalues = eigenvalues
-        self.scalar_moment = None
+        self.scalar_moment = scalar_moment
         self.tensor = moment_tensor
         self.mechanism_type = mechanism_type
 
     def get_rake_from_mechanism_type(self):
         """
-        Returns an idealised "rake" based on a qualitative description of the
-        style of faulting
+        Returns an idealised "rake" based on a qualitative
+        description of the style of faulting
         """
-        if self.mechanism_type in utils.MECHANISM_TYPE:
-            return utils.MECHANISM_TYPE[self.mechanism_type]
-        return 0.0
+        if self.mechanism_type in MECHANISM_TYPE:
+            return MECHANISM_TYPE[self.mechanism_type]
+        else:
+            return 0.0
 
     def _moment_tensor_to_list(self):
         """
@@ -233,12 +258,12 @@ class FocalMechanism(object):
 
 class Earthquake(object):
     """
-    Class to hold earthquake event related information
-    :param str id:
+    Class to hold earthquake event information
+    :param str eq_id:
         Earthquake ID
-    :param str name:
+    :param str eq_name:
         Earthquake name
-    :param datetime:
+    :param date_time:
         Earthquake date and time as instance of :class: datetime.datetime
     :param float longitude:
         Earthquake hypocentre longitude
@@ -248,43 +273,40 @@ class Earthquake(object):
         Earthquake hypocentre depth (km)
     :param magnitude:
         Primary magnitude as instance of :class: Magnitude
-    :param magnitude_list:
-        Magnitude solutions for the earthquake as list of instances of the
-        :class: Magntiude
-    :param mechanism:
-        Focal mechanism as instance of the :class: FocalMechanism
     :param rupture:
         Earthquake rupture as instance of the :class: Rupture
+    :param focal_mechanism:
+        Focal mechanism as instance of the :class: FocalMechanism
+    :param tectonic_region:
+        Tectonic region of the earthquake
     """
     def __init__(self,
                  eq_id,
-                 name,
+                 eq_name,
                  date_time,
                  longitude,
                  latitude,
                  depth,
                  magnitude,
+                 rupture=None,
                  focal_mechanism=None,
-                 eq_country=None,
                  tectonic_region=None):
         self.id = eq_id
         assert isinstance(date_time, datetime)
         self.datetime = date_time
-        self.name = name
-        self.country = eq_country
+        self.name = eq_name
         self.longitude = longitude
         self.latitude = latitude
         self.depth = depth
         self.magnitude = magnitude
-        self.magnitude_list = []
+        self.rupture = rupture
         self.mechanism = focal_mechanism
-        self.rupture = None
         self.tectonic_region = tectonic_region
 
 
 class RecordDistance(object):
     """
-    Class to hold source to site distance information
+    Class to hold source to site distance information.
     :param float repi:
         Epicentral distance (km)
     :param float rhypo:
@@ -298,42 +320,30 @@ class RecordDistance(object):
         to surface
     :param float ry0:
         Along-track distance from site to surface projection of fault plane
-    :param float azimuth:
-        Source to site azimuth (degrees)
-    :param bool hanging_wall:
-        True if site on hanging wall, False otherwise
-    :param bool flag:
-        Distance flagged according to SigmaDatabase definition
+    :param rvolc:
+        Horizontal distance traversed through zone of volcanic activity.
     :param float rcdpp:
         Direct point parameter for directivity effect centered on the site-
-        and earthquake-specific
-        average DPP used
+        and earthquake-specific average DPP used
     """
     def __init__(self,
-                 repi,
-                 rhypo,
+                 repi=None,
+                 rhypo=None,
                  rjb=None,
                  rrup=None,
                  r_x=None,
                  ry0=None,
-                 flag=None,
-                 azimuth=None,
-                 rcdpp=None,
-                 rvolc=None):
+                 rvolc=None,
+                 rcdpp=None):
+        
         self.repi = repi
         self.rhypo = rhypo
         self.rjb = rjb
         self.rrup = rrup
         self.r_x = r_x
         self.ry0 = ry0
-        self.azimuth = None
-        self.hanging_wall = None
-        self.flag = flag
-        self.rcdpp = rcdpp
         self.rvolc = rvolc
-        # QuakeML parameters
-        self.pre_event_length = None
-        self.post_event_length = None
+        self.rcdpp = rcdpp
 
 
 # Eurocode 8 Site Class Vs30 boundaries
@@ -415,8 +425,6 @@ class RecordSite(object):
         Description of digitiser
     :param str network_code:
         Code of strong motion recording network
-    :param str country:
-        Country of site
     :param float z1pt0:
         Depth (m) to 1.0 km/s shear-wave velocity interface
     :param float z1pt5:
@@ -425,7 +433,6 @@ class RecordSite(object):
         Depth (km) to 2.5 km/s shear-wave velocity interface
     :param book backarc:
         True if site is in subduction backarc, False otherwise
-
     """
     def __init__(self,
                  site_id,
@@ -437,7 +444,6 @@ class RecordSite(object):
                  vs30=None,
                  vs30_measured=None,
                  network_code=None,
-                 country=None,
                  site_class=None,
                  backarc=False):
         self.id = site_id
@@ -461,7 +467,6 @@ class RecordSite(object):
         self.digitiser = None
         self.network_code = network_code
         self.sensor_depth = None
-        self.country = country
         self.z1pt0 = None
         self.z1pt5 = None
         self.z2pt5 = None
@@ -597,12 +602,12 @@ ims_dict = {
 class Component(object):
     """
     Contains the metadata relating to waveform of the record
-    :param str id:
+    :param str waveform_id:
         Waveform unique identifier
     :param orientation:
         Orientation of record as either azimuth (degrees, float) or string
     :param dict ims:
-        Intensity Measures of component
+        Intensity measures computed from component
     :param float longest_period:
         Longest usable period (s)
     :param dict waveform_filter:
@@ -630,13 +635,7 @@ class Component(object):
         self.ims = ims
         self.units = units  # Equivalent to gain unit
         self.late_trigger = None
-        # QuakeML compatible parameters (mostly unused)
-        self.start_time = None
-        self.duration = None
-        self.resample_rate_denominator = None
-        self.resample_rate_numerator = None
-        self.owner = None
-        self.creation_info = None
+
 
 
 class GroundMotionRecord(object):
@@ -644,10 +643,8 @@ class GroundMotionRecord(object):
     Class containing the full representation of the strong motion record
     :param str id:
         Ground motion record unique identifier
-    :param str time_series_file:
-        Path to time series file
-    :param str spectra_file:
-        Path to spectra file
+    :param str time_series_files:
+        Path to time series files
     :param event:
         Earthquake event representation as :class: Earthquake
     :param distance:
@@ -660,23 +657,33 @@ class GroundMotionRecord(object):
         y-component of record as instance of :class: Component
     :param vertical:
          vertical component of record as instance of :class: Component
-    :param float average_lup:
-        Longest usable period of record-pair
-    :param float average_sup:
-        Shortest usable period of record-pair
     :param dict ims:
-        Intensity measure of record
-    :param directivity:
-        ?
+        Intensity measures computed from record (general utility)
+    :param float longest_period:
+        Longest usable period of record-pair
+    :param float shortest_period:
+        Shortest usable period of record-pair
+    :param str spectra_files:
+        Path to spectra files
     :param str datafile:
-        Data file for strong motion record
+        Data file for strong motion record (general utility)
     """
-    def __init__(self, gm_id, time_series_file, event, distance, record_site,
-                 x_comp, y_comp, vertical=None, ims=None, longest_period=None,
-                 shortest_period=None, spectra_file=None):
+    def __init__(self,
+                 gm_id,
+                 time_series_files,
+                 event,
+                 distance,
+                 record_site,
+                 x_comp,
+                 y_comp,
+                 vertical=None,
+                 ims=None,
+                 longest_period=None,
+                 shortest_period=None,
+                 spectra_files=None,
+                 datafile=None):
         self.id = gm_id
-        self.time_series_file = time_series_file
-        self.spectra_file = spectra_file
+        self.time_series_files = time_series_files
         assert isinstance(event, Earthquake)
         self.event = event
         assert isinstance(distance, RecordDistance)
@@ -689,12 +696,11 @@ class GroundMotionRecord(object):
         if vertical:
             assert isinstance(vertical, Component)
         self.vertical = vertical
+        self.ims = ims
         self.average_lup = longest_period
         self.average_sup = shortest_period
-        self.ims = ims
-        self.directivity = None
-        self.datafile = None
-        self.misc = None
+        self.spectra_files = spectra_files
+        self.datafile = datafile
 
     def get_azimuth(self):
         """
@@ -726,7 +732,11 @@ class GroundMotionDatabase(ContextDB):
     :param list site_ids:
         List of site ids (defaults to None: empty list)
     """
-    def __init__(self, db_id, db_name, db_directory=None, records=None,
+    def __init__(self,
+                 db_id,
+                 db_name,
+                 db_directory=None,
+                 records=None,
                  site_ids=None):
         self.id = db_id
         self.name = db_name
@@ -765,7 +775,7 @@ class GroundMotionDatabase(ContextDB):
     def get_observations(self, imtx, records, component="Geometric"):
         """
         Return observed values for the given imt, as numpy array.
-        See superclass docstrsing for details
+        See superclass docstring for details
         """
         values = []
         selection_string = "IMS/H/Spectra/Response/Acceleration/"
@@ -785,6 +795,101 @@ class GroundMotionDatabase(ContextDB):
             
         return values
 
+    def get_rup(self, ctx):
+        """
+        Make a finite rupture for the given event inforamation.
+        """ 
+        # Get msr and aratio based on TRT if possible
+        if hasattr(ctx, 'tectonic_region_type'):
+            # NOTE: Admitted TRTs must be mapped to MBTK classifier TRTs
+            eq_trt = ctx.tectonic_region_type
+            if eq_trt in ['active_crustal', 'crustal']:    
+                msr = scalerel.WC1994()
+                aratio = 2
+                trt = TRT.ACTIVE_SHALLOW_CRUST
+            elif eq_trt == "stable":
+                msr = scalerel.WC1994()
+                aratio = 2
+                trt = TRT.STABLE_CONTINENTAL
+            elif eq_trt == 'slab':
+                msr = scalerel.strasser2010.StrasserIntraslab()
+                aratio = 5
+                trt = TRT.SUBDUCTION_INTRASLAB
+            elif eq_trt == 'int':
+                msr = scalerel.strasser2010.StrasserInterface()
+                aratio = 5
+                trt = TRT.SUBDUCTION_INTERFACE
+            else:
+                # Has another TRT e.g. deep, induced, "unknown"
+                # so make assumptions as for if no TRT provided
+                msr = scalerel.WC1994()
+                aratio = 3.0
+                trt = None
+        else:
+            # No TRT so make some assumptions
+            msr = scalerel.WC1994()
+            aratio = 3.0
+            trt = None
+
+        # Avoid nodal plane issues
+        if ctx.strike == 360.0:
+            ctx.strike = 359.0
+        if ctx.rake in {-180.0, 180.0}:
+            ctx.rake = -179 if ctx.rake == -180.0 else 179
+
+        # Make rupture from admitted event info
+        rup = utils.make_rup(ctx.hypo_lon,
+                             ctx.hypo_lat,
+                             ctx.hypo_depth,
+                             msr,
+                             ctx.mag,
+                             aratio,
+                             ctx.strike,
+                             ctx.dip,
+                             ctx.rake,
+                             trt,
+                             ctx.ztor
+                             )
+        
+        return rup
+
+    def make_oq_ctx(self, ctx, rup, idx_site):
+        """
+        Make regular OQ context maker for computing missing distance metrics.
+
+        NOTE: The user should be mindful that there will be inconsistencies
+              between the distances obtained from reconstructing the ruptures
+              and the distances provided in the flatfile. Therefore, it is
+              advisable that the user either removes all provided distances
+              and computes all of them from the reconstructed finite rupture,
+              or they ensure the dataset they input already contains the
+              distance metrics required for the GMMs they wish to consider.
+         
+        NOTE: This is tested within:
+              `openquake.smt.tests.residuals.parsers.gem_flatfile_parser_test`
+              which contains a row with completely empty distance metric cols.
+        """  
+        # Make site collection for given station
+        pnt = Point(
+            ctx.lons[idx_site], ctx.lats[idx_site], ctx.depths[idx_site])
+        site = SiteCollection([
+                    Site(
+                        pnt,
+                        ctx.vs30[idx_site],
+                        ctx.z1pt0[idx_site],
+                        ctx.z2pt5[idx_site]
+                        )
+                        ])
+        
+        # Make the ctx for given station which contains all distances
+        mag_str = [f'{rup.mag:.2f}']
+        oqp = {'imtls': {"PGA": []}, 'mags': mag_str}
+        ctxm = ContextMaker(
+            rup.tectonic_region_type, [utils.full_dtype_gmm()], oqp)
+        ctxs = list(ctxm.get_ctx_iter([rup], site))
+
+        return ctxs[0]
+
     def update_context(self, ctx, records, nodal_plane_index=1):
         """
         Updates the given RuptureContext with data from `records`.
@@ -800,7 +905,11 @@ class GroundMotionDatabase(ContextDB):
         Called by self.update_context
         """
         record = records[0]
+
+        # Assign magnitude
         ctx.mag = record.event.magnitude.value
+
+        # Assign nodal plane
         if nodal_plane_index == 2:
             ctx.strike = record.event.mechanism.nodal_planes.nodal_plane_2['strike']
             ctx.dip = record.event.mechanism.nodal_planes.nodal_plane_2['dip']
@@ -814,32 +923,32 @@ class GroundMotionDatabase(ContextDB):
             ctx.dip = 90.0
             ctx.rake = record.event.mechanism.get_rake_from_mechanism_type()
 
-        if record.event.rupture.surface:
-            ctx.ztor = record.event.rupture.surface.get_top_edge_depth()
-            ctx.width = record.event.rupture.surface.width
-            ctx.hypo_loc = record.event.rupture.surface.get_hypo_location(1000)
+        # Assign a ztor if available
+        if record.event.rupture.depth is not None:
+            ctx.ztor = record.event.rupture.depth
         else:
-            if record.event.rupture.depth is not None:
-                ctx.ztor = record.event.rupture.depth
-            else:
-                ctx.ztor = record.event.depth
+            ctx.ztor = record.event.depth
 
-            if record.event.rupture.width is not None:
-                ctx.width = record.event.rupture.width
-            else:
-                # Use the PeerMSR to define the area and assuming an aspect ratio
-                # of 1 get the width
-                ctx.width = np.sqrt(utils.DEFAULT_MSR.get_median_area(ctx.mag, 0))
+        # Assign a rupture width if available
+        if record.event.rupture.width is not None:
+            ctx.width = record.event.rupture.width
+        else:
+            # Use WC1994 to define area and assume aratio of 1 to get width
+            ctx.width = np.sqrt(scalerel.WC1994().get_median_area(ctx.mag, ctx.rake))
 
-            # Default hypocentre location to the middle of the rupture
-            ctx.hypo_loc = (0.5, 0.5)
+        # Default hypocentre location to the middle of the rupture
+        ctx.hypo_loc = (0.5, 0.5)
         ctx.hypo_depth = record.event.depth
         ctx.hypo_lat = record.event.latitude
         ctx.hypo_lon = record.event.longitude
 
+        # Add TRT if available
+        if record.event.tectonic_region is not None:
+            ctx.tectonic_region_type = record.event.tectonic_region
+
     def _update_sites_context(self, ctx, records):
         """
-        Called by self.update_context
+        Called by self.update_context.
         """
         for attname in self.sites_context_attrs:
             setattr(ctx, attname, [])
@@ -871,59 +980,95 @@ class GroundMotionDatabase(ContextDB):
             if getattr(record.site, "backarc", None) is not None:
                 ctx.backarc.append(record.site.backarc)
         
-        # Finalise
         for attname in self.sites_context_attrs:
             attval = getattr(ctx, attname)
             # Remove attribute if its value is empty-like
-            if attval is None or not len(attval):
+            if attval is None or not len(attval):  
                 delattr(ctx, attname)
+            # Ensure some params are stored as bools
             elif attname in ('vs30measured', 'backarc'):
                 setattr(ctx, attname, np.asarray(attval, dtype=bool))
             else:
-                # dtype=float forces Nones to be safely converted to nan
+                # dtype=float safely converts Nones to nans
                 setattr(ctx, attname, np.asarray(attval, dtype=float))
 
     def _update_distances_context(self, ctx, records):
         """
-        Called by self.update_context
+        Called by self.update_context.
+
+        NOTE: If a distance metric is missing from the record,
+        then the SMT takes it from a finite rupture reconstructed
+        within the engine.
         """
+        # Set distance types in the "SMT" ctx
         for attname in self.distances_context_attrs:
             setattr(ctx, attname, [])
+    
+        # Get rupture for event
+        rup = self.get_rup(ctx)
 
-        for record in records:
-            ctx.repi.append(record.distance.repi)
-            ctx.rhypo.append(record.distance.rhypo)
-            # TODO Setting Rjb == Repi and Rrup == Rhypo when missing value
-            # is a hack! Need feedback on how to fix
-            if record.distance.rjb is not None:
-                ctx.rjb.append(record.distance.rjb)
+        # For each record manage the distances
+        for idx_site, rec in enumerate(records):
+
+            # Make ctx for given site
+            site_ctx = self.make_oq_ctx(ctx, rup, idx_site)
+
+            # Can take repi from regular ctx if missing
+            if rec.distance.repi is not None:
+                ctx.repi.append(rec.distance.repi)
             else:
-                ctx.rjb.append(record.distance.repi)
-            if record.distance.rrup is not None:
-                ctx.rrup.append(record.distance.rrup)
+                ctx.repi.append(getattr(site_ctx, 'repi')[0])
+
+            # Can take rhypo from regular ctx if missing
+            if rec.distance.rhypo is not None:
+                ctx.rhypo.append(rec.distance.rhypo)
             else:
-                ctx.rrup.append(record.distance.rhypo)
-            if record.distance.r_x is not None:
-                ctx.rx.append(record.distance.r_x)
+                ctx.rhypo.append(getattr(site_ctx, 'rhypo')[0])
+
+            # Can take rjb from regular ctx if missing
+            if rec.distance.rjb is not None:
+                ctx.rjb.append(rec.distance.rjb)
             else:
-                ctx.rx.append(record.distance.repi)
-            if getattr(record.distance, "ry0", None) is not None:
-                ctx.ry0.append(record.distance.ry0)
-            if getattr(record.distance, "rcdpp", None) is not None:
-                ctx.rcdpp.append(record.distance.rcdpp)
-            if record.distance.azimuth is not None:
-                ctx.azimuth.append(record.distance.azimuth)
-            if record.distance.hanging_wall is not None:
-                ctx.hanging_wall.append(record.distance.hanging_wall)
-            if getattr(record.distance, "rvolc", None) is not None:
-                ctx.rvolc.append(record.distance.rvolc)
+                ctx.rjb.append(getattr(site_ctx, 'rjb')[0])
+
+            # Can take rrup from regular ctx if missing
+            if rec.distance.rrup is not None:
+                ctx.rrup.append(rec.distance.rrup)
+            else:
+                ctx.rrup.append(getattr(site_ctx, 'rrup')[0])
+                
+            # Can take rx from regular ctx if missing
+            if rec.distance.r_x is not None:
+                ctx.rx.append(rec.distance.r_x) # r_x vs rx
+            else:
+                ctx.rx.append(getattr(site_ctx, 'rx')[0])
+
+            # Can take ry0 from regular ctx if missing
+            if rec.distance.ry0 is not None:
+                ctx.ry0.append(rec.distance.ry0)
+            else:
+                ctx.ry0.append(getattr(site_ctx, 'ry0')[0])
+            
+            # Cannot compute rvolc from regular ctx
+            if rec.distance.rvolc is None:
+                # The regular ctx currently returns rvolc = 0
+                # km by default (i.e. it cannot compute it),
+                # but better to make this explicit here)
+                ctx.rvolc.append(0.)
+            else:
+                ctx.rvolc.append(rec.distance.rvolc)
+                                     
+            # Cannot compute rcdpp from regular ctx
+            if rec.distance.rcdpp is not None:
+                ctx.rcdpp.append(rec.distance.rcdpp)
+            else:
+                # i.e. no directivity term (see CY14's
+                # get_directivity function for example)
+                ctx.rcdpp.append(0.) 
 
         for attname in self.distances_context_attrs:
             attval = getattr(ctx, attname)
-            if attval is None or not len(attval): # remove attr if value is empty-like
-                delattr(ctx, attname)
-            else:
-                setattr(ctx, attname, np.asarray(attval, dtype=float))
+            setattr(ctx, attname, np.asarray(attval, dtype=float))
 
     def get_scalar(self, fle, i_m, component="Geometric"):
         """
@@ -1018,24 +1163,12 @@ class GroundMotionDatabase(ContextDB):
 def load_database(directory):
     """
     Wrapper function to load the metadata of a :class:`GroundMotionDatabase`
-    according to the filetype
     """
-    metadata_file = None
-    filetype = None
-    fileset = os.listdir(directory)
-    for ftype in ["pkl"]:
-        if ("metadatafile.%s" % ftype) in fileset:
-            metadata_file = "metadatafile.%s" % ftype
-            filetype = ftype
-            break
-    if not metadata_file:
-        raise IOError(
-            "Expected metadata file of supported type not found in %s"
-            % directory)
+    metadata_file = "metadatafile.pkl"
     metadata_path = os.path.join(directory, metadata_file)
-    if filetype == "pkl":
-        # pkl file type
-        with open(metadata_path, "rb") as f:
-            return pickle.load(f)
-    else:
-        raise ValueError("Metadata filetype %s not supported" % ftype)
+    if not os.path.exists(metadata_path):
+        raise FileNotFoundError(
+            f"Metadata file 'metadatafile.pkl' not found in {directory}."
+        )
+    with open(metadata_path, "rb") as f:
+        return pickle.load(f)

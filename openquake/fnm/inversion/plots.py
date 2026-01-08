@@ -90,7 +90,7 @@ def plot_seis(
     start_year=None,
     latest_year=None,
     completeness_table=None,
-    **kwargs
+    **kwargs,
 ):
     eqplot = eqs.copy(deep=True)
 
@@ -150,7 +150,14 @@ def plot_soln_mfd(
 
 
 def plot_soln_slip_rates(
-    soln, slip_rates, lhs, errs=None, units="mm/yr", pred_alpha=1.0, **kwargs,
+    soln,
+    slip_rates,
+    lhs,
+    errs=None,
+    units="mm/yr",
+    pred_alpha=1.0,
+    elinewidth=None,
+    **kwargs,
 ):
     pred_slip_rates = get_soln_slip_rates(
         soln, lhs, len(slip_rates), units=units
@@ -166,17 +173,30 @@ def plot_soln_slip_rates(
         lw=0.2,
         label='Fault slip rate',
     )
+
+    slip_rate_errs = np.zeros((2, len(errs)))
+    slip_rate_errs[0, :] = errs
+    slip_rate_errs[0, (slip_rates - slip_rate_errs[0, :] < 0.0)] = 0.0
+    slip_rate_errs[1, :] = errs
+
     if errs is not None:
         plt.errorbar(
             slip_rates,
             slip_rates,
-            yerr=errs,
+            yerr=slip_rate_errs,
             fmt="k,",
             lw=0.05,
+            elinewidth=elinewidth,
         )
 
-    plt.plot(slip_rates, pred_slip_rates, ".", alpha=pred_alpha, **kwargs,
-             label='Slip rate from modeled ruptures')
+    plt.plot(
+        slip_rates,
+        pred_slip_rates,
+        ".",
+        alpha=pred_alpha,
+        **kwargs,
+        label='Slip rate from modeled ruptures',
+    )
 
     plt.axis("equal")
     plt.xlabel("Observed slip rate")
