@@ -541,7 +541,7 @@ def make_fault_mfd_equation_components(
                 if skip_missing_rup_idxs == True:
                     pass
                 elif skip_missing_rup_idxs == 'warn':
-                    print(f"can't find {rup_idx}, skipping...")
+                    logging.info(f"can't find {rup_idx}, skipping...")
                 elif skip_missing_rup_idxs == False:
                     raise e
 
@@ -598,17 +598,19 @@ def make_eqns(
         fault_moment = get_fault_moment(faults, shear_modulus=shear_modulus)
         mfd_moment = get_mfd_moment(mfd)
         seismic_slip_rate_frac = mfd_moment / fault_moment
-        print("fault_moment", fault_moment)
-        print("mfd_moment", mfd_moment)
-        print(
+        logging.info("fault_moment", fault_moment)
+        logging.info("mfd_moment", mfd_moment)
+        logging.info(
             "Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
         )
     elif seismic_slip_rate_frac is None and mfd is None:
-        print("Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac)
+        logging.info(
+            "Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
+        )
         seismic_slip_rate_frac = 1.0
 
     if slip_rate_eqns is True:
-        print("Making slip rate eqns")
+        logging.info("Making slip rate eqns")
         slip_rate_result = make_slip_rate_eqns(
             rups,
             faults,
@@ -626,7 +628,7 @@ def make_eqns(
             metadata_set.append(metadata)
 
     if mfd_rel_eqns is True:
-        print("Making MFD relative eqns")
+        logging.info("Making MFD relative eqns")
         rel_result = make_rel_gr_mfd_eqns(
             rups,
             mfd_rel_b_val,
@@ -646,7 +648,7 @@ def make_eqns(
 
     if mfd is not None:
         if incremental_abs_mfds:
-            print("Making MFD absolute eqns")
+            logging.info("Making MFD absolute eqns")
             abs_result = make_abs_mfd_eqns(
                 rups,
                 mfd,
@@ -665,7 +667,7 @@ def make_eqns(
                 metadata_set.append(metadata)
 
         if cumulative_abs_mfds:
-            print("Making cumulative MFD absolute eqns")
+            logging.info("Making cumulative MFD absolute eqns")
             cum_result = make_abs_mfd_eqns(
                 rups,
                 mfd,
@@ -686,7 +688,7 @@ def make_eqns(
 
     if regional_abs_mfds is not None:
         if incremental_abs_mfds:
-            print("Making regional MFD absolute eqns")
+            logging.info("Making regional MFD absolute eqns")
             for reg, reg_mfd_data in regional_abs_mfds.items():
                 if ('rups_include' in reg_mfd_data.keys()) and (
                     len(reg_mfd_data['rups_include']) > 0
@@ -713,7 +715,7 @@ def make_eqns(
                         metadata_set.append(metadata)
 
         if cumulative_abs_mfds:
-            print("Making regional cumulative MFD absolute eqns")
+            logging.info("Making regional cumulative MFD absolute eqns")
             for reg, reg_mfd_data in regional_abs_mfds.items():
                 if ('rups_include' in reg_mfd_data.keys()) and (
                     len(reg_mfd_data['rups_include']) > 0
@@ -742,7 +744,7 @@ def make_eqns(
 
     if slip_rate_smoothing is True:
         raise NotImplementedError("Smoothing not implemented")
-        # print("Making slip rate smoothing eqns")
+        # logging.info("Making slip rate smoothing eqns")
         # (
         #    slip_smooth_lhs,
         #    slip_smooth_rhs,
@@ -760,10 +762,10 @@ def make_eqns(
         # rhs_set.append(slip_smooth_rhs)
         # err_set.append(slip_smooth_errs)
 
-    print("stacking results")
+    logging.info("stacking results")
     if verbose:
-        print("matrix sizes:")
-        [print(lhs.shape) for lhs in lhs_set]
+        logging.info("matrix sizes:")
+        [logging.info(lhs.shape) for lhs in lhs_set]
 
     if return_sparse:
         lhs_set = [ssp.csc_array(lhs) for lhs in lhs_set]
@@ -777,10 +779,9 @@ def make_eqns(
     errs = np.hstack(err_set)
 
     if verbose:
-        print("lhs total:", lhs.shape)
+        logging.info("lhs total:", lhs.shape)
 
     if return_metadata:
         return lhs, rhs, errs, metadata_set
     else:
         return lhs, rhs, errs
-
